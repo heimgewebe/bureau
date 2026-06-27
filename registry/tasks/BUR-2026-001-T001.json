@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-001-T001",
+  "initiative": "BUR-2026-001",
+  "title": "Audit current Grabowski operational completion gaps",
+  "state": "ready",
+  "goal": "Check runtime alignment, reconciliation, GUI prerequisites, connector snapshot and broker state.",
+  "depends_on": [],
+  "required_capabilities": ["repository", "shell"],
+  "priority": {"lane": "now", "rank": 10},
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "autonomous",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": ["repo:/home/alex/repos/bureau"]
+  },
+  "claims": [
+    {"resource":"repo.bureau","mode":"write","isolation":"worktree"},
+    {"resource":"repo.grabowski","mode":"read","isolation":"none"},
+    {"resource":"host.heim-pc","mode":"capacity","amount":1,"isolation":"none"}
+  ],
+  "acceptance": [
+    {"id":"runtime-baseline","assertion":"Deployed release and canonical checkout are compared."},
+    {"id":"host-gaps","assertion":"Reconcile, Xvfb, connector snapshot and broker are checked."},
+    {"id":"followups","assertion":"Confirmed gaps become validated Bureau tasks."}
+  ]
+}

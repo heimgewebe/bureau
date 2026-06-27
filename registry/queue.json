@@ -1,1 +1,11 @@
-{"schema_version":1,"queue_policy":"skip-blocked","lanes":{"now":["BUR-2026-001-T002"],"next":[],"later":["BUR-2026-001-T003"]}}
+{
+  "schema_version": 1,
+  "queue_policy": "skip-blocked",
+  "lanes": {
+    "now": [],
+    "next": [],
+    "later": [
+      "BUR-2026-001-T002"
+    ]
+  }
+}

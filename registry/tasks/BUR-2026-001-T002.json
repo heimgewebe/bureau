@@ -3,25 +3,69 @@
   "id": "BUR-2026-001-T002",
   "initiative": "BUR-2026-001",
   "title": "Correct terminal GUI worker classification",
-  "state": "ready",
+  "state": "blocked",
   "goal": "Classify a successful short-lived GUI worker as completed even after its transient systemd unit has been collected.",
-  "depends_on": ["BUR-2026-001-T001"],
-  "required_capabilities": ["repository", "shell"],
-  "priority": {"lane": "next", "rank": 20},
+  "depends_on": [
+    "BUR-2026-001-T001"
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
   "execution": {
     "mode": "interactive-agent",
     "policy": "autonomous",
     "preferred_host": "heim-pc",
     "working_repository": "/home/alex/repos/grabowski",
-    "grabowski_resources": ["repo:/home/alex/repos/grabowski"]
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
   },
   "claims": [
-    {"resource":"repo.grabowski","mode":"write","isolation":"worktree"},
-    {"resource":"host.heim-pc","mode":"capacity","amount":1,"isolation":"none"}
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "capacity",
+      "amount": 1,
+      "isolation": "none"
+    }
   ],
   "acceptance": [
-    {"id":"success-classification","assertion":"A short-lived GUI worker with Result=success and ExecMainStatus=0 is terminally completed rather than interrupted."},
-    {"id":"failure-preservation","assertion":"Failed and genuinely interrupted GUI workers retain distinct non-success states."},
-    {"id":"regression-tests","assertion":"Worker classification tests cover collected transient units and pass in CI."}
-  ]
+    {
+      "id": "success-classification",
+      "assertion": "A short-lived GUI worker with Result=success and ExecMainStatus=0 is terminally completed rather than interrupted."
+    },
+    {
+      "id": "failure-preservation",
+      "assertion": "Failed and genuinely interrupted GUI workers retain distinct non-success states."
+    },
+    {
+      "id": "regression-tests",
+      "assertion": "Worker classification tests cover collected transient units and pass in CI."
+    }
+  ],
+  "metadata": {
+    "implementation": {
+      "pr": 23,
+      "merge_commit": "b7de49197505c9c98994a920c87684b8152374fc",
+      "ci": "Python 3.10 and 3.12 successful",
+      "tests": 263
+    },
+    "blocker": {
+      "kind": "runtime-cutover",
+      "target_commit": "f1dd99e293a3d9300a5538c450cf82a513b34584",
+      "live_runtime_commit": "b65518061d66ad792ff39093a8dc8f9579d9a1e4",
+      "live_probe_worker": "5d16bb848f744feebec0",
+      "observed": "Result=success and ExecMainStatus=0, but old runtime reports interrupted",
+      "reason": "deployment apply denied by the upstream execution safety check"
+    }
+  }
 }

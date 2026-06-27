@@ -3,7 +3,7 @@
   "id": "BUR-2026-001-T001",
   "initiative": "BUR-2026-001",
   "title": "Audit current Grabowski operational completion gaps",
-  "state": "ready",
+  "state": "verified",
   "goal": "Check runtime alignment, reconciliation, GUI prerequisites, connector snapshot and broker state.",
   "depends_on": [],
   "required_capabilities": ["repository", "shell"],

@@ -3,21 +3,49 @@
   "id": "BUR-2026-001-T003",
   "initiative": "BUR-2026-001",
   "title": "Resolve privileged broker deployment prerequisite",
-  "state": "blocked",
+  "state": "verified",
   "goal": "Complete the separately governed host prerequisite until the privileged broker status reports ready.",
-  "depends_on": ["BUR-2026-001-T001"],
-  "required_capabilities": ["shell", "fleet"],
-  "priority": {"lane": "later", "rank": 30},
+  "depends_on": [
+    "BUR-2026-001-T001"
+  ],
+  "required_capabilities": [
+    "shell",
+    "fleet"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 30
+  },
   "execution": {
     "mode": "manual",
     "policy": "review-before-effect",
     "preferred_host": "heim-pc"
   },
   "claims": [
-    {"resource":"host.heim-pc","mode":"exclusive","isolation":"none"}
+    {
+      "resource": "host.heim-pc",
+      "mode": "exclusive",
+      "isolation": "none"
+    }
   ],
   "acceptance": [
-    {"id":"broker-readiness","assertion":"The Grabowski privileged broker status reports ready."},
-    {"id":"bounded-authority","assertion":"Only the separately approved named actions are available."}
-  ]
+    {
+      "id": "broker-readiness",
+      "assertion": "The Grabowski privileged broker status reports ready."
+    },
+    {
+      "id": "bounded-authority",
+      "assertion": "Only the separately approved named actions are available."
+    }
+  ],
+  "metadata": {
+    "evidence": {
+      "broker_valid": true,
+      "config_valid": true,
+      "socket_valid": true,
+      "ready": true,
+      "execution_model": "root-owned-systemd-socket-template-broker",
+      "verified_at": "2026-06-27"
+    }
+  }
 }

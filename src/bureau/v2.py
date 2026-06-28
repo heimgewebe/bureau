@@ -60,6 +60,10 @@ class Registry(legacy.Registry):
             self.schemas.validate(kind, raw, path)
         except DocumentSchemaError as exc:
             raise legacy.ValidationError(str(exc)) from exc
+        if kind == "source":
+            from .weltgewebe_source import validate_source_document
+
+            validate_source_document(raw)
 
     def _load(self) -> None:
         for path in self._files(self.root / "registry/resources"):
@@ -68,6 +72,8 @@ class Registry(legacy.Registry):
             self._schema_document("initiative", path)
         for path in self._files(self.root / "registry/tasks"):
             self._schema_document("task", path)
+        for path in self._files(self.root / "registry/sources"):
+            self._schema_document("source", path)
         queue = self.root / "registry/queue.json"
         if queue.exists():
             self._schema_document("queue", queue)

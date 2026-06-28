@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from bureau import cli as bureau_cli
+from bureau import weltgewebe_source
 from bureau.core import Registry, ValidationError
 from bureau.weltgewebe_source import source_check, source_sync
 
@@ -289,6 +290,20 @@ def test_external_schema_reference_is_rejected(source_repo):
     schema_path.write_text(json.dumps(schema), encoding="utf-8")
     commit_source(source_repo, "external ref")
     with pytest.raises(ValidationError, match="external references"):
+        source_check(source_repo, "HEAD")
+
+
+def test_git_source_reader_disables_replacement_objects():
+    assert weltgewebe_source._git_environment()["GIT_NO_REPLACE_OBJECTS"] == "1"
+
+
+def test_invalid_source_schema_is_reported_as_validation_error(source_repo):
+    schema_path = source_repo / "docs/tasks/schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    schema["properties"]["tasks"]["type"] = 7
+    schema_path.write_text(json.dumps(schema), encoding="utf-8")
+    commit_source(source_repo, "invalid schema")
+    with pytest.raises(ValidationError, match="invalid Weltgewebe source schema"):
         source_check(source_repo, "HEAD")
 
 

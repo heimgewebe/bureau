@@ -11,6 +11,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 from jsonschema import Draft7Validator, FormatChecker
+from jsonschema.exceptions import SchemaError
 
 from .legacy import ValidationError, atomic_write, canonical_json, read_json, sha256_json
 from .schema_validation import DocumentSchemaError, SchemaSet
@@ -78,6 +79,7 @@ def _git_environment() -> dict[str, str]:
         "GIT_CONFIG_SYSTEM": "/dev/null",
         "GIT_TERMINAL_PROMPT": "0",
         "GIT_OPTIONAL_LOCKS": "0",
+        "GIT_NO_REPLACE_OBJECTS": "1",
         "GIT_PAGER": "cat",
         "PAGER": "cat",
     }
@@ -175,7 +177,10 @@ def _validate_index(document: dict[str, Any], schema: dict[str, Any]) -> None:
     if schema.get("$schema") != "http://json-schema.org/draft-07/schema#":
         raise ValidationError("Weltgewebe source schema must declare JSON Schema Draft-07")
     _reject_external_refs(schema)
-    Draft7Validator.check_schema(schema)
+    try:
+        Draft7Validator.check_schema(schema)
+    except SchemaError as exc:
+        raise ValidationError(f"invalid Weltgewebe source schema: {exc.message}") from exc
     errors = sorted(
         Draft7Validator(schema, format_checker=FormatChecker()).iter_errors(document),
         key=lambda error: tuple(str(part) for part in error.absolute_path),

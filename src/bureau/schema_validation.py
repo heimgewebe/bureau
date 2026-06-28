@@ -13,6 +13,7 @@ SCHEMA_FILES = {
     "queue": "queue.v1.schema.json",
     "execution-envelope": "execution-envelope.v1.schema.json",
     "receipt": "receipt.v1.schema.json",
+    "source": "source.v1.schema.json",
 }
 
 

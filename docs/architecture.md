@@ -24,3 +24,15 @@ Bureau and Grabowski form a saga rather than a shared transaction:
 The adapter contract is deliberately small: `dispatch(request)` and `observe(external_id)`. An
 unavailable adapter creates a visible reconcile finding; it never causes a bound run to be silently
 forgotten.
+
+
+## Source inboxes
+
+A source inbox is an observation layer, not a commitment layer. The Weltgewebe adapter resolves one
+local Git ref to one exact commit and reads `docs/tasks/index.json` and its Draft-07 schema from that
+same commit with fixed, non-networked Git commands. The resulting snapshot records source facts,
+per-task hashes and evidence counts under `registry/sources/`.
+
+Source snapshots never establish Bureau task materialisation, readiness, dependency completeness,
+parallel write safety or autonomous execution permission. A future promotion step must make those
+decisions explicitly and preserve Bureau-owned coordination state.

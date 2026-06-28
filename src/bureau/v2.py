@@ -68,6 +68,8 @@ class Registry(legacy.Registry):
             self._schema_document("initiative", path)
         for path in self._files(self.root / "registry/tasks"):
             self._schema_document("task", path)
+        for path in self._files(self.root / "registry/sources"):
+            self._schema_document("source", path)
         queue = self.root / "registry/queue.json"
         if queue.exists():
             self._schema_document("queue", queue)

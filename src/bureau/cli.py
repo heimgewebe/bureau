@@ -60,6 +60,15 @@ def parser() -> argparse.ArgumentParser:
     doctor.add_argument("--repair", action="store_true")
     sub.add_parser("conflicts")
     sub.add_parser("lifecycle")
+    source_check = sub.add_parser("source-check")
+    source_check.add_argument("source", choices=["weltgewebe"])
+    source_check.add_argument("--repo", required=True)
+    source_check.add_argument("--ref", default="origin/main")
+    source_sync = sub.add_parser("source-sync")
+    source_sync.add_argument("source", choices=["weltgewebe"])
+    source_sync.add_argument("--repo", required=True)
+    source_sync.add_argument("--ref", default="origin/main")
+    source_sync.add_argument("--apply", action="store_true")
     sub.add_parser("close-ready")
     frontier = sub.add_parser("frontier")
     frontier.add_argument("--capability", action="append", default=[])
@@ -158,7 +167,19 @@ def adapters(args: argparse.Namespace) -> AdapterRegistry:
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
-        registry = Registry.load(Path(args.root))
+        root = Path(args.root)
+        registry = Registry.load(root)
+        if args.command in {"source-check", "source-sync"}:
+            from .weltgewebe_source import source_check, source_sync
+
+            if args.command == "source-check":
+                value = source_check(args.repo, args.ref)
+            else:
+                value = source_sync(root, args.repo, args.ref, apply=args.apply)
+                if args.apply:
+                    Registry.load(root)
+            emit(value, args.json)
+            return 0
         state_path = Path(args.state_db).expanduser() if args.state_db else None
         state_root = Path(args.state_root).expanduser() if args.state_root else None
         store = StateStore(state_path, state_root)

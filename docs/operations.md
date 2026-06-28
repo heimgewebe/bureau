@@ -39,7 +39,6 @@ bureau --root . workspace-cleanup <run-id>
 Cleanup requires a terminal run. Dirty or unmerged workspaces are preserved unless `--force` is
 explicitly supplied.
 
-
 ## Weltgewebe source inbox
 
 Validate the locally available source ref without changing Bureau state:
@@ -70,11 +69,48 @@ bounds preview ID lists. Repeating `--apply` for unchanged source bytes performs
 Scheduling may run `source-check`, preview sync or reconciliation. It must not imply promotion,
 readiness or approval to execute any source task.
 
-
 ## Scheduled Weltgewebe synchronization
 
-The `sync-weltgewebe-source` GitHub workflow runs at minute 0 and 30 of every hour and can also be started manually. It checks out the current public Weltgewebe `main`, materializes the candidate snapshot in an ephemeral Bureau checkout, and runs the full validation suite when the snapshot changes.
+The `sync-weltgewebe-source` GitHub workflow runs at minute 0 and 30 of every hour and can also be
+started manually. It checks out the current public Weltgewebe `main`, materialises the candidate
+snapshot in an ephemeral Bureau checkout, and runs the full validation suite when the snapshot
+changes.
 
-A changed snapshot is pushed only to the bot-owned `automation/weltgewebe-source-sync` branch using an explicit force-with-lease precondition. The workflow creates or updates a pull request; it never pushes to `main` and never merges the pull request. Only `registry/sources/weltgewebe.json` may change. Any additional changed path fails the run.
+A changed snapshot is pushed only to the bot-owned `automation/weltgewebe-source-sync` branch using
+an explicit force-with-lease precondition. The workflow never pushes to `main`, merges a pull
+request or promotes a source task. Only `registry/sources/weltgewebe.json` may change; any additional
+changed path fails the run.
 
-GitHub schedules are best-effort rather than exact wall-clock execution. A delayed run affects freshness only; it does not weaken commit binding or permit task promotion. Repository Actions settings must allow `GITHUB_TOKEN` to create pull requests, otherwise publication fails visibly while validation remains read-only.
+The Heimgewebe organisation deliberately prevents `GITHUB_TOKEN` from creating pull requests. The
+least-privilege design therefore keeps branch publication in GitHub Actions and delegates pull
+request creation to the local `bureau-source-pr-bridge`, which uses the already authorised user
+`gh` session without exporting its token to GitHub Actions.
+
+Install the bridge into an isolated environment and enable the supplied user timer:
+
+```bash
+python3 -m venv ~/.local/share/bureau-source-pr-bridge/venv
+~/.local/share/bureau-source-pr-bridge/venv/bin/pip install .
+install -Dm644 ops/systemd/bureau-source-pr-bridge.service \
+  ~/.config/systemd/user/bureau-source-pr-bridge.service
+install -Dm644 ops/systemd/bureau-source-pr-bridge.timer \
+  ~/.config/systemd/user/bureau-source-pr-bridge.timer
+systemctl --user daemon-reload
+systemctl --user enable --now bureau-source-pr-bridge.timer
+```
+
+The timer runs at minute 15 and 45, after the hosted source observation. A delayed hosted run is
+picked up by a later bridge run. The bridge is idempotent: it does nothing without an ahead source
+branch, creates a missing review pull request, and otherwise refreshes the existing pull request
+body.
+
+Manual checks:
+
+```bash
+bureau-source-pr-bridge
+systemctl --user status bureau-source-pr-bridge.timer
+journalctl --user -u bureau-source-pr-bridge.service -n 50 --no-pager
+```
+
+Neither half of the pipeline establishes readiness, dependency completeness, safe parallel scope or
+autonomous execution permission.

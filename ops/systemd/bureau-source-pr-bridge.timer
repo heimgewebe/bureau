@@ -1,0 +1,12 @@
+[Unit]
+Description=Open or refresh the Bureau Weltgewebe source PR twice hourly
+
+[Timer]
+OnCalendar=*-*-* *:15,45:00
+Persistent=true
+RandomizedDelaySec=60
+AccuracySec=1min
+Unit=bureau-source-pr-bridge.service
+
+[Install]
+WantedBy=timers.target

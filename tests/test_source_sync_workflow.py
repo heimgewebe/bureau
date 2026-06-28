@@ -14,12 +14,15 @@ def test_source_sync_workflow_contract():
         "registry/sources/weltgewebe.json",
         "make validate",
         "Unexpected changed paths",
-        "pull-requests: write",
+        "contents: write",
         "--force-with-lease=",
-        "gh pr create",
-        "gh pr edit",
+        "Publish snapshot branch",
+        "The local Bureau source PR bridge will create or update the review PR.",
     )
     for value in required:
         assert value in text
+    assert "pull-requests: write" not in text
+    assert "gh pr create" not in text
+    assert "gh pr edit" not in text
     assert "gh pr merge" not in text
     assert "HEAD:refs/heads/main" not in text

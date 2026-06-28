@@ -2,10 +2,19 @@
   "schema_version": 1,
   "id": "BUR-2026-001",
   "title": "Grabowski operational completion",
-  "state": "active",
-  "commitment": "now",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Establish a fresh operational baseline and represent confirmed gaps as executable tasks.",
-  "current_plan": {"repository":"grabowski","path":"docs/roadmap.md"},
-  "completion": ["All confirmed operational gaps are resolved or explicitly manual."],
-  "parallelism": {"max_active_tasks": 2}
+  "current_plan": {
+    "repository": "grabowski",
+    "path": "docs/roadmap.md",
+    "commit": "f1dd99e293a3d9300a5538c450cf82a513b34584",
+    "document_sha256": "ea89c4db2b569dc5575589e534fdfb7ee4606c4d331c5d9302371746ae2dcfc5"
+  },
+  "completion": [
+    "All confirmed operational gaps are resolved or explicitly manual."
+  ],
+  "parallelism": {
+    "max_active_tasks": 2
+  }
 }

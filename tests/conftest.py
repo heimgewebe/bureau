@@ -23,6 +23,7 @@ def registry_factory(tmp_path: Path):
             "title": "Test",
             "state": "active",
             "commitment": "now",
+            "goal": "Test goal",
             "completion": ["done"],
             "parallelism": {"max_active_tasks": max_active},
         }

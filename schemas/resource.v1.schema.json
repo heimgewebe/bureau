@@ -1,1 +1,21 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Bureau resource v1","type":"object","required":["schema_version"],"properties":{"schema_version":{"const":1}}}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://heimgewebe.local/bureau/resource.v1.schema.json",
+  "title": "Bureau resource v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "type"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{0,254}$"},
+    "type": {"enum": ["group", "git-repository", "component", "path", "host", "service", "external", "capacity"]},
+    "parent": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{0,254}$"},
+    "capacity": {"type": "integer", "minimum": 1},
+    "path": {"type": "string", "minLength": 1},
+    "grabowski_key": {"type": "string", "minLength": 1},
+    "metadata": {"type": "object"}
+  },
+  "allOf": [
+    {"if": {"properties": {"type": {"const": "capacity"}}, "required": ["type"]}, "then": {"required": ["capacity"]}}
+  ]
+}

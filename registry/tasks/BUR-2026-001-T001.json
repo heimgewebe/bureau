@@ -6,23 +6,59 @@
   "state": "verified",
   "goal": "Check runtime alignment, reconciliation, GUI prerequisites, connector snapshot and broker state.",
   "depends_on": [],
-  "required_capabilities": ["repository", "shell"],
-  "priority": {"lane": "now", "rank": 10},
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
   "execution": {
     "mode": "interactive-agent",
     "policy": "autonomous",
     "preferred_host": "heim-pc",
     "working_repository": "/home/alex/repos/bureau",
-    "grabowski_resources": ["repo:/home/alex/repos/bureau"]
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
   },
   "claims": [
-    {"resource":"repo.bureau","mode":"write","isolation":"worktree"},
-    {"resource":"repo.grabowski","mode":"read","isolation":"none"},
-    {"resource":"host.heim-pc","mode":"capacity","amount":1,"isolation":"none"}
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "capacity",
+      "amount": 1,
+      "isolation": "none"
+    }
   ],
   "acceptance": [
-    {"id":"runtime-baseline","assertion":"Deployed release and canonical checkout are compared."},
-    {"id":"host-gaps","assertion":"Reconcile, Xvfb, connector snapshot and broker are checked."},
-    {"id":"followups","assertion":"Confirmed gaps become validated Bureau tasks."}
-  ]
+    {
+      "id": "runtime-baseline",
+      "assertion": "Deployed release and canonical checkout are compared."
+    },
+    {
+      "id": "host-gaps",
+      "assertion": "Reconcile, Xvfb, connector snapshot and broker are checked."
+    },
+    {
+      "id": "followups",
+      "assertion": "Confirmed gaps become validated Bureau tasks."
+    }
+  ],
+  "metadata": {
+    "verification": {
+      "task_sha256": "00e55e6290584cc3459440218137d683bddf9b19eb8bc505285fbb2aaf826182",
+      "plan_sha256": "a693177e04de7b0c356ae6e029ae30b206092e6c8cbf3f1096f669e64cc5cf61"
+    }
+  }
 }

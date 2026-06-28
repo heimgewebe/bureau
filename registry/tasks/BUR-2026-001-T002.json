@@ -1,1 +1,55 @@
-{"schema_version":1,"id":"BUR-2026-001-T002","initiative":"BUR-2026-001","title":"Correct terminal GUI worker classification","state":"verified","execution":{"mode":"interactive-agent","policy":"autonomous"},"claims":[{"resource":"repo.grabowski","mode":"write","isolation":"worktree"}],"acceptance":[{"id":"proof","assertion":"PR 23 merged; 263 tests and Python 3.10/3.12 CI passed."}],"metadata":{"receipt_sha256":"7c3102901761f40c0781fbb9cb2d26a01bbebdcdd5cf855d2c6e421b4b6832e8","merge_commit":"b7de49197505c9c98994a920c87684b8152374fc"}}
+{
+  "schema_version": 1,
+  "id": "BUR-2026-001-T002",
+  "initiative": "BUR-2026-001",
+  "title": "Correct terminal GUI worker classification",
+  "state": "verified",
+  "goal": "Classify successful collected GUI workers correctly.",
+  "depends_on": [
+    "BUR-2026-001-T001"
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "autonomous",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "capacity",
+      "amount": 1,
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "proof",
+      "assertion": "PR 23 merged; 263 tests and Python 3.10/3.12 CI passed."
+    }
+  ],
+  "metadata": {
+    "receipt_sha256": "7c3102901761f40c0781fbb9cb2d26a01bbebdcdd5cf855d2c6e421b4b6832e8",
+    "merge_commit": "b7de49197505c9c98994a920c87684b8152374fc",
+    "verification": {
+      "task_sha256": "e335cd257a93ed1f71c553845677b985e3631898c743df665dd4d1a2ff6c3314",
+      "plan_sha256": "a693177e04de7b0c356ae6e029ae30b206092e6c8cbf3f1096f669e64cc5cf61"
+    }
+  }
+}

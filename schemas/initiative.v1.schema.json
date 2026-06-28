@@ -1,1 +1,107 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Bureau initiative v1","type":"object","required":["schema_version"],"properties":{"schema_version":{"const":1}}}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://heimgewebe.local/bureau/initiative.v1.schema.json",
+  "title": "Bureau initiative v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "title",
+    "state",
+    "commitment",
+    "goal",
+    "completion",
+    "parallelism"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "enum": [
+        "inbox",
+        "candidate",
+        "committed",
+        "active",
+        "waiting",
+        "completion-ready",
+        "completed",
+        "dropped"
+      ]
+    },
+    "commitment": {
+      "enum": [
+        "now",
+        "next",
+        "later",
+        "waiting",
+        "someday",
+        "completed"
+      ]
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 1
+    },
+    "current_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "path"
+      ],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "document_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "completion": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "parallelism": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_active_tasks"
+      ],
+      "properties": {
+        "max_active_tasks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256
+        }
+      }
+    },
+    "metadata": {
+      "type": "object"
+    }
+  }
+}

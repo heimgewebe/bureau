@@ -1,0 +1,682 @@
+{
+  "schema_version": 1,
+  "repo_root": "/home/alex/repos",
+  "vault_root": "/home/alex/repos/vault-gewebe",
+  "primary_repositories": [
+    {
+      "name": "agent-control-surface",
+      "path": "/home/alex/repos/agent-control-surface",
+      "remote": "org-236528253@github.com:heimgewebe/agent-control-surface.git",
+      "remote_key": "heimgewebe/agent-control-surface",
+      "planning_files": [
+        "docs/blaupause.md"
+      ],
+      "vault_paths": [
+        "/home/alex/repos/vault-gewebe/agent-control-surface"
+      ],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "agent-smoke-test",
+      "path": "/home/alex/repos/agent-smoke-test",
+      "remote": "",
+      "remote_key": "",
+      "planning_files": [],
+      "vault_paths": [],
+      "authority": "repository-context",
+      "enabled_by_default": false
+    },
+    {
+      "name": "aussensensor",
+      "path": "/home/alex/repos/aussensensor",
+      "remote": "org-236528253@github.com:heimgewebe/aussensensor.git",
+      "remote_key": "heimgewebe/aussensensor",
+      "planning_files": [],
+      "vault_paths": [],
+      "authority": "repository-context",
+      "enabled_by_default": true
+    },
+    {
+      "name": "bureau",
+      "path": "/home/alex/repos/bureau",
+      "remote": "git@github.com:heimgewebe/bureau.git",
+      "remote_key": "heimgewebe/bureau",
+      "planning_files": [],
+      "vault_paths": [],
+      "authority": "repository-context",
+      "enabled_by_default": true
+    },
+    {
+      "name": "cabinet",
+      "path": "/home/alex/repos/cabinet",
+      "remote": "git@github.com:heimgewebe/cabinet.git",
+      "remote_key": "heimgewebe/cabinet",
+      "planning_files": [],
+      "vault_paths": [],
+      "authority": "repository-context",
+      "enabled_by_default": true
+    },
+    {
+      "name": "chronik",
+      "path": "/home/alex/repos/chronik",
+      "remote": "org-236528253@github.com:heimgewebe/chronik.git",
+      "remote_key": "heimgewebe/chronik",
+      "planning_files": [
+        "docs/PLAN_OPTIMIERUNG.md"
+      ],
+      "vault_paths": [],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "claim-audit-lab",
+      "path": "/home/alex/repos/claim-audit-lab",
+      "remote": "git@github.com:alexdermohr/claim-audit-lab.git",
+      "remote_key": "alexdermohr/claim-audit-lab",
+      "planning_files": [],
+      "vault_paths": [],
+      "authority": "repository-context",
+      "enabled_by_default": false
+    },
+    {
+      "name": "contracts-mirror",
+      "path": "/home/alex/repos/contracts-mirror",
+      "remote": "org-236528253@github.com:heimgewebe/contracts-mirror.git",
+      "remote_key": "heimgewebe/contracts-mirror",
+      "planning_files": [],
+      "vault_paths": [],
+      "authority": "repository-context",
+      "enabled_by_default": true
+    },
+    {
+      "name": "demo-repository",
+      "path": "/home/alex/repos/demo-repository",
+      "remote": "org-236528253@github.com:heimgewebe/demo-repository.git",
+      "remote_key": "heimgewebe/demo-repository",
+      "planning_files": [],
+      "vault_paths": [],
+      "authority": "repository-context",
+      "enabled_by_default": false
+    },
+    {
+      "name": "device-graph",
+      "path": "/home/alex/repos/device-graph",
+      "remote": "org-236528253@github.com:heimgewebe/device-graph.git",
+      "remote_key": "heimgewebe/device-graph",
+      "planning_files": [
+        "docs/blueprints/device-ontology-blaupause.md",
+        "docs/blueprints/heimnetz-2026-blaupause.md",
+        "docs/blueprints/migration-heimberry-blaupause.md",
+        "docs/blueprints/trust-zones-blaupause.md",
+        "docs/plans/next-steps.md",
+        "docs/plans/roadmap.md"
+      ],
+      "vault_paths": [],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "grabowski",
+      "path": "/home/alex/repos/grabowski",
+      "remote": "git@github.com:heimgewebe/grabowski.git",
+      "remote_key": "heimgewebe/grabowski",
+      "planning_files": [
+        "docs/roadmap.md"
+      ],
+      "vault_paths": [],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "hausarbeit",
+      "path": "/home/alex/repos/hausarbeit",
+      "remote": "git@github.com:alexdermohr/hausarbeit.git",
+      "remote_key": "alexdermohr/hausarbeit",
+      "planning_files": [],
+      "vault_paths": [],
+      "authority": "repository-context",
+      "enabled_by_default": false
+    },
+    {
+      "name": "hausKI",
+      "path": "/home/alex/repos/hausKI",
+      "remote": "org-236528253@github.com:heimgewebe/hausKI.git",
+      "remote_key": "heimgewebe/hausKI",
+      "planning_files": [
+        "docs/hausmaister/blueprint.md",
+        "docs/ist-stand-vs-roadmap.md"
+      ],
+      "vault_paths": [],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "hausKI-audio",
+      "path": "/home/alex/repos/hausKI-audio",
+      "remote": "org-236528253@github.com:heimgewebe/hausKI-audio.git",
+      "remote_key": "heimgewebe/hausKI-audio",
+      "planning_files": [],
+      "vault_paths": [],
+      "authority": "repository-context",
+      "enabled_by_default": true
+    },
+    {
+      "name": "heim-assi",
+      "path": "/home/alex/repos/heim-assi",
+      "remote": "org-236528253@github.com:heimgewebe/heim-assi.git",
+      "remote_key": "heimgewebe/heim-assi",
+      "planning_files": [
+        "docs/HEIM-ASSI-BLUEPRINT.md"
+      ],
+      "vault_paths": [],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "heim-pc",
+      "path": "/home/alex/repos/heim-pc",
+      "remote": "org-236528253@github.com:heimgewebe/heim-pc.git",
+      "remote_key": "heimgewebe/heim-pc",
+      "planning_files": [],
+      "vault_paths": [],
+      "authority": "repository-context",
+      "enabled_by_default": true
+    },
+    {
+      "name": "heimgeist",
+      "path": "/home/alex/repos/heimgeist",
+      "remote": "org-236528253@github.com:heimgewebe/heimgeist.git",
+      "remote_key": "heimgewebe/heimgeist",
+      "planning_files": [
+        "docs/heimgewebe-vektor-blaupause.md"
+      ],
+      "vault_paths": [
+        "/home/alex/repos/vault-gewebe/heimgewebe"
+      ],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "heimlern",
+      "path": "/home/alex/repos/heimlern",
+      "remote": "org-236528253@github.com:heimgewebe/heimlern.git",
+      "remote_key": "heimgewebe/heimlern",
+      "planning_files": [],
+      "vault_paths": [],
+      "authority": "repository-context",
+      "enabled_by_default": true
+    },
+    {
+      "name": "heimserver",
+      "path": "/home/alex/repos/heimserver",
+      "remote": "org-236528253@github.com:heimgewebe/heimserver.git",
+      "remote_key": "heimgewebe/heimserver",
+      "planning_files": [
+        "docs/decisions/0001-adopt-agentic-blueprint.md"
+      ],
+      "vault_paths": [
+        "/home/alex/repos/vault-gewebe/heimserver"
+      ],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "icf-tool",
+      "path": "/home/alex/repos/icf-tool",
+      "remote": "git@github.com:alexdermohr/icf-tool.git",
+      "remote_key": "alexdermohr/icf-tool",
+      "planning_files": [
+        "roadmap.md"
+      ],
+      "vault_paths": [
+        "/home/alex/repos/vault-gewebe/icf-tool"
+      ],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "infra",
+      "path": "/home/alex/repos/infra",
+      "remote": "git@github.com:heimgewebe/infra.git",
+      "remote_key": "heimgewebe/infra",
+      "planning_files": [
+        "docs/infra/blueprint.md"
+      ],
+      "vault_paths": [],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "leitstand",
+      "path": "/home/alex/repos/leitstand",
+      "remote": "org-236528253@github.com:heimgewebe/leitstand.git",
+      "remote_key": "heimgewebe/leitstand",
+      "planning_files": [],
+      "vault_paths": [
+        "/home/alex/repos/vault-gewebe/leitstand"
+      ],
+      "authority": "repository-context",
+      "enabled_by_default": true
+    },
+    {
+      "name": "leitwerk",
+      "path": "/home/alex/repos/leitwerk",
+      "remote": "org-236528253@github.com:heimgewebe/leitwerk.git",
+      "remote_key": "heimgewebe/leitwerk",
+      "planning_files": [
+        "contracts/artifacts/plan.v1.schema.json",
+        "examples/sample-plan.json"
+      ],
+      "vault_paths": [
+        "/home/alex/repos/vault-gewebe/heimgewebe"
+      ],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "lenskit",
+      "path": "/home/alex/repos/lenskit",
+      "remote": "org-236528253@github.com:heimgewebe/lenskit.git",
+      "remote_key": "heimgewebe/lenskit",
+      "planning_files": [
+        "docs/atlas-blaupause.md",
+        "docs/blueprints/lenskit-cli-operational-blueprint.md",
+        "docs/blueprints/rlens-cli-client-blueprint.md",
+        "docs/blueprints/rlens-source-acquisition-blueprint.md",
+        "docs/lenskit-upgrade-blaupause.md",
+        "docs/proofs/atlas-blueprint-audit.md",
+        "docs/proofs/context-risk-hardening-plan.md",
+        "docs/roadmap.md",
+        "docs/roadmap/lenskit-master-roadmap.md",
+        "docs/tasks/board.md",
+        "docs/tasks/index.json",
+        "docs/tasks/planning-registration-baseline.json"
+      ],
+      "vault_paths": [
+        "/home/alex/repos/vault-gewebe/lenskit"
+      ],
+      "authority": "structured",
+      "enabled_by_default": true
+    },
+    {
+      "name": "metarepo",
+      "path": "/home/alex/repos/metarepo",
+      "remote": "org-236528253@github.com:heimgewebe/metarepo.git",
+      "remote_key": "heimgewebe/metarepo",
+      "planning_files": [
+        "docs/vision/IDEal_Blueprint.canvas",
+        "docs/vision/IDEal_Blueprint.md",
+        "docs/vision/IDEal_Blueprint.mmd",
+        "docs/vision/heimgewebe-capability-plan.md",
+        "docs/vision/leitwerk-blueprint",
+        "wgx/cmd/plan.bash"
+      ],
+      "vault_paths": [
+        "/home/alex/repos/vault-gewebe/heimgewebe"
+      ],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "mitschreiber",
+      "path": "/home/alex/repos/mitschreiber",
+      "remote": "org-236528253@github.com:heimgewebe/mitschreiber.git",
+      "remote_key": "heimgewebe/mitschreiber",
+      "planning_files": [],
+      "vault_paths": [],
+      "authority": "repository-context",
+      "enabled_by_default": true
+    },
+    {
+      "name": "obsidian-bridge",
+      "path": "/home/alex/repos/obsidian-bridge",
+      "remote": "org-236528253@github.com:heimgewebe/obsidian-bridge.git",
+      "remote_key": "heimgewebe/obsidian-bridge",
+      "planning_files": [
+        "docs/bridge-blaupause.md",
+        "docs/canvas-blaupause.md",
+        "docs/roadmap.md",
+        "docs/roadmap_assessment.md"
+      ],
+      "vault_paths": [
+        "/home/alex/repos/vault-gewebe/obsidian/bridge",
+        "/home/alex/repos/vault-gewebe/obsidian"
+      ],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "plexer",
+      "path": "/home/alex/repos/plexer",
+      "remote": "org-236528253@github.com:heimgewebe/plexer.git",
+      "remote_key": "heimgewebe/plexer",
+      "planning_files": [],
+      "vault_paths": [],
+      "authority": "repository-context",
+      "enabled_by_default": true
+    },
+    {
+      "name": "PrepP",
+      "path": "/home/alex/repos/PrepP",
+      "remote": "git@github.com:alexdermohr/PrepP.git",
+      "remote_key": "alexdermohr/PrepP",
+      "planning_files": [
+        "models/prep_planung.md"
+      ],
+      "vault_paths": [],
+      "authority": "planning",
+      "enabled_by_default": false
+    },
+    {
+      "name": "schauwerk",
+      "path": "/home/alex/repos/schauwerk",
+      "remote": "git@github.com:heimgewebe/schauwerk.git",
+      "remote_key": "heimgewebe/schauwerk",
+      "planning_files": [
+        "docs/roadmap.md",
+        "src/schauwerk/surfaces/miro/board_registry.py",
+        "tests/miro/test_board_registry.py"
+      ],
+      "vault_paths": [],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "semantAH",
+      "path": "/home/alex/repos/semantAH",
+      "remote": "org-236528253@github.com:heimgewebe/semantAH.git",
+      "remote_key": "heimgewebe/semantAH",
+      "planning_files": [
+        "docs/blueprint.md",
+        "docs/roadmap.md"
+      ],
+      "vault_paths": [],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "sichter",
+      "path": "/home/alex/repos/sichter",
+      "remote": "org-236528253@github.com:heimgewebe/sichter.git",
+      "remote_key": "heimgewebe/sichter",
+      "planning_files": [
+        "docs/BLUEPRINT.md",
+        "docs/PLAN_SICHTER_AUSBAU.md",
+        "docs/ROADMAP_REVIEWER.md"
+      ],
+      "vault_paths": [],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "snippet-engine-control",
+      "path": "/home/alex/repos/snippet-engine-control",
+      "remote": "org-236528253@github.com:heimgewebe/snippet-engine-control.git",
+      "remote_key": "heimgewebe/snippet-engine-control",
+      "planning_files": [
+        "docs/archive/blaupause-legacy.md",
+        "docs/blaupause.md",
+        "docs/decisions/0003-export-plan.md",
+        "packages/app/src/services/plan.ts",
+        "packages/app/test/plan.test.ts",
+        "packages/cli/src/plan.ts",
+        "packages/cli/test/plan.test.ts",
+        "packages/core/src/export/plan.ts"
+      ],
+      "vault_paths": [
+        "/home/alex/repos/vault-gewebe/snippet-engine-control"
+      ],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "spannungsatlas",
+      "path": "/home/alex/repos/spannungsatlas",
+      "remote": "git@github.com:alexdermohr/spannungsatlas.git",
+      "remote_key": "alexdermohr/spannungsatlas",
+      "planning_files": [
+        "MASTERPLAN.md",
+        "docs/blueprints/perspektiven-blaupause.md",
+        "docs/blueprints/psych-modelle-blaupause.md",
+        "docs/deploy-blaupause.md",
+        "docs/icf-integration-blaupause.md",
+        "docs/roadmap.md",
+        "docs/ux-ui-blaupause.md"
+      ],
+      "vault_paths": [
+        "/home/alex/repos/vault-gewebe/spannungsatlas"
+      ],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "steuerboard",
+      "path": "/home/alex/repos/steuerboard",
+      "remote": "git@github.com:heimgewebe/steuerboard.git",
+      "remote_key": "heimgewebe/steuerboard",
+      "planning_files": [
+        "docs/masterplan.md",
+        "docs/roadmap.md",
+        "examples/action-approval-validations/git-pull-ff-only-plan-mismatch.json",
+        "examples/action-approvals/git-pull-ff-only-approved-plan-mismatch.json",
+        "examples/action-preflight-bindings/git-pull-ff-only-binding-blocked-unsupported-plan-action.json",
+        "examples/action-preflight-bindings/git-pull-ff-only-binding-invalid-plan-action-wrong.json",
+        "examples/action-preflight-bindings/git-pull-ff-only-binding-invalid-plan-content-sha256-mismatch.json",
+        "examples/action-preflight-bindings/git-pull-ff-only-binding-invalid-plan-ref-mismatch.json",
+        "examples/run-evidence-chains/git-status-read-only-plan-binding-unavailable.json",
+        "examples/switch-main-preflight-proofs/blocked-plan-action-mismatch.json",
+        "examples/switch-main-preflight-proofs/blocked-plan-content-mismatch.json",
+        "examples/switch-main-readiness/blocked-plan-action-mismatch.json",
+        "examples/switch-main-readiness/blocked-plan-content-mismatch.json",
+        "schemas/action-plan.v1.schema.json",
+        "schemas/runbook-plan.v1.schema.json"
+      ],
+      "vault_paths": [],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "vault-gewebe",
+      "path": "/home/alex/repos/vault-gewebe",
+      "remote": "git@github.com:heimgewebe/vault-gewebe.git",
+      "remote_key": "heimgewebe/vault-gewebe",
+      "planning_files": [
+        "agent-control-surface/blaupause.md",
+        "agent-control-surface/leitstand-blaupause3.md",
+        "agent-control-surface/leitwerk-blaupause.md",
+        "fairschenkbox/Kopie von fairschenkbox plan.md",
+        "fairschenkbox/fairschenkbox plan.md",
+        "heimgewebe-labs/patches/metarepo-roadmap.patch",
+        "heimgewebe/blaupause+roadmap-abarbeitunsanweisung.md",
+        "heimgewebe/heimgewebe-vektor-blaupause.md",
+        "heimgewebe/leitwerk-blueprint.md",
+        "icf-tool/folge.md",
+        "lenskit/atlas folge.md",
+        "lenskit/blaupause.md",
+        "lenskit/fix folge pr.md",
+        "lenskit/lenskit-mcp-blaupause.md",
+        "lenskit/lenskit-upgrade-plan.md",
+        "lenskit/neue blaupause.md",
+        "lenskit/retrieval folge.md",
+        "obsidian/bridge/blaupause.md",
+        "obsidian/bridge/folge.md",
+        "obsidian/cli-plan.md",
+        "snippet-engine-control/folge.md",
+        "spannungsatlas/folge.md",
+        "weltgewebe/Weltgewebe Repository-Audit und Ausarbeitung des Agent-Readiness-Masterplans.docx",
+        "weltgewebe/Weltgewebe Repository-Audit und Ausarbeitung des Agent-Readiness-Masterplans.pdf",
+        "weltgewebe/agent readyness masterplan.md",
+        "weltgewebe/deploy folge.md",
+        "weltgewebe/map folge.md",
+        "weltgewebe/map-blaupause.md",
+        "weltgewebe/ui folge.md",
+        "weltgewebe/ui-blaupause.md",
+        "weltgewebe/ui-state-machine-blaupause.md",
+        "weltgewebe/weltgewebe - Weltgewebe Plan Analyse.png",
+        "weltgewebe/wf folge.md"
+      ],
+      "vault_paths": [],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "vault-privat",
+      "path": "/home/alex/repos/vault-privat",
+      "remote": "git@github.com:heimgewebe/vault-privat.git",
+      "remote_key": "heimgewebe/vault-privat",
+      "planning_files": [],
+      "vault_paths": [],
+      "authority": "repository-context",
+      "enabled_by_default": false
+    },
+    {
+      "name": "vibe-lab",
+      "path": "/home/alex/repos/vibe-lab",
+      "remote": "org-236528253@github.com:heimgewebe/vibe-lab.git",
+      "remote_key": "heimgewebe/vibe-lab",
+      "planning_files": [
+        "benchmarks/challenges/kanban-board-v1.md",
+        "docs/blueprints/blueprint-agent-operability-phase-1c.md",
+        "docs/blueprints/blueprint-agent-operability.md",
+        "docs/blueprints/blueprint-agent-skill-minimal-layer-v0.1.md",
+        "docs/blueprints/blueprint-evidence-control-plane-v1.md",
+        "docs/blueprints/blueprint-model-lab-control-plane-v1.md",
+        "docs/blueprints/blueprint-v2-roadmap.md",
+        "docs/blueprints/blueprint-v2.md",
+        "docs/foundations/repo-plan.md",
+        "docs/masterplan.md",
+        "docs/playbooks/evidence-control-plane-roadmap-checklist.md",
+        "docs/playbooks/plan-execution-checklist.md",
+        "docs/roadmap.md",
+        "experiments/2026-05-31_model-lab-replication-series/artifacts/run-003-plan-stronger-condition-contrast/plan.md"
+      ],
+      "vault_paths": [],
+      "authority": "planning",
+      "enabled_by_default": true
+    },
+    {
+      "name": "weltgewebe",
+      "path": "/home/alex/repos/weltgewebe",
+      "remote": "git@github.com:heimgewebe/weltgewebe.git",
+      "remote_key": "heimgewebe/weltgewebe",
+      "planning_files": [
+        "architecture/blueprint.docmeta-engine.md",
+        "docs/adr/ADR-0004__fahrplan-verweis.md",
+        "docs/blueprints/agent-operability-blaupause.md",
+        "docs/blueprints/auth-roadmap.md",
+        "docs/blueprints/blueprint-agent-safety-control-layer.md",
+        "docs/blueprints/doc-structure-task-control-roadmap.md",
+        "docs/blueprints/kartenklarheit-roadmap.md",
+        "docs/blueprints/map-blaupause.md",
+        "docs/blueprints/map-roadmap.md",
+        "docs/blueprints/ui-blaupause.md",
+        "docs/blueprints/ui-roadmap.md",
+        "docs/blueprints/versionierungs-blaupause.md",
+        "docs/geist-und-plan.md",
+        "docs/process/fahrplan.md",
+        "docs/reports/auth-persistence-next-step.md",
+        "docs/reports/inwx-zone-reconciliation-plan.md",
+        "docs/roadmap.md",
+        "docs/specs/auth-blueprint.md",
+        "docs/tasks/DEPLOY-DNS-001B.md",
+        "docs/tasks/README.md",
+        "docs/tasks/board.md",
+        "docs/tasks/index.json",
+        "docs/tasks/schema.json",
+        "tests/fixtures/agent/valid-roadmap-claim-task.json"
+      ],
+      "vault_paths": [
+        "/home/alex/repos/vault-gewebe/weltgewebe"
+      ],
+      "authority": "structured",
+      "enabled_by_default": true
+    },
+    {
+      "name": "wgx",
+      "path": "/home/alex/repos/wgx",
+      "remote": "org-236528253@github.com:heimgewebe/wgx.git",
+      "remote_key": "heimgewebe/wgx",
+      "planning_files": [],
+      "vault_paths": [],
+      "authority": "repository-context",
+      "enabled_by_default": true
+    }
+  ],
+  "duplicate_checkouts": [
+    {
+      "name": ".grabowski-main-deploy",
+      "path": "/home/alex/repos/.grabowski-main-deploy",
+      "remote": "git@github.com:heimgewebe/grabowski.git",
+      "duplicate_of": "grabowski",
+      "reason": "same remote"
+    },
+    {
+      "name": ".grabowski-rest-work",
+      "path": "/home/alex/repos/.grabowski-rest-work",
+      "remote": "git@github.com:heimgewebe/grabowski.git",
+      "duplicate_of": "grabowski",
+      "reason": "same remote"
+    },
+    {
+      "name": "bureau-source-operator",
+      "path": "/home/alex/repos/bureau-source-operator",
+      "remote": "git@github.com:heimgewebe/bureau.git",
+      "duplicate_of": "bureau",
+      "reason": "same remote"
+    },
+    {
+      "name": "grabowski-outcome-integrity",
+      "path": "/home/alex/repos/grabowski-outcome-integrity",
+      "remote": "git@github.com:heimgewebe/grabowski.git",
+      "duplicate_of": "grabowski",
+      "reason": "same remote"
+    },
+    {
+      "name": "schauwerk-readopt",
+      "path": "/home/alex/repos/schauwerk-readopt",
+      "remote": "/home/alex/repos/schauwerk",
+      "duplicate_of": "schauwerk",
+      "reason": "local derivative checkout"
+    },
+    {
+      "name": "steuerboard-operational-profile",
+      "path": "/home/alex/repos/steuerboard-operational-profile",
+      "remote": "git@github.com:heimgewebe/steuerboard.git",
+      "duplicate_of": "steuerboard",
+      "reason": "same remote"
+    },
+    {
+      "name": "steuerboard-runtime-release",
+      "path": "/home/alex/repos/steuerboard-runtime-release",
+      "remote": "git@github.com:heimgewebe/steuerboard.git",
+      "duplicate_of": "steuerboard",
+      "reason": "same remote"
+    }
+  ],
+  "global_sources": [
+    {
+      "kind": "github",
+      "purpose": "issues, pull requests and CI only for reconciliation"
+    },
+    {
+      "kind": "schauwerk-miro",
+      "purpose": "registered boards as discovery-only candidates"
+    },
+    {
+      "kind": "observatorium",
+      "path": "/home/alex/repos/vault-gewebe/Observatorium/_machine",
+      "purpose": "machine findings, discovery only"
+    },
+    {
+      "kind": "vault-canvas",
+      "purpose": "allowlisted canvas files, manual-confirmation only"
+    }
+  ],
+  "summary": {
+    "primary_repositories": 40,
+    "duplicate_checkouts": 7,
+    "repositories_with_planning_files": 24,
+    "repositories_with_vault_paths": 12
+  }
+}

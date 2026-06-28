@@ -17,6 +17,7 @@ dev = ["pytest>=8", "ruff>=0.15"]
 
 [project.scripts]
 bureau = "bureau.cli:main"
+bureau-source-pr-bridge = "bureau.source_pr_bridge:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

@@ -1,0 +1,22 @@
+[Unit]
+Description=Bureau Weltgewebe source PR bridge
+Documentation=https://github.com/heimgewebe/bureau
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/share/bureau-source-pr-bridge/venv/bin/bureau-source-pr-bridge
+Environment=GH_HOST=github.com
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictSUIDSGID=true
+UMask=0077
+TimeoutStartSec=120

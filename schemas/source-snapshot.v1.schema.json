@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://heimgewebe.net/schemas/bureau/source-snapshot.v1.schema.json",
+  "title": "Bureau external source snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "source",
+    "index",
+    "schema",
+    "task_count",
+    "status_counts",
+    "tasks",
+    "does_not_establish"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "bureau.source_snapshot"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "system",
+        "repository",
+        "ref",
+        "commit_sha"
+      ],
+      "properties": {
+        "name": {
+          "const": "weltgewebe"
+        },
+        "system": {
+          "const": "weltgewebe-task-control"
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commit_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      }
+    },
+    "index": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "const": "docs/tasks/index.json"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "const": "docs/tasks/schema.json"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "task_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "status_counts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "propertyNames": {
+        "minLength": 1
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_task_id",
+          "source_task_sha256",
+          "task"
+        ],
+        "properties": {
+          "source_task_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_task_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "task": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "does_not_establish": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "allOf": [
+        {
+          "contains": {
+            "const": "bureau_task_readiness"
+          }
+        },
+        {
+          "contains": {
+            "const": "dependency_completeness"
+          }
+        },
+        {
+          "contains": {
+            "const": "safe_parallel_write_scope"
+          }
+        },
+        {
+          "contains": {
+            "const": "autonomous_execution_permission"
+          }
+        },
+        {
+          "contains": {
+            "const": "source_claim_truth"
+          }
+        }
+      ]
+    }
+  }
+}

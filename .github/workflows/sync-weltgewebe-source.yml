@@ -1,0 +1,140 @@
+name: sync-weltgewebe-source
+
+on:
+  schedule:
+    - cron: "0,30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-weltgewebe-source
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Bureau
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Keep source checkout outside Bureau changes
+        run: echo '/.source/' >> .git/info/exclude
+
+      - name: Check out Weltgewebe
+        uses: actions/checkout@v4
+        with:
+          repository: heimgewebe/weltgewebe
+          ref: main
+          path: .source/weltgewebe
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Bureau
+        run: python -m pip install -e '.[dev]'
+
+      - name: Materialize candidate snapshot
+        id: sync
+        shell: bash
+        run: |
+          set -euo pipefail
+          report="$RUNNER_TEMP/weltgewebe-source-sync.json"
+          python -m bureau.cli \
+            --root . \
+            --json \
+            source-sync weltgewebe \
+            --repo .source/weltgewebe \
+            --ref HEAD \
+            --apply > "$report"
+          cat "$report"
+          python - "$report" >> "$GITHUB_OUTPUT" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as handle:
+              report = json.load(handle)
+          print(f"changed={str(report['changed']).lower()}")
+          print(f"source_commit={report['commit_sha']}")
+          print(f"document_sha256={report['document_sha256']}")
+          PY
+
+      - name: Validate changed snapshot
+        if: steps.sync.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t changed_paths < <(git diff --name-only)
+          if [[ ${#changed_paths[@]} -ne 1 || "${changed_paths[0]}" != "registry/sources/weltgewebe.json" ]]; then
+            printf 'Unexpected changed paths:\n'
+            printf '  %s\n' "${changed_paths[@]}"
+            exit 1
+          fi
+          make validate
+
+      - name: Publish or update snapshot PR
+        if: steps.sync.outputs.changed == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_COMMIT: ${{ steps.sync.outputs.source_commit }}
+          DOCUMENT_SHA256: ${{ steps.sync.outputs.document_sha256 }}
+        run: |
+          set -euo pipefail
+          branch='automation/weltgewebe-source-sync'
+          remote_ref="refs/heads/$branch"
+          tracking_ref="refs/remotes/origin/$branch"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add registry/sources/weltgewebe.json
+          git commit -m "chore: sync Weltgewebe source at ${SOURCE_COMMIT:0:12}"
+
+          if git ls-remote --exit-code --heads origin "$remote_ref" >/dev/null 2>&1; then
+            git fetch origin "$remote_ref:$tracking_ref"
+            expected_remote="$(git rev-parse "$tracking_ref")"
+            git push \
+              --force-with-lease="$remote_ref:$expected_remote" \
+              origin "HEAD:$remote_ref"
+          else
+            git push origin "HEAD:$remote_ref"
+          fi
+
+          existing_pr="$(gh pr list \
+            --base main \
+            --head "$branch" \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')"
+
+          body="$RUNNER_TEMP/weltgewebe-source-pr.md"
+          cat > "$body" <<EOF
+          ## Automated source observation
+
+          Bureau observed a changed, commit-bound Weltgewebe task snapshot.
+
+          - Weltgewebe commit: \`$SOURCE_COMMIT\`
+          - snapshot SHA-256: \`$DOCUMENT_SHA256\`
+          - generated path: \`registry/sources/weltgewebe.json\`
+
+          This PR updates observation data only. It does not materialize executable Bureau tasks,
+          establish readiness, infer dependencies or resource claims, or grant autonomous execution.
+          EOF
+
+          if [[ -z "$existing_pr" ]]; then
+            gh pr create \
+              --base main \
+              --head "$branch" \
+              --title 'chore: sync Weltgewebe source snapshot' \
+              --body-file "$body"
+          else
+            gh pr edit "$existing_pr" --body-file "$body"
+          fi

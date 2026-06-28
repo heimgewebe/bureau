@@ -227,6 +227,9 @@ def test_source_sync_apply_is_valid_and_idempotent(registry_factory, source_repo
     assert target.stat().st_mtime_ns == before
     snapshot = json.loads(target.read_text(encoding="utf-8"))
     assert snapshot["active_task_ids"] == ["TASK-ONE-001"]
+    assert snapshot["repository"] == "heimgewebe/weltgewebe"
+    assert str(source_repo) not in target.read_text(encoding="utf-8")
+    assert snapshot["entries"][0]["source_task"]["id"] == "TASK-ONE-001"
     assert "bureau_task_materialization" in snapshot["does_not_establish"]
 
 
@@ -287,6 +290,17 @@ def test_external_schema_reference_is_rejected(source_repo):
     commit_source(source_repo, "external ref")
     with pytest.raises(ValidationError, match="external references"):
         source_check(source_repo, "HEAD")
+
+
+def test_registry_rejects_source_task_hash_drift(registry_factory, source_repo):
+    root = registry_factory(1)
+    source_sync(root, source_repo, "HEAD", apply=True)
+    target = root / "registry/sources/weltgewebe.json"
+    snapshot = json.loads(target.read_text(encoding="utf-8"))
+    snapshot["entries"][0]["source_task"]["title"] = "tampered"
+    target.write_text(json.dumps(snapshot), encoding="utf-8")
+    with pytest.raises(ValidationError, match="task hash mismatch"):
+        Registry.load(root)
 
 
 def test_registry_rejects_unknown_source_property(registry_factory, source_repo):

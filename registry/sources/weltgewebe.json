@@ -1,0 +1,2291 @@
+{
+  "active_task_ids": [
+    "AGENT-SAFE-008",
+    "AUTH-PG-001",
+    "AUTH-PG-002",
+    "AUTH-PG-003",
+    "CI-TOOL-001",
+    "DB-PROOF-001",
+    "DEPLOY-DNS-001",
+    "DOCMETA-FRESHNESS-001",
+    "DOCMETA-PROOF-001",
+    "DOCMETA-REPORT-LIFECYCLE-001",
+    "DOMAIN-PG-001",
+    "DOMAIN-PG-003",
+    "OPT-ARC-001",
+    "OPT-CI-003",
+    "OPT-CI-005",
+    "OPT-CON-001",
+    "OPT-INF-002",
+    "TASK-CTL-002"
+  ],
+  "commit_sha": "d5df6bef72ebac109a504f82b3bb767296829308",
+  "curation": "manual_phase2_seed",
+  "does_not_establish": [
+    "bureau_task_materialization",
+    "bureau_task_readiness",
+    "dependency_completeness",
+    "safe_parallel_write_scope",
+    "autonomous_execution_permission",
+    "source_claim_truth"
+  ],
+  "entries": [
+    {
+      "acceptance_count": 3,
+      "area": "governance",
+      "effort": "M",
+      "evidence_count": 4,
+      "id": "AGENT-SAFE-001",
+      "link_counts": {
+        "docs": 3,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 1,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "ein minimaler Preflight prüft vor agentischen Schreiboperationen Task-ID, Ziel, erlaubte Pfade, Claims, erwartete Evidence und Validierungskommandos",
+          "fehlende Pflichtfelder blockieren den Task deterministisch statt still weiterzulaufen",
+          "der erste Slice bleibt report-only oder warn und setzt keinen Done-Status für Folgepfade"
+        ],
+        "area": "governance",
+        "effort": "M",
+        "evidence": [
+          "scripts/agent/check_agent_preflight.py",
+          "scripts/agent/tests/test_check_agent_preflight.py",
+          ".github/workflows/agent-safety-preflight.yml",
+          "docs/security/agent-write-scope-baseline.md"
+        ],
+        "id": "AGENT-SAFE-001",
+        "links": {
+          "docs": [
+            "docs/blueprints/blueprint-agent-safety-control-layer.md",
+            "docs/roadmap.md",
+            "docs/tasks/board.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "Blocking-Modus und Write Mode sind nicht Teil dieses report-only Safety-Preflight-Slices"
+        ],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "high",
+        "status": "done",
+        "title": "Safety-Preflight Guard minimal einführen",
+        "updated_at": "2026-06-26"
+      },
+      "source_task_sha256": "8e3623ea9172093dcf6baebe009761bf6d4defc3d9d34509e53ff745609bc8e5",
+      "status": "done",
+      "title": "Safety-Preflight Guard minimal einführen",
+      "updated_at": "2026-06-26"
+    },
+    {
+      "acceptance_count": 4,
+      "area": "governance",
+      "effort": "S",
+      "evidence_count": 3,
+      "id": "AGENT-SAFE-002",
+      "link_counts": {
+        "docs": 3,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "fehlende als verpflichtend markierte Agent-Fähigkeiten führen zu hard fail statt soft degrade",
+          "Capability-Matrix oder äquivalente Quelle unterscheidet optionale und verpflichtende Fähigkeiten",
+          "Task-Control und Roadmap behaupten keinen Done-Status ohne belegten Hard-Fail-Mechanismus",
+          "offene Capability-Artefakte bleiben explizit sichtbar und laufen in eigenen Folge-Slices"
+        ],
+        "area": "governance",
+        "effort": "S",
+        "evidence": [
+          "scripts/docmeta/generate_agent_readiness.py",
+          "scripts/docmeta/tests/test_generate_agent_readiness.py",
+          "docs/tasks/board.md"
+        ],
+        "id": "AGENT-SAFE-002",
+        "links": {
+          "docs": [
+            "docs/blueprints/blueprint-agent-safety-control-layer.md",
+            "docs/roadmap.md",
+            "docs/tasks/board.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "medium",
+        "status": "done",
+        "title": "Readiness Hard Fail für Agent-Fähigkeiten einführen",
+        "updated_at": "2026-06-26"
+      },
+      "source_task_sha256": "8d7a03a3ec52e4c742469b5b9dc68a69a7f67aefaee09dbeb95737240dfaf27e",
+      "status": "done",
+      "title": "Readiness Hard Fail für Agent-Fähigkeiten einführen",
+      "updated_at": "2026-06-26"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "governance",
+      "effort": "M",
+      "evidence_count": 6,
+      "id": "AGENT-SAFE-003",
+      "link_counts": {
+        "docs": 3,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "eine minimale Claim-Spine bildet zentrale Implementierungs- und Guard-Claims maschinenlesbar ab",
+          "Claim-Status und Evidence-Verweise lassen sich deterministisch validieren",
+          "Claim-Registry und Validator sind in die Readiness-Logik angebunden"
+        ],
+        "area": "governance",
+        "effort": "M",
+        "evidence": [
+          "docs/claims/registry.yml",
+          "docs/claims/README.md",
+          "scripts/docmeta/validate_claim_registry.py",
+          "scripts/docmeta/tests/test_validate_claim_registry.py",
+          "scripts/docmeta/generate_agent_readiness.py",
+          "scripts/docmeta/tests/test_generate_agent_readiness.py"
+        ],
+        "id": "AGENT-SAFE-003",
+        "links": {
+          "docs": [
+            "docs/blueprints/blueprint-agent-safety-control-layer.md",
+            "docs/roadmap.md",
+            "docs/tasks/board.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "high",
+        "status": "done",
+        "title": "Minimale Claim-Evidence-Spine aufbauen",
+        "updated_at": "2026-06-01"
+      },
+      "source_task_sha256": "56847205272f09edd8a0588ca9462e75d9d52ab1e428bb72c89d1499489e93ec",
+      "status": "done",
+      "title": "Minimale Claim-Evidence-Spine aufbauen",
+      "updated_at": "2026-06-01"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "governance",
+      "effort": "M",
+      "evidence_count": 14,
+      "id": "AGENT-SAFE-004",
+      "link_counts": {
+        "docs": 3,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "ein minimaler Contract beschreibt Pflichtfelder, Claims und erlaubte Pfade für agentische Tasks",
+          "ein Guard blockiert Non-Ideal-Tasks ohne vollständigen Arbeitsauftrag",
+          "Readiness zeigt Agent-Contracts und Non-Ideal-Guard als vorhanden, ohne offene Hard-Gaps zu glätten; Handoff, Dry-Run und Write Mode bleiben eigene Slices"
+        ],
+        "area": "governance",
+        "effort": "M",
+        "evidence": [
+          "contracts/agent/task.schema.json",
+          "scripts/agent/check_non_ideal_task.py",
+          "scripts/agent/tests/test_check_non_ideal_task.py",
+          "tests/fixtures/agent/valid-doc-drift-task.json",
+          "tests/fixtures/agent/valid-roadmap-claim-task.json",
+          "tests/fixtures/agent/valid-generated-refresh-task.json",
+          "tests/fixtures/agent/invalid-missing-scope.json",
+          "tests/fixtures/agent/invalid-missing-validation.json",
+          "tests/fixtures/agent/invalid-missing-evidence.json",
+          "tests/fixtures/agent/invalid-forbidden-path.json",
+          "tests/fixtures/agent/invalid-status-done-by-agent.json",
+          "docs/reference/agent-operability-fixture-matrix.md",
+          "scripts/docmeta/generate_agent_readiness.py",
+          "scripts/docmeta/tests/test_generate_agent_readiness.py"
+        ],
+        "id": "AGENT-SAFE-004",
+        "links": {
+          "docs": [
+            "docs/blueprints/blueprint-agent-safety-control-layer.md",
+            "docs/roadmap.md",
+            "docs/tasks/board.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "high",
+        "status": "done",
+        "title": "Minimale Agent-Contracts und Non-Ideal-Guard einführen",
+        "updated_at": "2026-06-26"
+      },
+      "source_task_sha256": "988d30c72bee48a18cc6df9f9f588a493a2a63ce4e124257a5cdf4b02a4bc123",
+      "status": "done",
+      "title": "Minimale Agent-Contracts und Non-Ideal-Guard einführen",
+      "updated_at": "2026-06-26"
+    },
+    {
+      "acceptance_count": 4,
+      "area": "governance",
+      "effort": "M",
+      "evidence_count": 11,
+      "id": "AGENT-SAFE-005",
+      "link_counts": {
+        "docs": 3,
+        "issues": 0,
+        "prs": 1
+      },
+      "missing_evidence_count": 1,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "Handoffs werden gegen den kanonischen Task-Contract und den Non-Ideal-Guard geprüft",
+          "Task-Bindung, Scope, Claims, Evidence, Validierungsresultate und Outcome-Konsistenz werden deterministisch validiert",
+          "Readiness kann nicht durch leere oder bloß passend benannte Dateien auf pass wechseln",
+          "Der Handoff bleibt ein Review-Beleg und behauptet keine unabhängige Run-Attestierung"
+        ],
+        "area": "governance",
+        "effort": "M",
+        "evidence": [
+          "contracts/agent/handoff.schema.json",
+          "scripts/agent/json_contract.py",
+          "scripts/agent/validate_handoff.py",
+          "scripts/contracts-agent-check.sh",
+          "scripts/agent/tests/test_validate_handoff.py",
+          "tests/fixtures/agent/handoff-task.json",
+          "tests/fixtures/agent/handoff-valid.json",
+          "docs/reference/agent-operability-fixture-matrix.md",
+          ".github/workflows/agent-safety-preflight.yml",
+          ".github/workflows/contracts-validate.yml",
+          "PR #1261 Merge-Commit 260a8d1ea39ea6c2de5f7b34ed75a20e5a2d9389"
+        ],
+        "id": "AGENT-SAFE-005",
+        "links": {
+          "docs": [
+            "docs/blueprints/blueprint-agent-safety-control-layer.md",
+            "docs/reference/agent-operability-fixture-matrix.md",
+            "docs/tasks/board.md"
+          ],
+          "issues": [],
+          "prs": [
+            "1261"
+          ]
+        },
+        "missing_evidence": [
+          "Unabhängige Run-Attestierung und tatsächliche Command-Ausführung bleiben einem späteren Runner-Slice vorbehalten"
+        ],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "high",
+        "status": "done",
+        "title": "Deterministische Agent-Handoff-Validierung einführen",
+        "updated_at": "2026-06-26"
+      },
+      "source_task_sha256": "082b9b250025361d04fe292c09ef3c52dab995569b852537a89eaa79a62da29a",
+      "status": "done",
+      "title": "Deterministische Agent-Handoff-Validierung einführen",
+      "updated_at": "2026-06-26"
+    },
+    {
+      "acceptance_count": 5,
+      "area": "governance",
+      "effort": "L",
+      "evidence_count": 8,
+      "id": "AGENT-SAFE-006",
+      "link_counts": {
+        "docs": 4,
+        "issues": 0,
+        "prs": 1
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "Der Runner laedt Task-Dateien strikt als Raw Bytes und bindet den SHA-256-Digest an das Handoff",
+          "Der Runner validiert Task-Schema, Claim-Registry, Non-Ideal-Guard und Handoff-Contract ohne Task-Kommandos auszufuehren",
+          "Der Runner erzeugt ein validatorgueltiges incomplete-Handoff mit vollstaendiger Claim-, Evidence- und Validierungsbilanz",
+          "Runner und CI vergleichen den persistenten, nicht ignorierten Git-sichtbaren Zustand zwischen Pruefpunkten; ignorierte Pfade, .git, externe Pfade und transiente Write-then-revert-Vorgaenge liegen ausserhalb dieses Nachweises",
+          "Agent-Readiness markiert dry_run_runner nur nach funktionalem Smoke als pass"
+        ],
+        "area": "governance",
+        "effort": "L",
+        "evidence": [
+          "scripts/agent/run_task.py",
+          "scripts/agent/tests/test_run_task.py",
+          "scripts/docmeta/generate_agent_readiness.py",
+          "scripts/docmeta/tests/test_generate_agent_readiness.py",
+          "scripts/docmeta/tests/test_agent_readiness_smoke_contract.py",
+          ".github/workflows/agent-safety-preflight.yml",
+          "docs/reference/agent-dry-run-runner.md",
+          "docs/reference/agent-operability-fixture-matrix.md"
+        ],
+        "id": "AGENT-SAFE-006",
+        "links": {
+          "docs": [
+            "docs/blueprints/blueprint-agent-safety-control-layer.md",
+            "docs/reference/agent-dry-run-runner.md",
+            "docs/reference/agent-operability-fixture-matrix.md",
+            "docs/tasks/board.md"
+          ],
+          "issues": [],
+          "prs": [
+            "1262"
+          ]
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "high",
+        "status": "done",
+        "title": "Deterministischen Read-only-Dry-Run-Runner mit funktionalem Readiness-Gate einführen",
+        "updated_at": "2026-06-26"
+      },
+      "source_task_sha256": "cce5a91d82b91b9134ae30325eaf010772c8926aa58c6cd98605c2ad00b0943e",
+      "status": "done",
+      "title": "Deterministischen Read-only-Dry-Run-Runner mit funktionalem Readiness-Gate einführen",
+      "updated_at": "2026-06-26"
+    },
+    {
+      "acceptance_count": 7,
+      "area": "governance",
+      "effort": "L",
+      "evidence_count": 15,
+      "id": "AGENT-SAFE-007",
+      "link_counts": {
+        "docs": 4,
+        "issues": 0,
+        "prs": 1
+      },
+      "missing_evidence_count": 1,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "Erfolgreiche geplante Dry-Runs publizieren genau vier Artefakte atomar und überschreiben kein vorhandenes Ziel",
+          "task.yml bewahrt die exakten Task-Eingabebytes ohne Normalisierung oder Neuformatierung",
+          "Task-ID, Task-SHA-256, kanonischer lokaler Git-HEAD und Repository-Fingerabdruck sind gegen Git-Umgebungsumlenkung gebunden",
+          "Der gemeldete Output-Pfad identifiziert bei der finalen Erfolgsgrenze weiterhin das geöffnete Publikationsverzeichnis",
+          "validation.json und run-result.json erzwingen geordnete Checks und Stages sowie semantisch reale UTC-Zeitwerte",
+          "Readiness markiert run_evidence_lite nur nach funktionalem Persistenz-Smoke als pass",
+          "Der Slice aktiviert weder Task-Ausführung noch Write Mode, externe Attestierung oder autonome Merge-Fähigkeit"
+        ],
+        "area": "governance",
+        "effort": "L",
+        "evidence": [
+          "contracts/agent/validation.schema.json",
+          "contracts/agent/run-result.schema.json",
+          "scripts/agent/run_task.py",
+          "scripts/agent/tests/test_run_task.py",
+          "scripts/agent/validate_agent_contracts.py",
+          "scripts/contracts-agent-check.sh",
+          "scripts/docmeta/generate_agent_readiness.py",
+          "scripts/docmeta/tests/test_generate_agent_readiness.py",
+          ".github/workflows/agent-safety-preflight.yml",
+          "docs/reference/agent-run-evidence-lite.md",
+          "scripts/agent/json_contract.py",
+          "scripts/agent/tests/test_json_contract.py",
+          "tests/fixtures/agent/validation-valid.json",
+          "tests/fixtures/agent/run-result-valid.json",
+          "PR #1265 Merge-Commit 13f42aaa945d6df5a8f106148ca9b8b7b478093b"
+        ],
+        "id": "AGENT-SAFE-007",
+        "links": {
+          "docs": [
+            "docs/blueprints/blueprint-agent-safety-control-layer.md",
+            "docs/reference/agent-run-evidence-lite.md",
+            "docs/reference/agent-dry-run-runner.md",
+            "docs/tasks/board.md"
+          ],
+          "issues": [],
+          "prs": [
+            "1265"
+          ]
+        },
+        "missing_evidence": [
+          "Failure-Evidence, unabhängige Attestierung, Command-Ausführung, Patch-Anwendung und Write Mode bleiben Folge-Slices"
+        ],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "high",
+        "status": "done",
+        "title": "Run Evidence Lite für erfolgreiche Agent-Dry-Runs einführen",
+        "updated_at": "2026-06-27"
+      },
+      "source_task_sha256": "323ee7439969d0ae33c303317197370e0c076f3e87a52b7b4ea70fae2fdf9c94",
+      "status": "done",
+      "title": "Run Evidence Lite für erfolgreiche Agent-Dry-Runs einführen",
+      "updated_at": "2026-06-27"
+    },
+    {
+      "acceptance_count": 5,
+      "area": "governance",
+      "effort": "M",
+      "evidence_count": 8,
+      "id": "AGENT-SAFE-008",
+      "link_counts": {
+        "docs": 3,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 2,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "Ein maschinenlesbares Manifest bindet die drei kritischen Kontrollpfade an Rolle, Kanonizität, Quellen und blockierende Checks",
+          "Agent-Readiness und Claim-Evidence-Map besitzen schreibfreie deterministische Drift-Checks",
+          "Der kuratierte Task-Index wird korrekt als kanonischer Index mit Schema- und Cross-Artifact-Checks modelliert, nicht als erfundener Generator-Output",
+          "Fehlende Pfade, Quellen, Marker, repository-fremde Kommandos, Symlinks und Scope-Ausweitungen werden fail-closed blockiert",
+          "Der Generated-Files-Guard führt den Manifestvalidator im blockierenden Check-Modus aus"
+        ],
+        "area": "governance",
+        "effort": "M",
+        "evidence": [
+          ".wgx/generated-artifacts.yml",
+          "scripts/docmeta/validate_generated_artifacts.py",
+          "scripts/docmeta/tests/test_validate_generated_artifacts.py",
+          "scripts/docmeta/generate_agent_readiness.py",
+          "scripts/docmeta/tests/test_generate_agent_readiness.py",
+          "scripts/docmeta/generated-files-guard.sh",
+          ".github/workflows/docs-guard.yml",
+          "docs/reference/generated-artifact-control.md"
+        ],
+        "id": "AGENT-SAFE-008",
+        "links": {
+          "docs": [
+            "docs/blueprints/blueprint-agent-safety-control-layer.md",
+            "docs/reference/generated-artifact-control.md",
+            "docs/tasks/board.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "PR-CI, Merge auf main und post-merge Verifikation stehen aus",
+          "Der Vollausbau auf alle docs/_generated-Artefakte bleibt PR 13"
+        ],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "high",
+        "status": "partial",
+        "title": "Minimalen Generated-Artifact-Kontrollvertrag einführen",
+        "updated_at": "2026-06-27"
+      },
+      "source_task_sha256": "64e9e30217306c8b6d30c1146c18d6c6db4d70f8a47b59e34c8673e36728fffb",
+      "status": "partial",
+      "title": "Minimalen Generated-Artifact-Kontrollvertrag einführen",
+      "updated_at": "2026-06-27"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "auth",
+      "effort": "M",
+      "evidence_count": 1,
+      "id": "AUTH-PG-001",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 2,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "Step-up-E-Mail-Aenderung (UpdateEmail-Intent) ist nach PostgreSQL-Cutover restart-stabil und nicht cache-only",
+          "E-Mail-Unique-Regel (domain_accounts_email_normalized_unique) bleibt gewahrt; Konflikt liefert kontrolliert 409",
+          "Fehlersemantik definiert: Konflikt, ungueltige E-Mail, nicht autorisiert, abgelaufenes Step-up"
+        ],
+        "area": "auth",
+        "effort": "M",
+        "evidence": [
+          "apps/api/src/routes/auth.rs"
+        ],
+        "id": "AUTH-PG-001",
+        "links": {
+          "docs": [
+            "docs/reports/auth-status-matrix.md",
+            "docs/blueprints/domain-data-postgres-cutover.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "Step-up-E-Mail-Persistenz ist ein ausdrueckliches Non-Goal von OPT-ARC-001 (docs/reports/opt-arc-001-db-proof-matrix.json: step_up_email_persistence) und noch nicht implementiert",
+          "Kein PostgreSQL-Write-Pfad/Proof, der eine via PUT /auth/me/email geaenderte E-Mail restart-stabil belegt"
+        ],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "high",
+        "status": "open",
+        "title": "Step-up-E-Mail-Persistenz nach PostgreSQL",
+        "updated_at": "2026-06-16"
+      },
+      "source_task_sha256": "9bcbc47c5a4c9ea77556645a06d72353d871e1bc5cd94cdbfad1b88ca75769b0",
+      "status": "open",
+      "title": "Step-up-E-Mail-Persistenz nach PostgreSQL",
+      "updated_at": "2026-06-16"
+    },
+    {
+      "acceptance_count": 4,
+      "area": "auth",
+      "effort": "L",
+      "evidence_count": 3,
+      "id": "AUTH-PG-002",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 3,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "Registrierter WebAuthn-Credential-Zustand ist restart-stabil (kein reiner Cache)",
+          "Public/Private-Trennung bleibt gewahrt; keine Credential-Daten leaken in die oeffentliche Account-Projektion",
+          "Ein blosser webauthn_user_id-Fix wird nicht als vollstaendiger WebAuthn-Cutover deklariert (siehe AUTH-PG-003)",
+          "Menschliches Review fuer credentials/ vor Merge"
+        ],
+        "area": "auth",
+        "effort": "L",
+        "evidence": [
+          "apps/api/src/auth/passkeys.rs",
+          "apps/api/src/routes/auth.rs",
+          "apps/api/src/routes/accounts.rs"
+        ],
+        "id": "AUTH-PG-002",
+        "links": {
+          "docs": [
+            "docs/reports/auth-status-matrix.md",
+            "docs/reports/passkey-register-verify-prep.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "WebAuthn-Credential-Writeback ist ein ausdrueckliches Non-Goal von OPT-ARC-001 (docs/reports/opt-arc-001-db-proof-matrix.json: webauthn_credential_writeback); PasskeyStore und webauthn_user_id-Writeback sind aktuell In-Memory (auth-status-matrix.md 2.8: persistente Ablage ueber Neustart offen)",
+          "Kein PostgreSQL-Persistenzmodell und keine Migration fuer registrierte Passkey-Credentials",
+          "Kein Restart-Stabilitaets-Proof (Registrierung, Reload, Login)"
+        ],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "high",
+        "status": "open",
+        "title": "WebAuthn-Credential-Persistenz / Passkey-Cutover nach PostgreSQL",
+        "updated_at": "2026-06-16"
+      },
+      "source_task_sha256": "ef38ffb7696262b7956865d3959ef3c7693fe745b89a0db35b4465b297184e1a",
+      "status": "open",
+      "title": "WebAuthn-Credential-Persistenz / Passkey-Cutover nach PostgreSQL",
+      "updated_at": "2026-06-16"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "auth",
+      "effort": "M",
+      "evidence_count": 1,
+      "id": "AUTH-PG-003",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 3,
+      "owner": "unknown",
+      "priority": "medium",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "Audit der Accounts mit fehlender webauthn_user_id liegt vor; Backfill-Strategie ist dokumentiert und testbar",
+          "Reload erzeugt keine neue Identitaet (keine stille UUID-Neuerzeugung)",
+          "NOT NULL wird erst nach Audit und erfolgreichem Backfill geprueft; Migration ist nachvollziehbar"
+        ],
+        "area": "auth",
+        "effort": "M",
+        "evidence": [
+          "apps/api/src/routes/accounts.rs"
+        ],
+        "id": "AUTH-PG-003",
+        "links": {
+          "docs": [
+            "docs/reports/auth-status-matrix.md",
+            "docs/reports/opt-arc-001-db-proof-matrix.json"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "legacy_webauthn_user_id_backfill und webauthn_user_id_not_null sind ausdrueckliche Non-Goals von OPT-ARC-001 (docs/reports/opt-arc-001-db-proof-matrix.json)",
+          "WebAuthn-Credential-Persistenz (AUTH-PG-002) ist fachlich noch nicht geklaert; die Backfill-Strategie haengt davon ab",
+          "Kein Audit, wie viele Accounts webauthn_user_id IS NULL haben, und kein Backfill-Test"
+        ],
+        "owner": "unknown",
+        "priority": "medium",
+        "risk": "medium",
+        "status": "blocked",
+        "title": "Legacy-Backfill fuer webauthn_user_id und spaeteres NOT NULL",
+        "updated_at": "2026-06-16"
+      },
+      "source_task_sha256": "9a3c63f8b6960814825c00dc187b1dba8a037bb5b91e6bf63d416868abea693c",
+      "status": "blocked",
+      "title": "Legacy-Backfill fuer webauthn_user_id und spaeteres NOT NULL",
+      "updated_at": "2026-06-16"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "ci",
+      "effort": "S",
+      "evidence_count": 5,
+      "id": "CI-TOOL-001",
+      "link_counts": {
+        "docs": 1,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 2,
+      "owner": "unknown",
+      "priority": "medium",
+      "risk": "low",
+      "source_task": {
+        "acceptance": [
+          "Nur eine Ebene enthaelt echte Compose-up/down-Logik; die andere delegiert",
+          "Node-/pnpm-Versionen sind konsistent sichtbar (engines), ohne ein zweites Versionssystem zu erzeugen; JSON bleibt valide",
+          "Keine Container-Starts noetig (Dry-Run/Lint genuegt als Nachweis)"
+        ],
+        "area": "ci",
+        "effort": "S",
+        "evidence": [
+          "Makefile",
+          "Justfile",
+          "apps/web/package.json",
+          ".node-version",
+          ".nvmrc"
+        ],
+        "id": "CI-TOOL-001",
+        "links": {
+          "docs": [
+            "docs/techstack.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "Makefile und Justfile fuehren up/down beide direkt 'docker compose ... --profile dev' aus (Duplikat ohne Delegation)",
+          "Root package.json hat kein engines-Feld (apps/web/package.json hat eines: node ^20.19.0 || ^22.13.0 || >=24)"
+        ],
+        "owner": "unknown",
+        "priority": "medium",
+        "risk": "low",
+        "status": "open",
+        "title": "Dev-Setup-Hygiene: Task-Runner-Dedup (Makefile/Justfile) und Node/pnpm engines",
+        "updated_at": "2026-06-16"
+      },
+      "source_task_sha256": "466df5e26675355fa53e3cac5604de8b0e15aac56cd64ee7d258f335dfb09da0",
+      "status": "open",
+      "title": "Dev-Setup-Hygiene: Task-Runner-Dedup (Makefile/Justfile) und Node/pnpm engines",
+      "updated_at": "2026-06-16"
+    },
+    {
+      "acceptance_count": 4,
+      "area": "api",
+      "effort": "M",
+      "evidence_count": 5,
+      "id": "DB-PROOF-001",
+      "link_counts": {
+        "docs": 4,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 2,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "Audit zaehlt reproduzierbar valide Edges, Orphans (fehlende source_id/target_id-Nodes) und betroffene Edge-Typen, ohne Orphans still zu verwerfen",
+          "Audit benennt entscheidungsfaehig Option A (strikte Foreign Keys auf domain_nodes(id)) vs. Option B (lose Referenzsemantik mit Guard/Quarantaene)",
+          "Keine FK-Migration und keine Runtime-Aenderung in diesem Task",
+          "Bericht ist redigiert: keine unredigierten Rohdaten/IDs aus Produktionslaeufen"
+        ],
+        "area": "api",
+        "effort": "M",
+        "evidence": [
+          "apps/api/migrations/20260531000002_create_domain_edges.up.sql",
+          "scripts/docmeta/audit_domain_edge_references.py",
+          "scripts/docmeta/tests/test_audit_domain_edge_references.py",
+          "docs/reports/domain-edge-reference-audit.md",
+          "docs/reports/domain-runtime-data-source-reconciliation.md"
+        ],
+        "id": "DB-PROOF-001",
+        "links": {
+          "docs": [
+            "docs/blueprints/domain-data-postgres-cutover.md",
+            "docs/reports/domain-edge-reference-audit.md",
+            "docs/reports/domain-runtime-data-source-reconciliation.md",
+            "docs/reports/opt-arc-001-db-proof-matrix.json"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "repräsentativer Runtime-/Deployment-Datenlauf mit auditable_edges_total > 0 fehlt",
+          "FK-vs-Guard-Policyentscheidung fehlt"
+        ],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "medium",
+        "status": "partial",
+        "title": "Edge-Orphan- und Referenz-Audit vor PostgreSQL-FK-Entscheidung",
+        "updated_at": "2026-06-18"
+      },
+      "source_task_sha256": "9f1b7434e79f7d4f450548b4951c43755d553c3eb32e2b858e4c12553437c2ca",
+      "status": "partial",
+      "title": "Edge-Orphan- und Referenz-Audit vor PostgreSQL-FK-Entscheidung",
+      "updated_at": "2026-06-18"
+    },
+    {
+      "acceptance_count": 6,
+      "area": "infra",
+      "effort": "M",
+      "evidence_count": 8,
+      "id": "DEPLOY-DNS-001",
+      "link_counts": {
+        "docs": 3,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 8,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "weltweb.net ist auf INWX delegiert",
+          "permanenter Redirect auf weltgewebe.net funktioniert",
+          "weltweberei.org ist auf INWX delegiert",
+          "Informationsseite funktioniert",
+          "beide Domains besitzen öffentlich und autoritativ belegte No-Mail-Records",
+          "danach Taskabschluss prüfen"
+        ],
+        "area": "infra",
+        "effort": "M",
+        "evidence": [
+          "docs/adr/ADR-0008__domain-mail-provider-boundaries.md",
+          "docs/deploy/domain-mail-migration-ionos-to-inwx-mailbox-brevo.md",
+          "docs/reports/domain-provider-role-finding.md",
+          "externe Audit-Artefakte (keine privaten Rohdaten im Repo)",
+          "apps/web/static/weltweberei/index.html",
+          "apps/web/static/weltweberei/styles.css",
+          "apps/web/tests/weltweberei-information.spec.ts",
+          "docs/deploy/secondary-domain-web-surfaces.md"
+        ],
+        "id": "DEPLOY-DNS-001",
+        "links": {
+          "docs": [
+            "docs/adr/ADR-0008__domain-mail-provider-boundaries.md",
+            "docs/deploy/domain-mail-migration-ionos-to-inwx-mailbox-brevo.md",
+            "docs/reports/domain-provider-role-finding.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "Autoritative INWX-Delegation für weltweb.net ist noch nicht belegt",
+          "Permanenter Redirect und HTTPS für weltweb.net sind noch nicht belegt",
+          "Autoritative INWX-Delegation für weltweberei.org ist noch nicht belegt",
+          "Informationsseite und HTTPS für weltweberei.org sind noch nicht belegt",
+          "Öffentliche und autoritative No-Mail-Records für beide Nebendomains sind noch nicht belegt",
+          "Das Heimserver-Edge-Template enthält den Redirect- und Static-Surface-Vertrag noch nicht nachweislich",
+          "Die aktive Edge-Konfiguration ist noch nicht gegen das Heimserver-Template abgeglichen",
+          "Das öffentliche Runtime-Verhalten von weltweb.net und weltweberei.org ist noch nicht nachgewiesen"
+        ],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "high",
+        "status": "partial",
+        "title": "INWX Registrar/DNS Cutover vorbereiten und durchführen",
+        "updated_at": "2026-06-23"
+      },
+      "source_task_sha256": "b9b6cf9e965fffef495599e47fb7d75ba6f4f5164702cb420570ecc29887fe30",
+      "status": "partial",
+      "title": "INWX Registrar/DNS Cutover vorbereiten und durchführen",
+      "updated_at": "2026-06-23"
+    },
+    {
+      "acceptance_count": 1,
+      "area": "infra",
+      "effort": "S",
+      "evidence_count": 2,
+      "id": "DEPLOY-DNS-002",
+      "link_counts": {
+        "docs": 1,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "low",
+      "source_task": {
+        "acceptance": [
+          "Historische Checklisten bleiben Evidenz; die operative Pre-Delegation-Annahme ist durch DEPLOY-DNS-001 und das abrupte Aktivierungsfenster superseded"
+        ],
+        "area": "infra",
+        "effort": "S",
+        "evidence": [
+          "docs/tasks/DEPLOY-DNS-001B.md",
+          "externe Audit-Artefakte"
+        ],
+        "id": "DEPLOY-DNS-002",
+        "links": {
+          "docs": [
+            "docs/tasks/DEPLOY-DNS-001B.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "low",
+        "status": "done",
+        "title": "Historischer INWX-Zonencheck; Pre-Delegation-Annahme superseded",
+        "updated_at": "2026-06-06"
+      },
+      "source_task_sha256": "0c8153250817719fde511045243d4150261767a571a4495bd6baae1609332c89",
+      "status": "done",
+      "title": "Historischer INWX-Zonencheck; Pre-Delegation-Annahme superseded",
+      "updated_at": "2026-06-06"
+    },
+    {
+      "acceptance_count": 8,
+      "area": "docs",
+      "effort": "M",
+      "evidence_count": 12,
+      "id": "DOCMETA-DEPENDS-ON-CANONICAL-001",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "docs-mechanik",
+      "priority": "medium",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "depends_on ist direktes Feld im Docmeta-Schema",
+          "depends_on und verifies_with sind für kanonische Docs verpflichtend",
+          "Alle in manifest/repo-index.yaml geführten kanonischen Docs tragen depends_on",
+          "depends_on: [] ist gültig",
+          "Direkter depends_on-Wert gewinnt vor Legacy-relations[type=depends_on]",
+          "Legacy-Fallback über relations[type=depends_on] bleibt erhalten",
+          "Review-Impact und System-Map nutzen konsistente Dependency-Semantik",
+          "Docmeta-Tests und Guards sind grün"
+        ],
+        "area": "docs",
+        "effort": "M",
+        "evidence": [
+          "contracts/docmeta.schema.json",
+          "architecture/docmeta.schema.md",
+          "architecture/blueprint.docmeta-engine.md",
+          "manifest/repo-index.yaml",
+          "scripts/docmeta/docmeta.py",
+          "scripts/docmeta/review_impact.py",
+          "scripts/docmeta/generate_system_map.py",
+          "scripts/docmeta/validate_schema.py",
+          "scripts/docmeta/tests/test_docmeta.py",
+          "scripts/docmeta/tests/test_validate_schema.py",
+          "scripts/docmeta/tests/test_review_impact.py",
+          "scripts/docmeta/tests/test_generate_system_map.py"
+        ],
+        "id": "DOCMETA-DEPENDS-ON-CANONICAL-001",
+        "links": {
+          "docs": [
+            "architecture/docmeta.schema.md",
+            "architecture/blueprint.docmeta-engine.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "docs-mechanik",
+        "priority": "medium",
+        "risk": "medium",
+        "status": "done",
+        "title": "Direktes depends_on als kanonisches Docmeta-Feld durchsetzen",
+        "updated_at": "2026-06-10"
+      },
+      "source_task_sha256": "205113e36c9b273b2b3da48bf45814451ec679b09186c4637a14a8476b2c861a",
+      "status": "done",
+      "title": "Direktes depends_on als kanonisches Docmeta-Feld durchsetzen",
+      "updated_at": "2026-06-10"
+    },
+    {
+      "acceptance_count": 8,
+      "area": "docs",
+      "effort": "S",
+      "evidence_count": 12,
+      "id": "DOCMETA-FRESHNESS-001",
+      "link_counts": {
+        "docs": 4,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "docs-mechanik",
+      "priority": "medium",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "Eine minimale Claim-Evidence-Spine existiert mit vier CLAIM-AGENT-SAFE-* Claims",
+          "Die Spine ist deterministisch validierbar via Claim-Registry, Doc-Freshness-Registry und Claim-Evidence-Map",
+          "Claim-Evidence-Map und Doc-Freshness-Registry sind vorhanden und über Repo-Checks validierbar",
+          "Task-Control-Registrierung bleibt sichtbar; epistemische Grenzen bleiben sichtbar",
+          "Scope wird deklarativ durch scripts/docmeta/freshness_scope_policy.yml entschieden; aktueller realer Scope bleibt CLAIM-AGENT-SAFE-* (S3-Scope-Policy umgesetzt)",
+          "Status bleibt partial: Scope bewusst klein, alle drei Claims tragen requires_live_check, kein Wahrheits-/Suffizienz-/Kausalitäts-/Vollständigkeitsbeweis",
+          "Claim-Evidence-Information wird intern als ClaimInfo typisiert; externes Registry-/Generator-Verhalten bleibt unverändert",
+          "Review-Age-Hygiene für kanonische Architektur-/Runtime-/Runbook-Dokumente wurde durchgeführt; betroffene Dokumente sind geprüft, aktualisiert oder explizit eingeordnet"
+        ],
+        "area": "docs",
+        "effort": "S",
+        "evidence": [
+          "docs/claims/registry.yml",
+          "docs/claims/README.md",
+          "docs/doc-freshness-registry.yml",
+          "scripts/docmeta/validate_claim_registry.py",
+          "scripts/docmeta/validate_doc_freshness_registry.py",
+          "scripts/docmeta/freshness_scope_policy.yml",
+          "scripts/docmeta/generate_claim_evidence_map.py",
+          "scripts/docmeta/tests/test_validate_claim_registry.py",
+          "scripts/docmeta/tests/test_validate_doc_freshness_registry.py",
+          "scripts/docmeta/tests/test_generate_claim_evidence_map.py",
+          ".github/workflows/claim-registry.yml",
+          ".github/workflows/docs-guard.yml"
+        ],
+        "id": "DOCMETA-FRESHNESS-001",
+        "links": {
+          "docs": [
+            "docs/claims/registry.yml",
+            "docs/claims/README.md",
+            "docs/doc-freshness-registry.yml",
+            "docs/tasks/board.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "docs-mechanik",
+        "priority": "medium",
+        "risk": "medium",
+        "status": "partial",
+        "title": "Claim-Evidence/Freshness-Spine registrieren und reviewbar halten",
+        "updated_at": "2026-06-09"
+      },
+      "source_task_sha256": "e45c1fd0f1d346c39b63b942a723f870431f504f69d183e7ea97f332c24fe266",
+      "status": "partial",
+      "title": "Claim-Evidence/Freshness-Spine registrieren und reviewbar halten",
+      "updated_at": "2026-06-09"
+    },
+    {
+      "acceptance_count": 4,
+      "area": "docs",
+      "effort": "S",
+      "evidence_count": 4,
+      "id": "DOCMETA-PROOF-001",
+      "link_counts": {
+        "docs": 3,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 3,
+      "owner": "docs-mechanik",
+      "priority": "medium",
+      "risk": "low",
+      "source_task": {
+        "acceptance": [
+          "OPT-ARC-001-Validator ist nach Abschluss oder spätestens beim zweiten ähnlichen Proof-Guard retrospektiv ausgewertet",
+          "Gemeinsame und spezifische Bestandteile des Proof-Matrix-Patterns sind dokumentiert",
+          "Ein generisches Validator-Schema wird nur gebaut, wenn mindestens ein zweiter echter Anwendungsfall dieselbe Struktur benötigt",
+          "Falls kein zweiter Anwendungsfall entsteht, bleibt der Task als bewusst nicht umgesetzte Generalisierung dokumentiert"
+        ],
+        "area": "docs",
+        "effort": "S",
+        "evidence": [
+          "docs/reports/opt-arc-001-db-proof-matrix.json",
+          "scripts/docmeta/validate_opt_arc_001_db_proof_matrix.py",
+          "scripts/docmeta/tests/test_validate_opt_arc_001_db_proof_matrix.py",
+          ".github/workflows/opt-arc-001-db-proof-matrix.yml"
+        ],
+        "id": "DOCMETA-PROOF-001",
+        "links": {
+          "docs": [
+            "docs/tasks/board.md",
+            "docs/tasks/README.md",
+            "docs/reports/opt-arc-001-db-proof-matrix.json"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "Zweiter echter Proof-Matrix-Anwendungsfall fehlt; Generalisierung darf nicht aus nur einem OPT-ARC-001-Spezialfall abgeleitet werden",
+          "Entscheidung fehlt, welche Teile generisch werden sollen: Matrix-Schema, Status-Sync, Evidence-Regeln, Workflow-Trigger-Regeln, Shell-Command-Prüfung",
+          "Nachweis fehlt, dass ein gemeinsames Schema mehr Nutzen als projektspezifische Validatoren stiftet"
+        ],
+        "owner": "docs-mechanik",
+        "priority": "medium",
+        "risk": "low",
+        "status": "open",
+        "title": "Proof-Matrix-Validator-Schema vormerken",
+        "updated_at": "2026-06-11"
+      },
+      "source_task_sha256": "98e95b540d77a70c39b170ff90d2730ccf16a64f9f3401ebcd08a88301d14ffd",
+      "status": "open",
+      "title": "Proof-Matrix-Validator-Schema vormerken",
+      "updated_at": "2026-06-11"
+    },
+    {
+      "acceptance_count": 13,
+      "area": "docs",
+      "effort": "M",
+      "evidence_count": 10,
+      "id": "DOCMETA-REPORT-LIFECYCLE-001",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 5
+      },
+      "missing_evidence_count": 7,
+      "owner": "docs-mechanik",
+      "priority": "medium",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "Policy und Contract-Alignment beschreiben den tatsächlich implementierten Rollout-Stand ohne überholte Gegenwartsclaims",
+          "owner_task- und review_after-Semantik sind als report-spezifische Prozessregel dokumentiert",
+          "Der Lifecycle-Validator läuft für relevante Änderungen im CI-Warnmodus; Lifecycle-Findings bleiben nicht blockierend, technische Validatorfehler bleiben blockierend",
+          "Lifecycle-Overview und Lifecycle-Inventory werden deterministisch durch ihre Generatoren erzeugt",
+          "Alle verbleibenden Reports erhalten in späteren kleinen Slices eine evidenzbasierte Klassifikation oder eine explizit begründete Leerstelle",
+          "alle acht Restreports besitzen gültige Lifecycle-Metadaten",
+          "jede gesetzte owner_task-ID ist in einer normativen Quelle auflösbar (keine Platzhalter-Owner)",
+          "OPT-Markdown und OPT-JSON besitzen vollständige getestete Parität oder der spätere Resolver liest die kanonische Quelle direkt",
+          "Lifecycle-Enums, review_after als ISO-Datum und Supersession sind geprüft",
+          "fehlendes oder defektes Frontmatter wird angemessen blockiert",
+          "Archivpfade sind entschieden",
+          "changed-only strict ist aktiviert",
+          "global strict ist aktiviert oder durch separate dokumentierte Policy-Entscheidung verworfen"
+        ],
+        "area": "docs",
+        "effort": "M",
+        "evidence": [
+          "docs/process/report-lifecycle.md",
+          "docs/process/report-lifecycle-contract-alignment.md",
+          "docs/tasks/README.md",
+          "scripts/docmeta/validate_report_lifecycle.py",
+          "scripts/docmeta/tests/test_validate_report_lifecycle.py",
+          "scripts/docmeta/generate_report_lifecycle.py",
+          "scripts/docmeta/generate_report_lifecycle_inventory.py",
+          ".github/workflows/docs-guard.yml",
+          "docs/reports/report-lifecycle-restbestand-triage.md",
+          "docs/reports/passkey-register-verify-prep.md"
+        ],
+        "id": "DOCMETA-REPORT-LIFECYCLE-001",
+        "links": {
+          "docs": [
+            "docs/process/report-lifecycle.md",
+            "docs/process/report-lifecycle-contract-alignment.md"
+          ],
+          "issues": [],
+          "prs": [
+            "1246",
+            "1255",
+            "1256",
+            "1257",
+            "1258"
+          ]
+        },
+        "missing_evidence": [
+          "Acht Reports wurden ursprünglich triagiert. Slice A und B sind abgeschlossen. 5 Reports verbleiben unklassifiziert.",
+          "Fehlendes oder nicht parsebares Report-Frontmatter wird noch nicht vollständig blockierend erkannt",
+          "Semantische Validatorprüfungen für Lifecycle-Enums, ISO-Datum und Supersession-Konsistenz fehlen",
+          "Die owner_task-Semantik und die normativen Registrierungsquellen sind entschieden und gegen den bestehenden Bestand kompatibilitätsgeprüft; vollständige OPT-Markdown–JSON-Parität und technische Existenzprüfung bleiben nach den Backfill-Slices offen.",
+          "Physische Archivpfade unter docs/reports/archive/** werden von Validator und Inventory noch nicht rekursiv erfasst",
+          "Changed-only strict ist noch nicht umgesetzt",
+          "Global strict bleibt bis zur Bereinigung des Bestands deaktiviert"
+        ],
+        "owner": "docs-mechanik",
+        "priority": "medium",
+        "risk": "medium",
+        "status": "partial",
+        "title": "Report-Lifecycle-Rollout reconciliieren und Restbestand ratcheten",
+        "updated_at": "2026-06-23"
+      },
+      "source_task_sha256": "948ce6328e4e5d66f8de78716c60aca76450f729ba2d3f3c9575a082b00baad3",
+      "status": "partial",
+      "title": "Report-Lifecycle-Rollout reconciliieren und Restbestand ratcheten",
+      "updated_at": "2026-06-23"
+    },
+    {
+      "acceptance_count": 5,
+      "area": "docs",
+      "effort": "S",
+      "evidence_count": 6,
+      "id": "DOCMETA-START-HERE-001",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "docs-mechanik",
+      "priority": "medium",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "README.md enthält oben einen Start-Here-Block mit expliziten Links zu Constitution, System Map, Runtime, Operations und Architecture Overview",
+          "Alle Start-Here-Zielpfade existieren im Repo",
+          "docs/_generated/system-map.md wird über Makefile blockierend drift-geprüft",
+          "System-Map-Generator läuft deterministisch genug für einen diff-guard",
+          "Docmeta-Blueprint Phase 5.1 ist nur nach Code-/Guard-Beleg abgehakt"
+        ],
+        "area": "docs",
+        "effort": "S",
+        "evidence": [
+          "README.md",
+          "architecture/blueprint.docmeta-engine.md",
+          "scripts/docmeta/generate_system_map.py",
+          "Makefile",
+          "docs/tasks/board.md",
+          "docs/tasks/index.json"
+        ],
+        "id": "DOCMETA-START-HERE-001",
+        "links": {
+          "docs": [
+            "README.md",
+            "architecture/blueprint.docmeta-engine.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "docs-mechanik",
+        "priority": "medium",
+        "risk": "medium",
+        "status": "done",
+        "title": "Start-Here Navigation und System-Map Drift Guard",
+        "updated_at": "2026-06-10"
+      },
+      "source_task_sha256": "828cf807ba9b8078142747bcf4e3d726656f4a20b69ddd8e986fd7234a1d999c",
+      "status": "done",
+      "title": "Start-Here Navigation und System-Map Drift Guard",
+      "updated_at": "2026-06-10"
+    },
+    {
+      "acceptance_count": 4,
+      "area": "docs",
+      "effort": "S",
+      "evidence_count": 5,
+      "id": "DOCMETA-WARN-MODE-001",
+      "link_counts": {
+        "docs": 1,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "docs-mechanik",
+      "priority": "medium",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "warn-Mode meldet fehlende Doc-IDs auf stderr und endet mit Exit-Code 0",
+          "warn-Mode meldet broken doc:<id>-Links auf stderr und endet mit Exit-Code 0",
+          "strict / fail-closed blockieren weiterhin bei missing IDs und broken doc links",
+          "Blueprint-Checkbox ist nur gesetzt, weil Code und Tests beide Oberflächen abdecken"
+        ],
+        "area": "docs",
+        "effort": "S",
+        "evidence": [
+          "scripts/docmeta/review_impact.py",
+          "scripts/docmeta/check_links.py",
+          "scripts/docmeta/tests/test_review_impact.py",
+          "scripts/docmeta/tests/test_check_links.py",
+          "architecture/blueprint.docmeta-engine.md"
+        ],
+        "id": "DOCMETA-WARN-MODE-001",
+        "links": {
+          "docs": [
+            "architecture/blueprint.docmeta-engine.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "docs-mechanik",
+        "priority": "medium",
+        "risk": "medium",
+        "status": "done",
+        "title": "Warn-Mode stderr semantics für Docmeta-Guards schließen",
+        "updated_at": "2026-06-09"
+      },
+      "source_task_sha256": "28cd14856cf7683ee6556612aaf61d94171d7dc42d3a40edaed5621c556dd610",
+      "status": "done",
+      "title": "Warn-Mode stderr semantics für Docmeta-Guards schließen",
+      "updated_at": "2026-06-09"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "docs",
+      "effort": "S",
+      "evidence_count": 4,
+      "id": "DOCS-CTL-001",
+      "link_counts": {
+        "docs": 3,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "medium",
+      "risk": "low",
+      "source_task": {
+        "acceptance": [
+          "Beide Dokumente sind fachlich eingeordnet (aktiv/archived/superseded/Ausnahme), nicht nur kosmetisch verlinkt",
+          "Orphan-Report ist leer oder die Ausnahmen sind bewusst dokumentiert",
+          "Die historische Deploy-/DNS-Aufgabe (DEPLOY-DNS-001B) wird nicht als aktuelle Handlungsanweisung reaktiviert"
+        ],
+        "area": "docs",
+        "effort": "S",
+        "evidence": [
+          "docs/reports/cost-report.md",
+          "docs/tasks/DEPLOY-DNS-001B.md",
+          "PR #1240 auf Branch docs/docs-ctl-001-orphan-lifecycle (Commit c9a9a19d)",
+          "Generatorlauf bestätigt No orphans found"
+        ],
+        "id": "DOCS-CTL-001",
+        "links": {
+          "docs": [
+            "docs/reports/cost-report.md",
+            "docs/tasks/DEPLOY-DNS-001B.md",
+            "docs/index.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "medium",
+        "risk": "low",
+        "status": "done",
+        "title": "Orphan-Dokumente einordnen (cost-report, DEPLOY-DNS-001B)",
+        "updated_at": "2026-06-18"
+      },
+      "source_task_sha256": "34390792a2d72552998b5d6522b02e6963bdfb4ff1641615038c5aff938b6b80",
+      "status": "done",
+      "title": "Orphan-Dokumente einordnen (cost-report, DEPLOY-DNS-001B)",
+      "updated_at": "2026-06-18"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "docs",
+      "effort": "S",
+      "evidence_count": 7,
+      "id": "DOCS-CTL-002",
+      "link_counts": {
+        "docs": 4,
+        "issues": 0,
+        "prs": 1
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "medium",
+      "risk": "low",
+      "source_task": {
+        "acceptance": [
+          "Keine unbegruendeten draft-/canonical-Widersprueche; betroffene Blueprints werden einzeln gelesen und nicht pauschal hochgestuft",
+          "Deprecated-Dokumente werden nicht reaktiviert",
+          "Planning-Registration-Check (scripts/docmeta/check_planning_registration.py) bleibt gruen; generierte Reports werden ueber ihren Generator aktualisiert"
+        ],
+        "area": "docs",
+        "effort": "S",
+        "evidence": [
+          "docs/reports/planning-registration-findings.md",
+          "scripts/docmeta/planning_registration.yml",
+          "docs/blueprints/kartenklarheit.md",
+          "docs/blueprints/map-blaupause.md",
+          "docs/index.md",
+          "PR #1241 merged from final head b6c58e751b934234e59848b5f0de7ecc34b77cac as merge commit 55b3c4b91a03855be96ece4b2ea54cef680a7b48",
+          "GitHub Actions run 27756033230 (task-index, pull_request, final head b6c58e751b934234e59848b5f0de7ecc34b77cac): task-index-check and all four task-control steps passed"
+        ],
+        "id": "DOCS-CTL-002",
+        "links": {
+          "docs": [
+            "docs/blueprints/kartenklarheit.md",
+            "docs/blueprints/map-blaupause.md",
+            "docs/reports/planning-registration-findings.md",
+            "docs/index.md"
+          ],
+          "issues": [],
+          "prs": [
+            "1241"
+          ]
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "medium",
+        "risk": "low",
+        "status": "done",
+        "title": "Blueprint-/Planning-Status-Konsistenz (draft/active/canonical/deprecated)",
+        "updated_at": "2026-06-19"
+      },
+      "source_task_sha256": "062b31be66c71cf1389d27fcc7ecccff3f1c5c4be6cdd53b96d55485252151b3",
+      "status": "done",
+      "title": "Blueprint-/Planning-Status-Konsistenz (draft/active/canonical/deprecated)",
+      "updated_at": "2026-06-19"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "api",
+      "effort": "M",
+      "evidence_count": 1,
+      "id": "DOMAIN-PG-001",
+      "link_counts": {
+        "docs": 1,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 2,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "Die in DB-PROOF-001 entschiedene Referenzpolitik ist technisch abgesichert (Option A: FK auf domain_nodes(id) mit kontrolliertem API-Fehler; Option B: Guard/Quarantaene-Report mit sichtbaren Orphans)",
+          "Keine stillen Datenverluste; vorhandene Orphans werden vor FK bereinigt oder bewusst als loses Modell dokumentiert",
+          "Tests fuer valide und ungueltige Referenzen ergaenzt"
+        ],
+        "area": "api",
+        "effort": "M",
+        "evidence": [
+          "apps/api/migrations/20260531000002_create_domain_edges.up.sql"
+        ],
+        "id": "DOMAIN-PG-001",
+        "links": {
+          "docs": [
+            "docs/blueprints/domain-data-postgres-cutover.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "DB-PROOF-001 ist nur partial; repräsentativer Runtime-/Deployment-Datenlauf mit auditable_edges_total > 0 und FK-vs-Guard-Policyentscheidung fehlen.",
+          "Keine FK-Migration und kein Referenz-Guard implementiert"
+        ],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "high",
+        "status": "blocked",
+        "title": "Edge-Referenz-Policy umsetzen (Foreign Keys oder Guard)",
+        "updated_at": "2026-06-18"
+      },
+      "source_task_sha256": "b66b48abd367294f90dd2cc78cd2590e0f1683a04d6a4924ce8cce1b67b50854",
+      "status": "blocked",
+      "title": "Edge-Referenz-Policy umsetzen (Foreign Keys oder Guard)",
+      "updated_at": "2026-06-18"
+    },
+    {
+      "acceptance_count": 5,
+      "area": "infra",
+      "effort": "M",
+      "evidence_count": 6,
+      "id": "DOMAIN-PG-002",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 1
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "Option A ist entschieden: Der aktuelle PostgreSQL-Domain-Pfad ist auf hoechstens eine API-Instanz begrenzt; kein Cross-Instance-Kohaerenz-Claim",
+          "Decision-Report und Cutover-Blueprint benennen Risiko, operative Folgen, Review-Trigger, Parsergrenzen und Nicht-Beweise",
+          "Der statische Guard akzeptiert an services.api.scale und services.api.deploy.replicas nur literal 0/1, verbietet direkte services.api.replicas, trennt ausfuehrbare CLI-Werte von Dokumentationsplatzhaltern, prueft Docker-Compose-CLI-Formen inklusive --scale api=*, --scale=api=* und scale api=* und entfernt Caddy-Kommentare vor der Direktiverkennung",
+          "Der Guard ist in einem unabhaengigen CI-Job und der Guard-Orchestrierung angebunden; gezielte Fixtures plus Real-Repo-Drift-Check sind gruen",
+          "Die Entscheidung beweist weder den Live-Containerstand noch Runtime-Korrektheit oder PostgreSQL-Cutover-Readiness"
+        ],
+        "area": "infra",
+        "effort": "M",
+        "evidence": [
+          "docs/reports/domain-postgres-instance-coherence-decision.md",
+          "docs/blueprints/domain-data-postgres-cutover.md",
+          "scripts/guard/domain-single-instance-guard.sh",
+          "scripts/tests/test_domain_single_instance_guard.sh",
+          ".github/workflows/ci.yml",
+          "scripts/guard/run.sh"
+        ],
+        "id": "DOMAIN-PG-002",
+        "links": {
+          "docs": [
+            "docs/reports/domain-postgres-instance-coherence-decision.md",
+            "docs/blueprints/domain-data-postgres-cutover.md"
+          ],
+          "issues": [],
+          "prs": [
+            "1242"
+          ]
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "high",
+        "status": "done",
+        "title": "Single-Instance-Invariante oder Multi-Instance-Kohaerenz entscheiden",
+        "updated_at": "2026-06-19"
+      },
+      "source_task_sha256": "fa401dee6d4251acfef1ea87daad2e9c9c057a8dc500a56cbe16a7e973c35dc8",
+      "status": "done",
+      "title": "Single-Instance-Invariante oder Multi-Instance-Kohaerenz entscheiden",
+      "updated_at": "2026-06-19"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "api",
+      "effort": "M",
+      "evidence_count": 1,
+      "id": "DOMAIN-PG-003",
+      "link_counts": {
+        "docs": 1,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 2,
+      "owner": "unknown",
+      "priority": "low",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "Entscheidung mit Trade-offs dokumentiert; Race-Sicherheit bleibt erhalten",
+          "Duplicate-vor-Limit-Semantik bleibt erhalten oder wird bewusst geaendert",
+          "Kein ungemessener/spekulativer Performance-Umbau"
+        ],
+        "area": "api",
+        "effort": "M",
+        "evidence": [
+          "apps/api/src/routes/edges.rs"
+        ],
+        "id": "DOMAIN-PG-003",
+        "links": {
+          "docs": [
+            "docs/blueprints/domain-data-postgres-cutover.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "Kein gemessener Insert-Pfad und keine dokumentierte Trade-off-Entscheidung zur Abloesung von LOCK TABLE + COUNT(*)",
+          "Bewusst zurueckgestellt (TODO C1): erst Messpunkt/Design, dann Umbau"
+        ],
+        "owner": "unknown",
+        "priority": "low",
+        "risk": "medium",
+        "status": "open",
+        "title": "Edge-Cache-Limit ohne Tabellenlock und Vollzaehlung designen",
+        "updated_at": "2026-06-16"
+      },
+      "source_task_sha256": "f484e9999d55b24bf7e7e4a93c66a5bf30d453df85b2a34132f9dcf25e6e4288",
+      "status": "open",
+      "title": "Edge-Cache-Limit ohne Tabellenlock und Vollzaehlung designen",
+      "updated_at": "2026-06-16"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "api",
+      "effort": "M",
+      "evidence_count": 8,
+      "id": "OPT-API-001",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "Cursor-Paginierung implementiert und per Test belegt",
+          "Response-Metadaten in API-Spec dokumentiert",
+          "Sortierungsvertrag explizit definiert"
+        ],
+        "area": "api",
+        "effort": "M",
+        "evidence": [
+          "apps/api/src/routes/query.rs",
+          "apps/api/src/routes/nodes.rs",
+          "apps/api/src/routes/edges.rs",
+          "apps/api/src/routes/accounts.rs",
+          "apps/api/tests/api_nodes.rs",
+          "apps/api/tests/api_edges.rs",
+          "apps/api/tests/api_accounts.rs",
+          "docs/specs/list-pagination-api.md"
+        ],
+        "id": "OPT-API-001",
+        "links": {
+          "docs": [
+            "docs/specs/list-pagination-api.md",
+            "docs/reports/optimierungsstatus.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "medium",
+        "status": "done",
+        "title": "Paginierung Listen-Endpunkte",
+        "updated_at": "2026-05-31"
+      },
+      "source_task_sha256": "3a3cb2b3a6dd99c051293cb5e780d4c91332bd5545876265e1f4284730ab447d",
+      "status": "done",
+      "title": "Paginierung Listen-Endpunkte",
+      "updated_at": "2026-05-31"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "api",
+      "effort": "XL",
+      "evidence_count": 36,
+      "id": "OPT-ARC-001",
+      "link_counts": {
+        "docs": 8,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 3,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "PostgreSQL-Pfad für alle Domänen-Endpunkte (nodes, accounts, edges) aktiv",
+          "Migrations-SQL vorhanden und per CI belegt",
+          "Phase E Write-Path-Cutover belegt; JSONL nicht mehr versteckte Runtime-Wahrheit"
+        ],
+        "area": "api",
+        "effort": "XL",
+        "evidence": [
+          "docs/blueprints/domain-data-postgres-cutover.md",
+          "apps/api/migrations/20260531000001_create_domain_nodes.up.sql",
+          "apps/api/migrations/20260531000001_create_domain_nodes.down.sql",
+          "apps/api/migrations/20260531000002_create_domain_edges.up.sql",
+          "apps/api/migrations/20260531000002_create_domain_edges.down.sql",
+          "apps/api/migrations/20260531000003_create_domain_accounts.up.sql",
+          "apps/api/migrations/20260531000003_create_domain_accounts.down.sql",
+          "apps/api/tests/db_domain_schema_migrations.rs",
+          "apps/api/tests/db_domain_backfill.rs",
+          "docs/reports/domain-backfill-proof.md",
+          ".github/workflows/api.yml",
+          "CI-Job: db-domain-schema-migrations-proof",
+          "CI-Job: db-domain-backfill-proof",
+          "apps/api/src/config.rs",
+          "apps/api/src/domain_db.rs",
+          "apps/api/src/lib.rs",
+          "apps/api/src/routes/domain_write_guard.rs",
+          "apps/api/src/routes/accounts.rs",
+          "apps/api/tests/db_domain_read_path.rs",
+          "apps/api/tests/db_domain_account_write_path.rs",
+          "docs/reports/domain-read-path-proof.md",
+          "docs/reports/domain-account-write-path-proof.md",
+          "CI-Job: db-domain-read-path-proof",
+          "CI-Job: db-domain-account-write-path-proof",
+          "apps/api/src/routes/nodes.rs",
+          "apps/api/tests/db_domain_node_write_path.rs",
+          "docs/reports/domain-node-write-path-proof.md",
+          "CI-Job: db-domain-node-write-path-proof",
+          "apps/api/src/routes/edges.rs",
+          "apps/api/tests/db_domain_edge_write_path.rs",
+          "docs/reports/domain-edge-write-path-proof.md",
+          "CI-Job: db-domain-edge-write-path-proof",
+          "docs/reports/opt-arc-001-db-proof-matrix.json",
+          "scripts/docmeta/validate_opt_arc_001_db_proof_matrix.py",
+          "PR-CI-Lauf 27041187630 (pull_request, PR #1165, Commit b10076ee743202d3ef07af42a464267c82f4a5c0): fünf DB-Domain-Proof-Jobs grün (historisch; Schema-, Backfill- und Read-Path-Proof weiter gültig)",
+          "PR-CI-Lauf 27441828545 (pull_request, PR #1188, Commit 75ad1ebbaecbc41353d2fb0b39c2d6a9d90434ff): db-domain-edge-write-path-proof grün"
+        ],
+        "id": "OPT-ARC-001",
+        "links": {
+          "docs": [
+            "docs/blueprints/domain-data-postgres-cutover.md",
+            "docs/reports/optimierungsstatus.md",
+            "docs/reports/domain-backfill-proof.md",
+            "docs/reports/domain-read-path-proof.md",
+            "docs/reports/domain-account-write-path-proof.md",
+            "docs/reports/domain-node-write-path-proof.md",
+            "docs/reports/opt-arc-001-db-proof-matrix.json",
+            "docs/reports/domain-edge-write-path-proof.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "Step-up-E-Mail-Persistenz und WebAuthn-User-ID-Writeback ausstehend",
+          "JSONL bleibt Default-Lesequelle und Write-Truth im Default-/JSONL-Modus bis Cutover; kein Dual-Write",
+          "Phase D (read-only), Phase E-A, E-B und E-C sind opt-in belegt; kein Produktions-Cutover"
+        ],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "high",
+        "status": "partial",
+        "title": "JSONL-Datenquelle zu PostgreSQL migrieren",
+        "updated_at": "2026-06-12"
+      },
+      "source_task_sha256": "cc3fdb9558a8e90fe57e28b77fa835389302f62f342a4e311ec63a7d252b677a",
+      "status": "partial",
+      "title": "JSONL-Datenquelle zu PostgreSQL migrieren",
+      "updated_at": "2026-06-12"
+    },
+    {
+      "acceptance_count": 2,
+      "area": "ci",
+      "effort": "S",
+      "evidence_count": 1,
+      "id": "OPT-CI-003",
+      "link_counts": {
+        "docs": 1,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 2,
+      "owner": "unknown",
+      "priority": "low",
+      "risk": "low",
+      "source_task": {
+        "acceptance": [
+          "Keine gemischten dtolnay-rust-toolchain-Refs; Rust-Version weiterhin aus zentraler Quelle",
+          "uv-Version ist zentral nachvollziehbar und in CI wirksam, ohne zweite Pinning-Logik"
+        ],
+        "area": "ci",
+        "effort": "S",
+        "evidence": [
+          ".github/workflows/python-tooling.yml"
+        ],
+        "id": "OPT-CI-003",
+        "links": {
+          "docs": [
+            "docs/reports/optimierungsstatus.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "dtolnay/rust-toolchain weiterhin gemischt @stable/@v1",
+          "gepinnte uv-Version nicht erzwungen"
+        ],
+        "owner": "unknown",
+        "priority": "low",
+        "risk": "low",
+        "status": "partial",
+        "title": "Action-Refs vereinheitlichen (dtolnay/rust-toolchain + uv-Pin)",
+        "updated_at": "2026-06-16"
+      },
+      "source_task_sha256": "2bd26eb733ba3e22d6d9eabe4fd7fbea72c36c9c05a481630983669334bf6df0",
+      "status": "partial",
+      "title": "Action-Refs vereinheitlichen (dtolnay/rust-toolchain + uv-Pin)",
+      "updated_at": "2026-06-16"
+    },
+    {
+      "acceptance_count": 2,
+      "area": "ci",
+      "effort": "S",
+      "evidence_count": 1,
+      "id": "OPT-CI-004",
+      "link_counts": {
+        "docs": 1,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "medium",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "Update-Automation existiert (Dependabot oder Renovate); PR-Flut ist begrenzt (Limit/Gruppierung)",
+          "Relevante Oekosysteme (Actions, pnpm/npm, Cargo, Docker, Python/uv) sind bewusst ein- oder ausgeschlossen"
+        ],
+        "area": "ci",
+        "effort": "S",
+        "evidence": [
+          ".github/dependabot.yml"
+        ],
+        "id": "OPT-CI-004",
+        "links": {
+          "docs": [
+            "docs/reports/optimierungsstatus.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "medium",
+        "risk": "medium",
+        "status": "done",
+        "title": "Dependency-Update-Automation (Dependabot/Renovate)",
+        "updated_at": "2026-06-17"
+      },
+      "source_task_sha256": "b582049757fc559615da0a963881cef1888b382f744a611aeae9f1233daebe58",
+      "status": "done",
+      "title": "Dependency-Update-Automation (Dependabot/Renovate)",
+      "updated_at": "2026-06-17"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "ci",
+      "effort": "M",
+      "evidence_count": 3,
+      "id": "OPT-CI-005",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 3,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 ist in direkt ausgeführten Workflows mit bekannten JavaScript-Actions gesetzt.",
+          "Kein Gebrauch von ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION.",
+          "CI-Lauf dokumentiert, ob Node-20-Metadatenwarnungen verbleiben; verbleibende Warnungen werden Stage B zugeordnet."
+        ],
+        "area": "ci",
+        "effort": "M",
+        "evidence": [
+          ".github/workflows/",
+          "scripts/ci/check_actions_node24_readiness.py",
+          "scripts/ci/tests/test_check_actions_node24_readiness.py"
+        ],
+        "id": "OPT-CI-005",
+        "links": {
+          "docs": [
+            "docs/tasks/board.md",
+            "docs/reports/optimierungsstatus.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "PR-CI-Lauf unter erzwungener Node-24-Action-Runtime ausstehend",
+          "Verbleibende Node-20-Metadatenwarnungen müssen nach PR-CI für Stage B erfasst werden",
+          "Action-Ref-Modernisierung bleibt Stage B, falls Warnungen bestehen"
+        ],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "medium",
+        "status": "partial",
+        "title": "GitHub Actions Node-24 Runtime Readiness",
+        "updated_at": "2026-06-05"
+      },
+      "source_task_sha256": "9071200ea386eabbeaef41dd0124748a5361208309edd00e238c78223cb647b1",
+      "status": "partial",
+      "title": "GitHub Actions Node-24 Runtime Readiness",
+      "updated_at": "2026-06-05"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "ci",
+      "effort": "S",
+      "evidence_count": 7,
+      "id": "OPT-CON-001",
+      "link_counts": {
+        "docs": 1,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 1,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "alle 6 Domain-Schemas schließen unkontrollierte Zusatzfelder; Top-Level additionalProperties ist false, bewusste Extension-Flächen sind wertseitig begrenzt",
+          "String-Constraints (minLength, maxLength) konsistent gesetzt",
+          "just contracts-domain-check pass"
+        ],
+        "area": "ci",
+        "effort": "S",
+        "evidence": [
+          "contracts/domain/account.schema.json",
+          "contracts/domain/conversation.schema.json",
+          "contracts/domain/edge.schema.json",
+          "contracts/domain/message.schema.json",
+          "contracts/domain/node.schema.json",
+          "contracts/domain/role.schema.json",
+          "scripts/contracts-domain-check.sh"
+        ],
+        "id": "OPT-CON-001",
+        "links": {
+          "docs": [
+            "docs/reports/optimierungsstatus.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "CI-Nachweis der gehärteten Schemas via contracts-domain.yml steht aus; lokaler Check muss im PR-Body belegt werden"
+        ],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "medium",
+        "status": "partial",
+        "title": "additionalProperties: false und String-Constraints in Domain-Schemas",
+        "updated_at": "2026-05-29"
+      },
+      "source_task_sha256": "274ed605e7a58af44cb1eff8db5968fc5150dcc194ea767cc62a6622e5485128",
+      "status": "partial",
+      "title": "additionalProperties: false und String-Constraints in Domain-Schemas",
+      "updated_at": "2026-05-29"
+    },
+    {
+      "acceptance_count": 2,
+      "area": "docs",
+      "effort": "S",
+      "evidence_count": 5,
+      "id": "OPT-DOC-001",
+      "link_counts": {
+        "docs": 4,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "docs/runbooks/incident-response.md existiert mit vollständigem Ablauf",
+          "docs/runbooks/db-recovery.md existiert mit vollständigem Ablauf"
+        ],
+        "area": "docs",
+        "effort": "S",
+        "evidence": [
+          "docs/runbooks/incident-response.md",
+          "docs/runbooks/db-recovery.md",
+          "docs/runbooks/README.md",
+          "docs/index.md",
+          "docs/runbook.md"
+        ],
+        "id": "OPT-DOC-001",
+        "links": {
+          "docs": [
+            "docs/runbooks/incident-response.md",
+            "docs/runbooks/db-recovery.md",
+            "docs/runbooks/README.md",
+            "docs/runbook.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "high",
+        "status": "done",
+        "title": "Incident-/DB-Recovery-Runbooks",
+        "updated_at": "2026-05-30"
+      },
+      "source_task_sha256": "5f61f5fc8ac2366f3f2006e85d2689a9aa93d85321ceddf808e382de39408f54",
+      "status": "done",
+      "title": "Incident-/DB-Recovery-Runbooks",
+      "updated_at": "2026-05-30"
+    },
+    {
+      "acceptance_count": 2,
+      "area": "infra",
+      "effort": "S",
+      "evidence_count": 1,
+      "id": "OPT-INF-002",
+      "link_counts": {
+        "docs": 1,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 2,
+      "owner": "unknown",
+      "priority": "low",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "Third-Party-Actions sind per Commit-SHA gepinnt; Ursprungstag als Kommentar; Update-Weg bleibt klar",
+          "Policy dokumentiert; CI gruen"
+        ],
+        "area": "infra",
+        "effort": "S",
+        "evidence": [
+          ".github/workflows/"
+        ],
+        "id": "OPT-INF-002",
+        "links": {
+          "docs": [
+            "docs/reports/optimierungsstatus.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "repo-weit nur Tag-Pinning, kein SHA-Pinning",
+          "Sequenzierung (TODO C3): SHA-Pinning erst nach Dependency-Update-Automation (OPT-CI-004), sonst Update-Weg unklar"
+        ],
+        "owner": "unknown",
+        "priority": "low",
+        "risk": "medium",
+        "status": "open",
+        "title": "Third-Party-Actions per Commit-SHA pinnen",
+        "updated_at": "2026-06-16"
+      },
+      "source_task_sha256": "4d42cf6654a90add9cff960c56e8fdbbfdaf6241b111e8e15758c1e7c3f7b616",
+      "status": "open",
+      "title": "Third-Party-Actions per Commit-SHA pinnen",
+      "updated_at": "2026-06-16"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "docs",
+      "effort": "M",
+      "evidence_count": 7,
+      "id": "TASK-CTL-001",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "docs/tasks/ existiert und alle Phase-2-Artefakte sind vorhanden",
+          "Validator läuft mit exit 0 gegen docs/tasks/index.json",
+          "README, CONTRIBUTING und docs/index.md beschreiben Task-Control korrekt"
+        ],
+        "area": "docs",
+        "effort": "M",
+        "evidence": [
+          "docs/tasks/README.md",
+          "docs/tasks/board.md",
+          "docs/tasks/index.json",
+          "docs/tasks/schema.json",
+          "docs/reports/optimierungsstatus.json",
+          "scripts/docmeta/validate_task_index.py",
+          "scripts/docmeta/tests/test_validate_task_index.py"
+        ],
+        "id": "TASK-CTL-001",
+        "links": {
+          "docs": [
+            "docs/tasks/README.md",
+            "docs/tasks/board.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "medium",
+        "status": "done",
+        "title": "Task-Control Phase 2 etablieren",
+        "updated_at": "2026-05-28"
+      },
+      "source_task_sha256": "c558c33342d9f30cc571793c075904a297c8c8ce8617639f7ca2223c20e6887d",
+      "status": "done",
+      "title": "Task-Control Phase 2 etablieren",
+      "updated_at": "2026-05-28"
+    },
+    {
+      "acceptance_count": 2,
+      "area": "governance",
+      "effort": "S",
+      "evidence_count": 0,
+      "id": "TASK-CTL-002",
+      "link_counts": {
+        "docs": 1,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 2,
+      "owner": "unknown",
+      "priority": "low",
+      "risk": "low",
+      "source_task": {
+        "acceptance": [
+          "Entscheidung dokumentiert in CONTRIBUTING.md und board.md",
+          "Kein Artefakt unter .github/ISSUE_TEMPLATE/ oder .github/pull_request_template.md ohne belegten Nutzen eingeführt"
+        ],
+        "area": "governance",
+        "effort": "S",
+        "evidence": [],
+        "id": "TASK-CTL-002",
+        "links": {
+          "docs": [
+            "docs/blueprints/doc-structure-task-control.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "Issue Forms, PR-Template und Release-Konfiguration bewusst zurückgestellt: erhöhen Formular-Overhead ohne belegten Mehrwert gegenüber kontextgenauen PR-Bodies",
+          "Wiederaufnahme sinnvoll wenn: externe Beitragende ohne Projekteinblick aktiv werden oder Release-Prozess stabilisiert ist"
+        ],
+        "owner": "unknown",
+        "priority": "low",
+        "risk": "low",
+        "status": "open",
+        "title": "GitHub-native Arbeitsobjekte minimal evaluieren",
+        "updated_at": "2026-05-28"
+      },
+      "source_task_sha256": "e90547790b296c9edd16b1a75bb3ee2549f8c5697c3c6bc7672e6e261c3b36a7",
+      "status": "open",
+      "title": "GitHub-native Arbeitsobjekte minimal evaluieren",
+      "updated_at": "2026-05-28"
+    },
+    {
+      "acceptance_count": 4,
+      "area": "ci",
+      "effort": "M",
+      "evidence_count": 6,
+      "id": "TASK-CTL-003",
+      "link_counts": {
+        "docs": 1,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "medium",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "Generator erzeugt oder prüft docs/tasks/index.json deterministisch (--check-Modus)",
+          "CI prüft Drift zwischen board.md, index.json und optimierungsstatus.json, schreibt aber nicht still",
+          "Fehlende Evidenz wird gemeldet, nicht geglättet",
+          "docs/_generated/* werden nicht manuell geändert"
+        ],
+        "area": "ci",
+        "effort": "M",
+        "evidence": [
+          "scripts/docmeta/generate_task_index.py",
+          "scripts/docmeta/tests/test_generate_task_index.py",
+          "scripts/docmeta/agent_entrypoint_smoke.py",
+          "scripts/docmeta/tests/test_agent_entrypoint_smoke.py",
+          ".github/workflows/task-index.yml",
+          "PR-CI-Lauf 27643872404 (pull_request, PR #1209, Commit 7cb5ec3364e1f47562574ca6fc729679c5056b29): task-index grün"
+        ],
+        "id": "TASK-CTL-003",
+        "links": {
+          "docs": [
+            "docs/blueprints/doc-structure-task-control-roadmap.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "medium",
+        "risk": "medium",
+        "status": "done",
+        "title": "Task-Index Generator und CI-Guard einführen",
+        "updated_at": "2026-06-17"
+      },
+      "source_task_sha256": "e458a76d6d339da87b36fcba32ee05bfef04951f6aae27c54105f023fd453e27",
+      "status": "done",
+      "title": "Task-Index Generator und CI-Guard einführen",
+      "updated_at": "2026-06-17"
+    },
+    {
+      "acceptance_count": 4,
+      "area": "docs",
+      "effort": "M",
+      "evidence_count": 8,
+      "id": "TASK-CTL-004",
+      "link_counts": {
+        "docs": 3,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "medium",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "neuer Blueprint oder Plan ohne Index-/Roadmap-/Task-Control-Einordnung wird im Check-Modus gemeldet",
+          "eingeordnete neue Blueprint-/Roadmap-Dateien bestehen den Guard",
+          "explizite Ausnahmen sind schema-konform und begründet",
+          "Ratchet kann mindestens report-only und warn unterscheiden, bevor blocking aktiviert wird"
+        ],
+        "area": "docs",
+        "effort": "M",
+        "evidence": [
+          "docs/blueprints/blueprint-agent-safety-control-layer.md",
+          "docs/roadmap.md",
+          "docs/tasks/board.md",
+          "docs/tasks/index.json",
+          "scripts/docmeta/check_planning_registration.py",
+          "scripts/docmeta/planning_registration.yml",
+          "scripts/docmeta/tests/test_check_planning_registration.py",
+          ".github/workflows/task-index.yml"
+        ],
+        "id": "TASK-CTL-004",
+        "links": {
+          "docs": [
+            "docs/blueprints/blueprint-agent-safety-control-layer.md",
+            "docs/roadmap.md",
+            "docs/tasks/board.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "medium",
+        "risk": "medium",
+        "status": "done",
+        "title": "Guard gegen uneingeordnete Blueprints und Pläne einführen",
+        "updated_at": "2026-06-02"
+      },
+      "source_task_sha256": "23f06f4abe24ad4d13b933a25ceb3645c1bb669c41fd244c177ceba6800027bb",
+      "status": "done",
+      "title": "Guard gegen uneingeordnete Blueprints und Pläne einführen",
+      "updated_at": "2026-06-02"
+    },
+    {
+      "acceptance_count": 2,
+      "area": "docs",
+      "effort": "S",
+      "evidence_count": 15,
+      "id": "TASK-CTL-005",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "jules",
+      "priority": "high",
+      "risk": "low",
+      "source_task": {
+        "acceptance": [
+          "Alle 8 Findings (u.a. in docs/blueprints/) sind als gueltige Task-Evidenz, Roadmap-Einordnung oder als false positive klassifiziert",
+          "Der Guard laeuft blockierend (--mode strict)"
+        ],
+        "area": "docs",
+        "effort": "S",
+        "evidence": [
+          "docs/reports/planning-registration-findings.md",
+          ".github/workflows/task-index.yml",
+          "docs/tasks/board.md",
+          "docs/tasks/index.json",
+          "docs/roadmap.md",
+          "scripts/docmeta/check_planning_registration.py",
+          "scripts/docmeta/tests/test_check_planning_registration.py",
+          "docs/blueprints/kartenklarheit.md",
+          "docs/blueprints/map-blaupause.md",
+          "docs/blueprints/ui-blaupause.md",
+          "docs/blueprints/ui-state-machine.md",
+          "docs/blueprints/doc-structure-task-control-examples.md",
+          "docs/blueprints/weltgewebe.auth-and-ui-routing.md",
+          "docs/blueprints/weltgewebe.config.diff.md",
+          "docs/blueprints/weltgewebe.deploy.plan.md"
+        ],
+        "id": "TASK-CTL-005",
+        "links": {
+          "docs": [
+            "docs/tasks/board.md",
+            "docs/reports/planning-registration-findings.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "jules",
+        "priority": "high",
+        "risk": "low",
+        "status": "done",
+        "title": "Bestehende Planning-Registration-Findings triagieren und Ratchet vorbereiten",
+        "updated_at": "2026-06-03"
+      },
+      "source_task_sha256": "4c2f0a3540433dacce16d1dbaf1d81f7901bade4c3c88f8b2603632a6c759baa",
+      "status": "done",
+      "title": "Bestehende Planning-Registration-Findings triagieren und Ratchet vorbereiten",
+      "updated_at": "2026-06-03"
+    }
+  ],
+  "index_path": "docs/tasks/index.json",
+  "index_sha256": "afc11b4c701e03b0e990a47e2f989326fbade7c5bb3f29c422f9da28b1f3bce3",
+  "ref": "origin/main",
+  "repository": "heimgewebe/weltgewebe",
+  "schema_path": "docs/tasks/schema.json",
+  "schema_sha256": "da290e95c2a54af8aac82802b4d6e0bbab5abc0303c3fc6d9e0e4bac99b003f5",
+  "schema_version": 1,
+  "source": "weltgewebe",
+  "source_files": [
+    "docs/reports/optimierungsstatus.md",
+    "docs/reports/auth-status-matrix.json",
+    "docs/reports/map-status-matrix.json",
+    "docs/tasks/board.md"
+  ],
+  "source_schema_version": "1.0.0",
+  "source_system": "weltgewebe-task-control",
+  "status_counts": {
+    "blocked": 2,
+    "contradicted": 0,
+    "done": 21,
+    "obsolete": 0,
+    "open": 7,
+    "partial": 9
+  },
+  "task_count": 39
+}

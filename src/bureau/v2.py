@@ -60,6 +60,10 @@ class Registry(legacy.Registry):
             self.schemas.validate(kind, raw, path)
         except DocumentSchemaError as exc:
             raise legacy.ValidationError(str(exc)) from exc
+        if kind == "source":
+            from .weltgewebe_source import validate_source_document
+
+            validate_source_document(raw)
 
     def _load(self) -> None:
         for path in self._files(self.root / "registry/resources"):

@@ -276,6 +276,56 @@ def build_source_document(snapshot: SourceSnapshot) -> dict[str, Any]:
     }
 
 
+def validate_source_document(value: dict[str, Any]) -> None:
+    entries = value.get("entries")
+    if not isinstance(entries, list):
+        raise ValidationError("source snapshot entries must be an array")
+    identifiers = [entry.get("id") for entry in entries if isinstance(entry, dict)]
+    if len(identifiers) != len(entries) or identifiers != sorted(identifiers):
+        raise ValidationError("source snapshot entries must be uniquely sorted by id")
+    if len(set(identifiers)) != len(identifiers):
+        raise ValidationError("source snapshot entries contain duplicate ids")
+    if value.get("task_count") != len(entries):
+        raise ValidationError("source snapshot task_count does not match entries")
+    expected_counts = {status: 0 for status in SOURCE_STATUSES}
+    expected_active: list[str] = []
+    for entry in entries:
+        source_task = entry.get("source_task")
+        if not isinstance(source_task, dict):
+            raise ValidationError("source snapshot entry is missing source_task")
+        identifier = entry["id"]
+        status = entry.get("status")
+        if source_task.get("id") != identifier or source_task.get("status") != status:
+            raise ValidationError(f"source snapshot entry identity mismatch: {identifier}")
+        if entry.get("source_task_sha256") != sha256_json(source_task):
+            raise ValidationError(f"source snapshot task hash mismatch: {identifier}")
+        for field in ("title", "area", "priority", "effort", "risk", "owner", "updated_at"):
+            if entry.get(field) != source_task.get(field):
+                raise ValidationError(f"source snapshot summary mismatch for {identifier}: {field}")
+        links = source_task.get("links", {})
+        expected_link_counts = {
+            "issues": len(links.get("issues", [])),
+            "prs": len(links.get("prs", [])),
+            "docs": len(links.get("docs", [])),
+        }
+        expected_entry_counts = {
+            "evidence_count": len(source_task.get("evidence", [])),
+            "missing_evidence_count": len(source_task.get("missing_evidence", [])),
+            "acceptance_count": len(source_task.get("acceptance", [])),
+        }
+        if entry.get("link_counts") != expected_link_counts or any(
+            entry.get(name) != count for name, count in expected_entry_counts.items()
+        ):
+            raise ValidationError(f"source snapshot evidence counts mismatch: {identifier}")
+        expected_counts[status] += 1
+        if status in ACTIVE_STATUSES:
+            expected_active.append(identifier)
+    if value.get("status_counts") != expected_counts:
+        raise ValidationError("source snapshot status_counts do not match entries")
+    if value.get("active_task_ids") != expected_active:
+        raise ValidationError("source snapshot active_task_ids do not match entries")
+
+
 def _bounded(values: list[str]) -> dict[str, Any]:
     ordered = sorted(values)
     return {
@@ -341,6 +391,7 @@ def source_sync(
     apply: bool = False,
 ) -> dict[str, Any]:
     candidate = build_source_document(load_snapshot(repository, ref))
+    validate_source_document(candidate)
     target = root.resolve() / "registry" / "sources" / "weltgewebe.json"
     existing = read_json(target) if target.exists() else None
     changes = _change_summary(existing, candidate)

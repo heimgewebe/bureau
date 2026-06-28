@@ -8,10 +8,11 @@ Its core interaction is:
 Look into Bureau and execute the next task.
 ```
 
-Each invocation reconciles earlier runs, computes the executable frontier, atomically claims one
-compatible task, freezes an execution envelope and reserves its coordination scopes. A subsequent
-invocation therefore receives a different non-conflicting task or an explicit explanation that no
-further safe parallel work is available.
+`checkout-next` first reconciles earlier runs, computes the executable frontier, atomically claims
+one compatible task, freezes a revision-bound execution envelope, creates an isolated workspace
+when required and returns or dispatches the executor handoff. A second session therefore receives
+a different non-conflicting task or an explicit explanation that no further safe parallel work is
+available.
 
 ## Boundaries
 
@@ -22,8 +23,7 @@ further safe parallel work is available.
 - **Schauwerk** owns visual projections.
 - **Chronik** owns append-only events.
 
-Bureau does not implement another shell, task runner, runtime lease engine, knowledge base or
-project-management UI.
+Bureau does not implement another shell, general workflow engine, knowledge base or project UI.
 
 ## Quick start
 
@@ -33,26 +33,42 @@ python -m venv .venv
 pip install -e '.[dev]'
 make validate
 
-bureau --root . frontier --capability repository --capability shell
-bureau --root . claim-next --worker chatgpt-session-1 \
+bureau --root . explain-next --capability repository --capability shell
+bureau --root . checkout-next --worker chatgpt-session-1 \
   --capability repository --capability shell
 ```
 
-Operational state is outside Git at `~/.local/state/bureau/bureau.sqlite3`. Override it with
-`BUREAU_STATE_DIR` or `--state-db`.
+For a `grabowski-task` task, the local Grabowski adapter can dispatch immediately:
 
-## Implemented in v0.1
+```bash
+bureau --root . --grabowski-source ~/repos/grabowski/src \
+  checkout-next --worker durable-1 --capability repository --capability shell --dispatch
+```
 
-- JSON registry contracts and semantic validation;
-- dependency-cycle detection;
-- hierarchical read/write/exclusive/capacity claims;
-- deterministic frontier computation;
-- SQLite WAL/FULL synchronous dispatch state;
-- atomic `claim-next` and one active run per task/worker;
-- immutable execution envelopes;
-- dynamic claim expansion;
-- worker heartbeats and orphan reconciliation;
-- evidence-complete receipts;
-- isolated Git worktree creation;
-- Grabowski handoffs with `origin_ref` and `request_id`;
-- concurrent claim stress tests.
+Operational state is outside Git at `~/.local/state/bureau`. The database, envelopes and receipts
+always derive from the same state root. Override it with `BUREAU_STATE_DIR`, `--state-root`, or
+`--state-db`.
+
+## Implemented in v0.2
+
+- enforced Draft 2020-12 JSON contracts plus semantic validation;
+- SQLite schema migrations, WAL and `synchronous=FULL`;
+- atomic `claim-next`, one active run per task/worker and concurrent claim stress coverage;
+- task and plan revision hashes on runs, receipts and operational task status;
+- stale evidence detection after task or plan changes;
+- idempotent DB-canonical completion and deterministic receipt materialisation;
+- automatic reconciliation before checkout;
+- observable external bindings through a typed adapter contract;
+- closed Bureau-side `checkout-next` with optional Grabowski dispatch;
+- hierarchical read/write/exclusive/capacity claims and dynamic scope expansion;
+- baseline-bound Git worktrees with inspect, preserve and cleanup lifecycle;
+- initiative lifecycle diagnostics, `explain-next`, and `doctor`;
+- immutable execution envelopes and evidence-complete receipts.
+
+## Safety invariants
+
+1. A receipt verifies exactly one task hash and one plan hash.
+2. A changed task or plan becomes `stale`; old evidence never unlocks dependencies.
+3. Reconciliation never silently ignores an unobservable external executor.
+4. Worktrees are removed only after terminal runs and never silently discard dirty work.
+5. Process success is not completion; every acceptance criterion still needs evidence.

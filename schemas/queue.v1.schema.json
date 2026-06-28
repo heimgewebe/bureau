@@ -1,1 +1,25 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Bureau queue v1","type":"object","required":["schema_version"],"properties":{"schema_version":{"const":1}}}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://heimgewebe.local/bureau/queue.v1.schema.json",
+  "title": "Bureau queue v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "queue_policy", "lanes"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "queue_policy": {"enum": ["skip-blocked", "strict"]},
+    "lanes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["now", "next", "later"],
+      "properties": {
+        "now": {"$ref": "#/$defs/task_ids"},
+        "next": {"$ref": "#/$defs/task_ids"},
+        "later": {"$ref": "#/$defs/task_ids"}
+      }
+    }
+  },
+  "$defs": {
+    "task_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$"}}
+  }
+}

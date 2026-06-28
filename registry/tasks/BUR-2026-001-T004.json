@@ -1,1 +1,45 @@
-{"schema_version":1,"id":"BUR-2026-001-T004","initiative":"BUR-2026-001","title":"Verify live Grabowski cutover","state":"verified","execution":{"mode":"interactive-agent","policy":"autonomous"},"claims":[{"resource":"host.heim-pc","mode":"exclusive"}],"acceptance":[{"id":"live-proof","assertion":"Runtime f1dd99e reported worker f87623902155426ba582 completed with Result=success and ExecMainStatus=0."}],"metadata":{"release_id":"f1dd99e293a3-srcset737ba9265758-locke6664d600b6c-contractb71d156258cc-attempt4"}}
+{
+  "schema_version": 1,
+  "id": "BUR-2026-001-T004",
+  "initiative": "BUR-2026-001",
+  "title": "Verify live Grabowski cutover",
+  "state": "verified",
+  "goal": "Verify the current Grabowski release and live GUI-worker classification.",
+  "depends_on": [
+    "BUR-2026-001-T002",
+    "BUR-2026-001-T003"
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "autonomous",
+    "preferred_host": "heim-pc"
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "exclusive",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "live-proof",
+      "assertion": "Runtime f1dd99e reported worker f87623902155426ba582 completed with Result=success and ExecMainStatus=0."
+    }
+  ],
+  "metadata": {
+    "release_id": "f1dd99e293a3-srcset737ba9265758-locke6664d600b6c-contractb71d156258cc-attempt4",
+    "verification": {
+      "task_sha256": "b5e8c0b3fa14e58d0f6881f144bb067d50388b01271dfa0c153be8b84088a6cc",
+      "plan_sha256": "a693177e04de7b0c356ae6e029ae30b206092e6c8cbf3f1096f669e64cc5cf61"
+    }
+  }
+}

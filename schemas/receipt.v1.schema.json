@@ -1,1 +1,20 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Bureau receipt v1","type":"object","required":["schema_version"],"properties":{"schema_version":{"const":1}}}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://heimgewebe.local/bureau/receipt.v1.schema.json",
+  "title": "Bureau receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "task_id", "task_sha256", "plan_sha256", "envelope_sha256", "verified_at", "external", "evidence", "receipt_sha256"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "run_id": {"type": "string"},
+    "task_id": {"type": "string"},
+    "task_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "envelope_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "verified_at": {"type": "string", "format": "date-time"},
+    "external": {"type": ["object", "null"]},
+    "evidence": {"type": "object", "minProperties": 1},
+    "receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

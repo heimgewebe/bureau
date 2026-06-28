@@ -2,17 +2,25 @@
 
 Bureau separates durable intent from volatile execution.
 
-Git contains initiatives, tasks, resources and queue order. SQLite contains workers, runs,
-reservations, task overlays and receipts. The database uses WAL, `synchronous=FULL`, foreign keys
-and `BEGIN IMMEDIATE` for atomic dispatch.
+Git contains initiatives, tasks, resources, queue order and exact plan references. SQLite contains
+workers, runs, reservations, revision-bound task overlays, receipts, workspace records and an
+operational event stream. The database uses migrations, WAL, `synchronous=FULL`, foreign keys and
+`BEGIN IMMEDIATE` for atomic dispatch.
+
+A run freezes both `task_sha256` and `plan_sha256`. A receipt is valid only for those exact
+revisions. Editing a previously completed task or its plan makes the operational overlay `stale`
+and blocks dependants until the new revision is verified.
 
 Bureau and Grabowski form a saga rather than a shared transaction:
 
-1. Bureau claims the task and coordination resources.
-2. Bureau writes an immutable execution envelope.
-3. Grabowski acquires concrete runtime leases and starts execution.
-4. Bureau binds the external task identity.
-5. Reconciliation repairs interruption between stages.
+1. Bureau reconciles local and externally bound runs.
+2. Bureau claims the task and semantic coordination resources.
+3. Bureau writes an immutable execution envelope.
+4. Bureau creates a baseline-bound workspace when required.
+5. Grabowski acquires concrete leases and starts execution.
+6. Bureau binds and observes the external identity.
+7. Bureau verifies evidence and commits a receipt.
 
-Grabowski should persist an idempotent `request_id` and `origin_ref` so the dispatch crash window
-can be reconstructed without duplicate execution.
+The adapter contract is deliberately small: `dispatch(request)` and `observe(external_id)`. An
+unavailable adapter creates a visible reconcile finding; it never causes a bound run to be silently
+forgotten.

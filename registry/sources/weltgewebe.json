@@ -6,7 +6,6 @@
     "DB-PROOF-001",
     "DEPLOY-DNS-001",
     "DOCMETA-FRESHNESS-001",
-    "DOCMETA-PROOF-001",
     "DOCMETA-REPORT-LIFECYCLE-001",
     "DOMAIN-PG-001",
     "DOMAIN-PG-003",
@@ -14,7 +13,7 @@
     "OPT-CI-005",
     "OPT-INF-002"
   ],
-  "commit_sha": "2e7124ca1f4a864c317a34d78957ca804008c2c3",
+  "commit_sha": "23f57aa196255cc52dcf8380f8b0b8db0ea4b08b",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -1020,14 +1019,14 @@
       "acceptance_count": 4,
       "area": "docs",
       "effort": "S",
-      "evidence_count": 4,
+      "evidence_count": 5,
       "id": "DOCMETA-PROOF-001",
       "link_counts": {
         "docs": 3,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 3,
+      "missing_evidence_count": 0,
       "owner": "docs-mechanik",
       "priority": "medium",
       "risk": "low",
@@ -1041,6 +1040,7 @@
         "area": "docs",
         "effort": "S",
         "evidence": [
+          "docs/reports/proof-matrix-generalization-decision.md",
           "docs/reports/opt-arc-001-db-proof-matrix.json",
           "scripts/docmeta/validate_opt_arc_001_db_proof_matrix.py",
           "scripts/docmeta/tests/test_validate_opt_arc_001_db_proof_matrix.py",
@@ -1056,22 +1056,18 @@
           "issues": [],
           "prs": []
         },
-        "missing_evidence": [
-          "Zweiter echter Proof-Matrix-Anwendungsfall fehlt; Generalisierung darf nicht aus nur einem OPT-ARC-001-Spezialfall abgeleitet werden",
-          "Entscheidung fehlt, welche Teile generisch werden sollen: Matrix-Schema, Status-Sync, Evidence-Regeln, Workflow-Trigger-Regeln, Shell-Command-Prüfung",
-          "Nachweis fehlt, dass ein gemeinsames Schema mehr Nutzen als projektspezifische Validatoren stiftet"
-        ],
+        "missing_evidence": [],
         "owner": "docs-mechanik",
         "priority": "medium",
         "risk": "low",
-        "status": "open",
+        "status": "done",
         "title": "Proof-Matrix-Validator-Schema vormerken",
-        "updated_at": "2026-06-11"
+        "updated_at": "2026-06-29"
       },
-      "source_task_sha256": "98e95b540d77a70c39b170ff90d2730ccf16a64f9f3401ebcd08a88301d14ffd",
-      "status": "open",
+      "source_task_sha256": "9e1f95ee5247084dae813d2d67db59ed391dcda1c5b6d1c8dd9b24961b2ece7d",
+      "status": "done",
       "title": "Proof-Matrix-Validator-Schema vormerken",
-      "updated_at": "2026-06-11"
+      "updated_at": "2026-06-29"
     },
     {
       "acceptance_count": 13,
@@ -2259,7 +2255,7 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "258c92164609e196eb0ca5b6e0f418a94043884fd24daf86de2e9edf4467386e",
+  "index_sha256": "55a084a82ac6461de50b33fc36726a33604248370bbabb2fe8b55db8ebd16151",
   "ref": "origin/main",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",
@@ -2277,9 +2273,9 @@
   "status_counts": {
     "blocked": 2,
     "contradicted": 0,
-    "done": 26,
+    "done": 27,
     "obsolete": 0,
-    "open": 5,
+    "open": 4,
     "partial": 6
   },
   "task_count": 39

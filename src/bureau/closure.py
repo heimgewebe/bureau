@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import sqlite3
 import subprocess
 import tempfile
@@ -72,6 +73,9 @@ STATE_PRIORITY = {
 MUTATING_STATES = {"planned", "ready", "active", "needs_revision", "ci_failed"}
 REVIEW_STATES = {"reviewing", "needs_revision", "ci_failed"}
 MERGE_STATES = {"merge_candidate", "merge_ready"}
+CANONICAL_TASK_REQUIRED_STATES = MUTATING_STATES | REVIEW_STATES | MERGE_STATES
+CANONICAL_BUREAU_TASK_ID_RE = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$")
+UNBOUND_NEXT_ACTION = "bind to canonical Bureau task before dispatch"
 
 
 @dataclass(frozen=True)
@@ -539,16 +543,47 @@ def lane_sort_key(lane: dict[str, Any]) -> tuple[Any, ...]:
     )
 
 
-def select_lanes_for_plan(
+def is_canonical_bureau_task_id(value: Any) -> bool:
+    return isinstance(value, str) and bool(CANONICAL_BUREAU_TASK_ID_RE.fullmatch(value))
+
+
+def lane_requires_canonical_task_id(lane: dict[str, Any]) -> bool:
+    return str(lane.get("state")) in CANONICAL_TASK_REQUIRED_STATES
+
+
+def rejected_unbound_lane(lane: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "lane_id": lane.get("lane_id"),
+        "repo_name": lane.get("repo_name"),
+        "branch": lane.get("branch"),
+        "state": lane.get("state"),
+        "task_id": lane.get("task_id"),
+        "reason": "missing_canonical_bureau_task_id",
+    }
+
+
+def select_lanes_for_plan_with_evidence(
     lanes: list[dict[str, Any]], limits: dict[str, int] | None = None
-) -> list[dict[str, Any]]:
+) -> dict[str, Any]:
     selected: list[dict[str, Any]] = []
+    rejected_unbound: list[dict[str, Any]] = []
     limits = {**DEFAULT_WIP_LIMITS, **(limits or {})}
     per_repo: dict[str, int] = {}
     coding = review = merge = 0
     for lane in sorted(lanes, key=lane_sort_key):
+        if len(selected) >= limits["max_selected_lanes"]:
+            break
         state = str(lane.get("state"))
         if state in {"closed", "verified", "merged", "obsolete", "paused", "blocked"}:
+            continue
+        if lane_requires_canonical_task_id(lane) and not is_canonical_bureau_task_id(
+            lane.get("task_id")
+        ):
+            lane["next_action"] = UNBOUND_NEXT_ACTION
+            blockers = lane.setdefault("selection_blockers", [])
+            if "missing_canonical_bureau_task_id" not in blockers:
+                blockers.append("missing_canonical_bureau_task_id")
+            rejected_unbound.append(rejected_unbound_lane(lane))
             continue
         repo = str(lane.get("repo"))
         if state in MUTATING_STATES:
@@ -567,13 +602,28 @@ def select_lanes_for_plan(
                 continue
             merge += 1
         selected.append(lane)
+        if len(selected) >= limits["max_selected_lanes"]:
+            break
         if (
             coding >= limits["max_active_coding_lanes"]
             and review >= limits["max_review_lanes"]
             and merge >= limits["max_merge_lanes"]
         ):
             break
-    return selected
+    return {
+        "selected_lanes": selected,
+        "rejected_unbound_lanes": rejected_unbound,
+        "unbound_selected_rejected_count": len(rejected_unbound),
+        "canonical_task_bound_count": sum(
+            1 for lane in selected if is_canonical_bureau_task_id(lane.get("task_id"))
+        ),
+    }
+
+
+def select_lanes_for_plan(
+    lanes: list[dict[str, Any]], limits: dict[str, int] | None = None
+) -> list[dict[str, Any]]:
+    return select_lanes_for_plan_with_evidence(lanes, limits)["selected_lanes"]
 
 
 def brief_for_lane(lane: dict[str, Any]) -> dict[str, Any]:
@@ -680,7 +730,8 @@ def run_closure_cycle(
     intents = read_manual_intents(intents_path)
     existing = load_json(state / "lanes.json", {})
     lanes = merge_lanes(inventory, existing, intents)
-    selected = select_lanes_for_plan(lanes["lanes"])
+    selection = select_lanes_for_plan_with_evidence(lanes["lanes"])
+    selected = selection["selected_lanes"]
     briefs = write_briefs(selected, state / "briefs")
     plan = {
         "schema_version": SCHEMA_VERSION,
@@ -690,6 +741,9 @@ def run_closure_cycle(
         "inventory_path": str(state / "inventory.json"),
         "lanes_path": str(state / "lanes.json"),
         "selected_lane_count": len(selected),
+        "unbound_selected_rejected_count": selection["unbound_selected_rejected_count"],
+        "rejected_unbound_lanes": selection["rejected_unbound_lanes"],
+        "canonical_task_bound_count": selection["canonical_task_bound_count"],
         "selected_lanes": selected,
         "briefs": briefs,
         "next_action": (

@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-001-T006",
+  "initiative": "BUR-2026-001",
+  "title": "Bind Cabinet workspace room closure lane",
+  "state": "planned",
+  "goal": "Bind the Cabinet fix/workspace-room-identity branch to a canonical Bureau task before the lane is used for execution.",
+  "depends_on": ["BUR-2026-001-T001"],
+  "required_capabilities": ["repository", "shell"],
+  "priority": {"lane": "next", "rank": 60},
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/cabinet",
+    "grabowski_resources": ["repo:/home/alex/repos/cabinet"]
+  },
+  "claims": [
+    {"resource": "repo.cabinet", "mode": "write", "isolation": "worktree"},
+    {"resource": "host.heim-pc", "mode": "capacity", "amount": 1, "isolation": "none"}
+  ],
+  "acceptance": [
+    {"id": "closure-lane-bound", "assertion": "The matching closure lane records this canonical task id."},
+    {"id": "branch-reviewed", "assertion": "The branch status, tests, and merge path are checked."},
+    {"id": "handoff-safe", "assertion": "A valid brief and this task binding exist before execution."}
+  ],
+  "metadata": {
+    "source_repository": "/home/alex/repos/cabinet",
+    "source_branch": "fix/workspace-room-identity",
+    "closure_fingerprints": ["bba0a2792136c7f4fa9bae7e77e7796447dc6eb537652c5fb16067ac44c19fe6"],
+    "created_for": "closure-lane-canonical-binding"
+  }
+}

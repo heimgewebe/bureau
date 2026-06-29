@@ -2265,7 +2265,7 @@
   ],
   "index_path": "docs/tasks/index.json",
   "index_sha256": "afc11b4c701e03b0e990a47e2f989326fbade7c5bb3f29c422f9da28b1f3bce3",
-  "ref": "origin/main",
+  "ref": "HEAD",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",
   "schema_sha256": "da290e95c2a54af8aac82802b4d6e0bbab5abc0303c3fc6d9e0e4bac99b003f5",

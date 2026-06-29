@@ -1,0 +1,17 @@
+{
+  "schema_version": "grabowski-bureau-execution-state.v1",
+  "updated_at": "2026-06-29T16:05:00+02:00",
+  "work_path": "work/grabowski-safety-smooth-ops",
+  "state": "IN_PROGRESS",
+  "completed": [
+    "plan translated into Bureau work files",
+    "GBW-001 marked IN_PROGRESS",
+    "GBW-002 prepared as next P0 implementation task",
+    "platform block matrix recorded"
+  ],
+  "not_completed": [
+    "ZIP import from Google Drive was not possible through rclone/API visibility",
+    "GBW-002 code implementation not yet started in grabowski repo"
+  ],
+  "next_action": "Create Grabowski branch for GBW-002 and implement task_reconcile_check/refresh/resume split."
+}

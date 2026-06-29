@@ -69,6 +69,9 @@ def parser() -> argparse.ArgumentParser:
     source_sync.add_argument("--repo", required=True)
     source_sync.add_argument("--ref", default="origin/main")
     source_sync.add_argument("--apply", action="store_true")
+    promote = sub.add_parser("source-promote-plan")
+    promote.add_argument("source", choices=["weltgewebe"])
+    promote.add_argument("--task-id", required=True)
     sub.add_parser("close-ready")
     frontier = sub.add_parser("frontier")
     frontier.add_argument("--capability", action="append", default=[])
@@ -169,15 +172,17 @@ def main(argv: list[str] | None = None) -> int:
     try:
         root = Path(args.root)
         registry = Registry.load(root)
-        if args.command in {"source-check", "source-sync"}:
-            from .weltgewebe_source import source_check, source_sync
+        if args.command in {"source-check", "source-sync", "source-promote-plan"}:
+            from .weltgewebe_source import source_check, source_promote_plan, source_sync
 
             if args.command == "source-check":
                 value = source_check(args.repo, args.ref)
-            else:
+            elif args.command == "source-sync":
                 value = source_sync(root, args.repo, args.ref, apply=args.apply)
                 if args.apply:
                     Registry.load(root)
+            else:
+                value = source_promote_plan(root, registry, args.source, args.task_id)
             emit(value, args.json)
             return 0
         state_path = Path(args.state_db).expanduser() if args.state_db else None

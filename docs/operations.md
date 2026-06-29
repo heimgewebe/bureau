@@ -114,3 +114,15 @@ journalctl --user -u bureau-source-pr-bridge.service -n 50 --no-pager
 
 Neither half of the pipeline establishes readiness, dependency completeness, safe parallel scope or
 autonomous execution permission.
+
+## Source promotion preview
+
+Plan one Weltgewebe task candidate without materialising it:
+
+```bash
+bureau --root . --json source-promote-plan weltgewebe --task-id DEPLOY-DNS-001
+```
+
+The result is read-only. It exposes the projected Bureau task ID, source binding, unresolved claims,
+unknown dependency structure and execution policy decisions. A promotion preview does not imply
+readiness or permission to execute.

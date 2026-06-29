@@ -88,3 +88,15 @@ always derive from the same state root. Override it with `BUREAU_STATE_DIR`, `--
 3. Reconciliation never silently ignores an unobservable external executor.
 4. Worktrees are removed only after terminal runs and never silently discard dirty work.
 5. Process success is not completion; every acceptance criterion still needs evidence.
+
+### Source promotion preview
+
+Plan a single source-task promotion without writing Registry tasks:
+
+```bash
+bureau --root . --json source-promote-plan weltgewebe --task-id DEPLOY-DNS-001
+```
+
+The command returns the would-be Bureau ID, the source commit and task hash, unresolved manual
+decisions and a non-executed candidate task. It does not create a task, touch the queue or grant
+readiness.

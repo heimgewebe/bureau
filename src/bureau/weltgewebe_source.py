@@ -27,6 +27,7 @@ SOURCE_STATUSES = ("open", "partial", "done", "blocked", "obsolete", "contradict
 ACTIVE_STATUSES = {"open", "partial", "blocked"}
 _COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 _REF_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,255}$")
+_SOURCE_ID_RE = re.compile(r"^[A-Z]+(?:-[A-Z]+)*-[0-9]{3}$")
 
 
 @dataclass(frozen=True)
@@ -331,6 +332,152 @@ def validate_source_document(value: dict[str, Any]) -> None:
         raise ValidationError("source snapshot active_task_ids do not match entries")
 
 
+def bureau_task_id(source_task_id: str) -> str:
+    if not _SOURCE_ID_RE.fullmatch(source_task_id):
+        raise ValidationError(f"unsupported Weltgewebe source task id {source_task_id!r}")
+    return f"WG-{source_task_id}"
+
+
+def _projected_state(source_status: str) -> str:
+    if source_status in {"open", "partial"}:
+        return "planned"
+    if source_status == "blocked":
+        return "blocked"
+    if source_status in {"done", "obsolete", "contradicted"}:
+        return "superseded"
+    raise ValidationError(f"unsupported Weltgewebe source status {source_status!r}")
+
+
+def _load_materialized_source(root: Path, source: str) -> dict[str, Any]:
+    if source != SOURCE_NAME:
+        raise ValidationError(f"unsupported source {source!r}")
+    target = root.resolve() / "registry" / "sources" / "weltgewebe.json"
+    if not target.is_file():
+        raise ValidationError("Weltgewebe source snapshot has not been materialized")
+    snapshot = read_json(target)
+    try:
+        SchemaSet(root.resolve() / "schemas").validate("source", snapshot, target)
+    except DocumentSchemaError as exc:
+        raise ValidationError(str(exc)) from exc
+    validate_source_document(snapshot)
+    return snapshot
+
+
+def _source_entry(snapshot: dict[str, Any], source_task_id: str) -> dict[str, Any]:
+    for entry in snapshot["entries"]:
+        if entry["id"] == source_task_id:
+            return entry
+    raise ValidationError(f"unknown Weltgewebe source task id {source_task_id!r}")
+
+
+def source_promote_plan(root: Path, registry: Any, source: str, task_id: str) -> dict[str, Any]:
+    snapshot = _load_materialized_source(root, source)
+    entry = _source_entry(snapshot, task_id)
+    source_task = entry["source_task"]
+    target_id = bureau_task_id(entry["id"])
+    existing = registry.tasks.get(target_id)
+    projected_state = _projected_state(entry["status"])
+    blockers: list[str] = []
+    if entry["status"] not in ACTIVE_STATUSES:
+        blockers.append("source-task-is-not-active")
+    if existing is not None:
+        blockers.append("bureau-task-already-exists")
+    if not source_task.get("acceptance"):
+        blockers.append("source-task-has-no-acceptance")
+    manual_decisions = [
+        {
+            "field": "initiative",
+            "reason": "WG-WELTGEWEBE is only a candidate namespace until explicitly registered",
+        },
+        {
+            "field": "claims",
+            "reason": "the source index does not define safe write scope or resource isolation",
+        },
+        {"field": "dependencies", "reason": "the source index has no structured dependency graph"},
+        {
+            "field": "execution.policy",
+            "reason": "source priority does not imply autonomous execution permission",
+        },
+    ]
+    candidate_task = {
+        "schema_version": 1,
+        "id": target_id,
+        "initiative": "WG-WELTGEWEBE",
+        "title": source_task["title"],
+        "state": projected_state,
+        "goal": source_task["title"],
+        "depends_on": [],
+        "required_capabilities": ["repository", "shell"],
+        "priority": {
+            "lane": "later",
+            "rank": {"high": 20, "medium": 50, "low": 80}[source_task["priority"]],
+        },
+        "execution": {
+            "mode": "interactive-agent",
+            "policy": "review-before-effect",
+            "working_repository": "/home/alex/repos/weltgewebe",
+            "baseline_commit": snapshot["commit_sha"],
+        },
+        "claims": [{"resource": "repo.weltgewebe", "mode": "write", "isolation": "worktree"}],
+        "acceptance": [
+            {"id": f"source-{index:02d}", "assertion": assertion}
+            for index, assertion in enumerate(source_task["acceptance"], 1)
+        ],
+        "metadata": {
+            "source": {
+                "system": SOURCE_SYSTEM,
+                "repository": snapshot["repository"],
+                "ref": snapshot["ref"],
+                "commit_sha": snapshot["commit_sha"],
+                "index_path": snapshot["index_path"],
+                "schema_path": snapshot["schema_path"],
+                "index_sha256": snapshot["index_sha256"],
+                "schema_sha256": snapshot["schema_sha256"],
+                "source_task_id": entry["id"],
+                "source_task_sha256": entry["source_task_sha256"],
+                "source_status": entry["status"],
+                "source_priority": entry["priority"],
+                "source_risk": entry["risk"],
+                "source_effort": entry["effort"],
+                "source_owner": entry["owner"],
+                "source_updated_at": entry["updated_at"],
+            }
+        },
+    }
+    return {
+        "valid": True,
+        "source": SOURCE_NAME,
+        "source_task_id": entry["id"],
+        "bureau_task_id": target_id,
+        "source_binding": {
+            "repository": snapshot["repository"],
+            "ref": snapshot["ref"],
+            "commit_sha": snapshot["commit_sha"],
+            "index_sha256": snapshot["index_sha256"],
+            "schema_sha256": snapshot["schema_sha256"],
+            "source_task_sha256": entry["source_task_sha256"],
+        },
+        "source_status": entry["status"],
+        "projected_state": projected_state,
+        "existing_bureau_task": None
+        if existing is None
+        else {"id": existing.id, "state": existing.state, "sha256": existing.sha256},
+        "materialization_allowed": not blockers,
+        "readiness": "blocked" if blockers or manual_decisions else "candidate",
+        "blockers": blockers,
+        "manual_decisions_required": manual_decisions,
+        "candidate_task": candidate_task,
+        "does_not_establish": [
+            "bureau_task_materialization",
+            "bureau_task_readiness",
+            "dependency_completeness",
+            "safe_parallel_write_scope",
+            "autonomous_execution_permission",
+            "source_claim_truth",
+        ],
+    }
+
+
 def _bounded(values: list[str]) -> dict[str, Any]:
     ordered = sorted(values)
     return {
@@ -347,8 +494,7 @@ def _change_summary(existing: dict[str, Any] | None, candidate: dict[str, Any]) 
         if isinstance(entry, dict) and "id" in entry and "source_task_sha256" in entry
     }
     new_entries = {
-        str(entry["id"]): str(entry["source_task_sha256"])
-        for entry in candidate["entries"]
+        str(entry["id"]): str(entry["source_task_sha256"]) for entry in candidate["entries"]
     }
     added = sorted(set(new_entries) - set(old_entries))
     removed = sorted(set(old_entries) - set(new_entries))

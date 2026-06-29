@@ -11,11 +11,10 @@
     "DOMAIN-PG-001",
     "DOMAIN-PG-003",
     "OPT-ARC-001",
-    "OPT-CI-003",
     "OPT-CI-005",
     "OPT-INF-002"
   ],
-  "commit_sha": "f440bdc0c5c73b2748d42489e86a29aac9c9b09f",
+  "commit_sha": "2e7124ca1f4a864c317a34d78957ca804008c2c3",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -1681,14 +1680,14 @@
       "acceptance_count": 2,
       "area": "ci",
       "effort": "S",
-      "evidence_count": 1,
+      "evidence_count": 5,
       "id": "OPT-CI-003",
       "link_counts": {
         "docs": 1,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 2,
+      "missing_evidence_count": 0,
       "owner": "unknown",
       "priority": "low",
       "risk": "low",
@@ -1700,7 +1699,11 @@
         "area": "ci",
         "effort": "S",
         "evidence": [
-          ".github/workflows/python-tooling.yml"
+          "toolchain.versions.yml",
+          ".github/workflows/ci.yml",
+          ".github/workflows/python-tooling.yml",
+          ".github/workflows/api-smoke.yml",
+          ".github/workflows/security.yml"
         ],
         "id": "OPT-CI-003",
         "links": {
@@ -1710,21 +1713,18 @@
           "issues": [],
           "prs": []
         },
-        "missing_evidence": [
-          "dtolnay/rust-toolchain weiterhin gemischt @stable/@v1",
-          "gepinnte uv-Version nicht erzwungen"
-        ],
+        "missing_evidence": [],
         "owner": "unknown",
         "priority": "low",
         "risk": "low",
-        "status": "partial",
+        "status": "done",
         "title": "Action-Refs vereinheitlichen (dtolnay/rust-toolchain + uv-Pin)",
-        "updated_at": "2026-06-16"
+        "updated_at": "2026-06-29"
       },
-      "source_task_sha256": "2bd26eb733ba3e22d6d9eabe4fd7fbea72c36c9c05a481630983669334bf6df0",
-      "status": "partial",
+      "source_task_sha256": "e9f265fc2ba71d8e02ef6cba703194f0cad372d640eb82720a49177e1d144829",
+      "status": "done",
       "title": "Action-Refs vereinheitlichen (dtolnay/rust-toolchain + uv-Pin)",
-      "updated_at": "2026-06-16"
+      "updated_at": "2026-06-29"
     },
     {
       "acceptance_count": 2,
@@ -2259,7 +2259,7 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "d04fb1cf75aed8e54e82bba3ebcb79f4a7e6bb66da10cad8041edc6b7f77bafe",
+  "index_sha256": "258c92164609e196eb0ca5b6e0f418a94043884fd24daf86de2e9edf4467386e",
   "ref": "origin/main",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",
@@ -2277,10 +2277,10 @@
   "status_counts": {
     "blocked": 2,
     "contradicted": 0,
-    "done": 25,
+    "done": 26,
     "obsolete": 0,
     "open": 5,
-    "partial": 7
+    "partial": 6
   },
   "task_count": 39
 }

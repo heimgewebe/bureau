@@ -4,7 +4,6 @@
     "AUTH-PG-001",
     "AUTH-PG-002",
     "AUTH-PG-003",
-    "CI-TOOL-001",
     "DB-PROOF-001",
     "DEPLOY-DNS-001",
     "DOCMETA-FRESHNESS-001",
@@ -19,7 +18,7 @@
     "OPT-INF-002",
     "TASK-CTL-002"
   ],
-  "commit_sha": "d5df6bef72ebac109a504f82b3bb767296829308",
+  "commit_sha": "3faed83a521e6bcac87e38cf618a132053bb05c7",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -672,14 +671,14 @@
       "acceptance_count": 3,
       "area": "ci",
       "effort": "S",
-      "evidence_count": 5,
+      "evidence_count": 6,
       "id": "CI-TOOL-001",
       "link_counts": {
         "docs": 1,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 2,
+      "missing_evidence_count": 0,
       "owner": "unknown",
       "priority": "medium",
       "risk": "low",
@@ -694,6 +693,7 @@
         "evidence": [
           "Makefile",
           "Justfile",
+          "package.json",
           "apps/web/package.json",
           ".node-version",
           ".nvmrc"
@@ -706,21 +706,18 @@
           "issues": [],
           "prs": []
         },
-        "missing_evidence": [
-          "Makefile und Justfile fuehren up/down beide direkt 'docker compose ... --profile dev' aus (Duplikat ohne Delegation)",
-          "Root package.json hat kein engines-Feld (apps/web/package.json hat eines: node ^20.19.0 || ^22.13.0 || >=24)"
-        ],
+        "missing_evidence": [],
         "owner": "unknown",
         "priority": "medium",
         "risk": "low",
-        "status": "open",
+        "status": "done",
         "title": "Dev-Setup-Hygiene: Task-Runner-Dedup (Makefile/Justfile) und Node/pnpm engines",
-        "updated_at": "2026-06-16"
+        "updated_at": "2026-06-29"
       },
-      "source_task_sha256": "466df5e26675355fa53e3cac5604de8b0e15aac56cd64ee7d258f335dfb09da0",
-      "status": "open",
+      "source_task_sha256": "0a79d6addfde8eee259232eec4bd7faef5050d0ba21d961dfdaebb113c327b38",
+      "status": "done",
       "title": "Dev-Setup-Hygiene: Task-Runner-Dedup (Makefile/Justfile) und Node/pnpm engines",
-      "updated_at": "2026-06-16"
+      "updated_at": "2026-06-29"
     },
     {
       "acceptance_count": 4,
@@ -2264,8 +2261,8 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "afc11b4c701e03b0e990a47e2f989326fbade7c5bb3f29c422f9da28b1f3bce3",
-  "ref": "origin/main",
+  "index_sha256": "1c4f9db2054d38225b584bdadf31dd32820dbdd0706a9475f07b04bd28415a13",
+  "ref": "HEAD",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",
   "schema_sha256": "da290e95c2a54af8aac82802b4d6e0bbab5abc0303c3fc6d9e0e4bac99b003f5",
@@ -2282,9 +2279,9 @@
   "status_counts": {
     "blocked": 2,
     "contradicted": 0,
-    "done": 21,
+    "done": 22,
     "obsolete": 0,
-    "open": 7,
+    "open": 6,
     "partial": 9
   },
   "task_count": 39

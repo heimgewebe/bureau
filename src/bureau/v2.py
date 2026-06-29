@@ -43,7 +43,11 @@ EXTERNAL_AGENT_MARKERS = ("codex", "claude", "cline", "agy", "gemini", "jules")
 
 def _grabowski_worker_policy() -> dict[str, Any]:
     configured = os.environ.get("BUREAU_WORKER_ROUTING_CONFIG")
-    path = Path(configured).expanduser() if configured else Path.home() / ".config/grabowski/worker-routing.json"
+    path = (
+        Path(configured).expanduser()
+        if configured
+        else Path.home() / ".config/grabowski/worker-routing.json"
+    )
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, TypeError, ValueError, json.JSONDecodeError):
@@ -52,7 +56,9 @@ def _grabowski_worker_policy() -> dict[str, Any]:
 
 
 def _external_agent_profile(task: legacy.Task, worker_id: str, kind: str) -> str | None:
-    explicit = task.execution.get("worker_profile") or task.execution.get("preferred_worker_profile")
+    explicit = task.execution.get("worker_profile") or task.execution.get(
+        "preferred_worker_profile"
+    )
     if isinstance(explicit, str) and explicit:
         return explicit
     haystack = " ".join((worker_id, kind, task.mode, task.policy)).lower()

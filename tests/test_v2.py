@@ -716,7 +716,9 @@ def test_external_agent_checkout_accepts_valid_grabowski_brief(
     task["claims"][0]["isolation"] = "none"
     task_path.write_text(json.dumps(task))
     _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
-    result = dispatcher.checkout_next("codex-worker", ("repository",), base_dir=tmp_path / "worktrees")
+    result = dispatcher.checkout_next(
+        "codex-worker", ("repository",), base_dir=tmp_path / "worktrees"
+    )
     assert result["agent_brief"]["status"] == "valid"
     assert result["handoff"]["agent_brief_path"] == str(brief_path)
     assert result["handoff"]["worker_profile"] == "codex-efficient"

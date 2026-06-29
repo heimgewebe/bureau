@@ -36,6 +36,8 @@ def main() -> int:
                 "path": str(STATE / "plan.json"),
                 "selected_lane_count": plan.get("selected_lane_count", 0),
                 "manual_intent_count": plan.get("manual_intent_count", 0),
+                "unbound_selected_rejected_count": plan.get("unbound_selected_rejected_count", 0),
+                "canonical_task_bound_count": plan.get("canonical_task_bound_count", 0),
             }
         )
     except Exception as exc:  # receipt first, crash never silent

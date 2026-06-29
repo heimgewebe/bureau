@@ -10,10 +10,9 @@
     "DOMAIN-PG-001",
     "DOMAIN-PG-003",
     "OPT-ARC-001",
-    "OPT-CI-005",
     "OPT-INF-002"
   ],
-  "commit_sha": "23f57aa196255cc52dcf8380f8b0b8db0ea4b08b",
+  "commit_sha": "74132da5e3a3b933bdef8cb1a977b893fb134a08",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -1772,14 +1771,14 @@
       "acceptance_count": 3,
       "area": "ci",
       "effort": "M",
-      "evidence_count": 3,
+      "evidence_count": 5,
       "id": "OPT-CI-005",
       "link_counts": {
         "docs": 2,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 3,
+      "missing_evidence_count": 1,
       "owner": "unknown",
       "priority": "high",
       "risk": "medium",
@@ -1792,9 +1791,11 @@
         "area": "ci",
         "effort": "M",
         "evidence": [
-          ".github/workflows/",
+          "docs/reports/github-actions-node24-readiness.md",
+          ".github/workflows/opt-arc-001-db-proof-matrix.yml",
           "scripts/ci/check_actions_node24_readiness.py",
-          "scripts/ci/tests/test_check_actions_node24_readiness.py"
+          "scripts/ci/tests/test_check_actions_node24_readiness.py",
+          ".github/workflows/"
         ],
         "id": "OPT-CI-005",
         "links": {
@@ -1806,21 +1807,19 @@
           "prs": []
         },
         "missing_evidence": [
-          "PR-CI-Lauf unter erzwungener Node-24-Action-Runtime ausstehend",
-          "Verbleibende Node-20-Metadatenwarnungen müssen nach PR-CI für Stage B erfasst werden",
-          "Action-Ref-Modernisierung bleibt Stage B, falls Warnungen bestehen"
+          "Stage B bleibt separat: wiederverwendbare externe Workflows und verbleibende Node-20-Metadatenwarnungen der Actions bewerten."
         ],
         "owner": "unknown",
         "priority": "high",
         "risk": "medium",
-        "status": "partial",
+        "status": "done",
         "title": "GitHub Actions Node-24 Runtime Readiness",
-        "updated_at": "2026-06-05"
+        "updated_at": "2026-06-29"
       },
-      "source_task_sha256": "9071200ea386eabbeaef41dd0124748a5361208309edd00e238c78223cb647b1",
-      "status": "partial",
+      "source_task_sha256": "aec2f05702c9c3b712b81da0546ebcf3ed88f0c9d67bd0cbc115481229a40210",
+      "status": "done",
       "title": "GitHub Actions Node-24 Runtime Readiness",
-      "updated_at": "2026-06-05"
+      "updated_at": "2026-06-29"
     },
     {
       "acceptance_count": 3,
@@ -2255,7 +2254,7 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "55a084a82ac6461de50b33fc36726a33604248370bbabb2fe8b55db8ebd16151",
+  "index_sha256": "01a374f28adf3991ccfdea15f517b39b28e0dcfc9ad8a3b87d8ef4c51bf67cd8",
   "ref": "origin/main",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",
@@ -2273,10 +2272,10 @@
   "status_counts": {
     "blocked": 2,
     "contradicted": 0,
-    "done": 27,
+    "done": 28,
     "obsolete": 0,
     "open": 4,
-    "partial": 6
+    "partial": 5
   },
   "task_count": 39
 }

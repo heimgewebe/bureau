@@ -11,6 +11,7 @@ from .cycle_contract import (
     SCHEMA_VERSION,
     atomic_json,
     cycle_id,
+    load_json,
     utc_now,
     validate_receipt,
 )
@@ -23,6 +24,20 @@ def failed_receipt(exc: Exception) -> Path:
     selected_cycle = cycle_id()
     run_id = f"scanner-{stamp}"
     report_path = discovery.RUNS / f"{stamp}-failed.json"
+    started_at = utc_now()
+    for candidate in sorted(discovery.RUNS.glob("*.json"), reverse=True):
+        prior = load_json(candidate, None)
+        if not isinstance(prior, dict):
+            continue
+        if (
+            prior.get("stage") == "scanner"
+            and prior.get("cycle_id") == selected_cycle
+            and prior.get("lifecycle_state") == "running"
+        ):
+            report_path = candidate
+            run_id = str(prior.get("run_id") or run_id)
+            started_at = str(prior.get("started_at") or started_at)
+            break
     now = utc_now()
     report = {
         "schema_version": SCHEMA_VERSION,
@@ -33,7 +48,7 @@ def failed_receipt(exc: Exception) -> Path:
         "scanner_run_id": run_id,
         "trigger": "local-half-hour",
         "schedule_role": "deterministic-discovery-scanner",
-        "started_at": now,
+        "started_at": started_at,
         "finished_at": now,
         "lifecycle_state": "terminal",
         "result": "failed",

@@ -17,7 +17,6 @@ from .cycle_contract import (
     SCHEMA_VERSION,
     atomic_json,
     cycle_id,
-    load_json,
     utc_now,
     validate_receipt,
 )
@@ -347,24 +346,109 @@ def main() -> int:
     cycle = cycle_id()
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_id = f"scanner-{stamp}"
+    report_path = RUNS / f"{stamp}.json"
     for directory in (STATE, RUNS, INBOX):
         directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     lock_handle = LOCK.open("a+")
     try:
         fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
+        now = utc_now()
+        blocked = {
+            "schema_version": SCHEMA_VERSION,
+            "contract_version": CONTRACT_VERSION,
+            "cycle_id": cycle,
+            "stage": "scanner",
+            "run_id": run_id,
+            "scanner_run_id": run_id,
+            "trigger": "local-half-hour",
+            "schedule_role": "deterministic-discovery-scanner",
+            "started_at": started_at,
+            "finished_at": now,
+            "lifecycle_state": "terminal",
+            "result": "blocked",
+            "degraded": False,
+            "baseline": not SOURCE_STATE.exists(),
+            "promotion_allowed": False,
+            "source_revisions": [],
+            "changed_documents": [],
+            "new_candidates": [],
+            "resolved_candidate_fingerprints": [],
+            "scanner_errors": [],
+            "overflow_candidate_count": 0,
+            "metrics": {},
+            "receipt_path": str(report_path),
+            "evidence": [{"kind": "lock", "value": "scanner-already-running"}],
+            "next_action": "allow the existing scanner invocation to finish",
+        }
+        errors = validate_receipt(blocked, expected_stage="scanner", expected_cycle_id=cycle)
+        if errors:
+            raise RuntimeError(
+                "blocked receipt contract failed: " + "; ".join(errors)
+            ) from None
+        atomic_json(report_path, blocked)
+        atomic_json(STATE / "latest.json", blocked)
+        atomic_json(INBOX / f"{cycle}-{stamp}-blocked.json", blocked)
         print(
             json.dumps(
-                {"status": "skipped", "reason": "scanner-already-running", "cycle_id": cycle}
+                {
+                    "status": "blocked",
+                    "reason": "scanner-already-running",
+                    "cycle_id": cycle,
+                    "report": str(report_path),
+                }
             )
         )
         return 0
 
-    registry = load_json(REGISTRY, None)
+    running = {
+        "schema_version": SCHEMA_VERSION,
+        "contract_version": CONTRACT_VERSION,
+        "cycle_id": cycle,
+        "stage": "scanner",
+        "run_id": run_id,
+        "scanner_run_id": run_id,
+        "trigger": "local-half-hour",
+        "schedule_role": "deterministic-discovery-scanner",
+        "started_at": started_at,
+        "finished_at": None,
+        "lifecycle_state": "running",
+        "result": None,
+        "degraded": False,
+        "baseline": not SOURCE_STATE.exists(),
+        "promotion_allowed": False,
+        "source_revisions": [],
+        "receipt_path": str(report_path),
+        "evidence": [],
+        "next_action": "finish the commit-bound discovery scan",
+    }
+    errors = validate_receipt(
+        running,
+        expected_stage="scanner",
+        expected_cycle_id=cycle,
+        require_terminal=False,
+    )
+    if errors:
+        raise RuntimeError("running receipt contract failed: " + "; ".join(errors))
+    atomic_json(report_path, running)
+    atomic_json(STATE / "latest.json", running)
+
+    try:
+        registry = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"missing or invalid source registry: {REGISTRY}") from exc
     if not isinstance(registry, dict):
         raise RuntimeError(f"missing or invalid source registry: {REGISTRY}")
     baseline = not SOURCE_STATE.exists()
-    previous = load_json(SOURCE_STATE, {"documents": {}, "candidate_fingerprints": []})
+    if baseline:
+        previous = {"documents": {}, "candidate_fingerprints": []}
+    else:
+        try:
+            previous = json.loads(SOURCE_STATE.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(f"invalid source state: {SOURCE_STATE}") from exc
+        if not isinstance(previous, dict):
+            raise RuntimeError(f"invalid source state: {SOURCE_STATE}")
     previous_documents = previous.get("documents", {}) if isinstance(previous, dict) else {}
     current_documents: dict[str, Any] = {}
     source_revisions: list[dict[str, Any]] = []
@@ -503,7 +587,6 @@ def main() -> int:
         result = "idle"
 
     finished_at = utc_now()
-    report_path = RUNS / f"{stamp}.json"
     report = {
         "schema_version": SCHEMA_VERSION,
         "contract_version": CONTRACT_VERSION,

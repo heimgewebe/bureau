@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 
+from bureau import discovery, discovery_runner
 from bureau.cycle_contract import (
     CONTRACT_VERSION,
     begin_receipt,
@@ -150,3 +152,73 @@ def test_scanner_receipt_requires_scanner_handoff_fields() -> None:
     assert "scanner receipt missing field: scanner_run_id" in errors
     assert "scanner receipt missing field: source_revisions" in errors
     assert "scanner receipt missing field: promotion_allowed" in errors
+
+
+def configure_scanner_paths(tmp_path: Path, monkeypatch) -> None:
+    state = tmp_path / "state"
+    monkeypatch.setattr(discovery, "STATE", state)
+    monkeypatch.setattr(discovery, "REGISTRY", state / "source-registry.json")
+    monkeypatch.setattr(discovery, "SOURCE_STATE", state / "source-state.json")
+    monkeypatch.setattr(discovery, "RUNS", state / "runs")
+    monkeypatch.setattr(discovery, "INBOX", state / "inbox")
+    monkeypatch.setattr(discovery, "LOCK", state / "scanner.lock")
+
+
+def test_corrupt_source_state_fails_closed(tmp_path: Path, monkeypatch) -> None:
+    configure_scanner_paths(tmp_path, monkeypatch)
+    discovery.STATE.mkdir(parents=True)
+    discovery.REGISTRY.write_text(
+        json.dumps({"repositories": [], "vault_root": str(tmp_path / "vault")}),
+        encoding="utf-8",
+    )
+    discovery.SOURCE_STATE.write_text("{not-json", encoding="utf-8")
+
+    try:
+        discovery.main()
+    except RuntimeError as exc:
+        assert "invalid source state" in str(exc)
+    else:
+        raise AssertionError("corrupt source state must fail closed")
+
+    latest = json.loads((discovery.STATE / "latest.json").read_text(encoding="utf-8"))
+    assert latest["lifecycle_state"] == "running"
+    assert latest["promotion_allowed"] is False
+
+
+def test_failed_receipt_closes_current_running_scanner_receipt(tmp_path: Path, monkeypatch) -> None:
+    configure_scanner_paths(tmp_path, monkeypatch)
+    discovery.RUNS.mkdir(parents=True)
+    discovery.INBOX.mkdir(parents=True)
+    selected_cycle = discovery.cycle_id()
+    running_path = discovery.RUNS / "20260629T030000Z.json"
+    running = {
+        "schema_version": 2,
+        "contract_version": CONTRACT_VERSION,
+        "cycle_id": selected_cycle,
+        "stage": "scanner",
+        "run_id": "scanner-running",
+        "scanner_run_id": "scanner-running",
+        "trigger": "test",
+        "started_at": "2026-06-29T03:00:00Z",
+        "finished_at": None,
+        "lifecycle_state": "running",
+        "result": None,
+        "degraded": False,
+        "promotion_allowed": False,
+        "source_revisions": [],
+        "evidence": [],
+        "next_action": "finish",
+        "receipt_path": str(running_path),
+    }
+    running_path.write_text(json.dumps(running), encoding="utf-8")
+
+    result_path = discovery_runner.failed_receipt(RuntimeError("broken state"))
+
+    assert result_path == running_path
+    terminal = json.loads(running_path.read_text(encoding="utf-8"))
+    assert terminal["run_id"] == "scanner-running"
+    assert terminal["started_at"] == "2026-06-29T03:00:00Z"
+    assert terminal["lifecycle_state"] == "terminal"
+    assert terminal["result"] == "failed"
+    assert terminal["promotion_allowed"] is False
+    assert validate_receipt(terminal, expected_stage="scanner") == []

@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-001-T005",
+  "initiative": "BUR-2026-001",
+  "title": "Bind Grabowski safety smooth-ops closure lane",
+  "state": "planned",
+  "goal": "Bind branch plan/grabowski-safety-smooth-ops and its task pack to a canonical Bureau task before external execution uses the lane.",
+  "depends_on": ["BUR-2026-001-T001"],
+  "required_capabilities": ["repository", "shell", "grabowski"],
+  "priority": {"lane": "next", "rank": 50},
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": ["repo:/home/alex/repos/bureau"]
+  },
+  "claims": [
+    {"resource": "repo.bureau", "mode": "write", "isolation": "worktree"},
+    {"resource": "host.heim-pc", "mode": "capacity", "amount": 1, "isolation": "none"}
+  ],
+  "acceptance": [
+    {"id": "closure-lane-bound", "assertion": "The matching closure lane records this canonical task id."},
+    {"id": "task-pack-normalized", "assertion": "The task pack is promoted into canonical Bureau tasks or kept as non-executable evidence."},
+    {"id": "delegator-safe", "assertion": "External execution requires a valid brief and this task binding."}
+  ],
+  "metadata": {
+    "source_branch": "plan/grabowski-safety-smooth-ops",
+    "source_task_pack": "work/grabowski-safety-smooth-ops/bureau_tasks.json",
+    "closure_fingerprints": [
+      "a3e5c7722cadc263d8971eb2713c58face319c1ba3dcbee88bf3e6f6dfdeed98",
+      "d132789ec134bda6d1b74c34cb346e0bcff902bdf0cd0077860569b06cbf5380"
+    ],
+    "created_for": "closure-lane-canonical-binding"
+  }
+}

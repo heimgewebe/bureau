@@ -1,0 +1,67 @@
+{
+  "schema_version": "bureau-task-pack.v1",
+  "program": "grabowski-safety-smooth-ops",
+  "created_at": "2026-06-29T16:04:00+02:00",
+  "tasks": [
+    {
+      "id": "GBW-001",
+      "title": "Operating Baseline und Receipts einfrieren",
+      "priority": "P0",
+      "status": "IN_PROGRESS",
+      "acceptance": [
+        "health receipt exists",
+        "task receipt exists",
+        "platform block matrix exists",
+        "current runtime and contract status documented"
+      ]
+    },
+    {
+      "id": "GBW-002",
+      "title": "Reconcile in check, refresh und resume splitten",
+      "priority": "P0",
+      "status": "READY",
+      "acceptance": [
+        "check tool is read-only",
+        "refresh starts no processes",
+        "resume requires explicit task id or bounded max_resumes",
+        "audit operations are distinct"
+      ]
+    },
+    {
+      "id": "GBW-003",
+      "title": "Capability-Profile observe, maintain, mutate, break-glass einführen",
+      "priority": "P1",
+      "status": "READY"
+    },
+    {
+      "id": "GBW-004",
+      "title": "Tool-Schemas und Contract-Receipts härten",
+      "priority": "P1",
+      "status": "READY"
+    },
+    {
+      "id": "GBW-005",
+      "title": "Terminalfläche in dedizierte Diagnosewerkzeuge überführen",
+      "priority": "P1",
+      "status": "READY"
+    },
+    {
+      "id": "GBW-006",
+      "title": "Secrets und Browserprofile kapseln",
+      "priority": "P1",
+      "status": "READY"
+    },
+    {
+      "id": "GBW-007",
+      "title": "systemd- und Worker-Sandboxing phasenweise aktivieren",
+      "priority": "P2",
+      "status": "READY"
+    },
+    {
+      "id": "GBW-008",
+      "title": "Prompt-Injection- und Tool-Poisoning-Regression bauen",
+      "priority": "P2",
+      "status": "READY"
+    }
+  ]
+}

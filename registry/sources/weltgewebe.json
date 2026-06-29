@@ -1,6 +1,5 @@
 {
   "active_task_ids": [
-    "AGENT-SAFE-008",
     "AUTH-PG-001",
     "AUTH-PG-002",
     "AUTH-PG-003",
@@ -14,11 +13,10 @@
     "OPT-ARC-001",
     "OPT-CI-003",
     "OPT-CI-005",
-    "OPT-CON-001",
     "OPT-INF-002",
     "TASK-CTL-002"
   ],
-  "commit_sha": "3faed83a521e6bcac87e38cf618a132053bb05c7",
+  "commit_sha": "5307219be402580ea49b3ca7217566f0ac8b1733",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -459,7 +457,7 @@
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 2,
+      "missing_evidence_count": 1,
       "owner": "unknown",
       "priority": "high",
       "risk": "high",
@@ -494,20 +492,19 @@
           "prs": []
         },
         "missing_evidence": [
-          "PR-CI, Merge auf main und post-merge Verifikation stehen aus",
-          "Der Vollausbau auf alle docs/_generated-Artefakte bleibt PR 13"
+          "Full generated-artifact coverage remains a separate follow-up slice; this task closes the minimal control contract."
         ],
         "owner": "unknown",
         "priority": "high",
         "risk": "high",
-        "status": "partial",
+        "status": "done",
         "title": "Minimalen Generated-Artifact-Kontrollvertrag einführen",
-        "updated_at": "2026-06-27"
+        "updated_at": "2026-06-29"
       },
-      "source_task_sha256": "64e9e30217306c8b6d30c1146c18d6c6db4d70f8a47b59e34c8673e36728fffb",
-      "status": "partial",
+      "source_task_sha256": "55b8ea4166906bd7513e31630ee9c08752b932b67dd44d4906a063d3bbb20a72",
+      "status": "done",
       "title": "Minimalen Generated-Artifact-Kontrollvertrag einführen",
-      "updated_at": "2026-06-27"
+      "updated_at": "2026-06-29"
     },
     {
       "acceptance_count": 3,
@@ -1834,14 +1831,14 @@
       "acceptance_count": 3,
       "area": "ci",
       "effort": "S",
-      "evidence_count": 7,
+      "evidence_count": 10,
       "id": "OPT-CON-001",
       "link_counts": {
         "docs": 1,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 1,
+      "missing_evidence_count": 0,
       "owner": "unknown",
       "priority": "high",
       "risk": "medium",
@@ -1860,7 +1857,10 @@
           "contracts/domain/message.schema.json",
           "contracts/domain/node.schema.json",
           "contracts/domain/role.schema.json",
-          "scripts/contracts-domain-check.sh"
+          "contracts/domain/examples/message.example.json",
+          "contracts/domain/examples/role.example.json",
+          "scripts/contracts-domain-check.sh",
+          ".github/workflows/contracts-domain.yml"
         ],
         "id": "OPT-CON-001",
         "links": {
@@ -1870,20 +1870,18 @@
           "issues": [],
           "prs": []
         },
-        "missing_evidence": [
-          "CI-Nachweis der gehärteten Schemas via contracts-domain.yml steht aus; lokaler Check muss im PR-Body belegt werden"
-        ],
+        "missing_evidence": [],
         "owner": "unknown",
         "priority": "high",
         "risk": "medium",
-        "status": "partial",
+        "status": "done",
         "title": "additionalProperties: false und String-Constraints in Domain-Schemas",
-        "updated_at": "2026-05-29"
+        "updated_at": "2026-06-29"
       },
-      "source_task_sha256": "274ed605e7a58af44cb1eff8db5968fc5150dcc194ea767cc62a6622e5485128",
-      "status": "partial",
+      "source_task_sha256": "735a806db7be0f4d23c682e3267aada3d3e33c7a492128fdb701f70640f08a58",
+      "status": "done",
       "title": "additionalProperties: false und String-Constraints in Domain-Schemas",
-      "updated_at": "2026-05-29"
+      "updated_at": "2026-06-29"
     },
     {
       "acceptance_count": 2,
@@ -2261,8 +2259,8 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "1c4f9db2054d38225b584bdadf31dd32820dbdd0706a9475f07b04bd28415a13",
-  "ref": "HEAD",
+  "index_sha256": "f299c4dbc8049036c0ec4fcc743eaebbcc2392d015e3962cb695e5b6c5631445",
+  "ref": "origin/main",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",
   "schema_sha256": "da290e95c2a54af8aac82802b4d6e0bbab5abc0303c3fc6d9e0e4bac99b003f5",
@@ -2279,10 +2277,10 @@
   "status_counts": {
     "blocked": 2,
     "contradicted": 0,
-    "done": 22,
+    "done": 24,
     "obsolete": 0,
     "open": 6,
-    "partial": 9
+    "partial": 7
   },
   "task_count": 39
 }

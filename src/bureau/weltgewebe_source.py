@@ -388,6 +388,15 @@ def source_check(repository: str | Path, ref: str = "origin/main") -> dict[str, 
     return _public_report(candidate, no_drift)
 
 
+_PROVENANCE_ONLY_FIELDS = frozenset({"ref", "commit_sha"})
+
+
+def _source_content(value: dict[str, Any] | None) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    return {key: item for key, item in value.items() if key not in _PROVENANCE_ONLY_FIELDS}
+
+
 def source_sync(
     root: Path,
     repository: str | Path,
@@ -401,8 +410,7 @@ def source_sync(
     existing = read_json(target) if target.exists() else None
     changes = _change_summary(existing, candidate)
     rendered = json.dumps(candidate, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
-    current = target.read_text(encoding="utf-8") if target.exists() else None
-    changed = current != rendered
+    changed = _source_content(existing) != _source_content(candidate)
     applied = False
     if apply and changed:
         try:

@@ -223,8 +223,16 @@ def test_source_sync_apply_is_valid_and_idempotent(registry_factory, source_repo
     Registry.load(root)
     before = target.stat().st_mtime_ns
     second = source_sync(root, source_repo, "HEAD", apply=True)
+    alias = source_sync(root, source_repo, first["commit_sha"], apply=True)
     assert second["applied"] is False
     assert second["changed"] is False
+    assert not alias["changed"]
+    assert target.stat().st_mtime_ns == before
+    (source_repo / "unrelated.txt").write_text("unrelated\n", encoding="utf-8")
+    commit_source(source_repo, "unrelated")
+    third = source_sync(root, source_repo, "HEAD", apply=True)
+    assert not third["changed"]
+    assert not third["applied"]
     assert target.stat().st_mtime_ns == before
     snapshot = json.loads(target.read_text(encoding="utf-8"))
     assert snapshot["active_task_ids"] == ["TASK-ONE-001"]

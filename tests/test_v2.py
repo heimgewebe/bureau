@@ -664,3 +664,59 @@ def test_default_grabowski_source_rejects_module_outside_release(tmp_path, monke
     monkeypatch.setenv("BUREAU_GRABOWSKI_MANIFEST", str(manifest))
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path / "empty-home"))
     assert bureau_cli.default_grabowski_source() is None
+
+
+def valid_agent_brief(path: Path) -> Path:
+    brief = {
+        "goal": "Implement the bounded change exactly as scoped.",
+        "context_summary": "Grabowski has already identified the target and invariants.",
+        "target_files_or_search_scope": ["src/example.py"],
+        "acceptance_criteria": ["tests pass"],
+        "non_goals": ["do not broaden scope"],
+        "allowed_changes": ["minimal code and tests"],
+        "forbidden_changes": ["no deployment", "no unrelated rewrites"],
+        "validation_commands": ["pytest"],
+        "expected_handoff_format": "summary, changed files, validation results, unresolved risks",
+    }
+    path.write_text(json.dumps(brief), encoding="utf-8")
+    return path
+
+
+def test_external_agent_checkout_requires_valid_grabowski_brief(
+    registry_factory, tmp_path, monkeypatch
+):
+    monkeypatch.setenv("BUREAU_WORKER_ROUTING_CONFIG", str(tmp_path / "routing.json"))
+    (tmp_path / "routing.json").write_text(
+        json.dumps({"policy": {"agent_brief_required": True}}), encoding="utf-8"
+    )
+    root = registry_factory(1)
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["execution"]["worker_profile"] = "codex-efficient"
+    task["claims"][0]["isolation"] = "none"
+    task_path.write_text(json.dumps(task))
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+    with pytest.raises(StateError, match="requires a Grabowski agent brief"):
+        dispatcher.checkout_next("codex-worker", ("repository",), base_dir=tmp_path / "worktrees")
+
+
+def test_external_agent_checkout_accepts_valid_grabowski_brief(
+    registry_factory, tmp_path, monkeypatch
+):
+    monkeypatch.setenv("BUREAU_WORKER_ROUTING_CONFIG", str(tmp_path / "routing.json"))
+    (tmp_path / "routing.json").write_text(
+        json.dumps({"policy": {"agent_brief_required": True}}), encoding="utf-8"
+    )
+    root = registry_factory(1)
+    brief_path = valid_agent_brief(tmp_path / "brief.json")
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["execution"]["worker_profile"] = "codex-efficient"
+    task["execution"]["agent_brief_path"] = str(brief_path)
+    task["claims"][0]["isolation"] = "none"
+    task_path.write_text(json.dumps(task))
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+    result = dispatcher.checkout_next("codex-worker", ("repository",), base_dir=tmp_path / "worktrees")
+    assert result["agent_brief"]["status"] == "valid"
+    assert result["handoff"]["agent_brief_path"] == str(brief_path)
+    assert result["handoff"]["worker_profile"] == "codex-efficient"

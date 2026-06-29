@@ -27,6 +27,94 @@ EVIDENCE_TYPES: dict[str, type | tuple[type, ...]] = {
     "array": list,
 }
 
+AGENT_BRIEF_REQUIRED_FIELDS = (
+    "goal",
+    "context_summary",
+    "target_files_or_search_scope",
+    "acceptance_criteria",
+    "non_goals",
+    "allowed_changes",
+    "forbidden_changes",
+    "validation_commands",
+    "expected_handoff_format",
+)
+EXTERNAL_AGENT_MARKERS = ("codex", "claude", "cline", "agy", "gemini", "jules")
+
+
+def _grabowski_worker_policy() -> dict[str, Any]:
+    configured = os.environ.get("BUREAU_WORKER_ROUTING_CONFIG")
+    path = Path(configured).expanduser() if configured else Path.home() / ".config/grabowski/worker-routing.json"
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def _external_agent_profile(task: legacy.Task, worker_id: str, kind: str) -> str | None:
+    explicit = task.execution.get("worker_profile") or task.execution.get("preferred_worker_profile")
+    if isinstance(explicit, str) and explicit:
+        return explicit
+    haystack = " ".join((worker_id, kind, task.mode, task.policy)).lower()
+    if worker_id.lower().startswith("grabowski") or kind.lower().startswith("grabowski"):
+        return None
+    for marker in EXTERNAL_AGENT_MARKERS:
+        if marker in haystack:
+            return marker
+    return None
+
+
+def _agent_brief_path(task: legacy.Task) -> Path | None:
+    raw = (
+        task.execution.get("agent_brief_path")
+        or task.execution.get("grabowski_agent_brief")
+        or task.raw.get("metadata", {}).get("agent_brief_path")
+    )
+    if not isinstance(raw, str) or not raw.strip():
+        return None
+    return Path(raw).expanduser()
+
+
+def validate_agent_brief(task: legacy.Task, worker_id: str, kind: str) -> dict[str, Any]:
+    path = _agent_brief_path(task)
+    if path is None:
+        raise legacy.StateError(
+            f"task {task.id} requires a Grabowski agent brief before external dispatch"
+        )
+    try:
+        brief = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        raise legacy.StateError(f"invalid agent brief for task {task.id}: {exc}") from exc
+    if not isinstance(brief, dict):
+        raise legacy.StateError(f"agent brief for task {task.id} must be a JSON object")
+    missing = [field for field in AGENT_BRIEF_REQUIRED_FIELDS if field not in brief]
+    if missing:
+        raise legacy.StateError(
+            f"agent brief for task {task.id} misses fields: {', '.join(missing)}"
+        )
+    empty = [field for field in AGENT_BRIEF_REQUIRED_FIELDS if brief[field] in (None, "", [], {})]
+    if empty:
+        raise legacy.StateError(
+            f"agent brief for task {task.id} has empty fields: {', '.join(empty)}"
+        )
+    return {
+        "path": str(path),
+        "sha256": legacy.sha256_json(brief),
+        "profile": _external_agent_profile(task, worker_id, kind),
+    }
+
+
+def _requires_agent_brief(task: legacy.Task, worker_id: str, kind: str, *, dispatch: bool) -> bool:
+    policy = _grabowski_worker_policy().get("policy", {})
+    if not policy.get("agent_brief_required", False):
+        return False
+    profile = _external_agent_profile(task, worker_id, kind)
+    if not profile:
+        return False
+    if task.mode in {"grabowski-task", "grabowski-operation"} and profile is None:
+        return False
+    return dispatch or profile in set(policy.get("first_external_worker", "").split()) or True
+
 
 def task_revision_sha256(raw: dict[str, Any]) -> str:
     payload = json.loads(json.dumps(raw))
@@ -670,10 +758,19 @@ class Dispatcher(legacy.Dispatcher):
         )
         run = claimed["run"]
         task = self.registry.tasks[run["task_id"]]
+        brief_gate: dict[str, Any] | None = None
+        if _requires_agent_brief(task, worker_id, kind, dispatch=dispatch):
+            try:
+                brief_gate = validate_agent_brief(task, worker_id, kind)
+            except legacy.StateError as exc:
+                fail_run(self.store, run["run_id"], f"agent brief preflight failed: {exc}")
+                raise
         if any(claim.isolation == "worktree" for claim in task.claims):
             run = create_workspace(self.registry, self.store, run["run_id"], base_dir)
         handoff = grabowski_handoff(self.registry, self.store, run["run_id"])
         result = {**claimed, "run": run, "handoff": handoff, "reconciliation": reconciliation}
+        if brief_gate is not None:
+            result["agent_brief"] = {**brief_gate, "status": "valid"}
         if dispatch:
             if task.mode != "grabowski-task":
                 result["dispatch"] = {"status": "not-applicable", "mode": task.mode}
@@ -1107,6 +1204,11 @@ def grabowski_handoff(registry: Registry, store: StateStore, run_id: str) -> dic
         "cwd": run["workspace_path"] or task.execution.get("cwd"),
         "resource_keys": sorted(keys),
         "acceptance": list(task.acceptance),
+        "agent_brief_path": task.execution.get("agent_brief_path")
+        or task.execution.get("grabowski_agent_brief")
+        or task.raw.get("metadata", {}).get("agent_brief_path"),
+        "worker_profile": task.execution.get("worker_profile")
+        or task.execution.get("preferred_worker_profile"),
         "cpu_weight": int(task.execution.get("cpu_weight", 100)),
         "io_weight": int(task.execution.get("io_weight", 100)),
         "memory_max_bytes": task.execution.get("memory_max_bytes"),

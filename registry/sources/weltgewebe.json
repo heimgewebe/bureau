@@ -8,11 +8,10 @@
     "DOCMETA-FRESHNESS-001",
     "DOCMETA-REPORT-LIFECYCLE-001",
     "DOMAIN-PG-001",
-    "DOMAIN-PG-003",
     "OPT-ARC-001",
     "OPT-INF-002"
   ],
-  "commit_sha": "74132da5e3a3b933bdef8cb1a977b893fb134a08",
+  "commit_sha": "9e4123bbbc90b00dc0a0f67119e4c223d78ec0ec",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -1477,14 +1476,14 @@
       "acceptance_count": 3,
       "area": "api",
       "effort": "M",
-      "evidence_count": 1,
+      "evidence_count": 4,
       "id": "DOMAIN-PG-003",
       "link_counts": {
         "docs": 1,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 2,
+      "missing_evidence_count": 0,
       "owner": "unknown",
       "priority": "low",
       "risk": "medium",
@@ -1497,7 +1496,10 @@
         "area": "api",
         "effort": "M",
         "evidence": [
-          "apps/api/src/routes/edges.rs"
+          "docs/reports/domain-edge-cache-limit-design.md",
+          "apps/api/src/domain_db.rs",
+          "apps/api/src/routes/edges.rs",
+          "docs/blueprints/domain-data-postgres-cutover.md"
         ],
         "id": "DOMAIN-PG-003",
         "links": {
@@ -1507,21 +1509,18 @@
           "issues": [],
           "prs": []
         },
-        "missing_evidence": [
-          "Kein gemessener Insert-Pfad und keine dokumentierte Trade-off-Entscheidung zur Abloesung von LOCK TABLE + COUNT(*)",
-          "Bewusst zurueckgestellt (TODO C1): erst Messpunkt/Design, dann Umbau"
-        ],
+        "missing_evidence": [],
         "owner": "unknown",
         "priority": "low",
         "risk": "medium",
-        "status": "open",
+        "status": "done",
         "title": "Edge-Cache-Limit ohne Tabellenlock und Vollzaehlung designen",
-        "updated_at": "2026-06-16"
+        "updated_at": "2026-06-29"
       },
-      "source_task_sha256": "f484e9999d55b24bf7e7e4a93c66a5bf30d453df85b2a34132f9dcf25e6e4288",
-      "status": "open",
+      "source_task_sha256": "12a97e6e9c8c9707e0867de453a46bb8f02c2311669fd3b0fbe403f420079a55",
+      "status": "done",
       "title": "Edge-Cache-Limit ohne Tabellenlock und Vollzaehlung designen",
-      "updated_at": "2026-06-16"
+      "updated_at": "2026-06-29"
     },
     {
       "acceptance_count": 3,
@@ -2254,7 +2253,7 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "01a374f28adf3991ccfdea15f517b39b28e0dcfc9ad8a3b87d8ef4c51bf67cd8",
+  "index_sha256": "85fa8644715ac0dbea43527a265f97b0eb6a511a525e820e6dda43064e8ec9dd",
   "ref": "origin/main",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",
@@ -2272,9 +2271,9 @@
   "status_counts": {
     "blocked": 2,
     "contradicted": 0,
-    "done": 28,
+    "done": 29,
     "obsolete": 0,
-    "open": 4,
+    "open": 3,
     "partial": 5
   },
   "task_count": 39

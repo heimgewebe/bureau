@@ -1,0 +1,27 @@
+[Unit]
+Description=Bureau read-only agent frontier governor
+Documentation=https://github.com/heimgewebe/bureau
+ConditionPathIsDirectory=%h/repos/bureau
+ConditionPathExists=%h/.local/state/bureau-halfhour-operator/source-state.json
+After=network-online.target bureau-closure-planner.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/libexec/bureau-agent-frontier
+TimeoutStartSec=2min
+UMask=0077
+Nice=5
+IOSchedulingClass=best-effort
+IOSchedulingPriority=6
+Environment=PYTHONUNBUFFERED=1
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.local/state/bureau-agent-frontier
+RestrictAddressFamilies=AF_UNIX
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictRealtime=true
+SystemCallArchitectures=native

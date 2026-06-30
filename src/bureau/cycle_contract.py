@@ -14,7 +14,7 @@ from zoneinfo import ZoneInfo
 
 CONTRACT_VERSION = 2
 SCHEMA_VERSION = 2
-STAGES = {"scanner", "curator", "operator", "verifier", "watchdog"}
+STAGES = {"scanner", "curator", "frontier", "operator", "verifier", "watchdog"}
 TERMINAL_RESULTS = {"completed", "partial", "blocked", "idle", "failed"}
 TRANSIENT_UNIT_PREFIXES = (
     "grabowski-task-",
@@ -76,6 +76,8 @@ def stage_state_root(stage: str, state_root: Path | None = None) -> Path:
     base = state_root or Path.home() / ".local/state"
     if stage == "scanner":
         return base / "bureau-halfhour-operator"
+    if stage == "frontier":
+        return base / "bureau-agent-frontier"
     return base / f"bureau-{stage}"
 
 

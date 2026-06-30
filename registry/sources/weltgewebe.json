@@ -6,17 +6,12 @@
     "DB-PROOF-001",
     "DEPLOY-DNS-001",
     "DOCMETA-FRESHNESS-001",
-    "DOCMETA-PROOF-001",
     "DOCMETA-REPORT-LIFECYCLE-001",
     "DOMAIN-PG-001",
-    "DOMAIN-PG-003",
     "OPT-ARC-001",
-    "OPT-CI-003",
-    "OPT-CI-005",
-    "OPT-INF-002",
-    "TASK-CTL-002"
+    "OPT-INF-002"
   ],
-  "commit_sha": "5307219be402580ea49b3ca7217566f0ac8b1733",
+  "commit_sha": "ecf5343307d16ffcad6cab36db3a8abb3d4e92a3",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -1022,14 +1017,14 @@
       "acceptance_count": 4,
       "area": "docs",
       "effort": "S",
-      "evidence_count": 4,
+      "evidence_count": 5,
       "id": "DOCMETA-PROOF-001",
       "link_counts": {
         "docs": 3,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 3,
+      "missing_evidence_count": 0,
       "owner": "docs-mechanik",
       "priority": "medium",
       "risk": "low",
@@ -1043,6 +1038,7 @@
         "area": "docs",
         "effort": "S",
         "evidence": [
+          "docs/reports/proof-matrix-generalization-decision.md",
           "docs/reports/opt-arc-001-db-proof-matrix.json",
           "scripts/docmeta/validate_opt_arc_001_db_proof_matrix.py",
           "scripts/docmeta/tests/test_validate_opt_arc_001_db_proof_matrix.py",
@@ -1058,35 +1054,31 @@
           "issues": [],
           "prs": []
         },
-        "missing_evidence": [
-          "Zweiter echter Proof-Matrix-Anwendungsfall fehlt; Generalisierung darf nicht aus nur einem OPT-ARC-001-Spezialfall abgeleitet werden",
-          "Entscheidung fehlt, welche Teile generisch werden sollen: Matrix-Schema, Status-Sync, Evidence-Regeln, Workflow-Trigger-Regeln, Shell-Command-Prüfung",
-          "Nachweis fehlt, dass ein gemeinsames Schema mehr Nutzen als projektspezifische Validatoren stiftet"
-        ],
+        "missing_evidence": [],
         "owner": "docs-mechanik",
         "priority": "medium",
         "risk": "low",
-        "status": "open",
+        "status": "done",
         "title": "Proof-Matrix-Validator-Schema vormerken",
-        "updated_at": "2026-06-11"
+        "updated_at": "2026-06-29"
       },
-      "source_task_sha256": "98e95b540d77a70c39b170ff90d2730ccf16a64f9f3401ebcd08a88301d14ffd",
-      "status": "open",
+      "source_task_sha256": "9e1f95ee5247084dae813d2d67db59ed391dcda1c5b6d1c8dd9b24961b2ece7d",
+      "status": "done",
       "title": "Proof-Matrix-Validator-Schema vormerken",
-      "updated_at": "2026-06-11"
+      "updated_at": "2026-06-29"
     },
     {
       "acceptance_count": 13,
       "area": "docs",
       "effort": "M",
-      "evidence_count": 10,
+      "evidence_count": 16,
       "id": "DOCMETA-REPORT-LIFECYCLE-001",
       "link_counts": {
         "docs": 2,
         "issues": 0,
         "prs": 5
       },
-      "missing_evidence_count": 7,
+      "missing_evidence_count": 6,
       "owner": "docs-mechanik",
       "priority": "medium",
       "risk": "medium",
@@ -1118,7 +1110,13 @@
           "scripts/docmeta/generate_report_lifecycle_inventory.py",
           ".github/workflows/docs-guard.yml",
           "docs/reports/report-lifecycle-restbestand-triage.md",
-          "docs/reports/passkey-register-verify-prep.md"
+          "docs/reports/passkey-register-verify-prep.md",
+          "tools/py/cost/report.py",
+          "docs/reports/cost-report.md",
+          "docs/reports/domain-runtime-data-source-reconciliation.md",
+          "docs/reports/map-architekturkritik.md",
+          "docs/reports/map-basemap-proof-gap-reconciliation.md",
+          "docs/reports/optimierungsbericht.md"
         ],
         "id": "DOCMETA-REPORT-LIFECYCLE-001",
         "links": {
@@ -1136,7 +1134,6 @@
           ]
         },
         "missing_evidence": [
-          "Acht Reports wurden ursprünglich triagiert. Slice A und B sind abgeschlossen. 5 Reports verbleiben unklassifiziert.",
           "Fehlendes oder nicht parsebares Report-Frontmatter wird noch nicht vollständig blockierend erkannt",
           "Semantische Validatorprüfungen für Lifecycle-Enums, ISO-Datum und Supersession-Konsistenz fehlen",
           "Die owner_task-Semantik und die normativen Registrierungsquellen sind entschieden und gegen den bestehenden Bestand kompatibilitätsgeprüft; vollständige OPT-Markdown–JSON-Parität und technische Existenzprüfung bleiben nach den Backfill-Slices offen.",
@@ -1149,12 +1146,12 @@
         "risk": "medium",
         "status": "partial",
         "title": "Report-Lifecycle-Rollout reconciliieren und Restbestand ratcheten",
-        "updated_at": "2026-06-23"
+        "updated_at": "2026-06-29"
       },
-      "source_task_sha256": "948ce6328e4e5d66f8de78716c60aca76450f729ba2d3f3c9575a082b00baad3",
+      "source_task_sha256": "4215441ae529295f064f0e32242189771a78d2e30da3060aad441d8a1bd49d45",
       "status": "partial",
       "title": "Report-Lifecycle-Rollout reconciliieren und Restbestand ratcheten",
-      "updated_at": "2026-06-23"
+      "updated_at": "2026-06-29"
     },
     {
       "acceptance_count": 5,
@@ -1484,14 +1481,14 @@
       "acceptance_count": 3,
       "area": "api",
       "effort": "M",
-      "evidence_count": 1,
+      "evidence_count": 4,
       "id": "DOMAIN-PG-003",
       "link_counts": {
         "docs": 1,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 2,
+      "missing_evidence_count": 0,
       "owner": "unknown",
       "priority": "low",
       "risk": "medium",
@@ -1504,7 +1501,10 @@
         "area": "api",
         "effort": "M",
         "evidence": [
-          "apps/api/src/routes/edges.rs"
+          "docs/reports/domain-edge-cache-limit-design.md",
+          "apps/api/src/domain_db.rs",
+          "apps/api/src/routes/edges.rs",
+          "docs/blueprints/domain-data-postgres-cutover.md"
         ],
         "id": "DOMAIN-PG-003",
         "links": {
@@ -1514,21 +1514,18 @@
           "issues": [],
           "prs": []
         },
-        "missing_evidence": [
-          "Kein gemessener Insert-Pfad und keine dokumentierte Trade-off-Entscheidung zur Abloesung von LOCK TABLE + COUNT(*)",
-          "Bewusst zurueckgestellt (TODO C1): erst Messpunkt/Design, dann Umbau"
-        ],
+        "missing_evidence": [],
         "owner": "unknown",
         "priority": "low",
         "risk": "medium",
-        "status": "open",
+        "status": "done",
         "title": "Edge-Cache-Limit ohne Tabellenlock und Vollzaehlung designen",
-        "updated_at": "2026-06-16"
+        "updated_at": "2026-06-29"
       },
-      "source_task_sha256": "f484e9999d55b24bf7e7e4a93c66a5bf30d453df85b2a34132f9dcf25e6e4288",
-      "status": "open",
+      "source_task_sha256": "12a97e6e9c8c9707e0867de453a46bb8f02c2311669fd3b0fbe403f420079a55",
+      "status": "done",
       "title": "Edge-Cache-Limit ohne Tabellenlock und Vollzaehlung designen",
-      "updated_at": "2026-06-16"
+      "updated_at": "2026-06-29"
     },
     {
       "acceptance_count": 3,
@@ -1682,14 +1679,14 @@
       "acceptance_count": 2,
       "area": "ci",
       "effort": "S",
-      "evidence_count": 1,
+      "evidence_count": 5,
       "id": "OPT-CI-003",
       "link_counts": {
         "docs": 1,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 2,
+      "missing_evidence_count": 0,
       "owner": "unknown",
       "priority": "low",
       "risk": "low",
@@ -1701,7 +1698,11 @@
         "area": "ci",
         "effort": "S",
         "evidence": [
-          ".github/workflows/python-tooling.yml"
+          "toolchain.versions.yml",
+          ".github/workflows/ci.yml",
+          ".github/workflows/python-tooling.yml",
+          ".github/workflows/api-smoke.yml",
+          ".github/workflows/security.yml"
         ],
         "id": "OPT-CI-003",
         "links": {
@@ -1711,21 +1712,18 @@
           "issues": [],
           "prs": []
         },
-        "missing_evidence": [
-          "dtolnay/rust-toolchain weiterhin gemischt @stable/@v1",
-          "gepinnte uv-Version nicht erzwungen"
-        ],
+        "missing_evidence": [],
         "owner": "unknown",
         "priority": "low",
         "risk": "low",
-        "status": "partial",
+        "status": "done",
         "title": "Action-Refs vereinheitlichen (dtolnay/rust-toolchain + uv-Pin)",
-        "updated_at": "2026-06-16"
+        "updated_at": "2026-06-29"
       },
-      "source_task_sha256": "2bd26eb733ba3e22d6d9eabe4fd7fbea72c36c9c05a481630983669334bf6df0",
-      "status": "partial",
+      "source_task_sha256": "e9f265fc2ba71d8e02ef6cba703194f0cad372d640eb82720a49177e1d144829",
+      "status": "done",
       "title": "Action-Refs vereinheitlichen (dtolnay/rust-toolchain + uv-Pin)",
-      "updated_at": "2026-06-16"
+      "updated_at": "2026-06-29"
     },
     {
       "acceptance_count": 2,
@@ -1777,14 +1775,14 @@
       "acceptance_count": 3,
       "area": "ci",
       "effort": "M",
-      "evidence_count": 3,
+      "evidence_count": 5,
       "id": "OPT-CI-005",
       "link_counts": {
         "docs": 2,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 3,
+      "missing_evidence_count": 1,
       "owner": "unknown",
       "priority": "high",
       "risk": "medium",
@@ -1797,9 +1795,11 @@
         "area": "ci",
         "effort": "M",
         "evidence": [
-          ".github/workflows/",
+          "docs/reports/github-actions-node24-readiness.md",
+          ".github/workflows/opt-arc-001-db-proof-matrix.yml",
           "scripts/ci/check_actions_node24_readiness.py",
-          "scripts/ci/tests/test_check_actions_node24_readiness.py"
+          "scripts/ci/tests/test_check_actions_node24_readiness.py",
+          ".github/workflows/"
         ],
         "id": "OPT-CI-005",
         "links": {
@@ -1811,21 +1811,19 @@
           "prs": []
         },
         "missing_evidence": [
-          "PR-CI-Lauf unter erzwungener Node-24-Action-Runtime ausstehend",
-          "Verbleibende Node-20-Metadatenwarnungen müssen nach PR-CI für Stage B erfasst werden",
-          "Action-Ref-Modernisierung bleibt Stage B, falls Warnungen bestehen"
+          "Stage B bleibt separat: wiederverwendbare externe Workflows und verbleibende Node-20-Metadatenwarnungen der Actions bewerten."
         ],
         "owner": "unknown",
         "priority": "high",
         "risk": "medium",
-        "status": "partial",
+        "status": "done",
         "title": "GitHub Actions Node-24 Runtime Readiness",
-        "updated_at": "2026-06-05"
+        "updated_at": "2026-06-29"
       },
-      "source_task_sha256": "9071200ea386eabbeaef41dd0124748a5361208309edd00e238c78223cb647b1",
-      "status": "partial",
+      "source_task_sha256": "aec2f05702c9c3b712b81da0546ebcf3ed88f0c9d67bd0cbc115481229a40210",
+      "status": "done",
       "title": "GitHub Actions Node-24 Runtime Readiness",
-      "updated_at": "2026-06-05"
+      "updated_at": "2026-06-29"
     },
     {
       "acceptance_count": 3,
@@ -2043,14 +2041,14 @@
       "acceptance_count": 2,
       "area": "governance",
       "effort": "S",
-      "evidence_count": 0,
+      "evidence_count": 3,
       "id": "TASK-CTL-002",
       "link_counts": {
         "docs": 1,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 2,
+      "missing_evidence_count": 0,
       "owner": "unknown",
       "priority": "low",
       "risk": "low",
@@ -2061,7 +2059,11 @@
         ],
         "area": "governance",
         "effort": "S",
-        "evidence": [],
+        "evidence": [
+          "CONTRIBUTING.md",
+          "docs/tasks/board.md",
+          "docs/blueprints/doc-structure-task-control.md"
+        ],
         "id": "TASK-CTL-002",
         "links": {
           "docs": [
@@ -2070,21 +2072,18 @@
           "issues": [],
           "prs": []
         },
-        "missing_evidence": [
-          "Issue Forms, PR-Template und Release-Konfiguration bewusst zurückgestellt: erhöhen Formular-Overhead ohne belegten Mehrwert gegenüber kontextgenauen PR-Bodies",
-          "Wiederaufnahme sinnvoll wenn: externe Beitragende ohne Projekteinblick aktiv werden oder Release-Prozess stabilisiert ist"
-        ],
+        "missing_evidence": [],
         "owner": "unknown",
         "priority": "low",
         "risk": "low",
-        "status": "open",
+        "status": "done",
         "title": "GitHub-native Arbeitsobjekte minimal evaluieren",
-        "updated_at": "2026-05-28"
+        "updated_at": "2026-06-29"
       },
-      "source_task_sha256": "e90547790b296c9edd16b1a75bb3ee2549f8c5697c3c6bc7672e6e261c3b36a7",
-      "status": "open",
+      "source_task_sha256": "feb5c76e571bc1fe75f5656015a2a745cbc7c2d2109fafec8dcd4012c24a8c04",
+      "status": "done",
       "title": "GitHub-native Arbeitsobjekte minimal evaluieren",
-      "updated_at": "2026-05-28"
+      "updated_at": "2026-06-29"
     },
     {
       "acceptance_count": 4,
@@ -2259,7 +2258,7 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "f299c4dbc8049036c0ec4fcc743eaebbcc2392d015e3962cb695e5b6c5631445",
+  "index_sha256": "9ab358029a473db9072d95471ce79eaf80b0329250294399a58b171e0cad1b8b",
   "ref": "origin/main",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",
@@ -2277,10 +2276,10 @@
   "status_counts": {
     "blocked": 2,
     "contradicted": 0,
-    "done": 24,
+    "done": 29,
     "obsolete": 0,
-    "open": 6,
-    "partial": 7
+    "open": 3,
+    "partial": 5
   },
   "task_count": 39
 }

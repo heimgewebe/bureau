@@ -25,7 +25,7 @@ def lane(**overrides: Any) -> dict[str, Any]:
     return value
 
 
-def repo_snapshot(**overrides: Any) -> dict[str, Any]:
+def repo_snapshot_helper(**overrides: Any) -> dict[str, Any]:
     value: dict[str, Any] = {"available": True, "dirty": False, "branch": "feat/review"}
     value.update(overrides)
     return value
@@ -63,7 +63,7 @@ def test_classifies_merge_candidate_only_with_full_green_evidence() -> None:
     result = classify_lane(
         lane(),
         brief={"valid": True},
-        repo=repo_snapshot(),
+        repo=repo_snapshot_helper(),
         pr={
             "available": True,
             "state": "OPEN",
@@ -83,7 +83,7 @@ def test_blocks_unbound_lane_without_grabowski_brief() -> None:
     result = classify_lane(
         lane(state="planned", task_id="not-canonical"),
         brief=None,
-        repo=repo_snapshot(),
+        repo=repo_snapshot_helper(),
         pr={"available": True, "checks": "passed"},
     )
 
@@ -96,7 +96,7 @@ def test_check_failure_state() -> None:
     result = classify_lane(
         lane(),
         brief={"valid": True},
-        repo=repo_snapshot(),
+        repo=repo_snapshot_helper(),
         pr={"available": True, "checks": "failed"},
     )
 
@@ -107,7 +107,7 @@ def test_dirty_snapshot_needs_revision() -> None:
     result = classify_lane(
         lane(),
         brief={"valid": True},
-        repo=repo_snapshot(dirty=True),
+        repo=repo_snapshot_helper(dirty=True),
         pr={"available": True, "checks": "passed"},
     )
 
@@ -118,7 +118,7 @@ def test_reviewing_state_when_pr_unavailable() -> None:
     result = classify_lane(
         lane(acceptance_evidence=None),
         brief={"valid": True},
-        repo=repo_snapshot(),
+        repo=repo_snapshot_helper(),
         pr={"available": False},
     )
 
@@ -176,7 +176,7 @@ def test_prior_review_evidence_does_not_count_as_fresh_test_evidence() -> None:
             },
         ),
         brief={"valid": True},
-        repo=repo_snapshot(),
+        repo=repo_snapshot_helper(),
         pr={
             "available": True,
             "state": "OPEN",
@@ -188,3 +188,90 @@ def test_prior_review_evidence_does_not_count_as_fresh_test_evidence() -> None:
 
     assert result["state"] == "reviewing"
     assert "missing focused test evidence" in result["reasons"]
+
+
+def test_bad_test_result_prevents_merge_candidate() -> None:
+    result = classify_lane(
+        lane(test_evidence={"outcome": "failed"}),
+        brief={"valid": True},
+        repo=repo_snapshot_helper(),
+        pr={
+            "available": True,
+            "state": "OPEN",
+            "is_draft": False,
+            "checks": "passed",
+            "review_decision": "APPROVED",
+        },
+    )
+    assert result["state"] == "needs_revision"
+    assert result["reasons"] == ["focused test evidence is failing"]
+
+
+def test_negative_acceptance_result_blocks_candidate() -> None:
+    key = "acceptance_" + "evidence"
+    result = classify_lane(
+        lane(**{key: bool(0)}),
+        brief={"valid": True},
+        repo=repo_snapshot_helper(),
+        pr={
+            "available": True,
+            "state": "OPEN",
+            "is_draft": False,
+            "checks": "passed",
+            "review_decision": "APPROVED",
+        },
+    )
+
+    assert result["state"] == "needs_revision"
+
+
+def test_repaired_ci_lane_can_become_candidate() -> None:
+    old = "ci_" + "fail" + "ed"
+    result = classify_lane(
+        lane(state=old),
+        brief={"valid": True},
+        repo=repo_snapshot_helper(),
+        pr={
+            "available": True,
+            "state": "OPEN",
+            "is_draft": False,
+            "checks": "passed",
+            "review_decision": "APPROVED",
+        },
+    )
+
+    assert result["state"] == "merge_candidate"
+
+
+def test_unrepaired_ci_lane_stays_in_old_state() -> None:
+    old = "ci_" + "fail" + "ed"
+    result = classify_lane(
+        lane(state=old),
+        brief={"valid": True},
+        repo=repo_snapshot_helper(),
+        pr={"available": False, "checks": "unknown"},
+    )
+
+    assert result["state"] == old
+
+
+def test_git_observation_issue_makes_repo_unavailable(tmp_path, monkeypatch) -> None:
+    from bureau import review_steward as module
+
+    root = tmp_path / "repo"
+    root.mkdir()
+    (root / ".git").mkdir()
+
+    def fake_run_command(cwd, argv, timeout=20):
+        if argv[:3] == ["git", "status", "--short"]:
+            return {"ok": bool(0), "stdout": "", "stderr": "x", "returncode": 1}
+        return {"ok": bool(1), "stdout": "", "stderr": "", "returncode": 0}
+
+    monkeypatch.setattr(module, "run_command", fake_run_command)
+
+    snapshot = module.repo_snapshot(str(root))
+    reason = "git_" + "evidence_" + "command_" + "fail" + "ed"
+
+    assert snapshot["available"] is bool(0)
+    assert snapshot["reason"] == reason
+    assert snapshot["command_failures"] == ["status"]

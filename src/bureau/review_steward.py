@@ -43,6 +43,52 @@ FAIL_CHECK_VALUES = {
 PASS_CHECK_VALUES = {"COMPLETED", "NEUTRAL", "PASSED", "SKIPPED", "SUCCESS"}
 APPROVED_REVIEW_VALUES = {"APPROVED"}
 REVISION_REVIEW_VALUES = {"CHANGES_REQUESTED"}
+TEST_EVIDENCE_KEYS = frozenset({"tests", "test_evidence", "validation", "validation_evidence"})
+ACCEPTANCE_EVIDENCE_KEYS = frozenset(
+    {"acceptance", "acceptance_evidence", "acceptance_criteria_evidence"}
+)
+EVIDENCE_RESULT_KEYS = (
+    "outcome",
+    "status",
+    "result",
+    "conclusion",
+    "state",
+    "accepted",
+    "passed",
+    "success",
+    "ok",
+    "valid",
+)
+PASS_EVIDENCE_VALUES = {
+    "accept",
+    "accepted",
+    "complete",
+    "completed",
+    "green",
+    "ok",
+    "pass",
+    "passed",
+    "success",
+    "successful",
+    "true",
+    "valid",
+    "yes",
+}
+FAIL_EVIDENCE_VALUES = {
+    "error",
+    "errored",
+    "fail",
+    "failed",
+    "failure",
+    "false",
+    "invalid",
+    "no",
+    "not accepted",
+    "not_accepted",
+    "red",
+    "reject",
+    "rejected",
+}
 
 PrStatusProvider = Callable[[dict[str, Any]], dict[str, Any]]
 
@@ -82,40 +128,51 @@ def run_command(cwd: Path, argv: list[str], timeout: int = 20) -> dict[str, Any]
     }
 
 
+
 def repo_snapshot(repo_value: Any) -> dict[str, Any]:
     if not isinstance(repo_value, str) or not repo_value:
         return {"available": False, "reason": "missing_repo_path"}
     repo = Path(repo_value).expanduser()
     if not repo.exists():
         return {"available": False, "reason": "repo_path_absent", "repo": str(repo)}
-    if (
-        not (repo / ".git").exists()
-        and not run_command(repo, ["git", "rev-parse", "--git-dir"])["ok"]
-    ):
-        return {"available": False, "reason": "not_a_git_repository", "repo": str(repo)}
+    git_dir = run_command(repo, ["git", "rev-parse", "--git-dir"])
+    if not (repo / ".git").exists() and not git_dir["ok"]:
+        return {
+            "available": False,
+            "reason": "not_a_git_repository",
+            "repo": str(repo),
+        }
 
-    status = run_command(repo, ["git", "status", "--short"])
-    branch_status = run_command(repo, ["git", "status", "--branch", "--short"])
-    branch = run_command(repo, ["git", "branch", "--show-current"])
-    head = run_command(repo, ["git", "rev-parse", "--short", "HEAD"])
-    diff_names = run_command(repo, ["git", "diff", "--name-only", "--"])
-    diff_stat = run_command(repo, ["git", "diff", "--stat", "--"])
-    dirty = bool(status["stdout"])
-    return {
-        "available": True,
-        "repo": str(repo),
-        "branch": branch["stdout"] or None,
-        "head": head["stdout"] or None,
-        "dirty": dirty,
-        "status_short": status["stdout"],
-        "branch_status": branch_status["stdout"],
-        "diff_files": [line for line in diff_names["stdout"].splitlines() if line],
-        "diff_stat": diff_stat["stdout"],
-        "commands_ok": all(
-            item["ok"] for item in [status, branch_status, branch, head, diff_names, diff_stat]
-        ),
+    commands = {
+        "status": run_command(repo, ["git", "status", "--short"]),
+        "branch_status": run_command(repo, ["git", "status", "--branch", "--short"]),
+        "branch": run_command(repo, ["git", "branch", "--show-current"]),
+        "head": run_command(repo, ["git", "rev-parse", "--short", "HEAD"]),
+        "diff_names": run_command(repo, ["git", "diff", "--name-only", "--"]),
+        "diff_stat": run_command(repo, ["git", "diff", "--stat", "--"]),
     }
-
+    command_failures = [name for name, result in commands.items() if not result["ok"]]
+    commands_ok = not command_failures
+    status_stdout = commands["status"]["stdout"] if commands["status"]["ok"] else ""
+    diff_names_stdout = (
+        commands["diff_names"]["stdout"] if commands["diff_names"]["ok"] else ""
+    )
+    snapshot = {
+        "available": commands_ok,
+        "repo": str(repo),
+        "branch": commands["branch"]["stdout"] or None,
+        "head": commands["head"]["stdout"] or None,
+        "dirty": bool(status_stdout) if commands["status"]["ok"] else None,
+        "status_short": status_stdout,
+        "branch_status": commands["branch_status"]["stdout"],
+        "diff_files": [line for line in diff_names_stdout.splitlines() if line],
+        "diff_stat": commands["diff_stat"]["stdout"],
+        "commands_ok": commands_ok,
+        "command_failures": command_failures,
+    }
+    if not commands_ok:
+        snapshot["reason"] = "git_evidence_command_failed"
+    return snapshot
 
 def load_briefs(brief_root: Path) -> dict[str, dict[str, Any]]:
     result: dict[str, dict[str, Any]] = {}
@@ -153,6 +210,7 @@ def selected_lane_ids(plan: dict[str, Any], lanes: list[dict[str, Any]]) -> list
     return fallback
 
 
+
 def truthy_evidence(value: Any) -> bool:
     if value in (None, "", [], {}) or value is False:
         return False
@@ -176,7 +234,7 @@ def nested_values(value: Any, keys: set[str]) -> list[Any]:
     return found
 
 
-def evidence_present(lane: dict[str, Any], keys: set[str]) -> bool:
+def direct_evidence_values(lane: dict[str, Any], keys: set[str] | frozenset[str]) -> list[Any]:
     values: list[Any] = []
     for key in keys:
         values.append(lane.get(key))
@@ -191,8 +249,60 @@ def evidence_present(lane: dict[str, Any], keys: set[str]) -> bool:
             continue
         for key in keys:
             values.append(container.get(key))
-    return any(truthy_evidence(item) for item in values)
+    return values
 
+
+def evidence_signal(value: Any) -> str:
+    if value in (None, "", [], {}):
+        return "missing"
+    if isinstance(value, bool):
+        return "passed" if value else "failed"
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in PASS_EVIDENCE_VALUES:
+            return "passed"
+        if lowered in FAIL_EVIDENCE_VALUES:
+            return "failed"
+        return "present" if truthy_evidence(value) else "missing"
+    if isinstance(value, dict):
+        explicit = [
+            evidence_signal(value[key]) for key in EVIDENCE_RESULT_KEYS if key in value
+        ]
+        explicit = [item for item in explicit if item != "missing"]
+        if explicit:
+            if "failed" in explicit:
+                return "failed"
+            if any(item == "passed" for item in explicit):
+                return "passed"
+            return "present"
+        return "present" if truthy_evidence(value) else "missing"
+    if isinstance(value, list):
+        signals = [evidence_signal(item) for item in value]
+        signals = [item for item in signals if item != "missing"]
+        if not signals:
+            return "missing"
+        if "failed" in signals:
+            return "failed"
+        if all(item == "passed" for item in signals):
+            return "passed"
+        return "present"
+    return "present" if truthy_evidence(value) else "missing"
+
+
+def evidence_status(lane: dict[str, Any], keys: set[str] | frozenset[str]) -> str:
+    signals = [evidence_signal(item) for item in direct_evidence_values(lane, keys)]
+    signals = [item for item in signals if item != "missing"]
+    if not signals:
+        return "missing"
+    if "failed" in signals:
+        return "failed"
+    if any(item == "passed" for item in signals):
+        return "passed"
+    return "present"
+
+
+def evidence_present(lane: dict[str, Any], keys: set[str] | frozenset[str]) -> bool:
+    return evidence_status(lane, keys) != "missing"
 
 def normalize_pr_status(raw: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(raw, dict) or not raw:
@@ -299,6 +409,7 @@ def explicit_blockers(lane: dict[str, Any]) -> list[str]:
     return sorted(set(blockers))
 
 
+
 def classify_lane(
     lane: dict[str, Any],
     *,
@@ -324,8 +435,9 @@ def classify_lane(
         }
 
     task_id = lane.get("task_id")
-    if previous_state in CANONICAL_TASK_REQUIRED_STATES and not is_canonical_bureau_task_id(
-        task_id
+    if (
+        previous_state in CANONICAL_TASK_REQUIRED_STATES
+        and not is_canonical_bureau_task_id(task_id)
     ):
         blockers.append("missing_canonical_bureau_task_id")
     if brief is None:
@@ -354,10 +466,16 @@ def classify_lane(
             "reasons": ["pull request is closed without merged evidence"],
             "blockers": ["closed_pull_request"],
         }
-    if pr.get("checks") == "failed" or previous_state == "ci_failed":
+    if pr.get("checks") == "failed":
         return {
             "state": "ci_failed",
             "reasons": ["CI/check evidence is failing"],
+            "blockers": [],
+        }
+    if previous_state == "ci_failed" and pr.get("checks") != "passed":
+        return {
+            "state": "ci_failed",
+            "reasons": ["lane was previously ci_failed and current checks are not passing"],
             "blockers": [],
         }
     if pr.get("review_decision") in REVISION_REVIEW_VALUES:
@@ -373,12 +491,25 @@ def classify_lane(
             "blockers": [],
         }
 
-    tests_present = evidence_present(
-        lane, {"tests", "test_evidence", "validation", "validation_evidence"}
-    )
-    acceptance_present = evidence_present(
-        lane, {"acceptance", "acceptance_evidence", "acceptance_criteria_evidence"}
-    )
+    test_status = evidence_status(lane, TEST_EVIDENCE_KEYS)
+    acceptance_status = evidence_status(lane, ACCEPTANCE_EVIDENCE_KEYS)
+    if test_status == "failed":
+        return {
+            "state": "needs_revision",
+            "reasons": ["focused test evidence is failing"],
+            "blockers": [],
+        }
+    if acceptance_status == "failed":
+        return {
+            "state": "needs_revision",
+            "reasons": ["acceptance evidence is failing"],
+            "blockers": [],
+        }
+
+    tests_present = test_status != "missing"
+    acceptance_present = acceptance_status != "missing"
+    tests_passed = test_status == "passed"
+    acceptance_passed = acceptance_status == "passed"
     approved = pr.get("review_decision") in APPROVED_REVIEW_VALUES
     checks_passed = pr.get("checks") == "passed"
     open_pr = pr.get("available") is True and pr.get("state") in {"OPEN", None}
@@ -389,19 +520,23 @@ def classify_lane(
         and non_draft
         and checks_passed
         and approved
-        and tests_present
-        and acceptance_present
+        and tests_passed
+        and acceptance_passed
     ):
         return {
             "state": "merge_candidate",
-            "reasons": ["tests, CI, review, acceptance, and clean diff evidence are present"],
+            "reasons": ["tests, CI, review, acceptance, and clean diff evidence are passing"],
             "blockers": [],
         }
 
     if not tests_present:
         reasons.append("missing focused test evidence")
+    elif not tests_passed:
+        reasons.append("focused test evidence has no passing outcome")
     if not acceptance_present:
         reasons.append("missing acceptance evidence")
+    elif not acceptance_passed:
+        reasons.append("acceptance evidence has no accepted outcome")
     if pr.get("available") is not True:
         reasons.append(f"missing PR/CI evidence: {pr.get('reason', 'unknown')}")
     elif pr.get("checks") != "passed":
@@ -416,7 +551,6 @@ def classify_lane(
         "reasons": reasons or ["no terminal review signal found"],
         "blockers": [],
     }
-
 
 def next_action_for(state: str) -> str:
     if state == "merge_candidate":
@@ -458,12 +592,8 @@ def review_one_lane(
             "brief": brief,
             "repo": repo,
             "pr": pr,
-            "tests_present": evidence_present(
-                lane, {"tests", "test_evidence", "validation", "validation_evidence"}
-            ),
-            "acceptance_present": evidence_present(
-                lane, {"acceptance", "acceptance_evidence", "acceptance_criteria_evidence"}
-            ),
+            "tests_present": evidence_present(lane, TEST_EVIDENCE_KEYS),
+            "acceptance_present": evidence_present(lane, ACCEPTANCE_EVIDENCE_KEYS),
         },
     }
 

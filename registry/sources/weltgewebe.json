@@ -11,7 +11,7 @@
     "OPT-ARC-001",
     "OPT-INF-002"
   ],
-  "commit_sha": "9e4123bbbc90b00dc0a0f67119e4c223d78ec0ec",
+  "commit_sha": "ecf5343307d16ffcad6cab36db3a8abb3d4e92a3",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -1071,14 +1071,14 @@
       "acceptance_count": 13,
       "area": "docs",
       "effort": "M",
-      "evidence_count": 10,
+      "evidence_count": 16,
       "id": "DOCMETA-REPORT-LIFECYCLE-001",
       "link_counts": {
         "docs": 2,
         "issues": 0,
         "prs": 5
       },
-      "missing_evidence_count": 7,
+      "missing_evidence_count": 6,
       "owner": "docs-mechanik",
       "priority": "medium",
       "risk": "medium",
@@ -1110,7 +1110,13 @@
           "scripts/docmeta/generate_report_lifecycle_inventory.py",
           ".github/workflows/docs-guard.yml",
           "docs/reports/report-lifecycle-restbestand-triage.md",
-          "docs/reports/passkey-register-verify-prep.md"
+          "docs/reports/passkey-register-verify-prep.md",
+          "tools/py/cost/report.py",
+          "docs/reports/cost-report.md",
+          "docs/reports/domain-runtime-data-source-reconciliation.md",
+          "docs/reports/map-architekturkritik.md",
+          "docs/reports/map-basemap-proof-gap-reconciliation.md",
+          "docs/reports/optimierungsbericht.md"
         ],
         "id": "DOCMETA-REPORT-LIFECYCLE-001",
         "links": {
@@ -1128,7 +1134,6 @@
           ]
         },
         "missing_evidence": [
-          "Acht Reports wurden ursprünglich triagiert. Slice A und B sind abgeschlossen. 5 Reports verbleiben unklassifiziert.",
           "Fehlendes oder nicht parsebares Report-Frontmatter wird noch nicht vollständig blockierend erkannt",
           "Semantische Validatorprüfungen für Lifecycle-Enums, ISO-Datum und Supersession-Konsistenz fehlen",
           "Die owner_task-Semantik und die normativen Registrierungsquellen sind entschieden und gegen den bestehenden Bestand kompatibilitätsgeprüft; vollständige OPT-Markdown–JSON-Parität und technische Existenzprüfung bleiben nach den Backfill-Slices offen.",
@@ -1141,12 +1146,12 @@
         "risk": "medium",
         "status": "partial",
         "title": "Report-Lifecycle-Rollout reconciliieren und Restbestand ratcheten",
-        "updated_at": "2026-06-23"
+        "updated_at": "2026-06-29"
       },
-      "source_task_sha256": "948ce6328e4e5d66f8de78716c60aca76450f729ba2d3f3c9575a082b00baad3",
+      "source_task_sha256": "4215441ae529295f064f0e32242189771a78d2e30da3060aad441d8a1bd49d45",
       "status": "partial",
       "title": "Report-Lifecycle-Rollout reconciliieren und Restbestand ratcheten",
-      "updated_at": "2026-06-23"
+      "updated_at": "2026-06-29"
     },
     {
       "acceptance_count": 5,
@@ -2253,7 +2258,7 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "85fa8644715ac0dbea43527a265f97b0eb6a511a525e820e6dda43064e8ec9dd",
+  "index_sha256": "9ab358029a473db9072d95471ce79eaf80b0329250294399a58b171e0cad1b8b",
   "ref": "origin/main",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",

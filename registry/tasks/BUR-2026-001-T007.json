@@ -23,7 +23,7 @@
     "preferred_host": "heim-pc",
     "working_repository": "/home/alex/repos/grabowski",
     "worker_profile": "grabowski-local-readonly",
-    "agent_brief_path": "/home/alex/.local/state/bureau-closure/briefs/lane-grabowski-feat-grabowski-autonomy-001-8470ad62af.json",
+    "agent_brief_path": "/home/alex/.local/state/bureau-closure/briefs/lane-grabowski-feat-grabowski-autonomy-001-956a3803a1.json",
     "grabowski_resources": [
       "repo:/home/alex/repos/grabowski"
     ]
@@ -72,6 +72,7 @@
     "frontier_report_sha256": "bd6fd5670f80224b239ad97e68750565ccf47fc618fa3dff573ba822ce67ca84",
     "created_for": "closure-lane-canonical-binding",
     "frontier_score": 129,
-    "frontier_recommended_action": "bind this lane to one canonical Bureau task before dispatch"
+    "frontier_recommended_action": "bind this lane to one canonical Bureau task before dispatch",
+    "source_upstream": "origin/feat/grabowski-autonomy-001"
   }
 }

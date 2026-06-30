@@ -11,7 +11,7 @@
     "OPT-ARC-001",
     "OPT-INF-002"
   ],
-  "commit_sha": "ecf5343307d16ffcad6cab36db3a8abb3d4e92a3",
+  "commit_sha": "3054104e2e9ff0e4170966997dfdab01b3798a6b",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -1078,7 +1078,7 @@
         "issues": 0,
         "prs": 5
       },
-      "missing_evidence_count": 6,
+      "missing_evidence_count": 5,
       "owner": "docs-mechanik",
       "priority": "medium",
       "risk": "medium",
@@ -1135,7 +1135,6 @@
         },
         "missing_evidence": [
           "Fehlendes oder nicht parsebares Report-Frontmatter wird noch nicht vollständig blockierend erkannt",
-          "Semantische Validatorprüfungen für Lifecycle-Enums, ISO-Datum und Supersession-Konsistenz fehlen",
           "Die owner_task-Semantik und die normativen Registrierungsquellen sind entschieden und gegen den bestehenden Bestand kompatibilitätsgeprüft; vollständige OPT-Markdown–JSON-Parität und technische Existenzprüfung bleiben nach den Backfill-Slices offen.",
           "Physische Archivpfade unter docs/reports/archive/** werden von Validator und Inventory noch nicht rekursiv erfasst",
           "Changed-only strict ist noch nicht umgesetzt",
@@ -1148,7 +1147,7 @@
         "title": "Report-Lifecycle-Rollout reconciliieren und Restbestand ratcheten",
         "updated_at": "2026-06-29"
       },
-      "source_task_sha256": "4215441ae529295f064f0e32242189771a78d2e30da3060aad441d8a1bd49d45",
+      "source_task_sha256": "af00292f22171b3e026476f1d06f3bc3c1e0473192f1fc82340c6fc60cdf9908",
       "status": "partial",
       "title": "Report-Lifecycle-Rollout reconciliieren und Restbestand ratcheten",
       "updated_at": "2026-06-29"
@@ -2258,7 +2257,7 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "9ab358029a473db9072d95471ce79eaf80b0329250294399a58b171e0cad1b8b",
+  "index_sha256": "9e90d97e534b9c1992c655fe97830a6bb3655de8e1be74e82fd0e5fd8104cc32",
   "ref": "origin/main",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",

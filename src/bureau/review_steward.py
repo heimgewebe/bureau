@@ -526,11 +526,46 @@ def review_closure_lanes(
     return receipt
 
 
+def receipt_summary(receipt: dict[str, Any]) -> dict[str, Any]:
+    reviews = receipt.get("reviews") if isinstance(receipt, dict) else []
+    compact_reviews = []
+    if isinstance(reviews, list):
+        for review in reviews:
+            if not isinstance(review, dict):
+                continue
+            compact_reviews.append(
+                {
+                    "lane_id": review.get("lane_id"),
+                    "task_id": review.get("task_id"),
+                    "repo": review.get("repo"),
+                    "branch": review.get("branch"),
+                    "previous_state": review.get("previous_state"),
+                    "recommended_state": review.get("recommended_state"),
+                    "reasons": review.get("reasons", []),
+                    "blockers": review.get("blockers", []),
+                    "next_action": review.get("next_action"),
+                }
+            )
+    return {
+        "schema_version": receipt.get("schema_version"),
+        "run_id": receipt.get("run_id"),
+        "reviewed_at": receipt.get("reviewed_at"),
+        "state_root": receipt.get("state_root"),
+        "selected_lane_count": receipt.get("selected_lane_count"),
+        "reviewed_lane_count": receipt.get("reviewed_lane_count"),
+        "classification_counts": receipt.get("classification_counts"),
+        "reviews": compact_reviews,
+        "receipt_path": receipt.get("receipt_path"),
+        "next_action": receipt.get("next_action"),
+    }
+
+
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="bureau-review-steward")
     result.add_argument("command", choices=["run"])
     result.add_argument("--state-root")
     result.add_argument("--max-lanes", type=int)
+    result.add_argument("--full-json", action="store_true")
     return result
 
 
@@ -543,7 +578,8 @@ def main(argv: list[str] | None = None) -> int:
         )
     else:
         raise AssertionError(args.command)
-    print(json.dumps(value, indent=2, ensure_ascii=False, sort_keys=True))
+    output = value if args.full_json else receipt_summary(value)
+    print(json.dumps(output, indent=2, ensure_ascii=False, sort_keys=True))
     return 0
 
 

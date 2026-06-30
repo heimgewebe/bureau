@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from bureau.closure import atomic_json, brief_for_lane
-from bureau.review_steward import classify_lane
+from bureau.review_steward import classify_lane, receipt_summary
 
 
 def lane(**overrides: Any) -> dict[str, Any]:
@@ -76,7 +76,7 @@ def test_classifies_merge_candidate_only_with_full_green_evidence() -> None:
     assert result["state"] == "merge_candidate"
     assert result["blockers"] == []
 
-# receipt tests pending
+
 
 
 def test_blocks_unbound_lane_without_grabowski_brief() -> None:
@@ -123,3 +123,39 @@ def test_reviewing_state_when_pr_unavailable() -> None:
     )
 
     assert result["state"] == "reviewing"
+
+
+def test_receipt_summary_omits_full_evidence() -> None:
+    summary = receipt_summary(
+        {
+            "schema_version": 1,
+            "run_id": "run-1",
+            "reviewed_lane_count": 1,
+            "selected_lane_count": 1,
+            "classification_counts": {"reviewing": 1},
+            "receipt_path": "/tmp/receipt.json",
+            "reviews": [
+                {
+                    "lane_id": "lane-1",
+                    "recommended_state": "reviewing",
+                    "reasons": ["missing CI"],
+                    "evidence": {"large": "value"},
+                }
+            ],
+        }
+    )
+
+    assert summary["reviews"] == [
+        {
+            "lane_id": "lane-1",
+            "task_id": None,
+            "repo": None,
+            "branch": None,
+            "previous_state": None,
+            "recommended_state": "reviewing",
+            "reasons": ["missing CI"],
+            "blockers": [],
+            "next_action": None,
+        }
+    ]
+    assert "evidence" not in summary["reviews"][0]

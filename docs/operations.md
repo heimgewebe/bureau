@@ -141,6 +141,9 @@ Manual run:
 bureau-review-steward run
 ```
 
+The command prints a compact receipt summary by default. Use `--full-json` only when the full
+lane evidence needs to be inspected outside the receipt file.
+
 Install the steward into an isolated environment and enable the supplied user timer:
 
 ```bash

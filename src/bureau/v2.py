@@ -138,6 +138,77 @@ def plan_sha256(registry: legacy.Registry, initiative_id: str) -> str:
     return legacy.sha256_json(plan)
 
 
+CANONICAL_BUREAU_TASK_RE = legacy.ID_RE
+MAX_CLOSURE_BRIDGE_LANES = 4
+
+
+def _closure_plan_path() -> Path:
+    configured = os.environ.get("BUREAU_CLOSURE_PLAN")
+    if configured:
+        return Path(configured).expanduser()
+    state_root = os.environ.get("BUREAU_CLOSURE_STATE_ROOT")
+    if state_root:
+        return Path(state_root).expanduser() / "plan.json"
+    return Path.home() / ".local/state/bureau-closure/plan.json"
+
+
+def _valid_closure_brief_by_lane(plan: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    briefs = plan.get("briefs")
+    if not isinstance(briefs, list):
+        return {}
+    result: dict[str, dict[str, Any]] = {}
+    for brief in briefs:
+        if not isinstance(brief, dict) or brief.get("valid") is not True:
+            continue
+        lane_id = brief.get("lane_id")
+        if isinstance(lane_id, str) and lane_id:
+            result[lane_id] = brief
+    return result
+
+
+def closure_bridge_task_ids(plan_path: Path | None = None) -> set[str]:
+    path = plan_path or _closure_plan_path()
+    try:
+        plan = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return set()
+    if not isinstance(plan, dict) or plan.get("degraded") is True:
+        return set()
+    selected_count = plan.get("selected_lane_count")
+    bound_count = plan.get("canonical_task_bound_count")
+    rejected_count = plan.get("unbound_selected_rejected_count")
+    if not isinstance(selected_count, int) or selected_count < 1:
+        return set()
+    if selected_count > MAX_CLOSURE_BRIDGE_LANES or selected_count != bound_count:
+        return set()
+    if not isinstance(rejected_count, int):
+        return set()
+    lanes = plan.get("selected_lanes")
+    if not isinstance(lanes, list) or len(lanes) != selected_count:
+        return set()
+    valid_brief_by_lane = _valid_closure_brief_by_lane(plan)
+    result: set[str] = set()
+    for lane in lanes:
+        if not isinstance(lane, dict):
+            continue
+        lane_id = lane.get("lane_id")
+        task_id = lane.get("task_id")
+        brief_path = lane.get("grabowski_brief")
+        metadata = lane.get("metadata")
+        if not isinstance(lane_id, str) or lane_id not in valid_brief_by_lane:
+            continue
+        if not isinstance(task_id, str) or not CANONICAL_BUREAU_TASK_RE.fullmatch(task_id):
+            continue
+        if not isinstance(brief_path, str) or not brief_path:
+            continue
+        if valid_brief_by_lane[lane_id].get("path") != brief_path:
+            continue
+        if not isinstance(metadata, dict) or not metadata.get("canonical_task_binding"):
+            continue
+        result.add(task_id)
+    return result
+
+
 class Registry(legacy.Registry):
     """Git-backed registry with executable JSON Schema contracts."""
 
@@ -599,6 +670,60 @@ class Dispatcher(legacy.Dispatcher):
         self.registry = registry
         self.store = store
         self.adapters = adapters or AdapterRegistry()
+
+    def _closure_bridge_applies(
+        self, task: legacy.Task, state: str, initiative: legacy.Initiative
+    ) -> bool:
+        if task.id not in closure_bridge_task_ids():
+            return False
+        return (
+            state == "planned"
+            and initiative.state == "completed"
+            and initiative.commitment == "completed"
+            and task.mode == "interactive-agent"
+            and task.policy == "review-before-effect"
+        )
+
+    def reasons(
+        self,
+        task: legacy.Task,
+        capabilities: set[str],
+        runs: list[sqlite3.Row],
+        reservations: list[legacy.Reservation],
+        overlays: dict[str, str],
+    ) -> list[str]:
+        result: list[str] = []
+        initiative = self.registry.initiatives[task.initiative]
+        state = overlays.get(task.id, task.state)
+        closure_bridge = self._closure_bridge_applies(task, state, initiative)
+        if state != "ready" and not closure_bridge:
+            result.append(f"state is {state}")
+        if initiative.state != "active" and not closure_bridge:
+            result.append(f"initiative state is {initiative.state}")
+        if initiative.commitment not in {"now", "next"} and not closure_bridge:
+            result.append(f"initiative commitment is {initiative.commitment}")
+        if (task.policy != "autonomous" or task.mode == "manual") and not closure_bridge:
+            result.append(f"execution is {task.mode}/{task.policy}")
+        missing = sorted(set(task.capabilities) - capabilities)
+        if missing:
+            result.append("missing capabilities: " + ", ".join(missing))
+        for dependency in task.depends_on:
+            dependency_state = overlays.get(dependency, self.registry.tasks[dependency].state)
+            if dependency_state != "verified":
+                result.append(f"dependency {dependency} is {dependency_state}")
+        if any(row["task_id"] == task.id for row in runs):
+            result.append("task already active")
+        active_for_initiative = sum(
+            1
+            for row in runs
+            if self.registry.tasks.get(row["task_id"])
+            and self.registry.tasks[row["task_id"]].initiative == task.initiative
+        )
+        if active_for_initiative >= initiative.max_active_tasks:
+            result.append(f"initiative parallel limit {initiative.max_active_tasks} reached")
+        for claim in task.claims:
+            result.extend(legacy.claim_conflicts(claim, reservations, self.registry.resources))
+        return result
 
     def frontier(self, capabilities: set[str]) -> list[dict[str, Any]]:
         with self.store.connect() as connection:

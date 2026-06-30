@@ -10,6 +10,7 @@
     "cycle_id",
     "frontier_role",
     "source_state_sha256",
+    "closure_lanes_path",
     "registry_available",
     "focus_repositories",
     "limits",
@@ -20,28 +21,77 @@
     "bottlenecks",
     "selected_frontier",
     "rejected_sample",
+    "closure_binding_frontier",
+    "closure_binding_rejected_sample",
     "does_not_do",
     "next_action",
     "report_sha256"
   ],
   "properties": {
-    "schema_version": {"const": 1},
-    "generated_at": {"type": "string", "format": "date-time"},
-    "cycle_id": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}$"},
-    "frontier_role": {"const": "read-only backlog governor"},
-    "source_state_path": {"type": ["string", "null"]},
-    "source_state_updated_at": {"type": ["string", "null"]},
-    "source_state_sha256": {"$ref": "#/$defs/sha256"},
-    "registry_root": {"type": ["string", "null"]},
-    "registry_available": {"type": "boolean"},
-    "focus_repositories": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "schema_version": {
+      "const": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cycle_id": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}$"
+    },
+    "frontier_role": {
+      "const": "read-only backlog governor"
+    },
+    "source_state_path": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_state_updated_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_state_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "registry_root": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "registry_available": {
+      "type": "boolean"
+    },
+    "focus_repositories": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
     "limits": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["selected_frontier", "rejected_sample"],
+      "required": [
+        "selected_frontier",
+        "rejected_sample"
+      ],
       "properties": {
-        "selected_frontier": {"type": "integer", "minimum": 1, "maximum": 100},
-        "rejected_sample": {"type": "integer", "minimum": 0, "maximum": 500}
+        "selected_frontier": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "rejected_sample": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 500
+        }
       }
     },
     "metrics": {
@@ -53,29 +103,121 @@
         "rejected_candidate_count",
         "selected_frontier_count",
         "registered_task_count",
-        "registered_title_count"
+        "registered_title_count",
+        "closure_lane_count",
+        "eligible_binding_candidate_count",
+        "rejected_binding_candidate_count",
+        "selected_binding_candidate_count"
       ],
       "properties": {
-        "candidate_count": {"type": "integer", "minimum": 0},
-        "eligible_candidate_count": {"type": "integer", "minimum": 0},
-        "rejected_candidate_count": {"type": "integer", "minimum": 0},
-        "selected_frontier_count": {"type": "integer", "minimum": 0},
-        "registered_task_count": {"type": "integer", "minimum": 0},
-        "registered_title_count": {"type": "integer", "minimum": 0}
+        "candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "eligible_candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rejected_candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "selected_frontier_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "registered_task_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "registered_title_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "closure_lane_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "eligible_binding_candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rejected_binding_candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "selected_binding_candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
-    "candidate_counts": {"type": "object"},
-    "scanner_summary": {"type": "object"},
-    "closure_summary": {"type": "object"},
-    "bottlenecks": {"type": "array", "items": {"type": "object"}},
-    "selected_frontier": {"type": "array", "items": {"$ref": "#/$defs/frontier_item"}},
-    "rejected_sample": {"type": "array", "items": {"$ref": "#/$defs/frontier_item"}},
-    "does_not_do": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
-    "next_action": {"type": "string", "minLength": 1},
-    "report_sha256": {"$ref": "#/$defs/sha256"}
+    "candidate_counts": {
+      "type": "object"
+    },
+    "scanner_summary": {
+      "type": "object"
+    },
+    "closure_summary": {
+      "type": "object"
+    },
+    "bottlenecks": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "selected_frontier": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/frontier_item"
+      }
+    },
+    "rejected_sample": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/frontier_item"
+      }
+    },
+    "does_not_do": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "report_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "closure_lanes_path": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "closure_binding_frontier": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/closure_lane_item"
+      }
+    },
+    "closure_binding_rejected_sample": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/closure_lane_item"
+      }
+    }
   },
   "$defs": {
-    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
     "frontier_item": {
       "type": "object",
       "additionalProperties": false,
@@ -94,24 +236,164 @@
         "suggested_worker_profile"
       ],
       "properties": {
-        "fingerprint": {"type": ["string", "null"]},
-        "score": {"type": "integer"},
-        "eligible": {"type": "boolean"},
-        "rejected_reason": {"type": ["string", "null"]},
-        "project": {"type": "string"},
-        "focus_hits": {"type": "array", "items": {"type": "string"}},
-        "candidate_kind": {"type": "string"},
-        "status": {"type": "string"},
-        "confidence": {"type": "string"},
-        "summary": {"type": "string"},
-        "source_id": {"type": ["string", "null"]},
-        "source_revision": {"type": ["string", "null"]},
-        "source_path": {"type": "string"},
-        "source_anchor": {"type": ["string", "null"]},
-        "external_id": {"type": ["string", "null"]},
-        "reasons": {"type": "array", "items": {"type": "string"}},
-        "recommended_action": {"type": "string"},
-        "suggested_worker_profile": {"type": "string"}
+        "fingerprint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "score": {
+          "type": "integer"
+        },
+        "eligible": {
+          "type": "boolean"
+        },
+        "rejected_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "project": {
+          "type": "string"
+        },
+        "focus_hits": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "candidate_kind": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "source_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_revision": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_path": {
+          "type": "string"
+        },
+        "source_anchor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "external_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "recommended_action": {
+          "type": "string"
+        },
+        "suggested_worker_profile": {
+          "type": "string"
+        }
+      }
+    },
+    "closure_lane_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lane_id",
+        "score",
+        "eligible",
+        "repo_name",
+        "branch",
+        "state",
+        "reasons",
+        "recommended_action",
+        "suggested_worker_profile"
+      ],
+      "properties": {
+        "lane_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "score": {
+          "type": "integer"
+        },
+        "eligible": {
+          "type": "boolean"
+        },
+        "rejected_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "repo_name": {
+          "type": "string"
+        },
+        "repo": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "branch": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "finishability": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "next_action": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "recommended_action": {
+          "type": "string"
+        },
+        "suggested_worker_profile": {
+          "type": "string"
+        }
       }
     }
   }

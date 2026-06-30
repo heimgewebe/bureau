@@ -24,6 +24,7 @@ from .cycle_contract import (
 AGENT_FRONTIER_SCHEMA_VERSION = 1
 DEFAULT_FRONTIER_LIMIT = 8
 DEFAULT_REJECT_LIMIT = 50
+DEFAULT_BINDING_LIMIT = 8
 DEFAULT_FOCUS_REPOSITORIES = ("weltgewebe", "lenskit", "grabowski")
 CANONICAL_TASK_ID_RE = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$")
 SOURCE_MARKERS = (
@@ -89,6 +90,10 @@ def default_closure_plan() -> Path:
     return Path(
         os.environ.get("BUREAU_CLOSURE_PLAN", Path.home() / ".local/state/bureau-closure/plan.json")
     ).expanduser()
+
+
+def closure_lanes_path() -> Path:
+    return Path.home() / ".local" / "state" / "bureau-closure" / "lanes.json"
 
 
 def canonical_json(value: Any) -> str:
@@ -316,6 +321,92 @@ def load_optional_summary(path: Path | None) -> dict[str, Any]:
     return summary
 
 
+def score_closure_lane(lane: dict[str, Any], focus_repositories: tuple[str, ...]) -> dict[str, Any]:
+    state = normalized_key(lane.get("state"))
+    repo_name = normalize_text(lane.get("repo_name"))
+    branch = normalize_text(lane.get("branch"))
+    task_id = lane.get("task_id")
+    terminal = {"obsolete", "merged", "verified", "closed", "cancelled", "superseded"}
+    rejected_reason = None
+    if state in terminal:
+        rejected_reason = "terminal_or_obsolete_lane"
+    elif isinstance(task_id, str) and CANONICAL_TASK_ID_RE.fullmatch(task_id):
+        rejected_reason = "already_bound_to_canonical_task"
+    elif not branch:
+        rejected_reason = "missing_branch"
+    score = 0
+    reasons: list[str] = []
+    state_scores = {"active": 90, "blocked": 84, "planned": 62, "ready": 58, "discovered": 44}
+    if state in state_scores:
+        score += state_scores[state]
+        reasons.append(f"state:{state}")
+    if repo_name in focus_repositories:
+        score += 24
+        reasons.append("focus_repository")
+    finishability = lane.get("finishability")
+    if isinstance(finishability, int | float):
+        score += min(20, max(0, round(float(finishability) * 20)))
+        reasons.append("finishability")
+    if branch.startswith(("feat/", "fix/", "plan/")):
+        score += 6
+        reasons.append("work_branch")
+    return {
+        "lane_id": lane.get("lane_id"),
+        "score": score,
+        "eligible": rejected_reason is None,
+        "rejected_reason": rejected_reason,
+        "repo_name": repo_name,
+        "repo": lane.get("repo"),
+        "branch": branch,
+        "state": state,
+        "task_id": task_id,
+        "finishability": finishability,
+        "next_action": lane.get("next_action"),
+        "reasons": reasons,
+        "recommended_action": "bind this lane to one canonical Bureau task before dispatch",
+        "suggested_worker_profile": suggested_worker_profile(
+            repo_name, branch, "closure-lane", state
+        ),
+    }
+
+
+def load_closure_lane_assessments(
+    path: Path | None,
+    *,
+    focus_repositories: tuple[str, ...],
+    limit: int = DEFAULT_BINDING_LIMIT,
+    reject_limit: int = DEFAULT_REJECT_LIMIT,
+) -> dict[str, Any]:
+    value = load_json(path, {}) if path is not None else {}
+    lanes = value.get("lanes", []) if isinstance(value, dict) else []
+    if not isinstance(lanes, list):
+        lanes = []
+    assessed = [
+        score_closure_lane(item, focus_repositories) for item in lanes if isinstance(item, dict)
+    ]
+    eligible = [item for item in assessed if item["eligible"]]
+    rejected = [item for item in assessed if not item["eligible"]]
+    eligible.sort(
+        key=lambda item: (-int(item["score"]), str(item["repo_name"]), str(item["branch"]))
+    )
+    rejected.sort(
+        key=lambda item: (
+            str(item["rejected_reason"]),
+            str(item["repo_name"]),
+            str(item["branch"]),
+        )
+    )
+    return {
+        "available": bool(path and value),
+        "path": str(path) if path else None,
+        "lane_count": len(lanes),
+        "eligible_count": len(eligible),
+        "rejected_count": len(rejected),
+        "selected": eligible[:limit],
+        "rejected_sample": rejected[:reject_limit],
+    }
+
+
 def build_frontier_report(
     source_state: dict[str, Any],
     *,
@@ -323,6 +414,7 @@ def build_frontier_report(
     source_state_path: Path | None = None,
     scanner_latest_path: Path | None = None,
     closure_plan_path: Path | None = None,
+    closure_lanes_path: Path | None = None,
     focus_repositories: tuple[str, ...] = DEFAULT_FOCUS_REPOSITORIES,
     limit: int = DEFAULT_FRONTIER_LIMIT,
     reject_limit: int = DEFAULT_REJECT_LIMIT,
@@ -362,6 +454,10 @@ def build_frontier_report(
     statuses = [item.get("status") for item in assessments]
     scanner_summary = load_optional_summary(scanner_latest_path)
     closure_summary = load_optional_summary(closure_plan_path)
+    binding = load_closure_lane_assessments(
+        closure_lanes_path,
+        focus_repositories=tuple(sorted(set(focus_repositories))),
+    )
     bottlenecks: list[dict[str, Any]] = []
     if len(candidates) and not selected:
         bottlenecks.append(
@@ -369,8 +465,7 @@ def build_frontier_report(
                 "kind": "latent_backlog_without_frontier_selection",
                 "severity": "high",
                 "detail": (
-                    "source candidates exist but all were rejected "
-                    "or scored below selection window"
+                    "source candidates exist but all were rejected or scored below selection window"
                 ),
             }
         )
@@ -397,8 +492,7 @@ def build_frontier_report(
                 "kind": "delta_only_discovery_idle",
                 "severity": "medium",
                 "detail": (
-                    "scanner has a backlog but no new candidates "
-                    "in the latest delta handoff"
+                    "scanner has a backlog but no new candidates in the latest delta handoff"
                 ),
                 "candidate_count": scanner_metrics.get("candidate_count"),
             }
@@ -411,6 +505,7 @@ def build_frontier_report(
         "source_state_path": str(source_state_path) if source_state_path else None,
         "source_state_updated_at": source_state.get("updated_at"),
         "source_state_sha256": sha256_json(source_state),
+        "closure_lanes_path": str(closure_lanes_path) if closure_lanes_path else None,
         "registry_root": str(registry_root) if registry_root else None,
         "registry_available": bool(signatures["available"]),
         "focus_repositories": list(tuple(sorted(set(focus_repositories)))),
@@ -422,6 +517,10 @@ def build_frontier_report(
             "selected_frontier_count": len(selected),
             "registered_task_count": len(signatures["task_ids"]),
             "registered_title_count": len(signatures["titles"]),
+            "closure_lane_count": binding["lane_count"],
+            "eligible_binding_candidate_count": binding["eligible_count"],
+            "rejected_binding_candidate_count": binding["rejected_count"],
+            "selected_binding_candidate_count": len(binding["selected"]),
         },
         "candidate_counts": {
             "by_project": counter_dict(projects, limit=20),
@@ -433,6 +532,8 @@ def build_frontier_report(
         "bottlenecks": bottlenecks,
         "selected_frontier": selected,
         "rejected_sample": rejected[:reject_limit],
+        "closure_binding_frontier": binding["selected"],
+        "closure_binding_rejected_sample": binding["rejected_sample"],
         "does_not_do": [
             "does not mutate Bureau registry",
             "does not dispatch external agents",
@@ -468,6 +569,7 @@ def run_frontier_cycle(
     source_state_path: Path | None = None,
     scanner_latest_path: Path | None = None,
     closure_plan_path: Path | None = None,
+    closure_lanes_file: Path | None = None,
     registry_root: Path | None = None,
     state_root: Path | None = None,
     focus_repositories: tuple[str, ...] = DEFAULT_FOCUS_REPOSITORIES,
@@ -477,6 +579,7 @@ def run_frontier_cycle(
     selected_source_state = source_state_path or default_source_state()
     selected_scanner_latest = scanner_latest_path or default_scanner_latest()
     selected_closure_plan = closure_plan_path or default_closure_plan()
+    selected_lanes_file = closure_lanes_file or closure_lanes_path()
     selected_registry_root = registry_root or Path.cwd()
     selected_state_root.mkdir(parents=True, exist_ok=True, mode=0o700)
     (selected_state_root / "runs").mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -498,6 +601,7 @@ def run_frontier_cycle(
             source_state_path=selected_source_state,
             scanner_latest_path=selected_scanner_latest,
             closure_plan_path=selected_closure_plan,
+            closure_lanes_path=selected_lanes_file,
             focus_repositories=focus_repositories,
             limit=limit,
         )
@@ -555,6 +659,7 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--source-state", default=str(default_source_state()))
     result.add_argument("--scanner-latest", default=str(default_scanner_latest()))
     result.add_argument("--closure-plan", default=str(default_closure_plan()))
+    result.add_argument("--closure-lanes", default=str(closure_lanes_path()))
     result.add_argument("--registry-root", default=".")
     result.add_argument("--state-root", default=str(default_state_root()))
     result.add_argument("--limit", type=int, default=DEFAULT_FRONTIER_LIMIT)
@@ -572,17 +677,22 @@ def main(argv: list[str] | None = None) -> int:
             source_state_path=Path(args.source_state).expanduser(),
             scanner_latest_path=Path(args.scanner_latest).expanduser(),
             closure_plan_path=Path(args.closure_plan).expanduser(),
+            closure_lanes_file=Path(args.closure_lanes).expanduser(),
             registry_root=Path(args.registry_root).expanduser(),
             state_root=Path(args.state_root).expanduser(),
             focus_repositories=focus,
             limit=args.limit,
         )
-        payload: Any = result if args.json else {
-            "status": result["receipt"]["result"],
-            "degraded": result["receipt"]["degraded"],
-            "report": result["report_path"],
-            "receipt": result["receipt"]["receipt_path"],
-        }
+        payload: Any = (
+            result
+            if args.json
+            else {
+                "status": result["receipt"]["result"],
+                "degraded": result["receipt"]["degraded"],
+                "report": result["report_path"],
+                "receipt": result["receipt"]["receipt_path"],
+            }
+        )
         print(
             json.dumps(
                 payload,
@@ -601,6 +711,7 @@ def main(argv: list[str] | None = None) -> int:
         source_state_path=Path(args.source_state).expanduser(),
         scanner_latest_path=Path(args.scanner_latest).expanduser(),
         closure_plan_path=Path(args.closure_plan).expanduser(),
+        closure_lanes_path=Path(args.closure_lanes).expanduser(),
         focus_repositories=focus,
         limit=args.limit,
     )

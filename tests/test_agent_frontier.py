@@ -170,3 +170,68 @@ def test_frontier_cycle_writes_report_and_terminal_receipt(tmp_path: Path) -> No
     assert validate_receipt(receipt, expected_stage="frontier") == []
     assert (state_root / "latest.json").is_file()
     assert (state_root / "latest-report.json").is_file()
+
+
+def test_frontier_selects_unbound_closure_lanes(tmp_path: Path) -> None:
+    lanes_path = tmp_path / "lanes.json"
+    lanes_path.write_text(
+        json.dumps(
+            {
+                "lanes": [
+                    {
+                        "lane_id": "lane-grabowski-active",
+                        "repo_name": "grabowski",
+                        "repo": "/tmp/grabowski",
+                        "branch": "feat/operator-workspace-v1",
+                        "state": "active",
+                        "task_id": None,
+                        "finishability": 0.45,
+                        "next_action": "bind to canonical Bureau task before dispatch",
+                    },
+                    {
+                        "lane_id": "lane-weltgewebe-planned",
+                        "repo_name": "weltgewebe",
+                        "repo": "/tmp/weltgewebe",
+                        "branch": "feat/docmeta-proof",
+                        "state": "planned",
+                        "task_id": None,
+                        "finishability": 0.8,
+                    },
+                    {
+                        "lane_id": "lane-bound",
+                        "repo_name": "weltgewebe",
+                        "repo": "/tmp/weltgewebe",
+                        "branch": "feat/bound",
+                        "state": "planned",
+                        "task_id": "BUR-2026-001-T999",
+                    },
+                    {
+                        "lane_id": "lane-old",
+                        "repo_name": "grabowski",
+                        "repo": "/tmp/grabowski",
+                        "branch": "feat/old",
+                        "state": "obsolete",
+                        "task_id": None,
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_frontier_report(
+        source_state(),
+        closure_lanes_path=lanes_path,
+        generated_at="2026-06-30T05:55:00Z",
+    )
+
+    assert report["metrics"]["closure_lane_count"] == 4
+    assert report["metrics"]["eligible_binding_candidate_count"] == 2
+    assert report["metrics"]["selected_binding_candidate_count"] == 2
+    assert report["closure_binding_frontier"][0]["lane_id"] == "lane-grabowski-active"
+    rejected = {
+        item["lane_id"]: item["rejected_reason"]
+        for item in report["closure_binding_rejected_sample"]
+    }
+    assert rejected["lane-bound"] == "already_bound_to_canonical_task"
+    assert rejected["lane-old"] == "terminal_or_obsolete_lane"

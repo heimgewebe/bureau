@@ -154,7 +154,7 @@ def selected_lane_ids(plan: dict[str, Any], lanes: list[dict[str, Any]]) -> list
 
 
 def truthy_evidence(value: Any) -> bool:
-    if value in (None, "", [], {}):
+    if value in (None, "", [], {}) or value is False:
         return False
     if isinstance(value, str):
         lowered = value.strip().lower()
@@ -177,7 +177,20 @@ def nested_values(value: Any, keys: set[str]) -> list[Any]:
 
 
 def evidence_present(lane: dict[str, Any], keys: set[str]) -> bool:
-    values = nested_values(lane, keys)
+    values: list[Any] = []
+    for key in keys:
+        values.append(lane.get(key))
+    for container_key in (
+        "evidence",
+        "handoff_evidence",
+        "validation_result",
+        "acceptance_result",
+    ):
+        container = lane.get(container_key)
+        if not isinstance(container, dict):
+            continue
+        for key in keys:
+            values.append(container.get(key))
     return any(truthy_evidence(item) for item in values)
 
 

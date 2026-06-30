@@ -159,3 +159,32 @@ def test_receipt_summary_omits_full_evidence() -> None:
         }
     ]
     assert "evidence" not in summary["reviews"][0]
+
+
+def test_prior_review_evidence_does_not_count_as_fresh_test_evidence() -> None:
+    result = classify_lane(
+        lane(
+            test_evidence=None,
+            review_evidence={
+                "evidence": {
+                    "brief": {
+                        "brief": {
+                            "expected_handoff_format": {"tests": "commands and outcomes"}
+                        }
+                    }
+                }
+            },
+        ),
+        brief={"valid": True},
+        repo=repo_snapshot(),
+        pr={
+            "available": True,
+            "state": "OPEN",
+            "is_draft": False,
+            "checks": "passed",
+            "review_decision": "APPROVED",
+        },
+    )
+
+    assert result["state"] == "reviewing"
+    assert "missing focused test evidence" in result["reasons"]

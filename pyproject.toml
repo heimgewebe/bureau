@@ -20,6 +20,7 @@ bureau = "bureau.cli:main"
 bureau-source-pr-bridge = "bureau.source_pr_bridge:main"
 bureau-closure = "bureau.closure:main"
 bureau-closure-runner = "bureau.closure_runner:main"
+bureau-review-steward = "bureau.review_steward:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

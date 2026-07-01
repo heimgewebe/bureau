@@ -1,0 +1,81 @@
+{
+  "agent_brief": {
+    "lane_id": "lane-bureau-plan-grabowski-safety-smooth-ops-a3e5c7722c",
+    "path": "/home/alex/.local/state/bureau-closure/briefs/lane-bureau-plan-grabowski-safety-smooth-ops-a3e5c7722c.json",
+    "required_fields_present": [
+      "acceptance_criteria",
+      "allowed_changes",
+      "context_summary",
+      "expected_handoff_format",
+      "forbidden_changes",
+      "goal",
+      "non_goals",
+      "target_files_or_search_scope",
+      "validation_commands"
+    ],
+    "sha256": "28629396ff08f3cc3d9f7c40166d68f0cf3139cee2c7eec65172567c5ffe2b04",
+    "state": "needs_revision",
+    "task_id": "BUR-2026-001-T005",
+    "valid": true
+  },
+  "closure_bridge": {
+    "accepted_task_ids": [
+      "BUR-2026-001-T005"
+    ],
+    "canonical_task_binding": "manual-chatgpt-20260629",
+    "canonical_task_bound_count": 1,
+    "plan_path": "/home/alex/.local/state/bureau-closure/plan.json",
+    "plan_sha256": "4e3dfd8cfcf0bc820b6a6ae77bb4feac4ee24712a3b3c08275db12affa3951e4",
+    "selected_lane_count": 1,
+    "selected_lane_fingerprint": "a3e5c7722cadc263d8971eb2713c58face319c1ba3dcbee88bf3e6f6dfdeed98",
+    "selected_lane_id": "lane-bureau-plan-grabowski-safety-smooth-ops-a3e5c7722c",
+    "selected_lane_state": "needs_revision",
+    "unbound_selected_rejected_count": 307
+  },
+  "created_at": "2026-07-01T17:16:56.037471Z",
+  "delegator_safety": {
+    "canonical_task_binding_present": true,
+    "execution_mode": "interactive-agent",
+    "external_execution_requires_valid_brief": true,
+    "review_before_effect_policy": true,
+    "valid_brief_path_matches_selected_lane": true
+  },
+  "does_not_establish": [
+    "GBW task pack code implementation completion",
+    "merge readiness for plan/grabowski-safety-smooth-ops",
+    "closure of unrelated unbound lanes"
+  ],
+  "schema_version": "bureau-binding-proof.v1",
+  "source_branch": "plan/grabowski-safety-smooth-ops",
+  "source_task_pack": "work/grabowski-safety-smooth-ops/bureau_tasks.json",
+  "task_id": "BUR-2026-001-T005",
+  "task_pack": {
+    "normalization_decision": "kept_as_non_executable_evidence",
+    "normalization_reason": "The pack is a Grabowski implementation roadmap; canonical Bureau dispatch is bound through BUR-2026-001-T005 rather than importing GBW subtasks as executable Bureau tasks in this slice.",
+    "path": "work/grabowski-safety-smooth-ops/bureau_tasks.json",
+    "program": "grabowski-safety-smooth-ops",
+    "schema_version": "bureau-task-pack.v1",
+    "sha256": "ae62185c90563a655f98d0a337cb4fea24c58495730d30165c2698bf4890e7e5",
+    "statuses": {
+      "GBW-001": "IN_PROGRESS",
+      "GBW-002": "READY",
+      "GBW-003": "READY",
+      "GBW-004": "READY",
+      "GBW-005": "READY",
+      "GBW-006": "READY",
+      "GBW-007": "READY",
+      "GBW-008": "READY"
+    },
+    "task_count": 8,
+    "task_ids": [
+      "GBW-001",
+      "GBW-002",
+      "GBW-003",
+      "GBW-004",
+      "GBW-005",
+      "GBW-006",
+      "GBW-007",
+      "GBW-008"
+    ]
+  }
+}

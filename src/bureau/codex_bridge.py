@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -38,6 +39,7 @@ MUTATION_INTENT_KEYS = frozenset(
     }
 )
 MAX_CAPTURE_CHARS = 100_000
+CANONICAL_TASK_ID_RE = re.compile(r"^(?P<initiative>.+)-T(?P<number>\d+)$")
 
 CommandRunner = Callable[[Sequence[str]], subprocess.CompletedProcess[str]]
 CodexRunner = Callable[[Sequence[str], str, Path, int], subprocess.CompletedProcess[str]]
@@ -59,6 +61,7 @@ class BridgeConfig:
     codex_command: tuple[str, ...] = ("codex", "exec")
     codex_timeout_seconds: int = 300
     run_id: str | None = None
+    binding_gate: bool = False
 
 
 def default_state_base() -> Path:
@@ -81,6 +84,7 @@ def default_config(
     codex_command: tuple[str, ...] | None = None,
     codex_timeout_seconds: int = 300,
     run_id: str | None = None,
+    binding_gate: bool = False,
 ) -> BridgeConfig:
     selected_state_base = (state_base or default_state_base()).expanduser()
     return BridgeConfig(
@@ -100,6 +104,7 @@ def default_config(
         codex_command=codex_command or ("codex", "exec"),
         codex_timeout_seconds=codex_timeout_seconds,
         run_id=run_id,
+        binding_gate=binding_gate,
     )
 
 
@@ -226,6 +231,14 @@ def _blocker(code: str, source: str, detail: str) -> dict[str, str]:
     return {"code": code, "source": source, "detail": detail}
 
 
+def _bureau_check_failure(bureau_check: dict[str, Any]) -> str | None:
+    check_payload = bureau_check.get("stdout_json")
+    check_valid = not (isinstance(check_payload, dict) and check_payload.get("valid") is False)
+    if bureau_check.get("ok") and check_valid:
+        return None
+    return str(bureau_check.get("error") or bureau_check.get("stderr") or "bureau check failed")
+
+
 def _context_blockers(sources: dict[str, dict[str, Any]]) -> list[dict[str, str]]:
     blockers: list[dict[str, str]] = []
     health = sources["health"]
@@ -267,13 +280,7 @@ def _context_blockers(sources: dict[str, dict[str, Any]]) -> list[dict[str, str]
             )
         )
 
-    bureau_check = sources["bureau_check"]
-    check_payload = bureau_check.get("stdout_json")
-    check_valid = not (isinstance(check_payload, dict) and check_payload.get("valid") is False)
-    if not bureau_check.get("ok") or not check_valid:
-        detail = str(
-            bureau_check.get("error") or bureau_check.get("stderr") or "bureau check failed"
-        )
+    if detail := _bureau_check_failure(sources["bureau_check"]):
         blockers.append(_blocker("bureau_check_failed", "bureau_check", detail[:1000]))
     return blockers
 
@@ -303,6 +310,19 @@ def collect_context(
             runner,
         ),
     }
+    does_not_do = [
+        "does not call OpenAI API",
+        "does not allow Codex to mutate Bureau; Codex may only return "
+        "decision JSON on stdout",
+        "does not claim, bind, complete, fail, merge, rebase, or deploy",
+    ]
+    if config.binding_gate:
+        does_not_do.append(
+            "does not mutate Bureau except one validated planned binding task file"
+        )
+    else:
+        does_not_do.append("does not mutate Bureau registry or tasks")
+
     context = {
         "schema_version": BRIDGE_SCHEMA_VERSION,
         "run_id": selected_run_id,
@@ -311,13 +331,7 @@ def collect_context(
         "state_base": str(config.state_base),
         "sources": sources,
         "blockers": _context_blockers(sources),
-        "does_not_do": [
-            "does not call OpenAI API",
-            "does not allow Codex to mutate Bureau; Codex may only return "
-            "decision JSON on stdout",
-            "does not mutate Bureau registry or tasks",
-            "does not claim, bind, complete, fail, merge, rebase, or deploy",
-        ],
+        "does_not_do": does_not_do,
     }
     return context
 
@@ -599,6 +613,420 @@ def _decision_blockers(decision_result: dict[str, Any]) -> list[dict[str, str]]:
     return []
 
 
+def _empty_binding_result(status: str, *, gate_enabled: bool) -> dict[str, Any]:
+    return {
+        "schema_version": BRIDGE_SCHEMA_VERSION,
+        "gate_enabled": gate_enabled,
+        "status": status,
+        "mutation_performed": False,
+        "task_id": None,
+        "task_path": None,
+        "lane_id": None,
+        "blockers": [],
+        "post_check": None,
+    }
+
+
+def _binding_blocker(code: str, detail: str) -> dict[str, str]:
+    return _blocker(code, "binding_gate", detail)
+
+
+def _frontier_binding_lane(
+    context: dict[str, Any],
+    lane_id: Any,
+) -> tuple[dict[str, Any] | None, dict[str, str] | None]:
+    if not isinstance(lane_id, str) or not lane_id.strip():
+        return None, _binding_blocker("binding_missing_lane_id", "decision lane_id is required")
+    frontier = context.get("sources", {}).get("frontier", {})
+    data = frontier.get("data") if isinstance(frontier, dict) else None
+    candidates = data.get("closure_binding_frontier") if isinstance(data, dict) else None
+    if not isinstance(candidates, list):
+        return None, _binding_blocker(
+            "binding_frontier_unavailable",
+            "sources.frontier.data.closure_binding_frontier is missing",
+        )
+    for item in candidates:
+        if isinstance(item, dict) and item.get("lane_id") == lane_id:
+            return item, None
+    return None, _binding_blocker(
+        "binding_lane_not_in_frontier",
+        f"lane_id {lane_id!r} is not in closure_binding_frontier",
+    )
+
+
+def _load_registry_json_files(root: Path, folder: str) -> list[tuple[Path, dict[str, Any]]]:
+    result: list[tuple[Path, dict[str, Any]]] = []
+    for path in sorted((root / "registry" / folder).glob("*.json")):
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            continue
+        if isinstance(value, dict):
+            result.append((path, value))
+    return result
+
+
+def _task_registry_files(root: Path) -> list[tuple[Path, dict[str, Any]]]:
+    return _load_registry_json_files(root, "tasks")
+
+
+def _initiative_ids(root: Path) -> list[str]:
+    result: list[str] = []
+    for _path, value in _load_registry_json_files(root, "initiatives"):
+        task_id = value.get("id")
+        if isinstance(task_id, str) and task_id:
+            result.append(task_id)
+    return sorted(result)
+
+
+def _next_task_identity(root: Path) -> tuple[str, int]:
+    initiatives = _initiative_ids(root)
+    parsed: list[tuple[str, int, int]] = []
+    for _path, task in _task_registry_files(root):
+        task_id = task.get("id")
+        if not isinstance(task_id, str):
+            continue
+        match = CANONICAL_TASK_ID_RE.fullmatch(task_id)
+        if match is None:
+            continue
+        number = int(match.group("number"))
+        width = len(match.group("number"))
+        parsed.append((match.group("initiative"), number, width))
+
+    if parsed:
+        initiative = initiatives[0] if len(initiatives) == 1 else parsed[-1][0]
+        matching = [item for item in parsed if item[0] == initiative]
+        if not matching:
+            matching = parsed
+            initiative = matching[-1][0]
+        next_number = max(item[1] for item in matching) + 1
+        width = max(3, max(item[2] for item in matching))
+        return f"{initiative}-T{next_number:0{width}d}", next_number
+    if not initiatives:
+        raise ValueError("registry has no initiative for canonical task id")
+    return f"{initiatives[0]}-T001", 1
+
+
+def _next_priority_rank(tasks: list[tuple[Path, dict[str, Any]]]) -> int:
+    ranks: list[int] = []
+    for _path, task in tasks:
+        priority = task.get("priority")
+        if isinstance(priority, dict) and isinstance(priority.get("rank"), int):
+            ranks.append(priority["rank"])
+    return (max(ranks) + 10) if ranks else 10
+
+
+def _normalized_text(value: Any) -> str:
+    return " ".join(str(value or "").split()).strip()
+
+
+def _normalized_path_key(value: Any) -> str:
+    text = _normalized_text(value)
+    if not text:
+        return ""
+    return str(Path(text).expanduser()).rstrip("/")
+
+
+def _metadata_lane_ids(metadata: dict[str, Any]) -> set[str]:
+    values: set[str] = set()
+    for key in ("closure_lane_id", "source_lane_id", "lane_id"):
+        value = metadata.get(key)
+        if isinstance(value, str) and value:
+            values.add(value)
+    for key in ("closure_lane_ids", "source_lane_ids", "lane_ids"):
+        raw = metadata.get(key)
+        if isinstance(raw, list):
+            values.update(item for item in raw if isinstance(item, str) and item)
+    return values
+
+
+def _metadata_source_repo(metadata: dict[str, Any], task: dict[str, Any]) -> str:
+    for key in ("source_repository", "source_repo", "repo"):
+        value = metadata.get(key)
+        if isinstance(value, str) and value:
+            return value
+    execution = task.get("execution")
+    if isinstance(execution, dict):
+        value = execution.get("working_repository")
+        if isinstance(value, str) and value:
+            return value
+    return ""
+
+
+def _metadata_source_branch(metadata: dict[str, Any]) -> str:
+    for key in ("source_branch", "branch"):
+        value = metadata.get(key)
+        if isinstance(value, str) and value:
+            return value
+    return ""
+
+
+def _duplicate_binding_blocker(
+    tasks: list[tuple[Path, dict[str, Any]]],
+    lane: dict[str, Any],
+) -> dict[str, str] | None:
+    lane_id = _normalized_text(lane.get("lane_id"))
+    source_repo = _normalized_path_key(lane.get("repo"))
+    source_branch = _normalized_text(lane.get("branch"))
+    for path, task in tasks:
+        metadata = task.get("metadata") if isinstance(task.get("metadata"), dict) else {}
+        if lane_id and lane_id in _metadata_lane_ids(metadata):
+            return _binding_blocker(
+                "binding_duplicate_existing_task",
+                f"{task.get('id')} already records lane_id {lane_id} in {path}",
+            )
+        task_repo = _normalized_path_key(_metadata_source_repo(metadata, task))
+        task_branch = _normalized_text(_metadata_source_branch(metadata))
+        if (
+            source_repo
+            and source_branch
+            and task_repo == source_repo
+            and task_branch == source_branch
+        ):
+            return _binding_blocker(
+                "binding_duplicate_existing_task",
+                (
+                    f"{task.get('id')} already records source repo/branch "
+                    f"{source_repo} {source_branch}"
+                ),
+            )
+    return None
+
+
+def _resource_for_lane(root: Path, lane: dict[str, Any]) -> tuple[str, str | None]:
+    resources = _load_registry_json_files(root, "resources")
+    repo_path = _normalized_path_key(lane.get("repo"))
+    repo_name = _normalized_text(lane.get("repo_name")).casefold()
+    wanted_name = f"repo.{repo_name}" if repo_name else ""
+    fallback_grabowski_key: str | None = None
+    for _path, resource in resources:
+        resource_id = resource.get("id")
+        if not isinstance(resource_id, str) or not resource_id:
+            continue
+        if repo_path and _normalized_path_key(resource.get("path")) == repo_path:
+            grabowski_key = resource.get("grabowski_key")
+            return resource_id, grabowski_key if isinstance(grabowski_key, str) else None
+        if resource_id == wanted_name:
+            grabowski_key = resource.get("grabowski_key")
+            fallback_grabowski_key = grabowski_key if isinstance(grabowski_key, str) else None
+    if wanted_name and any(resource.get("id") == wanted_name for _path, resource in resources):
+        return wanted_name, fallback_grabowski_key
+    if any(resource.get("id") == "repo" for _path, resource in resources):
+        return "repo", f"repo:{repo_path}" if repo_path else None
+    raise ValueError("registry has no repository resource for binding task claim")
+
+
+def _binding_task(
+    *,
+    root: Path,
+    task_id: str,
+    priority_rank: int,
+    lane: dict[str, Any],
+    context: dict[str, Any],
+    config: BridgeConfig,
+) -> dict[str, Any]:
+    initiative = task_id.rsplit("-T", 1)[0]
+    lane_id = _normalized_text(lane.get("lane_id"))
+    repo_name = _normalized_text(lane.get("repo_name")) or "repository"
+    repo = _normalized_text(lane.get("repo"))
+    branch = _normalized_text(lane.get("branch"))
+    resource, grabowski_key = _resource_for_lane(root, lane)
+    capabilities = ["repository", "shell"]
+    if repo_name.casefold() == "grabowski":
+        capabilities.append("grabowski")
+    execution: dict[str, Any] = {
+        "mode": "interactive-agent",
+        "policy": "review-before-effect",
+    }
+    if repo:
+        execution["working_repository"] = repo
+    worker_profile = lane.get("suggested_worker_profile")
+    if isinstance(worker_profile, str) and worker_profile:
+        execution["worker_profile"] = worker_profile
+    if grabowski_key:
+        execution["grabowski_resources"] = [grabowski_key]
+    elif repo:
+        execution["grabowski_resources"] = [f"repo:{repo}"]
+    frontier_data = context.get("sources", {}).get("frontier", {}).get("data")
+    metadata: dict[str, Any] = {
+        "created_for": "closure-lane-canonical-binding",
+        "closure_lane_id": lane_id,
+        "closure_lane_ids": [lane_id],
+        "source_repository": repo,
+        "source_branch": branch,
+        "frontier_report": str(config.frontier_report_path),
+        "frontier_score": lane.get("score"),
+        "frontier_recommended_action": lane.get("recommended_action"),
+    }
+    if isinstance(frontier_data, dict) and isinstance(frontier_data.get("report_sha256"), str):
+        metadata["frontier_report_sha256"] = frontier_data["report_sha256"]
+    return {
+        "schema_version": 1,
+        "id": task_id,
+        "initiative": initiative,
+        "title": f"Bind {repo_name} {branch} closure lane",
+        "state": "planned",
+        "goal": (
+            f"Bind closure lane {lane_id} for {repo_name} branch {branch} to this "
+            "canonical Bureau task before any external execution, merge, or deployment."
+        ),
+        "depends_on": [],
+        "required_capabilities": capabilities,
+        "priority": {"lane": "next", "rank": priority_rank},
+        "execution": execution,
+        "claims": [{"resource": resource, "mode": "write", "isolation": "worktree"}],
+        "acceptance": [
+            {
+                "id": "closure-lane-bound",
+                "assertion": "The matching closure lane records this canonical Bureau task id.",
+            },
+            {
+                "id": "branch-reviewed",
+                "assertion": "The branch status, relevant tests, and merge path are checked.",
+            },
+            {
+                "id": "handoff-safe",
+                "assertion": (
+                    "A valid brief and this task binding exist before external execution continues."
+                ),
+            },
+        ],
+        "metadata": metadata,
+    }
+
+
+def _remove_written_task(path: Path) -> dict[str, Any]:
+    try:
+        path.unlink()
+    except FileNotFoundError:
+        return {"removed": True, "error": None}
+    except OSError as exc:
+        return {"removed": False, "error": f"{type(exc).__name__}: {exc}"}
+    return {"removed": True, "error": None}
+
+
+def _apply_binding_gate(
+    config: BridgeConfig,
+    *,
+    context: dict[str, Any],
+    decision_result: dict[str, Any],
+    existing_blockers: list[dict[str, str]],
+    runner: CommandRunner,
+) -> dict[str, Any]:
+    decision = decision_result.get("decision")
+    if not isinstance(decision, dict) or decision.get("action") != "propose_binding":
+        return _empty_binding_result("not_requested", gate_enabled=config.binding_gate)
+
+    result = _empty_binding_result(
+        "pending" if config.binding_gate else "disabled",
+        gate_enabled=config.binding_gate,
+    )
+    result["lane_id"] = decision.get("lane_id")
+    if not config.binding_gate:
+        result["blockers"] = [
+            _binding_blocker("binding_gate_disabled", "propose_binding requires --binding-gate")
+        ]
+        return result
+    if existing_blockers:
+        result["status"] = "blocked"
+        result["blockers"] = [
+            _binding_blocker(
+                "binding_context_blocked",
+                "binding gate will not write while context or decision blockers are present",
+            )
+        ]
+        return result
+
+    confidence = decision.get("confidence")
+    if not isinstance(confidence, int | float) or isinstance(confidence, bool) or confidence < 0.75:
+        result["status"] = "blocked"
+        result["blockers"] = [
+            _binding_blocker(
+                "binding_low_confidence",
+                f"propose_binding confidence must be >= 0.75, got {confidence!r}",
+            )
+        ]
+        return result
+    if decision.get("task_id") not in (None, ""):
+        result["status"] = "blocked"
+        result["blockers"] = [
+            _binding_blocker("binding_task_id_must_be_empty", "decision task_id must be empty")
+        ]
+        return result
+
+    lane, blocker = _frontier_binding_lane(context, decision.get("lane_id"))
+    if blocker is not None:
+        result["status"] = "blocked"
+        result["blockers"] = [blocker]
+        return result
+    if lane is None:
+        raise AssertionError("frontier binding lookup returned neither lane nor blocker")
+    result["lane_id"] = lane.get("lane_id")
+    if lane.get("eligible") is not True:
+        result["status"] = "blocked"
+        result["blockers"] = [
+            _binding_blocker("binding_lane_not_eligible", "frontier lane eligible is not true")
+        ]
+        return result
+    if lane.get("task_id") not in (None, ""):
+        result["status"] = "blocked"
+        result["blockers"] = [
+            _binding_blocker("binding_lane_already_bound", "frontier lane task_id is not empty")
+        ]
+        return result
+
+    root = config.repo_root
+    tasks = _task_registry_files(root)
+    if blocker := _duplicate_binding_blocker(tasks, lane):
+        result["status"] = "blocked"
+        result["blockers"] = [blocker]
+        return result
+
+    try:
+        task_id, _number = _next_task_identity(root)
+        task_path = root / "registry" / "tasks" / f"{task_id}.json"
+        if task_path.exists():
+            raise ValueError(f"target task file already exists: {task_path}")
+        task = _binding_task(
+            root=root,
+            task_id=task_id,
+            priority_rank=_next_priority_rank(tasks),
+            lane=lane,
+            context=context,
+            config=config,
+        )
+        atomic_json(task_path, task)
+    except (OSError, ValueError) as exc:
+        result["status"] = "blocked"
+        result["blockers"] = [
+            _binding_blocker("binding_write_failed", f"{type(exc).__name__}: {exc}")
+        ]
+        return result
+
+    result["task_id"] = task_id
+    result["task_path"] = str(task_path)
+    post_check = _command_observation(
+        "bureau_check_after_binding",
+        "bureau check",
+        _bureau_args(config, "check"),
+        runner,
+    )
+    result["post_check"] = post_check
+    if detail := _bureau_check_failure(post_check):
+        rollback = _remove_written_task(task_path)
+        result["rollback"] = rollback
+        result["mutation_performed"] = task_path.exists()
+        result["status"] = "rolled_back" if rollback["removed"] else "rollback_failed"
+        result["blockers"] = [
+            _binding_blocker("binding_post_check_failed", detail[:1000])
+        ]
+        return result
+
+    result["status"] = "written"
+    result["mutation_performed"] = task_path.exists()
+    return result
+
+
 def render_prompt(context: dict[str, Any], decision_result: dict[str, Any]) -> str:
     blockers = context.get("blockers", [])
     source_summary = {
@@ -619,8 +1047,10 @@ def render_prompt(context: dict[str, Any], decision_result: dict[str, Any]) -> s
         "## Hard Constraints\n\n"
         "- Do not call the OpenAI API.\n"
         "- Do not use ChatGPT-planned execution.\n"
-        "- Do not mutate Bureau registry, tasks, run reservations, claims, envelopes, "
-        "worktrees, merges, rebases, deployments, or external executors.\n"
+        "- Do not mutate Bureau run reservations, claims, envelopes, worktrees, merges, "
+        "rebases, deployments, or external executors.\n"
+        "- Do not mutate Bureau registry or tasks unless this context enables the explicit "
+        "binding gate; even then, only the bridge may write one validated planned task file.\n"
         "- Only return a JSON decision; the bridge records artifacts and receipts.\n\n"
         "## Current Blockers\n\n"
         f"```json\n{json.dumps(blockers, indent=2, ensure_ascii=False, sort_keys=True)}\n```\n\n"
@@ -633,6 +1063,8 @@ def render_prompt(context: dict[str, Any], decision_result: dict[str, Any]) -> s
         f"- `schema_version`: `{DECISION_SCHEMA_VERSION}`\n"
         f"- `action`: one of `{sorted(ALLOWED_ACTIONS)}`\n"
         "- `confidence`: number from `0` to `1`\n\n"
+        "When the bridge binding gate is enabled, `propose_binding` must include `lane_id` "
+        "from `sources.frontier.data.closure_binding_frontier` and no `task_id`.\n\n"
         "The current backend observation is:\n\n"
         "```json\n"
         f"{json.dumps(decision_result, indent=2, ensure_ascii=False, sort_keys=True)}\n"
@@ -675,7 +1107,15 @@ def run_bridge(
         prompt=prompt,
         codex_runner=codex_runner,
     )
-    blockers = [*context["blockers"], *_decision_blockers(decision_result)]
+    pre_binding_blockers = [*context["blockers"], *_decision_blockers(decision_result)]
+    binding_result = _apply_binding_gate(
+        config,
+        context=context,
+        decision_result=decision_result,
+        existing_blockers=pre_binding_blockers,
+        runner=runner,
+    )
+    blockers = [*pre_binding_blockers, *binding_result.get("blockers", [])]
     receipt_path = run_dir / "receipt.json"
     receipt = {
         "schema_version": BRIDGE_SCHEMA_VERSION,
@@ -689,12 +1129,13 @@ def run_bridge(
         "decision": decision_result.get("decision"),
         "decision_valid": decision_result.get("valid"),
         "decision_errors": decision_result.get("errors", []),
+        "binding_result": binding_result,
         "backend_observation": {
             key: value
             for key, value in decision_result.items()
             if key not in {"decision"}
         },
-        "mutation_performed": False,
+        "mutation_performed": bool(binding_result.get("mutation_performed")),
         "artifacts": {
             "context": str(run_dir / "context.json"),
             "prompt": str(run_dir / "prompt.md"),
@@ -757,6 +1198,7 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=int(os.environ.get("BUREAU_CODEX_BRIDGE_CODEX_TIMEOUT_SECONDS", "300")),
     )
+    parser.add_argument("--binding-gate", action="store_true")
     parser.add_argument("--run-id", default=os.environ.get("BUREAU_CODEX_BRIDGE_RUN_ID"))
     parser.add_argument("--json", action="store_true")
     return parser
@@ -786,6 +1228,7 @@ def config_from_args(args: argparse.Namespace) -> BridgeConfig:
         codex_command=tuple(shlex.split(args.codex_command)),
         codex_timeout_seconds=args.codex_timeout_seconds,
         run_id=args.run_id,
+        binding_gate=args.binding_gate,
     )
     return BridgeConfig(
         **{

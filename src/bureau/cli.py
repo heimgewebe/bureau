@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sqlite3
 import sys
 from pathlib import Path
 from typing import Any
@@ -182,6 +183,40 @@ def adapters(args: argparse.Namespace) -> AdapterRegistry:
     return registry
 
 
+def read_only_state_integrity(args: argparse.Namespace) -> dict[str, Any]:
+    if args.state_db:
+        state_path = Path(args.state_db).expanduser()
+    elif args.state_root:
+        state_path = Path(args.state_root).expanduser() / "bureau.sqlite3"
+    else:
+        state_path = Path(os.environ.get("BUREAU_STATE_DIR", "~/.local/state/bureau")).expanduser()
+        state_path = state_path / "bureau.sqlite3"
+    if not state_path.is_file():
+        return {"available": False, "path": str(state_path), "error": "missing"}
+    try:
+        connection = sqlite3.connect(f"file:{state_path}?mode=ro", uri=True)
+        connection.row_factory = sqlite3.Row
+        integrity = connection.execute("PRAGMA integrity_check").fetchone()[0]
+        foreign = [dict(row) for row in connection.execute("PRAGMA foreign_key_check")]
+        version = connection.execute("PRAGMA user_version").fetchone()[0]
+    except sqlite3.Error as exc:
+        return {
+            "available": False,
+            "path": str(state_path),
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+    finally:
+        if "connection" in locals():
+            connection.close()
+    return {
+        "available": True,
+        "path": str(state_path),
+        "integrity": integrity,
+        "foreign_key_errors": foreign,
+        "schema_version": version,
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
@@ -269,19 +304,21 @@ def main(argv: list[str] | None = None) -> int:
                 value = source_promote_plan(root, registry, args.source, args.task_id)
             emit(value, args.json)
             return 0
+        if args.command == "check":
+            value = {
+                "valid": True,
+                **registry.summary(),
+                "state": read_only_state_integrity(args),
+                "adapters": adapters(args).status(),
+            }
+            emit(value, args.json)
+            return 0
         state_path = Path(args.state_db).expanduser() if args.state_db else None
         state_root = Path(args.state_root).expanduser() if args.state_root else None
         store = StateStore(state_path, state_root)
         adapter_registry = adapters(args)
         dispatcher = Dispatcher(registry, store, adapter_registry)
-        if args.command == "check":
-            value = {
-                "valid": True,
-                **registry.summary(),
-                "state": store.integrity(),
-                "adapters": adapter_registry.status(),
-            }
-        elif args.command == "status":
+        if args.command == "status":
             value = {
                 **registry.summary(),
                 "runs": store.list_runs(),

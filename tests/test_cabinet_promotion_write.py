@@ -187,3 +187,83 @@ class CabinetPromotionTaskValidationTests(unittest.TestCase):
         self.assertEqual(payload["kind"], "cabinet_promotion_task_validation")
         self.assertEqual(payload["taskId"], "BUR-CAB-ECO-001")
         self.assertFalse(payload["registryMutationAllowed"])
+
+
+class CabinetPromotionTaskImportPreviewTests(unittest.TestCase):
+    def import_preview_promotion_fixture(self, *, task_id: str = "BUR-CAB-ECO-009") -> dict:
+        export = export_fixture()
+        return promote_frontier_candidate(
+            export,
+            candidate_id=export["candidates"][0]["id"],
+            task_id=task_id,
+            initiative="BUR-2026-001",
+            target_proof="A reviewed proof exists.",
+            approve=True,
+        )
+
+    def test_preview_import_checks_registry_without_mutation(self) -> None:
+        from bureau.cabinet_promotion_write import preview_promotion_task_import_file
+        from bureau.core import Registry
+
+        promotion = self.import_preview_promotion_fixture()
+        with tempfile.TemporaryDirectory() as directory:
+            task_path = Path(directory) / "task.json"
+            write_promotion_task(promotion, task_path)
+            registry = Registry.load(Path.cwd())
+            before = sorted(registry.tasks)
+            receipt = preview_promotion_task_import_file(task_path, registry=registry)
+            after = sorted(registry.tasks)
+
+        self.assertEqual(before, after)
+        self.assertEqual(receipt["kind"], "cabinet_promotion_task_import_preview")
+        self.assertEqual(receipt["mode"], "dry_run")
+        self.assertTrue(receipt["valid"])
+        self.assertTrue(receipt["importReady"])
+        self.assertEqual(receipt["taskId"], "BUR-CAB-ECO-009")
+        self.assertEqual(receipt["initiative"], "BUR-2026-001")
+        self.assertTrue(receipt["checks"]["taskSchema"])
+        self.assertTrue(receipt["checks"]["taskIdAvailable"])
+        self.assertTrue(receipt["checks"]["initiativeKnown"])
+        self.assertFalse(receipt["dispatchAllowed"])
+        self.assertFalse(receipt["queueMutationAllowed"])
+        self.assertFalse(receipt["taskCreationAllowed"])
+        self.assertFalse(receipt["registryMutationAllowed"])
+
+    def test_preview_rejects_existing_registry_task_id(self) -> None:
+        from bureau.cabinet_promotion_write import preview_promotion_task_import_file
+        from bureau.core import Registry
+
+        promotion = self.import_preview_promotion_fixture(task_id="BUR-2026-001-T001")
+        with tempfile.TemporaryDirectory() as directory:
+            task_path = Path(directory) / "task.json"
+            write_promotion_task(promotion, task_path)
+            registry = Registry.load(Path.cwd())
+            with self.assertRaisesRegex(CabinetGraphError, "already exists"):
+                preview_promotion_task_import_file(task_path, registry=registry)
+
+    def test_cli_previews_import_with_registry_context(self) -> None:
+        from bureau.cli import main
+
+        promotion = self.import_preview_promotion_fixture()
+        with tempfile.TemporaryDirectory() as directory:
+            task_path = Path(directory) / "task.json"
+            write_promotion_task(promotion, task_path)
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                result = main(
+                    [
+                        "--json",
+                        "--root",
+                        str(Path.cwd()),
+                        "cabinet-import-preview",
+                        "--task-file",
+                        str(task_path),
+                    ]
+                )
+            payload = json.loads(output.getvalue())
+
+        self.assertEqual(result, 0)
+        self.assertEqual(payload["kind"], "cabinet_promotion_task_import_preview")
+        self.assertEqual(payload["mode"], "dry_run")
+        self.assertTrue(payload["checks"]["taskSchema"])
+        self.assertFalse(payload["registryMutationAllowed"])

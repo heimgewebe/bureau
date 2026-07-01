@@ -61,12 +61,14 @@ class CabinetGraphReaderTests(unittest.TestCase):
             self.assertEqual(summary.candidate_count, 0)
 
     def test_derives_read_only_candidates_for_drift_and_dirty_worktree(self) -> None:
-        loaded = graph([
-            repo_node(
-                "steuerboard",
-                ["reference_freshness", "dirty_import_worktree", "review_import_drift"],
-            )
-        ])
+        loaded = graph(
+            [
+                repo_node(
+                    "steuerboard",
+                    ["reference_freshness", "dirty_import_worktree", "review_import_drift"],
+                )
+            ]
+        )
         candidates = derive_diagnostic_candidates(loaded)
         self.assertEqual(len(candidates), 2)
         self.assertEqual(
@@ -111,7 +113,10 @@ class CabinetGraphReaderTests(unittest.TestCase):
             "status": "observed",
             "sources": [{"type": "manual", "ref": "test"}],
         }
-        self.assertEqual([node["name"] for node in repository_nodes(graph([repo_node("cabinet"), service]))], ["cabinet"])
+        self.assertEqual(
+            [node["name"] for node in repository_nodes(graph([repo_node("cabinet"), service]))],
+            ["cabinet"],
+        )
 
 
 if __name__ == "__main__":

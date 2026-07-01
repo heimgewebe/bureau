@@ -5,9 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-DEFAULT_GRAPH_PATH = (
-    Path.home() / "repos/cabinet/steuerung/10 Lage/ecosystem-graph.json"
-)
+DEFAULT_GRAPH_PATH = Path.home() / "repos/cabinet/steuerung/10 Lage/ecosystem-graph.json"
 
 
 class CabinetGraphError(RuntimeError):
@@ -97,7 +95,9 @@ def derive_diagnostic_candidates(graph: dict[str, Any]) -> list[dict[str, Any]]:
     for node in repository_nodes(graph):
         dimensions = node.get("healthDimensions", [])
         if not isinstance(dimensions, list):
-            raise CabinetGraphError(f"node {node.get('id', '<unknown>')} healthDimensions must be a list")
+            raise CabinetGraphError(
+                f"node {node.get('id', '<unknown>')} healthDimensions must be a list"
+            )
         source_refs = node.get("sources", [])
         if not isinstance(source_refs, list):
             raise CabinetGraphError(f"node {node.get('id', '<unknown>')} sources must be a list")

@@ -781,3 +781,46 @@ def test_doctor_reports_runtime_truth_for_lifecycle_mismatch(
     assert doctor["runtime_truth"]["capability_context"] == "not-evaluated"
     assert doctor["runtime_truth"]["lifecycle_mismatch"] is True
     assert doctor["runtime_truth"]["repair_task_required"] is True
+
+
+def test_explain_next_exposes_read_only_lifecycle_repair_candidate(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative = json.loads(initiative_path.read_text())
+    initiative["state"] = "completed"
+    initiative["commitment"] = "completed"
+    initiative_path.write_text(json.dumps(initiative))
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["state"] = "planned"
+    task["execution"]["policy"] = "review-before-effect"
+    task_path.write_text(json.dumps(task))
+
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+    explained = dispatcher.explain_next({"repository"})
+    candidates = explained["runtime_truth"]["repair_task_candidates"]
+
+    assert explained["runtime_truth"]["repair_task_required"] is True
+    assert explained["runtime_truth"]["repair_task_candidate_count"] == 1
+    assert candidates == [
+        {
+            "kind": "bureau_lifecycle_repair_candidate",
+            "id": "lifecycle-repair:BUR-TEST-001",
+            "initiative_id": "BUR-TEST-001",
+            "title": "Repair lifecycle mismatch for BUR-TEST-001",
+            "reason": (
+                "Initiative state conflicts with open task states; reconcile "
+                "initiative lifecycle before claiming normal work."
+            ),
+            "declared_state": "completed",
+            "recommended_state": "reopen-required",
+            "open_task_count": 1,
+            "open_tasks": [task["id"]],
+            "dispatch_allowed": False,
+            "queue_mutation_allowed": False,
+            "task_creation_allowed": False,
+            "suggested_action": "reconcile_initiative_lifecycle",
+        }
+    ]

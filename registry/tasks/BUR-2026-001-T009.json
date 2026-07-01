@@ -1,0 +1,62 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The matching closure lane records this canonical Bureau task id.",
+      "id": "closure-lane-bound"
+    },
+    {
+      "assertion": "The branch status, relevant tests, and merge path are checked.",
+      "id": "branch-reviewed"
+    },
+    {
+      "assertion": "A valid brief and this task binding exist before external execution continues.",
+      "id": "handoff-safe"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Bind closure lane lane-grabowski-feat-operator-workspace-v1-c9c751aafb for grabowski branch feat/operator-workspace-v1 to this canonical Bureau task before any external execution, merge, or deployment.",
+  "id": "BUR-2026-001-T009",
+  "initiative": "BUR-2026-001",
+  "metadata": {
+    "closure_lane_id": "lane-grabowski-feat-operator-workspace-v1-c9c751aafb",
+    "closure_lane_ids": [
+      "lane-grabowski-feat-operator-workspace-v1-c9c751aafb"
+    ],
+    "created_for": "closure-lane-canonical-binding",
+    "deferred_worker_profile": "grabowski-local-readonly",
+    "deferred_worker_profile_reason": "no generated closure brief path is recorded yet",
+    "frontier_recommended_action": "bind this lane to one canonical Bureau task before dispatch",
+    "frontier_report": "/home/alex/.local/state/bureau-agent-frontier/latest-report.json",
+    "frontier_report_sha256": "050d025dbe3cb379e6733cec1d3959d022fee950ce5821bd71cbf74b02de5b65",
+    "frontier_score": 129,
+    "source_branch": "feat/operator-workspace-v1",
+    "source_repository": "/home/alex/repos/grabowski"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 80
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bind grabowski feat/operator-workspace-v1 closure lane"
+}

@@ -75,6 +75,8 @@ def parser() -> argparse.ArgumentParser:
     sub.add_parser("close-ready")
     cabinet_graph = sub.add_parser("cabinet-graph")
     cabinet_graph.add_argument("--graph")
+    cabinet_frontier = sub.add_parser("cabinet-frontier")
+    cabinet_frontier.add_argument("--graph")
     frontier = sub.add_parser("frontier")
     frontier.add_argument("--capability", action="append", default=[])
     explain = sub.add_parser("explain-next")
@@ -173,12 +175,21 @@ def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
         root = Path(args.root)
-        if args.command == "cabinet-graph":
-            from .cabinet_graph import DEFAULT_GRAPH_PATH, CabinetGraphError, graph_report
+        if args.command in {"cabinet-graph", "cabinet-frontier"}:
+            from .cabinet_graph import (
+                DEFAULT_GRAPH_PATH,
+                CabinetGraphError,
+                frontier_export,
+                graph_report,
+            )
 
             graph_path = args.graph or DEFAULT_GRAPH_PATH
             try:
-                value = graph_report(graph_path)
+                value = (
+                    frontier_export(graph_path)
+                    if args.command == "cabinet-frontier"
+                    else graph_report(graph_path)
+                )
             except CabinetGraphError as exc:
                 print(f"bureau: {exc}", file=sys.stderr)
                 return 2

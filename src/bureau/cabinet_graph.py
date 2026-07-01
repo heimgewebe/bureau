@@ -172,3 +172,25 @@ def graph_report(path: str | Path = DEFAULT_GRAPH_PATH) -> dict[str, Any]:
         "candidates": candidates,
         "warnings": warnings if isinstance(warnings, list) else [],
     }
+
+
+def frontier_export(path: str | Path = DEFAULT_GRAPH_PATH) -> dict[str, Any]:
+    """Return a read-only Frontier export derived from Cabinet graph candidates.
+
+    The export is intentionally not a Bureau queue and not executable work. It is
+    a stable observation surface for later review and promotion.
+    """
+    candidates = derive_diagnostic_candidates(load_graph(path))
+    return {
+        "schemaVersion": 1,
+        "kind": "cabinet_frontier_export",
+        "contract": "bureau-cabinet-frontier-export.v1",
+        "mode": "read_only",
+        "source": "cabinet_ecosystem_graph",
+        "graphPath": str(Path(path)),
+        "dispatchAllowed": False,
+        "queueMutationAllowed": False,
+        "taskCreationAllowed": False,
+        "candidateCount": len(candidates),
+        "candidates": candidates,
+    }

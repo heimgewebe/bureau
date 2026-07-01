@@ -10,6 +10,7 @@ from pathlib import Path
 from bureau.cabinet_graph import (
     CabinetGraphError,
     derive_diagnostic_candidates,
+    frontier_export,
     graph_report,
     load_graph,
     repository_nodes,
@@ -156,6 +157,39 @@ class CabinetGraphReaderTests(unittest.TestCase):
             [node["name"] for node in repository_nodes(graph([repo_node("cabinet"), service]))],
             ["cabinet"],
         )
+
+    def test_frontier_export_keeps_candidates_non_executable(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "graph.json"
+            write_graph(
+                path,
+                graph([repo_node("bureau", ["review_import_drift"])]),
+            )
+            export = frontier_export(path)
+            self.assertEqual(export["kind"], "cabinet_frontier_export")
+            self.assertEqual(export["mode"], "read_only")
+            self.assertFalse(export["dispatchAllowed"])
+            self.assertFalse(export["queueMutationAllowed"])
+            self.assertFalse(export["taskCreationAllowed"])
+            self.assertEqual(export["candidateCount"], 1)
+            self.assertEqual(export["candidates"][0]["repository"], "bureau")
+            self.assertFalse(export["candidates"][0]["dispatchAllowed"])
+
+    def test_cli_emits_read_only_frontier_export(self) -> None:
+        from bureau.cli import main
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "graph.json"
+            write_graph(path, graph([repo_node("bureau", ["dirty_import_worktree"])]))
+            stream = io.StringIO()
+            with contextlib.redirect_stdout(stream):
+                result = main(["--json", "cabinet-frontier", "--graph", str(path)])
+            self.assertEqual(result, 0)
+            payload = json.loads(stream.getvalue())
+            self.assertEqual(payload["kind"], "cabinet_frontier_export")
+            self.assertFalse(payload["dispatchAllowed"])
+            self.assertFalse(payload["queueMutationAllowed"])
+            self.assertEqual(payload["candidateCount"], 1)
 
 
 if __name__ == "__main__":

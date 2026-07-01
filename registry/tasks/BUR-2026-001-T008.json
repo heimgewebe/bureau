@@ -34,6 +34,10 @@
   "id": "BUR-2026-001-T008",
   "initiative": "BUR-2026-001",
   "metadata": {
+    "ci": {
+      "validate_3_10": "success",
+      "validate_3_12": "success"
+    },
     "closure_lane_id": "lane-grabowski-feat-observer-shutdown-hygiene-v1-7d4a913abe",
     "closure_lane_ids": [
       "lane-grabowski-feat-observer-shutdown-hygiene-v1-7d4a913abe"
@@ -43,8 +47,23 @@
     "frontier_report": "/home/alex/.local/state/bureau-agent-frontier/latest-report.json",
     "frontier_report_sha256": "64bf706cf4255c1b1b6febf762a30336f4b6f39e41efa9da0a9c5513029473aa",
     "frontier_score": 129,
+    "merge_commit": "731b5ec12bf4caccf87b5533130ba7bcd8ee0b16",
+    "merge_pr": 56,
+    "merged_at": "2026-07-01T15:23:21Z",
+    "outcome": "Grabowski safety observer branch merged and reviewed.",
     "source_branch": "feat/observer-shutdown-hygiene-v1",
-    "source_repository": "/home/alex/repos/grabowski"
+    "source_repository": "/home/alex/repos/grabowski",
+    "validation": {
+      "github_validate_3_10": "success",
+      "github_validate_3_12": "success",
+      "scoped_pytest": "4 passed",
+      "scoped_ruff": "pass",
+      "secret_scan": "pass after dynamic fake secret construction"
+    },
+    "verification": {
+      "plan_sha256": "a693177e04de7b0c356ae6e029ae30b206092e6c8cbf3f1096f669e64cc5cf61",
+      "task_sha256": "823b83f71080277c2b55fb797fff3f81259385cc990c5fa6e17a677ac80dfbcf"
+    }
   },
   "priority": {
     "lane": "next",
@@ -56,6 +75,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Bind grabowski feat/observer-shutdown-hygiene-v1 closure lane"
 }

@@ -194,3 +194,136 @@ def frontier_export(path: str | Path = DEFAULT_GRAPH_PATH) -> dict[str, Any]:
         "candidateCount": len(candidates),
         "candidates": candidates,
     }
+
+
+def load_frontier_export(path: str | Path) -> dict[str, Any]:
+    """Load and minimally validate a read-only Cabinet frontier export."""
+    export_path = Path(path)
+    try:
+        raw = export_path.read_text(encoding="utf-8")
+    except FileNotFoundError as exc:
+        raise CabinetGraphError(f"Cabinet frontier export missing: {export_path}") from exc
+    except OSError as exc:
+        raise CabinetGraphError(
+            f"Cabinet frontier export cannot be read: {export_path}: {exc.__class__.__name__}"
+        ) from exc
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise CabinetGraphError(f"Cabinet frontier export is invalid JSON: {exc.msg}") from exc
+    export = _expect_dict(value, "Cabinet frontier export")
+    if export.get("schemaVersion") != 1:
+        raise CabinetGraphError("Cabinet frontier export schemaVersion must be 1")
+    if export.get("kind") != "cabinet_frontier_export":
+        raise CabinetGraphError("Cabinet frontier export kind must be cabinet_frontier_export")
+    _validate_frontier_export(export)
+    return export
+
+
+def _validate_frontier_export(export: dict[str, Any]) -> None:
+    if export.get("dispatchAllowed") is not False:
+        raise CabinetGraphError("Cabinet frontier export must keep dispatchAllowed false")
+    if export.get("queueMutationAllowed") is not False:
+        raise CabinetGraphError("Cabinet frontier export must keep queueMutationAllowed false")
+    if export.get("taskCreationAllowed") is not False:
+        raise CabinetGraphError("Cabinet frontier export must keep taskCreationAllowed false")
+    _expect_list(export.get("candidates"), "Cabinet frontier export candidates")
+
+
+def _resource_for_repository(repository: str) -> str:
+    safe = "".join(
+        character.lower() if character.isalnum() else "." for character in repository.strip()
+    ).strip(".")
+    return f"repo.{safe or 'unknown'}"
+
+
+def promote_frontier_candidate(
+    export: dict[str, Any],
+    *,
+    candidate_id: str,
+    task_id: str,
+    initiative: str,
+    target_proof: str,
+    approve: bool,
+) -> dict[str, Any]:
+    """Prepare a Bureau task proposal from one exported Cabinet candidate.
+
+    The gate is explicit and non-mutating: it never writes to the Bureau registry
+    and never dispatches work. The returned task is a review-before-effect draft.
+    """
+    _validate_frontier_export(export)
+    if not approve:
+        raise CabinetGraphError("promotion requires explicit --approve")
+    target_proof = target_proof.strip()
+    if not target_proof:
+        raise CabinetGraphError("promotion requires non-empty target proof")
+    if not task_id.strip():
+        raise CabinetGraphError("promotion requires task id")
+    if not initiative.strip():
+        raise CabinetGraphError("promotion requires initiative id")
+
+    candidates = _expect_list(export.get("candidates"), "Cabinet frontier export candidates")
+    selected = None
+    for raw_candidate in candidates:
+        candidate = _expect_dict(raw_candidate, "Cabinet frontier candidate")
+        if candidate.get("id") == candidate_id:
+            selected = candidate
+            break
+    if selected is None:
+        raise CabinetGraphError(f"candidate not found in Cabinet frontier export: {candidate_id}")
+    if selected.get("dispatchAllowed") is not False:
+        raise CabinetGraphError("candidate must keep dispatchAllowed false")
+
+    repository = str(selected.get("repository", "unknown"))
+    suggested_action = str(selected.get("suggestedAction", "review_cabinet_candidate"))
+    risk = str(selected.get("risk", "medium"))
+    priority_rank = 55 if risk == "medium" else 75
+    task = {
+        "schema_version": 1,
+        "id": task_id.strip(),
+        "initiative": initiative.strip(),
+        "title": f"Review Cabinet candidate for {repository}",
+        "state": "planned",
+        "goal": (
+            f"Review Cabinet graph candidate {candidate_id}: "
+            f"{selected.get('reason', suggested_action)}"
+        ),
+        "required_capabilities": ["repository", "review"],
+        "priority": {"lane": "next", "rank": priority_rank},
+        "execution": {"mode": "manual", "policy": "review-before-effect"},
+        "claims": [
+            {
+                "resource": _resource_for_repository(repository),
+                "mode": "read",
+                "isolation": "none",
+            }
+        ],
+        "acceptance": [
+            {"id": "target-proof", "assertion": target_proof},
+            {
+                "id": "no-auto-dispatch",
+                "assertion": (
+                    "Promotion creates a review-before-effect task proposal only; "
+                    "no dispatch is allowed."
+                ),
+            },
+        ],
+        "metadata": {
+            "source": "cabinet_frontier_export",
+            "source_candidate_id": candidate_id,
+            "source_candidate": selected,
+            "dispatch_allowed": False,
+            "queue_mutation_allowed": False,
+            "task_creation_allowed": False,
+        },
+    }
+    return {
+        "schemaVersion": 1,
+        "kind": "cabinet_frontier_promotion",
+        "mode": "proposal_only",
+        "approved": True,
+        "dispatchAllowed": False,
+        "queueMutationAllowed": False,
+        "taskCreationAllowed": False,
+        "task": task,
+    }

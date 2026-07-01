@@ -9,6 +9,7 @@ from bureau.closure import (
     RepositorySource,
     inventory_existing_work,
     is_canonical_bureau_task_id,
+    load_canonical_task_states,
     merge_lanes,
     run_closure_cycle,
     select_lanes_for_plan_with_evidence,
@@ -126,6 +127,46 @@ def test_run_selects_bound_lane_and_generates_brief(tmp_path: Path, monkeypatch)
     for field in AGENT_BRIEF_REQUIRED_FIELDS:
         assert field in brief
 
+
+
+def test_verified_canonical_task_is_not_selected_again(tmp_path: Path, monkeypatch) -> None:
+    repo = make_repo(tmp_path)
+    source = RepositorySource("repo", repo, "repo:repo")
+    lanes = merge_lanes(inventory_existing_work([source]))
+    task_id = "BUR-2026-001-T999"
+    lanes["lanes"][0]["task_id"] = task_id
+    state_root = tmp_path / "closure"
+    state_root.mkdir()
+    (state_root / "lanes.json").write_text(json.dumps(lanes), encoding="utf-8")
+    bureau_root = tmp_path / "bureau"
+    task_dir = bureau_root / "registry/tasks"
+    task_dir.mkdir(parents=True)
+    (task_dir / f"{task_id}.json").write_text(
+        json.dumps({"id": task_id, "state": "verified"}), encoding="utf-8"
+    )
+    registry = write_source_registry(tmp_path, repo)
+    monkeypatch.setenv("BUREAU_DISCOVERY_REGISTRY", str(registry))
+    monkeypatch.setenv("BUREAU_REGISTRY_ROOT", str(bureau_root))
+
+    plan = run_closure_cycle(state_root=state_root)
+
+    assert plan["canonical_task_state_count"] == 1
+    assert plan["selected_lane_count"] == 0
+    assert plan["selected_lanes"] == []
+    updated = json.loads((state_root / "lanes.json").read_text(encoding="utf-8"))
+    assert updated["lanes"][0]["state"] == "verified"
+    assert updated["lanes"][0]["metadata"]["canonical_task_state"] == "verified"
+
+
+def test_load_canonical_task_states_reads_registry_root(tmp_path: Path) -> None:
+    task_dir = tmp_path / "registry/tasks"
+    task_dir.mkdir(parents=True)
+    (task_dir / "BUR-2026-001-T001.json").write_text(
+        json.dumps({"id": "BUR-2026-001-T001", "state": "verified"}),
+        encoding="utf-8",
+    )
+
+    assert load_canonical_task_states(tmp_path) == {"BUR-2026-001-T001": "verified"}
 
 def test_selection_rejects_grabowski_task_id_for_ci_failed_lane() -> None:
     values = [lane("lane-1", "ci_failed", "a4d2e0bc80f749ebb4482961")]

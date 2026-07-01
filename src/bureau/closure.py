@@ -479,10 +479,64 @@ def apply_manual_priority(lane: dict[str, Any], intents: list[dict[str, Any]]) -
     return lane
 
 
+def default_bureau_registry_root() -> Path | None:
+    configured = os.environ.get("BUREAU_REGISTRY_ROOT")
+    if configured:
+        return Path(configured).expanduser()
+    cwd = Path.cwd()
+    if (cwd / "registry/tasks").is_dir():
+        return cwd
+    fallback = Path.home() / "repos/bureau"
+    if (fallback / "registry/tasks").is_dir():
+        return fallback
+    return None
+
+
+def load_canonical_task_states(registry_root: Path | None = None) -> dict[str, str]:
+    root = registry_root or default_bureau_registry_root()
+    if root is None:
+        return {}
+    task_dir = root / "registry/tasks"
+    if not task_dir.is_dir():
+        return {}
+    states: dict[str, str] = {}
+    for path in sorted(task_dir.glob("*.json")):
+        raw = load_json(path, None)
+        if not isinstance(raw, dict):
+            continue
+        task_id = raw.get("id")
+        state = raw.get("state")
+        if isinstance(task_id, str) and isinstance(state, str):
+            states[task_id] = state
+    return states
+
+
+def apply_canonical_task_state(
+    lane: dict[str, Any], task_states: dict[str, str]
+) -> dict[str, Any]:
+    task_id = lane.get("task_id")
+    if not isinstance(task_id, str) or not CANONICAL_BUREAU_TASK_ID_RE.fullmatch(task_id):
+        return lane
+    task_state = task_states.get(task_id)
+    if not task_state:
+        return lane
+    metadata = lane.setdefault("metadata", {})
+    if isinstance(metadata, dict):
+        metadata["canonical_task_state"] = task_state
+    if task_state == "verified":
+        lane["state"] = "verified"
+        lane["next_action"] = "canonical Bureau task is verified; do not select lane"
+    elif task_state in {"cancelled", "superseded"}:
+        lane["state"] = "obsolete"
+        lane["next_action"] = "canonical Bureau task is terminal; inspect before continuing"
+    return lane
+
+
 def merge_lanes(
     inventory: dict[str, Any],
     existing: dict[str, Any] | None = None,
     manual_intents: list[dict[str, Any]] | None = None,
+    canonical_task_states: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     previous = existing if isinstance(existing, dict) else {}
     by_fingerprint = {
@@ -518,7 +572,9 @@ def merge_lanes(
             "next_action": candidate.get("next_best_action"),
             "updated_at": utc_now(),
         }
-        lanes.append(apply_manual_priority(lane, intents))
+        lane = apply_manual_priority(lane, intents)
+        lane = apply_canonical_task_state(lane, canonical_task_states or {})
+        lanes.append(lane)
         seen.add(fingerprint)
     for lane in previous.get("lanes", []):
         if isinstance(lane, dict) and lane.get("fingerprint") not in seen:
@@ -527,7 +583,9 @@ def merge_lanes(
                 retained["state"] = "blocked"
                 retained["next_action"] = "source candidate disappeared; inspect before continuing"
                 retained["updated_at"] = utc_now()
-            lanes.append(apply_manual_priority(retained, intents))
+            retained = apply_manual_priority(retained, intents)
+            retained = apply_canonical_task_state(retained, canonical_task_states or {})
+            lanes.append(retained)
     return {
         "schema_version": SCHEMA_VERSION,
         "generated_at": utc_now(),
@@ -732,7 +790,8 @@ def run_closure_cycle(
     intents_path = state / "manual-intents.jsonl"
     intents = read_manual_intents(intents_path)
     existing = load_json(state / "lanes.json", {})
-    lanes = merge_lanes(inventory, existing, intents)
+    canonical_task_states = load_canonical_task_states()
+    lanes = merge_lanes(inventory, existing, intents, canonical_task_states)
     selection = select_lanes_for_plan_with_evidence(lanes["lanes"])
     selected = selection["selected_lanes"]
     briefs = write_briefs(selected, state / "briefs")
@@ -747,6 +806,7 @@ def run_closure_cycle(
         "unbound_selected_rejected_count": selection["unbound_selected_rejected_count"],
         "rejected_unbound_lanes": selection["rejected_unbound_lanes"],
         "canonical_task_bound_count": selection["canonical_task_bound_count"],
+        "canonical_task_state_count": len(canonical_task_states),
         "selected_lanes": selected,
         "briefs": briefs,
         "next_action": (

@@ -1,78 +1,96 @@
 {
-  "schema_version": 1,
-  "id": "BUR-2026-001-T007",
-  "initiative": "BUR-2026-001",
-  "title": "Bind Grabowski autonomy closure lane",
-  "state": "planned",
-  "goal": "Bind Grabowski branch feat/grabowski-autonomy-001 to this canonical Bureau task before any external execution or merge preparation continues.",
+  "acceptance": [
+    {
+      "assertion": "Both known feat/grabowski-autonomy-001 closure-lane fingerprints are recorded on this canonical Bureau task.",
+      "id": "closure-lane-bound"
+    },
+    {
+      "assertion": "The branch/worktree status, relevant tests, and merge path are checked before any mutating continuation.",
+      "id": "branch-reviewed"
+    },
+    {
+      "assertion": "A valid closure-lane brief and this task binding exist before external execution continues.",
+      "id": "handoff-safe"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "amount": 1,
+      "isolation": "none",
+      "mode": "capacity",
+      "resource": "host.heim-pc"
+    }
+  ],
   "depends_on": [
     "BUR-2026-001-T001"
   ],
+  "execution": {
+    "agent_brief_path": "/home/alex/.local/state/bureau-closure/briefs/lane-grabowski-feat-grabowski-autonomy-001-8470ad62af.json",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "preferred_host": "heim-pc",
+    "worker_profile": "grabowski-local-readonly",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Bind Grabowski branch feat/grabowski-autonomy-001 to this canonical Bureau task before any external execution or merge preparation continues.",
+  "id": "BUR-2026-001-T007",
+  "initiative": "BUR-2026-001",
+  "metadata": {
+    "binding_proof": {
+      "agent_brief_path": "/home/alex/.local/state/bureau-closure/briefs/lane-grabowski-feat-grabowski-autonomy-001-8470ad62af.json",
+      "agent_brief_sha256": "d7b962cb6d0e55b97d6a809e9f27f3d4a58ae9ec9e84f012899889990c9a0c9b",
+      "closure_plan_path": "/home/alex/.local/state/bureau-closure/plan.json",
+      "closure_plan_sha256": "36a1285928e38bc50ccebf5b53a1dfe8bda711a253bb5cfccf99f70427c51f3b",
+      "implemented_at": "2026-07-01T18:01:02.287296Z",
+      "proof_path": "work/grabowski-safety-smooth-ops/receipts/bur-2026-001-t007-binding-proof.json",
+      "proof_sha256": "89401e3bf9db3a36b024ce375df0cda435faf2a28a595ab9d2a0780f364db5b5",
+      "review_checkout": "/home/alex/repos/grabowski-autonomy-001-review",
+      "review_head": "2949f670a8487a824a33ec7d944f6643add85543",
+      "selected_lane_id": "lane-grabowski-feat-grabowski-autonomy-001-8470ad62af",
+      "status": "verified-by-local-proof"
+    },
+    "closure_fingerprints": [
+      "956a3803a17a6a9111e8f732046e7a4f98cec6d3862e424f88f16553fc9dc99c",
+      "8470ad62af58ba86bfee7e7de8e5f0759b27b07e17f9c340ef2f24c4a4874065"
+    ],
+    "closure_lane_ids": [
+      "lane-grabowski-feat-grabowski-autonomy-001-956a3803a1",
+      "lane-grabowski-feat-grabowski-autonomy-001-8470ad62af"
+    ],
+    "created_for": "closure-lane-canonical-binding",
+    "frontier_recommended_action": "bind this lane to one canonical Bureau task before dispatch",
+    "frontier_report": "/home/alex/.local/state/bureau-agent-frontier/runs/20260630T143457Z-agent-frontier-report.json",
+    "frontier_report_sha256": "bd6fd5670f80224b239ad97e68750565ccf47fc618fa3dff573ba822ce67ca84",
+    "frontier_score": 129,
+    "source_branch": "feat/grabowski-autonomy-001",
+    "source_head": "2949f670a8487a824a33ec7d944f6643add85543",
+    "source_repository": "/home/alex/repos/grabowski",
+    "source_upstream": "origin/feat/grabowski-autonomy-001",
+    "source_worktree": "/home/alex/repos/.grabowski-autonomy-001",
+    "verification": {
+      "plan_sha256": "a693177e04de7b0c356ae6e029ae30b206092e6c8cbf3f1096f669e64cc5cf61",
+      "receipt_sha256": "1d0eed0e9a8880a0f5cb5f13cd33f74931399870a4b8c13adafddaad435d2fc3",
+      "task_sha256": "7d27f138842021d47630fb67eadb0d9fee3ddf424eedc22d5e8bf8fe7f598aa7"
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 45
+  },
   "required_capabilities": [
     "repository",
     "shell",
     "grabowski"
   ],
-  "priority": {
-    "lane": "next",
-    "rank": 45
-  },
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "preferred_host": "heim-pc",
-    "working_repository": "/home/alex/repos/grabowski",
-    "worker_profile": "grabowski-local-readonly",
-    "agent_brief_path": "/home/alex/.local/state/bureau-closure/briefs/lane-grabowski-feat-grabowski-autonomy-001-956a3803a1.json",
-    "grabowski_resources": [
-      "repo:/home/alex/repos/grabowski"
-    ]
-  },
-  "claims": [
-    {
-      "resource": "repo.grabowski",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
-      "resource": "host.heim-pc",
-      "mode": "capacity",
-      "amount": 1,
-      "isolation": "none"
-    }
-  ],
-  "acceptance": [
-    {
-      "id": "closure-lane-bound",
-      "assertion": "Both known feat/grabowski-autonomy-001 closure-lane fingerprints are recorded on this canonical Bureau task."
-    },
-    {
-      "id": "branch-reviewed",
-      "assertion": "The branch/worktree status, relevant tests, and merge path are checked before any mutating continuation."
-    },
-    {
-      "id": "handoff-safe",
-      "assertion": "A valid closure-lane brief and this task binding exist before external execution continues."
-    }
-  ],
-  "metadata": {
-    "source_repository": "/home/alex/repos/grabowski",
-    "source_branch": "feat/grabowski-autonomy-001",
-    "source_worktree": "/home/alex/repos/.grabowski-autonomy-001",
-    "source_head": "89406c581b6e002ef7493a03531b83a885090d24",
-    "closure_lane_ids": [
-      "lane-grabowski-feat-grabowski-autonomy-001-956a3803a1",
-      "lane-grabowski-feat-grabowski-autonomy-001-8470ad62af"
-    ],
-    "closure_fingerprints": [
-      "956a3803a17a6a9111e8f732046e7a4f98cec6d3862e424f88f16553fc9dc99c",
-      "8470ad62af58ba86bfee7e7de8e5f0759b27b07e17f9c340ef2f24c4a4874065"
-    ],
-    "frontier_report": "/home/alex/.local/state/bureau-agent-frontier/runs/20260630T143457Z-agent-frontier-report.json",
-    "frontier_report_sha256": "bd6fd5670f80224b239ad97e68750565ccf47fc618fa3dff573ba822ce67ca84",
-    "created_for": "closure-lane-canonical-binding",
-    "frontier_score": 129,
-    "frontier_recommended_action": "bind this lane to one canonical Bureau task before dispatch",
-    "source_upstream": "origin/feat/grabowski-autonomy-001"
-  }
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Bind Grabowski autonomy closure lane"
 }

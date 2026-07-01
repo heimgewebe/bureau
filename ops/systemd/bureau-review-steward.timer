@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the Bureau Review Steward hourly after closure selection
+
+[Timer]
+OnCalendar=*-*-* *:23:00
+Persistent=true
+RandomizedDelaySec=60
+AccuracySec=1min
+Unit=bureau-review-steward.service
+
+[Install]
+WantedBy=timers.target

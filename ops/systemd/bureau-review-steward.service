@@ -1,0 +1,20 @@
+[Unit]
+Description=Bureau Review Steward local evidence pass
+Documentation=https://github.com/heimgewebe/bureau
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/share/bureau-review-steward/venv/bin/bureau-review-steward run
+Environment=GH_HOST=github.com
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.local/state/bureau-closure
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictSUIDSGID=true
+UMask=0077
+TimeoutStartSec=180

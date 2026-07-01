@@ -126,3 +126,46 @@ bureau --root . --json source-promote-plan weltgewebe --task-id DEPLOY-DNS-001
 The result is read-only. It exposes the projected Bureau task ID, source binding, unresolved claims,
 unknown dependency structure and execution policy decisions. A promotion preview does not imply
 readiness or permission to execute.
+
+## Local Review Steward
+
+The `bureau-review-steward` command performs a local, read-mostly review pass over the current
+Closure state. It reads `lanes.json`, `plan.json`, generated Grabowski briefs, repository diff state
+and, when `gh` is available, pull-request review and check evidence. It writes only lane review
+evidence and review receipts under the Closure state root. It never starts coding work and never
+merges.
+
+Manual run:
+
+```bash
+bureau-review-steward run
+```
+
+The command prints a compact receipt summary by default. Use `--full-json` only when the full
+lane evidence needs to be inspected outside the receipt file.
+
+Install the steward into an isolated environment and enable the supplied user timer:
+
+```bash
+python3 -m venv ~/.local/share/bureau-review-steward/venv
+~/.local/share/bureau-review-steward/venv/bin/pip install .
+install -Dm644 ops/systemd/bureau-review-steward.service \
+  ~/.config/systemd/user/bureau-review-steward.service
+install -Dm644 ops/systemd/bureau-review-steward.timer \
+  ~/.config/systemd/user/bureau-review-steward.timer
+systemctl --user daemon-reload
+systemctl --user enable --now bureau-review-steward.timer
+```
+
+The timer runs hourly at minute 23, after Closure lane selection. Conservative classifications are
+limited to `reviewing`, `needs_revision`, `ci_failed`, `merge_candidate`, `blocked` and `obsolete`.
+A `merge_candidate` means only that the lane can be handed to the merge gatekeeper; it is not a
+merge permission.
+
+Manual checks:
+
+```bash
+bureau-review-steward run --max-lanes 4
+systemctl --user status bureau-review-steward.timer
+journalctl --user -u bureau-review-steward.service -n 50 --no-pager
+```

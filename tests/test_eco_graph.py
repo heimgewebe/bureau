@@ -13,6 +13,7 @@ from bureau.cabinet_graph import (
     frontier_export,
     graph_report,
     load_graph,
+    promote_frontier_candidate,
     repository_nodes,
     summarize_graph,
 )
@@ -194,3 +195,61 @@ class CabinetGraphReaderTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CabinetPromotionGateTests(unittest.TestCase):
+    def _export(self) -> dict:
+        return {
+            "schemaVersion": 1,
+            "kind": "cabinet_frontier_export",
+            "dispatchAllowed": False,
+            "queueMutationAllowed": False,
+            "taskCreationAllowed": False,
+            "candidates": [
+                {
+                    "schemaVersion": 1,
+                    "kind": "bureau_frontier_candidate",
+                    "id": "cabinet-graph:repo-bureau:review-import-drift",
+                    "source": "cabinet_ecosystem_graph",
+                    "targetNode": "repo:bureau",
+                    "repository": "bureau",
+                    "reason": "Cabinet graph reports drift between review HEAD and import HEAD.",
+                    "risk": "medium",
+                    "suggestedAction": "diagnose_repository_reference_drift",
+                    "dispatchAllowed": False,
+                    "evidence": [{"type": "cabinet", "ref": "test"}],
+                }
+            ],
+        }
+
+    def test_promotion_gate_requires_explicit_approval(self) -> None:
+        export = self._export()
+        with self.assertRaisesRegex(CabinetGraphError, "approve"):
+            promote_frontier_candidate(
+                export,
+                candidate_id=export["candidates"][0]["id"],
+                task_id="BUR-CAB-ECO-001",
+                initiative="BUR-CAB-ECO",
+                target_proof="A reviewed proof exists.",
+                approve=False,
+            )
+
+    def test_promotion_gate_returns_non_dispatching_task_proposal(self) -> None:
+        export = self._export()
+        result = promote_frontier_candidate(
+            export,
+            candidate_id=export["candidates"][0]["id"],
+            task_id="BUR-CAB-ECO-001",
+            initiative="BUR-CAB-ECO",
+            target_proof="A reviewed proof exists.",
+            approve=True,
+        )
+        self.assertEqual(result["kind"], "cabinet_frontier_promotion")
+        self.assertFalse(result["dispatchAllowed"])
+        self.assertFalse(result["queueMutationAllowed"])
+        self.assertFalse(result["taskCreationAllowed"])
+        task = result["task"]
+        self.assertEqual(task["id"], "BUR-CAB-ECO-001")
+        self.assertEqual(task["execution"]["policy"], "review-before-effect")
+        self.assertEqual(task["execution"]["mode"], "manual")
+        self.assertFalse(task["metadata"]["dispatch_allowed"])

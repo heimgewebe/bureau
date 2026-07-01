@@ -73,6 +73,8 @@ def parser() -> argparse.ArgumentParser:
     promote.add_argument("source", choices=["weltgewebe"])
     promote.add_argument("--task-id", required=True)
     sub.add_parser("close-ready")
+    cabinet_graph = sub.add_parser("cabinet-graph")
+    cabinet_graph.add_argument("--graph")
     frontier = sub.add_parser("frontier")
     frontier.add_argument("--capability", action="append", default=[])
     explain = sub.add_parser("explain-next")
@@ -171,6 +173,17 @@ def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
         root = Path(args.root)
+        if args.command == "cabinet-graph":
+            from .cabinet_graph import DEFAULT_GRAPH_PATH, CabinetGraphError, graph_report
+
+            graph_path = args.graph or DEFAULT_GRAPH_PATH
+            try:
+                value = graph_report(graph_path)
+            except CabinetGraphError as exc:
+                print(f"bureau: {exc}", file=sys.stderr)
+                return 2
+            emit(value, args.json)
+            return 0
         registry = Registry.load(root)
         if args.command in {"source-check", "source-sync", "source-promote-plan"}:
             from .weltgewebe_source import source_check, source_promote_plan, source_sync

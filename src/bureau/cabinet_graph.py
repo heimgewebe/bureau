@@ -150,3 +150,25 @@ def summarize_graph(path: str | Path = DEFAULT_GRAPH_PATH) -> CabinetGraphSummar
         warning_count=len(warnings) if isinstance(warnings, list) else 0,
         candidate_count=len(candidates),
     )
+
+
+def graph_report(path: str | Path = DEFAULT_GRAPH_PATH) -> dict[str, Any]:
+    graph = load_graph(path)
+    candidates = derive_diagnostic_candidates(graph)
+    warnings = graph.get("warnings", [])
+    summary = summarize_graph(path)
+    return {
+        "schemaVersion": 1,
+        "kind": "cabinet_graph_report",
+        "mode": "read_only",
+        "dispatchAllowed": False,
+        "summary": {
+            "graphPath": summary.graph_path,
+            "nodeCount": summary.node_count,
+            "repositoryCount": summary.repository_count,
+            "warningCount": summary.warning_count,
+            "candidateCount": summary.candidate_count,
+        },
+        "candidates": candidates,
+        "warnings": warnings if isinstance(warnings, list) else [],
+    }

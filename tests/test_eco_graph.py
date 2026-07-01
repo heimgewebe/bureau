@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import tempfile
 import unittest
@@ -8,6 +10,7 @@ from pathlib import Path
 from bureau.cabinet_graph import (
     CabinetGraphError,
     derive_diagnostic_candidates,
+    graph_report,
     load_graph,
     repository_nodes,
     summarize_graph,
@@ -81,6 +84,42 @@ class CabinetGraphReaderTests(unittest.TestCase):
             self.assertEqual(candidate["repository"], "steuerboard")
             self.assertEqual(candidate["targetNode"], "repo:steuerboard")
             self.assertTrue(candidate["evidence"])
+
+    def test_graph_report_is_read_only_surface(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "graph.json"
+            write_graph(
+                path,
+                graph(
+                    [
+                        repo_node(
+                            "steuerboard",
+                            ["review_import_drift", "dirty_import_worktree"],
+                        )
+                    ]
+                ),
+            )
+            report = graph_report(path)
+            self.assertEqual(report["kind"], "cabinet_graph_report")
+            self.assertEqual(report["mode"], "read_only")
+            self.assertFalse(report["dispatchAllowed"])
+            self.assertEqual(report["summary"]["candidateCount"], 2)
+            self.assertEqual(len(report["candidates"]), 2)
+
+    def test_cli_emits_read_only_json_report(self) -> None:
+        from bureau.cli import main
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "graph.json"
+            write_graph(path, graph([repo_node("cabinet")]))
+            stream = io.StringIO()
+            with contextlib.redirect_stdout(stream):
+                result = main(["--json", "cabinet-graph", "--graph", str(path)])
+            self.assertEqual(result, 0)
+            payload = json.loads(stream.getvalue())
+            self.assertEqual(payload["kind"], "cabinet_graph_report")
+            self.assertFalse(payload["dispatchAllowed"])
+            self.assertEqual(payload["summary"]["repositoryCount"], 1)
 
     def test_rejects_missing_file_and_invalid_json(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

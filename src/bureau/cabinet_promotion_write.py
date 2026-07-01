@@ -209,3 +209,76 @@ def validate_promotion_task_file(path: str | Path) -> dict[str, Any]:
     task_path = Path(path)
     receipt = validate_promotion_task(load_promotion_task(task_path))
     return {**receipt, "path": str(task_path)}
+
+
+
+def preview_promotion_task_import(
+    task: dict[str, Any],
+    *,
+    registry: Any | None = None,
+    path: str | Path | None = None,
+) -> dict[str, Any]:
+    """Preview importing one Cabinet promotion task into a Bureau registry.
+
+    The preview is deliberately read-only. It validates the same dry task artifact
+    as CAB-ECO-008, then optionally checks the active Bureau registry context:
+    JSON Schema compatibility, task-id availability and initiative existence.
+    """
+    receipt = validate_promotion_task(task)
+    task_id = receipt["taskId"]
+    initiative = receipt["initiative"]
+    schema_validated = False
+    initiative_known: bool | None = None
+
+    if registry is not None:
+        try:
+            registry.schemas.validate(
+                "task",
+                task,
+                Path(path) if path is not None else Path("<cabinet-promotion-task>"),
+            )
+        except Exception as exc:
+            raise CabinetGraphError(
+                f"promotion task does not satisfy Bureau task schema: {exc}"
+            ) from exc
+        schema_validated = True
+
+        if task_id in getattr(registry, "tasks", {}):
+            raise CabinetGraphError(f"promotion task already exists in registry: {task_id}")
+        initiative_known = initiative in getattr(registry, "initiatives", {})
+        if not initiative_known:
+            raise CabinetGraphError(
+                f"promotion task initiative missing from registry: {initiative}"
+            )
+
+    return {
+        "schemaVersion": 1,
+        "kind": "cabinet_promotion_task_import_preview",
+        "mode": "dry_run",
+        "valid": True,
+        "importReady": True,
+        "taskId": task_id,
+        "initiative": initiative,
+        "path": str(path) if path is not None else None,
+        "checks": {
+            "taskValidation": True,
+            "taskSchema": schema_validated,
+            "taskIdAvailable": True,
+            "initiativeKnown": initiative_known,
+        },
+        "dispatchAllowed": False,
+        "queueMutationAllowed": False,
+        "taskCreationAllowed": False,
+        "registryMutationAllowed": False,
+    }
+
+
+def preview_promotion_task_import_file(
+    path: str | Path,
+    *,
+    registry: Any | None = None,
+) -> dict[str, Any]:
+    task_path = Path(path)
+    return preview_promotion_task_import(
+        load_promotion_task(task_path), registry=registry, path=task_path
+    )

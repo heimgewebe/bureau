@@ -89,6 +89,8 @@ def parser() -> argparse.ArgumentParser:
     cabinet_promote.add_argument("--write-task")
     cabinet_validate_task = sub.add_parser("cabinet-validate-task")
     cabinet_validate_task.add_argument("--task-file", required=True)
+    cabinet_import_preview = sub.add_parser("cabinet-import-preview")
+    cabinet_import_preview.add_argument("--task-file", required=True)
     frontier = sub.add_parser("frontier")
     frontier.add_argument("--capability", action="append", default=[])
     explain = sub.add_parser("explain-next")
@@ -291,6 +293,19 @@ def main(argv: list[str] | None = None) -> int:
             emit(value, args.json)
             return 0
         registry = Registry.load(root)
+        if args.command == "cabinet-import-preview":
+            from .cabinet_graph import CabinetGraphError
+            from .cabinet_promotion_write import preview_promotion_task_import_file
+
+            try:
+                value = preview_promotion_task_import_file(
+                    args.task_file, registry=registry
+                )
+            except CabinetGraphError as exc:
+                print(f"bureau: {exc}", file=sys.stderr)
+                return 2
+            emit(value, args.json)
+            return 0
         if args.command in {"source-check", "source-sync", "source-promote-plan"}:
             from .weltgewebe_source import source_check, source_promote_plan, source_sync
 

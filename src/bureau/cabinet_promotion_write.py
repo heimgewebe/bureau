@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -63,7 +64,7 @@ def write_promotion_task(proposal: dict[str, Any], path: str | Path) -> dict[str
     if not task_path.parent.exists():
         raise CabinetGraphError(f"promotion task write parent missing: {task_path.parent}")
 
-    rendered = json.dumps(task, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
+    rendered = _render_task(task)
     try:
         with task_path.open("x", encoding="utf-8") as handle:
             handle.write(rendered)
@@ -98,6 +99,15 @@ def _expect_list(value: Any, label: str) -> list[Any]:
     if not isinstance(value, list):
         raise CabinetGraphError(f"{label} must be a list")
     return value
+
+
+def _task_sha256(task: dict[str, Any]) -> str:
+    rendered = json.dumps(task, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(rendered.encode("utf-8")).hexdigest()
+
+
+def _render_task(task: dict[str, Any]) -> str:
+    return json.dumps(task, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
 
 
 def validate_promotion_task(task: dict[str, Any]) -> dict[str, Any]:
@@ -281,4 +291,113 @@ def preview_promotion_task_import_file(
     task_path = Path(path)
     return preview_promotion_task_import(
         load_promotion_task(task_path), registry=registry, path=task_path
+    )
+
+
+
+def import_reviewed_promotion_task(
+    task: dict[str, Any],
+    *,
+    registry: Any,
+    reviewer: str,
+    apply: bool,
+    path: str | Path | None = None,
+) -> dict[str, Any]:
+    """Review-gated import for one Cabinet promotion task.
+
+    Without ``apply`` this is only a dry run. With ``apply`` it creates exactly
+    one task file in ``registry/tasks`` using exclusive create; it never touches
+    the queue and never dispatches work.
+    """
+    reviewer_id = _expect_non_empty_string(reviewer, "promotion task reviewer")
+    preview = preview_promotion_task_import(task, registry=registry, path=path)
+    task_id = preview["taskId"]
+    target_dir = Path(registry.root) / "registry" / "tasks"
+    target_path = target_dir / f"{task_id}.json"
+    if target_path.exists() or target_path.is_symlink():
+        raise CabinetGraphError(f"promotion task already exists in registry: {task_id}")
+
+    base = {
+        "schemaVersion": 1,
+        "kind": "cabinet_promotion_task_reviewed_import",
+        "taskId": task_id,
+        "initiative": preview["initiative"],
+        "sourcePath": str(path) if path is not None else None,
+        "targetPath": str(target_path),
+        "reviewedBy": reviewer_id,
+        "checks": preview["checks"],
+        "dispatchAllowed": False,
+        "queueMutationAllowed": False,
+        "dispatchPerformed": False,
+        "queueMutationPerformed": False,
+    }
+    if not apply:
+        return {
+            **base,
+            "mode": "dry_run",
+            "importReady": True,
+            "registryMutationAllowed": False,
+            "registryMutationPerformed": False,
+            "taskCreationPerformed": False,
+        }
+
+    if not target_dir.is_dir():
+        raise CabinetGraphError(f"promotion task registry directory missing: {target_dir}")
+
+    imported_task = json.loads(json.dumps(task))
+    metadata = _expect_object(
+        imported_task.setdefault("metadata", {}),
+        "Cabinet promotion task metadata",
+    )
+    metadata["reviewed_import"] = {
+        "source": "cabinet-import-reviewed",
+        "reviewer": reviewer_id,
+        "source_task_file": str(path) if path is not None else None,
+        "source_task_sha256": _task_sha256(task),
+        "dispatch_performed": False,
+        "queue_mutation_performed": False,
+    }
+    try:
+        registry.schemas.validate("task", imported_task, target_path)
+    except Exception as exc:
+        raise CabinetGraphError(
+            f"reviewed promotion task does not satisfy Bureau task schema: {exc}"
+        ) from exc
+
+    rendered = _render_task(imported_task)
+    try:
+        with target_path.open("x", encoding="utf-8") as handle:
+            handle.write(rendered)
+    except FileExistsError as exc:
+        raise CabinetGraphError(f"promotion task already exists in registry: {task_id}") from exc
+    except OSError as exc:
+        raise CabinetGraphError(
+            f"promotion task cannot be imported: {target_path}: {exc.__class__.__name__}"
+        ) from exc
+
+    return {
+        **base,
+        "mode": "apply",
+        "importReady": True,
+        "bytes": len(rendered.encode("utf-8")),
+        "registryMutationAllowed": True,
+        "registryMutationPerformed": True,
+        "taskCreationPerformed": True,
+    }
+
+
+def import_reviewed_promotion_task_file(
+    path: str | Path,
+    *,
+    registry: Any,
+    reviewer: str,
+    apply: bool,
+) -> dict[str, Any]:
+    task_path = Path(path)
+    return import_reviewed_promotion_task(
+        load_promotion_task(task_path),
+        registry=registry,
+        reviewer=reviewer,
+        apply=apply,
+        path=task_path,
     )

@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -267,3 +268,152 @@ class CabinetPromotionTaskImportPreviewTests(unittest.TestCase):
         self.assertEqual(payload["mode"], "dry_run")
         self.assertTrue(payload["checks"]["taskSchema"])
         self.assertFalse(payload["registryMutationAllowed"])
+
+
+class CabinetPromotionTaskReviewedImportTests(unittest.TestCase):
+    def reviewed_import_fixture(self, *, task_id: str = "BUR-CAB-ECO-010") -> dict:
+        export = export_fixture()
+        return promote_frontier_candidate(
+            export,
+            candidate_id=export["candidates"][0]["id"],
+            task_id=task_id,
+            initiative="BUR-2026-001",
+            target_proof="A reviewed proof exists.",
+            approve=True,
+        )
+
+    def registry_root_copy(self, directory: str) -> Path:
+        root = Path(directory) / "registry-root"
+        shutil.copytree(Path.cwd() / "registry", root / "registry")
+        shutil.copytree(Path.cwd() / "schemas", root / "schemas")
+        return root
+
+    def test_reviewed_import_defaults_to_dry_run_without_registry_mutation(self) -> None:
+        from bureau.cabinet_promotion_write import import_reviewed_promotion_task_file
+        from bureau.core import Registry
+
+        promotion = self.reviewed_import_fixture()
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.registry_root_copy(directory)
+            task_path = Path(directory) / "task.json"
+            write_promotion_task(promotion, task_path)
+            registry = Registry.load(root)
+            receipt = import_reviewed_promotion_task_file(
+                task_path, registry=registry, reviewer="alex", apply=False
+            )
+            target_path = root / "registry" / "tasks" / "BUR-CAB-ECO-010.json"
+
+        self.assertEqual(receipt["kind"], "cabinet_promotion_task_reviewed_import")
+        self.assertEqual(receipt["mode"], "dry_run")
+        self.assertTrue(receipt["importReady"])
+        self.assertEqual(receipt["reviewedBy"], "alex")
+        self.assertFalse(receipt["registryMutationAllowed"])
+        self.assertFalse(receipt["registryMutationPerformed"])
+        self.assertFalse(receipt["taskCreationPerformed"])
+        self.assertFalse(receipt["dispatchPerformed"])
+        self.assertFalse(receipt["queueMutationPerformed"])
+        self.assertFalse(target_path.exists())
+
+    def test_reviewed_import_apply_creates_exactly_one_registry_task_file(self) -> None:
+        from bureau.cabinet_promotion_write import import_reviewed_promotion_task_file
+        from bureau.core import Registry
+
+        promotion = self.reviewed_import_fixture()
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.registry_root_copy(directory)
+            task_path = Path(directory) / "task.json"
+            write_promotion_task(promotion, task_path)
+            registry = Registry.load(root)
+            receipt = import_reviewed_promotion_task_file(
+                task_path, registry=registry, reviewer="alex", apply=True
+            )
+            target_path = root / "registry" / "tasks" / "BUR-CAB-ECO-010.json"
+            imported = json.loads(target_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(receipt["mode"], "apply")
+        self.assertTrue(receipt["registryMutationAllowed"])
+        self.assertTrue(receipt["registryMutationPerformed"])
+        self.assertTrue(receipt["taskCreationPerformed"])
+        self.assertFalse(receipt["dispatchPerformed"])
+        self.assertFalse(receipt["queueMutationPerformed"])
+        self.assertEqual(imported["id"], "BUR-CAB-ECO-010")
+        self.assertEqual(imported["metadata"]["reviewed_import"]["reviewer"], "alex")
+        self.assertFalse(imported["metadata"]["reviewed_import"]["dispatch_performed"])
+        self.assertFalse(imported["metadata"]["reviewed_import"]["queue_mutation_performed"])
+
+    def test_reviewed_import_apply_refuses_existing_task_file(self) -> None:
+        from bureau.cabinet_promotion_write import import_reviewed_promotion_task_file
+        from bureau.core import Registry
+
+        promotion = self.reviewed_import_fixture(task_id="BUR-2026-001-T001")
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.registry_root_copy(directory)
+            task_path = Path(directory) / "task.json"
+            write_promotion_task(promotion, task_path)
+            registry = Registry.load(root)
+            with self.assertRaisesRegex(CabinetGraphError, "already exists"):
+                import_reviewed_promotion_task_file(
+                    task_path, registry=registry, reviewer="alex", apply=True
+                )
+
+    def test_cli_reviewed_import_requires_apply_for_write(self) -> None:
+        from bureau.cli import main
+
+        promotion = self.reviewed_import_fixture()
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.registry_root_copy(directory)
+            task_path = Path(directory) / "task.json"
+            write_promotion_task(promotion, task_path)
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                result = main(
+                    [
+                        "--json",
+                        "--root",
+                        str(root),
+                        "cabinet-import-reviewed",
+                        "--task-file",
+                        str(task_path),
+                        "--reviewer",
+                        "alex",
+                    ]
+                )
+            payload = json.loads(output.getvalue())
+            target_path = root / "registry" / "tasks" / "BUR-CAB-ECO-010.json"
+
+        self.assertEqual(result, 0)
+        self.assertEqual(payload["mode"], "dry_run")
+        self.assertFalse(payload["registryMutationPerformed"])
+        self.assertFalse(target_path.exists())
+
+    def test_cli_reviewed_import_apply_writes_with_reviewer_gate(self) -> None:
+        from bureau.cli import main
+
+        promotion = self.reviewed_import_fixture()
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.registry_root_copy(directory)
+            task_path = Path(directory) / "task.json"
+            write_promotion_task(promotion, task_path)
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                result = main(
+                    [
+                        "--json",
+                        "--root",
+                        str(root),
+                        "cabinet-import-reviewed",
+                        "--task-file",
+                        str(task_path),
+                        "--reviewer",
+                        "alex",
+                        "--apply",
+                    ]
+                )
+            payload = json.loads(output.getvalue())
+            target_path = root / "registry" / "tasks" / "BUR-CAB-ECO-010.json"
+            target_exists = target_path.exists()
+
+        self.assertEqual(result, 0)
+        self.assertEqual(payload["mode"], "apply")
+        self.assertTrue(payload["registryMutationPerformed"])
+        self.assertTrue(target_exists)

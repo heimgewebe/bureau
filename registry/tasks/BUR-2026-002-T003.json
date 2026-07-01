@@ -1,0 +1,41 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Opportunistic, required, strict, live-first, and external-safe rLens modes are represented deterministically.",
+      "id": "mode-policy"
+    },
+    {
+      "assertion": "A required/strict task without rLens context records a machine-readable skip or block reason.",
+      "id": "skip-reason"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.bureau"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Add Bureau task-class policy so repo/PR/roadmap/architecture work records rLens refs or explicit skip reasons while live-first tasks remain unblocked.",
+  "id": "BUR-2026-002-T003",
+  "initiative": "BUR-2026-002",
+  "metadata": {
+    "operator_lab_run": "vibe-lab: experiments/2026-07-01_operator-lab-loop/artifacts/run-002-rlens-agent-ecosystem/run-card.yml",
+    "plan_path": "docs/plans/rlens-agent-ecosystem-integration-v1.md"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 30
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Enforce rLens context refs in Bureau modes"
+}

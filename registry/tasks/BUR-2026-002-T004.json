@@ -1,0 +1,41 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Generated Cabinet references state bundle stem, freshness class, health, and non-claims.",
+      "id": "dated-reference"
+    },
+    {
+      "assertion": "The importer does not claim current live repository state from a dated dump.",
+      "id": "no-live-claim"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.cabinet"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Create a Cabinet importer that turns rLens bundle metadata into dated Repository References and optional agent briefings without live-state claims.",
+  "id": "BUR-2026-002-T004",
+  "initiative": "BUR-2026-002",
+  "metadata": {
+    "operator_lab_run": "vibe-lab: experiments/2026-07-01_operator-lab-loop/artifacts/run-002-rlens-agent-ecosystem/run-card.yml",
+    "plan_path": "docs/plans/rlens-agent-ecosystem-integration-v1.md"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Import rLens references into Cabinet"
+}

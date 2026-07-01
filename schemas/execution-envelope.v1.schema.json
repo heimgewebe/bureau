@@ -1,21 +1,150 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "rlens_context_ref": {
+      "additionalProperties": false,
+      "properties": {
+        "bundle_commit": {
+          "pattern": "^[0-9a-f]{40}$",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "does_not_establish": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "freshness_status": {
+          "enum": [
+            "fresh_exact",
+            "fresh_dirty_unverified",
+            "stale_head",
+            "unknown",
+            "not_required"
+          ]
+        },
+        "generated_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "live_commit_at_claim": {
+          "pattern": "^[0-9a-f]{40}$",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "manifest_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "preflight_status": {
+          "enum": [
+            "pass",
+            "warn",
+            "fail",
+            "not_applicable",
+            "unknown"
+          ]
+        },
+        "repo": {
+          "pattern": "^[A-Za-z0-9_.-]{1,120}$",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "source": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "stem": {
+          "pattern": "^[A-Za-z0-9_.-]{1,160}$",
+          "type": "string"
+        },
+        "task_profile": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "repo",
+        "stem",
+        "manifest_sha256",
+        "freshness_status",
+        "task_profile",
+        "preflight_status"
+      ],
+      "type": "object"
+    }
+  },
   "$id": "https://heimgewebe.local/bureau/execution-envelope.v1.schema.json",
-  "title": "Bureau execution envelope v1",
-  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "required": ["schema_version", "run_id", "task_id", "worker_id", "task_sha256", "plan_sha256", "created_at", "task", "claims"],
   "properties": {
-    "schema_version": {"const": 1},
-    "run_id": {"type": "string", "pattern": "^BUR-RUN-[0-9]{8}T[0-9]{6}Z-[0-9a-f]{10}$"},
-    "task_id": {"type": "string"},
-    "worker_id": {"type": "string", "minLength": 1},
-    "task_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-    "plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-    "created_at": {"type": "string", "format": "date-time"},
-    "task": {"type": "object"},
-    "claims": {"type": "array"},
-    "plan": {"type": ["object", "null"]},
-    "baseline_commit": {"type": ["string", "null"], "pattern": "^[0-9a-f]{40}$"}
-  }
+    "baseline_commit": {
+      "pattern": "^[0-9a-f]{40}$",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "claims": {
+      "type": "array"
+    },
+    "created_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "plan": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "plan_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "rlens_context_ref": {
+      "$ref": "#/$defs/rlens_context_ref"
+    },
+    "run_id": {
+      "pattern": "^BUR-RUN-[0-9]{8}T[0-9]{6}Z-[0-9a-f]{10}$",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "task": {
+      "type": "object"
+    },
+    "task_id": {
+      "type": "string"
+    },
+    "task_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "worker_id": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "run_id",
+    "task_id",
+    "worker_id",
+    "task_sha256",
+    "plan_sha256",
+    "created_at",
+    "task",
+    "claims"
+  ],
+  "title": "Bureau execution envelope v1",
+  "type": "object"
 }

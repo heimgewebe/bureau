@@ -86,6 +86,8 @@ def parser() -> argparse.ArgumentParser:
     cabinet_promote.add_argument("--target-proof", required=True)
     cabinet_promote.add_argument("--approve", action="store_true")
     cabinet_promote.add_argument("--write-task")
+    cabinet_validate_task = sub.add_parser("cabinet-validate-task")
+    cabinet_validate_task.add_argument("--task-file", required=True)
     frontier = sub.add_parser("frontier")
     frontier.add_argument("--capability", action="append", default=[])
     explain = sub.add_parser("explain-next")
@@ -237,6 +239,17 @@ def main(argv: list[str] | None = None) -> int:
                         **value,
                         "write": write_promotion_task(value, args.write_task),
                     }
+            except CabinetGraphError as exc:
+                print(f"bureau: {exc}", file=sys.stderr)
+                return 2
+            emit(value, args.json)
+            return 0
+        if args.command == "cabinet-validate-task":
+            from .cabinet_graph import CabinetGraphError
+            from .cabinet_promotion_write import validate_promotion_task_file
+
+            try:
+                value = validate_promotion_task_file(args.task_file)
             except CabinetGraphError as exc:
                 print(f"bureau: {exc}", file=sys.stderr)
                 return 2

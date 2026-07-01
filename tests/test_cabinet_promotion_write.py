@@ -128,3 +128,62 @@ class CabinetPromotionWriteTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CabinetPromotionTaskValidationTests(unittest.TestCase):
+    def test_validates_written_task_file_without_registry_mutation(self) -> None:
+        from bureau.cabinet_promotion_write import validate_promotion_task_file
+
+        promotion = promotion_fixture()
+        with tempfile.TemporaryDirectory() as directory:
+            task_path = Path(directory) / "task.json"
+            write_promotion_task(promotion, task_path)
+            receipt = validate_promotion_task_file(task_path)
+
+        self.assertEqual(receipt["kind"], "cabinet_promotion_task_validation")
+        self.assertEqual(receipt["mode"], "file_only")
+        self.assertTrue(receipt["valid"])
+        self.assertEqual(receipt["taskId"], "BUR-CAB-ECO-001")
+        self.assertFalse(receipt["dispatchAllowed"])
+        self.assertFalse(receipt["queueMutationAllowed"])
+        self.assertFalse(receipt["taskCreationAllowed"])
+        self.assertFalse(receipt["registryMutationAllowed"])
+
+    def test_validation_rejects_non_read_claim(self) -> None:
+        from bureau.cabinet_promotion_write import validate_promotion_task_file
+
+        promotion = promotion_fixture()
+        with tempfile.TemporaryDirectory() as directory:
+            task_path = Path(directory) / "task.json"
+            write_promotion_task(promotion, task_path)
+            task = json.loads(task_path.read_text(encoding="utf-8"))
+            task["claims"][0]["mode"] = "write"
+            task_path.write_text(json.dumps(task), encoding="utf-8")
+            with self.assertRaisesRegex(CabinetGraphError, "read-only"):
+                validate_promotion_task_file(task_path)
+
+    def test_cli_validates_task_file_without_registry_load(self) -> None:
+        from bureau.cli import main
+
+        promotion = promotion_fixture()
+        with tempfile.TemporaryDirectory() as directory:
+            task_path = Path(directory) / "task.json"
+            write_promotion_task(promotion, task_path)
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                result = main(
+                    [
+                        "--json",
+                        "--root",
+                        str(Path(directory) / "not-a-registry"),
+                        "cabinet-validate-task",
+                        "--task-file",
+                        str(task_path),
+                    ]
+                )
+            payload = json.loads(output.getvalue())
+
+        self.assertEqual(result, 0)
+        self.assertEqual(payload["kind"], "cabinet_promotion_task_validation")
+        self.assertEqual(payload["taskId"], "BUR-CAB-ECO-001")
+        self.assertFalse(payload["registryMutationAllowed"])

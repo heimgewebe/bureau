@@ -85,3 +85,127 @@ def write_promotion_task(proposal: dict[str, Any], path: str | Path) -> dict[str
         "taskCreationAllowed": False,
         "registryMutationAllowed": False,
     }
+
+
+
+def _expect_non_empty_string(value: Any, label: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise CabinetGraphError(f"{label} must be a non-empty string")
+    return value.strip()
+
+
+def _expect_list(value: Any, label: str) -> list[Any]:
+    if not isinstance(value, list):
+        raise CabinetGraphError(f"{label} must be a list")
+    return value
+
+
+def validate_promotion_task(task: dict[str, Any]) -> dict[str, Any]:
+    """Validate one file-only Cabinet promotion task proposal.
+
+    This validates the dry task artifact written by CAB-ECO-007. It does not
+    import the task into the Bureau registry and does not dispatch work.
+    """
+    task = _expect_object(task, "Cabinet promotion task")
+    if task.get("schema_version") != 1:
+        raise CabinetGraphError("Cabinet promotion task schema_version must be 1")
+    task_id = _expect_non_empty_string(task.get("id"), "Cabinet promotion task id")
+    initiative = _expect_non_empty_string(
+        task.get("initiative"), "Cabinet promotion task initiative"
+    )
+    _expect_non_empty_string(task.get("title"), "Cabinet promotion task title")
+    if task.get("state") != "planned":
+        raise CabinetGraphError("Cabinet promotion task state must be planned")
+
+    execution = _expect_object(task.get("execution"), "Cabinet promotion task execution")
+    if execution.get("mode") != "manual":
+        raise CabinetGraphError("Cabinet promotion task execution mode must be manual")
+    if execution.get("policy") != "review-before-effect":
+        raise CabinetGraphError(
+            "Cabinet promotion task execution policy must be review-before-effect"
+        )
+
+    capabilities = _expect_list(
+        task.get("required_capabilities"), "Cabinet promotion task capabilities"
+    )
+    if "repository" not in capabilities or "review" not in capabilities:
+        raise CabinetGraphError(
+            "Cabinet promotion task capabilities must include repository and review"
+        )
+
+    claims = _expect_list(task.get("claims"), "Cabinet promotion task claims")
+    if not claims:
+        raise CabinetGraphError("Cabinet promotion task claims must not be empty")
+    for index, raw_claim in enumerate(claims):
+        claim = _expect_object(raw_claim, f"Cabinet promotion task claim {index}")
+        if claim.get("mode") != "read":
+            raise CabinetGraphError("Cabinet promotion task claims must stay read-only")
+        if claim.get("isolation") != "none":
+            raise CabinetGraphError("Cabinet promotion task claims must keep isolation none")
+
+    acceptance = _expect_list(
+        task.get("acceptance"), "Cabinet promotion task acceptance"
+    )
+    acceptance_ids = {
+        item.get("id")
+        for item in acceptance
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    if "target-proof" not in acceptance_ids:
+        raise CabinetGraphError("Cabinet promotion task must include target-proof acceptance")
+    if "no-auto-dispatch" not in acceptance_ids:
+        raise CabinetGraphError("Cabinet promotion task must include no-auto-dispatch acceptance")
+
+    metadata = _expect_object(task.get("metadata"), "Cabinet promotion task metadata")
+    if metadata.get("source") != "cabinet_frontier_export":
+        raise CabinetGraphError("Cabinet promotion task source must be cabinet_frontier_export")
+    _expect_non_empty_string(
+        metadata.get("source_candidate_id"), "Cabinet promotion task source_candidate_id"
+    )
+    source_candidate = _expect_object(
+        metadata.get("source_candidate"), "Cabinet promotion task source_candidate"
+    )
+    _expect_false(source_candidate.get("dispatchAllowed"), "source candidate dispatchAllowed")
+    _expect_false(metadata.get("dispatch_allowed"), "task metadata dispatch_allowed")
+    _expect_false(
+        metadata.get("queue_mutation_allowed"), "task metadata queue_mutation_allowed"
+    )
+    _expect_false(
+        metadata.get("task_creation_allowed"), "task metadata task_creation_allowed"
+    )
+
+    return {
+        "schemaVersion": 1,
+        "kind": "cabinet_promotion_task_validation",
+        "mode": "file_only",
+        "valid": True,
+        "taskId": task_id,
+        "initiative": initiative,
+        "dispatchAllowed": False,
+        "queueMutationAllowed": False,
+        "taskCreationAllowed": False,
+        "registryMutationAllowed": False,
+    }
+
+
+def load_promotion_task(path: str | Path) -> dict[str, Any]:
+    task_path = Path(path)
+    try:
+        raw = task_path.read_text(encoding="utf-8")
+    except FileNotFoundError as exc:
+        raise CabinetGraphError(f"promotion task file missing: {task_path}") from exc
+    except OSError as exc:
+        raise CabinetGraphError(
+            f"promotion task file cannot be read: {task_path}: {exc.__class__.__name__}"
+        ) from exc
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise CabinetGraphError(f"promotion task file is invalid JSON: {exc.msg}") from exc
+    return _expect_object(value, "Cabinet promotion task file")
+
+
+def validate_promotion_task_file(path: str | Path) -> dict[str, Any]:
+    task_path = Path(path)
+    receipt = validate_promotion_task(load_promotion_task(task_path))
+    return {**receipt, "path": str(task_path)}

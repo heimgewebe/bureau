@@ -722,3 +722,62 @@ def test_external_agent_checkout_accepts_valid_grabowski_brief(
     assert result["agent_brief"]["status"] == "valid"
     assert result["handoff"]["agent_brief_path"] == str(brief_path)
     assert result["handoff"]["worker_profile"] == "codex-efficient"
+
+
+def test_explain_next_reports_runtime_truth_for_lifecycle_reopen(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative = json.loads(initiative_path.read_text())
+    initiative["state"] = "completed"
+    initiative["commitment"] = "completed"
+    initiative_path.write_text(json.dumps(initiative))
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["state"] = "planned"
+    task["execution"]["policy"] = "review-before-effect"
+    task_path.write_text(json.dumps(task))
+
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+    explained = dispatcher.explain_next({"repository"})
+
+    assert explained["selected"] is None
+    assert explained["runtime_truth"]["next_task_available"] is False
+    assert explained["runtime_truth"]["lifecycle_mismatch"] is True
+    assert explained["runtime_truth"]["health_blocks_normal_claim"] is True
+    assert explained["runtime_truth"]["repair_task_required"] is True
+    assert explained["runtime_truth"]["repair_recommendations"] == [
+        {
+            "initiative_id": "BUR-TEST-001",
+            "declared_state": "completed",
+            "recommended_state": "reopen-required",
+            "open_task_count": 1,
+            "open_tasks": [task["id"]],
+        }
+    ]
+
+
+def test_doctor_reports_runtime_truth_for_lifecycle_mismatch(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    initial = Registry.load(root)
+    task = json.loads(task_path.read_text())
+    task["state"] = "verified"
+    task["metadata"] = {
+        "verification": {
+            "task_sha256": task_revision_sha256(task),
+            "plan_sha256": plan_sha256(initial, task["initiative"]),
+        }
+    }
+    task_path.write_text(json.dumps(task))
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    doctor = dispatcher.doctor()
+
+    assert doctor["healthy"] is False
+    assert doctor["runtime_truth"]["capability_context"] == "not-evaluated"
+    assert doctor["runtime_truth"]["lifecycle_mismatch"] is True
+    assert doctor["runtime_truth"]["repair_task_required"] is True

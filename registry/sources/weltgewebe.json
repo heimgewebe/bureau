@@ -6,12 +6,11 @@
     "DB-PROOF-001",
     "DEPLOY-DNS-001",
     "DOCMETA-FRESHNESS-001",
-    "DOCMETA-REPORT-LIFECYCLE-001",
     "DOMAIN-PG-001",
     "OPT-ARC-001",
     "OPT-INF-002"
   ],
-  "commit_sha": "ecf5343307d16ffcad6cab36db3a8abb3d4e92a3",
+  "commit_sha": "66bd1df1fd56fe9927c7cc235a2a8e2479527f1c",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -502,13 +501,13 @@
       "updated_at": "2026-06-29"
     },
     {
-      "acceptance_count": 3,
+      "acceptance_count": 4,
       "area": "auth",
       "effort": "M",
-      "evidence_count": 1,
+      "evidence_count": 5,
       "id": "AUTH-PG-001",
       "link_counts": {
-        "docs": 2,
+        "docs": 3,
         "issues": 0,
         "prs": 0
       },
@@ -518,52 +517,58 @@
       "risk": "high",
       "source_task": {
         "acceptance": [
-          "Step-up-E-Mail-Aenderung (UpdateEmail-Intent) ist nach PostgreSQL-Cutover restart-stabil und nicht cache-only",
+          "Step-up-E-Mail-Aenderung (UpdateEmail-Intent) schreibt im PostgreSQL-Account-Write-Modus DB-vor-Cache nach domain_accounts",
+          "Restart-Proof-Harness belegt Reload aus PostgreSQL mit neuer E-Mail",
           "E-Mail-Unique-Regel (domain_accounts_email_normalized_unique) bleibt gewahrt; Konflikt liefert kontrolliert 409",
-          "Fehlersemantik definiert: Konflikt, ungueltige E-Mail, nicht autorisiert, abgelaufenes Step-up"
+          "Fehlersemantik definiert: Konflikt, ungueltige E-Mail, nicht autorisiert, abgelaufenes Step-up; DB-Fehler mutieren den Cache nicht"
         ],
         "area": "auth",
         "effort": "M",
         "evidence": [
-          "apps/api/src/routes/auth.rs"
+          "apps/api/src/routes/auth.rs",
+          "apps/api/src/domain_db.rs",
+          "apps/api/src/routes/domain_write_guard.rs",
+          "apps/api/tests/db_domain_account_write_path.rs",
+          "docs/tasks/board.md"
         ],
         "id": "AUTH-PG-001",
         "links": {
           "docs": [
             "docs/reports/auth-status-matrix.md",
-            "docs/blueprints/domain-data-postgres-cutover.md"
+            "docs/blueprints/domain-data-postgres-cutover.md",
+            "docs/reports/domain-account-write-path-proof.md"
           ],
           "issues": [],
           "prs": []
         },
         "missing_evidence": [
-          "Step-up-E-Mail-Persistenz ist ein ausdrueckliches Non-Goal von OPT-ARC-001 (docs/reports/opt-arc-001-db-proof-matrix.json: step_up_email_persistence) und noch nicht implementiert",
-          "Kein PostgreSQL-Write-Pfad/Proof, der eine via PUT /auth/me/email geaenderte E-Mail restart-stabil belegt"
+          "Fresh Rust-Compile-, PostgreSQL-Proof- und PR-CI-Evidence stehen aus",
+          "Produktions-Cutover bleibt ausstehend; JSONL bleibt Default-Lesequelle und Write-Truth"
         ],
         "owner": "unknown",
         "priority": "high",
         "risk": "high",
-        "status": "open",
+        "status": "partial",
         "title": "Step-up-E-Mail-Persistenz nach PostgreSQL",
-        "updated_at": "2026-06-16"
+        "updated_at": "2026-06-29"
       },
-      "source_task_sha256": "9bcbc47c5a4c9ea77556645a06d72353d871e1bc5cd94cdbfad1b88ca75769b0",
-      "status": "open",
+      "source_task_sha256": "45af4756694f941505d0a57c8f48633f8095676f91b6692e961a7ab64effa106",
+      "status": "partial",
       "title": "Step-up-E-Mail-Persistenz nach PostgreSQL",
-      "updated_at": "2026-06-16"
+      "updated_at": "2026-06-29"
     },
     {
       "acceptance_count": 4,
       "area": "auth",
       "effort": "L",
-      "evidence_count": 3,
+      "evidence_count": 20,
       "id": "AUTH-PG-002",
       "link_counts": {
-        "docs": 2,
+        "docs": 9,
         "issues": 0,
-        "prs": 0
+        "prs": 3
       },
-      "missing_evidence_count": 3,
+      "missing_evidence_count": 6,
       "owner": "unknown",
       "priority": "high",
       "risk": "high",
@@ -579,42 +584,73 @@
         "evidence": [
           "apps/api/src/auth/passkeys.rs",
           "apps/api/src/routes/auth.rs",
-          "apps/api/src/routes/accounts.rs"
+          "apps/api/src/routes/accounts.rs",
+          "apps/api/migrations/20260630000001_create_passkey_credentials.up.sql",
+          "apps/api/src/auth/passkeys_db.rs",
+          "apps/api/tests/db_passkey_store_persistence.rs",
+          ".github/workflows/api.yml",
+          "docs/reports/auth-pg-002-passkey-db-store.md",
+          "apps/api/src/auth/passkeys_runtime.rs",
+          "apps/api/src/config.rs",
+          "apps/api/src/lib.rs",
+          "docs/reports/auth-pg-002-passkey-runtime-facade.md",
+          "docs/reports/auth-pg-002-cutover-plan.md",
+          "apps/api/tests/db_passkey_fk_readiness.rs",
+          "docs/reports/auth-pg-002-passkey-fk-readiness-audit.md",
+          "scripts/docmeta/audit_passkey_fk_runtime.py",
+          "scripts/docmeta/tests/test_audit_passkey_fk_runtime.py",
+          "docs/reports/auth-pg-002-passkey-runtime-audit-plan.md",
+          "docs/reports/auth-pg-002-passkey-runtime-audit-heimserver-2026-07-01.md",
+          "docs/reports/auth-pg-002-runtime-schema-readiness-heimserver-2026-07-01.md"
         ],
         "id": "AUTH-PG-002",
         "links": {
           "docs": [
             "docs/reports/auth-status-matrix.md",
-            "docs/reports/passkey-register-verify-prep.md"
+            "docs/reports/passkey-register-verify-prep.md",
+            "docs/reports/auth-pg-002-passkey-db-store.md",
+            "docs/reports/auth-pg-002-passkey-runtime-facade.md",
+            "docs/reports/auth-pg-002-cutover-plan.md",
+            "docs/reports/auth-pg-002-passkey-fk-readiness-audit.md",
+            "docs/reports/auth-pg-002-passkey-runtime-audit-plan.md",
+            "docs/reports/auth-pg-002-passkey-runtime-audit-heimserver-2026-07-01.md",
+            "docs/reports/auth-pg-002-runtime-schema-readiness-heimserver-2026-07-01.md"
           ],
           "issues": [],
-          "prs": []
+          "prs": [
+            "#1295",
+            "#1299",
+            "#1300"
+          ]
         },
         "missing_evidence": [
-          "WebAuthn-Credential-Writeback ist ein ausdrueckliches Non-Goal von OPT-ARC-001 (docs/reports/opt-arc-001-db-proof-matrix.json: webauthn_credential_writeback); PasskeyStore und webauthn_user_id-Writeback sind aktuell In-Memory (auth-status-matrix.md 2.8: persistente Ablage ueber Neustart offen)",
-          "Kein PostgreSQL-Persistenzmodell und keine Migration fuer registrierte Passkey-Credentials",
-          "Kein Restart-Stabilitaets-Proof (Registrierung, Reload, Login)"
+          "Kein Produktions-Cutover; passkey_credential_source bleibt Default in_memory",
+          "Heimserver-Runtime-PostgreSQL hat _sqlx_migrations und domain_accounts, aber passkey_credentials fehlt",
+          "Runtime-Preflight für 20260630000001_create_passkey_credentials fehlt",
+          "FK passkey_credentials.account_id -> domain_accounts(id) noch nicht implementiert; erneuter Runtime-Audit erst nach vorhandener Tabelle möglich",
+          "Kein webauthn_user_id-Backfill/NOT NULL (AUTH-PG-003 bleibt offen)",
+          "Passkey-Management-UI/List/Remove-Cutover fehlt"
         ],
         "owner": "unknown",
         "priority": "high",
         "risk": "high",
-        "status": "open",
+        "status": "partial",
         "title": "WebAuthn-Credential-Persistenz / Passkey-Cutover nach PostgreSQL",
-        "updated_at": "2026-06-16"
+        "updated_at": "2026-07-01"
       },
-      "source_task_sha256": "ef38ffb7696262b7956865d3959ef3c7693fe745b89a0db35b4465b297184e1a",
-      "status": "open",
+      "source_task_sha256": "c6afac677a2b4b4bbc275a181d90547fe551096b1296fe58d3cc8a395cf68f0d",
+      "status": "partial",
       "title": "WebAuthn-Credential-Persistenz / Passkey-Cutover nach PostgreSQL",
-      "updated_at": "2026-06-16"
+      "updated_at": "2026-07-01"
     },
     {
-      "acceptance_count": 3,
+      "acceptance_count": 4,
       "area": "auth",
       "effort": "M",
-      "evidence_count": 1,
+      "evidence_count": 7,
       "id": "AUTH-PG-003",
       "link_counts": {
-        "docs": 2,
+        "docs": 6,
         "issues": 0,
         "prs": 0
       },
@@ -625,39 +661,50 @@
       "source_task": {
         "acceptance": [
           "Audit der Accounts mit fehlender webauthn_user_id liegt vor; Backfill-Strategie ist dokumentiert und testbar",
+          "Runtime-Audit klassifiziert Schema-, Backfill- und Cutover-Blocker read-only und redigiert Account-Samples",
           "Reload erzeugt keine neue Identitaet (keine stille UUID-Neuerzeugung)",
           "NOT NULL wird erst nach Audit und erfolgreichem Backfill geprueft; Migration ist nachvollziehbar"
         ],
         "area": "auth",
         "effort": "M",
         "evidence": [
-          "apps/api/src/routes/accounts.rs"
+          "apps/api/src/routes/accounts.rs",
+          "docs/reports/auth-pg-003-backfill-readiness.md",
+          "apps/api/src/domain_db.rs",
+          "apps/api/tests/db_webauthn_user_id_backfill_audit.rs",
+          "scripts/docmeta/audit_webauthn_user_id_backfill_runtime.py",
+          "scripts/docmeta/tests/test_audit_webauthn_user_id_backfill_runtime.py",
+          "docs/reports/auth-pg-003-runtime-audit-wg-pg-proof-2026-07-01.md"
         ],
         "id": "AUTH-PG-003",
         "links": {
           "docs": [
             "docs/reports/auth-status-matrix.md",
-            "docs/reports/opt-arc-001-db-proof-matrix.json"
+            "docs/reports/opt-arc-001-db-proof-matrix.json",
+            "docs/reports/auth-pg-003-backfill-readiness.md",
+            "docs/reports/auth-pg-002-passkey-runtime-facade.md",
+            "docs/reports/auth-pg-002-cutover-plan.md",
+            "docs/reports/auth-pg-003-runtime-audit-wg-pg-proof-2026-07-01.md"
           ],
           "issues": [],
           "prs": []
         },
         "missing_evidence": [
           "legacy_webauthn_user_id_backfill und webauthn_user_id_not_null sind ausdrueckliche Non-Goals von OPT-ARC-001 (docs/reports/opt-arc-001-db-proof-matrix.json)",
-          "WebAuthn-Credential-Persistenz (AUTH-PG-002) ist fachlich noch nicht geklaert; die Backfill-Strategie haengt davon ab",
-          "Kein Audit, wie viele Accounts webauthn_user_id IS NULL haben, und kein Backfill-Test"
+          "Audit-Proof, Runtime-Audit-Werkzeug und lokaler wg-pg-proof-Smoke vorbereitet; Live-Produktions-Audit und Backfill fehlen weiter",
+          "Kein NOT NULL vor erfolgreichem Backfill-Proof und Cutover-Entscheidung"
         ],
         "owner": "unknown",
         "priority": "medium",
         "risk": "medium",
         "status": "blocked",
         "title": "Legacy-Backfill fuer webauthn_user_id und spaeteres NOT NULL",
-        "updated_at": "2026-06-16"
+        "updated_at": "2026-07-01"
       },
-      "source_task_sha256": "9a3c63f8b6960814825c00dc187b1dba8a037bb5b91e6bf63d416868abea693c",
+      "source_task_sha256": "3691a9c11f4c244cdf85f28be40e401a046f6c49ee657ac75853c4a766dfc7bf",
       "status": "blocked",
       "title": "Legacy-Backfill fuer webauthn_user_id und spaeteres NOT NULL",
-      "updated_at": "2026-06-16"
+      "updated_at": "2026-07-01"
     },
     {
       "acceptance_count": 3,
@@ -1068,35 +1115,32 @@
       "updated_at": "2026-06-29"
     },
     {
-      "acceptance_count": 13,
+      "acceptance_count": 10,
       "area": "docs",
       "effort": "M",
-      "evidence_count": 16,
+      "evidence_count": 20,
       "id": "DOCMETA-REPORT-LIFECYCLE-001",
       "link_counts": {
         "docs": 2,
         "issues": 0,
         "prs": 5
       },
-      "missing_evidence_count": 6,
+      "missing_evidence_count": 0,
       "owner": "docs-mechanik",
       "priority": "medium",
       "risk": "medium",
       "source_task": {
         "acceptance": [
-          "Policy und Contract-Alignment beschreiben den tatsächlich implementierten Rollout-Stand ohne überholte Gegenwartsclaims",
+          "Policy und Contract-Alignment beschreiben den implementierten Rollout-Stand ohne überholte Gegenwartsclaims",
           "owner_task- und review_after-Semantik sind als report-spezifische Prozessregel dokumentiert",
-          "Der Lifecycle-Validator läuft für relevante Änderungen im CI-Warnmodus; Lifecycle-Findings bleiben nicht blockierend, technische Validatorfehler bleiben blockierend",
+          "Report-Lifecycle-Validator läuft in Docs Guard global blockierend im strict-Modus",
           "Lifecycle-Overview und Lifecycle-Inventory werden deterministisch durch ihre Generatoren erzeugt",
-          "Alle verbleibenden Reports erhalten in späteren kleinen Slices eine evidenzbasierte Klassifikation oder eine explizit begründete Leerstelle",
-          "alle acht Restreports besitzen gültige Lifecycle-Metadaten",
-          "jede gesetzte owner_task-ID ist in einer normativen Quelle auflösbar (keine Platzhalter-Owner)",
-          "OPT-Markdown und OPT-JSON besitzen vollständige getestete Parität oder der spätere Resolver liest die kanonische Quelle direkt",
-          "Lifecycle-Enums, review_after als ISO-Datum und Supersession sind geprüft",
-          "fehlendes oder defektes Frontmatter wird angemessen blockiert",
-          "Archivpfade sind entschieden",
-          "changed-only strict ist aktiviert",
-          "global strict ist aktiviert oder durch separate dokumentierte Policy-Entscheidung verworfen"
+          "alle ursprünglich unklassifizierten Reports besitzen gültige Lifecycle-Metadaten",
+          "jede gesetzte owner_task-ID ist in einer normativen Quelle auflösbar und statuskompatibel",
+          "OPT-Markdown und OPT-JSON besitzen getestete Parität für die stabile Statusmatrix-Oberfläche",
+          "Lifecycle-Enums, review_after als ISO-Datum, Supersession, Frontmatter und Owner-Status werden geprüft",
+          "Archivpfade werden rekursiv erfasst",
+          "changed-only strict und global strict sind aktiviert"
         ],
         "area": "docs",
         "effort": "M",
@@ -1116,7 +1160,11 @@
           "docs/reports/domain-runtime-data-source-reconciliation.md",
           "docs/reports/map-architekturkritik.md",
           "docs/reports/map-basemap-proof-gap-reconciliation.md",
-          "docs/reports/optimierungsbericht.md"
+          "docs/reports/optimierungsbericht.md",
+          "scripts/docmeta/validate_optimierungsstatus_parity.py",
+          "scripts/docmeta/tests/test_validate_optimierungsstatus_parity.py",
+          "docs/reports/optimierungsstatus.md",
+          "docs/reports/optimierungsstatus.json"
         ],
         "id": "DOCMETA-REPORT-LIFECYCLE-001",
         "links": {
@@ -1133,25 +1181,18 @@
             "1258"
           ]
         },
-        "missing_evidence": [
-          "Fehlendes oder nicht parsebares Report-Frontmatter wird noch nicht vollständig blockierend erkannt",
-          "Semantische Validatorprüfungen für Lifecycle-Enums, ISO-Datum und Supersession-Konsistenz fehlen",
-          "Die owner_task-Semantik und die normativen Registrierungsquellen sind entschieden und gegen den bestehenden Bestand kompatibilitätsgeprüft; vollständige OPT-Markdown–JSON-Parität und technische Existenzprüfung bleiben nach den Backfill-Slices offen.",
-          "Physische Archivpfade unter docs/reports/archive/** werden von Validator und Inventory noch nicht rekursiv erfasst",
-          "Changed-only strict ist noch nicht umgesetzt",
-          "Global strict bleibt bis zur Bereinigung des Bestands deaktiviert"
-        ],
+        "missing_evidence": [],
         "owner": "docs-mechanik",
         "priority": "medium",
         "risk": "medium",
-        "status": "partial",
+        "status": "done",
         "title": "Report-Lifecycle-Rollout reconciliieren und Restbestand ratcheten",
-        "updated_at": "2026-06-29"
+        "updated_at": "2026-06-30"
       },
-      "source_task_sha256": "4215441ae529295f064f0e32242189771a78d2e30da3060aad441d8a1bd49d45",
-      "status": "partial",
+      "source_task_sha256": "69d224e1c7104c34e90e7b6ef0532339216da6b59f0cddce2c6a6b12230acf29",
+      "status": "done",
       "title": "Report-Lifecycle-Rollout reconciliieren und Restbestand ratcheten",
-      "updated_at": "2026-06-29"
+      "updated_at": "2026-06-30"
     },
     {
       "acceptance_count": 5,
@@ -2258,8 +2299,8 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "9ab358029a473db9072d95471ce79eaf80b0329250294399a58b171e0cad1b8b",
-  "ref": "origin/main",
+  "index_sha256": "535c9bea70f0e01ea13a412b418e47512af68ef7fb7ef7f4d810107eafca20b9",
+  "ref": "HEAD",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",
   "schema_sha256": "da290e95c2a54af8aac82802b4d6e0bbab5abc0303c3fc6d9e0e4bac99b003f5",
@@ -2276,10 +2317,10 @@
   "status_counts": {
     "blocked": 2,
     "contradicted": 0,
-    "done": 29,
+    "done": 30,
     "obsolete": 0,
-    "open": 3,
-    "partial": 5
+    "open": 1,
+    "partial": 6
   },
   "task_count": 39
 }

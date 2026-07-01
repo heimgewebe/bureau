@@ -27,7 +27,6 @@
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "worker_profile": "grabowski-local-readonly",
     "working_repository": "/home/alex/repos/grabowski"
   },
   "goal": "Bind closure lane lane-grabowski-feat-operator-workspace-v1-c9c751aafb for grabowski branch feat/operator-workspace-v1 to this canonical Bureau task before any external execution, merge, or deployment.",
@@ -39,6 +38,8 @@
       "lane-grabowski-feat-operator-workspace-v1-c9c751aafb"
     ],
     "created_for": "closure-lane-canonical-binding",
+    "deferred_worker_profile": "grabowski-local-readonly",
+    "deferred_worker_profile_reason": "no generated closure brief path is recorded yet",
     "frontier_recommended_action": "bind this lane to one canonical Bureau task before dispatch",
     "frontier_report": "/home/alex/.local/state/bureau-agent-frontier/latest-report.json",
     "frontier_report_sha256": "050d025dbe3cb379e6733cec1d3959d022fee950ce5821bd71cbf74b02de5b65",

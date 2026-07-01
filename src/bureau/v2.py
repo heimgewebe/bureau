@@ -209,6 +209,74 @@ def closure_bridge_task_ids(plan_path: Path | None = None) -> set[str]:
     return result
 
 
+OPEN_TASK_STATES = {"inbox", "planned", "ready", "blocked", "stale"}
+
+
+def lifecycle_repair_recommendations(lifecycle: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    for item in lifecycle:
+        if item.get("consistent") is True:
+            continue
+        states = item.get("task_states") if isinstance(item.get("task_states"), dict) else {}
+        open_tasks = sorted(
+            task_id for task_id, state in states.items() if state in OPEN_TASK_STATES
+        )
+        result.append(
+            {
+                "initiative_id": item.get("initiative_id"),
+                "declared_state": item.get("declared_state"),
+                "recommended_state": item.get("recommended_state"),
+                "open_task_count": len(open_tasks),
+                "open_tasks": open_tasks,
+            }
+        )
+    return result
+
+
+def frontier_runtime_truth(
+    frontier: list[dict[str, Any]], lifecycle: list[dict[str, Any]]
+) -> dict[str, Any]:
+    selected = next((item for item in frontier if item.get("eligible") is True), None)
+    eligible = [item for item in frontier if item.get("eligible") is True]
+    normal_eligible = [item for item in eligible if item.get("closure_bridge") is not True]
+    bridge_eligible = [item for item in eligible if item.get("closure_bridge") is True]
+    repair_recommendations = lifecycle_repair_recommendations(lifecycle)
+    lifecycle_mismatch = bool(repair_recommendations)
+    selected_via = None
+    if selected is not None:
+        selected_via = "closure_bridge" if selected.get("closure_bridge") else "normal"
+    return {
+        "next_task_available": selected is not None,
+        "selected_task_id": selected.get("task_id") if selected is not None else None,
+        "selected_via": selected_via,
+        "eligible_task_count": len(eligible),
+        "normal_task_available": bool(normal_eligible),
+        "normal_eligible_task_count": len(normal_eligible),
+        "closure_bridge_task_available": bool(bridge_eligible),
+        "closure_bridge_eligible_task_count": len(bridge_eligible),
+        "lifecycle_mismatch": lifecycle_mismatch,
+        "health_blocks_normal_claim": lifecycle_mismatch and not normal_eligible,
+        "repair_task_required": lifecycle_mismatch and selected is None,
+        "repair_recommendations": repair_recommendations,
+    }
+
+
+def doctor_runtime_truth(*, healthy: bool, lifecycle: list[dict[str, Any]]) -> dict[str, Any]:
+    repair_recommendations = lifecycle_repair_recommendations(lifecycle)
+    lifecycle_mismatch = bool(repair_recommendations)
+    return {
+        "healthy": healthy,
+        "next_task_available": None,
+        "selected_task_id": None,
+        "selected_via": None,
+        "capability_context": "not-evaluated",
+        "lifecycle_mismatch": lifecycle_mismatch,
+        "health_blocks_normal_claim": lifecycle_mismatch,
+        "repair_task_required": lifecycle_mismatch,
+        "repair_recommendations": repair_recommendations,
+    }
+
+
 class Registry(legacy.Registry):
     """Git-backed registry with executable JSON Schema contracts."""
 
@@ -730,18 +798,23 @@ class Dispatcher(legacy.Dispatcher):
             runs = self.store.active_runs(connection)
             reservations = self.store.reservations(connection)
             overlays = self.store.overlays(connection, self.registry)
-            return [
-                {
-                    "task_id": task.id,
-                    "title": task.title,
-                    "effective_state": overlays.get(task.id, task.state),
-                    "eligible": not (
-                        reasons := self.reasons(task, capabilities, runs, reservations, overlays)
-                    ),
-                    "reasons": reasons,
-                }
-                for task in self.registry.ordered_tasks()
-            ]
+            result: list[dict[str, Any]] = []
+            for task in self.registry.ordered_tasks():
+                state = overlays.get(task.id, task.state)
+                initiative = self.registry.initiatives[task.initiative]
+                closure_bridge = self._closure_bridge_applies(task, state, initiative)
+                reasons = self.reasons(task, capabilities, runs, reservations, overlays)
+                result.append(
+                    {
+                        "task_id": task.id,
+                        "title": task.title,
+                        "effective_state": state,
+                        "eligible": not reasons,
+                        "closure_bridge": closure_bridge,
+                        "reasons": reasons,
+                    }
+                )
+            return result
 
     def claim_next(
         self,
@@ -1101,8 +1174,14 @@ class Dispatcher(legacy.Dispatcher):
 
     def explain_next(self, capabilities: set[str]) -> dict[str, Any]:
         frontier = self.frontier(capabilities)
+        lifecycle = lifecycle_diagnostics(self.registry, self.store)
         eligible = next((item for item in frontier if item["eligible"]), None)
-        return {"selected": eligible, "frontier": frontier}
+        return {
+            "selected": eligible,
+            "frontier": frontier,
+            "lifecycle": lifecycle,
+            "runtime_truth": frontier_runtime_truth(frontier, lifecycle),
+        }
 
     def doctor(self, repair: bool = False) -> dict[str, Any]:
         integrity = self.store.integrity()
@@ -1173,6 +1252,7 @@ class Dispatcher(legacy.Dispatcher):
             "workspace_findings": workspace_findings,
             "queue_findings": queue_findings,
             "lifecycle": lifecycle,
+            "runtime_truth": doctor_runtime_truth(healthy=healthy, lifecycle=lifecycle),
             "repaired": repair,
         }
 

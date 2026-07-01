@@ -34,9 +34,7 @@ def _write_plan(path: Path, task_id: str, *, valid: bool = True) -> None:
                         "grabowski_brief": str(brief),
                     }
                 ],
-                "briefs": [
-                    {"lane_id": "lane-test", "path": str(brief), "valid": True}
-                ],
+                "briefs": [{"lane_id": "lane-test", "path": str(brief), "valid": True}],
             }
         ),
         encoding="utf-8",
@@ -83,9 +81,7 @@ def test_bridge_rejects_unbound_plan(tmp_path):
     assert closure_bridge_task_ids(path) == set()
 
 
-def test_closure_selected_review_task_can_be_claimed(
-    registry_factory, tmp_path, monkeypatch
-):
+def test_closure_selected_review_task_can_be_claimed(registry_factory, tmp_path, monkeypatch):
     root = registry_factory(1)
     task_id = _make_completed_review_task(root)
     plan_path = tmp_path / "closure-plan.json"
@@ -97,6 +93,10 @@ def test_closure_selected_review_task_can_be_claimed(
     assert closure_bridge_task_ids(plan_path) == {task_id}
     explained = dispatcher.explain_next({"repository"})
     assert explained["selected"]["task_id"] == task_id
+    assert explained["selected"]["closure_bridge"] is True
+    assert explained["runtime_truth"]["selected_via"] == "closure_bridge"
+    assert explained["runtime_truth"]["health_blocks_normal_claim"] is True
+    assert explained["runtime_truth"]["repair_task_required"] is False
     claimed = dispatcher.claim_next("worker", ("repository",))
     assert claimed["run"]["task_id"] == task_id
     assert registry.tasks[task_id].policy == "review-before-effect"

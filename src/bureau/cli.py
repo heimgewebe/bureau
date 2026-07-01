@@ -85,6 +85,7 @@ def parser() -> argparse.ArgumentParser:
     cabinet_promote.add_argument("--initiative", required=True)
     cabinet_promote.add_argument("--target-proof", required=True)
     cabinet_promote.add_argument("--approve", action="store_true")
+    cabinet_promote.add_argument("--write-task")
     frontier = sub.add_parser("frontier")
     frontier.add_argument("--capability", action="append", default=[])
     explain = sub.add_parser("explain-next")
@@ -198,6 +199,44 @@ def main(argv: list[str] | None = None) -> int:
                     if args.command == "cabinet-frontier"
                     else graph_report(graph_path)
                 )
+            except CabinetGraphError as exc:
+                print(f"bureau: {exc}", file=sys.stderr)
+                return 2
+            emit(value, args.json)
+            return 0
+        if args.command == "cabinet-promote":
+            from .cabinet_graph import (
+                DEFAULT_GRAPH_PATH,
+                CabinetGraphError,
+                frontier_export,
+                load_frontier_export,
+                promote_frontier_candidate,
+            )
+            from .cabinet_promotion_write import write_promotion_task
+
+            try:
+                if args.graph and args.frontier_export:
+                    raise CabinetGraphError(
+                        "cabinet-promote accepts either --graph or --frontier-export, not both"
+                    )
+                export = (
+                    load_frontier_export(args.frontier_export)
+                    if args.frontier_export
+                    else frontier_export(args.graph or DEFAULT_GRAPH_PATH)
+                )
+                value = promote_frontier_candidate(
+                    export,
+                    candidate_id=args.candidate_id,
+                    task_id=args.task_id,
+                    initiative=args.initiative,
+                    target_proof=args.target_proof,
+                    approve=args.approve,
+                )
+                if args.write_task:
+                    value = {
+                        **value,
+                        "write": write_promotion_task(value, args.write_task),
+                    }
             except CabinetGraphError as exc:
                 print(f"bureau: {exc}", file=sys.stderr)
                 return 2

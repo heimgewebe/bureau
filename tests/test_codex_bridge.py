@@ -183,3 +183,63 @@ def test_codex_bridge_timer_runs_at_57():
     text = TIMER.read_text(encoding="utf-8")
     assert "OnCalendar=*-*-* *:57:00" in text
     assert "Unit=bureau-codex-bridge.service" in text
+
+
+def test_bridge_runs_codex_backend_in_run_directory(tmp_path):
+    selected = config(tmp_path, backend="codex")
+    write_inputs(selected.state_base)
+    seen: dict[str, object] = {}
+
+    def fake_codex(command, prompt, cwd, timeout_seconds):
+        seen["command"] = list(command)
+        seen["prompt"] = prompt
+        seen["cwd"] = cwd
+        seen["timeout_seconds"] = timeout_seconds
+        decision = {
+            "schema_version": 1,
+            "action": "request_human_review",
+            "confidence": 0.8,
+            "rationale": "valid codex fixture",
+        }
+        return subprocess.CompletedProcess(list(command), 0, stdout=json.dumps(decision), stderr="")
+
+    result = codex_bridge.run_bridge(
+        selected,
+        runner=FakeRunner(),
+        codex_runner=fake_codex,
+    )
+
+    receipt = result["receipt"]
+    run_dir = Path(result["run_dir"])
+    assert receipt["blocked"] is False
+    assert receipt["result"] == "completed"
+    assert receipt["mutation_performed"] is False
+    assert receipt["decision"]["action"] == "request_human_review"
+    assert receipt["backend_observation"]["backend"] == "codex"
+    assert receipt["backend_observation"]["returncode"] == 0
+    assert seen["command"] == ["codex", "exec"]
+    assert seen["cwd"] == run_dir
+    assert "decision" in receipt["artifacts"]
+    assert receipt["artifacts"]["decision"].endswith("decision.json")
+    assert (run_dir / "decision.json").is_file()
+
+
+def test_bridge_blocks_when_codex_writes_no_decision(tmp_path):
+    selected = config(tmp_path, backend="codex")
+    write_inputs(selected.state_base)
+
+    def fake_codex(command, prompt, cwd, timeout_seconds):
+        return subprocess.CompletedProcess(list(command), 0, stdout="no decision", stderr="")
+
+    result = codex_bridge.run_bridge(
+        selected,
+        runner=FakeRunner(),
+        codex_runner=fake_codex,
+    )
+
+    receipt = result["receipt"]
+    assert receipt["blocked"] is True
+    assert "invalid_decision" in blocker_codes(receipt)
+    assert receipt["decision_valid"] is False
+    assert "stdout_did_not_contain_json_object" in receipt["decision_errors"]
+    assert receipt["mutation_performed"] is False

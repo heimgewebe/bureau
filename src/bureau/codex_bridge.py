@@ -40,6 +40,7 @@ MUTATION_INTENT_KEYS = frozenset(
 MAX_CAPTURE_CHARS = 100_000
 
 CommandRunner = Callable[[Sequence[str]], subprocess.CompletedProcess[str]]
+CodexRunner = Callable[[Sequence[str], str, Path, int], subprocess.CompletedProcess[str]]
 
 
 @dataclass(frozen=True)
@@ -55,6 +56,8 @@ class BridgeConfig:
     fixture_decision_path: Path | None = None
     bureau_command: tuple[str, ...] = ()
     bureau_state_root: Path | None = None
+    codex_command: tuple[str, ...] = ("codex", "exec")
+    codex_timeout_seconds: int = 300
     run_id: str | None = None
 
 
@@ -75,6 +78,8 @@ def default_config(
     fixture_decision_path: Path | None = None,
     bureau_command: tuple[str, ...] | None = None,
     bureau_state_root: Path | None = None,
+    codex_command: tuple[str, ...] | None = None,
+    codex_timeout_seconds: int = 300,
     run_id: str | None = None,
 ) -> BridgeConfig:
     selected_state_base = (state_base or default_state_base()).expanduser()
@@ -92,6 +97,8 @@ def default_config(
         else None,
         bureau_command=bureau_command or default_bureau_command(),
         bureau_state_root=bureau_state_root.expanduser() if bureau_state_root is not None else None,
+        codex_command=codex_command or ("codex", "exec"),
+        codex_timeout_seconds=codex_timeout_seconds,
         run_id=run_id,
     )
 
@@ -306,7 +313,8 @@ def collect_context(
         "blockers": _context_blockers(sources),
         "does_not_do": [
             "does not call OpenAI API",
-            "does not execute Codex",
+            "does not allow Codex to mutate Bureau; Codex may only return "
+            "decision JSON on stdout",
             "does not mutate Bureau registry or tasks",
             "does not claim, bind, complete, fail, merge, rebase, or deploy",
         ],
@@ -391,7 +399,159 @@ def _load_fixture_decision(path: Path | None) -> dict[str, Any]:
     }
 
 
-def _backend_decision(config: BridgeConfig) -> dict[str, Any]:
+def _extract_decision_from_text(value: str) -> tuple[Any | None, str | None]:
+    stripped = value.strip()
+    if not stripped:
+        return None, "empty_stdout"
+    candidates = [stripped]
+    if "```" in stripped:
+        parts = stripped.split("```")
+        candidates.extend(part.removeprefix("json").strip() for part in parts)
+    if "{" in stripped and "}" in stripped:
+        candidates.append(stripped[stripped.find("{") : stripped.rfind("}") + 1])
+    for candidate in candidates:
+        if not candidate:
+            continue
+        try:
+            return json.loads(candidate), None
+        except json.JSONDecodeError:
+            continue
+    return None, "stdout_did_not_contain_json_object"
+
+
+def _read_decision_file(path: Path, *, backend: str) -> dict[str, Any]:
+    try:
+        decision = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {
+            "backend": backend,
+            "path": str(path),
+            "decision": None,
+            "valid": False,
+            "errors": [f"{backend} decision file is missing"],
+        }
+    except json.JSONDecodeError as exc:
+        return {
+            "backend": backend,
+            "path": str(path),
+            "decision": None,
+            "valid": False,
+            "errors": [
+                f"{backend} decision has invalid JSON at line {exc.lineno} "
+                f"column {exc.colno}"
+            ],
+        }
+    except OSError as exc:
+        return {
+            "backend": backend,
+            "path": str(path),
+            "decision": None,
+            "valid": False,
+            "errors": [f"{backend} decision cannot be read: {exc}"],
+        }
+    errors = validate_decision(decision)
+    return {
+        "backend": backend,
+        "path": str(path),
+        "decision": decision if isinstance(decision, dict) else None,
+        "valid": not errors,
+        "errors": errors,
+    }
+
+
+def _codex_process(
+    command: Sequence[str],
+    prompt: str,
+    cwd: Path,
+    timeout_seconds: int,
+) -> subprocess.CompletedProcess[str]:
+    environment = os.environ.copy()
+    existing_node_options = environment.get("NODE_OPTIONS", "")
+    if "--jitless" not in existing_node_options.split():
+        environment["NODE_OPTIONS"] = f"{existing_node_options} --jitless".strip()
+    return subprocess.run(
+        [*command, "-C", str(cwd), "-s", "read-only", "-"],
+        cwd=cwd,
+        input=prompt,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=timeout_seconds,
+        env=environment,
+    )
+
+
+def _run_codex_decision(
+    config: BridgeConfig,
+    *,
+    run_dir: Path,
+    prompt: str,
+    codex_runner: CodexRunner,
+) -> dict[str, Any]:
+    decision_path = run_dir / "decision.json"
+    try:
+        process = codex_runner(
+            config.codex_command,
+            prompt,
+            run_dir,
+            config.codex_timeout_seconds,
+        )
+    except subprocess.TimeoutExpired:
+        return {
+            "backend": "codex",
+            "path": str(decision_path),
+            "command": list(config.codex_command),
+            "decision": None,
+            "valid": False,
+            "errors": ["codex timed out"],
+            "returncode": None,
+            "stdout": "",
+            "stderr": "",
+        }
+    except OSError as exc:
+        return {
+            "backend": "codex",
+            "path": str(decision_path),
+            "command": list(config.codex_command),
+            "decision": None,
+            "valid": False,
+            "errors": [f"codex failed to start: {exc}"],
+            "returncode": None,
+            "stdout": "",
+            "stderr": "",
+        }
+
+    stdout = process.stdout or ""
+    decision, parse_error = _extract_decision_from_text(stdout)
+    if parse_error is None:
+        atomic_json(decision_path, decision)
+        result = _read_decision_file(decision_path, backend="codex")
+    else:
+        result = _read_decision_file(decision_path, backend="codex")
+        if not result.get("valid"):
+            result["errors"] = [parse_error]
+    errors = list(result.get("errors", []))
+    if process.returncode != 0:
+        errors.append(f"codex exited with {process.returncode}")
+    return {
+        **result,
+        "valid": not errors,
+        "errors": errors,
+        "command": list(config.codex_command),
+        "sandbox": "read-only",
+        "returncode": process.returncode,
+        "stdout": _trim(stdout),
+        "stderr": _trim(process.stderr),
+    }
+
+
+def _backend_decision(
+    config: BridgeConfig,
+    *,
+    run_dir: Path,
+    prompt: str,
+    codex_runner: CodexRunner,
+) -> dict[str, Any]:
     if config.backend == "none":
         return {
             "backend": "none",
@@ -402,6 +562,13 @@ def _backend_decision(config: BridgeConfig) -> dict[str, Any]:
         }
     if config.backend == "fixture":
         return _load_fixture_decision(config.fixture_decision_path)
+    if config.backend == "codex":
+        return _run_codex_decision(
+            config,
+            run_dir=run_dir,
+            prompt=prompt,
+            codex_runner=codex_runner,
+        )
     return {
         "backend": config.backend,
         "path": None,
@@ -446,14 +613,15 @@ def render_prompt(context: dict[str, Any], decision_result: dict[str, Any]) -> s
     return (
         "# Bureau Codex Bridge Context\n\n"
         f"Run: `{context['run_id']}`\n\n"
-        "This prompt is persisted for a future local Codex backend. It is not executed in "
-        "this slice.\n\n"
+        "If this prompt is executed by the local Codex backend, do not use tools, shell, "
+        "apply_patch, or file writes. Return only one JSON object on stdout. The Bureau "
+        "bridge will validate it and write decision.json itself.\n\n"
         "## Hard Constraints\n\n"
         "- Do not call the OpenAI API.\n"
         "- Do not use ChatGPT-planned execution.\n"
         "- Do not mutate Bureau registry, tasks, run reservations, claims, envelopes, "
         "worktrees, merges, rebases, deployments, or external executors.\n"
-        "- Only record a proposal or blocker in the bridge receipt.\n\n"
+        "- Only return a JSON decision; the bridge records artifacts and receipts.\n\n"
         "## Current Blockers\n\n"
         f"```json\n{json.dumps(blockers, indent=2, ensure_ascii=False, sort_keys=True)}\n```\n\n"
         "## Source Summary\n\n"
@@ -485,14 +653,29 @@ def run_bridge(
     config: BridgeConfig,
     *,
     runner: CommandRunner = _subprocess_runner,
+    codex_runner: CodexRunner = _codex_process,
 ) -> dict[str, Any]:
     selected_run_id = config.run_id or generate_run_id()
     run_dir = config.output_root / "runs" / selected_run_id
     started_at = utc_now()
     context = collect_context(config, run_id=selected_run_id, runner=runner)
-    decision_result = _backend_decision(config)
+    pending_decision = {
+        "backend": config.backend,
+        "path": str(run_dir / "decision.json") if config.backend == "codex" else None,
+        "decision": None,
+        "valid": True,
+        "errors": [],
+    }
+    prompt = render_prompt(context, pending_decision)
+    atomic_json(run_dir / "context.json", context)
+    _atomic_text(run_dir / "prompt.md", prompt)
+    decision_result = _backend_decision(
+        config,
+        run_dir=run_dir,
+        prompt=prompt,
+        codex_runner=codex_runner,
+    )
     blockers = [*context["blockers"], *_decision_blockers(decision_result)]
-    prompt = render_prompt(context, decision_result)
     receipt_path = run_dir / "receipt.json"
     receipt = {
         "schema_version": BRIDGE_SCHEMA_VERSION,
@@ -506,16 +689,20 @@ def run_bridge(
         "decision": decision_result.get("decision"),
         "decision_valid": decision_result.get("valid"),
         "decision_errors": decision_result.get("errors", []),
+        "backend_observation": {
+            key: value
+            for key, value in decision_result.items()
+            if key not in {"decision"}
+        },
         "mutation_performed": False,
         "artifacts": {
             "context": str(run_dir / "context.json"),
             "prompt": str(run_dir / "prompt.md"),
+            "decision": str(run_dir / "decision.json"),
             "receipt": str(receipt_path),
         },
         "does_not_do": context["does_not_do"],
     }
-    atomic_json(run_dir / "context.json", context)
-    _atomic_text(run_dir / "prompt.md", prompt)
     atomic_json(receipt_path, receipt)
     return {"context": context, "prompt": prompt, "receipt": receipt, "run_dir": str(run_dir)}
 
@@ -545,7 +732,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--backend",
-        choices=("none", "fixture"),
+        choices=("none", "fixture", "codex"),
         default=os.environ.get("BUREAU_CODEX_BRIDGE_BACKEND", "none"),
     )
     parser.add_argument(
@@ -560,6 +747,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--bureau-state-root",
         default=os.environ.get("BUREAU_CODEX_BRIDGE_BUREAU_STATE_ROOT"),
+    )
+    parser.add_argument(
+        "--codex-command",
+        default=os.environ.get("BUREAU_CODEX_BRIDGE_CODEX_COMMAND", "codex exec"),
+    )
+    parser.add_argument(
+        "--codex-timeout-seconds",
+        type=int,
+        default=int(os.environ.get("BUREAU_CODEX_BRIDGE_CODEX_TIMEOUT_SECONDS", "300")),
     )
     parser.add_argument("--run-id", default=os.environ.get("BUREAU_CODEX_BRIDGE_RUN_ID"))
     parser.add_argument("--json", action="store_true")
@@ -587,6 +783,8 @@ def config_from_args(args: argparse.Namespace) -> BridgeConfig:
         bureau_state_root=Path(args.bureau_state_root).expanduser()
         if args.bureau_state_root
         else None,
+        codex_command=tuple(shlex.split(args.codex_command)),
+        codex_timeout_seconds=args.codex_timeout_seconds,
         run_id=args.run_id,
     )
     return BridgeConfig(

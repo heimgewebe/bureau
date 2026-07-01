@@ -1,0 +1,61 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The matching closure lane records this canonical Bureau task id.",
+      "id": "closure-lane-bound"
+    },
+    {
+      "assertion": "The branch status, relevant tests, and merge path are checked.",
+      "id": "branch-reviewed"
+    },
+    {
+      "assertion": "A valid brief and this task binding exist before external execution continues.",
+      "id": "handoff-safe"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "worker_profile": "grabowski-local-readonly",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Bind closure lane lane-grabowski-feat-observer-shutdown-hygiene-v1-7d4a913abe for grabowski branch feat/observer-shutdown-hygiene-v1 to this canonical Bureau task before any external execution, merge, or deployment.",
+  "id": "BUR-2026-001-T008",
+  "initiative": "BUR-2026-001",
+  "metadata": {
+    "closure_lane_id": "lane-grabowski-feat-observer-shutdown-hygiene-v1-7d4a913abe",
+    "closure_lane_ids": [
+      "lane-grabowski-feat-observer-shutdown-hygiene-v1-7d4a913abe"
+    ],
+    "created_for": "closure-lane-canonical-binding",
+    "frontier_recommended_action": "bind this lane to one canonical Bureau task before dispatch",
+    "frontier_report": "/home/alex/.local/state/bureau-agent-frontier/latest-report.json",
+    "frontier_report_sha256": "64bf706cf4255c1b1b6febf762a30336f4b6f39e41efa9da0a9c5513029473aa",
+    "frontier_score": 129,
+    "source_branch": "feat/observer-shutdown-hygiene-v1",
+    "source_repository": "/home/alex/repos/grabowski"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 70
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bind grabowski feat/observer-shutdown-hygiene-v1 closure lane"
+}

@@ -1,0 +1,46 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A context pack includes task profile, freshness, snippets/ranges, answer-compliance template, and explicit non-claims.",
+      "id": "context-pack"
+    },
+    {
+      "assertion": "The wrapper handles Lenskit query output shape without assuming a bare top-level results array.",
+      "id": "query-shape-normalized"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "mode": "read",
+      "resource": "repo.lenskit"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Add typed preflight/query/range/context-pack wrappers so delegated agents receive bounded rLens context instead of raw dumps by default.",
+  "id": "BUR-2026-002-T002",
+  "initiative": "BUR-2026-002",
+  "metadata": {
+    "operator_lab_run": "vibe-lab: experiments/2026-07-01_operator-lab-loop/artifacts/run-002-rlens-agent-ecosystem/run-card.yml",
+    "plan_path": "docs/plans/rlens-agent-ecosystem-integration-v1.md"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Build rLens context pack bridge"
+}

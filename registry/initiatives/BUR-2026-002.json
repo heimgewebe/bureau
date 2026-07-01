@@ -1,0 +1,30 @@
+{
+  "commitment": "next",
+  "completion": [
+    "Grabowski can discover, inspect, and freshness-check rLens bundles through typed read-only tools.",
+    "Bureau can bind rLens context references into task/run/receipt evidence.",
+    "Follow-up context-pack, Cabinet import, and Vibe-Lab measurement tasks are represented explicitly."
+  ],
+  "current_plan": {
+    "commit": "a766dc7f65a23963a346a7ded256f25f5d4263cc",
+    "document_sha256": "8631b94cca96baacd7f5b75fd99af8003e5379443064873c99cc31f2f3d4b14e",
+    "path": "docs/plans/rlens-agent-ecosystem-integration-v1.md",
+    "repository": "bureau"
+  },
+  "goal": "Integrate rLens as a task-profiled evidence backbone for agent and repository work without turning it into a control plane or truth oracle.",
+  "id": "BUR-2026-002",
+  "metadata": {
+    "does_not_establish": [
+      "agent_quality_improvement",
+      "global_dump_freshness",
+      "merge_readiness"
+    ],
+    "operator_lab_run": "vibe-lab: experiments/2026-07-01_operator-lab-loop/artifacts/run-002-rlens-agent-ecosystem/run-card.yml"
+  },
+  "parallelism": {
+    "max_active_tasks": 2
+  },
+  "schema_version": 1,
+  "state": "active",
+  "title": "rLens agent ecosystem integration"
+}

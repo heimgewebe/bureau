@@ -1,0 +1,60 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Lenskit preflight treats the supplied bundle manifest as the bundle_manifest self-role and focused tests pass.",
+      "id": "lenskit-preflight-self-role"
+    },
+    {
+      "assertion": "Grabowski exposes read-only rLens bundle discovery, status, and freshness checks with tests and regenerated contracts.",
+      "id": "grabowski-rlens-read-tools"
+    },
+    {
+      "assertion": "Bureau schemas accept optional rlens_context_ref and focused tests pass.",
+      "id": "bureau-context-ref"
+    },
+    {
+      "assertion": "The Vibe-Lab operator run card is referenced from the implementation record.",
+      "id": "operator-lab-run"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.lenskit"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.bureau"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Review, package, and submit the first Lenskit, Grabowski, and Bureau rLens integration changes without merging prematurely.",
+  "id": "BUR-2026-002-T001",
+  "initiative": "BUR-2026-002",
+  "metadata": {
+    "operator_lab_run": "vibe-lab: experiments/2026-07-01_operator-lab-loop/artifacts/run-002-rlens-agent-ecosystem/run-card.yml",
+    "plan_path": "docs/plans/rlens-agent-ecosystem-integration-v1.md"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Finalize first rLens integration slice"
+}

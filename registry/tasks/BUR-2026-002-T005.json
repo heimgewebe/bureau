@@ -1,0 +1,41 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The experiment compares at least no-rLens, reading-pack, context-pack, and trace-gated conditions.",
+      "id": "conditions"
+    },
+    {
+      "assertion": "Metrics include unsupported claims, hallucinated paths, missing evidence, and rework count.",
+      "id": "metrics"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.vibe-lab"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Run a Vibe-Lab comparison of no-rLens, reading-pack, context-pack, full-dump, and trace-gated conditions before promoting a default access level.",
+  "id": "BUR-2026-002-T005",
+  "initiative": "BUR-2026-002",
+  "metadata": {
+    "operator_lab_run": "vibe-lab: experiments/2026-07-01_operator-lab-loop/artifacts/run-002-rlens-agent-ecosystem/run-card.yml",
+    "plan_path": "docs/plans/rlens-agent-ecosystem-integration-v1.md"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Measure rLens agent-context conditions in Vibe-Lab"
+}

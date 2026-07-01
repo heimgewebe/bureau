@@ -822,6 +822,13 @@ class Dispatcher(legacy.Dispatcher):
                 "plan": initiative.current_plan,
                 "baseline_commit": baseline,
             }
+            rlens_context_ref = (
+                selected.raw.get("rlens_context_ref")
+                or selected.execution.get("rlens_context_ref")
+                or selected.raw.get("metadata", {}).get("rlens_context_ref")
+            )
+            if isinstance(rlens_context_ref, dict):
+                envelope["rlens_context_ref"] = rlens_context_ref
             self.registry.schemas.validate("execution-envelope", envelope, f"run:{run_id}")
             envelope_json = legacy.canonical_json(envelope)
             envelope_sha = legacy.sha256_json(envelope)
@@ -1245,6 +1252,8 @@ def complete_run(
         ),
         "evidence": {item["id"]: evidence[item["id"]] for item in criteria},
     }
+    if isinstance(envelope.get("rlens_context_ref"), dict):
+        receipt["rlens_context_ref"] = envelope["rlens_context_ref"]
     receipt_sha = legacy.sha256_json(receipt)
     receipt["receipt_sha256"] = receipt_sha
     registry.schemas.validate("receipt", receipt, f"receipt:{run_id}")
@@ -1344,6 +1353,13 @@ def grabowski_handoff(registry: Registry, store: StateStore, run_id: str) -> dic
         "io_weight": int(task.execution.get("io_weight", 100)),
         "memory_max_bytes": task.execution.get("memory_max_bytes"),
     }
+    rlens_context_ref = (
+        task.raw.get("rlens_context_ref")
+        or task.execution.get("rlens_context_ref")
+        or task.raw.get("metadata", {}).get("rlens_context_ref")
+    )
+    if isinstance(rlens_context_ref, dict):
+        result["rlens_context_ref"] = rlens_context_ref
     if task.mode == "grabowski-task":
         result.update(
             argv=task.execution["argv"],

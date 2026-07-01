@@ -22,6 +22,7 @@ bureau-closure = "bureau.closure:main"
 bureau-closure-runner = "bureau.closure_runner:main"
 bureau-agent-frontier = "bureau.agent_frontier:main"
 bureau-agent-scout = "bureau.agent_frontier:main"
+bureau-codex-bridge = "bureau.codex_bridge:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

@@ -373,18 +373,36 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "explain-next":
             value = dispatcher.explain_next(set(args.capability))
         elif args.command == "claim-next":
-            value = dispatcher.claim_next(
-                args.worker, tuple(sorted(set(args.capability))), args.kind
-            )
+            try:
+                value = dispatcher.claim_next(
+                    args.worker, tuple(sorted(set(args.capability))), args.kind
+                )
+            except NoEligibleTask as exc:
+                value = {
+                    "status": "no-eligible-task",
+                    "detail": str(exc),
+                    "explain_next": dispatcher.explain_next(set(args.capability)),
+                }
+                emit(value, args.json)
+                return 1
         elif args.command == "checkout-next":
             base = Path(args.base_dir).expanduser() if args.base_dir else None
-            value = dispatcher.checkout_next(
-                args.worker,
-                tuple(sorted(set(args.capability))),
-                args.kind,
-                base,
-                args.dispatch,
-            )
+            try:
+                value = dispatcher.checkout_next(
+                    args.worker,
+                    tuple(sorted(set(args.capability))),
+                    args.kind,
+                    base,
+                    args.dispatch,
+                )
+            except NoEligibleTask as exc:
+                value = {
+                    "status": "no-eligible-task",
+                    "detail": str(exc),
+                    "explain_next": dispatcher.explain_next(set(args.capability)),
+                }
+                emit(value, args.json)
+                return 1
         elif args.command == "runs":
             value = store.list_runs()
         elif args.command == "run":

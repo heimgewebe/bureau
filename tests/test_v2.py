@@ -781,3 +781,40 @@ def test_doctor_reports_runtime_truth_for_lifecycle_mismatch(
     assert doctor["runtime_truth"]["capability_context"] == "not-evaluated"
     assert doctor["runtime_truth"]["lifecycle_mismatch"] is True
     assert doctor["runtime_truth"]["repair_task_required"] is True
+
+
+def test_no_eligible_cli_paths_expose_runtime_truth(registry_factory, tmp_path, capsys):
+    root = registry_factory(1)
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative = json.loads(initiative_path.read_text())
+    initiative["state"] = "completed"
+    initiative["commitment"] = "completed"
+    initiative_path.write_text(json.dumps(initiative))
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["state"] = "planned"
+    task["execution"]["policy"] = "review-before-effect"
+    task_path.write_text(json.dumps(task))
+
+    for command in ("claim-next", "checkout-next"):
+        result = bureau_cli.main(
+            [
+                "--root",
+                str(root),
+                "--state-db",
+                str(tmp_path / f"{command}.sqlite3"),
+                "--json",
+                command,
+                "--worker",
+                command,
+                "--capability",
+                "repository",
+            ]
+        )
+        output = json.loads(capsys.readouterr().out)
+        truth = output["explain_next"]["runtime_truth"]
+        assert result == 1
+        assert output["status"] == "no-eligible-task"
+        assert output["explain_next"]["selected"] is None
+        assert truth["repair_task_required"] is True
+        assert truth["repair_recommendations"][0]["open_tasks"] == [task["id"]]

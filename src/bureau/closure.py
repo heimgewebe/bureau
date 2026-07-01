@@ -292,11 +292,13 @@ def recent_failed_tasks(task_db: Path, horizon_seconds: int = 3 * 60 * 60) -> li
         return []
     now = int(datetime.now(timezone.utc).timestamp())
     threshold = now - horizon_seconds
-    rows: list[dict[str, Any]] = []
-    connection = sqlite3.connect(f"file:{task_db}?mode=ro", uri=True)
+    try:
+        connection = sqlite3.connect(f"file:{task_db}?mode=ro", uri=True)
+    except sqlite3.Error:
+        return []
     connection.row_factory = sqlite3.Row
     try:
-        for row in connection.execute(
+        rows = connection.execute(
             """
             SELECT task_id,state,cwd,updated_at_unix,unit
             FROM tasks
@@ -304,11 +306,12 @@ def recent_failed_tasks(task_db: Path, horizon_seconds: int = 3 * 60 * 60) -> li
             ORDER BY updated_at_unix DESC
             """,
             (threshold,),
-        ).fetchall():
-            rows.append(dict(row))
+        ).fetchall()
+    except sqlite3.Error:
+        return []
     finally:
         connection.close()
-    return rows
+    return [dict(row) for row in rows]
 
 
 def candidate_fingerprint(candidate: dict[str, Any]) -> str:

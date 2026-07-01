@@ -1,0 +1,26 @@
+[Unit]
+Description=Bureau Codex-only local bridge
+Documentation=https://github.com/heimgewebe/bureau
+After=bureau-agent-frontier.service bureau-closure-planner.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/repos/bureau
+ExecStart=%h/.local/libexec/bureau-codex-bridge --repo-root %h/repos/bureau --backend=none --json
+TimeoutStartSec=2min
+UMask=0077
+Nice=5
+IOSchedulingClass=best-effort
+IOSchedulingPriority=6
+Environment=PYTHONUNBUFFERED=1
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.local/state/bureau-codex-bridge
+RestrictAddressFamilies=AF_UNIX
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+SystemCallArchitectures=native

@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Bureau Codex-only local bridge after frontier governance
+
+[Timer]
+OnCalendar=*-*-* *:57:00
+AccuracySec=1s
+RandomizedDelaySec=0
+Persistent=false
+Unit=bureau-codex-bridge.service
+
+[Install]
+WantedBy=timers.target

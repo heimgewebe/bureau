@@ -1,0 +1,49 @@
+{
+  "agent_brief": {
+    "lane_id": "lane-grabowski-feat-grabowski-autonomy-001-8470ad62af",
+    "path": "/home/alex/.local/state/bureau-closure/briefs/lane-grabowski-feat-grabowski-autonomy-001-8470ad62af.json",
+    "sha256": "d7b962cb6d0e55b97d6a809e9f27f3d4a58ae9ec9e84f012899889990c9a0c9b",
+    "state": "needs_revision",
+    "task_id": "BUR-2026-001-T007",
+    "valid": true
+  },
+  "branch_review": {
+    "head": "2949f670a8487a824a33ec7d944f6643add85543",
+    "merge_path": {
+      "ahead_of_origin_main": 4,
+      "already_merged_to_origin_main": false,
+      "behind_origin_main": 41,
+      "requires_rebase_or_review_before_merge": true
+    },
+    "review_checkout": "/home/alex/repos/grabowski-autonomy-001-review",
+    "source_branch": "feat/grabowski-autonomy-001",
+    "source_repository": "/home/alex/repos/grabowski",
+    "status_short_branch": "## review-autonomy...origin/feat/grabowski-autonomy-001",
+    "tests": [
+      {
+        "command": "python3 -m pytest -q",
+        "result": "109 passed in 0.22s"
+      }
+    ]
+  },
+  "closure_bridge": {
+    "accepted_task_ids": [
+      "BUR-2026-001-T007"
+    ],
+    "canonical_task_bound_count": 1,
+    "canonical_task_state_count": 8,
+    "plan_path": "/home/alex/.local/state/bureau-closure/plan.json",
+    "plan_sha256": "36a1285928e38bc50ccebf5b53a1dfe8bda711a253bb5cfccf99f70427c51f3b",
+    "selected_lane_fingerprint": "8470ad62af58ba86bfee7e7de8e5f0759b27b07e17f9c340ef2f24c4a4874065",
+    "selected_lane_id": "lane-grabowski-feat-grabowski-autonomy-001-8470ad62af",
+    "selected_lane_state": "needs_revision"
+  },
+  "created_at": "2026-07-01T18:01:02.287296Z",
+  "does_not_establish": [
+    "merge readiness",
+    "deployment readiness",
+    "implementation correctness beyond existing test suite"
+  ],
+  "schema_version": "bureau-binding-proof.v1",
+  "task_id": "BUR-2026-001-T007"
+}

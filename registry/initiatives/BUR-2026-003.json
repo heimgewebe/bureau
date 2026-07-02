@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-003",
+  "title": "Repository audit follow-ups 2026-07",
+  "state": "active",
+  "commitment": "next",
+  "goal": "Resolve the operator-decision findings from the July 2026 repository audit so doctor and lifecycle report a consistent, healthy registry again.",
+  "completion": [
+    "BUR-2026-001 lifecycle is consistent: no reopen-required recommendation remains.",
+    "Queue lanes reference only tasks whose effective state matches queue expectations.",
+    "A written retirement or freeze decision for bureau.legacy exists."
+  ],
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/reports/repo-audit-2026-07.md"
+  },
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "source": "docs/reports/repo-audit-2026-07.md",
+    "created_by": "repo-audit-2026-07"
+  }
+}

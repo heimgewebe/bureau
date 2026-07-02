@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-003-T002",
+  "initiative": "BUR-2026-003",
+  "title": "Align queue lanes with task readiness",
+  "state": "planned",
+  "goal": "All five queued tasks (BUR-2026-002-T001..T005) are in state planned, so doctor emits a queue finding for every lane entry. Either promote tasks to ready when their prerequisites are actually met or trim the queue to tasks that are dispatchable, and record the intended queue semantics.",
+  "depends_on": [],
+  "required_capabilities": [
+    "repository"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "no-queue-findings",
+      "assertion": "bureau doctor reports an empty queue_findings list."
+    },
+    {
+      "id": "queue-semantics-documented",
+      "assertion": "The intended relationship between queue membership and task state is documented in docs/operations.md or docs/concurrency.md."
+    }
+  ],
+  "metadata": {
+    "source": "docs/reports/repo-audit-2026-07.md",
+    "audit_finding": "queue references planned tasks; doctor healthy=false"
+  }
+}

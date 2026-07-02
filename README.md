@@ -81,6 +81,29 @@ always derive from the same state root. Override it with `BUREAU_STATE_DIR`, `--
 - initiative lifecycle diagnostics, `explain-next`, and `doctor`;
 - immutable execution envelopes and evidence-complete receipts.
 
+## Companion commands
+
+Beyond the `bureau` core CLI the package installs single-purpose companions:
+
+- `bureau-closure` / `bureau-closure-runner` — inventory existing branches, worktrees and failed
+  tasks into closure lanes, select a bounded work plan and write Grabowski briefs; the runner
+  wraps one cycle in a terminal receipt.
+- `bureau-discovery` — hardened entry for the half-hourly discovery scanner; writes a terminal
+  failed receipt instead of crashing silently.
+- `bureau-agent-frontier` (alias `bureau-agent-scout`) — read-only backlog governor that ranks
+  discovery candidates and closure lanes into a frontier report.
+- `bureau-codex-bridge` — collects local health/frontier/closure context, optionally consults a
+  read-only Codex backend and, only behind the explicit binding gate, writes at most one
+  validated planned binding task.
+- `bureau-review-steward` — local review pass over selected closure lanes (diff, brief, PR and
+  check evidence); classifies lanes, never merges.
+- `bureau-source-pr-bridge` — creates or refreshes the review PR for the Weltgewebe source
+  snapshot branch using the local `gh` session.
+- `bureau-cycle` — cycle-contract helper: `cycle-id`, `begin`, `validate` receipts and the
+  Grabowski task `attention` classification.
+
+See `docs/operations.md` for installation and scheduling.
+
 ## Safety invariants
 
 1. A receipt verifies exactly one task hash and one plan hash.

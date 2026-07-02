@@ -415,7 +415,7 @@ def source_promote_plan(root: Path, registry: Any, source: str, task_id: str) ->
         "execution": {
             "mode": "interactive-agent",
             "policy": "review-before-effect",
-            "working_repository": "/home/alex/repos/weltgewebe",
+            "working_repository": str(Path.home() / "repos/weltgewebe"),
             "baseline_commit": snapshot["commit_sha"],
         },
         "claims": [{"resource": "repo.weltgewebe", "mode": "write", "isolation": "worktree"}],

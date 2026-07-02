@@ -619,8 +619,6 @@ def run_frontier_cycle(
                 "bottleneck_count": len(report["bottlenecks"]),
             }
         )
-        if any(item.get("severity") == "high" for item in report["bottlenecks"]):
-            degraded = False
     except Exception as exc:  # terminal receipt first; no silent skipped cycle
         degraded = True
         result = "failed"

@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-003-T003",
+  "initiative": "BUR-2026-003",
+  "title": "Define retirement plan for bureau.legacy",
+  "state": "planned",
+  "goal": "bureau.legacy is retained for migration and contract compatibility but carries ruff per-file ignores, an unclosed connection in StateStore._initialize, and superseded variants of complete_run and reconcile. Decide whether to freeze it with an explicit compatibility contract or remove it, and record the migration path for remaining importers.",
+  "depends_on": [],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 30
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "decision-documented",
+      "assertion": "A written freeze-or-remove decision for bureau.legacy exists, including the list of public symbols that must stay importable."
+    },
+    {
+      "id": "no-new-legacy-callers",
+      "assertion": "No module outside bureau.core and existing compatibility shims imports bureau.legacy directly, or each remaining import is justified in the decision note."
+    }
+  ],
+  "metadata": {
+    "source": "docs/reports/repo-audit-2026-07.md",
+    "audit_finding": "legacy module drift: lint ignores, connection leak, superseded semantics"
+  }
+}

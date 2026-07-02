@@ -110,16 +110,11 @@ def validate_agent_brief(task: legacy.Task, worker_id: str, kind: str) -> dict[s
     }
 
 
-def _requires_agent_brief(task: legacy.Task, worker_id: str, kind: str, *, dispatch: bool) -> bool:
+def _requires_agent_brief(task: legacy.Task, worker_id: str, kind: str) -> bool:
     policy = _grabowski_worker_policy().get("policy", {})
     if not policy.get("agent_brief_required", False):
         return False
-    profile = _external_agent_profile(task, worker_id, kind)
-    if not profile:
-        return False
-    if task.mode in {"grabowski-task", "grabowski-operation"} and profile is None:
-        return False
-    return dispatch or profile in set(policy.get("first_external_worker", "").split()) or True
+    return bool(_external_agent_profile(task, worker_id, kind))
 
 
 def task_revision_sha256(raw: dict[str, Any]) -> str:
@@ -1013,7 +1008,7 @@ class Dispatcher(legacy.Dispatcher):
         run = claimed["run"]
         task = self.registry.tasks[run["task_id"]]
         brief_gate: dict[str, Any] | None = None
-        if _requires_agent_brief(task, worker_id, kind, dispatch=dispatch):
+        if _requires_agent_brief(task, worker_id, kind):
             try:
                 brief_gate = validate_agent_brief(task, worker_id, kind)
             except legacy.StateError as exc:

@@ -127,6 +127,55 @@ The result is read-only. It exposes the projected Bureau task ID, source binding
 unknown dependency structure and execution policy decisions. A promotion preview does not imply
 readiness or permission to execute.
 
+## Closure planner, agent frontier governor and Codex bridge
+
+Three local oneshot units complete the hourly cycle. All of them are read-mostly: the closure
+planner writes only its own state under `~/.local/state/bureau-closure`, the frontier governor
+writes only reports and receipts under `~/.local/state/bureau-agent-frontier`, and the Codex
+bridge mutates nothing unless the explicit `--binding-gate` is passed.
+
+- `bureau-closure-runner` inventories branches, dirty worktrees and recent failed tasks into
+  lanes, selects a WIP-limited plan and writes Grabowski briefs plus a terminal receipt.
+- `bureau-agent-frontier --write-state` ranks the discovery backlog and closure lanes into a
+  frontier report (`*:55`, after closure planning).
+- `bureau-codex-bridge` collects health, frontier and closure context, renders the prompt and
+  records a receipt (`*:57`, after frontier governance).
+
+The supplied units `ops/systemd/bureau-agent-frontier.*` and `ops/systemd/bureau-codex-bridge.*`
+execute wrappers from `~/.local/libexec`. Install the package into an isolated environment and
+link the entry points there:
+
+```bash
+python3 -m venv ~/.local/share/bureau-cycle/venv
+~/.local/share/bureau-cycle/venv/bin/pip install .
+install -d ~/.local/libexec
+ln -sf ~/.local/share/bureau-cycle/venv/bin/bureau-agent-frontier \
+  ~/.local/libexec/bureau-agent-frontier
+ln -sf ~/.local/share/bureau-cycle/venv/bin/bureau-codex-bridge \
+  ~/.local/libexec/bureau-codex-bridge
+install -Dm644 ops/systemd/bureau-agent-frontier.service \
+  ~/.config/systemd/user/bureau-agent-frontier.service
+install -Dm644 ops/systemd/bureau-agent-frontier.timer \
+  ~/.config/systemd/user/bureau-agent-frontier.timer
+install -Dm644 ops/systemd/bureau-codex-bridge.service \
+  ~/.config/systemd/user/bureau-codex-bridge.service
+install -Dm644 ops/systemd/bureau-codex-bridge.timer \
+  ~/.config/systemd/user/bureau-codex-bridge.timer
+systemctl --user daemon-reload
+systemctl --user enable --now bureau-agent-frontier.timer bureau-codex-bridge.timer
+```
+
+The frontier unit requires an existing discovery source state
+(`~/.local/state/bureau-halfhour-operator/source-state.json`); run the `bureau-discovery`
+scanner at least once before enabling the timer. Manual checks:
+
+```bash
+bureau-closure run
+bureau-agent-frontier --json
+bureau-codex-bridge --backend=none --json
+bureau-cycle validate ~/.local/state/bureau-agent-frontier/latest.json --stage frontier
+```
+
 ## Local Review Steward
 
 The `bureau-review-steward` command performs a local, read-mostly review pass over the current

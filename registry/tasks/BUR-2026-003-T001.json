@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-003-T001",
+  "initiative": "BUR-2026-003",
+  "title": "Reconcile BUR-2026-001 lifecycle mismatch",
+  "state": "planned",
+  "goal": "Decide and apply the correct resolution for the completed initiative BUR-2026-001 that still carries planned tasks T006 and T009: verify them, re-home them into an active initiative, or reopen the initiative explicitly, so lifecycle stops recommending reopen-required.",
+  "depends_on": [],
+  "required_capabilities": [
+    "repository"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 10
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "lifecycle-consistent",
+      "assertion": "bureau lifecycle reports consistent=true for BUR-2026-001."
+    },
+    {
+      "id": "decision-recorded",
+      "assertion": "The chosen resolution (verify, re-home, or reopen) is recorded with rationale in the audit report or a follow-up note."
+    }
+  ],
+  "metadata": {
+    "source": "docs/reports/repo-audit-2026-07.md",
+    "audit_finding": "doctor reports reopen-required for BUR-2026-001 because T006/T009 are planned"
+  }
+}

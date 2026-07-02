@@ -8,9 +8,10 @@
     "DOCMETA-FRESHNESS-001",
     "DOMAIN-PG-001",
     "OPT-ARC-001",
-    "OPT-INF-002"
+    "OPT-INF-002",
+    "REPO-AUDIT-001"
   ],
-  "commit_sha": "b82819308cde369f727535889988650ee3420fec",
+  "commit_sha": "060bf869c35e37a60b28e5d6d3eabce4d8043de8",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -2029,6 +2030,68 @@
     },
     {
       "acceptance_count": 3,
+      "area": "ci",
+      "effort": "S",
+      "evidence_count": 11,
+      "id": "REPO-AUDIT-001",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 3,
+      "owner": "unknown",
+      "priority": "medium",
+      "risk": "low",
+      "source_task": {
+        "acceptance": [
+          "R-10: OPT-ARC-001-Validator meldet bei Shallow-Clone einen erklaerenden Hinweis statt eines nackten Commit-Fehlers",
+          "R-12: .lychee.toml wird entweder per --config geladen oder ersatzlos entfernt",
+          "R-13: heavy.yml-e2e-Job hat einen gruenen Dispatch-Lauf als Laufzeit-Beweis des Setup-Fixes"
+        ],
+        "area": "ci",
+        "effort": "S",
+        "evidence": [
+          "docs/reports/repo-audit-2026-07-02.md",
+          "Justfile",
+          "repo.meta.yaml",
+          "agent-policy.yaml",
+          "scripts/docmeta/generated-files-guard.sh",
+          ".github/workflows/ci.yml",
+          ".github/workflows/heavy.yml",
+          "CLAUDE.md",
+          ".env.example",
+          "scripts/guard/auth-rate-limit-runtime-smoke.sh",
+          "scripts/guard_api_alias.sh"
+        ],
+        "id": "REPO-AUDIT-001",
+        "links": {
+          "docs": [
+            "docs/reports/repo-audit-2026-07-02.md",
+            "docs/tasks/board.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "Shallow-Clone-Hinweis in scripts/docmeta/validate_opt_arc_001_db_proof_matrix.py (R-10)",
+          "Entscheidung + Umsetzung zu .lychee.toml: laden oder entfernen (R-12)",
+          "Gruener workflow_dispatch-Lauf des heavy.yml-e2e-Jobs nach pnpm-Setup-Fix (R-13)"
+        ],
+        "owner": "unknown",
+        "priority": "medium",
+        "risk": "low",
+        "status": "partial",
+        "title": "Repo-Komplettaudit 2026-07-02: Restarbeiten (R-10/R-12/R-13)",
+        "updated_at": "2026-07-02"
+      },
+      "source_task_sha256": "33986b3608b02524a81d60c1e0624d4b42c75e32600e5ef33e0fbf1a4ac59884",
+      "status": "partial",
+      "title": "Repo-Komplettaudit 2026-07-02: Restarbeiten (R-10/R-12/R-13)",
+      "updated_at": "2026-07-02"
+    },
+    {
+      "acceptance_count": 3,
       "area": "docs",
       "effort": "M",
       "evidence_count": 7,
@@ -2302,7 +2365,7 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "b6a46d75891d30a8a01957fe90a0868a3b5d6d4dfc76e61f27b2a13fe021a120",
+  "index_sha256": "aabd606820201a6bd190523abad5b2260fad3f69fed2f393cec3ffc8e5a75df6",
   "ref": "HEAD",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",
@@ -2323,7 +2386,7 @@
     "done": 30,
     "obsolete": 0,
     "open": 1,
-    "partial": 6
+    "partial": 7
   },
-  "task_count": 39
+  "task_count": 40
 }

@@ -1891,7 +1891,10 @@ def _read_only_state_rows(state_path: Path) -> dict[str, Any]:
                 "foreign_key_errors": foreign,
                 "schema_version": version,
                 "unsupported_schema_version": version,
-                "error": f"unsupported schema version: {version}; maximum supported is {SCHEMA_VERSION}",
+                "error": (
+                    f"unsupported schema version: {version}; "
+                    f"maximum supported is {SCHEMA_VERSION}"
+                ),
             }
         rows: dict[str, list[dict[str, Any]]] = {}
         for table in ("task_status", "runs", "receipts"):

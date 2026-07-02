@@ -7,7 +7,9 @@
   "goal": "Rebuild Bureau's runtime and repository orchestration spine with read-only drift truth, hard approval paths, explicit lifecycle repair, repo registry, and bounded task planning before fetch or pull automation.",
   "current_plan": {
     "repository": "bureau",
-    "path": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md"
+    "path": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
+    "commit": "479f46233e00f4c802f66c8ea78a4591e5aaddd8",
+    "document_sha256": "401054b0a25d2bd29d5bdf22edd8845b3a0d61e693a582a5f2d3caf1db2d50d5"
   },
   "completion": [
     "Bureau has a deterministic read-only runtime drift check before runtime repair.",

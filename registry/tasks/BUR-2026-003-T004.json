@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-003-T004",
+  "initiative": "BUR-2026-003",
+  "title": "Approval path",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 40
+  },
+  "goal": "Define and implement approval semantics for repository mutation, source import, agent dispatch, and task creation from external evidence.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "baseline_commit": "a19c6f0779bc0955ec36f941b9969f2c69079d92",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "approval-classes-defined",
+      "assertion": "Mutation and dispatch classes are documented with required approval levels.",
+      "verifier": "doc and schema review",
+      "evidence_type": "object"
+    },
+    {
+      "id": "gates-enforced",
+      "assertion": "Unsafe actions require explicit approval or fail closed.",
+      "verifier": "tests",
+      "evidence_type": "string"
+    },
+    {
+      "id": "operator-relay-compatible",
+      "assertion": "The approval path remains compatible with bounded Operator Relay handoff.",
+      "verifier": "diff review",
+      "evidence_type": "boolean"
+    }
+  ],
+  "metadata": {
+    "planning_slice": "bureau-runtime-and-repo-orchestration-v1",
+    "created_from_plan": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
+    "operator_lab_run": "not applicable — planning task definition only"
+  },
+  "depends_on": [
+    "BUR-2026-003-T001"
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-003-T002",
+  "initiative": "BUR-2026-003",
+  "title": "Steuerboard runtime hardening",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "goal": "Harden Steuerboard execution so it exposes runtime truth and refuses unsafe operation against a drifted Bureau checkout.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "baseline_commit": "a19c6f0779bc0955ec36f941b9969f2c69079d92",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "runtime-truth-visible",
+      "assertion": "Steuerboard output includes the runtime truth needed to diagnose checkout drift.",
+      "verifier": "CLI test",
+      "evidence_type": "object"
+    },
+    {
+      "id": "fail-closed-on-drift",
+      "assertion": "Unsafe drift states produce an explicit stop instead of silent execution.",
+      "verifier": "regression test",
+      "evidence_type": "string"
+    },
+    {
+      "id": "receipt-evidence",
+      "assertion": "Receipts include branch, head, base, and drift classification.",
+      "verifier": "receipt fixture",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "planning_slice": "bureau-runtime-and-repo-orchestration-v1",
+    "created_from_plan": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
+    "operator_lab_run": "not applicable — planning task definition only"
+  },
+  "depends_on": [
+    "BUR-2026-003-T001"
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-003-T006",
+  "initiative": "BUR-2026-003",
+  "title": "Safe fetch orchestration/import",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
+  "goal": "Design safe fetch and import orchestration with dry-run, provenance, conflict reporting, and approval gates.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "baseline_commit": "a19c6f0779bc0955ec36f941b9969f2c69079d92",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "preconditions-bound",
+      "assertion": "The orchestration refuses to run unless runtime drift and approval preconditions are satisfied.",
+      "verifier": "tests",
+      "evidence_type": "string"
+    },
+    {
+      "id": "dry-run-first",
+      "assertion": "Dry-run explains proposed fetch/import actions before mutation.",
+      "verifier": "CLI fixture",
+      "evidence_type": "object"
+    },
+    {
+      "id": "conflict-report",
+      "assertion": "Conflicts are reported with repo, branch, source, and required human decision.",
+      "verifier": "fixture",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "planning_slice": "bureau-runtime-and-repo-orchestration-v1",
+    "created_from_plan": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
+    "operator_lab_run": "not applicable — planning task definition only"
+  },
+  "depends_on": [
+    "BUR-2026-003-T001",
+    "BUR-2026-003-T004",
+    "BUR-2026-003-T005"
+  ]
+}

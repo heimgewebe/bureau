@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-003-T008",
+  "initiative": "BUR-2026-003",
+  "title": "Pull candidate planning through existing Steuerboard artifacts",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 80
+  },
+  "goal": "Use existing Steuerboard artifacts as candidate evidence and convert them into Bureau tasks only when provenance and acceptance criteria are explicit.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "baseline_commit": "a19c6f0779bc0955ec36f941b9969f2c69079d92",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "artifact-provenance",
+      "assertion": "Candidate tasks preserve source artifact path, hash, and generated-at evidence.",
+      "verifier": "fixture",
+      "evidence_type": "object"
+    },
+    {
+      "id": "dedupe",
+      "assertion": "Existing tasks are detected so duplicate task cutting is avoided.",
+      "verifier": "tests",
+      "evidence_type": "string"
+    },
+    {
+      "id": "acceptance-required",
+      "assertion": "No candidate is promoted without explicit acceptance criteria and approval class.",
+      "verifier": "regression test",
+      "evidence_type": "boolean"
+    }
+  ],
+  "metadata": {
+    "planning_slice": "bureau-runtime-and-repo-orchestration-v1",
+    "created_from_plan": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
+    "operator_lab_run": "not applicable — planning task definition only"
+  },
+  "depends_on": [
+    "BUR-2026-003-T004",
+    "BUR-2026-003-T005"
+  ]
+}

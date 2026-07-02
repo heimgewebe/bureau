@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-003-T005",
+  "initiative": "BUR-2026-003",
+  "title": "Repo registry and repo-scan",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "goal": "Create a bounded repo registry and scanner for local repositories and their matching planning locations.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "baseline_commit": "a19c6f0779bc0955ec36f941b9969f2c69079d92",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "registry-schema",
+      "assertion": "Repo registry shape captures repo identity, source, status, and planning references without modeling unnecessary details.",
+      "verifier": "schema or fixture",
+      "evidence_type": "object"
+    },
+    {
+      "id": "scanner-dry-run",
+      "assertion": "Repo scanning has a dry-run mode and does not mutate repositories.",
+      "verifier": "CLI test",
+      "evidence_type": "string"
+    },
+    {
+      "id": "vault-links",
+      "assertion": "Matching planning locations are represented as evidence, not as truth by volume.",
+      "verifier": "fixture review",
+      "evidence_type": "array"
+    }
+  ],
+  "metadata": {
+    "planning_slice": "bureau-runtime-and-repo-orchestration-v1",
+    "created_from_plan": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
+    "operator_lab_run": "not applicable — planning task definition only"
+  },
+  "depends_on": [
+    "BUR-2026-003-T004"
+  ]
+}

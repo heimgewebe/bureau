@@ -1738,6 +1738,447 @@ def lifecycle_diagnostics(registry: Registry, store: StateStore) -> list[dict[st
     return result
 
 
+
+
+def _runtime_state_db_path(
+    state_db: Path | None = None,
+    state_root: Path | None = None,
+) -> Path:
+    if state_db is not None:
+        return state_db.expanduser().resolve()
+    if state_root is not None:
+        return (state_root.expanduser().resolve() / "bureau.sqlite3")
+    configured = os.environ.get("BUREAU_STATE_DIR")
+    root = Path(configured).expanduser() if configured else Path.home() / ".local/state/bureau"
+    return (root / "bureau.sqlite3").resolve()
+
+
+def _git_read(repo: Path, arguments: list[str]) -> dict[str, Any]:
+    result = subprocess.run(
+        ["git", "-C", str(repo), *arguments],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    return {
+        "returncode": result.returncode,
+        "stdout": result.stdout.rstrip("\n"),
+        "stderr": result.stderr.rstrip("\n"),
+    }
+
+
+def _checkout_drift(root: Path, findings: list[dict[str, Any]]) -> dict[str, Any]:
+    inside = _git_read(root, ["rev-parse", "--is-inside-work-tree"])
+    if inside["returncode"] != 0 or inside["stdout"] != "true":
+        findings.append(
+            {
+                "severity": "blocker",
+                "code": "checkout-not-git",
+                "message": "Bureau root is not a readable Git worktree.",
+            }
+        )
+        return {"available": False, "root": str(root), "error": inside["stderr"]}
+
+    branch = _git_read(root, ["branch", "--show-current"])
+    head = _git_read(root, ["rev-parse", "HEAD"])
+    origin_main = _git_read(root, ["rev-parse", "--verify", "origin/main^{commit}"])
+    status = _git_read(root, ["status", "--porcelain=v1"])
+    dirty_lines = [line for line in status["stdout"].splitlines() if line]
+    detached = not branch["stdout"]
+
+    report = {
+        "available": True,
+        "root": str(root),
+        "branch": branch["stdout"] or None,
+        "detached": detached,
+        "head": head["stdout"] if head["returncode"] == 0 else None,
+        "origin_main": origin_main["stdout"] if origin_main["returncode"] == 0 else None,
+        "head_equals_origin_main": None,
+        "dirty": bool(dirty_lines),
+        "dirty_paths": dirty_lines,
+    }
+    if report["head"] and report["origin_main"]:
+        report["head_equals_origin_main"] = report["head"] == report["origin_main"]
+    if detached:
+        findings.append(
+            {
+                "severity": "info",
+                "code": "checkout-detached",
+                "message": "Checkout is detached; this is acceptable for read-only inspection.",
+            }
+        )
+    if dirty_lines:
+        findings.append(
+            {
+                "severity": "warning",
+                "code": "checkout-dirty",
+                "message": "Checkout contains uncommitted or untracked paths.",
+                "paths": dirty_lines,
+            }
+        )
+    else:
+        findings.append(
+            {
+                "severity": "info",
+                "code": "checkout-clean",
+                "message": "Checkout has no uncommitted or untracked paths.",
+            }
+        )
+    if origin_main["returncode"] != 0:
+        findings.append(
+            {
+                "severity": "warning",
+                "code": "origin-main-missing",
+                "message": "origin/main is not available locally; no fetch was attempted.",
+            }
+        )
+    elif report["head"] != report["origin_main"]:
+        findings.append(
+            {
+                "severity": "warning",
+                "code": "head-differs-origin-main",
+                "message": "Checkout HEAD differs from local origin/main.",
+                "head": report["head"],
+                "origin_main": report["origin_main"],
+            }
+        )
+    return report
+
+
+def _read_only_state_rows(state_path: Path) -> dict[str, Any]:
+    if not state_path.is_file():
+        return {"available": False, "path": str(state_path), "error": "missing"}
+    connection: sqlite3.Connection | None = None
+    try:
+        connection = sqlite3.connect(f"file:{state_path}?mode=ro", uri=True)
+        connection.row_factory = sqlite3.Row
+        integrity = connection.execute("PRAGMA integrity_check").fetchone()[0]
+        foreign = [dict(row) for row in connection.execute("PRAGMA foreign_key_check")]
+        version = connection.execute("PRAGMA user_version").fetchone()[0]
+        tables = {
+            row["name"]
+            for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            )
+        }
+        rows: dict[str, list[dict[str, Any]]] = {}
+        for table in ("task_status", "runs", "receipts"):
+            if table in tables:
+                rows[table] = [dict(row) for row in connection.execute(f"SELECT * FROM {table}")]
+            else:
+                rows[table] = []
+        return {
+            "available": True,
+            "path": str(state_path),
+            "integrity": integrity,
+            "foreign_key_errors": foreign,
+            "schema_version": version,
+            "rows": rows,
+        }
+    except sqlite3.Error as exc:
+        return {
+            "available": False,
+            "path": str(state_path),
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+    finally:
+        if connection is not None:
+            connection.close()
+
+
+def _read_only_overlays(
+    registry: Registry, task_status_rows: list[dict[str, Any]]
+) -> dict[str, str]:
+    result: dict[str, str] = {}
+    rows = {row["task_id"]: row for row in task_status_rows if "task_id" in row}
+    for task in registry.tasks.values():
+        current_plan = plan_sha256(registry, task.initiative)
+        verification = task.raw.get("metadata", {}).get("verification", {})
+        if task.state == "verified":
+            if (
+                verification.get("task_sha256") == task.sha256
+                and verification.get("plan_sha256") == current_plan
+            ):
+                result[task.id] = "verified"
+            else:
+                result[task.id] = "stale"
+            continue
+        row = rows.get(task.id)
+        if row is None:
+            continue
+        if row.get("state") == "verified" and (
+            row.get("task_sha256") != task.sha256 or row.get("plan_sha256") != current_plan
+        ):
+            result[task.id] = "stale"
+        else:
+            state = row.get("state")
+            if isinstance(state, str):
+                result[task.id] = state
+    return result
+
+
+def _read_only_lifecycle(registry: Registry, overlays: dict[str, str]) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    for initiative in registry.initiatives.values():
+        tasks = [task for task in registry.tasks.values() if task.initiative == initiative.id]
+        states = {task.id: overlays.get(task.id, task.state) for task in tasks}
+        open_states = {"inbox", "planned", "ready", "blocked", "stale"}
+        if (
+            initiative.state == "completed"
+            and tasks
+            and all(state == "verified" for state in states.values())
+        ):
+            recommendation = "completed"
+        elif initiative.state == "completed":
+            recommendation = "reopen-required"
+        elif tasks and all(state == "verified" for state in states.values()):
+            recommendation = "completion-ready"
+        elif any(state == "blocked" for state in states.values()) and not any(
+            state == "ready" for state in states.values()
+        ):
+            recommendation = "waiting"
+        elif any(state in open_states for state in states.values()):
+            recommendation = "active"
+        else:
+            recommendation = initiative.state
+        result.append(
+            {
+                "initiative_id": initiative.id,
+                "declared_state": initiative.state,
+                "recommended_state": recommendation,
+                "task_states": states,
+                "consistent": initiative.state == recommendation,
+            }
+        )
+    return result
+
+
+def _registry_drift(
+    registry: Registry, overlays: dict[str, str], findings: list[dict[str, Any]]
+) -> dict[str, Any]:
+    task_states: dict[str, int] = {}
+    stale_verified: list[str] = []
+    for task in registry.tasks.values():
+        state = overlays.get(task.id, task.state)
+        task_states[state] = task_states.get(state, 0) + 1
+        if task.state == "verified" and state == "stale":
+            stale_verified.append(task.id)
+    lifecycle = _read_only_lifecycle(registry, overlays)
+    mismatches = [item for item in lifecycle if not item["consistent"]]
+    for item in mismatches:
+        findings.append(
+            {
+                "severity": "warning",
+                "code": "lifecycle-mismatch",
+                "message": "Initiative lifecycle does not match current task states.",
+                "initiative_id": item["initiative_id"],
+                "declared_state": item["declared_state"],
+                "recommended_state": item["recommended_state"],
+            }
+        )
+    if stale_verified:
+        findings.append(
+            {
+                "severity": "blocker",
+                "code": "verified-task-drift",
+                "message": "Verified registry tasks have stale or missing embedded verification.",
+                "task_ids": stale_verified,
+            }
+        )
+    return {
+        "valid": True,
+        "initiatives": len(registry.initiatives),
+        "tasks": len(registry.tasks),
+        "resources": len(registry.resources),
+        "task_states": task_states,
+        "verified_task_drift": stale_verified,
+        "lifecycle": lifecycle,
+    }
+
+
+def _receipt_drift(
+    registry: Registry,
+    state: dict[str, Any],
+    findings: list[dict[str, Any]],
+) -> dict[str, Any]:
+    if not state.get("available"):
+        findings.append(
+            {
+                "severity": "blocker",
+                "code": "state-db-unavailable",
+                "message": "Bureau state database is unavailable for receipt drift inspection.",
+                "path": state.get("path"),
+                "error": state.get("error"),
+            }
+        )
+        return {"available": False, "stale_tasks": [], "unknown_task_status_rows": []}
+    if state.get("integrity") != "ok" or state.get("foreign_key_errors"):
+        findings.append(
+            {
+                "severity": "blocker",
+                "code": "state-db-integrity",
+                "message": "Bureau state database failed read-only integrity checks.",
+                "integrity": state.get("integrity"),
+                "foreign_key_errors": state.get("foreign_key_errors"),
+            }
+        )
+
+    task_status_rows = state["rows"]["task_status"]
+    stale_tasks: list[dict[str, Any]] = []
+    unknown_status_rows: list[str] = []
+    for row in task_status_rows:
+        task_id = row.get("task_id")
+        if not isinstance(task_id, str) or task_id not in registry.tasks:
+            if isinstance(task_id, str):
+                unknown_status_rows.append(task_id)
+            continue
+        task = registry.tasks[task_id]
+        current_plan = plan_sha256(registry, task.initiative)
+        if row.get("state") == "verified" and (
+            row.get("task_sha256") != task.sha256 or row.get("plan_sha256") != current_plan
+        ):
+            stale_tasks.append(
+                {
+                    "task_id": task_id,
+                    "stored_task_sha256": row.get("task_sha256"),
+                    "current_task_sha256": task.sha256,
+                    "stored_plan_sha256": row.get("plan_sha256"),
+                    "current_plan_sha256": current_plan,
+                    "receipt_sha256": row.get("receipt_sha256"),
+                }
+            )
+    active_run_drift: list[dict[str, Any]] = []
+    for row in state["rows"]["runs"]:
+        if row.get("state") not in legacy.ACTIVE_STATES:
+            continue
+        task_id = row.get("task_id")
+        if not isinstance(task_id, str) or task_id not in registry.tasks:
+            active_run_drift.append(
+                {"run_id": row.get("run_id"), "task_id": task_id, "reason": "unknown-task"}
+            )
+            continue
+        task = registry.tasks[task_id]
+        current_plan = plan_sha256(registry, task.initiative)
+        if row.get("task_sha256") != task.sha256 or row.get("plan_sha256") != current_plan:
+            active_run_drift.append(
+                {
+                    "run_id": row.get("run_id"),
+                    "task_id": task_id,
+                    "stored_task_sha256": row.get("task_sha256"),
+                    "current_task_sha256": task.sha256,
+                    "stored_plan_sha256": row.get("plan_sha256"),
+                    "current_plan_sha256": current_plan,
+                }
+            )
+    if stale_tasks:
+        findings.append(
+            {
+                "severity": "blocker",
+                "code": "receipt-drift",
+                "message": "Verified task receipts no longer match current task or plan revisions.",
+                "task_ids": [item["task_id"] for item in stale_tasks],
+            }
+        )
+    else:
+        findings.append(
+            {
+                "severity": "info",
+                "code": "receipt-drift-clear",
+                "message": "No verified receipt drift was found.",
+            }
+        )
+    if unknown_status_rows:
+        findings.append(
+            {
+                "severity": "warning",
+                "code": "unknown-task-status-row",
+                "message": (
+                    "State database has task_status rows for tasks absent from the "
+                    "registry."
+                ),
+                "task_ids": unknown_status_rows,
+            }
+        )
+    if active_run_drift:
+        findings.append(
+            {
+                "severity": "blocker",
+                "code": "active-run-drift",
+                "message": "Active runs no longer match current task or plan revisions.",
+                "run_ids": [str(item.get("run_id")) for item in active_run_drift],
+            }
+        )
+    return {
+        "available": True,
+        "stale_tasks": stale_tasks,
+        "active_run_drift": active_run_drift,
+        "unknown_task_status_rows": unknown_status_rows,
+        "task_status_rows": len(task_status_rows),
+        "receipt_rows": len(state["rows"]["receipts"]),
+    }
+
+
+def _runtime_status(findings: list[dict[str, Any]]) -> str:
+    severities = {str(item.get("severity")) for item in findings}
+    if "blocker" in severities:
+        return "blocked"
+    if "warning" in severities:
+        return "warning"
+    return "ok"
+
+
+def runtime_drift_check(
+    root: Path,
+    *,
+    state_db: Path | None = None,
+    state_root: Path | None = None,
+) -> dict[str, Any]:
+    """Read-only runtime drift report for Bureau's local registry and state."""
+    resolved_root = root.expanduser().resolve()
+    findings: list[dict[str, Any]] = []
+    checkout = _checkout_drift(resolved_root, findings)
+    state_path = _runtime_state_db_path(state_db, state_root)
+    state = _read_only_state_rows(state_path)
+    runtime = {
+        "root": str(resolved_root),
+        "state_db": str(state_path),
+        "state_available": state.get("available") is True,
+        "state_integrity": state.get("integrity"),
+        "state_schema_version": state.get("schema_version"),
+        "read_only": True,
+    }
+    registry_report: dict[str, Any]
+    receipt_report: dict[str, Any]
+    try:
+        registry = Registry.load(resolved_root)
+    except legacy.BureauError as exc:
+        findings.append(
+            {
+                "severity": "blocker",
+                "code": "registry-invalid",
+                "message": "Bureau registry failed validation.",
+                "error": str(exc),
+            }
+        )
+        registry_report = {"valid": False, "error": str(exc)}
+        receipt_report = {"available": False, "stale_tasks": [], "unknown_task_status_rows": []}
+    else:
+        task_status_rows = state.get("rows", {}).get("task_status", [])
+        overlays = _read_only_overlays(registry, task_status_rows)
+        registry_report = _registry_drift(registry, overlays, findings)
+        receipt_report = _receipt_drift(registry, state, findings)
+    return {
+        "schema_version": 1,
+        "command": "runtime-drift-check",
+        "read_only": True,
+        "status": _runtime_status(findings),
+        "runtime": runtime,
+        "checkout": checkout,
+        "registry": registry_report,
+        "receipts": receipt_report,
+        "findings": findings,
+    }
+
 def close_ready_initiatives(registry: Registry, store: StateStore) -> list[dict[str, Any]]:
     diagnostics = {item["initiative_id"]: item for item in lifecycle_diagnostics(registry, store)}
     changed: list[dict[str, Any]] = []

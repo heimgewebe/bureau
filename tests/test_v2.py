@@ -23,7 +23,7 @@ from bureau.core import (
     verification_stamp,
     workspace_status,
 )
-from bureau.v2 import plan_sha256, task_revision_sha256
+from bureau.v2 import plan_sha256, runtime_drift_check, task_revision_sha256
 
 
 class FakeAdapter:
@@ -49,6 +49,28 @@ class FakeAdapter:
     def resume(self, external_id: str) -> dict:
         return {"task_id": external_id, "state": "running"}
 
+
+
+
+def git_output(root: Path, *arguments: str) -> str:
+    result = subprocess.run(
+        ["git", "-C", str(root), *arguments],
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    return result.stdout.strip()
+
+
+def init_clean_origin_main(root: Path) -> str:
+    git_output(root, "init", "-b", "main")
+    git_output(root, "config", "user.email", "bureau-test@example.invalid")
+    git_output(root, "config", "user.name", "Bureau Test")
+    git_output(root, "add", ".")
+    git_output(root, "commit", "-m", "initial")
+    head = git_output(root, "rev-parse", "HEAD")
+    git_output(root, "update-ref", "refs/remotes/origin/main", head)
+    return head
 
 def setup(root: Path, tmp_path: Path, monkeypatch, adapters: AdapterRegistry | None = None):
     state = tmp_path / "state"
@@ -723,6 +745,82 @@ def test_external_agent_checkout_accepts_valid_grabowski_brief(
     assert result["handoff"]["agent_brief_path"] == str(brief_path)
     assert result["handoff"]["worker_profile"] == "codex-efficient"
 
+
+
+
+def test_runtime_drift_check_reports_clean_checkout_without_mutation(
+    registry_factory, tmp_path
+):
+    root = registry_factory(1)
+    head = init_clean_origin_main(root)
+    state = StateStore(tmp_path / "bureau.sqlite3")
+
+    report = runtime_drift_check(root, state_db=state.path)
+
+    assert report["command"] == "runtime-drift-check"
+    assert report["read_only"] is True
+    assert report["status"] == "ok"
+    assert report["checkout"]["branch"] == "main"
+    assert report["checkout"]["head"] == head
+    assert report["checkout"]["origin_main"] == head
+    assert report["checkout"]["head_equals_origin_main"] is True
+    assert report["checkout"]["dirty"] is False
+    assert report["runtime"]["state_integrity"] == "ok"
+    assert report["receipts"]["stale_tasks"] == []
+    assert report["receipts"]["active_run_drift"] == []
+    assert {item["code"] for item in report["findings"]} == {
+        "checkout-clean",
+        "receipt-drift-clear",
+    }
+
+
+def test_runtime_drift_check_reports_dirty_checkout_and_receipt_drift(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+    complete_run(registry, store, run["run_id"], {"proof": {"result": "passed"}})
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["title"] = "Changed after receipt"
+    task_path.write_text(json.dumps(task))
+
+    report = runtime_drift_check(root, state_db=store.path)
+    codes = {item["code"] for item in report["findings"]}
+
+    assert report["status"] == "blocked"
+    assert report["checkout"]["dirty"] is True
+    assert any("registry/tasks" in path for path in report["checkout"]["dirty_paths"])
+    assert report["receipts"]["stale_tasks"][0]["task_id"] == task["id"]
+    assert {"checkout-dirty", "receipt-drift"} <= codes
+    assert {item["severity"] for item in report["findings"]} >= {"warning", "blocker"}
+
+
+def test_runtime_drift_check_cli_emits_read_only_report(
+    registry_factory, tmp_path, capsys
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    state = StateStore(tmp_path / "bureau.sqlite3")
+
+    result = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-db",
+            str(state.path),
+            "--json",
+            "runtime-drift-check",
+        ]
+    )
+    output = json.loads(capsys.readouterr().out)
+
+    assert result == 0
+    assert output["command"] == "runtime-drift-check"
+    assert output["read_only"] is True
+    assert output["checkout"]["dirty"] is False
 
 def test_explain_next_reports_runtime_truth_for_lifecycle_reopen(
     registry_factory, tmp_path, monkeypatch

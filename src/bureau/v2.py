@@ -233,6 +233,43 @@ def lifecycle_repair_recommendations(lifecycle: list[dict[str, Any]]) -> list[di
     return result
 
 
+def lifecycle_repair_task_candidates(
+    repair_recommendations: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Return read-only pseudo tasks for lifecycle repair work.
+
+    These are not registry tasks and cannot be dispatched. They make the required
+    repair visible when lifecycle health blocks normal next-task selection.
+    """
+    candidates: list[dict[str, Any]] = []
+    for recommendation in repair_recommendations:
+        initiative_id = recommendation.get("initiative_id") or "unknown"
+        open_tasks = recommendation.get("open_tasks")
+        if not isinstance(open_tasks, list):
+            open_tasks = []
+        candidates.append(
+            {
+                "kind": "bureau_lifecycle_repair_candidate",
+                "id": f"lifecycle-repair:{initiative_id}",
+                "initiative_id": initiative_id,
+                "title": f"Repair lifecycle mismatch for {initiative_id}",
+                "reason": (
+                    "Initiative state conflicts with open task states; reconcile "
+                    "initiative lifecycle before claiming normal work."
+                ),
+                "declared_state": recommendation.get("declared_state"),
+                "recommended_state": recommendation.get("recommended_state"),
+                "open_task_count": recommendation.get("open_task_count", 0),
+                "open_tasks": open_tasks,
+                "dispatch_allowed": False,
+                "queue_mutation_allowed": False,
+                "task_creation_allowed": False,
+                "suggested_action": "reconcile_initiative_lifecycle",
+            }
+        )
+    return candidates
+
+
 def frontier_runtime_truth(
     frontier: list[dict[str, Any]], lifecycle: list[dict[str, Any]]
 ) -> dict[str, Any]:
@@ -241,6 +278,7 @@ def frontier_runtime_truth(
     normal_eligible = [item for item in eligible if item.get("closure_bridge") is not True]
     bridge_eligible = [item for item in eligible if item.get("closure_bridge") is True]
     repair_recommendations = lifecycle_repair_recommendations(lifecycle)
+    repair_candidates = lifecycle_repair_task_candidates(repair_recommendations)
     lifecycle_mismatch = bool(repair_recommendations)
     selected_via = None
     if selected is not None:
@@ -258,11 +296,14 @@ def frontier_runtime_truth(
         "health_blocks_normal_claim": lifecycle_mismatch and not normal_eligible,
         "repair_task_required": lifecycle_mismatch and selected is None,
         "repair_recommendations": repair_recommendations,
+        "repair_task_candidate_count": len(repair_candidates),
+        "repair_task_candidates": repair_candidates,
     }
 
 
 def doctor_runtime_truth(*, healthy: bool, lifecycle: list[dict[str, Any]]) -> dict[str, Any]:
     repair_recommendations = lifecycle_repair_recommendations(lifecycle)
+    repair_candidates = lifecycle_repair_task_candidates(repair_recommendations)
     lifecycle_mismatch = bool(repair_recommendations)
     return {
         "healthy": healthy,
@@ -274,6 +315,8 @@ def doctor_runtime_truth(*, healthy: bool, lifecycle: list[dict[str, Any]]) -> d
         "health_blocks_normal_claim": lifecycle_mismatch,
         "repair_task_required": lifecycle_mismatch,
         "repair_recommendations": repair_recommendations,
+        "repair_task_candidate_count": len(repair_candidates),
+        "repair_task_candidates": repair_candidates,
     }
 
 

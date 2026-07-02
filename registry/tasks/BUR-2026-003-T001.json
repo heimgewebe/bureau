@@ -11,7 +11,7 @@
   "goal": "Implement a deterministic read-only Bureau runtime drift check before any runtime repair or repository orchestration is attempted.",
   "execution": {
     "mode": "interactive-agent",
-    "policy": "review-before-effect",
+    "policy": "autonomous",
     "working_repository": "/home/alex/repos/bureau",
     "baseline_commit": "a19c6f0779bc0955ec36f941b9969f2c69079d92",
     "grabowski_resources": [

@@ -1755,7 +1755,7 @@ def _runtime_state_db_path(
 
 def _git_read(repo: Path, arguments: list[str]) -> dict[str, Any]:
     result = subprocess.run(
-        ["git", "-C", str(repo), *arguments],
+        ["git", "--no-optional-locks", "-C", str(repo), *arguments],
         text=True,
         capture_output=True,
         check=False,
@@ -1783,7 +1783,8 @@ def _checkout_drift(root: Path, findings: list[dict[str, Any]]) -> dict[str, Any
     head = _git_read(root, ["rev-parse", "HEAD"])
     origin_main = _git_read(root, ["rev-parse", "--verify", "origin/main^{commit}"])
     status = _git_read(root, ["status", "--porcelain=v1"])
-    dirty_lines = [line for line in status["stdout"].splitlines() if line]
+    status_failed = status["returncode"] != 0
+    dirty_lines = [] if status_failed else [line for line in status["stdout"].splitlines() if line]
     detached = not branch["stdout"]
 
     report = {
@@ -1794,7 +1795,7 @@ def _checkout_drift(root: Path, findings: list[dict[str, Any]]) -> dict[str, Any
         "head": head["stdout"] if head["returncode"] == 0 else None,
         "origin_main": origin_main["stdout"] if origin_main["returncode"] == 0 else None,
         "head_equals_origin_main": None,
-        "dirty": bool(dirty_lines),
+        "dirty": None if status_failed else bool(dirty_lines),
         "dirty_paths": dirty_lines,
     }
     if report["head"] and report["origin_main"]:
@@ -1807,7 +1808,16 @@ def _checkout_drift(root: Path, findings: list[dict[str, Any]]) -> dict[str, Any
                 "message": "Checkout is detached; this is acceptable for read-only inspection.",
             }
         )
-    if dirty_lines:
+    if status_failed:
+        findings.append(
+            {
+                "severity": "blocker",
+                "code": "checkout-status-unreadable",
+                "message": "Git status could not be read; checkout cleanliness is unknown.",
+                "error": status["stderr"],
+            }
+        )
+    elif dirty_lines:
         findings.append(
             {
                 "severity": "warning",
@@ -1861,6 +1871,28 @@ def _read_only_state_rows(state_path: Path) -> dict[str, Any]:
                 "SELECT name FROM sqlite_master WHERE type='table'"
             )
         }
+        required_tables = {"task_status", "runs", "receipts"}
+        missing_tables = sorted(required_tables - tables)
+        if missing_tables:
+            return {
+                "available": False,
+                "path": str(state_path),
+                "integrity": integrity,
+                "foreign_key_errors": foreign,
+                "schema_version": version,
+                "missing_tables": missing_tables,
+                "error": "missing required tables: " + ", ".join(missing_tables),
+            }
+        if version > SCHEMA_VERSION:
+            return {
+                "available": False,
+                "path": str(state_path),
+                "integrity": integrity,
+                "foreign_key_errors": foreign,
+                "schema_version": version,
+                "unsupported_schema_version": version,
+                "error": f"unsupported schema version: {version}; maximum supported is {SCHEMA_VERSION}",
+            }
         rows: dict[str, list[dict[str, Any]]] = {}
         for table in ("task_status", "runs", "receipts"):
             if table in tables:

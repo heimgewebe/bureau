@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-003",
+  "title": "Bureau runtime and repo orchestration rebuild",
+  "state": "active",
+  "commitment": "next",
+  "goal": "Rebuild Bureau's runtime and repository orchestration spine with read-only drift truth, hard approval paths, explicit lifecycle repair, repo registry, and bounded task planning before fetch or pull automation.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
+    "commit": "479f46233e00f4c802f66c8ea78a4591e5aaddd8",
+    "document_sha256": "401054b0a25d2bd29d5bdf22edd8845b3a0d61e693a582a5f2d3caf1db2d50d5"
+  },
+  "completion": [
+    "Bureau has a deterministic read-only runtime drift check before runtime repair.",
+    "Steuerboard execution cannot silently operate against a drifted Bureau checkout.",
+    "Lifecycle, approval, repo registry, safe fetch/import, what-now, and Steuerboard artifact planning work is represented by explicit tasks."
+  ],
+  "parallelism": {
+    "max_active_tasks": 2
+  },
+  "metadata": {
+    "created_from": "bureau-runtime-orchestration-stop-report-2026-07-02",
+    "does_not_establish": [
+      "runtime_repair",
+      "fetch_automation",
+      "pull_automation",
+      "merge_readiness"
+    ],
+    "operator_lab_trigger_check": {
+      "pr_or_agent_run": "yes",
+      "strong_claim_possible": "no",
+      "run_card_needed": "no",
+      "reason": "planning and registry cut only; no runtime-performance or agent-capability claim"
+    },
+    "alternative_axis": "less-surprising-bureau-before-more-autonomous-bureau"
+  }
+}

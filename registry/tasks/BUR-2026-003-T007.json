@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-003-T007",
+  "initiative": "BUR-2026-003",
+  "title": "Minimal what-now",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 70
+  },
+  "goal": "Create a minimal what-now path that ranks eligible work from registry truth and explains blockers.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "baseline_commit": "a19c6f0779bc0955ec36f941b9969f2c69079d92",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "eligible-ranking",
+      "assertion": "The command ranks eligible tasks from registry state, priority, dependencies, and resource claims.",
+      "verifier": "CLI test",
+      "evidence_type": "array"
+    },
+    {
+      "id": "blockers-visible",
+      "assertion": "When no task is eligible, runtime truth and blocker reasons are visible.",
+      "verifier": "regression test",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-chat-memory",
+      "assertion": "The command does not depend on chat memory or informal plans.",
+      "verifier": "code review",
+      "evidence_type": "boolean"
+    }
+  ],
+  "metadata": {
+    "planning_slice": "bureau-runtime-and-repo-orchestration-v1",
+    "created_from_plan": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
+    "operator_lab_run": "not applicable — planning task definition only"
+  },
+  "depends_on": [
+    "BUR-2026-003-T001"
+  ]
+}

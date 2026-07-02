@@ -10,7 +10,7 @@
     "OPT-ARC-001",
     "OPT-INF-002"
   ],
-  "commit_sha": "66bd1df1fd56fe9927c7cc235a2a8e2479527f1c",
+  "commit_sha": "b82819308cde369f727535889988650ee3420fec",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -647,14 +647,14 @@
       "acceptance_count": 4,
       "area": "auth",
       "effort": "M",
-      "evidence_count": 7,
+      "evidence_count": 8,
       "id": "AUTH-PG-003",
       "link_counts": {
-        "docs": 6,
+        "docs": 7,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 3,
+      "missing_evidence_count": 4,
       "owner": "unknown",
       "priority": "medium",
       "risk": "medium",
@@ -674,7 +674,8 @@
           "apps/api/tests/db_webauthn_user_id_backfill_audit.rs",
           "scripts/docmeta/audit_webauthn_user_id_backfill_runtime.py",
           "scripts/docmeta/tests/test_audit_webauthn_user_id_backfill_runtime.py",
-          "docs/reports/auth-pg-003-runtime-audit-wg-pg-proof-2026-07-01.md"
+          "docs/reports/auth-pg-003-runtime-audit-wg-pg-proof-2026-07-01.md",
+          "docs/reports/auth-pg-003-runtime-audit-heimserver-2026-07-01.md"
         ],
         "id": "AUTH-PG-003",
         "links": {
@@ -684,15 +685,17 @@
             "docs/reports/auth-pg-003-backfill-readiness.md",
             "docs/reports/auth-pg-002-passkey-runtime-facade.md",
             "docs/reports/auth-pg-002-cutover-plan.md",
-            "docs/reports/auth-pg-003-runtime-audit-wg-pg-proof-2026-07-01.md"
+            "docs/reports/auth-pg-003-runtime-audit-wg-pg-proof-2026-07-01.md",
+            "docs/reports/auth-pg-003-runtime-audit-heimserver-2026-07-01.md"
           ],
           "issues": [],
           "prs": []
         },
         "missing_evidence": [
           "legacy_webauthn_user_id_backfill und webauthn_user_id_not_null sind ausdrueckliche Non-Goals von OPT-ARC-001 (docs/reports/opt-arc-001-db-proof-matrix.json)",
-          "Audit-Proof, Runtime-Audit-Werkzeug und lokaler wg-pg-proof-Smoke vorbereitet; Live-Produktions-Audit und Backfill fehlen weiter",
-          "Kein NOT NULL vor erfolgreichem Backfill-Proof und Cutover-Entscheidung"
+          "Audit-Proof, Runtime-Audit-Werkzeug, lokaler wg-pg-proof-Smoke und Heimserver-Runtime-Audit vorbereitet; Heimserver-Audit ist durch fehlendes passkey_credentials-Schema blockiert; Backfill fehlt weiter",
+          "Kein NOT NULL vor erfolgreichem Backfill-Proof und Cutover-Entscheidung",
+          "Vollständige Backfill-Counts fehlen, solange passkey_credentials in der Zielumgebung nicht existiert"
         ],
         "owner": "unknown",
         "priority": "medium",
@@ -701,7 +704,7 @@
         "title": "Legacy-Backfill fuer webauthn_user_id und spaeteres NOT NULL",
         "updated_at": "2026-07-01"
       },
-      "source_task_sha256": "3691a9c11f4c244cdf85f28be40e401a046f6c49ee657ac75853c4a766dfc7bf",
+      "source_task_sha256": "a577648658de0dc4edc96ebe86a47aefca811bd3230c82caed16d5259f1f0d4f",
       "status": "blocked",
       "title": "Legacy-Backfill fuer webauthn_user_id und spaeteres NOT NULL",
       "updated_at": "2026-07-01"
@@ -2299,7 +2302,7 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "535c9bea70f0e01ea13a412b418e47512af68ef7fb7ef7f4d810107eafca20b9",
+  "index_sha256": "b6a46d75891d30a8a01957fe90a0868a3b5d6d4dfc76e61f27b2a13fe021a120",
   "ref": "HEAD",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",

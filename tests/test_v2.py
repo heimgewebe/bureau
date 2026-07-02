@@ -961,37 +961,45 @@ def test_explain_next_exposes_read_only_lifecycle_repair_candidate(
         }
     ]
 
+
 def test_git_read_disables_optional_locks(monkeypatch, tmp_path):
-    calls = {}
-    class Result:
-        returncode = 0
-        stdout = "ok\n"
-        stderr = ""
+    calls = []
+
     def fake_run(argv, **kwargs):
-        calls["argv"] = argv
-        calls["kwargs"] = kwargs
-        return Result()
+        calls.append((argv, kwargs))
+        return subprocess.CompletedProcess(argv, 0, stdout="ok\n", stderr="")
+
     monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+
     result = bureau_v2._git_read(tmp_path, ["status", "--porcelain=v1"])
-    assert calls["argv"][:2] == ["git", "--no-optional-locks"]
+
+    assert calls[0][0][:2] == ["git", "--no-optional-locks"]
     assert result["stdout"] == "ok"
 
-def test_runtime_drift_check_blocks_when_git_status_fails(registry_factory, tmp_path, monkeypatch):
+
+def test_runtime_drift_check_blocks_when_git_status_fails(
+    registry_factory, tmp_path, monkeypatch
+):
     root = registry_factory(1)
     init_clean_origin_main(root)
     state = StateStore(tmp_path / "bureau.sqlite3")
     original_git_read = bureau_v2._git_read
+
     def fake_git_read(repo: Path, arguments: list[str]) -> dict[str, object]:
         if arguments == ["status", "--porcelain=v1"]:
             return {"returncode": 128, "stdout": "", "stderr": "fatal: bad index"}
         return original_git_read(repo, arguments)
+
     monkeypatch.setattr(bureau_v2, "_git_read", fake_git_read)
+
     report = runtime_drift_check(root, state_db=state.path)
     codes = {item["code"] for item in report["findings"]}
+
     assert report["status"] == "blocked"
     assert report["checkout"]["dirty"] is None
     assert "checkout-status-unreadable" in codes
     assert "checkout-clean" not in codes
+
 
 def test_runtime_drift_check_blocks_incomplete_state_db(registry_factory, tmp_path):
     root = registry_factory(1)
@@ -1002,8 +1010,10 @@ def test_runtime_drift_check_blocks_incomplete_state_db(registry_factory, tmp_pa
     connection.execute("CREATE TABLE task_status(task_id TEXT)")
     connection.commit()
     connection.close()
+
     report = runtime_drift_check(root, state_db=state_path)
     codes = {item["code"] for item in report["findings"]}
+
     assert report["status"] == "blocked"
     assert report["runtime"]["state_available"] is False
     assert report["runtime"]["state_schema_version"] == 3

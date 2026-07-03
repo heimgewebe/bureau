@@ -413,3 +413,33 @@ def test_pr_alias_is_seen_even_with_exact_branch_match() -> None:
     assert lane["pr"] == 54
     assert lane["task_id"] == "BUR-2026-001-T054"
     assert lane["metadata"]["merged_alias_fingerprint"] == pr_candidate["fingerprint"]
+
+
+def test_observe_open_pull_requests_passes_json_fields_as_one_argument(
+    tmp_path: Path, monkeypatch
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    monkeypatch.setattr("bureau.closure.github_repo_slug", lambda root: "heimgewebe/bureau")
+    calls: list[list[str]] = []
+
+    def fake_run(
+        args: list[str],
+        *unused_args: object,
+        **unused_kwargs: object,
+    ) -> subprocess.CompletedProcess[str]:
+        calls.append(args)
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="[]", stderr="")
+
+    monkeypatch.setattr("bureau.closure.subprocess.run", fake_run)
+
+    observation = observe_open_pull_requests(repo)
+
+    assert observation.pull_requests == []
+    command = calls[0]
+    json_index = command.index("--json")
+    assert command[json_index + 1] == (
+        "number,title,url,headRefName,isDraft,reviewDecision,mergeStateStatus,"
+        "headRepositoryOwner,isCrossRepository"
+    )
+    assert "number" not in command[json_index + 2 :]

@@ -80,7 +80,7 @@ OPEN_PULL_REQUEST_LIMIT = 200
 OPEN_PULL_REQUEST_SOURCE = "gh pr list --state open"
 OPEN_PULL_REQUEST_JSON_FIELDS = (
     "number,title,url,headRefName,isDraft,reviewDecision,mergeStateStatus,"
-    "headRepositoryOwner,isCrossRepository"
+    "headRepositoryOwner,isCrossRepository",
 )
 
 

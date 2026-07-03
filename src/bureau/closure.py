@@ -76,6 +76,7 @@ MERGE_STATES = {"merge_candidate", "merge_ready"}
 CANONICAL_TASK_REQUIRED_STATES = MUTATING_STATES | REVIEW_STATES | MERGE_STATES
 CANONICAL_BUREAU_TASK_ID_RE = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$")
 UNBOUND_NEXT_ACTION = "bind to canonical Bureau task before dispatch"
+OPEN_PULL_REQUEST_LIMIT = 200
 
 
 @dataclass(frozen=True)
@@ -160,6 +161,8 @@ def list_open_pull_requests(repo: Path) -> list[dict[str, Any]]:
                 slug,
                 "--state",
                 "open",
+                "--limit",
+                str(OPEN_PULL_REQUEST_LIMIT),
                 "--json",
                 "number,title,url,headRefName,isDraft,reviewDecision,mergeStateStatus",
             ],
@@ -489,12 +492,17 @@ def recent_failed_tasks(task_db: Path, horizon_seconds: int = 3 * 60 * 60) -> li
 
 
 def candidate_fingerprint(candidate: dict[str, Any]) -> str:
-    return hashlib.sha256(
-        "\0".join(
-            str(candidate.get(key, ""))
-            for key in ("kind", "repo", "branch", "pr", "task_id", "source")
-        ).encode("utf-8")
-    ).hexdigest()
+    pr_identity = "" if candidate.get("kind") == "branch" else candidate.get("pr", "")
+    values = (
+        candidate.get("kind", ""),
+        candidate.get("repo", ""),
+        candidate.get("branch", ""),
+        pr_identity,
+        candidate.get("task_id", ""),
+        candidate.get("source", ""),
+    )
+    joined = "\0".join(str(value) for value in values)
+    return hashlib.sha256(joined.encode("utf-8")).hexdigest()
 
 
 def inventory_existing_work(
@@ -738,9 +746,11 @@ def merge_lanes(
     for candidate in inventory.get("candidates", []):
         fingerprint = candidate["fingerprint"]
         old = dict(by_fingerprint.get(fingerprint, {}))
-        state = (
-            old.get("state") if old.get("state") in LANE_STATES else initial_lane_state(candidate)
-        )
+        candidate_state = initial_lane_state(candidate)
+        if candidate.get("observed_github_state"):
+            state = candidate_state
+        else:
+            state = old.get("state") if old.get("state") in LANE_STATES else candidate_state
         if state in {"closed", "verified", "merged"} and not candidate.get("merged"):
             state = "needs_revision"
         lane = {

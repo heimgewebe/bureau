@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from bureau import cli as bureau_cli
+from bureau import v2 as bureau_v2
 from bureau.adapters import AdapterRegistry, Observation
 from bureau.core import (
     Dispatcher,
@@ -23,7 +24,7 @@ from bureau.core import (
     verification_stamp,
     workspace_status,
 )
-from bureau.v2 import plan_sha256, task_revision_sha256
+from bureau.v2 import plan_sha256, runtime_drift_check, task_revision_sha256
 
 
 class FakeAdapter:
@@ -49,6 +50,28 @@ class FakeAdapter:
     def resume(self, external_id: str) -> dict:
         return {"task_id": external_id, "state": "running"}
 
+
+
+
+def git_output(root: Path, *arguments: str) -> str:
+    result = subprocess.run(
+        ["git", "-C", str(root), *arguments],
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    return result.stdout.strip()
+
+
+def init_clean_origin_main(root: Path) -> str:
+    git_output(root, "init", "-b", "main")
+    git_output(root, "config", "user.email", "bureau-test@example.invalid")
+    git_output(root, "config", "user.name", "Bureau Test")
+    git_output(root, "add", ".")
+    git_output(root, "commit", "-m", "initial")
+    head = git_output(root, "rev-parse", "HEAD")
+    git_output(root, "update-ref", "refs/remotes/origin/main", head)
+    return head
 
 def setup(root: Path, tmp_path: Path, monkeypatch, adapters: AdapterRegistry | None = None):
     state = tmp_path / "state"
@@ -724,6 +747,102 @@ def test_external_agent_checkout_accepts_valid_grabowski_brief(
     assert result["handoff"]["worker_profile"] == "codex-efficient"
 
 
+
+
+def test_runtime_drift_check_reports_clean_checkout_without_mutation(
+    registry_factory, tmp_path
+):
+    root = registry_factory(1)
+    head = init_clean_origin_main(root)
+    state = StateStore(tmp_path / "bureau.sqlite3")
+
+    report = runtime_drift_check(root, state_db=state.path)
+
+    assert report["command"] == "runtime-drift-check"
+    assert report["read_only"] is True
+    assert report["status"] == "ok"
+    assert report["checkout"]["branch"] == "main"
+    assert report["checkout"]["head"] == head
+    assert report["checkout"]["origin_main"] == head
+    assert report["checkout"]["head_equals_origin_main"] is True
+    assert report["checkout"]["dirty"] is False
+    assert report["runtime"]["state_integrity"] == "ok"
+    assert report["receipts"]["stale_tasks"] == []
+    assert report["receipts"]["active_run_drift"] == []
+    assert {item["code"] for item in report["findings"]} == {
+        "checkout-clean",
+        "receipt-drift-clear",
+    }
+
+
+def test_runtime_drift_check_reports_dirty_checkout_and_receipt_drift(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+    complete_run(registry, store, run["run_id"], {"proof": {"result": "passed"}})
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["title"] = "Changed after receipt"
+    task_path.write_text(json.dumps(task))
+
+    report = runtime_drift_check(root, state_db=store.path)
+    codes = {item["code"] for item in report["findings"]}
+
+    assert report["status"] == "blocked"
+    assert report["checkout"]["dirty"] is True
+    assert any("registry/tasks" in path for path in report["checkout"]["dirty_paths"])
+    assert report["receipts"]["stale_tasks"][0]["task_id"] == task["id"]
+    assert {"checkout-dirty", "receipt-drift"} <= codes
+    assert {item["severity"] for item in report["findings"]} >= {"warning", "blocker"}
+
+
+def test_runtime_drift_check_reports_untracked_files_when_git_config_hides_them(
+    registry_factory, tmp_path
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    subprocess.run(
+        ["git", "-C", str(root), "config", "status.showUntrackedFiles", "no"],
+        check=True,
+    )
+    (root / "hidden-untracked.txt").write_text("not tracked\n")
+    state = StateStore(tmp_path / "bureau.sqlite3")
+
+    report = runtime_drift_check(root, state_db=state.path)
+
+    assert report["status"] == "warning"
+    assert report["checkout"]["dirty"] is True
+    assert "?? hidden-untracked.txt" in report["checkout"]["dirty_paths"]
+    assert "checkout-dirty" in {item["code"] for item in report["findings"]}
+
+
+def test_runtime_drift_check_cli_emits_read_only_report(
+    registry_factory, tmp_path, capsys
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    state = StateStore(tmp_path / "bureau.sqlite3")
+
+    result = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-db",
+            str(state.path),
+            "--json",
+            "runtime-drift-check",
+        ]
+    )
+    output = json.loads(capsys.readouterr().out)
+
+    assert result == 0
+    assert output["command"] == "runtime-drift-check"
+    assert output["read_only"] is True
+    assert output["checkout"]["dirty"] is False
+
 def test_explain_next_reports_runtime_truth_for_lifecycle_reopen(
     registry_factory, tmp_path, monkeypatch
 ):
@@ -861,3 +980,61 @@ def test_explain_next_exposes_read_only_lifecycle_repair_candidate(
             "suggested_action": "reconcile_initiative_lifecycle",
         }
     ]
+
+
+def test_git_read_disables_optional_locks(monkeypatch, tmp_path):
+    calls = []
+
+    def fake_run(argv, **kwargs):
+        calls.append((argv, kwargs))
+        return subprocess.CompletedProcess(argv, 0, stdout="ok\n", stderr="")
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+
+    result = bureau_v2._git_read(tmp_path, ["status", "--porcelain=v1"])
+
+    assert calls[0][0][:2] == ["git", "--no-optional-locks"]
+    assert result["stdout"] == "ok"
+
+
+def test_runtime_drift_check_blocks_when_git_status_fails(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    state = StateStore(tmp_path / "bureau.sqlite3")
+    original_git_read = bureau_v2._git_read
+
+    def fake_git_read(repo: Path, arguments: list[str]) -> dict[str, object]:
+        if arguments == ["status", "--porcelain=v1", "--untracked-files=all"]:
+            return {"returncode": 128, "stdout": "", "stderr": "fatal: bad index"}
+        return original_git_read(repo, arguments)
+
+    monkeypatch.setattr(bureau_v2, "_git_read", fake_git_read)
+
+    report = runtime_drift_check(root, state_db=state.path)
+    codes = {item["code"] for item in report["findings"]}
+
+    assert report["status"] == "blocked"
+    assert report["checkout"]["dirty"] is None
+    assert "checkout-status-unreadable" in codes
+    assert "checkout-clean" not in codes
+
+
+def test_runtime_drift_check_blocks_incomplete_state_db(registry_factory, tmp_path):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    state_path = tmp_path / "incomplete.sqlite3"
+    connection = sqlite3.connect(state_path)
+    connection.execute("PRAGMA user_version=3")
+    connection.execute("CREATE TABLE task_status(task_id TEXT)")
+    connection.commit()
+    connection.close()
+
+    report = runtime_drift_check(root, state_db=state_path)
+    codes = {item["code"] for item in report["findings"]}
+
+    assert report["status"] == "blocked"
+    assert report["runtime"]["state_available"] is False
+    assert report["runtime"]["state_schema_version"] == 3
+    assert "state-db-unavailable" in codes

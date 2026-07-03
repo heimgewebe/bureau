@@ -24,6 +24,7 @@ from .core import (
     grabowski_handoff,
     lifecycle_diagnostics,
     preserve_workspace,
+    runtime_drift_check,
     verification_stamp,
     workspace_status,
 )
@@ -59,6 +60,7 @@ def parser() -> argparse.ArgumentParser:
     sub.add_parser("status")
     doctor = sub.add_parser("doctor")
     doctor.add_argument("--repair", action="store_true")
+    sub.add_parser("runtime-drift-check")
     sub.add_parser("conflicts")
     sub.add_parser("lifecycle")
     source_check = sub.add_parser("source-check")
@@ -296,6 +298,12 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             emit(value, args.json)
             return 0
+        state_path = Path(args.state_db).expanduser() if args.state_db else None
+        state_root = Path(args.state_root).expanduser() if args.state_root else None
+        if args.command == "runtime-drift-check":
+            value = runtime_drift_check(root, state_db=state_path, state_root=state_root)
+            emit(value, args.json)
+            return 0
         registry = Registry.load(root)
         if args.command == "cabinet-import-preview":
             from .cabinet_graph import CabinetGraphError
@@ -348,8 +356,6 @@ def main(argv: list[str] | None = None) -> int:
             }
             emit(value, args.json)
             return 0
-        state_path = Path(args.state_db).expanduser() if args.state_db else None
-        state_root = Path(args.state_root).expanduser() if args.state_root else None
         store = StateStore(state_path, state_root)
         adapter_registry = adapters(args)
         dispatcher = Dispatcher(registry, store, adapter_registry)

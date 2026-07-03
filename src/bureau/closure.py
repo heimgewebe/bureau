@@ -95,6 +95,7 @@ class RepositorySource:
 class OpenPullRequestObservation:
     pull_requests: list[dict[str, Any]]
     blocked: dict[str, Any] | None = None
+    observed: bool = True
 
 
 def github_repo_slug_from_remote_url(remote_url: str | None) -> str | None:
@@ -189,7 +190,7 @@ def _normalise_open_pull_request(raw: dict[str, Any]) -> dict[str, Any] | None:
 def observe_open_pull_requests(repo: Path) -> OpenPullRequestObservation:
     slug = github_repo_slug(repo)
     if slug is None:
-        return OpenPullRequestObservation([])
+        return OpenPullRequestObservation([], observed=False)
     env = {**os.environ, "GH_PROMPT_DISABLED": "1", "NO_COLOR": "1", "PAGER": "cat"}
     try:
         result = subprocess.run(
@@ -609,6 +610,19 @@ def inventory_existing_work(
                     "observed_github_state": pr_observation.blocked,
                 }
             )
+        elif pr_observation.observed:
+            github_observations.append(
+                {
+                    "repo": str(source.root),
+                    "repo_name": source.name,
+                    "source_id": source.source_id,
+                    "observed_github_state": {
+                        "state": "observed",
+                        "source": OPEN_PULL_REQUEST_SOURCE,
+                        "open_pull_request_count": len(open_pull_requests),
+                    },
+                }
+            )
         open_prs_by_branch = {
             str(pr.get("branch")): pr
             for pr in open_pull_requests
@@ -838,12 +852,20 @@ def merge_lanes(
         for lane in previous.get("lanes", [])
         if isinstance(lane, dict) and lane.get("fingerprint")
     }
-    blocked_github_observations = {
+    github_observations = {
         item.get("repo"): item.get("observed_github_state")
         for item in inventory.get("github_observations", [])
-        if isinstance(item, dict)
-        and isinstance(item.get("observed_github_state"), dict)
-        and item.get("observed_github_state", {}).get("state") == "blocked"
+        if isinstance(item, dict) and isinstance(item.get("observed_github_state"), dict)
+    }
+    blocked_github_observations = {
+        repo: observation
+        for repo, observation in github_observations.items()
+        if observation.get("state") == "blocked"
+    }
+    successful_github_observation_repos = {
+        repo
+        for repo, observation in github_observations.items()
+        if observation.get("state") == "observed"
     }
     lanes: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -860,12 +882,17 @@ def merge_lanes(
                     break
         old = dict(old or {})
         blocked_github_observation = blocked_github_observations.get(candidate.get("repo"))
+        stale_pr_after_successful_observation = (
+            candidate.get("repo") in successful_github_observation_repos
+            and candidate.get("observed_github_state") is None
+            and (old.get("pr") is not None or old.get("observed_github_state") is not None)
+        )
         candidate_state = initial_lane_state(candidate)
         if blocked_github_observation is not None and (
             old.get("pr") is not None or old.get("observed_github_state") is not None
         ):
             state = "blocked"
-        elif candidate.get("observed_github_state"):
+        elif candidate.get("observed_github_state") or stale_pr_after_successful_observation:
             state = candidate_state
         else:
             state = old.get("state") if old.get("state") in LANE_STATES else candidate_state
@@ -890,6 +917,13 @@ def merge_lanes(
             )
             metadata["github_observation_blocked"] = blocked_github_observation
             next_action = "GitHub PR observation blocked; retry before closure decision"
+        elif stale_pr_after_successful_observation:
+            metadata["github_pr_observation_reset"] = {
+                "previous_pr": old.get("pr"),
+                "previous_observed_github_state": old.get("observed_github_state"),
+                "reason": "successful GitHub observation no longer returned this PR",
+            }
+            next_action = candidate.get("next_best_action")
         if matched_fingerprint != fingerprint:
             metadata["migrated_from_fingerprint"] = matched_fingerprint
         lane = {

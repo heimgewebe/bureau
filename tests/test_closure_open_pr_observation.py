@@ -257,3 +257,55 @@ def test_cross_repository_pr_is_not_attached_to_same_named_local_branch(
     )
     assert branch_candidate.get("pr") is None
     assert pr_candidate["pr"] == 52
+
+
+def test_successful_github_observation_resets_stale_pr_state() -> None:
+    candidate = {
+        "kind": "branch",
+        "repo": "/tmp/repo",
+        "repo_name": "repo",
+        "branch": "feat/example",
+        "pr": 54,
+        "pr_title": "Example PR",
+        "pr_url": "https://github.com/heimgewebe/bureau/pull/54",
+        "observed_github_state": {"state": "open", "source": "test"},
+        "proposed_state": "merge_candidate",
+        "finishability": 0.9,
+    }
+    candidate["fingerprint"] = candidate_fingerprint(candidate)
+    existing = merge_lanes({"candidates": [candidate]})
+    existing["lanes"][0]["task_id"] = "BUR-2026-001-T999"
+    next_candidate = {
+        "kind": "branch",
+        "repo": "/tmp/repo",
+        "repo_name": "repo",
+        "branch": "feat/example",
+        "proposed_state": "planned",
+        "finishability": 0.55,
+        "next_best_action": "bind branch to canonical task or create planned closure task",
+    }
+    next_candidate["fingerprint"] = candidate_fingerprint(next_candidate)
+
+    lanes = merge_lanes(
+        {
+            "candidates": [next_candidate],
+            "github_observations": [
+                {
+                    "repo": "/tmp/repo",
+                    "observed_github_state": {
+                        "state": "observed",
+                        "source": "gh pr list --state open",
+                        "open_pull_request_count": 0,
+                    },
+                }
+            ],
+        },
+        existing,
+    )
+
+    lane = lanes["lanes"][0]
+    assert lane["state"] == "planned"
+    assert lane["pr"] is None
+    assert lane["observed_github_state"] is None
+    assert lane["task_id"] == "BUR-2026-001-T999"
+    assert lane["metadata"]["github_pr_observation_reset"]["previous_pr"] == 54

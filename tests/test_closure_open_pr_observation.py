@@ -4,10 +4,13 @@ import subprocess
 from pathlib import Path
 
 from bureau.closure import (
+    OpenPullRequestObservation,
     RepositorySource,
+    candidate_fingerprint,
     github_repo_slug_from_remote_url,
     inventory_existing_work,
     merge_lanes,
+    observe_open_pull_requests,
     open_pull_request_lane_state,
 )
 
@@ -77,7 +80,10 @@ def test_github_repo_slug_from_remote_url_accepts_ssh_and_https() -> None:
 
 def test_inventory_attaches_open_pr_to_existing_branch(tmp_path: Path, monkeypatch) -> None:
     repo = make_repo(tmp_path)
-    monkeypatch.setattr("bureau.closure.list_open_pull_requests", lambda root: [open_pr()])
+    monkeypatch.setattr(
+        "bureau.closure.observe_open_pull_requests",
+        lambda root: OpenPullRequestObservation([open_pr()]),
+    )
 
     inventory = inventory_existing_work([RepositorySource("repo", repo, "repo:repo")])
     candidate = next(item for item in inventory["candidates"] if item["kind"] == "branch")
@@ -97,8 +103,10 @@ def test_inventory_attaches_open_pr_to_existing_branch(tmp_path: Path, monkeypat
 def test_inventory_records_open_pr_without_local_branch(tmp_path: Path, monkeypatch) -> None:
     repo = make_repo(tmp_path)
     monkeypatch.setattr(
-        "bureau.closure.list_open_pull_requests",
-        lambda root: [open_pr(53, branch="automation/remote-only", draft=True)],
+        "bureau.closure.observe_open_pull_requests",
+        lambda root: OpenPullRequestObservation(
+            [open_pr(53, branch="automation/remote-only", draft=True)]
+        ),
     )
 
     inventory = inventory_existing_work([RepositorySource("repo", repo, "repo:repo")])
@@ -125,3 +133,127 @@ def test_clean_approved_open_pr_is_merge_candidate() -> None:
     )
     assert state == "merge_candidate"
     assert "merge gatekeeper" in action
+
+
+def test_observe_open_pull_requests_records_adapter_failure(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    monkeypatch.setattr("bureau.closure.github_repo_slug", lambda root: "heimgewebe/bureau")
+
+    def fail(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        raise FileNotFoundError("gh missing")
+
+    monkeypatch.setattr("bureau.closure.subprocess.run", fail)
+
+    observation = observe_open_pull_requests(repo)
+
+    assert observation.pull_requests == []
+    assert observation.blocked is not None
+    assert observation.blocked["state"] == "blocked"
+    assert observation.blocked["reason"] == "adapter_unavailable"
+
+
+def test_blocked_github_observation_preserves_existing_pr_lane() -> None:
+    candidate = {
+        "kind": "branch",
+        "repo": "/tmp/repo",
+        "repo_name": "repo",
+        "branch": "feat/example",
+        "pr": 54,
+        "pr_title": "Example PR",
+        "pr_url": "https://github.com/heimgewebe/bureau/pull/54",
+        "observed_github_state": {"state": "open", "source": "test"},
+        "proposed_state": "merge_candidate",
+        "finishability": 0.9,
+    }
+    candidate["fingerprint"] = candidate_fingerprint(candidate)
+    existing = merge_lanes({"candidates": [candidate]})
+    existing["lanes"][0]["task_id"] = "BUR-2026-001-T999"
+    next_candidate = {
+        "kind": "branch",
+        "repo": "/tmp/repo",
+        "repo_name": "repo",
+        "branch": "feat/example",
+        "proposed_state": "planned",
+        "finishability": 0.55,
+    }
+    next_candidate["fingerprint"] = candidate_fingerprint(next_candidate)
+
+    lanes = merge_lanes(
+        {
+            "candidates": [next_candidate],
+            "github_observations": [
+                {
+                    "repo": "/tmp/repo",
+                    "observed_github_state": {
+                        "state": "blocked",
+                        "source": "gh pr list --state open",
+                        "reason": "adapter_failed",
+                    },
+                }
+            ],
+        },
+        existing,
+    )
+
+    lane = lanes["lanes"][0]
+    assert lane["state"] == "blocked"
+    assert lane["pr"] == 54
+    assert lane["task_id"] == "BUR-2026-001-T999"
+    assert lane["observed_github_state"]["state"] == "open"
+    assert lane["metadata"]["github_observation_blocked"]["reason"] == "adapter_failed"
+
+
+def test_remote_only_pr_lane_migrates_when_branch_is_checked_out(
+    tmp_path: Path, monkeypatch
+) -> None:
+    repo = make_repo(tmp_path)
+    source = RepositorySource("repo", repo, "repo:repo")
+    monkeypatch.setattr(
+        "bureau.closure.observe_open_pull_requests",
+        lambda root: OpenPullRequestObservation(
+            [open_pr(53, branch="automation/remote-only")]
+        ),
+    )
+    existing = merge_lanes(inventory_existing_work([source]))
+    existing["lanes"][0]["task_id"] = "BUR-2026-001-T053"
+
+    git(repo, "switch", "-c", "automation/remote-only")
+    (repo / "remote.txt").write_text("remote\n", encoding="utf-8")
+    git(repo, "add", "remote.txt")
+    git(repo, "commit", "-m", "remote branch")
+    git(repo, "switch", "main")
+
+    lanes = merge_lanes(inventory_existing_work([source]), existing)
+
+    assert len(lanes["lanes"]) == 2
+    remote_lane = next(item for item in lanes["lanes"] if item["pr"] == 53)
+    assert remote_lane["branch"] == "automation/remote-only"
+    assert remote_lane["task_id"] == "BUR-2026-001-T053"
+    assert remote_lane["metadata"]["migrated_from_fingerprint"]
+    assert all(
+        item["next_action"] != "source candidate disappeared; inspect before continuing"
+        for item in lanes["lanes"]
+    )
+
+
+def test_cross_repository_pr_is_not_attached_to_same_named_local_branch(
+    tmp_path: Path, monkeypatch
+) -> None:
+    repo = make_repo(tmp_path)
+    fork_pr = open_pr()
+    fork_pr["is_cross_repository"] = True
+    fork_pr["observed_github_state"]["is_cross_repository"] = True
+    monkeypatch.setattr(
+        "bureau.closure.observe_open_pull_requests",
+        lambda root: OpenPullRequestObservation([fork_pr]),
+    )
+
+    inventory = inventory_existing_work([RepositorySource("repo", repo, "repo:repo")])
+
+    branch_candidate = next(item for item in inventory["candidates"] if item["kind"] == "branch")
+    pr_candidate = next(
+        item for item in inventory["candidates"] if item["kind"] == "open_pull_request"
+    )
+    assert branch_candidate.get("pr") is None
+    assert pr_candidate["pr"] == 52

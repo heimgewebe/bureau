@@ -77,6 +77,11 @@ CANONICAL_TASK_REQUIRED_STATES = MUTATING_STATES | REVIEW_STATES | MERGE_STATES
 CANONICAL_BUREAU_TASK_ID_RE = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$")
 UNBOUND_NEXT_ACTION = "bind to canonical Bureau task before dispatch"
 OPEN_PULL_REQUEST_LIMIT = 200
+OPEN_PULL_REQUEST_SOURCE = "gh pr list --state open"
+OPEN_PULL_REQUEST_JSON_FIELDS = (
+    "number,title,url,headRefName,isDraft,reviewDecision,mergeStateStatus,"
+    "headRepositoryOwner,isCrossRepository"
+)
 
 
 @dataclass(frozen=True)
@@ -84,6 +89,12 @@ class RepositorySource:
     name: str
     root: Path
     source_id: str
+
+
+@dataclass(frozen=True)
+class OpenPullRequestObservation:
+    pull_requests: list[dict[str, Any]]
+    blocked: dict[str, Any] | None = None
 
 
 def github_repo_slug_from_remote_url(remote_url: str | None) -> str | None:
@@ -117,6 +128,27 @@ def _upper_or_unknown(value: Any) -> str:
     return "UNKNOWN"
 
 
+def _github_observation_blocked(reason: str, detail: str = "") -> dict[str, Any]:
+    value = {
+        "state": "blocked",
+        "source": OPEN_PULL_REQUEST_SOURCE,
+        "reason": reason,
+    }
+    if detail:
+        value["detail"] = detail[:500]
+    return value
+
+
+def _normalise_head_repository_owner(value: Any) -> str:
+    if isinstance(value, dict):
+        login = value.get("login")
+        if isinstance(login, str):
+            return login
+    if isinstance(value, str):
+        return value
+    return ""
+
+
 def _normalise_open_pull_request(raw: dict[str, Any]) -> dict[str, Any] | None:
     number = raw.get("number") or raw.get("pr")
     if not isinstance(number, int):
@@ -130,26 +162,34 @@ def _normalise_open_pull_request(raw: dict[str, Any]) -> dict[str, Any] | None:
     merge_state = _upper_or_unknown(raw.get("mergeStateStatus") or raw.get("merge_state_status"))
     review_decision = _upper_or_unknown(raw.get("reviewDecision") or raw.get("review_decision"))
     is_draft = bool(raw.get("isDraft") or raw.get("is_draft"))
+    is_cross_repository = bool(raw.get("isCrossRepository") or raw.get("is_cross_repository"))
+    head_repository_owner = _normalise_head_repository_owner(
+        raw.get("headRepositoryOwner") or raw.get("head_repository_owner")
+    )
     return {
         "pr": number,
         "pr_title": str(raw.get("title") or raw.get("pr_title") or ""),
         "pr_url": str(raw.get("url") or raw.get("pr_url") or ""),
         "branch": branch.strip(),
         "head_ref_name": branch.strip(),
+        "head_repository_owner": head_repository_owner,
+        "is_cross_repository": is_cross_repository,
         "observed_github_state": {
             "state": "open",
             "merge_state_status": merge_state,
             "review_decision": review_decision,
             "is_draft": is_draft,
-            "source": "gh pr list --state open",
+            "head_repository_owner": head_repository_owner,
+            "is_cross_repository": is_cross_repository,
+            "source": OPEN_PULL_REQUEST_SOURCE,
         },
     }
 
 
-def list_open_pull_requests(repo: Path) -> list[dict[str, Any]]:
+def observe_open_pull_requests(repo: Path) -> OpenPullRequestObservation:
     slug = github_repo_slug(repo)
     if slug is None:
-        return []
+        return OpenPullRequestObservation([])
     env = {**os.environ, "GH_PROMPT_DISABLED": "1", "NO_COLOR": "1", "PAGER": "cat"}
     try:
         result = subprocess.run(
@@ -164,7 +204,7 @@ def list_open_pull_requests(repo: Path) -> list[dict[str, Any]]:
                 "--limit",
                 str(OPEN_PULL_REQUEST_LIMIT),
                 "--json",
-                "number,title,url,headRefName,isDraft,reviewDecision,mergeStateStatus",
+                *OPEN_PULL_REQUEST_JSON_FIELDS,
             ],
             check=False,
             capture_output=True,
@@ -172,16 +212,36 @@ def list_open_pull_requests(repo: Path) -> list[dict[str, Any]]:
             timeout=20,
             env=env,
         )
-    except (OSError, subprocess.SubprocessError):
-        return []
+    except subprocess.TimeoutExpired as exc:
+        return OpenPullRequestObservation(
+            [], _github_observation_blocked("timeout", str(exc))
+        )
+    except OSError as exc:
+        return OpenPullRequestObservation(
+            [], _github_observation_blocked("adapter_unavailable", str(exc))
+        )
+    except subprocess.SubprocessError as exc:
+        return OpenPullRequestObservation(
+            [], _github_observation_blocked("adapter_error", str(exc))
+        )
     if result.returncode:
-        return []
+        return OpenPullRequestObservation(
+            [],
+            _github_observation_blocked(
+                "adapter_failed",
+                f"returncode={result.returncode} stderr={result.stderr.strip()}",
+            ),
+        )
     try:
         raw_values = json.loads(result.stdout or "[]")
-    except json.JSONDecodeError:
-        return []
+    except json.JSONDecodeError as exc:
+        return OpenPullRequestObservation(
+            [], _github_observation_blocked("invalid_response", str(exc))
+        )
     if not isinstance(raw_values, list):
-        return []
+        return OpenPullRequestObservation(
+            [], _github_observation_blocked("invalid_response", "expected JSON array")
+        )
     normalised: list[dict[str, Any]] = []
     for raw in raw_values:
         if not isinstance(raw, dict):
@@ -189,7 +249,11 @@ def list_open_pull_requests(repo: Path) -> list[dict[str, Any]]:
         pr = _normalise_open_pull_request(raw)
         if pr is not None:
             normalised.append(pr)
-    return normalised
+    return OpenPullRequestObservation(normalised)
+
+
+def list_open_pull_requests(repo: Path) -> list[dict[str, Any]]:
+    return observe_open_pull_requests(repo).pull_requests
 
 
 def open_pull_request_lane_state(pr: dict[str, Any]) -> tuple[str, float, str]:
@@ -505,6 +569,25 @@ def candidate_fingerprint(candidate: dict[str, Any]) -> str:
     return hashlib.sha256(joined.encode("utf-8")).hexdigest()
 
 
+def candidate_fingerprint_aliases(candidate: dict[str, Any]) -> list[str]:
+    if candidate.get("kind") != "branch" or candidate.get("pr") in {None, ""}:
+        return []
+    remote_pr_candidate = {
+        "kind": "open_pull_request",
+        "repo": candidate.get("repo"),
+        "branch": candidate.get("branch"),
+        "pr": candidate.get("pr"),
+    }
+    return [candidate_fingerprint(remote_pr_candidate)]
+
+
+def open_pull_request_can_match_local_branch(pr: dict[str, Any]) -> bool:
+    if pr.get("is_cross_repository") is True:
+        return False
+    observed = pr.get("observed_github_state")
+    return not (isinstance(observed, dict) and observed.get("is_cross_repository") is True)
+
+
 def inventory_existing_work(
     repositories: list[RepositorySource],
     *,
@@ -513,10 +596,23 @@ def inventory_existing_work(
 ) -> dict[str, Any]:
     selected = repositories[:max_repositories] if max_repositories else repositories
     candidates: list[dict[str, Any]] = []
+    github_observations: list[dict[str, Any]] = []
     for source in selected:
-        open_pull_requests = list_open_pull_requests(source.root)
+        pr_observation = observe_open_pull_requests(source.root)
+        open_pull_requests = pr_observation.pull_requests
+        if pr_observation.blocked is not None:
+            github_observations.append(
+                {
+                    "repo": str(source.root),
+                    "repo_name": source.name,
+                    "source_id": source.source_id,
+                    "observed_github_state": pr_observation.blocked,
+                }
+            )
         open_prs_by_branch = {
-            str(pr.get("branch")): pr for pr in open_pull_requests if pr.get("branch")
+            str(pr.get("branch")): pr
+            for pr in open_pull_requests
+            if pr.get("branch") and open_pull_request_can_match_local_branch(pr)
         }
         matched_open_pr_numbers: set[int] = set()
         for branch in local_branches(source.root):
@@ -607,6 +703,8 @@ def inventory_existing_work(
         "generated_at": utc_now(),
         "repository_count": len(selected),
         "candidate_count": len(candidates),
+        "github_observation_count": len(github_observations),
+        "github_observations": github_observations,
         "candidates": sorted(
             candidates,
             key=lambda item: (
@@ -740,19 +838,60 @@ def merge_lanes(
         for lane in previous.get("lanes", [])
         if isinstance(lane, dict) and lane.get("fingerprint")
     }
+    blocked_github_observations = {
+        item.get("repo"): item.get("observed_github_state")
+        for item in inventory.get("github_observations", [])
+        if isinstance(item, dict)
+        and isinstance(item.get("observed_github_state"), dict)
+        and item.get("observed_github_state", {}).get("state") == "blocked"
+    }
     lanes: list[dict[str, Any]] = []
     seen: set[str] = set()
     intents = manual_intents or []
     for candidate in inventory.get("candidates", []):
         fingerprint = candidate["fingerprint"]
-        old = dict(by_fingerprint.get(fingerprint, {}))
+        matched_fingerprint = fingerprint
+        old = by_fingerprint.get(fingerprint)
+        if old is None:
+            for alias in candidate_fingerprint_aliases(candidate):
+                old = by_fingerprint.get(alias)
+                if old is not None:
+                    matched_fingerprint = alias
+                    break
+        old = dict(old or {})
+        blocked_github_observation = blocked_github_observations.get(candidate.get("repo"))
         candidate_state = initial_lane_state(candidate)
-        if candidate.get("observed_github_state"):
+        if blocked_github_observation is not None and (
+            old.get("pr") is not None or old.get("observed_github_state") is not None
+        ):
+            state = "blocked"
+        elif candidate.get("observed_github_state"):
             state = candidate_state
         else:
             state = old.get("state") if old.get("state") in LANE_STATES else candidate_state
         if state in {"closed", "verified", "merged"} and not candidate.get("merged"):
             state = "needs_revision"
+        metadata = dict(old.get("metadata") if isinstance(old.get("metadata"), dict) else {})
+        pr_value = candidate.get("pr")
+        pr_title = candidate.get("pr_title")
+        pr_url = candidate.get("pr_url")
+        observed_github_state = candidate.get("observed_github_state")
+        next_action = candidate.get("next_best_action")
+        if blocked_github_observation is not None and (
+            old.get("pr") is not None or old.get("observed_github_state") is not None
+        ):
+            pr_value = old.get("pr") if pr_value is None else pr_value
+            pr_title = old.get("pr_title") if pr_title is None else pr_title
+            pr_url = old.get("pr_url") if pr_url is None else pr_url
+            observed_github_state = (
+                old.get("observed_github_state")
+                if observed_github_state is None
+                else observed_github_state
+            )
+            metadata["github_observation_blocked"] = blocked_github_observation
+            next_action = "GitHub PR observation blocked; retry before closure decision"
+        if matched_fingerprint != fingerprint:
+            metadata["migrated_from_fingerprint"] = matched_fingerprint
         lane = {
             **old,
             "schema_version": SCHEMA_VERSION,
@@ -762,27 +901,45 @@ def merge_lanes(
             "repo": candidate.get("repo"),
             "repo_name": candidate.get("repo_name"),
             "branch": candidate.get("branch"),
-            "pr": candidate.get("pr"),
-            "pr_title": candidate.get("pr_title"),
-            "pr_url": candidate.get("pr_url"),
-            "observed_github_state": candidate.get("observed_github_state"),
+            "pr": pr_value,
+            "pr_title": pr_title,
+            "pr_url": pr_url,
+            "observed_github_state": observed_github_state,
+            "metadata": metadata,
             "task_id": old.get("task_id") or candidate.get("task_id"),
             "source_candidate": candidate,
             "risk": candidate.get("risk", "medium"),
             "finishability": candidate.get("finishability", 0.0),
-            "next_action": candidate.get("next_best_action"),
+            "next_action": next_action,
             "updated_at": utc_now(),
         }
         lane = apply_manual_priority(lane, intents)
         lane = apply_canonical_task_state(lane, canonical_task_states or {})
         lanes.append(lane)
         seen.add(fingerprint)
+        seen.add(matched_fingerprint)
     for lane in previous.get("lanes", []):
         if isinstance(lane, dict) and lane.get("fingerprint") not in seen:
             retained = dict(lane)
+            blocked_github_observation = blocked_github_observations.get(retained.get("repo"))
+            metadata = dict(
+                retained.get("metadata") if isinstance(retained.get("metadata"), dict) else {}
+            )
             if retained.get("state") not in {"closed", "merged", "verified", "obsolete"}:
                 retained["state"] = "blocked"
-                retained["next_action"] = "source candidate disappeared; inspect before continuing"
+                if blocked_github_observation is not None and (
+                    retained.get("pr") is not None
+                    or retained.get("observed_github_state") is not None
+                ):
+                    metadata["github_observation_blocked"] = blocked_github_observation
+                    retained["next_action"] = (
+                        "GitHub PR observation blocked; retry before treating source as disappeared"
+                    )
+                else:
+                    retained["next_action"] = (
+                        "source candidate disappeared; inspect before continuing"
+                    )
+                retained["metadata"] = metadata
                 retained["updated_at"] = utc_now()
             retained = apply_manual_priority(retained, intents)
             retained = apply_canonical_task_state(retained, canonical_task_states or {})

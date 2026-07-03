@@ -96,6 +96,7 @@ class OpenPullRequestObservation:
     pull_requests: list[dict[str, Any]]
     blocked: dict[str, Any] | None = None
     observed: bool = True
+    complete: bool = True
 
 
 def github_repo_slug_from_remote_url(remote_url: str | None) -> str | None:
@@ -190,7 +191,7 @@ def _normalise_open_pull_request(raw: dict[str, Any]) -> dict[str, Any] | None:
 def observe_open_pull_requests(repo: Path) -> OpenPullRequestObservation:
     slug = github_repo_slug(repo)
     if slug is None:
-        return OpenPullRequestObservation([], observed=False)
+        return OpenPullRequestObservation([], observed=False, complete=False)
     env = {**os.environ, "GH_PROMPT_DISABLED": "1", "NO_COLOR": "1", "PAGER": "cat"}
     try:
         result = subprocess.run(
@@ -250,7 +251,9 @@ def observe_open_pull_requests(repo: Path) -> OpenPullRequestObservation:
         pr = _normalise_open_pull_request(raw)
         if pr is not None:
             normalised.append(pr)
-    return OpenPullRequestObservation(normalised)
+    return OpenPullRequestObservation(
+        normalised, complete=len(raw_values) < OPEN_PULL_REQUEST_LIMIT
+    )
 
 
 def list_open_pull_requests(repo: Path) -> list[dict[str, Any]]:
@@ -620,6 +623,8 @@ def inventory_existing_work(
                         "state": "observed",
                         "source": OPEN_PULL_REQUEST_SOURCE,
                         "open_pull_request_count": len(open_pull_requests),
+                        "complete": pr_observation.complete,
+                        "limit": OPEN_PULL_REQUEST_LIMIT,
                     },
                 }
             )
@@ -862,10 +867,15 @@ def merge_lanes(
         for repo, observation in github_observations.items()
         if observation.get("state") == "blocked"
     }
-    successful_github_observation_repos = {
+    successful_complete_github_observation_repos = {
         repo
         for repo, observation in github_observations.items()
-        if observation.get("state") == "observed"
+        if observation.get("state") == "observed" and observation.get("complete") is True
+    }
+    incomplete_github_observations = {
+        repo: observation
+        for repo, observation in github_observations.items()
+        if observation.get("state") == "observed" and observation.get("complete") is not True
     }
     lanes: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -873,24 +883,43 @@ def merge_lanes(
     for candidate in inventory.get("candidates", []):
         fingerprint = candidate["fingerprint"]
         matched_fingerprint = fingerprint
+        aliases = candidate_fingerprint_aliases(candidate)
         old = by_fingerprint.get(fingerprint)
-        if old is None:
-            for alias in candidate_fingerprint_aliases(candidate):
-                old = by_fingerprint.get(alias)
-                if old is not None:
+        alias_old = None
+        alias_fingerprint = None
+        for alias in aliases:
+            candidate_alias_old = by_fingerprint.get(alias)
+            if candidate_alias_old is not None:
+                alias_old = candidate_alias_old
+                alias_fingerprint = alias
+                if old is None:
+                    old = candidate_alias_old
                     matched_fingerprint = alias
-                    break
+                break
         old = dict(old or {})
+        alias_old = dict(alias_old or {})
         blocked_github_observation = blocked_github_observations.get(candidate.get("repo"))
+        incomplete_github_observation = incomplete_github_observations.get(candidate.get("repo"))
+        has_previous_pr_state = (
+            old.get("pr") is not None
+            or old.get("observed_github_state") is not None
+            or alias_old.get("pr") is not None
+            or alias_old.get("observed_github_state") is not None
+        )
         stale_pr_after_successful_observation = (
-            candidate.get("repo") in successful_github_observation_repos
+            candidate.get("repo") in successful_complete_github_observation_repos
             and candidate.get("observed_github_state") is None
-            and (old.get("pr") is not None or old.get("observed_github_state") is not None)
+            and has_previous_pr_state
+        )
+        incomplete_pr_observation_for_previous_pr = (
+            incomplete_github_observation is not None
+            and candidate.get("observed_github_state") is None
+            and has_previous_pr_state
         )
         candidate_state = initial_lane_state(candidate)
-        if blocked_github_observation is not None and (
-            old.get("pr") is not None or old.get("observed_github_state") is not None
-        ):
+        if (
+            blocked_github_observation is not None and has_previous_pr_state
+        ) or incomplete_pr_observation_for_previous_pr:
             state = "blocked"
         elif candidate.get("observed_github_state") or stale_pr_after_successful_observation:
             state = candidate_state
@@ -904,19 +933,36 @@ def merge_lanes(
         pr_url = candidate.get("pr_url")
         observed_github_state = candidate.get("observed_github_state")
         next_action = candidate.get("next_best_action")
-        if blocked_github_observation is not None and (
-            old.get("pr") is not None or old.get("observed_github_state") is not None
-        ):
-            pr_value = old.get("pr") if pr_value is None else pr_value
-            pr_title = old.get("pr_title") if pr_title is None else pr_title
-            pr_url = old.get("pr_url") if pr_url is None else pr_url
+        if blocked_github_observation is not None and has_previous_pr_state:
+            pr_value = old.get("pr") or alias_old.get("pr") if pr_value is None else pr_value
+            pr_title = (
+                old.get("pr_title") or alias_old.get("pr_title")
+                if pr_title is None
+                else pr_title
+            )
+            pr_url = old.get("pr_url") or alias_old.get("pr_url") if pr_url is None else pr_url
             observed_github_state = (
-                old.get("observed_github_state")
+                old.get("observed_github_state") or alias_old.get("observed_github_state")
                 if observed_github_state is None
                 else observed_github_state
             )
             metadata["github_observation_blocked"] = blocked_github_observation
             next_action = "GitHub PR observation blocked; retry before closure decision"
+        elif incomplete_pr_observation_for_previous_pr:
+            pr_value = old.get("pr") or alias_old.get("pr") if pr_value is None else pr_value
+            pr_title = (
+                old.get("pr_title") or alias_old.get("pr_title")
+                if pr_title is None
+                else pr_title
+            )
+            pr_url = old.get("pr_url") or alias_old.get("pr_url") if pr_url is None else pr_url
+            observed_github_state = (
+                old.get("observed_github_state") or alias_old.get("observed_github_state")
+                if observed_github_state is None
+                else observed_github_state
+            )
+            metadata["github_observation_incomplete"] = incomplete_github_observation
+            next_action = "GitHub PR observation incomplete; retry before closure decision"
         elif stale_pr_after_successful_observation:
             metadata["github_pr_observation_reset"] = {
                 "previous_pr": old.get("pr"),
@@ -926,6 +972,8 @@ def merge_lanes(
             next_action = candidate.get("next_best_action")
         if matched_fingerprint != fingerprint:
             metadata["migrated_from_fingerprint"] = matched_fingerprint
+        elif alias_old and alias_fingerprint:
+            metadata["merged_alias_fingerprint"] = alias_fingerprint
         lane = {
             **old,
             "schema_version": SCHEMA_VERSION,
@@ -940,7 +988,7 @@ def merge_lanes(
             "pr_url": pr_url,
             "observed_github_state": observed_github_state,
             "metadata": metadata,
-            "task_id": old.get("task_id") or candidate.get("task_id"),
+            "task_id": old.get("task_id") or alias_old.get("task_id") or candidate.get("task_id"),
             "source_candidate": candidate,
             "risk": candidate.get("risk", "medium"),
             "finishability": candidate.get("finishability", 0.0),
@@ -952,6 +1000,7 @@ def merge_lanes(
         lanes.append(lane)
         seen.add(fingerprint)
         seen.add(matched_fingerprint)
+        seen.update(aliases)
     for lane in previous.get("lanes", []):
         if isinstance(lane, dict) and lane.get("fingerprint") not in seen:
             retained = dict(lane)

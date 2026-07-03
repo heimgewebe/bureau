@@ -102,7 +102,9 @@ def test_inventory_records_open_pr_without_local_branch(tmp_path: Path, monkeypa
     )
 
     inventory = inventory_existing_work([RepositorySource("repo", repo, "repo:repo")])
-    candidate = next(item for item in inventory["candidates"] if item["kind"] == "open_pull_request")
+    candidate = next(
+        item for item in inventory["candidates"] if item["kind"] == "open_pull_request"
+    )
 
     assert candidate["branch"] == "automation/remote-only"
     assert candidate["pr"] == 53

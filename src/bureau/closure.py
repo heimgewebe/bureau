@@ -106,7 +106,8 @@ def github_repo_slug_from_remote_url(remote_url: str | None) -> str | None:
 
 
 def github_repo_slug(repo: Path) -> str | None:
-    return github_repo_slug_from_remote_url(git_stdout(repo, "config", "--get", "remote.origin.url"))
+    remote_url = git_stdout(repo, "config", "--get", "remote.origin.url")
+    return github_repo_slug_from_remote_url(remote_url)
 
 
 def _upper_or_unknown(value: Any) -> str:

@@ -799,6 +799,26 @@ def test_runtime_drift_check_reports_dirty_checkout_and_receipt_drift(
     assert {item["severity"] for item in report["findings"]} >= {"warning", "blocker"}
 
 
+def test_runtime_drift_check_reports_untracked_files_when_git_config_hides_them(
+    registry_factory, tmp_path
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    subprocess.run(
+        ["git", "-C", str(root), "config", "status.showUntrackedFiles", "no"],
+        check=True,
+    )
+    (root / "hidden-untracked.txt").write_text("not tracked\n")
+    state = StateStore(tmp_path / "bureau.sqlite3")
+
+    report = runtime_drift_check(root, state_db=state.path)
+
+    assert report["status"] == "warning"
+    assert report["checkout"]["dirty"] is True
+    assert "?? hidden-untracked.txt" in report["checkout"]["dirty_paths"]
+    assert "checkout-dirty" in {item["code"] for item in report["findings"]}
+
+
 def test_runtime_drift_check_cli_emits_read_only_report(
     registry_factory, tmp_path, capsys
 ):
@@ -986,7 +1006,7 @@ def test_runtime_drift_check_blocks_when_git_status_fails(
     original_git_read = bureau_v2._git_read
 
     def fake_git_read(repo: Path, arguments: list[str]) -> dict[str, object]:
-        if arguments == ["status", "--porcelain=v1"]:
+        if arguments == ["status", "--porcelain=v1", "--untracked-files=all"]:
             return {"returncode": 128, "stdout": "", "stderr": "fatal: bad index"}
         return original_git_read(repo, arguments)
 

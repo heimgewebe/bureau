@@ -1782,7 +1782,7 @@ def _checkout_drift(root: Path, findings: list[dict[str, Any]]) -> dict[str, Any
     branch = _git_read(root, ["branch", "--show-current"])
     head = _git_read(root, ["rev-parse", "HEAD"])
     origin_main = _git_read(root, ["rev-parse", "--verify", "origin/main^{commit}"])
-    status = _git_read(root, ["status", "--porcelain=v1"])
+    status = _git_read(root, ["status", "--porcelain=v1", "--untracked-files=all"])
     status_failed = status["returncode"] != 0
     dirty_lines = [] if status_failed else [line for line in status["stdout"].splitlines() if line]
     detached = not branch["stdout"]

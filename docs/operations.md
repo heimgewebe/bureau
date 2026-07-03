@@ -169,3 +169,19 @@ bureau-review-steward run --max-lanes 4
 systemctl --user status bureau-review-steward.timer
 journalctl --user -u bureau-review-steward.service -n 50 --no-pager
 ```
+
+## Closure pull-request observation
+
+Closure may observe open GitHub pull requests when the repository origin resolves to a GitHub `owner/repo` slug and `gh pr list` is available. The observation is fail-soft: if GitHub metadata cannot be read, Closure continues with local branch, worktree and task evidence only.
+
+Open pull requests are recorded as coordination evidence, not as a second pull-request authority. GitHub remains the owner for pull-request state, checks, review decisions and mergeability. Closure only stores `pr`, `pr_title`, `pr_url` and `observed_github_state` on the lane so that existing work can be routed to the right closure path.
+
+Conservative lane derivation from observed GitHub state is intentionally narrow:
+
+- `DIRTY` becomes `needs_revision`.
+- `UNSTABLE` or `UNKNOWN` becomes `ci_failed`.
+- Draft pull requests become `reviewing`.
+- `CLEAN` plus `APPROVED` becomes `merge_candidate`.
+- `CLEAN` without approval remains `reviewing`.
+
+A `merge_candidate` lane is only eligible for merge-gatekeeper handoff. It is not a merge permission and does not replace explicit checks, review-thread inspection or final merge policy.

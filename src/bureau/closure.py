@@ -85,6 +85,179 @@ class RepositorySource:
     source_id: str
 
 
+def github_repo_slug_from_remote_url(remote_url: str | None) -> str | None:
+    if not isinstance(remote_url, str):
+        return None
+    value = remote_url.strip()
+    if not value:
+        return None
+    patterns = (
+        r"^git@github\.com:([^/]+)/([^/]+?)(?:\.git)?/?$",
+        r"^ssh://(?:git@)?github\.com(?::\d+)?/([^/]+)/([^/]+?)(?:\.git)?/?$",
+        r"^https?://github\.com/([^/]+)/([^/]+?)(?:\.git)?/?$",
+    )
+    for pattern in patterns:
+        match = re.match(pattern, value)
+        if match:
+            owner, repo = match.groups()
+            if owner and repo:
+                return f"{owner}/{repo}"
+    return None
+
+
+def github_repo_slug(repo: Path) -> str | None:
+    return github_repo_slug_from_remote_url(git_stdout(repo, "config", "--get", "remote.origin.url"))
+
+
+def _upper_or_unknown(value: Any) -> str:
+    if isinstance(value, str) and value.strip():
+        return value.strip().upper()
+    return "UNKNOWN"
+
+
+def _normalise_open_pull_request(raw: dict[str, Any]) -> dict[str, Any] | None:
+    number = raw.get("number") or raw.get("pr")
+    if not isinstance(number, int):
+        try:
+            number = int(str(number))
+        except (TypeError, ValueError):
+            return None
+    branch = raw.get("headRefName") or raw.get("head_ref_name") or raw.get("branch")
+    if not isinstance(branch, str) or not branch.strip():
+        return None
+    merge_state = _upper_or_unknown(raw.get("mergeStateStatus") or raw.get("merge_state_status"))
+    review_decision = _upper_or_unknown(raw.get("reviewDecision") or raw.get("review_decision"))
+    is_draft = bool(raw.get("isDraft") or raw.get("is_draft"))
+    return {
+        "pr": number,
+        "pr_title": str(raw.get("title") or raw.get("pr_title") or ""),
+        "pr_url": str(raw.get("url") or raw.get("pr_url") or ""),
+        "branch": branch.strip(),
+        "head_ref_name": branch.strip(),
+        "observed_github_state": {
+            "state": "open",
+            "merge_state_status": merge_state,
+            "review_decision": review_decision,
+            "is_draft": is_draft,
+            "source": "gh pr list --state open",
+        },
+    }
+
+
+def list_open_pull_requests(repo: Path) -> list[dict[str, Any]]:
+    slug = github_repo_slug(repo)
+    if slug is None:
+        return []
+    env = {**os.environ, "GH_PROMPT_DISABLED": "1", "NO_COLOR": "1", "PAGER": "cat"}
+    try:
+        result = subprocess.run(
+            [
+                "gh",
+                "pr",
+                "list",
+                "--repo",
+                slug,
+                "--state",
+                "open",
+                "--json",
+                "number,title,url,headRefName,isDraft,reviewDecision,mergeStateStatus",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=20,
+            env=env,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    if result.returncode:
+        return []
+    try:
+        raw_values = json.loads(result.stdout or "[]")
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(raw_values, list):
+        return []
+    normalised: list[dict[str, Any]] = []
+    for raw in raw_values:
+        if not isinstance(raw, dict):
+            continue
+        pr = _normalise_open_pull_request(raw)
+        if pr is not None:
+            normalised.append(pr)
+    return normalised
+
+
+def open_pull_request_lane_state(pr: dict[str, Any]) -> tuple[str, float, str]:
+    observed = pr.get("observed_github_state")
+    if not isinstance(observed, dict):
+        observed = {}
+    merge_state = _upper_or_unknown(observed.get("merge_state_status"))
+    review_decision = _upper_or_unknown(observed.get("review_decision"))
+    is_draft = bool(observed.get("is_draft"))
+    if merge_state == "DIRTY":
+        return (
+            "needs_revision",
+            0.35,
+            "resolve observed GitHub pull-request conflicts before review handoff",
+        )
+    if merge_state in {"UNSTABLE", "UNKNOWN"}:
+        return (
+            "ci_failed",
+            0.4,
+            "inspect observed GitHub checks before advancing this pull request",
+        )
+    if is_draft:
+        return "reviewing", 0.6, "continue draft pull-request review; do not merge"
+    if merge_state == "CLEAN" and review_decision == "APPROVED":
+        return (
+            "merge_candidate",
+            0.9,
+            "hand to merge gatekeeper after independently verifying checks and reviews",
+        )
+    if merge_state == "CLEAN":
+        return "reviewing", 0.7, "wait for or request review before merge-gatekeeper handoff"
+    return "reviewing", 0.5, "inspect observed GitHub pull-request state before dispatch"
+
+
+def apply_open_pull_request(candidate: dict[str, Any], pr: dict[str, Any]) -> dict[str, Any]:
+    state, finishability, next_action = open_pull_request_lane_state(pr)
+    candidate.update(
+        {
+            "pr": pr.get("pr"),
+            "pr_title": pr.get("pr_title"),
+            "pr_url": pr.get("pr_url"),
+            "observed_github_state": pr.get("observed_github_state"),
+            "proposed_state": state,
+            "finishability": finishability,
+            "next_best_action": next_action,
+            "risk": "medium",
+        }
+    )
+    return candidate
+
+
+def open_pull_request_candidate(source: RepositorySource, pr: dict[str, Any]) -> dict[str, Any]:
+    state, finishability, next_action = open_pull_request_lane_state(pr)
+    candidate = {
+        "kind": "open_pull_request",
+        "repo": str(source.root),
+        "repo_name": source.name,
+        "source_id": source.source_id,
+        "branch": pr.get("branch"),
+        "pr": pr.get("pr"),
+        "pr_title": pr.get("pr_title"),
+        "pr_url": pr.get("pr_url"),
+        "observed_github_state": pr.get("observed_github_state"),
+        "proposed_state": state,
+        "finishability": finishability,
+        "next_best_action": next_action,
+        "risk": "medium",
+    }
+    candidate["fingerprint"] = candidate_fingerprint(candidate)
+    return candidate
+
+
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -332,8 +505,14 @@ def inventory_existing_work(
     selected = repositories[:max_repositories] if max_repositories else repositories
     candidates: list[dict[str, Any]] = []
     for source in selected:
+        open_pull_requests = list_open_pull_requests(source.root)
+        open_prs_by_branch = {
+            str(pr.get("branch")): pr for pr in open_pull_requests if pr.get("branch")
+        }
+        matched_open_pr_numbers: set[int] = set()
         for branch in local_branches(source.root):
-            if branch["merged"]:
+            open_pr = open_prs_by_branch.get(str(branch["branch"]))
+            if open_pr is None and branch["merged"]:
                 state = "obsolete"
                 next_action = "confirm branch is merged and archive lane"
                 finishability = 0.95
@@ -356,8 +535,16 @@ def inventory_existing_work(
                 "next_best_action": next_action,
                 "risk": "low" if branch["merged"] else "medium",
             }
+            if open_pr is not None:
+                candidate = apply_open_pull_request(candidate, open_pr)
+                if isinstance(open_pr.get("pr"), int):
+                    matched_open_pr_numbers.add(open_pr["pr"])
             candidate["fingerprint"] = candidate_fingerprint(candidate)
             candidates.append(candidate)
+        for open_pr in open_pull_requests:
+            if open_pr.get("pr") in matched_open_pr_numbers:
+                continue
+            candidates.append(open_pull_request_candidate(source, open_pr))
         for tree in worktrees(source.root):
             branch = tree.get("branch")
             if not branch or branch in {"main", "master"}:
@@ -565,6 +752,9 @@ def merge_lanes(
             "repo_name": candidate.get("repo_name"),
             "branch": candidate.get("branch"),
             "pr": candidate.get("pr"),
+            "pr_title": candidate.get("pr_title"),
+            "pr_url": candidate.get("pr_url"),
+            "observed_github_state": candidate.get("observed_github_state"),
             "task_id": old.get("task_id") or candidate.get("task_id"),
             "source_candidate": candidate,
             "risk": candidate.get("risk", "medium"),
@@ -702,6 +892,9 @@ def brief_for_lane(lane: dict[str, Any]) -> dict[str, Any]:
         "repo": lane.get("repo"),
         "branch": lane.get("branch"),
         "pr": lane.get("pr"),
+        "pr_title": lane.get("pr_title"),
+        "pr_url": lane.get("pr_url"),
+        "observed_github_state": lane.get("observed_github_state"),
         "state": lane.get("state"),
         "goal": lane.get("next_action") or "advance this closure lane toward merge-ready state",
         "context_summary": (

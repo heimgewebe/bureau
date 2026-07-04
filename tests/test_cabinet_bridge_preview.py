@@ -16,6 +16,7 @@ def write_report(path: Path) -> None:
         "schemaVersion": 1,
         "kind": "cabinet_bureau_bridge_probe",
         "mode": "read_only",
+        "importAllowed": False,
         "dispatchAllowed": False,
         "queueMutationAllowed": False,
         "taskCreationAllowed": False,
@@ -75,6 +76,7 @@ class CabinetBridgePreviewTests(unittest.TestCase):
             )
             self.assertEqual(result["kind"], "cabinet_bridge_promotion_preview")
             self.assertEqual(result["mode"], "proposal_only")
+            self.assertFalse(result["importAllowed"])
             self.assertFalse(result["dispatchAllowed"])
             self.assertFalse(result["queueMutationAllowed"])
             self.assertFalse(result["taskCreationAllowed"])
@@ -82,6 +84,7 @@ class CabinetBridgePreviewTests(unittest.TestCase):
             self.assertEqual(task["id"], "BUR-CAB-001")
             self.assertEqual(task["execution"]["policy"], "review-before-effect")
             self.assertEqual(task["claims"][0]["resource"], "organ.bureau")
+            self.assertFalse(task["metadata"]["import_allowed"])
             self.assertFalse(task["metadata"]["dispatch_allowed"])
 
     def test_preview_rejects_blocked_candidate(self) -> None:

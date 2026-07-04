@@ -7,6 +7,13 @@ from typing import Any
 
 DEFAULT_BRIDGE_POLICY_PATH = Path.home() / "repos/cabinet/registry/ecosystem/bureau-bridge.json"
 BRIDGE_DIRECTION = "cabinet_to_bureau_read_only_candidate_signal"
+EFFECT_FLAGS = ("importAllowed", "dispatchAllowed", "queueMutationAllowed", "taskCreationAllowed")
+METADATA_EFFECT_FLAGS = (
+    "import_allowed",
+    "dispatch_allowed",
+    "queue_mutation_allowed",
+    "task_creation_allowed",
+)
 
 
 class CabinetBridgeError(RuntimeError):
@@ -194,9 +201,7 @@ def bridge_probe(
         "mode": "read_only",
         "bridgePolicyPath": str(policy_path),
         "claimsPath": str(claims_path),
-        "dispatchAllowed": False,
-        "queueMutationAllowed": False,
-        "taskCreationAllowed": False,
+        **{field: False for field in EFFECT_FLAGS},
         "candidateCount": len(candidates),
         "admissibleCount": admissible_count,
         "blockedCount": len(candidates) - admissible_count,

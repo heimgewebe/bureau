@@ -6,14 +6,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from .cabinet_bridge import CabinetBridgeError
-
-EFFECT_FLAGS = ("dispatchAllowed", "queueMutationAllowed", "taskCreationAllowed")
-METADATA_EFFECT_FLAGS = (
-    "dispatch_allowed",
-    "queue_mutation_allowed",
-    "task_creation_allowed",
-)
+from .cabinet_bridge import EFFECT_FLAGS, METADATA_EFFECT_FLAGS, CabinetBridgeError
 
 
 def _object(value: Any, label: str) -> dict[str, Any]:

@@ -1,0 +1,93 @@
+{
+  "$id": "https://heimgewebe.local/bureau/agent-run-evidence-ref.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "bureau.agent-run-evidence-ref.v1"
+    },
+    "kind": {
+      "enum": ["local_preview", "chronik_event", "manual_report"]
+    },
+    "source_organ": {
+      "enum": ["grabowski", "chronik", "cabinet"]
+    },
+    "subject_repo": {
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$",
+      "type": "string"
+    },
+    "summary_result": {
+      "enum": ["completed", "blocked", "mixed", "unknown"]
+    },
+    "evidence_ref": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "reviewed_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "does_not_establish": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "uniqueItems": true,
+      "type": "array"
+    },
+    "run_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "task_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "preview_root_name": {
+      "pattern": "^[A-Za-z0-9_.-]{1,200}$",
+      "type": "string"
+    },
+    "chronik_event_id": {
+      "pattern": "^(sha256:[0-9a-f]{64}|[0-9A-HJKMNP-TV-Z]{26})$",
+      "type": "string"
+    },
+    "pr": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "commit": {
+      "pattern": "^[0-9a-f]{7,40}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "kind",
+    "source_organ",
+    "subject_repo",
+    "summary_result",
+    "evidence_ref",
+    "reviewed_at",
+    "does_not_establish"
+  ],
+  "type": "object",
+  "allOf": [
+    {
+      "if": {
+        "properties": {"kind": {"const": "local_preview"}}
+      },
+      "then": {
+        "required": ["preview_root_name"]
+      }
+    },
+    {
+      "if": {
+        "properties": {"kind": {"const": "chronik_event"}}
+      },
+      "then": {
+        "required": ["chronik_event_id"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "schema": "bureau.agent-run-evidence-ref.v1",
+  "kind": "chronik_event",
+  "source_organ": "chronik",
+  "subject_repo": "heimgewebe/grabowski",
+  "summary_result": "completed",
+  "evidence_ref": "chronik-event:sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "reviewed_at": "2026-07-04T08:31:00Z",
+  "does_not_establish": [
+    "does_not_authorize_execution",
+    "does_not_prove_current_runtime_state"
+  ],
+  "chronik_event_id": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "run_id": "task-abc-a1",
+  "task_id": "abc"
+}

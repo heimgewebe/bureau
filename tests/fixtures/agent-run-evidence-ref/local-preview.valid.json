@@ -1,0 +1,17 @@
+{
+  "schema": "bureau.agent-run-evidence-ref.v1",
+  "kind": "local_preview",
+  "source_organ": "grabowski",
+  "subject_repo": "heimgewebe/chronik",
+  "summary_result": "mixed",
+  "evidence_ref": "local-preview:agent-run-ledger-real-20260703T185817Z",
+  "reviewed_at": "2026-07-04T08:30:00Z",
+  "does_not_establish": [
+    "does_not_authorize_execution",
+    "does_not_trigger_chronik",
+    "does_not_replace_receipt_validation"
+  ],
+  "preview_root_name": "agent-run-ledger-real-20260703T185817Z",
+  "pr": "heimgewebe/chronik#203",
+  "commit": "4332acf07ecba52da959ff5628a570cee74ca1f3"
+}

@@ -75,6 +75,12 @@ def test_github_repo_slug_from_remote_url_accepts_ssh_and_https() -> None:
         github_repo_slug_from_remote_url("ssh://git@github.com/heimgewebe/bureau.git")
         == "heimgewebe/bureau"
     )
+    assert (
+        github_repo_slug_from_remote_url(
+            "https://x-access-token:secret@github.com/heimgewebe/bureau.git"
+        )
+        == "heimgewebe/bureau"
+    )
     assert github_repo_slug_from_remote_url("https://example.invalid/heimgewebe/bureau.git") is None
 
 

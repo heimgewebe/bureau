@@ -117,7 +117,7 @@ def github_repo_slug_from_remote_url(remote_url: str | None) -> str | None:
     patterns = (
         r"^git@github\.com:([^/]+)/([^/]+?)(?:\.git)?/?$",
         r"^ssh://(?:git@)?github\.com(?::\d+)?/([^/]+)/([^/]+?)(?:\.git)?/?$",
-        r"^https?://github\.com/([^/]+)/([^/]+?)(?:\.git)?/?$",
+        r"^https?://(?:[^/@]+@)?github\.com/([^/]+)/([^/]+?)(?:\.git)?/?$",
     )
     for pattern in patterns:
         match = re.match(pattern, value)

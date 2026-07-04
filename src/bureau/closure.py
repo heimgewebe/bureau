@@ -266,6 +266,8 @@ def observe_open_pull_requests(repo: Path) -> OpenPullRequestObservation:
 
 
 def list_open_pull_requests(repo: Path) -> list[dict[str, Any]]:
+    # Convenience only; closure decisions must use observe_open_pull_requests()
+    # so blocked/incomplete observations are not confused with "no open PRs".
     return observe_open_pull_requests(repo).pull_requests
 
 
@@ -960,6 +962,9 @@ def merge_lanes(
             alias_old.get("metadata") if isinstance(alias_old.get("metadata"), dict) else {}
         )
         metadata = {**alias_metadata, **old_metadata}
+        old_task_id = old.get("task_id")
+        alias_task_id = alias_old.get("task_id")
+        task_id = old_task_id or alias_task_id or candidate.get("task_id")
         pr_value = candidate.get("pr")
         pr_title = candidate.get("pr_title")
         pr_url = candidate.get("pr_url")
@@ -1012,6 +1017,28 @@ def merge_lanes(
             metadata["migrated_from_fingerprint"] = matched_fingerprint
         elif alias_old and alias_fingerprint:
             metadata["merged_alias_fingerprint"] = alias_fingerprint
+        binding = metadata.get("canonical_task_binding")
+        binding_task_id = binding.get("task_id") if isinstance(binding, dict) else None
+        task_id_conflict = (
+            isinstance(old_task_id, str)
+            and isinstance(alias_task_id, str)
+            and old_task_id != alias_task_id
+        )
+        binding_conflict = (
+            isinstance(task_id, str)
+            and isinstance(binding_task_id, str)
+            and binding_task_id != task_id
+        )
+        if task_id_conflict or binding_conflict:
+            metadata["canonical_task_binding_conflict"] = {
+                "lane_task_id": task_id,
+                "old_task_id": old_task_id,
+                "alias_task_id": alias_task_id,
+                "binding_task_id": binding_task_id,
+            }
+            metadata.pop("canonical_task_binding", None)
+            state = "blocked"
+            next_action = "resolve conflicting canonical task binding before closure decision"
         lane = {
             **old,
             "schema_version": SCHEMA_VERSION,
@@ -1026,7 +1053,7 @@ def merge_lanes(
             "pr_url": pr_url,
             "observed_github_state": observed_github_state,
             "metadata": metadata,
-            "task_id": old.get("task_id") or alias_old.get("task_id") or candidate.get("task_id"),
+            "task_id": task_id,
             "source_candidate": candidate,
             "risk": candidate.get("risk", "medium"),
             "finishability": finishability,

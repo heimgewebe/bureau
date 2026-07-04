@@ -632,3 +632,62 @@ def test_pr_alias_merge_preserves_alias_binding_metadata() -> None:
     assert lane["task_id"] == "BUR-2026-001-T054"
     assert lane["metadata"]["canonical_task_binding"]["task_id"] == "BUR-2026-001-T054"
     assert lane["metadata"]["merged_alias_fingerprint"] == pr_candidate["fingerprint"]
+
+
+def test_pr_alias_merge_blocks_conflicting_binding_metadata() -> None:
+    branch_candidate = {
+        "kind": "branch",
+        "repo": "/tmp/repo",
+        "repo_name": "repo",
+        "branch": "feat/example",
+        "proposed_state": "planned",
+        "finishability": 0.55,
+    }
+    branch_candidate["fingerprint"] = candidate_fingerprint(branch_candidate)
+    pr_candidate = {
+        "kind": "open_pull_request",
+        "repo": "/tmp/repo",
+        "repo_name": "repo",
+        "branch": "feat/example",
+        "pr": 54,
+        "pr_title": "Example PR",
+        "pr_url": "https://github.com/heimgewebe/bureau/pull/54",
+        "observed_github_state": {"state": "open", "source": "test"},
+        "proposed_state": "reviewing",
+        "finishability": 0.75,
+    }
+    pr_candidate["fingerprint"] = candidate_fingerprint(pr_candidate)
+    existing = merge_lanes({"candidates": [branch_candidate, pr_candidate]})
+    branch_lane = next(item for item in existing["lanes"] if item.get("pr") is None)
+    remote_lane = next(item for item in existing["lanes"] if item.get("pr") == 54)
+    branch_lane["task_id"] = "BUR-2026-001-T001"
+    remote_lane["task_id"] = "BUR-2026-001-T054"
+    remote_lane["metadata"] = {
+        "canonical_task_binding": {"task_id": "BUR-2026-001-T054", "source": "test"}
+    }
+    next_candidate = {
+        "kind": "branch",
+        "repo": "/tmp/repo",
+        "repo_name": "repo",
+        "branch": "feat/example",
+        "pr": 54,
+        "pr_title": "Example PR",
+        "pr_url": "https://github.com/heimgewebe/bureau/pull/54",
+        "observed_github_state": {"state": "open", "source": "test"},
+        "proposed_state": "merge_candidate",
+        "finishability": 0.9,
+    }
+    next_candidate["fingerprint"] = candidate_fingerprint(next_candidate)
+
+    lanes = merge_lanes({"candidates": [next_candidate]}, existing)
+
+    assert len(lanes["lanes"]) == 1
+    lane = lanes["lanes"][0]
+    assert lane["state"] == "blocked"
+    assert lane["task_id"] == "BUR-2026-001-T001"
+    assert "canonical_task_binding" not in lane["metadata"]
+    conflict = lane["metadata"]["canonical_task_binding_conflict"]
+    assert conflict["lane_task_id"] == "BUR-2026-001-T001"
+    assert conflict["old_task_id"] == "BUR-2026-001-T001"
+    assert conflict["alias_task_id"] == "BUR-2026-001-T054"
+    assert conflict["binding_task_id"] == "BUR-2026-001-T054"

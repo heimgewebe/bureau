@@ -73,6 +73,8 @@ STATE_PRIORITY = {
 MUTATING_STATES = {"planned", "ready", "active", "needs_revision", "ci_failed"}
 REVIEW_STATES = {"reviewing", "needs_revision", "ci_failed"}
 MERGE_STATES = {"merge_candidate", "merge_ready"}
+PR_OBSERVATION_PRESERVED_WORKFLOW_STATES = {"active", "needs_revision", "ci_failed"}
+PR_OBSERVATION_NON_BLOCKING_STATES = {"merge_candidate", "reviewing"}
 CANONICAL_TASK_REQUIRED_STATES = MUTATING_STATES | REVIEW_STATES | MERGE_STATES
 CANONICAL_BUREAU_TASK_ID_RE = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$")
 UNBOUND_NEXT_ACTION = "bind to canonical Bureau task before dispatch"
@@ -917,14 +919,22 @@ def merge_lanes(
             and has_previous_pr_state
         )
         candidate_state = initial_lane_state(candidate)
+        old_state = old.get("state") if old.get("state") in LANE_STATES else None
+        preserve_existing_workflow_state = (
+            candidate.get("observed_github_state") is not None
+            and old_state in PR_OBSERVATION_PRESERVED_WORKFLOW_STATES
+            and candidate_state in PR_OBSERVATION_NON_BLOCKING_STATES
+        )
         if (
             blocked_github_observation is not None and has_previous_pr_state
         ) or incomplete_pr_observation_for_previous_pr:
             state = "blocked"
+        elif preserve_existing_workflow_state:
+            state = old_state
         elif candidate.get("observed_github_state") or stale_pr_after_successful_observation:
             state = candidate_state
         else:
-            state = old.get("state") if old.get("state") in LANE_STATES else candidate_state
+            state = old_state or candidate_state
         if state in {"closed", "verified", "merged"} and not candidate.get("merged"):
             state = "needs_revision"
         metadata = dict(old.get("metadata") if isinstance(old.get("metadata"), dict) else {})
@@ -933,6 +943,12 @@ def merge_lanes(
         pr_url = candidate.get("pr_url")
         observed_github_state = candidate.get("observed_github_state")
         next_action = candidate.get("next_best_action")
+        finishability = candidate.get("finishability", 0.0)
+        if preserve_existing_workflow_state:
+            metadata["github_observation_candidate_state"] = candidate_state
+            metadata["preserved_lane_state"] = old_state
+            next_action = old.get("next_action") or next_action
+            finishability = old.get("finishability", finishability)
         if blocked_github_observation is not None and has_previous_pr_state:
             pr_value = old.get("pr") or alias_old.get("pr") if pr_value is None else pr_value
             pr_title = (
@@ -991,7 +1007,7 @@ def merge_lanes(
             "task_id": old.get("task_id") or alias_old.get("task_id") or candidate.get("task_id"),
             "source_candidate": candidate,
             "risk": candidate.get("risk", "medium"),
-            "finishability": candidate.get("finishability", 0.0),
+            "finishability": finishability,
             "next_action": next_action,
             "updated_at": utc_now(),
         }

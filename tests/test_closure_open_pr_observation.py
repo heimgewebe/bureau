@@ -443,3 +443,41 @@ def test_observe_open_pull_requests_passes_json_fields_as_one_argument(
         "headRepositoryOwner,isCrossRepository"
     )
     assert "number" not in command[json_index + 2 :]
+
+def test_observed_pr_preserves_active_lane_state() -> None:
+    candidate = {
+        "kind": "branch",
+        "repo": "/tmp/repo",
+        "repo_name": "repo",
+        "branch": "feat/example",
+        "pr": 54,
+        "pr_title": "Example PR",
+        "pr_url": "https://github.com/heimgewebe/bureau/pull/54",
+        "observed_github_state": {
+            "state": "open",
+            "merge_state_status": "CLEAN",
+            "review_decision": "APPROVED",
+            "is_draft": False,
+            "source": "test",
+        },
+        "proposed_state": "merge_candidate",
+        "finishability": 0.9,
+        "next_best_action": "handoff to merge gatekeeper after final evidence check",
+    }
+    candidate["fingerprint"] = candidate_fingerprint(candidate)
+    existing = merge_lanes({"candidates": [candidate]})
+    existing["lanes"][0]["state"] = "active"
+    existing["lanes"][0]["task_id"] = "BUR-2026-001-T054"
+    existing["lanes"][0]["next_action"] = "continue implementation work"
+    existing["lanes"][0]["finishability"] = 0.4
+
+    lanes = merge_lanes({"candidates": [candidate]}, existing)
+
+    lane = lanes["lanes"][0]
+    assert lane["state"] == "active"
+    assert lane["task_id"] == "BUR-2026-001-T054"
+    assert lane["next_action"] == "continue implementation work"
+    assert lane["finishability"] == 0.4
+    assert lane["pr"] == 54
+    assert lane["metadata"]["github_observation_candidate_state"] == "merge_candidate"
+    assert lane["metadata"]["preserved_lane_state"] == "active"

@@ -1070,6 +1070,9 @@ def merge_lanes(
         if isinstance(lane, dict) and lane.get("fingerprint") not in seen:
             retained = dict(lane)
             blocked_github_observation = blocked_github_observations.get(retained.get("repo"))
+            incomplete_github_observation = incomplete_github_observations.get(
+                retained.get("repo")
+            )
             metadata = dict(
                 retained.get("metadata") if isinstance(retained.get("metadata"), dict) else {}
             )
@@ -1082,6 +1085,14 @@ def merge_lanes(
                     metadata["github_observation_blocked"] = blocked_github_observation
                     retained["next_action"] = (
                         "GitHub PR observation blocked; retry before treating source as disappeared"
+                    )
+                elif incomplete_github_observation is not None and (
+                    retained.get("pr") is not None
+                    or retained.get("observed_github_state") is not None
+                ):
+                    metadata["github_observation_incomplete"] = incomplete_github_observation
+                    retained["next_action"] = (
+                        "GitHub PR observation incomplete; retry before closure decision"
                     )
                 else:
                     retained["next_action"] = (

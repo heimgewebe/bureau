@@ -691,3 +691,44 @@ def test_pr_alias_merge_blocks_conflicting_binding_metadata() -> None:
     assert conflict["old_task_id"] == "BUR-2026-001-T001"
     assert conflict["alias_task_id"] == "BUR-2026-001-T054"
     assert conflict["binding_task_id"] == "BUR-2026-001-T054"
+
+def test_retained_remote_only_pr_lane_blocks_on_incomplete_observation() -> None:
+    pr_candidate = {
+        "kind": "open_pull_request",
+        "repo": "/tmp/repo",
+        "repo_name": "repo",
+        "branch": "feat/outside-cap",
+        "pr": 250,
+        "pr_title": "Outside cap",
+        "pr_url": "",
+        "observed_github_state": {"state": "open", "source": "test"},
+        "proposed_state": "reviewing",
+        "finishability": 0.75,
+    }
+    pr_candidate["fingerprint"] = candidate_fingerprint(pr_candidate)
+    existing = merge_lanes({"candidates": [pr_candidate]})
+
+    lanes = merge_lanes(
+        {
+            "github_observations": [
+                {
+                    "repo": "/tmp/repo",
+                    "observed_github_state": {
+                        "state": "observed",
+                        "source": "test",
+                        "complete": False,
+                    },
+                }
+            ],
+            "candidates": [],
+        },
+        existing,
+    )
+
+    assert len(lanes["lanes"]) == 1
+    lane = lanes["lanes"][0]
+    assert lane["state"] == "blocked"
+    assert lane["pr"] == 250
+    assert lane["observed_github_state"] == {"state": "open", "source": "test"}
+    assert "github_observation_incomplete" in lane["metadata"]
+    assert lane["next_action"] == "GitHub PR observation incomplete; retry before closure decision"

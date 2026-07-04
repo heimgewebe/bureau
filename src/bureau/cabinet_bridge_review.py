@@ -68,7 +68,8 @@ def review_preview(path: str | Path) -> dict[str, Any]:
     if execution.get("policy") != "review-before-effect":
         raise CabinetBridgeError("preview task policy must be review-before-effect")
 
-    capabilities = {str(item) for item in _list(task.get("required_capabilities"), "capabilities")}
+    raw_capabilities = _list(task.get("required_capabilities"), "capabilities")
+    capabilities = {str(item) for item in raw_capabilities}
     if "review" not in capabilities:
         raise CabinetBridgeError("preview task must require review capability")
     for claim in _list(task.get("claims"), "preview task claims"):
@@ -126,7 +127,8 @@ def main(argv: list[str] | None = None) -> int:
     except CabinetBridgeError as exc:
         print(f"bureau-cabinet-bridge-review: {exc}", file=sys.stderr)
         return 2
-    print(json.dumps(value, indent=2 if args.json else None, ensure_ascii=False, sort_keys=True))
+    indent = 2 if args.json else None
+    print(json.dumps(value, indent=indent, ensure_ascii=False, sort_keys=True))
     return 0
 
 

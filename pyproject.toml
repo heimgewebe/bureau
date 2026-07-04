@@ -26,6 +26,7 @@ bureau-codex-bridge = "bureau.codex_bridge:main"
 bureau-review-steward = "bureau.review_steward:main"
 bureau-cabinet-bridge-preview = "bureau.cabinet_bridge_preview:main"
 bureau-cabinet-bridge-review = "bureau.cabinet_bridge_review:main"
+bureau-cabinet-bridge-receipt = "bureau.cabinet_bridge_receipt:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

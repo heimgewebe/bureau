@@ -37,10 +37,15 @@ def preview_payload() -> dict[str, object]:
             "required_capabilities": ["review"],
             "priority": {"lane": "next", "rank": 65},
             "execution": {"mode": "manual", "policy": "review-before-effect"},
-            "claims": [{"resource": "organ.bureau", "mode": "read", "isolation": "none"}],
+            "claims": [
+                {"resource": "organ.bureau", "mode": "read", "isolation": "none"}
+            ],
             "acceptance": [
                 {"id": "target-proof", "assertion": "Reviewed proof exists."},
-                {"id": "no-auto-effect", "assertion": "Preview creates no operational effect."},
+                {
+                    "id": "no-auto-effect",
+                    "assertion": "Preview creates no operational effect.",
+                },
             ],
             "metadata": {
                 "source": "cabinet_bridge_probe",
@@ -56,7 +61,8 @@ def preview_payload() -> dict[str, object]:
 
 def write_preview(path: Path, payload: dict[str, object] | None = None) -> None:
     value = payload or preview_payload()
-    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    rendered = json.dumps(value, indent=2, sort_keys=True) + "\n"
+    path.write_text(rendered, encoding="utf-8")
 
 
 class CabinetBridgeReviewTests(unittest.TestCase):

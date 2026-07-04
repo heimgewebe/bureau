@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "kind": "bureau.cabinet_bridge_import_review_contract_policy",
+  "version": "0",
+  "document": "docs/cabinet-bridge-import-review-contract-v0.md",
+  "requiredReceipt": {
+    "kind": "cabinet_bridge_review_receipt",
+    "status": "review_recorded",
+    "importAllowed": false,
+    "importReviewRequired": true,
+    "dispatchAllowed": false,
+    "queueMutationAllowed": false,
+    "taskCreationAllowed": false
+  },
+  "requiredInputs": [
+    "current_cabinet_bridge_policy",
+    "bridge_probe_report",
+    "bridge_preview",
+    "bridge_review_gate",
+    "bridge_receipt",
+    "cabinet_commit_sha",
+    "bureau_commit_sha",
+    "explicit_target_path",
+    "explicit_write_surface",
+    "non_ci_reviewer"
+  ],
+  "nonEffects": {
+    "createTasks": false,
+    "mutateQueues": false,
+    "writeBureauRegistry": false,
+    "dispatchWork": false,
+    "runRuntimeActions": false
+  }
+}

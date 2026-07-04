@@ -10,7 +10,7 @@
     "OPT-ARC-001",
     "OPT-INF-002"
   ],
-  "commit_sha": "b82819308cde369f727535889988650ee3420fec",
+  "commit_sha": "4ac3f0a35e077326616e1570d1428a14e0421767",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -441,26 +441,27 @@
       "updated_at": "2026-06-27"
     },
     {
-      "acceptance_count": 5,
+      "acceptance_count": 6,
       "area": "governance",
       "effort": "M",
-      "evidence_count": 8,
+      "evidence_count": 17,
       "id": "AGENT-SAFE-008",
       "link_counts": {
         "docs": 3,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 1,
+      "missing_evidence_count": 0,
       "owner": "unknown",
       "priority": "high",
       "risk": "high",
       "source_task": {
         "acceptance": [
-          "Ein maschinenlesbares Manifest bindet die drei kritischen Kontrollpfade an Rolle, Kanonizität, Quellen und blockierende Checks",
-          "Agent-Readiness und Claim-Evidence-Map besitzen schreibfreie deterministische Drift-Checks",
+          "Ein maschinenlesbares Manifest bindet alle getrackten docs/_generated/*.md-Artefakte sowie den kuratierten Task-Index an Rolle, Kanonizität, Quellen und blockierende Checks",
+          "Alle generated-Artefakte besitzen mindestens einen artefaktspezifischen schreibfreien Drift-Check; central-only Checks werden für generated-Artefakte blockiert",
+          "Shell-Generatoren sind auf reviewte scripts/docmeta/generate-*.sh-Pfade begrenzt; als Zusatzargument ist nur --check erlaubt",
           "Der kuratierte Task-Index wird korrekt als kanonischer Index mit Schema- und Cross-Artifact-Checks modelliert, nicht als erfundener Generator-Output",
-          "Fehlende Pfade, Quellen, Marker, repository-fremde Kommandos, Symlinks und Scope-Ausweitungen werden fail-closed blockiert",
+          "Fehlende Pfade, Quellen, Marker, repository-fremde Kommandos, Symlinks, Manifest-/repo.meta-Drift und fehlende Direct-Checks werden fail-closed blockiert",
           "Der Generated-Files-Guard führt den Manifestvalidator im blockierenden Check-Modus aus"
         ],
         "area": "governance",
@@ -473,7 +474,16 @@
           "scripts/docmeta/tests/test_generate_agent_readiness.py",
           "scripts/docmeta/generated-files-guard.sh",
           ".github/workflows/docs-guard.yml",
-          "docs/reference/generated-artifact-control.md"
+          "docs/reference/generated-artifact-control.md",
+          "repo.meta.yaml",
+          "scripts/docmeta/generated_check.py",
+          "scripts/docmeta/generate-doc-index.sh",
+          "scripts/docmeta/generate-impl-index.sh",
+          "scripts/docmeta/generate_relates_to_audit.py",
+          "scripts/docmeta/generate_relations_analysis.py",
+          "scripts/docmeta/generate_report_lifecycle.py",
+          "scripts/docmeta/generate_report_lifecycle_inventory.py",
+          "scripts/docmeta/generate_system_map.py"
         ],
         "id": "AGENT-SAFE-008",
         "links": {
@@ -485,20 +495,18 @@
           "issues": [],
           "prs": []
         },
-        "missing_evidence": [
-          "Full generated-artifact coverage remains a separate follow-up slice; this task closes the minimal control contract."
-        ],
+        "missing_evidence": [],
         "owner": "unknown",
         "priority": "high",
         "risk": "high",
         "status": "done",
-        "title": "Minimalen Generated-Artifact-Kontrollvertrag einführen",
-        "updated_at": "2026-06-29"
+        "title": "Generated-Artifact-Kontrollvertrag ausbauen und ratcheten",
+        "updated_at": "2026-07-02"
       },
-      "source_task_sha256": "55b8ea4166906bd7513e31630ee9c08752b932b67dd44d4906a063d3bbb20a72",
+      "source_task_sha256": "16914b6a69478247093ae5ef80fd592cf8561792765bc4df285f1a67d9d57f02",
       "status": "done",
-      "title": "Minimalen Generated-Artifact-Kontrollvertrag einführen",
-      "updated_at": "2026-06-29"
+      "title": "Generated-Artifact-Kontrollvertrag ausbauen und ratcheten",
+      "updated_at": "2026-07-02"
     },
     {
       "acceptance_count": 4,
@@ -561,10 +569,10 @@
       "acceptance_count": 4,
       "area": "auth",
       "effort": "L",
-      "evidence_count": 20,
+      "evidence_count": 23,
       "id": "AUTH-PG-002",
       "link_counts": {
-        "docs": 9,
+        "docs": 11,
         "issues": 0,
         "prs": 3
       },
@@ -596,12 +604,15 @@
           "docs/reports/auth-pg-002-passkey-runtime-facade.md",
           "docs/reports/auth-pg-002-cutover-plan.md",
           "apps/api/tests/db_passkey_fk_readiness.rs",
+          "apps/api/tests/db_passkey_schema_preflight.rs",
           "docs/reports/auth-pg-002-passkey-fk-readiness-audit.md",
           "scripts/docmeta/audit_passkey_fk_runtime.py",
           "scripts/docmeta/tests/test_audit_passkey_fk_runtime.py",
           "docs/reports/auth-pg-002-passkey-runtime-audit-plan.md",
           "docs/reports/auth-pg-002-passkey-runtime-audit-heimserver-2026-07-01.md",
-          "docs/reports/auth-pg-002-runtime-schema-readiness-heimserver-2026-07-01.md"
+          "docs/reports/auth-pg-002-runtime-schema-readiness-heimserver-2026-07-01.md",
+          "docs/reports/auth-pg-002-controlled-preflight.md",
+          "docs/reports/auth-pg-002-schema-preflight-ci.md"
         ],
         "id": "AUTH-PG-002",
         "links": {
@@ -614,7 +625,9 @@
             "docs/reports/auth-pg-002-passkey-fk-readiness-audit.md",
             "docs/reports/auth-pg-002-passkey-runtime-audit-plan.md",
             "docs/reports/auth-pg-002-passkey-runtime-audit-heimserver-2026-07-01.md",
-            "docs/reports/auth-pg-002-runtime-schema-readiness-heimserver-2026-07-01.md"
+            "docs/reports/auth-pg-002-runtime-schema-readiness-heimserver-2026-07-01.md",
+            "docs/reports/auth-pg-002-controlled-preflight.md",
+            "docs/reports/auth-pg-002-schema-preflight-ci.md"
           ],
           "issues": [],
           "prs": [
@@ -626,7 +639,7 @@
         "missing_evidence": [
           "Kein Produktions-Cutover; passkey_credential_source bleibt Default in_memory",
           "Heimserver-Runtime-PostgreSQL hat _sqlx_migrations und domain_accounts, aber passkey_credentials fehlt",
-          "Runtime-Preflight für 20260630000001_create_passkey_credentials fehlt",
+          "CI-Schema-Preflight (db_passkey_schema_preflight) ist belegt; die kontrollierte Runtime-Anwendung der Migration 20260630000001 auf dem Heimserver (AUTH-PG-002-R2) und der erneute read-only Runtime-Audit fehlen",
           "FK passkey_credentials.account_id -> domain_accounts(id) noch nicht implementiert; erneuter Runtime-Audit erst nach vorhandener Tabelle möglich",
           "Kein webauthn_user_id-Backfill/NOT NULL (AUTH-PG-003 bleibt offen)",
           "Passkey-Management-UI/List/Remove-Cutover fehlt"
@@ -636,12 +649,12 @@
         "risk": "high",
         "status": "partial",
         "title": "WebAuthn-Credential-Persistenz / Passkey-Cutover nach PostgreSQL",
-        "updated_at": "2026-07-01"
+        "updated_at": "2026-07-04"
       },
-      "source_task_sha256": "c6afac677a2b4b4bbc275a181d90547fe551096b1296fe58d3cc8a395cf68f0d",
+      "source_task_sha256": "1bf034edfb402bcbd3991d698c50a4ba72b6eb6bc56011b9466df7a3467b60be",
       "status": "partial",
       "title": "WebAuthn-Credential-Persistenz / Passkey-Cutover nach PostgreSQL",
-      "updated_at": "2026-07-01"
+      "updated_at": "2026-07-04"
     },
     {
       "acceptance_count": 4,
@@ -1816,17 +1829,17 @@
       "updated_at": "2026-06-17"
     },
     {
-      "acceptance_count": 3,
+      "acceptance_count": 4,
       "area": "ci",
       "effort": "M",
-      "evidence_count": 5,
+      "evidence_count": 7,
       "id": "OPT-CI-005",
       "link_counts": {
         "docs": 2,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 1,
+      "missing_evidence_count": 0,
       "owner": "unknown",
       "priority": "high",
       "risk": "medium",
@@ -1834,7 +1847,8 @@
         "acceptance": [
           "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 ist in direkt ausgeführten Workflows mit bekannten JavaScript-Actions gesetzt.",
           "Kein Gebrauch von ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION.",
-          "CI-Lauf dokumentiert, ob Node-20-Metadatenwarnungen verbleiben; verbleibende Warnungen werden Stage B zugeordnet."
+          "Reusable Workflow Calls werden nach Ref-Typ und Policy klassifiziert.",
+          "Alle reusable Workflow Calls sind auf geprüfte SHAs gepinnt, ohne fremde Workflow-Readiness zu behaupten."
         ],
         "area": "ci",
         "effort": "M",
@@ -1843,7 +1857,9 @@
           ".github/workflows/opt-arc-001-db-proof-matrix.yml",
           "scripts/ci/check_actions_node24_readiness.py",
           "scripts/ci/tests/test_check_actions_node24_readiness.py",
-          ".github/workflows/"
+          ".github/workflows/",
+          ".github/workflows/pr-heimgewebe-commands.yml",
+          ".github/workflows/wgx-smoke.yml"
         ],
         "id": "OPT-CI-005",
         "links": {
@@ -1854,20 +1870,18 @@
           "issues": [],
           "prs": []
         },
-        "missing_evidence": [
-          "Stage B bleibt separat: wiederverwendbare externe Workflows und verbleibende Node-20-Metadatenwarnungen der Actions bewerten."
-        ],
+        "missing_evidence": [],
         "owner": "unknown",
         "priority": "high",
         "risk": "medium",
         "status": "done",
         "title": "GitHub Actions Node-24 Runtime Readiness",
-        "updated_at": "2026-06-29"
+        "updated_at": "2026-07-03"
       },
-      "source_task_sha256": "aec2f05702c9c3b712b81da0546ebcf3ed88f0c9d67bd0cbc115481229a40210",
+      "source_task_sha256": "7e1c8b8eae9812162425b575492d83557e7f7f041e445b2d1a8faaa23eadbc89",
       "status": "done",
       "title": "GitHub Actions Node-24 Runtime Readiness",
-      "updated_at": "2026-06-29"
+      "updated_at": "2026-07-03"
     },
     {
       "acceptance_count": 3,
@@ -1979,53 +1993,119 @@
       "updated_at": "2026-05-30"
     },
     {
-      "acceptance_count": 2,
+      "acceptance_count": 4,
       "area": "infra",
       "effort": "S",
-      "evidence_count": 1,
+      "evidence_count": 4,
       "id": "OPT-INF-002",
       "link_counts": {
-        "docs": 1,
+        "docs": 3,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 2,
+      "missing_evidence_count": 3,
       "owner": "unknown",
-      "priority": "low",
+      "priority": "medium",
       "risk": "medium",
       "source_task": {
         "acceptance": [
-          "Third-Party-Actions sind per Commit-SHA gepinnt; Ursprungstag als Kommentar; Update-Weg bleibt klar",
-          "Policy dokumentiert; CI gruen"
+          "Ein reproduzierbarer Scanner klassifiziert alle GitHub-Workflow-uses-Referenzen nach Kind, Ref-Typ und Pinning-Policy.",
+          "Der Audit-Report dokumentiert aktuelle Counts, verbleibende unique named refs und Pinning-Slices.",
+          "Reusable Workflows, upload-artifact, pnpm/action-setup, setup-python und actions-cache sind SHA-gepinnt; checkout ist außerhalb der OPT-ARC-001-DB-Proof-Harness-Datei auf einen geprüften SHA gepinnt.",
+          "CI-/Update-Pfad bleibt nachvollziehbar; kein repo-weites Blind-Pinning ohne Action-Familien-Slice."
         ],
         "area": "infra",
         "effort": "S",
         "evidence": [
+          "scripts/ci/check_github_action_pinning.py",
+          "scripts/ci/tests/test_check_github_action_pinning.py",
+          "docs/reports/github-action-ref-pinning-audit.md",
           ".github/workflows/"
         ],
         "id": "OPT-INF-002",
         "links": {
           "docs": [
-            "docs/reports/optimierungsstatus.md"
+            "docs/reports/github-action-ref-pinning-audit.md",
+            "docs/reports/optimierungsstatus.md",
+            "docs/tasks/board.md"
           ],
           "issues": [],
           "prs": []
         },
         "missing_evidence": [
-          "repo-weit nur Tag-Pinning, kein SHA-Pinning",
-          "Sequenzierung (TODO C3): SHA-Pinning erst nach Dependency-Update-Automation (OPT-CI-004), sonst Update-Weg unklar"
+          "49 direkte GitHub Action uses bleiben named refs; vollständiges SHA-Pinning erfolgt in ratcheted Folge-Slices.",
+          "12 actions/checkout uses in .github/workflows/api.yml bleiben bis zu einem separaten OPT-ARC-001-Proof-Refresh-Schnitt unpinned.",
+          "Ursprungstag und Ziel-SHA müssen pro verbleibender Action-Familie dokumentiert werden."
         ],
         "owner": "unknown",
-        "priority": "low",
+        "priority": "medium",
         "risk": "medium",
-        "status": "open",
+        "status": "partial",
         "title": "Third-Party-Actions per Commit-SHA pinnen",
-        "updated_at": "2026-06-16"
+        "updated_at": "2026-07-03"
       },
-      "source_task_sha256": "4d42cf6654a90add9cff960c56e8fdbbfdaf6241b111e8e15758c1e7c3f7b616",
-      "status": "open",
+      "source_task_sha256": "af1f1b015e0f18545341390a6a1044b3e33777fc61a495d68b9f5a0220c10610",
+      "status": "partial",
       "title": "Third-Party-Actions per Commit-SHA pinnen",
-      "updated_at": "2026-06-16"
+      "updated_at": "2026-07-03"
+    },
+    {
+      "acceptance_count": 0,
+      "area": "ci",
+      "effort": "S",
+      "evidence_count": 15,
+      "id": "REPO-AUDIT-001",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "medium",
+      "risk": "low",
+      "source_task": {
+        "acceptance": [],
+        "area": "ci",
+        "effort": "S",
+        "evidence": [
+          "docs/reports/repo-audit-2026-07-02.md",
+          "Justfile",
+          "repo.meta.yaml",
+          "agent-policy.yaml",
+          "scripts/docmeta/generated-files-guard.sh",
+          ".github/workflows/ci.yml",
+          ".github/workflows/heavy.yml",
+          ".github/workflows/links.yml",
+          ".lychee.toml",
+          "CLAUDE.md",
+          ".env.example",
+          "scripts/guard/auth-rate-limit-runtime-smoke.sh",
+          "scripts/guard_api_alias.sh",
+          "scripts/docmeta/tests/test_validate_opt_arc_001_db_proof_matrix.py",
+          "https://github.com/heimgewebe/weltgewebe/actions/runs/28589031507"
+        ],
+        "id": "REPO-AUDIT-001",
+        "links": {
+          "docs": [
+            "docs/reports/repo-audit-2026-07-02.md",
+            "docs/tasks/board.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "medium",
+        "risk": "low",
+        "status": "done",
+        "title": "Repo-Komplettaudit 2026-07-02 abgeschlossen",
+        "updated_at": "2026-07-02"
+      },
+      "source_task_sha256": "6370507a58de9e7fa74ac21e08c2753b90eb9fc7704f9ed8b628e4d78b3b4a58",
+      "status": "done",
+      "title": "Repo-Komplettaudit 2026-07-02 abgeschlossen",
+      "updated_at": "2026-07-02"
     },
     {
       "acceptance_count": 3,
@@ -2302,7 +2382,7 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "b6a46d75891d30a8a01957fe90a0868a3b5d6d4dfc76e61f27b2a13fe021a120",
+  "index_sha256": "b0cd959a86761cd30ada553ca938f21f33d7220ce341f9d9d4a35144937de274",
   "ref": "HEAD",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",
@@ -2320,10 +2400,10 @@
   "status_counts": {
     "blocked": 2,
     "contradicted": 0,
-    "done": 30,
+    "done": 31,
     "obsolete": 0,
-    "open": 1,
-    "partial": 6
+    "open": 0,
+    "partial": 7
   },
-  "task_count": 39
+  "task_count": 40
 }

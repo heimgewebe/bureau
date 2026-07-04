@@ -65,6 +65,8 @@ def review_preview(path: str | Path) -> dict[str, Any]:
         )
     if preview.get("mode") != "proposal_only":
         raise CabinetBridgeError("preview mode must be proposal_only")
+    if preview.get("approved") is not True:
+        raise CabinetBridgeError("preview approved must be true")
     _require_false(preview, EFFECT_FLAGS, "preview")
 
     task = _object(preview.get("task"), "preview task")
@@ -78,10 +80,13 @@ def review_preview(path: str | Path) -> dict[str, Any]:
         raise CabinetBridgeError("preview task policy must be review-before-effect")
 
     raw_capabilities = _list(task.get("required_capabilities"), "capabilities")
-    capabilities = {str(item) for item in raw_capabilities}
-    if "review" not in capabilities:
-        raise CabinetBridgeError("preview task must require review capability")
-    for claim in _list(task.get("claims"), "preview task claims"):
+    if raw_capabilities != ["review"]:
+        raise CabinetBridgeError("preview task capabilities must be review-only")
+
+    claims = _list(task.get("claims"), "preview task claims")
+    if not claims:
+        raise CabinetBridgeError("preview task claims must include at least one read claim")
+    for claim in claims:
         claim_obj = _object(claim, "preview task claim")
         if claim_obj.get("mode") != "read":
             raise CabinetBridgeError("preview task claims must stay read-only")

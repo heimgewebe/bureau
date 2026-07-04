@@ -95,6 +95,7 @@ def create_review_receipt(
             "status": gate["status"],
         },
         "importAllowed": False,
+        "importReviewRequired": True,
         "dispatchAllowed": False,
         "queueMutationAllowed": False,
         "taskCreationAllowed": False,

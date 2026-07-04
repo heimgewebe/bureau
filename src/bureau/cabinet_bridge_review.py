@@ -8,9 +8,12 @@ from typing import Any
 
 from .cabinet_bridge import CabinetBridgeError
 
-
 EFFECT_FLAGS = ("dispatchAllowed", "queueMutationAllowed", "taskCreationAllowed")
-METADATA_EFFECT_FLAGS = ("dispatch_allowed", "queue_mutation_allowed", "task_creation_allowed")
+METADATA_EFFECT_FLAGS = (
+    "dispatch_allowed",
+    "queue_mutation_allowed",
+    "task_creation_allowed",
+)
 
 
 def _object(value: Any, label: str) -> dict[str, Any]:
@@ -42,7 +45,11 @@ def _load_preview(path: str | Path) -> dict[str, Any]:
     return _object(preview, "preview")
 
 
-def _require_false(container: dict[str, Any], fields: tuple[str, ...], label: str) -> None:
+def _require_false(
+    container: dict[str, Any],
+    fields: tuple[str, ...],
+    label: str,
+) -> None:
     for field in fields:
         if container.get(field) is not False:
             raise CabinetBridgeError(f"{label} must keep {field} false")
@@ -53,7 +60,9 @@ def review_preview(path: str | Path) -> dict[str, Any]:
     if preview.get("schemaVersion") != 1:
         raise CabinetBridgeError("preview schemaVersion must be 1")
     if preview.get("kind") != "cabinet_bridge_promotion_preview":
-        raise CabinetBridgeError("preview kind must be cabinet_bridge_promotion_preview")
+        raise CabinetBridgeError(
+            "preview kind must be cabinet_bridge_promotion_preview"
+        )
     if preview.get("mode") != "proposal_only":
         raise CabinetBridgeError("preview mode must be proposal_only")
     _require_false(preview, EFFECT_FLAGS, "preview")
@@ -84,13 +93,18 @@ def review_preview(path: str | Path) -> dict[str, Any]:
     required_acceptance = {"target-proof", "no-auto-effect"}
     if not required_acceptance.issubset(acceptance_ids):
         missing = sorted(required_acceptance - acceptance_ids)
-        raise CabinetBridgeError("preview task acceptance missing: " + ",".join(missing))
+        raise CabinetBridgeError(
+            "preview task acceptance missing: " + ",".join(missing)
+        )
 
     metadata = _object(task.get("metadata"), "preview task metadata")
     _require_false(metadata, METADATA_EFFECT_FLAGS, "preview metadata")
     if metadata.get("source") != "cabinet_bridge_probe":
         raise CabinetBridgeError("preview metadata source must be cabinet_bridge_probe")
-    source_candidate_id = _text(metadata.get("source_candidate_id"), "source_candidate_id")
+    source_candidate_id = _text(
+        metadata.get("source_candidate_id"),
+        "source_candidate_id",
+    )
     candidate = _object(metadata.get("source_candidate"), "source candidate")
     if candidate.get("id") != source_candidate_id:
         raise CabinetBridgeError("source candidate id mismatch")

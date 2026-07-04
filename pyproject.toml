@@ -25,6 +25,7 @@ bureau-agent-scout = "bureau.agent_frontier:main"
 bureau-codex-bridge = "bureau.codex_bridge:main"
 bureau-review-steward = "bureau.review_steward:main"
 bureau-cabinet-bridge-preview = "bureau.cabinet_bridge_preview:main"
+bureau-cabinet-bridge-review = "bureau.cabinet_bridge_review:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

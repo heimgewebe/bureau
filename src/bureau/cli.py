@@ -80,6 +80,8 @@ def parser() -> argparse.ArgumentParser:
     cabinet_graph.add_argument("--graph")
     cabinet_frontier = sub.add_parser("cabinet-frontier")
     cabinet_frontier.add_argument("--graph")
+    cabinet_bridge_probe = sub.add_parser("cabinet-bridge-probe")
+    cabinet_bridge_probe.add_argument("--bridge-policy")
     cabinet_promote = sub.add_parser("cabinet-promote")
     cabinet_promote.add_argument("--graph")
     cabinet_promote.add_argument("--frontier-export")
@@ -245,6 +247,21 @@ def main(argv: list[str] | None = None) -> int:
                     else graph_report(graph_path)
                 )
             except CabinetGraphError as exc:
+                print(f"bureau: {exc}", file=sys.stderr)
+                return 2
+            emit(value, args.json)
+            return 0
+        if args.command == "cabinet-bridge-probe":
+            from .cabinet_bridge import (
+                DEFAULT_BRIDGE_POLICY_PATH,
+                CabinetBridgeError,
+                bridge_probe,
+            )
+
+            bridge_policy_path = args.bridge_policy or DEFAULT_BRIDGE_POLICY_PATH
+            try:
+                value = bridge_probe(bridge_policy_path)
+            except CabinetBridgeError as exc:
                 print(f"bureau: {exc}", file=sys.stderr)
                 return 2
             emit(value, args.json)

@@ -955,7 +955,11 @@ def merge_lanes(
             state = old_state or candidate_state
         if state in {"closed", "verified", "merged"} and not candidate.get("merged"):
             state = "needs_revision"
-        metadata = dict(old.get("metadata") if isinstance(old.get("metadata"), dict) else {})
+        old_metadata = old.get("metadata") if isinstance(old.get("metadata"), dict) else {}
+        alias_metadata = (
+            alias_old.get("metadata") if isinstance(alias_old.get("metadata"), dict) else {}
+        )
+        metadata = {**alias_metadata, **old_metadata}
         pr_value = candidate.get("pr")
         pr_title = candidate.get("pr_title")
         pr_url = candidate.get("pr_url")

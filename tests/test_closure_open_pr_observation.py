@@ -576,3 +576,59 @@ def test_observed_changes_requested_pr_preserves_paused_lane_state() -> None:
     assert lane["pr"] == 54
     assert lane["metadata"]["github_observation_candidate_state"] == "needs_revision"
     assert lane["metadata"]["preserved_lane_state"] == "paused"
+
+
+def test_pr_alias_merge_preserves_alias_binding_metadata() -> None:
+    branch_candidate = {
+        "kind": "branch",
+        "repo": "/tmp/repo",
+        "repo_name": "repo",
+        "branch": "feat/example",
+        "proposed_state": "planned",
+        "finishability": 0.55,
+    }
+    branch_candidate["fingerprint"] = candidate_fingerprint(branch_candidate)
+    pr_candidate = {
+        "kind": "open_pull_request",
+        "repo": "/tmp/repo",
+        "repo_name": "repo",
+        "branch": "feat/example",
+        "pr": 54,
+        "pr_title": "Example PR",
+        "pr_url": "https://github.com/heimgewebe/bureau/pull/54",
+        "observed_github_state": {"state": "open", "source": "test"},
+        "proposed_state": "reviewing",
+        "finishability": 0.75,
+    }
+    pr_candidate["fingerprint"] = candidate_fingerprint(pr_candidate)
+    existing = merge_lanes({"candidates": [branch_candidate, pr_candidate]})
+    remote_lane = next(item for item in existing["lanes"] if item.get("pr") == 54)
+    remote_lane["task_id"] = "BUR-2026-001-T054"
+    remote_lane["metadata"] = {
+        "canonical_task_binding": {
+            "task_id": "BUR-2026-001-T054",
+            "source": "test",
+        }
+    }
+    next_candidate = {
+        "kind": "branch",
+        "repo": "/tmp/repo",
+        "repo_name": "repo",
+        "branch": "feat/example",
+        "pr": 54,
+        "pr_title": "Example PR",
+        "pr_url": "https://github.com/heimgewebe/bureau/pull/54",
+        "observed_github_state": {"state": "open", "source": "test"},
+        "proposed_state": "merge_candidate",
+        "finishability": 0.9,
+    }
+    next_candidate["fingerprint"] = candidate_fingerprint(next_candidate)
+
+    lanes = merge_lanes({"candidates": [next_candidate]}, existing)
+
+    assert len(lanes["lanes"]) == 1
+    lane = lanes["lanes"][0]
+    assert lane["pr"] == 54
+    assert lane["task_id"] == "BUR-2026-001-T054"
+    assert lane["metadata"]["canonical_task_binding"]["task_id"] == "BUR-2026-001-T054"
+    assert lane["metadata"]["merged_alias_fingerprint"] == pr_candidate["fingerprint"]

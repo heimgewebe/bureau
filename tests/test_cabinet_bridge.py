@@ -120,7 +120,14 @@ class CabinetBridgeProbeTests(unittest.TestCase):
             policy_path = write_fixture(Path(directory), [])
             stream = io.StringIO()
             with contextlib.redirect_stdout(stream):
-                result = main(["--json", "cabinet-bridge-probe", "--bridge-policy", str(policy_path)])
+                result = main(
+                    [
+                        "--json",
+                        "cabinet-bridge-probe",
+                        "--bridge-policy",
+                        str(policy_path),
+                    ]
+                )
             self.assertEqual(result, 0)
             payload = json.loads(stream.getvalue())
             self.assertEqual(payload["kind"], "cabinet_bureau_bridge_probe")

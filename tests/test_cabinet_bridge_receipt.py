@@ -47,6 +47,7 @@ class CabinetBridgeReceiptTests(unittest.TestCase):
         self.assertEqual(receipt["status"], "review_recorded")
         self.assertEqual(receipt["decision"], "ready-for-design")
         self.assertFalse(receipt["importAllowed"])
+        self.assertTrue(receipt["importReviewRequired"])
         self.assertFalse(receipt["dispatchAllowed"])
         self.assertFalse(receipt["queueMutationAllowed"])
         self.assertFalse(receipt["taskCreationAllowed"])
@@ -100,6 +101,7 @@ class CabinetBridgeReceiptTests(unittest.TestCase):
         self.assertEqual(result, 0)
         payload = json.loads(stream.getvalue())
         self.assertEqual(payload["status"], "review_recorded")
+        self.assertTrue(payload["importReviewRequired"])
         self.assertEqual(payload["sourceGate"]["sourceCandidateId"], "claim:ready")
 
 

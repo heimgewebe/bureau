@@ -14,6 +14,7 @@ SCHEMA_FILES = {
     "execution-envelope": "execution-envelope.v1.schema.json",
     "receipt": "receipt.v1.schema.json",
     "source": "source.v1.schema.json",
+    "agent-run-evidence-ref": "agent-run-evidence-ref.v1.schema.json",
 }
 
 

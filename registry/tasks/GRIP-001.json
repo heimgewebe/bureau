@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "id": "GRIP-001",
+  "initiative": "GRABOWSKI-GRIPS-V1",
+  "title": "Add operator grip foundation",
+  "state": "ready",
+  "goal": "Add operator grip foundation for the Grabowski operator grip foundation.",
+  "depends_on": [],
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "tests"
+  ],
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "execution": {
+    "mode": "grabowski-operation",
+    "policy": "autonomous",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/grabowski",
+    "operation": "grip-001",
+    "operation_parameters": {
+      "target_repo": "heimgewebe/grabowski",
+      "branch": "feat/operator-grip-foundation-v1",
+      "source_plan": "heimgewebe/grabowski:docs/operator-grip-foundation-plan-v1.md",
+      "slice_kind": "planned-pr-slice"
+    },
+    "resume_policy": "verify-then-retry",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "capacity",
+      "amount": 1,
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "acceptance-1",
+      "assertion": "Core read-only grips work."
+    },
+    {
+      "id": "acceptance-2",
+      "assertion": "Receipts are emitted."
+    },
+    {
+      "id": "acceptance-3",
+      "assertion": "Tests cover happy path and blocked/preflight failure."
+    }
+  ],
+  "metadata": {
+    "planning_stage": "ready",
+    "target_repo": "heimgewebe/grabowski",
+    "branch": "feat/operator-grip-foundation-v1",
+    "scope": [
+      "grip spec model",
+      "grip receipt model",
+      "grip runner skeleton",
+      "repo-orient",
+      "pr-check-readiness",
+      "post-merge-sync"
+    ],
+    "non_goals": [
+      "no durable runner",
+      "no merge grip",
+      "no deploy grip",
+      "no cleanup apply"
+    ],
+    "evidence": [
+      "PR URL",
+      "diff",
+      "tests",
+      "sample receipts"
+    ],
+    "source_plan": {
+      "ref": "heimgewebe/grabowski:docs/operator-grip-foundation-plan-v1.md",
+      "document_sha256": "2dc8e20c5643e76e12afb89b2734f87bc0323e9c5488e7d4fcd698e0a6464ada",
+      "source_repo_owns_fachplan": true,
+      "bureau_owns_planned_slice_list": true
+    },
+    "receipt_required": true
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "id": "GRIP-002",
+  "initiative": "GRABOWSKI-GRIPS-V1",
+  "title": "Add branch and PR publishing grips",
+  "state": "planned",
+  "goal": "Add branch and PR publishing grips for the Grabowski operator grip foundation.",
+  "depends_on": [
+    "GRIP-001"
+  ],
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "tests"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "execution": {
+    "mode": "grabowski-operation",
+    "policy": "autonomous",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/grabowski",
+    "operation": "grip-002",
+    "operation_parameters": {
+      "target_repo": "heimgewebe/grabowski",
+      "branch": "feat/branch-pr-publishing-grips-v1",
+      "source_plan": "heimgewebe/grabowski:docs/operator-grip-foundation-plan-v1.md",
+      "slice_kind": "planned-pr-slice"
+    },
+    "resume_policy": "verify-then-retry",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "capacity",
+      "amount": 1,
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "acceptance-1",
+      "assertion": "Add branch and PR publishing grips has an implementation receipt."
+    }
+  ],
+  "metadata": {
+    "planning_stage": "planned",
+    "target_repo": "heimgewebe/grabowski",
+    "branch": "feat/branch-pr-publishing-grips-v1",
+    "scope": [
+      "branch-publish",
+      "pr-create-or-update",
+      "agent-review-request"
+    ],
+    "non_goals": [],
+    "evidence": [
+      "PR URL",
+      "diff",
+      "tests"
+    ],
+    "source_plan": {
+      "ref": "heimgewebe/grabowski:docs/operator-grip-foundation-plan-v1.md",
+      "document_sha256": "2dc8e20c5643e76e12afb89b2734f87bc0323e9c5488e7d4fcd698e0a6464ada",
+      "source_repo_owns_fachplan": true,
+      "bureau_owns_planned_slice_list": true
+    },
+    "receipt_required": true
+  }
+}

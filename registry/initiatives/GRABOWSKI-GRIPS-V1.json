@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-GRIPS-V1",
+  "title": "Build Grabowski operator grip foundation",
+  "state": "committed",
+  "commitment": "next",
+  "goal": "Make Grabowski more handlungsfaehig through named operator grips, receipts and durable roles.",
+  "current_plan": {
+    "repository": "heimgewebe/grabowski",
+    "path": "docs/operator-grip-foundation-plan-v1.md"
+  },
+  "completion": [
+    "Planned Grabowski grip PR slices are visible in Bureau.",
+    "Ready slices are claimable only when their dependencies and acceptance evidence are explicit.",
+    "Implemented slices are completed with receipts linking PR, diff, tests and sample outputs where applicable."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "requested_id": "GRABOWSKI-GRIPS-v1",
+    "requested_status": "planned",
+    "planning_stage": "planned",
+    "target_repo": "heimgewebe/grabowski",
+    "source_plan": "heimgewebe/grabowski:docs/operator-grip-foundation-plan-v1.md",
+    "state_mapping": {
+      "initiative_planned": "state=committed, commitment=next",
+      "task_candidate": "state=inbox, metadata.planning_stage=candidate",
+      "task_planned": "state=planned",
+      "task_ready": "state=ready"
+    },
+    "source_plan_document_sha256": "2dc8e20c5643e76e12afb89b2734f87bc0323e9c5488e7d4fcd698e0a6464ada"
+  }
+}

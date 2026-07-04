@@ -73,7 +73,14 @@ STATE_PRIORITY = {
 MUTATING_STATES = {"planned", "ready", "active", "needs_revision", "ci_failed"}
 REVIEW_STATES = {"reviewing", "needs_revision", "ci_failed"}
 MERGE_STATES = {"merge_candidate", "merge_ready"}
-PR_OBSERVATION_PRESERVED_WORKFLOW_STATES = {"active", "needs_revision", "ci_failed"}
+PR_OBSERVATION_HELD_WORKFLOW_STATES = {"paused"}
+PR_OBSERVATION_PRESERVED_WORKFLOW_STATES = {
+    "active",
+    "ci_failed",
+    "needs_revision",
+}
+# `blocked` is intentionally not generic here: Closure also uses it for
+# transient observation blockers. Add an explicit operator-block marker first.
 PR_OBSERVATION_NON_BLOCKING_STATES = {"merge_candidate", "reviewing"}
 CANONICAL_TASK_REQUIRED_STATES = MUTATING_STATES | REVIEW_STATES | MERGE_STATES
 CANONICAL_BUREAU_TASK_ID_RE = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$")
@@ -280,6 +287,12 @@ def open_pull_request_lane_state(pr: dict[str, Any]) -> tuple[str, float, str]:
             "ci_failed",
             0.4,
             "inspect observed GitHub checks before advancing this pull request",
+        )
+    if review_decision == "CHANGES_REQUESTED":
+        return (
+            "needs_revision",
+            0.35,
+            "address requested GitHub pull-request changes before review handoff",
         )
     if is_draft:
         return "reviewing", 0.6, "continue draft pull-request review; do not merge"
@@ -922,8 +935,13 @@ def merge_lanes(
         old_state = old.get("state") if old.get("state") in LANE_STATES else None
         preserve_existing_workflow_state = (
             candidate.get("observed_github_state") is not None
-            and old_state in PR_OBSERVATION_PRESERVED_WORKFLOW_STATES
-            and candidate_state in PR_OBSERVATION_NON_BLOCKING_STATES
+            and (
+                old_state in PR_OBSERVATION_HELD_WORKFLOW_STATES
+                or (
+                    old_state in PR_OBSERVATION_PRESERVED_WORKFLOW_STATES
+                    and candidate_state in PR_OBSERVATION_NON_BLOCKING_STATES
+                )
+            )
         )
         if (
             blocked_github_observation is not None and has_previous_pr_state

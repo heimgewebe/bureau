@@ -180,8 +180,11 @@ Conservative lane derivation from observed GitHub state is intentionally narrow:
 
 - `DIRTY` becomes `needs_revision`.
 - `UNSTABLE` or `UNKNOWN` becomes `ci_failed`.
+- `CHANGES_REQUESTED` becomes `needs_revision`.
 - Draft pull requests become `reviewing`.
 - `CLEAN` plus `APPROVED` becomes `merge_candidate`.
 - `CLEAN` without approval remains `reviewing`.
+
+Existing `paused` lanes keep their operator hold when pull-request observation would otherwise derive a review, revision, or merge-candidate state.
 
 A `merge_candidate` lane is only eligible for merge-gatekeeper handoff. It is not a merge permission and does not replace explicit checks, review-thread inspection or final merge policy.

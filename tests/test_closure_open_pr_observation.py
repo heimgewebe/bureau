@@ -135,6 +135,23 @@ def test_clean_approved_open_pr_is_merge_candidate() -> None:
     assert "merge gatekeeper" in action
 
 
+def test_changes_requested_open_pr_needs_revision() -> None:
+    state, finishability, action = open_pull_request_lane_state(
+        open_pr(merge_state="CLEAN", review_decision="CHANGES_REQUESTED", draft=False)
+    )
+    assert state == "needs_revision"
+    assert finishability == 0.35
+    assert "requested GitHub pull-request changes" in action
+
+
+def test_changes_requested_open_pr_takes_precedence_over_draft() -> None:
+    state, _finishability, action = open_pull_request_lane_state(
+        open_pr(merge_state="CLEAN", review_decision="CHANGES_REQUESTED", draft=True)
+    )
+    assert state == "needs_revision"
+    assert "requested GitHub pull-request changes" in action
+
+
 def test_observe_open_pull_requests_records_adapter_failure(tmp_path: Path, monkeypatch) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()
@@ -481,3 +498,81 @@ def test_observed_pr_preserves_active_lane_state() -> None:
     assert lane["pr"] == 54
     assert lane["metadata"]["github_observation_candidate_state"] == "merge_candidate"
     assert lane["metadata"]["preserved_lane_state"] == "active"
+
+
+def test_observed_pr_preserves_paused_lane_state() -> None:
+    candidate = {
+        "kind": "branch",
+        "repo": "/tmp/repo",
+        "repo_name": "repo",
+        "branch": "feat/example",
+        "pr": 54,
+        "pr_title": "Example PR",
+        "pr_url": "https://github.com/heimgewebe/bureau/pull/54",
+        "observed_github_state": {
+            "state": "open",
+            "merge_state_status": "CLEAN",
+            "review_decision": "APPROVED",
+            "is_draft": False,
+            "source": "test",
+        },
+        "proposed_state": "merge_candidate",
+        "finishability": 0.9,
+        "next_best_action": "handoff to merge gatekeeper after final evidence check",
+    }
+    candidate["fingerprint"] = candidate_fingerprint(candidate)
+    existing = merge_lanes({"candidates": [candidate]})
+    existing["lanes"][0]["state"] = "paused"
+    existing["lanes"][0]["task_id"] = "BUR-2026-001-T054"
+    existing["lanes"][0]["next_action"] = "operator pause before merge handoff"
+    existing["lanes"][0]["finishability"] = 0.2
+
+    lanes = merge_lanes({"candidates": [candidate]}, existing)
+
+    lane = lanes["lanes"][0]
+    assert lane["state"] == "paused"
+    assert lane["task_id"] == "BUR-2026-001-T054"
+    assert lane["next_action"] == "operator pause before merge handoff"
+    assert lane["finishability"] == 0.2
+    assert lane["pr"] == 54
+    assert lane["metadata"]["github_observation_candidate_state"] == "merge_candidate"
+    assert lane["metadata"]["preserved_lane_state"] == "paused"
+
+
+def test_observed_changes_requested_pr_preserves_paused_lane_state() -> None:
+    candidate = {
+        "kind": "branch",
+        "repo": "/tmp/repo",
+        "repo_name": "repo",
+        "branch": "feat/example",
+        "pr": 54,
+        "pr_title": "Example PR",
+        "pr_url": "https://github.com/heimgewebe/bureau/pull/54",
+        "observed_github_state": {
+            "state": "open",
+            "merge_state_status": "CLEAN",
+            "review_decision": "CHANGES_REQUESTED",
+            "is_draft": False,
+            "source": "test",
+        },
+        "proposed_state": "needs_revision",
+        "finishability": 0.35,
+        "next_best_action": "address requested GitHub pull-request changes before review handoff",
+    }
+    candidate["fingerprint"] = candidate_fingerprint(candidate)
+    existing = merge_lanes({"candidates": [candidate]})
+    existing["lanes"][0]["state"] = "paused"
+    existing["lanes"][0]["task_id"] = "BUR-2026-001-T054"
+    existing["lanes"][0]["next_action"] = "operator pause before revision handoff"
+    existing["lanes"][0]["finishability"] = 0.2
+
+    lanes = merge_lanes({"candidates": [candidate]}, existing)
+
+    lane = lanes["lanes"][0]
+    assert lane["state"] == "paused"
+    assert lane["task_id"] == "BUR-2026-001-T054"
+    assert lane["next_action"] == "operator pause before revision handoff"
+    assert lane["finishability"] == 0.2
+    assert lane["pr"] == 54
+    assert lane["metadata"]["github_observation_candidate_state"] == "needs_revision"
+    assert lane["metadata"]["preserved_lane_state"] == "paused"

@@ -29,14 +29,18 @@ def merged_evidence() -> dict:
         "mergeCommit": {"oid": MERGE_SHA},
     }
 
+
 def test_scan_reports_ready_receipt_for_merged_bound_task(tmp_path: Path) -> None:
-    write_task(tmp_path, {
-        "id": "DEMO-T001",
-        "state": "ready",
-        "metadata": {"pr_completion": {
-            "repo": "heimgewebe/example", "number": 7, "head_sha": HEAD_SHA
-        }},
-    })
+    write_task(
+        tmp_path,
+        {
+            "id": "DEMO-T001",
+            "state": "ready",
+            "metadata": {
+                "pr_completion": {"repo": "heimgewebe/example", "number": 7, "head_sha": HEAD_SHA}
+            },
+        },
+    )
     evidence_dir = tmp_path / "evidence"
     evidence_dir.mkdir()
     write_evidence(evidence_dir, merged_evidence())
@@ -44,12 +48,16 @@ def test_scan_reports_ready_receipt_for_merged_bound_task(tmp_path: Path) -> Non
     assert findings[0]["ready"] is True
     assert findings[0]["blockers"] == []
 
+
 def test_scan_blocks_unmerged_evidence(tmp_path: Path) -> None:
-    write_task(tmp_path, {
-        "id": "DEMO-T002",
-        "state": "ready",
-        "metadata": {"pr_completion": {"repo": "heimgewebe/example", "number": 7}},
-    })
+    write_task(
+        tmp_path,
+        {
+            "id": "DEMO-T002",
+            "state": "ready",
+            "metadata": {"pr_completion": {"repo": "heimgewebe/example", "number": 7}},
+        },
+    )
     evidence_dir = tmp_path / "evidence"
     evidence_dir.mkdir()
     write_evidence(evidence_dir, {"state": "OPEN", "headRefOid": HEAD_SHA})
@@ -57,14 +65,18 @@ def test_scan_blocks_unmerged_evidence(tmp_path: Path) -> None:
     assert findings[0]["ready"] is False
     assert findings[0]["blockers"] == ["pull request is not merged"]
 
+
 def test_scan_blocks_head_sha_mismatch(tmp_path: Path) -> None:
-    write_task(tmp_path, {
-        "id": "DEMO-T003",
-        "state": "ready",
-        "metadata": {"pr_completion": {
-            "repo": "heimgewebe/example", "number": 7, "head_sha": "3" * 40
-        }},
-    })
+    write_task(
+        tmp_path,
+        {
+            "id": "DEMO-T003",
+            "state": "ready",
+            "metadata": {
+                "pr_completion": {"repo": "heimgewebe/example", "number": 7, "head_sha": "3" * 40}
+            },
+        },
+    )
     evidence_dir = tmp_path / "evidence"
     evidence_dir.mkdir()
     write_evidence(evidence_dir, merged_evidence())
@@ -72,17 +84,23 @@ def test_scan_blocks_head_sha_mismatch(tmp_path: Path) -> None:
     assert findings[0]["ready"] is False
     assert findings[0]["blockers"] == ["pull request head sha does not match"]
 
+
 def test_apply_ready_verifies_only_auto_verify_tasks(tmp_path: Path) -> None:
-    write_task(tmp_path, {
-        "id": "DEMO-T004",
-        "state": "ready",
-        "metadata": {"pr_completion": {
-            "repo": "heimgewebe/example",
-            "number": 7,
-            "head_sha": HEAD_SHA,
-            "auto_verify": True,
-        }},
-    })
+    write_task(
+        tmp_path,
+        {
+            "id": "DEMO-T004",
+            "state": "ready",
+            "metadata": {
+                "pr_completion": {
+                    "repo": "heimgewebe/example",
+                    "number": 7,
+                    "head_sha": HEAD_SHA,
+                    "auto_verify": True,
+                }
+            },
+        },
+    )
     evidence_dir = tmp_path / "evidence"
     evidence_dir.mkdir()
     write_evidence(evidence_dir, merged_evidence())
@@ -93,14 +111,18 @@ def test_apply_ready_verifies_only_auto_verify_tasks(tmp_path: Path) -> None:
     assert task["state"] == "verified"
     assert task["metadata"]["verification"]["pr_completion"]["kind"]
 
+
 def test_apply_ready_leaves_non_auto_verify_task_unchanged(tmp_path: Path) -> None:
-    write_task(tmp_path, {
-        "id": "DEMO-T005",
-        "state": "ready",
-        "metadata": {"pr_completion": {
-            "repo": "heimgewebe/example", "number": 7, "head_sha": HEAD_SHA
-        }},
-    })
+    write_task(
+        tmp_path,
+        {
+            "id": "DEMO-T005",
+            "state": "ready",
+            "metadata": {
+                "pr_completion": {"repo": "heimgewebe/example", "number": 7, "head_sha": HEAD_SHA}
+            },
+        },
+    )
     evidence_dir = tmp_path / "evidence"
     evidence_dir.mkdir()
     write_evidence(evidence_dir, merged_evidence())

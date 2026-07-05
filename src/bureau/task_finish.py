@@ -24,9 +24,12 @@ def load_json(path: Path) -> dict[str, Any]:
 
 def write_json(path: Path, value: dict[str, Any]) -> None:
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
 def task_paths(root: Path) -> list[Path]:
     tasks = root / "registry" / "tasks"
     return sorted(tasks.glob("*.json")) if tasks.exists() else []
+
 
 def task_binding(task: dict[str, Any]) -> dict[str, Any] | None:
     meta = task.get("metadata")
@@ -53,6 +56,7 @@ def task_binding(task: dict[str, Any]) -> dict[str, Any] | None:
         "post_merge_required": bool(raw.get("post_merge_required", False)),
     }
 
+
 def pr_is_merged(pr: dict[str, Any]) -> bool:
     return (
         pr.get("merged") is True
@@ -60,15 +64,18 @@ def pr_is_merged(pr: dict[str, Any]) -> bool:
         or bool(pr.get("mergedAt") or pr.get("merged_at"))
     )
 
+
 def pr_head_sha(pr: dict[str, Any]) -> str | None:
     value = pr.get("headRefOid") or pr.get("head_sha")
     return value if isinstance(value, str) else None
+
 
 def pr_merge_commit(pr: dict[str, Any]) -> str | None:
     value = pr.get("mergeCommit") or pr.get("merge_commit")
     if isinstance(value, dict):
         value = value.get("oid") or value.get("sha")
     return value if isinstance(value, str) else None
+
 
 def load_evidence(directory: Path, repo: str, number: int) -> dict[str, Any] | None:
     safe_repo = repo.replace("/", "__")
@@ -78,6 +85,7 @@ def load_evidence(directory: Path, repo: str, number: int) -> dict[str, Any] | N
         if path.exists():
             return load_json(path)
     return None
+
 
 def make_finding(
     root: Path,
@@ -125,6 +133,7 @@ def make_finding(
         }
     return finding
 
+
 def scan(root: Path, evidence_dir: Path) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
     for task_path in task_paths(root):
@@ -135,6 +144,7 @@ def scan(root: Path, evidence_dir: Path) -> list[dict[str, Any]]:
         evidence = load_evidence(evidence_dir, binding["repo"], binding["number"])
         findings.append(make_finding(root, task_path, task, binding, evidence))
     return findings
+
 
 def apply_ready(root: Path, findings: list[dict[str, Any]], observed_at: str) -> list[str]:
     changed: list[str] = []
@@ -153,6 +163,7 @@ def apply_ready(root: Path, findings: list[dict[str, Any]], observed_at: str) ->
         write_json(path, task)
         changed.append(str(path.relative_to(root)))
     return changed
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -181,6 +192,7 @@ def main(argv: list[str] | None = None) -> int:
             number = finding["pr_number"]
             print(f"{state} {task_id} {repo}#{number}")
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

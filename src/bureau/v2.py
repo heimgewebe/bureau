@@ -6,7 +6,7 @@ import re
 import sqlite3
 import subprocess
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager, suppress
 from dataclasses import replace
 from datetime import datetime, timezone
@@ -39,6 +39,137 @@ AGENT_BRIEF_REQUIRED_FIELDS = (
     "expected_handoff_format",
 )
 EXTERNAL_AGENT_MARKERS = ("codex", "claude", "cline", "agy", "gemini", "jules")
+
+
+class OpenPullRequestObservationError(RuntimeError):
+    """Raised when claim-time open pull-request observation is inconclusive."""
+
+
+def github_repository_from_remote_url(remote_url: str) -> str | None:
+    """Return owner/repo for GitHub remotes in common SSH/HTTPS forms."""
+    value = remote_url.strip()
+    if not value:
+        return None
+    if value.endswith(".git"):
+        value = value[:-4]
+    marker = "github.com/"
+    if value.startswith("git@github.com:"):
+        path = value.removeprefix("git@github.com:")
+    elif marker in value:
+        path = value.split(marker, 1)[1]
+    else:
+        return None
+    path = path.strip("/")
+    parts = path.split("/")
+    if len(parts) < 2 or not parts[0] or not parts[1]:
+        return None
+    return f"{parts[0]}/{parts[1]}"
+
+
+def _github_repository_for_path(path: Path) -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(path), "remote", "get-url", "origin"],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise OpenPullRequestObservationError(
+            f"cannot resolve git remote for {path}: {exc}"
+        ) from exc
+    if result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip() or "no diagnostic"
+        raise OpenPullRequestObservationError(
+            f"cannot resolve git remote for {path}: {detail}"
+        )
+    return github_repository_from_remote_url(result.stdout.strip())
+
+
+def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
+    binary = os.environ.get("BUREAU_GH_BIN", "gh")
+    try:
+        result = subprocess.run(
+            [
+                binary,
+                "pr",
+                "list",
+                "--repo",
+                repository,
+                "--state",
+                "open",
+                "--limit",
+                "100",
+                "--json",
+                "number,title,headRefName,url",
+            ],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise OpenPullRequestObservationError(
+            f"cannot observe open pull requests for {repository}: {exc}"
+        ) from exc
+    if result.returncode != 0:
+        detail = "\n".join(
+            part for part in (result.stdout.strip(), result.stderr.strip()) if part
+        )
+        raise OpenPullRequestObservationError(
+            f"gh pr list failed for {repository}: {detail or 'no diagnostic'}"
+        )
+    try:
+        value = json.loads(result.stdout or "[]")
+    except json.JSONDecodeError as exc:
+        raise OpenPullRequestObservationError(
+            f"gh pr list returned invalid JSON for {repository}: {exc}"
+        ) from exc
+    if not isinstance(value, list):
+        raise OpenPullRequestObservationError(
+            f"gh pr list returned non-list JSON for {repository}"
+        )
+    return [item for item in value if isinstance(item, dict)]
+
+
+def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Reservation]:
+    """Represent open GitHub PRs as conservative repo write blockers.
+
+    The guard is intentionally repository-scoped: if a task wants write access to a
+    repository or one of its child resources, an already-open PR for that GitHub
+    repository blocks claim selection until the PR is merged or closed.
+    """
+    if os.environ.get("BUREAU_OPEN_PR_CLAIM_GUARD", "1") in {"0", "false", "False"}:
+        return []
+    result: list[legacy.Reservation] = []
+    observed: dict[str, list[dict[str, Any]]] = {}
+    for resource in registry.resources.values():
+        if resource.type != "git-repository":
+            continue
+        if not resource.path:
+            raise OpenPullRequestObservationError(
+                f"cannot observe configured repository {resource.id}: missing path"
+            )
+        repository = _github_repository_for_path(Path(resource.path).expanduser())
+        if repository is None:
+            continue
+        if repository not in observed:
+            observed[repository] = _github_open_pull_requests(repository)
+        pull_requests = observed[repository]
+        for pull_request in pull_requests:
+            number = pull_request.get("number")
+            if not isinstance(number, int):
+                continue
+            result.append(
+                legacy.Reservation(
+                    f"open-pr:{repository}#{number}",
+                    resource.id,
+                    "write-blocker",
+                    1,
+                )
+            )
+    return result
 
 
 def _grabowski_worker_policy() -> dict[str, Any]:
@@ -798,11 +929,23 @@ class Dispatcher(legacy.Dispatcher):
         registry: Registry,
         store: StateStore,
         adapters: AdapterRegistry | None = None,
+        open_pr_reservations_provider: Callable[[Registry], list[legacy.Reservation]] | None = None,
     ):
         super().__init__(registry, store)
         self.registry = registry
         self.store = store
         self.adapters = adapters or AdapterRegistry()
+        self.open_pr_reservations_provider = (
+            open_pr_reservations_provider or open_pull_request_reservations
+        )
+
+    def _open_pr_reservations(self, *, strict: bool) -> list[legacy.Reservation]:
+        try:
+            return list(self.open_pr_reservations_provider(self.registry))
+        except OpenPullRequestObservationError as exc:
+            if strict:
+                raise legacy.StateError(f"open pull request guard failed: {exc}") from exc
+            return []
 
     def _closure_bridge_applies(
         self, task: legacy.Task, state: str, initiative: legacy.Initiative
@@ -859,9 +1002,10 @@ class Dispatcher(legacy.Dispatcher):
         return result
 
     def frontier(self, capabilities: set[str]) -> list[dict[str, Any]]:
+        open_pr_reservations = self._open_pr_reservations(strict=False)
         with self.store.connect() as connection:
             runs = self.store.active_runs(connection)
-            reservations = self.store.reservations(connection)
+            reservations = self.store.reservations(connection) + open_pr_reservations
             overlays = self.store.overlays(connection, self.registry)
             result: list[dict[str, Any]] = []
             for task in self.registry.ordered_tasks():
@@ -908,12 +1052,13 @@ class Dispatcher(legacy.Dispatcher):
                     "run": self.store.public_run(current),
                     "envelope": json.loads(current["envelope_json"]),
                 }
+            open_pr_reservations = self._open_pr_reservations(strict=True)
             worker = connection.execute(
                 "SELECT * FROM workers WHERE worker_id=?", (worker_id,)
             ).fetchone()
             worker_capabilities = set(json.loads(worker["capabilities_json"]))
             runs = self.store.active_runs(connection)
-            reservations = self.store.reservations(connection)
+            reservations = self.store.reservations(connection) + open_pr_reservations
             overlays = self.store.overlays(connection, self.registry)
             rejected: list[dict[str, Any]] = []
             selected: legacy.Task | None = None

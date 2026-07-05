@@ -198,6 +198,8 @@ def overlaps(left: str, right: str, resources: dict[str, Resource]) -> bool:
 def modes_conflict(left: str, right: str) -> bool:
     if "exclusive" in {left, right}:
         return True
+    if "write-blocker" in {left, right}:
+        return "write" in {left, right}
     if left == right == "read":
         return False
     if left == right == "capacity":

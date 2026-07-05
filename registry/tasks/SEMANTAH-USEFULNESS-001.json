@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "id": "SEMANTAH-USEFULNESS-001",
+  "initiative": "SEMANTAH-USEFULNESS-V1",
+  "title": "Create real RepoBrief snapshot evidence for semantAH",
+  "state": "planned",
+  "depends_on": [],
+  "required_capabilities": ["repository", "shell"],
+  "priority": {
+    "lane": "later",
+    "rank": 100
+  },
+  "execution": {
+    "policy": "review-before-effect",
+    "mode": "interactive-agent",
+    "summary": "Generate or reference a real Lenskit RepoBrief bundle for heimgewebe/semantAH before treating the audit as durable evidence."
+  },
+  "claims": [],
+  "acceptance": [
+    {
+      "id": "repobrief-bundle",
+      "assertion": "A semantAH RepoBrief bundle manifest exists or an explicit blocker records why it could not be generated."
+    },
+    {
+      "id": "snapshot-check",
+      "assertion": "RepoBrief snapshot check result is captured with status pass, warn, or documented failure."
+    },
+    {
+      "id": "negative-semantics",
+      "assertion": "The result preserves RepoBrief negative semantics and does not claim truth, completeness, runtime correctness, or repo understanding."
+    }
+  ],
+  "plan_ref": "docs/plans/semantah-usefulness-repobrief-plan-v1.md#phase-0--real-repobrief-starting-point"
+}

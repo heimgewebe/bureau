@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "SEMANTAH-USEFULNESS-V1",
+  "title": "Make semantAH useful through RepoBrief-bound evidence and retrieval proof",
+  "state": "committed",
+  "commitment": "next",
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "current_plan": {
+    "path": "docs/plans/semantah-usefulness-repobrief-plan-v1.md",
+    "version": "v1",
+    "status": "planned",
+    "registered_at": "2026-07-05",
+    "summary": "RepoBrief-bound plan to convert semantAH from aspirational semantic pipeline into measured Semantic Evidence Service."
+  }
+}

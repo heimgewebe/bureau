@@ -1,0 +1,1 @@
+RBV1-T001 checked on 2026-07-05. Lenskit RepoBrief naming docs are already covered; focused docs tests passed: 13 passed. No Lenskit patch needed.

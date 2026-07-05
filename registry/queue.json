@@ -3,7 +3,8 @@
   "queue_policy": "skip-blocked",
   "lanes": {
     "now": [
-      "BUR-2026-002-T001"
+      "BUR-2026-002-T001",
+      "GRIP-ROADMAP-V1-T001"
     ],
     "next": [
       "BUR-2026-002-T002",
@@ -16,7 +17,9 @@
       "RBV1-T006",
       "RBV1-T007",
       "RBV1-T008",
-      "RBV1-T009"
+      "RBV1-T009",
+      "GRIP-ROADMAP-V1-T002",
+      "GRIP-ROADMAP-V1-T003"
     ],
     "later": [
       "BUR-2026-002-T004",
@@ -33,7 +36,10 @@
       "RBV1-T015",
       "RBV1-T016",
       "RBV1-T017",
-      "RBV1-T018"
+      "RBV1-T018",
+      "GRIP-ROADMAP-V1-T004",
+      "GRIP-ROADMAP-V1-T005",
+      "GRIP-ROADMAP-V1-T006"
     ]
   }
 }

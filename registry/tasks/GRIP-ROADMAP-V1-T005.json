@@ -1,0 +1,51 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Each Captain action is explicitly marked high-impact.",
+      "id": "high-impact-marked"
+    },
+    {
+      "assertion": "Recovery or irreversibility is recorded before mutation.",
+      "id": "recovery-visible"
+    },
+    {
+      "assertion": "Target changes require an explicit target-change record.",
+      "id": "no-silent-target-change"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Add explicitly marked Captain paths for merge, deploy, service restart, fleet mutation, and cleanup apply with recovery/irreversibility receipts.",
+  "id": "GRIP-ROADMAP-V1-T005",
+  "initiative": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
+    "roadmap_slice": "PR7",
+    "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately."
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Add captain privileged-action path",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T002",
+    "GRIP-ROADMAP-V1-T004"
+  ]
+}

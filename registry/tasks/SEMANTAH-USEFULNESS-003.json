@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "id": "SEMANTAH-USEFULNESS-003",
+  "initiative": "SEMANTAH-USEFULNESS-V1",
+  "title": "Repair semantAH insight contract drift",
+  "state": "planned",
+  "depends_on": ["SEMANTAH-USEFULNESS-002"],
+  "required_capabilities": ["repository"],
+  "priority": {
+    "lane": "later",
+    "rank": 120
+  },
+  "execution": {
+    "policy": "review-before-effect",
+    "mode": "interactive-agent",
+    "summary": "Repair the confusion between review insights and daily insights in semantAH contracts and documentation."
+  },
+  "claims": [],
+  "acceptance": [
+    {
+      "id": "output-doc-fixed",
+      "assertion": "semantAH docs/contracts/output.md no longer says insights.daily.schema.json does not exist."
+    },
+    {
+      "id": "schema-roles-clear",
+      "assertion": "insights.schema.json is documented as review insight and insights.daily.schema.json as daily summary."
+    },
+    {
+      "id": "daily-validation",
+      "assertion": "Daily insights exporter validates against the daily schema or records a precise blocker."
+    }
+  ],
+  "plan_ref": "docs/plans/semantah-usefulness-repobrief-plan-v1.md#phase-2--repair-insight-contract-drift"
+}

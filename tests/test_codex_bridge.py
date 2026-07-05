@@ -37,7 +37,9 @@ class FakeRunner:
             )
         if action == "check":
             returncode = (
-                self.check_returncodes.pop(0) if self.check_returncodes else self.check_returncode
+                self.check_returncodes.pop(0)
+                if self.check_returncodes
+                else self.check_returncode
             )
             return subprocess.CompletedProcess(
                 list(command),

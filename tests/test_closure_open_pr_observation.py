@@ -234,7 +234,9 @@ def test_remote_only_pr_lane_migrates_when_branch_is_checked_out(
     source = RepositorySource("repo", repo, "repo:repo")
     monkeypatch.setattr(
         "bureau.closure.observe_open_pull_requests",
-        lambda root: OpenPullRequestObservation([open_pr(53, branch="automation/remote-only")]),
+        lambda root: OpenPullRequestObservation(
+            [open_pr(53, branch="automation/remote-only")]
+        ),
     )
     existing = merge_lanes(inventory_existing_work([source]))
     existing["lanes"][0]["task_id"] = "BUR-2026-001-T053"
@@ -464,7 +466,6 @@ def test_observe_open_pull_requests_passes_json_fields_as_one_argument(
         "headRepositoryOwner,isCrossRepository"
     )
     assert "number" not in command[json_index + 2 :]
-
 
 def test_observed_pr_preserves_active_lane_state() -> None:
     candidate = {
@@ -696,7 +697,6 @@ def test_pr_alias_merge_blocks_conflicting_binding_metadata() -> None:
     assert conflict["old_task_id"] == "BUR-2026-001-T001"
     assert conflict["alias_task_id"] == "BUR-2026-001-T054"
     assert conflict["binding_task_id"] == "BUR-2026-001-T054"
-
 
 def test_retained_remote_only_pr_lane_blocks_on_incomplete_observation() -> None:
     pr_candidate = {

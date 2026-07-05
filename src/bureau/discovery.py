@@ -383,7 +383,9 @@ def main() -> int:
         }
         errors = validate_receipt(blocked, expected_stage="scanner", expected_cycle_id=cycle)
         if errors:
-            raise RuntimeError("blocked receipt contract failed: " + "; ".join(errors)) from None
+            raise RuntimeError(
+                "blocked receipt contract failed: " + "; ".join(errors)
+            ) from None
         atomic_json(report_path, blocked)
         atomic_json(STATE / "latest.json", blocked)
         atomic_json(INBOX / f"{cycle}-{stamp}-blocked.json", blocked)

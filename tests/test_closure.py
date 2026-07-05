@@ -128,6 +128,7 @@ def test_run_selects_bound_lane_and_generates_brief(tmp_path: Path, monkeypatch)
         assert field in brief
 
 
+
 def test_verified_canonical_task_is_not_selected_again(tmp_path: Path, monkeypatch) -> None:
     repo = make_repo(tmp_path)
     source = RepositorySource("repo", repo, "repo:repo")
@@ -166,7 +167,6 @@ def test_load_canonical_task_states_reads_registry_root(tmp_path: Path) -> None:
     )
 
     assert load_canonical_task_states(tmp_path) == {"BUR-2026-001-T001": "verified"}
-
 
 def test_selection_rejects_grabowski_task_id_for_ci_failed_lane() -> None:
     values = [lane("lane-1", "ci_failed", "a4d2e0bc80f749ebb4482961")]

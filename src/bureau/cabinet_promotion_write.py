@@ -88,6 +88,7 @@ def write_promotion_task(proposal: dict[str, Any], path: str | Path) -> dict[str
     }
 
 
+
 def _expect_non_empty_string(value: Any, label: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise CabinetGraphError(f"{label} must be a non-empty string")
@@ -152,7 +153,9 @@ def validate_promotion_task(task: dict[str, Any]) -> dict[str, Any]:
         if claim.get("isolation") != "none":
             raise CabinetGraphError("Cabinet promotion task claims must keep isolation none")
 
-    acceptance = _expect_list(task.get("acceptance"), "Cabinet promotion task acceptance")
+    acceptance = _expect_list(
+        task.get("acceptance"), "Cabinet promotion task acceptance"
+    )
     acceptance_ids = {
         item.get("id")
         for item in acceptance
@@ -174,8 +177,12 @@ def validate_promotion_task(task: dict[str, Any]) -> dict[str, Any]:
     )
     _expect_false(source_candidate.get("dispatchAllowed"), "source candidate dispatchAllowed")
     _expect_false(metadata.get("dispatch_allowed"), "task metadata dispatch_allowed")
-    _expect_false(metadata.get("queue_mutation_allowed"), "task metadata queue_mutation_allowed")
-    _expect_false(metadata.get("task_creation_allowed"), "task metadata task_creation_allowed")
+    _expect_false(
+        metadata.get("queue_mutation_allowed"), "task metadata queue_mutation_allowed"
+    )
+    _expect_false(
+        metadata.get("task_creation_allowed"), "task metadata task_creation_allowed"
+    )
 
     return {
         "schemaVersion": 1,
@@ -212,6 +219,7 @@ def validate_promotion_task_file(path: str | Path) -> dict[str, Any]:
     task_path = Path(path)
     receipt = validate_promotion_task(load_promotion_task(task_path))
     return {**receipt, "path": str(task_path)}
+
 
 
 def preview_promotion_task_import(
@@ -284,6 +292,7 @@ def preview_promotion_task_import_file(
     return preview_promotion_task_import(
         load_promotion_task(task_path), registry=registry, path=task_path
     )
+
 
 
 def import_reviewed_promotion_task(

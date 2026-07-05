@@ -3,7 +3,7 @@
   "id": "COMMONWORLD-ATLAS-V1-T001",
   "initiative": "COMMONWORLD-ATLAS-V1",
   "title": "Define CommonProject contract foundation",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 10
@@ -56,6 +56,30 @@
   ],
   "metadata": {
     "repo": "heimgewebe/commonworld",
-    "plan": "docs/blueprints/commonworld-masterplan.md"
+    "plan": "docs/blueprints/commonworld-masterplan.md",
+    "implemented_by": "heimgewebe/commonworld#1",
+    "implementation_evidence": {
+      "pull_request": "heimgewebe/commonworld#1",
+      "title": "contracts: add CommonProject foundation",
+      "head_sha": "c064fea528b66e01ade270a5acade96ddf23a8b2",
+      "merge_commit": "5ba494d900c678906fc5b1e0944cbdbcd7880128",
+      "merged_at": "2026-07-05T14:29:21Z",
+      "checks": [
+        {
+          "workflow": "validate",
+          "job": "contracts",
+          "conclusion": "success",
+          "completed_at": "2026-07-05T14:28:13Z"
+        }
+      ],
+      "self_review": "PASS / no blocker, bound to commonworld PR #1 head c064fea528b66e01ade270a5acade96ddf23a8b2"
+    },
+    "verification": {
+      "status": "verified-from-merged-pr",
+      "verified_at": "2026-07-05T14:29:21Z",
+      "verified_source": "commonworld PR #1 merge and validate check success",
+      "task_sha256": "5d66ad8ebe1035779d73f00040214653ea18a4886b2d746dfc55ae3931504317",
+      "plan_sha256": "37e27f4919329addeee583330b0168ea472b468e6d80cadb2559ef0d10f10b2d"
+    }
   }
 }

@@ -12,6 +12,7 @@ class Observation:
 
 class ExternalAdapter(Protocol):
     system: str
+    aliases: tuple[str, ...]
 
     def dispatch(self, request: dict[str, Any]) -> str: ...
 
@@ -26,12 +27,16 @@ class ExternalAdapter(Protocol):
 
 class AdapterRegistry:
     def __init__(self, adapters: list[ExternalAdapter] | None = None):
-        self._adapters = {adapter.system: adapter for adapter in adapters or []}
+        self._adapters: dict[str, ExternalAdapter] = {}
         self._unavailable: dict[str, dict[str, str | bool]] = {}
+        for adapter in adapters or []:
+            self.add(adapter)
 
     def add(self, adapter: ExternalAdapter) -> None:
-        self._adapters[adapter.system] = adapter
-        self._unavailable.pop(adapter.system, None)
+        systems = [adapter.system, *getattr(adapter, "aliases", ())]
+        for system in systems:
+            self._adapters[system] = adapter
+            self._unavailable.pop(system, None)
 
     def mark_unavailable(self, system: str, error: Exception) -> None:
         self._adapters.pop(system, None)

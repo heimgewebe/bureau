@@ -687,6 +687,18 @@ def test_read_command_survives_unavailable_grabowski_adapter(
     }
 
 
+
+
+def test_adapter_registry_resolves_external_system_alias():
+    class AliasAdapter(FakeAdapter):
+        aliases = ("grabowski-job",)
+
+    adapter = AliasAdapter()
+    registry = AdapterRegistry([adapter])
+
+    assert registry.get("grabowski-task") is adapter
+    assert registry.get("grabowski-job") is adapter
+    assert registry.status()["grabowski-job"] == {"available": True}
 def test_unavailable_adapter_reason_remains_explicit():
     adapters = AdapterRegistry()
     adapters.mark_unavailable("grabowski-task", ModuleNotFoundError("missing runtime dependency"))

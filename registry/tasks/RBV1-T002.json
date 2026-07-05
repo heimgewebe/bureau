@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "id": "RBV1-T002",
+  "initiative": "REPOBRIEF-V1-ROADMAP",
+  "title": "Add explicit RepoBrief snapshot create command",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "goal": "Implement or close explicit repobrief snapshot create as the sole early snapshot-writing path",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rbv1-t002-scope-bound",
+      "assertion": "The slice is implemented or explicitly closed against current main/PR state with no hidden broadening.",
+      "verifier": "PR, self-review, tests, or stop report",
+      "evidence_type": "string"
+    },
+    {
+      "id": "rbv1-t002-boundary-preserved",
+      "assertion": "RepoBrief boundaries are preserved: no hidden refresh, no Git mutation in RepoBrief core, no review/runtime correctness claim.",
+      "verifier": "PR, self-review, tests, or stop report",
+      "evidence_type": "string"
+    },
+    {
+      "id": "rbv1-t002-tests-or-gap",
+      "assertion": "Relevant tests/checks are run, or a precise blocker/gap is recorded.",
+      "verifier": "PR, self-review, tests, or stop report",
+      "evidence_type": "string"
+    },
+    {
+      "id": "rbv1-t002-non-claims",
+      "assertion": "The output states what the evidence does not establish.",
+      "verifier": "PR, self-review, tests, or stop report",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "Plan — RepoBrief v1",
+    "registered_at": "2026-07-05T14:33:30Z",
+    "plan_refs": [
+      "Phase 2 / PR 2"
+    ],
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness"
+    ]
+  },
+  "depends_on": [
+    "RBV1-T001"
+  ]
+}

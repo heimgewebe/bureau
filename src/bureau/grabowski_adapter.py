@@ -14,6 +14,7 @@ class GrabowskiTaskAdapter:
     """In-process adapter for Grabowski's persistent task API."""
 
     system = "grabowski-task"
+    aliases = ("grabowski-job",)
 
     def __init__(self, source_root: Path | None = None):
         configured = os.environ.get("BUREAU_GRABOWSKI_SRC")

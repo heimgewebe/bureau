@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "id": "REPOBRIEF-V1-ROADMAP",
+  "title": "RepoBrief v1 roadmap remainder",
+  "state": "active",
+  "commitment": "later",
+  "goal": "Register and sequence remaining RepoBrief v1 plan slices that are not already completed.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/repobrief-v1-roadmap-remainder.md",
+    "document_sha256": "369e707f27c89d73bd8fd6be39d30d83a104110623e37e9b809ea2f58f88bfa7",
+    "commit": "c72bb7e4ed34e934b7484c71343eb68c00dcde02"
+  },
+  "completion": [
+    "Remaining RepoBrief v1 slices are represented as Bureau tasks.",
+    "Completed slices are not duplicated as implementation work.",
+    "Each slice preserves RepoBrief non-goals and boundaries."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-05T14:33:08Z",
+    "source_plan": "user-provided Plan — RepoBrief v1",
+    "completed_not_registered_as_new_work": [
+      "Phase 0 / PR 0.1",
+      "Phase 4 / PR 6 read-only access layer / PR #887",
+      "Phase 6 / PR 11 Agent Consumption Preflight",
+      "Phase 7 / PR 12 MCP Boundary Docs"
+    ],
+    "does_not_establish": [
+      "implementation_complete",
+      "runtime_correctness",
+      "test_sufficiency",
+      "merge_readiness"
+    ]
+  }
+}

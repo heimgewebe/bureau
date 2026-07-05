@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "id": "SEMANTAH-USEFULNESS-008",
+  "initiative": "SEMANTAH-USEFULNESS-V1",
+  "title": "Add semantAH retrieval evaluation harness",
+  "state": "planned",
+  "depends_on": ["SEMANTAH-USEFULNESS-007"],
+  "required_capabilities": ["repository"],
+  "priority": {
+    "lane": "later",
+    "rank": 170
+  },
+  "execution": {
+    "policy": "review-before-effect",
+    "mode": "interactive-agent",
+    "summary": "Measure whether semantAH retrieval is actually useful before any consumer integration."
+  },
+  "claims": [],
+  "acceptance": [
+    {
+      "id": "golden-queries",
+      "assertion": "Golden queries with expected references exist."
+    },
+    {
+      "id": "metrics-report",
+      "assertion": "Evaluation reports Precision@5, Recall@10, MRR, p95 latency, and keyword baseline comparison."
+    },
+    {
+      "id": "failure-taxonomy",
+      "assertion": "Retrieval failures are classified by type rather than hidden."
+    },
+    {
+      "id": "go-no-go",
+      "assertion": "Plan records that no consumer integration proceeds unless retrieval beats or usefully complements baseline."
+    }
+  ],
+  "plan_ref": "docs/plans/semantah-usefulness-repobrief-plan-v1.md#phase-7--add-retrieval-evaluation-harness"
+}

@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T001",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Add situation grip and snapshot digest",
+  "state": "planned",
+  "goal": "Implement a read-only Grabowski situation surface that summarizes repo, PR, Bureau, job, gate and stale snapshot state and recommends the next safe grip without mutation.",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T001"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 12
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "situation-readonly",
+      "assertion": "The new situation path is read-only and does not refresh connectors, mutate repositories, dispatch work or complete Bureau tasks."
+    },
+    {
+      "id": "core-state-fields",
+      "assertion": "Output includes repository/branch/head/dirty state, open PR/check/review summary when available, Bureau task/run/blocker state when available, and visible non-claims when unavailable."
+    },
+    {
+      "id": "snapshot-digest",
+      "assertion": "Output includes a capability or tool-contract digest plus runtime/source identity sufficient to warn about stale tool pictures."
+    },
+    {
+      "id": "next-safe-grip",
+      "assertion": "Output recommends at most one next safe grip with reason, preconditions and explicit does-not-establish language."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover normal state, missing optional sources, stale digest warning and no-mutation behavior."
+    }
+  ],
+  "metadata": {
+    "phase": "situation-spine",
+    "effect": "read_only",
+    "source_priority": 1,
+    "non_goal": "Does not replace Bureau task truth or force a connector refresh.",
+    "coordinates_with": [
+      "GRIP-ROADMAP-V1-T001",
+      "docs/grabowski-restplan-v2.md"
+    ]
+  }
+}

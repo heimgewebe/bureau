@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T004",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Add evidence-bound operator recall",
+  "state": "planned",
+  "goal": "Create an episodic recall contract and exporter from receipts, PRs, Bureau tasks and friction records, optionally consumable by heimlern for offline learning.",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T003"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.heimlern",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "recall-contract",
+      "assertion": "Recall item contract contains topic, situation, attempt, result, learned rule, evidence refs and does_not_establish entries."
+    },
+    {
+      "id": "evidence-bound",
+      "assertion": "Recall items cannot be created without at least one concrete evidence reference to receipt, PR, Bureau task or friction record."
+    },
+    {
+      "id": "offline-learning",
+      "assertion": "Any heimlern integration is offline/proposal-only and cannot alter live routing, merge policy or task completion."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover valid recall, rejected free-form memory and missing-evidence failure."
+    }
+  ],
+  "metadata": {
+    "phase": "operator-recall",
+    "effect": "derived_evidence_records",
+    "non_goal": "Does not create free-form chat memory or a policy oracle.",
+    "organs": [
+      "grabowski",
+      "heimlern",
+      "bureau"
+    ]
+  }
+}

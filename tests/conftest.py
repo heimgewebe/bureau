@@ -90,3 +90,8 @@ def registry_factory(tmp_path: Path):
         return root
 
     return create
+
+
+@pytest.fixture(autouse=True)
+def disable_open_pr_claim_guard_by_default(monkeypatch):
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD", "0")

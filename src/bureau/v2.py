@@ -75,10 +75,15 @@ def _github_repository_for_path(path: Path) -> str | None:
             check=False,
             timeout=10,
         )
-    except (OSError, subprocess.SubprocessError):
-        return None
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise OpenPullRequestObservationError(
+            f"cannot resolve git remote for {path}: {exc}"
+        ) from exc
     if result.returncode != 0:
-        return None
+        detail = result.stderr.strip() or result.stdout.strip() or "no diagnostic"
+        raise OpenPullRequestObservationError(
+            f"cannot resolve git remote for {path}: {detail}"
+        )
     return github_repository_from_remote_url(result.stdout.strip())
 
 
@@ -140,8 +145,12 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
     result: list[legacy.Reservation] = []
     observed: dict[str, list[dict[str, Any]]] = {}
     for resource in registry.resources.values():
-        if resource.type != "git-repository" or not resource.path:
+        if resource.type != "git-repository":
             continue
+        if not resource.path:
+            raise OpenPullRequestObservationError(
+                f"cannot observe configured repository {resource.id}: missing path"
+            )
         repository = _github_repository_for_path(Path(resource.path).expanduser())
         if repository is None:
             continue
@@ -1027,7 +1036,6 @@ class Dispatcher(legacy.Dispatcher):
         if reconcile_first:
             self.reconcile()
         self.store.register_worker(worker_id, kind, capabilities)
-        open_pr_reservations = self._open_pr_reservations(strict=True)
         envelope: dict[str, Any] | None = None
         run: dict[str, Any] | None = None
         with self.store.immediate() as connection:
@@ -1044,6 +1052,7 @@ class Dispatcher(legacy.Dispatcher):
                     "run": self.store.public_run(current),
                     "envelope": json.loads(current["envelope_json"]),
                 }
+            open_pr_reservations = self._open_pr_reservations(strict=True)
             worker = connection.execute(
                 "SELECT * FROM workers WHERE worker_id=?", (worker_id,)
             ).fetchone()

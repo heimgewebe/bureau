@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-004-T002",
+  "initiative": "BUR-2026-004",
+  "title": "Add state-root doctor",
+  "state": "planned",
+  "goal": "Add a read-only Bureau doctor check that reports unknown files in the configured state root and documents a manual cleanup path.",
+  "priority": {
+    "lane": "next",
+    "rank": 10
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/bureau-boundary-ops-v1.md"
+  },
+  "acceptance": [
+    {
+      "id": "state-root-classifier",
+      "assertion": "Doctor has an explicit classifier for Bureau-owned state-root artefact classes."
+    },
+    {
+      "id": "unknown-files-report",
+      "assertion": "Unknown state-root files are reported without automatic deletion."
+    },
+    {
+      "id": "operations-doc",
+      "assertion": "Operations documentation explains manual cleanup before deletion."
+    },
+    {
+      "id": "focused-tests",
+      "assertion": "Focused tests cover known files, unknown files and non-mutating behaviour."
+    }
+  ]
+}

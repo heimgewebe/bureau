@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-004",
+  "title": "Bureau boundary and operational organs",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Make Bureau's Core/Ops/External Authority boundary explicit before larger refactors such as state-root hygiene, legacy removal, entry-point consolidation or ops extraction.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/bureau-boundary-ops-v1.md",
+    "commit": "a10a9ce1a7190d80849ea88450b314082741630f",
+    "document_sha256": "812a7db19882c246ce00815c27977af63203ea0b100cf4facc4d87f955d980d5"
+  },
+  "completion": [
+    "README, architecture and ownership docs explicitly separate Bureau Core, Bureau Ops and external authorities.",
+    "State-root hygiene, legacy dependency audit, entry-point consolidation and ops extraction are represented as separate follow-up tasks.",
+    "No code-moving refactor is started before the authority model and audits are visible."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  }
+}

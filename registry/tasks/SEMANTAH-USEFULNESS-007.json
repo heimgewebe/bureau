@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "id": "SEMANTAH-USEFULNESS-007",
+  "initiative": "SEMANTAH-USEFULNESS-V1",
+  "title": "Implement semantAH docs markdown ingest MVP",
+  "state": "planned",
+  "depends_on": ["SEMANTAH-USEFULNESS-006"],
+  "required_capabilities": ["repository"],
+  "priority": {
+    "lane": "later",
+    "rank": 160
+  },
+  "execution": {
+    "policy": "review-before-effect",
+    "mode": "interactive-agent",
+    "summary": "Build the first real semantAH ingest path for Markdown docs only, with deterministic chunks and validated store rows."
+  },
+  "claims": [],
+  "acceptance": [
+    {
+      "id": "deterministic-chunks",
+      "assertion": "Markdown ingest produces deterministic chunk IDs with source_ref and content/text hashes."
+    },
+    {
+      "id": "validated-store-rows",
+      "assertion": "Generated rows validate against index.store.v1."
+    },
+    {
+      "id": "no-autowrite",
+      "assertion": "The MVP performs no graph generation, no Related writes, and no autonomous note mutation."
+    },
+    {
+      "id": "search-smoke",
+      "assertion": "A fixture-backed search smoke proves that ingested docs can be searched."
+    }
+  ],
+  "plan_ref": "docs/plans/semantah-usefulness-repobrief-plan-v1.md#phase-6--implement-docs-markdown-ingest-mvp"
+}

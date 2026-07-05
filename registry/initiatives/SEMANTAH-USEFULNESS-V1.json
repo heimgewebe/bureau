@@ -4,14 +4,24 @@
   "title": "Make semantAH useful through RepoBrief-bound evidence and retrieval proof",
   "state": "committed",
   "commitment": "next",
+  "goal": "Convert semantAH from aspirational semantic pipeline into a measured Semantic Evidence Service through RepoBrief-bound evidence, contract repair, real ingest, and retrieval evaluation.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/semantah-usefulness-repobrief-plan-v1.md"
+  },
+  "completion": [
+    "A real semantAH RepoBrief snapshot is created or an explicit blocker is recorded.",
+    "The verified semantAH usefulness audit is stored as a Bureau artifact.",
+    "semantAH contract drift, namespace drift, stub-pipeline ambiguity, store-row contract, docs ingest, retrieval evaluation, evidence-only Observatory, and read-only consumer adapter tasks are completed or explicitly superseded."
+  ],
   "parallelism": {
     "max_active_tasks": 1
   },
-  "current_plan": {
-    "path": "docs/plans/semantah-usefulness-repobrief-plan-v1.md",
-    "version": "v1",
-    "status": "planned",
+  "metadata": {
+    "plan_version": "v1",
+    "plan_status": "planned",
     "registered_at": "2026-07-05",
+    "target_repository": "heimgewebe/semantAH",
     "summary": "RepoBrief-bound plan to convert semantAH from aspirational semantic pipeline into measured Semantic Evidence Service."
   }
 }

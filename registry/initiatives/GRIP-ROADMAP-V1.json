@@ -6,8 +6,8 @@
     "Privileged and durable actions remain receipt-bound, scope-marked, and non-default until explicitly enabled."
   ],
   "current_plan": {
-    "commit": "81daeb54bbcdf90b4740336d70b1e2dfc05ba91f",
-    "document_sha256": "a55049586a0e4abf410b83fcf4d5025d70c85e9118167c1fb5317703e088184d",
+    "commit": "6f6d681226e3256b6579c0a626435056fbb12071",
+    "document_sha256": "0887546ff06e9c60f632632c05e3f49888d2b38bbd362506f8e72471ef66dfac",
     "path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
     "repository": "bureau"
   },

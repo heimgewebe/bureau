@@ -84,6 +84,7 @@ class CabinetBridgeProbeTests(unittest.TestCase):
             report = bridge_probe(policy_path, today=date(2026, 7, 4))
             self.assertEqual(report["kind"], "cabinet_bureau_bridge_probe")
             self.assertEqual(report["mode"], "read_only")
+            self.assertFalse(report["importAllowed"])
             self.assertFalse(report["dispatchAllowed"])
             self.assertFalse(report["queueMutationAllowed"])
             self.assertFalse(report["taskCreationAllowed"])
@@ -131,6 +132,7 @@ class CabinetBridgeProbeTests(unittest.TestCase):
             self.assertEqual(result, 0)
             payload = json.loads(stream.getvalue())
             self.assertEqual(payload["kind"], "cabinet_bureau_bridge_probe")
+            self.assertFalse(payload["importAllowed"])
             self.assertFalse(payload["dispatchAllowed"])
             self.assertEqual(payload["candidateCount"], 0)
 

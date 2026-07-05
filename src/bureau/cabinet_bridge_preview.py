@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from .cabinet_bridge import CabinetBridgeError
+from .cabinet_bridge import EFFECT_FLAGS, METADATA_EFFECT_FLAGS, CabinetBridgeError
 
 
 def _object(value: Any, label: str) -> dict[str, Any]:
@@ -27,6 +27,16 @@ def _text(value: Any, label: str) -> str:
     return value.strip()
 
 
+def _require_false(
+    container: dict[str, Any],
+    fields: tuple[str, ...],
+    label: str,
+) -> None:
+    for field in fields:
+        if container.get(field) is not False:
+            raise CabinetBridgeError(label + " must keep " + field + " false")
+
+
 def load_probe_report(path: str | Path) -> dict[str, Any]:
     probe_path = Path(path).expanduser()
     try:
@@ -40,9 +50,7 @@ def load_probe_report(path: str | Path) -> dict[str, Any]:
         raise CabinetBridgeError("probe report schemaVersion must be 1")
     if report.get("kind") != "cabinet_bureau_bridge_probe":
         raise CabinetBridgeError("probe report kind must be cabinet_bureau_bridge_probe")
-    for field in ("dispatchAllowed", "queueMutationAllowed", "taskCreationAllowed"):
-        if report.get(field) is not False:
-            raise CabinetBridgeError(f"probe report must keep {field} false")
+    _require_false(report, EFFECT_FLAGS, "probe report")
     _list(report.get("candidates"), "probe report candidates")
     return report
 
@@ -101,9 +109,7 @@ def preview_bridge_candidate(
             "source": "cabinet_bridge_probe",
             "source_candidate_id": candidate_id,
             "source_candidate": candidate,
-            "dispatch_allowed": False,
-            "queue_mutation_allowed": False,
-            "task_creation_allowed": False,
+            **{field: False for field in METADATA_EFFECT_FLAGS},
         },
     }
     return {
@@ -111,9 +117,7 @@ def preview_bridge_candidate(
         "kind": "cabinet_bridge_promotion_preview",
         "mode": "proposal_only",
         "approved": True,
-        "dispatchAllowed": False,
-        "queueMutationAllowed": False,
-        "taskCreationAllowed": False,
+        **{field: False for field in EFFECT_FLAGS},
         "task": task,
     }
 

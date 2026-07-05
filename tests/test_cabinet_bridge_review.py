@@ -25,6 +25,7 @@ def preview_payload() -> dict[str, Any]:
         "kind": "cabinet_bridge_promotion_preview",
         "mode": "proposal_only",
         "approved": True,
+        "importAllowed": False,
         "dispatchAllowed": False,
         "queueMutationAllowed": False,
         "taskCreationAllowed": False,
@@ -47,6 +48,7 @@ def preview_payload() -> dict[str, Any]:
                 "source": "cabinet_bridge_probe",
                 "source_candidate_id": "claim:ready",
                 "source_candidate": candidate,
+                "import_allowed": False,
                 "dispatch_allowed": False,
                 "queue_mutation_allowed": False,
                 "task_creation_allowed": False,
@@ -87,10 +89,20 @@ class CabinetBridgeReviewTests(unittest.TestCase):
         payload["approved"] = False
         expect_rejected(payload, "approved")
 
+    def test_review_gate_rejects_import_enabled_preview(self) -> None:
+        payload = preview_payload()
+        payload["importAllowed"] = True
+        expect_rejected(payload, "importAllowed")
+
     def test_review_gate_rejects_dispatch_enabled_preview(self) -> None:
         payload = preview_payload()
         payload["dispatchAllowed"] = True
         expect_rejected(payload, "dispatchAllowed")
+
+    def test_review_gate_rejects_import_enabled_metadata(self) -> None:
+        payload = preview_payload()
+        payload["task"]["metadata"]["import_allowed"] = True
+        expect_rejected(payload, "import_allowed")
 
     def test_review_gate_rejects_extra_capability(self) -> None:
         payload = preview_payload()

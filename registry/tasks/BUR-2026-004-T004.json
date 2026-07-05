@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-004-T004",
+  "initiative": "BUR-2026-004",
+  "title": "Plan console entry-point consolidation",
+  "state": "planned",
+  "goal": "Inventory Bureau console scripts and systemd references, then design a compatibility-preserving subcommand consolidation path.",
+  "priority": {
+    "lane": "later",
+    "rank": 30
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/bureau-boundary-ops-v1.md"
+  },
+  "acceptance": [
+    {
+      "id": "entrypoint-inventory",
+      "assertion": "All console entry points and their module targets are listed."
+    },
+    {
+      "id": "systemd-impact",
+      "assertion": "Known systemd units, docs and scripts that call the entry points are checked."
+    },
+    {
+      "id": "compat-plan",
+      "assertion": "Plan keeps compatibility shims before any removal and states when warnings or removal are allowed."
+    }
+  ]
+}

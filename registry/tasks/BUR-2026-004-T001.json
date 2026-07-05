@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-004-T001",
+  "initiative": "BUR-2026-004",
+  "title": "Document Bureau Core/Ops boundary",
+  "state": "planned",
+  "goal": "Update README, architecture and ownership documentation so operational organs are named as Bureau Ops consumers around the core.",
+  "priority": {
+    "lane": "now",
+    "rank": 5
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/bureau-boundary-ops-v1.md"
+  },
+  "acceptance": [
+    {
+      "id": "readme-boundary",
+      "assertion": "README distinguishes Bureau Core, Bureau Ops and external authorities."
+    },
+    {
+      "id": "architecture-component-model",
+      "assertion": "Architecture documentation contains a Core/Ops/External Authority component model and rules for operational organs."
+    },
+    {
+      "id": "ownership-authority",
+      "assertion": "Ownership documentation clarifies that GitHub owns PR and CI facts while Bureau Ops may observe or derive findings from them."
+    }
+  ]
+}

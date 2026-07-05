@@ -438,11 +438,49 @@ def test_future_database_schema_is_rejected(tmp_path):
         StateStore(database)
 
 
-def test_dispatch_response_loss_recovers_binding(registry_factory, tmp_path, monkeypatch):
+
+def test_grabowski_task_without_resource_keys_fails_registry_validation(registry_factory):
     root = registry_factory(1)
     task_path = next((root / "registry/tasks").glob("*.json"))
     task = json.loads(task_path.read_text())
     task["execution"].update(mode="grabowski-task", argv=["/usr/bin/true"])
+    task_path.write_text(json.dumps(task))
+
+    with pytest.raises(ValidationError) as excinfo:
+        Registry.load(root)
+
+    assert "requires at least one Grabowski resource key" in str(excinfo.value)
+
+
+def test_grabowski_task_handoff_uses_execution_resource_keys(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["execution"].update(
+        mode="grabowski-task",
+        argv=["/usr/bin/true"],
+        grabowski_resources=["repo:/tmp/test-repo"],
+    )
+    task["claims"][0]["isolation"] = "none"
+    task_path.write_text(json.dumps(task))
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    result = dispatcher.checkout_next("worker", ("repository",), dispatch=False)
+
+    assert result["handoff"]["resource_keys"] == ["repo:/tmp/test-repo"]
+
+
+def test_dispatch_response_loss_recovers_binding(registry_factory, tmp_path, monkeypatch):
+    root = registry_factory(1)
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["execution"].update(
+        mode="grabowski-task",
+        argv=["/usr/bin/true"],
+        grabowski_resources=["repo:/tmp/test-repo"],
+    )
     task["claims"][0]["isolation"] = "none"
     task_path.write_text(json.dumps(task))
     adapter = RecoveringAdapter()
@@ -466,7 +504,11 @@ def test_uncertain_dispatch_is_recovered_by_reconcile(registry_factory, tmp_path
     root = registry_factory(1)
     task_path = next((root / "registry/tasks").glob("*.json"))
     task = json.loads(task_path.read_text())
-    task["execution"].update(mode="grabowski-task", argv=["/usr/bin/true"])
+    task["execution"].update(
+        mode="grabowski-task",
+        argv=["/usr/bin/true"],
+        grabowski_resources=["repo:/tmp/test-repo"],
+    )
     task["claims"][0]["isolation"] = "none"
     task_path.write_text(json.dumps(task))
     adapter = RecoveringAdapter(recover_id=None)
@@ -495,7 +537,11 @@ def test_checkout_existing_binding_does_not_redispatch(registry_factory, tmp_pat
     root = registry_factory(1)
     task_path = next((root / "registry/tasks").glob("*.json"))
     task = json.loads(task_path.read_text())
-    task["execution"].update(mode="grabowski-task", argv=["/usr/bin/true"])
+    task["execution"].update(
+        mode="grabowski-task",
+        argv=["/usr/bin/true"],
+        grabowski_resources=["repo:/tmp/test-repo"],
+    )
     task["claims"][0]["isolation"] = "none"
     task_path.write_text(json.dumps(task))
     adapter = FakeAdapter()

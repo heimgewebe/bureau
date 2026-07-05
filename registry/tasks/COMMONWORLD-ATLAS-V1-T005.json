@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-ATLAS-V1-T005",
+  "initiative": "COMMONWORLD-ATLAS-V1",
+  "title": "Document governance and weltgewebe handoff boundary",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 70
+  },
+  "goal": "Define source, curation, privacy and taxonomy policy plus the disabled-by-default handoff boundary to weltgewebe.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "autonomous",
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "acceptance": [
+    {
+      "id": "source-policy",
+      "assertion": "Source and license policy distinguishes curated entries from import candidates.",
+      "verifier": "docs review",
+      "evidence_type": "object"
+    },
+    {
+      "id": "privacy-policy",
+      "assertion": "Location precision defaults and sensitive-place rules are documented.",
+      "verifier": "docs review",
+      "evidence_type": "object"
+    },
+    {
+      "id": "handoff-contract",
+      "assertion": "weltgewebe handoff requires explicit project identity for join/manage actions and is disabled by default.",
+      "verifier": "contract/docs review",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "repo": "heimgewebe/commonworld",
+    "plan": "docs/blueprints/commonworld-masterplan.md"
+  },
+  "depends_on": [
+    "COMMONWORLD-ATLAS-V1-T001"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-ATLAS-V1-T004",
+  "initiative": "COMMONWORLD-ATLAS-V1",
+  "title": "Add focused digital Commons proof",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
+  "goal": "Implement a first digital Commons view where exactly one hierarchy branch is focused at a time.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "autonomous",
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "acceptance": [
+    {
+      "id": "single-branch",
+      "assertion": "Only one digital Commons branch is active at a time.",
+      "verifier": "test",
+      "evidence_type": "string"
+    },
+    {
+      "id": "breadcrumb",
+      "assertion": "Breadcrumb/back navigation makes the focus path explicit.",
+      "verifier": "component test",
+      "evidence_type": "string"
+    },
+    {
+      "id": "no-hairball",
+      "assertion": "The proof does not introduce an unrestricted network graph.",
+      "verifier": "diff review",
+      "evidence_type": "boolean"
+    }
+  ],
+  "metadata": {
+    "repo": "heimgewebe/commonworld",
+    "plan": "docs/blueprints/commonworld-masterplan.md"
+  },
+  "depends_on": [
+    "COMMONWORLD-ATLAS-V1-T001",
+    "COMMONWORLD-ATLAS-V1-T002"
+  ]
+}

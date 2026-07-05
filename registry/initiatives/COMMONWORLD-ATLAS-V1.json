@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-ATLAS-V1",
+  "title": "commonworld Commons atlas foundation",
+  "state": "committed",
+  "commitment": "next",
+  "goal": "Establish commonworld.net as a separate public Commons atlas repository with a contract-first catalog, visual proof slices, governance, and a later explicit handoff to weltgewebe.",
+  "current_plan": {
+    "repository": "commonworld",
+    "path": "docs/blueprints/commonworld-masterplan.md"
+  },
+  "completion": [
+    "The commonworld repository has a validated CommonProject contract and curated seed examples.",
+    "The mixed-node marker and aspect-colored detail panel have a static visual proof.",
+    "The MapLibre place view and focused digital Commons view are implemented as bounded proofs.",
+    "Source, curation, privacy and taxonomy governance are documented.",
+    "The weltgewebe handoff boundary is explicit and disabled-by-default until compatible."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "github": "heimgewebe/commonworld",
+    "domain": "commonworld.net",
+    "product_boundary": "commonworld discovers and explains; weltgewebe administers and coordinates",
+    "non_goals_initial": [
+      "own administration backend",
+      "public submissions",
+      "automatic global imports",
+      "Supabase core",
+      "PostGIS core",
+      "Rust API core"
+    ]
+  }
+}

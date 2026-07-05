@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-ATLAS-V1-T001",
+  "initiative": "COMMONWORLD-ATLAS-V1",
+  "title": "Define CommonProject contract foundation",
+  "state": "ready",
+  "priority": {
+    "lane": "next",
+    "rank": 10
+  },
+  "goal": "Add the machine-readable commonworld catalog contract, seed examples, validation tests, and minimal CI so later UI work has a stable data shape.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "autonomous",
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "acceptance": [
+    {
+      "id": "project-schema",
+      "assertion": "contracts/commonworld/project.schema.json defines CommonProject with sphere, aspects, provenance, curation and optional handoff fields.",
+      "verifier": "schema review",
+      "evidence_type": "object"
+    },
+    {
+      "id": "aspect-schema",
+      "assertion": "Aspect entries require label, color token, icon token, weight, confidence and evidence; color is not the only semantic carrier.",
+      "verifier": "schema validation",
+      "evidence_type": "object"
+    },
+    {
+      "id": "seed-examples",
+      "assertion": "At least two curated seed project examples validate against the schemas.",
+      "verifier": "contract test",
+      "evidence_type": "string"
+    },
+    {
+      "id": "ci-baseline",
+      "assertion": "The repository has a minimal validation command or CI path for contract examples.",
+      "verifier": "CI or local command output",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "repo": "heimgewebe/commonworld",
+    "plan": "docs/blueprints/commonworld-masterplan.md"
+  }
+}

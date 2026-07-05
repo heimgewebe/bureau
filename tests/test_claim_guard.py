@@ -14,7 +14,7 @@ def test_open_pull_request_reservation_blocks_repo_write_claim(registry_factory,
         registry,
         store,
         open_pr_reservations_provider=lambda _: [
-            bureau_v2.legacy.Reservation("open-pr:repo#999", "repo", "write", 1)
+            bureau_v2.legacy.Reservation("open-pr:repo#999", "repo", "write-blocker", 1)
         ],
     )
 
@@ -57,3 +57,21 @@ def test_open_pull_request_probe_failure_fails_closed_for_claim(registry_factory
 )
 def test_github_repository_from_remote_url(remote, expected):
     assert bureau_v2.github_repository_from_remote_url(remote) == expected
+
+
+def test_open_pull_request_reservation_does_not_block_repo_read_claim(registry_factory, tmp_path):
+    root = registry_factory(1, mode="read")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _: [
+            bureau_v2.legacy.Reservation("open-pr:repo#999", "repo", "write-blocker", 1)
+        ],
+    )
+
+    frontier = dispatcher.frontier({"repository"})
+    assert frontier[0]["eligible"] is True
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+    assert run["task_id"] == "BUR-TEST-001-T001"

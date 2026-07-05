@@ -129,7 +129,7 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
 
 
 def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Reservation]:
-    """Represent open GitHub PRs as conservative repo write reservations.
+    """Represent open GitHub PRs as conservative repo write blockers.
 
     The guard is intentionally repository-scoped: if a task wants write access to a
     repository or one of its child resources, an already-open PR for that GitHub
@@ -156,7 +156,7 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
                 legacy.Reservation(
                     f"open-pr:{repository}#{number}",
                     resource.id,
-                    "write",
+                    "write-blocker",
                     1,
                 )
             )

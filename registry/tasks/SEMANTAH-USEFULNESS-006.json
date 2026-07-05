@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "id": "SEMANTAH-USEFULNESS-006",
+  "initiative": "SEMANTAH-USEFULNESS-V1",
+  "title": "Define semantAH index.store.v1 row contract",
+  "state": "planned",
+  "depends_on": ["SEMANTAH-USEFULNESS-005"],
+  "required_capabilities": ["repository"],
+  "priority": {
+    "lane": "later",
+    "rank": 150
+  },
+  "execution": {
+    "policy": "review-before-effect",
+    "mode": "interactive-agent",
+    "summary": "Define a validated Store Row v1 contract so persistence and Observatory can rely on schema-checked evidence instead of loose metadata."
+  },
+  "claims": [],
+  "acceptance": [
+    {
+      "id": "schema-exists",
+      "assertion": "A semantAH index.store.v1 JSON schema exists with namespace, source_ref, hashes, embedding metadata, and generated_at."
+    },
+    {
+      "id": "validator-exists",
+      "assertion": "A validator exists for index.store.v1 rows."
+    },
+    {
+      "id": "observatory-ready",
+      "assertion": "The contract is ready for Observatory to consume without regex extraction."
+    }
+  ],
+  "plan_ref": "docs/plans/semantah-usefulness-repobrief-plan-v1.md#phase-5--define-indexstorev1"
+}

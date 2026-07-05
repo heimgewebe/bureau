@@ -53,9 +53,7 @@ def review_preview(path: str | Path) -> dict[str, Any]:
     if preview.get("schemaVersion") != 1:
         raise CabinetBridgeError("preview schemaVersion must be 1")
     if preview.get("kind") != "cabinet_bridge_promotion_preview":
-        raise CabinetBridgeError(
-            "preview kind must be cabinet_bridge_promotion_preview"
-        )
+        raise CabinetBridgeError("preview kind must be cabinet_bridge_promotion_preview")
     if preview.get("mode") != "proposal_only":
         raise CabinetBridgeError("preview mode must be proposal_only")
     if preview.get("approved") is not True:
@@ -91,9 +89,7 @@ def review_preview(path: str | Path) -> dict[str, Any]:
     required_acceptance = {"target-proof", "no-auto-effect"}
     if not required_acceptance.issubset(acceptance_ids):
         missing = sorted(required_acceptance - acceptance_ids)
-        raise CabinetBridgeError(
-            "preview task acceptance missing: " + ",".join(missing)
-        )
+        raise CabinetBridgeError("preview task acceptance missing: " + ",".join(missing))
 
     metadata = _object(task.get("metadata"), "preview task metadata")
     _require_false(metadata, METADATA_EFFECT_FLAGS, "preview metadata")

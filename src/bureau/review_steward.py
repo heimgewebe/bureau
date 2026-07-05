@@ -128,7 +128,6 @@ def run_command(cwd: Path, argv: list[str], timeout: int = 20) -> dict[str, Any]
     }
 
 
-
 def repo_snapshot(repo_value: Any) -> dict[str, Any]:
     if not isinstance(repo_value, str) or not repo_value:
         return {"available": False, "reason": "missing_repo_path"}
@@ -154,9 +153,7 @@ def repo_snapshot(repo_value: Any) -> dict[str, Any]:
     command_failures = [name for name, result in commands.items() if not result["ok"]]
     commands_ok = not command_failures
     status_stdout = commands["status"]["stdout"] if commands["status"]["ok"] else ""
-    diff_names_stdout = (
-        commands["diff_names"]["stdout"] if commands["diff_names"]["ok"] else ""
-    )
+    diff_names_stdout = commands["diff_names"]["stdout"] if commands["diff_names"]["ok"] else ""
     snapshot = {
         "available": commands_ok,
         "repo": str(repo),
@@ -173,6 +170,7 @@ def repo_snapshot(repo_value: Any) -> dict[str, Any]:
     if not commands_ok:
         snapshot["reason"] = "git_evidence_command_failed"
     return snapshot
+
 
 def load_briefs(brief_root: Path) -> dict[str, dict[str, Any]]:
     result: dict[str, dict[str, Any]] = {}
@@ -208,7 +206,6 @@ def selected_lane_ids(plan: dict[str, Any], lanes: list[dict[str, Any]]) -> list
             if isinstance(lane_id, str):
                 fallback.append(lane_id)
     return fallback
-
 
 
 def truthy_evidence(value: Any) -> bool:
@@ -265,9 +262,7 @@ def evidence_signal(value: Any) -> str:
             return "failed"
         return "present" if truthy_evidence(value) else "missing"
     if isinstance(value, dict):
-        explicit = [
-            evidence_signal(value[key]) for key in EVIDENCE_RESULT_KEYS if key in value
-        ]
+        explicit = [evidence_signal(value[key]) for key in EVIDENCE_RESULT_KEYS if key in value]
         explicit = [item for item in explicit if item != "missing"]
         if explicit:
             if "failed" in explicit:
@@ -303,6 +298,7 @@ def evidence_status(lane: dict[str, Any], keys: set[str] | frozenset[str]) -> st
 
 def evidence_present(lane: dict[str, Any], keys: set[str] | frozenset[str]) -> bool:
     return evidence_status(lane, keys) != "missing"
+
 
 def normalize_pr_status(raw: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(raw, dict) or not raw:
@@ -409,7 +405,6 @@ def explicit_blockers(lane: dict[str, Any]) -> list[str]:
     return sorted(set(blockers))
 
 
-
 def classify_lane(
     lane: dict[str, Any],
     *,
@@ -435,9 +430,8 @@ def classify_lane(
         }
 
     task_id = lane.get("task_id")
-    if (
-        previous_state in CANONICAL_TASK_REQUIRED_STATES
-        and not is_canonical_bureau_task_id(task_id)
+    if previous_state in CANONICAL_TASK_REQUIRED_STATES and not is_canonical_bureau_task_id(
+        task_id
     ):
         blockers.append("missing_canonical_bureau_task_id")
     if brief is None:
@@ -515,14 +509,7 @@ def classify_lane(
     open_pr = pr.get("available") is True and pr.get("state") in {"OPEN", None}
     non_draft = pr.get("is_draft") is False
 
-    if (
-        open_pr
-        and non_draft
-        and checks_passed
-        and approved
-        and tests_passed
-        and acceptance_passed
-    ):
+    if open_pr and non_draft and checks_passed and approved and tests_passed and acceptance_passed:
         return {
             "state": "merge_candidate",
             "reasons": ["tests, CI, review, acceptance, and clean diff evidence are passing"],
@@ -551,6 +538,7 @@ def classify_lane(
         "reasons": reasons or ["no terminal review signal found"],
         "blockers": [],
     }
+
 
 def next_action_for(state: str) -> str:
     if state == "merge_candidate":

@@ -46,14 +46,25 @@ SOURCE_SCHEMA = {
                     "title": {"type": "string", "minLength": 1},
                     "area": {
                         "enum": [
-                            "docs", "ci", "api", "web", "infra",
-                            "release", "auth", "map", "governance",
+                            "docs",
+                            "ci",
+                            "api",
+                            "web",
+                            "infra",
+                            "release",
+                            "auth",
+                            "map",
+                            "governance",
                         ]
                     },
                     "status": {
                         "enum": [
-                            "open", "partial", "done", "blocked",
-                            "obsolete", "contradicted",
+                            "open",
+                            "partial",
+                            "done",
+                            "blocked",
+                            "obsolete",
+                            "contradicted",
                         ]
                     },
                     "priority": {"enum": ["high", "medium", "low"]},
@@ -173,13 +184,16 @@ def test_source_check_is_commit_bound_and_read_only(
     )
     report = json.loads(capsys.readouterr().out)
     assert result == 0
-    assert report["commit_sha"] == subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=source_repo,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
+    assert (
+        report["commit_sha"]
+        == subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=source_repo,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    )
     assert report["task_count"] == 2
     assert report["status_counts"]["open"] == 1
     assert report["status_counts"]["done"] == 1

@@ -51,8 +51,6 @@ class FakeAdapter:
         return {"task_id": external_id, "state": "running"}
 
 
-
-
 def git_output(root: Path, *arguments: str) -> str:
     result = subprocess.run(
         ["git", "-C", str(root), *arguments],
@@ -72,6 +70,7 @@ def init_clean_origin_main(root: Path) -> str:
     head = git_output(root, "rev-parse", "HEAD")
     git_output(root, "update-ref", "refs/remotes/origin/main", head)
     return head
+
 
 def setup(root: Path, tmp_path: Path, monkeypatch, adapters: AdapterRegistry | None = None):
     state = tmp_path / "state"
@@ -438,7 +437,6 @@ def test_future_database_schema_is_rejected(tmp_path):
         StateStore(database)
 
 
-
 def test_grabowski_task_without_resource_keys_fails_registry_validation(registry_factory):
     root = registry_factory(1)
     task_path = next((root / "registry/tasks").glob("*.json"))
@@ -793,11 +791,7 @@ def test_external_agent_checkout_accepts_valid_grabowski_brief(
     assert result["handoff"]["worker_profile"] == "codex-efficient"
 
 
-
-
-def test_runtime_drift_check_reports_clean_checkout_without_mutation(
-    registry_factory, tmp_path
-):
+def test_runtime_drift_check_reports_clean_checkout_without_mutation(registry_factory, tmp_path):
     root = registry_factory(1)
     head = init_clean_origin_main(root)
     state = StateStore(tmp_path / "bureau.sqlite3")
@@ -865,9 +859,7 @@ def test_runtime_drift_check_reports_untracked_files_when_git_config_hides_them(
     assert "checkout-dirty" in {item["code"] for item in report["findings"]}
 
 
-def test_runtime_drift_check_cli_emits_read_only_report(
-    registry_factory, tmp_path, capsys
-):
+def test_runtime_drift_check_cli_emits_read_only_report(registry_factory, tmp_path, capsys):
     root = registry_factory(1)
     init_clean_origin_main(root)
     state = StateStore(tmp_path / "bureau.sqlite3")
@@ -888,6 +880,7 @@ def test_runtime_drift_check_cli_emits_read_only_report(
     assert output["command"] == "runtime-drift-check"
     assert output["read_only"] is True
     assert output["checkout"]["dirty"] is False
+
 
 def test_explain_next_reports_runtime_truth_for_lifecycle_reopen(
     registry_factory, tmp_path, monkeypatch
@@ -1043,9 +1036,7 @@ def test_git_read_disables_optional_locks(monkeypatch, tmp_path):
     assert result["stdout"] == "ok"
 
 
-def test_runtime_drift_check_blocks_when_git_status_fails(
-    registry_factory, tmp_path, monkeypatch
-):
+def test_runtime_drift_check_blocks_when_git_status_fails(registry_factory, tmp_path, monkeypatch):
     root = registry_factory(1)
     init_clean_origin_main(root)
     state = StateStore(tmp_path / "bureau.sqlite3")

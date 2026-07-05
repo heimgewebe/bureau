@@ -77,8 +77,6 @@ def test_classifies_merge_candidate_only_with_full_green_evidence() -> None:
     assert result["blockers"] == []
 
 
-
-
 def test_blocks_unbound_lane_without_grabowski_brief() -> None:
     result = classify_lane(
         lane(state="planned", task_id="not-canonical"),
@@ -168,9 +166,7 @@ def test_prior_review_evidence_does_not_count_as_fresh_test_evidence() -> None:
             review_evidence={
                 "evidence": {
                     "brief": {
-                        "brief": {
-                            "expected_handoff_format": {"tests": "commands and outcomes"}
-                        }
+                        "brief": {"expected_handoff_format": {"tests": "commands and outcomes"}}
                     }
                 }
             },

@@ -327,9 +327,7 @@ def main(argv: list[str] | None = None) -> int:
             from .cabinet_promotion_write import preview_promotion_task_import_file
 
             try:
-                value = preview_promotion_task_import_file(
-                    args.task_file, registry=registry
-                )
+                value = preview_promotion_task_import_file(args.task_file, registry=registry)
             except CabinetGraphError as exc:
                 print(f"bureau: {exc}", file=sys.stderr)
                 return 2

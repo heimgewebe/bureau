@@ -224,9 +224,7 @@ def observe_open_pull_requests(repo: Path) -> OpenPullRequestObservation:
             env=env,
         )
     except subprocess.TimeoutExpired as exc:
-        return OpenPullRequestObservation(
-            [], _github_observation_blocked("timeout", str(exc))
-        )
+        return OpenPullRequestObservation([], _github_observation_blocked("timeout", str(exc)))
     except OSError as exc:
         return OpenPullRequestObservation(
             [], _github_observation_blocked("adapter_unavailable", str(exc))
@@ -841,9 +839,7 @@ def load_canonical_task_states(registry_root: Path | None = None) -> dict[str, s
     return states
 
 
-def apply_canonical_task_state(
-    lane: dict[str, Any], task_states: dict[str, str]
-) -> dict[str, Any]:
+def apply_canonical_task_state(lane: dict[str, Any], task_states: dict[str, str]) -> dict[str, Any]:
     task_id = lane.get("task_id")
     if not isinstance(task_id, str) or not CANONICAL_BUREAU_TASK_ID_RE.fullmatch(task_id):
         return lane
@@ -935,14 +931,11 @@ def merge_lanes(
         )
         candidate_state = initial_lane_state(candidate)
         old_state = old.get("state") if old.get("state") in LANE_STATES else None
-        preserve_existing_workflow_state = (
-            candidate.get("observed_github_state") is not None
-            and (
-                old_state in PR_OBSERVATION_HELD_WORKFLOW_STATES
-                or (
-                    old_state in PR_OBSERVATION_PRESERVED_WORKFLOW_STATES
-                    and candidate_state in PR_OBSERVATION_NON_BLOCKING_STATES
-                )
+        preserve_existing_workflow_state = candidate.get("observed_github_state") is not None and (
+            old_state in PR_OBSERVATION_HELD_WORKFLOW_STATES
+            or (
+                old_state in PR_OBSERVATION_PRESERVED_WORKFLOW_STATES
+                and candidate_state in PR_OBSERVATION_NON_BLOCKING_STATES
             )
         )
         if (
@@ -979,9 +972,7 @@ def merge_lanes(
         if blocked_github_observation is not None and has_previous_pr_state:
             pr_value = old.get("pr") or alias_old.get("pr") if pr_value is None else pr_value
             pr_title = (
-                old.get("pr_title") or alias_old.get("pr_title")
-                if pr_title is None
-                else pr_title
+                old.get("pr_title") or alias_old.get("pr_title") if pr_title is None else pr_title
             )
             pr_url = old.get("pr_url") or alias_old.get("pr_url") if pr_url is None else pr_url
             observed_github_state = (
@@ -994,9 +985,7 @@ def merge_lanes(
         elif incomplete_pr_observation_for_previous_pr:
             pr_value = old.get("pr") or alias_old.get("pr") if pr_value is None else pr_value
             pr_title = (
-                old.get("pr_title") or alias_old.get("pr_title")
-                if pr_title is None
-                else pr_title
+                old.get("pr_title") or alias_old.get("pr_title") if pr_title is None else pr_title
             )
             pr_url = old.get("pr_url") or alias_old.get("pr_url") if pr_url is None else pr_url
             observed_github_state = (
@@ -1070,9 +1059,7 @@ def merge_lanes(
         if isinstance(lane, dict) and lane.get("fingerprint") not in seen:
             retained = dict(lane)
             blocked_github_observation = blocked_github_observations.get(retained.get("repo"))
-            incomplete_github_observation = incomplete_github_observations.get(
-                retained.get("repo")
-            )
+            incomplete_github_observation = incomplete_github_observations.get(retained.get("repo"))
             metadata = dict(
                 retained.get("metadata") if isinstance(retained.get("metadata"), dict) else {}
             )

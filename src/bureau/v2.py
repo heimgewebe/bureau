@@ -81,9 +81,7 @@ def _github_repository_for_path(path: Path) -> str | None:
         ) from exc
     if result.returncode != 0:
         detail = result.stderr.strip() or result.stdout.strip() or "no diagnostic"
-        raise OpenPullRequestObservationError(
-            f"cannot resolve git remote for {path}: {detail}"
-        )
+        raise OpenPullRequestObservationError(f"cannot resolve git remote for {path}: {detail}")
     return github_repository_from_remote_url(result.stdout.strip())
 
 
@@ -114,9 +112,7 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
             f"cannot observe open pull requests for {repository}: {exc}"
         ) from exc
     if result.returncode != 0:
-        detail = "\n".join(
-            part for part in (result.stdout.strip(), result.stderr.strip()) if part
-        )
+        detail = "\n".join(part for part in (result.stdout.strip(), result.stderr.strip()) if part)
         raise OpenPullRequestObservationError(
             f"gh pr list failed for {repository}: {detail or 'no diagnostic'}"
         )
@@ -127,9 +123,7 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
             f"gh pr list returned invalid JSON for {repository}: {exc}"
         ) from exc
     if not isinstance(value, list):
-        raise OpenPullRequestObservationError(
-            f"gh pr list returned non-list JSON for {repository}"
-        )
+        raise OpenPullRequestObservationError(f"gh pr list returned non-list JSON for {repository}")
     return [item for item in value if isinstance(item, dict)]
 
 
@@ -1901,8 +1895,6 @@ def lifecycle_diagnostics(registry: Registry, store: StateStore) -> list[dict[st
     return result
 
 
-
-
 def _runtime_state_db_path(
     state_db: Path | None = None,
     state_root: Path | None = None,
@@ -1910,7 +1902,7 @@ def _runtime_state_db_path(
     if state_db is not None:
         return state_db.expanduser().resolve()
     if state_root is not None:
-        return (state_root.expanduser().resolve() / "bureau.sqlite3")
+        return state_root.expanduser().resolve() / "bureau.sqlite3"
     configured = os.environ.get("BUREAU_STATE_DIR")
     root = Path(configured).expanduser() if configured else Path.home() / ".local/state/bureau"
     return (root / "bureau.sqlite3").resolve()
@@ -2030,9 +2022,7 @@ def _read_only_state_rows(state_path: Path) -> dict[str, Any]:
         version = connection.execute("PRAGMA user_version").fetchone()[0]
         tables = {
             row["name"]
-            for row in connection.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            )
+            for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")
         }
         required_tables = {"task_status", "runs", "receipts"}
         missing_tables = sorted(required_tables - tables)
@@ -2055,8 +2045,7 @@ def _read_only_state_rows(state_path: Path) -> dict[str, Any]:
                 "schema_version": version,
                 "unsupported_schema_version": version,
                 "error": (
-                    f"unsupported schema version: {version}; "
-                    f"maximum supported is {SCHEMA_VERSION}"
+                    f"unsupported schema version: {version}; maximum supported is {SCHEMA_VERSION}"
                 ),
             }
         rows: dict[str, list[dict[str, Any]]] = {}
@@ -2291,8 +2280,7 @@ def _receipt_drift(
                 "severity": "warning",
                 "code": "unknown-task-status-row",
                 "message": (
-                    "State database has task_status rows for tasks absent from the "
-                    "registry."
+                    "State database has task_status rows for tasks absent from the registry."
                 ),
                 "task_ids": unknown_status_rows,
             }
@@ -2376,6 +2364,7 @@ def runtime_drift_check(
         "receipts": receipt_report,
         "findings": findings,
     }
+
 
 def close_ready_initiatives(registry: Registry, store: StateStore) -> list[dict[str, Any]]:
     diagnostics = {item["initiative_id"]: item for item in lifecycle_diagnostics(registry, store)}

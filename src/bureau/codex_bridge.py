@@ -312,14 +312,11 @@ def collect_context(
     }
     does_not_do = [
         "does not call OpenAI API",
-        "does not allow Codex to mutate Bureau; Codex may only return "
-        "decision JSON on stdout",
+        "does not allow Codex to mutate Bureau; Codex may only return decision JSON on stdout",
         "does not claim, bind, complete, fail, merge, rebase, or deploy",
     ]
     if config.binding_gate:
-        does_not_do.append(
-            "does not mutate Bureau except one validated planned binding task file"
-        )
+        does_not_do.append("does not mutate Bureau except one validated planned binding task file")
     else:
         does_not_do.append("does not mutate Bureau registry or tasks")
 
@@ -451,8 +448,7 @@ def _read_decision_file(path: Path, *, backend: str) -> dict[str, Any]:
             "decision": None,
             "valid": False,
             "errors": [
-                f"{backend} decision has invalid JSON at line {exc.lineno} "
-                f"column {exc.colno}"
+                f"{backend} decision has invalid JSON at line {exc.lineno} column {exc.colno}"
             ],
         }
     except OSError as exc:
@@ -1017,9 +1013,7 @@ def _apply_binding_gate(
         result["rollback"] = rollback
         result["mutation_performed"] = task_path.exists()
         result["status"] = "rolled_back" if rollback["removed"] else "rollback_failed"
-        result["blockers"] = [
-            _binding_blocker("binding_post_check_failed", detail[:1000])
-        ]
+        result["blockers"] = [_binding_blocker("binding_post_check_failed", detail[:1000])]
         return result
 
     result["status"] = "written"
@@ -1131,9 +1125,7 @@ def run_bridge(
         "decision_errors": decision_result.get("errors", []),
         "binding_result": binding_result,
         "backend_observation": {
-            key: value
-            for key, value in decision_result.items()
-            if key not in {"decision"}
+            key: value for key, value in decision_result.items() if key not in {"decision"}
         },
         "mutation_performed": bool(binding_result.get("mutation_performed")),
         "artifacts": {
@@ -1207,9 +1199,7 @@ def build_parser() -> argparse.ArgumentParser:
 def config_from_args(args: argparse.Namespace) -> BridgeConfig:
     state_base = Path(args.state_base).expanduser()
     bureau_command = (
-        tuple(shlex.split(args.bureau_command))
-        if args.bureau_command
-        else default_bureau_command()
+        tuple(shlex.split(args.bureau_command)) if args.bureau_command else default_bureau_command()
     )
     config = default_config(
         repo_root=Path(args.repo_root).expanduser(),

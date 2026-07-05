@@ -3,7 +3,7 @@
   "id": "COMMONWORLD-ATLAS-V1-T002",
   "initiative": "COMMONWORLD-ATLAS-V1",
   "title": "Build mixed-node visual proof",
-  "state": "planned",
+  "state": "ready",
   "priority": {
     "lane": "next",
     "rank": 20
@@ -50,7 +50,8 @@
   ],
   "metadata": {
     "repo": "heimgewebe/commonworld",
-    "plan": "docs/blueprints/commonworld-masterplan.md"
+    "plan": "docs/blueprints/commonworld-masterplan.md",
+    "ready_after": "COMMONWORLD-ATLAS-V1-T001 verified by commonworld PR #1"
   },
   "depends_on": [
     "COMMONWORLD-ATLAS-V1-T001"

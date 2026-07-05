@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-LEARNING-AXIS-V1",
+  "title": "Operator learning axis for heimlern and Grabowski",
+  "state": "candidate",
+  "commitment": "later",
+  "goal": "Make Grabowski routing decisions and outcomes available to heimlern as offline learning inputs without granting heimlern live routing authority.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/operator-learning-axis-v1.md"
+  },
+  "completion": [
+    "heimlern contains validated operator routing decision and outcome contracts with fixtures.",
+    "A bounded adapter converts Grabowski friction records and execution receipts into operator routing outcomes.",
+    "Routing outcomes can be mapped into heimlern feedback analysis without exposing unredacted logs.",
+    "A fixture corpus covers success, blocked, failed and fail-closed operator runs.",
+    "Any routing adjustment remains proposal-only and does not auto-apply to Grabowski."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "primary_repo": "heimgewebe/heimlern",
+    "related_organs": ["grabowski", "bureau", "chronik", "leitstand"],
+    "initial_slice": "contracts-first",
+    "does_not_establish": [
+      "live_routing_readiness",
+      "routing_policy_superiority",
+      "sample_sufficiency",
+      "auto_apply_permission"
+    ]
+  }
+}

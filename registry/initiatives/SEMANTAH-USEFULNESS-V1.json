@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "SEMANTAH-USEFULNESS-V1",
+  "title": "semantAH Semantic Evidence Service usefulness proof",
+  "state": "candidate",
+  "commitment": "later",
+  "goal": "Prove or reject semantAH as a source-grounded Semantic Evidence Service through deterministic RepoBrief evidence, contract repair, real documentation ingest, and retrieval evaluation before any consumer integration.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/semantah-usefulness-registration-v1.md"
+  },
+  "completion": [
+    "A deterministic RepoBrief or equivalent Lenskit snapshot exists for heimgewebe/semantAH and is cited by later Bureau artifacts.",
+    "The semantAH usefulness audit is represented as evidence-grounded claims with explicit non-claims.",
+    "semantAH contract drift, namespace identity, and stub authority risks are repaired or explicitly rejected.",
+    "A real documentation ingest path preserves source identity and produces deterministic index artifacts.",
+    "Retrieval evaluation compares semantAH against a keyword baseline before any read-only consumer adapter is considered."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "github_issue": "heimgewebe/bureau#77",
+    "supersedes": [
+      "closed PR heimgewebe/bureau#75"
+    ],
+    "abandoned_branches": [
+      "semantah-usefulness-registration-v2"
+    ],
+    "initial_task_policy": "Do not create ready tasks before RepoBrief snapshot evidence exists.",
+    "next_allowed_task": "Create deterministic RepoBrief snapshot evidence for heimgewebe/semantAH.",
+    "does_not_establish": [
+      "semantAH usefulness",
+      "semantAH operational readiness",
+      "knowledge graph readiness",
+      "consumer integration readiness",
+      "runtime correctness",
+      "test sufficiency"
+    ],
+    "alternative_axis": "evidence-service-before-knowledge-graph"
+  }
+}

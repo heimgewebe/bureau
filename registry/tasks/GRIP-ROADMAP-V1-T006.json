@@ -1,0 +1,50 @@
+{
+  "acceptance": [
+    {
+      "id": "docs-updated",
+      "assertion": "Blanket language that categorically forbids automatic merge/deploy/durable autonomy is replaced or qualified."
+    },
+    {
+      "id": "organs-positioned",
+      "assertion": "Bureau, Cabinet, Chronik, Plexer, Lenskit, and Vibe-Lab are documented as helpers rather than universal gates."
+    },
+    {
+      "id": "high-impact-language",
+      "assertion": "High-impact actions are marked and receipt-bound, not categorically forbidden."
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Replace restrictive autonomy wording with grip-oriented doctrine: Grabowski may act when target, scope, risk, and receipt are clear.",
+  "id": "GRIP-ROADMAP-V1-T006",
+  "initiative": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
+    "roadmap_slice": "PR8",
+    "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately."
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Update autonomy doctrine docs",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T002"
+  ]
+}

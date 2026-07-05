@@ -1,0 +1,56 @@
+{
+  "commitment": "next",
+  "completion": [
+    "Remaining roadmap slices are represented as Bureau tasks with explicit claims, dependencies, lanes, and acceptance.",
+    "Worktree navigation is implemented before high-impact Captain actions.",
+    "Privileged and durable actions remain receipt-bound, scope-marked, and non-default until explicitly enabled."
+  ],
+  "current_plan": {
+    "commit": "6f6d681226e3256b6579c0a626435056fbb12071",
+    "document_sha256": "0887546ff06e9c60f632632c05e3f49888d2b38bbd362506f8e72471ef66dfac",
+    "path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
+    "repository": "bureau"
+  },
+  "goal": "Complete the remaining Grabowski grip roadmap after the already-merged foundation and publish/readiness grips, with read-only worktree navigation before privileged durable autonomy.",
+  "id": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "already_done": [
+      "operator-grip-foundation",
+      "branch-publish",
+      "pr-create-or-update",
+      "pr-check-readiness hardening"
+    ],
+    "does_not_establish": [
+      "merge_authority_change",
+      "runtime_deploy_authority_change",
+      "captain_default_enablement"
+    ],
+    "source_theme": "Grabowski handlungsfähiger, flexibler, dauerfähiger",
+    "source_summary": "User-provided Grabowski grip roadmap rest review and registration prompt.",
+    "source_record": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
+    "already_done_refs": [
+      {
+        "slice": "operator-grip-foundation",
+        "pr": "heimgewebe/grabowski#75"
+      },
+      {
+        "slice": "branch-publish",
+        "pr": "heimgewebe/grabowski#76"
+      },
+      {
+        "slice": "pr-create-or-update",
+        "pr": "heimgewebe/grabowski#79"
+      },
+      {
+        "slice": "pr-check-readiness hardening",
+        "pr": "heimgewebe/grabowski#81"
+      }
+    ]
+  },
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "schema_version": 1,
+  "state": "active",
+  "title": "Grabowski grip roadmap remainder"
+}

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "id": "SEMANTAH-USEFULNESS-010",
+  "initiative": "SEMANTAH-USEFULNESS-V1",
+  "title": "Expose semantAH read-only consumer adapter",
+  "state": "planned",
+  "depends_on": ["SEMANTAH-USEFULNESS-009"],
+  "required_capabilities": ["repository"],
+  "priority": {
+    "lane": "later",
+    "rank": 190
+  },
+  "execution": {
+    "policy": "review-before-effect",
+    "mode": "interactive-agent",
+    "summary": "Add a read-only consumer integration only after retrieval evaluation proves useful evidence."
+  },
+  "claims": [],
+  "acceptance": [
+    {
+      "id": "eval-gate",
+      "assertion": "Task confirms SEMANTAH-USEFULNESS-008 produced a positive or explicitly useful retrieval evaluation."
+    },
+    {
+      "id": "read-only",
+      "assertion": "The adapter is read-only and performs no autonomous writes or policy decisions."
+    },
+    {
+      "id": "consumer-boundary",
+      "assertion": "The consuming organ treats semantAH output as evidence, not authority."
+    },
+    {
+      "id": "receipt",
+      "assertion": "A receipt records which consumer was integrated and what decision or context quality improved."
+    }
+  ],
+  "plan_ref": "docs/plans/semantah-usefulness-repobrief-plan-v1.md#phase-9--add-read-only-consumer-adapter"
+}

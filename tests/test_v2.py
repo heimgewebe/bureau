@@ -734,6 +734,36 @@ def test_adapter_registry_marks_canonical_unavailable_with_alias_system():
     assert registry.get("grabowski-job") is None
 
 
+
+
+def test_adapter_registry_rejects_alias_conflicts():
+    class FirstAdapter(FakeAdapter):
+        system = "first-system"
+        aliases = ("shared-alias",)
+
+    class SecondAdapter(FakeAdapter):
+        system = "second-system"
+        aliases = ("shared-alias",)
+
+    registry = AdapterRegistry([FirstAdapter()])
+
+    with pytest.raises(ValueError, match="shared-alias"):
+        registry.add(SecondAdapter())
+
+
+def test_adapter_registry_remembers_alias_group_after_unavailable():
+    class AliasAdapter(FakeAdapter):
+        aliases = ("grabowski-job",)
+
+    registry = AdapterRegistry([AliasAdapter()])
+    registry.mark_unavailable("grabowski-task", RuntimeError("runtime offline"))
+    registry.mark_unavailable("grabowski-job", RuntimeError("still offline"))
+
+    assert registry.get("grabowski-task") is None
+    assert registry.get("grabowski-job") is None
+    assert registry.status()["grabowski-task"]["detail"] == "still offline"
+    assert registry.status()["grabowski-job"]["detail"] == "still offline"
+
 def test_unavailable_adapter_reason_remains_explicit():
     adapters = AdapterRegistry()
     adapters.mark_unavailable("grabowski-task", ModuleNotFoundError("missing runtime dependency"))

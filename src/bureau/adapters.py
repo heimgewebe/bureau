@@ -29,29 +29,41 @@ class AdapterRegistry:
     def __init__(self, adapters: list[ExternalAdapter] | None = None):
         self._adapters: dict[str, ExternalAdapter] = {}
         self._unavailable: dict[str, dict[str, str | bool]] = {}
+        self._systems_by_name: dict[str, frozenset[str]] = {}
         for adapter in adapters or []:
             self.add(adapter)
 
+    @staticmethod
+    def _systems(adapter: ExternalAdapter) -> frozenset[str]:
+        return frozenset((adapter.system, *getattr(adapter, "aliases", ())))
+
     def add(self, adapter: ExternalAdapter) -> None:
-        systems = [adapter.system, *getattr(adapter, "aliases", ())]
+        systems = self._systems(adapter)
+        for system in systems:
+            registered = self._adapters.get(system)
+            if registered is not None and registered is not adapter:
+                raise ValueError(f"external adapter system already registered: {system}")
         for system in systems:
             self._adapters[system] = adapter
+            self._systems_by_name[system] = systems
             self._unavailable.pop(system, None)
 
     def mark_unavailable(self, system: str, error: Exception) -> None:
         adapter = self._adapters.get(system)
-        systems = [system]
-        if adapter is not None:
-            systems = [adapter.system, *getattr(adapter, "aliases", ())]
+        systems = self._systems_by_name.get(system)
+        if systems is None and adapter is not None:
+            systems = self._systems(adapter)
+        if systems is None:
+            systems = frozenset((system,))
 
         unavailable = {
             "available": False,
             "error_type": type(error).__name__,
             "detail": str(error),
         }
-        for adapter_system in set(systems):
+        for adapter_system in systems:
             self._adapters.pop(adapter_system, None)
-            self._unavailable[adapter_system] = unavailable
+            self._unavailable[adapter_system] = unavailable.copy()
 
     def get(self, system: str) -> ExternalAdapter | None:
         return self._adapters.get(system)

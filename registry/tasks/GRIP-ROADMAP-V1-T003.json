@@ -1,0 +1,46 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Scout output is change-only rather than a noisy full report.",
+      "id": "only-changes"
+    },
+    {
+      "assertion": "Scout can be disabled.",
+      "id": "disable-switch"
+    },
+    {
+      "assertion": "Scout does not mutate repositories or runtime state.",
+      "id": "no-mutation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Implement a durable Scout that reports only changes such as PR drift, stale reviews, runtime/main drift, unpushed branches, and missing receipts.",
+  "id": "GRIP-ROADMAP-V1-T003",
+  "initiative": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
+    "roadmap_slice": "PR5"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 30
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Add durable scout prototype"
+}

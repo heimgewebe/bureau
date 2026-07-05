@@ -1,0 +1,46 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Restrictive blanket language is replaced or qualified.",
+      "id": "docs-updated"
+    },
+    {
+      "assertion": "Bureau, Cabinet, Chronik, Plexer, Lenskit, and Vibe-Lab are documented as helpers rather than universal gates.",
+      "id": "organs-positioned"
+    },
+    {
+      "assertion": "High-impact actions are marked and receipt-bound, not categorically forbidden.",
+      "id": "high-impact-language"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Replace restrictive autonomy wording with grip-oriented doctrine: Grabowski may act when target, scope, risk, and receipt are clear.",
+  "id": "GRIP-ROADMAP-V1-T006",
+  "initiative": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
+    "roadmap_slice": "PR8"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Update autonomy doctrine docs"
+}

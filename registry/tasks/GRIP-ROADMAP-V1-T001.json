@@ -1,0 +1,46 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Grabowski exposes worktree-orient in the Grip registry with receipt output.",
+      "id": "worktree-orient-grip"
+    },
+    {
+      "assertion": "Output distinguishes dirty worktrees from stale cleanup candidates without mutating them.",
+      "id": "dirty-and-stale-visible"
+    },
+    {
+      "assertion": "Focused tests cover the new grip and receipt shape.",
+      "id": "focused-tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Implement a read-only worktree-orient grip that summarizes canonical checkout, feature worktrees, dirty worktrees, stale candidates, and next safe grip.",
+  "id": "GRIP-ROADMAP-V1-T001",
+  "initiative": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
+    "roadmap_slice": "PR4/read-only subset"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Add worktree navigation grip"
+}

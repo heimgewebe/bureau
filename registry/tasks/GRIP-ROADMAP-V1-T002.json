@@ -1,0 +1,46 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Receipts include risk and recovery/irreversibility fields.",
+      "id": "privileged-receipt-risk"
+    },
+    {
+      "assertion": "runtime-deploy-check is read-only and test-covered.",
+      "id": "deploy-check-readonly"
+    },
+    {
+      "assertion": "No Captain default enablement is introduced by this slice.",
+      "id": "no-default-captain"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Add high-impact grip receipt scaffolding for runtime-deploy-check, runtime-deploy, service-restart, and later pr-merge without enabling blind execution.",
+  "id": "GRIP-ROADMAP-V1-T002",
+  "initiative": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
+    "roadmap_slice": "PR3"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Add privileged grip receipt foundation"
+}

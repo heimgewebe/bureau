@@ -1,0 +1,37 @@
+{
+  "commitment": "next",
+  "completion": [
+    "Remaining roadmap slices are represented as Bureau tasks with explicit claims and acceptance.",
+    "Worktree navigation is implemented before high-impact Captain actions.",
+    "Privileged and durable actions remain receipt-bound and scope-marked."
+  ],
+  "current_plan": {
+    "commit": "81daeb54bbcdf90b4740336d70b1e2dfc05ba91f",
+    "document_sha256": "a55049586a0e4abf410b83fcf4d5025d70c85e9118167c1fb5317703e088184d",
+    "path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
+    "repository": "bureau"
+  },
+  "goal": "Complete the remaining Grabowski grip roadmap after the already-merged foundation and publish/readiness grips, with read-only worktree navigation before privileged durable autonomy.",
+  "id": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "already_done": [
+      "operator-grip-foundation",
+      "branch-publish",
+      "pr-create-or-update",
+      "pr-check-readiness hardening"
+    ],
+    "does_not_establish": [
+      "merge_authority_change",
+      "runtime_deploy_authority_change",
+      "captain_default_enablement"
+    ],
+    "source_theme": "Grabowski handlungsfähiger, flexibler, dauerfähiger",
+    "source_user_file": "Eingefügter Text.txt"
+  },
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "schema_version": 1,
+  "state": "active",
+  "title": "Grabowski grip roadmap remainder"
+}

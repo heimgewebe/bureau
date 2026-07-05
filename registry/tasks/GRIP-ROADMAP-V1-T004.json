@@ -1,0 +1,46 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Mechanic is limited to normal non-privileged grips.",
+      "id": "normal-grips-only"
+    },
+    {
+      "assertion": "Every action records target and scope.",
+      "id": "scope-visible"
+    },
+    {
+      "assertion": "Every action emits or links a receipt.",
+      "id": "receipt-per-grip"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Allow a Mechanic loop to run normal receipt-bound grips such as tests, branch publish, PR update, review request, friction triage, and post-merge sync.",
+  "id": "GRIP-ROADMAP-V1-T004",
+  "initiative": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
+    "roadmap_slice": "PR6"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Add mechanic normal-action loop"
+}

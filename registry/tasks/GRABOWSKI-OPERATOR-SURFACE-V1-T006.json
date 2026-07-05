@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T006",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Add enforceable session capability profiles",
+  "state": "planned",
+  "goal": "Implement the first enforceable session capability profile layer with explicit read roots, write roots, allowed grips, forbidden hosts and max risk level.",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T001"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "profile-contract",
+      "assertion": "Session profile contract includes read_roots, write_roots, allowed_grips, forbidden_hosts and max_risk_level."
+    },
+    {
+      "id": "runtime-enforced",
+      "assertion": "At least one high-risk action is blocked by runtime enforcement, not just documentation."
+    },
+    {
+      "id": "explicit-escalation",
+      "assertion": "High-impact paths require explicit target, reason, expiry and recovery or irreversibility metadata."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover allowed read-only action, blocked write outside scope, blocked forbidden host and explicit escalation shape."
+    }
+  ],
+  "metadata": {
+    "phase": "session-attenuation",
+    "effect": "capability_enforcement_foundation",
+    "non_goal": "Does not remove existing break-glass paths until observe/maintain paths are tested.",
+    "related_plan": "docs/grabowski-restplan-v2.md"
+  }
+}

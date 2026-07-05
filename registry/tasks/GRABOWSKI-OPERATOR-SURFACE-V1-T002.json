@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T002",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Expose first-class grip MCP surface",
+  "state": "planned",
+  "goal": "Expose grip_list and grip_run or equivalent MCP tools over a small allowlisted set of intent-shaped, receipt-bound Grabowski runners.",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T001"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 14
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "grip-list-contract",
+      "assertion": "grip_list returns name, purpose, target, scope, effect class, risk, recovery path, preconditions and expected receipt shape for each allowed grip."
+    },
+    {
+      "id": "grip-run-allowlist",
+      "assertion": "grip_run dispatches only an explicit allowlist of narrow runners and rejects unknown or broad do-everything grips."
+    },
+    {
+      "id": "receipt-bound",
+      "assertion": "Every mutating grip either emits or links a receipt with target, scope and outcome."
+    },
+    {
+      "id": "profile-visible",
+      "assertion": "Grip availability is visible for the current session/profile, even if enforcement remains conservative."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover list output, rejected unknown grips, read-only grips and receipt-bound mutation dispatch."
+    }
+  ],
+  "metadata": {
+    "phase": "grip-surface",
+    "effect": "typed_dispatch_surface",
+    "non_goal": "Does not add generic shell or Captain default execution.",
+    "initial_grip_candidates": [
+      "repo-orient",
+      "worktree-orient",
+      "branch-publish",
+      "pr-create-or-update",
+      "pr-check-readiness",
+      "post-merge-sync"
+    ]
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T005",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Add durable job notify design slice",
+  "state": "planned",
+  "goal": "Define and implement the first durable job identity fields needed for optional notify_on_done behavior without relying on polling or hiding finalization failures.",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T001"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "job-identity",
+      "assertion": "Job records include job_id, owner, scope, started_at, expected receipt, final status and terminalization evidence."
+    },
+    {
+      "id": "notify-metadata",
+      "assertion": "notify_on_done metadata can be represented without sending notifications by default."
+    },
+    {
+      "id": "failure-visible",
+      "assertion": "Failed or missing finalization remains visible and is not hidden by notification success."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover job identity, terminal status, no-default-notify and failed finalization visibility."
+    }
+  ],
+  "metadata": {
+    "phase": "durable-jobs",
+    "effect": "job_identity_foundation",
+    "non_goal": "Does not enable background notification delivery by default."
+  }
+}

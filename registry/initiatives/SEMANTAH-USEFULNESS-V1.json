@@ -7,9 +7,7 @@
   "goal": "Prove or reject semantAH as a source-grounded Semantic Evidence Service through deterministic RepoBrief evidence, contract repair, real documentation ingest, and retrieval evaluation before any consumer integration.",
   "current_plan": {
     "repository": "bureau",
-    "path": "docs/plans/semantah-usefulness-registration-v1.md",
-    "commit": "6b6a22776ec82368eddbcaa86d419ea61cbe2ed9",
-    "document_sha256": "2b89820f5aabe1b7665f6b4cbe298918d9df1619599952fcc926108a5a49b336"
+    "path": "docs/plans/semantah-usefulness-registration-v1.md"
   },
   "completion": [
     "A deterministic RepoBrief or equivalent Lenskit snapshot exists for heimgewebe/semantAH and is cited by later Bureau artifacts.",

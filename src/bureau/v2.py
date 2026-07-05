@@ -138,6 +138,21 @@ def plan_sha256(registry: legacy.Registry, initiative_id: str) -> str:
     return legacy.sha256_json(plan)
 
 
+def grabowski_resource_keys_for_task(
+    resources: dict[str, legacy.Resource],
+    task: legacy.Task,
+) -> set[str]:
+    keys: set[str] = set()
+    configured = task.execution.get("grabowski_resources", [])
+    if isinstance(configured, list):
+        keys.update(item for item in configured if isinstance(item, str) and item.strip())
+    for claim in task.claims:
+        resource = resources.get(claim.resource)
+        if resource is not None and resource.grabowski_key:
+            keys.add(resource.grabowski_key)
+    return keys
+
+
 CANONICAL_BUREAU_TASK_RE = legacy.ID_RE
 MAX_CLOSURE_BRIDGE_LANES = 4
 
@@ -381,6 +396,13 @@ class Registry(legacy.Registry):
         for task in self.tasks.values():
             if task.mode == "grabowski-task" and not task.execution.get("argv"):
                 errors.append(f"grabowski-task {task.id} requires execution.argv")
+            if task.mode == "grabowski-task" and not grabowski_resource_keys_for_task(
+                self.resources,
+                task,
+            ):
+                errors.append(
+                    f"grabowski-task {task.id} requires at least one Grabowski resource key"
+                )
             if task.mode == "grabowski-operation" and not task.execution.get("operation"):
                 errors.append(f"grabowski-operation {task.id} requires execution.operation")
             if task.state == "verified":
@@ -1447,11 +1469,7 @@ def fail_run(store: StateStore, run_id: str, error: str, state: str = "failed") 
 def grabowski_handoff(registry: Registry, store: StateStore, run_id: str) -> dict[str, Any]:
     run = store.run(run_id)
     task = registry.tasks[run["task_id"]]
-    keys = set(task.execution.get("grabowski_resources", []))
-    for claim in task.claims:
-        key = registry.resources[claim.resource].grabowski_key
-        if key:
-            keys.add(key)
+    keys = grabowski_resource_keys_for_task(registry.resources, task)
     result: dict[str, Any] = {
         "origin_ref": f"bureau:{run_id}",
         "request_id": run["dispatch_request_id"] or f"{run_id}:dispatch-1",

@@ -62,6 +62,23 @@ class CabinetBridgePreviewTests(unittest.TestCase):
                     approve=False,
                 )
 
+    def test_preview_rejects_enabled_probe_import_effect(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            report = Path(directory) / "report.json"
+            write_report(report)
+            payload = json.loads(report.read_text(encoding="utf-8"))
+            payload["importAllowed"] = True
+            report.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(CabinetBridgeError, "importAllowed"):
+                preview_bridge_candidate(
+                    report,
+                    candidate_id="claim:ready",
+                    task_id="BUR-CAB-001",
+                    initiative="BUR-CAB",
+                    target_proof="Reviewed proof exists.",
+                    approve=True,
+                )
+
     def test_preview_returns_manual_proposal_only(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             report = Path(directory) / "report.json"

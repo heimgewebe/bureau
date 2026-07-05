@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "id": "SEMANTAH-USEFULNESS-009",
+  "initiative": "SEMANTAH-USEFULNESS-V1",
+  "title": "Make semantAH Observatory evidence-only",
+  "state": "planned",
+  "depends_on": ["SEMANTAH-USEFULNESS-008"],
+  "required_capabilities": ["repository"],
+  "priority": {
+    "lane": "later",
+    "rank": 180
+  },
+  "execution": {
+    "policy": "review-before-effect",
+    "mode": "interactive-agent",
+    "summary": "Refactor Observatory so it reports validated evidence only, not static or heuristic semantic claims."
+  },
+  "claims": [],
+  "acceptance": [
+    {
+      "id": "no-regex-counting",
+      "assertion": "Observatory no longer uses regex extraction over store rows for namespace/model statistics."
+    },
+    {
+      "id": "validated-counts",
+      "assertion": "Observatory counts valid and invalid rows by namespace and model revision using validated store rows."
+    },
+    {
+      "id": "no-static-topics",
+      "assertion": "Observatory emits no static topics without input evidence."
+    },
+    {
+      "id": "blind-spots-evidence",
+      "assertion": "Blind spots derive from missing or invalid evidence."
+    }
+  ],
+  "plan_ref": "docs/plans/semantah-usefulness-repobrief-plan-v1.md#phase-8--make-observatory-evidence-only"
+}

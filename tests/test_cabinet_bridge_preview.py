@@ -68,7 +68,10 @@ class CabinetBridgePreviewTests(unittest.TestCase):
             write_report(report)
             payload = json.loads(report.read_text(encoding="utf-8"))
             payload["importAllowed"] = True
-            report.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            report.write_text(
+                json.dumps(payload, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
             with self.assertRaisesRegex(CabinetBridgeError, "importAllowed"):
                 preview_bridge_candidate(
                     report,

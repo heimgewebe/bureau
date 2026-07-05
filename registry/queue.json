@@ -1,1 +1,22 @@
-{"schema_version":1,"queue_policy":"skip-blocked","lanes":{"now":["BUR-2026-002-T001"],"next":["BUR-2026-002-T002","BUR-2026-002-T003"],"later":["BUR-2026-002-T004","BUR-2026-002-T005"]}}
+{
+  "schema_version": 1,
+  "queue_policy": "skip-blocked",
+  "lanes": {
+    "now": [
+      "BUR-2026-002-T001"
+    ],
+    "next": [
+      "BUR-2026-002-T002",
+      "BUR-2026-002-T003"
+    ],
+    "later": [
+      "BUR-2026-002-T004",
+      "BUR-2026-002-T005",
+      "COMMONWORLD-ATLAS-V1-T001",
+      "COMMONWORLD-ATLAS-V1-T002",
+      "COMMONWORLD-ATLAS-V1-T003",
+      "COMMONWORLD-ATLAS-V1-T004",
+      "COMMONWORLD-ATLAS-V1-T005"
+    ]
+  }
+}

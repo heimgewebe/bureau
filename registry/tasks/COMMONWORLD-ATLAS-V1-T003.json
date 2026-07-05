@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-ATLAS-V1-T003",
+  "initiative": "COMMONWORLD-ATLAS-V1",
+  "title": "Add MapLibre place proof",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "goal": "Add a bounded map proof that renders seed place and hybrid projects with privacy-aware location modes.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "autonomous",
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "acceptance": [
+    {
+      "id": "map-route",
+      "assertion": "A commonworld map route renders seed projects from the catalog fixtures.",
+      "verifier": "Playwright smoke",
+      "evidence_type": "string"
+    },
+    {
+      "id": "privacy-modes",
+      "assertion": "exact, approximate and hidden location modes are visually and behaviorally distinct.",
+      "verifier": "test or review",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-api-coupling",
+      "assertion": "The map proof does not require a new backend or write path.",
+      "verifier": "diff review",
+      "evidence_type": "boolean"
+    }
+  ],
+  "metadata": {
+    "repo": "heimgewebe/commonworld",
+    "plan": "docs/blueprints/commonworld-masterplan.md"
+  },
+  "depends_on": [
+    "COMMONWORLD-ATLAS-V1-T002"
+  ]
+}

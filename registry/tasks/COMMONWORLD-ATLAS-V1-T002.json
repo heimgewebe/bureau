@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-ATLAS-V1-T002",
+  "initiative": "COMMONWORLD-ATLAS-V1",
+  "title": "Build mixed-node visual proof",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "goal": "Implement the isolated mixed-node marker and detail surface using static seed data before adding MapLibre or APIs.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "autonomous",
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "acceptance": [
+    {
+      "id": "marker-segments",
+      "assertion": "A mixed node renders weighted aspect segments in deterministic order.",
+      "verifier": "component test or visual proof",
+      "evidence_type": "object"
+    },
+    {
+      "id": "detail-panel",
+      "assertion": "Selecting a mixed node opens a mobile bottom sheet or desktop side panel with aspect-colored cards.",
+      "verifier": "Playwright or component test",
+      "evidence_type": "string"
+    },
+    {
+      "id": "accessibility",
+      "assertion": "Aspect meaning is visible through text and icons, not color alone, and reduced motion is respected.",
+      "verifier": "review and test",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "repo": "heimgewebe/commonworld",
+    "plan": "docs/blueprints/commonworld-masterplan.md"
+  },
+  "depends_on": [
+    "COMMONWORLD-ATLAS-V1-T001"
+  ]
+}

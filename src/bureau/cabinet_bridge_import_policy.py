@@ -91,7 +91,7 @@ def validate_policy(path: str | Path) -> dict[str, Any]:
 
     receipt = _object(policy.get("requiredReceipt"), "requiredReceipt")
     for key, expected in REQUIRED_RECEIPT.items():
-        if receipt.get(key) is not expected:
+        if receipt.get(key) != expected:
             raise CabinetBridgeError(f"requiredReceipt.{key} must be {expected!r}")
 
     inputs = _list(policy.get("requiredInputs"), "requiredInputs")

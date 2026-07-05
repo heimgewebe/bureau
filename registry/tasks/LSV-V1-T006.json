@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "id": "LSV-V1-T006",
+  "initiative": "LEITSTAND-VISUAL-LAYER-V1",
+  "title": "RepoBrief observability view",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
+  "goal": "Add a read-only Leitstand surface for RepoBrief/rLens bundle status, freshness, required artifacts, and export-safety warnings.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "LSV-V1-T003"
+  ],
+  "acceptance": [
+    {
+      "id": "bundle-list",
+      "assertion": "The view lists available RepoBrief bundles with repo, snapshot time, status, and manifest path.",
+      "verifier": "fixture or controller test",
+      "evidence_type": "object"
+    },
+    {
+      "id": "export-safety-visible",
+      "assertion": "Export-safety failures or warnings are visible and never hidden behind a green status.",
+      "verifier": "view test",
+      "evidence_type": "string"
+    },
+    {
+      "id": "local-only-links",
+      "assertion": "Links to reading packs or canonical dumps are local/operator pointers and not presented as public URLs unless export-safety permits.",
+      "verifier": "view test",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "docs/plans/leitstand-visualization-layer-v1.md",
+    "evidence_anchor_example": "/home/alex/repos/merges/leitstand-max-260705-0643",
+    "does_not_establish": [
+      "repo_understanding",
+      "public_export_safety",
+      "review_completeness"
+    ]
+  }
+}

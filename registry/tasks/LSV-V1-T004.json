@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "LSV-V1-T004",
+  "initiative": "LEITSTAND-VISUAL-LAYER-V1",
+  "title": "Map rendering handoff",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "goal": "Introduce rendered ecosystem diagrams without making Leitstand the render authority or hiding the source Mermaid and provenance.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "LSV-V1-T003"
+  ],
+  "acceptance": [
+    {
+      "id": "preferred-handoff",
+      "assertion": "The preferred implementation consumes Cabinet- or Schauwerk-produced SVG/HTML render artifacts with digest/freshness metadata.",
+      "verifier": "design review or tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "fallback-bounded",
+      "assertion": "If client-side Mermaid rendering is used, the source Mermaid and digest remain visible and render success is not framed as validation.",
+      "verifier": "view test",
+      "evidence_type": "string"
+    },
+    {
+      "id": "source-visible",
+      "assertion": "Rendered diagrams retain links to Cabinet source paths and source commit information.",
+      "verifier": "view test",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "docs/plans/leitstand-visualization-layer-v1.md",
+    "preferred_organs": [
+      "cabinet",
+      "schauwerk",
+      "leitstand"
+    ],
+    "does_not_establish": [
+      "cabinet_map_validity",
+      "claim_truth",
+      "runtime_correctness"
+    ]
+  }
+}

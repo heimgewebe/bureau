@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "id": "LEITSTAND-VISUAL-LAYER-V1",
+  "title": "Leitstand ecosystem visualization layer expansion",
+  "state": "candidate",
+  "commitment": "later",
+  "goal": "Expand Leitstand into a read-only visualization layer for ecosystem maps, source freshness, RepoBrief health, and cross-view navigation without making Leitstand a source of truth, orchestrator, or task dispatcher.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/leitstand-visualization-layer-v1.md"
+  },
+  "completion": [
+    "Cabinet exposes a stable ecosystem map artifact contract for Leitstand to consume.",
+    "Leitstand has a read-only /ecosystem-map view with source identity, freshness, boundary language, and safe empty states.",
+    "Rendered map display is introduced without making Leitstand the map authority.",
+    "Cross-view links use deterministic IDs and degraded labels for unknown mappings.",
+    "RepoBrief/rLens bundle observability is visible in Leitstand with export-safety and freshness warnings.",
+    "An internal pilot records missing, stale, and degraded source behavior without adding write paths."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "evidence_anchor": {
+      "repobrief_snapshot": "/home/alex/repos/merges/leitstand-max-260705-0643",
+      "bundle_manifest": "/home/alex/repos/merges/leitstand-max-260705-0643/leitstand-max-260705-0443_merge.bundle.manifest.json",
+      "source_commit": "0aeb59942d4b70d92129516139b4f46d3e07ec1d",
+      "snapshot_status": "ok",
+      "preflight_status": "warn",
+      "preflight_warning": "claim-evidence sidecars skipped; no missing required artifacts",
+      "export_safety": "not_public_export_ready"
+    },
+    "initial_task_policy": "Do not put this initiative in the active queue until current Bureau runtime/hardening work is reconciled.",
+    "next_allowed_task": "Define Cabinet ecosystem-map artifact manifest before implementing a polished Leitstand render view.",
+    "does_not_establish": [
+      "leitstand_runtime_correctness",
+      "ecosystem_map_truth",
+      "cabinet_registry_correctness",
+      "repobrief_public_export_safety",
+      "ui_dispatch_readiness",
+      "test_sufficiency"
+    ],
+    "alternative_axis": "source-contract-before-pretty-dashboard"
+  }
+}

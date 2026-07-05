@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "LSV-V1-T005",
+  "initiative": "LEITSTAND-VISUAL-LAYER-V1",
+  "title": "Cross-view identity mapping",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "goal": "Connect ecosystem map nodes to Leitstand Anatomy, Timeline, Insights, Reflexion, and Ops views only through deterministic IDs and explicit degraded states.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "LSV-V1-T003"
+  ],
+  "acceptance": [
+    {
+      "id": "stable-id-map",
+      "assertion": "Map node IDs are resolved through a deterministic mapping contract rather than label heuristics.",
+      "verifier": "unit tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "unknown-id-degraded",
+      "assertion": "Unknown or unmapped IDs are shown as degraded or unlinked, not guessed.",
+      "verifier": "unit tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "links-preserve-boundary",
+      "assertion": "Cross-view links navigate within read-only views and do not trigger tasks or external mutations.",
+      "verifier": "view/diff review",
+      "evidence_type": "boolean"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "docs/plans/leitstand-visualization-layer-v1.md",
+    "does_not_establish": [
+      "relation_truth",
+      "runtime_dependency",
+      "change_impact"
+    ]
+  }
+}

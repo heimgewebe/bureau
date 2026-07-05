@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "LSV-V1-T007",
+  "initiative": "LEITSTAND-VISUAL-LAYER-V1",
+  "title": "Visualization pilot evidence",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 70
+  },
+  "goal": "Run an internal pilot of the Leitstand visualization layer with real Cabinet, RepoBrief, Chronik, WGX, and semantAH artifacts and record degraded-source behavior before rollout.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "LSV-V1-T004",
+    "LSV-V1-T005",
+    "LSV-V1-T006"
+  ],
+  "acceptance": [
+    {
+      "id": "real-artifact-pilot",
+      "assertion": "The pilot uses real source artifacts and records their source commits, digests, and freshness states.",
+      "verifier": "pilot report",
+      "evidence_type": "object"
+    },
+    {
+      "id": "degraded-behavior-recorded",
+      "assertion": "Missing, stale, corrupt, and export-safety-failing inputs are visible in the pilot report.",
+      "verifier": "pilot report",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-write-paths",
+      "assertion": "The pilot introduces no default task dispatch, external mutation, or source repair from the UI.",
+      "verifier": "diff and runtime config review",
+      "evidence_type": "boolean"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "docs/plans/leitstand-visualization-layer-v1.md",
+    "does_not_establish": [
+      "production_rollout_ready",
+      "all_sources_complete",
+      "runtime_correctness"
+    ]
+  }
+}

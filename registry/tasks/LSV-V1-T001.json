@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "LSV-V1-T001",
+  "initiative": "LEITSTAND-VISUAL-LAYER-V1",
+  "title": "Cabinet map artifact manifest",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 10
+  },
+  "goal": "Define and validate a Cabinet-owned ecosystem map artifact manifest before Leitstand consumes map files as a dashboard source.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/cabinet",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/cabinet"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.cabinet",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "manifest-contract",
+      "assertion": "A versioned Cabinet ecosystem-map artifact manifest records source commit, generated_at, artifact paths, digests, and non-claims.",
+      "verifier": "schema or fixture test",
+      "evidence_type": "object"
+    },
+    {
+      "id": "ci-validation",
+      "assertion": "Cabinet CI validates the manifest and fails if referenced map artifacts are missing or stale.",
+      "verifier": "CI check or local equivalent",
+      "evidence_type": "string"
+    },
+    {
+      "id": "truth-boundary",
+      "assertion": "The manifest explicitly says it does not establish claim truth, runtime correctness, or merge readiness.",
+      "verifier": "diff review",
+      "evidence_type": "boolean"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "docs/plans/leitstand-visualization-layer-v1.md",
+    "why_first": "Leitstand should consume a source contract instead of guessing paths.",
+    "does_not_establish": [
+      "leitstand_view_ready",
+      "ecosystem_map_truth",
+      "runtime_correctness"
+    ]
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "LSV-V1-T002",
+  "initiative": "LEITSTAND-VISUAL-LAYER-V1",
+  "title": "Leitstand map loader",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 20
+  },
+  "goal": "Implement a read-only Leitstand loader for a pinned Cabinet ecosystem map artifact manifest with explicit empty, corrupt, stale, and valid states.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "LSV-V1-T001"
+  ],
+  "acceptance": [
+    {
+      "id": "read-only-loader",
+      "assertion": "The loader reads configured local manifest/artifacts only and does not run git, fetch remote content, or mutate other repos.",
+      "verifier": "code review and tests",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "state-model",
+      "assertion": "Valid, missing, corrupt, and stale source states are represented in typed view data.",
+      "verifier": "unit tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "public-boundary",
+      "assertion": "View data contains source identity and non-claims so the UI cannot present the map as runtime truth.",
+      "verifier": "unit tests",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "docs/plans/leitstand-visualization-layer-v1.md",
+    "does_not_establish": [
+      "rendered_view_ready",
+      "cabinet_manifest_correctness",
+      "runtime_correctness"
+    ]
+  }
+}

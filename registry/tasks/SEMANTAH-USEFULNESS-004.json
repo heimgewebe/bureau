@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "id": "SEMANTAH-USEFULNESS-004",
+  "initiative": "SEMANTAH-USEFULNESS-V1",
+  "title": "Canonicalize semantAH namespaces",
+  "state": "planned",
+  "depends_on": ["SEMANTAH-USEFULNESS-003"],
+  "required_capabilities": ["repository"],
+  "priority": {
+    "lane": "later",
+    "rank": 130
+  },
+  "execution": {
+    "policy": "review-before-effect",
+    "mode": "interactive-agent",
+    "summary": "Align semantAH namespace documentation, schemas, and API behavior around docs, code, chronik, osctx, and insights."
+  },
+  "claims": [],
+  "acceptance": [
+    {
+      "id": "namespace-doc",
+      "assertion": "semantAH docs/namespaces.md defines the canonical namespace set and marks vault only as legacy alias if retained."
+    },
+    {
+      "id": "schema-api-alignment",
+      "assertion": "Namespace schema and API behavior are aligned or any remaining mismatch is explicitly documented."
+    },
+    {
+      "id": "namespace-tests",
+      "assertion": "Tests cover allowed and rejected namespaces or a precise blocker is recorded."
+    }
+  ],
+  "plan_ref": "docs/plans/semantah-usefulness-repobrief-plan-v1.md#phase-3--canonicalize-namespaces"
+}

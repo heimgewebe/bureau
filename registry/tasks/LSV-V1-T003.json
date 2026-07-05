@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "LSV-V1-T003",
+  "initiative": "LEITSTAND-VISUAL-LAYER-V1",
+  "title": "Ecosystem map source view",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 30
+  },
+  "goal": "Add a Leitstand /ecosystem-map source view and dashboard card that display Cabinet map sources, provenance, freshness, and boundary notes without implying truth authority.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "LSV-V1-T002"
+  ],
+  "acceptance": [
+    {
+      "id": "route-renders",
+      "assertion": "/ecosystem-map renders a page for valid and missing source states.",
+      "verifier": "server or view test",
+      "evidence_type": "string"
+    },
+    {
+      "id": "dashboard-card",
+      "assertion": "The landing dashboard links to the ecosystem map view and shows source/freshness status.",
+      "verifier": "view test",
+      "evidence_type": "string"
+    },
+    {
+      "id": "boundary-visible",
+      "assertion": "The page visibly states that Cabinet owns canonical map semantics and Leitstand is view-only.",
+      "verifier": "view test",
+      "evidence_type": "string"
+    },
+    {
+      "id": "no-action-buttons",
+      "assertion": "The view provides no dispatch, edit, merge, repair, or refresh actions that mutate external systems.",
+      "verifier": "diff review",
+      "evidence_type": "boolean"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "docs/plans/leitstand-visualization-layer-v1.md",
+    "implementation_bias": "show raw Mermaid and metadata before polished rendering",
+    "does_not_establish": [
+      "map_truth",
+      "rendering_correctness",
+      "runtime_correctness"
+    ]
+  }
+}

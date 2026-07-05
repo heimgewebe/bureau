@@ -1,16 +1,20 @@
 {
   "acceptance": [
     {
-      "assertion": "Scout output is change-only rather than a noisy full report.",
-      "id": "only-changes"
+      "id": "only-changes",
+      "assertion": "Scout output is change-only rather than a noisy full report."
     },
     {
-      "assertion": "Scout can be disabled.",
-      "id": "disable-switch"
+      "id": "pr-and-runtime-drift",
+      "assertion": "Scout change-only output covers PR drift, stale reviews, runtime/main drift, unpushed branches, and missing receipts."
     },
     {
-      "assertion": "Scout does not mutate repositories or runtime state.",
-      "id": "no-mutation"
+      "id": "disable-switch",
+      "assertion": "Scout can be disabled."
+    },
+    {
+      "id": "no-mutation",
+      "assertion": "Scout does not mutate repositories or runtime state."
     }
   ],
   "claims": [
@@ -29,7 +33,9 @@
   "initiative": "GRIP-ROADMAP-V1",
   "metadata": {
     "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
-    "roadmap_slice": "PR5"
+    "roadmap_slice": "PR5",
+    "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately.",
+    "resulting_effect": "read_only"
   },
   "priority": {
     "lane": "next",
@@ -42,5 +48,8 @@
   ],
   "schema_version": 1,
   "state": "planned",
-  "title": "Add durable scout prototype"
+  "title": "Add durable scout prototype",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T001"
+  ]
 }

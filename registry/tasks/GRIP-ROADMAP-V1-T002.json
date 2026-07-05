@@ -29,7 +29,16 @@
   "initiative": "GRIP-ROADMAP-V1",
   "metadata": {
     "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
-    "roadmap_slice": "PR3"
+    "roadmap_slice": "PR3",
+    "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately.",
+    "non_goal": "Does not enable Captain defaults or blind privileged execution.",
+    "receipt_fields": [
+      "target",
+      "scope",
+      "risk_level",
+      "irreversibility",
+      "recovery_path"
+    ]
   },
   "priority": {
     "lane": "next",
@@ -42,5 +51,8 @@
   ],
   "schema_version": 1,
   "state": "planned",
-  "title": "Add privileged grip receipt foundation"
+  "title": "Add privileged grip receipt foundation",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T001"
+  ]
 }

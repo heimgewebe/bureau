@@ -11,6 +11,10 @@
     {
       "assertion": "Focused tests cover the new grip and receipt shape.",
       "id": "focused-tests"
+    },
+    {
+      "id": "next-safe-grip",
+      "assertion": "Output recommends a next safe grip without applying cleanup or checkout mutations."
     }
   ],
   "claims": [
@@ -29,7 +33,11 @@
   "initiative": "GRIP-ROADMAP-V1",
   "metadata": {
     "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
-    "roadmap_slice": "PR4/read-only subset"
+    "roadmap_slice": "PR4/read-only subset",
+    "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately.",
+    "resulting_effect": "read_only",
+    "implementation_pr": "heimgewebe/grabowski#83",
+    "implementation_branch": "feat/worktree-orient-grip-v1"
   },
   "priority": {
     "lane": "now",

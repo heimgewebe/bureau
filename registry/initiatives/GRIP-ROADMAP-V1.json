@@ -1,9 +1,9 @@
 {
   "commitment": "next",
   "completion": [
-    "Remaining roadmap slices are represented as Bureau tasks with explicit claims and acceptance.",
+    "Remaining roadmap slices are represented as Bureau tasks with explicit claims, dependencies, lanes, and acceptance.",
     "Worktree navigation is implemented before high-impact Captain actions.",
-    "Privileged and durable actions remain receipt-bound and scope-marked."
+    "Privileged and durable actions remain receipt-bound, scope-marked, and non-default until explicitly enabled."
   ],
   "current_plan": {
     "commit": "81daeb54bbcdf90b4740336d70b1e2dfc05ba91f",
@@ -26,7 +26,26 @@
       "captain_default_enablement"
     ],
     "source_theme": "Grabowski handlungsfähiger, flexibler, dauerfähiger",
-    "source_user_file": "Eingefügter Text.txt"
+    "source_summary": "User-provided Grabowski grip roadmap rest review and registration prompt.",
+    "source_record": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
+    "already_done_refs": [
+      {
+        "slice": "operator-grip-foundation",
+        "pr": "heimgewebe/grabowski#75"
+      },
+      {
+        "slice": "branch-publish",
+        "pr": "heimgewebe/grabowski#76"
+      },
+      {
+        "slice": "pr-create-or-update",
+        "pr": "heimgewebe/grabowski#79"
+      },
+      {
+        "slice": "pr-check-readiness hardening",
+        "pr": "heimgewebe/grabowski#81"
+      }
+    ]
   },
   "parallelism": {
     "max_active_tasks": 1

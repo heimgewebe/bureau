@@ -29,7 +29,8 @@
   "initiative": "GRIP-ROADMAP-V1",
   "metadata": {
     "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
-    "roadmap_slice": "PR7"
+    "roadmap_slice": "PR7",
+    "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately."
   },
   "priority": {
     "lane": "later",
@@ -42,5 +43,9 @@
   ],
   "schema_version": 1,
   "state": "planned",
-  "title": "Add captain privileged-action path"
+  "title": "Add captain privileged-action path",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T002",
+    "GRIP-ROADMAP-V1-T004"
+  ]
 }

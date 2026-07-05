@@ -29,7 +29,8 @@
   "initiative": "GRIP-ROADMAP-V1",
   "metadata": {
     "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
-    "roadmap_slice": "PR6"
+    "roadmap_slice": "PR6",
+    "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately."
   },
   "priority": {
     "lane": "later",
@@ -42,5 +43,10 @@
   ],
   "schema_version": 1,
   "state": "planned",
-  "title": "Add mechanic normal-action loop"
+  "title": "Add mechanic normal-action loop",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T001",
+    "GRIP-ROADMAP-V1-T002",
+    "GRIP-ROADMAP-V1-T003"
+  ]
 }

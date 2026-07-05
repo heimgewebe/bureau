@@ -688,7 +688,6 @@ def test_read_command_survives_unavailable_grabowski_adapter(
 
 
 
-
 def test_adapter_registry_resolves_external_system_alias():
     class AliasAdapter(FakeAdapter):
         aliases = ("grabowski-job",)
@@ -699,6 +698,42 @@ def test_adapter_registry_resolves_external_system_alias():
     assert registry.get("grabowski-task") is adapter
     assert registry.get("grabowski-job") is adapter
     assert registry.status()["grabowski-job"] == {"available": True}
+
+
+def test_adapter_registry_marks_aliases_unavailable_with_canonical_system():
+    class AliasAdapter(FakeAdapter):
+        aliases = ("grabowski-job",)
+
+    adapter = AliasAdapter()
+    registry = AdapterRegistry([adapter])
+    registry.mark_unavailable("grabowski-task", RuntimeError("runtime offline"))
+
+    assert registry.get("grabowski-task") is None
+    assert registry.get("grabowski-job") is None
+    assert registry.status()["grabowski-task"] == {
+        "available": False,
+        "detail": "runtime offline",
+        "error_type": "RuntimeError",
+    }
+    assert registry.status()["grabowski-job"] == {
+        "available": False,
+        "detail": "runtime offline",
+        "error_type": "RuntimeError",
+    }
+
+
+def test_adapter_registry_marks_canonical_unavailable_with_alias_system():
+    class AliasAdapter(FakeAdapter):
+        aliases = ("grabowski-job",)
+
+    adapter = AliasAdapter()
+    registry = AdapterRegistry([adapter])
+    registry.mark_unavailable("grabowski-job", RuntimeError("runtime offline"))
+
+    assert registry.get("grabowski-task") is None
+    assert registry.get("grabowski-job") is None
+
+
 def test_unavailable_adapter_reason_remains_explicit():
     adapters = AdapterRegistry()
     adapters.mark_unavailable("grabowski-task", ModuleNotFoundError("missing runtime dependency"))

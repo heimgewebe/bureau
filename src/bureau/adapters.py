@@ -39,12 +39,19 @@ class AdapterRegistry:
             self._unavailable.pop(system, None)
 
     def mark_unavailable(self, system: str, error: Exception) -> None:
-        self._adapters.pop(system, None)
-        self._unavailable[system] = {
+        adapter = self._adapters.get(system)
+        systems = [system]
+        if adapter is not None:
+            systems = [adapter.system, *getattr(adapter, "aliases", ())]
+
+        unavailable = {
             "available": False,
             "error_type": type(error).__name__,
             "detail": str(error),
         }
+        for adapter_system in set(systems):
+            self._adapters.pop(adapter_system, None)
+            self._unavailable[adapter_system] = unavailable
 
     def get(self, system: str) -> ExternalAdapter | None:
         return self._adapters.get(system)

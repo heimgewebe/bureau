@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "BUR-2026-001",
   "title": "Grabowski operational completion",
-  "state": "completed",
-  "commitment": "completed",
+  "state": "active",
+  "commitment": "next",
   "goal": "Establish a fresh operational baseline and represent confirmed gaps as executable tasks.",
   "current_plan": {
     "repository": "grabowski",
@@ -16,5 +16,11 @@
   ],
   "parallelism": {
     "max_active_tasks": 2
+  },
+  "metadata": {
+    "lifecycle_reconcile": {
+      "reason": "reopened because BUR-2026-001-T009 remains open",
+      "source": "BUR-DOCTOR-QUEUE-LIFECYCLE-RECONCILE-V1"
+    }
   }
 }

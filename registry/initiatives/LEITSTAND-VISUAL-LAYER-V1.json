@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "LEITSTAND-VISUAL-LAYER-V1",
   "title": "Leitstand ecosystem visualization layer expansion",
-  "state": "candidate",
+  "state": "active",
   "commitment": "later",
   "goal": "Expand Leitstand into a read-only visualization layer for ecosystem maps, source freshness, RepoBrief health, and cross-view navigation without making Leitstand a source of truth, orchestrator, or task dispatcher.",
   "current_plan": {
@@ -40,6 +40,10 @@
       "ui_dispatch_readiness",
       "test_sufficiency"
     ],
-    "alternative_axis": "source-contract-before-pretty-dashboard"
+    "alternative_axis": "source-contract-before-pretty-dashboard",
+    "lifecycle_reconcile": {
+      "reason": "activated as a registered later-work visualization initiative",
+      "source": "BUR-DOCTOR-QUEUE-LIFECYCLE-RECONCILE-V1"
+    }
   }
 }

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "COMMONWORLD-ATLAS-V1",
   "title": "commonworld Commons atlas foundation",
-  "state": "committed",
+  "state": "active",
   "commitment": "next",
   "goal": "Establish commonworld.net as a separate public Commons atlas repository with a contract-first catalog, visual proof slices, governance, and a later explicit handoff to weltgewebe.",
   "current_plan": {
@@ -30,6 +30,10 @@
       "Supabase core",
       "PostGIS core",
       "Rust API core"
-    ]
+    ],
+    "lifecycle_reconcile": {
+      "reason": "activated because registered tasks remain open",
+      "source": "BUR-DOCTOR-QUEUE-LIFECYCLE-RECONCILE-V1"
+    }
   }
 }

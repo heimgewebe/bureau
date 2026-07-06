@@ -3,7 +3,7 @@
   "id": "RBAW-V1-T003",
   "initiative": "REPOBRIEF-AGENT-WORKBENCH-V1",
   "title": "Define read-only patch evaluation consumption",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 191
@@ -54,7 +54,39 @@
       "review_completeness",
       "merge_readiness",
       "security_correctness"
-    ]
+    ],
+    "outcome": "Lenskit PR #893 added read-only RepoBrief consumption of external patch-evaluation artifacts.",
+    "verification": {
+      "lenskit_repository": "heimgewebe/lenskit",
+      "lenskit_pr": "heimgewebe/lenskit#893",
+      "lenskit_merge_commit": "40792e56671404f6a08664eeef4e02fb37614349",
+      "verified_surfaces": [
+        "merger/lenskit/core/patch_evaluation.py",
+        "merger/lenskit/cli/cmd_repobrief.py",
+        "merger/lenskit/tests/test_patch_evaluation.py",
+        "docs/contracts/patch-evaluation-v1.md"
+      ],
+      "checks": [
+        "python -m pytest merger/lenskit/tests/test_patch_evaluation.py -> 15 passed",
+        "python -m ruff check merger/lenskit/core/patch_evaluation.py merger/lenskit/tests/test_patch_evaluation.py -> passed",
+        "GitHub PR #893 CI passed before squash merge"
+      ],
+      "acceptance_summary": [
+        "Consumer validates and summarizes artifacts read-only.",
+        "Malformed diagnostic inputs are tolerated without upgrading invalid evidence.",
+        "Consumer does not mutate Git, run shells/tests, read secrets, or emit merge approval."
+      ],
+      "does_not_establish": [
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness",
+        "merge_readiness",
+        "security_correctness",
+        "roadmap_completeness"
+      ],
+      "task_sha256": "04de620c056caabb0045853199794db241ad8d49b15fa9624c223d94090685d1",
+      "plan_sha256": "44feb70a77fc185a7a36e565d7a7ae3b703a3f01350a931602ee348f9b4e7e6a"
+    }
   },
   "depends_on": [
     "RBAW-V1-T002"

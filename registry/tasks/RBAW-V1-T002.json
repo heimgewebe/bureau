@@ -3,7 +3,7 @@
   "id": "RBAW-V1-T002",
   "initiative": "REPOBRIEF-AGENT-WORKBENCH-V1",
   "title": "Sketch patch evaluation artifact contract",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 190
@@ -54,7 +54,36 @@
       "review_completeness",
       "merge_readiness",
       "security_correctness"
-    ]
+    ],
+    "outcome": "Lenskit PR #893 added the Patch Evaluation Artifact v1 contract.",
+    "verification": {
+      "lenskit_repository": "heimgewebe/lenskit",
+      "lenskit_pr": "heimgewebe/lenskit#893",
+      "lenskit_merge_commit": "40792e56671404f6a08664eeef4e02fb37614349",
+      "verified_surfaces": [
+        "docs/contracts/patch-evaluation-v1.md",
+        "merger/lenskit/contracts/patch-evaluation.v1.schema.json",
+        "merger/lenskit/contracts/examples/patch-evaluation.v1.json"
+      ],
+      "checks": [
+        "python -m pytest merger/lenskit/tests/test_patch_evaluation.py -> 15 passed after review hardening",
+        "GitHub PR #893 CI passed before squash merge"
+      ],
+      "acceptance_summary": [
+        "Contract root is strict and pins authority to external_evaluation_evidence.",
+        "Mandatory non-claims include correctness, test sufficiency, security correctness, runtime behavior outside evaluated commands, merge authorization, merge readiness, regression absence, repo understanding, and claim truth."
+      ],
+      "does_not_establish": [
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness",
+        "merge_readiness",
+        "security_correctness",
+        "roadmap_completeness"
+      ],
+      "task_sha256": "e38d73fc04ff51a1bd0f032493686723454cccc6103faa000e7ee41e7b6d5ded",
+      "plan_sha256": "44feb70a77fc185a7a36e565d7a7ae3b703a3f01350a931602ee348f9b4e7e6a"
+    }
   },
   "depends_on": [
     "RBAW-V1-T001"

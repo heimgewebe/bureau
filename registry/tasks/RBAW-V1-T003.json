@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "id": "RBAW-V1-T003",
+  "initiative": "REPOBRIEF-AGENT-WORKBENCH-V1",
+  "title": "Define read-only patch evaluation consumption",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 191
+  },
+  "goal": "Plan how RepoBrief may read existing patch-evaluation artifacts without generating, applying or approving patches.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "4d31a206dc2ec9bf90e71cbaa6ba102377815beb",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rbaw-v1-t003-read-only",
+      "assertion": "The proposed consumption surface remains read-only and cannot create or execute patch evaluations.",
+      "verifier": "PR, self-review, tests, or stop report",
+      "evidence_type": "string"
+    },
+    {
+      "id": "rbaw-v1-t003-availability",
+      "assertion": "Availability, provenance and non-claims are part of the proposed consumption output.",
+      "verifier": "PR, self-review, tests, or stop report",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-06T05:39:49Z",
+    "created_from_plan": "RepoBrief Agent Workbench Boundary v1",
+    "plan_path": "docs/plans/repobrief-agent-workbench-boundary-v1.md",
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "security_correctness"
+    ]
+  },
+  "depends_on": [
+    "RBAW-V1-T002"
+  ]
+}

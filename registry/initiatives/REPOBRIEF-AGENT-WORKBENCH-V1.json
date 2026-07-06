@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "id": "REPOBRIEF-AGENT-WORKBENCH-V1",
+  "title": "RepoBrief Agent Workbench boundary",
+  "state": "active",
+  "commitment": "next",
+  "goal": "Define and sequence the external Write-Axis / Agent Workbench boundary without moving patch or runtime authority into RepoBrief core.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/repobrief-agent-workbench-boundary-v1.md"
+  },
+  "completion": [
+    "The RepoBrief versus Agent Workbench boundary is documented.",
+    "Patch-evaluation artifacts are specified before any runtime workbench implementation.",
+    "RepoBrief remains read-only with respect to patch/test execution.",
+    "Overlapping Lenskit-agent-optimization suggestions are mapped to existing roadmap tasks instead of duplicated blindly."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-06T05:39:49Z",
+    "source_thread": "Lenskit / RepoBrief / rLens Write-Axis planning after PR #889",
+    "plan_document_sha256": "461d8075c361aa7b92d46675ae9f76a835bfe5e84e049e7cc1d4f359b43d3894",
+    "prerequisite_observation": "User reported Lenskit PR #889 merged; live verification remains required at task start.",
+    "boundary_decision": "Write/Patch/Test/Sandbox is external Agent Workbench, not RepoBrief core.",
+    "related_lenskit_prs": [
+      {
+        "number": 889,
+        "title": "feat(repobrief): Source Citation Projection v1 (RBEV1-T003)",
+        "status": "reported_merged"
+      }
+    ],
+    "related_existing_tasks": [
+      "RBV1-T004",
+      "RBV1-T005",
+      "RBV1-T006",
+      "RBV1-T007",
+      "RBV1-T008",
+      "RBV1-T009",
+      "RBV1-T012",
+      "RBV1-T014",
+      "RBV1-T015",
+      "RBV1-T016",
+      "RBV1-T017"
+    ],
+    "does_not_establish": [
+      "implementation_complete",
+      "runtime_correctness",
+      "test_sufficiency",
+      "merge_readiness",
+      "security_correctness"
+    ]
+  }
+}

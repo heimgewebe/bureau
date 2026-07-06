@@ -3,7 +3,7 @@
   "id": "RBV1-T004",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Make RepoBrief health degradation explicit",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 40
@@ -67,7 +67,49 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "outcome": "RepoBrief health degradation visibility was implemented and merged in Lenskit PR #890.",
+    "verification": {
+      "lenskit_repository": "heimgewebe/lenskit",
+      "lenskit_pr": "heimgewebe/lenskit#890",
+      "lenskit_head": "e473999c9555495480fdc060872f8546a1c59980",
+      "lenskit_merge_commit": "be5ec960dc6decd7efdc42cbedc0550d454a1831",
+      "verified_surfaces": [
+        "merger/lenskit/core/health_degradation.py",
+        "merger/lenskit/core/output_health.py",
+        "merger/lenskit/core/post_emit_health.py",
+        "merger/lenskit/contracts/output-health.v1.schema.json",
+        "merger/lenskit/contracts/post-emit-health.v1.schema.json",
+        "merger/lenskit/tests/test_output_health.py",
+        "merger/lenskit/tests/test_post_emit_health.py"
+      ],
+      "checks": [
+        "env PYTHONPATH=. python3 -m pytest merger/lenskit/tests/test_output_health.py -q -> 65 passed",
+        "env PYTHONPATH=. python3 -m pytest merger/lenskit/tests/test_post_emit_health.py -q -> 49 passed",
+        "env PYTHONPATH=. python3 -m pytest merger/lenskit/tests/test_jsonschema_degradation.py merger/lenskit/tests/test_repobrief_preflight.py -q -> 41 passed",
+        "ruff check health/output/post-emit surfaces -> passed",
+        "git diff --cached --check -> passed",
+        "GitHub PR #890 CI -> all reported checks passed"
+      ],
+      "acceptance_summary": [
+        "output_health and post_emit_health expose health_status_model",
+        "output_health and post_emit_health expose a classified degradation summary",
+        "jsonschema unavailable and skipped schema validation are machine-readable",
+        "range strict unavailable and claim evidence validation skipped are visible",
+        "existing output_health verdict and post_emit_health status semantics are preserved",
+        "degradation summary carries explicit non-claims"
+      ],
+      "does_not_establish": [
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness",
+        "regression_absence",
+        "forensic_readiness",
+        "merge_readiness_for_followup_tasks"
+      ],
+      "task_sha256": "7f3df4527a5b095c4325baf3e66308cb0a1f11f11d637ee0be4b7fc9efdf12a8",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   },
   "depends_on": [
     "RBV1-T003"

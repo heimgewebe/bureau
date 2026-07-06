@@ -13,7 +13,6 @@
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/lenskit",
-    "baseline_commit": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
     "grabowski_resources": [
       "repo:/home/alex/repos/lenskit"
     ]
@@ -74,6 +73,57 @@
       "evidence_pr": "heimgewebe/bureau#92"
     },
     "outcome": "Explicit RepoBrief snapshot create is present on Lenskit origin/main and verified; no Lenskit patch was required.",
+    "removed_dead_baseline_commit": {
+      "value": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
+      "reason": "not present in declared working_repository during RBV1-T002 reconciliation",
+      "observed_by": "grabowski-task:051cd8abfcb1438dbafe1d96",
+      "observed_at": "2026-07-06T05:42:22Z"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "observed_at": "2026-07-06T05:42:22Z",
+      "observed_by": "grabowski-task:051cd8abfcb1438dbafe1d96",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "repo": "heimgewebe/lenskit",
+          "number": 861,
+          "commit_short": "74663b95",
+          "summary": "repobrief-snapshot-create"
+        },
+        {
+          "kind": "pull_request",
+          "repo": "heimgewebe/lenskit",
+          "number": 870,
+          "summary": "extension evidence from Opus report"
+        },
+        {
+          "kind": "pull_request",
+          "repo": "heimgewebe/lenskit",
+          "number": 871,
+          "summary": "extension evidence from Opus report"
+        },
+        {
+          "kind": "pull_request",
+          "repo": "heimgewebe/lenskit",
+          "number": 872,
+          "summary": "extension evidence from Opus report"
+        },
+        {
+          "kind": "pull_request",
+          "repo": "heimgewebe/lenskit",
+          "number": 877,
+          "summary": "extension evidence from Opus report"
+        }
+      ],
+      "does_not_establish": [
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness",
+        "merge_readiness"
+      ]
+    },
     "verification": {
       "lenskit_repository": "heimgewebe/lenskit",
       "lenskit_main_commit": "900bc2c9",
@@ -83,18 +133,18 @@
         "merger/lenskit/tests/test_repobrief_snapshot_cli.py",
         "docs/architecture/repobrief.md"
       ],
-      "checks": [
-        "python3 -m pytest merger/lenskit/tests/test_repobrief_snapshot_cli.py -q -> 24 passed",
-        "python3 -m pytest merger/lenskit/tests/test_repobrief_profiles.py merger/lenskit/tests/test_export_safety_report.py merger/lenskit/tests/test_repobrief_snapshot_cli.py -q -> 58 passed",
-        "python3 -m ruff check merger/lenskit/cli/cmd_repobrief.py merger/lenskit/tests/test_repobrief_snapshot_cli.py merger/lenskit/tests/test_repobrief_profiles.py merger/lenskit/tests/test_export_safety_report.py -> passed",
-        "runtime smoke: repobrief snapshot create on temporary git repo -> rc 0, bundle manifest exists, git status preserved, mutation_boundary writes only brief_bundle_artifacts"
+      "check_summary": [
+        "snapshot CLI tests passed",
+        "profile/export-safety/snapshot tests passed",
+        "focused ruff check passed",
+        "temporary-repo runtime check preserved source working tree"
       ],
       "acceptance_summary": [
         "explicit repobrief snapshot create command exists",
         "profile is recorded in emitted result and manifest capabilities",
         "read/create mutation boundary is represented",
         "does_not_establish is emitted",
-        "no Git, PR, patch, or source working tree mutation observed in smoke"
+        "no Git, PR, patch, or source working tree mutation observed"
       ],
       "does_not_establish": [
         "runtime_correctness_beyond_smoke",
@@ -103,7 +153,7 @@
         "regression_absence",
         "merge_readiness_for_followup_tasks"
       ],
-      "task_sha256": "c5dd7d318d745edcdb96d20ca9210d24e19aded252a2fb284ddf5751388501df",
+      "task_sha256": "7943a352436b3eea91eab0d2d1ce62ea7a11a5421e425be631d499e00b025043",
       "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
     }
   },

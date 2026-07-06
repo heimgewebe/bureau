@@ -1464,6 +1464,8 @@ class Dispatcher(legacy.Dispatcher):
         }
 
     def doctor(self, repair: bool = False) -> dict[str, Any]:
+        from .registry_truth import registry_truth_diagnostics
+
         integrity = self.store.integrity()
         missing_envelopes: list[str] = []
         missing_receipts: list[str] = []
@@ -1510,6 +1512,7 @@ class Dispatcher(legacy.Dispatcher):
         lifecycle = lifecycle_diagnostics(self.registry, self.store)
         lifecycle_findings = [item for item in lifecycle if not item["consistent"]]
         state_root_report = state_root_hygiene(self.store.state_root, self.store.path)
+        registry_truth = registry_truth_diagnostics(self.registry.root)
         if repair:
             missing_envelopes = []
             missing_receipts = []
@@ -1523,6 +1526,7 @@ class Dispatcher(legacy.Dispatcher):
             and not queue_findings
             and not lifecycle_findings
             and state_root_report["healthy"]
+            and registry_truth["healthy"]
         )
         return {
             "healthy": healthy,
@@ -1536,6 +1540,7 @@ class Dispatcher(legacy.Dispatcher):
             "queue_findings": queue_findings,
             "lifecycle": lifecycle,
             "runtime_truth": doctor_runtime_truth(healthy=healthy, lifecycle=lifecycle),
+            "registry_truth": registry_truth,
             "repaired": repair,
         }
 

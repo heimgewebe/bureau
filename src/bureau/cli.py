@@ -61,6 +61,9 @@ def parser() -> argparse.ArgumentParser:
     doctor = sub.add_parser("doctor")
     doctor.add_argument("--repair", action="store_true")
     sub.add_parser("runtime-drift-check")
+    registry_truth = sub.add_parser("registry-truth")
+    registry_truth.add_argument("--strict", action="store_true")
+    registry_truth.add_argument("--no-baseline-probe", action="store_true")
     sub.add_parser("conflicts")
     sub.add_parser("lifecycle")
     source_check = sub.add_parser("source-check")
@@ -321,6 +324,14 @@ def main(argv: list[str] | None = None) -> int:
             value = runtime_drift_check(root, state_db=state_path, state_root=state_root)
             emit(value, args.json)
             return 0
+        if args.command == "registry-truth":
+            from .registry_truth import registry_truth_diagnostics
+
+            value = registry_truth_diagnostics(
+                root, probe_baselines=not args.no_baseline_probe
+            )
+            emit(value, args.json)
+            return 1 if args.strict and not value["healthy"] else 0
         registry = Registry.load(root)
         if args.command == "cabinet-import-preview":
             from .cabinet_graph import CabinetGraphError

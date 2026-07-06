@@ -3,7 +3,7 @@
   "id": "RBAW-V1-T005",
   "initiative": "REPOBRIEF-AGENT-WORKBENCH-V1",
   "title": "Triage Lenskit agent optimization axes",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 36
@@ -67,7 +67,37 @@
       "review_completeness",
       "merge_readiness",
       "security_correctness"
-    ]
+    ],
+    "outcome": "Lenskit PR #895 merged the RepoBrief Agent Optimization Triage v1 documentation.",
+    "verification": {
+      "lenskit_repository": "heimgewebe/lenskit",
+      "lenskit_pr": "heimgewebe/lenskit#895",
+      "lenskit_merge_commit": "ef4e04fa341ab5721428c497c40b9c41cd6d6946",
+      "verified_surfaces": [
+        "docs/architecture/repobrief-agent-optimization-triage.md",
+        "docs/architecture/repobrief-agent-workbench-boundary.md"
+      ],
+      "checks": [
+        "python -m pytest merger/lenskit/tests/test_repobrief_naming_doc.py merger/lenskit/tests/test_repobrief_mcp_boundary_doc.py merger/lenskit/tests/test_anti_hallucination_lint.py -> 56 passed",
+        "python -m pytest merger/lenskit/tests/test_doc_freshness.py -> 39 passed",
+        "GitHub PR #895 merge state CLEAN before squash merge"
+      ],
+      "acceptance_summary": [
+        "Each broad optimization axis is mapped to an existing roadmap owner, deferred Sidecar owner, or explicit non-goal.",
+        "The output is documentation-only and does not start a broad refactor."
+      ],
+      "does_not_establish": [
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness",
+        "merge_readiness",
+        "security_correctness",
+        "roadmap_completeness"
+      ],
+      "lenskit_head": "55a6b04a04eb85109a6cf06f4211346c63d44952",
+      "task_sha256": "cf8990bf75dd1de6da98c42cb85753bbaf216b4601a800ca9fe2b60c40bb49b9",
+      "plan_sha256": "44feb70a77fc185a7a36e565d7a7ae3b703a3f01350a931602ee348f9b4e7e6a"
+    }
   },
   "depends_on": [
     "RBAW-V1-T001"

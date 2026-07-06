@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T003",
+  "initiative": "BUR-2026-005",
+  "title": "Implement GitHub PR observer",
+  "state": "planned",
+  "depends_on": [
+    "BUR-2026-005-T001"
+  ],
+  "goal": "Implement the GitHub PR, check and review observer described in docs/plans/bureau-runtime-automation-baseline-v1.md as source-attributed evidence for Bureau runs.",
+  "priority": {
+    "lane": "next",
+    "rank": 30
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
+    "safety_boundary": "observation only; GitHub keeps PR, review and CI authority"
+  },
+  "acceptance": [
+    {
+      "id": "explicit-marker-binding",
+      "assertion": "Observer prefers explicit Bureau-Run and Bureau-Task markers before branch-name fallback."
+    },
+    {
+      "id": "github-facts",
+      "assertion": "Observed facts include PR state, draft state, head SHA, check state, review state, merge state and observation timestamp when available."
+    },
+    {
+      "id": "confidence-and-ambiguity",
+      "assertion": "Branch fallback has lower confidence, and ambiguous or unavailable observations fail closed instead of becoming success."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover marker match, branch fallback, no match, ambiguous match and stale observation cases."
+    }
+  ]
+}

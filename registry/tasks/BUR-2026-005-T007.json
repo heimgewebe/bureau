@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T007",
+  "initiative": "BUR-2026-005",
+  "title": "Add automation operations runbook",
+  "state": "planned",
+  "depends_on": [
+    "BUR-2026-005-T002",
+    "BUR-2026-005-T003",
+    "BUR-2026-005-T004",
+    "BUR-2026-005-T005",
+    "BUR-2026-005-T006"
+  ],
+  "goal": "Add an operations runbook and proof matrix for installing, disabling, inspecting and auditing the Bureau runtime automation baseline.",
+  "priority": {
+    "lane": "later",
+    "rank": 70
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
+    "safety_boundary": "documentation, proof matrix and audit commands only"
+  },
+  "acceptance": [
+    {
+      "id": "install-disable-runbook",
+      "assertion": "Runbook documents install, enable, disable, status and journal inspection for each automation unit."
+    },
+    {
+      "id": "proof-matrix",
+      "assertion": "Proof matrix lists each automation loop, inputs, outputs, write paths, authority limits and validation commands."
+    },
+    {
+      "id": "rollback",
+      "assertion": "Rollback path restores manual-only Bureau operation without deleting state-root evidence."
+    }
+  ]
+}

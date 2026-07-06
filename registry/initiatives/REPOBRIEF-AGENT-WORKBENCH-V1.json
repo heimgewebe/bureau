@@ -4,15 +4,15 @@
   "title": "RepoBrief Agent Workbench boundary",
   "state": "active",
   "commitment": "next",
-  "goal": "Define and sequence the external Write-Axis / Agent Workbench boundary without moving patch or runtime authority into RepoBrief core.",
+  "goal": "Define and sequence the RepoBrief Agent Workbench / Patch Evaluation Sidecar boundary without moving patch or runtime authority into RepoBrief core.",
   "current_plan": {
     "repository": "bureau",
     "path": "docs/plans/repobrief-agent-workbench-boundary-v1.md"
   },
   "completion": [
-    "The RepoBrief versus Agent Workbench boundary is documented.",
-    "Patch-evaluation artifacts are specified before any runtime workbench implementation.",
-    "RepoBrief remains read-only with respect to patch/test execution.",
+    "The RepoBrief Agent Workbench boundary is documented.",
+    "Patch-evaluation artifacts are specified before any runtime Sidecar implementation.",
+    "RepoBrief remains read-only with respect to patch/test execution while deterministic code-understanding tools may remain integrated.",
     "Overlapping Lenskit-agent-optimization suggestions are mapped to existing roadmap tasks instead of duplicated blindly."
   ],
   "parallelism": {
@@ -21,14 +21,19 @@
   "metadata": {
     "registered_at": "2026-07-06T05:39:49Z",
     "source_thread": "Lenskit / RepoBrief / rLens Write-Axis planning after PR #889",
-    "plan_document_sha256": "461d8075c361aa7b92d46675ae9f76a835bfe5e84e049e7cc1d4f359b43d3894",
+    "plan_document_sha256": "7548fc24b9e1ae183c93078eb208216a229bddd6b1215ae8c507117d110690ad",
     "prerequisite_observation": "User reported Lenskit PR #889 merged; live verification remains required at task start.",
-    "boundary_decision": "Write/Patch/Test/Sandbox is external Agent Workbench, not RepoBrief core.",
+    "boundary_decision": "Agent Workbench is integrated deterministic read-only code-understanding; Patch Evaluation Sidecar owns external patch/test/sandbox authority; RepoBrief core must not become a mutation engine.",
     "related_lenskit_prs": [
       {
         "number": 889,
         "title": "feat(repobrief): Source Citation Projection v1 (RBEV1-T003)",
-        "status": "reported_merged"
+        "status": "merged"
+      },
+      {
+        "number": 891,
+        "title": "docs(repobrief): define agent workbench boundary",
+        "status": "merged"
       }
     ],
     "related_existing_tasks": [

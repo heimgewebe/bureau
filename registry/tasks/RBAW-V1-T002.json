@@ -8,7 +8,7 @@
     "lane": "later",
     "rank": 190
   },
-  "goal": "Define a non-runtime patch-evaluation.v1 contract with mandatory non-claims and provenance fields before any Workbench implementation.",
+  "goal": "Define a non-runtime patch-evaluation.v1 contract with mandatory non-claims and provenance fields before any Patch Evaluation Sidecar implementation.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",

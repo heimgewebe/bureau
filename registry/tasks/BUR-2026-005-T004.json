@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T004",
+  "initiative": "BUR-2026-005",
+  "title": "Add status projection board",
+  "state": "planned",
+  "depends_on": [
+    "BUR-2026-005-T001",
+    "BUR-2026-005-T003"
+  ],
+  "goal": "Add a read-only JSON projection that combines registry state, runtime state, workspace state, external evidence, receipts and stale overlays into one status surface.",
+  "priority": {
+    "lane": "next",
+    "rank": 40
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
+    "safety_boundary": "read-only projection; no state mutation"
+  },
+  "acceptance": [
+    {
+      "id": "projection-command",
+      "assertion": "A command exposes per-task status with registry state, effective state, active run, worker, workspace, external evidence and receipt status."
+    },
+    {
+      "id": "unknowns-visible",
+      "assertion": "Unknown, blocked and stale conditions remain visible instead of being collapsed into success or failure."
+    },
+    {
+      "id": "machine-readable",
+      "assertion": "Projection output is stable JSON suitable for dashboards and later automation."
+    }
+  ]
+}

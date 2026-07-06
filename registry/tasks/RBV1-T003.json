@@ -3,7 +3,7 @@
   "id": "RBV1-T003",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Define machine-readable snapshot profiles",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 30
@@ -67,7 +67,59 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "outcome": "Machine-readable RepoBrief snapshot profiles are present on Lenskit origin/main and verified; no Lenskit patch was required.",
+    "verification": {
+      "lenskit_repository": "heimgewebe/lenskit",
+      "lenskit_main_commit": "900bc2c922824b268a5e6ed0472ed3f158404db7",
+      "lenskit_main_subject": "feat(repobrief): Resolved Evidence Query v1 (RBEV1-T002) (#888)",
+      "verified_surfaces": [
+        "merger/lenskit/core/repobrief_profiles.py",
+        "merger/lenskit/tests/test_repobrief_profiles.py",
+        "merger/lenskit/cli/cmd_repobrief.py",
+        "merger/lenskit/tests/test_repobrief_snapshot_cli.py",
+        "merger/lenskit/core/export_safety_report.py"
+      ],
+      "profile_contract": [
+        "local-private",
+        "agent-portable",
+        "full-max",
+        "pr-review",
+        "security-export-review",
+        "public-share",
+        "ci-artifact"
+      ],
+      "requirement_values": [
+        "required",
+        "recommended",
+        "optional",
+        "not_applicable",
+        "profile_excluded"
+      ],
+      "checks": [
+        "profile-contract-smoke -> pass",
+        "python3 -m pytest merger/lenskit/tests/test_repobrief_profiles.py -q -> 6 passed",
+        "python3 -m pytest merger/lenskit/tests/test_repobrief_profiles.py merger/lenskit/tests/test_repobrief_snapshot_cli.py merger/lenskit/tests/test_export_safety_report.py merger/lenskit/tests/test_cli_export_safety.py -q -> 60 passed",
+        "python3 -m ruff check merger/lenskit/core/repobrief_profiles.py merger/lenskit/cli/cmd_repobrief.py merger/lenskit/core/export_safety_report.py merger/lenskit/tests/test_repobrief_profiles.py merger/lenskit/tests/test_repobrief_snapshot_cli.py merger/lenskit/tests/test_export_safety_report.py merger/lenskit/tests/test_cli_export_safety.py -> passed"
+      ],
+      "acceptance_summary": [
+        "all seven planned profile names are machine-readable",
+        "artifact rule values are explicit and limited to the profile requirement vocabulary",
+        "required core artifacts are required across profiles",
+        "export-safety-required profiles require export_safety_report",
+        "public-share marks sqlite_index as profile_excluded",
+        "no Lenskit source change was made during verification"
+      ],
+      "does_not_establish": [
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness",
+        "regression_absence",
+        "merge_readiness_for_followup_tasks"
+      ],
+      "task_sha256": "ecbd83ac9d50ab4bdf98f0c392bb0c36b1389781fc975dac481b2b943e328e5d",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   },
   "depends_on": [
     "RBV1-T002"

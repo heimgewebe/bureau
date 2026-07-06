@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005",
+  "title": "Bureau runtime automation baseline",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Make Bureau self-maintaining for observation, reconciliation and status projection without granting hidden authority to merge, delete, verify or dispatch unsafe work.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/bureau-runtime-automation-baseline-v1.md"
+  },
+  "completion": [
+    "Bureau has an explicit local automation model for reconciliation, GitHub observation, status projection, webhook ingestion and optional dispatch.",
+    "GitHub PR, review, CI and merge facts are imported as source-attributed evidence rather than manually maintained status fields.",
+    "No automation introduced by this initiative has merge, cleanup or completion authority without a separate evidence-bound gate."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  }
+}

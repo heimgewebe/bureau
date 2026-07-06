@@ -13,7 +13,6 @@
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/lenskit",
-    "baseline_commit": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
     "grabowski_resources": [
       "repo:/home/alex/repos/lenskit"
     ]
@@ -69,6 +68,33 @@
       "merge_readiness"
     ],
     "outcome": "RepoBrief naming vocabulary verified in Lenskit; no Lenskit patch was required.",
+    "removed_dead_baseline_commit": {
+      "value": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
+      "reason": "not present in declared working_repository during RBV1-T002 reconciliation",
+      "observed_by": "grabowski-task:051cd8abfcb1438dbafe1d96",
+      "observed_at": "2026-07-06T05:42:22Z"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "observed_at": "2026-07-06T05:42:22Z",
+      "observed_by": "grabowski-task:051cd8abfcb1438dbafe1d96",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "repo": "heimgewebe/lenskit",
+          "number": 860,
+          "commit_short": "9b7a6063",
+          "summary": "docs: introduce RepoBrief naming"
+        }
+      ],
+      "does_not_establish": [
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness",
+        "merge_readiness"
+      ]
+    },
     "verification": {
       "evidence_pr": "heimgewebe/bureau#92",
       "evidence_pr_state": "MERGED",
@@ -84,7 +110,7 @@
         "review_completeness",
         "merge_readiness_for_followup_tasks"
       ],
-      "task_sha256": "c4a9ca267f7708a3eedd8716737bc067c6eac681a5aeb33d6ac89cee7498553a",
+      "task_sha256": "0ea6fa3b076ae3869e789f1ae3e7a6d33e60e8aa9a421e732bd4d5a765ac127e",
       "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
     }
   }

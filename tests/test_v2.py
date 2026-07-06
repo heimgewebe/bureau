@@ -1161,3 +1161,66 @@ def test_runtime_drift_check_blocks_incomplete_state_db(registry_factory, tmp_pa
     assert report["runtime"]["state_available"] is False
     assert report["runtime"]["state_schema_version"] == 3
     assert "state-db-unavailable" in codes
+
+def test_doctor_reports_known_state_root_entries(registry_factory, tmp_path, monkeypatch):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is True
+    assert report["unknown_entries"] == []
+    known = {entry["name"]: entry["class"] for entry in report["known_entries"]}
+    assert known["bureau.sqlite3"] == "sqlite-database"
+    assert known["envelopes"] == "envelope-directory"
+    assert known["receipts"] == "receipt-directory"
+
+
+def test_doctor_uses_configured_state_database_name(registry_factory, tmp_path):
+    root = registry_factory(1)
+    state_root = tmp_path / "custom-state"
+    registry = Registry.load(root)
+    store = StateStore(state_root / "custom.sqlite3")
+    (state_root / "custom.sqlite3-wal").write_text("", encoding="utf-8")
+    (state_root / "custom.sqlite3-shm").write_text("", encoding="utf-8")
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is True
+    assert report["unknown_entries"] == []
+    known = {entry["name"]: entry["class"] for entry in report["known_entries"]}
+    assert known["custom.sqlite3"] == "sqlite-database"
+    assert known["custom.sqlite3-wal"] == "sqlite-sidecar"
+    assert known["custom.sqlite3-shm"] == "sqlite-sidecar"
+
+
+def test_doctor_reports_unknown_state_root_file_without_deleting(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    foreign = store.state_root / "foreign-prompt.txt"
+    foreign.write_text("not bureau state", encoding="utf-8")
+
+    doctor = Dispatcher(registry, store).doctor(repair=True)
+
+    assert doctor["healthy"] is False
+    assert doctor["state_root_hygiene"]["healthy"] is False
+    assert doctor["state_root_hygiene"]["unknown_entries"] == [
+        {"name": "foreign-prompt.txt", "type": "file", "class": "unknown"}
+    ]
+    assert foreign.read_text(encoding="utf-8") == "not bureau state"
+
+
+def test_doctor_reports_unknown_state_root_directory(registry_factory, tmp_path, monkeypatch):
+    root = registry_factory(1)
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    foreign = store.state_root / "manual-maintenance"
+    foreign.mkdir()
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "manual-maintenance", "type": "directory", "class": "unknown"}
+    ]

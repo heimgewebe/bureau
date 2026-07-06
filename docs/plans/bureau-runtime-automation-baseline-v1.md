@@ -11,34 +11,36 @@ Thesis: Bureau should not depend on a chat operator as its heartbeat. Git remain
 
 Antithesis: A fully autonomous Bureau scheduler would be faster, but it could also confuse observation with authority: GitHub owns pull requests, reviews and CI facts; Grabowski owns processes and concrete workers; Bureau owns coordination and verification receipts.
 
-Synthesis: Build a daemonized control tower before building an autopilot. Local systemd timers keep Bureau state fresh, a GitHub observer imports PR/CI/review facts as evidence, status projection explains the current truth, and any dispatcher remains opt-in, bounded and non-merge-capable.
+Synthesis: Build a daemonized control tower before building an autopilot. Scheduler-neutral one-shot commands keep Bureau state refreshable, hardened systemd user timers provide the default local Linux deployment profile, a GitHub observer imports PR/CI/review facts as evidence, status projection explains the current truth, and any dispatcher remains opt-in, bounded and non-merge-capable.
 
 ## Alternative axis
 
-Do not optimize first for "more automation". Optimize for this question:
+Do not optimize first for "more automation" or for one scheduler. Optimize for this question:
 
 > Can Bureau stay truthful when no operator is present, without gaining hidden authority to merge, delete, verify or dispatch unsafe work?
 
-This changes the order: observe and project first; dispatch later; auto-merge last or never.
+This changes the order: define idempotent scheduler contracts first; use systemd only as the local Linux reference implementation; observe and project before dispatch; auto-merge last or never.
 
 ## Source weighting
 
 1. Primary runtime contracts: `StateStore`, `Dispatcher`, reconciliation, receipts, stale overlays and event logging.
-2. Primary deployment contracts: existing systemd units, GitHub Actions, CLI commands and state-root layout.
-3. Source authority contracts: GitHub PR/check/review semantics, Grabowski task observation and local `gh` availability.
-4. Registry contracts: initiative, task, queue and resource schemas.
-5. Operator convenience and chat workflow impressions.
+2. Primary scheduler contracts: idempotent `--once` style commands, locking, state-root paths, CLI output and replay behaviour.
+3. Primary deployment contracts: existing systemd units, GitHub Actions, CLI commands and state-root layout.
+4. Source authority contracts: GitHub PR/check/review semantics, Grabowski task observation and local `gh` availability.
+5. Registry contracts: initiative, task, queue and resource schemas.
+6. Operator convenience and chat workflow impressions.
 
 ## Scope
 
 ### In scope
 
 - Add an explicit runtime automation architecture for Bureau.
-- Add local systemd timers for reconciliation, doctor/reporting and GitHub observation.
+- Define scheduler-neutral local loops for reconciliation, health reporting and GitHub observation.
+- Provide hardened user-level systemd timers as the default local Linux reference implementation.
 - Add a GitHub PR observer that binds PR facts to Bureau runs using explicit markers before branch heuristics.
 - Add a status projection command that shows registry state, runtime state, GitHub evidence and receipt/stale state together.
 - Define a webhook inbox as append-only event ingestion, not direct state mutation.
-- Define a conservative dispatcher timer policy, disabled by default, with no merge, cleanup or completion authority.
+- Assess and red-test a conservative dispatcher timer policy, disabled by default, with no merge, cleanup or completion authority.
 
 ### Out of scope
 
@@ -47,6 +49,7 @@ This changes the order: observe and project first; dispatch later; auto-merge la
 - Production deployment or remote host mutation.
 - Changing existing task semantics without a focused task and tests.
 - Treating GitHub observations as stronger than GitHub itself.
+- Making systemd a Bureau Core dependency.
 
 ## Optimized operating model
 
@@ -54,10 +57,10 @@ This changes the order: observe and project first; dispatch later; auto-merge la
 |---|---|---|---|
 | Registry | durable intent, initiatives, tasks, queue, resources | PR/CI validation | no runtime truth |
 | State root | runs, claims, reservations, receipts, events | local SQLite + materialized files | no GitHub truth ownership |
-| Reconcile loop | stale runs, external observations, missing materializations | systemd timer | no merge, no verification shortcut |
-| GitHub observer | PR, CI, review, merge facts | systemd timer and optional webhook inbox | evidence only |
+| Reconcile loop | stale runs, external observations, missing materializations | scheduler-neutral one-shot command; systemd reference timer | no merge, no verification shortcut |
+| GitHub observer | PR, CI, review, merge facts | scheduler-neutral one-shot command, optional webhook inbox, systemd reference timer | evidence only |
 | Status projection | operator dashboard and machine-readable board | CLI JSON output | read-only |
-| Dispatcher | optional work claiming and external dispatch | disabled-by-default systemd timer | no destructive effects |
+| Dispatcher | optional work claiming and external dispatch | disabled-by-default scheduler profile after assessment | no destructive effects |
 | Merge gate | final human or explicit gatekeeper decision | later narrow policy | outside this plan |
 
 ## Binding rules
@@ -75,15 +78,16 @@ This changes the order: observe and project first; dispatch later; auto-merge la
 - CI unknown: show unknown; do not infer success.
 - Review state conflicted: show the stricter state, for example `changes_requested` over `approved`.
 - Receipt stale: keep stale overlay until the current task and plan revision is verified again.
+- Scheduler unavailable: scheduled freshness degrades visibly; manual one-shot commands remain the fallback.
 
 ## Task sequence
 
-1. **T001 — Runtime automation contract.** Document the control-tower model, status vocabulary, authority limits and systemd/webhook/CI split.
-2. **T002 — Reconcile and doctor timers.** Add hardened user-level systemd units for periodic `reconcile` and read-only health reporting.
+1. **T001 — Runtime automation contract.** Document the control-tower model, status vocabulary, authority limits and scheduler/webhook/CI split.
+2. **T002 — Local scheduler contract and reference timers.** Define idempotent local scheduler commands for reconciliation, health reporting and observation; provide hardened systemd user timers as the Linux reference deployment.
 3. **T003 — GitHub PR observer.** Implement PR/check/review observation and run binding with explicit markers, confidence levels and fail-closed ambiguity handling.
 4. **T004 — Status projection board.** Add a read-only JSON projection that combines registry, SQLite, workspace and GitHub evidence.
-5. **T005 — Webhook inbox contract.** Add an append-only webhook/event inbox contract with replay tests; no direct state mutation.
-6. **T006 — Opt-in dispatcher timer policy.** Add a disabled-by-default dispatcher loop for autonomous-ready tasks with strict preflight gates and no merge/completion/cleanup authority.
+5. **T005 — Webhook inbox contract.** Add an append-only webhook/event inbox contract with source verification, replay tests and no direct state mutation.
+6. **T006 — Opt-in dispatcher timer assessment.** Red-test and specify a disabled-by-default dispatcher loop before implementation.
 7. **T007 — Operations runbook and proof matrix.** Document installation, rollback, logs, safety checks and the evidence required before any later merge-gate automation.
 
 ## Risk / benefit check
@@ -94,14 +98,16 @@ Benefits:
 - Operators see one truth surface instead of reconstructing state from PRs, SQLite and memory.
 - GitHub facts become evidence with source attribution, not manual status folklore.
 - Future dispatch automation receives explicit gates before it can start work.
+- Scheduler-neutral loops keep Bureau portable beyond one Linux user service setup.
 
 Risks:
 
 - Incorrect PR-to-run binding can mislead the status board.
 - Polling and webhooks can race or duplicate events.
-- A local `gh` session can become a single point of failure.
+- A local `gh` session can become a single point of failure for the local reference deployment.
 - Dispatcher automation can create noisy or unsafe work if enabled too early.
 - Status projection can appear more authoritative than its sources.
+- Treating systemd as architecture rather than deployment profile can reduce portability.
 
 Mitigations:
 
@@ -110,11 +116,13 @@ Mitigations:
 - Fail closed on GitHub ambiguity.
 - Keep dispatcher disabled until observer and status board are proven.
 - Keep merge and completion outside this plan.
+- Require manual one-shot operation to remain possible for every scheduled loop.
 
 ## Decision gates
 
+- T002 must define idempotent one-shot commands before relying on any timer.
 - T003 must not ship without ambiguity tests for marker, branch and no-match cases.
 - T004 must show stale receipts and GitHub unknowns explicitly.
-- T005 must be replayable from stored events.
-- T006 must include a dry-run mode and a hard default-off deployment.
+- T005 must validate source identity, payload schema and event identity, and must be replayable from stored events.
+- T006 must remain an assessment/red-team task unless a later PR explicitly implements the default-off dispatcher.
 - Any later auto-merge plan must be a separate initiative with its own authority review.

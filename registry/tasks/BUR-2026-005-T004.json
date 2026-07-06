@@ -6,6 +6,7 @@
   "state": "planned",
   "depends_on": [
     "BUR-2026-005-T001",
+    "BUR-2026-005-T002",
     "BUR-2026-005-T003"
   ],
   "goal": "Add a read-only JSON projection that combines registry state, runtime state, workspace state, external evidence, receipts and stale overlays into one status surface.",

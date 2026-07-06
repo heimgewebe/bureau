@@ -73,3 +73,23 @@ per-task hashes and evidence counts under `registry/sources/`.
 Source snapshots never establish Bureau task materialisation, readiness, dependency completeness,
 parallel write safety or autonomous execution permission. A future promotion step must make those
 decisions explicitly and preserve Bureau-owned coordination state.
+
+## Core/Ops/Authority component model
+
+Bureau is split by authority, not by convenience.
+
+| Layer | Owns | Role |
+|---|---|---|
+| Bureau Core | Registry commitments, queue order, dependency state, coordination claims, execution envelopes, receipts and revision-bound overlays | Decides whether Bureau evidence is sufficient for Bureau lifecycle changes. |
+| Bureau Ops | Closure, review stewardship, source bridges, Cabinet bridges, agent frontier and Codex bridge code | Observes outside systems, derives findings, prepares candidate tasks and writes explicit receipts. |
+| External authorities | Domain facts outside Bureau Core | Provide primary facts and stable identifiers. |
+
+Operational organs sit around the core. They are consumers and producers of evidence, not a second core. When an organ observes GitHub, the branch, PR, review and CI state remain GitHub facts. When an organ observes Grabowski, process state and leases remain Grabowski facts. Bureau Core can record those observations only as revision-bound evidence with explicit non-claims.
+
+Rules for operational organs:
+
+1. Name the authority being observed.
+2. Preserve the outside identifier, commit or ref used for the observation.
+3. State what the observation does not establish.
+4. Convert observations into Bureau commitments only through explicit Registry, envelope or receipt changes.
+5. Prefer read-only reports before cleanup, extraction or lifecycle mutation.

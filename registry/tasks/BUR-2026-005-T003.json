@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T003",
+  "initiative": "BUR-2026-005",
+  "title": "Implement repository status observer",
+  "state": "planned",
+  "goal": "Implement the third task from docs/plans/bureau-runtime-automation-baseline-v1.md.",
+  "priority": {
+    "lane": "next",
+    "rank": 30
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md"
+  },
+  "acceptance": [
+    {
+      "id": "implemented",
+      "assertion": "The task is implemented according to the plan."
+    }
+  ]
+}

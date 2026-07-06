@@ -2,12 +2,12 @@
   "schema_version": 1,
   "id": "BUR-2026-005-T008",
   "initiative": "BUR-2026-005",
-  "title": "Pin runtime automation plan after merge",
+  "title": "Assess plan pinning freshness strategy",
   "state": "planned",
   "depends_on": [
     "BUR-2026-005-T001"
   ],
-  "goal": "After the runtime automation baseline plan is merged to main, bind the initiative current_plan to the merged commit and raw document SHA-256.",
+  "goal": "Assess how to bind runtime automation plan revisions without staling existing receipts or blocking dependent task eligibility.",
   "priority": {
     "lane": "later",
     "rank": 80
@@ -29,20 +29,24 @@
   },
   "metadata": {
     "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
-    "safety_boundary": "post-merge registry pinning only; no runtime automation authority"
+    "safety_boundary": "analysis and strategy only; no current_plan mutation without explicit revalidation plan"
   },
   "acceptance": [
     {
-      "id": "merged-main-commit",
-      "assertion": "The initiative current_plan commit points to a commit that is reachable from main after PR merge."
+      "id": "freshness-model",
+      "assertion": "The assessment explains how current_plan changes affect envelopes, receipts, stale overlays and dependency eligibility."
     },
     {
-      "id": "raw-document-sha",
-      "assertion": "The initiative current_plan document_sha256 matches the raw bytes of the merged plan document."
+      "id": "safe-options",
+      "assertion": "The assessment compares path-bound plans, pre-verification pinning, separate maintenance initiatives and explicit re-verification strategies."
     },
     {
-      "id": "no-runtime-effect",
-      "assertion": "The task changes only registry plan pinning and introduces no scheduler, observer, dispatch, merge or completion behavior."
+      "id": "no-self-stale-mutation",
+      "assertion": "The task does not add current_plan.commit or document_sha256 to this initiative unless a no-stall revalidation strategy is already documented."
+    },
+    {
+      "id": "follow-up-boundary",
+      "assertion": "Any actual pinning or re-verification work is registered as a separate follow-up after the strategy is accepted."
     }
   ]
 }

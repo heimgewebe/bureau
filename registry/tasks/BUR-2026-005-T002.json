@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T002",
+  "initiative": "BUR-2026-005",
+  "title": "Add reconcile and doctor timers",
+  "state": "planned",
+  "depends_on": [
+    "BUR-2026-005-T001"
+  ],
+  "goal": "Add hardened user-level systemd units for periodic Bureau reconciliation and read-only health reporting without registry mutation or destructive repair.",
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
+    "safety_boundary": "local systemd units only; no autonomous dispatch"
+  },
+  "acceptance": [
+    {
+      "id": "reconcile-unit",
+      "assertion": "A Bureau reconcile service/timer exists with minimal privileges and writes only to the configured Bureau state root."
+    },
+    {
+      "id": "doctor-report-unit",
+      "assertion": "A read-only doctor/reporting service/timer exists and records health without deleting or repairing unknown files by default."
+    },
+    {
+      "id": "operations-docs",
+      "assertion": "Operations documentation explains install, status inspection, journal inspection, disable and rollback commands."
+    }
+  ]
+}

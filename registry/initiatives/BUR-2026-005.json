@@ -18,7 +18,7 @@
     "max_active_tasks": 1
   },
   "metadata": {
-    "plan_pinning": "deferred_until_post_merge",
-    "pinning_reason": "The final main commit and document hash are not stable while this registry change is still a pull request. BUR-2026-005-T008 records the post-merge pinning task."
+    "plan_pinning": "path_bound_until_strategy",
+    "pinning_reason": "Adding current_plan.commit or document_sha256 after tasks are verified can stale receipts and block dependants. BUR-2026-005-T008 records the strategy task before any such mutation."
   }
 }

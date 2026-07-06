@@ -41,7 +41,7 @@ This changes the order: define idempotent scheduler contracts first; use systemd
 - Add a status projection command that shows registry state, runtime state, GitHub evidence and receipt/stale state together.
 - Define a webhook inbox as append-only event ingestion, not direct state mutation.
 - Assess and red-test a conservative dispatcher timer policy, disabled by default, with no merge, cleanup or completion authority.
-- Register post-merge plan pinning as a separate follow-up task, because a pull request cannot know its final main commit in advance.
+- Assess safe plan pinning and re-verification strategies before mutating `current_plan` in a way that can stale receipts.
 
 ### Out of scope
 
@@ -52,6 +52,7 @@ This changes the order: define idempotent scheduler contracts first; use systemd
 - Treating GitHub observations as stronger than GitHub itself.
 - Making systemd a Bureau Core dependency.
 - Pretending a branch commit is the final canonical plan revision after merge.
+- Adding `current_plan.commit` or `document_sha256` to this initiative before a no-stall pinning strategy is documented.
 
 ## Optimized operating model
 
@@ -81,6 +82,7 @@ This changes the order: define idempotent scheduler contracts first; use systemd
 - Review state conflicted: show the stricter state, for example `changes_requested` over `approved`.
 - Receipt stale: keep stale overlay until the current task and plan revision is verified again.
 - Scheduler unavailable: scheduled freshness degrades visibly; manual one-shot commands remain the fallback.
+- Plan pinning that changes `plan_sha256` after verification can stale existing receipts and must be treated as a re-verification event, not harmless metadata.
 
 ## Task sequence
 
@@ -91,7 +93,7 @@ This changes the order: define idempotent scheduler contracts first; use systemd
 5. **T005 — Webhook inbox contract.** Add an append-only webhook/event inbox contract with source verification, replay tests and no direct state mutation.
 6. **T006 — Opt-in dispatcher timer assessment.** Red-test and specify a disabled-by-default dispatcher loop before implementation.
 7. **T007 — Operations runbook and proof matrix.** Document installation, rollback, logs, safety checks and the evidence required before any later merge-gate automation.
-8. **T008 — Post-merge plan pinning.** After this PR is merged, bind the initiative `current_plan` to the merged main commit and raw document SHA-256.
+8. **T008 — Plan pinning freshness strategy.** Assess how to bind plan revisions without staling existing receipts or blocking dependent tasks.
 
 ## Risk / benefit check
 
@@ -112,6 +114,7 @@ Risks:
 - Status projection can appear more authoritative than its sources.
 - Treating systemd as architecture rather than deployment profile can reduce portability.
 - Premature plan pinning can turn a branch-local commit into fake canonical evidence.
+- Later plan pinning can stale verified receipts for tasks in this initiative and stop dependent task eligibility.
 
 Mitigations:
 
@@ -121,7 +124,7 @@ Mitigations:
 - Keep dispatcher disabled until observer and status board are proven.
 - Keep merge and completion outside this plan.
 - Require manual one-shot operation to remain possible for every scheduled loop.
-- Defer `current_plan.commit` and `document_sha256` until the plan is actually on `main`.
+- Keep `current_plan` path-bound in this baseline until T008 documents a safe pinning/re-verification strategy.
 
 ## Decision gates
 
@@ -130,5 +133,5 @@ Mitigations:
 - T004 must show stale receipts and GitHub unknowns explicitly.
 - T005 must validate source identity, payload schema and event identity, and must be replayable from stored events.
 - T006 must remain an assessment/red-team task unless a later PR explicitly implements the default-off dispatcher.
-- T008 must not run before this plan is merged to `main`; it must verify the raw document SHA-256 from the merged file.
+- T008 must not mutate this initiative's `current_plan` until it documents how plan pinning interacts with envelopes, receipts, stale overlays and dependency eligibility.
 - Any later auto-merge plan must be a separate initiative with its own authority review.

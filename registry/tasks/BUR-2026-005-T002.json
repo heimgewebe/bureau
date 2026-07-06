@@ -2,12 +2,12 @@
   "schema_version": 1,
   "id": "BUR-2026-005-T002",
   "initiative": "BUR-2026-005",
-  "title": "Add reconcile and doctor timers",
+  "title": "Define scheduler contract and timers",
   "state": "planned",
   "depends_on": [
     "BUR-2026-005-T001"
   ],
-  "goal": "Add hardened user-level systemd units for periodic Bureau reconciliation and read-only health reporting without registry mutation or destructive repair.",
+  "goal": "Define idempotent local scheduler commands for Bureau reconciliation and health reporting, then provide hardened user-level systemd timers as the Linux reference deployment.",
   "priority": {
     "lane": "next",
     "rank": 20
@@ -29,16 +29,20 @@
   },
   "metadata": {
     "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
-    "safety_boundary": "local systemd units only; no autonomous dispatch"
+    "safety_boundary": "scheduler contract first; systemd only as reference deployment; no autonomous dispatch"
   },
   "acceptance": [
     {
-      "id": "reconcile-unit",
-      "assertion": "A Bureau reconcile service/timer exists with minimal privileges and writes only to the configured Bureau state root."
+      "id": "scheduler-contract",
+      "assertion": "Each scheduled loop is exposed as an idempotent one-shot command that can run manually, under systemd, or under another scheduler."
     },
     {
-      "id": "doctor-report-unit",
-      "assertion": "A read-only doctor/reporting service/timer exists and records health without deleting or repairing unknown files by default."
+      "id": "reference-timers",
+      "assertion": "Hardened user-level systemd service and timer units are provided as the local Linux reference deployment."
+    },
+    {
+      "id": "lock-and-paths",
+      "assertion": "Units and docs specify BUREAU_STATE_DIR, read paths, write paths, lock behavior, timeout behavior, journal inspection and failure semantics."
     },
     {
       "id": "operations-docs",

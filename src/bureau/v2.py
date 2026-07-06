@@ -563,15 +563,35 @@ def _classify_state_root_entry(entry: Path, database_name: str) -> dict[str, str
     sqlite_sidecars = {f"{database_name}-wal", f"{database_name}-shm", f"{database_name}-journal"}
     if name == database_name and entry_type == "file":
         return {"name": name, "type": entry_type, "class": "sqlite-database"}
-    if (
-        name in sqlite_sidecars
-        and entry_type == "file"
-    ):
+    if name in sqlite_sidecars and entry_type == "file":
         return {"name": name, "type": entry_type, "class": "sqlite-sidecar"}
     if name == "envelopes" and entry_type == "directory":
         return {"name": name, "type": entry_type, "class": "envelope-directory"}
     if name == "receipts" and entry_type == "directory":
         return {"name": name, "type": entry_type, "class": "receipt-directory"}
+    if entry_type == "directory" and (
+        name in {"archived-untracked", "merge-gatekeeper-runs"}
+        or re.fullmatch(r"(?:manual-maintenance|pre-foundation|recovery)-\d{8}T\d{6}Z", name)
+    ):
+        return {"name": name, "type": entry_type, "class": "legacy-artifact-directory"}
+    if entry_type == "file" and re.fullmatch(
+        r"bureau\.before-[A-Za-z0-9._-]+-\d{8}T\d{6}Z\.sqlite3", name
+    ):
+        return {"name": name, "type": entry_type, "class": "legacy-sqlite-backup"}
+    if entry_type == "file" and re.fullmatch(
+        r"evidence-BUR-RUN-\d{8}T\d{6}Z-[0-9a-f]{10}\.json", name
+    ):
+        return {"name": name, "type": entry_type, "class": "legacy-evidence-artifact"}
+    if entry_type == "file" and (
+        name in {"merge-gatekeeper-latest.json", "notes.txt", "read_bounded.py"}
+        or re.fullmatch(r"(?:coding-delegator|lenskit-codex-handoff|review-steward)-\d{8}T\d{4}\.json", name)
+        or re.fullmatch(r"pr\d+-merged\.json", name)
+        or re.fullmatch(r"ollama-wg-[A-Za-z0-9_.-]+\.(?:json|py|txt)", name)
+        or re.fullmatch(r"run-(?:goose|qwen)-weltgewebe\.sh", name)
+        or re.fullmatch(r"weltgewebe-[A-Za-z0-9_.-]+\.txt", name)
+        or re.fullmatch(r"wg-(?:coordinator\.\d+|source\.b64\.\d+)", name)
+    ):
+        return {"name": name, "type": entry_type, "class": "legacy-operator-artifact"}
     return {"name": name, "type": entry_type, "class": "unknown"}
 
 

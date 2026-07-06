@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "VIBE-LIFECYCLE-V1-T001",
+  "initiative": "VIBE-LIFECYCLE-V1",
+  "title": "Add vibe status, doctor and adopt MVP",
+  "state": "ready",
+  "goal": "Implement the first non-destructive Vibe lane lifecycle slice in wgx: status, doctor and adopt for existing branch/worktree reality.",
+  "priority": {
+    "lane": "now",
+    "rank": 5
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "git"
+  ],
+  "claims": [
+    {
+      "resource": "repo.wgx",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "primary-clean"
+    }
+  ],
+  "execution": {
+    "mode": "operator",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/wgx-vibe-lane-lifecycle-v1.md",
+    "implementation_repo": "heimgewebe/wgx",
+    "implementation_branch": "feat/vibe-lifecycle-adopt-status-v1",
+    "depends_on": [
+      "heimgewebe/wgx#632"
+    ],
+    "does_not_establish": [
+      "automatic worktree cleanup",
+      "automatic PR creation",
+      "automatic Bureau lane creation",
+      "Chronik event delivery"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "vibe-status",
+      "assertion": "`wgx vibe status` lists existing Vibe receipts or reports that none exist without mutating Git."
+    },
+    {
+      "id": "vibe-doctor",
+      "assertion": "`wgx vibe doctor` reports receipt/worktree/branch inconsistencies without cleanup."
+    },
+    {
+      "id": "vibe-adopt",
+      "assertion": "`wgx vibe adopt` can create a receipt for an existing repo branch/worktree without changing branch contents."
+    },
+    {
+      "id": "focused-tests",
+      "assertion": "Focused bats tests cover help, missing idea, status, doctor and adopt behavior."
+    }
+  ]
+}

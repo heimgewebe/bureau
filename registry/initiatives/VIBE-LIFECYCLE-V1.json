@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "VIBE-LIFECYCLE-V1",
+  "title": "WGX vibe lane lifecycle",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Turn feature branches and worktrees into bounded, adoptable and closable Vibe lanes instead of permanent branch sprawl.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/wgx-vibe-lane-lifecycle-v1.md"
+  },
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "source": "operator ecosystem review",
+    "does_not_establish": [
+      "automatic merge authority",
+      "automatic cleanup authority",
+      "Cabinet registry authority change",
+      "Chronik runtime dependency",
+      "Bureau task creation on every vibe start"
+    ]
+  },
+  "completion": [
+    "Vibe lanes have visible receipts.",
+    "Existing branches can be adopted without mutation.",
+    "Doctor output reports orphan branches, orphan worktrees and stale receipts without cleanup.",
+    "Cleanup and closure remain explicit later slices."
+  ]
+}

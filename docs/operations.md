@@ -8,6 +8,8 @@ bureau --root . lifecycle --json
 bureau --root . explain-next --capability repository --capability shell --json
 ```
 
+`doctor` includes a read-only `state_root_hygiene` section. It treats only the configured Bureau database, SQLite sidecars, `envelopes/` and `receipts/` as known state-root artefacts. Unknown files or directories are reported, not deleted, including when `--repair` is used. Move or quarantine such files manually after checking whether they are operator notes, old backups or unrelated prompts.
+
 ## Check out work
 
 ```bash

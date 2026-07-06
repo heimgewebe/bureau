@@ -547,6 +547,76 @@ class Registry(legacy.Registry):
             raise legacy.ValidationError("\n".join(errors))
 
 
+def _state_root_entry_type(entry: Path) -> str:
+    if entry.is_symlink():
+        return "symlink"
+    if entry.is_dir():
+        return "directory"
+    if entry.is_file():
+        return "file"
+    return "other"
+
+
+def _classify_state_root_entry(entry: Path, database_name: str) -> dict[str, str]:
+    entry_type = _state_root_entry_type(entry)
+    name = entry.name
+    sqlite_sidecars = {f"{database_name}-wal", f"{database_name}-shm", f"{database_name}-journal"}
+    if name == database_name and entry_type == "file":
+        return {"name": name, "type": entry_type, "class": "sqlite-database"}
+    if (
+        name in sqlite_sidecars
+        and entry_type == "file"
+    ):
+        return {"name": name, "type": entry_type, "class": "sqlite-sidecar"}
+    if name == "envelopes" and entry_type == "directory":
+        return {"name": name, "type": entry_type, "class": "envelope-directory"}
+    if name == "receipts" and entry_type == "directory":
+        return {"name": name, "type": entry_type, "class": "receipt-directory"}
+    return {"name": name, "type": entry_type, "class": "unknown"}
+
+
+def state_root_hygiene(state_root: Path, state_db_path: Path) -> dict[str, Any]:
+    if not state_root.exists():
+        return {
+            "available": False,
+            "path": str(state_root),
+            "known_entries": [],
+            "unknown_entries": [],
+            "known_count": 0,
+            "unknown_count": 0,
+            "healthy": False,
+            "error": "missing",
+        }
+    if not state_root.is_dir():
+        return {
+            "available": False,
+            "path": str(state_root),
+            "known_entries": [],
+            "unknown_entries": [],
+            "known_count": 0,
+            "unknown_count": 0,
+            "healthy": False,
+            "error": "not-directory",
+        }
+    known_entries: list[dict[str, str]] = []
+    unknown_entries: list[dict[str, str]] = []
+    for entry in sorted(state_root.iterdir(), key=lambda item: item.name):
+        classified = _classify_state_root_entry(entry, state_db_path.name)
+        if classified["class"] == "unknown":
+            unknown_entries.append(classified)
+        else:
+            known_entries.append(classified)
+    return {
+        "available": True,
+        "path": str(state_root),
+        "known_entries": known_entries,
+        "unknown_entries": unknown_entries,
+        "known_count": len(known_entries),
+        "unknown_count": len(unknown_entries),
+        "healthy": not unknown_entries,
+    }
+
+
 class StateStore:
     """Migrating operational store and canonical source for run-time state."""
 
@@ -1439,6 +1509,7 @@ class Dispatcher(legacy.Dispatcher):
                         )
         lifecycle = lifecycle_diagnostics(self.registry, self.store)
         lifecycle_findings = [item for item in lifecycle if not item["consistent"]]
+        state_root_report = state_root_hygiene(self.store.state_root, self.store.path)
         if repair:
             missing_envelopes = []
             missing_receipts = []
@@ -1451,11 +1522,13 @@ class Dispatcher(legacy.Dispatcher):
             and not workspace_findings
             and not queue_findings
             and not lifecycle_findings
+            and state_root_report["healthy"]
         )
         return {
             "healthy": healthy,
             "database": integrity,
             "state_root": str(self.store.state_root),
+            "state_root_hygiene": state_root_report,
             "missing_envelopes": missing_envelopes,
             "missing_receipts": missing_receipts,
             "stale_tasks": stale_tasks,

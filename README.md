@@ -38,6 +38,10 @@ Optional ops organs in this repository include closure observation, review stewa
 bridging, agent frontier, source discovery, Cabinet bridges and cycle contracts. They surround the
 core; they are not replacement authorities for their source systems.
 
+Runtime automation follows the contract in `docs/runtime-automation-contract.md`: scheduler loops
+remain one-shot callable, observer facts stay source-attributed, status projection is read-only,
+and merge, cleanup and completion authority are not implicit automation powers.
+
 ## Quick start
 
 ```bash

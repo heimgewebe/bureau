@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "OPERATOR-LEARNING-AXIS-V1",
   "title": "Operator learning axis for heimlern and Grabowski",
-  "state": "candidate",
-  "commitment": "later",
+  "state": "active",
+  "commitment": "now",
   "goal": "Make Grabowski routing decisions and outcomes available to heimlern as offline learning inputs without granting heimlern live routing authority.",
   "current_plan": {
     "repository": "bureau",
@@ -22,7 +22,7 @@
   "metadata": {
     "primary_repo": "heimgewebe/heimlern",
     "related_organs": ["grabowski", "bureau", "chronik", "leitstand"],
-    "initial_slice": "contracts-first",
+    "initial_slice": "contract-ci-repair",
     "does_not_establish": [
       "live_routing_readiness",
       "routing_policy_superiority",

@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-LEARNING-AXIS-V1-T002",
+  "initiative": "OPERATOR-LEARNING-AXIS-V1",
+  "title": "Decide additive contract follow-up path",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "goal": "Decide whether additive weight deltas belong in the shared policy.weight_adjustment.v1 contract or remain outside contract-bound heimlern proposal emission.",
+  "depends_on": [
+    "OPERATOR-LEARNING-AXIS-V1-T001"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/heimlern",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heimlern"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.heimlern",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "acceptance": [
+    {
+      "id": "decision-recorded",
+      "assertion": "A decision record states whether additive deltas should be added to the shared contract or kept out of contract-bound emission.",
+      "verifier": "decision document diff",
+      "evidence_type": "object"
+    },
+    {
+      "id": "contract-follow-up-clear",
+      "assertion": "If additive deltas are needed, the separate cross-repository contract follow-up is specified without changing heimlern emission in this task.",
+      "verifier": "task or plan reference",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "primary_repo": "heimgewebe/heimlern",
+    "follow_up_from": "OPERATOR-LEARNING-AXIS-V1-T001",
+    "recommended_agent": "claude",
+    "claude_delegation": "architecture and contract-decision review"
+  }
+}

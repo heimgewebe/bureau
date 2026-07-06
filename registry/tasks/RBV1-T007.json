@@ -3,7 +3,7 @@
   "id": "RBV1-T007",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Add RepoBrief CLI alias",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 70
@@ -67,7 +67,43 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "outcome": "Lenskit PR #899 implemented a direct RepoBrief CLI alias while preserving the legacy lenskit repobrief subcommand.",
+    "verification": {
+      "lenskit_repository": "heimgewebe/lenskit",
+      "lenskit_pr": "heimgewebe/lenskit#899",
+      "lenskit_head": "c778058a9157ecf1936621221fad29f461edd343",
+      "lenskit_merge_commit": "b21a37f9e3be676e8490e9b08068fd724b580ece",
+      "verified_surfaces": [
+        "merger/lenskit/cli/cmd_repobrief.py",
+        "merger/lenskit/cli/repobrief.py",
+        "merger/lenskit/tests/test_repobrief_snapshot_cli.py"
+      ],
+      "checks": [
+        "py_compile scoped CLI files -> passed",
+        "pytest repobrief_snapshot_cli -> 27 passed",
+        "pytest repobrief_profiles+repobrief_access_boundary -> 18 passed",
+        "ruff scoped files -> passed",
+        "GitHub PR #899 CI -> all visible checks passed"
+      ],
+      "acceptance_summary": [
+        "direct python module alias exposes usage: repobrief",
+        "legacy lenskit repobrief subcommand remains compatible",
+        "alias dispatch reaches read-only snapshot status without writes"
+      ],
+      "does_not_establish": [
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness",
+        "merge_readiness",
+        "security_correctness",
+        "packaging_entrypoint_installed",
+        "full_cli_migration_complete",
+        "repo_understood"
+      ],
+      "task_sha256": "7ae39d042ca96815adc1283e43a049da4be0f9e5dab9a2dee7d0091350b3a454",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   },
   "depends_on": [
     "RBV1-T002",

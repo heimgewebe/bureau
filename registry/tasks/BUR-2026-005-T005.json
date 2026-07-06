@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T005",
+  "initiative": "BUR-2026-005",
+  "title": "Define webhook event inbox",
+  "state": "planned",
+  "depends_on": [
+    "BUR-2026-005-T001",
+    "BUR-2026-005-T003"
+  ],
+  "goal": "Define an append-only event inbox contract for external notifications with verification, idempotency and replay before any direct state mutation is allowed.",
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
+    "safety_boundary": "event ingestion only; no direct state transition"
+  },
+  "acceptance": [
+    {
+      "id": "append-only-contract",
+      "assertion": "External notifications are stored as append-only events before being interpreted by a reconciler."
+    },
+    {
+      "id": "idempotent-replay",
+      "assertion": "Stored events can be replayed idempotently in tests without duplicating final findings."
+    },
+    {
+      "id": "no-direct-transition",
+      "assertion": "The inbox contract forbids direct task completion, merge or cleanup decisions."
+    }
+  ]
+}

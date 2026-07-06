@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T006",
+  "initiative": "BUR-2026-005",
+  "title": "Assess opt-in dispatcher timer",
+  "state": "planned",
+  "depends_on": [
+    "BUR-2026-005-T001",
+    "BUR-2026-005-T002",
+    "BUR-2026-005-T003",
+    "BUR-2026-005-T004"
+  ],
+  "goal": "Assess and red-test a disabled-by-default dispatcher timer for autonomous-ready tasks with strict preflight gates.",
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
+    "safety_boundary": "assessment and default-off policy only"
+  },
+  "acceptance": [
+    {
+      "id": "default-off",
+      "assertion": "The dispatcher timer design is disabled by default and requires explicit local enablement."
+    },
+    {
+      "id": "preflight-gates",
+      "assertion": "The assessment lists required gates for ready state, dependencies, capabilities, conflict checks and GitHub observation."
+    },
+    {
+      "id": "no-destructive-authority",
+      "assertion": "The dispatcher has no merge, cleanup or completion authority."
+    }
+  ]
+}

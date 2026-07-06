@@ -41,6 +41,7 @@ This changes the order: define idempotent scheduler contracts first; use systemd
 - Add a status projection command that shows registry state, runtime state, GitHub evidence and receipt/stale state together.
 - Define a webhook inbox as append-only event ingestion, not direct state mutation.
 - Assess and red-test a conservative dispatcher timer policy, disabled by default, with no merge, cleanup or completion authority.
+- Register post-merge plan pinning as a separate follow-up task, because a pull request cannot know its final main commit in advance.
 
 ### Out of scope
 
@@ -50,6 +51,7 @@ This changes the order: define idempotent scheduler contracts first; use systemd
 - Changing existing task semantics without a focused task and tests.
 - Treating GitHub observations as stronger than GitHub itself.
 - Making systemd a Bureau Core dependency.
+- Pretending a branch commit is the final canonical plan revision after merge.
 
 ## Optimized operating model
 
@@ -89,6 +91,7 @@ This changes the order: define idempotent scheduler contracts first; use systemd
 5. **T005 — Webhook inbox contract.** Add an append-only webhook/event inbox contract with source verification, replay tests and no direct state mutation.
 6. **T006 — Opt-in dispatcher timer assessment.** Red-test and specify a disabled-by-default dispatcher loop before implementation.
 7. **T007 — Operations runbook and proof matrix.** Document installation, rollback, logs, safety checks and the evidence required before any later merge-gate automation.
+8. **T008 — Post-merge plan pinning.** After this PR is merged, bind the initiative `current_plan` to the merged main commit and raw document SHA-256.
 
 ## Risk / benefit check
 
@@ -108,6 +111,7 @@ Risks:
 - Dispatcher automation can create noisy or unsafe work if enabled too early.
 - Status projection can appear more authoritative than its sources.
 - Treating systemd as architecture rather than deployment profile can reduce portability.
+- Premature plan pinning can turn a branch-local commit into fake canonical evidence.
 
 Mitigations:
 
@@ -117,6 +121,7 @@ Mitigations:
 - Keep dispatcher disabled until observer and status board are proven.
 - Keep merge and completion outside this plan.
 - Require manual one-shot operation to remain possible for every scheduled loop.
+- Defer `current_plan.commit` and `document_sha256` until the plan is actually on `main`.
 
 ## Decision gates
 
@@ -125,4 +130,5 @@ Mitigations:
 - T004 must show stale receipts and GitHub unknowns explicitly.
 - T005 must validate source identity, payload schema and event identity, and must be replayable from stored events.
 - T006 must remain an assessment/red-team task unless a later PR explicitly implements the default-off dispatcher.
+- T008 must not run before this plan is merged to `main`; it must verify the raw document SHA-256 from the merged file.
 - Any later auto-merge plan must be a separate initiative with its own authority review.

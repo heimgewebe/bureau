@@ -43,7 +43,9 @@
   "initiative": "BUR-2026-002",
   "metadata": {
     "operator_lab_run": "vibe-lab: experiments/2026-07-01_operator-lab-loop/artifacts/run-002-rlens-agent-ecosystem/run-card.yml",
-    "plan_path": "docs/plans/rlens-agent-ecosystem-integration-v1.md"
+    "plan_path": "docs/plans/rlens-agent-ecosystem-integration-v1.md",
+    "implementation_record": "docs/rlens-agent-ecosystem-integration-v1-implementation-record.md",
+    "implementation_record_scope": "phase-1-rlens-hardening-slice"
   },
   "priority": {
     "lane": "now",

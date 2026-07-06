@@ -557,61 +557,162 @@ def _state_root_entry_type(entry: Path) -> str:
     return "other"
 
 
+STATE_ROOT_ARCHIVE_CANDIDATE_CLASSES = {
+    "legacy-agent-handoff-artifact",
+    "legacy-archive-directory",
+    "legacy-coding-delegator-artifact",
+    "legacy-evidence-artifact",
+    "legacy-manual-maintenance-directory",
+    "legacy-merge-gatekeeper-artifact",
+    "legacy-merge-gatekeeper-runs",
+    "legacy-operator-artifact",
+    "legacy-pr-merge-artifact",
+    "legacy-pre-foundation-directory",
+    "legacy-recovery-directory",
+    "legacy-review-steward-artifact",
+    "legacy-sqlite-backup",
+    "legacy-weltgewebe-artifact",
+    "legacy-wg-artifact",
+}
+
+_STATE_ROOT_TIMESTAMP_RE = r"\d{8}T\d{6}Z"
+_STATE_ROOT_SHORT_TIMESTAMP_RE = r"\d{8}T\d{4}"
+
+
+def _legacy_state_root_class(name: str, entry_type: str) -> str | None:
+    if entry_type == "directory":
+        if name == "archived-untracked":
+            return "legacy-archive-directory"
+        if name == "merge-gatekeeper-runs":
+            return "legacy-merge-gatekeeper-runs"
+        directory_patterns = (
+            ("manual-maintenance", "legacy-manual-maintenance-directory"),
+            ("pre-foundation", "legacy-pre-foundation-directory"),
+            ("recovery", "legacy-recovery-directory"),
+        )
+        for prefix, class_name in directory_patterns:
+            if re.fullmatch(rf"{prefix}-{_STATE_ROOT_TIMESTAMP_RE}", name):
+                return class_name
+        return None
+    if entry_type != "file":
+        return None
+    file_patterns = (
+        (
+            rf"bureau\.before-[A-Za-z0-9_.-]+-{_STATE_ROOT_TIMESTAMP_RE}\.sqlite3",
+            "legacy-sqlite-backup",
+        ),
+        (
+            rf"evidence-BUR-RUN-{_STATE_ROOT_TIMESTAMP_RE}-[0-9a-f]{{10}}\.json",
+            "legacy-evidence-artifact",
+        ),
+        (
+            rf"coding-delegator-{_STATE_ROOT_SHORT_TIMESTAMP_RE}\.json",
+            "legacy-coding-delegator-artifact",
+        ),
+        (
+            rf"lenskit-codex-handoff-{_STATE_ROOT_SHORT_TIMESTAMP_RE}\.json",
+            "legacy-agent-handoff-artifact",
+        ),
+        (
+            rf"review-steward-{_STATE_ROOT_SHORT_TIMESTAMP_RE}\.json",
+            "legacy-review-steward-artifact",
+        ),
+        (r"pr\d+-merged\.json", "legacy-pr-merge-artifact"),
+        (r"ollama-wg-.+\.(json|py|txt)", "legacy-operator-artifact"),
+        (r"weltgewebe-.+\.txt", "legacy-weltgewebe-artifact"),
+        (r"wg-coordinator\.\d+", "legacy-wg-artifact"),
+        (r"wg-source\.b64\.\d+", "legacy-wg-artifact"),
+    )
+    exact_file_classes = {
+        "merge-gatekeeper-latest.json": "legacy-merge-gatekeeper-artifact",
+        "run-goose-weltgewebe.sh": "legacy-operator-artifact",
+        "run-qwen-weltgewebe.sh": "legacy-operator-artifact",
+    }
+    if name in exact_file_classes:
+        return exact_file_classes[name]
+    for pattern, class_name in file_patterns:
+        if re.fullmatch(pattern, name):
+            return class_name
+    return None
+
+
 def _classify_state_root_entry(entry: Path, database_name: str) -> dict[str, str]:
     entry_type = _state_root_entry_type(entry)
     name = entry.name
-    sqlite_sidecars = {f"{database_name}-wal", f"{database_name}-shm", f"{database_name}-journal"}
+    sqlite_sidecars = {
+        f"{database_name}-wal",
+        f"{database_name}-shm",
+        f"{database_name}-journal",
+    }
     if name == database_name and entry_type == "file":
         return {"name": name, "type": entry_type, "class": "sqlite-database"}
-    if (
-        name in sqlite_sidecars
-        and entry_type == "file"
-    ):
+    if name in sqlite_sidecars and entry_type == "file":
         return {"name": name, "type": entry_type, "class": "sqlite-sidecar"}
     if name == "envelopes" and entry_type == "directory":
         return {"name": name, "type": entry_type, "class": "envelope-directory"}
     if name == "receipts" and entry_type == "directory":
         return {"name": name, "type": entry_type, "class": "receipt-directory"}
+    legacy_class = _legacy_state_root_class(name, entry_type)
+    if legacy_class is not None:
+        return {"name": name, "type": entry_type, "class": legacy_class}
     return {"name": name, "type": entry_type, "class": "unknown"}
+
+
+def _empty_state_root_hygiene_report(
+    state_root: Path,
+    *,
+    available: bool,
+    healthy: bool,
+    error: str,
+) -> dict[str, Any]:
+    return {
+        "available": available,
+        "path": str(state_root),
+        "known_entries": [],
+        "archive_candidate_entries": [],
+        "unknown_entries": [],
+        "known_count": 0,
+        "archive_candidate_count": 0,
+        "unknown_count": 0,
+        "healthy": healthy,
+        "error": error,
+    }
 
 
 def state_root_hygiene(state_root: Path, state_db_path: Path) -> dict[str, Any]:
     if not state_root.exists():
-        return {
-            "available": False,
-            "path": str(state_root),
-            "known_entries": [],
-            "unknown_entries": [],
-            "known_count": 0,
-            "unknown_count": 0,
-            "healthy": False,
-            "error": "missing",
-        }
+        return _empty_state_root_hygiene_report(
+            state_root,
+            available=False,
+            healthy=False,
+            error="missing",
+        )
     if not state_root.is_dir():
-        return {
-            "available": False,
-            "path": str(state_root),
-            "known_entries": [],
-            "unknown_entries": [],
-            "known_count": 0,
-            "unknown_count": 0,
-            "healthy": False,
-            "error": "not-directory",
-        }
+        return _empty_state_root_hygiene_report(
+            state_root,
+            available=False,
+            healthy=False,
+            error="not-directory",
+        )
     known_entries: list[dict[str, str]] = []
+    archive_candidate_entries: list[dict[str, str]] = []
     unknown_entries: list[dict[str, str]] = []
     for entry in sorted(state_root.iterdir(), key=lambda item: item.name):
         classified = _classify_state_root_entry(entry, state_db_path.name)
         if classified["class"] == "unknown":
             unknown_entries.append(classified)
+        elif classified["class"] in STATE_ROOT_ARCHIVE_CANDIDATE_CLASSES:
+            archive_candidate_entries.append(classified)
         else:
             known_entries.append(classified)
     return {
         "available": True,
         "path": str(state_root),
         "known_entries": known_entries,
+        "archive_candidate_entries": archive_candidate_entries,
         "unknown_entries": unknown_entries,
         "known_count": len(known_entries),
+        "archive_candidate_count": len(archive_candidate_entries),
         "unknown_count": len(unknown_entries),
         "healthy": not unknown_entries,
     }

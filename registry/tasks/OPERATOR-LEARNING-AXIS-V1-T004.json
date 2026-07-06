@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-LEARNING-AXIS-V1-T004",
+  "initiative": "OPERATOR-LEARNING-AXIS-V1",
+  "title": "Add review-only end-to-end OLA learning smoke",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 40
+  },
+  "goal": "Add one bounded OLA circle proof from routing outcome fixtures through heimlern proposal generation to contract validation, keeping the result review-only.",
+  "depends_on": [
+    "OPERATOR-LEARNING-AXIS-V1-T002",
+    "OPERATOR-LEARNING-AXIS-V1-T003"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/heimlern",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heimlern"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.heimlern",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "acceptance": [
+    {
+      "id": "fixture-corpus",
+      "assertion": "The smoke fixture corpus covers success, blocked, failed and fail-closed routing outcomes.",
+      "verifier": "fixture diff and tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "circle-proof",
+      "assertion": "Each success, blocked, failed and fail-closed routing outcome fixture is exercised through the offline proposal and validation path, or documented as an intentional no-proposal case.",
+      "verifier": "test output",
+      "evidence_type": "string"
+    },
+    {
+      "id": "review-only",
+      "assertion": "The smoke proves the offline circle only and does not change routing behavior.",
+      "verifier": "diff review",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "primary_repo": "heimgewebe/heimlern",
+    "recommended_agent": "grabowski-codex",
+    "claude_delegation": "optional review if the smoke boundary becomes ambiguous"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-LEARNING-AXIS-V1-T003",
+  "initiative": "OPERATOR-LEARNING-AXIS-V1",
+  "title": "Move OLA adapter invariants into Rust",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 30
+  },
+  "goal": "Plan and implement the adapter-language repair so route-key sanitizing, reward clamping and state normalization are covered by the tested Rust core instead of living primarily in Python scripts.",
+  "depends_on": [
+    "OPERATOR-LEARNING-AXIS-V1-T001",
+    "OPERATOR-LEARNING-AXIS-V1-T002"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/heimlern",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heimlern"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.heimlern",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "acceptance": [
+    {
+      "id": "rust-invariants",
+      "assertion": "Route-key sanitizing, reward clamping and state normalization are represented in Rust with regression coverage.",
+      "verifier": "cargo test output",
+      "evidence_type": "string"
+    },
+    {
+      "id": "python-degraded",
+      "assertion": "Python OLA scripts are reduced to fixture, probe or delegation roles rather than owning the transformation contract.",
+      "verifier": "diff review",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "primary_repo": "heimgewebe/heimlern",
+    "recommended_agent": "claude",
+    "claude_delegation": "primary architecture pass before code changes; implementation may then route through Grabowski/Codex"
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-LEARNING-AXIS-V1-T001",
+  "initiative": "OPERATOR-LEARNING-AXIS-V1",
+  "title": "Close heimlern OLA contract drift and repair Metrics CI",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "goal": "Implement the narrow P1/P2 repair slice: close the additive proposal drift and restore Metrics CI to the canonical schema path with clear diagnostics.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "autonomous",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/heimlern",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heimlern"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.heimlern",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "acceptance": [
+    {
+      "id": "additive-emit-closed",
+      "assertion": "Contract-bound policy.weight_adjustment.v1 proposal emission excludes additive weight deltas unless the local schema fixture for this task explicitly permits them.",
+      "verifier": "targeted regression test",
+      "evidence_type": "string"
+    },
+    {
+      "id": "metrics-schema-canonical",
+      "assertion": "Metrics CI resolves the existing canonical metrics schema path.",
+      "verifier": "workflow log or local equivalent",
+      "evidence_type": "string"
+    },
+    {
+      "id": "schema-miss-diagnostic",
+      "assertion": "A missing or moved schema fails closed with an explicit diagnostic naming the requested schema location.",
+      "verifier": "targeted test or workflow log excerpt",
+      "evidence_type": "string"
+    },
+    {
+      "id": "scope-contained",
+      "assertion": "The change is limited to contract safety and Metrics CI repair; adapter migration and E2E smoke remain follow-ups.",
+      "verifier": "diff review",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "primary_repo": "heimgewebe/heimlern",
+    "implements": [
+      "P1 path B",
+      "P2 metrics CI repair"
+    ],
+    "recommended_agent": "grabowski-codex",
+    "claude_delegation": "review if contract interpretation or architecture risk appears"
+  }
+}

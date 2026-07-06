@@ -1,23 +1,22 @@
 # Operator Learning Axis v1
 
-Status: candidate
-Date: 2026-07-05
+Status: active
+Date: 2026-07-06
 
 ## Goal
 
-Make Grabowski routing decisions learnable by heimlern without changing live routing rules.
+Make Grabowski routing decisions learnable by heimlern while keeping routing authority outside heimlern.
 
 ## Boundary
 
-The learning axis is offline and proposal-only. It records routing choices and outcomes, then lets heimlern analyze patterns. It does not authorize automatic routing changes.
+The learning axis is offline and proposal-only. It records routing choices and outcomes, then lets heimlern analyze patterns. Bureau coordinates the work chain; heimlern proposes changes for review.
 
-## First sequence
+## Registered sequence
 
-1. Add routing decision and routing outcome contracts to heimlern.
-2. Add a small adapter from Grabowski friction records and receipts to routing outcomes.
-3. Map routing outcomes into heimlern feedback analysis.
-4. Add a fixture corpus for success, blocked, failed and fail-closed runs.
-5. Only after enough evidence, define routing adjustment proposals.
+1. `OPERATOR-LEARNING-AXIS-V1-T001` — close heimlern OLA contract drift and repair Metrics CI.
+2. `OPERATOR-LEARNING-AXIS-V1-T002` — decide the additive contract follow-up path.
+3. `OPERATOR-LEARNING-AXIS-V1-T003` — move OLA adapter invariants into Rust.
+4. `OPERATOR-LEARNING-AXIS-V1-T004` — add a review-only end-to-end OLA learning smoke.
 
 ## Organs
 
@@ -29,4 +28,4 @@ The learning axis is offline and proposal-only. It records routing choices and o
 
 ## Non-claims
 
-This plan does not establish live routing readiness, policy superiority, sample sufficiency or permission to auto-apply learned weights.
+This plan does not establish production routing readiness, policy superiority, sample sufficiency, or permission to apply learned weights. Any later application needs a separate explicit task, authority boundary, and review.

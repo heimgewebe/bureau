@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-004-T003",
+  "initiative": "BUR-2026-004",
+  "title": "Audit legacy module dependencies",
+  "state": "planned",
+  "goal": "Produce a dependency map for legacy.py before any deletion or compatibility reduction.",
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/bureau-boundary-ops-v1.md"
+  },
+  "acceptance": [
+    {
+      "id": "import-map",
+      "assertion": "Audit records imports, re-exports, CLI references and tests that still touch legacy.py."
+    },
+    {
+      "id": "state-compatibility",
+      "assertion": "Audit checks whether existing receipts, envelopes or migration paths require old compatibility."
+    },
+    {
+      "id": "decision-frame",
+      "assertion": "Audit ends with keep, deprecate or delete criteria and identifies the smallest safe follow-up PR."
+    }
+  ]
+}

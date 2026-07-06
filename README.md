@@ -16,14 +16,28 @@ available.
 
 ## Boundaries
 
-- **Bureau** owns commitments, ordering, dependencies, coordination claims, dispatch and completion.
+Bureau is documented as a core plus operational organs.
+
+- **Bureau Core** owns commitments, ordering, dependencies, coordination claims, dispatch,
+  completion verification, immutable envelopes and revision-bound receipts.
+- **Bureau Ops** observes adjacent systems, derives findings, proposes work and materialises
+  explicit evidence through Bureau Core contracts.
 - **Grabowski** owns processes, hosts, concrete runtime leases, durable tasks and workers.
 - **Steuerboard** owns action-specific readiness and specialised evidence.
 - **Cabinet** owns readable research and decisions.
 - **Schauwerk** owns visual projections.
 - **Chronik** owns append-only events.
+- **GitHub** owns branches, pull requests, reviews and CI facts.
 
 Bureau does not implement another shell, general workflow engine, knowledge base or project UI.
+Ops organs keep source ownership visible and bind Bureau effects to explicit tasks, claims,
+evidence or receipts.
+
+## Operational organs
+
+Optional ops organs in this repository include closure observation, review stewardship, Codex
+bridging, agent frontier, source discovery, Cabinet bridges and cycle contracts. They surround the
+core; they are not replacement authorities for their source systems.
 
 ## Quick start
 
@@ -79,7 +93,8 @@ always derive from the same state root. Override it with `BUREAU_STATE_DIR`, `--
 - hierarchical read/write/exclusive/capacity claims and dynamic scope expansion;
 - baseline-bound Git worktrees with inspect, preserve and cleanup lifecycle;
 - initiative lifecycle diagnostics, `explain-next`, and `doctor`;
-- immutable execution envelopes and evidence-complete receipts.
+- immutable execution envelopes and evidence-complete receipts;
+- optional ops organs for source, closure, review, bridge, frontier, Cabinet and cycle observation.
 
 ## Safety invariants
 
@@ -88,6 +103,7 @@ always derive from the same state root. Override it with `BUREAU_STATE_DIR`, `--
 3. Reconciliation never silently ignores an unobservable external executor.
 4. Worktrees are removed only after terminal runs and never silently discard dirty work.
 5. Process success is not completion; every acceptance criterion still needs evidence.
+6. Ops observations never replace the authority of their source systems.
 
 ### Source promotion preview
 

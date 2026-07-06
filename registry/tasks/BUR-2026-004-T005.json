@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-004-T005",
+  "initiative": "BUR-2026-004",
+  "title": "Decide Bureau Ops packaging path",
+  "state": "planned",
+  "goal": "Decide the future packaging shape for operational organs after the documentation and audit tasks are complete.",
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/bureau-boundary-ops-v1.md"
+  },
+  "acceptance": [
+    {
+      "id": "packaging-criteria",
+      "assertion": "Decision document states packaging criteria."
+    },
+    {
+      "id": "api-contract",
+      "assertion": "Decision identifies the stable Bureau Core API surface."
+    },
+    {
+      "id": "deployment-cost",
+      "assertion": "Decision weighs systemd, packaging, CI and operator-cost implications."
+    }
+  ]
+}

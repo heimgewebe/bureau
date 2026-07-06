@@ -21,13 +21,12 @@ Bureau is documented as a core plus operational organs.
 - **Bureau Core** owns commitments, ordering, dependencies, coordination claims, dispatch,
   completion verification, immutable envelopes and revision-bound receipts.
 - **Bureau Ops** observes adjacent systems, derives findings, proposes work and materialises
-  explicit evidence through Bureau Core contracts.
-- **Grabowski** owns processes, hosts, concrete runtime leases, durable tasks and workers.
-- **Steuerboard** owns action-specific readiness and specialised evidence.
-- **Cabinet** owns readable research and decisions.
-- **Schauwerk** owns visual projections.
-- **Chronik** owns append-only events.
-- **GitHub** owns branches, pull requests, reviews and CI facts.
+  explicit evidence through Bureau Core contracts. Ops findings are evidence for Bureau Core to
+  consider, not permission to replace the authority that produced the fact.
+- **External authorities** retain their domains: GitHub owns branches, pull requests, reviews and
+  CI facts; Grabowski owns processes, hosts, concrete runtime leases, durable tasks and workers;
+  Steuerboard owns action-specific readiness; Cabinet owns readable research and decisions;
+  Schauwerk owns visual projections; Chronik owns append-only events.
 
 Bureau does not implement another shell, general workflow engine, knowledge base or project UI.
 Ops organs keep source ownership visible and bind Bureau effects to explicit tasks, claims,

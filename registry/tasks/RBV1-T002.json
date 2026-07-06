@@ -3,7 +3,7 @@
   "id": "RBV1-T002",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Add explicit RepoBrief snapshot create command",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 20
@@ -72,6 +72,39 @@
       "task": "RBV1-T001",
       "state": "verified",
       "evidence_pr": "heimgewebe/bureau#92"
+    },
+    "outcome": "Explicit RepoBrief snapshot create is present on Lenskit origin/main and verified; no Lenskit patch was required.",
+    "verification": {
+      "lenskit_repository": "heimgewebe/lenskit",
+      "lenskit_main_commit": "900bc2c9",
+      "lenskit_main_subject": "feat(repobrief): Resolved Evidence Query v1 (RBEV1-T002) (#888)",
+      "verified_surfaces": [
+        "merger/lenskit/cli/cmd_repobrief.py",
+        "merger/lenskit/tests/test_repobrief_snapshot_cli.py",
+        "docs/architecture/repobrief.md"
+      ],
+      "checks": [
+        "python3 -m pytest merger/lenskit/tests/test_repobrief_snapshot_cli.py -q -> 24 passed",
+        "python3 -m pytest merger/lenskit/tests/test_repobrief_profiles.py merger/lenskit/tests/test_export_safety_report.py merger/lenskit/tests/test_repobrief_snapshot_cli.py -q -> 58 passed",
+        "python3 -m ruff check merger/lenskit/cli/cmd_repobrief.py merger/lenskit/tests/test_repobrief_snapshot_cli.py merger/lenskit/tests/test_repobrief_profiles.py merger/lenskit/tests/test_export_safety_report.py -> passed",
+        "runtime smoke: repobrief snapshot create on temporary git repo -> rc 0, bundle manifest exists, git status preserved, mutation_boundary writes only brief_bundle_artifacts"
+      ],
+      "acceptance_summary": [
+        "explicit repobrief snapshot create command exists",
+        "profile is recorded in emitted result and manifest capabilities",
+        "read/create mutation boundary is represented",
+        "does_not_establish is emitted",
+        "no Git, PR, patch, or source working tree mutation observed in smoke"
+      ],
+      "does_not_establish": [
+        "runtime_correctness_beyond_smoke",
+        "test_sufficiency",
+        "review_completeness",
+        "regression_absence",
+        "merge_readiness_for_followup_tasks"
+      ],
+      "task_sha256": "c5dd7d318d745edcdb96d20ca9210d24e19aded252a2fb284ddf5751388501df",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
     }
   },
   "depends_on": [

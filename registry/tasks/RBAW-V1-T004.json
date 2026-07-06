@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "RBAW-V1-T004",
+  "initiative": "REPOBRIEF-AGENT-WORKBENCH-V1",
+  "title": "Prototype external Agent Workbench harness",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 192
+  },
+  "goal": "Prototype an external isolated-worktree patch/test harness only after boundary and artifact contract are explicit.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "4d31a206dc2ec9bf90e71cbaa6ba102377815beb",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rbaw-v1-t004-external-only",
+      "assertion": "The prototype, if implemented, remains outside RepoBrief core and uses an isolated worktree boundary.",
+      "verifier": "PR, self-review, tests, or stop report",
+      "evidence_type": "string"
+    },
+    {
+      "id": "rbaw-v1-t004-no-approval-claim",
+      "assertion": "The prototype does not present tests or lint results as merge authorization or correctness proof.",
+      "verifier": "PR, self-review, tests, or stop report",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-06T05:39:49Z",
+    "created_from_plan": "RepoBrief Agent Workbench Boundary v1",
+    "plan_path": "docs/plans/repobrief-agent-workbench-boundary-v1.md",
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "security_correctness"
+    ]
+  },
+  "depends_on": [
+    "RBAW-V1-T002",
+    "RBAW-V1-T003"
+  ]
+}

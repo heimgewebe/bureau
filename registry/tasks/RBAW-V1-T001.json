@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "RBAW-V1-T001",
+  "initiative": "REPOBRIEF-AGENT-WORKBENCH-V1",
+  "title": "Define RepoBrief Agent Workbench boundary",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 35
+  },
+  "goal": "Document that patch/test/sandbox authority belongs to an external Agent Workbench while RepoBrief remains read-only evidence infrastructure.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "4d31a206dc2ec9bf90e71cbaa6ba102377815beb",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rbaw-v1-t001-scope-bound",
+      "assertion": "The boundary document is created or explicitly closed against current main/PR state with no hidden broadening.",
+      "verifier": "PR, self-review, tests, or stop report",
+      "evidence_type": "string"
+    },
+    {
+      "id": "rbaw-v1-t001-boundary-preserved",
+      "assertion": "RepoBrief boundaries are preserved: no hidden refresh, no Git mutation in RepoBrief core, no patch/test execution inside the read-only evidence layer.",
+      "verifier": "PR, self-review, tests, or stop report",
+      "evidence_type": "string"
+    },
+    {
+      "id": "rbaw-v1-t001-non-claims",
+      "assertion": "The document states what Workbench evidence does not establish.",
+      "verifier": "PR, self-review, tests, or stop report",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-06T05:39:49Z",
+    "created_from_plan": "RepoBrief Agent Workbench Boundary v1",
+    "plan_path": "docs/plans/repobrief-agent-workbench-boundary-v1.md",
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "security_correctness"
+    ]
+  },
+  "depends_on": []
+}

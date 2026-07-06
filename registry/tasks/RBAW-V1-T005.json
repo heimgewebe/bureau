@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "id": "RBAW-V1-T005",
+  "initiative": "REPOBRIEF-AGENT-WORKBENCH-V1",
+  "title": "Triage Lenskit agent optimization axes",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 36
+  },
+  "goal": "Map Agent Contracts, Reading Packs, CLI JSON hygiene, Graph, AST, Retrieval and Doc Freshness suggestions to existing RepoBrief roadmap tasks without duplicate broad refactors.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "4d31a206dc2ec9bf90e71cbaa6ba102377815beb",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rbaw-v1-t005-deduped-map",
+      "assertion": "Each broad optimization axis is mapped to an existing task, a new bounded task, or an explicit non-goal.",
+      "verifier": "PR, self-review, tests, or stop report",
+      "evidence_type": "string"
+    },
+    {
+      "id": "rbaw-v1-t005-no-broad-refactor",
+      "assertion": "The output does not start a broad refactor and does not duplicate already registered RepoBrief roadmap tasks.",
+      "verifier": "PR, self-review, tests, or stop report",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-06T05:39:49Z",
+    "created_from_plan": "RepoBrief Agent Workbench Boundary v1",
+    "plan_path": "docs/plans/repobrief-agent-workbench-boundary-v1.md",
+    "related_existing_tasks": [
+      "RBV1-T004",
+      "RBV1-T005",
+      "RBV1-T006",
+      "RBV1-T007",
+      "RBV1-T008",
+      "RBV1-T009",
+      "RBV1-T012",
+      "RBV1-T014",
+      "RBV1-T015",
+      "RBV1-T016",
+      "RBV1-T017"
+    ],
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "security_correctness"
+    ]
+  },
+  "depends_on": [
+    "RBAW-V1-T001"
+  ]
+}

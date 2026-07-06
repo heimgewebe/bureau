@@ -3,7 +3,7 @@
   "id": "RBV1-T006",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Add snapshot availability and freshness model",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 60
@@ -57,7 +57,7 @@
     }
   ],
   "metadata": {
-    "created_from_plan": "Plan — RepoBrief v1",
+    "created_from_plan": "Plan \u2014 RepoBrief v1",
     "registered_at": "2026-07-05T14:33:30Z",
     "plan_refs": [
       "Phase 4 / PR 7"
@@ -67,7 +67,41 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "outcome": "Lenskit PR #898 implemented RepoBrief snapshot availability/freshness model.",
+    "verification": {
+      "lenskit_repository": "heimgewebe/lenskit",
+      "lenskit_pr": "heimgewebe/lenskit#898",
+      "lenskit_head": "774d373a7ee1672e719b1078cbb32c0c988e9f0a",
+      "lenskit_merge_commit": "e3c4b330594ef8df2c99ed85938905ec9accc67e",
+      "verified_surfaces": [
+        "merger/lenskit/core/repobrief_availability.py",
+        "merger/lenskit/core/repobrief_access.py",
+        "merger/lenskit/tests/test_repobrief_profiles.py"
+      ],
+      "checks": [
+        "pytest profiles -> 9 passed",
+        "pytest profiles+snapshot_cli -> 33 passed",
+        "ruff scoped files -> passed",
+        "GitHub PR #898 CI -> all visible checks passed"
+      ],
+      "acceptance_summary": [
+        "snapshot_status exposes availability_model and freshness",
+        "availability/freshness vocabulary is explicit",
+        "read paths do not refresh or mutate source state"
+      ],
+      "does_not_establish": [
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness",
+        "merge_readiness",
+        "security_correctness",
+        "freshness_against_remote",
+        "repo_understood"
+      ],
+      "task_sha256": "b3ddf78d8092c209cfe175663ae80d5e26a53bc1429b5b5968c38f6879034922",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   },
   "depends_on": [
     "RBV1-T005"

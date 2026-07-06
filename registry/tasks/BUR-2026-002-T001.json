@@ -45,7 +45,17 @@
     "operator_lab_run": "vibe-lab: experiments/2026-07-01_operator-lab-loop/artifacts/run-002-rlens-agent-ecosystem/run-card.yml",
     "plan_path": "docs/plans/rlens-agent-ecosystem-integration-v1.md",
     "implementation_record": "docs/rlens-agent-ecosystem-integration-v1-implementation-record.md",
-    "implementation_record_scope": "phase-1-rlens-hardening-slice"
+    "implementation_record_scope": "phase-1-rlens-hardening-slice",
+    "outcome": "First rLens integration slice verified across Lenskit, Grabowski, and Bureau.",
+    "verification": {
+      "bureau_pr": "heimgewebe/bureau#112",
+      "bureau_merge_commit": "dab52787a8547d4db856c9ef40576906abd151b0",
+      "lenskit_main_head": "daa06187",
+      "grabowski_pr": "heimgewebe/grabowski#57",
+      "grabowski_discovery_commit": "d1f9061fa012f15b9ecbc01a92b093be4b759b58",
+      "task_sha256": "484b7c6bc12d8cd1b7736832227b7480cbdd53926c771ca5e66bcf2bc729b553",
+      "plan_sha256": "2a786843fa4b6a7da77cd9790f77a41b5a35fb591b0047e2d6d1698d45df4ca2"
+    }
   },
   "priority": {
     "lane": "now",
@@ -57,6 +67,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Finalize first rLens integration slice"
 }

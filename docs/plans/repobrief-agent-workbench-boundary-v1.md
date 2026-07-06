@@ -36,7 +36,8 @@ RepoBrief must not:
 ## Target architecture
 
 - RepoBrief = landkarte / evidence core / deterministic context.
-- Agent Workbench = external workshop for patch application and evaluation.
+- Agent Workbench = integrated deterministic code-understanding workbench for agents.
+- Patch Evaluation Sidecar = external workshop for patch application, command execution, sandboxing and evaluation.
 - CI = independent verifier.
 - GitHub PR = review and decision surface.
 - Bureau = task registration, sequencing and evidence receipts.
@@ -49,18 +50,18 @@ Thesis: Coding agents need a Write-Axis: patch application, test/lint feedback, 
 
 Antithesis: putting Write-Axis inside RepoBrief blurs the authority boundary and makes a snapshot/evidence layer responsible for mutation, rollback and runtime interpretation.
 
-Synthesis: implement Write-Axis externally as Agent Workbench / Patch Evaluation Sidecar. RepoBrief may later read and cite Workbench artifacts, but must not generate them or interpret them as approval.
+Synthesis: keep deterministic code-understanding tools inside RepoBrief as Agent Workbench surfaces, but implement mutable patch/test/sandbox authority externally as Patch Evaluation Sidecar. RepoBrief may later read and cite Sidecar artifacts, but must not generate them or interpret them as approval.
 
 ## Artifact flow
 
 1. RepoBrief Snapshot / Brief Bundle exists.
-2. Agent consumes Required Reading, Ranges, Citations and Source Citation Projection.
-3. Agent proposes a patch.
-4. External Workbench creates an isolated Git worktree.
-5. Workbench applies the patch.
-6. Workbench runs explicitly configured checks.
-7. Workbench emits `patch-evaluation.v1`.
-8. RepoBrief may later read/link that artifact as evidence.
+2. Agent consumes Required Reading, Ranges, Citations, Source Citation Projection and integrated Workbench evidence such as symbols or relation hints.
+3. Agent proposes a patch with cited evidence and explicit uncertainty.
+4. External Patch Evaluation Sidecar creates an isolated Git worktree.
+5. Sidecar applies the patch.
+6. Sidecar runs explicitly configured checks.
+7. Sidecar emits `patch-evaluation.v1`.
+8. RepoBrief may later read/link that artifact as external evidence.
 9. CI / PR review / human decide.
 
 ## Patch evaluation contract sketch
@@ -99,7 +100,7 @@ Required non-claims:
 1. Define Agent Workbench boundary documentation.
 2. Sketch patch-evaluation artifact contract.
 3. Define read-only RepoBrief consumption of patch-evaluation artifacts.
-4. Prototype external Workbench harness later.
+4. Prototype external Patch Evaluation Sidecar harness later.
 5. Triage broad Lenskit-agent-optimization axes against existing RepoBrief roadmap tasks to avoid duplicate work.
 
 ## Existing RepoBrief roadmap crosslinks
@@ -125,7 +126,7 @@ The broad Lenskit optimization proposal is not one refactor. It maps to existing
 5. Python AST symbol index.
 6. Retrieval v2 promotion evaluation.
 7. Patch evaluation contract.
-8. External Workbench prototype.
+8. External Patch Evaluation Sidecar prototype.
 
 ## Non-claims
 

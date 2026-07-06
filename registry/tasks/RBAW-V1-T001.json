@@ -3,12 +3,12 @@
   "id": "RBAW-V1-T001",
   "initiative": "REPOBRIEF-AGENT-WORKBENCH-V1",
   "title": "Define RepoBrief Agent Workbench boundary",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 35
   },
-  "goal": "Document that patch/test/sandbox authority belongs to an external Agent Workbench while RepoBrief remains read-only evidence infrastructure.",
+  "goal": "Document that RepoBrief may host deterministic read-only Agent Workbench code-understanding tools while patch/test/sandbox authority belongs to an external Patch Evaluation Sidecar.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -60,7 +60,44 @@
       "review_completeness",
       "merge_readiness",
       "security_correctness"
-    ]
+    ],
+    "outcome": "Lenskit PR #891 documented the RepoBrief Agent Workbench boundary and corrected the term split: Agent Workbench is integrated deterministic code-understanding; Patch Evaluation Sidecar owns mutable patch/test/sandbox authority.",
+    "verification": {
+      "lenskit_repository": "heimgewebe/lenskit",
+      "lenskit_pr": "heimgewebe/lenskit#891",
+      "lenskit_pr_state": "MERGED",
+      "lenskit_head": "6086953cf1227d299bee5530ca803741e53952ca",
+      "lenskit_merge_commit": "45ec568775286374e4a50e9f2d8a1e1bc5886a7a",
+      "merged_at": "2026-07-06T09:41:25Z",
+      "verified_surfaces": [
+        "docs/architecture/repobrief-agent-workbench-boundary.md",
+        "docs/architecture/repobrief-mcp-boundary.md",
+        "docs/architecture/repobrief.md"
+      ],
+      "checks": [
+        "GitHub PR #891 checks -> all reported checks passed",
+        "git diff --check origin/main..HEAD -> passed",
+        "git diff --check origin/main...HEAD -> passed",
+        "tip-to-tip diff origin/main..repobrief-agent-workbench-boundary-v1 -> 0 bytes after merge verification"
+      ],
+      "acceptance_summary": [
+        "boundary document exists on Lenskit main",
+        "RepoBrief remains deterministic evidence/snapshot/citation and read-only code-understanding infrastructure",
+        "Agent Workbench is defined as integrated deterministic read-only code-understanding tooling",
+        "Patch Evaluation Sidecar is defined as the external mutable patch/test/sandbox authority",
+        "non-claims explicitly cover correctness, test sufficiency, review completeness, merge readiness, security correctness and repo-understood claims"
+      ],
+      "does_not_establish": [
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness",
+        "regression_absence",
+        "security_correctness",
+        "merge_readiness_for_followup_tasks"
+      ],
+      "task_sha256": "122958e7f3ddd73fd7ec3a9889694c38d85f7de031a3f76a512749cba1a90511",
+      "plan_sha256": "44feb70a77fc185a7a36e565d7a7ae3b703a3f01350a931602ee348f9b4e7e6a"
+    }
   },
   "depends_on": []
 }

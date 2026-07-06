@@ -2,13 +2,13 @@
   "schema_version": 1,
   "id": "RBAW-V1-T004",
   "initiative": "REPOBRIEF-AGENT-WORKBENCH-V1",
-  "title": "Prototype external Agent Workbench harness",
+  "title": "Prototype external Patch Evaluation Sidecar harness",
   "state": "planned",
   "priority": {
     "lane": "later",
     "rank": 192
   },
-  "goal": "Prototype an external isolated-worktree patch/test harness only after boundary and artifact contract are explicit.",
+  "goal": "Prototype an external isolated-worktree patch/test sidecar harness only after boundary and artifact contract are explicit.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",

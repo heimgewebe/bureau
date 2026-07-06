@@ -3,7 +3,7 @@
   "id": "RBV1-T005",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Harden snapshot Git provenance status",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 50
@@ -57,7 +57,7 @@
     }
   ],
   "metadata": {
-    "created_from_plan": "Plan — RepoBrief v1",
+    "created_from_plan": "Plan \u2014 RepoBrief v1",
     "registered_at": "2026-07-05T14:33:30Z",
     "plan_refs": [
       "Phase 3 / PR 5"
@@ -67,7 +67,45 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "outcome": "Lenskit PR #896 implemented explicit snapshot_provenance status for generated RepoBrief bundle manifests.",
+    "verification": {
+      "lenskit_repository": "heimgewebe/lenskit",
+      "lenskit_pr": "heimgewebe/lenskit#896",
+      "lenskit_head": "c8f8ecbe93c4dc18edfd07266217b60c0cfb676a",
+      "lenskit_merge_commit": "f441c7d104b70fa0bc0901cabcb659dbf1d30507",
+      "verified_surfaces": [
+        "merger/lenskit/core/snapshot_provenance.py",
+        "merger/lenskit/core/merge.py",
+        "merger/lenskit/contracts/bundle-manifest.v1.schema.json",
+        "merger/lenskit/core/repobrief_preflight.py",
+        "merger/lenskit/tests/test_snapshot_provenance.py",
+        "merger/lenskit/tests/test_runtime_provenance.py",
+        "merger/lenskit/tests/test_repobrief_preflight.py"
+      ],
+      "checks": [
+        "pytest snapshot/runtime/preflight -> 44 passed",
+        "pytest bundle manifest/integration/surface -> 145 passed",
+        "ruff check scoped files -> passed",
+        "GitHub PR #896 visible checks -> passed"
+      ],
+      "acceptance_summary": [
+        "snapshot_provenance v1 emitted in bundle manifests",
+        "per-repository provenance fields include repo_root, repo_remote, git_commit, git_dirty, git_branch, provenance_status and freshness_basis",
+        "missing or unavailable git provenance keeps freshness_basis unknown"
+      ],
+      "does_not_establish": [
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness",
+        "merge_readiness",
+        "security_correctness",
+        "freshness_against_remote",
+        "repo_understood"
+      ],
+      "task_sha256": "47f443a55264e96a15b512a1afccf672949508ba965d0d5561b966fedf6498ea",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   },
   "depends_on": [
     "RBV1-T004"

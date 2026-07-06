@@ -22,12 +22,12 @@
     },
     {
       "resource": "repo.bureau",
-      "mode": "write",
-      "isolation": "primary-clean"
+      "mode": "read",
+      "isolation": "none"
     }
   ],
   "execution": {
-    "mode": "operator",
+    "mode": "interactive-agent",
     "policy": "review-before-effect"
   },
   "metadata": {

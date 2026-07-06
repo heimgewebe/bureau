@@ -8,7 +8,7 @@
     "BUR-2026-005-T001",
     "BUR-2026-005-T003"
   ],
-  "goal": "Define an append-only event inbox contract for external notifications with verification, idempotency and replay before any direct state mutation is allowed.",
+  "goal": "Define an append-only event inbox contract for external notifications with source verification, idempotency, quarantine and replay before any direct state mutation is allowed.",
   "priority": {
     "lane": "later",
     "rank": 50
@@ -36,6 +36,14 @@
     {
       "id": "append-only-contract",
       "assertion": "External notifications are stored as append-only events before being interpreted by a reconciler."
+    },
+    {
+      "id": "verified-ingest",
+      "assertion": "Webhook inbox validates source identity, payload schema and event identity before storing an event as trusted input."
+    },
+    {
+      "id": "dedupe-and-quarantine",
+      "assertion": "The contract covers event deduplication, replay window handling and quarantine for unverifiable payloads."
     },
     {
       "id": "idempotent-replay",

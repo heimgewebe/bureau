@@ -1501,13 +1501,38 @@ class Dispatcher(legacy.Dispatcher):
                             "finding": "workspace path missing",
                         }
                     )
+            terminal_queue_states = {"verified", "cancelled", "superseded"}
+            allowed_backlog_states = {"planned", "ready"}
             for lane, task_ids in self.registry.queue.items():
                 for task_id in task_ids:
                     task = self.registry.tasks[task_id]
                     effective = overlays.get(task_id, task.state)
-                    if effective != "ready":
+                    if effective in terminal_queue_states:
                         queue_findings.append(
-                            {"task_id": task_id, "lane": lane, "effective_state": effective}
+                            {
+                                "task_id": task_id,
+                                "lane": lane,
+                                "effective_state": effective,
+                                "issue": "terminal-task-in-queue",
+                            }
+                        )
+                    elif lane == "now" and effective != "ready":
+                        queue_findings.append(
+                            {
+                                "task_id": task_id,
+                                "lane": lane,
+                                "effective_state": effective,
+                                "issue": "now-task-not-ready",
+                            }
+                        )
+                    elif lane != "now" and effective not in allowed_backlog_states:
+                        queue_findings.append(
+                            {
+                                "task_id": task_id,
+                                "lane": lane,
+                                "effective_state": effective,
+                                "issue": "backlog-task-not-actionable",
+                            }
                         )
         lifecycle = lifecycle_diagnostics(self.registry, self.store)
         lifecycle_findings = [item for item in lifecycle if not item["consistent"]]

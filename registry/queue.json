@@ -3,10 +3,7 @@
   "queue_policy": "skip-blocked",
   "lanes": {
     "now": [
-      "BUR-2026-004-T001",
-      "BUR-2026-005-T001",
-      "BUR-2026-002-T001",
-      "GRIP-ROADMAP-V1-T001"
+      "BUR-2026-005-T001"
     ],
     "next": [
       "BUR-2026-004-T002",
@@ -20,6 +17,7 @@
       "RBV1-T009",
       "GRABOWSKI-OPERATOR-SURFACE-V1-T001",
       "GRABOWSKI-OPERATOR-SURFACE-V1-T002",
+      "GRIP-ROADMAP-V1-T001",
       "GRIP-ROADMAP-V1-T002",
       "GRIP-ROADMAP-V1-T003",
       "RBAW-V1-T005"

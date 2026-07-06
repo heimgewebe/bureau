@@ -3,7 +3,7 @@
   "id": "RBV1-T001",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Verify and finish RepoBrief naming vocabulary",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 10
@@ -67,6 +67,25 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "outcome": "RepoBrief naming vocabulary verified in Lenskit; no Lenskit patch was required.",
+    "verification": {
+      "evidence_pr": "heimgewebe/bureau#92",
+      "evidence_pr_state": "MERGED",
+      "evidence_pr_head": "d5c48ff44d4dcd39272017df8338480543b659ed",
+      "evidence_merge_commit": "dbeb491f25e67d534ad94b7cc3cb5f7426a0e970",
+      "merged_at": "2026-07-06T02:14:23Z",
+      "lenskit_checks": [
+        "python3 -m pytest merger/lenskit/tests/test_repobrief_naming_doc.py merger/lenskit/tests/test_repobrief_mcp_boundary_doc.py -q -> 13 passed"
+      ],
+      "does_not_establish": [
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness",
+        "merge_readiness_for_followup_tasks"
+      ],
+      "task_sha256": "c4a9ca267f7708a3eedd8716737bc067c6eac681a5aeb33d6ac89cee7498553a",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   }
 }

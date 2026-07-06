@@ -3,7 +3,7 @@
   "id": "RBV1-T002",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Add explicit RepoBrief snapshot create command",
-  "state": "planned",
+  "state": "ready",
   "priority": {
     "lane": "next",
     "rank": 20
@@ -67,7 +67,12 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "unblocked_by": {
+      "task": "RBV1-T001",
+      "state": "verified",
+      "evidence_pr": "heimgewebe/bureau#92"
+    }
   },
   "depends_on": [
     "RBV1-T001"

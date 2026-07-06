@@ -7,9 +7,7 @@
   "goal": "Make Bureau self-maintaining for observation, reconciliation and status projection without granting hidden authority to merge, delete, verify or dispatch unsafe work.",
   "current_plan": {
     "repository": "bureau",
-    "path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
-    "commit": "ca31abb130999de8019becd727463936287599da",
-    "document_sha256": "db42fe121cb7cc4cf725edfaebdb01fc56a2e78e00d4b33573055a0ce79c31f1"
+    "path": "docs/plans/bureau-runtime-automation-baseline-v1.md"
   },
   "completion": [
     "Bureau has an explicit local automation model for reconciliation, GitHub observation, status projection, webhook ingestion and optional dispatch.",
@@ -18,5 +16,9 @@
   ],
   "parallelism": {
     "max_active_tasks": 1
+  },
+  "metadata": {
+    "plan_pinning": "deferred_until_post_merge",
+    "pinning_reason": "The final main commit and document hash are not stable while this registry change is still a pull request. BUR-2026-005-T008 records the post-merge pinning task."
   }
 }

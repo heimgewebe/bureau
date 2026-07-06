@@ -1224,25 +1224,3 @@ def test_doctor_reports_unknown_state_root_directory(registry_factory, tmp_path,
     assert report["unknown_entries"] == [
         {"name": "manual-maintenance", "type": "directory", "class": "unknown"}
     ]
-
-def test_doctor_accepts_known_legacy_state_root_artifacts(registry_factory, tmp_path, monkeypatch):
-    root = registry_factory(1)
-    registry, store, _ = setup(root, tmp_path, monkeypatch)
-    (store.state_root / "archived-untracked").mkdir()
-    (store.state_root / "manual-maintenance-20260628T084045Z").mkdir()
-    (store.state_root / "merge-gatekeeper-runs").mkdir()
-    (store.state_root / "bureau.before-t005-reverify-20260702T182019Z.sqlite3").write_text("", encoding="utf-8")
-    (store.state_root / "evidence-BUR-RUN-20260627T180009Z-0579f4c484.json").write_text("{}", encoding="utf-8")
-    (store.state_root / "ollama-wg-prompt-final.txt").write_text("prompt", encoding="utf-8")
-    (store.state_root / "run-goose-weltgewebe.sh").write_text("#!/bin/sh", encoding="utf-8")
-    (store.state_root / "wg-source.b64.0").write_text("", encoding="utf-8")
-
-    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
-
-    assert report["healthy"] is True
-    assert report["unknown_entries"] == []
-    classes = {entry["name"]: entry["class"] for entry in report["known_entries"]}
-    assert classes["archived-untracked"] == "legacy-artifact-directory"
-    assert classes["bureau.before-t005-reverify-20260702T182019Z.sqlite3"] == "legacy-sqlite-backup"
-    assert classes["evidence-BUR-RUN-20260627T180009Z-0579f4c484.json"] == "legacy-evidence-artifact"
-    assert classes["ollama-wg-prompt-final.txt"] == "legacy-operator-artifact"

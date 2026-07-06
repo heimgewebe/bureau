@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T001",
   "initiative": "BUR-2026-005",
   "title": "Define runtime automation contract",
-  "state": "planned",
+  "state": "ready",
   "goal": "Document the Bureau control-tower automation model, including source authority, status vocabulary, event semantics and forbidden implicit powers.",
   "priority": {
     "lane": "now",

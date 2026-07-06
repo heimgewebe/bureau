@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T001",
+  "initiative": "BUR-2026-005",
+  "title": "Define runtime automation contract",
+  "state": "planned",
+  "goal": "Document the Bureau control-tower automation model, including source authority, status vocabulary, event semantics and forbidden implicit powers.",
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
+    "safety_boundary": "documentation and contract only; no runtime authority change"
+  },
+  "acceptance": [
+    {
+      "id": "control-tower-model",
+      "assertion": "Documentation separates registry authority, runtime state, observer evidence, status projection and dispatcher authority."
+    },
+    {
+      "id": "status-vocabulary",
+      "assertion": "A shared vocabulary exists for assigned, running, dispatching, PR observed, CI unknown, review blocked, merged, verified and stale states."
+    },
+    {
+      "id": "forbidden-powers",
+      "assertion": "The contract explicitly forbids automatic merge, cleanup and completion authority in this baseline."
+    }
+  ]
+}

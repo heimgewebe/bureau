@@ -37,7 +37,11 @@
     "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately.",
     "resulting_effect": "read_only",
     "implementation_pr": "heimgewebe/grabowski#83",
-    "implementation_branch": "feat/worktree-orient-grip-v1"
+    "implementation_branch": "feat/worktree-orient-grip-v1",
+    "verification": {
+      "task_sha256": "30760d6060cace3cbebba088b56dbef86f0d152a6f289008fd78c39ca07a387e",
+      "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180"
+    }
   },
   "priority": {
     "lane": "now",

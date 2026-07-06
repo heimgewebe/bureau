@@ -4,7 +4,10 @@
   "initiative": "BUR-2026-005",
   "title": "Implement repository status observer",
   "state": "planned",
-  "goal": "Implement the third task from docs/plans/bureau-runtime-automation-baseline-v1.md.",
+  "depends_on": [
+    "BUR-2026-005-T001"
+  ],
+  "goal": "Implement the repository status observer described in docs/plans/bureau-runtime-automation-baseline-v1.md as source-attributed evidence for Bureau runs.",
   "priority": {
     "lane": "next",
     "rank": 30
@@ -25,12 +28,25 @@
     "policy": "review-before-effect"
   },
   "metadata": {
-    "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md"
+    "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
+    "safety_boundary": "observation only; source systems keep authority"
   },
   "acceptance": [
     {
-      "id": "implemented",
-      "assertion": "The task is implemented according to the plan."
+      "id": "plan-bound",
+      "assertion": "Implementation follows the observer binding and failure semantics in the registered plan."
+    },
+    {
+      "id": "source-attribution",
+      "assertion": "Observed repository facts retain source, timestamp and confidence information."
+    },
+    {
+      "id": "ambiguity-visible",
+      "assertion": "Ambiguous observations remain visible and do not become successful completion."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover explicit match, fallback match, no match and ambiguity cases."
     }
   ]
 }

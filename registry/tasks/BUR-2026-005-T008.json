@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T008",
+  "initiative": "BUR-2026-005",
+  "title": "Pin runtime automation plan after merge",
+  "state": "planned",
+  "depends_on": [
+    "BUR-2026-005-T001"
+  ],
+  "goal": "After the runtime automation baseline plan is merged to main, bind the initiative current_plan to the merged commit and raw document SHA-256.",
+  "priority": {
+    "lane": "later",
+    "rank": 80
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
+    "safety_boundary": "post-merge registry pinning only; no runtime automation authority"
+  },
+  "acceptance": [
+    {
+      "id": "merged-main-commit",
+      "assertion": "The initiative current_plan commit points to a commit that is reachable from main after PR merge."
+    },
+    {
+      "id": "raw-document-sha",
+      "assertion": "The initiative current_plan document_sha256 matches the raw bytes of the merged plan document."
+    },
+    {
+      "id": "no-runtime-effect",
+      "assertion": "The task changes only registry plan pinning and introduces no scheduler, observer, dispatch, merge or completion behavior."
+    }
+  ]
+}

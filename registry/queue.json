@@ -3,7 +3,6 @@
   "queue_policy": "skip-blocked",
   "lanes": {
     "now": [
-      "VIBE-LIFECYCLE-V1-T001",
       "BUR-2026-005-T001"
     ],
     "next": [

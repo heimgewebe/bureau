@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "repo.chronik",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/chronik",
+  "grabowski_key": "repo:/home/alex/repos/chronik",
+  "metadata": {
+    "github": "heimgewebe/chronik",
+    "role": "append-only event ledger and historical evidence axis",
+    "boundaries": [
+      "no_worker_control",
+      "no_orchestration_decisions",
+      "no_runtime_authority"
+    ]
+  }
+}

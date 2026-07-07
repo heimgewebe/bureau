@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T001",
+  "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
+  "title": "Resolve Chronik service bootstrap PR lane",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "goal": "Review and close the Chronik service bootstrap PR lane, especially PR #206, with fresh CI/local evidence and explicit no-runtime-activation boundary.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.chronik",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "fresh-pr-state",
+      "assertion": "PR #206 state, head, title, body and open/closed state are checked live before any decision.",
+      "verifier": "gh pr view",
+      "evidence_type": "object"
+    },
+    {
+      "id": "ci-and-local-validation",
+      "assertion": "GitHub checks and local role/service artifact tests pass or failures are recorded as blockers.",
+      "verifier": "gh pr checks plus pytest/check_role",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-runtime-claim",
+      "assertion": "The lane does not claim service start, deploy, restart, token handling, or runtime activation.",
+      "verifier": "diff review",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "review-diff-before-merge",
+      "assertion": "Before any merge approval, the PR diff is reviewed and made available to external reviewers.",
+      "verifier": "diff artifact",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "github_repository": "heimgewebe/chronik",
+    "primary_pull_request": 206,
+    "superseded_pull_request": 204,
+    "does_not_establish": [
+      "merge_permission",
+      "service_runtime_active",
+      "deploy_readiness"
+    ]
+  }
+}

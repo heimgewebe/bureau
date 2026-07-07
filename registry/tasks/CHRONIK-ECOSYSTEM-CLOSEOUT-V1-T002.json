@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T002",
+  "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
+  "title": "Map Chronik ecosystem edges in Cabinet",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 30
+  },
+  "goal": "Review and land the Cabinet ecosystem registry update that models Chronik as a bounded ledger/evidence axis with Plexer, Grabowski, Bureau, Leitstand and heimlern edges.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/cabinet",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/cabinet"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.cabinet",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "edge-boundaries",
+      "assertion": "Cabinet registry keeps Chronik as append-only evidence, not orchestration authority.",
+      "verifier": "diff review",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "projection-check",
+      "assertion": "Rendered ecosystem registry map is reproducible from the registry source.",
+      "verifier": "render check",
+      "evidence_type": "string"
+    },
+    {
+      "id": "map-validation",
+      "assertion": "Cabinet ecosystem map validation passes or records a blocker.",
+      "verifier": "validator or CI check",
+      "evidence_type": "string"
+    },
+    {
+      "id": "github-checks",
+      "assertion": "Cabinet PR checks for the mapping lane pass before closeout.",
+      "verifier": "gh pr checks",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "github_repository": "heimgewebe/cabinet",
+    "primary_pull_request": 83,
+    "does_not_establish": [
+      "ecosystem_runtime_truth",
+      "chronik_runtime_active",
+      "bureau_verification_truth"
+    ]
+  }
+}

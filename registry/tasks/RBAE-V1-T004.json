@@ -3,7 +3,7 @@
   "id": "RBAE-V1-T004",
   "initiative": "REPOBRIEF-AGENT-CODE-EMPOWERMENT-V1",
   "title": "Extend required reading for code-change profiles",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 195
@@ -62,7 +62,23 @@
       "merge_readiness",
       "security_correctness",
       "agent_patch_quality_proven"
-    ]
+    ],
+    "verified_at": "2026-07-07",
+    "outcome": "Defined code-change Required Reading profiles and preflight outcomes.",
+    "contract_path": "docs/rbae-v1-t004.required-reading-profiles.md",
+    "dependency_closure": {
+      "RBAE-V1-T001": "verified",
+      "RBV1-T009": "verified"
+    },
+    "verified_acceptance": {
+      "rbae-v1-t004-profiles": "Profile table maps code task kinds to required and recommended surfaces.",
+      "rbae-v1-t004-preflight": "Outcome model defines fail warn pass and not_applicable results.",
+      "rbae-v1-t004-no-hidden-refresh": "Read-only rule forbids refresh Git mutation and implicit evidence generation."
+    },
+    "verification": {
+      "task_sha256": "b3d49f8861f12c13e4e4aeeaa89216f91ec139d88caee0d3a45ff4519818a35e",
+      "plan_sha256": "397bf76c26fd7e743d9ddeb6282defd3cf7d4b019601f8270d0fa272cf6a1512"
+    }
   },
   "depends_on": [
     "RBAE-V1-T001",

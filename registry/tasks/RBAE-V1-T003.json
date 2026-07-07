@@ -3,7 +3,7 @@
   "id": "RBAE-V1-T003",
   "initiative": "REPOBRIEF-AGENT-CODE-EMPOWERMENT-V1",
   "title": "Define code impact map v1",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 194
@@ -62,7 +62,25 @@
       "merge_readiness",
       "security_correctness",
       "agent_patch_quality_proven"
-    ]
+    ],
+    "verified_at": "2026-07-07",
+    "outcome": "Defined RepoBrief Code Impact Map v1 as a read-only agent planning surface.",
+    "impact_map_contract_path": "docs/repobrief-code-impact-map-v1.md",
+    "dependency_closure": {
+      "RBAE-V1-T001": "verified",
+      "RBV1-T014": "verified",
+      "RBV1-T015": "verified",
+      "RBV1-T016": "verified"
+    },
+    "verified_acceptance": {
+      "rbae-v1-t003-scope": "docs/repobrief-code-impact-map-v1.md#source-status-model distinguishes available, stale, missing, not-generated, profile-excluded, invalid and provenance-blocked evidence.",
+      "rbae-v1-t003-no-completeness-claim": "docs/repobrief-code-impact-map-v1.md#does-not-establish explicitly denies complete dependency/test/runtime/security/review/merge coverage.",
+      "rbae-v1-t003-existing-owners": "docs/repobrief-code-impact-map-v1.md#inputs-and-existing-owners reuses RBV1-T014, RBV1-T015, RBV1-T016, RBAE-V1-T001 and RBAE-V1-T002 instead of duplicating them."
+    },
+    "verification": {
+      "task_sha256": "db1f886f4613ec3c813dda2f88a92c80331d7770ee848700c65ab53c5e8ee3b0",
+      "plan_sha256": "397bf76c26fd7e743d9ddeb6282defd3cf7d4b019601f8270d0fa272cf6a1512"
+    }
   },
   "depends_on": [
     "RBAE-V1-T001",

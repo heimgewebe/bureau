@@ -3,7 +3,7 @@
   "id": "RBV1-T009",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Align export safety with RepoBrief profiles",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 90
@@ -67,7 +67,34 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "verified_at": "2026-07-07",
+    "outcome": "Verified existing Lenskit export safety alignment with RepoBrief profiles on current main.",
+    "implementation_paths": [
+      "merger/lenskit/core/repobrief_profiles.py",
+      "merger/lenskit/core/export_safety_report.py",
+      "merger/lenskit/core/required_reading.py",
+      "merger/lenskit/cli/cmd_repobrief.py",
+      "merger/lenskit/tests/test_repobrief_profiles.py",
+      "merger/lenskit/tests/test_export_safety_report.py",
+      "merger/lenskit/tests/test_required_reading_protocol.py",
+      "merger/lenskit/tests/test_repobrief_snapshot_cli.py"
+    ],
+    "live_lenskit_commit": "8e09353ac9eac6c961685db8a69d39b3aa562e78",
+    "validation": [
+      "pytest -q merger/lenskit/tests/test_repobrief_profiles.py merger/lenskit/tests/test_export_safety_report.py merger/lenskit/tests/test_required_reading_protocol.py merger/lenskit/tests/test_repobrief_snapshot_cli.py -> 87 passed",
+      "repobrief_profiles.py marks export_safety_report required/recommended/optional/profile-excluded by profile"
+    ],
+    "verified_acceptance": {
+      "rbv1-t009-scope-bound": "Existing Lenskit main aligns export_safety_report requirements with RepoBrief profiles and surfaces the profile check behavior.",
+      "rbv1-t009-boundary-preserved": "The alignment is profile/read-only policy and does not introduce hidden refresh, Git mutation, review verdicts or runtime correctness claims.",
+      "rbv1-t009-tests-or-gap": "Targeted profile, export safety, required reading and snapshot CLI tests passed: 87 passed.",
+      "rbv1-t009-non-claims": "Export Safety remains diagnostic and does not establish secret absence, PII absence, runtime correctness, test sufficiency, review completeness or merge readiness."
+    },
+    "verification": {
+      "task_sha256": "3f32ef763b997edbb4091ef7585bcc2d4e57a0d59712cc4293ba0d47fa36fbd8",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   },
   "depends_on": [
     "RBV1-T003",

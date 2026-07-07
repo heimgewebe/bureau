@@ -3,7 +3,7 @@
   "id": "COMMONWORLD-ATLAS-V1-T002",
   "initiative": "COMMONWORLD-ATLAS-V1",
   "title": "Build mixed-node visual proof",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 20
@@ -51,7 +51,45 @@
   "metadata": {
     "repo": "heimgewebe/commonworld",
     "plan": "docs/blueprints/commonworld-masterplan.md",
-    "ready_after": "COMMONWORLD-ATLAS-V1-T001 verified by commonworld PR #1"
+    "ready_after": "COMMONWORLD-ATLAS-V1-T001 verified by commonworld PR #1",
+    "outcome": "Static mixed-node visual proof is present on commonworld main and validated.",
+    "implementation_pr": "heimgewebe/commonworld#2",
+    "implementation_merge_commit": "0dad8560fb9a9f2d941d7d5d72f5e7d2dc491e3d",
+    "validated_surfaces": [
+      "proofs/mixed-node/index.html",
+      "proofs/mixed-node/mixed-node.css",
+      "proofs/mixed-node/mixed-node.js",
+      "proofs/mixed-node/seed-projects.json",
+      "scripts/validate_mixed_node_proof.py",
+      "tests/test_mixed_node_proof.py"
+    ],
+    "checks": [
+      "python3 scripts/validate_contracts.py -> commonworld contract validation ok",
+      "python3 scripts/validate_mixed_node_proof.py -> commonworld mixed-node proof validation ok",
+      "python3 -m pytest -q tests/test_mixed_node_proof.py tests/test_contracts.py -> 19 passed, 28 subtests passed"
+    ],
+    "verified_acceptance": {
+      "marker-segments": "weighted aspect segments render in deterministic order",
+      "detail-panel": "node selection opens mobile bottom sheet or desktop side panel",
+      "accessibility": "aspect label, icon token, confidence and evidence are visible; reduced motion rule is present"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "repository": "heimgewebe/commonworld",
+          "number": 2,
+          "state": "merged",
+          "merge_commit": "0dad8560fb9a9f2d941d7d5d72f5e7d2dc491e3d"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "e7919bcd1606d168e14a454e9100e42eb28b10ee8479495a153bc19211745cf2",
+      "plan_sha256": "37e27f4919329addeee583330b0168ea472b468e6d80cadb2559ef0d10f10b2d"
+    }
   },
   "depends_on": [
     "COMMONWORLD-ATLAS-V1-T001"

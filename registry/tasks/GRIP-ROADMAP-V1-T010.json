@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "initiative": "GRIP-ROADMAP-V1",
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "GRIP-ROADMAP-V1-T010",
+  "title": "Define real Captain execution authority contract",
+  "state": "planned",
+  "goal": "Design and implement the explicit contract for any future real Captain execution path, including evaluation-vs-execution authority naming, cryptographic evidence binding, dispatcher or webhook boundaries, and separate review gates.",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T005",
+    "GRIP-ROADMAP-V1-T008"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 100
+  },
+  "acceptance": [
+    {
+      "id": "authority-naming",
+      "assertion": "Evaluation authority and execution authority are separate terms, fields, and gates."
+    },
+    {
+      "id": "execution-contract",
+      "assertion": "Any future execution path has explicit action-specific contracts and remains disabled unless all required authority evidence is present."
+    },
+    {
+      "id": "no-default-mutation",
+      "assertion": "No merge, deploy, restart, fleet mutation or cleanup becomes default or implicitly enabled."
+    }
+  ],
+  "metadata": {
+    "deferred_from": "PR #97 review",
+    "reason": "PR #97 deliberately remains read-only and does not create a real execution authority path."
+  }
+}

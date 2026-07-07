@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "initiative": "GRIP-ROADMAP-V1",
+  "state": "planned",
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "GRIP-ROADMAP-V1-T011",
+  "title": "Harden Captain status projection trust and replay boundary",
+  "goal": "Define and implement a trust contract for Captain status projections, including trusted source identity, schema/version validation, generated-at/max-age freshness, action or target digest binding, and replay resistance before any future privileged decision can use the projection.",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T005",
+    "GRIP-ROADMAP-V1-T008"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 110
+  },
+  "acceptance": [
+    {
+      "id": "source-trust",
+      "assertion": "Captain preflight distinguishes trusted projection sources from caller-declared freshness flags."
+    },
+    {
+      "id": "freshness-window",
+      "assertion": "Projection generated-at and max-age are validated and stale projections fail closed."
+    },
+    {
+      "id": "projection-schema",
+      "assertion": "Projection schema/version and required fields are validated before use."
+    },
+    {
+      "id": "replay-boundary",
+      "assertion": "Projection evidence is bound to action or target digests and contains replay-resistant metadata such as run id, nonce or receipt reference."
+    }
+  ],
+  "metadata": {
+    "deferred_from": "PR #97 review",
+    "reason": "PR #97 hash-binds projection object but does not establish source trust, max-age semantics, schema trust or anti-replay."
+  }
+}

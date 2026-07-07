@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "initiative": "GRIP-ROADMAP-V1",
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "GRIP-ROADMAP-V1-T008",
+  "title": "Bind Captain evidence to action and target digests",
+  "state": "planned",
+  "goal": "Add deterministic action/target digest binding for Captain evidence so review, CI, human authorization, execution authority, and status projection can be tied to the exact requested high-impact envelope.",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T005"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 80
+  },
+  "acceptance": [
+    {
+      "id": "actions-digest",
+      "assertion": "Captain preflight computes a deterministic actions_sha256 over normalized requested actions."
+    },
+    {
+      "id": "target-digest",
+      "assertion": "Each Captain action exposes a deterministic target_sha256 in its receipt."
+    },
+    {
+      "id": "evidence-bound",
+      "assertion": "Review, CI, human authorization, execution authority, and status projection evidence can be checked against action or target digests and mismatches fail closed."
+    }
+  ],
+  "metadata": {
+    "deferred_from": "PR #97 review",
+    "reason": "PR #97 validates structure but does not cryptographically bind all evidence objects to the requested action envelope."
+  }
+}

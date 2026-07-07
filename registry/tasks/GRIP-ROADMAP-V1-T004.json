@@ -30,7 +30,16 @@
   "metadata": {
     "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
     "roadmap_slice": "PR6",
-    "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately."
+    "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately.",
+    "verified_by": "GitHub merge evidence for heimgewebe/grabowski#96",
+    "implementation_pr": "https://github.com/heimgewebe/grabowski/pull/96",
+    "merge_commit": "e6276a96b8ada9e82c48f0afe898f399641de8c8",
+    "verified_at": "2026-07-07T17:01:46Z",
+    "note": "Bureau state was stale relative to GitHub; this registry update records the merged Mechanic/Captain boundary slice.",
+    "verification": {
+      "task_sha256": "b7014151476f3554841b47f0a9efb38954e7d2720439083fdf84a9e2e7cd6775",
+      "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180"
+    }
   },
   "priority": {
     "lane": "later",
@@ -42,7 +51,7 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Add mechanic normal-action loop",
   "depends_on": [
     "GRIP-ROADMAP-V1-T001",

@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "initiative": "GRIP-ROADMAP-V1",
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "GRIP-ROADMAP-V1-T009",
+  "title": "Make Captain preflight validation gate-native",
+  "state": "planned",
+  "goal": "Convert Captain preflight envelope validation failures into structured gate records where feasible, so invalid targets, scopes, recovery records, and evidence bindings are visible in the same gate model as missing evidence.",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T005"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 90
+  },
+  "acceptance": [
+    {
+      "id": "target-gate-failures",
+      "assertion": "Invalid Captain targets are reported as target-bound gate failures rather than only generic preflight errors."
+    },
+    {
+      "id": "scope-gate-failures",
+      "assertion": "Invalid Captain scopes are reported as scope-bound gate failures with bounded details."
+    },
+    {
+      "id": "risk-gate-failures",
+      "assertion": "Missing recovery or irreversibility records are reported as recovery-or-irreversibility gate failures."
+    }
+  ],
+  "metadata": {
+    "deferred_from": "PR #97 review",
+    "reason": "Generic fail-closed errors are safe but less useful for Captain receipts and later audits."
+  }
+}

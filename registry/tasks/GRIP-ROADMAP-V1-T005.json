@@ -30,7 +30,12 @@
   "metadata": {
     "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
     "roadmap_slice": "PR7",
-    "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately."
+    "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately.",
+    "implementation_pr": "https://github.com/heimgewebe/grabowski/pull/97",
+    "implementation_branch": "feat/captain-privileged-action-path-v1",
+    "implementation_head_at_registration": "bd1602350e9a8e1f74acfa7dd1b292f0876f626d",
+    "status_note": "Open implementation PR exists; keep task unverified until PR review and merge evidence are present.",
+    "review_fix_scope": "PR #97 hardens owner/repo target binding, wildcard target rejection, scope typing, irreversible record non-emptiness, and expected_head evidence binding."
   },
   "priority": {
     "lane": "later",

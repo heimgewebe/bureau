@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "initiative": "GRIP-ROADMAP-V1",
+  "state": "planned",
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "GRIP-ROADMAP-V1-T012",
+  "title": "Define Captain action-specific evidence schemas",
+  "goal": "Define action-specific evidence contracts for pr-merge, runtime-deploy, service-restart, fleet-mutation and cleanup-apply so each high-impact action has explicit required review, CI, human authorization, status projection and recovery evidence before any later execution path can exist.",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T005",
+    "GRIP-ROADMAP-V1-T008"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 120
+  },
+  "acceptance": [
+    {
+      "id": "pr-merge-schema",
+      "assertion": "pr-merge evidence schema binds repo, PR number, head, diff, CI, review and human authorization."
+    },
+    {
+      "id": "runtime-deploy-schema",
+      "assertion": "runtime-deploy evidence schema binds service or repo, environment, projection, rollback and deployment boundary."
+    },
+    {
+      "id": "service-restart-schema",
+      "assertion": "service-restart evidence schema binds host, unit, health projection, restart budget and recovery path."
+    },
+    {
+      "id": "fleet-cleanup-schemas",
+      "assertion": "fleet-mutation and cleanup-apply evidence schemas bind target, operation, dry-run/projection evidence and recovery or irreversibility records."
+    }
+  ],
+  "metadata": {
+    "deferred_from": "PR #97 review",
+    "reason": "PR #97 validates generic envelopes but does not define per-action evidence schemas for later execution authority."
+  }
+}

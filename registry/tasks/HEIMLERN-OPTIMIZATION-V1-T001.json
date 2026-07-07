@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "id": "HEIMLERN-OPTIMIZATION-V1-T001",
+  "initiative": "HEIMLERN-OPTIMIZATION-V1",
+  "title": "Feedback-Schema härten",
+  "state": "ready",
+  "goal": "policy.feedback.schema.json von einem inhaltsleeren object-Schema zu einem konkret validierenden Contract mit Positiv- und Negativ-Fixtures härten.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heimlern",
+    "baseline_commit": "9fef180bcabf3fffe9d476127221643acba0ea64"
+  },
+  "claims": [],
+  "acceptance": [
+    {
+      "id": "feedback-schema-concrete",
+      "assertion": "policy.feedback.schema.json definiert die real produzierten Felder und required-Felder explizit."
+    },
+    {
+      "id": "positive-fixture-valid",
+      "assertion": "data/samples/policy.feedback.sample.json validiert weiter grün gegen das gehärtete Schema."
+    },
+    {
+      "id": "negative-fixture-rejected",
+      "assertion": "Ein invalides Feedback-Fixture wird durch validate_json.py oder den CI-äquivalenten Validator abgelehnt."
+    },
+    {
+      "id": "no-refactor-mixed-in",
+      "assertion": "Der Diff enthält keine Feedback-Kern-Refactors und keine additive-bezogene Contract-Änderung."
+    }
+  ],
+  "metadata": {
+    "source_plan": "docs/plans/heimlern-optimization-plan-v1.md",
+    "source_pr": "heimgewebe/heimlern#181",
+    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a"
+  }
+}

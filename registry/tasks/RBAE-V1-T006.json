@@ -3,7 +3,7 @@
   "id": "RBAE-V1-T006",
   "initiative": "REPOBRIEF-AGENT-CODE-EMPOWERMENT-V1",
   "title": "Define agent outcome evaluation loop",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 197
@@ -62,7 +62,24 @@
       "merge_readiness",
       "security_correctness",
       "agent_patch_quality_proven"
-    ]
+    ],
+    "verified_at": "2026-07-07",
+    "outcome": "Defined Agent Outcome Evaluation Loop for RepoBrief-assisted code work.",
+    "contract_path": "docs/rbae-v1-t006.agent-outcome-evaluation-loop.md",
+    "dependency_closure": {
+      "RBAE-V1-T002": "verified",
+      "RBAW-V1-T003": "verified",
+      "RBV1-T017": "verified"
+    },
+    "verified_acceptance": {
+      "rbae-v1-t006-metrics": "Evaluation axes, required metrics and miss taxonomy distinguish localization, evidence completeness, patch scope, check fit and misses.",
+      "rbae-v1-t006-no-self-proof": "No self-proof rule forbids treating agent-authored tests or local green checks as independent correctness proof.",
+      "rbae-v1-t006-sidecar-link": "External observations section consumes Patch Evaluation, CI, review and operator evidence with mandatory non-claims."
+    },
+    "verification": {
+      "task_sha256": "c0c2acf17be281574b3bd328868e9e92e118dd4f25e432a6669fdc868ae5fe06",
+      "plan_sha256": "397bf76c26fd7e743d9ddeb6282defd3cf7d4b019601f8270d0fa272cf6a1512"
+    }
   },
   "depends_on": [
     "RBAE-V1-T002",

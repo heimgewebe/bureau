@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "initiative": "GRIP-ROADMAP-V1",
+  "state": "planned",
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "GRIP-ROADMAP-V1-T013",
+  "title": "Introduce typed Captain envelope model",
+  "goal": "Replace ad-hoc Captain action dictionaries with a typed internal model or dataclass-style validation layer while preserving the public JSON envelope and without changing execution authority.",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T005",
+    "GRIP-ROADMAP-V1-T007"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 130
+  },
+  "acceptance": [
+    {
+      "id": "typed-envelope",
+      "assertion": "Captain action envelope validation is represented by typed internal objects rather than ad-hoc mutated dictionaries."
+    },
+    {
+      "id": "no-public-break",
+      "assertion": "The public captain-preflight JSON input and output contract remains compatible or has an explicit schema-version migration."
+    },
+    {
+      "id": "no-authority-change",
+      "assertion": "The typed model refactor does not add merge, deploy, restart, fleet mutation, cleanup or secret authority."
+    }
+  ],
+  "metadata": {
+    "deferred_from": "PR #97 review",
+    "reason": "PR #97 intentionally avoids large refactor; review identified growing dictionary mutation complexity in _captain_actions."
+  }
+}

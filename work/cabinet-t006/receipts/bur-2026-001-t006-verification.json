@@ -1,8 +1,43 @@
 {
   "acceptance": {
-    "branch_reviewed": "branch drift, file identity, tests and open PR state checked",
-    "closure_lane_bound": "canonical Bureau task records the closure fingerprint",
-    "handoff_safe": "terminal receipt; no external execution continues"
+    "branch_reviewed": "satisfied: branch unique changed paths are exhaustively listed; all scoped files are byte-identical to Cabinet origin/main; focused tests and layout guard pass",
+    "closure_lane_bound": "satisfied: closure brief records lane_id, source fingerprint, branch, repo, and task_id BUR-2026-001-T006",
+    "handoff_safe": "satisfied: terminal receipt records result, evidence, next state, and non-claims"
+  },
+  "branch_diff": {
+    "all_changed_paths_compared": true,
+    "compared_paths": [
+      "scripts/check-cabinet-layout.py",
+      "scripts/workspace_default_cutover.py",
+      "scripts/tests/test_phase4_layout.py",
+      "scripts/tests/test_phase4_rollback_guard.py",
+      "scripts/tests/test_phase4_workspace_identity.py"
+    ],
+    "name_status": [
+      {
+        "path": "scripts/check-cabinet-layout.py",
+        "status": "M"
+      },
+      {
+        "path": "scripts/tests/test_phase4_layout.py",
+        "status": "M"
+      },
+      {
+        "path": "scripts/tests/test_phase4_rollback_guard.py",
+        "status": "M"
+      },
+      {
+        "path": "scripts/tests/test_phase4_workspace_identity.py",
+        "status": "A"
+      },
+      {
+        "path": "scripts/workspace_default_cutover.py",
+        "status": "M"
+      }
+    ],
+    "source_branch": "fix/workspace-room-identity",
+    "source_branch_head": "60825a19e5ccd9ad14fff5db3961edd1a5a0f2a2",
+    "source_branch_parent": "46a630c270858df7c10a00b5720d8f46c9be9667"
   },
   "checks": [
     {
@@ -17,12 +52,36 @@
     },
     {
       "name": "open_pr_probe",
-      "observed": "no open Cabinet pull requests",
+      "observed": "no open Cabinet pull requests at review time",
+      "observed_at": "2026-07-07T13:31:27.201290Z",
+      "open_pr_count": 0,
+      "query": "gh pr list --state open",
+      "repo": "heimgewebe/cabinet",
       "result": "pass"
     }
   ],
+  "closure_lane_binding": {
+    "branch": "fix/workspace-room-identity",
+    "brief_canonical_json_sha256": "06ba71bb95a90f6934d9e947739a2cfc288655652ab7636e598a86e387b2e9a7",
+    "brief_file_sha256": "20e3be8f9529e017a559bed0d07cbc72293e7858f946ed735a5d2c05c70ddb69",
+    "brief_path": "/home/alex/.local/state/bureau-closure/briefs/lane-cabinet-fix-workspace-room-identity-bba0a27921.json",
+    "brief_records_lane_id": true,
+    "brief_records_task_id": true,
+    "lane_id": "lane-cabinet-fix-workspace-room-identity-bba0a27921",
+    "plan_file_sha256": "985b079fa1003921d018b7c1ccff51ddb10051d8f993c605789e3d2eb31e5861",
+    "plan_path": "/home/alex/.local/state/bureau-closure/plan.json",
+    "plan_records_brief_canonical_sha256": true,
+    "repo": "/home/alex/repos/cabinet",
+    "review_latest_file_sha256": "db68f196b1a37acc7f940040b5e0bfe4aa2d431ee9a07c6334a2e19e70eb423b",
+    "review_latest_path": "/home/alex/.local/state/bureau-closure/review-latest.json",
+    "review_latest_records_task_id": true,
+    "source_candidate_fingerprint": "bba0a2792136c7f4fa9bae7e77e7796447dc6eb537652c5fb16067ac44c19fe6",
+    "state_at_review": "reviewing",
+    "status": "verified",
+    "task_id": "BUR-2026-001-T006"
+  },
   "created_at": "2026-07-07T13:31:27.201290Z",
-  "decision": "Old branch file content is already present on current Cabinet origin/main; no fresh Cabinet mutation is required.",
+  "decision": "Closure lane is bound to BUR-2026-001-T006; old branch payload is already present on current Cabinet origin/main, so no fresh Cabinet mutation or PR is required.",
   "file_comparisons": [
     {
       "identical": true,
@@ -56,10 +115,17 @@
     }
   ],
   "kind": "bureau.task_verification_receipt",
+  "merge_path": {
+    "decision": "no_merge_required",
+    "old_branch_cleanup": "left_untouched",
+    "pull_request": "none_required",
+    "reason": "branch payload already present on current Cabinet origin/main"
+  },
   "non_claims": [
-    "does_not_merge_any_pull_request",
+    "does_not_assert_runtime_correctness_beyond_focused_layout_validation",
+    "does_not_claim_the_closure_plan_byte_hash_equals_the_brief_file_hash",
     "does_not_delete_old_branch",
-    "does_not_assert_runtime_correctness_beyond_focused_layout_validation"
+    "does_not_merge_any_pull_request"
   ],
   "outcome": "verified-no-cabinet-pr-needed",
   "schema_version": 1,
@@ -68,6 +134,7 @@
   "source_branch_parent": "46a630c270858df7c10a00b5720d8f46c9be9667",
   "source_repository": "/home/alex/repos/cabinet",
   "task_id": "BUR-2026-001-T006",
+  "updated_at": "2026-07-07T14:32:50.023855Z",
   "validated_head": "3017f3fa54165b0c92122c2674fe2427f5e0a520",
   "validated_ref": "origin/main"
 }

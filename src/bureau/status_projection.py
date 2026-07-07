@@ -168,6 +168,16 @@ def status_projection(
     github_observed = github is not None
     github_healthy = bool(github.get("healthy")) if github_observed else False
     github_blocked_reason = github.get("blocked_reason") if github_observed else None
+    github_binding_healthy = (
+        bool(github.get("binding_healthy", True))
+        if github_observed and github_healthy
+        else None
+    )
+    github_hard_findings = (
+        [item for item in github.get("hard_findings", []) if isinstance(item, dict)]
+        if github_observed and github_healthy
+        else []
+    )
     github_stale = (
         github_observed
         and github_healthy
@@ -182,8 +192,21 @@ def status_projection(
             if isinstance(task_id, str) and task_id:
                 observations_by_task.setdefault(task_id, []).append(observation)
 
+    projection_findings: list[dict[str, Any]] = []
+    if github_observed and github_healthy and github_binding_healthy is False:
+        projection_findings.append(
+            {
+                "severity": "blocker",
+                "code": "github-binding-unhealthy",
+                "message": "GitHub observation contains ambiguous PR bindings",
+                "hard_findings": github_hard_findings,
+            }
+        )
+
     tasks: list[dict[str, Any]] = []
-    hard_findings = 0
+    hard_findings = sum(
+        1 for finding in projection_findings if finding["severity"] == "blocker"
+    )
     for task in sorted(registry.tasks.values(), key=lambda item: item.id):
         findings: list[dict[str, Any]] = []
         unknowns: list[str] = []
@@ -322,10 +345,13 @@ def status_projection(
             "healthy": github_healthy,
             "repository": github.get("repository") if github_observed else None,
             "blocked_reason": github_blocked_reason,
+            "binding_healthy": github_binding_healthy,
+            "hard_findings": github_hard_findings,
             "observed_at": github.get("observed_at") if github_observed else None,
             "stale": github_stale,
         },
         "healthy": healthy,
+        "findings": projection_findings,
         "tasks": tasks,
         "does_not_establish": list(PROJECTION_DOES_NOT_ESTABLISH),
     }

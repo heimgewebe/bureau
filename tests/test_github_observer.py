@@ -209,8 +209,16 @@ def test_checks_summaries() -> None:
     assert summarize_checks(pending)["summary"] == "ci_pending"
     passed = [{"name": "ci", "status": "COMPLETED", "conclusion": "SUCCESS"}]
     assert summarize_checks(passed)["summary"] == "ci_passed"
+    skipped = [{"name": "optional", "status": "COMPLETED", "conclusion": "SKIPPED"}]
+    assert summarize_checks(skipped)["summary"] == "ci_unknown"
+    neutral = [{"name": "optional", "status": "COMPLETED", "conclusion": "NEUTRAL"}]
+    assert summarize_checks(neutral)["summary"] == "ci_unknown"
+    success_with_skipped = [*passed, *skipped]
+    assert summarize_checks(success_with_skipped)["summary"] == "ci_passed"
     failed = [*passed, {"name": "lint", "status": "COMPLETED", "conclusion": "FAILURE"}]
     assert summarize_checks(failed)["summary"] == "ci_failed"
+    failed_with_skipped = [*skipped, {"name": "lint", "conclusion": "FAILURE"}]
+    assert summarize_checks(failed_with_skipped)["summary"] == "ci_failed"
     mixed = [*pending, {"name": "lint", "conclusion": "FAILURE"}]
     assert summarize_checks(mixed)["summary"] == "ci_failed"
     status_context = [{"context": "external", "state": "PENDING"}]

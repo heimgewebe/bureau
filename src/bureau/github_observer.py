@@ -53,7 +53,8 @@ CI_FAILED = "ci_failed"
 CI_PASSED = "ci_passed"
 
 _FAILED_CONCLUSIONS = {"FAILURE", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED", "STARTUP_FAILURE"}
-_PASSED_CONCLUSIONS = {"SUCCESS", "NEUTRAL", "SKIPPED"}
+_PASSED_CONCLUSIONS = {"SUCCESS"}
+_NEUTRAL_CONCLUSIONS = {"NEUTRAL", "SKIPPED"}
 _PENDING_STATUSES = {"QUEUED", "IN_PROGRESS", "PENDING", "WAITING", "REQUESTED", "EXPECTED"}
 
 OBSERVATION_DOES_NOT_ESTABLISH = (
@@ -91,6 +92,8 @@ def _check_item_state(item: dict[str, Any]) -> str:
         return "failed"
     if conclusion in _PASSED_CONCLUSIONS:
         return "passed"
+    if conclusion in _NEUTRAL_CONCLUSIONS:
+        return "neutral"
     status = str(item.get("status") or item.get("state") or "").upper()
     if status in _FAILED_CONCLUSIONS or status in {"FAILURE", "ERROR"}:
         return "failed"
@@ -118,10 +121,10 @@ def summarize_checks(rollup: Any) -> dict[str, Any]:
         summary = CI_FAILED
     elif "pending" in states:
         summary = CI_PENDING
-    elif "unknown" in states or not items:
-        summary = CI_UNKNOWN
-    else:
+    elif any(value == "passed" for value in states) and states.issubset({"passed", "neutral"}):
         summary = CI_PASSED
+    else:
+        summary = CI_UNKNOWN
     return {"summary": summary, "items": items}
 
 

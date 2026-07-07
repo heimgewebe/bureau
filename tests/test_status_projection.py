@@ -297,6 +297,44 @@ def test_ambiguous_github_binding_is_a_hard_finding(registry_factory) -> None:
     assert projection["healthy"] is False
 
 
+def test_unbound_unhealthy_github_binding_is_top_level_blocker(registry_factory) -> None:
+    root = registry_factory()
+    github = github_observation(None)
+    github["binding_healthy"] = False
+    github["hard_findings"] = [
+        {
+            "severity": "blocker",
+            "code": "ambiguous-github-binding",
+            "message": "multiple-bureau-task-markers",
+            "number": 9,
+            "task_id": None,
+        }
+    ]
+    github["pull_requests"] = [
+        {
+            "number": 9,
+            "binding": "ambiguous",
+            "confidence": None,
+            "ambiguous_reason": "multiple-bureau-task-markers",
+            "task_id": None,
+            "observed_at": NOW,
+        }
+    ]
+
+    projection = project(root, github=github)
+
+    assert projection["healthy"] is False
+    assert projection["github_observation"]["healthy"] is True
+    assert projection["github_observation"]["binding_healthy"] is False
+    assert (
+        projection["github_observation"]["hard_findings"][0]["code"]
+        == "ambiguous-github-binding"
+    )
+    assert projection["findings"][0]["code"] == "github-binding-unhealthy"
+    entry = task_entry(projection, TASK_1)
+    assert entry["github"] is None
+
+
 def test_declared_lane_without_queue_entry_is_reported(registry_factory) -> None:
     root = registry_factory()
     queue_path = root / "registry/queue.json"
@@ -331,6 +369,7 @@ def test_projection_is_stable_and_read_only(registry_factory) -> None:
         "state_store",
         "github_observation",
         "healthy",
+        "findings",
         "tasks",
         "does_not_establish",
     } <= set(first)

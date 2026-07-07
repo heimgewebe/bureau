@@ -3,7 +3,7 @@
   "id": "RBAE-V1-T005",
   "initiative": "REPOBRIEF-AGENT-CODE-EMPOWERMENT-V1",
   "title": "Expose read-only agent code workbench surfaces",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 196
@@ -62,7 +62,24 @@
       "merge_readiness",
       "security_correctness",
       "agent_patch_quality_proven"
-    ]
+    ],
+    "verified_at": "2026-07-07",
+    "outcome": "Defined read-only Agent Code Workbench surfaces aligned with RepoBrief MCP boundary.",
+    "contract_path": "docs/rbae-v1-t005.agent-workbench-surfaces.md",
+    "dependency_closure": {
+      "RBAE-V1-T003": "verified",
+      "RBAE-V1-T004": "verified",
+      "RBV1-T010": "verified"
+    },
+    "verified_acceptance": {
+      "rbae-v1-t005-read-only": "Boundary section requires all surfaces to read only existing RepoBrief artifacts and forbids refresh, Git mutation, test verdicts and PR changes.",
+      "rbae-v1-t005-ergonomics": "Surface catalog and result rules define small structured outputs with availability, gaps, citations/range refs and non-claims.",
+      "rbae-v1-t005-mcp-alignment": "MCP alignment section reuses RBV1-T010 and avoids a parallel authority layer."
+    },
+    "verification": {
+      "task_sha256": "55787f9871a41da937cc00c51e1617f2b5d3f4cb9dd519d43f72f85cdff7da52",
+      "plan_sha256": "397bf76c26fd7e743d9ddeb6282defd3cf7d4b019601f8270d0fa272cf6a1512"
+    }
   },
   "depends_on": [
     "RBAE-V1-T003",

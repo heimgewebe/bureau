@@ -7,7 +7,7 @@
   "goal": "Define the return path from Bureau/Grabowski execution evidence to Cabinet outcomes and Heimlern proposal-only learning input.",
   "priority": {
     "lane": "later",
-    "rank": 260
+    "rank": 270
   },
   "required_capabilities": [
     "repository",
@@ -44,7 +44,7 @@
       "claim_truth",
       "autonomous_dispatch"
     ],
-    "phase": "CCFG-6",
+    "phase": "CCFG-7",
     "target_repository": "heimgewebe/bureau"
   },
   "acceptance": [

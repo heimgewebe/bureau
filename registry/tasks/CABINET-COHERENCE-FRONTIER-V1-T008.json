@@ -10,7 +10,7 @@
   "goal": "Verify whether Gemini can be used as local proposal-only review capacity before it is treated as an operational review lane.",
   "priority": {
     "lane": "later",
-    "rank": 255
+    "rank": 250
   },
   "required_capabilities": [
     "repository",

@@ -2,12 +2,12 @@
   "schema_version": 1,
   "id": "CABINET-COHERENCE-FRONTIER-V1-T007",
   "initiative": "CABINET-COHERENCE-FRONTIER-V1",
-  "title": "Project Cabinet coherence status read-only",
+  "title": "Project Cabinet coherence status in Leitstand read-only",
   "state": "planned",
-  "goal": "Expose Cabinet map/frontier, Bureau queue/import state, PR/CI status and agent-lane state as a read-only projection for Leitstand or Schauwerk.",
+  "goal": "Expose Cabinet map/frontier, Bureau queue/import state, PR/CI status and agent-lane state as a read-only Leitstand projection.",
   "priority": {
     "lane": "later",
-    "rank": 270
+    "rank": 280
   },
   "required_capabilities": [
     "repository",
@@ -44,8 +44,10 @@
       "claim_truth",
       "autonomous_dispatch"
     ],
-    "phase": "CCFG-7",
-    "target_repository": "heimgewebe/leitstand_or_schauwerk"
+    "phase": "CCFG-8",
+    "target_repository": "heimgewebe/leitstand",
+    "display_surface": "leitstand",
+    "schauwerk_boundary": "not claimed; requires separate Bureau resource and task if selected later"
   },
   "acceptance": [
     {
@@ -63,6 +65,10 @@
     {
       "id": "map-linked",
       "assertion": "The Ecosystem Registry Map remains linked as the orientation surface."
+    },
+    {
+      "id": "no-schauwerk-claim",
+      "assertion": "Task does not claim a Schauwerk write surface unless that resource is registered separately."
     }
   ],
   "depends_on": [

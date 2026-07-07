@@ -7,7 +7,7 @@
   "goal": "Define and test a Gemini review/scout lane that consumes bounded non-credential context and returns structured proposal-only findings or patch suggestions.",
   "priority": {
     "lane": "later",
-    "rank": 250
+    "rank": 260
   },
   "required_capabilities": [
     "repository",
@@ -39,7 +39,7 @@
       "claim_truth",
       "autonomous_dispatch"
     ],
-    "phase": "CCFG-5",
+    "phase": "CCFG-6",
     "target_repository": "heimgewebe/bureau",
     "agent_pool": "gemini",
     "agent_authority": "proposal_only"
@@ -60,9 +60,13 @@
     {
       "id": "human-or-grabowski-gate",
       "assertion": "Any patch proposal requires Grabowski or human review before effect."
+    },
+    {
+      "id": "preflight-required",
+      "assertion": "The Gemini review lane is not active until the Gemini capability and sandbox preflight task is accepted."
     }
   ],
   "depends_on": [
-    "CABINET-COHERENCE-FRONTIER-V1-T003"
+    "CABINET-COHERENCE-FRONTIER-V1-T008"
   ]
 }

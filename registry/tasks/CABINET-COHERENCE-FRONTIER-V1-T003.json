@@ -58,6 +58,10 @@
     {
       "id": "invalid-blocks",
       "assertion": "Invalid, ambiguous or high-risk candidates are blocked with a reason."
+    },
+    {
+      "id": "existing-bridge-surface",
+      "assertion": "Implementation accounts for existing Cabinet bridge and promotion surfaces, and does not add a second undocumented import path."
     }
   ],
   "depends_on": [

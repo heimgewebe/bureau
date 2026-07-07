@@ -26,7 +26,7 @@
   },
   "metadata": {
     "plan_path": "docs/plans/cabinet-coherence-frontier-gemini-lane-v1.md",
-    "safety_boundary": "gated design and registration only; no dispatch, merge, runtime mutation, credential exposure or automatic queue mutation",
+    "safety_boundary": "reviewed one-task registry import only; no automatic import, no queue mutation, no dispatch, no merge, no runtime mutation, no completion authority",
     "does_not_establish": [
       "task_approval",
       "merge_readiness",
@@ -35,7 +35,8 @@
       "autonomous_dispatch"
     ],
     "phase": "CCFG-4",
-    "target_repository": "heimgewebe/bureau"
+    "target_repository": "heimgewebe/bureau",
+    "authority_model": "Task creation can become allowed only for an explicit apply command after a valid review receipt; dispatch and queue mutation remain separately gated."
   },
   "acceptance": [
     {
@@ -53,6 +54,10 @@
     {
       "id": "collision-check",
       "assertion": "Import checks existing tasks and queue for duplicate source fingerprints or target collisions."
+    },
+    {
+      "id": "existing-promotion-surface",
+      "assertion": "Implementation accounts for the existing Cabinet promotion import surface before adding or changing import behavior."
     }
   ],
   "depends_on": [

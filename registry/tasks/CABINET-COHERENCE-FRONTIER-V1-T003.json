@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "CABINET-COHERENCE-FRONTIER-V1-T003",
+  "initiative": "CABINET-COHERENCE-FRONTIER-V1",
+  "title": "Build Bureau frontier reader preview gate",
+  "state": "planned",
+  "goal": "Add a Bureau read-only reader that validates Cabinet Frontier records and produces preview/review/receipt evidence without importing tasks.",
+  "priority": {
+    "lane": "later",
+    "rank": 230
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.cabinet",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/cabinet-coherence-frontier-gemini-lane-v1.md",
+    "safety_boundary": "gated design and registration only; no dispatch, merge, runtime mutation, credential exposure or automatic queue mutation",
+    "does_not_establish": [
+      "task_approval",
+      "merge_readiness",
+      "runtime_correctness",
+      "claim_truth",
+      "autonomous_dispatch"
+    ],
+    "phase": "CCFG-3",
+    "target_repository": "heimgewebe/bureau"
+  },
+  "acceptance": [
+    {
+      "id": "reader-readonly",
+      "assertion": "The reader accepts only schema-valid Cabinet Frontier records and performs no registry mutation."
+    },
+    {
+      "id": "review-checks",
+      "assertion": "Review checks target repo, evidence, risk, acceptance, collision risk and forbidden effect flags."
+    },
+    {
+      "id": "receipt-non-effects",
+      "assertion": "Receipt records importAllowed, dispatchAllowed, queueMutationAllowed and taskCreationAllowed as false for this phase."
+    },
+    {
+      "id": "invalid-blocks",
+      "assertion": "Invalid, ambiguous or high-risk candidates are blocked with a reason."
+    },
+    {
+      "id": "existing-bridge-surface",
+      "assertion": "Implementation accounts for src/bureau/cabinet_bridge.py, cabinet_bridge_preview.py, cabinet_bridge_review.py, cabinet_bridge_receipt.py and cabinet_promotion_write.py before adding or changing a Cabinet reader path."
+    }
+  ],
+  "depends_on": [
+    "CABINET-COHERENCE-FRONTIER-V1-T002"
+  ]
+}

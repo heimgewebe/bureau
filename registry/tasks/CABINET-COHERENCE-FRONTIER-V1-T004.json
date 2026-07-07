@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "CABINET-COHERENCE-FRONTIER-V1-T004",
+  "initiative": "CABINET-COHERENCE-FRONTIER-V1",
+  "title": "Implement reviewed one-task Cabinet import",
+  "state": "planned",
+  "goal": "Allow Bureau to import exactly one reviewed Cabinet Frontier candidate as a Bureau task through an explicit apply gate, without dispatching or merging.",
+  "priority": {
+    "lane": "later",
+    "rank": 240
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/cabinet-coherence-frontier-gemini-lane-v1.md",
+    "safety_boundary": "reviewed one-task registry import only; no automatic import, no queue mutation, no dispatch, no merge, no runtime mutation, no completion authority",
+    "does_not_establish": [
+      "task_approval",
+      "merge_readiness",
+      "runtime_correctness",
+      "claim_truth",
+      "autonomous_dispatch"
+    ],
+    "phase": "CCFG-4",
+    "target_repository": "heimgewebe/bureau",
+    "authority_model": "Task creation can become allowed only for an explicit apply command after a valid review receipt; dispatch and queue mutation remain separately gated."
+  },
+  "acceptance": [
+    {
+      "id": "review-required",
+      "assertion": "Import requires a valid Bureau review receipt bound to the exact source candidate."
+    },
+    {
+      "id": "exclusive-task-create",
+      "assertion": "Apply creates exactly one registry task file with exclusive create and rejects duplicates."
+    },
+    {
+      "id": "no-dispatch",
+      "assertion": "Import does not dispatch agents, mutate runtime, merge, push or mark work done."
+    },
+    {
+      "id": "collision-check",
+      "assertion": "Import checks existing tasks and queue for duplicate source fingerprints or target collisions."
+    },
+    {
+      "id": "existing-promotion-surface",
+      "assertion": "Implementation reuses, extends or explicitly supersedes src/bureau/cabinet_promotion_write.py before adding or changing import behavior."
+    }
+  ],
+  "depends_on": [
+    "CABINET-COHERENCE-FRONTIER-V1-T003"
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "id": "CABINET-COHERENCE-FRONTIER-V1-T008",
+  "initiative": "CABINET-COHERENCE-FRONTIER-V1",
+  "title": "Verify Gemini capability and sandbox boundary",
+  "state": "planned",
+  "depends_on": [
+    "CABINET-COHERENCE-FRONTIER-V1-T003"
+  ],
+  "goal": "Verify whether Gemini can be used as local proposal-only review capacity before it is treated as an operational review lane.",
+  "priority": {
+    "lane": "later",
+    "rank": 250
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/cabinet-coherence-frontier-gemini-lane-v1.md",
+    "safety_boundary": "preflight only; no dispatch, merge, runtime mutation, repository mutation by Gemini, or automatic queue mutation",
+    "does_not_establish": [
+      "task_approval",
+      "merge_readiness",
+      "runtime_correctness",
+      "claim_truth",
+      "autonomous_dispatch",
+      "gemini_availability",
+      "gemini_write_authority"
+    ],
+    "phase": "CCFG-5-preflight",
+    "target_repository": "heimgewebe/bureau",
+    "agent_pool": "gemini",
+    "agent_authority": "preflight_only",
+    "write_scope": "Bureau documentation or task evidence only; Gemini runner itself receives no repository write authority."
+  },
+  "acceptance": [
+    {
+      "id": "availability-observed",
+      "assertion": "Gemini runner availability is observed, or unavailability is recorded as a blocker."
+    },
+    {
+      "id": "noninteractive-mode",
+      "assertion": "A non-interactive execution mode and output capture path are documented or blocked."
+    },
+    {
+      "id": "context-boundary",
+      "assertion": "The preflight documents which inputs Gemini may inspect and which sensitive values are excluded."
+    },
+    {
+      "id": "no-agent-effect",
+      "assertion": "The preflight does not run Gemini with write, push, merge, runtime or repository mutation authority."
+    },
+    {
+      "id": "lane-dependency",
+      "assertion": "The later Gemini review lane is not treated as active capacity until this preflight is accepted."
+    },
+    {
+      "id": "bureau-write-scope",
+      "assertion": "Any write claim is limited to Bureau evidence or documentation updates by Grabowski; Gemini itself receives no repository write capability."
+    }
+  ]
+}

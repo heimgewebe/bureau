@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "id": "CABINET-COHERENCE-FRONTIER-V1-T007",
+  "initiative": "CABINET-COHERENCE-FRONTIER-V1",
+  "title": "Project Cabinet coherence status in Leitstand read-only",
+  "state": "planned",
+  "goal": "Expose Cabinet map/frontier, Bureau queue/import state, PR/CI status and agent-lane state as a read-only Leitstand projection.",
+  "priority": {
+    "lane": "later",
+    "rank": 280
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.cabinet",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/cabinet-coherence-frontier-gemini-lane-v1.md",
+    "safety_boundary": "gated design and registration only; no dispatch, merge, runtime mutation, credential exposure or automatic queue mutation",
+    "does_not_establish": [
+      "task_approval",
+      "merge_readiness",
+      "runtime_correctness",
+      "claim_truth",
+      "autonomous_dispatch"
+    ],
+    "phase": "CCFG-8",
+    "target_repository": "heimgewebe/leitstand",
+    "display_surface": "leitstand",
+    "schauwerk_boundary": "not claimed; requires separate Bureau resource and task if selected later"
+  },
+  "acceptance": [
+    {
+      "id": "projection-boundary",
+      "assertion": "Projection distinguishes Cabinet canon, Bureau registry, GitHub/CI facts, runtime facts and display state."
+    },
+    {
+      "id": "readonly-display",
+      "assertion": "The projection cannot approve, dispatch, import, merge or mutate queue/runtime state."
+    },
+    {
+      "id": "blocked-visible",
+      "assertion": "Blocked candidates and missing evidence are visible instead of smoothed over."
+    },
+    {
+      "id": "map-linked",
+      "assertion": "The Ecosystem Registry Map remains linked as the orientation surface."
+    },
+    {
+      "id": "no-schauwerk-claim",
+      "assertion": "Task does not claim a Schauwerk write surface unless that resource is registered separately."
+    },
+    {
+      "id": "preflight-state-visible",
+      "assertion": "The projection distinguishes Gemini preflight blocked, unavailable, available and proposal-only states."
+    }
+  ],
+  "depends_on": [
+    "CABINET-COHERENCE-FRONTIER-V1-T002",
+    "CABINET-COHERENCE-FRONTIER-V1-T006"
+  ]
+}

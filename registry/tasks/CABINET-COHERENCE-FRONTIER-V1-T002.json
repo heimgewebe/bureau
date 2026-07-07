@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "CABINET-COHERENCE-FRONTIER-V1-T002",
+  "initiative": "CABINET-COHERENCE-FRONTIER-V1",
+  "title": "Define Cabinet frontier contract",
+  "state": "planned",
+  "goal": "Define a schema-bound Cabinet Frontier that turns maintenance findings and live signals into Bureau-importable candidates without creating Bureau tasks or dispatching work.",
+  "priority": {
+    "lane": "later",
+    "rank": 220
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.cabinet",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/cabinet-coherence-frontier-gemini-lane-v1.md",
+    "safety_boundary": "gated design and registration only; no dispatch, merge, runtime mutation, credential exposure or automatic queue mutation",
+    "does_not_establish": [
+      "task_approval",
+      "merge_readiness",
+      "runtime_correctness",
+      "claim_truth",
+      "autonomous_dispatch"
+    ],
+    "phase": "CCFG-2",
+    "target_repository": "heimgewebe/cabinet"
+  },
+  "acceptance": [
+    {
+      "id": "frontier-contract",
+      "assertion": "A Cabinet Frontier contract documents candidate fields, evidence, risk, acceptance, forbidden effects and proposal-only semantics."
+    },
+    {
+      "id": "frontier-schema",
+      "assertion": "A JSON schema or equivalent validator exists for Cabinet Frontier records."
+    },
+    {
+      "id": "producer-non-effects",
+      "assertion": "The producer keeps Bureau task creation, queue mutation, dispatch, merge, runtime mutation, cleanup and dump generation disabled."
+    },
+    {
+      "id": "ci-bound",
+      "assertion": "Contract and producer are covered by deterministic tests or a recorded blocked reason."
+    }
+  ],
+  "depends_on": [
+    "CABINET-COHERENCE-FRONTIER-V1-T001"
+  ]
+}

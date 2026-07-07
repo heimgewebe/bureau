@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "id": "CABINET-COHERENCE-FRONTIER-V1-T005",
+  "initiative": "CABINET-COHERENCE-FRONTIER-V1",
+  "title": "Add Gemini proposal-only review lane",
+  "state": "planned",
+  "goal": "Define and test a Gemini review/scout lane that consumes bounded context without sensitive values and returns structured proposal-only findings or patch suggestions.",
+  "priority": {
+    "lane": "later",
+    "rank": 260
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/cabinet-coherence-frontier-gemini-lane-v1.md",
+    "safety_boundary": "proposal-only review lane after preflight; no push, merge, runtime mutation, repository mutation by Gemini, credential exposure, automatic dispatch, or queue mutation",
+    "does_not_establish": [
+      "task_approval",
+      "merge_readiness",
+      "runtime_correctness",
+      "claim_truth",
+      "autonomous_dispatch",
+      "gemini_write_authority",
+      "gemini_schedulable_capacity"
+    ],
+    "phase": "CCFG-6",
+    "target_repository": "heimgewebe/bureau",
+    "agent_pool": "gemini",
+    "agent_authority": "proposal_only",
+    "ordering_note": "Execution order is governed by depends_on; this task remains blocked until T008 is accepted."
+  },
+  "acceptance": [
+    {
+      "id": "briefing-schema",
+      "assertion": "Agent briefing requires allowed_scope, forbidden_changes, input_artifacts, output_schema, max_runtime and no-credential/no-push/no-merge/no-runtime-mutation constraints."
+    },
+    {
+      "id": "output-schema",
+      "assertion": "Gemini output is machine-readable and limited to proposal, blocked or no_action outcomes."
+    },
+    {
+      "id": "sandbox-boundary",
+      "assertion": "The lane does not grant write, push, merge, runtime or credential authority to Gemini."
+    },
+    {
+      "id": "human-or-grabowski-gate",
+      "assertion": "Any patch proposal requires Grabowski or human review before effect."
+    },
+    {
+      "id": "preflight-required",
+      "assertion": "The Gemini review lane is not active until the Gemini capability and sandbox preflight task is accepted."
+    }
+  ],
+  "depends_on": [
+    "CABINET-COHERENCE-FRONTIER-V1-T008"
+  ]
+}

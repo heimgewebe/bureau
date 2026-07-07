@@ -3,7 +3,7 @@
   "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T001",
   "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
   "title": "Resolve Chronik service bootstrap PR lane",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 20
@@ -64,6 +64,23 @@
       "merge_permission",
       "service_runtime_active",
       "deploy_readiness"
-    ]
+    ],
+    "verification": {
+      "task_sha256": "cb29053a695214129e9afae7cc07e223aeae4e20ec9877161d36c2e9331dd59c",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "repository": "heimgewebe/chronik",
+          "number": 206,
+          "state": "merged",
+          "merge_commit": "e9d6b7d"
+        }
+      ]
+    }
   }
 }

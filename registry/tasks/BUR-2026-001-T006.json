@@ -1,33 +1,88 @@
 {
-  "schema_version": 1,
-  "id": "BUR-2026-001-T006",
-  "initiative": "BUR-2026-001",
-  "title": "Bind Cabinet workspace room closure lane",
-  "state": "planned",
-  "goal": "Bind the Cabinet fix/workspace-room-identity branch to a canonical Bureau task before the lane is used for execution.",
-  "depends_on": ["BUR-2026-001-T001"],
-  "required_capabilities": ["repository", "shell"],
-  "priority": {"lane": "next", "rank": 60},
+  "acceptance": [
+    {
+      "assertion": "The matching closure lane records this canonical task id.",
+      "id": "closure-lane-bound"
+    },
+    {
+      "assertion": "The branch status, tests, and merge path are checked.",
+      "id": "branch-reviewed"
+    },
+    {
+      "assertion": "A valid brief and this task binding exist before execution.",
+      "id": "handoff-safe"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.cabinet"
+    },
+    {
+      "amount": 1,
+      "isolation": "none",
+      "mode": "capacity",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "BUR-2026-001-T001"
+  ],
   "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/cabinet"
+    ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "preferred_host": "heim-pc",
-    "working_repository": "/home/alex/repos/cabinet",
-    "grabowski_resources": ["repo:/home/alex/repos/cabinet"]
+    "working_repository": "/home/alex/repos/cabinet"
   },
-  "claims": [
-    {"resource": "repo.cabinet", "mode": "write", "isolation": "worktree"},
-    {"resource": "host.heim-pc", "mode": "capacity", "amount": 1, "isolation": "none"}
-  ],
-  "acceptance": [
-    {"id": "closure-lane-bound", "assertion": "The matching closure lane records this canonical task id."},
-    {"id": "branch-reviewed", "assertion": "The branch status, tests, and merge path are checked."},
-    {"id": "handoff-safe", "assertion": "A valid brief and this task binding exist before execution."}
-  ],
+  "goal": "Bind the Cabinet fix/workspace-room-identity branch to a canonical Bureau task before the lane is used for execution.",
+  "id": "BUR-2026-001-T006",
+  "initiative": "BUR-2026-001",
   "metadata": {
-    "source_repository": "/home/alex/repos/cabinet",
+    "binding_proof": {
+      "file_identity": "all scoped branch files are byte-identical to current Cabinet origin/main",
+      "focused_tests": "20 unittest tests pass; layout guard passes",
+      "implemented_at": "2026-07-07T13:31:27.201290Z",
+      "proof_path": "work/cabinet-t006/receipts/bur-2026-001-t006-verification.json",
+      "proof_sha256": "1741e1c7943afda4e7dd470d77b604cbb106bbdfcb531703b11d16f252d4550b",
+      "review_checkout": "/home/alex/repos/cabinet-worktrees/bur-2026-001-t006-workspace-room-identity-v2",
+      "review_head": "3017f3fa54165b0c92122c2674fe2427f5e0a520",
+      "selected_lane_id": "lane-cabinet-fix-workspace-room-identity-bba0a27921",
+      "source_branch_head": "60825a19e5ccd9ad14fff5db3961edd1a5a0f2a2",
+      "status": "verified-by-local-proof"
+    },
+    "closure_fingerprints": [
+      "bba0a2792136c7f4fa9bae7e77e7796447dc6eb537652c5fb16067ac44c19fe6"
+    ],
+    "closure_lane_ids": [
+      "lane-cabinet-fix-workspace-room-identity-bba0a27921"
+    ],
+    "created_for": "closure-lane-canonical-binding",
+    "outcome": "Old Cabinet workspace room identity branch is already represented on current origin/main; no new Cabinet PR is required.",
     "source_branch": "fix/workspace-room-identity",
-    "closure_fingerprints": ["bba0a2792136c7f4fa9bae7e77e7796447dc6eb537652c5fb16067ac44c19fe6"],
-    "created_for": "closure-lane-canonical-binding"
-  }
+    "source_head": "60825a19e5ccd9ad14fff5db3961edd1a5a0f2a2",
+    "source_repository": "/home/alex/repos/cabinet",
+    "validated_head": "3017f3fa54165b0c92122c2674fe2427f5e0a520",
+    "verification": {
+      "plan_sha256": "a693177e04de7b0c356ae6e029ae30b206092e6c8cbf3f1096f669e64cc5cf61",
+      "proof_sha256": "1741e1c7943afda4e7dd470d77b604cbb106bbdfcb531703b11d16f252d4550b",
+      "task_preimage_sha256": "2a9ee4ac0f405bebb46c4ac49c0b1166d98a5ae0d4fcb32dc08dde0c0d85f74d",
+      "task_sha256": "95eb84f0846017ae7492a1489d2c0f3891cb596b9f7cfc54d306b2c40a2fb909",
+      "verified_at": "2026-07-07T13:31:27.201290Z"
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 60
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Bind Cabinet workspace room closure lane"
 }

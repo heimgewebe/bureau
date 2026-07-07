@@ -1,0 +1,73 @@
+{
+  "acceptance": {
+    "branch_reviewed": "branch drift, file identity, tests and open PR state checked",
+    "closure_lane_bound": "canonical Bureau task records the closure fingerprint",
+    "handoff_safe": "terminal receipt; no external execution continues"
+  },
+  "checks": [
+    {
+      "name": "focused_unittest",
+      "observed": "20 tests OK",
+      "result": "pass"
+    },
+    {
+      "name": "layout_guard",
+      "observed": "CABINET-LAYOUT-GUARD PASS",
+      "result": "pass"
+    },
+    {
+      "name": "open_pr_probe",
+      "observed": "no open Cabinet pull requests",
+      "result": "pass"
+    }
+  ],
+  "created_at": "2026-07-07T13:31:27.201290Z",
+  "decision": "Old branch file content is already present on current Cabinet origin/main; no fresh Cabinet mutation is required.",
+  "file_comparisons": [
+    {
+      "identical": true,
+      "main_sha256": "69de0d0412bd03c37e5d971b14ad03de43e35c1eb999d74f8544b26b42db6873",
+      "old_sha256": "69de0d0412bd03c37e5d971b14ad03de43e35c1eb999d74f8544b26b42db6873",
+      "path": "scripts/check-cabinet-layout.py"
+    },
+    {
+      "identical": true,
+      "main_sha256": "0f0f1ae7c6524884526a84ffcb1f2ab69b4408c8b10370cfa4f4680dc3e776c6",
+      "old_sha256": "0f0f1ae7c6524884526a84ffcb1f2ab69b4408c8b10370cfa4f4680dc3e776c6",
+      "path": "scripts/workspace_default_cutover.py"
+    },
+    {
+      "identical": true,
+      "main_sha256": "abd8b8ea9ee8bd86722a51c20851e33d494ce08ad2823848dd228b422e5ae5a6",
+      "old_sha256": "abd8b8ea9ee8bd86722a51c20851e33d494ce08ad2823848dd228b422e5ae5a6",
+      "path": "scripts/tests/test_phase4_layout.py"
+    },
+    {
+      "identical": true,
+      "main_sha256": "000da760f239a17ae2b312754195e0a24833f1e5409779964d9e65dbd4d2354a",
+      "old_sha256": "000da760f239a17ae2b312754195e0a24833f1e5409779964d9e65dbd4d2354a",
+      "path": "scripts/tests/test_phase4_rollback_guard.py"
+    },
+    {
+      "identical": true,
+      "main_sha256": "34c1797e69c8e61019360ccf79d57f832287b9334d1371f9c98b0b7d675b0e6d",
+      "old_sha256": "34c1797e69c8e61019360ccf79d57f832287b9334d1371f9c98b0b7d675b0e6d",
+      "path": "scripts/tests/test_phase4_workspace_identity.py"
+    }
+  ],
+  "kind": "bureau.task_verification_receipt",
+  "non_claims": [
+    "does_not_merge_any_pull_request",
+    "does_not_delete_old_branch",
+    "does_not_assert_runtime_correctness_beyond_focused_layout_validation"
+  ],
+  "outcome": "verified-no-cabinet-pr-needed",
+  "schema_version": 1,
+  "source_branch": "fix/workspace-room-identity",
+  "source_branch_head": "60825a19e5ccd9ad14fff5db3961edd1a5a0f2a2",
+  "source_branch_parent": "46a630c270858df7c10a00b5720d8f46c9be9667",
+  "source_repository": "/home/alex/repos/cabinet",
+  "task_id": "BUR-2026-001-T006",
+  "validated_head": "3017f3fa54165b0c92122c2674fe2427f5e0a520",
+  "validated_ref": "origin/main"
+}

@@ -3,7 +3,7 @@
   "id": "RBV1-T017",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Run retrieval v2 promotion evaluation",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 170
@@ -67,7 +67,34 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "verified_at": "2026-07-07",
+    "outcome": "Verified existing Lenskit retrieval v2 promotion evaluation surfaces on current main.",
+    "live_lenskit_commit": "8e09353ac9eac6c961685db8a69d39b3aa562e78",
+    "implementation_paths": [
+      "merger/lenskit/retrieval/eval_core.py",
+      "merger/lenskit/retrieval/retrieval_promotion_gate.py",
+      "merger/lenskit/retrieval/review_eval.py",
+      "merger/lenskit/tests/test_retrieval_eval.py",
+      "merger/lenskit/tests/test_retrieval_promotion_gate.py",
+      "merger/lenskit/tests/test_review_intent_router_audit.py",
+      "merger/lenskit/tests/test_review_retrieval_metrics.py",
+      "merger/lenskit/tests/test_context_quality.py"
+    ],
+    "validation": [
+      "pytest -q merger/lenskit/tests/test_retrieval_eval.py merger/lenskit/tests/test_retrieval_promotion_gate.py -> 44 passed",
+      "pytest -q merger/lenskit/tests/test_review_intent_router_audit.py merger/lenskit/tests/test_review_retrieval_metrics.py merger/lenskit/tests/test_context_quality.py -> 63 passed"
+    ],
+    "verified_acceptance": {
+      "rbv1-t017-scope-bound": "Existing Lenskit main evaluates retrieval variants with recall/MRR, promotion gates, review metrics and miss taxonomy without broadening default promotion.",
+      "rbv1-t017-boundary-preserved": "Retrieval evaluation remains diagnostic and does not mutate Git, refresh snapshots, create PRs or claim runtime/review correctness.",
+      "rbv1-t017-tests-or-gap": "Targeted retrieval, promotion, review and context-quality tests passed: 107 total.",
+      "rbv1-t017-non-claims": "Evaluation metrics do not establish retrieval completeness, semantic correctness, runtime correctness, test sufficiency, review completeness or merge readiness."
+    },
+    "verification": {
+      "task_sha256": "1abaec644f4cd194a6d9d7c412a7df0c6a4d2e107a14c8fc2efb1f3ea5f00001",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   },
   "depends_on": [
     "RBV1-T014",

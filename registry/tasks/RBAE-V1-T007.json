@@ -3,7 +3,7 @@
   "id": "RBAE-V1-T007",
   "initiative": "REPOBRIEF-AGENT-CODE-EMPOWERMENT-V1",
   "title": "Define agent code workbench promotion gate",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 198
@@ -62,7 +62,23 @@
       "merge_readiness",
       "security_correctness",
       "agent_patch_quality_proven"
-    ]
+    ],
+    "verified_at": "2026-07-07",
+    "contract_path": "docs/rbae-v1-t007.agent-workbench-promotion-gate.md",
+    "outcome": "Defined promotion gate.",
+    "dependency_closure": {
+      "RBAE-V1-T005": "verified",
+      "RBAE-V1-T006": "verified"
+    },
+    "verified_acceptance": {
+      "rbae-v1-t007-promotion-criteria": "satisfied",
+      "rbae-v1-t007-regression-control": "satisfied",
+      "rbae-v1-t007-fallback": "satisfied"
+    },
+    "verification": {
+      "task_sha256": "57eb24d481efcd11619d0f50fccdb12ed0958461e6e319774b0bd3c7b0f5cdf0",
+      "plan_sha256": "397bf76c26fd7e743d9ddeb6282defd3cf7d4b019601f8270d0fa272cf6a1512"
+    }
   },
   "depends_on": [
     "RBAE-V1-T005",

@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "id": "RBAE-V1-T004",
+  "initiative": "REPOBRIEF-AGENT-CODE-EMPOWERMENT-V1",
+  "title": "Extend required reading for code-change profiles",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 195
+  },
+  "goal": "Extend Agent Consumption / Required Reading profiles for concrete code-change tasks such as bugfix, refactor, feature, contract change and code PR review.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "b21a37f9e3be676e8490e9b08068fd724b580ece",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit",
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rbae-v1-t004-profiles",
+      "assertion": "Code-change task profiles map to required and recommended RepoBrief surfaces."
+    },
+    {
+      "id": "rbae-v1-t004-preflight",
+      "assertion": "Missing required evidence, stale freshness or unknown live state produce structured fail/warn outcomes."
+    },
+    {
+      "id": "rbae-v1-t004-no-hidden-refresh",
+      "assertion": "Resolving code-change profiles never refreshes snapshots or mutates Git implicitly."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-07T00:00:00Z",
+    "created_from_plan": "RepoBrief Agent Code Empowerment v1",
+    "plan_path": "docs/plans/repobrief-agent-code-empowerment-v1.md",
+    "plan_sha256": "2ff3debc28f7618b28624d51a462b0d0c9fdb7fe3402cbe3a4183ea881c60a8b",
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "security_correctness",
+      "agent_patch_quality_proven"
+    ]
+  },
+  "depends_on": [
+    "RBAE-V1-T001",
+    "RBV1-T009"
+  ]
+}

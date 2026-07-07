@@ -35,7 +35,25 @@
     "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
     "roadmap_slice": "PR5",
     "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately.",
-    "resulting_effect": "read_only"
+    "resulting_effect": "read_only",
+    "implementation_pr": "heimgewebe/grabowski#94",
+    "implementation_branch": "feat/grip-roadmap-t003-scout",
+    "implementation_head": "55eef1b805f2fc2fe531564f4ac56cd861ab8441",
+    "implementation_merge_commit": "1a66ea4741bd7812fb63d607788181b63cc33a12",
+    "verified_at": "2026-07-07",
+    "verification_note": "Grabowski PR #94 merged; CI validate 3.10/3.12 passed; local python3 -m pytest and make validate passed before merge.",
+    "outcome": "Added a read-only scout grip that reports only change items for PR drift, stale reviews, runtime/main drift, unpushed branches and missing expected receipt paths; includes disabled switch and no-mutation checks.",
+    "validated_acceptance": {
+      "only-changes": "Scout output contains enabled, change_count, changes and non_claims; it omits a full situation dump.",
+      "pr-and-runtime-drift": "Tests cover runtime/main drift, unpushed branch, PR drift, stale review state and missing expected receipt path categories.",
+      "disable-switch": "disabled=true returns no changes and performs no git or gh observation in focused tests.",
+      "no-mutation": "Scout is READ_ONLY, available to observer profile, and tests assert no mutating git verbs are used."
+    },
+    "verification": {
+      "task_sha256": "f544ab65d9bcfcf361ffb926339a5699e17b3789bdcd2b49eb4b932b6c9dc96d",
+      "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+      "implementation_diff_sha256": "31f6588c92b5792eeff859c22f8a8d4413ad8c1a551709cf80e096a32c0456f1"
+    }
   },
   "priority": {
     "lane": "next",
@@ -47,7 +65,7 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Add durable scout prototype",
   "depends_on": [
     "GRIP-ROADMAP-V1-T001"

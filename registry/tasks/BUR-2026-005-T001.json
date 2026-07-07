@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T001",
   "initiative": "BUR-2026-005",
   "title": "Define runtime automation contract",
-  "state": "ready",
+  "state": "verified",
   "goal": "Document the Bureau control-tower automation model, including source authority, status vocabulary, event semantics and forbidden implicit powers.",
   "priority": {
     "lane": "now",
@@ -26,7 +26,25 @@
   },
   "metadata": {
     "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
-    "safety_boundary": "documentation and contract only; no runtime authority change"
+    "safety_boundary": "documentation and contract only; no runtime authority change",
+    "outcome": "Defined Bureau Runtime Automation Contract v1.",
+    "contract_path": "docs/bureau-runtime-automation-contract-v1.md",
+    "verified_acceptance": {
+      "control-tower-model": "docs/bureau-runtime-automation-contract-v1.md#control-tower-organ-model",
+      "status-vocabulary": "docs/bureau-runtime-automation-contract-v1.md#status-vocabulary",
+      "forbidden-powers": "docs/bureau-runtime-automation-contract-v1.md#forbidden-implicit-powers"
+    },
+    "does_not_establish": [
+      "new_runtime_authority",
+      "automatic_merge_authority",
+      "automatic_cleanup_authority",
+      "automatic_completion_authority",
+      "runtime_correctness"
+    ],
+    "verification": {
+      "task_sha256": "74628647f992cb224a2bfc5911f78635870f7623761f04a0d1a62f64bc1d0733",
+      "plan_sha256": "653fa6a056506c94d5654ba5e3c16f9c31032767f0e1c844a8cb4714c50ce917"
+    }
   },
   "acceptance": [
     {

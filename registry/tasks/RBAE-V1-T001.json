@@ -3,7 +3,7 @@
   "id": "RBAE-V1-T001",
   "initiative": "REPOBRIEF-AGENT-CODE-EMPOWERMENT-V1",
   "title": "Define agent code-task evidence matrix",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 95
@@ -62,7 +62,18 @@
       "merge_readiness",
       "security_correctness",
       "agent_patch_quality_proven"
-    ]
+    ],
+    "outcome": "Defined RepoBrief Agent Code Task Evidence Matrix v1.",
+    "evidence_matrix_path": "docs/repobrief-agent-code-task-evidence-matrix-v1.md",
+    "verified_acceptance": {
+      "rbae-v1-t001-task-matrix": "docs/repobrief-agent-code-task-evidence-matrix-v1.md#matrix",
+      "rbae-v1-t001-boundary": "docs/repobrief-agent-code-task-evidence-matrix-v1.md#snapshot-insufficiency-rules",
+      "rbae-v1-t001-non-claims": "docs/repobrief-agent-code-task-evidence-matrix-v1.md#required-non-claims"
+    },
+    "verification": {
+      "task_sha256": "befaae1122e48e8b667fe825532a59d366295a7fd72124ffaa316810a0033755",
+      "plan_sha256": "397bf76c26fd7e743d9ddeb6282defd3cf7d4b019601f8270d0fa272cf6a1512"
+    }
   },
   "depends_on": [
     "RBAW-V1-T005"

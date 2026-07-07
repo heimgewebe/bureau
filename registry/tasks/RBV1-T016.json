@@ -3,7 +3,7 @@
   "id": "RBV1-T016",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Add Python AST symbol index v1",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 160
@@ -67,7 +67,32 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "verified_at": "2026-07-07",
+    "outcome": "Implemented and verified optional deterministic Python AST symbol index v1 in Lenskit.",
+    "implementation_pr": "heimgewebe/lenskit#904",
+    "implementation_merge_commit": "8e09353ac9eac6c961685db8a69d39b3aa562e78",
+    "implementation_paths": [
+      "merger/lenskit/architecture/symbol_index.py",
+      "merger/lenskit/contracts/python-symbol-index.v1.schema.json",
+      "merger/lenskit/tests/test_python_symbol_index.py",
+      "docs/proofs/python-symbol-index-proof.md"
+    ],
+    "validation": [
+      "pytest -q merger/lenskit/tests/test_python_symbol_index.py -> 2 passed",
+      "pytest -q merger/lenskit/tests/test_python_symbol_index.py merger/lenskit/tests/test_architecture_entrypoints.py -> 4 passed",
+      "Lenskit PR #904 CI green including pytest-full, ruff, anti-hallucination-lint, doc-freshness, parity-gate and CodeQL"
+    ],
+    "verified_acceptance": {
+      "rbv1-t016-scope-bound": "Lenskit PR #904 adds optional Python AST symbol index v1, schema, tests and proof only; no hidden broadening into runtime or query promotion.",
+      "rbv1-t016-boundary-preserved": "The index is read-only and parses source with ast; it does not import modules, execute code, mutate Git, refresh snapshots, create patches or create PRs as RepoBrief core behavior.",
+      "rbv1-t016-tests-or-gap": "Targeted local tests passed and PR #904 CI was green.",
+      "rbv1-t016-non-claims": "Proof and symbol index does_not_establish preserve call graph completeness, dependency completeness, runtime behavior, import success, test sufficiency, review impact and merge readiness."
+    },
+    "verification": {
+      "task_sha256": "8e2af9038c972a24259cda14c495b57c49490a3c4245631e4b002f89ba94e3ce",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   },
   "depends_on": [
     "RBV1-T006"

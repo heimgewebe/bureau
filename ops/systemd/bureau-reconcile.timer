@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the bounded Bureau reconcile loop hourly
+
+[Timer]
+OnCalendar=*-*-* *:07:00
+Persistent=true
+RandomizedDelaySec=60
+AccuracySec=1min
+Unit=bureau-reconcile.service
+
+[Install]
+WantedBy=timers.target

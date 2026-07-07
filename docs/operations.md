@@ -190,3 +190,18 @@ Conservative lane derivation from observed GitHub state is intentionally narrow:
 Existing `paused` lanes keep their operator hold when pull-request observation would otherwise derive a review, revision, or merge-candidate state.
 
 A `merge_candidate` lane is only eligible for merge-gatekeeper handoff. It is not a merge permission and does not replace explicit checks, review-thread inspection or final merge policy.
+
+## Runtime observation and status projection
+
+The GitHub observer and the read-only status projection board, including
+their scheduler contract and the `bureau-status-projection` and
+`bureau-reconcile` reference timers under `ops/systemd/`, are documented in
+`docs/bureau-runtime-observation-v1.md`. Quick start:
+
+```bash
+bureau --root . --json github-observe
+bureau --root . --json status-projection
+```
+
+Both commands observe and project only. They never verify tasks, mutate the
+queue, merge, delete branches or clean up worktrees.

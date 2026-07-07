@@ -156,6 +156,14 @@ def parser() -> argparse.ArgumentParser:
     workspace_keep.add_argument("--reason", required=True)
     stamp = sub.add_parser("verification-stamp")
     stamp.add_argument("task_id")
+    github_observe = sub.add_parser("github-observe")
+    github_observe.add_argument("--repo")
+    github_observe.add_argument("--task-id")
+    projection = sub.add_parser("status-projection")
+    projection.add_argument("--repo")
+    projection.add_argument("--github-observations")
+    projection.add_argument("--skip-github", action="store_true")
+    projection.add_argument("--github-max-age", type=int, default=3600)
     return result
 
 
@@ -382,6 +390,55 @@ def main(argv: list[str] | None = None) -> int:
                 "state": read_only_state_integrity(args),
                 "adapters": adapters(args).status(),
             }
+            emit(value, args.json)
+            return 0
+        if args.command == "github-observe":
+            from .github_observer import observe_pull_requests
+
+            value = observe_pull_requests(
+                root,
+                repository=args.repo,
+                registry=registry,
+                state_db=state_path,
+                state_root=state_root,
+            )
+            if args.task_id:
+                value = {
+                    **value,
+                    "pull_requests": [
+                        item
+                        for item in value["pull_requests"]
+                        if item.get("task_id") == args.task_id
+                    ],
+                }
+            emit(value, args.json)
+            return 0 if value["healthy"] and value.get("binding_healthy", True) else 1
+        if args.command == "status-projection":
+            from .github_observer import observe_pull_requests
+            from .status_projection import status_projection
+
+            if args.skip_github:
+                github = None
+            elif args.github_observations:
+                github = json.loads(
+                    Path(args.github_observations).expanduser().read_text(encoding="utf-8")
+                )
+            else:
+                github = observe_pull_requests(
+                    root,
+                    repository=args.repo,
+                    registry=registry,
+                    state_db=state_path,
+                    state_root=state_root,
+                )
+            value = status_projection(
+                root,
+                registry=registry,
+                state_db=state_path,
+                state_root=state_root,
+                github=github,
+                github_max_age_seconds=args.github_max_age,
+            )
             emit(value, args.json)
             return 0
         store = StateStore(state_path, state_root)

@@ -1,0 +1,28 @@
+[Unit]
+Description=Bureau bounded runtime reconcile loop (no dispatch, no merge, no cleanup)
+Documentation=https://github.com/heimgewebe/bureau/blob/main/docs/bureau-runtime-observation-v1.md
+ConditionPathIsDirectory=%h/repos/bureau
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/share/bureau/venv/bin/bureau --root %h/repos/bureau --json reconcile --stale-after 900
+Environment=PYTHONUNBUFFERED=1
+Environment=BUREAU_STATE_DIR=%h/.local/state/bureau
+TimeoutStartSec=5min
+Nice=5
+IOSchedulingClass=best-effort
+IOSchedulingPriority=6
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.local/state/bureau
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+UMask=0077

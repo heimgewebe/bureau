@@ -7,6 +7,7 @@
 - Quelle: Cabinet-/Bureau-/Grabowski-Lageprüfung vom 2026-07-07
 - Bureau-Rolle: registrieren, takten, Import prüfen, Delegation vorbereiten, Receipts verwalten
 - Autonomie: nicht aktiviert
+- Queue-Politik: keine automatische Queue-Erweiterung in diesem Registrierungs-PR; konkrete Queue-Aufnahme erfolgt separat.
 
 ## Entscheidung
 
@@ -19,7 +20,7 @@ Cabinet erkennt.
 Bureau registriert und taktet.
 Grabowski führt aus.
 Agenten schlagen vor oder reviewen.
-CI, GitHub und Runtime beweisen.
+CI, GitHub und Runtime belegen technische Realität in ihrer jeweiligen Domäne.
 Heimlern lernt.
 Leitstand zeigt.
 ```
@@ -36,7 +37,7 @@ Wenn Cabinet direkt Bureau-Tasks schreibt, Grabowski startet, Agenten beauftragt
 
 ### Synthese
 
-Cabinet darf Wahrnehmung, Sinnbildung, Priorisierung und Vorschläge automatisieren. Bureau importiert nur reviewte Kandidaten. Grabowski und Agenten führen nur gebunden aus. Gemini wird als proposal-only Review- und Scout-Kapazität modelliert, nicht als autonomer Operator.
+Cabinet darf Wahrnehmung, Sinnbildung, Priorisierung und Vorschläge automatisieren. Bureau importiert nur reviewte Kandidaten. Grabowski und Agenten führen nur gebunden aus. Gemini wird erst nach Capability- und Sandbox-Preflight als proposal-only Review- und Scout-Kapazität modelliert, nicht als autonomer Operator.
 
 ## Organmodell
 
@@ -45,11 +46,12 @@ Cabinet darf Wahrnehmung, Sinnbildung, Priorisierung und Vorschläge automatisie
 | Cabinet | Map-Canon, Claims, Kohärenzradar, Findings, Frontier-Kandidaten | keine direkte Task-, Dispatch- oder Runtimewirkung |
 | Bureau | Registry, Queue, Import-Gate, Taktung, Delegationsvorbereitung, Receipts | keine fachliche Wahrheitsbehauptung und kein Patch-Organ |
 | Grabowski | Repo-Arbeit, GitHub/CI-Prüfung, kontrollierte Ausführung | nur nach Task, Freigabe oder Gate |
-| Gemini-Agenten | breite Analyse, Gegenprüfung, strukturierte Vorschläge | proposal-only; kein Push, Merge, Runtime-Effekt oder Credentials-Kontext |
+| Gemini-Agenten | breite Analyse, Gegenprüfung, strukturierte Vorschläge | proposal-only; kein Push, Merge, Runtime-Effekt oder sensibler Kontext |
 | RepoBrief/Lenskit | externe Kontext- und Dump-Artefakte | keine Cabinet-Task-Erzeugung |
 | Heimlern | Outcome-Auswertung und Policy-Vorschläge | keine direkte Regelaktivierung |
-| Leitstand/Schauwerk | Anzeige und Visualisierung | nicht Canon, nicht Wahrheit |
-| GitHub/CI/Runtime | harte Primärquellen | keine semantische Gesamtdeutung |
+| Leitstand | erste read-only Projektionsfläche | nicht Canon, nicht Wahrheit |
+| Schauwerk | mögliche spätere Renderer-Fläche | erst nach eigener Resource-/Repo-Bindung |
+| GitHub/CI/Runtime | harte Primärquellen in ihrer jeweiligen Domäne | keine semantische Gesamtdeutung |
 
 ## Phasen
 
@@ -63,23 +65,27 @@ Cabinet definiert eine maschinenlesbare Frontier für Bureau-Kandidaten. Diese F
 
 ### CCFG-3 — Bureau Frontier Reader
 
-Bureau liest die Cabinet Frontier read-only und erzeugt Preview, Review und Receipt. Invalides, unklares oder riskantes Material wird blockiert.
+Bureau liest die Cabinet Frontier read-only und erzeugt Preview, Review und Receipt. Invalides, unklares oder riskantes Material wird blockiert. Bestehende Cabinet-Bridge- und Promotion-Flächen werden wiederverwendet, erweitert oder ausdrücklich abgelöst; es entsteht kein unkommentierter Parallelpfad.
 
 ### CCFG-4 — Reviewed One-Task Import
 
 Bureau darf nach Review genau einen Cabinet-Kandidaten als Bureau-Task importieren. Der Import ist idempotent und erzeugt keinen Dispatch.
 
-### CCFG-5 — Gemini Proposal-Only Review Lane
+### CCFG-5 — Gemini Capability and Sandbox Preflight
 
-Gemini-Agenten werden als Review- und Scout-Kapazität angebunden. Sie arbeiten nur auf freigegebenem, credentialfreiem Kontext und geben strukturierte Vorschläge zurück.
+Vor jeder Gemini-Lane wird geprüft, ob Gemini lokal verfügbar, nicht-interaktiv ausführbar und sicher sandboxbar ist. Falls nicht, bleibt Gemini als geplante Kapazität blockiert.
 
-### CCFG-6 — Outcome Feedback Loop
+### CCFG-6 — Gemini Proposal-Only Review Lane
+
+Gemini-Agenten werden erst nach bestandenem Preflight als Review- und Scout-Kapazität angebunden. Sie arbeiten nur auf freigegebenem Kontext ohne sensible Werte und geben strukturierte Vorschläge zurück.
+
+### CCFG-7 — Outcome Feedback Loop
 
 Bureau-Receipts und Grabowski-/CI-Ergebnisse laufen als Outcomes nach Cabinet zurück. Heimlern darf daraus Vorschläge ableiten, aber nicht aktivieren.
 
-### CCFG-7 — Read-only Status Projection
+### CCFG-8 — Read-only Leitstand Status Projection
 
-Leitstand oder Schauwerk zeigen Map, Frontier, Bureau-Queue, PR-/CI-Status, Agentenlane und blockierte Kandidaten. Anzeige bleibt read-only.
+Leitstand zeigt Map, Frontier, Bureau-Queue, PR-/CI-Status, Agentenlane und blockierte Kandidaten. Anzeige bleibt read-only. Schauwerk wird nicht implizit beansprucht; eine Schauwerk-Fläche braucht eine eigene Resource-/Repo-Bindung.
 
 ## Stop-Kriterien
 
@@ -91,7 +97,7 @@ Stoppe Import oder Delegation, wenn:
 - Risiko `high` ohne menschliche Freigabe ist;
 - Gemini-Output nicht schema-valide ist;
 - verbotene Effekte nicht explizit false sind;
-- Credentials, Runtime-Privatdaten oder Deploy-Flächen berührt werden.
+- sensible Werte, private Runtime-Daten oder Deploy-Flächen berührt werden.
 
 ## Nicht-Ziele
 
@@ -99,9 +105,10 @@ Stoppe Import oder Delegation, wenn:
 - Kein automatischer Merge.
 - Kein automatischer Push durch Gemini.
 - Keine Runtime-Mutation.
-- Keine Credentials in Agentenkontexten.
+- Keine sensiblen Werte in Agentenkontexten.
 - Keine Wahrheit aus Mermaid-Karten.
 - Kein Bureau als Patch-Organ.
+- Keine Schauwerk-Bindung ohne eigene Bureau-Ressource.
 
 ## Erste Umsetzungsscheiben
 

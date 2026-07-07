@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "CABINET-COHERENCE-FRONTIER-V1-T001",
   "initiative": "CABINET-COHERENCE-FRONTIER-V1",
-  "title": "Register Cabinet organ map and Gemini proposal role",
+  "title": "Register Cabinet organ map and Gemini proposed role",
   "state": "planned",
   "goal": "Update Cabinet-facing registry expectations so Gemini is represented as proposal-only review/scout capacity and the Ecosystem Registry Map remains the canonical orientation surface.",
   "priority": {
@@ -58,6 +58,10 @@
     {
       "id": "no-map-truth",
       "assertion": "The update states that Mermaid maps are orientation surfaces, not proof or authority."
+    },
+    {
+      "id": "proposed-not-schedulable",
+      "assertion": "Cabinet represents Gemini as proposed proposal-only capacity, not as verified or schedulable capacity."
     }
   ]
 }

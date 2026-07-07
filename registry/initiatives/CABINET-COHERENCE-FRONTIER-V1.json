@@ -36,8 +36,12 @@
       "automatic_merge_authority",
       "runtime_mutation_authority",
       "gemini_write_authority",
-      "claim_truth"
+      "claim_truth",
+      "gemini_availability",
+      "gemini_schedulable_capacity",
+      "cabinet_frontier_contract_implemented",
+      "bureau_import_path_implemented"
     ],
-    "registration_note": "Registered while Bureau PR #169 was open; kept later and queues only the first entry task to avoid stealing the active Bureau ball."
+    "registration_note": "Registered while Bureau PR #169 was open; kept later and does not mutate the queue to avoid stealing the active Bureau ball."
   }
 }

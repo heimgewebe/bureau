@@ -57,7 +57,7 @@
     },
     {
       "id": "existing-promotion-surface",
-      "assertion": "Implementation accounts for the existing Cabinet promotion import surface before adding or changing import behavior."
+      "assertion": "Implementation reuses, extends or explicitly supersedes src/bureau/cabinet_promotion_write.py before adding or changing import behavior."
     }
   ],
   "depends_on": [

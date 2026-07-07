@@ -47,7 +47,8 @@
     "phase": "CCFG-5-preflight",
     "target_repository": "heimgewebe/bureau",
     "agent_pool": "gemini",
-    "agent_authority": "preflight_only"
+    "agent_authority": "preflight_only",
+    "write_scope": "Bureau documentation or task evidence only; Gemini runner itself receives no repository write authority."
   },
   "acceptance": [
     {
@@ -69,6 +70,10 @@
     {
       "id": "lane-dependency",
       "assertion": "The later Gemini review lane is not treated as active capacity until this preflight is accepted."
+    },
+    {
+      "id": "bureau-write-scope",
+      "assertion": "Any write claim is limited to Bureau evidence or documentation updates by Grabowski; Gemini itself receives no repository write capability."
     }
   ]
 }

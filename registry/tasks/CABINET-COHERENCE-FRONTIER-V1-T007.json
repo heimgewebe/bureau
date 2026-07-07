@@ -69,6 +69,10 @@
     {
       "id": "no-schauwerk-claim",
       "assertion": "Task does not claim a Schauwerk write surface unless that resource is registered separately."
+    },
+    {
+      "id": "preflight-state-visible",
+      "assertion": "The projection distinguishes Gemini preflight blocked, unavailable, available and proposal-only states."
     }
   ],
   "depends_on": [

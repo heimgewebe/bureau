@@ -61,7 +61,7 @@
     },
     {
       "id": "existing-bridge-surface",
-      "assertion": "Implementation accounts for existing Cabinet bridge and promotion surfaces, and does not add a second undocumented import path."
+      "assertion": "Implementation accounts for src/bureau/cabinet_bridge.py, cabinet_bridge_preview.py, cabinet_bridge_review.py, cabinet_bridge_receipt.py and cabinet_promotion_write.py before adding or changing a Cabinet reader path."
     }
   ],
   "depends_on": [

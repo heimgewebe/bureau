@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "CABINET-COHERENCE-FRONTIER-V1",
   "title": "Cabinet coherence frontier and Gemini review lane",
-  "state": "committed",
+  "state": "active",
   "commitment": "later",
   "goal": "Register the safe path for Cabinet to keep ecosystem coherence, produce Bureau-importable candidates, and use Gemini agents as proposal-only review capacity without breaking organ boundaries.",
   "current_plan": {
@@ -42,6 +42,7 @@
       "cabinet_frontier_contract_implemented",
       "bureau_import_path_implemented"
     ],
-    "registration_note": "Registered while Bureau PR #169 was open; kept later and does not mutate the queue to avoid stealing the active Bureau ball."
+    "registration_note": "Registered while Bureau PR #169 was open; kept later and does not mutate the queue to avoid stealing the active Bureau ball.",
+    "lifecycle_repair_note": "Aligned initiative state with Bureau lifecycle diagnostics after task state changes."
   }
 }

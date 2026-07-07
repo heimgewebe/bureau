@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "REPOBRIEF-AGENT-CODE-EMPOWERMENT-V1",
   "title": "RepoBrief Agent Code Empowerment v1",
-  "state": "active",
+  "state": "completion-ready",
   "commitment": "next",
   "goal": "Optimize RepoBrief specifically for coding agents by connecting task intent, required code evidence, impact mapping, change planning and external evaluation without moving mutation authority into RepoBrief core.",
   "current_plan": {
@@ -52,6 +52,7 @@
       "security_correctness",
       "agent_patch_quality_proven"
     ],
-    "plan_sha256_unpinned": "2ff3debc28f7618b28624d51a462b0d0c9fdb7fe3402cbe3a4183ea881c60a8b"
+    "plan_sha256_unpinned": "2ff3debc28f7618b28624d51a462b0d0c9fdb7fe3402cbe3a4183ea881c60a8b",
+    "lifecycle_repair_note": "Aligned initiative state with Bureau lifecycle diagnostics after task state changes."
   }
 }

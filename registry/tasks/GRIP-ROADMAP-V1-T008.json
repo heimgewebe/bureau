@@ -1,0 +1,49 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Mechanic and Captain action envelopes have one canonical structured representation.",
+      "id": "schema-bound-envelope"
+    },
+    {
+      "assertion": "action is canonical and grip remains only a validated alias.",
+      "id": "strict-alias-rules"
+    },
+    {
+      "assertion": "Receipt hashes, receipt paths, target/scope objects, and bounded output rules are validated consistently.",
+      "id": "receipt-integrity-contract"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T004"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Replace ad-hoc Mechanic/Captain action-envelope dict validation with explicit dataclass or schema-backed validation while preserving fail-closed behavior.",
+  "id": "GRIP-ROADMAP-V1-T008",
+  "initiative": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "deferred_from": "PR #96 review",
+    "reason": "Schema/dataclass migration is broader than the immediate PR #96 hardening."
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 80
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Add structured action envelope validation"
+}

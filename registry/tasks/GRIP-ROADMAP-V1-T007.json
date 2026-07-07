@@ -1,0 +1,49 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Mechanic and Captain sequence logic lives outside the core grip surface file.",
+      "id": "orchestrator-module"
+    },
+    {
+      "assertion": "Generic run_grip dispatch remains runner-agnostic and has no runner-name special cases.",
+      "id": "engine-boundary"
+    },
+    {
+      "assertion": "The refactor does not add merge, deploy, service restart, fleet mutation, or cleanup authority.",
+      "id": "no-authority-change"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T004"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Move Mechanic/Captain orchestration out of grabowski_grips.py into a dedicated orchestration module with clearer runner boundaries, without changing grip authority semantics.",
+  "id": "GRIP-ROADMAP-V1-T007",
+  "initiative": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "deferred_from": "PR #96 review",
+    "reason": "Keep PR #96 focused on boundary semantics and tests."
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 70
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Extract grip orchestration runners"
+}

@@ -1,0 +1,49 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Already-executed mutating children remain visible after later failure.",
+      "id": "executed-actions-visible"
+    },
+    {
+      "assertion": "Receipts include enough recovery evidence for manual or external rollback.",
+      "id": "manual-recovery-recorded"
+    },
+    {
+      "assertion": "The design explicitly separates receipt visibility from automatic rollback execution.",
+      "id": "no-automatic-rollback-yet"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T004"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Design how Mechanic sequences expose already-executed mutating children, manual recovery steps, and future rollback hooks when a later child blocks or fails.",
+  "id": "GRIP-ROADMAP-V1-T009",
+  "initiative": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "deferred_from": "PR #96 review",
+    "reason": "Automatic rollback would create new authority and belongs in a separate Recovery/Captain design."
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 90
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Design mechanic recovery receipts"
+}

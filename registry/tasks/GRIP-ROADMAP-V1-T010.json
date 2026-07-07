@@ -1,0 +1,50 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Captain preflight consumes fresh status projection evidence instead of caller-supplied booleans.",
+      "id": "projection-bound"
+    },
+    {
+      "assertion": "Missing or stale projection fails closed.",
+      "id": "stale-blocks"
+    },
+    {
+      "assertion": "The task does not enable privileged execution by default.",
+      "id": "plan-only-until-enabled"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T005",
+    "BUR-2026-005-T004"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Replace dummy Captain preflight freshness flags with real Bureau/Runtime status projection evidence before any future Captain execution authority is considered.",
+  "id": "GRIP-ROADMAP-V1-T010",
+  "initiative": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "deferred_from": "PR #96 review",
+    "reason": "Live projection binding depends on status-projection infrastructure and is outside PR #96."
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 100
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bind captain preflight to live status projection"
+}

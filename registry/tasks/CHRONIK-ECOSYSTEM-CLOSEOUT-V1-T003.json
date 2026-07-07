@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T003",
+  "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
+  "title": "Prepare Chronik local service activation gate",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "goal": "Define the explicit gate for possible local Chronik user-service activation after bootstrap merge, including env/token handling, smoke evidence, and rollback, without starting the service in this task.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.chronik",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "activation-boundary",
+      "assertion": "The gate states that systemctl enable/start, restart, deploy, fleet mutation and secret handling require explicit approval.",
+      "verifier": "diff review",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "smoke-and-rollback-plan",
+      "assertion": "The activation plan includes non-secret smoke checks and a rollback path.",
+      "verifier": "plan review",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-service-action",
+      "assertion": "No service start, restart, enable, deploy or token handling is performed while preparing the gate.",
+      "verifier": "operator log review",
+      "evidence_type": "boolean"
+    }
+  ],
+  "metadata": {
+    "depends_on": [
+      "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T001"
+    ],
+    "activation_requires_explicit_user_approval": true,
+    "does_not_establish": [
+      "service_started",
+      "env_configured",
+      "runtime_healthy"
+    ],
+    "service_activation_policy": "manual explicit approval before any systemctl/deploy/secret action",
+    "depends_on_note": "Dispatcher-enforced dependency is the top-level depends_on field."
+  },
+  "depends_on": [
+    "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T001"
+  ]
+}

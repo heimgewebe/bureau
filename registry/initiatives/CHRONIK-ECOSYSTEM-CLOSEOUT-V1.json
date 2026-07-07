@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
+  "title": "Chronik operator ecosystem closeout",
+  "state": "active",
+  "commitment": "next",
+  "goal": "Close the remaining Chronik operator-ecosystem integration gaps without turning Chronik into an orchestrator or runtime control surface.",
+  "completion": [
+    "Chronik service bootstrap PR is resolved with CI/local evidence and no runtime activation claim.",
+    "Cabinet maps Chronik as append-only ledger and historical evidence axis with bounded ecosystem edges.",
+    "Chronik local service activation has an explicit, separately approved gate with rollback and smoke evidence."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "source_context": "Chronik integration live closeout after PR 206 and Cabinet PR 83 review",
+    "truth_boundaries": {
+      "chronik": "append-only event ledger and historical evidence axis",
+      "bureau": "task, claim and verification truth",
+      "cabinet": "orientation and drift/coherence map, not runtime truth",
+      "leitstand": "display only, no authority",
+      "heimlern": "offline learning and proposal generation only"
+    },
+    "does_not_establish": [
+      "service_runtime_active",
+      "merge_readiness_without_fresh_checks",
+      "cabinet_map_truth",
+      "automatic_task_verification",
+      "deploy_permission"
+    ]
+  }
+}

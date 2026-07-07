@@ -3,7 +3,7 @@
   "id": "RBV1-T010",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Expose MCP read-only RepoBrief resources",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 100
@@ -67,7 +67,34 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "verified_at": "2026-07-07",
+    "outcome": "Verified existing Lenskit read-only RepoBrief access and MCP boundary surfaces on current main.",
+    "live_lenskit_commit": "8e09353ac9eac6c961685db8a69d39b3aa562e78",
+    "implementation_paths": [
+      "docs/architecture/repobrief-mcp-boundary.md",
+      "merger/lenskit/core/repobrief_access.py",
+      "merger/lenskit/cli/cmd_repobrief.py",
+      "merger/lenskit/tests/test_repobrief_mcp_boundary_doc.py",
+      "merger/lenskit/tests/test_repobrief_access_boundary.py",
+      "merger/lenskit/tests/test_repobrief_source_citation_projection.py",
+      "merger/lenskit/tests/test_repobrief_resolved_evidence_query.py"
+    ],
+    "validation": [
+      "pytest -q merger/lenskit/tests/test_repobrief_mcp_boundary_doc.py merger/lenskit/tests/test_repobrief_access_boundary.py -> 17 passed",
+      "pytest -q merger/lenskit/tests/test_repobrief_source_citation_projection.py -> 13 passed",
+      "pytest -q merger/lenskit/tests/test_repobrief_resolved_evidence_query.py -> 11 passed"
+    ],
+    "verified_acceptance": {
+      "rbv1-t010-scope-bound": "Existing Lenskit main exposes read-only RepoBrief resource/tool-equivalent surfaces and MCP boundary documentation without hidden broadening.",
+      "rbv1-t010-boundary-preserved": "Boundary docs and access tests preserve no refresh, no Git mutation, no shell, no PR actions and no runtime/review correctness claim.",
+      "rbv1-t010-tests-or-gap": "Targeted MCP boundary and read-only access tests passed: 41 total.",
+      "rbv1-t010-non-claims": "MCP/read-only access does not establish truth, correctness, completeness, runtime behavior, test sufficiency, regression absence, repo understanding, claim truth or forensic readiness."
+    },
+    "verification": {
+      "task_sha256": "5c454d61d38ebe50b30ac7c44e1d2dfb3341795c53bc8043557a0c12e001748c",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   },
   "depends_on": [
     "RBV1-T006",

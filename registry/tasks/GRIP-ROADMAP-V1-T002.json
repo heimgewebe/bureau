@@ -38,7 +38,24 @@
       "risk_level",
       "irreversibility",
       "recovery_path"
-    ]
+    ],
+    "implementation_pr": "heimgewebe/grabowski#92",
+    "implementation_branch": "feat/grip-roadmap-t002-receipt-foundation-v2",
+    "implementation_head": "6d704592e1e36703ae1407b651112f6fc63a0716",
+    "implementation_merge_commit": "6ede1801e0c2a46601cc89de6eb30ca581e8dcaf",
+    "verified_at": "2026-07-07",
+    "verification_note": "Grabowski PR #92 merged; CI validate 3.10/3.12 passed; local python3 -m pytest and make validate passed before merge.",
+    "outcome": "Added metadata-only reference receipt foundation with reference_sha256, target_sha256, receipt_sha256, replay/expiry metadata, risk, irreversibility, recovery path and external-agent contract fields.",
+    "validated_acceptance": {
+      "privileged-receipt-risk": "Receipt profiles include scope, risk_level, irreversibility and recovery_path for runtime-deploy-check, runtime-deploy, service-restart and pr-merge.",
+      "deploy-check-readonly": "runtime-deploy-check profile is read_only=true, risk_level=low and covered by tests/test_reference_receipts.py.",
+      "no-default-captain": "Receipt builder sets may_execute=false and captain_default_enabled=false; no runtime grip, MCP tool or Captain default is enabled."
+    },
+    "verification": {
+      "task_sha256": "d33b23cc954d9cb5dfc41643c58e29d4d0080c72127b9de33c1f0fc877ee6fcb",
+      "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+      "implementation_diff_sha256": "993a4221bb017d8feb7ad156cfa5f1c498aea70cff048966e5d43ecda6539d05"
+    }
   },
   "priority": {
     "lane": "next",
@@ -50,7 +67,7 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Add privileged grip receipt foundation",
   "depends_on": [
     "GRIP-ROADMAP-V1-T001"

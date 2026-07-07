@@ -109,6 +109,7 @@ Stoppe Import oder Delegation, wenn:
 2. Cabinet Frontier Contract definieren.
 3. Bureau Frontier Reader bauen.
 4. One-Task Import nach Review bauen.
-5. Gemini Review Lane als proposal-only anbinden.
-6. Outcome Feedback Loop schließen.
-7. Read-only Status Projection anzeigen.
+5. Gemini Capability und Sandbox prüfen.
+6. Gemini Review Lane als proposal-only anbinden.
+7. Outcome Feedback Loop schließen.
+8. Read-only Leitstand Projection anzeigen.

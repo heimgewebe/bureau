@@ -80,9 +80,22 @@
       "plan_sha256": "a693177e04de7b0c356ae6e029ae30b206092e6c8cbf3f1096f669e64cc5cf61",
       "proof_sha256": "95fa06854176fe0a62753428c28752d01e1c9e0085268d7ae42a0594420247ce",
       "task_preimage_sha256": "2a9ee4ac0f405bebb46c4ac49c0b1166d98a5ae0d4fcb32dc08dde0c0d85f74d",
-      "task_sha256": "b8b64268b797fa9971726c0af5d6e8bfdbb6bd6c163ddfe6fee1d1a7b7e32c5d",
+      "task_sha256": "16166e80957b88232c8b12646263936dd528f6df5841d9a231b5440518dad246",
       "verified_at": "2026-07-07T14:32:50.023855Z"
-    }
+    },
+    "verified_acceptance": {
+      "closure-lane-bound": "metadata.closure_lane_ids records lane-cabinet-fix-workspace-room-identity-bba0a27921 and metadata.closure_fingerprints records bba0a2792136c7f4fa9bae7e77e7796447dc6eb537652c5fb16067ac44c19fe6.",
+      "branch-reviewed": "metadata.binding_proof records branch_diff_exhaustive=true, lane_records_task_id=true, merge_path=no_merge_required_branch_payload_already_in_origin_main, source/review heads, focused test result, closure brief hashes, closure plan hash, and byte-identical scoped file comparisons.",
+      "handoff-safe": "metadata.binding_proof.proof_path points to work/cabinet-t006/receipts/bur-2026-001-t006-verification.json, metadata.binding_proof.proof_sha256 matches metadata.verification.proof_sha256, and metadata.binding_proof.status is verified-by-local-proof."
+    },
+    "does_not_establish": [
+      "cabinet_runtime_correctness",
+      "new_cabinet_mutation",
+      "pull_request_merge_authority",
+      "branch_deletion",
+      "general_layout_correctness",
+      "external_execution_continuation"
+    ]
   },
   "priority": {
     "lane": "next",

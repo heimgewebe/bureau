@@ -3,7 +3,7 @@
   "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T002",
   "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
   "title": "Map Chronik ecosystem edges in Cabinet",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 30
@@ -63,6 +63,23 @@
       "ecosystem_runtime_truth",
       "chronik_runtime_active",
       "bureau_verification_truth"
-    ]
+    ],
+    "verification": {
+      "task_sha256": "f6881efe9e0c5da61d22b58c990e85729e4907b16664bd32d688a235f9b683e2",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "repository": "heimgewebe/cabinet",
+          "number": 83,
+          "state": "merged",
+          "merge_commit": "fed8304"
+        }
+      ]
+    }
   }
 }

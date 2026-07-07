@@ -3,7 +3,7 @@
   "id": "RBV1-T014",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Add relation guard goldset",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 140
@@ -67,7 +67,30 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "verified_at": "2026-07-07",
+    "outcome": "Verified existing Lenskit relation guard goldset on origin/main.",
+    "implementation_paths": [
+      "docs/retrieval/guard_relation_goldset.v1.json",
+      "scripts/proofs/guard_relation_goldset_eval.py",
+      "docs/proofs/guard-relation-goldset-proof.md",
+      "merger/lenskit/tests/test_grg_goldset.py"
+    ],
+    "live_lenskit_commit": "a3bb8245",
+    "validation": [
+      "pytest -q merger/lenskit/tests/test_grg_goldset.py -> 3 passed",
+      "python scripts/proofs/guard_relation_goldset_eval.py -> reports tests_by_name and validates_schema diagnostic metrics with non-claims"
+    ],
+    "verified_acceptance": {
+      "rbv1-t014-scope-bound": "Existing Lenskit origin/main contains the diagnostic goldset, evaluator, proof and tests; no new scope broadened.",
+      "rbv1-t014-boundary-preserved": "Goldset and evaluator are diagnostic only and do not persist relation cards or create correctness/review/runtime claims.",
+      "rbv1-t014-tests-or-gap": "pytest -q merger/lenskit/tests/test_grg_goldset.py passed; evaluator ran successfully.",
+      "rbv1-t014-non-claims": "Proof and evaluator preserve non-claims for test sufficiency, runtime correctness, regression absence, schema runtime equivalence and review completeness."
+    },
+    "verification": {
+      "task_sha256": "8acea74e167ab7d53b042ea1fcb45d64dccadfcf718976556e87a259b1ee94db",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   },
   "depends_on": [
     "RBV1-T006"

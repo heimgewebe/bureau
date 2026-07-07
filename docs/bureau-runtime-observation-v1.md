@@ -32,8 +32,10 @@ manual one-shot invocation must always remain possible.
 unknown), `--github-observations FILE` (use stored observer output instead of
 calling `gh`), `--github-max-age SECONDS` (staleness threshold, default 3600)
 and `--repo OWNER/NAME`. `github-observe` accepts `--repo` and `--task-id`
-and exits non-zero when the observation is blocked, so a scheduler surfaces a
-broken `gh` session as a failed unit instead of silent staleness.
+and exits non-zero when the observation is blocked or PR binding is ambiguous.
+`status-projection` keeps returning a readable JSON board; if GitHub is blocked
+there, the board is `healthy: false` and the journal contains the degraded
+evidence instead of a silent success claim.
 
 ### What reconcile may mutate
 
@@ -75,7 +77,8 @@ after a reconcile tick, and the status projection will show the new overlay.
 
 - `gh` missing, failing or returning invalid JSON → the observation is
   `blocked` with a reason; nothing fails open, `github-observe` exits 1.
-- Ambiguous PR binding → `ambiguous`, fail-closed, never success.
+- Ambiguous PR binding → `ambiguous`; PR facts remain visible, but
+  `binding_healthy` is false and `github-observe` exits 1.
 - State store missing → observers report `runtime-state-unavailable` and keep
   going; they do not create the database.
 - Scheduler missing or disabled → freshness degrades visibly (older
@@ -87,7 +90,7 @@ after a reconcile tick, and the status projection will show the new overlay.
 
 ## GitHub observer (T003)
 
-`bureau --root R --json github-observe` imports open-PR facts as
+`bureau --root R --json github-observe` imports currently open PR facts as
 source-attributed evidence: PR state, draft state, head ref/SHA, base ref,
 merge state, review decision, per-check states with a summary
 (`ci_unknown` / `ci_pending` / `ci_failed` / `ci_passed`) and an observation
@@ -105,7 +108,9 @@ Binding order (explicit markers beat heuristics):
 
 `CHANGES_REQUESTED` marks the observation review-blocked regardless of other
 approvals; a draft PR is never presented as merge-ready; a passing check
-proves only the listed jobs on the observed head.
+proves only the listed jobs on the observed head. Live `github-observe` reads
+open PRs only; merged observations can appear only through stored observation
+files or later webhook/history surfaces.
 
 ## Status projection board (T004)
 

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
 import stat
 from pathlib import Path
 
+from bureau.cli import main
 from bureau.github_observer import (
     BINDING_AMBIGUOUS,
     BINDING_BRANCH_FALLBACK,
@@ -158,6 +160,8 @@ def test_multiple_open_prs_for_one_task_become_ambiguous(tmp_path: Path) -> None
         tmp_path,
     )
     assert result["healthy"] is True
+    assert result["binding_healthy"] is False
+    assert result["hard_findings"][0]["code"] == "ambiguous-github-binding"
     for observation in result["pull_requests"]:
         assert observation["binding"] == BINDING_AMBIGUOUS
         assert observation["ambiguous_reason"] == "multiple-open-prs-for-task"
@@ -262,4 +266,44 @@ def test_stale_observation_is_detectable() -> None:
 def test_state_store_unavailable_is_noted_not_fatal(tmp_path: Path) -> None:
     result = observe([pull_request(6, body="Bureau-Task: BUR-X-T001")], tmp_path)
     assert result["healthy"] is True
+    assert result["binding_healthy"] is True
     assert any("state-store-unavailable" in note for note in result["notes"])
+
+
+def test_cli_github_observe_ambiguous_binding_exits_nonzero(
+    registry_factory, tmp_path: Path, capsys, monkeypatch
+) -> None:
+    root = registry_factory()
+    payload = json.dumps(
+        [
+            pull_request(
+                1,
+                body="Bureau-Task: BUR-TEST-001-T001",
+                branch="feat/one",
+            ),
+            pull_request(
+                2,
+                body="Bureau-Task: BUR-TEST-001-T001",
+                branch="feat/two",
+            ),
+        ]
+    )
+    fake = fake_gh(tmp_path, f"cat <<'JSON'\n{payload}\nJSON")
+    monkeypatch.setenv("BUREAU_GH_BIN", fake)
+    code = main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(root / "no-state"),
+            "--json",
+            "github-observe",
+            "--repo",
+            "heimgewebe/bureau",
+        ]
+    )
+    assert code == 1
+    value = json.loads(capsys.readouterr().out)
+    assert value["healthy"] is True
+    assert value["binding_healthy"] is False
+    assert value["hard_findings"][0]["code"] == "ambiguous-github-binding"

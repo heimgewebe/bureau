@@ -272,7 +272,15 @@ def _blocked_observation(
         "repository": repository,
         "observed_at": observed_at,
         "healthy": False,
+        "binding_healthy": False,
         "blocked_reason": reason,
+        "hard_findings": [
+            {
+                "severity": "blocker",
+                "code": "github-observation-blocked",
+                "message": reason,
+            }
+        ],
         "pull_requests": [],
         "does_not_establish": list(OBSERVATION_DOES_NOT_ESTABLISH),
     }
@@ -372,13 +380,16 @@ def observe_pull_requests(
             }
         )
     _mark_shared_task_ambiguity(observations)
+    hard_findings = _binding_hard_findings(observations)
     return {
         "schema_version": GITHUB_OBSERVATION_SCHEMA_VERSION,
         "source": "github",
         "repository": repository,
         "observed_at": observed_at,
         "healthy": True,
+        "binding_healthy": not hard_findings,
         "blocked_reason": None,
+        "hard_findings": hard_findings,
         "notes": state_notes,
         "pull_requests": observations,
         "does_not_establish": list(OBSERVATION_DOES_NOT_ESTABLISH),
@@ -400,6 +411,24 @@ def _mark_shared_task_ambiguity(observations: list[dict[str, Any]]) -> None:
             observation["confidence"] = None
             observation["ambiguous_reason"] = "multiple-open-prs-for-task"
             observation["notes"].append(f"pull requests bound to {task_id}: {numbers}")
+
+
+def _binding_hard_findings(observations: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Return fail-closed binding findings without hiding usable PR facts."""
+    findings: list[dict[str, Any]] = []
+    for observation in observations:
+        if observation.get("binding") != BINDING_AMBIGUOUS:
+            continue
+        findings.append(
+            {
+                "severity": "blocker",
+                "code": "ambiguous-github-binding",
+                "message": observation.get("ambiguous_reason") or "ambiguous GitHub binding",
+                "number": observation.get("number"),
+                "task_id": observation.get("task_id"),
+            }
+        )
+    return findings
 
 
 def observation_age_seconds(observation: dict[str, Any], now: str | None = None) -> float | None:

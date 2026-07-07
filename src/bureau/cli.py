@@ -412,7 +412,7 @@ def main(argv: list[str] | None = None) -> int:
                     ],
                 }
             emit(value, args.json)
-            return 0 if value["healthy"] else 1
+            return 0 if value["healthy"] and value.get("binding_healthy", True) else 1
         if args.command == "status-projection":
             from .github_observer import observe_pull_requests
             from .status_projection import status_projection

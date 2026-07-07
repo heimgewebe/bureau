@@ -393,7 +393,7 @@ def main(argv: list[str] | None = None) -> int:
             emit(value, args.json)
             return 0
         if args.command == "github-observe":
-            from .github_observer import observe_pull_requests
+            from .github_observer import filter_observation_by_task, observe_pull_requests
 
             value = observe_pull_requests(
                 root,
@@ -403,14 +403,7 @@ def main(argv: list[str] | None = None) -> int:
                 state_root=state_root,
             )
             if args.task_id:
-                value = {
-                    **value,
-                    "pull_requests": [
-                        item
-                        for item in value["pull_requests"]
-                        if item.get("task_id") == args.task_id
-                    ],
-                }
+                value = filter_observation_by_task(value, args.task_id)
             emit(value, args.json)
             return 0 if value["healthy"] and value.get("binding_healthy", True) else 1
         if args.command == "status-projection":

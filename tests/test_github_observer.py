@@ -307,3 +307,72 @@ def test_cli_github_observe_ambiguous_binding_exits_nonzero(
     assert value["healthy"] is True
     assert value["binding_healthy"] is False
     assert value["hard_findings"][0]["code"] == "ambiguous-github-binding"
+
+
+def test_cli_github_observe_task_filter_recomputes_binding_health(
+    registry_factory, tmp_path: Path, capsys, monkeypatch
+) -> None:
+    root = registry_factory()
+    payload = json.dumps(
+        [
+            pull_request(
+                1,
+                body="Bureau-Task: BUR-TEST-001-T001",
+                branch="feat/clean",
+            ),
+            pull_request(
+                2,
+                body="Bureau-Task: BUR-TEST-001-T002",
+                branch="feat/ambiguous-one",
+            ),
+            pull_request(
+                3,
+                body="Bureau-Task: BUR-TEST-001-T002",
+                branch="feat/ambiguous-two",
+            ),
+        ]
+    )
+    fake = fake_gh(tmp_path, f"cat <<'JSON'\n{payload}\nJSON")
+    monkeypatch.setenv("BUREAU_GH_BIN", fake)
+    code = main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(root / "no-state"),
+            "--json",
+            "github-observe",
+            "--repo",
+            "heimgewebe/bureau",
+            "--task-id",
+            "BUR-TEST-001-T001",
+        ]
+    )
+    assert code == 0
+    value = json.loads(capsys.readouterr().out)
+    assert value["healthy"] is True
+    assert value["binding_healthy"] is True
+    assert value["hard_findings"] == []
+    assert [item["number"] for item in value["pull_requests"]] == [1]
+
+    code = main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(root / "no-state"),
+            "--json",
+            "github-observe",
+            "--repo",
+            "heimgewebe/bureau",
+            "--task-id",
+            "BUR-TEST-001-T002",
+        ]
+    )
+    assert code == 1
+    value = json.loads(capsys.readouterr().out)
+    assert value["binding_healthy"] is False
+    assert {item["number"] for item in value["pull_requests"]} == {2, 3}
+    assert {item["code"] for item in value["hard_findings"]} == {
+        "ambiguous-github-binding"
+    }

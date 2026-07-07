@@ -60,6 +60,10 @@
       "env_configured",
       "runtime_healthy"
     ],
-    "service_activation_policy": "manual explicit approval before any systemctl/deploy/secret action"
-  }
+    "service_activation_policy": "manual explicit approval before any systemctl/deploy/secret action",
+    "depends_on_note": "Dispatcher-enforced dependency is the top-level depends_on field."
+  },
+  "depends_on": [
+    "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T001"
+  ]
 }

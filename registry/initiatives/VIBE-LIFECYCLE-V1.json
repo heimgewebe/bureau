@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "VIBE-LIFECYCLE-V1",
   "title": "WGX vibe lane lifecycle",
-  "state": "active",
-  "commitment": "now",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Turn feature branches and worktrees into bounded, adoptable and closable Vibe lanes instead of permanent branch sprawl.",
   "current_plan": {
     "repository": "bureau",
@@ -20,7 +20,10 @@
       "Cabinet registry authority change",
       "Chronik runtime dependency",
       "Bureau task creation on every vibe start"
-    ]
+    ],
+    "lifecycle": {
+      "completed_at": "2026-07-07T05:26:10.309080Z"
+    }
   },
   "completion": [
     "Vibe lanes have visible receipts.",

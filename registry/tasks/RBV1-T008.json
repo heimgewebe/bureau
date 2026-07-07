@@ -3,7 +3,7 @@
   "id": "RBV1-T008",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Document RepoBrief CLI migration",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 80
@@ -57,7 +57,7 @@
     }
   ],
   "metadata": {
-    "created_from_plan": "Plan — RepoBrief v1",
+    "created_from_plan": "Plan \u2014 RepoBrief v1",
     "registered_at": "2026-07-05T14:33:30Z",
     "plan_refs": [
       "Phase 5 / PR 9"
@@ -67,7 +67,33 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "outcome": "Lenskit PR #901 documented RepoBrief CLI migration.",
+    "verification": {
+      "lenskit_pr": "heimgewebe/lenskit#901",
+      "lenskit_head": "d24701e4e79f114cc2dc9d7379b6f4a01e87d441",
+      "lenskit_merge_commit": "00e98fa52817dcc4e937b924bb7028354b415735",
+      "verified_surfaces": [
+        "docs/architecture/repobrief.md",
+        "merger/lenskit/tests/test_repobrief_naming_doc.py"
+      ],
+      "checks": [
+        "naming doc 6 passed",
+        "anti hallucination lint 43 passed",
+        "ruff scoped passed",
+        "GitHub PR #901 checks passed"
+      ],
+      "does_not_establish": [
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness",
+        "merge_readiness",
+        "source_freshness",
+        "repo_understood"
+      ],
+      "task_sha256": "b959708fe10400c02a9f18b5a7870bafd16898233674f6df773acab973cbe4cf",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   },
   "depends_on": [
     "RBV1-T007"

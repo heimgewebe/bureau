@@ -431,6 +431,38 @@ def _binding_hard_findings(observations: list[dict[str, Any]]) -> list[dict[str,
     return findings
 
 
+def filter_observation_by_task(
+    observation: dict[str, Any], task_id: str
+) -> dict[str, Any]:
+    """Return one task-scoped observation with binding health recomputed.
+
+    The live observer first evaluates the full open-PR set so shared-task
+    ambiguity can fail closed. The CLI may then present a task-scoped view;
+    that view must not inherit ambiguity findings from unrelated tasks.
+    """
+    if not observation.get("healthy"):
+        return {
+            **observation,
+            "pull_requests": [
+                item
+                for item in observation.get("pull_requests", [])
+                if item.get("task_id") == task_id
+            ],
+        }
+    pull_requests = [
+        item
+        for item in observation.get("pull_requests", [])
+        if item.get("task_id") == task_id
+    ]
+    hard_findings = _binding_hard_findings(pull_requests)
+    return {
+        **observation,
+        "pull_requests": pull_requests,
+        "binding_healthy": not hard_findings,
+        "hard_findings": hard_findings,
+    }
+
+
 def observation_age_seconds(observation: dict[str, Any], now: str | None = None) -> float | None:
     observed_at = observation.get("observed_at")
     if not isinstance(observed_at, str) or not observed_at:

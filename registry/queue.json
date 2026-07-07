@@ -9,8 +9,9 @@
       "BUR-2026-002-T002",
       "BUR-2026-002-T003",
       "RBV1-T009",
-      "GRIP-ROADMAP-V1-T003",
       "HEIMLERN-OPTIMIZATION-V1-T001"
+      "GRIP-ROADMAP-V1-T002",
+      "GRIP-ROADMAP-V1-T003"
     ],
     "later": [
       "BUR-2026-004-T004",
@@ -35,7 +36,6 @@
       "GRABOWSKI-OPERATOR-SURFACE-V1-T005",
       "GRABOWSKI-OPERATOR-SURFACE-V1-T006",
       "RBAW-V1-T004",
-      "RBAE-V1-T003",
       "RBAE-V1-T004",
       "RBAE-V1-T005",
       "RBAE-V1-T006",

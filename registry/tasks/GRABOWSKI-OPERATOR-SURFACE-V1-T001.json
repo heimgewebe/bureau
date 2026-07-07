@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T001",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Add situation grip and snapshot digest",
-  "state": "planned",
+  "state": "verified",
   "goal": "Implement a read-only Grabowski situation surface that summarizes repo, PR, Bureau, job, gate and stale snapshot state and recommends the next safe grip without mutation.",
   "depends_on": [
     "GRIP-ROADMAP-V1-T001"
@@ -58,6 +58,10 @@
     "coordinates_with": [
       "GRIP-ROADMAP-V1-T001",
       "docs/grabowski-restplan-v2.md"
-    ]
+    ],
+    "implementation_pr": "heimgewebe/grabowski#88",
+    "implementation_merge_commit": "d4a2592",
+    "verified_at": "2026-07-07",
+    "verification_note": "Grabowski PR #88 merged; local and CI validation passed before merge."
   }
 }

@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "id": "CABINET-COHERENCE-FRONTIER-V1-T006",
+  "initiative": "CABINET-COHERENCE-FRONTIER-V1",
+  "title": "Close Cabinet-Bureau outcome feedback loop",
+  "state": "planned",
+  "goal": "Define the return path from Bureau/Grabowski execution evidence to Cabinet outcomes and Heimlern proposal-only learning input.",
+  "priority": {
+    "lane": "later",
+    "rank": 260
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.cabinet",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.heimlern",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/cabinet-coherence-frontier-gemini-lane-v1.md",
+    "safety_boundary": "gated design and registration only; no dispatch, merge, runtime mutation, credential exposure or automatic queue mutation",
+    "does_not_establish": [
+      "task_approval",
+      "merge_readiness",
+      "runtime_correctness",
+      "claim_truth",
+      "autonomous_dispatch"
+    ],
+    "phase": "CCFG-6",
+    "target_repository": "heimgewebe/bureau"
+  },
+  "acceptance": [
+    {
+      "id": "outcome-contract",
+      "assertion": "Outcome records distinguish completed, blocked, failed, superseded and false-positive findings with evidence."
+    },
+    {
+      "id": "cabinet-return-path",
+      "assertion": "Bureau receipts can be referenced by Cabinet without Bureau writing Cabinet truth directly."
+    },
+    {
+      "id": "heimlern-proposal-only",
+      "assertion": "Heimlern receives only closed outcomes and may produce proposed adjustments, not active policy changes."
+    },
+    {
+      "id": "confidence-floor",
+      "assertion": "Learning proposals must include minimum case count, confidence and known bias limits."
+    }
+  ],
+  "depends_on": [
+    "CABINET-COHERENCE-FRONTIER-V1-T004",
+    "CABINET-COHERENCE-FRONTIER-V1-T005"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "id": "CABINET-COHERENCE-FRONTIER-V1",
+  "title": "Cabinet coherence frontier and Gemini review lane",
+  "state": "candidate",
+  "commitment": "later",
+  "goal": "Register the safe path for Cabinet to keep ecosystem coherence, produce Bureau-importable candidates, and use Gemini agents as proposal-only review capacity without breaking organ boundaries.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/cabinet-coherence-frontier-gemini-lane-v1.md"
+  },
+  "completion": [
+    "Cabinet has a schema-bound frontier for Bureau candidates that preserves read-only effect closure.",
+    "Bureau can preview, review and receipt Cabinet candidates before any optional one-task import.",
+    "Gemini agents are registered as proposal-only review and scout capacity without write, merge or runtime authority.",
+    "Outcome receipts can flow back from Bureau or Grabowski to Cabinet and later to Heimlern as review-only learning input."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "source_decision": "Cabinet holds ecosystem sense and coherence; Bureau registers, takts and delegates; Grabowski executes; Gemini proposes and reviews only.",
+    "organ_boundary": {
+      "cabinet": "sensemaking, maps, claims, findings, frontier proposals",
+      "bureau": "registry, queue, preview, review, receipts, controlled import",
+      "grabowski": "repo and operator execution after gate",
+      "gemini": "proposal-only analysis and review lane",
+      "heimlern": "retrospective outcome learning only"
+    },
+    "does_not_establish": [
+      "automatic_bureau_task_creation",
+      "automatic_agent_dispatch",
+      "automatic_merge_authority",
+      "runtime_mutation_authority",
+      "gemini_write_authority",
+      "claim_truth"
+    ],
+    "registration_note": "Registered while Bureau PR #169 was open; kept candidate/later to avoid stealing the active Bureau ball."
+  }
+}

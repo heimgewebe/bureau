@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "CABINET-COHERENCE-FRONTIER-V1-T001",
+  "initiative": "CABINET-COHERENCE-FRONTIER-V1",
+  "title": "Register Cabinet organ map and Gemini proposal role",
+  "state": "planned",
+  "goal": "Update Cabinet-facing registry expectations so Gemini is represented as proposal-only review/scout capacity and the Ecosystem Registry Map remains the canonical orientation surface.",
+  "priority": {
+    "lane": "later",
+    "rank": 210
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.cabinet",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/cabinet-coherence-frontier-gemini-lane-v1.md",
+    "safety_boundary": "gated design and registration only; no dispatch, merge, runtime mutation, credential exposure or automatic queue mutation",
+    "does_not_establish": [
+      "task_approval",
+      "merge_readiness",
+      "runtime_correctness",
+      "claim_truth",
+      "autonomous_dispatch"
+    ],
+    "phase": "CCFG-1",
+    "target_repository": "heimgewebe/cabinet"
+  },
+  "acceptance": [
+    {
+      "id": "gemini-role-boundary",
+      "assertion": "Cabinet registry or planning docs represent Gemini as proposal-only and explicitly forbid push, merge, runtime mutation and credential context."
+    },
+    {
+      "id": "map-entrypoints",
+      "assertion": "README.md and AGENTS.md continue to expose the Ecosystem Registry Map prominently for agents."
+    },
+    {
+      "id": "map-regenerated",
+      "assertion": "The rendered ecosystem registry map is regenerated or a blocked reason is recorded."
+    },
+    {
+      "id": "no-map-truth",
+      "assertion": "The update states that Mermaid maps are orientation surfaces, not proof or authority."
+    }
+  ]
+}

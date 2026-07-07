@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "CABINET-COHERENCE-FRONTIER-V1-T005",
+  "initiative": "CABINET-COHERENCE-FRONTIER-V1",
+  "title": "Add Gemini proposal-only review lane",
+  "state": "planned",
+  "goal": "Define and test a Gemini review/scout lane that consumes bounded non-credential context and returns structured proposal-only findings or patch suggestions.",
+  "priority": {
+    "lane": "later",
+    "rank": 250
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "plan_path": "docs/plans/cabinet-coherence-frontier-gemini-lane-v1.md",
+    "safety_boundary": "gated design and registration only; no dispatch, merge, runtime mutation, credential exposure or automatic queue mutation",
+    "does_not_establish": [
+      "task_approval",
+      "merge_readiness",
+      "runtime_correctness",
+      "claim_truth",
+      "autonomous_dispatch"
+    ],
+    "phase": "CCFG-5",
+    "target_repository": "heimgewebe/bureau",
+    "agent_pool": "gemini",
+    "agent_authority": "proposal_only"
+  },
+  "acceptance": [
+    {
+      "id": "briefing-schema",
+      "assertion": "Agent briefing requires allowed_scope, forbidden_changes, input_artifacts, output_schema, max_runtime and no-credential/no-push/no-merge/no-runtime-mutation constraints."
+    },
+    {
+      "id": "output-schema",
+      "assertion": "Gemini output is machine-readable and limited to proposal, blocked or no_action outcomes."
+    },
+    {
+      "id": "sandbox-boundary",
+      "assertion": "The lane does not grant write, push, merge, runtime or credential authority to Gemini."
+    },
+    {
+      "id": "human-or-grabowski-gate",
+      "assertion": "Any patch proposal requires Grabowski or human review before effect."
+    }
+  ],
+  "depends_on": [
+    "CABINET-COHERENCE-FRONTIER-V1-T003"
+  ]
+}

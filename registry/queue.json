@@ -2,9 +2,7 @@
   "schema_version": 1,
   "queue_policy": "skip-blocked",
   "lanes": {
-    "now": [
-      "BUR-2026-005-T001"
-    ],
+    "now": [],
     "next": [
       "BUR-2026-004-T002",
       "BUR-2026-004-T003",

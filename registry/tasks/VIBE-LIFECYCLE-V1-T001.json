@@ -3,7 +3,7 @@
   "id": "VIBE-LIFECYCLE-V1-T001",
   "initiative": "VIBE-LIFECYCLE-V1",
   "title": "Add vibe status, doctor and adopt MVP",
-  "state": "ready",
+  "state": "verified",
   "goal": "Implement the first non-destructive Vibe lane lifecycle slice in wgx: status, doctor and adopt for existing branch/worktree reality.",
   "priority": {
     "lane": "now",
@@ -41,8 +41,31 @@
       "automatic worktree cleanup",
       "automatic PR creation",
       "automatic Bureau lane creation",
-      "Chronik event delivery"
-    ]
+      "Chronik event delivery",
+      "runtime correctness outside tested commands"
+    ],
+    "outcome": "wgx Vibe lifecycle MVP is present on main and validated.",
+    "implementation_pr": "heimgewebe/wgx#632",
+    "implementation_merge_commit": "44069602da536e781675a788e8d9d4c45c7c1f75",
+    "validated_surfaces": [
+      "cmd/vibe.bash",
+      "tests/vibe.bats",
+      "docs/cli.md"
+    ],
+    "checks": [
+      "bats tests/vibe.bats: 5 passed"
+    ],
+    "verified_acceptance": {
+      "vibe-status": "status command present and tested",
+      "vibe-doctor": "doctor command present and tested as read-only",
+      "vibe-adopt": "adopt command writes local receipt and is tested",
+      "focused-tests": "tests/vibe.bats covers help/status/doctor/adopt"
+    },
+    "verified_at": "2026-07-07T04:45:00Z",
+    "verification": {
+      "task_sha256": "843229ac3a2092a599a8c61c33e40c2e0b5d86142a75a7a4a04792af208e9488",
+      "plan_sha256": "4e947b83f44c9e5191c77c24dd81ee9b382e057b04a1a6aa408c6c0b0acd625d"
+    }
   },
   "acceptance": [
     {

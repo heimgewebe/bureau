@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "CABINET-COHERENCE-FRONTIER-V1",
   "title": "Cabinet coherence frontier and Gemini review lane",
-  "state": "candidate",
+  "state": "committed",
   "commitment": "later",
   "goal": "Register the safe path for Cabinet to keep ecosystem coherence, produce Bureau-importable candidates, and use Gemini agents as proposal-only review capacity without breaking organ boundaries.",
   "current_plan": {
@@ -12,20 +12,23 @@
   "completion": [
     "Cabinet has a schema-bound frontier for Bureau candidates that preserves read-only effect closure.",
     "Bureau can preview, review and receipt Cabinet candidates before any optional one-task import.",
-    "Gemini agents are registered as proposal-only review and scout capacity without write, merge or runtime authority.",
-    "Outcome receipts can flow back from Bureau or Grabowski to Cabinet and later to Heimlern as review-only learning input."
+    "Gemini capability and sandbox boundaries are verified before any proposal-only review lane is enabled.",
+    "Outcome receipts can flow back from Bureau or Grabowski to Cabinet and later to Heimlern as review-only learning input.",
+    "The first read-only status projection is bound to Leitstand; Schauwerk requires a separate resource decision."
   ],
   "parallelism": {
     "max_active_tasks": 1
   },
   "metadata": {
-    "source_decision": "Cabinet holds ecosystem sense and coherence; Bureau registers, takts and delegates; Grabowski executes; Gemini proposes and reviews only.",
+    "source_decision": "Cabinet holds ecosystem sense and coherence; Bureau registers, schedules and delegates only after review; Grabowski executes; Gemini proposes and reviews only after capability preflight.",
     "organ_boundary": {
       "cabinet": "sensemaking, maps, claims, findings, frontier proposals",
       "bureau": "registry, queue, preview, review, receipts, controlled import",
       "grabowski": "repo and operator execution after gate",
-      "gemini": "proposal-only analysis and review lane",
-      "heimlern": "retrospective outcome learning only"
+      "gemini": "proposal-only analysis and review lane after capability and sandbox preflight",
+      "heimlern": "retrospective outcome learning only",
+      "leitstand": "first read-only projection surface",
+      "schauwerk": "possible later renderer surface after separate resource binding"
     },
     "does_not_establish": [
       "automatic_bureau_task_creation",
@@ -35,6 +38,6 @@
       "gemini_write_authority",
       "claim_truth"
     ],
-    "registration_note": "Registered while Bureau PR #169 was open; kept candidate/later to avoid stealing the active Bureau ball."
+    "registration_note": "Registered while Bureau PR #169 was open; kept later and queues only the first entry task to avoid stealing the active Bureau ball."
   }
 }

@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T002",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Expose first-class grip MCP surface",
-  "state": "planned",
+  "state": "verified",
   "goal": "Expose grip_list and grip_run or equivalent MCP tools over a small allowlisted set of intent-shaped, receipt-bound Grabowski runners.",
   "depends_on": [
     "GRABOWSKI-OPERATOR-SURFACE-V1-T001"
@@ -61,6 +61,22 @@
       "pr-create-or-update",
       "pr-check-readiness",
       "post-merge-sync"
-    ]
+    ],
+    "implementation_pr": "heimgewebe/grabowski#90",
+    "implementation_merge_commit": "f34d757554fa9d99b65c3367522abd434eeeaad2",
+    "verified_at": "2026-07-07",
+    "verification_note": "Grabowski PR #90 merged; CI validate 3.10/3.12 passed; local pytest, ruff, deploy-check and diff-check passed before merge.",
+    "outcome": "grip_list and grip_run are exposed as allowlisted, receipt-bound Grabowski grip surface functions and MCP tools.",
+    "validated_acceptance": {
+      "grip-list-contract": "list output includes purpose, target, scope, effect class, risk, recovery path, preconditions and expected receipt shape",
+      "grip-run-allowlist": "unknown and non-allowlisted grip names are rejected with blocked receipts",
+      "receipt-bound": "grip_run delegates through run_grip and preserves mutation receipts/gates",
+      "profile-visible": "observer/operator/captain profile availability is visible in grip_list output",
+      "tests": "tests/test_grips.py covers list output, unknown rejection, read-only dispatch, mutation gate and observer mutation rejection"
+    },
+    "verification": {
+      "task_sha256": "51d485db0201ed641f5ed739754791685ed9d776d2af9dd8a1e51f69a2b717b9",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

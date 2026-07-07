@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T003",
   "initiative": "BUR-2026-005",
   "title": "Implement GitHub PR observer",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "BUR-2026-005-T001"
   ],
@@ -29,7 +29,25 @@
   },
   "metadata": {
     "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
-    "safety_boundary": "observation only; GitHub keeps PR, review and CI authority"
+    "safety_boundary": "observation only; GitHub keeps PR, review and CI authority",
+    "outcome": "Implemented the read-only GitHub PR observer with marker-first binding, weak branch fallback and fail-closed blocked/ambiguous observations (src/bureau/github_observer.py, CLI github-observe).",
+    "verified_acceptance": {
+      "explicit-marker-binding": "src/bureau/github_observer.py bind_pull_request; tests/test_github_observer.py marker tests",
+      "github-facts": "observe_pull_requests emits state, is_draft, head_sha, checks, review_decision, merge_state, observed_at",
+      "confidence-and-ambiguity": "branch fallback capped at 0.55; gh failure/ambiguity yield blocked/ambiguous, never success; fail-closed tests",
+      "tests": "tests/test_github_observer.py covers marker match, branch fallback, no match, ambiguous match and stale observation"
+    },
+    "does_not_establish": [
+      "automatic_merge_authority",
+      "automatic_completion_authority",
+      "dispatcher_authority",
+      "runtime_correctness",
+      "ci_sufficiency"
+    ],
+    "verification": {
+      "task_sha256": "103829752f1f9921a5e75b650468c3ee18d5066029ce7f98883e062378e8b017",
+      "plan_sha256": "653fa6a056506c94d5654ba5e3c16f9c31032767f0e1c844a8cb4714c50ce917"
+    }
   },
   "acceptance": [
     {

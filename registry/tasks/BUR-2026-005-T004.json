@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T004",
   "initiative": "BUR-2026-005",
   "title": "Add status projection board",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "BUR-2026-005-T001",
     "BUR-2026-005-T002",
@@ -31,7 +31,24 @@
   },
   "metadata": {
     "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
-    "safety_boundary": "read-only projection; no state mutation"
+    "safety_boundary": "read-only projection; no state mutation",
+    "outcome": "Added the read-only status projection board combining registry, runtime, workspace, receipt and GitHub evidence per task (src/bureau/status_projection.py, CLI status-projection).",
+    "verified_acceptance": {
+      "projection-command": "bureau status-projection --json emits per-task registry_state, effective_state, active_run with worker, workspace, github evidence and receipts",
+      "unknowns-visible": "unknowns, stale_reasons, blocked_reasons and findings stay explicit; tests keep ci_unknown, blocked gh and stale overlays visible",
+      "machine-readable": "schema_version 1, sorted stable JSON; stability test in tests/test_status_projection.py"
+    },
+    "does_not_establish": [
+      "automatic_merge_authority",
+      "automatic_completion_authority",
+      "dispatcher_authority",
+      "runtime_correctness",
+      "ci_sufficiency"
+    ],
+    "verification": {
+      "task_sha256": "c5bed8b328289aade0371902d46bf9b6307b7d0ff2f4b642b4d974a332006fbb",
+      "plan_sha256": "653fa6a056506c94d5654ba5e3c16f9c31032767f0e1c844a8cb4714c50ce917"
+    }
   },
   "acceptance": [
     {

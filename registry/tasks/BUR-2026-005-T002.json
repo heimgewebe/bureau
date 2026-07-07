@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T002",
   "initiative": "BUR-2026-005",
   "title": "Define scheduler contract and timers",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "BUR-2026-005-T001"
   ],
@@ -29,7 +29,25 @@
   },
   "metadata": {
     "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
-    "safety_boundary": "scheduler contract first; systemd only as reference deployment; no autonomous dispatch"
+    "safety_boundary": "scheduler contract first; systemd only as reference deployment; no autonomous dispatch",
+    "outcome": "Defined the scheduler-neutral one-shot contract and shipped hardened user-level reference timers for status projection and the bounded reconcile loop.",
+    "verified_acceptance": {
+      "scheduler-contract": "docs/bureau-runtime-observation-v1.md#scheduler-contract-t002",
+      "reference-timers": "ops/systemd/bureau-status-projection.service, ops/systemd/bureau-status-projection.timer, ops/systemd/bureau-reconcile.service, ops/systemd/bureau-reconcile.timer; static safety tests in tests/test_runtime_observation_systemd.py",
+      "lock-and-paths": "docs/bureau-runtime-observation-v1.md#paths-locks-timeouts and #failure-semantics; ReadWritePaths/TimeoutStartSec in the units",
+      "operations-docs": "docs/bureau-runtime-observation-v1.md#reference-deployment-systemd-user-units"
+    },
+    "does_not_establish": [
+      "automatic_merge_authority",
+      "automatic_completion_authority",
+      "dispatcher_authority",
+      "runtime_correctness",
+      "ci_sufficiency"
+    ],
+    "verification": {
+      "task_sha256": "a3343c7ca8c9ced7b8eee651fbf36de46e70cb20bdd96c4ae028111a14775872",
+      "plan_sha256": "653fa6a056506c94d5654ba5e3c16f9c31032767f0e1c844a8cb4714c50ce917"
+    }
   },
   "acceptance": [
     {

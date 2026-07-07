@@ -1,0 +1,12 @@
+[Unit]
+Description=Project Bureau status twice hourly as read-only evidence
+
+[Timer]
+OnCalendar=*-*-* *:20,50:00
+Persistent=true
+RandomizedDelaySec=60
+AccuracySec=1min
+Unit=bureau-status-projection.service
+
+[Install]
+WantedBy=timers.target

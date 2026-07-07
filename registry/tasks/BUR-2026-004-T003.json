@@ -3,7 +3,7 @@
   "id": "BUR-2026-004-T003",
   "initiative": "BUR-2026-004",
   "title": "Audit legacy module dependencies",
-  "state": "planned",
+  "state": "verified",
   "goal": "Produce a dependency map for legacy.py before any deletion or compatibility reduction.",
   "priority": {
     "lane": "next",
@@ -25,7 +25,25 @@
     "policy": "review-before-effect"
   },
   "metadata": {
-    "plan_path": "docs/plans/bureau-boundary-ops-v1.md"
+    "plan_path": "docs/plans/bureau-boundary-ops-v1.md",
+    "verified_at": "2026-07-07",
+    "outcome": "Audited dependencies on src/bureau/legacy.py and defined keep/deprecate/remove criteria.",
+    "audit_path": "docs/bur-2026-004-t003-legacy-module-dependency-audit.md",
+    "verified_acceptance": {
+      "import-map": "Audit records direct imports, module references, CLI facade references and tests touching legacy.py.",
+      "state-compatibility": "Audit records StateStore tables, run envelopes, receipts and task_status compatibility surfaces.",
+      "decision-frame": "Audit recommends keep for now, deprecate by extraction, and smallest safe helper-extraction follow-up PR."
+    },
+    "does_not_establish": [
+      "legacy_module_safe_to_remove",
+      "v2_migration_complete",
+      "runtime_state_drift_free",
+      "old_receipts_semantically_complete"
+    ],
+    "verification": {
+      "task_sha256": "2329212ff5fd9c60f5994a1804d0e8613ac65a565c476d3b50386e4b5912f3db",
+      "plan_sha256": "bb81949c8375fa377db1e49b6c2f53d10c6ec53b894485799e234a28e92e44d3"
+    }
   },
   "acceptance": [
     {

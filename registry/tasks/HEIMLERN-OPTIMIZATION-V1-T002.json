@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "HEIMLERN-OPTIMIZATION-V1-T002",
+  "initiative": "HEIMLERN-OPTIMIZATION-V1",
+  "title": "Feedback-Kern entdoppeln",
+  "state": "planned",
+  "depends_on": [
+    "HEIMLERN-OPTIMIZATION-V1-T001"
+  ],
+  "goal": "Zähllogik und Simulationsableitung im Feedback-Kern vereinheitlichen, ohne Verhalten zu ändern.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heimlern",
+    "baseline_commit": "9fef180bcabf3fffe9d476127221643acba0ea64"
+  },
+  "claims": [],
+  "acceptance": [
+    {
+      "id": "record-helper",
+      "assertion": "OutcomeStatistics besitzt eine gemeinsame record-Logik für total, successes, failures und finite rewards."
+    },
+    {
+      "id": "single-simulation-source",
+      "assertion": "propose_adjustment leitet failure_rate_after_sim über simulate_adjustment oder eine äquivalente einzige Simulationsquelle ab."
+    },
+    {
+      "id": "behavior-regression",
+      "assertion": "Tests belegen, dass Proposal-Evidence und simulate_adjustment für dasselbe Proposal konsistent bleiben."
+    }
+  ],
+  "metadata": {
+    "source_plan": "docs/plans/heimlern-optimization-plan-v1.md",
+    "source_pr": "heimgewebe/heimlern#181",
+    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a"
+  }
+}

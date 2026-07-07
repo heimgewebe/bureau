@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "id": "HEIMLERN-OPTIMIZATION-V1",
+  "title": "heimlern Optimierung v1",
+  "state": "active",
+  "commitment": "next",
+  "goal": "heimlern als learning_proposal_engine durch Contract-Schärfe, Drift-Reduktion und einen auditierbaren review-only Lernpfad härten.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/heimlern-optimization-plan-v1.md"
+  },
+  "completion": [
+    "Feedback-Schema konkretisiert und durch Fixtures abgesichert.",
+    "Feedback-Kern entdoppelt ohne Verhaltensänderung.",
+    "Review-only Lernpfad outcomes to proposal to schema validation als Rust-CLI belegbar.",
+    "Python/Rust Proposal-Emission gegen Drift geschützt oder auf Rust delegiert.",
+    "Release-Profil-Entscheidung gemessen und dokumentiert.",
+    "Claim-Evidence-Registry minimal angelegt."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-07",
+    "source_repo": "heimgewebe/heimlern",
+    "source_pr": "heimgewebe/heimlern#181",
+    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a",
+    "base_head": "9fef180bcabf3fffe9d476127221643acba0ea64",
+    "decision": "Plan in Bureau übernehmen; Heimlern-Plan-PR ohne Merge schließen.",
+    "a4_boundary": "Emission/CI stabilisiert; additive-Vertragsentscheidung bleibt bei OPERATOR-LEARNING-AXIS-V1-T002."
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "HEIMLERN-OPTIMIZATION-V1-T003",
+  "initiative": "HEIMLERN-OPTIMIZATION-V1",
+  "title": "Rust CLI Lernpfad ergänzen",
+  "state": "planned",
+  "goal": "Den offline Lernpfad als prüfbares Rust-CLI-Artefakt ergänzen.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heimlern",
+    "baseline_commit": "9fef180bcabf3fffe9d476127221643acba0ea64"
+  },
+  "claims": [],
+  "acceptance": [
+    {
+      "id": "cli-command",
+      "assertion": "heimlern-cli bietet ein neues offline Subcommand für den Lernpfad."
+    },
+    {
+      "id": "schema-e2e",
+      "assertion": "Ein Integrationstest validiert ein erzeugtes JSON-Artefakt gegen das gepinnte Schema."
+    },
+    {
+      "id": "read-only",
+      "assertion": "Das Kommando schreibt keine produktive Änderung."
+    }
+  ],
+  "metadata": {
+    "source_plan": "docs/plans/heimlern-optimization-plan-v1.md",
+    "source_pr": "heimgewebe/heimlern#181",
+    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a"
+  },
+  "depends_on": [
+    "HEIMLERN-OPTIMIZATION-V1-T002"
+  ]
+}

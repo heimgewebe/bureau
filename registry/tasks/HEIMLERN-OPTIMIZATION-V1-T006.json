@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "id": "HEIMLERN-OPTIMIZATION-V1-T006",
+  "initiative": "HEIMLERN-OPTIMIZATION-V1",
+  "title": "Claim Evidence Registry minimal anlegen",
+  "state": "planned",
+  "goal": "Eine schlanke doc-freshness Registry für tragende agentenrelevante Claims ergänzen, ohne Ballast aufzubauen.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heimlern",
+    "baseline_commit": "9fef180bcabf3fffe9d476127221643acba0ea64"
+  },
+  "claims": [],
+  "acceptance": [
+    {
+      "id": "registry-present",
+      "assertion": "docs/doc-freshness-registry.yml existiert und enthält die tragenden Claims des Plans."
+    },
+    {
+      "id": "minimal-scope",
+      "assertion": "Die Registry bleibt auf auditierte Claims begrenzt und wird nicht zur allgemeinen Dokumentationsliste."
+    },
+    {
+      "id": "repobrief-useful",
+      "assertion": "RepoBrief kann die Registry als Claim-Evidence-Oberfläche verwenden oder die erwartete Struktur ist dokumentiert."
+    }
+  ],
+  "metadata": {
+    "source_plan": "docs/plans/heimlern-optimization-plan-v1.md",
+    "source_pr": "heimgewebe/heimlern#181",
+    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "id": "HEIMLERN-OPTIMIZATION-V1-T004",
+  "initiative": "HEIMLERN-OPTIMIZATION-V1",
+  "title": "Release-Profil messen und entscheiden",
+  "state": "planned",
+  "goal": "Die opt-level=z Entscheidung mit reproduzierbarer Messung und kurzer ADR bestätigen oder anpassen.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heimlern",
+    "baseline_commit": "9fef180bcabf3fffe9d476127221643acba0ea64"
+  },
+  "claims": [],
+  "acceptance": [
+    {
+      "id": "benchmark-added",
+      "assertion": "Ein reproduzierbarer Benchmark vergleicht relevante Feedback- oder Replay-Pfade."
+    },
+    {
+      "id": "profile-compared",
+      "assertion": "opt-level z, s und 3 wurden mit Größe und Laufzeit verglichen oder die Grenzen der Messung sind dokumentiert."
+    },
+    {
+      "id": "adr-recorded",
+      "assertion": "Eine kurze ADR hält die Profilentscheidung und ihre Prämissen fest."
+    }
+  ],
+  "metadata": {
+    "source_plan": "docs/plans/heimlern-optimization-plan-v1.md",
+    "source_pr": "heimgewebe/heimlern#181",
+    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a"
+  }
+}

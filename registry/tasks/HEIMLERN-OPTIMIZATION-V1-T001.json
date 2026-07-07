@@ -3,7 +3,7 @@
   "id": "HEIMLERN-OPTIMIZATION-V1-T001",
   "initiative": "HEIMLERN-OPTIMIZATION-V1",
   "title": "Feedback-Schema härten",
-  "state": "ready",
+  "state": "verified",
   "goal": "policy.feedback.schema.json von einem inhaltsleeren object-Schema zu einem konkret validierenden Contract mit Positiv- und Negativ-Fixtures härten.",
   "execution": {
     "mode": "interactive-agent",
@@ -33,6 +33,34 @@
   "metadata": {
     "source_plan": "docs/plans/heimlern-optimization-plan-v1.md",
     "source_pr": "heimgewebe/heimlern#181",
-    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a"
+    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a",
+    "outcome": "Heimlern PR #183 hardened policy.feedback.schema.json with positive and rejected fixtures.",
+    "implementation_repo": "heimgewebe/heimlern",
+    "implementation_pr": "heimgewebe/heimlern#183",
+    "implementation_merge_commit": "64ec17c",
+    "verified_acceptance": {
+      "feedback-schema-concrete": "contracts/policy.feedback.schema.json now defines required feedback_id, decision_id and reward plus explicit properties and additionalProperties=false",
+      "positive-fixture-valid": "data/samples/policy.feedback.sample.json validates against the hardened schema",
+      "negative-fixture-rejected": "data/samples/policy.feedback.rejected.json is rejected by scripts/validate_json.py and enforced in rust.yml schema-validate",
+      "no-refactor-mixed-in": "heimlern diff limited to .github/workflows/rust.yml, contracts/policy.feedback.schema.json and data/samples/policy.feedback.rejected.json"
+    },
+    "checks": [
+      "heimlern PR #183 schema-validate SUCCESS",
+      "heimlern PR #183 build-test SUCCESS",
+      "heimlern PR #183 CodeQL SUCCESS",
+      "local positive fixture validation passed",
+      "local rejected fixture returned failure as expected",
+      "local batch sample validation passed"
+    ],
+    "does_not_establish": [
+      "feedback_core_refactor",
+      "additive_contract_change",
+      "runtime_policy_readiness",
+      "production_feedback_semantics"
+    ],
+    "verification": {
+      "task_sha256": "e39369b1cf163611a68ef1199b0ac514fc0fd5cccba84f90a0b169000bb2dc5c",
+      "plan_sha256": "de066e4dc95e6a5575653e41c8cf2c6108f57052e12ba782dbbf49f4ab556b7e"
+    }
   }
 }

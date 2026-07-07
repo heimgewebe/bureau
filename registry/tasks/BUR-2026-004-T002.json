@@ -3,7 +3,7 @@
   "id": "BUR-2026-004-T002",
   "initiative": "BUR-2026-004",
   "title": "Add state-root doctor",
-  "state": "planned",
+  "state": "verified",
   "goal": "Add a read-only Bureau doctor check that reports unknown files in the configured state root and documents a manual cleanup path.",
   "priority": {
     "lane": "next",
@@ -25,7 +25,11 @@
     "policy": "review-before-effect"
   },
   "metadata": {
-    "plan_path": "docs/plans/bureau-boundary-ops-v1.md"
+    "plan_path": "docs/plans/bureau-boundary-ops-v1.md",
+    "verification": {
+      "task_sha256": "32a415f19005f3f2ee4a36718be211bfcce820c0be39a594415415a0c7010120",
+      "plan_sha256": "bb81949c8375fa377db1e49b6c2f53d10c6ec53b894485799e234a28e92e44d3"
+    }
   },
   "acceptance": [
     {

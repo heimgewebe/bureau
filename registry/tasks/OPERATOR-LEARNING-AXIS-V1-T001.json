@@ -3,7 +3,7 @@
   "id": "OPERATOR-LEARNING-AXIS-V1-T001",
   "initiative": "OPERATOR-LEARNING-AXIS-V1",
   "title": "Close heimlern OLA contract drift and repair Metrics CI",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 10
@@ -62,6 +62,34 @@
       "P2 metrics CI repair"
     ],
     "recommended_agent": "grabowski-codex",
-    "claude_delegation": "review if contract interpretation or architecture risk appears"
+    "claude_delegation": "review if contract interpretation or architecture risk appears",
+    "outcome": "Heimlern PR #182 closed OLA contract drift and repaired Metrics CI schema path.",
+    "implementation_repo": "heimgewebe/heimlern",
+    "implementation_pr": "heimgewebe/heimlern#182",
+    "implementation_merge_commit": "90ce34a",
+    "verified_acceptance": {
+      "additive-emit-closed": "scripts/ola_probe.py self-test asserts relative, non-additive emitted deltas",
+      "metrics-schema-canonical": "metrics workflow resolves contracts/metrics.snapshot.schema.json",
+      "schema-miss-diagnostic": "metrics workflow emits explicit Metrics schema not found diagnostic",
+      "scope-contained": "diff limited to metrics workflow, OLA probe regression, metrics schema"
+    },
+    "checks": [
+      "PR #182 build-test SUCCESS",
+      "PR #182 schema-validate SUCCESS",
+      "PR #182 CodeQL SUCCESS",
+      "local ola_probe self-test passed before merge",
+      "local metrics schema smoke passed before merge"
+    ],
+    "does_not_establish": [
+      "runtime_policy_readiness",
+      "automatic_rule_change_permission",
+      "sample_representativeness",
+      "full OLA adapter migration",
+      "end_to_end_learning_smoke"
+    ],
+    "verification": {
+      "task_sha256": "001d378fddfdd61983e1c54b768b3afa2417713aa710f8aa49604b885c3db0a0",
+      "plan_sha256": "76d9bc2839e3a37b12f25e565b429bf413427570794dfa836137a18eb712d8f5"
+    }
   }
 }

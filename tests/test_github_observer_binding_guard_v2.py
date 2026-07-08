@@ -3,7 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-from bureau.github_observer import BINDING_AMBIGUOUS, BINDING_UNMATCHED, observe_pull_requests
+from bureau.github_observer import (
+    BINDING_AMBIGUOUS,
+    BINDING_UNMATCHED,
+    observe_pull_requests,
+)
 
 
 def pull_request(
@@ -52,7 +56,10 @@ def registry(*tasks: SimpleNamespace) -> SimpleNamespace:
 
 
 def observe(
-    pull_requests: list[dict[str, object]], tmp_path: Path, *, registry_value=None
+    pull_requests: list[dict[str, object]],
+    tmp_path: Path,
+    *,
+    registry_value=None,
 ) -> dict[str, object]:
     return observe_pull_requests(
         tmp_path,
@@ -130,7 +137,9 @@ def test_terminal_task_with_schema_visible_follow_up_is_allowed(tmp_path: Path) 
     assert result["hard_findings"] == []
 
 
-def test_schema_visible_exception_suppresses_taskless_binding_blocker(tmp_path: Path) -> None:
+def test_schema_visible_exception_suppresses_taskless_binding_blocker(
+    tmp_path: Path,
+) -> None:
     result = observe(
         [
             pull_request(
@@ -151,7 +160,9 @@ def test_schema_visible_exception_suppresses_taskless_binding_blocker(tmp_path: 
     assert result["hard_findings"] == []
 
 
-def test_schema_visible_exception_suppresses_multi_task_binding_blocker(tmp_path: Path) -> None:
+def test_schema_visible_exception_suppresses_multi_task_binding_blocker(
+    tmp_path: Path,
+) -> None:
     result = observe(
         [
             pull_request(

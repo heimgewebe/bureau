@@ -16,6 +16,11 @@ from typing import Any
 
 from . import legacy
 from .adapters import AdapterRegistry
+from .rlens_policy import (
+    evaluate_task_rlens_policy,
+    rlens_policy_block_reason,
+    task_rlens_context_ref,
+)
 from .schema_validation import DocumentSchemaError, SchemaSet
 
 SCHEMA_VERSION = 3
@@ -1363,6 +1368,9 @@ class Dispatcher(legacy.Dispatcher):
                     )
                     result.append(f"repo write blocked by open PR: {label}{task_note}")
                     break
+        rlens_block = rlens_policy_block_reason(task.raw)
+        if rlens_block:
+            result.append(f"rlens policy blocked: {rlens_block}")
         for claim in task.claims:
             result.extend(
                 legacy.claim_conflicts(claim, regular_reservations, self.registry.resources)
@@ -1473,11 +1481,9 @@ class Dispatcher(legacy.Dispatcher):
                 "plan": initiative.current_plan,
                 "baseline_commit": baseline,
             }
-            rlens_context_ref = (
-                selected.raw.get("rlens_context_ref")
-                or selected.execution.get("rlens_context_ref")
-                or selected.raw.get("metadata", {}).get("rlens_context_ref")
-            )
+            rlens_context_policy = evaluate_task_rlens_policy(selected.raw)
+            envelope["rlens_context_policy"] = rlens_context_policy
+            rlens_context_ref = task_rlens_context_ref(selected.raw)
             if isinstance(rlens_context_ref, dict):
                 envelope["rlens_context_ref"] = rlens_context_ref
             self.registry.schemas.validate("execution-envelope", envelope, f"run:{run_id}")
@@ -1945,6 +1951,8 @@ def complete_run(
     }
     if isinstance(envelope.get("rlens_context_ref"), dict):
         receipt["rlens_context_ref"] = envelope["rlens_context_ref"]
+    if isinstance(envelope.get("rlens_context_policy"), dict):
+        receipt["rlens_context_policy"] = envelope["rlens_context_policy"]
     receipt_sha = legacy.sha256_json(receipt)
     receipt["receipt_sha256"] = receipt_sha
     registry.schemas.validate("receipt", receipt, f"receipt:{run_id}")
@@ -2040,11 +2048,9 @@ def grabowski_handoff(registry: Registry, store: StateStore, run_id: str) -> dic
         "io_weight": int(task.execution.get("io_weight", 100)),
         "memory_max_bytes": task.execution.get("memory_max_bytes"),
     }
-    rlens_context_ref = (
-        task.raw.get("rlens_context_ref")
-        or task.execution.get("rlens_context_ref")
-        or task.raw.get("metadata", {}).get("rlens_context_ref")
-    )
+    rlens_context_policy = evaluate_task_rlens_policy(task.raw)
+    result["rlens_context_policy"] = rlens_context_policy
+    rlens_context_ref = task_rlens_context_ref(task.raw)
     if isinstance(rlens_context_ref, dict):
         result["rlens_context_ref"] = rlens_context_ref
     if task.mode == "grabowski-task":

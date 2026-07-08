@@ -79,6 +79,126 @@
         "preflight_status"
       ],
       "type": "object"
+    },
+    "rlens_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "opportunistic",
+            "required",
+            "strict",
+            "live-first",
+            "external-safe"
+          ]
+        },
+        "task_profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "skip_reason": {
+          "type": "string",
+          "enum": [
+            "not_required",
+            "live_first_primary",
+            "context_pack_unavailable",
+            "stale_context_explicitly_allowed",
+            "external_safe_export_blocked",
+            "trivial_task",
+            "not_yet_generated",
+            "policy_override"
+          ]
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "mode"
+      ]
+    },
+    "rlens_policy_evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "opportunistic",
+            "required",
+            "strict",
+            "live-first",
+            "external-safe"
+          ]
+        },
+        "requires_context": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "satisfied",
+            "skipped",
+            "blocked",
+            "not_required"
+          ]
+        },
+        "task_profile": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "has_context_ref": {
+          "type": "boolean"
+        },
+        "skip_reason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "not_required",
+            "live_first_primary",
+            "context_pack_unavailable",
+            "stale_context_explicitly_allowed",
+            "external_safe_export_blocked",
+            "trivial_task",
+            "not_yet_generated",
+            "policy_override",
+            null
+          ]
+        },
+        "block_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "does_not_establish": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "schema_version",
+        "mode",
+        "requires_context",
+        "status",
+        "has_context_ref",
+        "skip_reason",
+        "block_reason",
+        "does_not_establish"
+      ]
     }
   },
   "$id": "https://heimgewebe.local/bureau/receipt.v1.schema.json",
@@ -126,6 +246,9 @@
     "verified_at": {
       "format": "date-time",
       "type": "string"
+    },
+    "rlens_context_policy": {
+      "$ref": "#/$defs/rlens_policy_evaluation"
     }
   },
   "required": [

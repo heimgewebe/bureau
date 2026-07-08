@@ -3,7 +3,7 @@
   "id": "RPU-V1-T011",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "Retrieval v2 default-promotion decision",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 51
@@ -53,9 +53,46 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness",
-      "agent_quality_improvement_by_itself"
+      "agent_quality_improvement_by_itself",
+      "default_query_behavior_change",
+      "retrieval_correctness",
+      "answer_correctness",
+      "default_promotion_readiness_beyond_measured_goldset",
+      "graph_completeness",
+      "runtime_causality",
+      "citation_semantic_correctness"
     ],
-    "lenskit_local_task": "TASK-RETRIEVAL-V2-DEFAULT-PROMOTION-DECISION-001"
+    "lenskit_local_task": "TASK-RETRIEVAL-V2-DEFAULT-PROMOTION-DECISION-001",
+    "diff_sha256": "478d9f95eeb71ba76ded0a933936ee0e07bb1a48e833cbaff7caf9aba6bc5260",
+    "implementation_head": "a2103e60fb2f4e75f92b9299e90a0ee11b4f0dd8",
+    "implementation_paths": [
+      "docs/proofs/retrieval-v2-default-promotion-decision-20260708T152502Z-proof.md",
+      "docs/diagnostics/retrieval-v2-default-promotion-decision-20260708T152502Z.json",
+      "docs/diagnostics/retrieval-v2-default-promotion-legacy-20260708T152502Z.json",
+      "docs/diagnostics/retrieval-v2-default-promotion-review-intent-20260708T152502Z.json",
+      "docs/diagnostics/retrieval-v2-default-promotion-graph-health-20260708T152502Z.json",
+      "docs/diagnostics/retrieval-v2-default-promotion-range-health-20260708T152502Z.json",
+      "docs/tasks/board.md",
+      "docs/tasks/index.json"
+    ],
+    "implementation_pr": "heimgewebe/lenskit#926",
+    "live_lenskit_commit": "79bdfa197c0fe47cf52d121ce0583df96e858e68",
+    "outcome": "Implemented in Lenskit PR #926: a current Retrieval v2 default-promotion decision was recorded against the 20260708T152502Z real RepoBrief dump. The diagnostic gate passed with review-intent recall@10 95.0 vs legacy 10.0, MRR 0.3751190476190477 vs 0.1, expected-target hits 27/60 vs 2/60, no category regressions, zero candidate fallbacks, fresh graph health and passing range/citation health. The explicit decision is keep false: the diagnostic gate remains non-promotional and no default behavior change is authorized.",
+    "validation": [
+      "Lenskit PR #926 GitHub CI passed: CodeQL, pytest-full, ruff, planning-registration, doc-freshness, graph-model, graph-bundle-sources, repo-root, templates, webui-js-tests, contract guards and reusable fixture validation.",
+      "Local before merge: JSON reports parsed, planning-registration ratchet had zero new findings, gate core reproduced from committed reports, 104 retrieval/goldset/eval tests passed, targeted ruff passed and diff-check passed.",
+      "Post-merge on origin/main 79bdfa197c0fe47cf52d121ce0583df96e858e68: JSON parsed, planning-registration ratchet had zero new findings, diff-check passed, 104 focused tests passed and targeted ruff passed."
+    ],
+    "verified_acceptance": {
+      "rpu-v1-t011-current-run": "Current run 20260708T152502Z records repo commit, dump stem, input artifact hashes, produced report hashes, metrics and health reports.",
+      "rpu-v1-t011-decision": "The explicit decision is keep false: promote_default=false and default_promotion_allowed=false even though the diagnostic gate status is passed.",
+      "rpu-v1-t011-regressions": "Category matrix reports no regressions; misses decrease 58 to 33; fallback count is zero; graph health is fresh/ok; range/citation health is pass."
+    },
+    "verified_at": "2026-07-08",
+    "verification": {
+      "task_sha256": "6301fa19f7d1243d541edc9697e579d37a730a9542cc3e0ff6be7771731817ed",
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015"
+    }
   },
   "depends_on": [
     "RBV1-T017",

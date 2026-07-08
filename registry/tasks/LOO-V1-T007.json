@@ -3,7 +3,7 @@
   "id": "LOO-V1-T007",
   "initiative": "LEITSTAND-OPERATOR-OBSERVABILITY-V1",
   "title": "Execution snapshot producer runbook",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "LOO-V1-T002",
     "LOO-V1-T003"
@@ -71,6 +71,67 @@
       "merge_readiness",
       "external_source_truth"
     ],
-    "priority_reason": "P3: needed before treating execution-axis snapshots as operationally current"
+    "priority_reason": "P3: needed before treating execution-axis snapshots as operationally current",
+    "verification": {
+      "verified_by": "Leitstand PR #158",
+      "leitstand_pr": "https://github.com/heimgewebe/leitstand/pull/158",
+      "leitstand_head": "8f2197993157965059e8a8573c6570b395ad5db5",
+      "leitstand_merge_commit": "c44fbbecae765373dd8166401de998619a485f30",
+      "merged_at": "2026-07-08T06:00:16Z",
+      "local_checks": [
+        "NODE_OPTIONS=--jitless pnpm lint",
+        "NODE_OPTIONS=--jitless pnpm typecheck",
+        "NODE_OPTIONS=--jitless pnpm build",
+        "python3 scripts/ai_context/validate_ai_context.py --file .ai-context.yml",
+        "bash scripts/ci/observer-invariant-guard.sh",
+        "bash scripts/ci/docs-relations-guard.sh",
+        "bash scripts/ci/generated-files-guard.sh",
+        "bash scripts/ci/check-drift-gates.sh",
+        "acceptance grep for producer owner, raw store, cadence, failure semantics, non-authority boundary"
+      ],
+      "ci": {
+        "build": "success",
+        "repo-root": "success",
+        "scan": "success",
+        "templates": "success",
+        "Cloudflare Pages": "success"
+      },
+      "verification_summary": "Leitstand PR #158 added docs/runbooks/operator-snapshots.md and linked it from docs/index.md and docs/data-flow.md. The runbook defines producer ownership, raw JSON locations, bridge invocation, refresh cadence, stale thresholds, failure states, fixture semantics, and non-authority boundaries.",
+      "acceptance_evidence": {
+        "producer-owner": "docs/runbooks/operator-snapshots.md identifies Bureau as task/claim source of truth and Grabowski as checkout inventory source of truth.",
+        "raw-json-store": [
+          "artifacts/raw/bureau-tasks.raw.json",
+          "artifacts/raw/checkout-inventory.raw.json"
+        ],
+        "freshness-cadence": {
+          "bureau": {
+            "cadence": "at least every 60 minutes during active operator work",
+            "stale_threshold": "6 hours"
+          },
+          "checkouts": {
+            "cadence": "at least daily",
+            "stale_threshold": "24 hours"
+          }
+        },
+        "failure-semantics": [
+          "artifact",
+          "stale",
+          "missing",
+          "corrupt",
+          "fixture"
+        ],
+        "non-authority-boundary": true
+      },
+      "does_not_establish": [
+        "raw_export_produced",
+        "bridge_run",
+        "runtime_deployed",
+        "bureau_snapshot_truth",
+        "grabowski_checkout_truth",
+        "repair_authority"
+      ],
+      "task_sha256": "50acfb92145fdaf3ae58c15806775e845000c23a107565195fc7eb5a14cb49ef",
+      "plan_sha256": "69e170cf832449b00f1257b359c99acc0b40bbae28278f779d4da0ce799fa053"
+    }
   }
 }

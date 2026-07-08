@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "state": "planned",
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T020",
+  "title": "Add friction resolve workflow",
+  "goal": "Turn the Grabowski friction ledger from an accumulating observation log into a resolvable decision ledger with explicit closeout evidence for recurring failure classes.",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T003",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T019"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 270
+  },
+  "acceptance": [
+    {
+      "id": "resolve-record",
+      "assertion": "A friction resolve or triage path records event_id, decision, status, evidence_ref, resolved_by, closed_at and non-claims without rewriting raw historical events unsafely."
+    },
+    {
+      "id": "class-closeout",
+      "assertion": "Recurring Platform-Filter, policy-gate, environment-tooling and actionable-failure classes can be closed or deliberately deferred with a canonical decision and evidence."
+    },
+    {
+      "id": "summary-noise-reduced",
+      "assertion": "friction_summary separates unresolved, resolved, superseded and deferred events so stale already-fixed findings do not dominate next-decision output."
+    },
+    {
+      "id": "bureau-bridge",
+      "assertion": "Resolvable friction can create or link Bureau tasks without implying task readiness, merge readiness or owner approval."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover resolving one event, resolving a class, duplicate closeout, invalid event id, deferred-with-reason and summary counts."
+    }
+  ],
+  "metadata": {
+    "phase": "grabowski-optimization-phase-2",
+    "source": "User requested phases 1-4 from the 2026-07-08 Grabowski optimization plan be registered as Bureau tasks.",
+    "live_basis": "Recent friction summary had 39 events with 34 unresolved decision-required events; some findings are already technically obsolete after recovery/tool-surface changes.",
+    "does_not_establish": [
+      "root_cause_proof",
+      "task_resume_permission",
+      "merge_readiness"
+    ]
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "state": "planned",
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T022",
+  "title": "Add explicit elevation profiles",
+  "goal": "Replace trusted-owner-as-default assumptions with explicit profile/elevation semantics for observation, normal mutation, captain-level high-impact action and full trusted-owner break-glass use.",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T006",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T021"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 290
+  },
+  "acceptance": [
+    {
+      "id": "profile-model",
+      "assertion": "Profiles are documented and represented as core-observer, operator-mutator, captain and trusted-owner or equivalent explicit tiers."
+    },
+    {
+      "id": "default-reduced",
+      "assertion": "Default ChatGPT-facing operation is read-mostly and does not rely on the OpenAI platform filter as the primary safety boundary."
+    },
+    {
+      "id": "elevation-gates",
+      "assertion": "Mutating and high-impact paths require explicit allow_mutation or captain gates, expected target evidence, recovery readiness where applicable, and audit receipts."
+    },
+    {
+      "id": "status-visible",
+      "assertion": "grabowski_status or contract drift exposes the active profile, enabled capabilities, forbidden capabilities and profile/tool mismatches."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover forbidden default access to high-risk tools, successful explicit elevation for allowed narrow grips, recovery-gated captain behavior and profile mismatch diagnostics."
+    }
+  ],
+  "metadata": {
+    "phase": "grabowski-optimization-phase-4",
+    "source": "User requested phases 1-4 from the 2026-07-08 Grabowski optimization plan be registered as Bureau tasks.",
+    "live_basis": "trusted-owner currently exposes broad read/write roots and high-risk capabilities; recovery is green but should remain a gate, not a blanket authorization.",
+    "does_not_establish": [
+      "policy_changed",
+      "security_proof",
+      "runtime_deployed"
+    ]
+  }
+}

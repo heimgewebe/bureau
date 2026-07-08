@@ -60,6 +60,10 @@
     "registered_at": "2026-07-08T12:10:00Z",
     "unblocked_after_manifest_at": "2026-07-08T14:35:00Z",
     "verified_at": "2026-07-08T14:45:00Z",
+    "verification": {
+      "task_sha256": "65aa035a969d4b9fcbe43e67d1030e7cca7d85be939345c8e2c73b2603cc8cb5",
+      "plan_sha256": "bfd441cbf854d2c8f0ffd14024f743ea64272ba867ffe26b2a5852bc947b7941"
+    },
     "evidence": {
       "cabinet_pr": "heimgewebe/cabinet#89",
       "cabinet_merge_commit": "0568efc9b43d1271664bad8d6a80bac96859e0ad",

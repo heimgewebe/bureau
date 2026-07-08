@@ -103,6 +103,37 @@ def test_missing_baseline_commit_is_reported_without_completion_claim(tmp_path: 
     assert "runtime_correctness" in result["does_not_establish"]
 
 
+
+
+def test_missing_verified_baseline_commit_is_hard_freshness_error(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init"], cwd=repo, check=True, stdout=subprocess.DEVNULL)
+    missing_commit = "1" * 40
+    _write_task(
+        tmp_path,
+        "RBV1-T004",
+        state="verified",
+        execution={
+            "mode": "interactive-agent",
+            "policy": "review-before-effect",
+            "working_repository": str(repo),
+            "baseline_commit": missing_commit,
+        },
+    )
+    _write_queue(tmp_path)
+
+    result = registry_truth_diagnostics(tmp_path)
+
+    assert result["healthy"] is False
+    assert any(
+        item["issue"] == "baseline_commit_not_present"
+        and item["severity"] == "error"
+        and item["task_id"] == "RBV1-T004"
+        for item in result["errors"]
+    )
+
+
 def test_registry_truth_cli_bypasses_eager_registry_validation(tmp_path: Path, capsys) -> None:
     metadata = {
         "registry_truth": {

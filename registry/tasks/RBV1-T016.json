@@ -13,7 +13,6 @@
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/lenskit",
-    "baseline_commit": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
     "grabowski_resources": [
       "repo:/home/alex/repos/lenskit"
     ]
@@ -90,8 +89,22 @@
       "rbv1-t016-non-claims": "Proof and symbol index does_not_establish preserve call graph completeness, dependency completeness, runtime behavior, import success, test sufficiency, review impact and merge readiness."
     },
     "verification": {
-      "task_sha256": "8e2af9038c972a24259cda14c495b57c49490a3c4245631e4b002f89ba94e3ce",
+      "task_sha256": "76e884f0e6a84b06536c2f6f1602287c7f9eb120f4dd9c5c6e58dbef92e33b9f",
       "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    },
+    "removed_dead_baseline_commit": {
+      "value": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
+      "reason": "commit_not_found during registry-truth baseline probe",
+      "working_repository": "/home/alex/repos/lenskit",
+      "baseline_status": "missing",
+      "observed_by": "bureau-registry-truth-terminal-baseline-hardening",
+      "observed_at": "2026-07-08",
+      "does_not_establish": [
+        "task_incomplete",
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness"
+      ]
     }
   },
   "depends_on": [

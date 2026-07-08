@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T012",
+  "initiative": "BUR-2026-005",
+  "title": "Harden terminal baseline diagnostics",
+  "state": "planned",
+  "depends_on": [
+    "BUR-2026-005-T004"
+  ],
+  "goal": "Make registry-truth treat missing baseline commits on verified tasks as hard freshness errors, and repair existing dead baseline metadata without claiming task incompletion.",
+  "priority": {
+    "lane": "later",
+    "rank": 120
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "source_review": "Follow-up from Bureau improvement review: baseline warnings should be stronger for verified tasks.",
+    "safety_boundary": "Hardens freshness diagnostics only; does not infer task incompletion from a dead baseline.",
+    "does_not_establish": [
+      "task_incomplete",
+      "runtime_correctness",
+      "automatic_merge_authority"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "verified-baseline-hard-error",
+      "assertion": "registry-truth reports missing baseline_commit on verified tasks as an error and unhealthy result."
+    },
+    {
+      "id": "planned-baseline-warning",
+      "assertion": "planned tasks with missing baseline_commit remain warnings, because a dead planning baseline does not prove task completion state."
+    },
+    {
+      "id": "existing-baseline-cleanup",
+      "assertion": "Existing dead Lenskit baseline commits are removed from execution metadata and recorded as removed_dead_baseline_commit evidence without changing task outcome claims."
+    }
+  ]
+}

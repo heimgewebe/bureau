@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 TERMINAL_STATES = {"verified", "cancelled", "superseded"}
+COMPLETION_STATES = {"verified"}
 SATISFIED_STATUSES = {"satisfied", "implemented", "closed", "verified"}
 
 
@@ -78,8 +79,9 @@ def registry_truth_diagnostics(
     """Return read-only registry-vs-evidence diagnostics.
 
     This deliberately separates hard evidence/state contradictions from stale
-    metadata warnings. A dead baseline is actionable, but it does not prove the
-    task itself is complete or incomplete.
+    metadata warnings. A dead baseline on planned work is actionable context; a
+    dead baseline on verified work is a hard freshness contradiction because the
+    stored completion evidence can no longer be replayed from the declared base.
     """
 
     root_path = Path(root)
@@ -132,7 +134,9 @@ def registry_truth_diagnostics(
                 if status != "present":
                     findings.append(
                         {
-                            "severity": "warning",
+                            "severity": "error"
+                            if state in COMPLETION_STATES
+                            else "warning",
                             "issue": "baseline_commit_not_present",
                             "task_id": task_id,
                             "state": state,

@@ -13,7 +13,6 @@
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/lenskit",
-    "baseline_commit": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
     "grabowski_resources": [
       "repo:/home/alex/repos/lenskit"
     ]
@@ -85,8 +84,22 @@
       "rbv1-t012-non-claims": "The CI path repair does not prove contract correctness, fixture completeness, runtime correctness, test sufficiency or release readiness."
     },
     "verification": {
-      "task_sha256": "5dff645e2dba7240c213409d94b218ae4375672b375b52fadca59095e0800a48",
+      "task_sha256": "5c4c958d2e931e41a7efe6467260a06e8d8ecc288b37861e46f070fca121f534",
       "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    },
+    "removed_dead_baseline_commit": {
+      "value": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
+      "reason": "commit_not_found during registry-truth baseline probe",
+      "working_repository": "/home/alex/repos/lenskit",
+      "baseline_status": "missing",
+      "observed_by": "bureau-registry-truth-terminal-baseline-hardening",
+      "observed_at": "2026-07-08",
+      "does_not_establish": [
+        "task_incomplete",
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness"
+      ]
     }
   }
 }

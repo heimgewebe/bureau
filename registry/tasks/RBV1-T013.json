@@ -13,7 +13,6 @@
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/lenskit",
-    "baseline_commit": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
     "grabowski_resources": [
       "repo:/home/alex/repos/lenskit"
     ]
@@ -90,8 +89,22 @@
       "rbv1-t013-non-claims": "The ratchet does not claim the whole repo is clean under all Ruff defaults and does not claim runtime/test/review completeness."
     },
     "verification": {
-      "task_sha256": "5cf48d596ae34bbe18274799a943bf3d6c6e894605dc729dc7433501db0b4d52",
+      "task_sha256": "b532e73491bf41d1cf7c2cfe15e7968d1f962beb51beb306526ccd56f2daeb92",
       "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    },
+    "removed_dead_baseline_commit": {
+      "value": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
+      "reason": "commit_not_found during registry-truth baseline probe",
+      "working_repository": "/home/alex/repos/lenskit",
+      "baseline_status": "missing",
+      "observed_by": "bureau-registry-truth-terminal-baseline-hardening",
+      "observed_at": "2026-07-08",
+      "does_not_establish": [
+        "task_incomplete",
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness"
+      ]
     }
   }
 }

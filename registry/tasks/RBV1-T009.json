@@ -13,7 +13,6 @@
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/lenskit",
-    "baseline_commit": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
     "grabowski_resources": [
       "repo:/home/alex/repos/lenskit"
     ]
@@ -92,8 +91,22 @@
       "rbv1-t009-non-claims": "Export Safety remains diagnostic and does not establish secret absence, PII absence, runtime correctness, test sufficiency, review completeness or merge readiness."
     },
     "verification": {
-      "task_sha256": "3f32ef763b997edbb4091ef7585bcc2d4e57a0d59712cc4293ba0d47fa36fbd8",
+      "task_sha256": "56b2dfbbb287cc714d959b9def614ab1be927f81f755c434a9bee3221f2c1f95",
       "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    },
+    "removed_dead_baseline_commit": {
+      "value": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
+      "reason": "commit_not_found during registry-truth baseline probe",
+      "working_repository": "/home/alex/repos/lenskit",
+      "baseline_status": "missing",
+      "observed_by": "bureau-registry-truth-terminal-baseline-hardening",
+      "observed_at": "2026-07-08",
+      "does_not_establish": [
+        "task_incomplete",
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness"
+      ]
     }
   },
   "depends_on": [

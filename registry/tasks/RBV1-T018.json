@@ -13,7 +13,6 @@
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/lenskit",
-    "baseline_commit": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
     "grabowski_resources": [
       "repo:/home/alex/repos/lenskit"
     ]
@@ -67,7 +66,21 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "removed_dead_baseline_commit": {
+      "value": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
+      "reason": "commit_not_found during registry-truth baseline probe",
+      "working_repository": "/home/alex/repos/lenskit",
+      "baseline_status": "missing",
+      "observed_by": "bureau-registry-truth-terminal-baseline-hardening",
+      "observed_at": "2026-07-08",
+      "does_not_establish": [
+        "task_incomplete",
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness"
+      ]
+    }
   },
   "depends_on": [
     "RBV1-T008"

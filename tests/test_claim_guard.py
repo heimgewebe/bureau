@@ -114,8 +114,6 @@ def test_open_pull_request_reservation_does_not_block_repo_read_claim(registry_f
     assert run["task_id"] == "BUR-TEST-001-T001"
 
 
-
-
 def test_open_pull_request_observation_failure_is_resource_scoped(
     registry_factory, tmp_path, monkeypatch
 ):
@@ -191,8 +189,6 @@ def test_github_open_pull_requests_requests_label_metadata_and_configured_limit(
     json_fields = captured["argv"][captured["argv"].index("--json") + 1].split(",")
     assert "labels" in json_fields
     assert captured["argv"][captured["argv"].index("--limit") + 1] == "321"
-
-
 
 
 def test_github_open_pull_requests_cap_reached_fails_closed(monkeypatch):
@@ -434,8 +430,6 @@ def test_open_pull_request_set_metadata_task_id_blocks_same_task(
     assert "task already implemented by open PR" in " ".join(reasons)
 
 
-
-
 def test_open_pull_request_structured_label_overrides_branch_heuristic(
     registry_factory, tmp_path, monkeypatch
 ):
@@ -466,7 +460,7 @@ def test_open_pull_request_structured_label_overrides_branch_heuristic(
     assert "repo write blocked by open PR" in second_reasons
 
 
-def test_open_pull_request_structured_metadata_can_bind_multiple_tasks(
+def test_open_pull_request_structured_metadata_multiple_tasks_is_binding_violation(
     registry_factory, tmp_path, monkeypatch
 ):
     root = registry_factory(2, mode="write")
@@ -489,13 +483,140 @@ def test_open_pull_request_structured_metadata_can_bind_multiple_tasks(
     )
 
     frontier = {item["task_id"]: item for item in dispatcher.frontier({"repository"})}
-    assert "task already implemented by open PR" in " ".join(
-        frontier["BUR-TEST-001-T001"]["reasons"]
-    )
-    assert "task already implemented by open PR" in " ".join(
-        frontier["BUR-TEST-001-T002"]["reasons"]
+    for task_id in ("BUR-TEST-001-T001", "BUR-TEST-001-T002"):
+        reasons = " ".join(frontier[task_id]["reasons"])
+        assert "task already implemented by open PR" not in reasons
+        assert "repo write blocked by open PR task binding violation" in reasons
+        assert "binding=multiple" in reasons
+        assert "task_ids=BUR-TEST-001-T001,BUR-TEST-001-T002" in reasons
+
+
+def test_open_pull_request_without_task_id_is_binding_violation(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = _observed_pr_dispatcher(
+        registry,
+        store,
+        monkeypatch,
+        [
+            {
+                "number": 110,
+                "title": "unbound work",
+                "headRefName": "fix/no-task-id",
+                "body": "No Bureau task reference.",
+                "url": "https://github.example/pr/110",
+            }
+        ],
     )
 
+    reasons = " ".join(dispatcher.frontier({"repository"})[0]["reasons"])
+    assert "repo write blocked by open PR task binding violation" in reasons
+    assert "binding=missing" in reasons
+    assert "task_id=missing" in reasons
+    assert "open PR has no valid Bureau task binding" in reasons
+
+
+def test_open_pull_request_terminal_task_binding_is_violation(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write")
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text())
+    task["state"] = "verified"
+    task.setdefault("metadata", {})["verification"] = {
+        "task_sha256": bureau_v2.task_revision_sha256(task),
+        "plan_sha256": bureau_v2.plan_sha256(Registry.load(root), task["initiative"]),
+    }
+    queue = json.loads((root / "registry/queue.json").read_text())
+    for lane in queue["lanes"].values():
+        while "BUR-TEST-001-T001" in lane:
+            lane.remove("BUR-TEST-001-T001")
+    (root / "registry/queue.json").write_text(json.dumps(queue))
+    task_path.write_text(json.dumps(task))
+
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = _observed_pr_dispatcher(
+        registry,
+        store,
+        monkeypatch,
+        [
+            {
+                "number": 111,
+                "title": "terminal task",
+                "headRefName": "fix/no-task-id",
+                "body": "Bureau-Task: BUR-TEST-001-T001",
+                "url": "https://github.example/pr/111",
+            }
+        ],
+    )
+
+    reasons = " ".join(dispatcher.frontier({"repository"})[0]["reasons"])
+    assert "repo write blocked by open PR task binding violation" in reasons
+    assert "binding=terminal" in reasons
+    assert "task_ids=BUR-TEST-001-T001" in reasons
+    assert "open PR binds a terminal Bureau task" in reasons
+
+
+def test_open_pull_request_task_binding_exception_is_not_binding_violation(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = _observed_pr_dispatcher(
+        registry,
+        store,
+        monkeypatch,
+        [
+            {
+                "number": 112,
+                "title": "exceptional meta work",
+                "headRefName": "chore/meta-pr",
+                "body": "Bureau-Task-Binding-Exception: registry-only meta PR",
+                "url": "https://github.example/pr/112",
+            }
+        ],
+    )
+
+    reasons = " ".join(dispatcher.frontier({"repository"})[0]["reasons"])
+    assert "repo write blocked by open PR: open-pr:heimgewebe/grabowski#112" in reasons
+    assert "binding=exception" in reasons
+    assert "registry-only meta PR" in reasons
+    assert "task binding violation" not in reasons
+
+
+def test_open_pull_request_task_binding_exception_label_is_schema_visible(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = _observed_pr_dispatcher(
+        registry,
+        store,
+        monkeypatch,
+        [
+            {
+                "number": 113,
+                "title": "label exception",
+                "headRefName": "chore/meta-pr",
+                "body": "No Bureau task reference.",
+                "labels": [
+                    {"name": "Bureau-Task-Binding-Exception: batch registry repair"}
+                ],
+                "url": "https://github.example/pr/113",
+            }
+        ],
+    )
+
+    reasons = " ".join(dispatcher.frontier({"repository"})[0]["reasons"])
+    assert "binding=exception" in reasons
+    assert "batch registry repair" in reasons
+    assert "task binding violation" not in reasons
 
 def test_open_pull_request_other_task_distinguishes_repo_wide_blocker(
     registry_factory, tmp_path, monkeypatch

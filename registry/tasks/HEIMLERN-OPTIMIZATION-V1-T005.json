@@ -3,7 +3,7 @@
   "id": "HEIMLERN-OPTIMIZATION-V1-T005",
   "initiative": "HEIMLERN-OPTIMIZATION-V1",
   "title": "Python Rust Kohärenz sichern",
-  "state": "in_progress",
+  "state": "verified",
   "goal": "Doppelte Artefakt-Erzeugung zwischen Rust und Python durch Delegation oder gemeinsamen Drift-Wächter entschärfen.",
   "execution": {
     "mode": "interactive-agent",
@@ -36,19 +36,40 @@
     "implementation_repo": "heimgewebe/heimlern",
     "work_started_at": "2026-07-08T14:39:13Z",
     "does_not_establish": [
-      "task_verified",
-      "merge_completed",
       "runtime_policy_readiness",
       "automatic_rule_change_permission",
       "release_profile_decision",
-      "claim_evidence_registry"
-    ]
+      "claim_evidence_registry",
+      "heimlern_rlens_bundle_availability"
+    ],
+    "outcome": "Heimlern PR #189 added a shared Rust/Python weight-adjustment coherence guard and moved CI to the shared guard.",
+    "implementation_pr": "heimgewebe/heimlern#189",
+    "implementation_merge_commit": "cbcf03fa09ff40846bdf0f76286ade72268dea5c",
+    "implementation_head": "4bea6aa9e0b6367779e66a6aedb5a31b42ca74cf",
+    "verified_acceptance": {
+      "coherence-path-chosen": "PR #189 implements scripts/validate_weight_adjustment_coherence.py as the shared drift guard and routes CI through it.",
+      "same-contract": "The guard validates the Rust fixture and Python OLA probe proposal against the same pinned policy.weight_adjustment.v1 schema downloaded from metarepo.",
+      "python-not-primary-owner": "The guard restricts Python to the expected routing delta key, safe delta key characters, relative percent deltas and the heuristic probe simulation method; docs state metarepo remains contract owner."
+    },
+    "checks": [
+      "Local: python3 scripts/validate_weight_adjustment_coherence.py --schema .ci/policy.weight_adjustment.v1.schema.json passed after downloading the pinned metarepo schema.",
+      "Local: cargo fmt --all --check passed.",
+      "Local: cargo clippy --all-targets -- -D warnings passed.",
+      "Local: cargo test --all --locked --workspace passed.",
+      "GitHub PR #189 repo-root, templates, schema-validate, build-test, CodeQL, Analyze actions/python/rust succeeded."
+    ],
+    "verification": {
+      "observed_repo_head": "cbcf03fa09ff40846bdf0f76286ade72268dea5c",
+      "verified_at": "2026-07-08T14:45:18Z",
+      "task_sha256": "f689fdc9b633c358f81e7617b0a94c196e8cc9f029c6ee0ad508dd97a5abd1b0",
+      "plan_sha256": "de066e4dc95e6a5575653e41c8cf2c6108f57052e12ba782dbbf49f4ab556b7e"
+    }
   },
   "depends_on": [
     "HEIMLERN-OPTIMIZATION-V1-T003"
   ],
   "priority": {
-    "lane": "now",
-    "rank": 10
+    "lane": "later",
+    "rank": 20
   }
 }

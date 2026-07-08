@@ -3,7 +3,7 @@
   "id": "BUREAU-DETERMINISTIC-OPS-V1-T006",
   "initiative": "BUREAU-DETERMINISTIC-OPS-V1",
   "title": "Extend deterministic secretary status projection",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 314
@@ -48,11 +48,29 @@
     "source_plan": "docs/plans/bureau-deterministic-ops-v1.md",
     "does_not_establish": [
       "runtime_correctness",
-      "merge_readiness",
-      "task_completion"
+      "merge_readiness_for_future_prs",
+      "dispatch_authority",
+      "task_completion_outside_this_registry_state",
+      "ai_authority"
     ],
     "advanced_at": "2026-07-08",
-    "advance_reason": "BUREAU-DETERMINISTIC-OPS-V1-T005 is verified by this registry state; the next deterministic hardening ball is deterministic secretary status projection."
+    "advance_reason": "BUREAU-DETERMINISTIC-OPS-V1-T005 is verified by this registry state; the next deterministic hardening ball is deterministic secretary status projection.",
+    "implementation_pr": "heimgewebe/bureau#306",
+    "verified_at": "2026-07-08",
+    "verified_acceptance": {
+      "projection-active-balls": "PR #306 adds repository_balls to status_projection, derived from registry resources, task claims and runtime active runs; same-repo ambiguity is a blocker finding.",
+      "projection-next-actions": "PR #306 adds next_actions derived from projection blockers, repository ambiguity, queue lane, registry state and task blockers; actions are read-only recommendations, not dispatch authority.",
+      "projection-no-authority": "PR #306 exposes authority_boundary.ai and keeps ai_authority in does_not_establish; tests verify defensive copying of the AI boundary."
+    },
+    "validation": [
+      "PR #306 CI validate succeeded for Python 3.10 and 3.12 before merge.",
+      "Local validation before PR creation: PYTHONPATH=src make validate -> 410 passed.",
+      "Merged as commit 14be89d5aad1737d76a2ef73a7fc19b1a0515790."
+    ],
+    "verification": {
+      "task_sha256": "545c8327bf616f908ee7eecf34158314de327546b4ae208d4255ad5175749bd1",
+      "plan_sha256": "aa19d4a7661b4b6bc802c78a3edd836713242f0c65e76926ae05f90344f975da"
+    }
   },
   "depends_on": [
     "BUREAU-DETERMINISTIC-OPS-V1-T001"

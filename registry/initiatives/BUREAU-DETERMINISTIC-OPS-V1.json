@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "BUREAU-DETERMINISTIC-OPS-V1",
   "title": "Bureau deterministic operations hardening",
-  "state": "active",
-  "commitment": "next",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Keep Bureau deterministic by excluding AI maintenance authority and strengthening queue, active-ball, PR-binding, closeout and status-projection guards.",
   "current_plan": {
     "repository": "bureau",
@@ -21,10 +21,28 @@
     "registered_at": "2026-07-08T17:20:00Z",
     "source_decision": "Ollama remains outside Bureau core after local model inventory and synthetic Bureau-rule probe.",
     "does_not_establish": [
-      "ollama_model_quality",
       "runtime_correctness",
-      "merge_readiness",
-      "task_completion"
-    ]
+      "future_merge_readiness",
+      "ai_authority",
+      "ollama_model_quality",
+      "all_future_bureau_hygiene_complete"
+    ],
+    "completed_at": "2026-07-08",
+    "completion_prs": [
+      "heimgewebe/bureau#280",
+      "heimgewebe/bureau#286",
+      "heimgewebe/bureau#288",
+      "heimgewebe/bureau#296",
+      "heimgewebe/bureau#297",
+      "heimgewebe/bureau#302",
+      "heimgewebe/bureau#306"
+    ],
+    "closeout_prs": [
+      "heimgewebe/bureau#287",
+      "heimgewebe/bureau#289",
+      "heimgewebe/bureau#299",
+      "heimgewebe/bureau#303"
+    ],
+    "completion_summary": "Bureau deterministic operations hardening completed: AI authority excluded, queue readiness and terminal queue invariants enforced, per-repo ball ambiguity visible, PR task binding hardened, typed closeout evidence required for automatic PR closeout, and deterministic secretary projection extended."
   }
 }

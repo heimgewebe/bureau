@@ -103,10 +103,7 @@ def _walk_dicts(value: Any) -> Iterator[dict[str, Any]]:
 
 
 def _has_named_key(value: Any, keys: set[str]) -> bool:
-    for item in _walk_dicts(value):
-        if any(str(key) in keys for key in item):
-            return True
-    return False
+    return any(any(str(key) in keys for key in item) for item in _walk_dicts(value))
 
 
 def _hash_bound_value(value: Any) -> bool:
@@ -130,10 +127,11 @@ def _has_verification_hash_binding(metadata: dict[str, Any]) -> bool:
     verification = metadata.get("verification")
     if not isinstance(verification, dict):
         return False
-    return all(isinstance(verification.get(key), str) and verification[key].strip() for key in (
-        "task_sha256",
-        "plan_sha256",
-    ))
+    required = ("task_sha256", "plan_sha256")
+    return all(
+        isinstance(verification.get(key), str) and verification[key].strip()
+        for key in required
+    )
 
 
 def _registry_truth_evidence(truth: dict[str, Any]) -> list[dict[str, Any]]:
@@ -160,7 +158,8 @@ def _evidence_item_has_task_or_pr_binding(item: dict[str, Any], task_id: str) ->
         task_values = item.get("task_id") or item.get("task_ids") or item.get("task_binding")
         return has_pr and task_values not in (None, "", [], {})
     if "task" in kind:
-        return item.get("task_id") in {task_id, None} or item.get("task_id") not in ("", [])
+        task_value = item.get("task_id")
+        return task_value in {task_id, None} or task_value not in ("", [])
     return True
 
 
@@ -191,7 +190,7 @@ def _has_machine_closeout_evidence(
 
 def _has_ai_summary_only_evidence(truth: dict[str, Any]) -> bool:
     evidence = _registry_truth_evidence(truth)
-    return bool(evidence) and not any(not _evidence_item_is_ai_summary(item) for item in evidence)
+    return bool(evidence) and all(_evidence_item_is_ai_summary(item) for item in evidence)
 
 
 def _has_closure_evidence(task_id: str, metadata: dict[str, Any], truth: dict[str, Any]) -> bool:

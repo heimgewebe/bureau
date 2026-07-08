@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T008",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Add bundle registry cache invalidation",
+  "state": "planned",
+  "goal": "Replace runtime-only merge semantics for latest_complete_bundles with an explicit bundle registry cache strategy that records manifest-directory mtime or equivalent invalidation evidence.",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T002"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 80
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "cache-evidence",
+      "assertion": "Cache metadata records enough evidence to decide whether discovery is needed without scanning live manifests on every valid cache read."
+    },
+    {
+      "id": "stale-policy",
+      "assertion": "Stale, missing and valid legacy rows have documented behavior and tests."
+    },
+    {
+      "id": "does-not-establish",
+      "assertion": "Output continues to state what registry authority does not establish, including live repo freshness and claim truth."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover valid cache, stale cache, missing cache and live discovery additions."
+    }
+  ],
+  "metadata": {
+    "phase": "tool-smoke-followup",
+    "effect": "repository_hardening",
+    "source": "Grabowski PR #103 self-review follow-up",
+    "reason": "PR #103 fixed immediate stale-row semantics but did not implement a durable cache invalidation model.",
+    "related_pr": "heimgewebe/grabowski#103"
+  }
+}

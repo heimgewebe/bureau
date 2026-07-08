@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T011",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Document bundle authority semantics",
+  "state": "planned",
+  "goal": "Clarify latest_complete_bundles authority values and does_not_establish semantics so operators do not overread legacy cache, live discovery or merged authority.",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T002"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 110
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "authority-definitions",
+      "assertion": "Each authority value is documented with what source it represents and what it does not prove."
+    },
+    {
+      "id": "operator-facing-language",
+      "assertion": "User/operator-facing docs distinguish registry availability from bundle freshness, repo understanding, claim truth and runtime correctness."
+    },
+    {
+      "id": "tests-or-doc-check",
+      "assertion": "A doc or contract check prevents removing core does_not_establish entries accidentally."
+    }
+  ],
+  "metadata": {
+    "phase": "tool-smoke-followup",
+    "effect": "repository_hardening",
+    "source": "Grabowski PR #103 self-review follow-up",
+    "reason": "PR #103 improved does_not_establish output but did not fully document operator semantics.",
+    "related_pr": "heimgewebe/grabowski#103"
+  }
+}

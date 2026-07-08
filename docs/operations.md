@@ -11,6 +11,47 @@ bureau --root . explain-next --capability repository --capability shell --json
 `doctor` includes a read-only `state_root_hygiene` section. It treats only the configured Bureau database, SQLite sidecars, `envelopes/` and `receipts/` as known state-root artefacts. Unknown files or directories are reported, not deleted, including when `--repair` is used. Move or quarantine such files manually after checking whether they are operator notes, old backups or unrelated prompts.
 
 
+
+## Queue freshness reconcile
+
+`registry/queue.json` is the dispatch canon. `task.priority` is advisory metadata. Use
+`queue-reconcile` to compare the two without mutating queue state:
+
+```bash
+bureau --root . --json queue-reconcile
+bureau --root . --json queue-reconcile --resource repo.bureau
+```
+
+The report can identify ready priority-now tasks that are not queued, priority-next tasks absent
+from queue, later-lane tasks whose advisory priority says now/next, terminal tasks still queued,
+and now-lane tasks that are not ready. It does not promote lanes, claim work, write tasks or close
+anything. Any apply mode must be a separate reviewed change.
+
+## Worktree hygiene
+
+Use `worktree-hygiene` to inspect local Bureau worktree sprawl without deleting anything:
+
+```bash
+bureau --root . --json worktree-hygiene
+bureau --root . --json worktree-hygiene --max-count 40
+```
+
+The report identifies detached worktrees, dirty worktrees, many-worktree pressure and heads already
+merged into the current checkout head. These are cleanup candidates only after human or operator
+review. The command never removes a worktree or branch.
+
+## Console script packaging
+
+Packaged console scripts are declared in `pyproject.toml`. If a command exists in pyproject but is
+missing from the local shell, refresh the editable install:
+
+```bash
+python3 -m pip install -e '.[dev]'
+```
+
+Module entrypoints remain available through `python3 -m bureau.<module>` even when the shell wrapper
+is stale.
+
 ## Repository-scoped balls
 
 Bureau can project one current ball per repository resource without changing queue state:

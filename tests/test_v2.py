@@ -971,6 +971,46 @@ def test_runtime_drift_check_reports_dirty_checkout_and_receipt_drift(
     assert {item["severity"] for item in report["findings"]} >= {"warning", "blocker"}
 
 
+def test_runtime_drift_check_treats_stale_state_rows_as_superseded_when_registry_verifies(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+    complete_run(registry, store, run["run_id"], {"proof": {"result": "passed"}})
+
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["state"] = "verified"
+    task["title"] = "Changed after receipt but registry verified"
+    metadata = task.setdefault("metadata", {})
+    metadata.pop("verification", None)
+    metadata["verification"] = {
+        "task_sha256": task_revision_sha256(task),
+        "plan_sha256": plan_sha256(registry, task["initiative"]),
+    }
+    task_path.write_text(json.dumps(task))
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative = json.loads(initiative_path.read_text())
+    initiative["state"] = "completion-ready"
+    initiative_path.write_text(json.dumps(initiative))
+    git_output(root, "add", ".")
+    git_output(root, "commit", "-m", "verify task in registry")
+    git_output(
+        root, "update-ref", "refs/remotes/origin/main", git_output(root, "rev-parse", "HEAD")
+    )
+
+    report = runtime_drift_check(root, state_db=store.path)
+    codes = {item["code"] for item in report["findings"]}
+
+    assert report["status"] == "ok"
+    assert report["receipts"]["stale_tasks"] == []
+    assert report["receipts"]["superseded_receipt_tasks"][0]["task_id"] == task["id"]
+    assert "receipt-drift" not in codes
+    assert "receipt-drift-superseded-by-registry-verification" in codes
+
+
 def test_runtime_drift_check_reports_untracked_files_when_git_config_hides_them(
     registry_factory, tmp_path
 ):

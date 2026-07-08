@@ -206,7 +206,14 @@ def evaluate_task_rlens_policy_report(task_raw: dict[str, Any]) -> dict[str, Any
     mode = core["mode"] if explicit else infer_mode(task_raw, report_policy)
     task_class = infer_task_class(task_raw, report_policy)
     context_present = task_rlens_context_ref(task_raw) is not None
-    skip_present = isinstance(core.get("skip_reason"), str) and bool(core["skip_reason"])
+    # ``evaluate_task_rlens_policy`` fills an internal non-blocking skip reason
+    # such as ``not_required`` for inferred opportunistic legacy tasks. The
+    # operator report must not present that as an explicit recorded skip.
+    skip_present = (
+        explicit
+        and isinstance(core.get("skip_reason"), str)
+        and bool(core["skip_reason"])
+    )
     block_present = isinstance(core.get("block_reason"), str) and bool(core["block_reason"])
     reasons: list[str] = []
 

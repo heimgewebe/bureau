@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T014",
   "initiative": "BUR-2026-005",
   "title": "Add repository-scoped ball projection",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "BUR-2026-005-T013"
   ],
@@ -34,8 +34,60 @@
       "queue_freshness_reconcile",
       "automatic_lane_promotion",
       "automatic_merge_authority",
-      "automatic_completion_authority"
-    ]
+      "automatic_completion_authority",
+      "runtime_correctness",
+      "test_sufficiency"
+    ],
+    "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Bureau PR #247: repository-scoped ball projection via repo-balls plus --resource filters for frontier, explain-next, claim-next and checkout-next. registry/queue.json remains the dispatch canon; repository balls are read-only projection/selection filters only.",
+    "implementation_pr": "heimgewebe/bureau#247",
+    "implementation_url": "https://github.com/heimgewebe/bureau/pull/247",
+    "live_bureau_commit": "7ca41b78e04e1951a083dfc15df968f92cd60dfb",
+    "implementation_head": "2ec9038af67603a03b741050a6d614fdac7037bc",
+    "implementation_diff_sha256": "bc551268dcaed203403484361fdb2b075c8e268f895d7c4915f54f00f6e573f7",
+    "implementation_paths": [
+      "docs/concurrency.md",
+      "docs/operations.md",
+      "registry/tasks/BUR-2026-005-T014.json",
+      "registry/queue.json",
+      "src/bureau/cli.py",
+      "src/bureau/v2.py",
+      "tests/test_v2.py"
+    ],
+    "validation": [
+      "Bureau PR #247 GitHub CI passed validate (3.10) and validate (3.12).",
+      "Local before merge: python3 -m bureau.cli --root . check -> valid True.",
+      "Local before merge: python3 -m bureau.cli --root . --json doctor -> healthy true.",
+      "Local before merge: python3 -m bureau.cli --root . --json registry-truth -> healthy true, 0 findings.",
+      "Local before merge: python3 -m bureau.cli --root . --json repo-balls --capability repository --capability shell -> projection emitted repository balls.",
+      "Local before merge: python3 -m pytest -> 378 passed.",
+      "Local before merge: python3 -m ruff check . -> passed.",
+      "Local before merge: git diff --check -> passed.",
+      "Post-merge: python3 -m bureau.cli --root . check -> valid True.",
+      "Post-merge: doctor healthy true.",
+      "Post-merge: registry-truth healthy true, 0 findings.",
+      "Post-merge: repo-balls summary emitted successfully."
+    ],
+    "external_review": {
+      "lane": "gemini-proposal-only",
+      "status": "no_action",
+      "prompt_sha256": "5f2ef9dea64876290ca68fa3ee949b0c3b926bed51874c95b939d0b69c694e38",
+      "output_sha256": "92ceb5e34415127f83b0312b2b352adc68c5fa1b22f14acb10c6a9dc50025d99",
+      "effect_flags": "all_false",
+      "receipt_path": "/tmp/bureau-pr247-gemini-review.json"
+    },
+    "verified_acceptance": {
+      "repo-ball-projection": "tests/test_v2.py covers repo_balls projecting current balls for repo.alpha and repo.beta; post-merge live repo-balls emitted a repository projection.",
+      "resource-filtered-explain": "tests/test_v2.py covers explain_next(resource=repo.beta) excluding non-overlapping repo.alpha tasks.",
+      "resource-filtered-claim": "tests/test_v2.py covers claim_next(resource=repo.alpha/repo.beta) selecting overlapping task claims while preserving Dispatcher.reasons.",
+      "worker-boundary": "tests/test_v2.py covers stable scoped worker IDs and rejects reuse of an active worker for a different resource filter.",
+      "docs-boundary": "docs/concurrency.md and docs/operations.md state repository balls do not replace registry/queue.json and do not auto-promote lanes."
+    },
+    "verification": {
+      "task_sha256": "9f43d0be7124164d7659d5f7f81485ecb1e54f0c4f0ed3fcad731721cc9ce308",
+      "plan_sha256": "653fa6a056506c94d5654ba5e3c16f9c31032767f0e1c844a8cb4714c50ce917"
+    }
   },
   "acceptance": [
     {

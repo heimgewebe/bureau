@@ -3,7 +3,7 @@
   "id": "OPERATOR-LEARNING-AXIS-V1-T003",
   "initiative": "OPERATOR-LEARNING-AXIS-V1",
   "title": "Move OLA adapter invariants into Rust",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 70
@@ -50,6 +50,49 @@
   "metadata": {
     "primary_repo": "heimgewebe/heimlern",
     "recommended_agent": "claude",
-    "claude_delegation": "primary architecture pass before code changes; implementation may then route through Grabowski/Codex"
+    "claude_delegation": "primary architecture pass before code changes; implementation may then route through Grabowski/Codex",
+    "verified_at": "2026-07-08",
+    "implementation_repo": "heimgewebe/heimlern",
+    "implementation_pr": "heimgewebe/heimlern#195",
+    "implementation_head": "6c3ea7f4b756a22170602db7b8af619bc92b030f",
+    "implementation_merge_commit": "8453c2c5332610dacf7920f5f8795b0bdcf8b6b4",
+    "diff_sha256": "5301cf819e45b04368a5869d69115ed5baf95d8db12efcfbc4b5ab10c169016a",
+    "superseded_pr": "heimgewebe/heimlern#194",
+    "superseded_reason": "PR #194 overlapped OPERATOR-LEARNING-AXIS-V1-T003, remained red on build-test, and was closed after PR #195 merged the broader Rust-owned OLA invariant surface.",
+    "implementation_paths": [
+      "crates/heimlern-cli/src/bin/heimlern-ola.rs",
+      "crates/heimlern-core/src/lib.rs",
+      "crates/heimlern-core/src/ola.rs",
+      "scripts/ola_adapter.py",
+      "scripts/ola_probe.py"
+    ],
+    "validated_acceptance": {
+      "rust-invariants": "Heimlern PR #195 adds heimlern_core::ola with Rust tests for route-key sanitizing, fail-closed route-key errors, reward clamping, state normalization, outcome conversion and decision-outcome conversion.",
+      "python-degraded": "scripts/ola_adapter.py becomes a compatibility wrapper around heimlern-ola, and scripts/ola_probe.py delegates route-key derivation to Rust-owned normalization instead of owning the transformation contract."
+    },
+    "validation": [
+      "Heimlern PR #195 merged at 8453c2c5332610dacf7920f5f8795b0bdcf8b6b4.",
+      "GitHub checks for PR #195 passed: Analyze actions/python/rust, CodeQL, build-test, repo-root, schema-validate, templates.",
+      "Local before merge: py_compile for ola_adapter.py, ola_probe.py and validate_weight_adjustment_coherence.py passed.",
+      "Local before merge: cargo test -q -p heimlern-core ola:: passed.",
+      "Local before merge: cargo test -q -p heimlern-cli --bin heimlern-ola passed.",
+      "Local before merge: cargo test -q -p heimlern-feedback passed.",
+      "Local before merge: python3 scripts/ola_adapter.py --self-test and python3 scripts/ola_probe.py --self-test passed.",
+      "Local before merge: validate_weight_adjustment_coherence.py passed against pinned metarepo policy.weight_adjustment.v1 schema.",
+      "Post-merge validation on Heimlern origin/main 8453c2c5332610dacf7920f5f8795b0bdcf8b6b4 repeated the same focused Python, Rust, schema and diff checks successfully."
+    ],
+    "does_not_establish": [
+      "routing_policy_readiness",
+      "automatic_rule_change_permission",
+      "runtime_policy_change",
+      "causal_route_superiority",
+      "proposal_quality",
+      "end_to_end_learning_smoke",
+      "T004_acceptance"
+    ],
+    "verification": {
+      "task_sha256": "8f4b55d66d6e615d84c72879cf89ccadb90864f54224428d2ed3090fb56d4bfa",
+      "plan_sha256": "76d9bc2839e3a37b12f25e565b429bf413427570794dfa836137a18eb712d8f5"
+    }
   }
 }

@@ -11,7 +11,7 @@
 - Parallel Git writers use distinct baseline-bound worktrees and branches.
 - Open PRs are external reservations: same-task PRs block as duplicates, other open PRs block repo writes conservatively.
 - Open PR task binding prefers structured markers documented in `docs/contracts/open-pr-task-metadata-v1.md`; title/body/branch matches are fallback only.
-- Open PR observation is bounded by `BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT` (default 500); full pagination is a registered follow-up, not an implicit guarantee.
+- Open PR observation uses `BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT` (default 500). If the observed page reaches that cap, coverage is explicitly bounded and the affected repository fails closed instead of silently treating the sample as complete.
 - Integration and deployment are exclusive tasks.
 - Reconciliation runs before each checkout.
 

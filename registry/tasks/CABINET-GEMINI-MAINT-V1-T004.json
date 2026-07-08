@@ -5,7 +5,7 @@
   "title": "Run first reviewed Gemini maintenance dry run",
   "state": "planned",
   "priority": {
-    "lane": "later",
+    "lane": "next",
     "rank": 100
   },
   "goal": "Run one manual artifact-only Gemini maintenance scan over the curated evidence packet and review signal quality before any recurrence is considered.",
@@ -63,6 +63,12 @@
   "metadata": {
     "source_issue": "heimgewebe/bureau#254",
     "registered_at": "2026-07-08T12:10:00Z",
+    "advanced_after_evidence_packet_at": "2026-07-08T16:35:00Z",
+    "context": {
+      "cabinet_evidence_packet_pr": "heimgewebe/cabinet#91",
+      "cabinet_evidence_packet_merge_commit": "5cb86665c49d163eb5efc18a5d95bfb4bf4478f0",
+      "generator": "scripts/write_gemini_maintenance_evidence_packet.py"
+    },
     "does_not_establish": [
       "scheduled_scan_approved",
       "task_approval",

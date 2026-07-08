@@ -1,0 +1,475 @@
+{
+  "console_scripts": [
+    {
+      "documentation_references": [
+        ".github/workflows/sync-weltgewebe-source.yml",
+        "Makefile",
+        "README.md",
+        "docs/bur-2026-004-t003-legacy-module-dependency-audit.md",
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
+        "docs/bureau-runtime-observation-v1.md",
+        "docs/cabinet-bridge-import-review-contract-v0.policy.json",
+        "docs/contracts/open-pr-task-metadata-v1.md",
+        "docs/gemini-proposal-lane-preflight-v1.md",
+        "docs/operations.md",
+        "docs/plans/agent-run-evidence-ref-placement-decision-v1.md",
+        "docs/plans/agent-run-evidence-reference-design-v1.md",
+        "docs/plans/bureau-boundary-ops-v1.md",
+        "docs/plans/bureau-runtime-automation-baseline-v1.md",
+        "docs/plans/cabinet-ecosystem-intelligence-masterplan-v1.md",
+        "docs/plans/cabinet-read-only-ecosystem-signal-ingest-v0.md",
+        "docs/plans/discovery-source-plan-v1.md",
+        "docs/plans/leitstand-operator-observability-hardening-v1.md",
+        "docs/rlens-context-policy-v1.md",
+        "docs/runtime-automation-contract.md",
+        "ops/systemd/bureau-agent-frontier.service",
+        "ops/systemd/bureau-agent-frontier.timer",
+        "ops/systemd/bureau-codex-bridge.service",
+        "ops/systemd/bureau-codex-bridge.timer",
+        "ops/systemd/bureau-reconcile.service",
+        "ops/systemd/bureau-reconcile.timer",
+        "ops/systemd/bureau-review-steward.service",
+        "ops/systemd/bureau-review-steward.timer",
+        "ops/systemd/bureau-source-pr-bridge.service",
+        "ops/systemd/bureau-source-pr-bridge.timer",
+        "ops/systemd/bureau-status-projection.service",
+        "ops/systemd/bureau-status-projection.timer",
+        "tests/fixtures/agent-run-evidence-ref/chronik-event.valid.json",
+        "tests/fixtures/agent-run-evidence-ref/local-preview.valid.json",
+        "tests/test_agent_frontier.py",
+        "tests/test_agent_frontier_systemd.py",
+        "tests/test_agent_run_evidence_ref.py",
+        "tests/test_agent_run_evidence_review_document.py",
+        "tests/test_bridge_policy_validator_file.py",
+        "tests/test_bureau.py",
+        "tests/test_cabinet_bridge.py",
+        "tests/test_cabinet_bridge_preview.py",
+        "tests/test_cabinet_bridge_receipt.py",
+        "tests/test_cabinet_bridge_review.py",
+        "tests/test_cabinet_frontier_reader.py",
+        "tests/test_cabinet_promotion_write.py",
+        "tests/test_claim_guard.py",
+        "tests/test_closure.py",
+        "tests/test_closure_bridge.py",
+        "tests/test_closure_open_pr_observation.py",
+        "tests/test_codex_bridge.py",
+        "tests/test_cycle_contract.py",
+        "tests/test_eco_graph.py",
+        "tests/test_entrypoint_inventory.py",
+        "tests/test_gemini_preflight.py",
+        "tests/test_github_observer.py",
+        "tests/test_registry_truth.py",
+        "tests/test_repository_registry_load.py",
+        "tests/test_review_steward.py",
+        "tests/test_rlens_context_policy.py",
+        "tests/test_rlens_context_ref.py",
+        "tests/test_rlens_mode_policy.py",
+        "tests/test_runtime_observation_systemd.py",
+        "tests/test_source_pr_bridge.py",
+        "tests/test_source_pr_bridge_systemd.py",
+        "tests/test_state_root_hygiene.py",
+        "tests/test_status_projection.py",
+        "tests/test_task_finish.py",
+        "tests/test_v2.py",
+        "tests/test_weltgewebe_promote.py",
+        "tests/test_weltgewebe_source.py"
+      ],
+      "layer": "core_cli",
+      "name": "bureau",
+      "target": "bureau.cli:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
+        "ops/systemd/bureau-agent-frontier.service",
+        "ops/systemd/bureau-agent-frontier.timer",
+        "ops/systemd/bureau-codex-bridge.service",
+        "tests/test_agent_frontier_systemd.py",
+        "tests/test_codex_bridge.py",
+        "tests/test_entrypoint_inventory.py"
+      ],
+      "layer": "ops_frontier",
+      "name": "bureau-agent-frontier",
+      "target": "bureau.agent_frontier:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
+        "tests/test_entrypoint_inventory.py"
+      ],
+      "layer": "ops_frontier",
+      "name": "bureau-agent-scout",
+      "target": "bureau.agent_frontier:main"
+    },
+    {
+      "documentation_references": [
+        "Makefile",
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md"
+      ],
+      "layer": "ops_cabinet_bridge",
+      "name": "bureau-cabinet-bridge-import-policy",
+      "target": "bureau.cabinet_bridge_import_policy:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md"
+      ],
+      "layer": "ops_cabinet_bridge",
+      "name": "bureau-cabinet-bridge-preview",
+      "target": "bureau.cabinet_bridge_preview:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md"
+      ],
+      "layer": "ops_cabinet_bridge",
+      "name": "bureau-cabinet-bridge-receipt",
+      "target": "bureau.cabinet_bridge_receipt:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md"
+      ],
+      "layer": "ops_cabinet_bridge",
+      "name": "bureau-cabinet-bridge-review",
+      "target": "bureau.cabinet_bridge_review:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
+        "tests/test_entrypoint_inventory.py"
+      ],
+      "layer": "ops_cabinet_bridge",
+      "name": "bureau-cabinet-frontier-reader",
+      "target": "bureau.cabinet_frontier_reader:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
+        "ops/systemd/bureau-agent-frontier.service",
+        "ops/systemd/bureau-codex-bridge.service",
+        "ops/systemd/bureau-review-steward.service",
+        "tests/test_codex_bridge.py"
+      ],
+      "layer": "ops_closure",
+      "name": "bureau-closure",
+      "target": "bureau.closure:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md"
+      ],
+      "layer": "ops_closure",
+      "name": "bureau-closure-runner",
+      "target": "bureau.closure_runner:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
+        "ops/systemd/bureau-codex-bridge.service",
+        "ops/systemd/bureau-codex-bridge.timer",
+        "tests/test_codex_bridge.py",
+        "tests/test_entrypoint_inventory.py"
+      ],
+      "layer": "ops_bridge",
+      "name": "bureau-codex-bridge",
+      "target": "bureau.codex_bridge:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
+        "docs/gemini-proposal-lane-preflight-v1.md",
+        "tests/test_entrypoint_inventory.py"
+      ],
+      "layer": "ops_external_preflight",
+      "name": "bureau-gemini-preflight",
+      "target": "bureau.gemini_preflight:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md"
+      ],
+      "layer": "ops_closure",
+      "name": "bureau-pr-task-finish",
+      "target": "bureau.task_finish:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
+        "docs/operations.md",
+        "ops/systemd/bureau-review-steward.service",
+        "ops/systemd/bureau-review-steward.timer",
+        "tests/test_entrypoint_inventory.py"
+      ],
+      "layer": "ops_bridge",
+      "name": "bureau-review-steward",
+      "target": "bureau.review_steward:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
+        "docs/operations.md",
+        "ops/systemd/bureau-source-pr-bridge.service",
+        "ops/systemd/bureau-source-pr-bridge.timer",
+        "tests/test_entrypoint_inventory.py",
+        "tests/test_source_pr_bridge_systemd.py"
+      ],
+      "layer": "ops_bridge",
+      "name": "bureau-source-pr-bridge",
+      "target": "bureau.source_pr_bridge:main"
+    }
+  ],
+  "does_not_establish": [
+    "runtime_units_installed",
+    "hidden_external_users_absent",
+    "safe_to_remove_entrypoints",
+    "packaging_decision",
+    "systemd_runtime_correctness"
+  ],
+  "kind": "bureau_console_entrypoint_inventory",
+  "module_entrypoints": [
+    {
+      "argparse_prog": "bureau-agent-frontier",
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.agent_frontier",
+      "path": "src/bureau/agent_frontier.py"
+    },
+    {
+      "argparse_prog": "bureau-cabinet-bridge-import-policy",
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.cabinet_bridge_import_policy",
+      "path": "src/bureau/cabinet_bridge_import_policy.py"
+    },
+    {
+      "argparse_prog": "bureau-cabinet-bridge-preview",
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.cabinet_bridge_preview",
+      "path": "src/bureau/cabinet_bridge_preview.py"
+    },
+    {
+      "argparse_prog": "bureau-cabinet-bridge-receipt",
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.cabinet_bridge_receipt",
+      "path": "src/bureau/cabinet_bridge_receipt.py"
+    },
+    {
+      "argparse_prog": "bureau-cabinet-bridge-review",
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.cabinet_bridge_review",
+      "path": "src/bureau/cabinet_bridge_review.py"
+    },
+    {
+      "argparse_prog": "bureau-cabinet-frontier-reader",
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.cabinet_frontier_reader",
+      "path": "src/bureau/cabinet_frontier_reader.py"
+    },
+    {
+      "argparse_prog": "bureau",
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.cli",
+      "path": "src/bureau/cli.py"
+    },
+    {
+      "argparse_prog": "bureau-closure",
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.closure",
+      "path": "src/bureau/closure.py"
+    },
+    {
+      "argparse_prog": null,
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.closure_runner",
+      "path": "src/bureau/closure_runner.py"
+    },
+    {
+      "argparse_prog": "bureau-codex-bridge",
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.codex_bridge",
+      "path": "src/bureau/codex_bridge.py"
+    },
+    {
+      "argparse_prog": "bureau-cycle",
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.cycle_contract",
+      "path": "src/bureau/cycle_contract.py"
+    },
+    {
+      "argparse_prog": null,
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.discovery",
+      "path": "src/bureau/discovery.py"
+    },
+    {
+      "argparse_prog": null,
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.discovery_runner",
+      "path": "src/bureau/discovery_runner.py"
+    },
+    {
+      "argparse_prog": "bureau-entrypoint-inventory",
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.entrypoint_inventory",
+      "path": "src/bureau/entrypoint_inventory.py"
+    },
+    {
+      "argparse_prog": "bureau-gemini-preflight",
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.gemini_preflight",
+      "path": "src/bureau/gemini_preflight.py"
+    },
+    {
+      "argparse_prog": "bureau-review-steward",
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.review_steward",
+      "path": "src/bureau/review_steward.py"
+    },
+    {
+      "argparse_prog": null,
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.source_pr_bridge",
+      "path": "src/bureau/source_pr_bridge.py"
+    },
+    {
+      "argparse_prog": null,
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.task_finish",
+      "path": "src/bureau/task_finish.py"
+    }
+  ],
+  "schema_version": 1,
+  "source": "src/bureau/entrypoint_inventory.py",
+  "summary": {
+    "module_entrypoints": 18,
+    "packaged_console_scripts": 15,
+    "systemd_services": 6,
+    "systemd_timers": 6
+  },
+  "systemd_units": [
+    {
+      "after": [
+        "network-online.target",
+        "bureau-closure-planner.service"
+      ],
+      "args": [],
+      "command": "%h/.local/libexec/bureau-agent-frontier",
+      "command_basename": "bureau-agent-frontier",
+      "exec_start": "%h/.local/libexec/bureau-agent-frontier",
+      "matched_console_script": "bureau-agent-frontier",
+      "read_write_paths": [
+        "%h/.local/state/bureau-agent-frontier"
+      ],
+      "timer": "ops/systemd/bureau-agent-frontier.timer",
+      "unit": "ops/systemd/bureau-agent-frontier.service"
+    },
+    {
+      "after": [
+        "bureau-agent-frontier.service",
+        "bureau-closure-planner.service"
+      ],
+      "args": [
+        "--repo-root",
+        "%h/repos/bureau",
+        "--backend=none",
+        "--json"
+      ],
+      "command": "%h/.local/libexec/bureau-codex-bridge",
+      "command_basename": "bureau-codex-bridge",
+      "exec_start": "%h/.local/libexec/bureau-codex-bridge --repo-root %h/repos/bureau --backend=none --json",
+      "matched_console_script": "bureau-codex-bridge",
+      "read_write_paths": [
+        "%h/.local/state/bureau-codex-bridge"
+      ],
+      "timer": "ops/systemd/bureau-codex-bridge.timer",
+      "unit": "ops/systemd/bureau-codex-bridge.service"
+    },
+    {
+      "after": [
+        "network-online.target"
+      ],
+      "args": [
+        "--root",
+        "%h/repos/bureau",
+        "--json",
+        "reconcile",
+        "--stale-after",
+        "900"
+      ],
+      "command": "%h/.local/share/bureau/venv/bin/bureau",
+      "command_basename": "bureau",
+      "exec_start": "%h/.local/share/bureau/venv/bin/bureau --root %h/repos/bureau --json reconcile --stale-after 900",
+      "matched_console_script": "bureau",
+      "read_write_paths": [
+        "%h/.local/state/bureau"
+      ],
+      "timer": "ops/systemd/bureau-reconcile.timer",
+      "unit": "ops/systemd/bureau-reconcile.service"
+    },
+    {
+      "after": [
+        "network-online.target"
+      ],
+      "args": [
+        "run"
+      ],
+      "command": "%h/.local/share/bureau-review-steward/venv/bin/bureau-review-steward",
+      "command_basename": "bureau-review-steward",
+      "exec_start": "%h/.local/share/bureau-review-steward/venv/bin/bureau-review-steward run",
+      "matched_console_script": "bureau-review-steward",
+      "read_write_paths": [
+        "%h/.local/state/bureau-closure"
+      ],
+      "timer": "ops/systemd/bureau-review-steward.timer",
+      "unit": "ops/systemd/bureau-review-steward.service"
+    },
+    {
+      "after": [
+        "network-online.target"
+      ],
+      "args": [],
+      "command": "%h/.local/share/bureau-source-pr-bridge/venv/bin/bureau-source-pr-bridge",
+      "command_basename": "bureau-source-pr-bridge",
+      "exec_start": "%h/.local/share/bureau-source-pr-bridge/venv/bin/bureau-source-pr-bridge",
+      "matched_console_script": "bureau-source-pr-bridge",
+      "read_write_paths": [],
+      "timer": "ops/systemd/bureau-source-pr-bridge.timer",
+      "unit": "ops/systemd/bureau-source-pr-bridge.service"
+    },
+    {
+      "after": [
+        "network-online.target"
+      ],
+      "args": [
+        "--root",
+        "%h/repos/bureau",
+        "--json",
+        "status-projection"
+      ],
+      "command": "%h/.local/share/bureau/venv/bin/bureau",
+      "command_basename": "bureau",
+      "exec_start": "%h/.local/share/bureau/venv/bin/bureau --root %h/repos/bureau --json status-projection",
+      "matched_console_script": "bureau",
+      "read_write_paths": [],
+      "timer": "ops/systemd/bureau-status-projection.timer",
+      "unit": "ops/systemd/bureau-status-projection.service"
+    }
+  ]
+}

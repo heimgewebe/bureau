@@ -1,16 +1,16 @@
 {
   "acceptance": [
     {
-      "id": "docs-updated",
-      "assertion": "Blanket language that categorically forbids automatic merge/deploy/durable autonomy is replaced or qualified."
+      "assertion": "Blanket language that categorically forbids automatic merge/deploy/durable autonomy is replaced or qualified.",
+      "id": "docs-updated"
     },
     {
-      "id": "organs-positioned",
-      "assertion": "Bureau, Cabinet, Chronik, Plexer, Lenskit, and Vibe-Lab are documented as helpers rather than universal gates."
+      "assertion": "Bureau, Cabinet, Chronik, Plexer, Lenskit, and Vibe-Lab are documented as helpers rather than universal gates.",
+      "id": "organs-positioned"
     },
     {
-      "id": "high-impact-language",
-      "assertion": "High-impact actions are marked and receipt-bound, not categorically forbidden."
+      "assertion": "High-impact actions are marked and receipt-bound, not categorically forbidden.",
+      "id": "high-impact-language"
     }
   ],
   "claims": [
@@ -20,6 +20,9 @@
       "resource": "repo.grabowski"
     }
   ],
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T002"
+  ],
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect"
@@ -28,12 +31,25 @@
   "id": "GRIP-ROADMAP-V1-T006",
   "initiative": "GRIP-ROADMAP-V1",
   "metadata": {
+    "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately.",
+    "implementation_branch": "docs/grip-autonomy-doctrine-v1",
+    "implementation_head": "1892600fb504e91a63787a6f1ea56d664ad25d48",
+    "implementation_merge_commit": "a6aeb6532e4cb9d421b237e055b4d993c2b391f9",
+    "implementation_pr": "heimgewebe/grabowski#98",
     "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
     "roadmap_slice": "PR8",
-    "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately.",
-    "implementation_pr": "https://github.com/heimgewebe/grabowski/pull/98",
-    "implementation_branch": "docs/grip-autonomy-doctrine-v1",
-    "status_note": "Implementation PR is open; keep task planned until PR review and merge evidence are present."
+    "status_note": "Implementation PR is open; keep task planned until PR review and merge evidence are present.",
+    "validated_acceptance": {
+      "docs-updated": "PR #98 updated autonomy doctrine language rather than leaving blanket prohibitions unqualified.",
+      "high-impact-language": "PR #98 clarifies high-impact actions as marked and receipt-bound.",
+      "organs-positioned": "PR #98 documents organs as helpers instead of universal gates."
+    },
+    "verification": {
+      "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+      "task_sha256": "f6e54f163ab5a486cbdf77e50b16c13c80aae80bff94774d565d4df801f103a7"
+    },
+    "verification_note": "Live GitHub check shows Grabowski PR #98 merged on 2026-07-08 and closed the autonomy doctrine documentation slice.",
+    "verified_at": "2026-07-08"
   },
   "priority": {
     "lane": "later",
@@ -45,9 +61,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
-  "title": "Update autonomy doctrine docs",
-  "depends_on": [
-    "GRIP-ROADMAP-V1-T002"
-  ]
+  "state": "verified",
+  "title": "Update autonomy doctrine docs"
 }

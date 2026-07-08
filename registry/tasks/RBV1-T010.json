@@ -13,7 +13,6 @@
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/lenskit",
-    "baseline_commit": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
     "grabowski_resources": [
       "repo:/home/alex/repos/lenskit"
     ]
@@ -92,7 +91,7 @@
       "rbv1-t010-non-claims": "MCP/read-only access does not establish truth, correctness, completeness, runtime behavior, test sufficiency, regression absence, repo understanding, claim truth or forensic readiness."
     },
     "verification": {
-      "task_sha256": "68db6bbdcc7392f522488d7d19dbf8f5afcf55ecbf9f045d0565c186ebe91a2a",
+      "task_sha256": "040759872d3f5b76f581df876c97f000a139bd529e6547cc57b14ccb01362894",
       "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
     },
     "scope_clarification_2026_07_08": {
@@ -103,6 +102,20 @@
         "mcp_snapshot_create_exists"
       ],
       "follow_up_task": "RPU-V1-T020"
+    },
+    "removed_dead_baseline_commit": {
+      "value": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
+      "reason": "commit_not_found during registry-truth baseline probe",
+      "working_repository": "/home/alex/repos/lenskit",
+      "baseline_status": "missing",
+      "observed_by": "bureau-registry-truth-terminal-baseline-hardening",
+      "observed_at": "2026-07-08",
+      "does_not_establish": [
+        "task_incomplete",
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness"
+      ]
     }
   },
   "depends_on": [

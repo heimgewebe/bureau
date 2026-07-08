@@ -13,7 +13,6 @@
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/lenskit",
-    "baseline_commit": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
     "grabowski_resources": [
       "repo:/home/alex/repos/lenskit"
     ]
@@ -57,7 +56,7 @@
     }
   ],
   "metadata": {
-    "created_from_plan": "Plan \u2014 RepoBrief v1",
+    "created_from_plan": "Plan — RepoBrief v1",
     "registered_at": "2026-07-05T14:33:30Z",
     "plan_refs": [
       "Phase 3 / PR 5"
@@ -103,8 +102,22 @@
         "freshness_against_remote",
         "repo_understood"
       ],
-      "task_sha256": "47f443a55264e96a15b512a1afccf672949508ba965d0d5561b966fedf6498ea",
+      "task_sha256": "9b54838e03b6c4cdb318bd0325b136e03efc801ac9625cdd3c4e6538d1ba6076",
       "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    },
+    "removed_dead_baseline_commit": {
+      "value": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
+      "reason": "commit_not_found during registry-truth baseline probe",
+      "working_repository": "/home/alex/repos/lenskit",
+      "baseline_status": "missing",
+      "observed_by": "bureau-registry-truth-terminal-baseline-hardening",
+      "observed_at": "2026-07-08",
+      "does_not_establish": [
+        "task_incomplete",
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness"
+      ]
     }
   },
   "depends_on": [

@@ -13,7 +13,6 @@
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/lenskit",
-    "baseline_commit": "4d31a206dc2ec9bf90e71cbaa6ba102377815beb",
     "grabowski_resources": [
       "repo:/home/alex/repos/lenskit"
     ]
@@ -86,8 +85,22 @@
         "security_correctness",
         "roadmap_completeness"
       ],
-      "task_sha256": "c534376ef5d8ab5712a0574e21b0ebae07880c6e99b4e5c1693b92374fe26cdc",
+      "task_sha256": "3f86d7321d5591d6cdf6ecea041c6b9fb1ba2ca63cc61f8b2752d6550fc5a4d2",
       "plan_sha256": "44feb70a77fc185a7a36e565d7a7ae3b703a3f01350a931602ee348f9b4e7e6a"
+    },
+    "removed_dead_baseline_commit": {
+      "value": "4d31a206dc2ec9bf90e71cbaa6ba102377815beb",
+      "reason": "commit_not_found during registry-truth baseline probe",
+      "working_repository": "/home/alex/repos/lenskit",
+      "baseline_status": "missing",
+      "observed_by": "bureau-registry-truth-terminal-baseline-hardening",
+      "observed_at": "2026-07-08",
+      "does_not_establish": [
+        "task_incomplete",
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness"
+      ]
     }
   },
   "depends_on": []

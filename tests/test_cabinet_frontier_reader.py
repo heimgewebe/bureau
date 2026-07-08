@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,6 +12,7 @@ from typing import Any
 from bureau.cabinet_bridge import CabinetBridgeError
 from bureau.cabinet_frontier_reader import (
     create_frontier_receipt,
+    import_reviewed_frontier_candidate,
     main,
     preview_frontier_candidate,
     read_frontier,
@@ -89,6 +91,40 @@ def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
 
 def write_json(path: Path, value: dict[str, Any]) -> None:
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+
+def registry_root_copy(directory: str) -> Path:
+    root = Path(directory) / "registry-root"
+    shutil.copytree(Path.cwd() / "registry", root / "registry")
+    shutil.copytree(Path.cwd() / "schemas", root / "schemas")
+    return root
+
+
+def reviewed_files(root: Path, directory: str) -> tuple[Path, Path]:
+    frontier = Path(directory) / "frontier.jsonl"
+    report_path = Path(directory) / "report.json"
+    preview_path = Path(directory) / "preview.json"
+    gate_path = Path(directory) / "gate.json"
+    receipt_path = Path(directory) / "receipt.json"
+    write_jsonl(frontier, [candidate()])
+    write_json(report_path, read_frontier(frontier, registry_root=root))
+    preview = preview_frontier_candidate(
+        report_path,
+        candidate_id="frontier:cabinet:ready",
+        approve=True,
+    )
+    write_json(preview_path, preview)
+    gate = review_frontier_preview(preview_path)
+    write_json(gate_path, gate)
+    receipt = create_frontier_receipt(
+        gate_path,
+        reviewer="alex",
+        decision="ready-for-design",
+        evidence=["manual review"],
+    )
+    write_json(receipt_path, receipt)
+    return report_path, receipt_path
 
 
 class CabinetFrontierReaderTests(unittest.TestCase):
@@ -244,6 +280,143 @@ class CabinetFrontierReaderTests(unittest.TestCase):
                 ])
         self.assertEqual(rc, 0)
         self.assertEqual(json.loads(stream.getvalue())["status"], "review_recorded")
+
+    def test_reviewed_import_defaults_to_dry_run_without_registry_mutation(self) -> None:
+        from bureau.core import Registry
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = registry_root_copy(directory)
+            report_path, receipt_path = reviewed_files(root, directory)
+            registry = Registry.load(root)
+            receipt = import_reviewed_frontier_candidate(
+                report_path,
+                receipt_path,
+                registry=registry,
+                task_id="CABINET-FRONTIER-IMPORT-TEST-T001",
+                initiative="CABINET-COHERENCE-FRONTIER-V1",
+                apply=False,
+            )
+            target = root / "registry/tasks/CABINET-FRONTIER-IMPORT-TEST-T001.json"
+        self.assertEqual(receipt["kind"], "cabinet_frontier_reviewed_import")
+        self.assertEqual(receipt["mode"], "dry_run")
+        self.assertTrue(receipt["importReady"])
+        self.assertFalse(receipt["registryMutationAllowed"])
+        self.assertFalse(receipt["registryMutationPerformed"])
+        self.assertFalse(receipt["taskCreationPerformed"])
+        self.assertFalse(receipt["dispatchPerformed"])
+        self.assertFalse(receipt["queueMutationPerformed"])
+        self.assertFalse(target.exists())
+
+    def test_reviewed_import_apply_creates_exactly_one_registry_task_file(self) -> None:
+        from bureau.core import Registry
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = registry_root_copy(directory)
+            report_path, receipt_path = reviewed_files(root, directory)
+            registry = Registry.load(root)
+            receipt = import_reviewed_frontier_candidate(
+                report_path,
+                receipt_path,
+                registry=registry,
+                task_id="CABINET-FRONTIER-IMPORT-TEST-T001",
+                initiative="CABINET-COHERENCE-FRONTIER-V1",
+                apply=True,
+            )
+            target = root / "registry/tasks/CABINET-FRONTIER-IMPORT-TEST-T001.json"
+            imported = json.loads(target.read_text(encoding="utf-8"))
+        self.assertEqual(receipt["mode"], "apply")
+        self.assertTrue(receipt["registryMutationAllowed"])
+        self.assertTrue(receipt["registryMutationPerformed"])
+        self.assertTrue(receipt["taskCreationPerformed"])
+        self.assertFalse(receipt["dispatchPerformed"])
+        self.assertFalse(receipt["queueMutationPerformed"])
+        self.assertEqual(imported["id"], "CABINET-FRONTIER-IMPORT-TEST-T001")
+        self.assertEqual(imported["metadata"]["source"], "cabinet_frontier_reviewed_import")
+        self.assertFalse(imported["metadata"]["dispatch_allowed"])
+        self.assertFalse(imported["metadata"]["queue_mutation_allowed"])
+
+    def test_reviewed_import_rejects_non_ready_receipt(self) -> None:
+        from bureau.core import Registry
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = registry_root_copy(directory)
+            report_path, receipt_path = reviewed_files(root, directory)
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            receipt["decision"] = "changes-requested"
+            write_json(receipt_path, receipt)
+            registry = Registry.load(root)
+            with self.assertRaisesRegex(CabinetBridgeError, "ready-for-design"):
+                import_reviewed_frontier_candidate(
+                    report_path,
+                    receipt_path,
+                    registry=registry,
+                    task_id="CABINET-FRONTIER-IMPORT-TEST-T001",
+                    initiative="CABINET-COHERENCE-FRONTIER-V1",
+                    apply=True,
+                )
+
+    def test_reviewed_import_rejects_source_collision(self) -> None:
+        from bureau.core import Registry
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = registry_root_copy(directory)
+            report_path, receipt_path = reviewed_files(root, directory)
+            tasks = root / "registry/tasks"
+            write_json(
+                tasks / "source-collision.json",
+                {
+                    "schema_version": 1,
+                    "id": "CABINET-FRONTIER-SOURCE-COLLISION",
+                    "initiative": "CABINET-COHERENCE-FRONTIER-V1",
+                    "title": "Existing source collision",
+                    "state": "planned",
+                    "goal": "Existing task with same source Frontier candidate.",
+                    "required_capabilities": ["repository", "review"],
+                    "priority": {"lane": "later", "rank": 999},
+                    "execution": {"mode": "manual", "policy": "review-before-effect"},
+                    "claims": [{"resource": "repo.cabinet", "mode": "read", "isolation": "none"}],
+                    "acceptance": [{"id": "existing", "assertion": "Existing task."}],
+                    "metadata": {"source_frontier_candidate_id": "frontier:cabinet:ready"},
+                },
+            )
+            registry = Registry.load(root)
+            with self.assertRaisesRegex(CabinetBridgeError, "already imported"):
+                import_reviewed_frontier_candidate(
+                    report_path,
+                    receipt_path,
+                    registry=registry,
+                    task_id="CABINET-FRONTIER-IMPORT-TEST-T001",
+                    initiative="CABINET-COHERENCE-FRONTIER-V1",
+                    apply=True,
+                )
+
+    def test_cli_reviewed_import_apply_writes_one_task(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = registry_root_copy(directory)
+            report_path, receipt_path = reviewed_files(root, directory)
+            stream = io.StringIO()
+            with contextlib.redirect_stdout(stream):
+                rc = main([
+                    "import-reviewed",
+                    "--report",
+                    str(report_path),
+                    "--receipt",
+                    str(receipt_path),
+                    "--registry-root",
+                    str(root),
+                    "--task-id",
+                    "CABINET-FRONTIER-IMPORT-TEST-T001",
+                    "--initiative",
+                    "CABINET-COHERENCE-FRONTIER-V1",
+                    "--apply",
+                    "--json",
+                ])
+            payload = json.loads(stream.getvalue())
+            target = root / "registry/tasks/CABINET-FRONTIER-IMPORT-TEST-T001.json"
+            target_exists = target.exists()
+        self.assertEqual(rc, 0)
+        self.assertEqual(payload["mode"], "apply")
+        self.assertTrue(target_exists)
 
 
 if __name__ == "__main__":

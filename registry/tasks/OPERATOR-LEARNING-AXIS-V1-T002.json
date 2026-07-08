@@ -6,7 +6,7 @@
   "state": "planned",
   "priority": {
     "lane": "next",
-    "rank": 20
+    "rank": 60
   },
   "goal": "Decide whether additive weight deltas belong in the shared policy.weight_adjustment.v1 contract or remain outside contract-bound heimlern proposal emission.",
   "depends_on": [

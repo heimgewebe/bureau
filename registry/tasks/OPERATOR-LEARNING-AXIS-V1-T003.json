@@ -6,7 +6,7 @@
   "state": "planned",
   "priority": {
     "lane": "next",
-    "rank": 30
+    "rank": 70
   },
   "goal": "Plan and implement the adapter-language repair so route-key sanitizing, reward clamping and state normalization are covered by the tested Rust core instead of living primarily in Python scripts.",
   "depends_on": [

@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "id": "HEIMLERN-OPTIMIZATION-V1-T007",
+  "initiative": "HEIMLERN-OPTIMIZATION-V1",
+  "title": "Heimlern RepoBrief/rLens Bundle herstellen",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 50
+  },
+  "depends_on": [
+    "HEIMLERN-OPTIMIZATION-V1-T006"
+  ],
+  "goal": "Einen aktuellen, konsumierbaren RepoBrief/rLens-Kontext für heimlern erzeugen oder die Registry-Lücke mit klarer Degradation dokumentieren.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heimlern",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heimlern"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.heimlern",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.lenskit",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "bundle-observable",
+      "assertion": "grabowski rlens bundle status for heimlern reports an existing complete bundle or a bounded documented unavailable reason."
+    },
+    {
+      "id": "context-pack-smoke",
+      "assertion": "A basic heimlern rLens context pack/query returns bounded evidence or explicit degradation without reading hidden live workspace state."
+    },
+    {
+      "id": "no-control-plane-claim",
+      "assertion": "The task does not make RepoBrief/rLens a source of task truth, runtime truth or merge authority."
+    }
+  ],
+  "metadata": {
+    "source_assessment": "2026-07-08 heimlern ecosystem integration audit",
+    "observed_gap": "rlens-latest-complete-bundles.tsv did not contain a heimlern entry during the audit.",
+    "does_not_establish": [
+      "repo_runtime_correctness",
+      "learning_policy_readiness",
+      "automatic_refresh_authority"
+    ],
+    "claim_boundary": "read-only observation; no checkout mutation or hidden refresh authority"
+  }
+}

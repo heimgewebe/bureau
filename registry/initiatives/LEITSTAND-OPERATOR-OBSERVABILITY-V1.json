@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "LEITSTAND-OPERATOR-OBSERVABILITY-V1",
   "title": "Leitstand operator observability hardening",
-  "state": "active",
-  "commitment": "next",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Harden the Leitstand operator-execution observation slice so /bureau and /checkouts display Bureau and Grabowski state through honest snapshot artifacts, safe public fixtures, consistent navigation, and aligned runtime/static documentation without giving Leitstand execution authority.",
   "current_plan": {
     "repository": "bureau",
@@ -47,6 +47,15 @@
       "grabowski_snapshot_truth",
       "test_sufficiency"
     ],
-    "alternative_axis": "make the observer-source seam truthful before polishing UI"
+    "alternative_axis": "make the observer-source seam truthful before polishing UI",
+    "lifecycle": {
+      "completed_at": "2026-07-08T06:48:29Z",
+      "repair_source": "bureau doctor lifecycle recommendation: completion-ready after all LOO-V1 tasks verified",
+      "does_not_establish": [
+        "runtime_deployed",
+        "pages_enabled",
+        "leitstand_execution_authority"
+      ]
+    }
   }
 }

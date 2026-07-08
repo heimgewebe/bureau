@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T012",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Align remove-path capability with reversible cleanup contract",
+  "state": "planned",
+  "goal": "Fix the Grabowski filesystem access profile so grabowski_remove_path is usable for audited reversible quarantine cleanup, or intentionally hide/disable the tool when file_delete is not enabled; irreversible destroy_path must not be the only working cleanup path.",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T002"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 16
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "capability-alignment",
+      "assertion": "The active trusted-owner or equivalent profile either enables the capability required by grabowski_remove_path or the remove tool is absent/blocked from the advertised contract with an explicit reason."
+    },
+    {
+      "id": "reversible-preferred",
+      "assertion": "A temporary-file smoke proves create/read/replace/rollback/remove/restore without requiring irreversible destroy for normal cleanup."
+    },
+    {
+      "id": "contract-visible",
+      "assertion": "grabowski_status or contract drift exposes any mismatch between registered tools and enabled capabilities."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover remove_path capability gating, destroy_path gating and the safer-preferred reversible cleanup path."
+    }
+  ],
+  "metadata": {
+    "phase": "grabowski-functionality-audit-20260708",
+    "effect": "repository_hardening",
+    "source": "Live Grabowski audit on 2026-07-08",
+    "observed_runtime_head": "5328a85da4eff10c7dc6f3ea0ec1e14a38941f96",
+    "observed_symptom": "grabowski_remove_path failed with Access capability is not enabled: file_delete while grabowski_destroy_path succeeded with file_destroy.",
+    "friction_event_id": "bdcbdb7032fe4b3fac19cae746cf2b08",
+    "risk": "Reversible cleanup is unavailable while irreversible deletion remains available; this inverts the intended safety preference.",
+    "does_not_establish": [
+      "implementation_complete",
+      "runtime_deployed",
+      "merge_authority_change"
+    ]
+  }
+}

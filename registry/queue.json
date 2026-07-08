@@ -3,7 +3,9 @@
   "queue_policy": "skip-blocked",
   "lanes": {
     "now": [],
-    "next": [],
+    "next": [
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T012"
+    ],
     "later": [
       "COMMONWORLD-ATLAS-V1-T003",
       "COMMONWORLD-ATLAS-V1-T004",

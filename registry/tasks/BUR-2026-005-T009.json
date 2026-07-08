@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T009",
   "initiative": "BUR-2026-005",
   "title": "Scope Open PR observation failures",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "BUR-2026-005-T003"
   ],
@@ -32,8 +32,42 @@
     "safety_boundary": "Fail closed for the affected resource; do not turn observation failures into implicit allow decisions.",
     "does_not_establish": [
       "github_reliability",
-      "automatic_merge_authority"
-    ]
+      "automatic_merge_authority",
+      "automatic_completion_authority",
+      "runtime_correctness",
+      "ci_sufficiency"
+    ],
+    "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Bureau PR #226: Open-PR observation failures now synthesize fail-closed reservations for the affected git-repository resource only, while non-overlapping repo-write tasks remain eligible and claimable.",
+    "implementation_pr": "heimgewebe/bureau#226",
+    "live_bureau_commit": "2569204933ee49d6f27173c73180cfb2bd20699f",
+    "implementation_head": "9905aa03953af3e0639432b61cbf836545b3446e",
+    "implementation_paths": [
+      "src/bureau/v2.py",
+      "tests/test_claim_guard.py"
+    ],
+    "validation": [
+      "Bureau PR #226 GitHub CI passed validate (3.10) and validate (3.12).",
+      "Local before merge: PYTHONPATH=src python3 -m ruff check src/bureau/v2.py tests/test_claim_guard.py -> passed.",
+      "Local before merge: PYTHONPATH=src python3 -m pytest tests/test_claim_guard.py tests/test_v2.py -q -> passed.",
+      "Local before merge: PYTHONPATH=src python3 -m bureau.cli --root . check -> valid True.",
+      "Local before merge: PYTHONPATH=src python3 -m pytest -> 355 passed.",
+      "Local before merge: PYTHONPATH=src python3 -m ruff check . -> passed.",
+      "Local before merge: PYTHONPATH=src python3 -m bureau.cli --root . --json doctor -> healthy true.",
+      "Local before merge: git diff --check -> passed.",
+      "Post-merge: PYTHONPATH=src python3 -m bureau.cli --root . check -> valid True.",
+      "Post-merge: doctor healthy true."
+    ],
+    "verified_acceptance": {
+      "resource-scoped-failure": "src/bureau/v2.py now converts missing path, repository resolution and gh observation errors into OpenPullRequestReservation blockers for the affected git-repository resource.",
+      "multi-repo-test": "tests/test_claim_guard.py covers a two-repository registry where one repository observation fails and a non-overlapping repo-write task remains eligible and claimable.",
+      "diagnostic": "frontier reasons include open PR guard failure, the affected resource id and the observation diagnostic without exposing secrets."
+    },
+    "verification": {
+      "task_sha256": "422fc05a1be5497d3b3130d8076dec875c8d20dc6b90aad150627c17b076dc04",
+      "plan_sha256": "653fa6a056506c94d5654ba5e3c16f9c31032767f0e1c844a8cb4714c50ce917"
+    }
   },
   "acceptance": [
     {

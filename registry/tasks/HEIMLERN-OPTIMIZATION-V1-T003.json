@@ -3,7 +3,7 @@
   "id": "HEIMLERN-OPTIMIZATION-V1-T003",
   "initiative": "HEIMLERN-OPTIMIZATION-V1",
   "title": "Rust CLI Lernpfad ergänzen",
-  "state": "planned",
+  "state": "ready",
   "goal": "Den offline Lernpfad als prüfbares Rust-CLI-Artefakt ergänzen.",
   "execution": {
     "mode": "interactive-agent",
@@ -29,9 +29,29 @@
   "metadata": {
     "source_plan": "docs/plans/heimlern-optimization-plan-v1.md",
     "source_pr": "heimgewebe/heimlern#181",
-    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a"
+    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a",
+    "active_implementation_pr": "heimgewebe/heimlern#187",
+    "active_branch": "feat/heimlern-rust-cli-learning-path-v1",
+    "active_head": "cb7dbdacf60fec8ad6f679443ad354010668dea4",
+    "local_verification": [
+      "cargo fmt --all --check",
+      "cargo test -p heimlern-cli --test offline_learning_path --locked",
+      "cargo test --all --locked --workspace",
+      "cargo clippy --all-targets -- -D warnings",
+      "python3 scripts/validate_json.py contracts/learning_path.schema.json /tmp/heimlern-learning-path.json"
+    ],
+    "does_not_establish": [
+      "merge_complete",
+      "bureau_task_verified",
+      "runtime_policy_readiness",
+      "automatic_rule_change_permission"
+    ]
   },
   "depends_on": [
     "HEIMLERN-OPTIMIZATION-V1-T002"
-  ]
+  ],
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  }
 }

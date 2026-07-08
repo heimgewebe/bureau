@@ -6,7 +6,7 @@
   "state": "planned",
   "priority": {
     "lane": "next",
-    "rank": 40
+    "rank": 80
   },
   "goal": "Add one bounded OLA circle proof from routing outcome fixtures through heimlern proposal generation to contract validation, keeping the result review-only.",
   "depends_on": [

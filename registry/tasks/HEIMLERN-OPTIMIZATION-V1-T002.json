@@ -3,7 +3,7 @@
   "id": "HEIMLERN-OPTIMIZATION-V1-T002",
   "initiative": "HEIMLERN-OPTIMIZATION-V1",
   "title": "Feedback-Kern entdoppeln",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "HEIMLERN-OPTIMIZATION-V1-T001"
   ],
@@ -32,6 +32,35 @@
   "metadata": {
     "source_plan": "docs/plans/heimlern-optimization-plan-v1.md",
     "source_pr": "heimgewebe/heimlern#181",
-    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a"
+    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a",
+    "outcome": "Heimlern PR #186 deduplicated the feedback outcome counting and simulation path.",
+    "implementation_repo": "heimgewebe/heimlern",
+    "implementation_pr": "heimgewebe/heimlern#186",
+    "implementation_merge_commit": "82197c082dd081dbb2e53e369edda27d9a2496e9",
+    "verified_acceptance": {
+      "record-helper": "crates/heimlern-feedback/src/lib.rs contains shared OutcomeStatistics::record logic for total, successes, failures and finite rewards.",
+      "single-simulation-source": "propose_adjustment evidence derives failure_rate_after_sim from the same simulation source exposed by simulate_adjustment.",
+      "behavior-regression": "PR #186 added regression coverage binding proposal evidence and simulate_adjustment consistency."
+    },
+    "checks": [
+      "heimlern PR #186 build-test SUCCESS",
+      "heimlern PR #186 schema-validate SUCCESS",
+      "heimlern PR #186 CodeQL SUCCESS",
+      "local grep verification found OutcomeStatistics::record and simulation consistency tests on main"
+    ],
+    "does_not_establish": [
+      "rust_cli_learning_path",
+      "release_profile_decision",
+      "python_rust_coherence_repair",
+      "claim_evidence_registry",
+      "runtime_policy_readiness",
+      "automatic_rule_change_permission"
+    ],
+    "verification": {
+      "observed_repo_head": "82197c082dd081dbb2e53e369edda27d9a2496e9",
+      "verified_at": "2026-07-08T13:10:54Z",
+      "task_sha256": "7a7922daef927fb25d5c2e0f3340363294da46722d35748dcb424989703b9f38",
+      "plan_sha256": "de066e4dc95e6a5575653e41c8cf2c6108f57052e12ba782dbbf49f4ab556b7e"
+    }
   }
 }

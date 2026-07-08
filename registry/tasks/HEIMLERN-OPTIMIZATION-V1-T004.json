@@ -30,5 +30,9 @@
     "source_plan": "docs/plans/heimlern-optimization-plan-v1.md",
     "source_pr": "heimgewebe/heimlern#181",
     "source_head": "b9919bd184c6918713ed11a54370ad03d510273a"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 30
   }
 }

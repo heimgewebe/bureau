@@ -3,9 +3,9 @@
   "id": "BUREAU-DETERMINISTIC-OPS-V1-T005",
   "initiative": "BUREAU-DETERMINISTIC-OPS-V1",
   "title": "Harden closeout evidence guard",
-  "state": "planned",
+  "state": "ready",
   "priority": {
-    "lane": "later",
+    "lane": "next",
     "rank": 313
   },
   "goal": "Make verified and done transitions require typed evidence, source authority, hash binding and queue cleanup.",
@@ -46,6 +46,8 @@
   "metadata": {
     "registered_at": "2026-07-08T17:20:00Z",
     "source_plan": "docs/plans/bureau-deterministic-ops-v1.md",
+    "advanced_at": "2026-07-08T19:15:00Z",
+    "advance_reason": "BUREAU-DETERMINISTIC-OPS-V1-T004 was implemented and verified by PR heimgewebe/bureau#297; closeout evidence and queue cleanup are now the next deterministic hardening gap.",
     "does_not_establish": [
       "runtime_correctness",
       "merge_readiness",
@@ -53,6 +55,6 @@
     ]
   },
   "depends_on": [
-    "BUREAU-DETERMINISTIC-OPS-V1-T001"
+    "BUREAU-DETERMINISTIC-OPS-V1-T004"
   ]
 }

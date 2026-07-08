@@ -1,63 +1,88 @@
 {
-  "schema_version": 1,
-  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T012",
-  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
-  "title": "Align remove-path capability with reversible cleanup contract",
-  "state": "planned",
-  "goal": "Fix the Grabowski filesystem access profile so grabowski_remove_path is usable for audited reversible quarantine cleanup, or intentionally hide/disable the tool when file_delete is not enabled; irreversible destroy_path must not be the only working cleanup path.",
-  "depends_on": [
-    "GRABOWSKI-OPERATOR-SURFACE-V1-T002"
-  ],
-  "priority": {
-    "lane": "next",
-    "rank": 16
-  },
-  "claims": [
+  "acceptance": [
     {
-      "resource": "repo.grabowski",
-      "mode": "write",
-      "isolation": "worktree"
+      "assertion": "The active trusted-owner or equivalent profile either enables the capability required by grabowski_remove_path or the remove tool is absent/blocked from the advertised contract with an explicit reason.",
+      "id": "capability-alignment"
+    },
+    {
+      "assertion": "A temporary-file smoke proves create/read/replace/rollback/remove/restore without requiring irreversible destroy for normal cleanup.",
+      "id": "reversible-preferred"
+    },
+    {
+      "assertion": "grabowski_status or contract drift exposes any mismatch between registered tools and enabled capabilities.",
+      "id": "contract-visible"
+    },
+    {
+      "assertion": "Focused tests cover remove_path capability gating, destroy_path gating and the safer-preferred reversible cleanup path.",
+      "id": "tests"
     }
   ],
-  "required_capabilities": [
-    "repository",
-    "shell",
-    "grabowski"
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T002"
   ],
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect"
   },
-  "acceptance": [
-    {
-      "id": "capability-alignment",
-      "assertion": "The active trusted-owner or equivalent profile either enables the capability required by grabowski_remove_path or the remove tool is absent/blocked from the advertised contract with an explicit reason."
-    },
-    {
-      "id": "reversible-preferred",
-      "assertion": "A temporary-file smoke proves create/read/replace/rollback/remove/restore without requiring irreversible destroy for normal cleanup."
-    },
-    {
-      "id": "contract-visible",
-      "assertion": "grabowski_status or contract drift exposes any mismatch between registered tools and enabled capabilities."
-    },
-    {
-      "id": "tests",
-      "assertion": "Focused tests cover remove_path capability gating, destroy_path gating and the safer-preferred reversible cleanup path."
-    }
-  ],
+  "goal": "Fix the Grabowski filesystem access profile so grabowski_remove_path is usable for audited reversible quarantine cleanup, or intentionally hide/disable the tool when file_delete is not enabled; irreversible destroy_path must not be the only working cleanup path.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T012",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
-    "phase": "grabowski-functionality-audit-20260708",
-    "effect": "repository_hardening",
-    "source": "Live Grabowski audit on 2026-07-08",
-    "observed_runtime_head": "5328a85da4eff10c7dc6f3ea0ec1e14a38941f96",
-    "observed_symptom": "grabowski_remove_path failed with Access capability is not enabled: file_delete while grabowski_destroy_path succeeded with file_destroy.",
-    "friction_event_id": "bdcbdb7032fe4b3fac19cae746cf2b08",
-    "risk": "Reversible cleanup is unavailable while irreversible deletion remains available; this inverts the intended safety preference.",
     "does_not_establish": [
       "implementation_complete",
       "runtime_deployed",
       "merge_authority_change"
-    ]
-  }
+    ],
+    "effect": "repository_hardening",
+    "friction_event_id": "bdcbdb7032fe4b3fac19cae746cf2b08",
+    "observed_runtime_head": "5328a85da4eff10c7dc6f3ea0ec1e14a38941f96",
+    "observed_symptom": "grabowski_remove_path failed with Access capability is not enabled: file_delete while grabowski_destroy_path succeeded with file_destroy.",
+    "phase": "grabowski-functionality-audit-20260708",
+    "risk": "Reversible cleanup is unavailable while irreversible deletion remains available; this inverts the intended safety preference.",
+    "runtime_capability_missing_count": 0,
+    "runtime_profile": "trusted-owner",
+    "runtime_repo_head_observed": "41686ecfb92045ec51facab4165eb896a81d2d44",
+    "runtime_status_note": "Runtime deployment identity is internally valid but not at current repository main; this closeout verifies the active capability/cleanup contract, not a new runtime deployment.",
+    "smoke_target": "/tmp/grabowski-t012-smoke.txt",
+    "smoke_transactions": {
+      "cleanup_remove": "20260708T163254.450868Z-6e88808fb028",
+      "create": "20260708T163210.805180Z-4afe5bff0710",
+      "remove": "20260708T163243.986790Z-2c441419e91c",
+      "replace": "20260708T163234.500658Z-814f834060c1",
+      "restore": "20260708T163248.916623Z-e4436faded31",
+      "rollback": "20260708T163239.038979Z-48cd3a4bf306"
+    },
+    "source": "Live Grabowski audit on 2026-07-08",
+    "validated_acceptance": {
+      "capability-alignment": "Active trusted-owner profile includes file_delete and file_destroy; grabowski_status capability_requirements reports missing_count 0.",
+      "contract-visible": "grabowski_status exposes capability_requirements and showed no missing enabled requirements.",
+      "reversible-preferred": "Temporary-file smoke completed create/read/replace/rollback/remove/restore using file_delete; irreversible destroy_path was not needed.",
+      "tests": "Existing focused tests cover remove_path capability gating, destroy_path separate capability/confirmation, kill switch, and reversible remove/restore paths."
+    },
+    "verification": {
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "task_sha256": "373ac1a4d67ad1c9ce9cd439e65f579a021f23787df0ee83d3cd2d18abfc78eb"
+    },
+    "verification_note": "Live Grabowski trusted-owner runtime exposes file_delete and file_destroy, capability_requirements.missing_count is 0, and a temporary-file smoke proved create/read/replace/rollback/remove/restore without irreversible destroy_path.",
+    "verified_at": "2026-07-08"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 16
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Align remove-path capability with reversible cleanup contract"
 }

@@ -29,6 +29,7 @@ bureau-cabinet-bridge-preview = "bureau.cabinet_bridge_preview:main"
 bureau-cabinet-bridge-review = "bureau.cabinet_bridge_review:main"
 bureau-cabinet-bridge-receipt = "bureau.cabinet_bridge_receipt:main"
 bureau-cabinet-bridge-import-policy = "bureau.cabinet_bridge_import_policy:main"
+bureau-cabinet-frontier-reader = "bureau.cabinet_frontier_reader:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

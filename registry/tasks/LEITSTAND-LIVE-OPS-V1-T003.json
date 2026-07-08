@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "id": "LEITSTAND-LIVE-OPS-V1-T003",
+  "initiative": "LEITSTAND-LIVE-OPS-V1",
+  "title": "Add Leitstand runtime health receipt",
+  "state": "verified",
+  "priority": {
+    "lane": "later",
+    "rank": 30
+  },
+  "goal": "Add a deterministic read-only health/freshness receipt for Leitstand that reports service status, git head, snapshot freshness, and boundary non-claims without adding execution authority to the UI.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand",
+      "host:heim-pc"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "read-only-health",
+      "assertion": "The health receipt reads service and artifact status only and performs no external mutation.",
+      "verifier": "code review and tests",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "freshness-boundary",
+      "assertion": "Snapshot freshness warnings are explicit and do not claim Bureau or Grabowski execution truth.",
+      "verifier": "unit/smoke test",
+      "evidence_type": "object"
+    },
+    {
+      "id": "canonical-health-smoke",
+      "assertion": "Canonical HTTPS /health returns leitstand_runtime_health_receipt with status ok after deployment.",
+      "verifier": "curl smoke",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "verified_at": "2026-07-08T18:39:15Z",
+    "outcome": "Leitstand PR #160 added /health as a read-only runtime health receipt, merged it to main, rebuilt the service on heim-pc, restarted leitstand.service, and canonical HTTPS /health reported status ok against main commit 52825f4af4693b652f4cffc06297463a93a7ee0e.",
+    "implementation_pr": "heimgewebe/leitstand#160",
+    "implementation_head": "a568c57f36dbb67846cd7999fbe6c775db2f3fed",
+    "live_leitstand_commit": "52825f4af4693b652f4cffc06297463a93a7ee0e",
+    "diff_sha256": "32318d1367b2c8aef169b939727f92e68afc418049057c00e2dba8627bb24380",
+    "self_review_sha256": "85139fd2c66ddb199601b2b827128923afc3b0675cfc4131ccef0ce4436fd146",
+    "implementation_paths": [
+      "src/runtimeHealth.ts",
+      "src/server.ts",
+      "tests/runtimeHealth.test.ts",
+      "tests/serverHealth.test.ts",
+      "docs/runbooks/operator-snapshots.md",
+      "docs/runtime.contract.md"
+    ],
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "repo": "heimgewebe/leitstand",
+          "number": 160,
+          "head": "a568c57f36dbb67846cd7999fbe6c775db2f3fed",
+          "merge_commit": "52825f4af4693b652f4cffc06297463a93a7ee0e"
+        },
+        {
+          "kind": "runtime_probe",
+          "target": "https://leitstand.heimgewebe.home.arpa/health",
+          "result": "leitstand_runtime_health_receipt status ok",
+          "observed_at": "2026-07-08T18:39:15Z"
+        }
+      ]
+    },
+    "validation": [
+      "Leitstand PR #160 GitHub CI passed CI/build, ai-context guard, security-hygiene and Cloudflare Pages.",
+      "Local before merge: NODE_OPTIONS=--jitless pnpm typecheck -> passed.",
+      "Local before merge: NODE_OPTIONS=--jitless pnpm lint -> passed.",
+      "Local before merge: NODE_OPTIONS=--jitless pnpm build -> passed.",
+      "Local before merge: /health endpoint smoke on port 3108 -> status ok.",
+      "Post-merge deployment: NODE_OPTIONS=--jitless pnpm install --frozen-lockfile/typecheck/lint/build -> passed.",
+      "Post-merge deployment: systemctl --user restart leitstand.service -> active running.",
+      "Post-merge canonical smoke: curl -k https://leitstand.heimgewebe.home.arpa/health -> status ok, git head 52825f4af4693b652f4cffc06297463a93a7ee0e, bureau snapshot ok, checkout snapshot ok."
+    ],
+    "verified_acceptance": {
+      "read-only-health": "src/runtimeHealth.ts reads process metadata, .git/HEAD and local snapshot artifacts only; the receipt explicitly marks ingress as not_checked and includes non-claims for DNS, Caddyfile persistence, Bureau task truth and operator action authority.",
+      "freshness-boundary": "The receipt reports missing/wrong/corrupt snapshots as fail, stale snapshots as warn and fresh contract-shaped snapshots as ok without claiming Bureau or Grabowski truth.",
+      "canonical-health-smoke": "Canonical HTTPS /health returned kind=leitstand_runtime_health_receipt and status=ok after main deployment."
+    },
+    "does_not_establish": [
+      "dns_correctness",
+      "caddyfile_persistence",
+      "bureau_task_truth",
+      "checkout_cleanup_authority",
+      "operator_action_authority"
+    ],
+    "verification": {
+      "task_sha256": "9652112a14a1449c37da2deb2c2bb1aa342ad6283321f67e21e6535bf9ae6c79",
+      "plan_sha256": "f91a1c386d504325502def8539cc00838c169b36183b98516766614c275f8dd6"
+    }
+  }
+}

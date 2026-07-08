@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "host.heimberry",
+  "type": "capacity",
+  "parent": "root",
+  "capacity": 2,
+  "metadata": {
+    "role": "LAN utility host for Pi-hole/Unbound DNS services",
+    "does_not_establish": [
+      "public_dns_authority",
+      "runtime_health",
+      "root_write_permission"
+    ]
+  }
+}

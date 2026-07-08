@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "LEITSTAND-LIVE-OPS-V1-T001",
+  "initiative": "LEITSTAND-LIVE-OPS-V1",
+  "title": "Persist Leitstand Caddy ingress in root config",
+  "state": "blocked",
+  "priority": {
+    "lane": "later",
+    "rank": 10
+  },
+  "goal": "Persist the live Caddy Admin API route for leitstand.heimgewebe.home.arpa into the root-owned Caddy deployment configuration, reload Caddy, and prove the route survives a reload or restart without relying on the user-level reapply timer.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "service:caddy",
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "namespace"
+    }
+  ],
+  "required_capabilities": [
+    "shell",
+    "grabowski",
+    "privileged_action"
+  ],
+  "acceptance": [
+    {
+      "id": "config-persisted",
+      "assertion": "Root-owned Caddy configuration contains a Leitstand host route for leitstand.heimgewebe.home.arpa to 127.0.0.1:3000.",
+      "verifier": "config read plus caddy adapt/validate",
+      "evidence_type": "object"
+    },
+    {
+      "id": "reload-smoke",
+      "assertion": "After Caddy reload or restart, HTTPS smoke for leitstand.heimgewebe.home.arpa returns 200 via Caddy without the user-level reapply timer restoring the route.",
+      "verifier": "curl smoke",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "blocked_at": "2026-07-08T18:39:00Z",
+    "blocker": "The current Grabowski execution context on heim-pc has no_new_privileges set, so sudo -n cannot modify /etc/caddy/Caddyfile. Live Caddy already contains the Leitstand route and leitstand-caddy-reapply.timer keeps it present, but that is not the same as root-owned Caddyfile persistence.",
+    "current_mitigation": "leitstand-caddy-reapply.timer is active and idempotently ensures the live Caddy Admin API route exists.",
+    "live_evidence": {
+      "caddy_admin_route": "route for host leitstand.heimgewebe.home.arpa present in /config/apps/http/servers/srv0/routes on 2026-07-08",
+      "canonical_https_root": "HTTP/2 200 via Caddy on 2026-07-08T18:39:15Z",
+      "canonical_https_health": "status ok on 2026-07-08T18:39:15Z",
+      "sudo_probe": "sudo: no_new_privileges prevents privilege escalation in current Grabowski execution context"
+    },
+    "does_not_establish": [
+      "root_caddyfile_persistence",
+      "route_survives_caddy_restart_without_reapply",
+      "public_access",
+      "leitstand_mutation_authority"
+    ]
+  }
+}

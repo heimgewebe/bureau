@@ -3,7 +3,7 @@
   "id": "RPU-V1-T016",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "Federated fleet bundle search",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 56
@@ -53,9 +53,47 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness",
-      "agent_quality_improvement_by_itself"
+      "agent_quality_improvement_by_itself",
+      "ecosystem_completeness",
+      "semantic_identity_between_repositories",
+      "dependency_relationships_between_repositories",
+      "runtime_truth",
+      "cabinet_claim_truth",
+      "production_query_quality",
+      "global_ranking_correctness",
+      "merge_readiness_by_itself"
     ],
-    "source_vision": "Organism/fleet federation."
+    "source_vision": "Organism/fleet federation.",
+    "verified_at": "2026-07-08",
+    "implementation_pr": "heimgewebe/lenskit#927",
+    "implementation_head": "08240bfe5593d8dcb17b4f3bb0693838cc129ac1",
+    "live_lenskit_commit": "67d330642bd24d53e64603e32af72f3b6f9aca18",
+    "diff_sha256": "7e5e01cdb70ff230021a945c37c96dd34cbadf45d9b97a2d8a1b09dc759228af",
+    "implementation_paths": [
+      "docs/GETTING_STARTED.md",
+      "docs/proofs/federated-fleet-bundle-search-rpu-v1-t016-proof.md",
+      "merger/lenskit/cli/cmd_federation.py",
+      "merger/lenskit/core/federation.py",
+      "merger/lenskit/retrieval/federation_query.py",
+      "merger/lenskit/tests/test_federation_cli.py",
+      "merger/lenskit/tests/test_federation_query.py"
+    ],
+    "outcome": "Implemented in Lenskit PR #927: federated search now supports existing registry-backed queries and repeated inline --bundle REPO_ID=PATH inputs without writing a federation_index.json. Results remain repo-qualified and now carry per-hit federation_bundle_status, federation_freshness_status and structured federation_origin. Stale bundle hits remain queryable only with explicit stale marking. The feature remains a read-only federation/search surface and does not establish ecosystem completeness, runtime truth or Cabinet claim truth.",
+    "validation": [
+      "Lenskit PR #927 GitHub CI passed: CodeQL, pytest-full, ruff, planning-registration, doc-freshness, repo-root, templates, webui-js-tests, contract guards, reusable fixture validation and CodeQL analysis jobs.",
+      "Local before merge: py_compile passed for changed modules/tests, targeted ruff passed, 93 federation/API tests passed, planning-registration ratchet had zero findings and diff-check passed.",
+      "During review CodeQL initially reported path-injection alerts on the new federation query path; the implementation was hardened and refactored so persisted index loading is centralized in the core federation loader while inline bundle paths are resolved as existing local bundle directories or .index.sqlite files.",
+      "Post-merge on origin/main 67d330642bd24d53e64603e32af72f3b6f9aca18: py_compile passed for changed modules/tests, targeted ruff passed, 93 federation/API tests passed, planning-registration ratchet had zero findings and diff-check passed."
+    ],
+    "verified_acceptance": {
+      "rpu-v1-t016-multi-bundle": "Satisfied by execute_federated_query_from_bundles and CLI repeated --bundle REPO_ID=PATH support; existing persisted --index federation queries remain supported.",
+      "rpu-v1-t016-freshness": "Satisfied by per-hit federation_bundle_status, federation_freshness_status and federation_origin fields; stale bundle results are explicitly marked stale and are not silently promoted.",
+      "rpu-v1-t016-no-global-truth": "Satisfied by read-only federation inputs, schema validation, explicit proof non-claims and unchanged heuristic boundaries for cross_repo_links and federation_conflicts."
+    },
+    "verification": {
+      "task_sha256": "9f898c07979c20f7866f1d58aa1c10857969e0fab4a04500ec5146337b11f97a",
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015"
+    }
   },
   "depends_on": [
     "RPU-V1-T001",

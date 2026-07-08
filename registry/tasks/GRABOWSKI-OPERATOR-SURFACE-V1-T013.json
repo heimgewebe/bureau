@@ -1,56 +1,71 @@
 {
-  "schema_version": 1,
-  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T013",
-  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
-  "title": "Enforce critical self-review gate workflow",
-  "state": "planned",
-  "goal": "Bind the Grabowski critical self-review workflow PR to a Bureau task so open PR reservations are structured and auditable.",
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/grabowski",
-    "grabowski_resources": [
-      "repo:/home/alex/repos/grabowski"
-    ]
-  },
-  "claims": [
+  "acceptance": [
     {
-      "resource": "repo.grabowski",
-      "mode": "write",
-      "isolation": "worktree"
+      "assertion": "The Grabowski PR gate requires current critical self-review evidence, not just PR comments.",
+      "id": "workflow-evidence-required"
+    },
+    {
+      "assertion": "Self-review evidence remains bound to current PR head and diff hash.",
+      "id": "diff-bound"
+    },
+    {
+      "assertion": "Focused PR review gate tests cover the critical self-review workflow.",
+      "id": "gate-tests"
     }
   ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Bind the Grabowski critical self-review workflow PR to a Bureau task so open PR reservations are structured and auditable.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T013",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "merge_readiness",
+      "ci_success",
+      "external_review_sufficiency"
+    ],
+    "followup_merge_commit": "7661df49d2e0f858f5817511d73b92b610440178",
+    "followup_pr": "heimgewebe/grabowski#112",
+    "implementation_branch": "fix/self-review-gate-critical-workflow-v1",
+    "implementation_head": "ff9877bd308d4709421f8d668e5ac7ec635314b5",
+    "implementation_merge_commit": "ad2b93d86fb19bc045dce31ba4c9b87eda91832f",
+    "implementation_pr": "heimgewebe/grabowski#111",
+    "source": "queue-readiness repair 2026-07-08",
+    "validated_acceptance": {
+      "diff-bound": "PR #111 binds self-review evidence to current head and diff hash; PR #112 hardens path control validation before trimming.",
+      "gate-tests": "PR #111/#112 expanded focused PR review gate tests and make validate passed before merge.",
+      "workflow-evidence-required": "PR #111 requires structured current self-review evidence instead of PR comments."
+    },
+    "verification": {
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "task_sha256": "424b209742aba81d94b1ffa1cb804da1f6747d66d730bce55ba720aa56818bb6"
+    },
+    "verification_note": "Grabowski PR #111 merged and established critical self-review workflow evidence; PR #112 merged the trailing-control-character follow-up. GitHub CI passed on both PRs; Grabowski main synced to merge commit 7661df4 before closeout.",
+    "verified_at": "2026-07-08"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 25
+  },
   "required_capabilities": [
     "repository",
     "shell",
     "grabowski"
   ],
-  "acceptance": [
-    {
-      "id": "workflow-evidence-required",
-      "assertion": "The Grabowski PR gate requires current critical self-review evidence, not just PR comments."
-    },
-    {
-      "id": "diff-bound",
-      "assertion": "Self-review evidence remains bound to current PR head and diff hash."
-    },
-    {
-      "id": "gate-tests",
-      "assertion": "Focused PR review gate tests cover the critical self-review workflow."
-    }
-  ],
-  "metadata": {
-    "source": "queue-readiness repair 2026-07-08",
-    "implementation_pr": "heimgewebe/grabowski#111",
-    "implementation_branch": "fix/self-review-gate-critical-workflow-v1",
-    "does_not_establish": [
-      "merge_readiness",
-      "ci_success",
-      "external_review_sufficiency"
-    ]
-  },
-  "priority": {
-    "lane": "next",
-    "rank": 25
-  }
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Enforce critical self-review gate workflow"
 }

@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "LOO-V1-T001",
+  "initiative": "LEITSTAND-OPERATOR-OBSERVABILITY-V1",
+  "title": "Execution snapshot source contract",
+  "state": "planned",
+  "depends_on": [],
+  "goal": "Fix the /bureau and /checkouts loading contract so generated artifacts are the primary source, fixtures are explicit fallback/demo data, and missing/corrupt/stale states are rendered honestly.",
+  "priority": {
+    "lane": "next",
+    "rank": 40
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "artifact-primary",
+      "assertion": "Controllers check artifacts/bureau-tasks.json and artifacts/checkout-inventory.json before fixture fallbacks.",
+      "verifier": "controller tests",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "source-kind-honest",
+      "assertion": "UI metadata distinguishes artifact, fixture, missing and corrupt states; a fixture is never labeled artifact.",
+      "verifier": "view/controller tests",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "strict-boundary",
+      "assertion": "Strict/internal runtime behavior for missing snapshots is documented and does not silently show green status.",
+      "verifier": "docs and test review",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "docs/plans/leitstand-operator-observability-hardening-v1.md",
+    "audit_source": "leitstand update audit 2026-07-08",
+    "does_not_establish": [
+      "runtime_deployed",
+      "merge_readiness",
+      "external_source_truth"
+    ],
+    "priority_reason": "P1: producer path and controller default disagree"
+  }
+}

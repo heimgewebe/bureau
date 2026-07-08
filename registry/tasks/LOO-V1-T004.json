@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "LOO-V1-T004",
+  "initiative": "LEITSTAND-OPERATOR-OBSERVABILITY-V1",
+  "title": "Leitstand navigation parity",
+  "state": "planned",
+  "depends_on": [
+    "LOO-V1-T001"
+  ],
+  "goal": "Make Bureau and Checkout surfaces reachable from all primary Leitstand pages through a consistent navigation model, ideally via a shared navigation partial or equivalent parity test.",
+  "priority": {
+    "lane": "later",
+    "rank": 210
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "nav-parity",
+      "assertion": "All primary views expose the same canonical read-only route set, including /bureau and /checkouts.",
+      "verifier": "view tests or grep snapshot",
+      "evidence_type": "array"
+    },
+    {
+      "id": "active-state",
+      "assertion": "The active page marker remains correct after navigation consolidation.",
+      "verifier": "view tests",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "no-new-actions",
+      "assertion": "Navigation links do not trigger task dispatch, checkout cleanup, external mutation, or POST fallbacks.",
+      "verifier": "observer invariant guard",
+      "evidence_type": "boolean"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "docs/plans/leitstand-operator-observability-hardening-v1.md",
+    "audit_source": "leitstand update audit 2026-07-08",
+    "does_not_establish": [
+      "runtime_deployed",
+      "merge_readiness",
+      "external_source_truth"
+    ],
+    "priority_reason": "P2: usability and cockpit coherence"
+  }
+}

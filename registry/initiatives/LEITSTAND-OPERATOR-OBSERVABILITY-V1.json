@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "id": "LEITSTAND-OPERATOR-OBSERVABILITY-V1",
+  "title": "Leitstand operator observability hardening",
+  "state": "active",
+  "commitment": "next",
+  "goal": "Harden the Leitstand operator-execution observation slice so /bureau and /checkouts display Bureau and Grabowski state through honest snapshot artifacts, safe public fixtures, consistent navigation, and aligned runtime/static documentation without giving Leitstand execution authority.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/leitstand-operator-observability-hardening-v1.md"
+  },
+  "completion": [
+    "Execution-axis snapshot controllers prefer artifacts, degrade to fixtures only in explicit dev/preview modes, and label source_kind honestly.",
+    "The producer bridge emits contract-normalized Bureau lifecycle and checkout retention values with tests.",
+    "Public fixtures and rendered UI do not expose real local operator paths unless explicitly running in internal debug mode.",
+    "All primary Leitstand views share coherent navigation for the new Bureau and Checkout surfaces.",
+    "README, docs/index.md, docs/data-flow.md, .ai-context.yml and runtime/static mode docs agree on the current operator-ecosystem role.",
+    "Static mirror and GitHub Pages behavior are either implemented for read-only routes or explicitly bounded/disabled.",
+    "A producer runbook explains who generates Bureau/Grabowski raw exports, when snapshots refresh, and what stale/missing states mean."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_from": "leitstand live audit 2026-07-08",
+    "source_repository": "/home/alex/repos/leitstand",
+    "source_head": "791b8313c220c900f62a75b9a1d8ed731fba9535",
+    "source_branch": "feat/operator-execution-observability",
+    "open_leitstand_prs_at_registration": 0,
+    "findings": [
+      "Leitstand local branch feat/operator-execution-observability exists as dirty work on head 791b8313c220c900f62a75b9a1d8ed731fba9535 with no open PR.",
+      "The proposed /bureau and /checkouts slice has green lint/typecheck/build/observer-invariant/docs-relations/generated-files/drift-gates locally.",
+      "Producer bridge writes artifacts/bureau-tasks.json and artifacts/checkout-inventory.json, while controllers default to src/fixtures/*.json.",
+      "Producer bridge currently preserves raw Bureau state values such as open even though the contract text promises canonical lifecycle states.",
+      "New fixtures contain real-looking local paths under /home/alex even though leitstand is a public repository.",
+      "Navigation differs across views; /bureau and /checkouts are not reachable consistently from older views.",
+      "README still documents pnpm dev, but package.json has no dev script.",
+      ".ai-context.yml still says the UI repo is profile-free although docs/decisions/wgx-leitstand.md records a tracked WGX profile.",
+      "Static build currently renders only index, observatory and intent while the docs describe a public/static mirror mode.",
+      "GitHub Pages deploy on main failed with 404 because Pages appears not enabled or the workflow should be made optional/disabled."
+    ],
+    "does_not_establish": [
+      "leitstand_slice_ready",
+      "runtime_deployed",
+      "pages_enabled",
+      "bureau_snapshot_truth",
+      "grabowski_snapshot_truth",
+      "test_sufficiency"
+    ],
+    "alternative_axis": "make the observer-source seam truthful before polishing UI"
+  }
+}

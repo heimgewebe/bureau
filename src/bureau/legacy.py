@@ -423,6 +423,11 @@ class Registry:
                 if task is None:
                     errors.append(f"queue {lane} has unknown task {task_id}")
                     continue
+                if task.state in {"verified", "cancelled", "superseded"}:
+                    errors.append(
+                        f"queue {lane} has terminal task {task_id} with state {task.state}"
+                    )
+                    continue
                 if lane == "now" and task.state != "ready":
                     errors.append(
                         f"queue now has non-ready task {task_id} with state {task.state}"

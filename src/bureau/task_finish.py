@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -14,6 +15,27 @@ TERMINAL_STATES = {"verified", "completed", "done", "closed", "cancelled", "supe
 def now_utc() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
+
+
+
+def sha256_json(value: Any) -> str:
+    payload = json.dumps(value, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def evidence_source_ref(binding: dict[str, Any], evidence: dict[str, Any]) -> str:
+    merge_commit = pr_merge_commit(evidence) or "unknown-merge"
+    head_sha = pr_head_sha(evidence) or "unknown-head"
+    return f"github-pr:{binding['repo']}#{binding['number']}@{head_sha}:{merge_commit}"
+
+
+def evidence_is_ai_only(evidence: dict[str, Any] | None) -> bool:
+    if not isinstance(evidence, dict):
+        return False
+    if not any(key in evidence for key in ("state", "merged", "mergedAt", "merged_at")):
+        lowered_keys = {str(key).lower() for key in evidence}
+        return any("ai" in key or "summary" in key or "llm" in key for key in lowered_keys)
+    return False
 
 def load_json(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
@@ -99,6 +121,8 @@ def make_finding(
         current_blockers.append("task is already terminal")
     if evidence is None:
         current_blockers.append("merge evidence is missing")
+    elif evidence_is_ai_only(evidence):
+        current_blockers.append("AI or prose-only evidence is insufficient")
     elif not pr_is_merged(evidence):
         current_blockers.append("pull request is not merged")
     if binding["post_merge_required"]:
@@ -116,21 +140,33 @@ def make_finding(
         "blockers": current_blockers,
     }
     if not current_blockers:
-        finding["receipt"] = {
+        evidence_payload = {
+            "source": "github_pull_request",
+            "source_ref": evidence_source_ref(binding, evidence or {}),
+            "repo": binding["repo"],
+            "pr_number": binding["number"],
+            "head_sha": head_sha,
+            "merge_commit": pr_merge_commit(evidence or {}),
+            "non_claims": [
+                "merged PR evidence does not prove deployment",
+                "merged PR evidence does not prove dependent tasks are complete",
+                "merged PR evidence does not prove runtime correctness",
+            ],
+        }
+        receipt = {
             "kind": "bureau.pr_completion_receipt",
+            "schema_version": 2,
             "task_id": task.get("id"),
             "outcome": "completed-by-merged-pr",
-            "evidence": {
-                "repo": binding["repo"],
-                "pr_number": binding["number"],
-                "head_sha": head_sha,
-                "merge_commit": pr_merge_commit(evidence or {}),
-                "non_claims": [
-                    "merged PR evidence does not prove deployment",
-                    "merged PR evidence does not prove dependent tasks are complete",
-                ],
-            },
+            "evidence": evidence_payload,
         }
+        evidence_payload["evidence_sha256"] = sha256_json(evidence_payload)
+        receipt["receipt_id"] = (
+            f"pr-completion:{binding['repo']}#{binding['number']}:"
+            f"{head_sha or 'unknown-head'}"
+        )
+        receipt["receipt_sha256"] = sha256_json(receipt)
+        finding["receipt"] = receipt
     return finding
 
 
@@ -158,7 +194,20 @@ def apply_ready(root: Path, findings: list[dict[str, Any]], observed_at: str) ->
         task["state"] = "verified"
         metadata = task.setdefault("metadata", {})
         verification = metadata.setdefault("verification", {})
-        verification["pr_completion"] = finding["receipt"]
+        receipt = finding["receipt"]
+        evidence = receipt.get("evidence", {})
+        if not receipt.get("receipt_id") or not receipt.get("receipt_sha256"):
+            continue
+        if not isinstance(evidence, dict) or not evidence.get("evidence_sha256"):
+            continue
+        if not evidence.get("source") or not evidence.get("source_ref"):
+            continue
+        verification["pr_completion"] = receipt
+        verification["receipt_id"] = receipt["receipt_id"]
+        verification["receipt_sha256"] = receipt["receipt_sha256"]
+        verification["source"] = evidence["source"]
+        verification["source_ref"] = evidence["source_ref"]
+        verification["evidence_sha256"] = evidence["evidence_sha256"]
         verification["verified_at"] = observed_at
         write_json(path, task)
         changed.append(str(path.relative_to(root)))

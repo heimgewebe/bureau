@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T015",
+  "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
+  "title": "Verifiable agent memory citations",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 55
+  },
+  "goal": "Define a memory pattern where durable agent memory stores a claim plus RepoBrief citation ids and revalidates freshness/content hashes on recall.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "61470f13b261cb13fe314139ad65a5913e2fc245",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rpu-v1-t015-memory-shape",
+      "assertion": "The memory record shape includes claim text, citation ids/ranges, snapshot stem, hash and freshness status."
+    },
+    {
+      "id": "rpu-v1-t015-recall-check",
+      "assertion": "Recall checks changed/stale/missing source evidence before presenting the memory as usable."
+    },
+    {
+      "id": "rpu-v1-t015-no-memory-truth",
+      "assertion": "Memory is never treated as source truth when citation evidence is stale or unverifiable."
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "RepoBrief Practical Utility Reconcile v1",
+    "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
+    "registered_at": "2026-07-08T00:00:00Z",
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "agent_quality_improvement_by_itself"
+    ],
+    "source_vision": "Verifiable agent memory."
+  },
+  "depends_on": [
+    "RPU-V1-T002",
+    "RPU-V1-T003"
+  ]
+}

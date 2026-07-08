@@ -7,6 +7,10 @@
     {
       "assertion": "The wrapper handles Lenskit query output shape without assuming a bare top-level results array.",
       "id": "query-shape-normalized"
+    },
+    {
+      "id": "resolved-evidence-input",
+      "assertion": "The context pack consumes or explicitly degrades when resolved evidence query results with snippets, ranges and citations are unavailable."
     }
   ],
   "claims": [
@@ -29,7 +33,9 @@
   "initiative": "BUR-2026-002",
   "metadata": {
     "operator_lab_run": "vibe-lab: experiments/2026-07-01_operator-lab-loop/artifacts/run-002-rlens-agent-ecosystem/run-card.yml",
-    "plan_path": "docs/plans/rlens-agent-ecosystem-integration-v1.md"
+    "plan_path": "docs/plans/rlens-agent-ecosystem-integration-v1.md",
+    "reconciled_at": "2026-07-08T00:00:00Z",
+    "reconcile_note": "Depends on RPU-V1-T001 so Grabowski context-pack work does not paper over the missing resolved-content query surface."
   },
   "priority": {
     "lane": "next",
@@ -42,5 +48,8 @@
   ],
   "schema_version": 1,
   "state": "planned",
-  "title": "Build rLens context pack bridge"
+  "title": "Build rLens context pack bridge",
+  "depends_on": [
+    "RPU-V1-T001"
+  ]
 }

@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "id": "REPOBRIEF-PRACTICAL-UTILITY-V1",
+  "title": "RepoBrief practical utility hardening",
+  "state": "active",
+  "commitment": "next",
+  "goal": "Turn RepoBrief/rLens from a strong evidence factory into a default-useful agent context system by registering the practical query, citation, freshness, context, review-coverage, semantic, federation and runtime-evidence gaps without moving mutation authority into RepoBrief core.",
+  "current_plan": {
+    "repository": "repo.bureau",
+    "path": "docs/plans/repobrief-practical-utility-reconcile-v1.md"
+  },
+  "completion": [
+    "All Lenskit/RepoBrief/rLens practical utility gaps identified in the max-dump critique and Lenskit PR #911 are mapped to Bureau tasks or explicitly deduplicated against existing RBV1/RBAE/BUR tasks.",
+    "High-leverage near-term tasks for resolved evidence query, live-repo citations and freshness registry are scheduled before broader MCP or rename work.",
+    "Every task preserves RepoBrief boundaries: no hidden refresh on reads, no Git mutation in RepoBrief core, no patch/test/shell authority, no review or runtime correctness verdict."
+  ],
+  "parallelism": {
+    "max_active_tasks": 2
+  },
+  "metadata": {
+    "registered_at": "2026-07-08T00:00:00Z",
+    "source_threads": [
+      "RepoBrief v1 plan reconciliation",
+      "rLens max-dump usefulness critique",
+      "Lenskit PR #911 local task registration follow-up"
+    ],
+    "lenskit_reference_head": "61470f13b261cb13fe314139ad65a5913e2fc245",
+    "bureau_reference_head": "b3010c2e07383639f338256ea3486b388b89beea",
+    "does_not_establish": [
+      "technical_tasks_implemented",
+      "agent_quality_improvement",
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "mcp_resource_availability",
+      "merge_readiness"
+    ]
+  }
+}

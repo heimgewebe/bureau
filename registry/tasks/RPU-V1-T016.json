@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T016",
+  "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
+  "title": "Federated fleet bundle search",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 56
+  },
+  "goal": "Design and implement or explicitly phase a federated search over multiple RepoBrief bundles so cross-repo questions can return cited evidence from each repository with per-bundle freshness and authority boundaries.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "61470f13b261cb13fe314139ad65a5913e2fc245",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rpu-v1-t016-multi-bundle",
+      "assertion": "The search accepts multiple bundle stems or a registry and returns repo-qualified cited results."
+    },
+    {
+      "id": "rpu-v1-t016-freshness",
+      "assertion": "Each result carries its own bundle freshness/availability, with stale bundles never silently promoted."
+    },
+    {
+      "id": "rpu-v1-t016-no-global-truth",
+      "assertion": "Federation does not establish ecosystem completeness, runtime truth or Cabinet claim truth."
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "RepoBrief Practical Utility Reconcile v1",
+    "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
+    "registered_at": "2026-07-08T00:00:00Z",
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "agent_quality_improvement_by_itself"
+    ],
+    "source_vision": "Organism/fleet federation."
+  },
+  "depends_on": [
+    "RPU-V1-T001",
+    "RPU-V1-T003"
+  ]
+}

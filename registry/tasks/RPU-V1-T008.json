@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T008",
+  "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
+  "title": "Runtime artifact retention and GC policy",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 48
+  },
+  "goal": "Define and implement or explicitly defer retention, TTL and garbage-collection behavior for runtime artifacts such as query_trace, context_bundle and agent_query_session.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "61470f13b261cb13fe314139ad65a5913e2fc245",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rpu-v1-t008-policy",
+      "assertion": "Retention states and TTL/GC policy are machine-readable or explicitly deferred with rationale."
+    },
+    {
+      "id": "rpu-v1-t008-no-surprise-delete",
+      "assertion": "Any deletion/GC behavior is opt-in, documented and test-covered; existing artifacts are not silently removed."
+    },
+    {
+      "id": "rpu-v1-t008-compat",
+      "assertion": "Backward compatibility for existing runtime artifacts is tested or a migration gap is recorded."
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "RepoBrief Practical Utility Reconcile v1",
+    "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
+    "registered_at": "2026-07-08T00:00:00Z",
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "agent_quality_improvement_by_itself"
+    ],
+    "lenskit_local_task": "TASK-RUNTIME-ARTIFACT-RETENTION-001"
+  },
+  "depends_on": [
+    "RBV1-T006"
+  ]
+}

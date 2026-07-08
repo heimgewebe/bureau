@@ -92,8 +92,17 @@
       "rbv1-t010-non-claims": "MCP/read-only access does not establish truth, correctness, completeness, runtime behavior, test sufficiency, regression absence, repo understanding, claim truth or forensic readiness."
     },
     "verification": {
-      "task_sha256": "5c454d61d38ebe50b30ac7c44e1d2dfb3341795c53bc8043557a0c12e001748c",
+      "task_sha256": "68db6bbdcc7392f522488d7d19dbf8f5afcf55ecbf9f045d0565c186ebe91a2a",
       "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    },
+    "scope_clarification_2026_07_08": {
+      "verified_scope": "read-only RepoBrief access layer, CLI/resource-equivalent helpers, source citation/resolved evidence query tests, and MCP boundary documentation",
+      "does_not_establish": [
+        "protocol_level_mcp_server_exists",
+        "repobrief_uri_resources_are_served",
+        "mcp_snapshot_create_exists"
+      ],
+      "follow_up_task": "RPU-V1-T020"
     }
   },
   "depends_on": [

@@ -31,3 +31,12 @@ Registered remainder:
 18. Package/repo rename decision.
 
 Non-claims: this registration does not implement the tasks, prove runtime correctness, prove test sufficiency, or make future merge decisions.
+
+
+## Reconciliation update — 2026-07-08
+
+Bureau now treats `RBV1-T012` and `RBV1-T013` as verified because the corresponding Lenskit work landed in PR #905 and PR #910.
+
+`RBV1-T010` remains verified only for read-only access / MCP-boundary-equivalent surfaces. It does not prove a protocol-level MCP server with concrete `repobrief://snapshot/...` resources. That gap is registered as `RPU-V1-T020` under `REPOBRIEF-PRACTICAL-UTILITY-V1`.
+
+Practical utility tasks discovered after the max-dump critique and Lenskit PR #911 are not stuffed back into the old RBV1 plan. They are registered under `REPOBRIEF-PRACTICAL-UTILITY-V1` so the original v1 roadmap stays readable while no useful follow-up is lost.

@@ -3,7 +3,7 @@
   "id": "RBV1-T013",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Add Ruff ratchet scope",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 130
@@ -67,6 +67,31 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "verified_at": "2026-07-08",
+    "outcome": "Lenskit PR #910 added a scoped Ruff ratchet config and kept path-scoped bare Ruff jobs on default rules.",
+    "live_lenskit_commit": "5821e0e3",
+    "implementation_pr": "heimgewebe/lenskit#910",
+    "implementation_paths": [
+      "ruff-ci.toml",
+      ".github/workflows/lint.yml",
+      "CONTRIBUTING.md",
+      "docs/proofs/ruff-scope-ratchet-v1-proof.md"
+    ],
+    "validation": [
+      "python3 -m ruff check --config ruff-ci.toml . -> pass",
+      "path-scoped bare ruff check -> pass",
+      "GitHub CI for PR #910 passed before merge."
+    ],
+    "verified_acceptance": {
+      "rbv1-t013-scope-bound": "Ruff ratchet scope was implemented as a dedicated ruff-ci.toml used by the repo-wide lint job only.",
+      "rbv1-t013-boundary-preserved": "The lint change does not alter RepoBrief runtime behavior, refresh, Git mutation or review authority.",
+      "rbv1-t013-tests-or-gap": "Local Ruff and GitHub CI validation passed before Lenskit PR #910 was merged.",
+      "rbv1-t013-non-claims": "The ratchet does not claim the whole repo is clean under all Ruff defaults and does not claim runtime/test/review completeness."
+    },
+    "verification": {
+      "task_sha256": "5cf48d596ae34bbe18274799a943bf3d6c6e894605dc729dc7433501db0b4d52",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   }
 }

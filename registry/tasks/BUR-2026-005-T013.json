@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T013",
   "initiative": "BUR-2026-005",
   "title": "Define queue canon for dispatch ordering",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "BUR-2026-005-T012"
   ],
@@ -31,10 +31,49 @@
     "source_review": "Follow-up from Bureau improvement review: queue canon must not conflict with task.priority.",
     "safety_boundary": "Queue canon affects dispatch eligibility and status reporting only; it does not grant task creation, verification or merge authority.",
     "does_not_establish": [
-      "task_completion",
+      "task_completion_without_evidence",
       "runtime_correctness",
-      "automatic_merge_authority"
-    ]
+      "test_sufficiency",
+      "automatic_merge_authority",
+      "automatic_completion_authority"
+    ],
+    "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Bureau PR #234: registry/queue.json is the dispatch canon; task.priority remains advisory/display metadata; unqueued tasks are not claimable and sort after queued tasks.",
+    "implementation_pr": "heimgewebe/bureau#234",
+    "live_bureau_commit": "c4872a045e9af1190d63439b7e0726b3eb8a7ba1",
+    "implementation_head": "060e35e3d2f572659291d96830b700c205475302",
+    "implementation_paths": [
+      "docs/concurrency.md",
+      "src/bureau/legacy.py",
+      "src/bureau/v2.py",
+      "src/bureau/status_projection.py",
+      "tests/test_v2.py",
+      "tests/test_status_projection.py"
+    ],
+    "validation": [
+      "Bureau PR #234 GitHub CI passed validate (3.10) and validate (3.12).",
+      "Local before merge: python3 -m bureau.cli --root . check -> valid True.",
+      "Local before merge: python3 -m bureau.cli --root . --json doctor -> healthy true.",
+      "Local before merge: python3 -m bureau.cli --root . --json registry-truth -> healthy true, 0 findings.",
+      "Local before merge: python3 -m pytest tests/test_v2.py tests/test_status_projection.py tests/test_registry_queue.py -q -> passed.",
+      "Local before merge: python3 -m pytest -> 359 passed.",
+      "Local before merge: python3 -m ruff check . -> passed.",
+      "Local before merge: git diff --check -> passed.",
+      "Post-merge: python3 -m bureau.cli --root . check -> valid True.",
+      "Post-merge: doctor healthy true.",
+      "Post-merge: registry-truth healthy true, 0 findings."
+    ],
+    "verified_acceptance": {
+      "queue-canonical-dispatch": "tests/test_v2.py covers an unqueued ready task with priority now and asserts dispatcher refuses to claim it.",
+      "queue-order-before-priority": "tests/test_v2.py covers queued tasks sorting before unqueued higher-priority tasks.",
+      "projection-names-advisory-priority": "tests/test_status_projection.py covers task-priority-not-queued with queue_canonical true.",
+      "docs-state-canon": "docs/concurrency.md states registry/queue.json is dispatch canon and task.priority is advisory/display metadata."
+    },
+    "verification": {
+      "task_sha256": "37b1c96b74724456aa3bc2a0390a4d9a051fb2242add63e7d2fe4d7a017adc9e",
+      "plan_sha256": "653fa6a056506c94d5654ba5e3c16f9c31032767f0e1c844a8cb4714c50ce917"
+    }
   },
   "acceptance": [
     {

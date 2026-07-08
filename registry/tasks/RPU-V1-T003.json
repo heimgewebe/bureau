@@ -3,7 +3,7 @@
   "id": "RPU-V1-T003",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "Latest-complete freshness registry",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 32
@@ -65,13 +65,52 @@
     "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
     "registered_at": "2026-07-08T00:00:00Z",
     "does_not_establish": [
+      "content_truth",
+      "bundle_completeness",
       "runtime_correctness",
-      "test_sufficiency",
+      "test_sufficiency_beyond_checked_scope",
       "review_completeness",
       "merge_readiness",
-      "agent_quality_improvement_by_itself"
+      "repo_understanding",
+      "claim_truth",
+      "freshness_against_remote_branch",
+      "agent_quality_improvement"
     ],
-    "source_gap": "Max-dump critique: bundles are often stale and require live fallback."
+    "source_gap": "Max-dump critique: bundles are often stale and require live fallback.",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Lenskit PR #916: added an explicit RepoBrief latest-complete registry and read-only freshness status path that records bundle manifest identity, source commit, health signals and fresh/stale/unknown state without hidden refresh during reads.",
+    "implementation_pr": "heimgewebe/lenskit#916",
+    "live_lenskit_commit": "1adb798cbc28541c97553823a1a6a2d563599611",
+    "implementation_head": "bdf355b9dc7b5a15588cf76d5ce552db99e8f95e",
+    "diff_sha256": "39f8c1a3d4694d2d84012ffbb6c677ebbd5fa9107f23aeda37a542b9041c9e80",
+    "implementation_paths": [
+      "merger/lenskit/core/repobrief_latest_complete.py",
+      "merger/lenskit/cli/cmd_repobrief.py",
+      "merger/lenskit/contracts/repobrief-latest-complete-registry.v1.schema.json",
+      "merger/lenskit/tests/test_repobrief_latest_complete.py",
+      "docs/proofs/repobrief-latest-complete-registry-v1-proof.md"
+    ],
+    "validation": [
+      "Lenskit PR #916 GitHub CI passed: pytest-full, ruff, CodeQL, doc-freshness, planning-registration, anti-hallucination-lint, forensic preflight canary, parity-gate, repo-root, templates, validate-merge-meta, webui-js-tests, reusable fixture validation and contract/static-security checks.",
+      "Local before merge: 185 RepoBrief/snapshot/preflight/external-manifest/bundle/snapshot-provenance tests passed.",
+      "Local before merge: targeted ruff-ci check passed.",
+      "Local before merge: latest-complete registry schema parsed with json.tool.",
+      "Local before merge: planning-registration ratchet reported no new drift.",
+      "Local before merge: doc-freshness inspect PASS.",
+      "Local before merge: git diff --check origin/main...HEAD passed.",
+      "Post-merge on origin/main 1adb798cbc28541c97553823a1a6a2d563599611: same 185 tests passed.",
+      "Post-merge on origin/main: targeted ruff-ci check passed, schema parsed, planning-registration no new drift, doc-freshness PASS and git diff --check pass."
+    ],
+    "verified_acceptance": {
+      "rpu-v1-t003-registry": "repobrief.latest_complete_registry records bundle stem, manifest path/hash, run id, generated_at, source commit, health signals and freshness vocabulary/state.",
+      "rpu-v1-t003-head-drift": "latest-complete status compares recorded source commit to an explicitly supplied local repo HEAD; matching HEAD is fresh, differing HEAD is stale, absent/unavailable information is unknown. Stale remains status=ok, not failure by itself.",
+      "rpu-v1-t003-no-hidden-refresh": "read-only status writes nothing, does not create snapshots, does not refresh bundles and does not mutate Git or source working trees. Registry writes occur only through explicit latest-complete write or explicit snapshot create --latest-complete-registry.",
+      "rpu-v1-t003-operator-fit": "surface is a bounded observation/receipt input for agents and Bureau/Grabowski; proof and output non-claims state it is not a control plane and does not establish truth, completeness, merge readiness or remote freshness."
+    },
+    "verification": {
+      "task_sha256": "94b985f0907252dacf54caa8573fbd838f0516e2c252d630c306f38394867100",
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015"
+    }
   },
   "depends_on": [
     "RBV1-T006",

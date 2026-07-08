@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T004",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Add evidence-bound operator recall",
-  "state": "planned",
+  "state": "verified",
   "goal": "Create an episodic recall contract and exporter from receipts, PRs, Bureau tasks and friction records, optionally consumable by heimlern for offline learning.",
   "depends_on": [
     "GRABOWSKI-OPERATOR-SURFACE-V1-T003"
@@ -59,6 +59,34 @@
       "grabowski",
       "heimlern",
       "bureau"
-    ]
+    ],
+    "implementation_pr": "heimgewebe/grabowski#116",
+    "implementation_head": "736042dfdee7d269c635112ea2cdd38609c6f704",
+    "implementation_merge_commit": "a9a0b9f5a85aeb234d42ec1d22a8b0943f6090aa",
+    "verified_at": "2026-07-08",
+    "verification_note": "Grabowski PR #116 merged and added read-only grabowski_operator_recall_export. The implementation creates evidence-ref-bound recall items from caller-supplied receipt, PR, Bureau task and friction records, labels source_trust as caller_supplied_unverified, requires concrete evidence refs, preserves non-claims, and keeps Heimlern usage offline/proposal-only.",
+    "validated_acceptance": {
+      "recall-contract": "PR #116 adds recall items with topic, situation, attempt, result, learned_rule, learned_rule_trust, evidence_refs and does_not_establish.",
+      "evidence-bound": "PR #116 requires at least one concrete evidence ref and rejects unsupported item sources, source/evidence mismatches, malformed IDs and free-form memory without evidence.",
+      "offline-learning": "PR #116 exposes heimlern_offline_learning as offline_proposal_only and explicitly does not establish live routing, merge policy or task completion.",
+      "tests": "PR #116 adds focused recall tests for valid exports, free-form rejection, missing evidence, malformed IDs, unsupported keys, source/evidence mismatch, learned-rule trust, bounded rejected sources, docs and runtime import."
+    },
+    "validation": {
+      "local": "make validate passed with 680 tests before merge",
+      "github_ci": "validate 3.10 and validate 3.12 succeeded before merge",
+      "review_gate": "Self-review was bound to head 736042dfdee7d269c635112ea2cdd38609c6f704 and diff b77e8d8198e5cb7133906bd3127d3bebc722ff6bee43047fb0cf89be0c261e0d before merge."
+    },
+    "does_not_establish": [
+      "runtime_deployed",
+      "verified_source_authenticity",
+      "persistent_recall_store",
+      "heimlern_live_integration",
+      "automatic_routing_change",
+      "policy_oracle"
+    ],
+    "verification": {
+      "task_sha256": "5cad0bec0fda5d34b551a1638e4753e5e96e5a6b0a61fd3424a9dac785bf2e1c",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

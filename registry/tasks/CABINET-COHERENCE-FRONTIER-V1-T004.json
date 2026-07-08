@@ -3,7 +3,7 @@
   "id": "CABINET-COHERENCE-FRONTIER-V1-T004",
   "initiative": "CABINET-COHERENCE-FRONTIER-V1",
   "title": "Implement reviewed one-task Cabinet import",
-  "state": "planned",
+  "state": "verified",
   "goal": "Allow Bureau to import exactly one reviewed Cabinet Frontier candidate as a Bureau task through an explicit apply gate, without dispatching or merging.",
   "priority": {
     "lane": "later",
@@ -36,7 +36,33 @@
     ],
     "phase": "CCFG-4",
     "target_repository": "heimgewebe/bureau",
-    "authority_model": "Task creation can become allowed only for an explicit apply command after a valid review receipt; dispatch and queue mutation remain separately gated."
+    "authority_model": "Task creation can become allowed only for an explicit apply command after a valid review receipt; dispatch and queue mutation remain separately gated.",
+    "implementation_repo": "heimgewebe/bureau",
+    "implementation_pr": "heimgewebe/bureau#206",
+    "implementation_url": "https://github.com/heimgewebe/bureau/pull/206",
+    "implementation_head": "b5780be1b8cc421ce6b0e4eebd7a5b748cb1674d",
+    "implementation_merge_commit": "7ffc1f5af31b68dd2d7ef2b2f7915b6de3afdbff",
+    "merged_at": "2026-07-08T06:27:23Z",
+    "verified_at": "2026-07-08",
+    "outcome": "Bureau PR #206 added explicit reviewed Cabinet Frontier import. It requires a ready-for-design review receipt bound to the exact Frontier candidate, defaults to dry-run, creates exactly one registry task file only with --apply, rejects task ID collisions, queue collisions, source re-import collisions, missing initiatives and invalid task schemas, and preserves no-dispatch/no-queue/no-runtime/no-merge boundaries.",
+    "verified_acceptance": {
+      "review-required": "Import requires a cabinet_frontier_review_receipt with decision ready-for-design and sourceCandidateId matching an admissible reader report candidate.",
+      "exclusive-task-create": "Apply writes exactly one registry task file using exclusive create and rejects existing task IDs/files.",
+      "no-dispatch": "Receipts record dispatchAllowed false and dispatchPerformed false; no runtime, merge, push or completion effect is created.",
+      "collision-check": "Import checks registry task IDs, queue IDs and existing source_frontier_candidate_id metadata before apply.",
+      "existing-promotion-surface": "Implementation keeps existing cabinet_promotion_write behavior tested and uses the same reviewed-import boundary for Frontier JSONL."
+    },
+    "checks": [
+      "Bureau PR #206 validate (3.10) SUCCESS before merge",
+      "Bureau PR #206 validate (3.12) SUCCESS before merge",
+      "local: ruff check src tests pyproject.toml OK",
+      "local: PYTHONPATH=src python3 -m pytest -q OK",
+      "local: focused cabinet frontier reader and cabinet promotion write tests OK"
+    ],
+    "verification": {
+      "task_sha256": "efdef556f2920e3f267b76338d413b219e2be6e11877d64180395afda88771a3",
+      "plan_sha256": "ed0ea5a017393327b162abb396f604282456f3e1a8b62a18bdf94ba1f5813696"
+    }
   },
   "acceptance": [
     {

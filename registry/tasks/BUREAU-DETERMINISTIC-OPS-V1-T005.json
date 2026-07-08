@@ -3,7 +3,7 @@
   "id": "BUREAU-DETERMINISTIC-OPS-V1-T005",
   "initiative": "BUREAU-DETERMINISTIC-OPS-V1",
   "title": "Harden closeout evidence guard",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 313
@@ -48,11 +48,29 @@
     "source_plan": "docs/plans/bureau-deterministic-ops-v1.md",
     "does_not_establish": [
       "runtime_correctness",
-      "merge_readiness",
-      "task_completion"
+      "merge_readiness_for_future_prs",
+      "manual_closeout_evidence_complete_for_historical_tasks",
+      "github_api_availability",
+      "task_completion_outside_this_registry_state"
     ],
     "advanced_at": "2026-07-08",
-    "advance_reason": "BUREAU-DETERMINISTIC-OPS-V1-T004 is verified by this registry state; the next deterministic hardening ball is the closeout evidence guard."
+    "advance_reason": "BUREAU-DETERMINISTIC-OPS-V1-T004 is verified by this registry state; the next deterministic hardening ball is the closeout evidence guard.",
+    "implementation_pr": "heimgewebe/bureau#302",
+    "verified_at": "2026-07-08",
+    "verified_acceptance": {
+      "verified-evidence-required": "PR #302 upgrades automatic PR completion receipts to typed v2 receipts with receipt_id, receipt_sha256, source, source_ref and evidence_sha256; apply_ready skips mutation unless those fields are present.",
+      "done-queue-cleanup": "PR #302 hardens Registry validation so verified/cancelled/superseded tasks cannot remain in any queue lane; tests cover terminal queue rejection.",
+      "ai-summary-insufficient": "PR #302 blocks AI/prose-only evidence objects in task_finish scan; tests cover ai_summary evidence being rejected."
+    },
+    "validation": [
+      "PR #302 CI validate succeeded for Python 3.10 and 3.12 before merge.",
+      "Local validation before PR creation: PYTHONPATH=src make validate -> 407 passed.",
+      "Merged as commit 76ba0f4679bcb99b4857316df82835ea53b34459."
+    ],
+    "verification": {
+      "task_sha256": "ed5e883c1ec4116f544356c533e5cccb55538d99cd77224d001fec4b0eab201e",
+      "plan_sha256": "aa19d4a7661b4b6bc802c78a3edd836713242f0c65e76926ae05f90344f975da"
+    }
   },
   "depends_on": [
     "BUREAU-DETERMINISTIC-OPS-V1-T001"

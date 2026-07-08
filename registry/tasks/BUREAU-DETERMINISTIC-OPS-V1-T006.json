@@ -3,9 +3,9 @@
   "id": "BUREAU-DETERMINISTIC-OPS-V1-T006",
   "initiative": "BUREAU-DETERMINISTIC-OPS-V1",
   "title": "Extend deterministic secretary status projection",
-  "state": "planned",
+  "state": "ready",
   "priority": {
-    "lane": "later",
+    "lane": "next",
     "rank": 314
   },
   "goal": "Extend read-only status projection to provide the secretary-like overview without model-maintained Bureau state.",
@@ -50,7 +50,9 @@
       "runtime_correctness",
       "merge_readiness",
       "task_completion"
-    ]
+    ],
+    "advanced_at": "2026-07-08",
+    "advance_reason": "BUREAU-DETERMINISTIC-OPS-V1-T005 is verified by this registry state; the next deterministic hardening ball is deterministic secretary status projection."
   },
   "depends_on": [
     "BUREAU-DETERMINISTIC-OPS-V1-T001"

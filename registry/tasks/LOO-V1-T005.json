@@ -3,7 +3,7 @@
   "id": "LOO-V1-T005",
   "initiative": "LEITSTAND-OPERATOR-OBSERVABILITY-V1",
   "title": "Leitstand role docs and AI context alignment",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "LOO-V1-T001"
   ],
@@ -60,6 +60,56 @@
       "merge_readiness",
       "external_source_truth"
     ],
-    "priority_reason": "P2: agent and human entrypoints currently contradict live repo state"
+    "priority_reason": "P2: agent and human entrypoints currently contradict live repo state",
+    "verification": {
+      "verified_by": "Leitstand PR #156",
+      "leitstand_pr": "https://github.com/heimgewebe/leitstand/pull/156",
+      "leitstand_head": "98892fc9987092b218d379426ff408d51eb85c51",
+      "leitstand_merge_commit": "39739c40bda34d3a09355a7ab4bd6a6fd59a4ca1",
+      "merged_at": "2026-07-08T05:33:46Z",
+      "local_checks": [
+        "README fenced-code sanity",
+        "stale grep for pnpm dev and old role/profile wording",
+        "NODE_OPTIONS=--jitless pnpm lint",
+        "NODE_OPTIONS=--jitless pnpm typecheck",
+        "NODE_OPTIONS=--jitless pnpm build",
+        "python3 scripts/ai_context/validate_ai_context.py --file .ai-context.yml",
+        "bash scripts/ci/observer-invariant-guard.sh",
+        "bash scripts/ci/docs-relations-guard.sh",
+        "bash scripts/ci/generated-files-guard.sh",
+        "bash scripts/ci/check-drift-gates.sh"
+      ],
+      "ci": {
+        "build": "success",
+        "repo-root": "success",
+        "scan": "success",
+        "templates": "success",
+        "Cloudflare Pages": "success"
+      },
+      "verification_summary": "Leitstand PR #156 aligned README/package role wording with repo.meta/.ai-context, documented tracked .wgx/profile.yml, replaced invalid pnpm dev instructions with existing scripts, and updated operator ecosystem inputs/roles.",
+      "acceptance_evidence": {
+        "role-list-current": true,
+        "wgx-profile-parity": true,
+        "start-command-valid": [
+          "pnpm build",
+          "pnpm start:server",
+          "pnpm build:static"
+        ],
+        "stale-grep-clean": [
+          "pnpm dev",
+          "Dashboard and control-room",
+          "dashboard_and_digest_generator",
+          "profile-free",
+          "Don’t add .wgx"
+        ]
+      },
+      "does_not_establish": [
+        "runtime_deployed",
+        "pages_enabled",
+        "user_acceptance"
+      ],
+      "task_sha256": "d66f511cd615e4f1fc6ce15c2728a6a45330b86b185237fb381dde6f080f236f",
+      "plan_sha256": "69e170cf832449b00f1257b359c99acc0b40bbae28278f779d4da0ce799fa053"
+    }
   }
 }

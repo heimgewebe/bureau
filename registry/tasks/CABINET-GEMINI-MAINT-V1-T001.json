@@ -3,7 +3,7 @@
   "id": "CABINET-GEMINI-MAINT-V1-T001",
   "initiative": "CABINET-GEMINI-MAINT-V1",
   "title": "Preflight Gemini maintenance scan capability",
-  "state": "planned",
+  "state": "blocked",
   "priority": {
     "lane": "next",
     "rank": 70
@@ -63,6 +63,15 @@
   "metadata": {
     "source_issue": "heimgewebe/bureau#254",
     "registered_at": "2026-07-08T12:10:00Z",
+    "blocked_at": "2026-07-08T13:10:00Z",
+    "block_reason": "Cabinet preflight found no concrete Gemini tool/action, version or pin, authentication model, permission manifest, cost/quota class or log privacy boundary. Gemini maintenance scans remain not schedulable.",
+    "evidence": {
+      "cabinet_pr": "heimgewebe/cabinet#87",
+      "cabinet_merge_commit": "28a521318e53ca58ab17fd64218a2b839fcb5e9b",
+      "preflight_markdown": "pruefung/30 Befunde/cabinet-gemini-maintenance-preflight-v1.md",
+      "preflight_receipt": "pruefung/30 Befunde/cabinet-gemini-maintenance-preflight-v1.json"
+    },
+    "next_action": "Define a concrete Gemini execution manifest before any dry run or schedule decision.",
     "does_not_establish": [
       "gemini_available",
       "gemini_schedulable",

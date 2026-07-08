@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from . import legacy
 from .github_observer import (
     BINDING_AMBIGUOUS,
     CI_UNKNOWN,
@@ -142,6 +143,175 @@ def _public_receipt(run_id: str, row: dict[str, Any]) -> dict[str, Any]:
 def _public_github(observation: dict[str, Any]) -> dict[str, Any]:
     return {field: observation.get(field) for field in GITHUB_FIELDS}
 
+
+
+
+def _repository_resources(registry: Registry) -> list[legacy.Resource]:
+    repositories = [
+        resource
+        for resource in registry.resources.values()
+        if resource.id.startswith("repo.")
+    ]
+    if repositories:
+        return sorted(repositories, key=lambda item: item.id)
+    return sorted(
+        (
+            resource
+            for resource in registry.resources.values()
+            if resource.type == "git-repository" and resource.id != "repo"
+        ),
+        key=lambda item: item.id,
+    )
+
+
+def _task_claims_repository(registry: Registry, task_id: str, repo_id: str) -> bool:
+    task = registry.tasks.get(task_id)
+    if task is None:
+        return False
+    return any(
+        legacy.overlaps(claim.resource, repo_id, registry.resources)
+        for claim in task.claims
+    )
+
+
+def _task_has_blocker(task_entry: dict[str, Any]) -> bool:
+    return bool(task_entry.get("blocked_reasons") or task_entry.get("stale_reasons")) or any(
+        finding.get("severity") == "blocker"
+        for finding in task_entry.get("findings", [])
+    )
+
+
+def _repository_balls(
+    registry: Registry,
+    tasks: list[dict[str, Any]],
+    runs_by_task: dict[str, list[dict[str, Any]]],
+) -> dict[str, dict[str, Any]]:
+    tasks_by_id = {task["task_id"]: task for task in tasks}
+    result: dict[str, dict[str, Any]] = {}
+    for repo in _repository_resources(registry):
+        repo_task_ids = [
+            task_id
+            for task_id in sorted(tasks_by_id)
+            if _task_claims_repository(registry, task_id, repo.id)
+        ]
+        active_runs: list[dict[str, Any]] = []
+        for task_id in repo_task_ids:
+            for row in runs_by_task.get(task_id, []):
+                if row.get("state") in ACTIVE_RUN_STATES:
+                    active_runs.append(_public_run(row))
+        findings: list[dict[str, Any]] = []
+        queued = [
+            tasks_by_id[task_id]
+            for task_id in repo_task_ids
+            if tasks_by_id[task_id].get("queue_lane") in {"now", "next", "later"}
+        ]
+        if len(active_runs) > 1:
+            status = "ambiguous"
+            current_ball = {
+                "kind": "ambiguous_active_runs",
+                "run_ids": sorted(str(run.get("run_id")) for run in active_runs),
+                "task_ids": sorted(str(run.get("task_id")) for run in active_runs),
+            }
+            findings.append(
+                {
+                    "severity": "blocker",
+                    "code": "multiple-active-balls-for-repository",
+                    "message": "more than one active run overlaps this repository",
+                    "run_ids": current_ball["run_ids"],
+                    "task_ids": current_ball["task_ids"],
+                }
+            )
+        elif active_runs:
+            status = "active"
+            current_ball = {"kind": "active_run", **active_runs[0]}
+        else:
+            ready = [
+                task
+                for task in queued
+                if task.get("registry_state") == "ready" and not _task_has_blocker(task)
+            ]
+            if ready:
+                task = ready[0]
+                status = "ready"
+                current_ball = {
+                    "kind": "eligible_task",
+                    "task_id": task["task_id"],
+                    "title": task["title"],
+                    "queue_lane": task["queue_lane"],
+                }
+            elif queued:
+                task = queued[0]
+                status = "blocked" if _task_has_blocker(task) else "planned"
+                current_ball = {
+                    "kind": "queued_task",
+                    "task_id": task["task_id"],
+                    "title": task["title"],
+                    "queue_lane": task["queue_lane"],
+                }
+            else:
+                status = "empty"
+                current_ball = None
+        result[repo.id] = {
+            "resource": repo.id,
+            "status": status,
+            "current_ball": current_ball,
+            "active_runs": active_runs,
+            "findings": findings,
+            "task_ids": repo_task_ids,
+        }
+    return result
+
+
+def _next_actions(
+    tasks: list[dict[str, Any]],
+    repository_balls: dict[str, dict[str, Any]],
+    projection_findings: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    actions: list[dict[str, Any]] = []
+    for finding in projection_findings:
+        if finding.get("severity") == "blocker":
+            actions.append(
+                {
+                    "action": "repair-projection-blocker",
+                    "reason": finding.get("code"),
+                    "source": "status-projection",
+                }
+            )
+    for repo_id, repo in sorted(repository_balls.items()):
+        if repo["status"] == "ambiguous":
+            actions.append(
+                {
+                    "action": "reconcile-active-repository-balls",
+                    "repository": repo_id,
+                    "reason": "multiple-active-balls-for-repository",
+                }
+            )
+    for task in tasks:
+        if len(actions) >= 10:
+            break
+        if task.get("queue_lane") not in {"now", "next"}:
+            continue
+        if task.get("registry_state") != "ready":
+            continue
+        if _task_has_blocker(task):
+            actions.append(
+                {
+                    "action": "repair-task-blocker",
+                    "task_id": task["task_id"],
+                    "queue_lane": task.get("queue_lane"),
+                    "reason": "blocked-or-stale-status",
+                }
+            )
+            continue
+        actions.append(
+            {
+                "action": "claim-task",
+                "task_id": task["task_id"],
+                "queue_lane": task.get("queue_lane"),
+                "source": "registry-queue",
+            }
+        )
+    return actions
 
 def _queue_lane(registry: Registry, task_id: str) -> str | None:
     for lane, task_ids in registry.queue.items():
@@ -353,6 +523,14 @@ def status_projection(
             }
         )
 
+    repository_balls = _repository_balls(registry, tasks, runs_by_task)
+    hard_findings += sum(
+        1
+        for repo in repository_balls.values()
+        for finding in repo.get("findings", [])
+        if finding.get("severity") == "blocker"
+    )
+    next_actions = _next_actions(tasks, repository_balls, projection_findings)
     healthy = hard_findings == 0
     return {
         "schema_version": STATUS_PROJECTION_SCHEMA_VERSION,
@@ -377,6 +555,8 @@ def status_projection(
         "healthy": healthy,
         "findings": projection_findings,
         "tasks": tasks,
+        "repository_balls": repository_balls,
+        "next_actions": next_actions,
         "authority_boundary": {
             "ai": copy.deepcopy(AI_AUTHORITY_BOUNDARY),
         },

@@ -38,11 +38,12 @@ def add_run(
     state: str = "running",
     branch: str | None = None,
     workspace_path: str | None = None,
+    worker_id: str = "worker-1",
 ) -> None:
     with connect(state_root) as connection:
         connection.execute(
-            "INSERT OR IGNORE INTO workers VALUES('worker-1','interactive-agent','[]',?)",
-            (NOW,),
+            "INSERT OR IGNORE INTO workers VALUES(?,?,?,?)",
+            (worker_id, "interactive-agent", "[]", NOW),
         )
         connection.execute(
             """
@@ -55,7 +56,7 @@ def add_run(
             (
                 run_id,
                 task_id,
-                "worker-1",
+                worker_id,
                 1,
                 state,
                 "sha",
@@ -461,3 +462,57 @@ def test_cli_github_observe_blocked_exits_nonzero(
     value = json.loads(capsys.readouterr().out)
     assert value["healthy"] is False
     assert value["pull_requests"] == []
+
+
+def test_projection_exposes_ai_authority_boundary(registry_factory) -> None:
+    root = registry_factory()
+    projection = project(root)
+
+    assert projection["authority_boundary"]["ai"] == AI_AUTHORITY_BOUNDARY
+    assert projection["authority_boundary"]["ai"]["core_policy"] == "deterministic_only"
+    assert projection["authority_boundary"]["ai"]["llm_outputs"] == "advisory_only"
+    assert "ai_authority" in projection["does_not_establish"]
+    projection["authority_boundary"]["ai"]["forbidden_effects"].append("mutated")
+    assert "mutated" not in AI_AUTHORITY_BOUNDARY["forbidden_effects"]
+
+
+def test_projection_includes_repository_balls_and_next_actions(
+    registry_factory, tmp_path
+) -> None:
+    root = registry_factory(2, mode="write")
+    state_root = make_state(root)
+    add_run(state_root, "BUR-RUN-A", TASK_1, state="running")
+
+    projection = project(root)
+
+    alpha = projection["repository_balls"]["repo.alpha"]
+    beta = projection["repository_balls"]["repo.beta"]
+    assert alpha["status"] == "active"
+    assert alpha["current_ball"]["task_id"] == TASK_1
+    assert beta["status"] == "ready"
+    assert beta["current_ball"]["task_id"] == TASK_2
+    assert {action["action"] for action in projection["next_actions"]} >= {"claim-task"}
+
+
+def test_projection_repository_ball_ambiguity_is_actionable(
+    registry_factory, tmp_path
+) -> None:
+    root = registry_factory(3, mode="read")
+    state_root = make_state(root)
+    add_run(state_root, "BUR-RUN-A1", TASK_1, state="running", worker_id="worker-a1")
+    add_run(
+        state_root,
+        "BUR-RUN-A2",
+        "BUR-TEST-001-T003",
+        state="running",
+        worker_id="worker-a2",
+    )
+
+    projection = project(root)
+
+    alpha = projection["repository_balls"]["repo.alpha"]
+    assert alpha["status"] == "ambiguous"
+    assert alpha["findings"][0]["code"] == "multiple-active-balls-for-repository"
+    assert projection["next_actions"][0]["action"] == "reconcile-active-repository-balls"
+    assert projection["next_actions"][0]["repository"] == "repo.alpha"
+    assert projection["healthy"] is False

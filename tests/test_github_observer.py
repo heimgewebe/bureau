@@ -30,6 +30,7 @@ def pull_request(
     draft: bool = False,
     rollup: list[dict[str, object]] | None = None,
     state: str = "OPEN",
+    labels: list[dict[str, object]] | None = None,
 ) -> dict[str, object]:
     return {
         "number": number,
@@ -45,6 +46,7 @@ def pull_request(
         "reviewDecision": review_decision,
         "statusCheckRollup": rollup,
         "updatedAt": "2026-07-07T11:00:00Z",
+        "labels": labels or [],
     }
 
 
@@ -107,6 +109,35 @@ def test_bureau_task_marker_binds_with_lower_confidence() -> None:
     assert binding["binding"] == BINDING_BUREAU_TASK
     assert binding["confidence"] == 0.95
     assert binding["task_id"] == "BUR-X-T001"
+
+
+
+
+def test_structured_label_marker_overrides_branch_fallback(tmp_path: Path) -> None:
+    result = observe(
+        [
+            pull_request(
+                8,
+                branch="feat/bur-x-t002-branch-fallback",
+                labels=[{"name": "Bureau-Task: BUR-X-T001"}],
+            )
+        ],
+        tmp_path,
+        registry=type(
+            "Registry",
+            (),
+            {"tasks": {"BUR-X-T001": object(), "BUR-X-T002": object()}},
+        )(),
+    )
+    observation = result["pull_requests"][0]
+    assert observation["binding"] == BINDING_BUREAU_TASK
+    assert observation["confidence"] == 0.95
+    assert observation["task_id"] == "BUR-X-T001"
+
+
+def test_structured_body_marker_accepts_multiple_tasks() -> None:
+    markers = extract_markers("Bureau-Tasks: BUR-X-T001, BUR-X-T002")
+    assert markers == {"runs": [], "tasks": ["BUR-X-T001", "BUR-X-T002"]}
 
 
 def test_branch_fallback_yields_weak_confidence() -> None:

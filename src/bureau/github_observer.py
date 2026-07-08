@@ -29,11 +29,17 @@ GITHUB_OBSERVATION_SCHEMA_VERSION = 1
 
 GH_PR_LIST_FIELDS = (
     "number,title,url,state,isDraft,headRefName,headRefOid,baseRefName,"
-    "mergeStateStatus,reviewDecision,statusCheckRollup,body,updatedAt"
+    "mergeStateStatus,reviewDecision,statusCheckRollup,body,labels,updatedAt"
 )
 
 BUREAU_RUN_MARKER_RE = re.compile(r"Bureau-Run:\s*([A-Za-z0-9][A-Za-z0-9._/-]*)")
 BUREAU_TASK_MARKER_RE = re.compile(r"Bureau-Task:\s*([A-Za-z0-9][A-Za-z0-9._/-]*)")
+BUREAU_TASK_LINE_RE = re.compile(
+    r"(?im)^\s*Bureau-Tasks?\s*:\s*(?P<value>[^\n#]+)\s*$"
+)
+BUREAU_TASK_LABEL_RE = re.compile(
+    r"(?i)^\s*Bureau[-_ ]Task(?:s)?\s*(?::|/|=)\s*(?P<value>.+?)\s*$"
+)
 
 BINDING_BUREAU_RUN = "bureau_run_marker"
 BINDING_BUREAU_TASK = "bureau_task_marker"
@@ -70,19 +76,53 @@ def _utc_now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def extract_markers(*texts: str | None) -> dict[str, list[str]]:
-    """Collect unique Bureau-Run/Bureau-Task markers in order of appearance."""
+def _marker_items(value: str) -> list[str]:
+    return [item.strip() for item in re.split(r"[,\s]+", value) if item.strip()]
+
+
+def _append_unique(target: list[str], values: list[str]) -> None:
+    for value in values:
+        if value not in target:
+            target.append(value)
+
+
+def _label_names(labels: Any) -> list[str]:
+    if not isinstance(labels, list | tuple | set):
+        return []
+    names: list[str] = []
+    for label in labels:
+        if isinstance(label, dict):
+            name = label.get("name")
+            if isinstance(name, str):
+                names.append(name)
+        elif isinstance(label, str):
+            names.append(label)
+    return names
+
+
+def extract_markers(*texts: str | None, labels: Any = None) -> dict[str, list[str]]:
+    """Collect unique structured Bureau-Run/Bureau-Task markers.
+
+    Supported task markers are body lines such as ``Bureau-Task: TASK`` or
+    ``Bureau-Tasks: TASK-1, TASK-2`` and labels such as ``Bureau-Task: TASK``.
+    The observer still accepts the legacy single ``Bureau-Task`` marker as a
+    compatibility fallback; broad branch matching remains lower-confidence.
+    """
     runs: list[str] = []
     tasks: list[str] = []
     for text in texts:
         if not text:
             continue
         for value in BUREAU_RUN_MARKER_RE.findall(text):
-            if value not in runs:
-                runs.append(value)
+            _append_unique(runs, [value])
+        for match in BUREAU_TASK_LINE_RE.finditer(text):
+            _append_unique(tasks, _marker_items(match.group("value")))
         for value in BUREAU_TASK_MARKER_RE.findall(text):
-            if value not in tasks:
-                tasks.append(value)
+            _append_unique(tasks, [value])
+    for label in _label_names(labels):
+        match = BUREAU_TASK_LABEL_RE.match(label)
+        if match:
+            _append_unique(tasks, _marker_items(match.group("value")))
     return {"runs": runs, "tasks": tasks}
 
 
@@ -351,7 +391,9 @@ def observe_pull_requests(
         if not isinstance(number, int):
             continue
         markers = extract_markers(
-            str(pull_request.get("title") or ""), str(pull_request.get("body") or "")
+            str(pull_request.get("title") or ""),
+            str(pull_request.get("body") or ""),
+            labels=pull_request.get("labels"),
         )
         head_ref = str(pull_request.get("headRefName") or "")
         binding = bind_pull_request(

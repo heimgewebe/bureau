@@ -246,20 +246,92 @@ def _match_task_ids(
     return result
 
 
-def _pull_request_task_ids(
+STRUCTURED_PR_TASK_KEYS = (
+    "bureau_task",
+    "bureauTask",
+    "bureau_tasks",
+    "bureauTasks",
+    "task_id",
+    "taskId",
+    "task_ids",
+    "taskIds",
+)
+STRUCTURED_PR_TASK_LINE_RE = re.compile(
+    r"(?im)^\s*Bureau-Tasks?\s*:\s*(?P<value>[^\n#]+)\s*$"
+)
+STRUCTURED_PR_LABEL_RE = re.compile(
+    r"(?i)^\s*Bureau[-_ ]Task(?:s)?\s*(?::|/|=)\s*(?P<value>.+?)\s*$"
+)
+
+
+def _structured_value_items(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [item.strip() for item in re.split(r"[,\s]+", value) if item.strip()]
+    if isinstance(value, dict):
+        result: list[str] = []
+        for key in STRUCTURED_PR_TASK_KEYS:
+            result.extend(_structured_value_items(value.get(key)))
+        return result
+    if isinstance(value, list | tuple | set):
+        result: list[str] = []
+        for item in value:
+            result.extend(_structured_value_items(item))
+        return result
+    return []
+
+
+def _structured_label_items(labels: Any) -> list[str]:
+    result: list[str] = []
+    for label in labels if isinstance(labels, list | tuple | set) else []:
+        names = _task_id_search_values(label.get("name") if isinstance(label, dict) else label)
+        for name in names:
+            match = STRUCTURED_PR_LABEL_RE.match(name)
+            if match:
+                result.extend(_structured_value_items(match.group("value")))
+    return result
+
+
+def _structured_body_items(body: Any) -> list[str]:
+    result: list[str] = []
+    if isinstance(body, str):
+        for match in STRUCTURED_PR_TASK_LINE_RE.finditer(body):
+            result.extend(_structured_value_items(match.group("value")))
+    return result
+
+
+def _structured_pull_request_task_ids(
     pull_request: dict[str, Any], registry: legacy.Registry
-) -> tuple[str, ...]:
+) -> set[str]:
+    task_ids = tuple(registry.tasks)
+    values: list[str] = []
+    for key in STRUCTURED_PR_TASK_KEYS:
+        values.extend(_structured_value_items(pull_request.get(key)))
+    values.extend(_structured_value_items(pull_request.get("metadata")))
+    values.extend(_structured_label_items(pull_request.get("labels")))
+    values.extend(_structured_body_items(pull_request.get("body")))
+    return _match_task_ids(values, task_ids, allow_branch_suffix=False)
+
+
+def _heuristic_pull_request_task_ids(
+    pull_request: dict[str, Any], registry: legacy.Registry
+) -> set[str]:
     task_ids = tuple(registry.tasks)
     exact_values: list[str] = []
-    for key in ("body", "title", "task_id", "taskId"):
-        exact_values.extend(_task_id_search_values(pull_request.get(key)))
-    for key in ("metadata", "labels", "task_ids", "taskIds"):
+    for key in ("body", "title"):
         exact_values.extend(_task_id_search_values(pull_request.get(key)))
     branch_values: list[str] = []
     for key in ("headRefName", "branch"):
         branch_values.extend(_task_id_search_values(pull_request.get(key)))
     matches = _match_task_ids(exact_values, task_ids, allow_branch_suffix=False)
     matches.update(_match_task_ids(branch_values, task_ids, allow_branch_suffix=True))
+    return matches
+
+
+def _pull_request_task_ids(
+    pull_request: dict[str, Any], registry: legacy.Registry
+) -> tuple[str, ...]:
+    structured = _structured_pull_request_task_ids(pull_request, registry)
+    matches = structured or _heuristic_pull_request_task_ids(pull_request, registry)
     return tuple(task_id for task_id in registry.tasks if task_id in matches)
 
 

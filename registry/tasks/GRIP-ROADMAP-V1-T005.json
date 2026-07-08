@@ -20,6 +20,10 @@
       "resource": "repo.grabowski"
     }
   ],
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T002",
+    "GRIP-ROADMAP-V1-T004"
+  ],
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect"
@@ -28,14 +32,27 @@
   "id": "GRIP-ROADMAP-V1-T005",
   "initiative": "GRIP-ROADMAP-V1",
   "metadata": {
-    "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
-    "roadmap_slice": "PR7",
     "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately.",
-    "implementation_pr": "https://github.com/heimgewebe/grabowski/pull/97",
     "implementation_branch": "feat/captain-privileged-action-path-v1",
+    "implementation_head": "92752b4ca82bd9b3293f7fdcd7b0b171fa4f0ec0",
     "implementation_head_at_registration": "bd1602350e9a8e1f74acfa7dd1b292f0876f626d",
+    "implementation_merge_commit": "754585e8aeb9c203c7232b6810af4ed6fe1088e4",
+    "implementation_pr": "heimgewebe/grabowski#97",
+    "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
+    "review_fix_scope": "PR #97 hardens owner/repo target binding, wildcard target rejection, scope typing, irreversible record non-emptiness, and expected_head evidence binding.",
+    "roadmap_slice": "PR7",
     "status_note": "Open implementation PR exists; keep task unverified until PR review and merge evidence are present.",
-    "review_fix_scope": "PR #97 hardens owner/repo target binding, wildcard target rejection, scope typing, irreversible record non-emptiness, and expected_head evidence binding."
+    "validated_acceptance": {
+      "high-impact-marked": "PR #97 added Captain privileged-action path with explicit high-impact authority handling.",
+      "no-silent-target-change": "PR #97 review-fix scope includes target binding, wildcard rejection, scope typing and expected_head evidence binding.",
+      "recovery-visible": "PR #97 review-fix scope records recovery/irreversibility hardening before privileged action authority."
+    },
+    "verification": {
+      "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+      "task_sha256": "3e84c21613b5d810b95b3920411271f63167ec9fda2e9e1ff434687563b56e86"
+    },
+    "verification_note": "Live GitHub check shows Grabowski PR #97 merged on 2026-07-07. Task acceptance is represented by the merged Captain privileged-action authority path and its review-fix scope.",
+    "verified_at": "2026-07-08"
   },
   "priority": {
     "lane": "later",
@@ -47,10 +64,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
-  "title": "Add captain privileged-action path",
-  "depends_on": [
-    "GRIP-ROADMAP-V1-T002",
-    "GRIP-ROADMAP-V1-T004"
-  ]
+  "state": "verified",
+  "title": "Add captain privileged-action path"
 }

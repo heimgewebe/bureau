@@ -3,7 +3,7 @@
   "id": "CABINET-COHERENCE-FRONTIER-V1-T008",
   "initiative": "CABINET-COHERENCE-FRONTIER-V1",
   "title": "Verify Gemini capability and sandbox boundary",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "CABINET-COHERENCE-FRONTIER-V1-T003"
   ],
@@ -48,7 +48,34 @@
     "target_repository": "heimgewebe/bureau",
     "agent_pool": "gemini",
     "agent_authority": "preflight_only",
-    "write_scope": "Bureau documentation or task evidence only; Gemini runner itself receives no repository write authority."
+    "write_scope": "Bureau documentation or task evidence only; Gemini runner itself receives no repository write authority.",
+    "implementation_repo": "heimgewebe/bureau",
+    "implementation_pr": "heimgewebe/bureau#213",
+    "implementation_url": "https://github.com/heimgewebe/bureau/pull/213",
+    "implementation_head": "08b44d93282ba22a3ea66f9abf5da891a31db3ca",
+    "implementation_merge_commit": "6ac24f4348ccc932297a0fe214ca317554227f1a",
+    "merged_at": "2026-07-08T06:36:07Z",
+    "verified_at": "2026-07-08",
+    "outcome": "Bureau PR #213 added a Gemini proposal-lane preflight. It observed the local Gemini executable, --print and --sandbox support, documented allowed inputs, sensitive exclusions and forbidden authority, and kept the Gemini lane disabled because auth/quota was not observed.",
+    "verified_acceptance": {
+      "availability-observed": "docs/reports/gemini-preflight-2026-07-08.json records binary found true for /home/alex/.local/bin/gemini and observed --version/--help metadata.",
+      "noninteractive-mode": "The report records noninteractiveModeObserved true with --print and outputCapturePath stdout_json_or_bounded_stdout.",
+      "context-boundary": "docs/gemini-proposal-lane-preflight-v1.md and the report list allowed inputs, sensitive exclusions and forbidden authority.",
+      "no-agent-effect": "The preflight only observes executable metadata, sends no repo content or prompts to Gemini, keeps all effect flags false and laneEnabled false.",
+      "lane-dependency": "The report status is blocked_pending_auth_quota_review, so the Gemini review lane must not be treated as active capacity yet.",
+      "bureau-write-scope": "Writes are limited to Bureau documentation, report, tests and preflight code; Gemini itself receives no repository write capability."
+    },
+    "checks": [
+      "Bureau PR #213 validate (3.10) SUCCESS before merge",
+      "Bureau PR #213 validate (3.12) SUCCESS before merge",
+      "local: ruff check src tests pyproject.toml OK",
+      "local: PYTHONPATH=src python3 -m pytest -q OK",
+      "local: bureau-gemini-preflight generated report with laneEnabled false and auth_quota_not_observed blocker"
+    ],
+    "verification": {
+      "task_sha256": "6d500175431f77e8b858f9f0f3f0145a846b5a375c57b46cb94b2c3d5696e14c",
+      "plan_sha256": "ed0ea5a017393327b162abb396f604282456f3e1a8b62a18bdf94ba1f5813696"
+    }
   },
   "acceptance": [
     {

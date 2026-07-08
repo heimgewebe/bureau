@@ -29,6 +29,7 @@ The canonical source is `[project.scripts]` in `pyproject.toml`. Current package
 | `bureau-closure-runner` | `bureau.closure_runner:main` | Closure ops |
 | `bureau-codex-bridge` | `bureau.codex_bridge:main` | Codex bridge ops |
 | `bureau-gemini-preflight` | `bureau.gemini_preflight:main` | External-agent preflight ops |
+| `bureau-gemini-review-lane` | `bureau.gemini_review_lane:main` | External-agent proposal review ops |
 | `bureau-pr-task-finish` | `bureau.task_finish:main` | Closure/task-finish ops |
 | `bureau-review-steward` | `bureau.review_steward:main` | Review stewardship ops |
 | `bureau-source-pr-bridge` | `bureau.source_pr_bridge:main` | Source PR bridge ops |
@@ -83,6 +84,7 @@ Add new `bureau` subcommands as equivalents, not replacements:
 | `bureau ops codex-bridge run` | `bureau-codex-bridge` |
 | `bureau ops cabinet preview/review/receipt/import-policy/frontier-read` | `bureau-cabinet-*` |
 | `bureau ops gemini-preflight` | `bureau-gemini-preflight` |
+| `bureau ops gemini-review-lane` | `bureau-gemini-review-lane` |
 | `bureau closure ...` | `bureau-closure`, `bureau-closure-runner`, `bureau-pr-task-finish` |
 
 Acceptance for Phase 1:

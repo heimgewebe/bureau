@@ -1,0 +1,38 @@
+{
+  "command": [
+    "gemini",
+    "--sandbox",
+    "--print",
+    "<prompt>"
+  ],
+  "credentialAccessAllowed": false,
+  "dispatchAllowed": false,
+  "effectPerformed": false,
+  "inputArtifacts": [
+    {
+      "bytes": 53,
+      "path": "/tmp/tmp.9ZTPkMIRap/review.patch",
+      "sha256": "00af7d020920e9f38c05ce314269b0eba9bf31d9dcac67896f4b870584cb525b"
+    }
+  ],
+  "kind": "gemini_proposal_review_lane_receipt",
+  "laneActivationAllowed": false,
+  "mergeAllowed": false,
+  "mode": "proposal_only",
+  "outputSha256": "7684542ce00e1718d999039c517a29e946f6c072a6df2aaf8d8e48a2ecf0398d",
+  "promptSha256": "b3a736077263c815337b16a7067dfdc2e8fa93d88f88209df5c26887d588c595",
+  "pushAllowed": false,
+  "queueMutationAllowed": false,
+  "returncode": 0,
+  "review": {
+    "effectAllowed": false,
+    "findings": [],
+    "schemaVersion": 1,
+    "status": "no_action",
+    "summary": "No issues found in the provided diff."
+  },
+  "runtimeMutationAllowed": false,
+  "schemaVersion": 1,
+  "status": "no_action",
+  "writeAllowed": false
+}

@@ -11,7 +11,7 @@ def test_inventory_lists_all_packaged_console_scripts() -> None:
     inventory = build_inventory(ROOT)
     names = {entry["name"] for entry in inventory["console_scripts"]}
 
-    assert inventory["summary"]["packaged_console_scripts"] == 15
+    assert inventory["summary"]["packaged_console_scripts"] == 16
     assert "bureau" in names
     assert "bureau-agent-scout" in names
     assert "bureau-cabinet-frontier-reader" in names

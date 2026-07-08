@@ -3,7 +3,7 @@
   "id": "CABINET-COHERENCE-FRONTIER-V1-T002",
   "initiative": "CABINET-COHERENCE-FRONTIER-V1",
   "title": "Define Cabinet frontier contract",
-  "state": "planned",
+  "state": "verified",
   "goal": "Define a schema-bound Cabinet Frontier that turns maintenance findings and live signals into Bureau-importable candidates without creating Bureau tasks or dispatching work.",
   "priority": {
     "lane": "later",
@@ -40,7 +40,35 @@
       "autonomous_dispatch"
     ],
     "phase": "CCFG-2",
-    "target_repository": "heimgewebe/cabinet"
+    "target_repository": "heimgewebe/cabinet",
+    "implementation_repo": "heimgewebe/cabinet",
+    "implementation_pr": "heimgewebe/cabinet#85",
+    "implementation_url": "https://github.com/heimgewebe/cabinet/pull/85",
+    "implementation_head": "b1c5c09a0921cd6ae3c8afd1c1786c10e294f9d5",
+    "implementation_merge_commit": "1a8da33fdeb61cbbb40662af5a0b31ee8afc13fe",
+    "merged_at": "2026-07-08T05:21:08Z",
+    "verified_at": "2026-07-08",
+    "outcome": "Cabinet PR #85 added Cabinet Frontier v1 contract, schema, validator, producer, tests and CI binding. The producer translates Cabinet maintenance candidates and live signals into proposal-only Frontier candidates without Bureau task creation, queue mutation, dispatch, merge/push, runtime mutation, cleanup or dump generation.",
+    "verified_acceptance": {
+      "frontier-contract": "docs/contracts/cabinet-frontier-v1.md documents fields, evidence, risk, acceptance, forbidden effects and proposal-only semantics.",
+      "frontier-schema": "docs/contracts/cabinet-frontier-v1.schema.json and scripts/validate_cabinet_frontier.py validate Frontier candidate records.",
+      "producer-non-effects": "scripts/write_cabinet_frontier.py keeps all effect flags false and check mode writes no output.",
+      "ci-bound": "Cabinet Validate workflow now runs Frontier check and tests; PR #85 checks were green before merge."
+    },
+    "checks": [
+      "Cabinet PR #85 Validate Ecosystem Map SUCCESS",
+      "Cabinet PR #85 Project Cards validate SUCCESS",
+      "Cabinet PR #85 Repository Snapshot Review SUCCESS",
+      "Cabinet PR #85 Repository Contract SUCCESS",
+      "Cabinet PR #85 Installer Shadow Test SUCCESS",
+      "Cabinet PR #85 Secret Scan SUCCESS",
+      "local: python3 -m unittest discover -s scripts/tests OK",
+      "local: python3 scripts/write_cabinet_frontier.py --check --json OK"
+    ],
+    "verification": {
+      "task_sha256": "d55befb3c1dc7bdb510cece7be2693b7f67f32146bd077a5d2cbfe1f22baa082",
+      "plan_sha256": "ed0ea5a017393327b162abb396f604282456f3e1a8b62a18bdf94ba1f5813696"
+    }
   },
   "acceptance": [
     {

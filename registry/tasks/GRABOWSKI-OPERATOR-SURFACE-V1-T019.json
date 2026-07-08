@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "state": "planned",
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T019",
+  "title": "Build typed PR mutation lifecycle",
+  "goal": "Reduce Platform-Filter friction by replacing free-form push, PR update and merge command text in the ChatGPT path with narrow receipt-bound Grabowski PR lifecycle grips or named operations.",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T013"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 260
+  },
+  "acceptance": [
+    {
+      "id": "publish-hardened",
+      "assertion": "branch-publish is validated or hardened so it publishes only the expected local HEAD to the named branch and emits an audit receipt with blocked/pass/fail status."
+    },
+    {
+      "id": "pr-upsert-hardened",
+      "assertion": "pr-create-or-update is validated or hardened so PR metadata writes require expected head, base, branch and title, and never fall back to generic GitHub shell text."
+    },
+    {
+      "id": "typed-pr-merge",
+      "assertion": "A typed pr-merge grip or named operation exists and requires open non-draft PR, expected head, clean mergeability, required green checks, current review-gate PASS evidence and match-head-commit semantics."
+    },
+    {
+      "id": "receipt-bound-lifecycle",
+      "assertion": "The publish/upsert/merge lifecycle returns structured receipts that include parameters hash, observed PR/head/check state, review-gate evidence reference and explicit non-claims."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover expected-head mismatch, dirty checkout, missing checks, missing review evidence, stale review evidence, mergeable=false and successful happy path without invoking free-form dangerous command strings."
+    }
+  ],
+  "metadata": {
+    "phase": "grabowski-optimization-phase-1",
+    "source": "User requested phases 1-4 from the 2026-07-08 Grabowski optimization plan be registered as Bureau tasks.",
+    "live_basis": "Friction ledger shows Platform-Filter as largest unresolved class; branch-publish and pr-create-or-update already exist, pr-merge as narrow normal lifecycle grip is still missing.",
+    "related_existing_tasks": [
+      "GRIP-ROADMAP-V1-T019",
+      "GRIP-ROADMAP-V1-T020",
+      "GRIP-ROADMAP-V1-T021"
+    ],
+    "does_not_establish": [
+      "implementation_complete",
+      "merge_authority_change",
+      "runtime_deployed"
+    ]
+  }
+}

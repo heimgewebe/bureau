@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "state": "planned",
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T021",
+  "title": "Define small Core connector profile",
+  "goal": "Reduce connector snapshot lag and schema surface drift by defining a small stable Grabowski Core profile for ChatGPT-facing observation and grip dispatch.",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T002",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T019"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 280
+  },
+  "acceptance": [
+    {
+      "id": "core-tool-list",
+      "assertion": "A documented core profile lists only stable observation and orchestration tools such as status, context, git status/diff, PR view/checks, friction summary, recovery status, grip_list and grip_run."
+    },
+    {
+      "id": "excluded-risky-tools",
+      "assertion": "Secrets, browser-profile reads, irreversible destroy, generic terminal/fleet execution and broad filesystem mutation tools are explicitly outside the default core connector profile."
+    },
+    {
+      "id": "snapshot-canary",
+      "assertion": "A canary or smoke path compares expected core tool names with the client-visible set when observable, and otherwise reports connector_snapshot_observable=false without false certainty."
+    },
+    {
+      "id": "docs",
+      "assertion": "Docs distinguish runtime contract completeness from ChatGPT client snapshot freshness and explain why a smaller profile reduces drift and context cost."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover core-profile membership, forbidden high-risk membership, stable name hash and contract drift reporting."
+    }
+  ],
+  "metadata": {
+    "phase": "grabowski-optimization-phase-3",
+    "source": "User requested phases 1-4 from the 2026-07-08 Grabowski optimization plan be registered as Bureau tasks.",
+    "live_basis": "Runtime registers 97/97 tools, but connector snapshot observability remains false; a small profile is a stability optimization, not proof of security.",
+    "does_not_establish": [
+      "connector_refresh_complete",
+      "security_boundary_complete",
+      "runtime_deployed"
+    ]
+  }
+}

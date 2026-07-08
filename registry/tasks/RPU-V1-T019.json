@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T019",
+  "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
+  "title": "RepoBrief contract hygiene fixes",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 33
+  },
+  "goal": "Fix small but high-friction contract and output-shape gaps: citation_map rows as directly valid range refs, populated top chunk spans where expected, and query JSON retaining line/source metadata.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "61470f13b261cb13fe314139ad65a5913e2fc245",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rpu-v1-t019-range-ref-shape",
+      "assertion": "citation_map or related rows can be consumed as valid range refs without manual field injection."
+    },
+    {
+      "id": "rpu-v1-t019-top-chunks",
+      "assertion": "Agent Reading Pack top chunk spans are populated or explicitly not_applicable with a tested reason."
+    },
+    {
+      "id": "rpu-v1-t019-query-lines",
+      "assertion": "query --emit json preserves line/source metadata needed for direct evidence use."
+    },
+    {
+      "id": "rpu-v1-t019-tests",
+      "assertion": "Focused contract/output-shape tests cover the repaired cases."
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "RepoBrief Practical Utility Reconcile v1",
+    "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
+    "registered_at": "2026-07-08T00:00:00Z",
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "agent_quality_improvement_by_itself"
+    ],
+    "source_gap": "Max-dump critique: citation_map range_refs needed manual completion; TOP_CHUNK_SPANS was empty; query JSON lost line numbers."
+  },
+  "depends_on": [
+    "RPU-V1-T001"
+  ]
+}

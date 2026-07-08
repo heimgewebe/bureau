@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T017",
+  "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
+  "title": "Runtime-Lens evidence bridge",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 57
+  },
+  "goal": "Define a bounded bridge between RepoBrief code evidence and Chronik/runtime observations so agents can cite code/runtime drift without collapsing snapshot authority into runtime truth.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "61470f13b261cb13fe314139ad65a5913e2fc245",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik",
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.chronik",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rpu-v1-t017-runtime-inputs",
+      "assertion": "Runtime evidence sources, timestamps and authority labels are explicit and hashable or otherwise provenance-bound."
+    },
+    {
+      "id": "rpu-v1-t017-drift-report",
+      "assertion": "The bridge can report code/runtime drift as observation, not as correctness verdict."
+    },
+    {
+      "id": "rpu-v1-t017-boundary",
+      "assertion": "RepoBrief does not own service restart, deploy, systemd, secrets or live runtime mutation."
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "RepoBrief Practical Utility Reconcile v1",
+    "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
+    "registered_at": "2026-07-08T00:00:00Z",
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "agent_quality_improvement_by_itself"
+    ],
+    "source_vision": "Runtime-Lens bridge to Chronik/runtime evidence."
+  },
+  "depends_on": [
+    "RPU-V1-T003"
+  ]
+}

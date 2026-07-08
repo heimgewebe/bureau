@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T013",
+  "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
+  "title": "SemantAH chunk embedding bridge",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 53
+  },
+  "goal": "Prototype a bounded semantic retrieval bridge where SemantAH embeds stable RepoBrief chunk_index records externally and RepoBrief consumes only measured, citation-preserving semantic evidence for evaluation, not default core ranking.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "61470f13b261cb13fe314139ad65a5913e2fc245",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit",
+      "repo:/home/alex/repos/semantAH"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.semantah",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rpu-v1-t013-stable-inputs",
+      "assertion": "Semantic inputs are stable chunk ids/ranges with hashes, not free-form repo crawls."
+    },
+    {
+      "id": "rpu-v1-t013-external-layer",
+      "assertion": "Embeddings and semantic ranking remain outside RepoBrief core unless a later measured promotion decision allows bounded consumption."
+    },
+    {
+      "id": "rpu-v1-t013-eval",
+      "assertion": "Recall/MRR and miss-taxonomy changes are measured against existing retrieval baselines before any default use."
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "RepoBrief Practical Utility Reconcile v1",
+    "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
+    "registered_at": "2026-07-08T00:00:00Z",
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "agent_quality_improvement_by_itself"
+    ],
+    "source_vision": "SemantAH over RepoBrief chunks, not embeddings in the RepoBrief core.",
+    "dependency_note": "SemantAH usefulness initiative exists, but no SEMANTAH-USEFULNESS-V1-T001 task is present on Bureau origin/main at reconciliation time; this task therefore depends only on RepoBrief prerequisites and the registered repo.semantah resource."
+  },
+  "depends_on": [
+    "RPU-V1-T001",
+    "RBV1-T017"
+  ]
+}

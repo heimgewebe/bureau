@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T011",
+  "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
+  "title": "Retrieval v2 default-promotion decision",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 51
+  },
+  "goal": "Run a current, reproducible default-promotion decision for Retrieval v2-style surfaces using real dumps and the existing promotion gate; keep default false unless measured non-regression and improvement thresholds are met.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "61470f13b261cb13fe314139ad65a5913e2fc245",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rpu-v1-t011-current-run",
+      "assertion": "A current evaluation run records dataset/dump, metrics and artifact hashes."
+    },
+    {
+      "id": "rpu-v1-t011-decision",
+      "assertion": "The default-promotion decision is explicit: promote, keep false, or defer with blocker."
+    },
+    {
+      "id": "rpu-v1-t011-regressions",
+      "assertion": "Category regressions, misses, fallback counts and range/citation health are reported."
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "RepoBrief Practical Utility Reconcile v1",
+    "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
+    "registered_at": "2026-07-08T00:00:00Z",
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "agent_quality_improvement_by_itself"
+    ],
+    "lenskit_local_task": "TASK-RETRIEVAL-V2-DEFAULT-PROMOTION-DECISION-001"
+  },
+  "depends_on": [
+    "RBV1-T017",
+    "RPU-V1-T001",
+    "RPU-V1-T007"
+  ]
+}

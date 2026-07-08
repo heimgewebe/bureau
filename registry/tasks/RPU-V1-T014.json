@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T014",
+  "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
+  "title": "Cabinet claim evidence revalidation",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 54
+  },
+  "goal": "Connect Cabinet claims to RepoBrief citation ids and freshness/hash checks so stale or broken evidence can be detected without treating Cabinet maps as truth.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "61470f13b261cb13fe314139ad65a5913e2fc245",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/cabinet",
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.cabinet",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rpu-v1-t014-claim-links",
+      "assertion": "Claims can reference RepoBrief citation ids or source ranges with hash/freshness metadata."
+    },
+    {
+      "id": "rpu-v1-t014-revalidation",
+      "assertion": "A revalidation report distinguishes still-established, stale, missing, changed and unverifiable evidence."
+    },
+    {
+      "id": "rpu-v1-t014-boundary",
+      "assertion": "The report does not make Cabinet a RepoBrief producer or RepoBrief a claim-truth oracle."
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "RepoBrief Practical Utility Reconcile v1",
+    "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
+    "registered_at": "2026-07-08T00:00:00Z",
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "agent_quality_improvement_by_itself"
+    ],
+    "source_vision": "Claim-TÜV for Cabinet."
+  },
+  "depends_on": [
+    "RPU-V1-T002",
+    "RPU-V1-T003"
+  ]
+}

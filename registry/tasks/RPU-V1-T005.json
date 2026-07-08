@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T005",
+  "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
+  "title": "Delta-Lens PR context compiler",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 45
+  },
+  "goal": "Turn PR/revision deltas into compact RepoBrief review context: changed ranges, adjacent graph blast radius, likely tests/contracts/docs, citations and freshness gaps without producing review verdicts.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "61470f13b261cb13fe314139ad65a5913e2fc245",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rpu-v1-t005-delta",
+      "assertion": "The compiler can represent changed ranges and their surrounding evidence without requiring a full repo dump in every review."
+    },
+    {
+      "id": "rpu-v1-t005-blast-radius",
+      "assertion": "Graph/symbol/relation signals are reported as bounded hints with stale/missing/degraded status."
+    },
+    {
+      "id": "rpu-v1-t005-no-verdict",
+      "assertion": "The output is review context only and does not approve, reject or score the PR as safe."
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "RepoBrief Practical Utility Reconcile v1",
+    "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
+    "registered_at": "2026-07-08T00:00:00Z",
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "agent_quality_improvement_by_itself"
+    ],
+    "source_vision": "Delta-Lens instead of snapshot-only context."
+  },
+  "depends_on": [
+    "RPU-V1-T001",
+    "RPU-V1-T002",
+    "RPU-V1-T004"
+  ]
+}

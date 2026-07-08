@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T003",
+  "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
+  "title": "Latest-complete freshness registry",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 32
+  },
+  "goal": "Create a latest-complete RepoBrief bundle registry and freshness check path that records source commit, generated bundle stem, manifest hash, health state and stale/unknown status without causing hidden refresh during reads.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "61470f13b261cb13fe314139ad65a5913e2fc245",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rpu-v1-t003-registry",
+      "assertion": "A machine-readable latest-complete registry records bundle stem, manifest hash, source commit, generation time and health/freshness state."
+    },
+    {
+      "id": "rpu-v1-t003-head-drift",
+      "assertion": "HEAD drift is detected as stale/unknown without treating stale as failure by itself."
+    },
+    {
+      "id": "rpu-v1-t003-no-hidden-refresh",
+      "assertion": "Read operations never re-dump or mutate Git; refresh remains an explicit create/job operation."
+    },
+    {
+      "id": "rpu-v1-t003-operator-fit",
+      "assertion": "The design can be consumed by Grabowski/Bureau receipts without making RepoBrief a control plane."
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "RepoBrief Practical Utility Reconcile v1",
+    "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
+    "registered_at": "2026-07-08T00:00:00Z",
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "agent_quality_improvement_by_itself"
+    ],
+    "source_gap": "Max-dump critique: bundles are often stale and require live fallback."
+  },
+  "depends_on": [
+    "RBV1-T006",
+    "RBV1-T007"
+  ]
+}

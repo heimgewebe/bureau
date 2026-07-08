@@ -3,7 +3,7 @@
   "id": "RBV1-T012",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Repair contract CI path filters",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 120
@@ -67,6 +67,26 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "verified_at": "2026-07-08",
+    "outcome": "Lenskit PR #905 repaired contract validation path filtering by removing workflow-level path filters and relying on the contract guard for the real contract roots.",
+    "live_lenskit_commit": "90abc2d5",
+    "implementation_pr": "heimgewebe/lenskit#905",
+    "implementation_paths": [
+      ".github/workflows/contracts-validate.yml"
+    ],
+    "validation": [
+      "GitHub CI after PR #905 passed on Lenskit main as observed before closeout."
+    ],
+    "verified_acceptance": {
+      "rbv1-t012-scope-bound": "Contract CI path filter reconciliation was implemented in Lenskit PR #905 without broadening RepoBrief authority.",
+      "rbv1-t012-boundary-preserved": "The change is CI-only and does not create refresh, Git mutation, review, runtime or RepoBrief write authority.",
+      "rbv1-t012-tests-or-gap": "Workflow guard coverage and CI validation were recorded in Lenskit task closeout.",
+      "rbv1-t012-non-claims": "The CI path repair does not prove contract correctness, fixture completeness, runtime correctness, test sufficiency or release readiness."
+    },
+    "verification": {
+      "task_sha256": "5dff645e2dba7240c213409d94b218ae4375672b375b52fadca59095e0800a48",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   }
 }

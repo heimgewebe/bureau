@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "repo.semantah",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/semantAH",
+  "grabowski_key": "repo:/home/alex/repos/semantAH",
+  "metadata": {
+    "github": "heimgewebe/semantAH",
+    "role": "semantic evidence and embedding axis for grounded retrieval experiments",
+    "boundaries": [
+      "no_repo_truth_by_itself",
+      "no_unbounded_llm_reranking_in_repobrief_core",
+      "no_default_promotion_without_measured_evaluation"
+    ]
+  }
+}

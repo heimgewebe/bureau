@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T020",
+  "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
+  "title": "Real MCP read-only resources implementation",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 90
+  },
+  "goal": "Implement or explicitly defer a protocol-level RepoBrief MCP server/resource surface for existing snapshots, distinct from already verified read-only access and MCP boundary documentation.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "61470f13b261cb13fe314139ad65a5913e2fc245",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rpu-v1-t020-protocol-resources",
+      "assertion": "Concrete MCP resources such as repobrief://snapshot/{stem}/manifest and canonical/reading-pack/health/availability are implemented or a precise blocker is recorded."
+    },
+    {
+      "id": "rpu-v1-t020-read-only",
+      "assertion": "Resource reads cannot create snapshots, refresh bundles, touch Git, run shells, inspect secrets, open PRs or apply patches."
+    },
+    {
+      "id": "rpu-v1-t020-status",
+      "assertion": "Every MCP resource/tool result carries health/freshness/availability or explains why it cannot."
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "RepoBrief Practical Utility Reconcile v1",
+    "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
+    "registered_at": "2026-07-08T00:00:00Z",
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "agent_quality_improvement_by_itself"
+    ],
+    "lenskit_local_task": "TASK-REPOBRIEF-MCP-READONLY-RESOURCES-001",
+    "rbv1_t010_clarification": "RBV1-T010 is verified for read-only access and MCP-boundary-equivalent surfaces, not a protocol-level MCP server/resource implementation."
+  },
+  "depends_on": [
+    "RBV1-T010",
+    "RPU-V1-T001",
+    "RPU-V1-T003"
+  ]
+}

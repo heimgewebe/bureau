@@ -214,16 +214,33 @@ def _has_closure_evidence(task_id: str, metadata: dict[str, Any], truth: dict[st
 
 
 def _strict_closeout_required(metadata: dict[str, Any], truth: dict[str, Any]) -> bool:
-    if truth.get("status") in SATISFIED_STATUSES:
+    """Return whether closeout evidence failures should be hard errors.
+
+    The closeout evidence guard is intentionally opt-in for machine-verifiable
+    closeouts. Older verified tasks often carry prose-like metadata or standalone
+    task/plan hashes without the newer source/task evidence binding. Those legacy
+    fields are useful audit notes, but treating them as strict evidence would
+    retroactively make historical registry states unhealthy.
+
+    New strict closeouts opt in by carrying evidence that is explicitly
+    task-bound, or by carrying metadata-only verification plus a source reference
+    outside ``registry_truth``. AI-summary-only evidence is also strict, because
+    it must never close out a verified task. A satisfied legacy registry-truth
+    evidence list without task binding remains a finding, but not a hard error.
+    """
+    evidence = _registry_truth_evidence(truth)
+    if _has_ai_summary_only_evidence(truth):
         return True
-    strict_keys = {
-        "verification",
-        "verified_acceptance",
-        "validated_acceptance",
-        "implementation_pr",
-        "implementation_prs",
+    if any(_has_named_key(item, TASK_BINDING_KEYS) for item in evidence):
+        return True
+    if evidence:
+        return False
+    metadata_without_truth = {
+        key: value for key, value in metadata.items() if key != "registry_truth"
     }
-    return any(key in metadata for key in strict_keys)
+    return isinstance(metadata.get("verification"), dict) and _has_named_key(
+        metadata_without_truth, SOURCE_REFERENCE_KEYS
+    )
 
 
 def _baseline_commit_status(repository: str, commit: str) -> tuple[str, str | None]:
@@ -359,9 +376,12 @@ def registry_truth_diagnostics(
                     }
                 )
             if not _has_closure_evidence(task_id, metadata, truth):
+                strict = _strict_closeout_required(metadata, truth)
                 findings.append(
                     {
-                        "severity": "error" if state in COMPLETION_STATES else "warning",
+                        "severity": "error"
+                        if state in COMPLETION_STATES and strict
+                        else "warning",
                         "issue": "registry_truth_without_machine_evidence",
                         "task_id": task_id,
                         "state": state,

@@ -344,18 +344,24 @@ def _open_pr_label(reservation: legacy.Reservation) -> str:
     return reservation.run_id
 
 
+def _repo_write_guard_failure_reservation(
+    resource: legacy.Resource, diagnostic: str
+) -> legacy.Reservation:
+    return OpenPullRequestReservation(
+        f"open-pr-guard-failed:{resource.id}",
+        resource.id,
+        "write-blocker",
+        1,
+        diagnostic=diagnostic,
+        observation_failed=True,
+    )
+
+
 def _repo_write_guard_failure_reservations(
     registry: legacy.Registry, diagnostic: str
 ) -> list[legacy.Reservation]:
     return [
-        OpenPullRequestReservation(
-            f"open-pr-guard-failed:{resource.id}",
-            resource.id,
-            "write-blocker",
-            1,
-            diagnostic=diagnostic,
-            observation_failed=True,
-        )
+        _repo_write_guard_failure_reservation(resource, diagnostic)
         for resource in registry.resources.values()
         if resource.type == "git-repository"
     ]
@@ -373,18 +379,39 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
         return []
     result: list[legacy.Reservation] = []
     observed: dict[str, list[dict[str, Any]]] = {}
+    observation_errors: dict[str, str] = {}
     for resource in registry.resources.values():
         if resource.type != "git-repository":
             continue
         if not resource.path:
-            raise OpenPullRequestObservationError(
-                f"cannot observe configured repository {resource.id}: missing path"
+            result.append(
+                _repo_write_guard_failure_reservation(
+                    resource,
+                    f"cannot observe configured repository {resource.id}: missing path",
+                )
             )
-        repository = _github_repository_for_path(Path(resource.path).expanduser())
+            continue
+        try:
+            repository = _github_repository_for_path(Path(resource.path).expanduser())
+        except OpenPullRequestObservationError as exc:
+            result.append(_repo_write_guard_failure_reservation(resource, str(exc)))
+            continue
         if repository is None:
             continue
+        if repository in observation_errors:
+            result.append(
+                _repo_write_guard_failure_reservation(
+                    resource, observation_errors[repository]
+                )
+            )
+            continue
         if repository not in observed:
-            observed[repository] = _github_open_pull_requests(repository)
+            try:
+                observed[repository] = _github_open_pull_requests(repository)
+            except OpenPullRequestObservationError as exc:
+                observation_errors[repository] = str(exc)
+                result.append(_repo_write_guard_failure_reservation(resource, str(exc)))
+                continue
         pull_requests = observed[repository]
         for pull_request in pull_requests:
             number = pull_request.get("number")

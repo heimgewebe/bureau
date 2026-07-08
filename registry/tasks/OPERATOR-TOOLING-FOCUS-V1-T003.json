@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-TOOLING-FOCUS-V1-T003",
+  "initiative": "OPERATOR-TOOLING-FOCUS-V1",
+  "title": "Harden Bitwarden CLI secret reference path",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 262
+  },
+  "goal": "Turn the already installed bw CLI into a documented, fail-closed secret reference and unlock path for operator workflows without leaking secrets into repos, logs, evidence bundles or agent context.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/infra",
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "bw-present",
+      "assertion": "The Bitwarden CLI presence is rechecked and its authentication/unlock state is reported without revealing secrets."
+    },
+    {
+      "id": "secret-reference-contract",
+      "assertion": "Operator scripts use stable secret references or environment handoff contracts, not copied secret values in repo files."
+    },
+    {
+      "id": "no-export",
+      "assertion": "Secrets are excluded from logs, evidence packets, RepoBrief/rLens exports and external review packets by explicit checks or review checklist."
+    },
+    {
+      "id": "failure-mode",
+      "assertion": "Missing lock, expired session or unavailable vault causes fail-closed behavior with a clear non-secret error."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-08T18:52:35Z",
+    "source_request": "grafana, n8n, bitwarden ins visier nehmen",
+    "does_not_establish": [
+      "runtime_correctness",
+      "security_correctness",
+      "install_readiness",
+      "merge_readiness"
+    ]
+  },
+  "depends_on": []
+}

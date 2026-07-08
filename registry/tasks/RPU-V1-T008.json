@@ -3,7 +3,7 @@
   "id": "RPU-V1-T008",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "Runtime artifact retention and GC policy",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 48
@@ -49,13 +49,56 @@
     "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
     "registered_at": "2026-07-08T00:00:00Z",
     "does_not_establish": [
+      "active_ttl",
+      "active_gc",
+      "automatic_deletion",
+      "bounded_storage",
+      "artifact_freshness",
+      "migration_completed",
+      "operator_cleanup_safe",
       "runtime_correctness",
       "test_sufficiency",
-      "review_completeness",
-      "merge_readiness",
-      "agent_quality_improvement_by_itself"
+      "merge_readiness"
     ],
-    "lenskit_local_task": "TASK-RUNTIME-ARTIFACT-RETENTION-001"
+    "lenskit_local_task": "TASK-RUNTIME-ARTIFACT-RETENTION-001",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Lenskit PR #921: runtime artifact retention for query_trace, context_bundle and agent_query_session is now explicit and machine-readable. The policy deliberately keeps retention unbounded_currently, disables TTL and GC, and adds no deletion path. Diagnostics expose policy identity without mutating stored artifacts.",
+    "implementation_pr": "heimgewebe/lenskit#921",
+    "live_lenskit_commit": "79cbc5a99939647fa81735e1b71d98109f48650a",
+    "implementation_head": "32ac18c68bb77bd2746babe4946d0034c23cc0a1",
+    "diff_sha256": "081c7a3c51ee1ebf8a5f9da8def41b6e4e08a09c4452443590c2eca54efa86bd",
+    "implementation_paths": [
+      "merger/lenskit/service/runtime_artifact_retention.py",
+      "merger/lenskit/service/query_artifact_store.py",
+      "merger/lenskit/tests/test_runtime_artifact_retention.py",
+      "merger/lenskit/tests/test_query_artifact_diagnostics.py",
+      "docs/proofs/runtime-artifact-retention-policy-v1-proof.md",
+      "docs/architecture/runtime-matrix.md",
+      "docs/architecture/artifact-inventory.md",
+      "docs/service-api.md",
+      "docs/tasks/board.md",
+      "docs/tasks/index.json"
+    ],
+    "validation": [
+      "Lenskit PR #921 GitHub CI passed after final head: pytest-full, ruff, CodeQL, doc-freshness, planning-registration, validate-merge-meta, contract checks, reusable fixture validation, graph checks and webui-js-tests.",
+      "Codex P2 feedback was addressed before merge: diagnostics exact field-set contract now includes retention_policy_id and retention_policy_status.",
+      "Local before merge: 166 runtime artifact retention/diagnostics/lookup/API/session tests passed.",
+      "Local before merge: targeted ruff-ci check passed.",
+      "Local before merge: planning-registration ratchet reported no new drift.",
+      "Local before merge: doc-freshness inspect PASS.",
+      "Local before merge: git diff --check origin/main...HEAD passed.",
+      "Post-merge on origin/main 79cbc5a99939647fa81735e1b71d98109f48650a: same 166 tests passed, targeted ruff passed, planning-registration no new drift, doc-freshness PASS and diff-check pass."
+    ],
+    "verified_acceptance": {
+      "rpu-v1-t008-policy": "runtime_artifact_retention_policy() provides a machine-readable policy for query_trace, context_bundle and agent_query_session with status explicitly_deferred and default retention unbounded_currently.",
+      "rpu-v1-t008-no-surprise-delete": "Policy and tests assert ttl_enabled=false, gc_enabled=false, automatic_delete=false, no deletion mode and no store/lookup surprise deletion.",
+      "rpu-v1-t008-compat": "Legacy runtime artifacts are backfilled on read and diagnostics do not rewrite the store file.",
+      "rpu-v1-t008-local-task": "Lenskit local task TASK-RUNTIME-ARTIFACT-RETENTION-001 was marked done with updated evidence and remaining non-claims."
+    },
+    "verification": {
+      "task_sha256": "0b390d2da4398a4f51c01f2dd6bea75d29a199bb79d9961a5603a552b79468a6",
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015"
+    }
   },
   "depends_on": [
     "RBV1-T006"

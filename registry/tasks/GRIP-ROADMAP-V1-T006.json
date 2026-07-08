@@ -30,7 +30,10 @@
   "metadata": {
     "plan_path": "docs/plans/grabowski-grip-roadmap-rest-v1.md",
     "roadmap_slice": "PR8",
-    "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately."
+    "claim_mode_note": "Task claim mode describes implementation repository access; resulting grip effects are documented separately.",
+    "implementation_pr": "https://github.com/heimgewebe/grabowski/pull/98",
+    "implementation_branch": "docs/grip-autonomy-doctrine-v1",
+    "status_note": "Implementation PR is open; keep task planned until PR review and merge evidence are present."
   },
   "priority": {
     "lane": "later",

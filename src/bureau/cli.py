@@ -108,16 +108,22 @@ def parser() -> argparse.ArgumentParser:
     cabinet_import_reviewed.add_argument("--apply", action="store_true")
     frontier = sub.add_parser("frontier")
     frontier.add_argument("--capability", action="append", default=[])
+    frontier.add_argument("--resource")
     explain = sub.add_parser("explain-next")
     explain.add_argument("--capability", action="append", default=[])
+    explain.add_argument("--resource")
+    repo_balls = sub.add_parser("repo-balls")
+    repo_balls.add_argument("--capability", action="append", default=[])
     claim = sub.add_parser("claim-next")
     claim.add_argument("--worker", required=True)
     claim.add_argument("--kind", default="interactive-agent")
     claim.add_argument("--capability", action="append", default=[])
+    claim.add_argument("--resource")
     checkout = sub.add_parser("checkout-next")
     checkout.add_argument("--worker", required=True)
     checkout.add_argument("--kind", default="interactive-agent")
     checkout.add_argument("--capability", action="append", default=[])
+    checkout.add_argument("--resource")
     checkout.add_argument("--base-dir")
     checkout.add_argument("--dispatch", action="store_true")
     sub.add_parser("runs")
@@ -475,19 +481,26 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "close-ready":
             value = close_ready_initiatives(registry, store)
         elif args.command == "frontier":
-            value = dispatcher.frontier(set(args.capability))
+            value = dispatcher.frontier(set(args.capability), resource=args.resource)
         elif args.command == "explain-next":
-            value = dispatcher.explain_next(set(args.capability))
+            value = dispatcher.explain_next(set(args.capability), resource=args.resource)
+        elif args.command == "repo-balls":
+            value = dispatcher.repo_balls(set(args.capability))
         elif args.command == "claim-next":
             try:
                 value = dispatcher.claim_next(
-                    args.worker, tuple(sorted(set(args.capability))), args.kind
+                    args.worker,
+                    tuple(sorted(set(args.capability))),
+                    args.kind,
+                    resource=args.resource,
                 )
             except NoEligibleTask as exc:
                 value = {
                     "status": "no-eligible-task",
                     "detail": str(exc),
-                    "explain_next": dispatcher.explain_next(set(args.capability)),
+                    "explain_next": dispatcher.explain_next(
+                        set(args.capability), resource=args.resource
+                    ),
                 }
                 emit(value, args.json)
                 return 1
@@ -500,12 +513,15 @@ def main(argv: list[str] | None = None) -> int:
                     args.kind,
                     base,
                     args.dispatch,
+                    resource=args.resource,
                 )
             except NoEligibleTask as exc:
                 value = {
                     "status": "no-eligible-task",
                     "detail": str(exc),
-                    "explain_next": dispatcher.explain_next(set(args.capability)),
+                    "explain_next": dispatcher.explain_next(
+                        set(args.capability), resource=args.resource
+                    ),
                 }
                 emit(value, args.json)
                 return 1

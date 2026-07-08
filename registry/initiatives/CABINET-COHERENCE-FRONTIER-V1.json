@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "CABINET-COHERENCE-FRONTIER-V1",
   "title": "Cabinet coherence frontier and Gemini review lane",
-  "state": "waiting",
+  "state": "active",
   "commitment": "later",
   "goal": "Register the safe path for Cabinet to keep ecosystem coherence, produce Bureau-importable candidates, and use Gemini agents as proposal-only review capacity without breaking organ boundaries.",
   "current_plan": {
@@ -43,19 +43,19 @@
       "bureau_import_path_implemented"
     ],
     "registration_note": "Registered while Bureau PR #169 was open; kept later and does not mutate the queue to avoid stealing the active Bureau ball.",
-    "lifecycle_repair_note": "Aligned initiative state with Bureau lifecycle diagnostics after task state changes.",
+    "lifecycle_repair_note": "Aligned initiative state with Bureau lifecycle diagnostics after Gemini lane task was verified and remaining open tasks are planned.",
     "lifecycle": {
-      "updated_at": "2026-07-08T06:48:29Z",
-      "repair_source": "bureau doctor lifecycle recommendation: waiting because Gemini lane task is blocked and remaining tasks are planned later",
+      "updated_at": "2026-07-08T11:05:00Z",
+      "repair_source": "bureau doctor lifecycle recommendation: active because remaining open tasks are planned and no blocked task remains after CABINET-COHERENCE-FRONTIER-V1-T005 was verified",
       "open_tasks": [
-        "CABINET-COHERENCE-FRONTIER-V1-T005",
         "CABINET-COHERENCE-FRONTIER-V1-T006",
         "CABINET-COHERENCE-FRONTIER-V1-T007"
       ],
       "does_not_establish": [
-        "gemini_write_authority",
         "automatic_bureau_task_creation",
-        "automatic_dispatch_authority"
+        "automatic_dispatch_authority",
+        "queue_promotion",
+        "merge_readiness"
       ]
     }
   }

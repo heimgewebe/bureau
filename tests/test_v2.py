@@ -1273,3 +1273,96 @@ def test_doctor_reports_unknown_state_root_directory(registry_factory, tmp_path,
     assert report["unknown_entries"] == [
         {"name": "manual-maintenance", "type": "directory", "class": "unknown"}
     ]
+
+
+def test_explain_next_can_be_scoped_to_repository_resource(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write")
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    explained = dispatcher.explain_next({"repository"}, resource="repo.beta")
+
+    assert explained["resource"] == "repo.beta"
+    assert explained["selected"]["task_id"] == "BUR-TEST-001-T002"
+    assert all(
+        any(
+            bureau_v2.legacy.overlaps(resource, "repo.beta", dispatcher.registry.resources)
+            for resource in item["claim_resources"]
+        )
+        for item in explained["frontier"]
+    )
+
+
+def test_resource_scoped_claims_allow_one_ball_per_repository_with_scoped_workers(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write")
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    alpha = dispatcher.claim_next(
+        "worker-alpha", ("repository",), resource="repo.alpha"
+    )["run"]
+    beta = dispatcher.claim_next(
+        "worker-beta", ("repository",), resource="repo.beta"
+    )["run"]
+    alpha_again = dispatcher.claim_next(
+        "worker-alpha", ("repository",), resource="repo.alpha"
+    )
+
+    assert alpha["task_id"] == "BUR-TEST-001-T001"
+    assert beta["task_id"] == "BUR-TEST-001-T002"
+    assert alpha_again["status"] == "existing-assignment"
+    assert alpha_again["run"]["task_id"] == alpha["task_id"]
+    with pytest.raises(StateError, match="resource-scoped worker id"):
+        dispatcher.claim_next("worker-alpha", ("repository",), resource="repo.beta")
+
+
+def test_repo_balls_projects_current_ball_per_repository(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write")
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    report = dispatcher.repo_balls({"repository"})
+
+    assert report["read_only"] is True
+    assert report["scope"] == "repository"
+    assert report["repo_balls"]["repo.alpha"]["status"] == "ready"
+    assert (
+        report["repo_balls"]["repo.alpha"]["current_ball"]["task_id"]
+        == "BUR-TEST-001-T001"
+    )
+    assert report["repo_balls"]["repo.beta"]["status"] == "ready"
+    assert (
+        report["repo_balls"]["repo.beta"]["current_ball"]["task_id"]
+        == "BUR-TEST-001-T002"
+    )
+
+
+def test_repo_balls_cli_emits_repository_projection(
+    registry_factory, tmp_path, capsys
+):
+    root = registry_factory(2, mode="write")
+    state = StateStore(tmp_path / "bureau.sqlite3")
+
+    result = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-db",
+            str(state.path),
+            "--json",
+            "repo-balls",
+            "--capability",
+            "repository",
+        ]
+    )
+    output = json.loads(capsys.readouterr().out)
+
+    assert result == 0
+    assert output["scope"] == "repository"
+    assert (
+        output["repo_balls"]["repo.alpha"]["current_ball"]["task_id"]
+        == "BUR-TEST-001-T001"
+    )

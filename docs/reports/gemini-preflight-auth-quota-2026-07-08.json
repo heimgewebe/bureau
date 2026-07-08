@@ -1,0 +1,131 @@
+{
+  "binary": {
+    "command": "gemini",
+    "found": true,
+    "path": "/home/alex/.local/bin/gemini",
+    "pathSha256": "167d31aa4e026846b143df772824c0499fd6823855421fc795ae8d1b74c76f20"
+  },
+  "blockedReasons": [],
+  "capabilities": {
+    "activeGenerationProbeObserved": true,
+    "authQuotaObserved": true,
+    "modelAccessObserved": true,
+    "noninteractiveMode": "--print",
+    "noninteractiveModeObserved": true,
+    "outputCapturePath": "stdout_json_or_bounded_stdout",
+    "sandboxFlag": "--sandbox",
+    "sandboxFlagObserved": true,
+    "versionObserved": true
+  },
+  "contextBoundary": {
+    "allowedInputs": [
+      "explicitly selected public repo diffs",
+      "bounded non-secret task briefs",
+      "schema-valid Frontier candidates",
+      "sanitized review prompts"
+    ],
+    "forbiddenAuthority": [
+      "write files",
+      "push branches",
+      "merge PRs",
+      "mutate runtime",
+      "read secrets",
+      "dispatch agents",
+      "modify Bureau queue"
+    ],
+    "noCredentialContext": true,
+    "noRepositoryWriteAuthority": true,
+    "sensitiveExclusions": [
+      "credentials",
+      "tokens",
+      "keys",
+      ".env contents",
+      "private runtime data",
+      "deploy-only material",
+      "unreviewed private context"
+    ]
+  },
+  "doesNotEstablish": [
+    "gemini_schedulable_capacity",
+    "gemini_write_authority",
+    "agent_dispatch",
+    "merge_readiness",
+    "runtime_correctness",
+    "claim_truth"
+  ],
+  "effectFlags": {
+    "credentialAccessAllowed": false,
+    "dispatchAllowed": false,
+    "laneActivationAllowed": false,
+    "mergeAllowed": false,
+    "pushAllowed": false,
+    "queueMutationAllowed": false,
+    "runtimeMutationAllowed": false,
+    "writeAllowed": false
+  },
+  "kind": "gemini_proposal_lane_preflight",
+  "laneEnabled": false,
+  "nextAction": "implement_proposal_only_review_lane_with_laneEnabled_false_receipts",
+  "observations": [
+    {
+      "argv": [
+        "gemini",
+        "--version"
+      ],
+      "ok": true,
+      "output": {
+        "prefix": "1.1.0:\n· Agent execution mode cycling is now publicly available: `default` -> `accept-edits` -> `plan`)\n· Added `request-review` (default) mode as the default execution behavior: automatically pauses before file write operations to display an interactive, line-level diff preview (`f` shortcut) where users can review, accept, or reject individual code modifications before they are saved to disk.\n· Added an `Agent Mode` option to the `/settings` panel so users can set and persist a default execution mode (`default`, `accept-edits`, `plan`) without manually editing `settings.json` or passing `--mode` on startup, with real-time synchronization so changes take effect immediately.\n· Added a dedicated `\"Create file\"` confirmation preview for new file creations (`write_to_file` without overwrite): renders new content as an addition-only diff preview.\n· Added `/plan` mode to replace legacy `/planning`, and removed `/fast` slash commands: consolidated and simplified execution mode switching around `shift+tab` mode cycling and the `/plan` mode prefix\n· Improved file-edit diff preview rendering: computed accurate line-level diffs with context lines (`3` lines) and hunk separators, capped inline preview height with truncation hints, and added a comment confirmation prompt when exiting the diff view with unsent comments.\n· Improved UI footer keybinding hints across all panels (such as `/tasks`, `/agents`, `/permissions`, and `/mcp`) by replacing hardcoded hint strings with centralized layout helpers that dynamically respect customized global and local keybinding configurations (`keybindings.json`).\n· Improved the multiline conversation rename view in the `/resume` picker by dynamically adjusting input box width and padding, and right-aligning metadata columns (`workspace`, `steps`, `time`) on the top line to prevent horizontal scrolling or layout shifts during active renaming.\n· Fixed the tool confirmation dialog to accurately check normalized file URIs against active workspace directories, resolving an issue where valid in-workspace file creations and reads were incorrectly flagged with an `\"Reason: outside workspace\"` warning.\n· Fixed workspace initialization failures when launching the CLI inside dot-prefixed directories (such as  .parent_dir/project ) by scoping path exclusion filters strictly to relative paths inside the workspace rather than rejecting dot-prefixed ancestor directories.\n· Fixed the `/agents` view header displaying `agent.json` instead of `agent.md` when creating new subagents.\n· Fixed the `/agents` panel's `\"Create New Agents\"` section displaying the wrong global configuration directory (`~/.gemini/antigravity-cli/` instead of `~/.gemini/config/`), ensuring users create global subagents in the location actively scanned during startup discovery.\n· Fixed statusline shortcut hints (`? for shortcuts`) and redundant escape hints (`Esc to cancel`) erroneously appearing inside full-screen overlay panels (such as `/changelog`, `/artifact`, and `/settings`) by correctly tracking overlay panel states.\n· Fixed inconsistent timestamp formatting in the `/tasks` panel and task detail views by converting agent-initiated background task timestamps (`time.Time`) from UTC to the local timezone.\n\n1.0.16:\n· Improved the `/tasks` detail panel to automatically scroll to the bottom as new background task logs stream in, and default to the latest output when opened while preserving scroll position if scrolled up manually.\n· Improved model generation resilience by adding automatic client-side retries when encountering transient errors.\n· Fixed dynamically defined subagents by transitioning definitions from JSON to Markdown format, fixing an issue where dynamically created subagents failed to invoke.\n· Fixed a crash occurring when executing background tasks or terminal commands that produce empty outputs (such as `sleep`).\n· Fixed shutdown resource leaks by integrating the shared SQLite summary store for background synchronization and resolving",
+        "sha256": "4e9400abd156035760cb79302416a3971dca8f72c2ae30844ac5c0b8de599bc2",
+        "truncated": true
+      },
+      "returncode": 0,
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "gemini",
+        "--help"
+      ],
+      "ok": true,
+      "output": {
+        "prefix": "Usage of agy:\n  --add-dir                       Add a directory to the workspace (repeatable) (default [])\n  -c                              Short alias for --continue\n  --continue                      Continue the most recent conversation\n  --conversation                  Resume a previous conversation by ID\n  --dangerously-skip-permissions  Auto-approve all tool permission requests without prompting\n  -i                              Short alias for --prompt-interactive\n  --log-file                      Override CLI log file path\n  --mode                          Set the agent execution mode for this session (accept-edits, plan)\n  --model                         Model for the current CLI session\n  --new-project                   Create a new project for this session\n  -p                              Short alias for --print\n  --print                         Run a single prompt non-interactively and print the response\n  --print-timeout                 Timeout for print mode wait (default 5m0s)\n  --project                       Project ID for the current CLI session\n  --prompt                        Alias for --print\n  --prompt-interactive            Run an initial prompt interactively and continue the session\n  --sandbox                       Run in a sandbox with terminal restrictions enabled\n\nAvailable subcommands:\n  changelog       Show changelog and release notes\n  help            Show help for subcommands\n  install         Configure environment paths and shell settings\n  models          List available models\n  plugin          Manage plugins (install, uninstall, list, enable, disable)\n  plugins         Alias for plugin\n  update          Update CLI\n",
+        "sha256": "a085e6086b61dc3acbd58b890e829c1fa26417aa3db9a4789bc926f5c94f9120",
+        "truncated": false
+      },
+      "returncode": 0,
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "gemini",
+        "models"
+      ],
+      "ok": true,
+      "output": {
+        "prefix": "Gemini 3.5 Flash (Medium)\nGemini 3.5 Flash (High)\nGemini 3.5 Flash (Low)\nGemini 3.1 Pro (Low)\nGemini 3.1 Pro (High)\nClaude Sonnet 4.6 (Thinking)\nClaude Opus 4.6 (Thinking)\nGPT-OSS 120B (Medium)\n",
+        "sha256": "189d45910073682a02b60d7dcfe3c73355c386012cc2544a907e04eebc74004b",
+        "truncated": false
+      },
+      "returncode": 0,
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "gemini",
+        "--sandbox",
+        "--print",
+        "Return exactly GEMINI_PREFLIGHT_OK and nothing else."
+      ],
+      "ok": true,
+      "output": {
+        "prefix": "GEMINI_PREFLIGHT_OK\n",
+        "sha256": "b7b3b5130460eef9096ff916bcfa9f07ae638966c7de6fbb65b08aa2357d59a6",
+        "truncated": false
+      },
+      "returncode": 0,
+      "timedOut": false
+    }
+  ],
+  "schemaVersion": 1,
+  "status": "ready_for_proposal_lane_design"
+}

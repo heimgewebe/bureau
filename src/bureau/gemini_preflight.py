@@ -102,6 +102,8 @@ def gemini_preflight(
     *,
     command: str = "gemini",
     timeout_seconds: int = 10,
+    observe_models: bool = False,
+    active_generation_probe: bool = False,
     runner: RunCommand = _run,
 ) -> dict[str, Any]:
     executable = shutil.which(command)
@@ -117,6 +119,8 @@ def gemini_preflight(
                 "versionObserved": False,
                 "noninteractiveModeObserved": False,
                 "sandboxFlagObserved": False,
+                "modelAccessObserved": False,
+                "activeGenerationProbeObserved": False,
                 "authQuotaObserved": False,
             },
             "contextBoundary": _context_boundary(),
@@ -149,11 +153,49 @@ def gemini_preflight(
         blocked.append("noninteractive_mode_not_observed")
     if not has_sandbox:
         blocked.append("sandbox_flag_not_observed")
-    blocked.append("auth_quota_not_observed")
+    observations = [version, help_result]
+    model_access_observed = False
+    generation_observed = False
+    if observe_models:
+        model_probe = _observe_command(
+            executable,
+            ["models"],
+            timeout_seconds=timeout_seconds,
+            runner=runner,
+        )
+        observations.append(model_probe)
+        model_access_observed = bool(model_probe["ok"])
+    if active_generation_probe:
+        generation_probe = _observe_command(
+            executable,
+            [
+                "--sandbox",
+                "--print",
+                "Return exactly GEMINI_PREFLIGHT_OK and nothing else.",
+            ],
+            timeout_seconds=max(timeout_seconds, 45),
+            runner=runner,
+        )
+        observations.append(generation_probe)
+        generation_output = generation_probe["output"]
+        output_prefix = (
+            generation_output.get("prefix", "")
+            if isinstance(generation_output, dict)
+            else ""
+        )
+        generation_observed = bool(
+            generation_probe["ok"] and "GEMINI_PREFLIGHT_OK" in output_prefix
+        )
+    if not model_access_observed or not generation_observed:
+        blocked.append("auth_quota_not_observed")
     status = (
-        "blocked_pending_auth_quota_review"
-        if len(blocked) == 1
-        else "blocked_preflight_incomplete"
+        "ready_for_proposal_lane_design"
+        if not blocked
+        else (
+            "blocked_pending_auth_quota_review"
+            if blocked == ["auth_quota_not_observed"]
+            else "blocked_preflight_incomplete"
+        )
     )
     return {
         "schemaVersion": VERSION,
@@ -166,7 +208,7 @@ def gemini_preflight(
             "path": executable,
             "pathSha256": _sha(executable),
         },
-        "observations": [version, help_result],
+        "observations": observations,
         "capabilities": {
             "versionObserved": version_observed,
             "noninteractiveModeObserved": has_print,
@@ -174,13 +216,19 @@ def gemini_preflight(
             "outputCapturePath": "stdout_json_or_bounded_stdout",
             "sandboxFlagObserved": has_sandbox,
             "sandboxFlag": "--sandbox" if has_sandbox else None,
-            "authQuotaObserved": False,
+            "modelAccessObserved": model_access_observed,
+            "activeGenerationProbeObserved": generation_observed,
+            "authQuotaObserved": model_access_observed and generation_observed,
         },
         "contextBoundary": _context_boundary(),
         "effectFlags": _effect_flags(),
         "doesNotEstablish": DOES_NOT_ESTABLISH,
         "blockedReasons": blocked,
-        "nextAction": "record_auth_quota_and_policy_review_before_enabling_gemini_lane",
+        "nextAction": (
+            "implement_proposal_only_review_lane_with_laneEnabled_false_receipts"
+            if not blocked
+            else "record_auth_quota_and_policy_review_before_enabling_gemini_lane"
+        ),
     }
 
 
@@ -211,6 +259,8 @@ def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="bureau-gemini-preflight")
     result.add_argument("--command", default="gemini")
     result.add_argument("--timeout-seconds", type=int, default=10)
+    result.add_argument("--observe-models", action="store_true")
+    result.add_argument("--active-generation-probe", action="store_true")
     result.add_argument("--output", type=Path)
     result.add_argument("--json", action="store_true")
     return result
@@ -218,7 +268,12 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
-    value = gemini_preflight(command=args.command, timeout_seconds=args.timeout_seconds)
+    value = gemini_preflight(
+        command=args.command,
+        timeout_seconds=args.timeout_seconds,
+        observe_models=args.observe_models,
+        active_generation_probe=args.active_generation_probe,
+    )
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         rendered = json.dumps(value, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
@@ -232,7 +287,8 @@ def main(argv: list[str] | None = None) -> int:
                 sort_keys=True,
             )
         )
-    return 0 if value["status"].startswith("blocked") or value["status"] == "ready" else 1
+    ok_statuses = {"ready", "ready_for_proposal_lane_design"}
+    return 0 if value["status"].startswith("blocked") or value["status"] in ok_statuses else 1
 
 
 if __name__ == "__main__":

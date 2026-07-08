@@ -3,7 +3,7 @@
   "id": "RPU-V1-T002",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "Live-repo source citation addressing",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 25
@@ -59,7 +59,35 @@
       "merge_readiness",
       "agent_quality_improvement_by_itself"
     ],
-    "source_gap": "Max-dump critique: bundle-only citations force agents out of normal repo path/line workflows."
+    "source_gap": "Max-dump critique: bundle-only citations force agents out of normal repo path/line workflows.",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Lenskit PR #913: citation map rows can carry optional live_repo_address convenience metadata beside canonical_range; resolved RepoBrief query projects the live source address while preserving canonical bundle authority.",
+    "implementation_pr": "heimgewebe/lenskit#913",
+    "live_lenskit_commit": "523dae26ad4e845e9fcc8a102bfb64a817855d4f",
+    "implementation_paths": [
+      "merger/lenskit/core/merge.py",
+      "merger/lenskit/core/citation_map.py",
+      "merger/lenskit/core/repobrief_access.py",
+      "merger/lenskit/contracts/citation-map.v1.schema.json",
+      "docs/proofs/repobrief-live-source-citation-address-v1-proof.md"
+    ],
+    "validation": [
+      "Lenskit PR #913 GitHub CI passed: CodeQL, pytest-full, ruff, planning-registration, doc-freshness, contract/security checks, graph/parity gates and webui-js-tests.",
+      "Local: targeted citation/source projection tests -> 146 passed.",
+      "Local: broader citation/range/RepoBrief tests -> 319 passed.",
+      "Local: ruff-ci targeted files -> pass.",
+      "Local: citation-map schema JSON parse, planning-registration and git diff --check -> pass."
+    ],
+    "verified_acceptance": {
+      "rpu-v1-t002-source-address": "citation_map rows and resolved query projections can expose source path, source line range, git_commit and blob_sha1 when provenance and source content are available.",
+      "rpu-v1-t002-dual-authority": "live_repo_address has authority=source_address_convenience and canonical_authority_preserved=true; query output also carries canonical_authority for canonical_md/citation_id.",
+      "rpu-v1-t002-dirty-handling": "dirty source snapshot provenance produces live_repo_address.status=degraded with reason=snapshot_worktree_dirty; missing/unavailable provenance produces unknown/unavailable/degraded, not inferred freshness.",
+      "rpu-v1-t002-compat": "citation_id and canonical_range remain unchanged/backward-compatible; live_repo_address is optional and schema-bounded."
+    },
+    "verification": {
+      "task_sha256": "a814403546053e7ead523cd008074aac5456b180ba120831c404e0ff0f5c1d07",
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015"
+    }
   },
   "depends_on": [
     "RBV1-T005",

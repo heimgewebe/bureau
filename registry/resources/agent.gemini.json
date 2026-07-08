@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "agent.gemini",
+  "type": "external",
+  "metadata": {
+    "role": "Proposed proposal-only semantic maintenance scout after capability and sandbox preflight",
+    "authority": "read-only proposal output only",
+    "does_not_establish": [
+      "gemini_available",
+      "gemini_schedulable",
+      "push_permission",
+      "merge_permission",
+      "runtime_mutation_permission",
+      "private_context_authority"
+    ]
+  }
+}

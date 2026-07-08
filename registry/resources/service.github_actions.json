@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "id": "service.github_actions",
+  "type": "service",
+  "metadata": {
+    "role": "GitHub Actions workflow and check surface for read-only/preflight validation",
+    "does_not_establish": [
+      "workflow_write_permission",
+      "runtime_correctness",
+      "task_approval"
+    ]
+  }
+}

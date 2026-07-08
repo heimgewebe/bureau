@@ -4,7 +4,8 @@
   "lanes": {
     "now": [],
     "next": [
-      "GRABOWSKI-OPERATOR-SURFACE-V1-T012"
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T012",
+      "CABINET-GEMINI-MAINT-V1-T001"
     ],
     "later": [
       "COMMONWORLD-ATLAS-V1-T003",
@@ -56,7 +57,11 @@
       "GRIP-ROADMAP-V1-T021",
       "BUR-2026-005-T015",
       "BUR-2026-005-T016",
-      "BUR-2026-005-T017"
+      "BUR-2026-005-T017",
+      "CABINET-GEMINI-MAINT-V1-T002",
+      "CABINET-GEMINI-MAINT-V1-T003",
+      "CABINET-GEMINI-MAINT-V1-T004",
+      "CABINET-GEMINI-MAINT-V1-T005"
     ]
   }
 }

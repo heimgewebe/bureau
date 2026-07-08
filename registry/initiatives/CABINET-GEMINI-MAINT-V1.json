@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "CABINET-GEMINI-MAINT-V1",
+  "title": "Cabinet Gemini maintenance scan lanes",
+  "state": "active",
+  "commitment": "next",
+  "goal": "Introduce Gemini only as a read-only semantic maintenance scout for Cabinet, with capability preflight, strict no-effect contracts, curated evidence packets, one reviewed dry run, and a separate schedule decision.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "https://github.com/heimgewebe/bureau/issues/254"
+  },
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "completion": [
+    "Gemini is not schedulable until capability and sandbox preflight evidence exists.",
+    "Any scan output is artifact-only and cannot create tasks, issues, PRs, comments, dispatches, queue mutations, runtime actions, pushes or merges.",
+    "Only the first dry run may inform a later scheduling decision."
+  ],
+  "metadata": {
+    "registered_at": "2026-07-08T12:10:00Z",
+    "source_issue": "heimgewebe/bureau#254",
+    "target_repository": "heimgewebe/cabinet",
+    "source_context": [
+      "Cabinet Gemini proposal-only role",
+      "Cabinet Maintenance Radar",
+      "Cabinet Frontier boundary",
+      "User request: register the plan as Bureau queue tasks"
+    ],
+    "does_not_establish": [
+      "gemini_available",
+      "gemini_schedulable",
+      "cost_acceptability",
+      "output_quality",
+      "task_approval",
+      "autonomous_dispatch",
+      "merge_readiness",
+      "runtime_correctness"
+    ]
+  }
+}

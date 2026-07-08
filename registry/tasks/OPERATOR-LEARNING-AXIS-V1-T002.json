@@ -3,7 +3,7 @@
   "id": "OPERATOR-LEARNING-AXIS-V1-T002",
   "initiative": "OPERATOR-LEARNING-AXIS-V1",
   "title": "Decide additive contract follow-up path",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 60
@@ -50,6 +50,49 @@
     "primary_repo": "heimgewebe/heimlern",
     "follow_up_from": "OPERATOR-LEARNING-AXIS-V1-T001",
     "recommended_agent": "claude",
-    "claude_delegation": "architecture and contract-decision review"
+    "claude_delegation": "architecture and contract-decision review",
+    "verified_at": "2026-07-08",
+    "implementation_repo": "heimgewebe/heimlern",
+    "implementation_pr": "heimgewebe/heimlern#193",
+    "implementation_head": "657014d0633a24956dda56589000b0542bf7c224",
+    "implementation_merge_commit": "af1c66bf7aca5b7b2c338e2f75ab690b43ac6ea3",
+    "diff_sha256": "fee5570d9bfded296227cb2b1dc3400828f4fea9352d8a2503ffd184f42fa81c",
+    "decision": "Keep additive deltas outside contract-bound policy.weight_adjustment.v1 emission.",
+    "decision_record": "docs/adr/0005-additive-delta-contract-boundary.md",
+    "decision_summary": {
+      "additive_delta_contract_path": "do_not_add_to_v1_now",
+      "v1_emission_allowed_delta_kinds": [
+        "absolute",
+        "relative"
+      ],
+      "additive_scope": "internal_simulation_only",
+      "ola_emission": "relative_percent_deltas_only",
+      "metarepo_follow_up_required_now": false,
+      "future_follow_up_condition": "Only if reviewed producer evidence shows additive external semantics are necessary and cannot be represented by relative or absolute deltas."
+    },
+    "validated_acceptance": {
+      "decision-recorded": "Heimlern PR #193 adds ADR-0005 and links it from the ADR index and policy lifecycle documentation.",
+      "contract-follow-up-clear": "ADR-0005 states no immediate metarepo follow-up is needed; any future additive external semantics require a separate contract-design follow-up before heimlern emission changes."
+    },
+    "validation": [
+      "Heimlern PR #193 merged at af1c66bf7aca5b7b2c338e2f75ab690b43ac6ea3.",
+      "GitHub checks for PR #193 passed: Analyze actions/python/rust, CodeQL, build-test, schema-validate, repo-root, templates.",
+      "Local before merge: py_compile for OLA/coherence/doc-freshness scripts passed; doc freshness pytest passed; ola_probe --self-test passed; validate_weight_adjustment_coherence.py passed against pinned metarepo schema; cargo test -q -p heimlern-feedback passed; git diff --check passed.",
+      "Post-merge validation on Heimlern origin/main af1c66bf7aca5b7b2c338e2f75ab690b43ac6ea3 repeated the same focused Python, schema, Rust and diff checks successfully."
+    ],
+    "does_not_establish": [
+      "metarepo_contract_change",
+      "automatic_rule_change_permission",
+      "runtime_policy_readiness",
+      "routing_policy_superiority",
+      "sample_sufficiency",
+      "end_to_end_learning_smoke",
+      "proposal_quality",
+      "full_ola_adapter_migration"
+    ],
+    "verification": {
+      "task_sha256": "5c954dea2094808724cb514c68956bd44be87dc0631cb4beafc4eb6ec97bdee0",
+      "plan_sha256": "76d9bc2839e3a37b12f25e565b429bf413427570794dfa836137a18eb712d8f5"
+    }
   }
 }

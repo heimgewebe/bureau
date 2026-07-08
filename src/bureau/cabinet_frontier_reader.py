@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -388,6 +389,220 @@ def create_frontier_receipt(
     return receipt
 
 
+
+def _candidate_sha256(candidate: dict[str, Any]) -> str:
+    rendered = json.dumps(candidate, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(rendered.encode("utf-8")).hexdigest()
+
+
+def _resource_for_repository(repository: str) -> str:
+    owner, _, name = repository.partition("/")
+    if owner == "heimgewebe" and name:
+        safe = "".join(char.lower() if char.isalnum() else "." for char in name).strip(".")
+        return f"repo.{safe}"
+    safe = "".join(char.lower() if char.isalnum() else "." for char in repository).strip(".")
+    return f"repo.{safe or 'unknown'}"
+
+
+def _queue_task_ids(registry_root: Path) -> set[str]:
+    queue_path = registry_root / "registry/queue.json"
+    if not queue_path.exists():
+        return set()
+    try:
+        queue = json.loads(queue_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise CabinetBridgeError(f"registry queue invalid JSON: {exc.msg}") from exc
+    lanes = queue.get("lanes") if isinstance(queue.get("lanes"), dict) else {}
+    result: set[str] = set()
+    for value in lanes.values():
+        if isinstance(value, list):
+            result.update(item for item in value if isinstance(item, str))
+    return result
+
+
+def _load_frontier_receipt(path: str | Path) -> dict[str, Any]:
+    receipt = _load_json(path, "frontier review receipt")
+    if receipt.get("schemaVersion") != 1:
+        raise CabinetBridgeError("frontier review receipt schemaVersion must be 1")
+    if receipt.get("kind") != RECEIPT_KIND:
+        raise CabinetBridgeError(f"frontier review receipt kind must be {RECEIPT_KIND}")
+    if receipt.get("status") != "review_recorded":
+        raise CabinetBridgeError("frontier review receipt status must be review_recorded")
+    if receipt.get("decision") != "ready-for-design":
+        raise CabinetBridgeError("frontier review receipt decision must be ready-for-design")
+    _require_false(receipt, EFFECT_FLAGS, "frontier review receipt")
+    _text(receipt.get("reviewer"), "frontier review receipt reviewer")
+    _texts(receipt.get("evidence"), "frontier review receipt evidence")
+    source_gate = _object(receipt.get("sourceGate"), "frontier review receipt sourceGate")
+    _text(source_gate.get("sourceCandidateId"), "frontier review receipt sourceCandidateId")
+    return receipt
+
+
+def _task_from_frontier_candidate(
+    candidate: dict[str, Any],
+    *,
+    task_id: str,
+    initiative: str,
+    reviewer: str,
+    receipt_path: str | Path,
+) -> dict[str, Any]:
+    task_id = _text(task_id, "task_id")
+    initiative = _text(initiative, "initiative")
+    reviewer = _text(reviewer, "reviewer")
+    proposal = _object(candidate.get("proposal"), "frontier candidate proposal")
+    target = _object(candidate.get("target"), "frontier candidate target")
+    repository = _text(target.get("repository"), "frontier candidate target repository")
+    candidate_id = _text(candidate.get("id"), "frontier candidate id")
+    source_sha = _candidate_sha256(candidate)
+    acceptance = _list(candidate.get("acceptance"), "frontier candidate acceptance")
+    task_acceptance = [
+        item
+        for item in acceptance
+        if isinstance(item, dict) and item.get("id") and item.get("assertion")
+    ]
+    task_acceptance.extend(
+        [
+            {
+                "id": "reviewed-frontier-import",
+                "assertion": "Task was created from a reviewed Cabinet Frontier receipt.",
+            },
+            {
+                "id": "no-auto-dispatch",
+                "assertion": (
+                    "Import creates no dispatch, queue mutation, runtime mutation, "
+                    "merge or completion effect."
+                ),
+            },
+        ]
+    )
+    return {
+        "schema_version": 1,
+        "id": task_id,
+        "initiative": initiative,
+        "title": _text(proposal.get("title"), "frontier proposal title"),
+        "state": "planned",
+        "goal": _text(proposal.get("summary"), "frontier proposal summary"),
+        "required_capabilities": ["repository", "review"],
+        "priority": {"lane": proposal.get("priorityHint") or "later", "rank": 245},
+        "execution": {"mode": "manual", "policy": "review-before-effect"},
+        "claims": [
+            {"resource": _resource_for_repository(repository), "mode": "read", "isolation": "none"}
+        ],
+        "acceptance": task_acceptance,
+        "metadata": {
+            "source": "cabinet_frontier_reviewed_import",
+            "source_frontier_candidate_id": candidate_id,
+            "source_frontier_candidate_sha256": source_sha,
+            "source_frontier_candidate": candidate,
+            "source_review_receipt": str(Path(receipt_path).expanduser()),
+            "reviewer": reviewer,
+            "import_allowed": False,
+            "dispatch_allowed": False,
+            "queue_mutation_allowed": False,
+            "runtime_mutation_allowed": False,
+            "merge_or_push_allowed": False,
+            "completion_authority": False,
+        },
+    }
+
+
+def import_reviewed_frontier_candidate(
+    report_path: str | Path,
+    receipt_path: str | Path,
+    *,
+    registry: Any,
+    task_id: str,
+    initiative: str,
+    apply: bool,
+) -> dict[str, Any]:
+    """Import one reviewed Frontier candidate using promotion-import boundaries."""
+    receipt = _load_frontier_receipt(receipt_path)
+    source_gate = _object(receipt.get("sourceGate"), "frontier review receipt sourceGate")
+    candidate_id = _text(source_gate.get("sourceCandidateId"), "sourceCandidateId")
+    row = _admissible_row(_load_report(report_path), candidate_id)
+    candidate = _object(row.get("candidate"), "frontier candidate")
+    reviewer = _text(receipt.get("reviewer"), "frontier receipt reviewer")
+    task = _task_from_frontier_candidate(
+        candidate,
+        task_id=task_id,
+        initiative=initiative,
+        reviewer=reviewer,
+        receipt_path=receipt_path,
+    )
+    task_id = task["id"]
+    registry_root = Path(registry.root)
+    target_path = registry_root / "registry/tasks" / f"{task_id}.json"
+    task_exists = task_id in getattr(registry, "tasks", {})
+    path_exists = target_path.exists() or target_path.is_symlink()
+    if task_exists or path_exists:
+        raise CabinetBridgeError(f"frontier import task already exists in registry: {task_id}")
+    if task_id in _queue_task_ids(registry_root):
+        raise CabinetBridgeError(f"frontier import task id already appears in queue: {task_id}")
+    existing_sources = _existing_frontier_sources(registry_root)
+    if candidate_id in existing_sources:
+        raise CabinetBridgeError(f"frontier source already imported: {candidate_id}")
+    if initiative not in getattr(registry, "initiatives", {}):
+        raise CabinetBridgeError(f"frontier import initiative missing from registry: {initiative}")
+    try:
+        registry.schemas.validate("task", task, target_path)
+    except Exception as exc:
+        raise CabinetBridgeError(
+            f"frontier import task does not satisfy Bureau schema: {exc}"
+        ) from exc
+
+    base = {
+        "schemaVersion": 1,
+        "kind": "cabinet_frontier_reviewed_import",
+        "sourceCandidateId": candidate_id,
+        "sourceCandidateSha256": _candidate_sha256(candidate),
+        "taskId": task_id,
+        "initiative": initiative,
+        "sourceReport": str(Path(report_path).expanduser()),
+        "sourceReceipt": str(Path(receipt_path).expanduser()),
+        "targetPath": str(target_path),
+        "reviewedBy": reviewer,
+        "dispatchAllowed": False,
+        "queueMutationAllowed": False,
+        "dispatchPerformed": False,
+        "queueMutationPerformed": False,
+        "runtimeMutationPerformed": False,
+        "mergeOrPushPerformed": False,
+    }
+    if not apply:
+        return {
+            **base,
+            "mode": "dry_run",
+            "importReady": True,
+            "registryMutationAllowed": False,
+            "registryMutationPerformed": False,
+            "taskCreationPerformed": False,
+        }
+
+    target_dir = target_path.parent
+    if not target_dir.is_dir():
+        raise CabinetBridgeError(f"frontier import registry directory missing: {target_dir}")
+    rendered = json.dumps(task, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
+    try:
+        with target_path.open("x", encoding="utf-8") as handle:
+            handle.write(rendered)
+    except FileExistsError as exc:
+        raise CabinetBridgeError(
+            f"frontier import task already exists in registry: {task_id}"
+        ) from exc
+    except OSError as exc:
+        raise CabinetBridgeError(
+            f"frontier import task cannot be written: {target_path}: {exc.__class__.__name__}"
+        ) from exc
+    return {
+        **base,
+        "mode": "apply",
+        "importReady": True,
+        "bytes": len(rendered.encode("utf-8")),
+        "registryMutationAllowed": True,
+        "registryMutationPerformed": True,
+        "taskCreationPerformed": True,
+    }
+
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="bureau-cabinet-frontier-reader")
     sub = result.add_subparsers(dest="command", required=True)
@@ -410,6 +625,14 @@ def parser() -> argparse.ArgumentParser:
     receipt.add_argument("--evidence", required=True, action="append")
     receipt.add_argument("--note")
     receipt.add_argument("--json", action="store_true")
+    reviewed_import = sub.add_parser("import-reviewed")
+    reviewed_import.add_argument("--report", required=True)
+    reviewed_import.add_argument("--receipt", required=True)
+    reviewed_import.add_argument("--registry-root", default=".")
+    reviewed_import.add_argument("--task-id", required=True)
+    reviewed_import.add_argument("--initiative", required=True)
+    reviewed_import.add_argument("--apply", action="store_true")
+    reviewed_import.add_argument("--json", action="store_true")
     return result
 
 
@@ -426,13 +649,24 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.command == "review":
             value = review_frontier_preview(args.preview)
-        else:
+        elif args.command == "receipt":
             value = create_frontier_receipt(
                 args.review_gate,
                 reviewer=args.reviewer,
                 decision=args.decision,
                 evidence=args.evidence,
                 note=args.note,
+            )
+        else:
+            from .core import Registry
+
+            value = import_reviewed_frontier_candidate(
+                args.report,
+                args.receipt,
+                registry=Registry.load(Path(args.registry_root)),
+                task_id=args.task_id,
+                initiative=args.initiative,
+                apply=args.apply,
             )
     except CabinetBridgeError as exc:
         print(f"bureau-cabinet-frontier-reader: {exc}", file=sys.stderr)

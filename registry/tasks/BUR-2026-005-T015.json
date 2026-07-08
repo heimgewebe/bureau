@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T015",
+  "initiative": "BUR-2026-005",
+  "title": "Design reviewed queue reconcile apply path",
+  "state": "planned",
+  "depends_on": [
+    "BUR-2026-005-T014"
+  ],
+  "goal": "Define and implement a guarded apply path for queue-reconcile recommendations so now/next lane promotions can be applied only from a reviewed plan artifact.",
+  "priority": {
+    "lane": "later",
+    "rank": 150
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "source": "Registered after PR #253 intentionally shipped queue-reconcile as read-only only.",
+    "not_implemented_in": "heimgewebe/bureau#253",
+    "safety_boundary": "No automatic promotion. Apply must require reviewed plan evidence, current registry hash, dry-run parity and doctor/registry-truth gates.",
+    "does_not_establish": [
+      "automatic_queue_mutation",
+      "dispatch_authority",
+      "merge_authority"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "reviewed-plan-required",
+      "assertion": "Apply mode requires an explicit reviewed plan artifact with expected queue diff and registry head."
+    },
+    {
+      "id": "dry-run-parity",
+      "assertion": "Apply refuses if dry-run findings changed since the reviewed plan was generated."
+    },
+    {
+      "id": "gates-after-apply",
+      "assertion": "bureau check, doctor and registry-truth must pass after any queue mutation."
+    },
+    {
+      "id": "no-implicit-dispatch",
+      "assertion": "Applying a queue change does not claim or dispatch work."
+    }
+  ]
+}

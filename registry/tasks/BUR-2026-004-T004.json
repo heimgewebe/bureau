@@ -3,7 +3,7 @@
   "id": "BUR-2026-004-T004",
   "initiative": "BUR-2026-004",
   "title": "Plan console entry-point consolidation",
-  "state": "planned",
+  "state": "verified",
   "goal": "Inventory Bureau console scripts and systemd references, then design a compatibility-preserving subcommand consolidation path.",
   "priority": {
     "lane": "later",
@@ -25,7 +25,43 @@
     "policy": "review-before-effect"
   },
   "metadata": {
-    "plan_path": "docs/plans/bureau-boundary-ops-v1.md"
+    "plan_path": "docs/plans/bureau-boundary-ops-v1.md",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Bureau PR #235: added a compatibility-preserving console entry-point consolidation plan, a bounded entry-point inventory report, and tests covering packaged console scripts, module entry points, systemd ExecStart references, and plan completeness.",
+    "implementation_pr": "heimgewebe/bureau#235",
+    "live_bureau_commit": "46e4d42461caed6c1654f44b3c3867d7c8d7fd57",
+    "coordination_note": "Bureau PR #234 was merged before this closeout because it was green/mergeable and touched registry/queue.json; closeout is based on Bureau main after #234.",
+    "implementation_paths": [
+      "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
+      "docs/reports/bur-2026-004-t004-console-entrypoints.v1.json",
+      "src/bureau/entrypoint_inventory.py",
+      "tests/test_entrypoint_inventory.py"
+    ],
+    "validation": [
+      "Bureau PR #235 GitHub CI passed validate (3.10) and validate (3.12).",
+      "Local before merge: entrypoint/systemd focused tests -> 28 passed.",
+      "Local before merge: PYTHONPATH=src python3 -m bureau.cli --root . check -> valid True.",
+      "Local before merge: PYTHONPATH=src python3 -m ruff check src tests -> pass.",
+      "Post-merge closeout base: entrypoint/systemd focused tests -> 28 passed.",
+      "Post-merge closeout base: PYTHONPATH=src python3 -m bureau.cli --root . check -> valid True.",
+      "Local: git diff --check -> pass."
+    ],
+    "verified_acceptance": {
+      "entrypoint-inventory": "Inventory lists 15 packaged console scripts from pyproject.toml and records module targets, layers and documentation reference files.",
+      "systemd-impact": "Inventory records 6 systemd service ExecStart commands and timers; plan reviews systemd impact for bureau, source PR bridge, review steward, agent frontier and Codex bridge units.",
+      "compat-plan": "Plan forbids removals now, adds future bureau grouped aliases first, keeps compatibility shims before any removal, forbids default warnings in JSON/scheduler paths, and defines a removal gate."
+    },
+    "does_not_establish": [
+      "runtime_units_installed",
+      "hidden_external_users_absent",
+      "safe_to_remove_entrypoints",
+      "ops_extraction_decision",
+      "systemd_runtime_correctness"
+    ],
+    "verification": {
+      "task_sha256": "7259dc34c016791b57b090580f852af404622a8cef1f64c2364c59dab5db798d",
+      "plan_sha256": "bb81949c8375fa377db1e49b6c2f53d10c6ec53b894485799e234a28e92e44d3"
+    }
   },
   "acceptance": [
     {

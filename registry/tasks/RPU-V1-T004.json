@@ -3,7 +3,7 @@
   "id": "RPU-V1-T004",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "Token-budget context compiler",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 40
@@ -53,13 +53,52 @@
     "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
     "registered_at": "2026-07-08T00:00:00Z",
     "does_not_establish": [
-      "runtime_correctness",
+      "exact_token_count",
+      "model_context_fit",
+      "best_possible_context",
+      "all_relevant_context_used",
+      "answer_correctness",
+      "repo_understanding",
+      "claims_truth",
+      "runtime_behavior",
       "test_sufficiency",
       "review_completeness",
       "merge_readiness",
-      "agent_quality_improvement_by_itself"
+      "agent_quality_improvement"
     ],
-    "source_vision": "Context-as-service / token-budget optimizer."
+    "source_vision": "Context-as-service / token-budget optimizer.",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Lenskit PR #918: RepoBrief now has a deterministic read-only context compiler that selects bounded context for a task and token budget from resolved evidence, python_symbol_index_json, relation_cards_jsonl and required-reading roles, with selected/omitted context, gaps, signals, fallback context and selection trace.",
+    "implementation_pr": "heimgewebe/lenskit#918",
+    "live_lenskit_commit": "567929382c90db8bf46986cd1da8eaecde611b8b",
+    "implementation_head": "f5a95e95ab8383e124aa92448f69e02da3806e5b",
+    "diff_sha256": "62e45886cf53edf8d8c810b9a72fdd83a7e1eba205aca4461a3abf8504323984",
+    "implementation_paths": [
+      "merger/lenskit/core/repobrief_context_compiler.py",
+      "merger/lenskit/cli/cmd_repobrief.py",
+      "merger/lenskit/tests/test_repobrief_context_compiler.py",
+      "docs/proofs/repobrief-context-compiler-v1-proof.md"
+    ],
+    "validation": [
+      "Lenskit PR #918 GitHub CI passed: pytest-full, ruff, CodeQL, doc-freshness, planning-registration, reusable fixture validation, contract static-pin/deletion policy, repo-root, templates, validate-merge-meta and webui-js-tests.",
+      "Local before merge: 222 focused RepoBrief/token-budget/symbol/relation/source-citation/access/profile/preflight/latest-complete tests passed.",
+      "Local before merge: targeted ruff-ci check passed.",
+      "Local before merge: planning-registration ratchet reported no new drift.",
+      "Local before merge: doc-freshness inspect PASS.",
+      "Local before merge: git diff --check origin/main...HEAD passed.",
+      "Manual CLI smoke: generated a tiny RepoBrief snapshot, ran repobrief context compile, selected resolved evidence and symbol context, reported relation_cards_jsonl as a missing signal gap, fallback_context.available=true and writes=[].",
+      "Post-merge on origin/main 567929382c90db8bf46986cd1da8eaecde611b8b: same 222 tests passed, targeted ruff passed, planning-registration no new drift, doc-freshness PASS and diff-check pass."
+    ],
+    "verified_acceptance": {
+      "rpu-v1-t004-budget": "repobrief.context_compiler accepts task, task_profile, optional query, signal_k, context_budget_tokens and bytes_per_token and emits an ordered selected_context plan.",
+      "rpu-v1-t004-selection-trace": "Output includes selection_trace, selected_context, omitted_context, gaps and signals for freshness, availability, resolved evidence, python symbol index, relation cards and required reading.",
+      "rpu-v1-t004-citations": "Selected context carries source ranges, citation/range refs and relation evidence where available for answer-compliance workflows.",
+      "rpu-v1-t004-fallback": "Fallback context exposes canonical/front-door required-reading roles when retrieval, graph, symbol or relation signals are missing or degraded."
+    },
+    "verification": {
+      "task_sha256": "caf3714a67faecc63c2e1946e3897c47a4466f3689e14671ec9061a63a028273",
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015"
+    }
   },
   "depends_on": [
     "RPU-V1-T001",

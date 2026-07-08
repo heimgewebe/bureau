@@ -3,7 +3,7 @@
   "id": "HEIMLERN-OPTIMIZATION-V1-T006",
   "initiative": "HEIMLERN-OPTIMIZATION-V1",
   "title": "Claim Evidence Registry minimal anlegen",
-  "state": "planned",
+  "state": "verified",
   "goal": "Eine schlanke doc-freshness Registry für tragende agentenrelevante Claims ergänzen, ohne Ballast aufzubauen.",
   "execution": {
     "mode": "interactive-agent",
@@ -36,7 +36,48 @@
     "source_plan": "docs/plans/heimlern-optimization-plan-v1.md",
     "source_pr": "heimgewebe/heimlern#181",
     "source_head": "b9919bd184c6918713ed11a54370ad03d510273a",
-    "queue_readiness_repair": "2026-07-08: next heimlern write ball; repo claim made explicit for repo-scoped queue projection."
+    "queue_readiness_repair": "2026-07-08: next heimlern write ball; repo claim made explicit for repo-scoped queue projection.",
+    "implementation_pr": "heimgewebe/heimlern#192",
+    "implementation_head": "3d1fafbaf74f945cacdecf15ae8b0f269b82a74c",
+    "implementation_merge_commit": "84c72306c355cf26c574d01e7f56b35bd207cbbb",
+    "diff_sha256": "b97e53494b3763503700f453553f04a993b99aeb18e9ab9b85ac9df3ac621e9e",
+    "live_heimlern_commit": "84c72306c355cf26c574d01e7f56b35bd207cbbb",
+    "source_plan_observed": "docs/plans/heimlern-repobrief-audit-umbauplan-v1.md",
+    "source_plan_note": "Task metadata named docs/plans/heimlern-optimization-plan-v1.md, but the live repo contains the RepoBrief audit plan; PR #192 follows its PR 4 evidence-surface section.",
+    "implementation_paths": [
+      "docs/doc-freshness-registry.yml",
+      "docs/doc-freshness-registry.md",
+      "tests/test_doc_freshness_registry.py"
+    ],
+    "outcome": "Added a minimal RepoBrief/rLens claim-evidence registry for heimlern with six audited agent-relevant claims, explicit diagnostic authority and non-claims, plus a focused test that keeps evidence targets resolvable and prevents the registry from becoming a general documentation index.",
+    "validated_acceptance": {
+      "registry-present": "docs/doc-freshness-registry.yml exists in Heimlern PR #192 and contains the audit-plan claims for contract ownership, learning cycle, no-auto-apply, weight adjustment output, offline outcome ingest and metrics workflow wiring.",
+      "minimal-scope": "tests/test_doc_freshness_registry.py asserts exactly six expected claim IDs and scope=audited_agent_relevant_claims_only.",
+      "repobrief-useful": "docs/doc-freshness-registry.md documents RepoBrief/rLens consumption as claim-evidence navigation only, with canonical authority remaining in referenced code, contracts, fixtures, tests and docs."
+    },
+    "validation": [
+      "Heimlern PR #192 GitHub CI passed: Analyze actions/python/rust, CodeQL, build-test, repo-root, schema-validate and templates.",
+      "Local before merge: py_compile for registry test and relevant scripts passed; pytest tests/test_doc_freshness_registry.py passed; CI-shaped schema/OLA checks passed; cargo fmt, clippy and cargo test passed; diff-check passed.",
+      "Post-merge on origin/main 84c72306c355cf26c574d01e7f56b35bd207cbbb: registry pytest passed; schema samples validated; rejected feedback fixture remained rejected; OLA self-tests passed; cargo fmt and cargo test passed; diff-check passed."
+    ],
+    "does_not_establish": [
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "production_readiness",
+      "proposal_quality",
+      "task_truth",
+      "repobrief_source_of_task_truth",
+      "all_documentation_current"
+    ],
+    "verification": {
+      "task_sha256": "ca5dfde41abfda86ab0e868f1b543b9139cb59fe25489fcf88caae1d2c39b0fe",
+      "source_plan_sha256": "fe6560c16af368462ab045c9c8690470c4c3a291b9c7252d115a93ccb1acd40b",
+      "source_plan_repository": "heimgewebe/heimlern",
+      "plan_sha256": "de066e4dc95e6a5575653e41c8cf2c6108f57052e12ba782dbbf49f4ab556b7e"
+    },
+    "verified_at": "2026-07-08"
   },
   "priority": {
     "lane": "next",

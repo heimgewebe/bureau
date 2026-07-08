@@ -3,9 +3,9 @@
   "id": "CABINET-GEMINI-MAINT-V1-T003",
   "initiative": "CABINET-GEMINI-MAINT-V1",
   "title": "Build curated Gemini maintenance evidence packet",
-  "state": "planned",
+  "state": "verified",
   "priority": {
-    "lane": "next",
+    "lane": "later",
     "rank": 90
   },
   "goal": "Build a narrow, deterministic evidence packet for Gemini maintenance scans so Gemini reads bounded Cabinet evidence rather than crawling unrestricted repositories.",
@@ -59,16 +59,33 @@
     "source_issue": "heimgewebe/bureau#254",
     "registered_at": "2026-07-08T12:10:00Z",
     "advanced_after_contract_at": "2026-07-08T14:45:00Z",
+    "verified_at": "2026-07-08T16:35:00Z",
+    "verification": {
+      "task_sha256": "c0abd6fa795609d9aec5faefb76ac2c4b7b1e14e74365b745ffb275ee0521ce9",
+      "plan_sha256": "bfd441cbf854d2c8f0ffd14024f743ea64272ba867ffe26b2a5852bc947b7941"
+    },
+    "evidence": {
+      "cabinet_pr": "heimgewebe/cabinet#91",
+      "cabinet_merge_commit": "5cb86665c49d163eb5efc18a5d95bfb4bf4478f0",
+      "contract": "docs/contracts/cabinet-gemini-maintenance-evidence-packet-v1.md",
+      "schema": "docs/contracts/cabinet-gemini-maintenance-evidence-packet-v1.schema.json",
+      "generator": "scripts/write_gemini_maintenance_evidence_packet.py",
+      "tests": "scripts/tests/test_gemini_maintenance_evidence_packet.py",
+      "ci_run": "heimgewebe/cabinet/actions/runs/28958409023"
+    },
     "context": {
       "cabinet_contract_pr": "heimgewebe/cabinet#89",
       "cabinet_contract_merge_commit": "0568efc9b43d1271664bad8d6a80bac96859e0ad",
       "validator": "scripts/validate_gemini_maintenance_scan.py"
     },
+    "next_action": "Continue with CABINET-GEMINI-MAINT-V1-T004: run the first reviewed manual artifact-only Gemini maintenance dry run.",
     "does_not_establish": [
-      "complete_repository_context",
-      "semantic_correctness",
+      "gemini_available",
+      "scheduled_scan_approved",
+      "dry_run_success",
       "scan_quality",
       "task_approval",
+      "complete_repository_context",
       "runtime_correctness"
     ]
   },

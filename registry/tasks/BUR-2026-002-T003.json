@@ -25,7 +25,34 @@
   "initiative": "BUR-2026-002",
   "metadata": {
     "operator_lab_run": "vibe-lab: experiments/2026-07-01_operator-lab-loop/artifacts/run-002-rlens-agent-ecosystem/run-card.yml",
-    "plan_path": "docs/plans/rlens-agent-ecosystem-integration-v1.md"
+    "plan_path": "docs/plans/rlens-agent-ecosystem-integration-v1.md",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Bureau PR #219: task schemas now support deterministic rlens_policy modes, Bureau evaluates policy into rlens_context_policy, required/strict/external-safe tasks without context ref or skip reason are blocked, and envelopes/receipts/handoffs record the machine-readable policy result.",
+    "implementation_pr": "heimgewebe/bureau#219",
+    "live_bureau_commit": "1d1553529d79bdfa3ddbaf70266863e863f01fa8",
+    "implementation_paths": [
+      "src/bureau/rlens_policy.py",
+      "src/bureau/v2.py",
+      "schemas/task.v1.schema.json",
+      "schemas/execution-envelope.v1.schema.json",
+      "schemas/receipt.v1.schema.json",
+      "tests/test_rlens_context_policy.py",
+      "docs/rlens-context-policy-v1.md"
+    ],
+    "validation": [
+      "Bureau PR #219 GitHub CI passed validate (3.10) and validate (3.12).",
+      "Local: PYTHONPATH=src make validate -> ruff pass, 340 tests passed, bureau check valid.",
+      "Local: git diff --check -> pass."
+    ],
+    "verified_acceptance": {
+      "mode-policy": "opportunistic, required, strict, live-first and external-safe are schema-bounded and evaluated deterministically into rlens_context_policy.",
+      "skip-reason": "required/strict/external-safe tasks without rlens_context_ref and without rlens_policy.skip_reason produce a machine-readable block reason; tasks with skip_reason record skipped policy in envelope/receipt."
+    },
+    "coordination_note": "PR #217 was merged before this closeout because it touched registry/queue.json and was already green/mergeable; closeout is based on the updated Bureau main.",
+    "verification": {
+      "task_sha256": "32b6b49d6b2bd656e0f09ca14f57eaa918cb6348867dac611f8d836ce90651a5",
+      "plan_sha256": "2a786843fa4b6a7da77cd9790f77a41b5a35fb591b0047e2d6d1698d45df4ca2"
+    }
   },
   "priority": {
     "lane": "next",
@@ -36,6 +63,6 @@
     "shell"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Enforce rLens context refs in Bureau modes"
 }

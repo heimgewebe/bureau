@@ -3,7 +3,7 @@
   "id": "RBV1-T011",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Add explicit MCP snapshot_create tool",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 110
@@ -62,10 +62,14 @@
       "Phase 7 / PR 14"
     ],
     "does_not_establish": [
+      "mcp_protocol_server_available",
+      "transport_security_correctness",
       "runtime_correctness",
       "test_sufficiency",
       "review_completeness",
-      "merge_readiness"
+      "merge_readiness",
+      "forensic_readiness",
+      "agent_quality_improvement"
     ],
     "removed_dead_baseline_commit": {
       "value": "c72bb7e4ed34e934b7484c71343eb68c00dcde02",
@@ -80,6 +84,40 @@
         "test_sufficiency",
         "review_completeness"
       ]
+    },
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Lenskit PR #914: added explicit MCP-shaped snapshot_create handler with repo/profile/output-root/timeout/size guards, preserving read-only access boundaries and avoiding MCP protocol/server claims.",
+    "implementation_pr": "heimgewebe/lenskit#914",
+    "live_lenskit_commit": "34f0b46706992a4120c6c6886691005afe86fa37",
+    "implementation_head": "2840533c32576eed8971a99f86cb2d2e455c24f0",
+    "diff_sha256": "1e84acb5c0d059ef19660e4b46a0f17bbbac9bb59ef57aac35a0eaefb5f69593",
+    "implementation_paths": [
+      "merger/lenskit/core/repobrief_mcp_tools.py",
+      "merger/lenskit/cli/cmd_repobrief.py",
+      "merger/lenskit/tests/test_repobrief_mcp_snapshot_create.py",
+      "merger/lenskit/tests/test_repobrief_mcp_boundary_doc.py",
+      "docs/architecture/repobrief-mcp-boundary.md",
+      "docs/architecture/repobrief.md",
+      "docs/proofs/repobrief-mcp-snapshot-create-tool-v1-proof.md"
+    ],
+    "validation": [
+      "Lenskit PR #914 GitHub CI passed: pytest-full, ruff, CodeQL, doc-freshness, planning-registration, repo-root, templates, validate-merge-meta, webui-js-tests, contract checks and static security checks.",
+      "Local before merge: 125 focused RepoBrief/MCP/access/profile tests passed.",
+      "Local before merge: ruff-ci targeted check passed.",
+      "Local before merge: git diff --check passed.",
+      "Post-merge on origin/main 34f0b46706992a4120c6c6886691005afe86fa37: same 125 focused tests passed.",
+      "Post-merge on origin/main: targeted ruff-ci check passed.",
+      "Post-merge on origin/main: git diff --check passed."
+    ],
+    "verified_acceptance": {
+      "rbv1-t011-scope-bound": "PR #914 implements only the explicit MCP-shaped snapshot_create handler, shared CLI result builder, tests and boundary docs/proof; no hidden broadening into protocol server, scheduler, shell, Git, PR, patch, review or runtime authority.",
+      "rbv1-t011-boundary-preserved": "Read-only RepoBrief access helpers keep writes=[] and tests assert they do not call snapshot_create; snapshot_create output says explicit_write_tool true and not_reachable_from_read_tools true.",
+      "rbv1-t011-tests-or-gap": "125 focused tests passed locally before and after merge; GitHub CI passed.",
+      "rbv1-t011-non-claims": "Docs and proof state no MCP protocol server and no transport/security/runtime/test/review/PR/forensic claim."
+    },
+    "verification": {
+      "task_sha256": "51c06fb0a94cfec4e976bf3f480b2ff5e7145fff346879a88f9d0348520dcb49",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
     }
   },
   "depends_on": [

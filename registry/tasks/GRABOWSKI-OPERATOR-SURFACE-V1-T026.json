@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "state": "planned",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T004"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 460
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T026",
+  "title": "Add typed recall schema validation",
+  "goal": "Replace ad-hoc recall dictionaries with a typed schema layer for recall item/export validation without changing runtime authority.",
+  "metadata": {
+    "phase": "operator-recall-followup",
+    "effect": "schema_validation_hardening",
+    "source": "deferred from PR #116 review; current PR intentionally kept small without Pydantic/dataclass refactor",
+    "non_goal": "Does not add new recall behavior or source verification by itself."
+  },
+  "acceptance": [
+    {
+      "id": "schema-contract",
+      "assertion": "Recall item/export schemas explicitly define required fields, allowed enum values, bounded text, evidence refs and non-claims."
+    },
+    {
+      "id": "runtime-validation",
+      "assertion": "Exporter validates every item against the schema before returning it."
+    },
+    {
+      "id": "compatibility",
+      "assertion": "Existing PR #116 output shape remains backward compatible unless a migration note is recorded."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover valid item/export, missing field, invalid enum, too-long field, unsupported evidence type and compatibility."
+    }
+  ]
+}

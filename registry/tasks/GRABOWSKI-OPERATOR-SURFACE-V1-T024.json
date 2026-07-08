@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "state": "planned",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T004"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 440
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T024",
+  "title": "Add persistent recall store boundary",
+  "goal": "Design and implement an optional append-only operator recall store with retention, dedupe and export semantics while preserving evidence refs and non-claims.",
+  "metadata": {
+    "phase": "operator-recall-followup",
+    "effect": "optional_append_only_store",
+    "source": "deferred from PR #116; current PR exports on demand only",
+    "non_goal": "Does not create free-form chat memory, automatic task completion or policy oracle behavior."
+  },
+  "acceptance": [
+    {
+      "id": "append-only",
+      "assertion": "Recall store writes are append-only or versioned with hash-bound records and cannot overwrite evidence history silently."
+    },
+    {
+      "id": "dedupe",
+      "assertion": "Duplicate recall items are detected by stable hash over source/evidence/topic/learned_rule without losing provenance."
+    },
+    {
+      "id": "retention",
+      "assertion": "Retention and export limits are explicit and visible in status/output."
+    },
+    {
+      "id": "no-policy-oracle",
+      "assertion": "Stored recall cannot authorize merges, recovery actions, routing changes or Bureau task completion."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover append, duplicate, corrupt record, bounded export and no-free-form-memory rejection."
+    }
+  ]
+}

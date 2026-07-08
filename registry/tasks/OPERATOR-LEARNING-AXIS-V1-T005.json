@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-LEARNING-AXIS-V1-T005",
+  "initiative": "OPERATOR-LEARNING-AXIS-V1",
+  "title": "Capture Vibe-Lab operator learning sample",
+  "state": "planned",
+  "goal": "Bind the Vibe-Lab operator-learning capture sample PR to Bureau as a proposal/evidence task without granting steering or import authority.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/vibe-lab",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/vibe-lab"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.vibe-lab",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "learning-sample-boundary",
+      "assertion": "The sample records evidence and non-claims without making Vibe-Lab a steering organ."
+    },
+    {
+      "id": "doc-index-fresh",
+      "assertion": "Generated documentation index is refreshed against the final PR head."
+    },
+    {
+      "id": "validation-recorded",
+      "assertion": "The PR records validation or an explicit blocker for missing validation."
+    }
+  ],
+  "metadata": {
+    "source": "queue-readiness repair 2026-07-08",
+    "implementation_pr": "heimgewebe/vibe-lab#295",
+    "implementation_branch": "docs/operator-learning-capture-sample-v1",
+    "does_not_establish": [
+      "import_authority",
+      "routing_policy_readiness",
+      "merge_readiness"
+    ]
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 90
+  }
+}

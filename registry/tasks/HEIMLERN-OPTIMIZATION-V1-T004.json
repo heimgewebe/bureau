@@ -3,7 +3,7 @@
   "id": "HEIMLERN-OPTIMIZATION-V1-T004",
   "initiative": "HEIMLERN-OPTIMIZATION-V1",
   "title": "Release-Profil messen und entscheiden",
-  "state": "planned",
+  "state": "ready",
   "goal": "Die opt-level=z Entscheidung mit reproduzierbarer Messung und kurzer ADR bestätigen oder anpassen.",
   "execution": {
     "mode": "interactive-agent",
@@ -11,7 +11,13 @@
     "working_repository": "/home/alex/repos/heimlern",
     "baseline_commit": "9fef180bcabf3fffe9d476127221643acba0ea64"
   },
-  "claims": [],
+  "claims": [
+    {
+      "resource": "repo.heimlern",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
   "acceptance": [
     {
       "id": "benchmark-added",
@@ -29,10 +35,16 @@
   "metadata": {
     "source_plan": "docs/plans/heimlern-optimization-plan-v1.md",
     "source_pr": "heimgewebe/heimlern#181",
-    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a"
+    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a",
+    "queue_readiness_repair": "2026-07-08: current implementation ball; made ready and repo claim explicit so now lane is claim-safe."
   },
   "priority": {
     "lane": "now",
     "rank": 10
-  }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ]
 }

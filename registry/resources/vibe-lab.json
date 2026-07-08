@@ -1,1 +1,12 @@
-{"schema_version":1,"id":"repo.vibe-lab","type":"git-repository","parent":"repo","path":"/home/alex/repos/vibe-lab","grabowski_key":"repo:/home/alex/repos/vibe-lab"}
+{
+  "schema_version": 1,
+  "id": "repo.vibe-lab",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/vibe-lab",
+  "grabowski_key": "repo:/home/alex/repos/vibe-lab",
+  "metadata": {
+    "github": "heimgewebe/vibe-lab",
+    "queue_readiness_repair": "2026-07-08: explicit GitHub slug for open PR task binding; local remote uses org-specific SSH user."
+  }
+}

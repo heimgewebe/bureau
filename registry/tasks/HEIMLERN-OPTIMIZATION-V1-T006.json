@@ -11,7 +11,13 @@
     "working_repository": "/home/alex/repos/heimlern",
     "baseline_commit": "9fef180bcabf3fffe9d476127221643acba0ea64"
   },
-  "claims": [],
+  "claims": [
+    {
+      "resource": "repo.heimlern",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
   "acceptance": [
     {
       "id": "registry-present",
@@ -29,10 +35,16 @@
   "metadata": {
     "source_plan": "docs/plans/heimlern-optimization-plan-v1.md",
     "source_pr": "heimgewebe/heimlern#181",
-    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a"
+    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a",
+    "queue_readiness_repair": "2026-07-08: next heimlern write ball; repo claim made explicit for repo-scoped queue projection."
   },
   "priority": {
     "lane": "next",
     "rank": 40
-  }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ]
 }

@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T012",
   "initiative": "BUR-2026-005",
   "title": "Harden terminal baseline diagnostics",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "BUR-2026-005-T004"
   ],
@@ -33,8 +33,63 @@
     "does_not_establish": [
       "task_incomplete",
       "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
       "automatic_merge_authority"
-    ]
+    ],
+    "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Bureau PR #230: registry-truth now treats missing baseline_commit on verified tasks as hard freshness errors, while planned task baselines remain warnings; existing dead Lenskit baseline commits were removed from execution metadata and recorded as removed_dead_baseline_commit evidence.",
+    "implementation_pr": "heimgewebe/bureau#230",
+    "live_bureau_commit": "6d0d1de1045f0358fbe0b07ae82d803d8b871ad9",
+    "implementation_head": "d533ebe09363768ecda032e2f98113603f711a0b",
+    "implementation_paths": [
+      "src/bureau/registry_truth.py",
+      "tests/test_registry_truth.py",
+      "registry/tasks/RBAW-V1-T001.json",
+      "registry/tasks/RBAW-V1-T002.json",
+      "registry/tasks/RBAW-V1-T003.json",
+      "registry/tasks/RBAW-V1-T004.json",
+      "registry/tasks/RBAW-V1-T005.json",
+      "registry/tasks/RBV1-T003.json",
+      "registry/tasks/RBV1-T004.json",
+      "registry/tasks/RBV1-T005.json",
+      "registry/tasks/RBV1-T006.json",
+      "registry/tasks/RBV1-T007.json",
+      "registry/tasks/RBV1-T008.json",
+      "registry/tasks/RBV1-T009.json",
+      "registry/tasks/RBV1-T010.json",
+      "registry/tasks/RBV1-T011.json",
+      "registry/tasks/RBV1-T012.json",
+      "registry/tasks/RBV1-T013.json",
+      "registry/tasks/RBV1-T014.json",
+      "registry/tasks/RBV1-T015.json",
+      "registry/tasks/RBV1-T016.json",
+      "registry/tasks/RBV1-T017.json",
+      "registry/tasks/RBV1-T018.json"
+    ],
+    "validation": [
+      "Bureau PR #230 GitHub CI passed validate (3.10) and validate (3.12).",
+      "Local before merge: python3 -m bureau.cli --root . check -> valid True.",
+      "Local before merge: python3 -m bureau.cli --root . --json registry-truth -> healthy true, 0 findings.",
+      "Local before merge: python3 -m bureau.cli --root . --json doctor -> healthy true.",
+      "Local before merge: python3 -m pytest tests/test_registry_truth.py tests/test_registry_queue.py tests/test_repository_registry_load.py -q -> 7 passed.",
+      "Local before merge: python3 -m ruff check src/bureau/registry_truth.py tests/test_registry_truth.py -> passed.",
+      "Local before merge: python3 -m pytest -> 357 passed.",
+      "Local before merge: git diff --check -> passed.",
+      "Post-merge: python3 -m bureau.cli --root . check -> valid True.",
+      "Post-merge: registry-truth healthy true with 0 findings.",
+      "Post-merge: doctor healthy true."
+    ],
+    "verified_acceptance": {
+      "verified-baseline-hard-error": "tests/test_registry_truth.py covers a verified task with a missing baseline_commit and expects registry-truth unhealthy with severity error.",
+      "planned-baseline-warning": "tests/test_registry_truth.py keeps the existing planned missing-baseline behavior healthy with warning only.",
+      "existing-baseline-cleanup": "PR #230 removed 21 dead Lenskit baseline commits from execution metadata and recorded removed_dead_baseline_commit evidence with explicit non-claims; registry-truth now reports 0 findings."
+    },
+    "verification": {
+      "task_sha256": "b19933428d7e8948eb7a1e7b7e106354adf6b76c0b7f6b97af43e8f900d26be0",
+      "plan_sha256": "653fa6a056506c94d5654ba5e3c16f9c31032767f0e1c844a8cb4714c50ce917"
+    }
   },
   "acceptance": [
     {

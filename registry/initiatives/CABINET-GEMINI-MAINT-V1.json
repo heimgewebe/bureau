@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "CABINET-GEMINI-MAINT-V1",
   "title": "Cabinet Gemini maintenance scan lanes",
-  "state": "active",
+  "state": "waiting",
   "commitment": "next",
   "goal": "Introduce Gemini only as a read-only semantic maintenance scout for Cabinet, with capability preflight, strict no-effect contracts, curated evidence packets, one reviewed dry run, and a separate schedule decision.",
   "current_plan": {
@@ -36,6 +36,7 @@
       "autonomous_dispatch",
       "merge_readiness",
       "runtime_correctness"
-    ]
+    ],
+    "lifecycle_repair_20260708": "T001 is blocked pending platform review/credit boundary; initiative waits rather than active."
   }
 }

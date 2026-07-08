@@ -29,6 +29,7 @@ COMMIT_BINDING_KEYS = {
     "merge_commit",
     "merge_commit_sha",
 }
+TASK_BINDING_KEYS = {"task_id", "task_ids", "task_binding"}
 SOURCE_REFERENCE_KEYS = {
     "authority",
     "source_authority",
@@ -51,6 +52,7 @@ SOURCE_REFERENCE_KEYS = {
     "number",
 }
 HEXISH_RE = re.compile(r"^[0-9a-f]{12,64}$", re.IGNORECASE)
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$", re.IGNORECASE)
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -129,7 +131,8 @@ def _has_verification_hash_binding(metadata: dict[str, Any]) -> bool:
         return False
     required = ("task_sha256", "plan_sha256")
     return all(
-        isinstance(verification.get(key), str) and verification[key].strip()
+        isinstance(verification.get(key), str)
+        and bool(SHA256_RE.fullmatch(verification[key]))
         for key in required
     )
 
@@ -151,15 +154,30 @@ def _evidence_item_is_ai_summary(item: dict[str, Any]) -> bool:
     return isinstance(kind, str) and kind.strip().lower() in AI_SUMMARY_KINDS
 
 
+def _task_binding_values(item: dict[str, Any]) -> list[Any]:
+    return [item[key] for key in TASK_BINDING_KEYS if key in item]
+
+
+def _matches_task_id(value: Any, task_id: str) -> bool:
+    if isinstance(value, str):
+        return value == task_id
+    if isinstance(value, dict):
+        return any(_matches_task_id(item, task_id) for item in value.values())
+    if isinstance(value, list | tuple | set):
+        return any(_matches_task_id(item, task_id) for item in value)
+    return False
+
+
 def _evidence_item_has_task_or_pr_binding(item: dict[str, Any], task_id: str) -> bool:
     kind = str(item.get("kind") or item.get("type") or "").lower()
+    bindings = _task_binding_values(item)
     if kind in {"pull_request", "github_pull_request", "pr"}:
         has_pr = any(key in item for key in ("number", "pull_request", "url", "pr"))
-        task_values = item.get("task_id") or item.get("task_ids") or item.get("task_binding")
-        return has_pr and task_values not in (None, "", [], {})
+        return has_pr and any(_matches_task_id(value, task_id) for value in bindings)
     if "task" in kind:
-        task_value = item.get("task_id")
-        return task_value in {task_id, None} or task_value not in ("", [])
+        return any(_matches_task_id(value, task_id) for value in bindings)
+    if bindings:
+        return any(_matches_task_id(value, task_id) for value in bindings)
     return True
 
 

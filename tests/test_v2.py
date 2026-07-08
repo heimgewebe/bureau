@@ -1399,6 +1399,41 @@ def test_repo_balls_projects_current_ball_per_repository(
     )
 
 
+
+
+def test_repo_balls_reports_ambiguous_same_repo_active_runs(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(3, mode="read")
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    first = dispatcher.claim_next(
+        "worker-alpha-1", ("repository",), resource="repo.alpha"
+    )["run"]
+    second = dispatcher.claim_next(
+        "worker-alpha-2", ("repository",), resource="repo.alpha"
+    )["run"]
+    beta = dispatcher.claim_next(
+        "worker-beta", ("repository",), resource="repo.beta"
+    )["run"]
+
+    report = dispatcher.repo_balls({"repository"})
+
+    alpha = report["repo_balls"]["repo.alpha"]
+    beta_ball = report["repo_balls"]["repo.beta"]
+    assert alpha["status"] == "ambiguous"
+    assert alpha["current_ball"]["kind"] == "ambiguous_active_runs"
+    assert alpha["current_ball"]["run_ids"] == sorted(
+        [first["run_id"], second["run_id"]]
+    )
+    assert alpha["findings"][0]["code"] == "multiple-active-balls-for-repository"
+    assert alpha["findings"][0]["severity"] == "blocker"
+    assert beta_ball["status"] == "active"
+    assert beta_ball["current_ball"]["task_id"] == beta["task_id"]
+    assert report["summary"]["ambiguous"] == 1
+    assert report["summary"]["active"] == 1
+
+
 def test_repo_balls_cli_emits_repository_projection(
     registry_factory, tmp_path, capsys
 ):

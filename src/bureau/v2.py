@@ -2007,7 +2007,24 @@ class Dispatcher(legacy.Dispatcher):
                 for lane in legacy.LANE_ORDER
             }
             selected = next((item for item in repo_frontier if item["eligible"]), None)
-            if active_runs:
+            repo_findings: list[dict[str, Any]] = []
+            if len(active_runs) > 1:
+                status = "ambiguous"
+                current_ball = {
+                    "kind": "ambiguous_active_runs",
+                    "run_ids": sorted(row["run_id"] for row in active_runs),
+                    "task_ids": sorted(row["task_id"] for row in active_runs),
+                }
+                repo_findings.append(
+                    {
+                        "severity": "blocker",
+                        "code": "multiple-active-balls-for-repository",
+                        "message": "more than one active run overlaps this repository",
+                        "run_ids": current_ball["run_ids"],
+                        "task_ids": current_ball["task_ids"],
+                    }
+                )
+            elif active_runs:
                 status = "active"
                 current_ball = {"kind": "active_run", **active_runs[0]}
             elif selected is not None:
@@ -2036,12 +2053,14 @@ class Dispatcher(legacy.Dispatcher):
                 "current_ball": current_ball,
                 "active_runs": active_runs,
                 "selected": selected,
+                "findings": repo_findings,
                 "lanes": lanes,
                 "frontier_count": len(repo_frontier),
             }
         summary = {
             "repositories": len(repo_balls),
             "active": sum(1 for item in repo_balls.values() if item["status"] == "active"),
+            "ambiguous": sum(1 for item in repo_balls.values() if item["status"] == "ambiguous"),
             "ready": sum(1 for item in repo_balls.values() if item["status"] == "ready"),
             "planned": sum(1 for item in repo_balls.values() if item["status"] == "planned"),
             "backlog": sum(1 for item in repo_balls.values() if item["status"] == "backlog"),

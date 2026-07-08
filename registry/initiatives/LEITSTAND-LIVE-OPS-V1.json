@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "LEITSTAND-LIVE-OPS-V1",
+  "title": "Leitstand live operations closeout",
+  "state": "waiting",
+  "commitment": "later",
+  "goal": "Track the remaining operational closeout for the supervised Leitstand runtime after canonical HTTPS and runtime health became live: keep the root-persistent Caddyfile gap explicit while recording the completed DNS and health receipt work.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "registry/initiatives/LEITSTAND-LIVE-OPS-V1.json"
+  },
+  "completion": [
+    "Root-owned Caddy configuration contains a Leitstand host route for leitstand.heimgewebe.home.arpa to 127.0.0.1:3000 and survives reload/restart without user-level reapply.",
+    "Pi-hole and heim-pc resolve leitstand.heimgewebe.home.arpa to exactly 192.168.178.55, and canonical HTTPS smoke succeeds without resolver override.",
+    "Leitstand exposes a deterministic read-only runtime health receipt at /health and canonical HTTPS /health reports status ok."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_from": "leitstand live operations closeout 2026-07-08",
+    "source_repository": "/home/alex/repos/leitstand",
+    "live_leitstand_head": "52825f4af4693b652f4cffc06297463a93a7ee0e",
+    "live_evidence": {
+      "leitstand_service": "enabled_active",
+      "operator_snapshot_timer": "enabled_active",
+      "caddy_reapply_timer": "enabled_active",
+      "canonical_https_root": "HTTP/2 200 via Caddy on 2026-07-08T18:39:15Z",
+      "canonical_https_health": "leitstand_runtime_health_receipt status ok on 2026-07-08T18:39:15Z"
+    },
+    "remaining_gaps": [
+      "Caddy route is present in live Caddy Admin API config and protected by leitstand-caddy-reapply.timer, but not persisted into /etc/caddy/Caddyfile because sudo is blocked for the current Grabowski execution context by no_new_privileges."
+    ],
+    "does_not_establish": [
+      "public_internet_exposure",
+      "leitstand_execution_authority",
+      "root_caddyfile_persistence",
+      "caddy_restart_persistence_without_reapply"
+    ]
+  }
+}

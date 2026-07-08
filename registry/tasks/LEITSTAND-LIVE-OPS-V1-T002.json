@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "id": "LEITSTAND-LIVE-OPS-V1-T002",
+  "initiative": "LEITSTAND-LIVE-OPS-V1",
+  "title": "Clean Leitstand DNS ambiguity",
+  "state": "verified",
+  "priority": {
+    "lane": "later",
+    "rank": 20
+  },
+  "goal": "Remove the stale 192.168.178.46 A answer for leitstand.heimgewebe.home.arpa so Pi-hole and clients resolve only the heim-pc address 192.168.178.55.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "host:heimberry",
+      "service:pihole-FTL",
+      "dns:leitstand.heimgewebe.home.arpa"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heimberry",
+      "mode": "write",
+      "isolation": "namespace"
+    }
+  ],
+  "required_capabilities": [
+    "shell",
+    "grabowski",
+    "privileged_action"
+  ],
+  "acceptance": [
+    {
+      "id": "single-a-record",
+      "assertion": "dig against Pi-hole returns exactly one A record for leitstand.heimgewebe.home.arpa: 192.168.178.55.",
+      "verifier": "dig @127.0.0.1",
+      "evidence_type": "string"
+    },
+    {
+      "id": "canonical-smoke",
+      "assertion": "curl -k -I https://leitstand.heimgewebe.home.arpa/ succeeds without --resolve from heim-pc.",
+      "verifier": "curl smoke",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "verified_at": "2026-07-08T18:39:15Z",
+    "outcome": "Pi-hole backup-like files that still carried the old 192.168.178.46 Leitstand A record were moved out of active Pi-hole configuration, pihole-FTL was restarted, and heim-pc now resolves leitstand.heimgewebe.home.arpa only to 192.168.178.55.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "dns_probe",
+          "target": "leitstand.heimgewebe.home.arpa",
+          "result": "192.168.178.55 only",
+          "observed_at": "2026-07-08T18:39:15Z"
+        },
+        {
+          "kind": "http_probe",
+          "target": "https://leitstand.heimgewebe.home.arpa/",
+          "result": "HTTP/2 200 via Caddy",
+          "observed_at": "2026-07-08T18:39:15Z"
+        }
+      ]
+    },
+    "verified_acceptance": {
+      "single-a-record": "getent ahostsv4 and dig from heim-pc returned only 192.168.178.55 for leitstand.heimgewebe.home.arpa.",
+      "canonical-smoke": "curl -k -I https://leitstand.heimgewebe.home.arpa/ returned HTTP/2 200 via Caddy without --resolve."
+    },
+    "validation": [
+      "getent ahostsv4 leitstand.heimgewebe.home.arpa -> 192.168.178.55 only",
+      "dig leitstand.heimgewebe.home.arpa A +short -> 192.168.178.55",
+      "curl -k -I https://leitstand.heimgewebe.home.arpa/ -> HTTP/2 200"
+    ],
+    "does_not_establish": [
+      "heimserver_recovery",
+      "public_dns",
+      "external_access",
+      "root_caddyfile_persistence"
+    ],
+    "verification": {
+      "task_sha256": "0e6a66eefea1ed499919034b303fb65a5344371ff5cf9d1bd45f2a623a41f4fd",
+      "plan_sha256": "f91a1c386d504325502def8539cc00838c169b36183b98516766614c275f8dd6"
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T009",
+  "initiative": "BUR-2026-005",
+  "title": "Scope Open PR observation failures",
+  "state": "planned",
+  "depends_on": [
+    "BUR-2026-005-T003"
+  ],
+  "goal": "Make Open-PR guard observation failures resource-scoped so one broken repository observation blocks only overlapping writes instead of pausing unrelated repositories.",
+  "priority": {
+    "lane": "later",
+    "rank": 90
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "source_review": "Follow-up from PR #177 open-PR claim guard review.",
+    "safety_boundary": "Fail closed for the affected resource; do not turn observation failures into implicit allow decisions.",
+    "does_not_establish": [
+      "github_reliability",
+      "automatic_merge_authority"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "resource-scoped-failure",
+      "assertion": "An observation failure carries enough repository/resource context to synthesize blockers only for overlapping claims."
+    },
+    {
+      "id": "multi-repo-test",
+      "assertion": "Tests cover two git repositories where one observation fails and a non-overlapping repo-write task remains eligible."
+    },
+    {
+      "id": "diagnostic",
+      "assertion": "frontier and explain-next identify the affected repository/resource and failure class without exposing secrets."
+    }
+  ]
+}

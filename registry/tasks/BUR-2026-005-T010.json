@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T010",
+  "initiative": "BUR-2026-005",
+  "title": "Define structured PR task metadata",
+  "state": "planned",
+  "depends_on": [
+    "BUR-2026-005-T003"
+  ],
+  "goal": "Define and implement a structured Bureau task marker contract for PRs so duplicate detection prefers explicit metadata over broad title/body heuristics.",
+  "priority": {
+    "lane": "later",
+    "rank": 100
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "source_review": "Follow-up from PR #177 open-PR claim guard review.",
+    "safety_boundary": "Metadata improves duplicate detection but does not grant PR creation, review or merge authority.",
+    "does_not_establish": [
+      "automatic_task_verification",
+      "automatic_merge_authority"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "metadata-contract",
+      "assertion": "A documented PR marker such as a label or body field binds a PR to exactly one or more Bureau task IDs."
+    },
+    {
+      "id": "heuristic-order",
+      "assertion": "The Open-PR guard prefers structured markers and treats title/body/branch scanning as explicit fallback with lower confidence diagnostics."
+    },
+    {
+      "id": "grammar-tests",
+      "assertion": "Tests cover T001, T0010, T001-EXTRA and branch suffix cases according to the documented task-ID grammar."
+    }
+  ]
+}

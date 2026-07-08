@@ -24,6 +24,19 @@ def _observed_pr_dispatcher(registry, store, monkeypatch, pull_requests):
     return Dispatcher(registry, store)
 
 
+def _add_task(root, source_task_id: str, task_id: str, *, rank: int = 1):
+    task_path = root / f"registry/tasks/{source_task_id}.json"
+    task = json.loads(task_path.read_text())
+    task["id"] = task_id
+    task["title"] = f"Task {task_id}"
+    task["priority"] = {"lane": "now", "rank": rank}
+    (root / f"registry/tasks/{task_id}.json").write_text(json.dumps(task))
+    queue_path = root / "registry/queue.json"
+    queue = json.loads(queue_path.read_text())
+    queue["lanes"]["now"].append(task_id)
+    queue_path.write_text(json.dumps(queue))
+
+
 def test_open_pull_request_reservation_blocks_repo_write_claim(registry_factory, tmp_path):
     root = registry_factory(1, mode="write")
     registry = Registry.load(root)
@@ -100,7 +113,9 @@ def test_open_pull_request_reservation_does_not_block_repo_read_claim(registry_f
     assert run["task_id"] == "BUR-TEST-001-T001"
 
 
-def test_github_open_pull_requests_requests_label_metadata(monkeypatch):
+def test_github_open_pull_requests_requests_label_metadata_and_configured_limit(
+    monkeypatch,
+):
     captured = {}
 
     class Completed:
@@ -112,11 +127,13 @@ def test_github_open_pull_requests_requests_label_metadata(monkeypatch):
         captured["argv"] = argv
         return Completed()
 
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT", "321")
     monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
 
     assert bureau_v2._github_open_pull_requests("heimgewebe/bureau") == []
     json_fields = captured["argv"][captured["argv"].index("--json") + 1].split(",")
     assert "labels" in json_fields
+    assert captured["argv"][captured["argv"].index("--limit") + 1] == "321"
 
 
 def test_open_pull_request_body_task_id_blocks_same_task(registry_factory, tmp_path, monkeypatch):
@@ -138,25 +155,17 @@ def test_open_pull_request_body_task_id_blocks_same_task(registry_factory, tmp_p
         ],
     )
 
-    reasons = dispatcher.frontier({"repository"})[0]["reasons"]
-    assert "task already implemented by open PR" in " ".join(reasons)
-    assert "open-pr:heimgewebe/grabowski#99" in " ".join(reasons)
+    reason_text = " ".join(dispatcher.frontier({"repository"})[0]["reasons"])
+    assert "task already implemented by open PR" in reason_text
+    assert "repo write blocked by open PR" not in reason_text
+    assert "open-pr:heimgewebe/grabowski#99" in reason_text
 
 
 def test_open_pull_request_task_id_scan_uses_token_boundaries(
     registry_factory, tmp_path, monkeypatch
 ):
     root = registry_factory(1, mode="write")
-    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
-    longer_task = json.loads(task_path.read_text())
-    longer_task["id"] = "BUR-TEST-001-T0010"
-    longer_task["priority"] = {"lane": "now", "rank": 1}
-    (root / "registry/tasks/BUR-TEST-001-T0010.json").write_text(
-        json.dumps(longer_task)
-    )
-    queue = json.loads((root / "registry/queue.json").read_text())
-    queue["lanes"]["now"].append("BUR-TEST-001-T0010")
-    (root / "registry/queue.json").write_text(json.dumps(queue))
+    _add_task(root, "BUR-TEST-001-T001", "BUR-TEST-001-T0010")
 
     registry = Registry.load(root)
     store = StateStore(tmp_path / "state" / "bureau.sqlite3")
@@ -182,6 +191,66 @@ def test_open_pull_request_task_id_scan_uses_token_boundaries(
     assert "task already implemented by open PR" not in shorter_reasons
     assert "repo write blocked by open PR" in shorter_reasons
     assert "task already implemented by open PR" in longer_reasons
+
+
+def test_open_pull_request_body_does_not_match_hyphen_extended_task_id(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    _add_task(root, "BUR-TEST-001-T001", "BUR-TEST-001-T001-EXTRA")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = _observed_pr_dispatcher(
+        registry,
+        store,
+        monkeypatch,
+        [
+            {
+                "number": 105,
+                "title": "extended task",
+                "headRefName": "fix/no-task-id",
+                "body": "Implements BUR-TEST-001-T001-EXTRA.",
+                "url": "https://github.example/pr/105",
+            }
+        ],
+    )
+
+    frontier = {item["task_id"]: item for item in dispatcher.frontier({"repository"})}
+    shorter_reasons = " ".join(frontier["BUR-TEST-001-T001"]["reasons"])
+    longer_reasons = " ".join(frontier["BUR-TEST-001-T001-EXTRA"]["reasons"])
+
+    assert "task already implemented by open PR" not in shorter_reasons
+    assert "task already implemented by open PR" in longer_reasons
+
+
+def test_open_pull_request_branch_suffix_still_matches_shorter_task(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    _add_task(root, "BUR-TEST-001-T001", "BUR-TEST-001-T001-EXTRA")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = _observed_pr_dispatcher(
+        registry,
+        store,
+        monkeypatch,
+        [
+            {
+                "number": 106,
+                "title": "branch suffix task",
+                "headRefName": "feat/bur-test-001-t001-duplicate-guard",
+                "body": "No explicit body reference.",
+                "url": "https://github.example/pr/106",
+            }
+        ],
+    )
+
+    frontier = {item["task_id"]: item for item in dispatcher.frontier({"repository"})}
+    shorter_reasons = " ".join(frontier["BUR-TEST-001-T001"]["reasons"])
+    longer_reasons = " ".join(frontier["BUR-TEST-001-T001-EXTRA"]["reasons"])
+
+    assert "task already implemented by open PR" in shorter_reasons
+    assert "task already implemented by open PR" not in longer_reasons
 
 
 def test_open_pull_request_branch_task_id_blocks_same_task(
@@ -262,6 +331,32 @@ def test_open_pull_request_metadata_task_id_blocks_same_task(
     assert "task already implemented by open PR" in " ".join(reasons)
 
 
+def test_open_pull_request_set_metadata_task_id_blocks_same_task(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = _observed_pr_dispatcher(
+        registry,
+        store,
+        monkeypatch,
+        [
+            {
+                "number": 107,
+                "title": "set metadata task",
+                "headRefName": "fix/no-task-id",
+                "body": "No explicit body reference.",
+                "metadata": {"task_ids": {"BUR-TEST-001-T001"}},
+                "url": "https://github.example/pr/107",
+            }
+        ],
+    )
+
+    reasons = dispatcher.frontier({"repository"})[0]["reasons"]
+    assert "task already implemented by open PR" in " ".join(reasons)
+
+
 def test_open_pull_request_other_task_distinguishes_repo_wide_blocker(
     registry_factory, tmp_path, monkeypatch
 ):
@@ -289,7 +384,7 @@ def test_open_pull_request_other_task_distinguishes_repo_wide_blocker(
     assert "repo write blocked by open PR" in first_reasons
     assert "task already implemented by open PR" not in first_reasons
     assert "task already implemented by open PR" in second_reasons
-    assert "repo write blocked by open PR" in second_reasons
+    assert "repo write blocked by open PR" not in second_reasons
 
 
 def test_three_parallel_claims_never_receive_same_task_id(registry_factory, tmp_path, monkeypatch):

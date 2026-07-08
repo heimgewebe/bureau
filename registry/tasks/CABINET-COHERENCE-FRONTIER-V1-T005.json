@@ -3,7 +3,7 @@
   "id": "CABINET-COHERENCE-FRONTIER-V1-T005",
   "initiative": "CABINET-COHERENCE-FRONTIER-V1",
   "title": "Add Gemini proposal-only review lane",
-  "state": "planned",
+  "state": "blocked",
   "goal": "Define and test a Gemini review/scout lane that consumes bounded context without sensitive values and returns structured proposal-only findings or patch suggestions.",
   "priority": {
     "lane": "later",
@@ -33,19 +33,41 @@
     "plan_path": "docs/plans/cabinet-coherence-frontier-gemini-lane-v1.md",
     "safety_boundary": "proposal-only review lane after preflight; no push, merge, runtime mutation, repository mutation by Gemini, credential exposure, automatic dispatch, or queue mutation",
     "does_not_establish": [
-      "task_approval",
+      "autonomous_dispatch",
+      "claim_truth",
+      "gemini_auth_quota_observed",
+      "gemini_lane_activation",
+      "gemini_schedulable_capacity",
+      "gemini_write_authority",
       "merge_readiness",
       "runtime_correctness",
-      "claim_truth",
-      "autonomous_dispatch",
-      "gemini_write_authority",
-      "gemini_schedulable_capacity"
+      "task_approval"
     ],
     "phase": "CCFG-6",
     "target_repository": "heimgewebe/bureau",
     "agent_pool": "gemini",
     "agent_authority": "proposal_only",
-    "ordering_note": "Execution order is governed by depends_on; this task remains blocked until T008 is accepted."
+    "ordering_note": "Execution order is governed by depends_on; this task remains blocked until T008 is accepted.",
+    "blocked_at": "2026-07-08",
+    "blocked_by": "CABINET-COHERENCE-FRONTIER-V1-T008",
+    "blocked_reason": "Gemini preflight observed local binary, --print and --sandbox, but auth/quota was not observed. The Gemini proposal-only review lane must not be treated as active or schedulable capacity.",
+    "blocking_evidence": {
+      "preflight_task": "CABINET-COHERENCE-FRONTIER-V1-T008",
+      "preflight_pr": "heimgewebe/bureau#213",
+      "preflight_merge_commit": "6ac24f4348ccc932297a0fe214ca317554227f1a",
+      "preflight_report": "docs/reports/gemini-preflight-2026-07-08.json",
+      "preflight_status": "blocked_pending_auth_quota_review",
+      "laneEnabled": false,
+      "blockedReasons": [
+        "auth_quota_not_observed"
+      ]
+    },
+    "unblock_conditions": [
+      "Auth/quota state is observed without leaking account details.",
+      "Exact non-interactive invocation shape is recorded.",
+      "Sandbox/permission mode is confirmed for no write, push, merge, runtime, credential, dispatch or queue authority.",
+      "Output schema and capture path are bound to a follow-up review-lane implementation."
+    ]
   },
   "acceptance": [
     {

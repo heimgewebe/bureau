@@ -5,7 +5,7 @@
   "title": "Build curated Gemini maintenance evidence packet",
   "state": "planned",
   "priority": {
-    "lane": "later",
+    "lane": "next",
     "rank": 90
   },
   "goal": "Build a narrow, deterministic evidence packet for Gemini maintenance scans so Gemini reads bounded Cabinet evidence rather than crawling unrestricted repositories.",
@@ -58,6 +58,12 @@
   "metadata": {
     "source_issue": "heimgewebe/bureau#254",
     "registered_at": "2026-07-08T12:10:00Z",
+    "advanced_after_contract_at": "2026-07-08T14:45:00Z",
+    "context": {
+      "cabinet_contract_pr": "heimgewebe/cabinet#89",
+      "cabinet_contract_merge_commit": "0568efc9b43d1271664bad8d6a80bac96859e0ad",
+      "validator": "scripts/validate_gemini_maintenance_scan.py"
+    },
     "does_not_establish": [
       "complete_repository_context",
       "semantic_correctness",

@@ -3,7 +3,7 @@
   "id": "RPU-V1-T009",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "Guard relation persistence decision",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 49
@@ -49,13 +49,43 @@
     "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
     "registered_at": "2026-07-08T00:00:00Z",
     "does_not_establish": [
-      "runtime_correctness",
       "test_sufficiency",
+      "runtime_correctness",
+      "regression_absence",
+      "schema_runtime_equivalence",
       "review_completeness",
-      "merge_readiness",
-      "agent_quality_improvement_by_itself"
+      "need_for_persistent_guard_relation_cards",
+      "retrieval_quality_improvement",
+      "merge_readiness"
     ],
-    "lenskit_local_task": "TASK-GUARD-RELATION-PERSISTENCE-DECISION-001"
+    "lenskit_local_task": "TASK-GUARD-RELATION-PERSISTENCE-DECISION-001",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Lenskit PR #922: persistent Guard Relation Cards remain blocked by explicit machine-readable decision. No concrete current consumer is established; current goldset precision is 0.666667, false-positive rate is 1.0, and unresolved cases remain present.",
+    "implementation_pr": "heimgewebe/lenskit#922",
+    "live_lenskit_commit": "c465644d5ff1b49a221b11b000bcf201bd24ad18",
+    "implementation_head": "cb7e2c8ea3e212d0ce34792536d97f0d767fa60c",
+    "diff_sha256": "4a60e9cacf844dab2546f1539cf8a964b399daa6cc34303289c020b2e1e22956",
+    "implementation_paths": [
+      "docs/proofs/guard-relation-persistence-decision.v1.json",
+      "docs/proofs/guard-relation-persistence-decision-v1-proof.md",
+      "merger/lenskit/tests/test_guard_relation_persistence_decision.py",
+      "docs/tasks/board.md",
+      "docs/tasks/index.json"
+    ],
+    "validation": [
+      "Lenskit PR #922 GitHub CI passed.",
+      "Local before merge: 142 guard relation decision/goldset/audit/relation-card tests passed.",
+      "Post-merge on origin/main c465644d5ff1b49a221b11b000bcf201bd24ad18: same 142 tests passed, evaluator ran, JSON parsed, targeted ruff passed, planning-registration no new drift, doc-freshness PASS and diff-check pass."
+    ],
+    "verified_acceptance": {
+      "rpu-v1-t009-consumer": "No concrete current consumer justifies persistent Guard Relation Cards.",
+      "rpu-v1-t009-thresholds": "Required thresholds recorded: named consumer, precision >=0.95, resolved-positive recall >=0.95, false-positive rate <=0.05, zero unresolved cases per relation type, preserved negative semantics.",
+      "rpu-v1-t009-block-ok": "Persistence remains blocked because current evidence fails consumer, precision, false-positive-rate and unresolved-case criteria."
+    },
+    "verification": {
+      "task_sha256": "f77167f7fcc81ea9a30a308c8e3d63effd90caf0f590e20b538d37333a278bdf",
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015"
+    }
   },
   "depends_on": [
     "RBV1-T014"

@@ -44,7 +44,8 @@ BUREAU_BINDING_EXCEPTION_LINE_RE = re.compile(
     r"(?im)^\s*Bureau-(?:PR-)?Task-Binding-Exception\s*:\s*(?P<value>[^\n#]+)\s*$"
 )
 BUREAU_BINDING_EXCEPTION_LABEL_RE = re.compile(
-    r"(?i)^\s*Bureau[-_ ](?:PR[-_ ])?Task[-_ ]Binding[-_ ]Exception\s*(?::|/|=)\s*(?P<value>.+?)\s*$"
+    r"(?i)^\s*Bureau[-_ ](?:PR[-_ ])?Task[-_ ]Binding[-_ ]Exception\s*"
+    r"(?::|/|=)\s*(?P<value>.+?)\s*$"
 )
 
 BINDING_BUREAU_RUN = "bureau_run_marker"
@@ -399,13 +400,24 @@ def _repository_resource_id(repository: str | None) -> str | None:
     return f"repo.{name}"
 
 
-def _task_claims_resource(task: Any, resource_id: str | None) -> bool | None:
+def _task_claims_resource(
+    task: Any, resource_id: str | None, registry: legacy.Registry | None
+) -> bool | None:
     if resource_id is None:
         return None
     claims = getattr(task, "claims", None)
     if claims is None:
         return None
-    return any(getattr(claim, "resource", None) == resource_id for claim in claims)
+    resources = getattr(registry, "resources", {}) if registry is not None else {}
+    for claim in claims:
+        claim_resource = getattr(claim, "resource", None)
+        if claim_resource == resource_id:
+            return True
+        if isinstance(claim_resource, str) and legacy.overlaps(
+            claim_resource, resource_id, resources
+        ):
+            return True
+    return False
 
 
 def _raw_metadata(task: Any) -> dict[str, Any]:
@@ -543,6 +555,13 @@ def _binding_hard_findings(
     """Return fail-closed binding findings without hiding usable PR facts."""
     findings: list[dict[str, Any]] = []
     expected_resource = _repository_resource_id(repository)
+    registry_resources = getattr(registry, "resources", {}) if registry is not None else {}
+    if (
+        expected_resource is not None
+        and expected_resource not in registry_resources
+        and "repo" in registry_resources
+    ):
+        expected_resource = "repo"
     for observation in observations:
         if observation.get("binding_exception"):
             continue
@@ -596,13 +615,16 @@ def _binding_hard_findings(
                 }
             )
             continue
-        claims_expected = _task_claims_resource(task, expected_resource)
+        claims_expected = _task_claims_resource(task, expected_resource, registry)
         if claims_expected is False:
             findings.append(
                 {
                     "severity": "blocker",
                     "code": "wrong-repository-github-task-binding",
-                    "message": f"bound task does not claim expected repository resource {expected_resource}",
+                    "message": (
+                        "bound task does not claim expected repository resource "
+                        f"{expected_resource}"
+                    ),
                     "number": number,
                     "task_id": task_id,
                 }

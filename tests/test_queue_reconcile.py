@@ -59,6 +59,11 @@ def test_queue_reconcile_reports_unqueued_ready_priority_now(registry_factory, t
     assert report["queue_canonical"] is True
     assert report["summary"]["promote_to_now_candidates"] == 1
     assert report["findings"][0]["code"] == "unqueued-ready-priority-now"
+    assert report["findings"][0]["rule"] == "ready_priority_now_should_be_queued_or_explained"
+    assert report["findings"][0]["proposed_action"] == {
+        "operation": "add_to_queue",
+        "target_lane": "now",
+    }
 
 
 def test_queue_reconcile_reports_unqueued_priority_next(registry_factory, tmp_path):
@@ -84,16 +89,24 @@ def test_queue_reconcile_reports_queued_later_priority_now_as_lane_mismatch(
 
     assert report["summary"]["lane_mismatch_candidates"] == 1
     assert report["findings"][0]["code"] == "queued-later-priority-now-or-next"
+    assert (
+        report["findings"][0]["rule"]
+        == "canonical_queue_lane_should_match_current_priority_or_document_drift"
+    )
+    assert report["findings"][0]["proposed_action"]["operation"] == "review_lane"
 
 
 def test_queue_reconcile_reports_terminal_queued_as_error(registry_factory, tmp_path):
     root = registry_factory(1)
+    _move_to_later(root, "BUR-TEST-001-T001")
     _set_task(root, "BUR-TEST-001-T001", state="cancelled")
 
     report = _report(root, tmp_path)
 
+    finding = next(item for item in report["findings"] if item["code"] == "terminal-task-in-queue")
     assert report["summary"]["blockers"] >= 1
-    assert "terminal-task-in-queue" in {item["code"] for item in report["findings"]}
+    assert finding["rule"] == "queued_terminal_tasks_are_invalid"
+    assert finding["proposed_action"] == {"operation": "remove_from_queue", "target_lane": None}
 
 
 def test_queue_reconcile_is_read_only(registry_factory, tmp_path):

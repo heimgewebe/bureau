@@ -73,6 +73,16 @@ def init_clean_origin_main(root: Path) -> str:
     git_output(root, "update-ref", "refs/remotes/origin/main", head)
     return head
 
+
+
+def remove_from_queue(root: Path, task_id: str) -> None:
+    queue_path = root / "registry/queue.json"
+    queue = json.loads(queue_path.read_text())
+    for lane in queue["lanes"].values():
+        while task_id in lane:
+            lane.remove(task_id)
+    queue_path.write_text(json.dumps(queue))
+
 def setup(root: Path, tmp_path: Path, monkeypatch, adapters: AdapterRegistry | None = None):
     state = tmp_path / "state"
     monkeypatch.setenv("BUREAU_STATE_DIR", str(state))
@@ -329,7 +339,7 @@ def test_queue_json_is_dispatch_canon_for_unqueued_ready_task(registry_factory, 
     root = registry_factory(2, mode="write", max_active=2)
     queue_path = root / "registry/queue.json"
     queue = json.loads(queue_path.read_text())
-    queue["lanes"]["now"] = ["BUR-TEST-001-T001"]
+    queue["lanes"]["now"] = []
     queue_path.write_text(json.dumps(queue))
 
     second_path = root / "registry/tasks/BUR-TEST-001-T002.json"
@@ -384,6 +394,7 @@ def test_lifecycle_diagnoses_completion_ready(registry_factory, tmp_path, monkey
             "plan_sha256": plan_sha256(preliminary, task["initiative"]),
         }
     }
+    remove_from_queue(root, task["id"])
     task_path.write_text(json.dumps(task))
     registry, store, _ = setup(root, tmp_path, monkeypatch)
     lifecycle = lifecycle_diagnostics(registry, store)[0]
@@ -409,6 +420,7 @@ def test_verified_task_requires_revision_stamp(registry_factory):
     task_path = next((root / "registry/tasks").glob("*.json"))
     task = json.loads(task_path.read_text())
     task["state"] = "verified"
+    remove_from_queue(root, task["id"])
     task_path.write_text(json.dumps(task))
     with pytest.raises(ValidationError, match="task verification"):
         Registry.load(root)
@@ -662,6 +674,7 @@ def test_close_ready_updates_initiative_atomically(registry_factory, tmp_path, m
             "plan_sha256": plan_sha256(initial, task["initiative"]),
         }
     }
+    remove_from_queue(root, task["id"])
     task_path.write_text(json.dumps(task))
     registry, store, _ = setup(root, tmp_path, monkeypatch)
     changed = close_ready_initiatives(registry, store)
@@ -698,6 +711,7 @@ def test_doctor_reports_lifecycle_mismatch(registry_factory, tmp_path, monkeypat
             "plan_sha256": plan_sha256(initial, task["initiative"]),
         }
     }
+    remove_from_queue(root, task["id"])
     task_path.write_text(json.dumps(task))
     _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
     doctor = dispatcher.doctor()
@@ -990,6 +1004,7 @@ def test_runtime_drift_check_treats_stale_state_rows_as_superseded_when_registry
         "task_sha256": task_revision_sha256(task),
         "plan_sha256": plan_sha256(registry, task["initiative"]),
     }
+    remove_from_queue(root, task["id"])
     task_path.write_text(json.dumps(task))
     initiative_path = root / "registry/initiatives/main.json"
     initiative = json.loads(initiative_path.read_text())
@@ -1068,6 +1083,7 @@ def test_explain_next_reports_runtime_truth_for_lifecycle_reopen(
     task = json.loads(task_path.read_text())
     task["state"] = "planned"
     task["execution"]["policy"] = "review-before-effect"
+    remove_from_queue(root, task["id"])
     task_path.write_text(json.dumps(task))
 
     _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
@@ -1103,6 +1119,7 @@ def test_doctor_reports_runtime_truth_for_lifecycle_mismatch(
             "plan_sha256": plan_sha256(initial, task["initiative"]),
         }
     }
+    remove_from_queue(root, task["id"])
     task_path.write_text(json.dumps(task))
     _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
 
@@ -1125,6 +1142,7 @@ def test_no_eligible_cli_paths_expose_runtime_truth(registry_factory, tmp_path, 
     task = json.loads(task_path.read_text())
     task["state"] = "planned"
     task["execution"]["policy"] = "review-before-effect"
+    remove_from_queue(root, task["id"])
     task_path.write_text(json.dumps(task))
 
     for command in ("claim-next", "checkout-next"):
@@ -1164,6 +1182,7 @@ def test_explain_next_exposes_read_only_lifecycle_repair_candidate(
     task = json.loads(task_path.read_text())
     task["state"] = "planned"
     task["execution"]["policy"] = "review-before-effect"
+    remove_from_queue(root, task["id"])
     task_path.write_text(json.dumps(task))
 
     _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)

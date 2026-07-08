@@ -94,8 +94,10 @@ def _finding(
     queue_lane: str | None,
     priority_lane: str,
     effective_state: str,
+    rule: str,
+    proposed_action: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    return {
+    finding = {
         "code": code,
         "severity": severity,
         "task_id": task.id,
@@ -105,8 +107,12 @@ def _finding(
         "priority_lane": priority_lane,
         "claim_resources": [claim.resource for claim in task.claims],
         "message": message,
+        "rule": rule,
         "recommendation": recommendation,
     }
+    if proposed_action is not None:
+        finding["proposed_action"] = proposed_action
+    return finding
 
 
 def _repo_focus(registry: Registry, snapshots: list[TaskSnapshot]) -> dict[str, Any]:
@@ -163,6 +169,8 @@ def queue_reconcile_report(
                     task=task,
                     message="Terminal task remains in registry/queue.json.",
                     recommendation="remove_from_queue",
+                    rule="queued_terminal_tasks_are_invalid",
+                    proposed_action={"operation": "remove_from_queue", "target_lane": None},
                     queue_lane=item.queue_lane,
                     priority_lane=item.priority_lane,
                     effective_state=item.effective_state,
@@ -175,7 +183,16 @@ def queue_reconcile_report(
                     severity="error",
                     task=task,
                     message="Task is queued in now but is not ready.",
-                    recommendation="move_or_repair_state",
+                    recommendation="move_to_next_or_repair_state",
+                    rule="queue_now_requires_ready_state",
+                    proposed_action={
+                        "operation": "move_from_now",
+                        "allowed_target_lanes": ["next", "later"],
+                        "alternative": (
+                            "change_task_state_to_ready_if_acceptance_"
+                            "preconditions_are_met"
+                        ),
+                    },
                     queue_lane=item.queue_lane,
                     priority_lane=item.priority_lane,
                     effective_state=item.effective_state,
@@ -193,6 +210,8 @@ def queue_reconcile_report(
                     task=task,
                     message="Ready task has advisory priority now but is absent from queue.",
                     recommendation="promote_to_now",
+                    rule="ready_priority_now_should_be_queued_or_explained",
+                    proposed_action={"operation": "add_to_queue", "target_lane": "now"},
                     queue_lane=item.queue_lane,
                     priority_lane=item.priority_lane,
                     effective_state=item.effective_state,
@@ -210,6 +229,8 @@ def queue_reconcile_report(
                     task=task,
                     message="Open task has advisory priority next but is absent from queue.",
                     recommendation="promote_to_next",
+                    rule="open_priority_next_should_be_queued_or_explained",
+                    proposed_action={"operation": "add_to_queue", "target_lane": "next"},
                     queue_lane=item.queue_lane,
                     priority_lane=item.priority_lane,
                     effective_state=item.effective_state,
@@ -223,6 +244,11 @@ def queue_reconcile_report(
                     task=task,
                     message="Queued lane later disagrees with advisory now/next priority.",
                     recommendation="review_lane",
+                    rule="canonical_queue_lane_should_match_current_priority_or_document_drift",
+                    proposed_action={
+                        "operation": "review_lane",
+                        "allowed_target_lanes": ["now", "next", "later"],
+                    },
                     queue_lane=item.queue_lane,
                     priority_lane=item.priority_lane,
                     effective_state=item.effective_state,

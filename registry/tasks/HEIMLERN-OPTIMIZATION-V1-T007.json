@@ -3,7 +3,7 @@
   "id": "HEIMLERN-OPTIMIZATION-V1-T007",
   "initiative": "HEIMLERN-OPTIMIZATION-V1",
   "title": "Heimlern RepoBrief/rLens Bundle herstellen",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 50
@@ -52,8 +52,164 @@
     "does_not_establish": [
       "repo_runtime_correctness",
       "learning_policy_readiness",
-      "automatic_refresh_authority"
+      "automatic_refresh_authority",
+      "bundle_freshness_against_live_repo",
+      "repo_understood",
+      "claims_true",
+      "task_truth",
+      "runtime_truth",
+      "merge_authority",
+      "review_completeness",
+      "test_sufficiency"
     ],
-    "claim_boundary": "read-only observation; no checkout mutation or hidden refresh authority"
+    "claim_boundary": "read-only observation; no checkout mutation or hidden refresh authority",
+    "verified_at": "2026-07-08",
+    "verification_mode": "read_only_rlens_observation_no_repo_mutation",
+    "observed_registry": {
+      "tool": "latest_complete_bundles",
+      "path": "/home/alex/.local/state/grabowski/rlens-latest-complete-bundles.tsv",
+      "sha256": "8d258594b05e449b3835f5f54d2650ab3c378c9931e69c10a1e78d4f12eb2574",
+      "heimlern_row": [
+        "heimlern",
+        "heimlern-max-260705-0119",
+        "2026-07-05T01:19:32+00:00",
+        "yes",
+        "./merges/heimlern-max-260705-0119_merge.md",
+        "./merges/heimlern-max-260705-0119_merge.bundle.manifest.json",
+        "./merges/heimlern-max-260705-0119_merge.output_health.json",
+        "./merges/heimlern-max-260705-0119_merge.agent_reading_pack.md"
+      ],
+      "authority": "merged_legacy_live_discovery",
+      "does_not_establish": [
+        "bundle_freshness_against_live_repo",
+        "repo_understood",
+        "claims_true",
+        "runtime_correctness"
+      ]
+    },
+    "observed_bundle": {
+      "stem": "heimlern-max-260705-0119",
+      "manifest_path": "/home/alex/repos/merges/heimlern-max-260705-0119_merge.bundle.manifest.json",
+      "manifest_sha256": "8e3ee3607aef7e4e94a56f38cb566e76f151941de78cbd723a49a0dd8ece000e",
+      "created_at": "2026-07-05T01:19:32Z",
+      "run_id": "heimlern-full-max-260705-0119",
+      "git_commit": "a8528e0209d27a2d7283ae20d1e486b6f9ba0e19",
+      "git_dirty": false,
+      "artifact_count": 16,
+      "artifact_roles": [
+        "agent_entry_manifest",
+        "agent_reading_pack",
+        "architecture_graph_json",
+        "canonical_md",
+        "chunk_index_jsonl",
+        "citation_map_jsonl",
+        "concept_cards_jsonl",
+        "derived_manifest_json",
+        "dump_index_json",
+        "entrypoints_json",
+        "graph_index_json",
+        "index_sidecar_json",
+        "lens_cards_jsonl",
+        "output_health",
+        "retrieval_eval_json",
+        "sqlite_index"
+      ],
+      "post_emit_health": {
+        "status": "pass",
+        "evidence_level": "range_strict",
+        "range_ref_resolution_status": "ok"
+      },
+      "output_health": {
+        "verdict": "pass",
+        "range_ref_resolution_status": "ok",
+        "warnings": []
+      },
+      "bundle_surface_validation": {
+        "status": "pass",
+        "bundle_run_id": "heimlern-full-max-260705-0119"
+      }
+    },
+    "freshness_observation": {
+      "tool": "rlens_freshness_check",
+      "status": "stale_head",
+      "reason": "bundle_commit_differs_from_live_head",
+      "bundle_commit": "a8528e0209d27a2d7283ae20d1e486b6f9ba0e19",
+      "live_repo_path": "/home/alex/repos/heimlern",
+      "live_commit_at_claim": "1ee6de4c53d0bf7a0c65d8a229960d54ac39f5ec",
+      "live_worktree_dirty": false,
+      "known_origin_main_during_session": "84c72306c355cf26c574d01e7f56b35bd207cbbb",
+      "bounded_degradation": "Bundle exists and is structurally complete, but it is stale against the observed live Heimlern checkout and therefore must not be used as current repo truth."
+    },
+    "context_pack_smoke": {
+      "tool": "rlens_context_pack",
+      "available": true,
+      "task_profile": "basic_repo_question",
+      "query": "heimlern feedback proposal no auto apply weight adjustment evidence",
+      "preflight_status": "warn",
+      "required_missing": [],
+      "recommended_missing": [
+        "snapshot_plan_json"
+      ],
+      "freshness_status": "stale_head",
+      "resolved_evidence_status": "available",
+      "query_shape": "source_citation_projection.items",
+      "hit_count": 1,
+      "result_count": 1,
+      "snippet_count": 1,
+      "range_count": 1,
+      "citation_count": 1,
+      "citation_ids": [
+        "cit_ead3a159e0652ebd"
+      ],
+      "snippet_path": "docs/learning-cycle.md",
+      "source_range": {
+        "artifact_path": "heimlern-max-260705-0119_merge.md",
+        "start_line": 10260,
+        "end_line": 10541,
+        "content_sha256": "56c7ca96019381696f6a397a135600d88c8c2b0a3047e373b65d5718f7fa5018"
+      }
+    },
+    "query_smoke": {
+      "tool": "rlens_query_existing_index",
+      "available": true,
+      "status": "available",
+      "hit_count": 1,
+      "result_count": 1,
+      "lenskit_status": "available",
+      "mutation_boundary": {
+        "read_paths_do_not_refresh": true,
+        "writes": [],
+        "does_not_mutate": [
+          "git",
+          "pull_requests",
+          "patches",
+          "source_working_tree",
+          "brief_bundle_artifacts"
+        ]
+      }
+    },
+    "range_get_note": {
+      "tool": "rlens_range_get",
+      "status": "invalid",
+      "error_code": "range_ref_invalid",
+      "reason": "Manual range_ref replay was not used as acceptance evidence; context_pack/query already returned resolved citation/snippet evidence. Treat direct range_get formatting as a separate wrapper-hardening observation if needed."
+    },
+    "validated_acceptance": {
+      "bundle-observable": "latest_complete_bundles, rlens_bundle_discover and rlens_bundle_status report heimlern-max-260705-0119 as an existing complete bundle with agent_reading_pack, canonical_md, sqlite_index, output_health pass, post_emit_health pass and bundle_surface_validation pass.",
+      "context-pack-smoke": "rlens_context_pack and rlens_query_existing_index returned bounded evidence for a basic heimlern query; the pack explicitly reports stale_head and preflight warn instead of claiming freshness.",
+      "no-control-plane-claim": "All rLens outputs used here carry does_not_establish and mutation_boundary fields; no RepoBrief/rLens output was treated as task truth, runtime truth, merge authority or source freshness proof."
+    },
+    "validation": [
+      "latest_complete_bundles returned a heimlern row for heimlern-max-260705-0119 with has_agent_reading_pack=yes.",
+      "rlens_bundle_discover(repo=heimlern) returned two heimlern candidates; selected max bundle has 16 roles and health pass.",
+      "rlens_bundle_status(stem=heimlern-max-260705-0119) returned exists=true, post_emit_health pass, output_health pass and bundle_surface_validation pass.",
+      "rlens_freshness_check(repo=heimlern, stem=heimlern-max-260705-0119) returned stale_head because bundle_commit differs from observed live checkout head.",
+      "rlens_query_existing_index returned status=available, hit_count=1, result_count=1, resolved citation cit_ead3a159e0652ebd and mutation_boundary writes=[].",
+      "rlens_context_pack returned available=true, preflight_status=warn, required_missing=[], recommended_missing=[snapshot_plan_json], resolved_evidence_status=available, snippet_count=1, range_count=1, citation_count=1."
+    ],
+    "verification": {
+      "task_sha256": "4e9025c27abe69e8947e477e1bdc134ec108a6a9f8614ffef357a488df5651b6",
+      "plan_sha256": "de066e4dc95e6a5575653e41c8cf2c6108f57052e12ba782dbbf49f4ab556b7e"
+    }
   }
 }

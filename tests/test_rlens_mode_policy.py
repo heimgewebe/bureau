@@ -151,6 +151,7 @@ def test_inferred_required_task_is_reported_but_not_strict_blocker() -> None:
     assert result["mode"] == "required"
     assert result["status"] == "policy-missing"
     assert result["policy_source"] == "inferred"
+    assert result["skip_reason_present"] is False
 
 
 def test_task_schema_accepts_rlens_policy() -> None:

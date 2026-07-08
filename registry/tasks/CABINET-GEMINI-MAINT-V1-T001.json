@@ -5,7 +5,7 @@
   "title": "Preflight Gemini maintenance scan capability",
   "state": "blocked",
   "priority": {
-    "lane": "next",
+    "lane": "later",
     "rank": 70
   },
   "goal": "Produce a reviewed capability and sandbox preflight for any Gemini-based Cabinet maintenance scan before scheduling or recurring execution is allowed.",
@@ -64,14 +64,18 @@
     "source_issue": "heimgewebe/bureau#254",
     "registered_at": "2026-07-08T12:10:00Z",
     "blocked_at": "2026-07-08T13:10:00Z",
-    "block_reason": "Cabinet preflight found no concrete Gemini tool/action, version or pin, authentication model, permission manifest, cost/quota class or log privacy boundary. Gemini maintenance scans remain not schedulable.",
+    "updated_after_manifest_at": "2026-07-08T14:35:00Z",
+    "block_reason": "Cabinet now has a concrete non-enabled execution manifest, but Gemini maintenance remains not schedulable until the evidence packet generator, output schema, validator, secret/WIF boundary, cost/quota and log privacy checks are reviewed.",
     "evidence": {
-      "cabinet_pr": "heimgewebe/cabinet#87",
-      "cabinet_merge_commit": "28a521318e53ca58ab17fd64218a2b839fcb5e9b",
-      "preflight_markdown": "pruefung/30 Befunde/cabinet-gemini-maintenance-preflight-v1.md",
+      "cabinet_preflight_pr": "heimgewebe/cabinet#87",
+      "cabinet_preflight_merge_commit": "28a521318e53ca58ab17fd64218a2b839fcb5e9b",
+      "cabinet_manifest_pr": "heimgewebe/cabinet#88",
+      "cabinet_manifest_merge_commit": "9e40f18bdb18d65f2047217d6c8f9e924af90e54",
+      "execution_manifest_markdown": "docs/blueprints/gemini-maintenance-execution-manifest-v1.md",
+      "execution_manifest_policy": "policy/gemini-maintenance-execution-manifest.v1.json",
       "preflight_receipt": "pruefung/30 Befunde/cabinet-gemini-maintenance-preflight-v1.json"
     },
-    "next_action": "Define a concrete Gemini execution manifest before any dry run or schedule decision.",
+    "next_action": "Continue with CABINET-GEMINI-MAINT-V1-T002: define the strict Gemini maintenance scan output contract and validator.",
     "does_not_establish": [
       "gemini_available",
       "gemini_schedulable",

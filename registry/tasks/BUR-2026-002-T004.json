@@ -25,7 +25,34 @@
   "initiative": "BUR-2026-002",
   "metadata": {
     "operator_lab_run": "vibe-lab: experiments/2026-07-01_operator-lab-loop/artifacts/run-002-rlens-agent-ecosystem/run-card.yml",
-    "plan_path": "docs/plans/rlens-agent-ecosystem-integration-v1.md"
+    "plan_path": "docs/plans/rlens-agent-ecosystem-integration-v1.md",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Cabinet PR #86: Cabinet now has a metadata-only rLens/RepoBrief bundle manifest importer that renders dated Repository References and optional bounded agent briefings without live-state claims.",
+    "implementation_pr": "heimgewebe/cabinet#86",
+    "live_cabinet_commit": "e68f38fcbcdefb4ce731148de9652664f6c68312",
+    "implementation_paths": [
+      "scripts/import_rlens_repository_reference.py",
+      "scripts/tests/test_rlens_repository_reference_import.py",
+      "docs/contracts/cabinet-rlens-repository-reference-import-v1.md",
+      ".github/workflows/validate.yml"
+    ],
+    "validation": [
+      "Cabinet PR #86 GitHub CI passed: Repository Contract, Installer Shadow Test, Secret Scan, Validate Ecosystem Map, test, validate.",
+      "Local: python3 -m unittest discover -s scripts/tests -p test_rlens_repository_reference_import.py -> 5 passed.",
+      "Local: python3 -m unittest discover -s scripts/tests -p test_external*.py -> 9 passed.",
+      "Local: python3 scripts/validate_external_dump_sources.py -> pass.",
+      "Local: cabinet frontier and ecosystem signal focused tests passed.",
+      "Local: ./scripts/ci/validate-repository.sh on real Cabinet checkout after merge -> pass.",
+      "Local: git diff --check -> pass."
+    ],
+    "verified_acceptance": {
+      "dated-reference": "Importer output includes bundle stem, manifest SHA-256, generated timestamp, health status, freshness class, and explicit non-claims.",
+      "no-live-claim": "Rendered references and JSON briefings set/ state live-state non-claim boundaries and do not inspect live Git or claim current repository HEAD."
+    },
+    "verification": {
+      "task_sha256": "5863863c0c40d00a2be2289010c5c4b9ca42611ecf12653cf3ed8f19d9f6887e",
+      "plan_sha256": "2a786843fa4b6a7da77cd9790f77a41b5a35fb591b0047e2d6d1698d45df4ca2"
+    }
   },
   "priority": {
     "lane": "later",
@@ -36,6 +63,6 @@
     "shell"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Import rLens references into Cabinet"
 }

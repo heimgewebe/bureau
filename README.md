@@ -12,7 +12,10 @@ Look into Bureau and execute the next task.
 one compatible task, freezes a revision-bound execution envelope, creates an isolated workspace
 when required and returns or dispatches the executor handoff. A second session therefore receives
 a different non-conflicting task or an explicit explanation that no further safe parallel work is
-available.
+available. Queue reads are advisory only; only `claim-next` and `checkout-next` reserve work
+before any workspace, branch or PR is created. Open PRs are treated as external reservations,
+with same-task PRs reported as duplicate implementations and other open PRs as conservative
+repo-write blockers.
 
 ## Boundaries
 

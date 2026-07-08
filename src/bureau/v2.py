@@ -8,7 +8,7 @@ import subprocess
 import uuid
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager, suppress
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -102,7 +102,7 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
                 "--limit",
                 "100",
                 "--json",
-                "number,title,headRefName,url",
+                "number,title,headRefName,url,body,labels",
             ],
             text=True,
             capture_output=True,
@@ -133,12 +133,92 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
     return [item for item in value if isinstance(item, dict)]
 
 
+@dataclass(frozen=True)
+class OpenPullRequestReservation(legacy.Reservation):
+    repository: str = ""
+    number: int | None = None
+    task_ids: tuple[str, ...] = ()
+    branch: str = ""
+    title: str = ""
+    url: str = ""
+    diagnostic: str = "open PR"
+    observation_failed: bool = False
+
+
+def _task_id_search_values(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, dict):
+        result: list[str] = []
+        for item in value.values():
+            result.extend(_task_id_search_values(item))
+        return result
+    if isinstance(value, list | tuple):
+        result: list[str] = []
+        for item in value:
+            result.extend(_task_id_search_values(item))
+        return result
+    return []
+
+
+def _normalize_task_id_text(value: str) -> str:
+    return value.lower().replace("_", "-")
+
+
+def _task_id_pattern(task_id: str) -> re.Pattern[str]:
+    normalized = re.escape(_normalize_task_id_text(task_id))
+    return re.compile(rf"(?<![a-z0-9]){normalized}(?![a-z0-9])")
+
+
+def _pull_request_task_ids(
+    pull_request: dict[str, Any], registry: legacy.Registry
+) -> tuple[str, ...]:
+    values: list[str] = []
+    for key in ("body", "title", "headRefName", "branch", "task_id", "taskId"):
+        values.extend(_task_id_search_values(pull_request.get(key)))
+    for key in ("metadata", "labels", "task_ids", "taskIds"):
+        values.extend(_task_id_search_values(pull_request.get(key)))
+    haystack = "\n".join(_normalize_task_id_text(item) for item in values)
+    if not haystack:
+        return ()
+    return tuple(
+        task_id for task_id in registry.tasks if _task_id_pattern(task_id).search(haystack)
+    )
+
+
+def _open_pr_label(reservation: legacy.Reservation) -> str:
+    if isinstance(reservation, OpenPullRequestReservation):
+        if reservation.observation_failed:
+            return f"open PR guard failed for {reservation.resource}: {reservation.diagnostic}"
+        if reservation.repository and reservation.number is not None:
+            return f"open-pr:{reservation.repository}#{reservation.number}"
+    return reservation.run_id
+
+
+def _repo_write_guard_failure_reservations(
+    registry: legacy.Registry, diagnostic: str
+) -> list[legacy.Reservation]:
+    return [
+        OpenPullRequestReservation(
+            f"open-pr-guard-failed:{resource.id}",
+            resource.id,
+            "write-blocker",
+            1,
+            diagnostic=diagnostic,
+            observation_failed=True,
+        )
+        for resource in registry.resources.values()
+        if resource.type == "git-repository"
+    ]
+
+
 def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Reservation]:
     """Represent open GitHub PRs as conservative repo write blockers.
 
-    The guard is intentionally repository-scoped: if a task wants write access to a
-    repository or one of its child resources, an already-open PR for that GitHub
-    repository blocks claim selection until the PR is merged or closed.
+    The guard is repository-scoped for write safety and task-aware for duplicate
+    diagnostics. PR body, title, branch name and structured metadata are scanned
+    for Registry task IDs so a direct branch/PR created without a Bureau claim is
+    observed as an external reservation on the next frontier or claim cycle.
     """
     if os.environ.get("BUREAU_OPEN_PR_CLAIM_GUARD", "1") in {"0", "false", "False"}:
         return []
@@ -161,12 +241,21 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
             number = pull_request.get("number")
             if not isinstance(number, int):
                 continue
+            branch = str(pull_request.get("headRefName") or "")
+            title = str(pull_request.get("title") or "")
+            url = str(pull_request.get("url") or "")
             result.append(
-                legacy.Reservation(
+                OpenPullRequestReservation(
                     f"open-pr:{repository}#{number}",
                     resource.id,
                     "write-blocker",
                     1,
+                    repository=repository,
+                    number=number,
+                    task_ids=_pull_request_task_ids(pull_request, registry),
+                    branch=branch,
+                    title=title,
+                    url=url,
                 )
             )
     return result
@@ -1111,12 +1200,14 @@ class Dispatcher(legacy.Dispatcher):
         )
 
     def _open_pr_reservations(self, *, strict: bool) -> list[legacy.Reservation]:
+        # Retain strict for call-site compatibility. Observation failures are
+        # represented as fail-closed reservations so frontier and claim_next
+        # report the same structured blocker instead of diverging on errors.
+        _ = strict
         try:
             return list(self.open_pr_reservations_provider(self.registry))
         except OpenPullRequestObservationError as exc:
-            if strict:
-                raise legacy.StateError(f"open pull request guard failed: {exc}") from exc
-            return []
+            return _repo_write_guard_failure_reservations(self.registry, str(exc))
 
     def _closure_bridge_applies(
         self, task: legacy.Task, state: str, initiative: legacy.Initiative
@@ -1158,8 +1249,10 @@ class Dispatcher(legacy.Dispatcher):
             dependency_state = overlays.get(dependency, self.registry.tasks[dependency].state)
             if dependency_state != "verified":
                 result.append(f"dependency {dependency} is {dependency_state}")
-        if any(row["task_id"] == task.id for row in runs):
-            result.append("task already active")
+        for row in runs:
+            if row["task_id"] == task.id:
+                result.append(f"active run for task {task.id}: {row['run_id']}")
+                break
         active_for_initiative = sum(
             1
             for row in runs
@@ -1168,8 +1261,39 @@ class Dispatcher(legacy.Dispatcher):
         )
         if active_for_initiative >= initiative.max_active_tasks:
             result.append(f"initiative parallel limit {initiative.max_active_tasks} reached")
+        open_pr_reservations = [
+            item for item in reservations if isinstance(item, OpenPullRequestReservation)
+        ]
+        regular_reservations = [
+            item for item in reservations if not isinstance(item, OpenPullRequestReservation)
+        ]
+        for reservation in open_pr_reservations:
+            label = _open_pr_label(reservation)
+            if reservation.observation_failed:
+                if any(
+                    legacy.overlaps(claim.resource, reservation.resource, self.registry.resources)
+                    and legacy.modes_conflict(claim.mode, reservation.mode)
+                    for claim in task.claims
+                ):
+                    result.append(f"repo write blocked by open PR guard failure: {label}")
+                continue
+            if task.id in reservation.task_ids:
+                result.append(f"task already implemented by open PR: {label}")
+            for claim in task.claims:
+                if legacy.overlaps(
+                    claim.resource, reservation.resource, self.registry.resources
+                ) and legacy.modes_conflict(claim.mode, reservation.mode):
+                    task_note = (
+                        f" task_ids={','.join(reservation.task_ids)}"
+                        if reservation.task_ids
+                        else " task_id=unknown"
+                    )
+                    result.append(f"repo write blocked by open PR: {label}{task_note}")
+                    break
         for claim in task.claims:
-            result.extend(legacy.claim_conflicts(claim, reservations, self.registry.resources))
+            result.extend(
+                legacy.claim_conflicts(claim, regular_reservations, self.registry.resources)
+            )
         return result
 
     def frontier(self, capabilities: set[str]) -> list[dict[str, Any]]:

@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "GRIP-ROADMAP-V1-T021",
+  "initiative": "GRIP-ROADMAP-V1",
+  "title": "Add immutable captain-run audit trail",
+  "state": "planned",
+  "goal": "Define an append-only or externally anchored audit trail for captain-run high-impact execution attempts separate from ordinary receipts.",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T014"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 210
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "audit-record",
+      "assertion": "Audit record binds action, target digest, expected_head, expected_base, execution result digest, actor/context and timestamp without exposing secrets."
+    },
+    {
+      "id": "fail-closed",
+      "assertion": "Failure to write required audit evidence blocks high-impact execution before executor invocation unless an explicitly documented bootstrap exception applies."
+    },
+    {
+      "id": "tamper-evidence",
+      "assertion": "Audit records are append-only or tamper-evident by hash chain or external anchor."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover audit write success, audit write failure, tamper detection and no-secret leakage."
+    }
+  ],
+  "metadata": {
+    "phase": "captain-run-followup",
+    "effect": "repository_hardening",
+    "source": "Grabowski captain-run PR #104/#106 reviews and follow-up triage",
+    "related_issue": "heimgewebe/bureau#212",
+    "related_prs": [
+      "heimgewebe/grabowski#104",
+      "heimgewebe/grabowski#106"
+    ],
+    "reason": "PR #106 preserves receipts but does not introduce an independent immutable audit trail.",
+    "does_not_establish": [
+      "implementation_complete",
+      "merge_authority_change",
+      "runtime_deployed",
+      "safety_proof"
+    ]
+  }
+}

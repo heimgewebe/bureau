@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "GRIP-ROADMAP-V1-T019",
+  "initiative": "GRIP-ROADMAP-V1",
+  "title": "Bind pr-merge verification to base branch head",
+  "state": "planned",
+  "goal": "Extend captain-run pr-merge verification so the observed base branch head is bound to the observed mergeCommit or classified when it advanced after execution.",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T014"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 190
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "base-ref-observation",
+      "assertion": "Post-merge verification observes refs/heads/<base> with a typed bounded GitHub call."
+    },
+    {
+      "id": "exact-match",
+      "assertion": "A clean passed receipt requires base ref object SHA to match the observed mergeCommit.oid when feasible."
+    },
+    {
+      "id": "advanced-classification",
+      "assertion": "If the base branch advanced after merge observation, receipt reports a distinct non-clean code such as base_branch_advanced_after_merge_observation."
+    },
+    {
+      "id": "fail-closed",
+      "assertion": "GitHub API failure, invalid base-ref shape or missing mergeCommit fail closed."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover exact match, base advanced, API failure and invalid base ref result."
+    }
+  ],
+  "metadata": {
+    "phase": "captain-run-followup",
+    "effect": "repository_hardening",
+    "source": "Grabowski captain-run PR #104/#106 reviews and follow-up triage",
+    "related_issue": "heimgewebe/bureau#210",
+    "related_prs": [
+      "heimgewebe/grabowski#104",
+      "heimgewebe/grabowski#106"
+    ],
+    "reason": "PR #106 verifies mergeCommit.oid but does not yet bind the target branch ref to it.",
+    "does_not_establish": [
+      "implementation_complete",
+      "merge_authority_change",
+      "runtime_deployed",
+      "safety_proof"
+    ]
+  }
+}

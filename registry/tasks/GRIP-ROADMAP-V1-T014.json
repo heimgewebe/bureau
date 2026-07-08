@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "GRIP-ROADMAP-V1-T014",
+  "initiative": "GRIP-ROADMAP-V1",
+  "title": "Add Captain execution intent records",
+  "state": "planned",
+  "goal": "Add an explicit execution_intent record for captain-run so high-impact execution is bound to a reviewed intent before any executor is invoked.",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T005",
+    "GRIP-ROADMAP-V1-T007"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 140
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "intent-required",
+      "assertion": "captain-run requires a structured execution_intent for mutating actions before executor invocation."
+    },
+    {
+      "id": "intent-bound",
+      "assertion": "The intent record binds action, target digest, expected_head, expected_base, evidence hashes, actor/context and timestamp without exposing secrets."
+    },
+    {
+      "id": "fail-closed",
+      "assertion": "Missing, malformed or drifted intent blocks execution before any high-impact command is invoked."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover missing intent, mismatched intent, valid intent and no-secret leakage in receipts."
+    }
+  ],
+  "metadata": {
+    "phase": "captain-run-followup",
+    "effect": "repository_hardening",
+    "source": "Grabowski captain-run PR #104/#106 reviews and follow-up triage",
+    "related_issue": "heimgewebe/bureau#190",
+    "related_prs": [
+      "heimgewebe/grabowski#104",
+      "heimgewebe/grabowski#106"
+    ],
+    "reason": "PR #102 introduced captain-run pr-merge execution; execution intent was intentionally deferred.",
+    "does_not_establish": [
+      "implementation_complete",
+      "merge_authority_change",
+      "runtime_deployed",
+      "safety_proof"
+    ]
+  }
+}

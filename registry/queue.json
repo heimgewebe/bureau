@@ -2,9 +2,7 @@
   "schema_version": 1,
   "queue_policy": "skip-blocked",
   "lanes": {
-    "now": [
-      "HEIMLERN-OPTIMIZATION-V1-T004"
-    ],
+    "now": [],
     "next": [
       "HEIMLERN-OPTIMIZATION-V1-T006",
       "HEIMLERN-OPTIMIZATION-V1-T007",

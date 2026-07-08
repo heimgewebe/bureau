@@ -10,6 +10,33 @@ bureau --root . explain-next --capability repository --capability shell --json
 
 `doctor` includes a read-only `state_root_hygiene` section. It treats only the configured Bureau database, SQLite sidecars, `envelopes/` and `receipts/` as known state-root artefacts. Unknown files or directories are reported, not deleted, including when `--repair` is used. Move or quarantine such files manually after checking whether they are operator notes, old backups or unrelated prompts.
 
+
+## Repository-scoped balls
+
+Bureau can project one current ball per repository resource without changing queue state:
+
+```bash
+bureau --root . --json repo-balls --capability repository --capability shell
+```
+
+Use a resource filter when asking for the next task for one repository:
+
+```bash
+bureau --root . --json explain-next --resource repo.bureau \
+  --capability repository --capability shell
+bureau --root . --json claim-next --worker worker-repo-bureau \
+  --resource repo.bureau --capability repository --capability shell
+```
+
+A resource-scoped ball does not create a second queue canon. `registry/queue.json` remains the
+dispatch queue. The resource filter limits observation, explanation and selection to tasks whose
+claims overlap the requested resource.
+
+Worker ownership is still one active assignment per worker ID. Use stable resource-scoped worker
+IDs, such as `worker-repo-bureau` or `worker-repo-lenskit`, when operating multiple repository
+balls in parallel. Reusing a worker ID for a different resource is rejected instead of silently
+claiming another task.
+
 ## Check out work
 
 ```bash

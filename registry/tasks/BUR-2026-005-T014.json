@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T014",
+  "initiative": "BUR-2026-005",
+  "title": "Add repository-scoped ball projection",
+  "state": "planned",
+  "depends_on": [
+    "BUR-2026-005-T013"
+  ],
+  "goal": "Expose a read-only current-ball projection per repository resource and allow next-task explanation and claiming to be filtered by repository resource without introducing a second queue canon.",
+  "priority": {
+    "lane": "later",
+    "rank": 140
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "source_request": "User requested one current ball per repository after queue canon made registry/queue.json dispatch-canonical.",
+    "safety_boundary": "Repository-scoped balls are projection and selection filters only; they do not create a second queue, auto-promote tasks, relax reservations, or grant merge/completion authority.",
+    "does_not_establish": [
+      "queue_freshness_reconcile",
+      "automatic_lane_promotion",
+      "automatic_merge_authority",
+      "automatic_completion_authority"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "repo-ball-projection",
+      "assertion": "A read-only command reports one current ball per repo.* resource using active runs, eligible tasks and queued lane state."
+    },
+    {
+      "id": "resource-filtered-explain",
+      "assertion": "explain-next/frontier can be scoped to a repository resource and exclude tasks that do not claim overlapping resources."
+    },
+    {
+      "id": "resource-filtered-claim",
+      "assertion": "claim-next/checkout-next can be scoped to a repository resource while preserving reservation, capability, lifecycle and open-PR gates."
+    },
+    {
+      "id": "worker-boundary",
+      "assertion": "The one-active-assignment-per-worker invariant is preserved; parallel repository balls require distinct stable worker IDs."
+    },
+    {
+      "id": "docs-boundary",
+      "assertion": "Documentation states that repository-scoped balls do not replace registry/queue.json as dispatch canon and do not auto-promote lanes."
+    }
+  ]
+}

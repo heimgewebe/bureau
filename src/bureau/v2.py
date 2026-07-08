@@ -1403,6 +1403,69 @@ class Dispatcher(legacy.Dispatcher):
             and task.policy == "review-before-effect"
         )
 
+    def _validate_resource_filter(self, resource: str | None) -> None:
+        if resource is not None and resource not in self.registry.resources:
+            raise legacy.StateError(f"unknown resource filter: {resource}")
+
+    def _task_matches_resource(self, task: legacy.Task, resource: str | None) -> bool:
+        if resource is None:
+            return True
+        self._validate_resource_filter(resource)
+        return any(
+            legacy.overlaps(claim.resource, resource, self.registry.resources)
+            for claim in task.claims
+        )
+
+    def _run_matches_resource(self, row: sqlite3.Row, resource: str | None) -> bool:
+        task = self.registry.tasks.get(row["task_id"])
+        return task is not None and self._task_matches_resource(task, resource)
+
+    def _queue_lane(self, task_id: str) -> str | None:
+        position = self.registry.positions.get(task_id)
+        if position is None:
+            return None
+        for lane, lane_index in legacy.LANE_ORDER.items():
+            if lane_index == position[0]:
+                return lane
+        return None
+
+    def _task_frontier_item(
+        self,
+        task: legacy.Task,
+        *,
+        effective_state: str,
+        eligible: bool,
+        closure_bridge: bool,
+        reasons: list[str],
+    ) -> dict[str, Any]:
+        return {
+            "task_id": task.id,
+            "title": task.title,
+            "effective_state": effective_state,
+            "eligible": eligible,
+            "closure_bridge": closure_bridge,
+            "queue_lane": self._queue_lane(task.id),
+            "claim_resources": [claim.resource for claim in task.claims],
+            "reasons": reasons,
+        }
+
+    def _repository_resources(self) -> list[legacy.Resource]:
+        repositories = [
+            resource
+            for resource in self.registry.resources.values()
+            if resource.id.startswith("repo.")
+        ]
+        if repositories:
+            return sorted(repositories, key=lambda item: item.id)
+        return sorted(
+            (
+                resource
+                for resource in self.registry.resources.values()
+                if resource.type == "git-repository" and resource.id != "repo"
+            ),
+            key=lambda item: item.id,
+        )
+
     def reasons(
         self,
         task: legacy.Task,
@@ -1483,7 +1546,10 @@ class Dispatcher(legacy.Dispatcher):
             )
         return result
 
-    def frontier(self, capabilities: set[str]) -> list[dict[str, Any]]:
+    def frontier(
+        self, capabilities: set[str], resource: str | None = None
+    ) -> list[dict[str, Any]]:
+        self._validate_resource_filter(resource)
         open_pr_reservations = self._open_pr_reservations(strict=False)
         with self.store.connect() as connection:
             runs = self.store.active_runs(connection)
@@ -1491,19 +1557,20 @@ class Dispatcher(legacy.Dispatcher):
             overlays = self.store.overlays(connection, self.registry)
             result: list[dict[str, Any]] = []
             for task in self.registry.ordered_tasks():
+                if not self._task_matches_resource(task, resource):
+                    continue
                 state = overlays.get(task.id, task.state)
                 initiative = self.registry.initiatives[task.initiative]
                 closure_bridge = self._closure_bridge_applies(task, state, initiative)
                 reasons = self.reasons(task, capabilities, runs, reservations, overlays)
                 result.append(
-                    {
-                        "task_id": task.id,
-                        "title": task.title,
-                        "effective_state": state,
-                        "eligible": not reasons,
-                        "closure_bridge": closure_bridge,
-                        "reasons": reasons,
-                    }
+                    self._task_frontier_item(
+                        task,
+                        effective_state=state,
+                        eligible=not reasons,
+                        closure_bridge=closure_bridge,
+                        reasons=reasons,
+                    )
                 )
             return result
 
@@ -1514,26 +1581,36 @@ class Dispatcher(legacy.Dispatcher):
         kind: str = "interactive-agent",
         *,
         reconcile_first: bool = True,
+        resource: str | None = None,
     ) -> dict[str, Any]:
+        self._validate_resource_filter(resource)
         if reconcile_first:
             self.reconcile()
         self.store.register_worker(worker_id, kind, capabilities)
         envelope: dict[str, Any] | None = None
         run: dict[str, Any] | None = None
         with self.store.immediate() as connection:
-            current = connection.execute(
+            current_rows = connection.execute(
                 (
                     "SELECT * FROM runs WHERE worker_id=? "
-                    "AND state IN ('assigned','running','verifying')"
+                    "AND state IN ('assigned','running','verifying') "
+                    "ORDER BY created_at"
                 ),
                 (worker_id,),
-            ).fetchone()
-            if current:
-                return {
-                    "status": "existing-assignment",
-                    "run": self.store.public_run(current),
-                    "envelope": json.loads(current["envelope_json"]),
-                }
+            ).fetchall()
+            for current in current_rows:
+                if resource is None or self._run_matches_resource(current, resource):
+                    return {
+                        "status": "existing-assignment",
+                        "resource": resource,
+                        "run": self.store.public_run(current),
+                        "envelope": json.loads(current["envelope_json"]),
+                    }
+            if current_rows and resource is not None:
+                raise legacy.StateError(
+                    "worker already has an active assignment outside resource filter; "
+                    "use a resource-scoped worker id"
+                )
             open_pr_reservations = self._open_pr_reservations(strict=True)
             worker = connection.execute(
                 "SELECT * FROM workers WHERE worker_id=?", (worker_id,)
@@ -1545,6 +1622,8 @@ class Dispatcher(legacy.Dispatcher):
             rejected: list[dict[str, Any]] = []
             selected: legacy.Task | None = None
             for task in self.registry.ordered_tasks():
+                if not self._task_matches_resource(task, resource):
+                    continue
                 reasons = self.reasons(task, worker_capabilities, runs, reservations, overlays)
                 if not reasons:
                     selected = task
@@ -1637,6 +1716,7 @@ class Dispatcher(legacy.Dispatcher):
         )
         return {
             "status": "claimed",
+            "resource": resource,
             "run": run,
             "envelope": envelope,
             "envelope_path": str(self.store.envelope_path(run["run_id"])),
@@ -1649,13 +1729,16 @@ class Dispatcher(legacy.Dispatcher):
         kind: str = "interactive-agent",
         base_dir: Path | None = None,
         dispatch: bool = False,
+        resource: str | None = None,
     ) -> dict[str, Any]:
+        self._validate_resource_filter(resource)
         reconciliation = self.reconcile()
         claimed = self.claim_next(
             worker_id,
             capabilities,
             kind,
             reconcile_first=False,
+            resource=resource,
         )
         run = claimed["run"]
         task = self.registry.tasks[run["task_id"]]
@@ -1862,13 +1945,113 @@ class Dispatcher(legacy.Dispatcher):
             "unobserved": unobserved,
         }
 
-    def explain_next(self, capabilities: set[str]) -> dict[str, Any]:
-        frontier = self.frontier(capabilities)
+    def explain_next(
+        self, capabilities: set[str], resource: str | None = None
+    ) -> dict[str, Any]:
+        self._validate_resource_filter(resource)
+        frontier = self.frontier(capabilities, resource=resource)
         lifecycle = lifecycle_diagnostics(self.registry, self.store)
         eligible = next((item for item in frontier if item["eligible"]), None)
         return {
+            "resource": resource,
             "selected": eligible,
             "frontier": frontier,
+            "lifecycle": lifecycle,
+            "runtime_truth": frontier_runtime_truth(frontier, lifecycle),
+        }
+
+    def repo_balls(self, capabilities: set[str]) -> dict[str, Any]:
+        frontier = self.frontier(capabilities)
+        lifecycle = lifecycle_diagnostics(self.registry, self.store)
+        with self.store.connect() as connection:
+            runs = [dict(row) for row in self.store.active_runs(connection)]
+        repo_balls: dict[str, dict[str, Any]] = {}
+        for repo in self._repository_resources():
+            repo_frontier = [
+                item
+                for item in frontier
+                if any(
+                    legacy.overlaps(claim_resource, repo.id, self.registry.resources)
+                    for claim_resource in item["claim_resources"]
+                )
+            ]
+            active_runs = []
+            for row in runs:
+                task = self.registry.tasks.get(row["task_id"])
+                if task is None or not self._task_matches_resource(task, repo.id):
+                    continue
+                active_runs.append(
+                    {
+                        "run_id": row["run_id"],
+                        "task_id": row["task_id"],
+                        "worker_id": row["worker_id"],
+                        "state": row["state"],
+                        "created_at": row["created_at"],
+                        "heartbeat_at": row["heartbeat_at"],
+                    }
+                )
+            lanes = {
+                lane: [
+                    {
+                        "task_id": item["task_id"],
+                        "title": item["title"],
+                        "eligible": item["eligible"],
+                        "effective_state": item["effective_state"],
+                        "reasons": item["reasons"],
+                    }
+                    for item in repo_frontier
+                    if item["queue_lane"] == lane
+                ]
+                for lane in legacy.LANE_ORDER
+            }
+            selected = next((item for item in repo_frontier if item["eligible"]), None)
+            if active_runs:
+                status = "active"
+                current_ball = {"kind": "active_run", **active_runs[0]}
+            elif selected is not None:
+                status = "ready"
+                current_ball = {
+                    "kind": "eligible_task",
+                    "task_id": selected["task_id"],
+                    "title": selected["title"],
+                    "queue_lane": selected["queue_lane"],
+                }
+            elif lanes["now"]:
+                status = "blocked"
+                current_ball = {"kind": "queued_now", **lanes["now"][0]}
+            elif lanes["next"]:
+                status = "planned"
+                current_ball = {"kind": "queued_next", **lanes["next"][0]}
+            elif lanes["later"]:
+                status = "backlog"
+                current_ball = {"kind": "queued_later", **lanes["later"][0]}
+            else:
+                status = "empty"
+                current_ball = None
+            repo_balls[repo.id] = {
+                "resource": repo.id,
+                "status": status,
+                "current_ball": current_ball,
+                "active_runs": active_runs,
+                "selected": selected,
+                "lanes": lanes,
+                "frontier_count": len(repo_frontier),
+            }
+        summary = {
+            "repositories": len(repo_balls),
+            "active": sum(1 for item in repo_balls.values() if item["status"] == "active"),
+            "ready": sum(1 for item in repo_balls.values() if item["status"] == "ready"),
+            "planned": sum(1 for item in repo_balls.values() if item["status"] == "planned"),
+            "backlog": sum(1 for item in repo_balls.values() if item["status"] == "backlog"),
+            "empty": sum(1 for item in repo_balls.values() if item["status"] == "empty"),
+        }
+        return {
+            "schema_version": 1,
+            "read_only": True,
+            "scope": "repository",
+            "capabilities": sorted(capabilities),
+            "summary": summary,
+            "repo_balls": repo_balls,
             "lifecycle": lifecycle,
             "runtime_truth": frontier_runtime_truth(frontier, lifecycle),
         }

@@ -19,3 +19,19 @@
 Compatibility: read/read is allowed; write conflicts with read or write; exclusive conflicts with
 all access; capacity claims are allowed until the declared capacity is exhausted. A parent resource
 overlaps all descendants.
+
+## Repository-scoped balls
+
+Ball-vor-Board is repository-scoped for repository work. A repository ball is the current active run
+or next eligible queued task for one `repo.*` resource. Bureau exposes this as a read-only
+projection through `repo-balls` and as a resource filter on `frontier`, `explain-next`, `claim-next`
+and `checkout-next`.
+
+The projection is not a second queue and does not promote tasks between lanes. `registry/queue.json`
+remains the dispatch canon; `task.priority` remains advisory metadata. A repository filter only
+constrains which task claims are considered. Normal reservation overlap, capability, dependency,
+lifecycle, open-PR and rLens gates still apply.
+
+Because the state database keeps one active assignment per worker ID, parallel repository balls must
+use distinct stable worker IDs. The recommended convention is `worker-<repo-id-with-dashes>`, for
+example `worker-repo-bureau` and `worker-repo-lenskit`.

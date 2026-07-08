@@ -3,7 +3,7 @@
   "id": "CABINET-COHERENCE-FRONTIER-V1-T003",
   "initiative": "CABINET-COHERENCE-FRONTIER-V1",
   "title": "Build Bureau frontier reader preview gate",
-  "state": "planned",
+  "state": "verified",
   "goal": "Add a Bureau read-only reader that validates Cabinet Frontier records and produces preview/review/receipt evidence without importing tasks.",
   "priority": {
     "lane": "later",
@@ -40,7 +40,33 @@
       "autonomous_dispatch"
     ],
     "phase": "CCFG-3",
-    "target_repository": "heimgewebe/bureau"
+    "target_repository": "heimgewebe/bureau",
+    "implementation_repo": "heimgewebe/bureau",
+    "implementation_pr": "heimgewebe/bureau#197",
+    "implementation_url": "https://github.com/heimgewebe/bureau/pull/197",
+    "implementation_head": "370235179c854640e23d2934efc44653edf8d883",
+    "implementation_merge_commit": "f78f34200f508a52b0dc60fb7fdfa4541c86f6d8",
+    "merged_at": "2026-07-08T05:47:51Z",
+    "verified_at": "2026-07-08",
+    "outcome": "Bureau PR #197 added bureau-cabinet-frontier-reader for Cabinet Frontier JSONL. The reader classifies candidates read-only, blocks invalid/high-risk/effect-enabled/collision-prone candidates, and produces proposal-only preview, review gate and review receipt with all effect flags false. Existing cabinet_bridge and cabinet_promotion_write paths remain untouched.",
+    "verified_acceptance": {
+      "reader-readonly": "src/bureau/cabinet_frontier_reader.py reads Cabinet Frontier JSONL and returns cabinet_frontier_reader_report with importAllowed, dispatchAllowed, queueMutationAllowed and taskCreationAllowed false.",
+      "review-checks": "Reader checks target repository/organ, risk, evidence, acceptance, duplicate/collision state and forbidden/effect flags.",
+      "receipt-non-effects": "Preview, review gate and receipt keep importAllowed, dispatchAllowed, queueMutationAllowed and taskCreationAllowed false.",
+      "invalid-blocks": "Tests cover high-risk candidates, effect-enabled candidates, blocked preview, and existing registry collision.",
+      "existing-bridge-surface": "Existing cabinet_bridge*, cabinet_bridge_preview/review/receipt and cabinet_promotion_write paths were not replaced or modified; new reader is explicitly separate for Cabinet Frontier JSONL."
+    },
+    "checks": [
+      "Bureau PR #197 validate (3.10) SUCCESS before merge",
+      "Bureau PR #197 validate (3.12) SUCCESS before merge",
+      "local: ruff check src tests pyproject.toml OK",
+      "local: PYTHONPATH=src python3 -m pytest -q OK",
+      "local: cabinet bridge focused regression tests OK"
+    ],
+    "verification": {
+      "task_sha256": "ffe45ffe01a24a5dd87b836fc2259ccb4fc3d4f8d32db6b90aa7bbf51c9029d1",
+      "plan_sha256": "ed0ea5a017393327b162abb396f604282456f3e1a8b62a18bdf94ba1f5813696"
+    }
   },
   "acceptance": [
     {

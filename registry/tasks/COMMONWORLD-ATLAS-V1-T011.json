@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-ATLAS-V1-T011",
+  "initiative": "COMMONWORLD-ATLAS-V1",
+  "title": "Generate static catalog export",
+  "state": "planned",
+  "goal": "Bind the Commonworld static catalog export generator PR as a deterministic, committed proof-export generator without adding API, ingestion, submissions or write paths.",
+  "depends_on": [
+    "COMMONWORLD-ATLAS-V1-T010"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 56
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "deterministic-generator",
+      "assertion": "A committed generator produces the static catalog export deterministically from curated seed inputs."
+    },
+    {
+      "id": "validation-wired",
+      "assertion": "Repository validation fails if the generated proof export drifts from the generator or schema."
+    },
+    {
+      "id": "no-runtime-boundary",
+      "assertion": "The slice does not add API server, database, ingestion worker, public submissions or write paths."
+    }
+  ],
+  "metadata": {
+    "source": "open PR task binding repair 2026-07-08",
+    "implementation_pr": "heimgewebe/commonworld#25",
+    "implementation_branch": "feat/static-catalog-export-generator-v1",
+    "does_not_establish": [
+      "api_runtime_readiness",
+      "ingestion_readiness",
+      "public_submission_readiness",
+      "merge_readiness"
+    ]
+  }
+}

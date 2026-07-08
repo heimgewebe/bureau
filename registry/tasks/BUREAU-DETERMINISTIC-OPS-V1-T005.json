@@ -3,9 +3,9 @@
   "id": "BUREAU-DETERMINISTIC-OPS-V1-T005",
   "initiative": "BUREAU-DETERMINISTIC-OPS-V1",
   "title": "Harden closeout evidence guard",
-  "state": "planned",
+  "state": "ready",
   "priority": {
-    "lane": "later",
+    "lane": "next",
     "rank": 313
   },
   "goal": "Make verified and done transitions require typed evidence, source authority, hash binding and queue cleanup.",
@@ -50,7 +50,9 @@
       "runtime_correctness",
       "merge_readiness",
       "task_completion"
-    ]
+    ],
+    "advanced_at": "2026-07-08",
+    "advance_reason": "BUREAU-DETERMINISTIC-OPS-V1-T004 is verified by this registry state; the next deterministic hardening ball is the closeout evidence guard."
   },
   "depends_on": [
     "BUREAU-DETERMINISTIC-OPS-V1-T001"

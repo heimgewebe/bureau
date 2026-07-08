@@ -3,7 +3,7 @@
   "id": "BUREAU-DETERMINISTIC-OPS-V1-T004",
   "initiative": "BUREAU-DETERMINISTIC-OPS-V1",
   "title": "Harden PR task binding guard v2",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 312
@@ -48,11 +48,32 @@
     "source_plan": "docs/plans/bureau-deterministic-ops-v1.md",
     "does_not_establish": [
       "runtime_correctness",
-      "merge_readiness",
-      "task_completion"
+      "merge_readiness_for_future_prs",
+      "task_completion_outside_this_registry_state",
+      "github_api_availability"
     ],
     "advanced_at": "2026-07-08",
-    "advance_reason": "BUREAU-DETERMINISTIC-OPS-V1-T003 is verified by this registry state; the next deterministic hardening ball is PR task binding guard v2."
+    "advance_reason": "BUREAU-DETERMINISTIC-OPS-V1-T003 is verified by this registry state; the next deterministic hardening ball is PR task binding guard v2.",
+    "implementation_prs": [
+      "heimgewebe/bureau#296",
+      "heimgewebe/bureau#297"
+    ],
+    "verified_at": "2026-07-08",
+    "verified_acceptance": {
+      "no-task-pr-blocker": "PR #296 makes the claim guard classify unbound open PRs as binding=missing with task_id=missing and an explicit task binding violation; PR #297 makes github-observe report missing-github-task-binding with binding_healthy=false.",
+      "multi-task-pr-blocker": "PR #296 changes multi-task PRs from per-task implemented claims to binding=multiple violations unless an explicit exception exists; PR #297 reports ambiguous GitHub bindings as hard findings unless a schema-visible exception is present.",
+      "task-existence-repo-check": "PR #297 adds observer hard findings for invalid task IDs, wrong repository resource claims using resource overlap, and terminal task bindings without follow-up semantics; PR #296 blocks terminal task bindings in the claim guard path."
+    },
+    "validation": [
+      "PR #296 CI validate succeeded for Python 3.10 and 3.12 before merge; local validation reported 396 passed.",
+      "PR #297 CI validate succeeded for Python 3.10 and 3.12 before merge; local validation after review fixes reported 403 passed.",
+      "PR #296 merged as commit 8dcf47b14cdee33362997f84528cce37ec6caed0.",
+      "PR #297 merged as commit 0f1b9c6f67a909601ed21f4fccc46c869ce628b6."
+    ],
+    "verification": {
+      "task_sha256": "0f4b75acc439343b4a2cd7d78bea9f28d4a320eed4857a1d81db3b3be19c8b70",
+      "plan_sha256": "aa19d4a7661b4b6bc802c78a3edd836713242f0c65e76926ae05f90344f975da"
+    }
   },
   "depends_on": [
     "BUREAU-DETERMINISTIC-OPS-V1-T001"

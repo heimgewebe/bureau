@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-ATLAS-V1-T006",
+  "initiative": "COMMONWORLD-ATLAS-V1",
+  "title": "Stabilize map proof browser smoke",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 80
+  },
+  "goal": "Add or repair a deterministic browser-route smoke for the Commonworld MapLibre map proof so T003 can be verified with real DOM-level evidence instead of static validation only.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "autonomous",
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "acceptance": [
+    {
+      "id": "browser-smoke",
+      "assertion": "A committed or repeatable browser smoke opens proofs/map/ and observes renderable markers for exact and approximate seed projects while hidden projects produce no marker.",
+      "verifier": "Playwright or equivalent browser harness",
+      "evidence_type": "string"
+    },
+    {
+      "id": "external-dependency-control",
+      "assertion": "The smoke does not depend on live CDN or tile provider availability; MapLibre and tile/network dependencies are mocked or otherwise controlled.",
+      "verifier": "test review",
+      "evidence_type": "object"
+    },
+    {
+      "id": "t003-verification-path",
+      "assertion": "COMMONWORLD-ATLAS-V1-T003 can be verified after this smoke passes without weakening the no-backend/no-write-path boundary.",
+      "verifier": "diff review",
+      "evidence_type": "boolean"
+    }
+  ],
+  "metadata": {
+    "repo": "heimgewebe/commonworld",
+    "source_pr": "heimgewebe/commonworld#19",
+    "source_attempt": "A local Playwright smoke was attempted on 2026-07-08 but failed before page load because the installed Playwright Node driver crashed with a V8 SetPermissions failure.",
+    "boundary": "Do not add backend, submissions, accounts or weltgewebe write coupling; this is only a deterministic proof-route smoke."
+  },
+  "depends_on": [
+    "COMMONWORLD-ATLAS-V1-T003"
+  ]
+}

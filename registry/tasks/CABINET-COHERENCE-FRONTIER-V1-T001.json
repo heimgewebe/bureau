@@ -3,7 +3,7 @@
   "id": "CABINET-COHERENCE-FRONTIER-V1-T001",
   "initiative": "CABINET-COHERENCE-FRONTIER-V1",
   "title": "Register Cabinet organ map and Gemini proposed role",
-  "state": "planned",
+  "state": "verified",
   "goal": "Update Cabinet-facing registry expectations so Gemini is represented as proposal-only review/scout capacity and the Ecosystem Registry Map remains the canonical orientation surface.",
   "priority": {
     "lane": "later",
@@ -40,7 +40,35 @@
       "autonomous_dispatch"
     ],
     "phase": "CCFG-1",
-    "target_repository": "heimgewebe/cabinet"
+    "target_repository": "heimgewebe/cabinet",
+    "implementation_repo": "heimgewebe/cabinet",
+    "implementation_pr": "heimgewebe/cabinet#84",
+    "implementation_url": "https://github.com/heimgewebe/cabinet/pull/84",
+    "implementation_head": "d3d8ee22556637a0c19973150cd0ccfeebc04b1a",
+    "implementation_merge_commit": "bd16d88160366a56aaaa43cded28a8da324e9756",
+    "merged_at": "2026-07-08T03:53:49Z",
+    "verified_at": "2026-07-08",
+    "outcome": "Cabinet PR #84 registered Gemini as a proposed proposal-only review/scout role, updated the ecosystem registry and routing brief boundaries, refreshed the generated registry map, and kept Gemini non-schedulable until capability/sandbox preflight.",
+    "verified_acceptance": {
+      "gemini-role-boundary": "AGENTS.md and docs/blueprints/agent-routing-brief-v0.md state Gemini is proposed proposal-only capacity after capability/sandbox preflight and not schedulable/einplanbar before that gate.",
+      "map-entrypoints": "README.md and AGENTS.md continue to link rendered/ecosystem-registry-map.mmd prominently.",
+      "map-regenerated": "rendered/ecosystem-registry-map.mmd was regenerated with agent:gemini and proposed edges.",
+      "no-map-truth": "README.md states Mermaid maps are orientation and drift surfaces, not proof of claim truth, merge readiness, runtime correctness or agent authority.",
+      "proposed-not-schedulable": "registry/ecosystem/nodes.json, edges.json and claims.jsonl mark Gemini as proposed proposal-only capacity, not verified or schedulable."
+    },
+    "checks": [
+      "Cabinet PR #84 Validate Ecosystem Map SUCCESS",
+      "Cabinet PR #84 Cabinet Bridge Probe SUCCESS",
+      "Cabinet PR #84 Validate Cabinet Maintenance Radar SUCCESS",
+      "Cabinet PR #84 Project Cards validate SUCCESS",
+      "Cabinet PR #84 Installer Shadow Test SUCCESS",
+      "Cabinet PR #84 Secret Scan SUCCESS",
+      "local: python3 -m unittest discover -s scripts/tests OK"
+    ],
+    "verification": {
+      "task_sha256": "8dab8d66094b7d844f4532384309835fab812eb4e8806f1b9b7f314ba65f75f9",
+      "plan_sha256": "ed0ea5a017393327b162abb396f604282456f3e1a8b62a18bdf94ba1f5813696"
+    }
   },
   "acceptance": [
     {

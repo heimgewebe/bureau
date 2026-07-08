@@ -25,7 +25,41 @@
   "initiative": "BUR-2026-002",
   "metadata": {
     "operator_lab_run": "vibe-lab: experiments/2026-07-01_operator-lab-loop/artifacts/run-002-rlens-agent-ecosystem/run-card.yml",
-    "plan_path": "docs/plans/rlens-agent-ecosystem-integration-v1.md"
+    "plan_path": "docs/plans/rlens-agent-ecosystem-integration-v1.md",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Vibe-Lab PR #296: seeded the rLens agent-context condition measurement design and guard without claiming executed comparison results or default access readiness.",
+    "implementation_pr": "heimgewebe/vibe-lab#296",
+    "live_vibe_lab_commit": "eb66c63f8ff3c558f12d8330de53fa73fa719e07",
+    "implementation_paths": [
+      "experiments/2026-07-08_rlens-agent-context-conditions/measurement-plan.yml",
+      "experiments/2026-07-08_rlens-agent-context-conditions/method.md",
+      "experiments/2026-07-08_rlens-agent-context-conditions/manifest.yml",
+      "experiments/2026-07-08_rlens-agent-context-conditions/results/decision.yml",
+      "scripts/docmeta/validate_rlens_agent_context_conditions.py",
+      "scripts/docmeta/test_validate_rlens_agent_context_conditions.py",
+      ".github/workflows/validate.yml",
+      "Makefile",
+      "docs/_generated/doc-index.md",
+      "docs/_generated/promotion-readiness.json"
+    ],
+    "validation": [
+      "Vibe-Lab PR #296 GitHub CI passed: validate, validate-doc-freshness-registry, bundle-freshness-receipt, ephemeral-diagnostics, non-blocking-diagnostics; claude skipped by workflow condition.",
+      "Codex review P2 on missing CI wiring was addressed by adding explicit workflow steps for validate-rlens-agent-context-conditions-tests and validate-rlens-agent-context-conditions.",
+      "Local post-merge: make validate-rlens-agent-context-conditions-tests -> 6 passed.",
+      "Local post-merge: make validate-rlens-agent-context-conditions -> valid.",
+      "Local post-merge: python3 scripts/docmeta/validate_promotion_readiness.py -> dry-run report unchanged, new experiment held as designed_not_executed.",
+      "Local post-merge: make generate-blocking -> unchanged/generated blocking artifacts current.",
+      "Local: git diff --check -> pass."
+    ],
+    "verified_acceptance": {
+      "conditions": "measurement-plan.yml compares no_rlens, reading_pack, context_pack, full_dump, and trace_gated; full_dump is diagnostic_only and not a default candidate.",
+      "metrics": "measurement-plan.yml defines unsupported_claim_count, hallucinated_path_count, missing_evidence_count, rework_count, stale_context_claim_count, preparation/review timing, and evidence_quality_score; promotion remains blocked until comparable runs exist."
+    },
+    "boundary": "Design and guard only. No condition run was executed; no rLens superiority, default access readiness, agent quality improvement, or repo-understanding improvement is established.",
+    "verification": {
+      "task_sha256": "361c442e7b82c66677bbcccce58484971021b4820b60c358c09e92cb96ffd0fe",
+      "plan_sha256": "2a786843fa4b6a7da77cd9790f77a41b5a35fb591b0047e2d6d1698d45df4ca2"
+    }
   },
   "priority": {
     "lane": "later",
@@ -36,6 +70,6 @@
     "shell"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Measure rLens agent-context conditions in Vibe-Lab"
 }

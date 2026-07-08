@@ -192,6 +192,26 @@ def test_github_open_pull_requests_requests_label_metadata_and_configured_limit(
     assert captured["argv"][captured["argv"].index("--limit") + 1] == "321"
 
 
+
+
+def test_github_open_pull_requests_cap_reached_fails_closed(monkeypatch):
+    class Completed:
+        returncode = 0
+        stdout = "[{\"number\":1},{\"number\":2}]"
+        stderr = ""
+
+    def fake_run(argv, **_kwargs):
+        return Completed()
+
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT", "2")
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+
+    with pytest.raises(bureau_v2.OpenPullRequestObservationError) as excinfo:
+        bureau_v2._github_open_pull_requests("heimgewebe/bureau")
+    assert "BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT" in str(excinfo.value)
+    assert "fails closed" in str(excinfo.value)
+
+
 def test_open_pull_request_body_task_id_blocks_same_task(registry_factory, tmp_path, monkeypatch):
     root = registry_factory(2, mode="write")
     registry = Registry.load(root)

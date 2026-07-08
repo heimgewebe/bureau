@@ -153,6 +153,11 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
         raise OpenPullRequestObservationError(
             f"gh pr list returned non-list JSON for {repository}"
         )
+    if len(value) >= _open_pr_claim_guard_limit():
+        raise OpenPullRequestObservationError(
+            "open PR observation reached BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT "
+            f"({_open_pr_claim_guard_limit()}); coverage is bounded and fails closed"
+        )
     return [item for item in value if isinstance(item, dict)]
 
 

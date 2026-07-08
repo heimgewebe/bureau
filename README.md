@@ -15,8 +15,9 @@ a different non-conflicting task or an explicit explanation that no further safe
 available. Queue reads are advisory only; only `claim-next` and `checkout-next` reserve work
 before any workspace, branch or PR is created. Open PRs are treated as external reservations,
 with same-task PRs reported as duplicate implementations and other open PRs as conservative
-repo-write blockers. Open-PR observation is bounded by `BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT`
-(default 500); complete pagination is tracked separately.
+repo-write blockers. Open-PR observation uses `BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT`
+(default 500); if the observed page reaches that cap, coverage is explicitly bounded and
+that repository fails closed instead of being treated as completely observed.
 
 ## Boundaries
 

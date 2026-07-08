@@ -3,11 +3,10 @@
   "queue_policy": "skip-blocked",
   "lanes": {
     "now": [
-      "HEIMLERN-OPTIMIZATION-V1-T003"
+      "HEIMLERN-OPTIMIZATION-V1-T005"
     ],
     "next": [
       "GRABOWSKI-OPERATOR-SURFACE-V1-T012",
-      "HEIMLERN-OPTIMIZATION-V1-T005",
       "HEIMLERN-OPTIMIZATION-V1-T004",
       "HEIMLERN-OPTIMIZATION-V1-T006",
       "HEIMLERN-OPTIMIZATION-V1-T007",

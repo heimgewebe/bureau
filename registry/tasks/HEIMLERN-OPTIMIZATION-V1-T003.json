@@ -3,7 +3,7 @@
   "id": "HEIMLERN-OPTIMIZATION-V1-T003",
   "initiative": "HEIMLERN-OPTIMIZATION-V1",
   "title": "Rust CLI Lernpfad ergänzen",
-  "state": "ready",
+  "state": "verified",
   "goal": "Den offline Lernpfad als prüfbares Rust-CLI-Artefakt ergänzen.",
   "execution": {
     "mode": "interactive-agent",
@@ -41,17 +41,43 @@
       "python3 scripts/validate_json.py contracts/learning_path.schema.json /tmp/heimlern-learning-path.json"
     ],
     "does_not_establish": [
-      "merge_complete",
-      "bureau_task_verified",
       "runtime_policy_readiness",
-      "automatic_rule_change_permission"
-    ]
+      "automatic_rule_change_permission",
+      "python_rust_coherence_repair",
+      "release_profile_decision",
+      "claim_evidence_registry",
+      "heimlern_rlens_bundle_availability"
+    ],
+    "outcome": "Heimlern PR #187 added the read-only offline learning path CLI artifact and schema-backed Rust integration test.",
+    "implementation_repo": "heimgewebe/heimlern",
+    "implementation_pr": "heimgewebe/heimlern#187",
+    "implementation_merge_commit": "79da148fa064a2cba3ad055c8ac299a28e7402eb",
+    "implementation_head": "cb7dbdacf60fec8ad6f679443ad354010668dea4",
+    "verified_acceptance": {
+      "cli-command": "`heimlern learning-path offline` is present in the CLI help and emits JSON.",
+      "schema-e2e": "crates/heimlern-cli/tests/offline_learning_path.rs validates emitted JSON against contracts/learning_path.schema.json shape.",
+      "read-only": "The integration test runs in a temp directory and asserts the command writes no files; the artifact has writes_production=false and every step read_only=true."
+    },
+    "checks": [
+      "Local: cargo fmt --all --check passed.",
+      "Local: cargo test -p heimlern-cli --test offline_learning_path --locked passed.",
+      "Local: cargo test --all --locked --workspace passed.",
+      "Local: cargo clippy --all-targets -- -D warnings passed.",
+      "Local: python3 scripts/validate_json.py contracts/learning_path.schema.json /tmp/heimlern-learning-path.json passed.",
+      "GitHub PR #187 build-test, schema-validate and CodeQL checks succeeded."
+    ],
+    "verification": {
+      "observed_repo_head": "79da148fa064a2cba3ad055c8ac299a28e7402eb",
+      "verified_at": "2026-07-08T14:28:07Z",
+      "task_sha256": "bd10b8dfdfcab2901a730630cd2aa59cf4b74f01b684e727d263d1ff80630de0",
+      "plan_sha256": "de066e4dc95e6a5575653e41c8cf2c6108f57052e12ba782dbbf49f4ab556b7e"
+    }
   },
   "depends_on": [
     "HEIMLERN-OPTIMIZATION-V1-T002"
   ],
   "priority": {
-    "lane": "now",
+    "lane": "later",
     "rank": 10
   }
 }

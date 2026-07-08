@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-TOOLING-FOCUS-V1-T004",
+  "initiative": "OPERATOR-TOOLING-FOCUS-V1",
+  "title": "Repair or replace broken Bitwarden CLI runtime",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 263
+  },
+  "goal": "Repair or replace the current crashing Bitwarden CLI path so the infra safe-status probe can pass without reading or leaking secrets, while preserving rollback evidence and avoiding any unlock/session output in logs.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/infra",
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "shell",
+    "grabowski",
+    "repository"
+  ],
+  "acceptance": [
+    {
+      "id": "candidate-selected",
+      "assertion": "A replacement path is selected from a verified native Bitwarden CLI binary, a working Flatpak CLI wrapper, or a documented Node/npm package path, with source, version and checksum evidence."
+    },
+    {
+      "id": "safe-status-green",
+      "assertion": "scripts/bitwarden/bw_status_safe.py succeeds against the selected CLI without printing raw Bitwarden output, email, UUID, BW_SESSION or vault item data."
+    },
+    {
+      "id": "require-unlocked-fail-closed",
+      "assertion": "scripts/bitwarden/bw_status_safe.py --require-unlocked fails closed when the vault is not unlocked and does not reveal session or secret material."
+    },
+    {
+      "id": "rollback-or-disable",
+      "assertion": "The previous symlink target and sha256 are recorded and there is a rollback or disable path if the replacement CLI regresses."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-08T19:37:38Z",
+    "source": "Follow-up from OPERATOR-TOOLING-FOCUS-V1-T003 / infra PR #104 live finding.",
+    "live_blocker": "/home/alex/.local/bin/bw -> /home/alex/.local/bin/bw-bin/bw-nodefree crashes with signal 5/Trace-Breakpoint for bw --version and bw status.",
+    "current_broken_command_sha256": "c02d90efef5feefdfec8bb452bb8ee5d2af9dd7de175a9a258d11cb1002b2e42",
+    "does_not_establish": [
+      "secret_correctness",
+      "vault_access",
+      "bitwarden_auth_state",
+      "install_readiness",
+      "runtime_correctness",
+      "merge_readiness"
+    ]
+  },
+  "depends_on": [
+    "OPERATOR-TOOLING-FOCUS-V1-T003"
+  ]
+}

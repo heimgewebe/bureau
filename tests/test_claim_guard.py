@@ -100,6 +100,25 @@ def test_open_pull_request_reservation_does_not_block_repo_read_claim(registry_f
     assert run["task_id"] == "BUR-TEST-001-T001"
 
 
+def test_github_open_pull_requests_requests_label_metadata(monkeypatch):
+    captured = {}
+
+    class Completed:
+        returncode = 0
+        stdout = "[]"
+        stderr = ""
+
+    def fake_run(argv, **_kwargs):
+        captured["argv"] = argv
+        return Completed()
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+
+    assert bureau_v2._github_open_pull_requests("heimgewebe/bureau") == []
+    json_fields = captured["argv"][captured["argv"].index("--json") + 1].split(",")
+    assert "labels" in json_fields
+
+
 def test_open_pull_request_body_task_id_blocks_same_task(registry_factory, tmp_path, monkeypatch):
     root = registry_factory(2, mode="write")
     registry = Registry.load(root)
@@ -189,6 +208,32 @@ def test_open_pull_request_branch_task_id_blocks_same_task(
     reasons = dispatcher.frontier({"repository"})[0]["reasons"]
     assert "task already implemented by open PR" in " ".join(reasons)
     assert "open-pr:heimgewebe/grabowski#100" in " ".join(reasons)
+
+
+def test_open_pull_request_label_task_id_blocks_same_task(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = _observed_pr_dispatcher(
+        registry,
+        store,
+        monkeypatch,
+        [
+            {
+                "number": 104,
+                "title": "label task",
+                "headRefName": "fix/no-task-id",
+                "body": "No explicit body reference.",
+                "labels": [{"name": "BUR-TEST-001-T001"}],
+                "url": "https://github.example/pr/104",
+            }
+        ],
+    )
+
+    reasons = dispatcher.frontier({"repository"})[0]["reasons"]
+    assert "task already implemented by open PR" in " ".join(reasons)
 
 
 def test_open_pull_request_metadata_task_id_blocks_same_task(

@@ -102,7 +102,7 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
                 "--limit",
                 "100",
                 "--json",
-                "number,title,headRefName,url,body",
+                "number,title,headRefName,url,body,labels",
             ],
             text=True,
             capture_output=True,
@@ -1200,6 +1200,10 @@ class Dispatcher(legacy.Dispatcher):
         )
 
     def _open_pr_reservations(self, *, strict: bool) -> list[legacy.Reservation]:
+        # Retain strict for call-site compatibility. Observation failures are
+        # represented as fail-closed reservations so frontier and claim_next
+        # report the same structured blocker instead of diverging on errors.
+        _ = strict
         try:
             return list(self.open_pr_reservations_provider(self.registry))
         except OpenPullRequestObservationError as exc:

@@ -105,6 +105,18 @@ def test_verified_task_without_hash_binding_is_error(tmp_path: Path) -> None:
     assert any(item["issue"] == "verified_task_without_hash_binding" for item in result["errors"])
 
 
+def test_verified_task_with_placeholder_hash_binding_is_error(tmp_path: Path) -> None:
+    metadata = _machine_metadata()
+    metadata["verification"] = {"task_sha256": "old", "plan_sha256": "pending"}
+    _write_task(tmp_path, "RBV1-T002", state="verified", metadata=metadata)
+    _write_queue(tmp_path)
+
+    result = registry_truth_diagnostics(tmp_path, probe_baselines=False)
+
+    assert result["healthy"] is False
+    assert any(item["issue"] == "verified_task_without_hash_binding" for item in result["errors"])
+
+
 def test_verified_task_still_queued_is_error(tmp_path: Path) -> None:
     _write_task(tmp_path, "RBV1-T002", state="verified", metadata=_machine_metadata())
     _write_queue(tmp_path, "RBV1-T002")
@@ -135,6 +147,20 @@ def test_ai_summary_alone_is_not_closeout_evidence(tmp_path: Path) -> None:
     issues = {item["issue"] for item in result["errors"]}
     assert "verified_task_ai_summary_only_evidence" in issues
     assert "verified_task_without_machine_closeout_evidence" in issues
+
+
+def test_evidence_bound_to_another_task_is_not_accepted(tmp_path: Path) -> None:
+    metadata = _machine_metadata(task_id="RBV1-T999")
+    _write_task(tmp_path, "RBV1-T002", state="verified", metadata=metadata)
+    _write_queue(tmp_path)
+
+    result = registry_truth_diagnostics(tmp_path, probe_baselines=False)
+
+    assert result["healthy"] is False
+    assert any(
+        item["issue"] == "registry_truth_without_machine_evidence"
+        for item in result["errors"]
+    )
 
 
 def test_missing_baseline_commit_is_reported_without_completion_claim(tmp_path: Path) -> None:

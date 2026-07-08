@@ -196,11 +196,9 @@ def _has_machine_closeout_evidence(
     metadata: dict[str, Any],
     truth: dict[str, Any],
 ) -> bool:
-    if any(_strong_evidence_item(item, task_id) for item in _registry_truth_evidence(truth)):
-        return True
-    # Legacy closeouts often record implementation PRs and verification hashes
-    # directly in metadata rather than under metadata.registry_truth.evidence.
-    # Treat that as machine-readable enough, but not as runtime truth.
+    evidence = _registry_truth_evidence(truth)
+    if evidence:
+        return any(_strong_evidence_item(item, task_id) for item in evidence)
     has_source_ref = _has_named_key(metadata, SOURCE_REFERENCE_KEYS)
     has_hash_binding = _has_verification_hash_binding(metadata) or _hash_bound_value(metadata)
     return has_source_ref and has_hash_binding
@@ -213,6 +211,19 @@ def _has_ai_summary_only_evidence(truth: dict[str, Any]) -> bool:
 
 def _has_closure_evidence(task_id: str, metadata: dict[str, Any], truth: dict[str, Any]) -> bool:
     return _has_machine_closeout_evidence(task_id, metadata, truth)
+
+
+def _strict_closeout_required(metadata: dict[str, Any], truth: dict[str, Any]) -> bool:
+    if truth.get("status") in SATISFIED_STATUSES:
+        return True
+    strict_keys = {
+        "verification",
+        "verified_acceptance",
+        "validated_acceptance",
+        "implementation_pr",
+        "implementation_prs",
+    }
+    return any(key in metadata for key in strict_keys)
 
 
 def _baseline_commit_status(repository: str, commit: str) -> tuple[str, str | None]:
@@ -232,6 +243,21 @@ def _baseline_commit_status(repository: str, commit: str) -> tuple[str, str | No
     except (OSError, subprocess.TimeoutExpired) as exc:
         return "unknown", f"probe_error:{type(exc).__name__}"
     return ("present", None) if completed.returncode == 0 else ("missing", "commit_not_found")
+
+
+def _closeout_finding(
+    *,
+    issue: str,
+    task_id: str,
+    state: Any,
+    strict: bool,
+) -> dict[str, Any]:
+    return {
+        "severity": "error" if strict else "warning",
+        "issue": issue,
+        "task_id": task_id,
+        "state": state,
+    }
 
 
 def _verified_closeout_findings(
@@ -256,32 +282,33 @@ def _verified_closeout_findings(
         )
     if state != "verified":
         return findings
+    strict = _strict_closeout_required(metadata, truth)
     if not _has_verification_hash_binding(metadata):
         findings.append(
-            {
-                "severity": "error",
-                "issue": "verified_task_without_hash_binding",
-                "task_id": task_id,
-                "state": state,
-            }
+            _closeout_finding(
+                issue="verified_task_without_hash_binding",
+                task_id=task_id,
+                state=state,
+                strict=strict,
+            )
         )
     if _has_ai_summary_only_evidence(truth):
         findings.append(
-            {
-                "severity": "error",
-                "issue": "verified_task_ai_summary_only_evidence",
-                "task_id": task_id,
-                "state": state,
-            }
+            _closeout_finding(
+                issue="verified_task_ai_summary_only_evidence",
+                task_id=task_id,
+                state=state,
+                strict=True,
+            )
         )
     if not _has_machine_closeout_evidence(task_id, metadata, truth):
         findings.append(
-            {
-                "severity": "error",
-                "issue": "verified_task_without_machine_closeout_evidence",
-                "task_id": task_id,
-                "state": state,
-            }
+            _closeout_finding(
+                issue="verified_task_without_machine_closeout_evidence",
+                task_id=task_id,
+                state=state,
+                strict=strict,
+            )
         )
     return findings
 

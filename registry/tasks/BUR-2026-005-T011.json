@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T011",
   "initiative": "BUR-2026-005",
   "title": "Add Open PR observation pagination",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "BUR-2026-005-T003"
   ],
@@ -32,8 +32,44 @@
     "safety_boundary": "Pagination must not silently ignore later pages; partial observation fails closed for the affected repository.",
     "does_not_establish": [
       "github_rate_limit_immunity",
-      "automatic_merge_authority"
-    ]
+      "automatic_merge_authority",
+      "automatic_completion_authority",
+      "runtime_correctness",
+      "ci_sufficiency"
+    ],
+    "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Bureau PR #228: Open-PR observation now fails closed with an explicit bounded-observation diagnostic when gh pr list reaches BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT, and the cap behavior is documented.",
+    "implementation_pr": "heimgewebe/bureau#228",
+    "live_bureau_commit": "a778896460813a147b74e6d37ad06e1ba103ba4d",
+    "implementation_head": "772961bedb9e6858fc685ba0cea86a798c9083e6",
+    "implementation_paths": [
+      "README.md",
+      "docs/concurrency.md",
+      "src/bureau/v2.py",
+      "tests/test_claim_guard.py"
+    ],
+    "validation": [
+      "Bureau PR #228 GitHub CI passed validate (3.10) and validate (3.12).",
+      "Local before merge: PYTHONPATH=src python3 -m ruff check src/bureau/v2.py tests/test_claim_guard.py README.md docs/concurrency.md -> passed.",
+      "Local before merge: PYTHONPATH=src python3 -m pytest tests/test_claim_guard.py tests/test_v2.py -q -> passed.",
+      "Local before merge: PYTHONPATH=src python3 -m bureau.cli --root . check -> valid True.",
+      "Local before merge: PYTHONPATH=src python3 -m pytest -> 356 passed.",
+      "Local before merge: PYTHONPATH=src python3 -m ruff check . -> passed.",
+      "Local before merge: PYTHONPATH=src python3 -m bureau.cli --root . --json doctor -> healthy true.",
+      "Local before merge: git diff --check -> passed.",
+      "Post-merge: PYTHONPATH=src python3 -m bureau.cli --root . check -> valid True.",
+      "Post-merge: doctor healthy true."
+    ],
+    "verified_acceptance": {
+      "pagination-or-explicit-cap": "src/bureau/v2.py raises OpenPullRequestObservationError when the observed page reaches BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT, so bounded coverage cannot be mistaken for complete coverage.",
+      "partial-failure": "The cap-reached error uses the same fail-closed observation path as GitHub failures and is scoped by the affected repository reservation logic.",
+      "configuration-docs": "README.md and docs/concurrency.md document BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT and the fail-closed cap behavior."
+    },
+    "verification": {
+      "task_sha256": "536c9131123e744fd728f5eaaff90b5ea2814cf025f94bfc1fd1f4cca44af52c",
+      "plan_sha256": "653fa6a056506c94d5654ba5e3c16f9c31032767f0e1c844a8cb4714c50ce917"
+    }
   },
   "acceptance": [
     {

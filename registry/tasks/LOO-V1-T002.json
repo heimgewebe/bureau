@@ -3,7 +3,7 @@
   "id": "LOO-V1-T002",
   "initiative": "LEITSTAND-OPERATOR-OBSERVABILITY-V1",
   "title": "Producer bridge canonicalization",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "LOO-V1-T001"
   ],
@@ -60,6 +60,55 @@
       "merge_readiness",
       "external_source_truth"
     ],
-    "priority_reason": "P1: artifact contract must be true at producer seam"
+    "priority_reason": "P1: artifact contract must be true at producer seam",
+    "verification": {
+      "verified_by": "Leitstand PR #154",
+      "leitstand_pr": "https://github.com/heimgewebe/leitstand/pull/154",
+      "leitstand_head": "c14c5e313867d2e26b420e2293776962fb284dc0",
+      "leitstand_merge_commit": "576a359b7d4360b0baa763c15f278fdd68945efc",
+      "merged_at": "2026-07-08T05:18:08Z",
+      "local_checks": [
+        "NODE_OPTIONS=--jitless pnpm lint",
+        "NODE_OPTIONS=--jitless pnpm typecheck",
+        "NODE_OPTIONS=--jitless pnpm build",
+        "python3 scripts/ai_context/validate_ai_context.py --file .ai-context.yml",
+        "bash scripts/ci/observer-invariant-guard.sh",
+        "bash scripts/ci/docs-relations-guard.sh",
+        "bash scripts/ci/generated-files-guard.sh",
+        "bash scripts/ci/check-drift-gates.sh",
+        "bridge canonicalization smoke"
+      ],
+      "ci": {
+        "build": "success",
+        "repo-root": "success",
+        "scan": "success",
+        "templates": "success",
+        "Cloudflare Pages": "success"
+      },
+      "does_not_establish": [
+        "runtime_deployed",
+        "pages_enabled",
+        "live_bureau_snapshot_truth",
+        "live_grabowski_snapshot_truth"
+      ],
+      "verification_summary": "Leitstand PR #154 merged bridge normalization for Bureau lifecycle states and checkout retention verdicts, with tests/exportOperatorSnapshots.test.ts plus smoke evidence.",
+      "acceptance_evidence": {
+        "bureau-state-normalization": {
+          "open": "queued",
+          "active": "running",
+          "error": "failed",
+          "custom": "unknown"
+        },
+        "checkout-retention-normalization": {
+          "stale": "archivable",
+          "orphaned": "orphan",
+          "implicit-unanchored": "orphan",
+          "anchored": "unknown"
+        },
+        "contract-doc-parity": true
+      },
+      "task_sha256": "567d0bf6d0b2643c972da085ccd8ddd4d7932b01d9f7e3ef18efc61dc3ea9dd6",
+      "plan_sha256": "69e170cf832449b00f1257b359c99acc0b40bbae28278f779d4da0ce799fa053"
+    }
   }
 }

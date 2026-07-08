@@ -3,7 +3,7 @@
   "id": "CABINET-COHERENCE-FRONTIER-V1-T005",
   "initiative": "CABINET-COHERENCE-FRONTIER-V1",
   "title": "Add Gemini proposal-only review lane",
-  "state": "blocked",
+  "state": "verified",
   "goal": "Define and test a Gemini review/scout lane that consumes bounded context without sensitive values and returns structured proposal-only findings or patch suggestions.",
   "priority": {
     "lane": "later",
@@ -35,9 +35,6 @@
     "does_not_establish": [
       "autonomous_dispatch",
       "claim_truth",
-      "gemini_auth_quota_observed",
-      "gemini_lane_activation",
-      "gemini_schedulable_capacity",
       "gemini_write_authority",
       "merge_readiness",
       "runtime_correctness",
@@ -48,26 +45,41 @@
     "agent_pool": "gemini",
     "agent_authority": "proposal_only",
     "ordering_note": "Execution order is governed by depends_on; this task remains blocked until T008 is accepted.",
-    "blocked_at": "2026-07-08",
-    "blocked_by": "CABINET-COHERENCE-FRONTIER-V1-T008",
-    "blocked_reason": "Gemini preflight observed local binary, --print and --sandbox, but auth/quota was not observed. The Gemini proposal-only review lane must not be treated as active or schedulable capacity.",
-    "blocking_evidence": {
-      "preflight_task": "CABINET-COHERENCE-FRONTIER-V1-T008",
-      "preflight_pr": "heimgewebe/bureau#213",
-      "preflight_merge_commit": "6ac24f4348ccc932297a0fe214ca317554227f1a",
-      "preflight_report": "docs/reports/gemini-preflight-2026-07-08.json",
-      "preflight_status": "blocked_pending_auth_quota_review",
+    "implementation_repo": "heimgewebe/bureau",
+    "implementation_pr": "heimgewebe/bureau#244",
+    "implementation_url": "https://github.com/heimgewebe/bureau/pull/244",
+    "implementation_head": "8505aa1af3e4f4b8ab6a812279aa21d80a6bfc52",
+    "implementation_merge_commit": "f52ca3fbad881bc5288d39ba90febbd4cc4b06c4",
+    "merged_at": "2026-07-08T10:53:53Z",
+    "verified_at": "2026-07-08",
+    "unblocked_by": "heimgewebe/bureau#242",
+    "unblock_evidence": {
+      "auth_quota_pr": "heimgewebe/bureau#242",
+      "auth_quota_merge_commit": "17b62b5ab084bc2498f38e2f15397b672160844c",
+      "auth_quota_report": "docs/reports/gemini-preflight-auth-quota-2026-07-08.json",
+      "preflight_status": "ready_for_proposal_lane_design",
       "laneEnabled": false,
-      "blockedReasons": [
-        "auth_quota_not_observed"
-      ]
+      "authQuotaObserved": true
     },
-    "unblock_conditions": [
-      "Auth/quota state is observed without leaking account details.",
-      "Exact non-interactive invocation shape is recorded.",
-      "Sandbox/permission mode is confirmed for no write, push, merge, runtime, credential, dispatch or queue authority.",
-      "Output schema and capture path are bound to a follow-up review-lane implementation."
-    ]
+    "outcome": "Bureau PR #244 added bureau-gemini-review-lane as a proposal-only external review lane. It accepts only explicit bounded diff and optional brief artifacts, rejects oversized or secret-like inputs, invokes Gemini as --sandbox --print from an empty temporary directory, parses only proposal/blocked/no_action JSON statuses, and keeps all write/push/merge/runtime/credential/dispatch/queue/lane-activation effect flags false.",
+    "verified_acceptance": {
+      "briefing-schema": "docs/gemini-proposal-review-lane-v1.md and src/bureau/gemini_review_lane.py define allowed scope, forbidden authority, input artifacts, output schema, max bytes and no-credential/no-push/no-merge/no-runtime constraints.",
+      "output-schema": "tests/test_gemini_review_lane.py covers proposal JSON, non-JSON blocking and allowed statuses proposal, blocked and no_action.",
+      "sandbox-boundary": "The tool invokes Gemini with --sandbox --print from an empty temporary directory and receipts keep all effect flags false.",
+      "human-or-grabowski-gate": "The lane returns proposal-only receipts; it never applies patches and marks suggestions as evidence for Grabowski or human review only.",
+      "preflight-required": "PR #242 recorded auth/model/generation readiness while keeping laneEnabled false before PR #244 implemented the lane."
+    },
+    "checks": [
+      "Bureau PR #244 validate (3.10) SUCCESS before merge",
+      "Bureau PR #244 validate (3.12) SUCCESS before merge",
+      "local: ruff check src tests pyproject.toml OK",
+      "local: PYTHONPATH=src python3 -m pytest -q OK",
+      "local: live smoke with synthetic non-secret mini diff wrote docs/reports/gemini-review-lane-smoke-2026-07-08.json and returned no_action with all effect flags false"
+    ],
+    "verification": {
+      "task_sha256": "88bdd315d097e86becea7600090f4548ea5787cda1ddf8b24a24d9a55cb02e03",
+      "plan_sha256": "ed0ea5a017393327b162abb396f604282456f3e1a8b62a18bdf94ba1f5813696"
+    }
   },
   "acceptance": [
     {

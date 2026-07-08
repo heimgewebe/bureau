@@ -40,6 +40,13 @@ BUREAU_TASK_LINE_RE = re.compile(
 BUREAU_TASK_LABEL_RE = re.compile(
     r"(?i)^\s*Bureau[-_ ]Task(?:s)?\s*(?::|/|=)\s*(?P<value>.+?)\s*$"
 )
+BUREAU_BINDING_EXCEPTION_LINE_RE = re.compile(
+    r"(?im)^\s*Bureau-(?:PR-)?Task-Binding-Exception\s*:\s*(?P<value>[^\n#]+)\s*$"
+)
+BUREAU_BINDING_EXCEPTION_LABEL_RE = re.compile(
+    r"(?i)^\s*Bureau[-_ ](?:PR[-_ ])?Task[-_ ]Binding[-_ ]Exception\s*"
+    r"(?::|/|=)\s*(?P<value>.+?)\s*$"
+)
 
 BINDING_BUREAU_RUN = "bureau_run_marker"
 BINDING_BUREAU_TASK = "bureau_task_marker"
@@ -62,6 +69,19 @@ _FAILED_CONCLUSIONS = {"FAILURE", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED", "
 _PASSED_CONCLUSIONS = {"SUCCESS"}
 _NEUTRAL_CONCLUSIONS = {"NEUTRAL", "SKIPPED"}
 _PENDING_STATUSES = {"QUEUED", "IN_PROGRESS", "PENDING", "WAITING", "REQUESTED", "EXPECTED"}
+TERMINAL_TASK_STATES = {"verified", "cancelled", "superseded"}
+FOLLOW_UP_KEYS = {
+    "follow_up",
+    "follow_up_task",
+    "follow_up_tasks",
+    "follow_up_refs",
+    "follow_up_semantics",
+    "next_task",
+    "next_tasks",
+    "successor_task",
+    "superseded_by",
+    "continuation_task",
+}
 
 OBSERVATION_DOES_NOT_ESTABLISH = (
     "task_completion",
@@ -124,6 +144,26 @@ def extract_markers(*texts: str | None, labels: Any = None) -> dict[str, list[st
         if match:
             _append_unique(tasks, _marker_items(match.group("value")))
     return {"runs": runs, "tasks": tasks}
+
+
+def extract_binding_exception(*texts: str | None, labels: Any = None) -> dict[str, str] | None:
+    """Return a schema-visible exception for intentionally taskless PRs.
+
+    Exceptions must be visible in observed GitHub metadata: either a PR body
+    line or a label named ``Bureau-PR-Task-Binding-Exception: <reason>``.
+    They only suppress binding hard findings; they never prove merge readiness.
+    """
+    for text in texts:
+        if not text:
+            continue
+        match = BUREAU_BINDING_EXCEPTION_LINE_RE.search(text)
+        if match and match.group("value").strip():
+            return {"source": "body", "reason": match.group("value").strip()}
+    for label in _label_names(labels):
+        match = BUREAU_BINDING_EXCEPTION_LABEL_RE.match(label)
+        if match and match.group("value").strip():
+            return {"source": "label", "reason": match.group("value").strip()}
+    return None
 
 
 def _check_item_state(item: dict[str, Any]) -> str:
@@ -351,6 +391,53 @@ def _run_index(
     return runs_by_id, runs_by_branch, notes
 
 
+def _repository_resource_id(repository: str | None) -> str | None:
+    if not repository or "/" not in repository:
+        return None
+    name = repository.rsplit("/", 1)[1].lower().replace("-", "_")
+    if not name or not re.fullmatch(r"[a-z0-9_]+", name):
+        return None
+    return f"repo.{name}"
+
+
+def _task_claims_resource(
+    task: Any, resource_id: str | None, registry: legacy.Registry | None
+) -> bool | None:
+    if resource_id is None:
+        return None
+    claims = getattr(task, "claims", None)
+    if claims is None:
+        return None
+    resources = getattr(registry, "resources", {}) if registry is not None else {}
+    for claim in claims:
+        claim_resource = getattr(claim, "resource", None)
+        if claim_resource == resource_id:
+            return True
+        if isinstance(claim_resource, str) and legacy.overlaps(
+            claim_resource, resource_id, resources
+        ):
+            return True
+    return False
+
+
+def _raw_metadata(task: Any) -> dict[str, Any]:
+    raw = getattr(task, "raw", None)
+    if not isinstance(raw, dict):
+        return {}
+    metadata = raw.get("metadata")
+    return metadata if isinstance(metadata, dict) else {}
+
+
+def _has_follow_up_semantics(task: Any) -> bool:
+    raw = getattr(task, "raw", None)
+    metadata = _raw_metadata(task)
+    candidates: list[Any] = []
+    if isinstance(raw, dict):
+        candidates.extend(raw.get(key) for key in FOLLOW_UP_KEYS)
+    candidates.extend(metadata.get(key) for key in FOLLOW_UP_KEYS)
+    return any(value not in (None, "", [], {}, False) for value in candidates)
+
+
 def observe_pull_requests(
     root: Path,
     *,
@@ -390,11 +477,11 @@ def observe_pull_requests(
         number = pull_request.get("number")
         if not isinstance(number, int):
             continue
-        markers = extract_markers(
-            str(pull_request.get("title") or ""),
-            str(pull_request.get("body") or ""),
-            labels=pull_request.get("labels"),
-        )
+        labels = pull_request.get("labels")
+        title = str(pull_request.get("title") or "")
+        body = str(pull_request.get("body") or "")
+        markers = extract_markers(title, body, labels=labels)
+        binding_exception = extract_binding_exception(title, body, labels=labels)
         head_ref = str(pull_request.get("headRefName") or "")
         binding = bind_pull_request(
             markers,
@@ -409,7 +496,7 @@ def observe_pull_requests(
                 "repository": repository,
                 "number": number,
                 "url": str(pull_request.get("url") or ""),
-                "title": str(pull_request.get("title") or ""),
+                "title": title,
                 "state": str(pull_request.get("state") or "OPEN"),
                 "is_draft": bool(pull_request.get("isDraft", False)),
                 "head_ref": head_ref,
@@ -421,11 +508,12 @@ def observe_pull_requests(
                 "checks": summarize_checks(pull_request.get("statusCheckRollup")),
                 "updated_at": str(pull_request.get("updatedAt") or ""),
                 "observed_at": observed_at,
+                "binding_exception": binding_exception,
                 **binding,
             }
         )
     _mark_shared_task_ambiguity(observations)
-    hard_findings = _binding_hard_findings(observations)
+    hard_findings = _binding_hard_findings(observations, registry=registry, repository=repository)
     return {
         "schema_version": GITHUB_OBSERVATION_SCHEMA_VERSION,
         "source": "github",
@@ -458,21 +546,100 @@ def _mark_shared_task_ambiguity(observations: list[dict[str, Any]]) -> None:
             observation["notes"].append(f"pull requests bound to {task_id}: {numbers}")
 
 
-def _binding_hard_findings(observations: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _binding_hard_findings(
+    observations: list[dict[str, Any]],
+    *,
+    registry: legacy.Registry | None = None,
+    repository: str | None = None,
+) -> list[dict[str, Any]]:
     """Return fail-closed binding findings without hiding usable PR facts."""
     findings: list[dict[str, Any]] = []
+    expected_resource = _repository_resource_id(repository)
+    registry_resources = getattr(registry, "resources", {}) if registry is not None else {}
+    if (
+        expected_resource is not None
+        and expected_resource not in registry_resources
+        and "repo" in registry_resources
+    ):
+        expected_resource = "repo"
     for observation in observations:
-        if observation.get("binding") != BINDING_AMBIGUOUS:
+        if observation.get("binding_exception"):
             continue
-        findings.append(
-            {
-                "severity": "blocker",
-                "code": "ambiguous-github-binding",
-                "message": observation.get("ambiguous_reason") or "ambiguous GitHub binding",
-                "number": observation.get("number"),
-                "task_id": observation.get("task_id"),
-            }
-        )
+        number = observation.get("number")
+        binding = observation.get("binding")
+        task_id = observation.get("task_id")
+        if binding == BINDING_UNMATCHED:
+            findings.append(
+                {
+                    "severity": "blocker",
+                    "code": "missing-github-task-binding",
+                    "message": "open PR has no valid Bureau task binding",
+                    "number": number,
+                    "task_id": None,
+                }
+            )
+            continue
+        if binding == BINDING_AMBIGUOUS:
+            findings.append(
+                {
+                    "severity": "blocker",
+                    "code": "ambiguous-github-binding",
+                    "message": observation.get("ambiguous_reason") or "ambiguous GitHub binding",
+                    "number": number,
+                    "task_id": task_id,
+                }
+            )
+            continue
+        if not isinstance(task_id, str) or not task_id:
+            findings.append(
+                {
+                    "severity": "blocker",
+                    "code": "missing-github-task-binding",
+                    "message": "open PR binding did not resolve to a Bureau task",
+                    "number": number,
+                    "task_id": None,
+                }
+            )
+            continue
+        if registry is None:
+            continue
+        task = registry.tasks.get(task_id)
+        if task is None:
+            findings.append(
+                {
+                    "severity": "blocker",
+                    "code": "invalid-github-task-binding",
+                    "message": "bound Bureau task does not exist in registry",
+                    "number": number,
+                    "task_id": task_id,
+                }
+            )
+            continue
+        claims_expected = _task_claims_resource(task, expected_resource, registry)
+        if claims_expected is False:
+            findings.append(
+                {
+                    "severity": "blocker",
+                    "code": "wrong-repository-github-task-binding",
+                    "message": (
+                        "bound task does not claim expected repository resource "
+                        f"{expected_resource}"
+                    ),
+                    "number": number,
+                    "task_id": task_id,
+                }
+            )
+        state = str(getattr(task, "state", ""))
+        if state in TERMINAL_TASK_STATES and not _has_follow_up_semantics(task):
+            findings.append(
+                {
+                    "severity": "blocker",
+                    "code": "terminal-github-task-binding",
+                    "message": "bound task is terminal and has no explicit follow-up semantics",
+                    "number": number,
+                    "task_id": task_id,
+                }
+            )
     return findings
 
 
@@ -483,7 +650,7 @@ def filter_observation_by_task(
 
     The live observer first evaluates the full open-PR set so shared-task
     ambiguity can fail closed. The CLI may then present a task-scoped view;
-    that view must not inherit ambiguity findings from unrelated tasks.
+    that view must not inherit hard findings from unrelated tasks.
     """
     if not observation.get("healthy"):
         return {
@@ -499,7 +666,10 @@ def filter_observation_by_task(
         for item in observation.get("pull_requests", [])
         if item.get("task_id") == task_id
     ]
-    hard_findings = _binding_hard_findings(pull_requests)
+    numbers = {item.get("number") for item in pull_requests}
+    hard_findings = [
+        item for item in observation.get("hard_findings", []) if item.get("number") in numbers
+    ]
     return {
         **observation,
         "pull_requests": pull_requests,

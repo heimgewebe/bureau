@@ -10,6 +10,7 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager, suppress
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -87,8 +88,25 @@ def _github_repository_for_path(path: Path) -> str | None:
     return github_repository_from_remote_url(result.stdout.strip())
 
 
+DEFAULT_OPEN_PR_CLAIM_GUARD_LIMIT = 500
+
+
+def _open_pr_claim_guard_limit() -> int:
+    configured = os.environ.get("BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT")
+    if configured is None:
+        return DEFAULT_OPEN_PR_CLAIM_GUARD_LIMIT
+    try:
+        value = int(configured)
+    except ValueError:
+        return DEFAULT_OPEN_PR_CLAIM_GUARD_LIMIT
+    if value < 1:
+        return DEFAULT_OPEN_PR_CLAIM_GUARD_LIMIT
+    return value
+
+
 def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
     binary = os.environ.get("BUREAU_GH_BIN", "gh")
+    limit = str(_open_pr_claim_guard_limit())
     try:
         result = subprocess.run(
             [
@@ -100,7 +118,7 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
                 "--state",
                 "open",
                 "--limit",
-                "100",
+                limit,
                 "--json",
                 "number,title,headRefName,url,body,labels",
             ],
@@ -153,7 +171,7 @@ def _task_id_search_values(value: Any) -> list[str]:
         for item in value.values():
             result.extend(_task_id_search_values(item))
         return result
-    if isinstance(value, list | tuple):
+    if isinstance(value, list | tuple | set):
         result: list[str] = []
         for item in value:
             result.extend(_task_id_search_values(item))
@@ -165,25 +183,79 @@ def _normalize_task_id_text(value: str) -> str:
     return value.lower().replace("_", "-")
 
 
-def _task_id_pattern(task_id: str) -> re.Pattern[str]:
-    normalized = re.escape(_normalize_task_id_text(task_id))
-    return re.compile(rf"(?<![a-z0-9]){normalized}(?![a-z0-9])")
+def _pr_task_text(value: str) -> str:
+    return value.replace("_", "-")
+
+
+def _case_flexible_literal(value: str) -> str:
+    parts: list[str] = []
+    for char in value:
+        if char.isascii() and char.isalpha():
+            parts.append(f"[{char.lower()}{char.upper()}]")
+        else:
+            parts.append(re.escape(char))
+    return "".join(parts)
+
+
+@lru_cache(maxsize=32)
+def _task_id_matcher(
+    task_ids: tuple[str, ...], *, allow_branch_suffix: bool
+) -> tuple[re.Pattern[str] | None, dict[str, str]]:
+    normalized_to_task: dict[str, str] = {}
+    normalized_ids: list[str] = []
+    for task_id in task_ids:
+        normalized = _normalize_task_id_text(task_id)
+        if normalized in normalized_to_task:
+            continue
+        normalized_to_task[normalized] = task_id
+        normalized_ids.append(normalized)
+    if not normalized_ids:
+        return None, {}
+    alternatives = "|".join(
+        _case_flexible_literal(task_id)
+        for task_id in sorted(normalized_ids, key=len, reverse=True)
+    )
+    suffix = (
+        r"(?=$|[^A-Za-z0-9-]|-[a-z][a-z0-9-]*(?=$|[^A-Za-z0-9-]))"
+        if allow_branch_suffix
+        else r"(?=$|[^A-Za-z0-9-])"
+    )
+    return re.compile(rf"(?<![A-Za-z0-9])(?P<task>{alternatives}){suffix}"), normalized_to_task
+
+
+def _match_task_ids(
+    values: list[str], task_ids: tuple[str, ...], *, allow_branch_suffix: bool
+) -> set[str]:
+    matcher, normalized_to_task = _task_id_matcher(
+        task_ids, allow_branch_suffix=allow_branch_suffix
+    )
+    if matcher is None:
+        return set()
+    result: set[str] = set()
+    for value in values:
+        haystack = _pr_task_text(value)
+        for match in matcher.finditer(haystack):
+            task_id = normalized_to_task.get(_normalize_task_id_text(match.group("task")))
+            if task_id is not None:
+                result.add(task_id)
+    return result
 
 
 def _pull_request_task_ids(
     pull_request: dict[str, Any], registry: legacy.Registry
 ) -> tuple[str, ...]:
-    values: list[str] = []
-    for key in ("body", "title", "headRefName", "branch", "task_id", "taskId"):
-        values.extend(_task_id_search_values(pull_request.get(key)))
+    task_ids = tuple(registry.tasks)
+    exact_values: list[str] = []
+    for key in ("body", "title", "task_id", "taskId"):
+        exact_values.extend(_task_id_search_values(pull_request.get(key)))
     for key in ("metadata", "labels", "task_ids", "taskIds"):
-        values.extend(_task_id_search_values(pull_request.get(key)))
-    haystack = "\n".join(_normalize_task_id_text(item) for item in values)
-    if not haystack:
-        return ()
-    return tuple(
-        task_id for task_id in registry.tasks if _task_id_pattern(task_id).search(haystack)
-    )
+        exact_values.extend(_task_id_search_values(pull_request.get(key)))
+    branch_values: list[str] = []
+    for key in ("headRefName", "branch"):
+        branch_values.extend(_task_id_search_values(pull_request.get(key)))
+    matches = _match_task_ids(exact_values, task_ids, allow_branch_suffix=False)
+    matches.update(_match_task_ids(branch_values, task_ids, allow_branch_suffix=True))
+    return tuple(task_id for task_id in registry.tasks if task_id in matches)
 
 
 def _open_pr_label(reservation: legacy.Reservation) -> str:
@@ -1279,6 +1351,7 @@ class Dispatcher(legacy.Dispatcher):
                 continue
             if task.id in reservation.task_ids:
                 result.append(f"task already implemented by open PR: {label}")
+                continue
             for claim in task.claims:
                 if legacy.overlaps(
                     claim.resource, reservation.resource, self.registry.resources

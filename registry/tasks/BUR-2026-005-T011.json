@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T011",
+  "initiative": "BUR-2026-005",
+  "title": "Add Open PR observation pagination",
+  "state": "planned",
+  "depends_on": [
+    "BUR-2026-005-T003"
+  ],
+  "goal": "Replace the bounded Open-PR observation cap with complete or explicitly paginated GitHub PR observation while preserving fail-closed behavior on partial failures.",
+  "priority": {
+    "lane": "later",
+    "rank": 110
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "source_review": "Follow-up from PR #177 open-PR claim guard review.",
+    "safety_boundary": "Pagination must not silently ignore later pages; partial observation fails closed for the affected repository.",
+    "does_not_establish": [
+      "github_rate_limit_immunity",
+      "automatic_merge_authority"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "pagination-or-explicit-cap",
+      "assertion": "Open PR observation either paginates all available results or reports an explicit bounded-observation diagnostic that cannot be mistaken for complete coverage."
+    },
+    {
+      "id": "partial-failure",
+      "assertion": "Tests cover a later-page or pagination failure and show that the affected repository fails closed."
+    },
+    {
+      "id": "configuration-docs",
+      "assertion": "The interaction between pagination, BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT and GitHub CLI limits is documented."
+    }
+  ]
+}

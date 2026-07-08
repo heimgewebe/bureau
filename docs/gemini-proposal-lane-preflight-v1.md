@@ -4,7 +4,8 @@
 
 - Task: `CABINET-COHERENCE-FRONTIER-V1-T008`
 - Mode: preflight only
-- Lane state after this slice: blocked until auth/quota and policy review is explicitly recorded
+- Lane state after the first slice: blocked until auth/quota and policy review is explicitly recorded
+- Lane state after the auth/quota addendum: ready for proposal-lane design only; not activated
 - Tool: `bureau-gemini-preflight`
 
 ## Boundary
@@ -42,3 +43,12 @@ A later lane must still record:
 5. Proof that Gemini cannot write, push, merge, mutate runtime, dispatch agents or mutate Bureau queue.
 
 Until then, Gemini is not schedulable/einplanbar.
+
+## Auth/quota addendum
+
+`bureau-gemini-preflight --observe-models --active-generation-probe` may perform two bounded checks without repository context:
+
+1. `gemini models` to observe authenticated model access.
+2. `gemini --sandbox --print "Return exactly GEMINI_PREFLIGHT_OK and nothing else."` from an empty temporary directory to observe a minimal generation path.
+
+The probe records only bounded output and hashes. It does not send repository files, diffs, credentials, runtime data or private context. A successful addendum can make the next implementation step ready for proposal-lane design, but it still must keep `laneEnabled: false` until a separate review-lane implementation exists.

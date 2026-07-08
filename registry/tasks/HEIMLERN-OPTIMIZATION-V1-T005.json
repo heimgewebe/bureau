@@ -3,7 +3,7 @@
   "id": "HEIMLERN-OPTIMIZATION-V1-T005",
   "initiative": "HEIMLERN-OPTIMIZATION-V1",
   "title": "Python Rust Kohärenz sichern",
-  "state": "planned",
+  "state": "in_progress",
   "goal": "Doppelte Artefakt-Erzeugung zwischen Rust und Python durch Delegation oder gemeinsamen Drift-Wächter entschärfen.",
   "execution": {
     "mode": "interactive-agent",
@@ -29,7 +29,20 @@
   "metadata": {
     "source_plan": "docs/plans/heimlern-optimization-plan-v1.md",
     "source_pr": "heimgewebe/heimlern#181",
-    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a"
+    "source_head": "b9919bd184c6918713ed11a54370ad03d510273a",
+    "active_implementation_pr": "heimgewebe/heimlern#189",
+    "active_branch": "feat/heimlern-weight-adjustment-coherence-v1",
+    "active_head": "4bea6aa9e0b6367779e66a6aedb5a31b42ca74cf",
+    "implementation_repo": "heimgewebe/heimlern",
+    "work_started_at": "2026-07-08T14:39:13Z",
+    "does_not_establish": [
+      "task_verified",
+      "merge_completed",
+      "runtime_policy_readiness",
+      "automatic_rule_change_permission",
+      "release_profile_decision",
+      "claim_evidence_registry"
+    ]
   },
   "depends_on": [
     "HEIMLERN-OPTIMIZATION-V1-T003"

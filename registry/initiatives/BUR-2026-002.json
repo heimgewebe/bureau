@@ -1,5 +1,5 @@
 {
-  "commitment": "next",
+  "commitment": "completed",
   "completion": [
     "Grabowski can discover, inspect, and freshness-check rLens bundles through typed read-only tools.",
     "Bureau can bind rLens context references into task/run/receipt evidence.",
@@ -19,12 +19,23 @@
       "global_dump_freshness",
       "merge_readiness"
     ],
-    "operator_lab_run": "vibe-lab: experiments/2026-07-01_operator-lab-loop/artifacts/run-002-rlens-agent-ecosystem/run-card.yml"
+    "operator_lab_run": "vibe-lab: experiments/2026-07-01_operator-lab-loop/artifacts/run-002-rlens-agent-ecosystem/run-card.yml",
+    "lifecycle": {
+      "completed_at": "2026-07-08T09:51:59.987071Z",
+      "repair_source": "bureau doctor lifecycle recommendation: completion-ready after all BUR-2026-002 tasks verified",
+      "closed_after_pr": "heimgewebe/bureau#232",
+      "does_not_establish": [
+        "agent_quality_improvement",
+        "global_dump_freshness",
+        "runtime_correctness",
+        "merge_readiness"
+      ]
+    }
   },
   "parallelism": {
     "max_active_tasks": 2
   },
   "schema_version": 1,
-  "state": "active",
+  "state": "completed",
   "title": "rLens agent ecosystem integration"
 }

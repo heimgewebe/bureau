@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T009",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Generalize narrow observers",
+  "state": "planned",
+  "goal": "Generalize the narrow observer pattern used for task systemd unit show into a reusable read-only observer shape for bounded systemd/journal-style diagnostics.",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T002"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 90
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "observer-contract",
+      "assertion": "Reusable observer contract defines fixed command shapes, argument validation, output bounds and non-mutation guarantees."
+    },
+    {
+      "id": "no-generic-authority",
+      "assertion": "Production hosts do not gain generic systemctl, journalctl or shell authority through the generalized path."
+    },
+    {
+      "id": "task-observer-compatible",
+      "assertion": "Existing task reconcile narrow observer behavior remains compatible."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover allowed fixed observer shapes and rejected unbounded or mutating shapes."
+    }
+  ],
+  "metadata": {
+    "phase": "tool-smoke-followup",
+    "effect": "repository_hardening",
+    "source": "Grabowski PR #103 self-review follow-up",
+    "reason": "PR #103 added one narrow task observer; broader observer design was intentionally deferred.",
+    "related_pr": "heimgewebe/grabowski#103"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T010",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Clarify SSH command construction",
+  "state": "planned",
+  "goal": "Document or encapsulate remote SSH command construction that uses exec plus shlex.join so safety assumptions and validation responsibilities are explicit.",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T002"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 100
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "ssh-wrapper-contract",
+      "assertion": "Remote command construction has a named helper or documented contract with validation responsibilities."
+    },
+    {
+      "id": "validated-inputs",
+      "assertion": "Call sites demonstrate that untrusted command parts are either validated before joining or impossible by construction."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover quoting-sensitive arguments without broadening remote shell authority."
+    }
+  ],
+  "metadata": {
+    "phase": "tool-smoke-followup",
+    "effect": "repository_hardening",
+    "source": "Grabowski PR #103 self-review follow-up",
+    "reason": "PR #103 kept existing exec + shlex.join pattern; safety assumptions should be made explicit.",
+    "related_pr": "heimgewebe/grabowski#103"
+  }
+}

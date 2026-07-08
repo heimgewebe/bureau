@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T007",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Extract rLens bundle helpers",
+  "state": "planned",
+  "goal": "Separate the rLens bundle registry helper functions from grabowski_mcp.py into a clearer internal module or equivalent structure without changing the public MCP contract.",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T002"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 70
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "module-boundary",
+      "assertion": "rLens bundle registry parsing, manifest discovery and row status helpers live behind a clearer internal boundary than the monolithic MCP module."
+    },
+    {
+      "id": "public-contract-stable",
+      "assertion": "latest_complete_bundles output shape and capability requirements remain backward-compatible unless explicitly documented."
+    },
+    {
+      "id": "tests",
+      "assertion": "Existing rLens bundle tests continue to pass and new focused tests cover the extracted boundary."
+    }
+  ],
+  "metadata": {
+    "phase": "tool-smoke-followup",
+    "effect": "repository_hardening",
+    "source": "Grabowski PR #103 self-review follow-up",
+    "reason": "Kept out of PR #103 to avoid turning a focused hardening patch into module extraction.",
+    "related_pr": "heimgewebe/grabowski#103"
+  }
+}

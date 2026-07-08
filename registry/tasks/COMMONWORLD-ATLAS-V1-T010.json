@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-ATLAS-V1-T010",
+  "initiative": "COMMONWORLD-ATLAS-V1",
+  "title": "Define static catalog export contract",
+  "state": "planned",
+  "goal": "Bind the Commonworld static catalog export contract PR as a read-only, no-runtime/no-write-path export contract task before API or ingestion work.",
+  "depends_on": [
+    "COMMONWORLD-ATLAS-V1-T001"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 55
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "export-schema",
+      "assertion": "A static catalog export schema defines deterministic public catalog entries without introducing an API runtime."
+    },
+    {
+      "id": "proof-sample",
+      "assertion": "A sample export validates against the schema and preserves deterministic entry order."
+    },
+    {
+      "id": "read-only-boundary",
+      "assertion": "The contract explicitly excludes API server, database, ingestion worker, public submissions and write paths."
+    }
+  ],
+  "metadata": {
+    "source": "open PR task binding repair 2026-07-08",
+    "implementation_pr": "heimgewebe/commonworld#24",
+    "implementation_branch": "docs/catalog-export-contract-v1",
+    "does_not_establish": [
+      "api_runtime_readiness",
+      "ingestion_readiness",
+      "public_submission_readiness",
+      "merge_readiness"
+    ]
+  }
+}

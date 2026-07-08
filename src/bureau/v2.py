@@ -165,6 +165,11 @@ def _normalize_task_id_text(value: str) -> str:
     return value.lower().replace("_", "-")
 
 
+def _task_id_pattern(task_id: str) -> re.Pattern[str]:
+    normalized = re.escape(_normalize_task_id_text(task_id))
+    return re.compile(rf"(?<![a-z0-9]){normalized}(?![a-z0-9])")
+
+
 def _pull_request_task_ids(
     pull_request: dict[str, Any], registry: legacy.Registry
 ) -> tuple[str, ...]:
@@ -177,9 +182,7 @@ def _pull_request_task_ids(
     if not haystack:
         return ()
     return tuple(
-        task_id
-        for task_id in registry.tasks
-        if _normalize_task_id_text(task_id) in haystack
+        task_id for task_id in registry.tasks if _task_id_pattern(task_id).search(haystack)
     )
 
 

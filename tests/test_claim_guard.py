@@ -124,6 +124,47 @@ def test_open_pull_request_body_task_id_blocks_same_task(registry_factory, tmp_p
     assert "open-pr:heimgewebe/grabowski#99" in " ".join(reasons)
 
 
+def test_open_pull_request_task_id_scan_uses_token_boundaries(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    longer_task = json.loads(task_path.read_text())
+    longer_task["id"] = "BUR-TEST-001-T0010"
+    longer_task["priority"] = {"lane": "now", "rank": 1}
+    (root / "registry/tasks/BUR-TEST-001-T0010.json").write_text(
+        json.dumps(longer_task)
+    )
+    queue = json.loads((root / "registry/queue.json").read_text())
+    queue["lanes"]["now"].append("BUR-TEST-001-T0010")
+    (root / "registry/queue.json").write_text(json.dumps(queue))
+
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = _observed_pr_dispatcher(
+        registry,
+        store,
+        monkeypatch,
+        [
+            {
+                "number": 103,
+                "title": "longer task",
+                "headRefName": "feat/bur-test-001-t0010-longer-task",
+                "body": "Implements BUR-TEST-001-T0010.",
+                "url": "https://github.example/pr/103",
+            }
+        ],
+    )
+
+    frontier = {item["task_id"]: item for item in dispatcher.frontier({"repository"})}
+    shorter_reasons = " ".join(frontier["BUR-TEST-001-T001"]["reasons"])
+    longer_reasons = " ".join(frontier["BUR-TEST-001-T0010"]["reasons"])
+
+    assert "task already implemented by open PR" not in shorter_reasons
+    assert "repo write blocked by open PR" in shorter_reasons
+    assert "task already implemented by open PR" in longer_reasons
+
+
 def test_open_pull_request_branch_task_id_blocks_same_task(
     registry_factory, tmp_path, monkeypatch
 ):

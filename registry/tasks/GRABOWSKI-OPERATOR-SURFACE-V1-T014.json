@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T014",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Keep privileged broker denials from degrading systemd",
-  "state": "planned",
+  "state": "verified",
   "goal": "Bind the Grabowski privileged broker denial-status repair PR so handled policy denials do not create host-level systemd failed state while internal broker crashes remain visible.",
   "depends_on": [
     "GRABOWSKI-OPERATOR-SURFACE-V1-T013"
@@ -53,7 +53,25 @@
     "does_not_establish": [
       "privileged_action_authority",
       "host_runtime_cleanliness",
+      "runtime_deployed",
       "merge_readiness"
-    ]
+    ],
+    "implementation_head": "6f46ea87c214220e020017f5e601e866eebdd732",
+    "implementation_merge_commit": "96b9bfc1c3e63827ae0dbe6c36f7f3458b0fea57",
+    "verified_at": "2026-07-08",
+    "verification_note": "Grabowski PR #115 merged and changed the privileged broker denial path so structured policy denials are handled without causing the transient systemd unit to be reported as failed, while unexpected internal broker errors remain visible and client denial/failure semantics stay non-zero.",
+    "validated_acceptance": {
+      "handled-denial-not-systemd-failed": "PR #115 updates tools/grabowski_privileged_broker.py so handled request denials are translated into a structured broker response instead of unhandled process failure.",
+      "internal-crash-visible": "PR #115 keeps unexpected internal exceptions on the process-failure path; only structured denials are handled.",
+      "client-failure-preserved": "PR #115 tests preserve non-zero client behavior for denied or failed privileged requests."
+    },
+    "validation": {
+      "github_ci": "validate 3.10 and validate 3.12 succeeded before merge",
+      "changed_files": "docs/control-plane.md, tests/test_control_plane.py, tools/grabowski_privileged_broker.py"
+    },
+    "verification": {
+      "task_sha256": "45d7d2bf6f6ec4fd0230793baab3c8b0c1c9ff5b7c9e5124aceca15301ff80e3",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

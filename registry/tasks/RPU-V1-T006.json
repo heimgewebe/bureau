@@ -3,7 +3,7 @@
   "id": "RPU-V1-T006",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "Proof-of-reading review coverage",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 46
@@ -59,13 +59,53 @@
     "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
     "registered_at": "2026-07-08T00:00:00Z",
     "does_not_establish": [
-      "runtime_correctness",
-      "test_sufficiency",
+      "review_correctness",
       "review_completeness",
+      "test_sufficiency",
+      "security_correctness",
+      "runtime_behavior",
+      "regression_absence",
       "merge_readiness",
-      "agent_quality_improvement_by_itself"
+      "approval",
+      "rejection",
+      "risk_score",
+      "all_relevant_context_used",
+      "claims_true"
     ],
-    "source_vision": "Proof-of-reading for LLM reviews."
+    "source_vision": "Proof-of-reading for LLM reviews.",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Lenskit PR #920: RepoBrief now has a read-only proof-of-reading coverage report that compares delta-context relevant ranges with review citations, lists uncovered ranges and keeps thresholds advisory unless external policy gates on them.",
+    "implementation_pr": "heimgewebe/lenskit#920",
+    "live_lenskit_commit": "6427f9ce3249aabecc1e4a3c8fd22a0b0051c727",
+    "implementation_head": "3e5620e7dada025d4a0d681f386f019ea6472513",
+    "diff_sha256": "7703485fb7fe859955a9ca893aecf919d3e6b80aadb6d80225a85bbe29547f09",
+    "implementation_paths": [
+      "merger/lenskit/core/repobrief_review_coverage.py",
+      "merger/lenskit/cli/cmd_repobrief.py",
+      "merger/lenskit/tests/test_repobrief_review_coverage.py",
+      "docs/proofs/repobrief-review-coverage-v1-proof.md"
+    ],
+    "validation": [
+      "Lenskit PR #920 GitHub CI passed after final head: pytest-full, ruff, CodeQL, doc-freshness, planning-registration, validate-merge-meta, contract checks, reusable fixture validation and webui-js-tests.",
+      "Codex P2 feedback was addressed before merge: root-level file citations, parent path plus nested source_range JSON citations, and line-intersection coverage accounting.",
+      "Local before merge: 111 focused RepoBrief/review-coverage/delta/context/source-citation/access/preflight tests passed.",
+      "Local before merge: targeted ruff-ci check passed.",
+      "Local before merge: planning-registration ratchet reported no new drift.",
+      "Local before merge: doc-freshness inspect PASS.",
+      "Local before merge: git diff --check origin/main...HEAD passed.",
+      "Manual CLI smoke: delta-context compile followed by review-coverage compile returned status pass, writes=[] and Bureau gate requires external policy.",
+      "Post-merge on origin/main 6427f9ce3249aabecc1e4a3c8fd22a0b0051c727: same 111 tests passed, targeted ruff passed, planning-registration no new drift, doc-freshness PASS and diff-check pass."
+    ],
+    "verified_acceptance": {
+      "rpu-v1-t006-coverage": "repobrief.review_coverage computes cited vs relevant changed ranges from delta-context output and lists uncovered_ranges.",
+      "rpu-v1-t006-thresholds": "min_range_coverage is configurable and advisory; CLI exits nonzero only for invalid input, and report declares external_policy_required_to_gate=true.",
+      "rpu-v1-t006-non-proof": "The report declares non-claims for review correctness, test sufficiency, security correctness, runtime behavior, regression absence and merge readiness.",
+      "rpu-v1-t006-bureau-fit": "The report emits a bureau_evidence boundary identifying it as evidence_signal, advisory by default and not a merge authority."
+    },
+    "verification": {
+      "task_sha256": "5d9b8fa146174d7c49162a195e46e6691a4ae0b999a4531c7dd0482837b79838",
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015"
+    }
   },
   "depends_on": [
     "RPU-V1-T005",

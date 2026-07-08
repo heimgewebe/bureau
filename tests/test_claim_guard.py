@@ -295,7 +295,7 @@ def test_open_pull_request_label_task_id_blocks_same_task(
                 "title": "label task",
                 "headRefName": "fix/no-task-id",
                 "body": "No explicit body reference.",
-                "labels": [{"name": "BUR-TEST-001-T001"}],
+                "labels": [{"name": "Bureau-Task: BUR-TEST-001-T001"}],
                 "url": "https://github.example/pr/104",
             }
         ],
@@ -355,6 +355,69 @@ def test_open_pull_request_set_metadata_task_id_blocks_same_task(
 
     reasons = dispatcher.frontier({"repository"})[0]["reasons"]
     assert "task already implemented by open PR" in " ".join(reasons)
+
+
+
+
+def test_open_pull_request_structured_label_overrides_branch_heuristic(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = _observed_pr_dispatcher(
+        registry,
+        store,
+        monkeypatch,
+        [
+            {
+                "number": 108,
+                "title": "confusing branch",
+                "headRefName": "feat/bur-test-001-t002-branch-fallback",
+                "body": "No explicit body reference.",
+                "labels": [{"name": "Bureau-Task: BUR-TEST-001-T001"}],
+                "url": "https://github.example/pr/108",
+            }
+        ],
+    )
+
+    frontier = {item["task_id"]: item for item in dispatcher.frontier({"repository"})}
+    first_reasons = " ".join(frontier["BUR-TEST-001-T001"]["reasons"])
+    second_reasons = " ".join(frontier["BUR-TEST-001-T002"]["reasons"])
+    assert "task already implemented by open PR" in first_reasons
+    assert "task already implemented by open PR" not in second_reasons
+    assert "repo write blocked by open PR" in second_reasons
+
+
+def test_open_pull_request_structured_metadata_can_bind_multiple_tasks(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = _observed_pr_dispatcher(
+        registry,
+        store,
+        monkeypatch,
+        [
+            {
+                "number": 109,
+                "title": "multi task",
+                "headRefName": "fix/no-task-id",
+                "body": "No broad body reference.",
+                "metadata": {"bureau_tasks": ["BUR-TEST-001-T001", "BUR-TEST-001-T002"]},
+                "url": "https://github.example/pr/109",
+            }
+        ],
+    )
+
+    frontier = {item["task_id"]: item for item in dispatcher.frontier({"repository"})}
+    assert "task already implemented by open PR" in " ".join(
+        frontier["BUR-TEST-001-T001"]["reasons"]
+    )
+    assert "task already implemented by open PR" in " ".join(
+        frontier["BUR-TEST-001-T002"]["reasons"]
+    )
 
 
 def test_open_pull_request_other_task_distinguishes_repo_wide_blocker(

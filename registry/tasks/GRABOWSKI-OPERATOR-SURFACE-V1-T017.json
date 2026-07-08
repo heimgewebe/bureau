@@ -1,0 +1,62 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Evidence can record per-axis notes for correctness, regression_risk, tests, security and integration without turning them into fake quantitative scores.",
+      "id": "axis-notes-schema"
+    },
+    {
+      "assertion": "Gate behavior distinguishes missing axis consideration from a legitimate not-applicable conclusion.",
+      "id": "gate-policy"
+    },
+    {
+      "assertion": "The documentation states that notes improve accountability but do not prove review quality.",
+      "id": "anti-theater"
+    },
+    {
+      "assertion": "Tests cover missing axis notes, not-applicable rationale and ordinary clean-pass evidence.",
+      "id": "tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T013"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Add a lightweight evidence contract requiring short notes or explicit not-applicable rationale for each required self-review focus axis.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T017",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation_complete",
+      "runtime_deployed",
+      "merge_readiness",
+      "review_gate_policy_change"
+    ],
+    "effect": "evidence_quality_hardening",
+    "phase": "review-gate-followup",
+    "reason": "Per-axis notes may improve review quality, but PR #111 limited itself to structural focus-axis presence.",
+    "related_pr": "heimgewebe/grabowski#111",
+    "source": "Grabowski PR #111 review follow-up"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 170
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Add review-focus notes contract"
+}

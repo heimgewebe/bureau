@@ -3,7 +3,7 @@
   "id": "RPU-V1-T010",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "Graph degradation semantics hardening",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 50
@@ -49,13 +49,55 @@
     "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
     "registered_at": "2026-07-08T00:00:00Z",
     "does_not_establish": [
-      "runtime_correctness",
-      "test_sufficiency",
-      "review_completeness",
+      "agent_quality_improvement_by_itself",
+      "change_impact_completeness",
+      "default_promotion_readiness",
+      "graph_completeness",
       "merge_readiness",
-      "agent_quality_improvement_by_itself"
+      "retrieval_quality_improvement",
+      "review_completeness",
+      "runtime_causality",
+      "runtime_correctness",
+      "runtime_reachability",
+      "test_sufficiency"
     ],
-    "lenskit_local_task": "TASK-GRAPH-DEGRADATION-SEMANTICS-HARDENING-001"
+    "lenskit_local_task": "TASK-GRAPH-DEGRADATION-SEMANTICS-HARDENING-001",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Lenskit PR #924: graph load, graph availability, query explain diagnostics, context compiler gaps and delta-context graph gaps now share a diagnostic degradation vocabulary. Only ok/available graph evidence is retrieval-eligible; stale, missing, invalid, degraded or profile-excluded graph evidence is explicitly non-promotional and does not establish runtime reachability, causality, change impact, graph completeness or default-promotion readiness.",
+    "implementation_pr": "heimgewebe/lenskit#924",
+    "live_lenskit_commit": "2cacb7bf7f29f7692007f45cebf2ab7b97220e17",
+    "implementation_head": "514a869f44b76b896e7f480ad9b131c7c3b339a5",
+    "superseded_pr": "heimgewebe/lenskit#923",
+    "diff_sha256": "81b23ae415ea4773436872a4452f06ff796bf9dd0b47c3d2ad3f776b9fdc5858",
+    "implementation_paths": [
+      "docs/proofs/graph-degradation-semantics-v1-proof.md",
+      "docs/tasks/board.md",
+      "docs/tasks/index.json",
+      "merger/lenskit/core/graph_degradation.py",
+      "merger/lenskit/core/repobrief_availability.py",
+      "merger/lenskit/core/repobrief_context_compiler.py",
+      "merger/lenskit/core/repobrief_delta_context.py",
+      "merger/lenskit/retrieval/query_core.py",
+      "merger/lenskit/tests/test_graph_degradation_semantics.py",
+      "merger/lenskit/tests/test_repobrief_profiles.py",
+      "merger/lenskit/tests/test_retrieval_query.py"
+    ],
+    "validation": [
+      "Lenskit PR #924 GitHub CI passed: pytest-full, ruff, CodeQL, doc-freshness, planning-registration, validate-merge-meta, contracts, graph checks, ai-context guards and webui-js-tests.",
+      "Before merge: direct self-review found and fixed generic graph_degradation_report ok-status consistency; added direct test coverage.",
+      "Before merge local: docs/tasks/index.json parsed, planning-registration ratchet had 0 new findings, git diff --check passed, 70 focused tests passed and targeted ruff passed.",
+      "Reviews/inline comments were empty; Codex did not produce a code review because the account had reached usage limits.",
+      "Post-merge on Lenskit origin/main 2cacb7bf7f29f7692007f45cebf2ab7b97220e17: same 70 focused tests passed, targeted ruff passed, planning-registration ratchet passed and task index JSON parsed."
+    ],
+    "verified_acceptance": {
+      "rpu-v1-t010-vocabulary": "Shared graph_degradation.py vocabulary is consumed by snapshot availability, query explain diagnostics, context compiler graph gaps and delta-context graph gaps.",
+      "rpu-v1-t010-no-causality": "Graph degradation reports and gaps explicitly do not establish runtime reachability, runtime causality, change impact, graph completeness, retrieval improvement, default-promotion readiness or merge readiness.",
+      "rpu-v1-t010-tests": "Added direct graph degradation semantics tests and strengthened graph availability/retrieval tests; post-merge focused suite passed 70 tests."
+    },
+    "verification": {
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015",
+      "task_sha256": "48c58b465138c49777e52fff1f9a33901206f15c74b937d93f026bcb6dae698d"
+    }
   },
   "depends_on": [
     "RBV1-T015",

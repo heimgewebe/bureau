@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T014",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Keep privileged broker denials from degrading systemd",
+  "state": "planned",
+  "goal": "Bind the Grabowski privileged broker denial-status repair PR so handled policy denials do not create host-level systemd failed state while internal broker crashes remain visible.",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T013"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 35
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "handled-denial-not-systemd-failed",
+      "assertion": "Structured privileged broker request denials return a handled response without marking the transient systemd service failed."
+    },
+    {
+      "id": "internal-crash-visible",
+      "assertion": "Unexpected internal broker exceptions still produce failing process status so real broker bugs remain visible."
+    },
+    {
+      "id": "client-failure-preserved",
+      "assertion": "The client command still returns non-zero when the broker response denies or fails the requested action."
+    }
+  ],
+  "metadata": {
+    "source": "open PR task binding repair 2026-07-08",
+    "implementation_pr": "heimgewebe/grabowski#115",
+    "implementation_branch": "fix/privileged-broker-denial-status-v1",
+    "does_not_establish": [
+      "privileged_action_authority",
+      "host_runtime_cleanliness",
+      "merge_readiness"
+    ]
+  }
+}

@@ -5,7 +5,10 @@
     "now": [],
     "next": [
       "BUR-2026-002-T002",
-      "BUR-2026-002-T003"
+      "BUR-2026-002-T003",
+      "LOO-V1-T001",
+      "LOO-V1-T002",
+      "LOO-V1-T003"
     ],
     "later": [
       "BUR-2026-004-T004",
@@ -38,7 +41,12 @@
       "GRIP-ROADMAP-V1-T010",
       "GRIP-ROADMAP-V1-T011",
       "GRIP-ROADMAP-V1-T012",
-      "GRIP-ROADMAP-V1-T013"
+      "GRIP-ROADMAP-V1-T013",
+      "LOO-V1-T004",
+      "LOO-V1-T005",
+      "LOO-V1-T006",
+      "LOO-V1-T007",
+      "LOO-V1-T008"
     ]
   }
 }

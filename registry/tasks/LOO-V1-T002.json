@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "LOO-V1-T002",
+  "initiative": "LEITSTAND-OPERATOR-OBSERVABILITY-V1",
+  "title": "Producer bridge canonicalization",
+  "state": "planned",
+  "depends_on": [
+    "LOO-V1-T001"
+  ],
+  "goal": "Make scripts/export-operator-snapshots.mjs emit contract-canonical Bureau states and checkout retention values rather than relying on controllers to repair raw producer vocabulary.",
+  "priority": {
+    "lane": "next",
+    "rank": 50
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "bureau-state-normalization",
+      "assertion": "Raw values such as open, pending, active, error and completed are exported as queued, running, failed or done according to the documented contract.",
+      "verifier": "bridge unit/smoke test",
+      "evidence_type": "object"
+    },
+    {
+      "id": "checkout-retention-normalization",
+      "assertion": "Checkout retention output is limited to retained, archivable, orphan or unknown.",
+      "verifier": "bridge unit/smoke test",
+      "evidence_type": "object"
+    },
+    {
+      "id": "contract-doc-parity",
+      "assertion": "Blueprint and data-flow docs match the actual exported vocabulary, including any unknown/degraded state.",
+      "verifier": "diff review",
+      "evidence_type": "boolean"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "docs/plans/leitstand-operator-observability-hardening-v1.md",
+    "audit_source": "leitstand update audit 2026-07-08",
+    "does_not_establish": [
+      "runtime_deployed",
+      "merge_readiness",
+      "external_source_truth"
+    ],
+    "priority_reason": "P1: artifact contract must be true at producer seam"
+  }
+}

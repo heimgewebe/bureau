@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "LOO-V1-T003",
+  "initiative": "LEITSTAND-OPERATOR-OBSERVABILITY-V1",
+  "title": "Public-safe fixtures and path redaction",
+  "state": "planned",
+  "depends_on": [
+    "LOO-V1-T001"
+  ],
+  "goal": "Remove real-looking local operator paths from public fixtures and prevent public/static views from exposing internal absolute source paths by default.",
+  "priority": {
+    "lane": "next",
+    "rank": 60
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "synthetic-fixtures",
+      "assertion": "bureau/checkouts fixtures use synthetic example paths and identities, not /home/alex operator paths.",
+      "verifier": "grep/test",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "source-path-redaction",
+      "assertion": "Rendered public/degraded UI redacts or relativizes snapshot source paths unless explicitly configured for internal debug visibility.",
+      "verifier": "view test",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "public-repo-boundary",
+      "assertion": "README or deployment docs state what internal path metadata may appear only in internal runtime mode.",
+      "verifier": "docs review",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "docs/plans/leitstand-operator-observability-hardening-v1.md",
+    "audit_source": "leitstand update audit 2026-07-08",
+    "does_not_establish": [
+      "runtime_deployed",
+      "merge_readiness",
+      "external_source_truth"
+    ],
+    "priority_reason": "P1: repository is public, fixtures should not leak local topology"
+  }
+}

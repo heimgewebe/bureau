@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "LOO-V1-T008",
+  "initiative": "LEITSTAND-OPERATOR-OBSERVABILITY-V1",
+  "title": "Local and CI test runner compatibility",
+  "state": "planned",
+  "depends_on": [
+    "LOO-V1-T005"
+  ],
+  "goal": "Make the Leitstand test/run instructions account for the observed local Node 22/V8 crash and Vitest WebAssembly limitation without weakening CI evidence.",
+  "priority": {
+    "lane": "later",
+    "rank": 250
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "local-runner-diagnosis",
+      "assertion": "The task records whether the Node 22 crash is local-host specific, package-version related, or expected under the current environment.",
+      "verifier": "diagnostic note",
+      "evidence_type": "string"
+    },
+    {
+      "id": "test-command-grounding",
+      "assertion": "Recommended local test commands are executable on the Heim-PC or document a known fallback that does not pretend full Vitest success.",
+      "verifier": "local command output",
+      "evidence_type": "object"
+    },
+    {
+      "id": "ci-not-weakened",
+      "assertion": "GitHub CI remains the source of truth for full test pass/fail; no test is skipped merely to hide the local runner issue.",
+      "verifier": "CI/diff review",
+      "evidence_type": "boolean"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "docs/plans/leitstand-operator-observability-hardening-v1.md",
+    "audit_source": "leitstand update audit 2026-07-08",
+    "does_not_establish": [
+      "runtime_deployed",
+      "merge_readiness",
+      "external_source_truth"
+    ],
+    "priority_reason": "P2/P3: local validation is currently partially blocked; CI was green on main"
+  }
+}

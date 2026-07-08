@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "id": "LOO-V1-T007",
+  "initiative": "LEITSTAND-OPERATOR-OBSERVABILITY-V1",
+  "title": "Execution snapshot producer runbook",
+  "state": "planned",
+  "depends_on": [
+    "LOO-V1-T002",
+    "LOO-V1-T003"
+  ],
+  "goal": "Define the producer-side operational path for Bureau and Grabowski raw exports feeding Leitstand snapshots, including freshness cadence, failure states, and non-authority boundaries.",
+  "priority": {
+    "lane": "later",
+    "rank": 240
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "producer-owner",
+      "assertion": "Runbook identifies which organ produces raw Bureau task state and Grabowski checkout inventory and where raw JSON is stored.",
+      "verifier": "runbook review",
+      "evidence_type": "string"
+    },
+    {
+      "id": "freshness-cadence",
+      "assertion": "Runbook records expected refresh cadence and stale thresholds for Bureau and checkout snapshots.",
+      "verifier": "runbook review",
+      "evidence_type": "string"
+    },
+    {
+      "id": "failure-semantics",
+      "assertion": "Missing, stale, corrupt and fixture states are operationally explained without granting Leitstand repair or execution authority.",
+      "verifier": "runbook review",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "docs/plans/leitstand-operator-observability-hardening-v1.md",
+    "audit_source": "leitstand update audit 2026-07-08",
+    "does_not_establish": [
+      "runtime_deployed",
+      "merge_readiness",
+      "external_source_truth"
+    ],
+    "priority_reason": "P3: needed before treating execution-axis snapshots as operationally current"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "LOO-V1-T005",
+  "initiative": "LEITSTAND-OPERATOR-OBSERVABILITY-V1",
+  "title": "Leitstand role docs and AI context alignment",
+  "state": "planned",
+  "depends_on": [
+    "LOO-V1-T001"
+  ],
+  "goal": "Align README, docs/index.md, docs/data-flow.md, repo.meta.yaml and .ai-context.yml with the current operator ecosystem and WGX-profile decision, and correct the stale start command documentation.",
+  "priority": {
+    "lane": "later",
+    "rank": 220
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "role-list-current",
+      "assertion": "Docs no longer present the old metarepo/wgx/semantAH-only role list as the current complete ecosystem.",
+      "verifier": "grep/diff review",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "wgx-profile-parity",
+      "assertion": ".ai-context.yml no longer says Leitstand is profile-free and agrees with docs/decisions/wgx-leitstand.md.",
+      "verifier": "ai-context guard and diff review",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "start-command-valid",
+      "assertion": "README installation/run instructions name scripts that actually exist in package.json, or package.json adds the documented script.",
+      "verifier": "package/readme check",
+      "evidence_type": "boolean"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "docs/plans/leitstand-operator-observability-hardening-v1.md",
+    "audit_source": "leitstand update audit 2026-07-08",
+    "does_not_establish": [
+      "runtime_deployed",
+      "merge_readiness",
+      "external_source_truth"
+    ],
+    "priority_reason": "P2: agent and human entrypoints currently contradict live repo state"
+  }
+}

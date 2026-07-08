@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "LOO-V1-T006",
+  "initiative": "LEITSTAND-OPERATOR-OBSERVABILITY-V1",
+  "title": "Static mirror and GitHub Pages boundary",
+  "state": "planned",
+  "depends_on": [
+    "LOO-V1-T005"
+  ],
+  "goal": "Decide and implement the static mirror boundary: either render all safe read-only views into dist/site or explicitly bound/disable GitHub Pages so the documented mirror does not remain red and misleading.",
+  "priority": {
+    "lane": "later",
+    "rank": 230
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "static-scope-decision",
+      "assertion": "A documented decision states which Leitstand routes are supported in static mirror mode and which are dynamic-only.",
+      "verifier": "decision/doc review",
+      "evidence_type": "string"
+    },
+    {
+      "id": "build-static-parity",
+      "assertion": "build-static.mjs either emits the supported route set or docs/workflow clearly state the smaller supported set.",
+      "verifier": "static build smoke",
+      "evidence_type": "array"
+    },
+    {
+      "id": "pages-red-resolved",
+      "assertion": "The failing GitHub Pages deployment is resolved by enabling Pages, making the workflow optional, or disabling/removing it with documented rationale.",
+      "verifier": "GitHub Actions status or diff review",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "docs/plans/leitstand-operator-observability-hardening-v1.md",
+    "audit_source": "leitstand update audit 2026-07-08",
+    "does_not_establish": [
+      "runtime_deployed",
+      "merge_readiness",
+      "external_source_truth"
+    ],
+    "priority_reason": "P2: main Pages workflow is red; static docs overpromise"
+  }
+}

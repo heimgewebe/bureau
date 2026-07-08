@@ -3,7 +3,7 @@
   "id": "LOO-V1-T004",
   "initiative": "LEITSTAND-OPERATOR-OBSERVABILITY-V1",
   "title": "Leitstand navigation parity",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "LOO-V1-T001"
   ],
@@ -60,6 +60,69 @@
       "merge_readiness",
       "external_source_truth"
     ],
-    "priority_reason": "P2: usability and cockpit coherence"
+    "priority_reason": "P2: usability and cockpit coherence",
+    "verification": {
+      "verified_by": "Leitstand PR #155",
+      "leitstand_pr": "https://github.com/heimgewebe/leitstand/pull/155",
+      "leitstand_head": "2c8c9394377d26c36ca91426fff5021087b00301",
+      "leitstand_merge_commit": "428607632168bd5a3dd1335fd540c7b92c19a488",
+      "merged_at": "2026-07-08T05:28:18Z",
+      "local_checks": [
+        "plain Node navigation parity smoke",
+        "NODE_OPTIONS=--jitless pnpm lint",
+        "NODE_OPTIONS=--jitless pnpm typecheck",
+        "NODE_OPTIONS=--jitless pnpm build",
+        "python3 scripts/ai_context/validate_ai_context.py --file .ai-context.yml",
+        "bash scripts/ci/observer-invariant-guard.sh",
+        "bash scripts/ci/docs-relations-guard.sh",
+        "bash scripts/ci/generated-files-guard.sh",
+        "bash scripts/ci/check-drift-gates.sh"
+      ],
+      "ci": {
+        "build": "success",
+        "repo-root": "success",
+        "scan": "success",
+        "templates": "success",
+        "Cloudflare Pages": "success"
+      },
+      "verification_summary": "Leitstand PR #155 aligned all nav-bearing primary views to a canonical read-only route set and added tests/views/navigation.test.ts to check route parity, active state, and absence of nav action hooks.",
+      "acceptance_evidence": {
+        "nav-parity": [
+          "/",
+          "/bureau",
+          "/checkouts",
+          "/observatory",
+          "/ecosystem-map",
+          "/repobriefs",
+          "/anatomy",
+          "/timeline",
+          "/insights",
+          "/reflexion",
+          "/ops"
+        ],
+        "active-state": {
+          "index.ejs": "/",
+          "bureau.ejs": "/bureau",
+          "checkouts.ejs": "/checkouts",
+          "observatory.ejs": "/observatory",
+          "ecosystem-map.ejs": "/ecosystem-map",
+          "repobriefs.ejs": "/repobriefs",
+          "anatomy.ejs": "/anatomy",
+          "timeline.ejs": "/timeline",
+          "insights.ejs": "/insights",
+          "reflexion.ejs": "/reflexion",
+          "ops.ejs": "/ops"
+        },
+        "no-new-actions": true
+      },
+      "does_not_establish": [
+        "runtime_deployed",
+        "pages_enabled",
+        "route_runtime_smoke",
+        "user_acceptance"
+      ],
+      "task_sha256": "86968a4920d83e04579e6f2e1b0098b77045f584d00d483c5e75b68cbdda9cbc",
+      "plan_sha256": "69e170cf832449b00f1257b359c99acc0b40bbae28278f779d4da0ce799fa053"
+    }
   }
 }

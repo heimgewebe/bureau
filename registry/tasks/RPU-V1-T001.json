@@ -3,7 +3,7 @@
   "id": "RPU-V1-T001",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "Resolved evidence query with content",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 24
@@ -63,7 +63,35 @@
       "merge_readiness",
       "agent_quality_improvement_by_itself"
     ],
-    "source_gap": "Max-dump critique: current search requires multiple manual steps and query JSON loses line-number utility."
+    "source_gap": "Max-dump critique: current search requires multiple manual steps and query JSON loses line-number utility.",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Lenskit PR #912: RepoBrief now exposes a read-only resolved evidence query surface with text excerpts, paths, line ranges, citation/range verification, freshness and availability.",
+    "implementation_pr": "heimgewebe/lenskit#912",
+    "live_lenskit_commit": "0c53ad4921e5152a096b60d8a57439318072b884",
+    "implementation_paths": [
+      "merger/lenskit/core/repobrief_access.py",
+      "merger/lenskit/cli/cmd_repobrief.py",
+      "merger/lenskit/tests/test_repobrief_resolved_evidence_query.py",
+      "docs/proofs/repobrief-resolved-evidence-query-v1-proof.md"
+    ],
+    "validation": [
+      "Lenskit PR #912 GitHub CI passed: CodeQL, pytest-full, ruff, planning-registration, doc-freshness, validate-merge-meta, contract guards, webui-js-tests.",
+      "Local: python3 -m pytest -q merger/lenskit/tests/test_repobrief_*.py merger/lenskit/tests/test_cli_query_profiles.py merger/lenskit/tests/test_api_query.py -> 150 passed.",
+      "Local: python3 -m ruff check targeted files -> pass.",
+      "Local: python3 -m scripts.docmeta.check_planning_registration -> pass.",
+      "Local: git diff --check -> pass."
+    ],
+    "verified_acceptance": {
+      "rpu-v1-t001-content-results": "Resolved evidence hits now expose text_excerpt, text_truncated, source_path, line_range, source_line_range, artifact_path and artifact_line_range.",
+      "rpu-v1-t001-citation-binding": "Resolved hits carry range_ref, range_ref_verified, citation_id, citation, citation_status and citation_verified.",
+      "rpu-v1-t001-freshness": "query_existing_index and resolved_evidence carry snapshot availability and freshness; read paths keep read_paths_do_not_refresh=True.",
+      "rpu-v1-t001-json-shape": "repobrief query emits JSON with directly usable line_range fields and no manual range_ref reconstruction requirement for normal evidence reading.",
+      "rpu-v1-t001-non-claims": "Proof and PR body state no semantic completeness, runtime correctness, test sufficiency, review completeness, agent quality improvement, stale-bundle validity or merge readiness."
+    },
+    "verification": {
+      "task_sha256": "b3ad8d49811185eecbd3687520ead13d1ab307c3cefec31b35c6ae20c16940ad",
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015"
+    }
   },
   "depends_on": [
     "RBV1-T006",

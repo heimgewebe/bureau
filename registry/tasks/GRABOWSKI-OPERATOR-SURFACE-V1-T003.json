@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T003",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Add friction summary next-grip proposal",
-  "state": "planned",
+  "state": "verified",
   "goal": "Summarize repeated Grabowski friction records into proposal-only recommendations for the next grip or small Bureau task to improve.",
   "depends_on": [
     "GRABOWSKI-OPERATOR-SURFACE-V1-T002"
@@ -49,6 +49,25 @@
   "metadata": {
     "phase": "friction-feedback",
     "effect": "read_only_proposal",
-    "non_goal": "Does not auto-create Bureau tasks or change priority without a separate registration step."
+    "non_goal": "Does not auto-create Bureau tasks or change priority without a separate registration step.",
+    "implementation_pr": "heimgewebe/grabowski#114",
+    "implementation_head": "93a6afb8ff9cf9832112442ea85f0f8fed03fa24",
+    "implementation_merge_commit": "80a5fbd27cf9deb1ee7bf6bfa1efd4ffaf6fa2e1",
+    "verified_at": "2026-07-08",
+    "verification_note": "Grabowski PR #114 merged and added proposal-only next_grip_proposals to grabowski_friction_summary. The merged implementation groups repeated friction, uses unresolved bounded evidence IDs for recommendations, exposes non-claims and matched/unmatched counts, and never mutates Bureau or executes grips.",
+    "validated_acceptance": {
+      "groups-repeated-friction": "PR #114 groups command chains, blocked gates, stale snapshots, review loops and missing receipt fields.",
+      "proposal-only": "PR #114 exposes authority=proposal_only and does not mutate Bureau queue state or execute grips.",
+      "evidence-linked": "PR #114 links recommendations to bounded unresolved event IDs and exposes does_not_establish at top level.",
+      "tests": "PR #114 added focused tests for repeated patterns, insufficient evidence, no-action output, unresolved evidence, broad terms, multi-pattern events, missing event IDs and empty input."
+    },
+    "validation": {
+      "local": "make validate passed with 658 tests before merge",
+      "github_ci": "validate 3.10 and 3.12 succeeded before merge"
+    },
+    "verification": {
+      "task_sha256": "d005acc8239fa34e66f0f5287bf37c38aae49ffd2e6e81d6874944d9c860e814",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

@@ -12,3 +12,5 @@
 10. Never edit an active execution envelope.
 11. Merge, rebase and deployment are separate exclusive tasks.
 12. Remove a workspace only after a terminal run and a clean, merged status unless force is explicit.
+13. Treat all AI or local model output as advisory only; it cannot establish queue truth, task verification, completion, claim truth, merge readiness, runtime correctness or dispatch authority.
+14. Do not add an Ollama Bureau secretary, scout, queue assistant or daemon without a later accepted benchmark and deterministic validator task.

@@ -8,6 +8,7 @@ blocked; nothing here verifies tasks, mutates the queue, merges or cleans up.
 
 from __future__ import annotations
 
+import copy
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -31,7 +32,28 @@ ACTIVE_RUN_STATES = {"assigned", "running", "verifying"}
 
 DEFAULT_GITHUB_MAX_AGE_SECONDS = 3600
 
+AI_AUTHORITY_BOUNDARY = {
+    "core_policy": "deterministic_only",
+    "llm_outputs": "advisory_only",
+    "forbidden_effects": [
+        "registry_mutation",
+        "queue_mutation",
+        "task_verification",
+        "task_completion",
+        "claim_truth",
+        "merge_readiness",
+        "runtime_correctness",
+        "dispatch_authority",
+    ],
+    "allowed_use": (
+        "External or local AI may be cited only as human-readable commentary or "
+        "bounded proposal evidence after deterministic Bureau validation; it is "
+        "never the authority that establishes Bureau facts."
+    ),
+}
+
 PROJECTION_DOES_NOT_ESTABLISH = (
+    "ai_authority",
     "task_completion",
     "merge_readiness",
     "ci_sufficiency",
@@ -355,5 +377,8 @@ def status_projection(
         "healthy": healthy,
         "findings": projection_findings,
         "tasks": tasks,
+        "authority_boundary": {
+            "ai": copy.deepcopy(AI_AUTHORITY_BOUNDARY),
+        },
         "does_not_establish": list(PROJECTION_DOES_NOT_ESTABLISH),
     }

@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-DETERMINISTIC-OPS-V1-T001",
+  "initiative": "BUREAU-DETERMINISTIC-OPS-V1",
+  "title": "Document Bureau AI authority boundary",
+  "state": "verified",
+  "priority": {
+    "lane": "next",
+    "rank": 96
+  },
+  "goal": "Record that AI and local model output has no Bureau maintenance authority, expose the boundary in status projection, and keep Ollama out of Bureau core.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "ai-boundary-doc",
+      "assertion": "docs/bureau-ai-authority-boundary-v1.md states that Ollama, Gemini and other LLM outputs do not establish queue truth, task truth, claim truth, merge readiness, runtime correctness, verification or completion."
+    },
+    {
+      "id": "status-projection-boundary",
+      "assertion": "status_projection emits an authority_boundary.ai section with deterministic_only core policy, advisory_only LLM output and forbidden effect classes."
+    },
+    {
+      "id": "agent-contract-boundary",
+      "assertion": "AGENTS.md instructs agents not to add an Ollama Bureau secretary or treat AI output as authority without a later accepted benchmark and deterministic validator task."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-08T17:20:00Z",
+    "source_plan": "docs/plans/bureau-deterministic-ops-v1.md",
+    "implementation_pr": "heimgewebe/bureau#280",
+    "verified_at": "2026-07-08",
+    "verified_acceptance": {
+      "ai-boundary-doc": "docs/bureau-ai-authority-boundary-v1.md explicitly classifies Ollama, Gemini, copied LLM reviews and generated summaries as advisory-only and lists queue, registry, claim, verification, completion, merge, runtime and dispatch authority as forbidden effects.",
+      "status-projection-boundary": "src/bureau/status_projection.py exposes authority_boundary.ai with deterministic_only core policy, advisory_only LLM output and forbidden effect classes; tests cover defensive copying and ai_authority non-claim output.",
+      "agent-contract-boundary": "AGENTS.md forbids treating AI or local model output as queue truth, task verification, completion, claim truth, merge readiness, runtime correctness or dispatch authority and blocks an Ollama secretary without a later accepted benchmark and deterministic validator task."
+    },
+    "validation": [
+      "PR #280 CI validate run completed successfully before the registry closeout adjustment at head 61a8646307b9f607373e138275060b1f5c0c69b4.",
+      "Self-review found and fixed the duplicate-claim risk: T001 is verified in this registry change and is absent from active queue lanes; T002 is advanced as the next deterministic hardening task."
+    ],
+    "does_not_establish": [
+      "runtime_correctness",
+      "merge_readiness",
+      "task_completion_outside_this_registry_state",
+      "ai_authority",
+      "ollama_model_quality",
+      "gemini_scan_quality"
+    ],
+    "verification": {
+      "task_sha256": "cb29c16335100bcf818ad0285e65355e79c217da20125bd9de224856a08b4cbc",
+      "plan_sha256": "aa19d4a7661b4b6bc802c78a3edd836713242f0c65e76926ae05f90344f975da"
+    }
+  },
+  "depends_on": []
+}

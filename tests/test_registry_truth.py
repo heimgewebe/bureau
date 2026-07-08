@@ -163,6 +163,63 @@ def test_evidence_bound_to_another_task_is_not_accepted(tmp_path: Path) -> None:
     )
 
 
+
+
+def test_verified_task_with_only_legacy_hashes_is_warning_not_error(tmp_path: Path) -> None:
+    metadata = {"verification": {"task_sha256": "c" * 64, "plan_sha256": "d" * 64}}
+    _write_task(tmp_path, "RBV1-T002", state="verified", metadata=metadata)
+    _write_queue(tmp_path)
+
+    result = registry_truth_diagnostics(tmp_path, probe_baselines=False)
+
+    assert result["healthy"] is True
+    assert result["errors"] == []
+    assert any(
+        item["issue"] == "verified_task_without_machine_closeout_evidence"
+        and item["severity"] == "warning"
+        for item in result["warnings"]
+    )
+
+def test_legacy_verified_task_without_new_closeout_evidence_is_warning_only(tmp_path: Path) -> None:
+    metadata = {
+        "implementation_pr": "heimgewebe/bureau#1",
+        "validated_acceptance": {"done": "legacy prose evidence"},
+    }
+    _write_task(tmp_path, "RBV1-T002", state="verified", metadata=metadata)
+    _write_queue(tmp_path)
+
+    result = registry_truth_diagnostics(tmp_path, probe_baselines=False)
+
+    assert result["healthy"] is True
+    assert result["errors"] == []
+    assert any(
+        item["issue"] == "verified_task_without_machine_closeout_evidence"
+        and item["severity"] == "warning"
+        for item in result["warnings"]
+    )
+
+
+def test_satisfied_legacy_registry_truth_without_evidence_is_warning_only(tmp_path: Path) -> None:
+    metadata = {
+        "registry_truth": {
+            "schema_version": 1,
+            "status": "satisfied",
+        },
+        "implementation_pr": "heimgewebe/bureau#1",
+    }
+    _write_task(tmp_path, "RBV1-T002", state="verified", metadata=metadata)
+    _write_queue(tmp_path)
+
+    result = registry_truth_diagnostics(tmp_path, probe_baselines=False)
+
+    assert result["healthy"] is True
+    assert result["errors"] == []
+    assert any(
+        item["issue"] == "registry_truth_without_machine_evidence"
+        and item["severity"] == "warning"
+        for item in result["warnings"]
+    )
+
 def test_missing_baseline_commit_is_reported_without_completion_claim(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()

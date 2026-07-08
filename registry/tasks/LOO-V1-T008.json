@@ -3,7 +3,7 @@
   "id": "LOO-V1-T008",
   "initiative": "LEITSTAND-OPERATOR-OBSERVABILITY-V1",
   "title": "Local and CI test runner compatibility",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "LOO-V1-T005"
   ],
@@ -60,6 +60,63 @@
       "merge_readiness",
       "external_source_truth"
     ],
-    "priority_reason": "P2/P3: local validation is currently partially blocked; CI was green on main"
+    "priority_reason": "P2/P3: local validation is currently partially blocked; CI was green on main",
+    "verification": {
+      "verified_by": "Leitstand PR #159",
+      "leitstand_pr": "https://github.com/heimgewebe/leitstand/pull/159",
+      "leitstand_head": "3136774bc903054b19dbe33348578ac951f195a6",
+      "leitstand_merge_commit": "7416c7360de3e1550383161c6c9d756727c6c854",
+      "merged_at": "2026-07-08T06:07:57Z",
+      "local_diagnostics": {
+        "node_version": "v22.23.1",
+        "plain_node_rc": 133,
+        "plain_node_failure": "V8 fatal error before repo code; SetPermissionsOnExecutableMemoryChunk",
+        "jitless_node": "passes",
+        "jitless_pnpm_version": "9.1.0",
+        "jitless_vitest": "fails before tests with ReferenceError: WebAssembly is not defined"
+      },
+      "local_checks": [
+        "acceptance checks for local diagnosis, command grounding, and ci-not-weakened",
+        "NODE_OPTIONS=--jitless pnpm lint",
+        "NODE_OPTIONS=--jitless pnpm typecheck",
+        "NODE_OPTIONS=--jitless pnpm build",
+        "python3 scripts/ai_context/validate_ai_context.py --file .ai-context.yml",
+        "bash scripts/ci/observer-invariant-guard.sh",
+        "bash scripts/ci/docs-relations-guard.sh",
+        "bash scripts/ci/generated-files-guard.sh",
+        "bash scripts/ci/check-drift-gates.sh"
+      ],
+      "ci": {
+        "build": "success",
+        "repo-root": "success",
+        "scan": "success",
+        "templates": "success",
+        "Cloudflare Pages": "success",
+        "full_vitest_truth": "GitHub CI runs pnpm test on Node 20; PR did not modify CI to skip or weaken tests."
+      },
+      "verification_summary": "Leitstand PR #159 added docs/runbooks/local-test-runner.md, updated README local validation guidance, and linked the runbook from docs/index.md. It documents the Heim-PC Node 22/V8 crash, the safe jitless lint/typecheck/build fallback, the Vitest WebAssembly limitation, and preserves GitHub CI as full test truth.",
+      "acceptance_evidence": {
+        "local-runner-diagnosis": "Node v22.23.1 default JIT path exits 133 before repo code; jitless node succeeds; jitless Vitest fails due missing WebAssembly.",
+        "test-command-grounding": [
+          "NODE_OPTIONS=--jitless pnpm lint",
+          "NODE_OPTIONS=--jitless pnpm typecheck",
+          "NODE_OPTIONS=--jitless pnpm build"
+        ],
+        "ci-not-weakened": true,
+        "docs": [
+          "README.md",
+          "docs/runbooks/local-test-runner.md",
+          "docs/index.md"
+        ]
+      },
+      "does_not_establish": [
+        "local_vitest_success",
+        "node_root_cause_fixed",
+        "runtime_deployed",
+        "ci_weakened"
+      ],
+      "task_sha256": "cfad5c54a1f7972a51c2c22214687f9a171e27762657b62530401208181977a6",
+      "plan_sha256": "69e170cf832449b00f1257b359c99acc0b40bbae28278f779d4da0ce799fa053"
+    }
   }
 }

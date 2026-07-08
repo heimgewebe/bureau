@@ -31,6 +31,7 @@ bureau-cabinet-bridge-receipt = "bureau.cabinet_bridge_receipt:main"
 bureau-cabinet-bridge-import-policy = "bureau.cabinet_bridge_import_policy:main"
 bureau-cabinet-frontier-reader = "bureau.cabinet_frontier_reader:main"
 bureau-gemini-preflight = "bureau.gemini_preflight:main"
+bureau-gemini-review-lane = "bureau.gemini_review_lane:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

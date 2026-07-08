@@ -43,3 +43,15 @@ The policy does not fetch, refresh, validate, or generate rLens bundles. It only
 ## Non-claims
 
 This policy does not establish actual agent reading, answer correctness, repo understanding, claim truth, runtime correctness, test sufficiency, review completeness, or merge readiness.
+
+## CLI report
+
+Bureau also exposes a read-only registry report:
+
+```bash
+python -m bureau.cli --root . --json rlens-policy
+python -m bureau.cli --root . --json rlens-policy --task-id BUR-2026-002-T003
+python -m bureau.cli --root . rlens-policy --strict
+```
+
+`--strict` returns a non-zero exit code only when explicit `rlens_policy` entries block. Inferred task classes for legacy registry entries are reported as `policy-missing` and do not block by themselves. This keeps adoption incremental while making missing policy visible.

@@ -28,6 +28,7 @@ from .core import (
     verification_stamp,
     workspace_status,
 )
+from .rlens_policy import evaluate_registry_rlens_policy
 
 
 def emit(value: Any, as_json: bool) -> None:
@@ -65,6 +66,9 @@ def parser() -> argparse.ArgumentParser:
     registry_truth.add_argument("--strict", action="store_true")
     registry_truth.add_argument("--no-baseline-probe", action="store_true")
     sub.add_parser("conflicts")
+    rlens_policy = sub.add_parser("rlens-policy")
+    rlens_policy.add_argument("--strict", action="store_true")
+    rlens_policy.add_argument("--task-id")
     sub.add_parser("lifecycle")
     source_check = sub.add_parser("source-check")
     source_check.add_argument("source", choices=["weltgewebe"])
@@ -448,6 +452,24 @@ def main(argv: list[str] | None = None) -> int:
             value = {**dispatcher.doctor(args.repair), "adapters": adapter_registry.status()}
         elif args.command == "conflicts":
             value = dispatcher.conflict_matrix()
+        elif args.command == "rlens-policy":
+            value = evaluate_registry_rlens_policy(registry.tasks)
+            if args.task_id:
+                value["tasks"] = [
+                    item for item in value["tasks"] if item["task_id"] == args.task_id
+                ]
+                value["blockers"] = [
+                    item for item in value["blockers"] if item["task_id"] == args.task_id
+                ]
+                value["summary"] = {
+                    "tasks": len(value["tasks"]),
+                    "blockers": len(value["blockers"]),
+                    "policy_missing": sum(
+                        1 for item in value["tasks"] if item["status"] == "policy-missing"
+                    ),
+                }
+            emit(value, args.json)
+            return 1 if args.strict and value["blockers"] else 0
         elif args.command == "lifecycle":
             value = lifecycle_diagnostics(registry, store)
         elif args.command == "close-ready":

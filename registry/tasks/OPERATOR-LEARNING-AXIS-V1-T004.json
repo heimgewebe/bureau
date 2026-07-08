@@ -3,7 +3,7 @@
   "id": "OPERATOR-LEARNING-AXIS-V1-T004",
   "initiative": "OPERATOR-LEARNING-AXIS-V1",
   "title": "Add review-only end-to-end OLA learning smoke",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 80
@@ -56,6 +56,34 @@
   "metadata": {
     "primary_repo": "heimgewebe/heimlern",
     "recommended_agent": "grabowski-codex",
-    "claude_delegation": "optional review if the smoke boundary becomes ambiguous"
+    "claude_delegation": "optional review if the smoke boundary becomes ambiguous",
+    "verified_at": "2026-07-08",
+    "implementation_repo": "heimgewebe/heimlern",
+    "implementation_pr": "heimgewebe/heimlern#196",
+    "implementation_head": "79cc2e475de7fb67500e5f64deb99bc5da12d412",
+    "implementation_merge_commit": "e0eb71ab182d67143adc435a8b92d1c54df9f06b",
+    "validated_acceptance": {
+      "fixture-corpus": "Heimlern PR #196 adds tests/fixtures/ola/blocked.ok.json and tests/fixtures/ola/fail_closed_collision.corpus.json; existing success.ok.json and failed.ok.json remain covered by the smoke.",
+      "circle-proof": "scripts/ola_circle_smoke.py runs success, blocked and single failed fixtures as intentional no-proposal cases, validates an amplified failed-route proposal against policy.weight_adjustment.v1, and verifies fail-closed route-key collision blocking.",
+      "review-only": "scripts/ola_circle_smoke.py emits review_only=true, writes=[] and does_not_establish for routing readiness, automatic rule changes, runtime policy mutation and causal route superiority."
+    },
+    "validation": [
+      "Heimlern PR #196 merged as e0eb71ab182d67143adc435a8b92d1c54df9f06b.",
+      "GitHub rust (cached) workflow for head 79cc2e475de7fb67500e5f64deb99bc5da12d412 succeeded: build-test and schema-validate jobs passed; schema-validate includes ola_circle_smoke.py.",
+      "GitHub ai-context guard workflow for head 79cc2e475de7fb67500e5f64deb99bc5da12d412 succeeded.",
+      "Codex review was unavailable because usage limits were reached; no actionable review comments were returned."
+    ],
+    "does_not_establish": [
+      "live_routing_readiness",
+      "routing_policy_superiority",
+      "sample_representativeness",
+      "automatic_rule_change_permission",
+      "runtime_policy_mutation",
+      "vibe_lab_sample_capture"
+    ],
+    "verification": {
+      "task_sha256": "62a6c3eaffab3a3771106427d1d3d3166d322e0b0e2d9bc18e8dd97e04aa765e",
+      "plan_sha256": "76d9bc2839e3a37b12f25e565b429bf413427570794dfa836137a18eb712d8f5"
+    }
   }
 }

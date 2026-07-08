@@ -3,9 +3,9 @@
   "id": "BUREAU-DETERMINISTIC-OPS-V1-T004",
   "initiative": "BUREAU-DETERMINISTIC-OPS-V1",
   "title": "Harden PR task binding guard v2",
-  "state": "planned",
+  "state": "ready",
   "priority": {
-    "lane": "later",
+    "lane": "next",
     "rank": 312
   },
   "goal": "Require open working PRs to bind exactly one valid Bureau task unless an explicit schema-visible exception exists.",
@@ -50,7 +50,9 @@
       "runtime_correctness",
       "merge_readiness",
       "task_completion"
-    ]
+    ],
+    "advanced_at": "2026-07-08",
+    "advance_reason": "BUREAU-DETERMINISTIC-OPS-V1-T003 is verified by this registry state; the next deterministic hardening ball is PR task binding guard v2."
   },
   "depends_on": [
     "BUREAU-DETERMINISTIC-OPS-V1-T001"

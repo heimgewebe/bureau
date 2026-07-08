@@ -3,7 +3,7 @@
   "id": "BUREAU-DETERMINISTIC-OPS-V1-T003",
   "initiative": "BUREAU-DETERMINISTIC-OPS-V1",
   "title": "Enforce per-repository active ball guard",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 311
@@ -48,11 +48,28 @@
     "source_plan": "docs/plans/bureau-deterministic-ops-v1.md",
     "does_not_establish": [
       "runtime_correctness",
-      "merge_readiness",
-      "task_completion"
+      "merge_readiness_for_future_prs",
+      "automatic_run_repair",
+      "task_completion_outside_this_registry_state"
     ],
     "advanced_at": "2026-07-08",
-    "advance_reason": "BUREAU-DETERMINISTIC-OPS-V1-T002 is verified by this registry state; the next deterministic hardening ball is the per-repository active ball guard."
+    "advance_reason": "BUREAU-DETERMINISTIC-OPS-V1-T002 is verified by this registry state; the next deterministic hardening ball is the per-repository active ball guard.",
+    "implementation_pr": "heimgewebe/bureau#288",
+    "verified_at": "2026-07-08",
+    "verified_acceptance": {
+      "repo-ball-projection": "repo-balls already listed every repository and PR #288 preserves that read-only projection while adding ambiguous same-repo state to the per-repository surface.",
+      "same-repo-conflict": "PR #288 reports multiple active runs overlapping one repository as status ambiguous with blocker code multiple-active-balls-for-repository and run/task ids.",
+      "multi-repo-parallelism": "PR #288 test coverage keeps independent repo.alpha and repo.beta active balls distinct; same-repo ambiguity does not collapse all repositories into one global ball."
+    },
+    "validation": [
+      "PR #288 CI validate succeeded for Python 3.10 and 3.12 before merge.",
+      "Local validation before PR creation: PYTHONPATH=src make validate -> 392 passed.",
+      "Merged as commit 2df16948d28406e8b06c45068ffe808f92bf9d98."
+    ],
+    "verification": {
+      "task_sha256": "cda9385f21098faf4cf1a51a273877d0615bac0a937e1f05f4d91de1509a4247",
+      "plan_sha256": "aa19d4a7661b4b6bc802c78a3edd836713242f0c65e76926ae05f90344f975da"
+    }
   },
   "depends_on": [
     "BUREAU-DETERMINISTIC-OPS-V1-T001"

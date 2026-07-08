@@ -113,6 +113,62 @@ def test_open_pull_request_reservation_does_not_block_repo_read_claim(registry_f
     assert run["task_id"] == "BUR-TEST-001-T001"
 
 
+
+
+def test_open_pull_request_observation_failure_is_resource_scoped(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write", max_active=2)
+
+    repo2_path = root / "second-repo"
+    repo2_path.mkdir()
+    resource_path = root / "registry/resources/5.json"
+    resource_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "id": "repo2",
+                "type": "git-repository",
+                "parent": "root",
+                "path": str(repo2_path),
+            }
+        )
+    )
+    task_path = root / "registry/tasks/BUR-TEST-001-T002.json"
+    task = json.loads(task_path.read_text())
+    task["claims"][0]["resource"] = "repo2"
+    task_path.write_text(json.dumps(task))
+
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD", "1")
+
+    def repository_for_path(path):
+        return "heimgewebe/healthy" if path == repo2_path else "heimgewebe/broken"
+
+    def open_pull_requests(repository):
+        if repository == "heimgewebe/broken":
+            raise bureau_v2.OpenPullRequestObservationError("broken gh observation")
+        return []
+
+    monkeypatch.setattr(bureau_v2, "_github_repository_for_path", repository_for_path)
+    monkeypatch.setattr(bureau_v2, "_github_open_pull_requests", open_pull_requests)
+
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(registry, store)
+
+    frontier = {item["task_id"]: item for item in dispatcher.frontier({"repository"})}
+    blocked_reasons = " ".join(frontier["BUR-TEST-001-T001"]["reasons"])
+    eligible_reasons = " ".join(frontier["BUR-TEST-001-T002"]["reasons"])
+    assert frontier["BUR-TEST-001-T001"]["eligible"] is False
+    assert "repo write blocked by open PR guard failure" in blocked_reasons
+    assert "repo" in blocked_reasons
+    assert frontier["BUR-TEST-001-T002"]["eligible"] is True
+    assert "open PR guard failure" not in eligible_reasons
+
+    claimed = dispatcher.claim_next("worker", ("repository",))["run"]
+    assert claimed["task_id"] == "BUR-TEST-001-T002"
+
+
 def test_github_open_pull_requests_requests_label_metadata_and_configured_limit(
     monkeypatch,
 ):

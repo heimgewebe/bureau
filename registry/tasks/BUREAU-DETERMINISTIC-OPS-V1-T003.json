@@ -3,9 +3,9 @@
   "id": "BUREAU-DETERMINISTIC-OPS-V1-T003",
   "initiative": "BUREAU-DETERMINISTIC-OPS-V1",
   "title": "Enforce per-repository active ball guard",
-  "state": "planned",
+  "state": "ready",
   "priority": {
-    "lane": "later",
+    "lane": "next",
     "rank": 311
   },
   "goal": "Make repo-balls or status projection show one active ball per repository, with ambiguity and conflicts visible per repo rather than as one global bottleneck.",
@@ -50,7 +50,9 @@
       "runtime_correctness",
       "merge_readiness",
       "task_completion"
-    ]
+    ],
+    "advanced_at": "2026-07-08",
+    "advance_reason": "BUREAU-DETERMINISTIC-OPS-V1-T002 is verified by this registry state; the next deterministic hardening ball is the per-repository active ball guard."
   },
   "depends_on": [
     "BUREAU-DETERMINISTIC-OPS-V1-T001"

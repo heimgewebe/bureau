@@ -3,7 +3,7 @@
   "id": "BUREAU-DETERMINISTIC-OPS-V1-T002",
   "initiative": "BUREAU-DETERMINISTIC-OPS-V1",
   "title": "Enforce queue readiness invariant",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 310
@@ -49,10 +49,28 @@
     "advanced_at": "2026-07-08",
     "advance_reason": "BUREAU-DETERMINISTIC-OPS-V1-T001 is verified by this registry state; the next safe Bureau implementation ball is the deterministic queue readiness invariant.",
     "does_not_establish": [
+      "runtime_overlay_readiness",
       "runtime_correctness",
-      "merge_readiness",
-      "task_completion"
-    ]
+      "merge_readiness_for_future_prs",
+      "task_completion_outside_this_registry_state",
+      "ai_authority"
+    ],
+    "implementation_pr": "heimgewebe/bureau#286",
+    "verified_at": "2026-07-08",
+    "verified_acceptance": {
+      "now-readiness-check": "PR #286 added a Registry.load / bureau check invariant rejecting any registry/queue.json now task whose registry state is not ready; tests/test_registry_queue.py covers the failure path.",
+      "repair-plan-evidence": "PR #286 extended queue_reconcile findings with deterministic rule and proposed_action fields for now-not-ready, terminal queued, unqueued priority and lane-drift findings.",
+      "no-ai-evidence": "The implementation is deterministic Python validation/reporting and test fixtures; no AI, Ollama, Gemini or prose model classification is used as evidence."
+    },
+    "validation": [
+      "PR #286 CI validate succeeded for Python 3.10 and 3.12 before merge.",
+      "Local validation before PR creation: PYTHONPATH=src make validate -> 391 passed.",
+      "Merged as commit 6d8b9f1138e2d612cbea010df817d64014fcc94c."
+    ],
+    "verification": {
+      "task_sha256": "b360b881538b5ea93fe0de17c916e70ef92b1eacfd0b175b4b88c3955dc5ed9e",
+      "plan_sha256": "aa19d4a7661b4b6bc802c78a3edd836713242f0c65e76926ae05f90344f975da"
+    }
   },
   "depends_on": [
     "BUREAU-DETERMINISTIC-OPS-V1-T001"

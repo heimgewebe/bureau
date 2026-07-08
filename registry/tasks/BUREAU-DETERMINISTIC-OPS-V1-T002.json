@@ -3,9 +3,9 @@
   "id": "BUREAU-DETERMINISTIC-OPS-V1-T002",
   "initiative": "BUREAU-DETERMINISTIC-OPS-V1",
   "title": "Enforce queue readiness invariant",
-  "state": "planned",
+  "state": "ready",
   "priority": {
-    "lane": "later",
+    "lane": "next",
     "rank": 310
   },
   "goal": "Harden queue reconciliation and validation so now cannot contain non-ready tasks and invalid lane placement is explained deterministically.",
@@ -46,6 +46,8 @@
   "metadata": {
     "registered_at": "2026-07-08T17:20:00Z",
     "source_plan": "docs/plans/bureau-deterministic-ops-v1.md",
+    "advanced_at": "2026-07-08",
+    "advance_reason": "BUREAU-DETERMINISTIC-OPS-V1-T001 is verified by this registry state; the next safe Bureau implementation ball is the deterministic queue readiness invariant.",
     "does_not_establish": [
       "runtime_correctness",
       "merge_readiness",

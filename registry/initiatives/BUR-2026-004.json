@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "BUR-2026-004",
   "title": "Bureau boundary and operational organs",
-  "state": "active",
-  "commitment": "now",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Make Bureau's Core/Ops/External Authority boundary explicit before larger refactors such as state-root hygiene, legacy removal, entry-point consolidation or ops extraction.",
   "current_plan": {
     "repository": "bureau",
@@ -16,5 +16,19 @@
   ],
   "parallelism": {
     "max_active_tasks": 1
+  },
+  "metadata": {
+    "lifecycle": {
+      "completed_at": "2026-07-08T10:52:33Z",
+      "closed_after_pr": "heimgewebe/bureau#243",
+      "completion_basis": "all BUR-2026-004 tasks verified; T005 packaging decision merged and validated",
+      "does_not_establish": [
+        "ops_extraction_safe",
+        "runtime_correctness",
+        "systemd_units_installed",
+        "legacy_module_safe_to_remove",
+        "entrypoint_removal_safe"
+      ]
+    }
   }
 }

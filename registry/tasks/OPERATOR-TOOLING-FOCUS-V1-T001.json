@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-TOOLING-FOCUS-V1-T001",
+  "initiative": "OPERATOR-TOOLING-FOCUS-V1",
+  "title": "Define Grafana operator observability boundary",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 260
+  },
+  "goal": "Decide whether Grafana should be added to the Heim-PC operator stack and, if yes, define a read-only role, datasource model, port/route plan and Leitstand relationship before any installation.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/infra",
+      "repo:/home/alex/repos/leitstand",
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "grafana-role",
+      "assertion": "Grafana is documented as dashboard/observability only and cannot own task truth, runtime truth, approvals, PR state, deploy state or command authority."
+    },
+    {
+      "id": "port-conflict",
+      "assertion": "The live port-3000 conflict is resolved by a documented alternate bind/route plan before installation."
+    },
+    {
+      "id": "datasource-minimum",
+      "assertion": "Initial datasources are limited to explicit operator metrics/log exports or read-only local files; no broad repository crawl or secret-bearing logs are ingested."
+    },
+    {
+      "id": "install-gate",
+      "assertion": "A later install task is blocked until the boundary doc, rollback path and smoke checks are reviewed."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-08T18:52:35Z",
+    "source_request": "grafana, n8n, bitwarden ins visier nehmen",
+    "does_not_establish": [
+      "runtime_correctness",
+      "security_correctness",
+      "install_readiness",
+      "merge_readiness"
+    ],
+    "live_risk": "Grafana default port 3000 conflicts with an existing listener on heim-pc."
+  },
+  "depends_on": []
+}

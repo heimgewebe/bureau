@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-TOOLING-FOCUS-V1",
+  "title": "Operator tooling focus: Grafana, n8n, Bitwarden",
+  "state": "active",
+  "commitment": "later",
+  "goal": "Evaluate and integrate Grafana, n8n and Bitwarden only where they strengthen Heim-PC operator observability, bounded automation and secret hygiene without becoming a second control-plane or weakening Grabowski/Bureau/Leitstand boundaries.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "registry/initiatives/OPERATOR-TOOLING-FOCUS-V1.json"
+  },
+  "completion": [
+    "Grafana has a documented read-only observability role, a non-conflicting port/route plan and explicit decision whether it complements or replaces any Netdata/Grafana-lite need.",
+    "n8n has a no-authority contract: notifications/proposals only, no queue truth, no PR merge, no deploy and no privileged host mutation.",
+    "Bitwarden CLI usage is documented as a fail-closed secret reference path with no secret export into repos, logs, evidence packets or broad agent context."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-08T18:52:35Z",
+    "source": "User request on 2026-07-08: grafana, n8n, bitwarden ins visier nehmen",
+    "live_findings": [
+      "bw CLI present at /home/alex/.local/bin/bw",
+      "grafana-server and n8n not present in PATH during live check",
+      "port 3000 is already listening on heim-pc; Grafana default port would conflict",
+      "Leitstand and rLens are already active; new tooling must not become a second operator truth"
+    ],
+    "does_not_establish": [
+      "grafana_install_readiness",
+      "n8n_install_readiness",
+      "bitwarden_auth_state",
+      "runtime_correctness",
+      "security_correctness",
+      "merge_readiness"
+    ]
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-TOOLING-FOCUS-V1-T002",
+  "initiative": "OPERATOR-TOOLING-FOCUS-V1",
+  "title": "Define n8n no-authority automation contract",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 261
+  },
+  "goal": "Define n8n as a bounded notification/proposal automation layer for GitHub, Bureau, Grabowski and Leitstand events without giving it queue, merge, deploy, host or secret authority.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "no-authority",
+      "assertion": "n8n cannot mutate Bureau queue truth, create or close tasks as authoritative state, merge PRs, deploy services, restart services or execute privileged host commands."
+    },
+    {
+      "id": "proposal-only",
+      "assertion": "Allowed outputs are notifications, proposal artifacts, links and human-review packets only."
+    },
+    {
+      "id": "credential-boundary",
+      "assertion": "Credential storage, webhook secrets and log redaction are documented before any workflow receives real tokens."
+    },
+    {
+      "id": "dry-run-first",
+      "assertion": "The first n8n workflow is a dry-run read-only event mirror with no outbound mutation except a local artifact or explicit test notification."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-08T18:52:35Z",
+    "source_request": "grafana, n8n, bitwarden ins visier nehmen",
+    "does_not_establish": [
+      "runtime_correctness",
+      "security_correctness",
+      "install_readiness",
+      "merge_readiness"
+    ]
+  },
+  "depends_on": []
+}

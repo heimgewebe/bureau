@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T016",
+  "initiative": "BUR-2026-005",
+  "title": "Design reviewed worktree cleanup apply path",
+  "state": "planned",
+  "depends_on": [
+    "BUR-2026-005-T014"
+  ],
+  "goal": "Define and implement a guarded cleanup path for worktree-hygiene candidates without deleting worktrees from a report alone.",
+  "priority": {
+    "lane": "later",
+    "rank": 160
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "source": "Registered after PR #253 intentionally shipped worktree-hygiene as read-only only.",
+    "not_implemented_in": "heimgewebe/bureau#253",
+    "safety_boundary": "Cleanup must be reviewed, path-scoped, branch-aware, dirty-state-protected and reversible where possible.",
+    "does_not_establish": [
+      "safe_to_delete_worktrees",
+      "branch_obsolete",
+      "cleanup_authority"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "explicit-candidates",
+      "assertion": "Apply mode accepts only explicit candidate paths from a reviewed plan, not all hygiene findings."
+    },
+    {
+      "id": "dirty-refusal",
+      "assertion": "Dirty or missing worktrees are refused unless a separate force boundary is designed and reviewed."
+    },
+    {
+      "id": "branch-preservation",
+      "assertion": "Cleanup never deletes a branch without explicit branch deletion evidence and review."
+    },
+    {
+      "id": "post-clean-report",
+      "assertion": "After cleanup, worktree-hygiene emits a fresh post-clean report."
+    }
+  ]
+}

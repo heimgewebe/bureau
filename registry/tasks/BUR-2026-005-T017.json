@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T017",
+  "initiative": "BUR-2026-005",
+  "title": "Design receipt state-store normalization path",
+  "state": "planned",
+  "depends_on": [
+    "BUR-2026-005-T014"
+  ],
+  "goal": "Define a safe path for normalizing historical task_status receipt rows that are superseded by current embedded registry verification.",
+  "priority": {
+    "lane": "later",
+    "rank": 170
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "source": "Registered after PR #253 classified superseded receipt drift as non-blocking but did not rewrite the state database.",
+    "not_implemented_in": "heimgewebe/bureau#253",
+    "safety_boundary": "No state DB rewrite without backup, dry-run, receipt hash inventory and rollback documentation.",
+    "does_not_establish": [
+      "receipt_db_rewrite",
+      "historical_receipt_deletion",
+      "runtime_correctness"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "dry-run-inventory",
+      "assertion": "Tool lists exact task_status rows that would be normalized and the embedded registry verification that supersedes them."
+    },
+    {
+      "id": "backup-required",
+      "assertion": "Apply requires a state DB backup or explicit reviewed backup waiver."
+    },
+    {
+      "id": "history-preserved",
+      "assertion": "Historical receipt rows are not deleted; any normalization preserves receipt references or writes an audit event."
+    },
+    {
+      "id": "runtime-drift-clear",
+      "assertion": "After normalization, runtime-drift-check remains ok and no true stale receipt blocker is hidden."
+    }
+  ]
+}

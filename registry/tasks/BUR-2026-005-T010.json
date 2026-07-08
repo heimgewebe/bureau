@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T010",
   "initiative": "BUR-2026-005",
   "title": "Define structured PR task metadata",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "BUR-2026-005-T003"
   ],
@@ -32,8 +32,45 @@
     "safety_boundary": "Metadata improves duplicate detection but does not grant PR creation, review or merge authority.",
     "does_not_establish": [
       "automatic_task_verification",
-      "automatic_merge_authority"
-    ]
+      "automatic_merge_authority",
+      "automatic_completion_authority",
+      "runtime_correctness",
+      "ci_sufficiency"
+    ],
+    "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Bureau PR #224: open PR task binding now prefers structured PR body lines, labels and structured API metadata over broad title/body/branch heuristics; the contract is documented and covered by claim-guard and GitHub observer tests.",
+    "implementation_pr": "heimgewebe/bureau#224",
+    "live_bureau_commit": "76cd11b1aa083c23065431c9132d5f186178a471",
+    "implementation_head": "de96590c0d4bfbeca69307bb210bc27b9155536c",
+    "implementation_paths": [
+      "docs/contracts/open-pr-task-metadata-v1.md",
+      "docs/concurrency.md",
+      "src/bureau/v2.py",
+      "src/bureau/github_observer.py",
+      "tests/test_claim_guard.py",
+      "tests/test_github_observer.py"
+    ],
+    "validation": [
+      "Bureau PR #224 GitHub CI passed validate (3.10) and validate (3.12).",
+      "Local before merge: PYTHONPATH=src python3 -m bureau.cli --root . check -> valid True.",
+      "Local before merge: PYTHONPATH=src python3 -m pytest -> 354 passed.",
+      "Local before merge: PYTHONPATH=src python3 -m ruff check . -> passed.",
+      "Local before merge: PYTHONPATH=src python3 -m bureau.cli --root . --json github-observe --repo heimgewebe/bureau -> healthy true, binding_healthy true.",
+      "Local before merge: PYTHONPATH=src python3 -m bureau.cli --root . --json doctor -> healthy true.",
+      "Local before merge: git diff --check -> passed.",
+      "Post-merge: python3 -m bureau.cli --root . check -> valid True.",
+      "Post-merge: doctor healthy true and github-observe binding_healthy true."
+    ],
+    "verified_acceptance": {
+      "metadata-contract": "docs/contracts/open-pr-task-metadata-v1.md documents structured body, label and metadata markers, including multi-task forms.",
+      "heuristic-order": "src/bureau/v2.py uses structured PR task metadata before title/body/branch heuristics; src/bureau/github_observer.py requests labels and binds structured markers before branch fallback.",
+      "grammar-tests": "Existing boundary tests for T001, T0010, T001-EXTRA and branch suffix behavior remain; new tests cover structured label override and multi-task metadata."
+    },
+    "verification": {
+      "task_sha256": "5dae3ee2f815f2873029311f0ebfe774d8d6fb2fa8f681a00d916059f2d217f3",
+      "plan_sha256": "653fa6a056506c94d5654ba5e3c16f9c31032767f0e1c844a8cb4714c50ce917"
+    }
   },
   "acceptance": [
     {

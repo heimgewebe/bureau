@@ -61,6 +61,8 @@ def github_repository_from_remote_url(remote_url: str) -> str | None:
     marker = "github.com/"
     if value.startswith("git@github.com:"):
         path = value.removeprefix("git@github.com:")
+    elif ":" in value and value.split(":", 1)[0].endswith("@github.com"):
+        path = value.split(":", 1)[1]
     elif marker in value:
         path = value.split(marker, 1)[1]
     else:

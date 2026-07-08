@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T013",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Enforce critical self-review gate workflow",
+  "state": "planned",
+  "goal": "Bind the Grabowski critical self-review workflow PR to a Bureau task so open PR reservations are structured and auditable.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "workflow-evidence-required",
+      "assertion": "The Grabowski PR gate requires current critical self-review evidence, not just PR comments."
+    },
+    {
+      "id": "diff-bound",
+      "assertion": "Self-review evidence remains bound to current PR head and diff hash."
+    },
+    {
+      "id": "gate-tests",
+      "assertion": "Focused PR review gate tests cover the critical self-review workflow."
+    }
+  ],
+  "metadata": {
+    "source": "queue-readiness repair 2026-07-08",
+    "implementation_pr": "heimgewebe/grabowski#111",
+    "implementation_branch": "fix/self-review-gate-critical-workflow-v1",
+    "does_not_establish": [
+      "merge_readiness",
+      "ci_success",
+      "external_review_sufficiency"
+    ]
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 25
+  }
+}

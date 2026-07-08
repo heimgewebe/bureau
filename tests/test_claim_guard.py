@@ -86,6 +86,7 @@ def test_open_pull_request_probe_failure_fails_closed_for_repo_write_claim(
     ("remote", "expected"),
     [
         ("git@github.com:heimgewebe/bureau.git", "heimgewebe/bureau"),
+        ("org-236528253@github.com:heimgewebe/vibe-lab.git", "heimgewebe/vibe-lab"),
         ("https://github.com/heimgewebe/bureau.git", "heimgewebe/bureau"),
         ("ssh://git@github.com/heimgewebe/bureau.git", "heimgewebe/bureau"),
         ("https://example.invalid/heimgewebe/bureau.git", None),

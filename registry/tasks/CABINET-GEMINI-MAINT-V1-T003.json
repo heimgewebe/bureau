@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "id": "CABINET-GEMINI-MAINT-V1-T003",
+  "initiative": "CABINET-GEMINI-MAINT-V1",
+  "title": "Build curated Gemini maintenance evidence packet",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 90
+  },
+  "goal": "Build a narrow, deterministic evidence packet for Gemini maintenance scans so Gemini reads bounded Cabinet evidence rather than crawling unrestricted repositories.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/cabinet",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/cabinet"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.cabinet",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "packet-manifest",
+      "assertion": "The evidence packet has a manifest listing exact input files, refs or commits, hashes where applicable and exclusion rules.",
+      "verifier": "manifest review",
+      "evidence_type": "object"
+    },
+    {
+      "id": "bounded-inputs",
+      "assertion": "Initial inputs are limited to Cabinet agent docs, relevant contracts, nodes, edges, claims, external dump sources, deterministic maintenance report and Frontier no-effect rules.",
+      "verifier": "manifest and generator review",
+      "evidence_type": "string"
+    },
+    {
+      "id": "no-secrets-runtime-logs",
+      "assertion": "The packet excludes secrets, private logs, unrestricted runtime data and any broad repository crawl.",
+      "verifier": "negative tests or explicit review checklist",
+      "evidence_type": "string"
+    },
+    {
+      "id": "deterministic-first",
+      "assertion": "JSON/schema/path/hash/freshness checks remain deterministic inputs; Gemini is not used as the primary validator for those checks.",
+      "verifier": "generator and documentation review",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "source_issue": "heimgewebe/bureau#254",
+    "registered_at": "2026-07-08T12:10:00Z",
+    "does_not_establish": [
+      "complete_repository_context",
+      "semantic_correctness",
+      "scan_quality",
+      "task_approval",
+      "runtime_correctness"
+    ]
+  },
+  "depends_on": [
+    "CABINET-GEMINI-MAINT-V1-T002"
+  ]
+}

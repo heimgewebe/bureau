@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "id": "CABINET-GEMINI-MAINT-V1-T005",
+  "initiative": "CABINET-GEMINI-MAINT-V1",
+  "title": "Decide scheduled Gemini maintenance lane",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 110
+  },
+  "goal": "Decide whether to add a recurring read-only Gemini maintenance workflow based on preflight evidence, contract validation and first dry-run quality.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/cabinet",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/cabinet"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.cabinet",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "service.github_actions",
+      "mode": "write",
+      "isolation": "profile"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "decision-evidence-bound",
+      "assertion": "The schedule decision cites the preflight, scan contract validation, evidence packet manifest and dry-run review.",
+      "verifier": "decision note or PR review",
+      "evidence_type": "string"
+    },
+    {
+      "id": "permissions-minimal",
+      "assertion": "If a schedule is enabled, workflow permissions remain artifact-only/read-only and no issue, PR, comment, task, queue mutation, dispatch, push, merge, runtime or cleanup effect is granted.",
+      "verifier": "workflow diff review and tests",
+      "evidence_type": "string"
+    },
+    {
+      "id": "recurrence-explicit",
+      "assertion": "Any recurrence cadence is explicit and justified by signal value, false-positive rate and cost/quota boundary.",
+      "verifier": "decision note",
+      "evidence_type": "object"
+    },
+    {
+      "id": "off-ramp-defined",
+      "assertion": "The lane includes a disable/off-ramp condition for noisy findings, cost issues, auth failures, log privacy risk or overclaiming.",
+      "verifier": "workflow and documentation review",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "source_issue": "heimgewebe/bureau#254",
+    "registered_at": "2026-07-08T12:10:00Z",
+    "does_not_establish": [
+      "schedule_should_be_enabled",
+      "future_scan_quality",
+      "task_approval",
+      "claim_truth",
+      "runtime_correctness",
+      "autonomous_dispatch"
+    ]
+  },
+  "depends_on": [
+    "CABINET-GEMINI-MAINT-V1-T004"
+  ]
+}

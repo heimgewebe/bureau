@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "id": "CABINET-GEMINI-MAINT-V1-T004",
+  "initiative": "CABINET-GEMINI-MAINT-V1",
+  "title": "Run first reviewed Gemini maintenance dry run",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 100
+  },
+  "goal": "Run one manual artifact-only Gemini maintenance scan over the curated evidence packet and review signal quality before any recurrence is considered.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/cabinet",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/cabinet"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.cabinet",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "agent.gemini",
+      "mode": "read",
+      "isolation": "profile"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "dry-run-artifact-only",
+      "assertion": "The run stores Markdown and JSON artifacts only and does not create issues, PRs, comments, tasks, queue mutations, dispatches or runtime actions.",
+      "verifier": "run artifact and GitHub diff review",
+      "evidence_type": "object"
+    },
+    {
+      "id": "review-quality",
+      "assertion": "The dry run is reviewed for useful findings, false positives, missing evidence, hallucinated refs and overclaiming.",
+      "verifier": "self-review or external review artifact",
+      "evidence_type": "string"
+    },
+    {
+      "id": "no-schedule-yet",
+      "assertion": "The dry run does not enable a schedule or recurrence by itself.",
+      "verifier": "workflow and diff review",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "bureau-proposal-only",
+      "assertion": "Any follow-up remains a proposal or Frontier candidate until Bureau review and explicit apply gate.",
+      "verifier": "artifact review",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "source_issue": "heimgewebe/bureau#254",
+    "registered_at": "2026-07-08T12:10:00Z",
+    "does_not_establish": [
+      "scheduled_scan_approved",
+      "task_approval",
+      "claim_truth",
+      "merge_readiness",
+      "runtime_correctness",
+      "autonomous_dispatch"
+    ]
+  },
+  "depends_on": [
+    "CABINET-GEMINI-MAINT-V1-T003"
+  ]
+}

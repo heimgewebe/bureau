@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "id": "CABINET-GEMINI-MAINT-V1-T001",
+  "initiative": "CABINET-GEMINI-MAINT-V1",
+  "title": "Preflight Gemini maintenance scan capability",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 70
+  },
+  "goal": "Produce a reviewed capability and sandbox preflight for any Gemini-based Cabinet maintenance scan before scheduling or recurring execution is allowed.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/cabinet",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/cabinet"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.cabinet",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "service.github_actions",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "gemini-tool-bound",
+      "assertion": "The preflight records the exact Gemini tool/action, version or pin, authentication mode and secret boundary without exposing secrets.",
+      "verifier": "preflight artifact review",
+      "evidence_type": "object"
+    },
+    {
+      "id": "read-only-proven-or-blocked",
+      "assertion": "The preflight proves read-only operation with no issue, PR, contents-write, dispatch, merge, runtime or queue mutation permission, or blocks the lane with a specific reason.",
+      "verifier": "permission manifest and workflow review",
+      "evidence_type": "object"
+    },
+    {
+      "id": "output-shape-tested",
+      "assertion": "The preflight checks whether Gemini can emit bounded Markdown plus JSON output suitable for later validation.",
+      "verifier": "dry-run or explicit blocker report",
+      "evidence_type": "string"
+    },
+    {
+      "id": "cost-and-log-boundary",
+      "assertion": "Cost/quota class and log privacy risks are recorded before any scheduled lane is considered.",
+      "verifier": "preflight artifact review",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "source_issue": "heimgewebe/bureau#254",
+    "registered_at": "2026-07-08T12:10:00Z",
+    "does_not_establish": [
+      "gemini_available",
+      "gemini_schedulable",
+      "scan_quality",
+      "task_approval",
+      "autonomous_dispatch",
+      "runtime_correctness"
+    ]
+  },
+  "depends_on": []
+}

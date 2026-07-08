@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "id": "CABINET-GEMINI-MAINT-V1-T002",
+  "initiative": "CABINET-GEMINI-MAINT-V1",
+  "title": "Define Gemini maintenance scan contract",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 80
+  },
+  "goal": "Define and validate a Cabinet Gemini maintenance scan output contract that keeps Gemini output proposal-only, evidence-bound and effect-free.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/cabinet",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/cabinet"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.cabinet",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "schema-defined",
+      "assertion": "A cabinet.gemini_maintenance_scan.v1 contract and schema define scan id, createdAt, source commit, evidence manifest, lane id, findings, effect flags and doesNotEstablish.",
+      "verifier": "contract and schema diff review",
+      "evidence_type": "string"
+    },
+    {
+      "id": "finding-epistemics-separated",
+      "assertion": "Findings separate observed, plausible and speculative statements, and observed findings require evidence refs.",
+      "verifier": "validator tests",
+      "evidence_type": "string"
+    },
+    {
+      "id": "no-effects-validated",
+      "assertion": "The validator rejects any true effect flag for task creation, queue mutation, dispatch, issue/PR/comment creation, push/merge, runtime mutation, cleanup or dump generation.",
+      "verifier": "negative tests",
+      "evidence_type": "string"
+    },
+    {
+      "id": "non-claims-explicit",
+      "assertion": "The contract states that Gemini output does not establish task approval, claim truth, merge readiness, runtime correctness, Bureau import or autonomous dispatch.",
+      "verifier": "contract review",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "source_issue": "heimgewebe/bureau#254",
+    "registered_at": "2026-07-08T12:10:00Z",
+    "does_not_establish": [
+      "gemini_available",
+      "scheduled_scan_enabled",
+      "task_approval",
+      "autonomous_dispatch",
+      "merge_readiness"
+    ]
+  },
+  "depends_on": [
+    "CABINET-GEMINI-MAINT-V1-T001"
+  ]
+}

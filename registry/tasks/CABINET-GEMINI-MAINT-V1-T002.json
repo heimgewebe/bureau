@@ -3,9 +3,9 @@
   "id": "CABINET-GEMINI-MAINT-V1-T002",
   "initiative": "CABINET-GEMINI-MAINT-V1",
   "title": "Define Gemini maintenance scan contract",
-  "state": "planned",
+  "state": "verified",
   "priority": {
-    "lane": "next",
+    "lane": "later",
     "rank": 85
   },
   "goal": "Define and validate a Cabinet Gemini maintenance scan output contract that keeps Gemini output proposal-only, evidence-bound and effect-free, using the non-enabled execution manifest as context.",
@@ -59,11 +59,21 @@
     "source_issue": "heimgewebe/bureau#254",
     "registered_at": "2026-07-08T12:10:00Z",
     "unblocked_after_manifest_at": "2026-07-08T14:35:00Z",
+    "verified_at": "2026-07-08T14:45:00Z",
+    "evidence": {
+      "cabinet_pr": "heimgewebe/cabinet#89",
+      "cabinet_merge_commit": "0568efc9b43d1271664bad8d6a80bac96859e0ad",
+      "contract": "docs/contracts/cabinet-gemini-maintenance-scan-v1.md",
+      "schema": "docs/contracts/cabinet-gemini-maintenance-scan-v1.schema.json",
+      "validator": "scripts/validate_gemini_maintenance_scan.py",
+      "tests": "scripts/tests/test_gemini_maintenance_scan_contract.py"
+    },
     "context": {
       "cabinet_manifest_pr": "heimgewebe/cabinet#88",
       "cabinet_manifest_merge_commit": "9e40f18bdb18d65f2047217d6c8f9e924af90e54",
       "execution_manifest_policy": "policy/gemini-maintenance-execution-manifest.v1.json"
     },
+    "next_action": "Continue with CABINET-GEMINI-MAINT-V1-T003: build the deterministic curated evidence packet generator.",
     "does_not_establish": [
       "gemini_available",
       "scheduled_scan_enabled",

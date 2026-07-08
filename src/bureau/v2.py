@@ -173,6 +173,8 @@ class OpenPullRequestReservation(legacy.Reservation):
     url: str = ""
     diagnostic: str = "open PR"
     observation_failed: bool = False
+    task_binding_status: str = "unknown"
+    task_binding_reason: str = ""
 
 
 def _task_id_search_values(value: Any) -> list[str]:
@@ -269,6 +271,18 @@ STRUCTURED_PR_TASK_LINE_RE = re.compile(
 STRUCTURED_PR_LABEL_RE = re.compile(
     r"(?i)^\s*Bureau[-_ ]Task(?:s)?\s*(?::|/|=)\s*(?P<value>.+?)\s*$"
 )
+STRUCTURED_PR_BINDING_EXCEPTION_KEYS = (
+    "bureau_task_binding_exception",
+    "bureauTaskBindingException",
+    "bureau_task_exception",
+    "bureauTaskException",
+)
+STRUCTURED_PR_BINDING_EXCEPTION_LINE_RE = re.compile(
+    r"(?im)^\s*Bureau[-_ ]Task[-_ ]Binding[-_ ]Exception\s*:\s*(?P<value>[^\n#]+)\s*$"
+)
+STRUCTURED_PR_BINDING_EXCEPTION_LABEL_RE = re.compile(
+    r"(?i)^\s*Bureau[-_ ]Task[-_ ]Binding[-_ ]Exception\s*(?::|/|=)\s*(?P<value>.+?)\s*$"
+)
 
 
 def _structured_value_items(value: Any) -> list[str]:
@@ -341,6 +355,48 @@ def _pull_request_task_ids(
     matches = structured or _heuristic_pull_request_task_ids(pull_request, registry)
     return tuple(task_id for task_id in registry.tasks if task_id in matches)
 
+
+def _pull_request_binding_exception(pull_request: dict[str, Any]) -> str | None:
+    values: list[str] = []
+    for key in STRUCTURED_PR_BINDING_EXCEPTION_KEYS:
+        for value in _task_id_search_values(pull_request.get(key)):
+            if value.strip():
+                values.append(value.strip())
+    metadata = pull_request.get("metadata")
+    if isinstance(metadata, dict):
+        for key in STRUCTURED_PR_BINDING_EXCEPTION_KEYS:
+            for value in _task_id_search_values(metadata.get(key)):
+                if value.strip():
+                    values.append(value.strip())
+    body = pull_request.get("body")
+    if isinstance(body, str):
+        for match in STRUCTURED_PR_BINDING_EXCEPTION_LINE_RE.finditer(body):
+            if match.group("value").strip():
+                values.append(match.group("value").strip())
+    labels = pull_request.get("labels")
+    for label in labels if isinstance(labels, list | tuple | set) else []:
+        names = _task_id_search_values(label.get("name") if isinstance(label, dict) else label)
+        for name in names:
+            match = STRUCTURED_PR_BINDING_EXCEPTION_LABEL_RE.match(name)
+            if match and match.group("value").strip():
+                values.append(match.group("value").strip())
+    return values[0] if values else None
+
+def _pull_request_task_binding(
+    pull_request: dict[str, Any], registry: legacy.Registry
+) -> tuple[tuple[str, ...], str, str]:
+    task_ids = _pull_request_task_ids(pull_request, registry)
+    exception = _pull_request_binding_exception(pull_request)
+    if exception is not None:
+        return task_ids, "exception", f"open PR declares task binding exception: {exception}"
+    if len(task_ids) == 0:
+        return (), "missing", "open PR has no valid Bureau task binding"
+    if len(task_ids) > 1:
+        return task_ids, "multiple", "open PR binds multiple Bureau tasks"
+    task = registry.tasks[task_ids[0]]
+    if task.state in {"verified", "cancelled", "superseded"}:
+        return task_ids, "terminal", "open PR binds a terminal Bureau task"
+    return task_ids, "valid", "open PR binds exactly one open Bureau task"
 
 def _open_pr_label(reservation: legacy.Reservation) -> str:
     if isinstance(reservation, OpenPullRequestReservation):
@@ -427,6 +483,9 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
             branch = str(pull_request.get("headRefName") or "")
             title = str(pull_request.get("title") or "")
             url = str(pull_request.get("url") or "")
+            task_ids, binding_status, binding_reason = _pull_request_task_binding(
+                pull_request, registry
+            )
             result.append(
                 OpenPullRequestReservation(
                     f"open-pr:{repository}#{number}",
@@ -435,10 +494,12 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
                     1,
                     repository=repository,
                     number=number,
-                    task_ids=_pull_request_task_ids(pull_request, registry),
+                    task_ids=task_ids,
                     branch=branch,
                     title=title,
                     url=url,
+                    task_binding_status=binding_status,
+                    task_binding_reason=binding_reason,
                 )
             )
     return result
@@ -1525,19 +1586,41 @@ class Dispatcher(legacy.Dispatcher):
                 ):
                     result.append(f"repo write blocked by open PR guard failure: {label}")
                 continue
-            if task.id in reservation.task_ids:
+            binding_status = reservation.task_binding_status or "unknown"
+            if binding_status == "valid" and task.id in reservation.task_ids:
                 result.append(f"task already implemented by open PR: {label}")
                 continue
             for claim in task.claims:
                 if legacy.overlaps(
                     claim.resource, reservation.resource, self.registry.resources
                 ) and legacy.modes_conflict(claim.mode, reservation.mode):
-                    task_note = (
-                        f" task_ids={','.join(reservation.task_ids)}"
-                        if reservation.task_ids
-                        else " task_id=unknown"
-                    )
-                    result.append(f"repo write blocked by open PR: {label}{task_note}")
+                    if binding_status == "exception":
+                        task_note = (
+                            f" task_ids={','.join(reservation.task_ids)}"
+                            if reservation.task_ids
+                            else " task_id=exception"
+                        )
+                        result.append(
+                            "repo write blocked by open PR: "
+                            f"{label} binding=exception{task_note} "
+                            f"reason={reservation.task_binding_reason}"
+                        )
+                    elif binding_status != "valid":
+                        task_note = (
+                            f" task_ids={','.join(reservation.task_ids)}"
+                            if reservation.task_ids
+                            else " task_id=missing"
+                        )
+                        result.append(
+                            "repo write blocked by open PR task binding violation: "
+                            f"{label} binding={binding_status}{task_note} "
+                            f"reason={reservation.task_binding_reason}"
+                        )
+                    else:
+                        result.append(
+                            "repo write blocked by open PR: "
+                            f"{label} task_ids={','.join(reservation.task_ids)}"
+                        )
                     break
         rlens_block = rlens_policy_block_reason(task.raw)
         if rlens_block:
@@ -2616,8 +2699,6 @@ def lifecycle_diagnostics(registry: Registry, store: StateStore) -> list[dict[st
             }
         )
     return result
-
-
 
 
 def _runtime_state_db_path(

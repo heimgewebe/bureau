@@ -3,7 +3,7 @@
   "id": "CABINET-GEMINI-MAINT-V1-T004",
   "initiative": "CABINET-GEMINI-MAINT-V1",
   "title": "Run first reviewed Gemini maintenance dry run",
-  "state": "blocked",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 100
@@ -67,8 +67,6 @@
     "workflow_ready_at": "2026-07-08T17:00:00Z",
     "runbook_ready_at": "2026-07-08T17:05:00Z",
     "local_runner_ready_at": "2026-07-08T18:45:00Z",
-    "blocked_at": "2026-07-08T18:45:00Z",
-    "blocker": "The operator does not want to use the GitHub Actions machine-auth path for this dry run. Cabinet now provides a local personal Gemini CLI runner. T004 remains blocked until the local runner is executed with a personal Gemini CLI login and a completed scan artifact is produced and reviewed.",
     "context": {
       "cabinet_evidence_packet_pr": "heimgewebe/cabinet#91",
       "cabinet_evidence_packet_merge_commit": "5cb86665c49d163eb5efc18a5d95bfb4bf4478f0",
@@ -87,7 +85,9 @@
       "workflow": ".github/workflows/gemini-maintenance-dry-run.yml",
       "generator": "scripts/write_gemini_maintenance_evidence_packet.py",
       "extractor": "scripts/extract_gemini_maintenance_scan.py",
-      "validator": "scripts/validate_gemini_maintenance_scan.py"
+      "validator": "scripts/validate_gemini_maintenance_scan.py",
+      "cabinet_dry_run_evidence_pr": "heimgewebe/cabinet#97",
+      "cabinet_dry_run_evidence_merge_commit": "e198e2a8e605b383a5c32f4d9e70a03db3369470"
     },
     "dry_run_attempts": [
       {
@@ -117,21 +117,79 @@
           "runtime_correctness",
           "autonomous_dispatch"
         ]
+      },
+      {
+        "attempted_at": "2026-07-08T19:22:23Z",
+        "repository": "heimgewebe/cabinet",
+        "head_sha": "09065341e17f261a2ca476cbf186d1bd3e8328ef",
+        "mode": "local_personal_gemini_cli_login",
+        "scan_status": "completed",
+        "completed_scan_produced": true,
+        "effect_flags_clean": true,
+        "scan_sha256": "8c00606909ffe2042f3e703a257d78a51f4bd3e77044e657aec220d7aa3127b0",
+        "quality_verdict": "valid_but_low_signal"
       }
     ],
-    "next_action": "Run the local Cabinet command `python3 scripts/run_gemini_maintenance_local_dry_run.py --json` from a checkout where Gemini CLI is installed and signed in with the operator personal Google login. If a blocked artifact should still be retained for review, use `--allow-blocked --json`.",
+    "next_action": "Continue with CABINET-GEMINI-MAINT-V1-T005: decide whether scheduled Gemini maintenance is worthwhile. Based on this first run, recurrence is not established.",
     "does_not_establish": [
-      "gemini_available",
-      "local_gemini_login_available",
-      "dry_run_success",
-      "scan_quality",
       "scheduled_scan_approved",
-      "task_approval",
+      "gemini_schedulability",
+      "bureau_import",
       "claim_truth",
-      "merge_readiness",
       "runtime_correctness",
-      "autonomous_dispatch"
-    ]
+      "merge_readiness",
+      "autonomous_dispatch",
+      "high_signal_scan_quality"
+    ],
+    "verified_at": "2026-07-08T19:35:00Z",
+    "local_dry_run_result": {
+      "cabinet_repository": "heimgewebe/cabinet",
+      "cabinet_commit": "09065341e17f261a2ca476cbf186d1bd3e8328ef",
+      "runner": "scripts/run_gemini_maintenance_local_dry_run.py",
+      "command": "python3 scripts/run_gemini_maintenance_local_dry_run.py --allow-blocked --json",
+      "status": "gemini_executed",
+      "ok": true,
+      "scan_status": "completed",
+      "gemini_return_code": 0,
+      "extract_return_code": 0,
+      "validator_result": "scripts/validate_gemini_maintenance_scan.py --input pruefung/10 Laeufe/gemini-maintenance-dry-run-scan.json --json -> ok=true, scanCount=1",
+      "artifact_paths": {
+        "evidence_packet": "pruefung/10 Laeufe/gemini-maintenance-evidence-packet-v1.json",
+        "prompt": "pruefung/10 Laeufe/gemini-maintenance-dry-run-prompt.md",
+        "raw_output": "pruefung/10 Laeufe/gemini-maintenance-dry-run-raw-output.json",
+        "wrapper": "pruefung/10 Laeufe/gemini-maintenance-dry-run-gemini-wrapper.json",
+        "scan": "pruefung/10 Laeufe/gemini-maintenance-dry-run-scan.json",
+        "review": "pruefung/10 Laeufe/gemini-maintenance-dry-run-review.md",
+        "summary": "pruefung/10 Laeufe/gemini-maintenance-dry-run-gemini-summary.txt",
+        "error": "pruefung/10 Laeufe/gemini-maintenance-dry-run-gemini-error.txt"
+      },
+      "artifact_sha256": {
+        "scan": "8c00606909ffe2042f3e703a257d78a51f4bd3e77044e657aec220d7aa3127b0",
+        "raw_output": "30f24a7ad567e3f359b34d26e6742190923b7bb8cbc75383cf759217ecacd7c9",
+        "evidence_packet": "851b56f6e18f538f640577a88f13ffff8531f5999fa6ec3e5edef619b8081c23",
+        "review": "472d403cd891a23e014936ee1ec7912907d36b53222efc29ec7964d828514a92"
+      },
+      "secret_surface_check": "error file empty; exclusionReport shows private logs/runtime config/agent runtime not included; grep hits were contract words such as secretRequested:false and exclusion labels, not credential material",
+      "effect_flags_clean": true,
+      "artifact_storage": "Cabinet PR #97 stores the dry-run artifacts under pruefung/10 Laeufe/."
+    },
+    "dry_run_review": {
+      "verdict": "completed_valid_low_signal",
+      "useful_findings": "Only one low-severity observed finding: Gemini remains proposal-only. This is correct but not operationally new.",
+      "false_positives": "None observed in the completed scan artifact.",
+      "missing_evidence": "No missing evidence for the one observed finding; broader maintenance usefulness remains unproven because Gemini found no structural, freshness or handoff issues.",
+      "hallucinated_refs": "None observed; evidenceRefs point to curated packet refs for agent-routing brief and ecosystem claims.",
+      "overclaiming": "No overclaiming observed; doesNotEstablish preserves no task approval, claim truth, merge readiness, runtime correctness, Bureau import, autonomous dispatch, schedule approval or Gemini schedulability.",
+      "schedule_readiness": "not_established",
+      "bureau_import_readiness": "not_established",
+      "recommendation": "Do not schedule recurring Gemini maintenance from this single low-signal run. Continue with T005 as a decision task; likely outcome is manual/on-demand only unless a second prompt or evidence packet demonstrates materially better findings."
+    },
+    "verification": {
+      "task_sha256": "f61ec8b4a3049aaaca7d1b02cf2c0648e923f8a02f3ed62e96ff691343a7a516",
+      "reviewed_by": "grabowski-assisted self-review",
+      "reviewed_at": "2026-07-08T19:38:00Z",
+      "plan_sha256": "bfd441cbf854d2c8f0ffd14024f743ea64272ba867ffe26b2a5852bc947b7941"
+    }
   },
   "depends_on": [
     "CABINET-GEMINI-MAINT-V1-T003"

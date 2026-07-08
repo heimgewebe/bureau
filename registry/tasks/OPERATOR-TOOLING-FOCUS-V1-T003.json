@@ -3,7 +3,7 @@
   "id": "OPERATOR-TOOLING-FOCUS-V1-T003",
   "initiative": "OPERATOR-TOOLING-FOCUS-V1",
   "title": "Harden Bitwarden CLI secret reference path",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 262
@@ -58,7 +58,36 @@
       "security_correctness",
       "install_readiness",
       "merge_readiness"
-    ]
+    ],
+    "verified_at": "2026-07-08",
+    "implementation_pr": "heimgewebe/infra#104",
+    "implementation_head": "712f50c92f26464a37a497c66517c1c14aa0ae2c",
+    "implementation_merge_commit": "a23d7362d9685473f912ae4b20bfb75c8525cbe2",
+    "diff_sha256": "eefb7dc57b6976b032b96d44e703a3d8d9d351530f6f485f3e584bd273eb9305",
+    "implementation_paths": [
+      "Makefile",
+      "runbooks/bitwarden-cli-secret-reference.md",
+      "runbooks/index.md",
+      "scripts/bitwarden/bw_status_safe.py",
+      "scripts/bitwarden/tests/test_bw_status_safe.sh"
+    ],
+    "outcome": "Implemented in infra PR #104: added a non-secret Bitwarden CLI safe-status probe, documented the operator secret-reference boundary, wired the probe lint/tests into make validate, and recorded that the current /home/alex/.local/bin/bw path is unusable because bw-nodefree crashes with signal 5/Trace-Breakpoint.",
+    "validation": [
+      "Infra PR #104 GitHub CI passed validate.",
+      "Local before merge: make validate passed in /home/alex/repos/.infra-worktrees/bitwarden-cli-secret-reference-v1.",
+      "Local live probe: scripts/bitwarden/bw_status_safe.py returned rc=2 with reason bw-cli-unusable, no raw bw output, no session key, no vault item access, and no user email/user id output.",
+      "Post-merge: /home/alex/repos/infra fast-forwarded to a23d7362d9685473f912ae4b20bfb75c8525cbe2."
+    ],
+    "verified_acceptance": {
+      "bw-present": "Rechecked on heim-pc: bw resolves to /home/alex/.local/bin/bw -> /home/alex/.local/bin/bw-bin/bw-nodefree; safe-status reports command_path, symlink target and sha256 without revealing secrets.",
+      "secret-reference-contract": "runbooks/bitwarden-cli-secret-reference.md defines bw as a Secret-Referenzpfad, not a Secret-Exportpfad; allowed use is non-secret readiness and explicit local secret handoff only.",
+      "no-export": "The runbook forbids writing Secret-Werte or BW_SESSION into repos, logs, evidence packets, RepoBrief/rLens bundles or chat output; bw_status_safe.py does not print raw bw output and redacts email/UUID/session-like strings.",
+      "failure-mode": "bw_status_safe.py exits 2 if bw is missing, crashes, returns invalid status, or --require-unlocked is used while not unlocked. The current broken bw path is detected as bw-cli-unusable."
+    },
+    "verification": {
+      "task_sha256": "4c1fa2a68c54b3e75fdd7edd4fbe25b7487ace5f07bb541d9e34328833c51845",
+      "plan_sha256": "07e89ae651eab631ae802ac14f422dbfc78b62b752431ecd2ed2244ba0516015"
+    }
   },
   "depends_on": []
 }

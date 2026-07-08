@@ -3,9 +3,7 @@
   "queue_policy": "skip-blocked",
   "lanes": {
     "now": [],
-    "next": [
-      "BUR-2026-002-T003"
-    ],
+    "next": [],
     "later": [
       "BUR-2026-004-T004",
       "BUR-2026-004-T005",

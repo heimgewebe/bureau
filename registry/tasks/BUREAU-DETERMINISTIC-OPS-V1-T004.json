@@ -3,7 +3,7 @@
   "id": "BUREAU-DETERMINISTIC-OPS-V1-T004",
   "initiative": "BUREAU-DETERMINISTIC-OPS-V1",
   "title": "Harden PR task binding guard v2",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 312
@@ -46,10 +46,32 @@
   "metadata": {
     "registered_at": "2026-07-08T17:20:00Z",
     "source_plan": "docs/plans/bureau-deterministic-ops-v1.md",
+    "verified_at": "2026-07-08T19:15:00Z",
+    "verification": {
+      "implementation_pr": "heimgewebe/bureau#297",
+      "implementation_merge_commit": "0f1b9c6f67a909601ed21f4fccc46c869ce628b6",
+      "implementation_head_sha": "679707a8a4e6ef157ee0a329031c83d4ce011937",
+      "validate_workflow_run_id": 28968607541,
+      "validate_jobs": [
+        "validate (3.10)",
+        "validate (3.12)"
+      ],
+      "accepted_evidence": [
+        "src/bureau/github_observer.py",
+        "tests/test_github_observer_binding_guard_v2.py",
+        "pyproject.toml"
+      ]
+    },
+    "acceptance_evidence": {
+      "no-task-pr-blocker": "tests/test_github_observer_binding_guard_v2.py::test_open_pr_without_task_binding_is_merge_blocking",
+      "multi-task-pr-blocker": "tests/test_github_observer_binding_guard_v2.py::test_schema_visible_exception_suppresses_multi_task_binding_blocker",
+      "task-existence-repo-check": "tests/test_github_observer_binding_guard_v2.py covers unknown task, wrong repository claim and terminal task without follow-up semantics"
+    },
     "does_not_establish": [
       "runtime_correctness",
-      "merge_readiness",
-      "task_completion"
+      "merge_readiness_for_future_prs",
+      "github_api_availability",
+      "task_completion_without_registry_state"
     ],
     "advanced_at": "2026-07-08",
     "advance_reason": "BUREAU-DETERMINISTIC-OPS-V1-T003 is verified by this registry state; the next deterministic hardening ball is PR task binding guard v2."

@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "HEIMLERN-OPTIMIZATION-V1",
   "title": "heimlern Optimierung v1",
-  "state": "active",
-  "commitment": "next",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "heimlern als learning_proposal_engine durch Contract-Schärfe, Drift-Reduktion und einen auditierbaren review-only Lernpfad härten.",
   "current_plan": {
     "repository": "bureau",
@@ -15,7 +15,8 @@
     "Review-only Lernpfad outcomes to proposal to schema validation als Rust-CLI belegbar.",
     "Python/Rust Proposal-Emission gegen Drift geschützt oder auf Rust delegiert.",
     "Release-Profil-Entscheidung gemessen und dokumentiert.",
-    "Claim-Evidence-Registry minimal angelegt."
+    "Claim-Evidence-Registry minimal angelegt.",
+    "RepoBrief/rLens Bundle-Status für heimlern als vollständiger, aber stale_head-degradierter Kontext belegbar."
   ],
   "parallelism": {
     "max_active_tasks": 1
@@ -27,6 +28,9 @@
     "source_head": "b9919bd184c6918713ed11a54370ad03d510273a",
     "base_head": "9fef180bcabf3fffe9d476127221643acba0ea64",
     "decision": "Plan in Bureau übernehmen; Heimlern-Plan-PR ohne Merge schließen.",
-    "a4_boundary": "Emission/CI stabilisiert; additive-Vertragsentscheidung bleibt bei OPERATOR-LEARNING-AXIS-V1-T002."
+    "a4_boundary": "Emission/CI stabilisiert; additive-Vertragsentscheidung bleibt bei OPERATOR-LEARNING-AXIS-V1-T002.",
+    "completed_at": "2026-07-08",
+    "completion_closeout_pr": "this Bureau closeout PR",
+    "completion_note": "All HEIMLERN-OPTIMIZATION-V1 tasks are verified; T007 records a complete but stale RepoBrief/rLens bundle and bounded context-pack smoke evidence."
   }
 }

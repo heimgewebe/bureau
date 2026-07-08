@@ -3,7 +3,7 @@
   "id": "LOO-V1-T006",
   "initiative": "LEITSTAND-OPERATOR-OBSERVABILITY-V1",
   "title": "Static mirror and GitHub Pages boundary",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "LOO-V1-T005"
   ],
@@ -60,6 +60,74 @@
       "merge_readiness",
       "external_source_truth"
     ],
-    "priority_reason": "P2: main Pages workflow is red; static docs overpromise"
+    "priority_reason": "P2: main Pages workflow is red; static docs overpromise",
+    "verification": {
+      "verified_by": "Leitstand PR #157",
+      "leitstand_pr": "https://github.com/heimgewebe/leitstand/pull/157",
+      "leitstand_head": "a306458886fe9227e15c7f2f5cddc2f2c6e9bc4e",
+      "leitstand_merge_commit": "05cff24c079a908f29d6b34475c5e287578a0faf",
+      "merged_at": "2026-07-08T05:53:26Z",
+      "local_checks": [
+        "NODE_OPTIONS=--jitless pnpm lint",
+        "NODE_OPTIONS=--jitless pnpm typecheck",
+        "NODE_OPTIONS=--jitless pnpm build",
+        "SOURCE_DATE_EPOCH=0 LEITSTAND_STRICT=0 NODE_OPTIONS=--jitless pnpm build:static",
+        "static boundary manifest sanity check",
+        "GitHub Pages manual-only trigger check",
+        "python3 scripts/ai_context/validate_ai_context.py --file .ai-context.yml",
+        "bash scripts/ci/observer-invariant-guard.sh",
+        "bash scripts/ci/docs-relations-guard.sh",
+        "bash scripts/ci/generated-files-guard.sh",
+        "bash scripts/ci/check-drift-gates.sh"
+      ],
+      "ci": {
+        "build": "success",
+        "repo-root": "success",
+        "scan": "success",
+        "templates": "success",
+        "Cloudflare Pages": "success"
+      },
+      "verification_summary": "Leitstand PR #157 defined the Mode B static mirror boundary, added a machine-readable _static-boundary.json to build-static output, documented supported/dynamic-only route scope, and made GitHub Pages manual-only so main is not held red by a disabled Pages environment.",
+      "acceptance_evidence": {
+        "static-scope-decision": "docs/decisions/static-mirror-boundary.md",
+        "build-static-parity": {
+          "manifest": "dist/site/_static-boundary.json",
+          "supportedRoutes": [
+            "/",
+            "/observatory",
+            "/intent"
+          ],
+          "dynamicOnlyRoutes": [
+            "/events",
+            "/ops",
+            "/bureau",
+            "/checkouts",
+            "/ecosystem-map",
+            "/repobriefs",
+            "/anatomy",
+            "/insights",
+            "/timeline",
+            "/reflexion"
+          ],
+          "emittedFiles": [
+            "dist/site/index.html",
+            "dist/site/observatory/index.html",
+            "dist/site/intent/index.html",
+            "dist/site/_static-boundary.json"
+          ]
+        },
+        "pages-red-resolved": "GitHub Pages workflow is workflow_dispatch-only; Cloudflare Pages remains the primary static preview path."
+      },
+      "does_not_establish": [
+        "runtime_deployed",
+        "pages_enabled",
+        "route_parity_with_mode_a",
+        "bureau_snapshot_truth",
+        "grabowski_checkout_truth",
+        "user_acceptance"
+      ],
+      "task_sha256": "d3cd994309d44f93869b2437b8d0475ad8ea4a73157d7669344456b7f770c716",
+      "plan_sha256": "69e170cf832449b00f1257b359c99acc0b40bbae28278f779d4da0ce799fa053"
+    }
   }
 }

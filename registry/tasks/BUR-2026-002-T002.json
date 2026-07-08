@@ -35,7 +35,36 @@
     "operator_lab_run": "vibe-lab: experiments/2026-07-01_operator-lab-loop/artifacts/run-002-rlens-agent-ecosystem/run-card.yml",
     "plan_path": "docs/plans/rlens-agent-ecosystem-integration-v1.md",
     "reconciled_at": "2026-07-08T00:00:00Z",
-    "reconcile_note": "Depends on RPU-V1-T001 so Grabowski context-pack work does not paper over the missing resolved-content query surface."
+    "reconcile_note": "Depends on RPU-V1-T001 so Grabowski context-pack work does not paper over the missing resolved-content query surface.",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Grabowski PR #105 after prerequisite hardening PRs #103 and #104 were merged. The rLens context pack now normalizes Lenskit resolved_evidence.hits, carries snippets/ranges/citation ids/canonical authority/live repo address metadata, and explicitly degrades when resolved evidence is unavailable.",
+    "implementation_pr": "heimgewebe/grabowski#105",
+    "live_grabowski_commit": "f5bcd1e58c6fa6b8292fe47ca72792b98d95e754",
+    "prerequisite_prs": [
+      "heimgewebe/grabowski#104",
+      "heimgewebe/grabowski#103"
+    ],
+    "implementation_paths": [
+      "src/grabowski_mcp.py",
+      "tests/test_rlens_bundles.py",
+      "docs/generated/operator-context.v1.json"
+    ],
+    "validation": [
+      "Grabowski PR #105 GitHub CI passed validate (3.10) and validate (3.12).",
+      "Local: python3 -m pytest -q tests/test_rlens_bundles.py -> 22 passed.",
+      "Local: python3 -m pytest -q tests/test_rlens_bundles.py tests/test_grips.py tests/test_operator_context.py tests/test_control_plane.py tests/test_tasks.py -> 200 passed, 30 subtests passed.",
+      "Local: python3 tools/build_operator_context.py --check -> current.",
+      "Local: git diff --check -> pass."
+    ],
+    "verified_acceptance": {
+      "context-pack": "rlens_context_pack includes task_profile, freshness, bounded_evidence snippets/ranges/citation_ids, preflight answer_compliance_template, context_ref, and explicit does_not_establish non-claims.",
+      "query-shape-normalized": "rlens query wrappers normalize source_citation_projection.items, resolved_evidence.hits, query_result.results, top-level results and bare result arrays rather than assuming a bare top-level results array.",
+      "resolved-evidence-input": "resolved_evidence.hits are consumed directly; missing snippets/ranges/citations produce bounded_evidence.resolved_evidence_status=degraded with degradation_reason instead of silent success."
+    },
+    "verification": {
+      "task_sha256": "f1fffabb166a4b1236fca6c47317abfb8f89641440906fa42d4730c50820bff3",
+      "plan_sha256": "2a786843fa4b6a7da77cd9790f77a41b5a35fb591b0047e2d6d1698d45df4ca2"
+    }
   },
   "priority": {
     "lane": "next",
@@ -47,7 +76,7 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Build rLens context pack bridge",
   "depends_on": [
     "RPU-V1-T001"

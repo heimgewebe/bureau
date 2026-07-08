@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from bureau import cli as bureau_cli
 from bureau.core import Registry, StateStore
+from bureau.legacy import ValidationError
 from bureau.queue_reconcile import queue_reconcile_report
 
 
@@ -96,17 +99,16 @@ def test_queue_reconcile_reports_queued_later_priority_now_as_lane_mismatch(
     assert report["findings"][0]["proposed_action"]["operation"] == "review_lane"
 
 
-def test_queue_reconcile_reports_terminal_queued_as_error(registry_factory, tmp_path):
+def test_queue_reconcile_terminal_queued_is_blocked_by_registry(registry_factory, tmp_path):
     root = registry_factory(1)
     _move_to_later(root, "BUR-TEST-001-T001")
     _set_task(root, "BUR-TEST-001-T001", state="cancelled")
 
-    report = _report(root, tmp_path)
-
-    finding = next(item for item in report["findings"] if item["code"] == "terminal-task-in-queue")
-    assert report["summary"]["blockers"] >= 1
-    assert finding["rule"] == "queued_terminal_tasks_are_invalid"
-    assert finding["proposed_action"] == {"operation": "remove_from_queue", "target_lane": None}
+    with pytest.raises(
+        ValidationError,
+        match="queue later has terminal task BUR-TEST-001-T001 with state cancelled",
+    ):
+        _report(root, tmp_path)
 
 
 def test_queue_reconcile_is_read_only(registry_factory, tmp_path):

@@ -129,3 +129,80 @@ def test_apply_ready_leaves_non_auto_verify_task_unchanged(tmp_path: Path) -> No
     findings = scan(tmp_path, evidence_dir)
     changed = apply_ready(tmp_path, findings, "2026-07-05T16:00:00Z")
     assert changed == []
+
+
+def test_scan_receipt_contains_typed_source_hashes(tmp_path: Path) -> None:
+    write_task(
+        tmp_path,
+        {
+            "id": "DEMO-T006",
+            "state": "ready",
+            "metadata": {
+                "pr_completion": {"repo": "heimgewebe/example", "number": 7, "head_sha": HEAD_SHA}
+            },
+        },
+    )
+    evidence_dir = tmp_path / "evidence"
+    evidence_dir.mkdir()
+    write_evidence(evidence_dir, merged_evidence())
+
+    receipt = scan(tmp_path, evidence_dir)[0]["receipt"]
+
+    assert receipt["schema_version"] == 2
+    assert receipt["receipt_id"] == f"pr-completion:heimgewebe/example#7:{HEAD_SHA}"
+    assert len(receipt["receipt_sha256"]) == 64
+    assert receipt["evidence"]["source"] == "github_pull_request"
+    assert receipt["evidence"]["source_ref"] == (
+        f"github-pr:heimgewebe/example#7@{HEAD_SHA}:{MERGE_SHA}"
+    )
+    assert len(receipt["evidence"]["evidence_sha256"]) == 64
+
+
+def test_scan_blocks_ai_or_prose_only_evidence(tmp_path: Path) -> None:
+    write_task(
+        tmp_path,
+        {
+            "id": "DEMO-T007",
+            "state": "ready",
+            "metadata": {"pr_completion": {"repo": "heimgewebe/example", "number": 7}},
+        },
+    )
+    evidence_dir = tmp_path / "evidence"
+    evidence_dir.mkdir()
+    write_evidence(evidence_dir, {"ai_summary": "looks merged"})
+
+    finding = scan(tmp_path, evidence_dir)[0]
+
+    assert finding["ready"] is False
+    assert finding["blockers"] == ["AI or prose-only evidence is insufficient"]
+
+
+def test_apply_ready_writes_top_level_evidence_fields(tmp_path: Path) -> None:
+    write_task(
+        tmp_path,
+        {
+            "id": "DEMO-T008",
+            "state": "ready",
+            "metadata": {
+                "pr_completion": {
+                    "repo": "heimgewebe/example",
+                    "number": 7,
+                    "head_sha": HEAD_SHA,
+                    "auto_verify": True,
+                }
+            },
+        },
+    )
+    evidence_dir = tmp_path / "evidence"
+    evidence_dir.mkdir()
+    write_evidence(evidence_dir, merged_evidence())
+
+    changed = apply_ready(tmp_path, scan(tmp_path, evidence_dir), "2026-07-05T16:00:00Z")
+
+    task = json.loads((tmp_path / changed[0]).read_text(encoding="utf-8"))
+    verification = task["metadata"]["verification"]
+    assert verification["receipt_id"] == f"pr-completion:heimgewebe/example#7:{HEAD_SHA}"
+    assert len(verification["receipt_sha256"]) == 64
+    assert verification["source"] == "github_pull_request"
+    assert verification["source_ref"] == f"github-pr:heimgewebe/example#7@{HEAD_SHA}:{MERGE_SHA}"
+    assert len(verification["evidence_sha256"]) == 64

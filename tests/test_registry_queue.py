@@ -43,3 +43,20 @@ def test_registry_rejects_non_ready_task_in_now(registry_factory):
         match="queue now has non-ready task BUR-TEST-001-T001 with state planned",
     ):
         Registry.load(root)
+
+
+def test_registry_rejects_terminal_task_in_queue(registry_factory):
+    from bureau.core import Registry
+    from bureau.legacy import ValidationError
+
+    root = registry_factory(1)
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["state"] = "verified"
+    task_path.write_text(json.dumps(task), encoding="utf-8")
+
+    with pytest.raises(
+        ValidationError,
+        match="queue now has terminal task BUR-TEST-001-T001 with state verified",
+    ):
+        Registry.load(root)

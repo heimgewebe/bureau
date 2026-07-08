@@ -59,14 +59,16 @@
       "runtime_causality",
       "runtime_correctness",
       "runtime_reachability",
-      "test_sufficiency"
+      "test_sufficiency",
+      "runtime_behavior",
+      "change_impact",
+      "impact_completeness",
+      "retrieval_improvement"
     ],
     "lenskit_local_task": "TASK-GRAPH-DEGRADATION-SEMANTICS-HARDENING-001",
     "verified_at": "2026-07-08",
-    "outcome": "Implemented in Lenskit PR #924: graph load, graph availability, query explain diagnostics, context compiler gaps and delta-context graph gaps now share a diagnostic degradation vocabulary. Only ok/available graph evidence is retrieval-eligible; stale, missing, invalid, degraded or profile-excluded graph evidence is explicitly non-promotional and does not establish runtime reachability, causality, change impact, graph completeness or default-promotion readiness.",
-    "implementation_pr": "heimgewebe/lenskit#924",
-    "live_lenskit_commit": "2cacb7bf7f29f7692007f45cebf2ab7b97220e17",
-    "implementation_head": "514a869f44b76b896e7f480ad9b131c7c3b339a5",
+    "outcome": "Implemented in Lenskit PR #924 plus follow-up PR #925: graph load, availability, query explain, context compiler and delta-context graph gaps now share diagnostic degradation semantics. Only ok/available graph evidence is retrieval-eligible; stale, missing, invalid, validation-unavailable, degraded or profile-excluded graph evidence remains non-promotional and does not establish runtime reachability, causality, change impact, completeness or default-promotion readiness.",
+    "live_lenskit_commit": "43d97b2b7cd26d7cc1d5ce2cc53df8a4f2eb8912",
     "superseded_pr": "heimgewebe/lenskit#923",
     "diff_sha256": "81b23ae415ea4773436872a4452f06ff796bf9dd0b47c3d2ad3f776b9fdc5858",
     "implementation_paths": [
@@ -83,21 +85,28 @@
       "merger/lenskit/tests/test_retrieval_query.py"
     ],
     "validation": [
-      "Lenskit PR #924 GitHub CI passed: pytest-full, ruff, CodeQL, doc-freshness, planning-registration, validate-merge-meta, contracts, graph checks, ai-context guards and webui-js-tests.",
-      "Before merge: direct self-review found and fixed generic graph_degradation_report ok-status consistency; added direct test coverage.",
-      "Before merge local: docs/tasks/index.json parsed, planning-registration ratchet had 0 new findings, git diff --check passed, 70 focused tests passed and targeted ruff passed.",
-      "Reviews/inline comments were empty; Codex did not produce a code review because the account had reached usage limits.",
-      "Post-merge on Lenskit origin/main 2cacb7bf7f29f7692007f45cebf2ab7b97220e17: same 70 focused tests passed, targeted ruff passed, planning-registration ratchet passed and task index JSON parsed."
+      "Lenskit PR #924 GitHub CI passed and merged graph degradation semantics v1.",
+      "Lenskit PR #925 GitHub CI passed and fixed Codex feedback: validation_unavailable is degraded/warn, not invalid/error.",
+      "Post-merge on origin/main 43d97b2b7cd26d7cc1d5ce2cc53df8a4f2eb8912: 83 graph/retrieval/context tests passed, targeted ruff passed, planning-registration no new drift, doc-freshness PASS, docs/tasks/index.json parsed, and diff-check passed."
     ],
     "verified_acceptance": {
       "rpu-v1-t010-vocabulary": "Shared graph_degradation.py vocabulary is consumed by snapshot availability, query explain diagnostics, context compiler graph gaps and delta-context graph gaps.",
       "rpu-v1-t010-no-causality": "Graph degradation reports and gaps explicitly do not establish runtime reachability, runtime causality, change impact, graph completeness, retrieval improvement, default-promotion readiness or merge readiness.",
-      "rpu-v1-t010-tests": "Added direct graph degradation semantics tests and strengthened graph availability/retrieval tests; post-merge focused suite passed 70 tests."
+      "rpu-v1-t010-tests": "Added direct graph degradation semantics tests and strengthened graph availability/retrieval tests; post-merge focused suite passed 70 tests.",
+      "rpu-v1-t010-validation-unavailable": "validation_unavailable is classified degraded/warn rather than invalid/error."
     },
     "verification": {
-      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015",
-      "task_sha256": "48c58b465138c49777e52fff1f9a33901206f15c74b937d93f026bcb6dae698d"
-    }
+      "task_sha256": "860993a1b7d1702550d0cd3be98c8792eca6a7ff2674d5732039ccaf4e224799",
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015"
+    },
+    "implementation_prs": [
+      "heimgewebe/lenskit#924",
+      "heimgewebe/lenskit#925"
+    ],
+    "implementation_heads": [
+      "514a869f44b76b896e7f480ad9b131c7c3b339a5",
+      "34499c5bf3708f52a7b8810b96d3090bcd73085d"
+    ]
   },
   "depends_on": [
     "RBV1-T015",

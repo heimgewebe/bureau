@@ -467,7 +467,10 @@ class Registry:
             position = self.positions.get(task.id)
             if position:
                 return position[0], position[1], task.rank, task.id
-            return LANE_ORDER[task.lane], 10_000_000, task.rank, task.id
+            # registry/queue.json is the dispatch canon. Task priority is
+            # retained as advisory metadata, but unqueued tasks sort after all
+            # queued tasks and are blocked by Dispatcher.reasons.
+            return len(LANE_ORDER), 10_000_000, task.rank, task.id
 
         return sorted(self.tasks.values(), key=key)
 

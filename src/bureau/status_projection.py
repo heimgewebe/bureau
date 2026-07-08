@@ -224,12 +224,14 @@ def status_projection(
             findings.append(
                 {
                     "severity": "warning",
-                    "code": "declared-lane-not-queued",
+                    "code": "task-priority-not-queued",
                     "message": (
-                        f"task declares priority lane '{task.lane}' "
-                        "but is missing from registry/queue.json"
+                        f"task declares advisory priority lane '{task.lane}' "
+                        "but is not dispatchable because registry/queue.json "
+                        "is the queue canon"
                     ),
                     "declared_lane": task.lane,
+                    "queue_canonical": True,
                 }
             )
 

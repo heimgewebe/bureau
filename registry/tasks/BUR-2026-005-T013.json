@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T013",
+  "initiative": "BUR-2026-005",
+  "title": "Define queue canon for dispatch ordering",
+  "state": "planned",
+  "depends_on": [
+    "BUR-2026-005-T012"
+  ],
+  "goal": "Make registry/queue.json the canonical dispatch queue while keeping task.priority as advisory metadata only, with tests preventing unqueued priority tasks from being claimed.",
+  "priority": {
+    "lane": "later",
+    "rank": 130
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "metadata": {
+    "source_review": "Follow-up from Bureau improvement review: queue canon must not conflict with task.priority.",
+    "safety_boundary": "Queue canon affects dispatch eligibility and status reporting only; it does not grant task creation, verification or merge authority.",
+    "does_not_establish": [
+      "task_completion",
+      "runtime_correctness",
+      "automatic_merge_authority"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "queue-canonical-dispatch",
+      "assertion": "Dispatcher refuses to claim ready tasks that are absent from registry/queue.json even when task.priority says now."
+    },
+    {
+      "id": "queue-order-before-priority",
+      "assertion": "Queued tasks sort before unqueued tasks even when an unqueued task has a higher advisory priority rank."
+    },
+    {
+      "id": "projection-names-advisory-priority",
+      "assertion": "Status projection reports unqueued priority as advisory and names registry/queue.json as the queue canon."
+    },
+    {
+      "id": "docs-state-canon",
+      "assertion": "Documentation states that registry/queue.json is canonical for dispatch and task.priority is advisory/display metadata."
+    }
+  ]
+}

@@ -323,6 +323,55 @@ def test_dirty_workspace_is_preserved(registry_factory, tmp_path, monkeypatch):
     assert workspace.is_dir()
 
 
+
+
+def test_queue_json_is_dispatch_canon_for_unqueued_ready_task(registry_factory, tmp_path):
+    root = registry_factory(2, mode="write", max_active=2)
+    queue_path = root / "registry/queue.json"
+    queue = json.loads(queue_path.read_text())
+    queue["lanes"]["now"] = ["BUR-TEST-001-T001"]
+    queue_path.write_text(json.dumps(queue))
+
+    second_path = root / "registry/tasks/BUR-TEST-001-T002.json"
+    second = json.loads(second_path.read_text())
+    second["state"] = "ready"
+    second["priority"] = {"lane": "now", "rank": 0}
+    second_path.write_text(json.dumps(second))
+
+    first_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    first = json.loads(first_path.read_text())
+    first["state"] = "planned"
+    first_path.write_text(json.dumps(first))
+
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(registry, store)
+
+    frontier = {item["task_id"]: item for item in dispatcher.frontier({"repository"})}
+    assert frontier["BUR-TEST-001-T002"]["eligible"] is False
+    assert "task is not queued in registry/queue.json" in frontier["BUR-TEST-001-T002"]["reasons"]
+    with pytest.raises(bureau_v2.legacy.NoEligibleTask) as excinfo:
+        dispatcher.claim_next("worker", ("repository",))
+    assert "task is not queued in registry/queue.json" in str(excinfo.value)
+
+
+def test_queued_tasks_sort_before_unqueued_priority_tasks(registry_factory):
+    root = registry_factory(2, mode="write", max_active=2)
+    queue_path = root / "registry/queue.json"
+    queue = json.loads(queue_path.read_text())
+    queue["lanes"]["now"] = ["BUR-TEST-001-T001"]
+    queue_path.write_text(json.dumps(queue))
+
+    second_path = root / "registry/tasks/BUR-TEST-001-T002.json"
+    second = json.loads(second_path.read_text())
+    second["priority"] = {"lane": "now", "rank": 0}
+    second_path.write_text(json.dumps(second))
+
+    registry = Registry.load(root)
+    ordered_ids = [task.id for task in registry.ordered_tasks()]
+    assert ordered_ids.index("BUR-TEST-001-T001") < ordered_ids.index("BUR-TEST-001-T002")
+
+
 def test_lifecycle_diagnoses_completion_ready(registry_factory, tmp_path, monkeypatch):
     root = registry_factory(1)
     task_path = next((root / "registry/tasks").glob("*.json"))

@@ -15,6 +15,17 @@ def _setup(root: Path, tmp_path: Path, monkeypatch):
     return registry, store, Dispatcher(registry, store)
 
 
+
+
+def _move_to_next(root: Path, task_id: str) -> None:
+    queue_path = root / "registry/queue.json"
+    queue = json.loads(queue_path.read_text(encoding="utf-8"))
+    for lane in queue["lanes"].values():
+        while task_id in lane:
+            lane.remove(task_id)
+    queue["lanes"]["next"].append(task_id)
+    queue_path.write_text(json.dumps(queue), encoding="utf-8")
+
 def _write_plan(path: Path, task_id: str, *, valid: bool = True) -> None:
     brief = path.parent / f"{task_id}-brief.json"
     brief.write_text(json.dumps({"task_id": task_id}), encoding="utf-8")
@@ -52,6 +63,7 @@ def _make_completed_review_task(root: Path) -> str:
     task = json.loads(task_path.read_text(encoding="utf-8"))
     task["state"] = "planned"
     task["execution"]["policy"] = "review-before-effect"
+    _move_to_next(root, str(task["id"]))
     task_path.write_text(json.dumps(task), encoding="utf-8")
     return str(task["id"])
 

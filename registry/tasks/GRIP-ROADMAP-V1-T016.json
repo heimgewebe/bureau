@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "GRIP-ROADMAP-V1-T016",
+  "initiative": "GRIP-ROADMAP-V1",
+  "title": "Introduce Captain executor registry",
+  "state": "planned",
+  "goal": "Replace ad-hoc captain-run executor branching with a single executor registry that is the source of truth for executable actions and executor metadata.",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T013"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 160
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "single-source",
+      "assertion": "CAPTAIN_EXECUTABLE_ACTIONS is derived from the executor registry rather than maintained separately."
+    },
+    {
+      "id": "metadata",
+      "assertion": "Registry entries declare action name, mutating status, required target fields, verification strategy and non-claims."
+    },
+    {
+      "id": "no-authority-expansion",
+      "assertion": "The refactor does not add deploy, restart, fleet mutation, cleanup or secret authority."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover registry/action allowlist consistency and unsupported-action fail-closed behavior."
+    }
+  ],
+  "metadata": {
+    "phase": "captain-run-followup",
+    "effect": "repository_hardening",
+    "source": "Grabowski captain-run PR #104/#106 reviews and follow-up triage",
+    "related_issue": "heimgewebe/bureau#192",
+    "related_prs": [
+      "heimgewebe/grabowski#104",
+      "heimgewebe/grabowski#106"
+    ],
+    "reason": "PR #102 and #104 left pr-merge as a hard-coded executor branch.",
+    "does_not_establish": [
+      "implementation_complete",
+      "merge_authority_change",
+      "runtime_deployed",
+      "safety_proof"
+    ]
+  }
+}

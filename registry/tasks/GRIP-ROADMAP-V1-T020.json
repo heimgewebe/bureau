@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "GRIP-ROADMAP-V1-T020",
+  "initiative": "GRIP-ROADMAP-V1",
+  "title": "Redact Captain command-output previews",
+  "state": "planned",
+  "goal": "Redact token-like or credential-like content from bounded Captain execution stdout/stderr previews while keeping deterministic hashes for full original outputs.",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T014"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 200
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "redaction-helper",
+      "assertion": "Captain command previews use a deterministic redaction helper for token-like strings, URL credentials, bearer tokens and common GitHub token patterns."
+    },
+    {
+      "id": "hash-contract",
+      "assertion": "Docs state whether hashes cover original or redacted output; preferred contract is original-output hash with redacted previews."
+    },
+    {
+      "id": "no-secret-preview",
+      "assertion": "Receipts do not expose raw token-like preview content."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover long stdout/stderr with token-like content, redacted previews and deterministic hashes."
+    }
+  ],
+  "metadata": {
+    "phase": "captain-run-followup",
+    "effect": "repository_hardening",
+    "source": "Grabowski captain-run PR #104/#106 reviews and follow-up triage",
+    "related_issue": "heimgewebe/bureau#211",
+    "related_prs": [
+      "heimgewebe/grabowski#104",
+      "heimgewebe/grabowski#106"
+    ],
+    "reason": "PR #106 bounds command previews but does not redact token-like content.",
+    "does_not_establish": [
+      "implementation_complete",
+      "merge_authority_change",
+      "runtime_deployed",
+      "safety_proof"
+    ]
+  }
+}

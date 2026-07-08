@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "GRIP-ROADMAP-V1-T015",
+  "initiative": "GRIP-ROADMAP-V1",
+  "title": "Define trusted-owner blast-radius policy",
+  "state": "planned",
+  "goal": "Define and enforce a blast-radius policy for trusted-owner captain-run autonomy so reversibility alone cannot release high-impact execution.",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T005",
+    "GRIP-ROADMAP-V1-T007"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 150
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "blast-radius-schema",
+      "assertion": "Captain actions declare bounded blast-radius fields for affected repo, branch, PR, runtime, host, fleet or cleanup target."
+    },
+    {
+      "id": "policy-gate",
+      "assertion": "trusted_owner_mode requires a passing blast-radius policy gate in addition to reversible risk records."
+    },
+    {
+      "id": "ambiguous-blocks",
+      "assertion": "Ambiguous, wildcard or unbounded blast-radius records fail closed and require manual authorization."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover bounded PR merge, ambiguous scope, wildcard scope and manual fallback."
+    }
+  ],
+  "metadata": {
+    "phase": "captain-run-followup",
+    "effect": "repository_hardening",
+    "source": "Grabowski captain-run PR #104/#106 reviews and follow-up triage",
+    "related_issue": "heimgewebe/bureau#191",
+    "related_prs": [
+      "heimgewebe/grabowski#104",
+      "heimgewebe/grabowski#106"
+    ],
+    "reason": "PR #102 trusted-owner autonomy still relied mostly on action-declared reversibility.",
+    "does_not_establish": [
+      "implementation_complete",
+      "merge_authority_change",
+      "runtime_deployed",
+      "safety_proof"
+    ]
+  }
+}

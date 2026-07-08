@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "GRIP-ROADMAP-V1-T018",
+  "initiative": "GRIP-ROADMAP-V1",
+  "title": "Add structured Captain error codes",
+  "state": "planned",
+  "goal": "Replace Captain string-only blocked_reasons and failed_reasons with structured error records while preserving deterministic compatibility summaries.",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T013"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 180
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "error-shape",
+      "assertion": "Captain errors include code, message, phase, severity and optional context."
+    },
+    {
+      "id": "compatibility",
+      "assertion": "Existing string reason fields remain available or are deterministically derived during a compatibility period."
+    },
+    {
+      "id": "source-of-truth",
+      "assertion": "Gate, preflight, execution and post-verification errors use one error-code source of truth."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover deterministic ordering, JSON stability and backward-compatible summaries."
+    }
+  ],
+  "metadata": {
+    "phase": "captain-run-followup",
+    "effect": "repository_hardening",
+    "source": "Grabowski captain-run PR #104/#106 reviews and follow-up triage",
+    "related_issue": "heimgewebe/bureau#209",
+    "related_prs": [
+      "heimgewebe/grabowski#104",
+      "heimgewebe/grabowski#106"
+    ],
+    "reason": "PR #106 improved error propagation but still uses string lists as the primary contract.",
+    "does_not_establish": [
+      "implementation_complete",
+      "merge_authority_change",
+      "runtime_deployed",
+      "safety_proof"
+    ]
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "GRIP-ROADMAP-V1-T017",
+  "initiative": "GRIP-ROADMAP-V1",
+  "title": "Add idempotent pr-merge already_satisfied mode",
+  "state": "planned",
+  "goal": "Add an explicit opt-in already_satisfied mode for captain-run pr-merge retries without claiming that the current run performed the merge.",
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T014"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 170
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "explicit-mode",
+      "assertion": "Already-merged PRs are treated as already_satisfied only when an explicit idempotent mode is requested."
+    },
+    {
+      "id": "binding",
+      "assertion": "already_satisfied requires matching repo, PR number, expected_head, expected_base and current evidence bindings."
+    },
+    {
+      "id": "default-blocks",
+      "assertion": "Default behavior continues to block pre-execution already-merged PRs."
+    },
+    {
+      "id": "truthful-receipt",
+      "assertion": "Receipts distinguish already_satisfied from executed and do not claim performed execution."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover matching already-merged, mismatched head/base, missing evidence and default blocked behavior."
+    }
+  ],
+  "metadata": {
+    "phase": "captain-run-followup",
+    "effect": "repository_hardening",
+    "source": "Grabowski captain-run PR #104/#106 reviews and follow-up triage",
+    "related_issue": "heimgewebe/bureau#208",
+    "related_prs": [
+      "heimgewebe/grabowski#104",
+      "heimgewebe/grabowski#106"
+    ],
+    "reason": "PR #104/#106 kept conservative blocking for already-merged PRs; retry idempotence remains useful.",
+    "does_not_establish": [
+      "implementation_complete",
+      "merge_authority_change",
+      "runtime_deployed",
+      "safety_proof"
+    ]
+  }
+}

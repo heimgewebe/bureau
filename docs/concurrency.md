@@ -35,3 +35,15 @@ lifecycle, open-PR and rLens gates still apply.
 Because the state database keeps one active assignment per worker ID, parallel repository balls must
 use distinct stable worker IDs. The recommended convention is `worker-<repo-id-with-dashes>`, for
 example `worker-repo-bureau` and `worker-repo-lenskit`.
+## Queue freshness
+
+`registry/queue.json` remains the only dispatch queue. `queue-reconcile` is a read-only freshness
+report over queue entries, advisory task priority and repository focus. It may recommend
+`promote_to_now`, `promote_to_next`, `review_lane` or `remove_from_queue`, but it does not mutate
+state. This keeps stale priority metadata visible without allowing unreviewed dispatch changes.
+
+## Worktree hygiene
+
+Local worktree inventory is operational context, not dispatch truth. `worktree-hygiene` reports
+detached, dirty, merged and excessive worktrees as cleanup candidates only. Cleanup authority stays
+outside the report.

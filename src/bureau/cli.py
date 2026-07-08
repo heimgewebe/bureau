@@ -62,6 +62,10 @@ def parser() -> argparse.ArgumentParser:
     doctor = sub.add_parser("doctor")
     doctor.add_argument("--repair", action="store_true")
     sub.add_parser("runtime-drift-check")
+    queue_reconcile = sub.add_parser("queue-reconcile")
+    queue_reconcile.add_argument("--resource")
+    worktree_hygiene = sub.add_parser("worktree-hygiene")
+    worktree_hygiene.add_argument("--max-count", type=int, default=25)
     registry_truth = sub.add_parser("registry-truth")
     registry_truth.add_argument("--strict", action="store_true")
     registry_truth.add_argument("--no-baseline-probe", action="store_true")
@@ -342,6 +346,12 @@ def main(argv: list[str] | None = None) -> int:
             value = runtime_drift_check(root, state_db=state_path, state_root=state_root)
             emit(value, args.json)
             return 0
+        if args.command == "worktree-hygiene":
+            from .worktree_hygiene import worktree_hygiene_report
+
+            value = worktree_hygiene_report(root, max_count=args.max_count)
+            emit(value, args.json)
+            return 0
         if args.command == "registry-truth":
             from .registry_truth import registry_truth_diagnostics
 
@@ -486,6 +496,10 @@ def main(argv: list[str] | None = None) -> int:
             value = dispatcher.explain_next(set(args.capability), resource=args.resource)
         elif args.command == "repo-balls":
             value = dispatcher.repo_balls(set(args.capability))
+        elif args.command == "queue-reconcile":
+            from .queue_reconcile import queue_reconcile_report
+
+            value = queue_reconcile_report(registry, store, resource=args.resource)
         elif args.command == "claim-next":
             try:
                 value = dispatcher.claim_next(

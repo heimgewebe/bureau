@@ -16,6 +16,7 @@ def test_inventory_lists_all_packaged_console_scripts() -> None:
     assert "bureau-agent-scout" in names
     assert "bureau-cabinet-frontier-reader" in names
     assert "bureau-gemini-preflight" in names
+    assert "bureau-gemini-review-lane" in names
 
 
 def test_inventory_covers_systemd_exec_start_commands() -> None:

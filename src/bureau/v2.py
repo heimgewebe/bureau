@@ -2919,6 +2919,7 @@ def _receipt_drift(
 
     task_status_rows = state["rows"]["task_status"]
     stale_tasks: list[dict[str, Any]] = []
+    superseded_receipt_tasks: list[dict[str, Any]] = []
     unknown_status_rows: list[str] = []
     for row in task_status_rows:
         task_id = row.get("task_id")
@@ -2931,16 +2932,34 @@ def _receipt_drift(
         if row.get("state") == "verified" and (
             row.get("task_sha256") != task.sha256 or row.get("plan_sha256") != current_plan
         ):
-            stale_tasks.append(
-                {
-                    "task_id": task_id,
-                    "stored_task_sha256": row.get("task_sha256"),
-                    "current_task_sha256": task.sha256,
-                    "stored_plan_sha256": row.get("plan_sha256"),
-                    "current_plan_sha256": current_plan,
-                    "receipt_sha256": row.get("receipt_sha256"),
-                }
-            )
+            verification = task.raw.get("metadata", {}).get("verification", {})
+            if (
+                task.state == "verified"
+                and verification.get("task_sha256") == task.sha256
+                and verification.get("plan_sha256") == current_plan
+            ):
+                superseded_receipt_tasks.append(
+                    {
+                        "task_id": task_id,
+                        "stored_task_sha256": row.get("task_sha256"),
+                        "current_task_sha256": task.sha256,
+                        "stored_plan_sha256": row.get("plan_sha256"),
+                        "current_plan_sha256": current_plan,
+                        "receipt_sha256": row.get("receipt_sha256"),
+                        "reason": "embedded-verification-current",
+                    }
+                )
+            else:
+                stale_tasks.append(
+                    {
+                        "task_id": task_id,
+                        "stored_task_sha256": row.get("task_sha256"),
+                        "current_task_sha256": task.sha256,
+                        "stored_plan_sha256": row.get("plan_sha256"),
+                        "current_plan_sha256": current_plan,
+                        "receipt_sha256": row.get("receipt_sha256"),
+                    }
+                )
     active_run_drift: list[dict[str, Any]] = []
     for row in state["rows"]["runs"]:
         if row.get("state") not in legacy.ACTIVE_STATES:
@@ -2971,6 +2990,20 @@ def _receipt_drift(
                 "code": "receipt-drift",
                 "message": "Verified task receipts no longer match current task or plan revisions.",
                 "task_ids": [item["task_id"] for item in stale_tasks],
+            }
+        )
+    elif superseded_receipt_tasks:
+        findings.append(
+            {
+                "severity": "info",
+                "code": "receipt-drift-superseded-by-registry-verification",
+                "message": (
+                    "Historical task_status receipts no longer match current task or plan "
+                    "revisions, but each affected verified task has current embedded "
+                    "registry verification. The stale state-store rows are historical and "
+                    "do not block runtime health."
+                ),
+                "task_ids": [item["task_id"] for item in superseded_receipt_tasks],
             }
         )
     else:
@@ -3005,6 +3038,7 @@ def _receipt_drift(
     return {
         "available": True,
         "stale_tasks": stale_tasks,
+        "superseded_receipt_tasks": superseded_receipt_tasks,
         "active_run_drift": active_run_drift,
         "unknown_task_status_rows": unknown_status_rows,
         "task_status_rows": len(task_status_rows),

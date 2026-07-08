@@ -3,7 +3,7 @@
   "id": "HEIMLERN-OPTIMIZATION-V1-T004",
   "initiative": "HEIMLERN-OPTIMIZATION-V1",
   "title": "Release-Profil messen und entscheiden",
-  "state": "ready",
+  "state": "verified",
   "goal": "Die opt-level=z Entscheidung mit reproduzierbarer Messung und kurzer ADR bestätigen oder anpassen.",
   "execution": {
     "mode": "interactive-agent",
@@ -36,7 +36,47 @@
     "source_plan": "docs/plans/heimlern-optimization-plan-v1.md",
     "source_pr": "heimgewebe/heimlern#181",
     "source_head": "b9919bd184c6918713ed11a54370ad03d510273a",
-    "queue_readiness_repair": "2026-07-08: current implementation ball; made ready and repo claim explicit so now lane is claim-safe."
+    "queue_readiness_repair": "2026-07-08: current implementation ball; made ready and repo claim explicit so now lane is claim-safe.",
+    "diff_sha256": "492916b7f3bcbb9aa4eb4f6347df79329b731cb2c362a1eeddfdc2c942435518",
+    "implementation_head": "a7017773b1c4cc86a085cbc4246ab49845d026e1",
+    "implementation_pr": "heimgewebe/heimlern#190",
+    "live_heimlern_commit": "3ea32c3e62e4e5b348f19dbd30dbdfe8c098de53",
+    "implementation_paths": [
+      "Cargo.toml",
+      "Justfile",
+      "crates/heimlern-bandits/examples/bench_feedback.rs",
+      "docs/adr/0004-release-opt-level-s.md",
+      "docs/adr/README.md",
+      "docs/benchmarks/release-profile-comparison-2026-07-08.json",
+      "scripts/benchmark_release_profiles.py"
+    ],
+    "outcome": "Implemented in Heimlern PR #190: release-profile benchmark evidence compares opt-level z, s and 3 for Heimlern feedback/snapshot paths. ADR-0004 records the decision to change the workspace release profile from opt-level=\"z\" to opt-level=\"s\". Measured binary sizes were s=535680 bytes, z=538056 bytes and 3=579272 bytes; s was the smallest measured binary and faster than z on existing-slot feedback and snapshot replay, while 3 was faster but larger.",
+    "validation": [
+      "Heimlern PR #190 GitHub CI passed: Analyze actions/python/rust, CodeQL, build-test, repo-root, schema-validate and templates.",
+      "Local before merge: cargo fmt --check, cargo check -p heimlern-bandits --example bench_feedback, cargo test, cargo clippy --workspace --all-targets -- -D warnings, benchmark script py_compile, benchmark JSON parse, release-profile smoke and diff-check all passed.",
+      "Post-merge on origin/main 3ea32c3e62e4e5b348f19dbd30dbdfe8c098de53: cargo fmt --check, cargo test, cargo clippy --workspace --all-targets -- -D warnings, benchmark script py_compile, benchmark JSON parse, release-profile smoke and diff-check all passed."
+    ],
+    "verified_acceptance": {
+      "benchmark-added": "bench_feedback is now reproducible and JSON-capable; scripts/benchmark_release_profiles.py builds isolated release-profile targets and measures existing-slot feedback, slot filling and snapshot replay.",
+      "profile-compared": "opt-level z, s and 3 are compared in docs/benchmarks/release-profile-comparison-2026-07-08.json by binary size and runtime medians. s is smallest; 3 is fastest but larger; z is neither smallest nor fastest in the measured paths.",
+      "adr-recorded": "docs/adr/0004-release-opt-level-s.md records the decision, benchmark command, measured results, rationale, consequences and non-claims."
+    },
+    "verified_at": "2026-07-08",
+    "does_not_establish": [
+      "production_runtime_performance",
+      "all_workload_performance",
+      "cross_machine_reproducibility",
+      "policy_quality",
+      "learning_quality",
+      "future_optimality",
+      "runtime_correctness",
+      "test_sufficiency",
+      "merge_readiness"
+    ],
+    "verification": {
+      "task_sha256": "5b12419f9743d720a76fe7424a26314a276455d641f419784336230bc7c5e6d5",
+      "plan_sha256": "de066e4dc95e6a5575653e41c8cf2c6108f57052e12ba782dbbf49f4ab556b7e"
+    }
   },
   "priority": {
     "lane": "now",

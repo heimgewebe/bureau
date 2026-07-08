@@ -335,7 +335,7 @@ def test_unbound_unhealthy_github_binding_is_top_level_blocker(registry_factory)
     assert entry["github"] is None
 
 
-def test_declared_lane_without_queue_entry_is_reported(registry_factory) -> None:
+def test_task_priority_without_queue_entry_is_reported_as_advisory(registry_factory) -> None:
     root = registry_factory()
     queue_path = root / "registry/queue.json"
     queue = json.loads(queue_path.read_text(encoding="utf-8"))
@@ -345,10 +345,11 @@ def test_declared_lane_without_queue_entry_is_reported(registry_factory) -> None
     entry = task_entry(projection, TASK_1)
     assert entry["queue_lane"] is None
     finding = next(
-        item for item in entry["findings"] if item["code"] == "declared-lane-not-queued"
+        item for item in entry["findings"] if item["code"] == "task-priority-not-queued"
     )
     assert finding["severity"] == "warning"
     assert finding["declared_lane"] == "now"
+    assert finding["queue_canonical"] is True
     assert projection["healthy"] is True
 
 

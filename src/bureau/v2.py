@@ -1414,6 +1414,8 @@ class Dispatcher(legacy.Dispatcher):
         result: list[str] = []
         initiative = self.registry.initiatives[task.initiative]
         state = overlays.get(task.id, task.state)
+        if task.id not in self.registry.positions:
+            result.append("task is not queued in registry/queue.json")
         closure_bridge = self._closure_bridge_applies(task, state, initiative)
         if state != "ready" and not closure_bridge:
             result.append(f"state is {state}")

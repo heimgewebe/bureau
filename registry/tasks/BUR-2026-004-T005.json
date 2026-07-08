@@ -3,7 +3,7 @@
   "id": "BUR-2026-004-T005",
   "initiative": "BUR-2026-004",
   "title": "Decide Bureau Ops packaging path",
-  "state": "planned",
+  "state": "verified",
   "goal": "Decide the future packaging shape for operational organs after the documentation and audit tasks are complete.",
   "priority": {
     "lane": "later",
@@ -25,7 +25,42 @@
     "policy": "review-before-effect"
   },
   "metadata": {
-    "plan_path": "docs/plans/bureau-boundary-ops-v1.md"
+    "plan_path": "docs/plans/bureau-boundary-ops-v1.md",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Bureau PR #243: documented the Bureau Ops packaging decision. Bureau Core and Bureau Ops stay in the existing bureau Python distribution for now; bureau-ops extraction is blocked until grouped aliases, boundary checks, CI separation, deployment migration evidence and lower operator cost are proven.",
+    "implementation_pr": "heimgewebe/bureau#243",
+    "live_bureau_commit": "d73b0e0ed3d4943675fd2b70db1306c395cdab2d",
+    "implementation_paths": [
+      "docs/bur-2026-004-t005-ops-packaging-decision.md",
+      "tests/test_ops_packaging_decision.py"
+    ],
+    "validation": [
+      "Bureau PR #243 GitHub CI passed: validate (3.10) and validate (3.12).",
+      "Local pre-merge: PYTHONPATH=src pytest tests/test_ops_packaging_decision.py -q -> 5 passed.",
+      "Local pre-merge: PYTHONPATH=src make validate -> 370 passed.",
+      "Local pre-merge: PYTHONPATH=src python3 -m bureau.cli --root . check -> valid True.",
+      "Local pre-merge: git diff --check -> pass after whitespace fix.",
+      "Local post-merge on origin/main: PYTHONPATH=src pytest tests/test_ops_packaging_decision.py -q -> 5 passed.",
+      "Local post-merge on origin/main: PYTHONPATH=src python3 -m bureau.cli --root . check -> valid True."
+    ],
+    "verified_acceptance": {
+      "packaging-criteria": "Decision doc states extraction criteria: stable Core API, entry-point stability, deployment portability, CI coverage, operator cost and reversibility; extraction is blocked until criteria are met.",
+      "api-contract": "Decision doc identifies stable Core API surfaces for Ops consumers: registry schemas, queue JSON, bureau.cli check, guard reports, state-root doctor, rLens policy report and entry-point inventory; legacy.py and arbitrary StateStore internals remain unstable.",
+      "deployment-cost": "Decision doc weighs systemd reference deployment, packaging, CI, operator cost, failure diagnosis and reversibility; six known service/timer pairs are called out as migration cost."
+    },
+    "does_not_establish": [
+      "ops_extraction_safe",
+      "package_boundary_ci_complete",
+      "grouped_cli_aliases_implemented",
+      "systemd_units_installed",
+      "systemd_runtime_correctness",
+      "hidden_external_users_absent",
+      "legacy_module_safe_to_remove"
+    ],
+    "verification": {
+      "task_sha256": "bf1c3778108985674082ab4aad2b40c7e53b257174119903600f9b6a0b58d44f",
+      "plan_sha256": "bb81949c8375fa377db1e49b6c2f53d10c6ec53b894485799e234a28e92e44d3"
+    }
   },
   "acceptance": [
     {

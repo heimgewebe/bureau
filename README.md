@@ -32,6 +32,10 @@ Bureau is documented as a core plus operational organs.
   CI facts; Grabowski owns processes, hosts, concrete runtime leases, durable tasks and workers;
   Steuerboard owns action-specific readiness; Cabinet owns readable research and decisions;
   Schauwerk owns visual projections; Chronik owns append-only events.
+- **AI and local model outputs** have no Bureau authority. Gemini, Ollama or other LLM output may
+  be preserved only as advisory commentary or bounded proposal evidence after deterministic
+  validation. It never establishes queue truth, task truth, claim truth, merge readiness, runtime
+  correctness, verification or completion.
 
 Bureau does not implement another shell, general workflow engine, knowledge base or project UI.
 Ops organs keep source ownership visible and bind Bureau effects to explicit tasks, claims,
@@ -112,6 +116,7 @@ always derive from the same state root. Override it with `BUREAU_STATE_DIR`, `--
 4. Worktrees are removed only after terminal runs and never silently discard dirty work.
 5. Process success is not completion; every acceptance criterion still needs evidence.
 6. Ops observations never replace the authority of their source systems.
+7. AI output never replaces deterministic Bureau validation or source authority.
 
 ### Source promotion preview
 

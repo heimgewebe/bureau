@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-DETERMINISTIC-OPS-V1-T002",
+  "initiative": "BUREAU-DETERMINISTIC-OPS-V1",
+  "title": "Enforce queue readiness invariant",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 310
+  },
+  "goal": "Harden queue reconciliation and validation so now cannot contain non-ready tasks and invalid lane placement is explained deterministically.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "now-readiness-check",
+      "assertion": "A failing test proves a non-ready task in now is rejected or reported as a blocker by queue validation."
+    },
+    {
+      "id": "repair-plan-evidence",
+      "assertion": "queue-reconcile emits the exact rule and proposed deterministic movement for invalid lane placement."
+    },
+    {
+      "id": "no-ai-evidence",
+      "assertion": "The invariant does not depend on AI, prose summaries or model classification."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-08T17:20:00Z",
+    "source_plan": "docs/plans/bureau-deterministic-ops-v1.md",
+    "does_not_establish": [
+      "runtime_correctness",
+      "merge_readiness",
+      "task_completion"
+    ]
+  },
+  "depends_on": [
+    "BUREAU-DETERMINISTIC-OPS-V1-T001"
+  ]
+}

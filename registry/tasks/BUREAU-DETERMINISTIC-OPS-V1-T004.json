@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-DETERMINISTIC-OPS-V1-T004",
+  "initiative": "BUREAU-DETERMINISTIC-OPS-V1",
+  "title": "Harden PR task binding guard v2",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 312
+  },
+  "goal": "Require open working PRs to bind exactly one valid Bureau task unless an explicit schema-visible exception exists.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "no-task-pr-blocker",
+      "assertion": "An open working PR without a valid task id is merge-blocking."
+    },
+    {
+      "id": "multi-task-pr-blocker",
+      "assertion": "An open working PR with multiple task ids is merge-blocking unless an explicit exception is recorded."
+    },
+    {
+      "id": "task-existence-repo-check",
+      "assertion": "The bound task must exist, belong to the expected repository claim and not be terminal without follow-up semantics."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-08T17:20:00Z",
+    "source_plan": "docs/plans/bureau-deterministic-ops-v1.md",
+    "does_not_establish": [
+      "runtime_correctness",
+      "merge_readiness",
+      "task_completion"
+    ]
+  },
+  "depends_on": [
+    "BUREAU-DETERMINISTIC-OPS-V1-T001"
+  ]
+}

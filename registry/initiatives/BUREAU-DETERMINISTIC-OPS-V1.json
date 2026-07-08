@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-DETERMINISTIC-OPS-V1",
+  "title": "Bureau deterministic operations hardening",
+  "state": "active",
+  "commitment": "next",
+  "goal": "Keep Bureau deterministic by excluding AI maintenance authority and strengthening queue, active-ball, PR-binding, closeout and status-projection guards.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/bureau-deterministic-ops-v1.md"
+  },
+  "completion": [
+    "The Bureau AI authority boundary is documented and exposed in read-only status projection.",
+    "Queue readiness, per-repository active ball, PR task binding and closeout evidence invariants are enforced by deterministic checks.",
+    "Secretary-like visibility is supplied by deterministic status projection rather than Ollama or another model-maintained Bureau lane."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-08T17:20:00Z",
+    "source_decision": "Ollama remains outside Bureau core after local model inventory and synthetic Bureau-rule probe.",
+    "does_not_establish": [
+      "ollama_model_quality",
+      "runtime_correctness",
+      "merge_readiness",
+      "task_completion"
+    ]
+  }
+}

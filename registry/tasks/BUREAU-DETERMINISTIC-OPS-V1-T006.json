@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-DETERMINISTIC-OPS-V1-T006",
+  "initiative": "BUREAU-DETERMINISTIC-OPS-V1",
+  "title": "Extend deterministic secretary status projection",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 314
+  },
+  "goal": "Extend read-only status projection to provide the secretary-like overview without model-maintained Bureau state.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "projection-active-balls",
+      "assertion": "The projection includes per-repository active balls and blockers."
+    },
+    {
+      "id": "projection-next-actions",
+      "assertion": "The projection shows deterministic next safe actions derived from queue, registry, GitHub and state-store facts."
+    },
+    {
+      "id": "projection-no-authority",
+      "assertion": "The projection explicitly states it does not establish completion, merge readiness, runtime correctness or AI authority."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-08T17:20:00Z",
+    "source_plan": "docs/plans/bureau-deterministic-ops-v1.md",
+    "does_not_establish": [
+      "runtime_correctness",
+      "merge_readiness",
+      "task_completion"
+    ]
+  },
+  "depends_on": [
+    "BUREAU-DETERMINISTIC-OPS-V1-T001"
+  ]
+}

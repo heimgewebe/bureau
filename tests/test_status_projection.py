@@ -6,6 +6,7 @@ from pathlib import Path
 
 from bureau.cli import main
 from bureau.status_projection import (
+    AI_AUTHORITY_BOUNDARY,
     PROJECTION_DOES_NOT_ESTABLISH,
     STATUS_PROJECTION_SCHEMA_VERSION,
     status_projection,
@@ -141,6 +142,19 @@ def project(root: Path, **kwargs):
 
 def task_entry(projection: dict, task_id: str) -> dict:
     return next(item for item in projection["tasks"] if item["task_id"] == task_id)
+
+
+def test_status_projection_exposes_ai_authority_boundary(registry_factory) -> None:
+    root = registry_factory()
+    projection = project(root, state_root=root / "no-state")
+    assert projection["authority_boundary"]["ai"] == AI_AUTHORITY_BOUNDARY
+    assert projection["authority_boundary"]["ai"]["core_policy"] == "deterministic_only"
+    assert projection["authority_boundary"]["ai"]["llm_outputs"] == "advisory_only"
+    assert "queue_mutation" in projection["authority_boundary"]["ai"]["forbidden_effects"]
+    assert "task_verification" in projection["authority_boundary"]["ai"]["forbidden_effects"]
+    projection["authority_boundary"]["ai"]["forbidden_effects"].append("mutated")
+    assert "mutated" not in AI_AUTHORITY_BOUNDARY["forbidden_effects"]
+    assert "ai_authority" in projection["does_not_establish"]
 
 
 def test_registry_only_projection_keeps_unknowns_visible(registry_factory) -> None:

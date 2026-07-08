@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-DETERMINISTIC-OPS-V1-T003",
+  "initiative": "BUREAU-DETERMINISTIC-OPS-V1",
+  "title": "Enforce per-repository active ball guard",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 311
+  },
+  "goal": "Make repo-balls or status projection show one active ball per repository, with ambiguity and conflicts visible per repo rather than as one global bottleneck.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "repo-ball-projection",
+      "assertion": "A deterministic command or projection lists every known repository with active, none, blocked or ambiguous ball status."
+    },
+    {
+      "id": "same-repo-conflict",
+      "assertion": "Two active write balls for the same repository are reported as a blocker."
+    },
+    {
+      "id": "multi-repo-parallelism",
+      "assertion": "Independent repositories may each have one active ball without being collapsed into a single global active ball."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-08T17:20:00Z",
+    "source_plan": "docs/plans/bureau-deterministic-ops-v1.md",
+    "does_not_establish": [
+      "runtime_correctness",
+      "merge_readiness",
+      "task_completion"
+    ]
+  },
+  "depends_on": [
+    "BUREAU-DETERMINISTIC-OPS-V1-T001"
+  ]
+}

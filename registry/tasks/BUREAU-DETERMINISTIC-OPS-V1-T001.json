@@ -64,7 +64,11 @@
       "ai_authority",
       "ollama_model_quality",
       "gemini_scan_quality"
-    ]
+    ],
+    "verification": {
+      "task_sha256": "cb29c16335100bcf818ad0285e65355e79c217da20125bd9de224856a08b4cbc",
+      "plan_sha256": "aa19d4a7661b4b6bc802c78a3edd836713242f0c65e76926ae05f90344f975da"
+    }
   },
   "depends_on": []
 }

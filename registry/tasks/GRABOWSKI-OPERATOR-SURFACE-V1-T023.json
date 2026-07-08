@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "state": "planned",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T004"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 430
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T023",
+  "title": "Add verified recall source adapters",
+  "goal": "Extend operator recall beyond caller-supplied references by adding explicit source adapters that can verify receipts, PRs, Bureau tasks and friction records before marking recall source authenticity as proven.",
+  "metadata": {
+    "phase": "operator-recall-followup",
+    "effect": "verified_source_refs",
+    "source": "deferred from PR #116 hardening; PR #116 intentionally remains caller_supplied_unverified",
+    "non_goal": "Does not create a persistent recall store or change Bureau/GitHub state."
+  },
+  "acceptance": [
+    {
+      "id": "verified-receipts",
+      "assertion": "Receipt references are verified against bounded local receipt evidence with hash/path checks before evidence_authenticity can be claimed."
+    },
+    {
+      "id": "verified-prs",
+      "assertion": "PR references are verified against live GitHub read-only PR view/check data with head/repo/number binding and explicit freshness metadata."
+    },
+    {
+      "id": "verified-bureau-tasks",
+      "assertion": "Bureau task references are verified against registry task files without inferring completion unless verification fields are present."
+    },
+    {
+      "id": "verified-friction-records",
+      "assertion": "Friction event references are verified against the bounded friction log or exported friction summary without rewriting raw events."
+    },
+    {
+      "id": "non-claims",
+      "assertion": "Unverified sources remain labelled caller_supplied_unverified and cannot silently upgrade to current_truth."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover verified source, stale source, missing source, malformed source and mixed verified/unverified export."
+    }
+  ]
+}

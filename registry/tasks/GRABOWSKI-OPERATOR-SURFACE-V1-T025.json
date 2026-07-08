@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "state": "planned",
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T004"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 450
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T025",
+  "title": "Add Heimlern offline recall consumer",
+  "goal": "Add a proposal-only offline adapter that lets heimlern consume operator recall exports for learning proposals without changing live routing or operator policy.",
+  "metadata": {
+    "phase": "operator-recall-followup",
+    "effect": "heimlern_offline_proposals",
+    "source": "deferred from PR #116; current PR only exposes offline_proposal_only boundary metadata",
+    "organs": [
+      "grabowski",
+      "heimlern"
+    ],
+    "non_goal": "Does not alter live routing, merge policy, task priority or runtime capabilities."
+  },
+  "acceptance": [
+    {
+      "id": "offline-input-contract",
+      "assertion": "Heimlern input contract accepts bounded recall exports and preserves source_trust/evidence_binding/non-claims."
+    },
+    {
+      "id": "proposal-only-output",
+      "assertion": "Adapter emits proposals only, never live routing_weight_adjustment or policy mutation."
+    },
+    {
+      "id": "evidence-linked",
+      "assertion": "Every proposal links back to recall evidence_refs and states what the evidence does not prove."
+    },
+    {
+      "id": "failure-safe",
+      "assertion": "Missing, malformed or unverified recall input produces no-op/degraded output, not speculative learning."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover valid recall export, unverified sources, malformed input and no live routing mutation."
+    }
+  ]
+}

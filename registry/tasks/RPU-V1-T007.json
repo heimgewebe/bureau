@@ -3,7 +3,7 @@
   "id": "RPU-V1-T007",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "Symbol index consumer wiring",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 47
@@ -49,13 +49,61 @@
     "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
     "registered_at": "2026-07-08T00:00:00Z",
     "does_not_establish": [
-      "runtime_correctness",
-      "test_sufficiency",
-      "review_completeness",
+      "call_graph_completeness",
+      "dependency_completeness",
+      "import_success",
+      "runtime_behavior",
+      "test_sufficiency_beyond_checked_scope",
+      "review_impact",
       "merge_readiness",
-      "agent_quality_improvement_by_itself"
+      "source_truth",
+      "repo_understanding",
+      "answer_correctness",
+      "agent_quality_improvement"
     ],
-    "lenskit_local_task": "TASK-REPOBRIEF-SYMBOL-INDEX-CONSUMER-001"
+    "lenskit_local_task": "TASK-REPOBRIEF-SYMBOL-INDEX-CONSUMER-001",
+    "verified_at": "2026-07-08",
+    "outcome": "Implemented in Lenskit PR #917: existing Python AST Symbol Index is now registered as python_symbol_index_json in RepoBrief bundles, surfaced in Agent Reading Pack, included in availability/profile policy, searchable through read-only repobrief symbol search, and excluded from public-share profile output.",
+    "implementation_pr": "heimgewebe/lenskit#917",
+    "live_lenskit_commit": "d2198bc7f5b92f977556c821bab30297b3af027a",
+    "implementation_head": "f63f37010f6eb6f02b5bb454a6283c6afae80d93",
+    "diff_sha256": "ecac37d775cfc3e08e8dffa0b85147559bedafd4dfb17c9402d29422950e878e",
+    "implementation_paths": [
+      "merger/lenskit/core/constants.py",
+      "merger/lenskit/core/merge.py",
+      "merger/lenskit/core/repobrief_access.py",
+      "merger/lenskit/core/agent_reading_pack.py",
+      "merger/lenskit/core/repobrief_profiles.py",
+      "merger/lenskit/cli/cmd_repobrief.py",
+      "merger/lenskit/contracts/bundle-manifest.v1.schema.json",
+      "merger/lenskit/tests/test_repobrief_symbol_index_consumer.py",
+      "merger/lenskit/tests/test_bundle_manifest_integration.py",
+      "merger/lenskit/tests/test_agent_reading_pack.py",
+      "merger/lenskit/tests/test_repobrief_profiles.py",
+      "docs/proofs/repobrief-symbol-index-consumer-v1-proof.md"
+    ],
+    "validation": [
+      "Lenskit PR #917 GitHub CI passed: pytest-full, ruff, CodeQL, doc-freshness, planning-registration, anti-hallucination-lint, graph-model, graph-bundle-sources, lens-model, validates-schema-target-proof, forensic preflight canary, parity-gate, repo-root, templates, validate-merge-meta, webui-js-tests, reusable fixture validation and contract/static-security checks.",
+      "Local before merge: 231 symbol/RepoBrief/manifest/agent-pack/profile/preflight/latest-complete tests passed.",
+      "Local before merge: targeted ruff-ci check passed.",
+      "Local before merge: bundle-manifest and python-symbol-index schemas parsed with json.tool.",
+      "Local before merge: planning-registration ratchet reported no new drift.",
+      "Local before merge: doc-freshness inspect PASS.",
+      "Local before merge: git diff --check origin/main...HEAD passed.",
+      "Manual CLI smoke: snapshot create on tiny Python repo produced python_symbol_index_json; repobrief symbol search found ContextPlan and reported writes=[].",
+      "Manual public-share smoke: snapshot create removed python_symbol_index_json from manifest and artifact output.",
+      "Post-merge on origin/main d2198bc7f5b92f977556c821bab30297b3af027a: same 231 tests passed, targeted ruff passed, schemas parsed, planning-registration no new drift, doc-freshness PASS and diff-check pass."
+    ],
+    "verified_acceptance": {
+      "rpu-v1-t007-artifact-registration": "python_symbol_index_json is a bundle-manifest role with contract python-symbol-index/v1, authority navigation_index, canonicality derived, risk_class navigation, regenerable and staleness_sensitive. Availability/profile policy includes the role; public-share excludes it.",
+      "rpu-v1-t007-consumer-access": "repobrief symbol search reads an existing python_symbol_index_json artifact and returns symbol id, kind, name, qualified_name, module, path, source lines and range_ref without importing or executing target code.",
+      "rpu-v1-t007-agent-surface": "Agent Reading Pack includes SYMBOL_INDEX guidance and a CLI hint when the artifact is present.",
+      "rpu-v1-t007-non-claims": "Proof, Agent Reading Pack and search output state that symbol records do not prove call graph completeness, dependency completeness, import success, runtime behavior, test sufficiency, review impact, merge readiness, source truth, repo understanding or answer correctness."
+    },
+    "verification": {
+      "task_sha256": "6fccf3246c81e67ed1fa44051a5087028fa4e9ec09f7d200ab2ec7690fc439e6",
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015"
+    }
   },
   "depends_on": [
     "RBV1-T016",

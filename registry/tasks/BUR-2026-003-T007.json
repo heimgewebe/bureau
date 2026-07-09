@@ -3,7 +3,7 @@
   "id": "BUR-2026-003-T007",
   "initiative": "BUR-2026-003",
   "title": "Minimal what-now",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 70
@@ -53,7 +53,41 @@
   "metadata": {
     "planning_slice": "bureau-runtime-and-repo-orchestration-v1",
     "created_from_plan": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
-    "operator_lab_run": "not applicable — planning task definition only"
+    "operator_lab_run": "not applicable — planning task definition only",
+    "verification": {
+      "verified_at": "2026-07-09T18:45:00Z",
+      "source": "local_worktree",
+      "repo": "heimgewebe/bureau",
+      "branch": "feat/bur-2026-003-t007-what-now",
+      "implementation_diff_sha256": "8cc4405414913dcc6f66741fcbed69a35cc10b2e4e58b4dcdedbce12f7653cd5",
+      "self_review": "docs/reports/bur-2026-003-t007-what-now-self-review.md",
+      "scope": [
+        "read-only bureau what-now CLI command",
+        "operator-eligible ranking distinct from strict claim eligibility",
+        "hard blocker visibility and blocker summary",
+        "registry/runtime-only ranking contract with no chat memory dependency",
+        "documentation and regression tests"
+      ],
+      "validation": [
+        "PYTHONPATH=$PWD/src python -m pytest tests/test_v2.py::test_what_now_ranks_eligible_tasks_from_registry_truth tests/test_v2.py::test_what_now_explains_blockers_when_no_task_is_eligible tests/test_v2.py::test_what_now_treats_planned_review_before_effect_as_operator_eligible tests/test_v2.py::test_what_now_cli_is_read_only_and_json_emits_ranked_answer passed: 4 tests",
+        "PYTHONPATH=$PWD/src python -m pytest passed: 452 tests",
+        "PYTHONPATH=$PWD/src ruff check src tests passed",
+        "PYTHONPATH=$PWD/src python -m bureau.cli --root . check passed",
+        "PYTHONPATH=$PWD/src python -m bureau.cli --root . --json doctor reported healthy=true",
+        "git diff --check passed",
+        "smoke what-now selected BUR-2026-003-T007 with claim_eligible=false and soft review-before-effect reasons"
+      ],
+      "does_not_establish": [
+        "claim authority",
+        "workspace creation",
+        "dispatch authority",
+        "merge readiness",
+        "queue mutation beyond removing verified T007 from next lane",
+        "complete modeling of every future ranking concern"
+      ],
+      "task_sha256": "930aa37ef1a6134005f782737be727eebd86d82f70b9bbde27139ad69869ebb6",
+      "plan_sha256": "bcc1fd0ae4a05f70066a0b1f1d573cc21add0a824489ab0a23ba76d48904f1bf"
+    }
   },
   "depends_on": [
     "BUR-2026-003-T001"

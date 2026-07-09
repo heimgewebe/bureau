@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "REPOBRIEF-FRONTDOOR-GROUNDING-V1",
   "title": "RepoBrief Frontdoor and Grounding Verifier v1",
-  "state": "active",
-  "commitment": "next",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Turn RepoBrief's existing evidence, required-reading, query and MCP surfaces into an agent-facing ask frontdoor and deterministic grounding-verifier workflow without adding mutation, review or truth authority to RepoBrief core.",
   "current_plan": {
     "repository": "bureau",
@@ -48,15 +48,14 @@
       "RBAW-V1-T005"
     ],
     "does_not_establish": [
-      "truth",
-      "semantic_correctness",
-      "completeness",
-      "repo_understood",
       "runtime_correctness",
+      "semantic_answer_correctness",
       "test_sufficiency",
       "review_completeness",
-      "merge_readiness",
-      "security_correctness"
-    ]
+      "security_correctness",
+      "future_regression_absence"
+    ],
+    "completed_at": "2026-07-09T10:23:10Z",
+    "completion_summary": "RBGV-V1-T001 through RBGV-V1-T009 verified. Lenskit PRs #931-#939 implemented contracts, verifier core, task-profile integration, ask frontdoor, ask CLI, ask evaluation, MCP read-only frontdoor, delta invalidation and History Lens."
   }
 }

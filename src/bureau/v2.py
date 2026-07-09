@@ -16,6 +16,7 @@ from typing import Any
 
 from . import legacy
 from .adapters import AdapterRegistry
+from .approval import explicit_operator_approval, require_approval, task_approval_contract
 from .rlens_policy import (
     evaluate_task_rlens_policy,
     rlens_policy_block_reason,
@@ -1531,6 +1532,7 @@ class Dispatcher(legacy.Dispatcher):
             "closure_bridge": closure_bridge,
             "queue_lane": self._queue_lane(task.id),
             "claim_resources": [claim.resource for claim in task.claims],
+            "approval_contract": task_approval_contract(task.raw),
             "reasons": reasons,
         }
 
@@ -1880,8 +1882,21 @@ class Dispatcher(legacy.Dispatcher):
         if brief_gate is not None:
             result["agent_brief"] = {**brief_gate, "status": "valid"}
         if dispatch:
+            dispatch_approval = require_approval(
+                "agent_dispatch",
+                explicit_operator_approval(
+                    source="cli --dispatch",
+                    approved=True,
+                    reviewer=worker_id,
+                    reference=run["run_id"],
+                ),
+            )
             if task.mode != "grabowski-task":
-                result["dispatch"] = {"status": "not-applicable", "mode": task.mode}
+                result["dispatch"] = {
+                    "status": "not-applicable",
+                    "mode": task.mode,
+                    "approval": dispatch_approval,
+                }
             else:
                 adapter = self.adapters.get("grabowski-task")
                 if adapter is None:
@@ -1893,6 +1908,7 @@ class Dispatcher(legacy.Dispatcher):
                         "status": "existing",
                         "system": run["external_system"],
                         "external_id": run["external_id"],
+                        "approval": dispatch_approval,
                     }
                 else:
                     self.store.prepare_dispatch(run["run_id"], adapter.system)
@@ -1911,6 +1927,7 @@ class Dispatcher(legacy.Dispatcher):
                         "status": "started",
                         "system": adapter.system,
                         "external_id": external_id,
+                        "approval": dispatch_approval,
                     }
         return result
 

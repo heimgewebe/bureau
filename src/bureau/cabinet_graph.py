@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from .approval import explicit_operator_approval, require_approval
+
 DEFAULT_GRAPH_PATH = Path.home() / "repos/cabinet/steuerung/10 Lage/ecosystem-graph.json"
 
 
@@ -254,6 +256,10 @@ def promote_frontier_candidate(
     _validate_frontier_export(export)
     if not approve:
         raise CabinetGraphError("promotion requires explicit --approve")
+    approval = require_approval(
+        "task_creation_from_external_evidence",
+        explicit_operator_approval(source="cli --approve", approved=approve),
+    )
     target_proof = target_proof.strip()
     if not target_proof:
         raise CabinetGraphError("promotion requires non-empty target proof")
@@ -322,6 +328,7 @@ def promote_frontier_candidate(
         "kind": "cabinet_frontier_promotion",
         "mode": "proposal_only",
         "approved": True,
+        "approval": approval,
         "dispatchAllowed": False,
         "queueMutationAllowed": False,
         "taskCreationAllowed": False,

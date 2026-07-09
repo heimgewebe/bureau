@@ -290,6 +290,40 @@
     "execution": {
       "additionalProperties": true,
       "properties": {
+        "approval": {
+          "additionalProperties": false,
+          "properties": {
+            "action_class": {
+              "enum": [
+                "read_only_observation",
+                "proposal_preview",
+                "repository_mutation",
+                "source_import",
+                "agent_dispatch",
+                "task_creation_from_external_evidence",
+                "queue_mutation",
+                "runtime_mutation"
+              ]
+            },
+            "note": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "required_level": {
+              "enum": [
+                "none",
+                "operator",
+                "reviewed_plan",
+                "reviewed_receipt",
+                "break_glass"
+              ]
+            }
+          },
+          "required": [
+            "action_class"
+          ],
+          "type": "object"
+        },
         "argv": {
           "items": {
             "type": "string"

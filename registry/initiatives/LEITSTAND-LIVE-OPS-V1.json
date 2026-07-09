@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "LEITSTAND-LIVE-OPS-V1",
   "title": "Leitstand live operations closeout",
-  "state": "waiting",
-  "commitment": "later",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Track the remaining operational closeout for the supervised Leitstand runtime after canonical HTTPS and runtime health became live: keep the root-persistent Caddyfile gap explicit while recording the completed DNS and health receipt work.",
   "current_plan": {
     "repository": "bureau",
@@ -28,14 +28,21 @@
       "canonical_https_root": "HTTP/2 200 via Caddy on 2026-07-08T18:39:15Z",
       "canonical_https_health": "leitstand_runtime_health_receipt status ok on 2026-07-08T18:39:15Z"
     },
-    "remaining_gaps": [
-      "Caddy route is present in live Caddy Admin API config and protected by leitstand-caddy-reapply.timer, but not persisted into /etc/caddy/Caddyfile because sudo is blocked for the current Grabowski execution context by no_new_privileges."
-    ],
+    "remaining_gaps": [],
     "does_not_establish": [
       "public_internet_exposure",
       "leitstand_execution_authority",
-      "root_caddyfile_persistence",
-      "caddy_restart_persistence_without_reapply"
-    ]
+      "external_network_reachability"
+    ],
+    "completed_at": "2026-07-09T02:27:49Z",
+    "completion_evidence": {
+      "caddyfile_sha256": "69fb54d514c7f8c32e431427c19fed7ecc664e5930fabc6b3df15bbca663d1fa",
+      "caddyfile_path": "/etc/caddy/Caddyfile",
+      "backup_path": "/etc/caddy/Caddyfile.bak-leitstand-20260709T022709Z",
+      "caddy_service": "active after restart",
+      "reapply_timer": "disabled and inactive",
+      "root_smoke": "HTTP/2 200 for https://leitstand.heimgewebe.home.arpa/",
+      "health_smoke": "leitstand_runtime_health_receipt status ok for https://leitstand.heimgewebe.home.arpa/health"
+    }
   }
 }

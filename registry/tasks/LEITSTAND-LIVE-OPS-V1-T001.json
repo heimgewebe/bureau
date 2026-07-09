@@ -3,7 +3,7 @@
   "id": "LEITSTAND-LIVE-OPS-V1-T001",
   "initiative": "LEITSTAND-LIVE-OPS-V1",
   "title": "Persist Leitstand Caddy ingress in root config",
-  "state": "blocked",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 10
@@ -47,8 +47,6 @@
   ],
   "metadata": {
     "blocked_at": "2026-07-08T18:39:00Z",
-    "blocker": "The current Grabowski execution context on heim-pc has no_new_privileges set, so sudo -n cannot modify /etc/caddy/Caddyfile. Live Caddy already contains the Leitstand route and leitstand-caddy-reapply.timer keeps it present, but that is not the same as root-owned Caddyfile persistence.",
-    "current_mitigation": "leitstand-caddy-reapply.timer is active and idempotently ensures the live Caddy Admin API route exists.",
     "live_evidence": {
       "caddy_admin_route": "route for host leitstand.heimgewebe.home.arpa present in /config/apps/http/servers/srv0/routes on 2026-07-08",
       "canonical_https_root": "HTTP/2 200 via Caddy on 2026-07-08T18:39:15Z",
@@ -56,10 +54,68 @@
       "sudo_probe": "sudo: no_new_privileges prevents privilege escalation in current Grabowski execution context"
     },
     "does_not_establish": [
-      "root_caddyfile_persistence",
-      "route_survives_caddy_restart_without_reapply",
-      "public_access",
+      "public_internet_exposure",
+      "external_network_reachability",
       "leitstand_mutation_authority"
-    ]
+    ],
+    "verified_at": "2026-07-09T02:27:49Z",
+    "outcome": "Root-owned Caddyfile persistence for leitstand.heimgewebe.home.arpa is now established: /etc/caddy/Caddyfile contains the host block, Caddy validated and restarted successfully, the user-level reapply timer was stopped/disabled, and canonical HTTPS root plus /health smokes passed without the reapply timer.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "config_file_probe",
+          "target": "/etc/caddy/Caddyfile",
+          "result": "contains leitstand.heimgewebe.home.arpa block with reverse_proxy 127.0.0.1:3000 and tls internal",
+          "sha256": "69fb54d514c7f8c32e431427c19fed7ecc664e5930fabc6b3df15bbca663d1fa",
+          "observed_at": "2026-07-09T02:27:49Z"
+        },
+        {
+          "kind": "service_restart_probe",
+          "target": "caddy.service",
+          "result": "active after sudo systemctl restart caddy",
+          "observed_at": "2026-07-09T02:27:16Z"
+        },
+        {
+          "kind": "timer_probe",
+          "target": "leitstand-caddy-reapply.timer",
+          "result": "disabled and inactive during successful smokes",
+          "observed_at": "2026-07-09T02:27:49Z"
+        },
+        {
+          "kind": "http_probe",
+          "target": "https://leitstand.heimgewebe.home.arpa/",
+          "result": "HTTP/2 200 via Caddy after Caddy restart with reapply timer disabled",
+          "observed_at": "2026-07-09T02:27:49Z"
+        },
+        {
+          "kind": "runtime_probe",
+          "target": "https://leitstand.heimgewebe.home.arpa/health",
+          "result": "leitstand_runtime_health_receipt status ok, git head 52825f4af4693b652f4cffc06297463a93a7ee0e, bureau snapshot ok, checkout snapshot ok",
+          "observed_at": "2026-07-09T02:27:49Z"
+        }
+      ]
+    },
+    "validation": [
+      "sudo cp /etc/caddy/Caddyfile /etc/caddy/Caddyfile.bak-leitstand-20260709T022709Z -> passed",
+      "sudo caddy fmt --overwrite /etc/caddy/Caddyfile -> passed",
+      "sudo caddy validate --config /etc/caddy/Caddyfile -> Valid configuration",
+      "systemctl --user stop leitstand-caddy-reapply.timer leitstand-caddy-reapply.service -> passed",
+      "sudo systemctl restart caddy -> passed",
+      "sudo systemctl --no-pager --plain is-active caddy -> active",
+      "systemctl --user is-enabled leitstand-caddy-reapply.timer -> disabled",
+      "systemctl --user is-active leitstand-caddy-reapply.timer leitstand-caddy-reapply.service -> inactive/inactive",
+      "curl -k -I https://leitstand.heimgewebe.home.arpa/ -> HTTP/2 200",
+      "curl -kfsS https://leitstand.heimgewebe.home.arpa/health -> leitstand_runtime_health_receipt status ok"
+    ],
+    "verified_acceptance": {
+      "config-persisted": "/etc/caddy/Caddyfile contains a root-owned leitstand.heimgewebe.home.arpa site block with reverse_proxy 127.0.0.1:3000 and tls internal; file sha256 69fb54d514c7f8c32e431427c19fed7ecc664e5930fabc6b3df15bbca663d1fa.",
+      "reload-smoke": "After Caddy restart with leitstand-caddy-reapply.timer stopped/disabled, canonical HTTPS root returned HTTP/2 200 and /health returned status ok."
+    },
+    "verification": {
+      "task_sha256": "09e93c62f38789179f4bbfff7b74e12c989cb0903db7775f1b901ae05b5757a2",
+      "plan_sha256": "f91a1c386d504325502def8539cc00838c169b36183b98516766614c275f8dd6"
+    }
   }
 }

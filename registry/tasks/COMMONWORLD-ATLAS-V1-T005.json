@@ -3,7 +3,7 @@
   "id": "COMMONWORLD-ATLAS-V1-T005",
   "initiative": "COMMONWORLD-ATLAS-V1",
   "title": "Document governance and weltgewebe handoff boundary",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 70
@@ -50,7 +50,70 @@
   ],
   "metadata": {
     "repo": "heimgewebe/commonworld",
-    "plan": "docs/blueprints/commonworld-masterplan.md"
+    "plan": "docs/blueprints/commonworld-masterplan.md",
+    "implementation_prs": [
+      "heimgewebe/commonworld#12",
+      "heimgewebe/commonworld#13",
+      "heimgewebe/commonworld#21"
+    ],
+    "implementation_heads": [
+      "57d3d8ae02dcb1ff20f244d543f0006dc22e0b32",
+      "c02ae64a5f56b4758e89f9772b9489616ba7d859",
+      "1466a4fe6aa091618b0140431ce9a57eada0b775"
+    ],
+    "implementation_merge_commits": [
+      "1b9d6a9473ef9ace183ecd7d73bede330c8444f5",
+      "4882c8f86d35e997c60857a60cc110778d9375a9",
+      "97be07608931f6db47cae15b261b19c78376d238"
+    ],
+    "verified_at": "2026-07-09",
+    "implementation_paths": [
+      "docs/blueprints/source-curation-policy.md",
+      "docs/blueprints/weltgewebe-handoff-contract.md",
+      "docs/blueprints/commonproject-projection-contract.md",
+      "contracts/commonworld/project.schema.json",
+      "scripts/validate_source_curation_policy.py",
+      "scripts/validate_weltgewebe_handoff_contract.py",
+      "scripts/validate_projection_contract.py",
+      "tests/test_source_curation_policy.py",
+      "tests/test_weltgewebe_handoff_contract.py",
+      "tests/test_projection_contract.py",
+      "tests/test_contracts.py"
+    ],
+    "validated_acceptance": {
+      "source-policy": "PR #13 defines source classes and curation states, distinguishes fixture/candidate/curated/archived entries, and validates source/license/provenance requirements.",
+      "privacy-policy": "PR #12 and the current CommonProject schema define map/aether/profile projections and location privacy modes; validators enforce hidden/approximate/exact and disabled handoff profile states.",
+      "handoff-contract": "PR #21 defines the weltgewebe handoff as read-only, disabled by default, requiring explicit project identity, URL, curated state and neutral labels before any enabled handoff."
+    },
+    "validation": [
+      "Commonworld PR #12 merged as 1b9d6a9473ef9ace183ecd7d73bede330c8444f5 with make validate / 50 tests.",
+      "Commonworld PR #13 merged as 4882c8f86d35e997c60857a60cc110778d9375a9 with make validate / 62 tests.",
+      "Commonworld PR #21 merged as 97be07608931f6db47cae15b261b19c78376d238 with make validate / 99 tests.",
+      "Current Commonworld main still carries source curation, projection and handoff validators/tests."
+    ],
+    "does_not_establish": [
+      "backend_readiness",
+      "public_submission_readiness",
+      "account_system_readiness",
+      "weltgewebe_write_path",
+      "runtime_correctness",
+      "future_merge_readiness",
+      "legal_license_sufficiency"
+    ],
+    "verification": {
+      "task_sha256": "3e1950d14d4632c34fd3dcb3d6006824b8778b9f5ee0ea39e45255d4471cfdc0",
+      "plan_sha256": "37e27f4919329addeee583330b0168ea472b468e6d80cadb2559ef0d10f10b2d",
+      "implementation_prs": [
+        "heimgewebe/commonworld#12",
+        "heimgewebe/commonworld#13",
+        "heimgewebe/commonworld#21"
+      ],
+      "implementation_merge_commits": [
+        "1b9d6a9473ef9ace183ecd7d73bede330c8444f5",
+        "4882c8f86d35e997c60857a60cc110778d9375a9",
+        "97be07608931f6db47cae15b261b19c78376d238"
+      ]
+    }
   },
   "depends_on": [
     "COMMONWORLD-ATLAS-V1-T001"

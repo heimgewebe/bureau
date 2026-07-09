@@ -3,9 +3,7 @@
   "queue_policy": "skip-blocked",
   "lanes": {
     "now": [],
-    "next": [
-      "COMMONWORLD-ATLAS-V1-T005"
-    ],
+    "next": [],
     "later": [
       "RPU-V1-T012",
       "RPU-V1-T013",

@@ -25,18 +25,18 @@ Approval levels are typed capabilities, not a pure numeric ladder. `reviewed_pla
 
 The implementation is `bureau.approval`.
 
-- `approval_decision(action_class, evidence)` returns a deterministic allow/block object.
-- `require_approval(action_class, evidence)` raises before any effect when the action is missing approval, has an unknown action class, has `approved=false`, or has insufficient level.
+- `approval_decision(action_class, evidence, expected_reference=...)` returns a deterministic allow/block object.
+- `require_approval(action_class, evidence, expected_reference=...)` raises before any effect when the action is missing approval, has an unknown action class, has `approved=false`, has insufficient level, or carries the wrong source reference.
 - `task_approval_contract(task)` infers the conservative task-level action class when no explicit `execution.approval` is declared.
 
-Unknown action classes fail closed. This is intentional: a new effect must be classified before it can be automated.
+Unknown action classes fail closed. This is intentional: a new effect must be classified before it can be automated. Approval records may carry `reference`, `task_id`, and `scope`; when callers provide expected values, mismatches fail closed.
 
 ## Current integration points
 
-- Agent dispatch through `checkout-next --dispatch` records an `agent_dispatch` approval decision tied to the explicit CLI flag.
-- Cabinet bridge and Cabinet frontier previews record `task_creation_from_external_evidence` approval evidence when `--approve` is supplied.
-- Reviewed Cabinet Frontier import uses the reviewed receipt as `source_import` approval when `--apply` writes a task file.
-- Queue reconcile apply uses the reviewed plan as `queue_mutation` approval.
+- Agent dispatch through `checkout-next --dispatch` records an `agent_dispatch` approval decision tied to the explicit CLI flag and current run id.
+- Cabinet bridge and Cabinet frontier previews record `task_creation_from_external_evidence` approval evidence when `--approve` is supplied and bind it to the proposed task id.
+- Reviewed Cabinet Frontier import uses the reviewed receipt as `source_import` approval when `--apply` writes a task file and binds approval to the receipt path.
+- Queue reconcile apply uses the reviewed plan as `queue_mutation` approval and binds approval to the reviewed plan path.
 
 ## Operator Relay compatibility
 

@@ -524,14 +524,19 @@ def import_reviewed_frontier_candidate(
     candidate = _object(row.get("candidate"), "frontier candidate")
     reviewer = _text(receipt.get("reviewer"), "frontier receipt reviewer")
     approval = None
+    receipt_reference = str(Path(receipt_path).expanduser())
     if apply:
         approval = require_approval(
             "source_import",
             reviewed_receipt_approval(
                 reviewer=reviewer,
-                reference=str(Path(receipt_path).expanduser()),
+                reference=receipt_reference,
                 approved=True,
+                task_id=task_id,
+                scope="source_import",
             ),
+            expected_reference=receipt_reference,
+            task_id=task_id,
         )
     task = _task_from_frontier_candidate(
         candidate,

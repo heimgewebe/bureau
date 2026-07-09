@@ -254,19 +254,29 @@ def promote_frontier_candidate(
     and never dispatches work. The returned task is a review-before-effect draft.
     """
     _validate_frontier_export(export)
+    target_proof = target_proof.strip()
+    task_id = task_id.strip()
+    initiative = initiative.strip()
+    if not target_proof:
+        raise CabinetGraphError("promotion requires non-empty target proof")
+    if not task_id:
+        raise CabinetGraphError("promotion requires task id")
+    if not initiative:
+        raise CabinetGraphError("promotion requires initiative id")
     if not approve:
         raise CabinetGraphError("promotion requires explicit --approve")
     approval = require_approval(
         "task_creation_from_external_evidence",
-        explicit_operator_approval(source="cli --approve", approved=approve),
+        explicit_operator_approval(
+            source="cli --approve",
+            approved=approve,
+            reference=task_id,
+            task_id=task_id,
+            scope="task_creation_from_external_evidence",
+        ),
+        expected_reference=task_id,
+        task_id=task_id,
     )
-    target_proof = target_proof.strip()
-    if not target_proof:
-        raise CabinetGraphError("promotion requires non-empty target proof")
-    if not task_id.strip():
-        raise CabinetGraphError("promotion requires task id")
-    if not initiative.strip():
-        raise CabinetGraphError("promotion requires initiative id")
 
     candidates = _expect_list(export.get("candidates"), "Cabinet frontier export candidates")
     selected = None

@@ -1884,7 +1884,11 @@ class Dispatcher(legacy.Dispatcher):
                     approved=True,
                     reviewer=worker_id,
                     reference=run["run_id"],
+                    task_id=run["task_id"],
+                    scope="repository_mutation",
                 ),
+                expected_reference=run["run_id"],
+                task_id=run["task_id"],
             )
             run = create_workspace(self.registry, self.store, run["run_id"], base_dir)
         handoff = grabowski_handoff(self.registry, self.store, run["run_id"])
@@ -1901,7 +1905,11 @@ class Dispatcher(legacy.Dispatcher):
                     approved=True,
                     reviewer=worker_id,
                     reference=run["run_id"],
+                    task_id=run["task_id"],
+                    scope="agent_dispatch",
                 ),
+                expected_reference=run["run_id"],
+                task_id=run["task_id"],
             )
             if task.mode != "grabowski-task":
                 result["dispatch"] = {

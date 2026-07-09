@@ -3,7 +3,7 @@
   "id": "RBGV-V1-T006",
   "initiative": "REPOBRIEF-FRONTDOOR-GROUNDING-V1",
   "title": "Add ask gold-query evaluation",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 84
@@ -80,7 +80,40 @@
       "security_correctness"
     ],
     "unblocked_by": "RBGV-V1-T005 verified via Lenskit PR #935; RBV1-T017 already verified.",
-    "selected_after": "RBGV-V1-T005"
+    "selected_after": "RBGV-V1-T005",
+    "outcome": "Implemented by Lenskit PR #936: repobrief ask-eval gold-query evaluator with metrics, miss taxonomy and conservative promotion gate.",
+    "implemented_by": {
+      "repository": "lenskit",
+      "pull_request": 936,
+      "merge_commit": "710791073f074b48722895239ef58b9e44bd961b",
+      "head_commit": "8c6918786bbb37ca3ea81462dd7a4f8fec56e1aa"
+    },
+    "verified_acceptance": {
+      "rbgv-v1-t006-goldset": "docs/retrieval/repobrief_ask_goldset.v1.example.json and test_repobrief_ask_eval.py define expected paths/citation IDs.",
+      "rbgv-v1-t006-metrics": "repobrief_ask_eval.py reports citation_coverage, required_reading_coverage, expected_path_recall, mrr_at_k and miss_taxonomy; tests cover report shape.",
+      "rbgv-v1-t006-promotion-gate": "promotion_gate requires no regression and positive measurement advantage against baseline; test_evaluate_ask_goldset_promotion_gate_with_baseline_advantage.",
+      "rbgv-v1-t006-nonclaims": "report does_not_establish includes no retrieval_quality_sufficient/default_promotion_safe and proof/self-review state no answer correctness or repo understanding."
+    },
+    "verification": {
+      "verified_at": "2026-07-09T09:36:36Z",
+      "checks": [
+        "Lenskit PR #936 CI all green before merge",
+        "diff saved before merge to /home/alex/iCloud/Drive/halde/lenskit-pr936.patch",
+        "local focused tests green"
+      ],
+      "patch_sha256": "8be7e1bfd61a86d0fcfe7f411c17ee4f4edcb141b8a38ea7c18ae0f91f6039bd",
+      "does_not_establish": [
+        "answer_correctness",
+        "repository_understanding",
+        "review_completeness",
+        "retrieval_quality_sufficiency",
+        "default_promotion_safety",
+        "runtime_correctness",
+        "security_correctness"
+      ],
+      "task_sha256": "1c63c5577fbf5e647e9d9d8ade81fd9275f86807ba1c188c995ab8d6223e8260",
+      "plan_sha256": "6e596079b33433e77ca945330a51c7a8d80595913062beba82a73d8a93832b5d"
+    }
   },
   "depends_on": [
     "RBGV-V1-T005",

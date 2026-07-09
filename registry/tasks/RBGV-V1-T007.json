@@ -5,8 +5,8 @@
   "title": "Expose MCP read-only frontdoor",
   "state": "planned",
   "priority": {
-    "lane": "later",
-    "rank": 225
+    "lane": "next",
+    "rank": 83
   },
   "goal": "Expose ask context build and answer grounding verify over MCP after CLI/Core semantics are stable.",
   "execution": {
@@ -78,7 +78,9 @@
       "review_completeness",
       "merge_readiness",
       "security_correctness"
-    ]
+    ],
+    "unblocked_by": "RBGV-V1-T006 verified via Lenskit PR #936; dependencies RBGV-V1-T003, RBGV-V1-T005 and RBV1-T010 are verified.",
+    "selected_after": "RBGV-V1-T006"
   },
   "depends_on": [
     "RBGV-V1-T005",

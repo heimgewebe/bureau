@@ -6,7 +6,6 @@
       "RPU-V1-T015",
       "RPU-V1-T017",
       "RPU-V1-T018",
-      "RPU-V1-T020",
       "RPU-V1-T021",
       "RBV1-T018",
       "RBAW-V1-T004",
@@ -54,7 +53,9 @@
       "OPERATOR-PC-HYGIENE-V1-T004",
       "OPERATOR-PC-HYGIENE-V1-T005"
     ],
-    "next": [],
+    "next": [
+      "RPU-V1-T020"
+    ],
     "now": []
   },
   "queue_policy": "skip-blocked",

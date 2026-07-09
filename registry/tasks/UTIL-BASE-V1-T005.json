@@ -3,7 +3,7 @@
   "id": "UTIL-BASE-V1-T005",
   "initiative": "UTIL-BASE-V1",
   "title": "Create LocalSend transfer path",
-  "state": "blocked",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 305
@@ -49,15 +49,16 @@
     "registered_at": "2026-07-09T02:58:00Z",
     "source_request": "Evaluate every interesting utility tool and register the resulting plan in Bureau.",
     "does_not_establish": [
-      "internet_exposure_safety_beyond_localhost",
-      "long_term_backup_policy_correctness",
       "all_document_import_quality",
-      "real_device_localsend_transfer",
       "beszel_monitored_system_configured",
-      "easyeffects_profile_quality"
+      "easyeffects_profile_quality",
+      "internet_exposure_safety_beyond_localhost",
+      "localsend_remote_transfer_quality",
+      "long_term_backup_policy_correctness"
     ],
     "tools": [
-      "localsend"
+      "localsend",
+      "tailscale-taildrop"
     ],
     "verified_at": "2026-07-09",
     "implementation_pr": "heimgewebe/infra#107",
@@ -77,21 +78,44 @@
       "scripts/utilities/restic_restore_probe.sh"
     ],
     "validation": [
-      "Service smoke on 2026-07-09 reported Backrest 200, Beszel 200, Stirling PDF 200 and Paperless 302.",
-      "Paperless README accidental import was removed; final Paperless counts are documents=1, tags=17, document_types=12, correspondents=13.",
-      "Paperless export command heim-paperless-export completed successfully at 2026-07-09T10:55:25+02:00.",
-      "Local restic utility backup command heim-restic-backup-local completed successfully and produced snapshot b9332c01 at 2026-07-09 10:55:28.",
-      "Systemd user timers heim-paperless-export.timer and heim-restic-backup-local.timer are enabled with next runs on 2026-07-10.",
-      "LocalSend inbox and Paperless consume handoff paths exist: ~/Incoming/LocalSend and ~/Incoming/LocalSend/paperless-consume.",
-      "EasyEffects profile planning evidence exists at ~/.local/share/heim-utilities/easyeffects/profile-plan.md; no profile was blindly activated.",
-      "Beszel HTTP smoke returned 200 and database has users=1 and _externalAuths=1, but systems=0, system_stats=0 and container_stats=0."
+      "LocalSend Flatpak remains installed with ~/Incoming/LocalSend and paperless-consume handoff prepared.",
+      "LocalSend remote transfer was not accepted: the Flatpak GUI did not expose a working LocalSend API/port from the tested operator context.",
+      "User chose Taildrop as replacement remote device-transfer path.",
+      "User executed sudo tailscale set --operator=alex locally on heim-pc.",
+      "tailscale file get --verbose --conflict=rename ~/Incoming/Taildrop returned moved 0/0 files with rc 0 as alex after operator setup.",
+      "heim-taildrop-inbox.service is enabled and active as a systemd user service.",
+      "PC-to-iPad tailscale file cp probe returned rc 0.",
+      "iPad-to-PC Taildrop transfer delivered gg.md into ~/Incoming/Taildrop at 2026-07-09T19:13:59+02:00.",
+      "A repeat iPad-to-PC transfer delivered gg (1).md into ~/Incoming/Taildrop at 2026-07-09T19:14:34+02:00.",
+      "Both received proof files are 4 bytes and have SHA-256 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08."
     ],
-    "runtime_evidence": "heimgewebe/infra runtime/local-utility-endstate-2026-07-09.md and heimgewebe/heim-pc runtime/software-inventory.md after utility end-state refresh",
-    "blocked_at": "2026-07-09",
-    "blocked_reason": "localsend-device-smoke-required",
-    "blocked_details": "LocalSend Flatpak is installed; ~/Incoming/LocalSend and ~/Incoming/LocalSend/paperless-consume exist; heim-localsend-open exists. Acceptance still requires an actual iPad or Samsung A54 transfer smoke, or a future device-side blocker note.",
-    "partial_outcome": "Transfer path is prepared and Paperless consume handoff is documented, but end-to-end device transfer is not proven.",
-    "status_corrected_at": "2026-07-09T09:55:30Z"
+    "runtime_evidence": "heimgewebe/infra runtime/local-utility-endstate-2026-07-09.md and heimgewebe/heim-pc runtime/software-inventory.md after Taildrop transfer closeout",
+    "status_corrected_at": "2026-07-09T17:18:00Z",
+    "acceptance_override": {
+      "original_tool": "LocalSend",
+      "accepted_transfer_path": "Tailscale Taildrop",
+      "reason": "The user accepted Taildrop after LocalSend remote transfer timed out and LocalSend did not expose a working receiver port from the tested PC context.",
+      "local_lan_localsend_status": "prepared_only",
+      "remote_transfer_status": "verified"
+    },
+    "transfer_acceptance": {
+      "path": "taildrop",
+      "inbox": "~/Incoming/Taildrop",
+      "service": "heim-taildrop-inbox.service",
+      "pc_to_ipad": "rc=0",
+      "ipad_to_pc_files": [
+        "gg.md",
+        "gg (1).md"
+      ],
+      "received_sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+    },
+    "verification": {
+      "task_sha256": "feed497aef7890e38105bcaab24c1253ee0fe1211f2e48a010de3fdd82988ebf",
+      "plan_sha256": "b7cfba2a62e364bcd6d07747f68eb82ac11f4ba9a25c9aef4a62bf9ee0631596",
+      "verified_at": "2026-07-09",
+      "source": "taildrop-transfer-closeout",
+      "source_ref": "heimgewebe/infra runtime/local-utility-endstate-2026-07-09.md and heimgewebe/heim-pc runtime/software-inventory.md after Taildrop transfer closeout"
+    }
   },
   "depends_on": []
 }

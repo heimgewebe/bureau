@@ -3,7 +3,7 @@
   "id": "UTIL-BASE-V1-T003",
   "initiative": "UTIL-BASE-V1",
   "title": "Pilot Beszel monitoring before Grafana",
-  "state": "blocked",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 303
@@ -57,7 +57,6 @@
       "long_term_backup_policy_correctness",
       "all_document_import_quality",
       "real_device_localsend_transfer",
-      "beszel_monitored_system_configured",
       "easyeffects_profile_quality"
     ],
     "tools": [
@@ -82,22 +81,32 @@
       "scripts/utilities/restic_restore_probe.sh"
     ],
     "validation": [
-      "Service smoke on 2026-07-09 reported Backrest 200, Beszel 200, Stirling PDF 200 and Paperless 302.",
-      "Paperless README accidental import was removed; final Paperless counts are documents=1, tags=17, document_types=12, correspondents=13.",
-      "Paperless export command heim-paperless-export completed successfully at 2026-07-09T10:55:25+02:00.",
-      "Local restic utility backup command heim-restic-backup-local completed successfully and produced snapshot b9332c01 at 2026-07-09 10:55:28.",
-      "Systemd user timers heim-paperless-export.timer and heim-restic-backup-local.timer are enabled with next runs on 2026-07-10.",
-      "LocalSend inbox and Paperless consume handoff paths exist: ~/Incoming/LocalSend and ~/Incoming/LocalSend/paperless-consume.",
-      "EasyEffects profile planning evidence exists at ~/.local/share/heim-utilities/easyeffects/profile-plan.md; no profile was blindly activated.",
-      "Beszel HTTP smoke returned 200 and database has users=1 and _externalAuths=1, but systems=0, system_stats=0 and container_stats=0."
+      "Beszel hub HTTP smoke returned 200 on 2026-07-09.",
+      "Agent container heim-util-beszel-agent is running from henrygd/beszel-agent:latest.",
+      "Agent log reports WebSocket connected host=127.0.0.1:8090.",
+      "WAL-aware read-only Beszel database check reports systems=1, system_stats>=44, container_stats>=44, containers=11, system_details=1.",
+      "Monitored system row is name=heim-pc, host=/beszel_socket/beszel.sock, status=up.",
+      "Screenshot from Beszel UI shows heim-pc with CPU, memory, disk, GPU, load, network and temperature columns populated."
     ],
-    "runtime_evidence": "heimgewebe/infra runtime/local-utility-endstate-2026-07-09.md and heimgewebe/heim-pc runtime/software-inventory.md after utility end-state refresh",
-    "blocked_at": "2026-07-09",
-    "blocked_reason": "beszel-monitored-system-missing",
-    "blocked_details": "Beszel serves HTTP 200 and has users=1 plus _externalAuths=1, but its local database still has systems=0, system_stats=0 and container_stats=0. Acceptance requires a monitored heim-pc system with CPU/RAM/disk/network and Docker/container state where available.",
-    "partial_outcome": "Beszel activation/auth prerequisite is present; monitoring evidence is still missing.",
-    "status_corrected_at": "2026-07-09T09:55:30Z",
-    "status_correction_reason": "Beszel login/OAuth activation is present, but monitored-system acceptance is not met."
+    "runtime_evidence": "heimgewebe/infra runtime/local-utility-endstate-2026-07-09.md and heimgewebe/heim-pc runtime/software-inventory.md after Beszel monitoring closeout",
+    "status_corrected_at": "2026-07-09T16:12:00Z",
+    "monitoring_acceptance": {
+      "system": "heim-pc",
+      "host": "/beszel_socket/beszel.sock",
+      "status": "up",
+      "systems": 1,
+      "system_stats_min": 44,
+      "container_stats_min": 44,
+      "containers": 11,
+      "system_details": 1
+    },
+    "verification": {
+      "task_sha256": "96e5b1e435e31c39a371d8a451e49c32388b5efccdfbe956db46965ce95970f2",
+      "plan_sha256": "b7cfba2a62e364bcd6d07747f68eb82ac11f4ba9a25c9aef4a62bf9ee0631596",
+      "verified_at": "2026-07-09",
+      "source": "beszel-monitoring-closeout",
+      "source_ref": "heimgewebe/infra runtime/local-utility-endstate-2026-07-09.md and heimgewebe/heim-pc runtime/software-inventory.md after Beszel monitoring closeout"
+    }
   },
   "depends_on": []
 }

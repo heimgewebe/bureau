@@ -255,6 +255,9 @@
     },
     "rlens_context_policy": {
       "$ref": "#/$defs/rlens_policy_evaluation"
+    },
+    "runtime_truth": {
+      "type": "object"
     }
   },
   "required": [

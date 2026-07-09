@@ -1434,6 +1434,7 @@ class Dispatcher(legacy.Dispatcher):
         store: StateStore,
         adapters: AdapterRegistry | None = None,
         open_pr_reservations_provider: Callable[[Registry], list[legacy.Reservation]] | None = None,
+        enforce_runtime_gate: bool = False,
     ):
         super().__init__(registry, store)
         self.registry = registry
@@ -1442,6 +1443,25 @@ class Dispatcher(legacy.Dispatcher):
         self.open_pr_reservations_provider = (
             open_pr_reservations_provider or open_pull_request_reservations
         )
+        self.enforce_runtime_gate = enforce_runtime_gate
+
+    def _runtime_execution_truth(self) -> dict[str, Any]:
+        report = runtime_drift_check(
+            self.registry.root, state_db=self.store.path, state_root=self.store.state_root
+        )
+        return _runtime_execution_truth(report)
+
+    def _runtime_execution_stop(
+        self, *, command: str, runtime_truth: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        if self.enforce_runtime_gate and runtime_truth.get("execution_blocked") is True:
+            return {
+                "status": "runtime-drift-blocked",
+                "command": command,
+                "detail": "Bureau checkout drift blocks Steuerboard execution.",
+                "runtime_truth": runtime_truth,
+            }
+        return None
 
     def _open_pr_reservations(self, *, strict: bool) -> list[legacy.Reservation]:
         # Retain strict for call-site compatibility. Observation failures are
@@ -1669,6 +1689,12 @@ class Dispatcher(legacy.Dispatcher):
         resource: str | None = None,
     ) -> dict[str, Any]:
         self._validate_resource_filter(resource)
+        runtime_truth = self._runtime_execution_truth()
+        runtime_stop = self._runtime_execution_stop(
+            command="claim-next", runtime_truth=runtime_truth
+        )
+        if runtime_stop is not None:
+            return runtime_stop
         if reconcile_first:
             self.reconcile()
         self.store.register_worker(worker_id, kind, capabilities)
@@ -1688,6 +1714,7 @@ class Dispatcher(legacy.Dispatcher):
                     return {
                         "status": "existing-assignment",
                         "resource": resource,
+                        "runtime_truth": runtime_truth,
                         "run": self.store.public_run(current),
                         "envelope": json.loads(current["envelope_json"]),
                     }
@@ -1750,6 +1777,7 @@ class Dispatcher(legacy.Dispatcher):
                 "claims": [claim.as_dict() for claim in selected.claims],
                 "plan": initiative.current_plan,
                 "baseline_commit": baseline,
+                "runtime_truth": runtime_truth,
             }
             rlens_context_policy = evaluate_task_rlens_policy(selected.raw)
             envelope["rlens_context_policy"] = rlens_context_policy
@@ -1802,6 +1830,7 @@ class Dispatcher(legacy.Dispatcher):
         return {
             "status": "claimed",
             "resource": resource,
+            "runtime_truth": runtime_truth,
             "run": run,
             "envelope": envelope,
             "envelope_path": str(self.store.envelope_path(run["run_id"])),
@@ -1817,6 +1846,12 @@ class Dispatcher(legacy.Dispatcher):
         resource: str | None = None,
     ) -> dict[str, Any]:
         self._validate_resource_filter(resource)
+        runtime_truth = self._runtime_execution_truth()
+        runtime_stop = self._runtime_execution_stop(
+            command="checkout-next", runtime_truth=runtime_truth
+        )
+        if runtime_stop is not None:
+            return runtime_stop
         reconciliation = self.reconcile()
         claimed = self.claim_next(
             worker_id,
@@ -1825,6 +1860,8 @@ class Dispatcher(legacy.Dispatcher):
             reconcile_first=False,
             resource=resource,
         )
+        if claimed.get("status") == "runtime-drift-blocked":
+            return claimed
         run = claimed["run"]
         task = self.registry.tasks[run["task_id"]]
         brief_gate: dict[str, Any] | None = None
@@ -3155,6 +3192,69 @@ def _runtime_status(findings: list[dict[str, Any]]) -> str:
     if "warning" in severities:
         return "warning"
     return "ok"
+
+
+_RUNTIME_EXECUTION_BLOCK_CODES = {
+    "checkout-dirty",
+    "checkout-status-unreadable",
+    "head-differs-origin-main",
+}
+
+
+def _runtime_execution_truth(report: dict[str, Any]) -> dict[str, Any]:
+    checkout = report.get("checkout") if isinstance(report, dict) else {}
+    if not isinstance(checkout, dict):
+        checkout = {}
+    findings = report.get("findings") if isinstance(report, dict) else []
+    if not isinstance(findings, list):
+        findings = []
+    blocker_findings = [
+        item
+        for item in findings
+        if isinstance(item, dict)
+        and (
+            item.get("code") in _RUNTIME_EXECUTION_BLOCK_CODES
+            or (
+                item.get("severity") == "blocker"
+                and item.get("code") != "checkout-not-git"
+            )
+        )
+    ]
+    available = checkout.get("available") is True
+    execution_blocked = available and bool(blocker_findings)
+    if not available:
+        drift_classification = "not-git"
+        gate_status = "not-applicable"
+    elif execution_blocked:
+        drift_classification = "blocked"
+        gate_status = "blocked"
+    elif checkout.get("dirty") is False and checkout.get("head_equals_origin_main") is True:
+        drift_classification = "clean"
+        gate_status = "clear"
+    else:
+        drift_classification = "warning"
+        gate_status = "clear"
+    return {
+        "schema_version": 1,
+        "read_only": True,
+        "gate": "steering-runtime-preflight",
+        "status": gate_status,
+        "execution_blocked": execution_blocked,
+        "drift_classification": drift_classification,
+        "blocker_codes": [str(item.get("code")) for item in blocker_findings],
+        "checkout": {
+            "available": checkout.get("available"),
+            "root": checkout.get("root"),
+            "branch": checkout.get("branch"),
+            "head": checkout.get("head"),
+            "base": checkout.get("origin_main"),
+            "head_equals_base": checkout.get("head_equals_origin_main"),
+            "dirty": checkout.get("dirty"),
+            "dirty_paths": checkout.get("dirty_paths", []),
+        },
+        "runtime_status": report.get("status") if isinstance(report, dict) else None,
+        "findings": findings,
+    }
 
 
 def runtime_drift_check(

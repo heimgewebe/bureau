@@ -459,7 +459,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         store = StateStore(state_path, state_root)
         adapter_registry = adapters(args)
-        dispatcher = Dispatcher(registry, store, adapter_registry)
+        dispatcher = Dispatcher(registry, store, adapter_registry, enforce_runtime_gate=True)
         if args.command == "status":
             value = {
                 **registry.summary(),
@@ -526,6 +526,9 @@ def main(argv: list[str] | None = None) -> int:
                     args.kind,
                     resource=args.resource,
                 )
+                if value.get("status") == "runtime-drift-blocked":
+                    emit(value, args.json)
+                    return 2
             except NoEligibleTask as exc:
                 value = {
                     "status": "no-eligible-task",
@@ -547,6 +550,9 @@ def main(argv: list[str] | None = None) -> int:
                     args.dispatch,
                     resource=args.resource,
                 )
+                if value.get("status") == "runtime-drift-blocked":
+                    emit(value, args.json)
+                    return 2
             except NoEligibleTask as exc:
                 value = {
                     "status": "no-eligible-task",

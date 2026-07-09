@@ -77,19 +77,21 @@
       "scripts/utilities/restic_restore_probe.sh"
     ],
     "validation": [
-      "Infra PR #107 GitHub CI validate passed.",
-      "Local make validate passed in /home/alex/repos/.infra-worktrees/util-base-implementation-v1.",
-      "scripts/utilities/heim-utilities-smoke.sh reported Backrest, Beszel, Stirling PDF, Paperless, Atuin, Difftastic, rga and LocalSend OK.",
-      "Restic util-base-v1 snapshot and single-file restore probe passed.",
-      "Paperless imported synthetic PDF document id 1 and indexed content containing UTIL-BASE-V1.",
-      "Stirling PDF converted the probe PDF to text and merged two copies into a 2-page PDF.",
-      "Docling 2.111.0 converted the probe PDF to Markdown and JSON with UTIL-BASE-V1 content."
+      "Service smoke on 2026-07-09 reported Backrest 200, Beszel 200, Stirling PDF 200 and Paperless 302.",
+      "Paperless README accidental import was removed; final Paperless counts are documents=1, tags=17, document_types=12, correspondents=13.",
+      "Paperless export command heim-paperless-export completed successfully at 2026-07-09T10:55:25+02:00.",
+      "Local restic utility backup command heim-restic-backup-local completed successfully and produced snapshot b9332c01 at 2026-07-09 10:55:28.",
+      "Systemd user timers heim-paperless-export.timer and heim-restic-backup-local.timer are enabled with next runs on 2026-07-10.",
+      "LocalSend inbox and Paperless consume handoff paths exist: ~/Incoming/LocalSend and ~/Incoming/LocalSend/paperless-consume.",
+      "EasyEffects profile planning evidence exists at ~/.local/share/heim-utilities/easyeffects/profile-plan.md; no profile was blindly activated.",
+      "Beszel HTTP smoke returned 200 and database has users=1 and _externalAuths=1, but systems=0, system_stats=0 and container_stats=0."
     ],
-    "runtime_evidence": "heimgewebe/infra runtime/local-utility-baseline-2026-07-09.md at 17eb12f437ee2eaca4002f22c102b16743982b41",
+    "runtime_evidence": "heimgewebe/infra runtime/local-utility-endstate-2026-07-09.md and heimgewebe/heim-pc runtime/software-inventory.md after utility end-state refresh",
     "blocked_at": "2026-07-09",
     "blocked_reason": "localsend-device-smoke-required",
-    "blocked_details": "LocalSend user Flatpak is installed and local inbox exists, but cross-device transfer requires iPad or Samsung A54 interaction.",
-    "partial_outcome": "Infrastructure/runtime prerequisite is present, but acceptance requires user/UI/device/audio interaction that should not be automated blindly."
+    "blocked_details": "LocalSend Flatpak is installed; ~/Incoming/LocalSend and ~/Incoming/LocalSend/paperless-consume exist; heim-localsend-open exists. Acceptance still requires an actual iPad or Samsung A54 transfer smoke, or a future device-side blocker note.",
+    "partial_outcome": "Transfer path is prepared and Paperless consume handoff is documented, but end-to-end device transfer is not proven.",
+    "status_corrected_at": "2026-07-09T09:55:30Z"
   },
   "depends_on": []
 }

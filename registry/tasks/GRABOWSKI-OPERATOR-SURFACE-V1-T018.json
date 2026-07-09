@@ -1,0 +1,62 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The helper never fills PASS, clean findings, or terminal triage without explicit operator-provided review content.",
+      "id": "no-auto-pass"
+    },
+    {
+      "assertion": "The helper refreshes and verifies current PR head and diff hash before writing completed evidence.",
+      "id": "head-diff-refresh"
+    },
+    {
+      "assertion": "Completed evidence is written create-only or with explicit stale-evidence archival; existing evidence is not silently overwritten.",
+      "id": "create-only"
+    },
+    {
+      "assertion": "Tests cover stale template rejection, missing operator review content, create-only behavior and successful completed-evidence validation.",
+      "id": "tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T013"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Add a safe helper that guides creation of completed self-review evidence from a template without auto-claiming that review was performed.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T018",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation_complete",
+      "runtime_deployed",
+      "merge_readiness",
+      "review_gate_policy_change"
+    ],
+    "effect": "operator_workflow_hardening",
+    "phase": "review-gate-followup",
+    "reason": "A helper may reduce manual JSON errors, but automatic evidence generation would be self-deceptive if folded into PR #111.",
+    "related_pr": "heimgewebe/grabowski#111",
+    "source": "Grabowski PR #111 review follow-up"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 180
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Add guided self-review evidence authoring"
+}

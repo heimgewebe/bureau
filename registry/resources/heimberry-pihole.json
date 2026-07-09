@@ -1,0 +1,9 @@
+{
+  "id": "host.heimberry.pihole",
+  "metadata": {
+    "boundary": "Pi-hole DNS service on heimberry"
+  },
+  "parent": "host.heimberry",
+  "schema_version": 1,
+  "type": "service"
+}

@@ -1,9 +1,5 @@
 {
-  "schema_version": 1,
-  "queue_policy": "skip-blocked",
   "lanes": {
-    "now": [],
-    "next": [],
     "later": [
       "RPU-V1-T012",
       "RPU-V1-T013",
@@ -37,6 +33,12 @@
       "BUR-2026-005-T017",
       "CABINET-GEMINI-MAINT-V1-T005",
       "LSV-V1-T002",
+      "WELTGEWEBE-PUBLIC-LOGIN-OPS-V1-T001",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T027",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T015",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T016",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T017",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T018",
       "GRABOWSKI-OPERATOR-SURFACE-V1-T019",
       "GRABOWSKI-OPERATOR-SURFACE-V1-T020",
       "GRABOWSKI-OPERATOR-SURFACE-V1-T021",
@@ -57,7 +59,16 @@
       "UTIL-BASE-V1-T009",
       "UTIL-BASE-V1-T010",
       "UTIL-BASE-V1-T011",
-      "UTIL-BASE-V1-T012"
-    ]
-  }
+      "UTIL-BASE-V1-T012",
+      "OPERATOR-PC-HYGIENE-V1-T001",
+      "OPERATOR-PC-HYGIENE-V1-T002",
+      "OPERATOR-PC-HYGIENE-V1-T003",
+      "OPERATOR-PC-HYGIENE-V1-T004",
+      "OPERATOR-PC-HYGIENE-V1-T005"
+    ],
+    "next": [],
+    "now": []
+  },
+  "queue_policy": "skip-blocked",
+  "schema_version": 1
 }

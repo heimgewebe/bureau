@@ -1,0 +1,8 @@
+{
+  "grabowski_key": "repo:/home/alex/repos/weltgewebe",
+  "id": "repo.weltgewebe",
+  "parent": "repo",
+  "path": "/home/alex/repos/weltgewebe",
+  "schema_version": 1,
+  "type": "git-repository"
+}

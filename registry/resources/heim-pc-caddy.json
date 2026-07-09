@@ -1,0 +1,9 @@
+{
+  "id": "host.heim-pc.caddy",
+  "metadata": {
+    "boundary": "Caddy service/configuration surface on Heim-PC"
+  },
+  "parent": "host.heim-pc",
+  "schema_version": 1,
+  "type": "service"
+}

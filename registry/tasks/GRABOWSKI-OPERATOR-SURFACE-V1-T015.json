@@ -1,0 +1,62 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The CI job can evaluate PR review-gate state without leaking private evidence contents or requiring mutable operator secrets.",
+      "id": "ci-boundary"
+    },
+    {
+      "assertion": "The design clearly defines which evidence can be committed, uploaded, or referenced and how stale evidence is detected.",
+      "id": "evidence-inputs"
+    },
+    {
+      "assertion": "A rollout plan explains when the status can become required and how high-critical platform review remains enforced.",
+      "id": "required-check-plan"
+    },
+    {
+      "assertion": "Tests or workflow validation cover missing evidence, stale head/diff, green evidence and red evidence paths.",
+      "id": "tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T013"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Design and implement a safe CI status-check path for the PR review gate so merge readiness is visible as a required check rather than only a local operator command.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T015",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation_complete",
+      "runtime_deployed",
+      "merge_readiness",
+      "review_gate_policy_change"
+    ],
+    "effect": "ci_policy_visibility",
+    "phase": "review-gate-followup",
+    "reason": "CI integration is useful but distinct from the local gate hardening in PR #111.",
+    "related_pr": "heimgewebe/grabowski#111",
+    "source": "Grabowski PR #111 review follow-up"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 150
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Run review gate as CI status"
+}

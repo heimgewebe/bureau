@@ -1,0 +1,62 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Document which attacker or accident scenarios signing would mitigate and which it would not.",
+      "id": "threat-model"
+    },
+    {
+      "assertion": "Compare local key signing, Sigstore-style approaches and repository-bound hash manifests.",
+      "id": "options"
+    },
+    {
+      "assertion": "Produce a concrete recommendation: implement, defer, or reject, with rollout cost and operational burden.",
+      "id": "recommendation"
+    },
+    {
+      "assertion": "Does not weaken current head/diff binding or make unsigned current evidence silently acceptable if signing is adopted.",
+      "id": "non-goal"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T013"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Evaluate whether Grabowski review evidence should be signed or otherwise provenance-bound beyond head/diff SHA-256 binding.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T016",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation_complete",
+      "runtime_deployed",
+      "merge_readiness",
+      "review_gate_policy_change"
+    ],
+    "effect": "evidence_provenance_design",
+    "phase": "review-gate-followup",
+    "reason": "Cryptographic evidence signing is potentially useful but too large and policy-heavy for the current gate hardening patch.",
+    "related_pr": "heimgewebe/grabowski#111",
+    "source": "Grabowski PR #111 review follow-up"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 160
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Evaluate signed review evidence"
+}

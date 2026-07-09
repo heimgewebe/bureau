@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-PC-HYGIENE-V1",
+  "title": "Heim-PC operator hygiene follow-ups",
+  "state": "active",
+  "commitment": "later",
+  "goal": "Close the remaining Heim-PC service hygiene gaps found in the 2026-07-08 live audit without weakening Operator Relay boundaries or making blind runtime claims.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "live-audit-2026-07-08-chat"
+  },
+  "completion": [
+    "Broken cloud mounts either reconnect cleanly or remain disabled without restart loops.",
+    "Grabowski operator watchdog probes are non-disruptive and cannot restart a healthy live MCP service because of transient probe failures.",
+    "Privileged stale-systemd cleanup has a narrow broker-mediated path or a documented manual path.",
+    "Wide Heim-PC listeners are classified as intentional, LAN-only, Tailnet-only, localhost-only or removed."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-08T16:10:19Z",
+    "source": "Live Heim-PC service audit from ChatGPT/Grabowski on 2026-07-08",
+    "does_not_establish": [
+      "runtime_correctness",
+      "security_correctness",
+      "firewall_correctness",
+      "cloud_auth_repaired",
+      "all_ports_safe"
+    ]
+  }
+}

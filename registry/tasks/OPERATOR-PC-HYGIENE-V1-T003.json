@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-PC-HYGIENE-V1-T003",
+  "initiative": "OPERATOR-PC-HYGIENE-V1",
+  "title": "Add narrow stale systemd cleanup privilege",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 203
+  },
+  "goal": "Provide a narrow fail-closed privileged path, or explicit manual runbook, for clearing stale failed systemd unit state such as user@111.service without broad sudo.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "operator-pc-hygiene-v1-t003-1",
+      "assertion": "The privileged path cannot restart, stop, enable, disable or edit arbitrary services."
+    },
+    {
+      "id": "operator-pc-hygiene-v1-t003-2",
+      "assertion": "It can only clear failed state for an explicitly allowed target or class after read-only status checks."
+    },
+    {
+      "id": "operator-pc-hygiene-v1-t003-3",
+      "assertion": "The Heim-PC audit can clear stale user@111.service without granting general sudo, or the runbook records the exact manual command."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-08T16:10:19Z",
+    "source_audit": "2026-07-08 Heim-PC service hygiene audit",
+    "does_not_establish": [
+      "runtime_correctness",
+      "security_correctness",
+      "merge_readiness"
+    ],
+    "live_audit_finding": "system systemd remained degraded because user@111.service stale fail could not be reset without sudo; broker had no reset-failed action."
+  },
+  "depends_on": []
+}

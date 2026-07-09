@@ -1,0 +1,63 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Self-review, external-review and Claude evidence objects have documented schema models or generated JSON Schemas with strict field boundaries.",
+      "id": "schema-models"
+    },
+    {
+      "assertion": "Existing evidence loaders validate through the schema layer and preserve current failure messages or clearer equivalents.",
+      "id": "loader-integration"
+    },
+    {
+      "assertion": "Existing schema_version 1 evidence remains supported or has an explicit migration path.",
+      "id": "migration-boundary"
+    },
+    {
+      "assertion": "Tests cover valid evidence, missing required fields, wrong primitive types, stale head/diff binding and unknown-field behavior where policy requires strictness.",
+      "id": "tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T013"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Introduce explicit machine-validated schema models for Grabowski self-review, external review and Claude evidence without changing the current gate policy semantics.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T027",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation_complete",
+      "runtime_deployed",
+      "merge_readiness",
+      "review_gate_policy_change"
+    ],
+    "effect": "repository_hardening",
+    "phase": "review-gate-followup",
+    "reason": "Pydantic/JSON Schema modeling was intentionally deferred from PR #111 to avoid widening the gate hardening patch.",
+    "related_pr": "heimgewebe/grabowski#111",
+    "renumbered_from": "GRABOWSKI-OPERATOR-SURFACE-V1-T014 during rebase because main already contains verified T014",
+    "source": "Grabowski PR #111 review follow-up"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 145
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Model review evidence schemas"
+}

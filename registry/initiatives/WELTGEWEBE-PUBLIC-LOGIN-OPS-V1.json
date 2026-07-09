@@ -1,0 +1,36 @@
+{
+  "commitment": "later",
+  "completion": [
+    "Runtime JWT secret on wg-prod-1 is rotated through a redacted secret-safe path after the prior exposure.",
+    "SMTP credential presence is verified by metadata only and no secret values are stored in Bureau, GitHub or chat.",
+    "Public login is enabled only after readiness preflight passes with AUTH_LOG_MAGIC_TOKEN disabled.",
+    "A real Magic-Link delivery is confirmed externally without token leakage in logs."
+  ],
+  "current_plan": {
+    "path": "registry/initiatives/WELTGEWEBE-PUBLIC-LOGIN-OPS-V1.json",
+    "repository": "bureau"
+  },
+  "goal": "Track the remaining production-safe rollout work for SMTP-backed public Magic-Link login on wg-prod-1, including remediation of the exposed JWT runtime secret before login activation.",
+  "id": "WELTGEWEBE-PUBLIC-LOGIN-OPS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "smtp_credentials_available",
+      "jwt_secret_rotated",
+      "public_login_enabled",
+      "mail_delivery_confirmed",
+      "runtime_correctness"
+    ],
+    "production_host": "wg-prod-1",
+    "registered_at": "2026-07-08T17:15:00Z",
+    "repo": "heimgewebe/weltgewebe",
+    "safety_boundary": "No public login activation until SMTP delivery is configured, JWT runtime secret is rotated, readiness preflight passes, and external delivery is confirmed. No secret values in Bureau, GitHub or chat.",
+    "source_issue": "heimgewebe/weltgewebe#1370",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "schema_version": 1,
+  "state": "active",
+  "title": "Weltgewebe public login production rollout safety"
+}

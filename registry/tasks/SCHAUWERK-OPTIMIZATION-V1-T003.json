@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "initiative": "SCHAUWERK-OPTIMIZATION-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SCHAUWERK-OPTIMIZATION-V1-T001"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09",
+    "source_request": "Schauwerk optimization todo",
+    "does_not_establish": [
+      "live_miro_acceptance",
+      "issue_8_closure",
+      "sw009_live_apply_readiness"
+    ]
+  },
+  "id": "SCHAUWERK-OPTIMIZATION-V1-T003",
+  "title": "Consolidate receipt validation helpers",
+  "priority": {
+    "lane": "later",
+    "rank": 30
+  },
+  "goal": "Reduce duplicated SW-003 receipt validation code by introducing shared helper checks for digest binding, source receipt digests, live-apply blockade and local-only boundaries.",
+  "acceptance": [
+    {
+      "id": "dedupe",
+      "assertion": "Common validation helpers cover repeated digest and boundary checks without weakening existing tests."
+    },
+    {
+      "id": "tests-preserved",
+      "assertion": "Existing evaluation/status/review packet negative tests still pass."
+    },
+    {
+      "id": "no-semantic-expansion",
+      "assertion": "Refactor does not add live Miro access or live apply readiness."
+    }
+  ]
+}

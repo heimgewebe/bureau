@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "initiative": "SCHAUWERK-OPTIMIZATION-V1",
+  "state": "blocked",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SCHAUWERK-OPTIMIZATION-V1-T002"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09",
+    "source_request": "Schauwerk optimization todo",
+    "does_not_establish": [
+      "live_miro_acceptance",
+      "issue_8_closure",
+      "sw009_live_apply_readiness"
+    ],
+    "blocked_reason": "Requires accepted controlled SW-003 live proof before SW-009 live apply can reopen.",
+    "external_blocker": "heimgewebe/schauwerk#8 SW-003: Isolated Miro write proof"
+  },
+  "id": "SCHAUWERK-OPTIMIZATION-V1-T005",
+  "title": "Only after SW-003: reopen SW-009 live apply gate",
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "goal": "After a controlled SW-003 live proof is accepted, update SW-009 typed-region apply gating so live apply can be considered under strict preflight/snapshot/review/restore conditions.",
+  "acceptance": [
+    {
+      "id": "dependency",
+      "assertion": "Task remains blocked until SW-003 live proof is accepted."
+    },
+    {
+      "id": "strict-gate",
+      "assertion": "Any live apply readiness requires allowlisted scope, preflight, snapshot, review packet, restore plan and postflight receipt."
+    },
+    {
+      "id": "redaction",
+      "assertion": "Provider identifiers remain absent from public receipts."
+    }
+  ]
+}

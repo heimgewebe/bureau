@@ -5,8 +5,8 @@
   "title": "Implement minimal citation and range verifier",
   "state": "planned",
   "priority": {
-    "lane": "later",
-    "rank": 220
+    "lane": "next",
+    "rank": 88
   },
   "goal": "Implement a deterministic read-only verifier for declared citations and ranges against existing RepoBrief snapshot artifacts.",
   "execution": {
@@ -78,7 +78,9 @@
       "review_completeness",
       "merge_readiness",
       "security_correctness"
-    ]
+    ],
+    "unblocked_by": "RBGV-V1-T001 verified via Lenskit PR #931",
+    "selected_after": "RBGV-V1-T001"
   },
   "depends_on": [
     "RBGV-V1-T001"

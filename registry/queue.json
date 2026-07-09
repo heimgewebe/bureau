@@ -57,7 +57,6 @@
       "OPERATOR-PC-HYGIENE-V1-T004",
       "OPERATOR-PC-HYGIENE-V1-T005",
       "SCHAUWERK-OPTIMIZATION-V1-T005",
-      "RBGV-V1-T002",
       "RBGV-V1-T003",
       "RBGV-V1-T004",
       "RBGV-V1-T005",
@@ -68,7 +67,7 @@
     ],
     "next": [
       "SCHAUWERK-OPTIMIZATION-V1-T004",
-      "RBGV-V1-T001"
+      "RBGV-V1-T002"
     ],
     "now": []
   },

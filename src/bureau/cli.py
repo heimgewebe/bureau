@@ -119,6 +119,10 @@ def parser() -> argparse.ArgumentParser:
     explain = sub.add_parser("explain-next")
     explain.add_argument("--capability", action="append", default=[])
     explain.add_argument("--resource")
+    what_now = sub.add_parser("what-now")
+    what_now.add_argument("--capability", action="append", default=[])
+    what_now.add_argument("--resource")
+    what_now.add_argument("--limit", type=int, default=5)
     repo_balls = sub.add_parser("repo-balls")
     repo_balls.add_argument("--capability", action="append", default=[])
     claim = sub.add_parser("claim-next")
@@ -497,6 +501,10 @@ def main(argv: list[str] | None = None) -> int:
             value = dispatcher.frontier(set(args.capability), resource=args.resource)
         elif args.command == "explain-next":
             value = dispatcher.explain_next(set(args.capability), resource=args.resource)
+        elif args.command == "what-now":
+            value = dispatcher.what_now(
+                set(args.capability), resource=args.resource, limit=args.limit
+            )
         elif args.command == "repo-balls":
             value = dispatcher.repo_balls(set(args.capability))
         elif args.command == "queue-reconcile":

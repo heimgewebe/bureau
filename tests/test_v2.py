@@ -1477,6 +1477,107 @@ def test_explain_next_can_be_scoped_to_repository_resource(
         for item in explained["frontier"]
     )
 
+def test_what_now_ranks_eligible_tasks_from_registry_truth(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(3, mode="write")
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    result = dispatcher.what_now({"repository"}, limit=2)
+
+    assert result["selected"]["task_id"] == "BUR-TEST-001-T001"
+    assert [item["task_id"] for item in result["ranked_eligible"]] == [
+        "BUR-TEST-001-T001",
+        "BUR-TEST-001-T002",
+    ]
+    assert result["selected"]["rank_key"] == {
+        "lane_order": 0,
+        "queue_index": 0,
+        "task_rank": 0,
+        "task_id": "BUR-TEST-001-T001",
+    }
+    assert result["selected"]["claims"][0]["resource"] == "repo.alpha"
+    assert result["ranking_contract"]["does_not_use"] == [
+        "chat memory",
+        "informal plans",
+    ]
+
+
+def test_what_now_explains_blockers_when_no_task_is_eligible(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write")
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    result = dispatcher.what_now(set(), limit=3)
+
+    assert result["selected"] is None
+    assert result["ranked_eligible"] == []
+    assert result["runtime_truth"]["next_task_available"] is False
+    assert result["blocker_summary"]["total_blocked"] == 2
+    assert result["blocked"][0]["task_id"] == "BUR-TEST-001-T001"
+    assert result["blocked"][0]["missing_capabilities"] == ["repository"]
+    assert "missing capabilities: repository" in result["blocked"][0]["reasons"]
+
+
+def test_what_now_treats_planned_review_before_effect_as_operator_eligible(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["state"] = "planned"
+    task["priority"] = {"lane": "next", "rank": 10}
+    task["execution"]["policy"] = "review-before-effect"
+    task_path.write_text(json.dumps(task))
+    queue_path = root / "registry/queue.json"
+    queue = json.loads(queue_path.read_text())
+    queue["lanes"] = {"now": [], "next": [task["id"]], "later": []}
+    queue_path.write_text(json.dumps(queue))
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    result = dispatcher.what_now({"repository"})
+
+    assert result["selected"]["task_id"] == task["id"]
+    assert result["selected"]["eligible"] is True
+    assert result["selected"]["claim_eligible"] is False
+    assert result["selected"]["soft_reasons"] == [
+        "state is planned",
+        "execution is interactive-agent/review-before-effect",
+    ]
+    assert result["selected"]["blocker_reasons"] == []
+
+
+def test_what_now_cli_is_read_only_and_json_emits_ranked_answer(
+    registry_factory, tmp_path, monkeypatch, capsys
+):
+    root = registry_factory(1, mode="write")
+    state = tmp_path / "state"
+    monkeypatch.setenv("BUREAU_STATE_DIR", str(state))
+
+    result = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--json",
+            "what-now",
+            "--capability",
+            "repository",
+        ]
+    )
+    output = json.loads(capsys.readouterr().out)
+
+    assert result == 0
+    assert output["selected"]["task_id"] == "BUR-TEST-001-T001"
+    assert output["does_not_establish"] == [
+        "claim authority",
+        "workspace creation",
+        "dispatch authority",
+        "merge readiness",
+    ]
+    envelope_dir = state / "envelopes"
+    assert not envelope_dir.exists() or list(envelope_dir.iterdir()) == []
+
 
 def test_resource_scoped_claims_allow_one_ball_per_repository_with_scoped_workers(
     registry_factory, tmp_path, monkeypatch

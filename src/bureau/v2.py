@@ -2121,6 +2121,138 @@ class Dispatcher(legacy.Dispatcher):
             "runtime_truth": frontier_runtime_truth(frontier, lifecycle),
         }
 
+    @staticmethod
+    def _what_now_soft_reason(reason: str) -> bool:
+        return reason in {
+            "state is planned",
+            "execution is interactive-agent/review-before-effect",
+        }
+
+    def _what_now_task_card(
+        self, item: dict[str, Any], capabilities: set[str]
+    ) -> dict[str, Any]:
+        task = self.registry.tasks[item["task_id"]]
+        initiative = self.registry.initiatives[task.initiative]
+        position = self.registry.positions.get(task.id)
+        if position is None:
+            lane = None
+            queue_index = None
+            lane_order = len(legacy.LANE_ORDER)
+        else:
+            lane_order, queue_index = position
+            lane = item.get("queue_lane")
+        dependency_states = {
+            task_id: self.registry.tasks[task_id].state for task_id in task.depends_on
+        }
+        missing_capabilities = sorted(set(task.capabilities) - capabilities)
+        soft_reasons = [
+            reason for reason in item["reasons"] if self._what_now_soft_reason(reason)
+        ]
+        blocker_reasons = [
+            reason
+            for reason in item["reasons"]
+            if not self._what_now_soft_reason(reason)
+        ]
+        what_now_eligible = not blocker_reasons
+        return {
+            "task_id": task.id,
+            "title": task.title,
+            "rank_key": {
+                "lane_order": lane_order,
+                "queue_index": queue_index,
+                "task_rank": task.rank,
+                "task_id": task.id,
+            },
+            "priority": {"lane": task.lane, "rank": task.rank},
+            "queue_lane": lane,
+            "effective_state": item["effective_state"],
+            "initiative": {
+                "id": task.initiative,
+                "state": initiative.state,
+                "commitment": initiative.commitment,
+            },
+            "execution": {
+                "mode": task.mode,
+                "policy": task.policy,
+            },
+            "dependencies": dependency_states,
+            "missing_capabilities": missing_capabilities,
+            "claims": [claim.as_dict() for claim in task.claims],
+            "claim_resources": item["claim_resources"],
+            "eligible": what_now_eligible,
+            "claim_eligible": item["eligible"],
+            "soft_reasons": soft_reasons,
+            "blocker_reasons": blocker_reasons,
+            "reasons": item["reasons"],
+            "approval_contract": item.get("approval_contract"),
+        }
+
+    def what_now(
+        self,
+        capabilities: set[str],
+        *,
+        resource: str | None = None,
+        limit: int = 5,
+    ) -> dict[str, Any]:
+        """Return a compact, read-only answer to what should happen next.
+
+        The result is derived only from registry state, durable Bureau runtime
+        state and configured observations. It deliberately does not consult chat
+        memory or informal plans.
+        """
+        self._validate_resource_filter(resource)
+        frontier = self.frontier(capabilities, resource=resource)
+        lifecycle = lifecycle_diagnostics(self.registry, self.store)
+        runtime_truth = frontier_runtime_truth(frontier, lifecycle)
+        cards = [self._what_now_task_card(item, capabilities) for item in frontier]
+        ranked_eligible = [item for item in cards if item["eligible"]]
+        blocked = [item for item in cards if not item["eligible"]]
+        blocker_counts: dict[str, int] = {}
+        for item in blocked:
+            for reason in item["blocker_reasons"]:
+                blocker_counts[reason] = blocker_counts.get(reason, 0) + 1
+        selected = ranked_eligible[0] if ranked_eligible else None
+        return {
+            "schema_version": 1,
+            "resource": resource,
+            "capabilities": sorted(capabilities),
+            "selected": selected,
+            "ranked_eligible": ranked_eligible[: max(limit, 0)],
+            "blocked": blocked[: max(limit, 0)],
+            "blocker_summary": {
+                "total_blocked": len(blocked),
+                "reason_counts": dict(sorted(blocker_counts.items())),
+            },
+            "runtime_truth": runtime_truth,
+            "lifecycle": lifecycle,
+            "ranking_contract": {
+                "source": "registry truth plus Bureau runtime state",
+                "order": ["queue lane", "queue index", "task priority rank", "task id"],
+                "eligibility_inputs": [
+                    "registry state",
+                    "initiative state and commitment",
+                    "execution mode and policy",
+                    (
+                        "planned review-before-effect tasks are eligible for "
+                        "operator attention but not claimable"
+                    ),
+                    "required capabilities",
+                    "dependency states",
+                    "active runs and reservations",
+                    "resource claim conflicts",
+                    "open PR claim guard",
+                    "rlens policy",
+                ],
+                "does_not_use": ["chat memory", "informal plans"],
+            },
+            "does_not_establish": [
+                "claim authority",
+                "workspace creation",
+                "dispatch authority",
+                "merge readiness",
+            ],
+        }
+
     def repo_balls(self, capabilities: set[str]) -> dict[str, Any]:
         frontier = self.frontier(capabilities)
         lifecycle = lifecycle_diagnostics(self.registry, self.store)

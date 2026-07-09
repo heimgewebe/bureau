@@ -3,7 +3,7 @@
   "id": "BUR-2026-003-T004",
   "initiative": "BUR-2026-003",
   "title": "Approval path",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 40
@@ -53,7 +53,58 @@
   "metadata": {
     "planning_slice": "bureau-runtime-and-repo-orchestration-v1",
     "created_from_plan": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
-    "operator_lab_run": "not applicable — planning task definition only"
+    "operator_lab_run": "not applicable — planning task definition only",
+    "next_action": "closed; proceed to BUR-2026-003-T007",
+    "verified_at": "2026-07-09T19:29:02+02:00",
+    "implementation_branch": "bur-2026-003-t004-approval-path-v1",
+    "implementation_files": [
+      "src/bureau/approval_path.py",
+      "src/bureau/cli.py",
+      "tests/test_approval_path.py",
+      "docs/approval-path-v1.md"
+    ],
+    "implementation_evidence": {
+      "acceptance_mapping": {
+        "approval-classes-defined": "docs/approval-path-v1.md defines effect classes and required approval levels; src/bureau/approval_path.py encodes them deterministically.",
+        "gates-enforced": "evaluate_approval_path fails closed for missing, insufficient, mismatched, narrow-scope, unknown, and prohibited approvals; covered by tests/test_approval_path.py.",
+        "operator-relay-compatible": "approval evaluator is pure/read-only and returns a bounded decision object; docs/approval-path-v1.md records that it performs no mutation or dispatch."
+      },
+      "focused_tests": ".venv/bin/python -m pytest tests/test_approval_path.py tests/test_bureau.py -q -> 21 passed",
+      "full_tests": ".venv/bin/python -m pytest -> 446 passed",
+      "ruff": ".venv/bin/python -m ruff check src/bureau/approval_path.py tests/test_approval_path.py src/bureau/cli.py -> All checks passed",
+      "cli_block_check": "approval-path --task-id BUR-2026-003-T004 --effect repository_mutation --strict blocks without approval",
+      "cli_allow_check": "approval-path --task-id BUR-2026-003-T004 --effect repository_mutation --approval operator-task-scope --strict allows with matching operator approval",
+      "self_review": "PASS: approval path is pure and fail-closed; it introduces no queue, Git, dispatch, import, or runtime mutation authority. Runtime/source-import integration remains a future application point."
+    },
+    "registry_truth": {
+      "status": "satisfied",
+      "verified_at": "2026-07-09T19:29:02+02:00",
+      "evidence": [
+        {
+          "type": "test_run",
+          "task_id": "BUR-2026-003-T004",
+          "command": ".venv/bin/python -m pytest",
+          "command_sha256": "d68c65e57d2ebfea2296ce7cae6b0b3cc79fc40e5fdecf7121a331ef9c939fae",
+          "result": "446 passed in 38.10s"
+        },
+        {
+          "type": "lint_run",
+          "task_id": "BUR-2026-003-T004",
+          "command": ".venv/bin/python -m ruff check src/bureau/approval_path.py tests/test_approval_path.py src/bureau/cli.py",
+          "command_sha256": "81caf0cb936c3b518fa46c2edc789faa15fb8feaa4749ea3c506ede54873b85e",
+          "result": "All checks passed"
+        }
+      ]
+    },
+    "verification": {
+      "previous_task_sha256": "bb8a31b6d457df6eb1570396505348b32312f466abdf179cc1517c23b98a295d",
+      "approval_path_doc_sha256": "5cdb0a3559a97f9078bd4324a5634aab91d055d7b89f2197f8554c5819a49406",
+      "approval_path_module_sha256": "d97857cc44af5789f97d25cd016aed74cc102f2d0a23d6f3920dbfde9f3d1779",
+      "approval_path_tests_sha256": "4500eac40a101484751fb9bf7ff710f017bbce38f3f31a55988559793b60ae53",
+      "task_sha256": "0bbe3869259e717cdd7d0c75e03854086cc80c302991386821b030275f6b8ae0",
+      "plan_sha256": "bcc1fd0ae4a05f70066a0b1f1d573cc21add0a824489ab0a23ba76d48904f1bf"
+    },
+    "outcome": "Approval path v1 is implemented as a pure classifier/evaluator, CLI-visible, documented, and covered by fail-closed tests."
   },
   "depends_on": [
     "BUR-2026-003-T001"

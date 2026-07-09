@@ -76,6 +76,11 @@ def parser() -> argparse.ArgumentParser:
     rlens_policy = sub.add_parser("rlens-policy")
     rlens_policy.add_argument("--strict", action="store_true")
     rlens_policy.add_argument("--task-id")
+    approval_path = sub.add_parser("approval-path")
+    approval_path.add_argument("--task-id", required=True)
+    approval_path.add_argument("--effect", action="append", default=[])
+    approval_path.add_argument("--approval")
+    approval_path.add_argument("--strict", action="store_true")
     sub.add_parser("lifecycle")
     source_check = sub.add_parser("source-check")
     source_check.add_argument("source", choices=["weltgewebe"])
@@ -489,6 +494,24 @@ def main(argv: list[str] | None = None) -> int:
                 }
             emit(value, args.json)
             return 1 if args.strict and value["blockers"] else 0
+        elif args.command == "approval-path":
+            from .approval_path import ApprovalPathError, evaluate_approval_path
+
+            if args.task_id not in registry.tasks:
+                raise StateError(f"unknown task: {args.task_id}")
+            approval = None
+            if args.approval:
+                approval = json.loads(Path(args.approval).expanduser().read_text(encoding="utf-8"))
+            try:
+                value = evaluate_approval_path(
+                    registry.tasks[args.task_id].raw,
+                    requested_effects=args.effect,
+                    approval=approval,
+                )
+            except ApprovalPathError as exc:
+                raise StateError(str(exc)) from exc
+            emit(value, args.json)
+            return 1 if args.strict and value["status"] != "allowed" else 0
         elif args.command == "lifecycle":
             value = lifecycle_diagnostics(registry, store)
         elif args.command == "close-ready":

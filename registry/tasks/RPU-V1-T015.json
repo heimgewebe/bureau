@@ -3,7 +3,7 @@
   "id": "RPU-V1-T015",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "Verifiable agent memory citations",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 55
@@ -61,7 +61,40 @@
       "merge_readiness",
       "agent_quality_improvement_by_itself"
     ],
-    "source_vision": "Verifiable agent memory."
+    "source_vision": "Verifiable agent memory.",
+    "implementation_paths": [
+      "docs/repobrief-verifiable-agent-memory-v1.md",
+      "schemas/agent-memory-claim.v1.schema.json",
+      "src/bureau/schema_validation.py",
+      "src/bureau/verifiable_memory.py",
+      "tests/test_verifiable_memory.py"
+    ],
+    "outcome": "Defined verifiable agent memory as a bounded RepoBrief-cited recall pattern: memory records carry claim text, citation/range evidence, snapshot stem, expected hash and freshness data; recall checks classify evidence as still_established, stale, missing, changed or unverifiable before allowing contextual use.",
+    "verified_at": "2026-07-09",
+    "verified_acceptance": {
+      "rpu-v1-t015-memory-shape": "agent-memory-claim.v1 requires claim_text, repo, snapshot_stem, freshness_status, evidence address, expected_sha256, generated_at/max_age_hours and non-claims.",
+      "rpu-v1-t015-recall-check": "evaluate_memory_recall checks observations for missing evidence, hash drift, stale timestamps and malformed hash/time metadata before setting usable_for_context.",
+      "rpu-v1-t015-no-memory-truth": "Recall output always sets presentable_as_source_truth=false and carries does_not_establish entries for memory_claim_truth, source_truth, repo_understood and runtime_correctness."
+    },
+    "validation": [
+      "python -m pytest tests/test_verifiable_memory.py -> 10 passed",
+      "python -m ruff check . -> All checks passed!",
+      "python -m pytest -> 436 passed"
+    ],
+    "residual_notes": [
+      "This implements Bureau-side memory record shape and recall evaluation. It does not wire a durable memory store or live RepoBrief observation fetcher."
+    ],
+    "verification": {
+      "task_sha256": "f308357775af2302250c8c609f6b1df0a3a08049559062ed9def8d836f2b2636",
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015",
+      "non_claims": [
+        "memory_claim_truth",
+        "source_truth",
+        "repo_understood",
+        "runtime_correctness",
+        "merge_readiness"
+      ]
+    }
   },
   "depends_on": [
     "RPU-V1-T002",

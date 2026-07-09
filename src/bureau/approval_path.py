@@ -278,8 +278,12 @@ def evaluate_approval_path(
         if approval.get("decision") not in {"approve", "approved", None}:
             blockers.append("approval decision is not approve")
         task_id = task.get("id")
-        if isinstance(task_id, str) and approval.get("task_id") not in {task_id, None}:
-            blockers.append("approval task_id does not match task")
+        if isinstance(task_id, str):
+            approval_task_id = approval.get("task_id")
+            if approval_task_id is None:
+                blockers.append("approval task_id is required")
+            elif approval_task_id != task_id:
+                blockers.append("approval task_id does not match task")
         if not _approval_scope_contains(approval, effect_classes):
             blockers.append("approval scope does not cover requested effect classes")
         reviewer = approval.get("reviewer")

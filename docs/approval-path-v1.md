@@ -57,7 +57,7 @@ Accepted approval levels, from weaker to stronger:
 - Missing approval blocks every effect above `none`.
 - A lower approval level never satisfies a stronger effect class.
 - `approved` must be `true`.
-- If `task_id` is present on the task and approval, they must match.
+- If `task_id` is present on the task, approval evidence must include the same `task_id`; unbound approval evidence fails closed.
 - Approval must include a reviewer and must cover the requested effect scope.
 - `prohibited` cannot be approved.
 

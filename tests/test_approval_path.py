@@ -76,6 +76,26 @@ def test_operator_approval_allows_repository_mutation() -> None:
     assert result["required_approval"] == "operator"
 
 
+def test_approval_must_be_bound_to_task_id() -> None:
+    result = evaluate_approval_path(
+        task(claims=[{"resource": "repo.commonworld", "mode": "write"}]),
+        approval=approval(level="operator", task_id=None),
+    )
+
+    assert result["status"] == "blocked"
+    assert "approval task_id is required" in result["blockers"]
+
+
+def test_approval_task_id_must_match_task() -> None:
+    result = evaluate_approval_path(
+        task(claims=[{"resource": "repo.commonworld", "mode": "write"}]),
+        approval=approval(level="operator", task_id="BUR-OTHER-T001"),
+    )
+
+    assert result["status"] == "blocked"
+    assert "approval task_id does not match task" in result["blockers"]
+
+
 def test_agent_dispatch_requires_operator_scope() -> None:
     result = evaluate_approval_path(
         task(execution={"mode": "grabowski-task", "policy": "autonomous"}),

@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "initiative": "SCHAUWERK-OPTIMIZATION-V1",
+  "state": "verified",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SCHAUWERK-OPTIMIZATION-V1-T005"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09",
+    "source_request": "@grabowski umsetzen; next Schauwerk ball after SW-009 gate",
+    "implementation_evidence": {
+      "pull_request": "heimgewebe/schauwerk#71",
+      "url": "https://github.com/heimgewebe/schauwerk/pull/71",
+      "title": "feat: add SW-009 live apply candidate check",
+      "head_sha": "e60da1286386ba31a91c074d519a880d7445f482",
+      "merge_commit": "311cb6e85b53775adce451558d136270795581c1",
+      "merged_at": "2026-07-09T12:11:44Z",
+      "local_validation": [
+        ".venv/bin/ruff check src tests",
+        ".venv/bin/python -m pytest tests/operator/test_regions.py tests/test_cli.py tests/test_sw003_closeout_cli.py -q",
+        ".venv/bin/python -m pytest -q"
+      ],
+      "checks": [
+        {
+          "workflow": "validate",
+          "job": "validate (3.11)",
+          "conclusion": "success",
+          "completed_at": "2026-07-09T12:07:48Z"
+        },
+        {
+          "workflow": "validate",
+          "job": "validate (3.12)",
+          "conclusion": "success",
+          "completed_at": "2026-07-09T12:07:50Z"
+        }
+      ],
+      "self_review": "PASS: adds local SW-009 candidate manifest template and checker only; checker reads local scaffold and SW-003 evidence, requires a digest-bound candidate manifest, rejects provider references/URLs, and keeps mutation_attempted=false plus live_apply_attempted=false. No Miro access, provider mutation, provider identifiers, or automatic live apply executor."
+    },
+    "verified_at": "2026-07-09T12:11:44Z",
+    "outcome": "SW-009 live apply now has a reproducible local candidate manifest and candidate receipt check before any human/operator live apply action.",
+    "verification": {
+      "task_sha256": "c68e78a1cf330237fe2c82ff722e9ed9e9b0c5d050e0614aae065a7fe141cb5c",
+      "plan_sha256": "98e690f5d61bddbd705683a4438c5f75891c1a9807a562036d316a0a3907a76e"
+    }
+  },
+  "id": "SCHAUWERK-OPTIMIZATION-V1-T006",
+  "title": "Prepare SW-009 live apply candidate manifest check",
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
+  "goal": "Add a local, digest-bound SW-009 live apply candidate manifest template and checker so a later live apply candidate can be reviewed reproducibly before any provider mutation.",
+  "acceptance": [
+    {
+      "id": "template",
+      "assertion": "A candidate manifest template can be emitted locally."
+    },
+    {
+      "id": "candidate-check",
+      "assertion": "A candidate check loads local scaffold and SW-003 evidence, calls the SW-009 live-apply gate, and emits a candidate receipt."
+    },
+    {
+      "id": "digest-bound",
+      "assertion": "The candidate manifest requires a valid digest and blocks mismatches or missing digests."
+    },
+    {
+      "id": "provider-redaction",
+      "assertion": "Provider URLs or provider references are rejected before candidate readiness is granted."
+    },
+    {
+      "id": "non-mutating",
+      "assertion": "The candidate check does not call Miro, does not mutate providers, and does not execute live apply."
+    }
+  ]
+}

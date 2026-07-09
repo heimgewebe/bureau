@@ -3,7 +3,7 @@
   "id": "OPERATOR-LEARNING-AXIS-V1-T005",
   "initiative": "OPERATOR-LEARNING-AXIS-V1",
   "title": "Capture Vibe-Lab operator learning sample",
-  "state": "planned",
+  "state": "verified",
   "goal": "Bind the Vibe-Lab operator-learning capture sample PR to Bureau as a proposal/evidence task without granting steering or import authority.",
   "execution": {
     "mode": "interactive-agent",
@@ -43,14 +43,38 @@
     "source": "queue-readiness repair 2026-07-08",
     "implementation_pr": "heimgewebe/vibe-lab#295",
     "implementation_branch": "docs/operator-learning-capture-sample-v1",
+    "implementation_head": "6945ca1af6143eac0768666dbb5df849309aaa4c",
+    "implementation_merge_commit": "b065722ba9c73806fed97291d5429d789255227a",
+    "verified_at": "2026-07-09",
+    "validated_acceptance": {
+      "learning-sample-boundary": "Vibe-Lab PR #295 adds docs/ecosystem/vibe-lab-productive-role.md and the operator-learning-capture-sample result/non-claim files. The role document says Vibe-Lab is an evidence and learning surface, not a steering organ; the sample records evidence boundaries and non-claims rather than import authority.",
+      "doc-index-fresh": "Vibe-Lab PR #295 updates docs/_generated/doc-index.md; the merged index includes the operator-learning-capture-sample documentation and result files.",
+      "validation-recorded": "Vibe-Lab PR #295 records local make validate success, final self-review, and green GitHub Actions for Bundle Freshness Receipt, Doc Freshness Registry, and Validate at head 6945ca1af6143eac0768666dbb5df849309aaa4c."
+    },
+    "validation": [
+      "Vibe-Lab PR #295 merged as b065722ba9c73806fed97291d5429d789255227a.",
+      "GitHub Actions for head 6945ca1af6143eac0768666dbb5df849309aaa4c succeeded: Bundle Freshness Receipt, Doc Freshness Registry, and Validate.",
+      "Earlier blocking review comments were addressed before merge: source state metadata was added, the inconclusive result was softened to a conditional candidate next step, and generated artifacts were reconciled.",
+      "The final self-review comment for head 6945ca1af6143eac0768666dbb5df849309aaa4c recorded green CI and approved the PR for merge by self-review evidence."
+    ],
     "does_not_establish": [
       "import_authority",
       "routing_policy_readiness",
-      "merge_readiness"
-    ]
+      "merge_readiness",
+      "vibe_lab_steering_authority",
+      "productivity_improvement",
+      "sample_representativeness",
+      "bureau_ingestion_authority",
+      "leitstand_projection_authority",
+      "grabowski_receipt_mutation"
+    ],
+    "verification": {
+      "implementation_pr_head": "6945ca1af6143eac0768666dbb5df849309aaa4c",
+      "implementation_merge_commit": "b065722ba9c73806fed97291d5429d789255227a"
+    }
   },
   "priority": {
-    "lane": "later",
+    "lane": "next",
     "rank": 90
   }
 }

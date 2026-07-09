@@ -1,61 +1,102 @@
 {
-  "schema_version": 1,
+  "acceptance": [
+    {
+      "assertion": "Mutation and dispatch classes are documented with required approval levels.",
+      "evidence_type": "object",
+      "id": "approval-classes-defined",
+      "verifier": "doc and schema review"
+    },
+    {
+      "assertion": "Unsafe actions require explicit approval or fail closed.",
+      "evidence_type": "string",
+      "id": "gates-enforced",
+      "verifier": "tests"
+    },
+    {
+      "assertion": "The approval path remains compatible with bounded Operator Relay handoff.",
+      "evidence_type": "boolean",
+      "id": "operator-relay-compatible",
+      "verifier": "diff review"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.bureau"
+    }
+  ],
+  "depends_on": [
+    "BUR-2026-003-T001"
+  ],
+  "execution": {
+    "baseline_commit": "a19c6f0779bc0955ec36f941b9969f2c69079d92",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Define and implement approval semantics for repository mutation, source import, agent dispatch, and task creation from external evidence.",
   "id": "BUR-2026-003-T004",
   "initiative": "BUR-2026-003",
-  "title": "Approval path",
-  "state": "planned",
+  "metadata": {
+    "created_from_plan": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
+    "operator_lab_run": "not applicable — planning task definition only",
+    "planning_slice": "bureau-runtime-and-repo-orchestration-v1",
+    "verification": {
+      "branch": "feat/bur-2026-003-t004-approval-path",
+      "does_not_establish": [
+        "automatic merge authority",
+        "automatic runtime repair",
+        "all future effectful paths wired to approval helper",
+        "test sufficiency beyond the executed validation commands"
+      ],
+      "implementation_diff_sha256": "3c9c043bc5b5e67b142254a19a52fa511a4d065369a63e9c6bc4685cc600e5bf",
+      "plan_sha256": "bcc1fd0ae4a05f70066a0b1f1d573cc21add0a824489ab0a23ba76d48904f1bf",
+      "repo": "heimgewebe/bureau",
+      "scope": [
+        "approval classes and levels documented",
+        "fail-closed approval evaluator added",
+        "task schema accepts execution.approval declarations",
+        "workspace repository mutation, agent dispatch, reviewed source import and reviewed queue mutation record approval evidence",
+        "Cabinet proposal previews preserve explicit approval evidence"
+      ],
+      "self_review": "docs/reports/bur-2026-003-t004-approval-path-self-review.md",
+      "source": "local_worktree",
+      "task_sha256": "d1a73baea651ed8e4c5de5ec48658f432f15f81da77a9bf2ba52f2a86f48c1f8",
+      "validation": [
+        "PYTHONPATH=src python -m pytest tests/test_approval.py tests/test_v2.py::test_checkout_next_records_repository_mutation_approval passed: 9 tests",
+        "PYTHONPATH=src python -m pytest tests/test_approval.py tests/test_cabinet_bridge_preview.py tests/test_cabinet_frontier_reader.py tests/test_queue_reconcile.py tests/test_v2.py passed: 109 tests",
+        "PYTHONPATH=src python -m pytest tests/test_v2.py::test_checkout_next_records_repository_mutation_approval tests/test_v2.py::test_grabowski_task_handoff_uses_execution_resource_keys tests/test_v2.py::test_dispatch_response_loss_recovers_binding tests/test_v2.py::test_checkout_existing_binding_does_not_redispatch passed",
+        "PYTHONPATH=src python -m pytest passed: 445 tests",
+        "PYTHONPATH=src ruff check src tests passed",
+        "PYTHONPATH=src python -m bureau.cli --root . check passed",
+        "PYTHONPATH=src python -m bureau.cli --root . --json doctor reported healthy=true"
+      ],
+      "verified_at": "2026-07-09T17:55:00Z",
+      "review_blocker_fix_patch_sha256": "6bafcbaeb1488fb80f136441e251daa975d6b9e13d6e3b7779a49dda79e61533",
+      "fixed_review_findings": [
+        {
+          "id": "typed-approval-substitution",
+          "severity": "P1",
+          "fixed_at": "2026-07-09T18:25:00Z",
+          "summary": "reviewed_plan and reviewed_receipt are typed capabilities and no longer satisfy each other merely by equal rank"
+        }
+      ]
+    }
+  },
   "priority": {
     "lane": "next",
     "rank": 40
   },
-  "goal": "Define and implement approval semantics for repository mutation, source import, agent dispatch, and task creation from external evidence.",
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/bureau",
-    "baseline_commit": "a19c6f0779bc0955ec36f941b9969f2c69079d92",
-    "grabowski_resources": [
-      "repo:/home/alex/repos/bureau"
-    ]
-  },
-  "claims": [
-    {
-      "resource": "repo.bureau",
-      "mode": "write",
-      "isolation": "worktree"
-    }
-  ],
   "required_capabilities": [
     "repository",
     "shell",
     "grabowski"
   ],
-  "acceptance": [
-    {
-      "id": "approval-classes-defined",
-      "assertion": "Mutation and dispatch classes are documented with required approval levels.",
-      "verifier": "doc and schema review",
-      "evidence_type": "object"
-    },
-    {
-      "id": "gates-enforced",
-      "assertion": "Unsafe actions require explicit approval or fail closed.",
-      "verifier": "tests",
-      "evidence_type": "string"
-    },
-    {
-      "id": "operator-relay-compatible",
-      "assertion": "The approval path remains compatible with bounded Operator Relay handoff.",
-      "verifier": "diff review",
-      "evidence_type": "boolean"
-    }
-  ],
-  "metadata": {
-    "planning_slice": "bureau-runtime-and-repo-orchestration-v1",
-    "created_from_plan": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
-    "operator_lab_run": "not applicable — planning task definition only"
-  },
-  "depends_on": [
-    "BUR-2026-003-T001"
-  ]
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Approval path"
 }

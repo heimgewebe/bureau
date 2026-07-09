@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from .approval import require_approval, reviewed_receipt_approval
 from .cabinet_bridge import EFFECT_FLAGS, CabinetBridgeError
 
 CANDIDATE_KIND = "cabinet_frontier_candidate"
@@ -522,6 +523,16 @@ def import_reviewed_frontier_candidate(
     row = _admissible_row(_load_report(report_path), candidate_id)
     candidate = _object(row.get("candidate"), "frontier candidate")
     reviewer = _text(receipt.get("reviewer"), "frontier receipt reviewer")
+    approval = None
+    if apply:
+        approval = require_approval(
+            "source_import",
+            reviewed_receipt_approval(
+                reviewer=reviewer,
+                reference=str(Path(receipt_path).expanduser()),
+                approved=True,
+            ),
+        )
     task = _task_from_frontier_candidate(
         candidate,
         task_id=task_id,
@@ -561,6 +572,7 @@ def import_reviewed_frontier_candidate(
         "sourceReceipt": str(Path(receipt_path).expanduser()),
         "targetPath": str(target_path),
         "reviewedBy": reviewer,
+        "approval": approval,
         "dispatchAllowed": False,
         "queueMutationAllowed": False,
         "dispatchPerformed": False,

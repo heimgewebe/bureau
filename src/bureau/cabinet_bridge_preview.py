@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from .approval import explicit_operator_approval, require_approval
 from .cabinet_bridge import EFFECT_FLAGS, METADATA_EFFECT_FLAGS, CabinetBridgeError
 
 
@@ -85,6 +86,10 @@ def preview_bridge_candidate(
 ) -> dict[str, Any]:
     if not approve:
         raise CabinetBridgeError("preview requires explicit --approve")
+    approval = require_approval(
+        "task_creation_from_external_evidence",
+        explicit_operator_approval(source="cli --approve", approved=approve),
+    )
     candidate_id = _text(candidate_id, "candidate_id")
     task_id = _text(task_id, "task_id")
     initiative = _text(initiative, "initiative")
@@ -117,6 +122,7 @@ def preview_bridge_candidate(
         "kind": "cabinet_bridge_promotion_preview",
         "mode": "proposal_only",
         "approved": True,
+        "approval": approval,
         **{field: False for field in EFFECT_FLAGS},
         "task": task,
     }

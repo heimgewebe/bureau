@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from . import legacy
+from .approval import require_approval, reviewed_plan_approval
 from .core import Registry, StateStore
 
 OPEN_STATES = {"inbox", "planned", "ready", "blocked", "stale"}
@@ -304,6 +305,14 @@ def _load_reviewed_plan(path: str | Path) -> dict[str, Any]:
         raise legacy.StateError("queue reconcile plan is not reviewed")
     if not review.get("reviewer") or not review.get("reviewed_at"):
         raise legacy.StateError("reviewed queue reconcile plan requires reviewer and reviewed_at")
+    plan["approval"] = require_approval(
+        "queue_mutation",
+        reviewed_plan_approval(
+            reviewer=str(review["reviewer"]),
+            reference=str(Path(path).expanduser()),
+            approved=True,
+        ),
+    )
     return plan
 
 
@@ -374,6 +383,7 @@ def apply_queue_reconcile_plan(
         "queue_sha256_before": current_queue_sha,
         "queue_sha256_after": expected_sha,
         "actions": plan.get("actions", []),
+        "approval": plan.get("approval"),
         "post_gates": gates,
         "does_not_establish": [
             "dispatch_authority",

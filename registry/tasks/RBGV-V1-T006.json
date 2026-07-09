@@ -5,8 +5,8 @@
   "title": "Add ask gold-query evaluation",
   "state": "planned",
   "priority": {
-    "lane": "later",
-    "rank": 224
+    "lane": "next",
+    "rank": 84
   },
   "goal": "Measure whether ask context packs find expected evidence before promoting ask defaults.",
   "execution": {
@@ -78,7 +78,9 @@
       "review_completeness",
       "merge_readiness",
       "security_correctness"
-    ]
+    ],
+    "unblocked_by": "RBGV-V1-T005 verified via Lenskit PR #935; RBV1-T017 already verified.",
+    "selected_after": "RBGV-V1-T005"
   },
   "depends_on": [
     "RBGV-V1-T005",

@@ -3,7 +3,7 @@
   "id": "RBGV-V1-T005",
   "initiative": "REPOBRIEF-FRONTDOOR-GROUNDING-V1",
   "title": "Prototype repobrief ask CLI",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 85
@@ -80,7 +80,40 @@
       "security_correctness"
     ],
     "unblocked_by": "RBGV-V1-T004 verified via Lenskit PR #934",
-    "selected_after": "RBGV-V1-T004"
+    "selected_after": "RBGV-V1-T004",
+    "outcome": "Implemented by Lenskit PR #935: minimal read-only repobrief ask CLI producing JSON and human-readable context packs with budget reporting.",
+    "implemented_by": {
+      "repository": "lenskit",
+      "pull_request": 935,
+      "merge_commit": "f2972c8979249dc4cd81a3dfe37823aa201c9f50",
+      "head_commit": "3a17807f2b8906231b48dba713158778d814f5d9"
+    },
+    "verified_acceptance": {
+      "rbgv-v1-t005-cli": "repobrief ask emits JSON and human-readable context-pack output; tests test_repobrief_ask_cli_emits_json_context_pack and test_repobrief_ask_cli_emits_human_context_pack.",
+      "rbgv-v1-t005-access-layer": "build_ask_context_pack delegates to existing snapshot_status, resolve_required_reading_for_bundle and query_existing_index; no snapshot writes/refresh.",
+      "rbgv-v1-t005-budget": "budget block reports max_context_tokens/max_answer_tokens/truncation and does_not_establish_quality; test_repobrief_ask_budget_truncates_without_quality_claim.",
+      "rbgv-v1-t005-smoke": "test_repobrief_ask_cli_stricter_profile_smoke covers pr_review; basic_repo_question covered by JSON/text CLI tests."
+    },
+    "verification": {
+      "verified_at": "2026-07-09T09:06:36Z",
+      "checks": [
+        "Lenskit PR #935 CI all green before merge",
+        "diff saved before merge to /home/alex/iCloud/Drive/halde/lenskit-pr935.patch",
+        "local focused tests green"
+      ],
+      "patch_sha256": "6e5e9bc1b3d8c741e62252b8288ab1e6100711fdf2bdf0aebafa028e2d94e1d4",
+      "does_not_establish": [
+        "answer_correctness",
+        "actual_reading",
+        "retrieval_quality",
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness",
+        "security_correctness"
+      ],
+      "task_sha256": "a7e5551cbe449920e074a9f33cd493c9ffb5f44523e11196a6f07a212a84cf41",
+      "plan_sha256": "6e596079b33433e77ca945330a51c7a8d80595913062beba82a73d8a93832b5d"
+    }
   },
   "depends_on": [
     "RBGV-V1-T004"

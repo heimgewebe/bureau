@@ -3,7 +3,7 @@
   "id": "BUR-2026-003-T003",
   "initiative": "BUR-2026-003",
   "title": "Lifecycle repair",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 30
@@ -53,7 +53,36 @@
   "metadata": {
     "planning_slice": "bureau-runtime-and-repo-orchestration-v1",
     "created_from_plan": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
-    "operator_lab_run": "not applicable — planning task definition only"
+    "operator_lab_run": "not applicable — planning task definition only",
+    "verification": {
+      "task_sha256": "d5ffa44e26a878b3e234fdabadc2dcf94cf7a4a2bcb1f05d96f0f985a3bb0b54",
+      "plan_sha256": "bcc1fd0ae4a05f70066a0b1f1d573cc21add0a824489ab0a23ba76d48904f1bf",
+      "verified_at": "2026-07-09T16:00:00Z",
+      "source": "github_pull_request",
+      "repo": "heimgewebe/bureau",
+      "pr_number": 360,
+      "source_ref": "github-pr:heimgewebe/bureau#360@efb24033c970f8ff845979a7491edb08769dfab5:b114c7e3f385d2d8ddebabe8a552d2a5a3ebcf25",
+      "head_sha": "efb24033c970f8ff845979a7491edb08769dfab5",
+      "merge_commit": "b114c7e3f385d2d8ddebabe8a552d2a5a3ebcf25",
+      "scope": [
+        "registry lifecycle states aligned with lifecycle diagnostics",
+        "blocked tasks removed from dispatch queue backlog",
+        "state-root reviews directory classified as known review evidence",
+        "focused state-root hygiene regression test added"
+      ],
+      "validation": [
+        "PYTHONPATH=src pytest -q",
+        "PYTHONPATH=src bureau --root . --json doctor reported healthy=true locally in PR #360",
+        "GitHub validate (3.10) passed for PR #360",
+        "GitHub validate (3.12) passed for PR #360"
+      ],
+      "self_review": "docs/reports/bur-2026-003-t003-doctor-gate-repair-self-review.md",
+      "does_not_establish": [
+        "blocked utility follow-ups complete",
+        "Schauwerk completed",
+        "future queue plan merge readiness"
+      ]
+    }
   },
   "depends_on": [
     "BUR-2026-003-T001"

@@ -305,13 +305,16 @@ def _load_reviewed_plan(path: str | Path) -> dict[str, Any]:
         raise legacy.StateError("queue reconcile plan is not reviewed")
     if not review.get("reviewer") or not review.get("reviewed_at"):
         raise legacy.StateError("reviewed queue reconcile plan requires reviewer and reviewed_at")
+    plan_reference = str(Path(path).expanduser())
     plan["approval"] = require_approval(
         "queue_mutation",
         reviewed_plan_approval(
             reviewer=str(review["reviewer"]),
-            reference=str(Path(path).expanduser()),
+            reference=plan_reference,
             approved=True,
+            scope="queue_mutation",
         ),
+        expected_reference=plan_reference,
     )
     return plan
 

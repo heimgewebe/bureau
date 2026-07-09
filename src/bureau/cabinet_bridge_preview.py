@@ -84,16 +84,24 @@ def preview_bridge_candidate(
     target_proof: str,
     approve: bool,
 ) -> dict[str, Any]:
-    if not approve:
-        raise CabinetBridgeError("preview requires explicit --approve")
-    approval = require_approval(
-        "task_creation_from_external_evidence",
-        explicit_operator_approval(source="cli --approve", approved=approve),
-    )
     candidate_id = _text(candidate_id, "candidate_id")
     task_id = _text(task_id, "task_id")
     initiative = _text(initiative, "initiative")
     target_proof = _text(target_proof, "target_proof")
+    if not approve:
+        raise CabinetBridgeError("preview requires explicit --approve")
+    approval = require_approval(
+        "task_creation_from_external_evidence",
+        explicit_operator_approval(
+            source="cli --approve",
+            approved=approve,
+            reference=task_id,
+            task_id=task_id,
+            scope="task_creation_from_external_evidence",
+        ),
+        expected_reference=task_id,
+        task_id=task_id,
+    )
     candidate = _candidate(load_probe_report(probe_report_path), candidate_id)
     task = {
         "schema_version": 1,

@@ -9,7 +9,7 @@ from bureau.core import StateError
 def test_unknown_effect_class_fails_closed() -> None:
     decision = approval.approval_decision("mystery_effect", None)
     assert decision["allowed"] is False
-    assert decision["reason"] == "unknown action class fails closed"
+    assert decision["reason"].startswith("unknown action class fails closed")
     with pytest.raises(StateError, match="approval required"):
         approval.require_approval("mystery_effect", None)
 
@@ -26,6 +26,80 @@ def test_unsafe_repository_mutation_requires_explicit_operator_approval() -> Non
     )
     assert allowed["allowed"] is True
     assert allowed["evidence"]["source"] == "cli --approve"
+
+
+def test_expected_reference_binds_approval_to_source() -> None:
+    with pytest.raises(StateError, match="approval reference"):
+        approval.require_approval(
+            "repository_mutation",
+            approval.explicit_operator_approval(
+                source="cli --approve", approved=True, reference="other-run"
+            ),
+            expected_reference="run-1",
+        )
+
+    allowed = approval.require_approval(
+        "repository_mutation",
+        approval.explicit_operator_approval(
+            source="cli --approve", approved=True, reference="run-1"
+        ),
+        expected_reference="run-1",
+    )
+    assert allowed["allowed"] is True
+
+
+def test_task_id_binding_blocks_unbound_or_wrong_task_approval() -> None:
+    with pytest.raises(StateError, match="approval task_id"):
+        approval.require_approval(
+            "repository_mutation",
+            approval.explicit_operator_approval(source="cli --approve", approved=True),
+            task_id="BUR-TEST-T001",
+        )
+
+    with pytest.raises(StateError, match="approval task_id"):
+        approval.require_approval(
+            "repository_mutation",
+            approval.explicit_operator_approval(
+                source="cli --approve", approved=True, task_id="BUR-OTHER-T001"
+            ),
+            task_id="BUR-TEST-T001",
+        )
+
+    allowed = approval.require_approval(
+        "repository_mutation",
+        approval.explicit_operator_approval(
+            source="cli --approve", approved=True, task_id="BUR-TEST-T001"
+        ),
+        task_id="BUR-TEST-T001",
+    )
+    assert allowed["allowed"] is True
+    assert allowed["evidence"]["task_id"] == "BUR-TEST-T001"
+
+
+def test_multi_effect_approval_scope_must_cover_all_action_classes() -> None:
+    partial = approval.approval_decision_for_effects(
+        ["repository_mutation", "source_import"],
+        approval.ApprovalEvidence(
+            source="break-glass procedure",
+            level="break_glass",
+            approved=True,
+            scope=("repository_mutation",),
+        ),
+    )
+    assert partial["allowed"] is False
+    assert "scope does not cover all action classes" in partial["reason"]
+
+    allowed = approval.require_approval_for_effects(
+        ["repository_mutation", "source_import"],
+        approval.ApprovalEvidence(
+            source="break-glass procedure",
+            level="break_glass",
+            approved=True,
+            scope=("repository_mutation", "source_import"),
+        ),
+    )
+    assert allowed["allowed"] is True
+    assert allowed["evidence"]["scope"] == ["repository_mutation", "source_import"]
 
 
 def test_reviewed_plan_does_not_satisfy_source_import() -> None:

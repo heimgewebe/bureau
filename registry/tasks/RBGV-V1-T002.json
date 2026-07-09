@@ -3,7 +3,7 @@
   "id": "RBGV-V1-T002",
   "initiative": "REPOBRIEF-FRONTDOOR-GROUNDING-V1",
   "title": "Implement minimal citation and range verifier",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 88
@@ -80,7 +80,40 @@
       "security_correctness"
     ],
     "unblocked_by": "RBGV-V1-T001 verified via Lenskit PR #931",
-    "selected_after": "RBGV-V1-T001"
+    "selected_after": "RBGV-V1-T001",
+    "outcome": "Implemented by Lenskit PR #932: minimal read-only answer grounding verifier core with citation, range, drift, degraded, required/recommended and non-claim checks.",
+    "implemented_by": {
+      "repository": "lenskit",
+      "pull_request": 932,
+      "merge_commit": "4c5630d5aa821a96dbf367126503ab44957dc379",
+      "head_commit": "7e5dca9dea5b1ea9893bce86773d9edee00dee4f"
+    },
+    "verified_acceptance": {
+      "rbgv-v1-t002-readonly": "merger/lenskit/core/answer_grounding.py reads supplied paths only; PR #932 self-review records no Git/shell/refresh/snapshot/patch/PR/merge actions.",
+      "rbgv-v1-t002-citation-resolution": "merger/lenskit/tests/test_answer_grounding_verifier.py::test_verify_answer_grounding_pass_resolves_citation_and_range",
+      "rbgv-v1-t002-drift": "test_verify_answer_grounding_fails_missing_citation, test_verify_answer_grounding_fails_hash_drift, test_verify_answer_grounding_degraded_for_invalid_citation_map_jsonl",
+      "rbgv-v1-t002-tests": "Focused tests covered pass/fail/warn/degraded/not_applicable; GitHub CI was green before merge."
+    },
+    "verification": {
+      "verified_at": "2026-07-09T07:05:05Z",
+      "checks": [
+        "Lenskit PR #932 CI all green before merge",
+        "diff saved before merge to /home/alex/iCloud/Drive/halde/lenskit-pr932.patch",
+        "local focused tests green"
+      ],
+      "patch_sha256": "cadc877f8e2598ff5e22450358c248a47e32df23786faa2e6054544cab5e8722",
+      "does_not_establish": [
+        "semantic_answer_correctness",
+        "actual_reading",
+        "complete_context_use",
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness",
+        "security_correctness"
+      ],
+      "task_sha256": "7d2457613927491b6514a49cf27d9a8b09b1708cc162319587443719f4f89131",
+      "plan_sha256": "6e596079b33433e77ca945330a51c7a8d80595913062beba82a73d8a93832b5d"
+    }
   },
   "depends_on": [
     "RBGV-V1-T001"

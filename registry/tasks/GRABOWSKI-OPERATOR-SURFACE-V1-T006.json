@@ -1,55 +1,82 @@
 {
-  "schema_version": 1,
-  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T006",
-  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
-  "title": "Add enforceable session capability profiles",
-  "state": "planned",
-  "goal": "Implement the first enforceable session capability profile layer with explicit read roots, write roots, allowed grips, forbidden hosts and max risk level.",
-  "depends_on": [
-    "GRABOWSKI-OPERATOR-SURFACE-V1-T001"
-  ],
-  "priority": {
-    "lane": "later",
-    "rank": 60
-  },
-  "claims": [
+  "acceptance": [
     {
-      "resource": "repo.grabowski",
-      "mode": "write",
-      "isolation": "worktree"
+      "assertion": "Session profile contract includes read_roots, write_roots, allowed_grips, forbidden_hosts and max_risk_level.",
+      "id": "profile-contract"
+    },
+    {
+      "assertion": "At least one high-risk action is blocked by runtime enforcement, not just documentation.",
+      "id": "runtime-enforced"
+    },
+    {
+      "assertion": "High-impact paths require explicit target, reason, expiry and recovery or irreversibility metadata.",
+      "id": "explicit-escalation"
+    },
+    {
+      "assertion": "Focused tests cover allowed read-only action, blocked write outside scope, blocked forbidden host and explicit escalation shape.",
+      "id": "tests"
     }
   ],
-  "required_capabilities": [
-    "repository",
-    "shell",
-    "grabowski"
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T001"
   ],
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect"
   },
-  "acceptance": [
-    {
-      "id": "profile-contract",
-      "assertion": "Session profile contract includes read_roots, write_roots, allowed_grips, forbidden_hosts and max_risk_level."
-    },
-    {
-      "id": "runtime-enforced",
-      "assertion": "At least one high-risk action is blocked by runtime enforcement, not just documentation."
-    },
-    {
-      "id": "explicit-escalation",
-      "assertion": "High-impact paths require explicit target, reason, expiry and recovery or irreversibility metadata."
-    },
-    {
-      "id": "tests",
-      "assertion": "Focused tests cover allowed read-only action, blocked write outside scope, blocked forbidden host and explicit escalation shape."
-    }
-  ],
+  "goal": "Implement the first enforceable session capability profile layer with explicit read roots, write roots, allowed grips, forbidden hosts and max risk level.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T006",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
-    "phase": "session-attenuation",
     "effect": "capability_enforcement_foundation",
+    "implementation_head": "e6327db5902b9711518b19fc83a5aead67c9e6a9",
+    "implementation_merge_commit": "fbc4aebcb8d4b1575f3f4354f0b11f74fd1e25b1",
+    "implementation_pr": "heimgewebe/grabowski#119",
     "non_goal": "Does not remove existing break-glass paths until observe/maintain paths are tested.",
-    "related_plan": "docs/grabowski-restplan-v2.md"
-  }
+    "phase": "session-attenuation",
+    "related_plan": "docs/grabowski-restplan-v2.md",
+    "validated_acceptance": {
+      "explicit-escalation": "High-risk grips require session_escalation with target, reason, expires_at_unix and recovery or irreversibility metadata. session_escalation is stripped before dispatch to the underlying grip runner.",
+      "profile-contract": "Runtime exposes session_profile contract with read_roots, write_roots, allowed_grips, forbidden_hosts and max_risk_level. Live grip_list shows trusted-owner profile with read_roots=[/], write_roots=[/], allowed_grips=[*], forbidden_hosts=[], max_risk_level=high.",
+      "runtime-enforced": "grip_run enforces allowed_grips, risk level and high-risk escalation before dispatch. Operator argv validation calls the forbidden-host guard directly with the resolved policy.",
+      "tests": "Focused and full validation passed: make validate ran 717 tests OK locally and during scheduled runtime deploy; GitHub validate (3.10) and validate (3.12) passed; final review gate PASS."
+    },
+    "validation": {
+      "external_review": "external agy review PASS, finding_count=0, head_sha=e6327db5902b9711518b19fc83a5aead67c9e6a9.",
+      "grabowski_pr": "heimgewebe/grabowski#119 merged via squash at fbc4aebcb8d4b1575f3f4354f0b11f74fd1e25b1 with head e6327db5902b9711518b19fc83a5aead67c9e6a9.",
+      "non_claims": [
+        "Does not mutate the live access policy file.",
+        "Does not grant automatic high-impact authority.",
+        "Does not remove existing break-glass or trusted-owner paths.",
+        "Does not prove host reachability or grip execution success merely from profile visibility."
+      ],
+      "review_gate": "tools/pr_review_gate.py PASS for PR #119 with self-review and external agy evidence; diff_sha256=9f3d256c628e46472b77599e030c1484b03c970a116ffbe5395eac9b8249462a.",
+      "runtime_deploy": "Scheduled deploy job grabowski-job-06fb8a97e9c6 completed; deploy log reports PASS and repo_head fbc4aebcb8d4b1575f3f4354f0b11f74fd1e25b1. grabowski_status confirms provenance_valid, runtime_binding_valid and environment_compatibility_valid."
+    },
+    "verification": {
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "task_sha256": "f71a76ec7696ef392d2d0396f9940b7326f368a34e5ce9b752b8ee7bb8e35e7a"
+    },
+    "verification_note": "Implemented and deployed enforceable session capability profile gates. The live trusted-owner policy remains pre-T006 but is deployment-compatible through projected defaults; no live policy mutation was performed.",
+    "verified_at": "2026-07-09"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Add enforceable session capability profiles"
 }

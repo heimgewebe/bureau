@@ -3,7 +3,7 @@
   "id": "RBGV-V1-T008",
   "initiative": "REPOBRIEF-FRONTDOOR-GROUNDING-V1",
   "title": "Add delta freshness invalidation",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 82
@@ -80,7 +80,38 @@
       "security_correctness"
     ],
     "unblocked_by": "RBGV-V1-T007 verified via Lenskit PR #937; dependencies RBGV-V1-T002 and RBV1-T006 are verified.",
-    "selected_after": "RBGV-V1-T007"
+    "selected_after": "RBGV-V1-T007",
+    "outcome": "Implemented by Lenskit PR #938: read-only answer-grounding delta invalidation helper with valid/drifted/missing/not_comparable classification and freshness status preservation.",
+    "implemented_by": {
+      "repository": "lenskit",
+      "pull_request": 938,
+      "merge_commit": "7492033bc74e41ce151a6579613261d9576654eb",
+      "head_commit": "49187576f1f9ca526cc746b873ada619a07d8004"
+    },
+    "verified_acceptance": {
+      "rbgv-v1-t008-status": "answer_grounding_delta.py classifies valid, drifted, missing and not_comparable; tests cover each status.",
+      "rbgv-v1-t008-no-refresh": "mutation_boundary reports no snapshot creation, no Git fetch and no refresh; implementation reads explicit files only.",
+      "rbgv-v1-t008-freshness": "test_answer_grounding_delta_preserves_existing_freshness_status keeps old stale and new unknown visible.",
+      "rbgv-v1-t008-tests": "test_answer_grounding_delta.py covers unchanged, drifted/hash mismatch, missing citation and not-comparable range-absent cases."
+    },
+    "verification": {
+      "verified_at": "2026-07-09T10:13:21Z",
+      "checks": [
+        "Lenskit PR #938 CI all green before merge",
+        "diff saved before merge to /home/alex/iCloud/Drive/halde/lenskit-pr938.patch",
+        "local focused tests green"
+      ],
+      "patch_sha256": "80f6b0916d01fdc7632fde9ef5a6b84b84bac7aea6b36a6e2688e7dab9c23001",
+      "does_not_establish": [
+        "semantic_answer_correctness",
+        "future_citation_stability",
+        "new_snapshot_freshness",
+        "runtime_correctness",
+        "security_correctness"
+      ],
+      "task_sha256": "6517bc968b94d47696af42b7348b241ae20cca2aa43c08b7ed5152680486c087",
+      "plan_sha256": "6e596079b33433e77ca945330a51c7a8d80595913062beba82a73d8a93832b5d"
+    }
   },
   "depends_on": [
     "RBGV-V1-T002",

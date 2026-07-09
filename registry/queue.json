@@ -57,11 +57,10 @@
       "OPERATOR-PC-HYGIENE-V1-T004",
       "OPERATOR-PC-HYGIENE-V1-T005",
       "SCHAUWERK-OPTIMIZATION-V1-T005",
-      "RBGV-V1-T009",
       "GRABOWSKI-OPERATOR-SURFACE-V1-T028"
     ],
     "next": [
-      "RBGV-V1-T008"
+      "RBGV-V1-T009"
     ],
     "now": []
   },

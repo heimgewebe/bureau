@@ -60,6 +60,24 @@ def test_configured_state_database_sidecars_stay_known(
     assert known["custom.sqlite3-shm"] == "sqlite-sidecar"
 
 
+def test_review_directory_stays_known_active_state_root_entry(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    reviews = store.state_root / "reviews"
+    reviews.mkdir()
+    (reviews / "example-self-review.md").write_text("review evidence\n", encoding="utf-8")
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is True
+    assert report["archive_candidate_entries"] == []
+    assert report["unknown_entries"] == []
+    known = {entry["name"]: entry["class"] for entry in report["known_entries"]}
+    assert known["reviews"] == "review-directory"
+
+
 def test_legacy_state_root_artifacts_are_archive_candidates(
     registry_factory, tmp_path, monkeypatch
 ):

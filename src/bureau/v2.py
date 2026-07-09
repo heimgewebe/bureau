@@ -985,6 +985,8 @@ def _classify_state_root_entry(entry: Path, database_name: str) -> dict[str, str
         return {"name": name, "type": entry_type, "class": "envelope-directory"}
     if name == "receipts" and entry_type == "directory":
         return {"name": name, "type": entry_type, "class": "receipt-directory"}
+    if name == "reviews" and entry_type == "directory":
+        return {"name": name, "type": entry_type, "class": "review-directory"}
     legacy_class = _legacy_state_root_class(name, entry_type)
     if legacy_class is not None:
         return {"name": name, "type": entry_type, "class": legacy_class}

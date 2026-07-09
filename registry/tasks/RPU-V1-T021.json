@@ -66,11 +66,14 @@
     "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
     "reason": "RPU-V1-T012 implemented the measurement harness but intentionally did not execute comparable runs or prove usefulness.",
     "registered_at": "2026-07-09T04:00:00Z",
-    "source_pr": "heimgewebe/vibe-lab#300"
+    "source_pr": "heimgewebe/vibe-lab#300",
+    "unblocked_by": "RPU-V1-T020 verified via Lenskit PR #940; RPU-V1-T012 dependency already verified.",
+    "selected_after": "RPU-V1-T020",
+    "selection_reason": "After resource implementation, the next useful validation is to run a RepoBrief workbench usefulness series against real agent-facing surfaces."
   },
   "priority": {
-    "lane": "later",
-    "rank": 95
+    "lane": "next",
+    "rank": 51
   },
   "required_capabilities": [
     "repository",

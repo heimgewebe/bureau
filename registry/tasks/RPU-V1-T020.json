@@ -3,7 +3,7 @@
   "id": "RPU-V1-T020",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "Real MCP read-only resources implementation",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 52
@@ -58,7 +58,39 @@
     "lenskit_local_task": "TASK-REPOBRIEF-MCP-READONLY-RESOURCES-001",
     "rbv1_t010_clarification": "RBV1-T010 is verified for read-only access and MCP-boundary-equivalent surfaces, not a protocol-level MCP server/resource implementation.",
     "selected_after": "REPOBRIEF-FRONTDOOR-GROUNDING-V1 completion",
-    "selection_reason": "Direct continuation: code-level MCP-shaped read-only handlers exist; next useful slice is concrete protocol resource/read surface implementation."
+    "selection_reason": "Direct continuation: code-level MCP-shaped read-only handlers exist; next useful slice is concrete protocol resource/read surface implementation.",
+    "outcome": "Implemented by Lenskit PR #940: concrete code-level repobrief://snapshot read-only resources for manifest, canonical, reading-pack, health, availability and artifact/{role} with health/freshness/availability context.",
+    "implemented_by": {
+      "repository": "lenskit",
+      "pull_request": 940,
+      "merge_commit": "3ec164d4a6b9b494821268e7645ea40806c22ff7",
+      "head_commit": "72c55b9f6d24aebe2ef9a4ee2e3920c7980d48e0"
+    },
+    "verified_acceptance": {
+      "rpu-v1-t020-protocol-resources": "repobrief_mcp_resources.py implements resource_templates, list_mcp_resources and read_mcp_resource for manifest/canonical/reading-pack/health/availability/artifact/{role}.",
+      "rpu-v1-t020-read-only": "Tests assert writes=[] and no bundle file changes; mutation boundary forbids snapshot creation, refresh, Git, shell, secrets, PRs, patches, reviews, fixes and merges.",
+      "rpu-v1-t020-status": "Each listed resource read carries snapshot_context.health, snapshot_context.freshness and snapshot_context.availability; missing snapshot explains unavailable context."
+    },
+    "verification": {
+      "verified_at": "2026-07-09T12:11:21Z",
+      "checks": [
+        "Lenskit PR #940 CI all green before merge",
+        "diff saved before merge to /home/alex/iCloud/Drive/halde/lenskit-pr940.patch",
+        "local focused tests green"
+      ],
+      "patch_sha256": "977e0bd1ba0104d18a12aa2c54a8ecb0f6f40ad24d9bdc923b11992417c5556d",
+      "does_not_establish": [
+        "mcp_server_available",
+        "transport_security",
+        "authentication_correctness",
+        "runtime_deployment",
+        "answer_correctness",
+        "repository_understanding",
+        "security_correctness"
+      ],
+      "task_sha256": "6ef10705f04c1e81dd52f05ef11b179165b55cf08319451908d4e5ff06c833cf",
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015"
+    }
   },
   "depends_on": [
     "RBV1-T010",

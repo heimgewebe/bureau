@@ -67,14 +67,24 @@
       "source": "local_worktree",
       "task_sha256": "d1a73baea651ed8e4c5de5ec48658f432f15f81da77a9bf2ba52f2a86f48c1f8",
       "validation": [
-        "PYTHONPATH=src python -m pytest tests/test_approval.py tests/test_cabinet_bridge_preview.py tests/test_cabinet_frontier_reader.py tests/test_queue_reconcile.py tests/test_v2.py passed",
+        "PYTHONPATH=src python -m pytest tests/test_approval.py tests/test_v2.py::test_checkout_next_records_repository_mutation_approval passed: 9 tests",
+        "PYTHONPATH=src python -m pytest tests/test_approval.py tests/test_cabinet_bridge_preview.py tests/test_cabinet_frontier_reader.py tests/test_queue_reconcile.py tests/test_v2.py passed: 109 tests",
         "PYTHONPATH=src python -m pytest tests/test_v2.py::test_checkout_next_records_repository_mutation_approval tests/test_v2.py::test_grabowski_task_handoff_uses_execution_resource_keys tests/test_v2.py::test_dispatch_response_loss_recovers_binding tests/test_v2.py::test_checkout_existing_binding_does_not_redispatch passed",
-        "PYTHONPATH=src python -m pytest passed: 441 tests",
+        "PYTHONPATH=src python -m pytest passed: 445 tests",
         "PYTHONPATH=src ruff check src tests passed",
         "PYTHONPATH=src python -m bureau.cli --root . check passed",
         "PYTHONPATH=src python -m bureau.cli --root . --json doctor reported healthy=true"
       ],
-      "verified_at": "2026-07-09T17:55:00Z"
+      "verified_at": "2026-07-09T17:55:00Z",
+      "review_blocker_fix_patch_sha256": "6bafcbaeb1488fb80f136441e251daa975d6b9e13d6e3b7779a49dda79e61533",
+      "fixed_review_findings": [
+        {
+          "id": "typed-approval-substitution",
+          "severity": "P1",
+          "fixed_at": "2026-07-09T18:25:00Z",
+          "summary": "reviewed_plan and reviewed_receipt are typed capabilities and no longer satisfy each other merely by equal rank"
+        }
+      ]
     }
   },
   "priority": {

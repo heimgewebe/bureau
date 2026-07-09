@@ -19,6 +19,7 @@ READ_ONLY_ACTIONS = frozenset({"read_only_observation", "dry_run", "proposal_pre
 APPROVAL_RULES: dict[str, dict[str, Any]] = {
     "repository_mutation": {
         "required_level": "operator",
+        "allowed_levels": frozenset({"operator", "break_glass"}),
         "reason": (
             "repository writes, branch operations, commits, pushes or merges "
             "change source state"
@@ -26,10 +27,12 @@ APPROVAL_RULES: dict[str, dict[str, Any]] = {
     },
     "source_import": {
         "required_level": "reviewed_receipt",
+        "allowed_levels": frozenset({"reviewed_receipt", "break_glass"}),
         "reason": "source imports convert external evidence into Bureau registry material",
     },
     "agent_dispatch": {
         "required_level": "operator",
+        "allowed_levels": frozenset({"operator", "break_glass"}),
         "reason": (
             "agent dispatch creates external work that may mutate repositories "
             "or runtime state"
@@ -37,6 +40,7 @@ APPROVAL_RULES: dict[str, dict[str, Any]] = {
     },
     "task_creation_from_external_evidence": {
         "required_level": "operator",
+        "allowed_levels": frozenset({"operator", "break_glass"}),
         "reason": (
             "external evidence may propose tasks, but Bureau task creation "
             "requires explicit approval"
@@ -44,20 +48,14 @@ APPROVAL_RULES: dict[str, dict[str, Any]] = {
     },
     "queue_mutation": {
         "required_level": "reviewed_plan",
+        "allowed_levels": frozenset({"reviewed_plan", "break_glass"}),
         "reason": "queue order controls what agents may pick next",
     },
     "runtime_mutation": {
         "required_level": "break_glass",
+        "allowed_levels": frozenset({"break_glass"}),
         "reason": "runtime mutation may restart, deploy or alter live services",
     },
-}
-
-LEVEL_ORDER = {
-    "none": 0,
-    "operator": 10,
-    "reviewed_plan": 20,
-    "reviewed_receipt": 20,
-    "break_glass": 30,
 }
 
 
@@ -159,9 +157,13 @@ def approval_decision(
         }
     required_level = str(rule["required_level"])
     evidence = approval.as_dict() if approval else None
+    allowed_levels = set(rule.get("allowed_levels", {required_level}))
     level_ok = False
     if approval is not None:
-        level_ok = LEVEL_ORDER.get(approval.level, -1) >= LEVEL_ORDER[required_level]
+        # Approval levels are typed capabilities, not a pure numeric ladder.
+        # A break_glass approval may satisfy lower gates when explicitly allowed,
+        # but reviewed_plan and reviewed_receipt must not substitute for each other.
+        level_ok = approval.level in allowed_levels
     allowed = bool(approval is not None and approval.approved and level_ok)
     reason = "approved" if allowed else str(rule["reason"])
     if approval is None:
@@ -169,7 +171,7 @@ def approval_decision(
     elif not approval.approved:
         reason = f"approval record is not approved: {reason}"
     elif not level_ok:
-        reason = f"approval level {approval.level} is below required {required_level}"
+        reason = f"approval level {approval.level} is not accepted for required {required_level}"
     return {
         "schema_version": APPROVAL_SCHEMA_VERSION,
         "action_class": action_class,

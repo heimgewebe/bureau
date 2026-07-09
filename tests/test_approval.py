@@ -28,8 +28,34 @@ def test_unsafe_repository_mutation_requires_explicit_operator_approval() -> Non
     assert allowed["evidence"]["source"] == "cli --approve"
 
 
+def test_reviewed_plan_does_not_satisfy_source_import() -> None:
+    with pytest.raises(StateError, match="not accepted for required reviewed_receipt"):
+        approval.require_approval(
+            "source_import",
+            approval.reviewed_plan_approval(reviewer="reviewer", reference="plan.json"),
+        )
+
+
+def test_reviewed_receipt_does_not_satisfy_queue_mutation() -> None:
+    with pytest.raises(StateError, match="not accepted for required reviewed_plan"):
+        approval.require_approval(
+            "queue_mutation",
+            approval.reviewed_receipt_approval(
+                reviewer="reviewer", reference="receipt.json"
+            ),
+        )
+
+
+def test_break_glass_satisfies_explicitly_allowed_lower_gates() -> None:
+    evidence = approval.ApprovalEvidence(
+        source="break-glass procedure", level="break_glass", approved=True
+    )
+    assert approval.require_approval("source_import", evidence)["allowed"] is True
+    assert approval.require_approval("queue_mutation", evidence)["allowed"] is True
+
+
 def test_runtime_mutation_rejects_lower_approval_level() -> None:
-    with pytest.raises(StateError, match="below required break_glass"):
+    with pytest.raises(StateError, match="not accepted for required break_glass"):
         approval.require_approval(
             "runtime_mutation",
             approval.explicit_operator_approval(source="cli --approve", approved=True),

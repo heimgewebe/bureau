@@ -19,7 +19,7 @@ Bureau separates observation from effect. A command may read, project, rank or d
 | `queue_mutation` | applying a queue-reconcile plan | `reviewed_plan` | fail closed |
 | `runtime_mutation` | deploy, restart, service repair, migration | `break_glass` | fail closed |
 
-The level names are ordered only for this gate: `operator < reviewed_plan/reviewed_receipt < break_glass`. A higher level may satisfy a lower requirement; a lower level may not satisfy a higher one.
+Approval levels are typed capabilities, not a pure numeric ladder. `reviewed_plan` and `reviewed_receipt` are intentionally not interchangeable. `break_glass` may satisfy lower gates only where the action rule explicitly allows it.
 
 ## Enforcement contract
 

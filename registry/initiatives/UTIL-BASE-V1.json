@@ -68,16 +68,16 @@
       "document_import_correctness",
       "merge_readiness"
     ],
-    "status_corrected_at": "2026-07-09T09:55:30Z",
-    "endstate_evidence": "heimgewebe/infra runtime/local-utility-endstate-2026-07-09.md and heimgewebe/heim-pc runtime/software-inventory.md after utility end-state refresh",
+    "status_corrected_at": "2026-07-09T16:12:00Z",
+    "endstate_evidence": "heimgewebe/infra runtime/local-utility-endstate-2026-07-09.md and heimgewebe/heim-pc runtime/software-inventory.md after Beszel monitoring closeout",
     "remaining_blockers": {
-      "UTIL-BASE-V1-T003": "Beszel has auth/UI activation but no monitored system/stats rows yet.",
       "UTIL-BASE-V1-T005": "LocalSend needs a real device transfer smoke with iPad or Samsung A54."
     },
     "verified_followups": {
       "paperless": "Starter taxonomy, export and local restic backup are in place.",
       "backup": "Local restic utility snapshot b9332c01 exists and timers are active.",
-      "easyeffects": "Profile plan is defined; activation requires listening/recording validation."
+      "easyeffects": "Profile plan is defined; activation requires listening/recording validation.",
+      "beszel": "Beszel monitoring is active for heim-pc with systems=1, system_stats>=44, container_stats>=44, containers=11 and status=up."
     },
     "lifecycle_hygiene_repair": {
       "updated_at": "2026-07-09",

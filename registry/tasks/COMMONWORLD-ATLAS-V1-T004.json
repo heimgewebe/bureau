@@ -3,9 +3,9 @@
   "id": "COMMONWORLD-ATLAS-V1-T004",
   "initiative": "COMMONWORLD-ATLAS-V1",
   "title": "Add focused digital Commons proof",
-  "state": "planned",
+  "state": "verified",
   "priority": {
-    "lane": "next",
+    "lane": "later",
     "rank": 60
   },
   "goal": "Implement a first digital Commons view where exactly one hierarchy branch is focused at a time.",
@@ -50,7 +50,45 @@
   ],
   "metadata": {
     "repo": "heimgewebe/commonworld",
-    "plan": "docs/blueprints/commonworld-masterplan.md"
+    "plan": "docs/blueprints/commonworld-masterplan.md",
+    "implementation_pr": "heimgewebe/commonworld#7",
+    "implementation_head": "032c2a9f7fcb4ec06d12d4d73807ed240ad32f19",
+    "implementation_merge_commit": "699863d804db6016f4cbfac5ff22fc173f42f96b",
+    "verified_at": "2026-07-09",
+    "source_pr_task_marker_note": "Commonworld PR #7 body says T006, but its title, files and acceptance content implement the focused digital Commons/Aether proof now represented by COMMONWORLD-ATLAS-V1-T004. Later Bureau T006 was the map-smoke follow-up and is already separately verified.",
+    "implementation_paths": [
+      "proofs/aether/index.html",
+      "proofs/aether/aether.css",
+      "proofs/aether/aether.js",
+      "proofs/aether/README.md",
+      "scripts/validate_aether_proof.py",
+      "tests/test_aether_proof.py"
+    ],
+    "validated_acceptance": {
+      "single-branch": "PR #7 adds a focused Aether proof where the active branch region and validator enforce one active Aether Commons project at a time.",
+      "breadcrumb": "PR #7 adds a data-breadcrumb proof navigation surface and active branch region; validate_aether_proof.py checks the breadcrumb and focus hooks.",
+      "no-hairball": "PR #7 Aether README and validator require no force-directed hairball network and no MapLibre dependency; the proof uses focused branches instead of an unrestricted graph."
+    },
+    "validation": [
+      "Commonworld PR #7 merged as 699863d804db6016f4cbfac5ff22fc173f42f96b.",
+      "PR #7 body records validate_aether_proof.py and unittest suite.",
+      "Current Commonworld main still includes validate_aether_proof.py, tests/test_aether_proof.py, and make validate coverage."
+    ],
+    "does_not_establish": [
+      "api_runtime_readiness",
+      "backend_readiness",
+      "public_submission_readiness",
+      "weltgewebe_write_path",
+      "production_ui_readiness",
+      "runtime_correctness",
+      "future_merge_readiness"
+    ],
+    "verification": {
+      "task_sha256": "4cdb3273a1b31a537dfceacf4f035d20efd1b9ca956bb353220bc04259554c1e",
+      "plan_sha256": "37e27f4919329addeee583330b0168ea472b468e6d80cadb2559ef0d10f10b2d",
+      "implementation_pr_head": "032c2a9f7fcb4ec06d12d4d73807ed240ad32f19",
+      "implementation_merge_commit": "699863d804db6016f4cbfac5ff22fc173f42f96b"
+    }
   },
   "depends_on": [
     "COMMONWORLD-ATLAS-V1-T001",

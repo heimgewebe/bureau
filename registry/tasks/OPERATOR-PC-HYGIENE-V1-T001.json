@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-PC-HYGIENE-V1-T001",
+  "initiative": "OPERATOR-PC-HYGIENE-V1",
+  "title": "Reconnect or retire Google Drive rclone mount",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 201
+  },
+  "goal": "Repair the expired/revoked gdrive OAuth remote or explicitly retire the Google Drive mount path while preserving the no-restart-loop behavior established during the audit.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/infra"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "operator-pc-hygiene-v1-t001-1",
+      "assertion": "rclone-gdrive.service does not enter a rapid restart loop when Google auth is invalid."
+    },
+    {
+      "id": "operator-pc-hygiene-v1-t001-2",
+      "assertion": "If Google Drive remains desired, `rclone config reconnect gdrive:` is completed by the user and a mount smoke proves /home/alex/GDrive is a real rclone mount."
+    },
+    {
+      "id": "operator-pc-hygiene-v1-t001-3",
+      "assertion": "If Google Drive is retired, references to /home/alex/GDrive in active operator paths are either removed or documented as historical."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-08T16:10:19Z",
+    "source_audit": "2026-07-08 Heim-PC service hygiene audit",
+    "does_not_establish": [
+      "runtime_correctness",
+      "security_correctness",
+      "merge_readiness"
+    ],
+    "live_audit_finding": "gdrive OAuth invalid_grant; service stopped and disabled on 2026-07-08."
+  },
+  "depends_on": []
+}

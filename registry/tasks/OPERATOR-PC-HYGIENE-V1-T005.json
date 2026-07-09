@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-PC-HYGIENE-V1-T005",
+  "initiative": "OPERATOR-PC-HYGIENE-V1",
+  "title": "Repair Heim-PC Node runtime JIT crash",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 205
+  },
+  "goal": "Diagnose and repair the host-level Node/V8 JIT crash that makes `node -e`, `npm`, `npx`, `pnpm` and the npm Codex entrypoint abort with rc 133 unless `NODE_OPTIONS=--jitless` is used.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/infra"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "operator-pc-hygiene-v1-t005-1",
+      "assertion": "`node -e 'console.log(1)'`, `npm --version`, `npx --version` and `pnpm --version` complete without rc 133 in a normal shell, or a precise upstream/runtime blocker is recorded."
+    },
+    {
+      "id": "operator-pc-hygiene-v1-t005-2",
+      "assertion": "The fix does not globally force `NODE_OPTIONS=--jitless` unless the trade-off is explicitly accepted and documented."
+    },
+    {
+      "id": "operator-pc-hygiene-v1-t005-3",
+      "assertion": "Codex wrapper behavior remains green: `codex --version` resolves to the intended standalone Codex binary or a documented fallback."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-08T18:20:00Z",
+    "source_audit": "2026-07-08 local Codex crash repair",
+    "does_not_establish": [
+      "node_runtime_repaired",
+      "npm_toolchain_repaired",
+      "all_javascript_tooling_safe",
+      "merge_readiness"
+    ],
+    "live_audit_finding": "`codex --version` crashed through the shell PTY wrapper because `~/bin/codexi` prepended `~/.npm-global/bin` and invoked the npm Codex entrypoint; direct `~/.local/bin/codex --version` returned codex-cli 0.142.2, while normal Node/npm still abort with a V8 SetPermissions fatal error and rc 133."
+  },
+  "depends_on": []
+}

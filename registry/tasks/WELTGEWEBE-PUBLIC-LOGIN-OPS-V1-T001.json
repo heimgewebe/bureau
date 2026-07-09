@@ -1,0 +1,97 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The API JWT runtime secret on wg-prod-1 has been rotated after the operator-output exposure and the API container was recreated without printing the value.",
+      "evidence_type": "object",
+      "id": "jwt-rotated",
+      "verifier": "redacted runtime receipt"
+    },
+    {
+      "assertion": "The runtime source contains SMTP host, port, from, auth policy and the SMTP credential pair, verified only by presence metadata.",
+      "evidence_type": "object",
+      "id": "smtp-secret-present",
+      "verifier": "scripts/ops/check_public_login_smtp_readiness.py --production-public-login"
+    },
+    {
+      "assertion": "AUTH_PUBLIC_LOGIN is enabled only after SMTP readiness passes and AUTH_LOG_MAGIC_TOKEN remains disabled.",
+      "evidence_type": "object",
+      "id": "public-login-enabled-after-preflight",
+      "verifier": "readiness receipt and rendered compose presence check"
+    },
+    {
+      "assertion": "https://api.weltgewebe.net/health/ready returns 200 after API recreation.",
+      "evidence_type": "string",
+      "id": "health-ready",
+      "verifier": "curl smoke"
+    },
+    {
+      "assertion": "A Magic-Link request for an allowed address is accepted and the email is received externally without token leakage in logs.",
+      "evidence_type": "object",
+      "id": "magic-link-delivered",
+      "verifier": "mailbox confirmation plus redacted log check"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "namespace",
+      "mode": "write",
+      "resource": "runtime.wg-prod-1"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.weltgewebe"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "github.issue.heimgewebe-weltgewebe:1370"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "production_host": "wg-prod-1",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Before closing weltgewebe issue #1370, rotate the exposed API JWT runtime secret on wg-prod-1, inject the Brevo SMTP credential pair through an approved secret channel, enable public login only after the readiness preflight passes, and verify real Magic-Link delivery.",
+  "id": "WELTGEWEBE-PUBLIC-LOGIN-OPS-V1-T001",
+  "initiative": "WELTGEWEBE-PUBLIC-LOGIN-OPS-V1",
+  "metadata": {
+    "block_reason": "SMTP credential pair is not available in an approved secret source, and an exposed API JWT runtime secret must be rotated before public-login rollout proceeds.",
+    "does_not_establish": [
+      "secret_values_known",
+      "secret_values_registered",
+      "public_login_enabled",
+      "jwt_rotated",
+      "delivery_working"
+    ],
+    "issue_comment": "https://github.com/heimgewebe/weltgewebe/issues/1370#issuecomment-4917322242",
+    "known_non_secret_smtp_baseline": {
+      "auth": "on",
+      "from": "noreply@login.weltgewebe.net",
+      "host": "smtp-relay.brevo.com",
+      "port": 587
+    },
+    "registered_at": "2026-07-08T17:15:00Z",
+    "schema_repair": {
+      "secret_boundary": "execution.policy normalized to review-before-effect and secret-channel represented as isolation=namespace; privileged secret boundary preserved in metadata.block_reason and required_capabilities"
+    },
+    "source_issue": "heimgewebe/weltgewebe#1370"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 20
+  },
+  "required_capabilities": [
+    "production-ssh",
+    "runtime-secret-write",
+    "docker-compose",
+    "github",
+    "external-mail-confirmation"
+  ],
+  "schema_version": 1,
+  "state": "blocked",
+  "title": "Rotate runtime JWT and finish SMTP-backed public login rollout"
+}

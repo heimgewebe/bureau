@@ -3,7 +3,7 @@
   "id": "BUR-2026-003-T002",
   "initiative": "BUR-2026-003",
   "title": "Steuerboard runtime hardening",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 20
@@ -53,7 +53,33 @@
   "metadata": {
     "planning_slice": "bureau-runtime-and-repo-orchestration-v1",
     "created_from_plan": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
-    "operator_lab_run": "not applicable — planning task definition only"
+    "operator_lab_run": "not applicable — planning task definition only",
+    "verified_at": "2026-07-09T17:24:00+02:00",
+    "implementation_evidence": {
+      "changed_files": [
+        "src/bureau/v2.py",
+        "src/bureau/cli.py",
+        "schemas/execution-envelope.v1.schema.json",
+        "tests/test_v2.py"
+      ],
+      "local_validation": [
+        "PYTHONPATH=src python -m pytest tests/test_v2.py -q -k claim_next or checkout_next or runtime_drift_check or no_eligible_cli_paths_expose_runtime_truth",
+        "ruff check src tests",
+        "PYTHONPATH=src make validate"
+      ],
+      "validation_result": "425 passed; registry valid",
+      "acceptance_mapping": {
+        "runtime-truth-visible": "claim-next output now includes runtime_truth with branch, head, base, dirty state, drift classification and findings",
+        "fail-closed-on-drift": "claim-next and checkout-next return status runtime-drift-blocked with exit code 2 when the Bureau checkout is dirty",
+        "receipt-evidence": "execution envelopes now include runtime_truth and schema permits the field"
+      },
+      "self_review": "PASS: CLI dispatcher enforces the runtime gate before claim/checkout execution, dirty checkout blocks before run creation, direct Dispatcher tests remain non-enforcing by default, and no fetch/pull/runtime repair automation is added."
+    },
+    "outcome": "Steuerboard claim-next and checkout-next now expose runtime truth and fail closed on dirty Bureau checkout drift before execution.",
+    "verification": {
+      "task_sha256": "accb4632dd3823278efd7d238d41bf78ab7f090cd961e4fc5a977ed8b194314c",
+      "plan_sha256": "bcc1fd0ae4a05f70066a0b1f1d573cc21add0a824489ab0a23ba76d48904f1bf"
+    }
   },
   "depends_on": [
     "BUR-2026-003-T001"

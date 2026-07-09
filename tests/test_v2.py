@@ -1169,6 +1169,113 @@ def test_no_eligible_cli_paths_expose_runtime_truth(registry_factory, tmp_path, 
         assert truth["repair_recommendations"][0]["open_tasks"] == [task["id"]]
 
 
+def test_claim_next_cli_exposes_runtime_preflight_truth(
+    registry_factory, tmp_path, capsys
+):
+    root = registry_factory(1)
+    head = init_clean_origin_main(root)
+
+    result = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-db",
+            str(tmp_path / "claim.sqlite3"),
+            "--json",
+            "claim-next",
+            "--worker",
+            "runtime-truth-worker",
+            "--capability",
+            "repository",
+        ]
+    )
+
+    output = json.loads(capsys.readouterr().out)
+    runtime_truth = output["runtime_truth"]
+    envelope_truth = output["envelope"]["runtime_truth"]
+    assert result == 0
+    assert output["status"] == "claimed"
+    assert runtime_truth["status"] == "clear"
+    assert runtime_truth["execution_blocked"] is False
+    assert runtime_truth["drift_classification"] == "clean"
+    assert runtime_truth["checkout"]["branch"] == "main"
+    assert runtime_truth["checkout"]["head"] == head
+    assert runtime_truth["checkout"]["base"] == head
+    assert runtime_truth["checkout"]["head_equals_base"] is True
+    assert runtime_truth["checkout"]["dirty"] is False
+    assert envelope_truth == runtime_truth
+
+
+def test_claim_next_cli_fails_closed_on_dirty_runtime_checkout(
+    registry_factory, tmp_path, capsys
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    (root / "dirty-runtime.txt").write_text("dirty", encoding="utf-8")
+    state_db = tmp_path / "dirty.sqlite3"
+
+    result = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-db",
+            str(state_db),
+            "--json",
+            "claim-next",
+            "--worker",
+            "dirty-worker",
+            "--capability",
+            "repository",
+        ]
+    )
+
+    output = json.loads(capsys.readouterr().out)
+    runtime_truth = output["runtime_truth"]
+    assert result == 2
+    assert output["status"] == "runtime-drift-blocked"
+    assert output["command"] == "claim-next"
+    assert runtime_truth["status"] == "blocked"
+    assert runtime_truth["execution_blocked"] is True
+    assert runtime_truth["drift_classification"] == "blocked"
+    assert "checkout-dirty" in runtime_truth["blocker_codes"]
+    assert any("dirty-runtime.txt" in path for path in runtime_truth["checkout"]["dirty_paths"])
+
+    store = StateStore(state_db)
+    assert store.list_runs() == []
+
+
+def test_checkout_next_cli_fails_closed_on_dirty_runtime_checkout(
+    registry_factory, tmp_path, capsys
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    (root / "dirty-runtime.txt").write_text("dirty", encoding="utf-8")
+
+    result = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-db",
+            str(tmp_path / "checkout-dirty.sqlite3"),
+            "--json",
+            "checkout-next",
+            "--worker",
+            "checkout-dirty-worker",
+            "--capability",
+            "repository",
+            "--base-dir",
+            str(tmp_path / "worktrees"),
+        ]
+    )
+
+    output = json.loads(capsys.readouterr().out)
+    assert result == 2
+    assert output["status"] == "runtime-drift-blocked"
+    assert output["command"] == "checkout-next"
+    assert output["runtime_truth"]["execution_blocked"] is True
+    assert "checkout-dirty" in output["runtime_truth"]["blocker_codes"]
+
+
 def test_explain_next_exposes_read_only_lifecycle_repair_candidate(
     registry_factory, tmp_path, monkeypatch
 ):

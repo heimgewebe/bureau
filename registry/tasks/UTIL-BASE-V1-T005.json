@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "id": "UTIL-BASE-V1-T005",
+  "initiative": "UTIL-BASE-V1",
+  "title": "Create LocalSend transfer path",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 305
+  },
+  "goal": "Set up a low-friction local transfer path between heim-pc, iPad and Samsung A54 for screenshots, PDFs, diffs and logs without cloud detours.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/infra"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "util-base-v1-t005-1",
+      "assertion": "A local inbox path such as /home/alex/Incoming/LocalSend is defined."
+    },
+    {
+      "id": "util-base-v1-t005-2",
+      "assertion": "At least one transfer direction is smoke-tested or blocked with device-side missing prerequisite recorded."
+    },
+    {
+      "id": "util-base-v1-t005-3",
+      "assertion": "LocalSend does not become an archival or authority layer; received files are triaged into the appropriate repo/document/archive path."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09T02:58:00Z",
+    "source_request": "Evaluate every interesting utility tool and register the resulting plan in Bureau.",
+    "does_not_establish": [
+      "runtime_correctness",
+      "security_correctness",
+      "install_readiness",
+      "merge_readiness"
+    ],
+    "tools": [
+      "localsend"
+    ]
+  },
+  "depends_on": []
+}

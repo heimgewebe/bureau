@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "id": "UTIL-BASE-V1",
+  "title": "Local operator utility baseline",
+  "state": "active",
+  "commitment": "later",
+  "goal": "Build a small, evidence-friendly Heim-PC utility baseline around backup, monitoring, shell history, local transfer, review/search tools and document processing without creating a second control-plane or second knowledge truth.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "registry/initiatives/UTIL-BASE-V1.json"
+  },
+  "completion": [
+    "Backups have at least one successful snapshot and one documented restore probe.",
+    "Monitoring starts with Beszel and remains observational only.",
+    "Atuin runs locally without cloud sync or AI features until a separate secret/history review approves more.",
+    "LocalSend, difftastic and ripgrep-all improve transfer, review and search without becoming authoritative evidence by themselves.",
+    "Paperless-ngx, Stirling PDF and Docling are introduced only after backup boundaries and import/export evidence are clear.",
+    "CopyQ, Espanso and EasyEffects are treated as existing tools to configure safely, not as new control surfaces.",
+    "Kopia, lazygit, KDE Connect/GSConnect, Zellij, Windmill, Open WebUI, AnythingLLM, Dyad and n8n remain parked unless a later explicit decision reopens them."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-09T02:58:00Z",
+    "source": "User request on 2026-07-09 to implement the evaluated utility plan and register it in Bureau.",
+    "live_basis": [
+      "Live check on 2026-07-08 found restic, CopyQ, Espanso, rg, Bitwarden CLI, Docker, Flatpak, Snap, apt and EasyEffects present on heim-pc.",
+      "Live check did not find atuin, LocalSend, Beszel, Backrest, Paperless, Stirling PDF, Docling, rga or difftastic in PATH/container candidates."
+    ],
+    "decision": {
+      "core_now": [
+        "backrest-restic",
+        "beszel",
+        "atuin-local",
+        "localsend",
+        "difftastic",
+        "ripgrep-all"
+      ],
+      "document_pipeline_after_backup": [
+        "stirling-pdf",
+        "paperless-ngx",
+        "docling"
+      ],
+      "configure_existing": [
+        "copyq",
+        "espanso",
+        "easyeffects"
+      ],
+      "parked": [
+        "kopia",
+        "lazygit",
+        "kde-connect-gsconnect",
+        "zellij",
+        "windmill",
+        "open-webui",
+        "anythingllm",
+        "dyad",
+        "n8n"
+      ]
+    },
+    "does_not_establish": [
+      "install_readiness",
+      "runtime_correctness",
+      "security_correctness",
+      "backup_restore_correctness",
+      "port_safety",
+      "document_import_correctness",
+      "merge_readiness"
+    ]
+  }
+}

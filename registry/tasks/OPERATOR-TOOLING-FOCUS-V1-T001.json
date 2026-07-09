@@ -2,13 +2,13 @@
   "schema_version": 1,
   "id": "OPERATOR-TOOLING-FOCUS-V1-T001",
   "initiative": "OPERATOR-TOOLING-FOCUS-V1",
-  "title": "Define Grafana operator observability boundary",
+  "title": "Defer Grafana behind Beszel monitoring pilot",
   "state": "planned",
   "priority": {
     "lane": "later",
     "rank": 260
   },
-  "goal": "Decide whether Grafana should be added to the Heim-PC operator stack and, if yes, define a read-only role, datasource model, port/route plan and Leitstand relationship before any installation.",
+  "goal": "Keep Grafana as a deferred observability option and re-evaluate it only after the Beszel monitoring pilot proves whether a heavier dashboard stack is actually needed.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -34,20 +34,20 @@
   ],
   "acceptance": [
     {
-      "id": "grafana-role",
-      "assertion": "Grafana is documented as dashboard/observability only and cannot own task truth, runtime truth, approvals, PR state, deploy state or command authority."
+      "id": "beszel-first",
+      "assertion": "Beszel is evaluated first for Heim-PC/service monitoring before any Grafana install path is reopened."
+    },
+    {
+      "id": "grafana-no-authority",
+      "assertion": "Grafana, if ever used, is dashboard/observability only and cannot own task truth, runtime truth, approvals, PR state, deploy state or command authority."
     },
     {
       "id": "port-conflict",
-      "assertion": "The live port-3000 conflict is resolved by a documented alternate bind/route plan before installation."
-    },
-    {
-      "id": "datasource-minimum",
-      "assertion": "Initial datasources are limited to explicit operator metrics/log exports or read-only local files; no broad repository crawl or secret-bearing logs are ingested."
+      "assertion": "The live port-3000 conflict is resolved by a documented alternate bind/route plan before any Grafana installation."
     },
     {
       "id": "install-gate",
-      "assertion": "A later install task is blocked until the boundary doc, rollback path and smoke checks are reviewed."
+      "assertion": "A later install task is blocked until boundary doc, rollback path and smoke checks are reviewed."
     }
   ],
   "metadata": {
@@ -59,7 +59,8 @@
       "install_readiness",
       "merge_readiness"
     ],
-    "live_risk": "Grafana default port 3000 conflicts with an existing listener on heim-pc."
+    "live_risk": "Grafana default port 3000 conflicts with an existing listener on heim-pc.",
+    "decision_update": "Beszel is the preferred first monitoring tool for UTIL-BASE-V1; Grafana remains deferred and non-authoritative."
   },
   "depends_on": []
 }

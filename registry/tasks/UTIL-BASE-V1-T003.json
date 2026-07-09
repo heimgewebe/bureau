@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "UTIL-BASE-V1-T003",
+  "initiative": "UTIL-BASE-V1",
+  "title": "Pilot Beszel monitoring before Grafana",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 303
+  },
+  "goal": "Pilot Beszel as the first lightweight Heim-PC/service monitoring layer and use the result to decide whether Grafana remains unnecessary.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/infra"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "util-base-v1-t003-1",
+      "assertion": "Beszel server/agent placement, port binding and persistence path are documented before install."
+    },
+    {
+      "id": "util-base-v1-t003-2",
+      "assertion": "The first monitored scope includes CPU, RAM, disk, network and Docker/container state where available."
+    },
+    {
+      "id": "util-base-v1-t003-3",
+      "assertion": "Beszel remains observation-only and cannot restart services, mutate Bureau queue state, merge PRs or deploy."
+    },
+    {
+      "id": "util-base-v1-t003-4",
+      "assertion": "The Grafana task remains deferred unless Beszel fails a concrete monitoring requirement."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09T02:58:00Z",
+    "source_request": "Evaluate every interesting utility tool and register the resulting plan in Bureau.",
+    "does_not_establish": [
+      "runtime_correctness",
+      "security_correctness",
+      "install_readiness",
+      "merge_readiness"
+    ],
+    "tools": [
+      "beszel",
+      "grafana"
+    ]
+  },
+  "depends_on": []
+}

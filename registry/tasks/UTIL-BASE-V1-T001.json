@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "id": "UTIL-BASE-V1-T001",
+  "initiative": "UTIL-BASE-V1",
+  "title": "Inventory utility baseline and service boundaries",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 301
+  },
+  "goal": "Re-run a live package/container/Flatpak/Snap/port inventory and record the binding rules for all utility web surfaces before installation.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/infra"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "util-base-v1-t001-1",
+      "assertion": "The current apt, snap, flatpak, PATH, Docker, user-service and listening-port state is captured with date and command evidence."
+    },
+    {
+      "id": "util-base-v1-t001-2",
+      "assertion": "Every planned web UI has an explicit bind/scope decision: localhost only, Tailnet only, or blocked."
+    },
+    {
+      "id": "util-base-v1-t001-3",
+      "assertion": "No tool is installed in this task; it only records baseline and service-boundary evidence."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09T02:58:00Z",
+    "source_request": "Evaluate every interesting utility tool and register the resulting plan in Bureau.",
+    "does_not_establish": [
+      "runtime_correctness",
+      "security_correctness",
+      "install_readiness",
+      "merge_readiness"
+    ],
+    "tools": [
+      "all"
+    ]
+  },
+  "depends_on": []
+}

@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "UTIL-BASE-V1-T002",
+  "initiative": "UTIL-BASE-V1",
+  "title": "Establish Backrest/restic restore gate",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 302
+  },
+  "goal": "Turn the existing restic installation into a verified backup/restore baseline and decide whether Backrest should be added as the local UI/orchestrator.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/infra"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "util-base-v1-t002-1",
+      "assertion": "Existing restic version, repositories, environment assumptions and exclude rules are documented without exposing secrets."
+    },
+    {
+      "id": "util-base-v1-t002-2",
+      "assertion": "At least one snapshot target set is defined for repos, Bureau registry, Lenskit/RepoBrief artifacts and selected documents."
+    },
+    {
+      "id": "util-base-v1-t002-3",
+      "assertion": "At least one single-file restore probe is executed or explicitly blocked with the missing prerequisite recorded."
+    },
+    {
+      "id": "util-base-v1-t002-4",
+      "assertion": "Backrest, if added, is bound only to localhost or Tailnet and does not expose repository credentials in logs or repo files."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09T02:58:00Z",
+    "source_request": "Evaluate every interesting utility tool and register the resulting plan in Bureau.",
+    "does_not_establish": [
+      "runtime_correctness",
+      "security_correctness",
+      "install_readiness",
+      "merge_readiness"
+    ],
+    "tools": [
+      "restic",
+      "backrest"
+    ]
+  },
+  "depends_on": []
+}

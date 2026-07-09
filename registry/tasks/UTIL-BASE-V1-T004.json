@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "UTIL-BASE-V1-T004",
+  "initiative": "UTIL-BASE-V1",
+  "title": "Add local-only Atuin shell history",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 304
+  },
+  "goal": "Add Atuin as local searchable shell history for operator sessions without cloud sync, AI features or secret export.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/infra"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "util-base-v1-t004-1",
+      "assertion": "Atuin installation path and shell integration are documented."
+    },
+    {
+      "id": "util-base-v1-t004-2",
+      "assertion": "Cloud sync and AI features are disabled unless a separate later review explicitly enables them."
+    },
+    {
+      "id": "util-base-v1-t004-3",
+      "assertion": "A secret/history hygiene note records what must not be entered into shell history."
+    },
+    {
+      "id": "util-base-v1-t004-4",
+      "assertion": "Basic history search works in the user shell without breaking existing tmux/SSH-Cockpit flows."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09T02:58:00Z",
+    "source_request": "Evaluate every interesting utility tool and register the resulting plan in Bureau.",
+    "does_not_establish": [
+      "runtime_correctness",
+      "security_correctness",
+      "install_readiness",
+      "merge_readiness"
+    ],
+    "tools": [
+      "atuin"
+    ]
+  },
+  "depends_on": []
+}

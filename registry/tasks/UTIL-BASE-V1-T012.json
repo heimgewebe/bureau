@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "id": "UTIL-BASE-V1-T012",
+  "initiative": "UTIL-BASE-V1",
+  "title": "Maintain parked utility recheck policy",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 312
+  },
+  "goal": "Record why Kopia, lazygit, KDE Connect/GSConnect, Zellij, Windmill, Open WebUI, AnythingLLM, Dyad and n8n are parked and what would reopen them.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/infra"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "util-base-v1-t012-1",
+      "assertion": "Each parked tool has a specific reopen condition instead of a vague maybe-later status."
+    },
+    {
+      "id": "util-base-v1-t012-2",
+      "assertion": "n8n is explicitly listed as deleted/not active and requires a later explicit user decision before any new Bureau task or install path is created."
+    },
+    {
+      "id": "util-base-v1-t012-3",
+      "assertion": "Windmill/Open WebUI/AnythingLLM/Dyad remain sandbox-only until a boundary review proves they do not create a second control-plane or knowledge truth."
+    },
+    {
+      "id": "util-base-v1-t012-4",
+      "assertion": "Kopia, lazygit, KDE Connect/GSConnect and Zellij remain optional and cannot displace the selected first-path tools without evidence."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09T02:58:00Z",
+    "source_request": "Evaluate every interesting utility tool and register the resulting plan in Bureau.",
+    "does_not_establish": [
+      "runtime_correctness",
+      "security_correctness",
+      "install_readiness",
+      "merge_readiness"
+    ],
+    "tools": [
+      "kopia",
+      "lazygit",
+      "kde-connect",
+      "gsconnect",
+      "zellij",
+      "windmill",
+      "open-webui",
+      "anythingllm",
+      "dyad",
+      "n8n"
+    ]
+  },
+  "depends_on": []
+}

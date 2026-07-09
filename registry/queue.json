@@ -50,9 +50,7 @@
       "OPERATOR-PC-HYGIENE-V1-T004",
       "OPERATOR-PC-HYGIENE-V1-T005"
     ],
-    "next": [
-      "RPU-V1-T021"
-    ],
+    "next": [],
     "now": []
   },
   "queue_policy": "skip-blocked",

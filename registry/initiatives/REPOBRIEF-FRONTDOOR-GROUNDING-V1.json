@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "id": "REPOBRIEF-FRONTDOOR-GROUNDING-V1",
+  "title": "RepoBrief Frontdoor and Grounding Verifier v1",
+  "state": "active",
+  "commitment": "next",
+  "goal": "Turn RepoBrief's existing evidence, required-reading, query and MCP surfaces into an agent-facing ask frontdoor and deterministic grounding-verifier workflow without adding mutation, review or truth authority to RepoBrief core.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/repobrief-frontdoor-grounding-verifier-v1.md"
+  },
+  "completion": [
+    "Grounding verifier contracts define answer declarations and technical grounding verdicts with mandatory non-claims.",
+    "A minimal read-only citation/range verifier checks declared citations and ranges against existing snapshot artifacts.",
+    "An ask frontdoor can build small task-conditioned context packs with freshness, availability, required reading and citations.",
+    "Ask/frontdoor usefulness is measured with gold-query evaluation before default promotion.",
+    "MCP exposure is read-only and does not trigger implicit snapshot creation.",
+    "Delta/freshness invalidation and History Lens are either implemented or explicitly deferred with evidence."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-09T00:00:00Z",
+    "source_thread": "Lenskit as LLM tool: frontdoor, citation verifier, MCP, delta bundles, history lens",
+    "plan_document_sha256": "0377e25f4c75a6613b495e1521ac9aab782374a0fc392fdd1089d463785f1d39",
+    "lenskit_blueprint": {
+      "repository": "lenskit",
+      "path": "docs/blueprints/repobrief-agent-frontdoor-grounding-verifier-v1.md",
+      "sha256_at_registration": "88b4f67460b8f80c7e77d9057336b43c28e86a9c6af87e9a99a2b12cf128fc4b",
+      "registration_branch": "docs/repobrief-frontdoor-grounding-v1"
+    },
+    "live_observation": {
+      "lenskit_origin_main_at_registration": "87e424d1184dc37ad874ba116c39e382b4744aaf",
+      "bureau_origin_main_at_registration": "e97c1d138c9333c82cde29cb10c35c9e1b817b63",
+      "lenskit_open_pr_note": "PR #929 existed as draft read-only adapter boundary at registration; this initiative does not modify that branch.",
+      "bureau_open_pr_note": "PR #327 existed for SemantAH queue selection; this initiative appends a separate task chain and does not claim now-lane ownership."
+    },
+    "boundary_decision": "Grounding verifies declared evidence mechanics, not semantic truth. Ask builds read-only context packs, not answers, patches or review verdicts.",
+    "related_existing_tasks": [
+      "RBV1-T006",
+      "RBV1-T007",
+      "RBV1-T010",
+      "RBV1-T014",
+      "RBV1-T015",
+      "RBV1-T016",
+      "RBV1-T017",
+      "RBAW-V1-T005"
+    ],
+    "does_not_establish": [
+      "truth",
+      "semantic_correctness",
+      "completeness",
+      "repo_understood",
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "security_correctness"
+    ]
+  }
+}

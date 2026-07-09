@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "id": "RBGV-V1-T002",
+  "initiative": "REPOBRIEF-FRONTDOOR-GROUNDING-V1",
+  "title": "Implement minimal citation and range verifier",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 220
+  },
+  "goal": "Implement a deterministic read-only verifier for declared citations and ranges against existing RepoBrief snapshot artifacts.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit",
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rbgv-v1-t002-readonly",
+      "assertion": "Verifier reads existing artifacts only and performs no Git, shell, refresh, snapshot creation, patch, PR or merge action.",
+      "verifier": "PR, self-review, tests, or stop report",
+      "evidence_type": "string"
+    },
+    {
+      "id": "rbgv-v1-t002-citation-resolution",
+      "assertion": "Known citation IDs and declared ranges are resolved against allowed artifact authority, preferably canonical_md.",
+      "verifier": "PR, self-review, tests, or stop report",
+      "evidence_type": "string"
+    },
+    {
+      "id": "rbgv-v1-t002-drift",
+      "assertion": "Missing, unresolved or hash/text-drifted citations produce fail; degraded dependencies are explicit.",
+      "verifier": "PR, self-review, tests, or stop report",
+      "evidence_type": "string"
+    },
+    {
+      "id": "rbgv-v1-t002-tests",
+      "assertion": "Focused tests cover pass, warn, fail and degraded paths.",
+      "verifier": "PR, self-review, tests, or stop report",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09T00:00:00Z",
+    "created_from_plan": "RepoBrief Frontdoor and Grounding Verifier v1",
+    "plan_path": "docs/plans/repobrief-frontdoor-grounding-verifier-v1.md",
+    "plan_sha256": "0377e25f4c75a6613b495e1521ac9aab782374a0fc392fdd1089d463785f1d39",
+    "lenskit_blueprint_path": "docs/blueprints/repobrief-agent-frontdoor-grounding-verifier-v1.md",
+    "lenskit_blueprint_sha256_at_registration": "88b4f67460b8f80c7e77d9057336b43c28e86a9c6af87e9a99a2b12cf128fc4b",
+    "does_not_establish": [
+      "truth",
+      "semantic_correctness",
+      "completeness",
+      "repo_understood",
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "security_correctness"
+    ]
+  },
+  "depends_on": [
+    "RBGV-V1-T001"
+  ]
+}

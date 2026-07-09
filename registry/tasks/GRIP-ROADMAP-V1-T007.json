@@ -1,50 +1,78 @@
 {
-  "schema_version": 1,
-  "initiative": "GRIP-ROADMAP-V1",
+  "acceptance": [
+    {
+      "assertion": "Mechanic and Captain sequence logic lives outside the core grip surface file.",
+      "id": "orchestrator-module"
+    },
+    {
+      "assertion": "Generic run_grip dispatch remains runner-agnostic and has no runner-name special cases.",
+      "id": "engine-boundary"
+    },
+    {
+      "assertion": "The refactor does not add merge, deploy, service restart, fleet mutation, cleanup or secret authority.",
+      "id": "no-authority-change"
+    }
+  ],
   "claims": [
     {
-      "resource": "repo.grabowski",
+      "isolation": "worktree",
       "mode": "write",
-      "isolation": "worktree"
+      "resource": "repo.grabowski"
     }
+  ],
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T004",
+    "GRIP-ROADMAP-V1-T005"
   ],
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect"
+  },
+  "goal": "Move Mechanic and Captain sequence/orchestration logic out of grabowski_grips.py into a dedicated orchestration module without changing action authority semantics.",
+  "id": "GRIP-ROADMAP-V1-T007",
+  "initiative": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "deferred_from": "PR #96/#97 review",
+    "implementation_head": "7ad25548c03258081510bfd23611c1e533f3bfd9",
+    "implementation_merge_commit": "54506e6a1a8d9a002b6dcb1a9e8b9d90ff84aaa4",
+    "implementation_pr": "heimgewebe/grabowski#125",
+    "reason": "Keep boundary and Captain authority slices focused before structural extraction.",
+    "validated_acceptance": {
+      "engine-boundary": "The generic _RUNNERS dispatch remains runner-key based and runner-name agnostic; the new boundary test asserts wrapper code contains no action loop bodies.",
+      "no-authority-change": "The patch only moves existing orchestration bodies and adds the new module to runtime supporting-source metadata; external review PASS and full tests did not identify authority expansion.",
+      "orchestrator-module": "src/grabowski_grip_orchestration.py now contains run_mechanic_loop, run_captain_preflight and run_captain_run. src/grabowski_grips.py retains thin wrappers only."
+    },
+    "validation": {
+      "ci": "GitHub validate (3.10) and validate (3.12) completed SUCCESS for PR #125.",
+      "external_review": "external agy review PASS, finding_count=0, head_sha=7ad25548c03258081510bfd23611c1e533f3bfd9.",
+      "grabowski_pr": "heimgewebe/grabowski#125 merged via squash at 54506e6a1a8d9a002b6dcb1a9e8b9d90ff84aaa4 with head 7ad25548c03258081510bfd23611c1e533f3bfd9.",
+      "local_tests": "make validate: 718 tests OK before PR creation.",
+      "non_claims": [
+        "Does not add merge, deploy, service restart, fleet mutation, cleanup or secret authority.",
+        "Does not change Captain gate policy semantics intentionally.",
+        "Does not remove existing receipt or review gates.",
+        "Does not prove semantic correctness beyond tests, review and live runtime identity."
+      ],
+      "review_gate": "tools/pr_review_gate.py PASS for PR #125 with self-review and external agy evidence; diff_sha256=d67d15c2499bae0bcf9300699c5e0fea584bd56ae851dfe02dbfc8c12d2b917b.",
+      "runtime_deploy": "Scheduled deploy job grabowski-job-6b3f4d2794e1 completed; deploy log reports PASS and repo_head 54506e6a1a8d9a002b6dcb1a9e8b9d90ff84aaa4. grabowski_status confirms runtime at that head with provenance_valid and runtime_binding_valid."
+    },
+    "verification": {
+      "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+      "task_sha256": "59378e51278ea2185c7164e327e5171f0b325a27351693261f9826b366359403"
+    },
+    "verification_note": "Mechanic and Captain orchestration runner bodies were extracted from grabowski_grips.py into src/grabowski_grip_orchestration.py while preserving generic dispatch and authority semantics.",
+    "verified_at": "2026-07-09"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 70
   },
   "required_capabilities": [
     "repository",
     "shell",
     "grabowski"
   ],
-  "id": "GRIP-ROADMAP-V1-T007",
-  "title": "Extract grip orchestration runners",
-  "state": "planned",
-  "goal": "Move Mechanic and Captain sequence/orchestration logic out of grabowski_grips.py into a dedicated orchestration module without changing action authority semantics.",
-  "depends_on": [
-    "GRIP-ROADMAP-V1-T004",
-    "GRIP-ROADMAP-V1-T005"
-  ],
-  "priority": {
-    "lane": "later",
-    "rank": 70
-  },
-  "acceptance": [
-    {
-      "id": "orchestrator-module",
-      "assertion": "Mechanic and Captain sequence logic lives outside the core grip surface file."
-    },
-    {
-      "id": "engine-boundary",
-      "assertion": "Generic run_grip dispatch remains runner-agnostic and has no runner-name special cases."
-    },
-    {
-      "id": "no-authority-change",
-      "assertion": "The refactor does not add merge, deploy, service restart, fleet mutation, cleanup or secret authority."
-    }
-  ],
-  "metadata": {
-    "deferred_from": "PR #96/#97 review",
-    "reason": "Keep boundary and Captain authority slices focused before structural extraction."
-  }
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Extract grip orchestration runners"
 }

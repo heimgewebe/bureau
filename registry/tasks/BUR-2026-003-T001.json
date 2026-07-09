@@ -3,7 +3,7 @@
   "id": "BUR-2026-003-T001",
   "initiative": "BUR-2026-003",
   "title": "Runtime drift check",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 10
@@ -60,6 +60,40 @@
     "planning_slice": "bureau-runtime-and-repo-orchestration-v1",
     "created_from_plan": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
     "operator_lab_run": "not applicable — planning task definition only",
-    "next_action": "implement this task first"
+    "next_action": "closed; proceed to BUR-2026-003-T002",
+    "verified_at": "2026-07-09T15:51:00+02:00",
+    "implementation_commits": [
+      "e066645 feat: add bureau runtime drift check",
+      "c77ee73 runtime drift read only checks",
+      "4c8e044 fix runtime drift untracked detection"
+    ],
+    "implementation_evidence": {
+      "runtime_cli": "PYTHONPATH=src python -m bureau.cli --root . --json runtime-drift-check",
+      "focused_tests": "PYTHONPATH=src python -m pytest tests/test_v2.py -q -k runtime_drift_check",
+      "focused_test_result": "7 passed",
+      "live_checkout_head": "5f39f9cf5ac886e2fceea5c3cadc21466337b497",
+      "runtime_report_boundary": {
+        "read_only": true,
+        "checkout_branch": "main",
+        "checkout_dirty": false,
+        "head_equals_origin_main": true,
+        "severity_classes_seen": [
+          "info",
+          "warning"
+        ]
+      },
+      "acceptance_mapping": {
+        "read-only-check": "runtime-drift-check reports checkout, branch, HEAD, origin/main, dirty paths, registry lifecycle, and receipt drift without mutation",
+        "clear-severity": "findings contain explicit severity fields including info and warning",
+        "tests-cover-drift": "tests/test_v2.py includes clean, dirty, untracked, receipt drift, git failure, state-db failure, and CLI runtime drift cases",
+        "no-runtime-repair": "this closeout changes registry state and queue only; it adds no runtime repair or fetch/pull automation"
+      },
+      "self_review": "PASS: implementation already exists; this slice only verifies the registry task with evidence and confirms the now queue no longer contains it. No runtime repair, no repository orchestration, no fetch/pull automation."
+    },
+    "outcome": "Bureau runtime drift check is implemented, CLI-visible, read-only, and covered by runtime drift tests; task is closed in the registry.",
+    "verification": {
+      "task_sha256": "f56c2a4a8020500c3ed432e1b4e178d3f30bd9bdda1ae0b4a4a870551e11f7de",
+      "plan_sha256": "bcc1fd0ae4a05f70066a0b1f1d573cc21add0a824489ab0a23ba76d48904f1bf"
+    }
   }
 }

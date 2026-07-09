@@ -5,8 +5,8 @@
   "title": "Add History Lens derived navigation",
   "state": "planned",
   "priority": {
-    "lane": "later",
-    "rank": 227
+    "lane": "next",
+    "rank": 81
   },
   "goal": "Design or implement optional History Lens navigation for churn, blame condensation and commit/PR provenance chains.",
   "execution": {
@@ -78,7 +78,9 @@
       "review_completeness",
       "merge_readiness",
       "security_correctness"
-    ]
+    ],
+    "unblocked_by": "RBGV-V1-T008 verified via Lenskit PR #938.",
+    "selected_after": "RBGV-V1-T008"
   },
   "depends_on": [
     "RBGV-V1-T008"

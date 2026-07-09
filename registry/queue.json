@@ -1,7 +1,6 @@
 {
   "lanes": {
     "later": [
-      "RPU-V1-T012",
       "RPU-V1-T013",
       "RPU-V1-T014",
       "RPU-V1-T015",
@@ -67,7 +66,9 @@
       "OPERATOR-PC-HYGIENE-V1-T005"
     ],
     "next": [],
-    "now": []
+    "now": [
+      "RPU-V1-T012"
+    ]
   },
   "queue_policy": "skip-blocked",
   "schema_version": 1

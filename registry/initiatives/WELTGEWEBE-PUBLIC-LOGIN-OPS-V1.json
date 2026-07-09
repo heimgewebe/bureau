@@ -1,5 +1,5 @@
 {
-  "commitment": "later",
+  "commitment": "waiting",
   "completion": [
     "Runtime JWT secret on wg-prod-1 is rotated through a redacted secret-safe path after the prior exposure.",
     "SMTP credential presence is verified by metadata only and no secret values are stored in Bureau, GitHub or chat.",
@@ -20,17 +20,20 @@
       "mail_delivery_confirmed",
       "runtime_correctness"
     ],
+    "lifecycle_repair": "Aligned initiative state with blocked task state after Bureau queue closeout PR #323.",
     "production_host": "wg-prod-1",
     "registered_at": "2026-07-08T17:15:00Z",
     "repo": "heimgewebe/weltgewebe",
     "safety_boundary": "No public login activation until SMTP delivery is configured, JWT runtime secret is rotated, readiness preflight passes, and external delivery is confirmed. No secret values in Bureau, GitHub or chat.",
     "source_issue": "heimgewebe/weltgewebe#1370",
+    "waiting_reason": "The only registered rollout task is blocked on secret-safe SMTP credential availability and JWT rotation; no runtime/public-login action is authorized while blocked.",
+    "waiting_since": "2026-07-09",
     "working_repository": "/home/alex/repos/weltgewebe"
   },
   "parallelism": {
     "max_active_tasks": 1
   },
   "schema_version": 1,
-  "state": "active",
+  "state": "waiting",
   "title": "Weltgewebe public login production rollout safety"
 }

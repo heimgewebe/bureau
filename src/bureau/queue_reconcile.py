@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import subprocess
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from . import legacy
@@ -145,6 +147,241 @@ def _repo_focus(registry: Registry, snapshots: list[TaskSnapshot]) -> dict[str, 
             "current_ball": current_ball,
         }
     return result
+
+
+SAFE_APPLY_OPERATIONS = {"add_to_queue"}
+SAFE_APPLY_LANES = {"now", "next"}
+
+
+def _queue_path(registry: Registry) -> Path:
+    return registry.root / "registry" / "queue.json"
+
+
+def _read_queue(registry: Registry) -> dict[str, Any]:
+    return legacy.read_json(_queue_path(registry))
+
+
+def _queue_sha256(queue: dict[str, Any]) -> str:
+    return legacy.sha256_json(queue)
+
+
+def _git_head(root: Path) -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            check=True,
+        )
+    except Exception:
+        return None
+    return result.stdout.strip() or None
+
+
+def _plan_actions(report: dict[str, Any]) -> list[dict[str, Any]]:
+    actions: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str]] = set()
+    for finding in report["findings"]:
+        proposed = finding.get("proposed_action")
+        if not isinstance(proposed, dict):
+            continue
+        operation = proposed.get("operation")
+        target_lane = proposed.get("target_lane")
+        task_id = finding.get("task_id")
+        if (
+            operation not in SAFE_APPLY_OPERATIONS
+            or target_lane not in SAFE_APPLY_LANES
+            or not isinstance(task_id, str)
+        ):
+            continue
+        key = (operation, target_lane, task_id)
+        if key in seen:
+            continue
+        seen.add(key)
+        actions.append(
+            {
+                "operation": operation,
+                "target_lane": target_lane,
+                "task_id": task_id,
+                "source_finding_code": finding.get("code"),
+                "effective_state": finding.get("effective_state"),
+                "priority_lane": finding.get("priority_lane"),
+            }
+        )
+    return actions
+
+
+def _apply_actions_to_queue(
+    queue: dict[str, Any], actions: list[dict[str, Any]]
+) -> dict[str, Any]:
+    updated = {
+        **queue,
+        "lanes": {
+            lane: list(task_ids)
+            for lane, task_ids in queue.get("lanes", {}).items()
+        },
+    }
+    lanes = updated.setdefault("lanes", {})
+    for lane in legacy.LANE_ORDER:
+        lanes.setdefault(lane, [])
+    for action in actions:
+        task_id = action["task_id"]
+        target_lane = action["target_lane"]
+        for lane in legacy.LANE_ORDER:
+            lanes[lane] = [item for item in lanes[lane] if item != task_id]
+        lanes[target_lane].append(task_id)
+    return updated
+
+
+def queue_reconcile_plan(
+    registry: Registry,
+    store: StateStore,
+    *,
+    resource: str | None = None,
+) -> dict[str, Any]:
+    """Create a reviewed-apply plan for safe queue-reconcile mutations.
+
+    The plan is inert until a reviewer edits ``review.status`` to ``reviewed``.
+    It binds the dry-run report and pre-apply queue hash so apply can refuse
+    stale plans instead of silently mutating a drifted queue.
+    """
+    report = queue_reconcile_report(registry, store, resource=resource)
+    queue_before = _read_queue(registry)
+    actions = _plan_actions(report)
+    queue_after = _apply_actions_to_queue(queue_before, actions)
+    return {
+        "schema_version": 1,
+        "command": "queue-reconcile-plan",
+        "created_at": legacy.utc_now(),
+        "resource": resource,
+        "registry": {
+            "root": str(registry.root),
+            "git_head": _git_head(registry.root),
+            "queue_sha256_before": _queue_sha256(queue_before),
+        },
+        "dry_run_report_sha256": legacy.sha256_json(report),
+        "actions": actions,
+        "expected_queue_after": queue_after,
+        "expected_queue_after_sha256": _queue_sha256(queue_after),
+        "review": {
+            "required": True,
+            "status": "pending",
+            "instructions": (
+                "Review actions and expected_queue_after. To apply, set status "
+                "to reviewed and add reviewer plus reviewed_at."
+            ),
+        },
+        "does_not_establish": [
+            "dispatch_authority",
+            "task_claim",
+            "task_completion",
+            "merge_readiness",
+        ],
+    }
+
+
+def write_queue_reconcile_plan(
+    registry: Registry,
+    store: StateStore,
+    path: str | Path,
+    *,
+    resource: str | None = None,
+) -> dict[str, Any]:
+    plan = queue_reconcile_plan(registry, store, resource=resource)
+    target = Path(path).expanduser()
+    legacy.atomic_write(target, legacy.canonical_json(plan) + "\n")
+    return {**plan, "path": str(target)}
+
+
+def _load_reviewed_plan(path: str | Path) -> dict[str, Any]:
+    plan = legacy.read_json(Path(path).expanduser())
+    if plan.get("schema_version") != 1 or plan.get("command") != "queue-reconcile-plan":
+        raise legacy.StateError("queue reconcile plan has unsupported schema or command")
+    review = plan.get("review")
+    if not isinstance(review, dict) or review.get("status") != "reviewed":
+        raise legacy.StateError("queue reconcile plan is not reviewed")
+    if not review.get("reviewer") or not review.get("reviewed_at"):
+        raise legacy.StateError("reviewed queue reconcile plan requires reviewer and reviewed_at")
+    return plan
+
+
+def apply_queue_reconcile_plan(
+    registry: Registry,
+    store: StateStore,
+    path: str | Path,
+    *,
+    resource: str | None = None,
+) -> dict[str, Any]:
+    """Apply a reviewed queue reconcile plan with dry-run parity and rollback.
+
+    Only deterministic add-to-now/add-to-next actions generated by
+    queue_reconcile_plan are applied. The function refuses stale plans and
+    restores the original queue if post-apply validation fails.
+    """
+    plan = _load_reviewed_plan(path)
+    if plan.get("resource") != resource:
+        raise legacy.StateError("queue reconcile plan resource does not match apply resource")
+    current_report = queue_reconcile_report(registry, store, resource=resource)
+    current_queue = _read_queue(registry)
+    current_queue_sha = _queue_sha256(current_queue)
+    if current_queue_sha != plan.get("registry", {}).get("queue_sha256_before"):
+        raise legacy.StateError("queue changed since queue reconcile plan was generated")
+    if legacy.sha256_json(current_report) != plan.get("dry_run_report_sha256"):
+        raise legacy.StateError("queue reconcile findings changed since plan review")
+    expected = plan.get("expected_queue_after")
+    if not isinstance(expected, dict):
+        raise legacy.StateError("queue reconcile plan lacks expected_queue_after")
+    expected_sha = _queue_sha256(expected)
+    if expected_sha != plan.get("expected_queue_after_sha256"):
+        raise legacy.StateError("queue reconcile plan expected queue hash mismatch")
+    recomputed = _apply_actions_to_queue(current_queue, plan.get("actions", []))
+    if legacy.sha256_json(recomputed) != expected_sha:
+        raise legacy.StateError("queue reconcile plan actions do not match expected queue")
+
+    queue_path = _queue_path(registry)
+    before_text = queue_path.read_text(encoding="utf-8")
+    legacy.atomic_write(queue_path, legacy.canonical_json(expected) + "\n")
+    try:
+        registry_after = Registry.load(registry.root)
+        from .core import Dispatcher
+        from .registry_truth import registry_truth_diagnostics
+
+        _ = registry_after.summary()
+        state_integrity = store.integrity()
+        doctor = Dispatcher(registry_after, store).doctor(False)
+        registry_truth = registry_truth_diagnostics(registry.root)
+        gates = {
+            "bureau_check": (
+                state_integrity["integrity"] == "ok"
+                and not state_integrity["foreign_key_errors"]
+            ),
+            "doctor_healthy": doctor["healthy"],
+            "registry_truth_healthy": registry_truth["healthy"],
+        }
+        if not all(gates.values()):
+            raise legacy.StateError("post-apply gates failed: " + legacy.canonical_json(gates))
+    except Exception:
+        legacy.atomic_write(queue_path, before_text)
+        raise
+    return {
+        "schema_version": 1,
+        "command": "queue-reconcile-apply",
+        "applied": True,
+        "resource": resource,
+        "path": str(Path(path).expanduser()),
+        "queue_sha256_before": current_queue_sha,
+        "queue_sha256_after": expected_sha,
+        "actions": plan.get("actions", []),
+        "post_gates": gates,
+        "does_not_establish": [
+            "dispatch_authority",
+            "task_claim",
+            "task_completion",
+            "merge_readiness",
+        ],
+    }
 
 
 def queue_reconcile_report(

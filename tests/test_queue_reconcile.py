@@ -7,7 +7,11 @@ import pytest
 from bureau import cli as bureau_cli
 from bureau.core import Registry, StateStore
 from bureau.legacy import ValidationError
-from bureau.queue_reconcile import queue_reconcile_report
+from bureau.queue_reconcile import (
+    apply_queue_reconcile_plan,
+    queue_reconcile_report,
+    write_queue_reconcile_plan,
+)
 
 
 def _task_path(root, task_id):
@@ -49,7 +53,9 @@ def _set_task(root, task_id: str, **changes) -> None:
 
 
 def _report(root, tmp_path):
-    return queue_reconcile_report(Registry.load(root), StateStore(tmp_path / "bureau.sqlite3"))
+    return queue_reconcile_report(
+        Registry.load(root), StateStore(tmp_path / "state" / "bureau.sqlite3")
+    )
 
 
 def test_queue_reconcile_reports_unqueued_ready_priority_now(registry_factory, tmp_path):
@@ -124,7 +130,7 @@ def test_queue_reconcile_is_read_only(registry_factory, tmp_path):
 
 def test_queue_reconcile_cli_emits_json(registry_factory, tmp_path, capsys):
     root = registry_factory(1)
-    state = StateStore(tmp_path / "bureau.sqlite3")
+    state = StateStore(tmp_path / "state" / "bureau.sqlite3")
 
     result = bureau_cli.main(
         [
@@ -147,7 +153,7 @@ def test_queue_reconcile_can_filter_by_repository_resource(registry_factory, tmp
     root = registry_factory(2)
     _remove_from_queue(root, "BUR-TEST-001-T002")
     registry = Registry.load(root)
-    store = StateStore(tmp_path / "bureau.sqlite3")
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
 
     report = queue_reconcile_report(registry, store, resource="repo.beta")
 
@@ -156,3 +162,115 @@ def test_queue_reconcile_can_filter_by_repository_resource(registry_factory, tmp
     }
     assert task_findings == {"BUR-TEST-001-T002"}
     assert report["resource"] == "repo.beta"
+
+
+
+def _review_plan(path):
+    plan = json.loads(path.read_text())
+    plan["review"] = {
+        "required": True,
+        "status": "reviewed",
+        "reviewer": "test-reviewer",
+        "reviewed_at": "2026-07-09T00:00:00Z",
+    }
+    path.write_text(json.dumps(plan))
+    return plan
+
+
+def test_queue_reconcile_write_plan_requires_review_before_apply(
+    registry_factory, tmp_path
+):
+    root = registry_factory(1)
+    _remove_from_queue(root, "BUR-TEST-001-T001")
+    _set_task(root, "BUR-TEST-001-T001", state="planned", priority_lane="next")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+
+    plan = write_queue_reconcile_plan(registry, store, plan_path)
+
+    assert plan["review"]["status"] == "pending"
+    assert plan["actions"] == [
+        {
+            "operation": "add_to_queue",
+            "target_lane": "next",
+            "task_id": "BUR-TEST-001-T001",
+            "source_finding_code": "unqueued-open-priority-next",
+            "effective_state": "planned",
+            "priority_lane": "next",
+        }
+    ]
+    with pytest.raises(Exception, match="not reviewed"):
+        apply_queue_reconcile_plan(registry, store, plan_path)
+
+
+def test_queue_reconcile_apply_reviewed_plan_promotes_next_and_runs_gates(
+    registry_factory, tmp_path
+):
+    root = registry_factory(1)
+    _remove_from_queue(root, "BUR-TEST-001-T001")
+    _set_task(root, "BUR-TEST-001-T001", state="ready", priority_lane="next")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+    write_queue_reconcile_plan(registry, store, plan_path)
+    _review_plan(plan_path)
+
+    result = apply_queue_reconcile_plan(registry, store, plan_path)
+    queue = json.loads(_queue_path(root).read_text())
+
+    assert result["applied"] is True
+    assert result["post_gates"] == {
+        "bureau_check": True,
+        "doctor_healthy": True,
+        "registry_truth_healthy": True,
+    }
+    assert queue["lanes"]["next"] == ["BUR-TEST-001-T001"]
+    assert queue["lanes"]["now"] == []
+
+
+def test_queue_reconcile_apply_refuses_stale_plan_without_mutation(
+    registry_factory, tmp_path
+):
+    root = registry_factory(2)
+    _remove_from_queue(root, "BUR-TEST-001-T001")
+    _set_task(root, "BUR-TEST-001-T001", state="planned", priority_lane="next")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+    write_queue_reconcile_plan(registry, store, plan_path)
+    _review_plan(plan_path)
+    _remove_from_queue(root, "BUR-TEST-001-T002")
+    before = _queue_path(root).read_text()
+
+    with pytest.raises(Exception, match="queue changed"):
+        apply_queue_reconcile_plan(registry, store, plan_path)
+
+    assert _queue_path(root).read_text() == before
+
+
+def test_queue_reconcile_cli_writes_plan(registry_factory, tmp_path, capsys):
+    root = registry_factory(1)
+    _remove_from_queue(root, "BUR-TEST-001-T001")
+    _set_task(root, "BUR-TEST-001-T001", state="planned", priority_lane="next")
+    state = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+
+    result = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-db",
+            str(state.path),
+            "--json",
+            "queue-reconcile",
+            "--write-plan",
+            str(plan_path),
+        ]
+    )
+    output = json.loads(capsys.readouterr().out)
+
+    assert result == 0
+    assert output["command"] == "queue-reconcile-plan"
+    assert output["path"] == str(plan_path)
+    assert plan_path.exists()

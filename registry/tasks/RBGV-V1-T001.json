@@ -3,7 +3,7 @@
   "id": "RBGV-V1-T001",
   "initiative": "REPOBRIEF-FRONTDOOR-GROUNDING-V1",
   "title": "Define grounding verifier contracts",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 89
@@ -78,7 +78,38 @@
       "review_completeness",
       "merge_readiness",
       "security_correctness"
-    ]
+    ],
+    "outcome": "Implemented by Lenskit PR #931: answer grounding declaration and verdict contracts, docs, matrix entry, tests, proof and self-review.",
+    "implemented_by": {
+      "repository": "lenskit",
+      "pull_request": 931,
+      "merge_commit": "3a85ae16a6f41b8ec2998ce6c716cd2ed3ffa824",
+      "head_commit": "e3df03b9cefc126ed8e6819554bcf69d68a0572e"
+    },
+    "verified_acceptance": {
+      "rbgv-v1-t001-contracts": "merger/lenskit/contracts/answer-grounding-declaration.v1.schema.json and merger/lenskit/contracts/answer-grounding-verdict.v1.schema.json",
+      "rbgv-v1-t001-verdict-boundary": "docs/contracts/answer-grounding-v1.md and merger/lenskit/tests/test_answer_grounding_contracts.py::test_verdict_rejects_truth_or_claim_support_statuses",
+      "rbgv-v1-t001-examples": "docs/contracts/answer-grounding-v1.md#example-outcomes",
+      "rbgv-v1-t001-nonclaims": "schema does_not_establish arrays and tests in merger/lenskit/tests/test_answer_grounding_contracts.py"
+    },
+    "verification": {
+      "verified_at": "2026-07-09T06:24:01Z",
+      "checks": [
+        "Lenskit PR #931 CI all green before merge",
+        "local focused tests green",
+        "diff downloadable before merge"
+      ],
+      "does_not_establish": [
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness",
+        "semantic_answer_correctness",
+        "merge_readiness_for_future_tasks",
+        "security_correctness"
+      ],
+      "task_sha256": "1680cd07fce80d605da1ed270d2193922dbab6241767e19c695e5c50c3621774",
+      "plan_sha256": "6e596079b33433e77ca945330a51c7a8d80595913062beba82a73d8a93832b5d"
+    }
   },
   "depends_on": [
     "RBV1-T006",

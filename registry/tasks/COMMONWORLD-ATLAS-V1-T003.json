@@ -3,7 +3,7 @@
   "id": "COMMONWORLD-ATLAS-V1-T003",
   "initiative": "COMMONWORLD-ATLAS-V1",
   "title": "Add MapLibre place proof",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 50
@@ -50,7 +50,67 @@
   ],
   "metadata": {
     "repo": "heimgewebe/commonworld",
-    "plan": "docs/blueprints/commonworld-masterplan.md"
+    "plan": "docs/blueprints/commonworld-masterplan.md",
+    "implementation_pr": "heimgewebe/commonworld#3",
+    "implementation_head": "fc9f6652f43d43f37f59ca72d4aeb57ba2a3734f",
+    "implementation_merge_commit": "dc7661057568d4867396529e86f8023721d2581c",
+    "supporting_prs": [
+      {
+        "pr": "heimgewebe/commonworld#19",
+        "title": "proofs: cover exact map privacy mode",
+        "head": "b0dba42cfb479d46decc443d288725040f0c6028",
+        "merge_commit": "edc8bd659435656e9441c62cad545ada8864489e"
+      },
+      {
+        "pr": "heimgewebe/commonworld#22",
+        "title": "docs: mark map source config implemented",
+        "merge_commit": "77e87918d0b0f3e8af1cffda519d3afbb6e1628a"
+      }
+    ],
+    "live_commonworld_head": "53c6b2e0bd411b66f3d3bd62703628cce2e3be2f",
+    "implementation_paths": [
+      "proofs/map/index.html",
+      "proofs/map/map.css",
+      "proofs/map/map.js",
+      "proofs/map/map-source.json",
+      "proofs/map/README.md",
+      "scripts/validate_map_proof.py",
+      "scripts/validate_map_source_strategy.py",
+      "tests/test_map_proof.py",
+      "tests/test_map_source_config.py",
+      "tests/test_map_source_strategy.py"
+    ],
+    "outcome": "Commonworld contains a static MapLibre/CARTO proof surface that renders location-safe seed projects, skips hidden projects, distinguishes approximate and exact location modes, and keeps API/backend/write paths out of scope.",
+    "verified_acceptance": {
+      "map-route": "proofs/map/index.html loads the static proof; proofs/map/map.js consumes seed projects and adds MapLibre markers only for map-renderable entries from the CommonProject fixtures.",
+      "privacy-modes": "validate_map_proof.py and tests/test_map_proof.py cover hidden projects as non-renderable, approximate projects with an approximate-location halo, and exact projects without the halo.",
+      "no-api-coupling": "proofs/map/README.md and index copy explicitly state no backend, no public submissions and no weltgewebe write path; validation passed without adding runtime services."
+    },
+    "validation": [
+      "Commonworld PR #3 GitHub validate/contracts check SUCCESS.",
+      "Commonworld PR #19 GitHub validate/contracts check SUCCESS.",
+      "Local: python3 scripts/validate_map_proof.py passed.",
+      "Local: python3 scripts/validate_map_source_strategy.py passed.",
+      "Local: python3 -m unittest tests.test_map_proof tests.test_map_source_config tests.test_map_source_strategy passed (20 tests).",
+      "Local: make validate passed on /home/alex/repos/commonworld origin/main."
+    ],
+    "verified_at": "2026-07-09",
+    "does_not_establish": [
+      "api_runtime_readiness",
+      "backend_readiness",
+      "public_submission_readiness",
+      "weltgewebe_write_path",
+      "production_map_infrastructure",
+      "tile_provider_commitment",
+      "browser_e2e_visual_correctness",
+      "merge_readiness_for_future_tasks"
+    ],
+    "verification": {
+      "task_sha256": "04b6dff27fe7ac2eaf248a22109a1c0ecee16d8b0e7b95557bb105adac195d88",
+      "commonworld_head": "53c6b2e0bd411b66f3d3bd62703628cce2e3be2f",
+      "checked_at": "2026-07-09T02:55:00Z",
+      "plan_sha256": "37e27f4919329addeee583330b0168ea472b468e6d80cadb2559ef0d10f10b2d"
+    }
   },
   "depends_on": [
     "COMMONWORLD-ATLAS-V1-T002"

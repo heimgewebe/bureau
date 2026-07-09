@@ -5,7 +5,7 @@
   "title": "Add focused digital Commons proof",
   "state": "planned",
   "priority": {
-    "lane": "later",
+    "lane": "next",
     "rank": 60
   },
   "goal": "Implement a first digital Commons view where exactly one hierarchy branch is focused at a time.",

@@ -65,9 +65,15 @@
         "pr": "heimgewebe/commonworld#22",
         "title": "docs: mark map source config implemented",
         "merge_commit": "77e87918d0b0f3e8af1cffda519d3afbb6e1628a"
+      },
+      {
+        "pr": "heimgewebe/commonworld#34",
+        "title": "test: add offline map proof smoke",
+        "head": "11d91f98f7b67ae50d445b98c32ba4b5306baa8a",
+        "merge_commit": "56d2741c60c506f73fa9d861247920b724ba4562"
       }
     ],
-    "live_commonworld_head": "53c6b2e0bd411b66f3d3bd62703628cce2e3be2f",
+    "live_commonworld_head": "56d2741c60c506f73fa9d861247920b724ba4562",
     "implementation_paths": [
       "proofs/map/index.html",
       "proofs/map/map.css",
@@ -82,9 +88,9 @@
     ],
     "outcome": "Commonworld contains a static MapLibre/CARTO proof surface that renders location-safe seed projects, skips hidden projects, distinguishes approximate and exact location modes, and keeps API/backend/write paths out of scope.",
     "verified_acceptance": {
-      "map-route": "proofs/map/index.html loads the static proof; proofs/map/map.js consumes seed projects and adds MapLibre markers only for map-renderable entries from the CommonProject fixtures.",
-      "privacy-modes": "validate_map_proof.py and tests/test_map_proof.py cover hidden projects as non-renderable, approximate projects with an approximate-location halo, and exact projects without the halo.",
-      "no-api-coupling": "proofs/map/README.md and index copy explicitly state no backend, no public submissions and no weltgewebe write path; validation passed without adding runtime services."
+      "map-route": "proofs/map/index.html loads the static proof; proofs/map/map.js consumes seed projects and adds MapLibre markers only for map-renderable entries. PR #34 adds a deterministic offline smoke wired into make validate.",
+      "privacy-modes": "validate_map_proof.py and tests/test_map_proof.py cover hidden, approximate and exact modes; PR #34 smoke observes exact marker without halo, approximate marker with halo, and hidden OpenStreetMap absence.",
+      "no-api-coupling": "proof docs and validators keep backend/write paths out of scope; PR #34 stubs MapLibre and CARTO dependencies instead of requiring live CDN/tile access."
     },
     "validation": [
       "Commonworld PR #3 GitHub validate/contracts check SUCCESS.",
@@ -92,7 +98,10 @@
       "Local: python3 scripts/validate_map_proof.py passed.",
       "Local: python3 scripts/validate_map_source_strategy.py passed.",
       "Local: python3 -m unittest tests.test_map_proof tests.test_map_source_config tests.test_map_source_strategy passed (20 tests).",
-      "Local: make validate passed on /home/alex/repos/commonworld origin/main."
+      "Local: make validate passed on /home/alex/repos/commonworld origin/main.",
+      "Commonworld PR #34 GitHub validate/contracts check SUCCESS.",
+      "Local: python3 scripts/smoke_map_proof_offline.py passed.",
+      "Local: PR #34 make validate passed before merge."
     ],
     "verified_at": "2026-07-09",
     "does_not_establish": [
@@ -103,13 +112,20 @@
       "production_map_infrastructure",
       "tile_provider_commitment",
       "browser_e2e_visual_correctness",
-      "merge_readiness_for_future_tasks"
+      "merge_readiness_for_future_tasks",
+      "live_browser_engine_equivalence",
+      "live_cdn_availability",
+      "live_tile_provider_availability"
     ],
+    "smoke_evidence_pr": "heimgewebe/commonworld#34",
+    "smoke_evidence_head": "11d91f98f7b67ae50d445b98c32ba4b5306baa8a",
+    "smoke_evidence_merge_commit": "56d2741c60c506f73fa9d861247920b724ba4562",
     "verification": {
-      "task_sha256": "04b6dff27fe7ac2eaf248a22109a1c0ecee16d8b0e7b95557bb105adac195d88",
-      "commonworld_head": "53c6b2e0bd411b66f3d3bd62703628cce2e3be2f",
-      "checked_at": "2026-07-09T02:55:00Z",
-      "plan_sha256": "37e27f4919329addeee583330b0168ea472b468e6d80cadb2559ef0d10f10b2d"
+      "task_sha256": "f73bae8ecc8b2e9139ee23caf7b174449be2d3ccea99d8b4b2bbc8e812791e28",
+      "plan_sha256": "37e27f4919329addeee583330b0168ea472b468e6d80cadb2559ef0d10f10b2d",
+      "implementation_pr_head": "fc9f6652f43d43f37f59ca72d4aeb57ba2a3734f",
+      "implementation_merge_commit": "dc7661057568d4867396529e86f8023721d2581c",
+      "commonworld_head": "56d2741c60c506f73fa9d861247920b724ba4562"
     }
   },
   "depends_on": [

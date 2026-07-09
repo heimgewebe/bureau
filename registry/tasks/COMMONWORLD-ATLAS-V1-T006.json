@@ -3,7 +3,7 @@
   "id": "COMMONWORLD-ATLAS-V1-T006",
   "initiative": "COMMONWORLD-ATLAS-V1",
   "title": "Stabilize map proof browser smoke",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 80
@@ -52,7 +52,37 @@
     "repo": "heimgewebe/commonworld",
     "source_pr": "heimgewebe/commonworld#19",
     "source_attempt": "A local Playwright smoke was attempted on 2026-07-08 but failed before page load because the installed Playwright Node driver crashed with a V8 SetPermissions failure.",
-    "boundary": "Do not add backend, submissions, accounts or weltgewebe write coupling; this is only a deterministic proof-route smoke."
+    "boundary": "Do not add backend, submissions, accounts or weltgewebe write coupling; this is only a deterministic proof-route smoke.",
+    "implementation_pr": "heimgewebe/commonworld#34",
+    "implementation_head": "11d91f98f7b67ae50d445b98c32ba4b5306baa8a",
+    "implementation_merge_commit": "56d2741c60c506f73fa9d861247920b724ba4562",
+    "verified_at": "2026-07-09",
+    "verified_acceptance": {
+      "browser-smoke": "PR #34 adds scripts/smoke_map_proof_offline.py, which emits exact/approximate marker evidence and skipped hidden-project evidence from committed proof files and seed data.",
+      "external-dependency-control": "PR #34 smoke is network_mode=offline-stubbed and stubs maplibre-gl plus carto-raster-tiles instead of fetching live dependencies.",
+      "t003-verification-path": "PR #34 is wired into make validate and provides the missing smoke evidence needed to verify T003 without weakening the no-backend/no-write-path boundary."
+    },
+    "validation": [
+      "Commonworld PR #34 merged as 56d2741c60c506f73fa9d861247920b724ba4562.",
+      "GitHub validate workflow succeeded for PR #34.",
+      "Local validation before merge: python3 scripts/smoke_map_proof_offline.py; make validate."
+    ],
+    "does_not_establish": [
+      "live_browser_engine_equivalence",
+      "live_cdn_availability",
+      "live_tile_provider_availability",
+      "api_runtime_readiness",
+      "write_path_readiness",
+      "runtime_correctness",
+      "future_merge_readiness"
+    ],
+    "verification": {
+      "task_sha256": "6b61d824a9181fc4a7ea0ed3884f52bf5c0aec2bca4af02042b6b3e9d74275e3",
+      "plan_sha256": "37e27f4919329addeee583330b0168ea472b468e6d80cadb2559ef0d10f10b2d",
+      "implementation_pr_head": "11d91f98f7b67ae50d445b98c32ba4b5306baa8a",
+      "implementation_merge_commit": "56d2741c60c506f73fa9d861247920b724ba4562",
+      "commonworld_head": null
+    }
   },
   "depends_on": [
     "COMMONWORLD-ATLAS-V1-T003"

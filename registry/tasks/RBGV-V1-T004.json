@@ -3,7 +3,7 @@
   "id": "RBGV-V1-T004",
   "initiative": "REPOBRIEF-FRONTDOOR-GROUNDING-V1",
   "title": "Define ask frontdoor contract",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 86
@@ -80,7 +80,40 @@
       "security_correctness"
     ],
     "unblocked_by": "RBGV-V1-T003 verified via Lenskit PR #933",
-    "selected_after": "RBGV-V1-T003"
+    "selected_after": "RBGV-V1-T003",
+    "outcome": "Implemented by Lenskit PR #934: read-only Ask Frontdoor request/context-pack contracts, answer scaffold, docs, matrix entry and schema tests.",
+    "implemented_by": {
+      "repository": "lenskit",
+      "pull_request": 934,
+      "merge_commit": "7b78b7b9103260e50a9d32bc3fa1ee5854929db1",
+      "head_commit": "20eadf07f2209649377663d42b3a446272549f98"
+    },
+    "verified_acceptance": {
+      "rbgv-v1-t004-request": "repobrief-ask-request.v1 requires query, task_profile, token_budget, snapshot_policy and output_mode.",
+      "rbgv-v1-t004-context-pack": "repobrief-ask-context-pack.v1 requires snapshot_ref, freshness, availability, required_reading, retrieval_hits, resolved_ranges and non-claims.",
+      "rbgv-v1-t004-no-refresh": "schemas require existing_snapshot_only and full forbidden_operations including implicit_refresh, git_mutation and snapshot_creation_on_read.",
+      "rbgv-v1-t004-agent-output": "answer_scaffold requires citation_obligations, caveats_to_surface and non_claims_to_surface."
+    },
+    "verification": {
+      "verified_at": "2026-07-09T07:31:26Z",
+      "checks": [
+        "Lenskit PR #934 CI all green before merge",
+        "diff saved before merge to /home/alex/iCloud/Drive/halde/lenskit-pr934.patch",
+        "local focused tests green"
+      ],
+      "patch_sha256": "a674bcbedcf96b91184882b039671250c06959121d55086b86ff8c15828b3dc7",
+      "does_not_establish": [
+        "runtime_implementation",
+        "actual_reading",
+        "semantic_answer_correctness",
+        "complete_context_use",
+        "test_sufficiency",
+        "review_completeness",
+        "security_correctness"
+      ],
+      "task_sha256": "210be7d486a62eeca5b1bc675748f8396d76e6bbd70d3624805fdde7ff1aa3ea",
+      "plan_sha256": "6e596079b33433e77ca945330a51c7a8d80595913062beba82a73d8a93832b5d"
+    }
   },
   "depends_on": [
     "RBGV-V1-T001",

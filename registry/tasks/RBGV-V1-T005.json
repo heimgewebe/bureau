@@ -5,8 +5,8 @@
   "title": "Prototype repobrief ask CLI",
   "state": "planned",
   "priority": {
-    "lane": "later",
-    "rank": 223
+    "lane": "next",
+    "rank": 85
   },
   "goal": "Build a minimal read-only CLI path that produces a small task-conditioned context pack from existing snapshots and indices.",
   "execution": {
@@ -78,7 +78,9 @@
       "review_completeness",
       "merge_readiness",
       "security_correctness"
-    ]
+    ],
+    "unblocked_by": "RBGV-V1-T004 verified via Lenskit PR #934",
+    "selected_after": "RBGV-V1-T004"
   },
   "depends_on": [
     "RBGV-V1-T004"

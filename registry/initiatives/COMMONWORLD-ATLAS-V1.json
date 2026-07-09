@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "COMMONWORLD-ATLAS-V1",
   "title": "commonworld Commons atlas foundation",
-  "state": "active",
-  "commitment": "next",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Establish commonworld.net as a separate public Commons atlas repository with a contract-first catalog, visual proof slices, governance, and a later explicit handoff to weltgewebe.",
   "current_plan": {
     "repository": "commonworld",
@@ -34,6 +34,17 @@
     "lifecycle_reconcile": {
       "reason": "activated because registered tasks remain open",
       "source": "BUR-DOCTOR-QUEUE-LIFECYCLE-RECONCILE-V1"
-    }
+    },
+    "completed_at": "2026-07-09",
+    "completion_summary": "Commonworld Atlas v1 registered tasks are verified: initial repo, mixed-node proof, map proof, Aether proof, governance/handoff boundary, map smoke, static catalog/API/search contracts and static search proof fixtures.",
+    "does_not_establish": [
+      "production_runtime_readiness",
+      "backend_readiness",
+      "public_submission_readiness",
+      "weltgewebe_write_path",
+      "all_future_commonworld_work_complete",
+      "runtime_correctness",
+      "future_merge_readiness"
+    ]
   }
 }

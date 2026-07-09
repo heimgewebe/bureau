@@ -63,13 +63,44 @@
       "merge_readiness"
     ],
     "experiment_path": "experiments/2026-07-09_repobrief-workbench-usefulness-eval",
+    "implementation_head": "0fd95f9a2c06ff81ed06a7affb50240d3d0658db",
+    "implementation_merge_commit": "fc5dc95d6a267fce085accb84e486b7feed9cfdd",
+    "implementation_pr": "heimgewebe/vibe-lab#301",
     "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
     "reason": "RPU-V1-T012 implemented the measurement harness but intentionally did not execute comparable runs or prove usefulness.",
     "registered_at": "2026-07-09T04:00:00Z",
+    "selected_after": "RPU-V1-T020",
+    "selection_reason": "After resource implementation, the next useful validation is to run a RepoBrief workbench usefulness series against real agent-facing surfaces.",
     "source_pr": "heimgewebe/vibe-lab#300",
     "unblocked_by": "RPU-V1-T020 verified via Lenskit PR #940; RPU-V1-T012 dependency already verified.",
-    "selected_after": "RPU-V1-T020",
-    "selection_reason": "After resource implementation, the next useful validation is to run a RepoBrief workbench usefulness series against real agent-facing surfaces."
+    "validated_acceptance": {
+      "decision-recorded": "decision.yml is schema-compliant with verdict=insufficient_proof and pilot_decision=pilot_without_promotion; result.md preserves the no-default-promotion and no-condition-superiority non-claims.",
+      "generated-artifacts-current": "docs/_generated/promotion-readiness.json and docs/_generated/doc-index.md were regenerated and committed after local/CI generated-artifact checks.",
+      "run-series-recorded": "experiments/2026-07-09_repobrief-workbench-usefulness-eval/results/run-series.yml records three audited single-run slices across context_pack and trace_gated conditions.",
+      "validator-frontdoor": "scripts/docmeta/validate_repobrief_workbench_run_series.py and its tests are wired into Makefile validate, so the run-series evidence is checked by the repository frontdoor."
+    },
+    "validation": {
+      "ci": "GitHub PR #301 checks completed SUCCESS: validate, validate-doc-freshness-registry, bundle-freshness-receipt, non-blocking-diagnostics, ephemeral-diagnostics.",
+      "fixes": [
+        "Changed decision.yml verdict from pilot_without_promotion to schema-compliant insufficient_proof and preserved pilot_without_promotion as pilot_decision.",
+        "Added RepoBrief Workbench run-series validator and regression tests to Makefile validate.",
+        "Committed regenerated docs/_generated/doc-index.md after the blocking generated-artifact CI contract reported stale status draft -> inconclusive."
+      ],
+      "local_tests": "python3 scripts/docmeta/test_validate_repobrief_workbench_run_series.py; python3 scripts/docmeta/validate_repobrief_workbench_run_series.py; python3 scripts/docmeta/validate_repobrief_workbench_usefulness.py; make validate all passed on final head.",
+      "non_claims": [
+        "No default promotion of RepoBrief Workbench conditions.",
+        "No condition superiority claim from the limited series.",
+        "No proof of agent quality, runtime correctness, or production safety.",
+        "The run series is comparative evidence for pilot/defer decisions, not a broad statistical study."
+      ],
+      "vibe_lab_pr": "heimgewebe/vibe-lab#301 merged via squash at fc5dc95d6a267fce085accb84e486b7feed9cfdd with final head 0fd95f9a2c06ff81ed06a7affb50240d3d0658db."
+    },
+    "verification": {
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015",
+      "task_sha256": "6a440a75dd42fc5cae5f07757f42248f9c2a02b89c23a283fe28a1e3e4d6a876"
+    },
+    "verification_note": "RepoBrief Workbench usefulness run series was recorded, validated, CI-green and merged. Decision remains conservative: pilot without default promotion, no condition superiority claim.",
+    "verified_at": "2026-07-09"
   },
   "priority": {
     "lane": "next",
@@ -82,6 +113,6 @@
     "github"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Execute RepoBrief workbench usefulness run series"
 }

@@ -3,7 +3,7 @@
   "id": "RBGV-V1-T007",
   "initiative": "REPOBRIEF-FRONTDOOR-GROUNDING-V1",
   "title": "Expose MCP read-only frontdoor",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 83
@@ -80,7 +80,39 @@
       "security_correctness"
     ],
     "unblocked_by": "RBGV-V1-T006 verified via Lenskit PR #936; dependencies RBGV-V1-T003, RBGV-V1-T005 and RBV1-T010 are verified.",
-    "selected_after": "RBGV-V1-T006"
+    "selected_after": "RBGV-V1-T006",
+    "outcome": "Implemented by Lenskit PR #937: MCP-shaped read-only frontdoor handlers ask_context and grounding_verify with shared CLI/Core semantics and no snapshot_create side effects.",
+    "implemented_by": {
+      "repository": "lenskit",
+      "pull_request": 937,
+      "merge_commit": "e7e31184c906811f27bf8226512ae8170b538722",
+      "head_commit": "d7b3ea0230eed980590218760f9a2f5efccbb891"
+    },
+    "verified_acceptance": {
+      "rbgv-v1-t007-readonly-mcp": "repobrief_mcp_tools.ask_context and grounding_verify report writes=[]; tests assert no snapshot_create call and no bundle writes.",
+      "rbgv-v1-t007-shared-semantics": "ask_context reports repobrief.ask_request.v1 / repobrief.ask_context_pack.v1; grounding_verify reports answer_grounding declaration/verdict semantics.",
+      "rbgv-v1-t007-boundary": "repobrief-mcp-boundary.md and read-only boundary forbid Git, shell, patch, PR, auto-review, auto-fix, auto-merge and secret_read.",
+      "rbgv-v1-t007-smoke": "test_repobrief_mcp_frontdoor.py covers ask context and grounding verification shapes."
+    },
+    "verification": {
+      "verified_at": "2026-07-09T09:56:50Z",
+      "checks": [
+        "Lenskit PR #937 CI all green before merge",
+        "diff saved before merge to /home/alex/iCloud/Drive/halde/lenskit-pr937.patch",
+        "local focused tests green"
+      ],
+      "patch_sha256": "fb9a96758f0e49e654205569ed9c1a9fd7a10f18aaac86d89b04adf69da76efb",
+      "does_not_establish": [
+        "mcp_server_available",
+        "transport_authentication_correctness",
+        "runtime_deployment",
+        "answer_correctness",
+        "actual_reading",
+        "security_correctness"
+      ],
+      "task_sha256": "d8f6ad5a67a64c4cebc0d764faf14df300145fae0d324ef1afd54e3d390cb762",
+      "plan_sha256": "6e596079b33433e77ca945330a51c7a8d80595913062beba82a73d8a93832b5d"
+    }
   },
   "depends_on": [
     "RBGV-V1-T005",

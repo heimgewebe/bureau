@@ -5,8 +5,8 @@
   "title": "Integrate answer compliance grounding",
   "state": "planned",
   "priority": {
-    "lane": "later",
-    "rank": 221
+    "lane": "next",
+    "rank": 87
   },
   "goal": "Connect required-reading and answer-compliance declarations to the grounding verdict without claiming actual reading or semantic correctness.",
   "execution": {
@@ -78,7 +78,9 @@
       "review_completeness",
       "merge_readiness",
       "security_correctness"
-    ]
+    ],
+    "unblocked_by": "RBGV-V1-T002 verified via Lenskit PR #932",
+    "selected_after": "RBGV-V1-T002"
   },
   "depends_on": [
     "RBGV-V1-T002"

@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-003-T009",
+  "initiative": "BUR-2026-003",
+  "title": "Wire runtime mutation approval enforcement",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 90
+  },
+  "goal": "Extend Approval Path v1 from the declared runtime_mutation class to concrete runtime, service, deploy or restart mutation paths.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "baseline_commit": "4a17343684a5910860979f76f710156214ee458f",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "runtime-gates-enforced",
+      "assertion": "Runtime, service, deploy or restart mutation paths either enforce runtime_mutation approval or explicitly route to an existing stronger runtime operator gate.",
+      "verifier": "tests and code review",
+      "evidence_type": "object"
+    },
+    {
+      "id": "unsafe-default-closed",
+      "assertion": "Runtime mutation attempts fail closed without sufficient break_glass approval or an explicitly documented stronger substitute gate.",
+      "verifier": "regression tests",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "created_from_task": "BUR-2026-003-T004",
+    "reason": "Approval Path v1 defines runtime_mutation as an unsafe class, but T004 wires repository mutation, agent dispatch, reviewed source import, queue mutation and external task creation only.",
+    "does_not_establish": [
+      "runtime approval enforcement is complete",
+      "runtime deploy or restart paths are safe by default",
+      "approval path covers every future command"
+    ]
+  },
+  "depends_on": [
+    "BUR-2026-003-T004"
+  ]
+}

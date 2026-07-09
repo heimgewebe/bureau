@@ -41,4 +41,4 @@ None found in the reviewed implementation diff.
 
 ## Non-claims
 
-This review does not establish automatic merge authority, automatic runtime repair, automatic queue repair, automatic task verification for future work, CI sufficiency beyond the executed commands, or that all future effectful paths are already wired to the approval helper. The final review also caught and fixed a missing repository-mutation approval record before workspace creation.
+This review does not establish automatic merge authority, automatic runtime repair, automatic queue repair, automatic task verification for future work, CI sufficiency beyond the executed commands, or that all future effectful paths are already wired to the approval helper. The final review also caught and fixed a missing repository-mutation approval record before workspace creation and registered runtime mutation wiring as follow-up `BUR-2026-003-T009`.

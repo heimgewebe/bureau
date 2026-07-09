@@ -24,8 +24,26 @@ bureau --root . --json queue-reconcile --resource repo.bureau
 
 The report can identify ready priority-now tasks that are not queued, priority-next tasks absent
 from queue, later-lane tasks whose advisory priority says now/next, terminal tasks still queued,
-and now-lane tasks that are not ready. It does not promote lanes, claim work, write tasks or close
-anything. Any apply mode must be a separate reviewed change.
+and now-lane tasks that are not ready. The default command is read-only: it does not promote
+lanes, claim work, write tasks or close anything.
+
+A queue mutation must go through a reviewed plan artifact. First write a plan:
+
+```bash
+bureau --root . --json queue-reconcile --write-plan /tmp/bureau-queue-plan.json
+```
+
+Review the plan's `actions` and `expected_queue_after`. To apply, edit `review.status` to
+`reviewed` and add `reviewer` plus `reviewed_at`, then run:
+
+```bash
+bureau --root . --json queue-reconcile --apply-plan /tmp/bureau-queue-plan.json
+```
+
+Apply is deliberately narrow. It only applies deterministic add-to-`now`/add-to-`next` actions
+from the reviewed plan, refuses if the queue or dry-run findings changed since the plan was
+generated, runs post-apply registry/doctor/registry-truth gates, and rolls the queue back if a
+post-apply gate fails. It never claims, dispatches, completes or merges work.
 
 ## Worktree hygiene
 

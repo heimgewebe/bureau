@@ -15,6 +15,7 @@ from .core import (
     Dispatcher,
     NoEligibleTask,
     Registry,
+    StateError,
     StateStore,
     cleanup_workspace,
     close_ready_initiatives,
@@ -64,6 +65,8 @@ def parser() -> argparse.ArgumentParser:
     sub.add_parser("runtime-drift-check")
     queue_reconcile = sub.add_parser("queue-reconcile")
     queue_reconcile.add_argument("--resource")
+    queue_reconcile.add_argument("--write-plan")
+    queue_reconcile.add_argument("--apply-plan")
     worktree_hygiene = sub.add_parser("worktree-hygiene")
     worktree_hygiene.add_argument("--max-count", type=int, default=25)
     registry_truth = sub.add_parser("registry-truth")
@@ -497,9 +500,24 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "repo-balls":
             value = dispatcher.repo_balls(set(args.capability))
         elif args.command == "queue-reconcile":
-            from .queue_reconcile import queue_reconcile_report
+            from .queue_reconcile import (
+                apply_queue_reconcile_plan,
+                queue_reconcile_report,
+                write_queue_reconcile_plan,
+            )
 
-            value = queue_reconcile_report(registry, store, resource=args.resource)
+            if args.write_plan and args.apply_plan:
+                raise StateError("use either --write-plan or --apply-plan, not both")
+            if args.write_plan:
+                value = write_queue_reconcile_plan(
+                    registry, store, args.write_plan, resource=args.resource
+                )
+            elif args.apply_plan:
+                value = apply_queue_reconcile_plan(
+                    registry, store, args.apply_plan, resource=args.resource
+                )
+            else:
+                value = queue_reconcile_report(registry, store, resource=args.resource)
         elif args.command == "claim-next":
             try:
                 value = dispatcher.claim_next(

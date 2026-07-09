@@ -3,7 +3,7 @@
   "id": "RBGV-V1-T009",
   "initiative": "REPOBRIEF-FRONTDOOR-GROUNDING-V1",
   "title": "Add History Lens derived navigation",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 81
@@ -80,7 +80,40 @@
       "security_correctness"
     ],
     "unblocked_by": "RBGV-V1-T008 verified via Lenskit PR #938.",
-    "selected_after": "RBGV-V1-T008"
+    "selected_after": "RBGV-V1-T008",
+    "outcome": "Implemented by Lenskit PR #939: optional History Lens derived navigation with export-profile controls, no person-blame/ownership/correctness/completeness verdicts, and live-state boundary.",
+    "implemented_by": {
+      "repository": "lenskit",
+      "pull_request": 939,
+      "merge_commit": "a1b9810a686df8f8b707567a1e5bf0dd1491f47c",
+      "head_commit": "1a7a6d68daaf109d38b9ae4ed55fa602af42b1ee"
+    },
+    "verified_acceptance": {
+      "rbgv-v1-t009-derived": "history_lens.py and history-lens-v1.md declare derived_navigation true and canonical_content_truth false.",
+      "rbgv-v1-t009-privacy": "export_policy supports disabled/summary/full profiles and excludes author metadata by default; tests cover inclusion controls.",
+      "rbgv-v1-t009-no-blame-verdict": "forbidden_verdicts includes person_blame, ownership, correctness and completeness; tests cover.",
+      "rbgv-v1-t009-live-boundary": "live_state_boundary and docs state live GitHub/CI/PR checks remain required; tests cover."
+    },
+    "verification": {
+      "verified_at": "2026-07-09T10:23:10Z",
+      "checks": [
+        "Lenskit PR #939 CI all green before merge",
+        "diff saved before merge to /home/alex/iCloud/Drive/halde/lenskit-pr939.patch",
+        "local focused tests green"
+      ],
+      "patch_sha256": "d6f24289a1097b77e84956978d4647493efef365472935be9e550cf559c1caac",
+      "does_not_establish": [
+        "canonical_content_truth",
+        "person_blame",
+        "ownership",
+        "correctness",
+        "completeness",
+        "live_github_state",
+        "security_correctness"
+      ],
+      "task_sha256": "c1f8c45ace3b94cc8236c0078ba8f43beb97cfc4ccbce7fac84ea724953bc11d",
+      "plan_sha256": "6e596079b33433e77ca945330a51c7a8d80595913062beba82a73d8a93832b5d"
+    }
   },
   "depends_on": [
     "RBGV-V1-T008"

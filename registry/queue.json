@@ -59,9 +59,7 @@
       "SCHAUWERK-OPTIMIZATION-V1-T005",
       "GRABOWSKI-OPERATOR-SURFACE-V1-T028"
     ],
-    "next": [
-      "RBGV-V1-T009"
-    ],
+    "next": [],
     "now": []
   },
   "queue_policy": "skip-blocked",

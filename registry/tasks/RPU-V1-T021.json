@@ -1,0 +1,84 @@
+{
+  "acceptance": [
+    {
+      "assertion": "At least three comparable task pairs or a justified smaller minimum are recorded under the defined conditions with task class, diff size and evidence boundaries.",
+      "id": "rpu-v1-t021-comparable-runs"
+    },
+    {
+      "assertion": "Each run is scored for localization, evidence completeness, patch scope, check fit, miss taxonomy, false-confidence risk and effort overhead.",
+      "id": "rpu-v1-t021-scoring"
+    },
+    {
+      "assertion": "Run evidence includes external observations such as existing tests, CI, review/operator notes or patch-evaluation artifacts; agent-authored tests alone are never treated as proof.",
+      "id": "rpu-v1-t021-external-observations"
+    },
+    {
+      "assertion": "The final decision is explicit: promote, pilot, defer or drop each candidate condition, with non-claims preserved.",
+      "id": "rpu-v1-t021-decision"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.vibe-lab"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.lenskit"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.bureau"
+    }
+  ],
+  "depends_on": [
+    "RPU-V1-T012"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/vibe-lab",
+      "repo:/home/alex/repos/lenskit",
+      "repo:/home/alex/repos/bureau"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/vibe-lab"
+  },
+  "goal": "Run comparable agent code-work tasks through the RepoBrief Workbench usefulness evaluation matrix and produce a measured promotion/defer/drop decision without self-proof or default-promotion shortcuts.",
+  "id": "RPU-V1-T021",
+  "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
+  "metadata": {
+    "created_from_task": "RPU-V1-T012",
+    "does_not_establish": [
+      "executed_comparable_run_series",
+      "agent_quality_improvement",
+      "condition_superiority",
+      "default_workbench_promotion_readiness",
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness"
+    ],
+    "experiment_path": "experiments/2026-07-09_repobrief-workbench-usefulness-eval",
+    "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
+    "reason": "RPU-V1-T012 implemented the measurement harness but intentionally did not execute comparable runs or prove usefulness.",
+    "registered_at": "2026-07-09T04:00:00Z",
+    "source_pr": "heimgewebe/vibe-lab#300"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 95
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Execute RepoBrief workbench usefulness run series"
+}

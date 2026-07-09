@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-ATLAS-V1-T018",
+  "initiative": "COMMONWORLD-ATLAS-V1",
+  "title": "Add static search query fixtures",
+  "state": "verified",
+  "goal": "Bind representative static search query fixtures for repair, open data, Hamburg, mutual aid and exact venue lookup.",
+  "depends_on": [
+    "COMMONWORLD-ATLAS-V1-T017"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 63
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "query-fixtures",
+      "assertion": "Representative static search query fixtures validate expected top IDs and scores."
+    },
+    {
+      "id": "js-drift",
+      "assertion": "Validator checks reason fields and JS model drift."
+    },
+    {
+      "id": "no-authority",
+      "assertion": "No search endpoint/service/database/crawler/submissions/write path or search authority is introduced."
+    }
+  ],
+  "metadata": {
+    "source": "commonworld merged PR reconciliation 2026-07-09",
+    "does_not_establish": [
+      "api_runtime_readiness",
+      "search_runtime_readiness",
+      "database_readiness",
+      "ingestion_readiness",
+      "public_submission_readiness",
+      "write_path_readiness",
+      "runtime_correctness",
+      "future_merge_readiness"
+    ],
+    "implementation_pr": "heimgewebe/commonworld#33",
+    "implementation_branch": "feat/search-query-fixtures-v1",
+    "implementation_head": "ff32831fec64c63770c1e5439c23a2e8002a5bee",
+    "implementation_merge_commit": "53c6b2e0bd411b66f3d3bd62703628cce2e3be2f",
+    "verified_at": "2026-07-09",
+    "validated_acceptance": {
+      "query-fixtures": "Representative static search query fixtures validate expected top IDs and scores.",
+      "js-drift": "Validator checks reason fields and JS model drift.",
+      "no-authority": "No search endpoint/service/database/crawler/submissions/write path or search authority is introduced."
+    },
+    "validation": [
+      "heimgewebe/commonworld#33 merged as 53c6b2e0bd411b66f3d3bd62703628cce2e3be2f",
+      "make validate plus static search query fixture checks",
+      "PR body records the no-runtime/no-authority boundary."
+    ],
+    "verification": {
+      "task_sha256": "42e6832c29f591dd20ff1e1585ce1478736c84312595797bac4a99cf3e212982",
+      "plan_sha256": "37e27f4919329addeee583330b0168ea472b468e6d80cadb2559ef0d10f10b2d",
+      "implementation_pr_head": "ff32831fec64c63770c1e5439c23a2e8002a5bee",
+      "implementation_merge_commit": "53c6b2e0bd411b66f3d3bd62703628cce2e3be2f"
+    }
+  }
+}

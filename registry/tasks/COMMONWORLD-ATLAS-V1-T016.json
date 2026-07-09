@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-ATLAS-V1-T016",
+  "initiative": "COMMONWORLD-ATLAS-V1",
+  "title": "Add static search proof",
+  "state": "verified",
+  "goal": "Bind the browser-only static search proof over the generated search index input sample.",
+  "depends_on": [
+    "COMMONWORLD-ATLAS-V1-T015"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 61
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "browser-proof",
+      "assertion": "Static browser search proof uses generated input sample locally."
+    },
+    {
+      "id": "public-fields",
+      "assertion": "The proof filters allowed public fields locally."
+    },
+    {
+      "id": "no-runtime",
+      "assertion": "No search endpoint/service/database/vector store/crawler/ingestion/account/submission/write path is introduced."
+    }
+  ],
+  "metadata": {
+    "source": "commonworld merged PR reconciliation 2026-07-09",
+    "does_not_establish": [
+      "api_runtime_readiness",
+      "search_runtime_readiness",
+      "database_readiness",
+      "ingestion_readiness",
+      "public_submission_readiness",
+      "write_path_readiness",
+      "runtime_correctness",
+      "future_merge_readiness"
+    ],
+    "implementation_pr": "heimgewebe/commonworld#31",
+    "implementation_branch": "feat/static-search-proof-v1",
+    "implementation_head": "55db6791ad316cc17b9965bbe1997cefbefe4af9",
+    "implementation_merge_commit": "c3382b003e7c6fb9a8eac3482904be8ea0e6e75d",
+    "verified_at": "2026-07-09",
+    "validated_acceptance": {
+      "browser-proof": "Static browser search proof uses generated input sample locally.",
+      "public-fields": "The proof filters allowed public fields locally.",
+      "no-runtime": "No search endpoint/service/database/vector store/crawler/ingestion/account/submission/write path is introduced."
+    },
+    "validation": [
+      "heimgewebe/commonworld#31 merged as c3382b003e7c6fb9a8eac3482904be8ea0e6e75d",
+      "make validate plus static proof checks",
+      "PR body records the no-runtime/no-authority boundary."
+    ],
+    "verification": {
+      "task_sha256": "59075c1846526b34977642143b80a0b42c0fa7ffd362756deada4a9cdb60fe4d",
+      "plan_sha256": "37e27f4919329addeee583330b0168ea472b468e6d80cadb2559ef0d10f10b2d",
+      "implementation_pr_head": "55db6791ad316cc17b9965bbe1997cefbefe4af9",
+      "implementation_merge_commit": "c3382b003e7c6fb9a8eac3482904be8ea0e6e75d"
+    }
+  }
+}

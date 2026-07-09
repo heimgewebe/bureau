@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-ATLAS-V1-T017",
+  "initiative": "COMMONWORLD-ATLAS-V1",
+  "title": "Explain static search proof matches",
+  "state": "verified",
+  "goal": "Bind local transparent match reasons and browser-only scoring for the static search proof.",
+  "depends_on": [
+    "COMMONWORLD-ATLAS-V1-T016"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 62
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "match-reasons",
+      "assertion": "The proof explains local match reasons and browser-only score components."
+    },
+    {
+      "id": "score-boundary",
+      "assertion": "The score is not server ranking, curation or authority."
+    },
+    {
+      "id": "no-runtime",
+      "assertion": "No search endpoint/service/database/vector store/crawler/ingestion/account/submission/write path is introduced."
+    }
+  ],
+  "metadata": {
+    "source": "commonworld merged PR reconciliation 2026-07-09",
+    "does_not_establish": [
+      "api_runtime_readiness",
+      "search_runtime_readiness",
+      "database_readiness",
+      "ingestion_readiness",
+      "public_submission_readiness",
+      "write_path_readiness",
+      "runtime_correctness",
+      "future_merge_readiness"
+    ],
+    "implementation_pr": "heimgewebe/commonworld#32",
+    "implementation_branch": "feat/search-proof-reasons-v1",
+    "implementation_head": "6181a63913d4cf95c32d9b116a5711d9bcab8865",
+    "implementation_merge_commit": "2560de0fadafa0c72fa8641096b6ddeb68379fc5",
+    "verified_at": "2026-07-09",
+    "validated_acceptance": {
+      "match-reasons": "The proof explains local match reasons and browser-only score components.",
+      "score-boundary": "The score is not server ranking, curation or authority.",
+      "no-runtime": "No search endpoint/service/database/vector store/crawler/ingestion/account/submission/write path is introduced."
+    },
+    "validation": [
+      "heimgewebe/commonworld#32 merged as 2560de0fadafa0c72fa8641096b6ddeb68379fc5",
+      "make validate plus search proof checks",
+      "PR body records the no-runtime/no-authority boundary."
+    ],
+    "verification": {
+      "task_sha256": "949fc160dfad8786e4e4c1656459102adf457501c41cc228f274a8b1b579ec94",
+      "plan_sha256": "37e27f4919329addeee583330b0168ea472b468e6d80cadb2559ef0d10f10b2d",
+      "implementation_pr_head": "6181a63913d4cf95c32d9b116a5711d9bcab8865",
+      "implementation_merge_commit": "2560de0fadafa0c72fa8641096b6ddeb68379fc5"
+    }
+  }
+}

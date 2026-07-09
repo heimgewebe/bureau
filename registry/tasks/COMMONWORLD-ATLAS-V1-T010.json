@@ -3,7 +3,7 @@
   "id": "COMMONWORLD-ATLAS-V1-T010",
   "initiative": "COMMONWORLD-ATLAS-V1",
   "title": "Define static catalog export contract",
-  "state": "planned",
+  "state": "verified",
   "goal": "Bind the Commonworld static catalog export contract PR as a read-only, no-runtime/no-write-path export contract task before API or ingestion work.",
   "depends_on": [
     "COMMONWORLD-ATLAS-V1-T001"
@@ -47,14 +47,37 @@
     }
   ],
   "metadata": {
-    "source": "open PR task binding repair 2026-07-08",
+    "source": "commonworld merged PR reconciliation 2026-07-09",
     "implementation_pr": "heimgewebe/commonworld#24",
     "implementation_branch": "docs/catalog-export-contract-v1",
     "does_not_establish": [
       "api_runtime_readiness",
+      "search_runtime_readiness",
+      "database_readiness",
       "ingestion_readiness",
       "public_submission_readiness",
-      "merge_readiness"
-    ]
+      "write_path_readiness",
+      "runtime_correctness",
+      "future_merge_readiness"
+    ],
+    "implementation_head": "6581eb0032391292b594b27f933b37b30e835683",
+    "implementation_merge_commit": "7b03fe2018cef5d1f4c448244658cf0fe27cbc4b",
+    "verified_at": "2026-07-09",
+    "validated_acceptance": {
+      "export-schema": "PR #24 defines catalog-export schema and deterministic public catalog entry contract.",
+      "proof-sample": "PR #24 adds a proof sample derived from the seed manifest and validates deterministic entry order.",
+      "read-only-boundary": "PR #24 explicitly excludes API server, database, ingestion worker, public submissions and write paths."
+    },
+    "validation": [
+      "heimgewebe/commonworld#24 merged as 7b03fe2018cef5d1f4c448244658cf0fe27cbc4b",
+      "make validate; 109 tests OK",
+      "No API server, database, ingestion worker, public submissions or write path introduced according to PR body and contract boundary."
+    ],
+    "verification": {
+      "task_sha256": "e35fb858e91ae2a63000916823f8538f7f8bd52ca7066555fca91e2edf29aca2",
+      "plan_sha256": "37e27f4919329addeee583330b0168ea472b468e6d80cadb2559ef0d10f10b2d",
+      "implementation_pr_head": "6581eb0032391292b594b27f933b37b30e835683",
+      "implementation_merge_commit": "7b03fe2018cef5d1f4c448244658cf0fe27cbc4b"
+    }
   }
 }

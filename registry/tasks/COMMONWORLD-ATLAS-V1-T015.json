@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-ATLAS-V1-T015",
+  "initiative": "COMMONWORLD-ATLAS-V1",
+  "title": "Generate static search index input",
+  "state": "verified",
+  "goal": "Bind deterministic generated search-index input from the static catalog export and committed CommonProject files.",
+  "depends_on": [
+    "COMMONWORLD-ATLAS-V1-T014"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "deterministic-generation",
+      "assertion": "Generated search-index input is produced deterministically from curated static sources."
+    },
+    {
+      "id": "drift-checks",
+      "assertion": "Generator and validator fail on stale generated search index input."
+    },
+    {
+      "id": "no-runtime",
+      "assertion": "No search endpoint/service/database/crawler/ingestion/submission/auth/write path is introduced."
+    }
+  ],
+  "metadata": {
+    "source": "commonworld merged PR reconciliation 2026-07-09",
+    "does_not_establish": [
+      "api_runtime_readiness",
+      "search_runtime_readiness",
+      "database_readiness",
+      "ingestion_readiness",
+      "public_submission_readiness",
+      "write_path_readiness",
+      "runtime_correctness",
+      "future_merge_readiness"
+    ],
+    "implementation_pr": "heimgewebe/commonworld#30",
+    "implementation_branch": "feat/search-index-input-generator-v1",
+    "implementation_head": "cfac9515eabd024f4b380770753a8f4ff68c4f43",
+    "implementation_merge_commit": "765fb2b091ba9f3d5bf65129f249aaca124b6927",
+    "verified_at": "2026-07-09",
+    "validated_acceptance": {
+      "deterministic-generation": "Generated search-index input is produced deterministically from curated static sources.",
+      "drift-checks": "Generator and validator fail on stale generated search index input.",
+      "no-runtime": "No search endpoint/service/database/crawler/ingestion/submission/auth/write path is introduced."
+    },
+    "validation": [
+      "heimgewebe/commonworld#30 merged as 765fb2b091ba9f3d5bf65129f249aaca124b6927",
+      "make validate plus generated search index input checks",
+      "PR body records the no-runtime/no-authority boundary."
+    ],
+    "verification": {
+      "task_sha256": "da241e7ff7be8119d546662c84be1d240bd0eb4212f0d8716fac44c3ea2f0aea",
+      "plan_sha256": "37e27f4919329addeee583330b0168ea472b468e6d80cadb2559ef0d10f10b2d",
+      "implementation_pr_head": "cfac9515eabd024f4b380770753a8f4ff68c4f43",
+      "implementation_merge_commit": "765fb2b091ba9f3d5bf65129f249aaca124b6927"
+    }
+  }
+}

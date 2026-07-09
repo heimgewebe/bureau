@@ -1,49 +1,77 @@
 {
-  "schema_version": 1,
-  "initiative": "GRIP-ROADMAP-V1",
+  "acceptance": [
+    {
+      "assertion": "Captain preflight computes a deterministic actions_sha256 over normalized requested actions.",
+      "id": "actions-digest"
+    },
+    {
+      "assertion": "Each Captain action exposes a deterministic target_sha256 in its receipt.",
+      "id": "target-digest"
+    },
+    {
+      "assertion": "Review, CI, human authorization, execution authority, and status projection evidence can be checked against action or target digests and mismatches fail closed.",
+      "id": "evidence-bound"
+    }
+  ],
   "claims": [
     {
-      "resource": "repo.grabowski",
+      "isolation": "worktree",
       "mode": "write",
-      "isolation": "worktree"
+      "resource": "repo.grabowski"
     }
+  ],
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T005"
   ],
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect"
+  },
+  "goal": "Add deterministic action/target digest binding for Captain evidence so review, CI, human authorization, execution authority, and status projection can be tied to the exact requested high-impact envelope.",
+  "id": "GRIP-ROADMAP-V1-T008",
+  "initiative": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "deferred_from": "PR #97 review",
+    "implementation_head": "dc0312db3f1ea9c457339164645d35ae57db217c",
+    "implementation_merge_commit": "2761100fb1df8eee6779e19d3a0b692092e491ac",
+    "implementation_pr": "heimgewebe/grabowski#126",
+    "reason": "PR #97 validates structure but does not cryptographically bind all evidence objects to the requested action envelope.",
+    "validated_acceptance": {
+      "actions-digest": "Captain preflight/run outputs expose actions_sha256. It is computed deterministically over normalized action records containing index, action, action_sha256 and target_sha256; action_sha256 includes target, scope, target_change_required, target_change, risk, irreversibility_record and receipt_path.",
+      "evidence-bound": "status_projection, execution_authority, review_evidence, ci_evidence and human_authorization may carry actions_sha256/action_sha256/target_sha256. Invalid or mismatched digests block both the central evidence-digest-bound gate and the relevant evidence gate.",
+      "target-digest": "Each Captain action record, envelope and captain_receipt exposes target_sha256; tests assert the values match."
+    },
+    "validation": {
+      "ci": "GitHub validate (3.10) and validate (3.12) completed SUCCESS for PR #126.",
+      "external_review": "Initial external agy review BLOCK led to explicit _captain_action_index and envelope index binding. Rerun external agy review PASS, finding_count=0, head_sha=dc0312db3f1ea9c457339164645d35ae57db217c.",
+      "grabowski_pr": "heimgewebe/grabowski#126 merged via squash at 2761100fb1df8eee6779e19d3a0b692092e491ac with head dc0312db3f1ea9c457339164645d35ae57db217c.",
+      "local_tests": "tests/test_grips.py: 140 passed, 37 subtests passed; make validate: 720 tests OK on final head.",
+      "non_claims": [
+        "Does not add new Captain executable actions.",
+        "Does not add merge, deploy, service restart, fleet mutation, cleanup or secret authority.",
+        "Digest matching binds evidence to an envelope; it does not prove semantic correctness or production safety.",
+        "Existing evidence without digest fields remains backward-compatible; provided mismatching digest fields fail closed."
+      ],
+      "review_gate": "tools/pr_review_gate.py PASS for PR #126 with self-review and external agy evidence; diff_sha256=a853438521fdaa7e40f32c0f7aa9189e5e7fe13dfca42490ff3131b3f49f8471.",
+      "runtime_deploy": "Scheduled deploy job grabowski-job-66007e73aecb logs report PASS and repo_head 2761100fb1df8eee6779e19d3a0b692092e491ac. grabowski_status confirms runtime at that head with provenance_valid and runtime_binding_valid."
+    },
+    "verification": {
+      "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+      "task_sha256": "f62eda5bc368f2ab6fde7712176bea5b7d3f7970632869c19f4a1c84b2fbfef0"
+    },
+    "verification_note": "Captain evidence now exposes deterministic action, target and action-set digests and fails closed when supplied evidence digest fields are bound to a different envelope.",
+    "verified_at": "2026-07-09"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 80
   },
   "required_capabilities": [
     "repository",
     "shell",
     "grabowski"
   ],
-  "id": "GRIP-ROADMAP-V1-T008",
-  "title": "Bind Captain evidence to action and target digests",
-  "state": "planned",
-  "goal": "Add deterministic action/target digest binding for Captain evidence so review, CI, human authorization, execution authority, and status projection can be tied to the exact requested high-impact envelope.",
-  "depends_on": [
-    "GRIP-ROADMAP-V1-T005"
-  ],
-  "priority": {
-    "lane": "later",
-    "rank": 80
-  },
-  "acceptance": [
-    {
-      "id": "actions-digest",
-      "assertion": "Captain preflight computes a deterministic actions_sha256 over normalized requested actions."
-    },
-    {
-      "id": "target-digest",
-      "assertion": "Each Captain action exposes a deterministic target_sha256 in its receipt."
-    },
-    {
-      "id": "evidence-bound",
-      "assertion": "Review, CI, human authorization, execution authority, and status projection evidence can be checked against action or target digests and mismatches fail closed."
-    }
-  ],
-  "metadata": {
-    "deferred_from": "PR #97 review",
-    "reason": "PR #97 validates structure but does not cryptographically bind all evidence objects to the requested action envelope."
-  }
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Bind Captain evidence to action and target digests"
 }

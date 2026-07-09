@@ -1,1 +1,80 @@
-{"schema_version":1,"id":"OLA-V1-T005","initiative":"OPERATOR-LEARNING-AXIS-V1","title":"proposal compatibility gate","state":"planned","depends_on":["OLA-V1-T004"],"execution":{"mode":"interactive-agent","policy":"review-before-effect"},"claims":[{"resource":"repo.heimlern","mode":"write"}],"acceptance":[{"id":"v1-proposal-shape","assertion":"OLA proposal candidates use policy.weight_adjustment.v1-compatible WeightAdjustmentProposal fields."},{"id":"threshold-path-ci","assertion":"CI validates a generated threshold-path OLA proposal candidate against the metarepo policy.weight_adjustment.v1 schema."}],"metadata":{"implemented_by":"heimgewebe/heimlern#174","implementation_status":"merged","origin":"Codex review on heimgewebe/heimlern#173","does_not_establish":["auto_apply_permission","routing_policy_ready"]}}
+{
+  "acceptance": [
+    {
+      "assertion": "OLA proposal candidates use policy.weight_adjustment.v1-compatible WeightAdjustmentProposal fields.",
+      "id": "v1-proposal-shape"
+    },
+    {
+      "assertion": "CI validates a generated threshold-path OLA proposal candidate against the metarepo policy.weight_adjustment.v1 schema.",
+      "id": "threshold-path-ci"
+    }
+  ],
+  "claims": [
+    {
+      "mode": "write",
+      "resource": "repo.heimlern"
+    }
+  ],
+  "depends_on": [
+    "OLA-V1-T004"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "id": "OLA-V1-T005",
+  "initiative": "OPERATOR-LEARNING-AXIS-V1",
+  "metadata": {
+    "closeout_reason": "Leaving this legacy placeholder planned contradicts the completed initiative lifecycle and blocks normal Bureau dispatch.",
+    "does_not_establish": [
+      "auto_apply_permission",
+      "independent_code_review_of_legacy_placeholder",
+      "live_routing_authority",
+      "new_implementation_work",
+      "routing_policy_ready"
+    ],
+    "implementation_status": "merged",
+    "implemented_by": "heimgewebe/heimlern#174",
+    "origin": "Codex review on heimgewebe/heimlern#173",
+    "outcome": "Legacy OLA placeholder closed by the completed OPERATOR-LEARNING-AXIS-V1 closeout; newer verified task series owns the actual evidence and implementation trace.",
+    "superseded_at": "2026-07-09",
+    "superseded_by": [
+      "OPERATOR-LEARNING-AXIS-V1-T001",
+      "OPERATOR-LEARNING-AXIS-V1-T002",
+      "OPERATOR-LEARNING-AXIS-V1-T003",
+      "OPERATOR-LEARNING-AXIS-V1-T004",
+      "OPERATOR-LEARNING-AXIS-V1-T005"
+    ],
+    "supersession_reason": "Legacy OLA placeholder task is covered by the verified OPERATOR-LEARNING-AXIS-V1 task series and the completed initiative closeout; keeping it planned creates a lifecycle contradiction.",
+    "verification": {
+      "plan_sha256": "76d9bc2839e3a37b12f25e565b429bf413427570794dfa836137a18eb712d8f5",
+      "receipt": {
+        "kind": "bureau.legacy_placeholder_closeout.v1",
+        "non_claims": [
+          "auto_apply_permission",
+          "independent_code_review_of_legacy_placeholder",
+          "live_routing_authority",
+          "new_implementation_work",
+          "routing_policy_ready"
+        ],
+        "outcome": "Legacy OLA placeholder closed by the completed OPERATOR-LEARNING-AXIS-V1 closeout; newer verified task series owns the actual evidence and implementation trace.",
+        "state": "verified",
+        "superseded_by": [
+          "OPERATOR-LEARNING-AXIS-V1-T001",
+          "OPERATOR-LEARNING-AXIS-V1-T002",
+          "OPERATOR-LEARNING-AXIS-V1-T003",
+          "OPERATOR-LEARNING-AXIS-V1-T004",
+          "OPERATOR-LEARNING-AXIS-V1-T005"
+        ],
+        "task_id": "OLA-V1-T005"
+      },
+      "receipt_sha256": "cbf1db8366be8a9d61c2ec4cab0d90b048971d6c785df92a7cdf88f904ad1cec",
+      "schema_version": 1,
+      "task_sha256": "4ced8c8d19bee0763d8e233b448b6a3d593f39a3f2a05ead7b524fa490e2d076"
+    },
+    "verified_at": "2026-07-09"
+  },
+  "schema_version": 1,
+  "state": "verified",
+  "title": "proposal compatibility gate"
+}

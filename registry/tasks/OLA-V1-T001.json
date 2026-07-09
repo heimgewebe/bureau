@@ -1,1 +1,70 @@
-{"schema_version":1,"id":"OLA-V1-T001","initiative":"OPERATOR-LEARNING-AXIS-V1","title":"contracts","state":"planned","execution":{"mode":"interactive-agent","policy":"review-before-effect"},"claims":[{"resource":"repo.heimlern","mode":"write"}],"acceptance":[{"id":"contracts","assertion":"Contracts were merged in heimlern PR 169."}],"metadata":{"implemented_by":"heimgewebe/heimlern#169","note":"Implemented externally; not marked verified until Bureau verification metadata is stamped."}}
+{
+  "acceptance": [
+    {
+      "assertion": "Contracts were merged in heimlern PR 169.",
+      "id": "contracts"
+    }
+  ],
+  "claims": [
+    {
+      "mode": "write",
+      "resource": "repo.heimlern"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "id": "OLA-V1-T001",
+  "initiative": "OPERATOR-LEARNING-AXIS-V1",
+  "metadata": {
+    "closeout_reason": "Leaving this legacy placeholder planned contradicts the completed initiative lifecycle and blocks normal Bureau dispatch.",
+    "does_not_establish": [
+      "auto_apply_permission",
+      "independent_code_review_of_legacy_placeholder",
+      "live_routing_authority",
+      "new_implementation_work"
+    ],
+    "implemented_by": "heimgewebe/heimlern#169",
+    "note": "Legacy placeholder is now verified as a registry closeout; implementation evidence is owned by the newer verified OPERATOR-LEARNING-AXIS-V1 task series.",
+    "outcome": "Legacy OLA placeholder closed by the completed OPERATOR-LEARNING-AXIS-V1 closeout; newer verified task series owns the actual evidence and implementation trace.",
+    "superseded_at": "2026-07-09",
+    "superseded_by": [
+      "OPERATOR-LEARNING-AXIS-V1-T001",
+      "OPERATOR-LEARNING-AXIS-V1-T002",
+      "OPERATOR-LEARNING-AXIS-V1-T003",
+      "OPERATOR-LEARNING-AXIS-V1-T004",
+      "OPERATOR-LEARNING-AXIS-V1-T005"
+    ],
+    "supersession_reason": "Legacy OLA placeholder task is covered by the verified OPERATOR-LEARNING-AXIS-V1 task series and the completed initiative closeout; keeping it planned creates a lifecycle contradiction.",
+    "verification": {
+      "plan_sha256": "76d9bc2839e3a37b12f25e565b429bf413427570794dfa836137a18eb712d8f5",
+      "receipt": {
+        "kind": "bureau.legacy_placeholder_closeout.v1",
+        "non_claims": [
+          "auto_apply_permission",
+          "independent_code_review_of_legacy_placeholder",
+          "live_routing_authority",
+          "new_implementation_work"
+        ],
+        "outcome": "Legacy OLA placeholder closed by the completed OPERATOR-LEARNING-AXIS-V1 closeout; newer verified task series owns the actual evidence and implementation trace.",
+        "state": "verified",
+        "superseded_by": [
+          "OPERATOR-LEARNING-AXIS-V1-T001",
+          "OPERATOR-LEARNING-AXIS-V1-T002",
+          "OPERATOR-LEARNING-AXIS-V1-T003",
+          "OPERATOR-LEARNING-AXIS-V1-T004",
+          "OPERATOR-LEARNING-AXIS-V1-T005"
+        ],
+        "task_id": "OLA-V1-T001"
+      },
+      "receipt_sha256": "828e4c0d3fb13189bc351ebcd27114d0d5c9d679be41306e49566c44bf5cb4df",
+      "schema_version": 1,
+      "task_sha256": "8eb9892208ae1c68e1f881cf55ffa7a1f38e89924959f0c1271d652afab7b0f7"
+    },
+    "verified_at": "2026-07-09"
+  },
+  "schema_version": 1,
+  "state": "verified",
+  "title": "contracts"
+}

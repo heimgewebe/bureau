@@ -1,1 +1,71 @@
-{"schema_version":1,"id":"OLA-V1-T003","initiative":"OPERATOR-LEARNING-AXIS-V1","title":"feedback mapping","state":"planned","depends_on":["OLA-V1-T002"],"execution":{"mode":"interactive-agent","policy":"review-before-effect"},"claims":[{"resource":"repo.heimlern","mode":"write"}],"acceptance":[{"id":"mapping","assertion":"Routing outcomes can be mapped into heimlern feedback analysis."}]}
+{
+  "acceptance": [
+    {
+      "assertion": "Routing outcomes can be mapped into heimlern feedback analysis.",
+      "id": "mapping"
+    }
+  ],
+  "claims": [
+    {
+      "mode": "write",
+      "resource": "repo.heimlern"
+    }
+  ],
+  "depends_on": [
+    "OLA-V1-T002"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "id": "OLA-V1-T003",
+  "initiative": "OPERATOR-LEARNING-AXIS-V1",
+  "metadata": {
+    "closeout_reason": "Leaving this legacy placeholder planned contradicts the completed initiative lifecycle and blocks normal Bureau dispatch.",
+    "does_not_establish": [
+      "auto_apply_permission",
+      "independent_code_review_of_legacy_placeholder",
+      "live_routing_authority",
+      "new_implementation_work"
+    ],
+    "outcome": "Legacy OLA placeholder closed by the completed OPERATOR-LEARNING-AXIS-V1 closeout; newer verified task series owns the actual evidence and implementation trace.",
+    "superseded_at": "2026-07-09",
+    "superseded_by": [
+      "OPERATOR-LEARNING-AXIS-V1-T001",
+      "OPERATOR-LEARNING-AXIS-V1-T002",
+      "OPERATOR-LEARNING-AXIS-V1-T003",
+      "OPERATOR-LEARNING-AXIS-V1-T004",
+      "OPERATOR-LEARNING-AXIS-V1-T005"
+    ],
+    "supersession_reason": "Legacy OLA placeholder task is covered by the verified OPERATOR-LEARNING-AXIS-V1 task series and the completed initiative closeout; keeping it planned creates a lifecycle contradiction.",
+    "verification": {
+      "plan_sha256": "76d9bc2839e3a37b12f25e565b429bf413427570794dfa836137a18eb712d8f5",
+      "receipt": {
+        "kind": "bureau.legacy_placeholder_closeout.v1",
+        "non_claims": [
+          "auto_apply_permission",
+          "independent_code_review_of_legacy_placeholder",
+          "live_routing_authority",
+          "new_implementation_work"
+        ],
+        "outcome": "Legacy OLA placeholder closed by the completed OPERATOR-LEARNING-AXIS-V1 closeout; newer verified task series owns the actual evidence and implementation trace.",
+        "state": "verified",
+        "superseded_by": [
+          "OPERATOR-LEARNING-AXIS-V1-T001",
+          "OPERATOR-LEARNING-AXIS-V1-T002",
+          "OPERATOR-LEARNING-AXIS-V1-T003",
+          "OPERATOR-LEARNING-AXIS-V1-T004",
+          "OPERATOR-LEARNING-AXIS-V1-T005"
+        ],
+        "task_id": "OLA-V1-T003"
+      },
+      "receipt_sha256": "425f502bc4eb09cb9adbdd53f0a439af2a98f313f95917ed4a2cfce544305a26",
+      "schema_version": 1,
+      "task_sha256": "68b2ddd01c827db252db5ff7e13a19b1649c7fca3dac3d6bf3799286f5306a7a"
+    },
+    "verified_at": "2026-07-09"
+  },
+  "schema_version": 1,
+  "state": "verified",
+  "title": "feedback mapping"
+}

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "UTIL-BASE-V1",
   "title": "Local operator utility baseline",
-  "state": "waiting",
+  "state": "completion-ready",
   "commitment": "later",
   "goal": "Build a small, evidence-friendly Heim-PC utility baseline around backup, monitoring, shell history, local transfer, review/search tools and document processing without creating a second control-plane or second knowledge truth.",
   "current_plan": {
@@ -80,7 +80,10 @@
     },
     "lifecycle_hygiene_repair": {
       "updated_at": "2026-07-09",
-      "reason": "Only blocked follow-ups remain open; lifecycle recommends waiting."
+      "reason": "bureau doctor lifecycle recommendation after all UTIL-BASE-V1 tasks are verified",
+      "previous_state": "waiting",
+      "recommended_state": "completion-ready",
+      "source": "post-merge doctor check after PR #366"
     },
     "closeout_status": "all current UTIL-BASE-V1 follow-up blockers cleared; remaining limits are documented boundaries, not active blockers"
   }

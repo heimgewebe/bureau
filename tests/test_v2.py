@@ -533,6 +533,24 @@ def test_grabowski_task_handoff_uses_execution_resource_keys(
     assert result["handoff"]["resource_keys"] == ["repo:/tmp/test-repo"]
 
 
+def test_checkout_next_records_repository_mutation_approval(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    init_clean_origin_main(root)
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    result = dispatcher.checkout_next(
+        "worker", ("repository",), base_dir=tmp_path / "worktrees"
+    )
+
+    approval = result["approval"]["repository_mutation"]
+    assert approval["action_class"] == "repository_mutation"
+    assert approval["allowed"] is True
+    assert approval["evidence"]["source"] == "checkout-next workspace"
+    assert approval["evidence"]["reference"] == result["run"]["run_id"]
+
+
 def test_dispatch_response_loss_recovers_binding(registry_factory, tmp_path, monkeypatch):
     root = registry_factory(1)
     task_path = next((root / "registry/tasks").glob("*.json"))

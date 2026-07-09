@@ -60,14 +60,15 @@
         "approval classes and levels documented",
         "fail-closed approval evaluator added",
         "task schema accepts execution.approval declarations",
-        "agent dispatch, reviewed source import and reviewed queue mutation record approval evidence",
+        "workspace repository mutation, agent dispatch, reviewed source import and reviewed queue mutation record approval evidence",
         "Cabinet proposal previews preserve explicit approval evidence"
       ],
       "self_review": "docs/reports/bur-2026-003-t004-approval-path-self-review.md",
       "source": "local_worktree",
       "task_sha256": "d1a73baea651ed8e4c5de5ec48658f432f15f81da77a9bf2ba52f2a86f48c1f8",
       "validation": [
-        "PYTHONPATH=src python -m pytest tests/test_approval.py tests/test_cabinet_bridge_preview.py tests/test_cabinet_frontier_reader.py tests/test_queue_reconcile.py tests/test_v2.py passed: 105 tests",
+        "PYTHONPATH=src python -m pytest tests/test_approval.py tests/test_cabinet_bridge_preview.py tests/test_cabinet_frontier_reader.py tests/test_queue_reconcile.py tests/test_v2.py passed",
+        "PYTHONPATH=src python -m pytest tests/test_v2.py::test_checkout_next_records_repository_mutation_approval tests/test_v2.py::test_grabowski_task_handoff_uses_execution_resource_keys tests/test_v2.py::test_dispatch_response_loss_recovers_binding tests/test_v2.py::test_checkout_existing_binding_does_not_redispatch passed",
         "PYTHONPATH=src python -m pytest passed: 441 tests",
         "PYTHONPATH=src ruff check src tests passed",
         "PYTHONPATH=src python -m bureau.cli --root . check passed",

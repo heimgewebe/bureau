@@ -1875,10 +1875,22 @@ class Dispatcher(legacy.Dispatcher):
             except legacy.StateError as exc:
                 fail_run(self.store, run["run_id"], f"agent brief preflight failed: {exc}")
                 raise
+        repository_approval: dict[str, Any] | None = None
         if any(claim.isolation == "worktree" for claim in task.claims):
+            repository_approval = require_approval(
+                "repository_mutation",
+                explicit_operator_approval(
+                    source="checkout-next workspace",
+                    approved=True,
+                    reviewer=worker_id,
+                    reference=run["run_id"],
+                ),
+            )
             run = create_workspace(self.registry, self.store, run["run_id"], base_dir)
         handoff = grabowski_handoff(self.registry, self.store, run["run_id"])
         result = {**claimed, "run": run, "handoff": handoff, "reconciliation": reconciliation}
+        if repository_approval is not None:
+            result["approval"] = {"repository_mutation": repository_approval}
         if brief_gate is not None:
             result["agent_brief"] = {**brief_gate, "status": "valid"}
         if dispatch:

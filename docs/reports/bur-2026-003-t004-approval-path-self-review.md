@@ -12,6 +12,7 @@ This patch adds a deterministic Bureau approval core and wires it into the exist
 - Defines approval classes and levels in `src/bureau/approval.py` and `docs/bureau-approval-path-v1.md`.
 - Adds a task execution schema declaration for `execution.approval`.
 - Adds approval decisions to frontier output without making missing approval a task-selection blocker.
+- Records explicit operator approval for `checkout-next` workspace/repository mutation before worktree creation.
 - Records explicit operator approval for `checkout-next --dispatch` agent dispatch.
 - Records explicit operator approval for Cabinet proposal previews created with `--approve`.
 - Requires reviewed-plan approval evidence for queue-reconcile apply.
@@ -31,7 +32,8 @@ None found in the reviewed implementation diff.
 
 ## Validation
 
-- `PYTHONPATH=src python -m pytest tests/test_approval.py tests/test_cabinet_bridge_preview.py tests/test_cabinet_frontier_reader.py tests/test_queue_reconcile.py tests/test_v2.py` passed: 105 tests.
+- `PYTHONPATH=src python -m pytest tests/test_approval.py tests/test_cabinet_bridge_preview.py tests/test_cabinet_frontier_reader.py tests/test_queue_reconcile.py tests/test_v2.py` passed.
+- `PYTHONPATH=src python -m pytest tests/test_v2.py::test_checkout_next_records_repository_mutation_approval tests/test_v2.py::test_grabowski_task_handoff_uses_execution_resource_keys tests/test_v2.py::test_dispatch_response_loss_recovers_binding tests/test_v2.py::test_checkout_existing_binding_does_not_redispatch` passed.
 - `PYTHONPATH=src python -m pytest` passed: 441 tests.
 - `PYTHONPATH=src ruff check src tests` passed.
 - `PYTHONPATH=src python -m bureau.cli --root . check` passed.
@@ -39,4 +41,4 @@ None found in the reviewed implementation diff.
 
 ## Non-claims
 
-This review does not establish automatic merge authority, automatic runtime repair, automatic queue repair, automatic task verification for future work, CI sufficiency beyond the executed commands, or that all future effectful paths are already wired to the approval helper.
+This review does not establish automatic merge authority, automatic runtime repair, automatic queue repair, automatic task verification for future work, CI sufficiency beyond the executed commands, or that all future effectful paths are already wired to the approval helper. The final review also caught and fixed a missing repository-mutation approval record before workspace creation.

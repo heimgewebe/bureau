@@ -3,7 +3,7 @@
   "id": "RPU-V1-T014",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "Cabinet claim evidence revalidation",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 54
@@ -61,7 +61,59 @@
       "merge_readiness",
       "agent_quality_improvement_by_itself"
     ],
-    "source_vision": "Claim-TÜV for Cabinet."
+    "source_vision": "Claim-TÜV for Cabinet.",
+    "implementation_pr": "heimgewebe/cabinet#101",
+    "implementation_pr_url": "https://github.com/heimgewebe/cabinet/pull/101",
+    "implementation_head_sha": "f4e64b0d5c46526bd45dfe0467ac505a50047585",
+    "merge_commit": "d4e17a413e96293185cd826eba52d80b9986403f",
+    "patch_sha256": "727aadb74a4c1e5a837d2aae9ffe3a5e8740636950f1c203bd2e4afb988628b2",
+    "patch_bytes": 53151,
+    "outcome": "Implemented in Cabinet PR #101: bounded claimEvidenceRevalidations in the maintenance report, structured RepoBrief citation/source-range evidence, hash/freshness checks and explicit claim-truth boundary.",
+    "implementation_paths": [
+      "scripts/write_cabinet_maintenance_report.py",
+      "docs/contracts/cabinet-maintenance-report-v1.md",
+      "docs/contracts/cabinet-maintenance-report-v1.schema.json",
+      "scripts/tests/test_cabinet_maintenance_report.py",
+      "pruefung/30 Befunde/rpu-v1-t014-claim-evidence-revalidation-2026-07-09.md"
+    ],
+    "verified_at": "2026-07-09",
+    "verified_acceptance": {
+      "rpu-v1-t014-claim-links": "Maintenance report evidence entries can now be structured as repobrief_citation or repobrief_source_range with ref/sourcePath, citationId, start/end lines, sha256/expectedSha256, generatedAt, freshnessBasis and maxAgeHours.",
+      "rpu-v1-t014-revalidation": "claimEvidenceRevalidations and summary.claimEvidenceRevalidationCounts distinguish still_established, stale, missing, changed and unverifiable evidence.",
+      "rpu-v1-t014-boundary": "Top-level and per-evidence doesNotEstablish fields explicitly preserve claim_truth, repobrief_claim_truth_oracle and cabinet_repobrief_lenskit_producer boundaries."
+    },
+    "validation": [
+      "Cabinet PR #101 GitHub checks passed at head f4e64b0d5c46526bd45dfe0467ac505a50047585: Repository Snapshot Review, Project Cards, Cabinet Maintenance Radar, Ecosystem Map, Validate / Repository Contract, Installer Shadow Test, Secret Scan.",
+      "Local: python3 -m unittest scripts.tests.test_cabinet_maintenance_report -> 13 tests OK.",
+      "Local: python3 scripts/write_cabinet_maintenance_report.py --check --json -> ok=true status=pass findingCount=0.",
+      "Local: python3 scripts/validate_ecosystem_map.py -> PASS.",
+      "Local: python3 -m unittest discover scripts/tests -> 274 tests OK; expected negative-test stderr line: ERROR: output path escapes repository.",
+      "Local: git diff --check -> pass."
+    ],
+    "verification": {
+      "source": "github_pull_request",
+      "repo": "heimgewebe/cabinet",
+      "pr_number": 101,
+      "source_ref": "github-pr:heimgewebe/cabinet#101@f4e64b0d5c46526bd45dfe0467ac505a50047585:d4e17a413e96293185cd826eba52d80b9986403f",
+      "head_sha": "f4e64b0d5c46526bd45dfe0467ac505a50047585",
+      "merge_commit": "d4e17a413e96293185cd826eba52d80b9986403f",
+      "patch_sha256": "727aadb74a4c1e5a837d2aae9ffe3a5e8740636950f1c203bd2e4afb988628b2",
+      "patch_bytes": 53151,
+      "verified_at": "2026-07-09T15:32:25Z",
+      "non_claims": [
+        "claim_truth",
+        "repo_understood",
+        "repobrief_claim_truth_oracle",
+        "cabinet_repobrief_lenskit_producer",
+        "runtime_correctness",
+        "task_approval"
+      ],
+      "task_sha256": "65b74330e7feeb735d89982ef9031dbb121849eba73b2af28813d8096907e2fb",
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015"
+    },
+    "residual_notes": [
+      "Productive Cabinet claims still need real RepoBrief citation ids from current bundles for end-to-end practical use; PR #101 implements the bounded report surface and tests, not a full claim migration."
+    ]
   },
   "depends_on": [
     "RPU-V1-T002",

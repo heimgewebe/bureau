@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "SCHAUWERK-OPTIMIZATION-V1",
   "title": "Schauwerk optimization and live-gate hardening",
-  "state": "active",
+  "state": "completion-ready",
   "commitment": "next",
   "goal": "Bring Schauwerk from foundation plus Miro-pilot into a clearer, safer next stage: current docs, controlled SW-003 live proof preparation, and cleaner receipt validation before any broader live apply path is opened.",
   "current_plan": {
@@ -23,7 +23,11 @@
       "sw003_closure",
       "sw009_live_apply_readiness",
       "provider_mutation_authority"
-    ]
+    ],
+    "lifecycle_hygiene_repair": {
+      "updated_at": "2026-07-09",
+      "reason": "All registered Schauwerk optimization tasks are verified; lifecycle now recommends completion-ready."
+    }
   },
   "completion": [
     "Schauwerk documentation reflects the current SW-003 local live-gate receipt chain without claiming live acceptance.",

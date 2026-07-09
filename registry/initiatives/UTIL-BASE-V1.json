@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "UTIL-BASE-V1",
   "title": "Local operator utility baseline",
-  "state": "active",
+  "state": "waiting",
   "commitment": "later",
   "goal": "Build a small, evidence-friendly Heim-PC utility baseline around backup, monitoring, shell history, local transfer, review/search tools and document processing without creating a second control-plane or second knowledge truth.",
   "current_plan": {
@@ -78,6 +78,10 @@
       "paperless": "Starter taxonomy, export and local restic backup are in place.",
       "backup": "Local restic utility snapshot b9332c01 exists and timers are active.",
       "easyeffects": "Profile plan is defined; activation requires listening/recording validation."
+    },
+    "lifecycle_hygiene_repair": {
+      "updated_at": "2026-07-09",
+      "reason": "Only blocked follow-ups remain open; lifecycle recommends waiting."
     }
   }
 }

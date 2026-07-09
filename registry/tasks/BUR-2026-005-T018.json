@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T018",
+  "initiative": "BUR-2026-005",
+  "title": "GitHub Actions Node runtime warning audit",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 118
+  },
+  "goal": "Audit and, where safe, update Bureau GitHub Actions versions or runner assumptions so Node.js 20 deprecation warnings no longer obscure CI signal quality.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "bur-2026-005-t018-live-warning",
+      "assertion": "The current GitHub Actions Node runtime warning is reproduced or shown to be resolved from live CI evidence."
+    },
+    {
+      "id": "bur-2026-005-t018-safe-action-version-plan",
+      "assertion": "If newer action versions are available and compatible, the workflow update is applied with CI proof; otherwise the deferral reason is recorded."
+    },
+    {
+      "id": "bur-2026-005-t018-no-ci-authority-change",
+      "assertion": "The change does not weaken branch, PR, registry or validation gates."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09T15:44:00Z",
+    "source_observation": "Bureau PR #359 CI passed but emitted: Node.js 20 is deprecated; actions/checkout@v4 and actions/setup-python@v5 are being forced to run on Node.js 24.",
+    "source_run": "https://github.com/heimgewebe/bureau/actions/runs/29030515541",
+    "does_not_establish": [
+      "workflow_update_required",
+      "new_action_version_available",
+      "ci_failure",
+      "security_vulnerability",
+      "merge_readiness"
+    ]
+  }
+}

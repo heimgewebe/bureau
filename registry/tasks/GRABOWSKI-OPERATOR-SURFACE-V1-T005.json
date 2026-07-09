@@ -1,54 +1,77 @@
 {
-  "schema_version": 1,
-  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T005",
-  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
-  "title": "Add durable job notify design slice",
-  "state": "planned",
-  "goal": "Define and implement the first durable job identity fields needed for optional notify_on_done behavior without relying on polling or hiding finalization failures.",
-  "depends_on": [
-    "GRABOWSKI-OPERATOR-SURFACE-V1-T001"
-  ],
-  "priority": {
-    "lane": "later",
-    "rank": 50
-  },
-  "claims": [
+  "acceptance": [
     {
-      "resource": "repo.grabowski",
-      "mode": "write",
-      "isolation": "worktree"
+      "assertion": "Job records include job_id, owner, scope, started_at, expected receipt, final status and terminalization evidence.",
+      "id": "job-identity"
+    },
+    {
+      "assertion": "notify_on_done metadata can be represented without sending notifications by default.",
+      "id": "notify-metadata"
+    },
+    {
+      "assertion": "Failed or missing finalization remains visible and is not hidden by notification success.",
+      "id": "failure-visible"
+    },
+    {
+      "assertion": "Focused tests cover job identity, terminal status, no-default-notify and failed finalization visibility.",
+      "id": "tests"
     }
   ],
-  "required_capabilities": [
-    "repository",
-    "shell",
-    "grabowski"
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T001"
   ],
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect"
   },
-  "acceptance": [
-    {
-      "id": "job-identity",
-      "assertion": "Job records include job_id, owner, scope, started_at, expected receipt, final status and terminalization evidence."
-    },
-    {
-      "id": "notify-metadata",
-      "assertion": "notify_on_done metadata can be represented without sending notifications by default."
-    },
-    {
-      "id": "failure-visible",
-      "assertion": "Failed or missing finalization remains visible and is not hidden by notification success."
-    },
-    {
-      "id": "tests",
-      "assertion": "Focused tests cover job identity, terminal status, no-default-notify and failed finalization visibility."
-    }
-  ],
+  "goal": "Define and implement the first durable job identity fields needed for optional notify_on_done behavior without relying on polling or hiding finalization failures.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T005",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
-    "phase": "durable-jobs",
     "effect": "job_identity_foundation",
-    "non_goal": "Does not enable background notification delivery by default."
-  }
+    "implementation_head": "7b9b6ccd65ddaeeafcd49f81286d93ea590885bb",
+    "implementation_pr": "unknown/prior-grabowski-job-foundation",
+    "non_goal": "Does not enable background notification delivery by default.",
+    "phase": "durable-jobs",
+    "validated_acceptance": {
+      "failure-visible": "_job_final_status and _job_terminalization_evidence preserve launch_failed, failed and missing_finalization_evidence. Notification evidence records final_status_preserved and cannot mask failed finalization.",
+      "job-identity": "src/grabowski_operator.py defines _job_identity, _job_expected_receipt and _project_job_metadata. grabowski_job_start/status/logs expose job_id, owner, scope, started_at, expected_receipt, final_status and terminalization_evidence; tests/test_operator_contract.py covers these fields.",
+      "notify-metadata": "_normalize_notify_on_done and _job_notification_evidence force delivery_mode=metadata_only and delivery_enabled=false; tests cover no-default-notify and strict bounded metadata.",
+      "tests": "Focused tests passed: python3 -m pytest tests/test_operator_contract.py -q; python3 -m pytest tests/test_self_deploy.py -q; python3 -m pytest tests/test_repository_contract.py -q."
+    },
+    "validation": {
+      "focused_tests": "tests/test_operator_contract.py: 35 passed, 8 subtests passed; tests/test_self_deploy.py: 7 passed; tests/test_repository_contract.py: 17 passed, 8 subtests passed.",
+      "grabowski_runtime": "grabowski_status reports deployed runtime repo_head 7b9b6ccd65ddaeeafcd49f81286d93ea590885bb with provenance_valid=true, runtime_binding_valid=true and environment_compatibility_valid=true.",
+      "non_claims": [
+        "No notification delivery was enabled.",
+        "No new background notification channel was created.",
+        "This closes an already-satisfied task rather than adding new code."
+      ]
+    },
+    "verification": {
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "task_sha256": "9d0120964ecb44a0857644adcb43fa3ee6f9632007ebd02b0e294b33a1bf7901"
+    },
+    "verification_note": "Live Grabowski main and deployed runtime already satisfy T005. Durable job records include identity, owner, scope, expected receipt, final status, terminalization evidence, notify_on_done metadata-only semantics and failed-finalization visibility. This closeout records that evidence without adding redundant Grabowski code.",
+    "verified_at": "2026-07-09"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Add durable job notify design slice"
 }

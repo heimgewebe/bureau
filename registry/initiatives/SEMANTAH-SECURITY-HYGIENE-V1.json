@@ -1,0 +1,27 @@
+{
+  "commitment": "later",
+  "completion": [
+    "Current GitHub dependency alert state for heimgewebe/semantAH is captured from a live source.",
+    "High severity alerts are either remediated by dependency updates or have explicit risk-accepted closure notes.",
+    "Relevant SemantAH tests/checks pass after dependency changes, or a precise blocker is recorded.",
+    "The result states non-claims, especially that dependency alert cleanup does not prove full security correctness."
+  ],
+  "goal": "Triage and remediate or explicitly close existing GitHub dependency security alerts in heimgewebe/semantAH without conflating alert absence with full security correctness.",
+  "id": "SEMANTAH-SECURITY-HYGIENE-V1",
+  "metadata": {
+    "created_from_residual": "RPU-V1-T013 post-merge push warning",
+    "does_not_establish": [
+      "full security correctness",
+      "runtime safety",
+      "absence of non-Dependabot vulnerabilities"
+    ],
+    "observed_warning": "GitHub reported 10 vulnerabilities on heimgewebe/semantAH default branch during PR #254 push: 3 high, 3 moderate, 4 low.",
+    "registered_at": "2026-07-09T13:40:00Z"
+  },
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "schema_version": 1,
+  "state": "candidate",
+  "title": "semantAH dependency security hygiene"
+}

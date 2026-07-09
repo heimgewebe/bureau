@@ -1,7 +1,6 @@
 {
   "lanes": {
     "later": [
-      "RPU-V1-T013",
       "RPU-V1-T014",
       "RPU-V1-T015",
       "RPU-V1-T017",
@@ -48,7 +47,8 @@
       "OPERATOR-PC-HYGIENE-V1-T002",
       "OPERATOR-PC-HYGIENE-V1-T003",
       "OPERATOR-PC-HYGIENE-V1-T004",
-      "OPERATOR-PC-HYGIENE-V1-T005"
+      "OPERATOR-PC-HYGIENE-V1-T005",
+      "SEMANTAH-SECURITY-HYGIENE-V1-T001"
     ],
     "next": [],
     "now": []

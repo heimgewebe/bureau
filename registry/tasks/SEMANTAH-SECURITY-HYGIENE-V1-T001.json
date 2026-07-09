@@ -1,0 +1,61 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Current alert/advisory state is checked live and recorded before changing dependencies.",
+      "id": "semantah-security-alert-live-state"
+    },
+    {
+      "assertion": "High severity dependency alerts are remediated or explicitly risk-accepted with rationale.",
+      "id": "semantah-security-highs-addressed"
+    },
+    {
+      "assertion": "Relevant SemantAH tests/checks pass after changes, or exact blockers are recorded.",
+      "id": "semantah-security-tests"
+    },
+    {
+      "assertion": "The task states that Dependabot alert cleanup does not prove full security correctness or runtime safety.",
+      "id": "semantah-security-non-claims"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.semantah"
+    }
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/semantAH"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/semantAH"
+  },
+  "goal": "Use live GitHub/Dependabot security evidence for heimgewebe/semantAH, then remediate or explicitly document the existing default-branch dependency alerts reported during RPU-V1-T013.",
+  "id": "SEMANTAH-SECURITY-HYGIENE-V1-T001",
+  "initiative": "SEMANTAH-SECURITY-HYGIENE-V1",
+  "metadata": {
+    "created_from_residual": "RPU-V1-T013",
+    "does_not_establish": [
+      "full security correctness",
+      "runtime safety",
+      "absence of non-Dependabot vulnerabilities"
+    ],
+    "observed_warning": "GitHub push for SemantAH PR #254 reported 10 default-branch vulnerabilities: 3 high, 3 moderate, 4 low.",
+    "registered_at": "2026-07-09T13:40:00Z"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 900
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Triage semantAH dependency security alerts"
+}

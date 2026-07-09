@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-ATLAS-V1-T013",
+  "initiative": "COMMONWORLD-ATLAS-V1",
+  "title": "Add static catalog API route fixtures",
+  "state": "verified",
+  "goal": "Bind deterministic static route fixtures for the read-only catalog API contract without adding runtime infrastructure.",
+  "depends_on": [
+    "COMMONWORLD-ATLAS-V1-T012"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 58
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "route-fixtures",
+      "assertion": "Static route fixtures cover the read-only catalog API contract."
+    },
+    {
+      "id": "drift-checks",
+      "assertion": "Fixture generation and validation detect route fixture drift."
+    },
+    {
+      "id": "no-runtime",
+      "assertion": "No API server, database, auth, submissions or write path is introduced."
+    }
+  ],
+  "metadata": {
+    "source": "commonworld merged PR reconciliation 2026-07-09",
+    "does_not_establish": [
+      "api_runtime_readiness",
+      "search_runtime_readiness",
+      "database_readiness",
+      "ingestion_readiness",
+      "public_submission_readiness",
+      "write_path_readiness",
+      "runtime_correctness",
+      "future_merge_readiness"
+    ],
+    "implementation_pr": "heimgewebe/commonworld#27",
+    "implementation_branch": "feat/catalog-api-route-fixtures-v1",
+    "implementation_head": "20788afef6095da8bdff80246300dedf3f2add64",
+    "implementation_merge_commit": "1e1773c72b3cb58b78bc7bd9e7e44c9347cbaf15",
+    "verified_at": "2026-07-09",
+    "validated_acceptance": {
+      "route-fixtures": "Static route fixtures cover the read-only catalog API contract.",
+      "drift-checks": "Fixture generation and validation detect route fixture drift.",
+      "no-runtime": "No API server, database, auth, submissions or write path is introduced."
+    },
+    "validation": [
+      "heimgewebe/commonworld#27 merged as 1e1773c72b3cb58b78bc7bd9e7e44c9347cbaf15",
+      "make validate plus route fixture checks",
+      "PR body records the no-runtime/no-authority boundary."
+    ],
+    "verification": {
+      "task_sha256": "8e92652fb39ae733876ba9dba4ddf4168211971e5ff9f4acb046651287152fef",
+      "plan_sha256": "37e27f4919329addeee583330b0168ea472b468e6d80cadb2559ef0d10f10b2d",
+      "implementation_pr_head": "20788afef6095da8bdff80246300dedf3f2add64",
+      "implementation_merge_commit": "1e1773c72b3cb58b78bc7bd9e7e44c9347cbaf15"
+    }
+  }
+}

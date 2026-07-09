@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-ATLAS-V1-T012",
+  "initiative": "COMMONWORLD-ATLAS-V1",
+  "title": "Define read-only catalog API contract",
+  "state": "verified",
+  "goal": "Bind the Commonworld read-only catalog API contract as a route contract without implementing an API runtime.",
+  "depends_on": [
+    "COMMONWORLD-ATLAS-V1-T011"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 57
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "api-contract",
+      "assertion": "A read-only catalog API route contract defines GET-only public catalog delivery routes."
+    },
+    {
+      "id": "no-runtime",
+      "assertion": "The task does not add an API server, database, ingestion worker or write path."
+    },
+    {
+      "id": "validation",
+      "assertion": "Repository validation covers the route contract boundary."
+    }
+  ],
+  "metadata": {
+    "source": "commonworld merged PR reconciliation 2026-07-09",
+    "does_not_establish": [
+      "api_runtime_readiness",
+      "search_runtime_readiness",
+      "database_readiness",
+      "ingestion_readiness",
+      "public_submission_readiness",
+      "write_path_readiness",
+      "runtime_correctness",
+      "future_merge_readiness"
+    ],
+    "implementation_pr": "heimgewebe/commonworld#26",
+    "implementation_branch": "contracts/catalog-api-readonly-v1",
+    "implementation_head": "f004d59bb5efa33b5df679f5f56bceb8cff6d653",
+    "implementation_merge_commit": "626353674d54f9eb46d13be1ef7c9c583a9bb4c9",
+    "verified_at": "2026-07-09",
+    "validated_acceptance": {
+      "api-contract": "A read-only catalog API route contract defines GET-only public catalog delivery routes.",
+      "no-runtime": "The task does not add an API server, database, ingestion worker or write path.",
+      "validation": "Repository validation covers the route contract boundary."
+    },
+    "validation": [
+      "heimgewebe/commonworld#26 merged as 626353674d54f9eb46d13be1ef7c9c583a9bb4c9",
+      "make validate; 119 tests OK",
+      "PR body records the no-runtime/no-authority boundary."
+    ],
+    "verification": {
+      "task_sha256": "45d2bf34ce37a7dcf6849f44b3c53238ba8b176f8e30ad268a60cacf555acf62",
+      "plan_sha256": "37e27f4919329addeee583330b0168ea472b468e6d80cadb2559ef0d10f10b2d",
+      "implementation_pr_head": "f004d59bb5efa33b5df679f5f56bceb8cff6d653",
+      "implementation_merge_commit": "626353674d54f9eb46d13be1ef7c9c583a9bb4c9"
+    }
+  }
+}

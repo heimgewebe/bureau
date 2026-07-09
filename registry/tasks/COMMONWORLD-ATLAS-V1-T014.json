@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-ATLAS-V1-T014",
+  "initiative": "COMMONWORLD-ATLAS-V1",
+  "title": "Define search index input boundary",
+  "state": "verified",
+  "goal": "Bind the static search index input contract as a deterministic no-runtime input boundary.",
+  "depends_on": [
+    "COMMONWORLD-ATLAS-V1-T011"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 59
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "search-input-contract",
+      "assertion": "Allowed future search index input fields and deterministic rebuild policy are defined."
+    },
+    {
+      "id": "boundary",
+      "assertion": "No search runtime, vector database, crawler, ingestion worker, submissions, auth or write path is introduced."
+    },
+    {
+      "id": "validation",
+      "assertion": "Contract validation is wired into repository validation."
+    }
+  ],
+  "metadata": {
+    "source": "commonworld merged PR reconciliation 2026-07-09",
+    "does_not_establish": [
+      "api_runtime_readiness",
+      "search_runtime_readiness",
+      "database_readiness",
+      "ingestion_readiness",
+      "public_submission_readiness",
+      "write_path_readiness",
+      "runtime_correctness",
+      "future_merge_readiness"
+    ],
+    "implementation_pr": "heimgewebe/commonworld#29",
+    "implementation_branch": "contracts/search-index-input-v1",
+    "implementation_head": "3ddd596e5e239660a8c99a8ae86262b8e01702f3",
+    "implementation_merge_commit": "163ce5a96291b59e1bb0bc508619e4e7c4ba2978",
+    "verified_at": "2026-07-09",
+    "validated_acceptance": {
+      "search-input-contract": "Allowed future search index input fields and deterministic rebuild policy are defined.",
+      "boundary": "No search runtime, vector database, crawler, ingestion worker, submissions, auth or write path is introduced.",
+      "validation": "Contract validation is wired into repository validation."
+    },
+    "validation": [
+      "heimgewebe/commonworld#29 merged as 163ce5a96291b59e1bb0bc508619e4e7c4ba2978",
+      "make validate plus search index input contract checks",
+      "PR body records the no-runtime/no-authority boundary."
+    ],
+    "verification": {
+      "task_sha256": "f6161315ea02c5d8df8caada4fce3dc8f42146248fbe2129fccf1aabacfc4342",
+      "plan_sha256": "37e27f4919329addeee583330b0168ea472b468e6d80cadb2559ef0d10f10b2d",
+      "implementation_pr_head": "3ddd596e5e239660a8c99a8ae86262b8e01702f3",
+      "implementation_merge_commit": "163ce5a96291b59e1bb0bc508619e4e7c4ba2978"
+    }
+  }
+}

@@ -102,6 +102,39 @@ def test_multi_effect_approval_scope_must_cover_all_action_classes() -> None:
     assert allowed["evidence"]["scope"] == ["repository_mutation", "source_import"]
 
 
+def test_mixed_read_only_and_effectful_actions_ignore_read_only_for_gate() -> None:
+    decision = approval.require_approval_for_effects(
+        ["read_only_observation", "repository_mutation"],
+        approval.explicit_operator_approval(
+            source="cli --approve",
+            approved=True,
+            scope="repository_mutation",
+        ),
+    )
+
+    assert decision["allowed"] is True
+    assert decision["action_classes"] == [
+        "read_only_observation",
+        "repository_mutation",
+    ]
+    assert decision["required_level"] == "operator"
+
+
+def test_multi_effect_runtime_reports_break_glass_required_level() -> None:
+    decision = approval.approval_decision_for_effects(
+        ["repository_mutation", "runtime_mutation"],
+        approval.explicit_operator_approval(
+            source="cli --approve",
+            approved=True,
+            scope=["repository_mutation", "runtime_mutation"],
+        ),
+    )
+
+    assert decision["allowed"] is False
+    assert decision["required_level"] == "break_glass"
+    assert "not accepted for required break_glass, operator" in decision["reason"]
+
+
 def test_reviewed_plan_does_not_satisfy_source_import() -> None:
     with pytest.raises(StateError, match="not accepted for required reviewed_receipt"):
         approval.require_approval(

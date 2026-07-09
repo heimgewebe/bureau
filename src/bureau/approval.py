@@ -171,11 +171,19 @@ def _scope_covers(approval: ApprovalEvidence, action_classes: set[str]) -> bool:
 def _required_level(action_classes: list[str]) -> str:
     if not action_classes:
         return "none"
-    if "break_glass" in action_classes:
+    levels = {
+        str(APPROVAL_RULES[action]["required_level"])
+        for action in action_classes
+        if action in APPROVAL_RULES
+    }
+    if not levels:
+        return "unknown"
+    if levels == {"break_glass"}:
         return "break_glass"
     if len(action_classes) == 1:
-        rule = APPROVAL_RULES.get(action_classes[0])
-        return str(rule["required_level"]) if rule else "unknown"
+        return next(iter(levels))
+    if "break_glass" in levels:
+        return "break_glass"
     return "multi_effect"
 
 
@@ -232,7 +240,10 @@ def approval_decision_for_effects(
             "evidence": evidence,
         }
 
-    rules = {action: APPROVAL_RULES.get(action) for action in actions}
+    effectful_actions = [
+        action for action in actions if action not in READ_ONLY_ACTIONS
+    ]
+    rules = {action: APPROVAL_RULES.get(action) for action in effectful_actions}
     unknown = [action for action, rule in rules.items() if rule is None]
     if unknown:
         return {
@@ -249,7 +260,7 @@ def approval_decision_for_effects(
         }
 
     required_levels = {str(rule["required_level"]) for rule in rules.values() if rule}
-    required_level = _required_level(actions)
+    required_level = _required_level(effectful_actions)
     allowed_levels = set.intersection(
         *(
             set(rule.get("allowed_levels", {rule["required_level"]}))
@@ -257,7 +268,7 @@ def approval_decision_for_effects(
             if rule
         )
     )
-    action_set = set(actions)
+    action_set = set(effectful_actions)
     level_ok = bool(approval is not None and approval.level in allowed_levels)
     reference_ok = True
     reference_reason = ""
@@ -317,13 +328,9 @@ def approval_decision_for_effects(
         "allowed": allowed,
         "reason": reason,
         "expected_reference": expected_reference,
-        "task_id": task_id,
+        "expected_task_id": task_id,
         "evidence": evidence,
     }
-    if expected_reference is not None:
-        result["expected_reference"] = expected_reference
-    if task_id is not None:
-        result["expected_task_id"] = task_id
     return result
 
 

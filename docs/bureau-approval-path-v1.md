@@ -29,7 +29,7 @@ The implementation is `bureau.approval`.
 - `require_approval(action_class, evidence, expected_reference=...)` raises before any effect when the action is missing approval, has an unknown action class, has `approved=false`, has insufficient level, or carries the wrong source reference.
 - `task_approval_contract(task)` infers the conservative task-level action class when no explicit `execution.approval` is declared.
 
-Unknown action classes fail closed. This is intentional: a new effect must be classified before it can be automated. Approval records may carry `reference`, `task_id`, and `scope`; when callers provide expected values, mismatches fail closed.
+Unknown effectful action classes fail closed. This is intentional: a new effect must be classified before it can be automated. Approval records may carry `reference`, `task_id`, and `scope`; when callers provide expected values, mismatches fail closed. In mixed checks, read-only actions remain visible in the decision object but do not increase the required approval level.
 
 ## Current integration points
 

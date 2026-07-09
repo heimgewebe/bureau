@@ -3,7 +3,7 @@
   "id": "OPERATOR-TOOLING-FOCUS-V1-T004",
   "initiative": "OPERATOR-TOOLING-FOCUS-V1",
   "title": "Repair or replace broken Bitwarden CLI runtime",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 263
@@ -61,7 +61,39 @@
       "install_readiness",
       "runtime_correctness",
       "merge_readiness"
-    ]
+    ],
+    "verified_at": "2026-07-09",
+    "implementation_pr": "heimgewebe/infra#105",
+    "implementation_head": "871b43ca3e7fc7bde431c524785405e8674567c7",
+    "implementation_merge_commit": "100579d0b5fce6c1cd3623c8492bf55a12d7b16c",
+    "diff_sha256": "fdc8eb7a62ab5e74169117e295bf72a771468959f4dd0388b7c10b39b1028bbf",
+    "implementation_paths": [
+      "Makefile",
+      "runbooks/bitwarden-cli-secret-reference.md",
+      "scripts/bitwarden/install_bw_systemd_wrapper.sh"
+    ],
+    "selected_candidate": "@bitwarden/cli@2026.6.0 via /home/alex/.local/bin/bw-bin/bw-systemd-run-npm-2026.6.0 wrapper over systemd-run --user --quiet --wait --pipe --collect --same-dir.",
+    "package_integrity": "sha512-quoPpGnLIAaGOBe61FZjZInbZzSvJTRzyK76icDFj4p6I4Oah7QubTKa//tIThU1GG5wFWK/OJeHA7AR1Knaxw==",
+    "active_command_sha256": "7f1892db07b52c1be450427098a74308b1b05a5b861d5b5c4a1b185207f1d676",
+    "rollback_target_sha256": "c02d90efef5feefdfec8bb452bb8ee5d2af9dd7de175a9a258d11cb1002b2e42",
+    "outcome": "Implemented in infra PR #105: the active bw path now resolves to a wrapper that runs @bitwarden/cli@2026.6.0 in a transient user systemd scope, avoiding the Grabowski service executable-memory restriction. The wrapper blocks command-line --session use and the safe-status probe passes while the vault remains locked.",
+    "validation": [
+      "Infra PR #105 GitHub CI passed validate.",
+      "Local before merge: make lint-bitwarden and make validate passed in /home/alex/repos/.infra-worktrees/bitwarden-cli-runtime-repair-v1.",
+      "Live runtime after repair: bw --version returned 2026.6.0; bw status returned status locked with redacted identity material.",
+      "Post-merge on infra main 100579d0b5fce6c1cd3623c8492bf55a12d7b16c: scripts/bitwarden/bw_status_safe.py returned rc=0 ok true, vault_status locked, does_not_read_vault_items true, prints_session_key false; --require-unlocked returned rc=2 reason vault-not-unlocked.",
+      "Wrapper command-line session-key guard: bw --session dummy status returned rc=64."
+    ],
+    "verified_acceptance": {
+      "candidate-selected": "Selected @bitwarden/cli@2026.6.0 from npm with recorded package integrity and installed it behind /home/alex/.local/bin/bw-bin/bw-systemd-run-npm-2026.6.0. Native Linux binary and direct Node/npm execution were rejected because they crashed under the Grabowski service execution boundary.",
+      "safe-status-green": "scripts/bitwarden/bw_status_safe.py passes against the selected wrapper with ok true, version 2026.6.0 and vault_status locked. It prints no raw Bitwarden output and does not read vault items.",
+      "require-unlocked-fail-closed": "scripts/bitwarden/bw_status_safe.py --require-unlocked returns rc=2 with reason vault-not-unlocked while the vault is locked, without revealing session or secret material.",
+      "rollback-or-disable": "Previous broken native target /home/alex/.local/bin/bw-bin/bw-nodefree and sha256 c02d90efef5feefdfec8bb452bb8ee5d2af9dd7de175a9a258d11cb1002b2e42 are recorded. The installer records old/new link targets and hashes and can relink or disable the wrapper if it regresses."
+    },
+    "verification": {
+      "task_sha256": "7b80e1a15961a87b5328d439960a0cfa6396380a96589d63d61db448357805e3",
+      "plan_sha256": "07e89ae651eab631ae802ac14f422dbfc78b62b752431ecd2ed2244ba0516015"
+    }
   },
   "depends_on": [
     "OPERATOR-TOOLING-FOCUS-V1-T003"

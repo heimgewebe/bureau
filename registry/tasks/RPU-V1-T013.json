@@ -3,9 +3,9 @@
   "id": "RPU-V1-T013",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "SemantAH chunk embedding bridge",
-  "state": "planned",
+  "state": "ready",
   "priority": {
-    "lane": "later",
+    "lane": "now",
     "rank": 53
   },
   "goal": "Prototype a bounded semantic retrieval bridge where SemantAH embeds stable RepoBrief chunk_index records externally and RepoBrief consumes only measured, citation-preserving semantic evidence for evaluation, not default core ranking.",
@@ -62,7 +62,30 @@
       "agent_quality_improvement_by_itself"
     ],
     "source_vision": "SemantAH over RepoBrief chunks, not embeddings in the RepoBrief core.",
-    "dependency_note": "SemantAH usefulness initiative exists, but no SEMANTAH-USEFULNESS-V1-T001 task is present on Bureau origin/main at reconciliation time; this task therefore depends only on RepoBrief prerequisites and the registered repo.semantah resource."
+    "dependency_note": "SemantAH usefulness initiative exists, but no SEMANTAH-USEFULNESS-V1-T001 task is present on Bureau origin/main at reconciliation time; this task therefore depends only on RepoBrief prerequisites and the registered repo.semantah resource.",
+    "promotion_basis": {
+      "promoted_at": "2026-07-09T04:12:00Z",
+      "previous_ball": "RPU-V1-T012",
+      "dependency_state": {
+        "RPU-V1-T001": "verified",
+        "RBV1-T017": "verified"
+      },
+      "live_open_pr_observation": {
+        "heimgewebe/semantAH": 0,
+        "heimgewebe/lenskit": {
+          "open_pr_count": 1,
+          "open_prs": [
+            "#929 docs/repobrief-readonly-adapter-no-mirror-v1"
+          ],
+          "blocker_assessment": "not_a_write_blocker_for_RPU-V1-T013_because_lenskit_claim_is_read_only"
+        }
+      },
+      "non_claims": [
+        "promotion_to_queue_does_not_implement_the_task",
+        "promotion_to_queue_does_not_make_semantic_embeddings_default",
+        "lenskit_open_pr_929_must_be_rechecked_before_any_lenskit_write"
+      ]
+    }
   },
   "depends_on": [
     "RPU-V1-T001",

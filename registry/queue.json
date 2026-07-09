@@ -7,6 +7,7 @@
       "RPU-V1-T017",
       "RPU-V1-T018",
       "RPU-V1-T020",
+      "RPU-V1-T021",
       "RBV1-T018",
       "GRABOWSKI-OPERATOR-SURFACE-V1-T005",
       "GRABOWSKI-OPERATOR-SURFACE-V1-T006",
@@ -66,9 +67,7 @@
       "OPERATOR-PC-HYGIENE-V1-T005"
     ],
     "next": [],
-    "now": [
-      "RPU-V1-T012"
-    ]
+    "now": []
   },
   "queue_policy": "skip-blocked",
   "schema_version": 1

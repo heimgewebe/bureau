@@ -51,14 +51,30 @@
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "metadata": {
     "created_from_plan": "RepoBrief Practical Utility Reconcile v1",
+    "diff_sha256": "33eaf604fd80ea9e730c6b4fcaffe88257d3b6645963242bc24bddae4a34bdb9",
     "does_not_establish": [
+      "executed_comparable_run_series",
+      "agent_quality_improvement",
+      "condition_superiority",
+      "default_workbench_promotion_readiness",
       "runtime_correctness",
       "test_sufficiency",
       "review_completeness",
-      "merge_readiness",
-      "agent_quality_improvement_by_itself"
+      "merge_readiness"
     ],
+    "implementation_head": "351152986a803b3f9bef2c75794ac24b308a8ad3",
+    "implementation_paths": [
+      "experiments/2026-07-09_repobrief-workbench-usefulness-eval/manifest.yml",
+      "experiments/2026-07-09_repobrief-workbench-usefulness-eval/measurement-plan.yml",
+      "experiments/2026-07-09_repobrief-workbench-usefulness-eval/results/decision.yml",
+      "scripts/docmeta/validate_repobrief_workbench_usefulness.py",
+      "scripts/docmeta/test_validate_repobrief_workbench_usefulness.py",
+      "Makefile"
+    ],
+    "implementation_pr": "heimgewebe/vibe-lab#300",
     "lenskit_local_task": "TASK-REPOBRIEF-WORKBENCH-USEFULNESS-EVAL-001",
+    "merge_commit": "1a3fff4b9448e8c7231e9decc07b9300bd3cc4f2",
+    "outcome": "Implemented in Vibe-Lab PR #300: a RepoBrief Workbench usefulness evaluation design, condition matrix, required metrics, no-self-proof rule, validator and regression tests now exist. The experiment is explicitly marked not_executed and not promotion-ready until comparable runs exist.",
     "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
     "promotion_basis": {
       "dependencies": [
@@ -74,7 +90,55 @@
       }
     },
     "queue_readiness_repair": "2026-07-09: promoted after PR #323 lifecycle repair because now/next was empty, dependencies are verified, and no open PR blockers were found for heimgewebe/lenskit, heimgewebe/bureau or heimgewebe/vibe-lab.",
-    "registered_at": "2026-07-08T00:00:00Z"
+    "registered_at": "2026-07-08T00:00:00Z",
+    "validation": [
+      "Vibe-Lab PR #300 GitHub CI passed: validate, bundle-freshness-receipt, validate-doc-freshness-registry, non-blocking-diagnostics, ephemeral-diagnostics.",
+      "Local validation before merge: make validate-repobrief-workbench-usefulness-tests -> passed.",
+      "Local validation before merge: make validate-repobrief-workbench-usefulness -> passed.",
+      "Local validation before merge: make validate-schemas -> passed.",
+      "Local validation before merge: make validate -> passed after make generate-blocking.",
+      "Post-merge Vibe-Lab main spot-check: make validate-repobrief-workbench-usefulness-tests and make validate-repobrief-workbench-usefulness -> passed."
+    ],
+    "verification": {
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015",
+      "receipt": {
+        "diff_sha256": "33eaf604fd80ea9e730c6b4fcaffe88257d3b6645963242bc24bddae4a34bdb9",
+        "implementation_head": "351152986a803b3f9bef2c75794ac24b308a8ad3",
+        "implementation_pr": "heimgewebe/vibe-lab#300",
+        "kind": "bureau.pr_completion_receipt.v1",
+        "merge_commit": "1a3fff4b9448e8c7231e9decc07b9300bd3cc4f2",
+        "non_claims": [
+          "executed_comparable_run_series",
+          "agent_quality_improvement",
+          "condition_superiority",
+          "default_workbench_promotion_readiness",
+          "runtime_correctness",
+          "test_sufficiency",
+          "review_completeness",
+          "merge_readiness"
+        ],
+        "outcome": "Implemented in Vibe-Lab PR #300: a RepoBrief Workbench usefulness evaluation design, condition matrix, required metrics, no-self-proof rule, validator and regression tests now exist. The experiment is explicitly marked not_executed and not promotion-ready until comparable runs exist.",
+        "state": "verified",
+        "task_id": "RPU-V1-T012",
+        "validation": [
+          "Vibe-Lab PR #300 GitHub CI passed: validate, bundle-freshness-receipt, validate-doc-freshness-registry, non-blocking-diagnostics, ephemeral-diagnostics.",
+          "Local validation before merge: make validate-repobrief-workbench-usefulness-tests -> passed.",
+          "Local validation before merge: make validate-repobrief-workbench-usefulness -> passed.",
+          "Local validation before merge: make validate-schemas -> passed.",
+          "Local validation before merge: make validate -> passed after make generate-blocking.",
+          "Post-merge Vibe-Lab main spot-check: make validate-repobrief-workbench-usefulness-tests and make validate-repobrief-workbench-usefulness -> passed."
+        ]
+      },
+      "receipt_sha256": "5ba13da76400af105ea4bf0ccc7bc47e65247ed5ceb46822feecd23cda485b3f",
+      "schema_version": 1,
+      "task_sha256": "241d03899a7805a9153a9443adab96b56b9977616dd621f346150912376bb40b"
+    },
+    "verified_acceptance": {
+      "rpu-v1-t012-comparison": "measurement-plan.yml defines no_context_no_rlens, reading_pack, context_pack, full_resolved_evidence and trace_gated conditions.",
+      "rpu-v1-t012-metrics": "measurement-plan.yml requires localization, evidence completeness, patch scope, check fit, miss taxonomy, false-confidence risk and effort overhead metrics.",
+      "rpu-v1-t012-no-self-proof": "measurement-plan.yml declares a required no_self_proof_rule and validator tests reject missing self-proof protections."
+    },
+    "verified_at": "2026-07-09"
   },
   "priority": {
     "lane": "now",
@@ -86,6 +150,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "RepoBrief workbench usefulness evaluation"
 }

@@ -1,0 +1,128 @@
+{
+  "actions": [
+    {
+      "effective_state": "planned",
+      "operation": "add_to_queue",
+      "priority_lane": "next",
+      "source_finding_code": "unqueued-open-priority-next",
+      "target_lane": "next",
+      "task_id": "BUR-2026-003-T004"
+    },
+    {
+      "effective_state": "planned",
+      "operation": "add_to_queue",
+      "priority_lane": "next",
+      "source_finding_code": "unqueued-open-priority-next",
+      "target_lane": "next",
+      "task_id": "BUR-2026-003-T007"
+    },
+    {
+      "effective_state": "planned",
+      "operation": "add_to_queue",
+      "priority_lane": "next",
+      "source_finding_code": "unqueued-open-priority-next",
+      "target_lane": "next",
+      "task_id": "BUR-2026-001-T009"
+    }
+  ],
+  "command": "queue-reconcile-plan",
+  "created_at": "2026-07-09T15:56:43.599170Z",
+  "does_not_establish": [
+    "dispatch_authority",
+    "task_claim",
+    "task_completion",
+    "merge_readiness"
+  ],
+  "dry_run_report_sha256": "3f8c538248808dd96eb063402c8ab721b7a010e0f24f5d2ef6a714b3b9c9f600",
+  "expected_queue_after": {
+    "lanes": {
+      "later": [
+        "RPU-V1-T015",
+        "RPU-V1-T017",
+        "RPU-V1-T018",
+        "RBV1-T018",
+        "RBAW-V1-T004",
+        "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T003",
+        "GRIP-ROADMAP-V1-T009",
+        "GRIP-ROADMAP-V1-T010",
+        "GRIP-ROADMAP-V1-T011",
+        "GRIP-ROADMAP-V1-T012",
+        "GRIP-ROADMAP-V1-T013",
+        "GRIP-ROADMAP-V1-T014",
+        "GRIP-ROADMAP-V1-T015",
+        "GRIP-ROADMAP-V1-T016",
+        "GRIP-ROADMAP-V1-T017",
+        "GRIP-ROADMAP-V1-T018",
+        "GRIP-ROADMAP-V1-T019",
+        "GRIP-ROADMAP-V1-T020",
+        "GRIP-ROADMAP-V1-T021",
+        "BUR-2026-005-T015",
+        "BUR-2026-005-T016",
+        "BUR-2026-005-T017",
+        "BUR-2026-005-T018",
+        "CABINET-GEMINI-MAINT-V1-T005",
+        "LSV-V1-T002",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T027",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T015",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T016",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T017",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T018",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T019",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T020",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T021",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T022",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T023",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T024",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T025",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T026",
+        "OPERATOR-TOOLING-FOCUS-V1-T001",
+        "OPERATOR-PC-HYGIENE-V1-T001",
+        "OPERATOR-PC-HYGIENE-V1-T002",
+        "OPERATOR-PC-HYGIENE-V1-T003",
+        "OPERATOR-PC-HYGIENE-V1-T004",
+        "OPERATOR-PC-HYGIENE-V1-T005",
+        "SEMANTAH-SECURITY-HYGIENE-V1-T001"
+      ],
+      "next": [
+        "BUR-2026-003-T004",
+        "BUR-2026-003-T007",
+        "BUR-2026-001-T009"
+      ],
+      "now": []
+    },
+    "queue_policy": "skip-blocked",
+    "schema_version": 1
+  },
+  "expected_queue_after_sha256": "72aca2e7293fa3259446bb76638b14356418b0242f2c3cbecbed418d58700732",
+  "registry": {
+    "git_head": "5998eeeced14bb5dae6f6c7ae87f37d15175541d",
+    "queue_sha256_before": "76143d3ebc0ca1b5a600d6b61e84d64845191c6094334eff68d4c66a7ebd0b02",
+    "root": "/home/alex/repos/.bureau-worktrees/bureau-reviewed-queue-next-apply-v2"
+  },
+  "resource": null,
+  "review": {
+    "required": true,
+    "status": "reviewed",
+    "reviewer": "ChatGPT GPT-5.5 Thinking via Grabowski",
+    "reviewed_at": "2026-07-09T16:00:00Z",
+    "decision": "approve exact safe add_to_queue next actions for three priority-next planned tasks after doctor baseline is healthy",
+    "checked_actions": [
+      {
+        "operation": "add_to_queue",
+        "target_lane": "next",
+        "task_id": "BUR-2026-003-T004"
+      },
+      {
+        "operation": "add_to_queue",
+        "target_lane": "next",
+        "task_id": "BUR-2026-003-T007"
+      },
+      {
+        "operation": "add_to_queue",
+        "target_lane": "next",
+        "task_id": "BUR-2026-001-T009"
+      }
+    ]
+  },
+  "schema_version": 1
+}

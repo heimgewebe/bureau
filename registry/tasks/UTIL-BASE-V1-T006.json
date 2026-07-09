@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "UTIL-BASE-V1-T006",
+  "initiative": "UTIL-BASE-V1",
+  "title": "Install review and document search helpers",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 306
+  },
+  "goal": "Add difftastic and ripgrep-all/rga as helper views for PR review and document search without replacing GitHub/CI/runtime evidence.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/infra"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "util-base-v1-t006-1",
+      "assertion": "difftastic is available as an explicit helper command or alias and does not replace mandatory git diff evidence."
+    },
+    {
+      "id": "util-base-v1-t006-2",
+      "assertion": "rga can search at least one PDF or Office-style test document, or missing adapters are documented."
+    },
+    {
+      "id": "util-base-v1-t006-3",
+      "assertion": "Sensitive paths are excluded from broad document search defaults."
+    },
+    {
+      "id": "util-base-v1-t006-4",
+      "assertion": "Review guidance states that helper search/diff output is orientation evidence, not final truth by itself."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09T02:58:00Z",
+    "source_request": "Evaluate every interesting utility tool and register the resulting plan in Bureau.",
+    "does_not_establish": [
+      "runtime_correctness",
+      "security_correctness",
+      "install_readiness",
+      "merge_readiness"
+    ],
+    "tools": [
+      "difftastic",
+      "ripgrep-all",
+      "rga"
+    ]
+  },
+  "depends_on": []
+}

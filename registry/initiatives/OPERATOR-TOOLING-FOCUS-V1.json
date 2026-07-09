@@ -1,18 +1,18 @@
 {
   "schema_version": 1,
   "id": "OPERATOR-TOOLING-FOCUS-V1",
-  "title": "Operator tooling focus: Grafana, n8n, Bitwarden",
+  "title": "Operator tooling focus: Grafana and Bitwarden",
   "state": "active",
   "commitment": "later",
-  "goal": "Evaluate and integrate Grafana, n8n and Bitwarden only where they strengthen Heim-PC operator observability, bounded automation and secret hygiene without becoming a second control-plane or weakening Grabowski/Bureau/Leitstand boundaries.",
+  "goal": "Evaluate Grafana and Bitwarden only where they strengthen Heim-PC operator observability and secret hygiene without becoming a second control-plane or weakening Grabowski/Bureau/Leitstand boundaries. n8n is intentionally removed from this initiative and must not be pursued unless a later explicit user decision reopens it.",
   "current_plan": {
     "repository": "bureau",
     "path": "registry/initiatives/OPERATOR-TOOLING-FOCUS-V1.json"
   },
   "completion": [
-    "Grafana has a documented read-only observability role, a non-conflicting port/route plan and explicit decision whether it complements or replaces any Netdata/Grafana-lite need.",
-    "n8n has a no-authority contract: notifications/proposals only, no queue truth, no PR merge, no deploy and no privileged host mutation.",
-    "Bitwarden CLI usage is documented as a fail-closed secret reference path with no secret export into repos, logs, evidence packets or broad agent context."
+    "Grafana is either explicitly deferred behind the Beszel monitoring pilot or has a documented read-only observability role, a non-conflicting port/route plan and a clear Leitstand relationship.",
+    "Bitwarden CLI usage remains documented as a fail-closed secret reference path with no secret export into repos, logs, evidence packets or broad agent context.",
+    "n8n has no active Bureau task, no queue slot and no install path in this initiative."
   ],
   "parallelism": {
     "max_active_tasks": 1
@@ -28,11 +28,15 @@
     ],
     "does_not_establish": [
       "grafana_install_readiness",
-      "n8n_install_readiness",
       "bitwarden_auth_state",
       "runtime_correctness",
       "security_correctness",
       "merge_readiness"
+    ],
+    "n8n_removed_at": "2026-07-09T02:58:00Z",
+    "n8n_removed_reason": "User explicitly requested deletion; current architecture favors deterministic Bureau/Grabowski/Leitstand paths over visual workflow automation.",
+    "parked_tools": [
+      "n8n"
     ]
   }
 }

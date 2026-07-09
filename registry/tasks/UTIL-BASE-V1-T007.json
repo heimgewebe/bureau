@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "UTIL-BASE-V1-T007",
+  "initiative": "UTIL-BASE-V1",
+  "title": "Pilot Stirling PDF locally",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 307
+  },
+  "goal": "Pilot Stirling PDF as a local PDF workbench after service-boundary and backup prerequisites are clear.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/infra"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "util-base-v1-t007-1",
+      "assertion": "Stirling PDF is bound only to localhost or Tailnet and has a documented rollback/stop path."
+    },
+    {
+      "id": "util-base-v1-t007-2",
+      "assertion": "A dummy PDF split/merge/OCR or equivalent smoke proves the workflow without sensitive documents."
+    },
+    {
+      "id": "util-base-v1-t007-3",
+      "assertion": "Output folders are separated from canonical document archives and reviewed before later import."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09T02:58:00Z",
+    "source_request": "Evaluate every interesting utility tool and register the resulting plan in Bureau.",
+    "does_not_establish": [
+      "runtime_correctness",
+      "security_correctness",
+      "install_readiness",
+      "merge_readiness"
+    ],
+    "tools": [
+      "stirling-pdf"
+    ]
+  },
+  "depends_on": [
+    "UTIL-BASE-V1-T001",
+    "UTIL-BASE-V1-T002"
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "UTIL-BASE-V1-T010",
+  "initiative": "UTIL-BASE-V1",
+  "title": "Harden CopyQ and Espanso usage",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 310
+  },
+  "goal": "Turn existing CopyQ and Espanso installations into a safer operator convenience layer for clipboard history and standard snippets.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/infra"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "util-base-v1-t010-1",
+      "assertion": "CopyQ secret-handling rules are documented, including how to clear sensitive clipboard history."
+    },
+    {
+      "id": "util-base-v1-t010-2",
+      "assertion": "Espanso snippets cover common PR/Bureau/evidence wording but contain no secrets and no dangerous mutation commands."
+    },
+    {
+      "id": "util-base-v1-t010-3",
+      "assertion": "Existing service/autostart behavior is checked and does not interfere with terminal, tmux or SSH-Cockpit flows."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09T02:58:00Z",
+    "source_request": "Evaluate every interesting utility tool and register the resulting plan in Bureau.",
+    "does_not_establish": [
+      "runtime_correctness",
+      "security_correctness",
+      "install_readiness",
+      "merge_readiness"
+    ],
+    "tools": [
+      "copyq",
+      "espanso"
+    ]
+  },
+  "depends_on": []
+}

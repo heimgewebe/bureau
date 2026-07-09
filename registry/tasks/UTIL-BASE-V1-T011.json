@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "id": "UTIL-BASE-V1-T011",
+  "initiative": "UTIL-BASE-V1",
+  "title": "Define EasyEffects audio profiles",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 311
+  },
+  "goal": "Stabilize existing EasyEffects usage into named audio profiles for calls, recording and monitoring rather than ad-hoc audio tweaks.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/infra"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "util-base-v1-t011-1",
+      "assertion": "Current PipeWire/EasyEffects presence and preset paths are recorded."
+    },
+    {
+      "id": "util-base-v1-t011-2",
+      "assertion": "Profiles for calls, recording and neutral monitoring are defined or the blocking audio prerequisite is documented."
+    },
+    {
+      "id": "util-base-v1-t011-3",
+      "assertion": "Preset backup/export is documented so audio changes are reversible."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09T02:58:00Z",
+    "source_request": "Evaluate every interesting utility tool and register the resulting plan in Bureau.",
+    "does_not_establish": [
+      "runtime_correctness",
+      "security_correctness",
+      "install_readiness",
+      "merge_readiness"
+    ],
+    "tools": [
+      "easyeffects",
+      "qpwgraph",
+      "noisetorch"
+    ]
+  },
+  "depends_on": []
+}

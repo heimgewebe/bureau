@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "UTIL-BASE-V1-T009",
+  "initiative": "UTIL-BASE-V1",
+  "title": "Build Docling import pipeline gate",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 309
+  },
+  "goal": "Evaluate Docling as the primary document-to-Markdown/JSON pipeline for Lenskit/RepoBrief-compatible imports, with quality checks against originals.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/infra"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "util-base-v1-t009-1",
+      "assertion": "At least three representative documents are converted or blocked with dependency/resource reasons recorded."
+    },
+    {
+      "id": "util-base-v1-t009-2",
+      "assertion": "Each output records source path, generated_at, content hash or equivalent source identity and conversion settings."
+    },
+    {
+      "id": "util-base-v1-t009-3",
+      "assertion": "A manual sample check compares headings, tables and reading order against the original."
+    },
+    {
+      "id": "util-base-v1-t009-4",
+      "assertion": "Converted output is marked as import artifact and not treated as canonical truth without review."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09T02:58:00Z",
+    "source_request": "Evaluate every interesting utility tool and register the resulting plan in Bureau.",
+    "does_not_establish": [
+      "runtime_correctness",
+      "security_correctness",
+      "install_readiness",
+      "merge_readiness"
+    ],
+    "tools": [
+      "docling",
+      "marker",
+      "mineru"
+    ]
+  },
+  "depends_on": [
+    "UTIL-BASE-V1-T001"
+  ]
+}

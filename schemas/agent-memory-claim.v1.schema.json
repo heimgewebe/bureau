@@ -1,0 +1,286 @@
+{
+  "$id": "https://heimgewebe.local/bureau/agent-memory-claim.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Bureau agent memory claim v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "memory_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.:-]{1,160}$"
+    },
+    "claim_text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "topic": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "repo": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]{1,120}$"
+    },
+    "snapshot_stem": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]{1,160}$"
+    },
+    "freshness_status": {
+      "type": "string",
+      "enum": [
+        "fresh_exact",
+        "fresh_dirty_unverified",
+        "stale_head",
+        "unknown"
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/evidence_ref"
+      }
+    },
+    "last_revalidation": {
+      "$ref": "#/$defs/revalidation_result"
+    },
+    "does_not_establish": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "memory_id",
+    "claim_text",
+    "created_at",
+    "repo",
+    "snapshot_stem",
+    "freshness_status",
+    "evidence",
+    "does_not_establish"
+  ],
+  "$defs": {
+    "evidence_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "repobrief_citation",
+            "repobrief_source_range",
+            "range_ref"
+          ]
+        },
+        "citation_id": {
+          "type": "string",
+          "pattern": "^cit_[0-9a-f]{16,64}$"
+        },
+        "range_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "start_line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "end_line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "expected_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "max_age_hours": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "freshness_basis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "does_not_establish": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "kind",
+        "expected_sha256",
+        "generated_at",
+        "max_age_hours",
+        "does_not_establish"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "citation_id"
+          ]
+        },
+        {
+          "required": [
+            "range_ref"
+          ]
+        },
+        {
+          "required": [
+            "source_path",
+            "start_line",
+            "end_line"
+          ]
+        }
+      ]
+    },
+    "revalidation_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "checked_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "overall_status": {
+          "type": "string",
+          "enum": [
+            "still_established",
+            "stale",
+            "missing",
+            "changed",
+            "unverifiable"
+          ]
+        },
+        "usable_for_context": {
+          "type": "boolean"
+        },
+        "presentable_as_source_truth": {
+          "const": false
+        },
+        "counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "still_established": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "stale": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "missing": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "changed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unverifiable": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "still_established",
+            "stale",
+            "missing",
+            "changed",
+            "unverifiable"
+          ]
+        },
+        "does_not_establish": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "memory_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "evidence_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "still_established",
+                  "stale",
+                  "missing",
+                  "changed",
+                  "unverifiable"
+                ]
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "status",
+              "reason"
+            ]
+          }
+        }
+      },
+      "required": [
+        "schema_version",
+        "checked_at",
+        "overall_status",
+        "usable_for_context",
+        "presentable_as_source_truth",
+        "counts",
+        "evidence",
+        "does_not_establish"
+      ]
+    }
+  }
+}

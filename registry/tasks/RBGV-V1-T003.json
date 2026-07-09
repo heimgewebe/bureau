@@ -3,7 +3,7 @@
   "id": "RBGV-V1-T003",
   "initiative": "REPOBRIEF-FRONTDOOR-GROUNDING-V1",
   "title": "Integrate answer compliance grounding",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 87
@@ -80,7 +80,40 @@
       "security_correctness"
     ],
     "unblocked_by": "RBGV-V1-T002 verified via Lenskit PR #932",
-    "selected_after": "RBGV-V1-T002"
+    "selected_after": "RBGV-V1-T002",
+    "outcome": "Implemented by Lenskit PR #933: answer grounding verifier integrates Required Reading task profiles and carries caveats/non-claims into verdicts.",
+    "implemented_by": {
+      "repository": "lenskit",
+      "pull_request": 933,
+      "merge_commit": "21a991ba3f8d209e9fc466d87d9427369bf3eb18",
+      "head_commit": "2f650ca1996fe304821fe1d5a3c2d4c87c21d9cd"
+    },
+    "verified_acceptance": {
+      "rbgv-v1-t003-task-profile": "verify_answer_grounding_for_task_profile derives required/recommended roles from default_required_reading_protocol().",
+      "rbgv-v1-t003-required-reading": "test_task_profile_missing_required_evidence_fails and test_task_profile_missing_recommended_evidence_warns.",
+      "rbgv-v1-t003-caveats": "test_task_profile_carries_freshness_availability_and_non_claims.",
+      "rbgv-v1-t003-no-reading-proof": "Proof/self-review and verdict does_not_establish keep actual_reading_proven/repo_understood as non-claims."
+    },
+    "verification": {
+      "verified_at": "2026-07-09T07:18:30Z",
+      "checks": [
+        "Lenskit PR #933 CI all green before merge",
+        "diff saved before merge to /home/alex/iCloud/Drive/halde/lenskit-pr933.patch",
+        "local focused tests green"
+      ],
+      "patch_sha256": "9db4437a23d09556309116c77e84a7f75e06d8388a3880d9ae182b00fe64a6e8",
+      "does_not_establish": [
+        "actual_reading",
+        "semantic_answer_correctness",
+        "complete_context_use",
+        "runtime_correctness",
+        "test_sufficiency",
+        "review_completeness",
+        "security_correctness"
+      ],
+      "task_sha256": "129dbfdd9fea494499523794103648af11f4768115751f6bf16625a820cfc4e1",
+      "plan_sha256": "6e596079b33433e77ca945330a51c7a8d80595913062beba82a73d8a93832b5d"
+    }
   },
   "depends_on": [
     "RBGV-V1-T002"

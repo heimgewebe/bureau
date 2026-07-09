@@ -49,7 +49,7 @@ Accepted approval levels, from weaker to stronger:
 3. `operator`
 4. `privileged_operator`
 
-`scope` may be `task`, one effect class, or a list of effect classes. If scope is too narrow, the gate blocks.
+`scope` may be `task`, one effect class, or a list of effect classes. For multi-effect requests, the scope must cover every requested/inferred effect class; if scope is too narrow, the gate blocks.
 
 ## Fail-closed rules
 

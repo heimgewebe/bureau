@@ -86,6 +86,35 @@ def test_agent_dispatch_requires_operator_scope() -> None:
     assert "approval scope does not cover requested effect classes" in result["blockers"]
 
 
+
+def test_scope_must_cover_all_effect_classes() -> None:
+    result = evaluate_approval_path(
+        task(
+            claims=[{"resource": "repo.commonworld", "mode": "write"}],
+            metadata={"source_import": True},
+        ),
+        approval=approval(level="operator", scope=["repository_mutation"]),
+    )
+
+    assert result["status"] == "blocked"
+    assert "approval scope does not cover requested effect classes" in result["blockers"]
+
+
+def test_scope_list_allows_when_all_effect_classes_are_covered() -> None:
+    result = evaluate_approval_path(
+        task(
+            claims=[{"resource": "repo.commonworld", "mode": "write"}],
+            metadata={"source_import": True},
+        ),
+        approval=approval(
+            level="operator", scope=["repository_mutation", "source_import"]
+        ),
+    )
+
+    assert result["status"] == "allowed"
+    assert result["required_approval"] == "operator"
+
+
 def test_source_import_requires_operator_approval() -> None:
     result = evaluate_approval_path(
         task(metadata={"source_import": True}),

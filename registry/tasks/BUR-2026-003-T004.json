@@ -55,7 +55,7 @@
     "created_from_plan": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
     "operator_lab_run": "not applicable — planning task definition only",
     "next_action": "closed; proceed to BUR-2026-003-T007",
-    "verified_at": "2026-07-09T19:29:02+02:00",
+    "verified_at": "2026-07-09T20:06:50+02:00",
     "implementation_branch": "bur-2026-003-t004-approval-path-v1",
     "implementation_files": [
       "src/bureau/approval_path.py",
@@ -66,45 +66,59 @@
     "implementation_evidence": {
       "acceptance_mapping": {
         "approval-classes-defined": "docs/approval-path-v1.md defines effect classes and required approval levels; src/bureau/approval_path.py encodes them deterministically.",
-        "gates-enforced": "evaluate_approval_path fails closed for missing, insufficient, mismatched, narrow-scope, unknown, and prohibited approvals; covered by tests/test_approval_path.py.",
+        "gates-enforced": "evaluate_approval_path fails closed for missing, insufficient, mismatched, narrow-scope, multi-effect narrow-scope, unknown, and prohibited approvals; covered by tests/test_approval_path.py.",
         "operator-relay-compatible": "approval evaluator is pure/read-only and returns a bounded decision object; docs/approval-path-v1.md records that it performs no mutation or dispatch."
       },
-      "focused_tests": ".venv/bin/python -m pytest tests/test_approval_path.py tests/test_bureau.py -q -> 21 passed",
-      "full_tests": ".venv/bin/python -m pytest -> 446 passed",
+      "focused_tests": ".venv/bin/python -m pytest tests/test_approval_path.py -q -> 12 passed",
+      "full_tests": ".venv/bin/python -m pytest -> 448 passed in 36.63s",
       "ruff": ".venv/bin/python -m ruff check src/bureau/approval_path.py tests/test_approval_path.py src/bureau/cli.py -> All checks passed",
       "cli_block_check": "approval-path --task-id BUR-2026-003-T004 --effect repository_mutation --strict blocks without approval",
       "cli_allow_check": "approval-path --task-id BUR-2026-003-T004 --effect repository_mutation --approval operator-task-scope --strict allows with matching operator approval",
-      "self_review": "PASS: approval path is pure and fail-closed; it introduces no queue, Git, dispatch, import, or runtime mutation authority. Runtime/source-import integration remains a future application point."
+      "self_review": "PASS after tightening scope semantics: approval path is pure and fail-closed; a scoped approval must now cover every inferred/requested effect class, preventing partial scope approval from authorizing combined effects. It introduces no queue, Git, dispatch, import, or runtime mutation authority. Runtime/source-import integration remains a future application point."
     },
     "registry_truth": {
       "status": "satisfied",
-      "verified_at": "2026-07-09T19:29:02+02:00",
+      "verified_at": "2026-07-09T20:06:50+02:00",
       "evidence": [
         {
           "type": "test_run",
           "task_id": "BUR-2026-003-T004",
           "command": ".venv/bin/python -m pytest",
-          "command_sha256": "d68c65e57d2ebfea2296ce7cae6b0b3cc79fc40e5fdecf7121a331ef9c939fae",
-          "result": "446 passed in 38.10s"
+          "command_sha256": "70fd0205ac2acb3a4c8729837c222026aec683aca0842acc9184a03851fefb41",
+          "result": "448 passed in 36.63s"
+        },
+        {
+          "type": "focused_test_run",
+          "task_id": "BUR-2026-003-T004",
+          "command": ".venv/bin/python -m pytest tests/test_approval_path.py -q",
+          "command_sha256": "1c06987dd1312d799255f291a4e953543348a6a8eeb5f2722074a719e0a6aa24",
+          "result": "12 passed"
         },
         {
           "type": "lint_run",
           "task_id": "BUR-2026-003-T004",
           "command": ".venv/bin/python -m ruff check src/bureau/approval_path.py tests/test_approval_path.py src/bureau/cli.py",
-          "command_sha256": "81caf0cb936c3b518fa46c2edc789faa15fb8feaa4749ea3c506ede54873b85e",
+          "command_sha256": "aca0092d3f5633af3a06fe4c6efe7f089ea0a28497a56b529fb1060890adfe03",
           "result": "All checks passed"
+        },
+        {
+          "type": "registry_truth_run",
+          "task_id": "BUR-2026-003-T004",
+          "command": ".venv/bin/python -m bureau.cli --root . --json registry-truth --no-baseline-probe",
+          "command_sha256": "55a5c4e251548c2c727223dc3e81c8e4196d7015be5055b01331d3d6ade31686",
+          "result": "healthy=true; errors=0; warnings=72 pre-existing registry warnings"
         }
       ]
     },
     "verification": {
       "previous_task_sha256": "bb8a31b6d457df6eb1570396505348b32312f466abdf179cc1517c23b98a295d",
-      "approval_path_doc_sha256": "5cdb0a3559a97f9078bd4324a5634aab91d055d7b89f2197f8554c5819a49406",
-      "approval_path_module_sha256": "d97857cc44af5789f97d25cd016aed74cc102f2d0a23d6f3920dbfde9f3d1779",
-      "approval_path_tests_sha256": "4500eac40a101484751fb9bf7ff710f017bbce38f3f31a55988559793b60ae53",
-      "task_sha256": "0bbe3869259e717cdd7d0c75e03854086cc80c302991386821b030275f6b8ae0",
+      "approval_path_doc_sha256": "f63f28d2bb85b7621768389d1a5fc109bba184cee78232f1a6e880fa728934e9",
+      "approval_path_module_sha256": "5a7a16c9539cf4e0f6d564f70a9e3eeb35156ec220d5a7020eaa813256fd606a",
+      "approval_path_tests_sha256": "c28b4a8c46ff8402f4e07db0fb3731453616d45ce798104533db40d185dd9dcd",
+      "task_sha256": "b561018bef74d696cfefc1c052364e6419d3e9b5b46746c47c969b375b1142f7",
       "plan_sha256": "bcc1fd0ae4a05f70066a0b1f1d573cc21add0a824489ab0a23ba76d48904f1bf"
     },
-    "outcome": "Approval path v1 is implemented as a pure classifier/evaluator, CLI-visible, documented, and covered by fail-closed tests."
+    "outcome": "Approval path v1 is implemented as a pure classifier/evaluator, CLI-visible, documented, covered by fail-closed tests, and tightened so scoped approvals must cover every effect class in multi-effect requests."
   },
   "depends_on": [
     "BUR-2026-003-T001"

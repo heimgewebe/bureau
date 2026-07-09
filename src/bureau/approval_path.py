@@ -230,10 +230,10 @@ def _approval_scope_contains(approval: dict[str, Any], effect_classes: set[str])
     if scope == "task":
         return True
     if isinstance(scope, str):
-        return scope in effect_classes
+        return effect_classes == {scope}
     if isinstance(scope, list):
         values = {item for item in scope if isinstance(item, str)}
-        return bool(values & effect_classes) or "task" in values
+        return "task" in values or effect_classes <= values
     return False
 
 

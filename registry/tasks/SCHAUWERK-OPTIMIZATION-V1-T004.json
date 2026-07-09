@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "initiative": "SCHAUWERK-OPTIMIZATION-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SCHAUWERK-OPTIMIZATION-V1-T001"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09",
+    "source_request": "Schauwerk optimization todo",
+    "does_not_establish": [
+      "live_miro_acceptance",
+      "issue_8_closure",
+      "sw009_live_apply_readiness"
+    ]
+  },
+  "id": "SCHAUWERK-OPTIMIZATION-V1-T004",
+  "title": "Add SW-003 evidence packet aggregator",
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "goal": "Add a local command or compiler that aggregates requirements, template/evaluation/status/review-packet metadata into one operator-readable evidence packet without Miro access.",
+  "acceptance": [
+    {
+      "id": "single-packet",
+      "assertion": "A deterministic local packet summarizes the SW-003 live-gate chain and blocked reasons."
+    },
+    {
+      "id": "source-binding",
+      "assertion": "Packet binds source receipt digests and schema versions."
+    },
+    {
+      "id": "no-live-apply",
+      "assertion": "Packet remains ready_for_live_apply=false and non-closing."
+    }
+  ]
+}

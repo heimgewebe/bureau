@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "SCHAUWERK-OPTIMIZATION-V1",
+  "title": "Schauwerk optimization and live-gate hardening",
+  "state": "active",
+  "commitment": "next",
+  "goal": "Bring Schauwerk from foundation plus Miro-pilot into a clearer, safer next stage: current docs, controlled SW-003 live proof preparation, and cleaner receipt validation before any broader live apply path is opened.",
+  "current_plan": {
+    "repository": "schauwerk",
+    "path": "docs/operators/sw003-sw009-planhygiene.md"
+  },
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-09",
+    "source_request": "erstelle eine to do liste, registriere diese im bureau und arbeite sie ab",
+    "repo": "heimgewebe/schauwerk",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "open_gate": "heimgewebe/schauwerk#8 SW-003: Isolated Miro write proof",
+    "does_not_establish": [
+      "live_miro_acceptance",
+      "sw003_closure",
+      "sw009_live_apply_readiness",
+      "provider_mutation_authority"
+    ]
+  },
+  "completion": [
+    "Schauwerk documentation reflects the current SW-003 local live-gate receipt chain without claiming live acceptance.",
+    "A controlled non-mutating SW-003 live proof plan exists before any live mutation is attempted.",
+    "Receipt validation and evidence packaging are improved while SW-003 Issue #8 and SW-009 live apply remain gated."
+  ]
+}

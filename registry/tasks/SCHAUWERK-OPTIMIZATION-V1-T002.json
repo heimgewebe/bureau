@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "initiative": "SCHAUWERK-OPTIMIZATION-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SCHAUWERK-OPTIMIZATION-V1-T001"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-09",
+    "source_request": "Schauwerk optimization todo",
+    "does_not_establish": [
+      "live_miro_acceptance",
+      "issue_8_closure",
+      "sw009_live_apply_readiness"
+    ]
+  },
+  "id": "SCHAUWERK-OPTIMIZATION-V1-T002",
+  "title": "Prepare controlled SW-003 live proof plan",
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "goal": "Add a concrete non-mutating plan/runbook for the eventual controlled SW-003 live proof, including required Miro tool checks, allowed scope, evidence fields, abort criteria and redaction requirements.",
+  "acceptance": [
+    {
+      "id": "tool-catalogue-check",
+      "assertion": "Plan specifies that the live Miro MCP tool catalogue must be checked before cleanup/update claims."
+    },
+    {
+      "id": "live-proof-boundary",
+      "assertion": "Plan separates preparation from actual live mutation and requires explicit operator approval for live action."
+    },
+    {
+      "id": "evidence-contract",
+      "assertion": "Plan maps create/read/update/verify/idempotency/cleanup evidence to sanitized public receipt fields."
+    }
+  ]
+}

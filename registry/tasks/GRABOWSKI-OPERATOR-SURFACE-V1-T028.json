@@ -1,79 +1,100 @@
 {
-  "schema_version": 1,
-  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T028",
-  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
-  "title": "Harden connector 502 transport observability",
-  "state": "planned",
-  "goal": "Make intermittent ChatGPT-to-Grabowski connector 502 and stream/timeout failures diagnosable and less likely by adding a bounded transport-failure classification, narrow probe guidance and retry/splitting rules without treating retries as proof of correctness.",
+  "acceptance": [
+    {
+      "assertion": "Friction classification distinguishes connector transport 502/stream exceptions from runtime policy gates, command return codes, platform filters and repository failures.",
+      "id": "transport-failure-class"
+    },
+    {
+      "assertion": "A documented or typed probe captures operator/tunnel service state, recent streamable_http errors, request concurrency hints and adjacent successful calls using bounded, redacted output.",
+      "id": "bounded-probes"
+    },
+    {
+      "assertion": "Operator docs define when to split broad terminal calls into smaller typed calls, when to retry once, and when to stop and record friction instead of looping.",
+      "id": "split-retry-policy"
+    },
+    {
+      "assertion": "A successful retry never proves the first failure was harmless; status output preserves non-claims and recommends follow-up only when recurrence threshold is met.",
+      "id": "no-false-green"
+    },
+    {
+      "assertion": "Focused tests cover classification of 502-like connector symptoms, timeout symptoms, adjacent successful retry, and non-confusion with fail-closed recovery gates.",
+      "id": "tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
   "depends_on": [
     "GRABOWSKI-OPERATOR-SURFACE-V1-T003",
     "GRABOWSKI-OPERATOR-SURFACE-V1-T021"
   ],
-  "priority": {
-    "lane": "later",
-    "rank": 470
-  },
-  "claims": [
-    {
-      "resource": "repo.grabowski",
-      "mode": "write",
-      "isolation": "worktree"
-    }
-  ],
-  "required_capabilities": [
-    "repository",
-    "shell",
-    "grabowski"
-  ],
   "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/grabowski",
     "grabowski_resources": [
       "repo:/home/alex/repos/grabowski"
-    ]
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
   },
-  "acceptance": [
-    {
-      "id": "transport-failure-class",
-      "assertion": "Friction classification distinguishes connector transport 502/stream exceptions from runtime policy gates, command return codes, platform filters and repository failures."
-    },
-    {
-      "id": "bounded-probes",
-      "assertion": "A documented or typed probe captures operator/tunnel service state, recent streamable_http errors, request concurrency hints and adjacent successful calls using bounded, redacted output."
-    },
-    {
-      "id": "split-retry-policy",
-      "assertion": "Operator docs define when to split broad terminal calls into smaller typed calls, when to retry once, and when to stop and record friction instead of looping."
-    },
-    {
-      "id": "no-false-green",
-      "assertion": "A successful retry never proves the first failure was harmless; status output preserves non-claims and recommends follow-up only when recurrence threshold is met."
-    },
-    {
-      "id": "tests",
-      "assertion": "Focused tests cover classification of 502-like connector symptoms, timeout symptoms, adjacent successful retry, and non-confusion with fail-closed recovery gates."
-    }
-  ],
+  "goal": "Make intermittent ChatGPT-to-Grabowski connector 502 and stream/timeout failures diagnosable and less likely by adding a bounded transport-failure classification, narrow probe guidance and retry/splitting rules without treating retries as proof of correctness.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T028",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
-    "phase": "connector-transport-hardening",
-    "effect": "observability_and_workflow_hardening",
-    "source": "Live Grabowski documentation check on 2026-07-09",
-    "friction_event_ids": [
-      "56ece2af1ac748829864323834d54c71",
-      "8a47183c2c884ec8bc2792ba7d642738"
-    ],
-    "observed_symptoms": [
-      "grabowski_terminal_run broad combined grep/find command returned 502 upstream/external service error while a smaller follow-up call succeeded.",
-      "grabowski_recovery_status initially timed out and then succeeded on retry with all recovery checks green."
-    ],
-    "live_basis": "grabowski-operator.service and tunnel-client-grabowski.service were active with zero restarts; journal near the event showed streamable_http POST handling exceptions and many concurrent forwarded commands.",
     "does_not_establish": [
       "root_cause_proof",
       "connector_vendor_fix",
       "runtime_policy_change",
       "merge_readiness",
       "transport_reliability_proof"
-    ]
-  }
+    ],
+    "effect": "observability_and_workflow_hardening",
+    "friction_event_ids": [
+      "56ece2af1ac748829864323834d54c71",
+      "8a47183c2c884ec8bc2792ba7d642738"
+    ],
+    "implementation_head": "f97143a8afac81cb36adf4e1cbaecb4938b0824e",
+    "implementation_merge_commit": "7b9b6ccd65ddaeeafcd49f81286d93ea590885bb",
+    "implementation_pr": "heimgewebe/grabowski#124",
+    "live_basis": "grabowski-operator.service and tunnel-client-grabowski.service were active with zero restarts; journal near the event showed streamable_http POST handling exceptions and many concurrent forwarded commands.",
+    "observed_symptoms": [
+      "grabowski_terminal_run broad combined grep/find command returned 502 upstream/external service error while a smaller follow-up call succeeded.",
+      "grabowski_recovery_status initially timed out and then succeeded on retry with all recovery checks green."
+    ],
+    "phase": "connector-transport-hardening",
+    "source": "Live Grabowski documentation check on 2026-07-09",
+    "validated_acceptance": {
+      "bounded-probes": "PR #124 friction_summary exposes connector_transport_diagnostics with recommended bounded probes for grabowski_status, service status, recent MCP stream/journal lines and one adjacent small typed read-only call.",
+      "no-false-green": "PR #124 diagnostics explicitly state a successful retry does not prove the first failure harmless and does_not_establish includes transport_reliability_proof and safe_mutation_retry.",
+      "split-retry-policy": "PR #124 documents and emits split_retry_policy: read-only retry limit 1, split broad terminal calls, no mutation retry until target state is re-read, record friction when path changes.",
+      "tests": "make validate passed after PR #124 implementation; focused tests in tests/test_friction.py cover connector_transport diagnostics, retry policy and separation from recovery timeout.",
+      "transport-failure-class": "PR #124 adds connector_transport to the event schema, FRICTION_KINDS and FAILURE_CLASSES; tests verify 502 connector symptoms classify as connector_transport while recovery timeout/operator_bug remains actionable_failure."
+    },
+    "validation": {
+      "grabowski_ci": "GitHub validate (3.10) and validate (3.12) succeeded before merge.",
+      "grabowski_local": "make validate passed: 710 tests OK, operator context current, policy checks passed, no obvious committed secrets detected.",
+      "review_gate": "tools/pr_review_gate.py PASS with self-review bound to head f97143a8afac81cb36adf4e1cbaecb4938b0824e and diff 02056c7b57fe276ffa090c42b70f6e61fba3ef3049e756cb0e86c96977842271 plus agy external review PASS."
+    },
+    "verification": {
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "task_sha256": "b725817e08776e8c339af6176d7f6b936c6d28773f99c8c33ffd05ec12c0955b"
+    },
+    "verification_note": "Grabowski PR #124 merged. It adds connector_transport as a first-class friction kind/failure class, separates 502/MCP stream/connector timeout symptoms from policy gates and recovery bugs, adds read-only connector_transport_diagnostics with bounded probe and split/retry policy, updates docs and regenerated operator context.",
+    "verified_at": "2026-07-09"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 470
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Harden connector 502 transport observability"
 }

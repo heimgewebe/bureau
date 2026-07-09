@@ -3,7 +3,7 @@
   "id": "UTIL-BASE-V1-T002",
   "initiative": "UTIL-BASE-V1",
   "title": "Establish Backrest/restic restore gate",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 302
@@ -53,15 +53,55 @@
     "registered_at": "2026-07-09T02:58:00Z",
     "source_request": "Evaluate every interesting utility tool and register the resulting plan in Bureau.",
     "does_not_establish": [
-      "runtime_correctness",
-      "security_correctness",
-      "install_readiness",
-      "merge_readiness"
+      "internet_exposure_safety_beyond_localhost",
+      "long_term_backup_policy_correctness",
+      "all_document_import_quality",
+      "real_device_localsend_transfer",
+      "beszel_monitored_system_configured",
+      "easyeffects_profile_quality"
     ],
     "tools": [
       "restic",
       "backrest"
-    ]
+    ],
+    "verified_at": "2026-07-09",
+    "implementation_pr": "heimgewebe/infra#107",
+    "implementation_head": "786730364c75baaaddcf678fe25a2c2715321a95",
+    "implementation_merge_commit": "17eb12f437ee2eaca4002f22c102b16743982b41",
+    "diff_sha256": "515031651eff006751f7bc361a2101df363bb4483951bbfaa246865dbd177267",
+    "implementation_paths": [
+      "Makefile",
+      "compose/heim-utilities/docker-compose.yml",
+      "compose/heim-utilities/paperless.env.example",
+      "runbooks/local-utility-baseline.md",
+      "runtime/local-utility-baseline-2026-07-09.md",
+      "scripts/utilities/create_paperless_env.sh",
+      "scripts/utilities/heim-copyq-clear-sensitive",
+      "scripts/utilities/heim-utilities-smoke.sh",
+      "scripts/utilities/heim-utility-inventory.sh",
+      "scripts/utilities/restic_restore_probe.sh"
+    ],
+    "validation": [
+      "Infra PR #107 GitHub CI validate passed.",
+      "Local make validate passed in /home/alex/repos/.infra-worktrees/util-base-implementation-v1.",
+      "scripts/utilities/heim-utilities-smoke.sh reported Backrest, Beszel, Stirling PDF, Paperless, Atuin, Difftastic, rga and LocalSend OK.",
+      "Restic util-base-v1 snapshot and single-file restore probe passed.",
+      "Paperless imported synthetic PDF document id 1 and indexed content containing UTIL-BASE-V1.",
+      "Stirling PDF converted the probe PDF to text and merged two copies into a 2-page PDF.",
+      "Docling 2.111.0 converted the probe PDF to Markdown and JSON with UTIL-BASE-V1 content."
+    ],
+    "runtime_evidence": "heimgewebe/infra runtime/local-utility-baseline-2026-07-09.md at 17eb12f437ee2eaca4002f22c102b16743982b41",
+    "outcome": "Implemented in infra PR #107 and live-smoked on heim-pc; see runtime evidence for exact boundaries and remaining manual steps.",
+    "verified_acceptance": {
+      "util-base-v1-t002-1": "Restic version and local repository/password-file assumptions are documented without committed secrets.",
+      "util-base-v1-t002-2": "Snapshot target includes Bureau queue, infra runbook index and synthetic probe file.",
+      "util-base-v1-t002-3": "Single-file restore probe passed with sha256 comparison.",
+      "util-base-v1-t002-4": "Backrest runs only on 127.0.0.1:9898; no repository credentials were committed."
+    },
+    "verification": {
+      "task_sha256": "d7401db767413c6b3b2deb9c50928100cd89762c90a6518290c849a39ef9eb95",
+      "plan_sha256": "b7cfba2a62e364bcd6d07747f68eb82ac11f4ba9a25c9aef4a62bf9ee0631596"
+    }
   },
   "depends_on": []
 }

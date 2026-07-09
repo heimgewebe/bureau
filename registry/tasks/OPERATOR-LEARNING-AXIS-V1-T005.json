@@ -69,6 +69,8 @@
       "grabowski_receipt_mutation"
     ],
     "verification": {
+      "task_sha256": "e8a9daaef6156da5ad0aee9fa58c2241c078c8459ee514f679ac463371fde9db",
+      "plan_sha256": "76d9bc2839e3a37b12f25e565b429bf413427570794dfa836137a18eb712d8f5",
       "implementation_pr_head": "6945ca1af6143eac0768666dbb5df849309aaa4c",
       "implementation_merge_commit": "b065722ba9c73806fed97291d5429d789255227a"
     }

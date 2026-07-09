@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "OPERATOR-LEARNING-AXIS-V1",
   "title": "Operator learning axis for heimlern and Grabowski",
-  "state": "active",
-  "commitment": "now",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Make Grabowski routing decisions and outcomes available to heimlern as offline learning inputs without granting heimlern live routing authority.",
   "current_plan": {
     "repository": "bureau",
@@ -21,13 +21,34 @@
   },
   "metadata": {
     "primary_repo": "heimgewebe/heimlern",
-    "related_organs": ["grabowski", "bureau", "chronik", "leitstand"],
+    "related_organs": [
+      "grabowski",
+      "bureau",
+      "chronik",
+      "leitstand"
+    ],
     "initial_slice": "contract-ci-repair",
     "does_not_establish": [
       "live_routing_readiness",
       "routing_policy_superiority",
       "sample_sufficiency",
-      "auto_apply_permission"
+      "auto_apply_permission",
+      "runtime_correctness",
+      "future_merge_readiness"
+    ],
+    "completed_at": "2026-07-09",
+    "completion_summary": "Operator learning axis baseline completed: heimlern contracts and adapters are verified; Vibe-Lab capture sample is recorded as proposal/evidence only; no live routing or auto-apply authority is granted.",
+    "completion_prs": [
+      "heimgewebe/heimlern#182",
+      "heimgewebe/heimlern#193",
+      "heimgewebe/heimlern#195",
+      "heimgewebe/heimlern#196",
+      "heimgewebe/vibe-lab#295"
+    ],
+    "bureau_closeout_prs": [
+      "heimgewebe/bureau#304",
+      "heimgewebe/bureau#312",
+      "heimgewebe/bureau#314"
     ]
   }
 }

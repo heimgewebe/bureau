@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "state": "ready",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T019",
+  "title": "Scope open-PR blockers to claimed repositories",
+  "priority": {
+    "lane": "now",
+    "rank": 5
+  },
+  "goal": "Keep Bureau's fail-closed open-PR and task-binding guards while ensuring a PR blocks only its own repository or the explicitly claimed repositories of its bound task, never unrelated repository balls.",
+  "acceptance": [
+    {
+      "id": "same-repo-fail-closed",
+      "assertion": "An open PR with missing, invalid or conflicting Bureau task binding blocks new write work in that PR's repository."
+    },
+    {
+      "id": "no-cross-repo-blast-radius",
+      "assertion": "An unbound or invalid PR in one repository does not block unrelated repositories."
+    },
+    {
+      "id": "multi-repo-claims",
+      "assertion": "A valid task that explicitly claims multiple repositories blocks conflicting writes only across those claimed repositories."
+    },
+    {
+      "id": "projection-consistency",
+      "assertion": "what-now, repo-balls, conflicts and live-conflicts project the same repository-scoped blocker semantics."
+    },
+    {
+      "id": "live-regression-proof",
+      "assertion": "The live state with Grabowski PRs #140/#145 and Lenskit PR #956 no longer produces unrelated Bureau, Cabinet, Chronik or Steuerboard blockers while same-repo blockers remain visible."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T18:55:00Z",
+    "source": "chatgpt-operator-ecosystem-live-audit-20260710",
+    "live_register_candidate_id": "operator-audit-bureau-repo-blocker-scope-v1",
+    "live_register_event_id": 75,
+    "live_finding": "Open PR blockers from Grabowski and Lenskit were projected onto unrelated repositories by live-conflicts.",
+    "does_not_establish": [
+      "merge_readiness",
+      "automatic_task_binding",
+      "automatic_dispatch",
+      "permission_to_ignore_same_repo_conflicts"
+    ]
+  }
+}

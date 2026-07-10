@@ -3,9 +3,9 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T012",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Inventory and export external Cabinet app data",
-  "state": "ready",
+  "state": "blocked",
   "priority": {
-    "lane": "now",
+    "lane": "later",
     "rank": 20
   },
   "goal": "Inventory the live external Cabinet runtime and export any non-versioned data before app decoupling, shutdown or repository rename.",
@@ -20,7 +20,7 @@
     "approval": {
       "action_class": "runtime_mutation",
       "required_level": "break_glass",
-      "note": "This narrow effect authorization permits one create-only private archive and one isolated restore verification on the encrypted local filesystem. It does not permit service mutation, source deletion, cleanup or repository rename."
+      "note": "No private export execution is currently authorized. The prior target class failed the exact encrypted-at-rest preflight and must be replaced by a separately reviewed protected destination design."
     }
   },
   "claims": [
@@ -31,7 +31,7 @@
     },
     {
       "resource": "host.heim-pc",
-      "mode": "write",
+      "mode": "read",
       "isolation": "none"
     }
   ],
@@ -63,6 +63,7 @@
     "registered_at": "2026-07-10T12:18:00+02:00",
     "source_decision": "Cabinet is to become an app-independent Heimgewebe system catalog.",
     "does_not_establish": [
+      "private_export_execution_permission",
       "service_shutdown_permission",
       "app_data_deletion_permission",
       "archive_deletion_permission",
@@ -75,30 +76,26 @@
     ],
     "execution_authorization": {
       "schema_version": 1,
-      "source": "operator_instruction",
+      "source": "runtime_preflight_revocation",
       "level": "break_glass",
-      "approved": true,
-      "reviewer": "alexdermohr",
-      "reference": "operator-instruction:2026-07-10:cabinet-t012-private-export",
+      "approved": false,
+      "reviewer": "grabowski-live-preflight",
+      "reference": "heimgewebe/bureau#390",
       "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T012",
       "scope": [
-        "runtime_mutation",
-        "execute the merged Cabinet private archive tool exactly once against the inventoried private runtime data",
-        "create one owner-only private archive and one owner-only isolated restore verification at precommitted create-only destinations",
-        "verify hashes, SQLite integrity, permissions and unchanged service state",
-        "no service mutation, source deletion, cleanup, publication of private paths or repository rename"
-      ]
+        "runtime_mutation"
+      ],
+      "note": "Revoked before use because the committed persistent destinations were not on encrypted-at-rest storage."
     },
     "execution_stage": {
-      "active": "private_export_execution",
+      "active": "blocked_protected_destination_redesign",
       "authorized_effects": [
-        "execute scripts/private_cabinet_archive.py from Cabinet merge 678311828e2192fe191db50f125f168a680daf77",
-        "create exactly one owner-only private archive at the precommitted absent destination",
-        "verify the private archive manifest, payload hashes, permissions and SQLite integrity",
-        "create exactly one owner-only isolated restore verification at the precommitted absent destination",
-        "compare service state before and after and require no mutation"
+        "read-only inspection of encryption-capable archive alternatives",
+        "proposal and review of a protected create-only export path"
       ],
       "pending_effects": [
+        "run the export tool against private data",
+        "create any private archive or restore directory",
         "service stop, restart, disable or configuration change",
         "source app-data deletion or cleanup",
         "archive deletion, relocation or publication",
@@ -141,8 +138,8 @@
         "current_safe_export": "excludes_private_runtime_data_and_is_not_a_T012_backup",
         "online_sqlite_backup": "available_via_python_standard_library",
         "hash_and_archive_tools": "available",
-        "encryption_recipient": "not_required_for_this_stage_destination_is_on_verified_encrypted_local_filesystem",
-        "protected_destination_class": "available"
+        "encryption_recipient": "required_but_not_yet_bound",
+        "protected_destination_class": "not_satisfied_by_revoked_destinations"
       },
       "public_evidence_policy": "Only classification, extent buckets, backup status and coverage gaps may be published."
     },
@@ -167,11 +164,27 @@
     },
     "private_destination_commitments": {
       "schema_version": 1,
-      "destination_class": "owner-only create-only directories on a verified encrypted local filesystem outside repositories and source roots",
       "export_path_sha256": "8e1615841c326a19d96094103fb0624f3cd97847265d04528371b06be4bac24d",
       "restore_path_sha256": "0bd221ef7762e459bf11e430114eafc541acb1e2edbf27b8ae75a0a7ad41f791",
       "actual_paths_public": false,
-      "source_of_exact_paths": "private local execution packet outside repositories"
+      "source_of_exact_paths": "private local execution packet outside repositories",
+      "status": "revoked_before_use",
+      "verification_result": "requested encrypted-at-rest destination class not satisfied",
+      "export_created": false,
+      "restore_created": false,
+      "requested_destination_class": "owner-only create-only destinations with verified encrypted-at-rest coverage outside repositories and source roots"
+    },
+    "authorization_revocation": {
+      "schema_version": 1,
+      "revoked_at": "2026-07-10T15:06:13Z",
+      "source_authorization_pr": "heimgewebe/bureau#390",
+      "source_authorization_merge": "530d08077158c337ea45e481f1cc35b4479f2bc8",
+      "reason": "exact destination preflight found no encrypted-at-rest coverage for the committed persistent archive paths",
+      "encrypted_swap_is_not_persistent_storage_encryption": true,
+      "export_executed": false,
+      "archive_created": false,
+      "restore_created": false,
+      "service_mutated": false
     }
   },
   "depends_on": [

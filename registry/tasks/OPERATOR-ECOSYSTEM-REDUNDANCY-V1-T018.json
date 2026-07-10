@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T018",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Resolve short Restic backup summary IDs safely",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 400
+  },
+  "goal": "Make the Cabinet Restic handoff compatible with Restic 0.12.1 backup summaries that emit a shortened snapshot ID, while preserving exact full-ID restore binding and preventing any second backup or ambiguous restore.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/cabinet",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/cabinet"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.cabinet",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T012"
+  ],
+  "acceptance": [
+    {
+      "id": "short-id-resolution",
+      "assertion": "A shortened backup summary ID is resolved only by querying the unique precommitted tag and requiring exactly one full 64-character snapshot ID whose prefix matches the summary value."
+    },
+    {
+      "id": "full-id-direct",
+      "assertion": "A full 64-character backup summary ID remains accepted and is rebound to the same unique tagged snapshot before restore."
+    },
+    {
+      "id": "fail-closed",
+      "assertion": "Missing, malformed, non-matching or ambiguous tag results stop before restore and report that a snapshot may exist; they never start a second backup or delete a snapshot."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover Restic 0.12.1 short IDs, full IDs, ambiguous/missing tag matches, prefix mismatch, exact restore and redacted error receipts."
+    },
+    {
+      "id": "live-safe-proof",
+      "assertion": "A read-only or synthetic proof demonstrates the corrected resolution path without creating another private snapshot."
+    }
+  ],
+  "metadata": {
+    "source": "T012 one-shot execution on 2026-07-10",
+    "observed_error": "restic_snapshot_id_missing after a successful Restic 0.12.1 backup created exactly one uniquely tagged snapshot",
+    "recovery_evidence": {
+      "snapshot_id_sha256": "b8f45a49111fcf89cdade133c96fd176b2e4a74d8e6710fc740896002a9c8d52",
+      "exact_restore_verified": true,
+      "second_backup_executed": false,
+      "service_unchanged": true,
+      "staging_removed": true
+    },
+    "does_not_establish": [
+      "permission for another private backup",
+      "retention mutation permission",
+      "snapshot deletion permission",
+      "runtime service mutation",
+      "current implementation fixed",
+      "merge readiness"
+    ]
+  }
+}

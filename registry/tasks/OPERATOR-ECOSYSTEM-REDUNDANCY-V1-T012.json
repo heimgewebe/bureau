@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T012",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Inventory and export external Cabinet app data",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 20
@@ -108,10 +108,14 @@
         "exclusive Bureau write claim for service.private_backup_repository is held for the run"
       ],
       "one_shot": true,
-      "revoked_on_mismatch": true
+      "revoked_on_mismatch": true,
+      "consumed": true,
+      "consumed_run_id": "BUR-RUN-20260710T174216Z-69651334b0",
+      "consumed_at": "2026-07-10T17:45:09.874105Z",
+      "remaining_uses": 0
     },
     "execution_stage": {
-      "active": "encrypted_restic_export_execution",
+      "active": "verified_encrypted_export_complete",
       "authorized_effects": [
         "read and online-backup the identified private Cabinet data classes through the merged tool",
         "create one owner-only tmpfs staging tree and one encrypted Restic snapshot",
@@ -277,7 +281,65 @@
       "exact_values_public": false,
       "source": "private local execution packet outside all repositories",
       "remote_effect_resource": "service.private_backup_repository"
-    }
+    },
+    "execution_result": {
+      "schema_version": 1,
+      "status": "snapshot_verified_after_parser_recovery",
+      "run_id": "BUR-RUN-20260710T174216Z-69651334b0",
+      "bureau_receipt_sha256": "71678cde0c13d0640ce83497bb94fd575526a058c689b9bbb8c84a42ee5794d3",
+      "private_result_sha256": "4e59aac8e7db75bc0d5e2f4237f8aa8d122df0009da7a7533796a7105c2bdd47",
+      "tag_sha256": "a134aaf2eac110d871e9321d6e5cc5576aa77bef855294a98c43e2ffe11af386",
+      "snapshot_id_sha256": "b8f45a49111fcf89cdade133c96fd176b2e4a74d8e6710fc740896002a9c8d52",
+      "manifest_sha256": "b529b3f5e662d3fdda847c824d5ec7bd1ebf5f09f48e6bcf11c7ee4d67b48d69",
+      "archive_scope": {
+        "entries": 504,
+        "bytes": 2725095,
+        "databases": 2,
+        "source_classes": [
+          "application_private",
+          "repository_local",
+          "repository_private",
+          "runtime_config",
+          "runtime_state"
+        ]
+      },
+      "integrity": {
+        "verified": true,
+        "manifest_present": true,
+        "live_database_method": "sqlite_online_backup",
+        "coverage_gaps": []
+      },
+      "boundaries": {
+        "second_backup_executed": false,
+        "exact_full_id_restore_verified": true,
+        "service_unchanged": true,
+        "staging_removed": true,
+        "retention_mutated": false,
+        "source_deleted": false,
+        "repository_mutated": false
+      },
+      "incident": {
+        "tool_error_code": "restic_snapshot_id_missing",
+        "classification": "Restic 0.12.1 backup summary returned a short snapshot id rejected by the full-id parser",
+        "recovery": "The unique precommitted tag resolved one full snapshot id; that exact snapshot was restored and verified without a second backup.",
+        "follow_up_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T018"
+      },
+      "private_values_public": false
+    },
+    "verification": {
+      "verified_at": "2026-07-10T17:45:09.874105Z",
+      "run_id": "BUR-RUN-20260710T174216Z-69651334b0",
+      "receipt_sha256": "71678cde0c13d0640ce83497bb94fd575526a058c689b9bbb8c84a42ee5794d3",
+      "acceptance_ids": [
+        "runtime-inventory",
+        "data-export",
+        "integrity-manifest",
+        "consumer-check"
+      ],
+      "task_sha256": "84ee93ed05ea13e39ace5b83cffac5dc463b05243c03cccd6f16a797ac467794",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    },
+    "verification_note": "Exactly one encrypted snapshot exists under the bound tag; the full snapshot was restored to tmpfs and verified. The service remained active, staging was removed, and no retention, source, repository or service mutation occurred. The one-shot authorization is consumed."
   },
   "depends_on": [
     "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T011"

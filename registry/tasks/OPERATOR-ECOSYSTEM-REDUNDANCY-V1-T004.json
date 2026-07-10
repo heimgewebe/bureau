@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T004",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Consolidate Cabinet semantic canon",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 310
+  },
+  "goal": "Reduce Cabinet ecosystem semantics to one authority matrix, one registry and one generated map while preserving source links and read-only boundaries.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/cabinet",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/cabinet"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.cabinet",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "single-authority-matrix",
+      "assertion": "Exactly one maintained authority matrix identifies every source owner and non-authoritative projection."
+    },
+    {
+      "id": "single-generated-map",
+      "assertion": "A single registry-derived ecosystem view is canonical for generated mapping; other views are explicit specialized projections or retired."
+    },
+    {
+      "id": "legacy-navigation",
+      "assertion": "Legacy rooms and duplicate prose are linked or archived without losing durable decisions."
+    },
+    {
+      "id": "validator",
+      "assertion": "CI detects new competing ecosystem canons or manually duplicated authority fields."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T07:25:00+02:00",
+    "source_audit": "heimgewebe/cabinet#103",
+    "does_not_establish": [
+      "merge_permission",
+      "runtime_correctness",
+      "cleanup_permission",
+      "automatic_shutdown_permission"
+    ]
+  },
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T007"
+  ]
+}

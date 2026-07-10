@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T005",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Gate Heimlern and Vibe-Lab work by consumers",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 320
+  },
+  "goal": "Require every new Heimlern proposal or Vibe-Lab experiment to name a consumer, decision target, success metric, expiry and promotion/closure outcome.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/heimlern",
+      "repo:/home/alex/repos/vibe-lab"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.heimlern",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.vibe-lab",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "consumer-required",
+      "assertion": "New proposal and experiment registrations fail closed without a named downstream consumer."
+    },
+    {
+      "id": "decision-and-metric",
+      "assertion": "Each item states the decision it informs and a measurable success or falsification criterion."
+    },
+    {
+      "id": "expiry",
+      "assertion": "Each item has a review or expiry date and a deterministic close/archive path."
+    },
+    {
+      "id": "no-auto-authority",
+      "assertion": "Neither Heimlern nor Vibe-Lab can auto-apply routing, policy, queue or runtime changes."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T07:25:00+02:00",
+    "source_audit": "heimgewebe/cabinet#103",
+    "does_not_establish": [
+      "merge_permission",
+      "runtime_correctness",
+      "cleanup_permission",
+      "automatic_shutdown_permission"
+    ]
+  },
+  "depends_on": []
+}

@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T008",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Consolidate RepoBrief daily artifact surface",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 340
+  },
+  "goal": "Define and migrate to the smallest RepoBrief/Lenskit artifact set needed for daily agent context while retaining full reports only for diagnostics and export.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit",
+      "repo:/home/alex/repos/cabinet",
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.cabinet",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "consumer-inventory",
+      "assertion": "Actual Grabowski, Cabinet and LLM consumers are mapped to the exact fields and artifacts they read."
+    },
+    {
+      "id": "minimal-surface",
+      "assertion": "Manifest, context pack and freshness identity are either confirmed sufficient or replaced by a comparably bounded set."
+    },
+    {
+      "id": "compatibility",
+      "assertion": "Redundant formats are deprecated only after compatibility tests and a migration window."
+    },
+    {
+      "id": "storage-effect",
+      "assertion": "Snapshot and export storage before and after consolidation is measured without weakening citation or freshness guarantees."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T07:32:00+02:00",
+    "source_audit": "heimgewebe/cabinet#103",
+    "does_not_establish": [
+      "merge_permission",
+      "runtime_correctness",
+      "cleanup_permission",
+      "automatic_shutdown_permission"
+    ]
+  },
+  "depends_on": []
+}

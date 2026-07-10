@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T007",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Measure remote consumers and operator view usage",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 70
+  },
+  "goal": "Close the audit evidence gap by inventorying remote runtimes, actual source consumers and usage frequency for Cabinet, Leitstand, Schauwerk, Chronik, Heimlern and Vibe-Lab before shutdown or consolidation decisions.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau",
+      "host:heim-pc",
+      "repo:/home/alex/repos/cabinet",
+      "repo:/home/alex/repos/leitstand",
+      "repo:/home/alex/repos/schauwerk",
+      "repo:/home/alex/repos/chronik",
+      "repo:/home/alex/repos/heimlern",
+      "repo:/home/alex/repos/vibe-lab"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.cabinet",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.leitstand",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.schauwerk",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.chronik",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.heimlern",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.vibe-lab",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "remote-runtime",
+      "assertion": "Local and registered remote hosts are checked for relevant services, timers and deployment endpoints with source and timestamp."
+    },
+    {
+      "id": "consumer-classification",
+      "assertion": "Each claimed consumer is classified as runtime-observed, source-integrated, declared-only or absent."
+    },
+    {
+      "id": "usage-measure",
+      "assertion": "Operator views expose a bounded, privacy-preserving usage or access signal sufficient to distinguish active from unused surfaces."
+    },
+    {
+      "id": "decision-input",
+      "assertion": "Shutdown and consolidation tasks consume this evidence and preserve uncertainty where measurement is unavailable."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T07:32:00+02:00",
+    "source_audit": "heimgewebe/cabinet#103",
+    "does_not_establish": [
+      "merge_permission",
+      "runtime_correctness",
+      "cleanup_permission",
+      "automatic_shutdown_permission"
+    ]
+  },
+  "depends_on": []
+}

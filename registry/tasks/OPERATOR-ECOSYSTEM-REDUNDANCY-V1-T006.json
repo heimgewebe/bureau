@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T006",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Define Chronik high-value operator events",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 330
+  },
+  "goal": "Define and enforce the small event set whose historical value exceeds existing Git, Bureau receipt and source-log coverage.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik",
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.chronik",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "event-value-rule",
+      "assertion": "Every retained operator event has a named query, consumer or recovery use that is not already satisfied by Git, Bureau receipts or source logs."
+    },
+    {
+      "id": "small-allowlist",
+      "assertion": "A bounded allowlist covers lifecycle, deployment, failure, policy-block and recovery events; commits, diffs and routine task transitions are excluded."
+    },
+    {
+      "id": "retention-redaction",
+      "assertion": "Retention, redaction and provenance are explicit and tested."
+    },
+    {
+      "id": "consumer-smoke",
+      "assertion": "At least one real consumer can query the retained events without granting Chronik task or command authority."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T07:25:00+02:00",
+    "source_audit": "heimgewebe/cabinet#103",
+    "does_not_establish": [
+      "merge_permission",
+      "runtime_correctness",
+      "cleanup_permission",
+      "automatic_shutdown_permission"
+    ]
+  },
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T007"
+  ]
+}

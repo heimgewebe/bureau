@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
-  "state": "ready",
+  "state": "verified",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -47,6 +47,57 @@
       "predecessor_closeout_merge": "3377be61843acb90c34ebdfe99eec9c8768e0ca8",
       "scope": "queue_release_only",
       "implementation_authorized": false
+    },
+    "implementation_evidence": {
+      "pull_request": "heimgewebe/schauwerk#75",
+      "url": "https://github.com/heimgewebe/schauwerk/pull/75",
+      "title": "feat: add education variants and offline packages",
+      "head_sha": "47368a3a0888a7ee5d06b567174c5b55492fb998",
+      "merge_commit": "9a9a8d3eafac240de01119bf99d33d15e4d20864",
+      "merged_at": "2026-07-10T22:18:00Z",
+      "pr_diff": {
+        "sha256": "121f1935a635aba9759a9221be1ebd8e6d9d970819d504695c2775899036a06a",
+        "artifact": "https://gist.github.com/alexdermohr/dd53627e671ac27a140200ec2319670a"
+      },
+      "source_digest": "34f75b9dcfdd3371c2bcb117f7a09b33a459688e3ad3929913ca65d8f64dff82",
+      "offline_manifest_sha256": "0bc4b082ec0d3909e9acce9812d1741d022934dedf6425b1451a32b6101b4ded",
+      "offline_variant": "student",
+      "local_validation": [
+        "pre-merge make validate: 332 passed",
+        "post-merge make validate: 332 passed",
+        "compileall: passed",
+        "evidence regeneration: byte-identical",
+        "sensitivity scan: no private paths, email addresses, phone numbers, scripts or remote resources",
+        "provider mutation attempted: false"
+      ],
+      "checks": [
+        {
+          "job": "validate (3.11)",
+          "conclusion": "success",
+          "details_url": "https://github.com/heimgewebe/schauwerk/actions/runs/29127167191/job/86475104071"
+        },
+        {
+          "job": "validate (3.12)",
+          "conclusion": "success",
+          "details_url": "https://github.com/heimgewebe/schauwerk/actions/runs/29127167191/job/86475104061"
+        }
+      ],
+      "review_gate": {
+        "verdict": "PASS",
+        "diff_sha256": "121f1935a635aba9759a9221be1ebd8e6d9d970819d504695c2775899036a06a",
+        "self_review_sha256": "a0ade45f651c40c391566ff6fc1351e509fffec80e74a27f72211c674e495c91",
+        "formal_gate_sha256": "0bbd2ae2cdc0ea7585e1f7e8c0caf63a45636d4e8b3bde0ddeb917763e2a4d83",
+        "self_review_iterations": 6,
+        "material_findings_fixed": 5,
+        "material_findings_remaining": 0,
+        "external_review_required": false
+      }
+    },
+    "verified_at": "2026-07-10T22:20:17Z",
+    "outcome": "One normalized learning source now produces versioned, audience-specific teacher, projection, assignment, student and presentation variants plus deterministic single-audience offline packages without Miro, network or personal-data dependencies.",
+    "verification": {
+      "task_sha256": "b902e3ccac5b3127bc16fc660082a1408cce8d22e976ea1cb04f0dbbaef06e51",
+      "plan_sha256": "f56d795d9f976a3b0f14b3df70d3bdd26c5a0cc800ff236db0ff2e1e04ef9880"
     }
   },
   "id": "SCHAUWERK-USEFUL-PILOT-V1-T005",

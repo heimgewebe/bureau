@@ -13,7 +13,7 @@
     "Bureau scheduler lanes have explicit unique inputs, outputs, order and consumers, with redundant lanes consolidated or justified.",
     "Grabowski worktree and transient-unit residue is classified, reconciled and safely archived or retained with evidence.",
     "Steuerboard has one bounded role or a reviewed migration/retirement path.",
-    "Cabinet exposes one semantic authority matrix, one registry and one generated ecosystem view.",
+    "Cabinet is reduced to an app-independent Heimgewebe system catalog with one authority matrix, one registry, one generated view, no duplicated operational status and a reviewed migration path away from the external Cabinet runtime.",
     "Heimlern and Vibe-Lab work requires a named consumer, decision target, success metric and expiry.",
     "Chronik stores only operator events that add value beyond Git, Bureau receipts and source logs.",
     "Remote and local runtime consumers plus view usage are measured before any final shutdown decision.",
@@ -41,6 +41,25 @@
       "consumer_semantic_correctness",
       "merge_readiness"
     ],
-    "live_findings_observed_at": "2026-07-10T07:09:52+02:00"
+    "live_findings_observed_at": "2026-07-10T07:09:52+02:00",
+    "cabinet_catalog_migration_decision": {
+      "decided_at": "2026-07-10T12:18:00+02:00",
+      "target_role": "app-independent system catalog",
+      "target_repository_name": "heimgewebe-katalog",
+      "external_cabinet_app_role": "temporary optional viewer only",
+      "migration_order": [
+        "establish catalog core",
+        "inventory and export local app data",
+        "consolidate semantic canon",
+        "decouple and retire external app runtime",
+        "rename repository and migrate references"
+      ],
+      "does_not_establish": [
+        "safe_immediate_service_shutdown",
+        "data_export_completeness",
+        "repository_rename_completion",
+        "runtime_cleanup_permission"
+      ]
+    }
   }
 }

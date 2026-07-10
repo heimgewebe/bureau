@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Reduce operator ecosystem redundancy",
+  "state": "active",
+  "commitment": "next",
+  "goal": "Reduce duplicated scheduling, execution residue, status projections, maps, event capture and proposal-only work while preserving the distinct authority of Bureau, Grabowski, RepoBrief/Lenskit, GitHub, CI and runtime.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/operator-ecosystem-redundancy-v1.md"
+  },
+  "completion": [
+    "Bureau scheduler lanes have explicit unique inputs, outputs, order and consumers, with redundant lanes consolidated or justified.",
+    "Grabowski worktree and transient-unit residue is classified, reconciled and safely archived or retained with evidence.",
+    "Steuerboard has one bounded role or a reviewed migration/retirement path.",
+    "Cabinet exposes one semantic authority matrix, one registry and one generated ecosystem view.",
+    "Heimlern and Vibe-Lab work requires a named consumer, decision target, success metric and expiry.",
+    "Chronik stores only operator events that add value beyond Git, Bureau receipts and source logs.",
+    "Remote and local runtime consumers plus view usage are measured before any final shutdown decision.",
+    "RepoBrief/Lenskit daily consumption uses a bounded artifact surface with redundant formats diagnostic-only.",
+    "WGX retains only genuinely shared fleet checks and does not duplicate Grabowski execution or Bureau coordination.",
+    "Leitstand is the single general operator display and duplicate generic panels are removed or source-linked."
+  ],
+  "parallelism": {
+    "max_active_tasks": 2
+  },
+  "metadata": {
+    "source_audit_repository": "heimgewebe/cabinet",
+    "source_audit_pr": 103,
+    "source_audit_merge_commit": "765644daff8ed909272bf097f83bf29679ef165e",
+    "source_audit_path": "registry/ecosystem/operator-redundancy-audit.v1.json",
+    "live_findings": {
+      "bureau_active_timers": 10,
+      "grabowski_worktrees": 44,
+      "grabowski_failed_transient_units": 21
+    },
+    "does_not_establish": [
+      "safe_immediate_shutdown",
+      "automatic_cleanup_permission",
+      "runtime_correctness",
+      "consumer_semantic_correctness",
+      "merge_readiness"
+    ],
+    "live_findings_observed_at": "2026-07-10T07:09:52+02:00"
+  }
+}

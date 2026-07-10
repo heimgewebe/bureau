@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T001",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Audit and consolidate Bureau scheduler lanes",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 40
+  },
+  "goal": "Map every active Bureau timer to its inputs, outputs, ordering constraints, unique consumer and failure behavior, then consolidate only lanes whose semantics are actually redundant.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau",
+      "host:heim-pc"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "timer-inventory",
+      "assertion": "All active Bureau timers are inventoried from live systemd state with unit source, cadence and last result."
+    },
+    {
+      "id": "consumer-map",
+      "assertion": "Each lane names its unique output and actual consumer, or is marked unconsumed."
+    },
+    {
+      "id": "consolidation-plan",
+      "assertion": "Overlapping lanes are grouped into an explicit staged scheduler plan before any disablement."
+    },
+    {
+      "id": "safe-cutover",
+      "assertion": "Any timer disablement has rollback, bounded runtime proof and no loss of Bureau Core authority."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T07:25:00+02:00",
+    "source_audit": "heimgewebe/cabinet#103",
+    "does_not_establish": [
+      "merge_permission",
+      "runtime_correctness",
+      "cleanup_permission",
+      "automatic_shutdown_permission"
+    ]
+  },
+  "depends_on": []
+}

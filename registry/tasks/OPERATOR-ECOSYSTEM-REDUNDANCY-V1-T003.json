@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T003",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Decide and narrow Steuerboard role",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 60
+  },
+  "goal": "Resolve the contradiction between Steuerboard's non-authoritative self-contract and external action-readiness ownership, then keep a bounded repo-state/readiness adapter or migrate and retire overlapping surfaces.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/steuerboard",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/steuerboard",
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.steuerboard",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "authority-decision",
+      "assertion": "One normative decision states whether Steuerboard owns a bounded readiness derivation or has no continuing standalone authority."
+    },
+    {
+      "id": "consumer-proof",
+      "assertion": "The exact Grabowski, Bureau and Cabinet consumers of Steuerboard outputs are tested live or marked absent."
+    },
+    {
+      "id": "mutation-boundary",
+      "assertion": "switch-main and ff-only mutation paths are assigned to one owner and are not duplicated with Grabowski."
+    },
+    {
+      "id": "migration-or-keep",
+      "assertion": "A tested migration/retirement plan or a sharply reduced keep-plan is delivered without breaking current consumers."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T07:25:00+02:00",
+    "source_audit": "heimgewebe/cabinet#103",
+    "does_not_establish": [
+      "merge_permission",
+      "runtime_correctness",
+      "cleanup_permission",
+      "automatic_shutdown_permission"
+    ]
+  },
+  "depends_on": []
+}

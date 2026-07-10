@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T002",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Reconcile Grabowski worktrees and transient units",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 50
+  },
+  "goal": "Classify Grabowski worktrees and failed transient units against live tasks, PRs and receipts, then archive or clean only terminal residue through bounded lifecycle paths.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "host:heim-pc"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "live-classification",
+      "assertion": "Every candidate worktree and transient unit is classified as active, blocked, terminal-retain, terminal-archive or safe-cleanup using live Git, PR, task and systemd evidence."
+    },
+    {
+      "id": "no-active-loss",
+      "assertion": "No active branch, dirty worktree, running task or unresolved receipt is removed."
+    },
+    {
+      "id": "bounded-cleanup",
+      "assertion": "Cleanup uses existing lifecycle/reconcile grips or a new narrow fail-closed path, never broad filesystem deletion."
+    },
+    {
+      "id": "post-proof",
+      "assertion": "Worktree and failed-unit counts plus Grabowski health are rechecked after effects."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T07:25:00+02:00",
+    "source_audit": "heimgewebe/cabinet#103",
+    "does_not_establish": [
+      "merge_permission",
+      "runtime_correctness",
+      "cleanup_permission",
+      "automatic_shutdown_permission"
+    ]
+  },
+  "depends_on": []
+}

@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T009",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Narrow WGX to shared fleet checks",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 350
+  },
+  "goal": "Inventory WGX guards, smoke tests, metrics and templates against repository-native CI and Grabowski, then retain only cross-repository functions with demonstrated shared consumers.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/wgx",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/wgx",
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.wgx",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "capability-map",
+      "assertion": "Each WGX capability names repositories that consume it and the repository-native alternative."
+    },
+    {
+      "id": "no-operator-duplication",
+      "assertion": "WGX does not own task coordination, deploy authority or generic host mutation already owned by Bureau or Grabowski."
+    },
+    {
+      "id": "shared-check-threshold",
+      "assertion": "Retained checks have multiple real consumers or a documented fleet-wide invariance benefit."
+    },
+    {
+      "id": "migration-proof",
+      "assertion": "Retired or migrated checks preserve CI coverage and provide source-linked replacement paths."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T07:32:00+02:00",
+    "source_audit": "heimgewebe/cabinet#103",
+    "does_not_establish": [
+      "merge_permission",
+      "runtime_correctness",
+      "cleanup_permission",
+      "automatic_shutdown_permission"
+    ]
+  },
+  "depends_on": []
+}

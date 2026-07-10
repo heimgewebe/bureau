@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T010",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Make Leitstand the single general operator display",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 360
+  },
+  "goal": "Consolidate general operator status into Leitstand while keeping Cabinet semantic, Schauwerk visual and source-system views specialized and authoritative only within their boundaries.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand",
+      "repo:/home/alex/repos/cabinet",
+      "repo:/home/alex/repos/schauwerk"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.cabinet",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.schauwerk",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "panel-authority",
+      "assertion": "Every general panel names its primary source, freshness and non-authoritative display boundary."
+    },
+    {
+      "id": "duplicate-panel-map",
+      "assertion": "Generic status panels duplicated in Cabinet or Schauwerk are identified and source-linked, specialized or retired."
+    },
+    {
+      "id": "single-entry",
+      "assertion": "The human operator has one documented general status entry without removing specialist Cabinet or Schauwerk workflows."
+    },
+    {
+      "id": "failure-mode",
+      "assertion": "Leitstand failure leaves source CLIs and direct views available and does not block operation."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T07:32:00+02:00",
+    "source_audit": "heimgewebe/cabinet#103",
+    "does_not_establish": [
+      "merge_permission",
+      "runtime_correctness",
+      "cleanup_permission",
+      "automatic_shutdown_permission"
+    ]
+  },
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T004",
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T007"
+  ]
+}

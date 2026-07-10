@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "initiative": "UTIL-BASE-V1",
+  "state": "ready",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/infra",
+      "service:heim-utilities-containers"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "operator",
+      "note": "Repository implementation is authorized by the user. Runtime recreation is allowed only after merge, immutable-image verification, data-path preflight and explicit rollback evidence; no data deletion or image pruning."
+    }
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "id": "UTIL-BASE-V1-T014",
+  "title": "Pin local utility container images and canonicalize Compose sources",
+  "priority": {
+    "lane": "now",
+    "rank": 8
+  },
+  "goal": "Make the existing Heim-PC utility container stack reproducible without an implicit upgrade by pinning the currently proven images, adding a canonical Beszel-agent Compose source, validating against floating tags, and documenting controlled update, rollout and rollback paths.",
+  "acceptance": [
+    {
+      "id": "current-image-pins",
+      "assertion": "Backrest, Beszel hub and agent, Stirling PDF, Paperless, Postgres and Redis are pinned to immutable registry digests matching the image contents proven live before the change; readable version tags are retained where registry resolution proves the same digest."
+    },
+    {
+      "id": "canonical-agent-source",
+      "assertion": "The Beszel agent Compose definition has a canonical secret-free source in infra and a deterministic install/render path for the runtime location under ~/.local/share/heim-utilities."
+    },
+    {
+      "id": "floating-tag-guard",
+      "assertion": "Infra validation rejects latest or otherwise unpinned image references in the canonical Heim-PC utility Compose sources."
+    },
+    {
+      "id": "rollback-contract",
+      "assertion": "The runbook records preflight, backup/data boundaries, staged recreation order, health checks and exact rollback to the previous image references without deleting data."
+    },
+    {
+      "id": "runtime-provenance",
+      "assertion": "After merge, the running containers are recreated from the canonical infra source rather than an obsolete worktree, while the separate agent stack records its canonical source digest."
+    },
+    {
+      "id": "post-rollout-smoke",
+      "assertion": "Beszel hub and agent, Backrest, Stirling PDF and Paperless pass bounded post-rollout health checks; Paperless database and Redis remain healthy; no browser-facing port becomes non-loopback."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T21:20:00Z",
+    "source": "chatgpt-operator-ecosystem-live-audit-20260710",
+    "live_register_candidate_id": "operator-audit-container-pinning-v1",
+    "live_register_event_id": 77,
+    "live_finding": "The live utility stack used floating image tags; three containers were still attributed to an obsolete infra worktree and the Beszel agent Compose file had no canonical repository source.",
+    "known_live_versions": {
+      "beszel": "0.18.7",
+      "beszel_agent": "0.18.7",
+      "stirling_pdf": "2.14.2",
+      "paperless_ngx": "2.20.15",
+      "postgres": "16.14",
+      "redis": "7.4.9",
+      "backrest": "1.13.0"
+    },
+    "does_not_establish": [
+      "future_image_security",
+      "automatic_upgrade_safety",
+      "public_ingress_safety_without_firewall_proof",
+      "permission_to_delete_old_worktrees",
+      "permission_to_prune_images"
+    ]
+  }
+}

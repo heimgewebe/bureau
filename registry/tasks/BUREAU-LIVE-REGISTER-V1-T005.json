@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-LIVE-REGISTER-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T00:00:00Z",
+    "source": "Follow-up from Live Register v1 first slice.",
+    "does_not_establish": [
+      "implementation",
+      "merge_readiness",
+      "runtime_correctness"
+    ]
+  },
+  "id": "BUREAU-LIVE-REGISTER-V1-T005",
+  "title": "Bind thread focus to worker and conflict view",
+  "goal": "Connect live thread focus with stable worker/thread identities and expose conflicts between live focus, active runs, open PRs and repo write guards.",
+  "priority": {
+    "lane": "later",
+    "rank": 750
+  },
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "thread-worker-shape",
+      "assertion": "Thread and worker identity fields are normalized and documented."
+    },
+    {
+      "id": "conflicts-visible",
+      "assertion": "A read-only view shows live focus conflicts with active runs and open PR guards."
+    },
+    {
+      "id": "no-implicit-claim",
+      "assertion": "Thread focus remains non-claiming unless claim-next/checkout-next is called."
+    }
+  ]
+}

@@ -29,6 +29,7 @@ from .core import (
     verification_stamp,
     workspace_status,
 )
+from .live_register import live_register_list, live_register_record
 from .rlens_policy import evaluate_registry_rlens_policy
 
 
@@ -125,6 +126,28 @@ def parser() -> argparse.ArgumentParser:
     what_now.add_argument("--limit", type=int, default=5)
     repo_balls = sub.add_parser("repo-balls")
     repo_balls.add_argument("--capability", action="append", default=[])
+    live_register = sub.add_parser("live-register")
+    live_register.add_argument(
+        "--kind",
+        required=True,
+        choices=["thread_focus", "candidate_task", "focus_override"],
+    )
+    live_register.add_argument("--title", required=True)
+    live_register.add_argument("--source", default="operator")
+    live_register.add_argument("--thread-id")
+    live_register.add_argument("--repo")
+    live_register.add_argument("--task-id")
+    live_register.add_argument(
+        "--status",
+        choices=["active", "paused", "closed", "observed", "promoted", "dropped"],
+    )
+    live_register.add_argument("--promotion-required", action="store_true")
+    live_register.add_argument("--note")
+    live_list = sub.add_parser("live-list")
+    live_list.add_argument("--kind", choices=["thread_focus", "candidate_task", "focus_override"])
+    live_list.add_argument("--repo")
+    live_list.add_argument("--thread-id")
+    live_list.add_argument("--limit", type=int, default=50)
     claim = sub.add_parser("claim-next")
     claim.add_argument("--worker", required=True)
     claim.add_argument("--kind", default="interactive-agent")
@@ -526,6 +549,28 @@ def main(argv: list[str] | None = None) -> int:
                 )
             else:
                 value = queue_reconcile_report(registry, store, resource=args.resource)
+        elif args.command == "live-register":
+            value = live_register_record(
+                registry,
+                store,
+                kind=args.kind,
+                title=args.title,
+                source=args.source,
+                thread_id=args.thread_id,
+                repo=args.repo,
+                task_id=args.task_id,
+                status=args.status,
+                promotion_required=args.promotion_required,
+                note=args.note,
+            )
+        elif args.command == "live-list":
+            value = live_register_list(
+                store,
+                kind=args.kind,
+                repo=args.repo,
+                thread_id=args.thread_id,
+                limit=args.limit,
+            )
         elif args.command == "claim-next":
             try:
                 value = dispatcher.claim_next(

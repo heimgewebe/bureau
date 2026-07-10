@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-LIVE-REGISTER-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T00:00:00Z",
+    "source": "Follow-up from Live Register v1 first slice.",
+    "does_not_establish": [
+      "implementation",
+      "merge_readiness",
+      "runtime_correctness"
+    ]
+  },
+  "id": "BUREAU-LIVE-REGISTER-V1-T002",
+  "title": "Integrate live register into what-now",
+  "goal": "Make what-now show live thread focus and candidate observations as source-bound context without changing eligibility, queue truth or claim authority.",
+  "priority": {
+    "lane": "later",
+    "rank": 720
+  },
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "live-context-visible",
+      "assertion": "what-now output includes a bounded live_register summary when events exist."
+    },
+    {
+      "id": "ranking-authority-preserved",
+      "assertion": "Live-register entries do not override queue lane order or hard blockers."
+    },
+    {
+      "id": "tests",
+      "assertion": "Regression tests cover live context presence and no change to claim eligibility."
+    }
+  ]
+}

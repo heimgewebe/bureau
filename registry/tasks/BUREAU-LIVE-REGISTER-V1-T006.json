@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-LIVE-REGISTER-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T00:00:00Z",
+    "source": "Follow-up from Live Register v1 first slice.",
+    "does_not_establish": [
+      "implementation",
+      "merge_readiness",
+      "runtime_correctness"
+    ]
+  },
+  "id": "BUREAU-LIVE-REGISTER-V1-T006",
+  "title": "Define live register retention and Chronik export",
+  "goal": "Define retention, redaction and optional Chronik export for live-register events so Bureau does not become an unbounded chat memory store.",
+  "priority": {
+    "lane": "later",
+    "rank": 760
+  },
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "retention-policy",
+      "assertion": "Retention classes and cleanup/export rules are documented."
+    },
+    {
+      "id": "chronik-boundary",
+      "assertion": "Chronik export is optional, redacted and source-bound."
+    },
+    {
+      "id": "no-memory-creep",
+      "assertion": "The policy states that Live Register is operational evidence, not general memory."
+    }
+  ]
+}

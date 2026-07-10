@@ -70,6 +70,32 @@ python3 -m pip install -e '.[dev]'
 Module entrypoints remain available through `python3 -m bureau.<module>` even when the shell wrapper
 is stale.
 
+## Live operational register
+
+Use the Live Register for gitless operational focus and candidate observations. It writes to the
+Bureau state-store eventlog, not to `registry/queue.json`:
+
+```bash
+bureau --root . --json live-register \
+  --kind thread_focus \
+  --thread-id chat-20260710-a \
+  --repo repo.bureau \
+  --title "Current Bureau architecture thread" \
+  --source chat
+
+bureau --root . --json live-register \
+  --kind candidate_task \
+  --repo repo.bureau \
+  --title "Promote live candidates into registry PRs" \
+  --promotion-required
+
+bureau --root . --json live-list
+```
+
+Live-register records are operational evidence only. They do not establish queue truth, task truth,
+claim authority, dispatch authority or merge readiness. Durable work still requires a reviewed
+Registry PR.
+
 ## Repository-scoped balls
 
 Bureau can project one current ball per repository resource without changing queue state:

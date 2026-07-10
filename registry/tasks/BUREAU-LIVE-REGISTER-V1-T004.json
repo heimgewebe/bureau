@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-LIVE-REGISTER-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T00:00:00Z",
+    "source": "Follow-up from Live Register v1 first slice.",
+    "does_not_establish": [
+      "implementation",
+      "merge_readiness",
+      "runtime_correctness"
+    ]
+  },
+  "id": "BUREAU-LIVE-REGISTER-V1-T004",
+  "title": "Promote live candidates to registry PR",
+  "goal": "Design and implement a reviewed candidate-to-registry promotion path for live candidate_task events.",
+  "priority": {
+    "lane": "later",
+    "rank": 740
+  },
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "reviewed-promotion",
+      "assertion": "Promotion requires a reviewed plan and creates reviewable registry diff only."
+    },
+    {
+      "id": "source-bound",
+      "assertion": "Promoted tasks preserve live event id, source, repo and non-claims."
+    },
+    {
+      "id": "no-auto-queue",
+      "assertion": "Promotion does not automatically add candidates to now/next without a queue decision."
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "host:heim-pc",
+      "service:grabowski-rootbroker"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T014"
+  ],
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T030",
+  "title": "Unify Rootbroker recovery freshness decisions",
+  "priority": {
+    "lane": "later",
+    "rank": 490
+  },
+  "goal": "Make recovery status and privileged Rootbroker execution consume one canonical, atomically refreshed freshness record so a ready recovery status cannot coexist with a stale-marker execution denial for the same observation window.",
+  "acceptance": [
+    {
+      "id": "canonical-freshness-source",
+      "assertion": "grabowski_recovery_status and privileged execution read the same canonical recovery record, max-age contract and digest-bound source identity; outputs expose bounded generated-at, age, max-age and typed freshness reason without secrets."
+    },
+    {
+      "id": "coherent-ready-decision",
+      "assertion": "When the canonical record is ready and fresh, an eligible read-only privileged call is not denied as recovery-marker stale; stale, missing, malformed and future-dated records block both surfaces with coherent typed reasons."
+    },
+    {
+      "id": "atomic-refresh",
+      "assertion": "Recovery refresh writes are atomic and readers cannot consume a partial or previous-generation marker after a successful ready result; race-focused tests cover refresh/check interleavings."
+    },
+    {
+      "id": "fail-closed-no-bypass",
+      "assertion": "The fix does not weaken command allowlists, audit, kill-switch, recovery requirements or privilege boundaries; no stale marker may be ignored merely to make a call succeed."
+    },
+    {
+      "id": "runtime-proof",
+      "assertion": "After reviewed merge and deployment, one bounded read-only Rootbroker call succeeds while recovery_status reports the same fresh record ready, with matching freshness identity and an audit receipt."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover ready, stale, missing, malformed, future-clock, partial-refresh and concurrent-reader cases plus denial without command execution."
+    }
+  ],
+  "metadata": {
+    "source": "OPERATOR-PC-HYGIENE-V1-T004 listener/firewall attribution on 2026-07-11",
+    "observed_contradiction": [
+      "grabowski_recovery_status returned ready=true and all recovery checks green.",
+      "Immediately following grabowski_power_run attempts were rejected before command execution because the Power recovery marker was reported missing or stale.",
+      "The attempted command was read-only socket/service attribution and used an absolute /usr/bin/bash path; no privilege bypass was attempted."
+    ],
+    "does_not_establish": [
+      "root cause",
+      "permission to bypass recovery",
+      "permission to broaden privileged commands",
+      "firewall correctness",
+      "runtime deployment permission",
+      "current Grabowski repo availability"
+    ]
+  }
+}

@@ -18,16 +18,16 @@
       "host:heim-pc"
     ],
     "approval": {
-      "action_class": "read_only_observation",
-      "required_level": "none",
-      "note": "This initial authorization covers read-only runtime inventory and export planning only. Any private export write, service change, deletion or rename requires a separate reviewed effect authorization."
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "This stage authorizes only reviewed Cabinet repository changes that implement a bounded private-export tool. Running the tool against private data remains separately unauthorized."
     }
   },
   "claims": [
     {
       "resource": "repo.cabinet",
-      "mode": "read",
-      "isolation": "none"
+      "mode": "write",
+      "isolation": "worktree"
     },
     {
       "resource": "host.heim-pc",
@@ -63,44 +63,92 @@
     "registered_at": "2026-07-10T12:18:00+02:00",
     "source_decision": "Cabinet is to become an app-independent Heimgewebe system catalog.",
     "does_not_establish": [
-      "private_export_write_permission",
+      "private_export_execution_permission",
       "service_shutdown_permission",
       "app_data_deletion_permission",
       "repository_rename_permission",
       "runtime_cleanup_permission",
+      "complete_remote_consumer_coverage",
       "public_runtime_detail_permission",
       "merge_permission_without_current_review_and_ci"
     ],
     "execution_authorization": {
       "schema_version": 1,
-      "source": "reviewed_plan",
-      "level": "reviewed_plan",
+      "source": "operator_instruction",
+      "level": "operator",
       "approved": true,
       "reviewer": "alexdermohr",
-      "reference": "heimgewebe/bureau#385",
-      "merge_commit": "1000e3f79eb9aee6f20a752ecd9c0492701ffb22",
+      "reference": "operator-instruction:2026-07-10:cabinet-t012-staged-migration",
       "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T012",
       "scope": [
-        "read-only inventory of the external Cabinet app runtime on heim-pc",
-        "classification of private data categories, dependencies and preservation need without publishing contents",
-        "private export and restore planning without creating, overwriting or deleting export data",
-        "redacted receipt planning limited to classification, coverage, backup status and gaps"
+        "repository_mutation",
+        "implement and test a bounded private-export and isolated-restore tool in heimgewebe/cabinet",
+        "no private export execution and no runtime mutation"
       ]
     },
     "execution_stage": {
-      "active": "inventory",
+      "active": "export_tooling",
       "authorized_effects": [
-        "read-only filesystem, process, service, timer, listener and configuration metadata inspection",
-        "classification of data roots, dependency classes and consumer classes",
-        "design of a bounded private backup and restore procedure"
+        "create a Cabinet worktree and implement generic private-export tooling",
+        "add deterministic tests and documentation without private runtime evidence",
+        "publish and review a Cabinet pull request bound to this task"
       ],
       "pending_effects": [
-        "private export or manifest writes",
+        "run the export tool against private data",
+        "create or overwrite a private export or manifest",
         "service stop, restart or disable",
         "app-data deletion or cleanup",
         "repository rename",
         "publication of concrete host, unit, port, listener, journal, secret or private app details"
       ]
+    },
+    "inventory_evidence": {
+      "schema_version": 1,
+      "observed_at": "2026-07-10T13:58:00Z",
+      "source": "live_read_only_inventory",
+      "cabinet_source_commit": "9bf9bc9dd72a3788e0c5ca03bb728488c2b21cc9",
+      "runtime_classification": "installed_live_runtime_present",
+      "preservation_classes": [
+        "live SQLite data with write-ahead-log activity",
+        "owner-restricted runtime configuration",
+        "owner-restricted runtime and rollback state",
+        "repository-local private workspace and agent state",
+        "private logs requiring archive-only handling"
+      ],
+      "extent": {
+        "preservable_private_data": "low_single_digit_mib",
+        "reinstallable_application_payload": "multi_gib",
+        "existing_private_export": "absent"
+      },
+      "integrity_observation": {
+        "live_database_read_check": "pass",
+        "live_database_copy_constraint": "online_backup_required",
+        "source_permissions": "owner_restricted_for_identified_live_data"
+      },
+      "consumer_observation": {
+        "local_runtime_surface": "installed",
+        "automatic_start_surface": "service_only_no_timer_or_autostart_binding_observed",
+        "canonical_repository_runtime_bindings": "none_observed_outside_cabinet",
+        "source_reference_consumers": "present",
+        "human_usage_counter": "unavailable",
+        "remote_coverage": "incomplete_owned_by_T007"
+      },
+      "tooling_observation": {
+        "current_safe_export": "excludes_private_runtime_data_and_is_not_a_T012_backup",
+        "online_sqlite_backup": "available_via_python_standard_library",
+        "hash_and_archive_tools": "available",
+        "encryption_recipient": "not_established"
+      },
+      "public_evidence_policy": "Only classification, extent buckets, backup status and coverage gaps may be published."
+    },
+    "export_design": {
+      "schema_version": 1,
+      "destination_policy": "explicit absolute create-only destination outside every repository with owner-only permissions",
+      "database_policy": "use SQLite online backup while the service remains running; never copy a live WAL database as ordinary files",
+      "file_policy": "copy only identified private configuration and state classes; detect source drift and do not follow unsafe symlinks",
+      "manifest_policy": "private JSON manifest with relative archive paths, modes, sizes and SHA-256; public receipt contains aggregates only",
+      "restore_policy": "restore into an isolated temporary root, verify manifest hashes and database integrity, and never overwrite live paths",
+      "excluded_from_export": "reinstallable multi-GiB application payload except narrowly matched private state artifacts"
     }
   },
   "depends_on": [

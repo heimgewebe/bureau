@@ -11,7 +11,7 @@
   "goal": "Make the Cabinet Restic handoff compatible with Restic 0.12.1 backup summaries that emit a shortened snapshot ID, while preserving exact full-ID restore binding and preventing any second backup or ambiguous restore.",
   "execution": {
     "mode": "interactive-agent",
-    "policy": "review-before-effect",
+    "policy": "autonomous",
     "working_repository": "/home/alex/repos/cabinet",
     "grabowski_resources": [
       "repo:/home/alex/repos/cabinet"
@@ -97,7 +97,8 @@
         "no real private restore is executed",
         "no service, retention, forget, prune, source-data or repository-runtime mutation occurs",
         "live proof is read-only or synthetic",
-        "merge requires current-head diff review and green Cabinet CI"
+        "merge requires current-head diff review and green Cabinet CI",
+        "Bureau execution policy is autonomous only within the already approved repository-only scope"
       ]
     },
     "authorized_effects": [

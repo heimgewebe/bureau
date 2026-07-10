@@ -3,9 +3,9 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T011",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Establish app-independent Cabinet catalog core",
-  "state": "ready",
+  "state": "verified",
   "priority": {
-    "lane": "now",
+    "lane": "later",
     "rank": 15
   },
   "goal": "Introduce the non-destructive target role, catalog contract, validator, renderer and full migration matrix inside the existing Cabinet repository before removing legacy surfaces.",
@@ -83,7 +83,42 @@
       "repository_rename_permission",
       "runtime_cleanup_permission",
       "merge_permission_without_current_review_and_ci"
-    ]
+    ],
+    "implementation_evidence": {
+      "pull_request": "heimgewebe/cabinet#105",
+      "url": "https://github.com/heimgewebe/cabinet/pull/105",
+      "title": "feat: establish app-independent system catalog core",
+      "head_sha": "1f8337989050f8c8178731643a6ce32cf23c465d",
+      "merge_commit": "9bf9bc9dd72a3788e0c5ca03bb728488c2b21cc9",
+      "merged_at": "2026-07-10T10:50:17Z",
+      "checks": [
+        {"workflow": "Validate", "job": "Repository Contract", "conclusion": "success"},
+        {"workflow": "Validate", "job": "Installer Shadow Test", "conclusion": "success"},
+        {"workflow": "Validate", "job": "Secret Scan", "conclusion": "success"},
+        {"workflow": "Ecosystem Map", "conclusion": "success"},
+        {"workflow": "Repository Snapshot Review", "conclusion": "success"},
+        {"workflow": "Project Cards", "conclusion": "success"},
+        {"workflow": "Cabinet Bridge Probe", "conclusion": "success"}
+      ],
+      "review_gate": {
+        "verdict": "PASS",
+        "review_id": 4670751716,
+        "reviewed_head": "1f8337989050f8c8178731643a6ce32cf23c465d",
+        "reviewed_files": 17,
+        "material_findings_fixed": 3
+      },
+      "privacy_finding": {
+        "source_pull_request": "heimgewebe/cabinet#104",
+        "thread_id": "PRRT_kwDOTDiEP86Pycv8",
+        "resolved": true
+      }
+    },
+    "verified_at": "2026-07-10T10:51:00Z",
+    "outcome": "Cabinet now has an app-independent system catalog contract, deterministic validation and rendering, a full migration matrix, corrected authority projections and redacted public runtime evidence.",
+    "verification": {
+      "task_sha256": "8ac1e1706ac1bc4cced740e6701b83c408d571f42991acb0dfbe0ceb30fec23c",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    }
   },
   "depends_on": []
 }

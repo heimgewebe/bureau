@@ -18,20 +18,20 @@
       "host:heim-pc"
     ],
     "approval": {
-      "action_class": "repository_mutation",
-      "required_level": "operator",
-      "note": "This stage authorizes only reviewed Cabinet repository changes that implement a bounded private-export tool. Running the tool against private data remains separately unauthorized."
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "This narrow effect authorization permits one create-only private archive and one isolated restore verification on the encrypted local filesystem. It does not permit service mutation, source deletion, cleanup or repository rename."
     }
   },
   "claims": [
     {
       "resource": "repo.cabinet",
-      "mode": "write",
-      "isolation": "worktree"
+      "mode": "read",
+      "isolation": "none"
     },
     {
       "resource": "host.heim-pc",
-      "mode": "read",
+      "mode": "write",
       "isolation": "none"
     }
   ],
@@ -63,43 +63,47 @@
     "registered_at": "2026-07-10T12:18:00+02:00",
     "source_decision": "Cabinet is to become an app-independent Heimgewebe system catalog.",
     "does_not_establish": [
-      "private_export_execution_permission",
       "service_shutdown_permission",
       "app_data_deletion_permission",
+      "archive_deletion_permission",
       "repository_rename_permission",
       "runtime_cleanup_permission",
       "complete_remote_consumer_coverage",
+      "semantic_application_restore",
       "public_runtime_detail_permission",
       "merge_permission_without_current_review_and_ci"
     ],
     "execution_authorization": {
       "schema_version": 1,
       "source": "operator_instruction",
-      "level": "operator",
+      "level": "break_glass",
       "approved": true,
       "reviewer": "alexdermohr",
-      "reference": "operator-instruction:2026-07-10:cabinet-t012-staged-migration",
+      "reference": "operator-instruction:2026-07-10:cabinet-t012-private-export",
       "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T012",
       "scope": [
-        "repository_mutation",
-        "implement and test a bounded private-export and isolated-restore tool in heimgewebe/cabinet",
-        "no private export execution and no runtime mutation"
+        "runtime_mutation",
+        "execute the merged Cabinet private archive tool exactly once against the inventoried private runtime data",
+        "create one owner-only private archive and one owner-only isolated restore verification at precommitted create-only destinations",
+        "verify hashes, SQLite integrity, permissions and unchanged service state",
+        "no service mutation, source deletion, cleanup, publication of private paths or repository rename"
       ]
     },
     "execution_stage": {
-      "active": "export_tooling",
+      "active": "private_export_execution",
       "authorized_effects": [
-        "create a Cabinet worktree and implement generic private-export tooling",
-        "add deterministic tests and documentation without private runtime evidence",
-        "publish and review a Cabinet pull request bound to this task"
+        "execute scripts/private_cabinet_archive.py from Cabinet merge 678311828e2192fe191db50f125f168a680daf77",
+        "create exactly one owner-only private archive at the precommitted absent destination",
+        "verify the private archive manifest, payload hashes, permissions and SQLite integrity",
+        "create exactly one owner-only isolated restore verification at the precommitted absent destination",
+        "compare service state before and after and require no mutation"
       ],
       "pending_effects": [
-        "run the export tool against private data",
-        "create or overwrite a private export or manifest",
-        "service stop, restart or disable",
-        "app-data deletion or cleanup",
+        "service stop, restart, disable or configuration change",
+        "source app-data deletion or cleanup",
+        "archive deletion, relocation or publication",
         "repository rename",
-        "publication of concrete host, unit, port, listener, journal, secret or private app details"
+        "publication of concrete paths, host, unit, port, listener, journal, secret, manifest or private app contents"
       ]
     },
     "inventory_evidence": {
@@ -137,7 +141,8 @@
         "current_safe_export": "excludes_private_runtime_data_and_is_not_a_T012_backup",
         "online_sqlite_backup": "available_via_python_standard_library",
         "hash_and_archive_tools": "available",
-        "encryption_recipient": "not_established"
+        "encryption_recipient": "not_required_for_this_stage_destination_is_on_verified_encrypted_local_filesystem",
+        "protected_destination_class": "available"
       },
       "public_evidence_policy": "Only classification, extent buckets, backup status and coverage gaps may be published."
     },
@@ -149,6 +154,24 @@
       "manifest_policy": "private JSON manifest with relative archive paths, modes, sizes and SHA-256; public receipt contains aggregates only",
       "restore_policy": "restore into an isolated temporary root, verify manifest hashes and database integrity, and never overwrite live paths",
       "excluded_from_export": "reinstallable multi-GiB application payload except narrowly matched private state artifacts"
+    },
+    "tool_execution_binding": {
+      "schema_version": 1,
+      "cabinet_pr": "heimgewebe/cabinet#106",
+      "reviewed_head": "dfab0bd5176fb8770c90954fefff6be7b53ec114",
+      "merge_commit": "678311828e2192fe191db50f125f168a680daf77",
+      "merged_at": "2026-07-10T14:44:30Z",
+      "reviewed_diff_sha256": "2e07280056ba98040da8786cd35059ae4a9f61e2dce0f7d067fe2d38dda73f8b",
+      "tool_path": "scripts/private_cabinet_archive.py",
+      "tool_policy": "execute from a clean detached worktree at the exact merge commit"
+    },
+    "private_destination_commitments": {
+      "schema_version": 1,
+      "destination_class": "owner-only create-only directories on a verified encrypted local filesystem outside repositories and source roots",
+      "export_path_sha256": "8e1615841c326a19d96094103fb0624f3cd97847265d04528371b06be4bac24d",
+      "restore_path_sha256": "0bd221ef7762e459bf11e430114eafc541acb1e2edbf27b8ae75a0a7ad41f791",
+      "actual_paths_public": false,
+      "source_of_exact_paths": "private local execution packet outside repositories"
     }
   },
   "depends_on": [

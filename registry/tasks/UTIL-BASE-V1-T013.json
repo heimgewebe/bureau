@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "id": "UTIL-BASE-V1-T013",
+  "initiative": "UTIL-BASE-V1",
+  "title": "Harden local Restic command surfaces against probe-as-write",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 130
+  },
+  "goal": "Move the active local Restic wrapper scripts under a canonical repository owner and make help, status and unknown-argument behavior fail closed so an inspection command cannot start backup, retention or prune work.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Registration only. Runtime replacement or timer changes require a later reviewed authorization."
+    },
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/infra",
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "canonical-owner",
+      "assertion": "Active Restic wrapper and unit sources are versioned under one explicit repository owner with install and rollback instructions."
+    },
+    {
+      "id": "safe-help",
+      "assertion": "--help and explicit status or plan modes perform no backup, retention, prune, restore or repository mutation."
+    },
+    {
+      "id": "unknown-args",
+      "assertion": "Unknown arguments fail closed before locks, tunnels, sentinel writes or Restic commands are started."
+    },
+    {
+      "id": "regression-tests",
+      "assertion": "Tests prove that help and unknown-argument probes cause zero backup-side effects and that normal scheduled execution retains its existing restore gate."
+    },
+    {
+      "id": "runtime-rollout",
+      "assertion": "Any later runtime replacement is hash-bound, reversible and separately reviewed before timers or active scripts change."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T15:40:00Z",
+    "source_incident": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T012 operator_incident",
+    "incident_summary": "A --help probe invoked two scripts that lacked argument parsing, creating encrypted snapshots and running one configured local retention/prune cycle.",
+    "does_not_establish": [
+      "runtime_script_replacement_permission",
+      "timer_change_permission",
+      "backup_execution_permission",
+      "snapshot_deletion_permission",
+      "prune_permission",
+      "service_restart_permission"
+    ]
+  },
+  "depends_on": [
+    "UTIL-BASE-V1-T002"
+  ]
+}

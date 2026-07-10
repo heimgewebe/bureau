@@ -3,9 +3,9 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T012",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Inventory and export external Cabinet app data",
-  "state": "blocked",
+  "state": "ready",
   "priority": {
-    "lane": "later",
+    "lane": "now",
     "rank": 20
   },
   "goal": "Inventory the live external Cabinet runtime and export any non-versioned data before app decoupling, shutdown or repository rename.",
@@ -18,16 +18,16 @@
       "host:heim-pc"
     ],
     "approval": {
-      "action_class": "runtime_mutation",
-      "required_level": "break_glass",
-      "note": "No private export execution is currently authorized. The prior target class failed the exact encrypted-at-rest preflight and must be replaced by a separately reviewed protected destination design."
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "This stage authorizes only reviewed Cabinet repository changes implementing a bounded tmpfs-to-Restic handoff and restore verifier. Running the private export remains separately unauthorized."
     }
   },
   "claims": [
     {
       "resource": "repo.cabinet",
-      "mode": "read",
-      "isolation": "none"
+      "mode": "write",
+      "isolation": "worktree"
     },
     {
       "resource": "host.heim-pc",
@@ -76,29 +76,33 @@
     ],
     "execution_authorization": {
       "schema_version": 1,
-      "source": "runtime_preflight_revocation",
-      "level": "break_glass",
-      "approved": false,
-      "reviewer": "grabowski-live-preflight",
-      "reference": "heimgewebe/bureau#390",
+      "source": "operator_instruction",
+      "level": "operator",
+      "approved": true,
+      "reviewer": "alexdermohr",
+      "reference": "operator-instruction:2026-07-10:cabinet-t012-restic-tooling",
       "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T012",
       "scope": [
-        "runtime_mutation"
-      ],
-      "note": "Revoked before use because the committed persistent destinations were not on encrypted-at-rest storage."
+        "repository_mutation",
+        "implement and test a generic tmpfs-to-Restic encrypted handoff and isolated restore verifier in heimgewebe/cabinet",
+        "no private export execution, no Restic snapshot creation, no forget/prune, no service mutation and no runtime cleanup"
+      ]
     },
     "execution_stage": {
-      "active": "blocked_protected_destination_redesign",
+      "active": "restic_handoff_tooling",
       "authorized_effects": [
-        "read-only inspection of encryption-capable archive alternatives",
-        "proposal and review of a protected create-only export path"
+        "create an isolated Cabinet worktree and implement generic Restic handoff tooling",
+        "add deterministic tests and documentation without private runtime evidence",
+        "publish and review a Cabinet pull request bound to this task"
       ],
       "pending_effects": [
         "run the export tool against private data",
-        "create any private archive or restore directory",
+        "create a Restic snapshot",
+        "create or remove a real tmpfs staging tree",
+        "restore a real private snapshot",
+        "forget or prune any Restic snapshot",
         "service stop, restart, disable or configuration change",
         "source app-data deletion or cleanup",
-        "archive deletion, relocation or publication",
         "repository rename",
         "publication of concrete paths, host, unit, port, listener, journal, secret, manifest or private app contents"
       ]
@@ -119,7 +123,7 @@
       "extent": {
         "preservable_private_data": "low_single_digit_mib",
         "reinstallable_application_payload": "multi_gib",
-        "existing_private_export": "absent"
+        "existing_private_export": "incidental_encrypted_snapshot_present_but_not_T012_valid"
       },
       "integrity_observation": {
         "live_database_read_check": "pass",
@@ -138,8 +142,8 @@
         "current_safe_export": "excludes_private_runtime_data_and_is_not_a_T012_backup",
         "online_sqlite_backup": "available_via_python_standard_library",
         "hash_and_archive_tools": "available",
-        "encryption_recipient": "required_but_not_yet_bound",
-        "protected_destination_class": "not_satisfied_by_revoked_destinations"
+        "encryption_recipient": "existing_restic_repository_password_bound_outside_repository",
+        "protected_destination_class": "restic_encrypted_repository_with_tmpfs_staging_available"
       },
       "public_evidence_policy": "Only classification, extent buckets, backup status and coverage gaps may be published."
     },
@@ -185,6 +189,47 @@
       "archive_created": false,
       "restore_created": false,
       "service_mutated": false
+    },
+    "restic_handoff_design": {
+      "schema_version": 1,
+      "observed_at": "2026-07-10T15:32:00Z",
+      "repository_class": "existing encrypted remote Restic repository reachable through an authenticated local tunnel",
+      "repository_read_probe": "pass",
+      "existing_restore_sentinel": "pass",
+      "staging_class": "owner-only tmpfs with sufficient capacity; encrypted swap present",
+      "persistent_plaintext_policy": "forbidden",
+      "workflow": [
+        "create bounded Cabinet archive only in a fresh tmpfs directory",
+        "verify manifest, payload hashes, permissions and SQLite integrity before upload",
+        "create one tagged Restic snapshot without retention mutation",
+        "restore the exact snapshot into a second fresh tmpfs directory",
+        "verify the restored archive with the Cabinet verifier",
+        "emit only a redacted public receipt and remove tmpfs staging under a separately authorized execution"
+      ],
+      "forbidden_commands": [
+        "restic forget",
+        "restic prune",
+        "generic backup wrapper scripts without argument validation"
+      ],
+      "tooling_requirement": "The handoff must expose explicit plan and execute modes; unknown arguments and --help must never execute work."
+    },
+    "operator_incident": {
+      "schema_version": 1,
+      "observed_at": "2026-07-10T15:32:17Z",
+      "kind": "probe_argument_triggered_backup",
+      "cause": "Two unversioned local backup scripts do not implement --help and treated the probe invocation as a normal run.",
+      "effects": {
+        "remote_encrypted_snapshot_created": true,
+        "remote_restore_sentinel_passed": true,
+        "local_encrypted_snapshot_created": true,
+        "local_retention_removed_one_older_snapshot": true,
+        "local_prune_executed": true,
+        "cabinet_service_mutated": false,
+        "source_data_deleted": false
+      },
+      "cabinet_relevance": "The remote snapshot contains the Cabinet repository and active database, but ordinary capture of a live WAL database is not accepted as a valid T012 export.",
+      "follow_up_task": "UTIL-BASE-V1-T013",
+      "public_evidence_policy": "No repository URL, credential, exact path, private manifest or app content is published."
     }
   },
   "depends_on": [

@@ -77,8 +77,7 @@
     ],
     "now": [
       "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T001",
-      "SCHAUWERK-USEFUL-PILOT-V1-T003",
-      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T018"
+      "SCHAUWERK-USEFUL-PILOT-V1-T003"
     ]
   },
   "queue_policy": "skip-blocked",

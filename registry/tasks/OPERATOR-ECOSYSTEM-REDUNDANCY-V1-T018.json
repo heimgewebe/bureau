@@ -3,10 +3,10 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T018",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Resolve short Restic backup summary IDs safely",
-  "state": "planned",
+  "state": "ready",
   "priority": {
-    "lane": "later",
-    "rank": 400
+    "lane": "now",
+    "rank": 20
   },
   "goal": "Make the Cabinet Restic handoff compatible with Restic 0.12.1 backup summaries that emit a shortened snapshot ID, while preserving exact full-ID restore binding and preventing any second backup or ambiguous restore.",
   "execution": {
@@ -15,7 +15,12 @@
     "working_repository": "/home/alex/repos/cabinet",
     "grabowski_resources": [
       "repo:/home/alex/repos/cabinet"
-    ]
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Authorizes only a reviewed Cabinet code, test and documentation change for safe Restic short-ID resolution. It does not authorize a private backup, restore, retention, service or source-data effect."
+    }
   },
   "claims": [
     {
@@ -72,6 +77,43 @@
       "runtime service mutation",
       "current implementation fixed",
       "merge readiness"
+    ],
+    "execution_authorization": {
+      "schema_version": 1,
+      "source": "operator_instruction",
+      "level": "operator",
+      "approved": true,
+      "reviewer": "alexdermohr",
+      "reference": "operator-instruction:2026-07-10:cabinet-restic-short-id-fix",
+      "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T018",
+      "scope": [
+        "repository_mutation",
+        "modify scripts/private_cabinet_restic_handoff.py for safe shortened snapshot-id resolution",
+        "add deterministic focused tests and update documentation if necessary",
+        "publish and review one Cabinet pull request bound to this task"
+      ],
+      "conditions": [
+        "no real private backup or new Restic snapshot is created",
+        "no real private restore is executed",
+        "no service, retention, forget, prune, source-data or repository-runtime mutation occurs",
+        "live proof is read-only or synthetic",
+        "merge requires current-head diff review and green Cabinet CI"
+      ]
+    },
+    "authorized_effects": [
+      "isolated Cabinet worktree creation",
+      "code, tests and documentation changes for T018",
+      "read-only inspection of the already-created tagged snapshot metadata if needed",
+      "synthetic restore-command argument verification without private payload extraction"
+    ],
+    "forbidden_effects": [
+      "another private archive or Restic backup",
+      "another private snapshot creation",
+      "real private snapshot restore",
+      "restic forget, prune, retention or repository cleanup",
+      "service stop, start, restart or configuration mutation",
+      "source-data deletion or repository rename",
+      "publication of private tag, snapshot id, endpoint, credential path or private contents"
     ]
   }
 }

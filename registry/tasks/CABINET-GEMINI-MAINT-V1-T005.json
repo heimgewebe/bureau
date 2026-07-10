@@ -3,7 +3,7 @@
   "id": "CABINET-GEMINI-MAINT-V1-T005",
   "initiative": "CABINET-GEMINI-MAINT-V1",
   "title": "Decide scheduled Gemini maintenance lane",
-  "state": "verified",
+  "state": "cancelled",
   "priority": {
     "lane": "later",
     "rank": 110
@@ -63,12 +63,13 @@
   "metadata": {
     "source_issue": "heimgewebe/bureau#254",
     "registered_at": "2026-07-08T12:10:00Z",
-    "decided_at": "2026-07-10T12:18:00+02:00",
+    "cancelled_at": "2026-07-10T12:18:00+02:00",
+    "cancellation_reason": "The reviewed dry run was valid but low-signal, and Cabinet is being reduced to a static app-independent catalog. A recurring Gemini maintenance lane would add an unnecessary scheduler and review surface.",
     "decision": "do_not_schedule",
     "rationale": [
-      "The reviewed dry run was valid but low-signal and produced no operationally new finding.",
-      "Cabinet is being narrowed to an app-independent static system catalog, so recurring semantic maintenance agents would recreate unnecessary operational surface.",
-      "Deterministic catalog validation and event-driven review are sufficient for the target role."
+      "The reviewed dry run produced no operationally new finding.",
+      "Deterministic catalog validation and diff-bound review cover the target role.",
+      "No recurrence, authentication or quota surface is justified."
     ],
     "evidence": {
       "dry_run_task": "CABINET-GEMINI-MAINT-V1-T004",
@@ -76,28 +77,9 @@
       "catalog_migration_plan": "docs/plans/operator-ecosystem-redundancy-v1.md",
       "operator_decision_at": "2026-07-10T12:18:00+02:00"
     },
-    "verification": {
-      "verified_at": "2026-07-10T12:18:00+02:00",
-      "source": "operator_decision_and_reviewed_dry_run",
-      "verdict": "recurring_lane_rejected",
-      "scope": [
-        "no scheduled Gemini maintenance",
-        "manual historical artifacts may remain",
-        "no new scheduler or scout authority"
-      ],
-      "validation": [
-        "dry-run review verdict completed_valid_low_signal",
-        "schedule readiness not established",
-        "target Cabinet role reduced to static app-independent catalog"
-      ],
-      "does_not_establish": [
-        "future_model_uselessness",
-        "manual_review_prohibited",
-        "runtime_cleanup_permission",
-        "merge_readiness_without_ci"
-      ]
-    },
     "does_not_establish": [
+      "future_model_uselessness",
+      "manual_review_prohibited",
       "future_scan_quality",
       "task_approval",
       "claim_truth",

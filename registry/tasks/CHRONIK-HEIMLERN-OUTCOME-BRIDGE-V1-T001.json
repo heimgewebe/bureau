@@ -3,7 +3,7 @@
   "id": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T001",
   "initiative": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1",
   "title": "Audit Chronik outcome export surface",
-  "state": "ready",
+  "state": "verified",
   "goal": "Audit the current Chronik repository and runtime/export surfaces to determine the safest source-grounded path for redacted operator.routing_outcome-style exports consumed by heimlern.",
   "execution": {
     "mode": "interactive-agent",
@@ -64,7 +64,36 @@
       "runtime_mutation",
       "merge_readiness"
     ],
-    "task_role": "t001"
+    "task_role": "t001",
+    "verified_at": "2026-07-10T23:43:23Z",
+    "audit_report": "docs/reports/chronik-heimlern-outcome-bridge-t001-audit.md",
+    "audited_revisions": {
+      "chronik": "e9d6b7d0de2cf1b7cd95ec254096d0e64a99732c",
+      "heimlern": "6d70e4900377c92b540d07bd6b71fe36677c2ba5",
+      "grabowski": "6a169c5f8f580907b64a51ba797b2d8bcc93b3e0"
+    },
+    "runtime_observation": "Chronik user service was inactive; no listener or successful local health response was observed. No mutation was attempted.",
+    "findings": [
+      "Chronik already provides append-only JSONL ingest and cursor export.",
+      "Heimlern owns a strict operator.routing_outcome.v1 payload contract.",
+      "The existing generic Heimlern Chronik consumer parses AussenEvent and is not suitable for routing outcomes.",
+      "Grabowski has lifecycle/friction receipts but no routing-outcome producer.",
+      "A separate Chronik transport envelope is required because the strict Heimlern payload cannot accept transport provenance fields."
+    ],
+    "verified_acceptance": {
+      "chronik-live-state-checked": "Git, open PRs, source surfaces and local user-service state were read live.",
+      "export-surface-boundary": "The append-only transport exists; bounded envelope, typed consumer and producer were identified as missing.",
+      "heimlern-input-fit": "The audit binds payload ownership to Heimlern and source/digest/freshness transport to a separate Chronik envelope.",
+      "no-runtime-mutation": "No service start, backfill, ingest or policy application occurred."
+    },
+    "outcome": "Use Chronik as append-only transport, not payload authority; implement a digest-bound envelope, typed Heimlern consumer and later Grabowski producer.",
+    "verification": {
+      "task_sha256": "ed01585b99ad294f4f51bf6d1d7a2eb0900ea59cfc09ea31caf5fe6c64f0635b",
+      "plan_sha256": "a39748d2669b385c611c92201f73d7ac77d0eb5a0753b79c377ecae3b76af675",
+      "verified_at": "2026-07-10T23:43:23Z"
+    },
+    "source_ref": "docs/reports/chronik-heimlern-outcome-bridge-t001-audit.md",
+    "evidence_sha256": "6ebf73ea0ffa0cb312c1b4a9c1b568ebe1bc8759d5dd4506849822d0da68523c"
   },
   "priority": {
     "lane": "now",

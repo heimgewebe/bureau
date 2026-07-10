@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
-  "state": "ready",
+  "state": "verified",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -64,6 +64,29 @@
       "automatic_task_binding",
       "automatic_dispatch",
       "permission_to_ignore_same_repo_conflicts"
-    ]
+    ],
+    "verified_at": "2026-07-10T23:43:23Z",
+    "implementation_pr": "heimgewebe/bureau#405",
+    "implementation_head": "00540c4d33d8f3950d3c8375bf9ad12af65a0778",
+    "implementation_merge_commit": "fcff55d67b48012b675b2ef6cc1e4fd90ad924de",
+    "validation": [
+      "Bureau validate passed on Python 3.10 and 3.12.",
+      "Local make validate reported 473 passing tests, Ruff green, bridge policy green and Bureau check valid.",
+      "Live blocker projection fell from 10 repository findings to 3; unrelated Cabinet, Leitstand, Lenskit, Schauwerk, Steuerboard and Vibe-Lab balls no longer inherited foreign blockers.",
+      "Claim eligibility remains global while repository-local and cross-repository reasons are reported separately."
+    ],
+    "verified_acceptance": {
+      "same-repo-fail-closed": "Invalid or unbound PRs reserve their source repository and remain local blockers there.",
+      "no-cross-repo-blast-radius": "Repository-local projection excludes unrelated repositories.",
+      "multi-repo-claims": "Valid bound tasks reserve explicit write-conflicting repository claims without relabeling global claim blockers as local.",
+      "projection-consistency": "frontier, what-now, repo-balls and live-conflicts consume the separated local/cross-repository reasons.",
+      "live-regression-proof": "Live conflicts retained only Bureau, Chronik and Grabowski findings in the cited observation."
+    },
+    "outcome": "Open-PR blockers remain fail-closed but are projected only onto their source repository or explicit conflicting repository claims.",
+    "verification": {
+      "task_sha256": "d3999d8f493018982ba3a25f807a89f36836679f8bf396b02eedd54e1eb8ed8f",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "verified_at": "2026-07-10T23:43:23Z"
+    }
   }
 }

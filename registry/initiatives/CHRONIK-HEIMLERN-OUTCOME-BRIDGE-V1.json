@@ -1,27 +1,28 @@
 {
   "schema_version": 1,
   "id": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1",
-  "title": "Chronik to heimlern outcome bridge",
+  "title": "Chronik to Heimlern outcome bridge",
   "state": "active",
   "commitment": "now",
-  "goal": "Make real operator routing outcomes available to heimlern through Chronik as append-only historical transport while keeping heimlern offline and proposal-only.",
+  "goal": "Make operator routing outcomes available to Heimlern through a Chronik-owned append-only envelope while keeping the payload contract in Heimlern and all analysis proposal-only.",
   "current_plan": {
     "repository": "bureau",
     "path": "docs/plans/chronik-heimlern-outcome-bridge-v1.md"
   },
   "completion": [
-    "Chronik outcome export surface is audited before any bridge implementation claim.",
-    "A redacted operator outcome event/export contract is defined with source identity, freshness and digest fields.",
-    "heimlern can consume Chronik-shaped outcome exports in a review-only smoke and emit a report or proposal without applying policy.",
-    "Bureau records review status for heimlern proposals and Leitstand remains a read-only display candidate."
+    "Chronik transport/export surfaces and runtime state are audited before implementation claims.",
+    "A redacted Chronik envelope binds the Heimlern-owned payload revision and digests without duplicating payload authority.",
+    "Heimlern consumes the envelope through a dedicated typed, review-only path and emits a report, valid proposal or insufficient-evidence result.",
+    "Grabowski has a separately reviewed, opt-in producer before any real-outcome or live round-trip claim.",
+    "Bureau records proposal review state; Leitstand remains an optional read-only projection."
   ],
   "parallelism": {
     "max_active_tasks": 1
   },
   "metadata": {
     "registered_at": "2026-07-10T00:00:00Z",
-    "source_decision": "User asked which organ should be connected for heimlern; live repo review selected Chronik as primary because it owns historical outcomes.",
-    "primary_organ": "chronik",
+    "source_decision": "Chronik is the primary historical transport organ; Heimlern is the routing-outcome payload and offline-analysis authority.",
+    "primary_organ": "chronik_transport",
     "secondary_organs": [
       "bureau",
       "leitstand",
@@ -37,6 +38,14 @@
       "chronik_runtime_readiness",
       "leitstand_projection_authority",
       "grabowski_policy_mutation"
-    ]
+    ],
+    "contract_authorities": {
+      "transport_envelope": "heimgewebe/chronik",
+      "routing_outcome_payload": "heimgewebe/heimlern",
+      "execution_receipts_and_producer": "heimgewebe/grabowski",
+      "task_and_review_truth": "heimgewebe/bureau"
+    },
+    "live_audit_report": "docs/reports/chronik-heimlern-outcome-bridge-t001-audit.md",
+    "audit_finding": "Transport exists, but a typed Heimlern consumer and real Grabowski producer were missing; Chronik runtime was inactive at audit time."
   }
 }

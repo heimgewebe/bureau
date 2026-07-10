@@ -3,7 +3,7 @@
   "id": "RPU-V1-T017",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "Runtime-Lens evidence bridge",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 57
@@ -61,7 +61,30 @@
       "merge_readiness",
       "agent_quality_improvement_by_itself"
     ],
-    "source_vision": "Runtime-Lens bridge to Chronik/runtime evidence."
+    "source_vision": "Runtime-Lens bridge to Chronik/runtime evidence.",
+    "verified_at": "2026-07-10T23:43:23Z",
+    "implementation_pr": "heimgewebe/chronik#212",
+    "implementation_head": "197ba09c2ec3a1fdb551bf073d8e951ec70582c3",
+    "implementation_merge_commit": "e5458fcc08e7444b4bf128d9d570118d09770b1d",
+    "implementation_diff_sha256": "eef0458c6325d26a8457af558b812e20ec3ca2fcc3108a7d2d4b3893b3cb86ca",
+    "implementation_diff_gist": "https://gist.github.com/alexdermohr/e19da7f5d47a2d696a8fda5faa911820",
+    "validation": [
+      "253 Chronik tests and the role contract passed after hardening.",
+      "All GitHub checks including CodeQL passed.",
+      "The event now satisfies Chronik strict provenance through source.repo/source.component.",
+      "Forbidden actions and non-claims are required as complete sets rather than optional subsets."
+    ],
+    "verified_acceptance": {
+      "rpu-v1-t017-runtime-inputs": "Runtime source, observed timestamp, authority label and digest/URI provenance are required.",
+      "rpu-v1-t017-drift-report": "Drift is observation-only and verdict_authority is fixed to none.",
+      "rpu-v1-t017-boundary": "The contract prohibits RepoBrief runtime/Git mutations and Chronik dispatch, deploy or verdict authority."
+    },
+    "outcome": "A bounded Runtime-Lens observation contract links RepoBrief code evidence and runtime observations without creating correctness or execution authority.",
+    "verification": {
+      "task_sha256": "4bfea45e80d553070bcfc714bade92cc25794c457be0786f7f391e66bd2150d0",
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015",
+      "verified_at": "2026-07-10T23:43:23Z"
+    }
   },
   "depends_on": [
     "RPU-V1-T003"

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
-  "state": "ready",
+  "state": "verified",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -48,10 +48,35 @@
       "predecessor_closeout_merge": "2a9381934adf7feaed9f3ac7a0f6ec8228f60885",
       "scope": "queue_release_only",
       "implementation_authorized": false
+    },
+    "verified_at": "2026-07-10T23:43:23Z",
+    "implementation_pr": "heimgewebe/schauwerk#76",
+    "implementation_head": "4bb84ae8a9fdb496c3371989a6ca77ea7995c8b2",
+    "implementation_merge_commit": "9faeb2c4bc9b92118d63c05b046610bd842a03ab",
+    "implementation_diff_sha256": "64d03bcde72155daeea069459ac103ca6f1c47959839a0a624861f12785a70af",
+    "implementation_diff_gist": "https://gist.github.com/alexdermohr/5708463c537a0a932d395d7141bf362c",
+    "validation": [
+      "Schauwerk validate passed on Python 3.11 and 3.12.",
+      "Local validation passed Ruff, registry checks and 342 tests.",
+      "Minimum normal-text contrast was 11.04:1.",
+      "Software and education pilots both use schauwerk-visual-grammar.v1 without sharing one identical layout.",
+      "Sensitivity scan found no private paths, private-key markers or GitHub token patterns."
+    ],
+    "verified_acceptance": {
+      "grammar": "Renderer-independent semantic tokens, provenance and six explicit non-colour state markers are versioned.",
+      "templates": "Software, education, roadmap, timeline, presentation and public-summary template families are present.",
+      "accessibility": "Contrast, reading order, text alternatives and text-plus-symbol state cues are fail-closed validated.",
+      "cross-pilot": "Software and education renderers consume the same manifest while retaining distinct layouts."
+    },
+    "outcome": "The shared visual grammar and template families are implemented, tested and merged without provider mutation.",
+    "verification": {
+      "task_sha256": "a7dc7aff2e41960ecdf117c95abec0b2caa3146a0e03044afe4f2a0685105ee8",
+      "plan_sha256": "f56d795d9f976a3b0f14b3df70d3bdd26c5a0cc800ff236db0ff2e1e04ef9880",
+      "verified_at": "2026-07-10T23:43:23Z"
     }
   },
   "id": "SCHAUWERK-USEFUL-PILOT-V1-T006",
-  "title": "SW-008 \u2014 Consolidate visual grammar and templates",
+  "title": "SW-008 — Consolidate visual grammar and templates",
   "goal": "Define recognisable semantic shapes, state markers, provenance, freshness, uncertainty, accessibility and layout templates.",
   "priority": {
     "lane": "now",

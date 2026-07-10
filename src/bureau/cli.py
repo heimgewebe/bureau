@@ -145,11 +145,17 @@ def parser() -> argparse.ArgumentParser:
     live_register.add_argument("--worker-id")
     live_register.add_argument("--repo")
     live_register.add_argument("--task-id")
+    live_register.add_argument("--candidate-id")
+    live_register.add_argument("--supersedes-event-id", type=int)
     live_register.add_argument(
         "--status",
         choices=["active", "paused", "closed", "observed", "promoted", "dropped"],
     )
-    live_register.add_argument("--promotion-required", action="store_true")
+    live_register.add_argument(
+        "--promotion-required",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+    )
     live_register.add_argument("--note")
     live_list = sub.add_parser("live-list")
     live_list.add_argument("--kind", choices=["thread_focus", "candidate_task", "focus_override"])
@@ -584,6 +590,8 @@ def main(argv: list[str] | None = None) -> int:
                 worker_id=args.worker_id,
                 repo=args.repo,
                 task_id=args.task_id,
+                candidate_id=args.candidate_id,
+                supersedes_event_id=args.supersedes_event_id,
                 status=args.status,
                 promotion_required=args.promotion_required,
                 note=args.note,

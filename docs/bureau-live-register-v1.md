@@ -59,12 +59,41 @@ Live-register events are stored in the existing state-store `events` table with
 - optional `thread_id`
 - optional `repo`
 - optional `task_id`
+- optional `candidate_id` for `candidate_task` records
+- optional `supersedes_event_id` for append-only candidate corrections or closeouts
 - optional `note`
 - `promotion_required`
 - `does_not_establish`
 
-The output includes a derived summary for active thread focus, active focus overrides and candidate
-work requiring promotion.
+Every newly recorded candidate receives a stable opaque `candidate_id`. To correct, close, drop or
+promote an existing candidate, append a new candidate event that names the current event through
+`--supersedes-event-id`. The successor inherits the candidate identity, repository, task binding,
+status and `promotion_required` value unless the latter is explicitly changed with
+`--promotion-required` or `--no-promotion-required`. Repository changes are rejected because they
+would make per-repository projections ambiguous. A predecessor can be superseded only once.
+
+Example correction and closeout:
+
+```bash
+bureau --root . --json live-register \
+  --kind candidate_task \
+  --title "Corrected candidate description" \
+  --supersedes-event-id 31
+
+bureau --root . --json live-register \
+  --kind candidate_task \
+  --title "Candidate closed after review" \
+  --status closed \
+  --supersedes-event-id 32
+```
+
+`live-list`, `what-now` and `repo-balls` preserve all sampled historical events in their raw record
+list but derive open candidates from only the latest event per stable identity. The summary exposes
+`candidate_history_count`, `superseded_candidate_event_count` and `latest_candidates`. Legacy
+candidate events without an ID remain readable and receive a derived `candidate-event-<event-id>`
+identity when first superseded. Promotion plans reject stale superseded events.
+
+The output also includes derived summaries for active thread focus and active focus overrides.
 
 ## Boundaries
 

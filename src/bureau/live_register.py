@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -10,11 +11,12 @@ from . import legacy
 from .core import Registry, StateError, StateStore
 
 LIVE_REGISTER_EVENT_TYPE = "live-register"
-LIVE_REGISTER_SCHEMA_VERSION = 1
+LIVE_REGISTER_SCHEMA_VERSION = 2
 LIVE_REGISTER_KINDS = {"thread_focus", "candidate_task", "focus_override"}
 LIVE_REGISTER_STATUSES = {"active", "paused", "closed", "observed", "promoted", "dropped"}
 ACTIVE_LIVE_STATUSES = {"active", "observed"}
 _THREAD_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,199}$")
+_CANDIDATE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,119}$")
 
 LIVE_REGISTER_RETENTION_POLICY = {
     "schema_version": 1,
@@ -112,6 +114,54 @@ def _validate_task(registry: Registry, task_id: str | None) -> str | None:
     return normalized
 
 
+def _validate_candidate_id(candidate_id: str | None) -> str | None:
+    if candidate_id is None:
+        return None
+    normalized = candidate_id.strip()
+    if not _CANDIDATE_ID_RE.fullmatch(normalized):
+        raise StateError(
+            "candidate_id must start with an alphanumeric character and contain only "
+            "alphanumeric, dot, underscore, colon or dash characters"
+        )
+    return normalized
+
+
+def _generated_candidate_id() -> str:
+    return f"candidate-{uuid.uuid4().hex}"
+
+
+def _legacy_candidate_id(event_id: int) -> str:
+    return f"candidate-event-{event_id}"
+
+
+def _candidate_identity(item: dict[str, Any]) -> str:
+    payload = item["record"]
+    candidate_id = payload.get("candidate_id")
+    return str(candidate_id) if candidate_id else _legacy_candidate_id(int(item["event_id"]))
+
+
+def _candidate_projection(records: list[dict[str, Any]]) -> dict[str, Any]:
+    candidates = [
+        item for item in records if item["record"].get("kind") == "candidate_task"
+    ]
+    superseded_event_ids = {
+        int(item["record"]["supersedes_event_id"])
+        for item in candidates
+        if isinstance(item["record"].get("supersedes_event_id"), int)
+    }
+    latest_by_identity: dict[str, dict[str, Any]] = {}
+    for item in sorted(candidates, key=lambda value: int(value["event_id"])):
+        if int(item["event_id"]) in superseded_event_ids:
+            continue
+        latest_by_identity[_candidate_identity(item)] = item
+    latest = sorted(latest_by_identity.values(), key=lambda value: int(value["event_id"]))
+    return {
+        "history_count": len(candidates),
+        "superseded_event_count": len(superseded_event_ids),
+        "latest": latest,
+    }
+
+
 def _live_nonclaims() -> list[str]:
     return [
         "registry_task_truth",
@@ -133,13 +183,17 @@ def live_register_record(
     worker_id: str | None = None,
     repo: str | None = None,
     task_id: str | None = None,
+    candidate_id: str | None = None,
+    supersedes_event_id: int | None = None,
     status: str | None = None,
-    promotion_required: bool = False,
+    promotion_required: bool | None = None,
     note: str | None = None,
 ) -> dict[str, Any]:
     """Append one gitless operational Bureau live-register event."""
     checked_kind = _validate_kind(kind)
-    checked_status = _validate_status(checked_kind, status)
+    checked_status = (
+        _validate_status(checked_kind, status) if status is not None else None
+    )
     checked_title = _optional_text(title, field="title", max_length=240)
     assert checked_title is not None
     checked_source = _optional_text(source, field="source", max_length=80) or "operator"
@@ -149,27 +203,106 @@ def live_register_record(
     checked_worker_id = _validate_worker_id(worker_id)
     checked_repo = _validate_repo(registry, repo)
     checked_task_id = _validate_task(registry, task_id)
+    checked_candidate_id = _validate_candidate_id(candidate_id)
     checked_note = _optional_text(note, field="note", max_length=2000)
     if checked_kind in {"thread_focus", "focus_override"} and checked_repo is None:
         raise StateError(f"repo is required for {checked_kind}")
-    payload: dict[str, Any] = {
-        "schema_version": LIVE_REGISTER_SCHEMA_VERSION,
-        "kind": checked_kind,
-        "title": checked_title,
-        "source": checked_source,
-        "status": checked_status,
-        "promotion_required": bool(promotion_required),
-        "does_not_establish": _live_nonclaims(),
-    }
-    optional = {
-        "thread_id": checked_thread_id,
-        "worker_id": checked_worker_id,
-        "repo": checked_repo,
-        "task_id": checked_task_id,
-        "note": checked_note,
-    }
-    payload.update({key: value for key, value in optional.items() if value is not None})
+    if supersedes_event_id is not None and supersedes_event_id < 1:
+        raise StateError("supersedes_event_id must be a positive integer")
+    if checked_kind != "candidate_task" and (
+        checked_candidate_id is not None or supersedes_event_id is not None
+    ):
+        raise StateError(
+            "candidate_id and supersedes_event_id are only valid for candidate_task"
+        )
+
     with store.immediate() as connection:
+        if checked_kind == "candidate_task":
+            rows = connection.execute(
+                """
+                SELECT event_id, payload_json, created_at
+                FROM events
+                WHERE event_type=?
+                ORDER BY event_id ASC
+                """,
+                (LIVE_REGISTER_EVENT_TYPE,),
+            ).fetchall()
+            existing = [_decode_live_row(row) for row in rows]
+            candidates = [
+                item
+                for item in existing
+                if item["record"].get("kind") == "candidate_task"
+            ]
+            if supersedes_event_id is not None:
+                previous = next(
+                    (
+                        item
+                        for item in candidates
+                        if int(item["event_id"]) == supersedes_event_id
+                    ),
+                    None,
+                )
+                if previous is None:
+                    raise StateError(
+                        "supersedes_event_id must reference a candidate_task event: "
+                        f"{supersedes_event_id}"
+                    )
+                if any(
+                    item["record"].get("supersedes_event_id") == supersedes_event_id
+                    for item in candidates
+                ):
+                    raise StateError(
+                        f"candidate event {supersedes_event_id} is already superseded"
+                    )
+                inherited_id = _candidate_identity(previous)
+                if checked_candidate_id is not None and checked_candidate_id != inherited_id:
+                    raise StateError(
+                        "candidate_id must match the superseded candidate identity"
+                    )
+                previous_repo = previous["record"].get("repo")
+                if checked_repo is not None and checked_repo != previous_repo:
+                    raise StateError("candidate repo cannot change across supersession")
+                checked_repo = checked_repo or previous_repo
+                if checked_task_id is None:
+                    checked_task_id = previous["record"].get("task_id")
+                if promotion_required is None:
+                    promotion_required = bool(
+                        previous["record"].get("promotion_required", False)
+                    )
+                if checked_status is None:
+                    checked_status = _validate_status(
+                        checked_kind, str(previous["record"].get("status"))
+                    )
+                checked_candidate_id = inherited_id
+            elif checked_candidate_id is not None and any(
+                _candidate_identity(item) == checked_candidate_id for item in candidates
+            ):
+                raise StateError(
+                    "an existing candidate_id requires supersedes_event_id pointing to "
+                    "its current event"
+                )
+            checked_candidate_id = checked_candidate_id or _generated_candidate_id()
+
+        checked_status = checked_status or _validate_status(checked_kind, None)
+        payload: dict[str, Any] = {
+            "schema_version": LIVE_REGISTER_SCHEMA_VERSION,
+            "kind": checked_kind,
+            "title": checked_title,
+            "source": checked_source,
+            "status": checked_status,
+            "promotion_required": bool(promotion_required),
+            "does_not_establish": _live_nonclaims(),
+        }
+        optional = {
+            "thread_id": checked_thread_id,
+            "worker_id": checked_worker_id,
+            "repo": checked_repo,
+            "task_id": checked_task_id,
+            "candidate_id": checked_candidate_id,
+            "supersedes_event_id": supersedes_event_id,
+            "note": checked_note,
+        }
+        payload.update({key: value for key, value in optional.items() if value is not None})
         created_at = legacy.utc_now()
         cursor = connection.execute(
             "INSERT INTO events(run_id,event_type,payload_json,created_at) VALUES(?,?,?,?)",
@@ -228,6 +361,24 @@ def _load_live_record(store: StateStore, event_id: int) -> dict[str, Any]:
     return _decode_live_row(row)
 
 
+def _load_all_candidate_records(store: StateStore) -> list[dict[str, Any]]:
+    with store.connect() as connection:
+        rows = connection.execute(
+            """
+            SELECT event_id, payload_json, created_at
+            FROM events
+            WHERE event_type=?
+            ORDER BY event_id ASC
+            """,
+            (LIVE_REGISTER_EVENT_TYPE,),
+        ).fetchall()
+    return [
+        item
+        for item in (_decode_live_row(row) for row in rows)
+        if item["record"].get("kind") == "candidate_task"
+    ]
+
+
 def _active_latest(
     records: list[dict[str, Any]], key_fields: tuple[str, ...]
 ) -> list[dict[str, Any]]:
@@ -271,11 +422,11 @@ def _summary(records: list[dict[str, Any]]) -> dict[str, Any]:
         [item for item in records if item["record"].get("kind") == "focus_override"],
         ("repo",),
     )
+    candidate_projection = _candidate_projection(records)
     open_candidates = [
         item
-        for item in records
-        if item["record"].get("kind") == "candidate_task"
-        and item["record"].get("status") in ACTIVE_LIVE_STATUSES
+        for item in candidate_projection["latest"]
+        if item["record"].get("status") in ACTIVE_LIVE_STATUSES
     ]
     promotion_required = [
         item for item in open_candidates if item["record"].get("promotion_required") is True
@@ -285,10 +436,15 @@ def _summary(records: list[dict[str, Any]]) -> dict[str, Any]:
         "active_thread_focus_count": len(active_thread_focus),
         "active_focus_override_count": len(active_focus_overrides),
         "open_candidate_count": len(open_candidates),
+        "candidate_history_count": candidate_projection["history_count"],
+        "superseded_candidate_event_count": candidate_projection[
+            "superseded_event_count"
+        ],
         "promotion_required_count": len(promotion_required),
         "active_thread_focus": active_thread_focus,
         "active_focus_overrides": active_focus_overrides,
         "open_candidates": open_candidates,
+        "latest_candidates": candidate_projection["latest"],
         "promotion_required": promotion_required,
     }
 
@@ -503,6 +659,8 @@ def _suggested_task_json(
         "metadata": {
             "source": "bureau_live_register",
             "live_register_event_id": event["event_id"],
+            "live_register_candidate_id": payload.get("candidate_id")
+            or _legacy_candidate_id(int(event["event_id"])),
             "live_register_created_at": event["created_at"],
             "live_register_source": payload.get("source"),
             "promotion_required_from_event": payload.get("promotion_required", False),
@@ -532,6 +690,11 @@ def write_live_promote_plan(
     payload = event["record"]
     if payload.get("kind") != "candidate_task":
         raise StateError("only candidate_task live-register events can be promoted")
+    projection = _candidate_projection(_load_all_candidate_records(store))
+    if not any(int(item["event_id"]) == event_id for item in projection["latest"]):
+        raise StateError("cannot promote a superseded candidate_task event")
+    if payload.get("status") not in ACTIVE_LIVE_STATUSES:
+        raise StateError("only an open candidate_task event can be promoted")
     candidate_task_id = task_id or f"{initiative}-{_slug_title(payload['title'])}"
     if not legacy.ID_RE.fullmatch(candidate_task_id):
         raise StateError("task_id must match Bureau task id syntax")
@@ -614,6 +777,8 @@ def live_register_export(
             "worker_id": payload.get("worker_id"),
             "title": payload.get("title"),
             "promotion_required": payload.get("promotion_required", False),
+            "candidate_id": payload.get("candidate_id"),
+            "supersedes_event_id": payload.get("supersedes_event_id"),
             "payload_digest": hashlib.sha256(
                 legacy.canonical_json(payload).encode("utf-8")
             ).hexdigest(),

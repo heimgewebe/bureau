@@ -187,3 +187,381 @@ def test_live_promote_plan_requires_review_and_applies_task_file(
     assert (root / "registry/tasks/BUR-TEST-001-T999.json").is_file()
     queue = json.loads((root / "registry/queue.json").read_text())
     assert "BUR-TEST-001-T999" not in queue["lanes"]["now"]
+
+
+def test_candidate_supersession_projects_latest_and_preserves_history(
+    registry_factory, tmp_path,
+):
+    _root, registry, store = setup_live(registry_factory, tmp_path)
+    first = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        repo="repo.alpha",
+        title="Original candidate",
+        source="chat",
+        promotion_required=True,
+    )
+
+    corrected = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        title="Corrected candidate",
+        source="chat",
+        supersedes_event_id=first["event_id"],
+    )
+
+    assert first["record"]["candidate_id"].startswith("candidate-")
+    assert corrected["record"]["candidate_id"] == first["record"]["candidate_id"]
+    assert corrected["record"]["supersedes_event_id"] == first["event_id"]
+    assert corrected["record"]["repo"] == "repo.alpha"
+    assert corrected["record"]["promotion_required"] is True
+
+    listed = live_register_list(store, kind="candidate_task")
+    assert len(listed["records"]) == 2
+    assert listed["summary"]["candidate_history_count"] == 2
+    assert listed["summary"]["superseded_candidate_event_count"] == 1
+    assert listed["summary"]["open_candidate_count"] == 1
+    assert listed["summary"]["open_candidates"][0]["event_id"] == corrected["event_id"]
+    assert listed["summary"]["open_candidates"][0]["record"]["title"] == "Corrected candidate"
+
+
+def test_candidate_close_event_removes_candidate_from_open_projection(
+    registry_factory, tmp_path,
+):
+    _root, registry, store = setup_live(registry_factory, tmp_path)
+    first = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        repo="repo.alpha",
+        title="Candidate to close",
+        promotion_required=True,
+    )
+    closed = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        repo="repo.alpha",
+        title="Candidate closed after review",
+        status="closed",
+        supersedes_event_id=first["event_id"],
+    )
+
+    corrected_closed = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        title="Closed candidate typo corrected",
+        supersedes_event_id=closed["event_id"],
+    )
+    assert corrected_closed["record"]["status"] == "closed"
+
+    listed = live_register_list(store, kind="candidate_task")
+    assert listed["summary"]["open_candidate_count"] == 0
+    assert listed["summary"]["promotion_required_count"] == 0
+    assert (
+        listed["summary"]["latest_candidates"][0]["event_id"]
+        == corrected_closed["event_id"]
+    )
+    assert listed["summary"]["latest_candidates"][0]["record"]["status"] == "closed"
+
+    from bureau.live_register import write_live_promote_plan
+
+    with pytest.raises(StateError, match="only an open candidate_task"):
+        write_live_promote_plan(
+            registry,
+            store,
+            event_id=corrected_closed["event_id"],
+            initiative="BUR-TEST-001",
+            task_id="BUR-TEST-001-T997",
+            path=str(tmp_path / "closed-plan.json"),
+        )
+
+
+def test_candidate_supersession_validation_fails_closed(registry_factory, tmp_path):
+    _root, registry, store = setup_live(registry_factory, tmp_path)
+    focus = live_register_record(
+        registry,
+        store,
+        kind="thread_focus",
+        thread_id="chat-focus",
+        repo="repo.alpha",
+        title="Not a candidate",
+    )
+    first = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        candidate_id="candidate.alpha",
+        repo="repo.alpha",
+        title="Candidate alpha",
+    )
+
+    with pytest.raises(StateError, match="only valid for candidate_task"):
+        live_register_record(
+            registry,
+            store,
+            kind="thread_focus",
+            thread_id="chat-invalid",
+            repo="repo.alpha",
+            title="Invalid candidate identity",
+            candidate_id="candidate.invalid",
+        )
+    with pytest.raises(StateError, match="must reference a candidate_task"):
+        live_register_record(
+            registry,
+            store,
+            kind="candidate_task",
+            repo="repo.alpha",
+            title="Wrong predecessor kind",
+            supersedes_event_id=focus["event_id"],
+        )
+    with pytest.raises(StateError, match="existing candidate_id requires"):
+        live_register_record(
+            registry,
+            store,
+            kind="candidate_task",
+            candidate_id="candidate.alpha",
+            repo="repo.alpha",
+            title="Duplicate identity without predecessor",
+        )
+    with pytest.raises(StateError, match="must match the superseded"):
+        live_register_record(
+            registry,
+            store,
+            kind="candidate_task",
+            candidate_id="candidate.other",
+            repo="repo.alpha",
+            title="Mismatched correction",
+            supersedes_event_id=first["event_id"],
+        )
+    with pytest.raises(StateError, match="repo cannot change"):
+        live_register_record(
+            registry,
+            store,
+            kind="candidate_task",
+            repo="repo.beta",
+            title="Cross-repository correction",
+            supersedes_event_id=first["event_id"],
+        )
+
+    corrected = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        candidate_id="candidate.alpha",
+        repo="repo.alpha",
+        title="Valid correction",
+        supersedes_event_id=first["event_id"],
+    )
+    assert corrected["record"]["candidate_id"] == "candidate.alpha"
+
+    with pytest.raises(StateError, match="already superseded"):
+        live_register_record(
+            registry,
+            store,
+            kind="candidate_task",
+            repo="repo.alpha",
+            title="Competing correction",
+            supersedes_event_id=first["event_id"],
+        )
+
+
+def test_candidate_supersession_supports_legacy_event_identity(registry_factory, tmp_path):
+    _root, registry, store = setup_live(registry_factory, tmp_path)
+    legacy_payload = {
+        "schema_version": 1,
+        "kind": "candidate_task",
+        "title": "Legacy candidate",
+        "source": "legacy-test",
+        "status": "observed",
+        "promotion_required": True,
+        "does_not_establish": ["queue_truth"],
+    }
+    with store.immediate() as connection:
+        cursor = connection.execute(
+            "INSERT INTO events(run_id,event_type,payload_json,created_at) VALUES(?,?,?,?)",
+            (None, "live-register", json.dumps(legacy_payload), "2026-07-10T00:00:00Z"),
+        )
+        legacy_event_id = int(cursor.lastrowid)
+
+    corrected = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        title="Legacy candidate corrected",
+        supersedes_event_id=legacy_event_id,
+    )
+
+    assert corrected["record"]["candidate_id"] == f"candidate-event-{legacy_event_id}"
+    listed = live_register_list(store, kind="candidate_task")
+    assert listed["summary"]["open_candidate_count"] == 1
+    assert listed["summary"]["open_candidates"][0]["event_id"] == corrected["event_id"]
+
+
+def test_live_promote_plan_rejects_superseded_candidate_event(
+    registry_factory, tmp_path,
+):
+    _root, registry, store = setup_live(registry_factory, tmp_path)
+    first = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        repo="repo.alpha",
+        title="Stale promotion candidate",
+    )
+    latest = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        repo="repo.alpha",
+        title="Current promotion candidate",
+        supersedes_event_id=first["event_id"],
+    )
+
+    from bureau.live_register import write_live_promote_plan
+
+    with pytest.raises(StateError, match="superseded candidate_task"):
+        write_live_promote_plan(
+            registry,
+            store,
+            event_id=first["event_id"],
+            initiative="BUR-TEST-001",
+            task_id="BUR-TEST-001-T998",
+            path=str(tmp_path / "stale-plan.json"),
+        )
+
+    current = write_live_promote_plan(
+        registry,
+        store,
+        event_id=latest["event_id"],
+        initiative="BUR-TEST-001",
+        task_id="BUR-TEST-001-T999",
+        path=str(tmp_path / "current-plan.json"),
+    )
+    assert (
+        current["plan"]["task_json"]["metadata"]["live_register_candidate_id"]
+        == latest["record"]["candidate_id"]
+    )
+
+
+def test_live_register_cli_corrects_and_closes_candidate(
+    registry_factory, tmp_path, capsys,
+):
+    root, _registry, _store = setup_live(registry_factory, tmp_path)
+    state_root = tmp_path / "candidate-cli-state"
+
+    rc = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(state_root),
+            "--json",
+            "live-register",
+            "--kind",
+            "candidate_task",
+            "--candidate-id",
+            "candidate.cli",
+            "--repo",
+            "repo.alpha",
+            "--title",
+            "CLI candidate",
+            "--promotion-required",
+        ]
+    )
+    assert rc == 0
+    first = json.loads(capsys.readouterr().out)
+
+    rc = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(state_root),
+            "--json",
+            "live-register",
+            "--kind",
+            "candidate_task",
+            "--title",
+            "CLI candidate closed",
+            "--status",
+            "closed",
+            "--no-promotion-required",
+            "--supersedes-event-id",
+            str(first["event_id"]),
+        ]
+    )
+    assert rc == 0
+    closed = json.loads(capsys.readouterr().out)
+    assert closed["record"]["candidate_id"] == "candidate.cli"
+    assert closed["record"]["repo"] == "repo.alpha"
+    assert closed["record"]["promotion_required"] is False
+
+    rc = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-root",
+            str(state_root),
+            "--json",
+            "live-list",
+            "--kind",
+            "candidate_task",
+        ]
+    )
+    assert rc == 0
+    listed = json.loads(capsys.readouterr().out)
+    assert listed["summary"]["candidate_history_count"] == 2
+    assert listed["summary"]["open_candidate_count"] == 0
+
+
+def test_live_promote_plan_uses_full_candidate_history_beyond_list_limit(
+    registry_factory, tmp_path,
+):
+    _root, registry, store = setup_live(registry_factory, tmp_path)
+    candidate = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        repo="repo.alpha",
+        title="Old but current candidate",
+    )
+    filler = {
+        "schema_version": 1,
+        "kind": "thread_focus",
+        "title": "Filler",
+        "source": "test",
+        "status": "closed",
+        "promotion_required": False,
+        "thread_id": "filler",
+        "repo": "repo.alpha",
+        "does_not_establish": ["queue_truth"],
+    }
+    with store.immediate() as connection:
+        connection.executemany(
+            "INSERT INTO events(run_id,event_type,payload_json,created_at) VALUES(?,?,?,?)",
+            [
+                (
+                    None,
+                    "live-register",
+                    json.dumps({**filler, "thread_id": f"filler-{index}"}),
+                    "2026-07-10T00:00:00Z",
+                )
+                for index in range(501)
+            ],
+        )
+
+    from bureau.live_register import write_live_promote_plan
+
+    plan = write_live_promote_plan(
+        registry,
+        store,
+        event_id=candidate["event_id"],
+        initiative="BUR-TEST-001",
+        task_id="BUR-TEST-001-T996",
+        path=str(tmp_path / "old-current-plan.json"),
+    )
+    assert plan["plan"]["event_id"] == candidate["event_id"]

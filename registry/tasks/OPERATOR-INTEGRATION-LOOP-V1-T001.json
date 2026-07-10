@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T001",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "Add cost-aware fallback patch executors",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 370
+  },
+  "goal": "Extend the Captain executor registry with a policy-bound fallback lane in which local AI and Gemini Flash via AGY generate bounded patch artifacts, while Grabowski remains the only audited mutation surface and Claude Code or Codex are escalation backends.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/bureau",
+      "host:heim-pc"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "This task mutates the Grabowski repository. Later model dispatch and patch application remain separately gated effects."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "capacity",
+      "isolation": "namespace",
+      "amount": 1
+    },
+    {
+      "resource": "agent.gemini",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "agent-routing"
+  ],
+  "acceptance": [
+    {
+      "id": "artifact-contract",
+      "assertion": "Every fallback backend returns a bounded patch artifact with base commit or file hash, changed paths, assumptions, proposed checks, backend identity, elapsed time and estimated or measured cost."
+    },
+    {
+      "id": "authority-boundary",
+      "assertion": "Local AI, Gemini Flash, Claude Code and Codex receive no independent push, merge, deploy, queue or runtime authority; Grabowski validates and applies accepted patches through audited operations."
+    },
+    {
+      "id": "routing-order",
+      "assertion": "The registry supports deterministic/no-model first, then local model, Gemini Flash via AGY and quality escalation, with risk, privacy, context size and retry limits recorded."
+    },
+    {
+      "id": "fail-closed",
+      "assertion": "Malformed, oversized, stale-base, secret-bearing or unverifiable artifacts are rejected without mutation and repeated backend failure escalates or stops rather than looping."
+    },
+    {
+      "id": "receipts-and-tests",
+      "assertion": "Tests cover backend selection, unavailable backends, cost ceiling, sensitive-context exclusion, stale patch rejection, escalation and unchanged high-impact approval gates."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T07:31:00+02:00",
+    "source_plan": "docs/plans/operator-integration-loop-v1.md",
+    "related_tasks": [
+      "CABINET-GEMINI-MAINT-V1-T005",
+      "BUREAU-DETERMINISTIC-OPS-V1-T001"
+    ],
+    "does_not_establish": [
+      "backend_quality_order",
+      "gemini_flash_mutation_authority",
+      "local_model_mutation_authority",
+      "automatic_merge",
+      "automatic_deploy",
+      "runtime_correctness"
+    ]
+  },
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T016"
+  ]
+}

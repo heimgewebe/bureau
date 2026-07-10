@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T007",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "Measure fallback routes and nightly diagnosis in Vibe-Lab",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 430
+  },
+  "goal": "Run comparable Vibe-Lab experiments over deterministic Grabowski work, local AI, Gemini Flash via AGY and quality-escalation backends, and evaluate whether the nightly diagnosis loop improves decisions without excessive cost, noise or false confidence.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/vibe-lab",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/vibe-lab",
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/bureau",
+      "host:heim-pc"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.vibe-lab",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "capacity",
+      "isolation": "namespace",
+      "amount": 1
+    },
+    {
+      "resource": "agent.gemini",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "agent-routing"
+  ],
+  "acceptance": [
+    {
+      "id": "comparable-task-classes",
+      "assertion": "Runs bind task class, risk, context size, baseline commit, expected checks and diff-size band so cheaper and stronger backends are not compared on materially different work."
+    },
+    {
+      "id": "route-metrics",
+      "assertion": "Each route records marginal monetary cost where available, local compute time, elapsed time, retries, patch size, validation result, review findings, rework, escaped defects and operator intervention."
+    },
+    {
+      "id": "external-observation",
+      "assertion": "Agent-authored tests or self-assessment are not independent proof; evaluation includes existing tests, CI, diff-bound review, operator notes or patch-evaluation evidence."
+    },
+    {
+      "id": "nightly-value-metrics",
+      "assertion": "The nightly cycle is scored for actionable unique findings, duplicate/noise rate, false positives, missed known failures, runtime, resource use and whether the morning digest changes an operator decision."
+    },
+    {
+      "id": "explicit-decision",
+      "assertion": "The experiment concludes with promote, pilot, defer or drop per task class and route, preserving uncertainty and an off-ramp rather than declaring one universal best backend."
+    },
+    {
+      "id": "no-auto-promotion",
+      "assertion": "No executor order, schedule or mutation authority changes automatically from Vibe-Lab output; promotion requires a reviewed registry or policy change."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T07:31:00+02:00",
+    "source_plan": "docs/plans/operator-integration-loop-v1.md",
+    "measurement_reuse": [
+      "RPU-V1-T012",
+      "RPU-V1-T021"
+    ],
+    "scope_exclusions": [
+      "gpu_benchmark",
+      "embedding_benchmark",
+      "local_model_infrastructure_buildout"
+    ],
+    "does_not_establish": [
+      "universal_backend_superiority",
+      "statistical_generality",
+      "automatic_route_promotion",
+      "automatic_schedule_enablement",
+      "runtime_correctness",
+      "merge_readiness"
+    ]
+  },
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T005",
+    "OPERATOR-INTEGRATION-LOOP-V1-T001",
+    "OPERATOR-INTEGRATION-LOOP-V1-T002",
+    "OPERATOR-INTEGRATION-LOOP-V1-T006"
+  ]
+}

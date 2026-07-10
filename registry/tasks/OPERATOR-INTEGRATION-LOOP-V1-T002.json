@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T002",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "Add WGX quick and full validation receipts",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 380
+  },
+  "goal": "Extend the existing wgx validate front door with quick and full profiles plus stable JSON receipts, while delegating actual checks to repository-native validation commands instead of duplicating CI logic.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/wgx",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/wgx",
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.wgx",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "existing-command-preserved",
+      "assertion": "The implementation evolves wgx validate rather than introducing a competing wgx verify or repo-wide duplicate command family."
+    },
+    {
+      "id": "profiles",
+      "assertion": "A quick profile targets bounded agent feedback and a full profile targets merge-grade local validation; repositories may declare unsupported or CI-only checks explicitly."
+    },
+    {
+      "id": "native-frontdoors",
+      "assertion": "WGX invokes declared repository-native commands such as make, just, cargo, pytest or npm front doors and does not reimplement their test semantics."
+    },
+    {
+      "id": "receipt-contract",
+      "assertion": "JSON output records repository, commit, dirty state, profile, invoked checks, durations, result, skipped checks, environment identity and receipt hash."
+    },
+    {
+      "id": "fleet-proof",
+      "assertion": "At least three representative core repositories prove deterministic command discovery, timeout behavior, redaction and green/red receipt output."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T07:31:00+02:00",
+    "source_plan": "docs/plans/operator-integration-loop-v1.md",
+    "does_not_establish": [
+      "repository_correctness",
+      "ci_replacement",
+      "merge_readiness_from_quick_profile",
+      "test_sufficiency",
+      "runtime_correctness"
+    ]
+  },
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T009"
+  ]
+}

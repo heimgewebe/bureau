@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T005",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "Unify Bureau ready selection and live claims",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 410
+  },
+  "goal": "Connect deterministic ready eligibility, live thread focus, atomic claims, Grabowski resource leases, repository and PR conflict checks, isolated worktrees and durable closeout receipts into one collision-safe task pickup path.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "eligibility-chain",
+      "assertion": "Task pickup requires registry state ready, satisfied dependencies, valid queue placement, no terminal state and no hard PR, task, repository or resource conflict."
+    },
+    {
+      "id": "atomic-claim-and-lease",
+      "assertion": "The pickup path atomically records a live claim and acquires required Grabowski resource leases, or fails without leaving a partial claim."
+    },
+    {
+      "id": "gitless-transient-state",
+      "assertion": "Claim, heartbeat and release state remain outside Git and do not require a Bureau PR, while durable task definition, promotion and completion evidence remain reviewable registry truth."
+    },
+    {
+      "id": "worktree-and-pr-binding",
+      "assertion": "A claimed repository mutation task receives one isolated worktree and any working PR binds exactly one valid task; ambiguous or conflicting states fail closed."
+    },
+    {
+      "id": "recovery-and-closeout",
+      "assertion": "Expired or lost claims reconcile without duplicate execution, and successful closeout writes typed evidence, releases leases and removes terminal tasks from active lanes."
+    },
+    {
+      "id": "ready-supply-visible",
+      "assertion": "Status projection distinguishes no eligible work, eligible unclaimed work, claimed work and blocked work, so a low ready count is visible rather than silently treated as executor failure."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T07:31:00+02:00",
+    "source_plan": "docs/plans/operator-integration-loop-v1.md",
+    "live_gap": "The registry currently contains only one task in state ready despite many planned tasks; readiness, live focus and runtime leases are implemented in separate surfaces.",
+    "related_tasks": [
+      "BUREAU-DETERMINISTIC-OPS-V1-T002",
+      "BUREAU-DETERMINISTIC-OPS-V1-T003",
+      "BUREAU-DETERMINISTIC-OPS-V1-T004",
+      "BUREAU-DETERMINISTIC-OPS-V1-T005"
+    ],
+    "does_not_establish": [
+      "automatic_task_promotion",
+      "automatic_dispatch",
+      "claim_from_chat_focus",
+      "merge_readiness",
+      "runtime_correctness"
+    ]
+  },
+  "depends_on": [
+    "BUREAU-LIVE-REGISTER-V1-T005"
+  ]
+}

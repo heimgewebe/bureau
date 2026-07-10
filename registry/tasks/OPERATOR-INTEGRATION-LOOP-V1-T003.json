@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T003",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "Wire a minimal operator event outbox",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 390
+  },
+  "goal": "Implement a bounded append-only outbox for high-value operator lifecycle events and connect initial Grabowski and agent producers before deciding whether a persistent Chronik or Plexer service is justified.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik",
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.chronik",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "small-event-contract",
+      "assertion": "The outbox accepts only the reviewed high-value event allowlist and requires event id, type, timestamp, source, provenance, redaction class and related task, receipt or runtime reference where applicable."
+    },
+    {
+      "id": "append-only-local-first",
+      "assertion": "Producers can append atomically to a local bounded outbox without requiring a network service, and partial or malformed writes fail closed."
+    },
+    {
+      "id": "initial-producers",
+      "assertion": "At least Grabowski durable-task lifecycle and one agent-session hook emit redacted schema-valid events without storing prompts, diffs, secrets or routine tool chatter."
+    },
+    {
+      "id": "real-consumer",
+      "assertion": "At least one consumer such as a morning digest, Heimlern input or Chronik query reads the event stream and demonstrates value beyond Git, Bureau receipts and source logs."
+    },
+    {
+      "id": "service-decision-deferred",
+      "assertion": "Chronik or Plexer persistence remains a separate evidence-based decision; no service is created merely to satisfy this task."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T07:31:00+02:00",
+    "source_plan": "docs/plans/operator-integration-loop-v1.md",
+    "related_tasks": [
+      "BUREAU-LIVE-REGISTER-V1-T006"
+    ],
+    "does_not_establish": [
+      "chronik_service_required",
+      "plexer_service_required",
+      "task_truth",
+      "command_authority",
+      "complete_observability",
+      "runtime_correctness"
+    ]
+  },
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T006"
+  ]
+}

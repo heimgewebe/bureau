@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T018",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Resolve short Restic backup summary IDs safely",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 20
@@ -99,7 +99,11 @@
         "live proof is read-only or synthetic",
         "merge requires current-head diff review and green Cabinet CI",
         "Bureau execution policy is autonomous only within the already approved repository-only scope"
-      ]
+      ],
+      "consumed": true,
+      "consumed_run_id": "BUR-RUN-20260710T180317Z-ff9b6b3875",
+      "consumed_at": "2026-07-10T18:14:45.685993Z",
+      "remaining_uses": 0
     },
     "authorized_effects": [
       "isolated Cabinet worktree creation",
@@ -115,6 +119,52 @@
       "service stop, start, restart or configuration mutation",
       "source-data deletion or repository rename",
       "publication of private tag, snapshot id, endpoint, credential path or private contents"
-    ]
+    ],
+    "completion": {
+      "schema_version": 1,
+      "status": "verified",
+      "cabinet_pr": "heimgewebe/cabinet#108",
+      "reviewed_head": "4b861bb8660e605819f2384113f63e6376944f15",
+      "merge_commit": "8ca544a8c00076aafd2d738fd6361ee6f6dbde3d",
+      "merged_at": "2026-07-10T18:13:27Z",
+      "diff_sha256": "d6d0f10f77a66b9aa92a69a3b9152a259f2efff2dee917d8391fa1049b31e7af",
+      "review_evidence_sha256": "627ef5ae85990c6d870ecafb0a4b335b162b3037f8c9196156da916560182f49",
+      "bureau_run_id": "BUR-RUN-20260710T180317Z-ff9b6b3875",
+      "bureau_receipt_sha256": "aa7685d5b939c46b99903434143bdca8bbaf829f0a89b10dfb4ddbb986da9a33",
+      "focused_tests": 37,
+      "repository_tests": 345,
+      "github_pr_checks": 6,
+      "main_ci": "pass",
+      "synthetic_proof": {
+        "summary_length": 8,
+        "resolved_length": 64,
+        "prefix_bound": true,
+        "exact_full_id": true,
+        "backup_or_restore_executed": false
+      },
+      "boundaries": {
+        "new_private_backup": false,
+        "real_private_restore": false,
+        "snapshot_deleted": false,
+        "retention_mutated": false,
+        "service_mutated": false,
+        "source_deleted": false
+      }
+    },
+    "verification": {
+      "verified_at": "2026-07-10T18:14:45.685993Z",
+      "run_id": "BUR-RUN-20260710T180317Z-ff9b6b3875",
+      "receipt_sha256": "aa7685d5b939c46b99903434143bdca8bbaf829f0a89b10dfb4ddbb986da9a33",
+      "acceptance_ids": [
+        "short-id-resolution",
+        "full-id-direct",
+        "fail-closed",
+        "tests",
+        "live-safe-proof"
+      ],
+      "task_sha256": "8c329d9c4fab317dad57fa0e94accbb282894af4a694f0b8d5de1398273578ac",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    },
+    "verification_note": "Restic 0.12.1 shortened summary IDs are resolved only through one unique full tagged ID with prefix equality. All ambiguity stops before restore; no new private backup or real restore was executed."
   }
 }

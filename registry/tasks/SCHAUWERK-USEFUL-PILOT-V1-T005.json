@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
-  "state": "planned",
+  "state": "ready",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -37,13 +37,23 @@
     "does_not_establish": [
       "implementation_before_merge",
       "provider_mutation_authority"
-    ]
+    ],
+    "release_evidence": {
+      "released_at": "2026-07-10T21:50:42Z",
+      "predecessor_task": "SCHAUWERK-USEFUL-PILOT-V1-T004",
+      "predecessor_state": "verified",
+      "predecessor_task_sha256": "a4dd7e2aaba644f06270a996390e4eaa6d480fe695a54954aa2d7b6b56089e5c",
+      "predecessor_closeout_pr": "heimgewebe/bureau#407",
+      "predecessor_closeout_merge": "3377be61843acb90c34ebdfe99eec9c8768e0ca8",
+      "scope": "queue_release_only",
+      "implementation_authorized": false
+    }
   },
   "id": "SCHAUWERK-USEFUL-PILOT-V1-T005",
   "title": "SW-007 \u2014 Complete education variants and offline output",
   "goal": "Extend Learning View into teacher, projection, assignment, student, presentation and offline variants without personal data.",
   "priority": {
-    "lane": "later",
+    "lane": "now",
     "rank": 30
   },
   "acceptance": [

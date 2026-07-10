@@ -270,9 +270,12 @@ def live_register_record(
                         previous["record"].get("promotion_required", False)
                     )
                 if checked_status is None:
-                    checked_status = _validate_status(
-                        checked_kind, str(previous["record"].get("status"))
-                    )
+                    previous_status = previous["record"].get("status")
+                    if not isinstance(previous_status, str) or not previous_status.strip():
+                        raise StateError(
+                            f"candidate event {supersedes_event_id} is missing required status"
+                        )
+                    checked_status = _validate_status(checked_kind, previous_status)
                 checked_candidate_id = inherited_id
             elif checked_candidate_id is not None and any(
                 _candidate_identity(item) == checked_candidate_id for item in candidates

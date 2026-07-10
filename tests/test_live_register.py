@@ -401,6 +401,46 @@ def test_candidate_supersession_supports_legacy_event_identity(registry_factory,
     assert listed["summary"]["open_candidates"][0]["event_id"] == corrected["event_id"]
 
 
+def test_candidate_supersession_reports_missing_legacy_status(
+    registry_factory, tmp_path,
+):
+    _root, registry, store = setup_live(registry_factory, tmp_path)
+    malformed_payload = {
+        "schema_version": 1,
+        "kind": "candidate_task",
+        "title": "Malformed legacy candidate",
+        "source": "legacy-test",
+        "promotion_required": True,
+        "does_not_establish": ["queue_truth"],
+    }
+    with store.immediate() as connection:
+        cursor = connection.execute(
+            "INSERT INTO events(run_id,event_type,payload_json,created_at) VALUES(?,?,?,?)",
+            (
+                None,
+                "live-register",
+                json.dumps(malformed_payload),
+                "2026-07-10T00:00:00Z",
+            ),
+        )
+        event_id = int(cursor.lastrowid)
+
+    with pytest.raises(
+        StateError, match=rf"candidate event {event_id} is missing required status"
+    ):
+        live_register_record(
+            registry,
+            store,
+            kind="candidate_task",
+            title="Attempted correction",
+            supersedes_event_id=event_id,
+        )
+
+    listed = live_register_list(store, kind="candidate_task")
+    assert listed["summary"]["candidate_history_count"] == 1
+    assert listed["records"][0]["event_id"] == event_id
+
+
 def test_live_promote_plan_rejects_superseded_candidate_event(
     registry_factory, tmp_path,
 ):

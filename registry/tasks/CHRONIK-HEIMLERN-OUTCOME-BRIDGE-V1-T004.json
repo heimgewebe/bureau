@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "id": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T004",
+  "initiative": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1",
+  "title": "Wire Bureau review and Leitstand display boundary",
+  "state": "planned",
+  "goal": "Register how heimlern proposals from Chronik outcomes move into Bureau review status and later Leitstand read-only display without making either surface the source of outcome truth.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.leitstand",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.chronik",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.heimlern",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "bureau-gate",
+      "assertion": "Bureau records proposal review state and follow-up decisions without storing raw Chronik outcome history."
+    },
+    {
+      "id": "leitstand-boundary",
+      "assertion": "Leitstand projection, if added, is read-only and displays source digest, freshness and proposal-only boundary language."
+    },
+    {
+      "id": "no-authority-collapse",
+      "assertion": "The design preserves Chronik history authority, Bureau task truth, heimlern proposal-only role and Grabowski execution authority."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T00:00:00Z",
+    "source_decision": "Chronik selected as primary integration organ for heimlern because it owns append-only historical outcomes.",
+    "plan_path": "docs/plans/chronik-heimlern-outcome-bridge-v1.md",
+    "does_not_establish": [
+      "auto_apply_permission",
+      "routing_policy_superiority",
+      "production_sample_sufficiency",
+      "runtime_mutation",
+      "merge_readiness"
+    ],
+    "task_role": "t004"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 80
+  },
+  "depends_on": [
+    "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T003"
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1",
+  "title": "Chronik to heimlern outcome bridge",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Make real operator routing outcomes available to heimlern through Chronik as append-only historical transport while keeping heimlern offline and proposal-only.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/chronik-heimlern-outcome-bridge-v1.md"
+  },
+  "completion": [
+    "Chronik outcome export surface is audited before any bridge implementation claim.",
+    "A redacted operator outcome event/export contract is defined with source identity, freshness and digest fields.",
+    "heimlern can consume Chronik-shaped outcome exports in a review-only smoke and emit a report or proposal without applying policy.",
+    "Bureau records review status for heimlern proposals and Leitstand remains a read-only display candidate."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-10T00:00:00Z",
+    "source_decision": "User asked which organ should be connected for heimlern; live repo review selected Chronik as primary because it owns historical outcomes.",
+    "primary_organ": "chronik",
+    "secondary_organs": [
+      "bureau",
+      "leitstand",
+      "grabowski",
+      "heimlern"
+    ],
+    "supersedes_none": true,
+    "follows_completed_initiative": "OPERATOR-LEARNING-AXIS-V1",
+    "does_not_establish": [
+      "production_routing_readiness",
+      "auto_apply_permission",
+      "sample_sufficiency",
+      "chronik_runtime_readiness",
+      "leitstand_projection_authority",
+      "grabowski_policy_mutation"
+    ]
+  }
+}

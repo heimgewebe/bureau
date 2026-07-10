@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau",
+      "host:heim-pc"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "systemd",
+    "grabowski"
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T001"
+  ],
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T016",
+  "title": "Decide the GPT connector probe consumer and cadence",
+  "priority": {
+    "lane": "later",
+    "rank": 380
+  },
+  "goal": "Name the actual consumer and freshness contract for the hourly GPT connector probe, then either version and retain it at a justified cadence or retire it after an external connector canary.",
+  "acceptance": [
+    {
+      "id": "consumer",
+      "assertion": "A named local or external consumer and the exact fields it consumes are evidenced, or the lane is explicitly classified unconsumed after an external canary."
+    },
+    {
+      "id": "ownership",
+      "assertion": "If retained, probe source and systemd units are versioned in a named canonical repository with release identity and drift checks."
+    },
+    {
+      "id": "cadence",
+      "assertion": "The cadence follows a documented freshness requirement instead of historical activation timing."
+    },
+    {
+      "id": "safe-retirement",
+      "assertion": "If retired, current units are captured, rollback is explicit and at least one external connector canary plus one missed-cycle observation shows no loss of readiness evidence."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T17:12:00Z",
+    "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T001",
+    "source_finding": "gpt-probe-consumer-unproven",
+    "does_not_establish": [
+      "complete_external_consumer_coverage",
+      "runtime_mutation_permission",
+      "safe_timer_disablement",
+      "probe_necessity",
+      "merge_permission"
+    ]
+  }
+}

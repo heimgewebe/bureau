@@ -3,7 +3,7 @@
   "id": "CABINET-GEMINI-MAINT-V1-T005",
   "initiative": "CABINET-GEMINI-MAINT-V1",
   "title": "Decide scheduled Gemini maintenance lane",
-  "state": "planned",
+  "state": "cancelled",
   "priority": {
     "lane": "later",
     "rank": 110
@@ -63,8 +63,23 @@
   "metadata": {
     "source_issue": "heimgewebe/bureau#254",
     "registered_at": "2026-07-08T12:10:00Z",
+    "cancelled_at": "2026-07-10T12:18:00+02:00",
+    "cancellation_reason": "The reviewed dry run was valid but low-signal, and Cabinet is being reduced to a static app-independent catalog. A recurring Gemini maintenance lane would add an unnecessary scheduler and review surface.",
+    "decision": "do_not_schedule",
+    "rationale": [
+      "The reviewed dry run produced no operationally new finding.",
+      "Deterministic catalog validation and diff-bound review cover the target role.",
+      "No recurrence, authentication or quota surface is justified."
+    ],
+    "evidence": {
+      "dry_run_task": "CABINET-GEMINI-MAINT-V1-T004",
+      "dry_run_review": "heimgewebe/cabinet:pruefung/10 Laeufe/gemini-maintenance-dry-run-review.md",
+      "catalog_migration_plan": "docs/plans/operator-ecosystem-redundancy-v1.md",
+      "operator_decision_at": "2026-07-10T12:18:00+02:00"
+    },
     "does_not_establish": [
-      "schedule_should_be_enabled",
+      "future_model_uselessness",
+      "manual_review_prohibited",
       "future_scan_quality",
       "task_approval",
       "claim_truth",

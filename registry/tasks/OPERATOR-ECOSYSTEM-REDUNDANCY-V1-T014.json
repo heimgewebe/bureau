@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Rename Cabinet repository to heimgewebe-katalog",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 330
+  },
+  "goal": "Rename the app-independent repository and migrate ecosystem references only after the external Cabinet runtime has been retired and all active consumers are known.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/cabinet",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/cabinet",
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.cabinet",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "repository-rename",
+      "assertion": "GitHub repository and local checkout use heimgewebe-katalog, with the old name retained only as a documented temporary redirect or compatibility path."
+    },
+    {
+      "id": "reference-migration",
+      "assertion": "Bureau, Grabowski, RepoBrief/Lenskit, Leitstand, Schauwerk and prominent documentation references use the new repository identity."
+    },
+    {
+      "id": "entrypoints-valid",
+      "assertion": "README, AGENTS, generated catalog and dump entrypoints resolve after the rename."
+    },
+    {
+      "id": "no-shadow-cabinet",
+      "assertion": "No active service, queue or status model continues under the old Cabinet identity."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T12:18:00+02:00",
+    "source_decision": "Cabinet is to become an app-independent Heimgewebe system catalog.",
+    "does_not_establish": [
+      "merge_permission",
+      "runtime_correctness",
+      "cleanup_permission",
+      "automatic_shutdown_permission"
+    ]
+  },
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013"
+  ]
+}

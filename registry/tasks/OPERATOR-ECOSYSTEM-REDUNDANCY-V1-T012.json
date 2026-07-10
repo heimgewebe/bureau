@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T012",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Inventory and export external Cabinet app data",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 75
+  },
+  "goal": "Inventory the live external Cabinet runtime and export any non-versioned data before app decoupling, shutdown or repository rename.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/cabinet",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/cabinet",
+      "host:heim-pc"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.cabinet",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "runtime-inventory",
+      "assertion": "Service, version, ports, data roots, configuration roots and dependent shortcuts are inventoried without exposing secrets or private runtime details in the public repository."
+    },
+    {
+      "id": "data-export",
+      "assertion": "Non-versioned conversations, notes, memories or configuration that require preservation are exported or explicitly classified as disposable."
+    },
+    {
+      "id": "integrity-manifest",
+      "assertion": "The private export has a path, timestamp, file inventory and hashes, while the public receipt is redacted."
+    },
+    {
+      "id": "consumer-check",
+      "assertion": "Known local and remote consumers are classified before shutdown authority is requested."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T12:18:00+02:00",
+    "source_decision": "Cabinet is to become an app-independent Heimgewebe system catalog.",
+    "does_not_establish": [
+      "merge_permission",
+      "runtime_correctness",
+      "cleanup_permission",
+      "automatic_shutdown_permission"
+    ]
+  },
+  "depends_on": []
+}

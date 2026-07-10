@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "service.private_backup_repository",
+  "type": "external",
+  "metadata": {
+    "role": "Encrypted private backup repository used through an authenticated local handoff; concrete host, endpoint and credential binding remain outside public registries.",
+    "data_classification": "private",
+    "does_not_establish": [
+      "concrete_host_identity",
+      "endpoint_disclosure",
+      "credential_access",
+      "repository_health",
+      "retention_permission",
+      "forget_permission",
+      "prune_permission",
+      "restore_success"
+    ]
+  }
+}

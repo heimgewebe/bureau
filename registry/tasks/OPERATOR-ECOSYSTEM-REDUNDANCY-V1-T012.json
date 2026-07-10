@@ -18,20 +18,25 @@
       "host:heim-pc"
     ],
     "approval": {
-      "action_class": "repository_mutation",
-      "required_level": "operator",
-      "note": "This stage authorizes only reviewed Cabinet repository changes implementing a bounded tmpfs-to-Restic handoff and restore verifier. Running the private export remains separately unauthorized."
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Authorizes exactly one commit-bound encrypted Restic preservation run with tmpfs-only plaintext staging, exact restore verification and mandatory cleanup. It does not authorize service, retention, source-data or repository mutation."
     }
   },
   "claims": [
     {
       "resource": "repo.cabinet",
-      "mode": "write",
-      "isolation": "worktree"
+      "mode": "read",
+      "isolation": "none"
     },
     {
       "resource": "host.heim-pc",
-      "mode": "read",
+      "mode": "write",
+      "isolation": "none"
+    },
+    {
+      "resource": "service.private_backup_repository",
+      "mode": "write",
       "isolation": "none"
     }
   ],
@@ -63,7 +68,6 @@
     "registered_at": "2026-07-10T12:18:00+02:00",
     "source_decision": "Cabinet is to become an app-independent Heimgewebe system catalog.",
     "does_not_establish": [
-      "private_export_execution_permission",
       "service_shutdown_permission",
       "app_data_deletion_permission",
       "archive_deletion_permission",
@@ -72,39 +76,56 @@
       "complete_remote_consumer_coverage",
       "semantic_application_restore",
       "public_runtime_detail_permission",
-      "merge_permission_without_current_review_and_ci"
+      "merge_permission_without_current_review_and_ci",
+      "repeated_private_export_permission",
+      "second_snapshot_permission",
+      "retention_mutation_permission",
+      "service_mutation_permission"
     ],
     "execution_authorization": {
       "schema_version": 1,
       "source": "operator_instruction",
-      "level": "operator",
+      "level": "break_glass",
       "approved": true,
       "reviewer": "alexdermohr",
-      "reference": "operator-instruction:2026-07-10:cabinet-t012-restic-tooling",
+      "reference": "operator-instruction:2026-07-10:cabinet-t012-restic-execution",
       "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T012",
       "scope": [
-        "repository_mutation",
-        "implement and test a generic tmpfs-to-Restic encrypted handoff and isolated restore verifier in heimgewebe/cabinet",
-        "no private export execution, no Restic snapshot creation, no forget/prune, no service mutation and no runtime cleanup"
-      ]
+        "runtime_mutation",
+        "create exactly one encrypted Restic snapshot from the merged Cabinet handoff tool",
+        "restore exactly that snapshot into fresh tmpfs and verify archive integrity",
+        "remove only the run-owned tmpfs staging tree",
+        "record redacted aggregate and hash-bound evidence"
+      ],
+      "conditions": [
+        "Cabinet HEAD equals 5cd85fa27fc7a7bb5ac6eb9a654feef51c1a2d27 and checkout is clean",
+        "private execution packet SHA-256 matches the registered commitment",
+        "read-only plan reports ready with no coverage gaps",
+        "bound tag is unused before execution",
+        "Cabinet service state is unchanged before and after execution",
+        "Restic snapshot count increases by exactly one",
+        "retention, forget, prune, service control, source deletion and repository writes remain absent",
+        "exclusive Bureau write claim for service.private_backup_repository is held for the run"
+      ],
+      "one_shot": true,
+      "revoked_on_mismatch": true
     },
     "execution_stage": {
-      "active": "restic_handoff_tooling",
+      "active": "encrypted_restic_export_execution",
       "authorized_effects": [
-        "create an isolated Cabinet worktree and implement generic Restic handoff tooling",
-        "add deterministic tests and documentation without private runtime evidence",
-        "publish and review a Cabinet pull request bound to this task"
+        "read and online-backup the identified private Cabinet data classes through the merged tool",
+        "create one owner-only tmpfs staging tree and one encrypted Restic snapshot",
+        "restore the exact created snapshot into the same run-owned tmpfs tree",
+        "verify manifest hashes, payload integrity and SQLite integrity",
+        "remove the run-owned tmpfs staging tree and emit redacted evidence"
       ],
       "pending_effects": [
-        "run the export tool against private data",
-        "create a Restic snapshot",
-        "create or remove a real tmpfs staging tree",
-        "restore a real private snapshot",
-        "forget or prune any Restic snapshot",
-        "service stop, restart, disable or configuration change",
+        "any second or repeated private export",
+        "restic forget, prune, retention or repository cleanup",
+        "service stop, start, restart, disable or configuration change",
         "source app-data deletion or cleanup",
         "repository rename",
-        "publication of concrete paths, host, unit, port, listener, journal, secret, manifest or private app contents"
+        "publication of concrete paths, host, unit, port, listener, credential location, tag, snapshot id, manifest or private app contents"
       ]
     },
     "inventory_evidence": {
@@ -230,6 +251,32 @@
       "cabinet_relevance": "The remote snapshot contains the Cabinet repository and active database, but ordinary capture of a live WAL database is not accepted as a valid T012 export.",
       "follow_up_task": "UTIL-BASE-V1-T013",
       "public_evidence_policy": "No repository URL, credential, exact path, private manifest or app content is published."
+    },
+    "tooling_completion": {
+      "schema_version": 1,
+      "cabinet_pr": "heimgewebe/cabinet#107",
+      "reviewed_head": "9784f84c9de668bd6668f3848f573e7c5dc1f1f2",
+      "merge_commit": "5cd85fa27fc7a7bb5ac6eb9a654feef51c1a2d27",
+      "merged_at": "2026-07-10T17:29:10Z",
+      "reviewed_diff_sha256": "e97a1e3fe4ac0854038b3552d9f06ce060fd44c14c39b78c65272ad0b0e7323d",
+      "review_evidence_sha256": "1b0ac5656864715d8348dc377c2817f42602a6d316150cc79548d02ff665a728",
+      "main_ci": "pass",
+      "tool_path": "scripts/private_cabinet_restic_handoff.py",
+      "tool_sha256": "7d96ee7dfa1150a5016b143bf4cf2d5025ace3c33ab85c88c0499afa0642c6f5"
+    },
+    "private_execution_packet_commitments": {
+      "schema_version": 1,
+      "packet_sha256": "d1d55b8c262ed00442dd54cc709142023eea94c030200042f84ca11374dc8f7d",
+      "tag_sha256": "a134aaf2eac110d871e9321d6e5cc5576aa77bef855294a98c43e2ffe11af386",
+      "tool_sha256": "7d96ee7dfa1150a5016b143bf4cf2d5025ace3c33ab85c88c0499afa0642c6f5",
+      "service_unit_sha256": "1d146f824d5ebe56f3b06b1ff65215ebbe5b2e8828322d7da11316e4f038c75a",
+      "logical_repository_binding_sha256": "ee3ca6df7aedc7d71a21713fe9c0dc3779f4d00bfc81a3ead89793073b2ebf19",
+      "expected_service_scope": "user",
+      "expected_service_state": "active",
+      "packet_owner_only": true,
+      "exact_values_public": false,
+      "source": "private local execution packet outside all repositories",
+      "remote_effect_resource": "service.private_backup_repository"
     }
   },
   "depends_on": [

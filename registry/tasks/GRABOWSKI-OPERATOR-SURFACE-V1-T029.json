@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T029",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Restore current-head external review availability",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 480
+  },
+  "goal": "Make independent current-head PR review fail predictably and recoverably when Claude credentials, Codex quota or local read-only sandbox support are unavailable, without weakening merge gates or treating failed model starts as review evidence.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.cabinet",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "provider-preflight",
+      "assertion": "External review adapters report credential, quota and sandbox readiness before consuming a review request; an unavailable provider produces typed blocked evidence rather than a partial review claim."
+    },
+    {
+      "id": "current-head-binding",
+      "assertion": "A successful review is bound to the exact PR head and diff hash, while stale-head reviews are classified as historical findings only."
+    },
+    {
+      "id": "fallback-policy",
+      "assertion": "The workflow defines an allowed independent fallback or an explicit stop condition without converting a self-review or failed model launch into external PASS evidence."
+    },
+    {
+      "id": "github-action-checkout",
+      "assertion": "PR review automation reads added files only after the pull-request head is checked out, avoiding base-branch file-hash warnings and ambiguous context."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover missing Claude authentication, exhausted Codex quota, unsupported read-only sandbox, stale review head and successful current-head evidence."
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T028"
+  ],
+  "metadata": {
+    "source": "Cabinet PR #107 current-head review closeout on 2026-07-10",
+    "observed_failures": [
+      "Claude GitHub action run 29110821959 failed before model execution because no supported Anthropic authentication input was available.",
+      "Local Codex review session 019f4d11-3950-7591-8e77-18f06e51c413 failed first on read-only bubblewrap network setup and then on exhausted usage quota.",
+      "The GitHub Codex review remained bound to an obsolete PR head and did not provide current-head evidence."
+    ],
+    "does_not_establish": [
+      "provider outage root cause",
+      "credentials may be committed",
+      "quota purchase authority",
+      "merge-gate bypass",
+      "external review availability",
+      "review PASS",
+      "runtime mutation permission"
+    ]
+  }
+}

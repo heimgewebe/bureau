@@ -34,6 +34,7 @@
       "GRIP-ROADMAP-V1": "complements and narrows operator-facing work; does not replace queued grip roadmap tasks",
       "docs/grabowski-restplan-v2.md": "reuses capability-profile direction and converts it into task-shaped follow-up"
     },
-    "priority_decision": "situation spine before recall; grip surface before friction automation; push and capability enforcement later"
+    "priority_decision": "situation spine before recall; grip surface before friction automation; push and capability enforcement later",
+    "rootbroker_recovery_freshness_followup_20260711": "T030 registers the observed contradiction between recovery_status ready=true and immediate Rootbroker stale-marker denial. It remains planned/later while another Grabowski task holds the repository."
   }
 }

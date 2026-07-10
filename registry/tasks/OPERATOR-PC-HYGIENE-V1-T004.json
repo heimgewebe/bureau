@@ -3,7 +3,7 @@
   "id": "OPERATOR-PC-HYGIENE-V1-T004",
   "initiative": "OPERATOR-PC-HYGIENE-V1",
   "title": "Classify Heim-PC wide listeners",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 9
@@ -82,7 +82,48 @@
       "security_correctness"
     ],
     "live_audit_finding": "unmanaged commonworld http.server on 0.0.0.0:4173 was stopped; remaining wide listeners need policy classification.",
-    "scope_update_20260711": "Live audit identified unmanaged Commonworld and merged-Weltgewebe preview listeners on 4173/4174 plus Leitstand contract drift on *:3000. The preview listeners were closed without deleting shells/worktrees; Leitstand requires a repo-bound safe-default patch and runtime proof."
+    "scope_update_20260711": "Live audit identified unmanaged Commonworld and merged-Weltgewebe preview listeners on 4173/4174 plus Leitstand contract drift on *:3000. The preview listeners were closed without deleting shells/worktrees; Leitstand requires a repo-bound safe-default patch and runtime proof.",
+    "verified_at": "2026-07-11T00:57:00+02:00",
+    "scope_registration_pr": "heimgewebe/bureau#410",
+    "scope_registration_head": "f65ab9b3e03b75c216244284dcf7904cdf8b468e",
+    "scope_registration_merge_commit": "7a4811511913fd5b8b07db1da3c6a966edd9083c",
+    "implementation_pr": "heimgewebe/leitstand#161",
+    "implementation_head": "b537b184b0f360ce6dfb374b16f2a64664937058",
+    "implementation_merge_commit": "99a925cba0b71ddfba7acc85367930e90e119b77",
+    "implementation_diff_sha256": "94b61ee61ac40871f54908ae2af1eb00268f6243c8508812c21050a55a34010e",
+    "implementation_diff_gist": "https://gist.github.com/alexdermohr/c7b32ba43eea2360b68a65a9faf392ab",
+    "runtime_evidence_pr": "heimgewebe/infra#116",
+    "runtime_evidence_head": "a0a5065f6d926bf523e8326ade06aa76ff2e9d80",
+    "runtime_evidence_merge_commit": "9e8048062a3cbf18f0b509f722a275f987485730",
+    "runtime_evidence_diff_sha256": "8f55d3efa66595b85e37badcffb57361bb50ee7ccf464105a3e94c01fa2eb585",
+    "runtime_evidence": "heimgewebe/infra runtime/heim-pc-listener-hygiene-2026-07-11.md at 9e8048062a3cbf18f0b509f722a275f987485730",
+    "listener_classification_sha256": "92c66386e8e12a504929c2a87c7fc57b21bde487cdebc3dc4f179b1522b9b607",
+    "leitstand_health_sha256": "e8e943679c4816af60a3e48b6a65947d8742e51c2226ffd147a30a4f53f5de88",
+    "leitstand_listener_sha256": "d5709fc38622682344bed480f36ca49f4e1210be252b8bed2a9995161111460f",
+    "leitstand_deploy_result_sha256": "693aea2feb1c988a3612a9dcbb3ad4c6577fcac42ddd7c6cf376b091ced13a88",
+    "validation": [
+      "All observed wildcard listener families were assigned to an owner, purpose, expected network scope and decision in the Infra runtime evidence.",
+      "Ports 4173 and 4174 were closed after process/unit attribution; their parent tmux shell and worktree were retained.",
+      "Leitstand PR #161 passed 341 tests, build, drift, security, AI-context and Cloudflare checks on its exact head.",
+      "Leitstand was deployed from immutable merge release 99a925cba0b71ddfba7acc85367930e90e119b77 and returned HTTP 200 with health status ok.",
+      "Port 3000 is bound only to 127.0.0.1; ports 4173 and 4174 remained closed.",
+      "SSH, Tailscale, Caddy, UniFi, Sunshine, GNOME Remote Desktop, Avahi, libvirt and cups-browsed remained active after the bounded changes.",
+      "Infra PR #116 validated and published the redacted listener/runtime evidence."
+    ],
+    "verified_acceptance": {
+      "operator-pc-hygiene-v1-t004-1": "Infra runtime evidence classifies every observed wildcard listener family by owner, purpose, expected scope and explicit retain/narrow/close decision.",
+      "operator-pc-hygiene-v1-t004-2": "Obsolete preview listeners 4173/4174 were closed and required operator services remained active; no parent shell or worktree was deleted.",
+      "operator-pc-hygiene-v1-t004-3": "The evidence distinguishes loopback, LAN, virtual-network and overlay purposes and explicitly leaves router forwarding, complete firewall policy and categorical public ingress unverified.",
+      "operator-pc-hygiene-v1-t004-4": "Leitstand PR #161 implements IP-literal bind validation, loopback default, explicit wildcard acknowledgement and focused default/LAN/invalid/wildcard tests.",
+      "operator-pc-hygiene-v1-t004-5": "The live service runs the exact merged release with LEITSTAND_BIND_HOST=127.0.0.1, health status ok and no wildcard port-3000 listener.",
+      "operator-pc-hygiene-v1-t004-6": "Local listener evidence binds 4173 to the unmanaged Commonworld process and 4174 to the merged-Weltgewebe transient unit; both are closed while shell/worktree state is retained."
+    },
+    "outcome": "All observed Heim-PC wildcard listener families are classified. Obsolete previews 4173/4174 are closed; Leitstand is healthy and loopback-only on 127.0.0.1:3000; retained operator services remain active. Router forwarding, complete firewall policy and categorical absence of public ingress remain explicitly unverified.",
+    "self_review": "PASS: verification is bound to Bureau PR #410, Leitstand PR #161, Infra PR #116, exact heads/merges, final diff hashes and local runtime evidence hashes. It does not claim firewall correctness, public-ingress absence, service necessity or permission to disable retained services.",
+    "verification": {
+      "task_sha256": "5d52719bc169609dfb1cac0e5c94150012d68f204ff8f5219c4ea190b0234cbc",
+      "plan_sha256": "2d61c05fd511d58d952d02850498a68c7ce5197da691b18ee0d6b775a5b3a39b"
+    }
   },
   "depends_on": []
 }

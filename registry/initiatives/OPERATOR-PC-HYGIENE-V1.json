@@ -27,6 +27,8 @@
       "firewall_correctness",
       "cloud_auth_repaired",
       "all_ports_safe"
-    ]
+    ],
+    "verified_listener_hygiene_20260711": "OPERATOR-PC-HYGIENE-V1-T004 verified: Infra PR #116 records complete observed wildcard-listener classification, closure of 4173/4174 and loopback-only Leitstand deployment from PR #161. Router forwarding and complete firewall policy remain unverified.",
+    "closeout_status": "T004 listener classification and bounded remediation are verified. T005 stale-systemd cleanup remains planned, so the initiative stays active. No permission to disable retained LAN/overlay services, delete worktrees or claim public-ingress absence follows."
   }
 }

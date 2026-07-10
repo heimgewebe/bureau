@@ -3,20 +3,25 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T012",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Inventory and export external Cabinet app data",
-  "state": "planned",
+  "state": "ready",
   "priority": {
-    "lane": "next",
-    "rank": 75
+    "lane": "now",
+    "rank": 20
   },
   "goal": "Inventory the live external Cabinet runtime and export any non-versioned data before app decoupling, shutdown or repository rename.",
   "execution": {
     "mode": "interactive-agent",
-    "policy": "review-before-effect",
+    "policy": "autonomous",
     "working_repository": "/home/alex/repos/cabinet",
     "grabowski_resources": [
       "repo:/home/alex/repos/cabinet",
       "host:heim-pc"
-    ]
+    ],
+    "approval": {
+      "action_class": "read_only_observation",
+      "required_level": "none",
+      "note": "This initial authorization covers read-only runtime inventory and export planning only. Any private export write, service change, deletion or rename requires a separate reviewed effect authorization."
+    }
   },
   "claims": [
     {
@@ -58,11 +63,47 @@
     "registered_at": "2026-07-10T12:18:00+02:00",
     "source_decision": "Cabinet is to become an app-independent Heimgewebe system catalog.",
     "does_not_establish": [
-      "merge_permission",
-      "runtime_correctness",
-      "cleanup_permission",
-      "automatic_shutdown_permission"
-    ]
+      "private_export_write_permission",
+      "service_shutdown_permission",
+      "app_data_deletion_permission",
+      "repository_rename_permission",
+      "runtime_cleanup_permission",
+      "public_runtime_detail_permission",
+      "merge_permission_without_current_review_and_ci"
+    ],
+    "execution_authorization": {
+      "schema_version": 1,
+      "source": "reviewed_plan",
+      "level": "reviewed_plan",
+      "approved": true,
+      "reviewer": "alexdermohr",
+      "reference": "heimgewebe/bureau#385",
+      "merge_commit": "1000e3f79eb9aee6f20a752ecd9c0492701ffb22",
+      "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T012",
+      "scope": [
+        "read-only inventory of the external Cabinet app runtime on heim-pc",
+        "classification of private data categories, dependencies and preservation need without publishing contents",
+        "private export and restore planning without creating, overwriting or deleting export data",
+        "redacted receipt planning limited to classification, coverage, backup status and gaps"
+      ]
+    },
+    "execution_stage": {
+      "active": "inventory",
+      "authorized_effects": [
+        "read-only filesystem, process, service, timer, listener and configuration metadata inspection",
+        "classification of data roots, dependency classes and consumer classes",
+        "design of a bounded private backup and restore procedure"
+      ],
+      "pending_effects": [
+        "private export or manifest writes",
+        "service stop, restart or disable",
+        "app-data deletion or cleanup",
+        "repository rename",
+        "publication of concrete host, unit, port, listener, journal, secret or private app details"
+      ]
+    }
   },
-  "depends_on": []
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T011"
+  ]
 }

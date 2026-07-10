@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
-  "state": "ready",
+  "state": "verified",
   "execution": {
     "mode": "interactive-agent",
     "policy": "autonomous",
@@ -52,6 +52,68 @@
         "repository_mutation"
       ],
       "approved_at": "2026-07-10T05:19:16Z"
+    },
+    "implementation_evidence": {
+      "pull_request": "heimgewebe/schauwerk#73",
+      "url": "https://github.com/heimgewebe/schauwerk/pull/73",
+      "title": "feat: add live Grabowski operational projection",
+      "head_sha": "1a74aaee35e0a417be6e741fb04665fb8db4ece7",
+      "merge_commit": "a872fc4fdcded0b1d1db94c97b06e402940eb390",
+      "merged_at": "2026-07-10T19:15:20Z",
+      "pr_diff": {
+        "sha256": "25a31234c7a68a2da6d8104f99a9eb3d94e0af56d1bc0e4f10403ab1e7364b17",
+        "artifact": "https://gist.github.com/alexdermohr/1c44d14e21b873cbde0951065b8e8092"
+      },
+      "operational_snapshot_sha256": "5af25c3a17b3d3c4191f0292bed848469ec27d989070c8317908b7f71f9670e2",
+      "local_validation": [
+        "pre-merge make validate: 304 passed",
+        "pre-merge compileall: passed",
+        "post-merge make validate on main: 304 passed",
+        "evidence sensitivity scan: no local paths, IP addresses, URLs, email addresses, or secret markers",
+        "provider mutation attempted: false"
+      ],
+      "checks": [
+        {
+          "workflow": "validate",
+          "job": "validate (3.11)",
+          "conclusion": "success",
+          "details_url": "https://github.com/heimgewebe/schauwerk/actions/runs/29117065642/job/86443009815"
+        },
+        {
+          "workflow": "validate",
+          "job": "validate (3.12)",
+          "conclusion": "success",
+          "details_url": "https://github.com/heimgewebe/schauwerk/actions/runs/29117065642/job/86443009806"
+        }
+      ],
+      "review_gate": {
+        "verdict": "PASS",
+        "diff_sha256": "25a31234c7a68a2da6d8104f99a9eb3d94e0af56d1bc0e4f10403ab1e7364b17",
+        "self_review_sha256": "07ed0cb1c9cc9852769f05d3e60d47db8106c3118cd38a06dec58f69b3342364",
+        "external_review_provider": "agy-gemini",
+        "external_review_verdict": "PASS",
+        "external_review_findings": 0,
+        "external_review_sha256": "83f4704de1042c321a136c191b0a9839322ec70e20789d07c94e058f60361273",
+        "formal_gate_sha256": "e54273e6ee13168503fee6d6938f16935a8e9791352d77f50f93b9918728008d",
+        "claude_packet_review": {
+          "status": "provider-unavailable",
+          "reason": "HTTP 429 session limit before token use",
+          "policy_waiver_scope": "claude_packet_review_only",
+          "policy_waiver_sha256": "74984393ff7b6d9df0d0e39a754798d57ab198bb49f36deaded55eb96c41a648"
+        },
+        "material_findings_fixed": 1,
+        "material_findings_remaining": 0
+      }
+    },
+    "verified_at": "2026-07-10T19:19:32Z",
+    "outcome": "The bounded live Grabowski operational projection is merged, review-gated, sanitized, reproducible and read-only with explicit authority and freshness semantics.",
+    "verification": {
+      "task_sha256": "0015afd16ba8a59f41e0ca3ee7b01f4ee0fcbfca1ea506e17261639009dc6787",
+      "plan_sha256": "f56d795d9f976a3b0f14b3df70d3bdd26c5a0cc800ff236db0ff2e1e04ef9880",
+      "run_id": "BUR-RUN-20260710T052751Z-627b72b64a",
+      "run_terminal_state": "orphaned",
+      "run_terminal_reason": "stale worker without external executor",
+      "run_closeout_interpretation": "The runtime run was terminalized as orphaned after its heartbeat expired. Registry verification is based on exact merged PR, CI, diff, review and post-merge validation evidence; no succeeded run receipt is claimed."
     }
   },
   "id": "SCHAUWERK-USEFUL-PILOT-V1-T003",

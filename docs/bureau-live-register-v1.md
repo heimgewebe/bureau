@@ -91,7 +91,8 @@ bureau --root . --json live-register \
 list but derive open candidates from only the latest event per stable identity. The summary exposes
 `candidate_history_count`, `superseded_candidate_event_count` and `latest_candidates`. Legacy
 candidate events without an ID remain readable and receive a derived `candidate-event-<event-id>`
-identity when first superseded. Promotion plans reject stale superseded events.
+identity when first superseded. A malformed legacy predecessor without a required status fails
+closed with an event-specific diagnostic. Promotion plans reject stale superseded events.
 
 The output also includes derived summaries for active thread focus and active focus overrides.
 

@@ -3,7 +3,7 @@
   "id": "CABINET-GEMINI-MAINT-V1-T005",
   "initiative": "CABINET-GEMINI-MAINT-V1",
   "title": "Decide scheduled Gemini maintenance lane",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 110
@@ -63,8 +63,41 @@
   "metadata": {
     "source_issue": "heimgewebe/bureau#254",
     "registered_at": "2026-07-08T12:10:00Z",
+    "decided_at": "2026-07-10T12:18:00+02:00",
+    "decision": "do_not_schedule",
+    "rationale": [
+      "The reviewed dry run was valid but low-signal and produced no operationally new finding.",
+      "Cabinet is being narrowed to an app-independent static system catalog, so recurring semantic maintenance agents would recreate unnecessary operational surface.",
+      "Deterministic catalog validation and event-driven review are sufficient for the target role."
+    ],
+    "evidence": {
+      "dry_run_task": "CABINET-GEMINI-MAINT-V1-T004",
+      "dry_run_review": "heimgewebe/cabinet:pruefung/10 Laeufe/gemini-maintenance-dry-run-review.md",
+      "catalog_migration_plan": "docs/plans/operator-ecosystem-redundancy-v1.md",
+      "operator_decision_at": "2026-07-10T12:18:00+02:00"
+    },
+    "verification": {
+      "verified_at": "2026-07-10T12:18:00+02:00",
+      "source": "operator_decision_and_reviewed_dry_run",
+      "verdict": "recurring_lane_rejected",
+      "scope": [
+        "no scheduled Gemini maintenance",
+        "manual historical artifacts may remain",
+        "no new scheduler or scout authority"
+      ],
+      "validation": [
+        "dry-run review verdict completed_valid_low_signal",
+        "schedule readiness not established",
+        "target Cabinet role reduced to static app-independent catalog"
+      ],
+      "does_not_establish": [
+        "future_model_uselessness",
+        "manual_review_prohibited",
+        "runtime_cleanup_permission",
+        "merge_readiness_without_ci"
+      ]
+    },
     "does_not_establish": [
-      "schedule_should_be_enabled",
       "future_scan_quality",
       "task_approval",
       "claim_truth",

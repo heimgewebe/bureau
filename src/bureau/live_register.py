@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
+from pathlib import Path
 from typing import Any
 
 from . import legacy
@@ -11,7 +13,32 @@ LIVE_REGISTER_EVENT_TYPE = "live-register"
 LIVE_REGISTER_SCHEMA_VERSION = 1
 LIVE_REGISTER_KINDS = {"thread_focus", "candidate_task", "focus_override"}
 LIVE_REGISTER_STATUSES = {"active", "paused", "closed", "observed", "promoted", "dropped"}
+ACTIVE_LIVE_STATUSES = {"active", "observed"}
 _THREAD_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,199}$")
+
+LIVE_REGISTER_RETENTION_POLICY = {
+    "schema_version": 1,
+    "policy": "live-register-retention-v1",
+    "classes": {
+        "thread_focus": {
+            "default_retention_days": 30,
+            "chronik_export": "optional-redacted-summary",
+        },
+        "candidate_task": {
+            "default_retention_days": 180,
+            "chronik_export": "optional-redacted-summary",
+        },
+        "focus_override": {
+            "default_retention_days": 14,
+            "chronik_export": "optional-redacted-summary",
+        },
+    },
+    "nonclaims": [
+        "automatic_deletion_authority",
+        "unredacted_chronik_export",
+        "general_chat_memory",
+    ],
+}
 
 
 def _optional_text(value: str | None, *, field: str, max_length: int) -> str | None:
@@ -55,6 +82,15 @@ def _validate_thread_id(thread_id: str | None, *, required: bool) -> str | None:
     return normalized
 
 
+def _validate_worker_id(worker_id: str | None) -> str | None:
+    if worker_id is None:
+        return None
+    normalized = worker_id.strip()
+    if not _THREAD_ID_RE.fullmatch(normalized):
+        raise StateError("worker_id uses the same syntax as thread_id")
+    return normalized
+
+
 def _validate_repo(registry: Registry, repo: str | None) -> str | None:
     if repo is None:
         return None
@@ -76,6 +112,16 @@ def _validate_task(registry: Registry, task_id: str | None) -> str | None:
     return normalized
 
 
+def _live_nonclaims() -> list[str]:
+    return [
+        "registry_task_truth",
+        "queue_truth",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_readiness",
+    ]
+
+
 def live_register_record(
     registry: Registry,
     store: StateStore,
@@ -84,17 +130,14 @@ def live_register_record(
     title: str,
     source: str = "operator",
     thread_id: str | None = None,
+    worker_id: str | None = None,
     repo: str | None = None,
     task_id: str | None = None,
     status: str | None = None,
     promotion_required: bool = False,
     note: str | None = None,
 ) -> dict[str, Any]:
-    """Append one gitless operational Bureau live-register event.
-
-    The live register is intentionally a state-store/eventlog surface. It records current operator
-    focus and candidate work without mutating registry/queue.json or task files.
-    """
+    """Append one gitless operational Bureau live-register event."""
     checked_kind = _validate_kind(kind)
     checked_status = _validate_status(checked_kind, status)
     checked_title = _optional_text(title, field="title", max_length=240)
@@ -103,6 +146,7 @@ def live_register_record(
     checked_thread_id = _validate_thread_id(
         thread_id, required=(checked_kind == "thread_focus")
     )
+    checked_worker_id = _validate_worker_id(worker_id)
     checked_repo = _validate_repo(registry, repo)
     checked_task_id = _validate_task(registry, task_id)
     checked_note = _optional_text(note, field="note", max_length=2000)
@@ -115,16 +159,11 @@ def live_register_record(
         "source": checked_source,
         "status": checked_status,
         "promotion_required": bool(promotion_required),
-        "does_not_establish": [
-            "registry_task_truth",
-            "queue_truth",
-            "claim_authority",
-            "dispatch_authority",
-            "merge_readiness",
-        ],
+        "does_not_establish": _live_nonclaims(),
     }
     optional = {
         "thread_id": checked_thread_id,
+        "worker_id": checked_worker_id,
         "repo": checked_repo,
         "task_id": checked_task_id,
         "note": checked_note,
@@ -156,6 +195,39 @@ def _decode_live_row(row: Any) -> dict[str, Any]:
     }
 
 
+def _load_live_records(store: StateStore, *, limit: int = 50) -> list[dict[str, Any]]:
+    if limit < 1 or limit > 500:
+        raise StateError("limit must be between 1 and 500")
+    with store.connect() as connection:
+        rows = connection.execute(
+            """
+            SELECT event_id, payload_json, created_at
+            FROM events
+            WHERE event_type=?
+            ORDER BY event_id DESC
+            LIMIT ?
+            """,
+            (LIVE_REGISTER_EVENT_TYPE, limit),
+        ).fetchall()
+    records = [_decode_live_row(row) for row in rows]
+    return list(reversed(records))
+
+
+def _load_live_record(store: StateStore, event_id: int) -> dict[str, Any]:
+    with store.connect() as connection:
+        row = connection.execute(
+            """
+            SELECT event_id, payload_json, created_at
+            FROM events
+            WHERE event_type=? AND event_id=?
+            """,
+            (LIVE_REGISTER_EVENT_TYPE, event_id),
+        ).fetchone()
+    if row is None:
+        raise StateError(f"unknown live register event {event_id}")
+    return _decode_live_row(row)
+
+
 def _active_latest(
     records: list[dict[str, Any]], key_fields: tuple[str, ...]
 ) -> list[dict[str, Any]]:
@@ -170,8 +242,24 @@ def _active_latest(
     return [
         item
         for item in sorted(latest.values(), key=lambda value: int(value["event_id"]))
-        if item["record"].get("status") in {"active", "observed"}
+        if item["record"].get("status") in ACTIVE_LIVE_STATUSES
     ]
+
+
+def _filter_records(
+    records: list[dict[str, Any]],
+    *,
+    kind: str | None = None,
+    repo: str | None = None,
+    thread_id: str | None = None,
+) -> list[dict[str, Any]]:
+    if kind is not None:
+        records = [item for item in records if item["record"].get("kind") == kind]
+    if repo is not None:
+        records = [item for item in records if item["record"].get("repo") == repo]
+    if thread_id is not None:
+        records = [item for item in records if item["record"].get("thread_id") == thread_id]
+    return records
 
 
 def _summary(records: list[dict[str, Any]]) -> dict[str, Any]:
@@ -187,7 +275,7 @@ def _summary(records: list[dict[str, Any]]) -> dict[str, Any]:
         item
         for item in records
         if item["record"].get("kind") == "candidate_task"
-        and item["record"].get("status") in {"active", "observed"}
+        and item["record"].get("status") in ACTIVE_LIVE_STATUSES
     ]
     promotion_required = [
         item for item in open_candidates if item["record"].get("promotion_required") is True
@@ -200,6 +288,7 @@ def _summary(records: list[dict[str, Any]]) -> dict[str, Any]:
         "promotion_required_count": len(promotion_required),
         "active_thread_focus": active_thread_focus,
         "active_focus_overrides": active_focus_overrides,
+        "open_candidates": open_candidates,
         "promotion_required": promotion_required,
     }
 
@@ -214,38 +303,356 @@ def live_register_list(
 ) -> dict[str, Any]:
     if kind is not None:
         _validate_kind(kind)
-    if limit < 1 or limit > 500:
-        raise StateError("limit must be between 1 and 500")
-    with store.connect() as connection:
-        rows = connection.execute(
-            """
-            SELECT event_id, payload_json, created_at
-            FROM events
-            WHERE event_type=?
-            ORDER BY event_id DESC
-            LIMIT ?
-            """,
-            (LIVE_REGISTER_EVENT_TYPE, limit),
-        ).fetchall()
-    records = [_decode_live_row(row) for row in rows]
-    records = list(reversed(records))
-    if kind is not None:
-        records = [item for item in records if item["record"].get("kind") == kind]
-    if repo is not None:
-        records = [item for item in records if item["record"].get("repo") == repo]
-    if thread_id is not None:
-        records = [item for item in records if item["record"].get("thread_id") == thread_id]
+    records = _load_live_records(store, limit=limit)
+    records = _filter_records(records, kind=kind, repo=repo, thread_id=thread_id)
     return {
         "schema_version": LIVE_REGISTER_SCHEMA_VERSION,
         "command": "live-list",
         "filters": {"kind": kind, "repo": repo, "thread_id": thread_id, "limit": limit},
         "summary": _summary(records),
         "records": records,
-        "nonclaims": [
-            "registry_task_truth",
-            "queue_truth",
+        "nonclaims": _live_nonclaims(),
+    }
+
+
+def live_register_context(
+    store: StateStore, *, repo: str | None = None, limit: int = 50
+) -> dict[str, Any]:
+    records = _filter_records(_load_live_records(store, limit=limit), repo=repo)
+    return {
+        "schema_version": LIVE_REGISTER_SCHEMA_VERSION,
+        "source": "bureau_state_store_events",
+        "repo": repo,
+        "summary": _summary(records),
+        "does_not_establish": _live_nonclaims(),
+    }
+
+
+def live_register_repo_context(
+    store: StateStore, repo: str, *, limit: int = 100
+) -> dict[str, Any]:
+    context = live_register_context(store, repo=repo, limit=limit)
+    summary = context["summary"]
+    return {
+        "source": context["source"],
+        "repo": repo,
+        "active_thread_focus": summary["active_thread_focus"],
+        "active_focus_overrides": summary["active_focus_overrides"],
+        "open_candidates": summary["open_candidates"],
+        "promotion_required": summary["promotion_required"],
+        "counts": {
+            "active_thread_focus": summary["active_thread_focus_count"],
+            "active_focus_overrides": summary["active_focus_override_count"],
+            "open_candidates": summary["open_candidate_count"],
+            "promotion_required": summary["promotion_required_count"],
+        },
+        "does_not_establish": context["does_not_establish"],
+    }
+
+
+def _run_repo_resources(registry: Registry, run: dict[str, Any]) -> list[str]:
+    task = registry.tasks.get(str(run["task_id"]))
+    if task is None:
+        return []
+    return sorted(
+        claim.resource for claim in task.claims if claim.resource.startswith("repo.")
+    )
+
+
+def _repo_has_active_run(registry: Registry, run: dict[str, Any], repo: str) -> bool:
+    return any(
+        legacy.overlaps(resource, repo, registry.resources)
+        for resource in _run_repo_resources(registry, run)
+    )
+
+
+def live_register_conflict_report(
+    registry: Registry,
+    store: StateStore,
+    *,
+    repo_ball_report: dict[str, Any] | None = None,
+    repo: str | None = None,
+    limit: int = 100,
+) -> dict[str, Any]:
+    records = _filter_records(_load_live_records(store, limit=limit), repo=repo)
+    with store.connect() as connection:
+        active_runs = [dict(row) for row in store.active_runs(connection)]
+    active_focus = _summary(records)["active_thread_focus"]
+    findings: list[dict[str, Any]] = []
+    for focus in active_focus:
+        payload = focus["record"]
+        focus_repo = payload.get("repo")
+        if focus_repo is None:
+            continue
+        overlapping_runs = [
+            run for run in active_runs if _repo_has_active_run(registry, run, str(focus_repo))
+        ]
+        if overlapping_runs:
+            findings.append(
+                {
+                    "severity": "info",
+                    "code": "live-focus-overlaps-active-run",
+                    "repo": focus_repo,
+                    "event_id": focus["event_id"],
+                    "thread_id": payload.get("thread_id"),
+                    "worker_id": payload.get("worker_id"),
+                    "run_ids": sorted(run["run_id"] for run in overlapping_runs),
+                    "task_ids": sorted(run["task_id"] for run in overlapping_runs),
+                }
+            )
+        worker_id = payload.get("worker_id")
+        if worker_id:
+            worker_runs = [run for run in active_runs if run["worker_id"] == worker_id]
+            for run in worker_runs:
+                if payload.get("task_id") and payload.get("task_id") == run["task_id"]:
+                    continue
+                findings.append(
+                    {
+                        "severity": "blocker",
+                        "code": "live-worker-has-different-active-run",
+                        "repo": focus_repo,
+                        "event_id": focus["event_id"],
+                        "thread_id": payload.get("thread_id"),
+                        "worker_id": worker_id,
+                        "run_id": run["run_id"],
+                        "run_task_id": run["task_id"],
+                        "focus_task_id": payload.get("task_id"),
+                    }
+                )
+    if repo_ball_report is not None:
+        for repo_id, ball in repo_ball_report.get("repo_balls", {}).items():
+            if repo is not None and repo_id != repo:
+                continue
+            blockers = []
+            for lane in ball.get("lanes", {}).values():
+                for item in lane:
+                    blockers.extend(
+                        reason for reason in item.get("reasons", []) if "open PR" in reason
+                    )
+            if blockers:
+                findings.append(
+                    {
+                        "severity": "blocker",
+                        "code": "repo-write-open-pr-blocker-visible",
+                        "repo": repo_id,
+                        "reasons": sorted(set(blockers)),
+                    }
+                )
+    context = live_register_context(store, repo=repo, limit=limit)
+    return {
+        "schema_version": LIVE_REGISTER_SCHEMA_VERSION,
+        "command": "live-conflicts",
+        "repo": repo,
+        "summary": {
+            "findings": len(findings),
+            "blockers": sum(1 for item in findings if item["severity"] == "blocker"),
+            "active_runs": len(active_runs),
+            "live_records": context["summary"]["records"],
+        },
+        "findings": findings,
+        "live_register": context,
+        "does_not_establish": _live_nonclaims(),
+    }
+
+
+def _slug_title(value: str) -> str:
+    slug = re.sub(r"[^A-Z0-9]+", "-", value.upper()).strip("-")
+    return slug or "LIVE-CANDIDATE"
+
+
+def _suggested_task_json(
+    registry: Registry,
+    event: dict[str, Any],
+    *,
+    task_id: str,
+    initiative: str,
+) -> dict[str, Any]:
+    payload = event["record"]
+    repo = payload.get("repo")
+    claims = []
+    if repo:
+        claims.append({"resource": repo, "mode": "write", "isolation": "worktree"})
+    task = {
+        "schema_version": 1,
+        "id": task_id,
+        "initiative": initiative,
+        "title": payload["title"],
+        "state": "planned",
+        "goal": payload.get("note") or payload["title"],
+        "priority": {"lane": "later", "rank": 900},
+        "execution": {"mode": "interactive-agent", "policy": "review-before-effect"},
+        "claims": claims,
+        "required_capabilities": ["repository", "shell", "grabowski"],
+        "depends_on": [],
+        "acceptance": [
+            {
+                "id": "source-event-bound",
+                "assertion": (
+                    "Task metadata preserves the originating live-register event id "
+                    "and source."
+                ),
+            },
+            {
+                "id": "reviewed-before-effect",
+                "assertion": (
+                    "Any repository effect remains review-before-effect and does not "
+                    "follow from the live event alone."
+                ),
+            },
+        ],
+        "metadata": {
+            "source": "bureau_live_register",
+            "live_register_event_id": event["event_id"],
+            "live_register_created_at": event["created_at"],
+            "live_register_source": payload.get("source"),
+            "promotion_required_from_event": payload.get("promotion_required", False),
+            "does_not_establish": _live_nonclaims(),
+        },
+    }
+    if not claims:
+        task["claims"] = [{"resource": "repo.bureau", "mode": "read", "isolation": "none"}]
+    repo_resource = registry.resources.get(str(repo)) if repo else None
+    if repo_resource is not None and repo_resource.path:
+        task["execution"]["working_repository"] = repo_resource.path
+    return task
+
+
+def write_live_promote_plan(
+    registry: Registry,
+    store: StateStore,
+    *,
+    event_id: int,
+    initiative: str,
+    task_id: str | None,
+    path: str,
+) -> dict[str, Any]:
+    if initiative not in registry.initiatives:
+        raise StateError(f"unknown initiative {initiative}")
+    event = _load_live_record(store, event_id)
+    payload = event["record"]
+    if payload.get("kind") != "candidate_task":
+        raise StateError("only candidate_task live-register events can be promoted")
+    candidate_task_id = task_id or f"{initiative}-{_slug_title(payload['title'])}"
+    if not legacy.ID_RE.fullmatch(candidate_task_id):
+        raise StateError("task_id must match Bureau task id syntax")
+    if candidate_task_id in registry.tasks:
+        raise StateError(f"task {candidate_task_id} already exists")
+    task_json = _suggested_task_json(
+        registry, event, task_id=candidate_task_id, initiative=initiative
+    )
+    plan = {
+        "schema_version": LIVE_REGISTER_SCHEMA_VERSION,
+        "command": "live-promote-plan",
+        "event_id": event_id,
+        "initiative": initiative,
+        "task_id": candidate_task_id,
+        "source_event": event,
+        "task_json": task_json,
+        "review": {"required": True, "status": "pending"},
+        "does_not_establish": [
+            "queue_mutation",
+            "task_verification",
             "claim_authority",
             "dispatch_authority",
             "merge_readiness",
         ],
+    }
+    unsigned_plan = {key: value for key, value in plan.items() if key != "plan_sha256"}
+    plan["plan_sha256"] = legacy.sha256_json(unsigned_plan)
+    rendered = json.dumps(plan, indent=2, ensure_ascii=False) + "\n"
+    legacy.atomic_write(Path(path).expanduser(), rendered)
+    return {"status": "written", "path": path, "plan": plan}
+
+
+def apply_live_promote_plan(registry: Registry, *, path: str) -> dict[str, Any]:
+    plan_path = Path(path).expanduser()
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    review = plan.get("review", {})
+    if review.get("status") != "reviewed" or not review.get("reviewer"):
+        raise StateError("live promotion plan requires review.status=reviewed and reviewer")
+    task_json = plan.get("task_json")
+    if not isinstance(task_json, dict):
+        raise StateError("promotion plan is missing task_json")
+    task_id = str(task_json.get("id"))
+    if task_id in registry.tasks:
+        raise StateError(f"task {task_id} already exists")
+    target = registry.root / "registry" / "tasks" / f"{task_id}.json"
+    if target.exists():
+        raise StateError(f"target task file already exists: {target}")
+    legacy.atomic_write(target, json.dumps(task_json, indent=2, ensure_ascii=False) + "\n")
+    return {
+        "status": "applied",
+        "task_id": task_id,
+        "task_file": str(target),
+        "queue_mutated": False,
+        "does_not_establish": ["queue_truth", "task_verification", "merge_readiness"],
+    }
+
+
+def live_register_export(
+    store: StateStore,
+    *,
+    repo: str | None = None,
+    limit: int = 100,
+    export_format: str = "chronik",
+) -> dict[str, Any]:
+    if export_format != "chronik":
+        raise StateError("only chronik export format is supported")
+    records = _filter_records(_load_live_records(store, limit=limit), repo=repo)
+    exported = []
+    for item in records:
+        payload = item["record"]
+        redacted = {
+            "event_type": "bureau.live_register.observed",
+            "source_event_id": item["event_id"],
+            "source_created_at": item["created_at"],
+            "kind": payload.get("kind"),
+            "status": payload.get("status"),
+            "repo": payload.get("repo"),
+            "task_id": payload.get("task_id"),
+            "thread_id": payload.get("thread_id"),
+            "worker_id": payload.get("worker_id"),
+            "title": payload.get("title"),
+            "promotion_required": payload.get("promotion_required", False),
+            "payload_digest": hashlib.sha256(
+                legacy.canonical_json(payload).encode("utf-8")
+            ).hexdigest(),
+        }
+        exported.append(redacted)
+    return {
+        "schema_version": LIVE_REGISTER_SCHEMA_VERSION,
+        "command": "live-export",
+        "format": export_format,
+        "repo": repo,
+        "records": exported,
+        "retention_policy": LIVE_REGISTER_RETENTION_POLICY,
+        "does_not_establish": [
+            "chronik_import",
+            "unredacted_export",
+            "queue_truth",
+            "registry_task_truth",
+        ],
+    }
+
+
+def live_retention_report(store: StateStore, *, limit: int = 500) -> dict[str, Any]:
+    records = _load_live_records(store, limit=limit)
+    by_kind: dict[str, int] = {}
+    by_status: dict[str, int] = {}
+    for item in records:
+        payload = item["record"]
+        kind = str(payload.get("kind", "unknown"))
+        status = str(payload.get("status", "unknown"))
+        by_kind[kind] = by_kind.get(kind, 0) + 1
+        by_status[status] = by_status.get(status, 0) + 1
+    return {
+        "schema_version": LIVE_REGISTER_SCHEMA_VERSION,
+        "command": "live-retention",
+        "summary": {
+            "records_sampled": len(records),
+            "by_kind": dict(sorted(by_kind.items())),
+            "by_status": dict(sorted(by_status.items())),
+        },
+        "policy": LIVE_REGISTER_RETENTION_POLICY,
+        "delete_authority": False,
     }

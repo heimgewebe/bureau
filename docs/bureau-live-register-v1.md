@@ -78,8 +78,65 @@ Live-register entries are operational evidence only. They do not establish:
 
 Promotion from candidate work to durable Bureau work must still go through a reviewed Registry PR.
 
-## Follow-up boundaries
+## What-now and repo-balls integration
 
-This first slice deliberately does not integrate Live Register into `what-now`, `repo-balls`,
-Candidate-to-Registry promotion, Chronik export or retention policy. Those follow-up topics are
-registered under `BUREAU-LIVE-REGISTER-V1`.
+`bureau what-now` includes a `live_register` context block. This makes current thread focus,
+focus overrides and candidate work visible next to registry/runtime ranking. The context is source
+bound and does not change queue order, task eligibility, claimability or hard blockers.
+
+`bureau repo-balls` includes a `live_register` overlay per repository and a
+`live_register_summary`. This shows live focus per repo while `registry/queue.json` remains the only
+dispatch queue.
+
+## Conflict view
+
+`bureau live-conflicts` is read-only. It compares live thread/worker focus with active runs and the
+repo-balls/open-PR blocker surface:
+
+```bash
+bureau --root . --json live-conflicts --repo repo.bureau --capability repository
+```
+
+Findings can identify an active run overlapping a live focus, a worker bound to a different active
+run, or an open-PR blocker visible for the repository. A finding is not a cleanup, claim or merge
+authority.
+
+## Candidate promotion
+
+Candidate tasks can be turned into a reviewed Registry diff through a plan:
+
+```bash
+bureau --root . --json live-promote-plan   --event-id 12   --initiative BUREAU-LIVE-REGISTER-V1   --task-id BUREAU-LIVE-REGISTER-V1-T007   --write-plan /tmp/live-promote.json
+```
+
+The plan must be reviewed by setting `review.status=reviewed` and `reviewer`. Applying the plan
+writes a task JSON file only:
+
+```bash
+bureau --root . --json live-promote-plan --apply-plan /tmp/live-promote.json
+```
+
+It does not mutate `registry/queue.json`, verify the task, claim work or dispatch an agent.
+
+## Retention and Chronik export
+
+`bureau live-retention` reports the current retention policy and sampled event counts. It has no
+delete authority.
+
+`bureau live-export --format chronik` emits a redacted Chronik-shaped summary with stable event IDs,
+source timestamps and payload digests. It omits notes and does not import into Chronik by itself.
+
+```bash
+bureau --root . --json live-retention
+bureau --root . --json live-export --format chronik --repo repo.bureau
+```
+
+## Implemented follow-up scope
+
+This implementation completes the registered follow-ups for:
+
+- `what-now` live-register context;
+- `repo-balls` live-register overlay;
+- reviewed candidate-to-registry task promotion plan;
+- thread/worker conflict view;
+- retention and redacted Chronik export boundary.

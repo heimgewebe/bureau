@@ -96,6 +96,28 @@ Live-register records are operational evidence only. They do not establish queue
 claim authority, dispatch authority or merge readiness. Durable work still requires a reviewed
 Registry PR.
 
+Operational views can consume the same state-store evidence without changing dispatch authority:
+
+```bash
+bureau --root . --json what-now --capability repository
+bureau --root . --json repo-balls --capability repository
+bureau --root . --json live-conflicts --capability repository --repo repo.bureau
+bureau --root . --json live-retention
+bureau --root . --json live-export --format chronik --repo repo.bureau
+```
+
+Candidate promotion is a reviewed-plan path and writes task JSON only:
+
+```bash
+bureau --root . --json live-promote-plan \
+  --event-id 12 \
+  --initiative BUREAU-LIVE-REGISTER-V1 \
+  --task-id BUREAU-LIVE-REGISTER-V1-T007 \
+  --write-plan /tmp/live-promote.json
+```
+
+Apply requires `review.status=reviewed` and does not mutate the queue.
+
 ## Repository-scoped balls
 
 Bureau can project one current ball per repository resource without changing queue state:

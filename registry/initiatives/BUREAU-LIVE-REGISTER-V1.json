@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "BUREAU-LIVE-REGISTER-V1",
   "title": "Bureau live operational register",
-  "state": "active",
+  "state": "completion-ready",
   "commitment": "later",
   "goal": "Separate live thread/repo focus and candidate observations from durable Git registry truth so multiple ecosystem threads can coordinate without Queue PRs for every focus movement.",
   "current_plan": {
@@ -28,6 +28,8 @@
       "claim_authority_from_chat_focus",
       "automatic_candidate_promotion",
       "unbounded_memory_store"
-    ]
+    ],
+    "completion_ready_at": "2026-07-10T06:00:00Z",
+    "completion_ready_reason": "All registered Live Register follow-up tasks T002-T006 are verified in the complete v1 implementation slice."
   }
 }

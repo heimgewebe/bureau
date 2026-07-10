@@ -32,7 +32,7 @@
     ],
     "verification": {
       "verified_at": "2026-07-10T06:00:00Z",
-      "source": "local_worktree_pending_pr",
+      "source": "github_pull_request",
       "repo": "heimgewebe/bureau",
       "branch": "feat/bureau-live-register-complete-v1",
       "implementation_diff_sha256": "f27e343b0555c99872120cabd684ff4e8311b890a72181976bf413454f2eeea0",
@@ -58,7 +58,11 @@
         "merge_readiness_without_ci"
       ],
       "task_sha256": "48e7cfdf58778e5a5ed317d3db7887d203e41f4bee3eb58977bb4f23a339b09e",
-      "plan_sha256": "36eceb12982abe5db5bf1514a707834520458119efcd9b7df17927250a48dca7"
+      "plan_sha256": "36eceb12982abe5db5bf1514a707834520458119efcd9b7df17927250a48dca7",
+      "pr_number": 380,
+      "head_sha": "810f8e6da736f8e00b687c83a54ab8faed57f09d",
+      "merge_commit": "3f186ded8f4c2eebe5ed6b41d83d588848b33fdb",
+      "source_ref": "github-pr:heimgewebe/bureau#380@810f8e6da736f8e00b687c83a54ab8faed57f09d:3f186ded8f4c2eebe5ed6b41d83d588848b33fdb"
     }
   },
   "id": "BUREAU-LIVE-REGISTER-V1-T005",

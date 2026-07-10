@@ -4,15 +4,15 @@
   "state": "ready",
   "execution": {
     "mode": "interactive-agent",
-    "policy": "review-before-effect",
+    "policy": "autonomous",
     "working_repository": "/home/alex/repos/schauwerk",
     "grabowski_resources": [
       "repo:/home/alex/repos/schauwerk"
     ],
     "approval": {
       "action_class": "repository_mutation",
-      "required_level": "reviewed_plan",
-      "note": "Repository changes require diff-bound review and green CI before merge."
+      "required_level": "operator",
+      "note": "The reviewed plan authorizes task execution; checkout-next must still record source-bound operator approval before creating the repository worktree."
     }
   },
   "claims": [
@@ -37,7 +37,22 @@
     "does_not_establish": [
       "implementation_before_merge",
       "provider_mutation_authority"
-    ]
+    ],
+    "execution_authorization": {
+      "schema_version": 1,
+      "source": "reviewed_plan",
+      "level": "reviewed_plan",
+      "approved": true,
+      "reviewer": "alexdermohr",
+      "reference": "heimgewebe/bureau#376",
+      "merge_commit": "9f7a655d8bc10638afc140e969db9696e1770e69",
+      "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T003",
+      "scope": [
+        "task",
+        "repository_mutation"
+      ],
+      "approved_at": "2026-07-10T05:19:16Z"
+    }
   },
   "id": "SCHAUWERK-USEFUL-PILOT-V1-T003",
   "title": "SW-005B \u2014 Add live Grabowski operational projection",

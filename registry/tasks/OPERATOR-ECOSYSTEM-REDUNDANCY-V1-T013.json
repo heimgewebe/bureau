@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Decouple and retire external Cabinet app runtime",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 320
+  },
+  "goal": "Remove the external Cabinet AI Workspace as a repository foundation and retire its local runtime only after catalog independence, private-data export and consumer evidence are complete.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/cabinet",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/cabinet",
+      "host:heim-pc"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.cabinet",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "exclusive",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "catalog-independent",
+      "assertion": "Catalog validation, rendering and agent orientation pass while cabinet.service is stopped."
+    },
+    {
+      "id": "backup-bound",
+      "assertion": "A reviewed private backup/export receipt exists before runtime removal."
+    },
+    {
+      "id": "runtime-retired",
+      "assertion": "The service, wrappers, pinned external app and app-specific patches are disabled or removed with a rollback record."
+    },
+    {
+      "id": "no-data-loss",
+      "assertion": "No versioned or classified-for-preservation content is lost."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T12:18:00+02:00",
+    "source_decision": "Cabinet is to become an app-independent Heimgewebe system catalog.",
+    "does_not_establish": [
+      "merge_permission",
+      "runtime_correctness",
+      "cleanup_permission",
+      "automatic_shutdown_permission"
+    ]
+  },
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T004",
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T007",
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T012"
+  ]
+}

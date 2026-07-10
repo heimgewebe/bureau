@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
-  "state": "planned",
+  "state": "ready",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -38,13 +38,23 @@
     "does_not_establish": [
       "implementation_before_merge",
       "provider_mutation_authority"
-    ]
+    ],
+    "release_evidence": {
+      "released_at": "2026-07-10T22:24:32Z",
+      "predecessor_task": "SCHAUWERK-USEFUL-PILOT-V1-T005",
+      "predecessor_state": "verified",
+      "predecessor_task_sha256": "b902e3ccac5b3127bc16fc660082a1408cce8d22e976ea1cb04f0dbbaef06e51",
+      "predecessor_closeout_pr": "heimgewebe/bureau#411",
+      "predecessor_closeout_merge": "2a9381934adf7feaed9f3ac7a0f6ec8228f60885",
+      "scope": "queue_release_only",
+      "implementation_authorized": false
+    }
   },
   "id": "SCHAUWERK-USEFUL-PILOT-V1-T006",
   "title": "SW-008 \u2014 Consolidate visual grammar and templates",
   "goal": "Define recognisable semantic shapes, state markers, provenance, freshness, uncertainty, accessibility and layout templates.",
   "priority": {
-    "lane": "later",
+    "lane": "now",
     "rank": 40
   },
   "acceptance": [

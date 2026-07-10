@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
-  "state": "planned",
+  "state": "ready",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -38,13 +38,23 @@
     "does_not_establish": [
       "implementation_before_merge",
       "provider_mutation_authority"
-    ]
+    ],
+    "release_evidence": {
+      "released_at": "2026-07-10T19:29:24Z",
+      "predecessor_task": "SCHAUWERK-USEFUL-PILOT-V1-T003",
+      "predecessor_state": "verified",
+      "predecessor_task_sha256": "0015afd16ba8a59f41e0ca3ee7b01f4ee0fcbfca1ea506e17261639009dc6787",
+      "predecessor_closeout_pr": "heimgewebe/bureau#403",
+      "predecessor_closeout_merge": "00cbb1a7b75f449f57ec13b12f019ca795b116dc",
+      "scope": "queue_release_only",
+      "implementation_authorized": false
+    }
   },
   "id": "SCHAUWERK-USEFUL-PILOT-V1-T004",
   "title": "SW-006 \u2014 Prove a second software pilot",
   "goal": "Apply the registry and view model to a second active software project to eliminate Grabowski-specific assumptions.",
   "priority": {
-    "lane": "later",
+    "lane": "now",
     "rank": 20
   },
   "acceptance": [

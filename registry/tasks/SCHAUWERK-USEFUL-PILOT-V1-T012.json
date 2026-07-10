@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Repository changes require diff-bound review and green CI before merge."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SCHAUWERK-USEFUL-PILOT-V1-T001"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T05:12:00Z",
+    "source_request": "alles umsetzen",
+    "roadmap_stage": "SW-014",
+    "does_not_establish": [
+      "implementation_before_merge",
+      "provider_mutation_authority"
+    ]
+  },
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T012",
+  "title": "SW-014 \u2014 Add source adapter programme",
+  "goal": "Add Git/GitHub, Lenskit, Cabinet, Vault, Obsidian Bridge, Leitstand, Chronik and optional enrichment adapters with explicit contracts.",
+  "priority": {
+    "lane": "later",
+    "rank": 100
+  },
+  "acceptance": [
+    {
+      "id": "authority",
+      "assertion": "Every adapter declares authority, visibility, freshness and failure semantics."
+    },
+    {
+      "id": "fixtures",
+      "assertion": "Each adapter has deterministic healthy, stale, partial and failed fixtures."
+    },
+    {
+      "id": "no-fabrication",
+      "assertion": "Adapter failure cannot silently emit fresh-looking facts."
+    },
+    {
+      "id": "incremental",
+      "assertion": "Adapters can be added without making optional systems prerequisites."
+    }
+  ]
+}

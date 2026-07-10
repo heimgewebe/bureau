@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Repository changes require diff-bound review and green CI before merge."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SCHAUWERK-USEFUL-PILOT-V1-T001",
+    "SCHAUWERK-USEFUL-PILOT-V1-T002"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T05:12:00Z",
+    "source_request": "alles umsetzen",
+    "roadmap_stage": "SW-006",
+    "does_not_establish": [
+      "implementation_before_merge",
+      "provider_mutation_authority"
+    ]
+  },
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T004",
+  "title": "SW-006 \u2014 Prove a second software pilot",
+  "goal": "Apply the registry and view model to a second active software project to eliminate Grabowski-specific assumptions.",
+  "priority": {
+    "lane": "later",
+    "rank": 20
+  },
+  "acceptance": [
+    {
+      "id": "project-selection",
+      "assertion": "A declared active repository with architecture, roadmap, work and risk sources is selected."
+    },
+    {
+      "id": "reconstruction",
+      "assertion": "A useful view is reconstructed from declared sources and snapshots."
+    },
+    {
+      "id": "generic-contract",
+      "assertion": "No renderer or registry rule depends on Grabowski-specific field names."
+    },
+    {
+      "id": "evidence",
+      "assertion": "Deterministic acceptance evidence is committed."
+    }
+  ]
+}

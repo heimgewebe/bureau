@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Repository changes require diff-bound review and green CI before merge."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SCHAUWERK-USEFUL-PILOT-V1-T001"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T05:12:00Z",
+    "source_request": "alles umsetzen",
+    "roadmap_stage": "SW-007",
+    "does_not_establish": [
+      "implementation_before_merge",
+      "provider_mutation_authority"
+    ]
+  },
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T005",
+  "title": "SW-007 \u2014 Complete education variants and offline output",
+  "goal": "Extend Learning View into teacher, projection, assignment, student, presentation and offline variants without personal data.",
+  "priority": {
+    "lane": "later",
+    "rank": 30
+  },
+  "acceptance": [
+    {
+      "id": "variants",
+      "assertion": "Declared view variants share source content while enforcing audience-specific visibility."
+    },
+    {
+      "id": "assignments",
+      "assertion": "Assignment output has explicit instructions, resources and submission boundary."
+    },
+    {
+      "id": "offline",
+      "assertion": "An offline package works without Miro or network access."
+    },
+    {
+      "id": "privacy",
+      "assertion": "Fixtures and validators reject personal data in classroom/public outputs."
+    }
+  ]
+}

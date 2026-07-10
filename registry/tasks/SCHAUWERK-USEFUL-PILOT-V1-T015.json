@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Repository changes require diff-bound review and green CI before merge."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SCHAUWERK-USEFUL-PILOT-V1-T007",
+    "SCHAUWERK-USEFUL-PILOT-V1-T011",
+    "SCHAUWERK-USEFUL-PILOT-V1-T013"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T05:12:00Z",
+    "source_request": "alles umsetzen",
+    "roadmap_stage": "SW-017",
+    "does_not_establish": [
+      "implementation_before_merge",
+      "provider_mutation_authority"
+    ]
+  },
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T015",
+  "title": "SW-017 \u2014 Complete operations and recovery",
+  "goal": "Add deployment profiles, metrics, backup, retention, restore drills, OAuth rotation, kill switch and incident runbooks.",
+  "priority": {
+    "lane": "later",
+    "rank": 130
+  },
+  "acceptance": [
+    {
+      "id": "deployment",
+      "assertion": "User/system service profiles are deterministic and health-checked."
+    },
+    {
+      "id": "backup",
+      "assertion": "Registry, local state and publication artifacts have tested retention and restore."
+    },
+    {
+      "id": "provider-recovery",
+      "assertion": "Token loss and Miro outage have exercised runbooks."
+    },
+    {
+      "id": "mutation-recovery",
+      "assertion": "Faulty bulk mutation has a tested kill switch and restore drill."
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Repository changes require diff-bound review and green CI before merge."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SCHAUWERK-USEFUL-PILOT-V1-T001",
+    "SCHAUWERK-USEFUL-PILOT-V1-T010"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T05:12:00Z",
+    "source_request": "alles umsetzen",
+    "roadmap_stage": "SW-013",
+    "does_not_establish": [
+      "implementation_before_merge",
+      "provider_mutation_authority"
+    ]
+  },
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T011",
+  "title": "SW-013 \u2014 Build Schaufenster publication boundary",
+  "goal": "Implement preview, privacy checks, sanitized immutable bundles, stable links, version metadata, expiry, withdrawal and read-only delivery.",
+  "priority": {
+    "lane": "later",
+    "rank": 90
+  },
+  "acceptance": [
+    {
+      "id": "declaration",
+      "assertion": "Only explicitly declared public sources and fields may enter a bundle."
+    },
+    {
+      "id": "privacy-gate",
+      "assertion": "Publication fails closed on private or unknown-visibility content."
+    },
+    {
+      "id": "lifecycle",
+      "assertion": "Bundles support version, expiry and withdrawal without mutating source truth."
+    },
+    {
+      "id": "delivery",
+      "assertion": "Published output is immutable and read-only."
+    }
+  ]
+}

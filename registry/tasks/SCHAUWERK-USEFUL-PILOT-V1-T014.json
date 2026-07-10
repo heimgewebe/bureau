@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Repository changes require diff-bound review and green CI before merge."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SCHAUWERK-USEFUL-PILOT-V1-T012"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T05:12:00Z",
+    "source_request": "alles umsetzen",
+    "roadmap_stage": "SW-016",
+    "does_not_establish": [
+      "implementation_before_merge",
+      "provider_mutation_authority"
+    ]
+  },
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T014",
+  "title": "SW-016 \u2014 Add optional search and semantics",
+  "goal": "Provide cross-project search, relationship suggestions, clustering, similar views, orphan detection and contradiction hints as optional services.",
+  "priority": {
+    "lane": "later",
+    "rank": 120
+  },
+  "acceptance": [
+    {
+      "id": "search",
+      "assertion": "Registry and declared artifacts are searchable with source citations."
+    },
+    {
+      "id": "optional",
+      "assertion": "Semantic service failure does not block core rendering or operation."
+    },
+    {
+      "id": "uncertainty",
+      "assertion": "Suggestions expose confidence and never become source facts automatically."
+    },
+    {
+      "id": "privacy",
+      "assertion": "Visibility boundaries constrain indexing and result delivery."
+    }
+  ]
+}

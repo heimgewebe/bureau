@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "state": "ready",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Repository changes require diff-bound review and green CI before merge."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SCHAUWERK-USEFUL-PILOT-V1-T002"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T05:12:00Z",
+    "source_request": "alles umsetzen",
+    "roadmap_stage": "SW-005B",
+    "does_not_establish": [
+      "implementation_before_merge",
+      "provider_mutation_authority"
+    ]
+  },
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T003",
+  "title": "SW-005B \u2014 Add live Grabowski operational projection",
+  "goal": "Add bounded source adapters and views for hosts, runtime health, current work and known gaps without embedding secrets or treating projections as authority.",
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "acceptance": [
+    {
+      "id": "source-contracts",
+      "assertion": "Each live source declares authority, freshness, collection error and stale-state semantics."
+    },
+    {
+      "id": "sanitized-snapshot",
+      "assertion": "A deterministic snapshot excludes secrets, raw command output and unstable provider identifiers."
+    },
+    {
+      "id": "view",
+      "assertion": "The operator overview distinguishes static contract facts from live observed state and unavailable data."
+    },
+    {
+      "id": "tests",
+      "assertion": "Fixtures cover healthy, stale, partial and unavailable source states."
+    }
+  ]
+}

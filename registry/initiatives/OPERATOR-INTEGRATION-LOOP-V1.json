@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "Close the operator integration loop",
+  "state": "active",
+  "commitment": "later",
+  "goal": "Connect cost-aware fallback patch generation, shared verification, high-value event capture, fresh RepoBrief provenance, collision-safe Bureau claims, a read-only nightly diagnosis cycle and Vibe-Lab measurement without granting model backends independent mutation authority.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/operator-integration-loop-v1.md"
+  },
+  "completion": [
+    "Local AI and Gemini Flash can serve as bounded low-cost fallback patch generators while Grabowski remains the audited mutation surface and Claude Code or Codex remain escalation paths.",
+    "WGX exposes a non-duplicative quick/full validation contract with stable JSON receipts for core repositories.",
+    "A bounded redacted append-only operator event outbox feeds at least one real consumer without requiring Chronik or Plexer service authority.",
+    "RepoBrief bundles carry source commit and dirty-state provenance and can be refreshed after merge or by a bounded catch-up cycle.",
+    "Bureau ready selection, live focus, claims, resource leases, PR/worktree conflicts and durable closeout receipts form one collision-safe chain.",
+    "A nightly observe-and-diagnose cycle produces a source-bound morning digest without repository mutation or automatic task creation.",
+    "Vibe-Lab records comparable cost, latency, patch quality, verification fit, review findings and rework evidence before any executor route is promoted."
+  ],
+  "parallelism": {
+    "max_active_tasks": 2
+  },
+  "metadata": {
+    "registered_at": "2026-07-10T07:31:00+02:00",
+    "source_request": "User accepted the non-GPU Claude proposals and specified local AI or Gemini Flash via AGY as cheaper last-mile fallback options, not the primary path.",
+    "scope_exclusions": [
+      "gpu_precommit_gate",
+      "embedding_rollout",
+      "local_model_infrastructure_optimization",
+      "direct_model_push_merge_or_deploy"
+    ],
+    "live_basis": {
+      "grabowski_tool_contract": "100/100 healthy",
+      "bureau_task_counts": {
+        "total": 265,
+        "verified": 188,
+        "planned": 74,
+        "ready": 1,
+        "blocked": 2
+      },
+      "chronik_service": "not-found",
+      "plexer_service": "not-found",
+      "repobrief_context_pack": "available with some bundle freshness unknown where source provenance is absent",
+      "recovery_gate": "green"
+    },
+    "does_not_establish": [
+      "model_backend_quality_order",
+      "gemini_flash_cheapest_for_every_task",
+      "local_model_sufficiency",
+      "automatic_executor_authority",
+      "nightly_mutation_permission",
+      "runtime_correctness",
+      "merge_readiness"
+    ]
+  }
+}

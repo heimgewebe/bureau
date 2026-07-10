@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T004",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "Make RepoBrief provenance and refresh current",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 400
+  },
+  "goal": "Make RepoBrief freshness determinable by requiring source commit and dirty-state provenance, separating stale legacy registry rows and adding merge-bound refresh plus bounded catch-up behavior.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit",
+      "repo:/home/alex/repos/grabowski",
+      "host:heim-pc"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "systemd"
+  ],
+  "acceptance": [
+    {
+      "id": "source-provenance-required",
+      "assertion": "New bundles record source repository identity, exact commit, dirty state, generated time and generator identity; missing source provenance is a visible degraded state rather than silently unknown freshness."
+    },
+    {
+      "id": "legacy-registry-separated",
+      "assertion": "Missing legacy bundle rows are removed from the live latest-complete authority or exposed in a separate historical/invalid section that cannot satisfy context selection."
+    },
+    {
+      "id": "merge-bound-refresh",
+      "assertion": "A debounced post-merge or source-head change trigger refreshes only the affected repository and does not operate in active dirty worktrees."
+    },
+    {
+      "id": "catch-up-cycle",
+      "assertion": "A bounded periodic catch-up identifies missing or stale bundles and refreshes them with resource leases, timeouts and per-repository receipts rather than regenerating all bundles blindly."
+    },
+    {
+      "id": "consumer-proof",
+      "assertion": "Grabowski context packs can distinguish fresh_exact, stale_head, dirty_unverified and unavailable states against live repository heads."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T07:31:00+02:00",
+    "source_plan": "docs/plans/operator-integration-loop-v1.md",
+    "live_gap": "Current context packs work, but bundles without source commit yield freshness unknown and the registry still reports missing legacy rows.",
+    "does_not_establish": [
+      "bundle_claim_truth",
+      "repo_understood",
+      "automatic_context_correctness",
+      "safe_dirty_worktree_refresh",
+      "runtime_correctness"
+    ]
+  },
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T008"
+  ]
+}

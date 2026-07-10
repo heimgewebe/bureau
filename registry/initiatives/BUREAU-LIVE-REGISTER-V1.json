@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-LIVE-REGISTER-V1",
+  "title": "Bureau live operational register",
+  "state": "active",
+  "commitment": "later",
+  "goal": "Separate live thread/repo focus and candidate observations from durable Git registry truth so multiple ecosystem threads can coordinate without Queue PRs for every focus movement.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/bureau-live-register-v1.md"
+  },
+  "completion": [
+    "Operators can record thread focus, candidate work and focus overrides in Bureau state without mutating registry/queue.json.",
+    "what-now and repo-balls can optionally surface live focus without treating it as queue or claim truth.",
+    "Candidate work can be promoted to durable Registry PRs through a reviewed path.",
+    "Retention/export boundaries preserve evidence without turning Live Register into an unbounded knowledge base."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-10T00:00:00Z",
+    "source_request": "User wants Bureau as the node where information relevant for tasks and execution converges while supporting multiple simultaneous threads.",
+    "design_decision": "Keep Git for durable truth; add state-store/eventlog for live operational registration.",
+    "does_not_establish": [
+      "git_registry_replacement",
+      "queue_truth_from_live_events",
+      "claim_authority_from_chat_focus",
+      "automatic_candidate_promotion",
+      "unbounded_memory_store"
+    ]
+  }
+}

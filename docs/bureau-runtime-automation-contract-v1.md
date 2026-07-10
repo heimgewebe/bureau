@@ -13,7 +13,7 @@ This is a contract document only. It does not implement new automation and does 
 | Organ | Owns | May emit | Must not decide alone |
 |---|---|---|---|
 | Registry | Initiatives, tasks, queue lanes, claims, acceptance criteria and plans. | Planned, ready and verified registry facts through reviewable JSON diffs. | Runtime truth, PR state, CI result, checkout state or merge readiness. |
-| State store | Runs, receipts, workspaces, reservations and overlays. | Runtime receipts, workspace findings and local overlays. | Permanent registry truth or external PR truth. |
+| State store | Runs, receipts, workspaces, reservations, overlays and live-register events. | Runtime receipts, workspace findings, local overlays, thread focus and candidate observations. | Permanent registry truth, queue truth or external PR truth. |
 | Git checkout | Local branch, head, dirty state and worktrees. | Local checkout evidence. | GitHub PR state, CI state or task acceptance. |
 | GitHub observer | PR metadata, review state, checks and merge facts. | Source-attributed PR, CI and review observations. | Registry mutation, merge authority or task verification. |
 | CI | A job result for one run and one commit. | Pass, fail, pending or skipped observations. | General correctness, test sufficiency, security correctness or merge readiness. |
@@ -89,6 +89,7 @@ This baseline forbids these powers unless a later separate contract grants a nar
 - automatic task verification;
 - automatic initiative completion;
 - automatic queue mutation;
+- treating live-register focus as queue truth, claim authority or dispatch permission;
 - automatic dispatch of unsafe or claim-conflicting tasks;
 - automatic PR creation from observation alone;
 - automatic Cabinet import;
@@ -108,6 +109,7 @@ Within this contract, Bureau may automate bounded non-destructive surfaces:
 - read local Git checkout facts;
 - read GitHub PR, check, review and merge observations;
 - project status with source attribution;
+- record gitless live-register focus/candidate events in the state store;
 - emit repair candidates;
 - run explicit validation commands when invoked by an operator or CI;
 - create reviewable PRs for registry or documentation repairs;

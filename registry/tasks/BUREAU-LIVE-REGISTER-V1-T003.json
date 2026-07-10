@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-LIVE-REGISTER-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T00:00:00Z",
+    "source": "Follow-up from Live Register v1 first slice.",
+    "does_not_establish": [
+      "implementation",
+      "merge_readiness",
+      "runtime_correctness"
+    ]
+  },
+  "id": "BUREAU-LIVE-REGISTER-V1-T003",
+  "title": "Overlay live focus in repo-balls",
+  "goal": "Surface active thread focus and focus overrides in repo-balls as operational context while keeping registry/queue.json as the dispatch canon.",
+  "priority": {
+    "lane": "later",
+    "rank": 730
+  },
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "repo-focus-visible",
+      "assertion": "repo-balls reports active live focus per repo when present."
+    },
+    {
+      "id": "projection-only",
+      "assertion": "The overlay is marked projection-only and never becomes a second queue."
+    },
+    {
+      "id": "tests",
+      "assertion": "Regression tests prove queue projection remains unchanged."
+    }
+  ]
+}

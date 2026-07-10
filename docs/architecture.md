@@ -3,8 +3,8 @@
 Bureau separates durable intent from volatile execution.
 
 Git contains initiatives, tasks, resources, queue order and exact plan references. SQLite contains
-workers, runs, reservations, revision-bound task overlays, receipts, workspace records and an
-operational event stream. The database uses migrations, WAL, `synchronous=FULL`, foreign keys and
+workers, runs, reservations, revision-bound task overlays, receipts, workspace records, the
+operational event stream and live-register focus/candidate records. The database uses migrations, WAL, `synchronous=FULL`, foreign keys and
 `BEGIN IMMEDIATE` for atomic dispatch.
 
 A run freezes both `task_sha256` and `plan_sha256`. A receipt is valid only for those exact
@@ -19,7 +19,7 @@ Bureau is a coordination core with optional operational organs around it.
 |---|---|---|
 | Registry | initiatives, tasks, resources, queue order, source snapshots | durable Bureau intent |
 | Core runtime | claim, reconcile, checkout, envelope, workspace and receipt logic | Bureau task coordination |
-| State store | SQLite runs, workers, reservations, overlays, receipts, workspaces and events | volatile execution state |
+| State store | SQLite runs, workers, reservations, overlays, receipts, workspaces, events and live-register records | volatile execution state and operational focus |
 | Bureau Ops | closure observation, review stewardship, bridge helpers, frontier, discovery and cycle contracts | observation, derivation, registration and evidence support |
 | External systems | GitHub, Grabowski, Steuerboard, Cabinet, Schauwerk and Chronik | their own source facts and actions |
 
@@ -62,6 +62,13 @@ forgotten.
 3. Evidence is revision-bound: any Bureau effect is tied to task and plan revisions when it unlocks dependencies.
 4. Failure is visible: if an external source cannot be observed, ops records a finding.
 5. Package extraction is a later decision, after dependencies and deployment costs are known.
+
+## Live operational register
+
+The Live Register is the gitless operational layer for thread focus, repository focus overrides and
+candidate work. It writes source-bound events to the state store and is meant for fast multi-thread
+coordination. It is not a second queue and does not create durable task truth. Candidate work becomes
+Bureau truth only after a reviewed Registry PR promotes it to task JSON and, separately, queue order.
 
 ## Source inboxes
 

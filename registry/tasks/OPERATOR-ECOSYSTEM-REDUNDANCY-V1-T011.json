@@ -5,8 +5,8 @@
   "title": "Establish app-independent Cabinet catalog core",
   "state": "planned",
   "priority": {
-    "lane": "now",
-    "rank": 15
+    "lane": "next",
+    "rank": 60
   },
   "goal": "Introduce the non-destructive target role, catalog contract, validator, renderer and full migration matrix inside the existing Cabinet repository before removing legacy surfaces.",
   "execution": {
@@ -56,6 +56,7 @@
     "registered_at": "2026-07-10T12:18:00+02:00",
     "source_decision": "Cabinet is to become an app-independent Heimgewebe system catalog.",
     "does_not_establish": [
+      "execution_authorization",
       "merge_permission",
       "runtime_correctness",
       "cleanup_permission",

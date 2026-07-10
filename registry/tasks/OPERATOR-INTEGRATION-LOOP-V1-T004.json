@@ -61,7 +61,7 @@
     },
     {
       "id": "consumer-proof",
-      "assertion": "Grabowski context packs can distinguish fresh_exact, stale_head, dirty_unverified and unavailable states against live repository heads."
+      "assertion": "Grabowski context packs can distinguish fresh_exact, stale_head, fresh_dirty_unverified and unknown states against live repository heads."
     }
   ],
   "metadata": {

@@ -29,7 +29,14 @@ from .core import (
     verification_stamp,
     workspace_status,
 )
-from .live_register import live_register_list, live_register_record
+from .live_register import (
+    apply_live_promote_plan,
+    live_register_export,
+    live_register_list,
+    live_register_record,
+    live_retention_report,
+    write_live_promote_plan,
+)
 from .rlens_policy import evaluate_registry_rlens_policy
 
 
@@ -135,6 +142,7 @@ def parser() -> argparse.ArgumentParser:
     live_register.add_argument("--title", required=True)
     live_register.add_argument("--source", default="operator")
     live_register.add_argument("--thread-id")
+    live_register.add_argument("--worker-id")
     live_register.add_argument("--repo")
     live_register.add_argument("--task-id")
     live_register.add_argument(
@@ -148,6 +156,22 @@ def parser() -> argparse.ArgumentParser:
     live_list.add_argument("--repo")
     live_list.add_argument("--thread-id")
     live_list.add_argument("--limit", type=int, default=50)
+    live_conflicts = sub.add_parser("live-conflicts")
+    live_conflicts.add_argument("--capability", action="append", default=[])
+    live_conflicts.add_argument("--repo")
+    live_conflicts.add_argument("--limit", type=int, default=100)
+    live_promote = sub.add_parser("live-promote-plan")
+    live_promote.add_argument("--event-id", type=int)
+    live_promote.add_argument("--initiative")
+    live_promote.add_argument("--task-id")
+    live_promote.add_argument("--write-plan")
+    live_promote.add_argument("--apply-plan")
+    live_export = sub.add_parser("live-export")
+    live_export.add_argument("--format", choices=["chronik"], default="chronik")
+    live_export.add_argument("--repo")
+    live_export.add_argument("--limit", type=int, default=100)
+    live_retention = sub.add_parser("live-retention")
+    live_retention.add_argument("--limit", type=int, default=500)
     claim = sub.add_parser("claim-next")
     claim.add_argument("--worker", required=True)
     claim.add_argument("--kind", default="interactive-agent")
@@ -557,6 +581,7 @@ def main(argv: list[str] | None = None) -> int:
                 title=args.title,
                 source=args.source,
                 thread_id=args.thread_id,
+                worker_id=args.worker_id,
                 repo=args.repo,
                 task_id=args.task_id,
                 status=args.status,
@@ -571,6 +596,34 @@ def main(argv: list[str] | None = None) -> int:
                 thread_id=args.thread_id,
                 limit=args.limit,
             )
+        elif args.command == "live-conflicts":
+            value = dispatcher.live_conflicts(
+                set(args.capability), resource=args.repo, limit=args.limit
+            )
+        elif args.command == "live-promote-plan":
+            if args.write_plan and args.apply_plan:
+                raise StateError("use either --write-plan or --apply-plan, not both")
+            if args.write_plan:
+                if args.event_id is None or not args.initiative:
+                    raise StateError("--event-id and --initiative are required with --write-plan")
+                value = write_live_promote_plan(
+                    registry,
+                    store,
+                    event_id=args.event_id,
+                    initiative=args.initiative,
+                    task_id=args.task_id,
+                    path=args.write_plan,
+                )
+            elif args.apply_plan:
+                value = apply_live_promote_plan(registry, path=args.apply_plan)
+            else:
+                raise StateError("live-promote-plan requires --write-plan or --apply-plan")
+        elif args.command == "live-export":
+            value = live_register_export(
+                store, repo=args.repo, limit=args.limit, export_format=args.format
+            )
+        elif args.command == "live-retention":
+            value = live_retention_report(store, limit=args.limit)
         elif args.command == "claim-next":
             try:
                 value = dispatcher.claim_next(

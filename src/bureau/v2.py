@@ -2212,6 +2212,9 @@ class Dispatcher(legacy.Dispatcher):
             for reason in item["blocker_reasons"]:
                 blocker_counts[reason] = blocker_counts.get(reason, 0) + 1
         selected = ranked_eligible[0] if ranked_eligible else None
+        from .live_register import live_register_context
+
+        live_context = live_register_context(self.store, repo=resource, limit=50)
         return {
             "schema_version": 1,
             "resource": resource,
@@ -2219,6 +2222,7 @@ class Dispatcher(legacy.Dispatcher):
             "selected": selected,
             "ranked_eligible": ranked_eligible[: max(limit, 0)],
             "blocked": blocked[: max(limit, 0)],
+            "live_register": live_context,
             "blocker_summary": {
                 "total_blocked": len(blocked),
                 "reason_counts": dict(sorted(blocker_counts.items())),
@@ -2226,7 +2230,10 @@ class Dispatcher(legacy.Dispatcher):
             "runtime_truth": runtime_truth,
             "lifecycle": lifecycle,
             "ranking_contract": {
-                "source": "registry truth plus Bureau runtime state",
+                "source": (
+                    "registry truth plus Bureau runtime state plus "
+                    "live-register operational context"
+                ),
                 "order": ["queue lane", "queue index", "task priority rank", "task id"],
                 "eligibility_inputs": [
                     "registry state",
@@ -2243,7 +2250,7 @@ class Dispatcher(legacy.Dispatcher):
                     "open PR claim guard",
                     "rlens policy",
                 ],
-                "does_not_use": ["chat memory", "informal plans"],
+                "does_not_use": ["raw chat memory", "informal plans outside live-register"],
             },
             "does_not_establish": [
                 "claim authority",
@@ -2259,7 +2266,10 @@ class Dispatcher(legacy.Dispatcher):
         with self.store.connect() as connection:
             runs = [dict(row) for row in self.store.active_runs(connection)]
         repo_balls: dict[str, dict[str, Any]] = {}
+        from .live_register import live_register_repo_context
+
         for repo in self._repository_resources():
+            live_context = live_register_repo_context(self.store, repo.id)
             repo_frontier = [
                 item
                 for item in frontier
@@ -2347,6 +2357,7 @@ class Dispatcher(legacy.Dispatcher):
                 "findings": repo_findings,
                 "lanes": lanes,
                 "frontier_count": len(repo_frontier),
+                "live_register": live_context,
             }
         summary = {
             "repositories": len(repo_balls),
@@ -2357,16 +2368,40 @@ class Dispatcher(legacy.Dispatcher):
             "backlog": sum(1 for item in repo_balls.values() if item["status"] == "backlog"),
             "empty": sum(1 for item in repo_balls.values() if item["status"] == "empty"),
         }
+        live_summary = {
+            repo_id: ball["live_register"]["counts"]
+            for repo_id, ball in repo_balls.items()
+            if any(ball["live_register"]["counts"].values())
+        }
         return {
             "schema_version": 1,
             "read_only": True,
             "scope": "repository",
             "capabilities": sorted(capabilities),
-            "summary": summary,
+            "summary": {**summary, "live_register_repositories": len(live_summary)},
             "repo_balls": repo_balls,
+            "live_register_summary": live_summary,
             "lifecycle": lifecycle,
             "runtime_truth": frontier_runtime_truth(frontier, lifecycle),
         }
+
+    def live_conflicts(
+        self,
+        capabilities: set[str],
+        *,
+        resource: str | None = None,
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        self._validate_resource_filter(resource)
+        from .live_register import live_register_conflict_report
+
+        return live_register_conflict_report(
+            self.registry,
+            self.store,
+            repo_ball_report=self.repo_balls(capabilities),
+            repo=resource,
+            limit=limit,
+        )
 
     def doctor(self, repair: bool = False) -> dict[str, Any]:
         from .registry_truth import registry_truth_diagnostics

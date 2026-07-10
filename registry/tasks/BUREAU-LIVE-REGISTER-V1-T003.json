@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "BUREAU-LIVE-REGISTER-V1",
-  "state": "planned",
+  "state": "verified",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -29,7 +29,37 @@
       "implementation",
       "merge_readiness",
       "runtime_correctness"
-    ]
+    ],
+    "verification": {
+      "verified_at": "2026-07-10T06:00:00Z",
+      "source": "local_worktree_pending_pr",
+      "repo": "heimgewebe/bureau",
+      "branch": "feat/bureau-live-register-complete-v1",
+      "implementation_diff_sha256": "f27e343b0555c99872120cabd684ff4e8311b890a72181976bf413454f2eeea0",
+      "scope": [
+        "repo-balls per-repo live_register overlay",
+        "projection-only summary",
+        "tests"
+      ],
+      "validation": [
+        "PYTHONPATH=src pytest -q tests/test_live_register.py tests/test_v2.py passed",
+        "PYTHONPATH=src ruff check src tests passed",
+        "git diff --check passed",
+        "bureau check valid=true",
+        "doctor healthy=true",
+        "live-register/what-now/repo-balls/live-conflicts/live-export/live-retention/live-promote-plan smokes passed"
+      ],
+      "does_not_establish": [
+        "automatic_queue_mutation",
+        "claim_authority",
+        "dispatch_authority",
+        "chronik_import",
+        "unreviewed_candidate_promotion",
+        "merge_readiness_without_ci"
+      ],
+      "task_sha256": "3a7116162963f1501459d8579be7d21a8dcee49fa881e797c8814e8286f9b315",
+      "plan_sha256": "36eceb12982abe5db5bf1514a707834520458119efcd9b7df17927250a48dca7"
+    }
   },
   "id": "BUREAU-LIVE-REGISTER-V1-T003",
   "title": "Overlay live focus in repo-balls",

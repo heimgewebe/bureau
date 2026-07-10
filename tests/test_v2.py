@@ -1498,9 +1498,10 @@ def test_what_now_ranks_eligible_tasks_from_registry_truth(
     }
     assert result["selected"]["claims"][0]["resource"] == "repo.alpha"
     assert result["ranking_contract"]["does_not_use"] == [
-        "chat memory",
-        "informal plans",
+        "raw chat memory",
+        "informal plans outside live-register",
     ]
+    assert result["live_register"]["summary"]["records"] == 0
 
 
 def test_what_now_explains_blockers_when_no_task_is_eligible(
@@ -1579,6 +1580,34 @@ def test_what_now_cli_is_read_only_and_json_emits_ranked_answer(
     assert not envelope_dir.exists() or list(envelope_dir.iterdir()) == []
 
 
+def test_what_now_includes_live_register_context(registry_factory, tmp_path, monkeypatch):
+    root = registry_factory(1, mode="write")
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    from bureau.live_register import live_register_record
+
+    live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        repo="repo.alpha",
+        title="Alpha candidate",
+        promotion_required=True,
+    )
+
+    result = dispatcher.what_now({"repository"}, resource="repo.alpha")
+
+    assert result["selected"]["task_id"] == "BUR-TEST-001-T001"
+    assert result["live_register"]["summary"]["promotion_required_count"] == 1
+    assert result["live_register"]["does_not_establish"] == [
+        "registry_task_truth",
+        "queue_truth",
+        "claim_authority",
+        "dispatch_authority",
+        "merge_readiness",
+    ]
+
+
+
 def test_resource_scoped_claims_allow_one_ball_per_repository_with_scoped_workers(
     registry_factory, tmp_path, monkeypatch
 ):
@@ -1624,6 +1653,59 @@ def test_repo_balls_projects_current_ball_per_repository(
         == "BUR-TEST-001-T002"
     )
 
+
+
+
+def test_repo_balls_overlays_live_focus_without_changing_current_ball(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write")
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    from bureau.live_register import live_register_record
+
+    live_register_record(
+        registry,
+        store,
+        kind="thread_focus",
+        thread_id="chat-alpha",
+        repo="repo.alpha",
+        title="Alpha live focus",
+    )
+
+    report = dispatcher.repo_balls({"repository"})
+
+    alpha = report["repo_balls"]["repo.alpha"]
+    assert alpha["current_ball"]["task_id"] == "BUR-TEST-001-T001"
+    assert alpha["live_register"]["counts"]["active_thread_focus"] == 1
+    assert report["summary"]["live_register_repositories"] == 1
+
+
+def test_live_conflicts_reports_thread_worker_run_conflict(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write")
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    from bureau.live_register import live_register_record
+
+    run = dispatcher.claim_next("worker-alpha", ("repository",), resource="repo.alpha")["run"]
+    live_register_record(
+        registry,
+        store,
+        kind="thread_focus",
+        thread_id="chat-alpha",
+        worker_id="worker-alpha",
+        repo="repo.alpha",
+        title="Conflicting live focus",
+    )
+
+    report = dispatcher.live_conflicts({"repository"}, resource="repo.alpha")
+
+    assert report["summary"]["findings"] >= 1
+    assert any(
+        item["code"] == "live-worker-has-different-active-run"
+        and item["run_id"] == run["run_id"]
+        for item in report["findings"]
+    )
 
 
 

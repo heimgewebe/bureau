@@ -120,3 +120,70 @@ def test_live_register_cli_writes_and_lists_state_events(registry_factory, tmp_p
     listed = json.loads(capsys.readouterr().out)
     assert listed["summary"]["active_thread_focus_count"] == 1
     assert listed["records"][0]["record"]["repo"] == "repo.alpha"
+
+
+def test_live_register_worker_id_and_export_retention(registry_factory, tmp_path):
+    _root, registry, store = setup_live(registry_factory, tmp_path)
+
+    live_register_record(
+        registry,
+        store,
+        kind="thread_focus",
+        thread_id="chat-worker",
+        worker_id="worker-alpha",
+        repo="repo.alpha",
+        title="Worker focus",
+        note="private details stay out of chronik export body",
+    )
+
+    from bureau.live_register import live_register_export, live_retention_report
+
+    exported = live_register_export(store, export_format="chronik")
+    assert exported["records"][0]["worker_id"] == "worker-alpha"
+    assert "payload_digest" in exported["records"][0]
+    assert "note" not in exported["records"][0]
+    assert "unredacted_export" in exported["does_not_establish"]
+
+    retention = live_retention_report(store)
+    assert retention["delete_authority"] is False
+    assert retention["summary"]["by_kind"] == {"thread_focus": 1}
+
+
+def test_live_promote_plan_requires_review_and_applies_task_file(
+    registry_factory, tmp_path,
+):
+    root, registry, store = setup_live(registry_factory, tmp_path)
+    result = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        repo="repo.alpha",
+        title="Promoted candidate",
+        promotion_required=True,
+    )
+    plan_path = tmp_path / "promote.json"
+
+    from bureau.live_register import apply_live_promote_plan, write_live_promote_plan
+
+    plan = write_live_promote_plan(
+        registry,
+        store,
+        event_id=result["event_id"],
+        initiative="BUR-TEST-001",
+        task_id="BUR-TEST-001-T999",
+        path=str(plan_path),
+    )
+    assert plan["plan"]["task_json"]["metadata"]["live_register_event_id"] == result["event_id"]
+    with pytest.raises(StateError, match="requires review"):
+        apply_live_promote_plan(registry, path=str(plan_path))
+
+    value = json.loads(plan_path.read_text())
+    value["review"] = {"required": True, "status": "reviewed", "reviewer": "test"}
+    plan_path.write_text(json.dumps(value))
+    applied = apply_live_promote_plan(registry, path=str(plan_path))
+
+    assert applied["status"] == "applied"
+    assert applied["queue_mutated"] is False
+    assert (root / "registry/tasks/BUR-TEST-001-T999.json").is_file()
+    queue = json.loads((root / "registry/queue.json").read_text())
+    assert "BUR-TEST-001-T999" not in queue["lanes"]["now"]

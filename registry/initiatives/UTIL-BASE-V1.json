@@ -85,8 +85,9 @@
       "recommended_state": "completion-ready",
       "source": "post-merge doctor check after PR #366"
     },
-    "closeout_status": "Reopened by UTIL-BASE-V1-T013 and T014. Probe-as-write hardening and immutable container-source rollout remain open; neither task authorizes data deletion, image pruning, unreviewed upgrades or public exposure.",
+    "closeout_status": "UTIL-BASE-V1-T014 is verified with immutable container pins, canonical Compose provenance and live rollback/smoke evidence. UTIL-BASE-V1-T013 remains planned, so the initiative stays active; no data deletion, image pruning, unreviewed upgrade or public exposure is authorized.",
     "lifecycle_reopened_20260710": "PR #392 registered UTIL-BASE-V1-T013 as a planned follow-up after the previous completion-ready closeout; the initiative is active again until that hardening task is resolved.",
-    "lifecycle_reopened_20260710_container_pinning": "UTIL-BASE-V1-T014 registers immutable image pins, canonical Beszel-agent source, validation and staged live rollout after the operator ecosystem audit found floating tags and obsolete worktree provenance."
+    "lifecycle_reopened_20260710_container_pinning": "UTIL-BASE-V1-T014 registers immutable image pins, canonical Beszel-agent source, validation and staged live rollout after the operator ecosystem audit found floating tags and obsolete worktree provenance.",
+    "verified_container_pinning_20260710": "Infra PR #113 implemented immutable image and source contracts; PR #114 published live evidence. Runtime verifier SHA-256 a0602f435e7c6c31ed3ddacfb329413802f51079d535296589b087be386c9b2c passed."
   }
 }

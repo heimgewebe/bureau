@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "UTIL-BASE-V1",
-  "state": "ready",
+  "state": "verified",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -86,6 +86,43 @@
       "public_ingress_safety_without_firewall_proof",
       "permission_to_delete_old_worktrees",
       "permission_to_prune_images"
-    ]
+    ],
+    "verified_at": "2026-07-10T22:01:02Z",
+    "registration_pr": "heimgewebe/bureau#406",
+    "registration_head": "b75ed1d5d0e81fdf06c9f1a89ca59d8d470e424b",
+    "registration_merge_commit": "a4659e8447bff29b4b995c9f4a085f751f3e8245",
+    "implementation_pr": "heimgewebe/infra#113",
+    "implementation_head": "51d5af914e263da476cb9f5798b44ec21bc8bba4",
+    "implementation_merge_commit": "1309dc138aa412a50624b0a6b4aa2acebdfbf4fd",
+    "implementation_diff_sha256": "e78d5b7e451e24a7a3d10fb202c052f7b07e98c91a5a6b97bc05a523705d55b7",
+    "runtime_evidence_pr": "heimgewebe/infra#114",
+    "runtime_evidence_head": "4bda0b03ecc355c7324eba4643920ff4c270cf93",
+    "runtime_evidence_merge_commit": "d99ae789e04bb930df8c0145b2c669c753514a20",
+    "runtime_evidence": "heimgewebe/infra runtime/local-utility-container-rollout-2026-07-10.md at d99ae789e04bb930df8c0145b2c669c753514a20",
+    "runtime_verifier_sha256": "a0602f435e7c6c31ed3ddacfb329413802f51079d535296589b087be386c9b2c",
+    "post_rollout_container_snapshot_sha256": "7730821801ae1eb5378b8fd67cbd5d4a9d67898b361e64d730df1e1d319b3546",
+    "validation": [
+      "Infra PR #113 GitHub validate passed on head 51d5af914e263da476cb9f5798b44ec21bc8bba4.",
+      "Repeated local make validate and ShellCheck passed before merge.",
+      "All seven readable version tags resolved to the exact manifests already running before rollout.",
+      "Staged live recreation passed for Stirling PDF, Backrest, Beszel hub and agent, PostgreSQL, Redis and Paperless.",
+      "Post-rollout verifier passed immutable digests, canonical Compose provenance, loopback bindings, no published database/broker ports, PostgreSQL/Redis readiness, HTTP services, agent receipt and Beszel monitoring.",
+      "Paperless document/user counts remained 2|3 before and after recreation.",
+      "Infra PR #114 validate passed and published the redacted runtime evidence."
+    ],
+    "outcome": "The Heim-PC utility stack now runs the previously proven image contents through immutable version+digest references. Main services use the canonical Infra Compose source; the Beszel agent uses a canonical installed source and unique project identity. Runtime and rollback evidence are preserved without data deletion or image pruning.",
+    "verified_acceptance": {
+      "current-image-pins": "All seven services run immutable version+digest references whose manifest digests equal the pre-rollout image contents.",
+      "canonical-agent-source": "Infra owns compose/heim-utilities/beszel-agent.compose.yml; the atomic installer and source receipt bind the runtime copy to source SHA-256 e0ae0f58a6a751dc93df05948bade342d57bfadfd9f75e4808bc0d9fca7c3df8.",
+      "floating-tag-guard": "Infra validation and negative tests reject latest, missing/malformed digests, missing agent source and wrong project identity.",
+      "rollback-contract": "The runbook and local preflight evidence preserve prior image/container metadata, Compose sources and a stopped legacy Beszel-agent rollback anchor without pruning or deleting persistence.",
+      "runtime-provenance": "Main containers report project heim-utilities and canonical /home/alex/repos/infra Compose source; agent reports project heim-utilities-beszel-agent and the installed canonical source.",
+      "post-rollout-smoke": "Digest/provenance verifier, HTTP checks, PostgreSQL pg_isready, Redis PONG, unchanged Paperless counts and growing Beszel rows all passed; browser services remain loopback-bound."
+    },
+    "self_review": "PASS: verification is bound to Bureau PR #406, Infra PRs #113/#114, exact heads/merges, implementation diff hash and live runtime evidence. It does not claim future image security, cleanup permission, public-ingress proof or completion of unrelated UTIL-BASE-V1-T013.",
+    "verification": {
+      "task_sha256": "e0ae07b4ea36b293f0ae8a222a47338d741ec7f136ac72e0477558f40e618ba4",
+      "plan_sha256": "b7cfba2a62e364bcd6d07747f68eb82ac11f4ba9a25c9aef4a62bf9ee0631596"
+    }
   }
 }

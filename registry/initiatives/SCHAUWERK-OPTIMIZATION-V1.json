@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "SCHAUWERK-OPTIMIZATION-V1",
   "title": "Schauwerk optimization and live-gate hardening",
-  "state": "completion-ready",
-  "commitment": "next",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Bring Schauwerk from foundation plus Miro-pilot into a clearer, safer next stage: current docs, controlled SW-003 live proof preparation, and cleaner receipt validation before any broader live apply path is opened.",
   "current_plan": {
     "repository": "schauwerk",
@@ -17,16 +17,28 @@
     "source_request": "erstelle eine to do liste, registriere diese im bureau und arbeite sie ab",
     "repo": "heimgewebe/schauwerk",
     "working_repository": "/home/alex/repos/schauwerk",
-    "open_gate": "heimgewebe/schauwerk#8 SW-003: Isolated Miro write proof",
-    "does_not_establish": [
+    "lifecycle_hygiene_repair": {
+      "updated_at": "2026-07-09",
+      "reason": "All registered Schauwerk optimization tasks are verified; lifecycle now recommends completion-ready."
+    },
+    "lifecycle": {
+      "completed_at": "2026-07-10T05:10:48.755262Z",
+      "completion_reason": "All six registered optimization tasks are verified; SW-003 was later closed by controlled live-proof evidence and follow-up SW-009 gating is complete."
+    },
+    "historical_open_gate": "heimgewebe/schauwerk#8 SW-003: Isolated Miro write proof",
+    "original_scope_did_not_establish": [
       "live_miro_acceptance",
       "sw003_closure",
       "sw009_live_apply_readiness",
       "provider_mutation_authority"
     ],
-    "lifecycle_hygiene_repair": {
-      "updated_at": "2026-07-09",
-      "reason": "All registered Schauwerk optimization tasks are verified; lifecycle now recommends completion-ready."
+    "closure_evidence": {
+      "issue": "heimgewebe/schauwerk#8",
+      "issue_state": "closed",
+      "closed_at": "2026-07-09T10:36:11Z",
+      "live_proof_merge": "cd56f7050336c16f58177a06bc3abf5c94dcb3ca",
+      "final_optimization_merge": "311cb6e85b53775adce451558d136270795581c1c",
+      "successor_initiative": "SCHAUWERK-USEFUL-PILOT-V1"
     }
   },
   "completion": [

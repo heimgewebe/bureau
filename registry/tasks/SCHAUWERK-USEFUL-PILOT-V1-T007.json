@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Repository changes require diff-bound review and green CI before merge."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SCHAUWERK-USEFUL-PILOT-V1-T001"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T05:12:00Z",
+    "source_request": "alles umsetzen",
+    "roadmap_stage": "SW-009",
+    "does_not_establish": [
+      "implementation_before_merge",
+      "provider_mutation_authority"
+    ]
+  },
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T007",
+  "title": "SW-009 \u2014 Implement reviewed live apply executor",
+  "goal": "Implement an explicitly approved live managed-region executor bound to target alias, expected revision, typed operations, snapshots, postflight and restore.",
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "acceptance": [
+    {
+      "id": "approval",
+      "assertion": "Live execution requires a reviewed receipt and explicit allowlisted local target alias."
+    },
+    {
+      "id": "scope",
+      "assertion": "Only the declared managed region and expected revision can be mutated."
+    },
+    {
+      "id": "postflight",
+      "assertion": "After-state, idempotency and semantic verification are mandatory."
+    },
+    {
+      "id": "restore",
+      "assertion": "A tested restore path and kill switch exist before productive use."
+    }
+  ]
+}

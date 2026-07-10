@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "id": "SCHAUWERK-USEFUL-PILOT-V1",
+  "title": "Schauwerk useful pilot and product surfaces",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Advance Schauwerk from a verified Miro/registry foundation to a useful, reviewable and durable visual operator, presentation and publication layer.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/schauwerk-useful-pilot-v1.md"
+  },
+  "completion": [
+    "Declared live and static sources reconstruct useful software and education views without becoming source truth.",
+    "Productive managed-region writes pass Regie review, exact-scope apply, postflight verification and restore gates.",
+    "Presentation and public publication outputs are reproducible, privacy-checked and usable offline.",
+    "Adapter failure, provider outage and faulty mutation have visible, tested recovery paths."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-10T05:12:00Z",
+    "source_request": "alles umsetzen",
+    "repository": "heimgewebe/schauwerk",
+    "baseline_merge": "7e2207b1144153251e2891030cb8b78d8221f6f6",
+    "baseline_registry_digest": "b6d178b02660c084e2cc1456955126c12637b3f69f47ab9d9d382929ce9bbbb5",
+    "does_not_establish": [
+      "automatic_live_miro_apply",
+      "public_release_readiness",
+      "all_roadmap_work_completed",
+      "visual_projection_as_source_truth"
+    ]
+  }
+}

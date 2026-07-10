@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "state": "verified",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Repository changes require diff-bound review and green CI before merge."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SCHAUWERK-USEFUL-PILOT-V1-T001"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T05:12:00Z",
+    "source_request": "alles umsetzen",
+    "roadmap_stage": "SW-005A",
+    "does_not_establish": [
+      "implementation_before_merge",
+      "provider_mutation_authority"
+    ],
+    "implementation_evidence": {
+      "pull_request": "heimgewebe/schauwerk#72",
+      "url": "https://github.com/heimgewebe/schauwerk/pull/72",
+      "title": "feat: establish useful-pilot registry and Grabowski projection",
+      "head_sha": "c48a2f6193a849a75c30b0c3ecade5cc28ec695b",
+      "merge_commit": "7e2207b1144153251e2891030cb8b78d8221f6f6",
+      "merged_at": "2026-07-10T05:09:59Z",
+      "local_validation": [
+        "make validate: 285 passed",
+        "schauwerk registry status --json",
+        "schauwerk miro doctor --json"
+      ],
+      "checks": [
+        {
+          "workflow": "validate",
+          "job": "validate (3.11)",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "validate",
+          "job": "validate (3.12)",
+          "conclusion": "success"
+        }
+      ],
+      "review_gate": {
+        "verdict": "PASS",
+        "diff_sha256": "130cc949d8efeab853cc7faa094fd7500b3d2992b0eb913807f425da6f2f882c",
+        "material_findings_fixed": 6
+      }
+    },
+    "verified_at": "2026-07-10T05:10:24Z",
+    "outcome": "The first static SW-005 Grabowski operator projection is reproducible from declared source truth.",
+    "verification": {
+      "task_sha256": "e08786418a8c8ec5634317fc87bc4bf5449f2d1ecff41e00d268333d456e8916",
+      "plan_sha256": "f56d795d9f976a3b0f14b3df70d3bdd26c5a0cc800ff236db0ff2e1e04ef9880"
+    }
+  },
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T002",
+  "title": "SW-005A \u2014 Render static Grabowski operator overview",
+  "goal": "Render a sanitized deterministic Grabowski operator view from a declared generated source with committed acceptance evidence.",
+  "priority": {
+    "lane": "later",
+    "rank": 2
+  },
+  "acceptance": [
+    {
+      "id": "declared-source",
+      "assertion": "The projection resolves its source and view through the registry."
+    },
+    {
+      "id": "deterministic",
+      "assertion": "Snapshot and DSL output are digest-bound and reproducible."
+    },
+    {
+      "id": "safe-output",
+      "assertion": "Input/output path, size, symlink and DSL-injection boundaries fail closed."
+    },
+    {
+      "id": "evidence",
+      "assertion": "A real Grabowski source revision and rendered output are committed without provider identifiers."
+    }
+  ]
+}

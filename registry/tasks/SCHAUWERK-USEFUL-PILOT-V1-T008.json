@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Repository changes require diff-bound review and green CI before merge."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SCHAUWERK-USEFUL-PILOT-V1-T007"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T05:12:00Z",
+    "source_request": "alles umsetzen",
+    "roadmap_stage": "SW-010",
+    "does_not_establish": [
+      "implementation_before_merge",
+      "provider_mutation_authority"
+    ]
+  },
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T008",
+  "title": "SW-010 \u2014 Build Regie review interface",
+  "goal": "Provide a local interface for context, sources, instructions, semantic/visual diff, partial approval, apply, verification and restore without terminal knowledge.",
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
+  "acceptance": [
+    {
+      "id": "review-bundle",
+      "assertion": "Regie renders a source-bound proposal bundle and highlights uncertainty and stale inputs."
+    },
+    {
+      "id": "partial-approval",
+      "assertion": "Operators can approve, reject or defer typed operations independently."
+    },
+    {
+      "id": "apply-receipt",
+      "assertion": "Apply and verification results are visible and receipt-bound."
+    },
+    {
+      "id": "restore",
+      "assertion": "Restore is available from the same reviewed operation context."
+    }
+  ]
+}

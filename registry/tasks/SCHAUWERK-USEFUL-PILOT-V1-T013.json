@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Repository changes require diff-bound review and green CI before merge."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SCHAUWERK-USEFUL-PILOT-V1-T008",
+    "SCHAUWERK-USEFUL-PILOT-V1-T012"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T05:12:00Z",
+    "source_request": "alles umsetzen",
+    "roadmap_stage": "SW-015",
+    "does_not_establish": [
+      "implementation_before_merge",
+      "provider_mutation_authority"
+    ]
+  },
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T013",
+  "title": "SW-015 \u2014 Add safe automated maintenance",
+  "goal": "Detect source changes and propose managed-region updates, stale statements, open decisions, focus and timeline views without mutating human regions.",
+  "priority": {
+    "lane": "later",
+    "rank": 110
+  },
+  "acceptance": [
+    {
+      "id": "proposal-first",
+      "assertion": "Automation emits reviewable proposals rather than direct provider writes."
+    },
+    {
+      "id": "ownership",
+      "assertion": "Human and cooperative regions are excluded from automatic replacement."
+    },
+    {
+      "id": "drift",
+      "assertion": "Stale and contradictory source facts are visible with evidence."
+    },
+    {
+      "id": "receipts",
+      "assertion": "Accepted maintenance runs produce source/apply/postflight receipts."
+    }
+  ]
+}

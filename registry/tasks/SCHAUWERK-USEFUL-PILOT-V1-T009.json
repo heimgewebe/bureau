@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Repository changes require diff-bound review and green CI before merge."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SCHAUWERK-USEFUL-PILOT-V1-T003",
+    "SCHAUWERK-USEFUL-PILOT-V1-T008"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T05:12:00Z",
+    "source_request": "alles umsetzen",
+    "roadmap_stage": "SW-011",
+    "does_not_establish": [
+      "implementation_before_merge",
+      "provider_mutation_authority"
+    ]
+  },
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T009",
+  "title": "SW-011 \u2014 Add overview and resilient live views",
+  "goal": "Expose project navigation, freshness, active jobs, provider health, publications and failures while remaining useful during Miro outage.",
+  "priority": {
+    "lane": "later",
+    "rank": 70
+  },
+  "acceptance": [
+    {
+      "id": "navigation",
+      "assertion": "Projects and views are discoverable through one registry-backed overview."
+    },
+    {
+      "id": "freshness",
+      "assertion": "Every live fact exposes observed time, source and stale/error state."
+    },
+    {
+      "id": "offline-diagnostics",
+      "assertion": "Core diagnostics remain available when Miro is unavailable."
+    },
+    {
+      "id": "fullscreen",
+      "assertion": "Declared live views can run in bounded fullscreen/display profiles."
+    }
+  ]
+}

@@ -722,3 +722,166 @@ def test_configured_git_repository_without_path_fails_closed_for_claim(
     with pytest.raises(NoEligibleTask) as excinfo:
         dispatcher.claim_next("worker", ("repository",))
     assert "missing path" in str(excinfo.value)
+
+
+def _split_repository_resources(root):
+    alpha_path = root / "alpha-repo"
+    beta_path = root / "beta-repo"
+    alpha_path.mkdir()
+    beta_path.mkdir()
+    resources = {
+        "1.json": {
+            "schema_version": 1,
+            "id": "repo",
+            "type": "group",
+            "parent": "root",
+        },
+        "2.json": {
+            "schema_version": 1,
+            "id": "repo.alpha",
+            "type": "git-repository",
+            "parent": "root",
+            "path": str(alpha_path),
+        },
+        "3.json": {
+            "schema_version": 1,
+            "id": "repo.beta",
+            "type": "git-repository",
+            "parent": "root",
+            "path": str(beta_path),
+        },
+    }
+    for name, value in resources.items():
+        (root / "registry/resources" / name).write_text(json.dumps(value))
+    first_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    first = json.loads(first_path.read_text())
+    first["claims"].insert(
+        1,
+        {
+            "resource": "repo.beta",
+            "mode": "write",
+            "isolation": "worktree",
+        },
+    )
+    first_path.write_text(json.dumps(first))
+    return alpha_path, beta_path
+
+
+def test_unbound_open_pr_is_projected_only_to_its_source_repository(
+    registry_factory, tmp_path
+):
+    root = registry_factory(2, mode="write")
+    _split_repository_resources(root)
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    reservation = bureau_v2.OpenPullRequestReservation(
+        "open-pr:heimgewebe/alpha#9",
+        "repo.alpha",
+        "write-blocker",
+        1,
+        repository="heimgewebe/alpha",
+        number=9,
+        task_binding_status="missing",
+        task_binding_reason="open PR has no valid Bureau task binding",
+        scope_resources=("repo.alpha",),
+    )
+    dispatcher = Dispatcher(
+        registry, store, open_pr_reservations_provider=lambda _registry: [reservation]
+    )
+
+    report = dispatcher.repo_balls({"repository"})
+    alpha_task = report["repo_balls"]["repo.alpha"]["lanes"]["now"][0]
+    beta_task = report["repo_balls"]["repo.beta"]["lanes"]["now"][0]
+    label = "open-pr:heimgewebe/alpha#9"
+
+    assert label in " ".join(alpha_task["reasons"])
+    assert label not in " ".join(beta_task["reasons"])
+    assert label in " ".join(beta_task["claim_reasons"])
+    assert label in " ".join(beta_task["cross_repository_reasons"])
+    assert report["repo_balls"]["repo.beta"]["current_ball"]["task_id"] == (
+        "BUR-TEST-001-T002"
+    )
+
+    live = dispatcher.live_conflicts({"repository"}, resource="repo.beta")
+    assert all(label not in " ".join(item.get("reasons", [])) for item in live["findings"])
+
+    what_now = dispatcher.what_now({"repository"}, resource="repo.beta", limit=10)
+    assert what_now["selected"]["task_id"] == "BUR-TEST-001-T002"
+    first = next(
+        item for item in what_now["blocked"] if item["task_id"] == "BUR-TEST-001-T001"
+    )
+    assert first["blocker_reasons"] == [
+        "task has blockers outside selected repository"
+    ]
+    assert label in " ".join(first["cross_repository_reasons"])
+
+
+def test_valid_bound_pr_scope_includes_source_and_explicit_repository_claims(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write")
+    alpha_path, beta_path = _split_repository_resources(root)
+    second_path = root / "registry/tasks/BUR-TEST-001-T002.json"
+    second_task = json.loads(second_path.read_text())
+    second_task["claims"][0].update({"resource": "repo.alpha", "mode": "write"})
+    second_task["claims"].insert(
+        1,
+        {
+            "resource": "repo.beta",
+            "mode": "read",
+            "isolation": "worktree",
+        },
+    )
+    second_path.write_text(json.dumps(second_task))
+    registry = Registry.load(root)
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD", "1")
+
+    def repository_for_path(path):
+        if path == alpha_path:
+            return "heimgewebe/alpha"
+        if path == beta_path:
+            return "heimgewebe/beta"
+        return None
+
+    def pull_requests(repository):
+        if repository == "heimgewebe/alpha":
+            return [
+                {
+                    "number": 10,
+                    "title": "implement multi-repository task",
+                    "headRefName": "feat/bur-test-001-t001",
+                    "body": "Bureau-Task: BUR-TEST-001-T001",
+                    "url": "https://github.example/alpha/pull/10",
+                }
+            ]
+        return []
+
+    monkeypatch.setattr(bureau_v2, "_github_repository_for_path", repository_for_path)
+    monkeypatch.setattr(bureau_v2, "_github_open_pull_requests", pull_requests)
+    reservations = bureau_v2.open_pull_request_reservations(registry)
+    reservation = next(
+        item
+        for item in reservations
+        if isinstance(item, bureau_v2.OpenPullRequestReservation) and item.number == 10
+    )
+
+    assert reservation.scope_resources == ("repo.alpha", "repo.beta")
+
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry, store, open_pr_reservations_provider=lambda _registry: reservations
+    )
+    beta = dispatcher.frontier({"repository"}, resource="repo.beta")
+    second = next(item for item in beta if item["task_id"] == "BUR-TEST-001-T002")
+    label = "open-pr:heimgewebe/alpha#10"
+    assert label not in " ".join(second["reasons"])
+    assert label in " ".join(second["claim_reasons"])
+    assert label in " ".join(second["cross_repository_reasons"])
+    assert second["resource_eligible"] is True
+    assert second["eligible"] is False
+
+    alpha = dispatcher.frontier({"repository"}, resource="repo.alpha")
+    second_alpha = next(
+        item for item in alpha if item["task_id"] == "BUR-TEST-001-T002"
+    )
+    assert label in " ".join(second_alpha["reasons"])

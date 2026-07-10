@@ -176,6 +176,7 @@ class OpenPullRequestReservation(legacy.Reservation):
     observation_failed: bool = False
     task_binding_status: str = "unknown"
     task_binding_reason: str = ""
+    scope_resources: tuple[str, ...] = ()
 
 
 def _task_id_search_values(value: Any) -> list[str]:
@@ -408,6 +409,32 @@ def _open_pr_label(reservation: legacy.Reservation) -> str:
     return reservation.run_id
 
 
+def _open_pr_scope_resources_for_binding(
+    registry: legacy.Registry,
+    source_resource: str,
+    task_ids: tuple[str, ...],
+    binding_status: str,
+) -> tuple[str, ...]:
+    scopes = [source_resource]
+    if binding_status == "valid" and len(task_ids) == 1:
+        task = registry.tasks[task_ids[0]]
+        for claim in task.claims:
+            resource = registry.resources.get(claim.resource)
+            if resource is None or resource.type != "git-repository":
+                continue
+            if not legacy.modes_conflict(claim.mode, "write-blocker"):
+                continue
+            if claim.resource not in scopes:
+                scopes.append(claim.resource)
+    return tuple(scopes)
+
+
+def _open_pr_reservation_scopes(
+    reservation: OpenPullRequestReservation,
+) -> tuple[str, ...]:
+    return reservation.scope_resources or (reservation.resource,)
+
+
 def _repo_write_guard_failure_reservation(
     resource: legacy.Resource, diagnostic: str
 ) -> legacy.Reservation:
@@ -487,6 +514,9 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
             task_ids, binding_status, binding_reason = _pull_request_task_binding(
                 pull_request, registry
             )
+            scope_resources = _open_pr_scope_resources_for_binding(
+                registry, resource.id, task_ids, binding_status
+            )
             result.append(
                 OpenPullRequestReservation(
                     f"open-pr:{repository}#{number}",
@@ -501,6 +531,7 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
                     url=url,
                     task_binding_status=binding_status,
                     task_binding_reason=binding_reason,
+                    scope_resources=scope_resources,
                 )
             )
     return result
@@ -1560,6 +1591,8 @@ class Dispatcher(legacy.Dispatcher):
         runs: list[sqlite3.Row],
         reservations: list[legacy.Reservation],
         overlays: dict[str, str],
+        *,
+        projection_resource: str | None = None,
     ) -> list[str]:
         result: list[str] = []
         initiative = self.registry.initiatives[task.initiative]
@@ -1601,51 +1634,64 @@ class Dispatcher(legacy.Dispatcher):
             item for item in reservations if not isinstance(item, OpenPullRequestReservation)
         ]
         for reservation in open_pr_reservations:
+            scopes = _open_pr_reservation_scopes(reservation)
+            projected_scopes = (
+                scopes
+                if projection_resource is None
+                else tuple(
+                    scope
+                    for scope in scopes
+                    if legacy.overlaps(
+                        scope, projection_resource, self.registry.resources
+                    )
+                )
+            )
+            if not projected_scopes:
+                continue
             label = _open_pr_label(reservation)
+            conflicts = any(
+                legacy.overlaps(claim.resource, scope, self.registry.resources)
+                and legacy.modes_conflict(claim.mode, reservation.mode)
+                for claim in task.claims
+                for scope in projected_scopes
+            )
             if reservation.observation_failed:
-                if any(
-                    legacy.overlaps(claim.resource, reservation.resource, self.registry.resources)
-                    and legacy.modes_conflict(claim.mode, reservation.mode)
-                    for claim in task.claims
-                ):
+                if conflicts:
                     result.append(f"repo write blocked by open PR guard failure: {label}")
                 continue
             binding_status = reservation.task_binding_status or "unknown"
             if binding_status == "valid" and task.id in reservation.task_ids:
                 result.append(f"task already implemented by open PR: {label}")
                 continue
-            for claim in task.claims:
-                if legacy.overlaps(
-                    claim.resource, reservation.resource, self.registry.resources
-                ) and legacy.modes_conflict(claim.mode, reservation.mode):
-                    if binding_status == "exception":
-                        task_note = (
-                            f" task_ids={','.join(reservation.task_ids)}"
-                            if reservation.task_ids
-                            else " task_id=exception"
-                        )
-                        result.append(
-                            "repo write blocked by open PR: "
-                            f"{label} binding=exception{task_note} "
-                            f"reason={reservation.task_binding_reason}"
-                        )
-                    elif binding_status != "valid":
-                        task_note = (
-                            f" task_ids={','.join(reservation.task_ids)}"
-                            if reservation.task_ids
-                            else " task_id=missing"
-                        )
-                        result.append(
-                            "repo write blocked by open PR task binding violation: "
-                            f"{label} binding={binding_status}{task_note} "
-                            f"reason={reservation.task_binding_reason}"
-                        )
-                    else:
-                        result.append(
-                            "repo write blocked by open PR: "
-                            f"{label} task_ids={','.join(reservation.task_ids)}"
-                        )
-                    break
+            if not conflicts:
+                continue
+            if binding_status == "exception":
+                task_note = (
+                    f" task_ids={','.join(reservation.task_ids)}"
+                    if reservation.task_ids
+                    else " task_id=exception"
+                )
+                result.append(
+                    "repo write blocked by open PR: "
+                    f"{label} binding=exception{task_note} "
+                    f"reason={reservation.task_binding_reason}"
+                )
+            elif binding_status != "valid":
+                task_note = (
+                    f" task_ids={','.join(reservation.task_ids)}"
+                    if reservation.task_ids
+                    else " task_id=missing"
+                )
+                result.append(
+                    "repo write blocked by open PR task binding violation: "
+                    f"{label} binding={binding_status}{task_note} "
+                    f"reason={reservation.task_binding_reason}"
+                )
+            else:
+                result.append(
+                    "repo write blocked by open PR: "
+                    f"{label} task_ids={','.join(reservation.task_ids)}"
+                )
         rlens_block = rlens_policy_block_reason(task.raw)
         if rlens_block:
             result.append(f"rlens policy blocked: {rlens_block}")
@@ -1653,6 +1699,60 @@ class Dispatcher(legacy.Dispatcher):
             result.extend(
                 legacy.claim_conflicts(claim, regular_reservations, self.registry.resources)
             )
+        return result
+
+    def _frontier_from_state(
+        self,
+        capabilities: set[str],
+        *,
+        resource: str | None,
+        runs: list[sqlite3.Row],
+        reservations: list[legacy.Reservation],
+        overlays: dict[str, str],
+        claim_reasons_by_task: dict[str, list[str]] | None = None,
+    ) -> list[dict[str, Any]]:
+        result: list[dict[str, Any]] = []
+        for task in self.registry.ordered_tasks():
+            if not self._task_matches_resource(task, resource):
+                continue
+            state = overlays.get(task.id, task.state)
+            initiative = self.registry.initiatives[task.initiative]
+            closure_bridge = self._closure_bridge_applies(task, state, initiative)
+            claim_reasons = (
+                claim_reasons_by_task.get(task.id)
+                if claim_reasons_by_task is not None
+                else None
+            )
+            if claim_reasons is None:
+                claim_reasons = self.reasons(
+                    task, capabilities, runs, reservations, overlays
+                )
+            reasons = (
+                claim_reasons
+                if resource is None
+                else self.reasons(
+                    task,
+                    capabilities,
+                    runs,
+                    reservations,
+                    overlays,
+                    projection_resource=resource,
+                )
+            )
+            item = self._task_frontier_item(
+                task,
+                effective_state=state,
+                eligible=not claim_reasons,
+                closure_bridge=closure_bridge,
+                reasons=reasons,
+            )
+            item["claim_reasons"] = claim_reasons
+            projected_reasons = set(reasons)
+            item["cross_repository_reasons"] = [
+                reason for reason in claim_reasons if reason not in projected_reasons
+            ]
+            item["resource_eligible"] = not reasons
+            result.append(item)
         return result
 
     def frontier(
@@ -1664,24 +1764,13 @@ class Dispatcher(legacy.Dispatcher):
             runs = self.store.active_runs(connection)
             reservations = self.store.reservations(connection) + open_pr_reservations
             overlays = self.store.overlays(connection, self.registry)
-            result: list[dict[str, Any]] = []
-            for task in self.registry.ordered_tasks():
-                if not self._task_matches_resource(task, resource):
-                    continue
-                state = overlays.get(task.id, task.state)
-                initiative = self.registry.initiatives[task.initiative]
-                closure_bridge = self._closure_bridge_applies(task, state, initiative)
-                reasons = self.reasons(task, capabilities, runs, reservations, overlays)
-                result.append(
-                    self._task_frontier_item(
-                        task,
-                        effective_state=state,
-                        eligible=not reasons,
-                        closure_bridge=closure_bridge,
-                        reasons=reasons,
-                    )
-                )
-            return result
+            return self._frontier_from_state(
+                capabilities,
+                resource=resource,
+                runs=runs,
+                reservations=reservations,
+                overlays=overlays,
+            )
 
     def claim_next(
         self,
@@ -2153,6 +2242,15 @@ class Dispatcher(legacy.Dispatcher):
             for reason in item["reasons"]
             if not self._what_now_soft_reason(reason)
         ]
+        claim_reasons = item.get("claim_reasons", item["reasons"])
+        claim_blocker_reasons = [
+            reason
+            for reason in claim_reasons
+            if not self._what_now_soft_reason(reason)
+        ]
+        cross_repository_reasons = item.get("cross_repository_reasons", [])
+        if not blocker_reasons and cross_repository_reasons:
+            blocker_reasons = ["task has blockers outside selected repository"]
         what_now_eligible = not blocker_reasons
         return {
             "task_id": task.id,
@@ -2181,8 +2279,11 @@ class Dispatcher(legacy.Dispatcher):
             "claim_resources": item["claim_resources"],
             "eligible": what_now_eligible,
             "claim_eligible": item["eligible"],
+            "resource_eligible": item.get("resource_eligible", what_now_eligible),
             "soft_reasons": soft_reasons,
             "blocker_reasons": blocker_reasons,
+            "claim_blocker_reasons": claim_blocker_reasons,
+            "cross_repository_reasons": cross_repository_reasons,
             "reasons": item["reasons"],
             "approval_contract": item.get("approval_contract"),
         }
@@ -2261,23 +2362,36 @@ class Dispatcher(legacy.Dispatcher):
         }
 
     def repo_balls(self, capabilities: set[str]) -> dict[str, Any]:
-        frontier = self.frontier(capabilities)
+        open_pr_reservations = self._open_pr_reservations(strict=False)
         lifecycle = lifecycle_diagnostics(self.registry, self.store)
         with self.store.connect() as connection:
-            runs = [dict(row) for row in self.store.active_runs(connection)]
+            run_rows = self.store.active_runs(connection)
+            reservations = self.store.reservations(connection) + open_pr_reservations
+            overlays = self.store.overlays(connection, self.registry)
+        frontier = self._frontier_from_state(
+            capabilities,
+            resource=None,
+            runs=run_rows,
+            reservations=reservations,
+            overlays=overlays,
+        )
+        claim_reasons_by_task = {
+            item["task_id"]: item["claim_reasons"] for item in frontier
+        }
+        runs = [dict(row) for row in run_rows]
         repo_balls: dict[str, dict[str, Any]] = {}
         from .live_register import live_register_repo_context
 
         for repo in self._repository_resources():
             live_context = live_register_repo_context(self.store, repo.id)
-            repo_frontier = [
-                item
-                for item in frontier
-                if any(
-                    legacy.overlaps(claim_resource, repo.id, self.registry.resources)
-                    for claim_resource in item["claim_resources"]
-                )
-            ]
+            repo_frontier = self._frontier_from_state(
+                capabilities,
+                resource=repo.id,
+                runs=run_rows,
+                reservations=reservations,
+                overlays=overlays,
+                claim_reasons_by_task=claim_reasons_by_task,
+            )
             active_runs = []
             for row in runs:
                 task = self.registry.tasks.get(row["task_id"])
@@ -2299,8 +2413,13 @@ class Dispatcher(legacy.Dispatcher):
                         "task_id": item["task_id"],
                         "title": item["title"],
                         "eligible": item["eligible"],
+                        "resource_eligible": item["resource_eligible"],
                         "effective_state": item["effective_state"],
                         "reasons": item["reasons"],
+                        "claim_reasons": item["claim_reasons"],
+                        "cross_repository_reasons": item[
+                            "cross_repository_reasons"
+                        ],
                     }
                     for item in repo_frontier
                     if item["queue_lane"] == lane

@@ -3,19 +3,24 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T011",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Establish app-independent Cabinet catalog core",
-  "state": "planned",
+  "state": "ready",
   "priority": {
-    "lane": "next",
-    "rank": 60
+    "lane": "now",
+    "rank": 15
   },
   "goal": "Introduce the non-destructive target role, catalog contract, validator, renderer and full migration matrix inside the existing Cabinet repository before removing legacy surfaces.",
   "execution": {
     "mode": "interactive-agent",
-    "policy": "review-before-effect",
+    "policy": "autonomous",
     "working_repository": "/home/alex/repos/cabinet",
     "grabowski_resources": [
       "repo:/home/alex/repos/cabinet"
-    ]
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "The reviewed and merged migration plan authorizes only the non-destructive catalog-core slice. Checkout and execution must remain bound to this task and repository."
+    }
   },
   "claims": [
     {
@@ -55,12 +60,29 @@
   "metadata": {
     "registered_at": "2026-07-10T12:18:00+02:00",
     "source_decision": "Cabinet is to become an app-independent Heimgewebe system catalog.",
+    "execution_authorization": {
+      "schema_version": 1,
+      "source": "reviewed_plan",
+      "level": "reviewed_plan",
+      "approved": true,
+      "reviewer": "alexdermohr",
+      "reference": "heimgewebe/bureau#385",
+      "merge_commit": "1000e3f79eb9aee6f20a752ecd9c0492701ffb22",
+      "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T011",
+      "scope": [
+        "repository-only non-destructive Cabinet catalog core",
+        "role contract",
+        "catalog validator and renderer",
+        "migration matrix",
+        "privacy remediation for tracked public evidence"
+      ]
+    },
     "does_not_establish": [
-      "execution_authorization",
-      "merge_permission",
-      "runtime_correctness",
-      "cleanup_permission",
-      "automatic_shutdown_permission"
+      "service_shutdown_permission",
+      "app_data_deletion_permission",
+      "repository_rename_permission",
+      "runtime_cleanup_permission",
+      "merge_permission_without_current_review_and_ci"
     ]
   },
   "depends_on": []

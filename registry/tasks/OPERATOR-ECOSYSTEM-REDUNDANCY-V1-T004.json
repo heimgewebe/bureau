@@ -2,13 +2,13 @@
   "schema_version": 1,
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T004",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
-  "title": "Consolidate Cabinet semantic canon",
+  "title": "Consolidate Cabinet into an app-independent system catalog",
   "state": "planned",
   "priority": {
     "lane": "later",
     "rank": 310
   },
-  "goal": "Reduce Cabinet ecosystem semantics to one authority matrix, one registry and one generated map while preserving source links and read-only boundaries.",
+  "goal": "Migrate Cabinet from mixed semantic, maintenance and runtime surfaces to one app-independent system catalog that owns stable ecosystem meaning, truth ownership, relations and entrypoints but no operational status.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -36,6 +36,14 @@
       "assertion": "Exactly one maintained authority matrix identifies every source owner and non-authoritative projection."
     },
     {
+      "id": "app-independent-catalog",
+      "assertion": "Catalog data, validation and rendering work with the external Cabinet application stopped and are not shaped by Cabinet room manifests or runtime state."
+    },
+    {
+      "id": "no-operational-status",
+      "assertion": "The maintained catalog contains no duplicated task priority, runtime health, merge readiness, active execution or scheduler state."
+    },
+    {
       "id": "single-generated-map",
       "assertion": "A single registry-derived ecosystem view is canonical for generated mapping; other views are explicit specialized projections or retired."
     },
@@ -45,20 +53,25 @@
     },
     {
       "id": "validator",
-      "assertion": "CI detects new competing ecosystem canons or manually duplicated authority fields."
+      "assertion": "CI detects competing ecosystem canons, manually duplicated authority fields and prohibited operational-status fields."
     }
   ],
   "metadata": {
     "registered_at": "2026-07-10T07:25:00+02:00",
+    "updated_at": "2026-07-10T12:18:00+02:00",
     "source_audit": "heimgewebe/cabinet#103",
+    "source_decision": "Operator decision on 2026-07-10 to replace the external Cabinet-app foundation with an app-independent catalog.",
     "does_not_establish": [
       "merge_permission",
       "runtime_correctness",
       "cleanup_permission",
-      "automatic_shutdown_permission"
+      "automatic_shutdown_permission",
+      "repository_rename_completion"
     ]
   },
   "depends_on": [
-    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T007"
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T007",
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T011",
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T012"
   ]
 }

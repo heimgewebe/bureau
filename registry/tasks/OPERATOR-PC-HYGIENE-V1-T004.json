@@ -3,27 +3,41 @@
   "id": "OPERATOR-PC-HYGIENE-V1-T004",
   "initiative": "OPERATOR-PC-HYGIENE-V1",
   "title": "Classify Heim-PC wide listeners",
-  "state": "planned",
+  "state": "ready",
   "priority": {
-    "lane": "later",
-    "rank": 204
+    "lane": "now",
+    "rank": 9
   },
   "goal": "Classify and, where appropriate, narrow wide Heim-PC listeners including Unifi, Sunshine, GNOME Remote Desktop, Leitstand and Caddy.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/infra",
+    "working_repository": "/home/alex/repos/leitstand",
     "grabowski_resources": [
       "host:heim-pc",
       "repo:/home/alex/repos/bureau",
-      "repo:/home/alex/repos/infra"
-    ]
+      "repo:/home/alex/repos/infra",
+      "repo:/home/alex/repos/leitstand",
+      "port:3000",
+      "port:4173",
+      "port:4174"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "operator",
+      "note": "User authorized full audit remediation. Stop only proven unmanaged previews; change Leitstand runtime only after reviewed code, green CI, preserved unit/log evidence and loopback HTTP rollback proof."
+    }
   },
   "claims": [
     {
       "resource": "host.heim-pc",
       "mode": "write",
       "isolation": "none"
+    },
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
     }
   ],
   "required_capabilities": [
@@ -42,17 +56,33 @@
     {
       "id": "operator-pc-hygiene-v1-t004-3",
       "assertion": "Any port binding or firewall change is made only after preserving required LAN/Tailnet functions."
+    },
+    {
+      "id": "operator-pc-hygiene-v1-t004-4",
+      "assertion": "Leitstand server code defaults to loopback and rejects wildcard binding unless an explicit unsafe-wide-bind acknowledgement is present; focused tests cover default, explicit LAN IP, invalid host and wildcard acknowledgement."
+    },
+    {
+      "id": "operator-pc-hygiene-v1-t004-5",
+      "assertion": "The live Leitstand user service is rebuilt from merged main, explicitly configured for 127.0.0.1, and post-restart proof shows HTTP success on loopback with no wildcard listener on port 3000."
+    },
+    {
+      "id": "operator-pc-hygiene-v1-t004-6",
+      "assertion": "Ports 4173 and 4174 are closed with process/unit provenance and clean-repository evidence; no parent tmux shell or worktree is deleted."
     }
   ],
   "metadata": {
     "registered_at": "2026-07-08T16:10:19Z",
     "source_audit": "2026-07-08 Heim-PC service hygiene audit",
     "does_not_establish": [
+      "merge_readiness",
+      "permission_to_delete_worktrees",
+      "permission_to_terminate_unrelated_shells",
+      "public_ingress_absence_without_router_firewall_proof",
       "runtime_correctness",
-      "security_correctness",
-      "merge_readiness"
+      "security_correctness"
     ],
-    "live_audit_finding": "unmanaged commonworld http.server on 0.0.0.0:4173 was stopped; remaining wide listeners need policy classification."
+    "live_audit_finding": "unmanaged commonworld http.server on 0.0.0.0:4173 was stopped; remaining wide listeners need policy classification.",
+    "scope_update_20260711": "Live audit identified unmanaged Commonworld and merged-Weltgewebe preview listeners on 4173/4174 plus Leitstand contract drift on *:3000. The preview listeners were closed without deleting shells/worktrees; Leitstand requires a repo-bound safe-default patch and runtime proof."
   },
   "depends_on": []
 }

@@ -4,13 +4,13 @@ install:
 	python -m pip install -e '.[dev]'
 
 validate: lint test bridge-import-policy
-	python -m bureau.cli --root . check
+	PYTHONPATH=src python -m bureau.cli --root . check
 
 bridge-import-policy:
-	bureau-cabinet-bridge-import-policy --json >/dev/null
+	PYTHONPATH=src python -m bureau.cabinet_bridge_import_policy --json >/dev/null
 
 test:
-	pytest
+	PYTHONPATH=src pytest
 
 lint:
 	ruff check src tests

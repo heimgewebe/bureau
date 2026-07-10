@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T001",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Audit and consolidate Bureau scheduler lanes",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 40
@@ -62,6 +62,70 @@
       "runtime_correctness",
       "cleanup_permission",
       "automatic_shutdown_permission"
+    ],
+    "verification": {
+      "schema_version": 1,
+      "verified_at": "2026-07-10T17:05:00Z",
+      "source": "live_systemd_scheduler_audit",
+      "host": "heim-pc",
+      "report_path": "docs/reports/operator-ecosystem-t001-bureau-scheduler-lanes.v1.json",
+      "report_sha256": "b0d4ada582217250243029f87de3c8ca9447dcab7bc6c1ade3d35c458f0ea970",
+      "plan_path": "docs/plans/operator-ecosystem-t001-bureau-scheduler-consolidation-v1.md",
+      "active_user_timers_observed": 10,
+      "system_bureau_timers_observed": 0,
+      "runtime_mutation_performed": false,
+      "retained_lanes": [
+        "operator-control",
+        "verifier-control",
+        "source-pr-bridge",
+        "review-steward",
+        "discovery",
+        "curator",
+        "closure-planner",
+        "agent-frontier"
+      ],
+      "temporary_retention": [
+        "gpt-connector-probe"
+      ],
+      "staged_retirement_or_normalization": [
+        "codex-bridge"
+      ],
+      "validation": [
+        "All active Bureau user timers were read from live systemd state with source, cadence, last trigger and service result.",
+        "Inputs, outputs, ordering and known consumers were mapped from live units, journals, state artifacts and repository source.",
+        "No timer, service, state file or runtime configuration was changed.",
+        "Codex bridge was classified as condition-skipped and drifted rather than successful.",
+        "Verifier systemd success was kept distinct from application partial/degraded health."
+      ],
+      "does_not_establish": [
+        "safe_timer_disablement",
+        "complete_external_consumer_coverage",
+        "runtime_correctness_beyond_observed_runs",
+        "automatic_cleanup_permission",
+        "dispatch_authority",
+        "merge_readiness_without_ci"
+      ],
+      "audit_plan_sha256": "a9bb1966a9e2cf13a3955cc8cb975f8ae59019a467ae40b44d47d6bc42e771a4",
+      "task_sha256": "5ab42885e53b758f05c4b156aa35b57d1b1b0b3823e4c9c3da2fd1741423fb52",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "state_transition_semantics": "Bureau task schema has no active or resolved task state. The audit moved from planned to verified after live evidence, artifact validation and explicit follow-up registration; no runtime effect was claimed.",
+      "hash_semantics": {
+        "task_sha256": "Canonical Bureau task revision hash excluding mutable state and verification metadata.",
+        "plan_sha256": "Canonical hash of the initiative current_plan object required by Bureau verification validation.",
+        "report_sha256": "Byte hash of report_path, the machine-readable live scheduler inventory.",
+        "audit_plan_sha256": "Byte hash of plan_path, the scheduler consolidation plan produced by this audit."
+      }
+    },
+    "validated_acceptance": {
+      "timer-inventory": "The machine report inventories all 10 active user timers and records no system-wide Bureau timers, including unit source, cadence and last result.",
+      "consumer-map": "Each lane records inputs, outputs and known consumers; GPT probe and Codex bridge are explicitly marked as lacking a proven current consumer.",
+      "consolidation-plan": "The plan retains eight distinct lanes and stages Codex/GPT/deployment-source decisions separately before any runtime effect.",
+      "safe-cutover": "No disablement occurred. The plan requires exact live preflight, rollback capture and bounded post-effect proof for every future cutover."
+    },
+    "follow_up_tasks": [
+      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T015",
+      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T016",
+      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T017"
     ]
   },
   "depends_on": []

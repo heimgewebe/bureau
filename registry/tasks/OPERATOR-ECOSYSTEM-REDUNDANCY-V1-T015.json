@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau",
+      "host:heim-pc"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "systemd",
+    "grabowski"
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T001"
+  ],
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T015",
+  "title": "Normalize or retire the skipped Bureau Codex bridge",
+  "priority": {
+    "lane": "later",
+    "rank": 370
+  },
+  "goal": "Resolve the enabled but condition-skipped and drifted Codex bridge lane through one reviewed canonical normalization or a rollback-bound retirement without weakening Bureau Core, closure or frontier authority.",
+  "acceptance": [
+    {
+      "id": "live-recheck",
+      "assertion": "Current timer, service, drop-ins, backend path, last output and known consumers are re-read immediately before any effect."
+    },
+    {
+      "id": "single-target",
+      "assertion": "The change chooses either one canonical executable service contract or explicit scheduled-lane retirement; mixed live/repository definitions do not remain."
+    },
+    {
+      "id": "rollback",
+      "assertion": "Current unit bytes and enablement state are captured and a tested rollback path is bound to the exact effect."
+    },
+    {
+      "id": "bounded-proof",
+      "assertion": "The target is proven as a one-shot before timer mutation and observed across at least two expected cycles after effect."
+    },
+    {
+      "id": "authority-preserved",
+      "assertion": "Bureau check, doctor, registry-truth, closure and agent frontier remain healthy and no automatic dispatch or merge authority is introduced."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T17:12:00Z",
+    "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T001",
+    "source_finding": "codex-bridge-inert-drift",
+    "does_not_establish": [
+      "runtime_mutation_permission",
+      "safe_timer_disablement",
+      "backend_selection",
+      "consumer_absence",
+      "merge_permission"
+    ]
+  }
+}

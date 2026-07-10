@@ -1,0 +1,453 @@
+{
+  "schema_version": 1,
+  "report_id": "operator-ecosystem-t001-bureau-scheduler-lanes-v1",
+  "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T001",
+  "observed_at": "2026-07-10T16:57:30Z",
+  "host": "heim-pc",
+  "scope": {
+    "user_manager": "systemd --user",
+    "system_manager": "checked_no_bureau_timers_observed",
+    "active_user_timer_count": 10,
+    "runtime_mutation_performed": false,
+    "evidence_sources": [
+      "systemctl --user list-timers --all",
+      "systemctl --user show/cat",
+      "journalctl --user",
+      "installed executable inspection",
+      "repository source and consumer search",
+      "state artifact inspection"
+    ]
+  },
+  "ordering": [
+    {
+      "minute": "00:05",
+      "lane": "operator-control",
+      "relation": "consumes curator and prior verifier health"
+    },
+    {
+      "minute": "15:05",
+      "lane": "verifier-control",
+      "relation": "consumes operator receipt and publishes cycle health"
+    },
+    {
+      "minute": "15/45 + jitter",
+      "lane": "source-pr-bridge",
+      "relation": "independent GitHub source-sync lane"
+    },
+    {
+      "minute": "23 + jitter",
+      "lane": "review-steward",
+      "relation": "reviews current closure inventory/plan evidence"
+    },
+    {
+      "minute": "30",
+      "lane": "discovery",
+      "relation": "starts next discovery handoff"
+    },
+    {
+      "minute": "45",
+      "lane": "curator",
+      "relation": "consumes discovery handoff"
+    },
+    {
+      "minute": "50",
+      "lane": "closure-planner",
+      "relation": "builds closure inventory, lanes and plan"
+    },
+    {
+      "minute": "approximately 50, hourly",
+      "lane": "gpt-connector-probe",
+      "relation": "reads health, closure and frontier; no local consumer found"
+    },
+    {
+      "minute": "55",
+      "lane": "agent-frontier",
+      "relation": "consumes closure plan/lanes and discovery state"
+    },
+    {
+      "minute": "57 + jitter",
+      "lane": "codex-bridge",
+      "relation": "intended to consume health/frontier/closure; currently condition-skipped"
+    }
+  ],
+  "lanes": [
+    {
+      "id": "operator-control",
+      "timer": "bureau-operator-control.timer",
+      "service": "bureau-operator-control.service",
+      "cadence": "hourly at minute 00:05",
+      "persistent": false,
+      "source_class": "installed bureau_cycle unit and libexec shim",
+      "unit_source": "~/.config/systemd/user/bureau-operator-control.timer",
+      "executable": "~/.local/libexec/bureau-operator-control -> bureau_cycle.operator_runner",
+      "last_observed_result": {
+        "systemd": "success",
+        "application": "idle",
+        "degraded": false,
+        "last_trigger_local": "2026-07-10 18:00:05 CEST"
+      },
+      "inputs": [
+        "~/.local/state/bureau-curator/latest.json",
+        "~/.local/state/bureau-cycle/health.json",
+        "Grabowski task database"
+      ],
+      "outputs": [
+        "~/.local/state/bureau-operator/latest.json",
+        "hourly operator receipt"
+      ],
+      "consumers": [
+        "bureau-verifier-control",
+        "operator diagnostics"
+      ],
+      "classification": "retain_unique_core_stage",
+      "decision": "retain",
+      "failure_behavior": "writes blocked/degraded receipt; verifier detects missing or invalid operator receipt"
+    },
+    {
+      "id": "verifier-control",
+      "timer": "bureau-verifier-control.timer",
+      "service": "bureau-verifier-control.service",
+      "cadence": "hourly at minute 15:05",
+      "persistent": false,
+      "source_class": "installed bureau_cycle unit and libexec shim",
+      "unit_source": "~/.config/systemd/user/bureau-verifier-control.timer",
+      "executable": "~/.local/libexec/bureau-verifier-control -> bureau_cycle.verifier_runner",
+      "last_observed_result": {
+        "systemd": "success",
+        "application": "partial",
+        "degraded": true,
+        "critical": false,
+        "allow_next_dispatch": true,
+        "last_trigger_local": "2026-07-10 18:15:05 CEST"
+      },
+      "inputs": [
+        "~/.local/state/bureau-operator/latest.json",
+        "Grabowski task database",
+        "Bureau SQLite database"
+      ],
+      "outputs": [
+        "~/.local/state/bureau-verifier/latest.json",
+        "~/.local/state/bureau-cycle/health.json"
+      ],
+      "consumers": [
+        "bureau-operator-control",
+        "bureau-gpt-connector-probe",
+        "operator health gates"
+      ],
+      "classification": "retain_unique_core_stage",
+      "decision": "retain",
+      "failure_behavior": "publishes critical/degraded health and fail-closed findings; systemd success is not treated as application health"
+    },
+    {
+      "id": "source-pr-bridge",
+      "timer": "bureau-source-pr-bridge.timer",
+      "service": "bureau-source-pr-bridge.service",
+      "cadence": "twice hourly at minutes 15 and 45 with up to 60 seconds jitter",
+      "persistent": true,
+      "source_class": "repository-owned unit and dedicated venv",
+      "unit_source": "ops/systemd/bureau-source-pr-bridge.* byte-identical to live units",
+      "executable": "~/.local/share/bureau-source-pr-bridge/venv/bin/bureau-source-pr-bridge",
+      "last_observed_result": {
+        "systemd": "success",
+        "application": "no_change",
+        "last_trigger_local": "2026-07-10 18:45:50 CEST"
+      },
+      "inputs": [
+        "Weltgewebe source state",
+        "GitHub repository state"
+      ],
+      "outputs": [
+        "automation source-sync branch or PR when changes exist"
+      ],
+      "consumers": [
+        "GitHub/Bureau source synchronization workflow"
+      ],
+      "classification": "retain_unique_external_effect",
+      "decision": "retain",
+      "failure_behavior": "oneshot failure visible in systemd/journal; no merge authority"
+    },
+    {
+      "id": "review-steward",
+      "timer": "bureau-review-steward.timer",
+      "service": "bureau-review-steward.service",
+      "cadence": "hourly at minute 23 with up to 60 seconds jitter",
+      "persistent": true,
+      "source_class": "repository-owned unit and dedicated venv",
+      "unit_source": "ops/systemd/bureau-review-steward.* byte-identical to live units",
+      "executable": "~/.local/share/bureau-review-steward/venv/bin/bureau-review-steward run",
+      "last_observed_result": {
+        "systemd": "success",
+        "application": "review_evidence_written",
+        "last_trigger_local": "2026-07-10 18:23:40 CEST"
+      },
+      "inputs": [
+        "~/.local/state/bureau-closure/plan.json",
+        "closure lanes and repository review state"
+      ],
+      "outputs": [
+        "~/.local/state/bureau-closure/review-latest.json",
+        "review receipts"
+      ],
+      "consumers": [
+        "operator review workflow and human merge decisions"
+      ],
+      "classification": "retain_unique_review_stage",
+      "decision": "retain",
+      "failure_behavior": "reports blockers and recommendations only; explicitly no automatic merge"
+    },
+    {
+      "id": "discovery",
+      "timer": "bureau-halfhour-operator.timer",
+      "service": "bureau-halfhour-operator.service",
+      "cadence": "hourly at minute 30 despite historical halfhour name",
+      "persistent": false,
+      "source_class": "installed bureau_cycle unit and libexec shim",
+      "unit_source": "~/.config/systemd/user/bureau-halfhour-operator.timer",
+      "executable": "~/.local/libexec/bureau-halfhour-operator -> bureau_cycle.discovery_runner",
+      "last_observed_result": {
+        "systemd": "success",
+        "application": "idle",
+        "new_candidates": 0,
+        "last_trigger_local": "2026-07-10 18:30:00 CEST"
+      },
+      "inputs": [
+        "source registry and configured repository planning files"
+      ],
+      "outputs": [
+        "~/.local/state/bureau-halfhour-operator/latest.json",
+        "source-state.json",
+        "scanner inbox and run receipts"
+      ],
+      "consumers": [
+        "bureau-curator",
+        "bureau-closure-planner",
+        "bureau-agent-frontier"
+      ],
+      "classification": "retain_unique_core_stage_with_misleading_name",
+      "decision": "retain_and_later_normalize_naming",
+      "failure_behavior": "writes failed/blocked receipt and scanner inbox evidence"
+    },
+    {
+      "id": "curator",
+      "timer": "bureau-curator.timer",
+      "service": "bureau-curator.service",
+      "cadence": "hourly at minute 45",
+      "persistent": false,
+      "source_class": "installed bureau_cycle unit and libexec shim",
+      "unit_source": "~/.config/systemd/user/bureau-curator.timer",
+      "executable": "~/.local/libexec/bureau-curator -> bureau_cycle.curator_runner",
+      "last_observed_result": {
+        "systemd": "success",
+        "application": "idle",
+        "degraded": false,
+        "last_trigger_local": "2026-07-10 18:45:00 CEST"
+      },
+      "inputs": [
+        "~/.local/state/bureau-halfhour-operator/latest.json"
+      ],
+      "outputs": [
+        "~/.local/state/bureau-curator/latest.json",
+        "seen.json",
+        "curator receipts"
+      ],
+      "consumers": [
+        "bureau-operator-control"
+      ],
+      "classification": "retain_unique_core_stage",
+      "decision": "retain",
+      "failure_behavior": "writes blocked/degraded receipt when scanner handoff is missing or invalid"
+    },
+    {
+      "id": "closure-planner",
+      "timer": "bureau-closure-planner.timer",
+      "service": "bureau-closure-planner.service",
+      "cadence": "hourly at minute 50",
+      "persistent": true,
+      "source_class": "repository module through local libexec shim",
+      "unit_source": "~/.config/systemd/user/bureau-closure-planner.timer; no matching versioned timer in current repo",
+      "executable": "~/.local/libexec/bureau-closure-planner -> bureau.closure_runner",
+      "last_observed_result": {
+        "systemd": "success",
+        "application": "idle",
+        "degraded": false,
+        "last_trigger_local": "2026-07-10 18:50:04 CEST",
+        "duration_seconds": 17
+      },
+      "inputs": [
+        "source registry",
+        "discovery source state",
+        "repository/PR/task inventory"
+      ],
+      "outputs": [
+        "~/.local/state/bureau-closure/inventory.json",
+        "lanes.json",
+        "plan.json",
+        "latest.json"
+      ],
+      "consumers": [
+        "bureau-review-steward",
+        "bureau-agent-frontier",
+        "bureau-gpt-connector-probe",
+        "operator delegation workflow"
+      ],
+      "classification": "retain_unique_planning_stage",
+      "decision": "retain_and_version_deployment_source",
+      "failure_behavior": "latest receipt exposes degraded status; downstream stages require plan/lanes"
+    },
+    {
+      "id": "gpt-connector-probe",
+      "timer": "bureau-gpt-probe.timer",
+      "service": "bureau-gpt-connector-probe.service",
+      "cadence": "one hour after activation, initial delay two minutes",
+      "persistent": true,
+      "source_class": "unversioned local compact probe",
+      "unit_source": "~/.config/systemd/user/bureau-gpt-probe.timer",
+      "executable": "~/.local/state/bureau_gpt_connector_probe_compact.py",
+      "last_observed_result": {
+        "systemd": "success",
+        "application": "completed",
+        "hard_failure_count": 0,
+        "last_trigger_local": "2026-07-10 18:50:49 CEST"
+      },
+      "inputs": [
+        "bureau-cycle health",
+        "agent-frontier latest report",
+        "closure plan and lanes",
+        "Bureau check"
+      ],
+      "outputs": [
+        "~/.local/state/bureau-gpt-connector-probe/latest.json",
+        "probe run receipts"
+      ],
+      "consumers": [
+        "no local repository or process consumer found; possible external ChatGPT/Grabowski readiness workflow not disproved"
+      ],
+      "classification": "diagnostic_orphan_pending_consumer_decision",
+      "decision": "retain_temporarily_no_disable_in_audit",
+      "failure_behavior": "returns nonzero and writes blocked receipt on local capability failure"
+    },
+    {
+      "id": "agent-frontier",
+      "timer": "bureau-agent-frontier.timer",
+      "service": "bureau-agent-frontier.service",
+      "cadence": "hourly at minute 55",
+      "persistent": false,
+      "source_class": "repository-owned unit with local libexec shim",
+      "unit_source": "ops/systemd/bureau-agent-frontier.* byte-identical to live units",
+      "executable": "~/.local/libexec/bureau-agent-frontier -> bureau.agent_frontier",
+      "last_observed_result": {
+        "systemd": "success",
+        "application": "completed",
+        "degraded": false,
+        "last_trigger_local": "2026-07-10 18:55:00 CEST"
+      },
+      "inputs": [
+        "closure plan and lanes",
+        "discovery source-state"
+      ],
+      "outputs": [
+        "~/.local/state/bureau-agent-frontier/latest-report.json",
+        "frontier receipt"
+      ],
+      "consumers": [
+        "operator/manual task binding workflow",
+        "bureau-gpt-connector-probe",
+        "intended codex bridge"
+      ],
+      "classification": "retain_unique_governance_stage",
+      "decision": "retain",
+      "failure_behavior": "downstream consumers see missing/stale frontier report; does not dispatch automatically"
+    },
+    {
+      "id": "codex-bridge",
+      "timer": "bureau-codex-bridge.timer",
+      "service": "bureau-codex-bridge.service",
+      "cadence": "hourly at minute 57 with live jitter; repo definition differs",
+      "persistent": true,
+      "source_class": "drifted live unit plus missing dedicated backend worktree",
+      "unit_source": "live service/timer differ from ops/systemd versions and include condition drop-in",
+      "executable": "live unit targets /home/alex/repos/bureau-codex-bridge-backend-v1, which is absent",
+      "last_observed_result": {
+        "systemd": "condition_skipped",
+        "application": "not_run",
+        "last_successful_output": "no current output; state files last observed 2026-07-01",
+        "last_trigger_local": "2026-07-10 18:57:10 CEST"
+      },
+      "inputs": [
+        "intended: cycle health, frontier report, closure plan and lanes"
+      ],
+      "outputs": [
+        "intended decision receipt; no current output"
+      ],
+      "consumers": [
+        "no current consumer established because service is skipped"
+      ],
+      "classification": "inert_drifted_lane_retirement_candidate",
+      "decision": "stage_retirement_or_canonical_normalization_separately",
+      "failure_behavior": "condition skip hides absence as non-failure; hourly timer continues without useful output"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "high",
+      "code": "codex-bridge-inert-drift",
+      "summary": "Codex bridge timer is enabled but condition-skipped every hour, has no current output and materially differs from the repository unit.",
+      "follow_up_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T015"
+    },
+    {
+      "severity": "medium",
+      "code": "gpt-probe-consumer-unproven",
+      "summary": "GPT readiness receipts are fresh, but no local consumer is present; an external consumer cannot be excluded from this host-only audit.",
+      "follow_up_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T016"
+    },
+    {
+      "severity": "medium",
+      "code": "deployment-source-split",
+      "summary": "Four core-cycle stages and closure planner are deployed from local libexec/systemd assets not fully versioned in the current repository.",
+      "follow_up_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T017"
+    },
+    {
+      "severity": "low",
+      "code": "halfhour-name-cadence-drift",
+      "summary": "bureau-halfhour-operator currently runs hourly at minute 30, so its name no longer describes cadence."
+    },
+    {
+      "severity": "informational",
+      "code": "verifier-partial-not-systemd-failure",
+      "summary": "Verifier systemd execution succeeds while application health is partial/degraded but noncritical; dashboards must preserve this distinction."
+    }
+  ],
+  "consolidation_decision": {
+    "immediate_disablement": [],
+    "retained_lanes": [
+      "operator-control",
+      "verifier-control",
+      "source-pr-bridge",
+      "review-steward",
+      "discovery",
+      "curator",
+      "closure-planner",
+      "agent-frontier"
+    ],
+    "temporary_retention": [
+      "gpt-connector-probe"
+    ],
+    "staged_retirement_or_normalization": [
+      "codex-bridge"
+    ],
+    "reason": "Only codex-bridge is presently operationally inert. The core cycle and closure/frontier lanes have distinct inputs, outputs and consumers. GPT probe consumer coverage is incomplete, so disabling it now would exceed evidence.",
+    "follow_up_tasks": [
+      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T015",
+      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T016",
+      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T017"
+    ]
+  },
+  "nonclaims": [
+    "safe_timer_disablement",
+    "complete_external_consumer_coverage",
+    "runtime_correctness_beyond_observed_runs",
+    "automatic_cleanup_permission",
+    "dispatch_authority",
+    "merge_permission"
+  ]
+}

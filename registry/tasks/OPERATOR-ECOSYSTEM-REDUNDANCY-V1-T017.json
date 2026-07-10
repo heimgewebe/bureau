@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau",
+      "host:heim-pc"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "systemd",
+    "grabowski"
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T001"
+  ],
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T017",
+  "title": "Canonicalize Bureau scheduler deployment sources",
+  "priority": {
+    "lane": "later",
+    "rank": 390
+  },
+  "goal": "Give the installed bureau_cycle stages and closure planner one versioned source of truth, immutable release identity and drift check while preserving compatibility with current unit names.",
+  "acceptance": [
+    {
+      "id": "source-owner",
+      "assertion": "Each installed cycle module, libexec shim and timer names one canonical repository path and immutable release identity."
+    },
+    {
+      "id": "unit-coverage",
+      "assertion": "Discovery, curator, operator, verifier and closure planner units are versioned or explicitly delegated to another canonical deployment repository."
+    },
+    {
+      "id": "drift-check",
+      "assertion": "A read-only check compares live unit and executable identities with the canonical release and reports mismatch without self-healing."
+    },
+    {
+      "id": "compatibility",
+      "assertion": "Any rename of bureau-halfhour-operator preserves a documented compatibility alias and rollback until consumers are migrated."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T17:12:00Z",
+    "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T001",
+    "source_finding": "deployment-source-split",
+    "does_not_establish": [
+      "runtime_deploy_permission",
+      "unit_restart_permission",
+      "automatic_self_healing",
+      "safe_rename",
+      "merge_permission"
+    ]
+  }
+}

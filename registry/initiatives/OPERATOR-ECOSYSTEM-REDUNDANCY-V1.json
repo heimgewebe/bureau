@@ -60,6 +60,27 @@
         "repository_rename_completion",
         "runtime_cleanup_permission"
       ]
+    },
+    "bureau_scheduler_audit": {
+      "observed_at": "2026-07-10T16:57:30Z",
+      "active_user_timers": 10,
+      "system_timers": 0,
+      "retained_distinct_lanes": 8,
+      "temporary_diagnostic_lanes": 1,
+      "inert_drifted_lanes": 1,
+      "immediate_disablement_count": 0,
+      "report_path": "docs/reports/operator-ecosystem-t001-bureau-scheduler-lanes.v1.json",
+      "plan_path": "docs/plans/operator-ecosystem-t001-bureau-scheduler-consolidation-v1.md",
+      "next_decisions": [
+        "codex bridge retirement or canonical normalization",
+        "GPT probe consumer and cadence decision",
+        "canonical deployment ownership for installed cycle units and closure timer"
+      ],
+      "follow_up_tasks": [
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T015",
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T016",
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T017"
+      ]
     }
   }
 }

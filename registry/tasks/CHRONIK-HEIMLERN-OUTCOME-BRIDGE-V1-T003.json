@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T003",
+  "initiative": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1",
+  "title": "Smoke heimlern over Chronik-shaped outcomes",
+  "state": "planned",
+  "goal": "Implement or verify a review-only smoke in heimlern that consumes Chronik-shaped outcome exports and produces an auditable report/proposal result without applying policy.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heimlern",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heimlern"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.heimlern",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.chronik",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "chronik-shaped-input",
+      "assertion": "The smoke consumes a Chronik-shaped export artifact rather than private ad-hoc fixture assumptions."
+    },
+    {
+      "id": "proposal-schema-valid",
+      "assertion": "Any produced proposal validates against the pinned policy.weight_adjustment.v1 contract or records insufficient evidence."
+    },
+    {
+      "id": "review-only",
+      "assertion": "The smoke writes no routing policy and preserves no-auto-apply non-claims."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T00:00:00Z",
+    "source_decision": "Chronik selected as primary integration organ for heimlern because it owns append-only historical outcomes.",
+    "plan_path": "docs/plans/chronik-heimlern-outcome-bridge-v1.md",
+    "does_not_establish": [
+      "auto_apply_permission",
+      "routing_policy_superiority",
+      "production_sample_sufficiency",
+      "runtime_mutation",
+      "merge_readiness"
+    ],
+    "task_role": "t003"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 40
+  },
+  "depends_on": [
+    "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T002"
+  ]
+}

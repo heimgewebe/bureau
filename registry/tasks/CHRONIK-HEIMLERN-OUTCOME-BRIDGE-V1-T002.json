@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "id": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T002",
+  "initiative": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1",
+  "title": "Define redacted operator outcome export contract",
+  "state": "planned",
+  "goal": "Define the Chronik-owned redacted operator outcome event/export shape that can transport Grabowski receipts to heimlern without raw logs, secrets or routing authority.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.chronik",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.heimlern",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "contract-owner-clear",
+      "assertion": "The contract states Chronik owns historical transport while heimlern owns only offline analysis/proposal output."
+    },
+    {
+      "id": "redaction-boundary",
+      "assertion": "The export shape excludes secrets and raw logs while preserving route, outcome, reward, source, freshness and digest evidence."
+    },
+    {
+      "id": "fixture-present",
+      "assertion": "At least one fixture or sample export validates the intended shape without claiming production sample sufficiency."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T00:00:00Z",
+    "source_decision": "Chronik selected as primary integration organ for heimlern because it owns append-only historical outcomes.",
+    "plan_path": "docs/plans/chronik-heimlern-outcome-bridge-v1.md",
+    "does_not_establish": [
+      "auto_apply_permission",
+      "routing_policy_superiority",
+      "production_sample_sufficiency",
+      "runtime_mutation",
+      "merge_readiness"
+    ],
+    "task_role": "t002"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 30
+  },
+  "depends_on": [
+    "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T001"
+  ]
+}

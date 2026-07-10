@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T011",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Establish app-independent Cabinet catalog core",
+  "state": "planned",
+  "priority": {
+    "lane": "now",
+    "rank": 15
+  },
+  "goal": "Introduce the non-destructive target role, catalog contract, validator, renderer and full migration matrix inside the existing Cabinet repository before removing legacy surfaces.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/cabinet",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/cabinet"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.cabinet",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "role-contract",
+      "assertion": "README, agent entry and a machine-readable policy define Cabinet as a system catalog for systems, purposes, truth owners, stable relations and entrypoints only."
+    },
+    {
+      "id": "catalog-contract",
+      "assertion": "A minimal machine-readable catalog contract and sample catalog are present and validated."
+    },
+    {
+      "id": "deterministic-render",
+      "assertion": "A deterministic readable catalog projection is generated from catalog data."
+    },
+    {
+      "id": "migration-matrix",
+      "assertion": "Every active Cabinet surface is classified as keep, simplify, move, archive or remove with target organ and dependency."
+    },
+    {
+      "id": "non-destructive",
+      "assertion": "This slice does not stop services, delete app data, rename the repository or remove legacy content."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T12:18:00+02:00",
+    "source_decision": "Cabinet is to become an app-independent Heimgewebe system catalog.",
+    "does_not_establish": [
+      "merge_permission",
+      "runtime_correctness",
+      "cleanup_permission",
+      "automatic_shutdown_permission"
+    ]
+  },
+  "depends_on": []
+}

@@ -85,7 +85,8 @@
       "recommended_state": "completion-ready",
       "source": "post-merge doctor check after PR #366"
     },
-    "closeout_status": "Reopened by UTIL-BASE-V1-T013. Probe-as-write hardening remains planned; no runtime script replacement, timer mutation, backup execution, retention or prune action is authorized by this lifecycle correction.",
-    "lifecycle_reopened_20260710": "PR #392 registered UTIL-BASE-V1-T013 as a planned follow-up after the previous completion-ready closeout; the initiative is active again until that hardening task is resolved."
+    "closeout_status": "Reopened by UTIL-BASE-V1-T013 and T014. Probe-as-write hardening and immutable container-source rollout remain open; neither task authorizes data deletion, image pruning, unreviewed upgrades or public exposure.",
+    "lifecycle_reopened_20260710": "PR #392 registered UTIL-BASE-V1-T013 as a planned follow-up after the previous completion-ready closeout; the initiative is active again until that hardening task is resolved.",
+    "lifecycle_reopened_20260710_container_pinning": "UTIL-BASE-V1-T014 registers immutable image pins, canonical Beszel-agent source, validation and staged live rollout after the operator ecosystem audit found floating tags and obsolete worktree provenance."
   }
 }

@@ -46,7 +46,7 @@
       "decided_at": "2026-07-10T12:18:00+02:00",
       "target_role": "app-independent system catalog",
       "target_repository_name": "heimgewebe-katalog",
-      "external_cabinet_app_role": "temporary optional viewer only",
+      "external_cabinet_app_role": "retired",
       "migration_order": [
         "establish catalog core",
         "inventory and export local app data",
@@ -129,8 +129,8 @@
       "next_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
       "next_migration_scope": "read-only preflight verified; Phase A authorization required and absent"
     },
-    "next_cabinet_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
-    "next_cabinet_migration_scope": "T013 Phase A passed and the service was restored. Phase B service disablement remains blocked until a new task-, target- and effect-bound authorization is registered.",
+    "next_cabinet_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014",
+    "next_cabinet_migration_scope": "T013 runtime retirement is verified. T014 repository and reference rename remains separately review- and authorization-bound.",
     "github_actions_runner_block_followup_20260711": {
       "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020",
       "status": "planned",
@@ -173,6 +173,22 @@
       "phase_A_authorization_expires_at": "2026-07-11T11:00:00Z",
       "phase_A_private_evidence_sha256": "e8c7e6c5042cddd8c673d74219f54f8f8a465dfa3e3613c78f38d9161e059585",
       "phase_B_status": "authorization_required_not_present"
+    },
+    "cabinet_runtime_retirement_closeout": {
+      "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
+      "status": "verified",
+      "verified_at": "2026-07-11T11:56:00Z",
+      "final_cabinet_head": "bbf085963976cea21ca2050c90aaa6a13739a863",
+      "pull_requests": [
+        112,
+        113,
+        114
+      ],
+      "private_evidence_sha256": "09bef8d56c3f050dad040eca75cb3c6af060e8144d4cb5fe193a3d81416393d2",
+      "runtime_service": "heimgewebe-systemkatalog.service",
+      "compatibility_alias": "cabinet.service",
+      "repository_renamed": false,
+      "next_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014"
     }
   }
 }

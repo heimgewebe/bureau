@@ -130,7 +130,7 @@
       "next_migration_scope": "read-only preflight verified; Phase A authorization required and absent"
     },
     "next_cabinet_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
-    "next_cabinet_migration_scope": "T013 Phase A is authorized once: temporarily stop cabinet.service, verify catalog independence, restart immediately, and record the result. Phases B-D and rename remain unauthorized.",
+    "next_cabinet_migration_scope": "T013 Phase A passed and the service was restored. Phase B service disablement remains blocked until a new task-, target- and effect-bound authorization is registered.",
     "github_actions_runner_block_followup_20260711": {
       "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020",
       "status": "planned",
@@ -156,10 +156,10 @@
         "firstFailureClass": "local_wrapper_drift",
         "repairRecommendation": "do_not_rebase_catalog_on_external_runtime; use_retirement_preflight"
       },
-      "phase_A_status": "authorized_not_executed",
+      "phase_A_status": "completed_passed_service_restored",
       "effect_authorized": false,
       "repository_rename_authorized": false,
-      "next_migration_action": "execute_one_bounded_phase_A_stop_test_then_consume_authorization",
+      "next_migration_action": "register_explicit_phase_B_authorization_or_stop_runtime_retirement_here",
       "does_not_authorize": [
         "bounded service stop test",
         "service disablement",
@@ -168,9 +168,11 @@
         "backup or retention change",
         "repository rename"
       ],
-      "phase_A_effect_authorized": true,
+      "phase_A_effect_authorized": false,
       "phase_A_authorization_reference": "operator-instruction:2026-07-11:cabinet-t013-phase-a-bounded-stop-test",
-      "phase_A_authorization_expires_at": "2026-07-11T11:00:00Z"
+      "phase_A_authorization_expires_at": "2026-07-11T11:00:00Z",
+      "phase_A_private_evidence_sha256": "e8c7e6c5042cddd8c673d74219f54f8f8a465dfa3e3613c78f38d9161e059585",
+      "phase_B_status": "authorization_required_not_present"
     }
   }
 }

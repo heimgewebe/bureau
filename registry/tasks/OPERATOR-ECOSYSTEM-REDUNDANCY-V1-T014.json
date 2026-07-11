@@ -77,7 +77,9 @@
       "runtime_preflight_available": true,
       "runtime_preflight_merge_commit": "6c64348daf242e48e09e678f5793fc086854b31b",
       "runtime_retired": false,
-      "preflight_satisfies_T013_dependency": false
+      "preflight_satisfies_T013_dependency": false,
+      "phase_A_completed": true,
+      "phase_A_private_evidence_sha256": "e8c7e6c5042cddd8c673d74219f54f8f8a465dfa3e3613c78f38d9161e059585"
     }
   },
   "depends_on": [

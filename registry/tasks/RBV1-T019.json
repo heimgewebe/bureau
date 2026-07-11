@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "id": "RBV1-T019",
+  "initiative": "REPOBRIEF-V1-ROADMAP",
+  "title": "Hash-lock RepoBrief semantic extension dependencies",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 190
+  },
+  "goal": "Define supported platforms and create a complete reproducible hash lock plus installation evidence for the optional sentence-transformers and Torch dependency closure without moving semantic reranking into RepoBrief core by default.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rbv1-t019-platform-matrix",
+      "assertion": "Supported Python, operating-system and architecture targets for the semantic extension are explicit; unsupported targets fail closed or remain clearly excluded.",
+      "verifier": "Versioned contract, tests and installation evidence",
+      "evidence_type": "string"
+    },
+    {
+      "id": "rbv1-t019-hash-lock",
+      "assertion": "The full sentence-transformers and Torch transitive closure is exactly versioned and SHA-256 locked for each supported target.",
+      "verifier": "Generated lock files, deterministic regeneration and isolated --require-hashes installs",
+      "evidence_type": "string"
+    },
+    {
+      "id": "rbv1-t019-boundary",
+      "assertion": "Semantic dependencies remain optional and do not become an implicit RepoBrief core, snapshot-read or default-ranking dependency.",
+      "verifier": "Diff review, boundary tests and release policy",
+      "evidence_type": "string"
+    },
+    {
+      "id": "rbv1-t019-non-claims",
+      "assertion": "The evidence does not claim semantic quality, cross-platform completeness, vulnerability absence or default-promotion readiness.",
+      "verifier": "Proof non-claims",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "Lenskit release packaging audit follow-up",
+    "registered_at": "2026-07-11T12:00:00Z",
+    "lenskit_local_task": "TASK-LENSKIT-SEMANTIC-LOCK-001",
+    "lenskit_reference_head": "15b8b1225d8bfb41662d44ead023a6816ea13af3",
+    "source_paths": [
+      "merger/lenskit/requirements-semantic.txt",
+      "docs/release/release-policy.md"
+    ],
+    "does_not_establish": [
+      "semantic_quality",
+      "cross_platform_completeness",
+      "absence_of_vulnerabilities",
+      "default_promotion_readiness",
+      "merge_readiness"
+    ]
+  },
+  "depends_on": [
+    "RBV1-T017"
+  ]
+}

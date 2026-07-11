@@ -3,7 +3,7 @@
   "id": "OPERATOR-PC-HYGIENE-V1-T001",
   "initiative": "OPERATOR-PC-HYGIENE-V1",
   "title": "Reconnect or retire Google Drive rclone mount",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 201
@@ -52,7 +52,80 @@
       "security_correctness",
       "merge_readiness"
     ],
-    "live_audit_finding": "gdrive OAuth invalid_grant; service stopped and disabled on 2026-07-08."
+    "live_audit_finding": "gdrive OAuth invalid_grant; service stopped and disabled on 2026-07-08.",
+    "verified_at": "2026-07-11T07:38:46Z",
+    "decision": "retire-gdrive-mount",
+    "outcome": "The expired Google Drive rclone mount was reversibly retired. Legacy units, drop-ins and commands are absent, the mount directory is retained but unmounted, rclone.conf and OAuth material are untouched, and the new Restic runtime no longer depends on GDrive.",
+    "runtime_evidence_pull_request": {
+      "repository": "heimgewebe/infra",
+      "number": 124,
+      "head_sha": "75eb26a3427252ab1ea6f4af36b742047ab24482",
+      "merge_commit": "d27548689861238edb770d2d39de986b7bab97f3",
+      "diff_sha256": "ddabef12b7b65700710851b09ddbc6d752ba23d0df0d0a467d08795752921fd8"
+    },
+    "retirement_evidence": {
+      "source_version": "0d0cba93bcafc1f92f70e77b7545407fee3cc773",
+      "receipt_path": "/home/alex/.local/lib/heim-gdrive-mount-retirement/retirement-receipt.json",
+      "receipt_sha256": "b25d5cc0b46a55279a679afa6772e398f9ba569e3819a736a7a3f8f819e3fa87",
+      "backup_dir": "/home/alex/.local/lib/heim-gdrive-mount-retirement/backups/20260711T050231Z.10854",
+      "rclone_config_sha256": "84591f4a8f9ac01160b1c15123d29a1a01efa69b6db9b282350f1e671edc51d9",
+      "rclone_config_touched": false,
+      "mount_directory_retained": true,
+      "mount_directory_mounted": false,
+      "retired_units_load_state": "not-found",
+      "active_operator_gdrive_reference_count": 0,
+      "retired_commands_absent": [
+        "heim-pc-rclone-backup",
+        "heim-pc-restic-bootstrap",
+        "restic-gdrive-throttled"
+      ]
+    },
+    "validated_acceptance": {
+      "operator-pc-hygiene-v1-t001-1": "rclone-gdrive.service and the historical backup service/timer have LoadState=not-found and cannot enter a restart loop.",
+      "operator-pc-hygiene-v1-t001-2": "Not applicable: the reviewed decision selected reversible retirement rather than OAuth reconnection.",
+      "operator-pc-hygiene-v1-t001-3": "No /home/alex/GDrive reference remains in active user systemd sources, ~/.local/bin or the active Restic release; the retained directory is documented as historical and unmounted."
+    },
+    "validation": [
+      "retire_gdrive_mount.py --check passed against source version 0d0cba93.",
+      "rclone.conf remains owner alex, mode 0600 and SHA-256 84591f4a...; its contents were not read or versioned.",
+      "Retired units report LoadState=not-found; retired commands are absent; ~/GDrive exists but is not a mountpoint.",
+      "The real Restic backup and exact restore succeeded without GDrive, proving the replacement path is operational.",
+      "Retirement backup and receipt remain available for rollback."
+    ],
+    "self_review": "PASS: retirement receipt, config hash, active unit sources, command absence, mount state, replacement backup path and rollback directory were re-read after the exact-snapshot Restic proof.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "runtime_evidence",
+          "system": "heim-gdrive-mount-retirement",
+          "task_id": "OPERATOR-PC-HYGIENE-V1-T001",
+          "path": "/home/alex/.local/lib/heim-gdrive-mount-retirement/retirement-receipt.json",
+          "content_sha256": "b25d5cc0b46a55279a679afa6772e398f9ba569e3819a736a7a3f8f819e3fa87",
+          "commit_sha": "0d0cba93bcafc1f92f70e77b7545407fee3cc773"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-PC-HYGIENE-V1-T001",
+          "source_ref": "heimgewebe/infra#124",
+          "number": 124,
+          "merge_commit_sha": "d27548689861238edb770d2d39de986b7bab97f3",
+          "diff_sha256": "ddabef12b7b65700710851b09ddbc6d752ba23d0df0d0a467d08795752921fd8"
+        }
+      ]
+    },
+    "verification": {
+      "verified_at": "2026-07-11T07:38:46Z",
+      "task_sha256": "8bb80ac1ed143c75b39e3549e70a3fed30117fbd0f70f9d09a54768b6cee0033",
+      "plan_sha256": "2d61c05fd511d58d952d02850498a68c7ce5197da691b18ee0d6b775a5b3a39b",
+      "acceptance_ids": [
+        "operator-pc-hygiene-v1-t001-1",
+        "operator-pc-hygiene-v1-t001-2",
+        "operator-pc-hygiene-v1-t001-3"
+      ]
+    }
   },
   "depends_on": []
 }

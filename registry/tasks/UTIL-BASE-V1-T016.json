@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "id": "UTIL-BASE-V1-T016",
+  "initiative": "UTIL-BASE-V1",
+  "title": "Authorize and prove first Restic maintenance run",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 132
+  },
+  "goal": "After an approved retention policy, execute at most one explicitly authorized maintenance run and prove repository health, retained restore capability and clean post-state without enabling the weekly timer.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Registration only. The actual forget/prune/check effect requires a current reviewed policy, exact confirmation hash and separate operator authorization at execution time."
+    },
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/infra",
+      "repo:/home/alex/repos/bureau",
+      "service:restic-maintenance-weekly.service"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [
+    "UTIL-BASE-V1-T015"
+  ],
+  "acceptance": [
+    {
+      "id": "fresh-preflight",
+      "assertion": "Backup service is inactive, repository lock is free, latest exact restore proof is fresh, retirement remains valid and the reviewed policy hash matches the deployed unit."
+    },
+    {
+      "id": "explicit-authorization",
+      "assertion": "One current operator authorization names the exact policy SHA-256 and permits one maintenance execution only."
+    },
+    {
+      "id": "bounded-execution",
+      "assertion": "Exactly one forget/prune/check run executes through the commit-bound wrapper; no timer activation, unrelated snapshot target or concurrent backup occurs."
+    },
+    {
+      "id": "postflight",
+      "assertion": "Repository check passes, lock/tunnel/temp state is clean, daily backup remains enabled and maintenance timer remains inactive and linked."
+    },
+    {
+      "id": "restore-after-maintenance",
+      "assertion": "A protected retained snapshot is restored exactly and its sentinel or equivalent evidence remains byte-identical after maintenance."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-11T07:38:46Z",
+    "source": "Restic runtime closeout 2026-07-11",
+    "depends_on_policy_sha256": "636acfde44ddb2b752802801080ddf479b999712426cc07a162a032ba0968af7",
+    "does_not_establish": [
+      "current maintenance authorization",
+      "retention suitability",
+      "permission for repeated maintenance",
+      "timer enablement permission",
+      "safe deletion beyond the reviewed policy"
+    ]
+  }
+}

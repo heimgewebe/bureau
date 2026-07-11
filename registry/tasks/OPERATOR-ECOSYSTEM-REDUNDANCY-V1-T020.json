@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Restore GitHub Actions runner start capability",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 400
+  },
+  "goal": "Resolve the GitHub account payment or spending-limit condition that prevents Actions jobs from starting, then prove that an unchanged representative workflow obtains a runner and executes real steps.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "operator",
+      "note": "Account billing or spending-limit changes require direct operator action. Repository workflow changes are not an acceptable substitute unless independently justified."
+    }
+  },
+  "claims": [
+    {
+      "resource": "service.github_actions",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "github",
+    "shell"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "root-cause",
+      "assertion": "The account-level payment, budget or spending-limit cause is identified from GitHub billing and Actions evidence without misclassifying it as a code or test failure."
+    },
+    {
+      "id": "minimal-account-effect",
+      "assertion": "Only the necessary billing or spending-limit setting is corrected by the operator; no repository is made public/private and no workflow is weakened merely to bypass the block."
+    },
+    {
+      "id": "runner-proof",
+      "assertion": "A representative unchanged workflow starts a runner, records at least one executed step and produces logs."
+    },
+    {
+      "id": "ci-result",
+      "assertion": "The workflow result is reported separately from runner-start capability; a genuine test failure remains a test failure."
+    },
+    {
+      "id": "affected-pr-recheck",
+      "assertion": "Previously locally validated but runner-blocked Infra PR evidence is reclassified with the new runner proof; no historical result is rewritten."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-11T07:38:46Z",
+    "source": "Infra PRs #121-#124 GitHub check observations",
+    "observed_runs": [
+      {
+        "repository": "heimgewebe/infra",
+        "pull_request": 124,
+        "workflow_run_id": 29144599089,
+        "check_run_id": 86523860200,
+        "steps": 0,
+        "logs_available": false
+      }
+    ],
+    "observed_annotation": "The job was not started because recent account payments have failed or your spending limit needs to be increased.",
+    "does_not_establish": [
+      "current payment state",
+      "permission to change billing",
+      "workflow correctness",
+      "test success",
+      "need to alter repository visibility"
+    ]
+  }
+}

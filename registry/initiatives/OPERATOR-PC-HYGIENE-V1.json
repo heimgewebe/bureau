@@ -29,7 +29,7 @@
       "all_ports_safe"
     ],
     "verified_listener_hygiene_20260711": "OPERATOR-PC-HYGIENE-V1-T004 verified: Infra PR #116 records complete observed wildcard-listener classification, closure of 4173/4174 and loopback-only Leitstand deployment from PR #161. Router forwarding and complete firewall policy remain unverified.",
-    "closeout_status": "T004-T007, T009 and T011 are verified. T003, T008 and T010 are blocked with explicit live evidence; T001-T002 remain open. Initiative is waiting on the named blockers.",
+    "closeout_status": "T001 and T004-T007, T009 and T011 are verified. T002 remains planned; T003, T008 and T010 remain blocked with explicit live evidence. The initiative stays waiting on those independent items.",
     "remaining_audit_followups_20260711": {
       "T003": "terminal systemd failed-state cleanup, blocked by T030 Rootbroker freshness contradiction",
       "T008": "host firewall and independent external ingress proof, blocked by T030 and missing external probe authority",
@@ -41,6 +41,7 @@
     "server_recovery_freshness_followup_20260711": "T011 registers the real configured-target backup/restore/repository probe needed to refresh stale server recovery evidence. No fallback, marker touch or gate bypass is authorized.",
     "verified_network_service_review_20260711": "T009 verified via Infra PR #120: GNOME-RDP, Sunshine, UniFi and Avahi retained by current consumer evidence; Sunshine UPnP disabled; no service mutation.",
     "verified_server_recovery_probe_20260711": "T011 verified via direct Grabowski probe snapshot a4973a5a on heimberry:rest-server/grabowski-recovery-probe; restore, repository check and fresh status green.",
-    "waiting_reason_20260711": "Waiting on T030 for T003/T008 and on active Lenskit checkout users for T010."
+    "waiting_reason_20260711": "Waiting on T002, on T030 for T003/T008 and on active Lenskit checkout users for T010. GDrive retirement no longer blocks the initiative.",
+    "verified_gdrive_retirement_20260711": "T001 verified through reversible retirement at Infra source 0d0cba93 and runtime evidence PR #124; rclone.conf/OAuth untouched, legacy units absent, ~/GDrive retained unmounted, Restic replacement proven."
   }
 }

@@ -130,6 +130,18 @@
       "next_migration_scope": "read-only preflight and authorization packet only"
     },
     "next_cabinet_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
-    "next_cabinet_migration_scope": "Read-only runtime inventory, fresh host and consumer preflight, rollback-plan drafting and authorization-packet preparation only; runtime effect remains unauthorized."
+    "next_cabinet_migration_scope": "Read-only runtime inventory, fresh host and consumer preflight, rollback-plan drafting and authorization-packet preparation only; runtime effect remains unauthorized.",
+    "github_actions_runner_block_followup_20260711": {
+      "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020",
+      "status": "planned",
+      "observed_run_id": 29144599089,
+      "observed_check_run_id": 86523860200,
+      "classification": "account billing or spending-limit prevented runner start; zero executed steps and no logs",
+      "does_not_establish": [
+        "code failure",
+        "test failure",
+        "permission to alter billing"
+      ]
+    }
   }
 }

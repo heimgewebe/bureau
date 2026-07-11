@@ -4,7 +4,7 @@
   "title": "Grabowski operator surface",
   "state": "waiting",
   "commitment": "next",
-  "goal": "Reduce Grabowski operator decision entropy by adding a read-only situation spine, a small intent-shaped grip surface, friction feedback, evidence-bound recall, durable jobs and enforceable session attenuation.",
+  "goal": "Reduce Grabowski operator decision entropy by adding a read-only situation spine, a small intent-shaped grip surface, friction feedback, evidence-bound recall, adaptive low-risk execution shaping, durable jobs and enforceable session attenuation.",
   "current_plan": {
     "repository": "bureau",
     "path": "docs/plans/grabowski-operator-surface-v1.md"
@@ -14,6 +14,8 @@
     "Grip list/run exposes small receipt-bound intents instead of the full tool drawer.",
     "Repeated friction produces proposal-only next-grip or next-task recommendations.",
     "Operator recall is evidence-bound and cannot replace receipts, reviews or Bureau completion.",
+    "Measured friction evidence can shape only bounded low- and medium-risk execution choices after shadow evaluation, while high-impact gates remain immutable.",
+    "Equivalent durable work is deduplicated only under exact input and freshness identity, and concurrent validation state is isolated.",
     "Durable job and session capability slices are registered but remain gated behind reliable read-side evidence."
   ],
   "parallelism": {
@@ -26,7 +28,7 @@
       "implementation_complete",
       "runtime_deployed",
       "merge_authority_change",
-      "automatic_routing_change",
+      "automatic routing authority",
       "mcp_catalog_freshness",
       "session_capability_enforced"
     ],
@@ -34,8 +36,9 @@
       "GRIP-ROADMAP-V1": "complements and narrows operator-facing work; does not replace queued grip roadmap tasks",
       "docs/grabowski-restplan-v2.md": "reuses capability-profile direction and converts it into task-shaped follow-up"
     },
-    "priority_decision": "situation spine before recall; grip surface before friction automation; push and capability enforcement later",
+    "priority_decision": "situation spine before recall; grip surface before friction automation; shadow measurement before bounded adaptive routing; push and capability enforcement later",
     "rootbroker_recovery_freshness_followup_20260711": "T030 records the reproduced contradiction between recovery_status ready=true and immediate Rootbroker stale-marker denial. It is blocked while another owner holds the Grabowski repository.",
-    "waiting_reason_20260711": "Waiting because T030 is blocked by an active foreign Grabowski repository lease after a fresh runtime reproduction."
+    "adaptive_friction_followup_20260711": "T031 registers a shadow-first friction-aware execution governor and T032 registers exact-identity work deduplication plus validation-state isolation from a live audit of 63 friction events, 48 unresolved events and repeated concurrent validation interference.",
+    "waiting_reason_20260711": "Waiting because T030 is blocked by an active foreign Grabowski repository lease after a fresh runtime reproduction; T031 and T032 remain queued later and do not bypass the active owner."
   }
 }

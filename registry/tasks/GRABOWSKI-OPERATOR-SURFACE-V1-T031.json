@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T031",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Add adaptive friction-aware execution governor",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 500
+  },
+  "goal": "Translate evidence-bound Grabowski friction patterns and capability metadata into bounded, explainable execution-shape recommendations that reduce avoidable platform blocks, connector ambiguity and broad retries without weakening safety, authorization or recovery gates.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "bounded-input-model",
+      "assertion": "The governor consumes only typed capability metadata, operation class, bounded payload-shape features, resource and lease state, and evidence-bound friction fingerprints; raw secret values and unrestricted command text are excluded from learned state."
+    },
+    {
+      "id": "explainable-action-shape",
+      "assertion": "For each supported operation the result explains whether to use a typed tool, grip or durable task, whether reads may be batched, where mutations must be split, which preflight is required, the retry budget and the mandatory post-state readback."
+    },
+    {
+      "id": "shadow-first-evaluation",
+      "assertion": "The first deployment is proposal-only shadow mode and records predicted versus actual friction, first-pass success, unchanged retries, ambiguous mutation outcomes, tool-call count and elapsed time before any automatic routing promotion."
+    },
+    {
+      "id": "bounded-promotion-and-rollback",
+      "assertion": "Only low- and medium-risk routing parameters may be promoted after an explicit minimum evidence threshold and measured improvement; promotions are append-only, time-decayed, reversible and automatically disabled by a regression circuit breaker."
+    },
+    {
+      "id": "immutable-safety-boundaries",
+      "assertion": "Learning cannot weaken or rewrite user intent, authorization, secret handling, recovery, kill-switch, review, merge, deployment or privileged-execution gates; high and critical actions remain explicit preflight, one mutation and receipt-bound readback."
+    },
+    {
+      "id": "transport-ambiguity-contract",
+      "assertion": "A connector or response failure after a possible mutation yields unknown outcome and blocks an unchanged retry until target state is re-read; a later success does not erase the original transport event."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused deterministic tests cover broad read decomposition, mutation isolation, platform-filter no-retry, post-mutation 502 ambiguity, risk-boundary enforcement, evidence decay, promotion, rollback and circuit-breaker behavior."
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T003",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T020",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T028"
+  ],
+  "metadata": {
+    "source": "Live Grabowski configuration and friction audit on 2026-07-11",
+    "evidence_summary": {
+      "runtime_head": "cbe22644722a135182891c3ee3f8e9936d9abf79",
+      "friction_events": 63,
+      "unresolved_events": 48,
+      "platform_filter_events": 26,
+      "connector_transport_events": 11,
+      "observed_gap": "Friction classification, closeout and next-grip proposals exist, but proposal evidence does not yet govern execution shape or measure whether routing changes reduce friction."
+    },
+    "does_not_establish": [
+      "automatic task creation authority",
+      "automatic policy mutation authority",
+      "platform filter root cause",
+      "connector vendor fault",
+      "permission to bypass a blocked call",
+      "permission to merge or deploy",
+      "runtime implementation complete"
+    ]
+  }
+}

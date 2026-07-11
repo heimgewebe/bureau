@@ -84,7 +84,7 @@
     },
     "catalog_gate": {
       "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T004",
-      "status": "read_only_preflight_verified_but_runtime_effect_not_authorized",
+      "status": "phase_A_authorized_not_executed",
       "cabinet_merge_commit": "0b718077a47b922262fdfbd8ccbe8e3e40464289",
       "catalog_policy_sha256": "6eff835fc31447014752bf5c916ecdf4d82ccbc3634b7e14ed58c3d2142116f2",
       "authority_matrix_sha256": "ca7e9b444e7ce78b40687809d260c364bbdd7b984f2da3c0886009132e0998a3",
@@ -111,7 +111,9 @@
         "post-effect verification"
       ],
       "preflight_merge_commit": "6c64348daf242e48e09e678f5793fc086854b31b",
-      "next_effect": "phase_A_bounded_stop_test_requires_explicit_authorization"
+      "next_effect": "execute_one_bounded_phase_A_stop_test_then_consume_authorization",
+      "phase_A_effect_authorized": true,
+      "authorization_reference": "operator-instruction:2026-07-11:cabinet-t013-phase-a-bounded-stop-test"
     },
     "runtime_retirement_preflight": {
       "status": "verified_read_only_preflight",
@@ -189,7 +191,7 @@
       },
       "rollback_plan": {
         "phase_A": {
-          "status": "authorization_required_not_present",
+          "status": "authorized_not_executed",
           "action": "bounded_service_stop_test",
           "executed": false,
           "rollback": "restart_service_and_verify_loopback_runtime"
@@ -226,7 +228,11 @@
           "runtime_file_quarantine_or_removal",
           "versioned_runtime_surface_removal",
           "repository_rename"
-        ]
+        ],
+        "phase_A_bounded_stop_test_authorized": true,
+        "phase_A_authorization_reference": "operator-instruction:2026-07-11:cabinet-t013-phase-a-bounded-stop-test",
+        "phase_A_authorization_expires_at": "2026-07-11T11:00:00Z",
+        "phase_A_authorized_stop_window_seconds": 300
       },
       "residual_uncertainty": [
         "one registered location unreachable",
@@ -241,6 +247,34 @@
         "private_data_deletion_permission",
         "backup_or_retention_change_permission",
         "repository_rename_permission"
+      ]
+    },
+    "execution_authorization": {
+      "schema_version": 1,
+      "source": "operator_instruction",
+      "level": "break_glass",
+      "approved": true,
+      "reviewer": "alexdermohr",
+      "reference": "operator-instruction:2026-07-11:cabinet-t013-phase-a-bounded-stop-test",
+      "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
+      "scope": [
+        "runtime_mutation"
+      ],
+      "effect": "temporarily stop cabinet.service once, verify catalog independence, and restart it",
+      "max_stop_seconds": 300,
+      "issued_at": "2026-07-11T09:00:09Z",
+      "expires_at": "2026-07-11T11:00:00Z",
+      "one_shot": true,
+      "revoked_on_mismatch": true,
+      "consumed": false,
+      "remaining_uses": 1,
+      "requires_rollback": true,
+      "does_not_authorize": [
+        "service disablement",
+        "file or data mutation",
+        "backup or retention change",
+        "repository rename",
+        "phases B-D"
       ]
     }
   },

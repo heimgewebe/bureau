@@ -3,7 +3,7 @@
   "id": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T004",
   "initiative": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1",
   "title": "Wire Bureau review and Leitstand display boundary",
-  "state": "planned",
+  "state": "ready",
   "goal": "Register how heimlern proposals from Chronik outcomes move into Bureau review status and later Leitstand read-only display without making either surface the source of outcome truth.",
   "execution": {
     "mode": "interactive-agent",
@@ -65,11 +65,13 @@
       "runtime_mutation",
       "merge_readiness"
     ],
-    "task_role": "t004"
+    "task_role": "t004",
+    "promoted_at": "2026-07-11",
+    "promotion_basis": "T003 is verified by merged Heimlern PR #200 and successful reviewed-head workflows."
   },
   "priority": {
-    "lane": "later",
-    "rank": 80
+    "lane": "now",
+    "rank": 10
   },
   "depends_on": [
     "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T003"

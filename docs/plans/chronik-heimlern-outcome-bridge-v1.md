@@ -47,6 +47,8 @@ T001 found that Chronik already has generic append-only ingest and cursor export
 
 T002 is implemented by Chronik PR #214. Its envelope pins the Heimlern-owned payload schema, validates canonical payload/event digests, rejects raw/secret/private-path material and requires consumers to recompute freshness.
 
+T003 is implemented by Heimlern PR #200. The dedicated consumer validates both contract layers, canonical identities and digests, recomputes freshness, deduplicates evidence, rejects sensitive input and emits only review-only reports, valid proposal candidates or typed insufficient-evidence results. The current sequenced task is T004: Bureau review state and an optional read-only Leitstand display boundary.
+
 ## Organ roles
 
 | Organ | Owns | May do | Must not do |

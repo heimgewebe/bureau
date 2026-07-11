@@ -3,7 +3,7 @@
   "id": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T003",
   "initiative": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1",
   "title": "Implement typed Heimlern outcome consumer smoke",
-  "state": "ready",
+  "state": "verified",
   "goal": "Implement a dedicated, review-only Heimlern consumer for the merged Chronik operator-outcome envelope; validate both contract layers and emit an auditable report or bounded proposal without applying policy.",
   "execution": {
     "mode": "interactive-agent",
@@ -72,7 +72,68 @@
     "scope_optimized_at": "2026-07-10T23:43:23Z",
     "scope_basis": "T001 live audit plus merged Chronik PR #214.",
     "chronik_contract_merge": "de1287423f3156cfae86c3cae6f4538732356c01",
-    "consumer_gap": "The existing Heimlern Chronik CLI consumes AussenEvent and must not be reused as an implicit routing-outcome parser."
+    "consumer_gap": "The existing Heimlern Chronik CLI consumes AussenEvent and must not be reused as an implicit routing-outcome parser.",
+    "verified_at": "2026-07-11",
+    "implementation_pr": "heimgewebe/heimlern#200",
+    "implementation_head": "1d6900c2e52c7510e8fc58565333d4d234797d4a",
+    "implementation_merge_commit": "1c64afa6656737cf56b78e9f5c30ba7c9d8da4d9",
+    "implementation_workflow_runs": [
+      29132762201,
+      29132762273
+    ],
+    "validation": [
+      "Heimlern PR #200 reports 37 Python tests and 76 Rust tests plus documentation tests passed.",
+      "GitHub workflow runs 29132762201 (ai-context guard) and 29132762273 (rust cached) completed successfully for the reviewed head.",
+      "Current Heimlern main retains the dedicated chronik_outcome_consumer.py path with exact contract pins, digest checks, freshness recomputation, deterministic duplicate handling and redaction.",
+      "The fixture smoke emitted insufficient_evidence with review_only=true and writes=[]; no routing policy, Chronik history or Grabowski execution state was mutated."
+    ],
+    "verified_acceptance": {
+      "typed-envelope-input": "Heimlern PR #200 adds scripts/chronik_outcome_consumer.py for chronik.operator-routing-outcome-export.v1 and explicitly keeps the generic AussenEvent path separate.",
+      "identity-and-digest-validation": "The consumer validates strict JSON, immutable mirror pins, both schemas, contract identities, canonical payload/event digests and evidence-reference identity before analysis.",
+      "freshness-and-duplicates": "Read-time freshness is explicit and deterministic; duplicate event and decision identities are deduplicated while conflicting identities fail closed.",
+      "proposal-schema-valid": "The fixture smoke returns typed insufficient_evidence, and the focused tests cover a schema-valid policy.weight_adjustment.v1 proposal candidate.",
+      "review-only": "Reports are review_only=true with writes=[] and explicit non-claims; no policy, history or execution state is changed.",
+      "tests": "Focused coverage includes valid input, contract and mirror drift, payload/event/evidence digest mismatch, stale and future input, duplicate and conflicting identities, sensitive fields, bounds, typed failures and insufficient evidence."
+    },
+    "outcome": "The dedicated typed Heimlern consumer is merged and CI-verified; the bridge remains offline and proposal-only without a live Grabowski producer.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T003",
+          "source_ref": "heimgewebe/heimlern#200",
+          "number": 200,
+          "head_sha": "1d6900c2e52c7510e8fc58565333d4d234797d4a",
+          "merge_commit_sha": "1c64afa6656737cf56b78e9f5c30ba7c9d8da4d9"
+        },
+        {
+          "kind": "workflow_run",
+          "authority": "github-actions",
+          "task_id": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T003",
+          "source_ref": "heimgewebe/heimlern/actions/runs/29132762201",
+          "run_id": 29132762201,
+          "commit_sha": "1d6900c2e52c7510e8fc58565333d4d234797d4a"
+        },
+        {
+          "kind": "workflow_run",
+          "authority": "github-actions",
+          "task_id": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T003",
+          "source_ref": "heimgewebe/heimlern/actions/runs/29132762273",
+          "run_id": 29132762273,
+          "commit_sha": "1d6900c2e52c7510e8fc58565333d4d234797d4a"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "0f763ac3ec96e063b9810cbf3a37dd74e2932daddb99bbfcbacd41507ef35825",
+      "plan_sha256": "a39748d2669b385c611c92201f73d7ac77d0eb5a0753b79c377ecae3b76af675",
+      "verified_at": "2026-07-11",
+      "task_sha256_scope": "canonical task revision without state and verification metadata",
+      "plan_sha256_scope": "canonical initiative.current_plan object"
+    }
   },
   "priority": {
     "lane": "now",

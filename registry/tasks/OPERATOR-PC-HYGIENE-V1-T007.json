@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "initiative": "OPERATOR-PC-HYGIENE-V1",
+  "state": "planned",
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "id": "OPERATOR-PC-HYGIENE-V1-T007",
+  "title": "Reconcile detached tmux sessions safely",
+  "goal": "Classify all detached Heim-PC tmux sessions against live processes, repository state, active leases and recoverable transcripts, then close only terminal idle shells through a reviewed allowlist without losing active agent work.",
+  "priority": {
+    "lane": "later",
+    "rank": 207
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "path:/tmp/tmux-1000",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/infra"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "inventory",
+      "assertion": "Every tmux session is inventoried with name, age, attach state, pane command, process tree, working directory, repository/branch where applicable and active lease/task references."
+    },
+    {
+      "id": "classification",
+      "assertion": "Each session is classified as active-retain, uncertain-retain, terminal-archive or safe-close; age or detached state alone never authorizes termination."
+    },
+    {
+      "id": "transcript-preservation",
+      "assertion": "Before any safe-close action, bounded pane history and session metadata are stored in a timestamped digest-manifested quarantine outside the tmux socket path."
+    },
+    {
+      "id": "explicit-allowlist",
+      "assertion": "Apply mode accepts only explicit reviewed session names and refuses attached sessions, sessions with non-shell foreground processes, sessions with active leases/tasks or sessions whose process tree changed since review."
+    },
+    {
+      "id": "post-proof",
+      "assertion": "After effects, tmux session counts, preserved active sessions and related services are re-read; no unrelated process or repository is changed."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-11T02:12:00+02:00",
+    "source_audit": "2026-07-11 Heim-PC lifecycle audit",
+    "live_finding": "59 detached sessions; 54 inactive for more than 24 hours and 38 for more than 72 hours, including both plain shells and Claude/agent processes.",
+    "does_not_establish": [
+      "safe_to_kill_by_age",
+      "permission_to_terminate_agent_sessions",
+      "permission_to_delete_transcripts",
+      "repository_cleanup_authority"
+    ]
+  }
+}

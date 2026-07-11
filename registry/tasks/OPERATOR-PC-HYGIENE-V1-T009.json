@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "initiative": "OPERATOR-PC-HYGIENE-V1",
+  "state": "planned",
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "id": "OPERATOR-PC-HYGIENE-V1-T009",
+  "title": "Review retained LAN listener necessity",
+  "goal": "Decide whether retained Heim-PC LAN-facing services such as UniFi, Sunshine, GNOME Remote Desktop and Avahi are still needed, then narrow or disable only services with a documented consumer, recovery path and reviewed effect.",
+  "priority": {
+    "lane": "later",
+    "rank": 209
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/infra"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "consumer-map",
+      "assertion": "Each retained LAN listener has a current consumer, purpose, access scope, startup owner and consequence of disabling."
+    },
+    {
+      "id": "least-exposure",
+      "assertion": "Services without a current consumer are proposed for disablement; services with a consumer are narrowed to the smallest viable interface or network where supported."
+    },
+    {
+      "id": "recovery",
+      "assertion": "Every change has a pre-state record, rollback command and post-change functional proof for the dependent workflow."
+    },
+    {
+      "id": "no-blind-disable",
+      "assertion": "No service is disabled merely because it is old, detached, noisy or unfamiliar; uncertainty retains the service and creates a specific evidence gap."
+    },
+    {
+      "id": "runtime-update",
+      "assertion": "Infra listener evidence is updated after reviewed effects or records a no-change decision with rationale."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-11T02:12:00+02:00",
+    "source_audit": "OPERATOR-PC-HYGIENE-V1-T004 closeout",
+    "candidate_services": [
+      "unifi",
+      "sunshine",
+      "gnome-remote-desktop",
+      "avahi"
+    ],
+    "does_not_establish": [
+      "permission_to_disable_services",
+      "service_unused",
+      "consumer_absence",
+      "network_safety"
+    ]
+  }
+}

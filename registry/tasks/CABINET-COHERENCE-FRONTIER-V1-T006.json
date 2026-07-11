@@ -3,7 +3,7 @@
   "id": "CABINET-COHERENCE-FRONTIER-V1-T006",
   "initiative": "CABINET-COHERENCE-FRONTIER-V1",
   "title": "Close Cabinet-Bureau outcome feedback loop",
-  "state": "planned",
+  "state": "superseded",
   "goal": "Define the return path from Bureau/Grabowski execution evidence to Cabinet outcomes and Heimlern proposal-only learning input.",
   "priority": {
     "lane": "later",
@@ -45,7 +45,10 @@
       "autonomous_dispatch"
     ],
     "phase": "CCFG-7",
-    "target_repository": "heimgewebe/bureau"
+    "target_repository": "heimgewebe/bureau",
+    "superseded_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021",
+    "superseded_at": "2026-07-11T20:31:00Z",
+    "supersession_reason": "Systemkatalog must not ingest execution outcomes or feed a second learning/status model."
   },
   "acceptance": [
     {

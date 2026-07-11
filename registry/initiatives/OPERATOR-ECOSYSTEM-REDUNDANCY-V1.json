@@ -200,8 +200,8 @@
         "verified_at": "2026-07-11T16:14:31Z"
       }
     },
-    "last_completed_catalog_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014",
-    "system_catalog_migration_status": "verified_complete",
+    "last_completed_catalog_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021",
+    "system_catalog_migration_status": "verified_roomless_systemkatalog",
     "system_catalog_repository_migration_closeout": {
       "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014",
       "status": "verified",
@@ -220,6 +220,34 @@
       "canonical_resource_id": "repo.heimgewebe-katalog",
       "merge_archive_latest_aliases_migrated": true,
       "historical_source_card_targets_preserved": true
+    },
+    "systemkatalog_room_retirement_closeout": {
+      "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021",
+      "status": "verified",
+      "verified_at": "2026-07-11T20:31:00Z",
+      "repository": "heimgewebe/systemkatalog",
+      "local_checkout": "/home/alex/repos/systemkatalog",
+      "repository_head": "2c70c8c337a8cbbdfbacd4d1724952428076e532",
+      "runtime_service": "systemkatalog.service",
+      "active_room_count": 0,
+      "archived_room_file_count": 187,
+      "canonical_resource_id": "repo.systemkatalog",
+      "consumer_merge_commits": {
+        "leitstand": "61c58ae5d3634ee6ec62eeeaac88632d41f60499",
+        "schauwerk": "f5f986d692b0759d44497d9280f963c4070c11a7",
+        "lenskit": "fd9d3ebb253015f01324d731fd417145181c7980"
+      },
+      "supersedes_current_state_claims_from": [
+        "system_catalog_repository_migration_closeout",
+        "cabinet_catalog_migration_decision",
+        "cabinet_runtime_retirement_closeout"
+      ],
+      "historical_evidence_preserved": true,
+      "does_not_establish": [
+        "truth of historical task claims beyond their original evidence",
+        "future runtime health",
+        "merge readiness of unrelated repositories"
+      ]
     }
   }
 }

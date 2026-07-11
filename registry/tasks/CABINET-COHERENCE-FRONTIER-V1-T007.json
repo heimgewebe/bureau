@@ -3,7 +3,7 @@
   "id": "CABINET-COHERENCE-FRONTIER-V1-T007",
   "initiative": "CABINET-COHERENCE-FRONTIER-V1",
   "title": "Project Cabinet coherence status in Leitstand read-only",
-  "state": "planned",
+  "state": "superseded",
   "goal": "Expose Cabinet map/frontier, Bureau queue/import state, PR/CI status and agent-lane state as a read-only Leitstand projection.",
   "priority": {
     "lane": "later",
@@ -47,7 +47,10 @@
     "phase": "CCFG-8",
     "target_repository": "heimgewebe/leitstand",
     "display_surface": "leitstand",
-    "schauwerk_boundary": "not claimed; requires separate Bureau resource and task if selected later"
+    "schauwerk_boundary": "not claimed; requires separate Bureau resource and task if selected later",
+    "superseded_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021",
+    "superseded_at": "2026-07-11T20:31:00Z",
+    "supersession_reason": "Leitstand reads source systems directly; Systemkatalog no longer owns frontier, queue, PR, CI or agent status."
   },
   "acceptance": [
     {

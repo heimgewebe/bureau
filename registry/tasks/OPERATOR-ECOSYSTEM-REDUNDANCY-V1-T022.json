@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T022",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Make Leitstand Git health worktree-aware",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 365
+  },
+  "goal": "Make Leitstand runtime-health Git identity resolution support both normal checkouts and linked Git worktrees without weakening fail-closed health semantics.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "gitdir-resolution",
+      "assertion": "Runtime health resolves Git HEAD and ref data when .git is either a directory or a linked-worktree gitdir file."
+    },
+    {
+      "id": "normal-checkout-regression",
+      "assertion": "Existing normal-checkout health behavior and fail-closed error reporting remain unchanged."
+    },
+    {
+      "id": "linked-worktree-test",
+      "assertion": "An automated test creates or simulates a linked worktree and proves the health receipt reports the expected commit instead of a false failure."
+    },
+    {
+      "id": "scope-boundary",
+      "assertion": "The fix changes only Git identity discovery and does not add execution authority, network dependencies or mutable health state."
+    }
+  ],
+  "depends_on": [],
+  "metadata": {
+    "registered_at": "2026-07-11T20:31:00Z",
+    "observed_during": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021",
+    "evidence": "Leitstand consumer PR local full suite passed 340 of 341 tests; tests/serverHealth.test.ts failed reproducibly only in a linked worktree because runtimeHealth Git discovery assumed a .git directory. GitHub CI in a normal checkout was green.",
+    "does_not_establish": [
+      "production health failure",
+      "consumer contract failure",
+      "merge blocker for Systemkatalog migration"
+    ]
+  }
+}

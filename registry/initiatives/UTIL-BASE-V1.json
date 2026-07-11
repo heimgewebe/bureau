@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "UTIL-BASE-V1",
   "title": "Local operator utility baseline",
-  "state": "active",
+  "state": "completion-ready",
   "commitment": "later",
   "goal": "Build a small, evidence-friendly Heim-PC utility baseline around backup, monitoring, shell history, local transfer, review/search tools and document processing without creating a second control-plane or second knowledge truth.",
   "current_plan": {
@@ -85,7 +85,7 @@
       "recommended_state": "completion-ready",
       "source": "post-merge doctor check after PR #366"
     },
-    "closeout_status": "UTIL-BASE-V1-T016 is verified: reviewed policy c7d1bad1... is deployed from d81ae8f..., exactly one maintenance run passed with seven snapshots retained and none removed, repository and restore checks green, and weekly maintenance remains disabled. T017 remains planned for separately reviewed release/backup classification; no deletion permission exists.",
+    "closeout_status": "All UTIL-BASE-V1 tasks are verified. T017 removed two exact unreferenced backup directories, protects eight rollback artifacts, leaves zero candidates, and preserves green runtime, retirement, restore and repository checks.",
     "lifecycle_reopened_20260710": "PR #392 registered UTIL-BASE-V1-T013 as a planned follow-up after the previous completion-ready closeout; the initiative is active again until that hardening task is resolved.",
     "lifecycle_reopened_20260710_container_pinning": "UTIL-BASE-V1-T014 registers immutable image pins, canonical Beszel-agent source, validation and staged live rollout after the operator ecosystem audit found floating tags and obsolete worktree provenance.",
     "verified_container_pinning_20260710": "Infra PR #113 implemented immutable image and source contracts; PR #114 published live evidence. Runtime verifier SHA-256 a0602f435e7c6c31ed3ddacfb329413802f51079d535296589b087be386c9b2c passed.",
@@ -144,6 +144,29 @@
       "maintenance_timer_enabled": false,
       "repeat_execution_authorized": false,
       "next_task": "UTIL-BASE-V1-T017"
+    },
+    "restic_artifact_cleanup_20260711": {
+      "task": "UTIL-BASE-V1-T017",
+      "status": "verified",
+      "verified_at": "2026-07-11T13:12:00Z",
+      "infra_prs": [
+        127,
+        128,
+        129,
+        130
+      ],
+      "infra_closeout_merge": "0fb18089607382378b835064c8a5e6ee0db52df8",
+      "final_plan_sha256": "ce98af02b926dbe150177f4b92dc55d5a5f2df5a95ed72d74bc354d9b479fc0d",
+      "removed_count": 2,
+      "protected_count": 8,
+      "remaining_candidates": 0,
+      "reclaimed_allocated_bytes": 28672,
+      "exact_restore": "PASS",
+      "repository_check": "PASS"
+    },
+    "lifecycle_completion_20260711": {
+      "state": "completion-ready",
+      "reason": "All seventeen initiative tasks are verified."
     }
   }
 }

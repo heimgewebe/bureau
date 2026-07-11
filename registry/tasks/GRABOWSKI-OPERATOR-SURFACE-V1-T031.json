@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T031",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Add adaptive friction-aware execution governor",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 500
@@ -88,6 +88,92 @@
       "permission to bypass a blocked call",
       "permission to merge or deploy",
       "runtime implementation complete"
-    ]
+    ],
+    "implementation_prs": [
+      "heimgewebe/grabowski#158",
+      "heimgewebe/grabowski#159"
+    ],
+    "implementation_heads": {
+      "158": "275c725160f05822be2e6bf1f7a1e26a56ec4e0e",
+      "159": "bd3d9e50ab2edd507966e3c84c011f255ae0892b"
+    },
+    "implementation_merge_commits": {
+      "158": "3e02491285b0d7cb5e50680aa64581f8faf6a6db",
+      "159": "733259556144a171914f339a4ea67bca32f08977"
+    },
+    "verified_at": "2026-07-11",
+    "verification_note": "T031 is merged, deployed and directly exercised through a fresh connector. All three governor tools remained proposal-only shadow mode; platform and policy stops used retry_limit=0; ambiguous mutation outcomes required state readback; the outcome ledger remained globally integer.",
+    "validated_acceptance": {
+      "bounded-input-model": "Live execution-shape calls accepted only typed operation, risk, payload-shape, resource, lease and friction metadata. Raw unrestricted command text and secret values are not learned inputs.",
+      "explainable-action-shape": "Direct probes covered low-risk read, broad read, platform filter, policy gate, mutation readback, resource conflict and high-risk preflight with explicit routes, reasons, retry policy and readback requirements.",
+      "shadow-first-evaluation": "The deployed tools reported proposal_only_shadow_mode, execution_authorized=false and automatic_live_routing_enabled=false. One evidence-bound read outcome was appended without production routing effect.",
+      "bounded-promotion-and-rollback": "The live summary reported 604800-second decay, minimum evidence 5, no live promotions, reversible candidates and circuit-breaker enforcement.",
+      "immutable-safety-boundaries": "User intent, authorization, secret handling, recovery, kill switch, review, merge, deployment and privileged execution remained immutable; high and critical actions stayed preflight-only.",
+      "transport-ambiguity-contract": "A possible mutation transport failure recommended state_readback_only and prohibited an unchanged retry.",
+      "tests": "Focused final tests passed 20 tests; full implementation validation passed 1053 tests and GitHub validate (3.10)/(3.12)."
+    },
+    "runtime_snapshot": {
+      "runtime_head": "733259556144a171914f339a4ea67bca32f08977",
+      "release_id": "733259556144-srcset2ad96478068f-locke6664d600b6c-contract9e073354720c",
+      "tool_contract_expected": 109,
+      "tool_contract_registered": 109,
+      "outcome_ledger": {
+        "records": 2,
+        "valid_records": 2,
+        "invalid_lines": 0,
+        "duplicate_outcome_ids": [],
+        "future_dated": 0,
+        "ledger_integrity_valid": true
+      },
+      "governor": {
+        "automatic_live_routing_enabled": false,
+        "live_promotions": [],
+        "decay_seconds": 604800,
+        "minimum_evidence": 5
+      }
+    },
+    "artifacts": {
+      "pr_159_diff_sha256": "27fb7836eae62314f57527bcff58c8683ce4659ee66269a83c9ad0f040160571",
+      "self_review_sha256": "f02bb8853017792683b416f1bc1ae1926507cc9bc9b9f9560ded11c4560a5ac8",
+      "focused_test_log_sha256": "22d16909bb9cb74a42c226188c6992b148a70f2b1c5b6b545b394e2266eedfcb",
+      "live_closeout_sha256": "549e0c1afae3627204556c95fda6152c09b7d4e20eb80a0dcb9716c1da61153e"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T031",
+          "source_ref": "heimgewebe/grabowski#158",
+          "number": 158,
+          "head_sha": "275c725160f05822be2e6bf1f7a1e26a56ec4e0e",
+          "merge_commit_sha": "3e02491285b0d7cb5e50680aa64581f8faf6a6db"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T031",
+          "source_ref": "heimgewebe/grabowski#159",
+          "number": 159,
+          "head_sha": "bd3d9e50ab2edd507966e3c84c011f255ae0892b",
+          "merge_commit_sha": "733259556144a171914f339a4ea67bca32f08977",
+          "diff_sha256": "27fb7836eae62314f57527bcff58c8683ce4659ee66269a83c9ad0f040160571"
+        },
+        {
+          "kind": "runtime_probe",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T031",
+          "source_ref": "execution-governor-live-proof@733259556144a171914f339a4ea67bca32f08977",
+          "commit_sha": "733259556144a171914f339a4ea67bca32f08977",
+          "content_sha256": "549e0c1afae3627204556c95fda6152c09b7d4e20eb80a0dcb9716c1da61153e"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "95f01e8a815eb20870779ff310ba1fc05a394619caa6ba3ddc1e271a5cb19366",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

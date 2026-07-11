@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T033",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Add adaptive agent bootstrap and call-shape linter",
+  "state": "verified",
+  "priority": {
+    "lane": "later",
+    "rank": 520
+  },
+  "goal": "Bind every fresh agent session to current runtime evidence and deterministically reject broad or ambiguous call shapes before execution, while keeping all adaptation proposal-only and preserving immutable safety gates.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "release-evidence-bound-bootstrap",
+      "assertion": "A read-only agent bootstrap capsule is derived from current friction and governor evidence, exposes drift handling and never authorizes execution."
+    },
+    {
+      "id": "deterministic-call-shape-linter",
+      "assertion": "A bounded read-only linter rejects multiple independent intents, multiple commands, oversized output and mutations without readback before execution."
+    },
+    {
+      "id": "immutable-boundaries",
+      "assertion": "Adaptive hints cannot change user intent, authorization, leases, secrets, recovery, kill switch, review, merge, deployment or privileged execution."
+    },
+    {
+      "id": "fail-closed-adaptation",
+      "assertion": "Invalid evidence integrity or an open circuit breaker disables adaptive hints instead of falling back to live routing."
+    },
+    {
+      "id": "agent-entry-instructions",
+      "assertion": "Repository agent instructions require one intent, bounded reads, one mutation, post-state readback and no unchanged retries after operator stops."
+    },
+    {
+      "id": "contracts-and-publication",
+      "assertion": "Runtime contract, capability catalog, publication profiles and generated operator context publish both tools without drift."
+    },
+    {
+      "id": "tests-and-live-deployment",
+      "assertion": "Focused and full tests pass, the PR is reviewed and merged, and the deployed runtime is bound to the merge head."
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T031"
+  ],
+  "metadata": {
+    "source": "User requested a self-learning adaptive entry layer after the T031 live proof on 2026-07-11.",
+    "implementation_pr": "heimgewebe/grabowski#160",
+    "implementation_head": "e20ffa182382ec2cf5883ae6be5382506d5d820b",
+    "implementation_merge_commit": "2cede6b4d5f9b73828ed7dfb44f24e1da5753f62",
+    "verified_at": "2026-07-11",
+    "verification_note": "PR #160 added proposal-only grabowski_agent_bootstrap and deterministic grabowski_call_shape_check, updated AGENTS.md and synchronized all runtime/publication contracts. Full validation passed 1058 tests and both CI jobs. The merge head was deployed successfully.",
+    "validated_acceptance": {
+      "release-evidence-bound-bootstrap": "The capsule reads current friction and outcome-ledger summaries, emits stable evidence hashes and stays execution_authorized=false with automatic_live_routing_enabled=false.",
+      "deterministic-call-shape-linter": "The linter deterministically flags multiple intents, command collections, oversized output, unisolated mutations and missing readback; tests prove stable hashes and split-before-execution behavior.",
+      "immutable-boundaries": "The implementation enumerates and tests immutable user intent, authorization, secret, lease, recovery, kill-switch, review, merge, deployment and privileged-execution boundaries.",
+      "fail-closed-adaptation": "Invalid governor integrity yields adaptive_mode=disabled_fail_closed; circuit-breaker candidates also disable adaptation.",
+      "agent-entry-instructions": "AGENTS.md now directs fresh agents to bootstrap, lint broad calls, use one mutation and read back state before continuing.",
+      "contracts-and-publication": "The canonical runtime contract and all publication projections contain 111 tools with no missing or orphan profiles.",
+      "tests-and-live-deployment": "make validate passed 1058 tests; GitHub validate (3.10)/(3.12) passed; deployment completed on merge head 2cede6b4d5f9b73828ed7dfb44f24e1da5753f62."
+    },
+    "artifacts": {
+      "github_diff_sha256": "3a79b6ca64faa5855cd31c4e721f8723c0dcc7ea203790e9b945c3caca1f9120",
+      "self_review_sha256": "be876a6892b21d9336cfdb02585a1ced7b99242c96986d04c1760ed41b362954",
+      "deploy_receipt_sha256": "e88808c3f54b221ceea3d6452f998529e508202f80cc0f3b759d0dfbbcb71ae1"
+    },
+    "runtime_snapshot": {
+      "runtime_head": "2cede6b4d5f9b73828ed7dfb44f24e1da5753f62",
+      "release_id": "2cede6b4d5f9-srcset25561d6c094c-locke6664d600b6c-contractc47063baadae",
+      "expected_tools": 111,
+      "connector_snapshot_note": "The current chat connector snapshot predates the deploy; runtime contract and deployment are current, but direct chat invocation requires a fresh connector snapshot."
+    },
+    "does_not_establish": [
+      "automatic live routing authority",
+      "permission to weaken policy gates",
+      "completion of T032",
+      "platform filter root cause"
+    ],
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T033",
+          "source_ref": "heimgewebe/grabowski#160",
+          "number": 160,
+          "head_sha": "e20ffa182382ec2cf5883ae6be5382506d5d820b",
+          "merge_commit_sha": "2cede6b4d5f9b73828ed7dfb44f24e1da5753f62",
+          "diff_sha256": "3a79b6ca64faa5855cd31c4e721f8723c0dcc7ea203790e9b945c3caca1f9120"
+        },
+        {
+          "kind": "runtime_probe",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T033",
+          "source_ref": "grabowski_runtime_health@2cede6b4d5f9b73828ed7dfb44f24e1da5753f62",
+          "commit_sha": "2cede6b4d5f9b73828ed7dfb44f24e1da5753f62",
+          "content_sha256": "e88808c3f54b221ceea3d6452f998529e508202f80cc0f3b759d0dfbbcb71ae1"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "5176f9e44548b758bd32eef0565f41bfe08d1851dba82a14d6ce42314dcf84d5",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
+  }
+}

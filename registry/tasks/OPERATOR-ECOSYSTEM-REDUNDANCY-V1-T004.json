@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T004",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Consolidate Cabinet into an app-independent system catalog",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 310
@@ -90,6 +90,107 @@
         "private data deletion",
         "repository rename"
       ]
+    },
+    "verified_at": "2026-07-11T06:22:54Z",
+    "outcome": "Cabinet now has one app-independent, status-free system catalog core with a single authority matrix, one canonical generated map, hash-bound legacy archives and fail-closed validation. No runtime or service effect occurred.",
+    "implementation_evidence": {
+      "pull_request": "heimgewebe/cabinet#110",
+      "url": "https://github.com/heimgewebe/cabinet/pull/110",
+      "base_sha": "4fe1a90a4064a550384db301038995a40056b8d7",
+      "head_sha": "256cced0babe5a08c8eece8017926b3b0d793fb6",
+      "merge_commit": "0b718077a47b922262fdfbd8ccbe8e3e40464289",
+      "merge_tree": "dc8d29d0eaf4481d3e1db43a27248bb40012477a",
+      "merged_at": "2026-07-11T06:18:15Z",
+      "github_diff_sha256": "7a94aa2b2ca5bdf7bf517616b2c9824fc16774502a4c6647fc3e900851710817",
+      "reviewed_local_diff_sha256": "1ef272f4d413cbc777775a168b9b152716385b0968530eb05b99a6abe7d511d3",
+      "stable_patch_id": "770f067fa8745c87544b3199d3d1d5fc2b281470",
+      "final_diff_gist": "https://gist.github.com/alexdermohr/631f959f14679935bb1fd08a314188c8",
+      "self_review_gist": "https://gist.github.com/alexdermohr/78df0e8921ca46700d4999fb08aa9e73",
+      "self_review_sha256": "93663a3bf2613561a7c1db288300f4382419c130b10410f0e8dabaad209f5c47",
+      "required_pr_checks": {
+        "Installer Shadow Test": "SUCCESS",
+        "Repository Contract": "SUCCESS",
+        "Run Cabinet-Bureau bridge probe": "SUCCESS",
+        "Secret Scan": "SUCCESS",
+        "Validate Ecosystem Map": "SUCCESS",
+        "test": "SUCCESS",
+        "validate": "SUCCESS"
+      },
+      "main_workflows": {
+        "Validate": {
+          "run_id": 29142601681,
+          "url": "https://github.com/heimgewebe/cabinet/actions/runs/29142601681",
+          "conclusion": "success"
+        },
+        "Cabinet Bridge Probe": {
+          "run_id": 29142601665,
+          "url": "https://github.com/heimgewebe/cabinet/actions/runs/29142601665",
+          "conclusion": "success"
+        },
+        "Ecosystem Map": {
+          "run_id": 29142601682,
+          "url": "https://github.com/heimgewebe/cabinet/actions/runs/29142601682",
+          "conclusion": "success"
+        },
+        "Repository Snapshot Review": {
+          "run_id": 29142601667,
+          "url": "https://github.com/heimgewebe/cabinet/actions/runs/29142601667",
+          "conclusion": "success"
+        },
+        "Project Cards": {
+          "run_id": 29142601660,
+          "url": "https://github.com/heimgewebe/cabinet/actions/runs/29142601660",
+          "conclusion": "success"
+        }
+      }
+    },
+    "catalog_artifacts": {
+      "policy/system-catalog.v1.json": "6eff835fc31447014752bf5c916ecdf4d82ccbc3634b7e14ed58c3d2142116f2",
+      "registry/ecosystem/authority-matrix.v1.json": "ca7e9b444e7ce78b40687809d260c364bbdd7b984f2da3c0886009132e0998a3",
+      "registry/ecosystem/claims.jsonl": "f53b526189379a5afa7daaada26b5a2e80280a07710370edf4c04187ed5f16e4",
+      "rendered/system-catalog.md": "389919d761cbb168be4f10eb7f83218363745323fb34a62141c47b0ba0b38954",
+      "rendered/ecosystem-registry-map.mmd": "6feb91500ae434d46f631e3a577e3dfe0007429ab86bab7be041697213411ea7"
+    },
+    "catalog_summary": {
+      "systems": 19,
+      "relations": 24,
+      "stable_claims": 8,
+      "authority_domains": 14,
+      "legacy_compatibility_surfaces": 10,
+      "repository_tests": "364 passed",
+      "validator_hardening": "36 cases passed"
+    },
+    "validated_acceptance": {
+      "single-authority-matrix": "Repository-wide validation permits exactly one maintained authority matrix and rejects manual authority assignments elsewhere.",
+      "app-independent-catalog": "Catalog data, validators and renderers pass in an isolated bundle without the external app, room manifests or runtime tree.",
+      "no-operational-status": "Canonical nodes, relations, claims, policy and authority data reject task priority, runtime health, merge readiness, active execution, scheduler state and related operational fields.",
+      "single-generated-map": "rendered/ecosystem-registry-map.mmd is the one canonical generated map; the previous hand-maintained map is explicitly non-authoritative and unmaintained.",
+      "legacy-navigation": "Dynamic claims and the earlier role decision are preserved bit-exactly with SHA-256 bindings and linked through the archive index.",
+      "validator": "CI rejects competing canons, duplicated authority assignments, prohibited operational fields, automatic legacy workflows and a bridge probe bypassing the isolated legacy adapter."
+    },
+    "regression_and_correction": {
+      "finding": "The first PR head moved dynamic claims out of the canonical path while the pinned Bureau compatibility probe still required the historical literal path registry/ecosystem/claims.jsonl.",
+      "correction": "A hash-bound, nonpersistent CI sandbox copies only archived dynamic claims to the historical path; canonical stable claims remain unchanged and are never exposed as task candidates. Pipefail now propagates probe failure.",
+      "corrected_probe_result": {
+        "candidates": 11,
+        "admissible": 5,
+        "blocked": 6,
+        "import_allowed": false,
+        "dispatch_allowed": false,
+        "queue_mutation_allowed": false,
+        "task_creation_allowed": false
+      }
+    },
+    "effect_boundary": {
+      "runtime_mutation_performed": false,
+      "service_mutation_performed": false,
+      "backup_or_restore_performed": false,
+      "private_data_mutation_performed": false,
+      "repository_rename_performed": false
+    },
+    "verification": {
+      "task_sha256": "313136fc6e1f08c73b2fe34959f9c599b42253dbe601f2802041554465f56165",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   },
   "depends_on": [

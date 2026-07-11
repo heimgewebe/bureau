@@ -81,6 +81,35 @@
         "one registered location only partially attributable",
         "Cabinet human use not directly measured"
       ]
+    },
+    "catalog_gate": {
+      "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T004",
+      "status": "dependency_satisfied_but_runtime_effect_not_authorized",
+      "cabinet_merge_commit": "0b718077a47b922262fdfbd8ccbe8e3e40464289",
+      "catalog_policy_sha256": "6eff835fc31447014752bf5c916ecdf4d82ccbc3634b7e14ed58c3d2142116f2",
+      "authority_matrix_sha256": "ca7e9b444e7ce78b40687809d260c364bbdd7b984f2da3c0886009132e0998a3",
+      "catalog_independence_proof": "isolated catalog bundle plus full CI passed without app or runtime tree",
+      "read_only_preflight_allowed": true,
+      "effect_authorized": false,
+      "allowed_without_new_authorization": [
+        "read-only runtime inventory",
+        "rollback-plan drafting",
+        "authorization-packet preparation",
+        "fresh consumer and host preflight"
+      ],
+      "forbidden_without_new_authorization": [
+        "stop or disable cabinet.service",
+        "remove wrappers or external app files",
+        "delete or move private data",
+        "change backup or retention",
+        "rename repository"
+      ],
+      "required_before_effect": [
+        "fresh registered-host preflight",
+        "explicit runtime shutdown authorization",
+        "rollback record",
+        "post-effect verification"
+      ]
     }
   },
   "depends_on": [

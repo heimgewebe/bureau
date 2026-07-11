@@ -82,7 +82,7 @@
         "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T017"
       ]
     },
-    "next_allowed_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T004",
+    "next_allowed_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T008",
     "cabinet_consumer_usage_closeout": {
       "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T007",
       "status": "verified",
@@ -104,6 +104,32 @@
         "private data deletion",
         "repository rename"
       ]
-    }
+    },
+    "next_allowed_scope": "RepoBrief/Lenskit daily artifact-surface consolidation under T008; no Cabinet runtime effect is implied.",
+    "cabinet_catalog_core_closeout": {
+      "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T004",
+      "status": "verified",
+      "verified_at": "2026-07-11T06:22:54Z",
+      "implementation_pr": "heimgewebe/cabinet#110",
+      "merge_commit": "0b718077a47b922262fdfbd8ccbe8e3e40464289",
+      "merge_tree": "dc8d29d0eaf4481d3e1db43a27248bb40012477a",
+      "catalog_policy_sha256": "6eff835fc31447014752bf5c916ecdf4d82ccbc3634b7e14ed58c3d2142116f2",
+      "authority_matrix_sha256": "ca7e9b444e7ce78b40687809d260c364bbdd7b984f2da3c0886009132e0998a3",
+      "systems": 19,
+      "relations": 24,
+      "stable_claims": 8,
+      "does_not_authorize": [
+        "external Cabinet app shutdown",
+        "runtime cleanup",
+        "private data deletion",
+        "backup or retention change",
+        "repository rename"
+      ],
+      "next_general_projected_ball": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T008",
+      "next_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
+      "next_migration_scope": "read-only preflight and authorization packet only"
+    },
+    "next_cabinet_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
+    "next_cabinet_migration_scope": "Read-only runtime inventory, fresh host and consumer preflight, rollback-plan drafting and authorization-packet preparation only; runtime effect remains unauthorized."
   }
 }

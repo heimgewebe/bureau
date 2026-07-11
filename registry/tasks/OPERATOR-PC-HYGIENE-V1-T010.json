@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "initiative": "OPERATOR-PC-HYGIENE-V1",
+  "state": "planned",
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "id": "OPERATOR-PC-HYGIENE-V1-T010",
+  "title": "Normalize canonical Lenskit checkout after active sessions",
+  "goal": "Attach /home/alex/repos/lenskit to the current main branch only after all active processes using the checkout are classified or finished, while preserving detached publication-source worktrees and any unique branch state.",
+  "priority": {
+    "lane": "later",
+    "rank": 210
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "process-safe",
+      "assertion": "No Claude, Grabowski stdio, rLens or shell process has the canonical checkout as cwd or command target at the moment of branch attachment, unless explicitly classified safe and quiescent."
+    },
+    {
+      "id": "exact-main",
+      "assertion": "The canonical checkout is clean and HEAD equals origin/main; local main is fast-forwarded without reset, stash, rebase or loss of unique commits."
+    },
+    {
+      "id": "publication-isolation",
+      "assertion": "RepoBrief publication-source and tool worktrees remain detached and unchanged."
+    },
+    {
+      "id": "post-proof",
+      "assertion": "After attachment, branch is main, status is clean, HEAD equals origin/main, rLens/RepoBrief services remain healthy and active worktrees are unchanged."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-11T02:12:00+02:00",
+    "source_audit": "2026-07-11 RepoBrief/Lenskit live verification",
+    "live_finding": "Canonical checkout was clean and exactly at origin/main but detached while multiple Claude, Grabowski stdio and rLens processes used it.",
+    "does_not_establish": [
+      "permission_to_terminate_processes",
+      "permission_to_reset_main",
+      "publication_worktree_cleanup",
+      "safe_to_attach_now"
+    ]
+  }
+}

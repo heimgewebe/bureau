@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "initiative": "OPERATOR-PC-HYGIENE-V1",
+  "state": "planned",
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "id": "OPERATOR-PC-HYGIENE-V1-T008",
+  "title": "Prove router and firewall ingress boundary",
+  "goal": "Produce a current end-to-end ingress proof for Heim-PC covering router port forwarding, UPnP/PCP mappings, host nftables/iptables/firewalld policy, Tailscale exposure and externally reachable services without inferring safety from local listeners alone.",
+  "priority": {
+    "lane": "later",
+    "rank": 208
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/infra"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "router-proof",
+      "assertion": "Current router forwarding and UPnP/PCP state is read from an authenticated primary source or remains explicitly UNVERIFIED with the missing access named."
+    },
+    {
+      "id": "host-firewall-proof",
+      "assertion": "Current nftables/iptables/firewalld/UFW policy and effective default/input rules are captured with bounded redacted evidence."
+    },
+    {
+      "id": "overlay-proof",
+      "assertion": "Tailscale Serve/Funnel and tailnet listener state are captured separately from LAN and public ingress."
+    },
+    {
+      "id": "external-probe",
+      "assertion": "A bounded external-network probe tests only explicitly listed expected ports and records source, target and timestamp; absence of response is not overstated as universal proof."
+    },
+    {
+      "id": "runtime-truth",
+      "assertion": "Infra runtime records the proven boundary and retains UNVERIFIED for every unsupported edge claim."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-11T02:12:00+02:00",
+    "source_audit": "OPERATOR-PC-HYGIENE-V1-T004 closeout",
+    "reason": "T004 classified listeners but deliberately did not prove router forwarding, complete firewall policy or categorical public-ingress absence.",
+    "does_not_establish": [
+      "no_public_ingress",
+      "router_configuration_access",
+      "external_probe_authority",
+      "firewall_correctness"
+    ]
+  }
+}

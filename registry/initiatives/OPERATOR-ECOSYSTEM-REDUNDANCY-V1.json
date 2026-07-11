@@ -127,10 +127,10 @@
       ],
       "next_general_projected_ball": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T008",
       "next_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
-      "next_migration_scope": "read-only preflight and authorization packet only"
+      "next_migration_scope": "read-only preflight verified; Phase A authorization required and absent"
     },
     "next_cabinet_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
-    "next_cabinet_migration_scope": "Read-only runtime inventory, fresh host and consumer preflight, rollback-plan drafting and authorization-packet preparation only; runtime effect remains unauthorized.",
+    "next_cabinet_migration_scope": "Read-only preflight verified. Phase A bounded stop test remains blocked until a new task-, target- and effect-bound authorization is registered.",
     "github_actions_runner_block_followup_20260711": {
       "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020",
       "status": "planned",
@@ -141,6 +141,32 @@
         "code failure",
         "test failure",
         "permission to alter billing"
+      ]
+    },
+    "cabinet_runtime_retirement_preflight": {
+      "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
+      "status": "verified_read_only_preflight",
+      "implementation_pr": "heimgewebe/cabinet#111",
+      "merge_commit": "6c64348daf242e48e09e678f5793fc086854b31b",
+      "public_snapshot_sha256": "e6b7c725595c1cb04975800a2a8088a7b90184d4757fac99cd0738c4211929ad",
+      "private_evidence_sha256": "d152176b79dd2365a31ea0dc34a8c5049a6bff456fd2616bc17ff1d99d8a060b",
+      "contract_drift": {
+        "detected": true,
+        "existingAuditPassed": false,
+        "firstFailureClass": "local_wrapper_drift",
+        "repairRecommendation": "do_not_rebase_catalog_on_external_runtime; use_retirement_preflight"
+      },
+      "phase_A_status": "authorization_required_not_present",
+      "effect_authorized": false,
+      "repository_rename_authorized": false,
+      "next_migration_action": "register_explicit_phase_A_authorization_or_refresh_preflight",
+      "does_not_authorize": [
+        "bounded service stop test",
+        "service disablement",
+        "runtime file quarantine or removal",
+        "private data mutation",
+        "backup or retention change",
+        "repository rename"
       ]
     }
   }

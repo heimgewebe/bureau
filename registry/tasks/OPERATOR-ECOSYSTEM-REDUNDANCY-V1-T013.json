@@ -84,7 +84,7 @@
     },
     "catalog_gate": {
       "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T004",
-      "status": "dependency_satisfied_but_runtime_effect_not_authorized",
+      "status": "read_only_preflight_verified_but_runtime_effect_not_authorized",
       "cabinet_merge_commit": "0b718077a47b922262fdfbd8ccbe8e3e40464289",
       "catalog_policy_sha256": "6eff835fc31447014752bf5c916ecdf4d82ccbc3634b7e14ed58c3d2142116f2",
       "authority_matrix_sha256": "ca7e9b444e7ce78b40687809d260c364bbdd7b984f2da3c0886009132e0998a3",
@@ -109,6 +109,138 @@
         "explicit runtime shutdown authorization",
         "rollback record",
         "post-effect verification"
+      ],
+      "preflight_merge_commit": "6c64348daf242e48e09e678f5793fc086854b31b",
+      "next_effect": "phase_A_bounded_stop_test_requires_explicit_authorization"
+    },
+    "runtime_retirement_preflight": {
+      "status": "verified_read_only_preflight",
+      "observed_at": "2026-07-11T07:19:46.991237Z",
+      "recorded_at": "2026-07-11T07:45:00Z",
+      "implementation": {
+        "pull_request": "heimgewebe/cabinet#111",
+        "url": "https://github.com/heimgewebe/cabinet/pull/111",
+        "base_sha": "0b718077a47b922262fdfbd8ccbe8e3e40464289",
+        "head_sha": "3452bb107c8ee59040df756a98c016cb2215e131",
+        "merge_commit": "6c64348daf242e48e09e678f5793fc086854b31b",
+        "merge_tree": "8cbbf4e147d2d9897c7cf23a2e87f88c8533184a",
+        "merged_at": "2026-07-11T07:37:31Z",
+        "github_diff_sha256": "6602b08605ee92b512a143d940c887cc24e2ac93761b4e005c2aee19ee2ec399",
+        "stable_patch_id": "6512fb810b9ac4e011e70aa5093e780511bb9a75",
+        "final_diff_gist": "https://gist.github.com/alexdermohr/950cc71f853d748053379f231df3fbe1",
+        "self_review_gist": "https://gist.github.com/alexdermohr/90d105ddd9c546e0a63c5f959bfa7d9c",
+        "self_review_sha256": "ac94cf84f13601fa48959830705ea5617bd3eb4d5ca77d3ad15c16e59d661934",
+        "required_pr_checks": {
+          "Installer Shadow Test": "SUCCESS",
+          "Repository Contract": "SUCCESS",
+          "Secret Scan": "SUCCESS",
+          "Validate Ecosystem Map": "SUCCESS",
+          "test": "SUCCESS",
+          "validate": "SUCCESS"
+        },
+        "main_workflows": {
+          "Validate": {
+            "run_id": 29144809423,
+            "url": "https://github.com/heimgewebe/cabinet/actions/runs/29144809423",
+            "conclusion": "success"
+          },
+          "Ecosystem Map": {
+            "run_id": 29144809440,
+            "url": "https://github.com/heimgewebe/cabinet/actions/runs/29144809440",
+            "conclusion": "success"
+          },
+          "Repository Snapshot Review": {
+            "run_id": 29144809434,
+            "url": "https://github.com/heimgewebe/cabinet/actions/runs/29144809434",
+            "conclusion": "success"
+          },
+          "Project Cards": {
+            "run_id": 29144809395,
+            "url": "https://github.com/heimgewebe/cabinet/actions/runs/29144809395",
+            "conclusion": "success"
+          }
+        }
+      },
+      "evidence": {
+        "public_snapshot_path": "docs/migration/cabinet-runtime-retirement-preflight-v1.json",
+        "public_snapshot_sha256": "e6b7c725595c1cb04975800a2a8088a7b90184d4757fac99cd0738c4211929ad",
+        "private_evidence_sha256": "d152176b79dd2365a31ea0dc34a8c5049a6bff456fd2616bc17ff1d99d8a060b",
+        "snapshot_role": "dated_decision_evidence_not_live_status",
+        "catalog_authoritative": false
+      },
+      "observation": {
+        "process_count": 8,
+        "listener_count": 2,
+        "listener_exposure": "loopback_only",
+        "service_loaded_at_observation": true,
+        "service_active_at_observation": true,
+        "service_enabled_at_observation": true,
+        "restart_count": 0,
+        "observed_runtime_version": "0.5.0",
+        "repository_runtime_contract_version": "0.4.4",
+        "external_app_bytes": 1890745490,
+        "private_state_bytes_excluding_evidence": 1383378
+      },
+      "contract_drift": {
+        "detected": true,
+        "existingAuditPassed": false,
+        "firstFailureClass": "local_wrapper_drift",
+        "repairRecommendation": "do_not_rebase_catalog_on_external_runtime; use_retirement_preflight"
+      },
+      "rollback_plan": {
+        "phase_A": {
+          "status": "authorization_required_not_present",
+          "action": "bounded_service_stop_test",
+          "executed": false,
+          "rollback": "restart_service_and_verify_loopback_runtime"
+        },
+        "phase_B": {
+          "status": "blocked_by_phase_A",
+          "executed": false
+        },
+        "phase_C": {
+          "status": "blocked_by_phase_B_and_reviewed_pr",
+          "executed": false
+        },
+        "phase_D": {
+          "status": "blocked_by_retention_decision",
+          "executed": false
+        },
+        "always_preserve": [
+          "private_configuration_until_separate_classification",
+          "private_state_until_separate_classification",
+          "verified_export_and_restore_receipts"
+        ]
+      },
+      "authorization": {
+        "effect_authorized": false,
+        "repository_rename_authorized": false,
+        "next_allowed_without_new_authorization": [
+          "refresh_read_only_inventory",
+          "maintain_rollback_plan",
+          "prepare_authorization_packet"
+        ],
+        "requires_explicit_authorization": [
+          "bounded_service_stop_test",
+          "service_disablement",
+          "runtime_file_quarantine_or_removal",
+          "versioned_runtime_surface_removal",
+          "repository_rename"
+        ]
+      },
+      "residual_uncertainty": [
+        "one registered location unreachable",
+        "one registered location only partially attributable",
+        "Cabinet human use not directly measured"
+      ],
+      "does_not_establish": [
+        "safe_immediate_shutdown",
+        "current_human_non_use",
+        "remote_consumer_absence",
+        "runtime_removal_permission",
+        "private_data_deletion_permission",
+        "backup_or_retention_change_permission",
+        "repository_rename_permission"
       ]
     }
   },

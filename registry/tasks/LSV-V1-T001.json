@@ -3,7 +3,7 @@
   "id": "LSV-V1-T001",
   "initiative": "LEITSTAND-VISUAL-LAYER-V1",
   "title": "Cabinet map artifact manifest",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 10
@@ -55,7 +55,39 @@
     "does_not_establish": [
       "leitstand_view_ready",
       "ecosystem_map_truth",
-      "runtime_correctness"
-    ]
+      "runtime_correctness",
+      "leitstand_loader_correctness",
+      "leitstand_runtime_readiness",
+      "future_manifest_compatibility",
+      "repository_rename_readiness"
+    ],
+    "verified_at": "2026-07-11T04:31:53Z",
+    "outcome": "Already implemented in Cabinet PR #69 and revalidated on current Cabinet main; no additional Cabinet code change was necessary.",
+    "implementation_pr": "heimgewebe/cabinet#69",
+    "implementation_head": "fcf048fc0a45ff30b4d460f5717903a7b72c0fae",
+    "implementation_merge_commit": "edbadf3522296048a25c3a0d022e8d7661d441d7",
+    "current_cabinet_head": "8ca544a8c00076aafd2d738fd6361ee6f6dbde3d",
+    "implementation_diff_sha256": "c45a6cd88550e43c63064e0a2d1c45d790de6c96365aad48d56470e98ec43178",
+    "verified_acceptance": {
+      "manifest-contract": "docs/contracts/cabinet-ecosystem-map-artifact-manifest-v1.md and its schema define source commit, generated_at, artifact paths, SHA-256 digests and explicit non-claims; scripts/write_ecosystem_map_artifact_manifest.py emits and checks the contract.",
+      "ci-validation": "Cabinet PR #69 passed Validate Ecosystem Map and all repository gates. Current Cabinet main 8ca544a8 also passes the Ecosystem Map workflow; local revalidation passed 7 focused manifest tests, renderer --check, writer write/check and 345 repository tests.",
+      "truth-boundary": "The contract and generated payload explicitly do not establish claim truth, runtime correctness, merge readiness or test sufficiency."
+    },
+    "validation": {
+      "focused_manifest_tests": "7 passed",
+      "repository_tests": "345 passed",
+      "renderer_check": "PASS (26 nodes, 38 edges)",
+      "manifest_check": "PASS (6 artifacts)",
+      "current_main_ci": [
+        "Repository Snapshot Review: success",
+        "Project Cards: success",
+        "Ecosystem Map: success",
+        "Validate: success"
+      ]
+    },
+    "verification": {
+      "task_sha256": "b55f2a78efc8442ddd0b5e69968f6b5f3d8f4ddd6b935cb4a3b00b9e4807a075",
+      "plan_sha256": "217a91b5a66a143e0440d2a7d656a5d0fada62b52778cf3285349e7667bd8621"
+    }
   }
 }

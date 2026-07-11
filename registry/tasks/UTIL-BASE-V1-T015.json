@@ -3,7 +3,7 @@
   "id": "UTIL-BASE-V1-T015",
   "initiative": "UTIL-BASE-V1",
   "title": "Review Restic retention and prune policy",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 131
@@ -74,6 +74,150 @@
       "prune permission",
       "maintenance execution permission",
       "timer enablement permission"
-    ]
+    ],
+    "verified_at": "2026-07-11T09:50:27Z",
+    "operator_authorization": "User instruction on 2026-07-11 to implement the next Restic retention review ball; no maintenance, forget, prune, timer enablement or snapshot deletion was authorized.",
+    "implementation_pull_request": {
+      "repository": "heimgewebe/infra",
+      "number": 125,
+      "head_sha": "17d30f02c28353e232cdc88881f0d40cf2982201",
+      "merge_commit": "d81ae8f4fcf72e1e7c36176c9df8ebf98a415b23",
+      "diff_sha256": "df2bfd93d1ee46c29c5fdd0484ad7f31154acb64cd2e6cbc861d59f76bbe9d87",
+      "self_review_sha256": "9714e571058f972b138ddaec9d01954ac7da6a8bc464ed71f0c4be0098574a0b",
+      "self_review_verdict": "PASS"
+    },
+    "github_ci_observation": {
+      "workflow_run_id": 29148208597,
+      "check_run_id": 86533289148,
+      "result": "job_not_started",
+      "steps": 0,
+      "logs_available": false,
+      "reason": "GitHub account payment or spending-limit block; not classified as a code or test failure."
+    },
+    "runtime_evidence": {
+      "repository": "heimgewebe/infra",
+      "path": "runtime/heim-pc-restic-retention-review-2026-07-11.json",
+      "markdown_path": "runtime/heim-pc-restic-retention-review-2026-07-11.md",
+      "commit_sha": "d81ae8f4fcf72e1e7c36176c9df8ebf98a415b23",
+      "content_sha256": "fe97b0bf32f92f491a4972e7df7a20053323fd01b1346b27b3d9ee5c8bbce86f",
+      "markdown_sha256": "0537955213b371038daf6d5b2ad7ff06c56bd059cf3db8ef0ab7c8f833ab71dd",
+      "source_commit": "0b9cc2b4ecff64bcef5c0f96c2701a1c9ac9b550",
+      "source_dirty": false,
+      "observed_at": "2026-07-11T11:32:24.004659+02:00"
+    },
+    "policy_decision": {
+      "rejected_active_source": {
+        "policy": "target=heimberry:rest-server/heim-pc;host=heim-pc;keep-daily=14;keep-weekly=8;keep-monthly=12;prune=true;check=true",
+        "sha256": "636acfde44ddb2b752802801080ddf479b999712426cc07a162a032ba0968af7",
+        "verdict": "REJECT",
+        "preview_keep": 3,
+        "preview_remove": 4
+      },
+      "approved_source_candidate": {
+        "policy": "target=heimberry:rest-server/heim-pc;host=heim-pc;keep-last=14;keep-within=7d;keep-daily=14;keep-weekly=8;keep-monthly=12;prune=true;check=true",
+        "sha256": "c7d1bad1f0d1f35d602541082131568848e55784880457acdeff315e06965254",
+        "verdict": "APPROVE_FOR_SOURCE_ONLY",
+        "preview_keep": 7,
+        "preview_remove": 0,
+        "runtime_deployed": false,
+        "maintenance_authorized": false
+      },
+      "reason": "keep-daily protects only one snapshot per calendar day; the old policy would mark four fresh same-day recovery points for removal."
+    },
+    "repository_inventory": {
+      "snapshot_count": 7,
+      "oldest": "2026-07-09T09:44:46.896650+00:00",
+      "newest": "2026-07-11T07:20:40.673111+00:00",
+      "span_hours": 45.598,
+      "raw_repository_size_bytes": 6335116330,
+      "raw_blob_count": 118958,
+      "inventory_sha256": "fd98c90f06b5cfb6d9c4c2aa30bd514091567ac4657c92b35c594c8143adfdf1",
+      "current_preview_sha256": "bf3ebfe1689fd3ae47e3b4fe1fac460d35d6db6c2185bad0d696ea892e0bcc7e",
+      "candidate_preview_sha256": "6d008416af4f4bf65900fdc45b8f63ce9132b04db0afe0f833faac0daced8f45",
+      "physical_reclaim_estimate": null,
+      "physical_reclaim_note": "Logical restore sizes are not additive physical reclaim estimates because repository data is deduplicated; prune was not executed."
+    },
+    "safety_evidence": {
+      "exact_snapshot_id": "5b2ac9c7029e604d51128a696376bf2ea6fdca330ff79073f8cfaf769574fd10",
+      "sentinel_sha256": "1a7424392ca5e0786b0025052244e151286e276bf70892d54de33445f080342c",
+      "exact_restore_passed": true,
+      "proof_snapshot_protected_by_candidate": true,
+      "repository_check": "PASS",
+      "repository_check_output_sha256": "232b9b2243b2bb26937cfddc9dd37b26f87829659f45f00ec2035c6132831e7b",
+      "minimum_protected_snapshots": 7,
+      "candidate_protected_snapshots": 7,
+      "rollback_paths_present": true,
+      "repository_lock_released": true,
+      "tunnel_process_residue": 0,
+      "temporary_residue": 0,
+      "active_runtime_source_version": "0d0cba93bcafc1f92f70e77b7545407fee3cc773",
+      "active_runtime_policy_sha256": "636acfde44ddb2b752802801080ddf479b999712426cc07a162a032ba0968af7",
+      "maintenance_timer": "inactive-linked",
+      "daily_backup_timer": "active-enabled"
+    },
+    "forbidden_effects_observed": {
+      "backup": false,
+      "forget_without_dry_run": false,
+      "prune": false,
+      "maintenance_run": false,
+      "snapshot_deleted": false,
+      "timer_mutation": false,
+      "runtime_deployment": false
+    },
+    "validated_acceptance": {
+      "policy-inventory": "Exact old and candidate policies and hashes, seven snapshot ages, raw repository bytes/blobs and per-snapshot logical sizes are recorded from read-only Restic queries.",
+      "recovery-model": "The candidate keeps all snapshots for seven days, at least the latest fourteen, then fourteen daily, eight weekly and twelve monthly points; the higher storage cost is explicit.",
+      "preview": "Two exact forget --dry-run JSON previews show old keep 3/remove 4 and candidate keep 7/remove 0; ambiguity and unknown snapshots fail closed.",
+      "safety-gates": "Fresh exact-snapshot restore, byte-identical sentinel, repository check, minimum protected snapshot count and both rollback paths passed.",
+      "review-decision": "Infra PR #125 reviewed and merged the conservative source policy; active runtime remains old and disabled, and no maintenance effect is authorized."
+    },
+    "validation": [
+      "Full Infra make validate passed repeatedly, including 30 Restic runtime tests.",
+      "The exact published PR #125 head passed again in a fresh detached checkout with clean before/after state.",
+      "Policy text and SHA-256 are identical across wrapper, installer, systemd service and runbook.",
+      "One review finding was fixed before merge: the nanosecond timestamp regression fixture now remains fresh dynamically.",
+      "The live review used only snapshots, stats, forget --dry-run, exact dump and repository check."
+    ],
+    "outcome": "The unsafe daily-only source policy is rejected. A conservative source policy preserving dense recent recovery points is reviewed and merged, but deliberately not deployed or authorized for maintenance.",
+    "self_review": "PASS: PR head, full diff, evidence sidecar, policy hashes, exact restore, repository check, tests, post-state and explicit no-effect boundary were independently re-read.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "UTIL-BASE-V1-T015",
+          "source_ref": "heimgewebe/infra#125",
+          "number": 125,
+          "head_sha": "17d30f02c28353e232cdc88881f0d40cf2982201",
+          "merge_commit_sha": "d81ae8f4fcf72e1e7c36176c9df8ebf98a415b23",
+          "diff_sha256": "df2bfd93d1ee46c29c5fdd0484ad7f31154acb64cd2e6cbc861d59f76bbe9d87",
+          "review_evidence_sha256": "9714e571058f972b138ddaec9d01954ac7da6a8bc464ed71f0c4be0098574a0b"
+        },
+        {
+          "kind": "runtime_evidence",
+          "system": "heim-pc-restic-retention-review",
+          "task_id": "UTIL-BASE-V1-T015",
+          "repository": "heimgewebe/infra",
+          "path": "runtime/heim-pc-restic-retention-review-2026-07-11.json",
+          "commit_sha": "d81ae8f4fcf72e1e7c36176c9df8ebf98a415b23",
+          "content_sha256": "fe97b0bf32f92f491a4972e7df7a20053323fd01b1346b27b3d9ee5c8bbce86f",
+          "snapshot_id": "5b2ac9c7029e604d51128a696376bf2ea6fdca330ff79073f8cfaf769574fd10"
+        }
+      ]
+    },
+    "verification": {
+      "verified_at": "2026-07-11T09:50:27Z",
+      "task_sha256": "f3491f46a1bc8964959fb1e986bf10a6fe8d1115b49a511a6ec3c2d2e68d4cfc",
+      "plan_sha256": "b7cfba2a62e364bcd6d07747f68eb82ac11f4ba9a25c9aef4a62bf9ee0631596",
+      "acceptance_ids": [
+        "policy-inventory",
+        "recovery-model",
+        "preview",
+        "safety-gates",
+        "review-decision"
+      ]
+    }
   }
 }

@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T032",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Deduplicate equivalent work and isolate validation state",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 510
+  },
+  "goal": "Prevent redundant Grabowski tasks and full validations while eliminating interference from shared temporary validation state, without reusing stale evidence or skipping checks required by a changed head, environment or risk profile.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "equivalence-fingerprint",
+      "assertion": "Durable work obtains a deterministic fingerprint from repository identity, exact head, normalized argv or grip id, bounded environment contract, validation profile and resource keys without embedding secret values."
+    },
+    {
+      "id": "active-duplicate-suppression",
+      "assertion": "Starting equivalent work while a matching task is active returns the existing task identity and evidence instead of launching a second process; non-equivalent work remains independently claimable."
+    },
+    {
+      "id": "safe-result-reuse",
+      "assertion": "A completed result is reusable only for the exact head and equivalent inputs within an explicit freshness window; changed source, dependencies, environment, policy or risk profile invalidates reuse and requires fresh validation."
+    },
+    {
+      "id": "validation-state-isolation",
+      "assertion": "Concurrent validations use per-task temporary homes and build state or an explicit validation lease so one run cannot remove or corrupt another run's fixtures, caches or generated access-policy files."
+    },
+    {
+      "id": "progressive-validation",
+      "assertion": "Cheap deterministic preflight and focused tests run before full validation, while high-risk or merge-bound paths still require the configured complete validation and current-head CI evidence."
+    },
+    {
+      "id": "observability",
+      "assertion": "Receipts distinguish launched, joined-active, reused-valid, invalidated and forced-fresh decisions and report avoided duplicate work, false-reuse regressions, validation collisions and end-to-end savings."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover active duplicate joins, changed-head invalidation, environment drift, expired results, secret-free fingerprints, concurrent validation isolation, focused-to-full escalation and required fresh runs for high-risk actions."
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T031"
+  ],
+  "metadata": {
+    "source": "Live Grabowski task and friction audit on 2026-07-11",
+    "observed_failures": [
+      "Multiple near-identical full validation tasks were launched for the same repository slice.",
+      "Concurrent scheduled validations shared a fixed test-home directory and one run failed after another removed generated files; serialization later passed the full suite."
+    ],
+    "does_not_establish": [
+      "permission to skip required tests",
+      "cross-head test equivalence",
+      "cache correctness without identity proof",
+      "merge readiness",
+      "deployment readiness",
+      "runtime implementation complete"
+    ]
+  }
+}

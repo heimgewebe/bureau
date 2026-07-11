@@ -113,6 +113,14 @@ Goal: replace live all-or-nothing exposure with session-scoped capability profil
 
 A session profile should make read roots, write roots, allowed grips, forbidden hosts and max risk level explicit. High-impact actions require explicit target, reason, expiry and recovery path. Documentation-only profiles are insufficient; the boundary must be enforced by the runtime/tool layer before being trusted.
 
+### Phase 7 — Adaptive friction-aware execution shaping
+
+Goal: turn the existing proposal-only friction loop into a measured, bounded execution-shape governor without allowing learned behavior to rewrite safety policy.
+
+The governor should select among already allowed routes: typed tool, grip, durable task, split read, isolated mutation and mandatory post-state readback. It starts in shadow mode, compares predicted and actual outcomes, and may later promote only low- and medium-risk routing parameters after a minimum evidence threshold. High-impact authorization, recovery, review, merge, deployment, secret and kill-switch gates remain immutable.
+
+Equivalent durable work should be joined or reused only when repository head, normalized operation identity, bounded environment contract, validation profile, resource scope and freshness all match. Concurrent validation state must be isolated or serialized so one run cannot remove another run's fixtures.
+
 ## Task cut
 
 1. `GRABOWSKI-OPERATOR-SURFACE-V1-T001` — add read-only situation grip and snapshot digest.
@@ -121,12 +129,16 @@ A session profile should make read roots, write roots, allowed grips, forbidden 
 4. `GRABOWSKI-OPERATOR-SURFACE-V1-T004` — add evidence-bound operator recall contract and exporter.
 5. `GRABOWSKI-OPERATOR-SURFACE-V1-T005` — add durable job identity and notify-on-done design slice.
 6. `GRABOWSKI-OPERATOR-SURFACE-V1-T006` — add enforceable session capability profiles.
+7. `GRABOWSKI-OPERATOR-SURFACE-V1-T031` — add a shadow-first adaptive friction-aware execution governor.
+8. `GRABOWSKI-OPERATOR-SURFACE-V1-T032` — deduplicate exact-equivalent work and isolate validation state.
 
 ## Relationship to existing Bureau work
 
 This plan does not replace `GRIP-ROADMAP-V1`. It narrows the next operator-facing layer around situation, grips and feedback. `GRIP-ROADMAP-V1-T001` remains the immediate worktree-orientation slice already in the queue. The first task here should follow it or be implemented in a non-conflicting worktree.
 
 The existing `docs/grabowski-restplan-v2.md` remains the deeper security/autonomy plan. Its capability-profile direction is reused here, but this registration gives it Bureau task shape.
+
+`OPERATOR-INTEGRATION-LOOP-V1-T006` and `T007` remain the diagnosis and experiment layer. T031 consumes measured outcomes but does not let the nightly loop or Heimlern mutate live routing directly.
 
 ## Risk / benefit
 
@@ -137,6 +149,7 @@ Benefits:
 - more consistent selection of safe next grips;
 - friction becomes planning input instead of a failure diary;
 - recall becomes evidence-bound rather than mythic memory;
+- fewer unchanged retries, ambiguous mutation repeats and duplicate full validations;
 - session privileges become bounded enough for unattended or semi-attended runs later.
 
 Risks:
@@ -145,23 +158,27 @@ Risks:
 - recall can become folklore if it is not evidence-bound;
 - stale snapshot warnings can become noisy and be ignored;
 - push notifications can hide failed finalization if job identity is weak;
+- adaptive routing can optimize for fewer visible failures while silently reducing validation quality;
+- result reuse can become stale-evidence reuse if identity and freshness are incomplete;
 - capability profiles can create a false safety sense if only documented, not enforced.
 
 Mitigation:
 
 - first slice is read-only;
 - every task lists non-claims;
-- no automatic routing or merge authority changes;
-- friction and recall are proposal-only until separately promoted;
+- no automatic merge, deployment, authorization, recovery or secret-policy changes;
+- adaptive routing starts in shadow mode and is limited to reversible low- and medium-risk route selection;
+- promotions require measured improvement, append-only evidence, decay and rollback;
+- exact head, input, environment and freshness identity are required before result reuse;
 - privileged/session work depends on a reliable situation spine.
 
 ## Epistemic gaps
 
-- Current generated MCP catalog is not inspected in this registration; needed to know exact grip exposure work.
-- Current friction-record corpus is not inspected here; needed to prioritize real recurring pain.
-- Exact job/task runtime model is not inspected here; needed before push notifications.
-- Existing capability enforcement code is not inspected here; needed before claiming profile enforcement.
-- Current PR/check state of related Grabowski branches is not proven by this plan; needed before implementation or merge.
+- The generated MCP catalog, runtime contract and current friction corpus were inspected live on 2026-07-11; this proves current counts and contracts, not the root cause of every historical platform or connector failure.
+- The current friction ledger contains 63 events and 48 unresolved events, but event exposure is operational rather than a controlled experiment; needed for causal promotion thresholds.
+- Exact job/task equivalence boundaries remain unimplemented; needed before safely joining or reusing work.
+- Existing capability enforcement is visible in the runtime catalog, but learned-route promotion boundaries are not implemented; needed before any live adaptation.
+- Connector client snapshot state is not observable from the local runtime; needed to distinguish client snapshot lag from runtime contract drift.
 
 ## Stop rules
 
@@ -172,6 +189,8 @@ Stop or narrow a slice if:
 - it lets friction or recall directly authorize action;
 - it requires broad shell access where a typed read tool is enough;
 - it hides stale connector/runtime uncertainty;
+- it reuses validation evidence without exact identity and freshness;
+- it optimizes friction metrics by weakening tests, reviews or safety gates;
 - it blurs Bureau task truth with Grabowski runtime state.
 
 ## Non-claims

@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Finalize Systemkatalog identity and retire active Cabinet rooms",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 335
+  },
+  "goal": "Remove the former Cabinet room architecture from the active product, preserve it as explicitly noncanonical history, migrate map consumers, rename the repository and runtime to Systemkatalog, and prove that no second task, review, runtime or status model remains active.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heimgewebe-katalog",
+    "working_branch": "refactor/systemkatalog-identity-room-retirement-v1",
+    "working_worktree": "/home/alex/repos/.systemkatalog-worktrees/identity-room-retirement-v1",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heimgewebe-katalog",
+      "repo:/home/alex/repos/bureau"
+    ],
+    "authorization": {
+      "source": "operator_instruction",
+      "reference": "operator-instruction:2026-07-11:systemkatalog-identity-room-retirement",
+      "approved": true,
+      "scope": [
+        "archive active Cabinet rooms and legacy product surfaces without deleting historical evidence",
+        "publish and merge the Systemkatalog refactor",
+        "migrate Leitstand and Schauwerk to the neutral map artifact contract in separate pull requests",
+        "rename GitHub repository to heimgewebe/systemkatalog and local checkout to /home/alex/repos/systemkatalog",
+        "replace heimgewebe-systemkatalog.service and executable with systemkatalog.service and systemkatalog",
+        "remove active old-name and Cabinet runtime aliases while preserving private archives and historical receipts"
+      ],
+      "does_not_authorize": [
+        "deletion or rewriting of historical task receipts or pull request evidence",
+        "deletion of private Cabinet archives, backups or retention state",
+        "mutation of unrelated repositories or foreign worktrees and leases"
+      ]
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.heimgewebe-katalog",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "service.systemkatalog",
+      "mode": "write",
+      "isolation": "none"
+    },
+    {
+      "resource": "service.github_repository_identity",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "systemd"
+  ],
+  "acceptance": [
+    {
+      "id": "active-room-retirement",
+      "assertion": "No former Cabinet room root, room metadata, project-card surface, task candidate, radar, frontier, scheduler or agent-maintenance surface remains active in the Systemkatalog repository."
+    },
+    {
+      "id": "archive-integrity",
+      "assertion": "Former room and Cabinet-era files are preserved under docs/archive/cabinet-era with an explicit noncanonical boundary, and the migration review proves that moved historical files were not silently altered or omitted."
+    },
+    {
+      "id": "catalog-role",
+      "assertion": "The active product contains only stable system inventory, purposes and limits, truth ownership, stable relations, evidence-bound stable claims, entrypoints and deterministic read-only projections."
+    },
+    {
+      "id": "fail-closed-validation",
+      "assertion": "CI rejects active legacy rooms, old catalog identities, operational status fields, competing canons, manual authority assignments, runtime aliases and map-manifest contract drift."
+    },
+    {
+      "id": "consumer-migration",
+      "assertion": "Leitstand and Schauwerk consume the neutral Systemkatalog map artifact contract through separately reviewed and merged pull requests without creating a second map truth."
+    },
+    {
+      "id": "repository-identity",
+      "assertion": "GitHub repository is heimgewebe/systemkatalog, the canonical local checkout is /home/alex/repos/systemkatalog, active remotes and Bureau resources use the new identity, and historical evidence retains historically accurate old names."
+    },
+    {
+      "id": "runtime-cutover",
+      "assertion": "Only systemkatalog.service and the systemkatalog executable remain active; the old heimgewebe-systemkatalog and Cabinet aliases are stopped, disabled and absent, and the installed read-only runtime matches the merged repository."
+    },
+    {
+      "id": "final-control-plane-proof",
+      "assertion": "Bureau queue, registry truth, doctor and lifecycle are checked after completion; worktrees and leases are closed without modifying foreign dirty states, leases or processes."
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-11T21:30:00+02:00",
+    "source_decision": "The product and repository are named Systemkatalog; Cabinet rooms are historical only and the catalog must not own tasks, runtime health, merge readiness, dispatch or a second live status model.",
+    "starting_snapshot": {
+      "repository": "heimgewebe/heimgewebe-katalog",
+      "local_checkout": "/home/alex/repos/heimgewebe-katalog",
+      "worktree": "/home/alex/repos/.systemkatalog-worktrees/identity-room-retirement-v1",
+      "base_head": "b8c550a042b42766552c4752ec3973d7637fab5d",
+      "old_runtime_service": "heimgewebe-systemkatalog.service"
+    },
+    "does_not_establish": [
+      "current merge readiness",
+      "current runtime health",
+      "consumer compatibility",
+      "test sufficiency",
+      "permission to mutate unrelated repositories"
+    ]
+  }
+}

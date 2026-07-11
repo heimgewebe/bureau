@@ -15,7 +15,7 @@
     "working_repository": "/home/alex/repos/lenskit",
     "baseline_commit": "61470f13b261cb13fe314139ad65a5913e2fc245",
     "grabowski_resources": [
-      "repo:/home/alex/repos/cabinet",
+      "repo:/home/alex/repos/heimgewebe-katalog",
       "repo:/home/alex/repos/lenskit"
     ]
   },
@@ -26,7 +26,7 @@
       "isolation": "none"
     },
     {
-      "resource": "repo.cabinet",
+      "resource": "repo.heimgewebe-katalog",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -108,7 +108,7 @@
         "runtime_correctness",
         "task_approval"
       ],
-      "task_sha256": "65b74330e7feeb735d89982ef9031dbb121849eba73b2af28813d8096907e2fb",
+      "task_sha256": "0d72841ddb039b73666ddebfdae74cfbdc3cddb6bf7c93ede75bc2ff17dc96bb",
       "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015"
     },
     "residual_notes": [

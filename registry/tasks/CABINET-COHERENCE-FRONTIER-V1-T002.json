@@ -15,7 +15,7 @@
   ],
   "claims": [
     {
-      "resource": "repo.cabinet",
+      "resource": "repo.heimgewebe-katalog",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -66,7 +66,7 @@
       "local: python3 scripts/write_cabinet_frontier.py --check --json OK"
     ],
     "verification": {
-      "task_sha256": "d55befb3c1dc7bdb510cece7be2693b7f67f32146bd077a5d2cbfe1f22baa082",
+      "task_sha256": "78732ef6e907189bbd8e3fb4c347ea9429007f48545cd8929fe625517ce35247",
       "plan_sha256": "ed0ea5a017393327b162abb396f604282456f3e1a8b62a18bdf94ba1f5813696"
     }
   },

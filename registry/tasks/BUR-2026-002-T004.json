@@ -13,7 +13,7 @@
     {
       "isolation": "worktree",
       "mode": "write",
-      "resource": "repo.cabinet"
+      "resource": "repo.heimgewebe-katalog"
     }
   ],
   "execution": {
@@ -50,7 +50,7 @@
       "no-live-claim": "Rendered references and JSON briefings set/ state live-state non-claim boundaries and do not inspect live Git or claim current repository HEAD."
     },
     "verification": {
-      "task_sha256": "5863863c0c40d00a2be2289010c5c4b9ca42611ecf12653cf3ed8f19d9f6887e",
+      "task_sha256": "9429245213c2c987739ee199172e1dd325cd668b4f495cdf85433d5d54721526",
       "plan_sha256": "2a786843fa4b6a7da77cd9790f77a41b5a35fb591b0047e2d6d1698d45df4ca2"
     }
   },

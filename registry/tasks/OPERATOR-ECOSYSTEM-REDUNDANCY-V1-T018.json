@@ -12,9 +12,9 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "autonomous",
-    "working_repository": "/home/alex/repos/cabinet",
+    "working_repository": "/home/alex/repos/heimgewebe-katalog",
     "grabowski_resources": [
-      "repo:/home/alex/repos/cabinet"
+      "repo:/home/alex/repos/heimgewebe-katalog"
     ],
     "approval": {
       "action_class": "repository_mutation",
@@ -24,7 +24,7 @@
   },
   "claims": [
     {
-      "resource": "repo.cabinet",
+      "resource": "repo.heimgewebe-katalog",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -162,7 +162,7 @@
         "tests",
         "live-safe-proof"
       ],
-      "task_sha256": "8c329d9c4fab317dad57fa0e94accbb282894af4a694f0b8d5de1398273578ac",
+      "task_sha256": "fe66333e8493f3afe8bc58360183e28423e53dafb9e9bd1b8a3fba7caa6e813d",
       "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     },
     "verification_note": "Restic 0.12.1 shortened summary IDs are resolved only through one unique full tagged ID with prefix equality. All ambiguity stops before restore; no new private backup or real restore was executed."

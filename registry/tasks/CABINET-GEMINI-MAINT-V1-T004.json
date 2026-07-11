@@ -12,14 +12,14 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/cabinet",
+    "working_repository": "/home/alex/repos/heimgewebe-katalog",
     "grabowski_resources": [
-      "repo:/home/alex/repos/cabinet"
+      "repo:/home/alex/repos/heimgewebe-katalog"
     ]
   },
   "claims": [
     {
-      "resource": "repo.cabinet",
+      "resource": "repo.heimgewebe-katalog",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -185,7 +185,7 @@
       "recommendation": "Do not schedule recurring Gemini maintenance from this single low-signal run. Continue with T005 as a decision task; likely outcome is manual/on-demand only unless a second prompt or evidence packet demonstrates materially better findings."
     },
     "verification": {
-      "task_sha256": "f61ec8b4a3049aaaca7d1b02cf2c0648e923f8a02f3ed62e96ff691343a7a516",
+      "task_sha256": "e50bf31632de93a2915b5aa10fbc362740825cfca073019f941ebeb3195a8ba6",
       "reviewed_by": "grabowski-assisted self-review",
       "reviewed_at": "2026-07-08T19:38:00Z",
       "plan_sha256": "bfd441cbf854d2c8f0ffd14024f743ea64272ba867ffe26b2a5852bc947b7941"

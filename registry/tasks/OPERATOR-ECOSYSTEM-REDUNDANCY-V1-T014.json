@@ -2,25 +2,25 @@
   "schema_version": 1,
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
-  "title": "Rename Cabinet repository to heimgewebe-katalog",
-  "state": "planned",
+  "title": "Complete Heimgewebe-Systemkatalog repository and alias migration",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 330
   },
-  "goal": "Rename the app-independent repository and migrate ecosystem references only after the external Cabinet runtime has been retired and all active consumers are known.",
+  "goal": "Use the canonical heimgewebe-katalog identity across GitHub, the local checkout, runtime and active consumers while preserving historical evidence and versioned wire formats.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/cabinet",
+    "working_repository": "/home/alex/repos/heimgewebe-katalog",
     "grabowski_resources": [
-      "repo:/home/alex/repos/cabinet",
+      "repo:/home/alex/repos/heimgewebe-katalog",
       "repo:/home/alex/repos/bureau"
     ]
   },
   "claims": [
     {
-      "resource": "repo.cabinet",
+      "resource": "repo.heimgewebe-katalog",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -64,15 +64,14 @@
       "automatic_shutdown_permission"
     ],
     "rename_gate": {
-      "status": "explicit_rename_authorization_registered_pending_execution",
+      "status": "verified_repository_path_reference_and_alias_migration_complete",
       "catalog_core_merge_commit": "0b718077a47b922262fdfbd8ccbe8e3e40464289",
       "dependency": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
       "rename_authorized": true,
       "does_not_authorize": [
-        "GitHub repository rename",
-        "local checkout rename",
-        "reference migration",
-        "compatibility redirect creation"
+        "deletion of historical receipts or PR evidence",
+        "deletion of private Cabinet archives or backup snapshots",
+        "unrelated repository mutation"
       ],
       "runtime_preflight_available": true,
       "runtime_preflight_merge_commit": "6c64348daf242e48e09e678f5793fc086854b31b",
@@ -82,7 +81,14 @@
       "phase_A_private_evidence_sha256": "e8c7e6c5042cddd8c673d74219f54f8f8a465dfa3e3613c78f38d9161e059585",
       "t013_final_cabinet_head": "bbf085963976cea21ca2050c90aaa6a13739a863",
       "t013_private_evidence_sha256": "09bef8d56c3f050dad040eca75cb3c6af060e8144d4cb5fe193a3d81416393d2",
-      "authorization_reference": "operator-instruction:2026-07-11:finalize-system-catalog-migration-and-remove-old-aliases"
+      "authorization_reference": "operator-instruction:2026-07-11:finalize-system-catalog-migration-and-remove-old-aliases",
+      "repository_rename_completed": true,
+      "local_checkout_rename_completed": true,
+      "active_reference_migration_completed": true,
+      "active_alias_removal_completed": true,
+      "authorization_consumed": true,
+      "final_repository": "heimgewebe/heimgewebe-katalog",
+      "final_local_checkout": "/home/alex/repos/heimgewebe-katalog"
     },
     "execution_authorization": {
       "schema_version": 1,
@@ -108,13 +114,126 @@
       ],
       "one_shot": true,
       "revoked_on_mismatch": true,
-      "consumed": false,
-      "remaining_uses": 1,
+      "consumed": true,
+      "remaining_uses": 0,
       "does_not_authorize": [
         "deletion of historical receipts or PR evidence",
         "deletion of private Cabinet archives or backup snapshots",
         "unrelated repository mutation"
-      ]
+      ],
+      "consumed_at": "2026-07-11T16:14:31Z"
+    },
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_system_catalog_repository_and_alias_migration_complete",
+      "verified_at": "2026-07-11T16:14:31Z",
+      "repository": {
+        "github_name": "heimgewebe/heimgewebe-katalog",
+        "github_url": "https://github.com/heimgewebe/heimgewebe-katalog",
+        "default_branch": "main",
+        "public": true,
+        "local_checkout": "/home/alex/repos/heimgewebe-katalog",
+        "local_head": "b8c550a042b42766552c4752ec3973d7637fab5d",
+        "origin": "git@github.com:heimgewebe/heimgewebe-katalog.git",
+        "old_local_checkout_absent": true,
+        "platform_managed_old_name_redirect_retained": true
+      },
+      "system_catalog_pull_requests": [
+        {
+          "number": 115,
+          "merge_commit": "7430e069becdd66d1471efe283e2b38e980941e8"
+        },
+        {
+          "number": 116,
+          "merge_commit": "a4ee5951dbc5cf66b0741c03c553fb88b6a354fb"
+        },
+        {
+          "number": 117,
+          "merge_commit": "d952fae875080816d7d513858d7d66e77f99af39"
+        },
+        {
+          "number": 118,
+          "merge_commit": "b8c550a042b42766552c4752ec3973d7637fab5d"
+        }
+      ],
+      "consumer_migrations": {
+        "bureau": {
+          "pull_request": 435,
+          "merge_commit": "25a03c03ec7a311e17993b49e54cfe466ece24c7",
+          "installed_version": "0.2.1"
+        },
+        "lenskit": {
+          "pull_request": 980,
+          "merge_commit": "3c6b028ee62dc5d094247c78541b2561c18307d0"
+        },
+        "leitstand": {
+          "pull_request": 162,
+          "merge_commit": "f1616086bcdf3f8c4db1ca6f97a7694645dd90db"
+        },
+        "schauwerk": {
+          "pull_request": 82,
+          "merge_commit": "57a9ec5d1a590ea0f0711f906db5bcf155b9bac2"
+        },
+        "grabowski": {
+          "active_reference_change_required": false,
+          "reason": "no active Cabinet repository reference detected"
+        }
+      },
+      "runtime": {
+        "service": "heimgewebe-systemkatalog.service",
+        "loaded": true,
+        "active": true,
+        "running": true,
+        "enabled": true,
+        "result": "success",
+        "restart_count": 0,
+        "systems": 19,
+        "relations": 24
+      },
+      "active_alias_retirement": {
+        "cabinet_service_absent": true,
+        "cabinet_safe_export_absent": true,
+        "old_checkout_absent": true,
+        "bureau_cabinet_console_scripts_absent": true,
+        "bureau_cabinet_subcommands_absent": true,
+        "repobrief_cabinet_wrappers_absent": true,
+        "repobrief_cabinet_units_absent": true,
+        "active_bin_and_user_systemd_cabinet_path_count": 0,
+        "new_repobrief_timers_loaded": true,
+        "new_repobrief_timers_enabled": false,
+        "bureau_repo_cabinet_resource_absent": true,
+        "canonical_bureau_resource_id": "repo.heimgewebe-katalog"
+      },
+      "preservation_boundary": {
+        "historical_receipts_preserved": true,
+        "historical_pr_evidence_preserved": true,
+        "private_archives_preserved": true,
+        "backup_or_retention_changed": false,
+        "versioned_cabinet_wire_kinds_retained": true,
+        "wire_kinds_are_executable_aliases": false
+      },
+      "validation": {
+        "system_catalog_tests": "364 passed, 49 subtests passed",
+        "bureau_tests": "474 passed on Python 3.10; GitHub validate 3.10 and 3.12 success",
+        "lenskit_tests": "3742 passed, 1 skipped, 10 deselected",
+        "leitstand_tests": "341 passed; typecheck and lint passed",
+        "schauwerk_tests": "490 passed; Ruff and registry validation passed",
+        "systemkatalog_bridge_probe": "success against Bureau merge 25a03c03ec7a311e17993b49e54cfe466ece24c7"
+      },
+      "evidence_sha256": "1b4ce16538eb966d71582d2395e0a4105e1ef0e8d17d3aeff95a3dff68b9d01b"
+    },
+    "verification": {
+      "verified_at": "2026-07-11T16:14:31Z",
+      "acceptance_ids": [
+        "repository-rename",
+        "reference-migration",
+        "entrypoints-valid",
+        "no-shadow-cabinet"
+      ],
+      "completion_evidence_sha256": "1b4ce16538eb966d71582d2395e0a4105e1ef0e8d17d3aeff95a3dff68b9d01b",
+      "verification_note": "GitHub and local repository identity migrated; runtime and active consumers verified; executable Cabinet aliases absent; historical evidence and versioned wire kinds preserved.",
+      "task_sha256": "3079230111760c3658b1bb2d0c97011b5bbaf4ad24bf8b45bdd95fe02888eb05",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   },
   "depends_on": [

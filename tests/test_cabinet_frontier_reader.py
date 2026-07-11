@@ -374,7 +374,13 @@ class CabinetFrontierReaderTests(unittest.TestCase):
                     "required_capabilities": ["repository", "review"],
                     "priority": {"lane": "later", "rank": 999},
                     "execution": {"mode": "manual", "policy": "review-before-effect"},
-                    "claims": [{"resource": "repo.cabinet", "mode": "read", "isolation": "none"}],
+                    "claims": [
+                        {
+                            "resource": "repo.heimgewebe-katalog",
+                            "mode": "read",
+                            "isolation": "none",
+                        }
+                    ],
                     "acceptance": [{"id": "existing", "assertion": "Existing task."}],
                     "metadata": {"source_frontier_candidate_id": "frontier:cabinet:ready"},
                 },

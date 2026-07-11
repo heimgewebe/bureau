@@ -12,9 +12,9 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "autonomous",
-    "working_repository": "/home/alex/repos/cabinet",
+    "working_repository": "/home/alex/repos/heimgewebe-katalog",
     "grabowski_resources": [
-      "repo:/home/alex/repos/cabinet",
+      "repo:/home/alex/repos/heimgewebe-katalog",
       "host:heim-pc"
     ],
     "approval": {
@@ -25,7 +25,7 @@
   },
   "claims": [
     {
-      "resource": "repo.cabinet",
+      "resource": "repo.heimgewebe-katalog",
       "mode": "read",
       "isolation": "none"
     },
@@ -336,7 +336,7 @@
         "integrity-manifest",
         "consumer-check"
       ],
-      "task_sha256": "84ee93ed05ea13e39ace5b83cffac5dc463b05243c03cccd6f16a797ac467794",
+      "task_sha256": "1a2573cceefa99f8a857eb8ead77c21e0ac9d90fa644ca5b9fcc5b43e9671639",
       "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     },
     "verification_note": "Exactly one encrypted snapshot exists under the bound tag; the full snapshot was restored to tmpfs and verified. The service remained active, staging was removed, and no retention, source, repository or service mutation occurred. The one-shot authorization is consumed."

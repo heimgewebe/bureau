@@ -17,7 +17,7 @@
     {
       "isolation": "worktree",
       "mode": "write",
-      "resource": "repo.cabinet"
+      "resource": "repo.heimgewebe-katalog"
     },
     {
       "amount": 1,
@@ -31,12 +31,12 @@
   ],
   "execution": {
     "grabowski_resources": [
-      "repo:/home/alex/repos/cabinet"
+      "repo:/home/alex/repos/heimgewebe-katalog"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "preferred_host": "heim-pc",
-    "working_repository": "/home/alex/repos/cabinet"
+    "working_repository": "/home/alex/repos/heimgewebe-katalog"
   },
   "goal": "Bind the Cabinet fix/workspace-room-identity branch to a canonical Bureau task before the lane is used for execution.",
   "id": "BUR-2026-001-T006",
@@ -80,7 +80,7 @@
       "plan_sha256": "a693177e04de7b0c356ae6e029ae30b206092e6c8cbf3f1096f669e64cc5cf61",
       "proof_sha256": "95fa06854176fe0a62753428c28752d01e1c9e0085268d7ae42a0594420247ce",
       "task_preimage_sha256": "2a9ee4ac0f405bebb46c4ac49c0b1166d98a5ae0d4fcb32dc08dde0c0d85f74d",
-      "task_sha256": "16166e80957b88232c8b12646263936dd528f6df5841d9a231b5440518dad246",
+      "task_sha256": "ff7b38dd59314d5b25f43ac99e09c774de7dae72d92f4527ea1f9b8c85a72485",
       "verified_at": "2026-07-07T14:32:50.023855Z"
     },
     "verified_acceptance": {

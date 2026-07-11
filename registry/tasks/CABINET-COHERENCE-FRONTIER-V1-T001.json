@@ -15,7 +15,7 @@
   ],
   "claims": [
     {
-      "resource": "repo.cabinet",
+      "resource": "repo.heimgewebe-katalog",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -66,7 +66,7 @@
       "local: python3 -m unittest discover -s scripts/tests OK"
     ],
     "verification": {
-      "task_sha256": "8dab8d66094b7d844f4532384309835fab812eb4e8806f1b9b7f314ba65f75f9",
+      "task_sha256": "cfcff6b245ca297419f983a67f9890e3b1ee556e30d2466ab9199494a0168788",
       "plan_sha256": "ed0ea5a017393327b162abb396f604282456f3e1a8b62a18bdf94ba1f5813696"
     }
   },

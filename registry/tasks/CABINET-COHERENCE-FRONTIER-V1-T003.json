@@ -20,7 +20,7 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.cabinet",
+      "resource": "repo.heimgewebe-katalog",
       "mode": "read",
       "isolation": "none"
     }
@@ -64,7 +64,7 @@
       "local: cabinet bridge focused regression tests OK"
     ],
     "verification": {
-      "task_sha256": "ffe45ffe01a24a5dd87b836fc2259ccb4fc3d4f8d32db6b90aa7bbf51c9029d1",
+      "task_sha256": "67aad0b38acbfe409714b15a11c931d019b6eaf28d6d8e05a6de4d18cf0af42a",
       "plan_sha256": "ed0ea5a017393327b162abb396f604282456f3e1a8b62a18bdf94ba1f5813696"
     }
   },

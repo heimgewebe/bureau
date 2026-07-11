@@ -16,7 +16,7 @@
     "grabowski_resources": [
       "repo:/home/alex/repos/bureau",
       "host:heim-pc",
-      "repo:/home/alex/repos/cabinet",
+      "repo:/home/alex/repos/heimgewebe-katalog",
       "repo:/home/alex/repos/leitstand",
       "repo:/home/alex/repos/schauwerk",
       "repo:/home/alex/repos/chronik",
@@ -36,7 +36,7 @@
       "isolation": "none"
     },
     {
-      "resource": "repo.cabinet",
+      "resource": "repo.heimgewebe-katalog",
       "mode": "read",
       "isolation": "none"
     },
@@ -161,7 +161,7 @@
       "private_details_committed": false
     },
     "verification": {
-      "task_sha256": "2ffe94d978de9efb98161876220917f3e16af8649c61faa3674811ab2004e4af",
+      "task_sha256": "cc31b542fcc5804b9dbbb17868a35e5731935477560d2a0e0a8049b57b0c615b",
       "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   },

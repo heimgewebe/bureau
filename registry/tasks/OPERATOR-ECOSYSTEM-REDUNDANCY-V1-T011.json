@@ -12,9 +12,9 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "autonomous",
-    "working_repository": "/home/alex/repos/cabinet",
+    "working_repository": "/home/alex/repos/heimgewebe-katalog",
     "grabowski_resources": [
-      "repo:/home/alex/repos/cabinet"
+      "repo:/home/alex/repos/heimgewebe-katalog"
     ],
     "approval": {
       "action_class": "repository_mutation",
@@ -24,7 +24,7 @@
   },
   "claims": [
     {
-      "resource": "repo.cabinet",
+      "resource": "repo.heimgewebe-katalog",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -92,13 +92,37 @@
       "merge_commit": "9bf9bc9dd72a3788e0c5ca03bb728488c2b21cc9",
       "merged_at": "2026-07-10T10:50:06Z",
       "checks": [
-        {"workflow": "Validate", "job": "Repository Contract", "conclusion": "success"},
-        {"workflow": "Validate", "job": "Installer Shadow Test", "conclusion": "success"},
-        {"workflow": "Validate", "job": "Secret Scan", "conclusion": "success"},
-        {"workflow": "Ecosystem Map", "conclusion": "success"},
-        {"workflow": "Repository Snapshot Review", "conclusion": "success"},
-        {"workflow": "Project Cards", "conclusion": "success"},
-        {"workflow": "Cabinet Bridge Probe", "conclusion": "success"}
+        {
+          "workflow": "Validate",
+          "job": "Repository Contract",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Validate",
+          "job": "Installer Shadow Test",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Validate",
+          "job": "Secret Scan",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Ecosystem Map",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Repository Snapshot Review",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Project Cards",
+          "conclusion": "success"
+        },
+        {
+          "workflow": "Cabinet Bridge Probe",
+          "conclusion": "success"
+        }
       ],
       "review_gate": {
         "verdict": "PASS",
@@ -116,7 +140,7 @@
     "verified_at": "2026-07-10T10:51:00Z",
     "outcome": "Cabinet now has an app-independent system catalog contract, deterministic validation and rendering, a full migration matrix, corrected authority projections and redacted public runtime evidence.",
     "verification": {
-      "task_sha256": "6effb40814dcc87ed8e4c0f786641ca93ebf1c1c1dbec999986eb6fa94ac2b79",
+      "task_sha256": "5da2960b5e87ab66cca4ba87ae1326da9a3b82a3d2911c1070b9a92926fd5270",
       "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   },

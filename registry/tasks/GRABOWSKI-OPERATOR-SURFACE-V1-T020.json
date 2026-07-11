@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
-  "state": "planned",
+  "state": "verified",
   "claims": [
     {
       "resource": "repo.grabowski",
@@ -63,6 +63,124 @@
       "root_cause_proof",
       "task_resume_permission",
       "merge_readiness"
-    ]
+    ],
+    "implementation_pr": "heimgewebe/grabowski#152",
+    "implementation_head": "8cc7c7a4a3ee515ef291e9543ccc34edd64f6276",
+    "implementation_merge_commit": "64cac0abc2e9dcfd5fd256d28bffc473933f2291",
+    "verified_at": "2026-07-11",
+    "verification_note": "Grabowski PR #152 introduced the append-only, event- and failure-class-bound friction closeout ledger. The live runtime at fbe9a11b9cf457f25756b0a4c8559b2cfbd6b46e reports two valid decisions, no duplicate or conflicting closeouts, intact event bindings and separate unresolved/resolved counts.",
+    "validated_acceptance": {
+      "resolve-record": "The closeout schema records event_id, classified failure_class, decision, status, evidence_ref, resolved_by, closed_at, optional bureau_task_id and explicit non-claims in an append-only decisions ledger; raw events remain unchanged.",
+      "class-closeout": "The resolve API requires exactly one event_id or failure_class selector, supports bounded recurring-class closeout, reports remaining targets, and accepts resolved, superseded, deferred, accepted_risk, wont_fix and linked_to_task decisions with evidence and reasons.",
+      "summary-noise-reduced": "The live summary separates 39 unresolved, 2 resolved and 9 legacy-resolved recent events. The two evidence-bound closeouts no longer count as decision-required noise.",
+      "bureau-bridge": "Closeouts accept a validated optional bureau_task_id for linked_to_task decisions while retaining non-claims for task readiness, merge readiness and policy exception.",
+      "tests": "PR #152 passed the full local suite with 1002 tests and GitHub validate (3.10)/(3.12). Focused friction tests cover single-event closeout, failure-class deferral, bounded class closeout, duplicate and conflicting decisions, invalid identifiers, reason requirements, task linking and summary counts."
+    },
+    "runtime_snapshot": {
+      "schema_version": 1,
+      "source": "grabowski_friction_summary",
+      "runtime_head": "fbe9a11b9cf457f25756b0a4c8559b2cfbd6b46e",
+      "limit": 50,
+      "returned": 50,
+      "unresolved": 39,
+      "resolution_counts": {
+        "legacy_resolved": 9,
+        "resolved": 2,
+        "unresolved": 39
+      },
+      "decision_log": {
+        "records": 2,
+        "valid_records": 2,
+        "invalid_lines": 0,
+        "duplicate_event_ids": [],
+        "conflicting_event_ids": [],
+        "integrity_valid": true
+      },
+      "event_log_integrity": {
+        "duplicate_event_ids": [],
+        "closeout_binding_mismatch_event_ids": [],
+        "integrity_valid": true
+      },
+      "unresolved_by_failure_class": {
+        "actionable_failure": 6,
+        "connector_transport": 6,
+        "environment_tooling": 6,
+        "platform_filter": 14,
+        "policy_gate": 7
+      },
+      "resolved_events": [
+        {
+          "event_id": "23b5123b79944b06b54d476c6b065351",
+          "failure_class": "platform_filter",
+          "decision": "Typed PR create path was fixed and proved by creating PR #153 on the exact published head.",
+          "evidence_ref": "receipt:0ae67a380c42ec66a4f5a3278479700f5498f740cbb49a2c31dd90a7dc7a590e",
+          "resolved_by": "chatgpt-operator",
+          "closed_at": "2026-07-11T06:22:44Z"
+        },
+        {
+          "event_id": "716c434621d143379ebfdc4031bbadd3",
+          "failure_class": "actionable_failure",
+          "decision": "Captain now reads repository merge policy, selected squash, merged PR #153, and verified the remote target state.",
+          "evidence_ref": "receipt:bc88b47cf17706e384ce645ac61a46595cb0b5c98dd5d5810f5a540ef656b1a1",
+          "resolved_by": "chatgpt-operator",
+          "closed_at": "2026-07-11T06:22:44Z"
+        }
+      ],
+      "observed_at": "2026-07-11T08:47:14Z"
+    },
+    "runtime_snapshot_sha256": "1825d327187f1442d3d4f98ad18bbb54910c700fcba60672950d03b6c87fc56f",
+    "validation": {
+      "github_ci": "validate (3.10) and validate (3.12) succeeded for Grabowski PR #152",
+      "local_suite": "1002 tests passed for the implementation PR",
+      "live_runtime_probe": "grabowski_friction_summary(limit=50) at runtime head fbe9a11b9cf457f25756b0a4c8559b2cfbd6b46e"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T020",
+          "source_ref": "heimgewebe/grabowski#152",
+          "number": 152,
+          "head_sha": "8cc7c7a4a3ee515ef291e9543ccc34edd64f6276",
+          "merge_commit_sha": "64cac0abc2e9dcfd5fd256d28bffc473933f2291",
+          "diff_sha256": "a7845eb0546854386b796e58112c9fe9d48e5c70aca4718535522fa45e2bb560"
+        },
+        {
+          "kind": "runtime_probe",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T020",
+          "source_ref": "grabowski_friction_summary@fbe9a11b9cf457f25756b0a4c8559b2cfbd6b46e",
+          "commit_sha": "fbe9a11b9cf457f25756b0a4c8559b2cfbd6b46e",
+          "content_sha256": "1825d327187f1442d3d4f98ad18bbb54910c700fcba60672950d03b6c87fc56f",
+          "decision_log_records": 2,
+          "decision_log_integrity_valid": true,
+          "event_log_integrity_valid": true,
+          "unresolved": 39,
+          "resolved": 2,
+          "observed_at": "2026-07-11T08:47:14Z"
+        },
+        {
+          "kind": "operator_receipt",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T020",
+          "source_ref": "receipt:0ae67a380c42ec66a4f5a3278479700f5498f740cbb49a2c31dd90a7dc7a590e",
+          "event_id": "23b5123b79944b06b54d476c6b065351",
+          "receipt_sha256": "0ae67a380c42ec66a4f5a3278479700f5498f740cbb49a2c31dd90a7dc7a590e"
+        },
+        {
+          "kind": "operator_receipt",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T020",
+          "source_ref": "receipt:bc88b47cf17706e384ce645ac61a46595cb0b5c98dd5d5810f5a540ef656b1a1",
+          "event_id": "716c434621d143379ebfdc4031bbadd3",
+          "receipt_sha256": "bc88b47cf17706e384ce645ac61a46595cb0b5c98dd5d5810f5a540ef656b1a1"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "f55cc51cb600db53bcc2ee4aaffff9e1eac233b2f60974fbd37e20ff95bd433b",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

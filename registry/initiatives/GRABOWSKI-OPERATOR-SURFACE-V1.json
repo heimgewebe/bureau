@@ -39,6 +39,8 @@
     "priority_decision": "situation spine before recall; grip surface before friction automation; shadow measurement before bounded adaptive routing; push and capability enforcement later",
     "rootbroker_recovery_freshness_followup_20260711": "T030 records the reproduced contradiction between recovery_status ready=true and immediate Rootbroker stale-marker denial. It is blocked while another owner holds the Grabowski repository.",
     "adaptive_friction_followup_20260711": "T031 registers a shadow-first friction-aware execution governor and T032 registers exact-identity work deduplication plus validation-state isolation from a live audit of 63 friction events, 48 unresolved events and repeated concurrent validation interference.",
-    "waiting_reason_20260711": "Waiting because T030 is blocked by an active foreign Grabowski repository lease after a fresh runtime reproduction; T031 and T032 remain queued later and do not bypass the active owner."
+    "waiting_reason_20260711": "Waiting because T030 remains blocked and T032 exact work dedupe plus validation isolation remains a separate planned slice. T031 and T033 are verified.",
+    "t031_closeout_20260711": "T031 verified after PRs #158/#159, deployment at 733259556144a171914f339a4ea67bca32f08977 and direct live proof of all three shadow-governor tools.",
+    "adaptive_agent_bootstrap_t033_20260711": "T033 verified through Grabowski PR #160 and deployed at 2cede6b4d5f9b73828ed7dfb44f24e1da5753f62. It adds a proposal-only session bootstrap and deterministic call-shape linter."
   }
 }

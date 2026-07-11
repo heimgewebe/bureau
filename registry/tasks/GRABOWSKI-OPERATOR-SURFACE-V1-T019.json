@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
-  "state": "planned",
+  "state": "verified",
   "claims": [
     {
       "resource": "repo.grabowski",
@@ -64,9 +64,86 @@
       "GRIP-ROADMAP-V1-T021"
     ],
     "does_not_establish": [
-      "implementation_complete",
-      "merge_authority_change",
-      "runtime_deployed"
-    ]
+      "force_push_authority",
+      "merge_without_captain_evidence_gates",
+      "all_platform_filter_events_resolved"
+    ],
+    "implementation_prs": [
+      "heimgewebe/grabowski#152",
+      "heimgewebe/grabowski#153"
+    ],
+    "implementation_heads": {
+      "heimgewebe/grabowski#152": "8cc7c7a4a3ee515ef291e9543ccc34edd64f6276",
+      "heimgewebe/grabowski#153": "e1b1f88a764168da42068d6168becbca2844e608"
+    },
+    "implementation_merge_commits": {
+      "heimgewebe/grabowski#152": "64cac0abc2e9dcfd5fd256d28bffc473933f2291",
+      "heimgewebe/grabowski#153": "984539139e425d44972b306e395ff87f97185e01"
+    },
+    "verified_at": "2026-07-11",
+    "verification_note": "Grabowski PR #152 hardened the typed branch publication and PR upsert path. PR #153 then supplied the live end-to-end proof: the exact published head was turned into a PR and merged by the provider-neutral Captain after head, diff, CI, review and repository merge-policy checks.",
+    "validated_acceptance": {
+      "publish-hardened": "The branch-publish receipt 770f91f5e3bcf00c965f4574f49362d5cb35f9bdf8c85c37c17fde582c0786e3 binds repository, branch and expected local head before publication.",
+      "pr-upsert-hardened": "The pr-create-or-update receipt 0ae67a380c42ec66a4f5a3278479700f5498f740cbb49a2c31dd90a7dc7a590e created PR #153 on exact head e1b1f88a764168da42068d6168becbca2844e608 without generic shell fallback.",
+      "typed-pr-merge": "The Captain merge receipt bc88b47cf17706e384ce645ac61a46595cb0b5c98dd5d5810f5a540ef656b1a1 records the successful policy-compatible squash merge of PR #153 after the typed evidence gates passed.",
+      "receipt-bound-lifecycle": "Publish, PR creation and merge each produced a distinct receipt hash and the remote PR target state was reread after merge.",
+      "tests": "PR #152 passed the full local validation suite with 1002 tests and GitHub validate (3.10)/(3.12); the follow-up proof PR #153 also passed both required checks before Captain execution."
+    },
+    "validation": {
+      "github_ci": "validate (3.10) and validate (3.12) succeeded for PR #152 and PR #153 before merge",
+      "live_proof": "PR #153 reached MERGED at merge commit 984539139e425d44972b306e395ff87f97185e01",
+      "runtime_head_after_proof": "984539139e425d44972b306e395ff87f97185e01"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T019",
+          "source_ref": "heimgewebe/grabowski#152",
+          "number": 152,
+          "head_sha": "8cc7c7a4a3ee515ef291e9543ccc34edd64f6276",
+          "merge_commit_sha": "64cac0abc2e9dcfd5fd256d28bffc473933f2291",
+          "diff_sha256": "a7845eb0546854386b796e58112c9fe9d48e5c70aca4718535522fa45e2bb560"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T019",
+          "source_ref": "heimgewebe/grabowski#153",
+          "number": 153,
+          "head_sha": "e1b1f88a764168da42068d6168becbca2844e608",
+          "merge_commit_sha": "984539139e425d44972b306e395ff87f97185e01",
+          "captain_receipt_sha256": "bc88b47cf17706e384ce645ac61a46595cb0b5c98dd5d5810f5a540ef656b1a1"
+        },
+        {
+          "kind": "operator_receipt",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T019",
+          "source_ref": "receipt:770f91f5e3bcf00c965f4574f49362d5cb35f9bdf8c85c37c17fde582c0786e3",
+          "operation": "branch-publish",
+          "receipt_sha256": "770f91f5e3bcf00c965f4574f49362d5cb35f9bdf8c85c37c17fde582c0786e3"
+        },
+        {
+          "kind": "operator_receipt",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T019",
+          "source_ref": "receipt:0ae67a380c42ec66a4f5a3278479700f5498f740cbb49a2c31dd90a7dc7a590e",
+          "operation": "pr-create-or-update",
+          "receipt_sha256": "0ae67a380c42ec66a4f5a3278479700f5498f740cbb49a2c31dd90a7dc7a590e"
+        },
+        {
+          "kind": "operator_receipt",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T019",
+          "source_ref": "receipt:bc88b47cf17706e384ce645ac61a46595cb0b5c98dd5d5810f5a540ef656b1a1",
+          "operation": "captain-pr-merge",
+          "receipt_sha256": "bc88b47cf17706e384ce645ac61a46595cb0b5c98dd5d5810f5a540ef656b1a1"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "d5aace8e2f002066649a128e442951f03ce04433b5fc8a3c0eb17e7c9a6cdd0c",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

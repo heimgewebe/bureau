@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "id": "RBV1-T020",
+  "initiative": "REPOBRIEF-V1-ROADMAP",
+  "title": "Decide RepoBrief public distribution license",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 200
+  },
+  "goal": "Make an explicit owner-approved decision whether RepoBrief receives a public distribution license, review third-party obligations, and replace the restrictive project LicenseRef only with documented authorization.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rbv1-t020-owner-decision",
+      "assertion": "The copyright holder records an explicit keep-restricted or public-license decision; repository visibility is not treated as permission.",
+      "verifier": "Owner decision record and reviewed license diff or explicit restrictive closeout",
+      "evidence_type": "string"
+    },
+    {
+      "id": "rbv1-t020-obligations",
+      "assertion": "Third-party dependency and bundled-content license obligations relevant to distribution are reviewed and recorded.",
+      "verifier": "Dependency/content license inventory and review receipt",
+      "evidence_type": "string"
+    },
+    {
+      "id": "rbv1-t020-publication-boundary",
+      "assertion": "Release and CI publication remain fail-closed until the decision and required notices are merged and verified.",
+      "verifier": "Release contract, workflow tests and GitHub release state",
+      "evidence_type": "string"
+    },
+    {
+      "id": "rbv1-t020-non-claims",
+      "assertion": "The task does not claim legal advice, universal jurisdictional sufficiency, product readiness or publication authorization beyond the recorded scope.",
+      "verifier": "Decision non-claims",
+      "evidence_type": "string"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "Lenskit release packaging audit follow-up",
+    "registered_at": "2026-07-11T12:00:00Z",
+    "lenskit_local_task": "TASK-REPOBRIEF-PUBLIC-LICENSE-DECISION-001",
+    "lenskit_reference_head": "15b8b1225d8bfb41662d44ead023a6816ea13af3",
+    "source_paths": [
+      "LICENSE",
+      "docs/release/licensing.md"
+    ],
+    "current_boundary": "LicenseRef-RepoBrief-All-Rights-Reserved",
+    "does_not_establish": [
+      "legal_advice",
+      "jurisdictional_completeness",
+      "public_distribution_permission",
+      "product_readiness",
+      "merge_readiness"
+    ]
+  },
+  "depends_on": [
+    "RBV1-T018"
+  ]
+}

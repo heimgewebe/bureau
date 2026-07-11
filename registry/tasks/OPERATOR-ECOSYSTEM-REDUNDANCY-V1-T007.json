@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T007",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Measure remote consumers and operator view usage",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 70
@@ -98,7 +98,72 @@
       "runtime_correctness",
       "cleanup_permission",
       "automatic_shutdown_permission"
-    ]
+    ],
+    "verified_at": "2026-07-11T05:27:48Z",
+    "outcome": "All four registered locations received bounded coverage, nine claimed consumer surfaces were classified, and a privacy-preserving access/activity snapshot was merged into Cabinet without changing any service or runtime.",
+    "implementation_evidence": {
+      "pull_request": "heimgewebe/cabinet#109",
+      "url": "https://github.com/heimgewebe/cabinet/pull/109",
+      "head_sha": "a8a1a2b2214c75db0a7a683924b953da59a42db6",
+      "merge_commit": "4fe1a90a4064a550384db301038995a40056b8d7",
+      "merged_at": "2026-07-11T05:23:11Z",
+      "diff_sha256": "5a196c5a4a07a90ddaf3c21ee9382a446bc8d28539f8561bbd600abe8572c454",
+      "public_snapshot_path": "registry/ecosystem/consumer-usage.v1.json",
+      "public_snapshot_sha256": "a0324b0b6f0c03d3414a129356f16b32467ed126c391a10232caea11306e7a98",
+      "private_evidence_format": "cabinet-consumer-usage-private-evidence-v1",
+      "private_evidence_sha256": "89bf8e7f8dc386d1a9dbdfdeff06d192a01d5c1fa753104320723101fc68a63f",
+      "private_evidence_stored_outside_repository": true,
+      "main_ci": [
+        "Validate: success",
+        "Cabinet Bridge Probe: success",
+        "Ecosystem Map: success",
+        "Repository Snapshot Review: success",
+        "Project Cards: success"
+      ]
+    },
+    "measurement_summary": {
+      "window": "7d",
+      "registered_locations": 4,
+      "observed_locations": 2,
+      "partially_observed_locations": 1,
+      "unknown_locations": 1,
+      "consumer_classes": {
+        "runtime_observed": 4,
+        "source_integrated": 4,
+        "declared_only": 1,
+        "absent": 0
+      },
+      "usage_classes": {
+        "recent_access_observed": 1,
+        "automated_activity_only": 2,
+        "runtime_without_operator_access_signal": 1,
+        "no_runtime_activity_observed": 5
+      }
+    },
+    "validated_acceptance": {
+      "remote-runtime": "All four registered locations are represented with an observation timestamp and an explicit observed, partial or unknown coverage class; one unreachable and one attribution-limited location remain uncertainty rather than false negatives.",
+      "consumer-classification": "All nine claimed surfaces are uniquely classified as runtime-observed, source-integrated, declared-only or absent and are bound to a twelve-repository source snapshot.",
+      "usage-measure": "Bounded service-journal and activity aggregates distinguish recent access, automation-only activity, runtime without access evidence and no observed runtime activity without exposing routes, clients or content.",
+      "decision-input": "The merged snapshot permits repository-only T004 consolidation, while T013 still requires explicit shutdown authorization, rollback and fresh preflight and T014 remains dependency-gated."
+    },
+    "measurement_limits": [
+      "Service presence is not human usage.",
+      "Automated activity is not human usage.",
+      "Browser-history aggregation was not admitted after the bounded probe failed unreliably.",
+      "One registered location was unreachable and one was only partially attributable.",
+      "Source references prove integration paths, not successful semantic consumption."
+    ],
+    "effect_boundary": {
+      "runtime_mutation_performed": false,
+      "service_mutation_performed": false,
+      "backup_or_restore_performed": false,
+      "repository_rename_performed": false,
+      "private_details_committed": false
+    },
+    "verification": {
+      "task_sha256": "2ffe94d978de9efb98161876220917f3e16af8649c61faa3674811ab2004e4af",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    }
   },
   "depends_on": []
 }

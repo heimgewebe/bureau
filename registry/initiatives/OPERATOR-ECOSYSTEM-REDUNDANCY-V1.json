@@ -81,6 +81,29 @@
         "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T016",
         "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T017"
       ]
+    },
+    "next_allowed_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T004",
+    "cabinet_consumer_usage_closeout": {
+      "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T007",
+      "status": "verified",
+      "verified_at": "2026-07-11T05:27:48Z",
+      "implementation_pr": "heimgewebe/cabinet#109",
+      "merge_commit": "4fe1a90a4064a550384db301038995a40056b8d7",
+      "public_snapshot_sha256": "a0324b0b6f0c03d3414a129356f16b32467ed126c391a10232caea11306e7a98",
+      "private_evidence_sha256": "89bf8e7f8dc386d1a9dbdfdeff06d192a01d5c1fa753104320723101fc68a63f",
+      "coverage": {
+        "registered": 4,
+        "observed": 2,
+        "partial": 1,
+        "unknown": 1
+      },
+      "next_effect": "repository_only_T004",
+      "does_not_authorize": [
+        "external Cabinet app shutdown",
+        "runtime cleanup",
+        "private data deletion",
+        "repository rename"
+      ]
     }
   }
 }

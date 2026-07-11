@@ -350,7 +350,7 @@ def import_reviewed_promotion_task(
         "Cabinet promotion task metadata",
     )
     metadata["reviewed_import"] = {
-        "source": "cabinet-import-reviewed",
+        "source": "systemkatalog-import-reviewed",
         "reviewer": reviewer_id,
         "source_task_file": str(path) if path is not None else None,
         "source_task_sha256": _task_sha256(task),

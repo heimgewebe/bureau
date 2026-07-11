@@ -137,7 +137,7 @@ def preview_bridge_candidate(
 
 
 def parser() -> argparse.ArgumentParser:
-    result = argparse.ArgumentParser(prog="bureau-cabinet-bridge-preview")
+    result = argparse.ArgumentParser(prog="bureau-systemkatalog-bridge-preview")
     result.add_argument("--probe-report", required=True)
     result.add_argument("--candidate-id", required=True)
     result.add_argument("--task-id", required=True)
@@ -160,7 +160,7 @@ def main(argv: list[str] | None = None) -> int:
             approve=args.approve,
         )
     except CabinetBridgeError as exc:
-        print(f"bureau-cabinet-bridge-preview: {exc}", file=sys.stderr)
+        print(f"bureau-systemkatalog-bridge-preview: {exc}", file=sys.stderr)
         return 2
     print(json.dumps(value, indent=2 if args.json else None, ensure_ascii=False, sort_keys=True))
     return 0

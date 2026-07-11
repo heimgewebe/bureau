@@ -126,7 +126,7 @@ def review_preview(path: str | Path) -> dict[str, Any]:
 
 
 def parser() -> argparse.ArgumentParser:
-    result = argparse.ArgumentParser(prog="bureau-cabinet-bridge-review")
+    result = argparse.ArgumentParser(prog="bureau-systemkatalog-bridge-review")
     result.add_argument("--preview", required=True)
     result.add_argument("--json", action="store_true")
     return result
@@ -137,7 +137,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         value = review_preview(args.preview)
     except CabinetBridgeError as exc:
-        print(f"bureau-cabinet-bridge-review: {exc}", file=sys.stderr)
+        print(f"bureau-systemkatalog-bridge-review: {exc}", file=sys.stderr)
         return 2
     indent = 2 if args.json else None
     print(json.dumps(value, indent=indent, ensure_ascii=False, sort_keys=True))

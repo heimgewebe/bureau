@@ -20,11 +20,11 @@ The canonical source is `[project.scripts]` in `pyproject.toml`. Current package
 | `bureau` | `bureau.cli:main` | Core CLI |
 | `bureau-agent-frontier` | `bureau.agent_frontier:main` | Ops frontier |
 | `bureau-agent-scout` | `bureau.agent_frontier:main` | Compatibility alias for agent frontier |
-| `bureau-cabinet-bridge-import-policy` | `bureau.cabinet_bridge_import_policy:main` | Cabinet bridge ops |
-| `bureau-cabinet-bridge-preview` | `bureau.cabinet_bridge_preview:main` | Cabinet bridge ops |
-| `bureau-cabinet-bridge-receipt` | `bureau.cabinet_bridge_receipt:main` | Cabinet bridge ops |
-| `bureau-cabinet-bridge-review` | `bureau.cabinet_bridge_review:main` | Cabinet bridge ops |
-| `bureau-cabinet-frontier-reader` | `bureau.cabinet_frontier_reader:main` | Cabinet frontier ops |
+| `bureau-systemkatalog-bridge-import-policy` | `bureau.cabinet_bridge_import_policy:main` | System catalog bridge ops |
+| `bureau-systemkatalog-bridge-preview` | `bureau.cabinet_bridge_preview:main` | System catalog bridge ops |
+| `bureau-systemkatalog-bridge-receipt` | `bureau.cabinet_bridge_receipt:main` | System catalog bridge ops |
+| `bureau-systemkatalog-bridge-review` | `bureau.cabinet_bridge_review:main` | System catalog bridge ops |
+| `bureau-systemkatalog-frontier-reader` | `bureau.cabinet_frontier_reader:main` | System catalog frontier ops |
 | `bureau-closure` | `bureau.closure:main` | Closure ops |
 | `bureau-closure-runner` | `bureau.closure_runner:main` | Closure ops |
 | `bureau-codex-bridge` | `bureau.codex_bridge:main` | Codex bridge ops |
@@ -82,7 +82,7 @@ Add new `bureau` subcommands as equivalents, not replacements:
 | `bureau ops review-steward run` | `bureau-review-steward run` |
 | `bureau ops agent-frontier report` | `bureau-agent-frontier` / `bureau-agent-scout` |
 | `bureau ops codex-bridge run` | `bureau-codex-bridge` |
-| `bureau ops cabinet preview/review/receipt/import-policy/frontier-read` | `bureau-cabinet-*` |
+| `bureau ops systemkatalog preview/review/receipt/import-policy/frontier-read` | `bureau-systemkatalog-*` |
 | `bureau ops gemini-preflight` | `bureau-gemini-preflight` |
 | `bureau ops gemini-review-lane` | `bureau-gemini-review-lane` |
 | `bureau closure ...` | `bureau-closure`, `bureau-closure-runner`, `bureau-pr-task-finish` |
@@ -124,7 +124,7 @@ Removal of any old command is allowed only when all of these are true:
 
 ## Decision for now
 
-Do not remove or rename any existing command now.
+The T014-authorized Cabinet-to-Systemkatalog identity migration removes the old Cabinet command aliases; all unrelated command names remain frozen.
 
 Recommended immediate next PR after this plan: implement `bureau ops ...` aliases for one low-risk bridge command only, probably `bureau ops source-pr-bridge run`, while preserving `bureau-source-pr-bridge` exactly. That keeps the migration empirical and reversible.
 

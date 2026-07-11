@@ -98,13 +98,13 @@ def parser() -> argparse.ArgumentParser:
     promote.add_argument("source", choices=["weltgewebe"])
     promote.add_argument("--task-id", required=True)
     sub.add_parser("close-ready")
-    cabinet_graph = sub.add_parser("cabinet-graph")
+    cabinet_graph = sub.add_parser("systemkatalog-graph")
     cabinet_graph.add_argument("--graph")
-    cabinet_frontier = sub.add_parser("cabinet-frontier")
+    cabinet_frontier = sub.add_parser("systemkatalog-frontier")
     cabinet_frontier.add_argument("--graph")
-    cabinet_bridge_probe = sub.add_parser("cabinet-bridge-probe")
+    cabinet_bridge_probe = sub.add_parser("systemkatalog-bridge-probe")
     cabinet_bridge_probe.add_argument("--bridge-policy")
-    cabinet_promote = sub.add_parser("cabinet-promote")
+    cabinet_promote = sub.add_parser("systemkatalog-promote")
     cabinet_promote.add_argument("--graph")
     cabinet_promote.add_argument("--frontier-export")
     cabinet_promote.add_argument("--candidate-id", required=True)
@@ -113,11 +113,11 @@ def parser() -> argparse.ArgumentParser:
     cabinet_promote.add_argument("--target-proof", required=True)
     cabinet_promote.add_argument("--approve", action="store_true")
     cabinet_promote.add_argument("--write-task")
-    cabinet_validate_task = sub.add_parser("cabinet-validate-task")
+    cabinet_validate_task = sub.add_parser("systemkatalog-validate-task")
     cabinet_validate_task.add_argument("--task-file", required=True)
-    cabinet_import_preview = sub.add_parser("cabinet-import-preview")
+    cabinet_import_preview = sub.add_parser("systemkatalog-import-preview")
     cabinet_import_preview.add_argument("--task-file", required=True)
-    cabinet_import_reviewed = sub.add_parser("cabinet-import-reviewed")
+    cabinet_import_reviewed = sub.add_parser("systemkatalog-import-reviewed")
     cabinet_import_reviewed.add_argument("--task-file", required=True)
     cabinet_import_reviewed.add_argument("--reviewer", required=True)
     cabinet_import_reviewed.add_argument("--apply", action="store_true")
@@ -316,7 +316,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
         root = Path(args.root)
-        if args.command in {"cabinet-graph", "cabinet-frontier"}:
+        if args.command in {"systemkatalog-graph", "systemkatalog-frontier"}:
             from .cabinet_graph import (
                 DEFAULT_GRAPH_PATH,
                 CabinetGraphError,
@@ -328,7 +328,7 @@ def main(argv: list[str] | None = None) -> int:
             try:
                 value = (
                     frontier_export(graph_path)
-                    if args.command == "cabinet-frontier"
+                    if args.command == "systemkatalog-frontier"
                     else graph_report(graph_path)
                 )
             except CabinetGraphError as exc:
@@ -336,7 +336,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             emit(value, args.json)
             return 0
-        if args.command == "cabinet-bridge-probe":
+        if args.command == "systemkatalog-bridge-probe":
             from .cabinet_bridge import (
                 DEFAULT_BRIDGE_POLICY_PATH,
                 CabinetBridgeError,
@@ -351,7 +351,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             emit(value, args.json)
             return 0
-        if args.command == "cabinet-promote":
+        if args.command == "systemkatalog-promote":
             from .cabinet_graph import (
                 DEFAULT_GRAPH_PATH,
                 CabinetGraphError,
@@ -364,7 +364,8 @@ def main(argv: list[str] | None = None) -> int:
             try:
                 if args.graph and args.frontier_export:
                     raise CabinetGraphError(
-                        "cabinet-promote accepts either --graph or --frontier-export, not both"
+                        "systemkatalog-promote accepts either --graph or "
+                        "--frontier-export, not both"
                     )
                 export = (
                     load_frontier_export(args.frontier_export)
@@ -389,7 +390,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             emit(value, args.json)
             return 0
-        if args.command == "cabinet-validate-task":
+        if args.command == "systemkatalog-validate-task":
             from .cabinet_graph import CabinetGraphError
             from .cabinet_promotion_write import validate_promotion_task_file
 
@@ -421,7 +422,7 @@ def main(argv: list[str] | None = None) -> int:
             emit(value, args.json)
             return 1 if args.strict and not value["healthy"] else 0
         registry = Registry.load(root)
-        if args.command == "cabinet-import-preview":
+        if args.command == "systemkatalog-import-preview":
             from .cabinet_graph import CabinetGraphError
             from .cabinet_promotion_write import preview_promotion_task_import_file
 
@@ -434,7 +435,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             emit(value, args.json)
             return 0
-        if args.command == "cabinet-import-reviewed":
+        if args.command == "systemkatalog-import-reviewed":
             from .cabinet_graph import CabinetGraphError
             from .cabinet_promotion_write import import_reviewed_promotion_task_file
 

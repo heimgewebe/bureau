@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "OPERATOR-PC-HYGIENE-V1",
-  "state": "planned",
+  "state": "verified",
   "required_capabilities": [
     "shell",
     "grabowski"
@@ -66,6 +66,37 @@
       "service_unused",
       "consumer_absence",
       "network_safety"
-    ]
+    ],
+    "verified_at": "2026-07-11T02:33:46Z",
+    "outcome": "Reviewed UniFi, Sunshine, GNOME Remote Desktop and Avahi against live consumers. All four are retained; no service or binding was changed. Sunshine UPnP is disabled. Unsupported ingress claims remain UNVERIFIED in Infra runtime.",
+    "implementation_pr": "heimgewebe/infra#120",
+    "implementation_head": "a269a55b772a666996d6304e2c28109db3402b7b",
+    "implementation_merge_commit": "61bc893ee50ac7d50eb548dcb4167f5ec6cb1461",
+    "implementation_diff_sha256": "bc2bb022bd0e2196bc9e81d470eb033a4d5044031c0cf5e21d699818a7c85428",
+    "runtime_evidence": "heimgewebe/infra runtime/heim-pc-network-boundary-2026-07-11.md at 61bc893ee50ac7d50eb548dcb4167f5ec6cb1461",
+    "runtime_evidence_hashes": {
+      "baseline.txt": "067bf01662dd6bd0e969221906ac43cab8647bb507124ee295689b1053b13efd",
+      "router-igd/soap/summary.json": "9f88f0ddb200d450c8be55d1c1e1ae459781b020b27d8d9f0226e66651083ab2",
+      "decision.json": "bcbc58526636e85db76f18eac2f131e69cd47a55f7db02bcc9a56f30603f59b2"
+    },
+    "validated_acceptance": {
+      "consumer-map": "GNOME RDP had recent sessions on 2026-07-09/10; Sunshine was active with autostart and _nvstream discovery; UniFi controller and logs were current; Avahi served Sunshine and cups-browsed discovery.",
+      "least-exposure": "No listener lacked a current consumer. Sunshine configuration explicitly records upnp=disabled. Further interface narrowing was not proven safe while host-firewall truth remains blocked.",
+      "recovery": "No runtime mutation was applied, so no rollback action was required. The no-change decision and pre-state hashes are recorded.",
+      "no-blind-disable": "Unknown authenticated UniFi device count was retained as an evidence gap rather than converted into an unused-service claim.",
+      "runtime-update": "Infra PR #120 records the reviewed no-change decision and the remaining UNVERIFIED ingress boundaries."
+    },
+    "ci_observation": {
+      "github_check": "validate",
+      "check_run_id": 86500669320,
+      "result": "job_not_started",
+      "reason": "GitHub account payment/spending-limit block; no runner or test step started.",
+      "local_validation": "make validate PASS on exact head a269a55b772a666996d6304e2c28109db3402b7b immediately before merge"
+    },
+    "self_review": "PASS after correcting the decision.json digest and removing an unsupported UniFi version claim; exact PR diff, local evidence hashes, live container identity and no-change semantics were re-read before merge.",
+    "verification": {
+      "task_sha256": "dc34d169cb25a6ae56d3205ecbd3e35a510df223c7af9d4ad64e3553211aabac",
+      "plan_sha256": "2d61c05fd511d58d952d02850498a68c7ce5197da691b18ee0d6b775a5b3a39b"
+    }
   }
 }

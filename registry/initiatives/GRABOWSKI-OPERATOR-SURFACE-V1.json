@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Grabowski operator surface",
-  "state": "active",
+  "state": "waiting",
   "commitment": "next",
   "goal": "Reduce Grabowski operator decision entropy by adding a read-only situation spine, a small intent-shaped grip surface, friction feedback, evidence-bound recall, durable jobs and enforceable session attenuation.",
   "current_plan": {
@@ -35,6 +35,7 @@
       "docs/grabowski-restplan-v2.md": "reuses capability-profile direction and converts it into task-shaped follow-up"
     },
     "priority_decision": "situation spine before recall; grip surface before friction automation; push and capability enforcement later",
-    "rootbroker_recovery_freshness_followup_20260711": "T030 registers the observed contradiction between recovery_status ready=true and immediate Rootbroker stale-marker denial. It remains planned/later while another Grabowski task holds the repository."
+    "rootbroker_recovery_freshness_followup_20260711": "T030 records the reproduced contradiction between recovery_status ready=true and immediate Rootbroker stale-marker denial. It is blocked while another owner holds the Grabowski repository.",
+    "waiting_reason_20260711": "Waiting because T030 is blocked by an active foreign Grabowski repository lease after a fresh runtime reproduction."
   }
 }

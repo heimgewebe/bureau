@@ -205,7 +205,7 @@
     "system_catalog_repository_migration_closeout": {
       "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014",
       "status": "verified",
-      "verified_at": "2026-07-11T16:14:31Z",
+      "verified_at": "2026-07-11T16:30:03Z",
       "repository": "heimgewebe/heimgewebe-katalog",
       "local_checkout": "/home/alex/repos/heimgewebe-katalog",
       "final_head": "b8c550a042b42766552c4752ec3973d7637fab5d",
@@ -216,8 +216,10 @@
       "runtime_service": "heimgewebe-systemkatalog.service",
       "active_cabinet_alias_count": 0,
       "historical_evidence_preserved": true,
-      "evidence_sha256": "1b4ce16538eb966d71582d2395e0a4105e1ef0e8d17d3aeff95a3dff68b9d01b",
-      "canonical_resource_id": "repo.heimgewebe-katalog"
+      "evidence_sha256": "226c9246269464bee4efaa32d9826ce1ec384158a6d5a9f032b4e0b36f50d3f4",
+      "canonical_resource_id": "repo.heimgewebe-katalog",
+      "merge_archive_latest_aliases_migrated": true,
+      "historical_source_card_targets_preserved": true
     }
   }
 }

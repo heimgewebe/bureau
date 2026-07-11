@@ -3,7 +3,7 @@
   "id": "UTIL-BASE-V1-T013",
   "initiative": "UTIL-BASE-V1",
   "title": "Harden local Restic command surfaces against probe-as-write",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 130
@@ -70,7 +70,160 @@
       "snapshot_deletion_permission",
       "prune_permission",
       "service_restart_permission"
-    ]
+    ],
+    "verified_at": "2026-07-11T07:38:46Z",
+    "operator_authorization": "User instruction on 2026-07-11 to finish the Restic runtime verification and Bureau closeout; no maintenance, retention, forget or prune action authorized.",
+    "implementation_pull_requests": [
+      {
+        "repository": "heimgewebe/infra",
+        "number": 121,
+        "head_sha": "47c68ada53d3655c42129be69c0e2c344d7d01e5",
+        "merge_commit": "ddfc8a55429b4a5251506c3476cbf92581e61749",
+        "diff_sha256": "97477d858da7d5ccc45eaa68b34affddcc7d9e91a2298c3cac591160623427d6"
+      },
+      {
+        "repository": "heimgewebe/infra",
+        "number": 122,
+        "head_sha": "b751cdab396f8a54a730e7f0f4df11d14afe6d97",
+        "merge_commit": "c4087e78d3a77ec55276859edd58536934486f3d",
+        "diff_sha256": "45de7f2fa15c9a9e635467485181824ddad187901e04ace7a675b676b4e0d76d"
+      },
+      {
+        "repository": "heimgewebe/infra",
+        "number": 123,
+        "head_sha": "e19f45ec00a37ede01909d1ef377ce8a88d79ece",
+        "merge_commit": "0d0cba93bcafc1f92f70e77b7545407fee3cc773",
+        "diff_sha256": "4e61c9c957e4506cf4435b8c5ca56ff11a02ae04652d75af801d07051b8efa6f"
+      }
+    ],
+    "runtime_evidence_pull_request": {
+      "repository": "heimgewebe/infra",
+      "number": 124,
+      "head_sha": "75eb26a3427252ab1ea6f4af36b742047ab24482",
+      "merge_commit": "d27548689861238edb770d2d39de986b7bab97f3",
+      "diff_sha256": "ddabef12b7b65700710851b09ddbc6d752ba23d0df0d0a467d08795752921fd8"
+    },
+    "runtime_evidence": {
+      "repository": "heimgewebe/infra",
+      "path": "runtime/heim-pc-restic-runtime-closeout-2026-07-11.json",
+      "commit_sha": "d27548689861238edb770d2d39de986b7bab97f3",
+      "content_sha256": "ca58c8aa1593d617bcc1eee851e81d51cdfa019d662b623bcf0a9f84c65f8874",
+      "markdown_sha256": "7e847b55d9d4410253910c1bd8d009b4f07ef08f6dd98680886d5900e117213a",
+      "source_version": "0d0cba93bcafc1f92f70e77b7545407fee3cc773",
+      "snapshot_id": "5b2ac9c7029e604d51128a696376bf2ea6fdca330ff79073f8cfaf769574fd10",
+      "run_tag": "heim-pc-daily-20260711T072040Z-449393-31805",
+      "sentinel_sha256": "1a7424392ca5e0786b0025052244e151286e276bf70892d54de33445f080342c",
+      "exact_snapshot_restore": true
+    },
+    "deployed_artifact_hashes": {
+      "backup_wrapper_sha256": "3627d1ef13cd8722305c9cf7442142ab79e68c1cb78471a0d372f286a6e490f5",
+      "maintenance_wrapper_sha256": "b1d47af537ada5379d718f5957d653a003bdc3ad09ef99e61c88723af6520ece",
+      "runtime_verifier_sha256": "72a68e5090d32484f4cb1f37e9ada163b1ef92361eb71f3830432a6ecb005349",
+      "install_receipt_sha256": "cd752a8eb1f30f767dbd4f4bbf0b74558884f57c2e64a1e8cc562d4324eea6f7"
+    },
+    "inspection_probe": {
+      "observed_at": "2026-07-11T07:38:46Z",
+      "backup_modes": [
+        "--help",
+        "status",
+        "plan",
+        "unknown-argument"
+      ],
+      "maintenance_modes": [
+        "--help",
+        "status",
+        "plan",
+        "unknown-argument"
+      ],
+      "unknown_argument_exit_code": 2,
+      "success_marker_sha256_before_after": "293fe546e9ecb1bc7336e2610213110774092db04f74e2a2517de2fa907fe374",
+      "sentinel_sha256_before_after": "1a7424392ca5e0786b0025052244e151286e276bf70892d54de33445f080342c",
+      "marker_mtime_unchanged": true,
+      "repository_lock_free_after": true,
+      "process_residue_count": 0,
+      "temporary_residue_count": 0,
+      "side_effects": false
+    },
+    "github_ci_observation": {
+      "workflow_run_id": 29144599089,
+      "check_run_id": 86523860200,
+      "result": "job_not_started",
+      "steps": 0,
+      "logs_available": false,
+      "reason": "GitHub account payment or spending-limit block; not classified as a code or test failure."
+    },
+    "validation": [
+      "Complete Infra make validate passed on the exact published PR #124 head in a fresh detached checkout.",
+      "All 24 Restic runtime tests passed; ShellCheck and git diff --check passed.",
+      "Help, status, plan and unknown-argument probes on both deployed wrappers changed neither marker nor sentinel, acquired no persistent lock, opened no tunnel and left no temporary files.",
+      "A real backup created one unique run-tagged full snapshot and restored the sentinel from exactly that snapshot with byte-identical SHA-256.",
+      "Installer, runtime verifier, daily timer, disabled maintenance timer, retirement verifier and rollback paths passed after the backup."
+    ],
+    "validated_acceptance": {
+      "canonical-owner": "Infra owns scripts, units, installer, verifier, install receipt and rollback contract; active runtime is bound to source commit 0d0cba93.",
+      "safe-help": "Live --help, status and plan probes on backup and maintenance wrappers were non-mutating; marker and sentinel hashes and marker mtime remained unchanged.",
+      "unknown-args": "Both deployed wrappers returned exit code 2 before lock, tunnel, Restic process, marker write or temporary file creation.",
+      "regression-tests": "24 focused tests plus the complete Infra suite prove probe safety and exact-snapshot restore binding; the real run returned BACKUP_OK restore_sentinel=PASS.",
+      "runtime-rollout": "PRs #121-#123 implemented the hash-bound reversible runtime; PR #124 records post-rollout exact-snapshot evidence. Previous releases and backup directories remain available."
+    },
+    "outcome": "The local Restic command surfaces are canonically owned, probe-safe, commit-bound and reversible. A real Heimberry backup and exact-snapshot sentinel restore passed. Maintenance remains explicitly unauthorized.",
+    "self_review": "PASS: implementation commits, deployed hashes, live no-side-effect probes, exact snapshot metadata, sentinel hashes, timer states, receipts and rollback directories were independently re-read.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "UTIL-BASE-V1-T013",
+          "source_ref": "heimgewebe/infra#121",
+          "number": 121,
+          "merge_commit_sha": "ddfc8a55429b4a5251506c3476cbf92581e61749",
+          "diff_sha256": "97477d858da7d5ccc45eaa68b34affddcc7d9e91a2298c3cac591160623427d6"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "UTIL-BASE-V1-T013",
+          "source_ref": "heimgewebe/infra#122",
+          "number": 122,
+          "merge_commit_sha": "c4087e78d3a77ec55276859edd58536934486f3d",
+          "diff_sha256": "45de7f2fa15c9a9e635467485181824ddad187901e04ace7a675b676b4e0d76d"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "UTIL-BASE-V1-T013",
+          "source_ref": "heimgewebe/infra#123",
+          "number": 123,
+          "merge_commit_sha": "0d0cba93bcafc1f92f70e77b7545407fee3cc773",
+          "diff_sha256": "4e61c9c957e4506cf4435b8c5ca56ff11a02ae04652d75af801d07051b8efa6f"
+        },
+        {
+          "kind": "runtime_evidence",
+          "system": "heim-pc-restic-runtime",
+          "task_id": "UTIL-BASE-V1-T013",
+          "repository": "heimgewebe/infra",
+          "path": "runtime/heim-pc-restic-runtime-closeout-2026-07-11.json",
+          "commit_sha": "d27548689861238edb770d2d39de986b7bab97f3",
+          "content_sha256": "ca58c8aa1593d617bcc1eee851e81d51cdfa019d662b623bcf0a9f84c65f8874",
+          "snapshot_id": "5b2ac9c7029e604d51128a696376bf2ea6fdca330ff79073f8cfaf769574fd10",
+          "run_id": "heim-pc-daily-20260711T072040Z-449393-31805"
+        }
+      ]
+    },
+    "verification": {
+      "verified_at": "2026-07-11T07:38:46Z",
+      "task_sha256": "59b251ae80f9b9020f7028e2668a841803bb51e66d6f14153112a4ce62f740f1",
+      "plan_sha256": "b7cfba2a62e364bcd6d07747f68eb82ac11f4ba9a25c9aef4a62bf9ee0631596",
+      "acceptance_ids": [
+        "canonical-owner",
+        "safe-help",
+        "unknown-args",
+        "regression-tests",
+        "runtime-rollout"
+      ]
+    }
   },
   "depends_on": [
     "UTIL-BASE-V1-T002"

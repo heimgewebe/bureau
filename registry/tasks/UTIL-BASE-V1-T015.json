@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "id": "UTIL-BASE-V1-T015",
+  "initiative": "UTIL-BASE-V1",
+  "title": "Review Restic retention and prune policy",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 131
+  },
+  "goal": "Evaluate the compiled Heim-PC Restic retention policy against actual recovery needs, repository growth and rollback requirements before any forget or prune execution is authorized.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Policy review and repository documentation only. No forget, prune, maintenance run, timer enablement or snapshot deletion is authorized."
+    },
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/infra",
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [
+    "UTIL-BASE-V1-T013"
+  ],
+  "acceptance": [
+    {
+      "id": "policy-inventory",
+      "assertion": "The exact compiled policy and SHA-256 are recorded together with snapshot age/count/size distributions using read-only repository queries."
+    },
+    {
+      "id": "recovery-model",
+      "assertion": "Daily, weekly and monthly retention values are justified against realistic restore horizons, outage scenarios and repository capacity."
+    },
+    {
+      "id": "preview",
+      "assertion": "A non-mutating preview or equivalent explicit candidate report identifies what would be forgotten and what would remain; ambiguity blocks approval."
+    },
+    {
+      "id": "safety-gates",
+      "assertion": "A fresh exact-snapshot restore proof, repository health check, rollback path and minimum protected snapshots are mandatory preconditions."
+    },
+    {
+      "id": "review-decision",
+      "assertion": "The policy is approved, revised or rejected in a reviewed PR; registration does not itself authorize forget or prune."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-11T07:38:46Z",
+    "source": "Restic runtime closeout 2026-07-11",
+    "observed_policy_sha256": "636acfde44ddb2b752802801080ddf479b999712426cc07a162a032ba0968af7",
+    "observed_policy": "keep-daily=14; keep-weekly=8; keep-monthly=12; prune=true; check=true",
+    "does_not_establish": [
+      "retention policy suitability",
+      "snapshot deletion permission",
+      "forget permission",
+      "prune permission",
+      "maintenance execution permission",
+      "timer enablement permission"
+    ]
+  }
+}

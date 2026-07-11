@@ -85,9 +85,23 @@
       "recommended_state": "completion-ready",
       "source": "post-merge doctor check after PR #366"
     },
-    "closeout_status": "UTIL-BASE-V1-T014 is verified with immutable container pins, canonical Compose provenance and live rollback/smoke evidence. UTIL-BASE-V1-T013 remains planned, so the initiative stays active; no data deletion, image pruning, unreviewed upgrade or public exposure is authorized.",
+    "closeout_status": "UTIL-BASE-V1-T013 is verified with commit-bound probe-safe wrappers and a real exact-snapshot restore. The initiative remains active for separate retention-policy review, first maintenance authorization/proof and later rollback-artifact evaluation under T015-T017.",
     "lifecycle_reopened_20260710": "PR #392 registered UTIL-BASE-V1-T013 as a planned follow-up after the previous completion-ready closeout; the initiative is active again until that hardening task is resolved.",
     "lifecycle_reopened_20260710_container_pinning": "UTIL-BASE-V1-T014 registers immutable image pins, canonical Beszel-agent source, validation and staged live rollout after the operator ecosystem audit found floating tags and obsolete worktree provenance.",
-    "verified_container_pinning_20260710": "Infra PR #113 implemented immutable image and source contracts; PR #114 published live evidence. Runtime verifier SHA-256 a0602f435e7c6c31ed3ddacfb329413802f51079d535296589b087be386c9b2c passed."
+    "verified_container_pinning_20260710": "Infra PR #113 implemented immutable image and source contracts; PR #114 published live evidence. Runtime verifier SHA-256 a0602f435e7c6c31ed3ddacfb329413802f51079d535296589b087be386c9b2c passed.",
+    "restic_runtime_closeout_20260711": {
+      "task": "UTIL-BASE-V1-T013",
+      "status": "verified",
+      "verified_at": "2026-07-11T07:38:46Z",
+      "infra_pr": "heimgewebe/infra#124",
+      "runtime_evidence_commit": "d27548689861238edb770d2d39de986b7bab97f3",
+      "snapshot_id": "5b2ac9c7029e604d51128a696376bf2ea6fdca330ff79073f8cfaf769574fd10",
+      "exact_snapshot_restore": true,
+      "follow_up_tasks": [
+        "UTIL-BASE-V1-T015",
+        "UTIL-BASE-V1-T016",
+        "UTIL-BASE-V1-T017"
+      ]
+    }
   }
 }

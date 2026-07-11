@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "id": "UTIL-BASE-V1-T017",
+  "initiative": "UTIL-BASE-V1",
+  "title": "Evaluate old Restic releases and rollback backups",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 133
+  },
+  "goal": "Classify retained Restic runtime releases, installer backups and GDrive-retirement quarantine backups by rollback value, then remove only artifacts proven obsolete under a separately reviewed deletion plan.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Inventory and deletion-plan review are allowed. Actual removal requires a separately reviewed exact path allowlist and rollback sufficiency proof."
+    },
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/infra",
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [
+    "UTIL-BASE-V1-T013"
+  ],
+  "acceptance": [
+    {
+      "id": "complete-inventory",
+      "assertion": "Every retained release and runtime/retirement backup is inventoried with path, source version, age, size, ownership and content or manifest hash."
+    },
+    {
+      "id": "rollback-value",
+      "assertion": "The currently active release, one proven immediate rollback release and all receipts/backups needed to restore pre-retirement state are explicitly protected."
+    },
+    {
+      "id": "deletion-plan",
+      "assertion": "Any removal proposal is an exact path allowlist with expected hashes, benefit, risk, dwell period and abort conditions; wildcard cleanup is forbidden."
+    },
+    {
+      "id": "reviewed-effect",
+      "assertion": "No artifact is removed before reviewed approval, current verifier success and confirmation that no process, worktree, lease or receipt still references it."
+    },
+    {
+      "id": "post-cleanup-proof",
+      "assertion": "After any approved removal, runtime, rollback, timer, retirement and exact restore checks remain green and removed paths are recorded."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-11T07:38:46Z",
+    "source": "Restic runtime closeout 2026-07-11",
+    "currently_protected": [
+      "releases/0d0cba93bcafc1f92f70e77b7545407fee3cc773",
+      "releases/c4087e78d3a77ec55276859edd58536934486f3d",
+      "runtime backup 20260711T050029Z.9347",
+      "retirement backup 20260711T050231Z.10854"
+    ],
+    "does_not_establish": [
+      "obsolete artifact classification",
+      "deletion permission",
+      "safe wildcard cleanup",
+      "permission to remove the immediate rollback release"
+    ]
+  }
+}

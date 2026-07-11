@@ -126,7 +126,7 @@
     "completion": {
       "schema_version": 1,
       "status": "verified_system_catalog_repository_and_alias_migration_complete",
-      "verified_at": "2026-07-11T16:14:31Z",
+      "verified_at": "2026-07-11T16:30:03Z",
       "repository": {
         "github_name": "heimgewebe/heimgewebe-katalog",
         "github_url": "https://github.com/heimgewebe/heimgewebe-katalog",
@@ -202,7 +202,14 @@
         "new_repobrief_timers_loaded": true,
         "new_repobrief_timers_enabled": false,
         "bureau_repo_cabinet_resource_absent": true,
-        "canonical_bureau_resource_id": "repo.heimgewebe-katalog"
+        "canonical_bureau_resource_id": "repo.heimgewebe-katalog",
+        "merge_archive_cabinet_latest_symlink_absent": true,
+        "merge_archive_cabinet_reviewed_latest_symlink_absent": true,
+        "replacement_latest_symlinks": [
+          "/home/alex/repos/merges/heimgewebe-katalog-source-cards-latest",
+          "/home/alex/repos/merges/heimgewebe-katalog-source-cards-reviewed-latest"
+        ],
+        "historical_source_card_target_directories_preserved": true
       },
       "preservation_boundary": {
         "historical_receipts_preserved": true,
@@ -220,19 +227,19 @@
         "schauwerk_tests": "490 passed; Ruff and registry validation passed",
         "systemkatalog_bridge_probe": "success against Bureau merge 25a03c03ec7a311e17993b49e54cfe466ece24c7"
       },
-      "evidence_sha256": "1b4ce16538eb966d71582d2395e0a4105e1ef0e8d17d3aeff95a3dff68b9d01b"
+      "evidence_sha256": "226c9246269464bee4efaa32d9826ce1ec384158a6d5a9f032b4e0b36f50d3f4"
     },
     "verification": {
-      "verified_at": "2026-07-11T16:14:31Z",
+      "verified_at": "2026-07-11T16:30:03Z",
       "acceptance_ids": [
         "repository-rename",
         "reference-migration",
         "entrypoints-valid",
         "no-shadow-cabinet"
       ],
-      "completion_evidence_sha256": "1b4ce16538eb966d71582d2395e0a4105e1ef0e8d17d3aeff95a3dff68b9d01b",
-      "verification_note": "GitHub and local repository identity migrated; runtime and active consumers verified; executable Cabinet aliases absent; historical evidence and versioned wire kinds preserved.",
-      "task_sha256": "3079230111760c3658b1bb2d0c97011b5bbaf4ad24bf8b45bdd95fe02888eb05",
+      "completion_evidence_sha256": "226c9246269464bee4efaa32d9826ce1ec384158a6d5a9f032b4e0b36f50d3f4",
+      "verification_note": "GitHub and local repository identity migrated; runtime and active consumers verified; executable, systemd, Bureau-resource and merge-archive latest Cabinet aliases absent; historical evidence, dated target directories and versioned wire kinds preserved.",
+      "task_sha256": "e2bf9b8bcf03eecb9a18c16e0b371937a553eef95a8ab9cdbac8f1f156b375ef",
       "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   },

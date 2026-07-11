@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Decouple and retire external Cabinet app runtime",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 320
@@ -259,30 +259,22 @@
       "level": "break_glass",
       "approved": true,
       "reviewer": "alexdermohr",
-      "reference": "operator-instruction:2026-07-11:cabinet-t013-phase-a-bounded-stop-test",
+      "reference": "operator-instruction:2026-07-11:cabinet-t013-radical-system-catalog-cutover",
       "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
       "scope": [
-        "runtime_mutation"
+        "retire external Cabinet runtime",
+        "replace active service with app-independent Heimgewebe-Systemkatalog",
+        "remove versioned external-app runtime wrappers and patches",
+        "preserve private data and rollback evidence"
       ],
-      "effect": "temporarily stop cabinet.service once, verify catalog independence, and restart it",
-      "max_stop_seconds": 300,
-      "issued_at": "2026-07-11T09:00:09Z",
-      "expires_at": "2026-07-11T11:00:00Z",
-      "one_shot": true,
-      "revoked_on_mismatch": true,
       "consumed": true,
       "remaining_uses": 0,
-      "requires_rollback": true,
       "does_not_authorize": [
-        "service disablement",
-        "file or data mutation",
-        "backup or retention change",
         "repository rename",
-        "phases B-D"
-      ],
-      "consumed_at": "2026-07-11T09:28:46.269714Z",
-      "consumed_evidence_sha256": "e8c7e6c5042cddd8c673d74219f54f8f8a465dfa3e3613c78f38d9161e059585",
-      "result": "phase_A_passed_service_restored"
+        "private archive deletion",
+        "backup retention mutation",
+        "unrelated Bureau task mutation"
+      ]
     },
     "phase_A_completion": {
       "schema_version": 1,
@@ -341,6 +333,79 @@
         "repository rename permission",
         "current human non-use"
       ]
+    },
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_runtime_retired_system_catalog_active",
+      "final_repository_head": "bbf085963976cea21ca2050c90aaa6a13739a863",
+      "pull_requests": [
+        {
+          "number": 112,
+          "merge_commit": "8faafd3094184cd8f36885834d41fb689be11ca7"
+        },
+        {
+          "number": 113,
+          "merge_commit": "90e02790410a4abb8d4ec99189b3ca71bac3ac55"
+        },
+        {
+          "number": 114,
+          "merge_commit": "bbf085963976cea21ca2050c90aaa6a13739a863"
+        }
+      ],
+      "main_workflows": {
+        "Validate": {
+          "run_id": 29150785453,
+          "conclusion": "success"
+        },
+        "Ecosystem Map": {
+          "run_id": 29150785471,
+          "conclusion": "success"
+        },
+        "Project Cards": {
+          "run_id": 29150785491,
+          "conclusion": "success"
+        }
+      },
+      "runtime": {
+        "service": "heimgewebe-systemkatalog.service",
+        "compatibility_alias": "cabinet.service",
+        "active": true,
+        "running": true,
+        "enabled": true,
+        "result": "success",
+        "restart_count": 0,
+        "systems": 19,
+        "relations": 24,
+        "truth_ownership_domains": 14,
+        "write_methods_rejected": true,
+        "old_daemon_port_closed": true,
+        "old_runtime_wrappers_present": 0
+      },
+      "boundaries": {
+        "external_runtime_retired": true,
+        "versioned_external_runtime_removed": true,
+        "private_configuration_preserved": true,
+        "private_state_preserved": true,
+        "external_app_archive_preserved": true,
+        "backup_or_retention_mutated": false,
+        "private_data_deleted": false,
+        "repository_renamed": false
+      },
+      "private_evidence_sha256": "09bef8d56c3f050dad040eca75cb3c6af060e8144d4cb5fe193a3d81416393d2",
+      "handoff_sha256": "b7bf39e1942000d38760ed72c95671aa471c18b137742d9c215c1d03b8729e9b"
+    },
+    "verification": {
+      "verified_at": "2026-07-11T11:56:00Z",
+      "acceptance_ids": [
+        "catalog-independent",
+        "backup-bound",
+        "runtime-retired",
+        "no-data-loss"
+      ],
+      "task_sha256": "bb09ca2fb61357ff0bbb0f05494d46e53b90720410db719be574d6f582e61593",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "evidence_sha256": "09bef8d56c3f050dad040eca75cb3c6af060e8144d4cb5fe193a3d81416393d2",
+      "verification_note": "External Cabinet runtime retired; read-only Heimgewebe-Systemkatalog active. Private state and rollback archive preserved. Repository rename remains unauthorized."
     }
   },
   "depends_on": [

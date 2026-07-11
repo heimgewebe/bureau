@@ -64,7 +64,7 @@
       "automatic_shutdown_permission"
     ],
     "rename_gate": {
-      "status": "blocked_pending_T013_runtime_retirement_and_explicit_authorization",
+      "status": "runtime_retired_pending_explicit_rename_authorization",
       "catalog_core_merge_commit": "0b718077a47b922262fdfbd8ccbe8e3e40464289",
       "dependency": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
       "rename_authorized": false,
@@ -76,10 +76,12 @@
       ],
       "runtime_preflight_available": true,
       "runtime_preflight_merge_commit": "6c64348daf242e48e09e678f5793fc086854b31b",
-      "runtime_retired": false,
-      "preflight_satisfies_T013_dependency": false,
+      "runtime_retired": true,
+      "preflight_satisfies_T013_dependency": true,
       "phase_A_completed": true,
-      "phase_A_private_evidence_sha256": "e8c7e6c5042cddd8c673d74219f54f8f8a465dfa3e3613c78f38d9161e059585"
+      "phase_A_private_evidence_sha256": "e8c7e6c5042cddd8c673d74219f54f8f8a465dfa3e3613c78f38d9161e059585",
+      "t013_final_cabinet_head": "bbf085963976cea21ca2050c90aaa6a13739a863",
+      "t013_private_evidence_sha256": "09bef8d56c3f050dad040eca75cb3c6af060e8144d4cb5fe193a3d81416393d2"
     }
   },
   "depends_on": [

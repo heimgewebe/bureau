@@ -43,15 +43,15 @@ Cabinet beantwortet künftig ausschließlich:
 
 Cabinet pflegt keine Aufgabenpriorität, Runtime-Gesundheit, Merge-Reife, Agentendisposition oder zweite Statusmodelle.
 
-Die externe Cabinet AI Workspace App ist nur noch ein vorübergehender optionaler Viewer. Sie ist weder Canon noch notwendiger Validator, Renderer oder Runtime-Unterbau. Zielname nach abgeschlossener Entkopplung: `heimgewebe-katalog`.
+Die externe Cabinet AI Workspace App ist stillgelegt. Die aktive Runtime ist der read-only Heimgewebe-Systemkatalog; sie ist kein zweites Status- oder Steuerungssystem. Der weiterhin getrennt zu autorisierende Zielname lautet `heimgewebe-katalog`.
 
 ## Cabinet-Migrationsreihenfolge
 
 1. `T011` führt Zielrolle, Katalogvertrag, Validator, Renderer und eine vollständige Rückbau-Matrix nichtdestruktiv ein.
 2. `T012` inventarisiert und exportiert private lokale App-Daten und Abhängigkeiten.
 3. `T004` migriert den semantischen Canon und entfernt operative Statusmodelle.
-4. `T013` entkoppelt und stilllegt die externe App-Runtime mit Backup- und Rollback-Beleg.
-5. `T014` benennt Repository und Querverweise in `heimgewebe-katalog` um.
+4. `T013` ist abgeschlossen: Die externe App-Runtime ist mit Backup- und Rollback-Beleg stillgelegt; der read-only Heimgewebe-Systemkatalog ist aktiv.
+5. `T014` bleibt offen und separat autorisierungspflichtig: Repository und Querverweise werden erst nach eigenem Review in `heimgewebe-katalog` umbenannt.
 
 `T007` bleibt die unabhängige Consumer- und Nutzungsevidenz vor Abschaltentscheidungen.
 

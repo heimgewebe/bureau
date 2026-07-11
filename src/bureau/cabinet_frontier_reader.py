@@ -621,7 +621,7 @@ def import_reviewed_frontier_candidate(
     }
 
 def parser() -> argparse.ArgumentParser:
-    result = argparse.ArgumentParser(prog="bureau-cabinet-frontier-reader")
+    result = argparse.ArgumentParser(prog="bureau-systemkatalog-frontier-reader")
     sub = result.add_subparsers(dest="command", required=True)
     read = sub.add_parser("read")
     read.add_argument("--frontier", required=True)
@@ -686,7 +686,7 @@ def main(argv: list[str] | None = None) -> int:
                 apply=args.apply,
             )
     except CabinetBridgeError as exc:
-        print(f"bureau-cabinet-frontier-reader: {exc}", file=sys.stderr)
+        print(f"bureau-systemkatalog-frontier-reader: {exc}", file=sys.stderr)
         return 2
     print(
         json.dumps(

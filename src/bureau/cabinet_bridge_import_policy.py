@@ -122,7 +122,7 @@ def validate_policy(path: str | Path) -> dict[str, Any]:
 
 
 def parser() -> argparse.ArgumentParser:
-    result = argparse.ArgumentParser(prog="bureau-cabinet-bridge-import-policy")
+    result = argparse.ArgumentParser(prog="bureau-systemkatalog-bridge-import-policy")
     result.add_argument(
         "--policy",
         default="docs/cabinet-bridge-import-review-contract-v0.policy.json",
@@ -136,7 +136,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         value = validate_policy(args.policy)
     except CabinetBridgeError as exc:
-        print(f"bureau-cabinet-bridge-import-policy: {exc}", file=sys.stderr)
+        print(f"bureau-systemkatalog-bridge-import-policy: {exc}", file=sys.stderr)
         return 2
     indent = 2 if args.json else None
     print(json.dumps(value, indent=indent, ensure_ascii=False, sort_keys=True))

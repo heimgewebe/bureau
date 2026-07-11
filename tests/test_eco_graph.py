@@ -116,7 +116,7 @@ class CabinetGraphReaderTests(unittest.TestCase):
             write_graph(path, graph([repo_node("cabinet")]))
             stream = io.StringIO()
             with contextlib.redirect_stdout(stream):
-                result = main(["--json", "cabinet-graph", "--graph", str(path)])
+                result = main(["--json", "systemkatalog-graph", "--graph", str(path)])
             self.assertEqual(result, 0)
             payload = json.loads(stream.getvalue())
             self.assertEqual(payload["kind"], "cabinet_graph_report")
@@ -184,7 +184,7 @@ class CabinetGraphReaderTests(unittest.TestCase):
             write_graph(path, graph([repo_node("bureau", ["dirty_import_worktree"])]))
             stream = io.StringIO()
             with contextlib.redirect_stdout(stream):
-                result = main(["--json", "cabinet-frontier", "--graph", str(path)])
+                result = main(["--json", "systemkatalog-frontier", "--graph", str(path)])
             self.assertEqual(result, 0)
             payload = json.loads(stream.getvalue())
             self.assertEqual(payload["kind"], "cabinet_frontier_export")
@@ -209,7 +209,7 @@ class CabinetPromotionGateTests(unittest.TestCase):
                 {
                     "schemaVersion": 1,
                     "kind": "bureau_frontier_candidate",
-                    "id": "cabinet-graph:repo-bureau:review-import-drift",
+                    "id": "systemkatalog-graph:repo-bureau:review-import-drift",
                     "source": "cabinet_ecosystem_graph",
                     "targetNode": "repo:bureau",
                     "repository": "bureau",

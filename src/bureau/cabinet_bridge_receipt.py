@@ -106,7 +106,7 @@ def create_review_receipt(
 
 
 def parser() -> argparse.ArgumentParser:
-    result = argparse.ArgumentParser(prog="bureau-cabinet-bridge-receipt")
+    result = argparse.ArgumentParser(prog="bureau-systemkatalog-bridge-receipt")
     result.add_argument("--review-gate", required=True)
     result.add_argument("--reviewer", required=True)
     result.add_argument("--decision", required=True, choices=DECISIONS)
@@ -127,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
             note=args.note,
         )
     except CabinetBridgeError as exc:
-        print(f"bureau-cabinet-bridge-receipt: {exc}", file=sys.stderr)
+        print(f"bureau-systemkatalog-bridge-receipt: {exc}", file=sys.stderr)
         return 2
     indent = 2 if args.json else None
     print(json.dumps(value, indent=indent, ensure_ascii=False, sort_keys=True))

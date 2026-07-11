@@ -124,7 +124,7 @@ class CabinetBridgeProbeTests(unittest.TestCase):
                 result = main(
                     [
                         "--json",
-                        "cabinet-bridge-probe",
+                        "systemkatalog-bridge-probe",
                         "--bridge-policy",
                         str(policy_path),
                     ]

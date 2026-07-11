@@ -15,7 +15,7 @@
     "working_repository": "/home/alex/repos/lenskit",
     "grabowski_resources": [
       "repo:/home/alex/repos/lenskit",
-      "repo:/home/alex/repos/cabinet",
+      "repo:/home/alex/repos/heimgewebe-katalog",
       "repo:/home/alex/repos/grabowski"
     ]
   },
@@ -26,7 +26,7 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.cabinet",
+      "resource": "repo.heimgewebe-katalog",
       "mode": "read",
       "isolation": "none"
     },

@@ -12,14 +12,14 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/cabinet",
+    "working_repository": "/home/alex/repos/heimgewebe-katalog",
     "grabowski_resources": [
-      "repo:/home/alex/repos/cabinet"
+      "repo:/home/alex/repos/heimgewebe-katalog"
     ]
   },
   "claims": [
     {
-      "resource": "repo.cabinet",
+      "resource": "repo.heimgewebe-katalog",
       "mode": "write",
       "isolation": "worktree"
     },

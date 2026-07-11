@@ -12,15 +12,15 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/cabinet",
+    "working_repository": "/home/alex/repos/heimgewebe-katalog",
     "grabowski_resources": [
-      "repo:/home/alex/repos/cabinet",
+      "repo:/home/alex/repos/heimgewebe-katalog",
       "host:heim-pc"
     ]
   },
   "claims": [
     {
-      "resource": "repo.cabinet",
+      "resource": "repo.heimgewebe-katalog",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -402,7 +402,7 @@
         "runtime-retired",
         "no-data-loss"
       ],
-      "task_sha256": "bb09ca2fb61357ff0bbb0f05494d46e53b90720410db719be574d6f582e61593",
+      "task_sha256": "19e5b5a5ab253875f04e4686b397084981e89392beb27b78ddfcba6c1261dfa1",
       "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
       "evidence_sha256": "09bef8d56c3f050dad040eca75cb3c6af060e8144d4cb5fe193a3d81416393d2",
       "verification_note": "External Cabinet runtime retired; read-only Heimgewebe-Systemkatalog active. Private state and rollback archive preserved. Repository rename remains unauthorized."

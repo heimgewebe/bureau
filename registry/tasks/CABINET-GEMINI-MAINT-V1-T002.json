@@ -12,14 +12,14 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/cabinet",
+    "working_repository": "/home/alex/repos/heimgewebe-katalog",
     "grabowski_resources": [
-      "repo:/home/alex/repos/cabinet"
+      "repo:/home/alex/repos/heimgewebe-katalog"
     ]
   },
   "claims": [
     {
-      "resource": "repo.cabinet",
+      "resource": "repo.heimgewebe-katalog",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -61,7 +61,7 @@
     "unblocked_after_manifest_at": "2026-07-08T14:35:00Z",
     "verified_at": "2026-07-08T14:45:00Z",
     "verification": {
-      "task_sha256": "65aa035a969d4b9fcbe43e67d1030e7cca7d85be939345c8e2c73b2603cc8cb5",
+      "task_sha256": "ce6fc492067bc4b3d0e32fe6833dfcc787850c35527630f3615900f0ed42d5b4",
       "plan_sha256": "bfd441cbf854d2c8f0ffd14024f743ea64272ba867ffe26b2a5852bc947b7941"
     },
     "evidence": {

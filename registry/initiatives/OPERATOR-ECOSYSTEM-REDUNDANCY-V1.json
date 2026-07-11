@@ -25,7 +25,7 @@
     "max_active_tasks": 2
   },
   "metadata": {
-    "source_audit_repository": "heimgewebe/cabinet",
+    "source_audit_repository": "heimgewebe/heimgewebe-katalog",
     "source_audit_pr": 103,
     "source_audit_merge_commit": "765644daff8ed909272bf097f83bf29679ef165e",
     "source_audit_path": "registry/ecosystem/operator-redundancy-audit.v1.json",
@@ -57,9 +57,14 @@
       "does_not_establish": [
         "safe_immediate_service_shutdown",
         "data_export_completeness",
-        "repository_rename_completion",
         "runtime_cleanup_permission"
-      ]
+      ],
+      "status": "verified_complete",
+      "completed_at": "2026-07-11T16:14:31Z",
+      "completion_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014",
+      "repository_rename_completed": true,
+      "active_reference_migration_completed": true,
+      "active_alias_removal_completed": true
     },
     "bureau_scheduler_audit": {
       "observed_at": "2026-07-10T16:57:30Z",
@@ -129,8 +134,6 @@
       "next_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
       "next_migration_scope": "read-only preflight verified; Phase A authorization required and absent"
     },
-    "next_cabinet_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014",
-    "next_cabinet_migration_scope": "T014 is explicitly authorized for repository/path/reference migration and active alias removal; execution and postflight remain pending.",
     "github_actions_runner_block_followup_20260711": {
       "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020",
       "status": "planned",
@@ -188,7 +191,33 @@
       "runtime_service": "heimgewebe-systemkatalog.service",
       "compatibility_alias": "cabinet.service",
       "repository_renamed": false,
-      "next_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014"
+      "next_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014",
+      "superseded_current_state": {
+        "by_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014",
+        "repository": "heimgewebe/heimgewebe-katalog",
+        "compatibility_alias_present": false,
+        "repository_renamed": true,
+        "verified_at": "2026-07-11T16:14:31Z"
+      }
+    },
+    "last_completed_catalog_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014",
+    "system_catalog_migration_status": "verified_complete",
+    "system_catalog_repository_migration_closeout": {
+      "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014",
+      "status": "verified",
+      "verified_at": "2026-07-11T16:14:31Z",
+      "repository": "heimgewebe/heimgewebe-katalog",
+      "local_checkout": "/home/alex/repos/heimgewebe-katalog",
+      "final_head": "b8c550a042b42766552c4752ec3973d7637fab5d",
+      "bureau_merge_commit": "25a03c03ec7a311e17993b49e54cfe466ece24c7",
+      "lenskit_merge_commit": "3c6b028ee62dc5d094247c78541b2561c18307d0",
+      "leitstand_merge_commit": "f1616086bcdf3f8c4db1ca6f97a7694645dd90db",
+      "schauwerk_merge_commit": "57a9ec5d1a590ea0f0711f906db5bcf155b9bac2",
+      "runtime_service": "heimgewebe-systemkatalog.service",
+      "active_cabinet_alias_count": 0,
+      "historical_evidence_preserved": true,
+      "evidence_sha256": "1b4ce16538eb966d71582d2395e0a4105e1ef0e8d17d3aeff95a3dff68b9d01b",
+      "canonical_resource_id": "repo.heimgewebe-katalog"
     }
   }
 }

@@ -20,7 +20,7 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.cabinet",
+      "resource": "repo.heimgewebe-katalog",
       "mode": "read",
       "isolation": "none"
     },

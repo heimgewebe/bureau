@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "OPERATOR-PC-HYGIENE-V1",
-  "state": "planned",
+  "state": "verified",
   "required_capabilities": [
     "shell",
     "grabowski"
@@ -62,6 +62,31 @@
       "permission_to_terminate_agent_sessions",
       "permission_to_delete_transcripts",
       "repository_cleanup_authority"
-    ]
+    ],
+    "verified_at": "2026-07-11T02:20:00+02:00",
+    "outcome": "Inventoried all 59 detached tmux sessions, retained 27 active and 3 uncertain/young sessions, archived bounded pane history for 29 process-fingerprint-bound idle shells, and closed exactly those 29 sessions. Repositories and worktrees were unchanged; 30 protected sessions and core operator services remained active.",
+    "runtime_evidence": {
+      "evidence_root": "/home/alex/.local/state/heim-pc-hygiene/tmux/20260711T001833Z-OPERATOR-PC-HYGIENE-V1-T007",
+      "initial_session_count": 59,
+      "closed_count": 29,
+      "remaining_count": 30,
+      "history_count": 29,
+      "history_bytes": 287080,
+      "dry_run_sha256": "207e9d895d1f59d87692822e278296eb5510235e60c591b161d1c2edc5df211a",
+      "apply_plan_sha256": "344ba855e03a1bc342778b6e72728f4af448a63e92b10b7c01e9640e10557455",
+      "result_sha256": "c4a77c3ffce8c2af6a9e993d4af148f9e4e658fe169b9e750dbfaac49ea12f75"
+    },
+    "verified_acceptance": {
+      "inventory": "The dry-run records every session and pane with age, attach state, command, cwd, process tree, fingerprint, active leases and repository-agent context.",
+      "classification": "59 sessions were classified as 29 safe-close, 27 active-retain and 3 uncertain-retain. Age alone was explicitly non-authorizing.",
+      "transcript-preservation": "Before effects, up to 5000 pane-history lines per safe-close session were stored locally as 29 mode-0600 files with individual hashes in the apply plan.",
+      "explicit-allowlist": "Only exact names in the reviewed 29-session allowlist were closed. Every session was detached, single-pane, bash-only apart from the session logger, older than 24 hours, unleased and fingerprint-identical immediately before kill-session.",
+      "post-proof": "All 29 allowlisted sessions are absent; all 30 protected sessions remain. Grabowski operator, tunnel and Leitstand user services remained active. No repository or worktree was removed or modified."
+    },
+    "self_review": "PASS: process fingerprints were checked twice, repository candidates were clean with no open PR or Bureau branch reference, active repo leases and agent-session repositories were retained, histories were archived before exact-name close, and protected sessions remained.",
+    "verification": {
+      "task_sha256": "e693e2298c6225080c05fc47c27f7c8bc26efa6e3eb683d5334b7e8b38550da7",
+      "plan_sha256": "2d61c05fd511d58d952d02850498a68c7ce5197da691b18ee0d6b775a5b3a39b"
+    }
   }
 }

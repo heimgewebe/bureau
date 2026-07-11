@@ -3,7 +3,7 @@
   "id": "OPERATOR-PC-HYGIENE-V1-T006",
   "initiative": "OPERATOR-PC-HYGIENE-V1",
   "title": "Quarantine Bureau state-root legacy artifacts",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 206
@@ -72,7 +72,30 @@
       "runtime_quiescence",
       "retention_period_complete",
       "backup_recoverability"
-    ]
+    ],
+    "verified_at": "2026-07-11T02:16:00+02:00",
+    "outcome": "Moved 38 doctor-classified legacy artifacts plus one classified static Weltgewebe audit bundle by same-filesystem atomic rename into a timestamped quarantine outside the active Bureau state root. No deletion occurred. The active root now contains exactly the six canonical entries and Bureau doctor/database checks are healthy.",
+    "runtime_evidence": {
+      "quarantine_root": "/home/alex/.local/state/bureau-quarantine/20260711T001410Z-OPERATOR-PC-HYGIENE-V1-T006",
+      "moved_count": 39,
+      "manifest_sha256": "03b4504cdfdb2d5e33e5ef5ff6685dad775613cc0a8491f8ec54709100f1588b",
+      "rollback_map_sha256": "62b4e1f768f46d4e433f6f6612d6bdc8ffbd4a585f64d9069915d3c6caee4867",
+      "doctor_pre_sha256": "ba83229bb015ab1f420f6217674f896bf7ac132667f8563b78df3ef749beaf93",
+      "doctor_post_sha256": "356e4e5c627607e86910eb8c4611a083f1651c18a89285b0eb9f595d372c6d0e",
+      "result_sha256": "51ae3a7934865c807bbaf6b9e555ef1832b773e8d28ae5938175946b9e35ff15"
+    },
+    "verified_acceptance": {
+      "classify-before-move": "The live doctor list yielded exactly 38 known archive candidates. The unknown directory was inspected as six schema-v2 static audit event JSON files, with no repository/state-root references, suspicious credential keys or open file descriptors, and classified as a replay-preserved legacy audit bundle.",
+      "reversible-quarantine": "All 39 entries were moved by same-filesystem os.rename into one timestamped 0700 quarantine. A 0600 rollback map records every source, destination and file/tree digest. No deletion occurred.",
+      "runtime-safety": "No process held a planned source entry open. bureau.sqlite3, WAL/SHM, envelopes, receipts and reviews were excluded. Post-move SQLite integrity/quick_check are ok and Bureau doctor reports state_root_hygiene healthy.",
+      "unknown-fail-closed": "The previously unknown directory was not deleted; its six event files and replay value remain byte-preserved in quarantine with file hashes.",
+      "deletion-separate": "The quarantine result states deletion=false. Permanent deletion remains unauthorized and requires a separate retention decision."
+    },
+    "self_review": "PASS: exact candidate set, protected entries, filesystem identity, process file descriptors, pre/post hashes, rollback map, database integrity and doctor state were checked. No content or entry was deleted.",
+    "verification": {
+      "task_sha256": "59409c606f5e117e3d835c45b1cae0f1d88623ec6f6c9f4789f3bcd4b4eceeb4",
+      "plan_sha256": "2d61c05fd511d58d952d02850498a68c7ce5197da691b18ee0d6b775a5b3a39b"
+    }
   },
   "depends_on": []
 }

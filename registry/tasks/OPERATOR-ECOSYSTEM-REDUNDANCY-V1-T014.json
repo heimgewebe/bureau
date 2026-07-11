@@ -62,7 +62,19 @@
       "runtime_correctness",
       "cleanup_permission",
       "automatic_shutdown_permission"
-    ]
+    ],
+    "rename_gate": {
+      "status": "blocked_pending_T013_and_explicit_authorization",
+      "catalog_core_merge_commit": "0b718077a47b922262fdfbd8ccbe8e3e40464289",
+      "dependency": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
+      "rename_authorized": false,
+      "does_not_authorize": [
+        "GitHub repository rename",
+        "local checkout rename",
+        "reference migration",
+        "compatibility redirect creation"
+      ]
+    }
   },
   "depends_on": [
     "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013"

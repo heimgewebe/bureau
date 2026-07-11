@@ -64,9 +64,9 @@
       "GRIP-ROADMAP-V1-T021"
     ],
     "does_not_establish": [
-      "implementation_complete",
-      "merge_authority_change",
-      "runtime_deployed"
+      "force_push_authority",
+      "merge_without_captain_evidence_gates",
+      "all_platform_filter_events_resolved"
     ],
     "implementation_prs": [
       "heimgewebe/grabowski#152",
@@ -142,7 +142,7 @@
       ]
     },
     "verification": {
-      "task_sha256": "e55c9810e91d9f7cdef56efee5f8d78403f45df8b528e798402d5ee99a0f6541",
+      "task_sha256": "d5aace8e2f002066649a128e442951f03ce04433b5fc8a3c0eb17e7c9a6cdd0c",
       "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
     }
   }

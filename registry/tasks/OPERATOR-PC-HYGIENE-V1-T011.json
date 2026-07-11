@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-PC-HYGIENE-V1-T011",
+  "initiative": "OPERATOR-PC-HYGIENE-V1",
+  "title": "Refresh configured server restore evidence",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 211
+  },
+  "goal": "Produce fresh server recovery evidence for the configured target heimberry:rest-server/grabowski-recovery-probe through a real bounded backup, isolated restore and repository-integrity probe so privileged actions can become eligible without weakening recovery gates.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "host:heimberry",
+      "service:grabowski-recovery",
+      "path:/home/alex/.local/state/grabowski/recovery"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "configured-target",
+      "assertion": "Preflight proves the configured target is exactly heimberry:rest-server/grabowski-recovery-probe; no default or dead heimserver backend is substituted."
+    },
+    {
+      "id": "real-backup-restore",
+      "assertion": "A real bounded backup snapshot is created and restored into an isolated temporary target; restored bytes or manifest hashes match the probe source and no live path is overwritten."
+    },
+    {
+      "id": "repository-check",
+      "assertion": "The remote Restic repository check required by the recovery contract succeeds for the configured target without snapshot prune, forget or unrelated retention mutation."
+    },
+    {
+      "id": "atomic-evidence",
+      "assertion": "The canonical server recovery marker is written atomically only after backup, restore and repository checks all pass and records target, snapshot id, timestamp and typed results."
+    },
+    {
+      "id": "post-status",
+      "assertion": "A fresh grabowski_recovery_status reports server_recovery_fresh=true and ready_for_privileged_actions=true for the same configured target."
+    },
+    {
+      "id": "fail-closed",
+      "assertion": "Any failed or partial probe leaves privileged and power actions blocked; no timestamp touch, marker fabrication, fallback target or bypass is accepted."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-11T03:34:00+02:00",
+    "source": "T008 host-firewall evidence blocked by stale Grabowski server-recovery marker",
+    "observed_status": {
+      "checked_at_unix": 1783733659,
+      "server_recovery_fresh": false,
+      "ready_for_privileged_actions": false,
+      "target": "heimberry:rest-server/grabowski-recovery-probe",
+      "snapshot_id": "b842574a",
+      "evidence_age_seconds": 135631,
+      "restore_probe_valid": true,
+      "repository_check_valid": true,
+      "error": "server recovery evidence is incomplete or stale"
+    },
+    "does_not_establish": [
+      "backup success",
+      "restore readiness",
+      "repository health",
+      "permission to bypass recovery",
+      "permission to use heimserver fallback",
+      "permission to prune snapshots",
+      "privileged action readiness"
+    ]
+  }
+}

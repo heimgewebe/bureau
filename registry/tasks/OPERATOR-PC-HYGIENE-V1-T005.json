@@ -3,7 +3,7 @@
   "id": "OPERATOR-PC-HYGIENE-V1-T005",
   "initiative": "OPERATOR-PC-HYGIENE-V1",
   "title": "Repair Heim-PC Node runtime JIT crash",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 205
@@ -53,7 +53,58 @@
       "all_javascript_tooling_safe",
       "merge_readiness"
     ],
-    "live_audit_finding": "`codex --version` crashed through the shell PTY wrapper because `~/bin/codexi` prepended `~/.npm-global/bin` and invoked the npm Codex entrypoint; direct `~/.local/bin/codex --version` returned codex-cli 0.142.2, while normal Node/npm still abort with a V8 SetPermissions fatal error and rc 133."
+    "live_audit_finding": "`codex --version` crashed through the shell PTY wrapper because `~/bin/codexi` prepended `~/.npm-global/bin` and invoked the npm Codex entrypoint; direct `~/.local/bin/codex --version` returned codex-cli 0.142.2, while normal Node/npm still abort with a V8 SetPermissions fatal error and rc 133.",
+    "verified_at": "2026-07-11T03:34:00+02:00",
+    "implementation_prs": [
+      "heimgewebe/infra#117",
+      "heimgewebe/infra#118"
+    ],
+    "implementation_heads": [
+      "9194efcf4c882d455ff3069c7d3b8ec91d9a52c8",
+      "608d81fc9bc17f1144821d7a026b4978ae547cd0"
+    ],
+    "implementation_merge_commits": [
+      "a8a70a40f5327abe6ebbe46607373e054f43bc3a",
+      "0fc7a0f30ec47aaf84774e3721e514c86059774e"
+    ],
+    "implementation_diff_sha256s": [
+      "e6e9defa97a44c0510cdb50ab9953020a4e4a647a5db381ef84b6068aa71c63b",
+      "1891cd7e2b4b81797d940e2d9ef8a5bad92de3a032c61236ea84b2141d2a7f09"
+    ],
+    "runtime_evidence_pr": "heimgewebe/infra#119",
+    "runtime_evidence_head": "43b8e017828b0057209f312680a239bd7ea47636",
+    "runtime_evidence_merge_commit": "04df9a5db56448c5580d67bb1b3e24437e974787",
+    "runtime_evidence_diff_sha256": "0cb12e28e1726d623d5d45588e082321054258c1c86f9f79e76547be08c8d693",
+    "runtime_evidence": "heimgewebe/infra runtime/heim-pc-node-runtime-2026-07-11.md at 04df9a5db56448c5580d67bb1b3e24437e974787",
+    "active_release": "/home/alex/.local/lib/heim-node-runtime/releases/0fc7a0f30ec47aaf84774e3721e514c86059774e",
+    "final_evidence_root": "/home/alex/.local/state/heim-pc-hygiene/node-runtime/20260711T012009Z-OPERATOR-PC-HYGIENE-V1-T005-FINAL",
+    "final_evidence_hashes": {
+      "pre.json": "92e1f9749ffc91e3237946e67fa76499a73175a8c02d956cc1b83d3e8b93c203",
+      "apply.txt": "3d23c70a1f3b1192ddfec36f9072c408712c3ad1d1c380b4a6e4a78f1cccd431",
+      "check.txt": "e58b4380e92dd51c668b88d137be86de6194227457ff2c3c2eab6766586a8e19",
+      "verify.json": "7c882d2c9adbf90c72ad42679329dd791d281e203ba290974fa10c4305c6e6a8",
+      "postflight.json": "33ea3006d793d481093db2b17d0662ccc979a62b016a201be13668e14c686e27",
+      "result.json": "38827b4870e824ff31aeabf80a0bff879d54ae448f5c50b22e358273cba3563c",
+      "pty.txt": "c9a91757451497d497ae40abf58d348bf6ae368893c0194b379c9f0ffd0dbce7"
+    },
+    "validated_acceptance": {
+      "operator-pc-hygiene-v1-t005-1": "The active Git-bound wrapper release passed 50 fresh node -e processes and 10 each npm, npx and pnpm probes, plus an npm child process, without rc 133.",
+      "operator-pc-hygiene-v1-t005-2": "The source receipt records globally_forces_jitless=false. Only MemoryDenyWriteExecute is relaxed in transient user units while NoNewPrivileges remains 1.",
+      "operator-pc-hygiene-v1-t005-3": "Standalone ~/.local/bin/codex remained unchanged and returned codex-cli 0.142.2 in final postflight."
+    },
+    "validation": [
+      "PRs #117 and #118 passed full Infra CI and local make validate on their final exact heads.",
+      "PR #117 live target mismatch was stopped and all three previous wrappers were restored byte-for-byte.",
+      "PR #118 test-harness ERR-trap rollback restored the previous wrappers before the final clean activation.",
+      "Final activation is source-bound to merge 0fc7a0f30ec47aaf84774e3721e514c86059774e.",
+      "Final postflight preserved environment values and PTY semantics, retained NoNewPrivileges=1, left no environment files and kept standalone Codex green."
+    ],
+    "outcome": "Node, npm, npx and pnpm are green through a versioned, Git-bound and reversible transient-unit boundary. The Grabowski service hardening remains unchanged; only MemoryDenyWriteExecute is relaxed for the three fixed Node-family targets.",
+    "self_review": "PASS: current public links, source receipt, final result and every cited local evidence hash were re-read after activation. Failed rollout and test-harness rollback events remain explicitly documented rather than smoothed over.",
+    "verification": {
+      "task_sha256": "1fd20320c56163b1dca4d07bf730d3c7f9544670f0a1c4e66464bbf26d42d7ef",
+      "plan_sha256": "2d61c05fd511d58d952d02850498a68c7ce5197da691b18ee0d6b775a5b3a39b"
+    }
   },
   "depends_on": []
 }

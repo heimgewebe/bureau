@@ -3,7 +3,7 @@
   "id": "UTIL-BASE-V1-T017",
   "initiative": "UTIL-BASE-V1",
   "title": "Evaluate old Restic releases and rollback backups",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 133
@@ -87,6 +87,96 @@
       "snapshot_inventory_changed": false,
       "raw_repository_state_changed": false,
       "deletion_authorized": false
+    },
+    "verified_at": "2026-07-11T13:12:00Z",
+    "final_plan": {
+      "sha256": "ce98af02b926dbe150177f4b92dc55d5a5f2df5a95ed72d74bc354d9b479fc0d",
+      "tool_sha256": "5511d90e18245bf134518b7d89590d1b8f07646c25a5c8c4c426c1671d19aa1a",
+      "rejected_before_effect": 2
+    },
+    "cleanup_execution": {
+      "authorization_sha256": "d6ca6328484dbebb6df7700e0df2f588d8b19dd385b3a5a23fd35ff8f0fca66d",
+      "receipt_sha256": "5a2c6d1f48b55ca35cdf30b7638d71343b99bb609b91547b4bac521d4f3462d2",
+      "removed_count": 2,
+      "reclaimed_allocated_bytes": 28672,
+      "remaining_candidates": 0,
+      "repeat_authorized": false
+    },
+    "post_cleanup": {
+      "inventory_sha256": "7c5ad6bd87534d8b850f3431722d3555e94ddf861073cd1bb40e4a293f9a44e3",
+      "protected_count": 8,
+      "restic_proof_sha256": "02bef340487a42824cd5706369c0af3f92129a7c4b04cec898f637905fd889b9",
+      "snapshot_count": 7,
+      "exact_restore": "PASS",
+      "repository_check": "PASS"
+    },
+    "infra_closeout": {
+      "pr": 130,
+      "head": "f1bfaca0f40794ef818a5d7e9f272a7a9f586450",
+      "merge": "0fb18089607382378b835064c8a5e6ee0db52df8",
+      "diff_sha256": "bb29ebfd59cdf2ddf77571b9285b1ad9fafa090e65d7e67bf1318035c0118925",
+      "review_sha256": "4c2de55b5b1884310b58e5948e47b96a408d45b52a2576420f13c20f75215776",
+      "evidence_sha256": "1164077645fa3faa836f4cd015cf6f3f9c09a755d7e97467212696f5a4768e2f"
+    },
+    "validated_acceptance": {
+      "complete-inventory": "Complete receipt- and worktree-closed inventory is published in Infra.",
+      "rollback-value": "Eight referenced runtime and retirement artifacts remain protected.",
+      "deletion-plan": "Final exact two-path allowlist included hashes, benefit, risk, dwell and abort conditions.",
+      "reviewed-effect": "Two plans stopped before effect; the final effect had merged plan, PASS review, one-shot authorization and reference closure.",
+      "post-cleanup-proof": "Two backup directories removed, zero candidates remain, exact restore and repository check PASS."
+    },
+    "effect_summary": {
+      "cleanup_executions": 1,
+      "removed_artifact_count": 2,
+      "removed_runtime_release_count": 0,
+      "removed_worktree_count": 0,
+      "protected_artifact_count": 8,
+      "remaining_candidate_count": 0,
+      "restic_repository_changed": false,
+      "timer_or_service_changed": false,
+      "repeat_cleanup_authorized": false
+    },
+    "outcome": "Two exact unreferenced backup directories were removed once; eight rollback artifacts remain protected, zero candidates remain, and all postflight checks are green.",
+    "self_review": "PASS: inventory, protection graph, plan history, authorization, removed paths and postflight evidence were re-read.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "UTIL-BASE-V1-T017",
+          "source_ref": "heimgewebe/infra#130",
+          "number": 130,
+          "head_sha": "f1bfaca0f40794ef818a5d7e9f272a7a9f586450",
+          "merge_commit_sha": "0fb18089607382378b835064c8a5e6ee0db52df8",
+          "diff_sha256": "bb29ebfd59cdf2ddf77571b9285b1ad9fafa090e65d7e67bf1318035c0118925",
+          "review_evidence_sha256": "4c2de55b5b1884310b58e5948e47b96a408d45b52a2576420f13c20f75215776"
+        },
+        {
+          "kind": "runtime_evidence",
+          "system": "heim-pc-restic-artifact-cleanup",
+          "task_id": "UTIL-BASE-V1-T017",
+          "repository": "heimgewebe/infra",
+          "path": "runtime/heim-pc-restic-artifact-cleanup-closeout-2026-07-11.json",
+          "commit_sha": "0fb18089607382378b835064c8a5e6ee0db52df8",
+          "content_sha256": "1164077645fa3faa836f4cd015cf6f3f9c09a755d7e97467212696f5a4768e2f",
+          "run_id": "restic-t017-cleanup-v3",
+          "snapshot_id": "5b2ac9c7029e604d51128a696376bf2ea6fdca330ff79073f8cfaf769574fd10"
+        }
+      ]
+    },
+    "verification": {
+      "verified_at": "2026-07-11T13:12:00Z",
+      "task_sha256": "0d0390054160f073ccdb42d880ce85639784a6e98f9dbe3c43a01e34e0fd0cd1",
+      "plan_sha256": "b7cfba2a62e364bcd6d07747f68eb82ac11f4ba9a25c9aef4a62bf9ee0631596",
+      "acceptance_ids": [
+        "complete-inventory",
+        "rollback-value",
+        "deletion-plan",
+        "reviewed-effect",
+        "post-cleanup-proof"
+      ]
     }
   }
 }

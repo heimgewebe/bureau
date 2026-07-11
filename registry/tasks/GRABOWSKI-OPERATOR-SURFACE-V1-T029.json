@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T029",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Restore current-head external review availability",
-  "state": "planned",
+  "state": "cancelled",
   "priority": {
     "lane": "later",
     "rank": 480
@@ -75,6 +75,22 @@
       "external review availability",
       "review PASS",
       "runtime mutation permission"
-    ]
+    ],
+    "cancelled_at": "2026-07-11T04:31:53Z",
+    "cancellation_reason": "Grabowski PR #146 replaced mandatory external review availability with risk-scaled, diff-bound self-review. Current gate logic treats external reviews as optional diagnostics, so restoring Claude/Codex availability is no longer a merge-safety prerequisite.",
+    "decision": "do_not_restore_as_required_operator_lane",
+    "rationale": [
+      "Current tools/pr_review_gate.py sets external_review_required=false for every review tier and requires one to five self-review iterations according to risk.",
+      "Missing or invalid optional external-review evidence produces warnings rather than a merge block.",
+      "Credential, quota and provider-specific recovery work would add maintenance and secret-handling surface without restoring a required capability.",
+      "A future provider-preflight task should be registered only after repeated operational demand demonstrates value for optional diagnostics."
+    ],
+    "evidence": {
+      "policy_commit": "9744d54c3166c7afef0c7628e18df008d5c9aad0",
+      "policy_merge": "heimgewebe/grabowski#146",
+      "gate_path": "tools/pr_review_gate.py",
+      "behavior_test": "tests/test_pr_review_gate_external.py::SelfReviewDepthPolicyTests::test_external_review_is_optional_and_missing_evidence_does_not_block",
+      "live_policy_head": "c0d6678173646056a14dc8c30cd9bd9032298d7d"
+    }
   }
 }

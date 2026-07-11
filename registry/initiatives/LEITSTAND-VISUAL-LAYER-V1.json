@@ -31,7 +31,7 @@
       "export_safety": "not_public_export_ready"
     },
     "initial_task_policy": "Do not put this initiative in the active queue until current Bureau runtime/hardening work is reconciled.",
-    "next_allowed_task": "Define Cabinet ecosystem-map artifact manifest before implementing a polished Leitstand render view.",
+    "next_allowed_task": "LSV-V1-T002",
     "does_not_establish": [
       "leitstand_runtime_correctness",
       "ecosystem_map_truth",
@@ -44,6 +44,12 @@
     "lifecycle_reconcile": {
       "reason": "activated as a registered later-work visualization initiative",
       "source": "BUR-DOCTOR-QUEUE-LIFECYCLE-RECONCILE-V1"
+    },
+    "source_contract_reconcile_20260711": {
+      "task": "LSV-V1-T001",
+      "status": "verified_existing_implementation",
+      "implementation_pr": "heimgewebe/cabinet#69",
+      "current_cabinet_head": "8ca544a8c00076aafd2d738fd6361ee6f6dbde3d"
     }
   }
 }

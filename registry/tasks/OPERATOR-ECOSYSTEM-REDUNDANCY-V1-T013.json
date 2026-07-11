@@ -84,7 +84,7 @@
     },
     "catalog_gate": {
       "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T004",
-      "status": "phase_A_authorized_not_executed",
+      "status": "phase_A_passed_phase_B_not_authorized",
       "cabinet_merge_commit": "0b718077a47b922262fdfbd8ccbe8e3e40464289",
       "catalog_policy_sha256": "6eff835fc31447014752bf5c916ecdf4d82ccbc3634b7e14ed58c3d2142116f2",
       "authority_matrix_sha256": "ca7e9b444e7ce78b40687809d260c364bbdd7b984f2da3c0886009132e0998a3",
@@ -111,8 +111,8 @@
         "post-effect verification"
       ],
       "preflight_merge_commit": "6c64348daf242e48e09e678f5793fc086854b31b",
-      "next_effect": "execute_one_bounded_phase_A_stop_test_then_consume_authorization",
-      "phase_A_effect_authorized": true,
+      "next_effect": "phase_B_service_disablement_requires_explicit_authorization",
+      "phase_A_effect_authorized": false,
       "authorization_reference": "operator-instruction:2026-07-11:cabinet-t013-phase-a-bounded-stop-test"
     },
     "runtime_retirement_preflight": {
@@ -191,13 +191,15 @@
       },
       "rollback_plan": {
         "phase_A": {
-          "status": "authorized_not_executed",
+          "status": "completed_passed_service_restored",
           "action": "bounded_service_stop_test",
-          "executed": false,
-          "rollback": "restart_service_and_verify_loopback_runtime"
+          "executed": true,
+          "rollback": "restart_service_and_verify_loopback_runtime",
+          "restart_verified": true,
+          "private_evidence_sha256": "e8c7e6c5042cddd8c673d74219f54f8f8a465dfa3e3613c78f38d9161e059585"
         },
         "phase_B": {
-          "status": "blocked_by_phase_A",
+          "status": "authorization_required_not_present",
           "executed": false
         },
         "phase_C": {
@@ -229,10 +231,12 @@
           "versioned_runtime_surface_removal",
           "repository_rename"
         ],
-        "phase_A_bounded_stop_test_authorized": true,
+        "phase_A_bounded_stop_test_authorized": false,
         "phase_A_authorization_reference": "operator-instruction:2026-07-11:cabinet-t013-phase-a-bounded-stop-test",
         "phase_A_authorization_expires_at": "2026-07-11T11:00:00Z",
-        "phase_A_authorized_stop_window_seconds": 300
+        "phase_A_authorized_stop_window_seconds": 300,
+        "phase_A_authorization_consumed": true,
+        "phase_A_consumed_at": "2026-07-11T09:28:46.269714Z"
       },
       "residual_uncertainty": [
         "one registered location unreachable",
@@ -266,8 +270,8 @@
       "expires_at": "2026-07-11T11:00:00Z",
       "one_shot": true,
       "revoked_on_mismatch": true,
-      "consumed": false,
-      "remaining_uses": 1,
+      "consumed": true,
+      "remaining_uses": 0,
       "requires_rollback": true,
       "does_not_authorize": [
         "service disablement",
@@ -275,6 +279,67 @@
         "backup or retention change",
         "repository rename",
         "phases B-D"
+      ],
+      "consumed_at": "2026-07-11T09:28:46.269714Z",
+      "consumed_evidence_sha256": "e8c7e6c5042cddd8c673d74219f54f8f8a465dfa3e3613c78f38d9161e059585",
+      "result": "phase_A_passed_service_restored"
+    },
+    "phase_A_completion": {
+      "schema_version": 1,
+      "status": "passed_service_restored",
+      "authorization_reference": "operator-instruction:2026-07-11:cabinet-t013-phase-a-bounded-stop-test",
+      "authorization_merge_commit": "ffa07f5510a87054dfb61b164481b9b25797eea2",
+      "private_evidence_sha256": "e8c7e6c5042cddd8c673d74219f54f8f8a465dfa3e3613c78f38d9161e059585",
+      "cabinet_head": "6c64348daf242e48e09e678f5793fc086854b31b",
+      "service_downtime_seconds": 130.872,
+      "offline_checks": {
+        "count": 8,
+        "passed": 8,
+        "catalog_independence_passed": true
+      },
+      "runtime_shape": {
+        "processes_before": 8,
+        "processes_stopped_remaining": 0,
+        "processes_after": 5,
+        "process_change_classification": "nonblocking_build_helpers_absent_after_clean_restart",
+        "listeners_before": 2,
+        "listeners_stopped_remaining": 0,
+        "listeners_after": 2,
+        "listener_exposure_after": "loopback_only",
+        "listener_targets_restored": true,
+        "tcp_probes_passed": 2,
+        "http_probes_responded": 2,
+        "http_status_classes": [
+          2,
+          4
+        ]
+      },
+      "postflight": {
+        "service_loaded": true,
+        "service_active": true,
+        "service_running": true,
+        "service_enabled": true,
+        "restart_count": 0,
+        "runtime_key_files_unchanged": 8,
+        "cabinet_clean": true,
+        "cabinet_head_unchanged": true
+      },
+      "effect_boundary": {
+        "service_stop_performed": true,
+        "service_start_performed": true,
+        "service_disablement_performed": false,
+        "operator_directed_file_or_private_data_mutation": false,
+        "backup_or_retention_mutation": false,
+        "repository_rename": false
+      },
+      "does_not_establish": [
+        "safe permanent shutdown",
+        "Phase B authorization",
+        "runtime file removal permission",
+        "private data deletion permission",
+        "backup or retention change permission",
+        "repository rename permission",
+        "current human non-use"
       ]
     }
   },

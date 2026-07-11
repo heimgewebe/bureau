@@ -64,7 +64,7 @@
       "automatic_shutdown_permission"
     ],
     "rename_gate": {
-      "status": "blocked_pending_T013_and_explicit_authorization",
+      "status": "blocked_pending_T013_runtime_retirement_and_explicit_authorization",
       "catalog_core_merge_commit": "0b718077a47b922262fdfbd8ccbe8e3e40464289",
       "dependency": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
       "rename_authorized": false,
@@ -73,7 +73,11 @@
         "local checkout rename",
         "reference migration",
         "compatibility redirect creation"
-      ]
+      ],
+      "runtime_preflight_available": true,
+      "runtime_preflight_merge_commit": "6c64348daf242e48e09e678f5793fc086854b31b",
+      "runtime_retired": false,
+      "preflight_satisfies_T013_dependency": false
     }
   },
   "depends_on": [

@@ -60,12 +60,7 @@
       "isolation": "worktree"
     },
     {
-      "resource": "service.systemkatalog",
-      "mode": "write",
-      "isolation": "none"
-    },
-    {
-      "resource": "service.github_repository_identity",
+      "resource": "host.heim-pc",
       "mode": "write",
       "isolation": "none"
     }
@@ -111,9 +106,7 @@
       "assertion": "Bureau queue, registry truth, doctor and lifecycle are checked after completion; worktrees and leases are closed without modifying foreign dirty states, leases or processes."
     }
   ],
-  "depends_on": [
-    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014"
-  ],
+  "depends_on": [],
   "metadata": {
     "registered_at": "2026-07-11T21:30:00+02:00",
     "source_decision": "The product and repository are named Systemkatalog; Cabinet rooms are historical only and the catalog must not own tasks, runtime health, merge readiness, dispatch or a second live status model.",

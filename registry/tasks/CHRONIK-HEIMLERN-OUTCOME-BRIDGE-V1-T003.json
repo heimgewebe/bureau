@@ -128,11 +128,11 @@
       ]
     },
     "verification": {
-      "task_sha256": "9a02241854e20d0f3864eeb030f493cabcadeb36e7574c16fd3b7666b83a8931",
-      "plan_sha256": "8ca52bb5c6538f1e51befb767c09eea0a1de0eacdce62065cf539687c152e9f9",
+      "task_sha256": "0f763ac3ec96e063b9810cbf3a37dd74e2932daddb99bbfcbacd41507ef35825",
+      "plan_sha256": "a39748d2669b385c611c92201f73d7ac77d0eb5a0753b79c377ecae3b76af675",
       "verified_at": "2026-07-11",
-      "task_sha256_scope": "pre-closeout task document",
-      "plan_sha256_scope": "plan document with T003 implementation note"
+      "task_sha256_scope": "canonical task revision without state and verification metadata",
+      "plan_sha256_scope": "canonical initiative.current_plan object"
     }
   },
   "priority": {

@@ -130,7 +130,7 @@
       "next_migration_scope": "read-only preflight verified; Phase A authorization required and absent"
     },
     "next_cabinet_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014",
-    "next_cabinet_migration_scope": "T013 runtime retirement is verified. T014 repository and reference rename remains separately review- and authorization-bound.",
+    "next_cabinet_migration_scope": "T014 is explicitly authorized for repository/path/reference migration and active alias removal; execution and postflight remain pending.",
     "github_actions_runner_block_followup_20260711": {
       "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020",
       "status": "planned",

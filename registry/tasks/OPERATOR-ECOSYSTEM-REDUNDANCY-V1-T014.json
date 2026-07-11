@@ -64,10 +64,10 @@
       "automatic_shutdown_permission"
     ],
     "rename_gate": {
-      "status": "runtime_retired_pending_explicit_rename_authorization",
+      "status": "explicit_rename_authorization_registered_pending_execution",
       "catalog_core_merge_commit": "0b718077a47b922262fdfbd8ccbe8e3e40464289",
       "dependency": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",
-      "rename_authorized": false,
+      "rename_authorized": true,
       "does_not_authorize": [
         "GitHub repository rename",
         "local checkout rename",
@@ -81,7 +81,40 @@
       "phase_A_completed": true,
       "phase_A_private_evidence_sha256": "e8c7e6c5042cddd8c673d74219f54f8f8a465dfa3e3613c78f38d9161e059585",
       "t013_final_cabinet_head": "bbf085963976cea21ca2050c90aaa6a13739a863",
-      "t013_private_evidence_sha256": "09bef8d56c3f050dad040eca75cb3c6af060e8144d4cb5fe193a3d81416393d2"
+      "t013_private_evidence_sha256": "09bef8d56c3f050dad040eca75cb3c6af060e8144d4cb5fe193a3d81416393d2",
+      "authorization_reference": "operator-instruction:2026-07-11:finalize-system-catalog-migration-and-remove-old-aliases"
+    },
+    "execution_authorization": {
+      "schema_version": 1,
+      "source": "operator_instruction",
+      "level": "break_glass",
+      "approved": true,
+      "reviewer": "alexdermohr",
+      "reference": "operator-instruction:2026-07-11:finalize-system-catalog-migration-and-remove-old-aliases",
+      "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014",
+      "scope": [
+        "rename GitHub repository heimgewebe/cabinet to heimgewebe/heimgewebe-katalog",
+        "rename canonical local checkout /home/alex/repos/cabinet to /home/alex/repos/heimgewebe-katalog",
+        "migrate active repository, runtime, Bureau, RepoBrief/Lenskit, Leitstand and Schauwerk references",
+        "remove active cabinet.service compatibility alias and active cabinet-named publish/export aliases",
+        "retain immutable historical evidence and platform-managed GitHub redirects only"
+      ],
+      "conditions": [
+        "T013 remains verified and system catalog runtime is active before migration",
+        "all repository mutations use isolated worktrees and current origin/main",
+        "runtime unit is rebound to the new local path before final verification",
+        "no private archive, backup snapshot or retention policy is deleted or changed",
+        "T014 closes only after new GitHub identity, local path, runtime and active consumers are verified"
+      ],
+      "one_shot": true,
+      "revoked_on_mismatch": true,
+      "consumed": false,
+      "remaining_uses": 1,
+      "does_not_authorize": [
+        "deletion of historical receipts or PR evidence",
+        "deletion of private Cabinet archives or backup snapshots",
+        "unrelated repository mutation"
+      ]
     }
   },
   "depends_on": [

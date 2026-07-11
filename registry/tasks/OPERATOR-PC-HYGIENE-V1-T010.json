@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "OPERATOR-PC-HYGIENE-V1",
-  "state": "planned",
+  "state": "blocked",
   "required_capabilities": [
     "shell",
     "grabowski"
@@ -56,6 +56,21 @@
       "permission_to_reset_main",
       "publication_worktree_cleanup",
       "safe_to_attach_now"
-    ]
+    ],
+    "blocked_at": "2026-07-11T02:33:46Z",
+    "block_reason": "The canonical checkout is clean and exactly at origin/main but eight live processes still use it as cwd, including two Claude/Python groups and shells. Attaching main now would mutate active working context.",
+    "checkout_evidence": {
+      "path": "/home/alex/repos/lenskit",
+      "head": "879347d736427d33f6c3e43061586735bd206799",
+      "origin_main": "879347d736427d33f6c3e43061586735bd206799",
+      "branch": null,
+      "dirty": false,
+      "blocking_process_count": 8,
+      "inventory_sha256": "2b201f01cde1bb2443e64b97a1961e43fa55803c7d148926e5f8264af934f955",
+      "generated_at_unix": 1783738276
+    },
+    "publication_worktrees_unchanged": true,
+    "next_action": "Re-run typed checkout inventory after the active processes finish. Attach main only if process count is zero or every remaining shell is explicitly classified quiescent, HEAD still equals origin/main and the checkout remains clean.",
+    "mutation_applied": false
   }
 }

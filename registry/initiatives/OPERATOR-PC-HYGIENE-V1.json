@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "OPERATOR-PC-HYGIENE-V1",
   "title": "Heim-PC operator hygiene follow-ups",
-  "state": "active",
+  "state": "waiting",
   "commitment": "later",
   "goal": "Close the remaining Heim-PC service hygiene gaps found in the 2026-07-08 live audit without weakening Operator Relay boundaries or making blind runtime claims.",
   "current_plan": {
@@ -29,16 +29,18 @@
       "all_ports_safe"
     ],
     "verified_listener_hygiene_20260711": "OPERATOR-PC-HYGIENE-V1-T004 verified: Infra PR #116 records complete observed wildcard-listener classification, closure of 4173/4174 and loopback-only Leitstand deployment from PR #161. Router forwarding and complete firewall policy remain unverified.",
-    "closeout_status": "T004-T007 are verified. T001-T003 and T008-T011 remain planned or blocked; initiative remains active.",
+    "closeout_status": "T004-T007, T009 and T011 are verified. T003, T008 and T010 are blocked with explicit live evidence; T001-T002 remain open. Initiative is waiting on the named blockers.",
     "remaining_audit_followups_20260711": {
-      "T007": "tmux session lifecycle and transcript-preserving reviewed cleanup",
-      "T008": "router/firewall/Tailscale/public-ingress evidence boundary",
-      "T009": "consumer-based necessity review for retained LAN listeners",
-      "T010": "process-safe canonical Lenskit branch attachment"
+      "T003": "terminal systemd failed-state cleanup, blocked by T030 Rootbroker freshness contradiction",
+      "T008": "host firewall and independent external ingress proof, blocked by T030 and missing external probe authority",
+      "T010": "process-safe canonical Lenskit branch attachment after eight active checkout users finish"
     },
-    "registration_boundary": "All four tasks remain planned/later and do not authorize session termination, service disablement, firewall/router changes or process termination.",
+    "registration_boundary": "T003, T008 and T010 remain non-actionable without their recorded prerequisites; no task authorizes service disablement, firewall/router mutation, process termination or a forced Lenskit branch switch.",
     "verified_state_and_tmux_hygiene_20260711": "T006 and T007 verified: Bureau state root is clean via reversible quarantine; 29 idle tmux shells were transcript-preserved and closed while 30 active/uncertain sessions remained.",
     "verified_node_runtime_20260711": "T005 verified via Infra PRs #117/#118, live release 0fc7a0f30ec47aaf84774e3721e514c86059774e and runtime evidence PR #119.",
-    "server_recovery_freshness_followup_20260711": "T011 registers the real configured-target backup/restore/repository probe needed to refresh stale server recovery evidence. No fallback, marker touch or gate bypass is authorized."
+    "server_recovery_freshness_followup_20260711": "T011 registers the real configured-target backup/restore/repository probe needed to refresh stale server recovery evidence. No fallback, marker touch or gate bypass is authorized.",
+    "verified_network_service_review_20260711": "T009 verified via Infra PR #120: GNOME-RDP, Sunshine, UniFi and Avahi retained by current consumer evidence; Sunshine UPnP disabled; no service mutation.",
+    "verified_server_recovery_probe_20260711": "T011 verified via direct Grabowski probe snapshot a4973a5a on heimberry:rest-server/grabowski-recovery-probe; restore, repository check and fresh status green.",
+    "waiting_reason_20260711": "Waiting on T030 for T003/T008 and on active Lenskit checkout users for T010."
   }
 }

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "OPERATOR-PC-HYGIENE-V1",
-  "state": "planned",
+  "state": "blocked",
   "required_capabilities": [
     "shell",
     "grabowski"
@@ -61,6 +61,39 @@
       "router_configuration_access",
       "external_probe_authority",
       "firewall_correctness"
-    ]
+    ],
+    "blocked_at": "2026-07-11T02:33:46Z",
+    "block_reason": "Router IGD and local Tailscale publication are proven, but effective UFW/nftables/iptables policy remains unreadable because T030 rejects the privileged read immediately after a fresh recovery proof. No independent external-network probe authority is available in this run.",
+    "blocked_by_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T030",
+    "partial_evidence": {
+      "infra_pr": "heimgewebe/infra#120",
+      "merge_commit": "61bc893ee50ac7d50eb548dcb4167f5ec6cb1461",
+      "diff_sha256": "bc2bb022bd0e2196bc9e81d470eb033a4d5044031c0cf5e21d699818a7c85428",
+      "router_igd": "zero exposed IPv4 generic UPnP mappings; IPv6 firewall enabled; inbound pinholes disallowed",
+      "tailscale": "backend online; Serve empty; Funnel empty"
+    },
+    "rootbroker_reproduction": {
+      "recovery_snapshot": "a4973a5a",
+      "recovery_status_checked_at_unix": 1783737028,
+      "recovery_age_seconds": 8,
+      "ready_for_privileged_actions": true,
+      "power_request_id": "4128c89318b04b869157ccec63fe2540",
+      "power_reference_sha256": "7c5444a85f38d515a70664836db48276c336fd6cbc2bc40de8a78c874190d42f",
+      "requested_argv": [
+        "/usr/sbin/ufw",
+        "status",
+        "verbose"
+      ],
+      "broker_result": "power recovery marker is stale",
+      "command_executed": false
+    },
+    "unverified": [
+      "effective host firewall rules/default input policy",
+      "manual router web-UI forwarding outside IGD visibility",
+      "PCP state outside read IGD surface",
+      "bounded independent external-network probe",
+      "categorical no-public-ingress claim"
+    ],
+    "next_action": "Complete T030, capture bounded UFW/nftables/iptables truth, then run an explicitly scoped external probe from an independent registered host or retain that acceptance item UNVERIFIED."
   }
 }

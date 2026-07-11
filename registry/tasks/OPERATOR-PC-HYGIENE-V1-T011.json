@@ -3,7 +3,7 @@
   "id": "OPERATOR-PC-HYGIENE-V1-T011",
   "initiative": "OPERATOR-PC-HYGIENE-V1",
   "title": "Refresh configured server restore evidence",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 211
@@ -79,7 +79,59 @@
       "permission to bypass recovery",
       "permission to use heimserver fallback",
       "permission to prune snapshots",
-      "privileged action readiness"
-    ]
+      "privileged action execution succeeds",
+      "rootbroker freshness decision coherence"
+    ],
+    "verified_at": "2026-07-11T02:33:46Z",
+    "outcome": "A fresh fixed Grabowski server-recovery probe created snapshot a4973a5a on the configured Heimberry target, restored it in isolation, completed the repository check and atomically refreshed the canonical marker. Recovery status then reported server_recovery_fresh=true and ready_for_privileged_actions=true.",
+    "runtime_evidence": {
+      "completed_at_unix": 1783737020,
+      "snapshot_id": "a4973a5a",
+      "target": "heimberry:rest-server/grabowski-recovery-probe",
+      "restore_probe_valid": true,
+      "repository_check_valid": true,
+      "marker_valid": true,
+      "marker_path": "/home/alex/.local/state/grabowski/recovery/last-server-recovery.json",
+      "marker_sha256": "638765546344dfe4a78f859eb736d425af7ff8863f0cd36e465a9325aa5dcd95",
+      "log_path": "/home/alex/.local/state/grabowski/recovery/server-recovery-1783737020.log",
+      "log_sha256": "0d47b4b031e1abe8d5764c27a0443f41f23d4e32f199d01e9866a70cd4ae3e27",
+      "tunnel_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "post_status": {
+      "checked_at_unix": 1783737028,
+      "server_recovery_fresh": true,
+      "ready_for_privileged_actions": true,
+      "target_matches_configured": true,
+      "age_seconds": 8
+    },
+    "validated_acceptance": {
+      "configured-target": "Probe and post-status used exactly heimberry:rest-server/grabowski-recovery-probe; no Heimserver/default fallback was used.",
+      "real-backup-restore": "Snapshot a4973a5a was created and restored by the fixed probe; restore_probe_valid=true and no live target was overwritten.",
+      "repository-check": "repository_check_valid=true; no prune, forget or retention mutation was invoked.",
+      "atomic-evidence": "Canonical mode-0600 marker records target, snapshot, timestamp and both typed success flags; SHA-256 is bound above.",
+      "post-status": "Eight seconds after completion, recovery_status reported the same snapshot fresh and privileged readiness true.",
+      "fail-closed": "The probe path has no timestamp-touch or fallback mode. A separate Rootbroker stale denial after this success is retained under T030 and does not invalidate the backup/restore proof."
+    },
+    "self_review": "PASS: direct probe receipt, canonical marker bytes/hash and immediate recovery_status were re-read. T011 proves recovery freshness only; it does not claim Rootbroker decision coherence.",
+    "verification": {
+      "task_sha256": "c6f40846d630c0921644b29c73c6c72e41729079af3cc7b4c0bb4ccf5aa41378",
+      "plan_sha256": "2d61c05fd511d58d952d02850498a68c7ce5197da691b18ee0d6b775a5b3a39b"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "recovery_probe",
+          "task_id": "OPERATOR-PC-HYGIENE-V1-T011",
+          "system": "grabowski_recovery_server_probe",
+          "run_id": "server-recovery-1783737020",
+          "path": "/home/alex/.local/state/grabowski/recovery/server-recovery-1783737020.log",
+          "content_sha256": "0d47b4b031e1abe8d5764c27a0443f41f23d4e32f199d01e9866a70cd4ae3e27",
+          "snapshot_id": "a4973a5a",
+          "target": "heimberry:rest-server/grabowski-recovery-probe"
+        }
+      ]
+    }
   }
 }

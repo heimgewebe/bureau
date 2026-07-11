@@ -3,7 +3,7 @@
   "id": "OPERATOR-PC-HYGIENE-V1-T003",
   "initiative": "OPERATOR-PC-HYGIENE-V1",
   "title": "Add narrow stale systemd cleanup privilege",
-  "state": "planned",
+  "state": "blocked",
   "priority": {
     "lane": "later",
     "rank": 203
@@ -50,9 +50,28 @@
     "does_not_establish": [
       "runtime_correctness",
       "security_correctness",
-      "merge_readiness"
+      "merge_readiness",
+      "permission_to_bypass_rootbroker",
+      "safe_to_restart_units",
+      "system_manager_healthy"
     ],
-    "live_audit_finding": "system systemd remained degraded because user@111.service stale fail could not be reset without sudo; broker had no reset-failed action."
+    "live_audit_finding": "system systemd remained degraded because user@111.service stale fail could not be reset without sudo; broker had no reset-failed action.",
+    "blocked_at": "2026-07-11T02:33:46Z",
+    "block_reason": "Four terminal system units are bounded reset-failed candidates after read-only classification, but the Grabowski runtime is NoNewPrivileges-hardened, direct sudo cannot elevate, and the recovery-gated Rootbroker rejects eligible calls as stale under T030. Bypassing that gate is not authorized.",
+    "blocked_by_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T030",
+    "live_candidates": [
+      "grabowski-privileged-broker@0-943410-1000.service",
+      "grabowski-privileged-broker@1-2209771-1000.service",
+      "grabowski-privileged-broker@2-2277057-1000.service",
+      "user@111.service"
+    ],
+    "candidate_invariants": {
+      "MainPID": 0,
+      "Restart": "no",
+      "NRestarts": 0,
+      "mutation_applied": false
+    },
+    "next_action": "After T030 is deployed, re-read exact unit properties and execute only systemctl reset-failed for the unchanged allowlist; then prove systemctl --failed empty."
   },
   "depends_on": []
 }

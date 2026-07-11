@@ -3,7 +3,7 @@
   "id": "UTIL-BASE-V1-T016",
   "initiative": "UTIL-BASE-V1",
   "title": "Authorize and prove first Restic maintenance run",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 132
@@ -92,6 +92,188 @@
       "Obtain a fresh exact-snapshot restore proof and repository check after deployment.",
       "Obtain a new operator authorization naming the exact policy SHA-256 and permitting one maintenance run only.",
       "Keep the weekly maintenance timer inactive and linked before and after the one-shot run."
-    ]
+    ],
+    "verified_at": "2026-07-11T10:57:15Z",
+    "operator_authorization": {
+      "instruction": "@grabowski umsetzen",
+      "context": "Immediate continuation after T015 named T016 and the exact reviewed policy SHA-256 as the next effect.",
+      "scope": "one manual maintenance execution only",
+      "policy_sha256": "c7d1bad1f0d1f35d602541082131568848e55784880457acdeff315e06965254",
+      "authorization_receipt_sha256": "a8461d02c670409547cc043fc18373884aff4473be491d94ecdec21638c84c5f",
+      "timer_activation_authorized": false,
+      "repeat_execution_authorized": false
+    },
+    "runtime_evidence_pull_request": {
+      "repository": "heimgewebe/infra",
+      "number": 126,
+      "head_sha": "5da3c4c88d95fe79c5897b5c35a0f004d1b14ac2",
+      "merge_commit": "3478019c5b0b0cde7a5432f792851d07e07480f3",
+      "diff_sha256": "2d27a5d911acaf1749c768dbf4534145f064dd9de9757bf572616b598ac97b98",
+      "self_review_sha256": "b98964d10d7c09e8195935d0cc6b9bdffe788900fc1a47761309f76b6ba219bb",
+      "self_review_verdict": "PASS"
+    },
+    "runtime_evidence": {
+      "repository": "heimgewebe/infra",
+      "path": "runtime/heim-pc-restic-maintenance-first-run-2026-07-11.json",
+      "markdown_path": "runtime/heim-pc-restic-maintenance-first-run-2026-07-11.md",
+      "commit_sha": "3478019c5b0b0cde7a5432f792851d07e07480f3",
+      "content_sha256": "595a44bcaee45e8318d256d881fc4070141bdeb8f7ab76ebec53f3cfa28bace6",
+      "markdown_sha256": "7ec3847b79f3b36a8314d15c74f42aab6aa53a3fb88a56c5048a29b290ee5a67",
+      "source_version": "d81ae8f4fcf72e1e7c36176c9df8ebf98a415b23",
+      "policy_sha256": "c7d1bad1f0d1f35d602541082131568848e55784880457acdeff315e06965254"
+    },
+    "github_ci_observation": {
+      "workflow_run_id": 29149972344,
+      "check_run_id": 86537791190,
+      "result": "job_not_started",
+      "steps": 0,
+      "logs_available": false,
+      "reason": "GitHub account payment or spending-limit block; not classified as a code or test failure."
+    },
+    "runtime_deployment": {
+      "active_release": "releases/d81ae8f4fcf72e1e7c36176c9df8ebf98a415b23",
+      "previous_release": "releases/0d0cba93bcafc1f92f70e77b7545407fee3cc773",
+      "rollback_backup_dir": "/home/alex/.local/lib/heim-restic-runtime/backups/20260711T103112Z.1184821",
+      "rollback_ready": true,
+      "install_receipt_sha256": "7f2324ad96d9c597b2ca4cb9e14bae3a9673cf3d7b9a6bf1183b522d41aa481d",
+      "release_receipt_sha256": "acdf374e5a6ad7513de9ce9b3066a90513337e82ff5a44a3679225b7fb66756e",
+      "maintenance_wrapper_sha256": "d49ca4dbc2ee06fab6c52210ec3d0d80cf1a0020fb75d5b0103d015175e793c2",
+      "maintenance_unit_sha256": "213e645f35d6526f7c93ec84752ca45e0daecb39226969bf4cc41aa5817e50f4",
+      "maintenance_timer_enabled_by_installer": false,
+      "gdrive_config_touched": false
+    },
+    "preflight": {
+      "unit": "restic-t016-preflight-v2-20260711T103617Z.service",
+      "invocation_id": "b0a76b6d8af4460bab70f3156aa14078",
+      "result": "success",
+      "exit_status": 0,
+      "evidence_sha256": "3437969a5868bd2cf6d8a15a77a523923b0a420a754204f58e7d7c2a7090f2c0",
+      "snapshot_count": 7,
+      "snapshot_inventory_sha256": "fd98c90f06b5cfb6d9c4c2aa30bd514091567ac4657c92b35c594c8143adfdf1",
+      "candidate_keep_count": 7,
+      "candidate_remove_count": 0,
+      "raw_repository_size_bytes": 6335116330,
+      "raw_blob_count": 118958,
+      "exact_snapshot_id": "5b2ac9c7029e604d51128a696376bf2ea6fdca330ff79073f8cfaf769574fd10",
+      "restored_sentinel_sha256": "1a7424392ca5e0786b0025052244e151286e276bf70892d54de33445f080342c",
+      "repository_check": "PASS",
+      "repository_check_output_sha256": "512a213ff7a0dafa36f08869bfc333e91cecea26f7a9d744eae625b516d7a629"
+    },
+    "maintenance_execution": {
+      "unit": "restic-maintenance-weekly.service",
+      "invocation_id": "cca7822bfed8422691c2d75f308e0d4c",
+      "started_at": "2026-07-11T12:40:27+02:00",
+      "finished_at": "2026-07-11T12:42:28+02:00",
+      "result": "success",
+      "exit_status": 0,
+      "policy_sha256": "c7d1bad1f0d1f35d602541082131568848e55784880457acdeff315e06965254",
+      "service_start_count": 1,
+      "service_finish_count": 1,
+      "maintenance_ok_count": 1,
+      "snapshot_keep_count": 7,
+      "snapshot_remove_count": 0,
+      "repository_check": "PASS",
+      "repository_check_message": "no errors were found",
+      "invocation_journal_sha256": "6249727695d7b70d3c377d79a1850a033701a11978caad662e78218b13fc6b78",
+      "full_unit_journal_sha256": "5b32e46ce4fbff374664a8c2936d14d6704cf8f4fcb94e1cf5cfada5eecf487e",
+      "success_marker": "2026-07-11T12:42:28+02:00",
+      "success_marker_sha256": "fbabb083871c7c8fd3debc37233b9e3f027ad2a55d3311877ba9a92c5ea67f6b"
+    },
+    "postflight": {
+      "evidence_sha256": "cad09dc88d2a7698cb605ebea2db0d218a9d7cb78f52fe9a929ca46e1dcf5d81",
+      "raw_stats_sha256": "85792d2d504bff2b95ecc0d8d21bf0080fab92a631a2d41637a60cb80e2ded51",
+      "snapshot_count": 7,
+      "snapshot_inventory_sha256": "fd98c90f06b5cfb6d9c4c2aa30bd514091567ac4657c92b35c594c8143adfdf1",
+      "snapshot_inventory_unchanged": true,
+      "raw_repository_size_bytes": 6335116330,
+      "raw_blob_count": 118958,
+      "raw_repository_state_unchanged": true,
+      "exact_snapshot_id": "5b2ac9c7029e604d51128a696376bf2ea6fdca330ff79073f8cfaf769574fd10",
+      "exact_snapshot_present": true,
+      "restored_sentinel_sha256": "1a7424392ca5e0786b0025052244e151286e276bf70892d54de33445f080342c",
+      "exact_restore_passed": true,
+      "runtime_verifier": "PASS",
+      "installer_check": "PASS",
+      "repository_lock_free": true,
+      "process_residue_count": 0,
+      "temporary_residue_count": 0,
+      "daily_backup_timer": "active-enabled",
+      "maintenance_timer": "inactive-linked"
+    },
+    "orchestration_notes": {
+      "accepted_preflight_unit": "restic-t016-preflight-v2-20260711T103617Z.service",
+      "discarded_lock_collision_unit": "restic-t016-preflight-v2-20260711T103820Z.service",
+      "discarded_attempt_exit_status": 78,
+      "discarded_attempt_repository_effect": false,
+      "reason": "The shared repository lock blocked a duplicate read-only preflight fail-closed."
+    },
+    "validated_acceptance": {
+      "fresh-preflight": "Backup and maintenance services were inactive, lock free, reviewed policy hash matched the deployed release, exact restore and repository check passed, and retirement/runtime rollback remained present.",
+      "explicit-authorization": "An atomic one-shot receipt binds the user instruction to policy c7d1bad1..., source d81ae8f..., one manual service start, no timer activation and no repeat permission.",
+      "bounded-execution": "Exactly one systemd invocation executed the commit-bound forget/prune/check contract; it retained seven snapshots, removed zero, and did not overlap a backup.",
+      "postflight": "Repository check passed; lock, tunnel, process and temporary state were clean; daily backup stayed enabled and weekly maintenance timer stayed inactive and linked.",
+      "restore-after-maintenance": "Snapshot 5b2ac9c7... remained present and restored sentinel SHA-256 1a742439... byte-identically after maintenance."
+    },
+    "effect_summary": {
+      "runtime_deployed": true,
+      "maintenance_executions": 1,
+      "forget_prune_path_executed": true,
+      "snapshots_removed": 0,
+      "snapshot_inventory_changed": false,
+      "raw_repository_size_changed": false,
+      "raw_blob_count_changed": false,
+      "maintenance_timer_enabled": false,
+      "repeat_execution_authorized": false
+    },
+    "validation": [
+      "Full Infra make validate passed before publication and again on the exact PR #126 head in a fresh detached checkout.",
+      "All 30 focused Restic tests passed.",
+      "The complete unit journal contains exactly one start, one finish and one MAINTENANCE_OK for the exact policy hash.",
+      "Preflight and postflight snapshot inventory SHA-256 are identical.",
+      "Preflight and postflight raw size and blob count are identical.",
+      "Exact sentinel restore passed after maintenance."
+    ],
+    "outcome": "The reviewed Restic policy is deployed and one bounded maintenance run passed. Seven snapshots were retained, none removed, repository state remained unchanged, and repeated maintenance remains unauthorized.",
+    "self_review": "PASS: authorization, source/policy binding, installer receipts, preflight, one systemd invocation, journals, marker, postflight restore, raw stats, timers, lock, residue and rollback path were independently re-read.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "UTIL-BASE-V1-T016",
+          "source_ref": "heimgewebe/infra#126",
+          "number": 126,
+          "head_sha": "5da3c4c88d95fe79c5897b5c35a0f004d1b14ac2",
+          "merge_commit_sha": "3478019c5b0b0cde7a5432f792851d07e07480f3",
+          "diff_sha256": "2d27a5d911acaf1749c768dbf4534145f064dd9de9757bf572616b598ac97b98",
+          "review_evidence_sha256": "b98964d10d7c09e8195935d0cc6b9bdffe788900fc1a47761309f76b6ba219bb"
+        },
+        {
+          "kind": "runtime_evidence",
+          "system": "heim-pc-restic-maintenance",
+          "task_id": "UTIL-BASE-V1-T016",
+          "repository": "heimgewebe/infra",
+          "path": "runtime/heim-pc-restic-maintenance-first-run-2026-07-11.json",
+          "commit_sha": "3478019c5b0b0cde7a5432f792851d07e07480f3",
+          "content_sha256": "595a44bcaee45e8318d256d881fc4070141bdeb8f7ab76ebec53f3cfa28bace6",
+          "run_id": "cca7822bfed8422691c2d75f308e0d4c",
+          "snapshot_id": "5b2ac9c7029e604d51128a696376bf2ea6fdca330ff79073f8cfaf769574fd10"
+        }
+      ]
+    },
+    "verification": {
+      "verified_at": "2026-07-11T10:57:15Z",
+      "task_sha256": "0d61fdeeafc29cb436d17a84ca3ba81d4e4185b953916d3a828f0f9532071739",
+      "plan_sha256": "b7cfba2a62e364bcd6d07747f68eb82ac11f4ba9a25c9aef4a62bf9ee0631596",
+      "acceptance_ids": [
+        "fresh-preflight",
+        "explicit-authorization",
+        "bounded-execution",
+        "postflight",
+        "restore-after-maintenance"
+      ]
+    }
   }
 }

@@ -2,9 +2,9 @@
   "schema_version": 1,
   "id": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T003",
   "initiative": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1",
-  "title": "Smoke heimlern over Chronik-shaped outcomes",
-  "state": "planned",
-  "goal": "Implement or verify a review-only smoke in heimlern that consumes Chronik-shaped outcome exports and produces an auditable report/proposal result without applying policy.",
+  "title": "Implement typed Heimlern outcome consumer smoke",
+  "state": "ready",
+  "goal": "Implement a dedicated, review-only Heimlern consumer for the merged Chronik operator-outcome envelope; validate both contract layers and emit an auditable report or bounded proposal without applying policy.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -32,16 +32,28 @@
   ],
   "acceptance": [
     {
-      "id": "chronik-shaped-input",
-      "assertion": "The smoke consumes a Chronik-shaped export artifact rather than private ad-hoc fixture assumptions."
+      "id": "typed-envelope-input",
+      "assertion": "A dedicated consumer parses chronik.operator-routing-outcome-export.v1 rather than routing the artifact through the unrelated generic AussenEvent path."
+    },
+    {
+      "id": "identity-and-digest-validation",
+      "assertion": "The consumer validates envelope identity, pinned Heimlern payload contract revision/digest, canonical payload digest, deterministic event id and evidence-reference digests before analysis."
+    },
+    {
+      "id": "freshness-and-duplicates",
+      "assertion": "Freshness is recomputed at read time with an explicit policy; duplicate event ids are handled deterministically without double-counting evidence."
     },
     {
       "id": "proposal-schema-valid",
-      "assertion": "Any produced proposal validates against the pinned policy.weight_adjustment.v1 contract or records insufficient evidence."
+      "assertion": "The smoke emits a bounded report, a policy.weight_adjustment.v1 proposal that validates, or a typed insufficient-evidence result."
     },
     {
       "id": "review-only",
-      "assertion": "The smoke writes no routing policy and preserves no-auto-apply non-claims."
+      "assertion": "No routing policy, live weights, Chronik history or Grabowski execution state is mutated; no-auto-apply non-claims survive the output."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused tests cover valid input, contract drift, payload/event digest mismatch, stale input, duplicate input, secret/raw-field rejection and insufficient evidence."
     }
   ],
   "metadata": {
@@ -52,14 +64,19 @@
       "auto_apply_permission",
       "routing_policy_superiority",
       "production_sample_sufficiency",
-      "runtime_mutation",
+      "chronik_runtime_readiness",
+      "live_grabowski_producer",
       "merge_readiness"
     ],
-    "task_role": "t003"
+    "task_role": "t003",
+    "scope_optimized_at": "2026-07-10T23:43:23Z",
+    "scope_basis": "T001 live audit plus merged Chronik PR #214.",
+    "chronik_contract_merge": "de1287423f3156cfae86c3cae6f4538732356c01",
+    "consumer_gap": "The existing Heimlern Chronik CLI consumes AussenEvent and must not be reused as an implicit routing-outcome parser."
   },
   "priority": {
-    "lane": "next",
-    "rank": 40
+    "lane": "now",
+    "rank": 10
   },
   "depends_on": [
     "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T002"

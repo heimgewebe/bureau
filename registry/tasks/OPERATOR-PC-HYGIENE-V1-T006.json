@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-PC-HYGIENE-V1-T006",
+  "initiative": "OPERATOR-PC-HYGIENE-V1",
+  "title": "Quarantine Bureau state-root legacy artifacts",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 206
+  },
+  "goal": "Restore a healthy Bureau state root by classifying the unknown entry and moving confirmed legacy/archive candidates into a digest-manifested reversible quarantine outside the active root, without deletion.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "classify-before-move",
+      "assertion": "The 38 doctor-classified archive candidates and the unknown weltgewebe-audit entry are re-read live; every moved entry has a documented class, original path, type, size and SHA-256 or deterministic directory manifest."
+    },
+    {
+      "id": "reversible-quarantine",
+      "assertion": "Confirmed legacy entries are moved atomically into a timestamped quarantine outside the active Bureau state root; no entry is deleted and a collision-safe rollback map is written."
+    },
+    {
+      "id": "runtime-safety",
+      "assertion": "Bureau service/process use is checked before mutation, SQLite database/sidecars and known envelope/receipt/review directories remain untouched, and post-move database integrity plus Bureau doctor/check are green."
+    },
+    {
+      "id": "unknown-fail-closed",
+      "assertion": "The weltgewebe-audit entry is retained if ownership or replay value cannot be proven; uncertainty must not be converted into deletion or silent archival."
+    },
+    {
+      "id": "deletion-separate",
+      "assertion": "Any later permanent deletion requires a separate retention decision and explicit authorization after a quarantine observation period."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T23:43:23Z",
+    "source_command": "bureau doctor",
+    "live_doctor_finding": {
+      "archive_candidate_count": 38,
+      "unknown_count": 1,
+      "unknown_name": "weltgewebe-audit-2026-07-10",
+      "active_state_root": "/home/alex/.local/state/bureau"
+    },
+    "reason_not_executed_now": "State relocation is a separate host mutation and must not be mixed into the registry reconcile or the active Heimlern consumer ball.",
+    "does_not_establish": [
+      "safe_to_delete",
+      "unknown_entry_disposable",
+      "runtime_quiescence",
+      "retention_period_complete",
+      "backup_recoverability"
+    ]
+  },
+  "depends_on": []
+}

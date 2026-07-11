@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "id": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T005",
+  "initiative": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1",
+  "title": "Emit redacted Grabowski routing outcomes",
+  "state": "planned",
+  "goal": "Add an explicit, opt-in Grabowski producer that derives redacted operator routing outcomes from execution/friction receipts, validates the Heimlern payload and Chronik envelope contracts, and can append them without changing routing policy.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/chronik",
+      "repo:/home/alex/repos/heimlern"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.chronik",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.heimlern",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "receipt-derived-payload",
+      "assertion": "The producer derives bounded route, outcome, reward, friction and evidence fields from typed execution receipts; missing evidence yields a typed refusal rather than invented values."
+    },
+    {
+      "id": "dual-contract-validation",
+      "assertion": "Every output validates against the pinned Heimlern payload contract and the merged Chronik transport envelope with deterministic payload/event digests."
+    },
+    {
+      "id": "redaction",
+      "assertion": "Raw logs, command output, secrets, private absolute paths and unbounded free text are excluded or rejected before append."
+    },
+    {
+      "id": "explicit-append",
+      "assertion": "Production append is explicit and opt-in; dry-run/fixture validation is the default and duplicate event ids are idempotent."
+    },
+    {
+      "id": "no-policy-authority",
+      "assertion": "The producer cannot apply Heimlern proposals, change route weights, dispatch tasks or weaken Grabowski execution gates."
+    },
+    {
+      "id": "tests-and-live-proof",
+      "assertion": "Focused tests cover success, missing evidence, digest drift, redaction, duplicate append and transport failure; any live proof occurs only after reviewed deployment and remains non-applying."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-10T23:43:23Z",
+    "source_audit": "docs/reports/chronik-heimlern-outcome-bridge-t001-audit.md",
+    "contract_merge": "heimgewebe/chronik@de1287423f3156cfae86c3cae6f4538732356c01",
+    "reason_separate_task": "A fixture-equivalent Heimlern smoke cannot establish a real source producer or runtime append path.",
+    "does_not_establish": [
+      "runtime_deployment_permission",
+      "chronik_service_readiness",
+      "production_sample_sufficiency",
+      "routing_policy_superiority",
+      "auto_apply_permission"
+    ]
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 90
+  },
+  "depends_on": [
+    "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T003"
+  ]
+}

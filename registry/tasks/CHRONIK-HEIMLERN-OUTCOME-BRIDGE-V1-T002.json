@@ -3,8 +3,8 @@
   "id": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T002",
   "initiative": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1",
   "title": "Define redacted operator outcome export contract",
-  "state": "planned",
-  "goal": "Define the Chronik-owned redacted operator outcome event/export shape that can transport Grabowski receipts to heimlern without raw logs, secrets or routing authority.",
+  "state": "verified",
+  "goal": "Define a Chronik-owned, digest-bound transport envelope around the Heimlern-owned operator.routing_outcome.v1 payload without raw logs, secrets, stored freshness verdicts or routing authority.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -38,15 +38,19 @@
   "acceptance": [
     {
       "id": "contract-owner-clear",
-      "assertion": "The contract states Chronik owns historical transport while heimlern owns only offline analysis/proposal output."
+      "assertion": "Chronik owns only the append-only transport envelope; Heimlern remains the canonical routing-outcome payload owner and offline proposal authority."
     },
     {
       "id": "redaction-boundary",
-      "assertion": "The export shape excludes secrets and raw logs while preserving route, outcome, reward, source, freshness and digest evidence."
+      "assertion": "The validator rejects raw output fields, secret-shaped text and private absolute paths while preserving source, payload, evidence and digest identities."
+    },
+    {
+      "id": "digest-and-freshness",
+      "assertion": "Payload schema revision, mirror digest, canonical payload digest and deterministic event identity are checked; freshness is recomputed from observation/export times rather than persisted as a mutable verdict."
     },
     {
       "id": "fixture-present",
-      "assertion": "At least one fixture or sample export validates the intended shape without claiming production sample sufficiency."
+      "assertion": "A fixture-equivalent export and machine-readable validator pass without claiming production sample sufficiency or runtime readiness."
     }
   ],
   "metadata": {
@@ -60,7 +64,33 @@
       "runtime_mutation",
       "merge_readiness"
     ],
-    "task_role": "t002"
+    "task_role": "t002",
+    "verified_at": "2026-07-10T23:43:23Z",
+    "implementation_pr": "heimgewebe/chronik#214",
+    "implementation_head": "6ceb96c25a080a7de5e9ab402aaf6bce6f255684",
+    "implementation_merge_commit": "de1287423f3156cfae86c3cae6f4538732356c01",
+    "implementation_diff_sha256": "e03a93d4287046996632a23e979a49f4b1dac6195f15732dc1a6cfde49a1e74d",
+    "implementation_diff_gist": "https://gist.github.com/alexdermohr/999237dbe5b35a312e22c88262d49adb",
+    "heimlern_payload_revision": "6d70e4900377c92b540d07bd6b71fe36677c2ba5",
+    "heimlern_payload_schema_sha256": "cff1f19814d33dd0ba084b3b5d9e2d4b6c36b1276dab35c3256912b5c457712d",
+    "validation": [
+      "264 Chronik tests passed and the Chronik role contract remained valid.",
+      "All GitHub checks including CodeQL, AJV fixtures and repository guards passed.",
+      "The local mirror is digest-pinned and explicitly mirror_only.",
+      "Runtime mutation was not attempted."
+    ],
+    "verified_acceptance": {
+      "contract-owner-clear": "The envelope and pin state Chronik transport ownership and Heimlern payload ownership separately.",
+      "redaction-boundary": "Focused tests reject raw output, secret-shaped strings and private absolute paths.",
+      "digest-and-freshness": "Validator binds contract revision, mirror/payload/event digests and requires consumer-side freshness recomputation.",
+      "fixture-present": "The fixture and CLI validator pass while retaining transport-only/no-auto-apply non-claims."
+    },
+    "outcome": "A strict transport envelope now exists; it does not provide a live producer or Heimlern consumer.",
+    "verification": {
+      "task_sha256": "1b452c75540227952bd47ecb4fb8ebc22606e465a7622116579c2d9e753db2f3",
+      "plan_sha256": "a39748d2669b385c611c92201f73d7ac77d0eb5a0753b79c377ecae3b76af675",
+      "verified_at": "2026-07-10T23:43:23Z"
+    }
   },
   "priority": {
     "lane": "next",

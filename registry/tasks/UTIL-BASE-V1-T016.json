@@ -66,13 +66,32 @@
   "metadata": {
     "registered_at": "2026-07-11T07:38:46Z",
     "source": "Restic runtime closeout 2026-07-11",
-    "depends_on_policy_sha256": "636acfde44ddb2b752802801080ddf479b999712426cc07a162a032ba0968af7",
+    "depends_on_policy_sha256": "c7d1bad1f0d1f35d602541082131568848e55784880457acdeff315e06965254",
     "does_not_establish": [
       "current maintenance authorization",
-      "retention suitability",
+      "runtime deployment",
       "permission for repeated maintenance",
       "timer enablement permission",
-      "safe deletion beyond the reviewed policy"
+      "safe deletion beyond the reviewed policy",
+      "physical reclaim amount"
+    ],
+    "reviewed_policy": {
+      "policy": "target=heimberry:rest-server/heim-pc;host=heim-pc;keep-last=14;keep-within=7d;keep-daily=14;keep-weekly=8;keep-monthly=12;prune=true;check=true",
+      "sha256": "c7d1bad1f0d1f35d602541082131568848e55784880457acdeff315e06965254",
+      "source_repository": "heimgewebe/infra",
+      "source_pull_request": 125,
+      "source_merge_commit": "d81ae8f4fcf72e1e7c36176c9df8ebf98a415b23",
+      "review_task": "UTIL-BASE-V1-T015",
+      "review_status": "verified",
+      "active_runtime_deployed": false,
+      "maintenance_authorized": false
+    },
+    "required_preconditions_before_effect": [
+      "Install the reviewed source policy through a new commit-bound reversible Infra runtime release.",
+      "Verify the deployed maintenance wrapper and systemd unit both report policy SHA-256 c7d1bad1f0d1f35d602541082131568848e55784880457acdeff315e06965254.",
+      "Obtain a fresh exact-snapshot restore proof and repository check after deployment.",
+      "Obtain a new operator authorization naming the exact policy SHA-256 and permitting one maintenance run only.",
+      "Keep the weekly maintenance timer inactive and linked before and after the one-shot run."
     ]
   }
 }

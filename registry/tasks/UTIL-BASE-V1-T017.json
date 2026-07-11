@@ -66,16 +66,27 @@
     "registered_at": "2026-07-11T07:38:46Z",
     "source": "Restic runtime closeout 2026-07-11",
     "currently_protected": [
+      "releases/d81ae8f4fcf72e1e7c36176c9df8ebf98a415b23",
       "releases/0d0cba93bcafc1f92f70e77b7545407fee3cc773",
-      "releases/c4087e78d3a77ec55276859edd58536934486f3d",
-      "runtime backup 20260711T050029Z.9347",
+      "runtime backup 20260711T103112Z.1184821",
       "retirement backup 20260711T050231Z.10854"
     ],
     "does_not_establish": [
       "obsolete artifact classification",
       "deletion permission",
       "safe wildcard cleanup",
-      "permission to remove the immediate rollback release"
-    ]
+      "permission to remove the active release",
+      "permission to remove the immediate rollback release or backup"
+    ],
+    "t016_runtime_basis": {
+      "active_release": "releases/d81ae8f4fcf72e1e7c36176c9df8ebf98a415b23",
+      "immediate_rollback_release": "releases/0d0cba93bcafc1f92f70e77b7545407fee3cc773",
+      "immediate_rollback_backup": "runtime backup 20260711T103112Z.1184821",
+      "maintenance_evidence_commit": "3478019c5b0b0cde7a5432f792851d07e07480f3",
+      "maintenance_status": "verified",
+      "snapshot_inventory_changed": false,
+      "raw_repository_state_changed": false,
+      "deletion_authorized": false
+    }
   }
 }

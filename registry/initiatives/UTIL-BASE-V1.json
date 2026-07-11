@@ -85,7 +85,7 @@
       "recommended_state": "completion-ready",
       "source": "post-merge doctor check after PR #366"
     },
-    "closeout_status": "UTIL-BASE-V1-T015 is verified: the daily-only policy is rejected and conservative source policy c7d1bad1... is reviewed. T016 remains planned for a separate commit-bound deployment and one explicitly authorized maintenance proof; T017 remains planned for later rollback-artifact evaluation.",
+    "closeout_status": "UTIL-BASE-V1-T016 is verified: reviewed policy c7d1bad1... is deployed from d81ae8f..., exactly one maintenance run passed with seven snapshots retained and none removed, repository and restore checks green, and weekly maintenance remains disabled. T017 remains planned for separately reviewed release/backup classification; no deletion permission exists.",
     "lifecycle_reopened_20260710": "PR #392 registered UTIL-BASE-V1-T013 as a planned follow-up after the previous completion-ready closeout; the initiative is active again until that hardening task is resolved.",
     "lifecycle_reopened_20260710_container_pinning": "UTIL-BASE-V1-T014 registers immutable image pins, canonical Beszel-agent source, validation and staged live rollout after the operator ecosystem audit found floating tags and obsolete worktree provenance.",
     "verified_container_pinning_20260710": "Infra PR #113 implemented immutable image and source contracts; PR #114 published live evidence. Runtime verifier SHA-256 a0602f435e7c6c31ed3ddacfb329413802f51079d535296589b087be386c9b2c passed.",
@@ -125,6 +125,25 @@
       "runtime_deployed": false,
       "maintenance_authorized": false,
       "next_task": "UTIL-BASE-V1-T016"
+    },
+    "restic_first_maintenance_20260711": {
+      "task": "UTIL-BASE-V1-T016",
+      "status": "verified",
+      "verified_at": "2026-07-11T10:57:15Z",
+      "infra_pr": "heimgewebe/infra#126",
+      "infra_merge_commit": "3478019c5b0b0cde7a5432f792851d07e07480f3",
+      "source_version": "d81ae8f4fcf72e1e7c36176c9df8ebf98a415b23",
+      "policy_sha256": "c7d1bad1f0d1f35d602541082131568848e55784880457acdeff315e06965254",
+      "maintenance_invocation_id": "cca7822bfed8422691c2d75f308e0d4c",
+      "snapshot_keep_count": 7,
+      "snapshot_remove_count": 0,
+      "snapshot_inventory_unchanged": true,
+      "raw_repository_state_unchanged": true,
+      "repository_check": "PASS",
+      "exact_restore_after_maintenance": true,
+      "maintenance_timer_enabled": false,
+      "repeat_execution_authorized": false,
+      "next_task": "UTIL-BASE-V1-T017"
     }
   }
 }

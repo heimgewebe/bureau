@@ -233,8 +233,8 @@
       "archived_room_file_count": 187,
       "canonical_resource_id": "repo.systemkatalog",
       "consumer_merge_commits": {
-        "leitstand": "61c58ae5d3634ee6ec62eeeaac88632d41f60499",
-        "schauwerk": "f5f986d692b0759d44497d9280f963c4070c11a7",
+        "leitstand": "07bb092564ef063b79e06619a9b132032dfb6cc4",
+        "schauwerk": "cc52fded054298e18d6982254dd624a3f60c607d",
         "lenskit": "fd9d3ebb253015f01324d731fd417145181c7980"
       },
       "supersedes_current_state_claims_from": [

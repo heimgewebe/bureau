@@ -136,9 +136,9 @@
       "systemkatalog_pr": 119,
       "systemkatalog_merge_commit": "2c70c8c337a8cbbdfbacd4d1724952428076e532",
       "leitstand_pr": 163,
-      "leitstand_merge_commit": "61c58ae5d3634ee6ec62eeeaac88632d41f60499",
+      "leitstand_merge_commit": "07bb092564ef063b79e06619a9b132032dfb6cc4",
       "schauwerk_pr": 84,
-      "schauwerk_merge_commit": "f5f986d692b0759d44497d9280f963c4070c11a7",
+      "schauwerk_merge_commit": "cc52fded054298e18d6982254dd624a3f60c607d",
       "lenskit_pr": 982,
       "lenskit_merge_commit": "fd9d3ebb253015f01324d731fd417145181c7980",
       "active_room_count": 0,
@@ -168,7 +168,7 @@
       "full_review_patch_sha256": "650beb1092dd8cfdd9c79e28a1226c11a43c40a3bf84011cfd64c3e0d9c190e5"
     },
     "verification": {
-      "task_sha256": "3d060d0124986de8372284f214e126f5d21ab744e4f7e706e7cbc8aff3f475ae",
+      "task_sha256": "e0c3a50a4dc21e5b200aa8b8df844c2c3927dda72a7e60d539c05b86c8dba481",
       "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   }

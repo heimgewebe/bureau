@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "RepoBrief practical utility hardening",
-  "state": "active",
-  "commitment": "next",
+  "state": "completion-ready",
+  "commitment": "later",
   "goal": "Turn RepoBrief/rLens from a strong evidence factory into a default-useful agent context system by registering the practical query, citation, freshness, context, review-coverage, semantic, federation and runtime-evidence gaps without moving mutation authority into RepoBrief core.",
   "current_plan": {
     "repository": "repo.bureau",
@@ -34,6 +34,8 @@
       "review_completeness",
       "mcp_resource_availability",
       "merge_readiness"
-    ]
+    ],
+    "completion_ready_at": "2026-07-12T06:30:00Z",
+    "completion_ready_reason": "All twenty-one registered RPU tasks are verified; Doctor independently recommends completion-ready with zero open tasks."
   }
 }

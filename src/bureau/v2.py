@@ -720,7 +720,8 @@ def closure_bridge_task_ids(plan_path: Path | None = None) -> set[str]:
     return result
 
 
-OPEN_TASK_STATES = {"inbox", "planned", "ready", "blocked", "stale"}
+TERMINAL_TASK_STATES = frozenset({"verified", "cancelled", "superseded"})
+OPEN_TASK_STATES = frozenset({"inbox", "planned", "ready", "blocked", "stale"})
 
 
 def lifecycle_repair_recommendations(lifecycle: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -3025,6 +3026,24 @@ def verification_stamp(registry: Registry, store: StateStore, task_id: str) -> d
     raise legacy.StateError(f"task {task_id} has no current verification")
 
 
+def _lifecycle_recommendation(initiative_state: str, states: dict[str, str]) -> str:
+    task_states = tuple(states.values())
+    all_terminal = bool(task_states) and all(
+        state in TERMINAL_TASK_STATES for state in task_states
+    )
+    all_verified = bool(task_states) and all(state == "verified" for state in task_states)
+
+    if initiative_state == "completed":
+        return "completed" if all_terminal else "reopen-required"
+    if all_verified:
+        return "completion-ready"
+    if "blocked" in task_states and "ready" not in task_states:
+        return "waiting"
+    if any(state in OPEN_TASK_STATES for state in task_states):
+        return "active"
+    return initiative_state
+
+
 def lifecycle_diagnostics(registry: Registry, store: StateStore) -> list[dict[str, Any]]:
     with store.connect() as connection:
         overlays = store.overlays(connection, registry)
@@ -3032,25 +3051,7 @@ def lifecycle_diagnostics(registry: Registry, store: StateStore) -> list[dict[st
     for initiative in registry.initiatives.values():
         tasks = [task for task in registry.tasks.values() if task.initiative == initiative.id]
         states = {task.id: overlays.get(task.id, task.state) for task in tasks}
-        open_states = {"inbox", "planned", "ready", "blocked", "stale"}
-        if (
-            initiative.state == "completed"
-            and tasks
-            and all(state == "verified" for state in states.values())
-        ):
-            recommendation = "completed"
-        elif initiative.state == "completed":
-            recommendation = "reopen-required"
-        elif tasks and all(state == "verified" for state in states.values()):
-            recommendation = "completion-ready"
-        elif any(state == "blocked" for state in states.values()) and not any(
-            state == "ready" for state in states.values()
-        ):
-            recommendation = "waiting"
-        elif any(state in open_states for state in states.values()):
-            recommendation = "active"
-        else:
-            recommendation = initiative.state
+        recommendation = _lifecycle_recommendation(initiative.state, states)
         result.append(
             {
                 "initiative_id": initiative.id,
@@ -3280,25 +3281,7 @@ def _read_only_lifecycle(registry: Registry, overlays: dict[str, str]) -> list[d
     for initiative in registry.initiatives.values():
         tasks = [task for task in registry.tasks.values() if task.initiative == initiative.id]
         states = {task.id: overlays.get(task.id, task.state) for task in tasks}
-        open_states = {"inbox", "planned", "ready", "blocked", "stale"}
-        if (
-            initiative.state == "completed"
-            and tasks
-            and all(state == "verified" for state in states.values())
-        ):
-            recommendation = "completed"
-        elif initiative.state == "completed":
-            recommendation = "reopen-required"
-        elif tasks and all(state == "verified" for state in states.values()):
-            recommendation = "completion-ready"
-        elif any(state == "blocked" for state in states.values()) and not any(
-            state == "ready" for state in states.values()
-        ):
-            recommendation = "waiting"
-        elif any(state in open_states for state in states.values()):
-            recommendation = "active"
-        else:
-            recommendation = initiative.state
+        recommendation = _lifecycle_recommendation(initiative.state, states)
         result.append(
             {
                 "initiative_id": initiative.id,

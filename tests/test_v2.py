@@ -401,6 +401,85 @@ def test_lifecycle_diagnoses_completion_ready(registry_factory, tmp_path, monkey
     assert lifecycle["recommended_state"] == "completion-ready"
 
 
+def test_completed_lifecycle_accepts_mixed_terminal_task_states(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(3)
+    preliminary = Registry.load(root)
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative = json.loads(initiative_path.read_text())
+    initiative["state"] = "completed"
+    initiative["commitment"] = "completed"
+    initiative_path.write_text(json.dumps(initiative))
+
+    terminal_states = ("verified", "cancelled", "superseded")
+    for task_path, state in zip(
+        sorted((root / "registry/tasks").glob("*.json")), terminal_states, strict=True
+    ):
+        task = json.loads(task_path.read_text())
+        task["state"] = state
+        if state == "verified":
+            task["metadata"] = {
+                "verification": {
+                    "task_sha256": task_revision_sha256(task),
+                    "plan_sha256": plan_sha256(preliminary, task["initiative"]),
+                }
+            }
+        remove_from_queue(root, task["id"])
+        task_path.write_text(json.dumps(task))
+
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+
+    assert lifecycle["recommended_state"] == "completed"
+    assert lifecycle["consistent"] is True
+
+
+def test_read_only_lifecycle_accepts_mixed_terminal_task_states(registry_factory):
+    root = registry_factory(3)
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative = json.loads(initiative_path.read_text())
+    initiative["state"] = "completed"
+    initiative["commitment"] = "completed"
+    initiative_path.write_text(json.dumps(initiative))
+    registry = Registry.load(root)
+    task_ids = sorted(registry.tasks)
+    overlays = dict(
+        zip(task_ids, ("verified", "cancelled", "superseded"), strict=True)
+    )
+
+    lifecycle = bureau_v2._read_only_lifecycle(registry, overlays)[0]
+
+    assert lifecycle["recommended_state"] == "completed"
+    assert lifecycle["consistent"] is True
+
+
+def test_completed_lifecycle_still_reopens_for_open_task(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2)
+    initiative_path = root / "registry/initiatives/main.json"
+    initiative = json.loads(initiative_path.read_text())
+    initiative["state"] = "completed"
+    initiative["commitment"] = "completed"
+    initiative_path.write_text(json.dumps(initiative))
+    task_paths = sorted((root / "registry/tasks").glob("*.json"))
+    first = json.loads(task_paths[0].read_text())
+    first["state"] = "superseded"
+    remove_from_queue(root, first["id"])
+    task_paths[0].write_text(json.dumps(first))
+    second = json.loads(task_paths[1].read_text())
+    second["state"] = "planned"
+    remove_from_queue(root, second["id"])
+    task_paths[1].write_text(json.dumps(second))
+
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+    lifecycle = lifecycle_diagnostics(registry, store)[0]
+
+    assert lifecycle["recommended_state"] == "reopen-required"
+    assert lifecycle["consistent"] is False
+
+
 def test_doctor_reports_stale_task(registry_factory, tmp_path, monkeypatch):
     root = registry_factory(1)
     _, store, _, _ = claim_and_complete(root, tmp_path, monkeypatch)

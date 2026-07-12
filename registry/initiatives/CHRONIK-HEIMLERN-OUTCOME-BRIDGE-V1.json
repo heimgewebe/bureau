@@ -4,17 +4,17 @@
   "title": "Chronik to Heimlern outcome bridge",
   "state": "active",
   "commitment": "now",
-  "goal": "Make operator routing outcomes available to Heimlern through a Chronik-owned append-only envelope while keeping the payload contract in Heimlern and all analysis proposal-only.",
+  "goal": "Make operator routing outcomes available to Heimlern through a Chronik-owned append-only envelope, prove on a bounded real sample whether the result improves an operator diagnosis or decision, and keep all analysis proposal-only.",
   "current_plan": {
     "repository": "bureau",
     "path": "docs/plans/chronik-heimlern-outcome-bridge-v1.md"
   },
   "completion": [
-    "Chronik transport/export surfaces and runtime state are audited before implementation claims.",
+    "Chronik transport and export surfaces and runtime state are audited before implementation claims.",
     "A redacted Chronik envelope binds the Heimlern-owned payload revision and digests without duplicating payload authority.",
     "Heimlern consumes the envelope through a dedicated typed, review-only path and emits a report, valid proposal or insufficient-evidence result.",
-    "Grabowski has a separately reviewed, opt-in producer before any real-outcome or live round-trip claim.",
-    "Bureau records proposal review state; Leitstand remains an optional read-only projection."
+    "Grabowski has a separately reviewed, opt-in producer and a bounded real-outcome proof records whether Heimlern materially improves an operator diagnosis or decision.",
+    "Only a positive usefulness result may promote Bureau proposal-review workflow or an optional Leitstand read-only projection."
   ],
   "parallelism": {
     "max_active_tasks": 1
@@ -46,9 +46,11 @@
       "task_and_review_truth": "heimgewebe/bureau"
     },
     "live_audit_report": "docs/reports/chronik-heimlern-outcome-bridge-t001-audit.md",
-    "audit_finding": "The transport envelope and dedicated typed Heimlern consumer are implemented. Bureau review/display boundaries and a separate opt-in Grabowski producer remain.",
+    "audit_finding": "The transport envelope and dedicated typed Heimlern consumer are implemented. The next missing evidence is not another display contract but a real, redacted Grabowski sample and an explicit operator-value verdict.",
     "consumer_implementation_pr": "heimgewebe/heimlern#200",
     "consumer_implementation_merge_commit": "1c64afa6656737cf56b78e9f5c30ba7c9d8da4d9",
-    "current_task": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T004"
+    "sequencing_corrected_at": "2026-07-12",
+    "sequencing_decision": "T005 real-outcome usefulness precedes T004 Bureau or Leitstand product surfaces.",
+    "current_task": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T005"
   }
 }

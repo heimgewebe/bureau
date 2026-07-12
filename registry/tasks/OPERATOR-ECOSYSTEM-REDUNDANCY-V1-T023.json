@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T023",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Retire the optional Systemkatalog HTTP runtime",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "goal": "Remove the optional local Systemkatalog HTTP service after a source- and task-bound backup, preserve the static catalog artifact contract, and merge the already reviewed static-only Systemkatalog change only after live retirement evidence exists.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/systemkatalog",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/systemkatalog",
+      "host:heim-pc"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "The operator explicitly instructed Grabowski to complete the prepared Systemkatalog retirement. The effect is one-shot, exact-head-bound, backup-first and revoked on any mismatch."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "systemd"
+  ],
+  "acceptance": [
+    {
+      "id": "authorization-merged-before-effect",
+      "assertion": "This exact task and its one-shot break-glass authorization are merged into bureau:main before any service stop, disablement or runtime file removal occurs."
+    },
+    {
+      "id": "exact-head-retirement",
+      "assertion": "origin/main:ops/install/retire-local-runtime.sh is executed from clean Systemkatalog commit dad18bf4ad62b88d349aad1288f92048d8af647f with Bureau:OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T023 as the authorization reference."
+    },
+    {
+      "id": "backup-and-receipt",
+      "assertion": "The retirement tool creates a checksum-bound backup, RESTORE.md and retirement-receipt.json before removing the installed unit and executables."
+    },
+    {
+      "id": "runtime-absent",
+      "assertion": "systemkatalog.service is inactive, disabled and unloaded after daemon-reload; ~/.config/systemd/user/systemkatalog.service, ~/.local/bin/systemkatalog and ~/.local/bin/systemkatalogctl are absent; port 4001 no longer listens."
+    },
+    {
+      "id": "private-state-preserved",
+      "assertion": "Private Cabinet/Systemkatalog archives, backups, ignored local state and historical receipts remain untouched."
+    },
+    {
+      "id": "static-consumer-contract-preserved",
+      "assertion": "Registry JSON/JSONL, rendered Markdown, Mermaid and map artifact manifest remain valid and consumer-facing canonical files are unchanged by the runtime retirement."
+    },
+    {
+      "id": "systemkatalog-pr-finalized",
+      "assertion": "Systemkatalog PR #123 is updated with the real Bureau task and retirement receipt, rebased on current main, fully revalidated, removed from draft and merged only after all prior acceptance evidence passes."
+    },
+    {
+      "id": "closeout-bound",
+      "assertion": "T023 and the initiative are updated with the Systemkatalog merge commit, backup/receipt hashes and live absence proof in a reviewed Bureau closeout."
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021"
+  ],
+  "rollback": {
+    "trigger": "Any failure before final absence verification or any newly discovered required HTTP consumer.",
+    "procedure": "Use the generated RESTORE.md and checksum manifest to reinstall the exact backed-up unit and executables, run systemctl --user daemon-reload, enable and start systemkatalog.service, then verify /healthz before stopping the task.",
+    "source": "~/.local/state/systemkatalog/runtime-retirements/<timestamp>/"
+  },
+  "stop": {
+    "conditions": [
+      "T023 is not yet present in bureau:origin/main",
+      "a foreign Bureau or Systemkatalog lease, dirty state, process or overlapping pull request is present",
+      "Systemkatalog main is not clean or differs from dad18bf4ad62b88d349aad1288f92048d8af647f before the retirement apply",
+      "the installed unit or executable hashes differ from the dry-run snapshot",
+      "PR #123 head differs from 78872ce230e7e1a7ed5ad04cd33af089b2369362 before final rebase",
+      "a required HTTP consumer is discovered",
+      "backup, receipt or absence verification fails"
+    ]
+  },
+  "metadata": {
+    "registered_at": "2026-07-12T17:08:52+02:00",
+    "source_decision": "The operator instructed Grabowski to complete the already prepared Systemkatalog runtime retirement.",
+    "execution_authorization": {
+      "schema_version": 1,
+      "source": "operator_instruction",
+      "level": "break_glass",
+      "approved": true,
+      "reviewer": "alexdermohr",
+      "reference": "operator-instruction:2026-07-12:complete-systemkatalog-runtime-retirement",
+      "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T023",
+      "scope": [
+        "merge this authorization into bureau:main before effect",
+        "run the exact-head-bound Systemkatalog retirement tool with backup-first semantics",
+        "stop and disable systemkatalog.service",
+        "remove only the installed systemkatalog.service unit, systemkatalog executable and systemkatalogctl executable",
+        "verify receipt, checksums, service absence, file absence and port-4001 absence",
+        "bind the retirement evidence into Systemkatalog PR #123 and Bureau closeout",
+        "merge Systemkatalog PR #123 only after all exact-head tests and GitHub checks pass"
+      ],
+      "conditions": [
+        "no foreign lease or dirty-state overlap",
+        "T023 is merged before runtime mutation",
+        "Systemkatalog main equals dad18bf4ad62b88d349aad1288f92048d8af647f at apply time",
+        "the live dry-run preconditions and installed hashes still match",
+        "the retirement tool creates rollback artifacts before deletion",
+        "the reviewed static-only PR remains consumer-compatible and is revalidated after task binding"
+      ],
+      "one_shot": true,
+      "revoked_on_mismatch": true,
+      "consumed": false,
+      "remaining_uses": 1,
+      "does_not_authorize": [
+        "force-releasing foreign leases or modifying foreign worktrees",
+        "deletion of private Cabinet or Systemkatalog state, archives, backups or historical receipts",
+        "mutation of unrelated repositories, services or ports",
+        "rewriting historical evidence",
+        "merging PR #123 before live retirement proof"
+      ]
+    },
+    "starting_snapshot": {
+      "observed_at": "2026-07-12T15:50:38+02:00",
+      "bureau_origin_main": "39f7c06a318c0c0f782f22db62255b2fd176efc8",
+      "systemkatalog_main": "dad18bf4ad62b88d349aad1288f92048d8af647f",
+      "systemkatalog_pr": 123,
+      "systemkatalog_pr_head": "78872ce230e7e1a7ed5ad04cd33af089b2369362",
+      "systemkatalog_pr_base": "dad18bf4ad62b88d349aad1288f92048d8af647f",
+      "review_patch_sha256": "c8687650001dbcee9d5ccbb91ae68c3287ab29e94f586ab4ab554ee85756d08a",
+      "review_evidence": "https://gist.github.com/alexdermohr/01111b1b02602c7db9f0f85fb78bd122",
+      "dry_run": "SYSTEMKATALOG-RUNTIME-RETIREMENT-DRY-RUN: PASS",
+      "service_state": "active/running/enabled",
+      "health_http": 204,
+      "installed_sha256": {
+        "systemkatalog.service": "3d2c36b4da4bbe7e49b60a5acd29576066082ab7bdf336e6ad9b56d6376f884a",
+        "systemkatalog": "d0f45b8d04321af392749107520d8879a6772d4e43fe24c34fef5256503c7f65",
+        "systemkatalogctl": "862569c8dce813a7553a25714a65f46906d64684f5cea63614c9e6f53f4a7b37"
+      }
+    },
+    "does_not_establish": [
+      "future runtime state after the observed dry-run",
+      "automatic merge readiness",
+      "permission to bypass Bureau or Grabowski leases",
+      "permission to delete private or historical state"
+    ]
+  }
+}

@@ -201,7 +201,7 @@
       }
     },
     "last_completed_catalog_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021",
-    "system_catalog_migration_status": "verified_roomless_systemkatalog",
+    "system_catalog_migration_status": "http_runtime_retirement_authorized_pending_execution",
     "system_catalog_repository_migration_closeout": {
       "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014",
       "status": "verified",
@@ -248,6 +248,25 @@
         "future runtime health",
         "merge readiness of unrelated repositories"
       ]
-    }
+    },
+    "systemkatalog_http_runtime_retirement": {
+      "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T023",
+      "status": "authorized_pending_execution",
+      "authorization_reference": "operator-instruction:2026-07-12:complete-systemkatalog-runtime-retirement",
+      "systemkatalog_pr": 123,
+      "systemkatalog_pr_head": "78872ce230e7e1a7ed5ad04cd33af089b2369362",
+      "systemkatalog_main_at_preflight": "dad18bf4ad62b88d349aad1288f92048d8af647f",
+      "dry_run_status": "pass",
+      "dry_run_observed_at": "2026-07-12T15:50:38+02:00",
+      "effect_authorized": true,
+      "effect_consumed": false,
+      "does_not_authorize": [
+        "force-releasing foreign leases",
+        "deleting private archives, backups or historical receipts",
+        "unrelated repository or runtime mutation",
+        "merging Systemkatalog PR #123 before retirement proof"
+      ]
+    },
+    "next_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T023"
   }
 }

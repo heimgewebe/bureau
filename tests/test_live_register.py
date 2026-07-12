@@ -605,3 +605,106 @@ def test_live_promote_plan_uses_full_candidate_history_beyond_list_limit(
         path=str(tmp_path / "old-current-plan.json"),
     )
     assert plan["plan"]["event_id"] == candidate["event_id"]
+
+
+def test_live_projection_remains_complete_beyond_history_limit(
+    registry_factory, tmp_path
+):
+    _root, registry, store = setup_live(registry_factory, tmp_path)
+    old = live_register_record(
+        registry,
+        store,
+        kind="thread_focus",
+        thread_id="old-still-active",
+        repo="repo.alpha",
+        title="Old focus remains active",
+    )
+    for index in range(120):
+        live_register_record(
+            registry,
+            store,
+            kind="thread_focus",
+            thread_id=f"noise-{index:03d}",
+            repo="repo.beta",
+            title=f"Noise {index:03d}",
+        )
+
+    from bureau.live_register import (
+        live_register_conflict_report,
+        live_register_context,
+        live_register_repo_context,
+    )
+
+    listed = live_register_list(store, repo="repo.alpha", limit=50)
+    context = live_register_context(store, repo="repo.alpha", limit=50)
+    repo_context = live_register_repo_context(store, "repo.alpha", limit=50)
+    conflicts = live_register_conflict_report(
+        registry, store, repo="repo.alpha", limit=50
+    )
+
+    for value in (listed, context, conflicts):
+        assert value["coverage_complete"] is True
+        assert value["history_truncated"] is True
+        assert value["oldest_loaded_event_id"] > old["event_id"]
+        assert value["projection_source"] == "complete_event_scan"
+    assert listed["records"] == []
+    assert listed["summary"]["history_loaded_records"] == 50
+    assert listed["summary"]["history_total_records"] == 121
+    assert listed["summary"]["active_thread_focus"][0]["event_id"] == old["event_id"]
+    assert context["summary"]["active_thread_focus"][0]["event_id"] == old["event_id"]
+    assert repo_context["active_thread_focus"][0]["event_id"] == old["event_id"]
+    conflict_focus = conflicts["live_register"]["summary"]["active_thread_focus"]
+    assert conflict_focus[0]["event_id"] == old["event_id"]
+    assert conflicts["summary"]["live_records"] == 0
+    assert conflicts["summary"]["history_loaded_records"] == 50
+    assert conflicts["summary"]["projection_records"] == 1
+    assert conflicts["summary"]["projection_total_records"] == 121
+
+
+def test_live_projection_uses_one_complete_snapshot(
+    registry_factory, tmp_path, monkeypatch
+):
+    _root, _registry, store = setup_live(registry_factory, tmp_path)
+
+    from bureau import live_register as live_register_module
+
+    monkeypatch.setattr(
+        live_register_module,
+        "_load_live_history",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("projection must not read a second history snapshot")
+        ),
+    )
+
+    report = live_register_module.live_register_list(store, limit=50)
+
+    assert report["coverage_complete"] is True
+    assert report["summary"]["history_total_records"] == 0
+
+
+
+def test_live_conflicts_fail_closed_when_projection_coverage_is_incomplete(
+    registry_factory, tmp_path, monkeypatch
+):
+    _root, registry, store = setup_live(registry_factory, tmp_path)
+
+    from bureau import live_register as live_register_module
+
+    monkeypatch.setattr(
+        live_register_module,
+        "_load_live_projection_records",
+        lambda _store: (
+            [],
+            {
+                "coverage_complete": False,
+                "projection_source": "test-incomplete",
+                "projection_records": 0,
+            },
+        ),
+    )
+
+    report = live_register_module.live_register_conflict_report(registry, store)
+
+    assert report["coverage_complete"] is False
+    assert report["summary"]["blockers"] == 1
+    assert report["findings"][0]["code"] == "live-register-projection-incomplete"

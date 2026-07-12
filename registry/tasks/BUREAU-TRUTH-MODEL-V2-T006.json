@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "BUREAU-TRUTH-MODEL-V2-T006",
+  "title": "Classify and revalidate long-lived backlog tasks",
+  "state": "planned",
+  "goal": "Classify later-lane tasks before any bulk cleanup and record why each sampled task still exists.",
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
+  "depends_on": [
+    "BUREAU-TRUTH-MODEL-V2-T003"
+  ],
+  "acceptance": [
+    {
+      "id": "classification",
+      "assertion": "Each reviewed task receives last_revalidated_at, revalidation_due_at, current persistence reason, origin and next trigger or an equivalent normalized record."
+    },
+    {
+      "id": "outcomes",
+      "assertion": "Classification distinguishes keep, supersession candidate, archive candidate and deletion candidate without applying bulk deletion."
+    },
+    {
+      "id": "sample-first",
+      "assertion": "A bounded representative sample is reviewed before schema-wide or queue-wide changes."
+    },
+    {
+      "id": "no-bulk-rewrite",
+      "assertion": "The task does not rewrite all later tasks merely to satisfy metadata shape."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-12T06:00:00Z",
+    "source": "Bureau total audit and Truth Model v2 design",
+    "does_not_establish": [
+      "automatic verification",
+      "automatic queue mutation",
+      "claim authority",
+      "dispatch authority",
+      "merge authority",
+      "deployment authority"
+    ]
+  }
+}

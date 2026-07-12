@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "BUREAU-TRUTH-MODEL-V2-T001",
+  "title": "Make Live Register projections history-complete",
+  "state": "ready",
+  "goal": "Separate bounded raw-history display from complete current-state projection so active focus, overrides, candidates and conflicts remain visible after unrelated history growth.",
+  "priority": {
+    "lane": "later",
+    "rank": 10
+  },
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "complete-projection",
+      "assertion": "Current thread focus, focus override and candidate state is derived from complete event coverage rather than the displayed history window."
+    },
+    {
+      "id": "coverage-signals",
+      "assertion": "live-list, context, repo context and conflict reports expose coverage_complete, history_truncated, oldest_loaded_event_id and projection_source."
+    },
+    {
+      "id": "fail-closed-conflicts",
+      "assertion": "Conflict reporting emits a blocker whenever current-state projection coverage is incomplete."
+    },
+    {
+      "id": "consumer-parity",
+      "assertion": "what-now and repo-balls retain older active focus and candidate state without treating it as queue or claim authority."
+    },
+    {
+      "id": "tests",
+      "assertion": "Deterministic tests exceed 100 events and cover complete projection plus fail-closed incomplete coverage."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-12T06:00:00Z",
+    "source": "Bureau total audit and Truth Model v2 design",
+    "does_not_establish": [
+      "automatic verification",
+      "automatic queue mutation",
+      "claim authority",
+      "dispatch authority",
+      "merge authority",
+      "deployment authority"
+    ]
+  }
+}

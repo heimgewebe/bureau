@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "BUREAU-TRUTH-MODEL-V2-T008",
+  "title": "Reconcile orphaned Bureau workspace state safely",
+  "state": "planned",
+  "goal": "Detect workspace rows that remain active after terminal or orphaned runs and produce a reviewed reconciliation path.",
+  "priority": {
+    "lane": "later",
+    "rank": 80
+  },
+  "depends_on": [
+    "BUREAU-TRUTH-MODEL-V2-T003"
+  ],
+  "acceptance": [
+    {
+      "id": "detect",
+      "assertion": "Doctor reports active workspace rows whose run is terminal, missing or orphaned."
+    },
+    {
+      "id": "ownership",
+      "assertion": "Cleanup refuses dirty, foreign-owned or still-running workspaces."
+    },
+    {
+      "id": "reviewed-reconcile",
+      "assertion": "State normalization and filesystem cleanup are separate reviewed actions with evidence and rollback."
+    },
+    {
+      "id": "history-preserved",
+      "assertion": "Run and workspace history remains auditable after reconciliation."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-12T06:00:00Z",
+    "source": "Bureau total audit and Truth Model v2 design",
+    "does_not_establish": [
+      "automatic verification",
+      "automatic queue mutation",
+      "claim authority",
+      "dispatch authority",
+      "merge authority",
+      "deployment authority"
+    ]
+  }
+}

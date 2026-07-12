@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "BUREAU-TRUTH-MODEL-V2-T005",
+  "title": "Make repository frontier the primary work view",
+  "state": "planned",
+  "goal": "Present the active or safely claimable ball per repository by combining tasks, queue weight, claims, leases, runs, PRs and blockers.",
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "depends_on": [
+    "BUREAU-TRUTH-MODEL-V2-T002",
+    "BUREAU-TRUTH-MODEL-V2-T003"
+  ],
+  "acceptance": [
+    {
+      "id": "one-writer-ball",
+      "assertion": "At most one active claimed write ball is shown per repository."
+    },
+    {
+      "id": "parallel-repositories",
+      "assertion": "Conflict-free balls in different repositories are visible concurrently without a global one-ball bottleneck."
+    },
+    {
+      "id": "blocker-evidence",
+      "assertion": "Each unavailable ball explains the concrete claim, lease, PR, dependency or approval blocker."
+    },
+    {
+      "id": "live-context-only",
+      "assertion": "Live Register may annotate the frontier but cannot select, claim or dispatch a task."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-12T06:00:00Z",
+    "source": "Bureau total audit and Truth Model v2 design",
+    "does_not_establish": [
+      "automatic verification",
+      "automatic queue mutation",
+      "claim authority",
+      "dispatch authority",
+      "merge authority",
+      "deployment authority"
+    ]
+  }
+}

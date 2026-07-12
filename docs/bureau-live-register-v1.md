@@ -87,14 +87,22 @@ bureau --root . --json live-register \
   --supersedes-event-id 32
 ```
 
-`live-list`, `what-now` and `repo-balls` preserve all sampled historical events in their raw record
-list but derive open candidates from only the latest event per stable identity. The summary exposes
+`live-list` keeps the raw history list bounded by `--limit`, but current-state projection is not
+bounded by that display window. Active thread focus, focus overrides and candidate state are derived
+from one complete event snapshot, so an older still-active record cannot disappear merely because newer
+unrelated events were appended. `what-now`, `repo-balls` and `live-conflicts` use the same complete
+projection.
+
+Responses expose `coverage_complete`, `history_truncated`, `oldest_loaded_event_id` and
+`projection_source`. The initial correctness-first source is `complete_event_scan`. If a future
+indexed or materialized source cannot prove complete coverage, conflict reporting emits a blocker
+and fails closed.
+
+Open candidates are derived from only the latest event per stable identity. The summary exposes
 `candidate_history_count`, `superseded_candidate_event_count` and `latest_candidates`. Legacy
 candidate events without an ID remain readable and receive a derived `candidate-event-<event-id>`
 identity when first superseded. A malformed legacy predecessor without a required status fails
 closed with an event-specific diagnostic. Promotion plans reject stale superseded events.
-
-The output also includes derived summaries for active thread focus and active focus overrides.
 
 ## Boundaries
 

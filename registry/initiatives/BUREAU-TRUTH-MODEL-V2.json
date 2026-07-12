@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-TRUTH-MODEL-V2",
+  "title": "Bureau Truth Model v2",
+  "state": "active",
+  "commitment": "next",
+  "goal": "Separate durable Git truth, operational evidence and the derived repository frontier so Bureau remains correct, available and low-friction without acquiring hidden execution authority.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/bureau-truth-model-v2.md"
+  },
+  "completion": [
+    "Live Register current-state projections are complete regardless of displayed history limits and expose explicit coverage metadata.",
+    "A narrow independent read-only status capsule reports bounded Bureau truth with freshness and unavailable semantics.",
+    "Registry and implementation drift is detected and can be closed only through reviewed evidence-bound plans.",
+    "Lifecycle-ledger shadow mode demonstrates parity before any reduction of Git lifecycle updates.",
+    "Repository frontier is the primary work view and exposes one active write ball per repository plus parallel conflict-free repositories.",
+    "Long-lived backlog and stale Live Register candidates have explicit revalidation outcomes."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-12T06:00:00Z",
+    "source": "Live Bureau total audit on 2026-07-12",
+    "observed_registry_head": "87540710b741399ed21e8186d0a0f96c636dad81",
+    "does_not_establish": [
+      "automatic task verification",
+      "automatic queue mutation",
+      "claim authority from live focus",
+      "dispatch authority",
+      "merge authority",
+      "deployment authority",
+      "replacement of GitHub or Grabowski truth"
+    ]
+  }
+}

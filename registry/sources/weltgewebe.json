@@ -6,11 +6,9 @@
     "DB-PROOF-001",
     "DEPLOY-DNS-001",
     "DOCMETA-FRESHNESS-001",
-    "DOMAIN-PG-001",
-    "OPT-ARC-001",
-    "OPT-INF-002"
+    "DOMAIN-PG-001"
   ],
-  "commit_sha": "4ac3f0a35e077326616e1570d1428a14e0421767",
+  "commit_sha": "11b9976cc4b0c174a325e926b8f5229b9ae7c3f1",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -1643,22 +1641,22 @@
       "acceptance_count": 3,
       "area": "api",
       "effort": "XL",
-      "evidence_count": 36,
+      "evidence_count": 39,
       "id": "OPT-ARC-001",
       "link_counts": {
-        "docs": 8,
+        "docs": 11,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 3,
+      "missing_evidence_count": 0,
       "owner": "unknown",
       "priority": "high",
       "risk": "high",
       "source_task": {
         "acceptance": [
-          "PostgreSQL-Pfad für alle Domänen-Endpunkte (nodes, accounts, edges) aktiv",
-          "Migrations-SQL vorhanden und per CI belegt",
-          "Phase E Write-Path-Cutover belegt; JSONL nicht mehr versteckte Runtime-Wahrheit"
+          "PostgreSQL ist produktive Lese- und Schreibwahrheit für Accounts/Garnrollen, Knoten und Fäden",
+          "Migrations- und PostgreSQL-Integrationsbeweise sind automatisiert",
+          "Vertikaler Garnrolle–Knoten–Faden-Persistenzpfad ist im Produktionsbetrieb belegt"
         ],
         "area": "api",
         "effort": "XL",
@@ -1698,7 +1696,10 @@
           "docs/reports/opt-arc-001-db-proof-matrix.json",
           "scripts/docmeta/validate_opt_arc_001_db_proof_matrix.py",
           "PR-CI-Lauf 27041187630 (pull_request, PR #1165, Commit b10076ee743202d3ef07af42a464267c82f4a5c0): fünf DB-Domain-Proof-Jobs grün (historisch; Schema-, Backfill- und Read-Path-Proof weiter gültig)",
-          "PR-CI-Lauf 27441828545 (pull_request, PR #1188, Commit 75ad1ebbaecbc41353d2fb0b39c2d6a9d90434ff): db-domain-edge-write-path-proof grün"
+          "PR-CI-Lauf 27441828545 (pull_request, PR #1188, Commit 75ad1ebbaecbc41353d2fb0b39c2d6a9d90434ff): db-domain-edge-write-path-proof grün",
+          "runtime/README.md",
+          "docs/reports/map-status.md",
+          "scripts/ci/run-postgres-integration-proofs.sh"
         ],
         "id": "OPT-ARC-001",
         "links": {
@@ -1710,27 +1711,26 @@
             "docs/reports/domain-account-write-path-proof.md",
             "docs/reports/domain-node-write-path-proof.md",
             "docs/reports/opt-arc-001-db-proof-matrix.json",
-            "docs/reports/domain-edge-write-path-proof.md"
+            "docs/reports/domain-edge-write-path-proof.md",
+            "scripts/docmeta/validate_opt_arc_001_db_proof_matrix.py",
+            "runtime/README.md",
+            "docs/reports/map-status.md"
           ],
           "issues": [],
           "prs": []
         },
-        "missing_evidence": [
-          "Step-up-E-Mail-Persistenz und WebAuthn-User-ID-Writeback ausstehend",
-          "JSONL bleibt Default-Lesequelle und Write-Truth im Default-/JSONL-Modus bis Cutover; kein Dual-Write",
-          "Phase D (read-only), Phase E-A, E-B und E-C sind opt-in belegt; kein Produktions-Cutover"
-        ],
+        "missing_evidence": [],
         "owner": "unknown",
         "priority": "high",
         "risk": "high",
-        "status": "partial",
-        "title": "JSONL-Datenquelle zu PostgreSQL migrieren",
-        "updated_at": "2026-06-12"
+        "status": "done",
+        "title": "PostgreSQL-Produktionscutover abschließen",
+        "updated_at": "2026-07-12"
       },
-      "source_task_sha256": "cc3fdb9558a8e90fe57e28b77fa835389302f62f342a4e311ec63a7d252b677a",
-      "status": "partial",
-      "title": "JSONL-Datenquelle zu PostgreSQL migrieren",
-      "updated_at": "2026-06-12"
+      "source_task_sha256": "3d87414e2a443f84f28033635ea31c48751cf8ccfae28a08953fc0ff3bb03ed0",
+      "status": "done",
+      "title": "PostgreSQL-Produktionscutover abschließen",
+      "updated_at": "2026-07-12"
     },
     {
       "acceptance_count": 2,
@@ -1993,26 +1993,24 @@
       "updated_at": "2026-05-30"
     },
     {
-      "acceptance_count": 4,
+      "acceptance_count": 2,
       "area": "infra",
       "effort": "S",
-      "evidence_count": 4,
+      "evidence_count": 5,
       "id": "OPT-INF-002",
       "link_counts": {
         "docs": 3,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 3,
+      "missing_evidence_count": 0,
       "owner": "unknown",
       "priority": "medium",
       "risk": "medium",
       "source_task": {
         "acceptance": [
-          "Ein reproduzierbarer Scanner klassifiziert alle GitHub-Workflow-uses-Referenzen nach Kind, Ref-Typ und Pinning-Policy.",
-          "Der Audit-Report dokumentiert aktuelle Counts, verbleibende unique named refs und Pinning-Slices.",
-          "Reusable Workflows, upload-artifact, pnpm/action-setup, setup-python und actions-cache sind SHA-gepinnt; checkout ist außerhalb der OPT-ARC-001-DB-Proof-Harness-Datei auf einen geprüften SHA gepinnt.",
-          "CI-/Update-Pfad bleibt nachvollziehbar; kein repo-weites Blind-Pinning ohne Action-Familien-Slice."
+          "Alle externen GitHub-Actions und reusable workflows sind auf Commit-SHAs gebunden",
+          "Named oder fehlende externe Refs blockieren CI"
         ],
         "area": "infra",
         "effort": "S",
@@ -2020,7 +2018,8 @@
           "scripts/ci/check_github_action_pinning.py",
           "scripts/ci/tests/test_check_github_action_pinning.py",
           "docs/reports/github-action-ref-pinning-audit.md",
-          ".github/workflows/"
+          ".github/workflows/",
+          "scripts/guard/run.sh"
         ],
         "id": "OPT-INF-002",
         "links": {
@@ -2032,22 +2031,18 @@
           "issues": [],
           "prs": []
         },
-        "missing_evidence": [
-          "49 direkte GitHub Action uses bleiben named refs; vollständiges SHA-Pinning erfolgt in ratcheted Folge-Slices.",
-          "12 actions/checkout uses in .github/workflows/api.yml bleiben bis zu einem separaten OPT-ARC-001-Proof-Refresh-Schnitt unpinned.",
-          "Ursprungstag und Ziel-SHA müssen pro verbleibender Action-Familie dokumentiert werden."
-        ],
+        "missing_evidence": [],
         "owner": "unknown",
         "priority": "medium",
         "risk": "medium",
-        "status": "partial",
+        "status": "done",
         "title": "Third-Party-Actions per Commit-SHA pinnen",
-        "updated_at": "2026-07-03"
+        "updated_at": "2026-07-12"
       },
-      "source_task_sha256": "af1f1b015e0f18545341390a6a1044b3e33777fc61a495d68b9f5a0220c10610",
-      "status": "partial",
+      "source_task_sha256": "653c5ad62b80e2331e8841c2cf29e0438cd5dc89cf8aff17f1608af653dee0f9",
+      "status": "done",
       "title": "Third-Party-Actions per Commit-SHA pinnen",
-      "updated_at": "2026-07-03"
+      "updated_at": "2026-07-12"
     },
     {
       "acceptance_count": 0,
@@ -2382,7 +2377,7 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "b0cd959a86761cd30ada553ca938f21f33d7220ce341f9d9d4a35144937de274",
+  "index_sha256": "8fce832f4c78b568f4f615de816c169d2054388ed9771d5edf3a1fc4fd0cdeb2",
   "ref": "HEAD",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",
@@ -2400,10 +2395,10 @@
   "status_counts": {
     "blocked": 2,
     "contradicted": 0,
-    "done": 31,
+    "done": 33,
     "obsolete": 0,
     "open": 0,
-    "partial": 7
+    "partial": 5
   },
   "task_count": 40
 }

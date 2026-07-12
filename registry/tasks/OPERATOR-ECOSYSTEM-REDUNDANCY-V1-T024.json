@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T024",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Retire Bureau Cabinet bridge and frontier execution surfaces",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 20
+  },
+  "goal": "Remove the unused Cabinet graph, bridge, frontier, promotion and reviewed-import execution surfaces from Bureau after the Systemkatalog became static-only, while preserving historical registry evidence and Bureau's own queue, frontier and live-register authority.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau",
+      "host:heim-pc"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "The operator explicitly instructed Grabowski to implement the Bureau cleanup. The effect is limited to reviewed Bureau source changes and removal of obsolete installed Bureau command wrappers after merge."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "authorization-merged-before-effect",
+      "assertion": "T024 is merged into bureau:main before the implementation PR or local Bureau installation is changed."
+    },
+    {
+      "id": "cabinet-modules-absent",
+      "assertion": "The eight active src/bureau/cabinet_* graph, bridge, frontier, review, receipt, policy and promotion modules are absent from the current Bureau source tree."
+    },
+    {
+      "id": "misleading-cli-absent",
+      "assertion": "The seven systemkatalog-* CLI subcommands that still implement Cabinet task-candidate, frontier, promotion or import semantics are absent, while Bureau's native frontier, queue, what-now and live-register commands remain unchanged."
+    },
+    {
+      "id": "obsolete-console-scripts-absent",
+      "assertion": "The five bureau-systemkatalog-* console scripts are absent from package metadata and from ~/.local/bin after exact-commit deployment."
+    },
+    {
+      "id": "stale-paths-absent",
+      "assertion": "No active Bureau source, package configuration, systemd unit or current operations document refers to ~/repos/cabinet graph or bridge paths."
+    },
+    {
+      "id": "history-preserved",
+      "assertion": "The former bridge import contract and policy are preserved under docs/archive/cabinet-era with explicit retired pointers at their previous paths; historical tasks, initiatives, plans and reports are not rewritten."
+    },
+    {
+      "id": "boundary-fail-closed",
+      "assertion": "A repository validation gate rejects restoration of retired modules, CLI commands, console scripts or Cabinet default paths in active source and configuration."
+    },
+    {
+      "id": "bureau-regression-proof",
+      "assertion": "Full Bureau lint, tests, registry validation and GitHub CI pass, and the normal Bureau CLI plus installed user services remain healthy after deployment."
+    },
+    {
+      "id": "closeout-bound",
+      "assertion": "T024 is closed with implementation merge, deployment identity, removed-command proof and validation evidence in a separately reviewed Bureau closeout."
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T023"
+  ],
+  "rollback": {
+    "trigger": "A real external consumer of the retired commands is discovered before deployment completion or the normal Bureau CLI fails after package replacement.",
+    "procedure": "Restore the previous immutable Bureau venv and wrapper set, verify Bureau checks and services, and stop T024 without rewriting historical evidence."
+  },
+  "stop": {
+    "conditions": [
+      "T024 is not yet present in bureau:origin/main",
+      "a foreign Bureau lease, dirty worktree, process or overlapping pull request is present",
+      "a timer, service, script or process is found to consume one of the retired commands",
+      "the implementation changes Bureau native queue, frontier, claim, what-now or live-register semantics",
+      "historical registry evidence or private Cabinet state would be deleted or rewritten",
+      "full validation or deployment verification fails"
+    ]
+  },
+  "metadata": {
+    "registered_at": "2026-07-12T19:00:00+02:00",
+    "source_decision": "After the static-only Systemkatalog retirement, the operator instructed Grabowski to remove Bureau's remaining active Cabinet execution logic rather than repoint it to the static catalog.",
+    "execution_authorization": {
+      "schema_version": 1,
+      "source": "operator_instruction",
+      "level": "break_glass",
+      "approved": true,
+      "reviewer": "alexdermohr",
+      "reference": "operator-instruction:2026-07-12:retire-bureau-cabinet-execution-surfaces",
+      "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T024",
+      "scope": [
+        "remove the eight unused Bureau Cabinet execution modules",
+        "remove the seven misleading systemkatalog-* Cabinet-semantics subcommands",
+        "remove the five obsolete bureau-systemkatalog-* package and installed wrappers",
+        "archive the former bridge import contract and retain valid retired pointers",
+        "add a fail-closed boundary validator",
+        "deploy the exact merged Bureau commit and verify normal Bureau commands and services"
+      ],
+      "conditions": [
+        "T024 is merged before implementation effect",
+        "all repository changes use an isolated worktree on current origin/main",
+        "no live timer, service, script, process or journal use of the retired commands exists",
+        "Bureau native coordination paths remain unchanged",
+        "historical and private Cabinet evidence remains preserved",
+        "a previous immutable Bureau deployment remains available for rollback"
+      ],
+      "one_shot": true,
+      "revoked_on_mismatch": true,
+      "consumed": false,
+      "remaining_uses": 1,
+      "does_not_authorize": [
+        "force-releasing foreign leases or changing foreign worktrees",
+        "deletion of private Cabinet databases, state directories, archives, backups or historical receipts",
+        "rewriting completed task, initiative, plan, report or pull request evidence",
+        "changes to Bureau queue, claim, native frontier, what-now, live-register or dispatch semantics",
+        "mutation of Systemkatalog or unrelated repositories"
+      ]
+    },
+    "starting_snapshot": {
+      "observed_at": "2026-07-12T18:40:00+02:00",
+      "bureau_origin_main": "16e15b158b15a2926795f5841f8fcf4269e17fba",
+      "systemkatalog_runtime_status": "retired_static_only",
+      "active_cabinet_modules": 8,
+      "active_misleading_cli_subcommands": 7,
+      "packaged_obsolete_console_scripts": 5,
+      "installed_obsolete_console_scripts": 5,
+      "systemd_consumers": 0,
+      "running_process_consumers": 0,
+      "user_script_consumers": 0,
+      "journal_consumers_last_7_days": 0,
+      "repo_brief_status": "no_bundle_available",
+      "evidence_basis": [
+        "current GitHub main source audit",
+        "installed Bureau CLI and wrapper inventory",
+        "user systemd unit scan",
+        "process scan",
+        "seven-day user journal scan"
+      ]
+    },
+    "does_not_establish": [
+      "absence of every historical or external reference outside the audited host and repository",
+      "automatic merge readiness",
+      "permission to delete private or historical state",
+      "correctness of unrelated Bureau tasks"
+    ]
+  }
+}

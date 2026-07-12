@@ -280,6 +280,34 @@
       ]
     },
     "next_migration_task": null,
-    "next_migration_scope": "No remaining Systemkatalog migration effect is registered; future catalog content changes are ordinary repository work and require their own scope."
+    "next_migration_scope": "No remaining Systemkatalog migration effect is registered; future catalog content changes are ordinary repository work and require their own scope.",
+    "bureau_cabinet_execution_surface_retirement": {
+      "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T024",
+      "status": "registered_ready",
+      "registered_at": "2026-07-12T19:00:00+02:00",
+      "repository": "heimgewebe/bureau",
+      "reason": "Static-only Systemkatalog cannot own or emit Bureau task candidates, frontiers, promotions or reviewed imports.",
+      "audited_active_surface": {
+        "cabinet_modules": 8,
+        "misleading_systemkatalog_cli_subcommands": 7,
+        "obsolete_console_scripts": 5,
+        "systemd_consumers": 0,
+        "process_consumers": 0,
+        "user_script_consumers": 0,
+        "journal_consumers_last_7_days": 0
+      },
+      "preservation_boundary": [
+        "historical registry tasks and initiatives",
+        "historical plans and reports",
+        "private Cabinet databases, state, archives and backups"
+      ],
+      "does_not_authorize": [
+        "changes to Bureau native queue, claim, frontier, what-now, live-register or dispatch semantics",
+        "private or historical state deletion",
+        "foreign lease or worktree override"
+      ]
+    },
+    "next_bureau_cleanup_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T024",
+    "next_bureau_cleanup_scope": "Retire only Bureau Cabinet graph/bridge/frontier/promotion execution surfaces; preserve static Systemkatalog and all historical evidence."
   }
 }

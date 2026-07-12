@@ -39,3 +39,29 @@ None found in the reviewed implementation diff.
 ## Non-claims
 
 This review does not establish semantic correctness of every future queue plan, suitability of every queued task, or merge readiness without CI.
+
+## Completion review — 2026-07-12
+
+A live acceptance review found that the 2026-07-09 implementation was not yet sufficient for task
+closeout:
+
+- the generated `registry.git_head` was recorded but not checked during apply;
+- the report hash was checked, but reviewed `actions` were not compared with actions freshly
+  derived from the current dry-run report; a coherently modified action/expected-queue pair could
+  therefore remain self-consistent;
+- the recorded registry root was not enforced;
+- head drift during the validation/write window was not rechecked.
+
+The completion patch now binds apply to the same registry root and non-empty Git head, compares the
+reviewed action list exactly with current safe dry-run actions, rechecks the head before and after
+the queue write and after post gates, and rolls the original queue bytes back on any post-write
+failure. Regression tests cover missing or changed head, mismatched root, coherently tampered
+actions, pre-effect head drift and post-write rollback. A live smoke additionally found that an
+empty plan rewrote the pretty queue as compact JSON; the completion patch now returns a byte-stable
+explicit no-op for empty actions and preserves readable two-space JSON for real updates.
+
+The file-based review still does not cryptographically prove reviewer identity. That remains an
+explicit non-claim; effect safety is established by deterministic action parity, root/head/queue
+binding, post gates and rollback. The separate follow-up `BUR-2026-005-T019` records the remaining
+auditability improvement: bind reviewed-plan evidence to the exact canonical plan payload digest
+without pretending that the digest authenticates reviewer identity.

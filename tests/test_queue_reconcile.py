@@ -5,7 +5,8 @@ import json
 import pytest
 
 from bureau import cli as bureau_cli
-from bureau.core import Registry, StateStore
+from bureau import queue_reconcile as queue_reconcile_module
+from bureau.core import Registry, StateError, StateStore
 from bureau.legacy import ValidationError
 from bureau.queue_reconcile import (
     apply_queue_reconcile_plan,
@@ -204,9 +205,31 @@ def test_queue_reconcile_write_plan_requires_review_before_apply(
         apply_queue_reconcile_plan(registry, store, plan_path)
 
 
-def test_queue_reconcile_apply_reviewed_plan_promotes_next_and_runs_gates(
-    registry_factory, tmp_path
+def test_queue_reconcile_apply_no_actions_is_byte_stable_no_op(
+    registry_factory, tmp_path, monkeypatch
 ):
+    monkeypatch.setattr(queue_reconcile_module, "_git_head", lambda _root: "a" * 40)
+    root = registry_factory(1)
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+    plan = write_queue_reconcile_plan(registry, store, plan_path)
+    assert plan["actions"] == []
+    _review_plan(plan_path)
+    before = _queue_path(root).read_bytes()
+
+    result = apply_queue_reconcile_plan(registry, store, plan_path)
+
+    assert result["applied"] is False
+    assert result["no_op"] is True
+    assert result["post_gates"] is None
+    assert _queue_path(root).read_bytes() == before
+
+
+def test_queue_reconcile_apply_reviewed_plan_promotes_next_and_runs_gates(
+    registry_factory, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(queue_reconcile_module, "_git_head", lambda _root: "a" * 40)
     root = registry_factory(1)
     _remove_from_queue(root, "BUR-TEST-001-T001")
     _set_task(root, "BUR-TEST-001-T001", state="ready", priority_lane="next")
@@ -220,6 +243,8 @@ def test_queue_reconcile_apply_reviewed_plan_promotes_next_and_runs_gates(
     queue = json.loads(_queue_path(root).read_text())
 
     assert result["applied"] is True
+    assert result["no_op"] is False
+    assert result["registry_git_head"] == "a" * 40
     assert result["post_gates"] == {
         "bureau_check": True,
         "doctor_healthy": True,
@@ -230,8 +255,9 @@ def test_queue_reconcile_apply_reviewed_plan_promotes_next_and_runs_gates(
 
 
 def test_queue_reconcile_apply_refuses_stale_plan_without_mutation(
-    registry_factory, tmp_path
+    registry_factory, tmp_path, monkeypatch
 ):
+    monkeypatch.setattr(queue_reconcile_module, "_git_head", lambda _root: "a" * 40)
     root = registry_factory(2)
     _remove_from_queue(root, "BUR-TEST-001-T001")
     _set_task(root, "BUR-TEST-001-T001", state="planned", priority_lane="next")
@@ -244,6 +270,163 @@ def test_queue_reconcile_apply_refuses_stale_plan_without_mutation(
     before = _queue_path(root).read_text()
 
     with pytest.raises(Exception, match="queue changed"):
+        apply_queue_reconcile_plan(registry, store, plan_path)
+
+    assert _queue_path(root).read_text() == before
+
+
+def test_queue_reconcile_apply_refuses_changed_registry_head_without_mutation(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    _remove_from_queue(root, "BUR-TEST-001-T001")
+    _set_task(root, "BUR-TEST-001-T001", state="ready", priority_lane="next")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+    heads = iter(["a" * 40, "b" * 40])
+    monkeypatch.setattr(queue_reconcile_module, "_git_head", lambda _root: next(heads))
+    write_queue_reconcile_plan(registry, store, plan_path)
+    _review_plan(plan_path)
+    before = _queue_path(root).read_text()
+
+    with pytest.raises(StateError, match="registry git head changed"):
+        apply_queue_reconcile_plan(registry, store, plan_path)
+
+    assert _queue_path(root).read_text() == before
+
+def test_queue_reconcile_apply_refuses_missing_registry_head_without_mutation(
+    registry_factory, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(queue_reconcile_module, "_git_head", lambda _root: "a" * 40)
+    root = registry_factory(1)
+    _remove_from_queue(root, "BUR-TEST-001-T001")
+    _set_task(root, "BUR-TEST-001-T001", state="ready", priority_lane="next")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+    write_queue_reconcile_plan(registry, store, plan_path)
+    plan = _review_plan(plan_path)
+    plan["registry"]["git_head"] = None
+    plan_path.write_text(json.dumps(plan))
+    before = _queue_path(root).read_text()
+
+    with pytest.raises(StateError, match="lacks a bound registry git head"):
+        apply_queue_reconcile_plan(registry, store, plan_path)
+
+    assert _queue_path(root).read_text() == before
+
+
+def test_queue_reconcile_apply_refuses_different_registry_root_without_mutation(
+    registry_factory, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(queue_reconcile_module, "_git_head", lambda _root: "a" * 40)
+    root = registry_factory(1)
+    _remove_from_queue(root, "BUR-TEST-001-T001")
+    _set_task(root, "BUR-TEST-001-T001", state="ready", priority_lane="next")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+    write_queue_reconcile_plan(registry, store, plan_path)
+    plan = _review_plan(plan_path)
+    plan["registry"]["root"] = str(tmp_path / "other-registry")
+    plan_path.write_text(json.dumps(plan))
+    before = _queue_path(root).read_text()
+
+    with pytest.raises(StateError, match="registry root does not match"):
+        apply_queue_reconcile_plan(registry, store, plan_path)
+
+    assert _queue_path(root).read_text() == before
+
+
+def test_queue_reconcile_apply_refuses_coherently_tampered_actions(
+    registry_factory, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(queue_reconcile_module, "_git_head", lambda _root: "a" * 40)
+    root = registry_factory(1)
+    _remove_from_queue(root, "BUR-TEST-001-T001")
+    _set_task(root, "BUR-TEST-001-T001", state="ready", priority_lane="next")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+    write_queue_reconcile_plan(registry, store, plan_path)
+    plan = _review_plan(plan_path)
+    plan["actions"][0]["target_lane"] = "now"
+    expected = plan["expected_queue_after"]
+    for lane in expected["lanes"].values():
+        while "BUR-TEST-001-T001" in lane:
+            lane.remove("BUR-TEST-001-T001")
+    expected["lanes"]["now"].append("BUR-TEST-001-T001")
+    plan["expected_queue_after_sha256"] = queue_reconcile_module._queue_sha256(
+        expected
+    )
+    plan_path.write_text(json.dumps(plan))
+    before = _queue_path(root).read_text()
+
+    with pytest.raises(StateError, match="actions changed since dry-run"):
+        apply_queue_reconcile_plan(registry, store, plan_path)
+
+    assert _queue_path(root).read_text() == before
+
+
+def test_queue_reconcile_apply_refuses_head_change_before_effect(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    _remove_from_queue(root, "BUR-TEST-001-T001")
+    _set_task(root, "BUR-TEST-001-T001", state="ready", priority_lane="next")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+    heads = iter(["a" * 40, "a" * 40, "b" * 40])
+    monkeypatch.setattr(queue_reconcile_module, "_git_head", lambda _root: next(heads))
+    write_queue_reconcile_plan(registry, store, plan_path)
+    _review_plan(plan_path)
+    before = _queue_path(root).read_text()
+
+    with pytest.raises(StateError, match="registry git head changed"):
+        apply_queue_reconcile_plan(registry, store, plan_path)
+
+    assert _queue_path(root).read_text() == before
+
+
+def test_queue_reconcile_apply_rolls_back_head_change_after_write(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    _remove_from_queue(root, "BUR-TEST-001-T001")
+    _set_task(root, "BUR-TEST-001-T001", state="ready", priority_lane="next")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+    heads = iter(["a" * 40, "a" * 40, "a" * 40, "b" * 40])
+    monkeypatch.setattr(queue_reconcile_module, "_git_head", lambda _root: next(heads))
+    write_queue_reconcile_plan(registry, store, plan_path)
+    _review_plan(plan_path)
+    before = _queue_path(root).read_text()
+
+    with pytest.raises(StateError, match="registry git head changed"):
+        apply_queue_reconcile_plan(registry, store, plan_path)
+
+    assert _queue_path(root).read_text() == before
+
+
+def test_queue_reconcile_apply_rolls_back_head_change_after_gates(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    _remove_from_queue(root, "BUR-TEST-001-T001")
+    _set_task(root, "BUR-TEST-001-T001", state="ready", priority_lane="next")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+    heads = iter(["a" * 40, "a" * 40, "a" * 40, "a" * 40, "b" * 40])
+    monkeypatch.setattr(queue_reconcile_module, "_git_head", lambda _root: next(heads))
+    write_queue_reconcile_plan(registry, store, plan_path)
+    _review_plan(plan_path)
+    before = _queue_path(root).read_text()
+
+    with pytest.raises(StateError, match="registry git head changed"):
         apply_queue_reconcile_plan(registry, store, plan_path)
 
     assert _queue_path(root).read_text() == before

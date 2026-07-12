@@ -29,6 +29,7 @@ from .core import (
     verification_stamp,
     workspace_status,
 )
+from .lease_contract import bureau_lease_contract
 from .live_register import (
     apply_live_promote_plan,
     live_register_export,
@@ -71,6 +72,8 @@ def parser() -> argparse.ArgumentParser:
     doctor = sub.add_parser("doctor")
     doctor.add_argument("--repair", action="store_true")
     sub.add_parser("runtime-drift-check")
+    lease_contract = sub.add_parser("lease-contract")
+    lease_contract.add_argument("--operation", dest="operation")
     queue_reconcile = sub.add_parser("queue-reconcile")
     queue_reconcile.add_argument("--resource")
     queue_reconcile.add_argument("--write-plan")
@@ -157,6 +160,11 @@ def parser() -> argparse.ArgumentParser:
         default=None,
     )
     live_register.add_argument("--note")
+    live_register.add_argument(
+        "--catalog-validation",
+        choices=["strict", "deferred"],
+        default="strict",
+    )
     live_list = sub.add_parser("live-list")
     live_list.add_argument("--kind", choices=["thread_focus", "candidate_task", "focus_override"])
     live_list.add_argument("--repo")
@@ -403,6 +411,52 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         state_path = Path(args.state_db).expanduser() if args.state_db else None
         state_root = Path(args.state_root).expanduser() if args.state_root else None
+        if args.command == "lease-contract":
+            try:
+                value = bureau_lease_contract(args.operation)
+            except ValueError as exc:
+                raise StateError(str(exc)) from exc
+            emit(value, args.json)
+            return 0
+        if args.command in {"live-list", "live-export", "live-retention"}:
+            store = StateStore(state_path, state_root)
+            if args.command == "live-list":
+                value = live_register_list(
+                    store,
+                    kind=args.kind,
+                    repo=args.repo,
+                    thread_id=args.thread_id,
+                    limit=args.limit,
+                )
+            elif args.command == "live-export":
+                value = live_register_export(
+                    store, repo=args.repo, limit=args.limit, export_format=args.format
+                )
+            else:
+                value = live_retention_report(store, limit=args.limit)
+            emit(value, args.json)
+            return 0
+        if args.command == "live-register" and args.catalog_validation == "deferred":
+            store = StateStore(state_path, state_root)
+            value = live_register_record(
+                None,
+                store,
+                kind=args.kind,
+                title=args.title,
+                source=args.source,
+                thread_id=args.thread_id,
+                worker_id=args.worker_id,
+                repo=args.repo,
+                task_id=args.task_id,
+                candidate_id=args.candidate_id,
+                supersedes_event_id=args.supersedes_event_id,
+                status=args.status,
+                promotion_required=args.promotion_required,
+                note=args.note,
+                catalog_validation="deferred",
+            )
+            emit(value, args.json)
+            return 0
         if args.command == "runtime-drift-check":
             value = runtime_drift_check(root, state_db=state_path, state_root=state_root)
             emit(value, args.json)
@@ -596,14 +650,7 @@ def main(argv: list[str] | None = None) -> int:
                 status=args.status,
                 promotion_required=args.promotion_required,
                 note=args.note,
-            )
-        elif args.command == "live-list":
-            value = live_register_list(
-                store,
-                kind=args.kind,
-                repo=args.repo,
-                thread_id=args.thread_id,
-                limit=args.limit,
+                catalog_validation=args.catalog_validation,
             )
         elif args.command == "live-conflicts":
             value = dispatcher.live_conflicts(
@@ -627,12 +674,6 @@ def main(argv: list[str] | None = None) -> int:
                 value = apply_live_promote_plan(registry, path=args.apply_plan)
             else:
                 raise StateError("live-promote-plan requires --write-plan or --apply-plan")
-        elif args.command == "live-export":
-            value = live_register_export(
-                store, repo=args.repo, limit=args.limit, export_format=args.format
-            )
-        elif args.command == "live-retention":
-            value = live_retention_report(store, limit=args.limit)
         elif args.command == "claim-next":
             try:
                 value = dispatcher.claim_next(

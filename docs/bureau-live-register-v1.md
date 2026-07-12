@@ -178,3 +178,33 @@ This implementation completes the registered follow-ups for:
 - reviewed candidate-to-registry task promotion plan;
 - thread/worker conflict view;
 - retention and redacted Chronik export boundary.
+
+## Always-on lease boundary
+
+A Grabowski resource lease for `repo:/home/alex/repos/bureau` protects Bureau source code,
+schemas, reviewed Git Registry changes, branches, merge and deployment. It does **not** reserve
+the Bureau state store and must not block `live-register`, `live-list`, `live-export` or
+`live-retention`.
+
+The machine-readable boundary is available without loading the Git Registry:
+
+```bash
+bureau --json lease-contract --operation live-register
+```
+
+Normal `live-register` writes use strict Registry validation. When the checkout or Registry catalog
+cannot safely be read, an operator may preserve operational evidence without touching Git:
+
+```bash
+bureau --state-root ~/.local/state/bureau --json live-register \
+  --kind candidate_task \
+  --repo repo.grabowski \
+  --title "Consume the Bureau always-on lease contract" \
+  --promotion-required \
+  --catalog-validation deferred
+```
+
+A deferred record is intentionally weaker. It records `catalog_validation.status=deferred` and does
+not establish that the repository or task exists or that a Registry binding is valid. It remains
+Live Register context only; reviewed promotion is still required before it becomes durable task
+truth.

@@ -356,3 +356,12 @@ bureau-status-capsule read \
 
 The reader touches only the capsule file and reports `fresh`, `stale` or `unavailable`; see
 `docs/bureau-status-capsule-v1.md`.
+
+### Bureau repo leases do not reserve operational state
+
+Use `bureau --json lease-contract` when an operator needs to classify a Bureau command. The
+contract is fail-closed for unlisted operations. A Bureau repository lease covers Git-backed code,
+schema, Registry, merge and deployment mutations, but not Live Register state-store reads or
+appends. If the Registry checkout is temporarily unavailable, `live-register
+--catalog-validation deferred` preserves a visibly unvalidated operational event instead of
+silently dropping the status update.

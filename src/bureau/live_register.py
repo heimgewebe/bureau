@@ -93,23 +93,28 @@ def _validate_worker_id(worker_id: str | None) -> str | None:
     return normalized
 
 
-def _validate_repo(registry: Registry, repo: str | None) -> str | None:
+def _validate_repo(registry: Registry | None, repo: str | None) -> str | None:
     if repo is None:
         return None
     normalized = repo.strip()
-    resource = registry.resources.get(normalized)
-    if resource is None:
-        raise StateError(f"unknown live register repo resource {normalized}")
+    if len(normalized) > 200:
+        raise StateError("live register repo must be at most 200 characters")
     if not normalized.startswith("repo."):
         raise StateError("live register repo must be a repo.* resource")
+    if registry is not None and registry.resources.get(normalized) is None:
+        raise StateError(f"unknown live register repo resource {normalized}")
     return normalized
 
 
-def _validate_task(registry: Registry, task_id: str | None) -> str | None:
+def _validate_task(registry: Registry | None, task_id: str | None) -> str | None:
     if task_id is None:
         return None
     normalized = task_id.strip()
-    if normalized not in registry.tasks:
+    if not normalized:
+        raise StateError("live register task must not be empty")
+    if len(normalized) > 240:
+        raise StateError("live register task must be at most 240 characters")
+    if registry is not None and normalized not in registry.tasks:
         raise StateError(f"unknown live register task {normalized}")
     return normalized
 
@@ -173,7 +178,7 @@ def _live_nonclaims() -> list[str]:
 
 
 def live_register_record(
-    registry: Registry,
+    registry: Registry | None,
     store: StateStore,
     *,
     kind: str,
@@ -188,8 +193,14 @@ def live_register_record(
     status: str | None = None,
     promotion_required: bool | None = None,
     note: str | None = None,
+    catalog_validation: str = "strict",
 ) -> dict[str, Any]:
     """Append one gitless operational Bureau live-register event."""
+    if catalog_validation not in {"strict", "deferred"}:
+        raise StateError("catalog_validation must be strict or deferred")
+    if catalog_validation == "strict" and registry is None:
+        raise StateError("strict catalog validation requires a loaded Bureau registry")
+    validation_registry = registry if catalog_validation == "strict" else None
     checked_kind = _validate_kind(kind)
     checked_status = (
         _validate_status(checked_kind, status) if status is not None else None
@@ -201,8 +212,8 @@ def live_register_record(
         thread_id, required=(checked_kind == "thread_focus")
     )
     checked_worker_id = _validate_worker_id(worker_id)
-    checked_repo = _validate_repo(registry, repo)
-    checked_task_id = _validate_task(registry, task_id)
+    checked_repo = _validate_repo(validation_registry, repo)
+    checked_task_id = _validate_task(validation_registry, task_id)
     checked_candidate_id = _validate_candidate_id(candidate_id)
     checked_note = _optional_text(note, field="note", max_length=2000)
     if checked_kind in {"thread_focus", "focus_override"} and checked_repo is None:
@@ -295,6 +306,15 @@ def live_register_record(
             "status": checked_status,
             "promotion_required": bool(promotion_required),
             "does_not_establish": _live_nonclaims(),
+            "catalog_validation": {
+                "mode": catalog_validation,
+                "status": "validated" if catalog_validation == "strict" else "deferred",
+                "does_not_establish": (
+                    []
+                    if catalog_validation == "strict"
+                    else ["repo_exists", "task_exists", "registry_binding_valid"]
+                ),
+            },
         }
         optional = {
             "thread_id": checked_thread_id,

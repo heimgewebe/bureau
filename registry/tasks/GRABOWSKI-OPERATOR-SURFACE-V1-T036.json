@@ -2,9 +2,9 @@
   "schema_version": 1,
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T036",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
-  "title": "Grabowski soll Bureau-Lease-Vertrag für Always-on-Operationen konsumieren",
+  "title": "Grabowski soll den feingranularen Bureau-Lease-Vertrag erzwingen",
   "state": "planned",
-  "goal": "Grabowski consumes Bureau's machine-readable lease contract so covered operational state reads and appends remain available under repo:bureau leases while Git-backed mutations remain fail-closed.",
+  "goal": "Grabowski consumes Bureau's machine-readable lease contract v2, rejects the broad Bureau repository key for normal work, accepts exact object/component scopes, and serializes only short worktree-admin, merge and emergency-recovery effects.",
   "priority": {
     "lane": "later",
     "rank": 360
@@ -30,27 +30,31 @@
   "acceptance": [
     {
       "id": "contract-consumed",
-      "assertion": "Grabowski evaluates the deployed Bureau lease-contract for covered Bureau operations and fails closed for unknown operations or unavailable/invalid contract output."
+      "assertion": "Grabowski evaluates the deployed Bureau lease-contract v2 and fails closed for unknown operations, invalid output or unavailable contract evidence."
+    },
+    {
+      "id": "broad-normal-work-denied",
+      "assertion": "Normal Bureau analysis, implementation, Registry work and merge attempts that request repo:/home/alex/repos/bureau are rejected before acquisition."
+    },
+    {
+      "id": "exact-scopes-accepted",
+      "assertion": "Different task, initiative and resource files plus declared component scopes can be acquired independently even while unrelated Bureau work is active."
+    },
+    {
+      "id": "short-effect-gates",
+      "assertion": "Linked-worktree administration and main merge require their dedicated gates with an explicit TTL of at most 300 seconds and release immediately after the effect."
+    },
+    {
+      "id": "bounded-emergency-only",
+      "assertion": "The broad Bureau repository key is accepted only for explicitly justified emergency recovery with an expected state or head and a TTL of at most 300 seconds."
     },
     {
       "id": "always-on-live-state",
-      "assertion": "With an active repo:/home/alex/repos/bureau lease, live-register, live-list, live-export and live-retention remain usable without acquiring or overriding that repository lease."
-    },
-    {
-      "id": "read-projections-not-repo-blocked",
-      "assertion": "Declared read-only projections are not rejected solely because repo:bureau is leased; required Registry/state inputs may still fail closed independently."
-    },
-    {
-      "id": "git-mutations-still-blocked",
-      "assertion": "Bureau code, schema, reviewed Git Registry, branch, merge and deployment mutations remain blocked by a foreign repo:bureau lease."
-    },
-    {
-      "id": "regression-proof",
-      "assertion": "Focused tests cover allowed operational commands, denied Git-backed commands, missing contract output and unknown operation classes."
+      "assertion": "Live Register reads and appends remain usable without acquiring or overriding any Git work lease."
     },
     {
       "id": "runtime-proof",
-      "assertion": "The merged Grabowski runtime is deployed and a live lease-bound smoke proves both the allowed and denied paths."
+      "assertion": "The merged Grabowski runtime is deployed and a live smoke proves broad-key refusal, parallel exact scopes, short gates and always-on operational state."
     }
   ],
   "metadata": {
@@ -68,8 +72,11 @@
       "merge_readiness"
     ],
     "source_pr": "heimgewebe/bureau#456",
-    "bureau_lease_contract_release": "91ecd3991b16ff59b802a3309ecad63b255fdc16",
     "active_foreign_grabowski_lease_observed": true,
-    "registration_boundary": "This task does not alter the active foreign Grabowski ball, grant merge/deploy authority, or weaken non-Bureau repository leases."
+    "registration_boundary": "This task does not alter the active foreign Grabowski ball, grant merge/deploy authority, or weaken non-Bureau repository leases.",
+    "bureau_lease_contract_schema_version": 2,
+    "supersedes_semantics": "Replaces the v1 rule that a foreign broad Bureau repo lease blocks reviewed Git Registry mutations; v2 uses exact object/component scopes and forbids the broad key for normal work.",
+    "bureau_lease_contract_v1_release": "91ecd3991b16ff59b802a3309ecad63b255fdc16",
+    "bureau_lease_contract_v2_release": "pending:BUREAU-TRUTH-MODEL-V2-T011-merge"
   }
 }

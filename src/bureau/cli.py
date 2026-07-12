@@ -29,7 +29,7 @@ from .core import (
     verification_stamp,
     workspace_status,
 )
-from .lease_contract import bureau_lease_contract
+from .lease_contract import bureau_lease_contract, diagnose_bureau_resource_keys
 from .live_register import (
     apply_live_promote_plan,
     live_register_export,
@@ -74,6 +74,17 @@ def parser() -> argparse.ArgumentParser:
     sub.add_parser("runtime-drift-check")
     lease_contract = sub.add_parser("lease-contract")
     lease_contract.add_argument("--operation", dest="operation")
+    lease_contract.add_argument("--subject")
+    lease_contract.add_argument(
+        "--phase",
+        choices=["work", "worktree-admin", "merge", "emergency-recovery"],
+        default="work",
+    )
+    lease_contract.add_argument("--resource-key", action="append", default=[])
+    lease_contract.add_argument("--ttl-seconds", type=int)
+    lease_contract.add_argument("--justification")
+    lease_contract.add_argument("--expected-head")
+    lease_contract.add_argument("--expected-state")
     queue_reconcile = sub.add_parser("queue-reconcile")
     queue_reconcile.add_argument("--resource")
     queue_reconcile.add_argument("--write-plan")
@@ -307,7 +318,22 @@ def main(argv: list[str] | None = None) -> int:
         state_root = Path(args.state_root).expanduser() if args.state_root else None
         if args.command == "lease-contract":
             try:
-                value = bureau_lease_contract(args.operation)
+                if args.resource_key:
+                    if args.operation or args.subject:
+                        raise ValueError(
+                            "--resource-key diagnosis cannot be combined with "
+                            "--operation or --subject"
+                        )
+                    value = diagnose_bureau_resource_keys(
+                        args.resource_key,
+                        phase=args.phase,
+                        ttl_seconds=args.ttl_seconds,
+                        justification=args.justification,
+                        expected_head=args.expected_head,
+                        expected_state=args.expected_state,
+                    )
+                else:
+                    value = bureau_lease_contract(args.operation, subject=args.subject)
             except ValueError as exc:
                 raise StateError(str(exc)) from exc
             emit(value, args.json)

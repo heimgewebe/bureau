@@ -384,3 +384,38 @@ The gate rejects restored Cabinet execution modules, the retired
 `~/repos/cabinet` graph or bridge default paths. Historical contracts remain
 available under `docs/archive/cabinet-era/` and do not authorize current
 execution.
+
+### Always-open Bureau Registry work
+
+The broad resource key `repo:/home/alex/repos/bureau` is deprecated for normal work. It may not
+be held across analysis, implementation, tests or review. Independent changes instead acquire the
+exact object or component key returned by the machine-readable contract:
+
+```bash
+bureau --json lease-contract \
+  --operation registry-task-write \
+  --subject BUREAU-TRUTH-MODEL-V2-T003
+```
+
+Task and initiative writes receive different file keys and may proceed in parallel. Queue, core,
+schema and runtime operations use their own component scopes. Linked-worktree creation or removal
+uses only `path:/home/alex/repos/bureau/.bureau-scopes/worktree-admin` with a TTL of at most 300
+seconds. A merge acquires only the dedicated
+`path:/home/alex/repos/bureau/.bureau-scopes/merge-main` gate with an explicit TTL of at most 300
+seconds and releases it immediately after the effect.
+
+A global Bureau repo lease is accepted only for explicitly justified emergency recovery with a TTL
+of at most 300 seconds. Diagnose intended keys without acquiring them:
+
+```bash
+bureau --json lease-contract \
+  --resource-key repo:/home/alex/repos/bureau \
+  --phase emergency-recovery \
+  --ttl-seconds 300 \
+  --justification "recover corrupt shared Git metadata" \
+  --expected-head 0123456789abcdef0123456789abcdef01234567
+```
+
+Doctor reports nonterminal legacy tasks that still request the broad key. Planned tasks produce a
+migration warning; a ready task or a task in `now` produces a blocker until its scope is narrowed.
+Historical terminal evidence is not rewritten.

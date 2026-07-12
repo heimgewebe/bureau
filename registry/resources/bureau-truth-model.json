@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "component.bureau.truth-model",
+  "type": "component",
+  "parent": "component.bureau.registry",
+  "path": "/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-*.json",
+  "grabowski_key": "path:/home/alex/repos/bureau/.bureau-scopes/truth-model-v2"
+}

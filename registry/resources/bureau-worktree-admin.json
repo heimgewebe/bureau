@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "component.bureau.worktree-admin",
+  "type": "component",
+  "parent": "repo.bureau",
+  "path": "/home/alex/repos/bureau/.bureau-scopes/worktree-admin",
+  "grabowski_key": "path:/home/alex/repos/bureau/.bureau-scopes/worktree-admin"
+}

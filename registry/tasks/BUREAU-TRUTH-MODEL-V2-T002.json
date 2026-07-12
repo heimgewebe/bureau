@@ -23,7 +23,7 @@
   ],
   "id": "BUREAU-TRUTH-MODEL-V2-T002",
   "title": "Publish an independent read-only Bureau status capsule",
-  "state": "planned",
+  "state": "verified",
   "goal": "Provide bounded Bureau truth without depending on a full Grabowski operator session.",
   "priority": {
     "lane": "later",
@@ -60,6 +60,139 @@
       "dispatch authority",
       "merge authority",
       "deployment authority"
-    ]
+    ],
+    "verified_at": "2026-07-12T16:35:22.437445Z",
+    "outcome": "Implemented, merged, installed and postflight-verified in Bureau PR #454: a sealed read-only status capsule now exposes bounded Registry and state truth with fresh/stale/unavailable semantics and remains readable without Git, SQLite, Grabowski or third-party site packages.",
+    "implementation_pr": "heimgewebe/bureau#454",
+    "implementation_head": "b0cc74a07b5465c6a93c5af07036226d46cc8693",
+    "implementation_base": "f3a1b4d136b1871c23116e8e7426649d2e391ba8",
+    "implementation_merge_commit": "b52bc55e46f7b94c3d3806189a6a6a15245cad2a",
+    "github_pr_diff_sha256": "890047eb1f63886b2aa7cb172a16ca91ad10b12b4fe34b1c5859373b38948c4e",
+    "implementation_commit_diff_sha256": "623b42d8ac33308fe168e6495bdfbd27516193eb26e9b4a87d05af0b2cf4aa37",
+    "stable_patch_id": "24e5dc178191375c1519d45f7e0d84d8c6564005",
+    "critical_self_review_sha256": "2846c545854efb13338f20fe83c1d0aee7810d703ccca0b766b29a02adcccd66",
+    "validation": [
+      "Bureau PR #454 GitHub CI passed validate (3.10) and validate (3.12); the optional Claude workflow was skipped.",
+      "The implementation head passed Ruff, git diff --check and the complete 512-test local pytest suite.",
+      "The exact merged archive installed heimgewebe-bureau 0.2.1 into a commit-bound virtual environment.",
+      "The installed collector module is byte-identical to origin/main at merge commit b52bc55e46f7b94c3d3806189a6a6a15245cad2a.",
+      "The systemd user timer is loaded, active and enabled; the latest oneshot service result is success with exit status 0.",
+      "The live capsule is mode 0600, state integrity is ok, Doctor and Registry Truth are healthy, and no refresh failure is recorded.",
+      "Fresh, stale and unavailable reader states, zero network system calls and the python -S file-only reader path were proven before merge."
+    ],
+    "verified_acceptance": {
+      "bounded-fields": "The live sealed snapshot contains Registry head/tree/hash, state integrity and schema, runs, leases, repository balls, Doctor, Registry Truth, creation time, collector identity and the previous successful snapshot.",
+      "freshness": "The reader exposes snapshot age and a 900-second threshold and has deterministic fresh, stale and unavailable outcomes.",
+      "read-only-boundary": "The capsule explicitly disclaims Registry/state mutation, shell, task verification, queue, claim, dispatch, merge and deploy authority; the systemd unit writes only the dedicated read-only snapshot directory.",
+      "independent-path": "The reader was proven under python -S with an empty HOME and reads only the sealed JSON file without Git, SQLite, network or Grabowski."
+    },
+    "runtime_snapshot": {
+      "observed_at": "2026-07-12T16:35:22.437445Z",
+      "registry_head": "b52bc55e46f7b94c3d3806189a6a6a15245cad2a",
+      "registry_sha256": "feb8e6284b1b94373d587a20b47f0135eeb7c1356ea1f4fde95dfca95559c0b3",
+      "registry_tree": "4a92fd06034bd07a92af35ebab36d2aebc5e3b3f",
+      "remote_freshness": "not-observed",
+      "capsule_created_at": "2026-07-12T16:35:04.685252Z",
+      "capsule_content_sha256": "65fcd94e149cfe8ad41d5a239378b98373a703247cfbb871caf7bd42be97c888",
+      "capsule_file_sha256": "dd9e20f0f859900e44593cec270978bb8a9a07d736d5b7658db7884207878dc6",
+      "capsule_file_mode": "0o600",
+      "capsule_file_size_bytes": 46258,
+      "freshness_threshold_seconds": 900,
+      "last_refresh_failure": null,
+      "collector": {
+        "distribution": "heimgewebe-bureau",
+        "package_version": "0.2.1",
+        "module": "bureau.status_capsule",
+        "module_sha256": "6b06a3308a7556615836ec29e08fcc4e0a256fbadc6ac34b2a821dfa82f87083",
+        "identity_scope": "running-module-bytes"
+      },
+      "installed_venv": "/home/alex/.local/share/bureau/venv-b52bc55e46f7b94c3d3806189a6a6a15245cad2a",
+      "installed_module_sha256": "6b06a3308a7556615836ec29e08fcc4e0a256fbadc6ac34b2a821dfa82f87083",
+      "repository_module_sha256": "6b06a3308a7556615836ec29e08fcc4e0a256fbadc6ac34b2a821dfa82f87083",
+      "service_unit_sha256": "ae5d04fe8cbf4e0c11682c313670546d66f87dd67d16f5972143d3c467373fc0",
+      "timer_unit_sha256": "d46f60ce7c2c433a5cd11d73871f191fba6db4e6bfeca1676f993b4354d7c087",
+      "timer": {
+        "NextElapseUSecRealtime": "Sun 2026-07-12 18:40:13 CEST",
+        "LastTriggerUSec": "Sun 2026-07-12 18:35:04 CEST",
+        "LoadState": "loaded",
+        "ActiveState": "active",
+        "UnitFileState": "enabled"
+      },
+      "service": {
+        "Result": "success",
+        "ExecMainStartTimestamp": "Sun 2026-07-12 18:35:04 CEST",
+        "ExecMainExitTimestamp": "Sun 2026-07-12 18:35:05 CEST",
+        "ExecMainStatus": "0",
+        "LoadState": "loaded",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "state_integrity": "ok",
+      "state_schema_version": 3,
+      "active_runs": 0,
+      "active_leases": 0,
+      "repository_ball_summary": {
+        "repositories": 15,
+        "status_counts": {
+          "empty": 3,
+          "planned": 9,
+          "ready": 3
+        }
+      },
+      "doctor_healthy": true,
+      "registry_truth_healthy": true,
+      "registry_truth_error_count": 0
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "BUREAU-TRUTH-MODEL-V2-T002",
+          "source_ref": "heimgewebe/bureau#454",
+          "number": 454,
+          "base_sha": "f3a1b4d136b1871c23116e8e7426649d2e391ba8",
+          "head_sha": "b0cc74a07b5465c6a93c5af07036226d46cc8693",
+          "merge_commit_sha": "b52bc55e46f7b94c3d3806189a6a6a15245cad2a",
+          "diff_sha256": "890047eb1f63886b2aa7cb172a16ca91ad10b12b4fe34b1c5859373b38948c4e",
+          "commit_diff_sha256": "623b42d8ac33308fe168e6495bdfbd27516193eb26e9b4a87d05af0b2cf4aa37",
+          "stable_patch_id": "24e5dc178191375c1519d45f7e0d84d8c6564005"
+        },
+        {
+          "kind": "runtime_probe",
+          "authority": "bureau-status-capsule",
+          "task_id": "BUREAU-TRUTH-MODEL-V2-T002",
+          "source_ref": "bureau-status-capsule.service@b52bc55e46f7b94c3d3806189a6a6a15245cad2a",
+          "commit_sha": "b52bc55e46f7b94c3d3806189a6a6a15245cad2a",
+          "content_sha256": "65fcd94e149cfe8ad41d5a239378b98373a703247cfbb871caf7bd42be97c888",
+          "file_sha256": "dd9e20f0f859900e44593cec270978bb8a9a07d736d5b7658db7884207878dc6",
+          "collector_module_sha256": "6b06a3308a7556615836ec29e08fcc4e0a256fbadc6ac34b2a821dfa82f87083"
+        },
+        {
+          "kind": "runtime_installation",
+          "authority": "local-filesystem-and-systemd",
+          "task_id": "BUREAU-TRUTH-MODEL-V2-T002",
+          "source_ref": "/home/alex/.local/share/bureau/venv-b52bc55e46f7b94c3d3806189a6a6a15245cad2a",
+          "commit_sha": "b52bc55e46f7b94c3d3806189a6a6a15245cad2a",
+          "content_sha256": "6b06a3308a7556615836ec29e08fcc4e0a256fbadc6ac34b2a821dfa82f87083",
+          "service_unit_sha256": "ae5d04fe8cbf4e0c11682c313670546d66f87dd67d16f5972143d3c467373fc0",
+          "timer_unit_sha256": "d46f60ce7c2c433a5cd11d73871f191fba6db4e6bfeca1676f993b4354d7c087"
+        }
+      ]
+    },
+    "verification": {
+      "verified_at": "2026-07-12T16:35:22.437445Z",
+      "acceptance_ids": [
+        "bounded-fields",
+        "freshness",
+        "read-only-boundary",
+        "independent-path"
+      ],
+      "verification_note": "PR #454 is merged with green Python 3.10/3.12 checks; the exact merge archive is installed; the enabled timer repeatedly publishes a fresh, sealed and healthy capsule bound to merge commit b52bc55e46f7b94c3d3806189a6a6a15245cad2a.",
+      "task_sha256": "55864feeaa17bcc58db242d69a190aab98468a18068136c5f5abc29471cb3fe5",
+      "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8"
+    }
   }
 }

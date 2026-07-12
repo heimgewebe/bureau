@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "CABINET-COHERENCE-FRONTIER-V1",
   "title": "Cabinet coherence frontier and Gemini review lane",
-  "state": "active",
-  "commitment": "later",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Register the safe path for Cabinet to keep ecosystem coherence, produce Bureau-importable candidates, and use Gemini agents as proposal-only review capacity without breaking organ boundaries.",
   "current_plan": {
     "repository": "bureau",
@@ -57,6 +57,10 @@
         "queue_promotion",
         "merge_readiness"
       ]
-    }
+    },
+    "superseded_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021",
+    "superseded_at": "2026-07-11T20:31:00Z",
+    "supersession_reason": "Cabinet frontier, feedback and status projection roles were retired by the roomless Systemkatalog decision.",
+    "completion_mode": "superseded_by_product_role_decision"
   }
 }

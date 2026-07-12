@@ -8,14 +8,14 @@
     "lane": "later",
     "rank": 360
   },
-  "goal": "Consolidate general operator status into Leitstand while keeping Cabinet semantic, Schauwerk visual and source-system views specialized and authoritative only within their boundaries.",
+  "goal": "Consolidate general operator status into Leitstand while keeping Systemkatalog as a stable read-only catalog and Schauwerk as a specialized renderer.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/leitstand",
     "grabowski_resources": [
       "repo:/home/alex/repos/leitstand",
-      "repo:/home/alex/repos/heimgewebe-katalog",
+      "repo:/home/alex/repos/systemkatalog",
       "repo:/home/alex/repos/schauwerk"
     ]
   },
@@ -26,7 +26,7 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.heimgewebe-katalog",
+      "resource": "repo.systemkatalog",
       "mode": "read",
       "isolation": "none"
     },
@@ -49,11 +49,11 @@
     },
     {
       "id": "duplicate-panel-map",
-      "assertion": "Generic status panels duplicated in Cabinet or Schauwerk are identified and source-linked, specialized or retired."
+      "assertion": "Generic status panels in specialist surfaces are identified and source-linked, specialized or retired; Systemkatalog remains status-free."
     },
     {
       "id": "single-entry",
-      "assertion": "The human operator has one documented general status entry without removing specialist Cabinet or Schauwerk workflows."
+      "assertion": "The human operator has one documented general status entry while direct Systemkatalog and Schauwerk specialist views remain available."
     },
     {
       "id": "failure-mode",
@@ -68,7 +68,9 @@
       "runtime_correctness",
       "cleanup_permission",
       "automatic_shutdown_permission"
-    ]
+    ],
+    "systemkatalog_rebound_at": "2026-07-11T20:31:00Z",
+    "systemkatalog_rebound_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021"
   },
   "depends_on": [
     "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T004",

@@ -3,7 +3,7 @@
   "id": "CABINET-GEMINI-MAINT-V1-T001",
   "initiative": "CABINET-GEMINI-MAINT-V1",
   "title": "Preflight Gemini maintenance scan capability",
-  "state": "blocked",
+  "state": "superseded",
   "priority": {
     "lane": "later",
     "rank": 70
@@ -83,7 +83,10 @@
       "task_approval",
       "autonomous_dispatch",
       "runtime_correctness"
-    ]
+    ],
+    "superseded_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021",
+    "superseded_at": "2026-07-11T20:31:00Z",
+    "supersession_reason": "The Systemkatalog has no maintenance-agent, scheduler or proposal frontier role."
   },
   "depends_on": []
 }

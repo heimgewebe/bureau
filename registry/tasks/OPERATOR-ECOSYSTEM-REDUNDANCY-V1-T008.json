@@ -8,14 +8,14 @@
     "lane": "later",
     "rank": 340
   },
-  "goal": "Define and migrate to the smallest RepoBrief/Lenskit artifact set needed for daily agent context while retaining full reports only for diagnostics and export.",
+  "goal": "Define and migrate to the smallest RepoBrief/Lenskit artifact set needed for daily agent context for Systemkatalog and other repositories while retaining full reports only for diagnostics and export.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/lenskit",
     "grabowski_resources": [
       "repo:/home/alex/repos/lenskit",
-      "repo:/home/alex/repos/heimgewebe-katalog",
+      "repo:/home/alex/repos/systemkatalog",
       "repo:/home/alex/repos/grabowski"
     ]
   },
@@ -26,7 +26,7 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.heimgewebe-katalog",
+      "resource": "repo.systemkatalog",
       "mode": "read",
       "isolation": "none"
     },
@@ -45,7 +45,7 @@
   "acceptance": [
     {
       "id": "consumer-inventory",
-      "assertion": "Actual Grabowski, Cabinet and LLM consumers are mapped to the exact fields and artifacts they read."
+      "assertion": "Actual Grabowski, Systemkatalog and LLM consumers are mapped to the exact fields and artifacts they read."
     },
     {
       "id": "minimal-surface",
@@ -68,7 +68,9 @@
       "runtime_correctness",
       "cleanup_permission",
       "automatic_shutdown_permission"
-    ]
+    ],
+    "systemkatalog_rebound_at": "2026-07-11T20:31:00Z",
+    "systemkatalog_rebound_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021"
   },
   "depends_on": []
 }

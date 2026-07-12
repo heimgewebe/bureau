@@ -1,1 +1,12 @@
-{"schema_version":1,"id":"repo.heimgewebe-katalog","type":"git-repository","parent":"repo","path":"/home/alex/repos/heimgewebe-katalog","grabowski_key":"repo:/home/alex/repos/heimgewebe-katalog"}
+{
+  "schema_version": 1,
+  "id": "repo.heimgewebe-katalog",
+  "type": "external",
+  "parent": "repo",
+  "metadata": {
+    "retired_at": "2026-07-11T20:18:08Z",
+    "canonical_successor": "repo.systemkatalog",
+    "historical_path": "/home/alex/repos/heimgewebe-katalog",
+    "reason": "Repository was renamed to Systemkatalog; retained only so historical task claims remain resolvable."
+  }
+}

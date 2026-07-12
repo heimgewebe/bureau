@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Finalize Systemkatalog identity and retire active Cabinet rooms",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 335
@@ -12,12 +12,13 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/heimgewebe-katalog",
-    "working_branch": "refactor/systemkatalog-identity-room-retirement-v1",
-    "working_worktree": "/home/alex/repos/.systemkatalog-worktrees/identity-room-retirement-v1",
+    "working_repository": "/home/alex/repos/systemkatalog",
     "grabowski_resources": [
-      "repo:/home/alex/repos/heimgewebe-katalog",
-      "repo:/home/alex/repos/bureau"
+      "repo:/home/alex/repos/systemkatalog",
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/leitstand",
+      "repo:/home/alex/repos/schauwerk",
+      "repo:/home/alex/repos/lenskit"
     ],
     "authorization": {
       "source": "operator_instruction",
@@ -40,7 +41,7 @@
   },
   "claims": [
     {
-      "resource": "repo.heimgewebe-katalog",
+      "resource": "repo.systemkatalog",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -63,6 +64,11 @@
       "resource": "host.heim-pc",
       "mode": "write",
       "isolation": "none"
+    },
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
     }
   ],
   "required_capabilities": [
@@ -118,11 +124,52 @@
       "old_runtime_service": "heimgewebe-systemkatalog.service"
     },
     "does_not_establish": [
-      "current merge readiness",
-      "current runtime health",
-      "consumer compatibility",
-      "test sufficiency",
-      "permission to mutate unrelated repositories"
-    ]
+      "future catalog content correctness without source review",
+      "future runtime health after the recorded verification time",
+      "correctness of unrelated Bureau tasks or historical warnings",
+      "permission to rewrite historical repository names in completed evidence"
+    ],
+    "verified_at": "2026-07-11T20:31:00Z",
+    "completion_evidence": {
+      "repository": "heimgewebe/systemkatalog",
+      "local_checkout": "/home/alex/repos/systemkatalog",
+      "systemkatalog_pr": 119,
+      "systemkatalog_merge_commit": "2c70c8c337a8cbbdfbacd4d1724952428076e532",
+      "leitstand_pr": 163,
+      "leitstand_merge_commit": "07bb092564ef063b79e06619a9b132032dfb6cc4",
+      "schauwerk_pr": 84,
+      "schauwerk_merge_commit": "cc52fded054298e18d6982254dd624a3f60c607d",
+      "lenskit_pr": 982,
+      "lenskit_merge_commit": "fd9d3ebb253015f01324d731fd417145181c7980",
+      "active_room_count": 0,
+      "archived_room_file_count": 187,
+      "byte_identical_archived_room_file_count": 187,
+      "catalog_systems": 19,
+      "catalog_relations": 24,
+      "authority_domains": 14,
+      "stable_claims": 8,
+      "unit_tests": 23,
+      "runtime_service": "systemkatalog.service",
+      "runtime_endpoint": "http://127.0.0.1:4001",
+      "runtime_repository_match": true,
+      "read_only_http_proof": {
+        "healthz": 204,
+        "catalog": 200,
+        "root": 200,
+        "post_root": 405
+      },
+      "old_runtime_service_absent": true,
+      "old_runtime_aliases_absent": true,
+      "runtime_backup": "/home/alex/.local/state/systemkatalog/runtime-cutovers/20260711T201808Z",
+      "private_agent_state_archive": "/home/alex/.local/state/systemkatalog/retired-cabinet-agent-state/20260711T201759Z",
+      "repobrief_publication": "/home/alex/repos/manifest-publications/repobrief-auto/systemkatalog-main/20260711T203041Z",
+      "repobrief_external_manifest": "external/repobrief/systemkatalog/main/manifest.json",
+      "lenskit_external_manifest": "external/lenskit/systemkatalog/main/manifest.json",
+      "full_review_patch_sha256": "650beb1092dd8cfdd9c79e28a1226c11a43c40a3bf84011cfd64c3e0d9c190e5"
+    },
+    "verification": {
+      "task_sha256": "e0c3a50a4dc21e5b200aa8b8df844c2c3927dda72a7e60d539c05b86c8dba481",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    }
   }
 }

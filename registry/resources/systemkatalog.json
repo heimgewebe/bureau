@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "repo.systemkatalog",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/systemkatalog",
+  "grabowski_key": "repo:/home/alex/repos/systemkatalog"
+}

@@ -91,8 +91,6 @@ def _reference_files(path: Path, root: Path, tokens: list[str]) -> list[str]:
 def _infer_layer(name: str, target: str) -> str:
     if name == "bureau":
         return "core_cli"
-    if name.startswith("bureau-systemkatalog"):
-        return "ops_systemkatalog_bridge"
     if name in {"bureau-agent-frontier", "bureau-agent-scout"}:
         return "ops_frontier"
     if name.startswith("bureau-closure") or name == "bureau-pr-task-finish":

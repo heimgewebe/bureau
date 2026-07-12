@@ -30,7 +30,6 @@ FORBIDDEN_SUBCOMMANDS = (
     "handoff",
     "workspace-cleanup",
     "workspace-create",
-    "systemkatalog-import-reviewed",
     "source-sync",
     "verification-stamp",
     "merge",

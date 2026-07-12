@@ -200,8 +200,8 @@
         "verified_at": "2026-07-11T16:14:31Z"
       }
     },
-    "last_completed_catalog_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021",
-    "system_catalog_migration_status": "http_runtime_retirement_authorized_pending_execution",
+    "last_completed_catalog_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T023",
+    "system_catalog_migration_status": "verified_static_only_systemkatalog",
     "system_catalog_repository_migration_closeout": {
       "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T014",
       "status": "verified",
@@ -251,22 +251,35 @@
     },
     "systemkatalog_http_runtime_retirement": {
       "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T023",
-      "status": "authorized_pending_execution",
-      "authorization_reference": "operator-instruction:2026-07-12:complete-systemkatalog-runtime-retirement",
-      "systemkatalog_pr": 123,
-      "systemkatalog_pr_head": "78872ce230e7e1a7ed5ad04cd33af089b2369362",
-      "systemkatalog_main_at_preflight": "dad18bf4ad62b88d349aad1288f92048d8af647f",
-      "dry_run_status": "pass",
-      "dry_run_observed_at": "2026-07-12T15:50:38+02:00",
+      "status": "verified",
+      "verified_at": "2026-07-12T17:31:42+02:00",
+      "authorization_reference": "Bureau:OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T023",
+      "authorization_pull_request": 452,
+      "authorization_merge_commit": "90d776ddadb97d8c7813523f56e1162eaa462d86",
       "effect_authorized": true,
-      "effect_consumed": false,
-      "does_not_authorize": [
-        "force-releasing foreign leases",
-        "deleting private archives, backups or historical receipts",
-        "unrelated repository or runtime mutation",
-        "merging Systemkatalog PR #123 before retirement proof"
+      "effect_consumed": true,
+      "retirement_id": "20260712T151827Z",
+      "receipt_sha256": "334de8c408183532ca68d64781cc5d2f72565e62095aae6ff7f022b261052c7b",
+      "manifest_sha256": "ba1006cd845a9062ac6082b2306d9346a43246b16f8b79b6585eec7d0ae01bba",
+      "restore_instructions_sha256": "ac438f5ed2ad6b05097b768be70e7017cca6211103b7236457efbe08ca107d8e",
+      "systemkatalog_pull_request": 123,
+      "systemkatalog_merge_commit": "4ed6e28e30210a1a68f80501dda7328741b73442",
+      "runtime_service_state": "not-found/inactive/dead",
+      "installed_runtime_paths_absent": true,
+      "port_4001_closed": true,
+      "static_catalog_contract": "pass",
+      "repobrief_source_commit": "4ed6e28e30210a1a68f80501dda7328741b73442",
+      "repobrief_dedicated_bundle_sha256": "ed806b931f9e33f1cb663fa1a12708942a6bf5422c26b23a41ac11cffc987e1b",
+      "repobrief_fleet_bundle_sha256": "aaa2b2f710bea57c600595f3818afc415517a960995169af5f015e2e888a5b5a",
+      "private_state_preserved": true,
+      "historical_evidence_preserved": true,
+      "does_not_establish": [
+        "future absence without a new live check",
+        "truth of historical Cabinet claims beyond their original evidence",
+        "merge readiness of unrelated repositories"
       ]
     },
-    "next_migration_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T023"
+    "next_migration_task": null,
+    "next_migration_scope": "No remaining Systemkatalog migration effect is registered; future catalog content changes are ordinary repository work and require their own scope."
   }
 }

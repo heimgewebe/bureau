@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T023",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Retire the optional Systemkatalog HTTP runtime",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 10
@@ -131,15 +131,16 @@
       ],
       "one_shot": true,
       "revoked_on_mismatch": true,
-      "consumed": false,
-      "remaining_uses": 1,
+      "consumed": true,
+      "remaining_uses": 0,
       "does_not_authorize": [
         "force-releasing foreign leases or modifying foreign worktrees",
         "deletion of private Cabinet or Systemkatalog state, archives, backups or historical receipts",
         "mutation of unrelated repositories, services or ports",
         "rewriting historical evidence",
         "merging PR #123 before live retirement proof"
-      ]
+      ],
+      "consumed_at": "2026-07-12T17:18:27+02:00"
     },
     "starting_snapshot": {
       "observed_at": "2026-07-12T15:50:38+02:00",
@@ -164,6 +165,93 @@
       "automatic merge readiness",
       "permission to bypass Bureau or Grabowski leases",
       "permission to delete private or historical state"
-    ]
+    ],
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_static_only_systemkatalog_http_runtime_retired",
+      "verified_at": "2026-07-12T17:31:42+02:00",
+      "authorization": {
+        "bureau_pull_request": 452,
+        "bureau_merge_commit": "90d776ddadb97d8c7813523f56e1162eaa462d86",
+        "authorization_reference": "Bureau:OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T023",
+        "consumed_at": "2026-07-12T17:18:27+02:00"
+      },
+      "runtime_retirement": {
+        "retirement_id": "20260712T151827Z",
+        "repository_head": "dad18bf4ad62b88d349aad1288f92048d8af647f",
+        "backup_root": "/home/alex/.local/state/systemkatalog/runtime-retirements/20260712T151827Z",
+        "receipt_status": "retired",
+        "receipt_sha256": "334de8c408183532ca68d64781cc5d2f72565e62095aae6ff7f022b261052c7b",
+        "manifest_sha256": "ba1006cd845a9062ac6082b2306d9346a43246b16f8b79b6585eec7d0ae01bba",
+        "restore_instructions_sha256": "ac438f5ed2ad6b05097b768be70e7017cca6211103b7236457efbe08ca107d8e",
+        "service_state": {
+          "load": "not-found",
+          "active": "inactive",
+          "sub": "dead",
+          "main_pid": 0,
+          "enabled": false
+        },
+        "installed_paths_absent": [
+          "/home/alex/.config/systemd/user/systemkatalog.service",
+          "/home/alex/.local/bin/systemkatalog",
+          "/home/alex/.local/bin/systemkatalogctl"
+        ],
+        "port_4001_closed": true,
+        "http_endpoint_absent": true
+      },
+      "systemkatalog_repository": {
+        "pull_request": 123,
+        "reviewed_head": "c6bb98cd635c75dc9b415a3daeca50f192f8f33c",
+        "merge_commit": "4ed6e28e30210a1a68f80501dda7328741b73442",
+        "final_patch_sha256": "28e5955caab432ff7b1ea0c9bbca88be536c4639c04f2796b5089abaee3c1b53",
+        "review_evidence": "https://gist.github.com/alexdermohr/4f5495dfceb8c66cc347924fd0261b50",
+        "github_checks": [
+          "Validate Ecosystem Map: success",
+          "Repository Contract: success",
+          "Secret Scan: success"
+        ],
+        "repository_contract": "pass",
+        "unit_tests": 30,
+        "gitleaks_history_commits": 513,
+        "gitleaks_findings": 0,
+        "catalog_systems": 32,
+        "catalog_relations": 38,
+        "authority_domains": 16
+      },
+      "repobrief_publication": {
+        "source_commit": "4ed6e28e30210a1a68f80501dda7328741b73442",
+        "dedicated_bundle": "/home/alex/repos/manifest-publications/repobrief-auto/systemkatalog-main/20260712T152700Z/heimgewebe__systemkatalog__main-max-260712-1527_merge.bundle.manifest.json",
+        "dedicated_bundle_sha256": "ed806b931f9e33f1cb663fa1a12708942a6bf5422c26b23a41ac11cffc987e1b",
+        "fleet_bundle": "/home/alex/repos/manifest-publications/bundles/heimgewebe__systemkatalog/main/20260712T152838Z/heimgewebe__systemkatalog__main-max-260712-1528_merge.bundle.manifest.json",
+        "fleet_bundle_sha256": "aaa2b2f710bea57c600595f3818afc415517a960995169af5f015e2e888a5b5a",
+        "artifact_count": 19,
+        "output_health": "pass",
+        "post_emit_health": "pass",
+        "bundle_surface_validation": "pass",
+        "agent_export_gate": "pass"
+      },
+      "preservation": {
+        "private_archives_deleted": false,
+        "historical_receipts_rewritten": false,
+        "backup_retained": true,
+        "restore_path_verified": true
+      }
+    },
+    "verification": {
+      "verified_at": "2026-07-12T17:31:42+02:00",
+      "acceptance_ids": [
+        "authorization-merged-before-effect",
+        "exact-head-retirement",
+        "backup-and-receipt",
+        "runtime-absent",
+        "private-state-preserved",
+        "static-consumer-contract-preserved",
+        "systemkatalog-pr-finalized",
+        "closeout-bound"
+      ],
+      "verification_note": "T023 was merged before effect; the one-shot authorization was consumed once; backup hashes verify; the service, installed files and port 4001 are absent; Systemkatalog PR #123 and both RepoBrief publication paths are bound to merge commit 4ed6e28e30210a1a68f80501dda7328741b73442.",
+      "task_sha256": "38c38fa71a62cf0faf4f72dcee0078db2e155d2752d08bd80e87b189664a45ef",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    }
   }
 }

@@ -708,3 +708,155 @@ def test_live_conflicts_fail_closed_when_projection_coverage_is_incomplete(
     assert report["coverage_complete"] is False
     assert report["summary"]["blockers"] == 1
     assert report["findings"][0]["code"] == "live-register-projection-incomplete"
+
+
+def test_deferred_catalog_validation_records_checkout_independent_event(tmp_path):
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+
+    result = live_register_record(
+        None,
+        store,
+        kind="candidate_task",
+        title="Grabowski should consume the Bureau lease contract",
+        repo="repo.grabowski",
+        task_id="BUREAU-LEASE-CONSUMER-FOLLOWUP",
+        promotion_required=True,
+        catalog_validation="deferred",
+    )
+
+    validation = result["record"]["catalog_validation"]
+    assert validation["status"] == "deferred"
+    assert "repo_exists" in validation["does_not_establish"]
+    assert result["record"]["repo"] == "repo.grabowski"
+    assert result["record"]["task_id"] == "BUREAU-LEASE-CONSUMER-FOLLOWUP"
+
+
+def test_deferred_live_register_cli_does_not_load_registry(monkeypatch, tmp_path, capsys):
+    state_root = tmp_path / "state"
+
+    def fail_registry_load(_root):
+        raise AssertionError("deferred live-register must not load the Git registry")
+
+    monkeypatch.setattr(bureau_cli.Registry, "load", fail_registry_load)
+
+    rc = bureau_cli.main(
+        [
+            "--root",
+            str(tmp_path / "unavailable-checkout"),
+            "--state-root",
+            str(state_root),
+            "--json",
+            "live-register",
+            "--kind",
+            "thread_focus",
+            "--thread-id",
+            "checkout-independent",
+            "--repo",
+            "repo.bureau",
+            "--title",
+            "Operational status remains writable",
+            "--catalog-validation",
+            "deferred",
+        ]
+    )
+
+    assert rc == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result["record"]["catalog_validation"]["status"] == "deferred"
+
+
+def test_live_list_cli_does_not_load_registry(registry_factory, tmp_path, monkeypatch, capsys):
+    _root, registry, store = setup_live(registry_factory, tmp_path)
+    live_register_record(
+        registry,
+        store,
+        kind="thread_focus",
+        thread_id="read-without-checkout",
+        repo="repo.alpha",
+        title="Read operational state",
+    )
+
+    def fail_registry_load(_root):
+        raise AssertionError("live-list must not load the Git registry")
+
+    monkeypatch.setattr(bureau_cli.Registry, "load", fail_registry_load)
+
+    rc = bureau_cli.main(
+        [
+            "--root",
+            str(tmp_path / "unavailable-checkout"),
+            "--state-db",
+            str(store.path),
+            "--json",
+            "live-list",
+            "--thread-id",
+            "read-without-checkout",
+        ]
+    )
+
+    assert rc == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result["summary"]["active_thread_focus_count"] == 1
+
+
+def test_deferred_catalog_validation_bounds_unverified_identifiers(tmp_path):
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+
+    with pytest.raises(StateError, match="repo must be at most 200 characters"):
+        live_register_record(
+            None,
+            store,
+            kind="candidate_task",
+            title="oversized repo",
+            repo="repo." + ("x" * 300),
+            catalog_validation="deferred",
+        )
+
+    with pytest.raises(StateError, match="task must be at most 240 characters"):
+        live_register_record(
+            None,
+            store,
+            kind="candidate_task",
+            title="oversized task",
+            repo="repo.alpha",
+            task_id="T" * 241,
+            catalog_validation="deferred",
+        )
+
+
+def test_active_deferred_candidate_must_remain_promotion_required(tmp_path):
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+
+    result = live_register_record(
+        None,
+        store,
+        kind="candidate_task",
+        title="Unvalidated candidate",
+        repo="repo.alpha",
+        catalog_validation="deferred",
+    )
+    assert result["record"]["promotion_required"] is True
+
+    with pytest.raises(
+        StateError, match="active deferred candidate_task requires promotion_required=true"
+    ):
+        live_register_record(
+            None,
+            store,
+            kind="candidate_task",
+            title="Misclassified unvalidated candidate",
+            repo="repo.alpha",
+            promotion_required=False,
+            catalog_validation="deferred",
+        )
+
+    with pytest.raises(StateError, match="cannot claim promoted status"):
+        live_register_record(
+            None,
+            store,
+            kind="candidate_task",
+            title="False promotion claim",
+            repo="repo.alpha",
+            status="promoted",
+            catalog_validation="deferred",
+        )

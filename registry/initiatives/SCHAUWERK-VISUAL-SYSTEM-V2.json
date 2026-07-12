@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "SCHAUWERK-VISUAL-SYSTEM-V2",
+  "title": "Schauwerk Visual System v2",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Replace technically successful but visually weak Miro layouts with a research-backed, semantic and narrative visual system that produces clear, dense, concise and coherent Schauwerke.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/schauwerk-visual-system-v2.md"
+  },
+  "completion": [
+    "A versioned visual-system contract selects Miro object types by information function and defines a canonical narrative board architecture.",
+    "A deterministic quality gate evaluates information architecture, hierarchy, density, object semantics, colour roles, connector discipline and evidence separation instead of relying on object counts.",
+    "A compact reference renderer creates a new Education-team Miro board that passes the v2 gate and remote readback.",
+    "Schauwerk tests, CI, documentation, diff-bound review and live evidence are merged and the Bureau task is verified."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-12",
+    "source_request": "alles umsetzen: plan erstellen, registrieren und gleich umsetzen in einem rutsch",
+    "predecessor": "SCHAUWERK-USEFUL-PILOT-V1",
+    "problem_statement": "The existing 92/100 Miro quality receipt proved technical structure but failed the user's direct visual-quality review.",
+    "does_not_establish": [
+      "universal_visual_quality",
+      "automatic_redesign_of_existing_boards",
+      "provider_layout_truth_from_incomplete_geometry",
+      "public_board_distribution"
+    ]
+  }
+}

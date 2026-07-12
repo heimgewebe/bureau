@@ -205,6 +205,15 @@ def live_register_record(
     checked_status = (
         _validate_status(checked_kind, status) if status is not None else None
     )
+    if catalog_validation == "deferred" and checked_kind == "candidate_task":
+        if checked_status == "promoted":
+            raise StateError("deferred candidate_task cannot claim promoted status")
+        if checked_status in {None, *ACTIVE_LIVE_STATUSES}:
+            if promotion_required is False:
+                raise StateError(
+                    "active deferred candidate_task requires promotion_required=true"
+                )
+            promotion_required = True
     checked_title = _optional_text(title, field="title", max_length=240)
     assert checked_title is not None
     checked_source = _optional_text(source, field="source", max_length=80) or "operator"

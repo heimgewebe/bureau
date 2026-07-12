@@ -822,3 +822,41 @@ def test_deferred_catalog_validation_bounds_unverified_identifiers(tmp_path):
             task_id="T" * 241,
             catalog_validation="deferred",
         )
+
+
+def test_active_deferred_candidate_must_remain_promotion_required(tmp_path):
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+
+    result = live_register_record(
+        None,
+        store,
+        kind="candidate_task",
+        title="Unvalidated candidate",
+        repo="repo.alpha",
+        catalog_validation="deferred",
+    )
+    assert result["record"]["promotion_required"] is True
+
+    with pytest.raises(
+        StateError, match="active deferred candidate_task requires promotion_required=true"
+    ):
+        live_register_record(
+            None,
+            store,
+            kind="candidate_task",
+            title="Misclassified unvalidated candidate",
+            repo="repo.alpha",
+            promotion_required=False,
+            catalog_validation="deferred",
+        )
+
+    with pytest.raises(StateError, match="cannot claim promoted status"):
+        live_register_record(
+            None,
+            store,
+            kind="candidate_task",
+            title="False promotion claim",
+            repo="repo.alpha",
+            status="promoted",
+            catalog_validation="deferred",
+        )

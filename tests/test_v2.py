@@ -1847,3 +1847,38 @@ def test_repo_balls_cli_emits_repository_projection(
         output["repo_balls"]["repo.alpha"]["current_ball"]["task_id"]
         == "BUR-TEST-001-T001"
     )
+
+
+def test_doctor_warns_then_blocks_deprecated_global_bureau_lease(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["execution"]["grabowski_resources"] = ["repo:/home/alex/repos/bureau"]
+    task["state"] = "planned"
+    task["priority"]["lane"] = "later"
+    task_path.write_text(json.dumps(task))
+    queue_path = root / "registry/queue.json"
+    queue = json.loads(queue_path.read_text())
+    task_id = task["id"]
+    queue["lanes"]["now"] = []
+    queue["lanes"]["later"] = [task_id]
+    queue_path.write_text(json.dumps(queue))
+
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    warning_report = dispatcher.doctor()
+    assert warning_report["lease_scope_blockers"] == []
+    assert warning_report["lease_scope_findings"][0]["severity"] == "warning"
+
+    task["state"] = "ready"
+    task["priority"]["lane"] = "now"
+    task_path.write_text(json.dumps(task))
+    queue["lanes"]["later"] = []
+    queue["lanes"]["now"] = [task_id]
+    queue_path.write_text(json.dumps(queue))
+
+    registry = Registry.load(root)
+    blocked = Dispatcher(registry, store).doctor()
+    assert blocked["healthy"] is False
+    assert blocked["lease_scope_blockers"][0]["task_id"] == task_id

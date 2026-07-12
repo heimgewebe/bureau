@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "component.bureau.merge-gate",
+  "type": "component",
+  "parent": "repo.bureau",
+  "path": "/home/alex/repos/bureau/.bureau-scopes/merge-main",
+  "grabowski_key": "path:/home/alex/repos/bureau/.bureau-scopes/merge-main"
+}

@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "component.bureau.runtime",
+  "type": "component",
+  "parent": "repo.bureau",
+  "path": "/home/alex/.local/share/bureau",
+  "grabowski_key": "service:bureau-status-capsule"
+}

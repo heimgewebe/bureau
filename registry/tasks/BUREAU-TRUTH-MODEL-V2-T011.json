@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.bureau-scopes/lease-contract",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T011.json",
+      "path:/home/alex/repos/bureau/registry/tasks/GRABOWSKI-OPERATOR-SURFACE-V1-T036.json"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "component.bureau.lease-contract",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.truth-model",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "BUREAU-TRUTH-MODEL-V2-T011",
+  "title": "Replace global Bureau work leases with object and component scopes",
+  "state": "planned",
+  "goal": "Keep Bureau intake and independent Registry work available by replacing long-running global repository leases with object, file, component and short effect-gate scopes.",
+  "priority": {
+    "lane": "later",
+    "rank": 110
+  },
+  "depends_on": [
+    "BUREAU-TRUTH-MODEL-V2-T001"
+  ],
+  "acceptance": [
+    {
+      "id": "scope-plans",
+      "assertion": "Machine-readable plans cover task, initiative, resource, queue, core, schema, merge and runtime operations without requiring the global Bureau repository lease."
+    },
+    {
+      "id": "broad-lease-diagnostics",
+      "assertion": "Normal work and merge attempts using repo:/home/alex/repos/bureau fail closed; only explicitly bounded emergency recovery may use it."
+    },
+    {
+      "id": "doctor-enforcement",
+      "assertion": "Doctor warns for planned legacy tasks and blocks ready or now tasks that still request the broad Bureau repository lease."
+    },
+    {
+      "id": "parallel-registry-work",
+      "assertion": "Different task and initiative files receive different path resource keys while merge serialization uses a short dedicated gate."
+    },
+    {
+      "id": "no-authority-expansion",
+      "assertion": "The contract grants no automatic verification, queue mutation, claim, dispatch, merge or deployment authority."
+    },
+    {
+      "id": "consumer-enforcement",
+      "assertion": "Grabowski deploys the v2 consumer that rejects broad Bureau normal-work leases and proves parallel exact scopes plus short effect gates."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-12T20:08:57Z",
+    "source": "User decision that Bureau must remain always available for ecosystem registration and status updates",
+    "does_not_establish": [
+      "automatic verification",
+      "automatic queue mutation",
+      "claim authority",
+      "dispatch authority",
+      "merge authority",
+      "deployment authority"
+    ],
+    "consumer_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T036",
+    "closeout_boundary": "T011 remains planned after the Bureau-side merge and may be verified only after the Grabowski T036 runtime proof is merged and deployed."
+  }
+}

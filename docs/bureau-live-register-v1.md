@@ -208,3 +208,8 @@ A deferred record is intentionally weaker. It records `catalog_validation.status
 not establish that the repository or task exists or that a Registry binding is valid. It remains
 Live Register context only; reviewed promotion is still required before it becomes durable task
 truth.
+
+The always-on state-store boundary does not imply a global Git-work lease. Reviewed task and
+initiative work uses exact Registry file keys, while main-branch integration uses a separate short
+merge gate. Therefore a Bureau code or Registry branch must not prevent other repositories from
+appending operational evidence or preparing disjoint Registry updates.

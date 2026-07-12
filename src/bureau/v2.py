@@ -2524,6 +2524,7 @@ class Dispatcher(legacy.Dispatcher):
         )
 
     def doctor(self, repair: bool = False) -> dict[str, Any]:
+        from .lease_contract import registry_bureau_lease_findings
         from .registry_truth import registry_truth_diagnostics
 
         integrity = self.store.integrity()
@@ -2598,6 +2599,10 @@ class Dispatcher(legacy.Dispatcher):
         lifecycle_findings = [item for item in lifecycle if not item["consistent"]]
         state_root_report = state_root_hygiene(self.store.state_root, self.store.path)
         registry_truth = registry_truth_diagnostics(self.registry.root)
+        lease_scope_findings = registry_bureau_lease_findings(self.registry)
+        lease_scope_blockers = [
+            item for item in lease_scope_findings if item["severity"] == "blocker"
+        ]
         if repair:
             missing_envelopes = []
             missing_receipts = []
@@ -2612,6 +2617,7 @@ class Dispatcher(legacy.Dispatcher):
             and not lifecycle_findings
             and state_root_report["healthy"]
             and registry_truth["healthy"]
+            and not lease_scope_blockers
         )
         return {
             "healthy": healthy,
@@ -2626,6 +2632,8 @@ class Dispatcher(legacy.Dispatcher):
             "lifecycle": lifecycle,
             "runtime_truth": doctor_runtime_truth(healthy=healthy, lifecycle=lifecycle),
             "registry_truth": registry_truth,
+            "lease_scope_findings": lease_scope_findings,
+            "lease_scope_blockers": lease_scope_blockers,
             "repaired": repair,
         }
 

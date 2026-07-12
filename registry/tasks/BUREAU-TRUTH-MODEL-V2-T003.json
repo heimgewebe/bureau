@@ -6,12 +6,13 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/.bureau-scopes/truth-model-v2",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T003.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.truth-model",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -60,6 +61,15 @@
       "dispatch authority",
       "merge authority",
       "deployment authority"
-    ]
+    ],
+    "lease_scope_contract": {
+      "schema_version": 2,
+      "global_repo_lease_required": false,
+      "work_resource_keys": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/truth-model-v2",
+        "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T003.json"
+      ],
+      "merge_gate_resource_key": "path:/home/alex/repos/bureau/.bureau-scopes/merge-main"
+    }
   }
 }

@@ -37,3 +37,176 @@ def test_lease_contract_cli_does_not_load_registry(monkeypatch, tmp_path, capsys
     assert rc == 0
     result = json.loads(capsys.readouterr().out)
     assert result["commands"]["live-register"]["git_repository_lease_required"] is False
+
+
+def test_registry_task_scopes_are_object_specific() -> None:
+    first = bureau_lease_contract("registry-task-write", subject="BUR-ONE-T001")
+    second = bureau_lease_contract("registry-task-write", subject="BUR-TWO-T001")
+
+    first_operation = first["commands"]["registry-task-write"]
+    second_operation = second["commands"]["registry-task-write"]
+    assert first_operation["git_repository_lease_required"] is False
+    assert first_operation["required_resource_keys"] != second_operation["required_resource_keys"]
+    assert first_operation["required_resource_keys"] == [
+        "path:/home/alex/repos/bureau/registry/tasks/BUR-ONE-T001.json"
+    ]
+    assert first_operation["forbidden_resource_keys"] == [
+        "repo:/home/alex/repos/bureau"
+    ]
+
+
+def test_registry_initiative_scope_rejects_path_traversal() -> None:
+    import pytest
+
+    with pytest.raises(ValueError, match="invalid initiative_id"):
+        bureau_lease_contract("registry-initiative-write", subject="../escape")
+
+
+def test_broad_bureau_repo_lease_is_blocked_for_normal_work() -> None:
+    from bureau.lease_contract import diagnose_bureau_resource_keys
+
+    report = diagnose_bureau_resource_keys(["repo:/home/alex/repos/bureau"])
+
+    assert report["healthy"] is False
+    assert [item["code"] for item in report["findings"]] == [
+        "broad-bureau-repo-lease-forbidden"
+    ]
+
+
+def test_bounded_emergency_repo_lease_requires_justification() -> None:
+    from bureau.lease_contract import diagnose_bureau_resource_keys
+
+    denied = diagnose_bureau_resource_keys(
+        ["repo:/home/alex/repos/bureau"],
+        phase="emergency-recovery",
+        ttl_seconds=300,
+    )
+    allowed = diagnose_bureau_resource_keys(
+        ["repo:/home/alex/repos/bureau"],
+        phase="emergency-recovery",
+        ttl_seconds=300,
+        justification="recover corrupt shared Git metadata",
+        expected_head="a" * 40,
+    )
+
+    assert denied["healthy"] is False
+    assert allowed["healthy"] is True
+    assert allowed["findings"][0]["code"] == "bounded-emergency-bureau-repo-lease"
+
+
+def test_merge_uses_short_gate_without_global_repo_lease() -> None:
+    from bureau.lease_contract import BUREAU_MERGE_GATE_KEY, diagnose_bureau_resource_keys
+
+    missing = diagnose_bureau_resource_keys([], phase="merge", ttl_seconds=120)
+    too_long = diagnose_bureau_resource_keys(
+        [BUREAU_MERGE_GATE_KEY], phase="merge", ttl_seconds=3600
+    )
+    valid = diagnose_bureau_resource_keys(
+        [BUREAU_MERGE_GATE_KEY], phase="merge", ttl_seconds=120
+    )
+
+    assert missing["healthy"] is False
+    assert too_long["healthy"] is False
+    assert valid["healthy"] is True
+
+
+def test_lease_contract_cli_emits_registry_task_scope(tmp_path, capsys) -> None:
+    rc = bureau_cli.main(
+        [
+            "--root",
+            str(tmp_path / "missing-checkout"),
+            "--json",
+            "lease-contract",
+            "--operation",
+            "registry-task-write",
+            "--subject",
+            "BUR-TEST-T001",
+        ]
+    )
+
+    assert rc == 0
+    result = json.loads(capsys.readouterr().out)
+    operation = result["commands"]["registry-task-write"]
+    assert operation["required_resource_keys"] == [
+        "path:/home/alex/repos/bureau/registry/tasks/BUR-TEST-T001.json"
+    ]
+
+
+def test_all_mutation_operations_avoid_global_repo_lease() -> None:
+    cases = {
+        "registry-task-write": "BUR-TEST-T001",
+        "registry-initiative-write": "BUR-TEST",
+        "registry-resource-write": "component.example",
+        "registry-queue-write": None,
+        "bureau-core-write": None,
+        "bureau-schema-write": None,
+        "worktree-admin": None,
+        "merge-main": None,
+        "runtime-deploy": None,
+    }
+
+    for operation, subject in cases.items():
+        contract = bureau_lease_contract(operation, subject=subject)
+        value = contract["commands"][operation]
+        assert value["git_repository_lease_required"] is False
+        assert value["forbidden_resource_keys"] == ["repo:/home/alex/repos/bureau"]
+        assert value["required_resource_keys"]
+
+
+def test_registry_lease_findings_detect_claim_derived_global_key() -> None:
+    from types import SimpleNamespace
+
+    from bureau.lease_contract import registry_bureau_lease_findings
+
+    registry = SimpleNamespace(
+        queue={"now": [], "next": [], "later": []},
+        resources={
+            "repo.bureau": SimpleNamespace(grabowski_key="repo:/home/alex/repos/bureau")
+        },
+        tasks={
+            "TASK-1": SimpleNamespace(
+                id="TASK-1",
+                state="planned",
+                execution={},
+                claims=[SimpleNamespace(resource="repo.bureau")],
+            )
+        },
+    )
+
+    findings = registry_bureau_lease_findings(registry)
+
+    assert findings[0]["sources"] == ["claims"]
+    assert findings[0]["claim_resources"] == ["repo.bureau"]
+
+
+def test_worktree_admin_uses_short_gate() -> None:
+    from bureau.lease_contract import (
+        BUREAU_WORKTREE_ADMIN_KEY,
+        diagnose_bureau_resource_keys,
+    )
+
+    missing = diagnose_bureau_resource_keys([], phase="worktree-admin", ttl_seconds=120)
+    too_long = diagnose_bureau_resource_keys(
+        [BUREAU_WORKTREE_ADMIN_KEY], phase="worktree-admin", ttl_seconds=3600
+    )
+    valid = diagnose_bureau_resource_keys(
+        [BUREAU_WORKTREE_ADMIN_KEY], phase="worktree-admin", ttl_seconds=120
+    )
+
+    assert missing["healthy"] is False
+    assert too_long["healthy"] is False
+    assert valid["healthy"] is True
+
+
+def test_emergency_repo_lease_rejects_missing_expected_boundary() -> None:
+    from bureau.lease_contract import diagnose_bureau_resource_keys
+
+    report = diagnose_bureau_resource_keys(
+        ["repo:/home/alex/repos/bureau"],
+        phase="emergency-recovery",
+        ttl_seconds=300,
+        justification="recover shared metadata",
+    )
+
+    assert report["healthy"] is False
+    assert report["expected_boundary_present"] is False

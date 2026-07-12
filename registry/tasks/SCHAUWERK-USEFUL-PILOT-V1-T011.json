@@ -1,68 +1,131 @@
 {
-  "schema_version": 1,
-  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
-  "state": "planned",
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/schauwerk",
-    "grabowski_resources": [
-      "repo:/home/alex/repos/schauwerk"
-    ],
-    "approval": {
-      "action_class": "repository_mutation",
-      "required_level": "reviewed_plan",
-      "note": "Repository changes require diff-bound review and green CI before merge."
-    }
-  },
-  "claims": [
+  "acceptance": [
     {
-      "resource": "repo.schauwerk",
-      "mode": "write",
-      "isolation": "worktree"
+      "assertion": "Only explicitly declared public sources and fields may enter a bundle.",
+      "id": "declaration"
+    },
+    {
+      "assertion": "Publication fails closed on private or unknown-visibility content.",
+      "id": "privacy-gate"
+    },
+    {
+      "assertion": "Bundles support version, expiry and withdrawal without mutating source truth.",
+      "id": "lifecycle"
+    },
+    {
+      "assertion": "Published output is immutable and read-only.",
+      "id": "delivery"
     }
   ],
-  "required_capabilities": [
-    "repository",
-    "shell",
-    "grabowski"
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.schauwerk"
+    }
   ],
   "depends_on": [
     "SCHAUWERK-USEFUL-PILOT-V1-T001",
     "SCHAUWERK-USEFUL-PILOT-V1-T010"
   ],
-  "metadata": {
-    "registered_at": "2026-07-10T05:12:00Z",
-    "source_request": "alles umsetzen",
-    "roadmap_stage": "SW-013",
-    "does_not_establish": [
-      "implementation_before_merge",
-      "provider_mutation_authority"
-    ]
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Repository changes require diff-bound review and green CI before merge.",
+      "required_level": "reviewed_plan"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk"
   },
-  "id": "SCHAUWERK-USEFUL-PILOT-V1-T011",
-  "title": "SW-013 \u2014 Build Schaufenster publication boundary",
   "goal": "Implement preview, privacy checks, sanitized immutable bundles, stable links, version metadata, expiry, withdrawal and read-only delivery.",
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T011",
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "metadata": {
+    "does_not_establish": [
+      "unreviewed provider mutation authority",
+      "public hosting",
+      "visual output as source truth"
+    ],
+    "implementation_evidence": {
+      "checks": [
+        {
+          "conclusion": "success",
+          "job": "validate (3.11)",
+          "workflow": "validate"
+        },
+        {
+          "conclusion": "success",
+          "job": "validate (3.12)",
+          "workflow": "validate"
+        }
+      ],
+      "head_sha": "a5e006e0cce89e2e00ce44f8dc95123f7afd55b6",
+      "merge_commit": "d21f362cae3794268a84a27628824f87f5a39de2",
+      "merged_at": "2026-07-11T12:03:26Z",
+      "post_merge_validation": {
+        "command": "make validate",
+        "commit_sha": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+        "log_path": "/home/alex/.local/state/schauwerk/operations/closeout-20260712/make-validate.log",
+        "log_sha256": "1a9feae1d4777ddeab30a88665d47bc191df569cbcca47bf0b96923823192249",
+        "result": "515 tests passed; Ruff, compileall and registry validation passed"
+      },
+      "pull_request": "heimgewebe/schauwerk#81",
+      "url": "https://github.com/heimgewebe/schauwerk/pull/81"
+    },
+    "outcome": "Fail-closed privacy checks and immutable publication bundles are implemented.",
+    "registered_at": "2026-07-10T05:12:00Z",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "head_sha": "a5e006e0cce89e2e00ce44f8dc95123f7afd55b6",
+          "kind": "pull_request",
+          "merge_commit_sha": "d21f362cae3794268a84a27628824f87f5a39de2",
+          "number": 81,
+          "source_ref": "heimgewebe/schauwerk#81",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T011"
+        },
+        {
+          "authority": "schauwerk-local-validation",
+          "commit_sha": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+          "content_sha256": "1a9feae1d4777ddeab30a88665d47bc191df569cbcca47bf0b96923823192249",
+          "kind": "test_run",
+          "source_ref": "/home/alex/.local/state/schauwerk/operations/closeout-20260712/make-validate.log",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T011"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "roadmap_stage": "SW-013",
+    "source_request": "alles umsetzen",
+    "verification": {
+      "plan_sha256": "f56d795d9f976a3b0f14b3df70d3bdd26c5a0cc800ff236db0ff2e1e04ef9880",
+      "task_sha256": "1d62dd66560f02ddcf4e8ec7a0a3d94a774b542a12741979b3f659d55dd1ab09",
+      "verified_at": "2026-07-12T20:21:12Z"
+    },
+    "verified_acceptance": {
+      "declaration": "Verified by PR #81, green CI and current post-merge validation: Only explicitly declared public sources and fields may enter a bundle.",
+      "delivery": "Verified by PR #81, green CI and current post-merge validation: Published output is immutable and read-only.",
+      "lifecycle": "Verified by PR #81, green CI and current post-merge validation: Bundles support version, expiry and withdrawal without mutating source truth.",
+      "privacy-gate": "Verified by PR #81, green CI and current post-merge validation: Publication fails closed on private or unknown-visibility content."
+    },
+    "verified_at": "2026-07-12T20:21:12Z"
+  },
   "priority": {
     "lane": "later",
     "rank": 90
   },
-  "acceptance": [
-    {
-      "id": "declaration",
-      "assertion": "Only explicitly declared public sources and fields may enter a bundle."
-    },
-    {
-      "id": "privacy-gate",
-      "assertion": "Publication fails closed on private or unknown-visibility content."
-    },
-    {
-      "id": "lifecycle",
-      "assertion": "Bundles support version, expiry and withdrawal without mutating source truth."
-    },
-    {
-      "id": "delivery",
-      "assertion": "Published output is immutable and read-only."
-    }
-  ]
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "SW-013 \u2014 Build Schaufenster publication boundary"
 }

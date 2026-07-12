@@ -1,67 +1,130 @@
 {
-  "schema_version": 1,
-  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
-  "state": "planned",
+  "acceptance": [
+    {
+      "assertion": "Regie renders a source-bound proposal bundle and highlights uncertainty and stale inputs.",
+      "id": "review-bundle"
+    },
+    {
+      "assertion": "Operators can approve, reject or defer typed operations independently.",
+      "id": "partial-approval"
+    },
+    {
+      "assertion": "Apply and verification results are visible and receipt-bound.",
+      "id": "apply-receipt"
+    },
+    {
+      "assertion": "Restore is available from the same reviewed operation context.",
+      "id": "restore"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.schauwerk"
+    }
+  ],
+  "depends_on": [
+    "SCHAUWERK-USEFUL-PILOT-V1-T007"
+  ],
   "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/schauwerk",
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Repository changes require diff-bound review and green CI before merge.",
+      "required_level": "reviewed_plan"
+    },
     "grabowski_resources": [
       "repo:/home/alex/repos/schauwerk"
     ],
-    "approval": {
-      "action_class": "repository_mutation",
-      "required_level": "reviewed_plan",
-      "note": "Repository changes require diff-bound review and green CI before merge."
-    }
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk"
   },
-  "claims": [
-    {
-      "resource": "repo.schauwerk",
-      "mode": "write",
-      "isolation": "worktree"
-    }
-  ],
+  "goal": "Provide a local interface for context, sources, instructions, semantic/visual diff, partial approval, apply, verification and restore without terminal knowledge.",
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T008",
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "metadata": {
+    "does_not_establish": [
+      "unreviewed provider mutation authority",
+      "public hosting",
+      "visual output as source truth"
+    ],
+    "implementation_evidence": {
+      "checks": [
+        {
+          "conclusion": "success",
+          "job": "validate (3.11)",
+          "workflow": "validate"
+        },
+        {
+          "conclusion": "success",
+          "job": "validate (3.12)",
+          "workflow": "validate"
+        }
+      ],
+      "head_sha": "34b5321086214e4d6e7ed1c2f8a9276a66b2dfb5",
+      "merge_commit": "d41ad61a713a87090df06968bfd6e4995151604b",
+      "merged_at": "2026-07-11T03:13:47Z",
+      "post_merge_validation": {
+        "command": "make validate",
+        "commit_sha": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+        "log_path": "/home/alex/.local/state/schauwerk/operations/closeout-20260712/make-validate.log",
+        "log_sha256": "1a9feae1d4777ddeab30a88665d47bc191df569cbcca47bf0b96923823192249",
+        "result": "515 tests passed; Ruff, compileall and registry validation passed"
+      },
+      "pull_request": "heimgewebe/schauwerk#78",
+      "url": "https://github.com/heimgewebe/schauwerk/pull/78"
+    },
+    "outcome": "Regie review, partial decision, apply evidence and restore context are implemented.",
+    "registered_at": "2026-07-10T05:12:00Z",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "head_sha": "34b5321086214e4d6e7ed1c2f8a9276a66b2dfb5",
+          "kind": "pull_request",
+          "merge_commit_sha": "d41ad61a713a87090df06968bfd6e4995151604b",
+          "number": 78,
+          "source_ref": "heimgewebe/schauwerk#78",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T008"
+        },
+        {
+          "authority": "schauwerk-local-validation",
+          "commit_sha": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+          "content_sha256": "1a9feae1d4777ddeab30a88665d47bc191df569cbcca47bf0b96923823192249",
+          "kind": "test_run",
+          "source_ref": "/home/alex/.local/state/schauwerk/operations/closeout-20260712/make-validate.log",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T008"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "roadmap_stage": "SW-010",
+    "source_request": "alles umsetzen",
+    "verification": {
+      "plan_sha256": "f56d795d9f976a3b0f14b3df70d3bdd26c5a0cc800ff236db0ff2e1e04ef9880",
+      "task_sha256": "ea02f2cb00b08785b69911e559a20b48d26084a6582bbb0a8facb38fbd2c6c64",
+      "verified_at": "2026-07-12T20:21:12Z"
+    },
+    "verified_acceptance": {
+      "apply-receipt": "Verified by PR #78, green CI and current post-merge validation: Apply and verification results are visible and receipt-bound.",
+      "partial-approval": "Verified by PR #78, green CI and current post-merge validation: Operators can approve, reject or defer typed operations independently.",
+      "restore": "Verified by PR #78, green CI and current post-merge validation: Restore is available from the same reviewed operation context.",
+      "review-bundle": "Verified by PR #78, green CI and current post-merge validation: Regie renders a source-bound proposal bundle and highlights uncertainty and stale inputs."
+    },
+    "verified_at": "2026-07-12T20:21:12Z"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
   "required_capabilities": [
     "repository",
     "shell",
     "grabowski"
   ],
-  "depends_on": [
-    "SCHAUWERK-USEFUL-PILOT-V1-T007"
-  ],
-  "metadata": {
-    "registered_at": "2026-07-10T05:12:00Z",
-    "source_request": "alles umsetzen",
-    "roadmap_stage": "SW-010",
-    "does_not_establish": [
-      "implementation_before_merge",
-      "provider_mutation_authority"
-    ]
-  },
-  "id": "SCHAUWERK-USEFUL-PILOT-V1-T008",
-  "title": "SW-010 \u2014 Build Regie review interface",
-  "goal": "Provide a local interface for context, sources, instructions, semantic/visual diff, partial approval, apply, verification and restore without terminal knowledge.",
-  "priority": {
-    "lane": "later",
-    "rank": 60
-  },
-  "acceptance": [
-    {
-      "id": "review-bundle",
-      "assertion": "Regie renders a source-bound proposal bundle and highlights uncertainty and stale inputs."
-    },
-    {
-      "id": "partial-approval",
-      "assertion": "Operators can approve, reject or defer typed operations independently."
-    },
-    {
-      "id": "apply-receipt",
-      "assertion": "Apply and verification results are visible and receipt-bound."
-    },
-    {
-      "id": "restore",
-      "assertion": "Restore is available from the same reviewed operation context."
-    }
-  ]
+  "schema_version": 1,
+  "state": "verified",
+  "title": "SW-010 \u2014 Build Regie review interface"
 }

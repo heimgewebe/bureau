@@ -1,67 +1,135 @@
 {
-  "schema_version": 1,
-  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
-  "state": "planned",
+  "acceptance": [
+    {
+      "assertion": "Registry and declared artifacts are searchable with source citations.",
+      "id": "search"
+    },
+    {
+      "assertion": "Semantic service failure does not block core rendering or operation.",
+      "id": "optional"
+    },
+    {
+      "assertion": "Suggestions expose confidence and never become source facts automatically.",
+      "id": "uncertainty"
+    },
+    {
+      "assertion": "Visibility boundaries constrain indexing and result delivery.",
+      "id": "privacy"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.schauwerk"
+    }
+  ],
+  "depends_on": [
+    "SCHAUWERK-USEFUL-PILOT-V1-T012"
+  ],
   "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/schauwerk",
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Repository changes require diff-bound review and green CI before merge.",
+      "required_level": "reviewed_plan"
+    },
     "grabowski_resources": [
       "repo:/home/alex/repos/schauwerk"
     ],
-    "approval": {
-      "action_class": "repository_mutation",
-      "required_level": "reviewed_plan",
-      "note": "Repository changes require diff-bound review and green CI before merge."
-    }
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk"
   },
-  "claims": [
-    {
-      "resource": "repo.schauwerk",
-      "mode": "write",
-      "isolation": "worktree"
-    }
-  ],
+  "goal": "Provide cross-project search, relationship suggestions, clustering, similar views, orphan detection and contradiction hints as optional services.",
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T014",
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "metadata": {
+    "does_not_establish": [
+      "unreviewed provider mutation authority",
+      "public hosting",
+      "visual output as source truth"
+    ],
+    "implementation_evidence": {
+      "checks": [
+        {
+          "conclusion": "success",
+          "job": "validate (3.11)",
+          "workflow": "validate"
+        },
+        {
+          "conclusion": "success",
+          "job": "validate (3.12)",
+          "workflow": "validate"
+        }
+      ],
+      "head_sha": "887876caa3186647b1910d160819c90edb0ce5bb",
+      "merge_commit": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+      "merged_at": "2026-07-12T17:26:11Z",
+      "post_merge_validation": {
+        "command": "make validate",
+        "commit_sha": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+        "log_path": "/home/alex/.local/state/schauwerk/operations/closeout-20260712/make-validate.log",
+        "log_sha256": "1a9feae1d4777ddeab30a88665d47bc191df569cbcca47bf0b96923823192249",
+        "result": "515 tests passed; Ruff, compileall and registry validation passed"
+      },
+      "pull_request": "heimgewebe/schauwerk#85",
+      "review_gate": {
+        "diff_sha256": "e98bd9ed33d82d5956f1bee8e7c88aedc073f37235cc1f70fe12884948865338",
+        "reviewed_head": "887876caa3186647b1910d160819c90edb0ce5bb",
+        "verdict": "PASS"
+      },
+      "url": "https://github.com/heimgewebe/schauwerk/pull/85"
+    },
+    "outcome": "Optional cited visibility-aware local search and suggestions are implemented.",
+    "registered_at": "2026-07-10T05:12:00Z",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "head_sha": "887876caa3186647b1910d160819c90edb0ce5bb",
+          "kind": "pull_request",
+          "merge_commit_sha": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+          "number": 85,
+          "source_ref": "heimgewebe/schauwerk#85",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T014"
+        },
+        {
+          "authority": "schauwerk-local-validation",
+          "commit_sha": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+          "content_sha256": "1a9feae1d4777ddeab30a88665d47bc191df569cbcca47bf0b96923823192249",
+          "kind": "test_run",
+          "source_ref": "/home/alex/.local/state/schauwerk/operations/closeout-20260712/make-validate.log",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T014"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "roadmap_stage": "SW-016",
+    "source_request": "alles umsetzen",
+    "verification": {
+      "plan_sha256": "f56d795d9f976a3b0f14b3df70d3bdd26c5a0cc800ff236db0ff2e1e04ef9880",
+      "task_sha256": "16019761a842835cd92181255650105dc67e97784dd4ef856bfc611de6bf2c62",
+      "verified_at": "2026-07-12T20:21:12Z"
+    },
+    "verified_acceptance": {
+      "optional": "Verified by PR #85, green CI and current post-merge validation: Semantic service failure does not block core rendering or operation.",
+      "privacy": "Verified by PR #85, green CI and current post-merge validation: Visibility boundaries constrain indexing and result delivery.",
+      "search": "Verified by PR #85, green CI and current post-merge validation: Registry and declared artifacts are searchable with source citations.",
+      "uncertainty": "Verified by PR #85, green CI and current post-merge validation: Suggestions expose confidence and never become source facts automatically."
+    },
+    "verified_at": "2026-07-12T20:21:12Z"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 120
+  },
   "required_capabilities": [
     "repository",
     "shell",
     "grabowski"
   ],
-  "depends_on": [
-    "SCHAUWERK-USEFUL-PILOT-V1-T012"
-  ],
-  "metadata": {
-    "registered_at": "2026-07-10T05:12:00Z",
-    "source_request": "alles umsetzen",
-    "roadmap_stage": "SW-016",
-    "does_not_establish": [
-      "implementation_before_merge",
-      "provider_mutation_authority"
-    ]
-  },
-  "id": "SCHAUWERK-USEFUL-PILOT-V1-T014",
-  "title": "SW-016 \u2014 Add optional search and semantics",
-  "goal": "Provide cross-project search, relationship suggestions, clustering, similar views, orphan detection and contradiction hints as optional services.",
-  "priority": {
-    "lane": "later",
-    "rank": 120
-  },
-  "acceptance": [
-    {
-      "id": "search",
-      "assertion": "Registry and declared artifacts are searchable with source citations."
-    },
-    {
-      "id": "optional",
-      "assertion": "Semantic service failure does not block core rendering or operation."
-    },
-    {
-      "id": "uncertainty",
-      "assertion": "Suggestions expose confidence and never become source facts automatically."
-    },
-    {
-      "id": "privacy",
-      "assertion": "Visibility boundaries constrain indexing and result delivery."
-    }
-  ]
+  "schema_version": 1,
+  "state": "verified",
+  "title": "SW-016 \u2014 Add optional search and semantics"
 }

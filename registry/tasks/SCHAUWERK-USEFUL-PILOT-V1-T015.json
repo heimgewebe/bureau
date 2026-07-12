@@ -1,69 +1,170 @@
 {
-  "schema_version": 1,
-  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
-  "state": "planned",
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/schauwerk",
-    "grabowski_resources": [
-      "repo:/home/alex/repos/schauwerk"
-    ],
-    "approval": {
-      "action_class": "repository_mutation",
-      "required_level": "reviewed_plan",
-      "note": "Repository changes require diff-bound review and green CI before merge."
-    }
-  },
-  "claims": [
+  "acceptance": [
     {
-      "resource": "repo.schauwerk",
-      "mode": "write",
-      "isolation": "worktree"
+      "assertion": "User/system service profiles are deterministic and health-checked.",
+      "id": "deployment"
+    },
+    {
+      "assertion": "Registry, local state and publication artifacts have tested retention and restore.",
+      "id": "backup"
+    },
+    {
+      "assertion": "Token loss and Miro outage have exercised runbooks.",
+      "id": "provider-recovery"
+    },
+    {
+      "assertion": "Faulty bulk mutation has a tested kill switch and restore drill.",
+      "id": "mutation-recovery"
     }
   ],
-  "required_capabilities": [
-    "repository",
-    "shell",
-    "grabowski"
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.schauwerk"
+    }
   ],
   "depends_on": [
     "SCHAUWERK-USEFUL-PILOT-V1-T007",
     "SCHAUWERK-USEFUL-PILOT-V1-T011",
     "SCHAUWERK-USEFUL-PILOT-V1-T013"
   ],
-  "metadata": {
-    "registered_at": "2026-07-10T05:12:00Z",
-    "source_request": "alles umsetzen",
-    "roadmap_stage": "SW-017",
-    "does_not_establish": [
-      "implementation_before_merge",
-      "provider_mutation_authority"
-    ]
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Repository changes require diff-bound review and green CI before merge.",
+      "required_level": "reviewed_plan"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk"
   },
-  "id": "SCHAUWERK-USEFUL-PILOT-V1-T015",
-  "title": "SW-017 \u2014 Complete operations and recovery",
   "goal": "Add deployment profiles, metrics, backup, retention, restore drills, OAuth rotation, kill switch and incident runbooks.",
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T015",
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "metadata": {
+    "does_not_establish": [
+      "unreviewed provider mutation authority",
+      "public hosting",
+      "visual output as source truth",
+      "installed scheduled services",
+      "live credential rotation",
+      "live-state overwrite during restore verification"
+    ],
+    "implementation_evidence": {
+      "checks": [
+        {
+          "conclusion": "success",
+          "job": "validate (3.11)",
+          "workflow": "validate"
+        },
+        {
+          "conclusion": "success",
+          "job": "validate (3.12)",
+          "workflow": "validate"
+        }
+      ],
+      "head_sha": "887876caa3186647b1910d160819c90edb0ce5bb",
+      "merge_commit": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+      "merged_at": "2026-07-12T17:26:11Z",
+      "post_merge_validation": {
+        "command": "make validate",
+        "commit_sha": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+        "log_path": "/home/alex/.local/state/schauwerk/operations/closeout-20260712/make-validate.log",
+        "log_sha256": "1a9feae1d4777ddeab30a88665d47bc191df569cbcca47bf0b96923823192249",
+        "result": "515 tests passed; Ruff, compileall and registry validation passed"
+      },
+      "pull_request": "heimgewebe/schauwerk#85",
+      "review_gate": {
+        "diff_sha256": "e98bd9ed33d82d5956f1bee8e7c88aedc073f37235cc1f70fe12884948865338",
+        "reviewed_head": "887876caa3186647b1910d160819c90edb0ce5bb",
+        "verdict": "PASS"
+      },
+      "url": "https://github.com/heimgewebe/schauwerk/pull/85"
+    },
+    "operations_evidence": {
+      "backup_manifest_sha256": "a2f5494fab284cb784965b5fc86e999c2aa1e68fd74120857181f84ce48a2f5e",
+      "blocked_apply_proof_sha256": "ed86771378a3741c827c28cc88581122ff7c9e2782a7d896de3eb6ede1118013",
+      "health_sha256": "72cd3495562b74c2c674ecca39fa0d375783be8ff6149882db68c8da1139460e",
+      "kill_switch_drill_sha256": "73d74c222a21e499eef26024f9f6e1a6c9cc1e32b455746b8f1dd90431381773",
+      "oauth_rotation_plan_sha256": "877517b0d9a96de2512bd24a09a200529f055899e8233bf99fcef8337dcc0b7c",
+      "profiles_sha256": "0346c7dfdb3a12f8069fdd932a971b69b990784668591911efe58d3a94d13976",
+      "restore_verification_sha256": "c644c232cc50c3f60aa4b75b8c22d4c7c0377dfcbf2ca3c1733259e060f740c6"
+    },
+    "outcome": "Operations and recovery contracts are implemented and exercised non-destructively.",
+    "registered_at": "2026-07-10T05:12:00Z",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "head_sha": "887876caa3186647b1910d160819c90edb0ce5bb",
+          "kind": "pull_request",
+          "merge_commit_sha": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+          "number": 85,
+          "source_ref": "heimgewebe/schauwerk#85",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T015"
+        },
+        {
+          "authority": "schauwerk-local-validation",
+          "commit_sha": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+          "content_sha256": "1a9feae1d4777ddeab30a88665d47bc191df569cbcca47bf0b96923823192249",
+          "kind": "test_run",
+          "source_ref": "/home/alex/.local/state/schauwerk/operations/closeout-20260712/make-validate.log",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T015"
+        },
+        {
+          "authority": "miro-education-via-schauwerk",
+          "content_sha256": "f6e1f45a3b5461f6070a32df413c16e36f4f61e44a521664642c00868af70664",
+          "kind": "miro_live_probe",
+          "source_ref": "schauwerk-praxistest-20260712@3e86cea9073f3322",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T015"
+        },
+        {
+          "authority": "schauwerk-local-runtime",
+          "content_sha256": "c644c232cc50c3f60aa4b75b8c22d4c7c0377dfcbf2ca3c1733259e060f740c6",
+          "kind": "staged_restore_probe",
+          "source_ref": "/home/alex/.local/state/schauwerk/operations/closeout-20260712/restore-verification.json",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T015"
+        },
+        {
+          "authority": "schauwerk-local-runtime",
+          "content_sha256": "73d74c222a21e499eef26024f9f6e1a6c9cc1e32b455746b8f1dd90431381773",
+          "kind": "stop_control_drill",
+          "source_ref": "/home/alex/.local/state/schauwerk/operations/closeout-20260712/kill-switch-drill.json",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T015"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "roadmap_stage": "SW-017",
+    "source_request": "alles umsetzen",
+    "verification": {
+      "plan_sha256": "f56d795d9f976a3b0f14b3df70d3bdd26c5a0cc800ff236db0ff2e1e04ef9880",
+      "task_sha256": "3141067078f479f1696604804e0934f3965174736ec96fb62c467bc2ef2cba5b",
+      "verified_at": "2026-07-12T20:21:12Z"
+    },
+    "verified_acceptance": {
+      "backup": "Verified by PR #85, green CI and current post-merge validation: Registry, local state and publication artifacts have tested retention and restore.",
+      "deployment": "Verified by PR #85, green CI and current post-merge validation: User/system service profiles are deterministic and health-checked.",
+      "mutation-recovery": "Verified by PR #85, green CI and current post-merge validation: Faulty bulk mutation has a tested kill switch and restore drill.",
+      "provider-recovery": "Verified by PR #85, green CI and current post-merge validation: Token loss and Miro outage have exercised runbooks."
+    },
+    "verified_at": "2026-07-12T20:21:12Z"
+  },
   "priority": {
     "lane": "later",
     "rank": 130
   },
-  "acceptance": [
-    {
-      "id": "deployment",
-      "assertion": "User/system service profiles are deterministic and health-checked."
-    },
-    {
-      "id": "backup",
-      "assertion": "Registry, local state and publication artifacts have tested retention and restore."
-    },
-    {
-      "id": "provider-recovery",
-      "assertion": "Token loss and Miro outage have exercised runbooks."
-    },
-    {
-      "id": "mutation-recovery",
-      "assertion": "Faulty bulk mutation has a tested kill switch and restore drill."
-    }
-  ]
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "SW-017 \u2014 Complete operations and recovery"
 }

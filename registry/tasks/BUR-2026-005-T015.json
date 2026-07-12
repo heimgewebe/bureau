@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T015",
   "initiative": "BUR-2026-005",
   "title": "Design reviewed queue reconcile apply path",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "BUR-2026-005-T014"
   ],
@@ -35,7 +35,111 @@
       "automatic_queue_mutation",
       "dispatch_authority",
       "merge_authority"
-    ]
+    ],
+    "verified_at": "2026-07-12T10:42:13.948021Z",
+    "outcome": "Reviewed queue-reconcile apply is implemented and postflight-verified. Apply now binds the reviewed artifact to the same registry root, non-empty Git head, pre-apply queue hash, current dry-run report and exactly re-derived safe actions; head drift around the effect boundary fails closed or rolls back byte-exactly. Empty action sets are byte-stable explicit no-ops.",
+    "implementation_prs": [
+      "heimgewebe/bureau#344",
+      "heimgewebe/bureau#449"
+    ],
+    "implementation_heads": [
+      "df20a23be589ca3fae55dd603d68f3a931c29351",
+      "1917a2cb9e5962773293412d51db6a5d41d7ee8c"
+    ],
+    "implementation_merge_commits": [
+      "88cafc53820cd7bc5cbb43c2fcaac56a08110bbc",
+      "5d30f3f747783e81244f0f7bcd40b500eadb4cf0"
+    ],
+    "implementation_diff_sha256": {
+      "pr_344_original": "a206aa546dc3c8bf9cffb5a4745d6491eab782174dddda531c2be14309b932c7",
+      "pr_449_local_full_diff": "894221e861cabe7505f9386ddddca5e241b683058db5889ad6d2f42820e7e64e",
+      "pr_449_github_rendered_diff": "fdbdfd8c2965c6aebe2df3232a03073ae8ea20b9d328c20315cb418041a70f0d",
+      "pr_449_stable_patch_id": "9f15a1056424697eeddfe7e5e04494a7d7842de4",
+      "pr_449_result_tree": "bc6f4bd164420a5107f02117d54fd2afc919bdab"
+    },
+    "critical_self_review_sha256": "b52e4ead2faa5f9d7d289f1027ce6fa760583895b400b18a3ee27d0ae9859ffc",
+    "live_smoke_evidence": {
+      "observed_at": "2026-07-12T10:40:02.047757Z",
+      "content_sha256": "0444503502fbe447dd7c80b5cbd0311d509b7872a7aa6f9e0b1238e6b4f2dc4c",
+      "safe_action": {
+        "operation": "add_to_queue",
+        "target_lane": "next",
+        "queue_sha256_before": "4b75d862d2f8fb2c0fc50d7462006cd52eea3fe05da20d3ab6e704e565975fa7",
+        "queue_sha256_after": "9c175eaba638a60295acb413b41c25a63478a642ea736a68c087533dde2d9c9a",
+        "queue_numstat": "2 additions, 1 deletion",
+        "post_gates": {
+          "bureau_check": true,
+          "doctor_healthy": true,
+          "registry_truth_healthy": true
+        }
+      },
+      "no_op": {
+        "applied": false,
+        "no_op": true,
+        "queue_sha256_before": "4b75d862d2f8fb2c0fc50d7462006cd52eea3fe05da20d3ab6e704e565975fa7",
+        "queue_sha256_after": "4b75d862d2f8fb2c0fc50d7462006cd52eea3fe05da20d3ab6e704e565975fa7"
+      },
+      "head_drift_refusal": {
+        "message": "registry git head changed since queue reconcile plan was generated",
+        "queue_sha256_before": "4b75d862d2f8fb2c0fc50d7462006cd52eea3fe05da20d3ab6e704e565975fa7",
+        "queue_sha256_after": "4b75d862d2f8fb2c0fc50d7462006cd52eea3fe05da20d3ab6e704e565975fa7"
+      }
+    },
+    "validation": [
+      "PR #344 and PR #449 passed GitHub validate (3.10) and validate (3.12).",
+      "Ruff over src and tests passed.",
+      "The complete local pytest suite passed.",
+      "Nineteen focused queue-reconcile tests passed.",
+      "git diff --check passed.",
+      "Bureau check passed with state-store integrity ok and no foreign-key errors.",
+      "Doctor and Registry Truth were healthy with zero lifecycle, queue or workspace findings.",
+      "A real temporary-Git add-to-next apply passed all post gates with a minimal readable queue diff.",
+      "No-op and head-drift smokes left queue bytes unchanged."
+    ],
+    "verified_acceptance": {
+      "reviewed-plan-required": "Apply requires review.status=reviewed plus reviewer and reviewed_at, enforces the same registry root and a non-empty exact Git head, and verifies the expected queue/hash.",
+      "dry-run-parity": "Apply recomputes the current report, compares its canonical hash, derives current safe actions again, requires exact action-list equality, and recomputes the expected queue. Coherently tampered action/queue pairs and head drift are refused.",
+      "gates-after-apply": "After a real queue write, state integrity, Doctor and Registry Truth must all pass; head drift is checked again after gates, and every post-write failure restores the original queue bytes.",
+      "no-implicit-dispatch": "The apply result and code retain explicit non-claims for dispatch, task claim, task completion and merge readiness; tests and live smoke perform no such effect."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "BUR-2026-005-T015",
+          "source_ref": "heimgewebe/bureau#344",
+          "number": 344,
+          "head_sha": "df20a23be589ca3fae55dd603d68f3a931c29351",
+          "merge_commit_sha": "88cafc53820cd7bc5cbb43c2fcaac56a08110bbc",
+          "diff_sha256": "a206aa546dc3c8bf9cffb5a4745d6491eab782174dddda531c2be14309b932c7"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "BUR-2026-005-T015",
+          "source_ref": "heimgewebe/bureau#449",
+          "number": 449,
+          "head_sha": "1917a2cb9e5962773293412d51db6a5d41d7ee8c",
+          "merge_commit_sha": "5d30f3f747783e81244f0f7bcd40b500eadb4cf0",
+          "diff_sha256": "894221e861cabe7505f9386ddddca5e241b683058db5889ad6d2f42820e7e64e"
+        },
+        {
+          "kind": "runtime_probe",
+          "authority": "bureau-temp-git-smoke",
+          "task_id": "BUR-2026-005-T015",
+          "source_ref": "queue-reconcile-live-smoke@5d30f3f747783e81244f0f7bcd40b500eadb4cf0",
+          "commit_sha": "5d30f3f747783e81244f0f7bcd40b500eadb4cf0",
+          "content_sha256": "0444503502fbe447dd7c80b5cbd0311d509b7872a7aa6f9e0b1238e6b4f2dc4c"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "8cf95560e06e44b309adb14b9db1cb280384bf47ec693cc6601c142f81edb3fa",
+      "plan_sha256": "653fa6a056506c94d5654ba5e3c16f9c31032767f0e1c844a8cb4714c50ce917"
+    }
   },
   "acceptance": [
     {

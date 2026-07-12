@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T024",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Retire Bureau Cabinet bridge and frontier execution surfaces",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 20
@@ -125,15 +125,16 @@
       ],
       "one_shot": true,
       "revoked_on_mismatch": true,
-      "consumed": false,
-      "remaining_uses": 1,
+      "consumed": true,
+      "remaining_uses": 0,
       "does_not_authorize": [
         "force-releasing foreign leases or changing foreign worktrees",
         "deletion of private Cabinet databases, state directories, archives, backups or historical receipts",
         "rewriting completed task, initiative, plan, report or pull request evidence",
         "changes to Bureau queue, claim, native frontier, what-now, live-register or dispatch semantics",
         "mutation of Systemkatalog or unrelated repositories"
-      ]
+      ],
+      "consumed_at": "2026-07-12T20:04:00+02:00"
     },
     "starting_snapshot": {
       "observed_at": "2026-07-12T18:40:00+02:00",
@@ -161,6 +162,50 @@
       "automatic merge readiness",
       "permission to delete private or historical state",
       "correctness of unrelated Bureau tasks"
-    ]
+    ],
+    "closeout": {
+      "verified_at": "2026-07-12T20:05:00+02:00",
+      "registration_pr": "heimgewebe/bureau#458",
+      "registration_merge_commit": "c40b0e918e79749b1aea085595d1a95a19440919",
+      "implementation_pr": "heimgewebe/bureau#459",
+      "implementation_merge_commit": "11f9aeb0c70d0433f46fc031537656dd80a5f219",
+      "deployment_release": "11f9aeb0c70d0433f46fc031537656dd80a5f219",
+      "deployment_archive_sha256": "fad5d2039b16c0feec87b161af672589fe9b35d980f34a0d056dc8ef23282f88",
+      "previous_rollback_venv": "/home/alex/.local/share/bureau/venv-91ecd3991b16ff59b802a3309ecad63b255fdc16",
+      "tests_passed": 457,
+      "installed_console_scripts": 12,
+      "retired_wrappers_removed": 5,
+      "retired_cli_subcommands_present": 0,
+      "active_cabinet_modules_present": 0,
+      "native_commands_verified": [
+        "frontier",
+        "what-now",
+        "repo-balls",
+        "live-register",
+        "lease-contract"
+      ],
+      "archive_sha256": {
+        "cabinet-bridge-import-review-contract-v0.md": "fda269df988da673cceba738a410f899232dced7aa67f991d4dc284707ba40fd",
+        "cabinet-bridge-import-review-contract-v0.policy.json": "18f2f534bbc3fe7d44fdffe1c78b925ff9a9384d854e1c86c828e0c6ac57b916"
+      },
+      "runtime_verification": {
+        "active_venv_exact_release": true,
+        "bureau_check_valid": true,
+        "failed_bureau_units": 0,
+        "enabled_bureau_timers_observed": 11,
+        "sample_one_shot_services_result": "success"
+      },
+      "historical_and_private_state_preserved": true,
+      "does_not_establish": [
+        "future absence without a new live check",
+        "correctness of unrelated Bureau tasks"
+      ],
+      "deployment_receipt_sha256": "24fada49a6265ded3983834527bdb7bc522cb11587870640e0a7a84d513e01a4",
+      "deployment_receipt": "~/.local/state/bureau/deployments/11f9aeb0c70d0433f46fc031537656dd80a5f219/receipt.json"
+    },
+    "verification": {
+      "task_sha256": "140e97bca5e3484d1bc84457759ba5f6e19221b46d31b652db5375bf84b02955",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    }
   }
 }

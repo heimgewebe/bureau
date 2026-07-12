@@ -343,3 +343,16 @@ bureau --root . --json status-projection
 
 Both commands observe and project only. They never verify tasks, mutate the
 queue, merge, delete branches or clean up worktrees.
+
+For a Grabowski-independent last-known-good read path, publish and read the sealed capsule:
+
+```bash
+bureau-status-capsule write --canonical-repo ~/repos/bureau \
+  --state-root ~/.local/state/bureau \
+  --output ~/.local/state/bureau-readonly/status-capsule.json
+bureau-status-capsule read \
+  --path ~/.local/state/bureau-readonly/status-capsule.json
+```
+
+The reader touches only the capsule file and reports `fresh`, `stale` or `unavailable`; see
+`docs/bureau-status-capsule-v1.md`.

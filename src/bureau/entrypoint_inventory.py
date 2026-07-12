@@ -97,6 +97,8 @@ def _infer_layer(name: str, target: str) -> str:
         return "ops_frontier"
     if name.startswith("bureau-closure") or name == "bureau-pr-task-finish":
         return "ops_closure"
+    if name == "bureau-status-capsule":
+        return "ops_readonly_status"
     if name in {"bureau-codex-bridge", "bureau-review-steward", "bureau-source-pr-bridge"}:
         return "ops_bridge"
     if name == "bureau-gemini-preflight":

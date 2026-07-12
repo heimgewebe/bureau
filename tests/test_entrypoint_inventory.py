@@ -11,26 +11,31 @@ def test_inventory_lists_all_packaged_console_scripts() -> None:
     inventory = build_inventory(ROOT)
     names = {entry["name"] for entry in inventory["console_scripts"]}
 
-    assert inventory["summary"]["packaged_console_scripts"] == 16
+    assert inventory["summary"]["packaged_console_scripts"] == 17
     assert "bureau" in names
     assert "bureau-agent-scout" in names
     assert "bureau-systemkatalog-frontier-reader" in names
     assert not any(name.startswith("bureau-cabinet-") for name in names)
     assert "bureau-gemini-preflight" in names
     assert "bureau-gemini-review-lane" in names
+    assert "bureau-status-capsule" in names
 
 
 def test_inventory_covers_systemd_exec_start_commands() -> None:
     inventory = build_inventory(ROOT)
     units = {unit["unit"]: unit for unit in inventory["systemd_units"]}
 
-    assert inventory["summary"]["systemd_services"] == 6
-    assert inventory["summary"]["systemd_timers"] == 6
+    assert inventory["summary"]["systemd_services"] == 7
+    assert inventory["summary"]["systemd_timers"] == 7
     assert (
         units["ops/systemd/bureau-status-projection.service"]["matched_console_script"]
         == "bureau"
     )
     assert units["ops/systemd/bureau-reconcile.service"]["matched_console_script"] == "bureau"
+    assert (
+        units["ops/systemd/bureau-status-capsule.service"]["matched_console_script"]
+        == "bureau-status-capsule"
+    )
     assert (
         units["ops/systemd/bureau-source-pr-bridge.service"]["matched_console_script"]
         == "bureau-source-pr-bridge"

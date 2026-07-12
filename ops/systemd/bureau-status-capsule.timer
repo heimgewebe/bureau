@@ -1,0 +1,12 @@
+[Unit]
+Description=Refresh the independent Bureau read-only status capsule every five minutes
+
+[Timer]
+OnCalendar=*-*-* *:0/5:00
+Persistent=true
+RandomizedDelaySec=15
+AccuracySec=30s
+Unit=bureau-status-capsule.service
+
+[Install]
+WantedBy=timers.target

@@ -3,8 +3,8 @@
   "id": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T004",
   "initiative": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1",
   "title": "Wire Bureau review and Leitstand display boundary",
-  "state": "ready",
-  "goal": "Register how heimlern proposals from Chronik outcomes move into Bureau review status and later Leitstand read-only display without making either surface the source of outcome truth.",
+  "state": "planned",
+  "goal": "Only after the real-outcome usefulness gate succeeds, register how useful Heimlern proposals move into Bureau review status and an optional Leitstand read-only display without making either surface the source of outcome truth.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -42,6 +42,10 @@
   ],
   "acceptance": [
     {
+      "id": "usefulness-gate",
+      "assertion": "T005 records a positive, evidence-bound operator-value evaluation before this task can become ready; insufficient or misleading output leaves this task unpromoted."
+    },
+    {
       "id": "bureau-gate",
       "assertion": "Bureau records proposal review state and follow-up decisions without storing raw Chronik outcome history."
     },
@@ -51,12 +55,12 @@
     },
     {
       "id": "no-authority-collapse",
-      "assertion": "The design preserves Chronik history authority, Bureau task truth, heimlern proposal-only role and Grabowski execution authority."
+      "assertion": "The design preserves Chronik history authority, Bureau task truth, Heimlern proposal-only role and Grabowski execution authority."
     }
   ],
   "metadata": {
     "registered_at": "2026-07-10T00:00:00Z",
-    "source_decision": "Chronik selected as primary integration organ for heimlern because it owns append-only historical outcomes.",
+    "source_decision": "Chronik selected as primary integration organ for Heimlern because it owns append-only historical outcomes.",
     "plan_path": "docs/plans/chronik-heimlern-outcome-bridge-v1.md",
     "does_not_establish": [
       "auto_apply_permission",
@@ -66,14 +70,14 @@
       "merge_readiness"
     ],
     "task_role": "t004",
-    "promoted_at": "2026-07-11",
-    "promotion_basis": "T003 is verified by merged Heimlern PR #200 and successful reviewed-head workflows."
+    "demoted_at": "2026-07-12",
+    "demotion_basis": "A review or display product is premature until real Grabowski outcomes show that Heimlern materially improves an operator diagnosis or decision."
   },
   "priority": {
-    "lane": "now",
-    "rank": 10
+    "lane": "later",
+    "rank": 80
   },
   "depends_on": [
-    "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T003"
+    "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T005"
   ]
 }

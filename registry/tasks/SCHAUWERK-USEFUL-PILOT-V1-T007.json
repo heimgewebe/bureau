@@ -1,67 +1,137 @@
 {
-  "schema_version": 1,
-  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
-  "state": "planned",
+  "acceptance": [
+    {
+      "assertion": "Live execution requires a reviewed receipt and explicit allowlisted local target alias.",
+      "id": "approval"
+    },
+    {
+      "assertion": "Only the declared managed region and expected revision can be mutated.",
+      "id": "scope"
+    },
+    {
+      "assertion": "After-state, idempotency and semantic verification are mandatory.",
+      "id": "postflight"
+    },
+    {
+      "assertion": "A tested restore path and kill switch exist before productive use.",
+      "id": "restore"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.schauwerk"
+    }
+  ],
+  "depends_on": [
+    "SCHAUWERK-USEFUL-PILOT-V1-T001"
+  ],
   "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/schauwerk",
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Repository changes require diff-bound review and green CI before merge.",
+      "required_level": "reviewed_plan"
+    },
     "grabowski_resources": [
       "repo:/home/alex/repos/schauwerk"
     ],
-    "approval": {
-      "action_class": "repository_mutation",
-      "required_level": "reviewed_plan",
-      "note": "Repository changes require diff-bound review and green CI before merge."
-    }
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk"
   },
-  "claims": [
-    {
-      "resource": "repo.schauwerk",
-      "mode": "write",
-      "isolation": "worktree"
-    }
-  ],
+  "goal": "Implement an explicitly approved live managed-region executor bound to target alias, expected revision, typed operations, snapshots, postflight and restore.",
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T007",
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "metadata": {
+    "does_not_establish": [
+      "unreviewed provider mutation authority",
+      "public hosting",
+      "visual output as source truth"
+    ],
+    "implementation_evidence": {
+      "checks": [
+        {
+          "conclusion": "success",
+          "job": "validate (3.11)",
+          "workflow": "validate"
+        },
+        {
+          "conclusion": "success",
+          "job": "validate (3.12)",
+          "workflow": "validate"
+        }
+      ],
+      "head_sha": "94afbbc4e8868c15c8047348068b940a6a32bada",
+      "merge_commit": "b54f3ef1e335c910da4d57c8e56750bafd1a836a",
+      "merged_at": "2026-07-11T01:41:44Z",
+      "post_merge_validation": {
+        "command": "make validate",
+        "commit_sha": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+        "log_path": "/home/alex/.local/state/schauwerk/operations/closeout-20260712/make-validate.log",
+        "log_sha256": "1a9feae1d4777ddeab30a88665d47bc191df569cbcca47bf0b96923823192249",
+        "result": "515 tests passed; Ruff, compileall and registry validation passed"
+      },
+      "pull_request": "heimgewebe/schauwerk#77",
+      "url": "https://github.com/heimgewebe/schauwerk/pull/77"
+    },
+    "outcome": "Reviewed exact-scope live executor, rollback and stop control are implemented.",
+    "registered_at": "2026-07-10T05:12:00Z",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "head_sha": "94afbbc4e8868c15c8047348068b940a6a32bada",
+          "kind": "pull_request",
+          "merge_commit_sha": "b54f3ef1e335c910da4d57c8e56750bafd1a836a",
+          "number": 77,
+          "source_ref": "heimgewebe/schauwerk#77",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T007"
+        },
+        {
+          "authority": "schauwerk-local-validation",
+          "commit_sha": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+          "content_sha256": "1a9feae1d4777ddeab30a88665d47bc191df569cbcca47bf0b96923823192249",
+          "kind": "test_run",
+          "source_ref": "/home/alex/.local/state/schauwerk/operations/closeout-20260712/make-validate.log",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T007"
+        },
+        {
+          "authority": "schauwerk-local-runtime",
+          "content_sha256": "ed86771378a3741c827c28cc88581122ff7c9e2782a7d896de3eb6ede1118013",
+          "kind": "runtime_probe",
+          "source_ref": "/home/alex/.local/state/schauwerk/operations/closeout-20260712/blocked-apply-proof.json",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T007"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "roadmap_stage": "SW-009",
+    "source_request": "alles umsetzen",
+    "verification": {
+      "plan_sha256": "f56d795d9f976a3b0f14b3df70d3bdd26c5a0cc800ff236db0ff2e1e04ef9880",
+      "task_sha256": "dafa6432adcfdb5fd7ecb3f6ed08580e670912eeb4d92474bd2380c61072179f",
+      "verified_at": "2026-07-12T20:21:12Z"
+    },
+    "verified_acceptance": {
+      "approval": "Verified by PR #77, green CI and current post-merge validation: Live execution requires a reviewed receipt and explicit allowlisted local target alias.",
+      "postflight": "Verified by PR #77, green CI and current post-merge validation: After-state, idempotency and semantic verification are mandatory.",
+      "restore": "Verified by PR #77, green CI and current post-merge validation: A tested restore path and kill switch exist before productive use.",
+      "scope": "Verified by PR #77, green CI and current post-merge validation: Only the declared managed region and expected revision can be mutated."
+    },
+    "verified_at": "2026-07-12T20:21:12Z"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
   "required_capabilities": [
     "repository",
     "shell",
     "grabowski"
   ],
-  "depends_on": [
-    "SCHAUWERK-USEFUL-PILOT-V1-T001"
-  ],
-  "metadata": {
-    "registered_at": "2026-07-10T05:12:00Z",
-    "source_request": "alles umsetzen",
-    "roadmap_stage": "SW-009",
-    "does_not_establish": [
-      "implementation_before_merge",
-      "provider_mutation_authority"
-    ]
-  },
-  "id": "SCHAUWERK-USEFUL-PILOT-V1-T007",
-  "title": "SW-009 \u2014 Implement reviewed live apply executor",
-  "goal": "Implement an explicitly approved live managed-region executor bound to target alias, expected revision, typed operations, snapshots, postflight and restore.",
-  "priority": {
-    "lane": "later",
-    "rank": 50
-  },
-  "acceptance": [
-    {
-      "id": "approval",
-      "assertion": "Live execution requires a reviewed receipt and explicit allowlisted local target alias."
-    },
-    {
-      "id": "scope",
-      "assertion": "Only the declared managed region and expected revision can be mutated."
-    },
-    {
-      "id": "postflight",
-      "assertion": "After-state, idempotency and semantic verification are mandatory."
-    },
-    {
-      "id": "restore",
-      "assertion": "A tested restore path and kill switch exist before productive use."
-    }
-  ]
+  "schema_version": 1,
+  "state": "verified",
+  "title": "SW-009 \u2014 Implement reviewed live apply executor"
 }

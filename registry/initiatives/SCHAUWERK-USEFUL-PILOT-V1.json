@@ -1,34 +1,61 @@
 {
-  "schema_version": 1,
-  "id": "SCHAUWERK-USEFUL-PILOT-V1",
-  "title": "Schauwerk useful pilot and product surfaces",
-  "state": "active",
-  "commitment": "now",
-  "goal": "Advance Schauwerk from a verified Miro/registry foundation to a useful, reviewable and durable visual operator, presentation and publication layer.",
-  "current_plan": {
-    "repository": "bureau",
-    "path": "docs/plans/schauwerk-useful-pilot-v1.md"
-  },
+  "commitment": "completed",
   "completion": [
     "Declared live and static sources reconstruct useful software and education views without becoming source truth.",
     "Productive managed-region writes pass Regie review, exact-scope apply, postflight verification and restore gates.",
     "Presentation and public publication outputs are reproducible, privacy-checked and usable offline.",
     "Adapter failure, provider outage and faulty mutation have visible, tested recovery paths."
   ],
-  "parallelism": {
-    "max_active_tasks": 1
+  "current_plan": {
+    "path": "docs/plans/schauwerk-useful-pilot-v1.md",
+    "repository": "bureau"
   },
+  "goal": "Advance Schauwerk from a verified Miro/registry foundation to a useful, reviewable and durable visual operator, presentation and publication layer.",
+  "id": "SCHAUWERK-USEFUL-PILOT-V1",
   "metadata": {
-    "registered_at": "2026-07-10T05:12:00Z",
-    "source_request": "alles umsetzen",
-    "repository": "heimgewebe/schauwerk",
     "baseline_merge": "7e2207b1144153251e2891030cb8b78d8221f6f6",
     "baseline_registry_digest": "b6d178b02660c084e2cc1456955126c12637b3f69f47ab9d9d382929ce9bbbb5",
+    "closure_evidence": {
+      "final_merge_commit": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+      "implementation_pull_requests": [
+        "heimgewebe/schauwerk#77",
+        "heimgewebe/schauwerk#78",
+        "heimgewebe/schauwerk#79",
+        "heimgewebe/schauwerk#80",
+        "heimgewebe/schauwerk#81",
+        "heimgewebe/schauwerk#85"
+      ],
+      "kill_switch_drill_sha256": "73d74c222a21e499eef26024f9f6e1a6c9cc1e32b455746b8f1dd90431381773",
+      "miro_live_board_alias": "schauwerk-praxistest-20260712",
+      "miro_live_board_reference_digest": "3e86cea9073f3322",
+      "miro_live_receipt_sha256": "f6e1f45a3b5461f6070a32df413c16e36f4f61e44a521664642c00868af70664",
+      "operations_closeout_root": "/home/alex/.local/state/schauwerk/operations/closeout-20260712",
+      "post_merge_validation_sha256": "1a9feae1d4777ddeab30a88665d47bc191df569cbcca47bf0b96923823192249"
+    },
+    "completion_non_claims": [
+      "visual output is not source truth",
+      "provider effects still require operation-specific authorization",
+      "public hosting is not implied",
+      "scheduled service installation and live credential rotation remain target-specific"
+    ],
     "does_not_establish": [
       "automatic_live_miro_apply",
       "public_release_readiness",
       "all_roadmap_work_completed",
       "visual_projection_as_source_truth"
-    ]
-  }
+    ],
+    "lifecycle": {
+      "completed_at": "2026-07-12T20:21:12Z",
+      "completion_reason": "All fifteen registered tasks are verified with merged implementation, green CI, current validation and bounded operational evidence."
+    },
+    "registered_at": "2026-07-10T05:12:00Z",
+    "repository": "heimgewebe/schauwerk",
+    "source_request": "alles umsetzen"
+  },
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "schema_version": 1,
+  "state": "completed",
+  "title": "Schauwerk useful pilot and product surfaces"
 }

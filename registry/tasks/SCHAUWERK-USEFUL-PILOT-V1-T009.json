@@ -1,68 +1,131 @@
 {
-  "schema_version": 1,
-  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
-  "state": "planned",
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/schauwerk",
-    "grabowski_resources": [
-      "repo:/home/alex/repos/schauwerk"
-    ],
-    "approval": {
-      "action_class": "repository_mutation",
-      "required_level": "reviewed_plan",
-      "note": "Repository changes require diff-bound review and green CI before merge."
-    }
-  },
-  "claims": [
+  "acceptance": [
     {
-      "resource": "repo.schauwerk",
-      "mode": "write",
-      "isolation": "worktree"
+      "assertion": "Projects and views are discoverable through one registry-backed overview.",
+      "id": "navigation"
+    },
+    {
+      "assertion": "Every live fact exposes observed time, source and stale/error state.",
+      "id": "freshness"
+    },
+    {
+      "assertion": "Core diagnostics remain available when Miro is unavailable.",
+      "id": "offline-diagnostics"
+    },
+    {
+      "assertion": "Declared live views can run in bounded fullscreen/display profiles.",
+      "id": "fullscreen"
     }
   ],
-  "required_capabilities": [
-    "repository",
-    "shell",
-    "grabowski"
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.schauwerk"
+    }
   ],
   "depends_on": [
     "SCHAUWERK-USEFUL-PILOT-V1-T003",
     "SCHAUWERK-USEFUL-PILOT-V1-T008"
   ],
-  "metadata": {
-    "registered_at": "2026-07-10T05:12:00Z",
-    "source_request": "alles umsetzen",
-    "roadmap_stage": "SW-011",
-    "does_not_establish": [
-      "implementation_before_merge",
-      "provider_mutation_authority"
-    ]
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Repository changes require diff-bound review and green CI before merge.",
+      "required_level": "reviewed_plan"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk"
   },
-  "id": "SCHAUWERK-USEFUL-PILOT-V1-T009",
-  "title": "SW-011 \u2014 Add overview and resilient live views",
   "goal": "Expose project navigation, freshness, active jobs, provider health, publications and failures while remaining useful during Miro outage.",
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T009",
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "metadata": {
+    "does_not_establish": [
+      "unreviewed provider mutation authority",
+      "public hosting",
+      "visual output as source truth"
+    ],
+    "implementation_evidence": {
+      "checks": [
+        {
+          "conclusion": "success",
+          "job": "validate (3.11)",
+          "workflow": "validate"
+        },
+        {
+          "conclusion": "success",
+          "job": "validate (3.12)",
+          "workflow": "validate"
+        }
+      ],
+      "head_sha": "0fc5f37a6381b83739f5d4be2a2c3e230b07afa5",
+      "merge_commit": "af43afc87fb808a25b5306cf460e16bfe6a00515",
+      "merged_at": "2026-07-11T03:38:55Z",
+      "post_merge_validation": {
+        "command": "make validate",
+        "commit_sha": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+        "log_path": "/home/alex/.local/state/schauwerk/operations/closeout-20260712/make-validate.log",
+        "log_sha256": "1a9feae1d4777ddeab30a88665d47bc191df569cbcca47bf0b96923823192249",
+        "result": "515 tests passed; Ruff, compileall and registry validation passed"
+      },
+      "pull_request": "heimgewebe/schauwerk#79",
+      "url": "https://github.com/heimgewebe/schauwerk/pull/79"
+    },
+    "outcome": "Registry-backed resilient overview and offline diagnostics are implemented.",
+    "registered_at": "2026-07-10T05:12:00Z",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "head_sha": "0fc5f37a6381b83739f5d4be2a2c3e230b07afa5",
+          "kind": "pull_request",
+          "merge_commit_sha": "af43afc87fb808a25b5306cf460e16bfe6a00515",
+          "number": 79,
+          "source_ref": "heimgewebe/schauwerk#79",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T009"
+        },
+        {
+          "authority": "schauwerk-local-validation",
+          "commit_sha": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+          "content_sha256": "1a9feae1d4777ddeab30a88665d47bc191df569cbcca47bf0b96923823192249",
+          "kind": "test_run",
+          "source_ref": "/home/alex/.local/state/schauwerk/operations/closeout-20260712/make-validate.log",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T009"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "roadmap_stage": "SW-011",
+    "source_request": "alles umsetzen",
+    "verification": {
+      "plan_sha256": "f56d795d9f976a3b0f14b3df70d3bdd26c5a0cc800ff236db0ff2e1e04ef9880",
+      "task_sha256": "b457ef8179df88fb0bbd83db1970c84f1664158f2f85a498e4091273b07828f1",
+      "verified_at": "2026-07-12T20:21:12Z"
+    },
+    "verified_acceptance": {
+      "freshness": "Verified by PR #79, green CI and current post-merge validation: Every live fact exposes observed time, source and stale/error state.",
+      "fullscreen": "Verified by PR #79, green CI and current post-merge validation: Declared live views can run in bounded fullscreen/display profiles.",
+      "navigation": "Verified by PR #79, green CI and current post-merge validation: Projects and views are discoverable through one registry-backed overview.",
+      "offline-diagnostics": "Verified by PR #79, green CI and current post-merge validation: Core diagnostics remain available when Miro is unavailable."
+    },
+    "verified_at": "2026-07-12T20:21:12Z"
+  },
   "priority": {
     "lane": "later",
     "rank": 70
   },
-  "acceptance": [
-    {
-      "id": "navigation",
-      "assertion": "Projects and views are discoverable through one registry-backed overview."
-    },
-    {
-      "id": "freshness",
-      "assertion": "Every live fact exposes observed time, source and stale/error state."
-    },
-    {
-      "id": "offline-diagnostics",
-      "assertion": "Core diagnostics remain available when Miro is unavailable."
-    },
-    {
-      "id": "fullscreen",
-      "assertion": "Declared live views can run in bounded fullscreen/display profiles."
-    }
-  ]
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "SW-011 \u2014 Add overview and resilient live views"
 }

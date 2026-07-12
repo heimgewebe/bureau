@@ -1,68 +1,131 @@
 {
-  "schema_version": 1,
-  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
-  "state": "planned",
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/schauwerk",
-    "grabowski_resources": [
-      "repo:/home/alex/repos/schauwerk"
-    ],
-    "approval": {
-      "action_class": "repository_mutation",
-      "required_level": "reviewed_plan",
-      "note": "Repository changes require diff-bound review and green CI before merge."
-    }
-  },
-  "claims": [
+  "acceptance": [
     {
-      "resource": "repo.schauwerk",
-      "mode": "write",
-      "isolation": "worktree"
+      "assertion": "HTML, PDF and PowerPoint derive from the same declared presentation model.",
+      "id": "formats"
+    },
+    {
+      "assertion": "Notes and timing remain separate from projected/public content.",
+      "id": "speaker-support"
+    },
+    {
+      "assertion": "One technical and one education presentation run without network access.",
+      "id": "offline"
+    },
+    {
+      "assertion": "Outputs include source revision and deterministic artifact metadata.",
+      "id": "reproducible"
     }
   ],
-  "required_capabilities": [
-    "repository",
-    "shell",
-    "grabowski"
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.schauwerk"
+    }
   ],
   "depends_on": [
     "SCHAUWERK-USEFUL-PILOT-V1-T005",
     "SCHAUWERK-USEFUL-PILOT-V1-T006"
   ],
-  "metadata": {
-    "registered_at": "2026-07-10T05:12:00Z",
-    "source_request": "alles umsetzen",
-    "roadmap_stage": "SW-012",
-    "does_not_establish": [
-      "implementation_before_merge",
-      "provider_mutation_authority"
-    ]
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Repository changes require diff-bound review and green CI before merge.",
+      "required_level": "reviewed_plan"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk"
   },
-  "id": "SCHAUWERK-USEFUL-PILOT-V1-T010",
-  "title": "SW-012 \u2014 Build B\u00fchne presentation outputs",
   "goal": "Generate presentation order, notes, timing, audience variants, HTML, PDF, PowerPoint, handout and offline packages.",
+  "id": "SCHAUWERK-USEFUL-PILOT-V1-T010",
+  "initiative": "SCHAUWERK-USEFUL-PILOT-V1",
+  "metadata": {
+    "does_not_establish": [
+      "unreviewed provider mutation authority",
+      "public hosting",
+      "visual output as source truth"
+    ],
+    "implementation_evidence": {
+      "checks": [
+        {
+          "conclusion": "success",
+          "job": "validate (3.11)",
+          "workflow": "validate"
+        },
+        {
+          "conclusion": "success",
+          "job": "validate (3.12)",
+          "workflow": "validate"
+        }
+      ],
+      "head_sha": "093b7b5c0901cc2224fa73e180de7477448d59d4",
+      "merge_commit": "901c40ceeaa71f9ee750959ffce9221be439cc78",
+      "merged_at": "2026-07-11T10:01:40Z",
+      "post_merge_validation": {
+        "command": "make validate",
+        "commit_sha": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+        "log_path": "/home/alex/.local/state/schauwerk/operations/closeout-20260712/make-validate.log",
+        "log_sha256": "1a9feae1d4777ddeab30a88665d47bc191df569cbcca47bf0b96923823192249",
+        "result": "515 tests passed; Ruff, compileall and registry validation passed"
+      },
+      "pull_request": "heimgewebe/schauwerk#80",
+      "url": "https://github.com/heimgewebe/schauwerk/pull/80"
+    },
+    "outcome": "Deterministic HTML, PDF, PowerPoint and offline stage packages are implemented.",
+    "registered_at": "2026-07-10T05:12:00Z",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "head_sha": "093b7b5c0901cc2224fa73e180de7477448d59d4",
+          "kind": "pull_request",
+          "merge_commit_sha": "901c40ceeaa71f9ee750959ffce9221be439cc78",
+          "number": 80,
+          "source_ref": "heimgewebe/schauwerk#80",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T010"
+        },
+        {
+          "authority": "schauwerk-local-validation",
+          "commit_sha": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
+          "content_sha256": "1a9feae1d4777ddeab30a88665d47bc191df569cbcca47bf0b96923823192249",
+          "kind": "test_run",
+          "source_ref": "/home/alex/.local/state/schauwerk/operations/closeout-20260712/make-validate.log",
+          "task_id": "SCHAUWERK-USEFUL-PILOT-V1-T010"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "roadmap_stage": "SW-012",
+    "source_request": "alles umsetzen",
+    "verification": {
+      "plan_sha256": "f56d795d9f976a3b0f14b3df70d3bdd26c5a0cc800ff236db0ff2e1e04ef9880",
+      "task_sha256": "ebeca9cb1695491d512b45e1f23ee39516251268f06cbebad94db27a4b2f6e66",
+      "verified_at": "2026-07-12T20:21:12Z"
+    },
+    "verified_acceptance": {
+      "formats": "Verified by PR #80, green CI and current post-merge validation: HTML, PDF and PowerPoint derive from the same declared presentation model.",
+      "offline": "Verified by PR #80, green CI and current post-merge validation: One technical and one education presentation run without network access.",
+      "reproducible": "Verified by PR #80, green CI and current post-merge validation: Outputs include source revision and deterministic artifact metadata.",
+      "speaker-support": "Verified by PR #80, green CI and current post-merge validation: Notes and timing remain separate from projected/public content."
+    },
+    "verified_at": "2026-07-12T20:21:12Z"
+  },
   "priority": {
     "lane": "later",
     "rank": 80
   },
-  "acceptance": [
-    {
-      "id": "formats",
-      "assertion": "HTML, PDF and PowerPoint derive from the same declared presentation model."
-    },
-    {
-      "id": "speaker-support",
-      "assertion": "Notes and timing remain separate from projected/public content."
-    },
-    {
-      "id": "offline",
-      "assertion": "One technical and one education presentation run without network access."
-    },
-    {
-      "id": "reproducible",
-      "assertion": "Outputs include source revision and deterministic artifact metadata."
-    }
-  ]
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "SW-012 \u2014 Build B\u00fchne presentation outputs"
 }

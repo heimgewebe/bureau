@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T036",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Grabowski soll Bureau-Lease-Vertrag für Always-on-Operationen konsumieren",
+  "state": "planned",
+  "goal": "Grabowski consumes Bureau's machine-readable lease contract so covered operational state reads and appends remain available under repo:bureau leases while Git-backed mutations remain fail-closed.",
+  "priority": {
+    "lane": "later",
+    "rank": 360
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "contract-consumed",
+      "assertion": "Grabowski evaluates the deployed Bureau lease-contract for covered Bureau operations and fails closed for unknown operations or unavailable/invalid contract output."
+    },
+    {
+      "id": "always-on-live-state",
+      "assertion": "With an active repo:/home/alex/repos/bureau lease, live-register, live-list, live-export and live-retention remain usable without acquiring or overriding that repository lease."
+    },
+    {
+      "id": "read-projections-not-repo-blocked",
+      "assertion": "Declared read-only projections are not rejected solely because repo:bureau is leased; required Registry/state inputs may still fail closed independently."
+    },
+    {
+      "id": "git-mutations-still-blocked",
+      "assertion": "Bureau code, schema, reviewed Git Registry, branch, merge and deployment mutations remain blocked by a foreign repo:bureau lease."
+    },
+    {
+      "id": "regression-proof",
+      "assertion": "Focused tests cover allowed operational commands, denied Git-backed commands, missing contract output and unknown operation classes."
+    },
+    {
+      "id": "runtime-proof",
+      "assertion": "The merged Grabowski runtime is deployed and a live lease-bound smoke proves both the allowed and denied paths."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_live_register",
+    "live_register_event_id": 234,
+    "live_register_candidate_id": "candidate-ee60e6cfac1547209576c6a53808c33d",
+    "live_register_created_at": "2026-07-12T17:33:41.412326Z",
+    "live_register_source": "operator",
+    "promotion_required_from_event": true,
+    "does_not_establish": [
+      "registry_task_truth",
+      "queue_truth",
+      "claim_authority",
+      "dispatch_authority",
+      "merge_readiness"
+    ],
+    "source_pr": "heimgewebe/bureau#456",
+    "bureau_lease_contract_release": "91ecd3991b16ff59b802a3309ecad63b255fdc16",
+    "active_foreign_grabowski_lease_observed": true,
+    "registration_boundary": "This task does not alter the active foreign Grabowski ball, grant merge/deploy authority, or weaken non-Bureau repository leases."
+  }
+}

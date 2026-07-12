@@ -23,7 +23,7 @@
   ],
   "id": "BUREAU-TRUTH-MODEL-V2-T001",
   "title": "Make Live Register projections history-complete",
-  "state": "ready",
+  "state": "verified",
   "goal": "Separate bounded raw-history display from complete current-state projection so active focus, overrides, candidates and conflicts remain visible after unrelated history growth.",
   "priority": {
     "lane": "later",
@@ -62,6 +62,71 @@
       "dispatch authority",
       "merge authority",
       "deployment authority"
-    ]
+    ],
+    "verified_at": "2026-07-12T10:12:45Z",
+    "outcome": "Implemented and postflight-verified in Bureau PR #447: Live Register operational projections now derive current state from complete event coverage while raw history remains bounded for display. Coverage and truncation are explicit, and incomplete conflict coverage fails closed.",
+    "implementation_pr": "heimgewebe/bureau#447",
+    "implementation_head": "511e8c2c09b31c79bbf9de00146fe88324d77798",
+    "implementation_merge_commit": "45a8361cf75fb31271de99f0ecf21453e72e9790",
+    "diff_sha256": "15a5e55f429994b13b73c1329a0d35c18c00610f4856e119deede2001821fe45",
+    "critical_self_review_sha256": "eaba465a8818c05e6e5c969cfe8988e8d51adeda13b848bb2c6927cc96d407a4",
+    "validation": [
+      "Bureau PR #447 GitHub CI passed validate (3.10) and validate (3.12).",
+      "Local Ruff over src and tests passed.",
+      "The complete local pytest suite passed.",
+      "Focused Live Register and v2 tests passed 97 tests.",
+      "git diff --check passed.",
+      "Post-merge Bureau check was valid with state-store integrity ok.",
+      "Post-merge Doctor and Registry Truth were healthy with zero errors.",
+      "Live state-store smoke covered 191 events with a 50-event display window and retained active event 36."
+    ],
+    "verified_acceptance": {
+      "complete-projection": "live-list, live_register_context, repo context and live-conflicts derive active focus, overrides and candidate state from one complete ordered event snapshot rather than the bounded display window.",
+      "coverage-signals": "Responses expose coverage_complete, history_truncated, oldest_loaded_event_id and projection_source; the live postflight reported complete_event_scan with complete coverage and truncated history.",
+      "fail-closed-conflicts": "live-conflicts emits live-register-projection-incomplete as a blocker whenever projection coverage is false; regression coverage proves the refusal path.",
+      "consumer-parity": "what-now and repo-balls retained active event 36 and complete candidate state while preserving Live Register non-claims and adding no queue or claim authority.",
+      "tests": "Regression tests exceed 100 events, verify one-snapshot projection and fail-closed incomplete coverage; full local tests and CI 3.10/3.12 passed."
+    },
+    "runtime_snapshot": {
+      "observed_at": "2026-07-12T10:14:00Z",
+      "live_register_events": 191,
+      "display_history_records": 50,
+      "history_truncated": true,
+      "coverage_complete": true,
+      "projection_source": "complete_event_scan",
+      "retained_active_event_id": 36,
+      "open_candidates": 44,
+      "doctor_healthy": true,
+      "registry_truth_healthy": true,
+      "state_integrity": "ok"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "BUREAU-TRUTH-MODEL-V2-T001",
+          "source_ref": "heimgewebe/bureau#447",
+          "number": 447,
+          "head_sha": "511e8c2c09b31c79bbf9de00146fe88324d77798",
+          "merge_commit_sha": "45a8361cf75fb31271de99f0ecf21453e72e9790",
+          "diff_sha256": "15a5e55f429994b13b73c1329a0d35c18c00610f4856e119deede2001821fe45"
+        },
+        {
+          "kind": "runtime_probe",
+          "authority": "bureau-state-store",
+          "task_id": "BUREAU-TRUTH-MODEL-V2-T001",
+          "source_ref": "live-register-postflight@45a8361cf75fb31271de99f0ecf21453e72e9790",
+          "commit_sha": "45a8361cf75fb31271de99f0ecf21453e72e9790",
+          "content_sha256": "15a5e55f429994b13b73c1329a0d35c18c00610f4856e119deede2001821fe45"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "3c1b3c25f789059f90d1621dfd134a41720e993d8e5b4ea0b645caf86b0932b9",
+      "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8"
+    }
   }
 }

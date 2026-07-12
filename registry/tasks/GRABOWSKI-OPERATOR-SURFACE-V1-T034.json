@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T034",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Harden Agent Workspace role recovery and closeout",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 530
+  },
+  "goal": "Keep environment-only failures of read-only test or review roles recoverable inside the same collected but still open Agent Workspace, while preserving immutable attempt evidence, the frozen writer boundary and an explicit post-workspace closeout plan.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "role-toolchain-preflight",
+      "assertion": "Before a test or review role starts, the workspace checks command executables and declared Python modules inside the same read-only sandbox and reports a typed environment failure without consuming a role attempt when prerequisites are unavailable."
+    },
+    {
+      "id": "bounded-read-role-retry",
+      "assertion": "A terminal failed test or review role in a collected but not closed workspace can be retried through a dedicated typed tool with an explicitly supplied replacement command, while remaining bound to the same writer head, base, diff, dirty state and frozen patch."
+    },
+    {
+      "id": "immutable-attempt-evidence",
+      "assertion": "Every role attempt has an immutable attempt-specific receipt. A retry records the previous task and receipt hash, failure classification, old and new command hashes, new task id, attempt number and selected final attempt without overwriting earlier evidence."
+    },
+    {
+      "id": "retry-policy-boundaries",
+      "assertion": "Retry is bounded, never automatic, never available for the writer, blocked after workspace close, blocked after writer binding drift and blocked for semantic test failures or review NEEDS_CHANGE/BLOCK unless the writer changes through a new workspace."
+    },
+    {
+      "id": "actionable-status-and-close-guard",
+      "assertion": "Workspace status distinguishes successful closure from abandoned or failed-role closure, classifies retry eligibility and returns a deterministic recommended next action. Closing a retry-eligible failed workspace requires an explicit abandonment flag."
+    },
+    {
+      "id": "external-closeout-plan",
+      "assertion": "Collection and close responses expose a machine-readable post-workspace checklist covering PR or integration truth, Bureau task reconciliation, workspace lease release, writer worktree archive or cleanup and operator final-summary emission; unknown external states remain explicitly unknown rather than implied complete."
+    },
+    {
+      "id": "live-regression-proof",
+      "assertion": "Tests reproduce the missing-pytest sandbox failure, prove preflight detection and successful retry with an available unittest command, preserve attempt one unchanged and prove that closeout status still lists unresolved external reconciliation until supplied evidence is verified."
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T033"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-12T06:00:00Z",
+    "source_task": "RPU-V1-T018",
+    "source_workspace": "gaw-lenskit-rpu-v1-t018-e8b0e581d7c3",
+    "source_finding": "The writer and review succeeded, but the test role failed because the read-only Bubblewrap environment exposed /usr/bin/python3 without pytest. Agent Workspace v1 had no bounded role-retry path; closing preserved evidence but forced validation outside the workspace. The later operator response also stopped after a successful artifact call, leaving Bureau truth, leases and worktree lifecycle unreconciled.",
+    "does_not_establish": [
+      "permission to expose user home or agent credentials inside the workspace",
+      "permission to mutate a frozen writer result",
+      "automatic retry authority",
+      "permission to reopen a closed workspace",
+      "automatic authority to mutate Bureau or merge pull requests",
+      "merge readiness",
+      "completion of T032"
+    ],
+    "followup_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T035"
+  }
+}

@@ -1,36 +1,188 @@
 {
-  "schema_version": 1,
-  "id": "SCHAUWERK-VISUAL-SYSTEM-V2-T001",
-  "initiative": "SCHAUWERK-VISUAL-SYSTEM-V2",
-  "title": "Implement and live-prove Visual System v2",
-  "state": "ready",
-  "priority": {
-    "lane": "now",
-    "rank": 0
-  },
-  "goal": "Implement the complete Visual System v2 vertical slice in Schauwerk and prove it with a newly created, visually reviewed Miro Education reference board.",
+  "acceptance": [
+    {
+      "assertion": "The repository documents and implements a visual contract derived from official Miro object, diagram, presentation and large-board guidance.",
+      "evidence_type": "object",
+      "id": "research-backed-contract",
+      "verifier": "documentation and code review"
+    },
+    {
+      "assertion": "Board specifications select frames, shapes, connectors, tables, documents and sticky notes by information function and reject misuse.",
+      "evidence_type": "object",
+      "id": "semantic-object-choice",
+      "verifier": "unit tests"
+    },
+    {
+      "assertion": "Quality v2 blocks missing narrative structure, weak hierarchy, excessive density, decorative colour use, connector clutter and unseparated evidence even when raw object counts look healthy.",
+      "evidence_type": "object",
+      "id": "meaningful-quality-gate",
+      "verifier": "unit and regression tests"
+    },
+    {
+      "assertion": "A deterministic renderer produces a compact seven-frame reference board with a clear reading path, consistent grid and semantic visual language.",
+      "evidence_type": "object",
+      "id": "reference-renderer",
+      "verifier": "fixture, DSL and diff review"
+    },
+    {
+      "assertion": "A new allowlisted Education-team board is created through Schauwerk, remotely read back and visually reviewed without altering or deleting existing boards.",
+      "evidence_type": "object",
+      "id": "live-miro-proof",
+      "verifier": "live receipt and visual review"
+    },
+    {
+      "assertion": "All repository tests and CI pass and the merged diff has a head- and diff-bound critical self-review.",
+      "evidence_type": "object",
+      "id": "release-gates",
+      "verifier": "CI and review receipt"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.schauwerk"
+    }
+  ],
+  "depends_on": [],
   "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/schauwerk",
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly authorized plan, registration, repository implementation and one new bounded live Miro reference board in one run.",
+      "required_level": "reviewed_plan"
+    },
     "baseline_commit": "6fb6418bd8f43917436d9450b03c50c75dbd3555",
     "grabowski_resources": [
       "repo:/home/alex/repos/schauwerk",
       "service:miro-education"
     ],
-    "approval": {
-      "action_class": "repository_mutation",
-      "required_level": "reviewed_plan",
-      "note": "The user explicitly authorized plan, registration, repository implementation and one new bounded live Miro reference board in one run."
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk"
+  },
+  "goal": "Implement the complete Visual System v2 vertical slice in Schauwerk and prove it with a newly created, visually reviewed Miro Education reference board.",
+  "id": "SCHAUWERK-VISUAL-SYSTEM-V2-T001",
+  "initiative": "SCHAUWERK-VISUAL-SYSTEM-V2",
+  "metadata": {
+    "created_from_plan": "docs/plans/schauwerk-visual-system-v2.md",
+    "does_not_establish": [
+      "universal aesthetic preference",
+      "authenticated Miro screenshot evidence",
+      "pixel-identical table or document geometry",
+      "automatic aesthetic acceptance from a score",
+      "permission to alter unrelated boards"
+    ],
+    "implementation_evidence": {
+      "checks": [
+        {
+          "conclusion": "success",
+          "job": "validate (3.11)"
+        },
+        {
+          "conclusion": "success",
+          "job": "validate (3.12)"
+        }
+      ],
+      "head_sha": "1562209e819ace667911a02150765578eb4eba1f",
+      "merge_commit": "3604f04638d200263530ba588617dba9a67670c8",
+      "merge_tree": "58c51db950a5a1cdf53d58ed7bfa1de23b2a95a2",
+      "merged_at": "2026-07-12T22:21:21Z",
+      "post_merge_validation": {
+        "content_sha256": "4eb6a08f07b7e0789cfcc34cfc4dbede0ed29402f3e14c849c8f9921cc9f8cd0",
+        "result": "536 tests plus Ruff, compileall and registry validation passed",
+        "source_ref": "/home/alex/.local/state/schauwerk/visual-system-v2-closeout/validation-receipt.json",
+        "tree_sha": "58c51db950a5a1cdf53d58ed7bfa1de23b2a95a2"
+      },
+      "pull_request": "heimgewebe/schauwerk#86",
+      "review_gate": {
+        "diff_sha256": "521844116d0370fd000ffad42d9d9c89a778146686157753d3cda7bdf1253d8c",
+        "reviewed_head": "1562209e819ace667911a02150765578eb4eba1f",
+        "verdict": "PASS"
+      },
+      "reviewed_tree": "58c51db950a5a1cdf53d58ed7bfa1de23b2a95a2",
+      "tree_equal": true
+    },
+    "outcome": "Visual System v2 is merged and live-proved with semantic object choice, fail-closed design gates, exact Miro conformance and a separate visual review.",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "head_sha": "1562209e819ace667911a02150765578eb4eba1f",
+          "kind": "pull_request",
+          "merge_commit_sha": "3604f04638d200263530ba588617dba9a67670c8",
+          "number": 86,
+          "source_ref": "heimgewebe/schauwerk#86",
+          "task_id": "SCHAUWERK-VISUAL-SYSTEM-V2-T001",
+          "tree_sha256": "58c51db950a5a1cdf53d58ed7bfa1de23b2a95a2"
+        },
+        {
+          "authority": "schauwerk-local-validation",
+          "commit_sha": "3604f04638d200263530ba588617dba9a67670c8",
+          "content_sha256": "4eb6a08f07b7e0789cfcc34cfc4dbede0ed29402f3e14c849c8f9921cc9f8cd0",
+          "kind": "test_run",
+          "source_ref": "/home/alex/.local/state/schauwerk/visual-system-v2-closeout/validation-receipt.json",
+          "task_id": "SCHAUWERK-VISUAL-SYSTEM-V2-T001"
+        },
+        {
+          "authority": "miro-education-via-schauwerk",
+          "content_sha256": "aaa93bdc6100a645e8b4dbcac44c17110489f5dda3af42b62c377aaf515cf7c0",
+          "kind": "miro_live_probe",
+          "source_ref": "schauwerk-visual-system-v2-20260712@6a84f345a0902078",
+          "task_id": "SCHAUWERK-VISUAL-SYSTEM-V2-T001"
+        },
+        {
+          "authority": "schauwerk-visual-review-v2",
+          "content_sha256": "a02d0ab52baf4c71beda142b09c0f6ba62fe5a56d073767ecf7c5a9f6f89c47f",
+          "kind": "visual_review",
+          "source_ref": "docs/operators/evidence/sw018-visual-system-v2-20260712/visual-review-receipt.json",
+          "task_id": "SCHAUWERK-VISUAL-SYSTEM-V2-T001"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "source_request": "User rejected the visual quality of the first Miro practice board and authorized a full redesign without preserving prior visual preferences.",
+    "verification": {
+      "plan_sha256": "5e0cbb1ea05a5e7278e92bcbf4e15f27b69addffd3cc434cb81fc62e45f60e5f",
+      "task_sha256": "148c275d8bbc717cffeb3ce92b178e0f702dd0b20c4680eebaf1efee968f49ad",
+      "verified_at": "2026-07-12T22:24:20Z"
+    },
+    "verified_acceptance": {
+      "live-miro-proof": "Verified by merged PR #86, green CI and bound evidence: A new allowlisted Education-team board is created through Schauwerk, remotely read back and visually reviewed without altering or deleting existing boards.",
+      "meaningful-quality-gate": "Verified by merged PR #86, green CI and bound evidence: Quality v2 blocks missing narrative structure, weak hierarchy, excessive density, decorative colour use, connector clutter and unseparated evidence even when raw object counts look healthy.",
+      "reference-renderer": "Verified by merged PR #86, green CI and bound evidence: A deterministic renderer produces a compact seven-frame reference board with a clear reading path, consistent grid and semantic visual language.",
+      "release-gates": "Verified by merged PR #86, green CI and bound evidence: All repository tests and CI pass and the merged diff has a head- and diff-bound critical self-review.",
+      "research-backed-contract": "Verified by merged PR #86, green CI and bound evidence: The repository documents and implements a visual contract derived from official Miro object, diagram, presentation and large-board guidance.",
+      "semantic-object-choice": "Verified by merged PR #86, green CI and bound evidence: Board specifications select frames, shapes, connectors, tables, documents and sticky notes by information function and reject misuse."
+    },
+    "verified_at": "2026-07-12T22:24:20Z",
+    "visual_system_evidence": {
+      "authenticated_provider_screenshot": "not_available",
+      "automatic_quality": {
+        "aesthetic_claim": false,
+        "blockers": 0,
+        "score": 100,
+        "warnings": 0
+      },
+      "board_alias": "schauwerk-visual-system-v2-20260712",
+      "board_reference_digest": "6a84f345a0902078",
+      "live_acceptance_sha256": "aaa93bdc6100a645e8b4dbcac44c17110489f5dda3af42b62c377aaf515cf7c0",
+      "quality_receipt_sha256": "02af017cffd9bdea7cf7058b82ea295be420bfdf4afe19e526bfa29008834710",
+      "remote_conformance": {
+        "connectors": 7,
+        "documents": 1,
+        "frames": 7,
+        "items": 38,
+        "mismatches": 0,
+        "tables": 3
+      },
+      "visual_review_sha256": "a02d0ab52baf4c71beda142b09c0f6ba62fe5a56d073767ecf7c5a9f6f89c47f"
     }
   },
-  "claims": [
-    {
-      "resource": "repo.schauwerk",
-      "mode": "write",
-      "isolation": "worktree"
-    }
-  ],
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
   "required_capabilities": [
     "repository",
     "shell",
@@ -38,53 +190,7 @@
     "miro",
     "grabowski"
   ],
-  "depends_on": [],
-  "acceptance": [
-    {
-      "id": "research-backed-contract",
-      "assertion": "The repository documents and implements a visual contract derived from official Miro object, diagram, presentation and large-board guidance.",
-      "verifier": "documentation and code review",
-      "evidence_type": "object"
-    },
-    {
-      "id": "semantic-object-choice",
-      "assertion": "Board specifications select frames, shapes, connectors, tables, documents and sticky notes by information function and reject misuse.",
-      "verifier": "unit tests",
-      "evidence_type": "object"
-    },
-    {
-      "id": "meaningful-quality-gate",
-      "assertion": "Quality v2 blocks missing narrative structure, weak hierarchy, excessive density, decorative colour use, connector clutter and unseparated evidence even when raw object counts look healthy.",
-      "verifier": "unit and regression tests",
-      "evidence_type": "object"
-    },
-    {
-      "id": "reference-renderer",
-      "assertion": "A deterministic renderer produces a compact seven-frame reference board with a clear reading path, consistent grid and semantic visual language.",
-      "verifier": "fixture, DSL and diff review",
-      "evidence_type": "object"
-    },
-    {
-      "id": "live-miro-proof",
-      "assertion": "A new allowlisted Education-team board is created through Schauwerk, remotely read back and visually reviewed without altering or deleting existing boards.",
-      "verifier": "live receipt and visual review",
-      "evidence_type": "object"
-    },
-    {
-      "id": "release-gates",
-      "assertion": "All repository tests and CI pass and the merged diff has a head- and diff-bound critical self-review.",
-      "verifier": "CI and review receipt",
-      "evidence_type": "object"
-    }
-  ],
-  "metadata": {
-    "created_from_plan": "docs/plans/schauwerk-visual-system-v2.md",
-    "source_request": "User rejected the visual quality of the first Miro practice board and authorized a full redesign without preserving prior visual preferences.",
-    "does_not_establish": [
-      "universal_aesthetic_preference",
-      "permission_to_delete_old_miro_boards",
-      "provider_geometry_completeness",
-      "unreviewed_future_miro_mutation"
-    ]
-  }
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Implement and live-prove Visual System v2"
 }

@@ -1,33 +1,56 @@
 {
-  "schema_version": 1,
-  "id": "SCHAUWERK-VISUAL-SYSTEM-V2",
-  "title": "Schauwerk Visual System v2",
-  "state": "active",
-  "commitment": "now",
-  "goal": "Replace technically successful but visually weak Miro layouts with a research-backed, semantic and narrative visual system that produces clear, dense, concise and coherent Schauwerke.",
-  "current_plan": {
-    "repository": "bureau",
-    "path": "docs/plans/schauwerk-visual-system-v2.md"
-  },
+  "commitment": "completed",
   "completion": [
     "A versioned visual-system contract selects Miro object types by information function and defines a canonical narrative board architecture.",
     "A deterministic quality gate evaluates information architecture, hierarchy, density, object semantics, colour roles, connector discipline and evidence separation instead of relying on object counts.",
     "A compact reference renderer creates a new Education-team Miro board that passes the v2 gate and remote readback.",
     "Schauwerk tests, CI, documentation, diff-bound review and live evidence are merged and the Bureau task is verified."
   ],
-  "parallelism": {
-    "max_active_tasks": 1
+  "current_plan": {
+    "path": "docs/plans/schauwerk-visual-system-v2.md",
+    "repository": "bureau"
   },
+  "goal": "Replace technically successful but visually weak Miro layouts with a research-backed, semantic and narrative visual system that produces clear, dense, concise and coherent Schauwerke.",
+  "id": "SCHAUWERK-VISUAL-SYSTEM-V2",
   "metadata": {
-    "registered_at": "2026-07-12",
-    "source_request": "alles umsetzen: plan erstellen, registrieren und gleich umsetzen in einem rutsch",
-    "predecessor": "SCHAUWERK-USEFUL-PILOT-V1",
-    "problem_statement": "The existing 92/100 Miro quality receipt proved technical structure but failed the user's direct visual-quality review.",
+    "closure_evidence": {
+      "diff_sha256": "521844116d0370fd000ffad42d9d9c89a778146686157753d3cda7bdf1253d8c",
+      "implementation_merge_commit": "3604f04638d200263530ba588617dba9a67670c8",
+      "implementation_pull_request": "heimgewebe/schauwerk#86",
+      "implementation_tree": "58c51db950a5a1cdf53d58ed7bfa1de23b2a95a2",
+      "live_acceptance_sha256": "aaa93bdc6100a645e8b4dbcac44c17110489f5dda3af42b62c377aaf515cf7c0",
+      "miro_board_alias": "schauwerk-visual-system-v2-20260712",
+      "miro_board_reference_digest": "6a84f345a0902078",
+      "post_merge_validation_sha256": "4eb6a08f07b7e0789cfcc34cfc4dbede0ed29402f3e14c849c8f9921cc9f8cd0",
+      "registration_pull_request": "heimgewebe/bureau#463",
+      "visual_review_sha256": "a02d0ab52baf4c71beda142b09c0f6ba62fe5a56d073767ecf7c5a9f6f89c47f"
+    },
+    "completion_non_claims": [
+      "universal aesthetic preference",
+      "authenticated Miro screenshot evidence",
+      "pixel-identical table or document geometry",
+      "automatic aesthetic acceptance from a score",
+      "permission to alter unrelated boards"
+    ],
     "does_not_establish": [
       "universal_visual_quality",
       "automatic_redesign_of_existing_boards",
       "provider_layout_truth_from_incomplete_geometry",
       "public_board_distribution"
-    ]
-  }
+    ],
+    "lifecycle": {
+      "completed_at": "2026-07-12T22:24:36Z",
+      "completion_reason": "The single vertical task is verified with merged implementation, green CI, exact Miro conformance and a separately bound visual review."
+    },
+    "predecessor": "SCHAUWERK-USEFUL-PILOT-V1",
+    "problem_statement": "The existing 92/100 Miro quality receipt proved technical structure but failed the user's direct visual-quality review.",
+    "registered_at": "2026-07-12",
+    "source_request": "alles umsetzen: plan erstellen, registrieren und gleich umsetzen in einem rutsch"
+  },
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "schema_version": 1,
+  "state": "completed",
+  "title": "Schauwerk Visual System v2"
 }

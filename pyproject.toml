@@ -18,6 +18,7 @@ dev = ["pytest>=8", "ruff>=0.15"]
 [project.scripts]
 bureau = "bureau.cli:main"
 bureau-source-pr-bridge = "bureau.source_pr_bridge:main"
+bureau-status-capsule = "bureau.status_capsule:main"
 bureau-closure = "bureau.closure:main"
 bureau-closure-runner = "bureau.closure_runner:main"
 bureau-pr-task-finish = "bureau.task_finish:main"

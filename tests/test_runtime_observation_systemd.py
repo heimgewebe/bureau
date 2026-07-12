@@ -14,10 +14,12 @@ OPS = Path(__file__).parents[1] / "ops/systemd"
 SERVICES = (
     OPS / "bureau-status-projection.service",
     OPS / "bureau-reconcile.service",
+    OPS / "bureau-status-capsule.service",
 )
 TIMERS = (
     OPS / "bureau-status-projection.timer",
     OPS / "bureau-reconcile.timer",
+    OPS / "bureau-status-capsule.timer",
 )
 
 FORBIDDEN_SUBCOMMANDS = (
@@ -91,6 +93,30 @@ def test_reconcile_service_is_bounded_to_the_state_root() -> None:
     assert " reconcile" in text
     assert "ReadWritePaths=%h/.local/state/bureau" in text
     assert "--stale-after" in text
+
+
+def test_status_capsule_service_is_networkless_and_source_read_only() -> None:
+    text = (OPS / "bureau-status-capsule.service").read_text(encoding="utf-8")
+    assert "bureau-status-capsule write" in text
+    assert "--canonical-repo %h/repos/bureau" in text
+    assert "--state-root %h/.local/state/bureau" in text
+    assert "ReadOnlyPaths=%h/repos/bureau %h/.local/state/bureau" in text
+    assert "ReadWritePaths=%h/.local/state/bureau-readonly" in text
+    assert "ConditionPathIsDirectory=%h/.local/state/bureau-readonly" in text
+    assert "StateDirectory=" not in text
+    assert "RestrictAddressFamilies=AF_UNIX" in text
+    assert " fetch" not in text
+    assert "--root %h/repos/bureau" not in text
+    docs = (
+        Path(__file__).parents[1] / "docs" / "bureau-status-capsule-v1.md"
+    ).read_text(encoding="utf-8")
+    assert 'git -C ~/repos/bureau archive --format=tar.gz' in docs
+    assert 'release_venv="$HOME/.local/share/bureau/venv-${release}"' in docs
+    assert 'test ! -e "$release_venv"' in docs
+    assert 'rm -f "$HOME/.local/share/bureau/venv.next"' in docs
+    assert 'mv -Tf "$HOME/.local/share/bureau/venv.next"' in docs
+    assert "pip install -e" not in docs
+    assert "install -d -m 0700 ~/.local/state/bureau-readonly" in docs
 
 
 def test_timers_reference_their_services_and_persist() -> None:

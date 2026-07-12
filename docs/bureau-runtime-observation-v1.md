@@ -138,14 +138,25 @@ hourly, write access restricted to `~/.local/state/bureau` via
 `ReadWritePaths`). Static tests (`tests/test_runtime_observation_systemd.py`)
 pin both units to non-dispatching subcommands.
 
-The units expect a deployment venv at `~/.local/share/bureau/venv` with the
-Bureau checkout installed and a `gh` session for the projection unit.
+The units expect a deployment venv symlink at `~/.local/share/bureau/venv` installed from an
+exact committed Git archive, not from mutable working-tree files, plus a `gh` session for the
+projection unit. The independent
+`bureau-status-capsule.{service,timer}` uses no network and writes only the sealed snapshot directory;
+its separate contract is `docs/bureau-status-capsule-v1.md`.
 
 Install and enable:
 
 ```bash
-python3 -m venv ~/.local/share/bureau/venv
-~/.local/share/bureau/venv/bin/pip install -e ~/repos/bureau
+release="$(git -C ~/repos/bureau rev-parse origin/main)"
+archive="/tmp/bureau-${release}.tar.gz"
+release_venv="$HOME/.local/share/bureau/venv-${release}"
+git -C ~/repos/bureau archive --format=tar.gz --output="$archive" "$release"
+test ! -e "$release_venv"
+python3 -m venv "$release_venv"
+"$release_venv/bin/pip" install "$archive"
+rm -f "$HOME/.local/share/bureau/venv.next"
+ln -s "$release_venv" "$HOME/.local/share/bureau/venv.next"
+mv -Tf "$HOME/.local/share/bureau/venv.next" "$HOME/.local/share/bureau/venv"
 install -Dm644 ops/systemd/bureau-status-projection.service \
   ~/.config/systemd/user/bureau-status-projection.service
 install -Dm644 ops/systemd/bureau-status-projection.timer \
@@ -154,8 +165,13 @@ install -Dm644 ops/systemd/bureau-reconcile.service \
   ~/.config/systemd/user/bureau-reconcile.service
 install -Dm644 ops/systemd/bureau-reconcile.timer \
   ~/.config/systemd/user/bureau-reconcile.timer
+install -d -m 0700 ~/.local/state/bureau-readonly
+install -Dm644 ops/systemd/bureau-status-capsule.service \
+  ~/.config/systemd/user/bureau-status-capsule.service
+install -Dm644 ops/systemd/bureau-status-capsule.timer \
+  ~/.config/systemd/user/bureau-status-capsule.timer
 systemctl --user daemon-reload
-systemctl --user enable --now bureau-status-projection.timer bureau-reconcile.timer
+systemctl --user enable --now bureau-status-projection.timer bureau-reconcile.timer bureau-status-capsule.timer
 ```
 
 Status and journal inspection:
@@ -163,6 +179,7 @@ Status and journal inspection:
 ```bash
 systemctl --user list-timers 'bureau-*'
 systemctl --user status bureau-status-projection.service
+systemctl --user status bureau-status-capsule.service
 journalctl --user -u bureau-status-projection.service -n 1 -o cat
 journalctl --user -u bureau-reconcile.service --since -2h
 ```
@@ -170,9 +187,10 @@ journalctl --user -u bureau-reconcile.service --since -2h
 Disable and rollback:
 
 ```bash
-systemctl --user disable --now bureau-status-projection.timer bureau-reconcile.timer
+systemctl --user disable --now bureau-status-projection.timer bureau-reconcile.timer bureau-status-capsule.timer
 rm ~/.config/systemd/user/bureau-status-projection.{service,timer} \
-   ~/.config/systemd/user/bureau-reconcile.{service,timer}
+   ~/.config/systemd/user/bureau-reconcile.{service,timer} \
+   ~/.config/systemd/user/bureau-status-capsule.{service,timer}
 systemctl --user daemon-reload
 ```
 

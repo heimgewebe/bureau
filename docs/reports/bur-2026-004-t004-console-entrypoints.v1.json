@@ -7,10 +7,17 @@
         "README.md",
         "docs/bur-2026-004-t003-legacy-module-dependency-audit.md",
         "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
+        "docs/bur-2026-004-t005-ops-packaging-decision.md",
+        "docs/bureau-approval-path-v1.md",
+        "docs/bureau-live-register-v1.md",
         "docs/bureau-runtime-observation-v1.md",
+        "docs/bureau-status-capsule-v1.md",
+        "docs/bureau-what-now-v1.md",
         "docs/cabinet-bridge-import-review-contract-v0.policy.json",
+        "docs/concurrency.md",
         "docs/contracts/open-pr-task-metadata-v1.md",
         "docs/gemini-proposal-lane-preflight-v1.md",
+        "docs/gemini-proposal-review-lane-v1.md",
         "docs/operations.md",
         "docs/plans/agent-run-evidence-ref-placement-decision-v1.md",
         "docs/plans/agent-run-evidence-reference-design-v1.md",
@@ -20,6 +27,8 @@
         "docs/plans/cabinet-read-only-ecosystem-signal-ingest-v0.md",
         "docs/plans/discovery-source-plan-v1.md",
         "docs/plans/leitstand-operator-observability-hardening-v1.md",
+        "docs/plans/operator-ecosystem-t001-bureau-scheduler-consolidation-v1.md",
+        "docs/repobrief-verifiable-agent-memory-v1.md",
         "docs/rlens-context-policy-v1.md",
         "docs/runtime-automation-contract.md",
         "ops/systemd/bureau-agent-frontier.service",
@@ -32,6 +41,8 @@
         "ops/systemd/bureau-review-steward.timer",
         "ops/systemd/bureau-source-pr-bridge.service",
         "ops/systemd/bureau-source-pr-bridge.timer",
+        "ops/systemd/bureau-status-capsule.service",
+        "ops/systemd/bureau-status-capsule.timer",
         "ops/systemd/bureau-status-projection.service",
         "ops/systemd/bureau-status-projection.timer",
         "tests/fixtures/agent-run-evidence-ref/chronik-event.valid.json",
@@ -40,6 +51,7 @@
         "tests/test_agent_frontier_systemd.py",
         "tests/test_agent_run_evidence_ref.py",
         "tests/test_agent_run_evidence_review_document.py",
+        "tests/test_approval.py",
         "tests/test_bridge_policy_validator_file.py",
         "tests/test_bureau.py",
         "tests/test_cabinet_bridge.py",
@@ -57,7 +69,13 @@
         "tests/test_eco_graph.py",
         "tests/test_entrypoint_inventory.py",
         "tests/test_gemini_preflight.py",
+        "tests/test_gemini_review_lane.py",
         "tests/test_github_observer.py",
+        "tests/test_github_observer_binding_guard_v2.py",
+        "tests/test_live_register.py",
+        "tests/test_ops_packaging_decision.py",
+        "tests/test_queue_reconcile.py",
+        "tests/test_registry_queue.py",
         "tests/test_registry_truth.py",
         "tests/test_repository_registry_load.py",
         "tests/test_review_steward.py",
@@ -68,11 +86,14 @@
         "tests/test_source_pr_bridge.py",
         "tests/test_source_pr_bridge_systemd.py",
         "tests/test_state_root_hygiene.py",
+        "tests/test_status_capsule.py",
         "tests/test_status_projection.py",
         "tests/test_task_finish.py",
         "tests/test_v2.py",
+        "tests/test_verifiable_memory.py",
         "tests/test_weltgewebe_promote.py",
-        "tests/test_weltgewebe_source.py"
+        "tests/test_weltgewebe_source.py",
+        "tests/test_worktree_hygiene.py"
       ],
       "layer": "core_cli",
       "name": "bureau",
@@ -103,48 +124,6 @@
     },
     {
       "documentation_references": [
-        "Makefile",
-        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md"
-      ],
-      "layer": "ops_cabinet_bridge",
-      "name": "bureau-cabinet-bridge-import-policy",
-      "target": "bureau.cabinet_bridge_import_policy:main"
-    },
-    {
-      "documentation_references": [
-        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md"
-      ],
-      "layer": "ops_cabinet_bridge",
-      "name": "bureau-cabinet-bridge-preview",
-      "target": "bureau.cabinet_bridge_preview:main"
-    },
-    {
-      "documentation_references": [
-        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md"
-      ],
-      "layer": "ops_cabinet_bridge",
-      "name": "bureau-cabinet-bridge-receipt",
-      "target": "bureau.cabinet_bridge_receipt:main"
-    },
-    {
-      "documentation_references": [
-        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md"
-      ],
-      "layer": "ops_cabinet_bridge",
-      "name": "bureau-cabinet-bridge-review",
-      "target": "bureau.cabinet_bridge_review:main"
-    },
-    {
-      "documentation_references": [
-        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
-        "tests/test_entrypoint_inventory.py"
-      ],
-      "layer": "ops_cabinet_bridge",
-      "name": "bureau-cabinet-frontier-reader",
-      "target": "bureau.cabinet_frontier_reader:main"
-    },
-    {
-      "documentation_references": [
         "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
         "ops/systemd/bureau-agent-frontier.service",
         "ops/systemd/bureau-codex-bridge.service",
@@ -166,6 +145,7 @@
     {
       "documentation_references": [
         "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
+        "docs/plans/operator-ecosystem-t001-bureau-scheduler-consolidation-v1.md",
         "ops/systemd/bureau-codex-bridge.service",
         "ops/systemd/bureau-codex-bridge.timer",
         "tests/test_codex_bridge.py",
@@ -184,6 +164,16 @@
       "layer": "ops_external_preflight",
       "name": "bureau-gemini-preflight",
       "target": "bureau.gemini_preflight:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
+        "docs/gemini-proposal-review-lane-v1.md",
+        "tests/test_entrypoint_inventory.py"
+      ],
+      "layer": "ops_or_auxiliary",
+      "name": "bureau-gemini-review-lane",
+      "target": "bureau.gemini_review_lane:main"
     },
     {
       "documentation_references": [
@@ -208,6 +198,7 @@
     {
       "documentation_references": [
         "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
+        "docs/bur-2026-004-t005-ops-packaging-decision.md",
         "docs/operations.md",
         "ops/systemd/bureau-source-pr-bridge.service",
         "ops/systemd/bureau-source-pr-bridge.timer",
@@ -217,6 +208,63 @@
       "layer": "ops_bridge",
       "name": "bureau-source-pr-bridge",
       "target": "bureau.source_pr_bridge:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
+        "docs/bureau-runtime-observation-v1.md",
+        "docs/bureau-status-capsule-v1.md",
+        "docs/operations.md",
+        "ops/systemd/bureau-status-capsule.service",
+        "ops/systemd/bureau-status-capsule.timer",
+        "tests/test_entrypoint_inventory.py",
+        "tests/test_runtime_observation_systemd.py",
+        "tests/test_status_capsule.py"
+      ],
+      "layer": "ops_readonly_status",
+      "name": "bureau-status-capsule",
+      "target": "bureau.status_capsule:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md"
+      ],
+      "layer": "ops_systemkatalog_bridge",
+      "name": "bureau-systemkatalog-bridge-import-policy",
+      "target": "bureau.cabinet_bridge_import_policy:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md"
+      ],
+      "layer": "ops_systemkatalog_bridge",
+      "name": "bureau-systemkatalog-bridge-preview",
+      "target": "bureau.cabinet_bridge_preview:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md"
+      ],
+      "layer": "ops_systemkatalog_bridge",
+      "name": "bureau-systemkatalog-bridge-receipt",
+      "target": "bureau.cabinet_bridge_receipt:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md"
+      ],
+      "layer": "ops_systemkatalog_bridge",
+      "name": "bureau-systemkatalog-bridge-review",
+      "target": "bureau.cabinet_bridge_review:main"
+    },
+    {
+      "documentation_references": [
+        "docs/bur-2026-004-t004-console-entrypoint-consolidation-plan.md",
+        "tests/test_entrypoint_inventory.py"
+      ],
+      "layer": "ops_systemkatalog_bridge",
+      "name": "bureau-systemkatalog-frontier-reader",
+      "target": "bureau.cabinet_frontier_reader:main"
     }
   ],
   "does_not_establish": [
@@ -236,35 +284,35 @@
       "path": "src/bureau/agent_frontier.py"
     },
     {
-      "argparse_prog": "bureau-cabinet-bridge-import-policy",
+      "argparse_prog": "bureau-systemkatalog-bridge-import-policy",
       "has_main_function": true,
       "has_main_guard": true,
       "module": "bureau.cabinet_bridge_import_policy",
       "path": "src/bureau/cabinet_bridge_import_policy.py"
     },
     {
-      "argparse_prog": "bureau-cabinet-bridge-preview",
+      "argparse_prog": "bureau-systemkatalog-bridge-preview",
       "has_main_function": true,
       "has_main_guard": true,
       "module": "bureau.cabinet_bridge_preview",
       "path": "src/bureau/cabinet_bridge_preview.py"
     },
     {
-      "argparse_prog": "bureau-cabinet-bridge-receipt",
+      "argparse_prog": "bureau-systemkatalog-bridge-receipt",
       "has_main_function": true,
       "has_main_guard": true,
       "module": "bureau.cabinet_bridge_receipt",
       "path": "src/bureau/cabinet_bridge_receipt.py"
     },
     {
-      "argparse_prog": "bureau-cabinet-bridge-review",
+      "argparse_prog": "bureau-systemkatalog-bridge-review",
       "has_main_function": true,
       "has_main_guard": true,
       "module": "bureau.cabinet_bridge_review",
       "path": "src/bureau/cabinet_bridge_review.py"
     },
     {
-      "argparse_prog": "bureau-cabinet-frontier-reader",
+      "argparse_prog": "bureau-systemkatalog-frontier-reader",
       "has_main_function": true,
       "has_main_guard": true,
       "module": "bureau.cabinet_frontier_reader",
@@ -334,6 +382,13 @@
       "path": "src/bureau/gemini_preflight.py"
     },
     {
+      "argparse_prog": "bureau-gemini-review-lane",
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.gemini_review_lane",
+      "path": "src/bureau/gemini_review_lane.py"
+    },
+    {
       "argparse_prog": "bureau-review-steward",
       "has_main_function": true,
       "has_main_guard": true,
@@ -348,6 +403,13 @@
       "path": "src/bureau/source_pr_bridge.py"
     },
     {
+      "argparse_prog": "bureau-status-capsule",
+      "has_main_function": true,
+      "has_main_guard": true,
+      "module": "bureau.status_capsule",
+      "path": "src/bureau/status_capsule.py"
+    },
+    {
       "argparse_prog": null,
       "has_main_function": true,
       "has_main_guard": true,
@@ -358,10 +420,10 @@
   "schema_version": 1,
   "source": "src/bureau/entrypoint_inventory.py",
   "summary": {
-    "module_entrypoints": 18,
-    "packaged_console_scripts": 15,
-    "systemd_services": 6,
-    "systemd_timers": 6
+    "module_entrypoints": 20,
+    "packaged_console_scripts": 17,
+    "systemd_services": 7,
+    "systemd_timers": 7
   },
   "systemd_units": [
     {
@@ -452,6 +514,31 @@
       "read_write_paths": [],
       "timer": "ops/systemd/bureau-source-pr-bridge.timer",
       "unit": "ops/systemd/bureau-source-pr-bridge.service"
+    },
+    {
+      "after": [],
+      "args": [
+        "write",
+        "--canonical-repo",
+        "%h/repos/bureau",
+        "--state-root",
+        "%h/.local/state/bureau",
+        "--output",
+        "%h/.local/state/bureau-readonly/status-capsule.json",
+        "--freshness-seconds",
+        "900",
+        "--max-runs",
+        "25"
+      ],
+      "command": "%h/.local/share/bureau/venv/bin/bureau-status-capsule",
+      "command_basename": "bureau-status-capsule",
+      "exec_start": "%h/.local/share/bureau/venv/bin/bureau-status-capsule write --canonical-repo %h/repos/bureau --state-root %h/.local/state/bureau --output %h/.local/state/bureau-readonly/status-capsule.json --freshness-seconds 900 --max-runs 25",
+      "matched_console_script": "bureau-status-capsule",
+      "read_write_paths": [
+        "%h/.local/state/bureau-readonly"
+      ],
+      "timer": "ops/systemd/bureau-status-capsule.timer",
+      "unit": "ops/systemd/bureau-status-capsule.service"
     },
     {
       "after": [

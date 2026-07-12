@@ -1,0 +1,28 @@
+[Unit]
+Description=Bureau independent read-only status capsule
+Documentation=https://github.com/heimgewebe/bureau/blob/main/docs/bureau-status-capsule-v1.md
+ConditionPathIsDirectory=%h/repos/bureau
+ConditionPathExists=%h/.local/state/bureau/bureau.sqlite3
+ConditionPathIsDirectory=%h/.local/state/bureau-readonly
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/share/bureau/venv/bin/bureau-status-capsule write --canonical-repo %h/repos/bureau --state-root %h/.local/state/bureau --output %h/.local/state/bureau-readonly/status-capsule.json --freshness-seconds 900 --max-runs 25
+Environment=PYTHONUNBUFFERED=1
+TimeoutStartSec=2min
+Nice=5
+IOSchedulingClass=best-effort
+IOSchedulingPriority=6
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadOnlyPaths=%h/repos/bureau %h/.local/state/bureau
+ReadWritePaths=%h/.local/state/bureau-readonly
+RestrictAddressFamilies=AF_UNIX
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+UMask=0077

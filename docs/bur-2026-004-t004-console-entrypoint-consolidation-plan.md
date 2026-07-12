@@ -33,6 +33,7 @@ The canonical source is `[project.scripts]` in `pyproject.toml`. Current package
 | `bureau-pr-task-finish` | `bureau.task_finish:main` | Closure/task-finish ops |
 | `bureau-review-steward` | `bureau.review_steward:main` | Review stewardship ops |
 | `bureau-source-pr-bridge` | `bureau.source_pr_bridge:main` | Source PR bridge ops |
+| `bureau-status-capsule` | `bureau.status_capsule:main` | Independent read-only status ops |
 
 ## Module entry points not promoted as packaged console scripts
 
@@ -47,6 +48,8 @@ Current reference units under `ops/systemd/`:
 | Unit | ExecStart shape | Compatibility implication |
 |---|---|---|
 | `bureau-status-projection.service` | `%h/.local/share/bureau/venv/bin/bureau --root %h/repos/bureau --json status-projection` | Already uses canonical `bureau` core CLI. Keep stable. |
+| `bureau-status-capsule.service` | `%h/.local/share/bureau/venv/bin/bureau-status-capsule write ...` | Dedicated independent read-only snapshot writer; keep its narrow binary and file-only reader stable. |
+| `bureau-status-capsule.timer` | refreshes `bureau-status-capsule.service` every five minutes | Keep explicit freshness scheduling; no network or source mutation. |
 | `bureau-reconcile.service` | `%h/.local/share/bureau/venv/bin/bureau --root %h/repos/bureau --json reconcile --stale-after 900` | Already uses canonical `bureau` core CLI. Keep stable. |
 | `bureau-source-pr-bridge.service` | `%h/.local/share/bureau-source-pr-bridge/venv/bin/bureau-source-pr-bridge` | Dedicated ops binary; needs compatibility shim before consolidation. |
 | `bureau-review-steward.service` | `%h/.local/share/bureau-review-steward/venv/bin/bureau-review-steward run` | Dedicated ops binary; needs compatibility shim before consolidation. |

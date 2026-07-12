@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "BUREAU-TRUTH-MODEL-V2-T004",
+  "title": "Run lifecycle ledger transitions in shadow mode",
+  "state": "planned",
+  "goal": "Record evidence-bound lifecycle transition proposals and compare them with canonical Git outcomes before reducing Registry PRs.",
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "depends_on": [
+    "BUREAU-TRUTH-MODEL-V2-T003"
+  ],
+  "acceptance": [
+    {
+      "id": "shadow-only",
+      "assertion": "Ledger transitions are proposal-only and cannot change canonical task state."
+    },
+    {
+      "id": "source-binding",
+      "assertion": "Each proposal binds task revision, evidence authority, source reference and observed time."
+    },
+    {
+      "id": "parity-metrics",
+      "assertion": "Parity, false-positive, false-negative and stale-evidence rates are measured over a reproducible sample."
+    },
+    {
+      "id": "promotion-gate",
+      "assertion": "Git lifecycle reduction requires an explicit later review and cannot happen in this task."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-12T06:00:00Z",
+    "source": "Bureau total audit and Truth Model v2 design",
+    "does_not_establish": [
+      "automatic verification",
+      "automatic queue mutation",
+      "claim authority",
+      "dispatch authority",
+      "merge authority",
+      "deployment authority"
+    ]
+  }
+}

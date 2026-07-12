@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "BUREAU-TRUTH-MODEL-V2-T002",
+  "title": "Publish an independent read-only Bureau status capsule",
+  "state": "planned",
+  "goal": "Provide bounded Bureau truth without depending on a full Grabowski operator session.",
+  "priority": {
+    "lane": "later",
+    "rank": 20
+  },
+  "depends_on": [
+    "BUREAU-TRUTH-MODEL-V2-T001"
+  ],
+  "acceptance": [
+    {
+      "id": "bounded-fields",
+      "assertion": "The capsule includes registry head/hash, state integrity, runs, leases, repo balls, Doctor, Registry Truth, creation time and last successful snapshot."
+    },
+    {
+      "id": "freshness",
+      "assertion": "Every snapshot declares age, freshness threshold and stale or unavailable state."
+    },
+    {
+      "id": "read-only-boundary",
+      "assertion": "The capsule has no mutation, shell, claim, dispatch, merge or deploy authority."
+    },
+    {
+      "id": "independent-path",
+      "assertion": "A failure of the full Grabowski session does not prevent reading the last valid capsule."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-12T06:00:00Z",
+    "source": "Bureau total audit and Truth Model v2 design",
+    "does_not_establish": [
+      "automatic verification",
+      "automatic queue mutation",
+      "claim authority",
+      "dispatch authority",
+      "merge authority",
+      "deployment authority"
+    ]
+  }
+}

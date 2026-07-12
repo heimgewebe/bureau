@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "BUREAU-TRUTH-MODEL-V2-T009",
+  "title": "Align status projection health with Doctor and Registry Truth",
+  "state": "planned",
+  "goal": "Prevent status-projection from reporting healthy when authoritative Bureau diagnostics report a current blocker or lifecycle mismatch.",
+  "priority": {
+    "lane": "later",
+    "rank": 90
+  },
+  "depends_on": [
+    "BUREAU-TRUTH-MODEL-V2-T002"
+  ],
+  "acceptance": [
+    {
+      "id": "health-contract",
+      "assertion": "Status projection documents which Doctor and Registry Truth severities affect its health result."
+    },
+    {
+      "id": "same-snapshot",
+      "assertion": "Compared health inputs are generated from the same registry head and bounded observation time."
+    },
+    {
+      "id": "stale-unavailable",
+      "assertion": "Missing or stale diagnostics produce explicit stale or unavailable state rather than optimistic health."
+    },
+    {
+      "id": "tests",
+      "assertion": "Fixtures cover healthy, warning, blocker, stale and unavailable combinations."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-12T06:00:00Z",
+    "source": "Bureau total audit and Truth Model v2 design",
+    "does_not_establish": [
+      "automatic verification",
+      "automatic queue mutation",
+      "claim authority",
+      "dispatch authority",
+      "merge authority",
+      "deployment authority"
+    ]
+  }
+}

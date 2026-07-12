@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "BUREAU-TRUTH-MODEL-V2-T010",
+  "title": "Revalidate stale Live Register candidates",
+  "state": "planned",
+  "goal": "Compare old candidate observations with current Registry, PR and runtime evidence so resolved work does not remain operationally open forever.",
+  "priority": {
+    "lane": "later",
+    "rank": 100
+  },
+  "depends_on": [
+    "BUREAU-TRUTH-MODEL-V2-T003"
+  ],
+  "acceptance": [
+    {
+      "id": "stable-identity",
+      "assertion": "Revalidation uses candidate identity and supersession history, including legacy events."
+    },
+    {
+      "id": "source-check",
+      "assertion": "Current task, PR, merge and runtime evidence is checked before proposing close, supersede or promote."
+    },
+    {
+      "id": "reviewed-outcome",
+      "assertion": "Candidate status changes are explicit reviewed events and never automatic task verification."
+    },
+    {
+      "id": "age-policy",
+      "assertion": "The report exposes age and revalidation due state without automatic deletion."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-12T06:00:00Z",
+    "source": "Bureau total audit and Truth Model v2 design",
+    "does_not_establish": [
+      "automatic verification",
+      "automatic queue mutation",
+      "claim authority",
+      "dispatch authority",
+      "merge authority",
+      "deployment authority"
+    ]
+  }
+}

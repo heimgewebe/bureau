@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "BUREAU-TRUTH-MODEL-V2-T007",
+  "title": "Index or materialize Live Register current state",
+  "state": "planned",
+  "goal": "Replace the correctness-first complete event scan with an indexed or materialized projection after parity is proven.",
+  "priority": {
+    "lane": "later",
+    "rank": 70
+  },
+  "depends_on": [
+    "BUREAU-TRUTH-MODEL-V2-T001"
+  ],
+  "acceptance": [
+    {
+      "id": "parity",
+      "assertion": "Materialized or SQL-latest projection matches the complete event scan across legacy and current event schemas."
+    },
+    {
+      "id": "atomicity",
+      "assertion": "Projection updates are atomic with event insertion or recoverable by deterministic rebuild."
+    },
+    {
+      "id": "coverage",
+      "assertion": "Coverage and rebuild state remain explicit and conflict checks fail closed during incomplete rebuilds."
+    },
+    {
+      "id": "measurement",
+      "assertion": "Performance benefit is measured on realistic event counts before adoption."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-12T06:00:00Z",
+    "source": "Bureau total audit and Truth Model v2 design",
+    "does_not_establish": [
+      "automatic verification",
+      "automatic queue mutation",
+      "claim authority",
+      "dispatch authority",
+      "merge authority",
+      "deployment authority"
+    ]
+  }
+}

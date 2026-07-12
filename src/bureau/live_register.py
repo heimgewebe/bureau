@@ -331,10 +331,18 @@ def _decode_live_row(row: Any) -> dict[str, Any]:
     }
 
 
-def _load_live_records(store: StateStore, *, limit: int = 50) -> list[dict[str, Any]]:
+def _load_live_history(
+    store: StateStore, *, limit: int = 50
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     if limit < 1 or limit > 500:
         raise StateError("limit must be between 1 and 500")
     with store.connect() as connection:
+        total_records = int(
+            connection.execute(
+                "SELECT COUNT(*) FROM events WHERE event_type=?",
+                (LIVE_REGISTER_EVENT_TYPE,),
+            ).fetchone()[0]
+        )
         rows = connection.execute(
             """
             SELECT event_id, payload_json, created_at
@@ -345,8 +353,72 @@ def _load_live_records(store: StateStore, *, limit: int = 50) -> list[dict[str, 
             """,
             (LIVE_REGISTER_EVENT_TYPE, limit),
         ).fetchall()
+    records = list(reversed([_decode_live_row(row) for row in rows]))
+    return records, {
+        "history_loaded_records": len(records),
+        "history_total_records": total_records,
+        "history_truncated": total_records > len(records),
+        "oldest_loaded_event_id": int(records[0]["event_id"]) if records else None,
+    }
+
+
+def _load_live_records(store: StateStore, *, limit: int = 50) -> list[dict[str, Any]]:
+    records, _metadata = _load_live_history(store, limit=limit)
+    return records
+
+
+def _load_live_projection_records(
+    store: StateStore,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Load the complete event basis used to derive current live state.
+
+    History limits are presentation controls only. Operational projections must
+    never silently derive current state from a truncated history window.
+    """
+    with store.connect() as connection:
+        rows = connection.execute(
+            """
+            SELECT event_id, payload_json, created_at
+            FROM events
+            WHERE event_type=?
+            ORDER BY event_id ASC
+            """,
+            (LIVE_REGISTER_EVENT_TYPE,),
+        ).fetchall()
     records = [_decode_live_row(row) for row in rows]
-    return list(reversed(records))
+    return records, {
+        "coverage_complete": True,
+        "projection_source": "complete_event_scan",
+        "projection_records": len(records),
+    }
+
+
+def _load_live_projection_snapshot(
+    store: StateStore, *, limit: int
+) -> tuple[
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+    dict[str, Any],
+    dict[str, Any],
+]:
+    if limit < 1 or limit > 500:
+        raise StateError("limit must be between 1 and 500")
+    projection_records, projection_metadata = _load_live_projection_records(store)
+    history_records = projection_records[-limit:]
+    history_metadata = {
+        "history_loaded_records": len(history_records),
+        "history_total_records": projection_metadata["projection_records"],
+        "history_truncated": len(projection_records) > len(history_records),
+        "oldest_loaded_event_id": (
+            int(history_records[0]["event_id"]) if history_records else None
+        ),
+    }
+    return (
+        history_records,
+        projection_records,
+        history_metadata,
+        projection_metadata,
+    )
 
 
 def _load_live_record(store: StateStore, event_id: int) -> dict[str, Any]:
@@ -452,6 +524,39 @@ def _summary(records: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _complete_projection_summary(
+    history_records: list[dict[str, Any]],
+    projection_records: list[dict[str, Any]],
+    *,
+    history_metadata: dict[str, Any],
+    projection_metadata: dict[str, Any],
+) -> dict[str, Any]:
+    summary = _summary(projection_records)
+    summary.update(
+        {
+            "records": len(history_records),
+            "history_loaded_records": history_metadata["history_loaded_records"],
+            "history_total_records": history_metadata["history_total_records"],
+            "history_truncated": history_metadata["history_truncated"],
+            "oldest_loaded_event_id": history_metadata["oldest_loaded_event_id"],
+            "coverage_complete": bool(projection_metadata["coverage_complete"]),
+            "projection_source": projection_metadata["projection_source"],
+            "projection_records": projection_metadata["projection_records"],
+            "projection_matching_records": len(projection_records),
+        }
+    )
+    return summary
+
+
+def _coverage_fields(summary: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "coverage_complete": summary["coverage_complete"],
+        "history_truncated": summary["history_truncated"],
+        "oldest_loaded_event_id": summary["oldest_loaded_event_id"],
+        "projection_source": summary["projection_source"],
+    }
+
+
 def live_register_list(
     store: StateStore,
     *,
@@ -462,14 +567,31 @@ def live_register_list(
 ) -> dict[str, Any]:
     if kind is not None:
         _validate_kind(kind)
-    records = _load_live_records(store, limit=limit)
-    records = _filter_records(records, kind=kind, repo=repo, thread_id=thread_id)
+    (
+        history_records,
+        projection_records,
+        history_metadata,
+        projection_metadata,
+    ) = _load_live_projection_snapshot(store, limit=limit)
+    history_records = _filter_records(
+        history_records, kind=kind, repo=repo, thread_id=thread_id
+    )
+    projection_records = _filter_records(
+        projection_records, kind=kind, repo=repo, thread_id=thread_id
+    )
+    summary = _complete_projection_summary(
+        history_records,
+        projection_records,
+        history_metadata=history_metadata,
+        projection_metadata=projection_metadata,
+    )
     return {
         "schema_version": LIVE_REGISTER_SCHEMA_VERSION,
         "command": "live-list",
         "filters": {"kind": kind, "repo": repo, "thread_id": thread_id, "limit": limit},
-        "summary": _summary(records),
-        "records": records,
+        "summary": summary,
+        "records": history_records,
+        **_coverage_fields(summary),
         "nonclaims": _live_nonclaims(),
     }
 
@@ -477,12 +599,26 @@ def live_register_list(
 def live_register_context(
     store: StateStore, *, repo: str | None = None, limit: int = 50
 ) -> dict[str, Any]:
-    records = _filter_records(_load_live_records(store, limit=limit), repo=repo)
+    (
+        history_records,
+        projection_records,
+        history_metadata,
+        projection_metadata,
+    ) = _load_live_projection_snapshot(store, limit=limit)
+    history_records = _filter_records(history_records, repo=repo)
+    projection_records = _filter_records(projection_records, repo=repo)
+    summary = _complete_projection_summary(
+        history_records,
+        projection_records,
+        history_metadata=history_metadata,
+        projection_metadata=projection_metadata,
+    )
     return {
         "schema_version": LIVE_REGISTER_SCHEMA_VERSION,
         "source": "bureau_state_store_events",
         "repo": repo,
-        "summary": _summary(records),
+        "summary": summary,
+        **_coverage_fields(summary),
         "does_not_establish": _live_nonclaims(),
     }
 
@@ -505,6 +641,7 @@ def live_register_repo_context(
             "open_candidates": summary["open_candidate_count"],
             "promotion_required": summary["promotion_required_count"],
         },
+        **_coverage_fields(summary),
         "does_not_establish": context["does_not_establish"],
     }
 
@@ -533,11 +670,24 @@ def live_register_conflict_report(
     repo: str | None = None,
     limit: int = 100,
 ) -> dict[str, Any]:
-    records = _filter_records(_load_live_records(store, limit=limit), repo=repo)
+    context = live_register_context(store, repo=repo, limit=limit)
     with store.connect() as connection:
         active_runs = [dict(row) for row in store.active_runs(connection)]
-    active_focus = _summary(records)["active_thread_focus"]
+    active_focus = context["summary"]["active_thread_focus"]
     findings: list[dict[str, Any]] = []
+    if not context["coverage_complete"]:
+        findings.append(
+            {
+                "severity": "blocker",
+                "code": "live-register-projection-incomplete",
+                "repo": repo,
+                "projection_source": context["projection_source"],
+                "message": (
+                    "Live-register conflict coverage is incomplete; repository "
+                    "conflict decisions must fail closed."
+                ),
+            }
+        )
     for focus in active_focus:
         payload = focus["record"]
         focus_repo = payload.get("repo")
@@ -597,7 +747,6 @@ def live_register_conflict_report(
                         "reasons": sorted(set(blockers)),
                     }
                 )
-    context = live_register_context(store, repo=repo, limit=limit)
     return {
         "schema_version": LIVE_REGISTER_SCHEMA_VERSION,
         "command": "live-conflicts",
@@ -607,9 +756,14 @@ def live_register_conflict_report(
             "blockers": sum(1 for item in findings if item["severity"] == "blocker"),
             "active_runs": len(active_runs),
             "live_records": context["summary"]["records"],
+            "history_loaded_records": context["summary"]["history_loaded_records"],
+            "projection_records": context["summary"]["projection_matching_records"],
+            "projection_total_records": context["summary"]["projection_records"],
+            "coverage_complete": context["coverage_complete"],
         },
         "findings": findings,
         "live_register": context,
+        **_coverage_fields(context["summary"]),
         "does_not_establish": _live_nonclaims(),
     }
 

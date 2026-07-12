@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "BUREAU-TRUTH-MODEL-V2-T003",
+  "title": "Detect registry and implementation drift with reviewed closeout plans",
+  "state": "planned",
+  "goal": "Find merged implementations, runtime evidence and lifecycle states that diverge, then produce reviewed closeout plans without blind verification.",
+  "priority": {
+    "lane": "later",
+    "rank": 30
+  },
+  "depends_on": [
+    "BUREAU-TRUTH-MODEL-V2-T001"
+  ],
+  "acceptance": [
+    {
+      "id": "drift-classes",
+      "assertion": "Doctor identifies merged implementation with open task, verified task still queued, closed PR without decision, runtime proof without closeout and queue/state lane mismatch."
+    },
+    {
+      "id": "acceptance-recheck",
+      "assertion": "A merged PR is evidence to inspect, not sufficient by itself; acceptance and current tests are rechecked."
+    },
+    {
+      "id": "reviewed-closeout",
+      "assertion": "Any lifecycle or queue mutation requires a reviewed, hash-bound plan with rollback or refusal semantics."
+    },
+    {
+      "id": "no-auto-verify",
+      "assertion": "The detector cannot verify tasks, merge PRs or dispatch work."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-12T06:00:00Z",
+    "source": "Bureau total audit and Truth Model v2 design",
+    "does_not_establish": [
+      "automatic verification",
+      "automatic queue mutation",
+      "claim authority",
+      "dispatch authority",
+      "merge authority",
+      "deployment authority"
+    ]
+  }
+}

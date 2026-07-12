@@ -3,7 +3,7 @@
   "id": "RPU-V1-T018",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "Compact card density for token consumers",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 58
@@ -48,14 +48,72 @@
     "created_from_plan": "RepoBrief Practical Utility Reconcile v1",
     "plan_path": "docs/plans/repobrief-practical-utility-reconcile-v1.md",
     "registered_at": "2026-07-08T00:00:00Z",
+    "verified_at": "2026-07-12T06:00:00Z",
+    "source_gap": "Max-dump critique: repeated does_not_establish lines are token-expensive for agents.",
+    "implementation_pr": "heimgewebe/lenskit#983",
+    "implementation_head": "d4fa783ffbf7477ed466a032d4c76a66434e7e09",
+    "implementation_merge_commit": "fe7610e1f328be42802f3718108e898f7a6ff3f4",
+    "self_review_sha256": "875c4ef5373ac9763e1128a59c34d73e4c9a71466a52baae28b291a6f2c9976c",
+    "workspace": {
+      "workspace_id": "gaw-lenskit-rpu-v1-t018-e8b0e581d7c3",
+      "writer_task_id": "27023dd59cd1406c9f30ab86",
+      "initial_test_task_id": "1d703856575243f58b55411b",
+      "review_task_id": "d7b3531f7dac4eb5a7af2085",
+      "initial_test_failure": "The isolated read-only role exposed /usr/bin/python3 without pytest; the writer patch and review remained valid and were preserved.",
+      "recovery": "The workspace was collected and closed with exact hashes and no discarded changes. The test harness was converted to standard-library unittest in the preserved task worktree and revalidated through normal Grabowski execution.",
+      "followup_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T034"
+    },
+    "validated_acceptance": {
+      "rpu-v1-t018-density": "produce_lens_card_collection(density=compact) removes only repeated per-card does_not_establish arrays and retains the complete mandatory tuple once at collection level.",
+      "rpu-v1-t018-compat": "The established produce_lens_card and produce_lens_cards implementations and default outputs are unchanged; verbose collection mode retains self-contained cards.",
+      "rpu-v1-t018-token-proof": "The committed proof records deterministic JSON sizes for three representative cards: 1799 verbose bytes, 1274 compact bytes, 525 bytes saved, 29.2 percent reduction."
+    },
+    "validation": {
+      "focused_pytest": "99 passed",
+      "standalone_unittest": "5 passed",
+      "ruff": "PASS",
+      "diff_check": "PASS",
+      "pull_request_ci": "all checks passed",
+      "post_merge_ci": "all observed required checks passed on the merged implementation"
+    },
     "does_not_establish": [
       "runtime_correctness",
       "test_sufficiency",
       "review_completeness",
-      "merge_readiness",
+      "general_token_savings",
       "agent_quality_improvement_by_itself"
     ],
-    "source_gap": "Max-dump critique: repeated does_not_establish lines are token-expensive for agents."
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "RPU-V1-T018",
+          "source_ref": "heimgewebe/lenskit#983",
+          "number": 983,
+          "head_sha": "d4fa783ffbf7477ed466a032d4c76a66434e7e09",
+          "merge_commit_sha": "fe7610e1f328be42802f3718108e898f7a6ff3f4",
+          "diff_sha256": "d323d45420c8347a10f171d8010ae66d2f8d94b514336dc64bf746c1546b975f"
+        },
+        {
+          "kind": "test_evidence",
+          "authority": "github-actions",
+          "task_id": "RPU-V1-T018",
+          "source_ref": "heimgewebe/lenskit@fe7610e1f328be42802f3718108e898f7a6ff3f4",
+          "commit_sha": "fe7610e1f328be42802f3718108e898f7a6ff3f4",
+          "summary": "All post-merge workflows passed, including test-suite, CodeQL, Lens Model, lint, contracts and task-index."
+        }
+      ]
+    },
+    "implementation_merged_at": "2026-07-12T05:58:25Z",
+    "implementation_diff_sha256": "d323d45420c8347a10f171d8010ae66d2f8d94b514336dc64bf746c1546b975f",
+    "verification": {
+      "task_sha256": "656cdafd9e73c4c4658336fc3577d27c520a6630cfa8cd50b617abe9c1438c1d",
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015",
+      "verified_at": "2026-07-12T06:00:00Z"
+    }
   },
   "depends_on": [
     "RPU-V1-T004"

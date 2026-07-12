@@ -1,34 +1,16 @@
 {
-  "schemaVersion": 1,
-  "kind": "bureau.cabinet_bridge_import_review_contract_policy",
-  "version": "0",
-  "document": "docs/cabinet-bridge-import-review-contract-v0.md",
-  "requiredReceipt": {
-    "kind": "cabinet_bridge_review_receipt",
-    "status": "review_recorded",
-    "importAllowed": false,
-    "importReviewRequired": true,
-    "dispatchAllowed": false,
-    "queueMutationAllowed": false,
-    "taskCreationAllowed": false
-  },
-  "requiredInputs": [
-    "current_cabinet_bridge_policy",
-    "bridge_probe_report",
-    "bridge_preview",
-    "bridge_review_gate",
-    "bridge_receipt",
-    "cabinet_commit_sha",
-    "bureau_commit_sha",
-    "explicit_target_path",
-    "explicit_write_surface",
-    "non_ci_reviewer"
-  ],
-  "nonEffects": {
-    "createTasks": false,
-    "mutateQueues": false,
-    "writeBureauRegistry": false,
-    "dispatchWork": false,
-    "runRuntimeActions": false
-  }
+  "schema_version": 1,
+  "kind": "bureau.retired_cabinet_bridge_contract_pointer",
+  "status": "retired",
+  "retired_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T024",
+  "archive": "docs/archive/cabinet-era/cabinet-bridge-import-review-contract-v0.policy.json",
+  "archive_sha256": "18f2f534bbc3fe7d44fdffe1c78b925ff9a9384d854e1c86c828e0c6ac57b916",
+  "does_not_authorize": [
+    "task import",
+    "task creation",
+    "queue mutation",
+    "agent dispatch",
+    "runtime mutation",
+    "restoration of retired Cabinet execution surfaces"
+  ]
 }

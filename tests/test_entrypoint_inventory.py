@@ -11,10 +11,10 @@ def test_inventory_lists_all_packaged_console_scripts() -> None:
     inventory = build_inventory(ROOT)
     names = {entry["name"] for entry in inventory["console_scripts"]}
 
-    assert inventory["summary"]["packaged_console_scripts"] == 17
+    assert inventory["summary"]["packaged_console_scripts"] == 12
     assert "bureau" in names
     assert "bureau-agent-scout" in names
-    assert "bureau-systemkatalog-frontier-reader" in names
+    assert not any(name.startswith("bureau-systemkatalog-") for name in names)
     assert not any(name.startswith("bureau-cabinet-") for name in names)
     assert "bureau-gemini-preflight" in names
     assert "bureau-gemini-review-lane" in names
@@ -76,7 +76,7 @@ def test_consolidation_plan_lists_current_console_scripts_and_units() -> None:
     assert "No warning may be printed in `--json` mode" in plan
 
 
-def test_system_catalog_commands_replace_retired_cabinet_aliases() -> None:
+def test_retired_system_catalog_candidate_commands_are_absent() -> None:
     from argparse import _SubParsersAction
 
     from bureau.cli import parser
@@ -86,7 +86,7 @@ def test_system_catalog_commands_replace_retired_cabinet_aliases() -> None:
         if isinstance(action, _SubParsersAction):
             command_choices.update(action.choices)
 
-    expected = {
+    retired = {
         "systemkatalog-graph",
         "systemkatalog-frontier",
         "systemkatalog-bridge-probe",
@@ -95,7 +95,6 @@ def test_system_catalog_commands_replace_retired_cabinet_aliases() -> None:
         "systemkatalog-import-preview",
         "systemkatalog-import-reviewed",
     }
-    retired = {name.replace("systemkatalog-", "cabinet-", 1) for name in expected}
 
-    assert expected <= command_choices
     assert retired.isdisjoint(command_choices)
+    assert {"frontier", "what-now", "repo-balls", "live-register"} <= command_choices

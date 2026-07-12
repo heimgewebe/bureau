@@ -365,3 +365,22 @@ schema, Registry, merge and deployment mutations, but not Live Register state-st
 appends. If the Registry checkout is temporarily unavailable, `live-register
 --catalog-validation deferred` preserves a visibly unvalidated operational event instead of
 silently dropping the status update.
+
+## Static Systemkatalog boundary
+
+Bureau does not import task candidates, frontiers, promotions or reviewed tasks
+from the static Systemkatalog. The former Cabinet bridge execution modules and
+`bureau-systemkatalog-*` wrappers were retired by
+`OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T024`.
+
+Validate that this authority boundary remains intact:
+
+```bash
+make systemkatalog-boundary
+```
+
+The gate rejects restored Cabinet execution modules, the retired
+`systemkatalog-*` subcommands, obsolete console scripts and the former
+`~/repos/cabinet` graph or bridge default paths. Historical contracts remain
+available under `docs/archive/cabinet-era/` and do not authorize current
+execution.

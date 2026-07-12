@@ -101,29 +101,7 @@ def parser() -> argparse.ArgumentParser:
     promote.add_argument("source", choices=["weltgewebe"])
     promote.add_argument("--task-id", required=True)
     sub.add_parser("close-ready")
-    cabinet_graph = sub.add_parser("systemkatalog-graph")
-    cabinet_graph.add_argument("--graph")
-    cabinet_frontier = sub.add_parser("systemkatalog-frontier")
-    cabinet_frontier.add_argument("--graph")
-    cabinet_bridge_probe = sub.add_parser("systemkatalog-bridge-probe")
-    cabinet_bridge_probe.add_argument("--bridge-policy")
-    cabinet_promote = sub.add_parser("systemkatalog-promote")
-    cabinet_promote.add_argument("--graph")
-    cabinet_promote.add_argument("--frontier-export")
-    cabinet_promote.add_argument("--candidate-id", required=True)
-    cabinet_promote.add_argument("--task-id", required=True)
-    cabinet_promote.add_argument("--initiative", required=True)
-    cabinet_promote.add_argument("--target-proof", required=True)
-    cabinet_promote.add_argument("--approve", action="store_true")
-    cabinet_promote.add_argument("--write-task")
-    cabinet_validate_task = sub.add_parser("systemkatalog-validate-task")
-    cabinet_validate_task.add_argument("--task-file", required=True)
-    cabinet_import_preview = sub.add_parser("systemkatalog-import-preview")
-    cabinet_import_preview.add_argument("--task-file", required=True)
-    cabinet_import_reviewed = sub.add_parser("systemkatalog-import-reviewed")
-    cabinet_import_reviewed.add_argument("--task-file", required=True)
-    cabinet_import_reviewed.add_argument("--reviewer", required=True)
-    cabinet_import_reviewed.add_argument("--apply", action="store_true")
+
     frontier = sub.add_parser("frontier")
     frontier.add_argument("--capability", action="append", default=[])
     frontier.add_argument("--resource")
@@ -324,91 +302,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
         root = Path(args.root)
-        if args.command in {"systemkatalog-graph", "systemkatalog-frontier"}:
-            from .cabinet_graph import (
-                DEFAULT_GRAPH_PATH,
-                CabinetGraphError,
-                frontier_export,
-                graph_report,
-            )
 
-            graph_path = args.graph or DEFAULT_GRAPH_PATH
-            try:
-                value = (
-                    frontier_export(graph_path)
-                    if args.command == "systemkatalog-frontier"
-                    else graph_report(graph_path)
-                )
-            except CabinetGraphError as exc:
-                print(f"bureau: {exc}", file=sys.stderr)
-                return 2
-            emit(value, args.json)
-            return 0
-        if args.command == "systemkatalog-bridge-probe":
-            from .cabinet_bridge import (
-                DEFAULT_BRIDGE_POLICY_PATH,
-                CabinetBridgeError,
-                bridge_probe,
-            )
-
-            bridge_policy_path = args.bridge_policy or DEFAULT_BRIDGE_POLICY_PATH
-            try:
-                value = bridge_probe(bridge_policy_path)
-            except CabinetBridgeError as exc:
-                print(f"bureau: {exc}", file=sys.stderr)
-                return 2
-            emit(value, args.json)
-            return 0
-        if args.command == "systemkatalog-promote":
-            from .cabinet_graph import (
-                DEFAULT_GRAPH_PATH,
-                CabinetGraphError,
-                frontier_export,
-                load_frontier_export,
-                promote_frontier_candidate,
-            )
-            from .cabinet_promotion_write import write_promotion_task
-
-            try:
-                if args.graph and args.frontier_export:
-                    raise CabinetGraphError(
-                        "systemkatalog-promote accepts either --graph or "
-                        "--frontier-export, not both"
-                    )
-                export = (
-                    load_frontier_export(args.frontier_export)
-                    if args.frontier_export
-                    else frontier_export(args.graph or DEFAULT_GRAPH_PATH)
-                )
-                value = promote_frontier_candidate(
-                    export,
-                    candidate_id=args.candidate_id,
-                    task_id=args.task_id,
-                    initiative=args.initiative,
-                    target_proof=args.target_proof,
-                    approve=args.approve,
-                )
-                if args.write_task:
-                    value = {
-                        **value,
-                        "write": write_promotion_task(value, args.write_task),
-                    }
-            except CabinetGraphError as exc:
-                print(f"bureau: {exc}", file=sys.stderr)
-                return 2
-            emit(value, args.json)
-            return 0
-        if args.command == "systemkatalog-validate-task":
-            from .cabinet_graph import CabinetGraphError
-            from .cabinet_promotion_write import validate_promotion_task_file
-
-            try:
-                value = validate_promotion_task_file(args.task_file)
-            except CabinetGraphError as exc:
-                print(f"bureau: {exc}", file=sys.stderr)
-                return 2
-            emit(value, args.json)
-            return 0
         state_path = Path(args.state_db).expanduser() if args.state_db else None
         state_root = Path(args.state_root).expanduser() if args.state_root else None
         if args.command == "lease-contract":
@@ -476,35 +370,7 @@ def main(argv: list[str] | None = None) -> int:
             emit(value, args.json)
             return 1 if args.strict and not value["healthy"] else 0
         registry = Registry.load(root)
-        if args.command == "systemkatalog-import-preview":
-            from .cabinet_graph import CabinetGraphError
-            from .cabinet_promotion_write import preview_promotion_task_import_file
 
-            try:
-                value = preview_promotion_task_import_file(
-                    args.task_file, registry=registry
-                )
-            except CabinetGraphError as exc:
-                print(f"bureau: {exc}", file=sys.stderr)
-                return 2
-            emit(value, args.json)
-            return 0
-        if args.command == "systemkatalog-import-reviewed":
-            from .cabinet_graph import CabinetGraphError
-            from .cabinet_promotion_write import import_reviewed_promotion_task_file
-
-            try:
-                value = import_reviewed_promotion_task_file(
-                    args.task_file,
-                    registry=registry,
-                    reviewer=args.reviewer,
-                    apply=args.apply,
-                )
-            except CabinetGraphError as exc:
-                print(f"bureau: {exc}", file=sys.stderr)
-                return 2
-            emit(value, args.json)
-            return 0
         if args.command in {"source-check", "source-sync", "source-promote-plan"}:
             from .weltgewebe_source import source_check, source_promote_plan, source_sync
 

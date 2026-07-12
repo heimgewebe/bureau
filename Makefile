@@ -1,13 +1,13 @@
-.PHONY: install validate test lint bridge-import-policy
+.PHONY: install validate test lint systemkatalog-boundary
 
 install:
 	python -m pip install -e '.[dev]'
 
-validate: lint test bridge-import-policy
+validate: lint test systemkatalog-boundary
 	PYTHONPATH=src python -m bureau.cli --root . check
 
-bridge-import-policy:
-	PYTHONPATH=src python -m bureau.cabinet_bridge_import_policy --json >/dev/null
+systemkatalog-boundary:
+	PYTHONPATH=src python -m bureau.systemkatalog_boundary --root . --json >/dev/null
 
 test:
 	PYTHONPATH=src pytest

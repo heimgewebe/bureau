@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -166,6 +167,10 @@ def _queue_sha256(queue: dict[str, Any]) -> str:
     return legacy.sha256_json(queue)
 
 
+def _queue_text(queue: dict[str, Any]) -> str:
+    return json.dumps(queue, ensure_ascii=False, indent=2) + "\n"
+
+
 def _git_head(root: Path) -> str | None:
     try:
         result = subprocess.run(
@@ -179,6 +184,26 @@ def _git_head(root: Path) -> str | None:
     except Exception:
         return None
     return result.stdout.strip() or None
+
+
+def _require_bound_git_head(root: Path, planned_git_head: Any) -> str:
+    if not isinstance(planned_git_head, str) or not planned_git_head:
+        raise legacy.StateError("queue reconcile plan lacks a bound registry git head")
+    current_git_head = _git_head(root)
+    if not current_git_head:
+        raise legacy.StateError("current registry git head is unavailable")
+    if current_git_head != planned_git_head:
+        raise legacy.StateError(
+            "registry git head changed since queue reconcile plan was generated"
+        )
+    return current_git_head
+
+
+def _require_bound_registry_root(root: Path, planned_root: Any) -> None:
+    if not isinstance(planned_root, str) or not planned_root:
+        raise legacy.StateError("queue reconcile plan lacks a bound registry root")
+    if Path(planned_root).expanduser().resolve() != root.resolve():
+        raise legacy.StateError("queue reconcile plan registry root does not match apply root")
 
 
 def _plan_actions(report: dict[str, Any]) -> list[dict[str, Any]]:
@@ -335,6 +360,12 @@ def apply_queue_reconcile_plan(
     plan = _load_reviewed_plan(path)
     if plan.get("resource") != resource:
         raise legacy.StateError("queue reconcile plan resource does not match apply resource")
+    plan_registry = plan.get("registry")
+    if not isinstance(plan_registry, dict):
+        raise legacy.StateError("queue reconcile plan lacks a registry binding")
+    _require_bound_registry_root(registry.root, plan_registry.get("root"))
+    planned_git_head = plan_registry.get("git_head")
+    current_git_head = _require_bound_git_head(registry.root, planned_git_head)
     current_report = queue_reconcile_report(registry, store, resource=resource)
     current_queue = _read_queue(registry)
     current_queue_sha = _queue_sha256(current_queue)
@@ -342,20 +373,48 @@ def apply_queue_reconcile_plan(
         raise legacy.StateError("queue changed since queue reconcile plan was generated")
     if legacy.sha256_json(current_report) != plan.get("dry_run_report_sha256"):
         raise legacy.StateError("queue reconcile findings changed since plan review")
+    current_actions = _plan_actions(current_report)
+    if plan.get("actions") != current_actions:
+        raise legacy.StateError(
+            "queue reconcile plan actions changed since dry-run generation"
+        )
     expected = plan.get("expected_queue_after")
     if not isinstance(expected, dict):
         raise legacy.StateError("queue reconcile plan lacks expected_queue_after")
     expected_sha = _queue_sha256(expected)
     if expected_sha != plan.get("expected_queue_after_sha256"):
         raise legacy.StateError("queue reconcile plan expected queue hash mismatch")
-    recomputed = _apply_actions_to_queue(current_queue, plan.get("actions", []))
+    recomputed = _apply_actions_to_queue(current_queue, current_actions)
     if legacy.sha256_json(recomputed) != expected_sha:
         raise legacy.StateError("queue reconcile plan actions do not match expected queue")
+    _require_bound_git_head(registry.root, planned_git_head)
+    if not current_actions:
+        return {
+            "schema_version": 1,
+            "command": "queue-reconcile-apply",
+            "applied": False,
+            "no_op": True,
+            "resource": resource,
+            "path": str(Path(path).expanduser()),
+            "registry_git_head": current_git_head,
+            "queue_sha256_before": current_queue_sha,
+            "queue_sha256_after": expected_sha,
+            "actions": [],
+            "approval": plan.get("approval"),
+            "post_gates": None,
+            "does_not_establish": [
+                "dispatch_authority",
+                "task_claim",
+                "task_completion",
+                "merge_readiness",
+            ],
+        }
 
     queue_path = _queue_path(registry)
     before_text = queue_path.read_text(encoding="utf-8")
-    legacy.atomic_write(queue_path, legacy.canonical_json(expected) + "\n")
+    legacy.atomic_write(queue_path, _queue_text(expected))
     try:
+        _require_bound_git_head(registry.root, planned_git_head)
         registry_after = Registry.load(registry.root)
         from .core import Dispatcher
         from .registry_truth import registry_truth_diagnostics
@@ -374,6 +433,7 @@ def apply_queue_reconcile_plan(
         }
         if not all(gates.values()):
             raise legacy.StateError("post-apply gates failed: " + legacy.canonical_json(gates))
+        _require_bound_git_head(registry.root, planned_git_head)
     except Exception:
         legacy.atomic_write(queue_path, before_text)
         raise
@@ -381,11 +441,13 @@ def apply_queue_reconcile_plan(
         "schema_version": 1,
         "command": "queue-reconcile-apply",
         "applied": True,
+        "no_op": False,
         "resource": resource,
         "path": str(Path(path).expanduser()),
+        "registry_git_head": current_git_head,
         "queue_sha256_before": current_queue_sha,
         "queue_sha256_after": expected_sha,
-        "actions": plan.get("actions", []),
+        "actions": current_actions,
         "approval": plan.get("approval"),
         "post_gates": gates,
         "does_not_establish": [

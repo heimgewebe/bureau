@@ -41,9 +41,13 @@ bureau --root . --json queue-reconcile --apply-plan /tmp/bureau-queue-plan.json
 ```
 
 Apply is deliberately narrow. It only applies deterministic add-to-`now`/add-to-`next` actions
-from the reviewed plan, refuses if the queue or dry-run findings changed since the plan was
-generated, runs post-apply registry/doctor/registry-truth gates, and rolls the queue back if a
-post-apply gate fails. It never claims, dispatches, completes or merges work.
+that exactly match the current dry-run recommendations. The reviewed artifact is bound to the same
+registry root, Git head and pre-apply queue hash. Apply checks the head before validation, directly
+before the write, directly after the write and after post-apply gates. A head change, queue change,
+dry-run change, action change or failed registry/doctor/registry-truth gate refuses or rolls back the
+queue mutation. A reviewed plan with no current actions returns an explicit byte-stable no-op and
+does not rewrite `registry/queue.json`. Real queue updates retain the repository's readable JSON
+format. The path never claims, dispatches, completes or merges work.
 
 ## Worktree hygiene
 

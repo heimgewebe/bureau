@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T019",
+  "initiative": "BUR-2026-005",
+  "title": "Digest-bind reviewed plan approval artifacts",
+  "state": "planned",
+  "depends_on": [
+    "BUR-2026-005-T015"
+  ],
+  "goal": "Bind reviewed-plan approval evidence to the exact immutable plan payload so post-review artifact changes are detectable without granting automatic approval or reviewer identity authority.",
+  "priority": {
+    "lane": "later",
+    "rank": 190
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "reviewed-payload-digest",
+      "assertion": "Reviewed-plan evidence records a canonical digest of the exact effect-bearing plan payload and apply recomputes it before any effect."
+    },
+    {
+      "id": "post-review-tamper-refusal",
+      "assertion": "Changes to actions, targets, expected output, source bindings or effect scope after review fail closed even when the current dry-run would otherwise permit the same operation."
+    },
+    {
+      "id": "generic-approval-contract",
+      "assertion": "The digest binding is represented in the reusable approval evidence contract rather than as an undocumented queue-only convention."
+    },
+    {
+      "id": "identity-nonclaim",
+      "assertion": "The implementation states and tests that a payload digest does not cryptographically authenticate reviewer identity unless a separate identity authority is provided."
+    },
+    {
+      "id": "migration-and-tests",
+      "assertion": "Compatibility or migration behavior for existing reviewed-plan artifacts is explicit, and tests cover valid, missing, stale and tampered digests."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-12T10:42:00Z",
+    "source": "BUR-2026-005-T015 completion review on 2026-07-12",
+    "source_observation": "Queue reconcile apply is now effect-safe through deterministic action parity plus root/head/queue binding, but reviewed_plan approval evidence still binds the artifact path rather than a digest of the exact reviewed payload.",
+    "safety_boundary": "Digest binding may strengthen evidence integrity only; it must not auto-approve plans, infer reviewer identity, widen effect scope or bypass current state and post-effect gates.",
+    "does_not_establish": [
+      "reviewer_identity_authentication",
+      "automatic_plan_approval",
+      "queue_mutation_authority",
+      "dispatch_authority",
+      "merge_authority",
+      "backward_compatibility_without_review"
+    ]
+  }
+}

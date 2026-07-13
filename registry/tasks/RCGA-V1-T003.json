@@ -3,11 +3,11 @@
   "id": "RCGA-V1-T003",
   "initiative": "REPOBRIEF-CODEGRAPH-ADOPTION-V1",
   "title": "Repair related-test retrieval and compression evaluation",
-  "state": "ready",
+  "state": "verified",
   "goal": "Remove the live-goldset regression by incorporating retrieval-resolved test paths as an explicit non-graph evidence class, fixing path projection hygiene, and evaluating context compression without weakening recall or authority boundaries.",
   "priority": {
-    "lane": "now",
-    "rank": 1
+    "lane": "later",
+    "rank": 999
   },
   "depends_on": [
     "RCGA-V1-T002"
@@ -70,6 +70,7 @@
   ],
   "metadata": {
     "registered_at": "2026-07-13",
+    "verified_at": "2026-07-13",
     "source_task": "RCGA-V1-T002",
     "source_evaluation": "docs/evidence/rcga-live-evaluation-20260713.json",
     "source_evaluation_sha256": "3f080feb83b23242f7a91e7ae7eba1cee6fb3bed079b6672301df046078f7dc2",
@@ -85,13 +86,74 @@
       "no_case_recall_regression_required": true,
       "default_promoted": false
     },
+    "outcome": "The live regression is repaired. The fixed three-repository replay retained target recall 1.0 with no case regression and reduced aggregate context paths by 50 percent. The real Grabowski path tests/test_job_finalizer.py is recovered as resolved_query evidence. The surface remains opt-in and default promotion remains disabled.",
+    "implementation": {
+      "repository": "heimgewebe/lenskit",
+      "pull_request": 996,
+      "reviewed_head": "3bb29b0db61e7cecfe4b17778caa03575e543f9d",
+      "merge_commit": "dff582f9c4e8b5511d4ce436db81e3e245f725ec",
+      "diff_sha256": "00d408a5482f7c35018f57152b07780752d0f36b0b04294de5f0929a621f7d5f",
+      "diff_bytes": 64133,
+      "self_review": "pass"
+    },
+    "measurement": {
+      "workflow_run": 29234901905,
+      "artifact_id": 8273035636,
+      "artifact_digest": "sha256:9cca7f74c3c46913f664bde5e069cb76bdac9f2e4e9cdca9d0f38ddd0945b7d4",
+      "goldset_sha256": "08bf2e0a508a033e6f6d0c038375860c0a1db5510dd4dab9f7965644185d8a3a",
+      "observations_sha256": "8853366f1f09c167cb5708dc8075ba7b97b6fcdd0083016541c922eced261661",
+      "evaluation_sha256": "b5f081834138b1d838b2a72183c5c22fbd7f3e805af02e4e98f8a20f7e344e88",
+      "baseline_target_recall": 1.0,
+      "impact_target_recall": 1.0,
+      "no_case_regression": true,
+      "baseline_mean_context_path_count": 10.666666666666666,
+      "impact_mean_context_path_count": 5.333333333333333,
+      "context_path_reduction_ratio": 0.5,
+      "default_promoted": false
+    },
+    "secondary_confirmation": {
+      "workflow_run": 29234901915,
+      "artifact_id": 8273044862,
+      "artifact_digest": "sha256:ab72636983fcfeffa1399d58485089fdb38cb7230d3a0219efe47f3af079a0cf",
+      "baseline_target_recall": 1.0,
+      "impact_target_recall": 1.0,
+      "no_case_regression": true,
+      "context_path_reduction_ratio": 0.32,
+      "default_promoted": false
+    },
+    "final_ci": {
+      "test_suite": 29236097089,
+      "lint": 29236097070,
+      "codeql": 29236097040,
+      "contracts": 29236097329,
+      "task_index": 29236097035,
+      "doc_freshness": 29236097122,
+      "ai_context": 29236097073,
+      "anti_hallucination": 29236097032,
+      "parity": 29236097134,
+      "forensic_preflight": 29236097077
+    },
+    "verified_acceptance": {
+      "rcga-v1-t003-resolved-tests": "The merged refinement emits test-like paths from source_citation_projection as resolved_query evidence with citation_id, source_range, range_status, derived authority and explicit non-graph/non-coverage semantics.",
+      "rcga-v1-t003-evidence-order": "Graph-edge and symbol-index evidence retain higher priority; resolved-query evidence is deterministic and stronger than heuristic fallback. Heuristics are suppressed only when resolved test evidence exists and remain available otherwise, with the suppression count reported.",
+      "rcga-v1-t003-path-hygiene": "Raw path segments are checked before PurePosixPath normalization. Empty, absolute, backslash, double-slash, dot and parent segments are rejected; the resolved P2 review includes regression tests for dot segments at the beginning, middle and end.",
+      "rcga-v1-t003-compression-metric": "The evaluator validates and deduplicates paths, records per-case and aggregate compression, blocks utility on any case recall regression, and keeps default_promoted false.",
+      "rcga-v1-t003-live-rerun": "The same fixed Lenskit, Grabowski and Weltgewebe cases were rerun on exact recorded commits and coherent bundles. Recall remained 1.0 in every case, the Grabowski test was recovered, aggregate path reduction was 50 percent, and repository, manifest, run and canonical identities are durably bound.",
+      "rcga-v1-t003-boundary": "The merged adapter remains read-only and introduces no Git, shell, patch, source, test, snapshot, PR, review, coverage, merge or memory authority.",
+      "rcga-v1-t003-merge-gates": "The reviewed head passed the complete repository test suite and all required diagnostics. The 64133-byte binary product diff is SHA-256 bound, the self-review passed, PR #996 was squash-merged, and central code/evidence blob SHAs match the merged main tree."
+    },
+    "decision": {
+      "retain_opt_in": true,
+      "default_promoted": false,
+      "separate_broader_agent_benchmark_required": true
+    },
     "does_not_establish": [
       "complete_call_graph",
       "complete_blast_radius",
       "runtime_correctness",
       "test_sufficiency",
       "review_completeness",
-      "merge_readiness",
+      "merge_readiness_beyond_bound_evidence",
       "security_correctness",
       "general_agent_quality_improvement",
       "default_promotion"

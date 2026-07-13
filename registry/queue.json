@@ -1,6 +1,7 @@
 {
   "lanes": {
     "later": [
+      "RAB-V1-T003",
       "RBV1-T018",
       "RBAW-V1-T004",
       "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T003",
@@ -55,12 +56,14 @@
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020"
     ],
     "next": [
+      "RAB-V1-T002",
       "BUR-2026-001-T009",
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T002",
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T003"
     ],
     "now": [
-      "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T005"
+      "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T005",
+      "RAB-V1-T001"
     ]
   },
   "queue_policy": "skip-blocked",

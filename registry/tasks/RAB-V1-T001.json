@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "id": "RAB-V1-T001",
+  "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
+  "title": "Build frozen taskset and provider-neutral benchmark harness",
+  "state": "ready",
+  "goal": "Implement the contracts, frozen 24-case taskset, provider-neutral runner boundary, transcript receipts, paired execution plan and offline evaluator required for a real baseline-versus-RepoBrief agent benchmark without claiming a model result.",
+  "priority": {
+    "lane": "now",
+    "rank": 20
+  },
+  "depends_on": [],
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "dff582f9c4e8b5511d4ce436db81e3e245f725ec",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit",
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/weltgewebe"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Freeze task definitions, metrics and stop rules before producing any benchmark result. Do not simulate model transcripts or provider token counts."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rab-v1-t001-contracts",
+      "assertion": "Versioned machine-readable contracts exist for the fixed taskset, agent-run request, raw transcript receipt, paired result and aggregate evaluation, with explicit negative semantics and size/path limits."
+    },
+    {
+      "id": "rab-v1-t001-fixed-cases",
+      "assertion": "Exactly 24 pre-registered cases cover navigation, structural impact and grounding/freshness across at least three commit-bound repositories, including at least six cases whose correct result requires abstention or a negative claim."
+    },
+    {
+      "id": "rab-v1-t001-pairing",
+      "assertion": "The harness deterministically balances baseline-first and treatment-first order, creates isolated per-condition requests and rejects cross-condition transcript, cache or workspace reuse."
+    },
+    {
+      "id": "rab-v1-t001-runner-boundary",
+      "assertion": "A provider-neutral runner command receives one bounded JSON request and must return provider/model identity, provider-reported tokens, tool-call records, timestamps, exit status and a complete or hash-bound transcript; missing required evidence makes a run invalid."
+    },
+    {
+      "id": "rab-v1-t001-tool-policy",
+      "assertion": "Baseline permits grep, glob, search and targeted reads only; treatment permits the same tools plus ask_context, RepoBrief resources, grounding_verify and live_freshness. The allowlist is enforced from recorded tool calls."
+    },
+    {
+      "id": "rab-v1-t001-evaluator",
+      "assertion": "The deterministic evaluator measures target hits, false hits, citations/ranges, abstention, false confidence, time, tool calls, provider tokens, bytes, stale handling and invalid-run rates, and cannot promote a result when any registered quality or safety regression threshold is crossed."
+    },
+    {
+      "id": "rab-v1-t001-no-fake-run",
+      "assertion": "Synthetic fixtures validate contracts and evaluator behavior but are unambiguously marked synthetic and cannot establish agent usefulness or satisfy the real-run task."
+    },
+    {
+      "id": "rab-v1-t001-tests",
+      "assertion": "Focused and full Lenskit tests, schema checks, deterministic replay tests, diff review and all repository CI gates pass before merge."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source_issue": "heimgewebe/bureau#481",
+    "plan": "docs/plans/repobrief-agent-benchmark-v1.md",
+    "runner_availability_at_registration": "No instrumented provider-neutral agent runner with provider token and immutable transcript evidence was found in the live Lenskit surface.",
+    "default_promoted": false,
+    "does_not_establish": [
+      "real agent usefulness",
+      "provider availability",
+      "answer correctness",
+      "general repository understanding",
+      "default promotion"
+    ]
+  }
+}

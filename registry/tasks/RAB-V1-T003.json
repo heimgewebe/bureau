@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "id": "RAB-V1-T003",
+  "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
+  "title": "Decide RepoBrief agent adoption from paired evidence",
+  "state": "planned",
+  "goal": "Review the fixed benchmark evidence, classify useful and harmful task classes, keep RepoBrief opt-in, prefer it for bounded classes, or reject the path, and only then decide whether incremental rebuild or watcher work is justified.",
+  "priority": {
+    "lane": "later",
+    "rank": 20
+  },
+  "depends_on": [
+    "RAB-V1-T002"
+  ],
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit",
+      "repo:/home/alex/repos/bureau"
+    ],
+    "approval": {
+      "action_class": "queue_mutation",
+      "required_level": "reviewed_receipt",
+      "note": "Any preference or default-route decision must cite the complete paired benchmark and preserve negative or null findings."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rab-v1-t003-classification",
+      "assertion": "Every task class is classified as reproducibly useful, neutral, harmful or insufficient-evidence using the pre-registered metrics and both benchmark repetitions."
+    },
+    {
+      "id": "rab-v1-t003-regressions",
+      "assertion": "Quality, citation, false-confidence, freshness, invalid-run and safety regressions are listed without averaging them away through token or time savings."
+    },
+    {
+      "id": "rab-v1-t003-decision",
+      "assertion": "The decision is one of retain-opt-in, prefer-for-explicit-classes, reject, or insufficient-evidence; default promotion remains a separate explicit authorization."
+    },
+    {
+      "id": "rab-v1-t003-watcher-gate",
+      "assertion": "Bureau issue #482 is promoted into active implementation only if the benchmark shows that freshness latency or rebuild cost materially limits an otherwise useful RepoBrief path."
+    },
+    {
+      "id": "rab-v1-t003-evidence",
+      "assertion": "The final report links immutable raw transcripts, requests, receipts, evaluation digests, exact runner/model identity and all invalid or failed runs."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source_issue": "heimgewebe/bureau#481",
+    "dependent_issue": "heimgewebe/bureau#482",
+    "default_promoted": false,
+    "does_not_establish": [
+      "general product maturity",
+      "model-independent benefit",
+      "complete repository understanding",
+      "test sufficiency",
+      "review completeness",
+      "merge readiness"
+    ]
+  }
+}

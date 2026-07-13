@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "REPOBRIEF-AGENT-BENCHMARK-V1",
+  "title": "RepoBrief agent benchmark against grep/read",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Measure the incremental value of RepoBrief MCP for real coding-agent work against the ordinary grep, glob and targeted-read workflow without fabricating model runs or promoting RepoBrief by default.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/repobrief-agent-benchmark-v1.md"
+  },
+  "completion": [
+    "A frozen multi-repository taskset, provider-neutral runner contract and deterministic evaluator are implemented and validated.",
+    "Real paired baseline and RepoBrief-augmented agent runs use the same model, prompt, budgets and isolated sessions with provider-reported tokens and bound transcripts.",
+    "Navigation, structural reasoning, grounding, freshness, false confidence, time, tool-call and token outcomes are reported without post-hoc task tuning.",
+    "RepoBrief remains opt-in unless a separate reviewed decision establishes a reproducible benefit without material quality or safety regression."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source_issue": "heimgewebe/bureau#481",
+    "depends_on_merges": [
+      "heimgewebe/lenskit@a3dcc4e954f3ea60842cb366b499659f40938e0b",
+      "heimgewebe/lenskit@dff582f9c4e8b5511d4ce436db81e3e245f725ec"
+    ],
+    "comparison": "baseline grep/glob/read versus the same tools plus RepoBrief MCP",
+    "fixed_case_count": 24,
+    "default_promoted": false,
+    "sequencing": "Complete the benchmark decision before prioritizing bureau#482 incremental rebuild or file-watcher work.",
+    "does_not_establish": [
+      "general agent quality improvement",
+      "answer correctness outside the fixed taskset",
+      "complete repository understanding",
+      "test sufficiency",
+      "review completeness",
+      "merge readiness",
+      "default promotion"
+    ]
+  }
+}

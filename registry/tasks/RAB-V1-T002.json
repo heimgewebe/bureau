@@ -7,10 +7,10 @@
   "goal": "Execute the frozen benchmark in isolated baseline and RepoBrief-augmented conditions with the separately qualified instrumented runner, provider-reported tokens and immutable transcripts.",
   "priority": {
     "lane": "next",
-    "rank": 20
+    "rank": 21
   },
   "depends_on": [
-    "RAB-V1-T002B"
+    "RAB-V1-T002D"
   ],
   "claims": [
     {
@@ -41,7 +41,7 @@
     "approval": {
       "action_class": "agent_dispatch",
       "required_level": "reviewed_plan",
-      "note": "Run only after RAB-V1-T002B verifies one cost-bounded live baseline/treatment pair with exact model identity, provider usage, tool-call capture, transcript binding, source integrity and separated freshness/preparation latency."
+      "note": "Run only after RAB-V1-T002D verifies one newly authorized, one-shot cost-bounded live pair with exact model identity, provider usage, treatment RepoBrief use, source integrity and separated latency."
     }
   },
   "required_capabilities": [
@@ -82,8 +82,8 @@
     "updated_at": "2026-07-13",
     "source_issue": "heimgewebe/bureau#481",
     "runner_prerequisite": "RAB-V1-T002A",
-    "live_preflight_prerequisite": "RAB-V1-T002B",
-    "initial_blocker": "The qualified runner is merged. Real dispatch remains prohibited until RAB-V1-T002B verifies a hard-cost-bounded live provider pair, valid Lenskit receipts, treatment MCP use, source integrity and separate snapshot/freshness latency.",
+    "live_preflight_prerequisite": "RAB-V1-T002D",
+    "initial_blocker": "RAB-V1-T002B ended fail-closed after a baseline retry and treatment budget stop. The 96-run benchmark remains prohibited until T002C qualifies the one-shot orchestrator and T002D produces one valid newly authorized pair.",
     "default_promoted": false,
     "does_not_establish": [
       "default promotion",

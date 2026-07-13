@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Use an isolated Commonworld worktree. Before every nontrivial merge require complete published diff, head/tree/diff-bound self-review, green CI, review resolution and exact live Pages readback."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source": "Commonworld deep audit 2026-07-13",
+    "queue_mutated": false,
+    "does_not_establish": [
+      "future merge readiness",
+      "provider SLA",
+      "backend readiness",
+      "unmeasured accessibility conformance"
+    ],
+    "claimed_at": "2026-07-13",
+    "claimed_by": "chatgpt-commonworld-optimization-program-20260713",
+    "claim_mode": "direct_operator_authority_without_queue_mutation"
+  },
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T005",
+  "title": "Establish current truth and failure-safe public surface",
+  "state": "ready",
+  "goal": "Eliminate contradictory active contracts and misleading failure states before adding geographic data.",
+  "priority": {
+    "lane": "now",
+    "rank": 100
+  },
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "current-truth",
+      "assertion": "One compact active-state record and aligned README/contracts distinguish current truth from historical evidence."
+    },
+    {
+      "id": "browser-ci",
+      "assertion": "Pull requests run a real bounded browser smoke covering Globe, Text, zero results and degraded states."
+    },
+    {
+      "id": "failure-safe-controls",
+      "assertion": "Search, settings and alternate view remain truthful and usable when catalog or map resources fail."
+    },
+    {
+      "id": "interaction-hardening",
+      "assertion": "The Text skip action works, Globe zero results are explained, mobile status remains visible and primary touch targets are normalized."
+    },
+    {
+      "id": "licensing-and-method",
+      "assertion": "Code/data licensing and a human-readable method/privacy/provider/coverage surface are explicit or an evidence-bound legal blocker is recorded."
+    }
+  ]
+}

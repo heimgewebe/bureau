@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Use an isolated Commonworld worktree. Before every nontrivial merge require complete published diff, head/tree/diff-bound self-review, green CI, review resolution and exact live Pages readback."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source": "Commonworld deep audit 2026-07-13",
+    "queue_mutated": false,
+    "does_not_establish": [
+      "future merge readiness",
+      "provider SLA",
+      "backend readiness",
+      "unmeasured accessibility conformance"
+    ]
+  },
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T010",
+  "title": "Prove physical screen-reader product usability",
+  "state": "planned",
+  "goal": "After geographic discovery stabilizes, test and repair the complete public task flow with physical assistive technologies.",
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T009"
+  ],
+  "acceptance": [
+    {
+      "id": "voiceover",
+      "assertion": "Physical VoiceOver task evidence covers discovery, search, selection, focus and return."
+    },
+    {
+      "id": "talkback",
+      "assertion": "Physical TalkBack task evidence covers the same bounded flow."
+    },
+    {
+      "id": "desktop-reader",
+      "assertion": "A desktop screen-reader and keyboard flow is checked."
+    },
+    {
+      "id": "announcements",
+      "assertion": "Search, map, selection and degraded states have understandable announcements."
+    },
+    {
+      "id": "claim-boundary",
+      "assertion": "No WCAG or screen-reader product-support claim exceeds the collected evidence."
+    }
+  ]
+}

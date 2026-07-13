@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Use an isolated Commonworld worktree. Before every nontrivial merge require complete published diff, head/tree/diff-bound self-review, green CI, review resolution and exact live Pages readback."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source": "Commonworld deep audit 2026-07-13",
+    "queue_mutated": false,
+    "does_not_establish": [
+      "future merge readiness",
+      "provider SLA",
+      "backend readiness",
+      "unmeasured accessibility conformance"
+    ]
+  },
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T009",
+  "title": "Grow a balanced catalog and add explicit Weltgewebe handoff",
+  "state": "planned",
+  "goal": "Expand to a transparent, balanced and reviewable Commons catalog with explicit same-identity transitions to Weltgewebe.",
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T008"
+  ],
+  "acceptance": [
+    {
+      "id": "balanced-growth",
+      "assertion": "The catalog reaches 30–50 sourced entries without one institutional family dominating unnoticed."
+    },
+    {
+      "id": "coverage-transparency",
+      "assertion": "Selection scope, geographic/digital coverage and known gaps are visible."
+    },
+    {
+      "id": "freshness-workflow",
+      "assertion": "Candidate, review, stale and archive paths preserve activity/curation distinction."
+    },
+    {
+      "id": "partner-path",
+      "assertion": "A bounded candidate or partner contribution path exists without direct unreviewed publication."
+    },
+    {
+      "id": "weltgewebe-handoff",
+      "assertion": "Known shared identities link explicitly to Weltgewebe and back without implied login or write authority."
+    }
+  ]
+}

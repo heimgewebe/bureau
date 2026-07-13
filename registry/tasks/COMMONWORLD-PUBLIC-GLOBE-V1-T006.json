@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Use an isolated Commonworld worktree. Before every nontrivial merge require complete published diff, head/tree/diff-bound self-review, green CI, review resolution and exact live Pages readback."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source": "Commonworld deep audit 2026-07-13",
+    "queue_mutated": false,
+    "does_not_establish": [
+      "future merge readiness",
+      "provider SLA",
+      "backend readiness",
+      "unmeasured accessibility conformance"
+    ]
+  },
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T006",
+  "title": "Deliver a real geographic and hybrid Commons vertical slice",
+  "state": "planned",
+  "goal": "Make the globe an information body using real sourced geographic, digital and hybrid CommonProject identities without creating a second catalog truth.",
+  "priority": {
+    "lane": "next",
+    "rank": 90
+  },
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T005"
+  ],
+  "acceptance": [
+    {
+      "id": "catalog-generalization",
+      "assertion": "Seed-only validation is separated from the scalable production catalog contract."
+    },
+    {
+      "id": "real-cases",
+      "assertion": "The public slice includes sourced exact, extent, approximate, hidden and hybrid cases plus at least one evidenced relation."
+    },
+    {
+      "id": "derived-map-data",
+      "assertion": "Static map representations derive from CommonProject records and preserve one CommonProject.id."
+    },
+    {
+      "id": "semantic-zoom",
+      "assertion": "Location line and zoom stages expose appropriate Commons information from planet to focus."
+    },
+    {
+      "id": "cross-view-parity",
+      "assertion": "Globe, digital sphere and Text select the same identity and never invent hidden or digital coordinates."
+    }
+  ]
+}

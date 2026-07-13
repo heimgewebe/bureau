@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Use an isolated Commonworld worktree. Before every nontrivial merge require complete published diff, head/tree/diff-bound self-review, green CI, review resolution and exact live Pages readback."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source": "Commonworld deep audit 2026-07-13",
+    "queue_mutated": false,
+    "does_not_establish": [
+      "future merge readiness",
+      "provider SLA",
+      "backend readiness",
+      "unmeasured accessibility conformance"
+    ]
+  },
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T007",
+  "title": "Implement intent-oriented search and discovery",
+  "state": "planned",
+  "goal": "Let people search by German concepts, actions and places and reach the matching spatial or digital context.",
+  "priority": {
+    "lane": "next",
+    "rank": 80
+  },
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T006"
+  ],
+  "acceptance": [
+    {
+      "id": "human-query",
+      "assertion": "German labels, synonyms, actions, places and regions participate in search."
+    },
+    {
+      "id": "result-surface",
+      "assertion": "Globe exposes result count, empty state and keyboard-navigable results."
+    },
+    {
+      "id": "spatial-navigation",
+      "assertion": "Selecting a geographic result moves to its public representation while digital results remain coordinate-free."
+    },
+    {
+      "id": "action-links",
+      "assertion": "Published actions such as use, learn, contribute or donate have sourced direct destinations when claimed."
+    },
+    {
+      "id": "filters",
+      "assertion": "Presence, action, language, access, freshness and curation filters preserve identity semantics."
+    }
+  ]
+}

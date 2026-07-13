@@ -2,7 +2,7 @@
 
 ## Ausgangspunkt
 
-Grabowski besitzt eine breite, auditierbare Operatoroberfläche. Der aktuelle Livevertrag umfasst 120 registrierte Tools. Die Oberfläche wird in ChatGPT bedarfsgerecht entdeckt; ein pauschales Vorladen aller Schemas ist daher nicht als aktueller Hauptengpass belegt. Belegt sind dagegen vier andere Reibungsquellen:
+Grabowski besitzt eine breite, auditierbare Operatoroberfläche. Der bei Erstellung dieses Plans verifizierte Deploymentvertrag umfasst 121 registrierte Tools; diese Zahl ist eine Momentaufnahme, kein Zielwert. Die Oberfläche wird in ChatGPT bedarfsgerecht entdeckt; ein pauschales Vorladen aller Schemas ist daher nicht als aktueller Hauptengpass belegt. Belegt sind dagegen vier andere Reibungsquellen:
 
 1. Serverweite Betriebsregeln liegen überwiegend in Repositoryprosa und werden nicht als MCP-Initialisierungsanweisung ausgeliefert.
 2. Fehlerklassifikation und Folgerouting sind vorhanden, erreichen den aufrufenden Agenten aber nicht einheitlich direkt am Fehlerort.

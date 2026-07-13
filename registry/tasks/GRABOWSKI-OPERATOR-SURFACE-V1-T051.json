@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T051",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Reconcile unowned post-merge Bureau dirty state without data loss",
+  "state": "planned",
+  "goal": "Determine the origin and validity of the post-merge edits that appeared in the protected T046 closeout worktree after PR #517 merged, preserve any legitimate evidence, reject claims contradicted by authoritative live runtime state, and only then clean the worktree and release its retained leases.",
+  "priority": {
+    "lane": "later",
+    "rank": 510
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T046"
+  ],
+  "acceptance": [
+    {
+      "id": "preserve-before-touch",
+      "assertion": "The complete dirty diff, file hashes, timestamps, branch head, leases and any available audit or process evidence are captured before any modification, reset, branch deletion or worktree removal."
+    },
+    {
+      "id": "origin-assessed",
+      "assertion": "The likely writer or execution path is identified where evidence permits; unknown provenance remains explicit rather than being attributed by assumption."
+    },
+    {
+      "id": "truth-reconciled",
+      "assertion": "Each proposed evidence correction is checked against authoritative live runtime, GitHub and Bureau state; claims contradicted by live evidence are not published."
+    },
+    {
+      "id": "valid-follow-up-only",
+      "assertion": "Any legitimate correction is published through a fresh clean branch and normal review gate, not by silently committing the protected dirty worktree."
+    },
+    {
+      "id": "cleanup-proven",
+      "assertion": "After valid information is preserved or published, the protected worktree and branch are removed only with explicit clean-or-preserved evidence and the four retained owner leases are released with readback."
+    }
+  ],
+  "metadata": {
+    "source": "T046 post-merge cleanup",
+    "source_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T046",
+    "observed_at": "2026-07-13T17:00:51Z",
+    "protected_worktree": "/home/alex/repos/.bureau-worktrees/close-grabowski-t046-v2",
+    "protected_branch": "registry/grabowski-t046-closeout-v2",
+    "dirty_paths": [
+      "registry/tasks/GRABOWSKI-OPERATOR-SURFACE-V1-T046.json",
+      "registry/tasks/GRABOWSKI-OPERATOR-SURFACE-V1-T049.json"
+    ],
+    "retained_lease_count": 4,
+    "authoritative_runtime_readback": {
+      "repo_head": "e72e012818525ee785a3cc76c0c05b741b72b2eb",
+      "release_id": "e72e01281852-srcseted22b35ae55a-locke6664d600b6c-contract32d81838b121",
+      "integrity": "valid"
+    },
+    "does_not_establish": [
+      "that the dirty edits are malicious",
+      "that the dirty edits belong to the T046 operator",
+      "permission to reset or delete the dirty worktree",
+      "permission to alter T047",
+      "that the proposed runtime-head correction is true"
+    ]
+  }
+}

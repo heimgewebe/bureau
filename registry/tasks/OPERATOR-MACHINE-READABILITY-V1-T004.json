@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T004",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Bind Bureau CLI execution to an observable current source identity",
-  "state": "planned",
+  "state": "verified",
   "goal": "Prevent `python3 -m bureau.cli` or the `bureau` command from silently executing a stale globally installed package while reading a newer Registry checkout, and expose the exact code, Registry and state-store identities in every operational response.",
   "priority": {
     "lane": "next",
@@ -58,12 +58,146 @@
     "observation": {
       "ambient_module": "/home/alex/.local/lib/python3.10/site-packages/bureau/v2.py",
       "selected_registry": "/home/alex/repos/.bureau-staging/operator-machine-readability-followups-v1",
-      "effect": "The stale package reported lifecycle mismatches already fixed in origin/main and blocked Grabowski's normal Bureau lease contract."
+      "effect": "The stale package reported lifecycle mismatches already fixed in origin/main and blocked normal Bureau coordination with code/Registry drift."
+    },
+    "implementation": {
+      "primary_pull_request": {
+        "repository": "heimgewebe/bureau",
+        "number": 521,
+        "head": "b8649819cf5789ba4d8cb8a888c3d74edd58a97a",
+        "base": "9c62d6f3732e6ca0a88a241e0fa84c8eb53830c7",
+        "merge_commit": "a0198442f25e25672b753f89a4ff5321e06f0f01",
+        "github_diff_sha256": "68cea9926400a6d50b241c2884ce5508feaf0f59871abfca51cb02a0c7a8a4ed",
+        "self_review_sha256": "5621be872484e7ea7bc09442b76d7d6493eaa68ce5d2bfc0f26bcbb18f706a31"
+      },
+      "symlink_migration_pull_request": {
+        "repository": "heimgewebe/bureau",
+        "number": 522,
+        "head": "d9cbb5513debb69b6392368c6f564b4d371f9f24",
+        "base": "1320196d28e99484218b0f9f4fc1c10c6892b69a",
+        "merge_commit": "d85ad423aa027a6910ad6695c63c822c6121cb6c",
+        "github_diff_sha256": "7882492f7d623caf5056f945d5db408eac022f20c45249b2a6121849c12773d2",
+        "self_review_sha256": "a3287a868c02678f83b4fd89dfca0eba34b5834e4b2946a53700db94f06bc0f6"
+      }
+    },
+    "validation": {
+      "full_local_suite": "Complete Bureau pytest suite reached 100 percent with empty stderr on both reviewed heads.",
+      "focused_tests": "Runtime identity, dirty/stale/unbound gates, immutable installer, rollback, manifest drift, package-tree drift, existing relative launcher symlink migration and systemd unit contracts passed.",
+      "lint": "Ruff passed on all changed Python files.",
+      "systemd": "systemd-analyze --user verify passed for the reviewed reference units.",
+      "github_ci": {
+        "pr_521_validate_3_10": "success",
+        "pr_521_validate_3_12": "success",
+        "pr_522_validate_3_10": "success",
+        "pr_522_validate_3_12": "success"
+      }
+    },
+    "deployment": {
+      "source_commit": "d85ad423aa027a6910ad6695c63c822c6121cb6c",
+      "canonical_release_id": "d85ad423aa02-src72aaf70b2218",
+      "canonical_launcher": "/home/alex/.local/bin/bureau",
+      "canonical_launcher_sha256": "2175d76f7e58817ad3b8367b515e6666adf03bb8e18f1add3ed556b50e3e1a6b",
+      "manifest_sha256": "9c6318c90a2c0ecde4dce0e034fc97ef6367332b43d8a0254a1a8e193342b8de",
+      "package_tree_sha256": "72aaf70b22181496c65c5172a32a0f6733689d4eba1aad2c2989f36a51579419",
+      "install_receipt": "/home/alex/.local/share/bureau/receipts/d85ad423aa02-src72aaf70b2218-9c6318c90a2c.json",
+      "install_receipt_sha256": "adfa91e53bde1e2c415a834b3f063272e9d35e175f8e8ab58081ef2fd3f2b064",
+      "previous_launcher_symlink_receipt_sha256": "308323aeb7d48877266e5917bf4947ca90b49a8666aa046d0daced9cfa335e84"
+    },
+    "grabowski_contract_runtime": {
+      "selector": "/home/alex/.local/share/bureau/venv",
+      "release_commit": "d85ad423aa027a6910ad6695c63c822c6121cb6c",
+      "executable_sha256": "66408f85f0c0bbe225bf39d824fa0728c81c1cd00a7f66abc5897c57b278b591",
+      "bureau_cli_sha256": "af6a8acfc9bb9e3e215f0a59f40cf5293bd82388f58007aeb801d52c9709c4f7",
+      "bureau_lease_contract_sha256": "4d05a41ffea86a811be27838c47b80a2bb532ba72acc9a15e190b7e910e24169",
+      "package_sha256": "61be8862ce529beaa4905b649382c118c2cd6246fcccbd796f1fd8f8ab475d66",
+      "package_file_count": 35,
+      "recovery_receipt": "/home/alex/.local/share/bureau/receipts/legacy-contract-venv-recovery-d85ad423aa027a6910ad6695c63c822c6121cb6c.json",
+      "recovery_receipt_sha256": "1a3dad59ff450242395621d1d96bb64e49cb9aa8e98e233523d29e0f05f6d87a",
+      "failed_relocated_venv_quarantined": true,
+      "previous_venv_preserved": true
+    },
+    "ambient_user_site": {
+      "status": "quarantined",
+      "package_tree_sha256": "8b8cb5159ae51d09d1440438486401cf81f6606b7a24da10048005684f3420ef",
+      "dist_info_tree_sha256": "307802655366192709fb9f50c65a9981edd623c5500a4ba936685b25a0f3f43e",
+      "receipt": "/home/alex/.local/share/bureau/receipts/ambient-user-site-quarantine-20260713T175319.129177Z.json",
+      "receipt_sha256": "8725e670cad5b00ddcd7cc4b99913a105ca991c70f9e6c37112aaccba10eb151",
+      "direct_module_probe": "python3 -m bureau.cli now fails loudly with ModuleNotFoundError instead of loading stale user-site code",
+      "rollback_available": true
+    },
+    "live_proof": {
+      "canonical_launcher_compatibility": "compatible",
+      "canonical_registry_head": "d85ad423aa027a6910ad6695c63c822c6121cb6c",
+      "state_schema_version": 3,
+      "state_integrity": "ok",
+      "grabowski_exact_scope_finding_codes": [],
+      "grabowski_contract_stdout_sha256": "5d839767426a5551e2922f35dc9085e8cb660fd8cb3a8e68719009ac0744a2ad",
+      "broad_repo_probe_boundary": "A broad repo lease remains intentionally forbidden and is not a runtime-health test."
+    },
+    "verified_acceptance": {
+      "source-identity": "Verified live: the canonical JSON envelope exposes immutable module, manifest and package-tree hashes, Registry head/origin/dirty state, state path/schema/integrity and explicit non-claims.",
+      "stale-runtime-gate": "Verified by tests for ambient, dirty, stale, unbound and package/manifest drift; mutation fails closed while bounded diagnostics remain available.",
+      "canonical-launcher": "Verified by the installed /home/alex/.local/bin/bureau launcher. The stale ambient user-site package is quarantined, so python3 -m bureau.cli fails loudly rather than silently loading old code.",
+      "deployment": "Verified by immutable release d85ad423aa02-src72aaf70b2218, manifest/package/launcher hashes, rollback metadata, install receipt and independent live readback.",
+      "tests": "Verified by focused positive and negative tests, complete local pytest runs, green Ruff, valid systemd reference units and green Python 3.10/3.12 CI on both implementation PRs."
+    },
+    "verified_at": "2026-07-13",
+    "verification_note": "PRs #521 and #522 are merged; the exact merge commit is deployed to the canonical manifest runtime and Grabowski contract venv; stale ambient imports are quarantined; a final exact-scope Grabowski lease contract returned no findings and all component hashes matched.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T004",
+          "source_ref": "heimgewebe/bureau#521",
+          "number": 521,
+          "head_sha": "b8649819cf5789ba4d8cb8a888c3d74edd58a97a",
+          "merge_commit_sha": "a0198442f25e25672b753f89a4ff5321e06f0f01",
+          "diff_sha256": "68cea9926400a6d50b241c2884ce5508feaf0f59871abfca51cb02a0c7a8a4ed"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T004",
+          "source_ref": "heimgewebe/bureau#522",
+          "number": 522,
+          "head_sha": "d9cbb5513debb69b6392368c6f564b4d371f9f24",
+          "merge_commit_sha": "d85ad423aa027a6910ad6695c63c822c6121cb6c",
+          "diff_sha256": "7882492f7d623caf5056f945d5db408eac022f20c45249b2a6121849c12773d2"
+        },
+        {
+          "kind": "runtime_deployment",
+          "authority": "bureau-runtime",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T004",
+          "source_ref": "bureau-runtime@d85ad423aa027a6910ad6695c63c822c6121cb6c",
+          "commit_sha": "d85ad423aa027a6910ad6695c63c822c6121cb6c",
+          "content_sha256": "adfa91e53bde1e2c415a834b3f063272e9d35e175f8e8ab58081ef2fd3f2b064"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "grabowski-resource-broker",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T004",
+          "source_ref": "exact-scope-contract-proof@d85ad423aa027a6910ad6695c63c822c6121cb6c",
+          "content_sha256": "5d839767426a5551e2922f35dc9085e8cb660fd8cb3a8e68719009ac0744a2ad"
+        }
+      ]
     },
     "does_not_establish": [
-      "registry_corruption",
-      "database_corruption",
-      "safe_mutation_until_runtime_parity_is_proven"
-    ]
+      "registry_semantic_correctness",
+      "task_priority",
+      "future_runtime_health",
+      "permission_to_delete_old_or_quarantined_releases",
+      "completion_of_the_separate_runtime_consolidation_followup"
+    ],
+    "verification": {
+      "task_sha256": "397c7af8dd8f0903ba542eeea024be7fcedc58e37281b3e8cd9a5aad851228ab",
+      "plan_sha256": "5bd32f4906cc9af27a3f99c7ab886eb9df7f8e5f4e9247c450bc492e64d28b06",
+      "source": "github_pull_requests_deployed_runtime_and_live_probe",
+      "source_ref": "github-pr:heimgewebe/bureau#521,#522@d85ad423aa027a6910ad6695c63c822c6121cb6c",
+      "evidence_sha256": "5d839767426a5551e2922f35dc9085e8cb660fd8cb3a8e68719009ac0744a2ad",
+      "verified_at": "2026-07-13"
+    }
   }
 }

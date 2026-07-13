@@ -57,7 +57,8 @@
     "OPERATOR-INTEGRATION-LOOP-V1-T004",
     "GRABOWSKI-OPERATOR-SURFACE-V1-T047",
     "OPERATOR-MACHINE-READABILITY-V1-T007",
-    "OPERATOR-MACHINE-READABILITY-V1-T008"
+    "OPERATOR-MACHINE-READABILITY-V1-T008",
+    "OPERATOR-MACHINE-READABILITY-V1-T011"
   ],
   "acceptance": [
     {
@@ -101,6 +102,7 @@
       "general_agent_reliability",
       "absence_of_future_instruction_drift",
       "mutation_or_merge_authority"
-    ]
+    ],
+    "requires_runtime_consolidation_task": "OPERATOR-MACHINE-READABILITY-V1-T011"
   }
 }

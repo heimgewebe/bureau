@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T011",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Unify Bureau canonical runtime and Grabowski contract deployment",
+  "state": "planned",
+  "goal": "Remove the remaining dual-deployment model by making Grabowski's Bureau lease consumer verify and execute the same immutable manifest-bound release selected by the canonical Bureau launcher, without weakening package integrity, exact-scope lease policy or rollback safety.",
+  "priority": {
+    "lane": "later",
+    "rank": 911
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/bureau",
+      "path:/home/alex/.local/share/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "state.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "bureau"
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T004"
+  ],
+  "acceptance": [
+    {
+      "id": "single-release-identity",
+      "assertion": "The canonical Bureau launcher and Grabowski lease consumer resolve one manifest, one source commit, one immutable package-tree digest and one rollback chain; no separately built venv is required for normal operation."
+    },
+    {
+      "id": "contract-integrity",
+      "assertion": "Grabowski still verifies the exact contract executable or interpreter, bureau.cli, bureau.lease_contract and the complete allowed package set before and after invocation, with source commit and manifest digest in the receipt."
+    },
+    {
+      "id": "policy-preservation",
+      "assertion": "Exact path and object scopes remain healthy, broad normal Bureau repository leases remain forbidden, emergency recovery boundaries remain unchanged and no manifest result grants lease authority by itself."
+    },
+    {
+      "id": "migration",
+      "assertion": "A create-first migration switches Grabowski only after a positive shadow comparison against the existing d85ad423 contract venv and retains both the previous selector and manifest for rollback."
+    },
+    {
+      "id": "failure-modes",
+      "assertion": "Missing, malformed, symlinked, digest-mismatched, stale-commit or concurrently changed manifests and package trees fail closed while bounded diagnostics remain available."
+    },
+    {
+      "id": "tests-and-live-proof",
+      "assertion": "Tests cover the current compatibility bridge, canonical manifest success, drift, races, rollback and policy parity; a deployed live proof acquires and releases one exact synthetic Bureau scope and rejects one broad normal repo scope for the policy reason rather than runtime drift."
+    }
+  ],
+  "metadata": {
+    "source": "OPERATOR-MACHINE-READABILITY-V1-T004 closeout",
+    "observed_at": "2026-07-13T17:55:00Z",
+    "current_state": {
+      "canonical_manifest_release": "d85ad423aa02-src72aaf70b2218",
+      "canonical_source_commit": "d85ad423aa027a6910ad6695c63c822c6121cb6c",
+      "grabowski_contract_venv": "/home/alex/.local/share/bureau/venv-d85ad423aa027a6910ad6695c63c822c6121cb6c",
+      "runtime_safety": "Both surfaces are independently hash-bound to the same source commit and currently pass live probes.",
+      "remaining_cost": "Two release builders, two rollback models and two runtime selectors must be maintained."
+    },
+    "safety_boundary": "Do not remove, overwrite or retarget the existing contract venv until manifest parity, exact-scope behavior and rollback are proven on the deployed Grabowski runtime.",
+    "does_not_establish": [
+      "current_runtime_insecurity",
+      "permission_to_delete_previous_or_quarantined_releases",
+      "automatic_migration_authority",
+      "need_to_change_Bureau_lease_policy"
+    ]
+  }
+}

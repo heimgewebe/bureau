@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T039",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Enforce transport-safe call shapes before execution",
+  "state": "planned",
+  "goal": "Enforce transport-safe boundaries on generic synchronous terminal and fleet execution before process start, route longer or shell-composed work to durable tasks, route oversized reads to bounded typed reads, retain internal process-safety timeouts, and prove the behavior through regression, CI and live deployment evidence without claiming that timeout parameters caused the ChatGPT UI hang.",
+  "priority": {
+    "lane": "later",
+    "rank": 390
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T036"
+  ],
+  "acceptance": [
+    {
+      "id": "source-event-bound",
+      "assertion": "Task metadata preserves live-register event 278 and candidate candidate-0379aae87f6f4730975e37f7e6554c88; the event remains observation evidence and does not itself authorize execution or merge."
+    },
+    {
+      "id": "pre-execution-hard-gate",
+      "assertion": "grabowski_terminal_run, grabowski_fleet_run and the generic Fleet CLI evaluate the same deterministic call-shape gate before any local or SSH process starts."
+    },
+    {
+      "id": "bounded-generic-sync-surface",
+      "assertion": "Generic synchronous execution denies known shell composition, timeouts above 30 seconds and output budgets above 64 KiB while preserving server-side timeout enforcement as a safety mechanism."
+    },
+    {
+      "id": "machine-readable-routing",
+      "assertion": "A denied call emits a bounded machine-readable receipt with process_started=false, reason codes and required_route=durable_task for shell-composed or longer work or required_route=split_read for oversized reads."
+    },
+    {
+      "id": "typed-and-durable-boundary",
+      "assertion": "Typed internal probes and persistent task/job executors retain their own bounded contracts and are not accidentally forced through the generic synchronous ceiling."
+    },
+    {
+      "id": "transport-ambiguity-preserved",
+      "assertion": "Existing mutation transport ambiguity semantics remain fail-closed: an interrupted response cannot authorize an unchanged mutation retry, and target-state readback remains required before another mutation attempt."
+    },
+    {
+      "id": "bypass-and-compatibility-tests",
+      "assertion": "Tests cover direct shells, env and known launcher wrappers, Fleet CLI parity, denial before _run, timeout and output ceilings, plain shell names used only as data, unchanged tool names and bounded defaults."
+    },
+    {
+      "id": "full-validation-and-review",
+      "assertion": "Focused tests, the complete test and contract suite, required GitHub CI and a head- and diff-bound critical self-review pass on the unchanged published PR head."
+    },
+    {
+      "id": "deployment-and-live-smoke",
+      "assertion": "The merge head is deployed and live probes prove one allowed bounded direct call plus fail-closed shell, long-timeout and oversized-output denials before process start."
+    },
+    {
+      "id": "causality-nonclaim",
+      "assertion": "Documentation and receipts state that the gate mitigates avoidable long synchronous transport exposure but does not establish the root cause of the ChatGPT application hang or guarantee that all future platform hangs are impossible."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_live_register",
+    "live_register_event_id": 278,
+    "live_register_candidate_id": "candidate-0379aae87f6f4730975e37f7e6554c88",
+    "live_register_created_at": "2026-07-13T04:57:51.190501Z",
+    "live_register_source": "operator",
+    "promotion_required_from_event": true,
+    "registered_from_plan_sha256": "ff1d45a0e47a362b02cb0bf91e3c549f8aad92774418f6ac8fef76b5d1913d9c",
+    "implementation": {
+      "branch": "fix/transport-safe-call-shape-v1",
+      "worktree": "/home/alex/repos/.grabowski-worktrees/transport-safe-call-shape-v1",
+      "base_head": "e96bbbd6cc90fe5d310d83538d8c5f2f7995aeca",
+      "integration_dependency": "T036 currently owns the shared generated runtime and publication contract files; T039 source and tests remain isolated until T036 is integrated."
+    },
+    "initial_validation": {
+      "focused_tests": "85 passed",
+      "broad_suite": "1291 passed, 1 expected stale generated-context failure",
+      "functional_failures": 0
+    },
+    "does_not_establish": [
+      "queue_truth",
+      "claim_authority",
+      "dispatch_authority",
+      "merge_readiness",
+      "timeout_parameter_root_cause",
+      "future_platform_hang_impossibility"
+    ]
+  }
+}

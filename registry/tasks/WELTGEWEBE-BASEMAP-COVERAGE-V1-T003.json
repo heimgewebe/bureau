@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-BASEMAP-COVERAGE-V1-T003",
+  "initiative": "WELTGEWEBE-BASEMAP-COVERAGE-V1",
+  "title": "Declare and verify PMTiles Content-Type",
+  "state": "planned",
+  "goal": "Configure the public PMTiles route to emit one documented, client-compatible Content-Type for full and Range responses, and lock the contract with CI plus production readiness checks.",
+  "depends_on": [
+    "WELTGEWEBE-BASEMAP-COVERAGE-V1-T002"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "git",
+    "caddy",
+    "http",
+    "pmtiles",
+    "integration-testing"
+  ],
+  "acceptance": [
+    {
+      "id": "mime-contract-decided",
+      "assertion": "The repository documents one explicit PMTiles Content-Type selected against current client and proxy compatibility.",
+      "evidence_type": "object",
+      "verifier": "documented route contract and upstream compatibility references"
+    },
+    {
+      "id": "full-and-range-headers",
+      "assertion": "Both HTTP 200 and HTTP 206 responses for every regional .pmtiles path emit the chosen Content-Type together with Accept-Ranges and correct Content-Range.",
+      "evidence_type": "object",
+      "verifier": "Caddy integration tests and public readiness receipt"
+    },
+    {
+      "id": "browser-regression",
+      "assertion": "Hamburg and Schleswig-Holstein still decode and render through MapLibre after the header change.",
+      "evidence_type": "object",
+      "verifier": "joint regional Playwright visual proof"
+    },
+    {
+      "id": "live-readback",
+      "assertion": "Production headers for both stable aliases and versioned artifacts match the declared contract.",
+      "evidence_type": "object",
+      "verifier": "post-deploy HTTP 200/206 receipt"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13T19:37:03Z",
+    "source_pr": "heimgewebe/weltgewebe#1417",
+    "gap": "Production currently serves valid PMTiles 200/206 bodies without an explicit Content-Type header. MapLibre works, but the HTTP representation contract is implicit.",
+    "does_not_establish": [
+      "current_browser_failure",
+      "pmtiles_payload_corruption",
+      "need_to_change_artifact_bytes"
+    ]
+  }
+}

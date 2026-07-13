@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 
 from bureau.core import Dispatcher, Registry, StateStore
 from bureau.v2 import state_root_hygiene
@@ -513,3 +514,232 @@ def test_not_directory_state_root_report_keeps_archive_candidate_shape(tmp_path)
     assert report["known_count"] == 0
     assert report["archive_candidate_count"] == 0
     assert report["unknown_count"] == 0
+
+
+
+def _canonical_sha256(value):
+    rendered = json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(rendered.encode()).hexdigest()
+
+
+def _write_completion_evidence(state_root, *, corrupt_diff=False, foreign=False):
+    bundle = state_root / "evidence" / "grabowski-task-completion"
+    bundle.mkdir(parents=True)
+    diff_bytes = b"diff --git a/a b/a\n--- a/a\n+++ b/a\n@@ -1 +1 @@\n-old\n+new\n"
+    (bundle / "pr.diff").write_bytes(diff_bytes)
+    axes = {
+        axis: {"result": "PASS", "evidence": [f"{axis} checked"]}
+        for axis in (
+            "correctness",
+            "integration",
+            "regression_risk",
+            "security",
+            "tests",
+        )
+    }
+    review = {
+        "schema_version": 1,
+        "kind": "bureau_pr_self_review",
+        "repository": "heimgewebe/bureau",
+        "pull_request": 999,
+        "reviewed_head": "a" * 40,
+        "base_head": "b" * 40,
+        "github_diff_sha256": (
+            "0" * 64 if corrupt_diff else hashlib.sha256(diff_bytes).hexdigest()
+        ),
+        "github_diff_bytes": len(diff_bytes),
+        "axes": axes,
+        "conclusion": "PASS",
+        "merge_condition": "head and diff unchanged",
+        "reviewed_at_unix": 1,
+    }
+    review["review_sha256"] = _canonical_sha256(review)
+    (bundle / "self-review.json").write_text(
+        json.dumps(review, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    if foreign:
+        (bundle / "operator-note.txt").write_text("foreign\n", encoding="utf-8")
+    return bundle
+
+
+def _write_reviewed_plan(state_root, *, corrupt_hash=False):
+    plans = state_root / "plans"
+    plans.mkdir()
+    event_id = 42
+    initiative = "TEST-INITIATIVE-V1"
+    task_id = "TEST-INITIATIVE-V1-T001"
+    plan = {
+        "schema_version": 2,
+        "command": "live-promote-plan",
+        "event_id": event_id,
+        "initiative": initiative,
+        "task_id": task_id,
+        "source_event": {
+            "event_id": event_id,
+            "record": {
+                "kind": "candidate_task",
+                "title": "Test task",
+                "status": "observed",
+            },
+        },
+        "task_json": {
+            "schema_version": 1,
+            "id": task_id,
+            "initiative": initiative,
+            "title": "Test task",
+            "state": "planned",
+        },
+        "review": {"required": True, "status": "pending"},
+        "does_not_establish": [
+            "queue_mutation",
+            "claim_authority",
+        ],
+    }
+    generated_sha256 = _canonical_sha256(plan)
+    plan["review"] = {
+        "required": True,
+        "status": "reviewed",
+        "reviewer": "test-reviewer",
+    }
+    plan["plan_sha256"] = "0" * 64 if corrupt_hash else generated_sha256
+    target = plans / "test-plan.json"
+    target.write_text(json.dumps(plan, indent=2) + "\n", encoding="utf-8")
+    return target
+
+
+def test_completion_evidence_and_reviewed_plans_are_known_active_entries(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    _write_completion_evidence(store.state_root)
+    _write_reviewed_plan(store.state_root)
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is True
+    assert report["unknown_entries"] == []
+    known = {entry["name"]: entry["class"] for entry in report["known_entries"]}
+    assert known["evidence"] == "completion-evidence-directory"
+    assert known["plans"] == "reviewed-plan-directory"
+
+
+def test_completion_evidence_with_diff_mismatch_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    _write_completion_evidence(store.state_root, corrupt_diff=True)
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "evidence", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_completion_evidence_with_foreign_file_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    _write_completion_evidence(store.state_root, foreign=True)
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "evidence", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_completion_evidence_symlink_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    bundle = _write_completion_evidence(store.state_root)
+    review = bundle / "self-review.json"
+    backup = bundle / "self-review.real.json"
+    review.rename(backup)
+    review.symlink_to(backup.name)
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "evidence", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_reviewed_plan_with_wrong_generated_hash_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    _write_reviewed_plan(store.state_root, corrupt_hash=True)
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "plans", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_reviewed_plan_symlink_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    target = _write_reviewed_plan(store.state_root)
+    backup = target.with_name("real-plan.json")
+    target.rename(backup)
+    target.symlink_to(backup.name)
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "plans", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_empty_evidence_and_plan_directories_remain_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    (store.state_root / "evidence").mkdir()
+    (store.state_root / "plans").mkdir()
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "evidence", "type": "directory", "class": "unknown"},
+        {"name": "plans", "type": "directory", "class": "unknown"},
+    ]
+
+
+def test_oversized_reviewed_plan_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    target = _write_reviewed_plan(store.state_root)
+    target.write_bytes(b"x" * (512 * 1024 + 1))
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "plans", "type": "directory", "class": "unknown"}
+    ]

@@ -1,6 +1,6 @@
 name: temporary-rcga-live-exploration
 
-on: [push]
+on: [push, pull_request]
 
 permissions:
   contents: read
@@ -74,8 +74,7 @@ jobs:
 
           from merger.lenskit.core.repobrief_agent_impact_adapter import RepoBriefAgentImpactAdapter
 
-          root = Path.cwd()
-          output = root / "live-output"
+          output = Path.cwd() / "live-output"
           exact = {
               "lenskit": "456d37bd142349bc0c04925d87934eefbbc546ac",
               "grabowski": "f6eed48752fd2cf32f070dc69b2112e2498872cb",

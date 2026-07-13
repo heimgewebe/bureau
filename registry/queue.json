@@ -60,8 +60,7 @@
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T003"
     ],
     "now": [
-      "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T005",
-      "RCGA-V1-T003"
+      "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T005"
     ]
   },
   "queue_policy": "skip-blocked",

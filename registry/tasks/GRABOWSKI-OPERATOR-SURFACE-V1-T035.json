@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T035",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Add Agent Workspace process observer and evidence-driven optimizer",
-  "state": "planned",
+  "state": "blocked",
   "priority": {
     "lane": "later",
     "rank": 531
@@ -74,14 +74,48 @@
     "source_finding": "The workspace preserved immutable role evidence, but the operator had to reconstruct why the test role failed, why retry was unavailable and which external closeout steps remained. A later response stopped after artifact generation, showing that workspace success and complete operator closeout are separate observability concerns.",
     "architecture_decision": "Use a deterministic event recorder for every workspace, an optional read-only observer role for selected runs, and a separate cross-workspace optimizer. Do not make an always-on agent role part of the critical path.",
     "does_not_establish": [
+      "automatic closeout reconciliation authority",
       "automatic optimization authority",
-      "permission to mutate writer output",
-      "permission to expose secrets or user home",
-      "workspace correctness",
-      "review completeness",
-      "merge readiness",
       "completion of T032",
-      "completion of T034"
-    ]
+      "completion of T034",
+      "merge readiness",
+      "observer correctness for legacy workspaces",
+      "optimizer recommendation usefulness",
+      "permission to expose secrets or user home",
+      "permission to mutate writer output",
+      "review completeness",
+      "task completion merely because PR #164 is merged",
+      "workspace correctness"
+    ],
+    "implementation_pr": "heimgewebe/grabowski#164",
+    "implementation_head": "7094dceca8c8fdb5d817ac2c12df7dd4e9896ce7",
+    "implementation_merge_commit": "a4e09954b33d17644518598b2867208a1595ecc0",
+    "implementation_diff_sha256": "13c8d9e69025bdedcd12bf301eb38494dd76b625ad8bddb6a29d7ef2b1b506f6",
+    "deployed_runtime_head": "0f5473e117ddc7f6e830b961a49e73fcf3ebb657",
+    "live_audit_at": "2026-07-13T04:52:00Z",
+    "live_audit_result": "acceptance_not_met",
+    "live_findings": [
+      {
+        "severity": "high",
+        "finding": "The legacy Lenskit receipt stderr `/usr/bin/python3: No module named pytest` is classified as tests:semantic_test_failure instead of an environment/toolchain failure.",
+        "workspace_id": "gaw-lenskit-rpu-v1-t018-e8b0e581d7c3",
+        "observer_report_sha256": "73a8811c0d2c00ee1b3bbaaee1119b351297a7f41f313adcceb8c033cdd956b9"
+      },
+      {
+        "severity": "high",
+        "finding": "Successful role states are emitted as failure classes such as review:already_succeeded; the cross-run optimizer then proposes reducing that non-failure.",
+        "optimizer_sha256": "7a9e09938872f52077a7406a1fa09bd0b00dd260c9efa1dd326f1cc01a9bac7b"
+      },
+      {
+        "severity": "medium",
+        "finding": "Legacy observer reports omit recoverable writer head/diff identity and leave already completed GitHub/Bureau/checkout closeout items unresolved.",
+        "workspace_ids": [
+          "gaw-gaw-smoke-repo-178-chat-20260710-grabowsk-4ba88cf171c5",
+          "gaw-lenskit-rpu-v1-t018-e8b0e581d7c3"
+        ]
+      }
+    ],
+    "blocking_reason": "Live legacy-workspace probes falsified observer classification, closeout reconciliation and optimizer usefulness. Grabowski is additionally occupied by the foreign Consumer Surface v2/T036 ball.",
+    "followup_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T037"
   }
 }

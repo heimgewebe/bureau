@@ -91,7 +91,9 @@ Vor der Planerzeugung prüft Bureau:
 - Ziel fehlt und überlappt den aktiven State-Root nicht;
 - State-Root, dessen Elternverzeichnis, Referenzwurzel, deren Elternverzeichnis und die
   nächste bereits vorhandene Zielbasis werden komponentenweise ohne Symlink-Folgen
-  geöffnet und mit Pfad, Gerät, Inode und Modus im Plan gebunden.
+  geöffnet und mit Pfad, Gerät, Inode und Modus im Plan gebunden;
+- State-Root und Referenzwurzel müssen unter ihrem erwarteten Namen im jeweils gebundenen
+  Parent exakt auf dieselbe Geräte-/Inode-Identität zeigen.
 
 Der Migrationsplan verwendet Schema 2. Schema-1-Pläne enthalten diese Anker nicht und
 werden deshalb bei einer Mutation bewusst fail-closed abgelehnt; es gibt keinen stillen
@@ -126,9 +128,11 @@ gebundenen Inode bezeichnet; ein fremdes Ersatzverzeichnis wird nie als eigenes 
 behandelt.
 
 Ein create-only Receipt Schema 2 bindet Plan, Einträge, Plattformvertrag,
-Verzeichnisanker, Zielaufbau, Rollbackwege und seinen eigenen kanonischen SHA-256. Eine
-identische Wiederholung öffnet die gebundenen Pfade erneut ohne Symlink-Folgen, validiert
-dieses Receipt und ist idempotent. Ein verändertes oder altes Receipt wird abgelehnt.
+Verzeichnisanker, Zielaufbau, Rollbackwege und seinen eigenen kanonischen SHA-256. Es
+bindet zusätzlich den tatsächlichen Ziel-Root und dessen direkten Parent. Eine identische
+Wiederholung öffnet die gebundenen Pfade erneut ohne Symlink-Folgen, prüft die
+Parent-Kind-Beziehungen und ist idempotent. Ein verändertes oder altes Receipt wird
+abgelehnt.
 
 ## Rollback
 
@@ -140,8 +144,10 @@ bureau --root /path/to/bureau --state-root ~/.local/state/bureau \
 
 Rollback verwendet denselben Plattformvertrag, dieselben Geräte-/Inode-Anker,
 descriptor-relativen No-follow-Operationen, die vollständige Vorabprüfung und die
-Kompensation wie Apply. Es prüft Receipt-SHA, Referenzen, Prozessbezüge,
-Dateisystemgrenzen, Zielkollisionen und jeden Eintragsdigest. Es verschiebt nur
+Kompensation wie Apply. Es prüft zusätzlich, dass der Ziel-Root unter dem erwarteten Namen
+weiterhin Kind des gebundenen direkten Ziel-Parents ist. Danach prüft es Receipt-SHA,
+Referenzen, Prozessbezüge, Dateisystemgrenzen, Zielkollisionen und jeden Eintragsdigest. Es
+verschiebt nur
 unveränderte Quarantäneeinträge an ihre gebundenen ursprünglichen Verzeichnisse zurück.
 Receipt und Quarantäneverzeichnis werden nicht gelöscht.
 

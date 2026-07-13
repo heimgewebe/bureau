@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-BASEMAP-COVERAGE-V1",
+  "title": "Weltgewebe sovereign regional basemap coverage",
+  "state": "active",
+  "commitment": "later",
+  "goal": "Extend and verify the local-sovereign Weltgewebe basemap region by region without allowing one healthy PMTiles archive to hide another missing or corrupt region.",
+  "current_plan": {
+    "repository": "weltgewebe",
+    "path": "docs/deployment.md"
+  },
+  "completion": [
+    "Every declared regional PMTiles source has a pinned build input, a versioned artifact and stable aliases.",
+    "CI and production readiness validate each regional archive independently.",
+    "Archive structure and representative tile payloads are validated beyond file hash, magic bytes and HTTP Range delivery."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "github": "heimgewebe/weltgewebe",
+    "source_pr": "heimgewebe/weltgewebe#1417",
+    "registered_at": "2026-07-13T15:08:00Z",
+    "does_not_establish": [
+      "all_german_regions_covered",
+      "future_osm_freshness",
+      "zero_cartographic_gaps",
+      "production_deployment_complete"
+    ]
+  }
+}

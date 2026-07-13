@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "id": "SCHAUWERK-VISUAL-ADOPTION-V1-T001",
+  "initiative": "SCHAUWERK-VISUAL-ADOPTION-V1",
+  "title": "Apply Visual System v2 to the software pilot",
+  "state": "ready",
+  "goal": "Compile a real software-pilot snapshot into a source-bound, narrative and quality-gated Visual System v2 board while preserving the existing renderer as an explicit compatibility path.",
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "depends_on": [],
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Repository changes require a complete GitHub diff, head- and diff-bound self-review, green CI and exact post-merge validation. A live Miro write may target only a newly created isolated board."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "miro"
+  ],
+  "acceptance": [
+    {
+      "id": "real-content",
+      "assertion": "A validated software-pilot snapshot compiles deterministically into a Visual System v2 board specification and Miro DSL."
+    },
+    {
+      "id": "quality-gate",
+      "assertion": "The generated board passes the v2 quality gate with at least 90 points, no blockers and explicit evidence separation."
+    },
+    {
+      "id": "truth",
+      "assertion": "Source authority, revisions, tests, risks and non-claims remain visible and digest-bound; missing or failed source data cannot appear current."
+    },
+    {
+      "id": "compatibility",
+      "assertion": "The existing software-pilot renderer and command remain compatible while v2 outputs are opt-in until adoption evidence is complete."
+    },
+    {
+      "id": "live-proof",
+      "assertion": "One fresh isolated Miro board is created from the generated v2 DSL and checked by remote conformance plus a bounded visual review, or the unavailable provider evidence is recorded as an explicit open gate."
+    },
+    {
+      "id": "merge-gates",
+      "assertion": "Tests, CI, complete diff, diff-bound self-review, mergeability and post-merge validation pass before the task is verified."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13T04:21:00Z",
+    "source_request": "arbeite weiter am schauwerk",
+    "predecessor_task": "SCHAUWERK-VISUAL-SYSTEM-V2-T001",
+    "does_not_establish": [
+      "default_migration_before_acceptance",
+      "automatic_changes_to_existing_boards",
+      "universal_aesthetic_quality",
+      "retirement_of_legacy_software_dsl"
+    ]
+  }
+}

@@ -5,16 +5,33 @@
   "title": "Reconcile obsolete path leases without weakening exact overlap",
   "state": "planned",
   "goal": "Close the live gap exposed by T040: exact path leases must remain fail-closed while their owner still declares the path, but completed or superseded owner work needs an evidence-bound release and reconciliation path so stale path leases do not block unrelated successors until TTL expiry.",
-  "priority": {"lane": "later", "rank": 460},
+  "priority": {
+    "lane": "later",
+    "rank": 460
+  },
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski",
-    "grabowski_resources": ["repo:/home/alex/repos/grabowski"]
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
   },
-  "claims": [{"resource": "repo.grabowski", "mode": "write", "isolation": "worktree"}],
-  "required_capabilities": ["repository", "shell", "grabowski"],
-  "depends_on": ["GRABOWSKI-OPERATOR-SURFACE-V1-T038"],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T038"
+  ],
   "acceptance": [
     {
       "id": "exact-overlap-remains-blocked",
@@ -53,13 +70,14 @@
     "observed_blocked_resource": "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json",
     "foreign_owner": "chatgpt-agent-workspace-outcomes-t037-20260713",
     "foreign_workspace": "gaw-grabowski-chat-grabowski-t037-po-9f6c04438937",
-    "safety_decision": "Do not force-release or infer permission. T040 remains blocked until the owner releases the exact path lease or a reviewed owner-bound reconciliation contract exists.",
+    "safety_decision": "At the original observation, do not force-release or infer permission. T040 could proceed only after the foreign owner had closed its workspace and the exact path lease was released or validly reclaimed owner-bound.",
     "does_not_establish": [
       "permission_to_force_release_foreign_leases",
       "expiry_as_reclaim_authority",
       "process_absence_as_completion_evidence",
       "path_overlap_as_nonconflicting",
       "automatic_merge_or_deploy_authority"
-    ]
+    ],
+    "observed_resolution": "T037 later closed with resources_released=true; T040 then acquired the exact generated-context path owner-bound, completed, merged and deployed. T046 remains planned to generalize this safe reconciliation path for future stale exact leases."
   }
 }

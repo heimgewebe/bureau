@@ -10,12 +10,12 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/registry/tasks/CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T004.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -71,7 +71,13 @@
     ],
     "task_role": "t004",
     "demoted_at": "2026-07-12",
-    "demotion_basis": "A review or display product is premature until real Grabowski outcomes show that Heimlern materially improves an operator diagnosis or decision."
+    "demotion_basis": "A review or display product is premature until real Grabowski outcomes show that Heimlern materially improves an operator diagnosis or decision.",
+    "bureau_always_open_scope_migration_20260713": {
+      "from": "repo:/home/alex/repos/bureau",
+      "to": "path:/home/alex/repos/bureau/registry/tasks/CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T004.json",
+      "claim_resource": "component.bureau.registry",
+      "reason": "Keep Bureau intake and unrelated registry writes available while this task is worked in an isolated branch."
+    }
   },
   "priority": {
     "lane": "later",

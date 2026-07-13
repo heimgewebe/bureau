@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+
 from bureau.core import Dispatcher, Registry, StateStore
 from bureau.v2 import state_root_hygiene
 
@@ -58,6 +60,263 @@ def test_configured_state_database_sidecars_stay_known(
     assert known["custom.sqlite3"] == "sqlite-database"
     assert known["custom.sqlite3-wal"] == "sqlite-sidecar"
     assert known["custom.sqlite3-shm"] == "sqlite-sidecar"
+
+
+def test_deployment_evidence_directory_stays_known_active_state_root_entry(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    deployments = store.state_root / "deployments"
+    release = deployments / ("a" * 40)
+    release.mkdir(parents=True)
+    (release / "receipt.json").write_text(
+        '{"schema_version":1,"release":"' + ("a" * 40) + '","status":"deployed"}\n',
+        encoding="utf-8",
+    )
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is True
+    assert report["archive_candidate_entries"] == []
+    assert report["unknown_entries"] == []
+    known = {entry["name"]: entry["class"] for entry in report["known_entries"]}
+    assert known["deployments"] == "deployment-evidence-directory"
+
+
+def test_empty_deployment_evidence_directory_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    (store.state_root / "deployments").mkdir()
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "deployments", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_malformed_deployment_evidence_directory_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    deployments = store.state_root / "deployments"
+    release = deployments / ("b" * 40)
+    release.mkdir(parents=True)
+    (release / "receipt.json").write_text(
+        '{"schema_version":1,"release":"wrong","status":"deployed"}\n',
+        encoding="utf-8",
+    )
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "deployments", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_foreign_file_inside_deployment_release_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    release = store.state_root / "deployments" / ("c" * 40)
+    release.mkdir(parents=True)
+    (release / "receipt.json").write_text(
+        '{"schema_version":1,"release":"' + ("c" * 40) + '","status":"deployed"}\n',
+        encoding="utf-8",
+    )
+    (release / "operator-note.txt").write_text("foreign\n", encoding="utf-8")
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "deployments", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_deployment_wrapper_count_must_match_receipt(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    release = store.state_root / "deployments" / ("d" * 40)
+    wrappers = release / "retired-wrappers"
+    wrappers.mkdir(parents=True)
+    (wrappers / "old-wrapper").write_text("#!/bin/sh\n", encoding="utf-8")
+    (release / "receipt.json").write_text(
+        '{"schema_version":1,"release":"'
+        + ("d" * 40)
+        + '","status":"deployed","retired_wrappers_removed":2}\n',
+        encoding="utf-8",
+    )
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "deployments", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_valid_retired_wrapper_evidence_stays_known(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    release = store.state_root / "deployments" / ("e" * 40)
+    wrappers = release / "retired-wrappers"
+    wrappers.mkdir(parents=True)
+    (wrappers / "old-wrapper").write_text("#!/bin/sh\n", encoding="utf-8")
+    (release / "receipt.json").write_text(
+        '{"schema_version":1,"release":"'
+        + ("e" * 40)
+        + '","status":"deployed","retired_wrappers_removed":1}\n',
+        encoding="utf-8",
+    )
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is True
+    assert report["unknown_entries"] == []
+
+
+def test_non_release_child_in_deployment_evidence_directory_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    deployments = store.state_root / "deployments"
+    deployments.mkdir()
+    (deployments / "operator-note.txt").write_text("not deployment evidence\n", encoding="utf-8")
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "deployments", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_recovery_bundle_directory_stays_known_active_state_root_entry(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    recovery = store.state_root / "recovery"
+    recovery.mkdir()
+    bundle = recovery / "pr464-closeout.bundle"
+    bundle.write_bytes(b"bundle evidence\n")
+    checksum = recovery / "pr464-closeout.bundle.sha256"
+    checksum.write_text(
+        hashlib.sha256(bundle.read_bytes()).hexdigest() + f"  {bundle}\n",
+        encoding="utf-8",
+    )
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is True
+    assert report["unknown_entries"] == []
+    known = {entry["name"]: entry["class"] for entry in report["known_entries"]}
+    assert known["recovery"] == "recovery-bundle-directory"
+
+
+def test_oversized_recovery_bundle_remains_unknown_without_hashing(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    recovery = store.state_root / "recovery"
+    recovery.mkdir()
+    bundle = recovery / "oversized.bundle"
+    with bundle.open("wb") as handle:
+        handle.truncate(512 * 1024 * 1024 + 1)
+    (recovery / "oversized.bundle.sha256").write_text(
+        ("0" * 64) + f"  {bundle}\n", encoding="utf-8"
+    )
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "recovery", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_recovery_bundle_with_wrong_digest_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    recovery = store.state_root / "recovery"
+    recovery.mkdir()
+    bundle = recovery / "pr464-closeout.bundle"
+    bundle.write_bytes(b"bundle evidence\n")
+    (recovery / "pr464-closeout.bundle.sha256").write_text(
+        ("0" * 64) + f"  {bundle}\n", encoding="utf-8"
+    )
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "recovery", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_empty_recovery_directory_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    (store.state_root / "recovery").mkdir()
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "recovery", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_unpaired_recovery_bundle_directory_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    recovery = store.state_root / "recovery"
+    recovery.mkdir()
+    (recovery / "pr464-closeout.bundle").write_bytes(b"bundle evidence\n")
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "recovery", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_foreign_file_in_recovery_bundle_directory_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    recovery = store.state_root / "recovery"
+    recovery.mkdir()
+    (recovery / "operator-note.txt").write_text("not recovery evidence\n", encoding="utf-8")
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "recovery", "type": "directory", "class": "unknown"}
+    ]
 
 
 def test_review_directory_stays_known_active_state_root_entry(

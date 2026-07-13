@@ -1,4 +1,4 @@
-name: temporary RCGA T003 validation diagnostics
+name: temporary RCGA T003 verification hashes
 
 on:
   pull_request:
@@ -8,26 +8,53 @@ permissions:
   contents: read
 
 jobs:
-  diagnose:
+  hashes:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
-        with:
-          python-version: "3.12"
-      - name: Install
-        run: python -m pip install -e '.[dev]'
-      - name: Capture validation output
-        shell: bash
+      - name: Compute canonical hashes
         run: |
-          set -o pipefail
-          make validate 2>&1 | tee validation.log
-      - name: Upload diagnostics
-        if: always()
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          def canonical(value):
+              return json.dumps(
+                  value,
+                  ensure_ascii=False,
+                  sort_keys=True,
+                  separators=(",", ":"),
+              )
+
+          task_path = Path("registry/tasks/RCGA-V1-T003.json")
+          initiative_path = Path(
+              "registry/initiatives/REPOBRIEF-CODEGRAPH-ADOPTION-V1.json"
+          )
+          task = json.loads(task_path.read_text(encoding="utf-8"))
+          task.pop("state", None)
+          metadata = task.get("metadata")
+          if isinstance(metadata, dict):
+              metadata.pop("verification", None)
+              if not metadata:
+                  task.pop("metadata", None)
+          initiative = json.loads(initiative_path.read_text(encoding="utf-8"))
+          plan = initiative.get("current_plan") or {}
+          result = {
+              "task_sha256": hashlib.sha256(canonical(task).encode()).hexdigest(),
+              "plan_sha256": hashlib.sha256(canonical(plan).encode()).hexdigest(),
+          }
+          Path("verification-hashes.json").write_text(
+              json.dumps(result, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(result, sort_keys=True))
+          PY
+      - name: Upload hashes
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6
         with:
-          name: rcga-t003-validation-diagnostics-${{ github.run_id }}
-          path: validation.log
+          name: rcga-t003-verification-hashes-${{ github.run_id }}
+          path: verification-hashes.json
           if-no-files-found: error
           retention-days: 7

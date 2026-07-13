@@ -38,6 +38,7 @@ from .live_register import (
     live_retention_report,
     write_live_promote_plan,
 )
+from .read_only_state import ReadOnlyStateStore
 from .rlens_policy import evaluate_registry_rlens_policy
 from .runtime_identity import bureau_runtime_identity, require_mutation_compatible
 
@@ -86,7 +87,7 @@ def emit(value: Any, as_json: bool) -> None:
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="bureau")
-    result.add_argument("--root", default=".")
+    result.add_argument("--root")
     result.add_argument("--state-db")
     result.add_argument("--state-root")
     result.add_argument("--json", action="store_true")
@@ -348,18 +349,42 @@ def _state_path(args: argparse.Namespace) -> Path:
     return Path(configured).expanduser() / "bureau.sqlite3"
 
 
+def resolve_registry_root(configured: str | None) -> tuple[Path, str]:
+    if configured is not None:
+        return Path(configured).expanduser(), "explicit-cli"
+    environment = os.environ.get("BUREAU_REGISTRY_ROOT")
+    if environment:
+        mode = os.environ.get("BUREAU_REGISTRY_ROOT_MODE", "explicit-environment")
+        return Path(environment).expanduser(), mode
+    return Path.cwd(), "ambient-cwd"
+
+
 _READ_ONLY_COMMANDS = frozenset(
     {
         "check",
+        "conflicts",
+        "explain-next",
+        "frontier",
         "runtime-identity",
         "runtime-drift-check",
         "lease-contract",
+        "lifecycle",
+        "live-conflicts",
+        "live-export",
+        "live-list",
+        "live-retention",
+        "repo-balls",
         "registry-truth",
         "rlens-policy",
+        "run",
+        "runs",
         "source-check",
         "source-promote-plan",
+        "status",
         "github-observe",
         "status-projection",
+        "what-now",
+        "workspace-status",
     }
 )
 
@@ -370,6 +395,12 @@ def _command_mutates(args: argparse.Namespace) -> bool:
         return bool(args.write_plan or args.apply_plan)
     if command == "source-sync":
         return bool(args.apply)
+    if command == "doctor":
+        return bool(getattr(args, "repair", True))
+    if command == "queue-reconcile":
+        return bool(args.write_plan or args.apply_plan)
+    if command == "live-promote-plan":
+        return bool(args.write_plan or args.apply_plan)
     # Fail closed for every command not explicitly proven read-only. This also
     # makes newly added commands mutation-gated until they are classified.
     return command not in _READ_ONLY_COMMANDS
@@ -379,11 +410,12 @@ def main(argv: list[str] | None = None) -> int:
     global _CLI_JSON_ENVELOPE, _CLI_RUNTIME_IDENTITY
     args = parser().parse_args(argv)
     try:
-        root = Path(args.root)
+        root, registry_selection = resolve_registry_root(args.root)
 
         state_path = Path(args.state_db).expanduser() if args.state_db else None
         state_root = Path(args.state_root).expanduser() if args.state_root else None
         _CLI_RUNTIME_IDENTITY = bureau_runtime_identity(root, state_path=_state_path(args))
+        _CLI_RUNTIME_IDENTITY["registry_selection"] = registry_selection
         operational_registry = bool(
             _CLI_RUNTIME_IDENTITY.get("registry", {}).get("bureau_project")
         )
@@ -395,6 +427,37 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "runtime-identity":
             emit({"status": "ok"}, args.json)
             return 0
+        canonical_registry = _CLI_RUNTIME_IDENTITY.get("manifest", {}).get(
+            "canonical_registry", {}
+        )
+        if (
+            registry_selection == "canonical-runtime-default"
+            and canonical_registry.get("valid") is not True
+        ):
+            emit(
+                {
+                    "schema_version": 1,
+                    "status": "canonical-registry-invalid",
+                    "reason_codes": canonical_registry.get("reasons", ["not-configured"]),
+                    "runtime_identity": _CLI_RUNTIME_IDENTITY,
+                    "does_not_establish": ["registry_truth", "safe_retry"],
+                },
+                args.json,
+            )
+            return 2
+        if _command_mutates(args) and registry_selection == "canonical-runtime-default":
+            emit(
+                {
+                    "schema_version": 1,
+                    "status": "explicit-registry-root-required",
+                    "reason_codes": ["canonical-registry-read-only"],
+                    "required_action": "rerun with --root bound to a clean task worktree",
+                    "runtime_identity": _CLI_RUNTIME_IDENTITY,
+                    "does_not_establish": ["mutation_authority", "task_worktree_identity"],
+                },
+                args.json,
+            )
+            return 2
         if _command_mutates(args):
             blocked = require_mutation_compatible(_CLI_RUNTIME_IDENTITY)
             if blocked is not None:
@@ -423,7 +486,12 @@ def main(argv: list[str] | None = None) -> int:
             emit(value, args.json)
             return 0
         if args.command in {"live-list", "live-export", "live-retention"}:
-            store = StateStore(state_path, state_root)
+            store_class = (
+                ReadOnlyStateStore
+                if registry_selection == "canonical-runtime-default"
+                else StateStore
+            )
+            store = store_class(state_path, state_root)
             if args.command == "live-list":
                 value = live_register_list(
                     store,
@@ -583,7 +651,12 @@ def main(argv: list[str] | None = None) -> int:
             )
             emit(value, args.json)
             return 0
-        store = StateStore(state_path, state_root)
+        store = (
+            ReadOnlyStateStore(state_path, state_root)
+            if not _command_mutates(args)
+            and registry_selection == "canonical-runtime-default"
+            else StateStore(state_path, state_root)
+        )
         adapter_registry = adapters(args)
         dispatcher = Dispatcher(registry, store, adapter_registry, enforce_runtime_gate=True)
         if args.command == "status":

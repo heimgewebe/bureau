@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "GRIP-ROADMAP-V1-T022",
+  "initiative": "GRIP-ROADMAP-V1",
+  "title": "Align worktree-ensure with the Bureau exact-lease contract",
+  "state": "planned",
+  "goal": "Make the Grabowski worktree-ensure grip acquire and validate the exact target-path and short Bureau worktree-admin leases required by Bureau Always-open Lease Contract v2, without requesting the deprecated global Bureau repository lease.",
+  "depends_on": [],
+  "priority": {
+    "lane": "next",
+    "rank": 22
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "bureau"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "acceptance": [
+    {
+      "id": "exact-leases",
+      "assertion": "For Bureau worktrees, worktree-ensure requires the exact target path lease and the bounded path:/home/alex/repos/bureau/.bureau-scopes/worktree-admin effect gate, and does not request repo:/home/alex/repos/bureau for normal work."
+    },
+    {
+      "id": "contract-discovery",
+      "assertion": "The grip derives or validates the current Bureau lease contract before mutation and fails closed with actionable required resource keys when the contract is unavailable or incompatible."
+    },
+    {
+      "id": "idempotency",
+      "assertion": "Existing matching worktrees remain idempotent, while branch, head, path or ownership mismatches remain blocked without cleanup or takeover."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover Bureau v2 exact leases, non-Bureau repositories, missing target-path lease, missing worktree-admin gate, deprecated broad lease rejection, replay and post-state readback."
+    },
+    {
+      "id": "live-smoke",
+      "assertion": "A live Bureau worktree is created through worktree-ensure using only the current exact leases, then its short worktree-admin gate is released while the target-path ownership remains intact."
+    }
+  ],
+  "metadata": {
+    "source": "Bureau canonical Registry root v2 implementation",
+    "observed_at": "2026-07-13T18:19:25Z",
+    "failure_receipt": "/home/alex/.local/state/grabowski/grip-receipts/worktree-ensure/e442e8b9b564f3f9561f7c6ca0009d471e7aef8de010049cb190b60d87bdec61.json",
+    "observed_failure": "worktree-ensure returned REJECTED_BY_LEASE because it required both the target path and deprecated repo:/home/alex/repos/bureau; direct exact-lease acquisition and typed git worktree creation then succeeded.",
+    "correct_contract": {
+      "target_path_lease": "path:<target-worktree>",
+      "effect_gate": "path:/home/alex/repos/bureau/.bureau-scopes/worktree-admin",
+      "global_repo_lease": "forbidden for normal work"
+    },
+    "does_not_establish": [
+      "implementation_complete",
+      "current_grip_safety",
+      "permission_to_bypass_leases",
+      "merge_readiness",
+      "runtime_deployed"
+    ]
+  }
+}

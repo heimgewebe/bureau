@@ -15,6 +15,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from .registry_snapshot import canonical_registry_identity
+
 
 def _sha256(path: Path) -> str | None:
     try:
@@ -169,6 +171,7 @@ def _manifest_identity(module_path: Path) -> dict[str, Any]:
         expected_tree_sha256 = value["package_tree_sha256"]
         source_commit = value["source_commit"]
         release_id = value["release_id"]
+        canonical_registry = canonical_registry_identity(value)
     except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
         return {
             "available": True,
@@ -189,6 +192,8 @@ def _manifest_identity(module_path: Path) -> dict[str, Any]:
     actual_tree_sha256 = _package_tree_sha256(release)
     if actual_tree_sha256 != expected_tree_sha256:
         reasons.append("package-tree-digest-mismatch")
+    if canonical_registry.get("available") and not canonical_registry.get("valid"):
+        reasons.extend(f"canonical-registry-{item}" for item in canonical_registry["reasons"])
     return {
         "available": True,
         "valid": not reasons,
@@ -202,6 +207,7 @@ def _manifest_identity(module_path: Path) -> dict[str, Any]:
         "observed_module_sha256": actual_module_sha256,
         "package_tree_sha256": expected_tree_sha256,
         "observed_package_tree_sha256": actual_tree_sha256,
+        "canonical_registry": canonical_registry,
         "reasons": reasons,
     }
 
@@ -245,8 +251,36 @@ def bureau_runtime_identity(
     manifest = _manifest_identity(observed_module)
     reasons: list[str] = []
     source_kind = "unbound"
+    canonical_registry = manifest.get("canonical_registry", {})
+    canonical_selected = bool(
+        canonical_registry.get("valid") is True
+        and canonical_registry.get("root")
+        and Path(canonical_registry["root"]) == resolved_registry_root
+    )
 
-    if registry["available"] is not True or not managed_registry:
+    if canonical_selected:
+        managed_registry = True
+        registry.update(
+            {
+                "available": True,
+                "root": str(resolved_registry_root),
+                "head": canonical_registry.get("source_commit"),
+                "origin_main": canonical_registry.get("source_commit"),
+                "head_equals_origin_main": True,
+                "dirty": False,
+                "dirty_paths": [],
+                "bureau_project": True,
+                "role": "canonical-runtime-snapshot",
+                "snapshot_tree_sha256": canonical_registry.get("tree_sha256"),
+            }
+        )
+
+    if canonical_selected:
+        status = "canonical-read-only"
+        mutation_allowed = False
+        source_kind = "immutable-release"
+        reasons.append("canonical-registry-read-only")
+    elif registry["available"] is not True or not managed_registry:
         status = "unmanaged-registry"
         mutation_allowed = True
         source_kind = "development"

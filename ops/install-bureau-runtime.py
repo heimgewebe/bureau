@@ -9,6 +9,7 @@ import hashlib
 import json
 import os
 import shutil
+import stat
 import subprocess
 import tempfile
 from datetime import datetime, timezone
@@ -82,6 +83,103 @@ def package_tree_sha256(root: Path) -> str:
     return digest.hexdigest()
 
 
+def tracked_paths(source: Path) -> list[Path]:
+    raw = git(source, "ls-files", "-z")
+    paths: list[Path] = []
+    for item in raw.split("\0"):
+        if not item:
+            continue
+        relative = Path(item)
+        if relative.is_absolute() or ".." in relative.parts:
+            raise SystemExit(f"unsafe tracked path: {item}")
+        paths.append(relative)
+    if not paths:
+        raise SystemExit("Bureau source has no tracked files")
+    return sorted(paths, key=lambda path: path.as_posix())
+
+
+def tracked_tree_sha256(root: Path, paths: list[Path]) -> str:
+    digest = hashlib.sha256()
+    for relative in paths:
+        path = root / relative
+        if path.is_symlink() or not path.is_file():
+            raise SystemExit(f"tracked tree contains non-regular input: {path}")
+        encoded = relative.as_posix().encode()
+        content = path.read_bytes()
+        digest.update(len(encoded).to_bytes(4, "big"))
+        digest.update(encoded)
+        digest.update(len(content).to_bytes(8, "big"))
+        digest.update(content)
+    return digest.hexdigest()
+
+
+def ensure_registry_snapshot(
+    source: Path,
+    prefix: Path,
+    head: str,
+) -> dict[str, str]:
+    paths = tracked_paths(source)
+    tree_digest = tracked_tree_sha256(source, paths)
+    snapshot_id = f"{head[:12]}-tree{tree_digest[:12]}"
+    snapshot = prefix / "registry-snapshots" / snapshot_id
+    inventory = snapshot / ".bureau-runtime-snapshot.json"
+    inventory_value = {
+        "schema_version": 1,
+        "kind": "bureau_registry_snapshot",
+        "source_commit": head,
+        "tree_sha256": tree_digest,
+        "paths": [path.as_posix() for path in paths],
+    }
+    inventory_bytes = canonical(inventory_value)
+    inventory_digest = hashlib.sha256(inventory_bytes).hexdigest()
+
+    if not snapshot.exists():
+        snapshot.parent.mkdir(parents=True, exist_ok=True)
+        temporary = snapshot.parent / f".{snapshot_id}.tmp-{os.getpid()}"
+        if temporary.exists():
+            shutil.rmtree(temporary)
+        temporary.mkdir()
+        try:
+            for relative in paths:
+                source_path = source / relative
+                destination = temporary / relative
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source_path, destination, follow_symlinks=False)
+            atomic_write(
+                temporary / inventory.name,
+                inventory_bytes,
+                0o444,
+            )
+            if tracked_tree_sha256(temporary, paths) != tree_digest:
+                raise SystemExit("copied Bureau Registry snapshot digest mismatch")
+            for path in sorted(temporary.rglob("*"), reverse=True):
+                if path.is_file():
+                    executable = bool(path.stat().st_mode & stat.S_IXUSR)
+                    path.chmod(0o555 if executable else 0o444)
+                elif path.is_dir():
+                    path.chmod(0o555)
+            temporary.chmod(0o555)
+            os.replace(temporary, snapshot)
+        finally:
+            if temporary.exists():
+                shutil.rmtree(temporary)
+
+    if snapshot.is_symlink() or not snapshot.is_dir():
+        raise SystemExit("existing Bureau Registry snapshot is not a directory")
+    if inventory.is_symlink() or not inventory.is_file():
+        raise SystemExit("existing Bureau Registry snapshot inventory is invalid")
+    if hashlib.sha256(inventory.read_bytes()).hexdigest() != inventory_digest:
+        raise SystemExit("existing Bureau Registry snapshot inventory digest mismatch")
+    if tracked_tree_sha256(snapshot, paths) != tree_digest:
+        raise SystemExit("existing Bureau Registry snapshot tree digest mismatch")
+    return {
+        "root": str(snapshot),
+        "inventory_path": str(inventory),
+        "inventory_sha256": inventory_digest,
+        "tree_sha256": tree_digest,
+    }
+
+
 def wrapper(manifest_path: Path, manifest_sha256: str) -> bytes:
     return f'''#!/usr/bin/env python3
 {MANAGED_MARKER}
@@ -106,6 +204,8 @@ try:
     module = Path(manifest["module_path"]).resolve()
     expected_module_sha256 = manifest["module_sha256"]
     expected_tree_sha256 = manifest["package_tree_sha256"]
+    canonical_registry_root = Path(manifest["canonical_registry_root"]).resolve()
+    canonical_registry_inventory = Path(manifest["canonical_registry_inventory_path"]).resolve()
 except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
     raise SystemExit(f"bureau runtime manifest invalid: {{exc}}")
 if module.is_symlink() or not module.is_file():
@@ -132,9 +232,15 @@ for path in [pyproject, *sorted(package.rglob("*.py"))]:
     digest.update(content)
 if digest.hexdigest() != expected_tree_sha256:
     raise SystemExit("bureau runtime package tree digest mismatch")
+if not canonical_registry_root.is_dir() or canonical_registry_root.is_symlink():
+    raise SystemExit("bureau canonical Registry snapshot is invalid")
+if not canonical_registry_inventory.is_file() or canonical_registry_inventory.is_symlink():
+    raise SystemExit("bureau canonical Registry inventory is invalid")
 sys.path.insert(0, str(release / "src"))
 os.environ["BUREAU_RUNTIME_MANIFEST"] = str(manifest_path)
 os.environ["BUREAU_RUNTIME_MANIFEST_SHA256"] = expected_manifest_sha256
+os.environ["BUREAU_REGISTRY_ROOT"] = str(canonical_registry_root)
+os.environ["BUREAU_REGISTRY_ROOT_MODE"] = "canonical-runtime-default"
 os.environ.setdefault("BUREAU_JSON_ENVELOPE", "1")
 from bureau.cli import main
 raise SystemExit(main())
@@ -217,6 +323,7 @@ def main(argv: list[str] | None = None) -> int:
     if head != origin_main:
         raise SystemExit("source HEAD differs from origin/main")
 
+    registry_snapshot = ensure_registry_snapshot(source, prefix, head)
     source_digest = package_tree_sha256(source)
     release_id = f"{head[:12]}-src{source_digest[:12]}"
     release = prefix / "releases" / release_id
@@ -278,6 +385,10 @@ def main(argv: list[str] | None = None) -> int:
         "immutable_release_path": str(release),
         "module_path": str(module),
         "module_sha256": sha256(module),
+        "canonical_registry_root": registry_snapshot["root"],
+        "canonical_registry_inventory_path": registry_snapshot["inventory_path"],
+        "canonical_registry_inventory_sha256": registry_snapshot["inventory_sha256"],
+        "canonical_registry_tree_sha256": registry_snapshot["tree_sha256"],
         "launcher_path": str(launcher),
         "installed_at": installed_at,
         "previous_manifest_sha256": (
@@ -300,6 +411,8 @@ def main(argv: list[str] | None = None) -> int:
         "launcher_path": str(launcher),
         "launcher_sha256": sha256(launcher),
         "package_tree_sha256": source_digest,
+        "canonical_registry_root": registry_snapshot["root"],
+        "canonical_registry_tree_sha256": registry_snapshot["tree_sha256"],
         "rollback": backup,
         "installed_at": installed_at,
     }

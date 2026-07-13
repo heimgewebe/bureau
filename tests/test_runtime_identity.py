@@ -257,3 +257,72 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
     )
     assert drifted_package.returncode != 0
     assert "package tree digest mismatch" in drifted_package.stderr
+
+
+
+def test_installer_migrates_existing_launcher_symlink_only_with_explicit_replace(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "source"
+    source.mkdir()
+    project_root = Path(__file__).resolve().parents[1]
+    shutil.copytree(project_root / "src/bureau", source / "src/bureau")
+    shutil.copy2(project_root / "pyproject.toml", source / "pyproject.toml")
+    git(source, "init", "-b", "main")
+    git(source, "config", "user.email", "test@example.invalid")
+    git(source, "config", "user.name", "Test")
+    git(source, "add", ".")
+    git(source, "commit", "-m", "source")
+    git(source, "remote", "add", "origin", str(source / ".git"))
+    git(source, "fetch", "origin", "main:refs/remotes/origin/main")
+
+    home = tmp_path / "home"
+    prefix = home / ".local/share/bureau"
+    bin_dir = home / ".local/bin"
+    bin_dir.mkdir(parents=True)
+    legacy_target = prefix / "venv/bin/bureau"
+    legacy_target.parent.mkdir(parents=True)
+    legacy_target.write_text("legacy bureau launcher\n", encoding="utf-8")
+    legacy_target.chmod(0o755)
+    launcher = bin_dir / "bureau"
+    raw_target = "../share/bureau/venv/bin/bureau"
+    launcher.symlink_to(raw_target)
+    legacy_sha256 = hashlib.sha256(legacy_target.read_bytes()).hexdigest()
+
+    command = [
+        sys.executable,
+        str(project_root / "ops/install-bureau-runtime.py"),
+        "--source",
+        str(source),
+        "--prefix",
+        str(prefix),
+        "--bin-dir",
+        str(bin_dir),
+    ]
+    blocked = subprocess.run(command, check=False, capture_output=True, text=True)
+    assert blocked.returncode != 0
+    assert "launcher is a symlink" in blocked.stderr
+    assert launcher.is_symlink()
+    assert launcher.readlink().as_posix() == raw_target
+
+    migrated = subprocess.run(
+        [*command, "--replace-existing"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    receipt = json.loads(migrated.stdout)
+    assert launcher.is_file()
+    assert not launcher.is_symlink()
+    assert hashlib.sha256(legacy_target.read_bytes()).hexdigest() == legacy_sha256
+    rollback = receipt["rollback"]
+    assert rollback["launcher_kind"] == "symlink"
+    assert rollback["launcher_symlink_target"] == raw_target
+    metadata_path = Path(rollback["launcher_metadata"])
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    assert metadata == {
+        "schema_version": 1,
+        "kind": "bureau_launcher_symlink_backup",
+        "path": str(launcher),
+        "target": raw_target,
+    }

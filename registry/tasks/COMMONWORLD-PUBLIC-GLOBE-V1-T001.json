@@ -3,7 +3,7 @@
   "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T001",
   "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
   "title": "Prove Android reduced-motion behavior",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Establish a physical, commit-bound Android reduced-motion result for the public globe without treating an unavailable device setting or desktop emulation as a pass.",
   "priority": {
     "lane": "later",
@@ -68,6 +68,17 @@
       "future merge readiness"
     ],
     "registration_baseline_commit": "92c6993b8c1cac07caf0771c6071de9ca4721047",
-    "live_state_required_at_execution": true
+    "live_state_required_at_execution": true,
+    "operator_disposition": {
+      "decided_at": "2026-07-13",
+      "decision": "omit",
+      "reason": "The operator chose not to pursue the Android-specific reduced-motion follow-up."
+    },
+    "cancellation": {
+      "cancelled_at": "2026-07-13",
+      "authority": "commonworld-project-operator",
+      "work_performed": false,
+      "claim_established": false
+    }
   }
 }

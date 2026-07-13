@@ -68,6 +68,13 @@
       "future merge readiness"
     ],
     "registration_baseline_commit": "92c6993b8c1cac07caf0771c6071de9ca4721047",
-    "live_state_required_at_execution": true
+    "live_state_required_at_execution": true,
+    "operator_disposition": {
+      "decided_at": "2026-07-13",
+      "decision": "defer",
+      "reason": "The operator chose to leave bounded screen-reader product support for a later decision."
+    },
+    "deferred": true,
+    "queued": false
   }
 }

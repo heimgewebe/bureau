@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T005",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Classify or migrate Bureau evidence and plan state roots",
-  "state": "planned",
+  "state": "verified",
   "goal": "Resolve the newly unclassified `evidence` and `plans` directories in Bureau's live state root through bounded format recognition, provenance and migration rules without deleting or silently trusting unknown operator data.",
   "priority": {
     "lane": "next",
@@ -71,10 +71,247 @@
     "previous_cleanup_task": "OPERATOR-PC-HYGIENE-V1-T006",
     "recurrence_boundary": "The previous verified cleanup made the then-active root healthy. This task covers later-created evidence and plans directories and does not reopen or contradict that historical verification.",
     "does_not_establish": [
-      "that_unknown_entries_are_invalid",
-      "permission_to_delete_state",
-      "content_authority",
-      "failure_of_the_previous_cleanup"
-    ]
+      "overall_doctor_health while unrelated queue findings remain",
+      "permission_to_delete quarantine, plan, receipt or audit artifacts",
+      "artifact obsolescence beyond the reviewed migration decision",
+      "hidden process reference absence outside visible procfs",
+      "future state-root health",
+      "completion of later operator-machine-readability tasks",
+      "replayability of the completed pre-hardening plan as a new apply request",
+      "successful full live rollback execution under the hardened runtime"
+    ],
+    "implementation": {
+      "repository": "heimgewebe/bureau",
+      "pull_request": 531,
+      "head": "579b48963b04b06ef40882bd002d9f314a705602",
+      "base": "9ac670b1942d903eea2ba35b72b59e50fe87f5d9",
+      "merge_commit": "110ca7265ed5b5a1e1311c5972216d8d510eb0e6",
+      "github_diff_sha256": "4efc4a648f61b4dd61df0f5741e02c3eb93f745e8ed868924848f7b22396127a",
+      "github_diff_bytes": 77728,
+      "stable_patch_id": "00ac87b9080b30b2479be28307768ed3c9cc6470",
+      "self_review_sha256": "a1c592476f56bdd969cff6cda769d693a170399de25d3880544f134858bf3a9c",
+      "superseded_pull_request": {
+        "number": 530,
+        "state": "closed-unmerged",
+        "reason": "Base advanced during CI; the generic Git gate blocked force-with-lease, so the fully rebased patch was published as PR #531 without rewriting history."
+      },
+      "hardening_followup": {
+        "repository": "heimgewebe/bureau",
+        "pull_request": 532,
+        "head": "864f4b977e9b00eecf7a2092004a1dd076ffade2",
+        "base": "110ca7265ed5b5a1e1311c5972216d8d510eb0e6",
+        "merge_commit": "55e51668d56133a13435dce54850d67e242e7d02",
+        "github_diff_sha256": "b6b2369aa0c75cc72919df17c6b3799ede971838db146932ecb2bfc6a560446e",
+        "github_diff_bytes": 12035,
+        "purpose": "Bind every operational plan field to review_payload_sha256 and make receipt rollback preflight-first and compensating on later failure."
+      }
+    },
+    "validation": {
+      "focused_tests": "62 final focused tests passed after the final rebase.",
+      "full_suite": "The complete Bureau pytest suite reached 100 percent with empty stderr after the final rebase.",
+      "lint": "Repository-wide Ruff passed.",
+      "diff_check": "git diff --check passed.",
+      "github_ci": {
+        "validate_3_10": "success",
+        "validate_3_12": "success"
+      },
+      "negative_cases": [
+        "empty directories",
+        "mixed foreign files",
+        "symlinked entries",
+        "oversized artifacts",
+        "digest mismatch",
+        "repository reference",
+        "process reference",
+        "destination collision",
+        "source drift",
+        "receipt tampering",
+        "destination drift"
+      ],
+      "effect_cases": [
+        "create-only plan",
+        "review binding",
+        "interruption rollback",
+        "receipt-write rollback",
+        "explicit receipt rollback",
+        "idempotent rerun with live destination readback"
+      ],
+      "hardening_followup": {
+        "targeted_state_root_tests": "46 passed",
+        "make_validate": "Ruff green, 533 tests passed, Systemkatalog boundary green, Bureau registry/state integrity green.",
+        "github_ci": {
+          "validate_3_10": "success",
+          "validate_3_12": "success"
+        }
+      }
+    },
+    "deployment": {
+      "source_commit": "110ca7265ed5b5a1e1311c5972216d8d510eb0e6",
+      "release_id": "110ca7265ed5-srcbd8c433b38eb",
+      "canonical_launcher": "/home/alex/.local/bin/bureau",
+      "launcher_sha256": "08eafadb369f6fbe58028c76386b173ccc684496fe3cfbdbd02d18ce631365ee",
+      "manifest_sha256": "c9be83a050dd2d68e1d77ccc542aea8603f3919426c716d49c8c269762cf6c40",
+      "package_tree_sha256": "bd8c433b38ebb592fdc2e07c1fc3251227e4b1907bac7368566fe38267ce64bf",
+      "canonical_registry_root": "/home/alex/.local/share/bureau/registry-snapshots/110ca7265ed5-treea73c90d1768d",
+      "canonical_registry_tree_sha256": "a73c90d1768d1eceee02c9bebbad9872c3e15c4090aff664c48585157f211d8e",
+      "install_receipt": "/home/alex/.local/share/bureau/receipts/110ca7265ed5-srcbd8c433b38eb-c9be83a050dd.json",
+      "install_receipt_sha256": "f84fa21330b467f0920e93a226afa6aac8b58e398b78a2d3d4f09dfeba3442ff",
+      "previous_launcher_and_manifest_backed_up": true
+    },
+    "state_root_migration": {
+      "state_root": "/home/alex/.local/state/bureau",
+      "reviewed_plan": "/home/alex/.local/share/bureau/operator-artifacts/t005/t005-live-migration-plan-110ca726.json",
+      "pending_plan_sha256": "8011b1cbc32c3e1e399bbb55169a5cedcf0654e1607cf51853575b948be92cd1",
+      "reviewed_plan_sha256": "596e68d095536ecacdfa22ff1a27a8549763e493b6ca4f06fa8406140192b73a",
+      "entries_sha256": "8a0451f07ab5d8c399620fa6744df03f5b4cc6b07bc3f4f1cbf58538ef44626a",
+      "plan_audit": "/home/alex/.local/share/bureau/operator-artifacts/t005/t005-live-migration-plan-audit.json",
+      "plan_audit_sha256": "58e36874150853fdda8024b5362529a5e9e9887201a1d2974e867179e9ece7ae",
+      "destination_root": "/home/alex/.local/share/bureau/quarantine/state-root/20260713T1932Z-t005-110ca726",
+      "entry_count": 42,
+      "file_count": 42,
+      "total_bytes": 473968,
+      "receipt": "/home/alex/.local/share/bureau/operator-artifacts/t005/t005-live-migration-plan-110ca726.json.receipt.json",
+      "receipt_file_sha256": "e98fb3b8441489247bb3eff51546bfb7f46172e83dd98e1c69d0133f4f2efc92",
+      "receipt_sha256": "94071db5c6db5a0e6c602c9e5250423961a31c5c29a143775291a10438f1917d",
+      "verification": "/home/alex/.local/share/bureau/operator-artifacts/t005/t005-live-migration-verification-v2.json",
+      "verification_sha256": "18009f4caf09a0dd9664d0d6569fd86ff1931fca4c71503cd230bfebe51cb96d",
+      "rollback_available": true,
+      "deletion_performed": false,
+      "idempotent_rerun": true,
+      "completed_plan_replay_boundary": "The completed plan predates review_payload_sha256 and is intentionally not accepted as a new apply plan by the hardened runtime. Its receipt remains integrity-bound, auditable and rollback-compatible. New plans require the full payload review binding.",
+      "hardened_rollback_preflight": {
+        "artifact": "/home/alex/.local/share/bureau/operator-artifacts/t005/t005-hardened-rollback-preflight.json",
+        "artifact_sha256": "d2401448b03bbbf2d74f5963665ae0f55fd3cf6cef863a9ceb7e09ef25eb703f",
+        "runtime_release_commit": "55e51668d56133a13435dce54850d67e242e7d02",
+        "rollback_action_count": 42,
+        "preflight_action_count": 42,
+        "rename_call_count": 1,
+        "intentional_first_rename_blocked": true,
+        "live_effect_performed": false,
+        "violations": []
+      }
+    },
+    "live_proof": {
+      "state_root_hygiene": {
+        "healthy": true,
+        "known_count": 10,
+        "unknown_count": 0
+      },
+      "managed_inventory_healthy": true,
+      "evidence_valid": true,
+      "plans_valid": true,
+      "database_integrity": "ok",
+      "database_schema_version": 3,
+      "overall_doctor_healthy": false,
+      "overall_doctor_boundary": "The overall doctor remains false only because existing blocked queue tasks RAB-V1-T002 and RAB-V1-T002B are not actionable. Those findings are outside T005 and already have canonical task identities.",
+      "migration_finalization_receipt_sha256": "9b9028a106cdaed4ed988c1a89a3ecc64f21cb8b4c6a51b9182f9f9b166e2f5c",
+      "verification_finalization_receipt_sha256": "2417397eb035aa632df1fa664ed8ba4867dd1715895197e2b583deac96c30cf5",
+      "current_hardened_runtime": {
+        "source_commit": "55e51668d56133a13435dce54850d67e242e7d02",
+        "manifest_valid": true,
+        "canonical_registry_valid": true,
+        "state_root_hygiene_healthy": true,
+        "known_count": 10,
+        "unknown_count": 0,
+        "managed_inventory_healthy": true
+      }
+    },
+    "verified_acceptance": {
+      "inventory": "Verified live: the read-only state-root-artifacts response reports every managed child with type, bounded size, content class, producer identity, source and observation time, digest, retention and non-authority semantics without following symlinks.",
+      "classification": "Verified by strict completion-evidence and reviewed-plan schemas, canonical digest checks, producer bindings, retention classes and explicit non-claims. evidence and plans remain present and valid after migration.",
+      "unknown-policy": "Verified by negative tests and live pre-state: malformed, mixed, symlinked, oversized or digest-invalid forms remain unknown and unhealthy; no coercion or deletion path exists.",
+      "migration": "Verified by the reviewed create-only plan, zero-violation audit, 42 exact leases, immediate source/reference/process/collision revalidation, same-filesystem atomic rename, self-hashing receipt and durable rollback map. Follow-up PR #532 now binds every operational plan field and makes rollback preflight-first with compensating rollback. The existing 42-action receipt passed a no-effect hardened rollback preflight under deployed commit 55e51668.",
+      "doctor": "Verified for the task scope: state_root_hygiene is healthy with known_count 10 and unknown_count 0. The overall doctor remains false only for two unrelated existing blocked queue tasks, which are explicitly recorded rather than hidden.",
+      "tests": "Verified by 62 implementation-focused tests, full repository pytest, repository-wide Ruff and green Python 3.10/3.12 CI for PR #531, plus 46 targeted tests and 533-test make validate with green Python 3.10/3.12 CI for hardening PR #532."
+    },
+    "verified_at": "2026-07-13",
+    "verification_note": "PRs #531 and #532 are merged. The original exact merge commit executed the reviewed 42-entry migration without deletion; the hardened follow-up is now the deployed canonical runtime. State-root hygiene remains healthy with zero unknown entries, and the original receipt passed all 42 rollback preflights under the hardened runtime while the first rename was intentionally blocked so no live effect occurred.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T005",
+          "source_ref": "heimgewebe/bureau#531",
+          "number": 531,
+          "head_sha": "579b48963b04b06ef40882bd002d9f314a705602",
+          "merge_commit_sha": "110ca7265ed5b5a1e1311c5972216d8d510eb0e6",
+          "diff_sha256": "4efc4a648f61b4dd61df0f5741e02c3eb93f745e8ed868924848f7b22396127a"
+        },
+        {
+          "kind": "runtime_deployment",
+          "authority": "bureau-runtime",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T005",
+          "source_ref": "bureau-runtime@110ca7265ed5b5a1e1311c5972216d8d510eb0e6",
+          "commit_sha": "110ca7265ed5b5a1e1311c5972216d8d510eb0e6",
+          "content_sha256": "f84fa21330b467f0920e93a226afa6aac8b58e398b78a2d3d4f09dfeba3442ff"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "bureau-state-root",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T005",
+          "source_ref": "reviewed-state-root-migration@110ca7265ed5b5a1e1311c5972216d8d510eb0e6",
+          "content_sha256": "e98fb3b8441489247bb3eff51546bfb7f46172e83dd98e1c69d0133f4f2efc92"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "bureau-doctor",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T005",
+          "source_ref": "state-root-hygiene-and-idempotency@110ca7265ed5b5a1e1311c5972216d8d510eb0e6",
+          "content_sha256": "18009f4caf09a0dd9664d0d6569fd86ff1931fca4c71503cd230bfebe51cb96d"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T005",
+          "source_ref": "heimgewebe/bureau#532",
+          "number": 532,
+          "head_sha": "864f4b977e9b00eecf7a2092004a1dd076ffade2",
+          "merge_commit_sha": "55e51668d56133a13435dce54850d67e242e7d02",
+          "diff_sha256": "b6b2369aa0c75cc72919df17c6b3799ede971838db146932ecb2bfc6a560446e"
+        },
+        {
+          "kind": "runtime_deployment",
+          "authority": "bureau-runtime",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T005",
+          "source_ref": "bureau-runtime@55e51668d56133a13435dce54850d67e242e7d02",
+          "commit_sha": "55e51668d56133a13435dce54850d67e242e7d02",
+          "content_sha256": "c85fb2e4f8b5a43ed09861c5111ba4234e164c78e26f1265217a6e2a9e3f3a8b"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "bureau-state-root-rollback",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T005",
+          "source_ref": "hardened-no-effect-rollback-preflight@55e51668d56133a13435dce54850d67e242e7d02",
+          "content_sha256": "d2401448b03bbbf2d74f5963665ae0f55fd3cf6cef863a9ceb7e09ef25eb703f"
+        }
+      ]
+    },
+    "followup_deployment": {
+      "source_commit": "55e51668d56133a13435dce54850d67e242e7d02",
+      "release_id": "55e51668d561-srcc9a94b53d821",
+      "canonical_launcher": "/home/alex/.local/bin/bureau",
+      "launcher_sha256": "c467f93a1688b0824a34082cb16e77ca04175f5653ae9725472fc6d6ddf4f480",
+      "manifest_sha256": "e6ada6b49dc7ec8db0f470f0cc85e566d2b233043a1f23b16bcc47c0fec36549",
+      "package_tree_sha256": "c9a94b53d821b824e3ab357bea54ea263fbf67a7cabe1f0d93244df8d9af634c",
+      "canonical_registry_root": "/home/alex/.local/share/bureau/registry-snapshots/55e51668d561-tree373881c893d6",
+      "canonical_registry_tree_sha256": "373881c893d69cc83d4c33e8abb81013f7e761301ac2c6da1cad0c73371eb2b1",
+      "canonical_registry_inventory_sha256": "234bed25bcfcf6409338fb9c58fbfe43ca8ba3d3a8f070341b4601836a16cb04",
+      "install_receipt": "/home/alex/.local/share/bureau/receipts/55e51668d561-srcc9a94b53d821-e6ada6b49dc7.json",
+      "install_receipt_sha256": "c85fb2e4f8b5a43ed09861c5111ba4234e164c78e26f1265217a6e2a9e3f3a8b",
+      "previous_launcher_and_manifest_backed_up": true,
+      "runtime_identity_status": "compatible",
+      "registry_head_equals_origin_main": true
+    },
+    "verification": {
+      "task_sha256": "d27e3b40b69cbc5a417da5d88954f94c71db50d9b343dce6dc1d20fb94ccec67",
+      "plan_sha256": "5bd32f4906cc9af27a3f99c7ab886eb9df7f8e5f4e9247c450bc492e64d28b06",
+      "source": "github_pull_requests_deployed_hardened_runtime_reviewed_migration_and_live_probes",
+      "source_ref": "github-pr:heimgewebe/bureau#531,#532@579b48963b04b06ef40882bd002d9f314a705602,864f4b977e9b00eecf7a2092004a1dd076ffade2:55e51668d56133a13435dce54850d67e242e7d02;state-root-migration:596e68d095536ecacdfa22ff1a27a8549763e493b6ca4f06fa8406140192b73a",
+      "evidence_sha256": "d2401448b03bbbf2d74f5963665ae0f55fd3cf6cef863a9ceb7e09ef25eb703f",
+      "verified_at": "2026-07-13"
+    }
   }
 }

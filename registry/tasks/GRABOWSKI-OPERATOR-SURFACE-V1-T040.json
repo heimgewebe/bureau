@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T040",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Deliver versioned MCP initialization instructions",
-  "state": "planned",
+  "state": "blocked",
   "goal": "Bind a small versioned and hash-verifiable operator instruction contract to FastMCP initialization so every compatible client session receives the truth hierarchy, narrow-read-first rule, mutation preconditions, fail-closed retry rule and typed-operation preference without requiring an active read of GRABOWSKI.md.",
   "priority": {"lane": "next", "rank": 400},
   "execution": {
@@ -39,6 +39,29 @@
       "tool_choice_accuracy_improved",
       "new_action_authority",
       "merge_readiness"
-    ]
+    ],
+    "blocked_at": "2026-07-13T08:00:57Z",
+    "block_reason": "The implementation and direct MCP initialize handshake are prepared, but the only remaining generated file, docs/generated/operator-context.v1.json, is held by an active foreign T037 lease. The lease is on the exact shared artifact and cannot be bypassed as a non-conflicting exception.",
+    "active_resource_observed_at": "2026-07-13T08:00:57Z",
+    "active_resource_owner": "chatgpt-agent-workspace-outcomes-t037-20260713",
+    "active_resource_key": "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json",
+    "active_resource_lease_expires_at_unix": 1783934305,
+    "lease_expiry_does_not_authorize_reclaim": true,
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "draft_pr": 175,
+      "draft_pr_url": "https://github.com/heimgewebe/grabowski/pull/175",
+      "branch": "feat/agent-facing-contract-t040",
+      "head": "c9caabab33ccd61f4eca20b318f058efb0d0f505",
+      "focused_tests": "143 passed",
+      "full_tests": "1363 passed, 1 failed because generated operator context remained intentionally unmodified under a foreign lease",
+      "compileall": "passed",
+      "direct_dual_release_check": "passed",
+      "mcp_protocol": "2025-06-18",
+      "instruction_version": "grabowski-agent-facing-contract-v1",
+      "instruction_sha256": "0abf7170e62106268af3b3baf14c32272ca3e659ee4f42aaae30f629b15f5368",
+      "expected_generated_context_sha256": "9487bceaba26c50a8d060664bf91000552b0f85c67c4aba1e7aeec46329a395d"
+    },
+    "next_action": "After T037 integrates and releases the exact generated-context lease, rebase PR #175, acquire that file, run context-refresh, make validate and make deploy-check, then bind the final GitHub diff and critical self-review before merge."
   }
 }

@@ -60,6 +60,14 @@ APPROVAL_RULES: dict[str, dict[str, Any]] = {
             "discard the last checked-out copy of a commit"
         ),
     },
+    "state_root_migration": {
+        "required_level": "reviewed_plan",
+        "allowed_levels": frozenset({"reviewed_plan", "break_glass"}),
+        "reason": (
+            "state-root migration changes active operational evidence paths and "
+            "therefore requires a digest-bound reviewed plan"
+        ),
+    },
     "runtime_mutation": {
         "required_level": "break_glass",
         "allowed_levels": frozenset({"break_glass"}),

@@ -19,3 +19,175 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install -e '.[dev]'
       - run: make validate
+
+  rcga-live-exploration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Checkout exact repository revisions
+        shell: bash
+        env:
+          GIT_TERMINAL_PROMPT: "0"
+        run: |
+          set -euo pipefail
+          mkdir -p repos
+          clone_at() {
+            name="$1"
+            sha="$2"
+            git clone --filter=blob:none --no-checkout "https://github.com/heimgewebe/${name}.git" "repos/${name}"
+            git -C "repos/${name}" checkout --detach "$sha"
+          }
+          clone_at lenskit 456d37bd142349bc0c04925d87934eefbbc546ac
+          clone_at grabowski f6eed48752fd2cf32f070dc69b2112e2498872cb
+          clone_at weltgewebe e095903bb71c937d861fa64d7e8a6b593062ca6f
+          for name in lenskit grabowski weltgewebe; do
+            git -C "repos/${name}" status --short
+            git -C "repos/${name}" rev-parse HEAD > "${name}.commit"
+          done
+      - name: Install Lenskit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -e './repos/lenskit[dev]'
+      - name: Create exact live bundles
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p live-output
+          for name in lenskit grabowski weltgewebe; do
+            mkdir -p "live-output/${name}"
+            set +e
+            python -m merger.lenskit.cli.main repobrief snapshot create \
+              --repo "$PWD/repos/${name}" \
+              --out "$PWD/live-output/${name}" \
+              --profile agent-portable \
+              --mode gesamt \
+              --output-mode dual \
+              --redact-secrets \
+              > "live-output/${name}/snapshot-create.json" \
+              2> "live-output/${name}/snapshot-create.stderr"
+            rc=$?
+            set -e
+            printf '%s\n' "$rc" > "live-output/${name}/snapshot-create.exit"
+          done
+      - name: Inspect bundle roles and impact-context viability
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from merger.lenskit.core.repobrief_agent_impact_adapter import RepoBriefAgentImpactAdapter
+
+          output = Path.cwd() / "live-output"
+          exact = {
+              "lenskit": "456d37bd142349bc0c04925d87934eefbbc546ac",
+              "grabowski": "f6eed48752fd2cf32f070dc69b2112e2498872cb",
+              "weltgewebe": "e095903bb71c937d861fa64d7e8a6b593062ca6f",
+          }
+          targets = {
+              "lenskit": "merger/lenskit/core/agent_impact_context.py",
+              "grabowski": "src/grabowski_job_finalizer.py",
+              "weltgewebe": "apps/api/src/routes/edges.rs",
+          }
+          snapshots = []
+          inventory = {}
+          for name in exact:
+              repo_out = output / name
+              manifests = sorted(repo_out.rglob("*.bundle.manifest.json"))
+              stderr_path = repo_out / "snapshot-create.stderr"
+              entry = {
+                  "repository": f"heimgewebe/{name}",
+                  "commit": exact[name],
+                  "snapshot_exit": int((repo_out / "snapshot-create.exit").read_text().strip()),
+                  "snapshot_stderr_tail": stderr_path.read_text(errors="replace")[-4000:] if stderr_path.exists() else "",
+                  "manifest_count": len(manifests),
+                  "manifests": [],
+              }
+              for manifest_path in manifests:
+                  try:
+                      manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                  except Exception as exc:
+                      entry["manifests"].append({"path": str(manifest_path), "error": str(exc)})
+                      continue
+                  artifacts = manifest.get("artifacts") if isinstance(manifest.get("artifacts"), list) else []
+                  roles = sorted(str(item.get("role")) for item in artifacts if isinstance(item, dict) and item.get("role"))
+                  entry["manifests"].append({
+                      "path": str(manifest_path),
+                      "kind": manifest.get("kind"),
+                      "run_id": manifest.get("run_id"),
+                      "canonical_dump_index_sha256": manifest.get("canonical_dump_index_sha256"),
+                      "roles": roles,
+                  })
+              if manifests:
+                  snapshots.append({"id": name, "manifest": str(manifests[-1])})
+              inventory[name] = entry
+
+          config_path = output / "adapter-config.json"
+          config_path.write_text(json.dumps({
+              "kind": "repobrief.readonly_adapter_config",
+              "version": "1.0",
+              "allowed_roots": [str(output)],
+              "snapshots": snapshots,
+          }, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+          contexts = {}
+          if snapshots:
+              adapter = RepoBriefAgentImpactAdapter.from_config(config_path)
+              for snapshot in snapshots:
+                  name = snapshot["id"]
+                  result = adapter.agent_impact_context(
+                      name,
+                      target_path=targets[name],
+                      mode="edit",
+                      max_items=30,
+                      include_query_context=False,
+                  )
+                  contexts[name] = {
+                      "target_path": targets[name],
+                      "status": result.get("status"),
+                      "provenance": result.get("provenance"),
+                      "source_statuses": result.get("source_statuses"),
+                      "relation_count": len(result.get("relations") or []),
+                      "related_tests": result.get("related_tests"),
+                      "supporting_context": result.get("supporting_context"),
+                      "entrypoints": result.get("entrypoints"),
+                      "gaps": result.get("gaps"),
+                  }
+          report = {
+              "kind": "rcga.live_bundle_exploration",
+              "version": "1.0",
+              "repositories": inventory,
+              "contexts": contexts,
+              "does_not_establish": [
+                  "navigation_utility",
+                  "answer_correctness",
+                  "complete_call_graph",
+                  "complete_blast_radius",
+                  "test_sufficiency",
+                  "default_promotion"
+              ],
+          }
+          (output / "exploration.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rcga-live-exploration-${{ github.sha }}
+          path: |
+            live-output/exploration.json
+            live-output/adapter-config.json
+            live-output/*/snapshot-create.json
+            live-output/*/snapshot-create.stderr
+            live-output/*/snapshot-create.exit
+            live-output/*/*.bundle.manifest.json
+            lenskit.commit
+            grabowski.commit
+            weltgewebe.commit
+          if-no-files-found: warn
+          retention-days: 7

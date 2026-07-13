@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T004",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "title": "Deliver globe-first surface with synchronized sphere and alternate views",
+  "state": "ready",
+  "goal": "Make commonworld.net open directly on the interactive globe, keep the digital sphere attached to the visible globe through the side-layer transition, and add one settings gear that switches between globe and equivalent text presentation while exposing the existing catalog as a documented machine-readable surface.",
+  "priority": {
+    "lane": "now",
+    "rank": 100
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld",
+      "path:/home/alex/repos/.commonworld-worktrees/globe-first-surface-v1",
+      "service:github-branch:heimgewebe-commonworld-feat-globe-first-surface-v1"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Use an isolated Commonworld worktree. Before merge require a complete downloadable GitHub diff, head/tree/diff-bound critical self-review, green CI, comment/review resolution, and exact live Pages readback."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "acceptance": [
+    {
+      "id": "globe-first-entry",
+      "assertion": "The root page is a viewport-filling globe surface from first paint; marketing copy, build status and the long catalog do not precede or visually compete with the globe."
+    },
+    {
+      "id": "sphere-globe-synchrony",
+      "assertion": "The SVG digital sphere derives its rendered center and size from the visible MapLibre globe and remains attached during resize, camera motion and the side-layer transition; the displaced-ring defect is covered by a real geometry test."
+    },
+    {
+      "id": "real-layer-state",
+      "assertion": "Opening the digital sphere produces a coherent side-layer state of the same surface, with the globe retained as a subdued reference and exact close/back restoration including reduced-motion behavior."
+    },
+    {
+      "id": "single-settings-gear",
+      "assertion": "Exactly one settings gear at the top right exposes presentation settings and switches between Globe and Text without hiding direct discovery controls or creating a separate product."
+    },
+    {
+      "id": "selection-parity",
+      "assertion": "Selected CommonProject identity, active digital layer, search/filter state and browser history remain coherent across Globe and Text views."
+    },
+    {
+      "id": "text-surface",
+      "assertion": "The Text view presents the same catalog records and focus information without requiring WebGL and remains keyboard usable; no unsupported screen-reader product-support or WCAG claim is introduced."
+    },
+    {
+      "id": "machine-surface",
+      "assertion": "The existing static catalog and project JSON files are documented and linked as the machine-readable surface, with stable manifest/schema/version metadata and no backend, write path or premature CLI."
+    },
+    {
+      "id": "responsive-live-proof",
+      "assertion": "Automated tests and visual/browser readback cover wide desktop, iPad-class and narrow mobile layouts before merge and the deployed Pages build is smoke-tested afterward."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "claimed_at": "2026-07-13",
+    "claimed_by": "chatgpt-commonworld-globe-first-v1-20260713",
+    "source": "operator screenshot of displaced digital sphere and direct globe-first instruction",
+    "source_public_url": "https://commonworld.net/",
+    "registration_baseline_commit": "3684c79e751e7584aadd500781fc2219ae91d098",
+    "plan_path": "docs/blueprints/commonworld-masterplan.md",
+    "queue_mutated": false,
+    "does_not_establish": [
+      "screen-reader product support",
+      "WCAG conformance",
+      "provider SLA",
+      "backend readiness",
+      "write-path authorization",
+      "standalone CLI requirement",
+      "future merge readiness"
+    ]
+  }
+}

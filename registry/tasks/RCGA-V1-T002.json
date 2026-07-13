@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "id": "RCGA-V1-T002",
+  "initiative": "REPOBRIEF-CODEGRAPH-ADOPTION-V1",
+  "title": "Calibrate agent impact context on live bundles",
+  "state": "ready",
+  "goal": "Measure the opt-in RepoBrief agent impact/edit context against the existing read-only workbench on coherent live bundles from representative repositories and decide retention, refinement, default promotion or removal without weakening authority boundaries.",
+  "priority": {
+    "lane": "later",
+    "rank": 999
+  },
+  "depends_on": [
+    "RCGA-V1-T001"
+  ],
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "456d37bd142349bc0c04925d87934eefbbc546ac",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit",
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/weltgewebe",
+      "repo:/home/alex/repos/bureau"
+    ],
+    "approval": {
+      "action_class": "read_only_measurement",
+      "required_level": "reviewed_plan",
+      "note": "Use coherent, commit- and bundle-identity-bound live snapshots. Do not promote the action by changing a default route in the same measurement slice."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rcga-v1-t002-live-cases",
+      "assertion": "The evaluation uses coherent live bundles from at least Lenskit, Grabowski and Weltgewebe, with every case bound to repository commit, snapshot id, run id and canonical dump digest."
+    },
+    {
+      "id": "rcga-v1-t002-comparison",
+      "assertion": "The same fixed questions and expected targets are compared between the existing read-only workbench and agent impact context, recording target recall, context path count, missing-evidence visibility, latency and case-level regressions."
+    },
+    {
+      "id": "rcga-v1-t002-truth-boundary",
+      "assertion": "Graph edges, symbol paths and heuristics remain separately reported; a hit is not treated as answer correctness, runtime dependency, test coverage or complete blast radius."
+    },
+    {
+      "id": "rcga-v1-t002-promotion",
+      "assertion": "Default promotion is a separate explicit decision and is allowed only when the registered aggregate threshold is met, no critical case regresses and human review confirms practical utility."
+    },
+    {
+      "id": "rcga-v1-t002-artifacts",
+      "assertion": "Goldset, observations, diagnostics, environment and provenance are committed or otherwise durably referenced so the result is reproducible and reviewable."
+    },
+    {
+      "id": "rcga-v1-t002-boundary",
+      "assertion": "The measurement performs no source, Git, patch, pull-request, test, snapshot or memory mutation through RepoBrief and creates no review or merge authority."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source_task": "RCGA-V1-T001",
+    "source_merge_commit": "456d37bd142349bc0c04925d87934eefbbc546ac",
+    "reason": "The committed synthetic contract fixture validates mechanics but does not establish utility on real repositories or justify default promotion.",
+    "execution_preconditions": [
+      "live access to the rLens or equivalent Lenskit bundle runtime",
+      "coherent current bundles for Lenskit, Grabowski and Weltgewebe",
+      "representative real changes or questions with expected target sets"
+    ],
+    "separate_decision_required": "Any default-route promotion, API publication or broader agent-tool exposure must be proposed and reviewed after this measurement, not bundled into it.",
+    "does_not_establish": [
+      "complete_call_graph",
+      "complete_blast_radius",
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "security_correctness",
+      "general_agent_quality_improvement",
+      "default_promotion"
+    ]
+  }
+}

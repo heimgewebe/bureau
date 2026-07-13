@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-PC-HYGIENE-V1-T012",
+  "initiative": "OPERATOR-PC-HYGIENE-V1",
+  "title": "Classify and retire stale Docker development residues",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 212
+  },
+  "goal": "Classify the remaining stopped or never-started Heim-PC Docker development containers and their persistent volumes against current repository, Compose, proof and recovery ownership, then remove only terminal residue through bounded container- and volume-specific actions.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "service:docker",
+      "service:docker-container:wg-pg-proof",
+      "service:docker-compose:weltgewebe-dev",
+      "service:docker-container:cranky_satoshi"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Task registration and read-only classification do not authorize Docker effects. Any container, volume or network removal requires a fresh exact-ID plan, current ownership and lease readback, rollback or export sufficiency evidence, and break-glass approval bound to that reviewed effect."
+    }
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "live-classification",
+      "assertion": "Each remaining candidate container and attached volume is re-read live and classified as active-source, restartable-development-state, retained-proof, terminal-container-only, terminal-volume or unknown-owner using Compose labels, mounts, current repo activity, leases and receipts."
+    },
+    {
+      "id": "no-active-loss",
+      "assertion": "No running container, active Compose project, current worktree bind mount, unresolved proof database, leased resource or volume without a verified owner/disposition is removed."
+    },
+    {
+      "id": "bounded-cleanup",
+      "assertion": "Every approved cleanup names exact container and volume IDs; container-only cleanup never implies volume deletion, and persistent volume removal requires separate export or explicit dispensability evidence."
+    },
+    {
+      "id": "post-proof",
+      "assertion": "After effects, Docker container, volume and network state plus the active Heim utility and Weltgewebe-related containers are re-read; no intended service is degraded."
+    },
+    {
+      "id": "durable-receipt",
+      "assertion": "Retained candidates record a concrete owner and next disposition; removed candidates record before/after IDs and whether any volume was intentionally preserved."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13T07:10:00+02:00",
+    "source": "Heim-PC closeout audit on 2026-07-13",
+    "safe_cleanup_already_applied": [
+      {
+        "name": "heim-util-beszel-agent-prepin-20260710T215036Z",
+        "container_id": "f04d0cd7bcb04b2cbb4df64c4b984471f21f9ea937ff8cb892a32d37d23ea8ff",
+        "reason": "Exited replacement candidate with only bind mounts; active pinned heim-util-beszel-agent remained running.",
+        "volumes_removed": false
+      },
+      {
+        "name": "brave_cori",
+        "container_id": "87ed5b68cea149dd132f87cf50cb8890f39cf2b9afd65825471a121fb11e873d",
+        "reason": "Randomly named Beszel container that never started and had no Compose ownership.",
+        "volumes_removed": false
+      }
+    ],
+    "remaining_candidates": [
+      {
+        "name": "wg-pg-proof",
+        "state": "exited",
+        "risk": "named PostgreSQL volume may contain proof evidence"
+      },
+      {
+        "name": "compose-caddy-1",
+        "state": "created",
+        "risk": "current Weltgewebe Compose source and bind mounts"
+      },
+      {
+        "name": "compose-web-1",
+        "state": "created",
+        "risk": "current Weltgewebe source bind mount and node_modules volume"
+      },
+      {
+        "name": "compose-api-1",
+        "state": "created",
+        "risk": "current Weltgewebe source bind mount and Cargo volumes"
+      },
+      {
+        "name": "compose-pgbouncer-1",
+        "state": "exited",
+        "risk": "shared Compose project ownership"
+      },
+      {
+        "name": "compose-db-1",
+        "state": "exited",
+        "risk": "persistent compose_pg_data volume"
+      },
+      {
+        "name": "cranky_satoshi",
+        "state": "exited",
+        "risk": "VS Code devcontainer bound to current Weltgewebe repository and shared vscode volume"
+      }
+    ],
+    "does_not_establish": [
+      "container cleanup permission",
+      "volume dispensability",
+      "proof database obsolescence",
+      "current Weltgewebe development stack retirement",
+      "permission to prune Docker images or networks"
+    ]
+  }
+}

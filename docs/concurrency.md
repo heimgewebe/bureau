@@ -44,6 +44,13 @@ state. This keeps stale priority metadata visible without allowing unreviewed di
 
 ## Worktree hygiene
 
-Local worktree inventory is operational context, not dispatch truth. `worktree-hygiene` reports
-detached, dirty, merged and excessive worktrees as cleanup candidates only. Cleanup authority stays
-outside the report.
+Local worktree inventory is operational context, not dispatch truth. The default
+`worktree-hygiene` report remains read-only and cannot authorize cleanup. The reviewed cleanup path
+accepts only explicit absolute candidate paths from one hash-bound plan, revalidates each candidate
+immediately before removal and never deletes branches. Dirty, missing, locked, process-used or
+unmerged worktrees fail closed.
+
+The reviewed plan is still not a substitute for live coordination. Apply requires the short Bureau
+worktree-admin effect gate and a separate current check that no foreign exact path lease covers a
+candidate. This preserves Bureau's always-open object/file lease model while serializing only the
+actual linked-worktree administration effect.

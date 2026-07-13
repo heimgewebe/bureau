@@ -49,18 +49,49 @@ queue mutation. A reviewed plan with no current actions returns an explicit byte
 does not rewrite `registry/queue.json`. Real queue updates retain the repository's readable JSON
 format. The path never claims, dispatches, completes or merges work.
 
-## Worktree hygiene
+## Worktree hygiene and reviewed cleanup
 
-Use `worktree-hygiene` to inspect local Bureau worktree sprawl without deleting anything:
+The default `worktree-hygiene` mode is read-only and inventories local Bureau worktree sprawl:
 
 ```bash
 bureau --root . --json worktree-hygiene
 bureau --root . --json worktree-hygiene --max-count 40
 ```
 
-The report identifies detached worktrees, dirty worktrees, many-worktree pressure and heads already
-merged into the current checkout head. These are cleanup candidates only after human or operator
-review. The command never removes a worktree or branch.
+The report identifies detached, locked, dirty, missing, excessive and already-merged worktrees. A
+report is not cleanup authority. It deliberately does not prove process or external lease absence.
+
+Cleanup uses a separate two-step reviewed-plan path. Every candidate must be an explicit absolute
+path; the command never expands all findings into effects:
+
+```bash
+bureau --root /home/alex/repos/bureau --json worktree-hygiene \
+  --candidate /absolute/path/to/linked-worktree \
+  --write-plan /absolute/path/outside/candidates/worktree-cleanup-plan.json
+```
+
+Plan creation already refuses the canonical worktree, unknown, missing, dirty, locked, process-used
+or not-fully-merged candidates. The generated plan is inert with `review.status=pending`. A reviewer
+checks every path, head and branch, then sets `status=reviewed`, adds `reviewer` and `reviewed_at`, and
+copies the top-level `repository_identity_sha256` and `candidate_states_sha256` into the review
+object. The plan file must stay outside every cleanup candidate.
+
+Apply is allowed only while the operator holds the dedicated Bureau worktree-admin gate and has
+confirmed that no foreign exact path lease covers a candidate:
+
+```bash
+bureau --root /home/alex/repos/bureau --json worktree-hygiene \
+  --apply-plan /absolute/path/outside/candidates/worktree-cleanup-plan.json
+```
+
+Apply revalidates repository identity, reviewed hashes, candidate path/head/branch, clean state,
+merge ancestry, lock state, active process references and unchanged plan bytes immediately before
+each removal. It calls `git worktree remove` without force, never deletes a branch, emits a fresh
+post-clean hygiene report and attempts to restore already removed worktrees if a later candidate or
+post-clean gate fails. External lease absence remains an operator/Grabowski precondition because
+Bureau does not treat its report as authority over Grabowski's live lease database. Process checks
+are bounded by what Linux `procfs` exposes to the executing user and do not claim visibility into
+otherwise hidden process state.
 
 ## Console script packaging
 

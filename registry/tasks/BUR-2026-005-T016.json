@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T016",
   "initiative": "BUR-2026-005",
   "title": "Design reviewed worktree cleanup apply path",
-  "state": "planned",
+  "state": "ready",
   "depends_on": [
     "BUR-2026-005-T014"
   ],
@@ -14,45 +14,78 @@
   },
   "required_capabilities": [
     "repository",
-    "shell"
+    "shell",
+    "github",
+    "grabowski"
   ],
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.worktree-admin",
       "mode": "write",
       "isolation": "worktree"
     }
   ],
   "execution": {
     "mode": "interactive-agent",
-    "policy": "review-before-effect"
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/worktree_hygiene.py",
+      "path:/home/alex/repos/bureau/src/bureau/cli.py",
+      "path:/home/alex/repos/bureau/src/bureau/approval.py",
+      "path:/home/alex/repos/bureau/tests/test_worktree_hygiene.py",
+      "path:/home/alex/repos/bureau/tests/test_approval.py",
+      "path:/home/alex/repos/bureau/docs/operations.md",
+      "path:/home/alex/repos/bureau/docs/concurrency.md",
+      "path:/home/alex/repos/bureau/registry/tasks/BUR-2026-005-T016.json"
+    ]
   },
   "metadata": {
     "source": "Registered after PR #253 intentionally shipped worktree-hygiene as read-only only.",
     "not_implemented_in": "heimgewebe/bureau#253",
-    "safety_boundary": "Cleanup must be reviewed, path-scoped, branch-aware, dirty-state-protected and reversible where possible.",
+    "safety_boundary": "Cleanup must be reviewed, path-scoped, branch-aware, dirty-state-protected, process-aware and reversible where possible. The external worktree-admin gate and current exact-path lease check remain mandatory operator preconditions.",
+    "implementation_status": "implementation_in_review",
+    "implementation_branch": "feat/bur-2026-005-t016-reviewed-worktree-cleanup-v1",
+    "implementation_base_head": "4470b8a165058565eb7749e9cf363ecac93c4b4d",
+    "effect_action_class": "worktree_cleanup",
     "does_not_establish": [
-      "safe_to_delete_worktrees",
+      "safe_to_delete_current_worktrees",
       "branch_obsolete",
-      "cleanup_authority"
+      "remote_branch_obsolete",
+      "external_lease_absence",
+      "process_absence_beyond_procfs_visibility",
+      "cleanup_authority_without_review",
+      "task_verification_before_post_merge_validation"
     ]
   },
   "acceptance": [
     {
       "id": "explicit-candidates",
-      "assertion": "Apply mode accepts only explicit candidate paths from a reviewed plan, not all hygiene findings."
+      "assertion": "Apply mode accepts only explicit absolute candidate paths from a reviewed plan, not all hygiene findings."
+    },
+    {
+      "id": "review-binding",
+      "assertion": "Review is bound to repository identity and exact candidate path, head, branch and safety-state hashes; stale or modified plans fail closed before an effect."
     },
     {
       "id": "dirty-refusal",
-      "assertion": "Dirty or missing worktrees are refused unless a separate force boundary is designed and reviewed."
+      "assertion": "Canonical, dirty, missing, locked, procfs-observably process-used or not-fully-merged worktrees are refused; no force mode exists."
     },
     {
       "id": "branch-preservation",
-      "assertion": "Cleanup never deletes a branch without explicit branch deletion evidence and review."
+      "assertion": "Cleanup calls git worktree remove without force and never deletes local or remote branches."
+    },
+    {
+      "id": "rollback-boundary",
+      "assertion": "If a later candidate or post-clean gate fails, already removed worktrees are restored where Git still permits exact reconstruction from the reviewed branch or detached head."
     },
     {
       "id": "post-clean-report",
-      "assertion": "After cleanup, worktree-hygiene emits a fresh post-clean report."
+      "assertion": "After cleanup, worktree-hygiene emits a fresh post-clean report proving the reviewed paths are absent while unrelated worktrees remain."
+    },
+    {
+      "id": "coordination-boundary",
+      "assertion": "Documentation requires the short Bureau worktree-admin gate and a separate current check for foreign exact path leases; the hygiene report never claims authority over Grabowski lease truth."
     }
   ]
 }

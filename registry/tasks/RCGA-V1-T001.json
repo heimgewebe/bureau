@@ -133,6 +133,10 @@
       "general_agent_quality_improvement",
       "live_repository_utility",
       "default_promotion"
-    ]
+    ],
+    "verification": {
+      "task_sha256": "b5d098c7864c3517994d9c309c66e34b6c7e860483b325b46d6dd7e8e3f51293",
+      "plan_sha256": "19328165d309658023f7f85cfbba74e4bccf71d3aea3b191ee50b32e96f55746"
+    }
   }
 }

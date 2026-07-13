@@ -105,7 +105,6 @@
     "optimization_program": {
       "registered_at": "2026-07-13",
       "source": "Commonworld deep audit 2026-07-13",
-      "audit_report": "commonworld-deep-audit-2026-07-13.md",
       "audit_browser_sha256": "45330e2b731759caa355dbac9c6343cfd9e574cc1acc0968f284abccc852db8e",
       "audit_link_sha256": "6dd2e426ed5c193f1e01622a7fc84bad373ecf81dcbfda7f783dc78ecfc9e00b",
       "task_order": [
@@ -118,7 +117,10 @@
       ],
       "execution_rule": "one active Commonworld task at a time; each successor requires verified predecessor evidence",
       "queue_mutated": false,
-      "direct_claim_authority": "operator instruction: alles registrieren und umsetzen"
+      "direct_claim_authority": "operator instruction: alles registrieren und umsetzen",
+      "audit_report_artifact_name": "commonworld-deep-audit-2026-07-13.md",
+      "audit_report_location_kind": "external_session_artifact_not_bureau_repository_path",
+      "structured_audit_summary_sha256": "683b9dd8d7003e8db3283e2a493d41b84f83889df1ee015ef1e4a1a493db8055"
     }
   }
 }

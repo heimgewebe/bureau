@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T012",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Decouple Bureau statements from ambient checkout state",
+  "state": "planned",
+  "goal": "Keep Bureau statements available through a deployment-bound, hash-verified, read-only Registry snapshot even when the conventional Bureau checkout is stale or dirty, while requiring every Registry mutation to bind an explicit clean current task worktree.",
+  "priority": {
+    "lane": "next",
+    "rank": 912
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-MACHINE-READABILITY-V1-T012.json"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "bureau"
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T004"
+  ],
+  "acceptance": [
+    {
+      "id": "canonical-read-snapshot",
+      "assertion": "Every installed Bureau release creates an immutable tracked-file Registry snapshot whose inventory binds source commit, path set, inventory SHA-256 and complete tree SHA-256."
+    },
+    {
+      "id": "ambient-independence",
+      "assertion": "The canonical launcher selects that snapshot by manifest-bound environment instead of the caller's working directory, so statements remain valid when ~/repos/bureau is stale, dirty or used by another process."
+    },
+    {
+      "id": "query-only-statements",
+      "assertion": "Commands explicitly classified as statements use a query-only StateStore path that performs no directory creation, migration, journal-mode change or chmod effect."
+    },
+    {
+      "id": "explicit-write-worktree",
+      "assertion": "A mutating command against the canonical snapshot fails with explicit-registry-root-required and can proceed only when --root names a clean Bureau task worktree whose head matches the deployed source commit."
+    },
+    {
+      "id": "tamper-and-drift",
+      "assertion": "Missing, malformed, symlinked, source-mismatched or content-drifted snapshots fail closed before Registry truth or mutation authority is claimed."
+    },
+    {
+      "id": "foreign-work-preservation",
+      "assertion": "No path automatically pulls, resets, stashes, cleans, overwrites or removes the conventional main checkout or any foreign worktree."
+    },
+    {
+      "id": "tests-and-live-proof",
+      "assertion": "Focused and full tests cover root precedence, dirty unrelated cwd, read-only SQLite, explicit clean override, blocked implicit mutation and snapshot tampering; live proof repeats the original stale-dirty-main scenario after deployment."
+    }
+  ],
+  "metadata": {
+    "source": "Live failure after OPERATOR-MACHINE-READABILITY-V1-T004 closeout",
+    "observed_at": "2026-07-13T18:11:00Z",
+    "observation": {
+      "deployed_runtime_source_commit": "d85ad423aa027a6910ad6695c63c822c6121cb6c",
+      "conventional_checkout_head": "b65d1f8f3ba5b67d707c23dfa773814067267f71",
+      "behind_commits": 84,
+      "foreign_dirty_paths": [
+        "registry/initiatives/BUREAU-LIVE-REGISTER-V1.json",
+        "registry/initiatives/UTIL-BASE-V1.json"
+      ],
+      "active_processes_using_checkout": 4,
+      "failure": "The current immutable runtime correctly refused the stale dirty checkout, but because the launcher defaulted Registry root to the caller cwd it also refused every normal statement."
+    },
+    "implementation_slice": {
+      "branch": "fix/canonical-registry-root-v2",
+      "worktree": "/home/alex/repos/.bureau-staging/canonical-registry-root-v2",
+      "focused_test_task": "eb7f884b313e4ceeb31cbc09",
+      "focused_test_result": "16 passed",
+      "merge_and_live_verification_pending": true
+    },
+    "safety_boundary": "Availability is restored only for read truth. Mutation authority remains stricter than before and always requires an explicit clean task worktree.",
+    "does_not_establish": [
+      "merge_readiness",
+      "production_deployment",
+      "registry_semantic_correctness",
+      "permission_to_modify_foreign_worktrees",
+      "automatic_task_closeout"
+    ]
+  }
+}

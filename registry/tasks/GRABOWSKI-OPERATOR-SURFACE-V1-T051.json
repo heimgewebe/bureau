@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T051",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Reconcile unowned post-merge Bureau dirty state without data loss",
-  "state": "planned",
+  "state": "verified",
   "goal": "Determine the origin and validity of the post-merge edits that appeared in the protected T046 closeout worktree after PR #517 merged, preserve any legitimate evidence, reject claims contradicted by authoritative live runtime state, and only then clean the worktree and release its retained leases.",
   "priority": {
     "lane": "later",
@@ -76,6 +76,60 @@
       "permission to reset or delete the dirty worktree",
       "permission to alter T047",
       "that the proposed runtime-head correction is true"
-    ]
+    ],
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_preserved_reconciled_and_cleaned",
+      "verified_at": "2026-07-13T17:18:00Z",
+      "preservation": {
+        "published_pull_request": "heimgewebe/bureau#518",
+        "head": "cc5f9562c5f68e68b9bc2723b8be47baba83bb02",
+        "merge_commit": "1b7136fb5963dff19525a0ec8c34296e5660b0d6",
+        "github_diff_sha256": "bd77174ac1d2c00c6b96cbb5406cfcc76c0d368cd3364ab96ca3e89b1452bfca",
+        "self_review_sha256": "b6aa681b2f587546d7003faf078f9563e0a9a49e06ea310bebeda3ae4eb5fc8f",
+        "ci": {
+          "validate_3_10": "SUCCESS",
+          "validate_3_12": "SUCCESS"
+        },
+        "review_threads": 0
+      },
+      "origin_assessment": {
+        "result": "The protected worktree later became clean at the exact PR #518 head and branch, strongly linking the transient edits to that parallel publication path.",
+        "writer_identity": "unknown",
+        "confidence": 0.92,
+        "does_not_claim": [
+          "a specific human or agent writer",
+          "malicious behavior"
+        ]
+      },
+      "truth_reconciliation": {
+        "contradicted_claim": "PR #518 recorded 7e3700938fbed3fc192d1528b630587c5b17ec76 as the deployed runtime head.",
+        "authoritative_runtime_head": "e72e012818525ee785a3cc76c0c05b741b72b2eb",
+        "authoritative_release_id": "e72e01281852-srcseted22b35ae55a-locke6664d600b6c-contract32d81838b121",
+        "integrity": "valid",
+        "resolution": "Corrected through a fresh clean branch and normal review gate; no protected dirty-state content was silently committed."
+      },
+      "cleanup": {
+        "protected_worktree_removed": true,
+        "local_branches_removed": [
+          "registry/grabowski-t046-closeout-v2",
+          "registry/grabowski-t046-evidence-correction-v1"
+        ],
+        "remote_branches_absent": [
+          "registry/grabowski-t046-closeout-v2",
+          "registry/grabowski-t046-evidence-correction-v1"
+        ],
+        "retained_leases_released": 4,
+        "readback": "No T046 closeout worktree or protected T046/T049 lease remains under the original owner."
+      }
+    },
+    "verification": {
+      "source": "github_pull_request_live_runtime_identity_and_cleanup_readback",
+      "source_ref": "heimgewebe/bureau#518;grabowski-runtime:e72e012818525ee785a3cc76c0c05b741b72b2eb",
+      "verified_at": "2026-07-13",
+      "evidence_sha256": "aed3ccbbe3e77a7704c808fb5d6faf50c0d360cd02808f836c001ac57d978843",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "task_sha256": "7c0553898392a61088ae865dfcbe91178d8afe2fd968140b4d7d28c59dad27c7"
+    }
   }
 }

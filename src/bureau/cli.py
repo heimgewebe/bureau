@@ -122,6 +122,12 @@ def parser() -> argparse.ArgumentParser:
     worktree_hygiene.add_argument("--candidate", action="append", default=[])
     worktree_hygiene.add_argument("--write-plan")
     worktree_hygiene.add_argument("--apply-plan")
+    state_root_artifacts = sub.add_parser("state-root-artifacts")
+    state_root_artifacts.add_argument("--entry", action="append", default=[])
+    state_root_artifacts.add_argument("--destination-root")
+    state_root_artifacts.add_argument("--write-plan")
+    state_root_artifacts.add_argument("--apply-plan")
+    state_root_artifacts.add_argument("--rollback-receipt")
     registry_truth = sub.add_parser("registry-truth")
     registry_truth.add_argument("--strict", action="store_true")
     registry_truth.add_argument("--no-baseline-probe", action="store_true")
@@ -359,6 +365,12 @@ def resolve_registry_root(configured: str | None) -> tuple[Path, str]:
     return Path.cwd(), "ambient-cwd"
 
 
+def _state_root_path(args: argparse.Namespace) -> Path:
+    if args.state_root:
+        return Path(args.state_root).expanduser()
+    return _state_path(args).parent
+
+
 _READ_ONLY_COMMANDS = frozenset(
     {
         "check",
@@ -393,6 +405,8 @@ def _command_mutates(args: argparse.Namespace) -> bool:
     command = args.command
     if command == "worktree-hygiene":
         return bool(args.write_plan or args.apply_plan)
+    if command == "state-root-artifacts":
+        return bool(args.write_plan or args.apply_plan or args.rollback_receipt)
     if command == "source-sync":
         return bool(args.apply)
     if command == "doctor":
@@ -531,6 +545,69 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.command == "runtime-drift-check":
             value = runtime_drift_check(root, state_db=state_path, state_root=state_root)
+            emit(value, args.json)
+            return 0
+        if args.command == "state-root-artifacts":
+            from .state_root_artifacts import (
+                apply_state_root_migration_plan,
+                managed_state_root_inventory,
+                rollback_state_root_migration,
+                write_state_root_migration_plan,
+            )
+            from .v2 import state_root_hygiene
+
+            effects = sum(
+                bool(value)
+                for value in (
+                    args.write_plan,
+                    args.apply_plan,
+                    args.rollback_receipt,
+                )
+            )
+            if effects > 1:
+                raise StateError(
+                    "use only one of --write-plan, --apply-plan or --rollback-receipt"
+                )
+            artifact_root = _state_root_path(args)
+            if args.write_plan:
+                if not args.entry or not args.destination_root:
+                    raise StateError(
+                        "--write-plan requires --entry and --destination-root"
+                    )
+                value = write_state_root_migration_plan(
+                    artifact_root,
+                    args.entry,
+                    Path(args.destination_root),
+                    Path(args.write_plan),
+                    reference_root=root,
+                )
+            elif args.apply_plan:
+                if args.entry or args.destination_root:
+                    raise StateError(
+                        "--entry and --destination-root cannot accompany --apply-plan"
+                    )
+                value = apply_state_root_migration_plan(Path(args.apply_plan))
+                value["post_hygiene"] = state_root_hygiene(
+                    artifact_root, _state_path(args)
+                )
+            elif args.rollback_receipt:
+                if args.entry or args.destination_root:
+                    raise StateError(
+                        "--entry and --destination-root cannot accompany --rollback-receipt"
+                    )
+                value = rollback_state_root_migration(Path(args.rollback_receipt))
+                value["post_hygiene"] = state_root_hygiene(
+                    artifact_root, _state_path(args)
+                )
+            else:
+                if args.entry or args.destination_root:
+                    raise StateError(
+                        "--entry and --destination-root require --write-plan"
+                    )
+                value = managed_state_root_inventory(artifact_root)
+                value["state_root_hygiene"] = state_root_hygiene(
+                    artifact_root, _state_path(args)
+                )
             emit(value, args.json)
             return 0
         if args.command == "worktree-hygiene":

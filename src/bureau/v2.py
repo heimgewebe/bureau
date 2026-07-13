@@ -24,6 +24,10 @@ from .rlens_policy import (
     task_rlens_context_ref,
 )
 from .schema_validation import DocumentSchemaError, SchemaSet
+from .state_root_artifacts import (
+    completion_evidence_directory_valid,
+    reviewed_plan_directory_valid,
+)
 
 SCHEMA_VERSION = 3
 TERMINAL_STATES = {"succeeded", "failed", "cancelled", "orphaned"}
@@ -963,8 +967,6 @@ _RECOVERY_BUNDLE_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\.bundle")
 _RECOVERY_BUNDLE_MAX_COUNT = 64
 _RECOVERY_BUNDLE_MAX_BYTES = 512 * 1024 * 1024
 _RECOVERY_CHECKSUM_MAX_BYTES = 4096
-
-
 def _is_deployment_evidence_directory(entry: Path) -> bool:
     try:
         releases = sorted(entry.iterdir(), key=lambda item: item.name)
@@ -1178,6 +1180,26 @@ def _classify_state_root_entry(entry: Path, database_name: str) -> dict[str, str
         return {"name": name, "type": entry_type, "class": "receipt-directory"}
     if name == "reviews" and entry_type == "directory":
         return {"name": name, "type": entry_type, "class": "review-directory"}
+    if (
+        name == "evidence"
+        and entry_type == "directory"
+        and completion_evidence_directory_valid(entry)
+    ):
+        return {
+            "name": name,
+            "type": entry_type,
+            "class": "completion-evidence-directory",
+        }
+    if (
+        name == "plans"
+        and entry_type == "directory"
+        and reviewed_plan_directory_valid(entry)
+    ):
+        return {
+            "name": name,
+            "type": entry_type,
+            "class": "reviewed-plan-directory",
+        }
     if (
         name == "deployments"
         and entry_type == "directory"

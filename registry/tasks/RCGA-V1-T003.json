@@ -3,7 +3,7 @@
   "id": "RCGA-V1-T003",
   "initiative": "REPOBRIEF-CODEGRAPH-ADOPTION-V1",
   "title": "Repair related-test retrieval and compression evaluation",
-  "state": "ready",
+  "state": "verified",
   "goal": "Remove the live-goldset regression by incorporating retrieval-resolved test paths as an explicit non-graph evidence class, fixing path projection hygiene, and evaluating context compression without weakening recall or authority boundaries.",
   "priority": {
     "lane": "now",
@@ -70,6 +70,7 @@
   ],
   "metadata": {
     "registered_at": "2026-07-13",
+    "verified_at": "2026-07-13",
     "source_task": "RCGA-V1-T002",
     "source_evaluation": "docs/evidence/rcga-live-evaluation-20260713.json",
     "source_evaluation_sha256": "3f080feb83b23242f7a91e7ae7eba1cee6fb3bed079b6672301df046078f7dc2",
@@ -85,6 +86,63 @@
       "no_case_recall_regression_required": true,
       "default_promoted": false
     },
+    "outcome": "The live recall regression is repaired. Resolved query test paths remain a separate navigation-evidence class, unsafe paths fail closed, and the fixed three-repository goldset preserves recall while materially reducing exposed context. The surface remains opt-in.",
+    "implementation": {
+      "repository": "heimgewebe/lenskit",
+      "pull_request": 996,
+      "reviewed_head": "3bb29b0db61e7cecfe4b17778caa03575e543f9d",
+      "merge_commit": "dff582f9c4e8b5511d4ce436db81e3e245f725ec",
+      "changed_files": 12,
+      "additions": 1049,
+      "deletions": 62,
+      "diff_sha256": "00d408a5482f7c35018f57152b07780752d0f36b0b04294de5f0929a621f7d5f",
+      "review_threads_resolved": 1
+    },
+    "validation": {
+      "ci": [
+        "pytest-full",
+        "browser-tests",
+        "webui-js-tests",
+        "release-candidate",
+        "lint",
+        "contracts-validate",
+        "parity-gate",
+        "task-index",
+        "codeql",
+        "forensic-preflight-canary",
+        "ai-context-guard",
+        "anti-hallucination-contract-lint",
+        "doc-freshness"
+      ],
+      "diff_bound_self_review": "PASS",
+      "post_merge_file_readback": "merger/lenskit/core/agent_impact_refinement.py on main"
+    },
+    "live_rerun": {
+      "canonical_workflow_run": 29234901905,
+      "canonical_artifact_id": 8273035636,
+      "canonical_artifact_digest": "sha256:9cca7f74c3c46913f664bde5e069cb76bdac9f2e4e9cdca9d0f38ddd0945b7d4",
+      "baseline_target_recall": 1.0,
+      "impact_target_recall": 1.0,
+      "no_case_regression": true,
+      "context_path_reduction_ratio": 0.5,
+      "independent_workflow_run": 29234901915,
+      "independent_artifact_id": 8273044862,
+      "independent_artifact_digest": "sha256:ab72636983fcfeffa1399d58485089fdb38cb7230d3a0219efe47f3af079a0cf",
+      "independent_context_path_reduction_ratio": 0.32,
+      "default_promoted": false,
+      "diagnostic_path": "docs/diagnostics/repobrief-agent-impact-live-rerun-v1.json",
+      "goldset_path": "docs/retrieval/repobrief_agent_impact_live_goldset.rerun.v1.json",
+      "proof_path": "docs/proofs/repobrief-agent-impact-live-regression-fix-v1-proof.md"
+    },
+    "verified_acceptance": {
+      "rcga-v1-t003-resolved-tests": "Lenskit PR #996 adds evidence_type=resolved_query with citation_id, source_range and range_status while explicitly denying graph and coverage authority.",
+      "rcga-v1-t003-evidence-order": "Tests preserve graph_edge, symbol_index_path_match, resolved_query and heuristic ordering; only pure heuristics are suppressed when resolved test evidence exists.",
+      "rcga-v1-t003-path-hygiene": "Raw empty, absolute, backslash, duplicate-slash, dot and parent segments are rejected before path normalization and excluded from metrics.",
+      "rcga-v1-t003-compression-metric": "The evaluator records case and aggregate context reduction and requires no recall regression before either recall or compression can establish bounded utility.",
+      "rcga-v1-t003-live-rerun": "The same Lenskit, Grabowski and Weltgewebe cases reached recall 1.0 with no regression; canonical context reduction was 50 percent and the stricter independent confirmation measured 32 percent.",
+      "rcga-v1-t003-boundary": "RepoBrief remains read-only and resolved_query remains derived navigation evidence without runtime, coverage, review or merge authority.",
+      "rcga-v1-t003-merge-gates": "PR #996 was mergeable, all head-bound CI gates passed, the complete diff was reviewed at SHA-256 00d408..., the P2 thread was resolved and merge commit dff582f... is present on Lenskit main."
+    },
     "does_not_establish": [
       "complete_call_graph",
       "complete_blast_radius",
@@ -95,6 +153,10 @@
       "security_correctness",
       "general_agent_quality_improvement",
       "default_promotion"
-    ]
+    ],
+    "verification": {
+      "task_sha256": "98bef941e639d99d502d090bc9f1dd799e04ed482c64bfe3e616e634f61f02b4",
+      "plan_sha256": "19328165d309658023f7f85cfbba74e4bccf71d3aea3b191ee50b32e96f55746"
+    }
   }
 }

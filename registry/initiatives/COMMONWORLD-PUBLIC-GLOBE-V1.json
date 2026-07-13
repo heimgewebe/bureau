@@ -4,7 +4,7 @@
   "title": "Commonworld public globe and surface hardening",
   "state": "active",
   "commitment": "now",
-  "goal": "Preserve the live public MapLibre globe and bounded production/provider contract while making the globe the direct entry surface, keeping the digital sphere geometrically synchronized, and providing equal text and machine-readable access without inventing a backend or unsupported accessibility claims.",
+  "goal": "Preserve the live public globe while completing the evidence-bound optimization program: current truth and failure safety, real geographic and hybrid Commons, intent-oriented discovery, scalable static machine surfaces, balanced catalog growth with Weltgewebe handoff, and deferred physical screen-reader acceptance.",
   "current_plan": {
     "repository": "bureau",
     "path": "docs/plans/commonworld-public-globe-v1.md"
@@ -101,6 +101,24 @@
       "canonical_live_smoke": "PASS",
       "exact_live_artifact_readback": "PASS",
       "closeout_sha256": "326ec3d974c7c6890a3fe2be45eb8e57b3ffaf112c1a27fe48bb3255cc4f54a8"
+    },
+    "optimization_program": {
+      "registered_at": "2026-07-13",
+      "source": "Commonworld deep audit 2026-07-13",
+      "audit_report": "commonworld-deep-audit-2026-07-13.md",
+      "audit_browser_sha256": "45330e2b731759caa355dbac9c6343cfd9e574cc1acc0968f284abccc852db8e",
+      "audit_link_sha256": "6dd2e426ed5c193f1e01622a7fc84bad373ecf81dcbfda7f783dc78ecfc9e00b",
+      "task_order": [
+        "COMMONWORLD-PUBLIC-GLOBE-V1-T005",
+        "COMMONWORLD-PUBLIC-GLOBE-V1-T006",
+        "COMMONWORLD-PUBLIC-GLOBE-V1-T007",
+        "COMMONWORLD-PUBLIC-GLOBE-V1-T008",
+        "COMMONWORLD-PUBLIC-GLOBE-V1-T009",
+        "COMMONWORLD-PUBLIC-GLOBE-V1-T010"
+      ],
+      "execution_rule": "one active Commonworld task at a time; each successor requires verified predecessor evidence",
+      "queue_mutated": false,
+      "direct_claim_authority": "operator instruction: alles registrieren und umsetzen"
     }
   }
 }

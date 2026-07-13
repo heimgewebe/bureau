@@ -10,7 +10,7 @@
     "rank": 20
   },
   "depends_on": [
-    "RAB-V1-T002A"
+    "RAB-V1-T002B"
   ],
   "claims": [
     {
@@ -41,7 +41,7 @@
     "approval": {
       "action_class": "agent_dispatch",
       "required_level": "reviewed_plan",
-      "note": "Run only after RAB-V1-T002A is verified and a live provider preflight proves exact model identity, provider usage, tool-call capture, transcript binding and bounded spend."
+      "note": "Run only after RAB-V1-T002B verifies one cost-bounded live baseline/treatment pair with exact model identity, provider usage, tool-call capture, transcript binding, source integrity and separated freshness/preparation latency."
     }
   },
   "required_capabilities": [
@@ -82,7 +82,8 @@
     "updated_at": "2026-07-13",
     "source_issue": "heimgewebe/bureau#481",
     "runner_prerequisite": "RAB-V1-T002A",
-    "initial_blocker": "No qualifying instrumented agent runner was exposed when the benchmark was registered. RAB-V1-T002A now owns the bounded Claude runner implementation and qualification; real dispatch remains prohibited until that task and a live provider preflight are verified.",
+    "live_preflight_prerequisite": "RAB-V1-T002B",
+    "initial_blocker": "The qualified runner is merged. Real dispatch remains prohibited until RAB-V1-T002B verifies a hard-cost-bounded live provider pair, valid Lenskit receipts, treatment MCP use, source integrity and separate snapshot/freshness latency.",
     "default_promoted": false,
     "does_not_establish": [
       "default promotion",

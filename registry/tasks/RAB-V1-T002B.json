@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "id": "RAB-V1-T002B",
+  "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
+  "title": "Run a cost-bounded live baseline and RepoBrief preflight",
+  "state": "ready",
+  "goal": "Prove the qualified Claude runner against the live provider with exactly one frozen baseline/treatment pair, a hard pre-dispatch spend ceiling, exact model and tool evidence, valid Lenskit receipts, immutable transcripts and separately measured snapshot-preparation and freshness latency before any 96-run benchmark dispatch.",
+  "priority": {
+    "lane": "next",
+    "rank": 19
+  },
+  "depends_on": [
+    "RAB-V1-T002A"
+  ],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.lenskit",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/lenskit"
+    ],
+    "approval": {
+      "action_class": "agent_dispatch",
+      "required_level": "reviewed_plan",
+      "note": "Dispatch exactly one pre-registered pair. Each provider process must receive a hard --max-budget-usd ceiling of at most USD 1.00; total authorized provider spend is at most USD 2.00. No retry, continuation or automatic full-benchmark dispatch is permitted."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "claude-cli",
+    "instrumented-agent-runner"
+  ],
+  "acceptance": [
+    {
+      "id": "rab-v1-t002b-hard-cost-cap",
+      "assertion": "The live runner requires an operator-provided positive cost ceiling, passes it to Claude Code through --max-budget-usd before execution, rejects provider total_cost_usd above the ceiling, and records the per-run and total authorized ceilings in the preflight report."
+    },
+    {
+      "id": "rab-v1-t002b-single-frozen-pair",
+      "assertion": "Exactly one baseline and one treatment request from the merged Lenskit plan are used with canonical request-root equality, the same case, repetition, repository commit, prompt, model, sampling contract and budgets, and no post-hoc task or threshold change."
+    },
+    {
+      "id": "rab-v1-t002b-live-provider-proof",
+      "assertion": "Both runs bind the actual Claude system/init and result session, exact model id, provider-reported input/output tokens, tool exposure, tool-use/result events, total_cost_usd and complete bounded transcript. Missing or contradictory evidence fails closed."
+    },
+    {
+      "id": "rab-v1-t002b-treatment-proof",
+      "assertion": "The treatment init exposes all required RepoBrief MCP and resource tools, at least one RepoBrief tool or resource call is observed, and no unapproved write, shell, web, memory or unrelated MCP tool is available or used."
+    },
+    {
+      "id": "rab-v1-t002b-lenskit-validation",
+      "assertion": "Both real receipts pass the merged Lenskit receipt validation and the pair is evaluated only as a preflight scope that cannot establish benchmark usefulness or default promotion."
+    },
+    {
+      "id": "rab-v1-t002b-latency-separation",
+      "assertion": "The report records snapshot_preparation_ms, freshness_check_ms, agent_execution_ms and total_time_to_answer_ms separately, plus snapshot_reused, snapshot_rebuilt and stale_blocked, so indexing or freshness cost is not hidden inside agent runtime."
+    },
+    {
+      "id": "rab-v1-t002b-isolation-and-source-integrity",
+      "assertion": "Baseline and treatment use fresh distinct sessions and checkouts; source checkout HEAD, index and working-tree state are read back before and after and remain unchanged."
+    },
+    {
+      "id": "rab-v1-t002b-evidence",
+      "assertion": "Requests, receipts, transcripts, environment identity, Claude version, target commits, manifest digest, timing breakdown, observed and authorized cost, and failure states are hash-bound in a reviewable preflight artifact."
+    },
+    {
+      "id": "rab-v1-t002b-stop-rule",
+      "assertion": "Any invalid receipt, unavailable provider, missing RepoBrief tool, stale or non-comparable treatment state, budget stop, timeout or source mutation ends the preflight without retry and leaves RAB-V1-T002 planned."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source_issue": "heimgewebe/bureau#481",
+    "runner_prerequisite": "RAB-V1-T002A",
+    "runner_merge": "heimgewebe/grabowski@4465ed14b7064e97e75d2e11be31e1264593e1ad",
+    "harness_merge": "heimgewebe/lenskit@7b729b52b6bf0302029626878ee444e664a0dc08",
+    "fixed_pair_count": 1,
+    "provider_process_count": 2,
+    "per_run_max_cost_usd": 1.0,
+    "total_max_cost_usd": 2.0,
+    "parallel_exception": {
+      "reason": "The queued Heimlern outcome task also claims repo.grabowski, but no public branch or pull request exists for it. This preflight task is restricted to the RepoBrief benchmark runner, its tests and contract, outside the routing-outcome producer surface.",
+      "remaining_uncertainty": "Unpublished local worktrees and leases remain authoritative and must be re-read before mutation or live dispatch."
+    },
+    "default_promoted": false,
+    "does_not_establish": [
+      "RepoBrief usefulness",
+      "benchmark completion",
+      "provider reliability beyond the two preflight runs",
+      "answer correctness outside the selected case",
+      "default promotion",
+      "permission to dispatch the 96-run benchmark"
+    ]
+  }
+}

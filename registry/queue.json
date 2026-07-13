@@ -54,6 +54,7 @@
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020"
     ],
     "next": [
+      "RAB-V1-T002B",
       "CCM-V1-T005",
       "RAB-V1-T002",
       "BUR-2026-001-T009",

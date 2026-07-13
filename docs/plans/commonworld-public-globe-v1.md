@@ -30,3 +30,19 @@ The three tasks are independent questions but share the Commonworld repository, 
 ## Nonclaims
 
 This registration does not establish Android-wide accessibility, screen-reader support, WCAG conformance, a provider SLA, production architecture authorization, backend readiness, migration permission, runtime correctness after future changes or merge readiness.
+
+
+## Optimization program registered from the 2026-07-13 deep audit
+
+The live Globe-first release remains the baseline. The audit found that the globe is technically stable but still carries only digital Commons, while seed-only validators, stale release gates and failure-state behavior block the next product phase. The following work is therefore ordered and limited to one active Commonworld task at a time.
+
+| Task | Result | Dependency |
+| --- | --- | --- |
+| `T005` | Current truth, real browser CI, failure-safe controls, interaction hardening and explicit licensing/method boundary | none |
+| `T006` | Real sourced geographic and hybrid vertical slice with semantic zoom | `T005` |
+| `T007` | Intent-oriented German search, results, spatial navigation and filters | `T006` |
+| `T008` | Scalable static loading, machine access and public metadata | `T007` |
+| `T009` | Balanced 30–50 entry catalog, freshness workflow and explicit Weltgewebe handoff | `T008` |
+| `T010` | Physical VoiceOver, TalkBack and desktop screen-reader product evidence | `T009` |
+
+The task chain deliberately forbids premature backend, account, database, PMTiles, vector-search or independent CLI work. Such architecture requires measured thresholds from T008 rather than anticipation.

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T045",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Run an evidence-bound observe-connector canary",
+  "state": "planned",
+  "goal": "Decide whether a separate narrow observe connector improves least-privilege operation or tool selection enough to justify a second registered connector, using a bounded A/B canary rather than assuming that tool count implies context loading cost.",
+  "priority": {"lane": "later", "rank": 450},
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": ["repo:/home/alex/repos/grabowski"]
+  },
+  "claims": [{"resource": "repo.grabowski", "mode": "write", "isolation": "worktree"}],
+  "required_capabilities": ["repository", "shell", "github", "grabowski"],
+  "depends_on": ["GRABOWSKI-OPERATOR-SURFACE-V1-T044"],
+  "acceptance": [
+    {"id": "entry-gate", "assertion": "The canary starts only if T044 identifies a plausible unresolved least-privilege or tool-choice advantage; otherwise the task closes as not justified with evidence."},
+    {"id": "narrow-surface", "assertion": "The canary connector exposes only an explicitly reviewed observe profile and cannot mutate, reveal secrets, signal processes, deploy, merge or silently route to the trusted-owner connector."},
+    {"id": "ab-design", "assertion": "The same golden prompts are run against one-connector and two-connector configurations with recorded server, publication profile, model and client snapshot identity where observable."},
+    {"id": "metrics", "assertion": "The comparison measures correct tool or connector selection, refusal when authority is insufficient, unnecessary escalation, latency and observable context or schema cost without treating JSON bytes as model tokens."},
+    {"id": "operational-cost", "assertion": "The decision includes configuration drift, deployment, refresh, naming ambiguity, maintenance and incident-response cost of a second connector."},
+    {"id": "decision-rule", "assertion": "A second default connector is adopted only with a material repeatable benefit and no unacceptable ambiguity; otherwise the canary is removed and the single-connector profile model remains canonical."},
+    {"id": "no-context-claim", "assertion": "The closeout does not claim automatic context savings when deferred tool discovery is active unless direct client-side evidence proves them."}
+  ],
+  "metadata": {
+    "source": "user-directed-agent-facing-contract-plan",
+    "plan": "docs/plans/grabowski-agent-facing-contract-v1.md",
+    "decision_posture": "canary, not committed architecture",
+    "does_not_establish": [
+      "second_connector_required",
+      "all_tool_schemas_are_preloaded",
+      "least_privilege_requires_multiple_connectors",
+      "client_side_token_measurement"
+    ]
+  }
+}

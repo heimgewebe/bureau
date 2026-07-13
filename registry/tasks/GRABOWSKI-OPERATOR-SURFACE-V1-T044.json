@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T044",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Measure and improve tool metadata and naming",
+  "state": "planned",
+  "goal": "Audit public tool names and descriptions against real operator intents, add explicit application and exclusion cues, and use a reproducible golden-prompt evaluation to justify metadata or naming changes instead of relying on intuition.",
+  "priority": {"lane": "next", "rank": 440},
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": ["repo:/home/alex/repos/grabowski"]
+  },
+  "claims": [{"resource": "repo.grabowski", "mode": "write", "isolation": "worktree"}],
+  "required_capabilities": ["repository", "shell", "github", "grabowski"],
+  "depends_on": ["GRABOWSKI-OPERATOR-SURFACE-V1-T043"],
+  "acceptance": [
+    {"id": "metadata-inventory", "assertion": "A generated inventory records each public name, description, category, risk, effect, closest alternatives and missing application or exclusion cues."},
+    {"id": "golden-prompts", "assertion": "A versioned dataset contains representative positive, negative and ambiguous intents for status, filesystem, Git, GitHub, tasks, workspaces, secrets, process control and deployment."},
+    {"id": "measured-selection", "assertion": "The evaluation reports top-choice precision, target recall, dangerous over-selection, unnecessary generic fallback and confusion pairs with a fixed model and connector snapshot identity where observable."},
+    {"id": "risk-names", "assertion": "Explicit risk names such as destroy and secret_reveal remain prominent unless a measured replacement improves selection without hiding effect or authority."},
+    {"id": "intent-names", "assertion": "Ambiguous effect-level names are replaced or supplemented by intent-shaped entry points only when the evaluation shows a material benefit and a compatibility path exists."},
+    {"id": "description-contract", "assertion": "Descriptions state when to use the tool, its decisive precondition or effect, and one important exclusion when confusion is plausible, within a bounded size."},
+    {"id": "before-after-proof", "assertion": "Accepted changes include before and after results on the same dataset and explicitly separate metadata effects from deferred tool loading or connector transport effects."}
+  ],
+  "metadata": {
+    "source": "user-directed-agent-facing-contract-plan",
+    "plan": "docs/plans/grabowski-agent-facing-contract-v1.md",
+    "does_not_establish": [
+      "all_models_choose_tools_equally",
+      "client_snapshot_observability",
+      "metadata_is_the_only_choice_factor",
+      "permission_for_breaking_renames"
+    ]
+  }
+}

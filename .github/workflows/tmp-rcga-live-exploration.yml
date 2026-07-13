@@ -1,6 +1,6 @@
 name: temporary-rcga-live-exploration
 
-on: [push, pull_request]
+on: [push]
 
 permissions:
   contents: read
@@ -47,7 +47,6 @@ jobs:
         run: |
           set -uo pipefail
           mkdir -p live-output
-          overall=0
           for name in lenskit grabowski weltgewebe; do
             mkdir -p "live-output/${name}"
             set +e
@@ -63,9 +62,6 @@ jobs:
             rc=$?
             set -e
             printf '%s\n' "$rc" > "live-output/${name}/snapshot-create.exit"
-            if [ "$rc" -ne 0 ]; then
-              overall=1
-            fi
           done
           exit 0
       - name: Inspect bundle roles and impact-context viability

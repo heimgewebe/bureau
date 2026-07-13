@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T001",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Expose the canonical operator entry as a typed Grabowski surface",
+  "state": "planned",
+  "goal": "Let a fresh ChatGPT operator read the canonical heim-pc operator entry, its content hash and resolved local locators through one typed read-only Grabowski call, then select the correct primary truth source without relying on conversation memory or broad filesystem discovery.",
+  "priority": {
+    "lane": "next",
+    "rank": 901
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "typed-read",
+      "assertion": "One typed read-only surface returns schema version, canonical source path, source SHA-256, resolved host paths, operator role, human role, entry sequence, truth-source locators, safety boundaries and explicit non-claims."
+    },
+    {
+      "id": "scope-routing",
+      "assertion": "A deterministic classifier distinguishes single-repository, cross-repository, host-runtime, task-selection and historical-evidence work and returns only the required next read surfaces."
+    },
+    {
+      "id": "freshness",
+      "assertion": "The response detects missing, malformed or source/projection hash drift and never substitutes embedded prose for an unreadable canonical contract."
+    },
+    {
+      "id": "privacy",
+      "assertion": "Path resolution is bounded to declared templates and cannot trigger a broad home scan or expose secret, browser-profile, keyring or private-content paths."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover valid entry, missing source, malformed JSON, source/projection drift, unresolved HOME, unsupported schema, scope routing and privacy boundaries."
+    },
+    {
+      "id": "non-authority",
+      "assertion": "The surface grants no mutation, task, merge, deploy or secret-read authority and claims no live health beyond freshly read primary sources."
+    }
+  ],
+  "metadata": {
+    "source": "operator ecosystem machine-readability audit",
+    "observed_at": "2026-07-13T15:00:00Z",
+    "evidence": {
+      "heim_pc_pull_request": 37,
+      "heim_pc_merge_commit": "d51460c52dba7603ecbe4a6d34106905ebe1e682",
+      "current_gap": "Grabowski bootstrap and embedded agent instructions do not expose heim-pc or systemkatalog as a first-class typed route."
+    },
+    "does_not_establish": [
+      "automatic_consumer_adoption",
+      "runtime_correctness",
+      "mutation_authority"
+    ]
+  }
+}

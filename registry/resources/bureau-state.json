@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "state.bureau",
+  "type": "path",
+  "parent": "repo.bureau",
+  "path": "/home/alex/.local/state/bureau",
+  "grabowski_key": "path:/home/alex/.local/state/bureau"
+}

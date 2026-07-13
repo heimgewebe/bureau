@@ -4,13 +4,13 @@
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "Run real paired baseline and RepoBrief agent trials",
   "state": "planned",
-  "goal": "Bind a real instrumented agent runner and execute the frozen benchmark in isolated baseline and RepoBrief-augmented conditions with provider-reported tokens and immutable transcripts.",
+  "goal": "Execute the frozen benchmark in isolated baseline and RepoBrief-augmented conditions with the separately qualified instrumented runner, provider-reported tokens and immutable transcripts.",
   "priority": {
     "lane": "next",
     "rank": 20
   },
   "depends_on": [
-    "RAB-V1-T001"
+    "RAB-V1-T002A"
   ],
   "claims": [
     {
@@ -41,7 +41,7 @@
     "approval": {
       "action_class": "agent_dispatch",
       "required_level": "reviewed_plan",
-      "note": "Run only after an instrumented runner proves provider/model identity, provider token accounting, tool-call capture and immutable transcript binding."
+      "note": "Run only after RAB-V1-T002A is verified and a live provider preflight proves exact model identity, provider usage, tool-call capture, transcript binding and bounded spend."
     }
   },
   "required_capabilities": [
@@ -54,11 +54,11 @@
   "acceptance": [
     {
       "id": "rab-v1-t002-runner-proof",
-      "assertion": "The bound runner records exact provider and model identity, sampling settings, provider-reported input/output tokens, tool calls, timestamps and complete or cryptographically bound transcripts for every valid run."
+      "assertion": "The bound and separately verified runner records exact provider and model identity, sampling settings, provider-reported input/output tokens, tool calls, timestamps and complete or cryptographically bound transcripts for every valid run."
     },
     {
       "id": "rab-v1-t002-isolation",
-      "assertion": "Each condition starts in a fresh session and isolated workspace with no transcript, cache, memory or result transfer between baseline and treatment."
+      "assertion": "Each condition starts in a fresh session and isolated checkout with no transcript, cache, memory or result transfer between baseline and treatment."
     },
     {
       "id": "rab-v1-t002-completeness",
@@ -79,8 +79,10 @@
   ],
   "metadata": {
     "registered_at": "2026-07-13",
+    "updated_at": "2026-07-13",
     "source_issue": "heimgewebe/bureau#481",
-    "initial_blocker": "No qualifying instrumented agent runner is currently exposed to this execution environment. T001 must implement the boundary; T002 remains planned until a real runner is available and explicitly bound.",
+    "runner_prerequisite": "RAB-V1-T002A",
+    "initial_blocker": "No qualifying instrumented agent runner was exposed when the benchmark was registered. RAB-V1-T002A now owns the bounded Claude runner implementation and qualification; real dispatch remains prohibited until that task and a live provider preflight are verified.",
     "default_promoted": false,
     "does_not_establish": [
       "default promotion",

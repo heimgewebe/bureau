@@ -170,6 +170,37 @@ def _assert_descriptor_matches_anchor(
         raise legacy.StateError(f"{role} directory descriptor identity mismatch")
 
 
+def _assert_directory_child_matches_anchor(
+    parent_descriptor: int,
+    child_name: str,
+    anchor: dict[str, Any],
+    *,
+    role: str,
+) -> None:
+    if Path(child_name).name != child_name or child_name in {"", ".", ".."}:
+        raise legacy.StateError(f"{role} directory child name is invalid")
+    try:
+        info = os.stat(
+            child_name,
+            dir_fd=parent_descriptor,
+            follow_symlinks=False,
+        )
+    except FileNotFoundError as exc:
+        raise legacy.StateError(f"{role} directory child is missing") from exc
+    except OSError as exc:
+        raise legacy.StateError(
+            f"cannot inspect {role} directory child: {exc}"
+        ) from exc
+    if (
+        stat.S_ISLNK(info.st_mode)
+        or not stat.S_ISDIR(info.st_mode)
+        or int(info.st_dev) != anchor["device"]
+        or int(info.st_ino) != anchor["inode"]
+        or oct(stat.S_IMODE(info.st_mode)) != anchor["mode"]
+    ):
+        raise legacy.StateError(f"{role} directory child identity mismatch")
+
+
 @contextmanager
 def _open_bound_directory(
     anchor: object,
@@ -961,6 +992,18 @@ def state_root_migration_plan(
                 reference.parent, reference_parent_descriptor
             ),
         }
+        _assert_directory_child_matches_anchor(
+            root_parent_descriptor,
+            root.name,
+            directory_anchors["state_root"],
+            role="state-root",
+        )
+        _assert_directory_child_matches_anchor(
+            reference_parent_descriptor,
+            reference.name,
+            directory_anchors["reference_root"],
+            role="reference-root",
+        )
 
     plan = {
         "schema_version": MIGRATION_PLAN_SCHEMA_VERSION,
@@ -1222,6 +1265,18 @@ def _assert_plan_directory_paths_current(
         ("destination_base", "destination-base"),
     ):
         _assert_bound_directory_path(descriptors[key], anchors[key], role=role)
+    _assert_directory_child_matches_anchor(
+        descriptors["state_root_parent"],
+        Path(anchors["state_root"]["path"]).name,
+        anchors["state_root"],
+        role="state-root",
+    )
+    _assert_directory_child_matches_anchor(
+        descriptors["reference_root_parent"],
+        Path(anchors["reference_root"]["path"]).name,
+        anchors["reference_root"],
+        role="reference-root",
+    )
 
 
 def _create_destination_chain(
@@ -1282,10 +1337,17 @@ def _assert_created_destination_paths_current(
     created: list[dict[str, Any]],
 ) -> None:
     for index, record in enumerate(created):
+        role = f"destination-component-{index}"
         _assert_bound_directory_path(
             record["descriptor"],
             record["anchor"],
-            role=f"destination-component-{index}",
+            role=role,
+        )
+        _assert_directory_child_matches_anchor(
+            record["parent_descriptor"],
+            record["name"],
+            record["anchor"],
+            role=role,
         )
 
 
@@ -1336,6 +1398,11 @@ def _receipt_directory_anchors(
         ("state_root", root, "state-root"),
         ("state_root_parent", root.parent, "state-root-parent"),
         ("destination_base", destination_base, "destination-base"),
+        (
+            "destination_root_parent",
+            destination.parent,
+            "destination-root-parent",
+        ),
         ("destination_root", destination, "destination-root"),
         ("reference_root", reference, "reference-root"),
         ("reference_root_parent", reference.parent, "reference-root-parent"),
@@ -1510,11 +1577,23 @@ def _assert_receipt_paths_current(
     *,
     descriptors: dict[str, int],
     anchors: dict[str, Any],
+    destination_parent_descriptor: int,
     destination_descriptor: int,
 ) -> None:
     _assert_plan_directory_paths_current(descriptors, anchors)
     _assert_bound_directory_path(
+        destination_parent_descriptor,
+        anchors["destination_root_parent"],
+        role="destination-root-parent",
+    )
+    _assert_bound_directory_path(
         destination_descriptor,
+        anchors["destination_root"],
+        role="destination-root",
+    )
+    _assert_directory_child_matches_anchor(
+        destination_parent_descriptor,
+        Path(anchors["destination_root"]["path"]).name,
         anchors["destination_root"],
         role="destination-root",
     )
@@ -1553,6 +1632,13 @@ def apply_state_root_migration_plan(path: Path) -> dict[str, Any]:
                 destination_base=destination_base,
                 anchors=receipt_anchors,
             )
+            destination_parent_descriptor = stack.enter_context(
+                _open_bound_directory(
+                    receipt_anchors["destination_root_parent"],
+                    expected_path=destination_root.parent,
+                    role="destination-root-parent",
+                )
+            )
             destination_descriptor = stack.enter_context(
                 _open_bound_directory(
                     receipt_anchors["destination_root"],
@@ -1563,6 +1649,7 @@ def apply_state_root_migration_plan(path: Path) -> dict[str, Any]:
             _assert_receipt_paths_current(
                 descriptors=descriptors,
                 anchors=receipt_anchors,
+                destination_parent_descriptor=destination_parent_descriptor,
                 destination_descriptor=destination_descriptor,
             )
             _verify_applied_receipt_state(
@@ -1590,6 +1677,11 @@ def apply_state_root_migration_plan(path: Path) -> dict[str, Any]:
             components=destination_components,
         )
         destination_root_anchor = created[-1]["anchor"]
+        destination_root_parent_anchor = (
+            created[-2]["anchor"]
+            if len(created) > 1
+            else anchors["destination_base"]
+        )
         _assert_plan_directory_paths_current(descriptors, anchors)
         _assert_created_destination_paths_current(created)
         unexpected = sorted(os.listdir(destination_descriptor))
@@ -1730,6 +1822,7 @@ def apply_state_root_migration_plan(path: Path) -> dict[str, Any]:
             _assert_created_destination_paths_current(created)
             receipt_anchors = {
                 **anchors,
+                "destination_root_parent": destination_root_parent_anchor,
                 "destination_root": destination_root_anchor,
             }
             receipt = {
@@ -1818,6 +1911,13 @@ def rollback_state_root_migration(receipt_path: Path) -> dict[str, Any]:
             destination_base=destination_base,
             anchors=anchors,
         )
+        destination_parent_descriptor = stack.enter_context(
+            _open_bound_directory(
+                anchors["destination_root_parent"],
+                expected_path=destination_root.parent,
+                role="destination-root-parent",
+            )
+        )
         destination_descriptor = stack.enter_context(
             _open_bound_directory(
                 anchors["destination_root"],
@@ -1828,6 +1928,7 @@ def rollback_state_root_migration(receipt_path: Path) -> dict[str, Any]:
         _assert_receipt_paths_current(
             descriptors=descriptors,
             anchors=anchors,
+            destination_parent_descriptor=destination_parent_descriptor,
             destination_descriptor=destination_descriptor,
         )
 
@@ -1924,6 +2025,7 @@ def rollback_state_root_migration(receipt_path: Path) -> dict[str, Any]:
                 _assert_receipt_paths_current(
                     descriptors=descriptors,
                     anchors=anchors,
+                    destination_parent_descriptor=destination_parent_descriptor,
                     destination_descriptor=destination_descriptor,
                 )
                 source_info = _lstat_at(destination_descriptor, item["source_name"])
@@ -1975,6 +2077,7 @@ def rollback_state_root_migration(receipt_path: Path) -> dict[str, Any]:
                 _assert_receipt_paths_current(
                     descriptors=descriptors,
                     anchors=anchors,
+                    destination_parent_descriptor=destination_parent_descriptor,
                     destination_descriptor=destination_descriptor,
                 )
                 if (

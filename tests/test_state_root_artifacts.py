@@ -750,6 +750,44 @@ def test_plan_refuses_symlink_source(tmp_path):
         )
 
 
+
+def test_receipt_binds_destination_root_and_direct_parent(tmp_path):
+    state_root, destination, plan_path, _ = write_plan(tmp_path)
+    review_plan(plan_path)
+
+    result = apply_state_root_migration_plan(plan_path)
+    receipt = json.loads(Path(result["receipt_path"]).read_text(encoding="utf-8"))
+    anchors = receipt["directory_anchors"]
+
+    assert anchors["destination_root"]["path"] == str(destination)
+    assert anchors["destination_root_parent"]["path"] == str(destination.parent)
+    destination_info = destination.stat()
+    parent_info = destination.parent.stat()
+    assert anchors["destination_root"]["device"] == destination_info.st_dev
+    assert anchors["destination_root"]["inode"] == destination_info.st_ino
+    assert anchors["destination_root_parent"]["device"] == parent_info.st_dev
+    assert anchors["destination_root_parent"]["inode"] == parent_info.st_ino
+    assert not (state_root / "artifact.txt").exists()
+
+
+def test_rollback_rejects_replaced_direct_destination_parent(tmp_path):
+    state_root, destination, plan_path, _ = write_plan(tmp_path)
+    review_plan(plan_path)
+    result = apply_state_root_migration_plan(plan_path)
+
+    reviewed_parent = destination.parent.with_name("quarantine-reviewed")
+    destination.parent.rename(reviewed_parent)
+    destination.parent.mkdir()
+    destination.mkdir()
+    (destination / "artifact.txt").write_text("decoy\n", encoding="utf-8")
+
+    with pytest.raises(legacy.StateError, match="identity mismatch"):
+        rollback_state_root_migration(Path(result["receipt_path"]))
+
+    assert not (state_root / "artifact.txt").exists()
+    assert (reviewed_parent / "run-1" / "artifact.txt").exists()
+    assert (destination / "artifact.txt").read_text(encoding="utf-8") == "decoy\n"
+
 def test_cli_classifies_read_and_effect_paths():
     read = parser().parse_args(["state-root-artifacts"])
     write = parser().parse_args(

@@ -36,7 +36,7 @@
       "repo:/home/alex/repos/bureau"
     ],
     "approval": {
-      "action_class": "read_only_measurement",
+      "action_class": "read_only_observation",
       "required_level": "reviewed_plan",
       "note": "Use coherent, commit- and bundle-identity-bound live snapshots. Do not promote the action by changing a default route in the same measurement slice."
     }

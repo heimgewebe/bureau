@@ -14,6 +14,7 @@
     "Connector snapshot identity and structural contract compatibility are observable and drift fails closed without claiming model comprehension or universal client compliance.",
     "A valid lease either prevents foreign writes in its write scope or produces complete, attributable conflict evidence before publication.",
     "The Bureau CLI, deployed package and selected checkout expose the same source identity and cannot silently execute stale code.",
+    "The canonical Bureau launcher and Grabowski lease consumer converge on one immutable release identity and rollback chain.",
     "Bureau state-root evidence and plan directories are classified or migrated without deleting unknown operator data.",
     "The existing RepoBrief provenance task binds source commit, dirty state and generation time before freshness can be current.",
     "Systemkatalog stable semantics are available through a typed read-only operator surface with explicit non-claims.",
@@ -39,10 +40,13 @@
       "GRABOWSKI-OPERATOR-SURFACE-V1-T047",
       "OPERATOR-INTEGRATION-LOOP-V1-T004"
     ],
-    "new_task_count": 9,
+    "new_task_count": 10,
+    "verified_tasks": [
+      "OPERATOR-MACHINE-READABILITY-V1-T004"
+    ],
     "does_not_establish": [
-      "implementation_of_registered_tasks",
-      "runtime_correctness",
+      "implementation_of_remaining_registered_tasks",
+      "future_runtime_correctness",
       "consumer_adoption",
       "merge_readiness",
       "automatic_dispatch_authority",

@@ -43,13 +43,14 @@ Alle Einstiegslogik ausschließlich in Grabowski einzubauen wäre kurzfristig ei
 1. Grabowski: kanonischen Operator-Einstieg typisiert lesen und auftragsabhängig routen.
 2. Grabowski: Connector-Snapshot-Identität und strukturelle Vertragskompatibilität beobachtbar machen; Verhaltensbelege bleiben getrennt.
 3. Grabowski: Lease-Schreibschutz und Herkunftsattribution erzwingen.
-4. Bureau: deployed CLI, Checkout und Runtime-Quelle identisch und sichtbar machen.
+4. Bureau: deployed CLI, Checkout und Runtime-Quelle identisch und sichtbar machen. **Verifiziert am 2026-07-13 über PRs #521/#522, immutable Release, Ambient-Quarantäne und exakten Grabowski-Lease-Probe.**
 5. Bureau: `evidence`/`plans` klassifizieren oder migrieren, ohne unbekannte Daten zu löschen.
 6. RepoBrief/Lenskit: bestehenden Task `OPERATOR-INTEGRATION-LOOP-V1-T004` für Source-Commit, Dirty-State, Erzeugungszeit und Refresh-Provenienz wiederverwenden; keine Dublette anlegen.
 7. Systemkatalog/Grabowski: typisierte read-only Abfragefläche mit stabilen Non-Claims.
 8. Metarepo/heim-pc: Contract-Auflösung in isolierten Worktrees reproduzierbar machen.
 9. heim-pc: optionale Hostzustände nur provenance-gebunden erzeugen; Abwesenheit bleibt gültig.
 10. End-to-End: beweisen, dass ein frischer Operator ohne Gesprächsvorwissen beim richtigen Host-, System-, Task- und Runtime-Kanon landet.
+11. Grabowski/Bureau: den sicheren Übergangszustand aus kanonischem Manifest-Release und separat hashgebundenem Vertrags-Venv auf eine einzige Release-Identität konsolidieren.
 
 ## Grenzen
 

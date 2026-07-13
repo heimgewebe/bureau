@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T013",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Harden state-root migration against ancestor path replacement",
-  "state": "planned",
+  "state": "verified",
   "goal": "Bind reviewed Bureau state-root migration and rollback effects to stable filesystem anchors so replacing or symlinking an ancestor directory between review, preflight and rename cannot redirect an otherwise valid operation.",
   "priority": {
     "lane": "later",
@@ -59,21 +59,70 @@
     }
   ],
   "metadata": {
-    "source": "PR #532 head- and diff-bound security self-review",
-    "observed_at": "2026-07-13T19:51:46Z",
-    "observation": "PR #532 binds the complete reviewed plan payload and makes multi-entry rollback preflighted and compensating, but path identity is still checked through absolute-path resolution rather than persistent directory descriptors.",
-    "risk_classification": {
-      "status": "plausible_not_reproduced",
-      "impact_if_confirmed": "A concurrent same-privilege actor could redirect a reviewed source, destination or reference scan by replacing an ancestor after validation.",
-      "current_mitigation": "Symlinks at inspected entries are rejected, identities are rechecked before rename, and no live migration was executed during PR #532."
+    "source": "deterministic synthetic reproduction, PR #542 and immutable Bureau runtime readback",
+    "observed_at": "2026-07-13T23:25:00+02:00",
+    "observation": {
+      "before_fix": "On unchanged main, replacing the state-root ancestor after the last identity check caused Bureau to report success while moving a replacement object and leaving the reviewed object behind.",
+      "after_fix": "Plans and receipts schema 2 bind directory and top-level entry device/inode identities; apply and rollback use no-follow descriptor-relative operations and reject or compensate reproduced ancestor, symlink, topology and entry-replacement interference.",
+      "safety_boundary": "All adversarial effects used temporary synthetic roots. No active Bureau state migration, rollback, recovery or deletion was executed."
     },
-    "related_pull_request": 532,
-    "related_head_sha": "864f4b977e9b00eecf7a2092004a1dd076ffade2",
+    "implementation": {
+      "pull_request": 542,
+      "head": "4a11476a32d962905330720ab4e79a79b83aee92",
+      "base": "d85b6a495040f83effda85f12b11b5f20dddebef",
+      "merge_commit": "e4769524092771d09f23be112650a950b8264389",
+      "github_diff_sha256": "dea5c6e570c7614b2f873d333ea916c7cb1f14ef8a30e38ce0594a87c0565e6a",
+      "self_review_sha256": "9beb4cb176e9fb8e43e73d1a0c4b72f9d74778ad28592cc49461d3fd3498ce5a",
+      "changed_files": 5,
+      "additions": 1758,
+      "deletions": 353
+    },
+    "validation": {
+      "focused_registry_and_state_root_tests": "61 passed",
+      "full_suite": "547 passed",
+      "ruff": "passed",
+      "systemkatalog_boundary": "passed",
+      "registry_and_sqlite_integrity": "passed",
+      "github_ci": {
+        "validate_3_10": "success",
+        "validate_3_12": "success"
+      },
+      "durable_validation_receipt_sha256": "0fe2d97f3546b332fedd777752f6f35712b6cf7858db140cedd343a0221e75c6"
+    },
+    "deployment": {
+      "source_commit": "b45f274052ededdbdc86bdc7a91ad801652e8f0e",
+      "contains_implementation_merge": "e4769524092771d09f23be112650a950b8264389",
+      "release_id": "b45f274052ed-src146b220aa68c",
+      "manifest_sha256": "616b66a4e27ec0a6281caab8137bca1422d5c1faae6c89dada0d87f952af42b9",
+      "package_tree_sha256": "146b220aa68c15f1a9714688da2bb29761affac0899c7e8310fe5f289dcb283a",
+      "canonical_registry_tree_sha256": "b2f84b0bd34a1fd656aa5490a30978f844030737aabbeabfac13155d94ecf507",
+      "launcher_sha256": "6318713a4591ed5c6d35d2a1f174a1d3b05c8a9acaa21d87007a613477baa382",
+      "install_receipt": "/home/alex/.local/share/bureau/receipts/b45f274052ed-src146b220aa68c-616b66a4e27e.json",
+      "rollback_backup": "/home/alex/.local/share/bureau/backups/20260713T212450.782334Z",
+      "live_readback": {
+        "runtime_identity": "ok",
+        "registry_dirty": false,
+        "head_equals_origin_main": true,
+        "state_integrity": "ok",
+        "initiatives": 44,
+        "tasks": 415,
+        "resources": 38
+      }
+    },
+    "residual_tasks": {
+      "OPERATOR-MACHINE-READABILITY-V1-T014": "Final-component conditional name-to-inode rename boundary.",
+      "OPERATOR-MACHINE-READABILITY-V1-T015": "Crash and power-loss recovery journal between effects and final receipt."
+    },
     "does_not_establish": [
-      "current_exploitability",
-      "presence_of_a_hostile_same_privilege_actor",
-      "permission_to_execute_or_delete_state",
-      "failure_of_PR_532"
-    ]
+      "atomic_rename_by_expected_inode",
+      "crash_or_power_loss_atomicity",
+      "support_for_network_filesystems",
+      "permission_to_execute_any_existing_migration_plan",
+      "absence_of_all_same_privilege_interference"
+    ],
+    "verification": {
+      "task_sha256": "1e2cd3826f13cdcbcb2bdf52436ce2047b2f02dd1018f3843b7c37807f8471d9",
+      "plan_sha256": "5bd32f4906cc9af27a3f99c7ab886eb9df7f8e5f4e9247c450bc492e64d28b06"
+    }
   }
 }

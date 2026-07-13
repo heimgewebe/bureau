@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T043",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Publish machine-readable contracts for complex tools",
+  "state": "planned",
+  "goal": "Move the normative precondition, state-transition, idempotency, retry and terminal-outcome rules of the most complex Grabowski surfaces into versioned machine-readable contracts and make prose subordinate to those contracts.",
+  "priority": {"lane": "next", "rank": 430},
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": ["repo:/home/alex/repos/grabowski"]
+  },
+  "claims": [{"resource": "repo.grabowski", "mode": "write", "isolation": "worktree"}],
+  "required_capabilities": ["repository", "shell", "github", "grabowski"],
+  "depends_on": ["GRABOWSKI-OPERATOR-SURFACE-V1-T042"],
+  "acceptance": [
+    {"id": "priority-surfaces", "assertion": "Versioned contracts cover at least Agent Workspace lifecycle, durable task/job lifecycle and irreversible or secret-backed operation families."},
+    {"id": "normative-fields", "assertion": "Each contract defines states, allowed transitions, required evidence, idempotency key or identity, retry eligibility, stable failure codes, terminal outcomes and authority boundaries."},
+    {"id": "implementation-check", "assertion": "Tests or generators prove that implementation enums, response fields and documentation do not drift from the contract."},
+    {"id": "legacy-readability", "assertion": "Existing receipts remain readable with explicit legacy classification and cannot acquire new retry or success authority merely because a new contract exists."},
+    {"id": "generated-prose", "assertion": "Long-form documentation is generated from the contracts or checked against generated state and retry tables; prose is explanatory, not the sole normative source."},
+    {"id": "bounded-publication", "assertion": "Consumer-facing contract views expose only the relevant state table and stable fields without returning the full internal schema by default."},
+    {"id": "negative-tests", "assertion": "Tests reject unknown transitions, missing evidence, stale identities, contradictory terminal outcomes and prose or enum drift."}
+  ],
+  "metadata": {
+    "source": "user-directed-agent-facing-contract-plan",
+    "plan": "docs/plans/grabowski-agent-facing-contract-v1.md",
+    "does_not_establish": [
+      "formal_verification",
+      "host_attacker_authenticity",
+      "automatic_recovery_authority",
+      "all_prose_can_be_removed"
+    ]
+  }
+}

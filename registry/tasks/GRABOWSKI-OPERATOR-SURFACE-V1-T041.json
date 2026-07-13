@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T041",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Return structured failure navigation at the call site",
+  "state": "planned",
+  "goal": "Make bounded Grabowski failures directly navigable by returning a stable machine-readable failure envelope with class, code, unchanged-retry safety, next state check and the narrowest permitted alternative route while preserving transport ambiguity and policy gates fail-closed.",
+  "priority": {"lane": "next", "rank": 410},
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": ["repo:/home/alex/repos/grabowski"]
+  },
+  "claims": [{"resource": "repo.grabowski", "mode": "write", "isolation": "worktree"}],
+  "required_capabilities": ["repository", "shell", "github", "grabowski"],
+  "depends_on": ["GRABOWSKI-OPERATOR-SURFACE-V1-T040"],
+  "acceptance": [
+    {"id": "stable-envelope", "assertion": "Applicable failures expose stable bounded fields including failure_class, error_code, retry_unchanged, next_action, alternative_tool or alternative_operation, authority_changed and evidence_ref when available."},
+    {"id": "single-taxonomy", "assertion": "The call-site taxonomy is mapped deterministically to the existing friction and execution-governor failure classes instead of creating an incompatible second classification system."},
+    {"id": "narrower-route-only", "assertion": "An alternative route is emitted only when it is no broader in authority than the failed call and its required preconditions are known; otherwise the field is null and next_action requests state verification or operator decision."},
+    {"id": "retry-safety", "assertion": "Mutation, connector-transport, filter and policy failures never imply safe unchanged retry unless target-state evidence proves that no effect occurred and the operation contract independently permits retry."},
+    {"id": "error-compatibility", "assertion": "Existing human-readable errors remain understandable and legacy callers remain functional while typed callers can consume the new envelope."},
+    {"id": "coverage", "assertion": "Regression tests cover transport ambiguity, platform filter, policy gate, validation error, stale identity, missing target, role preflight failure and one successful narrower fallback recommendation."},
+    {"id": "measured-effect", "assertion": "A replay over representative friction cases records whether the envelope removes a separate diagnostic call without claiming that every external connector error can be structured server-side."}
+  ],
+  "metadata": {
+    "source": "user-directed-agent-facing-contract-plan",
+    "plan": "docs/plans/grabowski-agent-facing-contract-v1.md",
+    "does_not_establish": [
+      "automatic_retry_authority",
+      "automatic_tool_execution",
+      "external_platform_error_control",
+      "absence_of_future_retry_loops"
+    ]
+  }
+}

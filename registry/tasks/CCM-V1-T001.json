@@ -3,7 +3,7 @@
   "id": "CCM-V1-T001",
   "initiative": "CHRONIK-CODING-MEMORY-V1",
   "title": "Implement local idempotent Chronik coding memory",
-  "state": "ready",
+  "state": "verified",
   "goal": "Share canonical API/CLI envelopes, import agent-run events exactly once, query by coding context and freeze hash-bound historical cohorts without a long-running service.",
   "priority": {
     "lane": "now",
@@ -55,6 +55,105 @@
       "runtime_deployment",
       "current_state_truth",
       "productivity_improvement"
-    ]
+    ],
+    "verified_at": "2026-07-13T22:59:23+02:00",
+    "outcome": "Chronik PR #215 implemented the local idempotent coding-memory path, was hardened against divergent event-id reuse and timezone-offset query drift, passed exact-head local validation, and merged as 16474d542e61e42bc7533d6b575bf243c6a496f2.",
+    "implementation": {
+      "repository": "heimgewebe/chronik",
+      "pull_request": 215,
+      "branch": "feat/coding-memory-v1",
+      "reviewed_head": "cd23334f184264581c20e7ddf7f58fd441f04a1e",
+      "merge_commit": "16474d542e61e42bc7533d6b575bf243c6a496f2",
+      "merged_at": "2026-07-13T20:57:17Z",
+      "github_diff_sha256": "4b5d46813a440d5a0c227fcbab41f773b8b07d4046ec2a9174f078b2bd666487",
+      "github_diff_bytes": 42075,
+      "tree_equal_after_squash": true
+    },
+    "validation": {
+      "focused_regressions": "7 passed",
+      "full_pytest": "271 passed, 1 pre-existing Starlette testclient deprecation warning",
+      "local_smoke": [
+        "role contract",
+        "health",
+        "version",
+        "ingest",
+        "readback"
+      ],
+      "git_diff_check": "PASS",
+      "pull_request_checks": {
+        "ai_context_guard": "SUCCESS",
+        "wgx_guard": "SUCCESS",
+        "fixture_validation": "SUCCESS",
+        "contract_validation": "SUCCESS",
+        "codeql_python": "SUCCESS",
+        "codeql_rust": "SUCCESS",
+        "codeql_actions": "SUCCESS"
+      },
+      "post_merge_checks": {
+        "commit": "16474d542e61e42bc7533d6b575bf243c6a496f2",
+        "codeql_run": 29284457151,
+        "codeql": "SUCCESS",
+        "all_non_wgx_smoke_push_workflows": "SUCCESS",
+        "wgx_smoke": "pre-existing baseline failure; follow-up CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T004"
+      }
+    },
+    "review": {
+      "result": "PASS",
+      "axes": [
+        "correctness",
+        "evidence_integrity",
+        "regression_risk",
+        "tests",
+        "security",
+        "integration"
+      ],
+      "findings_fixed_before_merge": [
+        "A reused event_id with divergent payload could be silently treated as an idempotent duplicate.",
+        "The since filter compared timestamps lexically and could misorder timezone offsets.",
+        "The missing-data-directory CLI shortcut bypassed query-limit validation."
+      ]
+    },
+    "acceptance_evidence": {
+      "canonical-envelope": "API and local importer share canonical_ingest.build_envelope; validate-local ingest/readback passed.",
+      "idempotent-import": "Retries skip byte-equivalent event ids; divergent payload reuse is rejected before partial append under the domain lock.",
+      "bounded-query": "Repo, component, operation, outcome and timezone-aware since filtering are implemented; historical_only and non-claims remain explicit.",
+      "frozen-cohort": "Freeze receipts bind query, event IDs and cohort bytes with SHA-256 and are covered by tests."
+    },
+    "verification_note": "PR #215 was reviewed against the exact 42,075-byte GitHub patch, hardened on head cd23334f184264581c20e7ddf7f58fd441f04a1e, validated by 271 tests and local API smoke, merged with exact-head protection, and verified to produce a byte-identical squash tree on main. The persistent WGX smoke failure also occurs on main and is registered separately rather than represented as green.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "CCM-V1-T001",
+          "source_ref": "heimgewebe/chronik#215",
+          "number": 215,
+          "head_sha": "cd23334f184264581c20e7ddf7f58fd441f04a1e",
+          "merge_commit_sha": "16474d542e61e42bc7533d6b575bf243c6a496f2",
+          "diff_sha256": "4b5d46813a440d5a0c227fcbab41f773b8b07d4046ec2a9174f078b2bd666487"
+        },
+        {
+          "kind": "test_evidence",
+          "authority": "local-exact-head",
+          "task_id": "CCM-V1-T001",
+          "source_ref": "grabowski tasks 27a40fb02e814347a4bdb2d7 and 964645d175cd4bbbb364e866",
+          "summary": "271 tests plus role/health/version/ingest/readback smoke passed"
+        },
+        {
+          "kind": "post_merge_ci",
+          "authority": "github-actions",
+          "task_id": "CCM-V1-T001",
+          "source_ref": "heimgewebe/chronik@16474d542e61e42bc7533d6b575bf243c6a496f2",
+          "codeql_run_id": 29284457151,
+          "known_baseline_failure_run_id": 29284458465
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "395a030c36dccf8691ffe5c839344d9fa20fd69ee17aa55fa1de7f5e1b804acf",
+      "plan_sha256": "7a4d09115c987f7199ff6b984bc87c08f8598c55d5dddfd7284c7d55d1b5bcd0"
+    }
   }
 }

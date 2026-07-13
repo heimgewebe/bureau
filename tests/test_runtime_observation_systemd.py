@@ -81,6 +81,14 @@ def test_services_run_only_allowed_one_shot_commands() -> None:
         assert "ExecStopPost" not in text
 
 
+def test_core_cli_units_use_the_manifest_bound_launcher() -> None:
+    for name in ("bureau-status-projection.service", "bureau-reconcile.service"):
+        text = (OPS / name).read_text(encoding="utf-8")
+        assert "ConditionFileIsExecutable=%h/.local/bin/bureau" in text
+        assert "ExecStart=%h/.local/bin/bureau " in text
+        assert "/bureau/venv/bin/bureau" not in text
+
+
 def test_projection_service_is_read_only() -> None:
     text = (OPS / "bureau-status-projection.service").read_text(encoding="utf-8")
     assert "status-projection" in text

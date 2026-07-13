@@ -180,7 +180,9 @@ def test_cli_reports_single_task_policy() -> None:
         text=True,
         env={"PYTHONPATH": str(ROOT / "src")},
     )
-    report = json.loads(result.stdout)
+    envelope = json.loads(result.stdout)
+    assert envelope["runtime_identity"]["kind"] == "bureau_runtime_identity"
+    report = envelope["result"]
     assert report["kind"] == "bureau.rlens_task_policy_report"
     assert report["summary"]["tasks"] == 1
     assert report["tasks"][0]["task_id"] == "BUR-2026-002-T003"

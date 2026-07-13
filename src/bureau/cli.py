@@ -39,11 +39,36 @@ from .live_register import (
     write_live_promote_plan,
 )
 from .rlens_policy import evaluate_registry_rlens_policy
+from .runtime_identity import bureau_runtime_identity, require_mutation_compatible
+
+_CLI_RUNTIME_IDENTITY: dict[str, Any] | None = None
+_CLI_JSON_ENVELOPE = False
+
+
+def _json_value_with_identity(value: Any) -> Any:
+    if _CLI_RUNTIME_IDENTITY is None:
+        return value
+    if _CLI_JSON_ENVELOPE:
+        return {
+            "schema_version": 1,
+            "runtime_identity": _CLI_RUNTIME_IDENTITY,
+            "result": value,
+        }
+    if isinstance(value, dict) and "runtime_identity" not in value:
+        return {**value, "runtime_identity": _CLI_RUNTIME_IDENTITY}
+    return value
 
 
 def emit(value: Any, as_json: bool) -> None:
     if as_json:
-        print(json.dumps(value, indent=2, ensure_ascii=False, sort_keys=True))
+        print(
+            json.dumps(
+                _json_value_with_identity(value),
+                indent=2,
+                ensure_ascii=False,
+                sort_keys=True,
+            )
+        )
     elif isinstance(value, list):
         for item in value:
             print(json.dumps(item, ensure_ascii=False, sort_keys=True))
@@ -65,9 +90,11 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--state-db")
     result.add_argument("--state-root")
     result.add_argument("--json", action="store_true")
+    result.add_argument("--json-envelope", action="store_true")
     result.add_argument("--grabowski-source")
     sub = result.add_subparsers(dest="command", required=True)
     sub.add_parser("check")
+    sub.add_parser("runtime-identity")
     sub.add_parser("status")
     doctor = sub.add_parser("doctor")
     doctor.add_argument("--repair", action="store_true")
@@ -312,13 +339,67 @@ def read_only_state_integrity(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
+def _state_path(args: argparse.Namespace) -> Path:
+    if args.state_db:
+        return Path(args.state_db).expanduser()
+    if args.state_root:
+        return Path(args.state_root).expanduser() / "bureau.sqlite3"
+    configured = os.environ.get("BUREAU_STATE_DIR", "~/.local/state/bureau")
+    return Path(configured).expanduser() / "bureau.sqlite3"
+
+
+_READ_ONLY_COMMANDS = frozenset(
+    {
+        "check",
+        "runtime-identity",
+        "runtime-drift-check",
+        "lease-contract",
+        "registry-truth",
+        "rlens-policy",
+        "source-check",
+        "source-promote-plan",
+        "github-observe",
+        "status-projection",
+    }
+)
+
+
+def _command_mutates(args: argparse.Namespace) -> bool:
+    command = args.command
+    if command == "worktree-hygiene":
+        return bool(args.write_plan or args.apply_plan)
+    if command == "source-sync":
+        return bool(args.apply)
+    # Fail closed for every command not explicitly proven read-only. This also
+    # makes newly added commands mutation-gated until they are classified.
+    return command not in _READ_ONLY_COMMANDS
+
+
 def main(argv: list[str] | None = None) -> int:
+    global _CLI_JSON_ENVELOPE, _CLI_RUNTIME_IDENTITY
     args = parser().parse_args(argv)
     try:
         root = Path(args.root)
 
         state_path = Path(args.state_db).expanduser() if args.state_db else None
         state_root = Path(args.state_root).expanduser() if args.state_root else None
+        _CLI_RUNTIME_IDENTITY = bureau_runtime_identity(root, state_path=_state_path(args))
+        operational_registry = bool(
+            _CLI_RUNTIME_IDENTITY.get("registry", {}).get("bureau_project")
+        )
+        _CLI_JSON_ENVELOPE = (
+            args.json_envelope
+            or os.environ.get("BUREAU_JSON_ENVELOPE") == "1"
+            or operational_registry
+        )
+        if args.command == "runtime-identity":
+            emit({"status": "ok"}, args.json)
+            return 0
+        if _command_mutates(args):
+            blocked = require_mutation_compatible(_CLI_RUNTIME_IDENTITY)
+            if blocked is not None:
+                emit(blocked, args.json)
+                return 2
         if args.command == "lease-contract":
             try:
                 if args.resource_key:
@@ -419,6 +500,25 @@ def main(argv: list[str] | None = None) -> int:
             return 1 if args.strict and not value["healthy"] else 0
         registry = Registry.load(root)
 
+        if args.command == "rlens-policy":
+            value = evaluate_registry_rlens_policy(registry.tasks)
+            if args.task_id:
+                value["tasks"] = [
+                    item for item in value["tasks"] if item["task_id"] == args.task_id
+                ]
+                value["blockers"] = [
+                    item for item in value["blockers"] if item["task_id"] == args.task_id
+                ]
+                value["summary"] = {
+                    "tasks": len(value["tasks"]),
+                    "blockers": len(value["blockers"]),
+                    "policy_missing": sum(
+                        1 for item in value["tasks"] if item["status"] == "policy-missing"
+                    ),
+                }
+            emit(value, args.json)
+            return 1 if args.strict and value["blockers"] else 0
+
         if args.command in {"source-check", "source-sync", "source-promote-plan"}:
             from .weltgewebe_source import source_check, source_promote_plan, source_sync
 
@@ -497,24 +597,6 @@ def main(argv: list[str] | None = None) -> int:
             value = {**dispatcher.doctor(args.repair), "adapters": adapter_registry.status()}
         elif args.command == "conflicts":
             value = dispatcher.conflict_matrix()
-        elif args.command == "rlens-policy":
-            value = evaluate_registry_rlens_policy(registry.tasks)
-            if args.task_id:
-                value["tasks"] = [
-                    item for item in value["tasks"] if item["task_id"] == args.task_id
-                ]
-                value["blockers"] = [
-                    item for item in value["blockers"] if item["task_id"] == args.task_id
-                ]
-                value["summary"] = {
-                    "tasks": len(value["tasks"]),
-                    "blockers": len(value["blockers"]),
-                    "policy_missing": sum(
-                        1 for item in value["tasks"] if item["status"] == "policy-missing"
-                    ),
-                }
-            emit(value, args.json)
-            return 1 if args.strict and value["blockers"] else 0
         elif args.command == "lifecycle":
             value = lifecycle_diagnostics(registry, store)
         elif args.command == "close-ready":

@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Use an isolated Commonworld worktree. Before every nontrivial merge require complete published diff, head/tree/diff-bound self-review, green CI, review resolution and exact live Pages readback."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source": "Commonworld deep audit 2026-07-13",
+    "queue_mutated": false,
+    "does_not_establish": [
+      "future merge readiness",
+      "provider SLA",
+      "backend readiness",
+      "unmeasured accessibility conformance"
+    ]
+  },
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T008",
+  "title": "Scale static machine access and public findability",
+  "state": "planned",
+  "goal": "Improve static loading, search indexing and discoverability without introducing a backend before measured need.",
+  "priority": {
+    "lane": "later",
+    "rank": 70
+  },
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T007"
+  ],
+  "acceptance": [
+    {
+      "id": "bounded-loading",
+      "assertion": "Overview/search data load compactly and full records load on focus without all-or-nothing failure."
+    },
+    {
+      "id": "conditional-map",
+      "assertion": "Text preference does not eagerly pay the full map runtime cost."
+    },
+    {
+      "id": "search-and-render-cache",
+      "assertion": "Derived search/layer data and unchanged geometry avoid repeated work."
+    },
+    {
+      "id": "public-metadata",
+      "assertion": "Canonical, OpenGraph, JSON-LD, sitemap and stable project HTML pages are published."
+    },
+    {
+      "id": "scaling-gate",
+      "assertion": "Backend, PMTiles or vector search remain blocked until measured catalog/traffic thresholds justify them."
+    }
+  ]
+}

@@ -1,118 +1,121 @@
 {
-  "schema_version": 1,
-  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T037",
-  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
-  "title": "Harden Agent Workspace outcomes and enforce evidence-bound adoption",
-  "state": "blocked",
-  "priority": {
-    "lane": "later",
-    "rank": 532
-  },
-  "goal": "Correct the live observer and optimizer defects, require an explicit route decision before nontrivial code work, record a bounded outcome after every workspace, and validate the current Agent Workspace on one real medium-sized code ball without making it the default for trivial work.",
+  "acceptance": [
+    {
+      "assertion": "Routing emits a deterministic recommendation identity and workspace creation independently replays score, route and external candidates from normalized input facts before accepting route evidence.",
+      "evidence_type": "object",
+      "id": "deterministic-route-replay",
+      "verifier": "PR #178 tests and live repeated-route probe"
+    },
+    {
+      "assertion": "Collection and close publish hash-addressed append-only outcome receipts with first-pass and final role results, retries, elapsed time, event-log-bound known mutating calls and frozen result identity.",
+      "evidence_type": "object",
+      "id": "immutable-outcome-receipts",
+      "verifier": "successful post-deploy workspace close outcome"
+    },
+    {
+      "assertion": "Successful and already-succeeded legacy states are not failures; missing declared tools or modules remain diagnostic, and legacy reports without an integrity-valid event log cannot authorize optimizer proposals.",
+      "evidence_type": "object",
+      "id": "legacy-diagnostic-boundary",
+      "verifier": "live observer and optimizer probes"
+    },
+    {
+      "assertion": "Optimizer proposals require the same actionable failure class in at least two explicitly named independent workspaces.",
+      "evidence_type": "object",
+      "id": "independent-repeated-evidence",
+      "verifier": "regression suite and live empty-proposal proof"
+    },
+    {
+      "assertion": "Caller-supplied closeout evidence is bound to workspace ID, current collection result, writer head, diff and current close receipt; stale evidence after result drift is rejected.",
+      "evidence_type": "object",
+      "id": "closeout-result-binding",
+      "verifier": "PR #178 stale-evidence regression and live rejection probe"
+    },
+    {
+      "assertion": "The reviewed implementation is merged, deployed at the exact merge commit, runtime health and tool contract are green, and live routing, observer, optimizer and stale-evidence probes pass.",
+      "evidence_type": "object",
+      "id": "merged-deployed-live",
+      "verifier": "GitHub PR #178, deployment release and live runtime probes"
+    },
+    {
+      "assertion": "A real post-deploy Agent Workspace pilot completes writer, tests, independent review and successful close on first pass with route evidence and immutable receipts, and is compared to an explicit direct baseline without general productivity claims.",
+      "evidence_type": "object",
+      "id": "bounded-postdeploy-pilot",
+      "verifier": "pilot comparison receipt"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T035",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T036"
+  ],
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/grabowski",
-    "grabowski_resources": [
-      "repo:/home/alex/repos/grabowski"
-    ]
+    "working_repository": "/home/alex/repos/grabowski"
   },
-  "claims": [
-    {
-      "resource": "repo.grabowski",
-      "mode": "write",
-      "isolation": "worktree"
+  "goal": "Bind nontrivial Agent Workspace adoption to a replayable route decision, immutable outcome receipts, conservative legacy observation, independent repeated-failure evidence and explicit closeout truth, then verify the corrected runtime with a bounded post-deploy pilot.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T037",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "general productivity advantage",
+      "general productivity disadvantage",
+      "automatic merge or deployment authority",
+      "independent truth from caller-supplied closeout evidence",
+      "completion of T032"
+    ],
+    "implementation_diff_sha256": "c14aef2c2b8afbf74a8773b43050a2737f951a8c56193fae274f43fe3b9c8f68",
+    "implementation_pr": "heimgewebe/grabowski#178",
+    "implementation_pr_head": "0b029e926c57a882a4218d0307c5bcb9c0f98354",
+    "merge_commit": "7731fa5b351b7975b802193c44e15ee19a66e6b5",
+    "postdeploy_pilot": {
+      "assessment": "The workspace added substantial measured overhead in this bounded pilot while providing route evidence, writer isolation, read-only tests, independent review, append-only receipts and lease release. One pilot establishes neither a general productivity advantage nor a general disadvantage.",
+      "close_receipt_sha256": "94e9af3a6cc3cd1e851b2ad36410a2b126c71a59945a1bebad8b815c14c664c1",
+      "closure_outcome": "successful",
+      "comparison_sha256": "381cb55e8d431e94356901538f9166000f3677d70dda9c662029677889321a6b",
+      "direct_baseline_elapsed_ms": 271,
+      "first_pass_success": true,
+      "outcome_sha256": "a8f607196f082219868f46e00c73d79fdd20f22d82deceee2cf60c4277f66936",
+      "retries_used": 0,
+      "workspace_elapsed_ms": 89000,
+      "workspace_id": "gaw-grabowski-chat-grabowski-t037-po-1c5ac539c549"
     },
-    {
-      "resource": "repo.bureau",
-      "mode": "read",
-      "isolation": "none"
+    "registered_retroactively_at": "2026-07-13T09:15:36.999354Z",
+    "registration_reason": "The task was tracked in Bureau live state during implementation but had no canonical registry file; this record reconciles the completed work to immutable evidence.",
+    "runtime_release": "7731fa5b351b-srcset594dcb62e292-locke6664d600b6c-contract22f31ec746bf",
+    "validation": {
+      "focused_tests": 180,
+      "full_tests": 1371,
+      "material_findings_remaining": 0,
+      "python_ci": [
+        "3.10",
+        "3.12"
+      ],
+      "review_iterations": 5
+    },
+    "verification": {
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "task_sha256": "6a1d11e99286fde435f4399e41f53e3fb6b719eedf7cfdd3eba16c8b416c72de"
     }
-  ],
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 537
+  },
   "required_capabilities": [
     "repository",
     "shell",
     "github",
-    "grabowski"
+    "grabowski",
+    "bureau"
   ],
-  "acceptance": [
-    {
-      "id": "routing-evidence-gate",
-      "assertion": "Before every nontrivial code ball, the operator records the typed route recommendation, actual route, input facts and any justified deviation. Trivial work is narrowly defined as at most one file, at most fifteen expected minutes, low novelty, no risk flag, no connector instability and no parallel work."
-    },
-    {
-      "id": "bounded-route-policy",
-      "assertion": "Risky, parallel, connector-unstable or salvage-relevant work uses a full workspace unless a recorded feasibility blocker prevents it. Small low-risk work remains direct or an isolated worktree; the route tool recommends but never grants merge, deployment or external-agent authority."
-    },
-    {
-      "id": "legacy-observer-classification",
-      "assertion": "Legacy receipts classify missing executables and Python modules as environment/toolchain failures, never as semantic test failures; already_succeeded is a success state rather than a failure class; recoverable writer head, base and diff identity are reported from immutable receipts or collection metadata."
-    },
-    {
-      "id": "evidence-bound-closeout-reconciliation",
-      "assertion": "Observer closeout accepts only explicitly supplied or independently read evidence for PR/integration truth, Bureau reconciliation, lease release, checkout archive/cleanup and final summary. Completed items are not left unresolved, but unknown items remain unknown and no automatic mutation authority is added."
-    },
-    {
-      "id": "actionable-optimizer-input",
-      "assertion": "The optimizer excludes success states, legacy event-log absence and unknown closeout from failure counts. A structural proposal requires the same actionable failure class in at least two independent workspaces and reports sample size, expected benefit, regression risk and a normal reviewed validation plan."
-    },
-    {
-      "id": "workspace-outcome-receipt",
-      "assertion": "Every collected or closed workspace emits or references a bounded outcome record containing recommendation and actual route, first-pass role results, retries, elapsed time, tool calls, frozen result identity, integration or salvage outcome and external closeout completion. Missing fields fail closed instead of being silently inferred."
-    },
-    {
-      "id": "real-medium-pilot",
-      "assertion": "After the corrections are merged and deployed, one real medium-sized code ball is routed through the current workspace. Its result records useful code retained, first-pass test/review outcome, overhead, failures caught, salvage value and comparison against an explicitly selected direct-work baseline without claiming general productivity from one case."
-    },
-    {
-      "id": "regression-and-live-proof",
-      "assertion": "Regression fixtures reproduce both existing workspace runs and prove the corrected classifications and optimizer silence. Focused/full tests and required CI pass; the merged runtime is deployed; the pilot is collected, externally reconciled and closed with exact hashes."
-    }
-  ],
-  "depends_on": [
-    "GRABOWSKI-OPERATOR-SURFACE-V1-T036"
-  ],
-  "metadata": {
-    "registered_at": "2026-07-13T04:52:00Z",
-    "source": "Live Agent Workspace usefulness and adoption audit",
-    "source_tasks": [
-      "GRABOWSKI-OPERATOR-SURFACE-V1-T034",
-      "GRABOWSKI-OPERATOR-SURFACE-V1-T035"
-    ],
-    "source_prs": [
-      "heimgewebe/grabowski#164",
-      "heimgewebe/grabowski#165"
-    ],
-    "source_workspaces": [
-      "gaw-gaw-smoke-repo-178-chat-20260710-grabowsk-4ba88cf171c5",
-      "gaw-lenskit-rpu-v1-t018-e8b0e581d7c3"
-    ],
-    "source_evidence": {
-      "observer_smoke_report_sha256": "3f67bea1ff0c54a3dcd60879b96884f35c315013029e8ff9a834250d0773a991",
-      "observer_lenskit_report_sha256": "73a8811c0d2c00ee1b3bbaaee1119b351297a7f41f313adcceb8c033cdd956b9",
-      "optimizer_sha256": "7a9e09938872f52077a7406a1fa09bd0b00dd260c9efa1dd326f1cc01a9bac7b",
-      "routing_pr_diff_sha256": "3eae037cb9d91353936ceb42e9bf4495d574b9b53c4ec52bb867df8a73f5342a"
-    },
-    "blocking_reason": "The Grabowski repository is held by the foreign Consumer Surface v2 ball and T036 is stacked on its head. The one-active-ball rule and exact lease ownership prohibit starting this implementation now.",
-    "queue_decision": "Registered but not queued while blocked; no second Grabowski ball is started.",
-    "scope_hint": [
-      "src/grabowski_agent_workspace_observer.py",
-      "src/grabowski_agent_workspace.py",
-      "src/grabowski_agent_competition.py",
-      "tests/test_agent_workspace_observer.py",
-      "tests/test_agent_workspace.py",
-      "tests/test_agent_competition.py",
-      "runtime and publication contracts only when generated output requires them"
-    ],
-    "does_not_establish": [
-      "automatic routing authority",
-      "automatic workspace creation for trivial work",
-      "automatic merge or deployment authority",
-      "observer access to unrestricted repository or home-directory content",
-      "general productivity improvement from one pilot",
-      "completion of T032",
-      "completion of T035",
-      "permission to alter the active Consumer Surface v2 or T036 worktrees"
-    ]
-  }
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Harden Agent Workspace outcomes and enforce evidence-bound adoption"
 }

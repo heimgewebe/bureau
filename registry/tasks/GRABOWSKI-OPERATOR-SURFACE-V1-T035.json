@@ -1,78 +1,64 @@
 {
-  "schema_version": 1,
-  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T035",
-  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
-  "title": "Add Agent Workspace process observer and evidence-driven optimizer",
-  "state": "blocked",
-  "priority": {
-    "lane": "later",
-    "rank": 531
-  },
-  "goal": "Make Agent Workspace friction, recovery decisions and unfinished closeout steps observable without adding another mutable worker, then derive bounded cross-workspace optimization proposals from multiple immutable run reports rather than from anecdote or self-justifying single runs.",
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/grabowski",
-    "grabowski_resources": [
-      "repo:/home/alex/repos/grabowski"
-    ]
-  },
-  "claims": [
-    {
-      "resource": "repo.grabowski",
-      "mode": "write",
-      "isolation": "worktree"
-    }
-  ],
-  "required_capabilities": [
-    "repository",
-    "shell",
-    "github",
-    "grabowski"
-  ],
   "acceptance": [
     {
-      "id": "deterministic-workspace-event-log",
-      "assertion": "Every workspace records a bounded append-only event timeline for plan creation, role preflight, role start and finish, collection, retry decision, close request, lease release and external closeout status. This recorder is core infrastructure, not an LLM role, and adds no mutation authority."
+      "assertion": "Every workspace records a bounded append-only event timeline for plan creation, role preflight, role start and finish, collection, retry decision, close request, lease release and external closeout status. This recorder is core infrastructure, not an LLM role, and adds no mutation authority.",
+      "id": "deterministic-workspace-event-log"
     },
     {
-      "id": "optional-process-observer-role",
-      "assertion": "A read-only process-observer role can run after collection for explicitly requested, high-risk or high-friction workspaces. It reads only frozen workspace metadata, role receipts and the event timeline; it cannot mutate the writer worktree, retry roles, merge, close the workspace or alter Bureau state."
+      "assertion": "A read-only process-observer role can run after collection for explicitly requested, high-risk or high-friction workspaces. It reads only frozen workspace metadata, role receipts and the event timeline; it cannot mutate the writer worktree, retry roles, merge, close the workspace or alter Bureau state.",
+      "id": "optional-process-observer-role"
     },
     {
-      "id": "observer-report-contract",
-      "assertion": "The observer emits a versioned immutable report containing an evidence-linked timeline, environment and tool failures, retry and abandonment decisions, unresolved external closeout items, friction taxonomy, recommendations, confidence and non-claims. Facts, inferences and proposals are distinct fields."
+      "assertion": "The observer emits a versioned immutable report containing an evidence-linked timeline, environment and tool failures, retry and abandonment decisions, unresolved external closeout items, friction taxonomy, recommendations, confidence and non-claims. Facts, inferences and proposals are distinct fields.",
+      "id": "observer-report-contract"
     },
     {
-      "id": "bounded-observer-activation",
-      "assertion": "The observer is not an unconditional fifth role. Activation is explicit or policy-based using risk and friction signals, and status reports the additional runtime and evidence cost. Low-risk successful workspaces retain the deterministic event log without invoking an agent observer."
+      "assertion": "The observer is not an unconditional fifth role. Activation is explicit or policy-based using risk and friction signals, and status reports the additional runtime and evidence cost. Low-risk successful workspaces retain the deterministic event log without invoking an agent observer.",
+      "id": "bounded-observer-activation"
     },
     {
-      "id": "cross-workspace-optimizer",
-      "assertion": "A separate optimizer consumes multiple immutable observer or event reports, groups repeated failure classes and proposes ranked workspace changes with measured baseline, expected benefit, regression risk and validation plan. One run alone cannot authorize a structural optimization."
+      "assertion": "A separate optimizer consumes multiple immutable observer or event reports, groups repeated failure classes and proposes ranked workspace changes with measured baseline, expected benefit, regression risk and validation plan. One run alone cannot authorize a structural optimization.",
+      "id": "cross-workspace-optimizer"
     },
     {
-      "id": "no-self-modifying-control-loop",
-      "assertion": "Observer and optimizer outputs are advisory. They cannot change workspace code, retry policy, sandbox exposure, deployment or Bureau queue automatically; every accepted optimization remains a normal task with review, tests, diff binding and rollback."
+      "assertion": "Observer and optimizer outputs are advisory. They cannot change workspace code, retry policy, sandbox exposure, deployment or Bureau queue automatically; every accepted optimization remains a normal task with review, tests, diff binding and rollback.",
+      "id": "no-self-modifying-control-loop"
     },
     {
-      "id": "privacy-and-secret-boundary",
-      "assertion": "Reports contain command and artifact hashes plus redacted diagnostics, not environment secrets, credentials, unrestricted home-directory content or raw unrelated tool output."
+      "assertion": "Reports contain command and artifact hashes plus redacted diagnostics, not environment secrets, credentials, unrestricted home-directory content or raw unrelated tool output.",
+      "id": "privacy-and-secret-boundary"
     },
     {
-      "id": "regression-and-usefulness-proof",
-      "assertion": "Tests cover successful, environment-failed, semantically failed, retried and abandoned workspaces; prove observer non-mutation; prove low-risk runs avoid agent overhead; and demonstrate one cross-run recommendation derived from repeated evidence without claiming automatic correctness."
+      "assertion": "Tests cover successful, environment-failed, semantically failed, retried and abandoned workspaces; prove observer non-mutation; prove low-risk runs avoid agent overhead; and demonstrate one cross-run recommendation derived from repeated evidence without claiming automatic correctness.",
+      "id": "regression-and-usefulness-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
     }
   ],
   "depends_on": [
     "GRABOWSKI-OPERATOR-SURFACE-V1-T034"
   ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Make Agent Workspace friction, recovery decisions and unfinished closeout steps observable without adding another mutable worker, then derive bounded cross-workspace optimization proposals from multiple immutable run reports rather than from anecdote or self-justifying single runs.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T035",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
-    "registered_at": "2026-07-12T06:26:19Z",
-    "source_task": "RPU-V1-T018",
-    "source_workspace": "gaw-lenskit-rpu-v1-t018-e8b0e581d7c3",
-    "source_finding": "The workspace preserved immutable role evidence, but the operator had to reconstruct why the test role failed, why retry was unavailable and which external closeout steps remained. A later response stopped after artifact generation, showing that workspace success and complete operator closeout are separate observability concerns.",
     "architecture_decision": "Use a deterministic event recorder for every workspace, an optional read-only observer role for selected runs, and a separate cross-workspace optimizer. Do not make an always-on agent role part of the critical path.",
+    "blocking_reason": "Live legacy-workspace probes falsified observer classification, closeout reconciliation and optimizer usefulness. Grabowski is additionally occupied by the foreign Consumer Surface v2/T036 ball.",
+    "completion_boundary": "Observer and optimizer remain read-only and advisory. Legacy diagnostics without an integrity-valid event log do not authorize optimizer proposals.",
+    "deployed_runtime_head": "0f5473e117ddc7f6e830b961a49e73fcf3ebb657",
     "does_not_establish": [
       "automatic closeout reconciliation authority",
       "automatic optimization authority",
@@ -87,35 +73,68 @@
       "task completion merely because PR #164 is merged",
       "workspace correctness"
     ],
-    "implementation_pr": "heimgewebe/grabowski#164",
+    "followup_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T037",
+    "full_validation": "1371 tests plus policy, generated-contract, runtime-lock, deploy-tooling and secret gates passed",
+    "implementation_diff_sha256": "c14aef2c2b8afbf74a8773b43050a2737f951a8c56193fae274f43fe3b9c8f68",
     "implementation_head": "7094dceca8c8fdb5d817ac2c12df7dd4e9896ce7",
     "implementation_merge_commit": "a4e09954b33d17644518598b2867208a1595ecc0",
-    "implementation_diff_sha256": "13c8d9e69025bdedcd12bf301eb38494dd76b625ad8bddb6a29d7ef2b1b506f6",
-    "deployed_runtime_head": "0f5473e117ddc7f6e830b961a49e73fcf3ebb657",
+    "implementation_pr": "heimgewebe/grabowski#178",
+    "implementation_pr_head": "0b029e926c57a882a4218d0307c5bcb9c0f98354",
     "live_audit_at": "2026-07-13T04:52:00Z",
     "live_audit_result": "acceptance_not_met",
     "live_findings": [
       {
-        "severity": "high",
         "finding": "The legacy Lenskit receipt stderr `/usr/bin/python3: No module named pytest` is classified as tests:semantic_test_failure instead of an environment/toolchain failure.",
-        "workspace_id": "gaw-lenskit-rpu-v1-t018-e8b0e581d7c3",
-        "observer_report_sha256": "73a8811c0d2c00ee1b3bbaaee1119b351297a7f41f313adcceb8c033cdd956b9"
-      },
-      {
+        "observer_report_sha256": "73a8811c0d2c00ee1b3bbaaee1119b351297a7f41f313adcceb8c033cdd956b9",
         "severity": "high",
-        "finding": "Successful role states are emitted as failure classes such as review:already_succeeded; the cross-run optimizer then proposes reducing that non-failure.",
-        "optimizer_sha256": "7a9e09938872f52077a7406a1fa09bd0b00dd260c9efa1dd326f1cc01a9bac7b"
+        "workspace_id": "gaw-lenskit-rpu-v1-t018-e8b0e581d7c3"
       },
       {
-        "severity": "medium",
+        "finding": "Successful role states are emitted as failure classes such as review:already_succeeded; the cross-run optimizer then proposes reducing that non-failure.",
+        "optimizer_sha256": "7a9e09938872f52077a7406a1fa09bd0b00dd260c9efa1dd326f1cc01a9bac7b",
+        "severity": "high"
+      },
+      {
         "finding": "Legacy observer reports omit recoverable writer head/diff identity and leave already completed GitHub/Bureau/checkout closeout items unresolved.",
+        "severity": "medium",
         "workspace_ids": [
           "gaw-gaw-smoke-repo-178-chat-20260710-grabowsk-4ba88cf171c5",
           "gaw-lenskit-rpu-v1-t018-e8b0e581d7c3"
         ]
       }
     ],
-    "blocking_reason": "Live legacy-workspace probes falsified observer classification, closeout reconciliation and optimizer usefulness. Grabowski is additionally occupied by the foreign Consumer Surface v2/T036 ball.",
-    "followup_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T037"
-  }
+    "live_observer_proof": {
+      "legacy_actionable_classes": [],
+      "legacy_diagnostic_class": "environment_toolchain_failure",
+      "legacy_workspace": "gaw-lenskit-rpu-v1-t018-e8b0e581d7c3",
+      "optimizer_proposals": [],
+      "optimizer_repeated_failure_classes": [],
+      "successful_failure_classes": [],
+      "successful_workspace": "gaw-grabowski-chat-grabowski-t037-wo-f5768a7c2966"
+    },
+    "merge_commit": "7731fa5b351b7975b802193c44e15ee19a66e6b5",
+    "registered_at": "2026-07-12T06:26:19Z",
+    "runtime_release": "7731fa5b351b-srcset594dcb62e292-locke6664d600b6c-contract22f31ec746bf",
+    "source_finding": "The workspace preserved immutable role evidence, but the operator had to reconstruct why the test role failed, why retry was unavailable and which external closeout steps remained. A later response stopped after artifact generation, showing that workspace success and complete operator closeout are separate observability concerns.",
+    "source_task": "RPU-V1-T018",
+    "source_workspace": "gaw-lenskit-rpu-v1-t018-e8b0e581d7c3",
+    "verification": {
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "task_sha256": "99c52c7d43e74ddbcbd944dc821caec81afb02d28f58bd8f3a889fdb1901cf5c"
+    },
+    "verified_at": "2026-07-13T09:15:36.999354Z"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 531
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Add Agent Workspace process observer and evidence-driven optimizer"
 }

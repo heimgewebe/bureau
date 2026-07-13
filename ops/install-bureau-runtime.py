@@ -150,24 +150,54 @@ def parser() -> argparse.ArgumentParser:
     return value
 
 
-def _backup_existing(prefix: Path, manifest_path: Path, launcher: Path) -> dict[str, str | None]:
-    if not manifest_path.exists() and not launcher.exists():
-        return {"directory": None, "manifest": None, "launcher": None}
+def _backup_existing(prefix: Path, manifest_path: Path, launcher: Path) -> dict[str, Any]:
+    launcher_present = os.path.lexists(launcher)
+    if not manifest_path.exists() and not launcher_present:
+        return {
+            "directory": None,
+            "manifest": None,
+            "launcher": None,
+            "launcher_kind": None,
+            "launcher_symlink_target": None,
+            "launcher_metadata": None,
+        }
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     directory = prefix / "backups" / stamp
     directory.mkdir(parents=True, exist_ok=False)
     manifest_backup = None
     launcher_backup = None
+    launcher_kind = None
+    launcher_symlink_target = None
+    launcher_metadata = None
     if manifest_path.is_file() and not manifest_path.is_symlink():
         manifest_backup = directory / "deployment-manifest.json"
         shutil.copy2(manifest_path, manifest_backup)
-    if launcher.is_file() and not launcher.is_symlink():
+    if launcher.is_symlink():
+        launcher_kind = "symlink"
+        launcher_symlink_target = os.readlink(launcher)
+        launcher_metadata = directory / "bureau.symlink.json"
+        atomic_write(
+            launcher_metadata,
+            canonical(
+                {
+                    "schema_version": 1,
+                    "kind": "bureau_launcher_symlink_backup",
+                    "path": str(launcher),
+                    "target": launcher_symlink_target,
+                }
+            ),
+        )
+    elif launcher.is_file():
+        launcher_kind = "file"
         launcher_backup = directory / "bureau"
         shutil.copy2(launcher, launcher_backup)
     return {
         "directory": str(directory),
         "manifest": str(manifest_backup) if manifest_backup else None,
         "launcher": str(launcher_backup) if launcher_backup else None,
+        "launcher_kind": launcher_kind,
+        "launcher_symlink_target": launcher_symlink_target,
+        "launcher_metadata": str(launcher_metadata) if launcher_metadata else None,
     }
 
 
@@ -218,13 +248,17 @@ def main(argv: list[str] | None = None) -> int:
     launcher = bin_dir / "bureau"
     if manifest_path.exists() and (manifest_path.is_symlink() or not manifest_path.is_file()):
         raise SystemExit("existing Bureau runtime manifest is not a regular file")
+    launcher_present = os.path.lexists(launcher)
     existing_launcher = (
         launcher.read_text(encoding="utf-8", errors="replace")
         if launcher.is_file() and not launcher.is_symlink()
         else None
     )
-    if launcher.exists() and existing_launcher is None:
-        raise SystemExit("existing bureau launcher is not a regular file")
+    if launcher.is_symlink():
+        if not args.replace_existing:
+            raise SystemExit("existing bureau launcher is a symlink; use --replace-existing")
+    elif launcher_present and existing_launcher is None:
+        raise SystemExit("existing bureau launcher is not a regular file or symlink")
     if (
         existing_launcher is not None
         and MANAGED_MARKER not in existing_launcher

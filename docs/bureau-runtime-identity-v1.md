@@ -52,7 +52,10 @@ The installer creates:
 - `~/.local/share/bureau/deployment-manifest.json`;
 - a digest-checking `~/.local/bin/bureau` launcher;
 - an installation receipt;
-- rollback copies of the previous manifest and launcher when present.
+- rollback copies of the previous manifest and regular launcher when present;
+- for a replaced launcher symlink, rollback metadata with the exact raw link target. The symlink target itself is never modified.
+
+Existing launcher symlinks and unmanaged regular launchers require explicit `--replace-existing`; without it the installer fails closed.
 
 The launcher pins the exact manifest SHA-256, verifies the manifest schema, the runtime module and the complete `pyproject.toml` plus `src/bureau/**/*.py` package tree before importing anything. A changed manifest, symlink, missing file or changed package file fails closed.
 

@@ -80,11 +80,146 @@
     "registered_at": "2026-07-13",
     "source_issue": "heimgewebe/bureau#481",
     "replaces_live_dispatch_of": "RAB-V1-T002B",
-    "authorization_status": "not_authorized",
+    "authorization_status": "authorized",
+    "authorized_at": "2026-07-13T19:47:33.474793Z",
+    "authorization_manifest_sha256": "46086f384d67ba5f0352780d5d286355aa5308a6960b34ce4d9045724a072f04",
+    "execution_authorization": {
+      "action_class": "agent_dispatch",
+      "approved": true,
+      "approved_at": "2026-07-13T19:47:33.474793Z",
+      "bindings": {
+        "budgets": {
+          "aggregate_authorized_usd": 0.4,
+          "aggregate_risk_ceiling_usd": 0.5,
+          "per_process_max_cost_usd": 0.2,
+          "provider_process_limit": 2
+        },
+        "claude_executable": {
+          "path": "/home/alex/.local/share/claude/versions/2.1.207",
+          "sha256": "85e7e988a392d859f90802ca21fb26e89d3c9ab527f5ed0b08df3955e34d5c83"
+        },
+        "control_files": {
+          "manifest-bindings.json": {
+            "path": "/home/alex/.local/state/grabowski/rab-v1-t002d-20260713/manifest-bindings.json",
+            "raw_sha256": "d1868cd3acfd51ea3aefc8e453098af4f8d6227445a57333547b4caf9522ea00"
+          },
+          "repository-map.json": {
+            "path": "/home/alex/.local/state/grabowski/rab-v1-t002d-20260713/repository-map.json",
+            "raw_sha256": "77f9af2dd5a1539f2b2fa66fe2af883088749f387b0ff425d171ea7b81bbb2bc"
+          },
+          "runner-v3.json": {
+            "path": "/home/alex/.local/state/grabowski/rab-v1-t002d-20260713/runner-v3.json",
+            "raw_sha256": "e298e1506ef9c82bc6083571d958471657791854ceb800524b609ce06d290e92"
+          }
+        },
+        "credential_boundary": {
+          "mode": "local_nonce_commitment",
+          "commitment_artifact": "credential-binding-v1.json",
+          "commitment_sha256": "0e8fc53b656981a1cfc6ed7ca6aaf72167e8134091eb9b8a9c9447c5770fb85a",
+          "credential_digest_public": false,
+          "credential_contents_exposed": false,
+          "revalidate_before_spawn": true
+        },
+        "grabowski_runtime_repo_head": "ed113109ec6693919071be832647b539a82c692d",
+        "lenskit_tooling_commit": "e8206024055c2342f3427726752c845b44aa2ed2",
+        "manifest_bindings": {
+          "grabowski": {
+            "manifest": "/home/alex/.local/state/grabowski/rab-v1-t002d-20260713/bundles/grabowski/grabowski-max-260713-1933_merge.bundle.manifest.json",
+            "manifest_sha256": "df5e15019106111e76d403eb1e76ae2f6bc0c3e9db060e910b8e9a9a0d5c786e",
+            "mcp_command_sha256": "642aa5100e98bed44329ccc387af37de4af902fa2b665ccdc064fc396b61b620"
+          },
+          "lenskit": {
+            "manifest": "/home/alex/.local/state/grabowski/rab-v1-t002d-20260713/bundles/lenskit/lenskit-max-260713-1932_merge.bundle.manifest.json",
+            "manifest_sha256": "571a42927f9e87a919a9b29f42a0c82ff206b830e519a755c7110f3e5c747b22",
+            "mcp_command_sha256": "459677c2ffe5a83a71cb95ee7a13930b8b3ba38d6a2fc74907264baa44575710"
+          },
+          "weltgewebe": {
+            "manifest": "/home/alex/.local/state/grabowski/rab-v1-t002d-20260713/bundles/weltgewebe/weltgewebe-max-260713-1933_merge.bundle.manifest.json",
+            "manifest_sha256": "fb4acad195353e9c781d0a3052545b48cd6c3d907f5daed40a90c0c6ccca4503",
+            "mcp_command_sha256": "73a9a6d6e6ca909099f1e04163617ae59883a1c5b440c388ffa609cb34d801f2"
+          }
+        },
+        "pair_id": "repobrief-agent-benchmark-v1-20260713:nav-lenskit-mcp-startup:r1",
+        "pair_sha256": "c071ee3cb0810ac65fcf497ce198f56aa1661b5a57900c9b387b2ed7dd274d7f",
+        "requests": {
+          "baseline": {
+            "canonical_sha256": "78744c9f3a7f9117f0b77fd06032bea95a0c56e259c43fd2856aafe2436cd0da",
+            "path": "/home/alex/.local/state/grabowski/rab-v1-t002d-20260713/benchmark-plan-v3/requests/repobrief-agent-benchmark-v1-20260713__nav-lenskit-mcp-startup__r1__baseline.json",
+            "raw_sha256": "bb2d0de4e3315664f6e8330770e3b94b3319bf2efe3e54b4a6e534b5ce71259f",
+            "request_id": "repobrief-agent-benchmark-v1-20260713:nav-lenskit-mcp-startup:r1:baseline"
+          },
+          "treatment": {
+            "canonical_sha256": "49464ce24b62b794a8737842b15c5f01455c0013c1cd0e5a2ecb5ef499e009c1",
+            "path": "/home/alex/.local/state/grabowski/rab-v1-t002d-20260713/benchmark-plan-v3/requests/repobrief-agent-benchmark-v1-20260713__nav-lenskit-mcp-startup__r1__treatment.json",
+            "raw_sha256": "d8cae9f519445d3c134ba978f8b53603f08464d2e4bf8ee7a6e7c1e62aee609e",
+            "request_id": "repobrief-agent-benchmark-v1-20260713:nav-lenskit-mcp-startup:r1:treatment"
+          }
+        },
+        "retry_permitted": false,
+        "runner": {
+          "model": "claude-haiku-4-5-20251001",
+          "provider": "anthropic-claude-code",
+          "sampling": {}
+        },
+        "source_commits": {
+          "grabowski": "f6eed48752fd2cf32f070dc69b2112e2498872cb",
+          "lenskit": "dff582f9c4e8b5511d4ce436db81e3e245f725ec",
+          "weltgewebe": "e095903bb71c937d861fa64d7e8a6b593062ca6f"
+        },
+        "synthetic_preflight": {
+          "baseline_receipt_sha256": "fa31f37066a2f614176488c177e146275dccfaa6234438a83b733a81e2922a1c",
+          "condition_intents": [
+            "baseline",
+            "treatment"
+          ],
+          "fixture_intents": 2,
+          "provider_process_intents": 0,
+          "report": "/home/alex/.local/state/grabowski/rab-v1-t002d-20260713/synthetic-exact-pair-v3/report.json",
+          "report_digest_file_sha256": "46d9b5126eee4b7937aa9902189c57dbc1c820f1a2b892081e9d1fcce0bdd59a",
+          "report_sha256": "a26e43757377ec1ca790a2d8f3f6e8efd35e457d289ecc78955563309fa9c535",
+          "source_unchanged": true,
+          "status": "synthetic_only",
+          "treatment_receipt_sha256": "3c0ea3deb7b50ba753736c76eb8049e8ca6eaa9f6dd49ed25ad30ccd0867be73"
+        },
+        "t002c_merge_commit": "f267070763fe8142f49c6d93810df0f7e219b308",
+        "taskset_id": "repobrief-agent-benchmark-v1-20260713",
+        "taskset_sha256": "bdfea9f337a0a651592b9ff78968e446ac217bb4c763d40a982f17f14157c3d4"
+      },
+      "conditions": [
+        "T002C remains verified",
+        "all bound hashes and clean source states are revalidated immediately before launch",
+        "no prior intent, receipt, report or transcript exists in the live output paths",
+        "no RepoBrief benchmark provider process is active",
+        "the live preflight starts baseline then treatment at most once",
+        "any failure or ambiguous start consumes the one-shot authorization and blocks without retry"
+      ],
+      "consumed": false,
+      "does_not_authorize": [
+        "RAB-V1-T002B retry",
+        "RAB-V1-T002 96-run benchmark",
+        "a second T002D pair",
+        "automatic pilot expansion",
+        "default promotion"
+      ],
+      "level": "reviewed_plan",
+      "one_shot": true,
+      "reference": "operator-instruction:2026-07-13:rab-v1-t002d-one-shot-live-pair-max-0.50-usd",
+      "remaining_uses": 1,
+      "reviewer": "alexdermohr",
+      "schema_version": 1,
+      "scope": [
+        "exactly one frozen baseline process",
+        "exactly one frozen RepoBrief treatment process",
+        "no retry or continuation"
+      ],
+      "source": "operator_instruction",
+      "task_id": "RAB-V1-T002D"
+    },
     "fixed_pair_count": 1,
     "provider_process_count": 2,
-    "per_run_max_cost_usd": 1.0,
-    "total_max_cost_usd": 2.0,
+    "per_run_max_cost_usd": 0.2,
+    "total_max_cost_usd": 0.4,
+    "aggregate_risk_ceiling_usd": 0.5,
     "default_promoted": false,
     "does_not_establish": [
       "RepoBrief usefulness",
@@ -102,7 +237,7 @@
       "state": "verified",
       "grabowski_merge_commit": "f267070763fe8142f49c6d93810df0f7e219b308"
     },
-    "requires_separate_reviewed_authorization": true,
+    "requires_separate_reviewed_authorization": false,
     "retry_permitted": false,
     "provider_processes_started": 0,
     "real_provider_cost_observed_usd": null,

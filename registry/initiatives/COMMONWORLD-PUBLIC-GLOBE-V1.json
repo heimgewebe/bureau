@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "title": "Commonworld public globe follow-up hardening",
+  "state": "active",
+  "commitment": "later",
+  "goal": "Preserve the first live public MapLibre globe as a verified baseline while separately proving accessibility behavior and deciding the production delivery and basemap-provider boundary without overstating the current slice.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/commonworld-public-globe-v1.md"
+  },
+  "completion": [
+    "Android-specific reduced-motion behavior is either physically proven against an exact Commonworld commit or remains an explicit nonclaim with a precise blocker.",
+    "Screen-reader product support is tested with a named physical assistive-technology path and bounded to the platforms actually covered.",
+    "Production delivery architecture and basemap-provider responsibility are explicitly authorized or deferred with SLA, privacy, cost, attribution, fallback and monitoring consequences visible.",
+    "The live public globe remains regression-tested and no follow-up claim is inferred from the successful PR #66 release alone."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source": "Commonworld PR #66 post-release residual registration",
+    "source_pr": "heimgewebe/commonworld#66",
+    "reviewed_head": "e1c701a2e7260091e31d22a056daab7b48382a72",
+    "reviewed_tree": "7e97820d6f2c06010fd072e6dcd6a9020154e3de",
+    "merge_commit": "92c6993b8c1cac07caf0771c6071de9ca4721047",
+    "public_url": "https://commonworld.net/",
+    "physical_android_receipt_sha256": "27e7e2a2e5d9fef3c56a9d660b31ab8029d855c69dc3de411fc0c53e15836547",
+    "closeout_sha256": "0ce6ae2806461f8fb7c296bd46c288cf4fe6382a3f8b298086cc0916a0d4dca4",
+    "live_smoke_sha256": "9b329f5112a3c62c093bb1e2e3e481e71196cdb5683649422dcb77b60c6de509",
+    "baseline_proven": [
+      "physical Android Chrome PASS for all 18 required checks",
+      "main CI and GitHub Pages deployment PASS",
+      "public runtime asset hashes match the reviewed merge tree"
+    ],
+    "explicit_nonclaims_at_registration": [
+      "Android Reduced Motion PASS",
+      "screen-reader product support",
+      "production architecture authorization",
+      "production basemap-provider commitment"
+    ],
+    "queue_policy": "Tasks are registered as planned and are not automatically added to registry/queue.json.",
+    "does_not_establish": [
+      "cross-platform accessibility correctness",
+      "WCAG conformance",
+      "production provider SLA",
+      "production architecture authorization",
+      "runtime correctness after future changes",
+      "future merge readiness"
+    ]
+  }
+}

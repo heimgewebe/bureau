@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T012",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Decouple Bureau statements from ambient checkout state",
-  "state": "planned",
+  "state": "verified",
   "goal": "Keep Bureau statements available through a deployment-bound, hash-verified, read-only Registry snapshot even when the conventional Bureau checkout is stale or dirty, while requiring every Registry mutation to bind an explicit clean current task worktree.",
   "priority": {
     "lane": "next",
@@ -14,7 +14,6 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
       "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-MACHINE-READABILITY-V1-T012.json"
     ]
   },
@@ -69,28 +68,112 @@
     "observation": {
       "deployed_runtime_source_commit": "d85ad423aa027a6910ad6695c63c822c6121cb6c",
       "conventional_checkout_head": "b65d1f8f3ba5b67d707c23dfa773814067267f71",
-      "behind_commits": 84,
+      "behind_commits_when_reported": 84,
+      "behind_commits_at_live_closeout": 94,
       "foreign_dirty_paths": [
         "registry/initiatives/BUREAU-LIVE-REGISTER-V1.json",
         "registry/initiatives/UTIL-BASE-V1.json"
       ],
-      "active_processes_using_checkout": 4,
-      "failure": "The current immutable runtime correctly refused the stale dirty checkout, but because the launcher defaulted Registry root to the caller cwd it also refused every normal statement."
+      "active_processes_using_checkout_when_reported": 4,
+      "failure": "The immutable runtime correctly refused the stale dirty checkout, but because the launcher defaulted Registry root to the caller cwd it also refused every normal statement."
     },
-    "implementation_slice": {
-      "branch": "fix/canonical-registry-root-v2",
-      "worktree": "/home/alex/repos/.bureau-staging/canonical-registry-root-v2",
-      "focused_test_task": "eb7f884b313e4ceeb31cbc09",
-      "focused_test_result": "16 passed",
-      "merge_and_live_verification_pending": true
+    "implementation": {
+      "repository": "heimgewebe/bureau",
+      "pull_request": 527,
+      "head_sha": "05343d0859b664cc20b399de64c6ee66c4439835",
+      "base_sha": "3774d859dc42221f883996fdad0bbc53d8742031",
+      "merge_commit_sha": "0f556f2dc1a02db40646a82f2ce7dc40d6cc5621",
+      "github_diff_sha256": "1777ba774151399c717f1c7f521cf2f90ab70eaccf5dae08c98a2c7746d6dc14",
+      "self_review_sha256": "924e889c4b3fdc1cae27493251e957a6b43c0f14e991f55cd6dddab64e57d53b",
+      "merged_at": "2026-07-13T19:01:10Z"
     },
+    "validation": {
+      "registry_check": "passed",
+      "full_pytest_task": "03114aef4b6742f094525a79",
+      "full_pytest_result": "passed at 100 percent",
+      "focused_regression_task": "f586b7e196704bd3b44fecb5",
+      "focused_regression_result": "7 passed",
+      "lint": "ruff check . passed",
+      "github_ci": {
+        "validate_3_10": "success",
+        "validate_3_12": "success"
+      },
+      "review_correction": "The first full-suite pass found that query-only state was applied too broadly to explicit development roots. The implementation was corrected so strict query-only access applies only to canonical-runtime-default; the final full suite then passed."
+    },
+    "deployment": {
+      "source_commit": "0f556f2dc1a02db40646a82f2ce7dc40d6cc5621",
+      "release_id": "0f556f2dc1a0-src96fea7a1c741",
+      "launcher_path": "/home/alex/.local/bin/bureau",
+      "launcher_sha256": "e50874e5511e00d9d063b6459261bf297e38338b7e1d177f72a065ea650ad5d9",
+      "manifest_sha256": "a682df0dd986068ca7e9de477f5355534d26c715863f1c0825d1bc5822ec6248",
+      "package_tree_sha256": "96fea7a1c741dc131fea98f91663b4910eae164ab507d6ff06132e52c1d8c0d2",
+      "registry_snapshot_root": "/home/alex/.local/share/bureau/registry-snapshots/0f556f2dc1a0-tree2f9b3a12f452",
+      "registry_snapshot_tree_sha256": "2f9b3a12f4529e3e93772fb46568386062b62ce3cd533e9bd3dd8bf944b21f37",
+      "registry_snapshot_inventory_sha256": "461669340c980a4cf41fab3675e4948a9399812961997898d65fbd98f8b615bd",
+      "install_receipt": "/home/alex/.local/share/bureau/receipts/0f556f2dc1a0-src96fea7a1c741-a682df0dd986.json",
+      "install_receipt_sha256": "fb3a25ee4a28bdbc470fa6af945bf2ed666f5e76917c25697ae877ad5dd38e39",
+      "rollback_directory": "/home/alex/.local/share/bureau/backups/20260713T190337.753200Z"
+    },
+    "verified_acceptance": {
+      "canonical-read-snapshot": "Verified live: manifest, inventory and tracked-tree hashes matched the immutable deployment at merge commit 0f556f2dc1a02db40646a82f2ce7dc40d6cc5621.",
+      "ambient-independence": "Verified from /home/alex/repos/bureau at head b65d1f8 with the two foreign dirty Registry files still present and the checkout 94 commits behind: runtime-identity and live-list succeeded through canonical-runtime-default.",
+      "query-only-statements": "Verified by dedicated filesystem and SQLite tests plus a live operational live-list read through the canonical snapshot.",
+      "explicit-write-worktree": "Verified live: close-ready without --root returned explicit-registry-root-required, while runtime identity against the clean exact-merge deployment worktree reported compatible and mutation_allowed=true.",
+      "tamper-and-drift": "Verified by manifest, inventory, symlink and tracked-tree negative tests; drift fails closed.",
+      "foreign-work-preservation": "Verified after merge and deployment: the conventional checkout remained on b65d1f8 with exactly the same two foreign modified files.",
+      "tests-and-live-proof": "Verified by full pytest, focused regressions, Ruff, both GitHub CI matrix jobs and the replay of the original stale-dirty-main scenario."
+    },
+    "live_evidence": {
+      "path": "/home/alex/.local/state/grabowski/evidence/operator-machine-readability-v1-t012-live-proof.json",
+      "sha256": "b8244838d115900fecc5f986a87e7b72050e78c781223295f37a09799ad8e419"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T012",
+          "source_ref": "heimgewebe/bureau#527",
+          "number": 527,
+          "head_sha": "05343d0859b664cc20b399de64c6ee66c4439835",
+          "merge_commit_sha": "0f556f2dc1a02db40646a82f2ce7dc40d6cc5621",
+          "diff_sha256": "1777ba774151399c717f1c7f521cf2f90ab70eaccf5dae08c98a2c7746d6dc14"
+        },
+        {
+          "kind": "runtime_deployment",
+          "authority": "bureau-runtime",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T012",
+          "source_ref": "bureau-runtime@0f556f2dc1a02db40646a82f2ce7dc40d6cc5621",
+          "commit_sha": "0f556f2dc1a02db40646a82f2ce7dc40d6cc5621",
+          "content_sha256": "fb3a25ee4a28bdbc470fa6af945bf2ed666f5e76917c25697ae877ad5dd38e39"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "grabowski",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T012",
+          "source_ref": "stale-dirty-main-replay@0f556f2dc1a02db40646a82f2ce7dc40d6cc5621",
+          "content_sha256": "b8244838d115900fecc5f986a87e7b72050e78c781223295f37a09799ad8e419"
+        }
+      ]
+    },
+    "verified_at": "2026-07-13",
+    "verification_note": "PR #527 is merged, its exact merge commit is deployed, the original stale-dirty-main failure is live-replayed successfully for statements, implicit mutation remains blocked, explicit clean-worktree compatibility remains available, and foreign changes remain untouched.",
     "safety_boundary": "Availability is restored only for read truth. Mutation authority remains stricter than before and always requires an explicit clean task worktree.",
+    "verification": {
+      "task_sha256": "3b55b56d580dbce3887e3d37409f58f32f6fcb012671c791f72784c569bfac9f",
+      "plan_sha256": "5bd32f4906cc9af27a3f99c7ab886eb9df7f8e5f4e9247c450bc492e64d28b06",
+      "source": "github_pull_request_deployed_runtime_and_live_probe",
+      "source_ref": "github-pr:heimgewebe/bureau#527@0f556f2dc1a02db40646a82f2ce7dc40d6cc5621",
+      "evidence_sha256": "b8244838d115900fecc5f986a87e7b72050e78c781223295f37a09799ad8e419",
+      "verified_at": "2026-07-13"
+    },
     "does_not_establish": [
-      "merge_readiness",
-      "production_deployment",
       "registry_semantic_correctness",
+      "future_runtime_health",
       "permission_to_modify_foreign_worktrees",
-      "automatic_task_closeout"
+      "completion_of_GRIP-ROADMAP-V1-T022"
     ]
   }
 }

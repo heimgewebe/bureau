@@ -3,7 +3,7 @@
   "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T003",
   "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
   "title": "Decide production delivery and basemap provider boundary",
-  "state": "planned",
+  "state": "verified",
   "goal": "Make an explicit evidence-based decision on whether the current static Pages architecture and public OpenFreeMap instance are authorized for production responsibility, including failure, privacy, cost, attribution and fallback consequences.",
   "priority": {
     "lane": "later",
@@ -73,6 +73,45 @@
       "future merge readiness"
     ],
     "registration_baseline_commit": "92c6993b8c1cac07caf0771c6071de9ca4721047",
-    "live_state_required_at_execution": true
+    "live_state_required_at_execution": true,
+    "verification": {
+      "verified_at": "2026-07-13",
+      "authority": "commonworld-project-operator",
+      "decision": "authorize_github_pages_with_noncritical_openfreemap_best_effort_boundary",
+      "commonworld_pull_requests": [
+        67,
+        68
+      ],
+      "decision_merge_commit": "1483d1941287ed1187f5846043552ee2dc642e6b",
+      "smoke_fix_merge_commit": "3684c79e751e7584aadd500781fc2219ae91d098",
+      "final_tree": "3511ac3e22d1daab603c8f7b905271e48929b4a4",
+      "contract_path": "contracts/commonworld/production-delivery-provider.contract.json",
+      "result_path": "docs/research/production-delivery-provider-v1.result.json",
+      "pages_runs": [
+        29230099349,
+        29230514536
+      ],
+      "public_url": "https://commonworld.net/",
+      "canonical_live_smoke": "PASS",
+      "dns_contract": "PASS",
+      "closeout_sha256": "9ddc776e59088e3cb44ea7ddbf9a62d9a187047fc8a86e77437f6b0b85c5dbc5",
+      "self_review_sha256": "529b618cdc0aa013f6b7706c32173d0903a92102c119914a7c50c7527dd75a8c",
+      "acceptance": {
+        "production-current-state": "PASS",
+        "production-provider-criteria": "PASS",
+        "production-decision": "PASS",
+        "production-failure-path": "PASS",
+        "production-no-implicit-migration": "PASS"
+      },
+      "task_sha256": "df591a47d160d6ce3a13408379351c96334c076b2fc9e4b5ae41eda44bd08382",
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4"
+    },
+    "verified_boundary": {
+      "delivery": "github_pages_static",
+      "basemap": "openfreemap_public_instance",
+      "basemap_critical": false,
+      "service_level_agreement_claimed": false,
+      "migration_authorized": false
+    }
   }
 }

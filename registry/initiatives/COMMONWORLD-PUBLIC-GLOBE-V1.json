@@ -4,16 +4,16 @@
   "title": "Commonworld public globe follow-up hardening",
   "state": "active",
   "commitment": "later",
-  "goal": "Preserve the first live public MapLibre globe as a verified baseline while separately proving accessibility behavior and deciding the production delivery and basemap-provider boundary without overstating the current slice.",
+  "goal": "Preserve the live public MapLibre globe and its bounded production/provider contract while keeping screen-reader product support explicitly deferred and avoiding unsupported accessibility or SLA claims.",
   "current_plan": {
     "repository": "bureau",
     "path": "docs/plans/commonworld-public-globe-v1.md"
   },
   "completion": [
-    "Android-specific reduced-motion behavior is either physically proven against an exact Commonworld commit or remains an explicit nonclaim with a precise blocker.",
-    "Screen-reader product support is tested with a named physical assistive-technology path and bounded to the platforms actually covered.",
-    "Production delivery architecture and basemap-provider responsibility are explicitly authorized or deferred with SLA, privacy, cost, attribution, fallback and monitoring consequences visible.",
-    "The live public globe remains regression-tested and no follow-up claim is inferred from the successful PR #66 release alone."
+    "T001 is explicitly cancelled by operator decision without establishing Android Reduced Motion support.",
+    "T002 remains planned in the later lane, unqueued and an explicit screen-reader product-support nonclaim.",
+    "T003 is verified through the bounded GitHub Pages and noncritical OpenFreeMap best-effort production contract.",
+    "The live public globe, DNS target and canonical live-smoke path remain verified against the merged Commonworld tree."
   ],
   "parallelism": {
     "max_active_tasks": 1
@@ -48,6 +48,30 @@
       "production architecture authorization",
       "runtime correctness after future changes",
       "future merge readiness"
+    ],
+    "operator_prioritization": {
+      "decided_at": "2026-07-13",
+      "t001": "cancelled",
+      "t002": "deferred_later_unqueued",
+      "t003": "verified"
+    },
+    "production_boundary_verification": {
+      "commonworld_pull_requests": [
+        67,
+        68
+      ],
+      "decision_merge_commit": "1483d1941287ed1187f5846043552ee2dc642e6b",
+      "final_merge_commit": "3684c79e751e7584aadd500781fc2219ae91d098",
+      "closeout_sha256": "9ddc776e59088e3cb44ea7ddbf9a62d9a187047fc8a86e77437f6b0b85c5dbc5",
+      "public_url": "https://commonworld.net/"
+    },
+    "explicit_nonclaims_current": [
+      "Android Reduced Motion PASS",
+      "screen-reader product support",
+      "GitHub Pages SLA",
+      "OpenFreeMap SLA or continuity guarantee",
+      "automatic provider failover",
+      "backend readiness"
     ]
   }
 }

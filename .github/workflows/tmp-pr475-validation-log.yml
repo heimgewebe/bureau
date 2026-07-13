@@ -1,0 +1,32 @@
+name: temporary-pr475-validation-log
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Capture validation output
+        shell: bash
+        run: |
+          set +e
+          make validate > validation.log 2>&1
+          status=$?
+          echo "$status" > validation.exit
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bureau-pr475-validation-${{ github.sha }}
+          path: |
+            validation.log
+            validation.exit
+          if-no-files-found: error
+          retention-days: 2

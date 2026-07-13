@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "id": "RAB-V1-T002F",
+  "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
+  "title": "Authorize and run one fresh live pair after contract hardening",
+  "state": "planned",
+  "goal": "After RAB-V1-T002E is merged and verified, prepare a new immutable pair and seek a separate reviewed authorization for exactly one baseline and one treatment process with no retry.",
+  "priority": {
+    "lane": "later",
+    "rank": 20
+  },
+  "depends_on": [
+    "RAB-V1-T002E"
+  ],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.lenskit",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/lenskit"
+    ],
+    "approval": {
+      "action_class": "agent_dispatch",
+      "required_level": "reviewed_plan",
+      "note": "This task is not authorized by registration. A new explicit authorization must bind new paths, hashes, pair, executable, credential commitment and hard cumulative cost limits after T002E verification."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "claude-cli",
+    "instrumented-agent-runner"
+  ],
+  "acceptance": [
+    {
+      "id": "rab-v1-t002f-new-state",
+      "assertion": "No T002D authorization, intent, ledger, output path or receipt is reused; the new pair has create-only paths and fresh cryptographic bindings."
+    },
+    {
+      "id": "rab-v1-t002f-separate-authorization",
+      "assertion": "A separately reviewed one-shot authorization is recorded only after T002E post-merge verification and remains unconsumed until the immediate launch gate passes."
+    },
+    {
+      "id": "rab-v1-t002f-two-process-limit",
+      "assertion": "At most one baseline and one treatment provider process are permitted, each with a positive hard ceiling and no retry after intent, failure or ambiguity."
+    },
+    {
+      "id": "rab-v1-t002f-validity",
+      "assertion": "Only a complete provider-backed pair with valid Lenskit receipts, distinct sessions, approved treatment RepoBrief use, bound transcripts, source integrity and observed costs may verify the task."
+    },
+    {
+      "id": "rab-v1-t002f-stop-rule",
+      "assertion": "Any local, provider, evidence, budget or ambiguity failure consumes the authorization, blocks the task and leaves RAB-V1-T002 prohibited."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source_issue": "heimgewebe/bureau#481",
+    "authorization_status": "not_authorized",
+    "execution_status": "not_started",
+    "requires_separate_reviewed_authorization": true,
+    "retry_permitted": false,
+    "provider_processes_started": 0,
+    "real_provider_cost_observed_usd": null,
+    "replaces_no_attempt": true,
+    "does_not_authorize": [
+      "RAB-V1-T002D retry",
+      "RAB-V1-T002 execution",
+      "automatic pilot expansion",
+      "default promotion"
+    ]
+  }
+}

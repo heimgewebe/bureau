@@ -60,7 +60,7 @@
       },
       "RAB-V1-T002": {
         "state": "blocked",
-        "condition": "Blocked until RAB-V1-T002D is separately authorized, executed once and verified."
+        "condition": "Blocked until T002E is verified and T002F is separately authorized, executed once and verified."
       },
       "RAB-V1-T003": {
         "state": "planned",
@@ -84,14 +84,28 @@
         ]
       },
       "RAB-V1-T002D": {
+        "state": "blocked",
+        "outcome": "The separately authorized one-shot attempt was consumed but failed locally before provider dispatch because argparse option abbreviation removed the absolute --claude-command argument. No live output tree, provider intent or cost was created; no retry is permitted.",
+        "attempt_id": "5ad8fc1f8826",
+        "failure_evidence_sha256": "d2559d0a22365f7d07ac8435db8f5d1c9148c59fbd996a0130fe67122fc12fc3",
+        "provider_processes_started": 0,
+        "observed_cost_usd": 0.0,
+        "authorization_consumed": true,
+        "retry_permitted": false
+      },
+      "RAB-V1-T002E": {
         "state": "ready",
+        "condition": "Fix and synthetically verify exact adapter, planner and export contracts with zero provider use."
+      },
+      "RAB-V1-T002F": {
+        "state": "planned",
         "authorization_status": "not_authorized",
         "execution_status": "not_started",
-        "scope": "One separately reviewed, one-shot live baseline/treatment pair; no retries and no benchmark launch."
+        "condition": "Requires verified T002E and a completely new explicit reviewed authorization."
       }
     },
     "default_promoted": false,
-    "sequencing": "Keep the failed T002B attempt visible, qualify the one-shot preflight in T002C without provider use, separately authorize and run one pair in T002D, execute the real paired benchmark, decide adoption, and only then prioritize later optimization work.",
+    "sequencing": "Keep failed T002B and consumed invalid T002D visible, harden exact live preparation contracts in T002E without provider use, separately authorize a fresh one-shot pair in T002F, execute the real paired benchmark only after a valid pair, decide adoption, and only then prioritize later optimization work.",
     "does_not_establish": [
       "general agent quality improvement",
       "answer correctness outside the fixed taskset",

@@ -151,6 +151,15 @@ Der Benchmark selbst setzt `default_promoted=false`.
 - Recall- oder Sicherheitsregression: keine Nutzenbeförderung trotz möglicher
   Token- oder Zeitersparnis.
 
+## Aktueller Live-Gate-Zustand (13. Juli 2026)
+
+- `RAB-V1-T002C` ist verifiziert.
+- `RAB-V1-T002D` hat seine einmalige Freigabe verbraucht, wurde aber vor jedem Provider-Dispatch ungültig: Die äußere Argumentauswertung behandelte `--claude-command` als Abkürzung für `--claude-command-sha256`.
+- Es entstanden kein Provider-Intent, kein Claude-Prozess, kein Live-Transcript und keine Providerkosten. Ein Retry von `T002D` ist ausgeschlossen.
+- `RAB-V1-T002E` härtet Argumentadapter, Plannervertrag und Export-Redaktion ausschließlich synthetisch.
+- `RAB-V1-T002F` bleibt geplant und nicht autorisiert. Es darf erst nach verifiziertem `T002E` eine vollständig neue Einmalfreigabe erhalten.
+- `RAB-V1-T002` bleibt blockiert und ungestartet.
+
 ## Phasen
 
 ### RAB-V1-T001 — Harness und gefrorenes Taskset

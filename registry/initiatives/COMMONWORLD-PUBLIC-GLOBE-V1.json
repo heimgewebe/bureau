@@ -14,7 +14,8 @@
     "T002 remains planned in the later lane, unqueued and an explicit screen-reader product-support nonclaim.",
     "T003 is verified through the bounded GitHub Pages and noncritical OpenFreeMap best-effort production contract.",
     "The live public globe, DNS target and canonical live-smoke path remain verified against the merged Commonworld tree.",
-    "T004 is verified through merged Globe-first delivery, physical Android Chrome PASS, successful GitHub Pages deployment and exact live artifact readback."
+    "T004 is verified through merged Globe-first delivery, physical Android Chrome PASS, successful GitHub Pages deployment and exact live artifact readback.",
+    "T005 is verified through Commonworld PR #70, exact reviewed-tree merge, green main validation and Pages deployment, byte-identical public readback and passing live failure-safe browser smoke."
   ],
   "parallelism": {
     "max_active_tasks": 1
@@ -76,19 +77,21 @@
       "backend readiness"
     ],
     "active_extension": {
-      "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T004",
+      "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T005",
       "started_at": "2026-07-13",
-      "decision": "deliver_globe_first_surface_with_text_and_machine_views",
-      "source": "operator screenshot and direct implementation instruction",
-      "queue_mode": "direct_claim_without_queue_mutation_due_foreign_queue_lease",
       "completed_at": "2026-07-13",
       "state": "verified",
+      "decision": "establish_current_truth_and_failure_safe_public_surface",
+      "queue_mode": "direct_claim_without_queue_mutation",
       "verification": {
-        "commonworld_pull_request": 69,
-        "merge_commit": "ab1e0264810be6349354a5b4ba482bf1a6660ea1",
-        "pages_run": 29248145161,
+        "commonworld_pull_request": 70,
+        "pr_head": "5cd14b4a584c93d98e47435e53eb7bc740e4077d",
+        "merge_commit": "face76805c1e7f4c424efc5f1b6ec337831de7ae",
+        "final_tree": "7cb7838c31da2c91fa6ccd1de5d989096909f878",
+        "main_validate_run": 29265256794,
+        "pages_run": 29265255519,
         "public_url": "https://commonworld.net/",
-        "closeout_sha256": "326ec3d974c7c6890a3fe2be45eb8e57b3ffaf112c1a27fe48bb3255cc4f54a8"
+        "closeout_sha256": "cbda11319a2aa41652c27afe23010386b7c9a0f8dd0f9e5d79866d364e68474e"
       }
     },
     "globe_first_surface_verification": {
@@ -120,7 +123,26 @@
       "direct_claim_authority": "operator instruction: alles registrieren und umsetzen",
       "audit_report_artifact_name": "commonworld-deep-audit-2026-07-13.md",
       "audit_report_location_kind": "external_session_artifact_not_bureau_repository_path",
-      "structured_audit_summary_sha256": "683b9dd8d7003e8db3283e2a493d41b84f83889df1ee015ef1e4a1a493db8055"
+      "structured_audit_summary_sha256": "683b9dd8d7003e8db3283e2a493d41b84f83889df1ee015ef1e4a1a493db8055",
+      "verified_tasks": [
+        "COMMONWORLD-PUBLIC-GLOBE-V1-T005"
+      ],
+      "next_ready_task": "COMMONWORLD-PUBLIC-GLOBE-V1-T006",
+      "maintenance_followups": [
+        "COMMONWORLD-PUBLIC-GLOBE-V1-T011"
+      ]
+    },
+    "failure_safe_surface_verification": {
+      "commonworld_pull_request": 70,
+      "reviewed_head": "5cd14b4a584c93d98e47435e53eb7bc740e4077d",
+      "reviewed_tree": "7cb7838c31da2c91fa6ccd1de5d989096909f878",
+      "reviewed_diff_sha256": "0c588718d3f74b0eb27657aba841184a4fd38bcaa2555bc186186defa27a6872",
+      "merge_commit": "face76805c1e7f4c424efc5f1b6ec337831de7ae",
+      "main_validate_run": 29265256794,
+      "pages_run": 29265255519,
+      "exact_live_artifact_readback": "PASS",
+      "live_browser_smoke": "PASS",
+      "closeout_sha256": "cbda11319a2aa41652c27afe23010386b7c9a0f8dd0f9e5d79866d364e68474e"
     }
   }
 }

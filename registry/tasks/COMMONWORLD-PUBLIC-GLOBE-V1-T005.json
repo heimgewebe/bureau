@@ -37,11 +37,46 @@
     ],
     "claimed_at": "2026-07-13",
     "claimed_by": "chatgpt-commonworld-optimization-program-20260713",
-    "claim_mode": "direct_operator_authority_without_queue_mutation"
+    "claim_mode": "direct_operator_authority_without_queue_mutation",
+    "completed_at": "2026-07-13",
+    "verification": {
+      "verified_at": "2026-07-13",
+      "authority": "commonworld-project-operator",
+      "decision": "current_truth_and_failure_safe_public_surface_live_verified",
+      "commonworld_pull_request": 70,
+      "pr_head": "5cd14b4a584c93d98e47435e53eb7bc740e4077d",
+      "reviewed_tree": "7cb7838c31da2c91fa6ccd1de5d989096909f878",
+      "reviewed_diff_sha256": "0c588718d3f74b0eb27657aba841184a4fd38bcaa2555bc186186defa27a6872",
+      "self_review_sha256": "8d598053a013b0fa8fd948650d2d12e75d6b18f1d34bd94cb2a041ca91b7e1d3",
+      "merge_commit": "face76805c1e7f4c424efc5f1b6ec337831de7ae",
+      "final_tree": "7cb7838c31da2c91fa6ccd1de5d989096909f878",
+      "main_validate_run": 29265256794,
+      "pages_run": 29265255519,
+      "public_url": "https://commonworld.net/",
+      "exact_live_artifact_readback": "PASS",
+      "live_browser_smoke": "PASS",
+      "closeout_sha256": "cbda11319a2aa41652c27afe23010386b7c9a0f8dd0f9e5d79866d364e68474e",
+      "acceptance": {
+        "current-truth": "PASS",
+        "browser-ci": "PASS",
+        "failure-safe-controls": "PASS",
+        "interaction-hardening": "PASS",
+        "licensing-and-method": "PASS"
+      },
+      "explicit_nonclaims": [
+        "WCAG conformance",
+        "screen-reader product support",
+        "provider SLA",
+        "automatic provider failover",
+        "backend readiness"
+      ],
+      "task_sha256": "42898aeaeafcfd520a1763c4fdc52c26361251e56617f66f0ec56933aea9263a",
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4"
+    }
   },
   "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T005",
   "title": "Establish current truth and failure-safe public surface",
-  "state": "ready",
+  "state": "verified",
   "goal": "Eliminate contradictory active contracts and misleading failure states before adding geographic data.",
   "priority": {
     "lane": "now",

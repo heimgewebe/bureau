@@ -1,0 +1,49 @@
+{
+  "cases": [
+    {
+      "expected_paths": [
+        "merger/lenskit/tests/test_agent_impact_context.py"
+      ],
+      "id": "lenskit-agent-impact-related-test",
+      "target": {
+        "mode": "edit",
+        "path": "merger/lenskit/core/agent_impact_context.py"
+      }
+    },
+    {
+      "expected_paths": [
+        "tests/test_job_finalizer.py"
+      ],
+      "id": "grabowski-job-finalizer-related-test",
+      "target": {
+        "mode": "edit",
+        "path": "src/grabowski_job_finalizer.py"
+      }
+    },
+    {
+      "expected_paths": [
+        "scripts/docmeta/tests/test_review_impact.py"
+      ],
+      "id": "weltgewebe-review-impact-related-test",
+      "target": {
+        "mode": "edit",
+        "path": "scripts/docmeta/review_impact.py"
+      }
+    }
+  ],
+  "does_not_establish": [
+    "answer_correctness",
+    "complete_call_graph",
+    "complete_blast_radius",
+    "runtime_dependency",
+    "test_sufficiency",
+    "review_completeness",
+    "merge_readiness",
+    "default_promotion"
+  ],
+  "id": "repobrief-agent-impact-live-bundles-2026-07-13",
+  "kind": "repobrief.agent_impact_goldset",
+  "measurement_scope": "live_bundle",
+  "minimum_target_recall_advantage": 0.2,
+  "version": "1.0"
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "CCM-V1-T003",
+  "initiative": "CHRONIK-CODING-MEMORY-V1",
+  "title": "Register Chronik history brief effect experiment",
+  "state": "ready",
+  "depends_on": [
+    "CCM-V1-T001",
+    "CCM-V1-T002"
+  ],
+  "goal": "Prospectively freeze a natural-case control/treatment comparison for the coding history brief before any observation or effect claim.",
+  "priority": {
+    "lane": "now",
+    "rank": 30
+  },
+  "claims": [
+    {
+      "resource": "repo.vibe-lab",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/vibe-lab",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/vibe-lab"
+    ]
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "prospective-registration",
+      "assertion": "Control, treatment, scorecard, material threshold, cost, confounders, review and expiry are fixed before observations."
+    },
+    {
+      "id": "natural-cases-only",
+      "assertion": "No retrospective cases or repeated productive mutations are presented as prospective evidence."
+    },
+    {
+      "id": "no-effect-claim",
+      "assertion": "The initial decision is not_executed with zero observations and no productivity claim."
+    },
+    {
+      "id": "boundary",
+      "assertion": "The experiment has no policy, routing, queue or runtime authority."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "experiment_id": "2026-07-13_chronik-history-brief-effect",
+    "implementation_branch": "experiment/chronik-history-brief-effect-v1",
+    "does_not_establish": [
+      "beneficial_effect",
+      "adoption_readiness",
+      "general_productivity_improvement"
+    ]
+  }
+}

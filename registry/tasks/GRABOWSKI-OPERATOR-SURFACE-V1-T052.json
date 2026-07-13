@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T052",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Align Bureau worktree leases with the narrow admin contract",
+  "state": "planned",
+  "goal": "Make Grabowski worktree orchestration acquire Bureau's short-lived worktree-admin gate with the required contract bindings, then retain only the normal target-worktree lease, without requesting the forbidden broad Bureau repository lease.",
+  "priority": {
+    "lane": "later",
+    "rank": 520
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T014"
+  ],
+  "acceptance": [
+    {
+      "id": "narrow-gate",
+      "assertion": "Bureau worktree creation uses path:/home/alex/repos/bureau/.bureau-scopes/worktree-admin rather than repo:/home/alex/repos/bureau."
+    },
+    {
+      "id": "contract-bound",
+      "assertion": "The acquire call supplies bureau_phase=worktree-admin, a bounded justification, expected head or state, and a gate TTL no greater than 300 seconds."
+    },
+    {
+      "id": "lease-transition",
+      "assertion": "After worktree creation the admin gate is released and the target worktree lease is renewed or reacquired as a normal work-phase lease without an unleased mutation window."
+    },
+    {
+      "id": "failure-classification",
+      "assertion": "Contract findings such as invalid TTL, mixed Bureau/non-Bureau resources and missing bindings are surfaced distinctly instead of collapsed to generic contract-unhealthy."
+    },
+    {
+      "id": "regression",
+      "assertion": "Tests and a live dry-run cover successful creation, broad-lease refusal, TTL refusal, mixed-resource separation and post-create lease readback."
+    }
+  ],
+  "metadata": {
+    "source": "CCM-V1-T001 Bureau closeout",
+    "observed_at": "2026-07-13T22:58:00+02:00",
+    "observed_surface": "worktree-ensure / resource acquisition",
+    "observed_contract_release": "d85ad423aa027a6910ad6695c63c822c6121cb6c",
+    "reproduction": {
+      "broad_repo_request": "rejected as contract-unhealthy",
+      "correct_gate_with_7200_ttl": "bureau-worktree-admin-ttl-invalid",
+      "correct_gate_with_300_ttl": "healthy and acquired",
+      "mixed_bureau_and_service_keys": "Bureau and non-Bureau resources must be acquired separately"
+    },
+    "sequencing_reason": "The currently active GRIP-ROADMAP-V1-T014 work touches the orchestration area; this follow-up waits for that slice and then revalidates whether the mismatch remains.",
+    "does_not_establish": [
+      "that GRIP-ROADMAP-V1-T014 caused the mismatch",
+      "permission to weaken Bureau's narrow lease contract",
+      "permission to acquire the broad Bureau repository lease",
+      "permission to alter an active foreign worktree"
+    ]
+  }
+}

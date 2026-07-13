@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T004",
+  "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
+  "title": "Repair persistent Chronik WGX smoke baseline",
+  "state": "planned",
+  "goal": "Restore a deterministic green WGX smoke on Chronik main by fixing the tracked profile parser or profile contract without weakening unsafe-assignment rejection or hiding unrelated failures.",
+  "priority": {
+    "lane": "later",
+    "rank": 45
+  },
+  "claims": [
+    {
+      "resource": "repo.chronik",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik"
+    ]
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "baseline-reproduced",
+      "assertion": "The exact main-branch WGX smoke failure is reproduced and its parser/profile root cause is identified from logs and tracked inputs."
+    },
+    {
+      "id": "safety-preserved",
+      "assertion": "The repair accepts only the intended profile form and preserves rejection of command substitution, expansion, shell execution and unsafe assignments."
+    },
+    {
+      "id": "regression-tests",
+      "assertion": "Tests cover the formerly rejected valid line plus representative unsafe profile inputs."
+    },
+    {
+      "id": "main-green",
+      "assertion": "The WGX smoke passes on the exact PR head and subsequent main push without suppressing the workflow or marking failure as allowed."
+    }
+  ],
+  "metadata": {
+    "source": "CCM-V1-T001 closeout",
+    "observed_main_run": 29284458465,
+    "observed_at_commit": "16474d542e61e42bc7533d6b575bf243c6a496f2",
+    "observation": "The push-only WGX smoke rejects a tracked profile assignment as unsafe; equivalent failures were observed on main before PR #215 and persisted after its byte-identical merge tree.",
+    "does_not_establish": [
+      "that PR #215 caused the failure",
+      "that the profile line is safe before parser-level review",
+      "permission to disable the smoke",
+      "permission to weaken shell-safety checks"
+    ]
+  }
+}

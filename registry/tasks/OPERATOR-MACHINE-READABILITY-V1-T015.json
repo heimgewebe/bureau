@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T015",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Make state-root migration crash-recoverable",
+  "state": "planned",
+  "goal": "Add a durable write-ahead and recovery contract for reviewed state-root migration and rollback so SIGKILL, host reboot or power loss between descriptor-relative effects and final receipt publication cannot leave an unclassified split state.",
+  "priority": {
+    "lane": "later",
+    "rank": 915
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "bureau"
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T013"
+  ],
+  "acceptance": [
+    {
+      "id": "durable-intent-before-effect",
+      "assertion": "Before the first rename, a create-only, fsync-bound journal records the exact reviewed plan, bound directory anchors, ordered effects and recovery authority; directory metadata durability is explicitly handled."
+    },
+    {
+      "id": "per-effect-durable-progress",
+      "assertion": "Every completed move is durably recorded before the next effect, without allowing a progress record to claim an effect that did not occur or omit an effect that did."
+    },
+    {
+      "id": "startup-reconciliation",
+      "assertion": "A read-only detector classifies incomplete journals after SIGKILL, reboot or power loss; a separate reviewed recovery action either completes or compensates only exact device/inode-bound effects."
+    },
+    {
+      "id": "fault-injection",
+      "assertion": "Deterministic subprocess tests terminate the worker at every persistence and rename boundary for single-file, multi-entry and directory-tree cases and prove no false success, silent loss or deletion of foreign replacement objects."
+    },
+    {
+      "id": "filesystem-contract",
+      "assertion": "The implementation documents and tests the required fsync, rename and directory durability semantics on supported local filesystems and fails closed on unsupported or unverifiable storage."
+    },
+    {
+      "id": "live-boundary",
+      "assertion": "Validation uses temporary synthetic roots only; no active Bureau state migration, rollback, journal recovery or deletion is executed."
+    }
+  ],
+  "metadata": {
+    "source": "OPERATOR-MACHINE-READABILITY-V1-T013 implementation self-review",
+    "observed_at": "2026-07-13T23:15:00+02:00",
+    "observation": "T013 compensates caught exceptions using held descriptors and exact effect inodes, but SIGKILL, reboot or power loss can occur after one or more rename effects and before a final receipt exists.",
+    "risk_classification": {
+      "status": "architecturally_confirmed_not_live_exercised",
+      "impact": "An abrupt stop can leave reviewed entries split between state root and quarantine without a durable machine-readable recovery ledger.",
+      "current_mitigation": "Mutations remain explicit reviewed actions, ordinary exceptions compensate, receipts are create-only and no live migration was executed during T013."
+    },
+    "does_not_establish": [
+      "observed_live_crash_damage",
+      "permission_to_execute_or_recover_state",
+      "failure_of_T013",
+      "support_for_network_filesystems"
+    ]
+  }
+}

@@ -80,12 +80,22 @@ bureau --root /path/to/bureau --state-root ~/.local/state/bureau \
 
 Vor der Planerzeugung prüft Bureau:
 
+- Linux stellt die benötigten `dir_fd`-Operationen, `O_DIRECTORY`, `O_NOFOLLOW` und
+  `/proc/self/fd` bereit; ohne diese Fähigkeiten bleibt die Mutation fail-closed;
 - Quelle existiert und ist weder selbst noch intern ein Symlink;
 - Datei-, Verzeichnis-, Anzahl- und Größenlimits;
-- vollständige Datei- und Baum-Digests;
+- vollständige Datei- und Baum-Digests sowie Geräte-/Inode-Identität des
+  Top-Level-Eintrags;
 - keine textuelle Referenz aus `registry/` oder `docs/`;
 - keine sichtbare Prozessreferenz über Arbeitsverzeichnis oder offene Dateideskriptoren;
-- Ziel fehlt und überlappt den aktiven State-Root nicht.
+- Ziel fehlt und überlappt den aktiven State-Root nicht;
+- State-Root, dessen Elternverzeichnis, Referenzwurzel, deren Elternverzeichnis und die
+  nächste bereits vorhandene Zielbasis werden komponentenweise ohne Symlink-Folgen
+  geöffnet und mit Pfad, Gerät, Inode und Modus im Plan gebunden.
+
+Der Migrationsplan verwendet Schema 2. Schema-1-Pläne enthalten diese Anker nicht und
+werden deshalb bei einer Mutation bewusst fail-closed abgelehnt; es gibt keinen stillen
+Kompatibilitätsmodus mit schwächerer Pfadsicherheit.
 
 Der Review setzt `review.status=reviewed`, `reviewer`, `reviewed_at` sowie Kopien von
 `review_payload_sha256`, `entries_sha256` und `destination_root`. Der Payload-Digest
@@ -100,14 +110,25 @@ bureau --root /path/to/bureau --state-root ~/.local/state/bureau \
   --json state-root-artifacts --apply-plan /outside/state-root/migration-plan.json
 ```
 
-Unmittelbar vor jeder Verschiebung werden Plan-Dateihash, Quellidentität, Referenzen,
-Prozesse und Kollisionen erneut geprüft. Die Verschiebung erfolgt nur auf demselben
-Dateisystem per atomarem Rename. Bei einem Fehler werden alle in diesem Lauf bereits
-verschobenen Einträge in umgekehrter Reihenfolge zurückgesetzt.
+Apply öffnet alle gebundenen Verzeichnisse erneut komponentenweise mit
+`O_DIRECTORY|O_NOFOLLOW` und vergleicht die offenen Deskriptoren mit den geprüften
+Geräte-/Inode-Ankern. Fehlende Zielkomponenten werden ausschließlich relativ zum offenen
+Zielbasis-Deskriptor mit `mkdirat` erzeugt und sofort selbst gebunden.
 
-Ein create-only Receipt bindet Plan, Einträge, Ziel, Rollbackwege und seinen eigenen
-kanonischen SHA-256. Eine identische Wiederholung liest und validiert dieses Receipt und
-ist idempotent. Ein verändertes Receipt wird abgelehnt.
+Unmittelbar vor und nach jeder Verschiebung werden Plan-Dateihash, öffentliche
+Ankerpfade, Quellidentität, Referenzen, Prozesse und Kollisionen erneut geprüft. Die
+Wirkung erfolgt nur auf demselben Dateisystem mit descriptor-relativem `renameat`; die
+geprüften absoluten Pfade werden an der Wirkungsgrenze nicht erneut als Autorität
+aufgelöst. Bei einem Fehler werden alle in diesem Lauf bereits verschobenen Einträge über
+die weiterhin offenen Deskriptoren in umgekehrter Reihenfolge zurückgesetzt. Leere, in
+diesem Lauf erzeugte Zielverzeichnisse werden nur entfernt, wenn ihr Name noch denselben
+gebundenen Inode bezeichnet; ein fremdes Ersatzverzeichnis wird nie als eigenes Cleanup
+behandelt.
+
+Ein create-only Receipt Schema 2 bindet Plan, Einträge, Plattformvertrag,
+Verzeichnisanker, Zielaufbau, Rollbackwege und seinen eigenen kanonischen SHA-256. Eine
+identische Wiederholung öffnet die gebundenen Pfade erneut ohne Symlink-Folgen, validiert
+dieses Receipt und ist idempotent. Ein verändertes oder altes Receipt wird abgelehnt.
 
 ## Rollback
 
@@ -117,9 +138,12 @@ bureau --root /path/to/bureau --state-root ~/.local/state/bureau \
   --rollback-receipt /outside/state-root/migration-plan.json.receipt.json
 ```
 
-Rollback prüft Receipt-SHA, Zielkollisionen und jeden Eintragsdigest. Es verschiebt nur
-unveränderte Quarantäneeinträge an ihre ursprünglichen Pfade zurück. Receipt und
-Quarantäneverzeichnis werden nicht gelöscht.
+Rollback verwendet denselben Plattformvertrag, dieselben Geräte-/Inode-Anker,
+descriptor-relativen No-follow-Operationen, die vollständige Vorabprüfung und die
+Kompensation wie Apply. Es prüft Receipt-SHA, Referenzen, Prozessbezüge,
+Dateisystemgrenzen, Zielkollisionen und jeden Eintragsdigest. Es verschiebt nur
+unveränderte Quarantäneeinträge an ihre gebundenen ursprünglichen Verzeichnisse zurück.
+Receipt und Quarantäneverzeichnis werden nicht gelöscht.
 
 ## Sicherheitsgrenzen
 
@@ -129,3 +153,14 @@ Quarantäneverzeichnis werden nicht gelöscht.
 - Migration ist keine Löschfreigabe und kein Obsoleszenzbeleg.
 - Nicht sichtbare Kernel-, Container- oder Fremdnutzer-Referenzen werden nicht behauptet.
 - Neue Artefaktformen bleiben fail-closed unbekannt, bis ihr Vertrag explizit ergänzt ist.
+- Die Implementierung verhindert erfolgreiche Ancestor-Redirects und kompensiert einen
+  nach der letzten Prüfung erkannten Eintragsaustausch. Linux bietet jedoch keine einfache
+  bedingte Rename-Operation „nur wenn Name weiterhin Inode X bezeichnet“. Der verbleibende
+  Nanorace zwischen `renameat` und unmittelbar folgender Wirkungserfassung ist als
+  `OPERATOR-MACHINE-READABILITY-V1-T014` getrennt; T013 behauptet keine atomare
+  Rename-by-Inode-Garantie.
+- Kompensation und Receipt-Erzeugung sind gegen gewöhnliche, abgefangene Fehler
+  abgesichert, aber noch nicht durch ein dauerhaftes Write-ahead-Journal gegen `SIGKILL`,
+  Host-Neustart oder Stromausfall zwischen Rename und Receipt. Diese Crash-Konsistenz ist
+  als `OPERATOR-MACHINE-READABILITY-V1-T015` registriert; T013 behauptet keine
+  stromausfallsichere Gesamttransaktion.

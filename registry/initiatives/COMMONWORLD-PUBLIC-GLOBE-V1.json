@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "id": "COMMONWORLD-PUBLIC-GLOBE-V1",
-  "title": "Commonworld public globe follow-up hardening",
+  "title": "Commonworld public globe and surface hardening",
   "state": "active",
-  "commitment": "later",
-  "goal": "Preserve the live public MapLibre globe and its bounded production/provider contract while keeping screen-reader product support explicitly deferred and avoiding unsupported accessibility or SLA claims.",
+  "commitment": "now",
+  "goal": "Preserve the live public MapLibre globe and bounded production/provider contract while making the globe the direct entry surface, keeping the digital sphere geometrically synchronized, and providing equal text and machine-readable access without inventing a backend or unsupported accessibility claims.",
   "current_plan": {
     "repository": "bureau",
     "path": "docs/plans/commonworld-public-globe-v1.md"
@@ -72,6 +72,13 @@
       "OpenFreeMap SLA or continuity guarantee",
       "automatic provider failover",
       "backend readiness"
-    ]
+    ],
+    "active_extension": {
+      "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T004",
+      "started_at": "2026-07-13",
+      "decision": "deliver_globe_first_surface_with_text_and_machine_views",
+      "source": "operator screenshot and direct implementation instruction",
+      "queue_mode": "direct_claim_without_queue_mutation_due_foreign_queue_lease"
+    }
   }
 }

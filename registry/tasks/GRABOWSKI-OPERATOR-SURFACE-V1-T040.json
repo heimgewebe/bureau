@@ -3,28 +3,62 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T040",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Deliver versioned MCP initialization instructions",
-  "state": "blocked",
+  "state": "verified",
   "goal": "Bind a small versioned and hash-verifiable operator instruction contract to FastMCP initialization so every compatible client session receives the truth hierarchy, narrow-read-first rule, mutation preconditions, fail-closed retry rule and typed-operation preference without requiring an active read of GRABOWSKI.md.",
-  "priority": {"lane": "next", "rank": 400},
+  "priority": {
+    "lane": "next",
+    "rank": 400
+  },
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski",
-    "grabowski_resources": ["repo:/home/alex/repos/grabowski"]
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
   },
-  "claims": [{"resource": "repo.grabowski", "mode": "write", "isolation": "worktree"}],
-  "required_capabilities": ["repository", "shell", "github", "grabowski"],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
   "depends_on": [
     "GRABOWSKI-OPERATOR-SURFACE-V1-T038",
     "GRABOWSKI-OPERATOR-SURFACE-V1-T039"
   ],
   "acceptance": [
-    {"id": "canonical-source", "assertion": "The instruction text is generated from or checked against one versioned canonical source with an explicit schema version, SHA-256 and bounded byte size."},
-    {"id": "fastmcp-binding", "assertion": "FastMCP is instantiated with the exact canonical instructions and the running deployment proves the same instruction identity."},
-    {"id": "minimal-content", "assertion": "The instructions contain only the truth hierarchy, narrow typed read first, mutation target and validation requirements, unchanged-retry prohibition after ambiguous failures, and typed-operation preference."},
-    {"id": "no-authority-inflation", "assertion": "Instructions do not grant action, merge, deploy, secret or retry authority and explicitly preserve live receipts and policy as higher-order truth."},
-    {"id": "contract-tests", "assertion": "Tests fail on missing instructions, stale generated identity, oversize content, semantic key loss or divergence between source, runtime entrypoint and deployment manifest."},
-    {"id": "live-proof", "assertion": "After merge and commit-bound deployment, a live initialization or equivalent server-contract readback proves the instruction hash and version without claiming universal client compliance."}
+    {
+      "id": "canonical-source",
+      "assertion": "The instruction text is generated from or checked against one versioned canonical source with an explicit schema version, SHA-256 and bounded byte size."
+    },
+    {
+      "id": "fastmcp-binding",
+      "assertion": "FastMCP is instantiated with the exact canonical instructions and the running deployment proves the same instruction identity."
+    },
+    {
+      "id": "minimal-content",
+      "assertion": "The instructions contain only the truth hierarchy, narrow typed read first, mutation target and validation requirements, unchanged-retry prohibition after ambiguous failures, and typed-operation preference."
+    },
+    {
+      "id": "no-authority-inflation",
+      "assertion": "Instructions do not grant action, merge, deploy, secret or retry authority and explicitly preserve live receipts and policy as higher-order truth."
+    },
+    {
+      "id": "contract-tests",
+      "assertion": "Tests fail on missing instructions, stale generated identity, oversize content, semantic key loss or divergence between source, runtime entrypoint and deployment manifest."
+    },
+    {
+      "id": "live-proof",
+      "assertion": "After merge and commit-bound deployment, a live initialization or equivalent server-contract readback proves the instruction hash and version without claiming universal client compliance."
+    }
   ],
   "metadata": {
     "source": "user-directed-agent-facing-contract-plan",
@@ -34,34 +68,157 @@
       "mcp 1.27.2 supports instructions",
       "current client uses deferred tool discovery"
     ],
-    "does_not_establish": [
-      "client_obeys_every_instruction",
-      "tool_choice_accuracy_improved",
-      "new_action_authority",
-      "merge_readiness"
-    ],
-    "blocked_at": "2026-07-13T08:00:57Z",
-    "block_reason": "The implementation and direct MCP initialize handshake are prepared, but the only remaining generated file, docs/generated/operator-context.v1.json, is held by an active foreign T037 lease. The lease is on the exact shared artifact and cannot be bypassed as a non-conflicting exception.",
-    "active_resource_observed_at": "2026-07-13T08:00:57Z",
-    "active_resource_owner": "chatgpt-agent-workspace-outcomes-t037-20260713",
-    "active_resource_key": "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json",
-    "active_resource_lease_expires_at_unix": 1783934305,
-    "lease_expiry_does_not_authorize_reclaim": true,
+    "historical_block": {
+      "blocked_at": "2026-07-13T08:00:57Z",
+      "reason": "The implementation and direct MCP initialize handshake are prepared, but the only remaining generated file, docs/generated/operator-context.v1.json, is held by an active foreign T037 lease. The lease is on the exact shared artifact and cannot be bypassed as a non-conflicting exception.",
+      "resolved_by": "T037 integrated and released the exact generated-context resource; T040 then acquired it owner-bound, regenerated deterministically and continued on PR #179.",
+      "superseded_pull_request": 175
+    },
     "implementation": {
       "repository": "heimgewebe/grabowski",
-      "draft_pr": 175,
-      "draft_pr_url": "https://github.com/heimgewebe/grabowski/pull/175",
-      "branch": "feat/agent-facing-contract-t040",
-      "head": "c9caabab33ccd61f4eca20b318f058efb0d0f505",
-      "focused_tests": "143 passed",
-      "full_tests": "1363 passed, 1 failed because generated operator context remained intentionally unmodified under a foreign lease",
-      "compileall": "passed",
-      "direct_dual_release_check": "passed",
+      "pull_request": 179,
+      "pull_request_head": "1076256d8928336057cb2898f99bb845fe112a7a",
+      "merge_commit": "f2b31c540fa3ce2cf4e4ecbbb4a78558151d887c",
+      "branch": "feat/agent-facing-contract-t040-v2",
+      "manifest_schema_version": 5,
       "mcp_protocol": "2025-06-18",
-      "instruction_version": "grabowski-agent-facing-contract-v1",
-      "instruction_sha256": "0abf7170e62106268af3b3baf14c32272ca3e659ee4f42aaae30f629b15f5368",
-      "expected_generated_context_sha256": "9487bceaba26c50a8d060664bf91000552b0f85c67c4aba1e7aeec46329a395d"
+      "instruction_identity": {
+        "schema_version": 1,
+        "version": "grabowski-agent-facing-contract-v1",
+        "sha256": "0abf7170e62106268af3b3baf14c32272ca3e659ee4f42aaae30f629b15f5368",
+        "bytes": 828,
+        "max_bytes": 4096
+      },
+      "generated_operator_context_sha256": "d60d353ac481d10c509684ea48a36b6c2a0c361ecc9bffe2999f6216efd42d54"
     },
-    "next_action": "After T037 integrates and releases the exact generated-context lease, rebase PR #175, acquire that file, run context-refresh, make validate and make deploy-check, then bind the final GitHub diff and critical self-review before merge."
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_agent_facing_contract_v1_live",
+      "verified_at": "2026-07-13T11:18:58.134402+00:00",
+      "critical_finding_f001": {
+        "state": "closed",
+        "finding": "Deployment activation formerly accepted a formally valid but substituted agent-instructions hash and exposed the drift only after activation.",
+        "closure": "The handshake-derived identity is now mandatory in build results and compared exactly before pointer capture, after activation, in deploy-check and in both dual-service identity checks.",
+        "regression_proof": [
+          "formal wrong hash rejected",
+          "rejected before pointer capture",
+          "dual-service verifier receives exact expected identity"
+        ]
+      },
+      "validation": {
+        "focused_tests": {
+          "passed": 111,
+          "task_id": "2e42bf72b90a4a089d95e609"
+        },
+        "full_validation": {
+          "passed": 1379,
+          "task_id": "c6f3cb2ffaa343dab50ce56e"
+        },
+        "deployment_revalidation": {
+          "passed": 1379,
+          "job": "grabowski-job-7380624ee5f7"
+        },
+        "deploy_check": {
+          "result": "PASS",
+          "task_id": "221d7963b9444eb1b94479f4"
+        },
+        "generator_current": true,
+        "publication_profiles_current": true,
+        "runtime_locks_valid": true,
+        "secret_check": "PASS"
+      },
+      "review": {
+        "result": "PASS",
+        "rounds": 2,
+        "open_findings": [],
+        "reviewed_head": "1076256d8928336057cb2898f99bb845fe112a7a",
+        "github_diff_sha256": "d5405511d43efd6f1506188126ac48f298bb7d26e619c1d760c29625a564d406",
+        "github_diff_bytes": 47752,
+        "github_diff_lines": 1087,
+        "review_receipt_sha256": "497cb0ec02f3d8cbea594f21dc44d928e9579aac39f0cd0f9ec4dfede2b0ce85"
+      },
+      "continuous_integration": [
+        {
+          "name": "validate (3.10)",
+          "result": "SUCCESS",
+          "completed_at": "2026-07-13T11:06:51Z"
+        },
+        {
+          "name": "validate (3.12)",
+          "result": "SUCCESS",
+          "completed_at": "2026-07-13T11:06:47Z"
+        }
+      ],
+      "deployment": {
+        "job": "grabowski-job-7380624ee5f7",
+        "final_status": "completed",
+        "finalization_receipt_sha256": "1798d16aa1470f2cb47cb0c2ca76d6030a7d12bb3648cf19edc5e7fdec76faf3",
+        "payload_sha256": "9962f22cc99b76931db3b870c180ea224bcd36fcbcbeadd14498737a4d5ffea2",
+        "repo_head": "f2b31c540fa3ce2cf4e4ecbbb4a78558151d887c",
+        "release_id": "f2b31c540fa3-srcseta1dc56b56ba2-locke6664d600b6c-contract22f31ec746bf",
+        "manifest_schema_version": 5,
+        "source_sha256": "e7eca914dcdda0233d844c2e99cc008ff4ea0239cafe28511c08d93a7dd9a1e0",
+        "runtime_lock_sha256": "e6664d600b6cbaf0bf649b9f6ef3cc5e938e219e15c552a24fa47c5acdc77855"
+      },
+      "live_verification": {
+        "runtime_healthy": true,
+        "deployment_integrity_valid": true,
+        "agent_instructions_identity_valid": true,
+        "agent_instructions_drift": false,
+        "initialize_handshake_matches_manifest": true,
+        "registered_tool_count": 121,
+        "expected_tool_count": 121
+      },
+      "follow_up_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T046"
+    },
+    "does_not_establish": [
+      "client_obeys_every_instruction",
+      "client_snapshot_freshness",
+      "tool_choice_accuracy_improved",
+      "new_action_authority",
+      "future_runtime_integrity"
+    ],
+    "verified_at": "2026-07-13",
+    "verification_note": "PR #179 was reviewed against the exact GitHub diff, merged with green Python 3.10/3.12 CI, deployed at the exact merge commit with a valid finalization receipt, and verified live by runtime status plus a real MCP initialize handshake matching manifest schema 5.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T040",
+          "source_ref": "heimgewebe/grabowski#179",
+          "number": 179,
+          "head_sha": "1076256d8928336057cb2898f99bb845fe112a7a",
+          "merge_commit_sha": "f2b31c540fa3ce2cf4e4ecbbb4a78558151d887c",
+          "diff_sha256": "d5405511d43efd6f1506188126ac48f298bb7d26e619c1d760c29625a564d406"
+        },
+        {
+          "kind": "runtime_deployment",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T040",
+          "source_ref": "grabowski-job-7380624ee5f7@f2b31c540fa3ce2cf4e4ecbbb4a78558151d887c",
+          "commit_sha": "f2b31c540fa3ce2cf4e4ecbbb4a78558151d887c",
+          "content_sha256": "1798d16aa1470f2cb47cb0c2ca76d6030a7d12bb3648cf19edc5e7fdec76faf3"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "grabowski-mcp-initialize",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T040",
+          "source_ref": "initialize-handshake@f2b31c540fa3ce2cf4e4ecbbb4a78558151d887c",
+          "proof_sha256": "0abf7170e62106268af3b3baf14c32272ca3e659ee4f42aaae30f629b15f5368",
+          "content_sha256": "0abf7170e62106268af3b3baf14c32272ca3e659ee4f42aaae30f629b15f5368"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "7777f7ff664a56711b78180d58a43c387602b17e026f505716ebf6238bbab692",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "source": "github_pull_request_deployed_runtime_and_live_initialize",
+      "source_ref": "github-pr:heimgewebe/grabowski#179@1076256d8928336057cb2898f99bb845fe112a7a:f2b31c540fa3ce2cf4e4ecbbb4a78558151d887c",
+      "evidence_sha256": "eb7da84e3d01de321696754a4a7b1f79649dd63ca92f16ab0e7e5f20c433165b",
+      "verified_at": "2026-07-13"
+    }
   }
 }

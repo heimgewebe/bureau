@@ -1,6 +1,6 @@
 name: temporary-pr475-validation-log
 
-on: [push, pull_request]
+on: [push]
 
 permissions:
   contents: read
@@ -8,6 +8,7 @@ permissions:
 jobs:
   diagnose:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

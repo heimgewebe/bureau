@@ -42,6 +42,16 @@
     "verified_network_service_review_20260711": "T009 verified via Infra PR #120: GNOME-RDP, Sunshine, UniFi and Avahi retained by current consumer evidence; Sunshine UPnP disabled; no service mutation.",
     "verified_server_recovery_probe_20260711": "T011 verified via direct Grabowski probe snapshot a4973a5a on heimberry:rest-server/grabowski-recovery-probe; restore, repository check and fresh status green.",
     "waiting_reason_20260711": "Waiting on T002, on T030 for T003/T008 and on active Lenskit checkout users for T010. GDrive retirement no longer blocks the initiative.",
-    "verified_gdrive_retirement_20260711": "T001 verified through reversible retirement at Infra source 0d0cba93 and runtime evidence PR #124; rclone.conf/OAuth untouched, legacy units absent, ~/GDrive retained unmounted, Restic replacement proven."
+    "verified_gdrive_retirement_20260711": "T001 verified through reversible retirement at Infra source 0d0cba93 and runtime evidence PR #124; rclone.conf/OAuth untouched, legacy units absent, ~/GDrive retained unmounted, Restic replacement proven.",
+    "docker_residue_followup_20260713": {
+      "task": "OPERATOR-PC-HYGIENE-V1-T012",
+      "status": "planned",
+      "reason": "Seven stopped or created Docker development/proof containers retain persistent volumes or current Weltgewebe repository bindings and therefore require owner-aware classification before cleanup.",
+      "safe_container_only_cleanup_completed": [
+        "heim-util-beszel-agent-prepin-20260710T215036Z",
+        "brave_cori"
+      ]
+    },
+    "waiting_reason_20260713": "Waiting on T002, T012, on T030 for T003/T008, and on active Lenskit checkout users for T010."
   }
 }

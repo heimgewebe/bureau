@@ -3,8 +3,8 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T039",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Enforce transport-safe call shapes before execution",
-  "state": "planned",
-  "goal": "Enforce transport-safe boundaries on generic synchronous terminal and fleet execution before process start, route longer or shell-composed work to durable tasks, route oversized reads to bounded typed reads, retain internal process-safety timeouts, and prove the behavior through regression, CI and live deployment evidence without claiming that timeout parameters caused the ChatGPT UI hang.",
+  "state": "verified",
+  "goal": "Enforce transport-safe boundaries on generic synchronous terminal and fleet execution before process start, route shell-composed and known indirect work to durable tasks, keep generic synchronous execution under server-owned time and output limits, route predictably large reads through typed or split-read surfaces, and prove the behavior through regression, CI and live deployment evidence without claiming that timeout parameters caused the ChatGPT UI hang.",
   "priority": {
     "lane": "later",
     "rank": 390
@@ -43,12 +43,12 @@
       "assertion": "grabowski_terminal_run, grabowski_fleet_run and the generic Fleet CLI evaluate the same deterministic call-shape gate before any local or SSH process starts."
     },
     {
-      "id": "bounded-generic-sync-surface",
-      "assertion": "Generic synchronous execution denies known shell composition, timeouts above 30 seconds and output budgets above 64 KiB while preserving server-side timeout enforcement as a safety mechanism."
+      "id": "server-owned-generic-sync-surface",
+      "assertion": "Generic synchronous execution no longer accepts caller-selected timeout or output-limit parameters. The runtime owns a 30-second timeout and 64-KiB output ceiling and preserves timeout termination as a process-safety mechanism."
     },
     {
       "id": "machine-readable-routing",
-      "assertion": "A denied call emits a bounded machine-readable receipt with process_started=false, reason codes and required_route=durable_task for shell-composed or longer work or required_route=split_read for oversized reads."
+      "assertion": "Shell composition and known indirect or detaching launchers are rejected with process_started=false, bounded reason codes and required_route=durable_task. The success contract advertises typed_read_or_split_read for predictably large reads while the executor itself enforces and may truncate at 64 KiB rather than claiming advance knowledge of output size."
     },
     {
       "id": "typed-and-durable-boundary",
@@ -60,7 +60,7 @@
     },
     {
       "id": "bypass-and-compatibility-tests",
-      "assertion": "Tests cover direct shells, env and known launcher wrappers, Fleet CLI parity, denial before _run, timeout and output ceilings, plain shell names used only as data, unchanged tool names and bounded defaults."
+      "assertion": "Tests cover direct success, direct and embedded shells, known wrapper and detaching launchers, Fleet CLI parity, denial before _run, fixed server-owned limits, plain shell and wrapper names used only as data, unchanged tool names and stale-client schema rejection before process execution."
     },
     {
       "id": "full-validation-and-review",
@@ -68,7 +68,7 @@
     },
     {
       "id": "deployment-and-live-smoke",
-      "assertion": "The merge head is deployed and live probes prove one allowed bounded direct call plus fail-closed shell, long-timeout and oversized-output denials before process start."
+      "assertion": "The merge head is deployed and live probes prove allowed bounded Terminal and Fleet calls plus fail-closed shell and indirect-launcher denials before process start, with the new server-owned contract returned on successful calls."
     },
     {
       "id": "causality-nonclaim",
@@ -84,23 +84,75 @@
     "promotion_required_from_event": true,
     "registered_from_plan_sha256": "ff1d45a0e47a362b02cb0bf91e3c549f8aad92774418f6ac8fef76b5d1913d9c",
     "implementation": {
-      "branch": "fix/transport-safe-call-shape-v1",
-      "worktree": "/home/alex/repos/.grabowski-worktrees/transport-safe-call-shape-v1",
-      "base_head": "e96bbbd6cc90fe5d310d83538d8c5f2f7995aeca",
-      "integration_dependency": "T036 currently owns the shared generated runtime and publication contract files; T039 source and tests remain isolated until T036 is integrated."
+      "pull_request": "heimgewebe/grabowski#170",
+      "published_head": "002a0b487c4e101257c210ed37a6f5a642988862",
+      "merge_commit": "8fba5465c3f5cf15038579950d1dbfe256dfd99b",
+      "base_head": "f6eed48752fd2cf32f070dc69b2112e2498872cb",
+      "github_diff_sha256": "b5696252f538b3d42db77431b4244db69178395205ee752e75863fe1515fbc59",
+      "self_review_sha256": "3d5bad4c6abe123cb00905adfe99febfdbaf364c7ad6d2e7f727193be64ef4be"
     },
-    "initial_validation": {
-      "focused_tests": "85 passed",
-      "broad_suite": "1291 passed, 1 expected stale generated-context failure",
-      "functional_failures": 0
+    "validation": {
+      "focused_tests": "89 passed after launcher hardening",
+      "full_local_validation": "1324 tests passed; policy, generated context, publication profiles, runtime lock, deploy tooling and secret scan passed",
+      "validation_task_id": "c725434f7a484846a43a43a5",
+      "github_ci": {
+        "validate_3_10": "success",
+        "validate_3_12": "success"
+      }
+    },
+    "deployment": {
+      "release_id": "8fba5465c3f5-srcset264a4f177398-locke6664d600b6c-contract4e43dbd64009",
+      "repo_head": "8fba5465c3f5cf15038579950d1dbfe256dfd99b",
+      "job_unit": "grabowski-job-5d87988908ef",
+      "finalization_receipt_sha256": "a898d23946769f8265f4490fbc3ae60c88cae8328735cfce99fac8fcab8ced26",
+      "integrity": "all deployment identity and provenance flags valid"
+    },
+    "live_smoke": {
+      "terminal_direct": "passed with server_owned_limits=true, timeout_seconds=30 and max_output_bytes=65536",
+      "terminal_shell": "denied before process start with shell_composition_requires_durable_task",
+      "terminal_indirect": "denied before process start with indirect_execution_requires_durable_task",
+      "fleet_direct": "passed with the same server-owned synchronous contract",
+      "fleet_shell": "denied before host execution with shell_composition_requires_durable_task",
+      "connector_snapshot": "the current chat still advertises the old optional fields; calls using only the retained required fields reach the new runtime, while a fresh connector snapshot is required to display the new schema"
+    },
+    "verified_at": "2026-07-13",
+    "verification_note": "PR #170 merged, exact merge head deployed, runtime identity and provenance valid, direct and denied call shapes exercised live, and the task wording corrected to distinguish runtime output bounding from preflight split-read routing.",
+    "verification": {
+      "task_sha256": "b0278f70eb72d8b85dd589d6d98cbe2d521a025bcd2a80d206ee97ad08aa80ad",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
     },
     "does_not_establish": [
       "queue_truth",
       "claim_authority",
       "dispatch_authority",
-      "merge_readiness",
       "timeout_parameter_root_cause",
-      "future_platform_hang_impossibility"
-    ]
+      "future_platform_hang_impossibility",
+      "semantic behavior of every arbitrary direct executable",
+      "fresh connector schema in the current chat"
+    ],
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T039",
+          "source_ref": "heimgewebe/grabowski#170",
+          "number": 170,
+          "head_sha": "002a0b487c4e101257c210ed37a6f5a642988862",
+          "merge_commit_sha": "8fba5465c3f5cf15038579950d1dbfe256dfd99b",
+          "diff_sha256": "b5696252f538b3d42db77431b4244db69178395205ee752e75863fe1515fbc59"
+        },
+        {
+          "kind": "runtime_probe",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T039",
+          "source_ref": "deployment-and-live-smoke@8fba5465c3f5cf15038579950d1dbfe256dfd99b",
+          "commit_sha": "8fba5465c3f5cf15038579950d1dbfe256dfd99b",
+          "content_sha256": "a898d23946769f8265f4490fbc3ae60c88cae8328735cfce99fac8fcab8ced26"
+        }
+      ]
+    }
   }
 }

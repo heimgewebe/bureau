@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T020",
+  "initiative": "BUR-2026-005",
+  "title": "Make status capsule TAR extraction explicit for Python 3.14",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 119
+  },
+  "goal": "Replace the implicit tarfile.extractall behavior in the Bureau status capsule with an explicit, version-stable extraction filter while preserving or strengthening the existing traversal, link and special-entry refusal contract.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "bur-2026-005-t020-live-warning",
+      "assertion": "The Python 3.12/3.14 tarfile extraction warning is reproduced by a focused status-capsule test before the change and absent after the explicit filter policy is applied."
+    },
+    {
+      "id": "bur-2026-005-t020-explicit-filter",
+      "assertion": "_safe_extract passes an explicit tarfile filter or equivalent member policy whose behavior is documented and stable across supported Python versions."
+    },
+    {
+      "id": "bur-2026-005-t020-security-invariants",
+      "assertion": "Tests prove that path traversal, symbolic links, hard links and non-file/non-directory archive entries remain fail-closed; normal files and directories still extract."
+    },
+    {
+      "id": "bur-2026-005-t020-no-warning-suppression",
+      "assertion": "The implementation resolves the API contract rather than suppressing DeprecationWarning globally or weakening tests."
+    },
+    {
+      "id": "bur-2026-005-t020-full-validation",
+      "assertion": "Focused status-capsule tests and the complete Bureau validation suite pass on all supported CI Python versions."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13T11:24:00Z",
+    "source": "BUR-2026-005-T018 closeout review and Bureau PR #496 Python 3.12 CI",
+    "source_observation": "GitHub run 29245925498, validate (3.12), emitted 19 DeprecationWarning instances at src/bureau/status_capsule.py:283 because handle.extractall(destination) does not provide an explicit filter before Python 3.14 changes the default.",
+    "source_run_id": 29245925498,
+    "source_job_id": 86802701765,
+    "affected_code": "src/bureau/status_capsule.py::_safe_extract",
+    "existing_safety_checks": [
+      "resolved target remains below destination root",
+      "symbolic links refused",
+      "hard links refused",
+      "non-file/non-directory entries refused"
+    ],
+    "does_not_establish": [
+      "current archive extraction vulnerability",
+      "exploitability",
+      "permission to weaken archive checks",
+      "need to support untrusted arbitrary archives",
+      "automatic task priority escalation"
+    ]
+  }
+}

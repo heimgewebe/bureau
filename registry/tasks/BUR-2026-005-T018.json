@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T018",
   "initiative": "BUR-2026-005",
   "title": "GitHub Actions Node runtime warning audit",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 118
@@ -48,11 +48,73 @@
     "source_observation": "Bureau PR #359 CI passed but emitted: Node.js 20 is deprecated; actions/checkout@v4 and actions/setup-python@v5 are being forced to run on Node.js 24.",
     "source_run": "https://github.com/heimgewebe/bureau/actions/runs/29030515541",
     "does_not_establish": [
-      "workflow_update_required",
-      "new_action_version_available",
-      "ci_failure",
-      "security_vulnerability",
-      "merge_readiness"
-    ]
+      "immutable third-party action supply-chain pinning",
+      "scheduled sync workflow execution after merge",
+      "absence of unrelated CI warnings",
+      "security correctness beyond the changed workflow runtime references"
+    ],
+    "verified_at": "2026-07-13T11:24:38Z",
+    "outcome": "Bureau PR #496 updated all active Node-20-based checkout/setup-python references in validate and Weltgewebe source-sync workflows to native Node 24 action majors. Exact-head local validation and both GitHub matrix jobs passed; complete logs contain neither the prior Node 20 deprecation warning nor the setup-python punycode warning.",
+    "implementation_pr": "heimgewebe/bureau#496",
+    "implementation_head": "7a945e1a399f4f0ed03b86350c6561e342d663fa",
+    "implementation_base": "828c24ac3bdf5ad0ed3959019a6643117c5a85ca",
+    "implementation_merge_commit": "00fa7f538ae44b035ff9f17fd69d126d4dcdf16f",
+    "github_pr_diff_sha256": "ee2d561815955fcb83d295539b0df787107ab4192cef54c4652d10b2fb92b720",
+    "critical_self_review_sha256": "749d1617b67ebd5965adfb245f1f9b132cdbfc70766580cf6c1eba9771702d50",
+    "live_warning_evidence": {
+      "source_pr": "heimgewebe/bureau#493",
+      "workflow_run_id": 29245174700,
+      "job_id": 86800223951,
+      "runner_version": "2.335.1",
+      "runner_image": "ubuntu-24.04@20260705.232.1",
+      "observed": [
+        "actions/checkout@v4 Node 20 deprecation",
+        "actions/setup-python@v5 Node 20 deprecation",
+        "actions/setup-python@v5 punycode deprecation"
+      ]
+    },
+    "action_targets": {
+      "actions/checkout@v7": {
+        "release": "v7.0.0",
+        "resolved_sha": "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+        "runtime": "node24"
+      },
+      "actions/setup-python@v6": {
+        "release": "v6.3.0",
+        "resolved_sha": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+        "runtime": "node24"
+      }
+    },
+    "validation": [
+      "Exact implementation head: YAML parse and git diff --check passed.",
+      "Exact implementation head: local make validate passed with Ruff, 481 tests, Systemkatalog boundary and registry check.",
+      "GitHub run 29245925498: validate (3.10) job 86802701778 passed with 481 tests.",
+      "GitHub run 29245925498: validate (3.12) job 86802701765 passed with 481 tests.",
+      "Complete logs for both jobs contain no Node 20 deprecation warning and no punycode warning.",
+      "Post-merge readback of origin/main at 00fa7f538ae44b035ff9f17fd69d126d4dcdf16f shows checkout@v7 and setup-python@v6 in both targeted workflows.",
+      "Post-merge main push run 29246152229 passed on merge commit 00fa7f538ae44b035ff9f17fd69d126d4dcdf16f."
+    ],
+    "verified_acceptance": {
+      "bur-2026-005-t018-live-warning": "The warning was reproduced from live run 29245174700 and shown absent in both complete logs of run 29245925498.",
+      "bur-2026-005-t018-safe-action-version-plan": "Official current Node 24 action majors were applied; local validation and both GitHub Python matrix jobs passed on exact head 7a945e1a399f4f0ed03b86350c6561e342d663fa.",
+      "bur-2026-005-t018-no-ci-authority-change": "The published diff changes only five uses-version lines. Triggers, permissions, matrices, inputs and validation commands are unchanged."
+    },
+    "residual_tasks": [
+      "BUR-2026-005-T020"
+    ],
+    "tradeoffs": [
+      "Major tags remain moving references under the existing repository policy; immutable action SHA pinning is not established."
+    ],
+    "verification": {
+      "verified_at": "2026-07-13T11:26:13Z",
+      "acceptance_ids": [
+        "bur-2026-005-t018-live-warning",
+        "bur-2026-005-t018-safe-action-version-plan",
+        "bur-2026-005-t018-no-ci-authority-change"
+      ],
+      "verification_note": "PR #496 is merged as 00fa7f538ae44b035ff9f17fd69d126d4dcdf16f; exact-head local validation, both PR matrix jobs and the post-merge main push run passed; complete logs prove the targeted Node 20 and punycode warnings are absent.",
+      "task_sha256": "6fc56c2e2637f29cb340fca5b48ae90f5c0568506f8e9d62fa3d4659bb51389e",
+      "plan_sha256": "653fa6a056506c94d5654ba5e3c16f9c31032767f0e1c844a8cb4714c50ce917"
+    }
   }
 }

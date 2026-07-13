@@ -1,4 +1,4 @@
-name: temporary-pr475-verification-stamp
+name: temporary-pr475-final-diff
 
 on: [push, pull_request]
 
@@ -6,38 +6,26 @@ permissions:
   contents: read
 
 jobs:
-  stamp:
+  export:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Compute verification stamp
+        with:
+          fetch-depth: 0
+      - name: Build final review diff
         shell: bash
         run: |
-          python - <<'PY'
-          import hashlib
-          import json
-          from pathlib import Path
-
-          def canonical(value):
-              return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-
-          task = json.loads(Path("registry/tasks/RCGA-V1-T001.json").read_text())
-          task.pop("state", None)
-          metadata = task.get("metadata")
-          if isinstance(metadata, dict):
-              metadata.pop("verification", None)
-              if not metadata:
-                  task.pop("metadata", None)
-          initiative = json.loads(Path("registry/initiatives/REPOBRIEF-CODEGRAPH-ADOPTION-V1.json").read_text())
-          result = {
-              "task_sha256": hashlib.sha256(canonical(task).encode()).hexdigest(),
-              "plan_sha256": hashlib.sha256(canonical(initiative.get("current_plan") or {}).encode()).hexdigest(),
-          }
-          Path("verification-stamp.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
-          PY
+          set -euo pipefail
+          git fetch --no-tags origin main
+          output="bureau-pr475-${GITHUB_SHA}.diff"
+          git diff --binary origin/main...HEAD -- . \
+            ':(exclude).github/workflows/tmp-pr475-validation-log.yml' > "$output"
+          sha256sum "$output" > "$output.sha256"
       - uses: actions/upload-artifact@v4
         with:
-          name: bureau-pr475-stamp-${{ github.sha }}
-          path: verification-stamp.json
+          name: bureau-pr475-final-${{ github.sha }}
+          path: |
+            bureau-pr475-${{ github.sha }}.diff
+            bureau-pr475-${{ github.sha }}.diff.sha256
           if-no-files-found: error
-          retention-days: 2
+          retention-days: 7

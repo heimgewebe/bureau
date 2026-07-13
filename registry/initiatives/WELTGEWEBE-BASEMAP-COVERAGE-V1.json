@@ -25,7 +25,19 @@
       "all_german_regions_covered",
       "future_osm_freshness",
       "zero_cartographic_gaps",
-      "production_deployment_complete"
+      "deep_validation_of_every_pmtiles_directory_and_payload",
+      "explicit_pmtiles_content_type"
+    ],
+    "verified_rollout_task": "WELTGEWEBE-BASEMAP-COVERAGE-V1-T002",
+    "verified_rollout_at": "2026-07-13T19:37:03Z",
+    "production_regions": [
+      "hamburg",
+      "schleswig-holstein"
+    ],
+    "production_merge_commit": "b49ffac5e30a58f23e551cfe7075bc73c8d45730",
+    "followup_tasks": [
+      "WELTGEWEBE-BASEMAP-COVERAGE-V1-T001",
+      "WELTGEWEBE-BASEMAP-COVERAGE-V1-T003"
     ]
   }
 }

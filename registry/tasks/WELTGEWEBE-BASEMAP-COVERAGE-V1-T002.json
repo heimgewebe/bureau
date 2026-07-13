@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-BASEMAP-COVERAGE-V1-T002",
+  "initiative": "WELTGEWEBE-BASEMAP-COVERAGE-V1",
+  "title": "Publish and verify Schleswig-Holstein regional PMTiles",
+  "state": "verified",
+  "goal": "Merge, deploy and independently verify Schleswig-Holstein as the second local-sovereign Weltgewebe PMTiles region while preserving Hamburg.",
+  "depends_on": [],
+  "priority": {
+    "lane": "now",
+    "rank": 20
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "runtime.wg-prod-1",
+      "mode": "write",
+      "isolation": "namespace"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "autonomous",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "docker",
+    "playwright",
+    "ssh",
+    "http-range",
+    "pmtiles"
+  ],
+  "acceptance": [
+    {
+      "id": "merged-final-head",
+      "assertion": "PR #1417 is merged from the reviewed final head and origin/main contains the merge commit.",
+      "evidence_type": "object",
+      "verifier": "GitHub pull request and origin/main commit receipts"
+    },
+    {
+      "id": "merge-main-ci-green",
+      "assertion": "The push workflow on the exact merge commit builds and proves both regional PMTiles archives and the joint browser rendering path.",
+      "evidence_type": "object",
+      "verifier": "GitHub Actions run 29276003866"
+    },
+    {
+      "id": "artifact-identity",
+      "assertion": "The deployed Schleswig-Holstein versioned file and stable alias are byte-identical to the merge-main CI artifact.",
+      "evidence_type": "object",
+      "verifier": "SHA-256 and size receipts from CI, production filesystem and full public download"
+    },
+    {
+      "id": "atomic-publication",
+      "assertion": "Versioned PMTiles and metadata are validated before both stable aliases are atomically switched.",
+      "evidence_type": "object",
+      "verifier": "Grabowski deployment receipt 8c2af51287854cef842f9522"
+    },
+    {
+      "id": "live-schleswig-holstein",
+      "assertion": "The merge-main browser proof renders decoded Schleswig-Holstein features around Kiel, and an independent production UI movement causes HTTP 206 requests for Schleswig-Holstein archive ranges beyond the initial header request without failed basemap resources or external provider fallback.",
+      "evidence_type": "object",
+      "verifier": "live-kiel-ui-proof.json and screenshot"
+    },
+    {
+      "id": "hamburg-regression",
+      "assertion": "A fresh production browser session still loads Hamburg tile-data ranges with HTTP 206 and no relevant console or resource errors.",
+      "evidence_type": "object",
+      "verifier": "live-hamburg-ui-proof.json and screenshot"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13T19:37:03Z",
+    "verified_at": "2026-07-13T19:37:03Z",
+    "source_pr": "heimgewebe/weltgewebe#1417",
+    "outcome": "Schleswig-Holstein is live as a second local-sovereign PMTiles source; Hamburg remains live.",
+    "implementation": {
+      "reviewed_head": "48e55984104f1100204fe84815becaca7ce135de",
+      "merge_commit": "b49ffac5e30a58f23e551cfe7075bc73c8d45730",
+      "final_github_diff_sha256": "a7a699c744c374d4dcf8671984690f0b069956e082f9064f1fa6057e4cac633a",
+      "final_github_diff_size_bytes": 81076,
+      "pull_request_run_id": 29274925351,
+      "merge_main_run_id": 29276003866,
+      "merge_main_run_conclusion": "success"
+    },
+    "artifact": {
+      "name": "basemap-schleswig-holstein-v0.1.0.pmtiles",
+      "stable_alias": "basemap-schleswig-holstein.pmtiles",
+      "size_bytes": 127636977,
+      "sha256": "3b58f77dd26e5a773b7ac5b5cda7cb1a7dae0379699bc59cc5304f9c0c2fa70a",
+      "production_path": "/opt/weltgewebe/build/basemap/basemap-schleswig-holstein-v0.1.0.pmtiles",
+      "production_alias_path": "/opt/weltgewebe/build/basemap/basemap-schleswig-holstein.pmtiles",
+      "public_path": "https://weltgewebe.net/local-basemap/basemap-schleswig-holstein.pmtiles",
+      "public_etag": "djxoe1smlyay23zpbl",
+      "range_status": 206,
+      "content_range": "bytes 0-511/127636977",
+      "magic": "PMTiles v3"
+    },
+    "deployment_receipts": {
+      "basemap_publish_task": "8c2af51287854cef842f9522",
+      "web_install_task": "f78775ec95d34ea798a791b2",
+      "style_install_task": "1ce1d6bef7d84c01a26344ed",
+      "server_identity_task": "46c535a9b3504f469d060bf2"
+    },
+    "live_browser": {
+      "schleswig_holstein_evidence_path": "/home/alex/.local/state/grabowski/artifacts/pr-1417-final/live-kiel-ui-proof.json",
+      "schleswig_holstein_screenshot_path": "/home/alex/.local/state/grabowski/artifacts/pr-1417-final/live-kiel-ui.png",
+      "schleswig_holstein_http_206_responses": 58,
+      "hamburg_evidence_path": "/home/alex/.local/state/grabowski/artifacts/pr-1417-final/live-hamburg-ui-proof.json",
+      "hamburg_screenshot_path": "/home/alex/.local/state/grabowski/artifacts/pr-1417-final/live-hamburg-ui.png",
+      "hamburg_http_206_responses": 5,
+      "failed_relevant_responses": 0,
+      "console_errors": 0,
+      "external_provider_requests": 0,
+      "schleswig_holstein_non_initial_header_ranges_observed": 57,
+      "hamburg_non_initial_header_ranges_observed": 4
+    },
+    "registry_truth": {
+      "status": "verified",
+      "authority": "github_ci_production_filesystem_public_http_and_browser",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "task_id": "WELTGEWEBE-BASEMAP-COVERAGE-V1-T002",
+          "repository": "heimgewebe/weltgewebe",
+          "number": 1417,
+          "head_sha": "48e55984104f1100204fe84815becaca7ce135de",
+          "merge_commit": "b49ffac5e30a58f23e551cfe7075bc73c8d45730",
+          "diff_sha256": "a7a699c744c374d4dcf8671984690f0b069956e082f9064f1fa6057e4cac633a"
+        },
+        {
+          "kind": "github_workflow_run",
+          "task_id": "WELTGEWEBE-BASEMAP-COVERAGE-V1-T002",
+          "repository": "heimgewebe/weltgewebe",
+          "workflow_run_id": 29276003866,
+          "head_sha": "b49ffac5e30a58f23e551cfe7075bc73c8d45730",
+          "conclusion": "success",
+          "artifact_sha256": "3b58f77dd26e5a773b7ac5b5cda7cb1a7dae0379699bc59cc5304f9c0c2fa70a"
+        },
+        {
+          "kind": "production_artifact",
+          "task_id": "WELTGEWEBE-BASEMAP-COVERAGE-V1-T002",
+          "system": "wg-prod-1",
+          "path": "/opt/weltgewebe/build/basemap/basemap-schleswig-holstein.pmtiles",
+          "sha256": "3b58f77dd26e5a773b7ac5b5cda7cb1a7dae0379699bc59cc5304f9c0c2fa70a",
+          "size_bytes": 127636977,
+          "receipt_id": "46c535a9b3504f469d060bf2"
+        },
+        {
+          "kind": "public_http_range",
+          "task_id": "WELTGEWEBE-BASEMAP-COVERAGE-V1-T002",
+          "url": "https://weltgewebe.net/local-basemap/basemap-schleswig-holstein.pmtiles",
+          "status": 206,
+          "content_range": "bytes 0-511/127636977",
+          "sha256": "3b58f77dd26e5a773b7ac5b5cda7cb1a7dae0379699bc59cc5304f9c0c2fa70a"
+        },
+        {
+          "kind": "live_browser",
+          "task_id": "WELTGEWEBE-BASEMAP-COVERAGE-V1-T002",
+          "path": "/home/alex/.local/state/grabowski/artifacts/pr-1417-final/live-kiel-ui-proof.json",
+          "evidence_sha256": "942a6d108fa03afa22b9e0f317c9aa305fc22b5f285c8d855ef288b667db150b",
+          "http_206_responses": 58,
+          "failed_relevant_responses": 0
+        },
+        {
+          "kind": "live_http_receipt",
+          "task_id": "WELTGEWEBE-BASEMAP-COVERAGE-V1-T002",
+          "path": "/home/alex/.local/state/grabowski/artifacts/pr-1417-final/live-http-proof.json",
+          "evidence_sha256": "2ed67d43fa6c28a0b5dbb2d7d366598f8fd8a5c52e9bbf2c4ff0bccc27b58838",
+          "receipt_id": "52f43f9eba74443b8ee70433"
+        }
+      ]
+    },
+    "verified_acceptance": {
+      "merged-final-head": "GitHub records reviewed head 48e55984 and merge commit b49ffac5; current Weltgewebe origin/main equals b49ffac5.",
+      "merge-main-ci-green": "GitHub Actions push run 29276003866 concluded success on b49ffac5; both regional content jobs and the joint visual proof passed.",
+      "artifact-identity": "CI metadata, production filesystem, stable alias and full public download all resolve to 127636977 bytes and SHA-256 3b58f77d...fa70a.",
+      "atomic-publication": "Publisher receipt 8c2af51287854cef842f9522 validates status ready, size and hash before two atomic alias switches.",
+      "live-schleswig-holstein": "The merge-main CI browser proof decoded and rendered Schleswig-Holstein features around Kiel. The independent production UI movement then generated 58 Schleswig-Holstein 206 responses, including 57 ranges beyond the initial 0-16383 header request, with zero relevant failures, console errors or external providers.",
+      "hamburg-regression": "The merge-main CI browser proof decoded and rendered Hamburg features. A fresh production load generated five Hamburg 206 responses, including four ranges beyond the initial 0-16383 header request, with zero relevant failures, console errors or external providers."
+    },
+    "does_not_establish": [
+      "all_german_regions_covered",
+      "future_osm_freshness",
+      "cartographic_completeness",
+      "deep_validation_of_every_pmtiles_directory_and_payload",
+      "explicit_pmtiles_content_type"
+    ],
+    "verification": {
+      "task_sha256": "7fafcf7f94dad3382f2e88c4fbc0ac2e637cb638732269f1c4ff36524244e244",
+      "plan_sha256": "f0f2a3b40099acf22d26401328280efd534acae2ceb93a44508e4dbc8b77dc55",
+      "verified_at": "2026-07-13T19:37:03Z"
+    },
+    "live_http": {
+      "evidence_path": "/home/alex/.local/state/grabowski/artifacts/pr-1417-final/live-http-proof.json",
+      "evidence_sha256": "2ed67d43fa6c28a0b5dbb2d7d366598f8fd8a5c52e9bbf2c4ff0bccc27b58838",
+      "verifier_task": "52f43f9eba74443b8ee70433",
+      "style_sha256": "d4ab0374661a578c44e9ead20bed24ef06eb718737c1a332f2577302d3909dda",
+      "schleswig_holstein_full_sha256": "3b58f77dd26e5a773b7ac5b5cda7cb1a7dae0379699bc59cc5304f9c0c2fa70a",
+      "hamburg_full_sha256": "fbb07468a9b854c29f52deb7ed1ad58202bdddfe8f96cad587a1f920b5b08705"
+    }
+  }
+}

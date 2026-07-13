@@ -1,0 +1,235 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A renderer-independent semantic input contract and public JSON Schema describe nodes, relations, groups, intent, requirements and requested formats.",
+      "evidence_type": "object",
+      "id": "semantic-input-contract",
+      "verifier": "schema validation and repository tests"
+    },
+    {
+      "assertion": "The representation router selects or rejects Mermaid, JSON Canvas, Miro-native, table and document outputs with deterministic scores, thresholds and reasons.",
+      "evidence_type": "object",
+      "id": "reasoned-routing",
+      "verifier": "unit tests and route-plan receipt"
+    },
+    {
+      "assertion": "A deterministic hybrid package preserves stable source identifiers, reports renderer-specific coverage and binds every artifact to SHA-256 evidence.",
+      "evidence_type": "object",
+      "id": "deterministic-hybrid-package",
+      "verifier": "byte-equality tests and final package receipt"
+    },
+    {
+      "assertion": "Mermaid source, JSON Canvas, Miro-native composition, table and document outputs are generated through one CLI path without treating any renderer as the sole source of truth.",
+      "evidence_type": "object",
+      "id": "multi-renderer-output",
+      "verifier": "CLI integration tests and package manifest"
+    },
+    {
+      "assertion": "The final Miro-native projection is created on one fresh Education-context board, passes the local contract at 100 without warnings and matches remote counts exactly without altering an existing board.",
+      "evidence_type": "object",
+      "id": "final-miro-live-proof",
+      "verifier": "Miro live-test receipt and board binding"
+    },
+    {
+      "assertion": "Both implementation pull requests have green CI, exact reviewed-head to merge-tree identity and head- plus diff-bound critical self-reviews.",
+      "evidence_type": "object",
+      "id": "release-gates",
+      "verifier": "GitHub CI, merge metadata and self-review receipts"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.schauwerk"
+    }
+  ],
+  "depends_on": [
+    "SCHAUWERK-VISUAL-SYSTEM-V2-T001"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "The user explicitly requested a plan and full implementation after discussing Mermaid and JSON Canvas as additional Schauwerk representation layers.",
+      "required_level": "reviewed_plan"
+    },
+    "baseline_commit": "9a11e9f094f816b66eaffd0cd9985b168e9f7d9a",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk",
+      "service:miro-education"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk"
+  },
+  "goal": "Implement and live-prove a renderer-routed Schauwerk representation layer that chooses and combines Mermaid, JSON Canvas, Miro-native, table and document outputs from one semantic input.",
+  "id": "SCHAUWERK-REPRESENTATION-ROUTER-V1-T001",
+  "initiative": "SCHAUWERK-VISUAL-SYSTEM-V2",
+  "metadata": {
+    "created_from_plan": "heimgewebe/schauwerk:docs/plans/schauwerk-representation-router-v1.md",
+    "does_not_establish": [
+      "universal aesthetic quality",
+      "Mermaid SVG rendering or browser rendering",
+      "lossless Miro projection of all source relations",
+      "Miro Space assignment to the Schauwerk space",
+      "semantic truth of source claims",
+      "permission to alter existing boards"
+    ],
+    "implementation_evidence": {
+      "checks": [
+        {
+          "conclusion": "success",
+          "job": "validate (3.11)",
+          "pull_request": 89
+        },
+        {
+          "conclusion": "success",
+          "job": "validate (3.12)",
+          "pull_request": 89
+        },
+        {
+          "conclusion": "success",
+          "job": "validate (3.11)",
+          "pull_request": 90
+        },
+        {
+          "conclusion": "success",
+          "job": "validate (3.12)",
+          "pull_request": 90
+        }
+      ],
+      "final_merge_commit": "8be927c41353841c8fc403df257c2ee2a2cb1c26",
+      "final_merge_tree": "6b6e76b91385af10c07a3e314feeeee3e09241dc",
+      "primary_head_sha": "a5608fc00494907e72cdb1b4dcc64d733463e300",
+      "primary_merge_commit": "43959f8166ff6a9faac6cbed7c075334bb5b623f",
+      "primary_pull_request": "heimgewebe/schauwerk#89",
+      "primary_review_gate": {
+        "diff_sha256": "ccf600de5b40c41f0cf3e7e46e43129bea9a65629fb8a57909c141ebe86c88fe",
+        "reviewed_head": "a5608fc00494907e72cdb1b4dcc64d733463e300",
+        "verdict": "PASS"
+      },
+      "primary_tree": "1ec48d667ba90be5fbf0075efdaad7411de624a4",
+      "primary_tree_equal": true,
+      "secondary_head_sha": "03d9c69913ffaa1e8a65e1e537f7242c2e67b09b",
+      "secondary_pull_request": "heimgewebe/schauwerk#90",
+      "secondary_review_gate": {
+        "diff_sha256": "3415a2343c4fb108bf7829917530d1d44d5952a1bcfc92278358d3e74535b644",
+        "reviewed_head": "03d9c69913ffaa1e8a65e1e537f7242c2e67b09b",
+        "verdict": "PASS"
+      },
+      "secondary_tree_equal": true
+    },
+    "miro_live_evidence": {
+      "automatic_quality": {
+        "aesthetic_claim": false,
+        "blockers": 0,
+        "score": 100,
+        "warnings": 0
+      },
+      "board_alias": "schauwerk-representation-router-v1-final-20260713",
+      "board_name": "Schauwerk Representation Router v1 – Final",
+      "board_reference_digest": "e96fbfd84188cab1",
+      "board_url": "https://miro.com/app/board/uXjVH8csG18=/",
+      "created_items": 39,
+      "failed_items": 0,
+      "live_receipt_sha256": "343bf110fb197502ae813f3360e9bf6545067689f87652a5c4a2c14ad0a06c18",
+      "remote_conformance": {
+        "connectors": 4,
+        "documents": 1,
+        "frames": 6,
+        "items": 35,
+        "mismatches": 0,
+        "tables": 1
+      },
+      "space_assignment": "not_verified_mcp_has_no_move_tool_and_isolated_browser_snapshot_was_blocked_before_execution"
+    },
+    "outcome": "Representation Router v1 is merged and live-proved: one semantic input now yields reasoned Mermaid, JSON Canvas, Miro-native, table and document outputs with deterministic evidence and explicit coverage limits.",
+    "package_evidence": {
+      "artifact_count": 10,
+      "hybrid": true,
+      "input_digest": "5cef2007c1764c1a17feb7f4857ccab61d0d238a894a64ff892d43718472d066",
+      "manifest_sha256": "7292396bee1dd648c36f01713a94b3cc42e697d94dd6af0693041d3d61895dc2",
+      "package_digest": "5ffa45f5c12f29058d81fc95909e13551f07beb4820b46361e94475079f6abce",
+      "plan_digest": "c28fd89761c0a6b1d51da7656a149fa66a5b33d0331804a64ed3b9daa08c9c79",
+      "primary_format": "miro_native",
+      "receipt_file_sha256": "e77ab0d0b1beddb4e4058a53c747c7f93db8878059bec13cb29f09650448917d",
+      "selected_formats": [
+        "miro_native",
+        "canvas",
+        "document",
+        "table",
+        "mermaid"
+      ],
+      "source_ref": "/home/alex/.local/state/schauwerk/evidence/representation-router-v1-final-merge-20260713/receipt.json"
+    },
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "head_sha": "a5608fc00494907e72cdb1b4dcc64d733463e300",
+          "kind": "pull_request",
+          "merge_commit_sha": "43959f8166ff6a9faac6cbed7c075334bb5b623f",
+          "number": 89,
+          "source_ref": "heimgewebe/schauwerk#89",
+          "task_id": "SCHAUWERK-REPRESENTATION-ROUTER-V1-T001",
+          "tree_sha256": "1ec48d667ba90be5fbf0075efdaad7411de624a4"
+        },
+        {
+          "authority": "github",
+          "head_sha": "03d9c69913ffaa1e8a65e1e537f7242c2e67b09b",
+          "kind": "pull_request",
+          "merge_commit_sha": "8be927c41353841c8fc403df257c2ee2a2cb1c26",
+          "number": 90,
+          "source_ref": "heimgewebe/schauwerk#90",
+          "task_id": "SCHAUWERK-REPRESENTATION-ROUTER-V1-T001",
+          "tree_sha256": "6b6e76b91385af10c07a3e314feeeee3e09241dc"
+        },
+        {
+          "authority": "schauwerk-representation-package",
+          "content_sha256": "e77ab0d0b1beddb4e4058a53c747c7f93db8878059bec13cb29f09650448917d",
+          "kind": "test_run",
+          "source_ref": "/home/alex/.local/state/schauwerk/evidence/representation-router-v1-final-merge-20260713/receipt.json",
+          "task_id": "SCHAUWERK-REPRESENTATION-ROUTER-V1-T001"
+        },
+        {
+          "authority": "miro-education-via-schauwerk",
+          "content_sha256": "343bf110fb197502ae813f3360e9bf6545067689f87652a5c4a2c14ad0a06c18",
+          "kind": "miro_live_probe",
+          "source_ref": "schauwerk-representation-router-v1-final-20260713@e96fbfd84188cab1",
+          "task_id": "SCHAUWERK-REPRESENTATION-ROUTER-V1-T001"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "source_request": "plan erstellen und umsetzen after evaluating JSON Canvas and Mermaid as additional Schauwerk representation layers",
+    "verification": {
+      "plan_sha256": "5e0cbb1ea05a5e7278e92bcbf4e15f27b69addffd3cc434cb81fc62e45f60e5f",
+      "task_sha256": "b1ad0117e49c54433b1d10cf9a9fb6dee525d9fdecff62c1251c2c7e6d182f12",
+      "verified_at": "2026-07-13T20:16:58Z"
+    },
+    "verified_acceptance": {
+      "deterministic-hybrid-package": "Verified by deterministic byte-equality tests and final package receipt e77ab0d0b1beddb4e4058a53c747c7f93db8878059bec13cb29f09650448917d.",
+      "final-miro-live-proof": "Verified by a fresh Education-context board with score 100, zero warnings, zero mismatches and live receipt 343bf110fb197502ae813f3360e9bf6545067689f87652a5c4a2c14ad0a06c18.",
+      "multi-renderer-output": "Verified by the merged CLI, deterministic package manifest and selected formats Mermaid, JSON Canvas, Miro-native, table and document.",
+      "reasoned-routing": "Verified by route-plan tests covering automatic primary choices, hybrid routing and explicit selected/rejected decisions.",
+      "release-gates": "Verified by Schauwerk PRs #89 and #90, four successful CI matrix jobs, tree identity and two bound PASS self-reviews.",
+      "semantic-input-contract": "Verified by the public representation-input.v1 JSON Schema, fixture validation and repository tests."
+    },
+    "verified_at": "2026-07-13T20:16:58Z"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "miro",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Implement renderer-routed representation packages"
+}

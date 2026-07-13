@@ -1,6 +1,6 @@
 name: temporary-pr475-validation-log
 
-on: [push]
+on: [push, pull_request]
 
 permissions:
   contents: read

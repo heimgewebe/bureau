@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "id": "CCM-V1-T001",
+  "initiative": "CHRONIK-CODING-MEMORY-V1",
+  "title": "Implement local idempotent Chronik coding memory",
+  "state": "ready",
+  "goal": "Share canonical API/CLI envelopes, import agent-run events exactly once, query by coding context and freeze hash-bound historical cohorts without a long-running service.",
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "claims": [
+    {
+      "resource": "repo.chronik",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik"
+    ]
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "canonical-envelope",
+      "assertion": "API and local importer use the same canonical quality and retention envelope constructor."
+    },
+    {
+      "id": "idempotent-import",
+      "assertion": "Retrying the same event_id records it once and returns an import receipt."
+    },
+    {
+      "id": "bounded-query",
+      "assertion": "History is filterable by repo, component, operation, outcome and time and is explicitly historical_only."
+    },
+    {
+      "id": "frozen-cohort",
+      "assertion": "A cohort receipt binds exact query parameters, event IDs and output bytes by SHA-256."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "implementation_branch": "feat/coding-memory-v1",
+    "does_not_establish": [
+      "runtime_deployment",
+      "current_state_truth",
+      "productivity_improvement"
+    ]
+  }
+}

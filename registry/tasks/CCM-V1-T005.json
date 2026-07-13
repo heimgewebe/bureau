@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "id": "CCM-V1-T005",
+  "initiative": "CHRONIK-CODING-MEMORY-V1",
+  "title": "Run and close the natural-case history brief pilot",
+  "state": "planned",
+  "depends_on": [
+    "CCM-V1-T001",
+    "CCM-V1-T002",
+    "CCM-V1-T003",
+    "CCM-V1-T004"
+  ],
+  "goal": "Collect the registered minimum of natural control and treatment cases, evaluate independently and close with an evidence-bound promotion decision.",
+  "priority": {
+    "lane": "next",
+    "rank": 50
+  },
+  "claims": [
+    {
+      "resource": "repo.vibe-lab",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/vibe-lab",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/vibe-lab",
+      "repo:/home/alex/repos/bureau"
+    ],
+    "approval": {
+      "action_class": "queue_mutation",
+      "required_level": "reviewed_receipt",
+      "note": "Any Grabowski preference or standard-path change must cite the complete experiment including null and harmful cases."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "minimum-sample",
+      "assertion": "At least three natural cases per condition satisfy the registered comparison constraints."
+    },
+    {
+      "id": "independent-scoring",
+      "assertion": "Every observation is evidence-bound, independently scored and condition-blinded or explicitly marked non-comparable."
+    },
+    {
+      "id": "complete-evidence",
+      "assertion": "Failed, null and harmful cases are retained and not averaged away."
+    },
+    {
+      "id": "closure",
+      "assertion": "The result closes as promote, pilot, defer, reject or archive; automatic policy and routing remain forbidden."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "experiment_id": "2026-07-13_chronik-history-brief-effect",
+    "review_at": "2026-08-15T00:00:00Z",
+    "expires_at": "2026-09-01T00:00:00Z",
+    "current_blocker": "The required natural future coding cases do not yet exist and must not be fabricated or repeated solely for measurement.",
+    "does_not_establish": [
+      "future_benefit",
+      "automatic_promotion",
+      "permission_to_repeat_productive_mutations"
+    ]
+  }
+}

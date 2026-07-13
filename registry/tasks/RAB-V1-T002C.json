@@ -3,7 +3,7 @@
   "id": "RAB-V1-T002C",
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "Qualify the integrated live-preflight orchestrator without provider use",
-  "state": "ready",
+  "state": "verified",
   "goal": "Rebase and finish the integrated preflight implementation on the current hardened runner, enforce a create-only two-process one-shot ledger and prove every dispatch, cost, receipt, transcript and source-integrity boundary synthetically before any new live authorization.",
   "priority": {
     "lane": "next",
@@ -102,6 +102,59 @@
       "desired": "Replace T002B with T002C after PR #509 is merged or rebased",
       "conflict": "heimgewebe/bureau#509 touches the same queue hunk",
       "dispatch_truth": "Lifecycle marks T002C ready even while the queue projection is stale."
+    },
+    "verified_at": "2026-07-13",
+    "outcome": "The integrated one-shot live-preflight orchestrator is merged and synthetically qualified on the hardened runner. It permits exactly one baseline and one treatment intent, preserves create-only hash-chained evidence, records observed cost and ambiguous outcomes, rejects changed source or authorization bindings, starts no separate version probe, and revalidates the credential bytes actually used before provider spawn. No live provider process was started and no RepoBrief usefulness or default promotion is claimed.",
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 186,
+      "reviewed_head": "6bff7f922e1ed80d74af3c623caa0cb10f5bb97e",
+      "base_head": "e72e012818525ee785a3cc76c0c05b741b72b2eb",
+      "merge_commit": "f267070763fe8142f49c6d93810df0f7e219b308",
+      "changed_files": 6,
+      "additions": 3188,
+      "deletions": 0,
+      "diff_sha256": "c16378e5fb35b9ae0f212b07c48a9db9a0b6e4b0ace8613d84201a4cb5028a16",
+      "diff_bytes": 130505,
+      "diff_lines": 3224,
+      "self_review_sha256": "037a215f611167693392e5ee0cf1a1c7f78094e3ec476b563cda14016506c0bd"
+    },
+    "validation": {
+      "focused_tests": "26/26 passed",
+      "full_repository_tests": "1482 tests passed",
+      "repository_gates": [
+        "access-policy",
+        "operator-context",
+        "publication-profiles",
+        "runtime-lock",
+        "deploy-tooling-venv",
+        "secret-scan"
+      ],
+      "github_ci": [
+        "validate (3.10)",
+        "validate (3.12)"
+      ],
+      "diff_bound_self_review": "PASS",
+      "post_merge_readback": "origin/main resolved to f267070763fe8142f49c6d93810df0f7e219b308; its tree equals the reviewed head tree; post-merge Python 3.10 and 3.12 checks passed."
+    },
+    "verified_acceptance": {
+      "rab-v1-t002c-current-runner": "The merged tree is based on Grabowski main after runner hardening and contains one adapter/core path rather than a second runner implementation.",
+      "rab-v1-t002c-one-shot-ledger": "The create-only hash-chained ledger records authorization and each dispatch intent, allows one baseline and one treatment only, rejects a third or duplicate condition, and blocks retry after ambiguous or terminal outcomes.",
+      "rab-v1-t002c-artifact-integrity": "Requests, binding snapshots, intents, receipts, transcript references, errors, report and digest paths are create-only and digest-bound; pre-existing paths fail before provider execution.",
+      "rab-v1-t002c-cost-ledger": "Observed provider cost is retained including overshoot; process intents above two and partial or retried pairs are rejected rather than reported as valid.",
+      "rab-v1-t002c-frozen-pair": "Baseline and treatment share the frozen pair identity, prompt, model, sampling, commit and budgets while the treatment-only RepoBrief tool binding remains explicit.",
+      "rab-v1-t002c-latency-and-source": "Snapshot, freshness, execution and total timing are separated; source HEAD, index and worktree plus dispatch bindings are checked before, between and after conditions.",
+      "rab-v1-t002c-tests": "Synthetic tests cover success, budget stop, provider failure, ambiguous launch, duplicate and third intent, existing artifacts, source/request/credential mutation and report publication without live provider use.",
+      "rab-v1-t002c-merge-proof": "PR #186 was reviewed against head 6bff7f922e1ed80d74af3c623caa0cb10f5bb97e and diff SHA-256 c16378e5fb35b9ae0f212b07c48a9db9a0b6e4b0ace8613d84201a4cb5028a16, passed local and GitHub checks, merged as f267070763fe8142f49c6d93810df0f7e219b308 and was read back from main."
+    },
+    "next_task": {
+      "id": "RAB-V1-T002D",
+      "state": "planned",
+      "blocker": "Any live pair requires a new reviewed authorization for exactly one baseline and one treatment process. RAB-V1-T002B remains non-retryable and the 96-run benchmark remains blocked."
+    },
+    "verification": {
+      "task_sha256": "7d0ab67d5288ee41f67b3a4a98298a123fa1c63fc1eaeac634bd6d9bd43a3ca9",
+      "plan_sha256": "80509abd14d63643ae73b9cf5ba0ef2255d73d1bd331a96b1752fe8ada04f308"
     }
   }
 }

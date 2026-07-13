@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T038",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Auditierbare Nichtkonflikt-Ausnahme für blockierende Repository-Leases",
-  "state": "planned",
+  "state": "verified",
   "goal": "Permit a second same-repository execution only when a machine-readable, hash-bound non-conflict proof shows disjoint tasks, paths, components, runtime resources, processes, deployments and migrations; preserve the original lease and fail closed for missing, stale or contradictory evidence.",
   "priority": {
     "lane": "later",
@@ -65,11 +65,13 @@
     "live_register_source": "operator",
     "promotion_required_from_event": true,
     "does_not_establish": [
-      "registry_task_truth",
       "queue_truth",
       "claim_authority",
       "dispatch_authority",
-      "merge_readiness"
+      "automatic_parallel_execution_without_a_fresh_proof",
+      "merge_deploy_or_migration_authority_from_the_proof",
+      "permission_to_release_or_modify_a_foreign_lease_or_worktree",
+      "fresh_connector_schema_in_the_current_chat"
     ],
     "depends_semantically_on": "GRABOWSKI-OPERATOR-SURFACE-V1-T036",
     "source_event_review": "PASS",
@@ -86,6 +88,97 @@
       "shared_gate"
     ],
     "safety_boundary": "No force release, lease theft, foreign worktree mutation or inference from task titles alone.",
-    "registration_scope": "One new task file; no queue mutation or execution authority."
+    "registration_scope": "One new task file; no queue mutation or execution authority.",
+    "implementation": {
+      "pull_request": "heimgewebe/grabowski#171",
+      "published_head": "982d792dfb34e290a5079ce62a3591f0bcb5c3f0",
+      "reviewed_tree": "b3cbb43329a529e594c9639535562520537349c6",
+      "base_head": "8fba5465c3f5cf15038579950d1dbfe256dfd99b",
+      "merge_commit": "b71821f11075953212f36f49392f1ab15e81b90f",
+      "merged_at": "2026-07-13T06:43:51Z",
+      "github_diff_sha256": "5a9d887986ca55c19c6e7749afb854487f812c17c5c3e02b194fe54ab3d30dc7",
+      "self_review_sha256": "3c7086e691c2b7d2a061b8cd3d93fa9477b8bade453f80de364de2f46f13bd66",
+      "self_review_file_sha256": "90e5b91c8821b748106fded92289eda1c0f5f3af2ec44701e3c757baa229d575"
+    },
+    "validation": {
+      "focused_tests": "149 passed on the reviewed tree",
+      "full_local_validation": "1356 tests passed; access policy, generated contracts, runtime lock, deploy tooling and secret scan passed",
+      "validation_job_unit": "grabowski-job-0eb58b3f6e1c",
+      "validation_job_result": "systemd success, exit 0; separate finalization receipt was not configured for this test job",
+      "github_ci": {
+        "validate_3_10": "success",
+        "validate_3_12": "success"
+      }
+    },
+    "deployment": {
+      "release_id": "b71821f11075-srcset7d53d4e5bbd0-lock17a2ed5faa04-contract982655b0b7f4",
+      "repo_head": "b71821f11075953212f36f49392f1ab15e81b90f",
+      "job_unit": "grabowski-job-fdd8370cd6c5",
+      "finalization_receipt_sha256": "265f6abed42ebb357783b8d6036065476cf3754756e448a357a40cce12b22dc9",
+      "integrity": "complete deployment identity, source, snapshot, lock and provenance parity"
+    },
+    "live_smoke": {
+      "runtime_surface": "active immutable release and installed MCP modules",
+      "disjoint_acquisition": "allowed with proof and atomic acquisition receipt",
+      "proof_sha256": "48aea5f1a97b52ff0b31def19f3a4b97b8f295c2b22e9552a1cad57f07a00067",
+      "acquisition_receipt_sha256": "5e129dd489d3cc007b11b528b172438768af049962307ab028ff4c4b14316bc1",
+      "foreign_broad_lease": "preserved byte-for-byte and remained owned by the original owner",
+      "overlap_probe": "rejected with scope-conflict",
+      "renewal_probe": "exception lease rejected as non-renewable",
+      "cleanup": "both temporary owner-bound leases released; isolated store empty",
+      "mcp_registration": "grabowski_resource_nonconflict_assess registered in the active MCP runtime",
+      "connector_schema_note": "the current chat connector snapshot did not yet expose the newly deployed tool schema; the active runtime registration was verified directly"
+    },
+    "verified_acceptance": {
+      "proof-contract": "Verified by PR #171: the versioned manifest covers owners, repository, common base, branch, physical worktree, logical paths, generated artifacts, components, runtime resources, processes, deployments, migrations and shared gates.",
+      "hash-and-time-bound": "Verified by strict canonical proof hashing, 30–300 second validity, blocker snapshot binding and atomic live revalidation under BEGIN IMMEDIATE.",
+      "fail-closed": "Verified by focused tests for unknown or incomplete scopes, wildcards, symlink aliases, different bases, exact and ancestor path overlap, nested worktrees, shared gates, emergency leases, drift, expiry, races and Boolean TTL misuse.",
+      "preserve-foreign-owner": "Verified live: the broad lease remained byte-identical and owned by the first owner while only the exact disjoint path was acquired for the second owner.",
+      "governor-and-resource-consistency": "Verified by one shared proof contract; the governor validates proposal evidence only, while resource acquisition revalidates the live lease atomically and emits a bound receipt.",
+      "regression-tests": "Verified by 149 focused tests and 1356 complete repository tests on the reviewed tree, plus green Python 3.10 and 3.12 CI.",
+      "runtime-proof": "Verified on deployed merge commit b71821f1: disjoint acquisition passed, a real overlap failed with scope-conflict, the exception could not be renewed and cleanup left no test leases."
+    },
+    "verified_at": "2026-07-13",
+    "verification_note": "PR #171 merged, the exact merge head was deployed with a valid finalization receipt, runtime identity was complete, the active MCP registered the new assessor and the isolated live broker smoke passed all positive, negative and cleanup checks.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T038",
+          "source_ref": "heimgewebe/grabowski#171",
+          "number": 171,
+          "head_sha": "982d792dfb34e290a5079ce62a3591f0bcb5c3f0",
+          "merge_commit_sha": "b71821f11075953212f36f49392f1ab15e81b90f",
+          "diff_sha256": "5a9d887986ca55c19c6e7749afb854487f812c17c5c3e02b194fe54ab3d30dc7"
+        },
+        {
+          "kind": "runtime_deployment",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T038",
+          "source_ref": "grabowski-job-fdd8370cd6c5@b71821f11075953212f36f49392f1ab15e81b90f",
+          "commit_sha": "b71821f11075953212f36f49392f1ab15e81b90f",
+          "content_sha256": "265f6abed42ebb357783b8d6036065476cf3754756e448a357a40cce12b22dc9"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "grabowski-resource-broker",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T038",
+          "source_ref": "isolated-nonconflict-live-smoke@b71821f11075953212f36f49392f1ab15e81b90f",
+          "proof_sha256": "48aea5f1a97b52ff0b31def19f3a4b97b8f295c2b22e9552a1cad57f07a00067",
+          "content_sha256": "5e129dd489d3cc007b11b528b172438768af049962307ab028ff4c4b14316bc1"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "68fc11d4cd141aa79c1fe14c4887d445b39132b196ec50dff10993b94e9e00f9",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "source": "github_pull_request_and_deployed_runtime",
+      "source_ref": "github-pr:heimgewebe/grabowski#171@982d792dfb34e290a5079ce62a3591f0bcb5c3f0:b71821f11075953212f36f49392f1ab15e81b90f",
+      "evidence_sha256": "0f3384208409a28fc73f8f6a05f6abf73ace5610b5f6de45c73610cff89b59a5",
+      "verified_at": "2026-07-13"
+    }
   }
 }

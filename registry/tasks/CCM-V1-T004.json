@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "id": "CCM-V1-T004",
+  "initiative": "CHRONIK-CODING-MEMORY-V1",
+  "title": "Align Systemkatalog learning roles",
+  "state": "ready",
+  "depends_on": [
+    "CCM-V1-T003"
+  ],
+  "goal": "Move the active evidence-learning relation from retired Heimlern to Vibe-Lab while keeping Chronik as append-only historical truth and Bureau as decision owner.",
+  "priority": {
+    "lane": "now",
+    "rank": 40
+  },
+  "claims": [
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/systemkatalog",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/systemkatalog"
+    ]
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "heimlern-retired",
+      "assertion": "Heimlern has no active learning truth ownership and is described as a retained historical reference."
+    },
+    {
+      "id": "chronik-vibe-relation",
+      "assertion": "Chronik may provide frozen historical evidence to Vibe-Lab with no automatic policy or task application."
+    },
+    {
+      "id": "vibe-bureau-relation",
+      "assertion": "Vibe-Lab may export reviewed proposal candidates while Bureau remains the sole task decision owner."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "implementation_branch": "docs/chronik-vibe-role-alignment-v1",
+    "does_not_establish": [
+      "runtime_integration",
+      "effectiveness",
+      "automatic_task_creation"
+    ]
+  }
+}

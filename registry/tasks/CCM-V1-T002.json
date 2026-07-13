@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "CCM-V1-T002",
+  "initiative": "CHRONIK-CODING-MEMORY-V1",
+  "title": "Bind Grabowski coding work context and Chronik retrieval",
+  "state": "ready",
+  "depends_on": [
+    "CCM-V1-T001"
+  ],
+  "goal": "Record the actual target repo, component and operation in Grabowski events and expose direct local import plus read-only history without Plexer.",
+  "priority": {
+    "lane": "now",
+    "rank": 20
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "explicit-work-context",
+      "assertion": "Task opt-in validates and persists repo, component, operation and optional Bureau/PR references."
+    },
+    {
+      "id": "direct-import",
+      "assertion": "One typed tool imports a redacted task outbox file into local Chronik idempotently."
+    },
+    {
+      "id": "history-read",
+      "assertion": "One read-only tool returns bounded historical outcomes and mandatory live-state non-claims."
+    },
+    {
+      "id": "fail-soft",
+      "assertion": "Chronik absence or import failure does not fail ordinary coding execution."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "implementation_branch": "feat/chronik-coding-memory-v1",
+    "parallel_nonconflict": "Disjoint from T040 agent-facing contract files and deployment paths.",
+    "does_not_establish": [
+      "default_outbox_activation",
+      "runtime_deployment",
+      "safe_retry",
+      "automatic_history_use"
+    ]
+  }
+}

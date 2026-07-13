@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "CHRONIK-CODING-MEMORY-V1",
+  "title": "Chronik coding memory and Vibe-Lab effect pilot",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Make Chronik a narrow local coding-outcome memory for Grabowski and test prospectively in Vibe-Lab whether a frozen history brief improves real coding decisions without becoming live truth or automatic policy.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/chronik-coding-memory-v1.md"
+  },
+  "completion": [
+    "Chronik imports explicit coding outcomes locally and idempotently and can freeze hash-bound history cohorts.",
+    "Grabowski records the actual target repository and exposes bounded import and historical query surfaces.",
+    "Vibe-Lab contains a valid prospective control/treatment registration with no fabricated observations.",
+    "Systemkatalog maps active learning evidence to Vibe-Lab and retains Heimlern only as historical reference.",
+    "The natural-case pilot is closed with promote, pilot, defer, reject or archive without automatic policy mutation."
+  ],
+  "parallelism": {
+    "max_active_tasks": 4
+  },
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source_request": "alles umsetzen",
+    "primary_repos": [
+      "heimgewebe/chronik",
+      "heimgewebe/grabowski",
+      "heimgewebe/vibe-lab",
+      "heimgewebe/systemkatalog"
+    ],
+    "supersedes_active_learning_destination": "heimgewebe/heimlern",
+    "does_not_establish": [
+      "current_git_state",
+      "current_ci_state",
+      "current_runtime_state",
+      "safe_retry",
+      "general_productivity_improvement",
+      "automatic_policy_or_routing_authority",
+      "automatic_bureau_task_creation"
+    ]
+  }
+}

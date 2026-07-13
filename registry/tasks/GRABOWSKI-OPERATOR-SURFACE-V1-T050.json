@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T050",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Restore valid finalization receipts for ad-hoc Grabowski jobs",
+  "state": "planned",
+  "goal": "Explain and repair why ad-hoc jobs launched through grabowski_job_start can finish with systemd success and complete logs while job status reports missing_finalization_evidence and finalization_receipt not_configured.",
+  "priority": {
+    "lane": "later",
+    "rank": 500
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "root-cause",
+      "assertion": "The mismatch between configured ExecStopPost, metadata expectations and final status is reproduced and explained without trusting successful command logs alone."
+    },
+    {
+      "id": "receipt-valid",
+      "assertion": "A successful ad-hoc job emits a valid integrity-bound finalization receipt and status reports completed."
+    },
+    {
+      "id": "failures-preserved",
+      "assertion": "Launch, command and finalizer failures remain distinct and cannot be masked by postflight aggregation."
+    },
+    {
+      "id": "regression",
+      "assertion": "Tests cover short collected units, success, command failure, finalizer failure, missing unit and delayed status reads."
+    }
+  ],
+  "metadata": {
+    "source": "T046 post-deploy validation",
+    "observed_jobs": [
+      "grabowski-job-5f665a901641",
+      "grabowski-job-cffede2fa5de"
+    ],
+    "observation": "Both jobs had systemd Result=success and complete successful logs, but status reported missing_finalization_evidence with finalization_receipt not_configured.",
+    "does_not_establish": [
+      "that T046 validation failed",
+      "that command logs alone are an integrity receipt",
+      "permission to alter running foreign jobs"
+    ]
+  }
+}

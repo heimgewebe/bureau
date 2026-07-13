@@ -1,5 +1,5 @@
 {
-  "commitment": "later",
+  "commitment": "completed",
   "completion": [
     "Current GitHub dependency alert state for heimgewebe/semantAH is captured from a live source.",
     "High severity alerts are either remediated by dependency updates or have explicit risk-accepted closure notes.",
@@ -9,23 +9,36 @@
   "goal": "Triage and remediate or explicitly close existing GitHub dependency security alerts in heimgewebe/semantAH without conflating alert absence with full security correctness.",
   "id": "SEMANTAH-SECURITY-HYGIENE-V1",
   "metadata": {
+    "closure_evidence": {
+      "closeout_merge_commit": "c306e89105605778a382aa12c231f727c221cc74",
+      "closeout_pr": "heimgewebe/semantAH#256",
+      "fixed_alert_count": 10,
+      "implementation_merge_commit": "2c627d1ff820212e274f4faaef9d78c31d40b37a",
+      "implementation_pr": "heimgewebe/semantAH#255",
+      "open_alert_count": 0,
+      "verified_at": "2026-07-13T06:37:00Z"
+    },
     "created_from_residual": "RPU-V1-T013 post-merge push warning",
     "does_not_establish": [
       "full security correctness",
       "runtime safety",
       "absence of non-Dependabot vulnerabilities"
     ],
-    "observed_warning": "GitHub reported 10 vulnerabilities on heimgewebe/semantAH default branch during PR #254 push: 3 high, 3 moderate, 4 low.",
-    "registered_at": "2026-07-09T13:40:00Z",
+    "lifecycle": {
+      "completed_at": "2026-07-13T06:37:00Z",
+      "completion_reason": "The sole registered task is verified: all ten historical Dependabot alerts are fixed, current validation passes, and post-merge GitHub readback reports zero open alerts."
+    },
     "lifecycle_hygiene_repair": {
-      "updated_at": "2026-07-09",
-      "reason": "The initiative has a planned task, so lifecycle recommends active instead of candidate."
-    }
+      "reason": "The initiative has a planned task, so lifecycle recommends active instead of candidate.",
+      "updated_at": "2026-07-09"
+    },
+    "observed_warning": "GitHub reported 10 vulnerabilities on heimgewebe/semantAH default branch during PR #254 push: 3 high, 3 moderate, 4 low.",
+    "registered_at": "2026-07-09T13:40:00Z"
   },
   "parallelism": {
     "max_active_tasks": 1
   },
   "schema_version": 1,
-  "state": "active",
+  "state": "completed",
   "title": "semantAH dependency security hygiene"
 }

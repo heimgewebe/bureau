@@ -36,14 +36,72 @@
   "id": "SEMANTAH-SECURITY-HYGIENE-V1-T001",
   "initiative": "SEMANTAH-SECURITY-HYGIENE-V1",
   "metadata": {
+    "closeout_head_sha": "3115cba3002584d2ed463bf3840cbc363aba10ac",
+    "closeout_merge_commit": "c306e89105605778a382aa12c231f727c221cc74",
+    "closeout_pr": "heimgewebe/semantAH#256",
     "created_from_residual": "RPU-V1-T013",
     "does_not_establish": [
       "full security correctness",
       "runtime safety",
+      "exploit unreachability",
       "absence of non-Dependabot vulnerabilities"
     ],
+    "implementation_head_sha": "48c45180b8152e60e953ee575252fdb03bf20456",
+    "implementation_merge_commit": "2c627d1ff820212e274f4faaef9d78c31d40b37a",
+    "implementation_pr": "heimgewebe/semantAH#255",
+    "live_alert_state": {
+      "checked_at": "2026-07-13T06:37:00Z",
+      "fixed_alert_count": 10,
+      "fixed_by_severity": {
+        "high": 3,
+        "low": 4,
+        "medium": 3
+      },
+      "open_alert_count": 0,
+      "packages": [
+        "Pygments",
+        "bytes",
+        "pyarrow",
+        "pytest",
+        "quinn-proto",
+        "rand",
+        "rustls-webpki"
+      ],
+      "source": "GitHub Dependabot REST API",
+      "vulnerability_alerts_enabled": true
+    },
     "observed_warning": "GitHub push for SemantAH PR #254 reported 10 default-branch vulnerabilities: 3 high, 3 moderate, 4 low.",
-    "registered_at": "2026-07-09T13:40:00Z"
+    "outcome": "SemantAH PR #255 remediated all ten historical default-branch Dependabot alerts. PR #256 restored the current Ruff formatting gate without changing behavior or dependency versions. Post-merge GitHub readback reports zero open alerts.",
+    "registered_at": "2026-07-09T13:40:00Z",
+    "validation": [
+      "SemantAH PR #255 merged as 2c627d1ff820212e274f4faaef9d78c31d40b37a; GitHub CodeQL and repository checks passed.",
+      "SemantAH PR #256 merged as c306e89105605778a382aa12c231f727c221cc74; all reported GitHub checks succeeded and merge state was CLEAN.",
+      "Exact PR #256 head 3115cba3002584d2ed463bf3840cbc363aba10ac: make CARGO=/home/alex/.cargo/bin/cargo lint test test-rust lint-rust passed.",
+      "Python validation: 108 tests passed and 1 integration test was intentionally deselected by the standard non-integration target.",
+      "Rust validation: complete workspace test suite passed; Clippy passed with -D warnings.",
+      "uv lock --check and git diff --check passed.",
+      "Post-merge GitHub Dependabot REST readback on 2026-07-13: vulnerability alerts enabled, 0 open alerts, 10 historical alerts state=fixed."
+    ],
+    "verification": {
+      "closeout_diff_sha256": "8f4f7e51bd84b6ac32383def4930b3e9cf6b2ecb1a7004aa15f91fa1ca4555e2",
+      "closeout_head_sha": "3115cba3002584d2ed463bf3840cbc363aba10ac",
+      "closeout_merge_commit": "c306e89105605778a382aa12c231f727c221cc74",
+      "closeout_pr": 256,
+      "implementation_merge_commit": "2c627d1ff820212e274f4faaef9d78c31d40b37a",
+      "implementation_pr": 255,
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "repo": "heimgewebe/semantAH",
+      "source": "github_pull_request_and_dependabot_api",
+      "task_sha256": "90403bed3916ae11ebc5631172d2627f20e5bb5bd49065fce2d62b0697c9a7c6",
+      "verified_at": "2026-07-13T06:37:00Z"
+    },
+    "verified_acceptance": {
+      "semantah-security-alert-live-state": "GitHub vulnerability alerts are enabled. The Dependabot API was checked live before closeout and again after PR #256 merged; it reports zero open alerts and ten historical alerts in fixed state.",
+      "semantah-security-highs-addressed": "All three high-severity alerts, together with three medium and four low alerts, are state=fixed after SemantAH PR #255.",
+      "semantah-security-non-claims": "The task and durable SemantAH proof explicitly state that alert cleanup does not establish full security correctness, runtime safety, exploit unreachability, or absence of non-Dependabot vulnerabilities.",
+      "semantah-security-tests": "Current exact-head validation passed after the formatting-only closeout: Ruff, 108 Python tests, Rust workspace tests, Clippy -D warnings, uv lock --check, and git diff --check."
+    },
+    "verified_at": "2026-07-13"
   },
   "priority": {
     "lane": "later",
@@ -56,6 +114,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Triage semantAH dependency security alerts"
 }

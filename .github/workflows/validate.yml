@@ -48,12 +48,13 @@ jobs:
             git -C "repos/${name}" status --short
             git -C "repos/${name}" rev-parse HEAD > "${name}.commit"
           done
-      - name: Install Lenskit
+      - name: Install Lenskit runtime
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install --upgrade pip
-          python -m pip install -e './repos/lenskit[dev]'
+          python -m pip install --disable-pip-version-check --require-hashes \
+            -r repos/lenskit/requirements/repobrief-dev.lock.txt
+          echo "PYTHONPATH=$PWD/repos/lenskit" >> "$GITHUB_ENV"
       - name: Create exact live bundles
         shell: bash
         run: |

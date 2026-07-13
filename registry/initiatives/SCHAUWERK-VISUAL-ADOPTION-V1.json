@@ -1,33 +1,44 @@
 {
-  "schema_version": 1,
-  "id": "SCHAUWERK-VISUAL-ADOPTION-V1",
-  "title": "Schauwerk Visual System v2 adoption",
-  "state": "active",
-  "commitment": "now",
-  "goal": "Turn Visual System v2 from a successful reference board into the default quality-gated composition path for real Schauwerk content, beginning with the software pilot.",
-  "current_plan": {
-    "repository": "bureau",
-    "path": "docs/plans/schauwerk-visual-adoption-v1.md"
-  },
+  "commitment": "completed",
   "completion": [
     "A real source-bound software snapshot compiles into a narrative Visual System v2 board specification and deterministic Miro DSL.",
     "The generated board passes the v2 quality gate with no blockers and keeps evidence, freshness and authority visible.",
     "The existing software-pilot DSL remains available as a compatibility path.",
     "Repository tests, CI, diff-bound review and one isolated live Miro acceptance are complete, or the live limitation is explicitly recorded without overstating completion."
   ],
-  "parallelism": {
-    "max_active_tasks": 1
+  "current_plan": {
+    "path": "docs/plans/schauwerk-visual-adoption-v1.md",
+    "repository": "bureau"
   },
+  "goal": "Turn Visual System v2 from a successful reference board into the default quality-gated composition path for real Schauwerk content, beginning with the software pilot.",
+  "id": "SCHAUWERK-VISUAL-ADOPTION-V1",
   "metadata": {
-    "predecessor": "SCHAUWERK-VISUAL-SYSTEM-V2",
-    "registered_at": "2026-07-13",
-    "source_request": "arbeite weiter am schauwerk",
-    "problem_statement": "Visual System v2 currently proves a fixed reference board but is not yet the composition path used by real software or education generators.",
+    "completed_at": "2026-07-13T05:35:28Z",
     "does_not_establish": [
       "automatic_migration_of_all_existing_boards",
       "universal_aesthetic_quality",
       "permission_to_modify_existing_or_unrelated_miro_boards",
       "removal_of_legacy_renderers"
-    ]
-  }
+    ],
+    "implementation_merge_commit": "4bf61ade226adb1b5abf578c08d4679700d70eba",
+    "implementation_pull_request": "heimgewebe/schauwerk#87",
+    "outcome": "Visual System v2 now composes a real source-bound software snapshot, preserves the legacy renderer, passes deterministic and live provider gates, and records a rejected table-heavy iteration as negative evidence.",
+    "predecessor": "SCHAUWERK-VISUAL-SYSTEM-V2",
+    "problem_statement": "Visual System v2 currently proves a fixed reference board but is not yet the composition path used by real software or education generators.",
+    "registered_at": "2026-07-13",
+    "source_request": "arbeite weiter am schauwerk",
+    "verification": {
+      "plan_sha256": "0226e0d8ecfd35d0f3b76c2d22089a320d128e911b458a16cfdb2df6205826cb",
+      "task_id": "SCHAUWERK-VISUAL-ADOPTION-V1-T001",
+      "task_sha256": "5dc29aa30c88d8d2951f39bd22bcb8622e486454e94d238e42f9b5bfa24e4d35",
+      "verified_at": "2026-07-13T05:35:28Z"
+    },
+    "verified_task": "SCHAUWERK-VISUAL-ADOPTION-V1-T001"
+  },
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "schema_version": 1,
+  "state": "completed",
+  "title": "Schauwerk Visual System v2 adoption"
 }

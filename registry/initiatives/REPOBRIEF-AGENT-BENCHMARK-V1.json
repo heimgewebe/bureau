@@ -12,6 +12,7 @@
   "completion": [
     "A frozen multi-repository taskset, provider-neutral runner contract and deterministic evaluator are implemented and validated.",
     "A read-only provider runner is separately qualified for exact model identity, provider-reported usage, tool-call capture, isolated checkouts and immutable transcripts.",
+    "A separate live preflight proves one hard-cost-bounded baseline/treatment pair, treatment MCP availability, valid receipts, source integrity and separated snapshot/freshness latency before batch dispatch.",
     "Real paired baseline and RepoBrief-augmented agent runs use the same model, prompt, budgets and isolated sessions with provider-reported tokens and bound transcripts.",
     "Navigation, structural reasoning, grounding, freshness, false confidence, time, tool-call and token outcomes are reported without post-hoc task tuning.",
     "RepoBrief remains opt-in unless a separate reviewed decision establishes a reproducible benefit without material quality or safety regression."
@@ -46,9 +47,14 @@
         "merge_commit": "4465ed14b7064e97e75d2e11be31e1264593e1ad",
         "diff_sha256": "1d85735814abe348e42e5b71484bd4889ee139ab9cdb89ae109663c1a9454156"
       },
+      "RAB-V1-T002B": {
+        "state": "ready",
+        "scope": "Exactly one frozen baseline/treatment pair with at most USD 1.00 per provider process and USD 2.00 total authorized spend.",
+        "stop_rule": "Any invalid receipt, missing treatment MCP use, stale/non-comparable state, budget stop, timeout or source mutation ends the preflight without retry."
+      },
       "RAB-V1-T002": {
         "state": "planned",
-        "blocker": "Requires a separately reviewed and cost-bounded live provider preflight with exact model, usage, tool and transcript evidence before any 96-run dispatch."
+        "blocker": "Requires verified RAB-V1-T002B live provider evidence before any 96-run dispatch."
       },
       "RAB-V1-T003": {
         "state": "planned",
@@ -56,7 +62,7 @@
       }
     },
     "default_promoted": false,
-    "sequencing": "Qualify the runner, execute the real paired benchmark, decide adoption, and only then prioritize bureau#482 incremental rebuild or file-watcher work.",
+    "sequencing": "Qualify the runner, verify one cost-bounded live pair, execute the real paired benchmark, decide adoption, and only then prioritize bureau#482 incremental rebuild or file-watcher work.",
     "does_not_establish": [
       "general agent quality improvement",
       "answer correctness outside the fixed taskset",

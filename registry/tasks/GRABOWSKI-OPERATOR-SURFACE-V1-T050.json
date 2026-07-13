@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T050",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Restore valid finalization receipts for ad-hoc Grabowski jobs",
-  "state": "planned",
+  "state": "verified",
   "goal": "Explain and repair why ad-hoc jobs launched through grabowski_job_start can finish with systemd success and complete logs while job status reports missing_finalization_evidence and finalization_receipt not_configured.",
   "priority": {
     "lane": "later",
@@ -59,6 +59,131 @@
       "that T046 validation failed",
       "that command logs alone are an integrity receipt",
       "permission to alter running foreign jobs"
-    ]
+    ],
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 192,
+      "pull_request_head": "c2e677efe0c403892f92ec1c4db181442b0ea315",
+      "merge_commit": "ed113109ec6693919071be832647b539a82c692d",
+      "branch": "fix/job-finalization-receipts-v2",
+      "github_diff_sha256": "9bca213e5dc6d64332970051a737b741697fec9a89f0715becb1c34d5a01cafd",
+      "github_diff_bytes": 50199,
+      "github_diff_lines": 993,
+      "diff_artifact": "https://gist.github.com/alexdermohr/336c9c4460991f4d34426fa9c772609f"
+    },
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_generic_job_finalization_receipts_live",
+      "verified_at": "2026-07-13T19:37:33Z",
+      "root_cause": {
+        "finding": "Generic ad-hoc jobs configured ExecStopPost but did not persist a finalization contract; only runtime-deploy jobs had one. Successful command logs and systemd Result=success therefore could not establish a durable integrity-bound terminal result after unit collection.",
+        "repair": "Every newly accepted generic job now receives a hash-bound contract and a create-only finalization.json. Runtime deploy keeps its stronger expected-head, runner-owned receipt.",
+        "truth_order": "Visible systemd state remains primary. A persisted receipt is used only after the unit is collected or no longer visible and only after full contract, hash, path, identity and status validation."
+      },
+      "validation": {
+        "focused": "110 tests and 121 subtests passed",
+        "full_repository": "make validate passed 1466 tests plus generated context, access policy, runtime locks, deploy tooling and secret scan",
+        "diff_check": "PASS",
+        "github_ci": {
+          "run_id": 29275291856,
+          "validate_3_10": "SUCCESS",
+          "validate_3_12": "SUCCESS"
+        }
+      },
+      "review": {
+        "result": "PASS",
+        "reviewed_head": "c2e677efe0c403892f92ec1c4db181442b0ea315",
+        "github_diff_sha256": "9bca213e5dc6d64332970051a737b741697fec9a89f0715becb1c34d5a01cafd",
+        "axes": [
+          "correctness",
+          "regression_risk",
+          "tests",
+          "security",
+          "integration",
+          "documentation"
+        ],
+        "external_review_used": false,
+        "external_review_reason": "The external read-only review sandbox could not read the frozen diff; no external verdict was represented as evidence."
+      },
+      "deployment": {
+        "job": "grabowski-job-fc216057502a",
+        "final_status": "completed",
+        "merge_commit": "ed113109ec6693919071be832647b539a82c692d",
+        "release_id": "ed113109ec66-srcset6289193fad36-locke6664d600b6c-contract32d81838b121",
+        "finalization_receipt_sha256": "688f2c5add1729531148e3b87670bde047ec5ad95bd303c29e9094e5811f6690",
+        "integrity": "valid",
+        "runtime_healthy": true
+      },
+      "live_smoke": {
+        "unit": "grabowski-job-2ffa97c69625",
+        "final_status": "succeeded",
+        "contract_kind": "grabowski_job_finalization",
+        "receipt_configured": true,
+        "receipt_valid": true,
+        "finalization_receipt_sha256": "db5a5aaf6bd2698c87dfeba58f1111a4f72327b5e7276a5504221d81bc219523",
+        "payload_sha256": "00951a299a4b352f8f0dd5316652fa23cfbbd09c84184f199dae6ce29b318be0",
+        "unit_collected": true,
+        "persisted_fallback_used": true,
+        "delayed_read_stable": true,
+        "argv": [
+          "python3",
+          "-c",
+          "print('t050-live-ok')"
+        ]
+      },
+      "failure_semantics": {
+        "launch_failure": "preserved from launch metadata and precedes receipt fallback",
+        "command_failure": "stored as failed with the terminal failure type",
+        "finalizer_failure": "visible as postflight failure and cannot convert a failed or successful main process into another main outcome",
+        "missing_or_conflicting_evidence": "fails closed as missing_finalization_evidence"
+      },
+      "residual_risks": [
+        "Same-UID code controlling both metadata and the systemd precondition can construct a self-consistent forgery; eliminating this requires a separate security domain.",
+        "Generic and runtime-deploy validators remain intentionally separate to avoid weakening expected-head authority.",
+        "Future runtime integrity is not established by this one deployment and live smoke."
+      ]
+    },
+    "verified_at": "2026-07-13",
+    "verification_note": "Grabowski PR #192 was reviewed against the exact GitHub diff, merged with green Python 3.10/3.12 CI, deployed at merge commit ed113109ec6693919071be832647b539a82c692d with a valid runner receipt, and verified by a real generic ad-hoc job whose valid create-only receipt restored succeeded after systemd unit collection.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T050",
+          "source_ref": "heimgewebe/grabowski#192",
+          "number": 192,
+          "head_sha": "c2e677efe0c403892f92ec1c4db181442b0ea315",
+          "merge_commit_sha": "ed113109ec6693919071be832647b539a82c692d",
+          "diff_sha256": "9bca213e5dc6d64332970051a737b741697fec9a89f0715becb1c34d5a01cafd"
+        },
+        {
+          "kind": "runtime_deployment",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T050",
+          "source_ref": "grabowski-job-fc216057502a@ed113109ec6693919071be832647b539a82c692d",
+          "commit_sha": "ed113109ec6693919071be832647b539a82c692d",
+          "content_sha256": "688f2c5add1729531148e3b87670bde047ec5ad95bd303c29e9094e5811f6690"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "grabowski-job-status",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T050",
+          "source_ref": "grabowski-job-2ffa97c69625",
+          "proof_sha256": "db5a5aaf6bd2698c87dfeba58f1111a4f72327b5e7276a5504221d81bc219523",
+          "content_sha256": "00951a299a4b352f8f0dd5316652fa23cfbbd09c84184f199dae6ce29b318be0"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "6315dc56d5c924710bd6f4017aa915afb594164c5bc03d9225fcc373dd9e6246",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "source": "github_pull_request_deployed_runtime_and_collected_generic_job_smoke",
+      "source_ref": "heimgewebe/grabowski#192@ed113109ec6693919071be832647b539a82c692d;grabowski-job-fc216057502a;grabowski-job-2ffa97c69625",
+      "evidence_sha256": "217e4ca88d88ee382a0a0dc8a9a22f795eae6a9f29bfd902fa3d98762ecac607",
+      "verified_at": "2026-07-13"
+    }
   }
 }

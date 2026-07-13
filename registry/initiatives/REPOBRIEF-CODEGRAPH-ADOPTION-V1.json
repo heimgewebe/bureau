@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "REPOBRIEF-CODEGRAPH-ADOPTION-V1",
   "title": "RepoBrief CodeGraph selective adoption",
-  "state": "active",
-  "commitment": "now",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Adopt the useful structural-navigation ideas from CodeGraph as a deterministic read-only Lenskit surface without introducing a second index authority, memory store or merge gate.",
   "current_plan": {
     "repository": "bureau",
@@ -32,7 +32,7 @@
     "synthetic_target_recall_advantage": 0.7083333333333334,
     "live_calibration_task": "RCGA-V1-T002",
     "live_calibration_task_state": "verified",
-    "live_calibration_result": {
+    "initial_live_calibration_result": {
       "baseline_target_recall": 1.0,
       "impact_target_recall": 0.6666666666666666,
       "target_recall_advantage": -0.33333333333333337,
@@ -40,16 +40,36 @@
       "default_promoted": false,
       "evidence_path": "docs/evidence/rcga-live-evaluation-20260713.json"
     },
-    "current_task": "RCGA-V1-T003",
-    "pending_refinement_task": "RCGA-V1-T003",
-    "default_promoted": false,
+    "refinement_task": "RCGA-V1-T003",
+    "refinement_task_state": "verified",
+    "refinement_merge_commit": "dff582f9c4e8b5511d4ce436db81e3e245f725ec",
+    "final_live_result": {
+      "baseline_target_recall": 1.0,
+      "impact_target_recall": 1.0,
+      "target_recall_advantage": 0.0,
+      "no_case_regression": true,
+      "context_path_reduction_ratio": 0.5,
+      "navigation_utility_established_for_goldset": true,
+      "default_promoted": false,
+      "evidence_path": "heimgewebe/lenskit:docs/diagnostics/repobrief-agent-impact-live-rerun-v1.json",
+      "evaluation_sha256": "b5f081834138b1d838b2a72183c5c22fbd7f3e805af02e4e98f8a20f7e344e88"
+    },
+    "adoption_decision": {
+      "retain_opt_in": true,
+      "default_promoted": false,
+      "reason": "The fixed live goldset now retains full recall without case regression and reduces aggregate context paths by 50 percent. General agent-quality benefit remains unproven and requires a separate broader benchmark."
+    },
+    "lifecycle": {
+      "completed_at": "2026-07-13",
+      "completion_reason": "All three registered tasks are verified. The Lenskit-native read-only Agent Impact surface is implemented, its initial live regression is repaired, the fixed goldset demonstrates bounded navigation utility, and default promotion remains explicitly disabled."
+    },
     "does_not_establish": [
       "codegraph_product_adoption",
       "complete_call_graph",
       "runtime_correctness",
       "test_sufficiency",
       "review_completeness",
-      "merge_readiness",
+      "merge_readiness_beyond_bound_evidence",
       "security_correctness",
       "general_agent_quality_improvement",
       "default_promotion"

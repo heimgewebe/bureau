@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "SCHAUWERK-VISUAL-ADOPTION-V1",
+  "title": "Schauwerk Visual System v2 adoption",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Turn Visual System v2 from a successful reference board into the default quality-gated composition path for real Schauwerk content, beginning with the software pilot.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/schauwerk-visual-adoption-v1.md"
+  },
+  "completion": [
+    "A real source-bound software snapshot compiles into a narrative Visual System v2 board specification and deterministic Miro DSL.",
+    "The generated board passes the v2 quality gate with no blockers and keeps evidence, freshness and authority visible.",
+    "The existing software-pilot DSL remains available as a compatibility path.",
+    "Repository tests, CI, diff-bound review and one isolated live Miro acceptance are complete, or the live limitation is explicitly recorded without overstating completion."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "predecessor": "SCHAUWERK-VISUAL-SYSTEM-V2",
+    "registered_at": "2026-07-13",
+    "source_request": "arbeite weiter am schauwerk",
+    "problem_statement": "Visual System v2 currently proves a fixed reference board but is not yet the composition path used by real software or education generators.",
+    "does_not_establish": [
+      "automatic_migration_of_all_existing_boards",
+      "universal_aesthetic_quality",
+      "permission_to_modify_existing_or_unrelated_miro_boards",
+      "removal_of_legacy_renderers"
+    ]
+  }
+}

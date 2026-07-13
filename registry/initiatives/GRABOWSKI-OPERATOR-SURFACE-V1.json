@@ -1,14 +1,5 @@
 {
-  "schema_version": 1,
-  "id": "GRABOWSKI-OPERATOR-SURFACE-V1",
-  "title": "Grabowski operator surface",
-  "state": "waiting",
   "commitment": "next",
-  "goal": "Reduce Grabowski operator decision entropy by adding a read-only situation spine, a small intent-shaped grip surface, friction feedback, evidence-bound recall, adaptive low-risk execution shaping, durable jobs and enforceable session attenuation.",
-  "current_plan": {
-    "repository": "bureau",
-    "path": "docs/plans/grabowski-operator-surface-v1.md"
-  },
   "completion": [
     "A fresh operator can read one situation output and know current state, blockers, stale-tool uncertainty and the next allowed grip.",
     "Grip list/run exposes small receipt-bound intents instead of the full tool drawer.",
@@ -18,12 +9,15 @@
     "Equivalent durable work is deduplicated only under exact input and freshness identity, and concurrent validation state is isolated.",
     "Durable job and session capability slices are registered but remain gated behind reliable read-side evidence."
   ],
-  "parallelism": {
-    "max_active_tasks": 1
+  "current_plan": {
+    "path": "docs/plans/grabowski-operator-surface-v1.md",
+    "repository": "bureau"
   },
+  "goal": "Reduce Grabowski operator decision entropy by adding a read-only situation spine, a small intent-shaped grip surface, friction feedback, evidence-bound recall, adaptive low-risk execution shaping, durable jobs and enforceable session attenuation.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
-    "source_summary": "User asked to turn the Grabowski operator-surface ideas into a Bureau plan after review of situation, grips, frozen snapshots, friction loop, push jobs, episodic memory and session attenuation.",
-    "source_mode": "conversation-derived planning registration",
+    "adaptive_agent_bootstrap_t033_20260711": "T033 verified through Grabowski PR #160 and deployed at 2cede6b4d5f9b73828ed7dfb44f24e1da5753f62. It adds a proposal-only session bootstrap and deterministic call-shape linter.",
+    "adaptive_friction_followup_20260711": "T031 registers a shadow-first friction-aware execution governor and T032 registers exact-identity work deduplication plus validation-state isolation from a live audit of 63 friction events, 48 unresolved events and repeated concurrent validation interference.",
     "does_not_establish": [
       "implementation_complete",
       "runtime_deployed",
@@ -32,15 +26,23 @@
       "mcp_catalog_freshness",
       "session_capability_enforced"
     ],
+    "priority_decision": "situation spine before recall; grip surface before friction automation; shadow measurement before bounded adaptive routing; push and capability enforcement later",
     "relationship_to_existing": {
       "GRIP-ROADMAP-V1": "complements and narrows operator-facing work; does not replace queued grip roadmap tasks",
       "docs/grabowski-restplan-v2.md": "reuses capability-profile direction and converts it into task-shaped follow-up"
     },
-    "priority_decision": "situation spine before recall; grip surface before friction automation; shadow measurement before bounded adaptive routing; push and capability enforcement later",
     "rootbroker_recovery_freshness_followup_20260711": "T030 records the reproduced contradiction between recovery_status ready=true and immediate Rootbroker stale-marker denial. It is blocked while another owner holds the Grabowski repository.",
-    "adaptive_friction_followup_20260711": "T031 registers a shadow-first friction-aware execution governor and T032 registers exact-identity work deduplication plus validation-state isolation from a live audit of 63 friction events, 48 unresolved events and repeated concurrent validation interference.",
-    "waiting_reason_20260711": "Waiting because T030 remains blocked and T032 exact work dedupe plus validation isolation remains a separate planned slice. T031 and T033 are verified.",
+    "source_mode": "conversation-derived planning registration",
+    "source_summary": "User asked to turn the Grabowski operator-surface ideas into a Bureau plan after review of situation, grips, frozen snapshots, friction loop, push jobs, episodic memory and session attenuation.",
     "t031_closeout_20260711": "T031 verified after PRs #158/#159, deployment at 733259556144a171914f339a4ea67bca32f08977 and direct live proof of all three shadow-governor tools.",
-    "adaptive_agent_bootstrap_t033_20260711": "T033 verified through Grabowski PR #160 and deployed at 2cede6b4d5f9b73828ed7dfb44f24e1da5753f62. It adds a proposal-only session bootstrap and deterministic call-shape linter."
-  }
+    "t035_verified_20260713": "Observer and optimizer verified through Grabowski PR #178 and deployed at 7731fa5b351b7975b802193c44e15ee19a66e6b5. Legacy no-event reports remain diagnostic only.",
+    "t037_verified_20260713": "Evidence-bound Agent Workspace adoption verified through PR #178, runtime release 7731fa5b351b-srcset594dcb62e292-locke6664d600b6c-contract22f31ec746bf, and successful pilot gaw-grabowski-chat-grabowski-t037-po-1c5ac539c549; comparison sha256 381cb55e8d431e94356901538f9166000f3677d70dda9c662029677889321a6b.",
+    "waiting_reason_20260711": "Waiting because T030 remains blocked and T032 exact work dedupe plus validation isolation remains a separate planned slice. T031 and T033 are verified."
+  },
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "schema_version": 1,
+  "state": "waiting",
+  "title": "Grabowski operator surface"
 }

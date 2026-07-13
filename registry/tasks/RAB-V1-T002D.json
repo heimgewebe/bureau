@@ -3,7 +3,7 @@
   "id": "RAB-V1-T002D",
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "Run one newly authorized live baseline and RepoBrief pair",
-  "state": "planned",
+  "state": "ready",
   "goal": "After the one-shot orchestrator is merged and verified, execute exactly one newly authorized frozen baseline/treatment pair with no retry, bounded total spend, immutable evidence and immediate fail-closed stop on any invalid outcome.",
   "priority": {
     "lane": "next",
@@ -91,6 +91,25 @@
       "benchmark completion",
       "provider reliability beyond one pair",
       "permission to dispatch 96 runs",
+      "default promotion"
+    ],
+    "updated_at": "2026-07-13",
+    "ready_at": "2026-07-13",
+    "execution_status": "not_started",
+    "ready_reason": "T002C is verified and the one-shot live acceptance contract is independently complete.",
+    "predecessor": {
+      "task_id": "RAB-V1-T002C",
+      "state": "verified",
+      "grabowski_merge_commit": "f267070763fe8142f49c6d93810df0f7e219b308"
+    },
+    "requires_separate_reviewed_authorization": true,
+    "retry_permitted": false,
+    "provider_processes_started": 0,
+    "real_provider_cost_observed_usd": null,
+    "dispatch_boundary": "At most one baseline and one treatment process; no restart after success, failure, ambiguous start or interrupted publication.",
+    "does_not_authorize": [
+      "RAB-V1-T002B retry",
+      "RAB-V1-T002 96-run benchmark",
       "default promotion"
     ]
   }

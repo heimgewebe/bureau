@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "repo.heim-pc",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/heim-pc",
+  "grabowski_key": "repo:/home/alex/repos/heim-pc"
+}

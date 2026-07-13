@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Make the operator ecosystem machine-first",
+  "state": "active",
+  "commitment": "later",
+  "goal": "Make ChatGPT through Grabowski the deterministic machine operator by connecting the canonical heim-pc entry, typed runtime and catalog reads, observable source identity, enforced write ownership and provenance-bound context without creating a second task, runtime or architecture truth.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/operator-machine-readability-v1.md"
+  },
+  "completion": [
+    "Grabowski exposes and consumes the canonical local operator entry through a typed, hash-bound read and scope-routing surface.",
+    "Connector snapshot identity and structural contract compatibility are observable and drift fails closed without claiming model comprehension or universal client compliance.",
+    "A valid lease either prevents foreign writes in its write scope or produces complete, attributable conflict evidence before publication.",
+    "The Bureau CLI, deployed package and selected checkout expose the same source identity and cannot silently execute stale code.",
+    "Bureau state-root evidence and plan directories are classified or migrated without deleting unknown operator data.",
+    "The existing RepoBrief provenance task binds source commit, dirty state and generation time before freshness can be current.",
+    "Systemkatalog stable semantics are available through a typed read-only operator surface with explicit non-claims.",
+    "Metarepo contracts resolve reproducibly in isolated worktrees without hidden sibling-path or environment assumptions.",
+    "Optional heim-pc state projections carry generator, source, timestamp and content provenance; absence remains a valid state.",
+    "A fresh end-to-end consumer test reaches the correct host, semantic, task and runtime truths without human shell assistance."
+  ],
+  "parallelism": {
+    "max_active_tasks": 2
+  },
+  "metadata": {
+    "registered_at": "2026-07-13T17:12:00+02:00",
+    "source_request": "User required the entire operator ecosystem and the canonical heim-pc entry to be optimized for machine readability because ChatGPT through Grabowski is the operator.",
+    "implemented_basis": {
+      "repository": "heimgewebe/heim-pc",
+      "pull_request": 37,
+      "head": "dc748147a34311e6e7715c6e8a59be17efe7180c",
+      "merge_commit": "d51460c52dba7603ecbe4a6d34106905ebe1e682",
+      "github_diff_sha256": "08dbb76d1983490fc6dd2a5cc1b366311fcccd34db431d060a028500b21e0533"
+    },
+    "reused_existing_tasks": [
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T021",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T047",
+      "OPERATOR-INTEGRATION-LOOP-V1-T004"
+    ],
+    "new_task_count": 9,
+    "does_not_establish": [
+      "implementation_of_registered_tasks",
+      "runtime_correctness",
+      "consumer_adoption",
+      "merge_readiness",
+      "automatic_dispatch_authority",
+      "permission_to_read_private_home_content"
+    ]
+  }
+}

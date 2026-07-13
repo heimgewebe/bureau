@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T008",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Resolve central contracts reproducibly in isolated worktrees",
+  "state": "planned",
+  "goal": "Make heim-pc and other consumers validate Metarepo contracts from an explicit, identity-bound source without depending on an accidental sibling checkout path or environment propagation through a particular execution wrapper.",
+  "priority": {
+    "lane": "next",
+    "rank": 908
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/metarepo",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/metarepo",
+      "repo:/home/alex/repos/heim-pc"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.metarepo",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.heim-pc",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "resolver-contract",
+      "assertion": "Consumers resolve contracts from an explicit CLI argument, immutable checked-out source or manifest-bound cache with documented precedence; ambient sibling paths are never silently authoritative."
+    },
+    {
+      "id": "identity",
+      "assertion": "Validation receipts include contract repository identity, commit, dirty state, schema path and schema SHA-256 together with consumer head and validated artifact hashes."
+    },
+    {
+      "id": "offline-and-ci",
+      "assertion": "The same resolver works in a clean local worktree, GitHub Actions checkout, detached source archive and approved offline cache without changing semantic results."
+    },
+    {
+      "id": "fail-closed",
+      "assertion": "Missing, dirty-unapproved, wrong-repository or incompatible contract sources return typed errors and cannot be mistaken for successful validation."
+    },
+    {
+      "id": "execution-surface",
+      "assertion": "Grabowski synchronous and durable execution routes preserve or explicitly reject required environment and source arguments; the validator does not rely on hidden shell initialization."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover sibling checkout, explicit path, immutable archive, missing environment, wrong commit, dirty schema, CI layout and concurrent contract movement."
+    }
+  ],
+  "metadata": {
+    "source": "heim-pc PR #37 validation",
+    "observed_at": "2026-07-13T15:00:00Z",
+    "observation": "The local validate_contracts path expected a sibling Metarepo checkout or environment override; Grabowski's synchronous route did not preserve the attempted environment form, while CI succeeded with an explicit _metarepo checkout.",
+    "does_not_establish": [
+      "contract_invalidity",
+      "ci_local_parity_without_implementation",
+      "permission_to_update_central_schemas"
+    ]
+  }
+}

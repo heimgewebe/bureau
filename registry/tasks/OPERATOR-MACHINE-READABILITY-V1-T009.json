@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T009",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Generate optional heim-pc state only with source provenance",
+  "state": "planned",
+  "goal": "Replace the former placeholder idea with an optional, provenance-bound host-state projection that is absent when no trustworthy scan exists and can never use null or zero values to simulate current machine knowledge.",
+  "priority": {
+    "lane": "next",
+    "rank": 909
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heim-pc"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.heim-pc",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T008"
+  ],
+  "acceptance": [
+    {
+      "id": "absence-valid",
+      "assertion": "No current host-state file is a valid and explicitly documented state; consumers do not require placeholder files."
+    },
+    {
+      "id": "provenance",
+      "assertion": "Every generated projection binds host identifier, generator version, scan profile, source paths or APIs, start/end timestamps, redaction policy, source digests and output digest."
+    },
+    {
+      "id": "bounded-scope",
+      "assertion": "The default scan reads only declared metadata surfaces and never broad-scans secret, browser-profile, keyring, private-content or agent-history paths."
+    },
+    {
+      "id": "freshness",
+      "assertion": "Consumers distinguish current, stale, partial, unknown and invalid projections; age alone cannot establish freshness when source identity changed."
+    },
+    {
+      "id": "truth-boundary",
+      "assertion": "The projection cannot establish live service health, repository dirty state, task priority, PR state or backup recoverability without the respective fresh primary-source evidence."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover absent state, valid generation, interrupted scan, redaction, source drift, stale timestamp, malformed provenance and private-path exclusion."
+    }
+  ],
+  "metadata": {
+    "source": "heim-pc PR #37 follow-up",
+    "observed_at": "2026-07-13T15:00:00Z",
+    "observation": "state/index.json and state/repos.json contained placeholder null/zero data without timestamps or source provenance and were removed from active truth in PR #37.",
+    "does_not_establish": [
+      "need_for_continuous_host_scanning",
+      "current_host_inventory",
+      "backup_recoverability"
+    ]
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T010",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Prove end-to-end canonical operator-entry consumption",
+  "state": "planned",
+  "goal": "Demonstrate with a fresh, conversation-independent ChatGPT/Grabowski session that the operator lands on the canonical heim-pc entry, resolves the correct truth sources and completes bounded read scenarios without human shell assistance or hidden memory.",
+  "priority": {
+    "lane": "next",
+    "rank": 910
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/heim-pc",
+      "repo:/home/alex/repos/systemkatalog",
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.heim-pc",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "bureau"
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T001",
+    "OPERATOR-MACHINE-READABILITY-V1-T002",
+    "OPERATOR-MACHINE-READABILITY-V1-T003",
+    "OPERATOR-MACHINE-READABILITY-V1-T004",
+    "OPERATOR-MACHINE-READABILITY-V1-T005",
+    "OPERATOR-INTEGRATION-LOOP-V1-T004",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T047",
+    "OPERATOR-MACHINE-READABILITY-V1-T007",
+    "OPERATOR-MACHINE-READABILITY-V1-T008"
+  ],
+  "acceptance": [
+    {
+      "id": "fresh-session",
+      "assertion": "The test starts without project conversation memory, injected repository names or preselected tools beyond access to Grabowski and the normal agent instructions."
+    },
+    {
+      "id": "host-entry",
+      "assertion": "The operator reads and hash-verifies the canonical local entry before systemwide or host-level work and does not broad-scan the home directory."
+    },
+    {
+      "id": "scenario-routing",
+      "assertion": "Scenarios for single-repository code, cross-system semantics, task selection, runtime health and historical evidence each reach the correct primary source and avoid irrelevant whole-ecosystem loading."
+    },
+    {
+      "id": "human-boundary",
+      "assertion": "No scenario asks the human to run shell commands, inspect files or aggregate status; the human is used only for meaning, approval or abort decisions."
+    },
+    {
+      "id": "negative-cases",
+      "assertion": "Stale projection, unknown RepoBrief provenance, connector mismatch, stale Bureau runtime, unhealthy Bureau state root and active write conflict all produce typed abstention or bounded diagnostic behavior."
+    },
+    {
+      "id": "receipt",
+      "assertion": "A reproducible receipt binds agent instructions, connector/runtime identities, operator-entry digest, scenario inputs, tool calls, source digests, outcomes and non-claims."
+    },
+    {
+      "id": "adoption-threshold",
+      "assertion": "The canonical route is adopted only after repeated clean runs and remains reversible; a one-off successful scripted demo is insufficient."
+    }
+  ],
+  "metadata": {
+    "source": "operator ecosystem machine-readability audit",
+    "observed_at": "2026-07-13T15:00:00Z",
+    "risk": "A well-designed contract has no operational value if fresh ChatGPT clients do not discover or obey it consistently.",
+    "reuses_existing_tasks": [
+      "OPERATOR-INTEGRATION-LOOP-V1-T004",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T047"
+    ],
+    "does_not_establish": [
+      "general_agent_reliability",
+      "absence_of_future_instruction_drift",
+      "mutation_or_merge_authority"
+    ]
+  }
+}

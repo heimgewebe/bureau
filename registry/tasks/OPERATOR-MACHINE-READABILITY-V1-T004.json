@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T004",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Bind Bureau CLI execution to an observable current source identity",
+  "state": "planned",
+  "goal": "Prevent `python3 -m bureau.cli` or the `bureau` command from silently executing a stale globally installed package while reading a newer Registry checkout, and expose the exact code, Registry and state-store identities in every operational response.",
+  "priority": {
+    "lane": "next",
+    "rank": 904
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "bureau"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "source-identity",
+      "assertion": "Every Bureau CLI JSON response exposes module path, package version, source commit or immutable release digest, Registry root/head/dirty state and state-store schema identity."
+    },
+    {
+      "id": "stale-runtime-gate",
+      "assertion": "A deployed package that is older or incompatible with the selected Registry fails normal claims and writes with a typed stale-runtime result while retaining read-only diagnosis."
+    },
+    {
+      "id": "canonical-launcher",
+      "assertion": "A single documented and machine-discoverable launcher selects the deployed immutable Bureau runtime or the current checkout explicitly; ambient user-site imports cannot silently win."
+    },
+    {
+      "id": "deployment",
+      "assertion": "Bureau deployment and upgrade produce an immutable manifest, version/hash readback and rollback path comparable to Grabowski runtime identity."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests reproduce a stale user-site package, editable checkout, detached worktree, incompatible schema, clean deployed runtime and explicit source override."
+    }
+  ],
+  "metadata": {
+    "source": "operator ecosystem machine-readability audit",
+    "observed_at": "2026-07-13T15:08:00Z",
+    "observation": {
+      "ambient_module": "/home/alex/.local/lib/python3.10/site-packages/bureau/v2.py",
+      "selected_registry": "/home/alex/repos/.bureau-staging/operator-machine-readability-followups-v1",
+      "effect": "The stale package reported lifecycle mismatches already fixed in origin/main and blocked Grabowski's normal Bureau lease contract."
+    },
+    "does_not_establish": [
+      "registry_corruption",
+      "database_corruption",
+      "safe_mutation_until_runtime_parity_is_proven"
+    ]
+  }
+}

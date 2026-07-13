@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "id": "RAB-V1-T002D",
+  "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
+  "title": "Run one newly authorized live baseline and RepoBrief pair",
+  "state": "planned",
+  "goal": "After the one-shot orchestrator is merged and verified, execute exactly one newly authorized frozen baseline/treatment pair with no retry, bounded total spend, immutable evidence and immediate fail-closed stop on any invalid outcome.",
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "depends_on": [
+    "RAB-V1-T002C"
+  ],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.lenskit",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/lenskit"
+    ],
+    "approval": {
+      "action_class": "agent_dispatch",
+      "required_level": "reviewed_plan",
+      "note": "A new explicit authorization must bind the exact merged runner/preflight heads, pair, model, per-process ceiling and total ceiling. Exactly two provider processes are permitted; no retry or continuation."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "claude-cli",
+    "instrumented-agent-runner"
+  ],
+  "acceptance": [
+    {
+      "id": "rab-v1-t002d-new-authorization",
+      "assertion": "A reviewed dispatch manifest created after T002C binds exact runner and preflight merge commits, Claude executable hash, frozen pair hashes, model, sampling contract, credential boundary, per-process budget and aggregate budget before any provider process."
+    },
+    {
+      "id": "rab-v1-t002d-exactly-two",
+      "assertion": "Exactly one baseline and one treatment process are launched. Existing intents, receipts, ambiguous outcomes, duplicate conditions or a third process block before provider execution."
+    },
+    {
+      "id": "rab-v1-t002d-valid-pair",
+      "assertion": "Both conditions produce valid Lenskit receipts with provider model, usage, cost, timestamps, tool evidence, distinct sessions and complete hash-bound transcripts; treatment proves at least one approved RepoBrief call."
+    },
+    {
+      "id": "rab-v1-t002d-budget-stop",
+      "assertion": "Each process has a positive reviewed ceiling no greater than USD 1.00 and aggregate authorized spend no greater than USD 2.00. Any budget stop or observed overshoot remains visible and blocks the pair without retry."
+    },
+    {
+      "id": "rab-v1-t002d-latency-source",
+      "assertion": "The final report separates snapshot, freshness, agent and total latency and proves source HEAD, index and worktree unchanged before and after."
+    },
+    {
+      "id": "rab-v1-t002d-stop-rule",
+      "assertion": "Any invalid receipt, unavailable provider, missing RepoBrief use, stale state, timeout, source mutation or uncertain launch ends the task without retry and leaves RAB-V1-T002 planned."
+    },
+    {
+      "id": "rab-v1-t002d-evidence",
+      "assertion": "The reviewed report binds plan, dispatch ledger, requests, receipts, transcripts, environment, costs, timings and failure states and explicitly makes no usefulness or default-promotion claim."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source_issue": "heimgewebe/bureau#481",
+    "replaces_live_dispatch_of": "RAB-V1-T002B",
+    "authorization_status": "not_authorized",
+    "fixed_pair_count": 1,
+    "provider_process_count": 2,
+    "per_run_max_cost_usd": 1.0,
+    "total_max_cost_usd": 2.0,
+    "default_promoted": false,
+    "does_not_establish": [
+      "RepoBrief usefulness",
+      "benchmark completion",
+      "provider reliability beyond one pair",
+      "permission to dispatch 96 runs",
+      "default promotion"
+    ]
+  }
+}

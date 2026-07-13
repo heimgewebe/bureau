@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "id": "RAB-V1-T002C",
+  "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
+  "title": "Qualify the integrated live-preflight orchestrator without provider use",
+  "state": "ready",
+  "goal": "Rebase and finish the integrated preflight implementation on the current hardened runner, enforce a create-only two-process one-shot ledger and prove every dispatch, cost, receipt, transcript and source-integrity boundary synthetically before any new live authorization.",
+  "priority": {
+    "lane": "next",
+    "rank": 19
+  },
+  "depends_on": [
+    "RAB-V1-T002A"
+  ],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.lenskit",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/lenskit"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "This task may edit, test and merge the preflight implementation but must not invoke a live provider or consume benchmark budget."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "instrumented-agent-runner"
+  ],
+  "acceptance": [
+    {
+      "id": "rab-v1-t002c-current-runner",
+      "assertion": "The implementation is rebased onto and tested against Grabowski main including runner hardening merge 1975c3f5c63fcb0e50f3f3d1101a34583d5a9fbd; no older worktree runner or second runner implementation is used."
+    },
+    {
+      "id": "rab-v1-t002c-one-shot-ledger",
+      "assertion": "A create-only dispatch ledger permits at most one baseline and one treatment process for a frozen pair. A prior attempt, any ambiguous launch outcome, a completed condition, changed schema or changed code blocks another provider start instead of retrying."
+    },
+    {
+      "id": "rab-v1-t002c-artifact-integrity",
+      "assertion": "Plan, requests, dispatch intents, receipts, errors, transcripts and report paths are create-only and hash-bound; no later attempt can overwrite or replace earlier evidence."
+    },
+    {
+      "id": "rab-v1-t002c-cost-ledger",
+      "assertion": "The report totals every observed provider process and cost, preserves budget-stop overshoot, rejects process counts above two and never presents a partial or retried pair as valid."
+    },
+    {
+      "id": "rab-v1-t002c-frozen-pair",
+      "assertion": "Baseline and treatment are proven equal for case, repetition, prompt, model, sampling, repository commit and budgets while condition-specific tools remain distinct and exact."
+    },
+    {
+      "id": "rab-v1-t002c-latency-and-source",
+      "assertion": "Snapshot preparation, freshness check, agent execution and total time are separated; source HEAD, index and worktree are read before and after and any mutation or stale state blocks."
+    },
+    {
+      "id": "rab-v1-t002c-tests",
+      "assertion": "Synthetic tests cover clean success, budget stop, provider failure, ambiguous launch, duplicate condition, third process, overwritten artifact, stale treatment, source mutation and interrupted finalization without any live provider call."
+    },
+    {
+      "id": "rab-v1-t002c-merge-proof",
+      "assertion": "A reviewed PR with exact head/diff binding and green CI is merged, main is read back and the proof explicitly states that no live pair and no RepoBrief usefulness were established."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source_issue": "heimgewebe/bureau#481",
+    "predecessor": "RAB-V1-T002B",
+    "candidate_pull_request": "heimgewebe/grabowski#186",
+    "required_runner_merge": "heimgewebe/grabowski@1975c3f5c63fcb0e50f3f3d1101a34583d5a9fbd",
+    "failed_preflight_evidence_gist": "https://gist.github.com/alexdermohr/895e0e93e699f31d4081862185c19605",
+    "failed_preflight_evidence_sha256": "bfef1cde93908b1761d294f1d5840c2b50a332073f61c9b3acd2c3aa615d9678",
+    "live_provider_dispatch_allowed": false,
+    "default_promoted": false,
+    "does_not_establish": [
+      "valid live pair",
+      "RepoBrief usefulness",
+      "provider reliability",
+      "permission to retry RAB-V1-T002B",
+      "permission to start the 96-run benchmark",
+      "default promotion"
+    ],
+    "queue_projection": {
+      "current": "T002B remains in next lane and is skipped as blocked",
+      "desired": "Replace T002B with T002C after PR #509 is merged or rebased",
+      "conflict": "heimgewebe/bureau#509 touches the same queue hunk",
+      "dispatch_truth": "Lifecycle marks T002C ready even while the queue projection is stale."
+    }
+  }
+}

@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T034",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Harden Agent Workspace role recovery and closeout",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 530
@@ -77,6 +77,79 @@
       "merge readiness",
       "completion of T032"
     ],
-    "followup_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T035"
+    "followup_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T035",
+    "implementation_prs": [
+      "heimgewebe/grabowski#162",
+      "heimgewebe/grabowski#163"
+    ],
+    "implementation_heads": {
+      "162": "20f137b5632a3aa3d66c3d059a2aeb2f90057e76",
+      "163": "c176c69df3815a2715d7c32292284db27d26b35a"
+    },
+    "implementation_merge_commits": {
+      "162": "503c92e22051e195630f7a2d0ed7b34af761d37c",
+      "163": "2791aae03d0cdd67c0b2a3269d5c2a4c4a353fc6"
+    },
+    "verified_at": "2026-07-13T04:52:00Z",
+    "verification_note": "PRs #162 and #163 implement exact-sandbox preflight, one explicit read-role retry, immutable attempt receipts, close guards and external closeout guidance. Both Python validation jobs passed on both PRs. Their merge commits are ancestors of the deployed runtime head 0f5473e117ddc7f6e830b961a49e73fcf3ebb657.",
+    "validated_acceptance": {
+      "role-toolchain-preflight": "PR #162 adds same-sandbox executable/module preflight; PR #163 binds Python probing to the exact declared interpreter and fails closed on malformed retry state.",
+      "bounded-read-role-retry": "The typed role-retry tool permits one explicit replacement command for tests or review only, against the unchanged frozen writer snapshot.",
+      "immutable-attempt-evidence": "Attempt-specific create-only receipts, previous receipt hashes and exact selected-attempt command hashes are enforced and regression-tested.",
+      "retry-policy-boundaries": "Writer retry, automatic retry, semantic failures, blocking review verdicts, closed workspaces and binding drift remain denied.",
+      "actionable-status-and-close-guard": "Status and closeout distinguish retry eligibility, failure, abandonment and unresolved start intents; abandonment is explicit.",
+      "external-closeout-plan": "Status, collect and close expose PR/integration, Bureau, lease, checkout and final-summary reconciliation as external truth rather than implied completion.",
+      "live-regression-proof": "GitHub validate (3.10) and validate (3.12) passed on both #162 and #163; the current deployed runtime identity includes the workspace and role modules and contains both merge commits in ancestry."
+    },
+    "artifacts": {
+      "pr_162_diff_sha256": "d6c91812a96ce6e9ec6e18cb055d43ecb4bf63e864f06b3fad62f900a77858ca",
+      "pr_163_diff_sha256": "f4b8eed75f4395c2a7cdddcd7b20cae3dfa7e3de2831d492b893f647a7cccfe4"
+    },
+    "runtime_snapshot": {
+      "runtime_head": "0f5473e117ddc7f6e830b961a49e73fcf3ebb657",
+      "release_id": "0f5473e117dd-srcseta1afe7bc3bdd-locke6664d600b6c-contractb46393fca5a9",
+      "source_sha256": "e7eca914dcdda0233d844c2e99cc008ff4ea0239cafe28511c08d93a7dd9a1e0",
+      "deployment_integrity_valid": true,
+      "workspace_module_identity_valid": true,
+      "role_module_identity_valid": true
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T034",
+          "source_ref": "heimgewebe/grabowski#162",
+          "number": 162,
+          "head_sha": "20f137b5632a3aa3d66c3d059a2aeb2f90057e76",
+          "merge_commit_sha": "503c92e22051e195630f7a2d0ed7b34af761d37c",
+          "diff_sha256": "d6c91812a96ce6e9ec6e18cb055d43ecb4bf63e864f06b3fad62f900a77858ca"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T034",
+          "source_ref": "heimgewebe/grabowski#163",
+          "number": 163,
+          "head_sha": "c176c69df3815a2715d7c32292284db27d26b35a",
+          "merge_commit_sha": "2791aae03d0cdd67c0b2a3269d5c2a4c4a353fc6",
+          "diff_sha256": "f4b8eed75f4395c2a7cdddcd7b20cae3dfa7e3de2831d492b893f647a7cccfe4"
+        },
+        {
+          "kind": "runtime_probe",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T034",
+          "source_ref": "grabowski_deployment_identity@0f5473e117ddc7f6e830b961a49e73fcf3ebb657",
+          "commit_sha": "0f5473e117ddc7f6e830b961a49e73fcf3ebb657",
+          "content_sha256": "e7eca914dcdda0233d844c2e99cc008ff4ea0239cafe28511c08d93a7dd9a1e0"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "5896c537bd88ff25819da489c653ec6c6a64a52cd26da37c0bbdacf77a4ca8e9",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

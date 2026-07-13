@@ -59,8 +59,8 @@
         "evidence_sha256": "bfef1cde93908b1761d294f1d5840c2b50a332073f61c9b3acd2c3aa615d9678"
       },
       "RAB-V1-T002": {
-        "state": "planned",
-        "blocker": "Requires verified RAB-V1-T002D live provider evidence before any 96-run dispatch."
+        "state": "blocked",
+        "condition": "Blocked until RAB-V1-T002D is separately authorized, executed once and verified."
       },
       "RAB-V1-T003": {
         "state": "planned",
@@ -68,12 +68,12 @@
       },
       "RAB-V1-T002C": {
         "state": "verified",
-        "outcome": "The integrated one-shot preflight is merged and synthetically qualified with a two-process ceiling, create-only hash-chained ledger, post-intent credential-byte binding and no live provider use.",
+        "outcome": "One-shot integrated preflight merged and synthetically qualified; no live provider use.",
         "pull_request": "heimgewebe/grabowski#186",
         "reviewed_head": "6bff7f922e1ed80d74af3c623caa0cb10f5bb97e",
         "merge_commit": "f267070763fe8142f49c6d93810df0f7e219b308",
         "diff_sha256": "c16378e5fb35b9ae0f212b07c48a9db9a0b6e4b0ace8613d84201a4cb5028a16",
-        "self_review_sha256": "037a215f611167693392e5ee0cf1a1c7f78094e3ec476b563cda14016506c0bd",
+        "self_review_sha256": "f19f5a2ef2c3428e4a6992a7b95ae2d5a5b5850544b152131afb770258e7dd7f",
         "does_not_establish": [
           "valid live pair",
           "RepoBrief usefulness",
@@ -84,8 +84,10 @@
         ]
       },
       "RAB-V1-T002D": {
-        "state": "planned",
-        "scope": "After T002C, require a new reviewed authorization for exactly one baseline and one treatment process with no retry."
+        "state": "ready",
+        "authorization_status": "not_authorized",
+        "execution_status": "not_started",
+        "scope": "One separately reviewed, one-shot live baseline/treatment pair; no retries and no benchmark launch."
       }
     },
     "default_promoted": false,

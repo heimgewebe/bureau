@@ -2,36 +2,30 @@
   "schema_version": 1,
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T005",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
-  "title": "Gate Heimlern and Vibe-Lab work by consumers",
+  "title": "Gate Vibe-Lab experiments by consumers",
   "state": "planned",
   "priority": {
     "lane": "later",
     "rank": 320
   },
-  "goal": "Require every new Heimlern proposal or Vibe-Lab experiment to name a consumer, decision target, success metric, expiry and promotion/closure outcome.",
+  "goal": "Require every new Vibe-Lab experiment to name an external consumer, a concrete decision target, a measurable success or falsification criterion, an expiry and a deterministic promotion or closure outcome.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/bureau",
+    "working_repository": "/home/alex/repos/vibe-lab",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau",
-      "repo:/home/alex/repos/heimlern",
-      "repo:/home/alex/repos/vibe-lab"
+      "repo:/home/alex/repos/vibe-lab",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T005.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
-      "resource": "repo.heimlern",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
       "resource": "repo.vibe-lab",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -45,24 +39,31 @@
   "acceptance": [
     {
       "id": "consumer-required",
-      "assertion": "New proposal and experiment registrations fail closed without a named downstream consumer."
+      "assertion": "New Vibe-Lab experiment registrations fail closed without a named current external consumer."
     },
     {
       "id": "decision-and-metric",
-      "assertion": "Each item states the decision it informs and a measurable success or falsification criterion."
+      "assertion": "Each experiment states the concrete decision it informs and a measurable success, harm or falsification criterion."
     },
     {
       "id": "expiry",
-      "assertion": "Each item has a review or expiry date and a deterministic close/archive path."
+      "assertion": "Each experiment has a review or expiry date and a deterministic promote, pilot, defer, reject or archive path."
+    },
+    {
+      "id": "surface-budget",
+      "assertion": "New experiments remove, replace or retire at least as much durable surface as they add, unless a reviewed exception explains the net cost."
     },
     {
       "id": "no-auto-authority",
-      "assertion": "Neither Heimlern nor Vibe-Lab can auto-apply routing, policy, queue or runtime changes."
+      "assertion": "Vibe-Lab cannot auto-apply routing, policy, queue, merge or runtime changes."
     }
   ],
   "metadata": {
     "registered_at": "2026-07-10T07:25:00+02:00",
+    "transferred_at": "2026-07-13",
+    "transfer_decision": "Heimlern-specific proposal gating is retired; the surviving governance function belongs to Vibe-Lab experiments.",
     "source_audit": "heimgewebe/cabinet#103",
+    "vibe_lab_existing_boundary": "docs/roadmap.md#neue-arbeit-gate",
     "does_not_establish": [
       "merge_permission",
       "runtime_correctness",

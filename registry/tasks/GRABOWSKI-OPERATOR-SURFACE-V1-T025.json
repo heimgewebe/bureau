@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
-  "state": "planned",
+  "state": "superseded",
   "depends_on": [
     "GRABOWSKI-OPERATOR-SURFACE-V1-T004"
   ],
@@ -36,7 +36,15 @@
       "grabowski",
       "heimlern"
     ],
-    "non_goal": "Does not alter live routing, merge policy, task priority or runtime capabilities."
+    "non_goal": "Does not alter live routing, merge policy, task priority or runtime capabilities.",
+    "superseded_by": [
+      "CCM-V1-T003",
+      "CCM-V1-T005"
+    ],
+    "superseded_at": "2026-07-13",
+    "supersession_reason": "A persistent Heimlern recall consumer would duplicate the experiment registration and natural-case evaluation now owned by Vibe-Lab. The useful advisory-history intent survives in the CCM treatment path without a live consumer or routing authority.",
+    "replacement_repository": "heimgewebe/vibe-lab",
+    "historical_record_retained": true
   },
   "acceptance": [
     {

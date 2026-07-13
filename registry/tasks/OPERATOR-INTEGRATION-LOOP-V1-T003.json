@@ -56,7 +56,7 @@
     },
     {
       "id": "real-consumer",
-      "assertion": "At least one consumer such as a morning digest, Heimlern input or Chronik query reads the event stream and demonstrates value beyond Git, Bureau receipts and source logs."
+      "assertion": "At least one consumer such as a morning digest, a Vibe-Lab experiment input or a Chronik query reads the event stream and demonstrates value beyond Git, Bureau receipts and source logs."
     },
     {
       "id": "service-decision-deferred",
@@ -66,6 +66,8 @@
   "metadata": {
     "registered_at": "2026-07-10T07:31:00+02:00",
     "source_plan": "docs/plans/operator-integration-loop-v1.md",
+    "heimlern_consumer_reference_replaced_at": "2026-07-13",
+    "heimlern_consumer_replacement": "Vibe-Lab experiment input",
     "related_tasks": [
       "BUREAU-LIVE-REGISTER-V1-T006"
     ],

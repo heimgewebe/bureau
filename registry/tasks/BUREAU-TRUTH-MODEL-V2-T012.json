@@ -31,7 +31,7 @@
   ],
   "id": "BUREAU-TRUTH-MODEL-V2-T012",
   "title": "Preserve orphaned initiative lifecycle closeouts",
-  "state": "planned",
+  "state": "verified",
   "goal": "Move the unique, uncommitted completion transitions for BUREAU-LIVE-REGISTER-V1 and UTIL-BASE-V1 from the stale canonical checkout into reviewed Git truth without resetting, stashing or overwriting foreign state.",
   "priority": {
     "lane": "later",
@@ -64,20 +64,102 @@
   ],
   "metadata": {
     "registered_at": "2026-07-13T14:58:00+02:00",
+    "verified_at": "2026-07-13T15:12:00+02:00",
     "source": "Live Bureau drift audit after autonomous Grabowski task selection",
-    "bootstrap_pr_binding_exception": "The task and its already-existing bounded lifecycle payload are introduced together because no prior task represented the orphaned dirty changes.",
+    "bootstrap_pr_binding_exception": "The task and its already-existing bounded lifecycle payload were introduced together because no prior task represented the orphaned dirty changes.",
     "observed_canonical_head": "b65d1f8f3ba5b67d707c23dfa773814067267f71",
     "observed_origin_main": "60f30a8966e12c66897598f2a9de6a5fb7e21d6f",
     "observed_dirty_paths": [
       "registry/initiatives/BUREAU-LIVE-REGISTER-V1.json",
       "registry/initiatives/UTIL-BASE-V1.json"
     ],
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_orphaned_lifecycle_closeouts_preserved",
+      "implementation_pull_request": 503,
+      "implementation_head": "90adf09bc676b67f330664eb490054d70b979556",
+      "merge_commit": "9351282497af2853ecc47870a0b522b3b3a2b05d",
+      "github_diff_sha256": "0ae6683b5213315c963998448d88e5fd8cec56531edb36b6cb590c297dc34f8f",
+      "validation": {
+        "registry_check_valid": true,
+        "focused_tests_passed": 48,
+        "full_tests_passed": 481,
+        "full_test_task_id": "f67aebfdf72f41a89eb562e9",
+        "diff_check": "PASS",
+        "ci_python_3_10": "SUCCESS",
+        "ci_python_3_12": "SUCCESS",
+        "post_merge_registry_check_valid": true
+      },
+      "review": {
+        "result": "PASS",
+        "reviewed_head": "90adf09bc676b67f330664eb490054d70b979556",
+        "github_diff_sha256": "0ae6683b5213315c963998448d88e5fd8cec56531edb36b6cb590c297dc34f8f",
+        "axes": [
+          "correctness",
+          "regression_risk",
+          "tests",
+          "security",
+          "integration"
+        ],
+        "open_findings": []
+      },
+      "canonical_checkout": {
+        "changed": false,
+        "process_count": 0,
+        "ahead_count": 0,
+        "behind_count_before_attempt": 47,
+        "dirty_paths_match_origin_main": true,
+        "fast_forward_command": "git merge --ff-only origin/main",
+        "fast_forward_result": "fail_closed_local_changes_would_be_overwritten",
+        "boundary_result": "PASS: checkout remained untouched; no reset, stash, restore or rebase was used."
+      }
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "BUREAU-TRUTH-MODEL-V2-T012",
+          "source_ref": "heimgewebe/bureau#503",
+          "number": 503,
+          "head_sha": "90adf09bc676b67f330664eb490054d70b979556",
+          "merge_commit_sha": "9351282497af2853ecc47870a0b522b3b3a2b05d",
+          "diff_sha256": "0ae6683b5213315c963998448d88e5fd8cec56531edb36b6cb590c297dc34f8f"
+        },
+        {
+          "kind": "test_run",
+          "authority": "grabowski-task",
+          "task_id": "BUREAU-TRUTH-MODEL-V2-T012",
+          "source_ref": "grabowski-task:f67aebfdf72f41a89eb562e9",
+          "result": "PASS",
+          "passed": 481
+        },
+        {
+          "kind": "live_probe",
+          "authority": "git-readback",
+          "task_id": "BUREAU-TRUTH-MODEL-V2-T012",
+          "source_ref": "canonical-bureau-vs-origin-main-after-merge",
+          "proof_sha256": "c27aa4b513ccad92bda43413a5a32527381a4d4c9a2b9c474d9a735f9de9c980",
+          "content_sha256": "fd44e693ac6683776243036f621bc9000eaff059d7b0d844da41a78ff0502752"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "a0994d311411040de14b8d22bcb86ac9085ee3bc8f0aae57cca00315b593e934",
+      "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8",
+      "source": "github_pull_request_and_local_readback",
+      "source_ref": "github-pr:heimgewebe/bureau#503@90adf09bc676b67f330664eb490054d70b979556:9351282497af2853ecc47870a0b522b3b3a2b05d",
+      "evidence_sha256": "0ae6683b5213315c963998448d88e5fd8cec56531edb36b6cb590c297dc34f8f"
+    },
+    "verification_note": "PR #503 preserved the two unique lifecycle transitions byte-for-byte, passed complete local and GitHub validation, merged at the exact reviewed head, and passed post-merge registry validation. The canonical checkout was intentionally left dirty after ff-only refused to proceed; no destructive normalization was attempted.",
     "does_not_establish": [
       "permission_to_reset_or_stash_the_canonical_checkout",
-      "automatic_task_verification",
       "automatic_queue_mutation",
-      "merge_authority_without_review_gates",
-      "absence_of_other_stale_local_checkouts"
+      "absence_of_other_stale_local_checkouts",
+      "canonical_checkout_cleanliness",
+      "resolution_of_unrelated_open_PR_binding_violations"
     ]
   }
 }

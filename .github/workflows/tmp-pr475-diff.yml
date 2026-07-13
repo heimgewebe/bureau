@@ -1,0 +1,33 @@
+name: temporary-pr475-diff
+
+on: [push]
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Build review diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          output="bureau-pr475-${GITHUB_SHA}.diff"
+          git diff --binary origin/main...HEAD -- . \
+            ':(exclude).github/workflows/tmp-pr475-diff.yml' > "$output"
+          sha256sum "$output" > "$output.sha256"
+      - name: Upload review diff
+        uses: actions/upload-artifact@v4
+        with:
+          name: bureau-pr475-${{ github.sha }}
+          path: |
+            bureau-pr475-${{ github.sha }}.diff
+            bureau-pr475-${{ github.sha }}.diff.sha256
+          if-no-files-found: error
+          retention-days: 7

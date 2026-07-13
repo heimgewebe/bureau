@@ -20,13 +20,32 @@
   },
   "metadata": {
     "registered_at": "2026-07-13",
+    "updated_at": "2026-07-13",
     "source_issue": "heimgewebe/bureau#481",
     "depends_on_merges": [
       "heimgewebe/lenskit@a3dcc4e954f3ea60842cb366b499659f40938e0b",
-      "heimgewebe/lenskit@dff582f9c4e8b5511d4ce436db81e3e245f725ec"
+      "heimgewebe/lenskit@dff582f9c4e8b5511d4ce436db81e3e245f725ec",
+      "heimgewebe/lenskit@7b729b52b6bf0302029626878ee444e664a0dc08"
     ],
     "comparison": "baseline grep/glob/read versus the same tools plus RepoBrief MCP",
     "fixed_case_count": 24,
+    "phase_status": {
+      "RAB-V1-T001": {
+        "state": "verified",
+        "outcome": "Frozen taskset, provider-neutral runner boundary, complete pair matrix, receipt integrity checks and deterministic evaluator are merged and validated.",
+        "pull_request": "heimgewebe/lenskit#1000",
+        "merge_commit": "7b729b52b6bf0302029626878ee444e664a0dc08",
+        "diff_sha256": "69f9eb47e6fc6ef80b7982f44e4a763d148136a7248559bcad00eaa43dd29893"
+      },
+      "RAB-V1-T002": {
+        "state": "planned",
+        "blocker": "No qualifying instrumented agent runner with exact provider/model identity, provider token accounting, tool-call capture and immutable transcript binding is currently exposed."
+      },
+      "RAB-V1-T003": {
+        "state": "planned",
+        "condition": "Requires completed real paired runs from RAB-V1-T002."
+      }
+    },
     "default_promoted": false,
     "sequencing": "Complete the benchmark decision before prioritizing bureau#482 incremental rebuild or file-watcher work.",
     "does_not_establish": [

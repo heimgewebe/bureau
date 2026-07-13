@@ -3,7 +3,7 @@
   "id": "RAB-V1-T001",
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "Build frozen taskset and provider-neutral benchmark harness",
-  "state": "ready",
+  "state": "verified",
   "goal": "Implement the contracts, frozen 24-case taskset, provider-neutral runner boundary, transcript receipts, paired execution plan and offline evaluator required for a real baseline-versus-RepoBrief agent benchmark without claiming a model result.",
   "priority": {
     "lane": "now",
@@ -85,9 +85,59 @@
   ],
   "metadata": {
     "registered_at": "2026-07-13",
+    "verified_at": "2026-07-13",
     "source_issue": "heimgewebe/bureau#481",
     "plan": "docs/plans/repobrief-agent-benchmark-v1.md",
     "runner_availability_at_registration": "No instrumented provider-neutral agent runner with provider token and immutable transcript evidence was found in the live Lenskit surface.",
+    "outcome": "The frozen provider-neutral benchmark harness is implemented and validated. It plans 96 isolated requests across 24 commit-bound cases and two repetitions, rejects manipulated or incomplete run evidence, keeps synthetic fixtures synthetic-only, and preserves default_promoted=false. No real agent usefulness result is claimed.",
+    "implementation": {
+      "repository": "heimgewebe/lenskit",
+      "pull_request": 1000,
+      "reviewed_head": "9d1e4aaffe2946c741a21807143b6c6d7c18e9fd",
+      "merge_commit": "7b729b52b6bf0302029626878ee444e664a0dc08",
+      "changed_files": 17,
+      "additions": 4992,
+      "deletions": 0,
+      "diff_sha256": "69f9eb47e6fc6ef80b7982f44e4a763d148136a7248559bcad00eaa43dd29893",
+      "diff_bytes": 178576,
+      "diff_lines": 5094,
+      "review_package_sha256": "0a9e507d14dfe3f7af8a19b4aeaf2e178416c103afebaafc14d5d4013ea74c38"
+    },
+    "validation": {
+      "ci": [
+        "pytest-full",
+        "release-candidate",
+        "browser-tests",
+        "webui-js-tests",
+        "lint",
+        "contracts-validate",
+        "parity-gate",
+        "task-index",
+        "codeql",
+        "forensic-preflight-canary",
+        "ai-context-guard",
+        "anti-hallucination-contract-lint",
+        "doc-freshness"
+      ],
+      "test_suite_workflow": 29243937249,
+      "diff_bound_self_review": "PASS",
+      "post_merge_file_readback": "merger/lenskit/core/agent_benchmark.py and bound taskset/tests on Lenskit main"
+    },
+    "verified_acceptance": {
+      "rab-v1-t001-contracts": "PR #1000 adds versioned Draft-07 contracts for the taskset, run request, run receipt and aggregate evaluation with explicit negative outcomes and bounded data surfaces.",
+      "rab-v1-t001-fixed-cases": "The merged taskset contains exactly 24 cases with an 8/8/8 class distribution across Lenskit, Grabowski and Weltgewebe, including abstention, stale, not-comparable and invalid-evidence cases.",
+      "rab-v1-t001-pairing": "The planner creates 96 deterministic requests over two repetitions, balances condition order and assigns distinct session and workspace identities; reuse and missing pairs invalidate evidence.",
+      "rab-v1-t001-runner-boundary": "The external runner uses an explicit argument array with shell disabled and must provide exact provider/model identity, provider-reported tokens, bounded tool records, aware timestamps and a complete hash-bound transcript.",
+      "rab-v1-t001-tool-policy": "Baseline and treatment allowlists are frozen in the taskset and validated against every recorded tool call; RepoBrief tools remain absent from baseline.",
+      "rab-v1-t001-evaluator": "The evaluator scores targets, false hits, citations, abstention, false confidence, time, calls, tokens and bytes and blocks utility when a quality or safety regression crosses its registered threshold.",
+      "rab-v1-t001-no-fake-run": "Synthetic fixtures are forced to measurement_scope=synthetic_contract_fixture and decision.status=synthetic_only; the merged proof explicitly denies real agent usefulness.",
+      "rab-v1-t001-tests": "All final-head Lenskit CI gates passed, the complete 178576-byte diff was reviewed at SHA-256 69f9eb47..., and merge commit 7b729b52... was byte-read back on main."
+    },
+    "next_task": {
+      "id": "RAB-V1-T002",
+      "state": "planned",
+      "blocker": "No qualifying instrumented agent runner with exact model/provider identity, provider token accounting, tool-call capture and immutable transcript binding is currently exposed. Real values must not be simulated."
+    },
     "default_promoted": false,
     "does_not_establish": [
       "real agent usefulness",
@@ -95,6 +145,10 @@
       "answer correctness",
       "general repository understanding",
       "default promotion"
-    ]
+    ],
+    "verification": {
+      "task_sha256": "701427b2124220f339768a0a41805c41c8c3429355ba907f23e0d19280cb375a",
+      "plan_sha256": "80509abd14d63643ae73b9cf5ba0ef2255d73d1bd331a96b1752fe8ada04f308"
+    }
   }
 }

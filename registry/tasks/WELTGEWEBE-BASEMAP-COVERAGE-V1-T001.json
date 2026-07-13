@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-BASEMAP-COVERAGE-V1-T001",
+  "initiative": "WELTGEWEBE-BASEMAP-COVERAGE-V1",
+  "title": "Validate PMTiles directory and representative tile payloads",
+  "state": "planned",
+  "goal": "Add a bounded validator that opens every regional Weltgewebe PMTiles archive, verifies its internal directory and metadata, and decodes representative vector tiles so corruption beyond magic bytes, size and SHA-256 is detected before publication.",
+  "depends_on": [],
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "python",
+    "docker",
+    "pmtiles-vector-tile-validation"
+  ],
+  "acceptance": [
+    {
+      "id": "archive-directory-valid",
+      "assertion": "Each declared regional PMTiles archive can be opened by an independent PMTiles reader and its root and leaf directory structure is internally consistent.",
+      "evidence_type": "object",
+      "verifier": "regional PMTiles deep-validation CI receipt"
+    },
+    {
+      "id": "representative-tiles-decode",
+      "assertion": "A deterministic bounded sample across archive bounds and zoom levels yields decodable MVT payloads with the expected OpenMapTiles source-layer contract.",
+      "evidence_type": "object",
+      "verifier": "regional PMTiles sample manifest and decoder receipt"
+    },
+    {
+      "id": "corruption-fails-closed",
+      "assertion": "Truncated, directory-corrupt and malformed vector-tile fixtures fail the validator before publication.",
+      "evidence_type": "object",
+      "verifier": "negative regression tests"
+    },
+    {
+      "id": "runtime-proof-integrated",
+      "assertion": "The existing regional content-proof jobs invoke the bounded deep validator in addition to hash, magic-byte and HTTP Range checks.",
+      "evidence_type": "object",
+      "verifier": "GitHub Actions run bound to the implementing PR head"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13T15:08:00Z",
+    "source_pr": "heimgewebe/weltgewebe#1417",
+    "gap": "Current proof establishes pinned input, artifact hash, PMTiles signature and HTTP Range delivery, but not internal directory or representative tile-payload integrity.",
+    "does_not_establish": [
+      "full_archive_tile-by-tile scan",
+      "cartographic completeness",
+      "osm semantic correctness",
+      "freshness of source data"
+    ]
+  }
+}

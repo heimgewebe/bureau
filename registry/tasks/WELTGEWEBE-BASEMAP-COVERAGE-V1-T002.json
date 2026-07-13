@@ -70,7 +70,7 @@
     },
     {
       "id": "hamburg-regression",
-      "assertion": "A fresh production browser session still loads Hamburg tile-data ranges with HTTP 206 and no relevant console or resource errors.",
+      "assertion": "The merge-main browser proof renders decoded Hamburg features, and a fresh production session causes HTTP 206 requests for Hamburg archive ranges beyond the initial header request without relevant console or resource errors.",
       "evidence_type": "object",
       "verifier": "live-hamburg-ui-proof.json and screenshot"
     }
@@ -193,7 +193,7 @@
       "explicit_pmtiles_content_type"
     ],
     "verification": {
-      "task_sha256": "7fafcf7f94dad3382f2e88c4fbc0ac2e637cb638732269f1c4ff36524244e244",
+      "task_sha256": "be0890324f4b4a283f257747367cc27600ac4e884f7e93eb8a5c3c3dc33a19ba",
       "plan_sha256": "f0f2a3b40099acf22d26401328280efd534acae2ceb93a44508e4dbc8b77dc55",
       "verified_at": "2026-07-13T19:37:03Z"
     },

@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T005",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Classify or migrate Bureau evidence and plan state roots",
+  "state": "planned",
+  "goal": "Resolve the newly unclassified `evidence` and `plans` directories in Bureau's live state root through bounded format recognition, provenance and migration rules without deleting or silently trusting unknown operator data.",
+  "priority": {
+    "lane": "next",
+    "rank": 905
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau",
+      "path:/home/alex/.local/state/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "state.bureau",
+      "mode": "exclusive",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "bureau"
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T004"
+  ],
+  "acceptance": [
+    {
+      "id": "inventory",
+      "assertion": "A read-only inventory reports every child, type, size bound, content class, producer evidence and last observed timestamp without following symlinks or reading unrelated private content."
+    },
+    {
+      "id": "classification",
+      "assertion": "Recognized evidence and plan artifacts have strict schemas, digest rules, producer identities, retention classes and explicit authority/non-authority semantics."
+    },
+    {
+      "id": "unknown-policy",
+      "assertion": "Unknown, malformed or oversized entries remain visible and unhealthy; no automatic deletion, coercion or truth claim occurs."
+    },
+    {
+      "id": "migration",
+      "assertion": "A reviewed create-only migration plan can move valid artifacts to canonical locations with before/after hashes, collision checks and rollback evidence."
+    },
+    {
+      "id": "doctor",
+      "assertion": "Bureau doctor becomes healthy only when all active state-root entries are known or explicitly quarantined by a reviewed receipt."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover empty directories, valid files, mixed foreign files, symlinks, oversized artifacts, hash mismatch, interrupted migration and idempotent rerun."
+    }
+  ],
+  "metadata": {
+    "source": "current-source Bureau doctor during operator ecosystem audit",
+    "observed_at": "2026-07-13T15:08:36Z",
+    "observation": "Current origin/main recognizes deployments and recovery but reports ~/.local/state/bureau/evidence and plans as unknown directories.",
+    "previous_cleanup_task": "OPERATOR-PC-HYGIENE-V1-T006",
+    "recurrence_boundary": "The previous verified cleanup made the then-active root healthy. This task covers later-created evidence and plans directories and does not reopen or contradict that historical verification.",
+    "does_not_establish": [
+      "that_unknown_entries_are_invalid",
+      "permission_to_delete_state",
+      "content_authority",
+      "failure_of_the_previous_cleanup"
+    ]
+  }
+}

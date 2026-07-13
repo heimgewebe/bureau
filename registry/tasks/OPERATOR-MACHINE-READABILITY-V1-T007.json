@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T007",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Expose Systemkatalog through a typed read-only operator surface",
+  "state": "planned",
+  "goal": "Let Grabowski query stable ecosystem semantics, truth ownership, relationships and entry points through typed structured calls instead of requiring shell-oriented CLI discovery or ad hoc file parsing.",
+  "priority": {
+    "lane": "next",
+    "rank": 907
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/systemkatalog",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/systemkatalog"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T001"
+  ],
+  "acceptance": [
+    {
+      "id": "typed-queries",
+      "assertion": "Typed read-only operations cover system lookup, truth-owner lookup, relationships, entry points, authority matrix and catalog manifest identity."
+    },
+    {
+      "id": "source-binding",
+      "assertion": "Every response binds repository commit, registry schema, relevant file digests and generated-manifest identity."
+    },
+    {
+      "id": "nonclaims",
+      "assertion": "Responses explicitly state that stable semantics do not establish runtime health, task state, pull-request state, CI state or merge readiness."
+    },
+    {
+      "id": "drift",
+      "assertion": "Missing, malformed, stale-generated or internally inconsistent catalog artifacts produce typed degraded results and do not fall back silently to prose."
+    },
+    {
+      "id": "context-economy",
+      "assertion": "Single-repository work does not load the full ecosystem graph unless scope classification requires it; responses are bounded and query-specific."
+    },
+    {
+      "id": "tests",
+      "assertion": "Contract tests compare typed results with the deterministic Systemkatalog query tool and cover unknown systems, multiple truth owners, cycles, malformed registry and source drift."
+    }
+  ],
+  "metadata": {
+    "source": "operator ecosystem machine-readability audit",
+    "observed_at": "2026-07-13T15:00:00Z",
+    "observation": "Systemkatalog has strong JSON registries and a deterministic query script, but Grabowski does not expose them as a first-class typed read surface.",
+    "does_not_establish": [
+      "need_for_a_systemkatalog_service",
+      "runtime_authority",
+      "automatic_task_selection"
+    ]
+  }
+}

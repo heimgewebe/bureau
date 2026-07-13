@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T003",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Enforce lease write ownership and attribute foreign writes",
+  "state": "planned",
+  "goal": "Turn a Grabowski write lease from an advisory coordination record into an enforceable or at least complete attribution boundary so an unknown same-user process cannot silently rewrite a leased worktree during review.",
+  "priority": {
+    "lane": "next",
+    "rank": 903
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "write-boundary",
+      "assertion": "A leased write scope is protected by an enforceable writer token, brokered mutation surface, filesystem watcher gate or equivalent mechanism with a documented threat boundary."
+    },
+    {
+      "id": "attribution",
+      "assertion": "Every observed write in the protected scope is attributable to lease owner, process identity and audited operation, or is emitted immediately as an unattributed conflict with path, hashes and timestamps."
+    },
+    {
+      "id": "review-stability",
+      "assertion": "Head-/diff-bound review cannot proceed while unattributed post-snapshot writes exist; a stable snapshot receipt proves no later write before commit or publication."
+    },
+    {
+      "id": "nonconflict-exception",
+      "assertion": "Documented parallel work remains possible only after file, component, resource, process and deploy-path non-overlap is proven; unclear overlap stays blocked."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover cooperating writers, an unaudited same-user writer, symlink/path escape, atomic rename, editor temp files, lease expiry, owner crash and nonconflicting parallel scopes."
+    },
+    {
+      "id": "recovery",
+      "assertion": "Detection never kills or rewrites a foreign process automatically; it freezes publication, preserves evidence and provides a bounded recovery path."
+    }
+  ],
+  "metadata": {
+    "source": "live heim-pc PR #37 implementation",
+    "observed_at": "2026-07-13T15:00:00Z",
+    "observation": "An unknown process repeatedly modified exact files inside the leased isolated heim-pc worktree without matching Grabowski task, process or write-audit evidence.",
+    "risk": "A clean review can be invalidated after inspection while existing lease evidence misleadingly suggests exclusive ownership.",
+    "does_not_establish": [
+      "malicious_writer",
+      "data_corruption",
+      "complete_same_user_process_visibility"
+    ]
+  }
+}

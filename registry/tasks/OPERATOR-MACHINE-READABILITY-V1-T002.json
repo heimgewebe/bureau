@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T002",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Make connector snapshot identity and compatibility observable",
+  "state": "planned",
+  "goal": "Expose which connector snapshot is actually serving ChatGPT, which server and agent contracts it advertises and whether that snapshot is structurally compatible with the deployed Grabowski runtime and canonical operator-entry policy without claiming model comprehension or universal client compliance.",
+  "priority": {
+    "lane": "next",
+    "rank": 902
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T021",
+    "OPERATOR-MACHINE-READABILITY-V1-T001"
+  ],
+  "acceptance": [
+    {
+      "id": "snapshot-identity",
+      "assertion": "Runtime evidence includes connector build identity, connector profile, visible tool-catalog digest, server tool-catalog digest, agent-instructions digest, canonical operator-entry digest and observation timestamp."
+    },
+    {
+      "id": "compatibility-result",
+      "assertion": "A typed structural result distinguishes compatible, stale, incompatible, unobservable and malformed snapshots with explicit reason codes and compared digests."
+    },
+    {
+      "id": "fail-closed",
+      "assertion": "Unknown or stale connector identity cannot establish tool-surface or instruction-contract compatibility or suppress warnings, while read-only diagnostics remain available."
+    },
+    {
+      "id": "drift-detection",
+      "assertion": "Deployment, connector restart and client reconnection tests detect old snapshots after a runtime, profile or instruction-contract change."
+    },
+    {
+      "id": "behavior-boundary",
+      "assertion": "The surface does not expose or imply a universal client_compliant result, model comprehension, hidden intent or correct future behavior; those remain separate from structural snapshot compatibility and from GRABOWSKI-OPERATOR-SURFACE-V1-T047 behavior evidence."
+    }
+  ],
+  "metadata": {
+    "source": "operator ecosystem machine-readability audit",
+    "observed_at": "2026-07-13T15:00:00Z",
+    "observation": "grabowski_contract_drift reported connector_snapshot_observable=false and structural client snapshot compatibility could not be determined.",
+    "related_existing_tasks": [
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T021",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T047"
+    ],
+    "does_not_establish": [
+      "current_connector_noncompliance",
+      "model_instruction_delivery_or_comprehension",
+      "observed_behavioral_conformance",
+      "transport_root_cause",
+      "future_runtime_safety"
+    ]
+  }
+}

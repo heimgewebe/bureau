@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -943,6 +944,101 @@ STATE_ROOT_ARCHIVE_CANDIDATE_CLASSES = {
 
 _STATE_ROOT_TIMESTAMP_RE = r"\d{8}T\d{6}Z"
 _STATE_ROOT_SHORT_TIMESTAMP_RE = r"\d{8}T\d{4}"
+_DEPLOYMENT_RELEASE_RE = re.compile(r"[0-9a-f]{40}")
+_DEPLOYMENT_RECEIPT_MAX_BYTES = 64 * 1024
+_RECOVERY_BUNDLE_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\.bundle")
+_RECOVERY_CHECKSUM_MAX_BYTES = 4096
+
+
+def _is_deployment_evidence_directory(entry: Path) -> bool:
+    try:
+        releases = sorted(entry.iterdir(), key=lambda item: item.name)
+    except OSError:
+        return False
+    if not releases:
+        return False
+    for release in releases:
+        if (
+            release.is_symlink()
+            or not release.is_dir()
+            or _DEPLOYMENT_RELEASE_RE.fullmatch(release.name) is None
+        ):
+            return False
+        receipt = release / "receipt.json"
+        try:
+            if (
+                receipt.is_symlink()
+                or not receipt.is_file()
+                or receipt.stat().st_size > _DEPLOYMENT_RECEIPT_MAX_BYTES
+            ):
+                return False
+            payload = json.loads(receipt.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            return False
+        if not isinstance(payload, dict):
+            return False
+        status = payload.get("status")
+        if (
+            payload.get("schema_version") != 1
+            or payload.get("release") != release.name
+            or not isinstance(status, str)
+            or not status.strip()
+        ):
+            return False
+    return True
+
+
+def _is_recovery_bundle_directory(entry: Path) -> bool:
+    try:
+        children = sorted(entry.iterdir(), key=lambda item: item.name)
+    except OSError:
+        return False
+    child_names = {child.name for child in children}
+    expected_names: set[str] = set()
+    for bundle in children:
+        if not bundle.name.endswith(".bundle"):
+            continue
+        if (
+            bundle.is_symlink()
+            or not bundle.is_file()
+            or _RECOVERY_BUNDLE_RE.fullmatch(bundle.name) is None
+        ):
+            return False
+        checksum = bundle.with_name(f"{bundle.name}.sha256")
+        try:
+            if (
+                checksum.is_symlink()
+                or not checksum.is_file()
+                or checksum.stat().st_size > _RECOVERY_CHECKSUM_MAX_BYTES
+            ):
+                return False
+            lines = [
+                line.strip()
+                for line in checksum.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+        except (OSError, UnicodeDecodeError):
+            return False
+        if len(lines) != 1:
+            return False
+        digest, separator, target = lines[0].partition("  ")
+        if (
+            separator != "  "
+            or re.fullmatch(r"[0-9a-f]{64}", digest) is None
+            or target not in {bundle.name, str(bundle)}
+        ):
+            return False
+        hasher = hashlib.sha256()
+        try:
+            with bundle.open("rb") as handle:
+                for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                    hasher.update(chunk)
+        except OSError:
+            return False
+        if hasher.hexdigest() != digest:
+            return False
+        expected_names.update({bundle.name, checksum.name})
+    return bool(expected_names) and child_names == expected_names
 
 
 def _legacy_state_root_class(name: str, entry_type: str) -> str | None:
@@ -1020,6 +1116,26 @@ def _classify_state_root_entry(entry: Path, database_name: str) -> dict[str, str
         return {"name": name, "type": entry_type, "class": "receipt-directory"}
     if name == "reviews" and entry_type == "directory":
         return {"name": name, "type": entry_type, "class": "review-directory"}
+    if (
+        name == "deployments"
+        and entry_type == "directory"
+        and _is_deployment_evidence_directory(entry)
+    ):
+        return {
+            "name": name,
+            "type": entry_type,
+            "class": "deployment-evidence-directory",
+        }
+    if (
+        name == "recovery"
+        and entry_type == "directory"
+        and _is_recovery_bundle_directory(entry)
+    ):
+        return {
+            "name": name,
+            "type": entry_type,
+            "class": "recovery-bundle-directory",
+        }
     legacy_class = _legacy_state_root_class(name, entry_type)
     if legacy_class is not None:
         return {"name": name, "type": entry_type, "class": legacy_class}

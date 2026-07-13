@@ -118,7 +118,7 @@ Ergebnis: Die Routingregel wird aufgrund von Evidenz angepasst oder verworfen, n
 Diese Initiative dupliziert bestehende Arbeit nicht:
 
 - `GRIP-ROADMAP-V1-T016` liefert die Captain-Executor-Registry-Grundlage.
-- `OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T005` definiert Consumer-, Metrik- und Ablaufpflicht für Heimlern/Vibe-Lab.
+- `OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T005` definiert Consumer-, Metrik-, Oberflächenbudget- und Ablaufpflicht für Vibe-Lab-Experimente.
 - `OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T006` grenzt hochwertige Chronik-Ereignisse ein.
 - `OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T008` konsolidiert die tägliche RepoBrief-Artefaktfläche.
 - `OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T009` schärft WGX auf tatsächlich gemeinsame Prüfungen.

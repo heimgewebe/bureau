@@ -1,101 +1,98 @@
-# Chronik Heimlern Outcome Bridge v1
+# Chronik to Vibe-Lab Outcome Evaluation Bridge v1
 
-Status: active  
-Date: 2026-07-12
+Status: completed
+Date: 2026-07-13
 
 ## Goal
 
-Connect Heimlern to real operator outcomes through Chronik as the append-only historical transport, without giving Heimlern live routing authority or letting Bureau become an event store. Before any review or display product is expanded, prove on a bounded real sample whether Heimlern materially improves an operator diagnosis or decision.
+Transfer the surviving question from Heimlern into Vibe-Lab: does one frozen, hash-bound Chronik history brief materially improve an operator diagnosis or decision?
 
-## Decision
+Vibe-Lab owns the prospective experiment, Chronik owns append-only history, Grabowski remains live-first execution truth and Bureau remains task and review truth.
 
-Primary transport organ: Chronik.
+The historical initiative and task IDs retain `HEIMLERN` for stable registry identity. Their active scope is closed and no longer assigns work or authority to Heimlern.
 
-Reason: Heimlern needs historical outcomes to produce useful offline learning reports and policy-weight proposals. Chronik owns the append-only envelope and history, while Heimlern remains the canonical routing-outcome payload owner. Bureau coordinates task and review truth. Leitstand may display derived reports only after source-grounded real outcomes establish actual operator value.
+## Transfer decision
 
-The sequencing rule is now explicit:
+The reusable Heimlern idea was not a runtime, policy learner or proposal service. It was the narrower, falsifiable question whether historical outcomes improve a future operator decision.
 
-> Real outcome -> bounded usefulness evaluation -> only then review workflow or display.
+That question belongs in Vibe-Lab because it is:
 
-A technically valid fixture path is necessary but does not justify a product surface.
+- experimental rather than authoritative;
+- testable through control and treatment cases;
+- bounded by review and expiry;
+- required to retain null, harmful and blocked cases;
+- forbidden from changing routing, queues, merge policy or runtime state.
+
+A persistent Heimlern consumer would duplicate this function and add another contract and maintenance surface. It is therefore superseded rather than renamed.
 
 ## Boundary
 
-The bridge is offline and proposal-only.
-
 Allowed:
 
-- Grabowski emits or exposes bounded routing decisions, friction and execution receipts through an explicit opt-in producer.
-- Chronik stores or exports a digest-bound envelope as append-only history.
-- Heimlern owns and validates the embedded routing-outcome payload, then reads exported outcomes and emits learning reports or non-applying weight proposals.
-- A manual operator review classifies the result as useful, insufficient-evidence or misleading.
-- Bureau tracks the usefulness verdict and, only after a positive verdict, proposal review decisions and follow-up work.
-- Leitstand may display source identity, freshness and proposal status only after a positive usefulness gate.
+- Grabowski performs normal live-state checks and may receive one advisory Chronik history brief before planning.
+- Chronik provides a frozen, digest-bound historical brief.
+- Vibe-Lab fixes control, treatment, scorecard, cost, confounders, review and expiry before observations.
+- Natural coding cases are independently evaluated.
+- Bureau references the final decision and evidence digest.
 
 Forbidden:
 
-- Heimlern applies policy or route weights.
-- Chronik rewrites historical outcomes to satisfy Heimlern.
-- Bureau becomes the raw outcome ledger.
-- Leitstand implies authority over proposals or is built merely because a fixture path exists.
-- Grabowski changes routing policy from Heimlern output without a separate reviewed gate.
-- Samples are duplicated or model scope is expanded merely to manufacture a positive usefulness result.
+- replacing live Git, PR, CI, runtime, lease or receipt checks with historical summaries;
+- retrospective cases presented as prospective evidence;
+- repeated productive mutations solely to increase sample size;
+- automatic routing, policy, queue, merge or runtime changes;
+- a Leitstand or dashboard surface created merely to display the result;
+- new experiments without a current external consumer and decision target.
 
-## Registered sequence
+## Disposition of the historical tasks
 
-1. `CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T001` — audit Chronik outcome export surface.
-2. `CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T002` — define redacted operator outcome event/export contract.
-3. `CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T003` — implement a dedicated typed, review-only Heimlern consumer over Chronik export artifacts.
-4. `CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T005` — add the smallest explicit, opt-in Grabowski producer and evaluate Heimlern on a bounded real-outcome sample.
-5. `CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T004` — only after a positive T005 verdict, register Bureau proposal review status and an optional Leitstand read-only projection.
+1. `CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T001` — Chronik export audit; verified and retained as history.
+2. `CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T002` — redacted historical envelope; verified and retained.
+3. `CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T003` — historical Heimlern consumer; verified, not reopened.
+4. `CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T005` — superseded by `CCM-V1-T003` and `CCM-V1-T005`.
+5. `CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T004` — superseded by `CCM-V1-T005`.
+6. `GRABOWSKI-OPERATOR-SURFACE-V1-T025` — superseded by the same Vibe-Lab registration and natural-case evaluation.
 
-## Live audit result
+The active successors are already registered in `CHRONIK-CODING-MEMORY-V1`:
 
-T001 found that Chronik already has generic append-only ingest and cursor export, but the bridge lacked a bounded envelope, a typed Heimlern consumer and a real Grabowski producer. Chronik was inactive locally at audit time. The detailed evidence is in `docs/reports/chronik-heimlern-outcome-bridge-t001-audit.md`.
+- `CCM-V1-T003` — prospective Vibe-Lab registration;
+- `CCM-V1-T005` — natural-case run and evidence-bound closeout.
 
-T002 is implemented by Chronik PR #214. Its envelope pins the Heimlern-owned payload schema, validates canonical payload and event digests, rejects raw, secret and private-path material and requires consumers to recompute freshness.
+Related implementation work:
 
-T003 is implemented by Heimlern PR #200. The dedicated consumer validates both contract layers, canonical identities and digests, recomputes freshness, deduplicates evidence, rejects sensitive input and emits only review-only reports, valid proposal candidates or typed insufficient-evidence results.
-
-The current sequenced task is T005. T004 was moved behind it because review and display infrastructure before a real usefulness result would add maintenance without proving operator value.
+- `heimgewebe/vibe-lab#316` — prospective Chronik history-brief effect experiment;
+- `heimgewebe/bureau#499` — canonical `CCM` task registration.
 
 ## Usefulness gate
 
-T005 must produce an auditable proof with all of the following:
+The Vibe-Lab path must preserve:
 
-- at least ten real, redacted Grabowski outcomes;
-- both successful and blocked or failed execution results;
-- deterministic Heimlern and Chronik contract validation;
-- no raw logs, command output, secrets or private absolute paths;
-- a manual comparison between Heimlern output and the operator's own review;
-- one explicit verdict: `useful`, `insufficient-evidence` or `misleading`;
-- the diagnosis or decision that was improved, or the reason no improvement occurred.
+- at least three natural cases per condition;
+- the same live-first Grabowski preflight in control and treatment;
+- one frozen, hash-bound Chronik brief only in treatment;
+- independently scored decision quality and diagnostic value;
+- explicit cost and confounder recording;
+- retained failed, blocked, null and harmful cases;
+- one closeout class: `promote`, `pilot`, `defer`, `reject` or `archive`.
 
-A positive result means the output changes or materially sharpens a diagnosis or decision with traceable evidence. Merely producing a schema-valid proposal is not sufficient.
-
-If the result is insufficient or misleading, Heimlern remains frozen and T004 is not promoted. No broader event bus, dashboard, model layer, event family or automatic collection is justified by that failure.
+Producing a valid artifact is not evidence of benefit. Benefit requires a material, traceable improvement in a concrete diagnosis or decision.
 
 ## Organ roles
 
 | Organ | Owns | May do | Must not do |
 | --- | --- | --- | --- |
-| Grabowski | execution decisions, friction, receipts | emit redacted outcome source material | accept learned weights directly |
-| Chronik | append-only transport envelope and history | store/export digest-bound envelopes | own the routing payload, orchestrate or mutate routing |
-| Heimlern | routing-outcome payload, analysis and proposals | validate payloads and generate reports/proposals offline | own tasks, history or policy application |
-| Bureau | commitments, task truth, review gates | record usefulness and later proposal-review decisions | store raw outcome history |
-| Leitstand | read-only visibility | display source-grounded reports after a positive usefulness gate | become proposal authority |
-
-## Acceptance boundary
-
-The contract and consumer path is already proven at fixture level. The initiative is useful only when a separately reviewed Grabowski producer supplies real outcomes and a bounded evaluation demonstrates operator value. A live round trip alone proves transport, not usefulness.
+| Grabowski | live execution decisions, leases, friction and receipts | run the live-first preflight and expose bounded evidence | accept historical conclusions as live truth |
+| Chronik | append-only history and digest-bound briefs | provide frozen historical context | own tasks, experiments or routing |
+| Vibe-Lab | experiment registration, observations and decision evidence | compare control and treatment and close the result | apply policy, queue or runtime changes |
+| Bureau | commitments, task truth and reviewed follow-ups | reference the Vibe-Lab decision and evidence digest | store raw history or invent experiment evidence |
 
 ## Non-claims
 
 This plan does not establish:
 
-- routing policy superiority;
+- that the history brief is beneficial;
 - sufficient production sample size;
 - automatic application permission;
 - Chronik runtime deployment readiness;
-- Leitstand projection correctness;
-- Grabowski routing mutation readiness.
+- routing policy superiority;
+- permission to revive Heimlern as an active service.

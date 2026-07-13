@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1",
   "title": "Chronik to Heimlern outcome bridge",
-  "state": "active",
-  "commitment": "now",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Make operator routing outcomes available to Heimlern through a Chronik-owned append-only envelope, prove on a bounded real sample whether the result improves an operator diagnosis or decision, and keep all analysis proposal-only.",
   "current_plan": {
     "repository": "bureau",
@@ -51,6 +51,16 @@
     "consumer_implementation_merge_commit": "1c64afa6656737cf56b78e9f5c30ba7c9d8da4d9",
     "sequencing_corrected_at": "2026-07-12",
     "sequencing_decision": "T005 real-outcome usefulness precedes T004 Bureau or Leitstand product surfaces.",
-    "current_task": "CHRONIK-HEIMLERN-OUTCOME-BRIDGE-V1-T005"
+    "transferred_at": "2026-07-13",
+    "completed_at": "2026-07-13",
+    "superseded_by": "CHRONIK-CODING-MEMORY-V1",
+    "supersession_reason": "The newer initiative contains the Vibe-Lab prospective registration and natural-case closeout tasks; retaining parallel active tasks would create duplicate experiment truth.",
+    "replacement_repository": "heimgewebe/vibe-lab",
+    "replacement_tasks": [
+      "CCM-V1-T003",
+      "CCM-V1-T005"
+    ],
+    "replacement_implementation_pr": "heimgewebe/vibe-lab#316",
+    "replacement_registry_pr": "heimgewebe/bureau#499"
   }
 }

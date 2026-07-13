@@ -945,6 +945,7 @@ STATE_ROOT_ARCHIVE_CANDIDATE_CLASSES = {
 _STATE_ROOT_TIMESTAMP_RE = r"\d{8}T\d{6}Z"
 _STATE_ROOT_SHORT_TIMESTAMP_RE = r"\d{8}T\d{4}"
 _DEPLOYMENT_RELEASE_RE = re.compile(r"[0-9a-f]{40}")
+_DEPLOYMENT_RELEASE_MAX_COUNT = 64
 _DEPLOYMENT_RECEIPT_MAX_BYTES = 64 * 1024
 _DEPLOYMENT_AUX_FILE_MAX_BYTES = 2 * 1024 * 1024
 _DEPLOYMENT_WRAPPER_MAX_BYTES = 64 * 1024
@@ -959,6 +960,8 @@ _DEPLOYMENT_ALLOWED_FILES = {
 }
 _DEPLOYMENT_WRAPPER_NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
 _RECOVERY_BUNDLE_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\.bundle")
+_RECOVERY_BUNDLE_MAX_COUNT = 64
+_RECOVERY_BUNDLE_MAX_BYTES = 512 * 1024 * 1024
 _RECOVERY_CHECKSUM_MAX_BYTES = 4096
 
 
@@ -967,7 +970,7 @@ def _is_deployment_evidence_directory(entry: Path) -> bool:
         releases = sorted(entry.iterdir(), key=lambda item: item.name)
     except OSError:
         return False
-    if not releases:
+    if not releases or len(releases) > _DEPLOYMENT_RELEASE_MAX_COUNT:
         return False
     for release in releases:
         if (
@@ -1046,16 +1049,22 @@ def _is_recovery_bundle_directory(entry: Path) -> bool:
         children = sorted(entry.iterdir(), key=lambda item: item.name)
     except OSError:
         return False
+    if not children or len(children) > _RECOVERY_BUNDLE_MAX_COUNT * 2:
+        return False
     child_names = {child.name for child in children}
     expected_names: set[str] = set()
     for bundle in children:
         if not bundle.name.endswith(".bundle"):
             continue
-        if (
-            bundle.is_symlink()
-            or not bundle.is_file()
-            or _RECOVERY_BUNDLE_RE.fullmatch(bundle.name) is None
-        ):
+        try:
+            if (
+                bundle.is_symlink()
+                or not bundle.is_file()
+                or _RECOVERY_BUNDLE_RE.fullmatch(bundle.name) is None
+                or bundle.stat().st_size > _RECOVERY_BUNDLE_MAX_BYTES
+            ):
+                return False
+        except OSError:
             return False
         checksum = bundle.with_name(f"{bundle.name}.sha256")
         try:

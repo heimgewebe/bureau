@@ -227,6 +227,28 @@ def test_recovery_bundle_directory_stays_known_active_state_root_entry(
     assert known["recovery"] == "recovery-bundle-directory"
 
 
+def test_oversized_recovery_bundle_remains_unknown_without_hashing(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    recovery = store.state_root / "recovery"
+    recovery.mkdir()
+    bundle = recovery / "oversized.bundle"
+    with bundle.open("wb") as handle:
+        handle.truncate(512 * 1024 * 1024 + 1)
+    (recovery / "oversized.bundle.sha256").write_text(
+        ("0" * 64) + f"  {bundle}\n", encoding="utf-8"
+    )
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "recovery", "type": "directory", "class": "unknown"}
+    ]
+
+
 def test_recovery_bundle_with_wrong_digest_remains_unknown(
     registry_factory, tmp_path, monkeypatch
 ):

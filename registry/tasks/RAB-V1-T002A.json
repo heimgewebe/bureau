@@ -3,7 +3,7 @@
   "id": "RAB-V1-T002A",
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "Build and qualify a read-only Claude benchmark runner",
-  "state": "ready",
+  "state": "verified",
   "goal": "Implement the smallest isolated Claude runner that consumes the merged Lenskit benchmark request, exposes only the registered read-only baseline or RepoBrief treatment tools, preserves the complete provider stream, and emits a Lenskit-compatible receipt with exact model, provider-reported usage and normalized tool calls before any real benchmark batch is dispatched.",
   "priority": {
     "lane": "next",
@@ -109,6 +109,58 @@
       "benchmark completion",
       "answer correctness",
       "default promotion"
-    ]
+    ],
+    "verified_at": "2026-07-13",
+    "outcome": "The isolated read-only Claude benchmark runner is merged and fully validated. It binds stdin to one frozen Lenskit plan request, derives bounded benchmark identities, isolates exact-commit checkouts, restricts baseline/treatment tools, preserves hash-bound provider streams, and keeps synthetic fixtures structurally incompatible with real success receipts. No live provider availability, token cost, usefulness result, benchmark completion, or default promotion is claimed.",
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 180,
+      "reviewed_head": "ed77581e8bc624151b31c4490c5d9064045ae31b",
+      "base_head": "30596f270748692125c043a3fd75bebb853e3666",
+      "merge_commit": "4465ed14b7064e97e75d2e11be31e1264593e1ad",
+      "changed_files": 3,
+      "additions": 1909,
+      "deletions": 0,
+      "diff_sha256": "1d85735814abe348e42e5b71484bd4889ee139ab9cdb89ae109663c1a9454156",
+      "diff_bytes": 73431
+    },
+    "validation": {
+      "focused_tests": "20/20 passed with ResourceWarning treated as error",
+      "full_repository_tests": "1399 tests passed after rebase",
+      "repository_gates": [
+        "access-policy",
+        "operator-context",
+        "publication-profiles",
+        "runtime-lock",
+        "deploy-tooling-venv",
+        "secret-scan"
+      ],
+      "github_ci": [
+        "validate (3.10)",
+        "validate (3.12)"
+      ],
+      "diff_bound_self_review": "PASS",
+      "post_merge_readback": "origin/main resolved to merge commit 4465ed14b7064e97e75d2e11be31e1264593e1ad"
+    },
+    "verified_acceptance": {
+      "rab-v1-t002a-request-contract": "The merged runner validates the strict request schema, derived pair/request/session/workspace identities, bounded order and repetition, exact does_not_establish semantics, and canonical equality with exactly one request in the frozen plan directory.",
+      "rab-v1-t002a-isolated-checkout": "Each run creates a private create-only workspace, clones without hardlinks or hooks, checks out the exact registered commit detached, and rejects reused or dirty workspaces.",
+      "rab-v1-t002a-tool-boundary": "The baseline command exposes only Read, Glob and Grep; treatment adds only the request-bound RepoBrief resource and MCP tools under strict MCP configuration.",
+      "rab-v1-t002a-provider-stream": "The implementation launches the provider non-interactively with exact model and bounded stream-json capture, validates model/session/tool evidence, and persists a create-only hash-bound transcript. Live provider compatibility remains reserved for the separate preflight.",
+      "rab-v1-t002a-usage-and-model": "Receipts require exact init/result model and session binding plus provider-reported nonnegative cumulative input/output tokens within the request budget.",
+      "rab-v1-t002a-tool-calls": "Provider tool uses and results are paired by unique ids, mapped to the frozen abstract vocabulary, ordered, byte-bounded and retained in the immutable transcript.",
+      "rab-v1-t002a-answer-contract": "The structured result is strictly normalized into outcome, paths, symbols, citations, claims and evidence-sufficiency fields; malformed or absent output fails closed.",
+      "rab-v1-t002a-no-live-claim": "Fixture execution returns a distinct repobrief.agent_benchmark_fixture_report with synthetic provider identity and token source, so it cannot satisfy the real receipt contract.",
+      "rab-v1-t002a-tests": "The reviewed 73431-byte diff passed 20 focused tests, 1399 full repository tests, all local gates, and GitHub validation on Python 3.10 and 3.12 before merge."
+    },
+    "next_task": {
+      "id": "RAB-V1-T002",
+      "state": "planned",
+      "blocker": "A bounded live baseline/treatment provider preflight with exact model, usage, tool, transcript and spend evidence is still required before the 96-run benchmark may be dispatched."
+    },
+    "verification": {
+      "task_sha256": "c5a483baca8eadd90a485e6003e7bfb8fbb7e9e6cb5655f4ed7e64fa41a5912a",
+      "plan_sha256": "80509abd14d63643ae73b9cf5ba0ef2255d73d1bd331a96b1752fe8ada04f308"
+    }
   }
 }

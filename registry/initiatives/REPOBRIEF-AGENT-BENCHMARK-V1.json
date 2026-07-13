@@ -26,7 +26,8 @@
     "depends_on_merges": [
       "heimgewebe/lenskit@a3dcc4e954f3ea60842cb366b499659f40938e0b",
       "heimgewebe/lenskit@dff582f9c4e8b5511d4ce436db81e3e245f725ec",
-      "heimgewebe/lenskit@7b729b52b6bf0302029626878ee444e664a0dc08"
+      "heimgewebe/lenskit@7b729b52b6bf0302029626878ee444e664a0dc08",
+      "heimgewebe/grabowski@4465ed14b7064e97e75d2e11be31e1264593e1ad"
     ],
     "comparison": "baseline grep/glob/read versus the same tools plus RepoBrief MCP",
     "fixed_case_count": 24,
@@ -39,12 +40,15 @@
         "diff_sha256": "69f9eb47e6fc6ef80b7982f44e4a763d148136a7248559bcad00eaa43dd29893"
       },
       "RAB-V1-T002A": {
-        "state": "ready",
-        "goal": "Build and qualify the isolated read-only Claude runner before any real benchmark batch is dispatched."
+        "state": "verified",
+        "outcome": "The isolated read-only Claude runner is merged with frozen-plan binding, derived identities, strict tool boundaries, hash-bound transcripts, provider evidence validation and synthetic-only fixture reports.",
+        "pull_request": "heimgewebe/grabowski#180",
+        "merge_commit": "4465ed14b7064e97e75d2e11be31e1264593e1ad",
+        "diff_sha256": "1d85735814abe348e42e5b71484bd4889ee139ab9cdb89ae109663c1a9454156"
       },
       "RAB-V1-T002": {
         "state": "planned",
-        "blocker": "Requires verified RAB-V1-T002A and a bounded live provider preflight with exact model, usage, tool and transcript evidence."
+        "blocker": "Requires a separately reviewed and cost-bounded live provider preflight with exact model, usage, tool and transcript evidence before any 96-run dispatch."
       },
       "RAB-V1-T003": {
         "state": "planned",

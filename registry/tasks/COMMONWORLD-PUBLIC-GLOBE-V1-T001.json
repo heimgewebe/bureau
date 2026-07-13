@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T001",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "title": "Prove Android reduced-motion behavior",
+  "state": "planned",
+  "goal": "Establish a physical, commit-bound Android reduced-motion result for the public globe without treating an unavailable device setting or desktop emulation as a pass.",
+  "priority": {
+    "lane": "later",
+    "rank": 310
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Use an isolated Commonworld worktree. Before merge require a complete downloadable diff, head- and diff-bound self-review, green CI and exact post-merge live validation."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "android-reduced-motion-setting",
+      "assertion": "A named physical Android device and Chrome version either expose a reproducible reduced-motion setting path or record the exact absence/blocker; absence cannot be converted into PASS."
+    },
+    {
+      "id": "android-reduced-motion-runtime",
+      "assertion": "With reduced motion genuinely active, camera and panel transitions are measured against an exact commit and use the contracted non-animated path or a documented equivalent."
+    },
+    {
+      "id": "android-reduced-motion-interaction",
+      "assertion": "One-finger globe movement, pinch zoom, focus-panel operation, layer switching and browser-back behavior remain usable under the tested setting."
+    },
+    {
+      "id": "android-reduced-motion-evidence",
+      "assertion": "The physical receipt binds repository, commit, tree, device, browser, setting state, assertions, failures and SHA-256; desktop emulation is only supplementary evidence."
+    },
+    {
+      "id": "android-reduced-motion-boundary",
+      "assertion": "The result states which Android version and device were covered and does not claim all Android devices, screen-reader support, WCAG conformance or future runtime correctness."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source_nonclaim": "Android Reduced Motion PASS",
+    "source_pr": "heimgewebe/commonworld#66",
+    "plan_path": "docs/plans/commonworld-public-globe-v1.md",
+    "does_not_establish": [
+      "all Android support",
+      "screen-reader product support",
+      "WCAG conformance",
+      "future merge readiness"
+    ],
+    "registration_baseline_commit": "92c6993b8c1cac07caf0771c6071de9ca4721047",
+    "live_state_required_at_execution": true
+  }
+}

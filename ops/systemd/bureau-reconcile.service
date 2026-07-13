@@ -2,12 +2,13 @@
 Description=Bureau bounded runtime reconcile loop (no dispatch, no merge, no cleanup)
 Documentation=https://github.com/heimgewebe/bureau/blob/main/docs/bureau-runtime-observation-v1.md
 ConditionPathIsDirectory=%h/repos/bureau
+ConditionFileIsExecutable=%h/.local/bin/bureau
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=%h/.local/share/bureau/venv/bin/bureau --root %h/repos/bureau --json reconcile --stale-after 900
+ExecStart=%h/.local/bin/bureau --root %h/repos/bureau --json reconcile --stale-after 900
 Environment=PYTHONUNBUFFERED=1
 Environment=BUREAU_STATE_DIR=%h/.local/state/bureau
 TimeoutStartSec=5min

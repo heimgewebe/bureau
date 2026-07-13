@@ -47,16 +47,18 @@ Current reference units under `ops/systemd/`:
 
 | Unit | ExecStart shape | Compatibility implication |
 |---|---|---|
-| `bureau-status-projection.service` | `%h/.local/share/bureau/venv/bin/bureau --root %h/repos/bureau --json status-projection` | Already uses canonical `bureau` core CLI. Keep stable. |
+| `bureau-status-projection.service` | `%h/.local/bin/bureau --root %h/repos/bureau --json status-projection` | Uses the manifest- and package-digest-bound immutable Bureau launcher. |
 | `bureau-status-capsule.service` | `%h/.local/share/bureau/venv/bin/bureau-status-capsule write ...` | Dedicated independent read-only snapshot writer; keep its narrow binary and file-only reader stable. |
 | `bureau-status-capsule.timer` | refreshes `bureau-status-capsule.service` every five minutes | Keep explicit freshness scheduling; no network or source mutation. |
-| `bureau-reconcile.service` | `%h/.local/share/bureau/venv/bin/bureau --root %h/repos/bureau --json reconcile --stale-after 900` | Already uses canonical `bureau` core CLI. Keep stable. |
+| `bureau-reconcile.service` | `%h/.local/bin/bureau --root %h/repos/bureau --json reconcile --stale-after 900` | Uses the same immutable Bureau launcher as interactive operator calls. |
 | `bureau-source-pr-bridge.service` | `%h/.local/share/bureau-source-pr-bridge/venv/bin/bureau-source-pr-bridge` | Dedicated ops binary; needs compatibility shim before consolidation. |
 | `bureau-review-steward.service` | `%h/.local/share/bureau-review-steward/venv/bin/bureau-review-steward run` | Dedicated ops binary; needs compatibility shim before consolidation. |
 | `bureau-agent-frontier.service` | `%h/.local/libexec/bureau-agent-frontier` | Uses local libexec shim. Replacement must account for deployed shim path. |
 | `bureau-codex-bridge.service` | `%h/.local/libexec/bureau-codex-bridge --repo-root %h/repos/bureau --backend=none --json` | Uses local libexec shim. Replacement must account for deployed shim path and arguments. |
 
 The inventory checked `ops/systemd/*.service`, `ops/systemd/*.timer`, `docs/operations.md`, `docs/bureau-runtime-observation-v1.md`, `.github/workflows/`, `Makefile`, and tests for references.
+
+The two core CLI units were migrated by `OPERATOR-MACHINE-READABILITY-V1-T004`. Historical inventory receipts under `docs/reports/` remain unchanged because they describe the previously observed deployment.
 
 ## Compatibility-preserving consolidation path
 

@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "id": "RAB-V1-T002A",
+  "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
+  "title": "Build and qualify a read-only Claude benchmark runner",
+  "state": "ready",
+  "goal": "Implement the smallest isolated Claude runner that consumes the merged Lenskit benchmark request, exposes only the registered read-only baseline or RepoBrief treatment tools, preserves the complete provider stream, and emits a Lenskit-compatible receipt with exact model, provider-reported usage and normalized tool calls before any real benchmark batch is dispatched.",
+  "priority": {
+    "lane": "next",
+    "rank": 19
+  },
+  "depends_on": [
+    "RAB-V1-T001"
+  ],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.lenskit",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/lenskit"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Implement and test the runner with synthetic provider streams only. A live Claude preflight or the 96-run benchmark requires a separate explicit reviewed dispatch with bounded spend."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "claude-cli"
+  ],
+  "acceptance": [
+    {
+      "id": "rab-v1-t002a-request-contract",
+      "assertion": "The runner reads exactly one bounded Lenskit agent-benchmark request from stdin, validates request identity, condition, commit, budgets, isolation fields and treatment binding, and rejects unknown or post-hoc fields."
+    },
+    {
+      "id": "rab-v1-t002a-isolated-checkout",
+      "assertion": "Each request gets a create-only private checkout of the exact registered commit with a unique session/workspace identity; source repositories, prior sessions, transcripts and caches are not reused across conditions."
+    },
+    {
+      "id": "rab-v1-t002a-tool-boundary",
+      "assertion": "Baseline exposes only read, glob and grep capabilities mapped to the registered abstract tools; treatment exposes the same tools plus only the request-bound RepoBrief stdio MCP server. Write, shell, web, memory and unrelated MCP tools are absent."
+    },
+    {
+      "id": "rab-v1-t002a-provider-stream",
+      "assertion": "Claude runs non-interactively with stream-json, verbose events, no session persistence and an explicit model; the complete bounded JSONL stream is stored create-only and hash-bound as the transcript."
+    },
+    {
+      "id": "rab-v1-t002a-usage-and-model",
+      "assertion": "The runner requires the provider system/init model identity and cumulative result usage, records provider-reported input/output tokens without estimation, and invalidates missing, negative, contradictory or non-integer usage."
+    },
+    {
+      "id": "rab-v1-t002a-tool-calls",
+      "assertion": "Tool-use events and corresponding results are paired by provider tool-use id, mapped to the Lenskit tool vocabulary, ordered deterministically, bounded by request budgets and retained in the immutable transcript."
+    },
+    {
+      "id": "rab-v1-t002a-answer-contract",
+      "assertion": "The final structured provider result is normalized into the Lenskit answer contract with outcome, reported paths, symbols, citations, claims and evidence sufficiency; malformed or absent structured output makes the run invalid."
+    },
+    {
+      "id": "rab-v1-t002a-no-live-claim",
+      "assertion": "Synthetic stream fixtures prove parsing, isolation and fail-closed behavior but cannot establish provider availability, real agent usefulness, benchmark success or default promotion."
+    },
+    {
+      "id": "rab-v1-t002a-tests",
+      "assertion": "Focused and full Grabowski tests cover baseline, treatment, unknown tools, transcript limits, duplicate ids, missing result, usage drift, checkout mismatch, MCP binding, timeout and process failure; all repository CI gates pass before merge."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source_issue": "heimgewebe/bureau#481",
+    "implementation_repository": "heimgewebe/grabowski",
+    "planned_write_scope": [
+      "tools/repobrief_agent_benchmark_runner.py",
+      "tests/test_repobrief_agent_benchmark_runner.py",
+      "docs/contracts/repobrief-agent-benchmark-runner-v1.md"
+    ],
+    "parallel_exception": {
+      "reason": "The visible open Grabowski PR #179 changes MCP initialization, deployment tooling and generated operator context. The runner task uses new competition-independent files. The active Heimlern outcome task concerns routing-outcome production and Chronik transport; no matching public branch, PR or file was found in the runner scope.",
+      "remaining_uncertainty": "Unpublished local worktrees and leases are not visible through GitHub and must be re-read by the execution broker before mutation."
+    },
+    "provider_contract_basis": [
+      "Claude Code stream-json system/init model and tools",
+      "Claude Agent SDK result usage and per-model usage",
+      "Claude streaming tool-use events"
+    ],
+    "default_promoted": false,
+    "does_not_establish": [
+      "provider credentials",
+      "live provider availability",
+      "real agent usefulness",
+      "benchmark completion",
+      "answer correctness",
+      "default promotion"
+    ]
+  }
+}

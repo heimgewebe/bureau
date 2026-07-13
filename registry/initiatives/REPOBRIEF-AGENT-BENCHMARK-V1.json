@@ -11,6 +11,7 @@
   },
   "completion": [
     "A frozen multi-repository taskset, provider-neutral runner contract and deterministic evaluator are implemented and validated.",
+    "A read-only provider runner is separately qualified for exact model identity, provider-reported usage, tool-call capture, isolated checkouts and immutable transcripts.",
     "Real paired baseline and RepoBrief-augmented agent runs use the same model, prompt, budgets and isolated sessions with provider-reported tokens and bound transcripts.",
     "Navigation, structural reasoning, grounding, freshness, false confidence, time, tool-call and token outcomes are reported without post-hoc task tuning.",
     "RepoBrief remains opt-in unless a separate reviewed decision establishes a reproducible benefit without material quality or safety regression."
@@ -37,9 +38,13 @@
         "merge_commit": "7b729b52b6bf0302029626878ee444e664a0dc08",
         "diff_sha256": "69f9eb47e6fc6ef80b7982f44e4a763d148136a7248559bcad00eaa43dd29893"
       },
+      "RAB-V1-T002A": {
+        "state": "ready",
+        "goal": "Build and qualify the isolated read-only Claude runner before any real benchmark batch is dispatched."
+      },
       "RAB-V1-T002": {
         "state": "planned",
-        "blocker": "No qualifying instrumented agent runner with exact provider/model identity, provider token accounting, tool-call capture and immutable transcript binding is currently exposed."
+        "blocker": "Requires verified RAB-V1-T002A and a bounded live provider preflight with exact model, usage, tool and transcript evidence."
       },
       "RAB-V1-T003": {
         "state": "planned",
@@ -47,7 +52,7 @@
       }
     },
     "default_promoted": false,
-    "sequencing": "Complete the benchmark decision before prioritizing bureau#482 incremental rebuild or file-watcher work.",
+    "sequencing": "Qualify the runner, execute the real paired benchmark, decide adoption, and only then prioritize bureau#482 incremental rebuild or file-watcher work.",
     "does_not_establish": [
       "general agent quality improvement",
       "answer correctness outside the fixed taskset",

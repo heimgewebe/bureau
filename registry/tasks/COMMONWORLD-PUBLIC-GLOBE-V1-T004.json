@@ -3,7 +3,7 @@
   "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T004",
   "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
   "title": "Deliver globe-first surface with synchronized sphere and alternate views",
-  "state": "ready",
+  "state": "verified",
   "goal": "Make commonworld.net open directly on the interactive globe, keep the digital sphere attached to the visible globe through the side-layer transition, and add one settings gear that switches between globe and equivalent text presentation while exposing the existing catalog as a documented machine-readable surface.",
   "priority": {
     "lane": "now",
@@ -89,6 +89,38 @@
       "write-path authorization",
       "standalone CLI requirement",
       "future merge readiness"
-    ]
+    ],
+    "verification": {
+      "verified_at": "2026-07-13",
+      "authority": "commonworld-project-operator",
+      "decision": "globe_first_surface_delivered_and_live_verified",
+      "commonworld_pull_request": 69,
+      "pr_head": "f343b784ac23a85a3c49c8926024f34655387e4a",
+      "merge_commit": "ab1e0264810be6349354a5b4ba482bf1a6660ea1",
+      "final_tree": "b1e711b5e970891db2f0c1543b342955dd6aa4b4",
+      "main_validate_run": 29248146345,
+      "pages_run": 29248145161,
+      "public_url": "https://commonworld.net/",
+      "canonical_live_smoke": "PASS",
+      "dns_contract": "PASS",
+      "exact_live_artifact_readback": "PASS",
+      "browser_acceptance_sha256": "ec64cbfd030414e095a0e3575880f49ae39de3414c6e99d24df3daa5f70d00d2",
+      "physical_android_attestation_sha256": "c275348f636064c8f97f07a2570a902ae3ff7251e20b1a2360a1c6426ff4f70d",
+      "self_review_sha256": "3e29c4ee98a69b9e579cfa508595bd33249927b6b7cd7b8260b7c16a949c46a5",
+      "reviewed_diff_sha256": "ee18de2247854d14d3d3ea24980b3795a779beffd8e6e0fc1975866cf11456fa",
+      "closeout_sha256": "326ec3d974c7c6890a3fe2be45eb8e57b3ffaf112c1a27fe48bb3255cc4f54a8",
+      "acceptance": {
+        "globe-first-entry": "PASS",
+        "sphere-globe-synchrony": "PASS",
+        "real-layer-state": "PASS",
+        "single-settings-gear": "PASS",
+        "selection-parity": "PASS",
+        "text-surface": "PASS",
+        "machine-surface": "PASS",
+        "responsive-live-proof": "PASS"
+      },
+      "task_sha256": "5f085e643511517eb367cbbcd1ec824fedbd7935759fdea14c34628e5f36e7dd",
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4"
+    }
   }
 }

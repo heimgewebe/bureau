@@ -26,6 +26,7 @@
       "mcp_catalog_freshness",
       "session_capability_enforced"
     ],
+    "lifecycle_reconciled_20260713": "Reactivated after the live what-now readback on Bureau main b45f274052ededdbdc86bdc7a91ad801652e8f0e proved a lifecycle mismatch: the initiative was still waiting on a historical 2026-07-11 reason while 28 tasks remained open, including independent ready task GRABOWSKI-OPERATOR-SURFACE-V1-T052. Active records that work exists; individual task dependencies, claims and leases still govern claimability.",
     "priority_decision": "situation spine before recall; grip surface before friction automation; shadow measurement before bounded adaptive routing; push and capability enforcement later",
     "relationship_to_existing": {
       "GRIP-ROADMAP-V1": "complements and narrows operator-facing work; does not replace queued grip roadmap tasks",
@@ -36,13 +37,13 @@
     "source_summary": "User asked to turn the Grabowski operator-surface ideas into a Bureau plan after review of situation, grips, frozen snapshots, friction loop, push jobs, episodic memory and session attenuation.",
     "t031_closeout_20260711": "T031 verified after PRs #158/#159, deployment at 733259556144a171914f339a4ea67bca32f08977 and direct live proof of all three shadow-governor tools.",
     "t035_verified_20260713": "Observer and optimizer verified through Grabowski PR #178 and deployed at 7731fa5b351b7975b802193c44e15ee19a66e6b5. Legacy no-event reports remain diagnostic only.",
-    "t037_verified_20260713": "Evidence-bound Agent Workspace adoption verified through PR #178, runtime release 7731fa5b351b-srcset594dcb62e292-locke6664d600b6c-contract22f31ec746bf, and successful pilot gaw-grabowski-chat-grabowski-t037-po-1c5ac539c549; comparison sha256 381cb55e8d431e94356901538f9166000f3677d70dda9c662029677889321a6b.",
-    "waiting_reason_20260711": "Waiting because T030 remains blocked and T032 exact work dedupe plus validation isolation remains a separate planned slice. T031 and T033 are verified."
+    "t037_verified_20260713": "Evidence-bound Agent Workspace adoption verified through PR #178, runtime release 7731fa5b351b7975b802193c44e15ee19a66e6b5, and successful pilot gaw-grabowski-chat-grabowski-t037-po-1c5ac539c549; comparison sha256 381cb55e8d431e94356901538f9166000f3677d70dda9c662029677889321a6b.",
+    "waiting_reason_20260711": "Historical: waiting because T030 remained blocked and T032 exact work dedupe plus validation isolation remained a separate planned slice. Superseded for initiative lifecycle by lifecycle_reconciled_20260713; task-level blockers remain authoritative."
   },
   "parallelism": {
     "max_active_tasks": 1
   },
   "schema_version": 1,
-  "state": "waiting",
+  "state": "active",
   "title": "Grabowski operator surface"
 }

@@ -163,7 +163,28 @@
         }
       ],
       "diff_bound_self_review": "PASS",
-      "post_merge_readback": "origin/main resolved to f267070763fe8142f49c6d93810df0f7e219b308; the squash commit changes exactly the six T002C files."
+      "post_merge_readback": "origin/main resolved to f267070763fe8142f49c6d93810df0f7e219b308; its tree equals the reviewed head tree and the squash commit changes exactly the six T002C files.",
+      "post_merge_ci": [
+        {
+          "name": "validate (3.10)",
+          "result": "SUCCESS",
+          "run_id": 29273036012,
+          "job_id": 86895193144
+        },
+        {
+          "name": "validate (3.12)",
+          "result": "SUCCESS",
+          "run_id": 29273036012,
+          "job_id": 86895193133
+        },
+        {
+          "name": "claude",
+          "result": "SKIPPED",
+          "run_id": 29273048198,
+          "job_id": 86895231612,
+          "reason": "No provider review or live dispatch was requested for the merge commit."
+        }
+      ]
     },
     "verified_acceptance": {
       "rab-v1-t002c-current-runner": "The merged tree is based on Grabowski main after runner hardening and contains one adapter/core path rather than a second runner implementation.",
@@ -190,7 +211,7 @@
       "reason": "T002C is implementation and synthetic qualification only; T002D remains unexecuted."
     },
     "verification": {
-      "task_sha256": "0378fca91d382dc712392366ee99288b86e501f10a5515143be165e30f4e80e4",
+      "task_sha256": "f07adf7244521e58b788f47694dacc05caee75588504995ea01570c87eab6ee7",
       "plan_sha256": "80509abd14d63643ae73b9cf5ba0ef2255d73d1bd331a96b1752fe8ada04f308"
     }
   }

@@ -69,7 +69,7 @@
     },
     {
       "id": "rab-v1-t002d-stop-rule",
-      "assertion": "Any invalid receipt, unavailable provider, missing RepoBrief use, stale state, timeout, source mutation or uncertain launch ends the task without retry and leaves RAB-V1-T002 planned."
+      "assertion": "Any invalid receipt, unavailable provider, missing RepoBrief use, stale state, timeout, source mutation or uncertain launch ends the task without retry and leaves RAB-V1-T002 blocked and unstarted."
     },
     {
       "id": "rab-v1-t002d-evidence",

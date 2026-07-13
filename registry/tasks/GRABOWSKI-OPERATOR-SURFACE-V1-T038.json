@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T038",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Auditierbare Nichtkonflikt-Ausnahme für blockierende Repository-Leases",
+  "state": "planned",
+  "goal": "Permit a second same-repository execution only when a machine-readable, hash-bound non-conflict proof shows disjoint tasks, paths, components, runtime resources, processes, deployments and migrations; preserve the original lease and fail closed for missing, stale or contradictory evidence.",
+  "priority": {
+    "lane": "later",
+    "rank": 380
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "proof-contract",
+      "assertion": "A versioned non-conflict proof records both owners, repository identity, base/head state, intended effects, exact paths, components, runtime resources, processes, deployment targets and migration domains."
+    },
+    {
+      "id": "hash-and-time-bound",
+      "assertion": "The decision is bound to the proof SHA-256, both compared lease snapshots and a short validity window; any changed or missing input invalidates it."
+    },
+    {
+      "id": "fail-closed",
+      "assertion": "Unknown, overlapping, wildcard or contradictory scopes remain blocked, including shared deployment, migration, generated-file, lock, queue and worktree-administration effects."
+    },
+    {
+      "id": "preserve-foreign-owner",
+      "assertion": "An accepted exception neither releases nor rewrites the foreign lease, worktree, branch or process and acquires only the proven exact scopes for the second owner."
+    },
+    {
+      "id": "governor-and-resource-consistency",
+      "assertion": "Resource acquisition and the execution governor evaluate the same decision contract and emit an audit receipt with the proof and lease hashes."
+    },
+    {
+      "id": "regression-tests",
+      "assertion": "Tests cover valid disjoint work, path/component/runtime/process/deploy/migration overlap, stale proof, changed lease, wildcard scope, same-owner misuse and concurrent decision races."
+    },
+    {
+      "id": "runtime-proof",
+      "assertion": "Merged and deployed Grabowski passes a live smoke proving accepted disjoint parallel acquisition and continued rejection of a real overlap without force release."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_live_register",
+    "live_register_event_id": 279,
+    "live_register_candidate_id": "lease-nonconflict-exception-v1",
+    "live_register_created_at": "2026-07-13T04:59:19.060706Z",
+    "live_register_source": "operator",
+    "promotion_required_from_event": true,
+    "does_not_establish": [
+      "registry_task_truth",
+      "queue_truth",
+      "claim_authority",
+      "dispatch_authority",
+      "merge_readiness"
+    ],
+    "depends_semantically_on": "GRABOWSKI-OPERATOR-SURFACE-V1-T036",
+    "source_event_review": "PASS",
+    "nonconflict_axes": [
+      "task",
+      "path",
+      "component",
+      "runtime_resource",
+      "process",
+      "worktree",
+      "deployment",
+      "migration",
+      "generated_artifact",
+      "shared_gate"
+    ],
+    "safety_boundary": "No force release, lease theft, foreign worktree mutation or inference from task titles alone.",
+    "registration_scope": "One new task file; no queue mutation or execution authority."
+  }
+}

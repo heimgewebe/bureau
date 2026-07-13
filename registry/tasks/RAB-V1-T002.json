@@ -3,7 +3,7 @@
   "id": "RAB-V1-T002",
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "Run real paired baseline and RepoBrief agent trials",
-  "state": "planned",
+  "state": "blocked",
   "goal": "Execute the frozen benchmark in isolated baseline and RepoBrief-augmented conditions with the separately qualified instrumented runner, provider-reported tokens and immutable transcripts.",
   "priority": {
     "lane": "next",
@@ -91,6 +91,14 @@
       "answer correctness outside the fixed taskset",
       "test sufficiency",
       "merge readiness"
-    ]
+    ],
+    "blocked_at": "2026-07-13",
+    "current_blocker": "RAB-V1-T002D is ready but not authorized, not executed and not verified. Therefore the 96-run benchmark remains prohibited.",
+    "unlock_conditions": [
+      "RAB-V1-T002D receives a separate reviewed live authorization",
+      "exactly one valid baseline/treatment pair is completed without retry",
+      "T002D evidence is verified in Bureau"
+    ],
+    "benchmark_execution_status": "not_started"
   }
 }

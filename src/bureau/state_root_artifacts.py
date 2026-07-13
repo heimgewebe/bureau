@@ -631,6 +631,15 @@ def _process_references(path: Path) -> list[dict[str, Any]]:
     return references
 
 
+def _migration_review_payload_sha256(plan: dict[str, Any]) -> str:
+    payload = {
+        key: value
+        for key, value in plan.items()
+        if key not in {"review", "review_payload_sha256"}
+    }
+    return legacy.sha256_json(payload)
+
+
 def state_root_migration_plan(
     state_root: Path,
     entry_names: list[str],
@@ -679,7 +688,7 @@ def state_root_migration_plan(
             }
         )
     entries_sha256 = legacy.sha256_json(entries)
-    return {
+    plan = {
         "schema_version": MIGRATION_PLAN_SCHEMA_VERSION,
         "command": MIGRATION_PLAN_COMMAND,
         "created_at": legacy.utc_now(),
@@ -692,9 +701,10 @@ def state_root_migration_plan(
             "required": True,
             "status": "pending",
             "instructions": (
-                "Review every source/destination and digest. To apply, set status to "
-                "reviewed, add reviewer and reviewed_at, and copy entries_sha256 plus "
-                "destination_root into this review object."
+                "Review every operational field, source/destination and digest. To "
+                "apply, set status to reviewed, add reviewer and reviewed_at, and "
+                "copy review_payload_sha256, entries_sha256 and destination_root "
+                "into this review object."
             ),
         },
         "execution_preconditions": [
@@ -711,6 +721,8 @@ def state_root_migration_plan(
             "cleanup_authority_without_review",
         ],
     }
+    plan["review_payload_sha256"] = _migration_review_payload_sha256(plan)
+    return plan
 
 
 def _write_create_only(path: Path, content: str) -> None:
@@ -774,6 +786,14 @@ def _load_reviewed_migration_plan(path: Path) -> tuple[Path, dict[str, Any], str
         raise legacy.StateError(
             "reviewed migration plan requires reviewer and reviewed_at"
         )
+    claimed_payload_sha256 = plan.get("review_payload_sha256")
+    if (
+        re.fullmatch(r"[0-9a-f]{64}", str(claimed_payload_sha256 or "")) is None
+        or _migration_review_payload_sha256(plan) != claimed_payload_sha256
+    ):
+        raise legacy.StateError("migration plan payload digest mismatch")
+    if review.get("review_payload_sha256") != claimed_payload_sha256:
+        raise legacy.StateError("review is not bound to migration plan payload")
     if review.get("entries_sha256") != plan.get("entries_sha256"):
         raise legacy.StateError("review is not bound to migration entry states")
     if review.get("destination_root") != plan.get("destination_root"):
@@ -1035,37 +1055,89 @@ def rollback_state_root_migration(receipt_path: Path) -> dict[str, Any]:
     actions = receipt.get("rollback")
     if not isinstance(actions, list) or not actions:
         raise legacy.StateError("migration receipt has no rollback actions")
-    restored: list[dict[str, Any]] = []
+
+    planned: list[dict[str, Any]] = []
+    source_paths: set[str] = set()
+    destination_paths: set[str] = set()
     for action in actions:
+        if not isinstance(action, dict):
+            raise legacy.StateError("migration rollback action is invalid")
         source = Path(str(action.get("source", "")))
         destination = Path(str(action.get("destination", "")))
         expected = str(action.get("entry_sha256", ""))
-        if destination.exists() or destination.is_symlink():
-            if not source.exists() and _entry_identity(destination)["entry_sha256"] == expected:
-                restored.append(
+        source_key = str(source)
+        destination_key = str(destination)
+        if (
+            not source.is_absolute()
+            or not destination.is_absolute()
+            or source_key in source_paths
+            or destination_key in destination_paths
+            or re.fullmatch(r"[0-9a-f]{64}", expected) is None
+        ):
+            raise legacy.StateError("migration rollback action binding is invalid")
+        source_paths.add(source_key)
+        destination_paths.add(destination_key)
+
+        source_exists = source.exists() or source.is_symlink()
+        destination_exists = destination.exists() or destination.is_symlink()
+        if destination_exists:
+            if (
+                not source_exists
+                and not destination.is_symlink()
+                and _entry_identity(destination)["entry_sha256"] == expected
+            ):
+                planned.append(
                     {
-                        "source": str(source),
-                        "destination": str(destination),
+                        "source": source_key,
+                        "destination": destination_key,
                         "entry_sha256": expected,
                         "status": "already-restored",
                     }
                 )
                 continue
             raise legacy.StateError(f"rollback destination collision: {destination}")
-        if not source.exists() or source.is_symlink():
+        if not source_exists or source.is_symlink():
             raise legacy.StateError(f"rollback source is missing or symlinked: {source}")
-        current = _entry_identity(source)
-        if current["entry_sha256"] != expected:
+        if _entry_identity(source)["entry_sha256"] != expected:
             raise legacy.StateError(f"rollback source identity mismatch: {source}")
-        source.rename(destination)
-        restored.append(
+        planned.append(
             {
+                "source": source_key,
+                "destination": destination_key,
+                "entry_sha256": expected,
+                "status": "ready",
+            }
+        )
+
+    restored: list[dict[str, Any]] = []
+    moved_this_run: list[dict[str, Any]] = []
+    try:
+        for item in planned:
+            source = Path(item["source"])
+            destination = Path(item["destination"])
+            expected = item["entry_sha256"]
+            if item["status"] == "already-restored":
+                restored.append(item)
+                continue
+            if destination.exists() or destination.is_symlink():
+                raise legacy.StateError(f"rollback destination gained a collision: {destination}")
+            if not source.exists() or source.is_symlink():
+                raise legacy.StateError(f"rollback source changed before effect: {source}")
+            if _entry_identity(source)["entry_sha256"] != expected:
+                raise legacy.StateError(f"rollback source changed before effect: {source}")
+            source.rename(destination)
+            moved = {
                 "source": str(source),
                 "destination": str(destination),
                 "entry_sha256": expected,
                 "status": "restored",
             }
-        )
+            moved_this_run.append(moved)
+            restored.append(moved)
+    except Exception as exc:
+        _rollback_moved_entries(moved_this_run, cause=exc)
+        raise
+
     return {
         "schema_version": 1,
         "command": MIGRATION_ROLLBACK_COMMAND,

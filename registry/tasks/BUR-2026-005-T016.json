@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T016",
   "initiative": "BUR-2026-005",
   "title": "Design reviewed worktree cleanup apply path",
-  "state": "ready",
+  "state": "verified",
   "depends_on": [
     "BUR-2026-005-T014"
   ],
@@ -44,7 +44,7 @@
     "source": "Registered after PR #253 intentionally shipped worktree-hygiene as read-only only.",
     "not_implemented_in": "heimgewebe/bureau#253",
     "safety_boundary": "Cleanup must be reviewed, path-scoped, branch-aware, dirty-state-protected, process-aware and reversible where possible. The external worktree-admin gate and current exact-path lease check remain mandatory operator preconditions.",
-    "implementation_status": "implementation_in_review",
+    "implementation_status": "verified",
     "implementation_branch": "feat/bur-2026-005-t016-reviewed-worktree-cleanup-v1",
     "implementation_base_head": "4470b8a165058565eb7749e9cf363ecac93c4b4d",
     "effect_action_class": "worktree_cleanup",
@@ -56,7 +56,85 @@
       "process_absence_beyond_procfs_visibility",
       "cleanup_authority_without_review",
       "task_verification_before_post_merge_validation"
-    ]
+    ],
+    "verified_at": "2026-07-13T16:15:00Z",
+    "outcome": "A reviewed, candidate-explicit worktree cleanup apply path is merged. It preserves the read-only report default, requires a hash-bound reviewed plan, refuses canonical, dirty, missing, locked, overlapping, unmerged and procfs-observably process-used worktrees, removes without force, never deletes branches, emits a fresh post-clean report and attempts best-effort rollback after partial failure.",
+    "implementation_pr": "heimgewebe/bureau#514",
+    "implementation_head": "0d5b57a645d5eb961ddcce875848b62cd253bb84",
+    "implementation_merge_commit": "2c12ed00586fc51738a1bf1b18d23c950cbac877",
+    "implementation_diff_sha256": "bd77a0137bbbcd553172c96611cb6dcad2e6aee6602a3f16116f07962757da72",
+    "critical_self_review_sha256": "76308186e5b65c66e8ff1f09f06d4b8722626b842b1d5a34b09d7a29d05a1bc7",
+    "validation": [
+      "Exact implementation head 0d5b57a collected and passed 491 of 491 repository tests.",
+      "Post-merge checkout at 2c12ed0 passed the same 491 of 491 repository tests.",
+      "Thirty-two focused worktree-hygiene, approval and runtime-observation tests passed before and after merge.",
+      "Ruff passed for all changed Python and test files.",
+      "git diff --check passed.",
+      "Bureau check reported valid=true before and after merge.",
+      "Registry Truth was healthy with zero errors and no BUR-2026-005-T016 finding before merge.",
+      "GitHub validate (3.10) and validate (3.12) succeeded at the reviewed head.",
+      "No existing live worktree was cleaned by this task; effect behavior was proven only in isolated temporary Git repositories."
+    ],
+    "verified_acceptance": {
+      "explicit-candidates": "Tests prove plan creation accepts only explicit absolute linked-worktree paths, rejects relative, duplicate and overlapping candidates, and never expands report findings into effects.",
+      "review-binding": "The reviewed plan is bound to repository identity, exact candidate identity and unchanged plan bytes; missing, mismatched or stale bindings fail before effect.",
+      "dirty-refusal": "Focused tests prove refusal for canonical, dirty, missing, locked, unmerged and procfs-observably process-used worktrees. No force option exists.",
+      "branch-preservation": "A real temporary-repository apply removes only the reviewed linked worktree while preserving its local branch and an unrelated worktree; implementation contains no branch deletion command.",
+      "rollback-boundary": "A simulated later-candidate failure proves the already removed branch-backed worktree is restored; documentation and result schema keep rollback explicitly best-effort.",
+      "post-clean-report": "The real temporary-repository apply returns a fresh hygiene report proving the reviewed path absent and the unrelated worktree present.",
+      "coordination-boundary": "Code and documentation preserve external worktree-admin gate and exact-path lease checks as operator preconditions and explicitly disclaim authority over Grabowski lease truth and process state beyond procfs visibility."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "BUR-2026-005-T016",
+          "source_ref": "heimgewebe/bureau#514",
+          "number": 514,
+          "head_sha": "0d5b57a645d5eb961ddcce875848b62cd253bb84",
+          "merge_commit_sha": "2c12ed00586fc51738a1bf1b18d23c950cbac877",
+          "diff_sha256": "bd77a0137bbbcd553172c96611cb6dcad2e6aee6602a3f16116f07962757da72"
+        },
+        {
+          "kind": "test_run",
+          "authority": "grabowski-task",
+          "task_id": "BUR-2026-005-T016",
+          "source_ref": "grabowski-task:fe95567e61f84ab98367a3bd",
+          "commit_sha": "0d5b57a645d5eb961ddcce875848b62cd253bb84",
+          "result": "PASS",
+          "passed": 491
+        },
+        {
+          "kind": "test_run",
+          "authority": "grabowski-task",
+          "task_id": "BUR-2026-005-T016",
+          "source_ref": "grabowski-task:b2699041f1734177be9f08a2",
+          "commit_sha": "2c12ed00586fc51738a1bf1b18d23c950cbac877",
+          "result": "PASS",
+          "passed": 491
+        },
+        {
+          "kind": "self_review",
+          "authority": "local-bound-review",
+          "task_id": "BUR-2026-005-T016",
+          "source_ref": "/home/alex/.local/state/bureau/reviews/pr-514-self-review.json",
+          "reviewed_head": "0d5b57a645d5eb961ddcce875848b62cd253bb84",
+          "diff_sha256": "bd77a0137bbbcd553172c96611cb6dcad2e6aee6602a3f16116f07962757da72",
+          "content_sha256": "76308186e5b65c66e8ff1f09f06d4b8722626b842b1d5a34b09d7a29d05a1bc7",
+          "verdict": "PASS"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "e571099b4086b1be362ba83d0d9501b91aa801cd3e0bb01265b50c705e8f3a5a",
+      "plan_sha256": "653fa6a056506c94d5654ba5e3c16f9c31032767f0e1c844a8cb4714c50ce917",
+      "source": "github_pull_request_and_post_merge_validation",
+      "source_ref": "github-pr:heimgewebe/bureau#514@0d5b57a645d5eb961ddcce875848b62cd253bb84:2c12ed00586fc51738a1bf1b18d23c950cbac877",
+      "evidence_sha256": "bd77a0137bbbcd553172c96611cb6dcad2e6aee6602a3f16116f07962757da72"
+    }
   },
   "acceptance": [
     {

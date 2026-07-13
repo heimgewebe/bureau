@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T048",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Serialize user-visible diff handoff before merge",
+  "state": "planned",
+  "goal": "Prevent parallel actors from merging a nontrivial pull request before the exact head- and diff-bound artifact has been exposed to the user, while preserving fail-closed head-drift handling and avoiding duplicate merge effects.",
+  "priority": {
+    "lane": "next",
+    "rank": 480
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T040"
+  ],
+  "acceptance": [
+    {
+      "id": "delivery-before-merge",
+      "assertion": "A nontrivial merge is authorized only by a durable delivery receipt proving that the complete downloadable diff artifact was exposed to the user before merge dispatch; artifact creation alone is insufficient."
+    },
+    {
+      "id": "head-and-diff-binding",
+      "assertion": "The delivery receipt, critical review and merge request bind the same repository, pull request, exact head SHA and complete GitHub diff SHA-256; any head change invalidates all three and requires regeneration and redelivery."
+    },
+    {
+      "id": "parallel-merge-serialization",
+      "assertion": "A merge-intent resource or equivalent atomic gate prevents another cooperating Grabowski actor from merging the same pull request while artifact delivery or review is pending."
+    },
+    {
+      "id": "external-merge-reconciliation",
+      "assertion": "If GitHub shows that another actor already merged, the operation performs no duplicate effect, records whether the pre-merge delivery contract was satisfied and never treats post-merge exposure as equivalent evidence."
+    },
+    {
+      "id": "observable-timestamps",
+      "assertion": "Receipts expose artifact creation time, user-visible delivery time, merge-dispatch time and GitHub merge time in a comparable clock domain, with ordering uncertainty stated explicitly."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover two concurrent merge actors, head drift after delivery, delivery failure, already-merged reconciliation, stale receipts and an exact successful artifact-review-delivery-merge sequence."
+    },
+    {
+      "id": "non-authority",
+      "assertion": "The gate grants no merge authority by itself and cannot replace task authorization, CI, critical review, recovery, branch protection or human authorization requirements."
+    }
+  ],
+  "metadata": {
+    "source": "live process race during Grabowski PR #181 closeout",
+    "source_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T040",
+    "observed_at": "2026-07-13T12:44:52Z",
+    "observation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 181,
+      "reviewed_head": "e236f6b3e606a7ee37678bc557c6d2b6512c4e58",
+      "github_diff_sha256": "a096d19325ae84815fefdc5963eadd0dfa3a45abf74c45b49172dfd927292c41",
+      "merge_commit": "30596f270748692125c043a3fd75bebb853e3666",
+      "finding": "A parallel actor merged the exact reviewed head before this thread exposed the downloadable artifact link to the user. The code and deployment were valid, but the required user-visible ordering was not serialized."
+    },
+    "risk": "Process evidence can appear complete after the fact even though the user did not receive the artifact before the irreversible merge effect.",
+    "does_not_establish": [
+      "that_pr_181_code_was_incorrect",
+      "that_the_merge_was_unauthorized_by_other_gates",
+      "that_all_external_github_actors_can_be_locked",
+      "future_merge_safety_until_implemented"
+    ]
+  }
+}

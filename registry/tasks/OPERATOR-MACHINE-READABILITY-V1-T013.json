@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T013",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Harden state-root migration against ancestor path replacement",
+  "state": "planned",
+  "goal": "Bind reviewed Bureau state-root migration and rollback effects to stable filesystem anchors so replacing or symlinking an ancestor directory between review, preflight and rename cannot redirect an otherwise valid operation.",
+  "priority": {
+    "lane": "later",
+    "rank": 913
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "bureau"
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T005"
+  ],
+  "acceptance": [
+    {
+      "id": "reproduction-and-threat-model",
+      "assertion": "A deterministic synthetic test documents whether replacing, renaming or symlinking a source, destination or reference-root ancestor between review, preflight and effect can redirect the current path-based operation; no exploitability claim is made without a reproduction."
+    },
+    {
+      "id": "stable-root-binding",
+      "assertion": "Plans and receipts bind the relevant root and parent directory identities, including device and inode where supported, and fail closed when any bound anchor changes before an effect."
+    },
+    {
+      "id": "descriptor-relative-effects",
+      "assertion": "Linux effects use validated directory descriptors and descriptor-relative no-follow operations such as openat2, renameat or renameat2 where needed, rather than re-resolving reviewed absolute paths at the effect boundary."
+    },
+    {
+      "id": "rollback-parity",
+      "assertion": "Rollback applies the same anchor, no-follow, all-entry preflight and compensation guarantees as forward migration."
+    },
+    {
+      "id": "portable-failure-contract",
+      "assertion": "Unsupported kernels or filesystems produce a typed fail-closed result or an explicitly weaker read-only diagnostic path; no silent fallback weakens mutation safety."
+    },
+    {
+      "id": "tests-and-live-proof",
+      "assertion": "Tests cover ancestor replacement, symlink substitution, cross-device boundaries, concurrent topology drift and interrupted effects; a bounded proof uses only temporary synthetic roots and performs no active Bureau state migration."
+    }
+  ],
+  "metadata": {
+    "source": "PR #532 head- and diff-bound security self-review",
+    "observed_at": "2026-07-13T19:51:46Z",
+    "observation": "PR #532 binds the complete reviewed plan payload and makes multi-entry rollback preflighted and compensating, but path identity is still checked through absolute-path resolution rather than persistent directory descriptors.",
+    "risk_classification": {
+      "status": "plausible_not_reproduced",
+      "impact_if_confirmed": "A concurrent same-privilege actor could redirect a reviewed source, destination or reference scan by replacing an ancestor after validation.",
+      "current_mitigation": "Symlinks at inspected entries are rejected, identities are rechecked before rename, and no live migration was executed during PR #532."
+    },
+    "related_pull_request": 532,
+    "related_head_sha": "864f4b977e9b00eecf7a2092004a1dd076ffade2",
+    "does_not_establish": [
+      "current_exploitability",
+      "presence_of_a_hostile_same_privilege_actor",
+      "permission_to_execute_or_delete_state",
+      "failure_of_PR_532"
+    ]
+  }
+}

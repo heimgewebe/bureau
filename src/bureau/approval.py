@@ -52,6 +52,14 @@ APPROVAL_RULES: dict[str, dict[str, Any]] = {
         "allowed_levels": frozenset({"reviewed_plan", "break_glass"}),
         "reason": "queue order controls what agents may pick next",
     },
+    "worktree_cleanup": {
+        "required_level": "reviewed_plan",
+        "allowed_levels": frozenset({"reviewed_plan", "break_glass"}),
+        "reason": (
+            "worktree removal changes repository administration state and may "
+            "discard the last checked-out copy of a commit"
+        ),
+    },
     "runtime_mutation": {
         "required_level": "break_glass",
         "allowed_levels": frozenset({"break_glass"}),

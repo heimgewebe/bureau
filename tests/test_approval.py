@@ -184,3 +184,32 @@ def test_task_approval_contract_infers_write_claim_as_repository_mutation() -> N
     contract = approval.task_approval_contract(task)
     assert contract["action_class"] == "repository_mutation"
     assert contract["decision"]["allowed"] is False
+
+
+def test_worktree_cleanup_requires_reviewed_plan_bound_to_reference() -> None:
+    blocked = approval.approval_decision("worktree_cleanup", None)
+    assert blocked["allowed"] is False
+    assert blocked["required_level"] == "reviewed_plan"
+
+    with pytest.raises(StateError, match="approval reference"):
+        approval.require_approval(
+            "worktree_cleanup",
+            approval.reviewed_plan_approval(
+                reviewer="reviewer",
+                reference="other-plan.json",
+                scope="worktree_cleanup",
+            ),
+            expected_reference="cleanup-plan.json",
+        )
+
+    allowed = approval.require_approval(
+        "worktree_cleanup",
+        approval.reviewed_plan_approval(
+            reviewer="reviewer",
+            reference="cleanup-plan.json",
+            scope="worktree_cleanup",
+        ),
+        expected_reference="cleanup-plan.json",
+    )
+    assert allowed["allowed"] is True
+    assert allowed["evidence"]["level"] == "reviewed_plan"

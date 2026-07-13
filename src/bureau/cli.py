@@ -91,6 +91,9 @@ def parser() -> argparse.ArgumentParser:
     queue_reconcile.add_argument("--apply-plan")
     worktree_hygiene = sub.add_parser("worktree-hygiene")
     worktree_hygiene.add_argument("--max-count", type=int, default=25)
+    worktree_hygiene.add_argument("--candidate", action="append", default=[])
+    worktree_hygiene.add_argument("--write-plan")
+    worktree_hygiene.add_argument("--apply-plan")
     registry_truth = sub.add_parser("registry-truth")
     registry_truth.add_argument("--strict", action="store_true")
     registry_truth.add_argument("--no-baseline-probe", action="store_true")
@@ -382,9 +385,28 @@ def main(argv: list[str] | None = None) -> int:
             emit(value, args.json)
             return 0
         if args.command == "worktree-hygiene":
-            from .worktree_hygiene import worktree_hygiene_report
+            from .worktree_hygiene import (
+                apply_worktree_cleanup_plan,
+                worktree_hygiene_report,
+                write_worktree_cleanup_plan,
+            )
 
-            value = worktree_hygiene_report(root, max_count=args.max_count)
+            if args.write_plan and args.apply_plan:
+                raise StateError("use either --write-plan or --apply-plan, not both")
+            if args.write_plan:
+                if not args.candidate:
+                    raise StateError("--write-plan requires at least one --candidate")
+                value = write_worktree_cleanup_plan(
+                    root, args.candidate, args.write_plan, max_count=args.max_count
+                )
+            elif args.apply_plan:
+                if args.candidate:
+                    raise StateError("--candidate cannot be combined with --apply-plan")
+                value = apply_worktree_cleanup_plan(root, args.apply_plan)
+            else:
+                if args.candidate:
+                    raise StateError("--candidate requires --write-plan")
+                value = worktree_hygiene_report(root, max_count=args.max_count)
             emit(value, args.json)
             return 0
         if args.command == "registry-truth":

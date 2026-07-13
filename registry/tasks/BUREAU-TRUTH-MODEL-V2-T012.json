@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/registry/initiatives/BUREAU-LIVE-REGISTER-V1.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/UTIL-BASE-V1.json",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T012.json"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Preserve only the two already-present lifecycle transitions, validate them against current registry truth, and merge through a complete diff plus head- and diff-bound self-review."
+    }
+  },
+  "claims": [
+    {
+      "resource": "component.bureau.truth-model",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "id": "BUREAU-TRUTH-MODEL-V2-T012",
+  "title": "Preserve orphaned initiative lifecycle closeouts",
+  "state": "planned",
+  "goal": "Move the unique, uncommitted completion transitions for BUREAU-LIVE-REGISTER-V1 and UTIL-BASE-V1 from the stale canonical checkout into reviewed Git truth without resetting, stashing or overwriting foreign state.",
+  "priority": {
+    "lane": "later",
+    "rank": 120
+  },
+  "depends_on": [
+    "BUREAU-TRUTH-MODEL-V2-T001"
+  ],
+  "acceptance": [
+    {
+      "id": "byte-preservation",
+      "assertion": "The two initiative files in the implementation diff are byte-identical to the unique dirty versions observed in the canonical checkout before preservation."
+    },
+    {
+      "id": "lifecycle-consistency",
+      "assertion": "Both initiatives are marked completed only because all of their registered tasks are verified, and the lifecycle timestamps remain explicit evidence rather than inferred current time."
+    },
+    {
+      "id": "bounded-scope",
+      "assertion": "No queue, state database, runtime, schema, unrelated task or open PR #499 file is modified."
+    },
+    {
+      "id": "merge-gates",
+      "assertion": "Registry check, doctor, focused tests, complete GitHub diff, head- and diff-bound self-review, CI, mergeability and post-merge validation pass before verification."
+    },
+    {
+      "id": "canonical-recovery-boundary",
+      "assertion": "The canonical dirty checkout is changed only after the preserved bytes exist on origin/main and a separate readback proves a lossless fast-forward path; otherwise it remains untouched."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13T14:58:00+02:00",
+    "source": "Live Bureau drift audit after autonomous Grabowski task selection",
+    "bootstrap_pr_binding_exception": "The task and its already-existing bounded lifecycle payload are introduced together because no prior task represented the orphaned dirty changes.",
+    "observed_canonical_head": "b65d1f8f3ba5b67d707c23dfa773814067267f71",
+    "observed_origin_main": "60f30a8966e12c66897598f2a9de6a5fb7e21d6f",
+    "observed_dirty_paths": [
+      "registry/initiatives/BUREAU-LIVE-REGISTER-V1.json",
+      "registry/initiatives/UTIL-BASE-V1.json"
+    ],
+    "does_not_establish": [
+      "permission_to_reset_or_stash_the_canonical_checkout",
+      "automatic_task_verification",
+      "automatic_queue_mutation",
+      "merge_authority_without_review_gates",
+      "absence_of_other_stale_local_checkouts"
+    ]
+  }
+}

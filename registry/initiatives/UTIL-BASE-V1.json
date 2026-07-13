@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "UTIL-BASE-V1",
   "title": "Local operator utility baseline",
-  "state": "completion-ready",
-  "commitment": "later",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Build a small, evidence-friendly Heim-PC utility baseline around backup, monitoring, shell history, local transfer, review/search tools and document processing without creating a second control-plane or second knowledge truth.",
   "current_plan": {
     "repository": "bureau",
@@ -167,6 +167,9 @@
     "lifecycle_completion_20260711": {
       "state": "completion-ready",
       "reason": "All seventeen initiative tasks are verified."
+    },
+    "lifecycle": {
+      "completed_at": "2026-07-12T06:18:20.376193Z"
     }
   }
 }

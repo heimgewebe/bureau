@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T014",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Close final-component rename identity race",
+  "state": "planned",
+  "goal": "Determine and, where the Linux kernel permits it, close the remaining race between descriptor-relative rename and post-effect inode capture so a same-privilege actor cannot replace the final source or destination name during the effect boundary without a deterministic fail-closed recovery result.",
+  "priority": {
+    "lane": "later",
+    "rank": 914
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "bureau"
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T013"
+  ],
+  "acceptance": [
+    {
+      "id": "deterministic-boundary-reproduction",
+      "assertion": "A syscall-interposed or otherwise deterministic test replaces the final source or destination name specifically after renameat returns and before Bureau captures the moved inode; the task distinguishes transient interference, false success and incomplete recovery without inferring exploitability from theory alone."
+    },
+    {
+      "id": "kernel-capability-analysis",
+      "assertion": "The implementation records which Linux primitives can and cannot provide conditional name-to-inode rename semantics, including renameat2, openat2, file handles, leases or an equivalent coordination mechanism; unsupported claims are rejected rather than approximated."
+    },
+    {
+      "id": "safe-resolution",
+      "assertion": "If an enforceable primitive exists, apply and rollback use it symmetrically with no silent fallback; otherwise Bureau exposes an explicit residual-risk result and requires a stronger exclusive coordination precondition before mutation."
+    },
+    {
+      "id": "compensation-proof",
+      "assertion": "Tests prove that Bureau never reports success for the wrong inode and never compensates or deletes an object whose captured device/inode does not match the object moved by the current run."
+    },
+    {
+      "id": "compatibility-and-performance",
+      "assertion": "The stronger boundary preserves idempotent receipts, multi-entry compensation and bounded performance, or documents a justified schema transition and operational migration path."
+    },
+    {
+      "id": "synthetic-only-proof",
+      "assertion": "All adversarial validation uses temporary synthetic roots; no active Bureau state migration, rollback or deletion is performed."
+    }
+  ],
+  "metadata": {
+    "source": "OPERATOR-MACHINE-READABILITY-V1-T013 implementation self-review",
+    "observed_at": "2026-07-13T23:06:00+02:00",
+    "observation": "T013 binds ancestors and top-level entries by device/inode, performs descriptor-relative effects and compensates detected post-effect identity drift. Linux renameat remains name-based and does not atomically assert the expected source inode while renaming.",
+    "risk_classification": {
+      "status": "residual_not_yet_reproduced_at_exact_boundary",
+      "impact_if_confirmed": "A same-privilege actor racing after renameat and before effect capture could force a fail-closed but incompletely recoverable result; T013 prevents false success but does not claim atomic rename-by-inode.",
+      "current_mitigation": "No-follow anchored descriptors, per-effect path and inode checks, post-effect identity verification, captured-effect compensation and typed incomplete-recovery errors."
+    },
+    "does_not_establish": [
+      "current_exploitability",
+      "availability_of_a_conditional_kernel_rename_primitive",
+      "permission_to_execute_or_delete_state",
+      "failure_of_T013"
+    ]
+  }
+}

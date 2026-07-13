@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T012",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Decouple Bureau statements from ambient checkout state",
-  "state": "planned",
+  "state": "verified",
   "goal": "Keep Bureau statements available through a deployment-bound, hash-verified, read-only Registry snapshot even when the conventional Bureau checkout is stale or dirty, while requiring every Registry mutation to bind an explicit clean current task worktree.",
   "priority": {
     "lane": "next",
@@ -44,7 +44,7 @@
     },
     {
       "id": "query-only-statements",
-      "assertion": "Commands explicitly classified as statements use a query-only StateStore path that performs no directory creation, migration, journal-mode change or chmod effect."
+      "assertion": "Commands explicitly classified as statements use a query-only StateStore path under canonical-runtime-default that performs no directory creation, migration, journal-mode change or chmod effect; explicit task worktrees retain their operational StateStore behavior."
     },
     {
       "id": "explicit-write-worktree",
@@ -67,9 +67,9 @@
     "source": "Live failure after OPERATOR-MACHINE-READABILITY-V1-T004 closeout",
     "observed_at": "2026-07-13T18:11:00Z",
     "observation": {
-      "deployed_runtime_source_commit": "d85ad423aa027a6910ad6695c63c822c6121cb6c",
+      "deployed_runtime_source_commit_before_fix": "d85ad423aa027a6910ad6695c63c822c6121cb6c",
       "conventional_checkout_head": "b65d1f8f3ba5b67d707c23dfa773814067267f71",
-      "behind_commits": 84,
+      "behind_commits_before_fix": 84,
       "foreign_dirty_paths": [
         "registry/initiatives/BUREAU-LIVE-REGISTER-V1.json",
         "registry/initiatives/UTIL-BASE-V1.json"
@@ -77,20 +77,50 @@
       "active_processes_using_checkout": 4,
       "failure": "The current immutable runtime correctly refused the stale dirty checkout, but because the launcher defaulted Registry root to the caller cwd it also refused every normal statement."
     },
-    "implementation_slice": {
-      "branch": "fix/canonical-registry-root-v2",
-      "worktree": "/home/alex/repos/.bureau-staging/canonical-registry-root-v2",
+    "verification_evidence": {
+      "implementation_pr": 527,
+      "implementation_head": "05343d0859b664cc20b399de64c6ee66c4439835",
+      "merge_commit": "0f556f2dc1a02db40646a82f2ce7dc40d6cc5621",
+      "ci": {
+        "validate_3_10": "success",
+        "validate_3_12": "success"
+      },
       "focused_test_task": "eb7f884b313e4ceeb31cbc09",
       "focused_test_result": "16 passed",
-      "merge_and_live_verification_pending": true
+      "full_suite_comparison": {
+        "universal_query_only_commit": "cfaab658cd763bba011403a1c2aab98fe50aae94",
+        "universal_query_only_task": "a607c16fa9a645db9ad42f07",
+        "canonical_only_commit": "05343d0859b664cc20b399de64c6ee66c4439835",
+        "canonical_only_task": "5295ab1cee3143c08a806e3f",
+        "result": "both completed successfully; canonical-only selected for compatibility"
+      },
+      "deployed_runtime_source_commit": "0f556f2dc1a02db40646a82f2ce7dc40d6cc5621",
+      "release_id": "0f556f2dc1a0-src96fea7a1c741",
+      "manifest_sha256": "a682df0dd986068ca7e9de477f5355534d26c715863f1c0825d1bc5822ec6248",
+      "canonical_snapshot_tree_sha256": "2f9b3a12f4529e3e93772fb46568386062b62ce3cd533e9bd3dd8bf944b21f37",
+      "canonical_snapshot_inventory_sha256": "461669340c980a4cf41fab3675e4948a9399812961997898d65fbd98f8b615bd",
+      "live_checkout_behind_commits": 94,
+      "live_statement": "bureau --json status succeeded from stale dirty main checkout",
+      "live_mutation_gate": "bureau --json close-ready returned explicit-registry-root-required",
+      "foreign_dirty_file_sha256_unchanged": {
+        "registry/initiatives/BUREAU-LIVE-REGISTER-V1.json": "c27aa4b513ccad92bda43413a5a32527381a4d4c9a2b9c474d9a735f9de9c980",
+        "registry/initiatives/UTIL-BASE-V1.json": "fd44e693ac6683776243036f621bc9000eaff059d7b0d844da41a78ff0502752"
+      }
     },
     "safety_boundary": "Availability is restored only for read truth. Mutation authority remains stricter than before and always requires an explicit clean task worktree.",
     "does_not_establish": [
-      "merge_readiness",
-      "production_deployment",
-      "registry_semantic_correctness",
-      "permission_to_modify_foreign_worktrees",
-      "automatic_task_closeout"
-    ]
+      "registry_semantic_correctness beyond validated schemas",
+      "permission to modify foreign worktrees",
+      "completion of GRIP-ROADMAP-V1-T022",
+      "completion of OPERATOR-MACHINE-READABILITY-V1-T003"
+    ],
+    "verification": {
+      "task_sha256": "45eea230a6f1925aac0d82adc16a0471d06b01c9a996a876937627c09431ea0f",
+      "plan_sha256": "5bd32f4906cc9af27a3f99c7ab886eb9df7f8e5f4e9247c450bc492e64d28b06",
+      "source": "github_pr_527_ci_deployment_and_live_dirty_checkout_probe",
+      "source_ref": "github-pr:heimgewebe/bureau#527@0f556f2dc1a02db40646a82f2ce7dc40d6cc5621",
+      "evidence_sha256": "f13a096d8a20aa76af0e3e3253eaf87c259649119c581d4352c1a435e12e6f28",
+      "verified_at": "2026-07-13"
+    }
   }
 }

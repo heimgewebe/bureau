@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T046",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Reconcile obsolete path leases without weakening exact overlap",
+  "state": "planned",
+  "goal": "Close the live gap exposed by T040: exact path leases must remain fail-closed while their owner still declares the path, but completed or superseded owner work needs an evidence-bound release and reconciliation path so stale path leases do not block unrelated successors until TTL expiry.",
+  "priority": {"lane": "later", "rank": 460},
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": ["repo:/home/alex/repos/grabowski"]
+  },
+  "claims": [{"resource": "repo.grabowski", "mode": "write", "isolation": "worktree"}],
+  "required_capabilities": ["repository", "shell", "grabowski"],
+  "depends_on": ["GRABOWSKI-OPERATOR-SURFACE-V1-T038"],
+  "acceptance": [
+    {
+      "id": "exact-overlap-remains-blocked",
+      "assertion": "A requester cannot bypass an exact path lease merely because processes are absent, the TTL is near expiry or observed current work appears disjoint; unknown or nonterminal owner state remains blocked."
+    },
+    {
+      "id": "owner-bound-release-receipt",
+      "assertion": "Workspace, task or integration closeout can emit an owner-bound receipt naming obsolete exact leases, terminal evidence and expected lease snapshots; the broker releases only unchanged leases owned by that owner."
+    },
+    {
+      "id": "bounded-reconciliation",
+      "assertion": "A typed reconciliation operation can verify merged/deployed or abandoned owner work, terminal tasks and workspace closeout, then release only explicitly proven obsolete path leases without touching other owner resources."
+    },
+    {
+      "id": "stable-navigation",
+      "assertion": "The non-conflict assessor returns a stable machine-readable distinction between repository-lease assessment, exact path overlap requiring owner release, stale proof and unsupported blocker type instead of a generic validation error."
+    },
+    {
+      "id": "no-third-party-reclaim",
+      "assertion": "A different owner receives no release, write or retry authority from lease expiry, process absence, task titles, inferred scope or a non-conflict proof alone."
+    },
+    {
+      "id": "lifecycle-integration",
+      "assertion": "Agent Workspace and durable-task closeout either release their exact owner leases or retain them with an explicit reason and bounded retention; failed or uncollected work remains fail-closed."
+    },
+    {
+      "id": "regression-and-live-proof",
+      "assertion": "Tests cover terminal owner release, changed lease snapshots, active dirty workspace, failed uncollected workspace, expiry-only attempts, partial release and concurrent reconciliation; a live smoke proves obsolete-path release and continued rejection of a genuine exact overlap."
+    }
+  ],
+  "metadata": {
+    "source": "T040 live execution blocker",
+    "source_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T040",
+    "source_runtime_head": "7731fa5b351b7975b802193c44e15ee19a66e6b5",
+    "observed_failure": "grabowski_resource_nonconflict_assess rejected a path blocker with: blocked_resource_key must be a repository lease",
+    "observed_blocked_resource": "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json",
+    "foreign_owner": "chatgpt-agent-workspace-outcomes-t037-20260713",
+    "foreign_workspace": "gaw-grabowski-chat-grabowski-t037-po-9f6c04438937",
+    "safety_decision": "Do not force-release or infer permission. T040 remains blocked until the owner releases the exact path lease or a reviewed owner-bound reconciliation contract exists.",
+    "does_not_establish": [
+      "permission_to_force_release_foreign_leases",
+      "expiry_as_reclaim_authority",
+      "process_absence_as_completion_evidence",
+      "path_overlap_as_nonconflicting",
+      "automatic_merge_or_deploy_authority"
+    ]
+  }
+}

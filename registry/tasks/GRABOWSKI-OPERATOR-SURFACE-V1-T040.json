@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T040",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Deliver versioned MCP initialization instructions",
+  "state": "planned",
+  "goal": "Bind a small versioned and hash-verifiable operator instruction contract to FastMCP initialization so every compatible client session receives the truth hierarchy, narrow-read-first rule, mutation preconditions, fail-closed retry rule and typed-operation preference without requiring an active read of GRABOWSKI.md.",
+  "priority": {"lane": "next", "rank": 400},
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": ["repo:/home/alex/repos/grabowski"]
+  },
+  "claims": [{"resource": "repo.grabowski", "mode": "write", "isolation": "worktree"}],
+  "required_capabilities": ["repository", "shell", "github", "grabowski"],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T038",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T039"
+  ],
+  "acceptance": [
+    {"id": "canonical-source", "assertion": "The instruction text is generated from or checked against one versioned canonical source with an explicit schema version, SHA-256 and bounded byte size."},
+    {"id": "fastmcp-binding", "assertion": "FastMCP is instantiated with the exact canonical instructions and the running deployment proves the same instruction identity."},
+    {"id": "minimal-content", "assertion": "The instructions contain only the truth hierarchy, narrow typed read first, mutation target and validation requirements, unchanged-retry prohibition after ambiguous failures, and typed-operation preference."},
+    {"id": "no-authority-inflation", "assertion": "Instructions do not grant action, merge, deploy, secret or retry authority and explicitly preserve live receipts and policy as higher-order truth."},
+    {"id": "contract-tests", "assertion": "Tests fail on missing instructions, stale generated identity, oversize content, semantic key loss or divergence between source, runtime entrypoint and deployment manifest."},
+    {"id": "live-proof", "assertion": "After merge and commit-bound deployment, a live initialization or equivalent server-contract readback proves the instruction hash and version without claiming universal client compliance."}
+  ],
+  "metadata": {
+    "source": "user-directed-agent-facing-contract-plan",
+    "plan": "docs/plans/grabowski-agent-facing-contract-v1.md",
+    "evidence_basis": [
+      "FastMCP currently instantiated without instructions",
+      "mcp 1.27.2 supports instructions",
+      "current client uses deferred tool discovery"
+    ],
+    "does_not_establish": [
+      "client_obeys_every_instruction",
+      "tool_choice_accuracy_improved",
+      "new_action_authority",
+      "merge_readiness"
+    ]
+  }
+}

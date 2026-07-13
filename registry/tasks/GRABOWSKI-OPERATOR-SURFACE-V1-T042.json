@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T042",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Enforce a tool-surface budget and operation-catalog gate",
+  "state": "planned",
+  "goal": "Prevent unexamined Top-Level-Tool growth by requiring each added public tool to prove a distinct authority boundary, materially different call shape or measured selection advantage; otherwise model the capability as a named typed operation behind an existing entry point.",
+  "priority": {"lane": "next", "rank": 420},
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": ["repo:/home/alex/repos/grabowski"]
+  },
+  "claims": [{"resource": "repo.grabowski", "mode": "write", "isolation": "worktree"}],
+  "required_capabilities": ["repository", "shell", "github", "grabowski"],
+  "depends_on": ["GRABOWSKI-OPERATOR-SURFACE-V1-T041"],
+  "acceptance": [
+    {"id": "surface-baseline", "assertion": "The repository records a generated baseline of public tool names, categories, authority classes and operation-catalog entries bound to the runtime contract."},
+    {"id": "merge-gate", "assertion": "Validation fails when a new public tool lacks a machine-readable justification naming the distinct authority boundary, materially different argument schema or measured tool-choice advantage."},
+    {"id": "operation-default", "assertion": "New capabilities without an accepted exception are represented as named operations with typed parameters, explicit effects, validation and rollback metadata rather than unconstrained strings."},
+    {"id": "security-boundaries-preserved", "assertion": "Irreversible deletion, secret reveal/use/export, process signalling, privileged actions and other materially different authority or reversibility boundaries are not collapsed merely to reduce the count."},
+    {"id": "no-arbitrary-cap", "assertion": "The gate does not enforce an unexplained fixed maximum. It reports growth, accepted exceptions, retired entries and operation migration candidates."},
+    {"id": "compatibility", "assertion": "Existing clients retain stable tool names unless a separately reviewed deprecation and compatibility path exists."},
+    {"id": "proof", "assertion": "Tests demonstrate one rejected unnecessary tool, one accepted security-boundary tool and one capability successfully added as a catalog operation."}
+  ],
+  "metadata": {
+    "source": "user-directed-agent-facing-contract-plan",
+    "plan": "docs/plans/grabowski-agent-facing-contract-v1.md",
+    "risk_note": "A generic operation dispatcher can reduce discoverability and blur authority unless operation schemas and effects remain explicit.",
+    "does_not_establish": [
+      "smaller_is_always_better",
+      "fixed_optimal_tool_count",
+      "permission_to_merge_security_boundaries",
+      "tool_choice_improvement_without_measurement"
+    ]
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "id": "RCGA-V1-T001",
+  "initiative": "REPOBRIEF-CODEGRAPH-ADOPTION-V1",
+  "title": "Implement Lenskit-native agent impact context v1",
+  "state": "ready",
+  "goal": "Implement and measure a deterministic read-only impact/edit context that adopts CodeGraph's useful relation, related-test and pre-edit context ideas using existing Lenskit artifacts and authority boundaries.",
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "depends_on": [
+    "RBAE-V1-T003"
+  ],
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "80374ccbd1af8e86dab3f3d173ce2a585962b195",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Use an isolated branch/worktree. Before merge require a complete downloadable diff, head- and diff-bound self-review, green CI and exact post-merge validation."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rcga-v1-t001-context",
+      "assertion": "An explicit path or symbol produces a deterministic bounded context containing the target, incoming and outgoing relations, related tests, contracts/docs/entrypoints, source statuses and gaps."
+    },
+    {
+      "id": "rcga-v1-t001-evidence",
+      "assertion": "Graph-derived, symbol-derived and heuristic candidates remain distinguishable with provenance, direction and evidence level; stale or missing inputs cannot appear current."
+    },
+    {
+      "id": "rcga-v1-t001-boundary",
+      "assertion": "RepoBrief remains read-only: no Git, patch, shell, test, PR, memory or source-tree mutation and no review verdict, risk score, coverage guarantee or merge authorization."
+    },
+    {
+      "id": "rcga-v1-t001-measurement",
+      "assertion": "A fixed goldset compares the candidate with the existing read-only workbench and records target recall, context size, missing-evidence visibility and non-regression without claiming general repository understanding."
+    },
+    {
+      "id": "rcga-v1-t001-integration",
+      "assertion": "The feature reuses existing Lenskit graph, symbol, query, relation-card and Delta Context components rather than creating a second index authority or CodeGraph service."
+    },
+    {
+      "id": "rcga-v1-t001-merge-gates",
+      "assertion": "Tests, CI, complete diff, diff-bound self-review, mergeability and post-merge validation pass before verification."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source_request": "alles umsetzen (vorher natürlich im bureau registrieren)",
+    "plan_path": "docs/plans/repobrief-codegraph-adoption-v1.md",
+    "reference_project": "codegraph-ai/CodeGraph",
+    "predecessor_task": "RBAE-V1-T003",
+    "does_not_establish": [
+      "complete_call_graph",
+      "complete_blast_radius",
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "security_correctness",
+      "general_agent_quality_improvement"
+    ]
+  }
+}

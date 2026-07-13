@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "REPOBRIEF-CODEGRAPH-ADOPTION-V1",
+  "title": "RepoBrief CodeGraph selective adoption",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Adopt the useful structural-navigation ideas from CodeGraph as a deterministic read-only Lenskit surface without introducing a second index authority, memory store or merge gate.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/repobrief-codegraph-adoption-v1.md"
+  },
+  "completion": [
+    "Lenskit exposes a bounded agent impact/edit context built from existing graph, symbol, query and provenance artifacts.",
+    "Related tests, incoming/outgoing relations, contracts, docs and entrypoints are separated by evidence type and source status.",
+    "A fixed evaluation establishes measurable navigation benefit or the candidate remains opt-in or is removed.",
+    "RepoBrief remains read-only and produces no review verdict, risk score, coverage guarantee or merge authorization."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source_request": "alles umsetzen (vorher natürlich im bureau registrieren)",
+    "predecessor_task": "RBAE-V1-T003",
+    "reference_project": "codegraph-ai/CodeGraph",
+    "boundary_decision": "selective Lenskit-native adoption; no persistent CodeGraph service or memory layer",
+    "does_not_establish": [
+      "codegraph_product_adoption",
+      "complete_call_graph",
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "security_correctness"
+    ]
+  }
+}

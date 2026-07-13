@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "id": "RAB-V1-T002",
+  "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
+  "title": "Run real paired baseline and RepoBrief agent trials",
+  "state": "planned",
+  "goal": "Bind a real instrumented agent runner and execute the frozen benchmark in isolated baseline and RepoBrief-augmented conditions with provider-reported tokens and immutable transcripts.",
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "depends_on": [
+    "RAB-V1-T001"
+  ],
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit",
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/weltgewebe"
+    ],
+    "approval": {
+      "action_class": "agent_dispatch",
+      "required_level": "reviewed_plan",
+      "note": "Run only after an instrumented runner proves provider/model identity, provider token accounting, tool-call capture and immutable transcript binding."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "instrumented-agent-runner"
+  ],
+  "acceptance": [
+    {
+      "id": "rab-v1-t002-runner-proof",
+      "assertion": "The bound runner records exact provider and model identity, sampling settings, provider-reported input/output tokens, tool calls, timestamps and complete or cryptographically bound transcripts for every valid run."
+    },
+    {
+      "id": "rab-v1-t002-isolation",
+      "assertion": "Each condition starts in a fresh session and isolated workspace with no transcript, cache, memory or result transfer between baseline and treatment."
+    },
+    {
+      "id": "rab-v1-t002-completeness",
+      "assertion": "All 24 fixed cases are attempted in both conditions and in the registered balanced order; invalid, failed and timed-out runs remain visible and are not silently retried into success."
+    },
+    {
+      "id": "rab-v1-t002-repeat",
+      "assertion": "The complete paired benchmark is repeated with identical configuration and taskset so directional reproducibility can be assessed."
+    },
+    {
+      "id": "rab-v1-t002-evidence",
+      "assertion": "Requests, receipts, transcripts, target repository commits, RepoBrief manifests, environment identity and aggregate evaluation are hash-bound and published as reviewable artifacts."
+    },
+    {
+      "id": "rab-v1-t002-no-promotion",
+      "assertion": "The run reports outcomes without changing default routing, tool policy or RepoBrief adoption state."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source_issue": "heimgewebe/bureau#481",
+    "initial_blocker": "No qualifying instrumented agent runner is currently exposed to this execution environment. T001 must implement the boundary; T002 remains planned until a real runner is available and explicitly bound.",
+    "default_promoted": false,
+    "does_not_establish": [
+      "default promotion",
+      "general model superiority",
+      "answer correctness outside the fixed taskset",
+      "test sufficiency",
+      "merge readiness"
+    ]
+  }
+}

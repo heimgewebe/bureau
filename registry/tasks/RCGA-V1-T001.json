@@ -3,7 +3,7 @@
   "id": "RCGA-V1-T001",
   "initiative": "REPOBRIEF-CODEGRAPH-ADOPTION-V1",
   "title": "Implement Lenskit-native agent impact context v1",
-  "state": "ready",
+  "state": "verified",
   "goal": "Implement and measure a deterministic read-only impact/edit context that adopts CodeGraph's useful relation, related-test and pre-edit context ideas using existing Lenskit artifacts and authority boundaries.",
   "priority": {
     "lane": "now",
@@ -66,10 +66,62 @@
   ],
   "metadata": {
     "registered_at": "2026-07-13",
+    "verified_at": "2026-07-13",
     "source_request": "alles umsetzen (vorher natürlich im bureau registrieren)",
     "plan_path": "docs/plans/repobrief-codegraph-adoption-v1.md",
     "reference_project": "codegraph-ai/CodeGraph",
     "predecessor_task": "RBAE-V1-T003",
+    "outcome": "Implemented a bounded opt-in RepoBrief agent impact/edit context from existing Lenskit artifacts, with evidence-separated relations and related tests, fail-closed artifact coherence, contracts, CLI, tests and a bounded synthetic usefulness evaluation.",
+    "implementation": {
+      "repository": "heimgewebe/lenskit",
+      "pull_request": 993,
+      "base_commit": "80374ccbd1af8e86dab3f3d173ce2a585962b195",
+      "reviewed_head": "b0fa750a8728b0aa4a6cffb7ffa75e530e8bbfea",
+      "merge_commit": "456d37bd142349bc0c04925d87934eefbbc546ac",
+      "changed_files": 13,
+      "additions": 3148,
+      "deletions": 0,
+      "diff_sha256": "f76da081cb1cd815df0d48b08c9377b630f5ed905c01ed235e09f500d852c482",
+      "review_threads_resolved": 2
+    },
+    "validation": {
+      "ci": [
+        "lint",
+        "anti-hallucination-contract-lint",
+        "contracts-validate",
+        "parity-gate",
+        "task-index",
+        "codeql",
+        "forensic-preflight-canary",
+        "ai-context-guard",
+        "doc-freshness",
+        "test-suite"
+      ],
+      "full_pytest": "success",
+      "browser_tests": "success",
+      "webui_tests": "success",
+      "release_candidate": "success",
+      "diff_bound_self_review": "PASS"
+    },
+    "evaluation": {
+      "scope": "synthetic_contract_fixture",
+      "goldset_path": "docs/retrieval/repobrief_agent_impact_goldset.v1.json",
+      "diagnostic_path": "docs/diagnostics/repobrief-agent-impact-context-fixture-eval-v1.json",
+      "baseline_target_recall": 0.29166666666666663,
+      "impact_target_recall": 1.0,
+      "target_recall_advantage": 0.7083333333333334,
+      "no_case_regression": true,
+      "default_promoted": false
+    },
+    "verified_acceptance": {
+      "rcga-v1-t001-context": "Lenskit PR #993 adds agent-impact-context.v1 producer, adapter and opt-in CLI with target, directed relations, tests, support, entrypoints, source states and gaps.",
+      "rcga-v1-t001-evidence": "Tests preserve graph direction/evidence and separate graph_edge, symbol_index_path_match and heuristic test candidates; malformed or incoherent core artifacts block.",
+      "rcga-v1-t001-boundary": "The implementation exposes an empty writes set and performs no Git, patch, shell, test, PR, snapshot or memory mutation; all new product files are read-only projections.",
+      "rcga-v1-t001-measurement": "Committed synthetic goldset report records baseline/impact recall, context size, missing-evidence visibility and non-regression while default_promoted remains false.",
+      "rcga-v1-t001-integration": "The adapter reuses architecture_graph_json, python_symbol_index_json, entrypoints_json, relation_cards_jsonl and the existing read-only SQLite query surface; no CodeGraph service or second index was added.",
+      "rcga-v1-t001-merge-gates": "PR #993 was mergeable, all head-bound CI gates passed, complete diff SHA-256 f76da081... was reviewed PASS and merge commit 456d37bd... is current Lenskit main."
+    },
+    "follow_up_task": "RCGA-V1-T002",
     "does_not_establish": [
       "complete_call_graph",
       "complete_blast_radius",
@@ -78,7 +130,9 @@
       "review_completeness",
       "merge_readiness",
       "security_correctness",
-      "general_agent_quality_improvement"
+      "general_agent_quality_improvement",
+      "live_repository_utility",
+      "default_promotion"
     ]
   }
 }

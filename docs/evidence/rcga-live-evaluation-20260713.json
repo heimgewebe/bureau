@@ -1,0 +1,127 @@
+{
+  "case_count": 3,
+  "case_runtime": {
+    "grabowski-job-finalizer-related-test": {
+      "baseline_latency_ms": 39.109886,
+      "baseline_status": "available",
+      "canonical_dump_index_sha256": "092137a2035e19938ae6d2a8a3d30826c6a9524a21b861be7141bbc9aca397c6",
+      "commit": "f6eed48752fd2cf32f070dc69b2112e2498872cb",
+      "deterministic_equal": true,
+      "expected_paths": ["tests/test_job_finalizer.py"],
+      "gaps": [],
+      "impact_latency_ms": 65.61544,
+      "impact_status": "available",
+      "query": "src/grabowski_job_finalizer.py",
+      "repository": "heimgewebe/grabowski",
+      "run_id": "grabowski-full-max-260713-0617",
+      "snapshot_id": "grabowski",
+      "source_statuses": [
+        {"bytes": 589927, "canonical_dump_index_sha256": "092137a2035e19938ae6d2a8a3d30826c6a9524a21b861be7141bbc9aca397c6", "error_code": null, "run_id": "grabowski-full-max-260713-0617", "sha256": "6a01a61096dc6a49460349b83cbdc7474efe6fb573c35155648892da64374cd5", "source": "architecture_graph_json", "status": "available"},
+        {"bytes": 36794, "canonical_dump_index_sha256": "092137a2035e19938ae6d2a8a3d30826c6a9524a21b861be7141bbc9aca397c6", "error_code": null, "run_id": "grabowski-full-max-260713-0617", "sha256": "1902217b80f455b6bf42985e8e3934ce9b59c8c4345f7d48640c37589ac2bdc4", "source": "entrypoints_json", "status": "available"},
+        {"bytes": 1632845, "canonical_dump_index_sha256": "092137a2035e19938ae6d2a8a3d30826c6a9524a21b861be7141bbc9aca397c6", "error_code": null, "run_id": "grabowski-full-max-260713-0617", "sha256": "a146811d178923cef1f2fc56ff257de6ab9786653a861f7d8f6f45f3ff3d8efe", "source": "python_symbol_index_json", "status": "available"},
+        {"bytes": 6636, "error_code": null, "sha256": "776e6c182c4f0e495de1c5b63b84dbfdee495a1e5b50704bb59c71f5d6f91113", "source": "relation_cards_jsonl", "status": "available"},
+        {"error_code": null, "source": "sqlite_index", "status": "available"}
+      ],
+      "target_path": "src/grabowski_job_finalizer.py"
+    },
+    "lenskit-agent-impact-related-test": {
+      "baseline_latency_ms": 1022.952663,
+      "baseline_status": "available",
+      "canonical_dump_index_sha256": "1ad2abea7e17b4a79a7ed84675192f55b607f1c6c15c538381edbd9f9cb87363",
+      "commit": "456d37bd142349bc0c04925d87934eefbbc546ac",
+      "deterministic_equal": true,
+      "expected_paths": ["merger/lenskit/tests/test_agent_impact_context.py"],
+      "gaps": [],
+      "impact_latency_ms": 154.571793,
+      "impact_status": "available",
+      "query": "merger/lenskit/core/agent_impact_context.py",
+      "repository": "heimgewebe/lenskit",
+      "run_id": "lenskit-full-max-260713-0616",
+      "snapshot_id": "lenskit",
+      "source_statuses": [
+        {"bytes": 1670049, "canonical_dump_index_sha256": "1ad2abea7e17b4a79a7ed84675192f55b607f1c6c15c538381edbd9f9cb87363", "error_code": null, "run_id": "lenskit-full-max-260713-0616", "sha256": "77a848727e4d9f83de19e452f51bcae898dd9995d8e7c9bdb1b584992e703a5c", "source": "architecture_graph_json", "status": "available"},
+        {"bytes": 25374, "canonical_dump_index_sha256": "1ad2abea7e17b4a79a7ed84675192f55b607f1c6c15c538381edbd9f9cb87363", "error_code": null, "run_id": "lenskit-full-max-260713-0616", "sha256": "1274b52e301187e60b9d3f9c70516d9d019f9fc9c42f820822246e5544ac0178", "source": "entrypoints_json", "status": "available"},
+        {"bytes": 3494159, "canonical_dump_index_sha256": "1ad2abea7e17b4a79a7ed84675192f55b607f1c6c15c538381edbd9f9cb87363", "error_code": null, "run_id": "lenskit-full-max-260713-0616", "sha256": "e57943d2eb8a47b6df4b4d4304f47fcb604bf7eb9b843be033a5f016503ff997", "source": "python_symbol_index_json", "status": "available"},
+        {"bytes": 834106, "error_code": null, "sha256": "5a9fc6beabd3f47b9a554695099fc23c147196ded4a8a5b4576bccd5e53b2001", "source": "relation_cards_jsonl", "status": "available"},
+        {"error_code": null, "source": "sqlite_index", "status": "available"}
+      ],
+      "target_path": "merger/lenskit/core/agent_impact_context.py"
+    },
+    "weltgewebe-review-impact-related-test": {
+      "baseline_latency_ms": 58.460763,
+      "baseline_status": "available",
+      "canonical_dump_index_sha256": "627f32508265fa5af8f2c66ea4e13fcbb16e773a5acef64b9ee71f057e83c9ef",
+      "commit": "e095903bb71c937d861fa64d7e8a6b593062ca6f",
+      "deterministic_equal": true,
+      "expected_paths": ["scripts/docmeta/tests/test_review_impact.py"],
+      "gaps": [],
+      "impact_latency_ms": 83.375259,
+      "impact_status": "available",
+      "query": "scripts/docmeta/review_impact.py",
+      "repository": "heimgewebe/weltgewebe",
+      "run_id": "weltgewebe-full-max-260713-0617",
+      "snapshot_id": "weltgewebe",
+      "source_statuses": [
+        {"bytes": 399677, "canonical_dump_index_sha256": "627f32508265fa5af8f2c66ea4e13fcbb16e773a5acef64b9ee71f057e83c9ef", "error_code": null, "run_id": "weltgewebe-full-max-260713-0617", "sha256": "349c73eee630fd27249b84e93f43b955ea153d7628782ade7f05d4367d3cecc4", "source": "architecture_graph_json", "status": "available"},
+        {"bytes": 44293, "canonical_dump_index_sha256": "627f32508265fa5af8f2c66ea4e13fcbb16e773a5acef64b9ee71f057e83c9ef", "error_code": null, "run_id": "weltgewebe-full-max-260713-0617", "sha256": "2b07cf4c05ac2f8ef120736f0205c1a069a615cffd71e9535c8aa8e18a4ec395", "source": "entrypoints_json", "status": "available"},
+        {"bytes": 1217585, "canonical_dump_index_sha256": "627f32508265fa5af8f2c66ea4e13fcbb16e773a5acef64b9ee71f057e83c9ef", "error_code": null, "run_id": "weltgewebe-full-max-260713-0617", "sha256": "c4b877f46aacd43a252c89fae5cabfc86949c8d8091857c0bbe726902e7a67dc", "source": "python_symbol_index_json", "status": "available"},
+        {"bytes": 108344, "error_code": null, "sha256": "6ba54d9c823e563c0bf7adf45473c7893ca9643f68c3d0d73ad43679c49ff980", "source": "relation_cards_jsonl", "status": "available"},
+        {"error_code": null, "source": "sqlite_index", "status": "available"}
+      ],
+      "target_path": "scripts/docmeta/review_impact.py"
+    }
+  },
+  "cases": [
+    {
+      "baseline_context_path_count": 11,
+      "baseline_paths": ["lenskit-max-260713-0616_merge.chunk_index.index.sqlite", "lenskit-max-260713-0616_merge.architecture_graph.json", "lenskit-max-260713-0616_merge.graph_index.json", "merger/lenskit/core/repobrief_agent_impact_adapter.py", "docs/architecture/repobrief-agent-impact-context.md", "merger/lenskit/tests/test_agent_impact_context.py", "merger/lenskit/core/agent_impact_context.py", "merger/lenskit/tests/test_repobrief_agent_impact_core_artifact_validation.py", "merger/lenskit/tests/test_repobrief_agent_impact_adapter.py", "merger/lenskit/cli/agent_impact.py", "merger/lenskit/core/agent_impact_eval.py"],
+      "baseline_recall": 1.0,
+      "expected_paths": ["merger/lenskit/tests/test_agent_impact_context.py"],
+      "id": "lenskit-agent-impact-related-test",
+      "impact_context_path_count": 7,
+      "impact_paths": ["merger/lenskit/core/agent_impact_context.py", "merger/lenskit/tests/test_agent_impact_context.py", "merger/lenskit/core/tests/test_agent_impact_context.py", "tests/test_agent_impact_context.py", "docs/architecture/repobrief-agent-impact-context.md", "merger/lenskit/core/repobrief_agent_impact_adapter.py", ""],
+      "impact_recall": 1.0,
+      "missing_evidence_visible": false,
+      "recall_advantage": 0.0
+    },
+    {
+      "baseline_context_path_count": 11,
+      "baseline_paths": ["grabowski-max-260713-0617_merge.chunk_index.index.sqlite", "grabowski-max-260713-0617_merge.architecture_graph.json", "grabowski-max-260713-0617_merge.graph_index.json", "docs/generated/operator-context.v1.json", "pyproject.toml", "config/runtime-entrypoint.json", "src/grabowski_job_finalizer.py", "docs/proofs/consumer-surface-v2-benchmark-20260713.json", "tests/test_repository_contract.py", "src/grabowski_operator.py", "tests/test_job_finalizer.py"],
+      "baseline_recall": 1.0,
+      "expected_paths": ["tests/test_job_finalizer.py"],
+      "id": "grabowski-job-finalizer-related-test",
+      "impact_context_path_count": 7,
+      "impact_paths": ["src/grabowski_job_finalizer.py", "merger/lenskit/tests/test_grabowski_job_finalizer.py", "src/tests/test_grabowski_job_finalizer.py", "tests/test_grabowski_job_finalizer.py", "docs/generated/operator-context.v1.json", "docs/proofs/consumer-surface-v2-benchmark-20260713.json", ""],
+      "impact_recall": 0.0,
+      "missing_evidence_visible": false,
+      "recall_advantage": -1.0
+    },
+    {
+      "baseline_context_path_count": 10,
+      "baseline_paths": ["weltgewebe-max-260713-0617_merge.chunk_index.index.sqlite", "weltgewebe-max-260713-0617_merge.architecture_graph.json", "weltgewebe-max-260713-0617_merge.graph_index.json", "scripts/docmeta/tests/test_review_impact.py", "docs/tasks/index.json", "docs/tasks/board.md", "Makefile", "architecture/blueprint.docmeta-engine.md", "scripts/docmeta/review_impact.py", "architecture/docmeta.schema.md"],
+      "baseline_recall": 1.0,
+      "expected_paths": ["scripts/docmeta/tests/test_review_impact.py"],
+      "id": "weltgewebe-review-impact-related-test",
+      "impact_context_path_count": 8,
+      "impact_paths": ["scripts/docmeta/review_impact.py", "scripts/docmeta/tests/test_review_impact.py", "merger/lenskit/tests/test_review_impact.py", "tests/test_review_impact.py", "docs/tasks/board.md", "docs/tasks/index.json", "", "scripts/docmeta/docmeta.py"],
+      "impact_recall": 1.0,
+      "missing_evidence_visible": false,
+      "recall_advantage": 0.0
+    }
+  ],
+  "decision": {"default_promoted": false, "navigation_utility_established_for_goldset": false, "reason": "fixed_goldset_threshold_or_non_regression_not_met"},
+  "does_not_establish": ["agent_quality_improvement", "answer_correctness", "repository_understanding", "complete_blast_radius", "test_sufficiency", "review_completeness", "merge_readiness", "general_retrieval_quality", "default_promotion"],
+  "environment": {"lenskit_commit": "456d37bd142349bc0c04925d87934eefbbc546ac", "platform": "Linux-6.17.0-1018-azure-x86_64-with-glibc2.39", "python": "3.12.13", "runner_os": "Linux"},
+  "goldset_id": "repobrief-agent-impact-live-bundles-2026-07-13",
+  "kind": "repobrief.agent_impact_usefulness_eval",
+  "measured_at": "2026-07-13",
+  "measurement_scope": "live_bundle",
+  "metrics": {"baseline_target_recall": 1.0, "impact_target_recall": 0.6666666666666666, "minimum_target_recall_advantage": 0.2, "missing_evidence_visibility_rate": 0.0, "no_case_regression": false, "target_recall_advantage": -0.33333333333333337},
+  "promotion": {"default_promoted": false, "recommendation": "do_not_promote_refine_or_remove", "separate_decision_required": true},
+  "repositories": {
+    "grabowski": {"commit": "f6eed48752fd2cf32f070dc69b2112e2498872cb", "manifest_sha256": "4e49b3d4b3461b787bdd02ce3d0effabc17d3b126b462e929028beabed46e29c", "repository": "heimgewebe/grabowski", "snapshot_id": "grabowski"},
+    "lenskit": {"commit": "456d37bd142349bc0c04925d87934eefbbc546ac", "manifest_sha256": "9f50cdfc8db9452d5d3ba32e46573b682558f08870ee48ce24bf35ff3a5ce897", "repository": "heimgewebe/lenskit", "snapshot_id": "lenskit"},
+    "weltgewebe": {"commit": "e095903bb71c937d861fa64d7e8a6b593062ca6f", "manifest_sha256": "33d08b7ef10172fd14efb9c8a7b4c39b4c95159ba4f9252b0659ecd433b90e91", "repository": "heimgewebe/weltgewebe", "snapshot_id": "weltgewebe"}
+  },
+  "version": "1.0"
+}

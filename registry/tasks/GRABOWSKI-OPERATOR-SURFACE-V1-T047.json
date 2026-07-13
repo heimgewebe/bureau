@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T047",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Measure rule-bound client behavior without claiming compliance",
+  "state": "planned",
+  "goal": "Add evidence-bound observability for externally visible agent behavior under the Agent-facing Contract while preserving the distinction between server instruction integrity, connector snapshot freshness, observed tool-use conformance and unobservable model comprehension or intent.",
+  "priority": {
+    "lane": "later",
+    "rank": 470
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T040"
+  ],
+  "acceptance": [
+    {
+      "id": "rule-observability-matrix",
+      "assertion": "Each Agent-facing Contract rule is classified as directly observable, conditionally observable or unobservable, with the required event sources, preconditions and known blind spots stated explicitly."
+    },
+    {
+      "id": "evidence-not-compliance",
+      "assertion": "The runtime exposes a versioned client_behavior_evidence projection with per-rule states such as observed_conformant, observed_nonconformant, insufficient_evidence and unobservable; it does not expose or imply a universal client_compliant boolean."
+    },
+    {
+      "id": "event-and-snapshot-binding",
+      "assertion": "Every observed rule result names bounded concrete event references and the relevant server contract, tool-catalog or client-snapshot identity; a missing or stale client snapshot prevents claims about narrowest-tool availability."
+    },
+    {
+      "id": "typed-routing-signals",
+      "assertion": "The implementation can identify bounded externally visible cases including typed versus generic operation selection, unchanged retry after an ambiguous failure and mutation without required post-state readback, without inferring hidden intent."
+    },
+    {
+      "id": "false-inference-boundary",
+      "assertion": "The projection states false-positive and false-negative limits and never treats tool order alone as proof that the agent read, understood or internally followed the instructions."
+    },
+    {
+      "id": "data-minimization",
+      "assertion": "Evidence uses existing redacted audit or event structures where possible, retains only fields required for the rule assessment and does not capture private chain of thought, prompt contents, secrets or unrelated user data."
+    },
+    {
+      "id": "non-authority",
+      "assertion": "Behavior evidence grants no action, retry, merge, deploy, secret, policy-bypass or autonomous-routing authority and cannot replace task, review, CI, recovery or human-authorization gates."
+    },
+    {
+      "id": "tests-and-live-proof",
+      "assertion": "Tests cover conformant, nonconformant, insufficient and unobservable cases, stale or absent snapshots, redaction and event-order ambiguity; a live proof demonstrates truthful evidence for at least one observable rule and explicit abstention for one unobservable rule."
+    }
+  ],
+  "metadata": {
+    "source": "critical post-merge reviews of T040 Agent-facing Contract v1",
+    "source_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T040",
+    "decision": "Keep server-side instruction integrity complete and separate. Implement documentation and naming cleanup independently; defer behavioral observability until it can be event-bound and abstention-aware.",
+    "current_runtime_truth": {
+      "agent_instruction_identity_observable": true,
+      "client_snapshot_observable": false,
+      "client_compliance_observable": false
+    },
+    "does_not_establish": [
+      "client_instruction_delivery_into_model_context",
+      "agent_read_or_comprehension",
+      "private_reasoning_or_intent",
+      "globally_optimal_tool_choice",
+      "individual_tool_correctness",
+      "future_action_authority",
+      "automatic_enforcement_or_sanction"
+    ]
+  }
+}

@@ -100,14 +100,30 @@ bureau --root /path/to/bureau --state-root ~/.local/state/bureau \
   --json state-root-artifacts --apply-plan /outside/state-root/migration-plan.json
 ```
 
-Unmittelbar vor jeder Verschiebung werden Plan-Dateihash, Quellidentität, Referenzen,
-Prozesse und Kollisionen erneut geprüft. Die Verschiebung erfolgt nur auf demselben
-Dateisystem per atomarem Rename. Bei einem Fehler werden alle in diesem Lauf bereits
-verschobenen Einträge in umgekehrter Reihenfolge zurückgesetzt.
+Plan und Receipt verwenden für Mutationen Schema 2. Auf Linux öffnet Bureau State-Root,
+Referenzwurzel, deren direkte Eltern und den nächsten bestehenden Zielvorfahren
+komponentenweise ab `/` mit `O_DIRECTORY|O_NOFOLLOW`. Der Plan bindet Pfad, Gerät, Inode
+und Modus dieser Verzeichnisse. Zusätzlich wird geprüft, dass State-Root und
+Referenzwurzel unter dem erwarteten Namen genau auf die gebundene Identität im gebundenen
+Parent zeigen.
 
-Ein create-only Receipt bindet Plan, Einträge, Ziel, Rollbackwege und seinen eigenen
-kanonischen SHA-256. Eine identische Wiederholung liest und validiert dieses Receipt und
-ist idempotent. Ein verändertes Receipt wird abgelehnt.
+Vor dem ersten Effekt werden **alle** Einträge geprüft: Plan-Dateihash, Quellidentität,
+Referenzen, Prozesse, Kollisionen und Dateisystemgrenze. Zielkomponenten werden relativ zu
+einem gehaltenen Verzeichnisdeskriptor erzeugt und ebenfalls mit Gerät/Inode gebunden.
+Die Verschiebung erfolgt ausschließlich descriptor-relativ per `renameat`-Semantik
+(`os.rename` mit `src_dir_fd` und `dst_dir_fd`). Absolute Pfade werden am Effektübergang
+nicht erneut als Mutationsziel aufgelöst.
+
+Vor und nach jedem Effekt werden die gehaltenen Deskriptoren, ihre aktuellen Pfade und die
+Parent-Kind-Beziehungen erneut geprüft. Bei einer Abweichung werden alle in diesem Lauf
+bereits verschobenen Einträge descriptor-relativ in umgekehrter Reihenfolge kompensiert;
+leere, in diesem Lauf erzeugte Zielverzeichnisse werden entfernt.
+
+Ein create-only Receipt bindet Plan, Einträge, Ziel, Rollbackwege, alle Plan-Anker sowie
+den tatsächlichen Ziel-Root und dessen direkten Parent. Es bindet außerdem seinen eigenen
+kanonischen SHA-256. Eine identische Wiederholung öffnet dieselben Anker erneut, validiert
+Parent-Kind-Beziehungen und Eintragsidentitäten und ist idempotent. Ein verändertes oder
+älteres Receipt wird für Mutationen abgelehnt.
 
 ## Rollback
 
@@ -117,9 +133,31 @@ bureau --root /path/to/bureau --state-root ~/.local/state/bureau \
   --rollback-receipt /outside/state-root/migration-plan.json.receipt.json
 ```
 
-Rollback prüft Receipt-SHA, Zielkollisionen und jeden Eintragsdigest. Es verschiebt nur
-unveränderte Quarantäneeinträge an ihre ursprünglichen Pfade zurück. Receipt und
+Rollback akzeptiert ausschließlich Receipt-Schema 2. Es öffnet dieselben gebundenen
+Verzeichnisanker ohne Symlinkfolge, prüft den direkten Ziel-Parent, alle Zielkollisionen,
+jeden Eintragsdigest und sämtliche Einträge vor der ersten Wirkung. Es verschiebt nur
+unveränderte Quarantäneeinträge descriptor-relativ an ihre ursprünglichen Pfade zurück.
+Bei einem Fehler wird auch der Rollbacklauf kompensiert. Receipt und
 Quarantäneverzeichnis werden nicht gelöscht.
+
+## Bedrohungsmodell und Plattformvertrag
+
+Der abgesicherte Fall ist ein konkurrierender Prozess mit denselben Dateirechten, der
+zwischen Review, Preflight und Effekt einen Vorfahren umbenennt, ersetzt oder durch einen
+Symlink substituiert. Synthetische Tests belegen, dass Quelle, Ziel und Referenzwurzel dann
+vor der Wirkung abgelehnt oder eine bereits begonnene Wirkung kompensiert wird. Der
+Nachweis arbeitet ausschließlich in temporären Verzeichnissen; aktiver Bureau-State wird
+nicht migriert.
+
+Mutationen benötigen Linux, `dir_fd`-fähige `open`, `mkdir`, `rename`, `rmdir` und `stat`,
+`O_DIRECTORY`, `O_NOFOLLOW` sowie `/proc/self/fd`. Fehlt eine Voraussetzung, entsteht ein
+typisierter Fail-closed-Fehler. Es gibt keinen stillen Rückfall auf pfadbasierte
+Mutationen. Inventur bleibt davon unberührt read-only nutzbar.
+
+Nicht behauptet wird atomarer Schutz gegen den Austausch des finalen Eintragsnamens exakt
+zwischen letzter Identitätsprüfung und `renameat`. Dieser enge Restspalt wird durch
+descriptor-relative Eltern, unmittelbare Nachprüfung und Gesamtlaufkompensation begrenzt,
+aber nicht als kernelatomar geschlossen dargestellt.
 
 ## Sicherheitsgrenzen
 

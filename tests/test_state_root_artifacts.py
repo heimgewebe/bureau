@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -289,14 +290,19 @@ def test_interrupted_migration_rolls_back_this_run(tmp_path, monkeypatch):
         tmp_path, names=("first.txt", "second.txt")
     )
     review_plan(plan_path)
-    original_rename = Path.rename
+    original_rename_at = state_root_artifacts._rename_at
 
-    def fail_second(source, target):
-        if source.name == "second.txt":
+    def fail_second(source_descriptor, source_name, destination_descriptor, destination_name):
+        if source_name == "second.txt":
             raise OSError("simulated interruption")
-        return original_rename(source, target)
+        return original_rename_at(
+            source_descriptor,
+            source_name,
+            destination_descriptor,
+            destination_name,
+        )
 
-    monkeypatch.setattr(Path, "rename", fail_second)
+    monkeypatch.setattr(state_root_artifacts, "_rename_at", fail_second)
     with pytest.raises(OSError, match="simulated interruption"):
         apply_state_root_migration_plan(plan_path)
 
@@ -340,14 +346,24 @@ def test_receipt_rollback_reverts_this_run_after_rename_failure(tmp_path, monkey
     )
     review_plan(plan_path)
     result = apply_state_root_migration_plan(plan_path)
-    original_rename = Path.rename
+    original_rename_at = state_root_artifacts._rename_at
 
-    def fail_first_restore(source, target):
-        if source == destination / "first.txt":
+    def fail_first_restore(
+        source_descriptor,
+        source_name,
+        destination_descriptor,
+        destination_name,
+    ):
+        if source_name == "first.txt":
             raise OSError("simulated rollback interruption")
-        return original_rename(source, target)
+        return original_rename_at(
+            source_descriptor,
+            source_name,
+            destination_descriptor,
+            destination_name,
+        )
 
-    monkeypatch.setattr(Path, "rename", fail_first_restore)
+    monkeypatch.setattr(state_root_artifacts, "_rename_at", fail_first_restore)
     with pytest.raises(OSError, match="simulated rollback interruption"):
         rollback_state_root_migration(Path(result["receipt_path"]))
 
@@ -410,3 +426,352 @@ def test_cli_classifies_read_and_effect_paths():
 
     assert _command_mutates(read) is False
     assert _command_mutates(write) is True
+
+
+
+def write_bound_plan(
+    tmp_path: Path,
+    *,
+    state_root: Path,
+    destination_root: Path,
+    reference_root: Path,
+    names=("artifact.txt",),
+):
+    state_root.mkdir(parents=True)
+    for name in names:
+        (state_root / name).write_text(f"content for {name}\n", encoding="utf-8")
+    (reference_root / "registry").mkdir(parents=True)
+    (reference_root / "docs").mkdir()
+    plan_path = tmp_path / "plans" / "bound-migration.json"
+    result = write_state_root_migration_plan(
+        state_root,
+        list(names),
+        destination_root,
+        plan_path,
+        reference_root=reference_root,
+    )
+    review_plan(plan_path)
+    return plan_path, result
+
+
+def test_plan_binds_operational_directory_device_and_inode(tmp_path):
+    state_root = tmp_path / "source-anchor" / "state"
+    destination = tmp_path / "destination-anchor" / "quarantine" / "run-1"
+    destination.parent.parent.mkdir()
+    reference_root = tmp_path / "reference-anchor" / "repo"
+    _, plan = write_bound_plan(
+        tmp_path,
+        state_root=state_root,
+        destination_root=destination,
+        reference_root=reference_root,
+    )
+
+    anchors = plan["directory_anchors"]
+    assert set(anchors) == {
+        "state_root",
+        "state_root_parent",
+        "destination_base",
+        "reference_root",
+        "reference_root_parent",
+    }
+    for anchor in anchors.values():
+        assert anchor["path"].startswith("/")
+        assert isinstance(anchor["device"], int)
+        assert isinstance(anchor["inode"], int) and anchor["inode"] > 0
+    assert plan["platform_contract"] == {
+        "mutation_mode": "linux-descriptor-relative-v1",
+        "no_follow": True,
+        "silent_fallback": False,
+    }
+
+
+def test_apply_rejects_replaced_source_ancestor_before_effect(tmp_path):
+    source_anchor = tmp_path / "source-anchor"
+    state_root = source_anchor / "state"
+    destination = tmp_path / "quarantine" / "run-1"
+    reference_root = tmp_path / "reference" / "repo"
+    plan_path, _ = write_bound_plan(
+        tmp_path,
+        state_root=state_root,
+        destination_root=destination,
+        reference_root=reference_root,
+    )
+    original_anchor = tmp_path / "source-anchor-reviewed"
+    source_anchor.rename(original_anchor)
+    state_root.mkdir(parents=True)
+    (state_root / "artifact.txt").write_text("decoy\n", encoding="utf-8")
+
+    with pytest.raises(legacy.StateError, match="identity mismatch"):
+        apply_state_root_migration_plan(plan_path)
+
+    assert (original_anchor / "state" / "artifact.txt").exists()
+    assert (state_root / "artifact.txt").read_text(encoding="utf-8") == "decoy\n"
+    assert not destination.exists()
+
+
+def test_apply_rejects_replaced_destination_ancestor_before_effect(tmp_path):
+    destination_anchor = tmp_path / "destination-anchor"
+    destination_anchor.mkdir()
+    state_root = tmp_path / "source" / "state"
+    destination = destination_anchor / "quarantine" / "run-1"
+    reference_root = tmp_path / "reference" / "repo"
+    plan_path, _ = write_bound_plan(
+        tmp_path,
+        state_root=state_root,
+        destination_root=destination,
+        reference_root=reference_root,
+    )
+    reviewed_anchor = tmp_path / "destination-anchor-reviewed"
+    destination_anchor.rename(reviewed_anchor)
+    destination_anchor.mkdir()
+
+    with pytest.raises(legacy.StateError, match="identity mismatch"):
+        apply_state_root_migration_plan(plan_path)
+
+    assert (state_root / "artifact.txt").exists()
+    assert not (reviewed_anchor / "quarantine").exists()
+    assert not (destination_anchor / "quarantine").exists()
+
+
+def test_apply_rejects_replaced_reference_ancestor_before_effect(tmp_path):
+    reference_anchor = tmp_path / "reference-anchor"
+    reference_root = reference_anchor / "repo"
+    state_root = tmp_path / "source" / "state"
+    destination = tmp_path / "quarantine" / "run-1"
+    plan_path, _ = write_bound_plan(
+        tmp_path,
+        state_root=state_root,
+        destination_root=destination,
+        reference_root=reference_root,
+    )
+    reviewed_anchor = tmp_path / "reference-anchor-reviewed"
+    reference_anchor.rename(reviewed_anchor)
+    (reference_anchor / "repo" / "registry").mkdir(parents=True)
+    (reference_anchor / "repo" / "docs").mkdir()
+
+    with pytest.raises(legacy.StateError, match="identity mismatch"):
+        apply_state_root_migration_plan(plan_path)
+
+    assert (state_root / "artifact.txt").exists()
+    assert not destination.exists()
+
+
+def test_apply_rejects_symlinked_destination_ancestor_before_effect(tmp_path):
+    destination_anchor = tmp_path / "destination-anchor"
+    destination_anchor.mkdir()
+    state_root = tmp_path / "source" / "state"
+    destination = destination_anchor / "quarantine" / "run-1"
+    reference_root = tmp_path / "reference" / "repo"
+    plan_path, _ = write_bound_plan(
+        tmp_path,
+        state_root=state_root,
+        destination_root=destination,
+        reference_root=reference_root,
+    )
+    reviewed_anchor = tmp_path / "destination-anchor-reviewed"
+    destination_anchor.rename(reviewed_anchor)
+    destination_anchor.symlink_to(reviewed_anchor, target_is_directory=True)
+
+    with pytest.raises(legacy.StateError, match="symlink or non-directory"):
+        apply_state_root_migration_plan(plan_path)
+
+    assert (state_root / "artifact.txt").exists()
+    assert not (reviewed_anchor / "quarantine").exists()
+
+
+def test_concurrent_source_ancestor_replacement_is_compensated(tmp_path, monkeypatch):
+    source_anchor = tmp_path / "source-anchor"
+    state_root = source_anchor / "state"
+    destination = tmp_path / "quarantine" / "run-1"
+    reference_root = tmp_path / "reference" / "repo"
+    plan_path, _ = write_bound_plan(
+        tmp_path,
+        state_root=state_root,
+        destination_root=destination,
+        reference_root=reference_root,
+    )
+    original_rename_at = state_root_artifacts._rename_at
+    reviewed_anchor = tmp_path / "source-anchor-reviewed"
+    replaced = False
+
+    def replace_ancestor_then_rename(
+        source_descriptor,
+        source_name,
+        destination_descriptor,
+        destination_name,
+    ):
+        nonlocal replaced
+        if not replaced:
+            source_anchor.rename(reviewed_anchor)
+            state_root.mkdir(parents=True)
+            replaced = True
+        return original_rename_at(
+            source_descriptor,
+            source_name,
+            destination_descriptor,
+            destination_name,
+        )
+
+    monkeypatch.setattr(
+        state_root_artifacts,
+        "_rename_at",
+        replace_ancestor_then_rename,
+    )
+    with pytest.raises(legacy.StateError, match="identity mismatch"):
+        apply_state_root_migration_plan(plan_path)
+
+    assert (reviewed_anchor / "state" / "artifact.txt").exists()
+    assert not (state_root / "artifact.txt").exists()
+    assert not destination.exists()
+
+
+def test_all_entries_preflight_before_first_descriptor_relative_rename(tmp_path):
+    state_root, destination, plan_path, _ = write_plan(
+        tmp_path, names=("first.txt", "second.txt")
+    )
+    review_plan(plan_path)
+    (state_root / "second.txt").write_text("drifted\n", encoding="utf-8")
+
+    with pytest.raises(legacy.StateError, match="changed since review"):
+        apply_state_root_migration_plan(plan_path)
+
+    assert (state_root / "first.txt").exists()
+    assert (state_root / "second.txt").exists()
+    assert not destination.exists()
+
+
+def test_cross_device_boundary_is_fail_closed(monkeypatch):
+    source = SimpleNamespace(st_dev=101)
+    monkeypatch.setattr(
+        state_root_artifacts.os,
+        "fstat",
+        lambda descriptor: SimpleNamespace(st_dev=202),
+    )
+
+    with pytest.raises(legacy.StateError, match="same-filesystem"):
+        state_root_artifacts._require_same_filesystem(source, 9)
+
+
+def test_unsupported_descriptor_platform_refuses_plan_without_effect(tmp_path, monkeypatch):
+    state_root = tmp_path / "state"
+    state_root.mkdir()
+    (state_root / "artifact.txt").write_text("artifact\n", encoding="utf-8")
+    reference_root = empty_reference_root(tmp_path)
+    destination = tmp_path / "quarantine" / "run-1"
+    plan_path = tmp_path / "migration.json"
+    monkeypatch.setattr(
+        state_root_artifacts,
+        "_descriptor_relative_support_error",
+        lambda: "synthetic unsupported platform",
+    )
+
+    with pytest.raises(legacy.StateError, match="unsupported"):
+        write_state_root_migration_plan(
+            state_root,
+            ["artifact.txt"],
+            destination,
+            plan_path,
+            reference_root=reference_root,
+        )
+
+    assert (state_root / "artifact.txt").exists()
+    assert not destination.exists()
+    assert not plan_path.exists()
+
+
+def test_rollback_rejects_replaced_destination_ancestor_without_effect(tmp_path):
+    destination_anchor = tmp_path / "destination-anchor"
+    destination_anchor.mkdir()
+    state_root = tmp_path / "source" / "state"
+    destination = destination_anchor / "quarantine" / "run-1"
+    reference_root = tmp_path / "reference" / "repo"
+    plan_path, _ = write_bound_plan(
+        tmp_path,
+        state_root=state_root,
+        destination_root=destination,
+        reference_root=reference_root,
+    )
+    result = apply_state_root_migration_plan(plan_path)
+    reviewed_anchor = tmp_path / "destination-anchor-reviewed"
+    destination_anchor.rename(reviewed_anchor)
+    destination_anchor.mkdir()
+
+    with pytest.raises(legacy.StateError, match="identity mismatch"):
+        rollback_state_root_migration(Path(result["receipt_path"]))
+
+    assert not (state_root / "artifact.txt").exists()
+    assert (reviewed_anchor / "quarantine" / "run-1" / "artifact.txt").exists()
+
+
+def test_legacy_receipt_cannot_silently_use_weaker_path_mutation(tmp_path):
+    state_root, destination, plan_path, _ = write_plan(tmp_path)
+    review_plan(plan_path)
+    result = apply_state_root_migration_plan(plan_path)
+    receipt_path = Path(result["receipt_path"])
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    receipt["schema_version"] = 1
+    receipt.pop("receipt_sha256")
+    receipt["receipt_sha256"] = canonical_sha256(receipt)
+    receipt_path.write_text(legacy.canonical_json(receipt) + "\n", encoding="utf-8")
+
+    with pytest.raises(legacy.StateError, match="unsupported"):
+        rollback_state_root_migration(receipt_path)
+
+    assert not (state_root / "artifact.txt").exists()
+    assert (destination / "artifact.txt").exists()
+
+
+
+def test_receipt_binds_destination_root_and_direct_parent(tmp_path):
+    destination_anchor = tmp_path / "destination-anchor"
+    destination_anchor.mkdir()
+    state_root = tmp_path / "source" / "state"
+    destination = destination_anchor / "quarantine" / "run-1"
+    reference_root = tmp_path / "reference" / "repo"
+    plan_path, _ = write_bound_plan(
+        tmp_path,
+        state_root=state_root,
+        destination_root=destination,
+        reference_root=reference_root,
+    )
+
+    result = apply_state_root_migration_plan(plan_path)
+    receipt = json.loads(Path(result["receipt_path"]).read_text(encoding="utf-8"))
+    anchors = receipt["directory_anchors"]
+
+    assert anchors["destination_root"]["path"] == str(destination)
+    assert anchors["destination_root_parent"]["path"] == str(destination.parent)
+    destination_info = destination.stat()
+    parent_info = destination.parent.stat()
+    assert anchors["destination_root"]["device"] == destination_info.st_dev
+    assert anchors["destination_root"]["inode"] == destination_info.st_ino
+    assert anchors["destination_root_parent"]["device"] == parent_info.st_dev
+    assert anchors["destination_root_parent"]["inode"] == parent_info.st_ino
+
+
+def test_rollback_rejects_replaced_direct_destination_parent(tmp_path):
+    destination_anchor = tmp_path / "destination-anchor"
+    destination_anchor.mkdir()
+    state_root = tmp_path / "source" / "state"
+    destination = destination_anchor / "quarantine" / "run-1"
+    reference_root = tmp_path / "reference" / "repo"
+    plan_path, _ = write_bound_plan(
+        tmp_path,
+        state_root=state_root,
+        destination_root=destination,
+        reference_root=reference_root,
+    )
+    result = apply_state_root_migration_plan(plan_path)
+
+    reviewed_parent = destination_anchor / "quarantine-reviewed"
+    destination.parent.rename(reviewed_parent)
+    destination.parent.mkdir()
+    destination.mkdir()
+    (destination / "artifact.txt").write_text("decoy\n", encoding="utf-8")
+
+    with pytest.raises(legacy.StateError, match="identity mismatch"):
+        rollback_state_root_migration(Path(result["receipt_path"]))
+
+    assert not (state_root / "artifact.txt").exists()
+    assert (reviewed_parent / "run-1" / "artifact.txt").exists()
+    assert (destination / "artifact.txt").read_text(encoding="utf-8") == "decoy\n"

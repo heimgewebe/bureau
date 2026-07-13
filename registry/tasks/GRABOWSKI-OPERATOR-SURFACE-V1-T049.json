@@ -46,7 +46,7 @@
       "assertion": "Wall-clock order alone cannot authorize release; missing or legacy generation evidence remains fail-closed."
     },
     {
-      "id": "race-proof",
+      "id": "concurrent-change-retained",
       "assertion": "Concurrent renewal or reacquisition between verification and delete retains the lease under the same atomic snapshot comparison."
     },
     {

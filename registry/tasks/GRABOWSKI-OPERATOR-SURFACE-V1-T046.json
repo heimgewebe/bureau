@@ -78,7 +78,7 @@
       "path_overlap_as_nonconflicting",
       "automatic_merge_or_deploy_authority"
     ],
-    "observed_resolution": "Implemented in PR #188, security-hardened in PR #191, deployed at e72e012818525ee785a3cc76c0c05b741b72b2eb, validated and live-smoked with cleanup.",
+    "observed_resolution": "Implemented in PR #188, security-hardened in PR #191, merged as e72e012818525ee785a3cc76c0c05b741b72b2eb, deployed from the byte-identical PR #191 head 7e3700938fbed3fc192d1528b630587c5b17ec76, validated and live-smoked with cleanup.",
     "completion": {
       "schema_version": 1,
       "status": "verified_obsolete_path_lease_reconciliation_live",
@@ -120,12 +120,12 @@
         "core": "33 passed, 3 subtests passed",
         "focused": "275 passed, 68 subtests passed",
         "full_repository": "1456 tests passed; generator, access policy, runtime locks, deploy tooling and secret scan passed",
-        "deploy_check": "PASS on tree identical to deployed merge tree",
+        "deploy_check": "PASS on PR #191 head 7e3700938fbed3fc192d1528b630587c5b17ec76; its Git tree is byte-identical to merge commit e72e012818525ee785a3cc76c0c05b741b72b2eb",
         "note": "ad-hoc durable validation jobs had systemd exit 0 and complete green logs but no valid finalizer receipt; tracked separately as T050"
       },
       "deployment": {
-        "runtime_head": "e72e012818525ee785a3cc76c0c05b741b72b2eb",
-        "release_id": "e72e01281852-srcseted22b35ae55a-locke6664d600b6c-contract32d81838b121",
+        "runtime_head": "7e3700938fbed3fc192d1528b630587c5b17ec76",
+        "release_id": "7e3700938fbe-srcseted22b35ae55a-locke6664d600b6c-contract32d81838b121",
         "source_sha256": "e7eca914dcdda0233d844c2e99cc008ff4ea0239cafe28511c08d93a7dd9a1e0",
         "runtime_lock_sha256": "e6664d600b6cbaf0bf649b9f6ef3cc5e938e219e15c552a24fa47c5acdc77855",
         "entrypoint_contract_sha256": "32d81838b121e59f2bf0bda8cdc7fa1dbca9f52c7533fff7cc47902dbf3665f2",
@@ -134,7 +134,9 @@
           "registered": 122,
           "sha256": "bbe17ca31d974eadcf0e0871df21931e5f506fbe1745cc580006a26228397215"
         },
-        "integrity": "valid"
+        "integrity": "valid",
+        "merge_commit": "e72e012818525ee785a3cc76c0c05b741b72b2eb",
+        "runtime_binding_note": "Live runtime readback reports the deployed PR #191 head. The deployed tree is byte-identical to the GitHub merge tree, but the commit identities are recorded separately."
       },
       "live_smoke": {
         "runtime_source": "exact deployed /home/alex/.local/share/grabowski-mcp release",
@@ -163,15 +165,37 @@
       "follow_up_tasks": [
         "GRABOWSKI-OPERATOR-SURFACE-V1-T049",
         "GRABOWSKI-OPERATOR-SURFACE-V1-T050"
-      ]
+      ],
+      "diff_artifact_provenance": {
+        "authoritative_binding": "Commit-bound GitHub self-review bodies on the exact PR heads record the pre-merge GitHub diff SHA-256 and review SHA-256 values.",
+        "original_pre_merge_local_files": "not_found_in_bounded_owner_state_search",
+        "search_scope": "Owned Grabowski evidence, review, diff-packet, job, task-outcome and quarantine state plus current PR comments and reviews.",
+        "pr_comments": "No original artifact path or artifact identifier was found; the binding is present in the commit-bound review bodies.",
+        "post_merge_reconstructions": [
+          {
+            "pull_request": "heimgewebe/grabowski#188",
+            "sha256": "cd94ea49798e423af54216fa8713fb30b63036ffe522c26b1cf0dbe40c52d6c3",
+            "classification": "current GitHub diff serialization; not claimed byte-identical to the pre-merge artifact"
+          },
+          {
+            "pull_request": "heimgewebe/grabowski#191",
+            "sha256": "f4223aec416e707088e39655f7796dc62dfad081ddc287e93986a983997e3179",
+            "classification": "current GitHub diff serialization; not claimed byte-identical to the pre-merge artifact"
+          }
+        ],
+        "does_not_claim": [
+          "reconstructed bytes equal the pre-merge diff artifacts",
+          "the missing local files can be recovered from the hashes alone"
+        ]
+      }
     },
     "verification": {
       "source": "github_pull_requests_deployed_runtime_and_isolated_live_smoke",
-      "source_ref": "heimgewebe/grabowski#188,#191@e72e012818525ee785a3cc76c0c05b741b72b2eb",
+      "source_ref": "heimgewebe/grabowski#188,#191@merge:e72e012818525ee785a3cc76c0c05b741b72b2eb;runtime:7e3700938fbed3fc192d1528b630587c5b17ec76",
       "verified_at": "2026-07-13",
       "evidence_sha256": "a0795dacc156d9bbfa664d93068ceef16a2307127fe1d8df87a3aa7811eb85ad",
       "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
-      "task_sha256": "49128b5fddcd989ef8f289f721f7aa9b82360e21b910b906c1185803c38c5c8c"
+      "task_sha256": "e664870927b14c8d56dfe33f590da5301ea5bea3666d34eb1d878bb8e3c37e5e"
     }
   }
 }

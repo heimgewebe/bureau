@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T046",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Reconcile obsolete path leases without weakening exact overlap",
-  "state": "planned",
+  "state": "verified",
   "goal": "Close the live gap exposed by T040: exact path leases must remain fail-closed while their owner still declares the path, but completed or superseded owner work needs an evidence-bound release and reconciliation path so stale path leases do not block unrelated successors until TTL expiry.",
   "priority": {
     "lane": "later",
@@ -78,6 +78,100 @@
       "path_overlap_as_nonconflicting",
       "automatic_merge_or_deploy_authority"
     ],
-    "observed_resolution": "T037 later closed with resources_released=true; T040 then acquired the exact generated-context path owner-bound, completed, merged and deployed. T046 remains planned to generalize this safe reconciliation path for future stale exact leases."
+    "observed_resolution": "Implemented in PR #188, security-hardened in PR #191, deployed at e72e012818525ee785a3cc76c0c05b741b72b2eb, validated and live-smoked with cleanup.",
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_obsolete_path_lease_reconciliation_live",
+      "verified_at": "2026-07-13T16:42:00Z",
+      "implementation": [
+        {
+          "pull_request": "heimgewebe/grabowski#188",
+          "head": "b80399ac7fb8962ec51c111cdc68c3c10e4ec2cd",
+          "merge_commit": "31198ff595294bf523c4c902189aa66abe92a0a9",
+          "historical_github_diff_sha256": "a6c17004b7b2397bc9804b8a642693ae0ec171e921e811c37641f186f5a57172",
+          "self_review_sha256": "ed1883ed2baaedfe6639e63f4e15f3d659307496317f6e696cb96b0e97aff2d8"
+        },
+        {
+          "pull_request": "heimgewebe/grabowski#191",
+          "head": "7e3700938fbed3fc192d1528b630587c5b17ec76",
+          "merge_commit": "e72e012818525ee785a3cc76c0c05b741b72b2eb",
+          "historical_github_diff_sha256": "2ad73804b05f83003bbf166a3ad34f512e746bf4ad7a3b2f334e46ce2d24335e",
+          "self_review_sha256": "4d49584ff0c00b2b0e28deab82b5cd59c2afb03f81ee6da4e1d34cf7617bd2b6"
+        }
+      ],
+      "review_axes": {
+        "correctness": "PASS",
+        "regression_risk": "PASS",
+        "tests": "PASS",
+        "security": "PASS",
+        "integration": "PASS"
+      },
+      "github_ci": {
+        "pr_188": {
+          "validate_3_10": "SUCCESS",
+          "validate_3_12": "SUCCESS"
+        },
+        "pr_191": {
+          "validate_3_10": "SUCCESS",
+          "validate_3_12": "SUCCESS"
+        }
+      },
+      "local_validation": {
+        "core": "33 passed, 3 subtests passed",
+        "focused": "275 passed, 68 subtests passed",
+        "full_repository": "1456 tests passed; generator, access policy, runtime locks, deploy tooling and secret scan passed",
+        "deploy_check": "PASS on tree identical to deployed merge tree",
+        "note": "ad-hoc durable validation jobs had systemd exit 0 and complete green logs but no valid finalizer receipt; tracked separately as T050"
+      },
+      "deployment": {
+        "runtime_head": "e72e012818525ee785a3cc76c0c05b741b72b2eb",
+        "release_id": "e72e01281852-srcseted22b35ae55a-locke6664d600b6c-contract32d81838b121",
+        "source_sha256": "e7eca914dcdda0233d844c2e99cc008ff4ea0239cafe28511c08d93a7dd9a1e0",
+        "runtime_lock_sha256": "e6664d600b6cbaf0bf649b9f6ef3cc5e938e219e15c552a24fa47c5acdc77855",
+        "entrypoint_contract_sha256": "32d81838b121e59f2bf0bda8cdc7fa1dbca9f52c7533fff7cc47902dbf3665f2",
+        "tool_contract": {
+          "expected": 122,
+          "registered": 122,
+          "sha256": "bbe17ca31d974eadcf0e0871df21931e5f506fbe1745cc580006a26228397215"
+        },
+        "integrity": "valid"
+      },
+      "live_smoke": {
+        "runtime_source": "exact deployed /home/alex/.local/share/grabowski-mcp release",
+        "isolation": "dedicated resource/task/workspace state root; global broker and foreign leases untouched",
+        "terminal_task_receipt_sha256": "5ba60671c58c3a848e8e6a4c3b13b03f0f447d3415fefbcf7358e69e8e93879b",
+        "positive_reconciliation_receipt_sha256": "373834b7cfb2bc37801eecea1d5e0102899e845d03eef95a7928eae9aa7fc618",
+        "positive": "one unchanged pre-terminal exact path lease released; live readback absent",
+        "negative": "same owner reacquired after terminal observation; old receipt denied with terminal-evidence-drift; lease retained",
+        "overlap": "different owner acquisition rejected with ResourceConflict",
+        "cleanup": "isolated resource store empty"
+      },
+      "verified_invariants": [
+        "exact path leases only",
+        "canonical owner-bound terminal source required",
+        "task attempt or workspace plan metadata must match",
+        "acquired_at and updated_at must both predate terminal observation",
+        "BEGIN IMMEDIATE and exact live snapshot equality before delete",
+        "already_absent does not count as released",
+        "process absence, expiry, title, inactivity and nonconflict proof do not authorize release"
+      ],
+      "residual_risks": [
+        "terminal ordering uses wall-clock seconds and therefore conservatively retains equality; T049 tracks a monotonic generation binding",
+        "SQLite transaction proves local broker atomicity, not failure freedom of the host filesystem",
+        "future races outside tested and reviewed paths are not claimed excluded"
+      ],
+      "follow_up_tasks": [
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T049",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T050"
+      ]
+    },
+    "verification": {
+      "source": "github_pull_requests_deployed_runtime_and_isolated_live_smoke",
+      "source_ref": "heimgewebe/grabowski#188,#191@e72e012818525ee785a3cc76c0c05b741b72b2eb",
+      "verified_at": "2026-07-13",
+      "evidence_sha256": "a0795dacc156d9bbfa664d93068ceef16a2307127fe1d8df87a3aa7811eb85ad",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "task_sha256": "49128b5fddcd989ef8f289f721f7aa9b82360e21b910b906c1185803c38c5c8c"
+    }
   }
 }

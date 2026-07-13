@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T049",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Bind obsolete lease reconciliation to monotonic lease generations",
+  "state": "planned",
+  "goal": "Replace the conservative wall-clock ordering fallback with a canonical monotonic lease generation or receipt-embedded lease snapshot digest so terminal evidence binds the exact lease generation without weakening fail-closed exact overlap.",
+  "priority": {
+    "lane": "later",
+    "rank": 490
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T046"
+  ],
+  "acceptance": [
+    {
+      "id": "monotonic-generation",
+      "assertion": "Every path lease generation has an immutable monotonic identity that changes on reacquisition and renewal according to an explicit contract."
+    },
+    {
+      "id": "receipt-binding",
+      "assertion": "Canonical task and workspace terminal receipts bind the exact lease generation or canonical snapshot digest they may reconcile."
+    },
+    {
+      "id": "no-time-authority",
+      "assertion": "Wall-clock order alone cannot authorize release; missing or legacy generation evidence remains fail-closed."
+    },
+    {
+      "id": "race-proof",
+      "assertion": "Concurrent renewal or reacquisition between verification and delete retains the lease under the same atomic snapshot comparison."
+    },
+    {
+      "id": "migration-tests",
+      "assertion": "Tests cover legacy receipts, same-second events, clock rollback, renewal, reacquisition, partial release and deployed compatibility."
+    }
+  ],
+  "metadata": {
+    "source": "T046 residual risk review",
+    "source_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T046",
+    "does_not_establish": [
+      "permission to weaken exact overlap",
+      "permission to release legacy leases without exact evidence",
+      "need to change T047"
+    ]
+  }
+}

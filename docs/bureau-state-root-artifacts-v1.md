@@ -88,7 +88,10 @@ Vor der Planerzeugung prüft Bureau:
 - Ziel fehlt und überlappt den aktiven State-Root nicht.
 
 Der Review setzt `review.status=reviewed`, `reviewer`, `reviewed_at` sowie Kopien von
-`entries_sha256` und `destination_root`. Ohne diese Bindung erfolgt keine Wirkung.
+`review_payload_sha256`, `entries_sha256` und `destination_root`. Der Payload-Digest
+bindet alle operativen Felder des Plans einschließlich State-Root, Referenzwurzel,
+Einträgen, Ziel, Ausführungsbedingungen und Non-Claims. Ohne diese Bindung erfolgt keine
+Wirkung; jede nachträgliche Änderung am operativen Plan wird abgelehnt.
 
 ## Anwendung
 

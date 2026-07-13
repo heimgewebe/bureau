@@ -115,6 +115,7 @@ def review_plan(path: Path):
         "status": "reviewed",
         "reviewer": "test-reviewer",
         "reviewed_at": "2026-07-13T18:00:00Z",
+        "review_payload_sha256": value["review_payload_sha256"],
         "entries_sha256": value["entries_sha256"],
         "destination_root": value["destination_root"],
     }
@@ -179,6 +180,27 @@ def test_migration_plan_is_create_only_and_review_bound(tmp_path):
         )
     with pytest.raises(legacy.StateError, match="not reviewed"):
         apply_state_root_migration_plan(plan_path)
+
+
+def test_reviewed_migration_rejects_operational_payload_tampering(tmp_path):
+    state_root, destination, plan_path, _ = write_plan(tmp_path)
+    review_plan(plan_path)
+    original_reference_root = tmp_path / "repo"
+    (original_reference_root / "registry" / "live-binding.json").write_text(
+        str(state_root / "artifact.txt"), encoding="utf-8"
+    )
+    bypass_reference_root = tmp_path / "bypass-repo"
+    (bypass_reference_root / "registry").mkdir(parents=True)
+    (bypass_reference_root / "docs").mkdir()
+    value = json.loads(plan_path.read_text(encoding="utf-8"))
+    value["reference_root"] = str(bypass_reference_root.resolve())
+    plan_path.write_text(legacy.canonical_json(value) + "\n", encoding="utf-8")
+
+    with pytest.raises(legacy.StateError, match="payload digest mismatch"):
+        apply_state_root_migration_plan(plan_path)
+
+    assert (state_root / "artifact.txt").exists()
+    assert not destination.exists()
 
 
 def test_reviewed_migration_apply_is_atomic_receipted_and_idempotent(tmp_path):
@@ -293,6 +315,46 @@ def test_receipt_rollback_restores_original_paths(tmp_path):
     assert rollback["command"] == "state-root-artifacts-migration-rollback"
     assert (state_root / "artifact.txt").exists()
     assert not (destination / "artifact.txt").exists()
+
+
+def test_receipt_rollback_preflights_all_entries_before_effect(tmp_path):
+    state_root, destination, plan_path, _ = write_plan(
+        tmp_path, names=("first.txt", "second.txt")
+    )
+    review_plan(plan_path)
+    result = apply_state_root_migration_plan(plan_path)
+    (state_root / "first.txt").write_text("foreign\n", encoding="utf-8")
+
+    with pytest.raises(legacy.StateError, match="destination collision"):
+        rollback_state_root_migration(Path(result["receipt_path"]))
+
+    assert (state_root / "first.txt").read_text(encoding="utf-8") == "foreign\n"
+    assert not (state_root / "second.txt").exists()
+    assert (destination / "first.txt").exists()
+    assert (destination / "second.txt").exists()
+
+
+def test_receipt_rollback_reverts_this_run_after_rename_failure(tmp_path, monkeypatch):
+    state_root, destination, plan_path, _ = write_plan(
+        tmp_path, names=("first.txt", "second.txt")
+    )
+    review_plan(plan_path)
+    result = apply_state_root_migration_plan(plan_path)
+    original_rename = Path.rename
+
+    def fail_first_restore(source, target):
+        if source == destination / "first.txt":
+            raise OSError("simulated rollback interruption")
+        return original_rename(source, target)
+
+    monkeypatch.setattr(Path, "rename", fail_first_restore)
+    with pytest.raises(OSError, match="simulated rollback interruption"):
+        rollback_state_root_migration(Path(result["receipt_path"]))
+
+    assert not (state_root / "first.txt").exists()
+    assert not (state_root / "second.txt").exists()
+    assert (destination / "first.txt").exists()
+    assert (destination / "second.txt").exists()
 
 
 def test_plan_refuses_repository_reference(tmp_path):

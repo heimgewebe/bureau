@@ -1,4 +1,4 @@
-name: temporary-pr475-validation-log
+name: temporary-pr475-verification-stamp
 
 on: [push, pull_request]
 
@@ -6,28 +6,38 @@ permissions:
   contents: read
 
 jobs:
-  diagnose:
+  stamp:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: python -m pip install -e '.[dev]'
-      - name: Capture validation output
+      - name: Compute verification stamp
         shell: bash
         run: |
-          set +e
-          make validate > validation.log 2>&1
-          status=$?
-          echo "$status" > validation.exit
-          exit 0
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          def canonical(value):
+              return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+          task = json.loads(Path("registry/tasks/RCGA-V1-T001.json").read_text())
+          task.pop("state", None)
+          metadata = task.get("metadata")
+          if isinstance(metadata, dict):
+              metadata.pop("verification", None)
+              if not metadata:
+                  task.pop("metadata", None)
+          initiative = json.loads(Path("registry/initiatives/REPOBRIEF-CODEGRAPH-ADOPTION-V1.json").read_text())
+          result = {
+              "task_sha256": hashlib.sha256(canonical(task).encode()).hexdigest(),
+              "plan_sha256": hashlib.sha256(canonical(initiative.get("current_plan") or {}).encode()).hexdigest(),
+          }
+          Path("verification-stamp.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+          PY
       - uses: actions/upload-artifact@v4
         with:
-          name: bureau-pr475-validation-${{ github.sha }}
-          path: |
-            validation.log
-            validation.exit
+          name: bureau-pr475-stamp-${{ github.sha }}
+          path: verification-stamp.json
           if-no-files-found: error
           retention-days: 2

@@ -1,34 +1,207 @@
 {
-  "schema_version": 1,
-  "id": "SCHAUWERK-VISUAL-ADOPTION-V1-T001",
-  "initiative": "SCHAUWERK-VISUAL-ADOPTION-V1",
-  "title": "Apply Visual System v2 to the software pilot",
-  "state": "ready",
-  "goal": "Compile a real software-pilot snapshot into a source-bound, narrative and quality-gated Visual System v2 board while preserving the existing renderer as an explicit compatibility path.",
-  "priority": {
-    "lane": "now",
-    "rank": 1
-  },
-  "depends_on": [],
-  "claims": [
+  "acceptance": [
     {
-      "resource": "repo.schauwerk",
-      "mode": "write",
-      "isolation": "worktree"
+      "assertion": "A validated software-pilot snapshot compiles deterministically into a Visual System v2 board specification and Miro DSL.",
+      "evidence_type": "object",
+      "id": "real-content",
+      "verifier": "merged implementation, tests and bound receipts"
+    },
+    {
+      "assertion": "The generated board passes the v2 quality gate with at least 90 points, no blockers and explicit evidence separation.",
+      "evidence_type": "object",
+      "id": "quality-gate",
+      "verifier": "merged implementation, tests and bound receipts"
+    },
+    {
+      "assertion": "Source authority, revisions, tests, risks and non-claims remain visible and digest-bound; missing or failed source data cannot appear current.",
+      "evidence_type": "object",
+      "id": "truth",
+      "verifier": "merged implementation, tests and bound receipts"
+    },
+    {
+      "assertion": "The existing software-pilot renderer and command remain compatible while v2 outputs are opt-in until adoption evidence is complete.",
+      "evidence_type": "object",
+      "id": "compatibility",
+      "verifier": "merged implementation, tests and bound receipts"
+    },
+    {
+      "assertion": "One fresh isolated Miro board is created from the generated v2 DSL and checked by remote conformance plus a bounded visual review, or the unavailable provider evidence is recorded as an explicit open gate.",
+      "evidence_type": "object",
+      "id": "live-proof",
+      "verifier": "merged implementation, tests and bound receipts"
+    },
+    {
+      "assertion": "Tests, CI, complete diff, diff-bound self-review, mergeability and post-merge validation pass before the task is verified.",
+      "evidence_type": "object",
+      "id": "merge-gates",
+      "verifier": "merged implementation, tests and bound receipts"
     }
   ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.schauwerk"
+    }
+  ],
+  "depends_on": [],
   "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/schauwerk",
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Repository changes require a complete GitHub diff, head- and diff-bound self-review, green CI and exact post-merge validation. A live Miro write may target only a newly created isolated board.",
+      "required_level": "reviewed_plan"
+    },
     "grabowski_resources": [
       "repo:/home/alex/repos/schauwerk"
     ],
-    "approval": {
-      "action_class": "repository_mutation",
-      "required_level": "reviewed_plan",
-      "note": "Repository changes require a complete GitHub diff, head- and diff-bound self-review, green CI and exact post-merge validation. A live Miro write may target only a newly created isolated board."
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk"
+  },
+  "goal": "Compile a real software-pilot snapshot into a source-bound, narrative and quality-gated Visual System v2 board while preserving the existing renderer as an explicit compatibility path.",
+  "id": "SCHAUWERK-VISUAL-ADOPTION-V1-T001",
+  "initiative": "SCHAUWERK-VISUAL-ADOPTION-V1",
+  "metadata": {
+    "does_not_establish": [
+      "default_migration_before_acceptance",
+      "automatic_changes_to_existing_boards",
+      "universal_aesthetic_quality",
+      "retirement_of_legacy_software_dsl"
+    ],
+    "implementation_evidence": {
+      "checks": [
+        {
+          "conclusion": "success",
+          "job": "validate (3.11)"
+        },
+        {
+          "conclusion": "success",
+          "job": "validate (3.12)"
+        }
+      ],
+      "head_sha": "6890ae2be495186016db16b5aecb21c8004e391d",
+      "merge_commit": "4bf61ade226adb1b5abf578c08d4679700d70eba",
+      "merge_tree": "4751beb6a14413be7db9fd8a68149b4f42b9b938",
+      "merged_at": "2026-07-13T05:27:46Z",
+      "post_merge_validation": {
+        "commit_sha": "4bf61ade226adb1b5abf578c08d4679700d70eba",
+        "content_sha256": "4eafd6e4b59c52e1164b985db274e763c6620ba367ea7df63eec570ca764c684",
+        "result": "546 tests plus Ruff, compileall and registry validation passed",
+        "source_ref": "/home/alex/.local/state/schauwerk/visual-adoption-v1-closeout/validation-receipt.json",
+        "tree_sha": "4751beb6a14413be7db9fd8a68149b4f42b9b938"
+      },
+      "pull_request": "heimgewebe/schauwerk#87",
+      "review_gate": {
+        "diff_sha256": "c3293f2160f6fbdf14ec1ece56a9947b37d553ca837a53b0cfcbd41d9e2d10b1",
+        "reviewed_head": "6890ae2be495186016db16b5aecb21c8004e391d",
+        "self_review_sha256": "98b9d85c3f3071b192787ae436fd42efc1adc79d2461c04b2cb37b1a1b085af7",
+        "verdict": "PASS"
+      },
+      "reviewed_tree": "4751beb6a14413be7db9fd8a68149b4f42b9b938",
+      "tree_equal": true
+    },
+    "outcome": "The Lenskit software pilot compiles into a seven-frame Visual System v2 board with bounded collections, semantic object selection, exact remote conformance and a separate human visual review. The legacy renderer remains the default compatibility path.",
+    "predecessor_task": "SCHAUWERK-VISUAL-SYSTEM-V2-T001",
+    "registered_at": "2026-07-13T04:21:00Z",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "head_sha": "6890ae2be495186016db16b5aecb21c8004e391d",
+          "kind": "pull_request",
+          "merge_commit_sha": "4bf61ade226adb1b5abf578c08d4679700d70eba",
+          "number": 87,
+          "source_ref": "heimgewebe/schauwerk#87",
+          "task_id": "SCHAUWERK-VISUAL-ADOPTION-V1-T001",
+          "tree_sha256": "4751beb6a14413be7db9fd8a68149b4f42b9b938"
+        },
+        {
+          "authority": "schauwerk-local-validation",
+          "commit_sha": "4bf61ade226adb1b5abf578c08d4679700d70eba",
+          "content_sha256": "4eafd6e4b59c52e1164b985db274e763c6620ba367ea7df63eec570ca764c684",
+          "kind": "test_run",
+          "source_ref": "/home/alex/.local/state/schauwerk/visual-adoption-v1-closeout/validation-receipt.json",
+          "task_id": "SCHAUWERK-VISUAL-ADOPTION-V1-T001"
+        },
+        {
+          "authority": "miro-education-via-schauwerk",
+          "content_sha256": "42698d66b84c4be23e08e706e32de8fe4a59fa1b7d4d305a3aa7816ecf25f6bb",
+          "kind": "miro_live_probe",
+          "source_ref": "schauwerk-software-visual-v2-lenskit-20260713-v2@2da2ead75af686d1",
+          "task_id": "SCHAUWERK-VISUAL-ADOPTION-V1-T001"
+        },
+        {
+          "authority": "schauwerk-visual-review-v2",
+          "content_sha256": "42698d66b84c4be23e08e706e32de8fe4a59fa1b7d4d305a3aa7816ecf25f6bb",
+          "kind": "visual_review",
+          "review_digest": "7f0000d5c6f4688affa39248bd93bfbc672e24cec2879900226d50d9c4af71f9",
+          "source_ref": "docs/operators/evidence/sw019-visual-adoption-v1/live-acceptance-receipt.json",
+          "task_id": "SCHAUWERK-VISUAL-ADOPTION-V1-T001"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "source_request": "arbeite weiter am schauwerk",
+    "verification": {
+      "plan_sha256": "0226e0d8ecfd35d0f3b76c2d22089a320d128e911b458a16cfdb2df6205826cb",
+      "task_sha256": "5dc29aa30c88d8d2951f39bd22bcb8622e486454e94d238e42f9b5bfa24e4d35",
+      "verified_at": "2026-07-13T05:35:28Z"
+    },
+    "verified_acceptance": {
+      "compatibility": "Verified by regression tests: the legacy four-column renderer remains the default and its receipt shape is unchanged unless v2 output is requested.",
+      "live-proof": "Verified on one fresh isolated board: 49 created, 0 failed, exact remote conformance and a seven-axis human visual PASS. Authenticated screenshot evidence remains explicitly unavailable.",
+      "merge-gates": "Verified by PR #87: complete diff, bound PASS review, green Python 3.11 and 3.12 CI, byte-equal merge tree and 546 post-merge tests.",
+      "quality-gate": "Verified by quality digest 9561bdd5: 100/100, no blocker, no warning, 42 declared objects and zero sticky notes.",
+      "real-content": "Verified by merged PR #87 and board digest b55b1df5: a validated Lenskit snapshot deterministically compiles into a seven-frame v2 specification and Miro DSL.",
+      "truth": "Verified by committed evidence: source revisions, snapshot digest and the absent observation timestamp are explicit; freshness is not invented."
+    },
+    "verified_at": "2026-07-13T05:35:28Z",
+    "visual_adoption_evidence": {
+      "automatic_quality": {
+        "aesthetic_claim": false,
+        "blockers": 0,
+        "score": 100,
+        "warnings": 0
+      },
+      "board_alias": "schauwerk-software-visual-v2-lenskit-20260713-v2",
+      "board_digest": "b55b1df55a82fa36749dc674015b0fb66fda88f00e860d6e180b96453e17957c",
+      "board_reference_digest": "2da2ead75af686d1",
+      "does_not_establish": [
+        "universal aesthetic preference",
+        "authenticated Miro screenshot evidence",
+        "pixel-identical provider geometry",
+        "freshness beyond recorded revisions"
+      ],
+      "live_acceptance_sha256": "42698d66b84c4be23e08e706e32de8fe4a59fa1b7d4d305a3aa7816ecf25f6bb",
+      "quality_digest": "9561bdd504193a7b0bc6c48f8ed3b08a58b15d2cbc405d2640c347996e0e83c2",
+      "rejected_iteration": {
+        "reason": "Six tables across seven frames remained too form-like despite a 100/100 automatic score.",
+        "receipt_sha256": "f1826410e01aac5750d12aae4d4dffc0616243998eb88c83b0648f41a82b2f69",
+        "remote_cleanup": "unavailable because provider exposes neither board delete nor board rename",
+        "review_digest": "d92deae61e77413e7ffdf8b9e5b51e3cb20b86be766318e7252cf767ed81e4c9",
+        "verdict": "FAIL"
+      },
+      "remote_conformance": {
+        "connectors": 8,
+        "documents": 1,
+        "frames": 7,
+        "items": 41,
+        "layout_created": 49,
+        "layout_failed": 0,
+        "mismatches": 0,
+        "tables": 3
+      },
+      "visual_review": {
+        "authenticated_provider_screenshot": "not_available",
+        "review_digest": "7f0000d5c6f4688affa39248bd93bfbc672e24cec2879900226d50d9c4af71f9",
+        "verdict": "PASS"
+      }
     }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
   },
   "required_capabilities": [
     "repository",
@@ -36,41 +209,7 @@
     "grabowski",
     "miro"
   ],
-  "acceptance": [
-    {
-      "id": "real-content",
-      "assertion": "A validated software-pilot snapshot compiles deterministically into a Visual System v2 board specification and Miro DSL."
-    },
-    {
-      "id": "quality-gate",
-      "assertion": "The generated board passes the v2 quality gate with at least 90 points, no blockers and explicit evidence separation."
-    },
-    {
-      "id": "truth",
-      "assertion": "Source authority, revisions, tests, risks and non-claims remain visible and digest-bound; missing or failed source data cannot appear current."
-    },
-    {
-      "id": "compatibility",
-      "assertion": "The existing software-pilot renderer and command remain compatible while v2 outputs are opt-in until adoption evidence is complete."
-    },
-    {
-      "id": "live-proof",
-      "assertion": "One fresh isolated Miro board is created from the generated v2 DSL and checked by remote conformance plus a bounded visual review, or the unavailable provider evidence is recorded as an explicit open gate."
-    },
-    {
-      "id": "merge-gates",
-      "assertion": "Tests, CI, complete diff, diff-bound self-review, mergeability and post-merge validation pass before the task is verified."
-    }
-  ],
-  "metadata": {
-    "registered_at": "2026-07-13T04:21:00Z",
-    "source_request": "arbeite weiter am schauwerk",
-    "predecessor_task": "SCHAUWERK-VISUAL-SYSTEM-V2-T001",
-    "does_not_establish": [
-      "default_migration_before_acceptance",
-      "automatic_changes_to_existing_boards",
-      "universal_aesthetic_quality",
-      "retirement_of_legacy_software_dsl"
-    ]
-  }
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Apply Visual System v2 to the software pilot"
 }

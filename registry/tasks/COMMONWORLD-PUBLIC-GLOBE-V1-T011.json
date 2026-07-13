@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Use official Node-24-native GitHub Action releases. Do not interrupt the strict T006-T010 product chain unless the warning becomes a failing required check."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source": "Commonworld main validate run 29265256794 annotation after T005 merge",
+    "source_merge_commit": "face76805c1e7f4c424efc5f1b6ec337831de7ae",
+    "queue_mutated": false,
+    "scheduling_boundary": "planned_later_nonblocking_outside_t005_t010_chain",
+    "observed_warning": "Node.js 20 is deprecated; checkout@v4, setup-node@v4 and setup-python@v5 were forced to run on Node.js 24.",
+    "does_not_establish": [
+      "current CI failure",
+      "runtime defect",
+      "permission to interrupt T006-T010",
+      "future action-version compatibility"
+    ]
+  },
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T011",
+  "title": "Move Commonworld GitHub Actions to Node-24-native releases",
+  "state": "planned",
+  "goal": "Remove the Node.js 20 deprecation annotation using current official action releases without changing Commonworld build or deployment behavior.",
+  "priority": {
+    "lane": "later",
+    "rank": 20
+  },
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "official-actions",
+      "assertion": "Checkout, Python and Node setup use current official releases whose bundled runtime is Node.js 24-native."
+    },
+    {
+      "id": "warning-removed",
+      "assertion": "Pull-request and main validation complete without the Node.js 20 deprecation annotation."
+    },
+    {
+      "id": "behavior-preserved",
+      "assertion": "Deterministic build, full validation, real browser smoke and Pages deployment remain green with no public artifact drift."
+    }
+  ]
+}

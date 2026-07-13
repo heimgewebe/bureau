@@ -46,3 +46,9 @@ The live Globe-first release remains the baseline. The audit found that the glob
 | `T010` | Physical VoiceOver, TalkBack and desktop screen-reader product evidence | `T009` |
 
 The task chain deliberately forbids premature backend, account, database, PMTiles, vector-search or independent CLI work. Such architecture requires measured thresholds from T008 rather than anticipation.
+
+## Verified progress on 2026-07-13
+
+- `T005` is verified by Commonworld PR #70, reviewed head `5cd14b4a584c93d98e47435e53eb7bc740e4077d`, merge `face76805c1e7f4c424efc5f1b6ec337831de7ae`, green main validation `29265256794`, successful Pages deployment `29265255519`, exact public artifact readback and a passing production browser smoke.
+- `T006` is the only ready Commonworld successor. `T007` through `T010` remain planned and retain their strict dependency chain.
+- `T011` records the nonblocking GitHub Actions Node.js 20 deprecation annotation. It remains in the later lane outside the T005-T010 product chain and does not mutate `registry/queue.json`.

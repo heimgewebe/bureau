@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T052",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Make Agent Workspace integration probing compatible with production Git",
+  "state": "ready",
+  "goal": "Replace the Agent Workspace base-drift integration probe's unconditional use of git merge-tree --write-tree with a deterministic, side-effect-free compatibility path that works on the production Git 2.34.1 baseline while preserving exact conflict detection and bounded evidence.",
+  "priority": {
+    "lane": "later",
+    "rank": 520
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "production-reproduction",
+      "assertion": "A regression test reproduces the current Git 2.34.1 failure where git merge-tree --write-tree exits 128 with fatal: unknown rev --write-tree."
+    },
+    {
+      "id": "compatible-probe",
+      "assertion": "Agent Workspace derives conflict or clean integration truth on the supported production Git baseline without mutating the repository, writer worktree, branch, index or refs."
+    },
+    {
+      "id": "newer-git-consistency",
+      "assertion": "Where the newer merge-tree mode is available, the compatibility result is checked to be semantically consistent for clean and conflicting histories."
+    },
+    {
+      "id": "failure-semantics",
+      "assertion": "Unsupported capability, missing objects and internal probe errors remain distinct from a genuine merge conflict and cannot be reported as conflicting=true solely because the command is unavailable."
+    },
+    {
+      "id": "live-workspace-readback",
+      "assertion": "A base-drifted workspace status on heim-pc returns a valid bounded integration_probe instead of fatal: unknown rev --write-tree."
+    }
+  ],
+  "metadata": {
+    "source": "Agent Workspace contract-v2 live closeout",
+    "observed_at": "2026-07-13T21:16:00Z",
+    "repository": "heimgewebe/grabowski",
+    "source_pull_request": 193,
+    "source_merge_commit": "61ae5c85694a307562c951759c1504155cfca97e",
+    "affected_workspace": "gaw-grabowski-grip-roadmap-v1-t014-97b64d990af8",
+    "production_git_version": "2.34.1",
+    "reproduction": {
+      "argv": [
+        "git",
+        "merge-tree",
+        "--write-tree",
+        "61ae5c85694a307562c951759c1504155cfca97e",
+        "ed113109ec6693919071be832647b539a82c692d"
+      ],
+      "returncode": 128,
+      "stderr": "fatal: unknown rev --write-tree"
+    },
+    "does_not_establish": [
+      "that the historical T014 writer result is mergeable",
+      "permission to modify or clean the foreign T014 worktree",
+      "permission to rewrite historical workspace evidence",
+      "that every nonzero merge probe result is a genuine conflict"
+    ]
+  }
+}

@@ -3,7 +3,7 @@
   "id": "RAB-V1-T002B",
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "Run a cost-bounded live baseline and RepoBrief preflight",
-  "state": "ready",
+  "state": "blocked",
   "goal": "Prove the qualified Claude runner against the live provider with exactly one frozen baseline/treatment pair, a hard pre-dispatch spend ceiling, exact model and tool evidence, valid Lenskit receipts, immutable transcripts and separately measured snapshot-preparation and freshness latency before any 96-run benchmark dispatch.",
   "priority": {
     "lane": "next",
@@ -106,6 +106,31 @@
       "answer correctness outside the selected case",
       "default promotion",
       "permission to dispatch the 96-run benchmark"
-    ]
+    ],
+    "updated_at": "2026-07-13",
+    "blocked_at": "2026-07-13T15:09:05Z",
+    "block_reason": "The live preflight did not produce one valid baseline/treatment pair. Baseline was executed twice, so three provider processes were observed instead of at most two; the treatment process ended with error_max_budget_usd and no valid treatment receipt. The registered no-retry stop rule therefore blocks this task and RAB-V1-T002.",
+    "observed_outcome": {
+      "provider_process_count_observed": 3,
+      "provider_process_count_allowed": 2,
+      "retry_observed": true,
+      "per_process_budget_usd": 0.12,
+      "observed_final_cost_total_usd": 0.2405027,
+      "baseline_valid_receipt": true,
+      "treatment_valid_receipt": false,
+      "treatment_final_result": "error_max_budget_usd",
+      "treatment_observed_cost_usd": 0.1358768,
+      "evidence_gist": "https://gist.github.com/alexdermohr/895e0e93e699f31d4081862185c19605",
+      "evidence_sha256": "bfef1cde93908b1761d294f1d5840c2b50a332073f61c9b3acd2c3aa615d9678"
+    },
+    "stop_rule_applied": true,
+    "next_action": "Do not retry RAB-V1-T002B. Qualify the integrated preflight implementation without provider use in RAB-V1-T002C, then require a separate reviewed authorization in RAB-V1-T002D for any new live pair.",
+    "queue_reconciliation": {
+      "state": "blocked-by-open-pr",
+      "queue_file": "registry/queue.json",
+      "conflicting_pull_request": "heimgewebe/bureau#509",
+      "conflicting_head": "800aa811af972183865b65e6806891ac4676d52a",
+      "reason": "PR #509 changes the same next-lane hunk. Do not make the foreign PR conflict merely to replace blocked T002B with ready T002C."
+    }
   }
 }

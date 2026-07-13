@@ -28,7 +28,8 @@
       "heimgewebe/lenskit@a3dcc4e954f3ea60842cb366b499659f40938e0b",
       "heimgewebe/lenskit@dff582f9c4e8b5511d4ce436db81e3e245f725ec",
       "heimgewebe/lenskit@7b729b52b6bf0302029626878ee444e664a0dc08",
-      "heimgewebe/grabowski@4465ed14b7064e97e75d2e11be31e1264593e1ad"
+      "heimgewebe/grabowski@4465ed14b7064e97e75d2e11be31e1264593e1ad",
+      "heimgewebe/grabowski@1975c3f5c63fcb0e50f3f3d1101a34583d5a9fbd"
     ],
     "comparison": "baseline grep/glob/read versus the same tools plus RepoBrief MCP",
     "fixed_case_count": 24,
@@ -45,24 +46,37 @@
         "outcome": "The isolated read-only Claude runner is merged with frozen-plan binding, derived identities, strict tool boundaries, hash-bound transcripts, provider evidence validation and synthetic-only fixture reports.",
         "pull_request": "heimgewebe/grabowski#180",
         "merge_commit": "4465ed14b7064e97e75d2e11be31e1264593e1ad",
-        "diff_sha256": "1d85735814abe348e42e5b71484bd4889ee139ab9cdb89ae109663c1a9454156"
+        "diff_sha256": "1d85735814abe348e42e5b71484bd4889ee139ab9cdb89ae109663c1a9454156",
+        "hardening_pull_request": "heimgewebe/grabowski#185",
+        "hardening_merge_commit": "1975c3f5c63fcb0e50f3f3d1101a34583d5a9fbd",
+        "hardening_diff_sha256": "62eb028a939645f4ca126003ed5f8c6d0693b56a4c2ae9a1ecf227de71efd86e"
       },
       "RAB-V1-T002B": {
-        "state": "ready",
-        "scope": "Exactly one frozen baseline/treatment pair with at most USD 1.00 per provider process and USD 2.00 total authorized spend.",
-        "stop_rule": "Any invalid receipt, missing treatment MCP use, stale/non-comparable state, budget stop, timeout or source mutation ends the preflight without retry."
+        "state": "blocked",
+        "outcome": "The live preflight was not a valid pair: baseline was executed twice, three provider processes were observed and treatment ended with error_max_budget_usd at USD 0.1358768 under a USD 0.12 ceiling. No retry is permitted.",
+        "evidence_gist": "https://gist.github.com/alexdermohr/895e0e93e699f31d4081862185c19605",
+        "evidence_sha256": "bfef1cde93908b1761d294f1d5840c2b50a332073f61c9b3acd2c3aa615d9678"
       },
       "RAB-V1-T002": {
         "state": "planned",
-        "blocker": "Requires verified RAB-V1-T002B live provider evidence before any 96-run dispatch."
+        "blocker": "Requires verified RAB-V1-T002D live provider evidence before any 96-run dispatch."
       },
       "RAB-V1-T003": {
         "state": "planned",
         "condition": "Requires completed real paired runs from RAB-V1-T002."
+      },
+      "RAB-V1-T002C": {
+        "state": "ready",
+        "scope": "Rebase and synthetically qualify the one-shot integrated preflight on the hardened runner; no live provider use.",
+        "queue_projection": "Pending conflict-free reconciliation after heimgewebe/bureau#509; lifecycle truth already marks T002C ready."
+      },
+      "RAB-V1-T002D": {
+        "state": "planned",
+        "scope": "After T002C, require a new reviewed authorization for exactly one baseline and one treatment process with no retry."
       }
     },
     "default_promoted": false,
-    "sequencing": "Qualify the runner, verify one cost-bounded live pair, execute the real paired benchmark, decide adoption, and only then prioritize bureau#482 incremental rebuild or file-watcher work.",
+    "sequencing": "Keep the failed T002B attempt visible, qualify the one-shot preflight in T002C without provider use, separately authorize and run one pair in T002D, execute the real paired benchmark, decide adoption, and only then prioritize later optimization work.",
     "does_not_establish": [
       "general agent quality improvement",
       "answer correctness outside the fixed taskset",

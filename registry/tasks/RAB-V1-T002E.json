@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "id": "RAB-V1-T002E",
+  "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
+  "title": "Harden exact live-preflight preparation contracts",
+  "state": "ready",
+  "goal": "Eliminate the argument-adapter collision and align the Lenskit preparation outputs with the exact Grabowski live-runner contract without starting any provider process.",
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "depends_on": [
+    "RAB-V1-T002C"
+  ],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/lenskit"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Provider use is forbidden. Fix and verify contracts synthetically before any new live authorization is considered."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rab-v1-t002e-no-prefix-abbrev",
+      "assertion": "The outer live-preflight argument parser disables option abbreviation, forwards an explicit absolute --claude-command unchanged and rejects ambiguous or prefix-only spellings."
+    },
+    {
+      "id": "rab-v1-t002e-exact-live-argv-test",
+      "assertion": "A provider-free contract test exercises the exact production live argv through the outer adapter and proves the absolute executable, SHA binding, credential boundary, budgets and output paths reach the core without a provider intent."
+    },
+    {
+      "id": "rab-v1-t002e-plan-contract",
+      "assertion": "Lenskit planning emits or rejects provider and sampling values according to the exact Claude-Code live-runner contract, including provider anthropic-claude-code and an explicit empty sampling object."
+    },
+    {
+      "id": "rab-v1-t002e-export-contract",
+      "assertion": "The agent-portable export path makes secret redaction an explicit machine-verifiable requirement or safe default before a benchmark bundle can be accepted."
+    },
+    {
+      "id": "rab-v1-t002e-regression",
+      "assertion": "Focused and full tests, Python 3.10 and 3.12 CI, diff-bound self-review and post-merge readback pass with zero provider processes and zero provider cost."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source_issue": "heimgewebe/bureau#481",
+    "triggered_by": "RAB-V1-T002D",
+    "trigger_attempt_id": "5ad8fc1f8826",
+    "failure_evidence_sha256": "d2559d0a22365f7d07ac8435db8f5d1c9148c59fbd996a0130fe67122fc12fc3",
+    "provider_use_permitted": false,
+    "provider_processes_started": 0,
+    "observed_cost_usd": 0.0,
+    "known_findings": [
+      "argparse prefix abbreviation consumes --claude-command as --claude-command-sha256",
+      "Lenskit planner initially accepted generic anthropic provider and non-empty sampling rejected by the live runner",
+      "agent-portable snapshot creation required explicit --redact-secrets to pass the export gate"
+    ],
+    "does_not_establish": [
+      "permission for a new live pair",
+      "RepoBrief usefulness",
+      "provider reliability",
+      "permission for the full benchmark",
+      "default promotion"
+    ]
+  }
+}

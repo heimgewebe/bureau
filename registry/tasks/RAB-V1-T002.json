@@ -6,11 +6,11 @@
   "state": "blocked",
   "goal": "Execute the frozen benchmark in isolated baseline and RepoBrief-augmented conditions with the separately qualified instrumented runner, provider-reported tokens and immutable transcripts.",
   "priority": {
-    "lane": "next",
+    "lane": "later",
     "rank": 21
   },
   "depends_on": [
-    "RAB-V1-T002D"
+    "RAB-V1-T002F"
   ],
   "claims": [
     {
@@ -41,7 +41,7 @@
     "approval": {
       "action_class": "agent_dispatch",
       "required_level": "reviewed_plan",
-      "note": "Run only after RAB-V1-T002D verifies one newly authorized, one-shot cost-bounded live pair with exact model identity, provider usage, treatment RepoBrief use, source integrity and separated latency."
+      "note": "Run only after RAB-V1-T002E fixes and verifies all live-preparation contracts and RAB-V1-T002F separately authorizes, executes once and verifies a fresh cost-bounded pair."
     }
   },
   "required_capabilities": [
@@ -82,7 +82,7 @@
     "updated_at": "2026-07-13",
     "source_issue": "heimgewebe/bureau#481",
     "runner_prerequisite": "RAB-V1-T002A",
-    "live_preflight_prerequisite": "RAB-V1-T002D",
+    "live_preflight_prerequisite": "RAB-V1-T002F",
     "initial_blocker": "RAB-V1-T002B ended fail-closed after a baseline retry and treatment budget stop. The 96-run benchmark remains prohibited until T002C qualifies the one-shot orchestrator and T002D produces one valid newly authorized pair.",
     "default_promoted": false,
     "does_not_establish": [
@@ -93,11 +93,12 @@
       "merge readiness"
     ],
     "blocked_at": "2026-07-13",
-    "current_blocker": "RAB-V1-T002D is ready but not authorized, not executed and not verified. Therefore the 96-run benchmark remains prohibited.",
+    "current_blocker": "RAB-V1-T002D consumed its one-shot authorization but failed locally before provider dispatch. RAB-V1-T002E must harden the exact live preparation contracts, and RAB-V1-T002F must then receive a new separate authorization and produce one valid pair. The 96-run benchmark remains prohibited and unstarted.",
     "unlock_conditions": [
-      "RAB-V1-T002D receives a separate reviewed live authorization",
-      "exactly one valid baseline/treatment pair is completed without retry",
-      "T002D evidence is verified in Bureau"
+      "RAB-V1-T002E is verified without provider use",
+      "RAB-V1-T002F receives a new separate reviewed live authorization",
+      "exactly one valid fresh baseline/treatment pair is completed without retry",
+      "T002F evidence is verified in Bureau"
     ],
     "benchmark_execution_status": "not_started"
   }

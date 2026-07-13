@@ -3,10 +3,10 @@
   "id": "RAB-V1-T002D",
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "Run one newly authorized live baseline and RepoBrief pair",
-  "state": "ready",
+  "state": "blocked",
   "goal": "After the one-shot orchestrator is merged and verified, execute exactly one newly authorized frozen baseline/treatment pair with no retry, bounded total spend, immutable evidence and immediate fail-closed stop on any invalid outcome.",
   "priority": {
-    "lane": "next",
+    "lane": "later",
     "rank": 20
   },
   "depends_on": [
@@ -80,7 +80,7 @@
     "registered_at": "2026-07-13",
     "source_issue": "heimgewebe/bureau#481",
     "replaces_live_dispatch_of": "RAB-V1-T002B",
-    "authorization_status": "authorized",
+    "authorization_status": "consumed",
     "authorized_at": "2026-07-13T19:47:33.474793Z",
     "authorization_manifest_sha256": "46086f384d67ba5f0352780d5d286355aa5308a6960b34ce4d9045724a072f04",
     "execution_authorization": {
@@ -193,7 +193,7 @@
         "the live preflight starts baseline then treatment at most once",
         "any failure or ambiguous start consumes the one-shot authorization and blocks without retry"
       ],
-      "consumed": false,
+      "consumed": true,
       "does_not_authorize": [
         "RAB-V1-T002B retry",
         "RAB-V1-T002 96-run benchmark",
@@ -204,7 +204,7 @@
       "level": "reviewed_plan",
       "one_shot": true,
       "reference": "operator-instruction:2026-07-13:rab-v1-t002d-one-shot-live-pair-max-0.50-usd",
-      "remaining_uses": 1,
+      "remaining_uses": 0,
       "reviewer": "alexdermohr",
       "schema_version": 1,
       "scope": [
@@ -226,26 +226,50 @@
       "benchmark completion",
       "provider reliability beyond one pair",
       "permission to dispatch 96 runs",
-      "default promotion"
+      "default promotion",
+      "valid live pair",
+      "provider availability",
+      "permission to retry",
+      "permission for pilot or full benchmark"
     ],
     "updated_at": "2026-07-13",
-    "ready_at": "2026-07-13",
-    "execution_status": "not_started",
-    "ready_reason": "T002C is verified and the one-shot live acceptance contract is independently complete.",
+    "execution_status": "failed_pre_dispatch",
     "predecessor": {
       "task_id": "RAB-V1-T002C",
       "state": "verified",
       "grabowski_merge_commit": "f267070763fe8142f49c6d93810df0f7e219b308"
     },
-    "requires_separate_reviewed_authorization": false,
+    "requires_separate_reviewed_authorization": true,
     "retry_permitted": false,
     "provider_processes_started": 0,
-    "real_provider_cost_observed_usd": null,
+    "real_provider_cost_observed_usd": 0.0,
     "dispatch_boundary": "At most one baseline and one treatment process; no restart after success, failure, ambiguous start or interrupted publication.",
     "does_not_authorize": [
       "RAB-V1-T002B retry",
       "RAB-V1-T002 96-run benchmark",
-      "default promotion"
-    ]
+      "default promotion",
+      "RAB-V1-T002F execution",
+      "a replacement live pair",
+      "automatic pilot expansion"
+    ],
+    "failed_at": "2026-07-13T20:08:20Z",
+    "attempt_id": "5ad8fc1f8826",
+    "attempt_unit": "grabowski-job-5ad8fc1f8826",
+    "attempt_outcome": "invalid_pre_dispatch",
+    "failure_stage": "argument_adapter_before_output_or_provider_dispatch",
+    "failure_class": "cli_argument_prefix_abbreviation_collision",
+    "failure_error": "live Claude executable path must be absolute",
+    "failure_evidence": {
+      "path": "/home/alex/.local/state/grabowski/rab-v1-t002d-20260713/live-failure-evidence.json",
+      "sha256": "d2559d0a22365f7d07ac8435db8f5d1c9148c59fbd996a0130fe67122fc12fc3",
+      "launch_intent_sha256": "a15fdaa0d66513ca9cf23e233085b3da8179dc192fab097fddd50bcb06c9c8d7",
+      "launch_receipt_sha256": "bc49b461dea208fab5fd8880d76fd564706d89c17821e435bc19ed29a4368f0a",
+      "job_finalization_receipt_sha256": "9092deb011ed37f592cdbc125d9d470d02774ec78d99fb9580a8594a9897d345",
+      "argv_sha256": "20d2cc8a2c0bd276db9b12cfedc51acff0662284aab454fdabfbd046bc37920e"
+    },
+    "provider_process_intents": 0,
+    "provider_processes_currently_running": 0,
+    "next_task": "RAB-V1-T002E",
+    "state_reason": "The one-shot authorization was consumed by an unambiguous launcher submission, but the local adapter rejected the command before any provider intent because argparse prefix abbreviation removed the absolute --claude-command argument. No retry is permitted."
   }
 }

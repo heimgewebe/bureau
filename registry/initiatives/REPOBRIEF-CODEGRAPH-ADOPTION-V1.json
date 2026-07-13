@@ -3,7 +3,7 @@
   "id": "REPOBRIEF-CODEGRAPH-ADOPTION-V1",
   "title": "RepoBrief CodeGraph selective adoption",
   "state": "active",
-  "commitment": "later",
+  "commitment": "now",
   "goal": "Adopt the useful structural-navigation ideas from CodeGraph as a deterministic read-only Lenskit surface without introducing a second index authority, memory store or merge gate.",
   "current_plan": {
     "repository": "bureau",
@@ -30,9 +30,19 @@
     "implementation_merge_commit": "456d37bd142349bc0c04925d87934eefbbc546ac",
     "synthetic_evaluation_completed": true,
     "synthetic_target_recall_advantage": 0.7083333333333334,
+    "live_calibration_task": "RCGA-V1-T002",
+    "live_calibration_task_state": "verified",
+    "live_calibration_result": {
+      "baseline_target_recall": 1.0,
+      "impact_target_recall": 0.6666666666666666,
+      "target_recall_advantage": -0.33333333333333337,
+      "no_case_regression": false,
+      "default_promoted": false,
+      "evidence_path": "docs/evidence/rcga-live-evaluation-20260713.json"
+    },
+    "current_task": "RCGA-V1-T003",
+    "pending_refinement_task": "RCGA-V1-T003",
     "default_promoted": false,
-    "current_task": "RCGA-V1-T002",
-    "pending_live_calibration_task": "RCGA-V1-T002",
     "does_not_establish": [
       "codegraph_product_adoption",
       "complete_call_graph",
@@ -41,7 +51,7 @@
       "review_completeness",
       "merge_readiness",
       "security_correctness",
-      "live_repository_utility",
+      "general_agent_quality_improvement",
       "default_promotion"
     ]
   }

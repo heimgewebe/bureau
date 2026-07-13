@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "id": "RCGA-V1-T003",
+  "initiative": "REPOBRIEF-CODEGRAPH-ADOPTION-V1",
+  "title": "Repair related-test retrieval and compression evaluation",
+  "state": "ready",
+  "goal": "Remove the live-goldset regression by incorporating retrieval-resolved test paths as an explicit non-graph evidence class, fixing path projection hygiene, and evaluating context compression without weakening recall or authority boundaries.",
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "depends_on": [
+    "RCGA-V1-T002"
+  ],
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "456d37bd142349bc0c04925d87934eefbbc546ac",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Use an isolated Lenskit branch/worktree. Preserve the existing read-only and non-authoritative boundaries. Re-run the pre-registered live goldset before any promotion decision."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rcga-v1-t003-resolved-tests",
+      "assertion": "Test-like repository paths from the already resolved query projection are emitted as related-test candidates with evidence_type=resolved_query and their citation/range metadata; they are never represented as graph edges, runtime dependencies or test coverage."
+    },
+    {
+      "id": "rcga-v1-t003-evidence-order",
+      "assertion": "Graph-edge, symbol-index, resolved-query and heuristic candidates remain distinguishable, deterministic and precedence-ordered; stronger evidence does not erase weaker evidence classes unless an explicitly tested dedupe rule applies."
+    },
+    {
+      "id": "rcga-v1-t003-path-hygiene",
+      "assertion": "Evaluation path projections reject empty and non-repository-relative path values so context-size metrics contain only meaningful candidates."
+    },
+    {
+      "id": "rcga-v1-t003-compression-metric",
+      "assertion": "The evaluator records aggregate and per-case context-path reduction. Utility may be established only with no recall regression and either the pre-existing recall-advantage threshold or at least 20 percent context reduction at equal-or-better recall; default_promoted remains false."
+    },
+    {
+      "id": "rcga-v1-t003-live-rerun",
+      "assertion": "The same three pre-registered live cases are rerun on coherent bundles. Grabowski must recover tests/test_job_finalizer.py, no case may regress against baseline recall, and all commits, manifests, run ids and canonical digests are recorded."
+    },
+    {
+      "id": "rcga-v1-t003-boundary",
+      "assertion": "RepoBrief remains read-only and produces no source, Git, patch, test, pull-request, snapshot or memory mutation and no review, coverage or merge authority."
+    },
+    {
+      "id": "rcga-v1-t003-merge-gates",
+      "assertion": "Tests, all CI gates, full downloadable diff, head- and diff-bound self-review, mergeability and post-merge validation pass before verification."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-13",
+    "source_task": "RCGA-V1-T002",
+    "source_evaluation": "docs/evidence/rcga-live-evaluation-20260713.json",
+    "source_evaluation_sha256": "3f080feb83b23242f7a91e7ae7eba1cee6fb3bed079b6672301df046078f7dc2",
+    "observed_regression": {
+      "case": "grabowski-job-finalizer-related-test",
+      "expected_path": "tests/test_job_finalizer.py",
+      "baseline_recall": 1.0,
+      "impact_recall": 0.0
+    },
+    "registered_measurement_rule": {
+      "minimum_recall_advantage": 0.2,
+      "minimum_context_path_reduction_at_equal_or_better_recall": 0.2,
+      "no_case_recall_regression_required": true,
+      "default_promoted": false
+    },
+    "does_not_establish": [
+      "complete_call_graph",
+      "complete_blast_radius",
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "security_correctness",
+      "general_agent_quality_improvement",
+      "default_promotion"
+    ]
+  }
+}

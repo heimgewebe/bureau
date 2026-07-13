@@ -18,7 +18,12 @@
       "service:docker-container:wg-pg-proof",
       "service:docker-compose:weltgewebe-dev",
       "service:docker-container:cranky_satoshi"
-    ]
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Task registration and read-only classification do not authorize Docker effects. Any container, volume or network removal requires a fresh exact-ID plan, current ownership and lease readback, rollback or export sufficiency evidence, and break-glass approval bound to that reviewed effect."
+    }
   },
   "claims": [
     {

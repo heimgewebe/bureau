@@ -946,6 +946,18 @@ _STATE_ROOT_TIMESTAMP_RE = r"\d{8}T\d{6}Z"
 _STATE_ROOT_SHORT_TIMESTAMP_RE = r"\d{8}T\d{4}"
 _DEPLOYMENT_RELEASE_RE = re.compile(r"[0-9a-f]{40}")
 _DEPLOYMENT_RECEIPT_MAX_BYTES = 64 * 1024
+_DEPLOYMENT_AUX_FILE_MAX_BYTES = 2 * 1024 * 1024
+_DEPLOYMENT_WRAPPER_MAX_BYTES = 64 * 1024
+_DEPLOYMENT_WRAPPER_MAX_COUNT = 256
+_DEPLOYMENT_ALLOWED_FILES = {
+    "receipt.json",
+    "check.pre-switch.json",
+    "check.post-switch.json",
+    "help.pre-switch.txt",
+    "help.post-switch.txt",
+    "pip-install.log",
+}
+_DEPLOYMENT_WRAPPER_NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
 _RECOVERY_BUNDLE_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\.bundle")
 _RECOVERY_CHECKSUM_MAX_BYTES = 4096
 
@@ -964,6 +976,44 @@ def _is_deployment_evidence_directory(entry: Path) -> bool:
             or _DEPLOYMENT_RELEASE_RE.fullmatch(release.name) is None
         ):
             return False
+        try:
+            release_children = sorted(release.iterdir(), key=lambda item: item.name)
+        except OSError:
+            return False
+        wrapper_count = 0
+        for child in release_children:
+            if child.name == "retired-wrappers":
+                if child.is_symlink() or not child.is_dir():
+                    return False
+                try:
+                    wrappers = sorted(child.iterdir(), key=lambda item: item.name)
+                except OSError:
+                    return False
+                if len(wrappers) > _DEPLOYMENT_WRAPPER_MAX_COUNT:
+                    return False
+                for wrapper in wrappers:
+                    try:
+                        if (
+                            wrapper.is_symlink()
+                            or not wrapper.is_file()
+                            or _DEPLOYMENT_WRAPPER_NAME_RE.fullmatch(wrapper.name) is None
+                            or wrapper.stat().st_size > _DEPLOYMENT_WRAPPER_MAX_BYTES
+                        ):
+                            return False
+                    except OSError:
+                        return False
+                wrapper_count = len(wrappers)
+                continue
+            try:
+                if (
+                    child.name not in _DEPLOYMENT_ALLOWED_FILES
+                    or child.is_symlink()
+                    or not child.is_file()
+                    or child.stat().st_size > _DEPLOYMENT_AUX_FILE_MAX_BYTES
+                ):
+                    return False
+            except OSError:
+                return False
         receipt = release / "receipt.json"
         try:
             if (
@@ -984,6 +1034,9 @@ def _is_deployment_evidence_directory(entry: Path) -> bool:
             or not isinstance(status, str)
             or not status.strip()
         ):
+            return False
+        retired_count = payload.get("retired_wrappers_removed")
+        if retired_count is not None and retired_count != wrapper_count:
             return False
     return True
 

@@ -120,6 +120,73 @@ def test_malformed_deployment_evidence_directory_remains_unknown(
     ]
 
 
+def test_foreign_file_inside_deployment_release_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    release = store.state_root / "deployments" / ("c" * 40)
+    release.mkdir(parents=True)
+    (release / "receipt.json").write_text(
+        '{"schema_version":1,"release":"' + ("c" * 40) + '","status":"deployed"}\n',
+        encoding="utf-8",
+    )
+    (release / "operator-note.txt").write_text("foreign\n", encoding="utf-8")
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "deployments", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_deployment_wrapper_count_must_match_receipt(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    release = store.state_root / "deployments" / ("d" * 40)
+    wrappers = release / "retired-wrappers"
+    wrappers.mkdir(parents=True)
+    (wrappers / "old-wrapper").write_text("#!/bin/sh\n", encoding="utf-8")
+    (release / "receipt.json").write_text(
+        '{"schema_version":1,"release":"'
+        + ("d" * 40)
+        + '","status":"deployed","retired_wrappers_removed":2}\n',
+        encoding="utf-8",
+    )
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "deployments", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_valid_retired_wrapper_evidence_stays_known(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    release = store.state_root / "deployments" / ("e" * 40)
+    wrappers = release / "retired-wrappers"
+    wrappers.mkdir(parents=True)
+    (wrappers / "old-wrapper").write_text("#!/bin/sh\n", encoding="utf-8")
+    (release / "receipt.json").write_text(
+        '{"schema_version":1,"release":"'
+        + ("e" * 40)
+        + '","status":"deployed","retired_wrappers_removed":1}\n',
+        encoding="utf-8",
+    )
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is True
+    assert report["unknown_entries"] == []
+
+
 def test_non_release_child_in_deployment_evidence_directory_remains_unknown(
     registry_factory, tmp_path, monkeypatch
 ):

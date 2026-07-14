@@ -3,7 +3,7 @@
   "id": "RBV1-T023",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Externe RepoBrief-Manifeste consumerlokal und generisch veröffentlichen",
-  "state": "planned",
+  "state": "verified",
   "goal": "Publish external RepoBrief/Lenskit bundle references portably by materializing every declared bundle member into a consumer-local, content-addressed subtree with SHA-256 and byte verification, while keeping existing consumer path boundaries fail-closed.",
   "priority": {
     "lane": "next",
@@ -78,6 +78,51 @@
       "merger/lenskit/tests/test_external_manifest_reference.py"
     ],
     "implementation_branch": "fix/repobrief-consumer-local-publication-v1",
-    "implementation_base": "db2df91a51354cb6972e197afc7456087a43e70b"
+    "implementation_base": "db2df91a51354cb6972e197afc7456087a43e70b",
+    "verified_at": "2026-07-14T19:56:55Z",
+    "implementation_pr": "heimgewebe/lenskit#1009",
+    "implementation_pr_url": "https://github.com/heimgewebe/lenskit/pull/1009",
+    "implementation_head": "7421452caa239e73bedde2acfe93a6516612757d",
+    "implementation_merge_commit": "9203f8928cdaa571cdfd099b10b2414ee7450789",
+    "diff_sha256": "8aaf128720739f43f0013b77868535221a8d68bd7517b11b3b675d2f8b1b8370",
+    "diff_bytes": 60125,
+    "implementation_paths": [
+      "merger/lenskit/core/external_manifest_reference.py",
+      "merger/lenskit/tests/test_external_manifest_reference.py"
+    ],
+    "validation": [
+      "27 focused external-manifest tests passed on the exact implementation head.",
+      "The complete local Lenskit suite passed on the exact head: 3970 passed, 1 skipped.",
+      "Ruff, git diff --check and the graph maintainability ratchet passed; zero new C901 violations and one baseline violation was resolved.",
+      "CLI dogfood proved that the localized bundle and integrity metadata remain valid after the producer-side source bundle is removed.",
+      "All GitHub checks passed, including pytest-full, browser-tests, planning-registration, contracts, Ruff and CodeQL.",
+      "Post-merge readback confirmed merge commit 9203f8928cdaa571cdfd099b10b2414ee7450789 and a tree byte-identical to reviewed head 7421452caa239e73bedde2acfe93a6516612757d."
+    ],
+    "review_receipt": {
+      "path": "/home/alex/logs/reviews/lenskit-pr-1009-self-review.json",
+      "sha256": "febd0b0006f600cbc62f8078d7247699fb84b981d93b9e6aeb3883c5264dea42",
+      "verdict": "PASS",
+      "origin": "self_review",
+      "external_review_performed": false
+    },
+    "follow_up_tasks": [
+      "RBV1-T024",
+      "RBV1-T025",
+      "RBV1-T026"
+    ],
+    "outcome": "Lenskit PR #1009 now publishes verified consumer-local, content-addressed copies of external RepoBrief bundles without relaxing consumer path boundaries. Reused trees fail closed on missing, unexpected, symlinked or integrity-mismatched entries; the merged tree matches the reviewed head. Joint multi-family transactions, hostile parent-directory replacement resistance and retention/GC remain explicit follow-ups.",
+    "verified_acceptance": {
+      "rbv1-t023-consumer-local": "Bundle manifest, declared artifacts and supported sidecars are copied below publication_root and published through relative in-root references.",
+      "rbv1-t023-integrity": "Copies and reused trees are verified by canonical SHA-256 and byte count; traversal, malformed declarations, collisions, symlinks, unexpected entries and changed file handles fail closed.",
+      "rbv1-t023-portability": "CLI dogfood removed the producer-side source and verified the localized bundle and artifacts remained readable and hash-identical.",
+      "rbv1-t023-publication-atomicity": "Families are normalized and validated before materialization; duplicate families are deduplicated and invalid families create no publication. Each stable family file is atomic, not a joint multi-file transaction.",
+      "rbv1-t023-validation": "27 focused tests, 3970 full-suite tests, Ruff, maintainability, CLI dogfood and all GitHub checks passed on head 7421452caa239e73bedde2acfe93a6516612757d.",
+      "rbv1-t023-pr-binding": "PR #1009 was bound to RBV1-T023, base db2df91a51354cb6972e197afc7456087a43e70b, head 7421452caa239e73bedde2acfe93a6516612757d and diff SHA-256 8aaf128720739f43f0013b77868535221a8d68bd7517b11b3b675d2f8b1b8370 before merge.",
+      "rbv1-t023-nonclaims": "No remote freshness, semantic truth, hostile multi-user filesystem safety, localized-bundle garbage collection, public distribution permission or independent external review is claimed."
+    },
+    "verification": {
+      "task_sha256": "22675cd0c1c525e2ad6d93a3d94a152806875dbcbae0a135458875d06dfc3faa",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   }
 }

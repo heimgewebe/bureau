@@ -784,6 +784,16 @@ def _extract_result(value: dict[str, Any]) -> dict[str, Any]:
     return result if isinstance(result, dict) else value
 
 
+def _extract_runtime_identity(value: dict[str, Any]) -> dict[str, Any]:
+    identity = value.get("runtime_identity")
+    if not isinstance(identity, dict):
+        raise RuntimeRefreshError(
+            "readback-runtime-identity-invalid",
+            "bureau runtime-identity response has no runtime_identity object",
+        )
+    return identity
+
+
 def run_json_command(argv: list[str], *, timeout: float = 120) -> dict[str, Any]:
     output = _require_command(_run(argv, timeout=timeout), argv)
     try:
@@ -822,7 +832,7 @@ def readback_install(
                 details={"expected": install_receipt.get(receipt_field), "observed": digest},
             )
     check = _extract_result(run_json_command([str(bureau_launcher), "--json", "check"]))
-    identity = _extract_result(
+    identity = _extract_runtime_identity(
         run_json_command([str(bureau_launcher), "--json", "runtime-identity"])
     )
     if check.get("valid") is not True:

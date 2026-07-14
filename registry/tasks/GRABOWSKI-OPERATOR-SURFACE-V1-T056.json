@@ -1,0 +1,55 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Only allowlisted realpaths and required shared libraries are visible inside the sandbox.",
+      "id": "explicit-binary"
+    },
+    {
+      "assertion": "Authentication context is mounted read-only and narrowly, with secrets absent from receipts and logs.",
+      "id": "bounded-auth"
+    },
+    {
+      "assertion": "Claude packet review runs successfully through the formal workspace and sandbox while forbidden paths remain inaccessible.",
+      "id": "workspace-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Allow explicitly approved external agent binaries and bounded authentication context inside the Agent Workspace sandbox without broadening unrelated filesystem access.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T056",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation_complete",
+      "runtime_deployed",
+      "workspace_ready"
+    ],
+    "effect": "operator_reliability",
+    "phase": "agent-workspace-adapter-hardening",
+    "reason": "The formal Agent Workspace path remained degraded while the isolated read-only Claude packet review succeeded through the direct review adapter.",
+    "source": "GRIP-ROADMAP-V1-T014 closeout live evidence"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 560
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Expose approved external agents inside Workspace sandbox"
+}

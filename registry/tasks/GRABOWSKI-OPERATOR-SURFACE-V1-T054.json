@@ -1,0 +1,55 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Workspace parsing accepts the current schema-versioned Bureau result envelope and rejects ambiguous or legacy-only shapes fail-closed.",
+      "id": "envelope-current"
+    },
+    {
+      "assertion": "Tests cover current envelope, malformed envelope, nested result absence and backward-compatibility policy.",
+      "id": "contract-tests"
+    },
+    {
+      "assertion": "A formal workspace reaches ready using the deployed Bureau runtime contract.",
+      "id": "live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Make Agent Workspace consume the current Bureau result envelope without relying on the legacy unwrapped JSON shape.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T054",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation_complete",
+      "runtime_deployed",
+      "workspace_ready"
+    ],
+    "effect": "operator_reliability",
+    "phase": "agent-workspace-adapter-hardening",
+    "reason": "The formal Agent Workspace path remained degraded while the isolated read-only Claude packet review succeeded through the direct review adapter.",
+    "source": "GRIP-ROADMAP-V1-T014 closeout live evidence"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 540
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Normalize Bureau result envelopes in Agent Workspace"
+}

@@ -1,67 +1,94 @@
 {
-  "schema_version": 1,
-  "id": "GRIP-ROADMAP-V1-T014",
-  "initiative": "GRIP-ROADMAP-V1",
-  "title": "Add Captain execution intent records",
-  "state": "planned",
-  "goal": "Add an explicit execution_intent record for captain-run so high-impact execution is bound to a reviewed intent before any executor is invoked.",
+  "acceptance": [
+    {
+      "assertion": "captain-run requires a structured execution_intent for mutating actions before executor invocation.",
+      "id": "intent-required"
+    },
+    {
+      "assertion": "The intent record binds action, target digest, expected_head, expected_base, evidence hashes, actor/context and timestamp without exposing secrets.",
+      "id": "intent-bound"
+    },
+    {
+      "assertion": "Missing, malformed or drifted intent blocks execution before any high-impact command is invoked.",
+      "id": "fail-closed"
+    },
+    {
+      "assertion": "Tests cover missing intent, mismatched intent, valid intent and no-secret leakage in receipts.",
+      "id": "tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
   "depends_on": [
     "GRIP-ROADMAP-V1-T005",
     "GRIP-ROADMAP-V1-T007"
-  ],
-  "priority": {
-    "lane": "later",
-    "rank": 140
-  },
-  "claims": [
-    {
-      "resource": "repo.grabowski",
-      "mode": "write",
-      "isolation": "worktree"
-    }
-  ],
-  "required_capabilities": [
-    "repository",
-    "shell",
-    "grabowski"
   ],
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect"
   },
-  "acceptance": [
-    {
-      "id": "intent-required",
-      "assertion": "captain-run requires a structured execution_intent for mutating actions before executor invocation."
-    },
-    {
-      "id": "intent-bound",
-      "assertion": "The intent record binds action, target digest, expected_head, expected_base, evidence hashes, actor/context and timestamp without exposing secrets."
-    },
-    {
-      "id": "fail-closed",
-      "assertion": "Missing, malformed or drifted intent blocks execution before any high-impact command is invoked."
-    },
-    {
-      "id": "tests",
-      "assertion": "Tests cover missing intent, mismatched intent, valid intent and no-secret leakage in receipts."
-    }
-  ],
+  "goal": "Add an explicit execution_intent record for captain-run so high-impact execution is bound to a reviewed intent before any executor is invoked.",
+  "id": "GRIP-ROADMAP-V1-T014",
+  "initiative": "GRIP-ROADMAP-V1",
   "metadata": {
-    "phase": "captain-run-followup",
-    "effect": "repository_hardening",
-    "source": "Grabowski captain-run PR #104/#106 reviews and follow-up triage",
-    "related_issue": "heimgewebe/bureau#190",
-    "related_prs": [
-      "heimgewebe/grabowski#104",
-      "heimgewebe/grabowski#106"
-    ],
-    "reason": "PR #102 introduced captain-run pr-merge execution; execution intent was intentionally deferred.",
     "does_not_establish": [
       "implementation_complete",
       "merge_authority_change",
       "runtime_deployed",
       "safety_proof"
-    ]
-  }
+    ],
+    "effect": "repository_hardening",
+    "implementation_head": "1346028a24ab6d2adb077ed146f8662f364217dd",
+    "implementation_merge_commit": "2a4e332ac8cfbdbaa93a766fcff98a6e4e7a6d24",
+    "implementation_pr": "heimgewebe/grabowski#194",
+    "phase": "captain-run-followup",
+    "reason": "PR #102 introduced captain-run pr-merge execution; execution intent was intentionally deferred.",
+    "related_issue": "heimgewebe/bureau#190",
+    "related_prs": [
+      "heimgewebe/grabowski#104",
+      "heimgewebe/grabowski#106"
+    ],
+    "source": "Grabowski captain-run PR #104/#106 reviews and follow-up triage",
+    "validated_acceptance": {
+      "fail-closed": "Missing, malformed, non-canonical, stale, future-dated or drifting intent blocks with no executor calls.",
+      "intent-bound": "Intent binds action, canonical target_sha256, expected_head, expected_base, six decisive evidence digests including authorization_sha256, actor/context digests and a timezone-aware issued_at.",
+      "intent-required": "captain-run computes and validates execution_intent before any GitHub merge or runtime deployment executor call.",
+      "tests": "Focused suite: 10 passed and 41 subtests; full make validate: 1503 tests and all validation gates passed."
+    },
+    "validation": {
+      "ci": "GitHub validate (3.10) and validate (3.12) PASS for PR #194.",
+      "external_review": "Claude Opus packet-bound review PASS, finding_count=0, review_sha256=2ebad3fce9abe559f77a8bca727d1f0603902a8e3ff377a039e6ab37b6d26516.",
+      "github_diff_sha256": "18a01c9355ac7fe745241eabd1d1919ed0edeca2b715c669b5c986dc3dea556a",
+      "non_claims": [
+        "Intent binding does not establish semantic correctness of an authorized action.",
+        "No new high-impact action or authority was added.",
+        "External review supplements but does not replace deterministic tests and CI."
+      ],
+      "runtime_deploy": "Grabowski runtime healthy and integrity-valid at merge commit 2a4e332ac8cfbdbaa93a766fcff98a6e4e7a6d24; release 2a4e332ac8cf-srcset9e28f46b5e8d-locke6664d600b6c-contract9dc5637bd19f.",
+      "self_review_sha256": "8b11965da0138e6c9edc456eb5339a6807d7c15555be259370ac0910bea8b1d1"
+    },
+    "verification": {
+      "plan_sha256": "4d0f2ace46059d27af6cc8a7aa1e2e35227f55d81e042acd511efac16a62a180",
+      "task_sha256": "abb266c6bd01e386a23fea80e277c92988d8c1128712f09f86afd84c9306220d"
+    },
+    "verification_note": "Captain-run requires a fresh structured execution_intent before any executor and binds action, target, head, base, decisive evidence and the complete authorization mode.",
+    "verified_at": "2026-07-14"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 140
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Add Captain execution intent records"
 }

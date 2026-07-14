@@ -1,0 +1,55 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Workspace and task store derive the same digest from one canonical argv serialization.",
+      "id": "canonical-digest"
+    },
+    {
+      "assertion": "Any argv or serialization drift is detected before writer execution.",
+      "id": "drift-blocked"
+    },
+    {
+      "assertion": "Existing receipts are handled through an explicit versioned compatibility policy.",
+      "id": "migration"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Use one canonical argv_sha256 algorithm across Workspace, durable task store and receipts.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T055",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation_complete",
+      "runtime_deployed",
+      "workspace_ready"
+    ],
+    "effect": "operator_reliability",
+    "phase": "agent-workspace-adapter-hardening",
+    "reason": "The formal Agent Workspace path remained degraded while the isolated read-only Claude packet review succeeded through the direct review adapter.",
+    "source": "GRIP-ROADMAP-V1-T014 closeout live evidence"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 550
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Unify Agent Workspace argv digest binding"
+}

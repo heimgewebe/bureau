@@ -19,6 +19,9 @@ ACTIVE_STATES = ("assigned", "running", "verifying")
 LANE_ORDER = {"now": 0, "next": 1, "later": 2}
 ID_RE = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$")
 RESOURCE_RE = re.compile(r"^[a-z0-9][a-z0-9._:-]{0,254}$")
+GITHUB_REPOSITORY_SLUG_RE = re.compile(
+    r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?/[A-Za-z0-9._-]{1,100}$"
+)
 
 
 class BureauError(RuntimeError):
@@ -104,6 +107,7 @@ class Resource:
     parent: str | None
     capacity: int | None
     path: str | None
+    github_slug: str | None
     grabowski_key: str | None
 
 
@@ -272,6 +276,7 @@ class Registry:
                 parent=raw.get("parent"),
                 capacity=raw.get("capacity"),
                 path=raw.get("path"),
+                github_slug=raw.get("github_slug"),
                 grabowski_key=raw.get("grabowski_key"),
             )
             self._unique(self.resources, item.id, item, path)
@@ -359,6 +364,7 @@ class Registry:
         policies = {"autonomous", "review-before-effect", "manual", "prohibited"}
         execution_modes = {"interactive-agent", "grabowski-task", "grabowski-operation", "manual"}
 
+        github_slugs: dict[str, str] = {}
         for resource in self.resources.values():
             if not RESOURCE_RE.fullmatch(resource.id):
                 errors.append(f"invalid resource id {resource.id}")
@@ -366,6 +372,25 @@ class Registry:
                 errors.append(f"resource {resource.id} has unknown parent {resource.parent}")
             if resource.type == "capacity" and (not resource.capacity or resource.capacity < 1):
                 errors.append(f"capacity resource {resource.id} needs positive capacity")
+            if resource.github_slug is not None:
+                if resource.type != "git-repository":
+                    errors.append(
+                        f"resource {resource.id} has github_slug but is not a git-repository"
+                    )
+                elif not isinstance(resource.github_slug, str) or not GITHUB_REPOSITORY_SLUG_RE.fullmatch(
+                    resource.github_slug
+                ):
+                    errors.append(f"resource {resource.id} has invalid github_slug")
+                else:
+                    normalized_slug = resource.github_slug.casefold()
+                    duplicate = github_slugs.get(normalized_slug)
+                    if duplicate is not None:
+                        errors.append(
+                            f"resources {duplicate} and {resource.id} share github_slug "
+                            f"{resource.github_slug}"
+                        )
+                    else:
+                        github_slugs[normalized_slug] = resource.id
         errors.extend(self._resource_cycles())
 
         for initiative in self.initiatives.values():

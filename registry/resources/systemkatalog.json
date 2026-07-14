@@ -4,5 +4,6 @@
   "type": "git-repository",
   "parent": "repo",
   "path": "/home/alex/repos/systemkatalog",
+  "github_slug": "heimgewebe/systemkatalog",
   "grabowski_key": "repo:/home/alex/repos/systemkatalog"
 }

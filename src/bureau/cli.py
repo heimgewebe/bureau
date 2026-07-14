@@ -265,7 +265,22 @@ def parser() -> argparse.ArgumentParser:
     stamp = sub.add_parser("verification-stamp")
     stamp.add_argument("task_id")
     github_observe = sub.add_parser("github-observe")
-    github_observe.add_argument("--repo")
+    github_observe.add_argument(
+        "--repo-slug",
+        metavar="OWNER/REPO",
+        help="observe one explicit GitHub repository slug",
+    )
+    github_observe.add_argument(
+        "--repo-resource",
+        metavar="RESOURCE_ID",
+        help="resolve one Bureau git-repository resource through its github_slug",
+    )
+    github_observe.add_argument(
+        "--repo",
+        dest="legacy_repo",
+        metavar="OWNER/REPO",
+        help="deprecated compatibility alias for --repo-slug",
+    )
     github_observe.add_argument("--task-id")
     projection = sub.add_parser("status-projection")
     projection.add_argument("--repo")
@@ -688,14 +703,30 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.command == "github-observe":
             from .github_observer import filter_observation_by_task, observe_pull_requests
+            from .github_repository import (
+                RepositoryIdentifierError,
+                resolve_github_repository,
+            )
 
+            try:
+                selection = resolve_github_repository(
+                    registry,
+                    repo_slug=args.repo_slug,
+                    repo_resource=args.repo_resource,
+                    legacy_repo=args.legacy_repo,
+                )
+            except RepositoryIdentifierError as exc:
+                emit(exc.payload(), args.json)
+                return 2
             value = observe_pull_requests(
                 root,
-                repository=args.repo,
+                repository=selection.repository,
                 registry=registry,
                 state_db=state_path,
                 state_root=state_root,
             )
+            value["repository_input"] = selection.metadata()
+            value["notes"] = list(dict.fromkeys([*value.get("notes", []), *selection.notes()]))
             if args.task_id:
                 value = filter_observation_by_task(value, args.task_id)
             emit(value, args.json)

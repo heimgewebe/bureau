@@ -4,9 +4,9 @@
   "type": "git-repository",
   "parent": "repo",
   "path": "/home/alex/repos/schauwerk",
+  "github_slug": "heimgewebe/schauwerk",
   "grabowski_key": "repo:/home/alex/repos/schauwerk",
   "metadata": {
-    "github": "heimgewebe/schauwerk",
     "registered_at": "2026-07-09",
     "purpose": "Schauwerk Miro/typed-region optimization tasks"
   }

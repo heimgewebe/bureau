@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-PR-MAINTENANCE-V1-T001",
+  "initiative": "WELTGEWEBE-PR-MAINTENANCE-V1",
+  "title": "Repair API release identity PR #1404 against current deployment contracts",
+  "goal": "Update PR #1404 on current main so API release identity remains source-commit-bound without weakening the deployment drift guard or the VPS proxy/Caddy safety contract.",
+  "state": "ready",
+  "depends_on": [],
+  "priority": {
+    "lane": "later",
+    "rank": 30
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "python-tests",
+    "shell-contract-tests",
+    "docker-compose"
+  ],
+  "acceptance": [
+    {
+      "id": "current-main",
+      "assertion": "PR #1404 is updated or rebuilt on the then-current main without overwriting unrelated work.",
+      "evidence_type": "object",
+      "verifier": "GitHub head/base and git ancestry receipt"
+    },
+    {
+      "id": "drift-guard",
+      "assertion": "Infra changes are paired with an explicit deploy snapshot or deployment documentation acknowledgement accepted by Deploy Drift Guard.",
+      "evidence_type": "object",
+      "verifier": "fresh Deploy Drift Guard check"
+    },
+    {
+      "id": "proxy-contract",
+      "assertion": "The VPS deploy entrypoint preserves the required Caddy/static-web safety condition and the proxy trust preflight passes.",
+      "evidence_type": "object",
+      "verifier": "scripts/ci/tests/test_proxy_trust_defaults.py and fresh Proxy trust preflight"
+    },
+    {
+      "id": "full-gate",
+      "assertion": "All required CI, API, CodeQL and Web E2E checks pass on the exact final head.",
+      "evidence_type": "object",
+      "verifier": "GitHub statusCheckRollup bound to final head"
+    },
+    {
+      "id": "diff-review",
+      "assertion": "A full final GitHub diff and SHA-256-bound self-review are recorded before merge.",
+      "evidence_type": "object",
+      "verifier": "diff artifact plus review receipt"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-14T06:02:00Z",
+    "source_pr": "heimgewebe/weltgewebe#1404",
+    "observed_head": "8bd533b194aabbb00e989db11fcd58a2c3756ae5",
+    "observed_failures": [
+      "Deploy Drift Guard rejects infra/compose/compose.prod.yml change without deploy snapshot or docs acknowledgement.",
+      "Proxy trust preflight rejects removal of the DEPLOY_TARGET=vps and WITH_CADDY=0 safety condition from scripts/weltgewebe-up."
+    ],
+    "does_not_establish": [
+      "root_cause_fully_exhausted",
+      "repair_complete",
+      "merge_safe"
+    ]
+  }
+}

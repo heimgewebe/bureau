@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-PR-MAINTENANCE-V1-T002",
+  "initiative": "WELTGEWEBE-PR-MAINTENANCE-V1",
+  "title": "Migrate Weltgewebe hashing safely to sha2 0.11 for PR #1411",
+  "goal": "Adapt Weltgewebe hash finalization and hexadecimal encoding to sha2 0.11 while preserving byte-for-byte hash meaning, authentication behavior and persistence contracts.",
+  "state": "ready",
+  "depends_on": [],
+  "priority": {
+    "lane": "later",
+    "rank": 31
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "rust",
+    "cargo",
+    "github",
+    "authentication-tests",
+    "database-integration-tests"
+  ],
+  "acceptance": [
+    {
+      "id": "semantic-compatibility",
+      "assertion": "All migrated digest-to-hex call sites produce the same lowercase hexadecimal bytes as sha2 0.10 for fixed test vectors.",
+      "evidence_type": "object",
+      "verifier": "new cross-version or golden-vector unit tests"
+    },
+    {
+      "id": "all-call-sites",
+      "assertion": "Every failing hash finalization site in auth routes, passkeys, step-up tokens and tokens is migrated through one reviewed, consistent encoding path.",
+      "evidence_type": "object",
+      "verifier": "code search and focused unit tests"
+    },
+    {
+      "id": "auth-proofs",
+      "assertion": "Authentication, session persistence, passkey, magic-link and database proof jobs pass on the exact final head.",
+      "evidence_type": "object",
+      "verifier": "fresh GitHub API/Auth proof matrix"
+    },
+    {
+      "id": "rust-gate",
+      "assertion": "cargo fmt, clippy with warnings denied and the full Rust test suite pass.",
+      "evidence_type": "object",
+      "verifier": "fresh test and lint (rust) check"
+    },
+    {
+      "id": "diff-review",
+      "assertion": "A full final GitHub diff and SHA-256-bound self-review are recorded before merge.",
+      "evidence_type": "object",
+      "verifier": "diff artifact plus review receipt"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-14T06:02:00Z",
+    "source_pr": "heimgewebe/weltgewebe#1411",
+    "observed_head": "b1a3249a4bb41247aa486c3599d3ed3235be8e90",
+    "observed_failure": "sha2 0.11 digest output no longer implements LowerHex; format!(\"{:x}\", hasher.finalize()) fails at seven authentication-related call sites.",
+    "observed_call_sites": [
+      "apps/api/src/routes/auth.rs:819",
+      "apps/api/src/routes/auth.rs:1776",
+      "apps/api/src/routes/auth.rs:2613",
+      "apps/api/src/routes/auth.rs:2800",
+      "apps/api/src/auth/passkeys.rs:573",
+      "apps/api/src/auth/step_up_tokens.rs:42",
+      "apps/api/src/auth/tokens.rs:39"
+    ],
+    "does_not_establish": [
+      "migration_strategy_selected",
+      "hash_compatibility_proven",
+      "repair_complete",
+      "merge_safe"
+    ]
+  }
+}

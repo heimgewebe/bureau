@@ -3,7 +3,7 @@
   "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T004",
   "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
   "title": "Repair persistent Chronik WGX smoke baseline",
-  "state": "planned",
+  "state": "verified",
   "goal": "Restore a deterministic green WGX smoke on Chronik main by fixing the tracked profile parser or profile contract without weakening unsafe-assignment rejection or hiding unrelated failures.",
   "priority": {
     "lane": "later",
@@ -59,6 +59,128 @@
       "that the profile line is safe before parser-level review",
       "permission to disable the smoke",
       "permission to weaken shell-safety checks"
-    ]
+    ],
+    "verified_at": "2026-07-14T08:30:00+02:00",
+    "outcome": "The persistent Chronik WGX smoke baseline was repaired systemically in WGX, pinned immutably into the reusable smoke workflow, and proven green on Chronik PR #216 and its subsequent main push.",
+    "implementation": {
+      "wgx_parser": {
+        "pull_request": 640,
+        "reviewed_head": "5eedb5702b83c1c5b91c9b61101d48fd7bdeab94",
+        "merge_commit": "3c2391623a1719ac5f0dd1cda6ba906b94079053",
+        "diff_sha256": "e7e1af5d13b25eefc107fd51646cece3e193a2d367c4151d0904c72e83c25f63",
+        "diff_bytes": 4958
+      },
+      "wgx_smoke_pin": {
+        "pull_request": 641,
+        "reviewed_head": "0b747254bfc3c781dd234042076b31fb37a5568b",
+        "merge_commit": "2f2aa2225838be1d029697348d9aa989ce7e62f9",
+        "diff_sha256": "b86781257280b2046e459c7ad872b8f0dcd702f573a0090486b2bc70a6b26c1a",
+        "diff_bytes": 1419
+      },
+      "chronik": {
+        "pull_request": 216,
+        "reviewed_head": "051417cca806bef62618bde89d897958cba39f41",
+        "merge_commit": "faa5d2d243112d9f85f459ca92a4bafb293e782e",
+        "diff_sha256": "b44f0f8749ecf45e1859b3f9dc184684e7556b70fdd50acdcf70a9e4985938d6",
+        "diff_bytes": 4512
+      }
+    },
+    "validation": {
+      "wgx_python_tests": "73 passed",
+      "wgx_profile_parser_bats": "5 passed",
+      "wgx_guard_pin_bats": "9 passed",
+      "chronik_coding_memory_focused": "8 passed",
+      "chronik_full_guard": "272 passed, 1 pre-existing Starlette testclient deprecation warning",
+      "chronik_profile_deprecation_error_mode": "PASS",
+      "chronik_local_smoke": "PASS",
+      "wgx_main_push_runs": {
+        "parser_smoke": 29310259733,
+        "parser_guard": 29310260061,
+        "pin_smoke": 29310651634,
+        "pin_guard": 29310651883
+      },
+      "chronik_pr_head_runs": {
+        "smoke": 29311246939,
+        "guard": 29311272193,
+        "codeql": 29311270519
+      },
+      "chronik_main_push_runs": {
+        "smoke": 29311472882,
+        "guard": 29311473252,
+        "codeql": 29311471947
+      }
+    },
+    "review": {
+      "result": "PASS",
+      "axes": [
+        "correctness",
+        "shell_safety",
+        "regression_risk",
+        "tests",
+        "integration",
+        "evidence_integrity"
+      ],
+      "findings_fixed": [
+        "WGX rejected Python-like tokens inside a fully validated ANSI-C-quoted parser value.",
+        "The reusable smoke remained pinned to the pre-fix WGX commit.",
+        "Chronik used the deprecated root profile shape.",
+        "The coding-memory CLI could import itself when PYTHONPATH already contained the repository root."
+      ]
+    },
+    "acceptance_evidence": {
+      "baseline-reproduced": "Main run 29284458465 failed because modules/profile.bash rejected print( before parsing the safe ANSI-C-quoted assignment shape.",
+      "safety-preserved": "WGX tests reject command substitution, parameter expansion, semicolon execution, raw commands, concatenated words and malformed ANSI-C quotes; GitHub Bats and security checks passed.",
+      "regression-tests": "A Python heredoc with import/try/print/except is accepted as quoted data; five representative unsafe forms remain rejected.",
+      "main-green": "Chronik exact PR head 051417cca806bef62618bde89d897958cba39f41 and main merge faa5d2d243112d9f85f459ca92a4bafb293e782e both have successful WGX smoke and guard runs."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T004",
+          "source_ref": "heimgewebe/wgx#640",
+          "number": 640,
+          "head_sha": "5eedb5702b83c1c5b91c9b61101d48fd7bdeab94",
+          "merge_commit_sha": "3c2391623a1719ac5f0dd1cda6ba906b94079053",
+          "diff_sha256": "e7e1af5d13b25eefc107fd51646cece3e193a2d367c4151d0904c72e83c25f63"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T004",
+          "source_ref": "heimgewebe/wgx#641",
+          "number": 641,
+          "head_sha": "0b747254bfc3c781dd234042076b31fb37a5568b",
+          "merge_commit_sha": "2f2aa2225838be1d029697348d9aa989ce7e62f9",
+          "diff_sha256": "b86781257280b2046e459c7ad872b8f0dcd702f573a0090486b2bc70a6b26c1a"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T004",
+          "source_ref": "heimgewebe/chronik#216",
+          "number": 216,
+          "head_sha": "051417cca806bef62618bde89d897958cba39f41",
+          "merge_commit_sha": "faa5d2d243112d9f85f459ca92a4bafb293e782e",
+          "diff_sha256": "b44f0f8749ecf45e1859b3f9dc184684e7556b70fdd50acdcf70a9e4985938d6"
+        },
+        {
+          "kind": "post_merge_ci",
+          "authority": "github-actions",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T004",
+          "source_ref": "heimgewebe/chronik@faa5d2d243112d9f85f459ca92a4bafb293e782e",
+          "wgx_smoke_run_id": 29311472882,
+          "wgx_guard_run_id": 29311473252,
+          "codeql_run_id": 29311471947
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "a0b99e7666cfdf541a30f7f1ed35300804d199ab6b906517e521b37cf841acaf",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   }
 }

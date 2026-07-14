@@ -60,10 +60,14 @@ Die Antwort enthält für jedes verwaltete Kind:
 - Produzentenidentität;
 - Retentionklasse;
 - Autoritätsgrenze und Non-Claims;
-- Validitätsstatus und genaue Ablehnungsgründe.
+- Validitätsstatus und genaue Ablehnungsgründe;
+- den strukturierten `effect_boundary`-Vertrag mit verfügbaren Linux-Primitiven,
+  gewählter Härtung, Garantien, Restgefahren und ausdrücklichen Non-Claims.
 
 Die Inventur folgt keinen Symlinks und liest keine Pfade außerhalb der beiden verwalteten
-Verzeichnisse.
+Verzeichnisse. Die vollständige Capability-Entscheidung liegt zusätzlich maschinenlesbar
+in
+`docs/reports/operator-machine-readability-t014-linux-rename-boundary.v1.json`.
 
 ## Reviewed create-only Migration
 
@@ -118,21 +122,39 @@ Geräte-/Inode-Ankern. Fehlende Zielkomponenten werden ausschließlich relativ z
 Zielbasis-Deskriptor mit `mkdirat` erzeugt und sofort selbst gebunden.
 
 Unmittelbar vor und nach jeder Verschiebung werden Plan-Dateihash, öffentliche
-Ankerpfade, Quellidentität, Referenzen, Prozesse und Kollisionen erneut geprüft. Die
-Wirkung erfolgt nur auf demselben Dateisystem mit descriptor-relativem `renameat`; die
+Ankerpfade, Quellidentität, Referenzen, Prozesse und Kollisionen erneut geprüft. Direkt vor
+dem Systemaufruf öffnet Bureau den finalen Quelleintrag zusätzlich mit
+`O_PATH|O_NOFOLLOW` und hält dessen Gerät/Inode über den Rename hinweg fest. Quelle und
+Zielverzeichnis werden für kooperierende Bureau-Mutatoren in deterministischer Reihenfolge
+mit nicht blockierenden exklusiven `flock`-Sperren belegt.
+
+Die Wirkung erfolgt nur auf demselben Dateisystem mit descriptor-relativem `renameat`; die
 geprüften absoluten Pfade werden an der Wirkungsgrenze nicht erneut als Autorität
-aufgelöst. Bei einem Fehler werden alle in diesem Lauf bereits verschobenen Einträge über
-die weiterhin offenen Deskriptoren in umgekehrter Reihenfolge zurückgesetzt. Leere, in
-diesem Lauf erzeugte Zielverzeichnisse werden nur entfernt, wenn ihr Name noch denselben
-gebundenen Inode bezeichnet; ein fremdes Ersatzverzeichnis wird nie als eigenes Cleanup
-behandelt.
+aufgelöst. Unmittelbar nach dem Systemaufruf muss der Quellname fehlen und der Zielname
+exakt den **vorher** festgehaltenen Inode bezeichnen. Erst dieser vorab festgehaltene
+Gerät-/Inodewert wird als mögliche Kompensationsautorität registriert. Ein danach
+sichtbarer Ersatz-Inode wird nie als eigenes Objekt zurückverschoben, überschrieben oder
+gelöscht.
+
+Bei Interferenz meldet Bureau den typisierten Grund
+`final-component-identity-interference`. Apply-Fehlerkompensation und Rollback-Fehlerkompensation verwenden dabei denselben
+Inode-vor-Rename-Guard samt Verzeichnissperren und Post-Rename-Prüfung wie der
+Primäreffekt. Exakt zuordenbare frühere Einträge werden in umgekehrter Reihenfolge
+kompensiert. Lässt sich der betroffene Eintrag nicht sicher
+zuordnen, bleibt ein evidenzerhaltender Splitzustand sichtbar und der Lauf endet als
+unvollständig statt mit einem falschen Erfolgs- oder Rollbackclaim. Leere, in diesem Lauf
+erzeugte Zielverzeichnisse werden nur entfernt, wenn ihr Name noch denselben gebundenen
+Inode bezeichnet; ein fremdes Ersatzverzeichnis wird nie als eigenes Cleanup behandelt.
 
 Ein create-only Receipt Schema 2 bindet Plan, Einträge, Plattformvertrag,
-Verzeichnisanker, Zielaufbau, Rollbackwege und seinen eigenen kanonischen SHA-256. Es
-bindet zusätzlich den tatsächlichen Ziel-Root und dessen direkten Parent. Eine identische
-Wiederholung öffnet die gebundenen Pfade erneut ohne Symlink-Folgen, prüft die
-Parent-Kind-Beziehungen und ist idempotent. Ein verändertes oder altes Receipt wird
-abgelehnt.
+`effect_boundary`, Verzeichnisanker, Zielaufbau, Rollbackwege und seinen eigenen
+kanonischen SHA-256. Es bindet zusätzlich den tatsächlichen Ziel-Root und dessen direkten
+Parent. Eine identische Wiederholung öffnet die gebundenen Pfade erneut ohne
+Symlink-Folgen, prüft die Parent-Kind-Beziehungen und ist idempotent. Vor T014 erzeugte
+Schema-2-Pläne und -Receipts ohne `effect_boundary` bleiben lesbar und können unter dem
+**stärkeren aktuellen Laufzeitguard** idempotent geprüft oder zurückgerollt werden; ihre
+bestehenden Hashes werden nicht umgeschrieben. Ein verändertes oder schematisch älteres
+Receipt wird abgelehnt.
 
 ## Rollback
 
@@ -143,13 +165,15 @@ bureau --root /path/to/bureau --state-root ~/.local/state/bureau \
 ```
 
 Rollback verwendet denselben Plattformvertrag, dieselben Geräte-/Inode-Anker,
-descriptor-relativen No-follow-Operationen, die vollständige Vorabprüfung und die
-Kompensation wie Apply. Es prüft zusätzlich, dass der Ziel-Root unter dem erwarteten Namen
-weiterhin Kind des gebundenen direkten Ziel-Parents ist. Danach prüft es Receipt-SHA,
-Referenzen, Prozessbezüge, Dateisystemgrenzen, Zielkollisionen und jeden Eintragsdigest. Es
-verschiebt nur
+descriptor-relativen No-follow-Operationen, exklusiven kooperativen Verzeichnissperren, die
+vollständige Vorabprüfung und die Inode-vor-Rename-Bindung wie Apply. Es prüft zusätzlich,
+dass der Ziel-Root unter dem erwarteten Namen weiterhin Kind des gebundenen direkten
+Ziel-Parents ist. Danach prüft es Receipt-SHA, Referenzen, Prozessbezüge,
+Dateisystemgrenzen, Zielkollisionen und jeden Eintragsdigest. Es verschiebt nur
 unveränderte Quarantäneeinträge an ihre gebundenen ursprünglichen Verzeichnisse zurück.
-Receipt und Quarantäneverzeichnis werden nicht gelöscht.
+Eine Post-Rename-Ersetzung am ursprünglichen Namen wird erkannt, aber weder überschrieben
+noch als eigenes Rollbackobjekt behandelt. Receipt und Quarantäneverzeichnis werden nicht
+gelöscht.
 
 ## Sicherheitsgrenzen
 
@@ -159,12 +183,19 @@ Receipt und Quarantäneverzeichnis werden nicht gelöscht.
 - Migration ist keine Löschfreigabe und kein Obsoleszenzbeleg.
 - Nicht sichtbare Kernel-, Container- oder Fremdnutzer-Referenzen werden nicht behauptet.
 - Neue Artefaktformen bleiben fail-closed unbekannt, bis ihr Vertrag explizit ergänzt ist.
-- Die Implementierung verhindert erfolgreiche Ancestor-Redirects und kompensiert einen
-  nach der letzten Prüfung erkannten Eintragsaustausch. Linux bietet jedoch keine einfache
-  bedingte Rename-Operation „nur wenn Name weiterhin Inode X bezeichnet“. Der verbleibende
-  Nanorace zwischen `renameat` und unmittelbar folgender Wirkungserfassung ist als
-  `OPERATOR-MACHINE-READABILITY-V1-T014` getrennt; T013 behauptet keine atomare
-  Rename-by-Inode-Garantie.
+- Linux bietet über `renameat2`, `openat2`, Dateideskriptoren oder Dateihandles keine
+  atomare Operation „benenne diesen Namen nur um, wenn er noch Gerät/Inode X bezeichnet“.
+  T014 schließt deshalb den falschen Erfolgs- und falschen Kompensationspfad, nicht diese
+  Kernel-Lücke selbst: erwartete Identität wird vorab festgehalten, nachher exakt geprüft
+  und ausschließlich sie darf kompensiert werden.
+- `flock` und Datei-Leases sind auf Linux kooperativ beziehungsweise advisory. Bureau
+  verlangt die exklusive Sperre von allen eigenen State-Root-Mutatoren und verweigert den
+  Effekt bei belegter Sperre. Ein gleich privilegierter, unkooperativer Prozess kann diese
+  Sperre ignorieren. Das Ergebnis bleibt deshalb bewusst `residual-risk`; es gibt keinen
+  Claim verpflichtender Writer-Exklusion.
+- Ein erkannter falscher Inode kann einen sichtbaren Splitzustand hinterlassen. Bureau
+  bevorzugt dann Evidenzerhalt und manuell begrenzte Recovery vor automatischem
+  Überschreiben oder Löschen eines nicht eindeutig eigenen Objekts.
 - Kompensation und Receipt-Erzeugung sind gegen gewöhnliche, abgefangene Fehler
   abgesichert, aber noch nicht durch ein dauerhaftes Write-ahead-Journal gegen `SIGKILL`,
   Host-Neustart oder Stromausfall zwischen Rename und Receipt. Diese Crash-Konsistenz ist

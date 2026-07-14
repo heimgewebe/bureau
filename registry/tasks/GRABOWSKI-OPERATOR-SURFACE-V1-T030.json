@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
-  "state": "blocked",
+  "state": "verified",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -36,7 +36,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T030",
   "title": "Unify Rootbroker recovery freshness decisions",
   "priority": {
-    "lane": "now",
+    "lane": "later",
     "rank": 490
   },
   "goal": "Make recovery status and privileged Rootbroker execution consume one canonical, atomically refreshed freshness record so a ready recovery status cannot coexist with a stale-marker execution denial for the same observation window.",
@@ -82,39 +82,14 @@
       "The installed broker unit has ProtectHome=yes and no installed drop-in exposing the configured source path under /home/alex, while recovery_status remains fail-closed with canonical freshness reason unsafe-file."
     ],
     "does_not_establish": [
-      "permission to bypass recovery, audit, kill-switch or Rootbroker policy",
-      "the exact broker exception text, because the installed request unit exposes only its exit status in the journal",
-      "current canonical marker owner or mode, because the unprivileged status reader cannot safely open it",
-      "that the independent legacy marker and lock self-heal slice alone can fix the missing systemd source visibility"
+      "future privileged actions remain authorized only by their current recovery, audit, kill-switch and allowlist checks",
+      "manual or environment kill switches can be self-cleared; they intentionally remain an external operator boundary",
+      "cryptographic attestation against the trusted local owner beyond the documented root-owned files, digests and tamper-evident audit chain",
+      "that client tool snapshots automatically refresh after every server deployment"
     ],
-    "blocked_at": "2026-07-14T15:14:51Z",
-    "block_reason": "Fresh restore evidence exists, but the installed root-owned Rootbroker service still runs with ProtectHome=yes and no exact recovery-source visibility drop-in for the configured source record under /home/alex. The official publisher therefore exits fail-closed before canonical readback. Applying the reviewed service/drop-in cutover remains a root-bound operation. A separate disjoint self-heal slice covers obsolete safe marker and lock ownership, but does not replace this sandbox cutover.",
     "dependency_state": {
       "GRABOWSKI-OPERATOR-SURFACE-V1-T014": "verified"
     },
-    "live_reproduction": {
-      "observed_at": "2026-07-14T15:14:51Z",
-      "runtime_head": "a5a5e8d8c9c01b877cff4dd53b8f6a70976ffc88",
-      "source_snapshot": "dc8a067e",
-      "source_generated_at_unix": 1784042088,
-      "source_age_seconds_at_status_readback": 14,
-      "source_restore_probe_valid": true,
-      "source_repository_check_valid": true,
-      "source_target": "heimberry:rest-server/grabowski-recovery-probe",
-      "canonical_marker_path": "/var/lib/grabowski/power-worker-recovery-gate.json",
-      "canonical_freshness_reason": "unsafe-file",
-      "canonical_error": "canonical recovery record cannot be opened safely",
-      "ready_for_privileged_actions": false,
-      "publication_request_id": "7c428800687c4ae7ae11b2270cdef34f",
-      "publication_reference_sha256": "3d4901378901ffdf1f123aebb429dd6cb1a2d663d226f0a0024a0c63a4db7acc",
-      "broker_client_returncode": 1,
-      "broker_service_instance": "grabowski-privileged-broker@70-14600-1000.service",
-      "broker_service_exit": "status=2/INVALIDARGUMENT",
-      "installed_service_protect_home": "yes",
-      "installed_recovery_source_drop_in_present": false,
-      "command_executed": false
-    },
-    "next_action": "Finish and independently review the exact Rootbroker recovery-source systemd drop-in/cutover, install it through the authorized root boundary, then run a fresh server recovery probe. Verify canonical mode and ownership, same-record status and broker readiness, one bounded /usr/bin/true proof and kill-switch denial. In parallel, finish the disjoint recovery-marker self-heal slice and merge it only after focused and full validation.",
     "implementation_evidence": {
       "feature_pr": 197,
       "feature_merge_commit": "d7192e9324d48dbfe9d1011c7ae2551e8ca9ec23",
@@ -149,23 +124,6 @@
         "commit-bound live read-only plan against installed root configuration returned ready=true"
       ]
     },
-    "live_root_cutover_gap": {
-      "canonical_marker_path": "/var/lib/grabowski/power-worker-recovery-gate.json",
-      "canonical_status_reason": "unsafe-file: canonical recovery record cannot be opened safely",
-      "canonical_exact_metadata_currently_observable": false,
-      "fresh_source_path": "/home/alex/.local/state/grabowski/recovery/last-server-recovery.json",
-      "fresh_source_snapshot": "dc8a067e",
-      "fresh_source_target": "heimberry:rest-server/grabowski-recovery-probe",
-      "fresh_source_valid": true,
-      "installed_publisher_action_presence": "not independently readable from the root-owned configuration",
-      "publisher_request_reached_broker_socket": true,
-      "publisher_request_result": "client exit 1; request unit status 2/INVALIDARGUMENT",
-      "installed_service_protect_home": "yes",
-      "installed_recovery_source_drop_in_present": false,
-      "source_visibility_causal_assessment": "high confidence from exact unit configuration and source location; exact broker exception unavailable",
-      "power_gate_result": "fail-closed before privileged command execution",
-      "root_mutation_still_required": true
-    },
     "root_cutover_acceptance": [
       "Back up and SHA-256-bind the installed root broker, wrapper, systemd unit/drop-ins and privileged-actions configuration before mutation.",
       "Install the reviewed broker contract and exact read-only recovery-source visibility drop-in while retaining ProtectHome and all unrelated sandbox restrictions.",
@@ -175,22 +133,6 @@
       "Preserve a rollback receipt and do not weaken allowlists, audit, kill-switch, recovery requirements or privilege boundaries."
     ],
     "former_repo_owner": "chatgpt-grabowski-residual-slices-20260711",
-    "root_cutover_helper_state": {
-      "merged_main_head": "4a7a30ec40b65318fce6ff8280326ab9677c3a83",
-      "clean_cutover_checkout": "/home/alex/repos/grabowski",
-      "plan_ready": true,
-      "planned_installed_config_sha256": "58a54cadf2cf518ff7fbf72d93bc46c8eeb71e010334fe92dc2b3e238f02ec44",
-      "planned_desired_config_sha256": "e4a6989de947213f8a2a97e88911e682ce8d1ccbe59d36eafce383c50e9311c7",
-      "socket_preflight": "requires an already active Rootbroker socket and treats unknown systemctl state as an error before backup or mutation",
-      "sudo_noninteractive_result": "password required; no command executed",
-      "platform_apply_result": "blocked before process start by platform security checks",
-      "polkit_temporary_authorization_present": false,
-      "root_process_started": false,
-      "root_mutation_performed": false,
-      "installed_helper_present": false,
-      "installed_config_unchanged": true,
-      "remaining_boundary": "explicit desktop or otherwise authorized root execution of the reviewed helper"
-    },
     "merged_disjoint_self_heal_slice": {
       "repository": "/home/alex/repos/grabowski",
       "branch": "fix/recovery-marker-self-heal-v1",
@@ -216,6 +158,232 @@
         "validate (3.12): success"
       ],
       "diff_sha256": "e1c4de246f4f9a5aa46a58cc7551c53360981cb0160a7a98bbbdd365634d58e3"
-    }
+    },
+    "former_blocked_at": "2026-07-14T15:14:51Z",
+    "former_block_reason": "Fresh restore evidence exists, but the installed root-owned Rootbroker service still runs with ProtectHome=yes and no exact recovery-source visibility drop-in for the configured source record under /home/alex. The official publisher therefore exits fail-closed before canonical readback. Applying the reviewed service/drop-in cutover remains a root-bound operation. A separate disjoint self-heal slice covers obsolete safe marker and lock ownership, but does not replace this sandbox cutover.",
+    "former_next_action": "Finish and independently review the exact Rootbroker recovery-source systemd drop-in/cutover, install it through the authorized root boundary, then run a fresh server recovery probe. Verify canonical mode and ownership, same-record status and broker readiness, one bounded /usr/bin/true proof and kill-switch denial. In parallel, finish the disjoint recovery-marker self-heal slice and merge it only after focused and full validation.",
+    "former_blocked_live_reproduction": {
+      "observed_at": "2026-07-14T15:14:51Z",
+      "runtime_head": "a5a5e8d8c9c01b877cff4dd53b8f6a70976ffc88",
+      "source_snapshot": "dc8a067e",
+      "source_generated_at_unix": 1784042088,
+      "source_age_seconds_at_status_readback": 14,
+      "source_restore_probe_valid": true,
+      "source_repository_check_valid": true,
+      "source_target": "heimberry:rest-server/grabowski-recovery-probe",
+      "canonical_marker_path": "/var/lib/grabowski/power-worker-recovery-gate.json",
+      "canonical_freshness_reason": "unsafe-file",
+      "canonical_error": "canonical recovery record cannot be opened safely",
+      "ready_for_privileged_actions": false,
+      "publication_request_id": "7c428800687c4ae7ae11b2270cdef34f",
+      "publication_reference_sha256": "3d4901378901ffdf1f123aebb429dd6cb1a2d663d226f0a0024a0c63a4db7acc",
+      "broker_client_returncode": 1,
+      "broker_service_instance": "grabowski-privileged-broker@70-14600-1000.service",
+      "broker_service_exit": "status=2/INVALIDARGUMENT",
+      "installed_service_protect_home": "yes",
+      "installed_recovery_source_drop_in_present": false,
+      "command_executed": false
+    },
+    "former_live_root_cutover_gap": {
+      "canonical_marker_path": "/var/lib/grabowski/power-worker-recovery-gate.json",
+      "canonical_status_reason": "unsafe-file: canonical recovery record cannot be opened safely",
+      "canonical_exact_metadata_currently_observable": false,
+      "fresh_source_path": "/home/alex/.local/state/grabowski/recovery/last-server-recovery.json",
+      "fresh_source_snapshot": "dc8a067e",
+      "fresh_source_target": "heimberry:rest-server/grabowski-recovery-probe",
+      "fresh_source_valid": true,
+      "installed_publisher_action_presence": "not independently readable from the root-owned configuration",
+      "publisher_request_reached_broker_socket": true,
+      "publisher_request_result": "client exit 1; request unit status 2/INVALIDARGUMENT",
+      "installed_service_protect_home": "yes",
+      "installed_recovery_source_drop_in_present": false,
+      "source_visibility_causal_assessment": "high confidence from exact unit configuration and source location; exact broker exception unavailable",
+      "power_gate_result": "fail-closed before privileged command execution",
+      "root_mutation_still_required": true
+    },
+    "former_root_cutover_helper_state": {
+      "merged_main_head": "4a7a30ec40b65318fce6ff8280326ab9677c3a83",
+      "clean_cutover_checkout": "/home/alex/repos/grabowski",
+      "plan_ready": true,
+      "planned_installed_config_sha256": "58a54cadf2cf518ff7fbf72d93bc46c8eeb71e010334fe92dc2b3e238f02ec44",
+      "planned_desired_config_sha256": "e4a6989de947213f8a2a97e88911e682ce8d1ccbe59d36eafce383c50e9311c7",
+      "socket_preflight": "requires an already active Rootbroker socket and treats unknown systemctl state as an error before backup or mutation",
+      "sudo_noninteractive_result": "password required; no command executed",
+      "platform_apply_result": "blocked before process start by platform security checks",
+      "polkit_temporary_authorization_present": false,
+      "root_process_started": false,
+      "root_mutation_performed": false,
+      "installed_helper_present": false,
+      "installed_config_unchanged": true,
+      "remaining_boundary": "explicit desktop or otherwise authorized root execution of the reviewed helper"
+    },
+    "verified_at": "2026-07-14T18:11:00Z",
+    "resolution_summary": "The reviewed Rootbroker cutover is installed with an exact recovery-source systemd drop-in; the canonical root marker is fresh, root-owned and source-digest aligned; bounded privileged execution succeeds; kill-switch state now blocks both status readiness flags; and an audit-bound Grabowski test switch can be safely quarantined without weakening manual or environment emergency stops.",
+    "root_cutover_live_state": {
+      "receipt_path": "/var/lib/grabowski/rootbroker-cutover-receipts/1784047377953596656-2c7314e5b282.json",
+      "receipt_sha256": "8be67585f1ec8f684691d9d0d2a59e5774d9299f2e249ed11b419bc7a9acc77d",
+      "expected_head": "2c7314e5b2823e91378d03abb7abcda34e7c2836",
+      "completed_at_unix": 1784047378,
+      "success": true,
+      "backup_directory": "/var/lib/grabowski/rootbroker-cutover-backups/1784047377953596656-2c7314e5b282",
+      "backup_manifest_sha256": "94b8531172b32238d021e024a344f8ea0ad42982ecb250c4a01893fdc0353fc9",
+      "daemon_reload_complete": true,
+      "socket_was_active": true,
+      "socket_active": true,
+      "rollback_performed": false,
+      "installed_drop_in": {
+        "path": "/etc/systemd/system/grabowski-privileged-broker@.service.d/recovery-source.conf",
+        "uid": 0,
+        "gid": 0,
+        "mode": "0644",
+        "sha256": "573716ab0e051c11e5d944c5a4687d0c08f5a8c8829f47a7d01c86d7fc154793"
+      },
+      "installed_sandbox": {
+        "protect_home": "tmpfs",
+        "bind_read_only_paths": [
+          "/home/alex/.local/state/grabowski/recovery/last-server-recovery.json",
+          "-/home/alex/.local/state/grabowski/operator-kill-switch"
+        ],
+        "base_unit_retains_protect_home_yes": true,
+        "drop_in_overrides_effective_protect_home": true
+      },
+      "operator_power_configuration_preserved": true,
+      "unrelated_action_names_preserved": [
+        "edit_system_service"
+      ]
+    },
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_rootbroker_recovery_freshness_deployed",
+      "implementation_pull_requests": [
+        197,
+        198,
+        202,
+        203,
+        210,
+        212,
+        213,
+        216
+      ],
+      "final_status_truth_pull_request": 216,
+      "final_status_truth_head": "ae9968138bf9dcba5e5d96d27a3833175d97d985",
+      "final_status_truth_merge_commit": "8a51cd37b82d879b735af3937c25d7f8f302fe42",
+      "root_cutover_commit": "2c7314e5b2823e91378d03abb7abcda34e7c2836",
+      "deployed_runtime_sha": "8a51cd37b82d879b735af3937c25d7f8f302fe42",
+      "runtime_release_id": "8a51cd37b82d-srcset2a8f13a5b249-locke6664d600b6c-contract8afcc76b890e",
+      "runtime_deploy_job": "grabowski-job-4de2605126a1",
+      "runtime_deploy_receipt_sha256": "289b4203abb9f6fb92d58470f4c6b73c0de7341c89676c4200e3d74ddbcfcf87",
+      "runtime_deploy_payload_sha256": "acd662e07bd1d77096535167012232fe2c1c49a5040298e2305d4e817f624462",
+      "validation": {
+        "focused_recovery_tests": "39/39 PASS",
+        "repository_tests": "1605 PASS; 1 expected skip",
+        "ci_python_3_10": "SUCCESS",
+        "ci_python_3_12": "SUCCESS",
+        "access_policy": "PASS",
+        "operator_context": "PASS",
+        "publication_profiles": "PASS",
+        "runtime_lock": "PASS",
+        "deploy_tooling": "PASS",
+        "secret_check": "PASS",
+        "root_cutover_receipt": "PASS",
+        "canonical_marker_owner_mode": "root:root 0644",
+        "bounded_privileged_true": "PASS",
+        "kill_switch_status_denial": "PASS",
+        "audit_bound_test_switch_recovery": "PASS"
+      }
+    },
+    "live_verification": {
+      "observed_at": "2026-07-14T18:07:34Z",
+      "runtime_head": "8a51cd37b82d879b735af3937c25d7f8f302fe42",
+      "runtime_healthy": true,
+      "expected_tool_count": 122,
+      "registered_tool_count": 122,
+      "audit_valid": true,
+      "audit_records_at_final_readback": 9415,
+      "server_recovery_snapshot": "1a1a835e",
+      "server_recovery_generated_at_unix": 1784052417,
+      "canonical_record_sha256": "a007418ae76fa6e1d1d2cf5647b25959b07d58a6d9ed06c8cb05933a1b1ae667",
+      "source_record_sha256": "8ef5710422f3666e2af15f615e0a228027042366e6ff04abf953355321d771ee",
+      "source_publication_current": true,
+      "effective_recovery_gate_reason": "ready",
+      "ready_for_user_power_worker": true,
+      "ready_for_privileged_actions": true,
+      "required_actions": [],
+      "bounded_true_proof": {
+        "request_id": "0a8976def0234f0991ead7012b67c85f",
+        "audit_record_sha256": "d4e4fa8974ebe6bed7cdb9a50fc398ab8240c660b00b755584251d0fde3d4012",
+        "argv_sha256": "3d8455a32560861ba0d4e30193298bd3e29ede3531d782227f37fe7f7aab1ac1",
+        "broker_client_returncode": 0,
+        "broker_returncode": 0,
+        "success": true
+      },
+      "kill_switch_cycle": {
+        "marker_sha256": "ebb5a7b3d63979fd73fd9b2c1bc02d6d0d62d00a0de173662553a1b7bb36172c",
+        "create_record_sha256": "57950f8c25b4ec35f685bcc14cd0454fdd89d49960a59b36fa04d7ffbeb0c4e2",
+        "blocked_ready_for_user_power_worker": true,
+        "blocked_ready_for_privileged_actions": true,
+        "blocked_reason": "kill-switch-engaged",
+        "test_recovery_eligible": true,
+        "clear_id": "c0af2aea87f34dab509e94de5f0bdb89",
+        "clear_record_sha256": "04b2b446752f8c96f9d53a058ac94dd7c1746b91575d4ea7cf2695c55cccae96",
+        "quarantine_path": "/home/alex/.local/state/grabowski/recovery/cleared-test-kill-switches/c0af2aea87f34dab509e94de5f0bdb89.json",
+        "quarantine_mode": "0600",
+        "quarantine_sha256": "ebb5a7b3d63979fd73fd9b2c1bc02d6d0d62d00a0de173662553a1b7bb36172c",
+        "post_clear_ready": true,
+        "manual_and_environment_self_clearable": false
+      }
+    },
+    "diff_evidence": {
+      "self_heal_pr_212_sha256": "e1c4de246f4f9a5aa46a58cc7551c53360981cb0160a7a98bbbdd365634d58e3",
+      "root_sandbox_cutover_pr_213_sha256": "76aa79dd4aeb849b64183584ed2d04dd6d35fe92fd4cc679afdc5d511eab0ff7",
+      "status_truth_pr_216_sha256": "33098576796c8499efef23772e4592bb207f98e7b63a429eb0bd4d30e29b3fac"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T030",
+          "source_ref": "heimgewebe/grabowski#216",
+          "number": 216,
+          "head_sha": "ae9968138bf9dcba5e5d96d27a3833175d97d985",
+          "merge_commit_sha": "8a51cd37b82d879b735af3937c25d7f8f302fe42"
+        },
+        {
+          "kind": "root_cutover_receipt",
+          "authority": "rootbroker",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T030",
+          "source_ref": "rootbroker-cutover:1784047377953596656-2c7314e5b282",
+          "receipt_sha256": "8be67585f1ec8f684691d9d0d2a59e5774d9299f2e249ed11b419bc7a9acc77d",
+          "expected_head": "2c7314e5b2823e91378d03abb7abcda34e7c2836"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T030",
+          "source_ref": "live:recovery-status-and-test-switch:2026-07-14T18:07Z",
+          "runtime_sha": "8a51cd37b82d879b735af3937c25d7f8f302fe42",
+          "canonical_record_sha256": "a007418ae76fa6e1d1d2cf5647b25959b07d58a6d9ed06c8cb05933a1b1ae667",
+          "source_record_sha256": "8ef5710422f3666e2af15f615e0a228027042366e6ff04abf953355321d771ee",
+          "audit_record_sha256": "04b2b446752f8c96f9d53a058ac94dd7c1746b91575d4ea7cf2695c55cccae96"
+        }
+      ]
+    },
+    "verification": {
+      "source": "github_ci_root_cutover_receipt_deployed_runtime_and_live_smoke",
+      "source_ref": "github-pr:heimgewebe/grabowski#216",
+      "implementation_sha": "ae9968138bf9dcba5e5d96d27a3833175d97d985",
+      "merge_commit_sha": "8a51cd37b82d879b735af3937c25d7f8f302fe42",
+      "deployed_runtime_sha": "8a51cd37b82d879b735af3937c25d7f8f302fe42",
+      "root_cutover_receipt_sha256": "8be67585f1ec8f684691d9d0d2a59e5774d9299f2e249ed11b419bc7a9acc77d",
+      "canonical_record_sha256": "a007418ae76fa6e1d1d2cf5647b25959b07d58a6d9ed06c8cb05933a1b1ae667",
+      "source_record_sha256": "8ef5710422f3666e2af15f615e0a228027042366e6ff04abf953355321d771ee",
+      "final_diff_sha256": "33098576796c8499efef23772e4592bb207f98e7b63a429eb0bd4d30e29b3fac",
+      "task_sha256": "5713ec77f2ce209082497fd260679ec40c92c4a4c8fb7b957583829fa235ca26",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    },
+    "verification_note": "T030 is satisfied: the root sandbox exposes only the exact source and optional kill-switch paths; the canonical marker and current source are digest-aligned; bounded root execution succeeds; kill-switch engagement blocks both readiness surfaces; and only an audit-bound test marker can be autonomously quarantined with rollback-on-audit-failure."
   }
 }

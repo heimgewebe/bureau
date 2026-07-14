@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T052",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Make Agent Workspace integration probing compatible with production Git",
-  "state": "ready",
+  "state": "verified",
   "goal": "Replace the Agent Workspace base-drift integration probe's unconditional use of git merge-tree --write-tree with a deterministic, side-effect-free compatibility path that works on the production Git 2.34.1 baseline while preserving exact conflict detection and bounded evidence.",
   "priority": {
     "lane": "later",
@@ -76,6 +76,137 @@
       "permission to modify or clean the foreign T014 worktree",
       "permission to rewrite historical workspace evidence",
       "that every nonzero merge probe result is a genuine conflict"
-    ]
+    ],
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 196,
+      "pull_request_head": "1495e3b8b035207c0ac8ec7a73a05c08c99368a9",
+      "pull_request_base": "274494be64d66d525200eb427d81871ce1628251",
+      "merge_commit": "b9b135f824be26799873434b0d00c6aa6833ac28",
+      "branch": "fix/agent-workspace-git234-compat-v1",
+      "github_diff_sha256": "38874dadb53fabcb32c14d13bb6324c7247970d6de0f85fb31ebb22d508acef2",
+      "github_diff_bytes": 49018,
+      "design": [
+        "run all writable merge state in a private temporary Git repository",
+        "read source objects only through read-only object alternates",
+        "use merge-tree --write-tree when available and a narrowly triggered merge-recursive fallback on Git 2.34",
+        "derive conflicts from unmerged index stages and preserve error as distinct from conflict",
+        "read Bureau tasks only from the immutable canonical Registry snapshot in a valid runtime envelope"
+      ]
+    },
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_production_git_compatibility_and_canonical_bureau_binding_live",
+      "verified_at": "2026-07-14T05:59:05Z",
+      "acceptance": {
+        "production_reproduction": {
+          "status": "passed",
+          "git_version": "2.34.1",
+          "original_returncode": 128,
+          "original_stderr": "fatal: unknown rev --write-tree"
+        },
+        "compatible_probe": {
+          "status": "passed",
+          "clean_case": "clean",
+          "conflict_case": "conflicting",
+          "source_repository_unchanged": true,
+          "mode": "merge-recursive-isolated-v1"
+        },
+        "newer_git_consistency": {
+          "status": "passed_in_ci",
+          "local_status": "expected capability skip on Git 2.34.1",
+          "ci_python_3_10": "SUCCESS",
+          "ci_python_3_12": "SUCCESS"
+        },
+        "failure_semantics": {
+          "status": "passed",
+          "missing_objects_and_internal_errors": "status=error; conflicting=null",
+          "unsupported_mode_fallback": "only exact --write-tree capability errors"
+        },
+        "live_workspace_readback": {
+          "status": "passed",
+          "workspace_id": "gaw-t052-live-workspac-grabowski-operator-sur-ef558286414a",
+          "creation_ready": true,
+          "base_drift": true,
+          "canonical_head": "3529ede189b1ff1a69269a071aa6f35f8f90421d",
+          "expected_base_head": "6b09e42e2983f5fcae6ea01e9eb951ab271759c3",
+          "integration_probe": {
+            "status": "clean",
+            "mode": "merge-recursive-isolated-v1",
+            "fallback_reason": "merge_tree_write_tree_unavailable",
+            "conflicting": false,
+            "unmerged_path_count": 0
+          },
+          "evidence_path": "/home/alex/.local/state/grabowski/evidence/t052-live-workspace-status.json",
+          "evidence_file_sha256": "da5e97b0313d53cfed90bf4c362e0eb8b28b63141d89be893778a9fc48b76f08",
+          "evidence_sha256": "bc435253aa7f4509dbb3b1af668e6e59a691ede7fe1c3dd3e334e933fb6da04d"
+        }
+      },
+      "validation": {
+        "focused_workspace_suite": "135 tests passed before final hardening",
+        "full_repository": "1525 tests passed; one expected local Git capability skip",
+        "github_actions_run_id": 29308772834,
+        "validate_3_10": "SUCCESS",
+        "validate_3_12": "SUCCESS",
+        "access_policy": "passed",
+        "generated_operator_context": "passed",
+        "runtime_locks": "passed",
+        "deploy_tooling": "passed",
+        "secret_scan": "passed"
+      },
+      "review": {
+        "result": "PASS",
+        "reviewed_head": "1495e3b8b035207c0ac8ec7a73a05c08c99368a9",
+        "reviewed_base": "274494be64d66d525200eb427d81871ce1628251",
+        "github_diff_sha256": "38874dadb53fabcb32c14d13bb6324c7247970d6de0f85fb31ebb22d508acef2",
+        "evidence_path": "/home/alex/.local/state/grabowski/evidence/pr-196-agent-workspace-git234-self-review.json",
+        "evidence_file_sha256": "dc988d4013bb808857806fd6c9841803b6b52d5a03fcf58c05e7eeaaba14080b",
+        "evidence_sha256": "ddb6f1cbb99852eada6b4c4f676ccdc23cf55a8c7aad70f0cda94ab80ccf08e8"
+      },
+      "deployment": {
+        "job": "grabowski-job-c47e107a4a7f",
+        "final_status": "completed",
+        "release_id": "b9b135f824be-srcset7ad38950e131-locke6664d600b6c-contract9dc5637bd19f",
+        "repo_head": "b9b135f824be26799873434b0d00c6aa6833ac28",
+        "finalization_receipt_sha256": "0a58594399a01496f656f15324cf58c247b0525e96dcf3584f2cc8f07414430e",
+        "payload_sha256": "bdb0d2bbb933a7d6ad811cc052b08161c8fe9381c887ae3942d640d863e5f062",
+        "runtime_healthy": true,
+        "deployment_integrity_valid": true
+      },
+      "bureau_binding": {
+        "registry_source": "canonical-runtime-snapshot",
+        "state_before_closeout": "ready",
+        "task_sha256": "280a96ebe2b23a49d9dd2eb8912399b72d3e029ac0d05142533d05a0f856b734",
+        "evidence_sha256": "fc295c5818cd7ca79982fe2eb058371f9574449c535db192efe86a48e21ee968",
+        "dirty_main_checkout_ignored": true
+      },
+      "formal_proof_closeout": {
+        "workspace_id": "gaw-t052-live-workspac-grabowski-operator-sur-ef558286414a",
+        "close_receipt_sha256": "fb291efe5d4825d059f0b7979ec097300e31e409eaa9a4414a9f8849eff8fb60",
+        "resources_released": true,
+        "closure_outcome": "abandoned_failed_roles",
+        "review_role_note": "The synthetic proof review command emitted no structured verdict and was correctly INVALID. It is not the PR self-review and does not weaken the separately persisted base-drift status evidence.",
+        "writer_patch_preserved_sha256": "bd59f525d5fa625c16620b79e5d84aac02db7670a1b974ea647532d158a5efaf"
+      },
+      "historical_workspace": {
+        "workspace_id": "gaw-grabowski-grip-roadmap-v1-t014-97b64d990af8",
+        "state": "not_ready",
+        "current_reason": "writer worktree is missing or no longer canonical",
+        "historical_evidence_rewritten": false
+      },
+      "does_not_establish": [
+        "that the historical T014 workspace is ready",
+        "merge authority for any writer result",
+        "permission to rewrite historical workspace evidence",
+        "that arbitrary nonzero Git results are conflicts"
+      ]
+    },
+    "verification": {
+      "source": "grabowski_pr_deployment_and_live_workspace_readback",
+      "source_ref": "heimgewebe/grabowski#196;b9b135f824be26799873434b0d00c6aa6833ac28;gaw-t052-live-workspac-grabowski-operator-sur-ef558286414a",
+      "verified_at": "2026-07-14",
+      "task_sha256": "432fc78b6f72773e07b2732e59ead4bce6c6633504f3ac64bf93d1b659aeb854",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

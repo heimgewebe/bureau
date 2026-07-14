@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "id": "RBV1-T024",
+  "initiative": "REPOBRIEF-V1-ROADMAP",
+  "title": "RepoBrief-Familienpublikation generationskohärent machen",
+  "state": "planned",
+  "goal": "Make publication of multiple stable RepoBrief family manifests recoverable and generation-coherent so readers cannot observe an unintended mixture of old and new family generations after interruption or concurrent publication.",
+  "priority": {
+    "lane": "later",
+    "rank": 24
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit"
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [
+    "RBV1-T023"
+  ],
+  "acceptance": [
+    {
+      "id": "rbv1-t024-generation-contract",
+      "assertion": "All family manifests from one publication are bound to one explicit generation identity and readers have one documented rule for selecting a complete committed generation."
+    },
+    {
+      "id": "rbv1-t024-interruption-recovery",
+      "assertion": "Injected failures before, between and after family publication cannot leave an unintended mixed generation as the authoritative read state; recovery is deterministic and tested."
+    },
+    {
+      "id": "rbv1-t024-concurrency",
+      "assertion": "Concurrent publishers are serialized or reconciled with a fail-closed protocol whose winner and rollback behavior are testable."
+    },
+    {
+      "id": "rbv1-t024-compatibility",
+      "assertion": "Existing single-family consumers continue to work or receive an explicit versioned migration path; consumer path validation remains fail-closed."
+    },
+    {
+      "id": "rbv1-t024-validation",
+      "assertion": "Focused crash/concurrency tests, the complete Lenskit suite, maintainability ratchets and real CLI dogfood pass on the exact implementation head."
+    },
+    {
+      "id": "rbv1-t024-nonclaims",
+      "assertion": "The result does not claim distributed consensus, cross-host transactional filesystems, remote freshness or semantic truth."
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "Lenskit PR #1009 residual-risk review",
+    "registered_at": "2026-07-14T19:46:02Z",
+    "source_pr": "heimgewebe/lenskit#1009",
+    "source_head": "7421452caa239e73bedde2acfe93a6516612757d",
+    "source_paths": [
+      "merger/lenskit/core/external_manifest_reference.py",
+      "merger/lenskit/tests/test_external_manifest_reference.py"
+    ],
+    "does_not_establish": [
+      "distributed_consensus",
+      "cross_host_transactionality",
+      "remote_freshness",
+      "semantic_truth",
+      "merge_readiness"
+    ]
+  }
+}

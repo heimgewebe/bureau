@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T016",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Automate gated Bureau runtime snapshot refresh",
+  "state": "planned",
+  "goal": "Automatically refresh the immutable Bureau runtime and canonical read-only Registry snapshot after a verified main change, without touching the conventional dirty checkout, weakening deployment gates, or creating duplicate deployments.",
+  "priority": {
+    "lane": "later",
+    "rank": 916
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau",
+      "path:/home/alex/.local/bin/bureau",
+      "path:/home/alex/.local/share/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "bureau",
+    "grabowski"
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T012",
+    "BUR-2026-003-T001"
+  ],
+  "acceptance": [
+    {
+      "id": "verified-main-trigger",
+      "assertion": "A versioned trigger considers only an exact merged origin/main commit with successful required CI and an explicit deployment intent; arbitrary branches, dirty sources, unverified heads and ambiguous GitHub state fail closed."
+    },
+    {
+      "id": "isolated-source",
+      "assertion": "Refresh uses a clean detached or task-specific checkout at the exact expected origin/main commit and never pulls, resets, stashes, cleans or otherwise mutates the conventional Bureau main checkout or any foreign worktree."
+    },
+    {
+      "id": "serialized-idempotent-deploy",
+      "assertion": "Launcher, Bureau prefix and source checkout are lease-bound; identical in-flight or already-current refreshes are deduplicated, while a conflicting deployment or lease blocks before mutation."
+    },
+    {
+      "id": "immutable-install-and-readback",
+      "assertion": "The existing immutable installer runs with an exact-head precondition, preserves rollback evidence, and success requires post-install readback of manifest, package tree, snapshot inventory/tree, launcher digest and canonical bureau --json check."
+    },
+    {
+      "id": "visible-failure-no-loop",
+      "assertion": "A failed or unclear refresh remains visible with a durable receipt and does not retry, self-heal, or claim current runtime state until an operator-authorized reconciliation proves the outcome."
+    },
+    {
+      "id": "freshness-slo",
+      "assertion": "A read-only receipt reports origin/main, deployed source_commit, lag in commits and elapsed time; verified Registry changes become visible through the canonical snapshot within a documented bounded interval or produce an explicit alert."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover already-current dedupe, foreign lease, origin drift, dirty source, failed CI, installer failure, unclear outcome, rollback evidence, successful readback and preservation of a stale dirty conventional checkout."
+    }
+  ],
+  "metadata": {
+    "source": "GRIP-ROADMAP-V1-T014 closeout and live Bureau runtime reconciliation",
+    "observed_at": "2026-07-14T07:16:00+02:00",
+    "observation": "The canonical Bureau Registry already marked T014 verified at origin/main 7a07635de3e6, while the active immutable snapshot still pointed to 6f17c5a44143 and reported T014 planned. Manual atomic deployment restored consistency; existing drift and scheduler tasks explicitly exclude automatic repair.",
+    "related_tasks": [
+      "BUR-2026-003-T001",
+      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T017",
+      "OPERATOR-MACHINE-READABILITY-V1-T012",
+      "GRIP-ROADMAP-V1-T014"
+    ],
+    "safety_boundary": "Automation may refresh only the immutable Bureau release and canonical read snapshot after all gates pass. It must not mutate Registry task truth, the conventional checkout, state-root data, systemd units or unrelated runtime paths.",
+    "does_not_establish": [
+      "automatic_merge_authority",
+      "unconditional_deploy_authority",
+      "permission_to_touch_foreign_worktrees",
+      "automatic_retry",
+      "runtime_semantic_correctness",
+      "completion_of_OPM_READABILITY_T016"
+    ]
+  }
+}

@@ -694,7 +694,7 @@ import json, sys
 if sys.argv[-1] == 'check':
     print(json.dumps({'result': {'valid': True}}))
 else:
-    print(json.dumps({'result': {'manifest': {
+    print(json.dumps({'result': {'status': 'ok'}, 'runtime_identity': {'manifest': {
         'valid': True,
         'source_commit': '"""
         + MAIN

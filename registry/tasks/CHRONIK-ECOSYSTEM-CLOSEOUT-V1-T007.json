@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T007",
+  "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
+  "title": "Read canonical producer component in Chronik history queries",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 70
+  },
+  "goal": "Correct the Chronik history component filter so producer identity is read from source.component, while subject remains reserved for the scoped work target and existing target, operation, task-class and outcome filters remain unchanged.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.chronik",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "producer-field-correct",
+      "assertion": "query_history(component=...) matches canonical source.component and does not require or fabricate subject.component."
+    },
+    {
+      "id": "target-semantics-preserved",
+      "assertion": "Repository- and host-scoped subject identity remains the work target and is not reinterpreted as producer identity."
+    },
+    {
+      "id": "legacy-boundary-explicit",
+      "assertion": "Any compatibility behavior for historical noncanonical records is explicit, tested and cannot override a present canonical source.component."
+    },
+    {
+      "id": "filter-regression-tests",
+      "assertion": "Tests cover repository and host subjects, positive and negative producer matches, and combinations with repo, operation, task-class and outcome filters."
+    },
+    {
+      "id": "live-readback",
+      "assertion": "A deployed query including component=grabowski returns the observed HausKI completion event and preserves ledger-integrity diagnostics."
+    },
+    {
+      "id": "full-regression-proof",
+      "assertion": "Chronik tests, local validation, GitHub CI, deploy and post-deploy query pass at the exact reviewed head."
+    }
+  ],
+  "depends_on": [
+    "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T006"
+  ],
+  "rollback": {
+    "trigger": "The change confuses producer and target identity, broadens matches unexpectedly or weakens ledger validation.",
+    "procedure": "Restore the previous query implementation, retain the scoped-event schema and require callers to omit the component filter until a corrected reviewed patch is deployed."
+  },
+  "stop": {
+    "conditions": [
+      "a foreign Chronik worktree, lease or process overlaps coding_memory.py or its tests",
+      "the fix would rewrite stored events instead of correcting query interpretation",
+      "source.component is absent from canonical current producer events",
+      "combined-filter or ledger-integrity tests fail"
+    ]
+  },
+  "metadata": {
+    "registered_at": "2026-07-14T19:54:20+02:00",
+    "observed_during": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T005",
+    "live_finding": {
+      "event_id": "sha256:48e2f68452689dd078397d420a9bcf55310cdda9bffbfdfafbba95c9f0342b42",
+      "source_component": "grabowski",
+      "subject_repo": "heimgewebe/hausKI",
+      "query_without_component_matches": 1,
+      "query_with_component_matches": 0,
+      "root_cause": "query_history compares component to subject.component although canonical producer identity lives in source.component."
+    },
+    "coordination": {
+      "blocked_files": [
+        "coding_memory.py",
+        "tests/test_coding_memory.py"
+      ],
+      "active_owner": "chatgpt-chronik-ccm-t006-20260714",
+      "decision": "register only; do not overlap the active T006 worktree or leases"
+    },
+    "does_not_establish": [
+      "corruption of imported events",
+      "failure of repository, operation, task-class or outcome filters",
+      "permission to modify the active T006 worktree",
+      "need to rewrite the append-only ledger"
+    ]
+  }
+}

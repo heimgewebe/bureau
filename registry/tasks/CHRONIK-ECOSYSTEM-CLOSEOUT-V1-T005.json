@@ -3,7 +3,7 @@
   "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T005",
   "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
   "title": "Bind Grabowski operator events to the actual target repository",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 50
@@ -90,6 +90,152 @@
       "safe retry authority",
       "permission to inspect or persist raw argv or secrets",
       "absence of concurrent Grabowski work without a fresh preflight"
-    ]
+    ],
+    "verified_at": "2026-07-14T19:54:20+02:00",
+    "outcome": "Grabowski now emits repository-scoped lifecycle events for the actual canonical task target, with explicit bounded operation and task class. The merged runtime was deployed and a real non-Grabowski HausKI task was imported into Chronik with deterministic idempotent readback.",
+    "implementation": {
+      "grabowski": {
+        "pull_request": 214,
+        "reviewed_head": "7431467f7d262faa3910c4066cd00de5c7d2542f",
+        "merge_commit": "75ed056d1433d12bc54d6b7a62617a033af67459",
+        "diff_sha256": "f410cb4438a34ad98014b7764cc19dbb763e7bd8261c92562f9c82a57c9bb382"
+      },
+      "chronik": {
+        "pull_request": 219,
+        "reviewed_head": "a09df86142ad8c28f996a593da8339932de5b76d",
+        "merge_commit": "62bd3c59f1ed4c955628ec58a12b577ec1f188bd",
+        "deployed_release": "2fc65efe06cd23baa2a2bdef39f5f099c8a5540b"
+      }
+    },
+    "deployment": {
+      "grabowski_job": "grabowski-job-ca72e7949216",
+      "release_id": "75ed056d1433-srcset84b51dd244b6-locke6664d600b6c-contract8afcc76b890e",
+      "repo_head": "75ed056d1433d12bc54d6b7a62617a033af67459",
+      "finalization_valid": true,
+      "full_suite": "1596 passed, 1 skipped"
+    },
+    "live_forward_proof": {
+      "target_repository": "heimgewebe/hausKI",
+      "grabowski_task_id": "59e70b25df4c4b37872ddca1",
+      "unit": "grabowski-task-59e70b25df4c4b37872ddca1-a1.service",
+      "operation": "implement",
+      "task_class": "coding",
+      "process_result": "success",
+      "exec_main_status": 0,
+      "outbox_sha256": "7036779affe17bfaac20df532f1f266167f1e248709d8fdf7f6b788c9daf9499",
+      "started_event_id": "sha256:fccc70bc22a68f792b0e6c74cb185a76312702635618df81483f192ed2d3772d",
+      "completed_event_id": "sha256:48e2f68452689dd078397d420a9bcf55310cdda9bffbfdfafbba95c9f0342b42",
+      "first_import": {
+        "files_seen": 1,
+        "events_imported": 2,
+        "events_skipped_existing": 0,
+        "errors": 0
+      },
+      "repeat_import": {
+        "files_seen": 1,
+        "events_imported": 0,
+        "events_skipped_existing": 2,
+        "errors": 0
+      },
+      "query_result_count": 1,
+      "ledger_events": 500,
+      "ledger_invalid_events": 0,
+      "ledger_integrity_valid": true,
+      "ledger_sha256": "ad6f5dccffcfe5e8507a25e409b006e8b111bcce7f3daa785dd66f2d6cde43fe"
+    },
+    "validation": {
+      "grabowski_targeted": "151 passed",
+      "grabowski_full": "1596 passed, 1 skipped",
+      "grabowski_ci": "PASS at reviewed head",
+      "runtime_deploy": "PASS with valid finalization receipt",
+      "live_task": "PASS: /usr/bin/true completed with exit status 0",
+      "chronik_first_import": "PASS: 2 imported, 0 errors",
+      "chronik_repeat_import": "PASS: 0 imported, 2 existing, 0 errors",
+      "chronik_scoped_query": "PASS: one observed completed event for heimgewebe/hausKI, implement, coding",
+      "chronik_ledger_integrity": "PASS: 500 valid, 0 invalid"
+    },
+    "review": {
+      "result": "PASS",
+      "axes": [
+        "correctness",
+        "privacy",
+        "determinism",
+        "deduplication",
+        "regression",
+        "integration",
+        "evidence_integrity"
+      ],
+      "findings_fixed": [
+        "Repository identity was previously hard-coded to heimgewebe/grabowski.",
+        "Operation semantics initially allowed an uninformative other value without an explicit task field.",
+        "The runbook demo depended on a stale checkout and was corrected to the installed runtime contract."
+      ],
+      "separate_follow_up": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T007 records the nonblocking producer-component query-filter defect discovered during live readback."
+    },
+    "acceptance_evidence": {
+      "target-repo-derived-from-task-record": "Task 59e70b25df4c4b37872ddca1 used only the canonical repo:/home/alex/repos/hausKI claim and emitted subject.repo=heimgewebe/hausKI.",
+      "non-repository-task-boundary": "Grabowski tests cover explicit host scope when no single canonical repository target is provable; no argv inference is used.",
+      "bounded-operation-semantics": "The live events contain operation=implement and task_class=coding while omitting argv, cwd, environment, secrets and private path data.",
+      "identity-and-dedup-stable": "Started and completed have distinct deterministic event IDs; a repeated Chronik import added 0 and recognized both existing events.",
+      "forward-proof": "The real HausKI task completed successfully; Chronik imported both lifecycle events and returned the observed completed event through repo, operation, task-class and outcome filters.",
+      "full-regression-proof": "151 focused and 1596 full Grabowski tests passed at the exact reviewed head; GitHub CI and the merged runtime deploy passed."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T005",
+          "source_ref": "heimgewebe/grabowski#214",
+          "number": 214,
+          "head_sha": "7431467f7d262faa3910c4066cd00de5c7d2542f",
+          "merge_commit_sha": "75ed056d1433d12bc54d6b7a62617a033af67459",
+          "diff_sha256": "f410cb4438a34ad98014b7764cc19dbb763e7bd8261c92562f9c82a57c9bb382"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T005",
+          "source_ref": "heimgewebe/chronik#219",
+          "number": 219,
+          "head_sha": "a09df86142ad8c28f996a593da8339932de5b76d",
+          "merge_commit_sha": "62bd3c59f1ed4c955628ec58a12b577ec1f188bd"
+        },
+        {
+          "kind": "runtime_deploy",
+          "authority": "grabowski",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T005",
+          "source_ref": "grabowski-job-ca72e7949216",
+          "commit_sha": "75ed056d1433d12bc54d6b7a62617a033af67459",
+          "release_id": "75ed056d1433-srcset84b51dd244b6-locke6664d600b6c-contract8afcc76b890e"
+        },
+        {
+          "kind": "live_task_outbox",
+          "authority": "grabowski",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T005",
+          "source_ref": "grabowski-task-59e70b25df4c4b37872ddca1-a1.service",
+          "run_id": "grabowski_task-59e70b25df4c4b37872ddca1-a1",
+          "content_sha256": "7036779affe17bfaac20df532f1f266167f1e248709d8fdf7f6b788c9daf9499",
+          "event_ids": [
+            "sha256:fccc70bc22a68f792b0e6c74cb185a76312702635618df81483f192ed2d3772d",
+            "sha256:48e2f68452689dd078397d420a9bcf55310cdda9bffbfdfafbba95c9f0342b42"
+          ]
+        },
+        {
+          "kind": "chronik_query_readback",
+          "authority": "chronik",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T005",
+          "source_ref": "agent.ledger.jsonl",
+          "content_sha256": "ad6f5dccffcfe5e8507a25e409b006e8b111bcce7f3daa785dd66f2d6cde43fe",
+          "matched_event_id": "sha256:48e2f68452689dd078397d420a9bcf55310cdda9bffbfdfafbba95c9f0342b42"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "56faabad307c4928acacc54cd028d6feae1369a65782e83f459e3cb46825af9d",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   }
 }

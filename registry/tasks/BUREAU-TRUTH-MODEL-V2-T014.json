@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.bureau-scopes/truth-model-v2",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T014.json"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "component.bureau.truth-model",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github"
+  ],
+  "id": "BUREAU-TRUTH-MODEL-V2-T014",
+  "title": "Make github-observe repository identifiers explicit",
+  "state": "planned",
+  "goal": "Replace the ambiguous github-observe --repo input with explicit machine-readable repository identifier modes so a Bureau resource ID can never reach gh as a malformed OWNER/REPO slug.",
+  "priority": {
+    "lane": "later",
+    "rank": 140
+  },
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "explicit-cli-modes",
+      "assertion": "github-observe exposes mutually exclusive `--repo-slug OWNER/REPO` and `--repo-resource RESOURCE_ID` options. Legacy `--repo` is either removed or retained only through an explicit deprecation path with deterministic diagnostics."
+    },
+    {
+      "id": "slug-before-after",
+      "assertion": "`--repo-slug heimgewebe/bureau` succeeds and preserves the current read-only observer result; `--repo-slug repo.bureau` is rejected locally before gh runs with code unsupported-repository-slug."
+    },
+    {
+      "id": "resource-before-after",
+      "assertion": "`--repo-resource repo.bureau` resolves through authoritative Registry repository metadata to heimgewebe/bureau. Missing or ambiguous mappings fail locally with stable codes and never delegate the raw resource ID to gh."
+    },
+    {
+      "id": "authoritative-mapping",
+      "assertion": "Repository resources gain or reference an explicit GitHub slug field; resolution does not guess from local directory names and does not treat a mutable git remote as Registry authority."
+    },
+    {
+      "id": "machine-readable-diagnostics",
+      "assertion": "JSON output distinguishes unsupported slug shape, missing Registry resource, missing GitHub mapping, ambiguous mapping, GitHub transport failure and observer binding findings with stable codes."
+    },
+    {
+      "id": "compatibility-tests",
+      "assertion": "Tests cover the two successful modes, repo.bureau passed incorrectly as a slug, unknown resource ID, missing mapping, ambiguous options and unavailable GitHub transport without changing task, queue, merge or deployment authority."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-14T15:39:00Z",
+    "source": "Live Bureau optimization audit",
+    "observed_runtime_commit": "7a47d9147a9c8f28ed1c6e8788280af216bf4411",
+    "observed_success": "bureau --root <clean-root> --json github-observe --repo heimgewebe/bureau returned healthy=true and binding_healthy=true.",
+    "observed_failure": "bureau --root <clean-root> --json github-observe --repo repo.bureau delegated the value to gh, which rejected it because OWNER/REPO was required.",
+    "deduplication": "Existing observer tasks own binding observation and guards. No existing task owns the CLI identifier split or authoritative Registry-to-GitHub mapping.",
+    "does_not_establish": [
+      "GitHub write authority",
+      "task completion",
+      "merge readiness",
+      "automatic Registry resource resolution",
+      "permission to broaden accepted identifier forms"
+    ],
+    "reviewed_at": "2026-07-14T16:31:00Z",
+    "review_observation": {
+      "pre_hardening_registry_head": "6364fae23605a67f2f92b7bc377a36ebe738c275",
+      "origin_main": "f6921f1a27813592d8e3087eb2532e66533b024b",
+      "valid_slug_command": "bureau --json github-observe --repo heimgewebe/bureau",
+      "valid_slug_result": "healthy=true; binding_healthy=true",
+      "invalid_resource_as_slug_command": "bureau --json github-observe --repo repo.bureau",
+      "invalid_resource_as_slug_result": "raw gh OWNER/REPO parser error"
+    },
+    "sequencing_reason": "T014 is independent of Lease Contract v2 and therefore intentionally has no dependency on T011. Artificial sequencing would reduce safe parallelism without protecting a shared file, component, process or deploy path.",
+    "path_contract": "Absolute path leases remain intentional host-local effect identities. T014 improves portable repository naming by adding typed Registry-to-GitHub mapping, not by weakening path identity.",
+    "hash_semantics": "T014 is planned and therefore has no terminal verification hashes. Its future execution and closeout must bind the implementation head, diff, tests and current plan hash."
+  }
+}

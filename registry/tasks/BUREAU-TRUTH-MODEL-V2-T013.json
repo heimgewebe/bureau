@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.bureau-scopes/truth-model-v2",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T013.json"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "component.bureau.truth-model",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "id": "BUREAU-TRUTH-MODEL-V2-T013",
+  "title": "Migrate nonterminal legacy Bureau tasks to exact lease scopes",
+  "state": "planned",
+  "goal": "Remove deprecated broad Bureau repository leases from all nonterminal tasks in bounded, reviewed batches while preserving each task's real conflict boundary, binding every proposal to current Registry hashes and refusing speculative bulk rewrites.",
+  "priority": {
+    "lane": "later",
+    "rank": 130
+  },
+  "depends_on": [
+    "BUREAU-TRUTH-MODEL-V2-T011"
+  ],
+  "acceptance": [
+    {
+      "id": "inventory-command",
+      "assertion": "`bureau --json doctor --inventory broad-bureau-leases` emits a stable machine-readable inventory containing task ID, state, lane, finding sources, current task SHA-256, replacement task-file key and unresolved semantic inputs."
+    },
+    {
+      "id": "dry-run-command",
+      "assertion": "`bureau --json migrate-leases --dry-run --batch-size 5` creates a proposal only; it cannot edit Registry files, queue state, claims, runs or leases."
+    },
+    {
+      "id": "hash-bound-plan",
+      "assertion": "Every dry-run batch records Registry base commit, each source task SHA-256, initiative plan SHA-256, proposed file diff SHA-256 and a stable plan SHA-256; apply refuses any drift."
+    },
+    {
+      "id": "scope-by-semantics",
+      "assertion": "Each migrated task receives exact task, initiative, queue, component, runtime or effect-gate resources derived from its actual effects; the migration does not mechanically substitute one generic key."
+    },
+    {
+      "id": "ambiguous-scope-refusal",
+      "assertion": "The planner reports stable refusal codes when files, components, processes, deploy paths or migration paths cannot be derived with sufficient confidence; ambiguous tasks remain unchanged."
+    },
+    {
+      "id": "batch-review",
+      "assertion": "Changes are split into batches of at most five tasks with current hashes, complete diff artifacts, no foreign dirty-worktree mutation and explicit per-task rationale."
+    },
+    {
+      "id": "ready-before-promotion",
+      "assertion": "No affected task may become ready or enter now until its broad lease finding is resolved; planned or blocked tasks may retain warnings while review is pending."
+    },
+    {
+      "id": "doctor-clean",
+      "assertion": "After all reviewed batches, Doctor reports no nonterminal task-uses-broad-bureau-repo-lease findings. Terminal historical records remain unchanged unless separately justified."
+    },
+    {
+      "id": "no-hidden-authority",
+      "assertion": "Inventory, planning and migration grant no queue, claim, dispatch, merge, deployment or verification authority and do not weaken lease rules for other repositories."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-14T15:32:00Z",
+    "source": "Live Bureau Doctor after operational verification of Always-open Lease Contract v2 and before Registry closeout PR #573.",
+    "deduplication": "T003 owns lifecycle/implementation drift and T006 owns backlog revalidation. T013 owns only broad-lease inventory, semantic proposal generation and bounded migration.",
+    "does_not_establish": [
+      "permission for bulk search-and-replace",
+      "safe mutation of terminal historical records",
+      "safe deletion of any worktree",
+      "queue mutation",
+      "task verification",
+      "claim or dispatch authority",
+      "merge or deployment authority"
+    ],
+    "reviewed_at": "2026-07-14T16:31:00Z",
+    "doctor_observation": {
+      "pre_hardening_registry_head": "6364fae23605a67f2f92b7bc377a36ebe738c275",
+      "origin_main": "f6921f1a27813592d8e3087eb2532e66533b024b",
+      "lease_contract_status": "healthy",
+      "lease_scope_findings": 39,
+      "lease_scope_blockers": 0,
+      "queue_findings": 2,
+      "lifecycle_inconsistent": 2,
+      "registry_truth_errors": 0,
+      "registry_truth_warnings": 80,
+      "overall_doctor_healthy": false,
+      "interpretation": "Lease Contract v2 is enforced correctly. Remaining broad-lease findings are nonblocking warnings on nonterminal legacy declarations; overall Doctor health is false for additional queue, lifecycle and historical Registry-truth findings."
+    },
+    "sequencing": {
+      "depends_on": "BUREAU-TRUTH-MODEL-V2-T011",
+      "blocking_for_t011_closeout": false,
+      "reason": "The contract must exist before legacy declarations can be migrated safely."
+    },
+    "path_contract": "Absolute host paths are intentional execution identities in the current Bureau/Grabowski contract. Portability must be introduced through typed repository-resource resolution, not by interpreting relative path leases differently per checkout.",
+    "hash_semantics": "Planned tasks do not carry verification.task_sha256 or plan_sha256. Bureau requires those stamps for verified terminal states; T013 instead requires every generated migration plan to bind current source hashes before any apply effect.",
+    "registration_context": "T013 is introduced in the same Registry PR that closes T011. Its creation does not claim that the closeout PR was already merged at registered_at."
+  }
+}

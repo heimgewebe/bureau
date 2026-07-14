@@ -30,7 +30,7 @@
   ],
   "id": "BUREAU-TRUTH-MODEL-V2-T011",
   "title": "Replace global Bureau work leases with object and component scopes",
-  "state": "planned",
+  "state": "verified",
   "goal": "Keep Bureau intake and independent Registry work available by replacing long-running global repository leases with object, file, component and short effect-gate scopes.",
   "priority": {
     "lane": "later",
@@ -74,9 +74,121 @@
       "claim authority",
       "dispatch authority",
       "merge authority",
-      "deployment authority"
+      "deployment authority",
+      "migration of every nonterminal legacy task declaration",
+      "safe deletion of unclassified or dirty worktrees"
     ],
     "consumer_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T036",
-    "closeout_boundary": "T011 remains planned after the Bureau-side merge and may be verified only after the Grabowski T036 runtime proof is merged and deployed."
+    "closeout_boundary": "Satisfied after Bureau PR #462, Grabowski PR #169, deployed descendant runtimes and live contract probes. Migration of pre-existing nonterminal task declarations is a separate non-blocking follow-up because T011 explicitly requires warnings for legacy planned work and blockers only before ready/now execution.",
+    "verified_at": "2026-07-14T15:32:00Z",
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_always_open_lease_contract_v2",
+      "bureau_implementation": {
+        "pull_request": 462,
+        "head_sha": "68df56dcdf956a83f642d325c20e7a9e5d7e8c68",
+        "merge_commit_sha": "bafd9f0a14215376b699eadf4624c8f761738c38",
+        "ci_python_3_10": "SUCCESS",
+        "ci_python_3_12": "SUCCESS"
+      },
+      "grabowski_consumer": {
+        "pull_request": 169,
+        "head_sha": "1ae02467920cc16358ca91d8c9de70c5c3e9ce5f",
+        "merge_commit_sha": "f6eed48752fd2cf32f070dc69b2112e2498872cb",
+        "deployed_runtime_sha": "a5a5e8d8c9c01b877cff4dd53b8f6a70976ffc88",
+        "runtime_ahead_of_consumer_merge_by": 29,
+        "ci_python_3_10": "SUCCESS",
+        "ci_python_3_12": "SUCCESS"
+      },
+      "bureau_runtime": {
+        "source_commit": "7a47d9147a9c8f28ed1c6e8788280af216bf4411",
+        "release_id": "7a47d9147a9c-src92fab44a3942",
+        "manifest_sha256": "7ad0321a9ea312fbd97fc853a73c3b6d9ecc98a7d6c8440dc54a662024abaad2",
+        "registry_tree_sha256": "5361d057c4219f5a4ec156361f067ceb72e25d7a58be8c3d10ca36077a5906b4",
+        "implementation_merge_commit": "bafd9f0a14215376b699eadf4624c8f761738c38",
+        "relationship_to_implementation_merge": "descendant",
+        "commits_ahead_of_implementation_merge": 151
+      },
+      "validation": {
+        "lease_contract_tests_passed": 12,
+        "doctor_legacy_scope_test_passed": 1,
+        "normal_broad_key_refused_live": true,
+        "parallel_exact_task_scopes_acquired_live": true,
+        "worktree_gate_ttl_seconds": 300,
+        "merge_gate_ttl_seconds": 300,
+        "bounded_emergency_contract_healthy": true,
+        "live_register_read_without_git_lease": true,
+        "reconcile_after_runtime_refresh": "PASS"
+      },
+      "follow_up_task": "BUREAU-TRUTH-MODEL-V2-T013",
+      "follow_up_blocking": false
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "BUREAU-TRUTH-MODEL-V2-T011",
+          "source_ref": "heimgewebe/bureau#462",
+          "number": 462,
+          "head_sha": "68df56dcdf956a83f642d325c20e7a9e5d7e8c68",
+          "merge_commit_sha": "bafd9f0a14215376b699eadf4624c8f761738c38"
+        },
+        {
+          "kind": "test_run",
+          "authority": "local-isolated-clone",
+          "task_id": "BUREAU-TRUTH-MODEL-V2-T011",
+          "source_ref": "tests/test_lease_contract.py@7a47d9147a9c8f28ed1c6e8788280af216bf4411",
+          "commit_sha": "7a47d9147a9c8f28ed1c6e8788280af216bf4411",
+          "result": "PASS",
+          "passed": 12
+        },
+        {
+          "kind": "live_probe",
+          "authority": "grabowski-resource-and-bureau-runtime",
+          "task_id": "BUREAU-TRUTH-MODEL-V2-T011",
+          "source_ref": "live:lease-contract-v2:2026-07-14T15:30Z",
+          "bureau_runtime_sha": "7a47d9147a9c8f28ed1c6e8788280af216bf4411",
+          "grabowski_runtime_sha": "a5a5e8d8c9c01b877cff4dd53b8f6a70976ffc88",
+          "contract_component_sha256": "4d05a41ffea86a811be27838c47b80a2bb532ba72acc9a15e190b7e910e24169"
+        }
+      ]
+    },
+    "verification": {
+      "source": "merged_implementation_ci_deployed_runtime_and_live_smoke",
+      "source_ref": "github-pr:heimgewebe/bureau#462+heimgewebe/grabowski#169",
+      "implementation_sha": "bafd9f0a14215376b699eadf4624c8f761738c38",
+      "consumer_sha": "f6eed48752fd2cf32f070dc69b2112e2498872cb",
+      "live_contract_sha256": "4d05a41ffea86a811be27838c47b80a2bb532ba72acc9a15e190b7e910e24169",
+      "task_sha256": "2593c093ca70b8fa7a3881cbddb0a39292bcf6f390eab3f2bb18cb66d6d7c3a6",
+      "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8"
+    },
+    "verification_note": "Bureau PR #462 and Grabowski PR #169 merged with green Python 3.10/3.12 checks. The live Bureau proof used runtime 7a47d914, a verified main descendant 151 commits ahead of Bureau merge commit bafd9f0a; the different SHAs therefore represent implementation merge evidence and a later deployed main runtime, not conflicting builds. Current deployed descendants passed focused tests and live probes for broad-key refusal, independent exact scopes, short effect gates, bounded emergency recovery and lease-free Live Register reads.",
+    "follow_up": {
+      "task_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "blocking": false,
+      "required_state_at_t011_closeout": "planned",
+      "observed_state_at_t011_closeout": "planned",
+      "reason": "T011 verifies deployment and enforcement of Lease Contract v2. T013 migrates pre-existing nonterminal task declarations; that backlog is outside T011 acceptance and does not invalidate the live contract."
+    },
+    "doctor_semantics": {
+      "lease_contract_enforcement": "satisfied",
+      "legacy_nonterminal_scope_findings": "expected-warning-until-T013",
+      "legacy_ready_or_now_scope_findings": "blocker",
+      "overall_doctor_health_is_not_t011_acceptance": true,
+      "review_observation": {
+        "observed_at": "2026-07-14T16:31:00Z",
+        "registry_head": "6364fae23605a67f2f92b7bc377a36ebe738c275",
+        "origin_main": "f6921f1a27813592d8e3087eb2532e66533b024b",
+        "lease_scope_findings": 39,
+        "lease_scope_blockers": 0,
+        "queue_findings": 2,
+        "lifecycle_inconsistent": 2,
+        "registry_truth_errors": 0,
+        "registry_truth_warnings": 80
+      }
+    }
   }
 }

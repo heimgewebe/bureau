@@ -3,7 +3,7 @@
   "id": "RBV1-T019",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Hash-lock RepoBrief semantic extension dependencies",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 190
@@ -70,7 +70,64 @@
       "absence_of_vulnerabilities",
       "default_promotion_readiness",
       "merge_readiness"
-    ]
+    ],
+    "verified_at": "2026-07-14T18:06:29Z",
+    "implementation_pr": "heimgewebe/lenskit#1008",
+    "implementation_pr_url": "https://github.com/heimgewebe/lenskit/pull/1008",
+    "implementation_pr_head": "3a1e5897b6c5025532276af2f5cdde7366eee7da",
+    "implementation_base": "ac7d35ff987a706e0dde0e042a34873d496c91b2",
+    "implementation_merge_commit": "db2df91a51354cb6972e197afc7456087a43e70b",
+    "diff_sha256": "5ae799ae8e84414a1b5d7c0ef8f70b15b5324991d2b428187ad58b3bb0da64a8",
+    "implementation_paths": [
+      ".github/workflows/semantic-lock.yml",
+      "docs/GETTING_STARTED.md",
+      "docs/contracts/contracts-matrix.md",
+      "docs/proofs/repobrief-semantic-extension-install-20260714.v1.json",
+      "docs/proofs/repobrief-semantic-extension-lock-v1-proof.md",
+      "docs/release/release-policy.md",
+      "docs/release/semantic-extension-platforms.v1.json",
+      "docs/status/repobrief-status-truth.v1.json",
+      "docs/tasks/board.md",
+      "docs/tasks/index.json",
+      "docs/testing/test-matrix.md",
+      "merger/lenskit/contracts/repobrief-release-candidate.v1.schema.json",
+      "merger/lenskit/contracts/repobrief-semantic-platforms.v1.schema.json",
+      "merger/lenskit/requirements-semantic.txt",
+      "merger/lenskit/retrieval/README.md",
+      "merger/lenskit/tests/test_release_packaging.py",
+      "merger/lenskit/tests/test_semantic_extension_lock.py",
+      "requirements/repobrief-semantic-linux-x86_64-py312.constraints.txt",
+      "requirements/repobrief-semantic-linux-x86_64-py312.in",
+      "requirements/repobrief-semantic-linux-x86_64-py312.lock.txt",
+      "scripts/release/build_release_candidate.py",
+      "scripts/release/check_release_contract.py",
+      "scripts/release/compile_semantic_lock.py",
+      "scripts/release/compile_semantic_lock.sh",
+      "scripts/release/verify_release_candidate.py"
+    ],
+    "validation": [
+      "25 focused semantic-lock and release-packaging tests passed.",
+      "CI-equivalent suite: 3945 passed, 1 skipped, 13 deselected.",
+      "The release contract passed under python -S without site packages.",
+      "Ruff passed for all changed Python files.",
+      "Maintainability ratchet passed with zero new violations and one baseline violation resolved.",
+      "The CPython 3.12.3/Linux x86-64 lock reproduced exactly with 58 selected wheel artifacts and unchanged SHA-256 identities.",
+      "A real --require-hashes installation into an existing empty target passed; sentence-transformers 5.6.0 and torch 2.13.0+cpu imported offline, CUDA was unavailable and no model was downloaded.",
+      "Two deterministic release candidates matched for head 3a1e5897b6c5025532276af2f5cdde7366eee7da: archive SHA-256 c33ffcbdd0fcbb31b06dd6ee33539e7f093c2eb01c6063192fc427824182044a; manifest SHA-256 7b56ce4f30eeab72111e1c708e0926d06d635c1fd46cee3182ee2fc07c6cd1c8.",
+      "GitHub PR #1008 checks passed, including pytest-full, semantic-lock, release-candidate, browser-tests, Ruff, CodeQL, contracts, planning-registration and anti-hallucination lint.",
+      "Post-merge readback confirmed Lenskit main at db2df91a51354cb6972e197afc7456087a43e70b and the complete merge tree byte-identical to the reviewed PR head."
+    ],
+    "outcome": "Implemented, critically reviewed, hardened, merged and post-merge verified in Lenskit PR #1008. The optional semantic extension now has one explicit fail-closed CPython 3.12/Linux x86-64/CPU-only platform contract, an exact 58-wheel SHA-256 lock, deterministic regeneration and installation proof, release-candidate binding, non-destructive target handling and a site-package-independent release gate. It remains outside RepoBrief core and disabled by default.",
+    "verified_acceptance": {
+      "rbv1-t019-platform-matrix": "The versioned contract supports only CPython 3.12 on Linux x86-64 with CPU-only selected wheels; all other observed targets are rejected fail-closed.",
+      "rbv1-t019-hash-lock": "The 58-package sentence-transformers/Torch closure is exactly versioned, bound to selected wheel URLs and one SHA-256 per package, reproducibly regenerated and installed with --require-hashes.",
+      "rbv1-t019-boundary": "Core runtime locks contain neither sentence-transformers nor Torch; the release contract and tests require default_enabled=false and prohibit implicit core, snapshot-read or default-ranking dependency status.",
+      "rbv1-t019-non-claims": "Proofs and runtime receipts explicitly do not establish semantic quality, cross-platform completeness, vulnerability absence, GPU support, model licensing or readiness for default promotion."
+    },
+    "verification": {
+      "task_sha256": "f07d0ea2ce3aedbd01cc44531ddc53d468bb4502760ac0e5aae0292dcb1c46e8",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   },
   "depends_on": [
     "RBV1-T017"

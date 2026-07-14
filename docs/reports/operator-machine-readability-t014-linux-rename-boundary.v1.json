@@ -1,0 +1,96 @@
+{
+  "acceptance_mapping": {
+    "deterministic_reproduction": "post-rename observation hook used only by tests",
+    "internal_recovery_identity": "apply and rollback failure compensation reuse the identity-bound helper with the previously recorded effect device/inode",
+    "multi_entry_and_idempotence": "focused tests cover exact prior-entry compensation after internal-recovery interference and legacy schema-2 rerun/rollback",
+    "primitive_analysis": "runtime_contract.capabilities",
+    "symmetric_apply_rollback": "apply, explicit rollback, and both internal recovery directions use the same identity-bound helper",
+    "synthetic_only": "all race proofs use pytest temporary directories; active Bureau state is not migrated",
+    "wrong_inode_safety": "moved identity is captured before rename and compensation requires exact device/inode"
+  },
+  "decision": {
+    "enforceable_kernel_compare_and_rename": false,
+    "failure_mode": "typed fail-closed incomplete recovery that preserves replacement evidence",
+    "schema_transition": "Plan and receipt schema stay at 2. New records bind effect_boundary; older schema-2 records remain usable under the stronger runtime guard without rewriting their hashes.",
+    "selected_implementation": "preopened O_PATH no-follow inode identity, exact post-effect check, exact-identity-only compensation, cooperative exclusive directory flock"
+  },
+  "kind": "operator_machine_readability_t014_linux_rename_boundary_analysis",
+  "method": {
+    "claim_policy": "No interface is treated as conditional expected-inode rename unless it atomically couples the name mutation to a caller-supplied device/inode identity.",
+    "local_probe": {
+      "directory_flock_supported": true,
+      "platform": "linux",
+      "second_descriptor_blocked_nonblocking": true
+    },
+    "primary_interfaces": [
+      "renameat2(2)",
+      "openat2(2)",
+      "open_by_handle_at(2)",
+      "flock(2)",
+      "inotify(7)",
+      "fanotify(7)"
+    ]
+  },
+  "residual_risk_owner": "Uncooperative same-privilege writers remain outside mandatory flock exclusion. Crash and power-loss recovery remains OPERATOR-MACHINE-READABILITY-V1-T015.",
+  "runtime_contract": {
+    "capabilities": {
+      "file_handle": {
+        "can_identify_or_reopen_inode": true,
+        "conditional_expected_inode_rename": false,
+        "portable_unprivileged_contract": false
+      },
+      "filesystem_watch": {
+        "detects_changes": true,
+        "prevents_rename_atomically": false
+      },
+      "flock_or_file_lease": {
+        "cooperative_exclusion": true,
+        "mandatory_against_same_privilege_actor": false
+      },
+      "opath_descriptor": {
+        "holds_inode_identity": true,
+        "renames_by_descriptor": false
+      },
+      "openat2": {
+        "conditional_expected_inode_rename": false,
+        "path_resolution_constraints": true
+      },
+      "renameat2": {
+        "available_semantics": [
+          "noreplace",
+          "exchange",
+          "whiteout"
+        ],
+        "conditional_expected_inode": false
+      }
+    },
+    "does_not_establish": [
+      "mandatory_exclusion_of_uncooperative_writers",
+      "kernel_atomic_compare_and_rename",
+      "crash_or_power_loss_recovery",
+      "permission_to_delete_or_overwrite_interfering_objects"
+    ],
+    "guarantees": [
+      "source device and inode are captured from an O_PATH no-follow descriptor before rename",
+      "post-effect source absence and destination device/inode equality are required",
+      "compensation acts only on the pre-captured expected device/inode",
+      "cooperating Bureau mutators hold nonblocking exclusive directory flocks",
+      "unsupported primitives fail closed without a path-based fallback"
+    ],
+    "kind": "bureau_state_root_final_component_boundary",
+    "reason_code": "conditional-name-to-inode-rename-unavailable",
+    "residual_risks": [
+      "Linux exposes no atomic rename-if-name-still-refers-to-expected-inode primitive",
+      "an uncooperative same-privilege process can ignore advisory directory flocks",
+      "interference can leave an evidence-preserving split state that requires bounded recovery",
+      "crash and power-loss durability require the separate recovery-journal contract"
+    ],
+    "schema_version": 1,
+    "selected_mode": "preopened-inode-plus-directory-flock-v1",
+    "status": "residual-risk",
+    "support_error": null
+  },
+  "schema_version": 1,
+  "scope": "Linux final-component rename identity boundary for Bureau state-root apply, explicit rollback, and internal failure compensation",
+  "task_id": "OPERATOR-MACHINE-READABILITY-V1-T014"
+}

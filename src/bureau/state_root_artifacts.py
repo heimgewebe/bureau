@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import errno
+import fcntl
 import hashlib
 import json
 import os
@@ -23,6 +24,8 @@ MIGRATION_RECEIPT_SCHEMA_VERSION = 2
 MIGRATION_PLAN_COMMAND = "state-root-artifacts-migration-plan"
 MIGRATION_APPLY_COMMAND = "state-root-artifacts-migration-apply"
 MIGRATION_ROLLBACK_COMMAND = "state-root-artifacts-migration-rollback"
+FINAL_COMPONENT_INTERFERENCE = "final-component-identity-interference"
+_EFFECT_BOUNDARY_SCHEMA_VERSION = 1
 
 _COMPLETION_BUNDLE_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}")
 _COMPLETION_MAX_COUNT = 128
@@ -68,11 +71,81 @@ def _descriptor_relative_support_error() -> str | None:
         return "Linux is required"
     if any(function not in os.supports_dir_fd for function in required):
         return "required dir_fd operations are unavailable"
-    if not hasattr(os, "O_DIRECTORY") or not hasattr(os, "O_NOFOLLOW"):
-        return "O_DIRECTORY or O_NOFOLLOW is unavailable"
+    if not all(hasattr(os, name) for name in ("O_DIRECTORY", "O_NOFOLLOW", "O_PATH")):
+        return "O_DIRECTORY, O_NOFOLLOW or O_PATH is unavailable"
     if not Path("/proc/self/fd").is_dir():
         return "/proc/self/fd is unavailable"
     return None
+
+
+def state_root_effect_boundary_contract() -> dict[str, Any]:
+    """Describe the strongest available final-component mutation boundary."""
+
+    support_error = _descriptor_relative_support_error()
+    return {
+        "schema_version": _EFFECT_BOUNDARY_SCHEMA_VERSION,
+        "kind": "bureau_state_root_final_component_boundary",
+        "status": "unsupported" if support_error else "residual-risk",
+        "reason_code": (
+            "platform-contract-unavailable"
+            if support_error
+            else "conditional-name-to-inode-rename-unavailable"
+        ),
+        "support_error": support_error,
+        "selected_mode": (None if support_error else "preopened-inode-plus-directory-flock-v1"),
+        "capabilities": {
+            "renameat2": {
+                "available_semantics": ["noreplace", "exchange", "whiteout"],
+                "conditional_expected_inode": False,
+            },
+            "openat2": {
+                "path_resolution_constraints": True,
+                "conditional_expected_inode_rename": False,
+            },
+            "opath_descriptor": {
+                "holds_inode_identity": True,
+                "renames_by_descriptor": False,
+            },
+            "file_handle": {
+                "can_identify_or_reopen_inode": True,
+                "conditional_expected_inode_rename": False,
+                "portable_unprivileged_contract": False,
+            },
+            "flock_or_file_lease": {
+                "cooperative_exclusion": True,
+                "mandatory_against_same_privilege_actor": False,
+            },
+            "filesystem_watch": {
+                "detects_changes": True,
+                "prevents_rename_atomically": False,
+            },
+        },
+        "guarantees": [
+            (
+                "source device and inode are captured from an O_PATH no-follow "
+                "descriptor before rename"
+            ),
+            "post-effect source absence and destination device/inode equality are required",
+            "compensation acts only on the pre-captured expected device/inode",
+            "cooperating Bureau mutators hold nonblocking exclusive directory flocks",
+            "unsupported primitives fail closed without a path-based fallback",
+        ],
+        "residual_risks": [
+            "Linux exposes no atomic rename-if-name-still-refers-to-expected-inode primitive",
+            "an uncooperative same-privilege process can ignore advisory directory flocks",
+            (
+                "interference can leave an evidence-preserving split state that "
+                "requires bounded recovery"
+            ),
+            "crash and power-loss durability require the separate recovery-journal contract",
+        ],
+        "does_not_establish": [
+            "mandatory_exclusion_of_uncooperative_writers",
+            "kernel_atomic_compare_and_rename",
+            "crash_or_power_loss_recovery",
+            "permission_to_delete_or_overwrite_interfering_objects",
+        ],
+    }
 
 
 def _require_descriptor_relative_mutation() -> None:
@@ -188,9 +261,7 @@ def _assert_directory_child_matches_anchor(
     except FileNotFoundError as exc:
         raise legacy.StateError(f"{role} directory child is missing") from exc
     except OSError as exc:
-        raise legacy.StateError(
-            f"cannot inspect {role} directory child: {exc}"
-        ) from exc
+        raise legacy.StateError(f"cannot inspect {role} directory child: {exc}") from exc
     if (
         stat.S_ISLNK(info.st_mode)
         or not stat.S_ISDIR(info.st_mode)
@@ -256,6 +327,189 @@ def _rename_at(
         src_dir_fd=source_descriptor,
         dst_dir_fd=destination_descriptor,
     )
+
+
+def _entry_open_flags() -> int:
+    return os.O_PATH | os.O_CLOEXEC | os.O_NOFOLLOW
+
+
+@contextmanager
+def _open_entry_identity(
+    parent_descriptor: int,
+    name: str,
+    *,
+    role: str,
+):
+    _require_descriptor_relative_mutation()
+    if Path(name).name != name or name in {"", ".", ".."}:
+        raise legacy.StateError(f"{role} entry name is invalid")
+    try:
+        descriptor = os.open(
+            name,
+            _entry_open_flags(),
+            dir_fd=parent_descriptor,
+        )
+    except OSError as exc:
+        raise legacy.StateError(f"cannot open {role} entry identity: {exc}") from exc
+    try:
+        info = os.fstat(descriptor)
+        if stat.S_ISLNK(info.st_mode):
+            raise legacy.StateError(f"{role} entry is symlinked")
+        yield descriptor, info
+    finally:
+        os.close(descriptor)
+
+
+@contextmanager
+def _exclusive_directory_locks(*descriptors: int):
+    """Hold cooperative exclusive locks in deterministic inode order."""
+
+    unique: dict[tuple[int, int], int] = {}
+    for descriptor in descriptors:
+        info = os.fstat(descriptor)
+        unique.setdefault((int(info.st_dev), int(info.st_ino)), descriptor)
+    ordered = sorted(unique.items())
+    acquired: list[tuple[tuple[int, int], int]] = []
+    try:
+        for identity, descriptor in ordered:
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError as exc:
+                raise legacy.StateError(
+                    "state-root effect coordination unavailable: directory-lock-busy "
+                    f"device={identity[0]} inode={identity[1]}"
+                ) from exc
+            except OSError as exc:
+                raise legacy.StateError(
+                    "state-root effect coordination unavailable: directory-lock-error "
+                    f"device={identity[0]} inode={identity[1]}: {exc}"
+                ) from exc
+            acquired.append((identity, descriptor))
+        yield
+    finally:
+        for _, descriptor in reversed(acquired):
+            with suppress(OSError):
+                fcntl.flock(descriptor, fcntl.LOCK_UN)
+
+
+def _post_rename_observation_hook(
+    *,
+    phase: str,
+    source_descriptor: int,
+    source_name: str,
+    destination_descriptor: int,
+    destination_name: str,
+    expected_device: int,
+    expected_inode: int,
+) -> None:
+    """Deterministic test hook at the otherwise unobservable syscall boundary."""
+
+
+def _assert_post_rename_identity(
+    *,
+    phase: str,
+    source_descriptor: int,
+    source_name: str,
+    destination_descriptor: int,
+    destination_name: str,
+    expected_info: os.stat_result,
+) -> None:
+    source_info = _lstat_at(source_descriptor, source_name)
+    destination_info = _lstat_at(destination_descriptor, destination_name)
+    expected_device = int(expected_info.st_dev)
+    expected_inode = int(expected_info.st_ino)
+    if source_info is not None:
+        raise legacy.StateError(
+            f"{FINAL_COMPONENT_INTERFERENCE}: {phase} source name reappeared "
+            f"after rename: {source_name}"
+        )
+    if destination_info is None or stat.S_ISLNK(destination_info.st_mode):
+        raise legacy.StateError(
+            f"{FINAL_COMPONENT_INTERFERENCE}: {phase} destination disappeared "
+            f"or became symlinked: {destination_name}"
+        )
+    observed = (int(destination_info.st_dev), int(destination_info.st_ino))
+    expected = (expected_device, expected_inode)
+    if observed != expected:
+        raise legacy.StateError(
+            f"{FINAL_COMPONENT_INTERFERENCE}: {phase} destination identity mismatch "
+            f"for {destination_name}: expected device={expected_device} "
+            f"inode={expected_inode}, observed device={observed[0]} inode={observed[1]}"
+        )
+
+
+def _identity_bound_rename(
+    *,
+    phase: str,
+    source_descriptor: int,
+    source_name: str,
+    destination_descriptor: int,
+    destination_name: str,
+    record: dict[str, Any],
+    moved: list[dict[str, Any]],
+    status: str,
+    expected_identity: tuple[int, int] | None = None,
+) -> dict[str, Any]:
+    """Rename one entry without ever trusting a post-rename replacement inode."""
+
+    with (
+        _exclusive_directory_locks(source_descriptor, destination_descriptor),
+        _open_entry_identity(
+            source_descriptor,
+            source_name,
+            role=f"{phase} source",
+        ) as (_, expected_info),
+    ):
+        observed_identity = (int(expected_info.st_dev), int(expected_info.st_ino))
+        if expected_identity is not None and observed_identity != expected_identity:
+            raise legacy.StateError(
+                f"{FINAL_COMPONENT_INTERFERENCE}: {phase} source identity no longer "
+                f"matches recorded effect: expected device={expected_identity[0]} "
+                f"inode={expected_identity[1]}, observed device={observed_identity[0]} "
+                f"inode={observed_identity[1]}"
+            )
+        current = _lstat_at(source_descriptor, source_name)
+        if current is None or stat.S_ISLNK(current.st_mode):
+            raise legacy.StateError(f"{phase} source changed before effect")
+        if int(current.st_dev) != int(expected_info.st_dev) or int(current.st_ino) != int(
+            expected_info.st_ino
+        ):
+            raise legacy.StateError(
+                f"{FINAL_COMPONENT_INTERFERENCE}: {phase} source identity changed before rename"
+            )
+        if _lstat_at(destination_descriptor, destination_name) is not None:
+            raise legacy.StateError(f"{phase} destination gained a collision")
+        _rename_at(
+            source_descriptor,
+            source_name,
+            destination_descriptor,
+            destination_name,
+        )
+        moved_record = {
+            **record,
+            "effect_device": int(expected_info.st_dev),
+            "effect_inode": int(expected_info.st_ino),
+            "status": status,
+        }
+        moved.append(moved_record)
+        _post_rename_observation_hook(
+            phase=phase,
+            source_descriptor=source_descriptor,
+            source_name=source_name,
+            destination_descriptor=destination_descriptor,
+            destination_name=destination_name,
+            expected_device=int(expected_info.st_dev),
+            expected_inode=int(expected_info.st_ino),
+        )
+        _assert_post_rename_identity(
+            phase=phase,
+            source_descriptor=source_descriptor,
+            source_name=source_name,
+            destination_descriptor=destination_descriptor,
+            destination_name=destination_name,
+            expected_info=expected_info,
+        )
+        return moved_record
 
 
 def _anchor_bundle(plan: dict[str, Any]) -> dict[str, Any]:
@@ -675,6 +929,7 @@ def managed_state_root_inventory(state_root: Path) -> dict[str, Any]:
         "observed_at": observed_at,
         "entries": entries,
         "healthy": all(item["valid"] for item in entries),
+        "effect_boundary": state_root_effect_boundary_contract(),
         "does_not_establish": [
             "task_completion",
             "merge_readiness",
@@ -1022,6 +1277,7 @@ def state_root_migration_plan(
             "no_follow": True,
             "silent_fallback": False,
         },
+        "effect_boundary": state_root_effect_boundary_contract(),
         "entries": entries,
         "entries_sha256": entries_sha256,
         "review": {
@@ -1040,6 +1296,8 @@ def state_root_migration_plan(
             "Every source identity and the reviewed plan file remain unchanged.",
             "No source has a repository reference or active process reference.",
             "Effects use no-follow directory descriptors and same-filesystem renameat semantics.",
+            "Cooperating mutators hold exclusive nonblocking locks on both effect directories.",
+            "The expected source device/inode is held open before rename and must match after it.",
             "Apply compensates moves from this run and removes its empty created "
             "directories on failure.",
         ],
@@ -1049,7 +1307,8 @@ def state_root_migration_plan(
             "content_authority",
             "future_reference_or_process_absence",
             "cleanup_authority_without_review",
-            "protection_against_final_entry_replacement_between_last_stat_and_renameat",
+            "mandatory_exclusion_of_uncooperative_same_privilege_writers",
+            "kernel_atomic_compare_and_rename",
             "crash_or_power_loss_atomicity_without_a_durable_recovery_journal",
         ],
     }
@@ -1170,6 +1429,9 @@ def _validate_migration_paths(
         "silent_fallback": False,
     }:
         raise legacy.StateError("migration platform contract is invalid")
+    effect_boundary = plan.get("effect_boundary")
+    if effect_boundary is not None and effect_boundary != state_root_effect_boundary_contract():
+        raise legacy.StateError("migration effect-boundary contract is invalid")
     layout = plan.get("destination_layout")
     if not isinstance(layout, dict):
         raise legacy.StateError("migration destination layout is missing")
@@ -1432,6 +1694,10 @@ def _validated_apply_receipt(
         or receipt.get("reference_root") != plan.get("reference_root")
         or receipt.get("destination_layout") != plan.get("destination_layout")
         or receipt.get("platform_contract") != plan.get("platform_contract")
+        or (
+            plan.get("effect_boundary") is not None
+            and receipt.get("effect_boundary") != plan.get("effect_boundary")
+        )
         or not isinstance(receipt_anchors, dict)
         or not isinstance(plan_anchors, dict)
         or any(receipt_anchors.get(key) != value for key, value in plan_anchors.items())
@@ -1498,6 +1764,7 @@ def _rollback_moved_entries(
     cause: Exception,
     source_descriptor: int,
     destination_descriptor: int,
+    phase: str,
 ) -> None:
     rollback: list[dict[str, Any]] = []
     for item in reversed(moved):
@@ -1506,33 +1773,38 @@ def _rollback_moved_entries(
         restored = False
         error = None
         try:
-            source_info = _lstat_at(source_descriptor, source_name)
-            destination_info = _lstat_at(destination_descriptor, destination_name)
             effect_device = item.get("effect_device")
             effect_inode = item.get("effect_inode")
-            if (
-                source_info is None
-                and destination_info is not None
-                and not stat.S_ISLNK(destination_info.st_mode)
-                and isinstance(effect_device, int)
-                and isinstance(effect_inode, int)
-                and int(destination_info.st_dev) == effect_device
-                and int(destination_info.st_ino) == effect_inode
-            ):
-                _rename_at(
-                    destination_descriptor,
-                    destination_name,
-                    source_descriptor,
-                    source_name,
+            if not isinstance(effect_device, int) or not isinstance(effect_inode, int):
+                raise legacy.StateError(
+                    f"{FINAL_COMPONENT_INTERFERENCE}: {phase} lacks recorded effect identity"
                 )
-                restored = True
-        except Exception as rollback_exc:  # pragma: no cover
+            compensated: list[dict[str, Any]] = []
+            _identity_bound_rename(
+                phase=phase,
+                source_descriptor=destination_descriptor,
+                source_name=destination_name,
+                destination_descriptor=source_descriptor,
+                destination_name=source_name,
+                record={
+                    "source": item["destination"],
+                    "destination": item["source"],
+                    "entry_sha256": item["entry_sha256"],
+                },
+                moved=compensated,
+                status="compensated",
+                expected_identity=(effect_device, effect_inode),
+            )
+            restored = True
+        except Exception as rollback_exc:
             error = f"{type(rollback_exc).__name__}: {rollback_exc}"
         rollback.append(
             {
                 "source": item["destination"],
                 "destination": item["source"],
                 "entry_sha256": item["entry_sha256"],
+                "effect_device": item.get("effect_device"),
+                "effect_inode": item.get("effect_inode"),
                 "restored": restored,
                 "error": error,
             }
@@ -1550,6 +1822,7 @@ def _recover_failed_effect(
     cause: Exception,
     source_descriptor: int,
     destination_descriptor: int,
+    compensation_phase: str,
     created: list[dict[str, Any]] | None = None,
 ) -> None:
     failures: list[str] = []
@@ -1559,6 +1832,7 @@ def _recover_failed_effect(
             cause=cause,
             source_descriptor=source_descriptor,
             destination_descriptor=destination_descriptor,
+            phase=compensation_phase,
         )
     except Exception as exc:
         failures.append(f"compensation: {type(exc).__name__}: {exc}")
@@ -1678,9 +1952,7 @@ def apply_state_root_migration_plan(path: Path) -> dict[str, Any]:
         )
         destination_root_anchor = created[-1]["anchor"]
         destination_root_parent_anchor = (
-            created[-2]["anchor"]
-            if len(created) > 1
-            else anchors["destination_base"]
+            created[-2]["anchor"] if len(created) > 1 else anchors["destination_base"]
         )
         _assert_plan_directory_paths_current(descriptors, anchors)
         _assert_created_destination_paths_current(created)
@@ -1777,26 +2049,20 @@ def apply_state_root_migration_plan(path: Path) -> dict[str, Any]:
                 if references or processes:
                     raise legacy.StateError(f"migration source gained references: {item['source']}")
                 _require_same_filesystem(source_info, destination_descriptor)
-                _rename_at(
-                    descriptors["state_root"],
-                    item["source_name"],
-                    destination_descriptor,
-                    item["destination_name"],
+                moved = _identity_bound_rename(
+                    phase="migration-apply",
+                    source_descriptor=descriptors["state_root"],
+                    source_name=item["source_name"],
+                    destination_descriptor=destination_descriptor,
+                    destination_name=item["destination_name"],
+                    record={
+                        "source": item["source"],
+                        "destination": item["destination"],
+                        "entry_sha256": item["entry_sha256"],
+                    },
+                    moved=moved_this_run,
+                    status="moved",
                 )
-                effect_info = _lstat_at(destination_descriptor, item["destination_name"])
-                if effect_info is None or stat.S_ISLNK(effect_info.st_mode):
-                    raise legacy.StateError(
-                        f"migration effect disappeared or became symlinked: {item['destination']}"
-                    )
-                moved = {
-                    "source": item["source"],
-                    "destination": item["destination"],
-                    "entry_sha256": item["entry_sha256"],
-                    "effect_device": int(effect_info.st_dev),
-                    "effect_inode": int(effect_info.st_ino),
-                    "status": "moved",
-                }
-                moved_this_run.append(moved)
                 applied.append(
                     {
                         key: value
@@ -1836,6 +2102,7 @@ def apply_state_root_migration_plan(path: Path) -> dict[str, Any]:
                 "reference_root": str(reference_root),
                 "destination_layout": plan["destination_layout"],
                 "platform_contract": plan["platform_contract"],
+                "effect_boundary": state_root_effect_boundary_contract(),
                 "directory_anchors": receipt_anchors,
                 "entries_sha256": plan["entries_sha256"],
                 "entries": applied,
@@ -1865,6 +2132,7 @@ def apply_state_root_migration_plan(path: Path) -> dict[str, Any]:
                 cause=exc,
                 source_descriptor=descriptors["state_root"],
                 destination_descriptor=destination_descriptor,
+                compensation_phase="migration-apply-compensation",
                 created=created,
             )
             raise
@@ -2047,26 +2315,20 @@ def rollback_state_root_migration(receipt_path: Path) -> dict[str, Any]:
                         f"rollback source changed before effect: {item['source']}"
                     )
                 _require_same_filesystem(source_info, descriptors["state_root"])
-                _rename_at(
-                    destination_descriptor,
-                    item["source_name"],
-                    descriptors["state_root"],
-                    item["destination_name"],
+                moved = _identity_bound_rename(
+                    phase="migration-rollback",
+                    source_descriptor=destination_descriptor,
+                    source_name=item["source_name"],
+                    destination_descriptor=descriptors["state_root"],
+                    destination_name=item["destination_name"],
+                    record={
+                        "source": item["source"],
+                        "destination": item["destination"],
+                        "entry_sha256": item["entry_sha256"],
+                    },
+                    moved=moved_this_run,
+                    status="restored",
                 )
-                effect_info = _lstat_at(descriptors["state_root"], item["destination_name"])
-                if effect_info is None or stat.S_ISLNK(effect_info.st_mode):
-                    raise legacy.StateError(
-                        f"rollback effect disappeared or became symlinked: {item['destination']}"
-                    )
-                moved = {
-                    "source": item["source"],
-                    "destination": item["destination"],
-                    "entry_sha256": item["entry_sha256"],
-                    "effect_device": int(effect_info.st_dev),
-                    "effect_inode": int(effect_info.st_ino),
-                    "status": "restored",
-                }
-                moved_this_run.append(moved)
                 restored.append(
                     {
                         key: value
@@ -2096,6 +2358,7 @@ def rollback_state_root_migration(receipt_path: Path) -> dict[str, Any]:
                 cause=exc,
                 source_descriptor=destination_descriptor,
                 destination_descriptor=descriptors["state_root"],
+                compensation_phase="migration-rollback-compensation",
             )
             raise
 

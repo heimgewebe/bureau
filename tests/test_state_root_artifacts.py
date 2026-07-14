@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 import os
@@ -433,7 +434,7 @@ def test_migration_plan_binds_directory_anchors_and_platform_contract(tmp_path):
     assert result["entries"][0]["destination"] == str(destination / "artifact.txt")
 
 
-def test_apply_rejects_and_compensates_final_entry_replacement(tmp_path, monkeypatch):
+def test_apply_never_compensates_wrong_inode_swapped_before_rename(tmp_path, monkeypatch):
     state_root, destination, plan_path, _ = write_plan(tmp_path)
     review_plan(plan_path)
     reviewed_entry = state_root / "artifact.txt"
@@ -446,19 +447,19 @@ def test_apply_rejects_and_compensates_final_entry_replacement(tmp_path, monkeyp
         if not swapped:
             swapped = True
             os.rename(reviewed_entry, parked_entry)
-            reviewed_entry.write_text("content for artifact.txt\n", encoding="utf-8")
+            reviewed_entry.write_text("replacement inode\n", encoding="utf-8")
         return original_rename(
             source_descriptor, source_name, destination_descriptor, destination_name
         )
 
     monkeypatch.setattr(state_root_artifacts, "_rename_at", replace_entry)
-    with pytest.raises(legacy.StateError, match="destination identity mismatch"):
+    with pytest.raises(legacy.StateError, match="incomplete recovery"):
         apply_state_root_migration_plan(plan_path)
 
     assert parked_entry.read_text(encoding="utf-8") == "content for artifact.txt\n"
-    assert reviewed_entry.read_text(encoding="utf-8") == "content for artifact.txt\n"
-    assert parked_entry.stat().st_ino != reviewed_entry.stat().st_ino
-    assert not destination.exists()
+    assert not reviewed_entry.exists()
+    assert (destination / "artifact.txt").read_text(encoding="utf-8") == "replacement inode\n"
+    assert not plan_path.with_name(f"{plan_path.name}.receipt.json").exists()
 
 
 def test_apply_compensates_source_ancestor_replacement(tmp_path, monkeypatch):
@@ -750,7 +751,6 @@ def test_plan_refuses_symlink_source(tmp_path):
         )
 
 
-
 def test_receipt_binds_destination_root_and_direct_parent(tmp_path):
     state_root, destination, plan_path, _ = write_plan(tmp_path)
     review_plan(plan_path)
@@ -788,6 +788,7 @@ def test_rollback_rejects_replaced_direct_destination_parent(tmp_path):
     assert (reviewed_parent / "run-1" / "artifact.txt").exists()
     assert (destination / "artifact.txt").read_text(encoding="utf-8") == "decoy\n"
 
+
 def test_cli_classifies_read_and_effect_paths():
     read = parser().parse_args(["state-root-artifacts"])
     write = parser().parse_args(
@@ -804,3 +805,328 @@ def test_cli_classifies_read_and_effect_paths():
 
     assert _command_mutates(read) is False
     assert _command_mutates(write) is True
+
+
+def test_inventory_exposes_final_component_residual_risk(tmp_path):
+    report = managed_state_root_inventory(tmp_path)
+    boundary = report["effect_boundary"]
+
+    assert boundary["schema_version"] == 1
+    assert boundary["status"] == "residual-risk"
+    assert boundary["reason_code"] == "conditional-name-to-inode-rename-unavailable"
+    assert boundary["selected_mode"] == "preopened-inode-plus-directory-flock-v1"
+    assert boundary["capabilities"]["renameat2"]["conditional_expected_inode"] is False
+    assert "mandatory_exclusion_of_uncooperative_writers" in boundary["does_not_establish"]
+
+
+def test_apply_fails_closed_when_cooperative_directory_lock_is_busy(tmp_path):
+    state_root, destination, plan_path, _ = write_plan(tmp_path)
+    review_plan(plan_path)
+    descriptor = os.open(state_root, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+    try:
+        fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with pytest.raises(legacy.StateError, match="directory-lock-busy"):
+            apply_state_root_migration_plan(plan_path)
+    finally:
+        os.close(descriptor)
+
+    assert (state_root / "artifact.txt").exists()
+    assert not destination.exists()
+    assert not plan_path.with_name(f"{plan_path.name}.receipt.json").exists()
+
+
+def test_apply_detects_post_rename_destination_replacement_without_touching_decoy(
+    tmp_path, monkeypatch
+):
+    state_root, destination, plan_path, _ = write_plan(tmp_path)
+    review_plan(plan_path)
+    parked = destination / "artifact.expected"
+    replaced = False
+
+    def replace_after_rename(**event):
+        nonlocal replaced
+        if event["phase"] == "migration-apply" and not replaced:
+            replaced = True
+            (destination / "artifact.txt").rename(parked)
+            (destination / "artifact.txt").write_text("decoy\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        state_root_artifacts,
+        "_post_rename_observation_hook",
+        replace_after_rename,
+    )
+    with pytest.raises(legacy.StateError, match="incomplete recovery") as caught:
+        apply_state_root_migration_plan(plan_path)
+
+    assert state_root_artifacts.FINAL_COMPONENT_INTERFERENCE in str(caught.value)
+    assert not (state_root / "artifact.txt").exists()
+    assert parked.read_text(encoding="utf-8") == "content for artifact.txt\n"
+    assert (destination / "artifact.txt").read_text(encoding="utf-8") == "decoy\n"
+    assert not plan_path.with_name(f"{plan_path.name}.receipt.json").exists()
+
+
+def test_apply_detects_post_rename_source_reappearance_without_overwrite(tmp_path, monkeypatch):
+    state_root, destination, plan_path, _ = write_plan(tmp_path)
+    review_plan(plan_path)
+    recreated = False
+
+    def recreate_source_after_rename(**event):
+        nonlocal recreated
+        if event["phase"] == "migration-apply" and not recreated:
+            recreated = True
+            (state_root / "artifact.txt").write_text("new source\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        state_root_artifacts,
+        "_post_rename_observation_hook",
+        recreate_source_after_rename,
+    )
+    with pytest.raises(legacy.StateError, match="incomplete recovery"):
+        apply_state_root_migration_plan(plan_path)
+
+    assert (state_root / "artifact.txt").read_text(encoding="utf-8") == "new source\n"
+    assert (destination / "artifact.txt").read_text(encoding="utf-8") == (
+        "content for artifact.txt\n"
+    )
+    assert not plan_path.with_name(f"{plan_path.name}.receipt.json").exists()
+
+
+def test_rollback_detects_post_rename_destination_replacement_without_touching_decoy(
+    tmp_path, monkeypatch
+):
+    state_root, destination, plan_path, _ = write_plan(tmp_path)
+    review_plan(plan_path)
+    applied = apply_state_root_migration_plan(plan_path)
+    parked = state_root / "artifact.expected"
+    replaced = False
+
+    def replace_after_rename(**event):
+        nonlocal replaced
+        if event["phase"] == "migration-rollback" and not replaced:
+            replaced = True
+            (state_root / "artifact.txt").rename(parked)
+            (state_root / "artifact.txt").write_text("rollback decoy\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        state_root_artifacts,
+        "_post_rename_observation_hook",
+        replace_after_rename,
+    )
+    with pytest.raises(legacy.StateError, match="incomplete recovery") as caught:
+        rollback_state_root_migration(Path(applied["receipt_path"]))
+
+    assert state_root_artifacts.FINAL_COMPONENT_INTERFERENCE in str(caught.value)
+    assert parked.read_text(encoding="utf-8") == "content for artifact.txt\n"
+    assert (state_root / "artifact.txt").read_text(encoding="utf-8") == ("rollback decoy\n")
+    assert not (destination / "artifact.txt").exists()
+
+
+def test_multi_entry_interference_compensates_only_exact_prior_inode(tmp_path, monkeypatch):
+    state_root, destination, plan_path, _ = write_plan(tmp_path, names=("first.txt", "second.txt"))
+    review_plan(plan_path)
+    parked = destination / "second.expected"
+    replaced = False
+
+    def replace_second_after_rename(**event):
+        nonlocal replaced
+        if (
+            event["phase"] == "migration-apply"
+            and event["destination_name"] == "second.txt"
+            and not replaced
+        ):
+            replaced = True
+            (destination / "second.txt").rename(parked)
+            (destination / "second.txt").write_text("second decoy\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        state_root_artifacts,
+        "_post_rename_observation_hook",
+        replace_second_after_rename,
+    )
+    with pytest.raises(legacy.StateError, match="incomplete recovery"):
+        apply_state_root_migration_plan(plan_path)
+
+    assert (state_root / "first.txt").read_text(encoding="utf-8") == ("content for first.txt\n")
+    assert not (state_root / "second.txt").exists()
+    assert parked.read_text(encoding="utf-8") == "content for second.txt\n"
+    assert (destination / "second.txt").read_text(encoding="utf-8") == ("second decoy\n")
+
+
+def test_apply_compensation_rejects_replaced_inode_before_recovery_rename(tmp_path, monkeypatch):
+    state_root, destination, plan_path, _ = write_plan(tmp_path, names=("first.txt", "second.txt"))
+    review_plan(plan_path)
+    original = state_root_artifacts._identity_bound_rename
+    parked = destination / "first.expected"
+    attacked = False
+
+    def attack_or_fail(**kwargs):
+        nonlocal attacked
+        if kwargs["phase"] == "migration-apply" and kwargs["source_name"] == "second.txt":
+            raise OSError("trigger apply recovery")
+        if kwargs["phase"] == "migration-apply-compensation" and not attacked:
+            attacked = True
+            (destination / "first.txt").rename(parked)
+            (destination / "first.txt").write_text("compensation decoy\n", encoding="utf-8")
+        return original(**kwargs)
+
+    monkeypatch.setattr(state_root_artifacts, "_identity_bound_rename", attack_or_fail)
+    with pytest.raises(legacy.StateError, match="incomplete recovery") as caught:
+        apply_state_root_migration_plan(plan_path)
+
+    assert state_root_artifacts.FINAL_COMPONENT_INTERFERENCE in str(caught.value)
+    assert not (state_root / "first.txt").exists()
+    assert (state_root / "second.txt").exists()
+    assert parked.read_text(encoding="utf-8") == "content for first.txt\n"
+    assert (destination / "first.txt").read_text(encoding="utf-8") == ("compensation decoy\n")
+    assert not plan_path.with_name(f"{plan_path.name}.receipt.json").exists()
+
+
+def test_apply_compensation_detects_post_rename_replacement_without_touching_decoy(
+    tmp_path, monkeypatch
+):
+    state_root, _destination, plan_path, _ = write_plan(tmp_path, names=("first.txt", "second.txt"))
+    review_plan(plan_path)
+    original = state_root_artifacts._identity_bound_rename
+    parked = state_root / "first.expected"
+    attacked = False
+
+    def fail_second(**kwargs):
+        if kwargs["phase"] == "migration-apply" and kwargs["source_name"] == "second.txt":
+            raise OSError("trigger apply recovery")
+        return original(**kwargs)
+
+    def replace_after_compensation(**event):
+        nonlocal attacked
+        if event["phase"] == "migration-apply-compensation" and not attacked:
+            attacked = True
+            (state_root / "first.txt").rename(parked)
+            (state_root / "first.txt").write_text("post-compensation decoy\n", encoding="utf-8")
+
+    monkeypatch.setattr(state_root_artifacts, "_identity_bound_rename", fail_second)
+    monkeypatch.setattr(
+        state_root_artifacts,
+        "_post_rename_observation_hook",
+        replace_after_compensation,
+    )
+    with pytest.raises(legacy.StateError, match="incomplete recovery") as caught:
+        apply_state_root_migration_plan(plan_path)
+
+    assert state_root_artifacts.FINAL_COMPONENT_INTERFERENCE in str(caught.value)
+    assert parked.read_text(encoding="utf-8") == "content for first.txt\n"
+    assert (state_root / "first.txt").read_text(encoding="utf-8") == ("post-compensation decoy\n")
+    assert not plan_path.with_name(f"{plan_path.name}.receipt.json").exists()
+
+
+def test_apply_compensation_continues_for_exact_prior_entries_after_interference(
+    tmp_path, monkeypatch
+):
+    state_root, destination, plan_path, _ = write_plan(
+        tmp_path, names=("first.txt", "second.txt", "third.txt")
+    )
+    review_plan(plan_path)
+    original = state_root_artifacts._identity_bound_rename
+    parked = destination / "second.expected"
+    attacked = False
+
+    def attack_or_fail(**kwargs):
+        nonlocal attacked
+        if kwargs["phase"] == "migration-apply" and kwargs["source_name"] == "third.txt":
+            raise OSError("trigger multi-entry recovery")
+        if (
+            kwargs["phase"] == "migration-apply-compensation"
+            and kwargs["source_name"] == "second.txt"
+            and not attacked
+        ):
+            attacked = True
+            (destination / "second.txt").rename(parked)
+            (destination / "second.txt").write_text("second decoy\n", encoding="utf-8")
+        return original(**kwargs)
+
+    monkeypatch.setattr(state_root_artifacts, "_identity_bound_rename", attack_or_fail)
+    with pytest.raises(legacy.StateError, match="incomplete recovery"):
+        apply_state_root_migration_plan(plan_path)
+
+    assert (state_root / "first.txt").read_text(encoding="utf-8") == ("content for first.txt\n")
+    assert not (state_root / "second.txt").exists()
+    assert (state_root / "third.txt").exists()
+    assert parked.read_text(encoding="utf-8") == "content for second.txt\n"
+    assert (destination / "second.txt").read_text(encoding="utf-8") == "second decoy\n"
+    assert not plan_path.with_name(f"{plan_path.name}.receipt.json").exists()
+
+
+def test_rollback_compensation_uses_same_recorded_identity_boundary(tmp_path, monkeypatch):
+    state_root, destination, plan_path, _ = write_plan(tmp_path, names=("first.txt", "second.txt"))
+    review_plan(plan_path)
+    applied = apply_state_root_migration_plan(plan_path)
+    original = state_root_artifacts._identity_bound_rename
+    parked = state_root / "second.expected"
+    attacked = False
+
+    def attack_or_fail(**kwargs):
+        nonlocal attacked
+        if kwargs["phase"] == "migration-rollback" and kwargs["source_name"] == "first.txt":
+            raise OSError("trigger rollback recovery")
+        if kwargs["phase"] == "migration-rollback-compensation" and not attacked:
+            attacked = True
+            (state_root / "second.txt").rename(parked)
+            (state_root / "second.txt").write_text(
+                "rollback compensation decoy\n", encoding="utf-8"
+            )
+        return original(**kwargs)
+
+    monkeypatch.setattr(state_root_artifacts, "_identity_bound_rename", attack_or_fail)
+    with pytest.raises(legacy.StateError, match="incomplete recovery") as caught:
+        rollback_state_root_migration(Path(applied["receipt_path"]))
+
+    assert state_root_artifacts.FINAL_COMPONENT_INTERFERENCE in str(caught.value)
+    assert (destination / "first.txt").exists()
+    assert not (destination / "second.txt").exists()
+    assert parked.read_text(encoding="utf-8") == "content for second.txt\n"
+    assert (state_root / "second.txt").read_text(encoding="utf-8") == (
+        "rollback compensation decoy\n"
+    )
+    assert Path(applied["receipt_path"]).exists()
+
+
+def test_schema2_plan_and_receipt_without_effect_boundary_use_stronger_runtime_guard(
+    tmp_path,
+):
+    state_root, destination, plan_path, _ = write_plan(tmp_path)
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    plan.pop("effect_boundary")
+    plan["review_payload_sha256"] = state_root_artifacts._migration_review_payload_sha256(plan)
+    plan_path.write_text(legacy.canonical_json(plan) + "\n", encoding="utf-8")
+    review_plan(plan_path)
+
+    applied = apply_state_root_migration_plan(plan_path)
+    receipt_path = Path(applied["receipt_path"])
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    receipt.pop("effect_boundary")
+    receipt.pop("receipt_sha256")
+    receipt["receipt_sha256"] = canonical_sha256(receipt)
+    receipt_path.write_text(legacy.canonical_json(receipt) + "\n", encoding="utf-8")
+
+    rerun = apply_state_root_migration_plan(plan_path)
+    rolled_back = rollback_state_root_migration(receipt_path)
+
+    assert rerun["idempotent_rerun"] is True
+    assert len(rolled_back["entries"]) == 1
+    assert (state_root / "artifact.txt").read_text(encoding="utf-8") == (
+        "content for artifact.txt\n"
+    )
+    assert not (destination / "artifact.txt").exists()
+
+
+def test_machine_readable_t014_capability_report_matches_runtime_contract():
+    report = json.loads(
+        Path(
+            "docs/reports/operator-machine-readability-t014-linux-rename-boundary.v1.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert report["task_id"] == "OPERATOR-MACHINE-READABILITY-V1-T014"
+    assert report["decision"]["enforceable_kernel_compare_and_rename"] is False
+    assert report["runtime_contract"] == (
+        state_root_artifacts.state_root_effect_boundary_contract()
+    )
+    assert report["acceptance_mapping"]["synthetic_only"].startswith("all race proofs")

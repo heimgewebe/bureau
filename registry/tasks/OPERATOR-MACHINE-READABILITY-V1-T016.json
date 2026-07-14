@@ -95,7 +95,7 @@
       "task_verification",
       "target_dedupe_live_proof"
     ],
-    "implementation_status": "merged_and_bootstrapped_pending_runner_live_verification",
+    "implementation_status": "parser_fix_merged_pending_repaired_runner_live_target",
     "implementation": {
       "branch": "omr-t016-runtime-refresh-v1",
       "base_sha": "191d825a5de3aa8c2032941c2ab8973e7a77a844",
@@ -130,12 +130,13 @@
       "synthetic_installer": "Passed with temporary clean and bare Git repositories; both manifest-bound launchers executed successfully."
     },
     "remaining_before_verification": [
-      "deploy the exact PR #561 merge commit with the installed refresh runner under real Grabowski leases",
-      "prove a second apply for the same target performs no additional installer effect",
-      "publish and deploy final Registry closeout evidence"
+      "bootstrap the exact PR #565 merge commit with the versioned immutable installer after the current foreign runtime lease terminates or is owner-released",
+      "deploy the merge commit of this staging evidence through the repaired installed runner under exact real Grabowski leases",
+      "record a successful runner result and publish the final verified Registry closeout",
+      "deploy the final closeout commit so the canonical snapshot exposes T016 as verified"
     ],
     "live_closeout": {
-      "phase": "bootstrap_verified_pending_runner_target",
+      "phase": "parser_fix_merged_pending_bootstrap_and_repaired_runner_target",
       "bootstrap": {
         "source_commit": "08cbc7377ce55f64539d7c6a0d0ddc9a4cf0b3c9",
         "release_id": "08cbc7377ce5-src0298e556e36d",
@@ -151,20 +152,45 @@
         "refresh_status_deployed_source_commit": "08cbc7377ce55f64539d7c6a0d0ddc9a4cf0b3c9",
         "reconciliation": "The initial bootstrap command completed the installation; its wrapper misread the runtime-identity envelope. Independent readback proved the installed state valid without retrying the installer."
       },
-      "next_target": "merge commit of PR #561",
+      "next_target": "merge commit of the T016 parser-fix staging evidence PR created from b6744c156abda7b11534bb475223d902fb20a101",
       "required_sequence": [
-        "merge PR #561 after exact diff and CI gates",
-        "observe the exact merge commit as a verified main candidate",
-        "create a short-lived exact deployment intent for that commit",
-        "apply once with the installed runner under real Grabowski leases",
-        "prove target-level dedupe and complete installed readback",
-        "publish and deploy final verified closeout evidence"
+        "merge the parser-fix staging evidence after exact diff and CI gates",
+        "bootstrap PR #565 merge commit b6744c156abda7b11534bb475223d902fb20a101 with the versioned immutable installer",
+        "observe the staging merge commit as an exact verified main candidate",
+        "create one short-lived exact deployment intent and hold all five real Grabowski path leases",
+        "apply once with the repaired runner and require a successful full readback",
+        "publish, merge and deploy the final verified closeout evidence"
       ],
       "does_not_establish": [
         "live_refresh_success",
         "target_dedupe_live_proof",
         "task_verification"
-      ]
+      ],
+      "parser_fix": {
+        "repository": "heimgewebe/bureau",
+        "pull_request": 565,
+        "reviewed_head_sha": "cb83aabb778f156f835c2e1f0a6d0534fefb9b76",
+        "merge_commit_sha": "b6744c156abda7b11534bb475223d902fb20a101",
+        "merged_at": "2026-07-14T12:10:09Z",
+        "github_diff_sha256": "38d42c7afa5dff7429a03f4e7b914317969761ba49e7daf60710d2ccd33ba7cb",
+        "required_ci": {
+          "validate_3_10": "success",
+          "validate_3_12": "success"
+        },
+        "validation": "22 focused refresh tests and 583 full tests passed; Ruff, Systemkatalog boundary, Registry, StateStore and adapters valid",
+        "live_failure_classification": "The installed effect was valid; only the old process parsed the top-level runtime_identity envelope through result.status and therefore emitted readback-identity-invalid."
+      },
+      "first_runner_attempt": {
+        "target_commit": "16c8ab96aef8f75ab0e7103458fc32b967845847",
+        "target_sha256": "7b9416acad5654b6ada5b8bf48ea484ad46ef1c7cfd0786ca4e8db1d0f48247b",
+        "result_path": "/home/alex/.local/state/bureau/runtime-refresh/attempts/7b9416acad5654b6ada5b8bf48ea484ad46ef1c7cfd0786ca4e8db1d0f48247b/result.json",
+        "result_file_sha256": "6cb5eda39d7e6f4ac5466928f82f3189264f5ae9ae6f6979a82a39939c559e96",
+        "result_sha256": "c9aeb2a57978b5eb458f213891f178f48fe8276f8d326d5879a8dacc8511a6f5",
+        "status": "unclear",
+        "effect_started": true,
+        "error_code": "readback-identity-invalid",
+        "reconciliation": "Independent manifest, launcher, snapshot and runtime-identity readback proved the install effect successful. A second apply returned the same target result with reused=true and produced no additional installer effect."
+      }
     }
   }
 }

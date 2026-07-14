@@ -36,7 +36,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T030",
   "title": "Unify Rootbroker recovery freshness decisions",
   "priority": {
-    "lane": "later",
+    "lane": "now",
     "rank": 490
   },
   "goal": "Make recovery status and privileged Rootbroker execution consume one canonical, atomically refreshed freshness record so a ready recovery status cannot coexist with a stale-marker execution denial for the same observation window.",
@@ -64,40 +64,57 @@
     {
       "id": "tests",
       "assertion": "Focused tests cover ready, stale, missing, malformed, future-clock, partial-refresh and concurrent-reader cases plus denial without command execution."
+    },
+    {
+      "id": "root-sandbox-source-visibility",
+      "assertion": "The installed Rootbroker keeps ProtectHome enabled while an exact read-only systemd exception exposes only the configured recovery source record and required parent traversal; the service can validate that source without broader home-directory visibility."
+    },
+    {
+      "id": "legacy-marker-self-heal",
+      "assertion": "Under an identity-bound non-writable root-owned parent, the publisher repairs an obsolete non-root lock owner only after acquiring the descriptor-bound lock and atomically replaces an unsafe regular single-link legacy marker, while preserving generation rollback, collision, symlink, hardlink, kill-switch and digest checks."
     }
   ],
   "metadata": {
-    "source": "OPERATOR-PC-HYGIENE-V1-T004 listener/firewall attribution on 2026-07-11",
+    "source": "OPERATOR-PC-HYGIENE-V1-T004 listener/firewall attribution on 2026-07-11; fresh Grabowski recovery publication reproduction on 2026-07-14",
     "observed_contradiction": [
-      "grabowski_recovery_status returned ready=true and all recovery checks green.",
-      "Immediately following grabowski_power_run attempts were rejected before command execution because the Power recovery marker was reported missing or stale.",
-      "The attempted command was read-only socket/service attribution and used an absolute /usr/bin/bash path; no privilege bypass was attempted."
+      "The fixed SSH-tunnelled restic probe completed backup, restore and repository check for heimberry:rest-server/grabowski-recovery-probe and wrote a fresh valid user-owned source record.",
+      "The same operation failed when publishing that source through the root-owned broker; the request service exited status 2/INVALIDARGUMENT and the client returned exit code 1.",
+      "The installed broker unit has ProtectHome=yes and no installed drop-in exposing the configured source path under /home/alex, while recovery_status remains fail-closed with canonical freshness reason unsafe-file."
     ],
     "does_not_establish": [
-      "root cause",
-      "permission to bypass recovery",
-      "permission to broaden privileged commands",
-      "firewall correctness",
-      "runtime deployment permission",
-      "current Grabowski repo availability"
+      "permission to bypass recovery, audit, kill-switch or Rootbroker policy",
+      "the exact broker exception text, because the installed request unit exposes only its exit status in the journal",
+      "current canonical marker owner or mode, because the unprivileged status reader cannot safely open it",
+      "that the independent legacy marker and lock self-heal slice alone can fix the missing systemd source visibility"
     ],
-    "blocked_at": "2026-07-14T08:43:17Z",
-    "block_reason": "The feature, review hardening, commit-bound Rootbroker cutover helper and socket-state preflight hardening are merged and fully validated. The installed root-owned broker configuration remains unchanged because passwordless sudo is unavailable and the platform safety boundary rejected the official power apply before process start. No root process ran and no mutation occurred. The cutover still requires an explicitly authorized desktop/root boundary; recovery, audit and kill-switch gates must not be bypassed.",
+    "blocked_at": "2026-07-14T15:14:51Z",
+    "block_reason": "Fresh restore evidence exists, but the installed root-owned Rootbroker service still runs with ProtectHome=yes and no exact recovery-source visibility drop-in for the configured source record under /home/alex. The official publisher therefore exits fail-closed before canonical readback. Applying the reviewed service/drop-in cutover remains a root-bound operation. A separate disjoint self-heal slice covers obsolete safe marker and lock ownership, but does not replace this sandbox cutover.",
     "dependency_state": {
       "GRABOWSKI-OPERATOR-SURFACE-V1-T014": "verified"
     },
     "live_reproduction": {
-      "runtime_head": "a2c09b1f9b7150c7f74a22d9ac16bdc73857186b",
-      "recovery_snapshot": "a4973a5a",
-      "recovery_checked_at_unix": 1783737028,
-      "recovery_age_seconds": 8,
-      "ready_for_privileged_actions": true,
-      "power_request_id": "4128c89318b04b869157ccec63fe2540",
-      "power_reference_sha256": "7c5444a85f38d515a70664836db48276c336fd6cbc2bc40de8a78c874190d42f",
-      "broker_result": "power recovery marker is stale",
+      "observed_at": "2026-07-14T15:14:51Z",
+      "runtime_head": "a5a5e8d8c9c01b877cff4dd53b8f6a70976ffc88",
+      "source_snapshot": "dc8a067e",
+      "source_generated_at_unix": 1784042088,
+      "source_age_seconds_at_status_readback": 14,
+      "source_restore_probe_valid": true,
+      "source_repository_check_valid": true,
+      "source_target": "heimberry:rest-server/grabowski-recovery-probe",
+      "canonical_marker_path": "/var/lib/grabowski/power-worker-recovery-gate.json",
+      "canonical_freshness_reason": "unsafe-file",
+      "canonical_error": "canonical recovery record cannot be opened safely",
+      "ready_for_privileged_actions": false,
+      "publication_request_id": "7c428800687c4ae7ae11b2270cdef34f",
+      "publication_reference_sha256": "3d4901378901ffdf1f123aebb429dd6cb1a2d663d226f0a0024a0c63a4db7acc",
+      "broker_client_returncode": 1,
+      "broker_service_instance": "grabowski-privileged-broker@70-14600-1000.service",
+      "broker_service_exit": "status=2/INVALIDARGUMENT",
+      "installed_service_protect_home": "yes",
+      "installed_recovery_source_drop_in_present": false,
       "command_executed": false
     },
-    "next_action": "Authorize the merged commit-bound Rootbroker cutover helper at the desktop/root boundary, then run a fresh server recovery probe, verify same-record recovery and broker readiness, execute one bounded /usr/bin/true proof, prove kill-switch denial and only then mark T030 verified.",
+    "next_action": "Finish and independently review the exact Rootbroker recovery-source systemd drop-in/cutover, install it through the authorized root boundary, then run a fresh server recovery probe. Verify canonical mode and ownership, same-record status and broker readiness, one bounded /usr/bin/true proof and kill-switch denial. In parallel, finish the disjoint recovery-marker self-heal slice and merge it only after focused and full validation.",
     "implementation_evidence": {
       "feature_pr": 197,
       "feature_merge_commit": "d7192e9324d48dbfe9d1011c7ae2551e8ca9ec23",
@@ -134,20 +151,24 @@
     },
     "live_root_cutover_gap": {
       "canonical_marker_path": "/var/lib/grabowski/power-worker-recovery-gate.json",
-      "canonical_marker_owner": "root:root",
-      "canonical_marker_mode": "0600",
-      "user_status_reason": "unsafe-file: permission denied",
+      "canonical_status_reason": "unsafe-file: canonical recovery record cannot be opened safely",
+      "canonical_exact_metadata_currently_observable": false,
       "fresh_source_path": "/home/alex/.local/state/grabowski/recovery/last-server-recovery.json",
+      "fresh_source_snapshot": "dc8a067e",
       "fresh_source_target": "heimberry:rest-server/grabowski-recovery-probe",
-      "installed_publisher_action_present": false,
-      "installed_root_broker_matches_merge": false,
-      "power_gate_result": "fail-closed before command execution",
-      "passwordless_root_cutover_available": false,
-      "polkit_temporary_authorization_present": false
+      "fresh_source_valid": true,
+      "installed_publisher_action_presence": "not independently readable from the root-owned configuration",
+      "publisher_request_reached_broker_socket": true,
+      "publisher_request_result": "client exit 1; request unit status 2/INVALIDARGUMENT",
+      "installed_service_protect_home": "yes",
+      "installed_recovery_source_drop_in_present": false,
+      "source_visibility_causal_assessment": "high confidence from exact unit configuration and source location; exact broker exception unavailable",
+      "power_gate_result": "fail-closed before privileged command execution",
+      "root_mutation_still_required": true
     },
     "root_cutover_acceptance": [
-      "Back up and SHA-256-bind the installed root broker, wrapper and privileged-actions configuration before mutation.",
-      "Install the merged broker contract and add the fixed publish_recovery_marker action without changing unrelated privileged actions.",
+      "Back up and SHA-256-bind the installed root broker, wrapper, systemd unit/drop-ins and privileged-actions configuration before mutation.",
+      "Install the reviewed broker contract and exact read-only recovery-source visibility drop-in while retaining ProtectHome and all unrelated sandbox restrictions.",
       "Publish a fresh canonical record as root:root mode 0644 and verify schema, target, generation, source digest and canonical digest by readback.",
       "Verify grabowski_recovery_status and the Rootbroker power gate report the same generated-at, age, max-age, source digest, canonical digest and ready reason.",
       "Run one bounded read-only privileged /usr/bin/true proof and preserve the audit receipt; separately prove kill-switch denial.",
@@ -169,6 +190,32 @@
       "installed_helper_present": false,
       "installed_config_unchanged": true,
       "remaining_boundary": "explicit desktop or otherwise authorized root execution of the reviewed helper"
+    },
+    "merged_disjoint_self_heal_slice": {
+      "repository": "/home/alex/repos/grabowski",
+      "branch": "fix/recovery-marker-self-heal-v1",
+      "worktree": "/home/alex/repos/.grabowski-worktrees/recovery-marker-self-heal-v1",
+      "scope": [
+        "src/grabowski_privileged_broker.py",
+        "tests/test_recovery_freshness.py"
+      ],
+      "focused_tests": "17 passed",
+      "full_validation": "make validate passed: 1588 tests, policy, context, runtime lock, deploy tooling and secret checks",
+      "does_not_modify": [
+        "installed root service",
+        "systemd recovery-source visibility",
+        "privileged action allowlists"
+      ],
+      "state": "merged",
+      "pr": 212,
+      "source_head": "f560e9feff7923db78e97505e67303faedba27c3",
+      "merge_commit": "36e4ad5b9e72853495303fbfed168db0d13066c1",
+      "merged_at": "2026-07-14T15:42:24Z",
+      "github_checks": [
+        "validate (3.10): success",
+        "validate (3.12): success"
+      ],
+      "diff_sha256": "e1c4de246f4f9a5aa46a58cc7551c53360981cb0160a7a98bbbdd365634d58e3"
     }
   }
 }

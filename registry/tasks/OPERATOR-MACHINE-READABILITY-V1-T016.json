@@ -88,7 +88,40 @@
       "permission_to_touch_foreign_worktrees",
       "automatic_retry",
       "runtime_semantic_correctness",
-      "completion_of_OPM_READABILITY_T016"
+      "completion_of_OPM_READABILITY_T016",
+      "merge_readiness_before_review",
+      "deployment_success",
+      "live_refresh_success"
+    ],
+    "implementation_status": "code_complete_pending_merge_deployment_and_live_verification",
+    "implementation": {
+      "branch": "omr-t016-runtime-refresh-v1",
+      "base_sha": "191d825a5de3aa8c2032941c2ab8973e7a77a844",
+      "runtime_module": "src/bureau/runtime_refresh.py",
+      "installer": "ops/install-bureau-runtime.py",
+      "documentation": "docs/bureau-runtime-refresh-v1.md",
+      "tests": "tests/test_runtime_refresh.py"
+    },
+    "implemented_contract": {
+      "observation": "GitHub main, exact merged PR, SUCCESS-only required CI, deployed manifest, lag and SLO are hash-bound without mutation.",
+      "intent": "Short-lived create-only intent binds exact target, deployment boundary, paths, authorization and required resources.",
+      "leases": "Apply reads the fixed private Grabowski resource database read-only and requires exact same-owner live leases with at least ten minutes remaining.",
+      "execution": "Exact target is cloned into an isolated detached workspace; target-based create-only ledger permits one effect attempt.",
+      "readback": "Success requires manifest, both launchers, package tree, Registry snapshot, bureau check and runtime identity.",
+      "failure": "Unclear post-effect outcomes are durable, preserve the workspace and never retry automatically."
+    },
+    "validation": {
+      "focused_refresh_tests": "22 passed",
+      "combined_runtime_tests": "39 passed",
+      "full_validate": "583 passed; Ruff, Systemkatalog boundary, Registry, StateStore and adapters valid",
+      "synthetic_installer": "Passed with temporary clean and bare Git repositories; both manifest-bound launchers executed successfully."
+    },
+    "remaining_before_verification": [
+      "merge exact reviewed GitHub diff with required CI green",
+      "deploy exact merge commit through immutable installer",
+      "use installed refresh runner against a subsequent exact main commit with real Grabowski leases",
+      "prove target-level dedupe and installed readback live",
+      "publish final Registry closeout evidence"
     ]
   }
 }

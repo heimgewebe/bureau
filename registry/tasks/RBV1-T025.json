@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "id": "RBV1-T025",
+  "initiative": "REPOBRIEF-V1-ROADMAP",
+  "title": "RepoBrief-Dateisystemzugriffe dirfd-gebunden härten",
+  "state": "planned",
+  "goal": "Harden consumer-local RepoBrief publication against hostile or accidental replacement of parent path components by binding traversal, creation, verification and replacement to trusted directory file descriptors with a portable fail-closed fallback policy.",
+  "priority": {
+    "lane": "later",
+    "rank": 25
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit"
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [
+    "RBV1-T023"
+  ],
+  "acceptance": [
+    {
+      "id": "rbv1-t025-threat-model",
+      "assertion": "The supported attacker and concurrency model is explicit, including which path-component replacement attacks are in scope and which platforms are supported."
+    },
+    {
+      "id": "rbv1-t025-dirfd-binding",
+      "assertion": "Security-sensitive traversal, file creation, verification and atomic replacement are anchored to trusted directory descriptors using openat/openat2-equivalent semantics where supported."
+    },
+    {
+      "id": "rbv1-t025-fallback",
+      "assertion": "Platforms without the required primitives either use a documented equally safe implementation for the declared threat model or fail closed instead of silently weakening guarantees."
+    },
+    {
+      "id": "rbv1-t025-adversarial-tests",
+      "assertion": "Deterministic tests exercise symlink swaps, parent-directory replacement, special files and concurrent renames without escaping the publication root or accepting mixed identities."
+    },
+    {
+      "id": "rbv1-t025-validation",
+      "assertion": "Focused adversarial tests, supported-platform tests, the complete Lenskit suite and GitHub CI pass on the exact implementation head."
+    },
+    {
+      "id": "rbv1-t025-nonclaims",
+      "assertion": "The result does not claim kernel-bug resistance, network-filesystem equivalence, privilege-boundary isolation or security on untested platforms."
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "Lenskit PR #1009 residual-risk review",
+    "registered_at": "2026-07-14T19:46:02Z",
+    "source_pr": "heimgewebe/lenskit#1009",
+    "source_head": "7421452caa239e73bedde2acfe93a6516612757d",
+    "source_paths": [
+      "merger/lenskit/core/external_manifest_reference.py"
+    ],
+    "does_not_establish": [
+      "kernel_bug_resistance",
+      "network_filesystem_equivalence",
+      "privilege_boundary_isolation",
+      "untested_platform_security",
+      "merge_readiness"
+    ]
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "id": "RBV1-T026",
+  "initiative": "REPOBRIEF-V1-ROADMAP",
+  "title": "Lokalisierte RepoBrief-Bundles sicher aufräumen",
+  "state": "planned",
+  "goal": "Define and implement evidence-bound retention and garbage collection for immutable consumer-local RepoBrief bundles without deleting any generation that is referenced, leased, under publication, required for rollback or not yet proven unreachable.",
+  "priority": {
+    "lane": "later",
+    "rank": 26
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit"
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [
+    "RBV1-T023",
+    "RBV1-T024"
+  ],
+  "acceptance": [
+    {
+      "id": "rbv1-t026-reachability-contract",
+      "assertion": "Reachability roots, rollback windows, leases, in-progress publication markers and minimum retention are explicit and versioned."
+    },
+    {
+      "id": "rbv1-t026-dry-run",
+      "assertion": "The collector defaults to a deterministic dry run that reports candidates, reasons, byte totals and proof inputs before any deletion."
+    },
+    {
+      "id": "rbv1-t026-safe-delete",
+      "assertion": "Deletion requires a fresh reachability recheck and refuses referenced, leased, recent, malformed, unexpected or concurrently changing trees."
+    },
+    {
+      "id": "rbv1-t026-recovery",
+      "assertion": "Interrupted collection is idempotent, auditable and cannot remove the currently authoritative or rollback-required generation."
+    },
+    {
+      "id": "rbv1-t026-validation",
+      "assertion": "Property-style reachability tests, race tests, dry-run dogfood, the complete Lenskit suite and GitHub CI pass on the exact implementation head."
+    },
+    {
+      "id": "rbv1-t026-nonclaims",
+      "assertion": "The result does not claim optimal storage use, deletion on untrusted network filesystems, recovery without retained generations or automatic policy choice."
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "Lenskit PR #1009 residual-risk review",
+    "registered_at": "2026-07-14T19:46:02Z",
+    "source_pr": "heimgewebe/lenskit#1009",
+    "source_head": "7421452caa239e73bedde2acfe93a6516612757d",
+    "source_paths": [
+      "merger/lenskit/core/external_manifest_reference.py"
+    ],
+    "does_not_establish": [
+      "optimal_storage_use",
+      "untrusted_network_filesystem_deletion_safety",
+      "recovery_without_retained_generations",
+      "automatic_policy_choice",
+      "merge_readiness"
+    ]
+  }
+}

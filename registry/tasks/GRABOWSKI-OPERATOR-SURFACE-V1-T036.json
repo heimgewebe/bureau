@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T036",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Grabowski soll den feingranularen Bureau-Lease-Vertrag erzwingen",
-  "state": "planned",
+  "state": "verified",
   "goal": "Grabowski consumes Bureau's machine-readable lease contract v2, rejects the broad Bureau repository key for normal work, accepts exact object/component scopes, and serializes only short worktree-admin, merge and emergency-recovery effects.",
   "priority": {
     "lane": "later",
@@ -77,6 +77,65 @@
     "bureau_lease_contract_schema_version": 2,
     "supersedes_semantics": "Replaces the v1 rule that a foreign broad Bureau repo lease blocks reviewed Git Registry mutations; v2 uses exact object/component scopes and forbids the broad key for normal work.",
     "bureau_lease_contract_v1_release": "91ecd3991b16ff59b802a3309ecad63b255fdc16",
-    "bureau_lease_contract_v2_release": "pending:BUREAU-TRUTH-MODEL-V2-T011-merge"
+    "bureau_lease_contract_v2_release": "bafd9f0a14215376b699eadf4624c8f761738c38",
+    "verified_at": "2026-07-14T15:32:00Z",
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_grabowski_consumer_deployed",
+      "implementation_pull_request": 169,
+      "implementation_head": "1ae02467920cc16358ca91d8c9de70c5c3e9ce5f",
+      "merge_commit": "f6eed48752fd2cf32f070dc69b2112e2498872cb",
+      "deployed_runtime_sha": "a5a5e8d8c9c01b877cff4dd53b8f6a70976ffc88",
+      "runtime_compare": {
+        "status": "ahead",
+        "ahead_by": 29,
+        "behind_by": 0
+      },
+      "validation": {
+        "ci_python_3_10": "SUCCESS",
+        "ci_python_3_12": "SUCCESS",
+        "broad_normal_work_refused": "PASS",
+        "parallel_exact_scopes": "PASS",
+        "worktree_admin_gate_300s": "PASS",
+        "merge_gate_300s": "PASS",
+        "bounded_emergency_recovery": "PASS",
+        "live_register_read_without_git_lease": "PASS"
+      }
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T036",
+          "source_ref": "heimgewebe/grabowski#169",
+          "number": 169,
+          "head_sha": "1ae02467920cc16358ca91d8c9de70c5c3e9ce5f",
+          "merge_commit_sha": "f6eed48752fd2cf32f070dc69b2112e2498872cb"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T036",
+          "source_ref": "live:grabowski-resource-acquire:2026-07-14T15:30Z",
+          "runtime_sha": "a5a5e8d8c9c01b877cff4dd53b8f6a70976ffc88",
+          "consumer_merge_sha": "f6eed48752fd2cf32f070dc69b2112e2498872cb",
+          "contract_component_sha256": "4d05a41ffea86a811be27838c47b80a2bb532ba72acc9a15e190b7e910e24169"
+        }
+      ]
+    },
+    "verification": {
+      "source": "github_pull_request_ci_deployed_descendant_and_live_smoke",
+      "source_ref": "github-pr:heimgewebe/grabowski#169",
+      "implementation_sha": "1ae02467920cc16358ca91d8c9de70c5c3e9ce5f",
+      "merge_commit_sha": "f6eed48752fd2cf32f070dc69b2112e2498872cb",
+      "deployed_runtime_sha": "a5a5e8d8c9c01b877cff4dd53b8f6a70976ffc88",
+      "contract_component_sha256": "4d05a41ffea86a811be27838c47b80a2bb532ba72acc9a15e190b7e910e24169",
+      "task_sha256": "1a3187d12cbab96d039b64eaba62dac9217840a77129c51485b7474988cdd646",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    },
+    "verification_note": "Grabowski PR #169 merged with green Python 3.10/3.12 checks. The deployed runtime is a 29-commit descendant and live-enforces the Bureau v2 contract."
   }
 }

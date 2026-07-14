@@ -30,14 +30,82 @@
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
     "does_not_establish": [
-      "implementation_complete",
-      "runtime_deployed",
-      "workspace_ready"
+      "broad host home visibility",
+      "approval of arbitrary external binaries or authentication roots",
+      "network isolation from the explicitly required provider endpoint",
+      "absence of secrets inside the external provider itself"
     ],
     "effect": "operator_reliability",
     "phase": "agent-workspace-adapter-hardening",
-    "reason": "The formal Agent Workspace path remained degraded while the isolated read-only Claude packet review succeeded through the direct review adapter.",
-    "source": "GRIP-ROADMAP-V1-T014 closeout live evidence"
+    "reason": "PR #193 and PR #199 plus the deployed formal Fable workspace resolved external-agent sandbox execution while preserving bounded isolation.",
+    "source": "GRIP-ROADMAP-V1-T014 closeout live evidence",
+    "implementation": {
+      "pull_requests": [
+        "heimgewebe/grabowski#193",
+        "heimgewebe/grabowski#199"
+      ],
+      "deployed_merge_commit": "ff0290ba3f46cfb6faff806b1659c2fff010f077"
+    },
+    "validation": {
+      "github_ci": "required validate (3.10) and validate (3.12) jobs passed on all cited implementation PRs",
+      "formal_workspace": "gaw-agent-workspace-t0-grabowski-operator-sur-bc57edfe3e57 closed successfully",
+      "workspace_close_receipt_sha256": "0aad33363e8a9a5319a408dd394ab3287ee13fe451df343dddc0b4835e7a407f"
+    },
+    "validated_acceptance": {
+      "explicit-binary": "PR #193 introduces the explicit Claude profile and bounded binary/library mounts; the post-deploy formal workspace ran through /opt/grabowski-external/claude while a foreign Bureau path remained inaccessible.",
+      "bounded-auth": "The profile mounts the owner-private Claude authentication root read-only; receipts contain hashes and bounded tails rather than credential contents, and symlinked credentials remain rejected.",
+      "workspace-proof": "After PR #199 restored resolver binding, the deployed formal workspace completed writer, tests and independent Fable review on first attempt with PASS and no findings."
+    },
+    "verified_at": "2026-07-14",
+    "verification_note": "PR #193 implemented the explicit external-agent profile, PR #199 fixed the host-managed resolv.conf bind, merge ff0290 was deployed with all integrity flags valid, and the formal post-deploy Fable workspace closed successfully.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "source_ref": "heimgewebe/grabowski#193",
+          "number": 193,
+          "head_sha": "ab041564f4dd1a6b835ceaceb3c3dfcc213dbf86",
+          "merge_commit_sha": "61ae5c85694a307562c951759c1504155cfca97e",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T056"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "source_ref": "heimgewebe/grabowski#199",
+          "number": 199,
+          "head_sha": "b44eaae3c7ec979bb1299535117de6b4c71fc083",
+          "merge_commit_sha": "ff0290ba3f46cfb6faff806b1659c2fff010f077",
+          "diff_sha256": "164d7e6652e77027381b3fc7eeb53e0e8110f87a295dbee31eb78b0802ba7805",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T056"
+        },
+        {
+          "kind": "runtime_probe",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T056",
+          "source_ref": "deployment-identity@ff0290ba3f46cfb6faff806b1659c2fff010f077",
+          "commit_sha": "ff0290ba3f46cfb6faff806b1659c2fff010f077",
+          "release_id": "ff0290ba3f46-srcset85cd668c7a9c-locke6664d600b6c-contract8afcc76b890e",
+          "runtime_input_sha256": "d7447ee9cd2491e28f1dddb80649db2787220df03132745f98a13f41b545b683"
+        },
+        {
+          "kind": "workspace_receipt",
+          "authority": "grabowski-agent-workspace",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T056",
+          "source_ref": "gaw-agent-workspace-t0-grabowski-operator-sur-bc57edfe3e57/close",
+          "receipt_sha256": "0aad33363e8a9a5319a408dd394ab3287ee13fe451df343dddc0b4835e7a407f",
+          "result_sha256": "7d358cf178486f7bd8e5ad8fe18c0a27614ffd45aa4f59866349b69e073121fd",
+          "review_receipt_sha256": "09a4ecaa07e9d00f0a27744463b254a7e008aa2af3abbccde64d3fa42bf8b470",
+          "tests_receipt_sha256": "936de75cc16c11e718d500d506f5e70f19af02170f0c23e783345d6ca3bc5bbf"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "1556e15368fc3ede0c61b2c4dc163c95ba55edc022887e960f8b5ff255bab59f",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   },
   "priority": {
     "lane": "later",
@@ -50,6 +118,6 @@
     "bureau"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Expose approved external agents inside Workspace sandbox"
 }

@@ -60,7 +60,7 @@
     "live_register_created_at": "2026-07-14T15:07:15.643720Z",
     "live_register_source": "chatgpt:chronik-pr-220",
     "source_pr": "heimgewebe/chronik#220",
-    "source_merge_commit": "0ab419e107b46ab5af23cc284ea72159ff07f910",
+    "source_merge_commit": "0ab419e296492d85c47d52d3c8e995309f94ea2c",
     "promotion_required_from_event": true,
     "does_not_establish": [
       "queue_truth",

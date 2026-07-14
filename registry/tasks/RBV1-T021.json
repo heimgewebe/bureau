@@ -3,7 +3,7 @@
   "id": "RBV1-T021",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Lenskit latest-complete publication v2 vollständig härten",
-  "state": "planned",
+  "state": "verified",
   "goal": "Korrektur nach Liveprüfung von Lenskit origin/main e241b7b95f08905159cf94f706f3e45024da4b71 und PR #987 (Head 48e1febe1522def29bb04afa8dcada986ce1086d, Merge 98161d7c0f9a224a1a1620e12a683c260543e968, GitHub-Diff SHA-256 4ef50982c81abbd06d286b3a2cb466234153719baaff18aa8e9a9e183cbc29aa). Die frühere Aussage, Lenskit sei vollständig abgeschlossen, ist falsifiziert. Reproduziert sind: Manifest-TOCTOU zwischen Parsing/Eligibility und späterem Hash; ungeprüfte alte v1-Registry mit Zukunftszeit kann gültige Kandidaten dauerhaft blockieren; unterschiedliche Repositories mit gleichem Namen und fehlender Remote-URL kollidieren in derselben Source-Lane; Directory-fsync-Fehler tritt nach os.replace auf und kann trotz Fehler sichtbaren Fortschritt hinterlassen; fehlgeschlagene Publikation kann die persistente Lockdatei erzeugen, während CLI nur unstrukturierten stderr-Text liefert. 17 fokussierte Tests und Ruff sind grün, decken diese Fehler aber nicht ab. Umsetzung ist durch einen fremden aktiven Lenskit-Ball und Prozesse im kanonischen Checkout blockiert; keine fremden Zustände anfassen. Erforderlich: eigener Folge-Ball, bytekonsistente Manifestaufnahme, gehärtete Legacy-Migrationsregel, unambige Lane-Identität, explizite uncertain-after-replace-/fsync-Semantik mit Recovery/Receipt sowie maschinenlesbare Fehler- und Mutationsbelege.",
   "priority": {
     "lane": "later",
@@ -50,6 +50,40 @@
       "claim_authority",
       "dispatch_authority",
       "merge_readiness"
-    ]
+    ],
+    "verified_at": "2026-07-14T14:02:26Z",
+    "implementation_pr": "heimgewebe/lenskit#1007",
+    "implementation_pr_url": "https://github.com/heimgewebe/lenskit/pull/1007",
+    "implementation_pr_head": "3ba1e7abf36776fb49fbdd5c1073f28fc4f08196",
+    "implementation_base": "af2f9ed36b95af35a54b98dfcb2ee946ef9c6e7e",
+    "implementation_merge_commit": "ac7d35ff987a706e0dde0e042a34873d496c91b2",
+    "diff_sha256": "4ee9258fc749a3519d649f7b44613a60d3bab8283aab020ebe61312b19bb8cf4",
+    "implementation_paths": [
+      "docs/contracts/contracts-matrix.md",
+      "docs/proofs/repobrief-latest-complete-registry-v2-proof.md",
+      "docs/testing/test-matrix.md",
+      "merger/lenskit/cli/cmd_repobrief.py",
+      "merger/lenskit/contracts/repobrief-latest-complete-registry.v2.schema.json",
+      "merger/lenskit/core/repobrief_latest_complete.py",
+      "merger/lenskit/tests/test_repobrief_latest_complete.py"
+    ],
+    "validation": [
+      "48 focused latest-complete publication v2 tests passed.",
+      "CI-equivalent suite: 3934 passed, 1 skipped, 13 deselected.",
+      "GitHub PR #1007 required checks passed, including pytest-full, browser-tests, release-candidate, Ruff, CodeQL, contracts, planning-registration and anti-hallucination lint.",
+      "Maintainability ratchet passed with zero new violations and one baseline violation resolved.",
+      "Two deterministic release candidates matched: archive SHA-256 976b3802dd70ba347a431fe74f94647bafd9d76a2cdb6a23aa6c4270e154c755; manifest SHA-256 51efc515ecee2e09596088f4b396c348da0eca04662d6162a6a64c5f32348f14.",
+      "CLI dogfood committed the registry with matching file readback and directory identity.",
+      "Post-merge readback confirmed Lenskit main at ac7d35ff987a706e0dde0e042a34873d496c91b2 and the seven implementation paths byte-identical to the reviewed PR head."
+    ],
+    "outcome": "Implemented, reviewed, merged and post-merge verified in Lenskit PR #1007. Latest-complete publication v2 now binds manifest bytes and hash, uses unambiguous credential-free source lanes, serializes on the directory inode, records exact filesystem effects, and reports uncertain durability states without hidden refresh or rollback claims.",
+    "verified_acceptance": {
+      "source-event-bound": "The task retains Bureau live-register event 259 and candidate systemaudit-atlas-terminal-publication-v1 while closure evidence binds Lenskit PR #1007, exact head/base/diff and merge commit.",
+      "reviewed-before-effect": "Implementation occurred in an isolated Lenskit worktree, passed local and GitHub review gates, and was merged only after exact head/base/diff-bound verification."
+    },
+    "verification": {
+      "task_sha256": "38cedb94710641d273fd9279d4f134d52ae7695e54c773378adcba9a6c841011",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   }
 }

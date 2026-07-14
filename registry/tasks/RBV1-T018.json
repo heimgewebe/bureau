@@ -3,7 +3,7 @@
   "id": "RBV1-T018",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Decide RepoBrief package and repository rename path",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 180
@@ -80,6 +80,37 @@
         "test_sufficiency",
         "review_completeness"
       ]
+    },
+    "verified_at": "2026-07-14T16:28:00Z",
+    "implementation_pr": "heimgewebe/lenskit#988",
+    "implementation_pr_url": "https://github.com/heimgewebe/lenskit/pull/988",
+    "implementation_pr_head": "83f022515c4c88dfaf9e154bf7be6eaf17dd9adb",
+    "implementation_base": "98161d7c0f9a224a1a1620e12a683c260543e968",
+    "implementation_merge_commit": "e241b7b95f08905159cf94f706f3e45024da4b71",
+    "diff_sha256": "87a0e8fe6aa511a1659b6415043b9cec4f6bc975a78d15b7f0554b9d6b4968bd",
+    "implementation_paths": [
+      "docs/decisions/repobrief-package-namespace-decision.md",
+      "docs/decisions/repobrief-package-namespace-decision.v1.json",
+      "docs/architecture/naming.md",
+      "scripts/release/check_identity_distribution_decisions.py",
+      "merger/lenskit/tests/test_identity_distribution_decisions.py"
+    ],
+    "validation": [
+      "Lenskit PR #988 merged with all required GitHub checks passing, including pytest-full, browser-tests, release-candidate, Ruff and CodeQL.",
+      "Current Lenskit main ac7d35ff987a706e0dde0e042a34873d496c91b2 still contains the decision artifacts unchanged.",
+      "Focused current-main validation: 4 identity/distribution decision tests passed.",
+      "Decision artifact SHA-256: 299b4e95e91922ba9c60a4ce5b984aba513fc7cfdae546ce6b6d077b79fbaecc."
+    ],
+    "outcome": "Closed as already implemented on current Lenskit main. RepoBrief remains the product and primary CLI name; repository lenskit and Python namespace merger.lenskit remain stable for the 2.x line. Any later rename requires an intentional breaking major release with consumer inventory, migration, deprecation and rollback evidence.",
+    "verified_acceptance": {
+      "rbv1-t018-scope-bound": "No new Lenskit mutation was created. Existing PR #988 was read back and current main was revalidated.",
+      "rbv1-t018-boundary-preserved": "The decision changes naming policy only and explicitly preserves RepoBrief read-only and non-authoritative boundaries.",
+      "rbv1-t018-tests-or-gap": "Four focused current-main tests passed and all historical PR #988 required checks are green.",
+      "rbv1-t018-non-claims": "The evidence does not establish unknown-consumer absence, public package readiness, runtime correctness beyond tested surfaces, or permanent prohibition of a future breaking-major rename."
+    },
+    "verification": {
+      "task_sha256": "ed0e8682a8cff7730e515c850eee4d42b473f6e9e5314d1d3d1924f1ac8c4520",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
     }
   },
   "depends_on": [

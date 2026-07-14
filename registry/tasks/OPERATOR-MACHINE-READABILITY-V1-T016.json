@@ -91,16 +91,29 @@
       "completion_of_OPM_READABILITY_T016",
       "merge_readiness_before_review",
       "deployment_success",
-      "live_refresh_success"
+      "live_refresh_success",
+      "task_verification",
+      "target_dedupe_live_proof"
     ],
-    "implementation_status": "code_complete_pending_merge_deployment_and_live_verification",
+    "implementation_status": "merged_and_bootstrapped_pending_runner_live_verification",
     "implementation": {
       "branch": "omr-t016-runtime-refresh-v1",
       "base_sha": "191d825a5de3aa8c2032941c2ab8973e7a77a844",
       "runtime_module": "src/bureau/runtime_refresh.py",
       "installer": "ops/install-bureau-runtime.py",
       "documentation": "docs/bureau-runtime-refresh-v1.md",
-      "tests": "tests/test_runtime_refresh.py"
+      "tests": "tests/test_runtime_refresh.py",
+      "repository": "heimgewebe/bureau",
+      "pull_request": 559,
+      "reviewed_head_sha": "a7d319aabe938495c26275e35bf8edb45d9dfaed",
+      "merge_commit_sha": "98b76ef45a73d5d22f6fb544121f20a4bbc1ecff",
+      "merged_at": "2026-07-14T08:16:02Z",
+      "github_diff_sha256": "7c782a307943a042248cae6215e38a1d66bfa820e2b66f569d16b0533f402481",
+      "required_ci": {
+        "validate_3_10": "success",
+        "validate_3_12": "success"
+      },
+      "self_review_sha256": "6fff3aee569c3b521041702792f2062e953b89d995212bb43e738975f1648b2b"
     },
     "implemented_contract": {
       "observation": "GitHub main, exact merged PR, SUCCESS-only required CI, deployed manifest, lag and SLO are hash-bound without mutation.",
@@ -117,11 +130,41 @@
       "synthetic_installer": "Passed with temporary clean and bare Git repositories; both manifest-bound launchers executed successfully."
     },
     "remaining_before_verification": [
-      "merge exact reviewed GitHub diff with required CI green",
-      "deploy exact merge commit through immutable installer",
-      "use installed refresh runner against a subsequent exact main commit with real Grabowski leases",
-      "prove target-level dedupe and installed readback live",
-      "publish final Registry closeout evidence"
-    ]
+      "deploy the exact PR #561 merge commit with the installed refresh runner under real Grabowski leases",
+      "prove a second apply for the same target performs no additional installer effect",
+      "publish and deploy final Registry closeout evidence"
+    ],
+    "live_closeout": {
+      "phase": "bootstrap_verified_pending_runner_target",
+      "bootstrap": {
+        "source_commit": "08cbc7377ce55f64539d7c6a0d0ddc9a4cf0b3c9",
+        "release_id": "08cbc7377ce5-src0298e556e36d",
+        "receipt_path": "/home/alex/.local/share/bureau/receipts/08cbc7377ce5-src0298e556e36d-2e1e197f9052.json",
+        "receipt_file_sha256": "fc8b68a2d34504b2ebb8d84fc1c20d1dda758511a5f76fe5bb2d6113cbe7842c",
+        "receipt_sha256": null,
+        "manifest_sha256": "2e1e197f9052e45c2213fd72cdd0a829bc139bdd5cbe67a241dfe29d46ee6db4",
+        "bureau_launcher_sha256": "c49185e994fe16f90a2a14df955c3a2db8f5f268ad33a3d08ae36b5909533bde",
+        "refresh_launcher_sha256": "d34851f6a892e93fc6d6cf6aa9d1efcd1a3a906b3534f2f10f1fb98f657a3505",
+        "bureau_check_valid": true,
+        "runtime_identity_valid": true,
+        "canonical_registry_valid": true,
+        "refresh_status_deployed_source_commit": "08cbc7377ce55f64539d7c6a0d0ddc9a4cf0b3c9",
+        "reconciliation": "The initial bootstrap command completed the installation; its wrapper misread the runtime-identity envelope. Independent readback proved the installed state valid without retrying the installer."
+      },
+      "next_target": "merge commit of PR #561",
+      "required_sequence": [
+        "merge PR #561 after exact diff and CI gates",
+        "observe the exact merge commit as a verified main candidate",
+        "create a short-lived exact deployment intent for that commit",
+        "apply once with the installed runner under real Grabowski leases",
+        "prove target-level dedupe and complete installed readback",
+        "publish and deploy final verified closeout evidence"
+      ],
+      "does_not_establish": [
+        "live_refresh_success",
+        "target_dedupe_live_proof",
+        "task_verification"
+      ]
+    }
   }
 }

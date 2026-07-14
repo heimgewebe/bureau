@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "id": "RBV1-T021",
+  "initiative": "REPOBRIEF-V1-ROADMAP",
+  "title": "Lenskit latest-complete publication v2 vollständig härten",
+  "state": "planned",
+  "goal": "Korrektur nach Liveprüfung von Lenskit origin/main e241b7b95f08905159cf94f706f3e45024da4b71 und PR #987 (Head 48e1febe1522def29bb04afa8dcada986ce1086d, Merge 98161d7c0f9a224a1a1620e12a683c260543e968, GitHub-Diff SHA-256 4ef50982c81abbd06d286b3a2cb466234153719baaff18aa8e9a9e183cbc29aa). Die frühere Aussage, Lenskit sei vollständig abgeschlossen, ist falsifiziert. Reproduziert sind: Manifest-TOCTOU zwischen Parsing/Eligibility und späterem Hash; ungeprüfte alte v1-Registry mit Zukunftszeit kann gültige Kandidaten dauerhaft blockieren; unterschiedliche Repositories mit gleichem Namen und fehlender Remote-URL kollidieren in derselben Source-Lane; Directory-fsync-Fehler tritt nach os.replace auf und kann trotz Fehler sichtbaren Fortschritt hinterlassen; fehlgeschlagene Publikation kann die persistente Lockdatei erzeugen, während CLI nur unstrukturierten stderr-Text liefert. 17 fokussierte Tests und Ruff sind grün, decken diese Fehler aber nicht ab. Umsetzung ist durch einen fremden aktiven Lenskit-Ball und Prozesse im kanonischen Checkout blockiert; keine fremden Zustände anfassen. Erforderlich: eigener Folge-Ball, bytekonsistente Manifestaufnahme, gehärtete Legacy-Migrationsregel, unambige Lane-Identität, explizite uncertain-after-replace-/fsync-Semantik mit Recovery/Receipt sowie maschinenlesbare Fehler- und Mutationsbelege.",
+  "priority": {
+    "lane": "later",
+    "rank": 900
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit"
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "source-event-bound",
+      "assertion": "Task metadata preserves the originating live-register event id and source."
+    },
+    {
+      "id": "reviewed-before-effect",
+      "assertion": "Any repository effect remains review-before-effect and does not follow from the live event alone."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_live_register",
+    "live_register_event_id": 259,
+    "live_register_candidate_id": "systemaudit-atlas-terminal-publication-v1",
+    "live_register_created_at": "2026-07-12T20:50:02.038956Z",
+    "live_register_source": "chatgpt-live-audit-20260712",
+    "promotion_required_from_event": true,
+    "does_not_establish": [
+      "registry_task_truth",
+      "queue_truth",
+      "claim_authority",
+      "dispatch_authority",
+      "merge_readiness"
+    ]
+  }
+}

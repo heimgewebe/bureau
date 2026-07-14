@@ -81,8 +81,8 @@
       "runtime deployment permission",
       "current Grabowski repo availability"
     ],
-    "blocked_at": "2026-07-11T02:33:46Z",
-    "block_reason": "The defect is freshly reproduced, but repo:/home/alex/repos/grabowski is exclusively leased by chatgpt-grabowski-residual-slices-20260711. This thread does not modify or terminate that owner.",
+    "blocked_at": "2026-07-14T06:34:16Z",
+    "block_reason": "Code, review hardening and user-runtime deployment are complete, but the installed root-owned broker and /etc configuration still predate the canonical publisher. The old stale recovery gate blocks operator_power_argv, and no authorized passwordless root cutover surface is available. The gate must not be bypassed or weakened.",
     "dependency_state": {
       "GRABOWSKI-OPERATOR-SURFACE-V1-T014": "verified"
     },
@@ -97,7 +97,44 @@
       "broker_result": "power recovery marker is stale",
       "command_executed": false
     },
-    "active_repo_owner": "chatgpt-grabowski-residual-slices-20260711",
-    "next_action": "Acquire the Grabowski repository only after the current owner releases it; implement the canonical freshness-source contract, tests, reviewed merge, deploy and same-record runtime proof."
+    "next_action": "Use an explicitly authorized root-capable cutover path to install the merged root broker/config with preimage backups and hash-bound rollback; then run a fresh server recovery probe, same-record status/broker proof, bounded /usr/bin/true call and kill-switch denial before marking T030 verified.",
+    "implementation_evidence": {
+      "feature_pr": 197,
+      "feature_merge_commit": "d7192e9324d48dbfe9d1011c7ae2551e8ca9ec23",
+      "review_hardening_pr": 198,
+      "review_hardening_merge_commit": "1929456f90b9017c2d5167a1f0590a09ec2cc90a",
+      "live_user_runtime_head": "1929456f90b9017c2d5167a1f0590a09ec2cc90a",
+      "github_checks": [
+        "validate (3.10): success",
+        "validate (3.12): success"
+      ],
+      "local_validation": [
+        "1542 tests passed with one expected skip",
+        "make validate passed",
+        "make deploy-check passed"
+      ],
+      "final_review_diff_sha256": "6f7a21b954242b29ff864696178741959b0393a76d1f80d7d5003aa3f046532b"
+    },
+    "live_root_cutover_gap": {
+      "canonical_marker_path": "/var/lib/grabowski/power-worker-recovery-gate.json",
+      "canonical_marker_owner": "root:root",
+      "canonical_marker_mode": "0600",
+      "user_status_reason": "unsafe-file: permission denied",
+      "fresh_source_path": "/home/alex/.local/state/grabowski/recovery/last-server-recovery.json",
+      "fresh_source_target": "heimberry:rest-server/grabowski-recovery-probe",
+      "installed_publisher_action_present": false,
+      "installed_root_broker_matches_merge": false,
+      "power_gate_result": "fail-closed before command execution",
+      "passwordless_root_cutover_available": false
+    },
+    "root_cutover_acceptance": [
+      "Back up and SHA-256-bind the installed root broker, wrapper and privileged-actions configuration before mutation.",
+      "Install the merged broker contract and add the fixed publish_recovery_marker action without changing unrelated privileged actions.",
+      "Publish a fresh canonical record as root:root mode 0644 and verify schema, target, generation, source digest and canonical digest by readback.",
+      "Verify grabowski_recovery_status and the Rootbroker power gate report the same generated-at, age, max-age, source digest, canonical digest and ready reason.",
+      "Run one bounded read-only privileged /usr/bin/true proof and preserve the audit receipt; separately prove kill-switch denial.",
+      "Preserve a rollback receipt and do not weaken allowlists, audit, kill-switch, recovery requirements or privilege boundaries."
+    ],
+    "former_repo_owner": "chatgpt-grabowski-residual-slices-20260711"
   }
 }

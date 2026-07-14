@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "initiative": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1",
+  "state": "blocked",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/repos/grabowski/src/grabowski_mcp.py",
+      "host:heim-pc",
+      "service:grabowski-operator.service",
+      "service:grabowski-rootbroker"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "id": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1-T001",
+  "title": "Harden kill-switch engagement, disarm and denial proofs",
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "goal": "Remove the leftover T030 production test marker safely, make the canonical marker impossible to mutate through generic trusted-owner surfaces, add a narrow recovery-gated disarm operation, and replace production-state denial proofs with isolated deployed-artifact probes.",
+  "acceptance": [
+    {
+      "id": "current-marker-break-glass",
+      "assertion": "The exact marker SHA-256 1a66d92ea0d5ec2ef463545bf58a181eaca5f7955c3d502dc48810bca8f674f3 is moved reversibly out of the canonical path by an external hash-bound helper; marker absence, quarantine identity, audit validity, recovery readiness and operator health are read back."
+    },
+    {
+      "id": "generic-mutation-denied",
+      "assertion": "KILL_SWITCH_PATH is rejected by generic create, replace, remove, destroy, terminal and indirect execution surfaces regardless of trusted_owner; tests prove no other protected-path contract regresses."
+    },
+    {
+      "id": "typed-engage",
+      "assertion": "A dedicated engage operation creates only a schema-valid regular single-link 0600 marker with bounded reason and evidence identity, using create-only semantics and an audit receipt."
+    },
+    {
+      "id": "typed-disarm",
+      "assertion": "A dedicated disarm operation is the only in-band exception: it requires exact marker SHA-256, environment switch off, valid audit chain, valid deployed provenance, fresh canonical recovery readiness, safe marker identity, reversible quarantine, fsync and absence readback."
+    },
+    {
+      "id": "fail-closed-boundary",
+      "assertion": "All ordinary mutations remain denied while the marker is active; wrong hash, symlink, hardlink, broad mode, malformed marker, environment kill switch, invalid audit, stale recovery or deployment drift deny disarm before mutation."
+    },
+    {
+      "id": "isolated-live-proof",
+      "assertion": "The deployed artifact is exercised in a transient isolated HOME/STATE_DIR for kill-switch denial proof. The probe refuses the canonical production path and leaves it byte-for-byte unchanged on success, exception and signal cleanup paths."
+    },
+    {
+      "id": "quality-gates",
+      "assertion": "Focused tests and full validation pass; the complete current GitHub diff is exported as a downloadable SHA-256-bound artifact; diff-bound critical self-review passes before merge."
+    },
+    {
+      "id": "deploy-live-verify",
+      "assertion": "After merge, the immutable runtime is deployed and provenance-valid; live checks prove normal mutation works with no marker, typed engagement blocks it, typed disarm restores it, and no production test marker remains."
+    }
+  ],
+  "metadata": {
+    "source": "Operator incident and live audit on 2026-07-14",
+    "grabowski_issue": 215,
+    "observed": {
+      "marker_path": "/home/alex/.local/state/grabowski/operator-kill-switch",
+      "marker_sha256": "1a66d92ea0d5ec2ef463545bf58a181eaca5f7955c3d502dc48810bca8f674f3",
+      "marker_content": "T030 live denial proof 2026-07-14\\n",
+      "created_at": "2026-07-14T16:44:48.024023+00:00",
+      "audit_operation": "create",
+      "audit_chain_valid": true,
+      "deployment_provenance_valid": true,
+      "recovery_ready": true,
+      "rootbroker_ready": true
+    },
+    "root_cause": [
+      "trusted_owner bypasses _protected_generic_write_target in _resolve_write_target",
+      "generic create therefore reached the canonical kill-switch path",
+      "the blanket mutation guard blocks the marker's own cleanup path",
+      "the T030 denial proof used production state and lacked atomic cleanup"
+    ],
+    "blocked_at": "2026-07-14T16:59:20Z",
+    "block_reason": "The marker currently blocks Grabowski mutations and deployment. The central source file is also leased by chatgpt-workspace-lifecycle-cleanup-v1-20260714; no override, reset or concurrent write is allowed.",
+    "unblock_conditions": [
+      "run the exact hash-bound reversible break-glass helper as desktop user",
+      "verify kill_switch_engaged is false and audit/recovery/deployment remain valid",
+      "wait for or coordinate a clean release of the exact src/grabowski_mcp.py lease",
+      "acquire a new isolated worktree and exact path claims"
+    ],
+    "does_not_establish": [
+      "permission to clear a different marker",
+      "permission to bypass environment kill switch",
+      "permission to weaken fail-closed behavior",
+      "permission to modify foreign worktrees or leases",
+      "implementation complete"
+    ]
+  }
+}

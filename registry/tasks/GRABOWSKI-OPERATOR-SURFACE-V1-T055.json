@@ -30,14 +30,67 @@
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
     "does_not_establish": [
-      "implementation_complete",
-      "runtime_deployed",
-      "workspace_ready"
+      "rewriting historical receipts in place",
+      "identity equivalence for non-argv command representations",
+      "permission to retry ambiguous historical task starts"
     ],
     "effect": "operator_reliability",
     "phase": "agent-workspace-adapter-hardening",
-    "reason": "The formal Agent Workspace path remained degraded while the isolated read-only Claude packet review succeeded through the direct review adapter.",
-    "source": "GRIP-ROADMAP-V1-T014 closeout live evidence"
+    "reason": "PR #193 plus successful formal workspace role starts resolved the Workspace and Task Store argv digest mismatch.",
+    "source": "GRIP-ROADMAP-V1-T014 closeout live evidence",
+    "implementation": {
+      "pull_requests": [
+        "heimgewebe/grabowski#193"
+      ],
+      "deployed_merge_commit": "ff0290ba3f46cfb6faff806b1659c2fff010f077"
+    },
+    "validation": {
+      "github_ci": "required validate (3.10) and validate (3.12) jobs passed on all cited implementation PRs",
+      "formal_workspace": "gaw-agent-workspace-t0-grabowski-operator-sur-bc57edfe3e57 closed successfully",
+      "workspace_close_receipt_sha256": "0aad33363e8a9a5319a408dd394ab3287ee13fe451df343dddc0b4835e7a407f"
+    },
+    "validated_acceptance": {
+      "canonical-digest": "PR #193 routes Workspace and durable task identity through the shared canonical argv serialization.",
+      "drift-blocked": "The formal workspace writer passed preflight and started without the former argv_sha256 mismatch; regression tests reject digest drift before execution.",
+      "migration": "PR #193 carries an explicit versioned command-identity compatibility contract rather than silently reinterpreting historical receipts."
+    },
+    "verified_at": "2026-07-14",
+    "verification_note": "PR #193 unified argv digest binding; the formal workspace preflight and role start completed without the previous Workspace/Task Store identity mismatch, and required CI passed.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "source_ref": "heimgewebe/grabowski#193",
+          "number": 193,
+          "head_sha": "ab041564f4dd1a6b835ceaceb3c3dfcc213dbf86",
+          "merge_commit_sha": "61ae5c85694a307562c951759c1504155cfca97e",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T055"
+        },
+        {
+          "kind": "workspace_receipt",
+          "authority": "grabowski-agent-workspace",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T055",
+          "source_ref": "gaw-agent-workspace-t0-grabowski-operator-sur-eaf95eed258b/role_started",
+          "event_sha256": "7f59e7f63ff7c44ba60511f4aadc866cffaa6ab8571160ca27861e527c76dc76",
+          "command_sha256": "4877f12b25d77c88555ab6f79b5cf4ebc2e0db032385f96e9509493bda50d802"
+        },
+        {
+          "kind": "workspace_receipt",
+          "authority": "grabowski-agent-workspace",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T055",
+          "source_ref": "gaw-agent-workspace-t0-grabowski-operator-sur-bc57edfe3e57/close",
+          "receipt_sha256": "0aad33363e8a9a5319a408dd394ab3287ee13fe451df343dddc0b4835e7a407f",
+          "commit_sha": "ff0290ba3f46cfb6faff806b1659c2fff010f077"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "fced3220ff444b66c06758eb4e3f122795c4846fc240eb567717b794c3956019",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   },
   "priority": {
     "lane": "later",
@@ -50,6 +103,6 @@
     "bureau"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Unify Agent Workspace argv digest binding"
 }

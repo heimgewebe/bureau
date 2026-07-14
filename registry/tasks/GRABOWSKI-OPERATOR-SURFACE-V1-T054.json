@@ -30,14 +30,69 @@
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
     "does_not_establish": [
-      "implementation_complete",
-      "runtime_deployed",
-      "workspace_ready"
+      "compatibility with unspecified future Bureau envelopes",
+      "acceptance of ambiguous legacy-only result shapes",
+      "completion of unrelated Agent Workspace roles"
     ],
     "effect": "operator_reliability",
     "phase": "agent-workspace-adapter-hardening",
-    "reason": "The formal Agent Workspace path remained degraded while the isolated read-only Claude packet review succeeded through the direct review adapter.",
-    "source": "GRIP-ROADMAP-V1-T014 closeout live evidence"
+    "reason": "PR #193 and PR #196 plus formal workspace live evidence resolved the Bureau envelope adapter degradation.",
+    "source": "GRIP-ROADMAP-V1-T014 closeout live evidence",
+    "implementation": {
+      "pull_requests": [
+        "heimgewebe/grabowski#193",
+        "heimgewebe/grabowski#196"
+      ],
+      "deployed_merge_commit": "ff0290ba3f46cfb6faff806b1659c2fff010f077"
+    },
+    "validation": {
+      "github_ci": "required validate (3.10) and validate (3.12) jobs passed on all cited implementation PRs",
+      "formal_workspace": "gaw-agent-workspace-t0-grabowski-operator-sur-bc57edfe3e57 closed successfully",
+      "workspace_close_receipt_sha256": "0aad33363e8a9a5319a408dd394ab3287ee13fe451df343dddc0b4835e7a407f"
+    },
+    "validated_acceptance": {
+      "envelope-current": "PR #193 normalizes the schema-versioned Bureau result envelope and fails closed on ambiguous shapes.",
+      "contract-tests": "PR #193 adds current, malformed, missing-result and compatibility-policy regression coverage; both required GitHub validation jobs passed.",
+      "live-proof": "The formal workspace gaw-agent-workspace-t0-grabowski-operator-sur-eaf95eed258b reached creation_state=ready against the deployed Bureau runtime and canonical runtime snapshot after PR #196."
+    },
+    "verified_at": "2026-07-14",
+    "verification_note": "PR #193 implemented the envelope adapter contract, PR #196 repaired the production Git/snapshot path, and the formal workspace reached ready using the deployed Bureau result envelope.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "source_ref": "heimgewebe/grabowski#193",
+          "number": 193,
+          "head_sha": "ab041564f4dd1a6b835ceaceb3c3dfcc213dbf86",
+          "merge_commit_sha": "61ae5c85694a307562c951759c1504155cfca97e",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T054"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "source_ref": "heimgewebe/grabowski#196",
+          "number": 196,
+          "head_sha": "1495e3b8b035207c0ac8ec7a73a05c08c99368a9",
+          "merge_commit_sha": "b9b135f824be26799873434b0d00c6aa6833ac28",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T054"
+        },
+        {
+          "kind": "workspace_receipt",
+          "authority": "grabowski-agent-workspace",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T054",
+          "source_ref": "gaw-agent-workspace-t0-grabowski-operator-sur-eaf95eed258b/workspace_ready",
+          "event_sha256": "dbf6cef69f6506a80754b4c2ad4a57c148289c98ea37aabd0dab2315a514bf0f",
+          "commit_sha": "b9b135f824be26799873434b0d00c6aa6833ac28"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "3a9d7d4e5f220af7d431e98ea97134cda1418154ff72ac38cdf569b33fa61996",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   },
   "priority": {
     "lane": "later",
@@ -50,6 +105,6 @@
     "bureau"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Normalize Bureau result envelopes in Agent Workspace"
 }

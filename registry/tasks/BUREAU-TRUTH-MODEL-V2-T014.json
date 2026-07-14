@@ -24,7 +24,7 @@
   ],
   "id": "BUREAU-TRUTH-MODEL-V2-T014",
   "title": "Make github-observe repository identifiers explicit",
-  "state": "planned",
+  "state": "verified",
   "goal": "Replace the ambiguous github-observe --repo input with explicit machine-readable repository identifier modes so a Bureau resource ID can never reach gh as a malformed OWNER/REPO slug.",
   "priority": {
     "lane": "later",
@@ -65,11 +65,10 @@
     "observed_failure": "bureau --root <clean-root> --json github-observe --repo repo.bureau delegated the value to gh, which rejected it because OWNER/REPO was required.",
     "deduplication": "Existing observer tasks own binding observation and guards. No existing task owns the CLI identifier split or authoritative Registry-to-GitHub mapping.",
     "does_not_establish": [
-      "GitHub write authority",
-      "task completion",
-      "merge readiness",
-      "automatic Registry resource resolution",
-      "permission to broaden accepted identifier forms"
+      "future GitHub availability",
+      "GitHub write, merge or deployment authority",
+      "automatic correctness of future repository mappings without schema and Registry validation",
+      "migration of status-projection or unrelated --repo consumers"
     ],
     "reviewed_at": "2026-07-14T16:31:00Z",
     "review_observation": {
@@ -82,6 +81,124 @@
     },
     "sequencing_reason": "T014 is independent of Lease Contract v2 and therefore intentionally has no dependency on T011. Artificial sequencing would reduce safe parallelism without protecting a shared file, component, process or deploy path.",
     "path_contract": "Absolute path leases remain intentional host-local effect identities. T014 improves portable repository naming by adding typed Registry-to-GitHub mapping, not by weakening path identity.",
-    "hash_semantics": "T014 is planned and therefore has no terminal verification hashes. Its future execution and closeout must bind the implementation head, diff, tests and current plan hash."
+    "hash_semantics": "The verified task binds its complete non-verification content through task_sha256 and the current initiative plan through plan_sha256.",
+    "verified_at": "2026-07-14T18:39:16Z",
+    "resolution_summary": "github-observe now exposes explicit slug and Bureau-resource identifier modes, resolves resource IDs only through authoritative Registry github_slug metadata, refuses malformed or ambiguous inputs locally, preserves a deterministic deprecated compatibility path, and is merged, deployed and live-verified in the canonical Bureau runtime.",
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_explicit_github_repository_identifiers_deployed",
+      "implementation_pull_request": 576,
+      "implementation_head": "61c108e0d12d11580df5b8740f3a30de0c3ef7e2",
+      "merge_commit": "2536b25300eafa7c29dc68daf8505a9180e5db20",
+      "final_diff_sha256": "a05a045c0f83bb3d3c3f367f5e62e7e11c548008364c60c2022593b8f8bbaf40",
+      "self_review_sha256": "e747714402b23783da68f565669d7fb42cc14c2ce856073be1625a530d28a753",
+      "validation": {
+        "focused_identifier_and_observer_tests": "34 PASS",
+        "repository_tests": "595 PASS",
+        "ruff": "PASS",
+        "systemkatalog_boundary": "PASS",
+        "registry_check": "PASS",
+        "sqlite_integrity": "PASS",
+        "ci_python_3_10": "SUCCESS",
+        "ci_python_3_12": "SUCCESS"
+      },
+      "runtime": {
+        "source_commit": "2536b25300eafa7c29dc68daf8505a9180e5db20",
+        "release_id": "2536b25300ea-src7f007ab75fca",
+        "manifest_sha256": "e30a7145837e9bb0627ae89cd06759a3011f6f0cb888239b5a9149f5b32b4da7",
+        "package_tree_sha256": "7f007ab75fca784105b2fc6b012dfc400f626b84d4177d90cfb7200c0974d82e",
+        "registry_tree_sha256": "f2cc63b3f1d9477cac2a8cf7975eb6055eb0908f5c7d30d06cce036d3a506da8",
+        "runtime_refresh_observation_sha256": "932e2afc3f6cc56149af9c03cb60dc3650ea32dc32f16949ad1bed7dc2fdb13e",
+        "runtime_refresh_intent_sha256": "591c57928662063099712900fd622fe87a4106ea9aa3c02f58efb6d2b956532a",
+        "runtime_refresh_result_sha256": "7afea63653859b548071fe793599920100052caa509ac973adcbff3b46011d9a"
+      }
+    },
+    "live_verification": {
+      "observed_at": "2026-07-14T18:39:16Z",
+      "canonical_runtime_source_commit": "2536b25300eafa7c29dc68daf8505a9180e5db20",
+      "runtime_identity_status": "ok",
+      "runtime_registry_role": "canonical-runtime-snapshot",
+      "runtime_head_equals_origin_main": true,
+      "invalid_slug": {
+        "command": "bureau --json github-observe --repo-slug repo.bureau",
+        "returncode": 2,
+        "status": "repository-identifier-error",
+        "code": "unsupported-repository-slug",
+        "delegated_to_github": false
+      },
+      "explicit_slug": {
+        "command": "bureau --json github-observe --repo-slug heimgewebe/bureau",
+        "returncode": 0,
+        "repository": "heimgewebe/bureau",
+        "repository_input_mode": "slug",
+        "healthy": true,
+        "binding_healthy": true
+      },
+      "registry_resource": {
+        "command": "bureau --json github-observe --repo-resource repo.bureau",
+        "returncode": 0,
+        "resource_id": "repo.bureau",
+        "resolved_repository": "heimgewebe/bureau",
+        "repository_input_mode": "resource",
+        "healthy": true,
+        "binding_healthy": true
+      }
+    },
+    "authoritative_mapping": {
+      "field": "github_slug",
+      "git_repository_resources_mapped": 16,
+      "runtime_path_inference": false,
+      "runtime_git_remote_inference": false,
+      "case_insensitive_uniqueness_validation": true,
+      "legacy_metadata_github_duplicates_removed": 6
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "BUREAU-TRUTH-MODEL-V2-T014",
+          "source_ref": "heimgewebe/bureau#576",
+          "number": 576,
+          "head_sha": "61c108e0d12d11580df5b8740f3a30de0c3ef7e2",
+          "merge_commit_sha": "2536b25300eafa7c29dc68daf8505a9180e5db20"
+        },
+        {
+          "kind": "runtime_deployment",
+          "authority": "bureau-runtime-refresh",
+          "task_id": "BUREAU-TRUTH-MODEL-V2-T014",
+          "source_ref": "bureau-runtime:2536b25300ea-src7f007ab75fca",
+          "source_commit": "2536b25300eafa7c29dc68daf8505a9180e5db20",
+          "manifest_sha256": "e30a7145837e9bb0627ae89cd06759a3011f6f0cb888239b5a9149f5b32b4da7",
+          "result_sha256": "7afea63653859b548071fe793599920100052caa509ac973adcbff3b46011d9a"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "bureau-runtime",
+          "task_id": "BUREAU-TRUTH-MODEL-V2-T014",
+          "source_ref": "live:github-observe-identifiers:2026-07-14T18:39:16Z",
+          "runtime_sha": "2536b25300eafa7c29dc68daf8505a9180e5db20",
+          "invalid_slug_code": "unsupported-repository-slug",
+          "resource_id": "repo.bureau",
+          "resolved_repository": "heimgewebe/bureau",
+          "binding_healthy": true
+        }
+      ]
+    },
+    "verification_note": "T014 is satisfied: explicit slug and resource modes are merged and deployed; resource identifiers resolve only through validated Registry github_slug metadata; malformed and ambiguous inputs fail locally with stable machine-readable codes; the legacy option is explicitly deprecated; and canonical live probes prove slug success, resource success and local malformed-slug refusal.",
+    "verification": {
+      "source": "github_ci_deployed_bureau_runtime_and_live_identifier_smoke",
+      "source_ref": "github-pr:heimgewebe/bureau#576",
+      "implementation_sha": "61c108e0d12d11580df5b8740f3a30de0c3ef7e2",
+      "merge_commit_sha": "2536b25300eafa7c29dc68daf8505a9180e5db20",
+      "deployed_runtime_sha": "2536b25300eafa7c29dc68daf8505a9180e5db20",
+      "runtime_manifest_sha256": "e30a7145837e9bb0627ae89cd06759a3011f6f0cb888239b5a9149f5b32b4da7",
+      "final_diff_sha256": "a05a045c0f83bb3d3c3f367f5e62e7e11c548008364c60c2022593b8f8bbaf40",
+      "self_review_sha256": "e747714402b23783da68f565669d7fb42cc14c2ce856073be1625a530d28a753",
+      "task_sha256": "a90e285052593598af253fa2674cd31721d36fbc4281dcccceb605475ca73202",
+      "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8"
+    }
   }
 }

@@ -3,7 +3,7 @@
   "id": "RBV1-T024",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "RepoBrief-Familienpublikation generationskohärent machen",
-  "state": "planned",
+  "state": "verified",
   "goal": "Make publication of multiple stable RepoBrief family manifests recoverable and generation-coherent so readers cannot observe an unintended mixture of old and new family generations after interruption or concurrent publication.",
   "priority": {
     "lane": "later",
@@ -71,6 +71,55 @@
       "remote_freshness",
       "semantic_truth",
       "merge_readiness"
-    ]
+    ],
+    "implementation_branch": "feat/rbv1-t024-generation-publication-v1",
+    "implementation_base": "9203f8928cdaa571cdfd099b10b2414ee7450789",
+    "verified_at": "2026-07-14T21:38:07Z",
+    "implementation_pr": "heimgewebe/lenskit#1010",
+    "implementation_pr_url": "https://github.com/heimgewebe/lenskit/pull/1010",
+    "implementation_head": "480a4322a1b2d03cdc9a0645d65ceb5a7386d3de",
+    "implementation_merge_commit": "58b44cd9261a07f67c1595d9ab87ce72a1b0b852",
+    "diff_sha256": "305f92a1f0e9f35be84e4050beef9d602b68a2edb01c78c30de875ea1caa9696",
+    "diff_bytes": 80117,
+    "diff_lines": 2158,
+    "implementation_paths": [
+      "docs/proofs/external-publish-v1-proof.md",
+      "merger/lenskit/core/external_manifest_generation.py",
+      "merger/lenskit/core/external_manifest_reference.py",
+      "merger/lenskit/tests/test_external_manifest_generation.py"
+    ],
+    "validation": [
+      "43 focused generation, interruption, recovery, tamper and concurrency tests passed on the exact implementation head.",
+      "The complete local Lenskit suite passed on the exact committed head: 3986 passed, 1 skipped.",
+      "Ruff CI configuration, Ruff formatting, git diff --check and the graph maintainability ratchet passed; no new C901 violation was introduced and one baseline violation was resolved.",
+      "CLI dogfood published both families under generation 45e17f6a123dacca71c9e3618359ebf955b2d14fad29195ce323bcd54c8d2323 and independent readback selected that one complete generation.",
+      "Recovery dogfood reconstructed a deliberately removed stable compatibility projection without changing the authoritative generation.",
+      "All GitHub checks passed, including pytest-full, browser-tests, planning-registration, contracts, Ruff and CodeQL.",
+      "Fresh pre-merge readback confirmed unchanged base, head and GitHub patch; post-merge readback confirmed merge commit 58b44cd9261a07f67c1595d9ab87ce72a1b0b852 from reviewed head 480a4322a1b2d03cdc9a0645d65ceb5a7386d3de."
+    ],
+    "review_receipt": {
+      "path": "/home/alex/logs/reviews/lenskit-pr-1010-self-review.json",
+      "sha256": "153839f591b4d94c4f91eb5c69b6ed6f8b45f11e8337bd20e5215661cc5787b8",
+      "verdict": "PASS",
+      "origin": "self_review",
+      "external_review_performed": false
+    },
+    "follow_up_tasks": [
+      "RBV1-T025",
+      "RBV1-T026"
+    ],
+    "outcome": "Lenskit PR #1010 now publishes all requested RepoBrief/Lenskit family manifests as one immutable, descriptor-bound generation selected by one atomic pointer. The reader verifies the pointer, descriptor, source bundle and every family fail-closed; per-lane locking starts before materialization; historical stable family paths remain non-authoritative compatibility projections with deterministic recovery. Hostile ancestor-directory replacement resistance and retention/garbage collection remain explicit follow-ups.",
+    "verified_acceptance": {
+      "rbv1-t024-generation-contract": "All requested families carry one deterministic generation ID and one shared generation timestamp. One atomically replaced pointer selects the complete descriptor-bound generation, and the reader validates the documented read-once selection rule.",
+      "rbv1-t024-interruption-recovery": "Injected failures between family writes and at pointer replacement leave the previous pointer authoritative. Failures after pointer commit degrade only non-authoritative compatibility projections, which deterministic recovery rebuilds from the selected generation.",
+      "rbv1-t024-concurrency": "An exclusive repository/ref lane flock serializes publishers before bundle materialization. Focused tests cover both different and identical concurrent bundles and verify a complete deterministic winner.",
+      "rbv1-t024-compatibility": "Historical single-family stable paths remain available and explicitly record that they are non-authoritative compatibility projections. Cross-family consumers receive a versioned pointer-and-descriptor migration rule; traversal, symlink and integrity mismatches fail closed.",
+      "rbv1-t024-validation": "43 focused tests, the complete 3986-test Lenskit suite, Ruff, formatting, diff checks, maintainability ratchets, CLI publication/recovery dogfood and all GitHub checks passed on head 480a4322a1b2d03cdc9a0645d65ceb5a7386d3de.",
+      "rbv1-t024-nonclaims": "No distributed consensus, cross-host transactional filesystem, remote freshness, semantic truth or hostile ancestor-directory replacement protection is claimed; RBV1-T025 remains the path-hardening follow-up."
+    },
+    "verification": {
+      "task_sha256": "e390cc58f673b68b9cbddb5c8be5e5a144dcad709ba1d24f374c40e6a8ca6438",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   }
 }

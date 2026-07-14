@@ -3,7 +3,7 @@
   "id": "RBV1-T022",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Lenskit GitHub-Actions-Vertrag auf wartbare Major-Pins umstellen",
-  "state": "planned",
+  "state": "verified",
   "goal": "PR #1004 aktualisiert mehrere SHA-gepinnte GitHub Actions. Lenskit-CI scheitert, weil Vertragstests einen einzelnen alten Checkout-SHA fest verdrahten und Versionskommentare nur als '# vN' statt Dependabots '# vN.N.N' erkennen. Enger Task: Tests auf explizite erlaubte Major-Versionen plus vollständige SHA-Pins umstellen, Browser-Gate semantisch statt hashfest prüfen, PR taskbinden, vollständig validieren und ohne Providerlauf abschließen.",
   "priority": {
     "lane": "next",
@@ -43,7 +43,7 @@
     },
     {
       "id": "rbv1-t022-pr-binding",
-      "assertion": "The Lenskit maintenance PR is bound only to RBV1-T021 and is merged only after a fresh diff-bound review and green GitHub CI."
+      "assertion": "The Lenskit maintenance PR is bound only to RBV1-T022 and is merged only after a fresh diff-bound review and green GitHub CI."
     },
     {
       "id": "rbv1-t022-nonclaims",
@@ -65,6 +65,68 @@
     ],
     "source_pr": "heimgewebe/lenskit#1004",
     "renumbered_from_local_unmerged_task_id": "RBV1-T021",
-    "renumber_reason": "RBV1-T021 was concurrently merged by Bureau PR #563 before this registration PR was created."
+    "renumber_reason": "RBV1-T021 was concurrently merged by Bureau PR #563 before this registration PR was created.",
+    "verified_at": "2026-07-14T12:14:22Z",
+    "implementation_pr": "heimgewebe/lenskit#1006",
+    "implementation_head": "1aa4020afc0434ea2e86fcddabf208bc6fd910c8",
+    "implementation_base": "cc345356056f2d160bc09f4b70e91cd80b36a033",
+    "implementation_merge_commit": "af2f9ed36b95af35a54b98dfcb2ee946ef9c6e7e",
+    "diff_sha256": "1014f8e5396080d8e359b39933701c7913739e06fdb90e239e989660d661ad15",
+    "diff_bytes": 23183,
+    "implementation_paths": [
+      ".github/workflows/ai-context-guard.yml",
+      ".github/workflows/anti-hallucination-lint.yml",
+      ".github/workflows/claude.yml",
+      ".github/workflows/codeql.yml",
+      ".github/workflows/contracts-validate.yml",
+      ".github/workflows/doc-freshness.yml",
+      ".github/workflows/forensic-preflight-canary.yml",
+      ".github/workflows/graph-bundle-sources.yml",
+      ".github/workflows/graph-model.yml",
+      ".github/workflows/graph-quality-goldset.yml",
+      ".github/workflows/graph-source-roots.yml",
+      ".github/workflows/lens-model.yml",
+      ".github/workflows/lint.yml",
+      ".github/workflows/metrics.yml",
+      ".github/workflows/parity-gate.yml",
+      ".github/workflows/parity_check.yml",
+      ".github/workflows/task-index.yml",
+      ".github/workflows/test-suite.yml",
+      ".github/workflows/validate-merges.yml",
+      "merger/lenskit/tests/test_browser_gate_contract.py",
+      "merger/lenskit/tests/test_github_actions_node_runtime.py"
+    ],
+    "validation": [
+      "Focused workflow-contract tests passed: 5 passed.",
+      "Full local non-browser suite passed on the implementation head: 3903 passed, 1 skipped, 13 deselected.",
+      "Ruff, GitHub Actions pin checks, reusable-workflow contracts, graph maintainability, five WebUI JavaScript suites and release contracts passed.",
+      "Two independently built release candidates were byte-identical and source-bound.",
+      "GitHub PR #1006 completed 32 checks successfully, including browser tests and CodeQL.",
+      "Fresh pre-merge read bound PR, head, base, 21 changed paths and the full GitHub diff SHA-256.",
+      "Post-merge GitHub readback reported merge commit af2f9ed36b95af35a54b98dfcb2ee946ef9c6e7e and main resolved to the same commit."
+    ],
+    "review_receipt": {
+      "path": "/home/alex/logs/reviews/lenskit-pr-1006-self-review.json",
+      "sha256": "b6960991efa698e86597e19a1ee96d5a3c06fc531b5736d535e0e65bc7d2cbaf",
+      "verdict": "PASS"
+    },
+    "release_candidate": {
+      "candidate_id": "2.4.0-rc.1-g1aa4020afc04",
+      "archive_sha256": "8f6c3221296e4f53f392e96f00115b64718dd0b63bf0698580d7828abbc6cbe9",
+      "manifest_sha256": "db68e0937f65ac585a01149a638f63ac42f389e74b93483ef8bc440ef8a493c3",
+      "distribution_status": "blocked_without_separate_written_permission"
+    },
+    "outcome": "Lenskit PR #1006 replaced the unbound Dependabot PR, preserved full commit SHA pins, made semantic version comments reviewable with explicit major allowlists, passed all local and GitHub validation, and was merged with exact-head protection.",
+    "verified_acceptance": {
+      "rbv1-t022-pin-contract": "All recognized JavaScript actions remain pinned to full lowercase 40-character commit SHAs; semantic comments are accepted only for explicitly allowed majors.",
+      "rbv1-t022-browser-contract": "The browser contract checks action identity and a full SHA without hard-coding one obsolete checkout commit.",
+      "rbv1-t022-ci": "Five focused tests, 3903 full local tests and all 32 GitHub checks passed on head 1aa4020afc0434ea2e86fcddabf208bc6fd910c8.",
+      "rbv1-t022-pr-binding": "PR #1006 contained exactly RBV1-T022, used fresh head/base/diff binding and merged as af2f9ed36b95af35a54b98dfcb2ee946ef9c6e7e.",
+      "rbv1-t022-nonclaims": "No arbitrary future-major compatibility, broader supply-chain guarantee, provider execution or public distribution permission is claimed."
+    },
+    "verification": {
+      "task_sha256": "e876234c0638cd1032299ee2575866866d6e8bd466b497a04aa67fb917129d61",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   }
 }

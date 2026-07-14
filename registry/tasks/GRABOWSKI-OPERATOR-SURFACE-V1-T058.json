@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T058",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Serialize the tamper-evident audit chain across processes",
+  "state": "planned",
+  "goal": "Replace the process-local audit append lock with a descriptor-bound cross-process critical section so concurrent Grabowski processes cannot fork, interleave or partially corrupt the audit chain, while preserving strict file identity and fail-closed recovery semantics.",
+  "priority": {
+    "lane": "next",
+    "rank": 580
+  },
+  "depends_on": [],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_mcp.py",
+      "path:/home/alex/repos/grabowski/tests/test_audit_interprocess_lock.py",
+      "path:/home/alex/repos/grabowski/docs/audit-chain-recovery-v1.md"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Harden audit serialization only. Never truncate, replace or repair the live audit log outside an explicit recovery contract."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "bureau"
+  ],
+  "acceptance": [
+    {
+      "id": "cross-process-lock",
+      "assertion": "All audit verification, sequence allocation and append operations that can race across processes are serialized by an OS-visible lock with bounded acquisition and explicit timeout."
+    },
+    {
+      "id": "descriptor-bound-identity",
+      "assertion": "Read and append paths use no-follow descriptors and revalidate regular-file type, owner, group, mode, single-link identity and path binding before and after critical operations."
+    },
+    {
+      "id": "complete-write",
+      "assertion": "Short writes and zero-progress writes are handled explicitly; a successful append proves the exact expected size increase and fsync completion."
+    },
+    {
+      "id": "bounded-rollback",
+      "assertion": "A failed partial append is rolled back to the exact pre-append size under the same exclusive descriptor lock, and rollback failure is surfaced as a distinct fail-closed recovery condition."
+    },
+    {
+      "id": "reader-consistency",
+      "assertion": "Audit verification and record enumeration cannot observe a concurrent partial append or silently switch inodes."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover concurrent processes, descriptor/path swaps, symlink and hardlink rejection, unsafe ownership or mode, lock timeout, short writes, partial append rollback, rollback failure and unchanged valid-chain behavior."
+    },
+    {
+      "id": "current-main-integration",
+      "assertion": "The final implementation is rebuilt or cleanly replayed onto current main, full repository validation and both GitHub CI variants pass, and generated contracts are refreshed only from the final source tree."
+    },
+    {
+      "id": "deployment-proof",
+      "assertion": "After merge and deployment, runtime identity matches the merge commit and a bounded concurrent append smoke preserves one linear valid audit chain."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-14",
+    "source": "Live review of stale draft PR heimgewebe/grabowski#205 after a prior audit-chain fork incident.",
+    "live_observation": {
+      "grabowski_main": "8a51cd37b82d879b735af3937c25d7f8f302fe42",
+      "main_gap": "AUDIT_APPEND_LOCK is a threading.RLock and therefore does not serialize independent Grabowski processes.",
+      "published_pr": {
+        "pull_request": "heimgewebe/grabowski#205",
+        "head": "caf1fbc6790da94d83690484d5dd8053370ffe0c",
+        "state": "open draft",
+        "assessment": "Do not merge as-is; the branch contains bootstrap and CI-trigger commits and is based on an older main."
+      },
+      "clean_successor": {
+        "worktree": "/home/alex/repos/.grabowski-worktrees/audit-interprocess-lock-final-v1",
+        "branch": "fix/audit-interprocess-lock-final-v1",
+        "head": "6b93fb3eaf625d3654d129bc9cb114d6c6bed601",
+        "state": "clean",
+        "substantive_commits": 6,
+        "files": [
+          "docs/audit-chain-recovery-v1.md",
+          "src/grabowski_mcp.py",
+          "tests/test_audit_interprocess_lock.py"
+        ],
+        "scope": "descriptor locking, race closure, short-write handling, partial append rollback and documented recovery boundary"
+      }
+    },
+    "current_blocker": {
+      "resource": "path:/home/alex/repos/grabowski/src/grabowski_mcp.py",
+      "owner": "chatgpt-workspace-lifecycle-cleanup-v1-20260714",
+      "reason": "An active exact path lease cannot be bypassed even when reviewed hunks appear disjoint. Continue only after owner-bound release or authoritative unchanged terminal reconciliation."
+    },
+    "does_not_establish": [
+      "correctness of the clean successor on current main",
+      "permission to bypass the active exact path lease",
+      "permission to mutate or remove another worktree",
+      "permission to rewrite the live audit chain"
+    ]
+  }
+}

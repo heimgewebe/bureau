@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T059",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Return structured exact-path denials from nonconflict assessment",
+  "state": "planned",
+  "goal": "Restore the stable navigation contract of T046 by making grabowski_resource_nonconflict_assess return the intentional machine-readable exact-path denial instead of crashing its public wrapper while trying to read a nonexistent proof.",
+  "priority": {
+    "lane": "next",
+    "rank": 590
+  },
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T046"
+  ],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_resources.py",
+      "path:/home/alex/repos/grabowski/tests/test_resources.py"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Fix response shaping only; do not weaken exact path overlap, issue a proof for path blockers or grant release authority."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "bureau"
+  ],
+  "acceptance": [
+    {
+      "id": "structured-deny",
+      "assertion": "For a live exact path blocker, the public MCP tool returns decision=deny, code=exact-path-owner-release-required, blocker_type=exact_path_lease, the bounded lease snapshot and the owner-bound reconciliation next action."
+    },
+    {
+      "id": "no-proof-on-path",
+      "assertion": "The response contains no non-conflict proof and grants no acquisition, retry, write, release or reclaim authority."
+    },
+    {
+      "id": "repository-path-separation",
+      "assertion": "Repository blockers retain their proof-capable assessment path; unsupported blockers and absent or expired path blockers retain their distinct stable codes."
+    },
+    {
+      "id": "wrapper-totality",
+      "assertion": "The public wrapper never assumes result[proof] exists unless decision=allow and validates response shaping for every assessor result variant."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests invoke the actual public tool for live path deny, absent path, unsupported blocker, repository allow and repository deny paths and assert no KeyError or generic transport failure."
+    },
+    {
+      "id": "live-proof",
+      "assertion": "After deployment, a real exact-path assessment returns the structured denial while the foreign lease remains unchanged and a normal acquisition still fails closed."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-14",
+    "regression_of": "GRABOWSKI-OPERATOR-SURFACE-V1-T046 stable-navigation acceptance",
+    "live_reproduction": {
+      "count": 2,
+      "surface": "grabowski_resource_nonconflict_assess",
+      "inputs": "one informal and one fully canonical scope request against the active src/grabowski_mcp.py exact path lease",
+      "observed_error": "internal wrapper error: 'proof'",
+      "underlying_contract": "assess_nonconflict intentionally returns a structured exact-path deny without a proof; the MCP wrapper unconditionally dereferences result[proof]."
+    },
+    "current_blocker": {
+      "dirty_foreign_worktree": "/home/alex/repos/.grabowski-worktrees/t057-atomic-merge-v1",
+      "dirty_paths": [
+        "src/grabowski_resources.py",
+        "tests/test_resources.py"
+      ],
+      "reason": "These exact implementation paths contain uncommitted foreign T057 hardening. Do not patch, reset, stage or extract them until that owner closes or publishes its work."
+    },
+    "does_not_establish": [
+      "permission to release the active workspace lifecycle lease",
+      "permission to treat path scopes as non-conflicting",
+      "permission to modify the dirty T057 worktree",
+      "that T046 reconciliation semantics are otherwise invalid"
+    ]
+  }
+}

@@ -81,8 +81,8 @@
       "runtime deployment permission",
       "current Grabowski repo availability"
     ],
-    "blocked_at": "2026-07-14T06:34:16Z",
-    "block_reason": "The feature, review hardening and commit-bound Rootbroker cutover helper are merged and fully validated. The installed root-owned broker configuration remains unchanged because the Polkit apply was rejected by the platform safety boundary before process start. No root process ran and no mutation occurred. The cutover still requires an explicitly authorized desktop/root boundary; recovery, audit and kill-switch gates must not be bypassed.",
+    "blocked_at": "2026-07-14T08:43:17Z",
+    "block_reason": "The feature, review hardening, commit-bound Rootbroker cutover helper and socket-state preflight hardening are merged and fully validated. The installed root-owned broker configuration remains unchanged because passwordless sudo is unavailable and the platform safety boundary rejected the official power apply before process start. No root process ran and no mutation occurred. The cutover still requires an explicitly authorized desktop/root boundary; recovery, audit and kill-switch gates must not be bypassed.",
     "dependency_state": {
       "GRABOWSKI-OPERATOR-SURFACE-V1-T014": "verified"
     },
@@ -117,13 +117,16 @@
       "root_cutover_helper_pr": 202,
       "root_cutover_helper_merge_commit": "300cecf5ce7e539bd2a5c3cd4e0fbb94a527681b",
       "root_cutover_helper_diff_sha256": "560f421c00980f53f50323e23ac37ec0fccc5ce6e7f19c31fb4a630de913adf7",
+      "root_cutover_socket_preflight_pr": 203,
+      "root_cutover_socket_preflight_merge_commit": "4a7a30ec40b65318fce6ff8280326ab9677c3a83",
+      "root_cutover_socket_preflight_diff_sha256": "71a5e0a7228802fd4cbb46368ebc57e6697efcf3a7ccc5a598a138a3ff98ba5a",
       "root_cutover_helper_checks": [
         "validate (3.10): success",
         "validate (3.12): success"
       ],
       "root_cutover_helper_validation": [
-        "16 focused success/negative/rollback tests passed",
-        "1562 repository tests passed with one expected skip",
+        "17 focused success/negative/rollback tests passed",
+        "1563 repository tests passed with one expected skip",
         "make validate passed",
         "make deploy-check passed",
         "commit-bound live read-only plan against installed root configuration returned ready=true"
@@ -139,7 +142,8 @@
       "installed_publisher_action_present": false,
       "installed_root_broker_matches_merge": false,
       "power_gate_result": "fail-closed before command execution",
-      "passwordless_root_cutover_available": false
+      "passwordless_root_cutover_available": false,
+      "polkit_temporary_authorization_present": false
     },
     "root_cutover_acceptance": [
       "Back up and SHA-256-bind the installed root broker, wrapper and privileged-actions configuration before mutation.",
@@ -151,12 +155,15 @@
     ],
     "former_repo_owner": "chatgpt-grabowski-residual-slices-20260711",
     "root_cutover_helper_state": {
-      "merged_main_head": "300cecf5ce7e539bd2a5c3cd4e0fbb94a527681b",
-      "clean_cutover_checkout": "/home/alex/repos/.grabowski-worktrees/t030-root-cutover-live-v1",
+      "merged_main_head": "4a7a30ec40b65318fce6ff8280326ab9677c3a83",
+      "clean_cutover_checkout": "/home/alex/repos/grabowski",
       "plan_ready": true,
       "planned_installed_config_sha256": "58a54cadf2cf518ff7fbf72d93bc46c8eeb71e010334fe92dc2b3e238f02ec44",
       "planned_desired_config_sha256": "e4a6989de947213f8a2a97e88911e682ce8d1ccbe59d36eafce383c50e9311c7",
+      "socket_preflight": "requires an already active Rootbroker socket and treats unknown systemctl state as an error before backup or mutation",
+      "sudo_noninteractive_result": "password required; no command executed",
       "platform_apply_result": "blocked before process start by platform security checks",
+      "polkit_temporary_authorization_present": false,
       "root_process_started": false,
       "root_mutation_performed": false,
       "installed_helper_present": false,

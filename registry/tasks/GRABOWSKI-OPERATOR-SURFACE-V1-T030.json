@@ -82,7 +82,7 @@
       "current Grabowski repo availability"
     ],
     "blocked_at": "2026-07-14T06:34:16Z",
-    "block_reason": "Code, review hardening and user-runtime deployment are complete, but the installed root-owned broker and /etc configuration still predate the canonical publisher. The old stale recovery gate blocks operator_power_argv, and no authorized passwordless root cutover surface is available. The gate must not be bypassed or weakened.",
+    "block_reason": "The feature, review hardening and commit-bound Rootbroker cutover helper are merged and fully validated. The installed root-owned broker configuration remains unchanged because the Polkit apply was rejected by the platform safety boundary before process start. No root process ran and no mutation occurred. The cutover still requires an explicitly authorized desktop/root boundary; recovery, audit and kill-switch gates must not be bypassed.",
     "dependency_state": {
       "GRABOWSKI-OPERATOR-SURFACE-V1-T014": "verified"
     },
@@ -97,7 +97,7 @@
       "broker_result": "power recovery marker is stale",
       "command_executed": false
     },
-    "next_action": "Use an explicitly authorized root-capable cutover path to install the merged root broker/config with preimage backups and hash-bound rollback; then run a fresh server recovery probe, same-record status/broker proof, bounded /usr/bin/true call and kill-switch denial before marking T030 verified.",
+    "next_action": "Authorize the merged commit-bound Rootbroker cutover helper at the desktop/root boundary, then run a fresh server recovery probe, verify same-record recovery and broker readiness, execute one bounded /usr/bin/true proof, prove kill-switch denial and only then mark T030 verified.",
     "implementation_evidence": {
       "feature_pr": 197,
       "feature_merge_commit": "d7192e9324d48dbfe9d1011c7ae2551e8ca9ec23",
@@ -113,7 +113,21 @@
         "make validate passed",
         "make deploy-check passed"
       ],
-      "final_review_diff_sha256": "6f7a21b954242b29ff864696178741959b0393a76d1f80d7d5003aa3f046532b"
+      "final_review_diff_sha256": "6f7a21b954242b29ff864696178741959b0393a76d1f80d7d5003aa3f046532b",
+      "root_cutover_helper_pr": 202,
+      "root_cutover_helper_merge_commit": "300cecf5ce7e539bd2a5c3cd4e0fbb94a527681b",
+      "root_cutover_helper_diff_sha256": "560f421c00980f53f50323e23ac37ec0fccc5ce6e7f19c31fb4a630de913adf7",
+      "root_cutover_helper_checks": [
+        "validate (3.10): success",
+        "validate (3.12): success"
+      ],
+      "root_cutover_helper_validation": [
+        "16 focused success/negative/rollback tests passed",
+        "1562 repository tests passed with one expected skip",
+        "make validate passed",
+        "make deploy-check passed",
+        "commit-bound live read-only plan against installed root configuration returned ready=true"
+      ]
     },
     "live_root_cutover_gap": {
       "canonical_marker_path": "/var/lib/grabowski/power-worker-recovery-gate.json",
@@ -135,6 +149,19 @@
       "Run one bounded read-only privileged /usr/bin/true proof and preserve the audit receipt; separately prove kill-switch denial.",
       "Preserve a rollback receipt and do not weaken allowlists, audit, kill-switch, recovery requirements or privilege boundaries."
     ],
-    "former_repo_owner": "chatgpt-grabowski-residual-slices-20260711"
+    "former_repo_owner": "chatgpt-grabowski-residual-slices-20260711",
+    "root_cutover_helper_state": {
+      "merged_main_head": "300cecf5ce7e539bd2a5c3cd4e0fbb94a527681b",
+      "clean_cutover_checkout": "/home/alex/repos/.grabowski-worktrees/t030-root-cutover-live-v1",
+      "plan_ready": true,
+      "planned_installed_config_sha256": "58a54cadf2cf518ff7fbf72d93bc46c8eeb71e010334fe92dc2b3e238f02ec44",
+      "planned_desired_config_sha256": "e4a6989de947213f8a2a97e88911e682ce8d1ccbe59d36eafce383c50e9311c7",
+      "platform_apply_result": "blocked before process start by platform security checks",
+      "root_process_started": false,
+      "root_mutation_performed": false,
+      "installed_helper_present": false,
+      "installed_config_unchanged": true,
+      "remaining_boundary": "explicit desktop or otherwise authorized root execution of the reviewed helper"
+    }
   }
 }

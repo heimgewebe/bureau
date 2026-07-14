@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "RBV1-T022",
+  "initiative": "REPOBRIEF-V1-ROADMAP",
+  "title": "Lenskit GitHub-Actions-Vertrag auf wartbare Major-Pins umstellen",
+  "state": "planned",
+  "goal": "PR #1004 aktualisiert mehrere SHA-gepinnte GitHub Actions. Lenskit-CI scheitert, weil Vertragstests einen einzelnen alten Checkout-SHA fest verdrahten und Versionskommentare nur als '# vN' statt Dependabots '# vN.N.N' erkennen. Enger Task: Tests auf explizite erlaubte Major-Versionen plus vollständige SHA-Pins umstellen, Browser-Gate semantisch statt hashfest prüfen, PR taskbinden, vollständig validieren und ohne Providerlauf abschließen.",
+  "priority": {
+    "lane": "next",
+    "rank": 21
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit"
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "rbv1-t022-pin-contract",
+      "assertion": "Every recognized JavaScript action remains pinned to a full 40-character commit SHA, while reviewable version comments accept an exact major or semantic version belonging to the explicitly allowed major."
+    },
+    {
+      "id": "rbv1-t022-browser-contract",
+      "assertion": "The browser workflow contract verifies the allowed checkout major and full SHA pin without hard-coding one obsolete checkout commit."
+    },
+    {
+      "id": "rbv1-t022-ci",
+      "assertion": "The focused workflow-contract tests and the complete Lenskit validation suite pass on the exact published PR head."
+    },
+    {
+      "id": "rbv1-t022-pr-binding",
+      "assertion": "The Lenskit maintenance PR is bound only to RBV1-T021 and is merged only after a fresh diff-bound review and green GitHub CI."
+    },
+    {
+      "id": "rbv1-t022-nonclaims",
+      "assertion": "The result does not claim arbitrary future action-major compatibility, supply-chain safety beyond reviewed SHA pins, or provider execution."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_live_register",
+    "live_register_event_id": 387,
+    "live_register_candidate_id": "lenskit-actions-contract-maintenance-v1",
+    "live_register_created_at": "2026-07-14T11:38:55.024861Z",
+    "live_register_source": "chatgpt-lenskit-actions-contract-20260714",
+    "promotion_required_from_event": true,
+    "does_not_establish": [
+      "future_action_major_compatibility",
+      "upstream_supply_chain_safety",
+      "provider_execution",
+      "merge_readiness"
+    ],
+    "source_pr": "heimgewebe/lenskit#1004",
+    "renumbered_from_local_unmerged_task_id": "RBV1-T021",
+    "renumber_reason": "RBV1-T021 was concurrently merged by Bureau PR #563 before this registration PR was created."
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "id": "CCM-V1-T006",
+  "initiative": "CHRONIK-CODING-MEMORY-V1",
+  "title": "Chronik-Ledger-Snapshot bei ungültigem UTF-8 bytegenau binden",
+  "state": "planned",
+  "goal": "Den Ledger-Snapshot aus Chronik PR #220 auch bei ungültigem UTF-8 an die tatsächlich gelesenen Rohbytes bis zur letzten vollständigen JSONL-Zeile binden, ohne historische Semantik, v1-Ausgabeformate oder das fail-closed Einfrieren zu verändern.",
+  "priority": {
+    "lane": "later",
+    "rank": 900
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik"
+  },
+  "claims": [
+    {
+      "resource": "repo.chronik",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "raw-byte-snapshot-bound",
+      "assertion": "ledger_snapshot.sha256 is computed from the original bytes that were scanned, bounded at the last complete JSONL line, including when a record contains invalid UTF-8."
+    },
+    {
+      "id": "single-read-evidence",
+      "assertion": "Snapshot hash, complete byte boundary, parsed records and integrity diagnostics derive from one coherent read and cannot silently describe different file states."
+    },
+    {
+      "id": "corruption-regression-covered",
+      "assertion": "Tests cover invalid UTF-8, malformed JSON and incomplete tails, including byte sequences that would collapse to identical Unicode replacement text after decoding."
+    },
+    {
+      "id": "valid-history-compatible",
+      "assertion": "Valid UTF-8 ledgers retain existing query, summary and freeze results and the public chronik-coding-history.v1, chronik-operator-summary.v1 and chronik-history-cohort-receipt.v1 identifiers."
+    },
+    {
+      "id": "freeze-remains-fail-closed",
+      "assertion": "freeze continues to refuse a cohort whenever the bounded ledger snapshot contains invalid records, while read-only history exposes bounded diagnostics."
+    },
+    {
+      "id": "source-event-bound",
+      "assertion": "Task metadata preserves the originating live-register event, Chronik PR and merge commit."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_live_register",
+    "live_register_event_id": 431,
+    "live_register_candidate_id": "CHRONIK-RAW-BYTE-SNAPSHOT-HASH-V1",
+    "live_register_created_at": "2026-07-14T15:07:15.643720Z",
+    "live_register_source": "chatgpt:chronik-pr-220",
+    "source_pr": "heimgewebe/chronik#220",
+    "source_merge_commit": "0ab419e107b46ab5af23cc284ea72159ff07f910",
+    "promotion_required_from_event": true,
+    "does_not_establish": [
+      "queue_truth",
+      "claim_authority",
+      "dispatch_authority",
+      "merge_readiness"
+    ]
+  }
+}

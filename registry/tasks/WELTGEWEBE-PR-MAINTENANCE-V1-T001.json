@@ -4,7 +4,7 @@
   "initiative": "WELTGEWEBE-PR-MAINTENANCE-V1",
   "title": "Repair API release identity PR #1404 against current deployment contracts",
   "goal": "Update PR #1404 on current main so API release identity remains source-commit-bound without weakening the deployment drift guard or the VPS proxy/Caddy safety contract.",
-  "state": "ready",
+  "state": "verified",
   "depends_on": [],
   "priority": {
     "lane": "later",
@@ -70,9 +70,27 @@
       "Proxy trust preflight rejects removal of the DEPLOY_TARGET=vps and WITH_CADDY=0 safety condition from scripts/weltgewebe-up."
     ],
     "does_not_establish": [
-      "root_cause_fully_exhausted",
-      "repair_complete",
-      "merge_safe"
-    ]
+      "production_deployment",
+      "production_runtime_identity_readback"
+    ],
+    "verification": {
+      "task_sha256": "3435f77d5b03f22cefc7db35807ffae4261677042314d257c8146122b2a38910",
+      "plan_sha256": "41f8b1f1939269e93ed656517bcf2964596b28f5a9584de234d7acec9fa333f8",
+      "verified_at": "2026-07-14T07:43:05Z",
+      "source_pr": "heimgewebe/weltgewebe#1404",
+      "final_head": "43ef14010f6b00692f9aec4087d84d82072ededb",
+      "merge_commit": "4ded46aeec93df2d080357aef5e061c7e44f658a",
+      "final_diff_sha256": "ddafc5f6f18ffcbdf24df7ba3a76f7f28ec7fc6f9eb452f49fb1f8297bd829f3",
+      "evidence": [
+        "fresh Deploy Drift Guard success",
+        "fresh Proxy trust preflight success",
+        "full CI and Web E2E success",
+        "Required merge gate success",
+        "local make validate success"
+      ],
+      "combined_main_commit": "135642b5900c5e9ec5bfb7122a4c573f0e994820",
+      "combined_main_ci_run": 29314989405,
+      "combined_main_ci_conclusion": "success"
+    }
   }
 }

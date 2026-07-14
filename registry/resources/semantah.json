@@ -4,9 +4,9 @@
   "type": "git-repository",
   "parent": "repo",
   "path": "/home/alex/repos/semantAH",
+  "github_slug": "heimgewebe/semantAH",
   "grabowski_key": "repo:/home/alex/repos/semantAH",
   "metadata": {
-    "github": "heimgewebe/semantAH",
     "role": "semantic evidence and embedding axis for grounded retrieval experiments",
     "boundaries": [
       "no_repo_truth_by_itself",

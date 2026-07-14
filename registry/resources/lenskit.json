@@ -1,1 +1,1 @@
-{"schema_version":1,"id":"repo.lenskit","type":"git-repository","parent":"repo","path":"/home/alex/repos/lenskit","grabowski_key":"repo:/home/alex/repos/lenskit"}
+{"schema_version":1,"id":"repo.lenskit","type":"git-repository","parent":"repo","path":"/home/alex/repos/lenskit","github_slug":"heimgewebe/lenskit","grabowski_key":"repo:/home/alex/repos/lenskit"}

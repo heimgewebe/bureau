@@ -3,6 +3,7 @@
   "id": "repo.weltgewebe",
   "parent": "repo",
   "path": "/home/alex/repos/weltgewebe",
+  "github_slug": "heimgewebe/weltgewebe",
   "schema_version": 1,
   "type": "git-repository"
 }

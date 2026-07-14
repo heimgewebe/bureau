@@ -4,5 +4,6 @@
   "type": "git-repository",
   "parent": "repo",
   "path": "/home/alex/repos/heim-pc",
+  "github_slug": "heimgewebe/heim-pc",
   "grabowski_key": "repo:/home/alex/repos/heim-pc"
 }

@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T057",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Bind merge dispatch to a fresh atomic lease snapshot",
+  "state": "planned",
+  "goal": "Close the race between an earlier repository review and the irreversible GitHub merge effect by atomically re-reading overlapping leases immediately before merge dispatch and binding that fresh snapshot to the exact pull request head, base and complete diff.",
+  "priority": {
+    "lane": "next",
+    "rank": 570
+  },
+  "depends_on": [],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Implement and test the merge-control gate only. It grants no merge authority and may never release or override a foreign lease."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau"
+  ],
+  "acceptance": [
+    {
+      "id": "fresh-lease-read",
+      "assertion": "Immediately before merge dispatch, the control plane performs an authoritative uncached read of repository, branch, path, service, deployment and merge-gate leases relevant to the exact pull request effect."
+    },
+    {
+      "id": "atomic-critical-section",
+      "assertion": "The final lease read and merge intent are serialized under a short atomic critical section or equivalent compare-and-swap boundary so that a newly acquired overlapping lease cannot enter unnoticed between validation and dispatch."
+    },
+    {
+      "id": "exact-binding",
+      "assertion": "The merge receipt binds repository, pull request number, base SHA, head SHA, complete GitHub diff SHA-256, relevant resource-key set, lease snapshot digest and comparable observation and dispatch timestamps."
+    },
+    {
+      "id": "late-lease-blocks",
+      "assertion": "Any foreign overlapping lease acquired after an earlier review or diff delivery invalidates the merge attempt and fails closed; cached evidence cannot be reused."
+    },
+    {
+      "id": "no-foreign-override",
+      "assertion": "The gate never releases, expires, reconciles or force-overrides a foreign lease and never interprets an unscoped legacy lease as disjoint without an authoritative non-conflict proof."
+    },
+    {
+      "id": "external-merge-reconciliation",
+      "assertion": "If GitHub reports an external merge, the system records the observed lease state and whether its own pre-merge contract was satisfied, but performs no duplicate merge and does not retroactively manufacture compliance."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover a lease acquired between review and merge, stale lease snapshots, exact non-overlap, legacy unscoped leases, concurrent merge actors, external merge reconciliation and the successful atomic path."
+    },
+    {
+      "id": "non-authority",
+      "assertion": "A fresh lease snapshot is necessary but insufficient for merge: authorization, current diff delivery, critical review, green CI, recovery and branch protection remain independent required gates."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-14",
+    "source_task": "RAB-V1-T002E",
+    "source_pull_request": "heimgewebe/grabowski#195",
+    "observed_repository": "heimgewebe/grabowski",
+    "reviewed_head": "9aa6336bb5087190b93bdd9af3d3be661b07d36a",
+    "merge_commit": "274494be64d66d525200eb427d81871ce1628251",
+    "observation": "A foreign repo-wide lease was acquired after the initial live-state inspection and before this actor dispatched the merge. The lease was discovered during runtime synchronization. The reviewed head, diff, tests and merge tree remained valid, but pre-merge lease freshness was not serialized.",
+    "relationship_to_existing": {
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T048": "T048 serializes user-visible diff delivery before merge; T057 separately serializes the final lease state immediately before the merge effect."
+    },
+    "risk": "A cooperating actor can pass an early lease check and later merge after another owner has acquired an overlapping resource, producing valid code but invalid operator ordering evidence.",
+    "does_not_establish": [
+      "that PR 195 code was incorrect",
+      "that T002E provider controls failed",
+      "that every external GitHub actor can be locked",
+      "future merge safety until T057 is implemented"
+    ]
+  }
+}

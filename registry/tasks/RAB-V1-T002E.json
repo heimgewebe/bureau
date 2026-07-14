@@ -3,7 +3,7 @@
   "id": "RAB-V1-T002E",
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "Harden exact live-preflight preparation contracts",
-  "state": "ready",
+  "state": "verified",
   "goal": "Eliminate the argument-adapter collision and align the Lenskit preparation outputs with the exact Grabowski live-runner contract without starting any provider process.",
   "priority": {
     "lane": "next",
@@ -86,6 +86,141 @@
       "provider reliability",
       "permission for the full benchmark",
       "default promotion"
-    ]
+    ],
+    "verified_at": "2026-07-14",
+    "outcome": "The exact live-preflight preparation chain is hardened and verified without provider use. Lenskit now rejects non-executable Claude-Code runner plans and applies required secret redaction safely before export; Grabowski preserves the exact Claude executable argument, rejects argparse abbreviations at both parser layers and accepts only the known optional execution contract. Both repositories were merged, post-merge checks passed, and the healthy live Grabowski runtime contains the merged hardening. No provider process was started and no RepoBrief usefulness is claimed.",
+    "implementation": {
+      "grabowski": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 195,
+        "url": "https://github.com/heimgewebe/grabowski/pull/195",
+        "diff_url": "https://github.com/heimgewebe/grabowski/pull/195.diff",
+        "reviewed_head": "9aa6336bb5087190b93bdd9af3d3be661b07d36a",
+        "base_head": "2a4e332ac8cfbdbaa93a766fcff98a6e4e7a6d24",
+        "diff_sha256": "a46c89f7442e29745b5783c8866158197c63fc90345d5358874dfef1fe68e94b",
+        "diff_bytes": 9193,
+        "changed_files": 5,
+        "additions": 149,
+        "deletions": 3,
+        "merge_commit": "274494be64d66d525200eb427d81871ce1628251",
+        "merged_at": "2026-07-14T05:13:06Z",
+        "merge_tree_equals_reviewed_head": true
+      },
+      "lenskit": {
+        "repository": "heimgewebe/lenskit",
+        "pull_request": 1002,
+        "url": "https://github.com/heimgewebe/lenskit/pull/1002",
+        "diff_url": "https://github.com/heimgewebe/lenskit/pull/1002.diff",
+        "reviewed_head": "c97d2547eab8de3716ce6d2a5761d58e4e07d931",
+        "base_head": "e8206024055c2342f3427726752c845b44aa2ed2",
+        "diff_sha256": "ba5bdcfccba04e566bc2bcf59ac65718c0273dec16b11265d49fa56b3b2002b0",
+        "diff_bytes": 17639,
+        "changed_files": 7,
+        "additions": 231,
+        "deletions": 31,
+        "merge_commit": "1b4fe0d9875a61a8b69e407cb29115dc1451c58d",
+        "merged_at": "2026-07-14T05:26:42Z",
+        "merge_tree_equals_reviewed_head": true
+      }
+    },
+    "validation": {
+      "cross_repository": {
+        "measurement_scope": "synthetic_contract_fixture",
+        "status": "PASS",
+        "request_count": 96,
+        "fixture_intents": 2,
+        "provider_process_intents": 0,
+        "retry_permitted": false,
+        "source_unchanged": true,
+        "observed_cost_usd": 0.0,
+        "evidence_sha256": "4dc760003deb5230aa041fa206993375b7acd6b82a31d08d4904d52dd2978219",
+        "report_sha256": "abb114dd46d924ee823f249e37d3e77763146509afb5ad7d4e3415e1f0babb31"
+      },
+      "diff_bound_self_review": {
+        "result": "PASS",
+        "sha256": "159dc54ce3065bfed549aa9054e395f8b9effbc7aa47d9df5b3d633aea486865",
+        "axes": [
+          "correctness",
+          "regression_risk",
+          "tests",
+          "security",
+          "integration"
+        ]
+      },
+      "grabowski_local": {
+        "result": "PASS",
+        "command": "make validate",
+        "tests_passed": 1516
+      },
+      "lenskit_local": {
+        "result": "PASS",
+        "tests_passed": 3890,
+        "tests_skipped": 1,
+        "tests_deselected": 13,
+        "ruff": "PASS",
+        "maintainability_ratchet": "PASS",
+        "release_contract": "PASS"
+      },
+      "github_ci": {
+        "grabowski_pr": [
+          "validate (3.10): SUCCESS",
+          "validate (3.12): SUCCESS"
+        ],
+        "grabowski_post_merge": [
+          "validate (3.10): SUCCESS",
+          "validate (3.12): SUCCESS"
+        ],
+        "lenskit_pr": "all required checks successful",
+        "lenskit_post_merge": [
+          "test-suite: SUCCESS",
+          "browser-tests: SUCCESS",
+          "contracts: SUCCESS",
+          "lint: SUCCESS",
+          "CodeQL: SUCCESS",
+          "parity and context gates: SUCCESS"
+        ]
+      }
+    },
+    "runtime_readback": {
+      "service": "grabowski-mcp",
+      "healthy": true,
+      "live_repo_head": "b9b135f824be26799873434b0d00c6aa6833ac28",
+      "contains_grabowski_merge": "274494be64d66d525200eb427d81871ce1628251",
+      "ancestry_evidence": "GitHub compare reports live head one commit ahead of the T002E Grabowski merge.",
+      "completion_status": "complete",
+      "integrity_valid": true,
+      "runtime_matches_deployment_contract": true,
+      "registered_tool_count": 122
+    },
+    "verified_acceptance": {
+      "rab-v1-t002e-no-prefix-abbrev": "Both the outer adapter and inner preflight argparse parsers set allow_abbrev=false; focused tests prove exact --claude-command forwarding and rejection of prefix spellings.",
+      "rab-v1-t002e-exact-live-argv-test": "The final provider-free cross-repository simulation passed the exact production argument path with one synthetic baseline and treatment intent, zero provider intents and unchanged sources.",
+      "rab-v1-t002e-plan-contract": "Lenskit binds grabowski-claude-code-live-v1, requires anthropic-claude-code and an explicitly present empty sampling object, and rejects ambiguous or unsupported configurations before planning.",
+      "rab-v1-t002e-export-contract": "Profiles whose canonical policy requires redaction enable it by default; an explicit disable is rejected before output creation and the result reports the redaction decision.",
+      "rab-v1-t002e-regression": "Full local suites, repository gates, exact GitHub diff reviews, PR CI, post-merge tree readback, post-merge CI and live runtime ancestry all passed with zero provider processes and zero provider cost."
+    },
+    "control_plane_followup": {
+      "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T057",
+      "finding": "A foreign repository lease was acquired after the initial live-state check but before PR #195 merge dispatch. The merged code and evidence remained valid, but the lease snapshot was not atomically refreshed immediately before the merge effect.",
+      "impact_on_t002e_result": "none on code correctness, provider safety or runtime validity; process-ordering control requires separate hardening"
+    },
+    "next_task": {
+      "id": "RAB-V1-T002F",
+      "state": "planned",
+      "authorization_status": "not_authorized",
+      "execution_status": "not_started",
+      "blocker": "A fresh live pair still requires a new separate reviewed authorization. No T002D path, authorization or evidence may be reused."
+    },
+    "live_provider_evidence": {
+      "provider_processes_started": 0,
+      "real_provider_cost_observed_usd": 0.0,
+      "real_tokens_observed": null,
+      "real_transcript_observed": false,
+      "reason": "T002E is provider-free contract hardening and verification only."
+    },
+    "verification": {
+      "task_sha256": "573d8b7e2666759e248570dc210ef15a9da6985bd2eee9ef5b20dc44ca5f807d",
+      "plan_sha256": "80509abd14d63643ae73b9cf5ba0ef2255d73d1bd331a96b1752fe8ada04f308"
+    }
   }
 }

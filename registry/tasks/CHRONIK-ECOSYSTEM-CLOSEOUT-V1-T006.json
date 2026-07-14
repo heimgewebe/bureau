@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T006",
+  "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
+  "title": "Bound direct Chronik outbox import scaling and receipt integrity",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
+  "goal": "Measure and bound the direct Grabowski-to-Chronik importer as source files and ledger history grow, replace repeated whole-ledger reconciliation only when evidence justifies it, and preserve fail-closed recovery after receipt or data loss.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.chronik",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "benchmark-contract",
+      "assertion": "A deterministic benchmark covers representative and stressed source-file and event-count tiers, reports elapsed time, target scans, memory and written versus skipped events, and records machine context."
+    },
+    {
+      "id": "threshold-defined-before-optimization",
+      "assertion": "The task defines an explicit performance threshold and does not add an index, database or cache unless the current implementation breaches that threshold reproducibly."
+    },
+    {
+      "id": "single-batch-reconciliation",
+      "assertion": "If optimization is required, one batch reconciles existing event IDs without rescanning the complete target ledger once per source file."
+    },
+    {
+      "id": "receipt-not-authority",
+      "assertion": "Import receipts remain evidence bound to source path and SHA-256 but never replace verification against the actual Chronik store."
+    },
+    {
+      "id": "loss-recovery-proof",
+      "assertion": "Tests prove recovery after target-ledger loss, receipt loss, stale receipt, appended source file, duplicate event and incomplete JSONL tail without partial success claims."
+    },
+    {
+      "id": "timer-budget",
+      "assertion": "The deployed two-minute timer has a measured worst-case runtime and overlap policy that prevents concurrent importers or unbounded backlog."
+    },
+    {
+      "id": "full-regression-proof",
+      "assertion": "Chronik tests, local validation, GitHub CI and a live repeated import pass at the exact reviewed head and merged release."
+    }
+  ],
+  "depends_on": [],
+  "rollback": {
+    "trigger": "An optimization weakens event-id deduplication, store verification, append-only behavior or crash recovery.",
+    "procedure": "Restore the merged PR #218 importer, retain the measured benchmark and lower the timer cadence only through a separate reviewed operational change."
+  },
+  "stop": {
+    "conditions": [
+      "current measured runtime remains comfortably below the defined timer and operator latency thresholds",
+      "the proposed optimization introduces a second truth store without a corruption and rebuild contract",
+      "recovery from missing target data would trust receipts instead of replaying source events",
+      "concurrent importer exclusion cannot be proven"
+    ]
+  },
+  "metadata": {
+    "registered_at": "2026-07-14T15:30:00+02:00",
+    "source_pull_requests": [
+      "heimgewebe/chronik#217",
+      "heimgewebe/chronik#218"
+    ],
+    "source_runtime_release": "428ffe3f14aef33666937736c5f0593ab44d2378",
+    "current_measurement": {
+      "observed_at": "2026-07-14T15:27:00+02:00",
+      "source_files": 195,
+      "events_initially_imported": 389,
+      "import_errors": 0,
+      "live_one_shot_result": "success",
+      "timer_interval": "2 minutes",
+      "assessment": "Current volume is operationally acceptable; repeated full-ledger scans may become material only at substantially larger history."
+    },
+    "does_not_establish": [
+      "a present scalability incident",
+      "need for SQLite or another database",
+      "permission to change retention",
+      "permission to reduce validation or deduplication",
+      "future performance without a fresh benchmark"
+    ]
+  }
+}

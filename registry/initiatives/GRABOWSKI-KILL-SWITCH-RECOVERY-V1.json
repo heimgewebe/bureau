@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1",
+  "title": "Grabowski kill-switch recovery and proof isolation",
+  "state": "waiting",
+  "commitment": "next",
+  "goal": "Prevent test or generic trusted-owner mutations from activating the production operator kill switch, and provide one narrow hash-bound recovery path that preserves fail-closed behavior.",
+  "current_plan": {
+    "repository": "grabowski",
+    "path": "https://github.com/heimgewebe/grabowski/issues/215"
+  },
+  "completion": [
+    "The canonical kill-switch marker cannot be created, replaced, removed or destroyed through generic filesystem or shell surfaces, including trusted-owner mode.",
+    "Kill-switch engagement and disarm are exposed only through typed, audited operations with exact marker identity and recovery prerequisites.",
+    "A live denial proof uses the deployed artifact in an isolated temporary state root and never changes the canonical production marker.",
+    "The current leftover T030 proof marker is removed through a hash-bound reversible break-glass receipt, followed by runtime readback.",
+    "Focused and full tests, diff-bound review, deployment and live verification are complete."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "source": "Live operator incident on 2026-07-14",
+    "root_cause": [
+      "trusted_owner bypasses protected generic write targets",
+      "the production kill-switch marker was created by a generic create operation for a T030 denial proof",
+      "the engaged marker blocks every available in-band cleanup surface",
+      "the proof had no isolated state root or atomic external cleanup contract"
+    ],
+    "evidence": {
+      "marker_path": "/home/alex/.local/state/grabowski/operator-kill-switch",
+      "marker_sha256": "1a66d92ea0d5ec2ef463545bf58a181eaca5f7955c3d502dc48810bca8f674f3",
+      "marker_reason": "T030 live denial proof 2026-07-14",
+      "audit_created_at": "2026-07-14T16:44:48.024023+00:00",
+      "grabowski_issue": 215
+    },
+    "does_not_establish": [
+      "current marker removed",
+      "source fix implemented",
+      "lease override permission",
+      "weakened kill-switch semantics",
+      "merge or deployment authority"
+    ],
+    "waiting_reason": "The active production marker blocks local mutation and deployment. src/grabowski_mcp.py is concurrently leased by chatgpt-workspace-lifecycle-cleanup-v1-20260714 and must not be overwritten."
+  }
+}

@@ -88,6 +88,46 @@
       "that T002E provider controls failed",
       "that every external GitHub actor can be locked",
       "future merge safety until T057 is implemented"
-    ]
+    ],
+    "live_reassessment_20260714": {
+      "observed_at": "2026-07-14",
+      "grabowski_main": "8a51cd37b82d879b735af3937c25d7f8f302fe42",
+      "main_truth": "Current main has no grabowski_merge_guard runtime module and no acquire_merge_guard_resources implementation; T057 remains functionally open.",
+      "published_pull_request": {
+        "pull_request": "heimgewebe/grabowski#201",
+        "state": "open",
+        "draft": false,
+        "head": "a65ddbc4eb5499f3894f7eec70d1901f7e784b3b",
+        "base_observed": "300cecf5ce7e539bd2a5c3cd4e0fbb94a527681b",
+        "ci": "validate 3.10 and 3.12 succeeded on the old head",
+        "assessment": "Do not merge as-is: generated contracts conflict with current main and a materially hardened local successor contains uncommitted work not represented by the PR."
+      },
+      "evolved_local_successor": {
+        "worktree": "/home/alex/repos/.grabowski-worktrees/t057-atomic-merge-v1",
+        "branch": "fix/t057-atomic-merge-v1",
+        "head": "5d63f9242432c0e7244fb65f00edc42e637713a6",
+        "state": "dirty",
+        "additional_diff_vs_pr_head": "approximately 660 insertions and 48 deletions across merge guard, resource broker, tests, documentation and adjacent current-main integration",
+        "dirty_paths": [
+          "docs/generated/operator-context.v1.json",
+          "docs/grip-mechanic-captain-boundary-v1.md",
+          "src/grabowski_merge_guard.py",
+          "src/grabowski_resources.py",
+          "tests/test_grips.py",
+          "tests/test_resources.py"
+        ],
+        "ownership_boundary": "Foreign dirty worktree; no reset, overwrite, cleanup, branch movement or partial extraction is authorized without owner-bound closeout or unchanged terminal evidence."
+      },
+      "current_blockers": [
+        "Preserve and finish the evolved dirty successor before replacing PR #201.",
+        "Rebase or rebuild on current main and regenerate derived contracts rather than resolving generated files manually.",
+        "Obtain owner-bound closeout or continue in the original owner context; do not infer abandonment from process absence."
+      ],
+      "does_not_establish": [
+        "permission to modify the foreign dirty worktree",
+        "permission to merge PR #201",
+        "that the evolved local successor is correct before current-main validation and review"
+      ]
+    }
   }
 }

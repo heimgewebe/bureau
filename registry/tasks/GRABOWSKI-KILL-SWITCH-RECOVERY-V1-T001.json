@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1",
-  "state": "blocked",
+  "state": "ready",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -33,16 +33,24 @@
     "grabowski"
   ],
   "id": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1-T001",
-  "title": "Harden kill-switch engagement, disarm and denial proofs",
+  "title": "Implement scoped kill-switch engagement, disarm and denial proofs",
   "priority": {
     "lane": "next",
     "rank": 1
   },
-  "goal": "Remove the leftover T030 production test marker safely, make the canonical marker impossible to mutate through generic trusted-owner surfaces, add a narrow recovery-gated disarm operation, and replace production-state denial proofs with isolated deployed-artifact probes.",
+  "goal": "Keep the canonical emergency stop fail-closed while replacing the binary global blockade with an evidence-bound two-axis model of scope and posture, protecting the marker from generic mutation, adding typed engagement and disarm, and isolating all denial proofs from production state.",
   "acceptance": [
     {
       "id": "current-marker-break-glass",
       "assertion": "The exact marker SHA-256 1a66d92ea0d5ec2ef463545bf58a181eaca5f7955c3d502dc48810bca8f674f3 is moved reversibly out of the canonical path by an external hash-bound helper; marker absence, quarantine identity, audit validity, recovery readiness and operator health are read back."
+    },
+    {
+      "id": "scoped-blockade-model",
+      "assertion": "Blockades use independent scope and posture axes. Supported scopes are path, capability, task, owner, repository, service, host and global; supported postures are observe, preflight_required, mutation_freeze and hard_stop. Matching records compose monotonically to the strongest applicable posture."
+    },
+    {
+      "id": "global-hard-stop-boundary",
+      "assertion": "Global hard_stop is reserved for global trust failures such as invalid audit or runtime provenance, compromised broker or recovery identity, an external environment kill switch, or damage with credible host-wide reach. Local CI, task, lease, path or service failures cannot create a global hard stop."
     },
     {
       "id": "generic-mutation-denied",
@@ -50,19 +58,19 @@
     },
     {
       "id": "typed-engage",
-      "assertion": "A dedicated engage operation creates only a schema-valid regular single-link 0600 marker with bounded reason and evidence identity, using create-only semantics and an audit receipt."
+      "assertion": "A dedicated engage operation creates only a schema-valid regular single-link 0600 record with bounded reason, trigger class, scope, posture, evidence identity and complete tool, request, session, task and owner provenance, using create-only semantics and an audit receipt."
     },
     {
       "id": "typed-disarm",
-      "assertion": "A dedicated disarm operation is the only in-band exception: it requires exact marker SHA-256, environment switch off, valid audit chain, valid deployed provenance, fresh canonical recovery readiness, safe marker identity, reversible quarantine, fsync and absence readback."
+      "assertion": "A dedicated disarm operation is the only in-band exception: it requires exact blockade identity and record SHA-256, exact scope, environment switch off, valid audit chain, valid deployed provenance, fresh canonical recovery readiness, safe marker identity, reversible quarantine, fsync and absence readback."
     },
     {
       "id": "fail-closed-boundary",
-      "assertion": "All ordinary mutations remain denied while the marker is active; wrong hash, symlink, hardlink, broad mode, malformed marker, environment kill switch, invalid audit, stale recovery or deployment drift deny disarm before mutation."
+      "assertion": "All ordinary mutations denied by an applicable mutation_freeze or hard_stop remain denied; wrong hash, scope mismatch, symlink, hardlink, broad mode, malformed record, environment kill switch, invalid audit, stale recovery or deployment drift deny disarm before mutation. Immutable read, status, audit and tightly bound recovery remain available."
     },
     {
       "id": "isolated-live-proof",
-      "assertion": "The deployed artifact is exercised in a transient isolated HOME/STATE_DIR for kill-switch denial proof. The probe refuses the canonical production path and leaves it byte-for-byte unchanged on success, exception and signal cleanup paths."
+      "assertion": "The deployed artifact is exercised in a transient isolated HOME and STATE_DIR for blockade and denial proofs. The probe refuses the canonical production path and leaves it byte-for-byte unchanged on success, exception and signal cleanup paths."
     },
     {
       "id": "quality-gates",
@@ -70,11 +78,11 @@
     },
     {
       "id": "deploy-live-verify",
-      "assertion": "After merge, the immutable runtime is deployed and provenance-valid; live checks prove normal mutation works with no marker, typed engagement blocks it, typed disarm restores it, and no production test marker remains."
+      "assertion": "After merge, the immutable runtime is deployed and provenance-valid; live isolated checks prove scoped decisions, typed engagement, normal mutation denial and typed disarm without leaving a production test marker."
     }
   ],
   "metadata": {
-    "source": "Operator incident and live audit on 2026-07-14",
+    "source": "Operator incident, live audit and issue heimgewebe/grabowski#215 on 2026-07-14",
     "grabowski_issue": 215,
     "observed": {
       "marker_path": "/home/alex/.local/state/grabowski/operator-kill-switch",
@@ -93,13 +101,29 @@
       "the blanket mutation guard blocks the marker's own cleanup path",
       "the T030 denial proof used production state and lacked atomic cleanup"
     ],
-    "blocked_at": "2026-07-14T16:59:20Z",
-    "block_reason": "The marker currently blocks Grabowski mutations and deployment. The central source file is also leased by chatgpt-workspace-lifecycle-cleanup-v1-20260714; no override, reset or concurrent write is allowed.",
-    "unblock_conditions": [
-      "run the exact hash-bound reversible break-glass helper as desktop user",
-      "verify kill_switch_engaged is false and audit/recovery/deployment remain valid",
-      "wait for or coordinate a clean release of the exact src/grabowski_mcp.py lease",
-      "acquire a new isolated worktree and exact path claims"
+    "previous_block": {
+      "blocked_at": "2026-07-14T16:59:20Z",
+      "reason": "The production test marker blocked Grabowski mutations while the central MCP source was independently leased."
+    },
+    "unblocked_at": "2026-07-14T17:21:35Z",
+    "unblock_evidence": {
+      "marker_present": false,
+      "quarantine_preimage": "/home/alex/.local/state/grabowski/recovery/kill-switch-clear-20260714T172135.114501Z-1a66d92ea0d5/operator-kill-switch.preimage",
+      "preimage_sha256": "1a66d92ea0d5ec2ef463545bf58a181eaca5f7955c3d502dc48810bca8f674f3",
+      "audit_chain_valid": true,
+      "runtime_provenance_valid": true,
+      "recovery_ready": true
+    },
+    "implementation_sequence": [
+      "build and test the conflict-free blockade core in disjoint new files",
+      "wait for authoritative release of the exact central MCP and capability leases",
+      "integrate typed runtime surfaces without overwriting foreign work",
+      "export diff, review, merge, deploy and verify in isolated state"
+    ],
+    "coordination_constraints": [
+      "src/grabowski_mcp.py and related generated surfaces remain leased by chatgpt-workspace-lifecycle-cleanup-v1-20260714 at task activation",
+      "no lease override, foreign worktree mutation or concurrent edit is permitted",
+      "the external environment kill switch remains outside in-band disarm authority"
     ],
     "does_not_establish": [
       "permission to clear a different marker",

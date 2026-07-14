@@ -4,7 +4,7 @@
   "initiative": "WELTGEWEBE-PR-MAINTENANCE-V1",
   "title": "Migrate Weltgewebe hashing safely to sha2 0.11 for PR #1411",
   "goal": "Adapt Weltgewebe hash finalization and hexadecimal encoding to sha2 0.11 while preserving byte-for-byte hash meaning, authentication behavior and persistence contracts.",
-  "state": "ready",
+  "state": "verified",
   "depends_on": [],
   "priority": {
     "lane": "later",
@@ -76,10 +76,28 @@
       "apps/api/src/auth/tokens.rs:39"
     ],
     "does_not_establish": [
-      "migration_strategy_selected",
-      "hash_compatibility_proven",
-      "repair_complete",
-      "merge_safe"
-    ]
+      "production_deployment",
+      "production_runtime_identity_readback"
+    ],
+    "verification": {
+      "task_sha256": "96d9d2370cf6b866a3945cd84969112d68ee17a8104e966ac365877e22278bbe",
+      "plan_sha256": "41f8b1f1939269e93ed656517bcf2964596b28f5a9584de234d7acec9fa333f8",
+      "verified_at": "2026-07-14T07:43:05Z",
+      "source_pr": "heimgewebe/weltgewebe#1411",
+      "final_head": "ffd1eaf9e510194f8fa97a9eba912cc634c830a0",
+      "merge_commit": "135642b5900c5e9ec5bfb7122a4c573f0e994820",
+      "final_diff_sha256": "b49a66a27a7a6a5f5b8662ffab750209485c135b26e6c05c29daf1125e436ab7",
+      "evidence": [
+        "legacy SHA-256 golden vectors including leading zero success",
+        "cargo fmt success",
+        "full cargo clippy all targets/features success",
+        "full cargo test all targets/features success",
+        "all API, authentication and PostgreSQL proof jobs success",
+        "Web E2E and Required merge gate success"
+      ],
+      "combined_main_commit": "135642b5900c5e9ec5bfb7122a4c573f0e994820",
+      "combined_main_ci_run": 29314989405,
+      "combined_main_ci_conclusion": "success"
+    }
   }
 }

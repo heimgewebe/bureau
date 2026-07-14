@@ -3,8 +3,8 @@
   "id": "WELTGEWEBE-PR-MAINTENANCE-V1",
   "title": "Weltgewebe open PR repair and dependency migration",
   "goal": "Track evidence-grounded repairs for open Weltgewebe pull requests that are unsafe or technically incomplete and therefore must not be merged as-is.",
-  "state": "active",
-  "commitment": "later",
+  "state": "completed",
+  "commitment": "completed",
   "completion": [
     "PR #1404 satisfies deployment-drift and proxy-trust contracts on current main before merge.",
     "PR #1411 migrates SHA-2 hashing output safely, passes the full Rust/API proof matrix and preserves hash semantics before merge."
@@ -23,10 +23,17 @@
     "source": "live open-PR audit on 2026-07-14",
     "safety_boundary": "Do not merge a task source PR until its exact current head, full diff, required checks and self-review are green against current main.",
     "does_not_establish": [
-      "repair_implemented",
-      "checks_green",
-      "merge_authorized",
-      "deployment_authorized"
-    ]
+      "production_deployment",
+      "production_runtime_identity_readback"
+    ],
+    "completed_at": "2026-07-14T07:43:05Z",
+    "completion_evidence": {
+      "pr_1404_merge_commit": "4ded46aeec93df2d080357aef5e061c7e44f658a",
+      "pr_1411_merge_commit": "135642b5900c5e9ec5bfb7122a4c573f0e994820",
+      "combined_main_commit": "135642b5900c5e9ec5bfb7122a4c573f0e994820",
+      "combined_main_ci_run": 29314989405,
+      "combined_main_ci_conclusion": "success",
+      "combined_main_required_merge_gate": "success"
+    }
   }
 }

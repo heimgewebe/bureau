@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "STORAGE-LIFECYCLE-V1-T005",
+  "initiative": "STORAGE-LIFECYCLE-V1",
+  "title": "Narrow checkout lifecycle coordination resources",
+  "state": "planned",
+  "priority": {
+    "lane": "now",
+    "rank": 15
+  },
+  "goal": "Separate code-path leases, checkout ownership and Git common-dir worktree metadata serialization so non-overlapping code work does not indefinitely block safe checkout archival and cleanup.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "component:grabowski-resource-leases",
+      "path:/home/alex/repos/grabowski/src",
+      "path:/home/alex/repos/grabowski/tests"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Source changes and read-only verification are authorized. Runtime deletion or cleanup effects require a fresh exact-target plan and post-readback."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "STORAGE-LIFECYCLE-V1-T004"
+  ],
+  "acceptance": [
+    {
+      "id": "resource-model",
+      "assertion": "Checkout mutation uses an exact checkout claim plus a short-lived git-metadata claim."
+    },
+    {
+      "id": "nonconflict",
+      "assertion": "Disjoint source-path work does not automatically block checkout lifecycle when non-overlap is proven."
+    },
+    {
+      "id": "serialization",
+      "assertion": "Mutations of the same Git common directory remain serialized."
+    },
+    {
+      "id": "regression",
+      "assertion": "Foreign leases, unknown overlaps and broad claims still fail closed."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-14T22:30:00+02:00",
+    "source": "STORAGE-LIFECYCLE-V1 plan from live 2026-07-14 storage audit",
+    "does_not_establish": [
+      "runtime correctness before tests",
+      "cleanup permission for foreign state",
+      "permission to bypass leases or dirty-state guards"
+    ]
+  }
+}

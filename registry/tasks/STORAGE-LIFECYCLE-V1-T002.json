@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "id": "STORAGE-LIFECYCLE-V1-T002",
+  "initiative": "STORAGE-LIFECYCLE-V1",
+  "title": "Externalize and bound automated build outputs",
+  "state": "planned",
+  "priority": {
+    "lane": "now",
+    "rank": 12
+  },
+  "goal": "Make Heim-PC automated Rust, Node, Python and browser jobs use managed external build/cache roots with per-producer keys and bounded retention instead of leaving multi-gigabyte outputs inside temporary worktrees.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc",
+    "grabowski_resources": [
+      "component:heim-pc-build-cache-policy",
+      "path:/home/alex/repos/heim-pc/config",
+      "path:/home/alex/repos/heim-pc/scripts",
+      "path:/home/alex/repos/heim-pc/tests"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Source changes and read-only verification are authorized. Runtime deletion or cleanup effects require a fresh exact-target plan and post-readback."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.heim-pc",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "STORAGE-LIFECYCLE-V1-T001"
+  ],
+  "acceptance": [
+    {
+      "id": "cargo-target",
+      "assertion": "Automated Cargo execution resolves CARGO_TARGET_DIR outside worktrees using repository, toolchain, lockfile and profile identity."
+    },
+    {
+      "id": "other-caches",
+      "assertion": "Node, Python and Playwright paths are explicitly classified and do not create uncontrolled per-worktree copies."
+    },
+    {
+      "id": "guard",
+      "assertion": "A read-only guard reports worktrees with more than 2 GiB regenerable data and blocks new automated builds above 5 GiB unless explicitly pinned."
+    },
+    {
+      "id": "compatibility",
+      "assertion": "Existing interactive developer behavior is not silently changed outside managed operator jobs."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-14T22:30:00+02:00",
+    "source": "STORAGE-LIFECYCLE-V1 plan from live 2026-07-14 storage audit",
+    "does_not_establish": [
+      "runtime correctness before tests",
+      "cleanup permission for foreign state",
+      "permission to bypass leases or dirty-state guards"
+    ]
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T005",
+  "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
+  "title": "Bind Grabowski operator events to the actual target repository",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 50
+  },
+  "goal": "Correct Grabowski's Chronik producer so agent-run events identify the actual task target repository and bounded operation without leaking argv, secrets or private paths, while retaining current event-id and trust-tier semantics.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "target-repo-derived-from-task-record",
+      "assertion": "For repository-bound tasks, subject.repo is derived from canonical task metadata and names the actual target repository rather than always heimgewebe/grabowski."
+    },
+    {
+      "id": "non-repository-task-boundary",
+      "assertion": "Tasks without a provable repository target use an explicit unknown or host-scoped subject and never fabricate a repository identity."
+    },
+    {
+      "id": "bounded-operation-semantics",
+      "assertion": "The event carries a typed bounded operation or task class sufficient for historical queries without copying raw argv, environment values, secrets or private path details."
+    },
+    {
+      "id": "identity-and-dedup-stable",
+      "assertion": "Event IDs remain deterministic and unique across started, completed and blocked states, and existing outbox retry and deduplication behavior remains valid."
+    },
+    {
+      "id": "forward-proof",
+      "assertion": "A real isolated Grabowski task targeting a non-Grabowski repository produces started and terminal events whose subject.repo matches that repository, and the merged Chronik importer preserves those fields."
+    },
+    {
+      "id": "full-regression-proof",
+      "assertion": "Grabowski task, workspace, Chronik-outbox and security tests plus GitHub CI pass at the exact reviewed head."
+    }
+  ],
+  "depends_on": [],
+  "rollback": {
+    "trigger": "The new derivation exposes private command data, misidentifies non-repository tasks or changes task execution semantics.",
+    "procedure": "Restore the previous producer mapping, retain the direct Chronik importer, and mark target identity unknown until a narrower typed task field is available."
+  },
+  "stop": {
+    "conditions": [
+      "a foreign Grabowski worktree, branch, lease or process overlaps the producer files",
+      "the target repository cannot be derived from canonical task state without parsing raw shell text",
+      "the change would make Chronik authoritative for current task or repository truth",
+      "privacy, determinism, replay or deduplication tests fail"
+    ]
+  },
+  "metadata": {
+    "registered_at": "2026-07-14T15:30:00+02:00",
+    "source_pull_requests": [
+      "heimgewebe/chronik#217",
+      "heimgewebe/chronik#218"
+    ],
+    "source_runtime_release": "428ffe3f14aef33666937736c5f0593ab44d2378",
+    "live_finding": {
+      "observed_at": "2026-07-14T15:27:00+02:00",
+      "stored_events_today": 30,
+      "subject_repo_values": [
+        "heimgewebe/grabowski"
+      ],
+      "finding": "Existing Grabowski outbox events preserve lifecycle truth but do not reliably identify the repository actually worked on."
+    },
+    "does_not_establish": [
+      "current repository state",
+      "current CI state",
+      "safe retry authority",
+      "permission to inspect or persist raw argv or secrets",
+      "absence of concurrent Grabowski work without a fresh preflight"
+    ]
+  }
+}

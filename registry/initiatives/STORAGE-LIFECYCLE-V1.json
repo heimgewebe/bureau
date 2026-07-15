@@ -6,8 +6,8 @@
   "commitment": "now",
   "goal": "Stop uncontrolled growth of temporary worktrees, build outputs, RepoBrief publications, caches and Docker residue by binding every large regenerable artifact to identity, owner, budget, retention and a safe cleanup lifecycle.",
   "current_plan": {
-    "repository": "grabowski",
-    "path": "registry/tasks/STORAGE-LIFECYCLE-V1-T003.json"
+    "repository": "leitstand",
+    "path": "registry/tasks/STORAGE-LIFECYCLE-V1-T007.json"
   },
   "completion": [
     "New temporary storage producers are inventory-bound and budgeted before they can grow without limit.",
@@ -49,8 +49,14 @@
       "dispensability of historical RepoBrief evidence",
       "safe cleanup without fresh live readback"
     ],
-    "current_phase": "STORAGE-LIFECYCLE-V1-T003",
+    "current_phase": "STORAGE-LIFECYCLE-V1-T007",
     "t001_verified_at": "2026-07-15T04:11:35.979726Z",
-    "t002_verified_at": "2026-07-15T06:10:30.456436Z"
+    "t002_verified_at": "2026-07-15T06:10:30.456436Z",
+    "t003_verified_at": "2026-07-15T18:07:00Z",
+    "t004_verified_at": "2026-07-15T18:07:01Z",
+    "t005_verified_at": "2026-07-15T18:07:02Z",
+    "t006_verified_at": "2026-07-15T18:07:03Z",
+    "t007_ready_at": "2026-07-15T18:07:04Z",
+    "dependency_closeout_basis": "T003-T006 were re-read from current GitHub, repository and runtime state in dependency order; T007 was released only after all four predecessors were marked verified with machine-bound evidence."
   }
 }

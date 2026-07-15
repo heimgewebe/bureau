@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-DOMAIN-SCALE-HARDENING-V1-T001",
+  "initiative": "WELTGEWEBE-DOMAIN-SCALE-HARDENING-V1",
+  "title": "Align domain-scale fixtures and CI with production contracts",
+  "state": "planned",
+  "goal": "Harden the merged PR #1442 benchmark so identifiers, timestamps, cursor workloads and CI assertions remain deterministic while representing production contracts and preserving fail-closed fixture validation.",
+  "depends_on": [],
+  "priority": {
+    "lane": "later",
+    "rank": 15
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "python",
+    "postgresql",
+    "github-actions"
+  ],
+  "acceptance": [
+    {
+      "id": "deterministic-production-shaped-uuids",
+      "assertion": "Node and edge fixtures use deterministic RFC 4122 UUID-v4-shaped identifiers, and cursor thresholds exercise the lexicographic distribution of production-shaped UUID keys rather than sequential prefixed text keys.",
+      "evidence_type": "object",
+      "verifier": "unit tests plus exact fixture and workload receipts"
+    },
+    {
+      "id": "monotonic-timestamp-correlation",
+      "assertion": "created_at increases monotonically in insertion order across at least the scale_1m edge count and does not wrap after 28 days.",
+      "evidence_type": "object",
+      "verifier": "bounded regression test over timestamp boundary cases"
+    },
+    {
+      "id": "manifest-bound-ci-counts",
+      "assertion": "The domain-scale workflow derives expected loaded row counts from the generated manifest and contains no duplicated CI-profile count constants.",
+      "evidence_type": "object",
+      "verifier": "workflow inspection and successful exact-head GitHub Actions run"
+    },
+    {
+      "id": "integrity-validation-preserved",
+      "assertion": "A fixture whose CSV and colocated manifest hash are changed consistently but whose declared row count is false still fails validation; any performance fast path requires an independently trusted binding and measured benefit.",
+      "evidence_type": "object",
+      "verifier": "existing self-consistent row-count-lie regression test plus performance evidence for any fast path"
+    },
+    {
+      "id": "path-platform-contract-explicit",
+      "assertion": "The benchmark either safely accepts native Windows absolute psql paths with focused tests or explicitly documents and tests a POSIX-only execution contract; unsafe psql meta-command characters remain rejected.",
+      "evidence_type": "object",
+      "verifier": "path-literal regression tests and blueprint contract"
+    },
+    {
+      "id": "failure-report-regression-retained",
+      "assertion": "Budget failures continue to write the machine-readable report before returning a nonzero exit status.",
+      "evidence_type": "object",
+      "verifier": "existing CLI failure-report regression test"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T12:59:49Z",
+    "source_pr": "heimgewebe/weltgewebe#1442",
+    "source_merge_commit": "cc915e95cfddff2e5c686124a9b392afa637b66f",
+    "reviewed_commit": "427e7bf81d",
+    "current_test_receipt": "python3 -B scripts/tests/test_domain_scale.py: 12 tests pass at merge commit",
+    "current_validation_receipt": "python3 -B scripts/performance/domain_scale.py validate: status pass at merge commit",
+    "confirmed_findings": [
+      "sequential non-UUID fixture identifiers diverge from node and edge contracts and production UUID-v4 creation",
+      "day-first timestamp generation destroys insertion-order time correlation",
+      "workflow count constants duplicate the generated manifest"
+    ],
+    "rejected_findings": [
+      "skip CSV structural and row-count validation solely after matching a digest stored in the same mutable manifest"
+    ],
+    "already_resolved_findings": [
+      "write failure reports before returning nonzero from check"
+    ],
+    "safety_boundary": "Do not start implementation until the active Weltgewebe PR #1440 repo-wide lease is released or an exact nonconflict proof becomes available.",
+    "does_not_establish": [
+      "a need to change production schemas",
+      "a need to support native Windows",
+      "permission to merge without a current downloadable full diff and exact-head self-review"
+    ]
+  }
+}

@@ -15,8 +15,8 @@
     "working_repository": "/home/alex/repos/grabowski",
     "grabowski_resources": [
       "host:heim-pc",
-      "repo:/home/alex/repos/bureau",
-      "repo:/home/alex/repos/grabowski"
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-PC-HYGIENE-V1-T003.json"
     ]
   },
   "claims": [
@@ -71,7 +71,25 @@
       "NRestarts": 0,
       "mutation_applied": false
     },
-    "next_action": "After T030 is deployed, re-read exact unit properties and execute only systemctl reset-failed for the unchanged allowlist; then prove systemctl --failed empty."
+    "next_action": "After T030 is deployed, re-read exact unit properties and execute only systemctl reset-failed for the unchanged allowlist; then prove systemctl --failed empty.",
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "The privileged cleanup path belongs to Grabowski/heim-pc; Bureau participation is only this exact task record.",
+      "effect_boundaries": [
+        "Exact Bureau task record only"
+      ],
+      "catalog_entry_sha256": "096dc12ffa7fc5b50964d5efd43d99e16ca6fafb1858a52337cb8127529d716b",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   },
   "depends_on": []
 }

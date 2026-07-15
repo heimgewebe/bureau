@@ -17,7 +17,7 @@
       "host:heim-pc",
       "repo:/home/alex/repos/infra",
       "repo:/home/alex/repos/leitstand",
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-TOOLING-FOCUS-V1-T001.json"
     ]
   },
   "claims": [
@@ -60,7 +60,25 @@
       "merge_readiness"
     ],
     "live_risk": "Grafana default port 3000 conflicts with an existing listener on heim-pc.",
-    "decision_update": "Beszel is the preferred first monitoring tool for UTIL-BASE-V1; Grafana remains deferred and non-authoritative."
+    "decision_update": "Beszel is the preferred first monitoring tool for UTIL-BASE-V1; Grafana remains deferred and non-authoritative.",
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "The monitoring decision belongs to host, infra and Leitstand; Bureau participation is only this exact task record.",
+      "effect_boundaries": [
+        "Exact Bureau task record only"
+      ],
+      "catalog_entry_sha256": "67abd01cb8fedf87cb56d45d4ddd771dfcfec32fda3abb88c35667b7e97424ab",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   },
   "depends_on": []
 }

@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "component.bureau.ops",
+  "type": "component",
+  "parent": "repo.bureau",
+  "path": "/home/alex/repos/bureau/ops",
+  "grabowski_key": "path:/home/alex/repos/bureau/.bureau-scopes/ops-automation"
+}

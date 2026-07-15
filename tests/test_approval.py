@@ -213,3 +213,23 @@ def test_worktree_cleanup_requires_reviewed_plan_bound_to_reference() -> None:
     )
     assert allowed["allowed"] is True
     assert allowed["evidence"]["level"] == "reviewed_plan"
+
+
+def test_registry_mutation_requires_reviewed_plan() -> None:
+    blocked = approval.approval_decision("registry_mutation", None)
+    assert blocked["allowed"] is False
+    assert blocked["required_level"] == "reviewed_plan"
+
+    allowed = approval.require_approval(
+        "registry_mutation",
+        approval.reviewed_plan_approval(
+            reviewer="reviewer",
+            reference="lease-plan.json",
+            task_id="BUREAU-TRUTH-MODEL-V2-T013",
+            scope="registry_mutation",
+        ),
+        expected_reference="lease-plan.json",
+        task_id="BUREAU-TRUTH-MODEL-V2-T013",
+    )
+    assert allowed["allowed"] is True
+    assert allowed["evidence"]["level"] == "reviewed_plan"

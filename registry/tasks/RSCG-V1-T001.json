@@ -1,0 +1,89 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A versioned Python call-reference artifact records deterministic call sites, callee expressions, source ranges, enclosing caller symbols and explicit resolution states, bound to the canonical dump digest.",
+      "id": "rscg-v1-t001-artifact"
+    },
+    {
+      "assertion": "Only uniquely resolvable local definitions receive target symbol ids; attribute, alias, dynamic and ambiguous calls remain visibly unresolved or candidate-only.",
+      "id": "rscg-v1-t001-resolution"
+    },
+    {
+      "assertion": "MCP exposes bounded find_references and get_callers tools with exact-first matching, stable ordering, input validation, explicit truncation and live freshness on every response.",
+      "id": "rscg-v1-t001-tools"
+    },
+    {
+      "assertion": "Existing find_symbol, symbol-index v1, bundle consumers and profiles remain compatible; missing call-graph artifacts fail closed without hidden refresh.",
+      "id": "rscg-v1-t001-compatibility"
+    },
+    {
+      "assertion": "Schema, producer, consumer, MCP stdio, ambiguity, recursion, method-call, parse-error and live-bundle tests pass together with the complete Lenskit suite and GitHub CI.",
+      "id": "rscg-v1-t001-validation"
+    },
+    {
+      "assertion": "A fixed navigation goldset demonstrates recovery of expected callers/references with no regression to find_symbol; default promotion remains separate.",
+      "id": "rscg-v1-t001-utility"
+    },
+    {
+      "assertion": "The result makes no complete call graph, runtime reachability, dynamic dispatch, dependency completeness, test sufficiency, review or merge-readiness claim.",
+      "id": "rscg-v1-t001-nonclaims"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.lenskit"
+    }
+  ],
+  "depends_on": [
+    "RCGA-V1-T003"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Use only the isolated branch/worktree. Preserve static, read-only, freshness-bound and non-authoritative semantics.",
+      "required_level": "reviewed_plan"
+    },
+    "baseline_commit": "f9b47a212fb20bebe32125889b92a8963d1213bc",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-symbol-call-graph-v1"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit"
+  },
+  "goal": "Produce a deterministic Python static call-reference index and expose bounded read-only reference/caller lookups through RepoBrief MCP with exact source ranges, freshness and explicit ambiguity.",
+  "id": "RSCG-V1-T001",
+  "initiative": "REPOBRIEF-SYMBOL-CALL-GRAPH-V1",
+  "metadata": {
+    "authorized_by": "operator-instruction:2026-07-15:alles-umsetzen",
+    "does_not_establish": [
+      "complete_call_graph",
+      "runtime_reachability",
+      "dynamic_dispatch_resolution",
+      "dependency_completeness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness",
+      "default_promotion"
+    ],
+    "implementation_branch": "feat/repobrief-symbol-call-graph-v1",
+    "implementation_worktree": "/home/alex/repos/.lenskit-worktrees/repobrief-symbol-call-graph-v1",
+    "registered_at": "2026-07-15T14:25:00Z",
+    "source_pr": "heimgewebe/lenskit#1005"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Add bounded find_references and get_callers navigation"
+}

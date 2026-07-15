@@ -7,7 +7,7 @@
   "goal": "Stop uncontrolled growth of temporary worktrees, build outputs, RepoBrief publications, caches and Docker residue by binding every large regenerable artifact to identity, owner, budget, retention and a safe cleanup lifecycle.",
   "current_plan": {
     "repository": "bureau",
-    "path": "registry/tasks/STORAGE-LIFECYCLE-V1-T001.json"
+    "path": "registry/tasks/STORAGE-LIFECYCLE-V1-T002.json"
   },
   "completion": [
     "New temporary storage producers are inventory-bound and budgeted before they can grow without limit.",
@@ -48,6 +48,8 @@
       "permission to delete Docker volumes",
       "dispensability of historical RepoBrief evidence",
       "safe cleanup without fresh live readback"
-    ]
+    ],
+    "current_phase": "STORAGE-LIFECYCLE-V1-T002",
+    "t001_verified_at": "2026-07-15T04:11:35.979726Z"
   }
 }

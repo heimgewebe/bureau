@@ -3,7 +3,7 @@
   "id": "STORAGE-LIFECYCLE-V1-T002",
   "initiative": "STORAGE-LIFECYCLE-V1",
   "title": "Externalize and bound automated build outputs",
-  "state": "planned",
+  "state": "ready",
   "priority": {
     "lane": "now",
     "rank": 12
@@ -64,6 +64,9 @@
       "runtime correctness before tests",
       "cleanup permission for foreign state",
       "permission to bypass leases or dirty-state guards"
-    ]
+    ],
+    "ready_at": "2026-07-15T04:11:35.979726Z",
+    "readiness_basis": "STORAGE-LIFECYCLE-V1-T001 verified by merged Heim-PC PRs #42 and #43 with live inventory evidence.",
+    "predecessor_merge_commit": "33fe0a05dc38a9e5a7fa1881ca44c797b7c576af"
   }
 }

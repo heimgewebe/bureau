@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "id": "RAB-V1-T002H",
+  "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
+  "title": "Prepare and separately authorize a fresh pair after executable hardening",
+  "state": "planned",
+  "goal": "After T002G is merged and verified and provider availability is no longer known to be blocked, create entirely new requests, bindings, output paths and reviewed one-shot authorization for exactly one baseline and one treatment process.",
+  "priority": {
+    "lane": "later",
+    "rank": 20
+  },
+  "depends_on": [
+    "RAB-V1-T002G"
+  ],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.lenskit",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/lenskit"
+    ],
+    "approval": {
+      "action_class": "agent_dispatch",
+      "required_level": "reviewed_plan",
+      "note": "Registration does not authorize execution. A new reviewed authorization after T002G must bind a fresh pair and must not run while provider/session availability is known to be blocked."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "claude-cli",
+    "instrumented-agent-runner"
+  ],
+  "acceptance": [
+    {
+      "id": "rab-v1-t002h-fresh-state",
+      "assertion": "No T002D or T002F authorization, pair, ledger, intent, output path, report or receipt is reused."
+    },
+    {
+      "id": "rab-v1-t002h-provider-availability",
+      "assertion": "Known provider or session-limit unavailability blocks before authorization and provider intent; no speculative attempt is consumed while availability is known false."
+    },
+    {
+      "id": "rab-v1-t002h-separate-authorization",
+      "assertion": "A separately reviewed one-shot authorization binds exact post-T002G code, executable identity, credential commitment, requests, manifests, sources and hard cost ceilings."
+    },
+    {
+      "id": "rab-v1-t002h-stop-rule",
+      "assertion": "At most one baseline and one treatment process may be attempted; any failure or ambiguity blocks without retry."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T15:20:19.344252Z",
+    "authorization_status": "not_authorized",
+    "execution_status": "not_started",
+    "retry_permitted": false,
+    "provider_processes_started": 0,
+    "known_provider_unavailability_until": "2026-07-15T21:50:00+02:00",
+    "source_observation": "Claude CLI reported that the session limit resets at 21:50 Europe/Berlin during the separate Symbol-Call-Graph coding job.",
+    "does_not_authorize": [
+      "RAB-V1-T002F retry",
+      "RAB-V1-T002 execution",
+      "a live pair before separate review",
+      "automatic pilot expansion",
+      "default promotion"
+    ]
+  }
+}

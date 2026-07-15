@@ -3,7 +3,7 @@
   "id": "RAB-V1-T002F",
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "Authorize and run one fresh live pair after contract hardening",
-  "state": "ready",
+  "state": "blocked",
   "goal": "After RAB-V1-T002E is merged and verified, prepare a new immutable pair and seek a separate reviewed authorization for exactly one baseline and one treatment process with no retry.",
   "priority": {
     "lane": "next",
@@ -71,8 +71,8 @@
   "metadata": {
     "registered_at": "2026-07-13",
     "source_issue": "heimgewebe/bureau#481",
-    "authorization_status": "approved_unconsumed",
-    "execution_status": "prepared_not_started",
+    "authorization_status": "consumed",
+    "execution_status": "failed_pre_dispatch",
     "requires_separate_reviewed_authorization": false,
     "retry_permitted": false,
     "provider_processes_started": 0,
@@ -110,7 +110,7 @@
       "level": "reviewed_plan",
       "action_class": "agent_dispatch",
       "one_shot": true,
-      "remaining_uses": 1,
+      "remaining_uses": 0,
       "retry_permitted": false,
       "scope": [
         "exactly one frozen baseline process",
@@ -228,7 +228,48 @@
         "a second T002F pair",
         "automatic pilot expansion",
         "default promotion"
-      ]
-    }
+      ],
+      "consumed": true,
+      "consumed_at": "2026-07-15T15:14:20.080052Z"
+    },
+    "failed_at": "2026-07-15T15:14:20.080052Z",
+    "attempt_job": "grabowski-job-f01e3dd5ef64",
+    "attempt_outcome": "invalid_pre_dispatch",
+    "failure_stage": "claude_identity_before_condition_intent",
+    "failure_class": "claude_executable_size_guard_incompatible",
+    "failure_error": "Claude executable is empty or oversized",
+    "failure_details": {
+      "actual_executable_bytes": 259820344,
+      "configured_max_executable_bytes": 67108864,
+      "provider_process_intents": 0,
+      "condition_intents": [],
+      "fixture_intents": 0,
+      "observed_costs": {},
+      "retry_permitted": false
+    },
+    "failure_evidence": {
+      "immediate_pre_dispatch": {
+        "path": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/immediate-pre-dispatch-nonsecret.json",
+        "sha256": "a08855c8908f40ab91cf153637b12c592ca63e0100572a8fe9ce95eec1be804e"
+      },
+      "ledger_authorization": {
+        "path": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/live-state/preflight-dispatch-ledger/cb86375d29557926b68d25b58237b121a0dceda5c96c1d7ccce2ae0cb477c6b3/authorization.json",
+        "sha256": "ff307a3c5ea6c4e289f4d8b103b6b7db2e992eeedc5e838fec81191969e4c1b6"
+      },
+      "authorized_event": {
+        "path": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/live-state/preflight-dispatch-ledger/cb86375d29557926b68d25b58237b121a0dceda5c96c1d7ccce2ae0cb477c6b3/events/0000-authorized.json",
+        "sha256": "37bcd8dbbe636542a8ac920f0d472e395a88c339b04472160e3b195a8260f6bb"
+      },
+      "failed_event": {
+        "path": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/live-state/preflight-dispatch-ledger/cb86375d29557926b68d25b58237b121a0dceda5c96c1d7ccce2ae0cb477c6b3/events/0001-preflight-failed.json",
+        "sha256": "a655b70ab8f015746dd874424305790d04ed29550d85fca8e1bc343c850ed74b"
+      },
+      "job_finalization": {
+        "path": "/home/alex/.local/state/grabowski/jobs/grabowski-job-f01e3dd5ef64/finalization.json",
+        "sha256": "d12e56cddc8074372447e2ce6274c0936ab37100e6c39a6b325a563d2e24537f"
+      }
+    },
+    "state_reason": "The fresh one-shot authorization was consumed by an unambiguous launch. The preflight ledger then failed before any condition or provider intent because the current 259,820,344-byte Claude executable exceeds the runner hard limit of 67,108,864 bytes. No provider process, model response or cost occurred; no retry is permitted.",
+    "next_task": "RAB-V1-T002G"
   }
 }

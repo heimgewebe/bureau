@@ -3,13 +3,13 @@
   "id": "WELTGEWEBE-OS-V1-T002",
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "Multi-Instanz-Wahrheit und Ereignisrückgrat schließen",
-  "state": "planned",
+  "state": "ready",
   "goal": "Alle prozesslokalen Autoritätsreste inventarisieren und Shared Auth State, abgeleitete Caches, Transactional Outbox, idempotente Konsumenten und Zwei-API-Kohärenz in kleinen beweisgebundenen Slices umsetzen.",
   "depends_on": [
     "WELTGEWEBE-OS-V1-T001"
   ],
   "priority": {
-    "lane": "next",
+    "lane": "now",
     "rank": 1
   },
   "claims": [
@@ -72,6 +72,8 @@
       "WELTGEWEBE-OS-003",
       "WELTGEWEBE-OS-004",
       "WELTGEWEBE-OS-005"
-    ]
+    ],
+    "unblocked_at": "2026-07-15T21:45:44Z",
+    "dependency_receipt": "WELTGEWEBE-OS-V1-T001 verified by Weltgewebe merge cb66183b and Bureau runtime refresh f5f7d5d1"
   }
 }

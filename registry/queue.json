@@ -67,7 +67,6 @@
       "RPU-V1-T028"
     ],
     "next": [
-      "WELTGEWEBE-OS-V1-T002",
       "RAB-V1-T002B",
       "CCM-V1-T005",
       "RAB-V1-T002",
@@ -78,7 +77,7 @@
       "RPU-V1-T025"
     ],
     "now": [
-      "WELTGEWEBE-OS-V1-T001",
+      "WELTGEWEBE-OS-V1-T002",
       "CCM-V1-T002",
       "CCM-V1-T003",
       "CCM-V1-T004"

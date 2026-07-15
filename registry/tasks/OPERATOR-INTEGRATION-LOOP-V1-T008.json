@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T008",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "Make review-evidence check runs converge after cancellation",
+  "state": "planned",
+  "goal": "Prevent GitHub concurrency cancellation from leaving an obsolete cancelled Review evidence gate check-run that blocks an otherwise green exact-head gate, while preserving fail-closed evidence binding, fork safety and bounded CI use.",
+  "priority": {
+    "lane": "later",
+    "rank": 440
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "reproduce-checkrun-conflict",
+      "assertion": "A deterministic workflow or integration fixture reproduces the PR #1441 state: a pull_request_target check-run is cancelled by concurrency, a later issue_comment evaluation publishes success for the same exact head, and GitHub can still report the PR blocked."
+    },
+    {
+      "id": "terminal-current-head-checkrun",
+      "assertion": "For every evaluated current PR head, the required Review evidence gate is represented by a terminal success or failure check-run/status that cannot be shadowed by an obsolete cancelled run."
+    },
+    {
+      "id": "preserve-security-boundary",
+      "assertion": "The solution continues to execute only trusted main-branch governance code, never checks out PR code, keeps exact base/head/diff binding and retains trusted-association checks for native reviews and rechecks."
+    },
+    {
+      "id": "preserve-fork-recheck",
+      "assertion": "Fork and Dependabot PRs retain a documented maintainer-triggered recheck path without granting write tokens to untrusted review events or requiring manual reruns of stale workflow attempts."
+    },
+    {
+      "id": "bounded-concurrency",
+      "assertion": "Concurrency still suppresses redundant work, but cancellation cannot strand a required check; tests cover push/comment/review races, edited or deleted evidence and repeated rechecks on one head."
+    },
+    {
+      "id": "verified-closeout",
+      "assertion": "Unit and workflow-contract tests, GitHub CI, an exact-head review-evidence run and a live PR readback prove CLEAN merge state without operator rerunning a cancelled check-run."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_live_register",
+    "live_register_event_id": 466,
+    "live_register_candidate_id": "weltgewebe-review-evidence-checkrun-concurrency-20260715",
+    "live_register_created_at": "2026-07-15T13:49:49.835212Z",
+    "live_register_source": "heimgewebe/weltgewebe#1441 post-merge closeout",
+    "promotion_required_from_event": true,
+    "source_pr": "heimgewebe/weltgewebe#1441",
+    "source_head": "2a8e3f2ae872ca4d7e713250d59b637ff8c9c4d5",
+    "source_merge_commit": "f9271dc73931db89d1810e83c99e87b92512e342",
+    "source_cancelled_run": 29416810535,
+    "source_successful_issue_comment_run": 29419537624,
+    "observed_resolution": "The cancelled PR-head run had to be rerun as attempt 2 before mergeStateStatus became CLEAN.",
+    "scope_exclusions": [
+      "weakening required checks",
+      "treating commit status success as sufficient when a blocking check-run remains",
+      "executing pull-request code in a privileged workflow",
+      "bypassing fork or Dependabot token restrictions",
+      "changing unrelated Weltgewebe CI"
+    ],
+    "live_register_does_not_establish": [
+      "registry_task_truth",
+      "queue_truth",
+      "claim_authority",
+      "dispatch_authority",
+      "merge_readiness"
+    ]
+  }
+}

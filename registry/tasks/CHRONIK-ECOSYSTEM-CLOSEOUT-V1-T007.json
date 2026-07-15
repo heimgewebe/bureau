@@ -3,7 +3,7 @@
   "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T007",
   "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
   "title": "Read canonical producer component in Chronik history queries",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 70
@@ -99,8 +99,9 @@
         "tests/test_coding_memory.py"
       ],
       "previous_active_owner": "chatgpt-chronik-ccm-t006-20260714",
+      "implementation_owner": "chatgpt-chronik-t007-source-component-20260715",
       "current_active_owner": null,
-      "decision": "T006 no longer blocks the files. T007 is eligible as the next Chronik task, but this Bureau-only closeout does not claim or modify Chronik source."
+      "decision": "T007 was implemented only in the isolated source-component-query-t007-v1 worktree. The canonical Chronik checkout and all foreign processes remained untouched."
     },
     "does_not_establish": [
       "corruption of imported events",
@@ -117,11 +118,212 @@
       "runtime_receipt_sha256": "55b70e2447e445630d955f9a94fde828c90c8234aacc16df2b251744a69963ea"
     },
     "reevaluation": {
-      "result": "still_required",
-      "priority_decision": "promote from later to next after T006 closeout",
-      "reason": "The exact historical HausKI completion event remains queryable through repo, operation, task-class and outcome filters but disappears only when component=grabowski is added. T006 changed import batching and does not supersede this interpretation defect.",
-      "implementation_started": false,
-      "next_safe_action": "Create a fresh isolated Chronik worktree after this Bureau registry PR merges, recheck coding_memory.py and tests, and implement only the producer component interpretation fix."
+      "result": "completed",
+      "priority_decision": "T007 closes before any T008 work begins.",
+      "reason": "The producer/target identity defect was reproduced, corrected at source.component, merged, deployed and confirmed by the exact HausKI query without rewriting the ledger.",
+      "implementation_started": true,
+      "next_safe_action": "Close T007 in Bureau, then evaluate T008 separately; this closeout does not begin T008."
+    },
+    "verified_at": "2026-07-15T16:03:30+02:00",
+    "outcome": "Chronik history queries now interpret component as the canonical producer identity event.source.component, keep subject reserved for repository or host targets, provide no legacy subject.component fallback, and return the known HausKI completion event under the deployed combined producer, target, operation, task-class and outcome filters.",
+    "implementation": {
+      "repository": "heimgewebe/chronik",
+      "pull_request": 223,
+      "reviewed_base": "6412616b0a6489a6e50646e4ca0e0c76b3dc6031",
+      "reviewed_head": "c9bbc2af51748e82513b1f696632b346d98e3076",
+      "merge_commit": "4d7e328980baeb53bdfb02657e80ffe2a044c67e",
+      "merged_at": "2026-07-15T13:27:07Z",
+      "changed_files": 2,
+      "additions": 43,
+      "deletions": 4,
+      "diff_path": "/home/alex/iCloud/Drive/halde/chronik-t007-pr-223-c9bbc2a.diff",
+      "diff_sha256": "1563c68cfa0403b6b3bf1dacc1dbe05d7dab7403fb2924bde2cf81859efd531f",
+      "diff_bytes": 6291,
+      "diff_lines": 90,
+      "stable_patch_id": "d390c24942dfe803d103f52ad6a5a51c6fd380ea",
+      "merge_blobs_equal_reviewed_head": true,
+      "changed_blob_ids": {
+        "coding_memory.py": "dc584d54957e88f639758ac3cb8ef8dbbe056af2",
+        "tests/test_coding_memory.py": "d22cdaf511a7b85633dc1d34bb9807c63f8ef48a"
+      }
+    },
+    "deployment": {
+      "release_path": "/home/alex/.local/lib/chronik/releases/4d7e328980baeb53bdfb02657e80ffe2a044c67e",
+      "current_target": "/home/alex/.local/lib/chronik/releases/4d7e328980baeb53bdfb02657e80ffe2a044c67e",
+      "rollback_release": "/home/alex/.local/lib/chronik/releases/6412616b0a6489a6e50646e4ca0e0c76b3dc6031",
+      "archive_sha256": "7d4f64c13fc50cdcff92802d2f9c47f95a8b25a7efe98dac7dd8b3ba186880f5",
+      "verified_git_blobs": 148,
+      "import_service": "inactive/dead after successful one-shot, exit status 0",
+      "import_timer": "enabled/active/waiting",
+      "http_service_activated": false,
+      "plexer_activated": false,
+      "runtime_receipt_path": "/home/alex/.local/state/chronik/runtime-receipt.json",
+      "runtime_receipt_sha256": "fb435d16ecdcd1b8bd0476616357bb4a3073ed1e7ed324d1993382f5bf3fe059",
+      "runtime_receipt_payload_sha256": "c278c5acf30305994aeade74f948af34d6e26ae4c5a2f43a1a29098ace5ebea1",
+      "immutable_live_receipt_path": "/home/alex/.local/state/chronik/t007-live-receipt-4d7e328980baeb53bdfb02657e80ffe2a044c67e.json"
+    },
+    "live_query": {
+      "query": {
+        "repo": "heimgewebe/hausKI",
+        "component": "grabowski",
+        "operation": "implement",
+        "task_class": "coding",
+        "outcome": "completed"
+      },
+      "event_ids": [
+        "sha256:48e2f68452689dd078397d420a9bcf55310cdda9bffbfdfafbba95c9f0342b42"
+      ],
+      "match_count": 1,
+      "durable_output_path": "/home/alex/.local/state/chronik/t007-live-query-4d7e328980baeb53bdfb02657e80ffe2a044c67e.json",
+      "durable_output_sha256": "3e261eafaadbef8fa90d172d552952af4d92fb629902f3a6fa450d3628600244",
+      "ledger_path": "/home/alex/.local/state/chronik/data/agent.ledger.jsonl",
+      "ledger_sha256_before_after": "9c10a40da206d5b68cf26b45bf2ab21ce8029b9d02d5918afd5b9c4527690715",
+      "valid_records": 1115,
+      "invalid_records": 0,
+      "integrity_valid": true,
+      "historical_only": true
+    },
+    "validation": {
+      "focused_tests": "23 passed",
+      "full_validation": "309 passed, 1 known Starlette TestClient/httpx warning",
+      "role_contract": "PASS",
+      "local_smoke": "PASS",
+      "git_diff_check": "PASS",
+      "ruff": "PASS with existing compact-test exclusions E401, E501, E701 and E702",
+      "github_ci": "16 of 16 checks passed at reviewed head",
+      "full_validation_job": "grabowski-job-7c36f7c0e8c9",
+      "full_validation_finalization_receipt": "04d1f127ef8c031800ed1083e57384192972be5f697a016725934be5033b6cc9",
+      "self_review_job": "grabowski-job-f99fadacf154",
+      "self_review_finalization_receipt": "7792a7eb6ad07988c30f0b8bca8946d1c9d488277b298af8bf4be810668ed347",
+      "deploy_job": "grabowski-job-d1a39736f827",
+      "live_query_job": "grabowski-job-5f84cf441448",
+      "runtime_receipt_job": "grabowski-job-da6ef2d13551"
+    },
+    "review": {
+      "result": "PASS",
+      "reviewed_head": "c9bbc2af51748e82513b1f696632b346d98e3076",
+      "diff_sha256": "1563c68cfa0403b6b3bf1dacc1dbe05d7dab7403fb2924bde2cf81859efd531f",
+      "self_review_comment": "https://github.com/heimgewebe/chronik/pull/223#issuecomment-4981033902",
+      "axes": [
+        "canonical producer identity",
+        "repository and host target semantics",
+        "no unexpected match broadening",
+        "explicit legacy boundary",
+        "combined filters",
+        "ledger integrity",
+        "query schema compatibility",
+        "read-only security and mutation boundary",
+        "regression coverage"
+      ],
+      "blocking_findings": []
+    },
+    "acceptance_evidence": {
+      "producer-field-correct": "PR #223 changes the component predicate from subject.component to the single _event_source_component(event) helper reading source.component only.",
+      "target-semantics-preserved": "Repository and host target matching remains in _matches_target(subject, ...); dedicated repository and host regression tests pass.",
+      "legacy-boundary-explicit": "A missing source.component remains an invalid-record boundary and never falls back to subject.component; a present source component cannot be overridden.",
+      "filter-regression-tests": "Four new tests cover repository and host targets, positive and negative producer matches, override resistance, no fallback and conjunction with operation, task_class and outcome.",
+      "live-readback": "The deployed exact HausKI query returns only event sha256:48e2f68452689dd078397d420a9bcf55310cdda9bffbfdfafbba95c9f0342b42 with 1115 valid and 0 invalid ledger records.",
+      "full-regression-proof": "23 focused tests, 309 full tests, 16 GitHub checks, merge-blob equality, 148 release-blob checks, versioned deploy and post-deploy query passed."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T007",
+          "source_ref": "heimgewebe/chronik#223",
+          "number": 223,
+          "head_sha": "c9bbc2af51748e82513b1f696632b346d98e3076",
+          "merge_commit_sha": "4d7e328980baeb53bdfb02657e80ffe2a044c67e",
+          "diff_sha256": "1563c68cfa0403b6b3bf1dacc1dbe05d7dab7403fb2924bde2cf81859efd531f"
+        },
+        {
+          "kind": "test_receipt",
+          "authority": "grabowski",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T007",
+          "source_ref": "grabowski-job-7c36f7c0e8c9",
+          "command_sha256": "04d1f127ef8c031800ed1083e57384192972be5f697a016725934be5033b6cc9",
+          "content_sha256": "7792a7eb6ad07988c30f0b8bca8946d1c9d488277b298af8bf4be810668ed347"
+        },
+        {
+          "kind": "runtime_deploy",
+          "authority": "chronik",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T007",
+          "source_ref": "/home/alex/.local/lib/chronik/releases/4d7e328980baeb53bdfb02657e80ffe2a044c67e",
+          "commit_sha": "4d7e328980baeb53bdfb02657e80ffe2a044c67e",
+          "content_sha256": "7d4f64c13fc50cdcff92802d2f9c47f95a8b25a7efe98dac7dd8b3ba186880f5"
+        },
+        {
+          "kind": "runtime_receipt",
+          "authority": "chronik",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T007",
+          "source_ref": "/home/alex/.local/state/chronik/t007-live-receipt-4d7e328980baeb53bdfb02657e80ffe2a044c67e.json",
+          "receipt_sha256": "fb435d16ecdcd1b8bd0476616357bb4a3073ed1e7ed324d1993382f5bf3fe059",
+          "commit_sha": "4d7e328980baeb53bdfb02657e80ffe2a044c67e"
+        },
+        {
+          "kind": "live_query_readback",
+          "authority": "chronik",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T007",
+          "source_ref": "/home/alex/.local/state/chronik/t007-live-query-4d7e328980baeb53bdfb02657e80ffe2a044c67e.json",
+          "run_id": "grabowski-job-5f84cf441448",
+          "content_sha256": "3e261eafaadbef8fa90d172d552952af4d92fb629902f3a6fa450d3628600244"
+        }
+      ]
+    },
+    "closure_truth_boundary": {
+      "establishes": [
+        "the reviewed producer component interpretation is merged and deployed",
+        "the exact observed HausKI historical event is returned by the combined deployed query",
+        "the observed ledger snapshot is valid and unchanged by the query",
+        "the Chronik import timer is active/waiting and the successful one-shot service is inactive/dead"
+      ],
+      "does_not_establish": [
+        "future timer success",
+        "future ledger integrity",
+        "current CI state after the recorded observation",
+        "completion or authorization of CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T008"
+      ]
+    },
+    "verification": {
+      "task_sha256": "d8cde3746c238816cd6fb37451f50e5244496cd4d78c8d97825373458651fb3b",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "bureau_closeout_validation": {
+      "validated_worktree_base": "9144dca0fe699bbb4d02a577c28fdca9a5bb33ce",
+      "remote_main_observed_after_validation": "e5a96e443b7e0db7a68746d33a5c1e0b450f8271",
+      "changed_paths": [
+        "registry/tasks/CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T007.json"
+      ],
+      "task_hash_and_registry_gates": {
+        "job": "grabowski-job-ad0d573475cc",
+        "result": "PASS",
+        "checks": [
+          "bureau check",
+          "bureau doctor",
+          "registry-truth --strict"
+        ],
+        "finalization_receipt_sha256": "ff293ae354d0ceff3df46673caf50990d8cb9604ce6671b4cb7c391475c25a62",
+        "payload_sha256": "97e7d2eea54f0c59940a80af6df133eb2184090e9217b013efadb95e9ba6af7e"
+      },
+      "full_tests": {
+        "job": "grabowski-job-26d80c1aac59",
+        "result": "PASS",
+        "passed": 595,
+        "failed": 0,
+        "finalization_receipt_sha256": "3a524f8e990c8aec1d2b02fc29cff399c8a097960a25c68bec6efc90884c2b91",
+        "payload_sha256": "23b64aafbc96a06863531172db9f7be7a061f4ae59a97a10de7ccc8ffa365f8d"
+      },
+      "transparent_failed_invocation": {
+        "job": "grabowski-job-443c823bd59a",
+        "result": "FAILED_BEFORE_VALID_TEST_COLLECTION",
+        "reason": "The final pytest command omitted PYTHONPATH=src and produced import-only collection errors; all preceding JSON, hash, check, doctor and strict registry-truth gates passed.",
+        "corrected_by": "grabowski-job-26d80c1aac59",
+        "finalization_receipt_sha256": "536042e3f69dd22d55b9526d5a36a7fe774ffca45d3439df367dec06424ec818"
+      },
+      "truth_boundary": "These local receipts precede the final commit and PR CI; final merge readiness still requires exact-head local revalidation and green GitHub CI."
     }
   }
 }

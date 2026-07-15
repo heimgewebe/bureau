@@ -14,14 +14,27 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau",
       "path:/home/alex/.local/bin/bureau",
-      "path:/home/alex/.local/share/bureau"
+      "path:/home/alex/.local/share/bureau",
+      "path:/home/alex/repos/bureau/src/bureau/runtime_refresh.py",
+      "path:/home/alex/repos/bureau/.bureau-scopes/ops-automation",
+      "service:bureau-status-capsule",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-MACHINE-READABILITY-V1-T016.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.ops",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.runtime",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -191,6 +204,26 @@
         "error_code": "readback-identity-invalid",
         "reconciliation": "Independent manifest, launcher, snapshot and runtime-identity readback proved the install effect successful. A second apply returned the same target result with reused=true and produced no additional installer effect."
       }
+    },
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Runtime refresh is bounded to its runner, versioned installer/automation and immutable deployment target.",
+      "effect_boundaries": [
+        "Runtime refresh runner",
+        "Installer and scheduler sources",
+        "Immutable Bureau runtime"
+      ],
+      "catalog_entry_sha256": "7bdcd36c9229cdb56f26ce1df45989af895b6b46fa32fe538cf8e62693d3c156",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
     }
   }
 }

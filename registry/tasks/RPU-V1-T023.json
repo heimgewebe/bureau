@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T023",
+  "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
+  "title": "Evidence-graded Python symbol call graph v1",
+  "state": "ready",
+  "goal": "Produce a deterministic Python call-site artifact with explicit S0/S1 evidence, strict provenance, conservative lexical resolution, bounded caller/callee/reference consumers and read-only MCP wiring.",
+  "depends_on": [
+    "RPU-V1-T021",
+    "RBV1-T016"
+  ],
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "f9b47a212fb20bebe32125889b92a8963d1213bc",
+    "grabowski_resources": [
+      "component:repobrief-evidence-call-graph-v1",
+      "path:/home/alex/repos/.lenskit-worktrees/repobrief-evidence-call-graph-v1",
+      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-evidence-call-graph-v1"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "rpu-v1-t023-producer",
+      "assertion": "Every Python call site is recorded deterministically; only unambiguous statically bound targets become S1 resolved relations, while shadowed, dynamic, foreign and ambiguous calls remain explicit S0 evidence."
+    },
+    {
+      "id": "rpu-v1-t023-scopes",
+      "assertion": "Parameters, local assignments, nested definitions, decorators, default arguments and class-definition expressions cannot be misattributed to a module function or the function being defined."
+    },
+    {
+      "id": "rpu-v1-t023-contract",
+      "assertion": "The call graph has a Draft-07 schema, coherent bundle role metadata, run and canonical dump binding, integrity validation, public-share exclusion and machine-readable negative semantics."
+    },
+    {
+      "id": "rpu-v1-t023-consumers",
+      "assertion": "find_references, get_callers and get_callees return bounded path, range, caller and target evidence, reject ambiguous symbol selection and attach live freshness without refreshing a snapshot."
+    },
+    {
+      "id": "rpu-v1-t023-validation",
+      "assertion": "Focused and full Lenskit tests, Ruff, repository ratchets and exact-head GitHub CI pass; a diff-bound self-review records correctness, regression, security and integration findings."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T16:20:00Z",
+    "source_request": "User requested all Symbol Call Graph work to be registered and implemented.",
+    "architecture_axis": "evidence-graded coding context graph",
+    "implementation_scope": [
+      "python AST producer",
+      "bundle artifact",
+      "read-only access",
+      "MCP stdio",
+      "tests and proof"
+    ],
+    "does_not_establish": [
+      "call_graph_completeness",
+      "dynamic_dispatch_resolution",
+      "runtime_reachability",
+      "import_success",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness"
+    ]
+  }
+}

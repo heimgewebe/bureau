@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
+  "title": "RepoBrief evidence context graph",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Build an evidence-graded coding context graph that adds precise Python caller, callee and reference navigation before measured edit-context, runtime, multilingual and build/test overlays.",
+  "current_plan": {
+    "repository": "repo.bureau",
+    "path": "docs/plans/repobrief-evidence-call-graph-v1.md"
+  },
+  "completion": [
+    "Python v1 emits deterministic S0/S1 relations and preserves uncertainty without guessing.",
+    "Bounded read-only caller, callee and reference consumers expose source ranges, provenance and freshness.",
+    "A fixed goldset and agent benchmark govern any default edit-context promotion.",
+    "Runtime, multilingual and build/test overlays remain separately registered evidence sources."
+  ],
+  "parallelism": {
+    "max_active_tasks": 2
+  },
+  "metadata": {
+    "registered_at": "2026-07-15T16:20:00Z",
+    "implementation_branch": "feat/repobrief-evidence-call-graph-v1",
+    "implementation_base": "f9b47a212fb20bebe32125889b92a8963d1213bc",
+    "implementation_worktree": "/home/alex/repos/.lenskit-worktrees/repobrief-evidence-call-graph-v1",
+    "source_request": "User requested all Symbol Call Graph work to be registered and implemented.",
+    "does_not_establish": [
+      "complete_call_graph",
+      "dynamic_dispatch_resolution",
+      "runtime_reachability",
+      "test_sufficiency",
+      "agent_quality_improvement",
+      "default_promotion",
+      "merge_readiness"
+    ]
+  }
+}

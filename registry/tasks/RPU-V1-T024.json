@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T024",
+  "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
+  "title": "Symbol call graph goldset and promotion benchmark",
+  "state": "planned",
+  "goal": "Measure precision, unresolved honesty, context compression and coding-agent task quality before any default promotion.",
+  "depends_on": [
+    "RPU-V1-T023"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "f9b47a212fb20bebe32125889b92a8963d1213bc",
+    "grabowski_resources": [
+      "component:repobrief-evidence-call-graph-v1",
+      "path:/home/alex/repos/.lenskit-worktrees/repobrief-evidence-call-graph-v1",
+      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-evidence-call-graph-v1"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "rpu-v1-t024-goldset",
+      "assertion": "A fixed multilingual-aware but Python-scored goldset covers direct calls, aliases, recursion, methods, shadowing, callbacks, decorators, defaults, dynamic dispatch and negative cases."
+    },
+    {
+      "id": "rpu-v1-t024-metrics",
+      "assertion": "The evaluation reports S1 precision, recall, false-positive classes, unresolved share, bytes, build time, context paths, tool calls and agent task outcomes."
+    },
+    {
+      "id": "rpu-v1-t024-promotion",
+      "assertion": "Default promotion remains false unless target recall is equal or better, S1 precision meets the registered threshold and no central task category regresses."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T16:20:00Z",
+    "source_request": "User requested all Symbol Call Graph work to be registered and implemented.",
+    "architecture_axis": "evidence-graded coding context graph",
+    "promotion_thresholds": {
+      "minimum_s1_precision": 0.97,
+      "minimum_context_path_reduction": 0.4,
+      "no_case_regression": true
+    }
+  }
+}

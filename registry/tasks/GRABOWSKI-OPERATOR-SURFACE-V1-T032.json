@@ -14,7 +14,8 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski",
     "grabowski_resources": [
-      "repo:/home/alex/repos/grabowski"
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/repos/bureau/registry/tasks/GRABOWSKI-OPERATOR-SURFACE-V1-T032.json"
     ]
   },
   "claims": [
@@ -24,7 +25,7 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
       "mode": "read",
       "isolation": "none"
     }
@@ -81,6 +82,24 @@
       "merge readiness",
       "deployment readiness",
       "runtime implementation complete"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Grabowski owns implementation; its Bureau dependency is read-only task and validation truth.",
+      "effect_boundaries": [
+        "Read-only Bureau task truth"
+      ],
+      "catalog_entry_sha256": "83f617d5efffe0006051a5c09f513ace5f60283c4d14fd6151e8cb6305f7a114",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   }
 }

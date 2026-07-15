@@ -17,7 +17,9 @@
       "repo:/home/alex/repos/grabowski",
       "repo:/home/alex/repos/heim-pc",
       "repo:/home/alex/repos/systemkatalog",
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+      "service:bureau-status-capsule",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-MACHINE-READABILITY-V1-T010.json"
     ]
   },
   "claims": [
@@ -37,7 +39,12 @@
       "isolation": "none"
     },
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "component.bureau.runtime",
       "mode": "read",
       "isolation": "none"
     }
@@ -103,6 +110,25 @@
       "absence_of_future_instruction_drift",
       "mutation_or_merge_authority"
     ],
-    "requires_runtime_consolidation_task": "OPERATOR-MACHINE-READABILITY-V1-T011"
+    "requires_runtime_consolidation_task": "OPERATOR-MACHINE-READABILITY-V1-T011",
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "The end-to-end proof reads canonical Registry truth and the immutable Bureau runtime; implementation occurs in other repositories.",
+      "effect_boundaries": [
+        "Canonical Registry read",
+        "Immutable runtime read"
+      ],
+      "catalog_entry_sha256": "70b9db596858d168db3abaa7bd74ccee2cb1e707df3ffd5701636f7122ee5f10",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   }
 }

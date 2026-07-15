@@ -14,12 +14,13 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/src/bureau/state_root_artifacts.py",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-MACHINE-READABILITY-V1-T014.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -72,6 +73,24 @@
       "availability_of_a_conditional_kernel_rename_primitive",
       "permission_to_execute_or_delete_state",
       "failure_of_T013"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "The residual rename race is located in the state-root artifact effect implementation.",
+      "effect_boundaries": [
+        "Descriptor-relative state-root rename code"
+      ],
+      "catalog_entry_sha256": "c738a662effa7a64d6f0467ed3a782e30781c7852732380bab90b2a55b0640f8",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   }
 }

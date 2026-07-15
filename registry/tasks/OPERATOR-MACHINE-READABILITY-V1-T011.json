@@ -15,8 +15,10 @@
     "working_repository": "/home/alex/repos/grabowski",
     "grabowski_resources": [
       "repo:/home/alex/repos/grabowski",
-      "repo:/home/alex/repos/bureau",
-      "path:/home/alex/.local/share/bureau"
+      "path:/home/alex/.local/share/bureau",
+      "service:bureau-status-capsule",
+      "path:/home/alex/repos/bureau/.bureau-scopes/lease-contract",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-MACHINE-READABILITY-V1-T011.json"
     ]
   },
   "claims": [
@@ -26,7 +28,12 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.runtime",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "component.bureau.lease-contract",
       "mode": "read",
       "isolation": "none"
     },
@@ -87,6 +94,25 @@
       "permission_to_delete_previous_or_quarantined_releases",
       "automatic_migration_authority",
       "need_to_change_Bureau_lease_policy"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "The unification target is the immutable Bureau runtime consumed by Grabowski and its exact lease contract.",
+      "effect_boundaries": [
+        "Immutable runtime identity",
+        "Lease consumer contract"
+      ],
+      "catalog_entry_sha256": "16ec8454be04045d33fd8edfb649f5a3151a98b1ef4b652693e0cf3db394caa6",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   }
 }

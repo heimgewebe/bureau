@@ -3,26 +3,65 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T042",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Enforce a tool-surface budget and operation-catalog gate",
-  "state": "planned",
+  "state": "verified",
   "goal": "Prevent unexamined Top-Level-Tool growth by requiring each added public tool to prove a distinct authority boundary, materially different call shape or measured selection advantage; otherwise model the capability as a named typed operation behind an existing entry point.",
-  "priority": {"lane": "next", "rank": 420},
+  "priority": {
+    "lane": "next",
+    "rank": 420
+  },
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski",
-    "grabowski_resources": ["repo:/home/alex/repos/grabowski"]
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
   },
-  "claims": [{"resource": "repo.grabowski", "mode": "write", "isolation": "worktree"}],
-  "required_capabilities": ["repository", "shell", "github", "grabowski"],
-  "depends_on": ["GRABOWSKI-OPERATOR-SURFACE-V1-T041"],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T041"
+  ],
   "acceptance": [
-    {"id": "surface-baseline", "assertion": "The repository records a generated baseline of public tool names, categories, authority classes and operation-catalog entries bound to the runtime contract."},
-    {"id": "merge-gate", "assertion": "Validation fails when a new public tool lacks a machine-readable justification naming the distinct authority boundary, materially different argument schema or measured tool-choice advantage."},
-    {"id": "operation-default", "assertion": "New capabilities without an accepted exception are represented as named operations with typed parameters, explicit effects, validation and rollback metadata rather than unconstrained strings."},
-    {"id": "security-boundaries-preserved", "assertion": "Irreversible deletion, secret reveal/use/export, process signalling, privileged actions and other materially different authority or reversibility boundaries are not collapsed merely to reduce the count."},
-    {"id": "no-arbitrary-cap", "assertion": "The gate does not enforce an unexplained fixed maximum. It reports growth, accepted exceptions, retired entries and operation migration candidates."},
-    {"id": "compatibility", "assertion": "Existing clients retain stable tool names unless a separately reviewed deprecation and compatibility path exists."},
-    {"id": "proof", "assertion": "Tests demonstrate one rejected unnecessary tool, one accepted security-boundary tool and one capability successfully added as a catalog operation."}
+    {
+      "id": "surface-baseline",
+      "assertion": "The repository records a generated baseline of public tool names, categories, authority classes and operation-catalog entries bound to the runtime contract."
+    },
+    {
+      "id": "merge-gate",
+      "assertion": "Validation fails when a new public tool lacks a machine-readable justification naming the distinct authority boundary, materially different argument schema or measured tool-choice advantage."
+    },
+    {
+      "id": "operation-default",
+      "assertion": "New capabilities without an accepted exception are represented as named operations with typed parameters, explicit effects, validation and rollback metadata rather than unconstrained strings."
+    },
+    {
+      "id": "security-boundaries-preserved",
+      "assertion": "Irreversible deletion, secret reveal/use/export, process signalling, privileged actions and other materially different authority or reversibility boundaries are not collapsed merely to reduce the count."
+    },
+    {
+      "id": "no-arbitrary-cap",
+      "assertion": "The gate does not enforce an unexplained fixed maximum. It reports growth, accepted exceptions, retired entries and operation migration candidates."
+    },
+    {
+      "id": "compatibility",
+      "assertion": "Existing clients retain stable tool names unless a separately reviewed deprecation and compatibility path exists."
+    },
+    {
+      "id": "proof",
+      "assertion": "Tests demonstrate one rejected unnecessary tool, one accepted security-boundary tool and one capability successfully added as a catalog operation."
+    }
   ],
   "metadata": {
     "source": "user-directed-agent-facing-contract-plan",
@@ -33,6 +72,51 @@
       "fixed_optimal_tool_count",
       "permission_to_merge_security_boundaries",
       "tool_choice_improvement_without_measurement"
-    ]
+    ],
+    "verified_at": "2026-07-15T04:51:33Z",
+    "implementation_branch": "feat/t042-tool-surface-budget-v1",
+    "implementation_pr": "heimgewebe/grabowski#220",
+    "implementation_pr_url": "https://github.com/heimgewebe/grabowski/pull/220",
+    "implementation_head": "5d3f4b4d73a5212bcd8fdb43ee87cb8c16755f65",
+    "implementation_merge_commit": "9f21b14a78d9e9eaed1bec6c45faf24b574f9dc6",
+    "diff_sha256": "d3f841843887806ddf90ac1bb029aa433ffe5bdff5ba3b45bd9ab84f1832e7d6",
+    "diff_bytes": 105627,
+    "deployment_release": "20260715T044254Z-9f21b14a78d9",
+    "deployment_head": "9f21b14a78d9e9eaed1bec6c45faf24b574f9dc6",
+    "implementation_paths": [
+      "Makefile",
+      "config/operations.example.json",
+      "contracts/operation-catalog.v1.json",
+      "contracts/tool-surface-budget.v1.json",
+      "contracts/tool-surface-budget.v1.schema.json",
+      "src/grabowski_tool_surface_budget.py",
+      "tests/test_tool_surface_budget.py"
+    ],
+    "validation": [
+      "Exact CI command make validate passed with the bare system Python: 1691 tests passed, 1 expected skip.",
+      "GitHub Actions validate passed on Python 3.10 and 3.12 for final head 5d3f4b4d73a5212bcd8fdb43ee87cb8c16755f65.",
+      "Ruff passed for the new validator and tests; a mutation corpus matched the full Draft 2020-12 jsonschema validator.",
+      "The head- and diff-bound four-pass self-review returned PASS with no material findings and uncertainty 0.08.",
+      "Post-merge self-deploy completed as release 20260715T044254Z-9f21b14a78d9 with complete and integrity-valid finalization.",
+      "Live tool-surface check on canonical main reported valid=true, baseline_tool_count=125, current_tool_count=125, growth=0, operation_count=3 and schema_valid=true."
+    ],
+    "outcome": "Grabowski now freezes the current 125-tool public surface with code-bound name and semantic hashes, rejects unbudgeted additions and baseline grandfathering, requires machine-readable exceptions for genuinely distinct top-level tools, and defaults ordinary capability growth to typed named operations with explicit execution authorities, effects and reversibility. No existing public tool name or security boundary was collapsed.",
+    "verified_acceptance": {
+      "surface-baseline": "The repository records 125 public tools with category, derived authority class, risk, read-only state, effects and reversibility, bound to runtime-entrypoint and capability-catalog hashes; three operation entries are separately projected and hashed.",
+      "merge-gate": "make validate invokes the budget gate. Tests reject an unbudgeted tool, capability-semantic drift, schema drift and an attempted baseline rewrite with recomputed hashes.",
+      "operation-default": "inspect-user-service was added as a typed operation with a bounded unit regex, fixed argv shape, service-read effect, operator-mutation execution authority and not-applicable reversibility, without adding a public MCP tool.",
+      "security-boundaries-preserved": "The policy explicitly permits reviewed security-boundary tools and the positive exception test accepts a separately authorized secret-rotation surface rather than forcing it behind a generic dispatcher.",
+      "no-arbitrary-cap": "fixed_tool_cap remains null. The report exposes baseline/current counts, growth, accepted additions, retirements and migration candidates.",
+      "compatibility": "All 125 existing public tool names remain unchanged; operation schema v1 execution remains compatible and src/grabowski_operations.py was not modified.",
+      "proof": "Focused tests prove rejection of an unnecessary tool, acceptance of a distinct security-boundary tool and addition of a typed operation; full local, CI, deployment and live readback are green."
+    },
+    "follow_up_tasks": [
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T043",
+      "STORAGE-LIFECYCLE-V1-T005"
+    ],
+    "verification": {
+      "task_sha256": "20c44e87dce70b2d0100f1acac3382d3f9f4112028a05ee4e352990edde8d912",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

@@ -158,8 +158,8 @@
       "http_service_activated": false,
       "plexer_activated": false,
       "runtime_receipt_path": "/home/alex/.local/state/chronik/runtime-receipt.json",
-      "runtime_receipt_sha256": "fb435d16ecdcd1b8bd0476616357bb4a3073ed1e7ed324d1993382f5bf3fe059",
-      "runtime_receipt_payload_sha256": "c278c5acf30305994aeade74f948af34d6e26ae4c5a2f43a1a29098ace5ebea1",
+      "runtime_receipt_sha256": "6c6e2bd7bf0efc64978e9bbf9fa83d6097ba3abf7441db59775fd1e6b93eaaba",
+      "runtime_receipt_payload_sha256": "5add817a3fa09e6d8e5b44b0e80978b023e2cc8e59422cc2438087d9afa28f1b",
       "immutable_live_receipt_path": "/home/alex/.local/state/chronik/t007-live-receipt-4d7e328980baeb53bdfb02657e80ffe2a044c67e.json"
     },
     "live_query": {
@@ -260,7 +260,7 @@
           "authority": "chronik",
           "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T007",
           "source_ref": "/home/alex/.local/state/chronik/t007-live-receipt-4d7e328980baeb53bdfb02657e80ffe2a044c67e.json",
-          "receipt_sha256": "fb435d16ecdcd1b8bd0476616357bb4a3073ed1e7ed324d1993382f5bf3fe059",
+          "receipt_sha256": "6c6e2bd7bf0efc64978e9bbf9fa83d6097ba3abf7441db59775fd1e6b93eaaba",
           "commit_sha": "4d7e328980baeb53bdfb02657e80ffe2a044c67e"
         },
         {
@@ -288,7 +288,7 @@
       ]
     },
     "verification": {
-      "task_sha256": "d8cde3746c238816cd6fb37451f50e5244496cd4d78c8d97825373458651fb3b",
+      "task_sha256": "aaaa4ab854db5e61c4efe7f08920235d998e684ff610a4f24ebbb814a3bd0e02",
       "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
     },
     "bureau_closeout_validation": {
@@ -324,6 +324,44 @@
         "finalization_receipt_sha256": "536042e3f69dd22d55b9526d5a36a7fe774ffca45d3439df367dec06424ec818"
       },
       "truth_boundary": "These local receipts precede the final commit and PR CI; final merge readiness still requires exact-head local revalidation and green GitHub CI."
+    },
+    "receipt_hash_correction": {
+      "corrected_at": "2026-07-15T16:42:20+02:00",
+      "scope": "Evidence transcription only; Chronik code, release, ledger, runtime receipt and live-query result are unchanged.",
+      "cause": "The first Bureau closeout transcribed provisional non-existent receipt hashes instead of the authoritative hashes printed by the create-only receipt job.",
+      "incorrect_values": {
+        "runtime_receipt_sha256": "fb435d16ecdcd1b8bd0476616357bb4a3073ed1e7ed324d1993382f5bf3fe059",
+        "runtime_receipt_payload_sha256": "c278c5acf30305994aeade74f948af34d6e26ae4c5a2f43a1a29098ace5ebea1"
+      },
+      "corrected_values": {
+        "runtime_receipt_sha256": "6c6e2bd7bf0efc64978e9bbf9fa83d6097ba3abf7441db59775fd1e6b93eaaba",
+        "runtime_receipt_payload_sha256": "5add817a3fa09e6d8e5b44b0e80978b023e2cc8e59422cc2438087d9afa28f1b"
+      },
+      "authoritative_creation_evidence": {
+        "job": "grabowski-job-da6ef2d13551",
+        "finalization_receipt_sha256": "736e352d2d2366ada5352b610c3d1badb8f458f80fdfdfec3861c87e0b72b5af",
+        "reported_runtime_receipt_sha256": "6c6e2bd7bf0efc64978e9bbf9fa83d6097ba3abf7441db59775fd1e6b93eaaba",
+        "reported_payload_sha256": "5add817a3fa09e6d8e5b44b0e80978b023e2cc8e59422cc2438087d9afa28f1b"
+      },
+      "final_readback_evidence": {
+        "job": "grabowski-job-e9478fe5b520",
+        "finalization_receipt_sha256": "1f2fe9b7b3077a8cdcd3a945c979730189529557e0b6d26b5ffad6a2caa0b4ad",
+        "runtime_and_immutable_receipts_byte_equal": true,
+        "reported_runtime_receipt_sha256": "6c6e2bd7bf0efc64978e9bbf9fa83d6097ba3abf7441db59775fd1e6b93eaaba",
+        "fresh_live_query_event_id": "sha256:48e2f68452689dd078397d420a9bcf55310cdda9bffbfdfafbba95c9f0342b42",
+        "fresh_live_query_valid_records": 1147,
+        "fresh_live_query_invalid_records": 0,
+        "fresh_live_query_integrity_valid": true,
+        "fresh_live_query_ledger_sha256_before_after": "9d898f700cca0bd0f8adbd1629f60953f490d95bca8f26b570d948d2a2178954"
+      },
+      "mutation_assessment": "No later receipt mutation occurred: the original creation-job stdout, canonical runtime receipt, immutable live receipt and final readback all agree on the corrected hashes.",
+      "does_not_change": [
+        "T007 verified state",
+        "Chronik PR #223 or merge commit",
+        "deployed release",
+        "append-only ledger",
+        "T008 planned state or authorization"
+      ]
     }
   }
 }

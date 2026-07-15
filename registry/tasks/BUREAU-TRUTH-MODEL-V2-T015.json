@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "id": "BUREAU-TRUTH-MODEL-V2-T015",
+  "title": "Restore Bureau release and Registry identity before verification stamps",
+  "state": "planned",
+  "goal": "Restore exact identity between the installed immutable Bureau release, canonical Registry snapshot and current origin/main so verification-stamp and other mutation-gated truth operations can run without stale-runtime-blocked results.",
+  "priority": {
+    "lane": "next",
+    "rank": 150
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau-runtime-identity",
+      "path:/home/alex/repos/bureau/src/bureau/runtime_identity.py",
+      "path:/home/alex/repos/bureau/src/bureau/cli.py",
+      "path:/home/alex/repos/bureau/tests"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Source diagnosis and tests are preauthorized. Runtime refresh must be bound to an exact source commit, Registry tree, deployment manifest and post-refresh readback."
+    }
+  },
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "identity-ok",
+      "assertion": "bureau runtime-identity reports compatibility.status=ok and mutation_allowed=true for a clean current Registry checkout."
+    },
+    {
+      "id": "verification-stamp",
+      "assertion": "verification-stamp succeeds for a valid task on the current canonical Registry without release-registry-identity-mismatch."
+    },
+    {
+      "id": "deployment-binding",
+      "assertion": "The immutable release, deployment manifest and canonical Registry snapshot are bound to the same reviewed source commit and recorded tree/package hashes."
+    },
+    {
+      "id": "no-bypass",
+      "assertion": "No stale-runtime guard is weakened or bypassed; mismatches continue to fail closed with stable reason codes."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused runtime identity, refresh, stale/mismatch and verification-stamp tests plus the complete Bureau suite and live post-refresh probes pass."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T04:11:35.979726Z",
+    "source": "STORAGE-LIFECYCLE-V1-T001 closeout verification-stamp readback",
+    "observed_reason_code": "release-registry-identity-mismatch",
+    "observed_runtime_source_commit": "ff925478c1b4b95bf7feda3780f73993dca76b5d",
+    "observed_registry_head": "2ff2e7274cfecfa8b4987c639c2c965dceaff1b3",
+    "observed_runtime_status": "stale-runtime-blocked",
+    "deduplication": "Repository search found no existing task naming the release/Registry identity mismatch or verification-stamp blockage.",
+    "does_not_establish": [
+      "permission to bypass runtime identity guards",
+      "automatic correctness of a runtime refresh",
+      "task completion without exact deployment and live readback evidence"
+    ]
+  }
+}

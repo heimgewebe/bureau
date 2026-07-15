@@ -6,12 +6,20 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+      "path:/home/alex/repos/bureau/docs",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T006.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/BUREAU-TRUTH-MODEL-V2.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.docs",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -60,6 +68,25 @@
       "dispatch authority",
       "merge authority",
       "deployment authority"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Backlog revalidation edits reviewed task classifications and records the classification contract.",
+      "effect_boundaries": [
+        "Reviewed task records",
+        "Backlog classification evidence"
+      ],
+      "catalog_entry_sha256": "9aec14a9f11499c0c04c3f486ad6a5eedc0c941fa3ff6aa14e224b0b2496fbd3",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   }
 }

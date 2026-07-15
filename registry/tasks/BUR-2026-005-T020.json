@@ -14,12 +14,13 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/src/bureau/status_capsule.py",
+      "path:/home/alex/repos/bureau/registry/tasks/BUR-2026-005-T020.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -70,6 +71,24 @@
       "permission to weaken archive checks",
       "need to support untrusted arbitrary archives",
       "automatic task priority escalation"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "The registered affected code is exactly status_capsule.py::_safe_extract.",
+      "effect_boundaries": [
+        "Status capsule archive extraction"
+      ],
+      "catalog_entry_sha256": "12a1b43a8ebeb00851c2869151dc2f518d7edd0cf3223328ca64016019ed25bc",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   }
 }

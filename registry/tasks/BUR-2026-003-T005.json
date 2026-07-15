@@ -15,12 +15,25 @@
     "working_repository": "/home/alex/repos/bureau",
     "baseline_commit": "a19c6f0779bc0955ec36f941b9969f2c69079d92",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+      "path:/home/alex/repos/bureau/.bureau-scopes/schema",
+      "path:/home/alex/repos/bureau/registry/tasks/BUR-2026-003-T005.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.schema",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -53,7 +66,27 @@
   "metadata": {
     "planning_slice": "bureau-runtime-and-repo-orchestration-v1",
     "created_from_plan": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
-    "operator_lab_run": "not applicable — planning task definition only"
+    "operator_lab_run": "not applicable — planning task definition only",
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Repo discovery changes Bureau scanner code plus the repository registry and its validation contract.",
+      "effect_boundaries": [
+        "Bureau core scanner code",
+        "Registry repository declarations",
+        "Registry schema validation"
+      ],
+      "catalog_entry_sha256": "226bcc9228ff51a3163d9a7d53e5397eed052ebcf6229870609660c0cc5550b8",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   },
   "depends_on": [
     "BUR-2026-003-T004"

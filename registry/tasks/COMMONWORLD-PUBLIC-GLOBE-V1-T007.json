@@ -34,11 +34,14 @@
       "provider SLA",
       "backend readiness",
       "unmeasured accessibility conformance"
-    ]
+    ],
+    "readied_at": "2026-07-15",
+    "readied_by_verified_predecessor": "COMMONWORLD-PUBLIC-GLOBE-V1-T006",
+    "direct_execution_authority": "operator instruction: weiter an commonworld arbeiten"
   },
   "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T007",
   "title": "Implement intent-oriented search and discovery",
-  "state": "planned",
+  "state": "ready",
   "goal": "Let people search by German concepts, actions and places and reach the matching spatial or digital context.",
   "priority": {
     "lane": "next",

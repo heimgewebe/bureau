@@ -19,7 +19,12 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "component.bureau.docs",
       "mode": "read",
       "isolation": "none"
     }
@@ -38,7 +43,10 @@
     "grabowski_resources": [
       "component:repobrief-evidence-call-graph-v1",
       "path:/home/alex/repos/.lenskit-worktrees/repobrief-evidence-call-graph-v1",
-      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-evidence-call-graph-v1"
+      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-evidence-call-graph-v1",
+      "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md",
+      "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T024.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1.json"
     ]
   },
   "acceptance": [
@@ -63,6 +71,26 @@
       "minimum_s1_precision": 0.97,
       "minimum_context_path_reduction": 0.4,
       "no_case_regression": true
+    },
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "The Lenskit benchmark reads only its exact Bureau task, shared initiative truth and promotion plan; benchmark effects remain in Lenskit.",
+      "effect_boundaries": [
+        "Exact Bureau task record",
+        "RepoBrief evidence-context initiative record",
+        "Current benchmark and promotion plan"
+      ],
+      "catalog_entry_sha256": "37fb7e209d784856db00c9ef5e5add97442818c096ed586a70865f9367482a64",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
     }
   }
 }

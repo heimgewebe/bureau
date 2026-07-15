@@ -3,7 +3,7 @@
   "id": "STORAGE-LIFECYCLE-V1-T008",
   "initiative": "STORAGE-LIFECYCLE-V1",
   "title": "Migrate and safely reclaim historical storage residue",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 18
@@ -67,6 +67,166 @@
     "ready_at": "2026-07-15T19:43:34Z",
     "readiness_basis": "STORAGE-LIFECYCLE-V1-T007 verified by merged Leitstand PR #172, exact diff-bound review, green CI, exact-commit deployment, active hourly timer, two successful productive collectors and live artifact-backed HTTP readback.",
     "predecessor_merge_commit": "b0532a39b72733cab3a46e30f82f6d0e8dcf7cec",
-    "safety_note": "Ready does not authorize deletion. T008 retains break-glass runtime-mutation policy and requires fresh exact-target plans, blocker readback and recovery evidence."
+    "safety_note": "Ready does not authorize deletion. T008 retains break-glass runtime-mutation policy and requires fresh exact-target plans, blocker readback and recovery evidence.",
+    "verified_at": "2026-07-15T21:20:13.251187Z",
+    "implementation_repository": "heimgewebe/heim-pc",
+    "implementation_commit": "aabfca5a4b5a0c6aad079148e8e9d2a509b8c8d6",
+    "grabowski_runtime_head": "acf25439f65e3de0057dbad3fcd73a2f40d04484",
+    "report_artifact": "/home/alex/iCloud/Drive/halde/STORAGE-LIFECYCLE-V1-T008-classification-and-reclamation.json",
+    "report_sha256": "b79ef997b418d8590aa39d91d1305d20029e0e2b17a53763b4dcff4e4cea902a",
+    "report_bytes": 133277,
+    "self_review_artifact": "/home/alex/iCloud/Drive/halde/STORAGE-LIFECYCLE-V1-T008-self-review.md",
+    "self_review_sha256": "e6c8848b20ed77bd927e084876812c72b6edbeac531bfa41eb82a178d79ffb8d",
+    "classification": {
+      "producer_count": 8,
+      "checkout_count": 109,
+      "checkout_state_counts": {
+        "blocked_unarchived": 2,
+        "dirty": 11,
+        "main": 3,
+        "prunable_or_missing": 4,
+        "retained": 1,
+        "unclassified_clean": 88
+      },
+      "hauski_root_bytes": 5415645184,
+      "heimlern_root_bytes": 5249171456,
+      "unclassified_roots_retained": true
+    },
+    "docker_reclamation": {
+      "plan_id": "cab9f60728927a6c5d6a3ff7f8904fa9bb72ee38bea99def3ea47c402ad5811a",
+      "plan_sha256": "cab9f60728927a6c5d6a3ff7f8904fa9bb72ee38bea99def3ea47c402ad5811a",
+      "apply_id": "ae04b3e1e36fbe4983acd908a2864debe888489e35bae60cefc4ac9372c0aa29",
+      "candidate_count": 14,
+      "removed_count": 14,
+      "post_plan_candidate_count": 0,
+      "reported_virtual_image_bytes_removed": 43386335537,
+      "immediate_physical_free_delta_bytes": 6561792,
+      "containers_before_after": 19,
+      "referenced_image_set_unchanged": true,
+      "removed_container_referenced_images": 0,
+      "docker_volumes_touched": false,
+      "size_semantics": "Docker virtual image bytes are not physical reclaim because layers are shared."
+    },
+    "checkout_reclamation": {
+      "removed_count": 2,
+      "allocated_bytes_removed_by_path_readback": 484159488,
+      "apparent_bytes_removed_by_path_readback": 427328129,
+      "global_filesystem_delta_attributable": false,
+      "items": [
+        {
+          "path": "/home/alex/repos/.weltgewebe-worktrees/map-zoom-marker-scale-deploy",
+          "head": "0bdbdbac5e82fb3f9f4a95ebbf10141511e4deee",
+          "archive_id": "20260714T083029Z-64886538a0c0",
+          "cleanup_plan_id": "d28a72debfb341069cff450f",
+          "cleanup_plan_sha256": "56ca466688db10501be274acabf6e3084bf96a58bdbf4cdaf17e721487a95bd8",
+          "exists_after": false,
+          "recovery_available": true
+        },
+        {
+          "path": "/home/alex/repos/.weltgewebe-worktrees/map-zoom-marker-scale-v1",
+          "head": "e33f25ff4ea1a1687ac814f451ff3c7601e05d55",
+          "branch": "fix/map-zoom-marker-scale-v1",
+          "archive_id": "20260714T083015Z-0e758fb7ccfa",
+          "cleanup_plan_id": "f19b8c49437f4bf4a1f6fba3",
+          "cleanup_plan_sha256": "87750b59482cb1e5bb01ed78cfc6a26aefaf0dd0cff7a065d3497ee7e855d299",
+          "exists_after": false,
+          "recovery_available": true
+        }
+      ]
+    },
+    "retained_blockers": [
+      "filesystem cache, trash, Grabowski releases and Docker build cache: process observation incomplete",
+      "user journal: report-only; no exact removable target set",
+      "maintenance journal: newest plans and receipts retained",
+      "remaining Docker images: container-referenced or named/digest-referenced",
+      "RepoBrief auto: within budget; manifest and retention truth required",
+      "VM data: canonical manual-only data",
+      "dirty, active, retained, unclassified or prunable checkouts: no physical removal without separate truth and recovery proof"
+    ],
+    "final_inventory": {
+      "artifact": "/home/alex/.local/state/heim-pc/storage-remediation/STORAGE-LIFECYCLE-V1-T008/storage-inventory-final.json",
+      "sha256": "10dbc82106e450500b158c8261eded5cbd0f8f9a15ec215e32b06cc31b17afdd",
+      "generated_at": "2026-07-15T21:13:26.256171Z",
+      "temporary_total_bytes": 263738986496,
+      "repo_worktrees_bytes": 183725797376,
+      "interpretation": "Concurrent foreign work increased global totals during the window; exact per-target readback is authoritative for T008 effects."
+    },
+    "leitstand_readback": {
+      "artifact_sha256": "75ee48b3c7d545aa7aec0e6c431bdf01176b840bd8b1499244ddeb70dc996ceb",
+      "generated_at": "2026-07-15T21:18:25.187Z",
+      "runtime_head": "b0532a39b72733cab3a46e30f82f6d0e8dcf7cec",
+      "health_status": "ok",
+      "surface_http_status": 200,
+      "hourly_count": 3,
+      "daily_count": 1,
+      "notification_count": 5,
+      "budget_violation_count": 5,
+      "cleanup_blocker_count": 8,
+      "unowned_artifact_count": 2,
+      "growth_24h_truth": "unavailable"
+    },
+    "verified_acceptance": {
+      "classification": "Eight producer records and 109 current checkout records contain owner, dependency, pin, cleanup strategy, decision and reasons.",
+      "no-blind-delete": "Only 14 exact hash-bound dangling images and two archived, clean, grace-elapsed, coordination-free checkout paths were removed.",
+      "recovery": "Both checkout removals used verified recovery refs, archive manifests, short-lived dry-run IDs and exact plan hashes.",
+      "result": "Virtual Docker bytes, immediate physical readback, exact allocated checkout bytes, final inventory and retained blockers are all recorded."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "runtime_evidence",
+          "system": "heim-pc-storage-remediation",
+          "task_id": "STORAGE-LIFECYCLE-V1-T008",
+          "path": "/home/alex/iCloud/Drive/halde/STORAGE-LIFECYCLE-V1-T008-classification-and-reclamation.json",
+          "content_sha256": "b79ef997b418d8590aa39d91d1305d20029e0e2b17a53763b4dcff4e4cea902a",
+          "commit_sha": "aabfca5a4b5a0c6aad079148e8e9d2a509b8c8d6"
+        },
+        {
+          "kind": "runtime_receipt",
+          "authority": "heim-pc-cache-maintenance",
+          "task_id": "STORAGE-LIFECYCLE-V1-T008",
+          "source_ref": "apply:ae04b3e1e36fbe4983acd908a2864debe888489e35bae60cefc4ac9372c0aa29",
+          "receipt_sha256": "59f48e0c7ef65fee1457f958654917b6045b6b680e1985ba173e3a57b58de4cf",
+          "plan_sha256": "cab9f60728927a6c5d6a3ff7f8904fa9bb72ee38bea99def3ea47c402ad5811a"
+        },
+        {
+          "kind": "runtime_receipt",
+          "authority": "grabowski-checkout-lifecycle",
+          "task_id": "STORAGE-LIFECYCLE-V1-T008",
+          "source_ref": "archives:20260714T083015Z-0e758fb7ccfa,20260714T083029Z-64886538a0c0",
+          "content_sha256": "b79ef997b418d8590aa39d91d1305d20029e0e2b17a53763b4dcff4e4cea902a",
+          "implementation_sha": "acf25439f65e3de0057dbad3fcd73a2f40d04484"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "leitstand-runtime",
+          "task_id": "STORAGE-LIFECYCLE-V1-T008",
+          "source_ref": "live:storage-health:2026-07-15T21:18:25.187Z",
+          "artifact_sha256": "75ee48b3c7d545aa7aec0e6c431bdf01176b840bd8b1499244ddeb70dc996ceb",
+          "implementation_sha": "b0532a39b72733cab3a46e30f82f6d0e8dcf7cec",
+          "cleanup_blocker_count": 8
+        }
+      ]
+    },
+    "review_receipts": [
+      {
+        "source_ref": "/home/alex/iCloud/Drive/halde/STORAGE-LIFECYCLE-V1-T008-classification-and-reclamation.json",
+        "content_sha256": "b79ef997b418d8590aa39d91d1305d20029e0e2b17a53763b4dcff4e4cea902a",
+        "review_sha256": "e6c8848b20ed77bd927e084876812c72b6edbeac531bfa41eb82a178d79ffb8d",
+        "verdict": "PASS",
+        "origin": "self_review"
+      }
+    ],
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_exact_historical_reclamation",
+      "outcome": "Historical residue was classified, exact safe Docker and checkout candidates were reclaimed with readback, and all unproven or active state remained retained."
+    },
+    "verification": {
+      "task_sha256": "e440900ede4ffa3d5ea933c843dc084059e545f53c1a4b42fd835eb5fa52f23c",
+      "plan_sha256": "abf1a6fcb3e04766eede2e4438bb31bb376416688176d945dec986d171a795b1"
+    }
   }
 }

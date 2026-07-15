@@ -1,0 +1,37 @@
+{
+  "commitment": "now",
+  "completion": [
+    "A versioned static Python call-reference artifact records call sites, enclosing caller symbols, callee expressions, source ranges and resolution state.",
+    "Read-only MCP tools find_references and get_callers return bounded exact-first results with live freshness attached.",
+    "Ambiguous or dynamic calls remain explicit and are never promoted to proven runtime reachability.",
+    "Focused, full-suite and live-bundle validation pass on the exact merged head."
+  ],
+  "current_plan": {
+    "path": "registry/tasks/RSCG-V1-T001.json",
+    "repository": "repo.bureau"
+  },
+  "goal": "Extend RepoBrief from exact symbol-definition lookup to deterministic, bounded Python reference and caller navigation without claiming a complete runtime call graph or moving mutation authority into RepoBrief.",
+  "id": "REPOBRIEF-SYMBOL-CALL-GRAPH-V1",
+  "metadata": {
+    "default_promoted": false,
+    "does_not_establish": [
+      "complete_call_graph",
+      "runtime_dispatch",
+      "dynamic_resolution",
+      "dependency_completeness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness"
+    ],
+    "predecessor": "REPOBRIEF-CODEGRAPH-ADOPTION-V1",
+    "registered_at": "2026-07-15T14:25:00Z",
+    "source_merge": "heimgewebe/lenskit#1005",
+    "source_request": "alles umsetzen"
+  },
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "schema_version": 1,
+  "state": "active",
+  "title": "RepoBrief bounded Symbol-Call-Graph navigation"
+}

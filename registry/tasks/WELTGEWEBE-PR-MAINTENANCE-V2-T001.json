@@ -4,7 +4,7 @@
   "initiative": "WELTGEWEBE-PR-MAINTENANCE-V2",
   "title": "Finish and review crash-safe node edit/delete PR #1440",
   "goal": "Reconcile the unpublished node mutation hardening without overwriting the existing dirty worktree, publish a coherent implementation on current main, verify persistence and concurrency integrity, and stop before merge with an exact downloadable final diff for review.",
-  "state": "ready",
+  "state": "verified",
   "depends_on": [],
   "priority": {
     "lane": "now",
@@ -104,7 +104,7 @@
       "production_deployment"
     ],
     "progress_2026_07_15": {
-      "published_head": "2feb46f1ede6972555311b93ed3e3a04c684aeff",
+      "published_head": "31c649afc737f5df7ab4af6505646659c361ff1b",
       "base_head": "f9271dc73931db89d1810e83c99e87b92512e342",
       "review_triage": [
         "Accepted: per-node PostgreSQL lock scope, directory fsync, byte-preserving JSONL streaming, cache metric repair, targeted Svelte invalidation, immediate detail-store update, race and large-file tests.",
@@ -121,23 +121,61 @@
         "pnpm run ci: pass",
         "Playwright node-mutations.spec.ts: pass"
       ],
-      "current_blocker": "Exact-head GitHub CI, final downloadable diff and external review evidence remain required before merge.",
+      "current_blocker": null,
       "exact_review_patch": {
-        "path": "/home/alex/iCloud/Drive/halde/weltgewebe-pr-1440-head-2feb46f1.patch",
-        "size_bytes": 221455,
-        "sha256": "257bd3ed33a6c690dd5840c64a0ee808a24b2894cfcc789266040a0d0e0b3829",
+        "path": "/home/alex/iCloud/Drive/halde/weltgewebe-pr-1440-head-31c649af.patch",
+        "size_bytes": 242288,
+        "patch_sha256": "e029a2fbf605eb5eeb5fb4cfeebaff195c79a41d8c52bc7674a1718299f7ca55",
+        "canonical_github_diff_sha256": "59bf1fcb7fca9c8c1ac5140f9b02cb0b01ea65e8af9da132886f3b3e812d33f6",
         "base_sha": "f9271dc73931db89d1810e83c99e87b92512e342",
-        "head_sha": "2feb46f1ede6972555311b93ed3e3a04c684aeff",
-        "commit_headers": [
-          "1ebb2da0fbe38f5286b73fbe705b1905589c1ee0",
-          "2feb46f1ede6972555311b93ed3e3a04c684aeff"
-        ]
+        "head_sha": "31c649afc737f5df7ab4af6505646659c361ff1b"
       },
       "github_checks": {
-        "all_code_docs_security_database_and_e2e_checks": "pass",
         "required_merge_gate": "pass",
-        "review_evidence_gate": "fail_missing_current_external_identity_bound_review"
+        "review_evidence_gate": "pass",
+        "web_e2e": "pass",
+        "postgresql_integration": "pass",
+        "codeql": "pass"
+      },
+      "review_evidence": [
+        {
+          "reviewer": "GPT-5.6 Thinking exact-head review",
+          "axis": "correctness",
+          "report_sha256": "16189ce77756a4409a131026e4c4e34ed7575d17849f3983533c4ca20d22ebe0",
+          "verdict": "PASS"
+        },
+        {
+          "reviewer": "Agy Gemini exact-head review",
+          "axis": "data-integrity",
+          "report_sha256": "854214ebd453416a13ead58a22025cfde3f60e59e72262169537a7f1bcc3e690",
+          "verdict": "PASS"
+        }
+      ],
+      "merge": {
+        "pull_request": "heimgewebe/weltgewebe#1440",
+        "merged_at": "2026-07-15T18:21:49Z",
+        "merge_commit": "7b65127e852561997fa6a45b8cb3bfcef38e1eb8",
+        "strategy": "merge commit"
       }
+    },
+    "outcome": "PR #1440 was merged after exact-head R3 correctness and data-integrity reviews, all required checks, and real PostgreSQL pool-headroom evidence passed.",
+    "validated_acceptance": {
+      "dirty-worktree-preservation": "The isolated worktree was reconciled without resetting or discarding its unpublished hardening and was clean at merge.",
+      "current-main": "Final head 31c649af was based on unchanged main f9271dc and GitHub reported CLEAN/MERGEABLE.",
+      "jsonl-crash-integrity": "Journal, file fsync, directory fsync and restart/failure-injection tests passed.",
+      "endpoint-ambiguity": "JSONL and PostgreSQL collision and malformed-reference paths fail closed without partial mutation.",
+      "postgres-concurrency": "Transactional cascade, stable bigint advisory locks and five concurrent PUTs against a five-connection pool passed.",
+      "product-contract": "Nested location contract is proven by HTTP tests; flat coordinates are rejected without mutation.",
+      "full-gate": "Required merge gate and Review evidence gate passed on exact head 31c649af.",
+      "external-review-stop": "Exact patch and canonical GitHub API diff hashes were recorded before merge."
+    },
+    "verification": {
+      "task_sha256": "7cff1fce31009d852c97d66af672d8ee3e210f39a303ee72738e70ac1cf4bf44",
+      "plan_sha256": "48a3408c3d0931c35975552cdee284f220253982e6ba6f67f7eb205d0cf9ac29",
+      "verified_at": "2026-07-15T18:21:49Z",
+      "source": "GitHub PR merge, exact-head checks and review-evidence readback",
+      "source_ref": "heimgewebe/weltgewebe#1440",
+      "evidence_sha256": "42359c3d9501d0ce69f13f56509f480b3dd283ae88129485c555630663d2587d"
     }
   }
 }

@@ -59,8 +59,44 @@
   "metadata": {
     "registered_at": "2026-07-14T22:30:00+02:00",
     "source": "STORAGE-LIFECYCLE-V1 plan from live 2026-07-14 storage audit",
+    "implementation_status": "verified_awaiting_dependency",
+    "formal_closeout": {
+      "eligible": false,
+      "reason": "STORAGE-LIFECYCLE-V1-T004 remains planned on current Bureau main.",
+      "dependency_checked_at": "2026-07-15T08:25:37Z"
+    },
+    "implementation_evidence": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 222,
+      "implementation_commit": "77cb346",
+      "merge_commit": "7809ab668d569357b8851331c778ba6a6a0f9253",
+      "diff_sha256": "debb167808d1472c376e88e02804004b64ffd2113811695263fe1811e4b9feba",
+      "diff_bytes": 10795,
+      "ci": {
+        "validate_python_3_10": "success",
+        "validate_python_3_12": "success"
+      },
+      "local_validation": {
+        "make_validate_tests": 1695,
+        "expected_skips": 1,
+        "focused_lifecycle_and_workspace_tests": 18,
+        "access_policy": "pass",
+        "tool_surface_budget": "pass",
+        "operator_context": "current",
+        "publication_profiles": "pass",
+        "runtime_locks": "pass",
+        "deploy_tooling": "pass",
+        "secret_scan": "pass"
+      },
+      "deployment": {
+        "release_id": "7809ab668d56-srcset82de8757de36-locke6664d600b6c-contract7a32c47858b1",
+        "repo_head": "7809ab668d569357b8851331c778ba6a6a0f9253",
+        "deployment_integrity_valid": true,
+        "runtime_healthy": true
+      }
+    },
     "does_not_establish": [
-      "runtime correctness before tests",
+      "formal task closure while T004 remains planned",
       "cleanup permission for foreign state",
       "permission to bypass leases or dirty-state guards"
     ],
@@ -76,7 +112,39 @@
         "blocking_resource_count": 19,
         "direct_overlap_count": 0,
         "expected_behavior": "Serialize only exact checkout and Git common-dir metadata mutations; disjoint source-path leases must not globally block archive or retention.",
-        "safety": "No foreign lease, process, worktree or dirty state was modified; T042 cleanup remains deferred."
+        "safety": "No foreign lease, process, worktree or dirty state was modified; T042 cleanup remained deferred."
+      },
+      {
+        "observed_at": "2026-07-15T08:13:06Z",
+        "source": "live deployed Grabowski checkout lifecycle",
+        "checkout": "/home/alex/repos/.grabowski-worktrees/t042-tool-surface-budget-v1",
+        "checkout_head": "7809ab668d569357b8851331c778ba6a6a0f9253",
+        "checkout_branch": "deploy/t005-checkout-lifecycle-20260715",
+        "result": "archive_and_cleanup_succeeded",
+        "finding": "Active disjoint work in the canonical Grabowski checkout no longer blocked the target checkout. The archive receipt recorded zero related resource leases, tasks and processes after the two obsolete owner-local leases were released.",
+        "archive_id": "20260715T081306Z-a31b1221c65b",
+        "archive_manifest": "/home/alex/.local/state/grabowski/checkout-archives/20260715T081306Z-a31b1221c65b/manifest.json",
+        "recovery_refs": [
+          "refs/grabowski/checkouts/505a74268b58df2a/20260715T081306Z-a31b1221c65b/head",
+          "refs/grabowski/checkouts/505a74268b58df2a/20260715T081306Z-a31b1221c65b/branch-head"
+        ],
+        "coordination_checked": {
+          "resource_leases": 0,
+          "tasks": 0,
+          "processes": 0
+        },
+        "cleanup_plan_id": "89e5ac45b4b74c34963f8ea3",
+        "cleanup_plan_sha256": "fc8d2e9255c7bbc16b3946789675a5dca12f63b0d17b5ec0e9f48c8e23ed9f15",
+        "cleanup_applied_at_unix": 1784103249,
+        "checkout_removed": true,
+        "branch_preserved": true,
+        "rollback_available": true,
+        "audit_readback": {
+          "valid": true,
+          "records": 10315,
+          "last_record_sha256": "e294abf486ef339aa914f7099803db088cb15c47e1fd05ba8d5843ae254c7441"
+        },
+        "safety": "No foreign lease, process, worktree, branch or dirty state was modified."
       }
     ]
   }

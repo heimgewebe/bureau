@@ -19,18 +19,54 @@
   ],
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "state.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.schema",
       "mode": "write",
       "isolation": "worktree"
     }
   ],
   "execution": {
     "mode": "interactive-agent",
-    "policy": "review-before-effect"
+    "policy": "review-before-effect",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/.local/state/bureau",
+      "path:/home/alex/repos/bureau/.bureau-scopes/schema",
+      "path:/home/alex/repos/bureau/registry/tasks/BUR-2026-005-T005.json"
+    ]
   },
   "metadata": {
     "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
-    "safety_boundary": "event ingestion only; no direct state transition"
+    "safety_boundary": "event ingestion only; no direct state transition",
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "The webhook inbox is an append-only Bureau state surface with source-verification and event schemas.",
+      "effect_boundaries": [
+        "Inbox implementation",
+        "Append-only state store",
+        "Webhook event schema"
+      ],
+      "catalog_entry_sha256": "1cf60aa5f8c98040423e823e1f419ac94f45dbc300e27ab0d4358a02e9dbc609",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   },
   "acceptance": [
     {

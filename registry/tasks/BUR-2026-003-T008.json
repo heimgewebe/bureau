@@ -15,12 +15,19 @@
     "working_repository": "/home/alex/repos/bureau",
     "baseline_commit": "a19c6f0779bc0955ec36f941b9969f2c69079d92",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+      "path:/home/alex/repos/bureau/registry/tasks/BUR-2026-003-T008.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -53,7 +60,26 @@
   "metadata": {
     "planning_slice": "bureau-runtime-and-repo-orchestration-v1",
     "created_from_plan": "docs/plans/bureau-runtime-and-repo-orchestration-v1.md",
-    "operator_lab_run": "not applicable — planning task definition only"
+    "operator_lab_run": "not applicable — planning task definition only",
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Steuerboard candidates are interpreted by Bureau code and may create reviewed Registry task material only.",
+      "effect_boundaries": [
+        "Candidate interpretation code",
+        "Reviewed Registry task creation"
+      ],
+      "catalog_entry_sha256": "8cc87a085484faf68f5bdbfa842943c109bb76cafede7c4e03791192fc610f1e",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   },
   "depends_on": [
     "BUR-2026-003-T004",

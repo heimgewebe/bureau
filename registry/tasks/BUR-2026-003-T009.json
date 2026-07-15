@@ -15,12 +15,25 @@
     "working_repository": "/home/alex/repos/bureau",
     "baseline_commit": "4a17343684a5910860979f76f710156214ee458f",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "service:bureau-status-capsule",
+      "path:/home/alex/repos/bureau/.bureau-scopes/ops-automation",
+      "path:/home/alex/repos/bureau/registry/tasks/BUR-2026-003-T009.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.ops",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -51,7 +64,27 @@
       "runtime approval enforcement is complete",
       "runtime deploy or restart paths are safe by default",
       "approval path covers every future command"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Runtime approval enforcement spans Bureau policy code, installed runtime effects and versioned operator automation.",
+      "effect_boundaries": [
+        "Approval policy code",
+        "Runtime effect gate",
+        "Versioned automation sources"
+      ],
+      "catalog_entry_sha256": "66b547b6ad0021f05941556eeddd47424652ba074806ee1c54a53df84d4b1712",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   },
   "depends_on": [
     "BUR-2026-003-T004"

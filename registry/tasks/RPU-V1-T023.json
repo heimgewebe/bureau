@@ -20,7 +20,12 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "component.bureau.docs",
       "mode": "read",
       "isolation": "none"
     }
@@ -39,7 +44,10 @@
     "grabowski_resources": [
       "component:repobrief-evidence-call-graph-v1",
       "path:/home/alex/repos/.lenskit-worktrees/repobrief-evidence-call-graph-v1",
-      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-evidence-call-graph-v1"
+      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-evidence-call-graph-v1",
+      "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md",
+      "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T023.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1.json"
     ]
   },
   "acceptance": [
@@ -83,6 +91,26 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "The Lenskit call-graph implementation reads only its exact Bureau task, shared initiative truth and current plan; it does not mutate Bureau code, runtime or Registry state.",
+      "effect_boundaries": [
+        "Exact Bureau task record",
+        "RepoBrief evidence-context initiative record",
+        "Current evidence call-graph plan"
+      ],
+      "catalog_entry_sha256": "5a4d9c9351fd46bc83ad375f0559d5762603c31ddf1534dafd1d734b13e72d2a",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   }
 }

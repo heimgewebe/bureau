@@ -3,7 +3,7 @@
   "id": "STORAGE-LIFECYCLE-V1-T002",
   "initiative": "STORAGE-LIFECYCLE-V1",
   "title": "Externalize and bound automated build outputs",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 12
@@ -67,6 +67,122 @@
     ],
     "ready_at": "2026-07-15T04:11:35.979726Z",
     "readiness_basis": "STORAGE-LIFECYCLE-V1-T001 verified by merged Heim-PC PRs #42 and #43 with live inventory evidence.",
-    "predecessor_merge_commit": "33fe0a05dc38a9e5a7fa1881ca44c797b7c576af"
+    "predecessor_merge_commit": "33fe0a05dc38a9e5a7fa1881ca44c797b7c576af",
+    "verified_at": "2026-07-15T06:10:30.456436Z",
+    "implementation_repository": "heimgewebe/heim-pc",
+    "implementation_pull_requests": [
+      47
+    ],
+    "implementation_pr_urls": [
+      "https://github.com/heimgewebe/heim-pc/pull/47"
+    ],
+    "implementation_head": "93f724e934290004262d7f138fa1d2716643ae4e",
+    "implementation_merge_commit": "2eefa6771d400e0437d9b363fdbda9357e983160",
+    "tested_tree": "a641fc4467b471594963237be019a896531a8172",
+    "implementation_diff_sha256": "c11ad418d6bafcb14ee155003b9d5a629456ac98ebdd12c974584df1c4744b90",
+    "implementation_diff_bytes": 73525,
+    "diff_artifact": "/home/alex/iCloud/Drive/halde/STORAGE-LIFECYCLE-V1-T002-pr47.patch",
+    "validation": [
+      "79 complete Heim-PC tests passed on the published final head.",
+      "GitHub smoke, guard and validate checks passed on the published final head.",
+      "JSON/YAML syntax, repository-index consistency, operator-entry validation and Metarepo contract validation passed.",
+      "Post-merge readback proved the merged main tree byte-identical to the tested final tree."
+    ],
+    "live_verification": {
+      "cargo": {
+        "repository": "/home/alex/repos/heimlern",
+        "resolved_executable": "/home/alex/.cargo/bin/cargo",
+        "local_allocated_bytes": 2341711872,
+        "guard_status": "warning",
+        "external_cache_key": "bef798f9fdfaa2a97fd93b86d3ae5d6de5f3f2a7adfd1f7eef594433224c69df"
+      },
+      "node": {
+        "repository": "/home/alex/repos/commonworld",
+        "guard_status": "ok",
+        "external_cache_configured": true
+      },
+      "python": {
+        "repository": "/home/alex/repos/grabowski",
+        "local_allocated_bytes": 77733888,
+        "guard_status": "ok",
+        "external_cache_configured": true
+      },
+      "playwright": {
+        "repository": "/home/alex/repos/commonworld",
+        "guard_status": "ok",
+        "external_browser_cache_configured": true
+      },
+      "managed_run": {
+        "repository": "/home/alex/repos/heim-pc",
+        "returncode": 0,
+        "receipt_path": "/home/alex/.local/state/heim-pc/managed-builds/receipts/1784095631696974-0dde751ec340-python.json",
+        "receipt_sha256": "21f621d83baa7262e19376687f37f4b385185c1c373809043a4c6ea266ece13d",
+        "worktree_bytes_before": 0,
+        "worktree_bytes_after": 0,
+        "automatic_cleanup_authorized": false
+      },
+      "operator_projection": {
+        "source_contract_sha256": "6fb53595f41bbb8de8454e346f643ed1bd5b6b8e5dee4bd036d0b9da263165c7",
+        "installed_matches_source": true,
+        "receipt_valid": true
+      }
+    },
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_managed_build_externalization_merged_and_live",
+      "production_files": [
+        "architecture/managed-builds.md",
+        "config/managed-build.v1.json",
+        "scripts/managed_build.py",
+        "manifest/operator-entry.v1.json"
+      ],
+      "test_files": [
+        "tests/test_managed_build.py",
+        "tests/test_operator_entry.py"
+      ],
+      "outcome": "Managed Cargo, Node, Python and Playwright jobs now use identity-bound external caches, bounded worktree guards and receipts without changing interactive shell behavior or authorizing cleanup."
+    },
+    "verified_acceptance": {
+      "cargo-target": "CARGO_TARGET_DIR is outside worktrees and bound to repository, resolved Cargo/Rustc toolchain, lockfiles and profile.",
+      "other-caches": "Node, Python and Playwright reusable stores are externalized and local projections remain measured.",
+      "guard": "Inclusive 2 GiB warning and 5 GiB hard blockade are tested; only an explicit repository/tool pin of at most seven days can pass the hard blockade.",
+      "compatibility": "The policy and operator contract keep interactive shell behavior unchanged and apply only to explicit managed-build entry use."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "STORAGE-LIFECYCLE-V1-T002",
+          "source_ref": "heimgewebe/heim-pc#47",
+          "number": 47,
+          "head_sha": "93f724e934290004262d7f138fa1d2716643ae4e",
+          "merge_commit_sha": "2eefa6771d400e0437d9b363fdbda9357e983160"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "heim-pc-managed-build",
+          "task_id": "STORAGE-LIFECYCLE-V1-T002",
+          "source_ref": "live:managed-build:1784095631696974",
+          "receipt_sha256": "21f621d83baa7262e19376687f37f4b385185c1c373809043a4c6ea266ece13d",
+          "automatic_cleanup_authorized": false
+        }
+      ]
+    },
+    "review_receipts": [
+      {
+        "source_ref": "heimgewebe/heim-pc#47",
+        "head_sha": "93f724e934290004262d7f138fa1d2716643ae4e",
+        "diff_sha256": "c11ad418d6bafcb14ee155003b9d5a629456ac98ebdd12c974584df1c4744b90",
+        "verdict": "PASS",
+        "origin": "self_review"
+      }
+    ],
+    "verification": {
+      "task_sha256": "06b5053f45b8912fd16106a4b366000e62bd812b68ac84a701317e6647f6ac95",
+      "plan_sha256": "621bef4ab42cc6f478c6d47ea68d85dccd2ae5eaeeb9107d71ac295d3063d15c"
+    }
   }
 }

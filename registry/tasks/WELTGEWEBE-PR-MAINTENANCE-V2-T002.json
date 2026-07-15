@@ -4,10 +4,8 @@
   "initiative": "WELTGEWEBE-PR-MAINTENANCE-V2",
   "title": "Retire conflicting predecessor PR #1424 after explicit reconciliation",
   "goal": "Confirm that every safe and still-relevant requirement from PR #1424 is either present in the reviewed successor or deliberately rejected by the canonical node/faden model, then close #1424 as superseded without merging it.",
-  "state": "blocked",
-  "depends_on": [
-    "WELTGEWEBE-PR-MAINTENANCE-V2-T001"
-  ],
+  "state": "verified",
+  "depends_on": [],
   "priority": {
     "lane": "next",
     "rank": 20
@@ -62,6 +60,48 @@
       "permission_to_close_before_T001_reconciliation",
       "merge_readiness",
       "production_deployment"
-    ]
+    ],
+    "verified_at": "2026-07-15T16:04:00Z",
+    "successor_pr": "heimgewebe/weltgewebe#1440",
+    "successor_head": "2feb46f1ede6972555311b93ed3e3a04c684aeff",
+    "reconciliation": {
+      "adopted_or_superseded": "All safe node edit/delete behavior is present in PR #1440 with stronger concurrency, crash recovery, endpoint classification and test coverage.",
+      "rejected": "Direct edge/faden update and delete endpoints plus EdgePanel mutation controls were not adopted because fäden remain derived projections of web actions.",
+      "unique_files_examined": [
+        "apps/web/src/lib/components/panels/EdgePanel.svelte",
+        "apps/api/src/routes/domain_write_guard.rs",
+        "apps/api/src/routes/edges.rs",
+        "apps/web/src/lib/api/domainWrites.ts",
+        "docs/specs/garnrolle-knoten-faden.md"
+      ]
+    },
+    "github_closeout": {
+      "state": "closed",
+      "merged": false,
+      "closing_comment": "heimgewebe/weltgewebe#1424 issuecomment-4982747271"
+    },
+    "validated_acceptance": {
+      "unique-delta-accounted": "Git range and file delta comparison classified direct faden mutation as the only unique product behavior; node behavior is superseded by #1440.",
+      "canonical-faden-model": "PR #1440 exposes no direct faden edit/delete route; cascade removal remains a server-side consequence of node deletion.",
+      "close-superseded": "GitHub PR #1424 was closed without merge after the reconciliation comment was posted."
+    },
+    "outcome": "PR #1424 is retired without merging its direct-faden mutation model.",
+    "verification": {
+      "task_sha256": "812dadbdd1612f2ca83ad14df5ba3e44dc1084173bf530d85cc47542fdc8b136",
+      "plan_sha256": "48a3408c3d0931c35975552cdee284f220253982e6ba6f67f7eb205d0cf9ac29",
+      "verified_at": "2026-07-15T16:04:00Z",
+      "source": "GitHub PR delta and closure readback",
+      "source_ref": "heimgewebe/weltgewebe#1424",
+      "evidence_sha256": "657b26d1f7ac4e175f9a9ded87e594b4c16b80fdd86b69dcf2443c810ba7f347",
+      "evidence": {
+        "source_pr": "heimgewebe/weltgewebe#1424",
+        "source_head": "6cbfc84900fc980fb25e0cd565dd51dad22cde80",
+        "successor_pr": "heimgewebe/weltgewebe#1440",
+        "successor_head": "2feb46f1ede6972555311b93ed3e3a04c684aeff",
+        "state": "closed",
+        "merged": false,
+        "unique_behavior": "direct edge update/delete rejected by canonical derived-faden model"
+      }
+    }
   }
 }

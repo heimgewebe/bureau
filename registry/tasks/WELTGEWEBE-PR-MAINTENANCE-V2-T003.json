@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-PR-MAINTENANCE-V2-T003",
+  "initiative": "WELTGEWEBE-PR-MAINTENANCE-V2",
+  "title": "Measure and decide the post-JSONL graph mutation architecture",
+  "goal": "Measure production graph size, mutation rate, rewrite latency and failure exposure, then decide whether to retire JSONL writes in favor of PostgreSQL-only persistence and whether GraphService extraction, append/compaction or cache-structure changes have justified value.",
+  "state": "ready",
+  "depends_on": [],
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "architecture-review",
+    "performance-measurement",
+    "postgresql",
+    "rust"
+  ],
+  "acceptance": [
+    {
+      "id": "production-scale",
+      "assertion": "Current and projected node/edge counts, mutation rates, JSONL rewrite durations and recovery frequency are measured from source-owned evidence.",
+      "evidence_type": "object",
+      "verifier": "bounded production/runtime metrics report"
+    },
+    {
+      "id": "database-cutover-decision",
+      "assertion": "A reversible decision compares PostgreSQL-only writes, append-plus-compaction and continued journaled JSONL operation, including migration and rollback cost.",
+      "evidence_type": "object",
+      "verifier": "decision record with measured premises"
+    },
+    {
+      "id": "service-boundary",
+      "assertion": "GraphService or event/change-feed extraction is adopted only if concrete coupling, reuse or throughput evidence justifies the added boundary.",
+      "evidence_type": "object",
+      "verifier": "architecture decision with explicit non-adoption path"
+    },
+    {
+      "id": "cache-measurement",
+      "assertion": "OrderedCache deletion complexity is benchmarked at relevant scale before replacing the current order vector.",
+      "evidence_type": "object",
+      "verifier": "benchmark and threshold decision"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T16:04:00Z",
+    "source": "external review follow-ups not required for PR #1440 correctness",
+    "premise": "PR #1440 already streams JSONL and has crash recovery; this task must not block the current feature without measured evidence.",
+    "does_not_establish": [
+      "postgresql_only_decision",
+      "event_sourcing_decision",
+      "graph_service_decision",
+      "merge_readiness"
+    ]
+  }
+}

@@ -102,6 +102,26 @@
       "merge_readiness",
       "merge_authorization",
       "production_deployment"
-    ]
+    ],
+    "progress_2026_07_15": {
+      "published_head": "2feb46f1ede6972555311b93ed3e3a04c684aeff",
+      "base_head": "f9271dc73931db89d1810e83c99e87b92512e342",
+      "review_triage": [
+        "Accepted: per-node PostgreSQL lock scope, directory fsync, byte-preserving JSONL streaming, cache metric repair, targeted Svelte invalidation, immediate detail-store update, race and large-file tests.",
+        "Rejected as false positive: nested location payload mismatch; both TypeScript and Rust use location {lat, lon}.",
+        "Existing unpublished hardening preserved: JSONL recovery journal, fail-closed ambiguous endpoint handling and restart recovery tests."
+      ],
+      "local_evidence": [
+        "cargo fmt --all -- --check: pass",
+        "cargo clippy --locked -p weltgewebe-api --all-targets --all-features -- -D warnings: pass",
+        "cargo test --locked -p weltgewebe-api --all-features: pass",
+        "isolated PostgreSQL 16 replace/delete transaction proof: pass",
+        "concurrent replace/delete JSONL proof: pass",
+        "5000-edge byte-preservation proof: pass",
+        "pnpm run ci: pass",
+        "Playwright node-mutations.spec.ts: pass"
+      ],
+      "current_blocker": "Exact-head GitHub CI, final downloadable diff and external review evidence remain required before merge."
+    }
   }
 }

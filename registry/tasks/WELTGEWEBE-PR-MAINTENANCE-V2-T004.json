@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-PR-MAINTENANCE-V2-T004",
+  "initiative": "WELTGEWEBE-PR-MAINTENANCE-V2",
+  "title": "Review grouped action-bar work as an independent change",
+  "goal": "Recover and review the grouped action-bar intent changes independently from node mutation PR #1440, publish them only through a separate branch and diff, and avoid mixing unrelated UI refactoring into the node integrity review.",
+  "state": "ready",
+  "depends_on": [],
+  "priority": {
+    "lane": "next",
+    "rank": 30
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "playwright",
+    "svelte"
+  ],
+  "acceptance": [
+    {
+      "id": "source-preserved",
+      "assertion": "The action-bar implementation and test commits are recovered from preserved Git objects without reintroducing them into PR #1440.",
+      "evidence_type": "object",
+      "verifier": "commit and branch ancestry receipt"
+    },
+    {
+      "id": "independent-review",
+      "assertion": "Any publication uses a separate current-main branch, focused tests and its own exact downloadable diff.",
+      "evidence_type": "object",
+      "verifier": "separate PR or explicit rejection decision"
+    },
+    {
+      "id": "no-duplicate-pr",
+      "assertion": "GitHub is checked immediately before publication so no concurrent action-bar PR is duplicated.",
+      "evidence_type": "object",
+      "verifier": "fresh open-PR and remote-branch readback"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T16:04:00Z",
+    "preserved_backup_branch": "backup/feat-node-edit-delete-v2-with-actionbar-20260715",
+    "source_commits": [
+      "044fcdc4",
+      "0761bf49"
+    ],
+    "observed_remote_branch_absent": "feat/actionbar-intent-groups-v1",
+    "does_not_establish": [
+      "publication_authorization",
+      "merge_readiness",
+      "product_acceptance"
+    ]
+  }
+}

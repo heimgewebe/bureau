@@ -121,7 +121,23 @@
         "pnpm run ci: pass",
         "Playwright node-mutations.spec.ts: pass"
       ],
-      "current_blocker": "Exact-head GitHub CI, final downloadable diff and external review evidence remain required before merge."
+      "current_blocker": "Exact-head GitHub CI, final downloadable diff and external review evidence remain required before merge.",
+      "exact_review_patch": {
+        "path": "/home/alex/iCloud/Drive/halde/weltgewebe-pr-1440-head-2feb46f1.patch",
+        "size_bytes": 221455,
+        "sha256": "257bd3ed33a6c690dd5840c64a0ee808a24b2894cfcc789266040a0d0e0b3829",
+        "base_sha": "f9271dc73931db89d1810e83c99e87b92512e342",
+        "head_sha": "2feb46f1ede6972555311b93ed3e3a04c684aeff",
+        "commit_headers": [
+          "1ebb2da0fbe38f5286b73fbe705b1905589c1ee0",
+          "2feb46f1ede6972555311b93ed3e3a04c684aeff"
+        ]
+      },
+      "github_checks": {
+        "all_code_docs_security_database_and_e2e_checks": "pass",
+        "required_merge_gate": "pass",
+        "review_evidence_gate": "fail_missing_current_external_identity_bound_review"
+      }
     }
   }
 }

@@ -6,12 +6,25 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/.local/state/bureau",
+      "path:/home/alex/repos/bureau/.bureau-scopes/worktree-admin",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T008.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "state.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.worktree-admin",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -60,6 +73,26 @@
       "dispatch authority",
       "merge authority",
       "deployment authority"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Workspace reconciliation spans workspace-state code, StateStore rows and the explicit worktree-admin effect gate.",
+      "effect_boundaries": [
+        "Workspace reconciliation code",
+        "Workspace state rows",
+        "Worktree administration gate"
+      ],
+      "catalog_entry_sha256": "5692b3f830023e404cae3c33509d38b81f8e809a823406bf3fecb549afc71298",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   }
 }

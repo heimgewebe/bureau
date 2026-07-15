@@ -22,7 +22,7 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
       "mode": "write",
       "isolation": "none"
     }
@@ -33,7 +33,9 @@
     "working_repository": "/home/alex/repos/vibe-lab",
     "grabowski_resources": [
       "repo:/home/alex/repos/vibe-lab",
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+      "path:/home/alex/repos/bureau/registry/tasks/CCM-V1-T005.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/CHRONIK-CODING-MEMORY-V1.json"
     ],
     "approval": {
       "action_class": "queue_mutation",
@@ -75,6 +77,24 @@
       "future_benefit",
       "automatic_promotion",
       "permission_to_repeat_productive_mutations"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "The pilot executes in Vibe-Lab; Bureau participation is limited to evidence-bound task and decision records.",
+      "effect_boundaries": [
+        "Bureau experiment task records"
+      ],
+      "catalog_entry_sha256": "25d98967c5ca7e797e7c0b0fcd68f44fb5e24ea259ca01fb1ec130b8abd91a99",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   }
 }

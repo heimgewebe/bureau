@@ -63,6 +63,21 @@
       "runtime correctness before tests",
       "cleanup permission for foreign state",
       "permission to bypass leases or dirty-state guards"
+    ],
+    "live_evidence": [
+      {
+        "observed_at": "2026-07-15T04:51:33Z",
+        "source_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T042",
+        "checkout": "/home/alex/repos/.grabowski-worktrees/t042-tool-surface-budget-v1",
+        "checkout_head": "5d3f4b4d73a5212bcd8fdb43ee87cb8c16755f65",
+        "checkout_state": "clean_merged_deployed",
+        "finding": "grabowski_checkout_archive and grabowski_checkout_retain both rejected the exact clean target because _linked_checkout_coordination included the entire canonical repository path and counted 19 foreign active file leases as blockers although none overlapped the checkout path.",
+        "blocking_owner": "chatgpt-blockade-runtime-integration-v1-20260715",
+        "blocking_resource_count": 19,
+        "direct_overlap_count": 0,
+        "expected_behavior": "Serialize only exact checkout and Git common-dir metadata mutations; disjoint source-path leases must not globally block archive or retention.",
+        "safety": "No foreign lease, process, worktree or dirty state was modified; T042 cleanup remains deferred."
+      }
     ]
   }
 }

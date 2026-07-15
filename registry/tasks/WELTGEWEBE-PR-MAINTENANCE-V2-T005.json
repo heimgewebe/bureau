@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-PR-MAINTENANCE-V2-T005",
+  "initiative": "WELTGEWEBE-PR-MAINTENANCE-V2",
+  "title": "Design accountable and conflict-safe collective mutations",
+  "goal": "Define and implement a measured safety layer for collective node changes: stale-write detection, actor-bound audit evidence, reversible deletion policy, abuse controls and mutation observability, without weakening the immediate shared-edit product model.",
+  "state": "ready",
+  "depends_on": [],
+  "priority": {
+    "lane": "next",
+    "rank": 35
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "architecture-review",
+    "rust",
+    "postgresql",
+    "privacy-review",
+    "security-review",
+    "svelte"
+  ],
+  "acceptance": [
+    {
+      "id": "stale-write-contract",
+      "assertion": "A documented API contract chooses and tests optimistic concurrency for replace and patch, such as ETag/If-Match or an exact updated_at precondition, including deterministic 409 or 412 behavior and a usable frontend conflict path.",
+      "evidence_type": "object",
+      "verifier": "API contract, PostgreSQL and JSONL race tests, browser conflict test"
+    },
+    {
+      "id": "actor-audit-trail",
+      "assertion": "Every collective replace and delete emits durable actor-bound evidence containing operation type, target id, timestamp and privacy-reviewed before/after hashes or redacted deltas; the audit record cannot be confused with public node content.",
+      "evidence_type": "object",
+      "verifier": "schema, privacy review, persistence and restart tests"
+    },
+    {
+      "id": "reversible-delete-decision",
+      "assertion": "Soft delete, tombstones, bounded undo or permanent delete is selected through an explicit product and data-retention decision; recovery and purge behavior are tested before public UI exposure.",
+      "evidence_type": "object",
+      "verifier": "decision record and lifecycle tests"
+    },
+    {
+      "id": "abuse-controls",
+      "assertion": "Account-scoped replace/delete rate limits and administrative emergency behavior are threat-modeled, configurable and tested without reusing authentication-email buckets.",
+      "evidence_type": "object",
+      "verifier": "threat model, configuration contract and rate-limit tests"
+    },
+    {
+      "id": "mutation-observability",
+      "assertion": "Mutation latency, failure class, conflict count and JSONL recovery activity are measurable without leaking node contents or account identifiers.",
+      "evidence_type": "object",
+      "verifier": "metrics contract and privacy-safe telemetry tests"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T18:40:00Z",
+    "source": "Final external reviews for heimgewebe/weltgewebe#1440",
+    "scope_decision": "These changes alter API and product semantics and therefore do not block the already integrity-hardened PR #1440.",
+    "preserved_product_rule": "All authenticated Weber may continue to edit and delete shared nodes immediately; this task adds accountability and conflict handling rather than ownership restrictions.",
+    "does_not_establish": [
+      "optimistic_locking_selected",
+      "soft_delete_selected",
+      "audit_log_public",
+      "merge_readiness"
+    ]
+  }
+}

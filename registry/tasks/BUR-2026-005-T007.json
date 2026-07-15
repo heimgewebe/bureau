@@ -22,18 +22,47 @@
   ],
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.docs",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.ops",
       "mode": "write",
       "isolation": "worktree"
     }
   ],
   "execution": {
     "mode": "interactive-agent",
-    "policy": "review-before-effect"
+    "policy": "review-before-effect",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/docs",
+      "path:/home/alex/repos/bureau/.bureau-scopes/ops-automation",
+      "path:/home/alex/repos/bureau/registry/tasks/BUR-2026-005-T007.json"
+    ]
   },
   "metadata": {
     "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
-    "safety_boundary": "documentation, proof matrix and audit commands only"
+    "safety_boundary": "documentation, proof matrix and audit commands only",
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "The task is limited to the automation runbook and versioned operations surfaces.",
+      "effect_boundaries": [
+        "Operations documentation",
+        "Automation install/disable/inspect sources"
+      ],
+      "catalog_entry_sha256": "19c9252dc827f582e9b5f3a3134b71ca4a3ee2def6f902fa081cda3f7f0e130c",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   },
   "acceptance": [
     {

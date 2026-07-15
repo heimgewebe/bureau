@@ -18,18 +18,54 @@
   ],
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.docs",
       "mode": "write",
       "isolation": "worktree"
     }
   ],
   "execution": {
     "mode": "interactive-agent",
-    "policy": "review-before-effect"
+    "policy": "review-before-effect",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+      "path:/home/alex/repos/bureau/docs",
+      "path:/home/alex/repos/bureau/registry/tasks/BUR-2026-005-T008.json"
+    ]
   },
   "metadata": {
     "plan_path": "docs/plans/bureau-runtime-automation-baseline-v1.md",
-    "safety_boundary": "analysis and strategy only; no current_plan mutation without explicit revalidation plan"
+    "safety_boundary": "analysis and strategy only; no current_plan mutation without explicit revalidation plan",
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Plan pinning freshness spans eligibility code, current-plan Registry semantics and the documented compatibility strategy.",
+      "effect_boundaries": [
+        "Plan freshness code",
+        "Registry plan semantics",
+        "Compatibility documentation"
+      ],
+      "catalog_entry_sha256": "8e27a18f1232b4bd9ec0fa00bb5a33f415da1c9be934ae0504c3bf6f8d859bc7",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   },
   "acceptance": [
     {

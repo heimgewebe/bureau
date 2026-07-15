@@ -18,14 +18,30 @@
   ],
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "state.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
       "mode": "write",
       "isolation": "worktree"
     }
   ],
   "execution": {
     "mode": "interactive-agent",
-    "policy": "review-before-effect"
+    "policy": "review-before-effect",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/.local/state/bureau",
+      "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+      "path:/home/alex/repos/bureau/registry/tasks/BUR-2026-005-T017.json"
+    ]
   },
   "metadata": {
     "source": "Registered after PR #253 classified superseded receipt drift as non-blocking but did not rewrite the state database.",
@@ -35,7 +51,27 @@
       "receipt_db_rewrite",
       "historical_receipt_deletion",
       "runtime_correctness"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Receipt normalization is bounded to StateStore handling and Registry verification reconciliation.",
+      "effect_boundaries": [
+        "Receipt normalization code",
+        "Bureau state rows",
+        "Registry verification projection"
+      ],
+      "catalog_entry_sha256": "2b883b1cb5fbd6e6da59a113de960dec0fefc1a344ce0050b4eefad174f9467c",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   },
   "acceptance": [
     {

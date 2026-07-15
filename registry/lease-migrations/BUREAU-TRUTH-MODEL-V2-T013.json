@@ -642,6 +642,102 @@
       "effect_boundaries": [
         "Adoption decision task truth"
       ]
+    },
+    "RPU-V1-T023": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "The Lenskit call-graph implementation reads only its exact Bureau task, shared initiative truth and current plan; it does not mutate Bureau code, runtime or Registry state.",
+      "effect_boundaries": [
+        "Exact Bureau task record",
+        "RepoBrief evidence-context initiative record",
+        "Current evidence call-graph plan"
+      ]
+    },
+    "RPU-V1-T024": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "The Lenskit benchmark reads only its exact Bureau task, shared initiative truth and promotion plan; benchmark effects remain in Lenskit.",
+      "effect_boundaries": [
+        "Exact Bureau task record",
+        "RepoBrief evidence-context initiative record",
+        "Current benchmark and promotion plan"
+      ]
+    },
+    "RPU-V1-T025": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "The Lenskit edit-context compiler reads only its exact Bureau task, shared initiative truth and current plan; all implementation effects remain in Lenskit.",
+      "effect_boundaries": [
+        "Exact Bureau task record",
+        "RepoBrief evidence-context initiative record",
+        "Current edit-context plan"
+      ]
+    },
+    "RPU-V1-T026": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "The runtime-overlay work reads only its exact Bureau task, shared initiative truth and current plan; trace production and overlay code remain in Lenskit.",
+      "effect_boundaries": [
+        "Exact Bureau task record",
+        "RepoBrief evidence-context initiative record",
+        "Current runtime-overlay plan"
+      ]
+    },
+    "RPU-V1-T027": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "The SCIP adapter reads only its exact Bureau task, shared initiative truth and current plan; adapter and benchmark effects remain in Lenskit.",
+      "effect_boundaries": [
+        "Exact Bureau task record",
+        "RepoBrief evidence-context initiative record",
+        "Current multilingual-adapter plan"
+      ]
+    },
+    "RPU-V1-T028": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "The relation-overlay work reads only its exact Bureau task, shared initiative truth and current plan; build, test and contract extraction effects remain in Lenskit.",
+      "effect_boundaries": [
+        "Exact Bureau task record",
+        "RepoBrief evidence-context initiative record",
+        "Current build-test-contract overlay plan"
+      ]
     }
   },
   "does_not_establish": [

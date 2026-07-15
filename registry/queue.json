@@ -53,7 +53,9 @@
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020",
       "RPU-V1-T026",
       "RPU-V1-T027",
-      "RPU-V1-T028"
+      "RPU-V1-T028",
+      "SEMANTAH-E2E-PORTABILITY-V1-T001",
+      "WGX-JUSTFILE-INTEGRITY-V1-T001"
     ],
     "next": [
       "RAB-V1-T002B",

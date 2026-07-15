@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "id": "SEMANTAH-E2E-PORTABILITY-V1",
+  "title": "SemantAH E2E port portability",
+  "state": "committed",
+  "commitment": "later",
+  "goal": "Den Push-Index-E2E-Test von der festen Bindung an 127.0.0.1:8080 entkoppeln, ohne Prozessbereinigung oder Readiness-Nachweis abzuschwächen.",
+  "completion": [
+    "Der E2E-Test verwendet einen dynamisch freien Port oder einen expliziten Port-Override.",
+    "Ein bereits belegter Port 8080 blockiert die Testsuite nicht mehr.",
+    "Gestartete Testprozesse werden zuverlässig bereinigt und Health-Readiness bleibt geprüft.",
+    "Repository- und GitHub-Checks verhindern die Wiedereinführung einer festen Portbindung."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-15T21:51:28+02:00",
+    "source_task": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
+    "source_finding": "tests/test_push_index_e2e.py hardcodes 127.0.0.1:8080; foreign service was not terminated",
+    "non_blocking_for_source_task": true
+  }
+}

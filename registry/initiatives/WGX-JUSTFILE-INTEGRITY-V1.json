@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "id": "WGX-JUSTFILE-INTEGRITY-V1",
+  "title": "WGX Justfile integrity",
+  "state": "committed",
+  "commitment": "later",
+  "goal": "Das auf main bereits nicht parsebare WGX-Justfile reparieren und einen CI-Parser-Gate gegen erneute Syntaxregressionen einführen.",
+  "completion": [
+    "Das eingecheckte Justfile ist parsebar.",
+    "Die vorgesehenen Justfile-Prüfziele laufen nach der Syntaxreparatur.",
+    "CI lehnt ein nicht parsebares Justfile ab.",
+    "Die Reparatur bleibt von der Metarepo-T006-Dokumentmigration getrennt."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-15T21:51:28+02:00",
+    "source_task": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
+    "source_finding": "Existing indentation/parser error around Justfile line 16 on origin/main",
+    "non_blocking_for_source_task": true
+  }
+}

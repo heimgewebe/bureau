@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "METAREPO-LEGACY-RECONCILIATION-V1",
+  "title": "Metarepo-Legacy-Reconciliation",
+  "state": "completed",
+  "commitment": "completed",
+  "goal": "Metarepo auf Fleet-Mitgliedschaft, gemeinsame Contracts, Templates und wiederverwendbare CI begrenzen und aktive organisationsweite Rollen- und Zielwahrheit an den Systemkatalog delegieren.",
+  "completion": [
+    "Aktive Consumer-Verweise auf historisierte Metarepo-Organismus- und Zielbilddokumente sind entfernt.",
+    "Aktuelle Systemzwecke, Lifecycle-Zustände und Beziehungen verweisen auf den Systemkatalog.",
+    "Repositoryeigene Betriebs-, Contract- und Implementierungswahrheit verbleibt in den jeweiligen Repositories.",
+    "Historische ADRs und Konzeptstände bleiben erhalten, sind aber eindeutig historisch beziehungsweise nicht normativ.",
+    "Alle T006-Consumer-PRs sind grün, gemergt und auf frischen main-Ständen verifiziert."
+  ],
+  "parallelism": {
+    "max_active_tasks": 7
+  },
+  "metadata": {
+    "registered_at": "2026-07-15T21:51:28+02:00",
+    "registered_as": "evidence-backed backfill after live reconciliation",
+    "scope_note": "Nur der belegte Abschluss T006 wird nachgetragen. Frühere T001-T005 werden nicht aus unvollständigen Übergaben rekonstruiert.",
+    "completed_at": "2026-07-15T21:51:28+02:00",
+    "completed_task": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
+    "does_not_establish": [
+      "Vollständigkeit nicht registrierter früherer Phasen T001-T005",
+      "Löschung historischer Evidenz",
+      "Zuständigkeit des Metarepos für operative oder Laufzeitwahrheit"
+    ]
+  }
+}

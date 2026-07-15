@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "id": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
+  "initiative": "METAREPO-LEGACY-RECONCILIATION-V1",
+  "title": "Externe Altverweise in Consumer-Repositories migrieren",
+  "state": "verified",
+  "priority": {
+    "lane": "now",
+    "rank": 6
+  },
+  "goal": "Aktive Architektur- und Rollenbehauptungen aus sieben Consumer-Repositories von historisierten Metarepo-Zieldokumenten auf den Systemkatalog und repositoryeigene Primärquellen umstellen.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/metarepo",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Sieben getrennte Consumer-PRs sowie ein belegter Leitstand-Nachlauf; keine Force-Pushes oder Änderungen fremder Arbeitsstände."
+    }
+  },
+  "claims": [],
+  "acceptance": [
+    {
+      "id": "active-legacy-paths",
+      "assertion": "Aktive Consumer-Oberflächen verweisen nicht mehr auf die vier historisierten Metarepo-Organismus- und Zielbildpfade.",
+      "evidence_type": "boolean",
+      "verifier": "post-merge scan assertion active_legacy_target_paths_absent"
+    },
+    {
+      "id": "system-catalog",
+      "assertion": "Alle sieben Consumer enthalten aktuelle Systemkatalog-Verweise und alle erkannten Zielpfade existieren.",
+      "evidence_type": "boolean",
+      "verifier": "fresh systemkatalog checkout and link target scan"
+    },
+    {
+      "id": "repo-truth",
+      "assertion": "Repositoryeigene Betriebs-, Contract- und Implementierungswahrheit verbleibt in den jeweiligen Repositories.",
+      "evidence_type": "array",
+      "verifier": "seven reviewed consumer diffs"
+    },
+    {
+      "id": "history",
+      "assertion": "Historische Dokumente bleiben erhalten und sind nicht normativ; die einzige alte Zielpfad-Ausnahme ist der Heimlern-ADR.",
+      "evidence_type": "string",
+      "verifier": "post-merge repository scan"
+    },
+    {
+      "id": "merged",
+      "assertion": "Alle sieben Consumer-PRs und der notwendige Leitstand-Nachlauf sind grün, gemergt und auf main zurückgelesen.",
+      "evidence_type": "array",
+      "verifier": "GitHub PR and fresh main ancestry readback"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T21:51:28+02:00",
+    "verified_at": "2026-07-15T21:51:28+02:00",
+    "registration_mode": "evidence-backed backfill; no fabrication of unregistered T001-T005",
+    "consumer_pull_requests": [
+      {
+        "repository": "heimgewebe/chronik",
+        "number": 225,
+        "url": "https://github.com/heimgewebe/chronik/pull/225",
+        "head_sha": "a0bbf2dea5049097c61401ec7726752b559e19cb",
+        "merge_commit_sha": "ac2d01bdf7a15732c9239c95e715d6bb43cf19c6"
+      },
+      {
+        "repository": "heimgewebe/hausKI",
+        "number": 755,
+        "url": "https://github.com/heimgewebe/hausKI/pull/755",
+        "head_sha": "dd5f2b0fdecd52f7de23510e439b05e8f4751b7a",
+        "merge_commit_sha": "7ae329ed5cee56666a9f6571e7ebee1c9df59441"
+      },
+      {
+        "repository": "heimgewebe/heimlern",
+        "number": 204,
+        "url": "https://github.com/heimgewebe/heimlern/pull/204",
+        "head_sha": "6032a2a2a4b3823b37352544c37df94bca5f39dc",
+        "merge_commit_sha": "d0a5d1bf26c9a5f555b7541d97fadb27a7cf9b31"
+      },
+      {
+        "repository": "heimgewebe/leitstand",
+        "number": 171,
+        "url": "https://github.com/heimgewebe/leitstand/pull/171",
+        "head_sha": "36c5ee7f9f015d37db4d4d28c3cc90732d99db83",
+        "merge_commit_sha": "f6726f8bfb655c837a90979beb09b6e6ecf061f0"
+      },
+      {
+        "repository": "heimgewebe/plexer",
+        "number": 79,
+        "url": "https://github.com/heimgewebe/plexer/pull/79",
+        "head_sha": "a719c3e8ded6efcc3f0796becfef124ab5f8a142",
+        "merge_commit_sha": "93fb9aa2451d44eb6b8cff7c7fd054086804049e"
+      },
+      {
+        "repository": "heimgewebe/semantAH",
+        "number": 257,
+        "url": "https://github.com/heimgewebe/semantAH/pull/257",
+        "head_sha": "0a929b9cb597bfcb478953bf5e4714685c115a74",
+        "merge_commit_sha": "b50bd2813b3f146f5cc51bee2ad6887bfb28ce69"
+      },
+      {
+        "repository": "heimgewebe/wgx",
+        "number": 642,
+        "url": "https://github.com/heimgewebe/wgx/pull/642",
+        "head_sha": "8d3046c5653314e39983b4049eeea5042cc3e5f6",
+        "merge_commit_sha": "01efb27f424466c951a196f095c549d1afdd10da"
+      }
+    ],
+    "supporting_pull_requests": [
+      {
+        "repository": "heimgewebe/hausKI",
+        "number": 757,
+        "url": "https://github.com/heimgewebe/hausKI/pull/757",
+        "merge_commit": "9c4ab34b71ba6882cf7b5c63ed9fd2ae8d10716e",
+        "purpose": "independent CI prerequisite"
+      },
+      {
+        "repository": "heimgewebe/leitstand",
+        "number": 173,
+        "url": "https://github.com/heimgewebe/leitstand/pull/173",
+        "merge_commit": "da4cf5b12ad50d2b1dafbe1883dc3130a3d8a130",
+        "purpose": "post-merge active role-boundary correction"
+      }
+    ],
+    "fresh_main_heads": {
+      "chronik": "ac2d01bdf7a15732c9239c95e715d6bb43cf19c6",
+      "hausKI": "7ae329ed5cee56666a9f6571e7ebee1c9df59441",
+      "heimlern": "d0a5d1bf26c9a5f555b7541d97fadb27a7cf9b31",
+      "leitstand": "da4cf5b12ad50d2b1dafbe1883dc3130a3d8a130",
+      "plexer": "93fb9aa2451d44eb6b8cff7c7fd054086804049e",
+      "semantAH": "b50bd2813b3f146f5cc51bee2ad6887bfb28ce69",
+      "wgx": "01efb27f424466c951a196f095c549d1afdd10da"
+    },
+    "systemkatalog_head": "ac0e7cc8862c97125862b1475068832d8d517475",
+    "post_merge_scan": {
+      "path": "/home/alex/iCloud/Drive/halde/metarepo-t006-postmerge-scan-20260715.json",
+      "sha256": "022d1e316482aeb8c5a7a82e491a6905bb57cfff5a1505edd34e3189d3677063",
+      "verdict": "PASS",
+      "checked_systemkatalog_targets": 3
+    },
+    "artifacts": [
+      {
+        "path": "/home/alex/iCloud/Drive/halde/metarepo-t006-consumer-migration-20260715.tar.gz",
+        "sha256": "f6085958d8986ef6d45a8e5fca901e3b8d76114642850fb9a0e9cea4c34a1d36",
+        "role": "original seven-consumer evidence"
+      },
+      {
+        "path": "/home/alex/iCloud/Drive/halde/metarepo-t006-consumer-migration-final-20260715.tar.gz",
+        "sha256": "6740d42d43a5257f6b35873d7399761acd2254b84e1ac16301d23ee8a19de04f",
+        "role": "final seven-consumer evidence after basis drift"
+      },
+      {
+        "path": "/home/alex/iCloud/Drive/halde/hauski-pr757-prerequisite-20260715.tar.gz",
+        "sha256": "8ab59afc66774a3439c7fe6a3413d740e16d716a243acd58cf7ea80049fbb9db",
+        "role": "HausKI CI prerequisite evidence"
+      },
+      {
+        "path": "/home/alex/iCloud/Drive/halde/leitstand-t006-role-boundary-correction-20260715.tar.gz",
+        "sha256": "bb3005e181ff393618ba3fab76e2253defafba747cc71f54d6157ef3b051b615",
+        "role": "Leitstand post-merge correction evidence"
+      }
+    ],
+    "historical_exception": "heimlern/docs/adr/0003-decision-feedback-analysis.md",
+    "independent_followups": [
+      "SEMANTAH-E2E-PORTABILITY-V1-T001",
+      "WGX-JUSTFILE-INTEGRITY-V1-T001"
+    ],
+    "verified_acceptance": {
+      "active-legacy-paths": "PASS; no active legacy target path remains outside the explicit Heimlern ADR exception.",
+      "system-catalog": "PASS; every consumer contains Systemkatalog references and three concrete catalog targets exist at the scanned Systemkatalog head.",
+      "repo-truth": "PASS; current organization-wide truth was removed without relocating repository-local operational or contract truth.",
+      "history": "PASS; Heimlern and SemantAH historical surfaces are marked historical/non-normative; Leitstand historical anatomy is visibly non-normative.",
+      "merged": "PASS; all required merge commits are ancestors of fresh main clones."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "post_merge_scan",
+          "authority": "fresh-git-main-scan",
+          "task_id": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
+          "path": "/home/alex/iCloud/Drive/halde/metarepo-t006-postmerge-scan-20260715.json",
+          "evidence_sha256": "022d1e316482aeb8c5a7a82e491a6905bb57cfff5a1505edd34e3189d3677063",
+          "verdict": "PASS",
+          "systemkatalog_head": "ac0e7cc8862c97125862b1475068832d8d517475"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
+          "repository": "heimgewebe/chronik",
+          "number": 225,
+          "url": "https://github.com/heimgewebe/chronik/pull/225",
+          "head_sha": "a0bbf2dea5049097c61401ec7726752b559e19cb",
+          "merge_commit_sha": "ac2d01bdf7a15732c9239c95e715d6bb43cf19c6"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
+          "repository": "heimgewebe/hausKI",
+          "number": 755,
+          "url": "https://github.com/heimgewebe/hausKI/pull/755",
+          "head_sha": "dd5f2b0fdecd52f7de23510e439b05e8f4751b7a",
+          "merge_commit_sha": "7ae329ed5cee56666a9f6571e7ebee1c9df59441"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
+          "repository": "heimgewebe/heimlern",
+          "number": 204,
+          "url": "https://github.com/heimgewebe/heimlern/pull/204",
+          "head_sha": "6032a2a2a4b3823b37352544c37df94bca5f39dc",
+          "merge_commit_sha": "d0a5d1bf26c9a5f555b7541d97fadb27a7cf9b31"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
+          "repository": "heimgewebe/leitstand",
+          "number": 171,
+          "url": "https://github.com/heimgewebe/leitstand/pull/171",
+          "head_sha": "36c5ee7f9f015d37db4d4d28c3cc90732d99db83",
+          "merge_commit_sha": "f6726f8bfb655c837a90979beb09b6e6ecf061f0"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
+          "repository": "heimgewebe/plexer",
+          "number": 79,
+          "url": "https://github.com/heimgewebe/plexer/pull/79",
+          "head_sha": "a719c3e8ded6efcc3f0796becfef124ab5f8a142",
+          "merge_commit_sha": "93fb9aa2451d44eb6b8cff7c7fd054086804049e"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
+          "repository": "heimgewebe/semantAH",
+          "number": 257,
+          "url": "https://github.com/heimgewebe/semantAH/pull/257",
+          "head_sha": "0a929b9cb597bfcb478953bf5e4714685c115a74",
+          "merge_commit_sha": "b50bd2813b3f146f5cc51bee2ad6887bfb28ce69"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
+          "repository": "heimgewebe/wgx",
+          "number": 642,
+          "url": "https://github.com/heimgewebe/wgx/pull/642",
+          "head_sha": "8d3046c5653314e39983b4049eeea5042cc3e5f6",
+          "merge_commit_sha": "01efb27f424466c951a196f095c549d1afdd10da"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
+          "repository": "heimgewebe/hausKI",
+          "number": 757,
+          "url": "https://github.com/heimgewebe/hausKI/pull/757",
+          "head_sha": "0d1c76a9f5836561253083ae8b6594bdea09a8d4",
+          "merge_commit_sha": "9c4ab34b71ba6882cf7b5c63ed9fd2ae8d10716e",
+          "role": "independent CI prerequisite"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
+          "repository": "heimgewebe/leitstand",
+          "number": 173,
+          "url": "https://github.com/heimgewebe/leitstand/pull/173",
+          "head_sha": "c1ce24badd9f00704b11b4e768d26775afd06c53",
+          "merge_commit_sha": "da4cf5b12ad50d2b1dafbe1883dc3130a3d8a130",
+          "role": "post-merge role-boundary correction"
+        }
+      ]
+    },
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_all_consumers_merged_and_post_merge_scan_passed",
+      "outcome": "Current consumer role truth now resolves through Systemkatalog or repository-local primary sources; historical evidence remains explicitly non-normative."
+    },
+    "verification": {
+      "task_sha256": "e23d14ff16a9b600bc041390c507bcc78f8ef4118096a98b47e86d1f03b5679b",
+      "task_sha256_basis": "bureau.v2.task_revision_sha256: canonical task excluding state and metadata.verification",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "plan_sha256_basis": "bureau.v2.plan_sha256 over empty current_plan"
+    }
+  }
+}

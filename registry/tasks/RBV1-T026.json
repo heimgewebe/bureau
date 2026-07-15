@@ -3,7 +3,7 @@
   "id": "RBV1-T026",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Lokalisierte RepoBrief-Bundles sicher aufräumen",
-  "state": "planned",
+  "state": "verified",
   "goal": "Define and implement evidence-bound retention and garbage collection for immutable consumer-local RepoBrief bundles without deleting any generation that is referenced, leased, under publication, required for rollback or not yet proven unreachable.",
   "priority": {
     "lane": "later",
@@ -69,8 +69,164 @@
       "optimal_storage_use",
       "untrusted_network_filesystem_deletion_safety",
       "recovery_without_retained_generations",
-      "automatic_policy_choice",
-      "merge_readiness"
-    ]
+      "automatic_policy_choice"
+    ],
+    "verified_at": "2026-07-15T12:34:39Z",
+    "implementation_branch": "fix/rbv1-t026-retention-safety-v1",
+    "implementation_base": "ff7a48607547aa23020b04e8af0d1b7a58b8cb66",
+    "implementation_pr": "heimgewebe/lenskit#1016",
+    "implementation_pr_url": "https://github.com/heimgewebe/lenskit/pull/1016",
+    "implementation_head": "697fb6d8f3624a615da022d90402d59a0768289a",
+    "implementation_merge_commit": "0103ee3bd5ba03e92025480ac9de3df2efc32076",
+    "implementation_merge_parents": [
+      "ff7a48607547aa23020b04e8af0d1b7a58b8cb66",
+      "697fb6d8f3624a615da022d90402d59a0768289a"
+    ],
+    "reviewed_diff": {
+      "path": "/home/alex/iCloud/Drive/halde/lenskit-pr-1016-current.patch",
+      "sha256": "fefe0c292fdedb9a7a95bc33a00c6f7840ba1f23c4ed76ad817bb02ac720b6f3",
+      "bytes": 79767,
+      "lines": 1880,
+      "file_count": 3,
+      "paths": [
+        "docs/operations/repobrief-fleet-retention.md",
+        "merger/lenskit/tests/test_repobrief_fleet_runtime.py",
+        "scripts/ops/rb-publish-fleet"
+      ]
+    },
+    "post_merge_github_diff_readback": {
+      "sha256": "a1a24594ee6cb80b50efea90991d87f47fa689b30c5a7e99e33381f19579a616",
+      "bytes": 79292,
+      "lines": 1869,
+      "note": "Fresh gh pr diff rendering after merge; the pre-merge reviewed artifact remains the review binding."
+    },
+    "review_receipt": {
+      "path": "/home/alex/iCloud/Drive/halde/lenskit-pr-1016-self-review.md",
+      "sha256": "8a7f52659b9543987c1ed25b5fcc3db7b0c680b02b19796bd42f05d08864965f",
+      "verdict": "PASS",
+      "bound_head": "697fb6d8f3624a615da022d90402d59a0768289a",
+      "bound_diff_sha256": "fefe0c292fdedb9a7a95bc33a00c6f7840ba1f23c4ed76ad817bb02ac720b6f3"
+    },
+    "validation": [
+      "31 focused retention tests passed on the reviewed implementation head.",
+      "The complete local Lenskit suite passed: 4040 passed, 1 skipped.",
+      "Ruff, graph/complexity ratchets and git diff --check passed.",
+      "All GitHub checks passed, including pytest-full, browser-tests, Ruff, release candidate, contracts and CodeQL.",
+      "Post-merge commit readback confirmed first parent ff7a48607547aa23020b04e8af0d1b7a58b8cb66 and reviewed head parent 697fb6d8f3624a615da022d90402d59a0768289a."
+    ],
+    "production_validation": {
+      "dry_run": {
+        "protected_paths": 80,
+        "active_publications": 0,
+        "legacy_candidates": 2,
+        "candidate_bytes": 10101936,
+        "candidate_paths": [
+          "/home/alex/repos/merges/repobrief-auto/cabinet-main/20260707T044235Z",
+          "/home/alex/repos/merges/repobrief-auto/cabinet-main/20260707T044254Z"
+        ]
+      },
+      "apply_receipt": {
+        "path": "/home/alex/iCloud/Drive/halde/lenskit-t026-apply-receipt-0103ee3b.json",
+        "sha256": "8beeafb4cf4f5dd534c9dc21abafa78c3b4f189627b7a909940687bd20b6043b",
+        "removed": 2,
+        "removed_bytes": 10101936,
+        "transaction_state": "deleted",
+        "quarantine_remaining": 0
+      },
+      "post_apply_dry_run": {
+        "path": "/home/alex/iCloud/Drive/halde/lenskit-t026-post-apply-dry-run-0103ee3b.json",
+        "sha256": "826e95185911dea9ea7c88770dcad7aa4448f5a11659397dd4646e971d655b21",
+        "current_candidates": 0,
+        "special_candidates": 0,
+        "legacy_candidates": 0
+      },
+      "live_fleet": {
+        "path": "/home/alex/iCloud/Drive/halde/lenskit-t026-live-fleet-receipt-0103ee3b.json",
+        "sha256": "e75a1bba82947043e270c41c5adea19ece935f6e7293c78e32649326b7cc6da2",
+        "tool_sha": "0103ee3bd5ba03e92025480ac9de3df2efc32076",
+        "checked": 40,
+        "published": 3,
+        "published_repositories": [
+          "heim-pc",
+          "lenskit",
+          "weltgewebe"
+        ],
+        "skipped": 37,
+        "failed": 0,
+        "prune_failed": 0,
+        "removed_old_version_bytes": 75725165,
+        "retention": 3
+      },
+      "timer_readback": {
+        "enabled": true,
+        "active": true,
+        "substate": "waiting",
+        "schedule": "hourly with RandomizedDelaySec=10min",
+        "service_after_run": "inactive/dead",
+        "last_result": "success"
+      }
+    },
+    "completion_summary": "The merged collector safely removed exactly two unreachable legacy cabinet-main generations, terminalized both journals, left no quarantine residue, proved zero remaining candidates, installed the canonical hourly changed-only timer and completed a 40-repository production run with three real publications, 37 skips and zero failures.",
+    "verified_acceptance": {
+      "rbv1-t026-reachability-contract": "Versioned retention roots cover current pointers, stable manifests, explicit protections, active publication markers and a minimum of three retained generations.",
+      "rbv1-t026-dry-run": "The deterministic default dry run reported 80 protected paths, zero active publications and exactly two legacy candidates totalling 10,101,936 bytes before effect.",
+      "rbv1-t026-safe-delete": "The apply path rechecked identity and reachability, moved candidates through journal-bound quarantine, removed only the two reviewed cabinet-main generations and refused unsafe or changing trees.",
+      "rbv1-t026-recovery": "Both transaction journals reached terminal deleted state, stored tree hashes were retained, no quarantine path remained and the post-apply dry run found zero candidates.",
+      "rbv1-t026-validation": "31 focused tests, the full 4040-pass Lenskit suite, Ruff and complexity checks, GitHub CI, merge-parent readback, production apply and live fleet readback all passed.",
+      "rbv1-t026-nonclaims": "No optimal storage use, untrusted network-filesystem safety, recovery without retained generations or automatic future policy choice is claimed."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "RBV1-T026",
+          "number": 1016,
+          "source_ref": "heimgewebe/lenskit#1016",
+          "base_commit_sha": "ff7a48607547aa23020b04e8af0d1b7a58b8cb66",
+          "head_commit_sha": "697fb6d8f3624a615da022d90402d59a0768289a",
+          "merge_commit_sha": "0103ee3bd5ba03e92025480ac9de3df2efc32076",
+          "diff_sha256": "fefe0c292fdedb9a7a95bc33a00c6f7840ba1f23c4ed76ad817bb02ac720b6f3"
+        },
+        {
+          "kind": "self_review",
+          "authority": "local_artifact",
+          "task_id": "RBV1-T026",
+          "source_ref": "/home/alex/iCloud/Drive/halde/lenskit-pr-1016-self-review.md",
+          "artifact_sha256": "8a7f52659b9543987c1ed25b5fcc3db7b0c680b02b19796bd42f05d08864965f",
+          "head_commit_sha": "697fb6d8f3624a615da022d90402d59a0768289a",
+          "diff_sha256": "fefe0c292fdedb9a7a95bc33a00c6f7840ba1f23c4ed76ad817bb02ac720b6f3",
+          "verdict": "PASS"
+        },
+        {
+          "kind": "apply_receipt",
+          "authority": "runtime_receipt",
+          "task_id": "RBV1-T026",
+          "source_ref": "/home/alex/iCloud/Drive/halde/lenskit-t026-apply-receipt-0103ee3b.json",
+          "receipt_sha256": "8beeafb4cf4f5dd534c9dc21abafa78c3b4f189627b7a909940687bd20b6043b"
+        },
+        {
+          "kind": "post_apply_dry_run",
+          "authority": "runtime_receipt",
+          "task_id": "RBV1-T026",
+          "source_ref": "/home/alex/iCloud/Drive/halde/lenskit-t026-post-apply-dry-run-0103ee3b.json",
+          "receipt_sha256": "826e95185911dea9ea7c88770dcad7aa4448f5a11659397dd4646e971d655b21"
+        },
+        {
+          "kind": "live_runtime",
+          "authority": "runtime_receipt",
+          "task_id": "RBV1-T026",
+          "source_ref": "/home/alex/iCloud/Drive/halde/lenskit-t026-live-fleet-receipt-0103ee3b.json",
+          "receipt_sha256": "e75a1bba82947043e270c41c5adea19ece935f6e7293c78e32649326b7cc6da2",
+          "tool_commit_sha": "0103ee3bd5ba03e92025480ac9de3df2efc32076"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "bf91f2e4e85513943938e4a329452cae2d5406061b2e8f6f3e90cf02b7bc0330",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   }
 }

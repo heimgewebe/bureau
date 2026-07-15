@@ -3,7 +3,7 @@
   "id": "RPU-V1-T022",
   "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "Scope fleet publication fingerprints to effective generator inputs",
-  "state": "planned",
+  "state": "verified",
   "goal": "Replace the over-broad RepoBrief fleet publication fingerprint with a versioned, explicit digest of effective generator/runtime inputs so test-, documentation- and timer-only Lenskit changes do not republish every repository while source, generator, contract and relevant configuration changes still invalidate safely.",
   "depends_on": [
     "RBV1-T026"
@@ -88,16 +88,123 @@
       "interpretation": "A test file under merger/lenskit changed the whole merger/lenskit tree digest and therefore invalidated every repository fingerprint, although no effective generator/runtime code changed."
     },
     "related_task": "RBV1-T026",
-    "blocked_reason": "Implementation touches scripts/ops/rb-publish-fleet and its runtime tests, which remain under active foreign leases until the T026 retention work is terminal.",
     "does_not_establish": [
-      "implementation_complete",
-      "timer_reenablement_safe",
-      "retention_reachability_complete",
       "semantic_equivalence_of_unlisted_inputs",
-      "runtime_correctness",
-      "test_sufficiency",
-      "review_completeness",
-      "merge_readiness"
-    ]
+      "optimal_input_contract",
+      "future_policy_automaticity"
+    ],
+    "verified_at": "2026-07-15T12:34:39Z",
+    "implementation_branch": "fix/repobrief-generator-fingerprint-v3",
+    "implementation_base": "55f841f08c3b76ab6fa5d40e9bebda6b3fb687ba",
+    "implementation_pr": "heimgewebe/lenskit#1015",
+    "implementation_pr_url": "https://github.com/heimgewebe/lenskit/pull/1015",
+    "implementation_head": "fa582701f9f4b9726a23c5191acfdaf6aac8b8bb",
+    "implementation_merge_commit": "ff7a48607547aa23020b04e8af0d1b7a58b8cb66",
+    "implementation_merge_parents": [
+      "55f841f08c3b76ab6fa5d40e9bebda6b3fb687ba",
+      "fa582701f9f4b9726a23c5191acfdaf6aac8b8bb"
+    ],
+    "post_merge_github_diff_readback": {
+      "sha256": "b187382973f97a6b4f34e0151babdb0ed0a0e203d5d0744af49fd93c8dae1a49",
+      "bytes": 11783,
+      "lines": 249,
+      "file_count": 3,
+      "paths": [
+        "docs/operations/repobrief-fleet-retention.md",
+        "merger/lenskit/tests/test_repobrief_fleet_runtime.py",
+        "scripts/ops/rb-publish-fleet"
+      ]
+    },
+    "generator_input_contract": {
+      "schema": "repobrief-generator-inputs-v1",
+      "generator_inputs_sha": "7b225635321d57d8cae80d1e1083dcc5bc52dbc9f9181814a3005a388eafb57f",
+      "excludes_nonsemantic_changes": [
+        "tests",
+        "documentation",
+        "service units",
+        "timer units",
+        "unrelated Lenskit modules"
+      ],
+      "includes_semantic_changes": [
+        "repository source SHA",
+        "effective generator/runtime code",
+        "output contracts",
+        "relevant publication configuration"
+      ]
+    },
+    "validation": [
+      "Focused positive and negative fingerprint invalidation tests passed.",
+      "The explicit schema migration rejects malformed or unknown prior fingerprint state instead of treating it as current.",
+      "All GitHub checks passed, including pytest-full, browser-tests, Ruff, release candidate, contracts and CodeQL.",
+      "Merge-parent readback confirmed first parent 55f841f08c3b76ab6fa5d40e9bebda6b3fb687ba and reviewed head parent fa582701f9f4b9726a23c5191acfdaf6aac8b8bb."
+    ],
+    "live_dogfood": {
+      "rolling_receipt_path": "/home/alex/logs/repobrief-publish/fleet-last.json",
+      "current_receipt_sha256": "ad563be534ba1151a8008ab7d58a501acd74b650e2f833383613b724a44274ad",
+      "historical_expected_sha256": "0f5873f3a0383e8da404f813f0a42de58e0adedfd6bea00901d60bfa766d5537",
+      "historical_receipt_still_at_rolling_path": false,
+      "note": "The rolling path was overwritten by a later healthy hourly run; current content still proves the same 40 unchanged repositories, zero publications and unchanged generator input digest.",
+      "tool_sha": "0103ee3bd5ba03e92025480ac9de3df2efc32076",
+      "generator_inputs_sha": "7b225635321d57d8cae80d1e1083dcc5bc52dbc9f9181814a3005a388eafb57f",
+      "checked": 40,
+      "changed": 0,
+      "published": 0,
+      "skipped": 40,
+      "failed": 0,
+      "positive_change_receipt": {
+        "path": "/home/alex/iCloud/Drive/halde/lenskit-t026-live-fleet-receipt-0103ee3b.json",
+        "sha256": "e75a1bba82947043e270c41c5adea19ece935f6e7293c78e32649326b7cc6da2",
+        "published": 3,
+        "skipped": 37,
+        "failed": 0
+      }
+    },
+    "completion_summary": "PR #1015 replaced the whole-tree fingerprint with a versioned effective-input contract. A later hourly run skipped all 40 unchanged repositories, while the T026 production run published three repositories with real source changes, proving both negative and positive invalidation paths.",
+    "verified_acceptance": {
+      "rpu-v1-t022-versioned-input-contract": "The publisher uses the explicit versioned repobrief-generator-inputs-v1 contract covering generator/runtime code, contracts and relevant configuration.",
+      "rpu-v1-t022-negative-invalidation": "Tests prove that test-, documentation-, service-, timer- and unrelated-module changes leave the generator input digest and existing repository fingerprints stable.",
+      "rpu-v1-t022-positive-invalidation": "Tests and the T026 live run prove deterministic invalidation for source SHA and effective generator inputs; three repositories with real changes were published.",
+      "rpu-v1-t022-migration": "The new schema is explicit and fail-closed; malformed or unknown prior state is not silently accepted as current.",
+      "rpu-v1-t022-dogfood": "The current rolling receipt records 40 checked, 0 changed, 0 published, 40 skipped and 0 failed under generator input SHA 7b2256…, while the preserved T026 receipt records three expected publications.",
+      "rpu-v1-t022-non-claims": "No source suppression, generator-upgrade bypass, weakening of retention/reachability guards or semantic equivalence of unlisted inputs is claimed."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "RPU-V1-T022",
+          "number": 1015,
+          "source_ref": "heimgewebe/lenskit#1015",
+          "base_commit_sha": "55f841f08c3b76ab6fa5d40e9bebda6b3fb687ba",
+          "head_commit_sha": "fa582701f9f4b9726a23c5191acfdaf6aac8b8bb",
+          "merge_commit_sha": "ff7a48607547aa23020b04e8af0d1b7a58b8cb66",
+          "diff_sha256": "b187382973f97a6b4f34e0151babdb0ed0a0e203d5d0744af49fd93c8dae1a49"
+        },
+        {
+          "kind": "live_runtime",
+          "authority": "runtime_receipt",
+          "task_id": "RPU-V1-T022",
+          "source_ref": "/home/alex/logs/repobrief-publish/fleet-last.json",
+          "receipt_sha256": "ad563be534ba1151a8008ab7d58a501acd74b650e2f833383613b724a44274ad",
+          "generator_inputs_sha256": "7b225635321d57d8cae80d1e1083dcc5bc52dbc9f9181814a3005a388eafb57f",
+          "tool_commit_sha": "0103ee3bd5ba03e92025480ac9de3df2efc32076"
+        },
+        {
+          "kind": "positive_invalidation_runtime",
+          "authority": "runtime_receipt",
+          "task_id": "RPU-V1-T022",
+          "source_ref": "/home/alex/iCloud/Drive/halde/lenskit-t026-live-fleet-receipt-0103ee3b.json",
+          "receipt_sha256": "e75a1bba82947043e270c41c5adea19ece935f6e7293c78e32649326b7cc6da2",
+          "tool_commit_sha": "0103ee3bd5ba03e92025480ac9de3df2efc32076"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "2b345c74b0b38e7c5ad7ee9589c7c41d5ab4b5b837ddce30509bb599e7c3dc15",
+      "plan_sha256": "638b3bedcfb76853e3693d84f72285effc991ad77a973fdef0811142061b6015"
+    }
   }
 }

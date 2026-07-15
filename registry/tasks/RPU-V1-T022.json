@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T022",
+  "initiative": "REPOBRIEF-PRACTICAL-UTILITY-V1",
+  "title": "Scope fleet publication fingerprints to effective generator inputs",
+  "state": "planned",
+  "goal": "Replace the over-broad RepoBrief fleet publication fingerprint with a versioned, explicit digest of effective generator/runtime inputs so test-, documentation- and timer-only Lenskit changes do not republish every repository while source, generator, contract and relevant configuration changes still invalidate safely.",
+  "depends_on": [
+    "RBV1-T026"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 59
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit",
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "rpu-v1-t022-versioned-input-contract",
+      "assertion": "The fleet fingerprint is derived from a versioned, reviewable input contract that explicitly identifies the generator/runtime code, contracts and configuration capable of changing published bundle semantics."
+    },
+    {
+      "id": "rpu-v1-t022-negative-invalidation",
+      "assertion": "Changing only tests, documentation, timer units or unrelated Lenskit modules leaves existing repository publication fingerprints unchanged."
+    },
+    {
+      "id": "rpu-v1-t022-positive-invalidation",
+      "assertion": "Changing repository source SHA, effective generator code, output contracts or relevant publication configuration changes the fingerprint deterministically."
+    },
+    {
+      "id": "rpu-v1-t022-migration",
+      "assertion": "The fingerprint schema/version migration is explicit, fail-closed and auditable; malformed or unknown prior state is never silently treated as current."
+    },
+    {
+      "id": "rpu-v1-t022-dogfood",
+      "assertion": "Focused tests and a fleet dry-run prove zero unrelated republish candidates for a test/docs/timer-only change and expected candidates for a real generator change."
+    },
+    {
+      "id": "rpu-v1-t022-non-claims",
+      "assertion": "The optimization does not suppress source changes, bypass generator upgrades, weaken retention or reachability guards, or claim semantic equivalence without explicit inputs."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T06:40:00Z",
+    "created_from_live_audit": "RepoBrief/Lenskit T026 conflict-free continuation",
+    "source_lenskit_pr": "heimgewebe/lenskit#1014",
+    "source_lenskit_merge_commit": "55f841f08c3b76ab6fa5d40e9bebda6b3fb687ba",
+    "source_observation": {
+      "fingerprint_code_path": "scripts/ops/rb-publish-fleet",
+      "current_generator_identity": "git tree HEAD:merger/lenskit",
+      "trigger_change_scope": [
+        "docs/operations/repobrief-fleet-retention.md",
+        "merger/lenskit/tests/test_repobrief_fleet_runtime.py",
+        "ops/systemd/repobrief-fleet/rb-publish-fleet-watch.timer"
+      ],
+      "fleet_result": {
+        "changed": 40,
+        "published": 8,
+        "queued": 32,
+        "failed": 0,
+        "prune_failed": 0
+      },
+      "interpretation": "A test file under merger/lenskit changed the whole merger/lenskit tree digest and therefore invalidated every repository fingerprint, although no effective generator/runtime code changed."
+    },
+    "related_task": "RBV1-T026",
+    "blocked_reason": "Implementation touches scripts/ops/rb-publish-fleet and its runtime tests, which remain under active foreign leases until the T026 retention work is terminal.",
+    "does_not_establish": [
+      "implementation_complete",
+      "timer_reenablement_safe",
+      "retention_reachability_complete",
+      "semantic_equivalence_of_unlisted_inputs",
+      "runtime_correctness",
+      "test_sufficiency",
+      "review_completeness",
+      "merge_readiness"
+    ]
+  }
+}

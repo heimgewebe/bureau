@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "REPOBRIEF-PRACTICAL-UTILITY-V1",
   "title": "RepoBrief practical utility hardening",
-  "state": "completion-ready",
+  "state": "active",
   "commitment": "later",
   "goal": "Turn RepoBrief/rLens from a strong evidence factory into a default-useful agent context system by registering the practical query, citation, freshness, context, review-coverage, semantic, federation and runtime-evidence gaps without moving mutation authority into RepoBrief core.",
   "current_plan": {
@@ -12,7 +12,8 @@
   "completion": [
     "All Lenskit/RepoBrief/rLens practical utility gaps identified in the max-dump critique and Lenskit PR #911 are mapped to Bureau tasks or explicitly deduplicated against existing RBV1/RBAE/BUR tasks.",
     "High-leverage near-term tasks for resolved evidence query, live-repo citations and freshness registry are scheduled before broader MCP or rename work.",
-    "Every task preserves RepoBrief boundaries: no hidden refresh on reads, no Git mutation in RepoBrief core, no patch/test/shell authority, no review or runtime correctness verdict."
+    "Every task preserves RepoBrief boundaries: no hidden refresh on reads, no Git mutation in RepoBrief core, no patch/test/shell authority, no review or runtime correctness verdict.",
+    "RPU-V1-T022 proves that fleet publication fingerprints invalidate on effective generator/source/configuration changes but remain stable for test-, documentation- and timer-only changes."
   ],
   "parallelism": {
     "max_active_tasks": 2
@@ -35,7 +36,12 @@
       "mcp_resource_availability",
       "merge_readiness"
     ],
-    "completion_ready_at": "2026-07-12T06:30:00Z",
-    "completion_ready_reason": "All twenty-one registered RPU tasks are verified; Doctor independently recommends completion-ready with zero open tasks."
+    "reopened_at": "2026-07-15T06:40:00Z",
+    "reopened_by_task": "RPU-V1-T022",
+    "reopened_reason": "Live fleet evidence after Lenskit PR #1014 proved that the current generator fingerprint includes tests and causes fleet-wide republishing for non-semantic changes.",
+    "previous_completion_ready": {
+      "completion_ready_at": "2026-07-12T06:30:00Z",
+      "completion_ready_reason": "All twenty-one registered RPU tasks are verified; Doctor independently recommends completion-ready with zero open tasks."
+    }
   }
 }

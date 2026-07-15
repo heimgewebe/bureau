@@ -3,7 +3,7 @@
   "id": "RBV1-T025",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "RepoBrief-Dateisystemzugriffe dirfd-gebunden härten",
-  "state": "planned",
+  "state": "verified",
   "goal": "Harden consumer-local RepoBrief publication against hostile or accidental replacement of parent path components by binding traversal, creation, verification and replacement to trusted directory file descriptors with a portable fail-closed fallback policy.",
   "priority": {
     "lane": "later",
@@ -70,6 +70,57 @@
       "privilege_boundary_isolation",
       "untested_platform_security",
       "merge_readiness"
-    ]
+    ],
+    "implementation_branch": "fix/rbv1-t025-dirfd-publication-v1",
+    "implementation_base": "ea57b08cf8acc580818ba11950c22f77f6dd1901",
+    "verified_at": "2026-07-15T04:22:18Z",
+    "implementation_pr": "heimgewebe/lenskit#1012",
+    "implementation_pr_url": "https://github.com/heimgewebe/lenskit/pull/1012",
+    "implementation_head": "706a397ba48ccea4e6271070d99e968eedae3d6a",
+    "implementation_merge_commit": "61caa5b7a04fb1e5ed53f1d0026d841b27f3df66",
+    "diff_sha256": "feee4334a188a91b22d0645d9e5850d99e37a16747ec698f05fe7e0efacf4612",
+    "diff_bytes": 94781,
+    "diff_lines": 2604,
+    "implementation_paths": [
+      "docs/proofs/external-publish-dirfd-v1-proof.md",
+      "merger/lenskit/core/external_manifest_generation.py",
+      "merger/lenskit/core/external_manifest_reference.py",
+      "merger/lenskit/core/rooted_filesystem.py",
+      "merger/lenskit/tests/test_external_manifest_dirfd.py",
+      "merger/lenskit/tests/test_rooted_filesystem.py"
+    ],
+    "validation": [
+      "60 focused legacy, adversarial, platform, crash, recovery and concurrency tests passed on the exact implementation head.",
+      "The complete Lenskit suite passed after a conflict-free rebase onto fleet-retention PR #1011: 4021 passed, 1 skipped.",
+      "Ruff CI configuration, Ruff formatting and git show --check passed.",
+      "The graph maintainability ratchet passed with zero new C901 violations and one resolved baseline violation.",
+      "A 200-cycle write/read/lock stress test changed the open-file-descriptor count by zero.",
+      "Real RepoBrief CLI dogfood published generation dac4de5d36518fe81cf8c27f8828370032eec020627e07f11fe3995877a8b18b with filesystemBinding trusted_dirfd_openat and independent authoritative readback confirmed both families.",
+      "All GitHub checks passed, including pytest-full, browser-tests, planning-registration, contracts, Ruff and CodeQL.",
+      "Fresh pre-merge readback confirmed unchanged base, head and GitHub patch; post-merge readback confirmed merge commit 61caa5b7a04fb1e5ed53f1d0026d841b27f3df66 from reviewed head 706a397ba48ccea4e6271070d99e968eedae3d6a."
+    ],
+    "review_receipt": {
+      "path": "/home/alex/logs/reviews/lenskit-pr-1012-self-review.json",
+      "sha256": "2bad7b0d29f05310520caf13258145d806200f995db63f857089e6eab176a536",
+      "verdict": "PASS",
+      "origin": "self_review",
+      "external_review_performed": false
+    },
+    "follow_up_tasks": [
+      "RBV1-T026"
+    ],
+    "outcome": "Lenskit PR #1012 anchors RepoBrief source and publication traversal, creation, verification, locking, atomic replacement, directory installation, tree inspection and cleanup to trusted directory descriptors. Visible path identities are rechecked before success; symlink, special-file, source-file, source-parent, publication-root, pointer-parent and lock-parent replacements fail closed. Platforms without the required POSIX primitives are rejected instead of receiving a weaker fallback. The public RepoBrief API and generations-coherent reader contract remain intact.",
+    "verified_acceptance": {
+      "rbv1-t025-threat-model": "The proof document explicitly defines same-host path-component, source, root, pointer and lock replacement attacks as in scope, identifies the required POSIX primitives, and records the excluded kernel, network-filesystem and privilege-boundary claims.",
+      "rbv1-t025-dirfd-binding": "Absolute directories are opened component by component with O_DIRECTORY and O_NOFOLLOW. Descendant traversal, creation, file access, rename, replacement, locking, tree verification and cleanup use directory-relative operations anchored to open descriptors and device/inode identities.",
+      "rbv1-t025-fallback": "Hosts lacking POSIX dir_fd operations, O_DIRECTORY or O_NOFOLLOW fail closed with RootedFilesystemError; there is no silent pathname fallback.",
+      "rbv1-t025-adversarial-tests": "Deterministic tests cover symlinked components, special entries, source-file and source-parent swaps, publication-root and pointer-parent swaps, lock-parent swaps and concurrent generation behavior without exposing replacement paths as successful publication.",
+      "rbv1-t025-validation": "60 focused tests, the full 4021-test suite, Ruff, formatting, diff checks, maintainability, descriptor stress, real CLI publication/readback and all GitHub checks passed on head 706a397ba48ccea4e6271070d99e968eedae3d6a.",
+      "rbv1-t025-nonclaims": "No kernel-bug resistance, network-filesystem equivalence, privilege-boundary isolation, untested-platform security, distributed consensus, cross-host transactionality, remote freshness or semantic truth is claimed."
+    },
+    "verification": {
+      "task_sha256": "f24a5b8e19834e30e5272dea373c3820224782515fe509b049aa83dfd0a87fc1",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   }
 }

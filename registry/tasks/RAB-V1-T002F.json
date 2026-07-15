@@ -3,10 +3,10 @@
   "id": "RAB-V1-T002F",
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "Authorize and run one fresh live pair after contract hardening",
-  "state": "planned",
+  "state": "ready",
   "goal": "After RAB-V1-T002E is merged and verified, prepare a new immutable pair and seek a separate reviewed authorization for exactly one baseline and one treatment process with no retry.",
   "priority": {
-    "lane": "later",
+    "lane": "next",
     "rank": 20
   },
   "depends_on": [
@@ -35,7 +35,7 @@
     "approval": {
       "action_class": "agent_dispatch",
       "required_level": "reviewed_plan",
-      "note": "This task is not authorized by registration. A new explicit authorization must bind new paths, hashes, pair, executable, credential commitment and hard cumulative cost limits after T002E verification."
+      "note": "Separately reviewed one-shot authorization binds the fresh r2 pair, exact runner/tooling/source states, private credential commitment, create-only output paths, USD 0.20 per process, USD 0.40 aggregate authorization and no retry."
     }
   },
   "required_capabilities": [
@@ -71,18 +71,164 @@
   "metadata": {
     "registered_at": "2026-07-13",
     "source_issue": "heimgewebe/bureau#481",
-    "authorization_status": "not_authorized",
-    "execution_status": "not_started",
-    "requires_separate_reviewed_authorization": true,
+    "authorization_status": "approved_unconsumed",
+    "execution_status": "prepared_not_started",
+    "requires_separate_reviewed_authorization": false,
     "retry_permitted": false,
     "provider_processes_started": 0,
-    "real_provider_cost_observed_usd": null,
+    "real_provider_cost_observed_usd": 0.0,
     "replaces_no_attempt": true,
     "does_not_authorize": [
       "RAB-V1-T002D retry",
       "RAB-V1-T002 execution",
       "automatic pilot expansion",
       "default promotion"
-    ]
+    ],
+    "authorized_at": "2026-07-15T15:04:15.196755Z",
+    "preparation_manifest_path": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/preparation-manifest.json",
+    "preparation_manifest_sha256": "b761d053eb8c26b2073dd86eb5e722457f86002a741afac57fc8f642f80bac98",
+    "pair_id": "repobrief-agent-benchmark-v1-20260713:nav-lenskit-mcp-startup:r2",
+    "preparation": {
+      "synthetic_report": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/synthetic-report-v2.json",
+      "synthetic_report_sha256": "bc2a4397bc1512637c2c8d0bd9fa991a81736194412114b7b6a8b02a1ed96b42",
+      "synthetic_status": "synthetic_only",
+      "fixture_intents": 2,
+      "provider_process_intents": 0,
+      "source_states_clean": true,
+      "runner_state_clean": true,
+      "tooling_state_clean": true,
+      "provider_free_fixture_correction": "The first provider-free fixture validation used a test-only model constant that did not match the frozen request and failed closed with zero provider intents. A fresh create-only synthetic v2 path corrected only the fixture model binding and passed."
+    },
+    "execution_authorization": {
+      "schema_version": 1,
+      "task_id": "RAB-V1-T002F",
+      "source": "operator_instruction",
+      "reference": "operator-instruction:2026-07-15:alles-umsetzen-repobrief",
+      "reviewer": "alexdermohr",
+      "approved": true,
+      "approved_at": "2026-07-15T15:04:15.196755Z",
+      "level": "reviewed_plan",
+      "action_class": "agent_dispatch",
+      "one_shot": true,
+      "remaining_uses": 1,
+      "retry_permitted": false,
+      "scope": [
+        "exactly one frozen baseline process",
+        "exactly one frozen RepoBrief treatment process",
+        "no retry or continuation"
+      ],
+      "bindings": {
+        "pair_id": "repobrief-agent-benchmark-v1-20260713:nav-lenskit-mcp-startup:r2",
+        "requests": {
+          "baseline": {
+            "canonical_sha256": "ee7bfbffaaeb4e2a3ee6e96313afe79ad8e1a624ad413746de5ef9d93b0b8042",
+            "path": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/benchmark-plan/requests/repobrief-agent-benchmark-v1-20260713__nav-lenskit-mcp-startup__r2__baseline.json",
+            "raw_sha256": "5738b3fbb253d890c6b2eac350b3ddb03645656353ce6b7a1abadb62733f0db7",
+            "request_id": "repobrief-agent-benchmark-v1-20260713:nav-lenskit-mcp-startup:r2:baseline"
+          },
+          "treatment": {
+            "canonical_sha256": "77878b040116d4cdae598b40ab2f3efaa9df90eac79405134110e20177efb5b6",
+            "path": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/benchmark-plan/requests/repobrief-agent-benchmark-v1-20260713__nav-lenskit-mcp-startup__r2__treatment.json",
+            "raw_sha256": "5de5c3732b0ac257ab07ebd65f1f9194b586150b4b985e649b430fd9f4b70a84",
+            "request_id": "repobrief-agent-benchmark-v1-20260713:nav-lenskit-mcp-startup:r2:treatment"
+          }
+        },
+        "budgets": {
+          "aggregate_authorized_usd": 0.4,
+          "aggregate_risk_ceiling_usd": 0.5,
+          "per_process_max_cost_usd": 0.2,
+          "provider_process_limit": 2
+        },
+        "runner": {
+          "grabowski_head": "fd84ae6492544bfa96e029e1d02a30dd52bcc38d",
+          "lenskit_tooling_head": "f9b47a212fb20bebe32125889b92a8963d1213bc",
+          "claude_executable": "/home/alex/.local/share/claude/versions/2.1.208",
+          "claude_executable_sha256": "125372839bc827ca24dd72382627b291fbca615408d732fe3291bc16723ce7f3",
+          "model": "claude-haiku-4-5-20251001",
+          "provider": "anthropic-claude-code",
+          "sampling": {}
+        },
+        "credential_boundary": {
+          "mode": "local_nonce_commitment",
+          "commitment_artifact": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/credential-binding-v1.json",
+          "commitment_sha256": "1a42a966114e1b3aec81a606ec4eb21ecd3152bec72b902068cf782bd59ac4c6",
+          "credential_digest_public": false,
+          "credential_contents_exposed": false,
+          "revalidate_before_spawn": true
+        },
+        "source_commits": {
+          "grabowski": "f6eed48752fd2cf32f070dc69b2112e2498872cb",
+          "lenskit": "dff582f9c4e8b5511d4ce436db81e3e245f725ec",
+          "weltgewebe": "e095903bb71c937d861fa64d7e8a6b593062ca6f"
+        },
+        "manifest_bindings": {
+          "grabowski": {
+            "manifest": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/bundles/grabowski/grabowski-max-260715-1433_merge.bundle.manifest.json",
+            "manifest_sha256": "07344c3069847e27f1e9a00037503a5729f000787531ae86de3747d6ed21b799"
+          },
+          "lenskit": {
+            "manifest": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/bundles/lenskit/lenskit-max-260715-1419_merge.bundle.manifest.json",
+            "manifest_sha256": "fc17d545ea6d3901e3f3f7f5be57947a1ac8275ba41838140e68105ff6d91fa2"
+          },
+          "weltgewebe": {
+            "manifest": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/bundles/weltgewebe/weltgewebe-max-260715-1433_merge.bundle.manifest.json",
+            "manifest_sha256": "ce2ba61ef862ea2aa3ffa1d3a9d9266be31dbcb75676617f162f7b35eae6efd3"
+          }
+        },
+        "control_files": {
+          "benchmark-plan/plan.json": {
+            "path": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/benchmark-plan/plan.json",
+            "raw_sha256": "b75bcc343cdebda1fde562357dcd7569856e0d0f0f9962968fbaeeeb5e30ffc6"
+          },
+          "manifest-bindings.json": {
+            "path": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/manifest-bindings.json",
+            "raw_sha256": "021aef3cb073d7612cbd603065b437983ec66d9e398e54a91454969b64dd7506"
+          },
+          "repository-map.json": {
+            "path": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/repository-map.json",
+            "raw_sha256": "77f9af2dd5a1539f2b2fa66fe2af883088749f387b0ff425d171ea7b81bbb2bc"
+          },
+          "runner.json": {
+            "path": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/runner.json",
+            "raw_sha256": "e298e1506ef9c82bc6083571d958471657791854ceb800524b609ce06d290e92"
+          },
+          "validator-command.json": {
+            "path": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/validator-command.json",
+            "raw_sha256": "fb202cc6d60844c4d869a1fa878d39abd8fc8a653a44a0e62b4249c0d5aa1a70"
+          }
+        },
+        "live_outputs": {
+          "evidence_root": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/live-evidence",
+          "report_out": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/live-report.json",
+          "state_root": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/live-state",
+          "transcript_root": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/live-transcripts"
+        },
+        "synthetic_preflight": {
+          "fixture_intents": 2,
+          "provider_process_intents": 0,
+          "report": "/home/alex/.local/state/grabowski/rab-v1-t002f-20260715/synthetic-report-v2.json",
+          "report_digest_sha256": "3f06f286c9efdc1fb49276fd5f49194f62c27db1669524b3dae781d2721acceb",
+          "report_sha256": "bc2a4397bc1512637c2c8d0bd9fa991a81736194412114b7b6a8b02a1ed96b42",
+          "retry_permitted": false,
+          "status": "synthetic_only"
+        },
+        "preparation_manifest_sha256": "b761d053eb8c26b2073dd86eb5e722457f86002a741afac57fc8f642f80bac98"
+      },
+      "conditions": [
+        "RAB-V1-T002E remains verified",
+        "all bound hashes and clean source states are revalidated immediately before launch",
+        "no prior live intent, receipt, report or transcript exists in the fresh T002F output paths",
+        "no RepoBrief benchmark provider process is active",
+        "baseline then treatment are each started at most once",
+        "any failure or ambiguous start consumes the authorization and blocks without retry"
+      ],
+      "does_not_authorize": [
+        "RAB-V1-T002D retry",
+        "RAB-V1-T002 96-run benchmark",
+        "a second T002F pair",
+        "automatic pilot expansion",
+        "default promotion"
+      ]
+    }
   }
 }

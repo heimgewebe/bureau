@@ -22,7 +22,7 @@
   },
   "metadata": {
     "registered_at": "2026-07-13",
-    "updated_at": "2026-07-13",
+    "updated_at": "2026-07-15",
     "source_issue": "heimgewebe/bureau#481",
     "depends_on_merges": [
       "heimgewebe/lenskit@a3dcc4e954f3ea60842cb366b499659f40938e0b",
@@ -94,14 +94,17 @@
         "retry_permitted": false
       },
       "RAB-V1-T002E": {
-        "state": "ready",
-        "condition": "Fix and synthetically verify exact adapter, planner and export contracts with zero provider use."
+        "state": "verified",
+        "outcome": "Exact adapter, planner and export contracts were hardened and verified without provider use; Grabowski PR #195 and Lenskit PR #1002 are merged."
       },
       "RAB-V1-T002F": {
-        "state": "planned",
-        "authorization_status": "not_authorized",
-        "execution_status": "not_started",
-        "condition": "Requires verified T002E and a completely new explicit reviewed authorization."
+        "state": "ready",
+        "authorization_status": "approved_unconsumed",
+        "execution_status": "prepared_not_started",
+        "pair_id": "repobrief-agent-benchmark-v1-20260713:nav-lenskit-mcp-startup:r2",
+        "preparation_manifest_sha256": "b761d053eb8c26b2073dd86eb5e722457f86002a741afac57fc8f642f80bac98",
+        "provider_processes_started": 0,
+        "condition": "Immediate pre-dispatch revalidation must pass; then exactly one baseline and one treatment process may run without retry."
       }
     },
     "default_promoted": false,

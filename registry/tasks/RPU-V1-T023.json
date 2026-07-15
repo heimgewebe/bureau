@@ -3,7 +3,7 @@
   "id": "RPU-V1-T023",
   "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
   "title": "Evidence-graded Python symbol call graph v1",
-  "state": "ready",
+  "state": "verified",
   "goal": "Produce a deterministic Python call-site artifact with explicit S0/S1 evidence, strict provenance, conservative lexical resolution, bounded caller/callee/reference consumers and read-only MCP wiring.",
   "depends_on": [
     "RPU-V1-T021",
@@ -83,6 +83,90 @@
       "test_sufficiency",
       "review_completeness",
       "merge_readiness"
-    ]
+    ],
+    "pr_completion": {
+      "auto_verify": true,
+      "head_sha": "9081ed81b6b48db8f4fbf91faea4eebcc4d9a4de",
+      "number": 1018,
+      "post_merge_required": false,
+      "repo": "heimgewebe/lenskit"
+    },
+    "implementation_pr": "heimgewebe/lenskit#1018",
+    "implementation_head": "9081ed81b6b48db8f4fbf91faea4eebcc4d9a4de",
+    "implementation_merge_commit": "48d1797553ddb233a9b64b22e50436ca5c6ac291",
+    "implementation_merged_at": "2026-07-15T19:50:13Z",
+    "implementation_diff_sha256": "28eb7098eb3317e1a785e271e2b0bf1e4af8515214a89eac429ce3c5e917b041",
+    "implementation_patch_url": "https://github.com/heimgewebe/lenskit/pull/1018.patch",
+    "outcome": "Lenskit now emits a deterministic evidence-graded Python Call Graph v1, binds callers to exact symbol definition ranges, exposes bounded read-only find_references/get_callers/get_callees MCP tools, and keeps ambiguous or dynamic relations as explicit S0 evidence.",
+    "validation": [
+      "Exact-head maintainability ratchet passed with no findings.",
+      "Exact-head Ruff CI scope passed.",
+      "Exact-head pytest excluding browser/live-doc tests passed: 4102 passed, 1 skipped, 13 deselected.",
+      "Exact-head release contract passed with no findings.",
+      "Exact-head parity gates passed: 39 passed.",
+      "Focused MCP, bundle and navigation tests passed: 99 passed.",
+      "Recursion and caller-identity negative tests passed: 31 passed.",
+      "Two independent release-candidate builds were byte-identical and verified.",
+      "All 15 GitHub push workflows on Lenskit main merge commit 48d1797553ddb233a9b64b22e50436ca5c6ac291 completed successfully.",
+      "Bureau Doctor has no finding for RPU-V1-T023; its global unhealthy state is caused by pre-existing unrelated runtime/state-root findings and broad-lease warnings."
+    ],
+    "verified_acceptance": {
+      "rpu-v1-t023-consumers": "find_references, get_callers and get_callees are bounded read-only consumers with path/range identity, exact symbol selection and live freshness reporting.",
+      "rpu-v1-t023-contract": "Draft-07 contract, bundle role, canonical dump/run binding, integrity checks, public-share exclusion and explicit non-claims are implemented.",
+      "rpu-v1-t023-producer": "Every parsed Python call site is deterministic; unique safe local bindings become S1, while shadowed, dynamic, foreign, redefined and ambiguous calls remain S0.",
+      "rpu-v1-t023-scopes": "Regression tests cover parameters, assignments, nested definitions, decorators, defaults, class expressions, methods, recursion and duplicate definition ranges.",
+      "rpu-v1-t023-validation": "Local full gates, diff-bound self-review, all PR checks and all 15 post-merge main workflows passed on the exact implementation head and merge commit."
+    },
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "diff_sha256": "28eb7098eb3317e1a785e271e2b0bf1e4af8515214a89eac429ce3c5e917b041",
+          "head_commit_sha": "9081ed81b6b48db8f4fbf91faea4eebcc4d9a4de",
+          "kind": "pull_request",
+          "merge_commit_sha": "48d1797553ddb233a9b64b22e50436ca5c6ac291",
+          "number": 1018,
+          "repo": "heimgewebe/lenskit",
+          "source_ref": "heimgewebe/lenskit#1018",
+          "task_id": "RPU-V1-T023"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "verified_at": "2026-07-15T19:56:43Z",
+    "verification": {
+      "evidence_sha256": "ad9cb448cc09f128b6c579b363422d6969898daf5a2e51dca47ea7da2004a6c3",
+      "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db",
+      "pr_completion": {
+        "evidence": {
+          "evidence_sha256": "ad9cb448cc09f128b6c579b363422d6969898daf5a2e51dca47ea7da2004a6c3",
+          "head_sha": "9081ed81b6b48db8f4fbf91faea4eebcc4d9a4de",
+          "merge_commit": "48d1797553ddb233a9b64b22e50436ca5c6ac291",
+          "non_claims": [
+            "merged PR evidence does not prove deployment",
+            "merged PR evidence does not prove dependent tasks are complete",
+            "merged PR evidence does not prove runtime correctness"
+          ],
+          "pr_number": 1018,
+          "repo": "heimgewebe/lenskit",
+          "source": "github_pull_request",
+          "source_ref": "github-pr:heimgewebe/lenskit#1018@9081ed81b6b48db8f4fbf91faea4eebcc4d9a4de:48d1797553ddb233a9b64b22e50436ca5c6ac291"
+        },
+        "kind": "bureau.pr_completion_receipt",
+        "outcome": "completed-by-merged-pr",
+        "receipt_id": "pr-completion:heimgewebe/lenskit#1018:9081ed81b6b48db8f4fbf91faea4eebcc4d9a4de",
+        "receipt_sha256": "64d722efbe74667c56c5ff78c1907eb7013a0e6cc17db12c7c370f41e6505ee1",
+        "schema_version": 2,
+        "task_id": "RPU-V1-T023"
+      },
+      "receipt_id": "pr-completion:heimgewebe/lenskit#1018:9081ed81b6b48db8f4fbf91faea4eebcc4d9a4de",
+      "receipt_sha256": "64d722efbe74667c56c5ff78c1907eb7013a0e6cc17db12c7c370f41e6505ee1",
+      "schema_version": 1,
+      "source": "github_pull_request",
+      "source_ref": "github-pr:heimgewebe/lenskit#1018@9081ed81b6b48db8f4fbf91faea4eebcc4d9a4de:48d1797553ddb233a9b64b22e50436ca5c6ac291",
+      "task_sha256": "7cb2032b1ff1744e54d0dc9c1f5be30ecc17e8943afb7bfe75fe666f0eed6312",
+      "verified_at": "2026-07-15T19:56:43Z"
+    }
   }
 }

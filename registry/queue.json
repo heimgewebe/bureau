@@ -68,8 +68,7 @@
     "now": [
       "CCM-V1-T002",
       "CCM-V1-T003",
-      "CCM-V1-T004",
-      "RPU-V1-T023"
+      "CCM-V1-T004"
     ]
   },
   "queue_policy": "skip-blocked",

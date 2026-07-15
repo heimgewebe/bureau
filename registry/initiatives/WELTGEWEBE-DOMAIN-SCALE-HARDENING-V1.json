@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-DOMAIN-SCALE-HARDENING-V1",
+  "title": "Weltgewebe domain-scale benchmark fidelity",
+  "state": "active",
+  "commitment": "later",
+  "goal": "Make the merged Weltgewebe domain-scale benchmark reproduce production-shaped identifiers, insertion-order time correlation and configuration-bound CI assertions without weakening fixture integrity checks.",
+  "current_plan": {
+    "repository": "weltgewebe",
+    "path": "docs/blueprints/domain-scale-foundation.md"
+  },
+  "completion": [
+    "Generated node and edge identifiers are deterministic, UUID-v4-shaped and exercise production-representative B-tree ordering.",
+    "Generated timestamps progress monotonically across the largest declared profile without periodic month wraparound.",
+    "CI row-count assertions derive from the generated manifest rather than duplicated constants.",
+    "Manifest validation retains a proven defense against self-consistent file-and-manifest tampering.",
+    "The supported host-path contract is explicit and covered by regression tests."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "github": "heimgewebe/weltgewebe",
+    "source_pr": "heimgewebe/weltgewebe#1442",
+    "source_merge_commit": "cc915e95cfddff2e5c686124a9b392afa637b66f",
+    "reviewed_commit": "427e7bf81d",
+    "registered_at": "2026-07-15T12:59:49Z",
+    "live_constraint": "Implementation must not begin while the active repo-wide Weltgewebe lease for PR #1440 prevents a proven nonconflicting write scope.",
+    "does_not_establish": [
+      "production query latency",
+      "native Windows support unless explicitly selected",
+      "permission to remove structural CSV validation solely because a colocated manifest hash matches"
+    ]
+  }
+}

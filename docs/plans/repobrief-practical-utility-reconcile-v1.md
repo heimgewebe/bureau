@@ -123,3 +123,9 @@ Later:
 ## Non-claims
 
 This reconciliation does not implement the registered technical tasks, prove RepoBrief improves agent quality, prove runtime correctness, prove test sufficiency, prove review completeness, authorize any merge, or make MCP resources available. It ensures the work is represented in Bureau with explicit boundaries and dependencies.
+
+## Live reconciliation update — 2026-07-15
+
+Lenskit PR #1014 changed only fleet timer documentation, one timer unit and a test below `merger/lenskit`. The live fleet run nevertheless classified all 40 repositories as changed because `rb-publish-fleet` fingerprints the complete `HEAD:merger/lenskit` tree. Eight repositories were immediately republished and 32 queued.
+
+This is not a retention/reachability fix and therefore does not expand `RBV1-T026`. It is registered separately as `RPU-V1-T022`: the publication fingerprint must be bound to explicit effective generator inputs, while real source, generator, contract and relevant configuration changes must continue to invalidate fail-closed. Implementation waits for `RBV1-T026` because both tasks touch the same fleet publisher and tests.

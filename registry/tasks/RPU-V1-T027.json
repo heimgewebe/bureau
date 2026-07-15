@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T027",
+  "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
+  "title": "SCIP multilingual symbol relation adapter",
+  "state": "planned",
+  "goal": "Normalize external SCIP definition/reference data into Lenskit evidence records without introducing a second bundle truth or trusting index completeness.",
+  "depends_on": [
+    "RPU-V1-T024"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "f9b47a212fb20bebe32125889b92a8963d1213bc",
+    "grabowski_resources": [
+      "component:repobrief-evidence-call-graph-v1",
+      "path:/home/alex/repos/.lenskit-worktrees/repobrief-evidence-call-graph-v1",
+      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-evidence-call-graph-v1"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "rpu-v1-t027-adapter",
+      "assertion": "SCIP input is versioned, provenance-bound, language-labelled and converted through a deterministic adapter."
+    },
+    {
+      "id": "rpu-v1-t027-degradation",
+      "assertion": "Missing indexers, partial documents and unsupported relationships remain explicit degradation states."
+    },
+    {
+      "id": "rpu-v1-t027-benchmark",
+      "assertion": "Each promoted language has a fixed precision and navigation benchmark before consumer enablement."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T16:20:00Z",
+    "source_request": "User requested all Symbol Call Graph work to be registered and implemented.",
+    "architecture_axis": "evidence-graded coding context graph"
+  }
+}

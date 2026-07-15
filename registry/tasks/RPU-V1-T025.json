@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T025",
+  "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
+  "title": "Call-graph-aware edit context compiler",
+  "state": "planned",
+  "goal": "Integrate proven caller/callee evidence into agent impact and token-budget edit context without turning graph relations into impact or test-sufficiency verdicts.",
+  "depends_on": [
+    "RPU-V1-T023",
+    "RPU-V1-T024"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 30
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "f9b47a212fb20bebe32125889b92a8963d1213bc",
+    "grabowski_resources": [
+      "component:repobrief-evidence-call-graph-v1",
+      "path:/home/alex/repos/.lenskit-worktrees/repobrief-evidence-call-graph-v1",
+      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-evidence-call-graph-v1"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "rpu-v1-t025-selection",
+      "assertion": "Edit context separately budgets target definition, direct callers, direct callees, entrypoints, tests, contracts and unresolved risk boundaries."
+    },
+    {
+      "id": "rpu-v1-t025-trace",
+      "assertion": "Every selected relation retains source ranges, evidence level, freshness and omission reasons."
+    },
+    {
+      "id": "rpu-v1-t025-nonverdict",
+      "assertion": "The compiler does not claim blast-radius completeness, runtime breakage, test sufficiency or merge readiness."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T16:20:00Z",
+    "source_request": "User requested all Symbol Call Graph work to be registered and implemented.",
+    "architecture_axis": "evidence-graded coding context graph"
+  }
+}

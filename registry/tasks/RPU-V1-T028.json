@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T028",
+  "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
+  "title": "Build, test and contract relation overlay",
+  "state": "planned",
+  "goal": "Add deterministic build-target, test-registration, schema-validation and artifact-flow relations as evidence sources stronger than filename convention alone.",
+  "depends_on": [
+    "RPU-V1-T024"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "f9b47a212fb20bebe32125889b92a8963d1213bc",
+    "grabowski_resources": [
+      "component:repobrief-evidence-call-graph-v1",
+      "path:/home/alex/repos/.lenskit-worktrees/repobrief-evidence-call-graph-v1",
+      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-evidence-call-graph-v1"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "rpu-v1-t028-build",
+      "assertion": "Build and package relations cite their originating manifest or workflow range."
+    },
+    {
+      "id": "rpu-v1-t028-tests",
+      "assertion": "Test relations distinguish explicit registration, import/reference evidence and naming heuristics."
+    },
+    {
+      "id": "rpu-v1-t028-contracts",
+      "assertion": "Schema and artifact producer/consumer relations preserve contract identity and do not imply runtime correctness."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T16:20:00Z",
+    "source_request": "User requested all Symbol Call Graph work to be registered and implemented.",
+    "architecture_axis": "evidence-graded coding context graph"
+  }
+}

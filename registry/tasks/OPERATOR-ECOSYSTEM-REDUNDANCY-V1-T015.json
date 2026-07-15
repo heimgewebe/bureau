@@ -7,13 +7,26 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau",
-      "host:heim-pc"
+      "host:heim-pc",
+      "path:/home/alex/repos/bureau/src/bureau/codex_bridge.py",
+      "path:/home/alex/repos/bureau/.bureau-scopes/ops-automation",
+      "path:/home/alex/.local/state/bureau",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T015.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.ops",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "state.bureau",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -71,6 +84,26 @@
       "backend_selection",
       "consumer_absence",
       "merge_permission"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Codex bridge normalization is limited to its bridge implementation, scheduled operations and bridge state.",
+      "effect_boundaries": [
+        "Codex bridge implementation",
+        "Scheduled bridge automation",
+        "Bridge state evidence"
+      ],
+      "catalog_entry_sha256": "7dea43b12f3ddd858a331bbdba289f3efda97e00a0b04da12bc6c90f48cc9b47",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   }
 }

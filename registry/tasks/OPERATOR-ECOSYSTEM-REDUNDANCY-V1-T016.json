@@ -7,13 +7,26 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau",
-      "host:heim-pc"
+      "host:heim-pc",
+      "path:/home/alex/repos/bureau/.bureau-scopes/ops-automation",
+      "path:/home/alex/repos/bureau/docs",
+      "path:/home/alex/.local/state/bureau",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T016.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.ops",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.docs",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "state.bureau",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -67,6 +80,26 @@
       "safe_timer_disablement",
       "probe_necessity",
       "merge_permission"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "The connector probe decision concerns its scheduler/probe sources, consumer contract and observation state.",
+      "effect_boundaries": [
+        "Probe automation",
+        "Consumer/freshness documentation",
+        "Probe observation state"
+      ],
+      "catalog_entry_sha256": "beb49e2b9e745a63c878ede55dd3efe0ae5fe228e9d5898ff62e34f32b42d29c",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   }
 }

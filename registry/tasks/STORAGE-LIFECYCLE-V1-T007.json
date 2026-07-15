@@ -3,7 +3,7 @@
   "id": "STORAGE-LIFECYCLE-V1-T007",
   "initiative": "STORAGE-LIFECYCLE-V1",
   "title": "Publish storage growth and lifecycle health to Leitstand",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 17
@@ -65,6 +65,122 @@
     ],
     "ready_at": "2026-07-15T18:07:04Z",
     "readiness_basis": "STORAGE-LIFECYCLE-V1-T006 verified by merged Heim-PC PR #48, exact current main readback, green CI and a current fail-closed no-write maintenance plan.",
-    "predecessor_merge_commit": "aabfca5a4b5a0c6aad079148e8e9d2a509b8c8d6"
+    "predecessor_merge_commit": "aabfca5a4b5a0c6aad079148e8e9d2a509b8c8d6",
+    "verified_at": "2026-07-15T19:43:33.590093Z",
+    "implementation_repository": "heimgewebe/leitstand",
+    "implementation_pull_requests": [
+      172
+    ],
+    "implementation_pr_urls": [
+      "https://github.com/heimgewebe/leitstand/pull/172"
+    ],
+    "implementation_base": "f6726f8bfb655c837a90979beb09b6e6ecf061f0",
+    "implementation_head": "9c2a9af61f919d991bd16c3673133cc779d8ca78",
+    "implementation_merge_commit": "b0532a39b72733cab3a46e30f82f6d0e8dcf7cec",
+    "implementation_diff_sha256": "c7ceeb2b00f86c8cd1a6c7f16a1b3c7f1ff049540a330be66c8830ee220ee991",
+    "implementation_diff_bytes": 102224,
+    "diff_artifact": "/home/alex/iCloud/Drive/halde/STORAGE-LIFECYCLE-V1-T007-leitstand-pr172.patch",
+    "self_review_artifact": "/home/alex/iCloud/Drive/halde/STORAGE-LIFECYCLE-V1-T007-leitstand-pr172-self-review.md",
+    "self_review_sha256": "ca4d6a96631b39a1d3ffdac2b0791e4a604b0d36b5f11acb52e21eb846252d42",
+    "validation": [
+      "TypeScript typecheck, ESLint, focused storage-health tests, the complete Leitstand test suite and production build passed.",
+      "Repository structure, documentation relations, generated files, staged drift gates, observer invariant and runbook invariants passed.",
+      "GitHub build, repository-root, templates, both security scans and Cloudflare Pages checks passed on the exact reviewed head.",
+      "Two isolated real Heim-PC bridge runs and two productive systemd collector runs kept one hourly bucket, one daily bucket and five notifications within the same hour."
+    ],
+    "deployment": {
+      "release_root": "/home/alex/.local/lib/leitstand/releases/b0532a39b72733cab3a46e30f82f6d0e8dcf7cec",
+      "repo_head": "b0532a39b72733cab3a46e30f82f6d0e8dcf7cec",
+      "release_git_clean": true,
+      "leitstand_unit_sha256": "cae6f3c91aeb8a981625cc4d1ff9052fbda4a6f78f09192126bc3fe7f5e152f4",
+      "storage_service_unit_sha256": "2729d0d00f3c5d2e99bb5ea493818b2e21e85a65d672d9cf4b56ec5bef755384",
+      "storage_timer_unit_sha256": "9ab22e74fcbefe292d00265212fd6c2f685d4e25d6ded7d3eed2305b75bc7142",
+      "leitstand_service_active": true,
+      "storage_timer_active": true,
+      "storage_timer_state": "waiting",
+      "collector_result": "success",
+      "health_git_head": "b0532a39b72733cab3a46e30f82f6d0e8dcf7cec"
+    },
+    "live_storage_health": {
+      "observed_at": "2026-07-15T19:40:33.755Z",
+      "artifact_path": "/home/alex/repos/leitstand/artifacts/storage-health.json",
+      "artifact_sha256": "a4da9632348667ef43f2ab02b47bda09c20cf3431d65d5f816e71b73b8db710a",
+      "kind": "leitstand_storage_health",
+      "schema_version": 1,
+      "hourly_count": 1,
+      "hourly_max": 168,
+      "daily_count": 1,
+      "daily_max": 90,
+      "notification_count": 5,
+      "notification_max": 128,
+      "filesystem_used_percent": 31.42,
+      "filesystem_truth": "observed",
+      "growth_24h_truth": "unavailable",
+      "top_producer_count": 6,
+      "budget_violation_count": 5,
+      "cleanup_blocker_count": 9,
+      "unowned_artifact_count": 2,
+      "second_run_same_bucket": true,
+      "second_run_notification_count_unchanged": true,
+      "http_health_status": "ok",
+      "http_storage_health_status": 200,
+      "surface_source_kind": "artifact",
+      "cleanup_authorized": false
+    },
+    "verified_acceptance": {
+      "timeseries": "The schema replaces the same UTC hour and day buckets, keeps strictly monotonic unique keys and enforces 168/90/128 default windows plus hard outer and nested payload maxima. Two live runs in one hour remained hourly=1, daily=1.",
+      "surface": "The live /storage-health route exposes total use, temporary storage, 24-hour growth, top producers, budget violations, unowned artifacts and cleanup blockers from the canonical artifact.",
+      "truth": "The contract and controller require observed, estimated or unavailable truth values. The first productive 24-hour growth value remained correctly unavailable because no historical baseline yet existed.",
+      "alerts": "State transitions are retained once and repeated unchanged observations do not append noise. Two live runs remained at five notifications."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "STORAGE-LIFECYCLE-V1-T007",
+          "source_ref": "heimgewebe/leitstand#172",
+          "number": 172,
+          "head_sha": "9c2a9af61f919d991bd16c3673133cc779d8ca78",
+          "merge_commit_sha": "b0532a39b72733cab3a46e30f82f6d0e8dcf7cec",
+          "diff_sha256": "c7ceeb2b00f86c8cd1a6c7f16a1b3c7f1ff049540a330be66c8830ee220ee991"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "leitstand-runtime",
+          "task_id": "STORAGE-LIFECYCLE-V1-T007",
+          "source_ref": "live:leitstand-storage-health:2026-07-15T19:40:33.755Z",
+          "implementation_sha": "b0532a39b72733cab3a46e30f82f6d0e8dcf7cec",
+          "artifact_sha256": "a4da9632348667ef43f2ab02b47bda09c20cf3431d65d5f816e71b73b8db710a",
+          "storage_service_unit_sha256": "2729d0d00f3c5d2e99bb5ea493818b2e21e85a65d672d9cf4b56ec5bef755384",
+          "storage_timer_unit_sha256": "9ab22e74fcbefe292d00265212fd6c2f685d4e25d6ded7d3eed2305b75bc7142",
+          "hourly_count": 1,
+          "daily_count": 1,
+          "notification_count": 5,
+          "second_run_idempotent": true,
+          "cleanup_authorized": false
+        }
+      ]
+    },
+    "review_receipts": [
+      {
+        "source_ref": "heimgewebe/leitstand#172",
+        "head_sha": "9c2a9af61f919d991bd16c3673133cc779d8ca78",
+        "diff_sha256": "c7ceeb2b00f86c8cd1a6c7f16a1b3c7f1ff049540a330be66c8830ee220ee991",
+        "verdict": "PASS",
+        "origin": "self_review"
+      }
+    ],
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_bounded_storage_health_merged_deployed_live",
+      "outcome": "Leitstand now consumes bounded read-only Heim-PC storage evidence, renders explicit truth states and deduplicates threshold notifications through an active commit-bound hourly collector without granting cleanup authority."
+    },
+    "verification": {
+      "task_sha256": "4131a0b63c5f95e0272c0928c571cf4f217a121bec55df60598d695fa9e75caa",
+      "plan_sha256": "029e9cab769414063025417ebcac22ea3a5cb52d5fe7693472c6335260f7cd8a"
+    }
   }
 }

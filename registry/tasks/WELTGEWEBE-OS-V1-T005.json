@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T005",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Föderationskern und Zwei-Zellen-Nachbarschaft beweisen",
+  "state": "blocked",
+  "goal": "Zellidentität, globale Objektadressen, signierte Ereignisse, Reichweiten, Quarantäne, gemeinsame Räume und einen unabhängigen Zwei-Zellen-Pilot implementieren.",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T002",
+    "WELTGEWEBE-OS-V1-T003",
+    "WELTGEWEBE-OS-V1-T004"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 3
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "rust",
+    "typescript",
+    "cryptography",
+    "protocol-design",
+    "postgresql",
+    "nats",
+    "browser-testing"
+  ],
+  "acceptance": [
+    {
+      "id": "protocol-conformance",
+      "assertion": "Signatur, Version, Wiederholung, Reichweite, Aktualisierung, Löschung und Quarantäne besitzen positive und negative Konformitätstests.",
+      "evidence_type": "object",
+      "verifier": "protocol conformance suite"
+    },
+    {
+      "id": "infrastructure-separation",
+      "assertion": "Öffentliche Föderation benötigt keinen internen Kubernetes-, Datenbank- oder NATS-Zugriff.",
+      "evidence_type": "object",
+      "verifier": "network and interface proof"
+    },
+    {
+      "id": "two-cell-product",
+      "assertion": "Zwei unabhängige Zellen verbinden Knoten, Fäden und einen gemeinsamen Raum.",
+      "evidence_type": "object",
+      "verifier": "end-to-end browser and API proof"
+    },
+    {
+      "id": "partition-recovery",
+      "assertion": "Beide Zellen bleiben getrennt lokal arbeitsfähig und konvergieren kontrolliert nach Wiederverbindung.",
+      "evidence_type": "object",
+      "verifier": "partition and reconciliation test"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T20:50:00Z",
+    "world_tasks": [
+      "WELTGEWEBE-OS-009",
+      "WELTGEWEBE-OS-010"
+    ]
+  }
+}

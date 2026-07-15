@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T010",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Systemkatalog als Rollen- und Einstiegskarte für Weltgewebe OS ausrichten",
+  "state": "planned",
+  "goal": "Weltgewebe OS, seine Zellen, Plattformkomponenten, Betreiberrollen, Datenwahrheiten und Einstiegspunkte im Systemkatalog registrieren.",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T001"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 8
+  },
+  "claims": [
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/systemkatalog"
+  },
+  "required_capabilities": [
+    "json",
+    "schemas",
+    "catalog",
+    "documentation"
+  ],
+  "acceptance": [
+    {
+      "id": "role-catalog",
+      "assertion": "Weltgewebe, Grabowski, Bureau, Chronik, Leitstand, Schauwerk, Commonworld, Lenskit und Konvergenzregelkreis besitzen eindeutige Rollen.",
+      "evidence_type": "object",
+      "verifier": "registry validation"
+    },
+    {
+      "id": "truth-locations",
+      "assertion": "Primärwahrheiten, Projektionen und abgeleitete Ansichten sind maschinenlesbar unterscheidbar.",
+      "evidence_type": "object",
+      "verifier": "catalog contract tests"
+    },
+    {
+      "id": "entrypoints",
+      "assertion": "Produkt-, Betriebs-, Architektur- und Recovery-Einstiegspunkte sind auffindbar.",
+      "evidence_type": "object",
+      "verifier": "generated projection"
+    },
+    {
+      "id": "no-shadow-status",
+      "assertion": "Systemkatalog erzeugt kein zweites Laufzeit- oder Taskstatusmodell.",
+      "evidence_type": "object",
+      "verifier": "negative drift checks"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T20:50:00Z",
+    "ecosystem_role": "system-discovery"
+  }
+}

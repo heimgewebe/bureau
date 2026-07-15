@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T004",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Hochverfügbare Referenzzelle und Recovery messen",
+  "state": "blocked",
+  "goal": "Eine reale oder realistisch fehlertolerante Gewebe-Zelle mit mehreren Fehlerdomänen, PostgreSQL-/JetStream-Redundanz, PITR, Blank-Cluster-Restore und gemessenen SLOs aufbauen.",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T003"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 2
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "kubernetes",
+    "postgresql",
+    "nats",
+    "backup",
+    "observability",
+    "chaos-testing"
+  ],
+  "acceptance": [
+    {
+      "id": "failure-domains",
+      "assertion": "API, Datenbank und Messaging sind über mehrere unabhängige Fehlerdomänen verteilt.",
+      "evidence_type": "object",
+      "verifier": "cluster topology and disruption evidence"
+    },
+    {
+      "id": "failover",
+      "assertion": "Knoten-, API-, Datenbank- und Messagingausfälle wurden kontrolliert ohne verlorene bestätigte Fachmutation geprobt.",
+      "evidence_type": "object",
+      "verifier": "chaos and failover receipts"
+    },
+    {
+      "id": "recovery",
+      "assertion": "PITR und vollständiger Restore in einen leeren Cluster wurden ausgeführt.",
+      "evidence_type": "object",
+      "verifier": "restore receipt and data comparison"
+    },
+    {
+      "id": "measured-objectives",
+      "assertion": "RTO, RPO, Upgrade, Rollback und Fehlerbudget sind gemessen statt angenommen.",
+      "evidence_type": "object",
+      "verifier": "SLO report"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T20:50:00Z",
+    "world_task": "WELTGEWEBE-OS-008"
+  }
+}

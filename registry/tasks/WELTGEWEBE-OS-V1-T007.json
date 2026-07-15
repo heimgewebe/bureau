@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T007",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Chronik als Ereignis- und Wirkungsverlauf anbinden",
+  "state": "blocked",
+  "goal": "Chronik als append-only Projektion für versionierte Domain-, Deployment-, Föderations- und Grabowski-Receipts anbinden, ohne die jeweilige Primärwahrheit zu ersetzen.",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T002"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 5
+  },
+  "claims": [
+    {
+      "resource": "repo.chronik",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik"
+  },
+  "required_capabilities": [
+    "python",
+    "events",
+    "schemas",
+    "postgresql",
+    "nats"
+  ],
+  "acceptance": [
+    {
+      "id": "typed-events",
+      "assertion": "Chronik unterscheidet Domain-Ereignis, Deployment, Föderationszustellung und Operator-Receipt typisiert.",
+      "evidence_type": "object",
+      "verifier": "schema and ingestion tests"
+    },
+    {
+      "id": "provenance",
+      "assertion": "Jeder Eintrag bindet Ursprung, Version, Korrelations-ID und Quellbeleg.",
+      "evidence_type": "object",
+      "verifier": "contract validation"
+    },
+    {
+      "id": "replay-boundary",
+      "assertion": "Chronik kann Diagnose und Historie liefern, begründet aber keine stille Rückschreibung in Weltgewebe.",
+      "evidence_type": "object",
+      "verifier": "read-only boundary tests"
+    },
+    {
+      "id": "retention",
+      "assertion": "Aufbewahrung, Datenschutz und Lösch-/Widerrufsprojektionen sind explizit.",
+      "evidence_type": "object",
+      "verifier": "policy tests"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T20:50:00Z",
+    "ecosystem_role": "history-projection"
+  }
+}

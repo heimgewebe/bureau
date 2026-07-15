@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1",
+  "title": "Weltgewebe OS — föderierte gesellschaftliche Betriebsschicht",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Weltgewebe und das lokale Ökosystem auf eine föderierte, lokal souveräne, global verbundene und Kubernetes-native Zielarchitektur ausrichten, ohne heutige Runtimegrenzen oder fehlende Hochverfügbarkeits- und Föderationsbeweise zu überbehaupten.",
+  "current_plan": {
+    "repository": "weltgewebe",
+    "path": "docs/blueprints/weltgewebe-os-masterplan.md"
+  },
+  "completion": [
+    "Die Weltgewebe-OS-Verfassung, Kubernetes-, Zellföderations- und Ereignisentscheidungen sind kanonisch veröffentlicht und gegen die heutige Runtime abgegrenzt.",
+    "Multi-Instanz-Kohärenz, gemeinsame Auth-Zustände, Transactional Outbox und idempotente Ereignisverarbeitung sind belegt, bevor der Single-Instance-Guard abgelöst wird.",
+    "Ein reproduzierbarer Kubernetes-/GitOps-Pfad und eine hochverfügbare Referenzzelle besitzen gemessene Restore-, Failover-, RTO- und RPO-Belege.",
+    "Ein versionierter Föderationskern und ein Zwei-Zellen-Pilot verbinden lokale Autonomie mit globalen Beziehungen und gemeinsamer Handlungsfähigkeit.",
+    "Grabowski, Chronik, Leitstand, Schauwerk, Systemkatalog, Commonworld, Lenskit und Konvergenzregelkreis sind über klare Rollen und Projektionen ausgerichtet, ohne Weltgewebes Fachwahrheit zu duplizieren."
+  ],
+  "parallelism": {
+    "max_active_tasks": 2
+  },
+  "metadata": {
+    "registered_at": "2026-07-15T20:50:00Z",
+    "source_branch": "architecture/weltgewebe-os-foundation-v1",
+    "source_base_commit": "7b65127e",
+    "first_pr_boundary": "Architecture and registry only; no production runtime mutation.",
+    "does_not_establish": [
+      "Kubernetes production readiness",
+      "high availability",
+      "public federation",
+      "permission to remove the single-instance guard",
+      "authority to mutate foreign active worktrees or deployments"
+    ]
+  }
+}

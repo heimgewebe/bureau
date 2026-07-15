@@ -15,8 +15,9 @@
     "working_repository": "/home/alex/repos/grabowski",
     "grabowski_resources": [
       "repo:/home/alex/repos/grabowski",
-      "repo:/home/alex/repos/bureau",
-      "host:heim-pc"
+      "host:heim-pc",
+      "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T001.json"
     ],
     "approval": {
       "action_class": "repository_mutation",
@@ -31,7 +32,7 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
       "mode": "read",
       "isolation": "none"
     },
@@ -89,7 +90,25 @@
       "automatic_merge",
       "automatic_deploy",
       "runtime_correctness"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Fallback patch executors live in Grabowski; Bureau supplies read-only policy and task truth.",
+      "effect_boundaries": [
+        "Read-only executor policy/task truth"
+      ],
+      "catalog_entry_sha256": "156646c5a6f94cbe4a4481905ca66fc87a556a467477a991c8fcf1acfaf9e8b5",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   },
   "depends_on": [
     "GRIP-ROADMAP-V1-T016"

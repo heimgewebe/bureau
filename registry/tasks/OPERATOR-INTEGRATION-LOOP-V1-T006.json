@@ -14,9 +14,13 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau",
       "repo:/home/alex/repos/grabowski",
-      "host:heim-pc"
+      "host:heim-pc",
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/repos/bureau/.bureau-scopes/ops-automation",
+      "path:/home/alex/.local/state/bureau",
+      "path:/home/alex/repos/bureau/docs",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T006.json"
     ],
     "approval": {
       "action_class": "repository_mutation",
@@ -26,7 +30,22 @@
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.ops",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "state.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.docs",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -84,7 +103,28 @@
       "merge_readiness",
       "runtime_correctness",
       "complete_health_coverage"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "The nightly cycle requires bounded observation code, scheduled execution, diagnostic state and its no-mutation contract.",
+      "effect_boundaries": [
+        "Observe-and-diagnose code",
+        "Nightly automation",
+        "Diagnostic state",
+        "No-mutation runbook"
+      ],
+      "catalog_entry_sha256": "f597e4baf338c95cabef91ce1852dc23866f908e594e6fc7e2d70cc5bfb516d4",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   },
   "depends_on": [
     "OPERATOR-INTEGRATION-LOOP-V1-T002",

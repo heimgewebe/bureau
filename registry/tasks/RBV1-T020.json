@@ -3,7 +3,7 @@
   "id": "RBV1-T020",
   "initiative": "REPOBRIEF-V1-ROADMAP",
   "title": "Decide RepoBrief public distribution license",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 200
@@ -71,7 +71,64 @@
       "public_distribution_permission",
       "product_readiness",
       "merge_readiness"
-    ]
+    ],
+    "verified_at": "2026-07-15T05:58:45Z",
+    "implementation_pr": "heimgewebe/lenskit#988",
+    "implementation_pr_url": "https://github.com/heimgewebe/lenskit/pull/988",
+    "implementation_base": "98161d7c0f9a224a1a1620e12a683c260543e968",
+    "implementation_head": "83f022515c4c88dfaf9e154bf7be6eaf17dd9adb",
+    "implementation_merge_commit": "e241b7b95f08905159cf94f706f3e45024da4b71",
+    "diff_sha256": "36a929a9f65d4b44a0ee6e90e7948b027e94c730b5d4666beedf1cb7703484ac",
+    "diff_bytes": 56835,
+    "diff_lines": 1504,
+    "implementation_paths": [
+      "docs/architecture/naming.md",
+      "docs/decisions/repobrief-package-namespace-decision.md",
+      "docs/decisions/repobrief-package-namespace-decision.v1.json",
+      "docs/decisions/repobrief-public-license-decision.md",
+      "docs/decisions/repobrief-public-license-decision.v1.json",
+      "docs/release/licensing.md",
+      "docs/release/third-party-license-review.v1.json",
+      "merger/lenskit/tests/test_identity_distribution_decisions.py",
+      "scripts/release/check_identity_distribution_decisions.py"
+    ],
+    "lenskit_main_readback": "40b5f02c31cf213074a30529124d2ca67fc8f096",
+    "validation": [
+      "Lenskit PR #988 was merged at e241b7b95f08905159cf94f706f3e45024da4b71 from reviewed head 83f022515c4c88dfaf9e154bf7be6eaf17dd9adb.",
+      "All seven GitHub workflow runs observed for the exact PR head completed successfully: task-index, lint, ai-context guard, Doc-Freshness, contracts-validate, CodeQL and test-suite.",
+      "A fresh isolated readback of Lenskit main at 40b5f02c31cf213074a30529124d2ca67fc8f096 passed scripts/release/check_identity_distribution_decisions.py.",
+      "The focused current-main decision suite passed: 4 tests passed.",
+      "The current-main release contract passed with no findings and retains public_distribution_permission among its explicit non-claims.",
+      "Current workflow, release-script and release-documentation scanning found no GitHub artifact upload or release-publication action.",
+      "GitHub release readback returned an empty list; no RepoBrief/Lenskit GitHub Release is published.",
+      "Current main still contains the All-Rights-Reserved LICENSE, restrictive licensing boundary, explicit machine-readable decision, bounded third-party review and non-public release-candidate policy."
+    ],
+    "outcome": "The copyright holder decision is complete and merged: RepoBrief remains publicly readable but no public redistribution license is granted. The exact third-party review is recorded, public release remains fail-closed, and the decision explicitly avoids legal, jurisdictional, readiness or redistribution claims. No additional Lenskit change was necessary.",
+    "verified_acceptance": {
+      "rbv1-t020-owner-decision": "The merged owner decision explicitly selects do_not_grant_public_redistribution_license and preserves LicenseRef-RepoBrief-All-Rights-Reserved; repository visibility is not treated as permission.",
+      "rbv1-t020-obligations": "The exact locked Python environment was inventoried: 57 packages, 53 identified, 4 metadata-ambiguous and 0 unresolved; the source candidate vendors none of them and the report explicitly does not grant redistribution clearance.",
+      "rbv1-t020-publication-boundary": "The release policy and current contract allow deterministic internal candidates only, publish no artifacts, expose no GitHub Releases, and remain blocked_without_separate_written_permission.",
+      "rbv1-t020-non-claims": "The decision explicitly does not establish legal advice, universal enforceability, redistribution permission, permanent rejection of open source or product readiness."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "number": 988,
+          "task_id": "RBV1-T020",
+          "source_ref": "heimgewebe/lenskit#988",
+          "merge_commit_sha": "e241b7b95f08905159cf94f706f3e45024da4b71",
+          "diff_sha256": "36a929a9f65d4b44a0ee6e90e7948b027e94c730b5d4666beedf1cb7703484ac"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "68f5c1ffe71102507acd307bbd8ab0f46cbbb7cf9065ed0a818a32b733842bd7",
+      "plan_sha256": "cac6e3020e1149f988f19d1db0b81ad5821923fa06367018f948b20596cd9eb2"
+    }
   },
   "depends_on": [
     "RBV1-T018"

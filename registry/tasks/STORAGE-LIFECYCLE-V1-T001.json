@@ -187,7 +187,7 @@
     "verification_note": "T001 is satisfied by two merged GitHub PRs, green local and GitHub validation, byte-identical post-merge tree readback and a head-bound live inventory. The separate Bureau runtime identity mismatch blocks only the optional official verification-stamp command and is registered as BUREAU-TRUTH-MODEL-V2-T015.",
     "verification": {
       "task_sha256": "ab2847fc614de4a482f5fd8c50cb7c422341b784af964d85709509ab46a44f88",
-      "plan_sha256": "621bef4ab42cc6f478c6d47ea68d85dccd2ae5eaeeb9107d71ac295d3063d15c"
+      "plan_sha256": "0551ecdbb4723f839a1803f5e402ae8b853f69aa1ea066dd235dc2074e614b34"
     }
   }
 }

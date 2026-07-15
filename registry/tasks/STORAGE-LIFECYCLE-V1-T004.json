@@ -3,7 +3,7 @@
   "id": "STORAGE-LIFECYCLE-V1-T004",
   "initiative": "STORAGE-LIFECYCLE-V1",
   "title": "Make RepoBrief publication identity-bound and retention-bounded",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 14
@@ -68,6 +68,69 @@
       "runtime correctness before tests",
       "cleanup permission for foreign state",
       "permission to bypass leases or dirty-state guards"
-    ]
+    ],
+    "ready_at": "2026-07-15T18:07:00Z",
+    "readiness_basis": "STORAGE-LIFECYCLE-V1-T003 verified by merged Grabowski PR #232, deployed exact merge identity and live preflight/grace/limit evidence.",
+    "predecessor_merge_commit": "d9dd40b5362fde317188f7aa6a73faefbc9bb484",
+    "verified_at": "2026-07-15T18:07:01Z",
+    "implementation_repository": "heimgewebe/lenskit",
+    "implementation_pull_requests": [
+      1017
+    ],
+    "implementation_pr_urls": [
+      "https://github.com/heimgewebe/lenskit/pull/1017"
+    ],
+    "implementation_base": "0103ee3bd5ba03e92025480ac9de3df2efc32076",
+    "implementation_head": "e04301f1557678821298842a0c6858376a790500",
+    "implementation_merge_commit": "f9b47a212fb20bebe32125889b92a8963d1213bc",
+    "implementation_diff_sha256": "3eae5305a798d4dadcbaa61c25182d105051a130a6a572be4d343a41f40a5423",
+    "diff_artifact": "/home/alex/iCloud/Drive/halde/STORAGE-LIFECYCLE-V1-T004-pr1017.patch",
+    "self_review_artifact": "/home/alex/iCloud/Drive/halde/STORAGE-LIFECYCLE-V1-T004-pr1017-self-review.md",
+    "validation": [
+      "4,067 full tests passed with one expected skip and 13 explicit deselections on the published implementation.",
+      "All substantive GitHub checks passed, including pytest-full, ruff, browser tests, CodeQL, contracts, documentation and repository guards.",
+      "36 post-merge publication-policy tests passed."
+    ],
+    "verified_acceptance": {
+      "identity-noop": "Canonical repository, profile, configuration, Lenskit and schema identity is persisted; an identical publication reuses the existing complete generation instead of writing another full artifact directory.",
+      "retention": "Selection preserves the last three full artifacts, seven daily anchors, eight weekly anchors and explicit pins per repository and lane.",
+      "incomplete-ttl": "Incomplete and failed generations expire after 48 hours unless explicitly pinned for debugging.",
+      "evidence-split": "Small durable manifests, hashes and receipts remain separate from large regenerable publication payloads.",
+      "tests": "Crash recovery, concurrent publication, identity no-op and deterministic retention selection are covered by the merged full and focused suites."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "STORAGE-LIFECYCLE-V1-T004",
+          "source_ref": "heimgewebe/lenskit#1017",
+          "number": 1017,
+          "head_sha": "e04301f1557678821298842a0c6858376a790500",
+          "merge_commit_sha": "f9b47a212fb20bebe32125889b92a8963d1213bc",
+          "diff_sha256": "3eae5305a798d4dadcbaa61c25182d105051a130a6a572be4d343a41f40a5423"
+        }
+      ]
+    },
+    "review_receipts": [
+      {
+        "source_ref": "heimgewebe/lenskit#1017",
+        "head_sha": "e04301f1557678821298842a0c6858376a790500",
+        "diff_sha256": "3eae5305a798d4dadcbaa61c25182d105051a130a6a572be4d343a41f40a5423",
+        "verdict": "PASS",
+        "origin": "self_review"
+      }
+    ],
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_identity_and_retention_bounded_repobrief_publication",
+      "outcome": "RepoBrief publication now avoids duplicate complete generations for identical identities and retains bounded history, incomplete generations and explicit pins under deterministic policy."
+    },
+    "verification": {
+      "task_sha256": "333517c3bca0ca64983e9e5e362fee879468ef9085813457469b6dfedfcab44f",
+      "plan_sha256": "0551ecdbb4723f839a1803f5e402ae8b853f69aa1ea066dd235dc2074e614b34"
+    }
   }
 }

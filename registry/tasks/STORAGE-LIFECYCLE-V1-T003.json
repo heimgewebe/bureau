@@ -3,7 +3,7 @@
   "id": "STORAGE-LIFECYCLE-V1-T003",
   "initiative": "STORAGE-LIFECYCLE-V1",
   "title": "Bind every new Grabowski checkout to owner, TTL and closure",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 13
@@ -67,6 +67,88 @@
     ],
     "ready_at": "2026-07-15T06:10:30.456436Z",
     "readiness_basis": "STORAGE-LIFECYCLE-V1-T002 verified by merged Heim-PC PR #47, green CI, byte-identical merge readback, live managed-build receipt and installed operator projection.",
-    "predecessor_merge_commit": "2eefa6771d400e0437d9b363fdbda9357e983160"
+    "predecessor_merge_commit": "2eefa6771d400e0437d9b363fdbda9357e983160",
+    "verified_at": "2026-07-15T18:07:00Z",
+    "implementation_repository": "heimgewebe/grabowski",
+    "implementation_pull_requests": [
+      232
+    ],
+    "implementation_pr_urls": [
+      "https://github.com/heimgewebe/grabowski/pull/232"
+    ],
+    "implementation_base": "dccedce950c0ae66d91f4e4246a30b7781e13659",
+    "implementation_head": "9d570318e4b0931c2299226ac7ad6f61a50632b2",
+    "implementation_merge_commit": "d9dd40b5362fde317188f7aa6a73faefbc9bb484",
+    "implementation_diff_sha256": "2cd123a06bca444bc3618697958fb7245fd2d20b2550ad4ad79a80fc665cbc3e",
+    "implementation_diff_bytes": 84915,
+    "diff_artifact": "/home/alex/iCloud/Drive/halde/STORAGE-LIFECYCLE-V1-T003-followup-pr232.patch",
+    "self_review_artifact": "/home/alex/iCloud/Drive/halde/STORAGE-LIFECYCLE-V1-T003-followup-pr232-self-review.md",
+    "self_review_sha256": "6db88ffbdba754df9abf2487c1ffc4c717ba30ff2a2b4b31117795f5100725da",
+    "validation": [
+      "1,768 repository tests passed with one expected skip on the exact published head.",
+      "Access policy, tool-surface budget, operator-context and publication-profile generators, runtime locks, deploy-tooling reproducibility and secret scan passed.",
+      "GitHub validate checks for Python 3.10 and 3.12 passed on the exact reviewed head.",
+      "Post-merge focused tests proved active-limit rejection without deletion, fresh-archive grace rejection and two-stage Agent Workspace cleanup."
+    ],
+    "deployment": {
+      "release_id": "d9dd40b5362f-srcset9b1383db0239-locke6664d600b6c-contractb5a98d5aa4ca",
+      "repo_head": "d9dd40b5362fde317188f7aa6a73faefbc9bb484",
+      "source_sha256": "e7eca914dcdda0233d844c2e99cc008ff4ea0239cafe28511c08d93a7dd9a1e0",
+      "runtime_lock_sha256": "e6664d600b6cbaf0bf649b9f6ef3cc5e938e219e15c552a24fa47c5acdc77855",
+      "deployment_complete": true,
+      "deployment_integrity_valid": true,
+      "runtime_healthy": true,
+      "audit_valid": true,
+      "kill_switch_engaged": false
+    },
+    "verified_acceptance": {
+      "creation-contract": "The deployed worktree-ensure grip rejected a request missing purpose, retention_until_unix, source_kind, source_id and artifact_class during preflight before Git mutation.",
+      "limits": "Managed physical active and completed-retained lifecycle rows are bounded per Git common directory; expiry alone does not bypass the limit, and the focused merge-commit test proved rejection without deleting an existing checkout.",
+      "closure": "Archive and lifecycle transition are one SQLite transaction; a fresh archive remains retained for at least 24 hours and requires a new hash-bound cleanup plan after the grace period.",
+      "safety": "Main worktree, dirty state, active tasks, processes, relevant leases, ownership, retention and identity drift remain hard blockers; no foreign checkout was removed during verification."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "STORAGE-LIFECYCLE-V1-T003",
+          "source_ref": "heimgewebe/grabowski#232",
+          "number": 232,
+          "head_sha": "9d570318e4b0931c2299226ac7ad6f61a50632b2",
+          "merge_commit_sha": "d9dd40b5362fde317188f7aa6a73faefbc9bb484",
+          "diff_sha256": "2cd123a06bca444bc3618697958fb7245fd2d20b2550ad4ad79a80fc665cbc3e"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "grabowski-runtime",
+          "task_id": "STORAGE-LIFECYCLE-V1-T003",
+          "source_ref": "live:grabowski-runtime:d9dd40b5362f",
+          "implementation_sha": "d9dd40b5362fde317188f7aa6a73faefbc9bb484",
+          "release_id": "d9dd40b5362f-srcset9b1383db0239-locke6664d600b6c-contractb5a98d5aa4ca",
+          "preflight_blocked_before_mutation": true
+        }
+      ]
+    },
+    "review_receipts": [
+      {
+        "source_ref": "heimgewebe/grabowski#232",
+        "head_sha": "9d570318e4b0931c2299226ac7ad6f61a50632b2",
+        "diff_sha256": "2cd123a06bca444bc3618697958fb7245fd2d20b2550ad4ad79a80fc665cbc3e",
+        "verdict": "PASS",
+        "origin": "self_review"
+      }
+    ],
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_checkout_lifecycle_limits_grace_merged_deployed_live",
+      "outcome": "New managed checkouts are identity-, owner-, source- and retention-bound before mutation; growth is bounded and cleanup remains archive-, grace-, plan- and blocker-guarded."
+    },
+    "verification": {
+      "task_sha256": "ddbb3b2d6072e4c95c22bc2500cce9d63ddf2cd1038322bd613efa57b476b677",
+      "plan_sha256": "0551ecdbb4723f839a1803f5e402ae8b853f69aa1ea066dd235dc2074e614b34"
+    }
   }
 }

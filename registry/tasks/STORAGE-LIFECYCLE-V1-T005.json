@@ -3,7 +3,7 @@
   "id": "STORAGE-LIFECYCLE-V1-T005",
   "initiative": "STORAGE-LIFECYCLE-V1",
   "title": "Narrow checkout lifecycle coordination resources",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 15
@@ -59,11 +59,11 @@
   "metadata": {
     "registered_at": "2026-07-14T22:30:00+02:00",
     "source": "STORAGE-LIFECYCLE-V1 plan from live 2026-07-14 storage audit",
-    "implementation_status": "verified_awaiting_dependency",
+    "implementation_status": "verified",
     "formal_closeout": {
-      "eligible": false,
-      "reason": "STORAGE-LIFECYCLE-V1-T004 remains planned on current Bureau main.",
-      "dependency_checked_at": "2026-07-15T08:25:37Z"
+      "eligible": true,
+      "reason": "STORAGE-LIFECYCLE-V1-T004 is verified and PR #222 plus live checkout coordination evidence satisfy all T005 acceptance criteria.",
+      "dependency_checked_at": "2026-07-15T18:07:02Z"
     },
     "implementation_evidence": {
       "repository": "heimgewebe/grabowski",
@@ -146,6 +146,69 @@
         },
         "safety": "No foreign lease, process, worktree, branch or dirty state was modified."
       }
-    ]
+    ],
+    "ready_at": "2026-07-15T18:07:01Z",
+    "readiness_basis": "STORAGE-LIFECYCLE-V1-T004 verified by merged Lenskit PR #1017, exact diff-bound review and complete CI/test evidence.",
+    "predecessor_merge_commit": "f9b47a212fb20bebe32125889b92a8963d1213bc",
+    "verified_at": "2026-07-15T18:07:02Z",
+    "current_runtime_inclusion": {
+      "current_release_id": "d9dd40b5362f-srcset9b1383db0239-locke6664d600b6c-contractb5a98d5aa4ca",
+      "current_repo_head": "d9dd40b5362fde317188f7aa6a73faefbc9bb484",
+      "t005_merge_is_ancestor": true,
+      "deployment_integrity_valid": true,
+      "runtime_healthy": true
+    },
+    "verified_acceptance": {
+      "resource-model": "Checkout lifecycle mutations use the exact checkout scope plus short-lived Git common-directory metadata serialization instead of broad source-tree blocking.",
+      "nonconflict": "Live archive and cleanup evidence proved disjoint source-path work no longer blocks a target checkout when non-overlap is observed.",
+      "serialization": "Git worktree metadata mutation remains serialized for the same common directory.",
+      "regression": "Foreign or broad relevant leases, unknown overlap, dirty state, active tasks and processes still block fail-closed."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "STORAGE-LIFECYCLE-V1-T005",
+          "source_ref": "heimgewebe/grabowski#222",
+          "number": 222,
+          "head_sha": "77cb346e6d3fe6566048460d6ee9d63d5363843d",
+          "merge_commit_sha": "7809ab668d569357b8851331c778ba6a6a0f9253",
+          "diff_sha256": "debb167808d1472c376e88e02804004b64ffd2113811695263fe1811e4b9feba"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "grabowski-checkout-lifecycle",
+          "task_id": "STORAGE-LIFECYCLE-V1-T005",
+          "source_ref": "live:checkout-archive:20260715T081306Z-a31b1221c65b",
+          "implementation_sha": "7809ab668d569357b8851331c778ba6a6a0f9253",
+          "archive_id": "20260715T081306Z-a31b1221c65b",
+          "plan_sha256": "fc8d2e9255c7bbc16b3946789675a5dca12f63b0d17b5ec0e9f48c8e23ed9f15",
+          "audit_sha256": "e294abf486ef339aa914f7099803db088cb15c47e1fd05ba8d5843ae254c7441",
+          "checkout_removed": true,
+          "rollback_available": true
+        }
+      ]
+    },
+    "review_receipts": [
+      {
+        "source_ref": "heimgewebe/grabowski#222",
+        "head_sha": "77cb346e6d3fe6566048460d6ee9d63d5363843d",
+        "diff_sha256": "debb167808d1472c376e88e02804004b64ffd2113811695263fe1811e4b9feba",
+        "verdict": "PASS",
+        "origin": "self_review"
+      }
+    ],
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_narrow_checkout_coordination_merged_live",
+      "outcome": "Checkout ownership and Git metadata serialization remain safe while disjoint code-path leases no longer create false global lifecycle blockers."
+    },
+    "verification": {
+      "task_sha256": "1fbf6ce8a615cdf4346ca9c0138d3dbc3d453a91b859b1549f6ad470098c965d",
+      "plan_sha256": "0551ecdbb4723f839a1803f5e402ae8b853f69aa1ea066dd235dc2074e614b34"
+    }
   }
 }

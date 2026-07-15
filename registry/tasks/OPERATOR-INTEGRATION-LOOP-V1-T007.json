@@ -16,8 +16,10 @@
     "grabowski_resources": [
       "repo:/home/alex/repos/vibe-lab",
       "repo:/home/alex/repos/grabowski",
-      "repo:/home/alex/repos/bureau",
-      "host:heim-pc"
+      "host:heim-pc",
+      "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+      "path:/home/alex/.local/state/bureau",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T007.json"
     ]
   },
   "claims": [
@@ -32,7 +34,12 @@
       "isolation": "none"
     },
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "state.bureau",
       "mode": "read",
       "isolation": "none"
     },
@@ -99,7 +106,26 @@
       "automatic_schedule_enablement",
       "runtime_correctness",
       "merge_readiness"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Measurement runs in Vibe-Lab and Grabowski; Bureau is a read-only source of task and outcome evidence.",
+      "effect_boundaries": [
+        "Read-only task truth",
+        "Read-only outcome evidence"
+      ],
+      "catalog_entry_sha256": "a29b3cd7b878e3fed260c0afc64396badb34cc8e07154225e9ef13ac9d9271fa",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   },
   "depends_on": [
     "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T005",

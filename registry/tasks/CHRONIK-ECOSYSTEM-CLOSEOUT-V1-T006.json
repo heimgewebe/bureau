@@ -3,9 +3,9 @@
   "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T006",
   "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
   "title": "Bound direct Chronik outbox import scaling and receipt integrity",
-  "state": "planned",
+  "state": "verified",
   "priority": {
-    "lane": "later",
+    "lane": "next",
     "rank": 60
   },
   "goal": "Measure and bound the direct Grabowski-to-Chronik importer as source files and ledger history grow, replace repeated whole-ledger reconciliation only when evidence justifies it, and preserve fail-closed recovery after receipt or data loss.",
@@ -62,8 +62,8 @@
   ],
   "depends_on": [],
   "rollback": {
-    "trigger": "An optimization weakens event-id deduplication, store verification, append-only behavior or crash recovery.",
-    "procedure": "Restore the merged PR #218 importer, retain the measured benchmark and lower the timer cadence only through a separate reviewed operational change."
+    "trigger": "The grouped importer weakens event-id conflict detection, store verification, append-only behavior, truthful partial-failure reporting or replay recovery.",
+    "procedure": "Atomically repoint /home/alex/.local/lib/chronik/current to /home/alex/.local/lib/chronik/releases/2fc65efe06cd23baa2a2bdef39f5f099c8a5540b, reload user units, run one manual import and retain PR #222, its benchmark and runtime receipt as historical evidence."
   },
   "stop": {
     "conditions": [
@@ -77,9 +77,10 @@
     "registered_at": "2026-07-14T15:30:00+02:00",
     "source_pull_requests": [
       "heimgewebe/chronik#217",
-      "heimgewebe/chronik#218"
+      "heimgewebe/chronik#218",
+      "heimgewebe/chronik#222"
     ],
-    "source_runtime_release": "428ffe3f14aef33666937736c5f0593ab44d2378",
+    "source_runtime_release": "6412616b0a6489a6e50646e4ca0e0c76b3dc6031",
     "current_measurement": {
       "observed_at": "2026-07-14T15:27:00+02:00",
       "source_files": 195,
@@ -95,6 +96,227 @@
       "permission to change retention",
       "permission to reduce validation or deduplication",
       "future performance without a fresh benchmark"
-    ]
+    ],
+    "verified_at": "2026-07-15T11:14:10+02:00",
+    "outcome": "The direct Grabowski outbox importer now validates and reconciles every valid source batch against the authoritative Chronik ledger with one target scan, keeps receipts nonauthoritative and reconstructible, preserves truthful ledger statistics after receipt-write failure, and remains far inside the two-minute timer budget without a persistent index.",
+    "implementation": {
+      "repository": "heimgewebe/chronik",
+      "pull_request": 222,
+      "reviewed_base": "2fc65efe06cd23baa2a2bdef39f5f099c8a5540b",
+      "reviewed_head": "47a635a3504a0da2af2b0011512cd959c46cb8b7",
+      "merge_commit": "6412616b0a6489a6e50646e4ca0e0c76b3dc6031",
+      "changed_files": 7,
+      "additions": 793,
+      "deletions": 70,
+      "diff_path": "/home/alex/iCloud/Drive/halde/chronik-pr-222-47a635a.diff",
+      "diff_sha256": "be8ed464285049d94720c9d409a1d5a200816b232f279d63ddc4e82dcdc3053e",
+      "diff_bytes": 40734,
+      "stable_patch_id": "bef90765d3f408fd14e78f9a603541f129aabb04",
+      "merge_blobs_equal_reviewed_head": true
+    },
+    "benchmark": {
+      "contract": {
+        "representative": {
+          "source_files": 200,
+          "source_events": 400,
+          "existing_ledger_events": 500,
+          "maximum_seconds": 5
+        },
+        "projected": {
+          "source_files": 1000,
+          "source_events": 2000,
+          "existing_ledger_events": 5000,
+          "maximum_seconds": 30
+        },
+        "per_run_timer_budget_seconds": 60,
+        "maximum_target_scans_per_batch": 1
+      },
+      "baseline": {
+        "representative": {
+          "seconds": 5.346139,
+          "target_scans": 200
+        },
+        "projected": {
+          "seconds": 187.856265,
+          "target_scans": 1000
+        }
+      },
+      "final": {
+        "job": "grabowski-job-619e77ffa9cd",
+        "argv_sha256": "a2c6dddb8329e94cf2e8084c320903e4d6cfec7f62c958a3a6d3d421cb1b200b",
+        "report_path": "/tmp/chronik-t006-final.json",
+        "report_sha256": "d087718fdd07ac141c5804b0088047ec55cd4c96a29c76a00cc11777383c19f1",
+        "representative_first": {
+          "seconds": 0.416491,
+          "target_scans": 1,
+          "target_records_scanned": 500,
+          "events_imported": 400,
+          "peak_bytes": 3120115
+        },
+        "representative_repeat": {
+          "seconds": 0.43907,
+          "target_scans": 1,
+          "target_records_scanned": 900,
+          "events_skipped_existing": 400,
+          "peak_bytes": 3341137
+        },
+        "projected_first": {
+          "seconds": 2.181003,
+          "target_scans": 1,
+          "target_records_scanned": 5000,
+          "events_imported": 2000,
+          "peak_bytes": 17035286
+        },
+        "projected_repeat": {
+          "seconds": 2.289956,
+          "target_scans": 1,
+          "target_records_scanned": 7000,
+          "events_skipped_existing": 2000,
+          "peak_bytes": 19822059
+        },
+        "thresholds_passed": true
+      },
+      "persistent_index_required": false,
+      "index_decision": "Deferred until a later reproducible benchmark violates the documented runtime or scan thresholds; no second consistency domain is justified now."
+    },
+    "deployment": {
+      "release_path": "/home/alex/.local/lib/chronik/releases/6412616b0a6489a6e50646e4ca0e0c76b3dc6031",
+      "current_target": "/home/alex/.local/lib/chronik/releases/6412616b0a6489a6e50646e4ca0e0c76b3dc6031",
+      "archive_sha256": "c16af5b1e9bbb377b55f64cd4ee2ad957eb86015fc4e6cd95c87b36c824dddf7",
+      "import_service": "inactive/dead after successful one-shot, exit status 0",
+      "import_timer": "enabled/active/waiting",
+      "http_service_activated": false,
+      "plexer_activated": false
+    },
+    "live_import": {
+      "first": {
+        "observed_at": "2026-07-15T10:50:57+02:00",
+        "files_seen": 448,
+        "events_imported": 2,
+        "events_skipped_existing": 891,
+        "target_scans": 1,
+        "target_records_scanned": 893,
+        "errors": [],
+        "wall_seconds_upper_bound": 1
+      },
+      "immediate_repeat": {
+        "observed_at": "2026-07-15T10:51:14+02:00",
+        "files_seen": 448,
+        "events_imported": 0,
+        "events_skipped_existing": 893,
+        "target_scans": 1,
+        "target_records_scanned": 895,
+        "errors": [],
+        "wall_seconds_upper_bound": 1
+      },
+      "runtime_receipt": {
+        "path": "/home/alex/.local/state/chronik/runtime-receipt.json",
+        "receipt_sha256": "55b70e2447e445630d955f9a94fde828c90c8234aacc16df2b251744a69963ea",
+        "ledger_snapshot_sha256": "f037f56e09acf4cc5d26b6efd0cd4013f95a83ec6c9620dbb99c4c9a95896631",
+        "ledger_events": 906,
+        "unique_event_ids": 906,
+        "invalid_records": 0,
+        "duplicate_event_ids": 0
+      }
+    },
+    "validation": {
+      "ruff": "PASS",
+      "git_diff_check": "PASS",
+      "focused_tests": "51 passed",
+      "full_validation": "305 passed, 1 known Starlette TestClient/httpx warning",
+      "role_contract": "PASS",
+      "local_smoke": "PASS",
+      "github_ci": "PASS at reviewed head",
+      "benchmark": "PASS",
+      "ledger_and_receipt_loss_recovery": "PASS",
+      "stale_receipt_and_appended_source_recovery": "PASS",
+      "cross_file_divergent_event_id_conflict": "PASS before append",
+      "receipt_enospc_truthful_telemetry_and_recovery": "PASS"
+    },
+    "review": {
+      "result": "PASS",
+      "reviewed_head": "47a635a3504a0da2af2b0011512cd959c46cb8b7",
+      "diff_sha256": "be8ed464285049d94720c9d409a1d5a200816b232f279d63ddc4e82dcdc3053e",
+      "axes": [
+        "correctness",
+        "regression",
+        "data_loss",
+        "partial_failure",
+        "locking",
+        "toctou",
+        "enospc_and_fsync",
+        "receipt_atomicity",
+        "deduplication",
+        "conflicts",
+        "memory",
+        "timer_reserve",
+        "recovery",
+        "api_compatibility",
+        "telemetry",
+        "index_necessity"
+      ],
+      "separate_follow_up": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T008 records the pre-existing low-level partial JSONL append rollback boundary; T006 does not claim to solve it."
+    },
+    "acceptance_evidence": {
+      "benchmark-contract": "tools/benchmark_outbox_import.py deterministically records machine context, elapsed time, peak memory, scans, scanned records and written/skipped counts for both tiers and repeated imports.",
+      "threshold-defined-before-optimization": "The 5 s, 30 s, one-scan and 60 s bounds were recorded before the optimization; the baseline violated them and the final implementation passes without an index.",
+      "single-batch-reconciliation": "The projected 1000-file batch performs exactly one target-ledger scan instead of 1000.",
+      "receipt-not-authority": "Every repeat import scans the actual ledger even when the source and receipt are unchanged; missing or stale receipts are rebuilt only after real ledger verification.",
+      "loss-recovery-proof": "Tests pass for ledger loss, receipt loss, stale receipt, appended source, duplicate/conflicting event IDs, incomplete JSONL tails and receipt ENOSPC after successful ledger append.",
+      "timer-budget": "The measured projected repeat is 2.289956 s against a 60 s per-run budget and a two-minute systemd timer; the one-shot service excludes parallel starts.",
+      "full-regression-proof": "305 tests, local validation, exact-head GitHub CI, merge-blob equality, versioned deploy and two live imports all passed."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T006",
+          "source_ref": "heimgewebe/chronik#222",
+          "number": 222,
+          "head_sha": "47a635a3504a0da2af2b0011512cd959c46cb8b7",
+          "merge_commit_sha": "6412616b0a6489a6e50646e4ca0e0c76b3dc6031",
+          "diff_sha256": "be8ed464285049d94720c9d409a1d5a200816b232f279d63ddc4e82dcdc3053e"
+        },
+        {
+          "kind": "benchmark_receipt",
+          "authority": "chronik",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T006",
+          "source_ref": "grabowski-job-619e77ffa9cd",
+          "command_sha256": "a2c6dddb8329e94cf2e8084c320903e4d6cfec7f62c958a3a6d3d421cb1b200b",
+          "content_sha256": "d087718fdd07ac141c5804b0088047ec55cd4c96a29c76a00cc11777383c19f1"
+        },
+        {
+          "kind": "runtime_deploy",
+          "authority": "chronik",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T006",
+          "source_ref": "/home/alex/.local/lib/chronik/releases/6412616b0a6489a6e50646e4ca0e0c76b3dc6031",
+          "commit_sha": "6412616b0a6489a6e50646e4ca0e0c76b3dc6031",
+          "content_sha256": "c16af5b1e9bbb377b55f64cd4ee2ad957eb86015fc4e6cd95c87b36c824dddf7"
+        },
+        {
+          "kind": "runtime_receipt",
+          "authority": "chronik",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T006",
+          "source_ref": "/home/alex/.local/state/chronik/runtime-receipt.json",
+          "receipt_sha256": "55b70e2447e445630d955f9a94fde828c90c8234aacc16df2b251744a69963ea",
+          "commit_sha": "6412616b0a6489a6e50646e4ca0e0c76b3dc6031"
+        },
+        {
+          "kind": "live_import_readback",
+          "authority": "chronik",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T006",
+          "source_ref": "chronik-outbox-import.service",
+          "run_id": "2026-07-15T10:50:57+02:00..2026-07-15T10:51:14+02:00",
+          "content_sha256": "f037f56e09acf4cc5d26b6efd0cd4013f95a83ec6c9620dbb99c4c9a95896631"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "38ead5efa24a2ba68ffd04684cf0b665fface592d8a5e4b88946e00fe5621a01",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   }
 }

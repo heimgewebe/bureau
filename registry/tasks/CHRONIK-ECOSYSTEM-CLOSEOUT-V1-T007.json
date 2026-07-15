@@ -5,7 +5,7 @@
   "title": "Read canonical producer component in Chronik history queries",
   "state": "planned",
   "priority": {
-    "lane": "later",
+    "lane": "next",
     "rank": 70
   },
   "goal": "Correct the Chronik history component filter so producer identity is read from source.component, while subject remains reserved for the scoped work target and existing target, operation, task-class and outcome filters remain unchanged.",
@@ -75,26 +75,53 @@
     "registered_at": "2026-07-14T19:54:20+02:00",
     "observed_during": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T005",
     "live_finding": {
+      "observed_at": "2026-07-15T11:14:10+02:00",
       "event_id": "sha256:48e2f68452689dd078397d420a9bcf55310cdda9bffbfdfafbba95c9f0342b42",
       "source_component": "grabowski",
       "subject_repo": "heimgewebe/hausKI",
+      "combined_query": {
+        "repo": "heimgewebe/hausKI",
+        "operation": "implement",
+        "task_class": "coding",
+        "outcome": "completed"
+      },
       "query_without_component_matches": 1,
-      "query_with_component_matches": 0,
-      "root_cause": "query_history compares component to subject.component although canonical producer identity lives in source.component."
+      "query_with_component_grabowski_matches": 0,
+      "ledger_records": 921,
+      "ledger_invalid_records": 0,
+      "ledger_integrity_valid": true,
+      "ledger_sha256": "0d2bd74ee00c26f84f3365941fdd1731ff52594bc25d5b5533420978ff735496",
+      "root_cause_still_plausible": "query_history still compares the requested producer component against subject.component instead of canonical source.component."
     },
     "coordination": {
       "blocked_files": [
         "coding_memory.py",
         "tests/test_coding_memory.py"
       ],
-      "active_owner": "chatgpt-chronik-ccm-t006-20260714",
-      "decision": "register only; do not overlap the active T006 worktree or leases"
+      "previous_active_owner": "chatgpt-chronik-ccm-t006-20260714",
+      "current_active_owner": null,
+      "decision": "T006 no longer blocks the files. T007 is eligible as the next Chronik task, but this Bureau-only closeout does not claim or modify Chronik source."
     },
     "does_not_establish": [
       "corruption of imported events",
       "failure of repository, operation, task-class or outcome filters",
       "permission to modify the active T006 worktree",
       "need to rewrite the append-only ledger"
-    ]
+    ],
+    "reevaluated_at": "2026-07-15T11:14:10+02:00",
+    "dependency_readback": {
+      "task": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T006",
+      "state": "verified in this registry change",
+      "chronik_pull_request": 222,
+      "chronik_merge_commit": "6412616b0a6489a6e50646e4ca0e0c76b3dc6031",
+      "runtime_receipt_sha256": "55b70e2447e445630d955f9a94fde828c90c8234aacc16df2b251744a69963ea"
+    },
+    "reevaluation": {
+      "result": "still_required",
+      "priority_decision": "promote from later to next after T006 closeout",
+      "reason": "The exact historical HausKI completion event remains queryable through repo, operation, task-class and outcome filters but disappears only when component=grabowski is added. T006 changed import batching and does not supersede this interpretation defect.",
+      "implementation_started": false,
+      "next_safe_action": "Create a fresh isolated Chronik worktree after this Bureau registry PR merges, recheck coding_memory.py and tests, and implement only the producer component interpretation fix."
+    }
   }
 }

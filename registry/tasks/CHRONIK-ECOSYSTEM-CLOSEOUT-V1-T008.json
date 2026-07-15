@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T008",
+  "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
+  "title": "Rollback partial Chronik JSONL appends under the ledger lock",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 80
+  },
+  "goal": "Harden the append-only Chronik storage primitive so a low-level short write or I/O failure after extending a ledger file either rolls back to the exact pre-append size under the same exclusive lock or returns a distinct fail-closed recovery condition without claiming a valid complete append.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.chronik",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "pre-append-size-bound",
+      "assertion": "The storage primitive records the exact target size while holding the same cross-process exclusive lock used for append."
+    },
+    {
+      "id": "partial-write-rollback",
+      "assertion": "A simulated short write or append I/O failure truncates and fsyncs the ledger back to the exact pre-append size before the lock is released."
+    },
+    {
+      "id": "rollback-failure-distinct",
+      "assertion": "If rollback or directory/file durability cannot be established, the result is a distinct fail-closed recovery error and never a normal import success or ordinary duplicate result."
+    },
+    {
+      "id": "complete-tail-invariant",
+      "assertion": "After every handled failure, a fresh byte-level snapshot either ends at the original complete JSONL boundary or reports explicit integrity failure; no decoder replacement or line filtering hides raw bytes."
+    },
+    {
+      "id": "concurrency-and-identity-tests",
+      "assertion": "Tests cover concurrent processes, target path replacement, lock ownership, short writes, ENOSPC, rollback success and rollback failure without weakening event-id conflict detection."
+    },
+    {
+      "id": "full-regression-proof",
+      "assertion": "Chronik focused tests, full local validation, GitHub CI, versioned deploy and a live repeated import pass at the exact reviewed head."
+    }
+  ],
+  "depends_on": [
+    "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T007"
+  ],
+  "rollback": {
+    "trigger": "The hardening truncates valid concurrent data, weakens append-only semantics or turns an uncertain rollback into success.",
+    "procedure": "Restore the previous storage primitive and timer release, preserve all failure artifacts, and require manual ledger integrity verification before another import."
+  },
+  "stop": {
+    "conditions": [
+      "a foreign Chronik worktree, lease or process overlaps storage.py or its tests",
+      "the design cannot bind the pre-append size and rollback to the same lock and opened file identity",
+      "the change would rewrite previously valid ledger records rather than only undo the failed extension",
+      "raw-byte tail, concurrency or recovery tests fail"
+    ]
+  },
+  "metadata": {
+    "registered_at": "2026-07-15T11:14:10+02:00",
+    "observed_during": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T006",
+    "finding": {
+      "status": "pre_existing_unfixed_boundary",
+      "scope": "storage.py append durability after low-level partial write",
+      "t006_result": "T006 validates candidates and conflicts before append and fsyncs successful writes, but intentionally does not claim that an abrupt partial os.write or flush failure can never leave an incomplete tail.",
+      "separate_existing_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T058 covers Grabowski audit-log append hardening, not the Chronik agent ledger, so it cannot close this scope."
+    },
+    "priority_decision": "Keep later than T007 because current ledger integrity is valid, incomplete tails fail closed on read/import, and no live corruption is observed; implement before treating abrupt append failures as fully recoverable.",
+    "does_not_establish": [
+      "current ledger corruption",
+      "a reproduced production ENOSPC event",
+      "permission to repair or truncate the live ledger",
+      "that fsync alone rolls back a partial append",
+      "that Grabowski T058 fixes Chronik storage"
+    ]
+  }
+}

@@ -52,6 +52,13 @@ APPROVAL_RULES: dict[str, dict[str, Any]] = {
         "allowed_levels": frozenset({"reviewed_plan", "break_glass"}),
         "reason": "queue order controls what agents may pick next",
     },
+    "registry_mutation": {
+        "required_level": "reviewed_plan",
+        "allowed_levels": frozenset({"reviewed_plan", "break_glass"}),
+        "reason": (
+            "reviewed Registry task-file rewrites require a digest-bound reviewed plan"
+        ),
+    },
     "worktree_cleanup": {
         "required_level": "reviewed_plan",
         "allowed_levels": frozenset({"reviewed_plan", "break_glass"}),

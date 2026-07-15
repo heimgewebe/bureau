@@ -98,7 +98,20 @@ def parser() -> argparse.ArgumentParser:
     sub.add_parser("runtime-identity")
     sub.add_parser("status")
     doctor = sub.add_parser("doctor")
-    doctor.add_argument("--repair", action="store_true")
+    doctor_mode = doctor.add_mutually_exclusive_group()
+    doctor_mode.add_argument("--repair", action="store_true")
+    doctor_mode.add_argument(
+        "--inventory",
+        choices=["broad-bureau-leases"],
+        help="emit one stable machine-readable Doctor inventory",
+    )
+    migrate_leases = sub.add_parser("migrate-leases")
+    migrate_mode = migrate_leases.add_mutually_exclusive_group(required=True)
+    migrate_mode.add_argument("--dry-run", action="store_true")
+    migrate_mode.add_argument("--apply-plan")
+    migrate_leases.add_argument("--write-plan")
+    migrate_leases.add_argument("--batch-size", type=int, default=5)
+    migrate_leases.add_argument("--after-task-id")
     sub.add_parser("runtime-drift-check")
     lease_contract = sub.add_parser("lease-contract")
     lease_contract.add_argument("--operation", dest="operation")
@@ -425,7 +438,13 @@ def _command_mutates(args: argparse.Namespace) -> bool:
     if command == "source-sync":
         return bool(args.apply)
     if command == "doctor":
+        if getattr(args, "inventory", None) is not None:
+            return False
         return bool(getattr(args, "repair", True))
+    if command == "migrate-leases":
+        if not hasattr(args, "apply_plan") or not hasattr(args, "write_plan"):
+            return True
+        return bool(args.apply_plan or args.write_plan)
     if command == "queue-reconcile":
         return bool(args.write_plan or args.apply_plan)
     if command == "live-promote-plan":
@@ -659,6 +678,41 @@ def main(argv: list[str] | None = None) -> int:
             emit(value, args.json)
             return 1 if args.strict and not value["healthy"] else 0
         registry = Registry.load(root)
+
+        if args.command == "doctor" and args.inventory == "broad-bureau-leases":
+            from .lease_migration import broad_bureau_lease_inventory
+
+            value = broad_bureau_lease_inventory(registry)
+            emit(value, args.json)
+            return 0
+        if args.command == "migrate-leases":
+            from .lease_migration import (
+                apply_lease_migration_plan,
+                lease_migration_plan,
+                write_lease_migration_plan,
+            )
+
+            if args.apply_plan:
+                if args.write_plan or args.after_task_id or args.batch_size != 5:
+                    raise StateError(
+                        "--apply-plan cannot be combined with planning options"
+                    )
+                value = apply_lease_migration_plan(registry, args.apply_plan)
+            elif args.write_plan:
+                value = write_lease_migration_plan(
+                    registry,
+                    args.write_plan,
+                    batch_size=args.batch_size,
+                    after_task_id=args.after_task_id,
+                )
+            else:
+                value = lease_migration_plan(
+                    registry,
+                    batch_size=args.batch_size,
+                    after_task_id=args.after_task_id,
+                )
+            emit(value, args.json)
+            return 0
 
         if args.command == "rlens-policy":
             value = evaluate_registry_rlens_policy(registry.tasks)

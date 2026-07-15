@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T006",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Grabowski auf Weltgewebe-OS-Regelkreis ausrichten",
+  "state": "planned",
+  "goal": "Grabowski für deklarative Plattformänderungen, isolierte Kubernetes-Agentenjobs, SLO-/Recoverybelege und föderationsbezogene Diagnose erweitern, ohne Autorität aus technischer Erreichbarkeit abzuleiten.",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T001"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 4
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "required_capabilities": [
+    "python",
+    "kubernetes",
+    "gitops",
+    "bureau",
+    "chronik",
+    "security"
+  ],
+  "acceptance": [
+    {
+      "id": "bounded-jobs",
+      "assertion": "Agentenjobs besitzen Namespace-, Ressourcen-, Secret-, Netz-, Zeit- und Kostenbudgets.",
+      "evidence_type": "object",
+      "verifier": "job policy and non-ideal tests"
+    },
+    {
+      "id": "gitops-effect",
+      "assertion": "Plattformänderungen durchlaufen Zielvertrag, Review, Artefakt, GitOps, Laufzeitbeobachtung und Wirkungsbeleg.",
+      "evidence_type": "object",
+      "verifier": "end-to-end operator receipt"
+    },
+    {
+      "id": "authority-boundary",
+      "assertion": "Grabowski kann keine unklare Primärinstanz ernennen, Sicherheitsregeln umgehen oder fremde Zellen übernehmen.",
+      "evidence_type": "object",
+      "verifier": "negative authorization tests"
+    },
+    {
+      "id": "recovery-loop",
+      "assertion": "Fehlgeschlagene Wirkungen führen zu überprüfbarer Nacharbeit oder Rücknahme statt bloßem Prozessstatus.",
+      "evidence_type": "object",
+      "verifier": "failure and rollback receipts"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T20:50:00Z",
+    "ecosystem_role": "controlled-operator"
+  }
+}

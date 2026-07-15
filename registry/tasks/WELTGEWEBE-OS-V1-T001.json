@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T001",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Weltgewebe-OS-Foundation veröffentlichen und kanonisch verifizieren",
+  "state": "ready",
+  "goal": "Den isolierten Weltgewebe-OS-Architekturschnitt diffgebunden prüfen, veröffentlichen, mergen und post-merge verifizieren, ohne Produktionsruntime oder Single-Instance-Guard zu verändern.",
+  "depends_on": [],
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "python",
+    "documentation"
+  ],
+  "acceptance": [
+    {
+      "id": "canonical-foundation",
+      "assertion": "Architekturvertrag, ADR-0010 bis ADR-0012, Föderationskern, Masterplan, Statusbericht, Roadmap und Task-Control sind auf main und konsistent registriert.",
+      "evidence_type": "object",
+      "verifier": "exact-head repository guards and post-merge readback"
+    },
+    {
+      "id": "truth-boundary",
+      "assertion": "Dokumente unterscheiden Compose-Gegenwart, Kubernetes-Ziel, fehlende HA und fehlende öffentliche Föderation explizit.",
+      "evidence_type": "object",
+      "verifier": "canonical truth tests and document inspection"
+    },
+    {
+      "id": "review-artifact",
+      "assertion": "Ein vollständiger herunterladbarer base-to-head-Diff und ein head-/diffgebundenes kritisches Selbstreview liegen vor.",
+      "evidence_type": "object",
+      "verifier": "artifact hashes plus reviewed head"
+    },
+    {
+      "id": "no-runtime-effect",
+      "assertion": "Produktionsdeployment, laufende PR-#1440-Lane und Single-Instance-Guard bleiben unverändert.",
+      "evidence_type": "object",
+      "verifier": "git path inspection and live coordination readback"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T20:50:00Z",
+    "world_task": "WELTGEWEBE-OS-001"
+  }
+}

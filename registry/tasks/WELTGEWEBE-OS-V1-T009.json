@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T009",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Schauwerk als visuelle Weltgewebe-OS-Erklärung ausrichten",
+  "state": "planned",
+  "goal": "Schauwerk für verständliche System-, Zell-, Ereignis-, Nachbarschafts- und Wirkungsdarstellungen aus kanonischen Projektionen ausrichten.",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T001"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 7
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk"
+  },
+  "required_capabilities": [
+    "visualization",
+    "miro",
+    "mermaid",
+    "schemas",
+    "systemkatalog"
+  ],
+  "acceptance": [
+    {
+      "id": "cell-graph",
+      "assertion": "Gewebe-Zellen, direkte Nachbarschaft, globale Verbindungen und Vertrauensgrenzen sind visuell unterscheidbar.",
+      "evidence_type": "object",
+      "verifier": "rendered artifact plus source binding"
+    },
+    {
+      "id": "event-flow",
+      "assertion": "Lokale Mutation, Outbox, JetStream, Projektion und Föderationszustellung sind nachvollziehbar dargestellt.",
+      "evidence_type": "object",
+      "verifier": "diagram contract and review"
+    },
+    {
+      "id": "truth-boundary",
+      "assertion": "Visualisierungen zeigen Quelle, Frische und Unsicherheit und werden nicht zur Statuswahrheit.",
+      "evidence_type": "object",
+      "verifier": "representation tests"
+    },
+    {
+      "id": "delivery",
+      "assertion": "Darstellungen sind im Schauwerk auffindbar, exportierbar und in Leitstand/Systemkatalog verlinkbar.",
+      "evidence_type": "object",
+      "verifier": "delivery proof"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T20:50:00Z",
+    "ecosystem_role": "visual-explanation"
+  }
+}

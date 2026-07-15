@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T002",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Multi-Instanz-Wahrheit und Ereignisrückgrat schließen",
+  "state": "planned",
+  "goal": "Alle prozesslokalen Autoritätsreste inventarisieren und Shared Auth State, abgeleitete Caches, Transactional Outbox, idempotente Konsumenten und Zwei-API-Kohärenz in kleinen beweisgebundenen Slices umsetzen.",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T001"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "rust",
+    "postgresql",
+    "nats",
+    "docker",
+    "python"
+  ],
+  "acceptance": [
+    {
+      "id": "state-inventory",
+      "assertion": "Alle produktionsrelevanten API-Zustände sind nach Autorität, Persistenz, Lebensdauer, Eigentümer und Fehlerwirkung klassifiziert.",
+      "evidence_type": "object",
+      "verifier": "state inventory plus code-bound references"
+    },
+    {
+      "id": "shared-auth-state",
+      "assertion": "Kein produktionsrelevanter Auth-Zwischenzustand hängt ausschließlich an einem Prozess.",
+      "evidence_type": "object",
+      "verifier": "cross-instance, restart and expiry tests"
+    },
+    {
+      "id": "transactional-outbox",
+      "assertion": "Fachmutation und Outbox sind atomar; Relay, Retry, Deduplikation und Quarantäne sind belegt.",
+      "evidence_type": "object",
+      "verifier": "database and JetStream integration tests"
+    },
+    {
+      "id": "two-api-proof",
+      "assertion": "Zwei API-Instanzen liefern bei Parallelität, Restart, verzögerter und doppelter Ereigniszustellung konsistente Fachresultate.",
+      "evidence_type": "object",
+      "verifier": "two-replica CI proof"
+    },
+    {
+      "id": "guard-ratchet",
+      "assertion": "Der Single-Instance-Guard wird nur im selben diffgebundenen Schnitt durch einen stärkeren Multi-Instance-Guard ersetzt.",
+      "evidence_type": "object",
+      "verifier": "guard tests and exact diff"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T20:50:00Z",
+    "world_tasks": [
+      "WELTGEWEBE-OS-002",
+      "WELTGEWEBE-OS-003",
+      "WELTGEWEBE-OS-004",
+      "WELTGEWEBE-OS-005"
+    ]
+  }
+}

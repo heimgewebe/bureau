@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T008",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Leitstand auf SLO-, Zell- und Föderationsbetrieb ausrichten",
+  "state": "blocked",
+  "goal": "Leitstand als operative Projektion für Cluster, Zellen, SLOs, Fehlerbudgets, Deployments, Föderationszustellung und offene Verpflichtungen ausrichten.",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T003",
+    "WELTGEWEBE-OS-V1-T004",
+    "WELTGEWEBE-OS-V1-T007"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 6
+  },
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand"
+  },
+  "required_capabilities": [
+    "typescript",
+    "observability",
+    "bureau",
+    "chronik",
+    "kubernetes"
+  ],
+  "acceptance": [
+    {
+      "id": "operational-projection",
+      "assertion": "Leitstand konsumiert autoritative Quellen und erzeugt kein konkurrierendes Statusmodell.",
+      "evidence_type": "object",
+      "verifier": "source map and tests"
+    },
+    {
+      "id": "slo-visibility",
+      "assertion": "Verfügbarkeit, Latenz, Fehlerbudget, RTO/RPO und Restore-Alter sind sichtbar.",
+      "evidence_type": "object",
+      "verifier": "dashboard fixture and runtime proof"
+    },
+    {
+      "id": "cell-state",
+      "assertion": "Zell-, Nachbarschafts- und Föderationszustand sind mit Herkunft und Frische dargestellt.",
+      "evidence_type": "object",
+      "verifier": "projection tests"
+    },
+    {
+      "id": "operator-actions",
+      "assertion": "Handlungsflächen verweisen auf Grabowski-Aufträge und Receipts statt unkontrollierte Direktmutation.",
+      "evidence_type": "object",
+      "verifier": "UI and authorization tests"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T20:50:00Z",
+    "ecosystem_role": "operational-view"
+  }
+}

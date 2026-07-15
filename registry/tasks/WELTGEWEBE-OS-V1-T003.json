@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T003",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Kubernetes- und GitOps-Grundlage reproduzierbar aufbauen",
+  "state": "blocked",
+  "goal": "Eine kanonische Plattformbasis mit lokalem Referenzcluster, GitOps, Gateway, Netzwerkpolicies, Secrets, Telemetrie und streng begrenztem Compose-Nebenpfad aufbauen.",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T002"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 1
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "kubernetes",
+    "kustomize",
+    "helm",
+    "flux",
+    "cilium",
+    "opentelemetry",
+    "python"
+  ],
+  "acceptance": [
+    {
+      "id": "blank-cluster-bootstrap",
+      "assertion": "Ein leerer lokaler Cluster wird allein aus versionierten Artefakten reproduzierbar aufgebaut.",
+      "evidence_type": "object",
+      "verifier": "clean cluster bootstrap receipt"
+    },
+    {
+      "id": "same-app-base",
+      "assertion": "CI, Staging und spätere Produktion nutzen dieselbe Anwendungsbasis mit kleinen überprüfbaren Overlays.",
+      "evidence_type": "object",
+      "verifier": "manifest comparison and CI"
+    },
+    {
+      "id": "platform-contracts",
+      "assertion": "Probes, Shutdown, Draining, Secrets, Network Policies, Ressourcenlimits und Telemetrie sind getestet.",
+      "evidence_type": "object",
+      "verifier": "policy and runtime tests"
+    },
+    {
+      "id": "compose-boundary",
+      "assertion": "Compose bleibt abgeleiteter oder streng geprüfter Entwicklungs-/Recoverypfad und keine zweite Plattformwahrheit.",
+      "evidence_type": "object",
+      "verifier": "drift guard"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T20:50:00Z",
+    "world_task": "WELTGEWEBE-OS-006"
+  }
+}

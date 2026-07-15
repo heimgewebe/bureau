@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T013",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Konvergenzregelkreis mit Weltgewebe-OS-Wirkungsmodell verbinden",
+  "state": "planned",
+  "goal": "Den öffentlichen Konvergenzregelkreis als portablen Soll-Ist-Wirkungs- und Rücknahmevertrag mit Weltgewebe OS verbinden, sobald sein Repository und seine Ressource kanonisch registriert sind.",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T001",
+    "WELTGEWEBE-OS-V1-T002"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 11
+  },
+  "claims": [],
+  "execution": {
+    "mode": "manual",
+    "policy": "manual"
+  },
+  "required_capabilities": [
+    "protocol-design",
+    "schemas",
+    "bureau",
+    "chronik",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "resource-registration",
+      "assertion": "Das neue Repository und seine kanonische Rolle sind vor jeder Mutation in Systemkatalog und Bureau registriert.",
+      "evidence_type": "object",
+      "verifier": "resource and catalog readback"
+    },
+    {
+      "id": "portable-loop",
+      "assertion": "Absicht, Sollzustand, Beobachtung, Abweichung, Wirkung, Entscheidung und Rücknahme sind domänenneutral versioniert.",
+      "evidence_type": "object",
+      "verifier": "schema conformance"
+    },
+    {
+      "id": "no-domain-duplication",
+      "assertion": "Der Regelkreis dupliziert weder Weltgewebe-Fachobjekte noch Bureau-Aufgaben- oder Chronik-Historienwahrheit.",
+      "evidence_type": "object",
+      "verifier": "boundary review"
+    },
+    {
+      "id": "integration-proof",
+      "assertion": "Mindestens ein Weltgewebe-OS-Vorgang erzeugt einen portablen Regelkreisbeleg, der auf Bureau, Chronik und Grabowski verweist.",
+      "evidence_type": "object",
+      "verifier": "cross-system receipt"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T20:50:00Z",
+    "ecosystem_role": "portable-control-loop",
+    "blocked_resource": "repo.konvergenzregelkreis is not present in Bureau main at registration time"
+  }
+}

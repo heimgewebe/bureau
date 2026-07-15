@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T011",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Commonworld als globale öffentliche Projektion ausrichten",
+  "state": "blocked",
+  "goal": "Commonworld als globale Erfahrungs- und Erkundungsschicht für öffentliche Zellen, Themen und Beziehungen ausrichten, ohne Weltgewebe-Domänenwahrheit zu duplizieren.",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T005",
+    "WELTGEWEBE-OS-V1-T010"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 9
+  },
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "required_capabilities": [
+    "typescript",
+    "globe",
+    "geospatial",
+    "federation",
+    "browser-testing"
+  ],
+  "acceptance": [
+    {
+      "id": "public-projection",
+      "assertion": "Commonworld zeigt nur explizit öffentliche und indexierbare Projektionen mit Ursprung und Frische.",
+      "evidence_type": "object",
+      "verifier": "data contract and UI tests"
+    },
+    {
+      "id": "semantic-zoom",
+      "assertion": "Lokale Objekte, regionale Beziehungen und globale Strömungen wechseln maßstabsabhängig semantisch.",
+      "evidence_type": "object",
+      "verifier": "interaction tests"
+    },
+    {
+      "id": "index-outage",
+      "assertion": "Ausfall einer globalen Projektion blockiert keine lokale oder direkte föderierte Weltgewebe-Nutzung.",
+      "evidence_type": "object",
+      "verifier": "degraded-mode proof"
+    },
+    {
+      "id": "no-write-authority",
+      "assertion": "Commonworld besitzt keine stille Schreibautorität über kanonische Weltgewebe-Objekte.",
+      "evidence_type": "object",
+      "verifier": "API boundary tests"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T20:50:00Z",
+    "ecosystem_role": "global-experience"
+  }
+}

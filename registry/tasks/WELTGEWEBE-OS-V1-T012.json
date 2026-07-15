@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T012",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Lenskit für Weltgewebe-OS-Änderungskontext härten",
+  "state": "planned",
+  "goal": "Lenskit/RepoBrief für Call-Graph, Impact, Einstiegspunkte, verwandte Tests und inkrementellen Kontext großer Weltgewebe-OS-Änderungen härten.",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T001"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 10
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit"
+  },
+  "required_capabilities": [
+    "python",
+    "codegraph",
+    "retrieval",
+    "git",
+    "benchmarking"
+  ],
+  "acceptance": [
+    {
+      "id": "symbol-context",
+      "assertion": "Caller, Callee, Einstiegspunkte und betroffene Verträge werden für Architektur- und Föderationsänderungen zuverlässig gefunden.",
+      "evidence_type": "object",
+      "verifier": "benchmark and task-specific evaluation"
+    },
+    {
+      "id": "test-context",
+      "assertion": "Verwandte Tests und Migrations-/Deploymentfolgen werden mit belegter Präzision vorgeschlagen.",
+      "evidence_type": "object",
+      "verifier": "retrieval benchmark"
+    },
+    {
+      "id": "incremental",
+      "assertion": "Kontext kann nach Commits inkrementell aktualisiert werden, ohne fremde Repositorywahrheit zu erfinden.",
+      "evidence_type": "object",
+      "verifier": "incremental index proof"
+    },
+    {
+      "id": "operator-handoff",
+      "assertion": "Grabowski-Handoffs können begrenzte, commitgebundene Kontextpakete nutzen.",
+      "evidence_type": "object",
+      "verifier": "context pack receipt"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T20:50:00Z",
+    "ecosystem_role": "code-context"
+  }
+}

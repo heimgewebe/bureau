@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-OS-V1-T001",
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "Weltgewebe-OS-Foundation veröffentlichen und kanonisch verifizieren",
-  "state": "ready",
+  "state": "verified",
   "goal": "Den isolierten Weltgewebe-OS-Architekturschnitt diffgebunden prüfen, veröffentlichen, mergen und post-merge verifizieren, ohne Produktionsruntime oder Single-Instance-Guard zu verändern.",
   "depends_on": [],
   "priority": {
@@ -56,6 +56,22 @@
   ],
   "metadata": {
     "registered_at": "2026-07-15T20:50:00Z",
-    "world_task": "WELTGEWEBE-OS-001"
+    "world_task": "WELTGEWEBE-OS-001",
+    "verified_at": "2026-07-15T21:45:44Z",
+    "weltgewebe_pr": "heimgewebe/weltgewebe#1443",
+    "weltgewebe_merge_commit": "cb66183b162199fc95ca99c865579a4dfe7c5442",
+    "bureau_pr": "heimgewebe/bureau#611",
+    "bureau_merge_commit": "cf6bc3d4db9a111fc571c67eb6e8caca811cd0b6",
+    "bureau_runtime_commit": "ab53f8487d0130acddd2499f49e5372cb552a9cf",
+    "bureau_runtime_refresh_result_sha256": "f5f7d5d1224d35dfbde40e7ff6e5cb5b7408e83c16410d81de94378ba7208c18",
+    "review_evidence_run": "heimgewebe/weltgewebe/actions/runs/29452796063",
+    "github_ci_run": "heimgewebe/weltgewebe/actions/runs/29451891868",
+    "verification": {
+      "task_sha256": "ffea44c91243f52314872ca8c4ae30354e6e743588ade65edb47228b3a85c799",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65"
+    },
+    "source_ref": "heimgewebe/weltgewebe#1443; heimgewebe/bureau#611; bureau-runtime-refresh result f5f7d5d1",
+    "receipt_sha256": "f5f7d5d1224d35dfbde40e7ff6e5cb5b7408e83c16410d81de94378ba7208c18",
+    "task_id": "WELTGEWEBE-OS-V1-T001"
   }
 }

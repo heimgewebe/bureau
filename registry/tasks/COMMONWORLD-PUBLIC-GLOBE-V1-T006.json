@@ -37,11 +37,93 @@
     ],
     "readied_at": "2026-07-13",
     "readied_by_verified_predecessor": "COMMONWORLD-PUBLIC-GLOBE-V1-T005",
-    "direct_execution_authority": "operator instruction: alles registrieren und umsetzen"
+    "direct_execution_authority": "operator instruction: alles registrieren und umsetzen",
+    "claimed_at": "2026-07-15",
+    "claimed_by": "chatgpt-commonworld-public-globe-t006-20260715",
+    "claim_mode": "direct_operator_authority_without_queue_mutation",
+    "completed_at": "2026-07-15",
+    "verification": {
+      "verified_at": "2026-07-15T17:38:10Z",
+      "authority": "commonworld-project-operator",
+      "decision": "real_geographic_hybrid_vertical_slice_merged_deployed_and_live_verified",
+      "commonworld_pull_request": 72,
+      "pr_url": "https://github.com/heimgewebe/commonworld/pull/72",
+      "pr_base": "0f5b86b161fc4ad44f3b64c7325f7c060250fca2",
+      "pr_head": "d09ab4a66388cab2499fe5681954e06941a745cb",
+      "reviewed_tree": "95fdd35d11514f0e5314fa4eecca928a99ea29cc",
+      "reviewed_diff_sha256": "5152fa1934522d9c69eb2bf640d9ed4464ba68296fd81067642f7646a924f338",
+      "reviewed_diff_bytes": 269411,
+      "reviewed_diff_artifact": "https://gist.github.com/alexdermohr/9fe5142e6865fc6ab49c624c66afa502",
+      "reviewed_diff_raw_readback": "PASS",
+      "self_review_comment": "https://github.com/heimgewebe/commonworld/pull/72#issuecomment-4982675014",
+      "self_review_sha256": "64446f8b842a43b69dfd21e5317fe8e1223cd8842a37b435e6ed9e1d1ce3f831",
+      "review_threads": {
+        "total": 9,
+        "resolved": 9,
+        "unresolved": 0
+      },
+      "merge_commit": "99030fa9534d1be7ac91122b468ef016c346e502",
+      "final_tree": "95fdd35d11514f0e5314fa4eecca928a99ea29cc",
+      "github_validate_run": 29429993211,
+      "github_validate_job": 87402232104,
+      "pages_commit": "99030fa9534d1be7ac91122b468ef016c346e502",
+      "pages_status": "built",
+      "pages_built_at": "2026-07-15T16:03:14Z",
+      "public_url": "https://commonworld.net/",
+      "exact_live_artifact_readback": "PASS",
+      "live_static_smoke": {
+        "verdict": "PASS",
+        "job": "grabowski-job-7d30ae72dc34",
+        "receipt_sha256": "3286ebe0686ef24b70aae10c1d8d34312e3a3db3665d28207b2776eb7f10bfdd"
+      },
+      "live_browser_smoke": {
+        "verdict": "PASS",
+        "job": "grabowski-job-34c93696c9fb",
+        "receipt_sha256": "28879b84d5b8bbcf460df8cf8189d74e9dd7ab1c23443c9d8dc4ed964edd7878",
+        "script_sha256": "e628d01e4612bd5e70c9a7d1cf23a98c9325569998f9bda910af5003d4c43408",
+        "scenarios": [
+          "desktop",
+          "ipad-portrait",
+          "ipad-landscape"
+        ],
+        "unchanged_map_updates_skipped": true
+      },
+      "premerge_validation": {
+        "javascript_tests": "23/23 PASS",
+        "python_tests": "357/357 PASS",
+        "browser_scenarios": "12/12 PASS",
+        "scale_fixture": "250 approximate Commons / 250 polygons PASS",
+        "scale_observation_ms": 13.46,
+        "validation_job": "grabowski-job-64bcf7ccefff",
+        "validation_receipt_sha256": "bad6765d3de12da3e20afadd102ca310242c58315c4fa9da68cb46a8f45afcdb",
+        "browser_job": "grabowski-job-8d1f5a844751",
+        "browser_receipt_sha256": "ac6385ab35d9ea055e76ec66b53f23c13d7b0c0fdf1a8addc327a205fc7f4276"
+      },
+      "acceptance": {
+        "catalog-generalization": "PASS",
+        "real-cases": "PASS",
+        "derived-map-data": "PASS",
+        "semantic-zoom": "PASS",
+        "cross-view-parity": "PASS"
+      },
+      "explicit_nonclaims": [
+        "WCAG conformance",
+        "screen-reader product support",
+        "provider SLA",
+        "backend readiness",
+        "million-record delivery architecture",
+        "spatially segmented catalogue delivery",
+        "vector-tile or server-side search infrastructure"
+      ],
+      "scalability_boundary": "Current map hot path is precomputed, indexed, bounded and avoids unchanged setData calls. A gigantic catalogue still requires segmented delivery, spatial/search indices, clustering or vector tiles, and demand-loaded rendering.",
+      "task_sha256": "e2e0d3b98478ef7be3bac9bc0dd10dc194c1739e31f2f5abe36381757bd5a521",
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4",
+      "closeout_sha256": "12edec4c29663831466a404ef3a50368d46ecd29eeaec9351a71c738ebd52d15"
+    }
   },
   "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T006",
   "title": "Deliver a real geographic and hybrid Commons vertical slice",
-  "state": "ready",
+  "state": "verified",
   "goal": "Make the globe an information body using real sourced geographic, digital and hybrid CommonProject identities without creating a second catalog truth.",
   "priority": {
     "lane": "now",

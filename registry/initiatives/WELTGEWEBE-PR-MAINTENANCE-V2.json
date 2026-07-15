@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-PR-MAINTENANCE-V2",
+  "title": "Weltgewebe node mutation PR hardening and supersession",
+  "goal": "Finish the safe node edit/delete implementation on current main, preserve crash and reference integrity, obtain exact-head review evidence, and retire the conflicting predecessor without merging its direct edge mutation model.",
+  "state": "active",
+  "commitment": "now",
+  "completion": [
+    "PR #1440 or a traceable replacement contains the reviewed crash-safe and fail-closed node mutation implementation on current main.",
+    "The exact final head passes required CI and has a downloadable SHA-256-bound final diff before any merge.",
+    "PR #1424 is closed as superseded only after any non-conflicting unique requirements have been reconciled explicitly."
+  ],
+  "current_plan": {
+    "repository": "bureau",
+    "path": "registry/initiatives/WELTGEWEBE-PR-MAINTENANCE-V2.json"
+  },
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-15T14:29:01Z",
+    "repo": "heimgewebe/weltgewebe",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "source": "live open-PR, CI, Git ancestry and dirty-worktree audit on 2026-07-15",
+    "safety_boundary": "Do not overwrite or clean the existing dirty node-edit-delete worktree. Do not merge until the exact current GitHub diff has external review opportunity, required checks are green and review evidence is valid.",
+    "observed_open_prs": [
+      "heimgewebe/weltgewebe#1440",
+      "heimgewebe/weltgewebe#1424"
+    ],
+    "does_not_establish": [
+      "merge_authorization",
+      "production_deployment",
+      "production_runtime_verification"
+    ]
+  }
+}

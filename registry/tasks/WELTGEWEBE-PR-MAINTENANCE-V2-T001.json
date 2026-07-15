@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-PR-MAINTENANCE-V2-T001",
+  "initiative": "WELTGEWEBE-PR-MAINTENANCE-V2",
+  "title": "Finish and review crash-safe node edit/delete PR #1440",
+  "goal": "Reconcile the unpublished node mutation hardening without overwriting the existing dirty worktree, publish a coherent implementation on current main, verify persistence and concurrency integrity, and stop before merge with an exact downloadable final diff for review.",
+  "state": "ready",
+  "depends_on": [],
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "rust",
+    "cargo",
+    "postgresql-integration-tests",
+    "playwright",
+    "shell-contract-tests"
+  ],
+  "acceptance": [
+    {
+      "id": "dirty-worktree-preservation",
+      "assertion": "The existing dirty worktree at /home/alex/repos/.weltgewebe-worktrees/node-edit-delete-v2 is inspected and preserved without reset, cleanup, overwrite or unverified ownership takeover; implementation proceeds in a safely owned path or through an explicitly reconciled continuation.",
+      "evidence_type": "object",
+      "verifier": "Git status, process, lease and worktree receipt before first write"
+    },
+    {
+      "id": "current-main",
+      "assertion": "The final implementation is based on the then-current origin/main and contains no unresolved merge conflicts or stale generated evidence.",
+      "evidence_type": "object",
+      "verifier": "GitHub head/base ancestry and clean worktree receipt"
+    },
+    {
+      "id": "jsonl-crash-integrity",
+      "assertion": "JSONL node deletion cannot leave node and edge projections partially committed after process failure; durable journal recovery, fsync boundaries and failure-injection tests prove rollback or completion across restart.",
+      "evidence_type": "object",
+      "verifier": "focused crash/restart and recovery tests bound to final head"
+    },
+    {
+      "id": "endpoint-ambiguity",
+      "assertion": "Node deletion classifies typed and legacy untyped edge endpoints without deleting account or role references; ambiguous or malformed references fail closed with no partial mutation.",
+      "evidence_type": "object",
+      "verifier": "PostgreSQL and JSONL collision/malformed-reference tests"
+    },
+    {
+      "id": "postgres-concurrency",
+      "assertion": "Concurrent edge creation and node deletion cannot produce orphaned projections, and the chosen PostgreSQL lock scope has an explicit bounded performance assessment.",
+      "evidence_type": "object",
+      "verifier": "direct PostgreSQL concurrency test plus lock-plan or bounded load evidence"
+    },
+    {
+      "id": "product-contract",
+      "assertion": "The edit form and replacement API preserve all supported node variants and do not silently make previously optional domain properties mandatory without an explicit product decision and migration.",
+      "evidence_type": "object",
+      "verifier": "schema/spec comparison and focused browser/API tests"
+    },
+    {
+      "id": "full-gate",
+      "assertion": "All required CI, API, PostgreSQL, CodeQL and Web E2E checks pass on the exact final head and the review-evidence gate is valid.",
+      "evidence_type": "object",
+      "verifier": "fresh GitHub statusCheckRollup bound to final head"
+    },
+    {
+      "id": "external-review-stop",
+      "assertion": "Before merge, the complete current GitHub diff is provided as a separate downloadable or copyable patch with base SHA, head SHA and SHA-256; execution then stops for external review.",
+      "evidence_type": "object",
+      "verifier": "artifact stat, hash receipt and explicit no-merge state"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T14:29:01Z",
+    "source_pr": "heimgewebe/weltgewebe#1440",
+    "observed_remote_head": "3865de7e69eaa13f77c337c169c28f6d23632c7c",
+    "observed_base": "610b3da3cd3790c769d47e2608e85cc8f71af7ee",
+    "observed_current_main": "f9271dc73931db89d1810e83c99e87b92512e342",
+    "observed_state": [
+      "PR is draft and behind current main.",
+      "Review evidence gate is failing while the old required merge gate is green.",
+      "The related worktree is one local commit ahead of the remote head and has 21 modified files plus one untracked fixture.",
+      "The unpublished diff contains crash-recovery journaling and stricter endpoint-collision handling absent from the current GitHub patch."
+    ],
+    "preliminary_diff": {
+      "path": "/home/alex/iCloud/Drive/halde/weltgewebe-pr-1440-current-3865de7.patch",
+      "sha256": "b126357cb45675e7bd00830fc1cff7bf0fcc48ac7f56437a1ea6560e41d6eede",
+      "status": "not a final merge candidate"
+    },
+    "does_not_establish": [
+      "merge_readiness",
+      "merge_authorization",
+      "production_deployment"
+    ]
+  }
+}

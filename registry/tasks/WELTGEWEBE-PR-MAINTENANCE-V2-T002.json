@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-PR-MAINTENANCE-V2-T002",
+  "initiative": "WELTGEWEBE-PR-MAINTENANCE-V2",
+  "title": "Retire conflicting predecessor PR #1424 after explicit reconciliation",
+  "goal": "Confirm that every safe and still-relevant requirement from PR #1424 is either present in the reviewed successor or deliberately rejected by the canonical node/faden model, then close #1424 as superseded without merging it.",
+  "state": "blocked",
+  "depends_on": [
+    "WELTGEWEBE-PR-MAINTENANCE-V2-T001"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "architecture-review"
+  ],
+  "acceptance": [
+    {
+      "id": "unique-delta-accounted",
+      "assertion": "A semantic comparison records every unique behavior in PR #1424 and classifies it as adopted, superseded or rejected with a reason.",
+      "evidence_type": "object",
+      "verifier": "head-bound range comparison and reconciliation note"
+    },
+    {
+      "id": "canonical-faden-model",
+      "assertion": "Direct edge/faden editing or deletion from PR #1424 is not merged unless a separate explicit architecture decision changes the canonical derived-projection model.",
+      "evidence_type": "object",
+      "verifier": "spec and final successor diff inspection"
+    },
+    {
+      "id": "close-superseded",
+      "assertion": "PR #1424 is closed with a concise reference to the reviewed successor and its non-adopted architectural scope; it is not merged.",
+      "evidence_type": "object",
+      "verifier": "GitHub pull-request state and closing comment"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T14:29:01Z",
+    "source_pr": "heimgewebe/weltgewebe#1424",
+    "observed_remote_head": "6cbfc84900fc980fb25e0cd565dd51dad22cde80",
+    "observed_state": [
+      "PR is draft and conflicting with current main.",
+      "Core CI and Required merge gate are failing.",
+      "The PR exposes direct edge/faden editing and deletion, while PR #1440 deliberately preserves edges as derived projections."
+    ],
+    "does_not_establish": [
+      "permission_to_close_before_T001_reconciliation",
+      "merge_readiness",
+      "production_deployment"
+    ]
+  }
+}

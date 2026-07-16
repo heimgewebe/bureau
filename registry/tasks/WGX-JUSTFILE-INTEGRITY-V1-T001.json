@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "id": "WGX-JUSTFILE-INTEGRITY-V1-T001",
+  "initiative": "WGX-JUSTFILE-INTEGRITY-V1",
+  "title": "Repair Justfile syntax and add CI parser gate",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 91
+  },
+  "goal": "Den bestehenden Einrückungsfehler im Justfile reparieren, die vorgesehenen Ziele ausführen und Parsebarkeit verbindlich in CI prüfen.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/wgx",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Eigenständiger Bestandsfix; nicht in T006-Dokumentdiff mischen."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.wgx",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "parse",
+      "assertion": "Das Justfile lässt sich mit der repositoryüblichen just-Version fehlerfrei parsen."
+    },
+    {
+      "id": "targets",
+      "assertion": "Die vorgesehenen Justfile-Prüfziele werden erfolgreich ausgeführt oder verbleibende unabhängige Fehler werden getrennt registriert."
+    },
+    {
+      "id": "ci-gate",
+      "assertion": "GitHub CI enthält einen expliziten Justfile-Parser-Gate."
+    },
+    {
+      "id": "regression",
+      "assertion": "Ein absichtlich nicht parsebares Justfile lässt den Gate-Test fehlschlagen."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T21:51:28+02:00",
+    "source_task": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
+    "source_repository": "heimgewebe/wgx",
+    "source_file": "Justfile",
+    "does_not_establish": [
+      "T006 regression",
+      "permission to mix unrelated changes into prior consumer PR"
+    ]
+  }
+}

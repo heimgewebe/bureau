@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "id": "SEMANTAH-E2E-PORTABILITY-V1-T001",
+  "initiative": "SEMANTAH-E2E-PORTABILITY-V1",
+  "title": "Push-index E2E test from fixed port 8080 decouple",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 90
+  },
+  "goal": "Einen dynamischen freien Port oder expliziten Port-Override durch Testserver, Health-Probe und Clientpfad führen.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/semantAH",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Testhärtung ohne Beenden fremder Prozesse oder Aufweichen von Cleanup/Readiness."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.semantah",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "dynamic-port",
+      "assertion": "Der Test bindet nicht mehr fest an 127.0.0.1:8080."
+    },
+    {
+      "id": "occupied-8080",
+      "assertion": "Der Test besteht, während Port 8080 durch einen unabhängigen Prozess belegt ist."
+    },
+    {
+      "id": "cleanup",
+      "assertion": "Alle vom Test gestarteten Prozesse werden auch bei Fehlern beendet."
+    },
+    {
+      "id": "readiness",
+      "assertion": "Health-Readiness wird vor dem Push-Index-Zugriff nachweislich abgewartet."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T21:51:28+02:00",
+    "source_task": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
+    "source_repository": "heimgewebe/semantAH",
+    "source_file": "tests/test_push_index_e2e.py",
+    "does_not_establish": [
+      "permission to terminate foreign port owners",
+      "T006 regression"
+    ]
+  }
+}

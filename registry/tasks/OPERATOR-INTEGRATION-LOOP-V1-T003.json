@@ -16,7 +16,9 @@
     "grabowski_resources": [
       "repo:/home/alex/repos/chronik",
       "repo:/home/alex/repos/grabowski",
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+      "path:/home/alex/.local/state/bureau",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T003.json"
     ]
   },
   "claims": [
@@ -31,7 +33,12 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "state.bureau",
       "mode": "read",
       "isolation": "none"
     }
@@ -78,7 +85,26 @@
       "command_authority",
       "complete_observability",
       "runtime_correctness"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "The outbox implementation is external-first; Bureau contributes bounded task truth and lifecycle evidence state.",
+      "effect_boundaries": [
+        "Bureau task/event contract",
+        "Lifecycle evidence state"
+      ],
+      "catalog_entry_sha256": "d5a649d1978da1882eb9d1a1a71c15609203470edb7fd09c0dd9cde1b7ded831",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   },
   "depends_on": [
     "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T006"

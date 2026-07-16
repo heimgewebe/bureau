@@ -14,12 +14,19 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/src/bureau/state_root_artifacts.py",
+      "path:/home/alex/.local/state/bureau",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-MACHINE-READABILITY-V1-T015.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "state.bureau",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -72,6 +79,25 @@
       "permission_to_execute_or_recover_state",
       "failure_of_T013",
       "support_for_network_filesystems"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Crash recovery extends the state-root migration implementation and its durable recovery ledger.",
+      "effect_boundaries": [
+        "State-root migration code",
+        "Durable recovery state"
+      ],
+      "catalog_entry_sha256": "4110709de069fb1bb18bea62f93229bae03f9ca040b47932551867056545af08",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   }
 }

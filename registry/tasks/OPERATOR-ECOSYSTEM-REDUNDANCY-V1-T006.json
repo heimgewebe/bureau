@@ -15,7 +15,10 @@
     "working_repository": "/home/alex/repos/chronik",
     "grabowski_resources": [
       "repo:/home/alex/repos/chronik",
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+      "path:/home/alex/repos/bureau/docs",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T006.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/OPERATOR-ECOSYSTEM-REDUNDANCY-V1.json"
     ]
   },
   "claims": [
@@ -25,7 +28,12 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.docs",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -62,7 +70,26 @@
       "runtime_correctness",
       "cleanup_permission",
       "automatic_shutdown_permission"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Chronik event selection is recorded as Bureau task/contract truth and supporting architecture documentation.",
+      "effect_boundaries": [
+        "Chronik event contract task truth",
+        "Operator event documentation"
+      ],
+      "catalog_entry_sha256": "bb39c43c6ce6ec1391412b9d9746eaaafc6abf5d752001198e8f6a643e65ea44",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   },
   "depends_on": [
     "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T007"

@@ -19,7 +19,12 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "component.bureau.docs",
       "mode": "read",
       "isolation": "none"
     }
@@ -38,7 +43,10 @@
     "grabowski_resources": [
       "component:repobrief-evidence-call-graph-v1",
       "path:/home/alex/repos/.lenskit-worktrees/repobrief-evidence-call-graph-v1",
-      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-evidence-call-graph-v1"
+      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-evidence-call-graph-v1",
+      "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md",
+      "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T027.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1.json"
     ]
   },
   "acceptance": [
@@ -58,6 +66,26 @@
   "metadata": {
     "registered_at": "2026-07-15T16:20:00Z",
     "source_request": "User requested all Symbol Call Graph work to be registered and implemented.",
-    "architecture_axis": "evidence-graded coding context graph"
+    "architecture_axis": "evidence-graded coding context graph",
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "The SCIP adapter reads only its exact Bureau task, shared initiative truth and current plan; adapter and benchmark effects remain in Lenskit.",
+      "effect_boundaries": [
+        "Exact Bureau task record",
+        "RepoBrief evidence-context initiative record",
+        "Current multilingual-adapter plan"
+      ],
+      "catalog_entry_sha256": "9103c915d4a0b609abb263c68b8c6b21b46aef7048941fdc6c412312221c27f2",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   }
 }

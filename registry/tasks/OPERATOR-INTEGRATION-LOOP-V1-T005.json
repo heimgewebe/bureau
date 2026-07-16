@@ -14,13 +14,38 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau",
-      "repo:/home/alex/repos/grabowski"
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/.local/state/bureau",
+      "path:/home/alex/repos/bureau/.bureau-scopes/lease-contract",
+      "path:/home/alex/repos/bureau/.bureau-scopes/worktree-admin",
+      "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T005.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "state.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.lease-contract",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.worktree-admin",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -78,7 +103,29 @@
       "claim_from_chat_focus",
       "merge_readiness",
       "runtime_correctness"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Collision-safe pickup joins eligibility code, operational state, exact lease policy, worktree administration and task truth.",
+      "effect_boundaries": [
+        "Ready-selection code",
+        "Live claim state",
+        "Lease contract",
+        "Worktree administration",
+        "Registry task truth"
+      ],
+      "catalog_entry_sha256": "37ac18438df38b81bc310c1bdf45bc10ec163927b7cd06ff348b0da6c958dffb",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   },
   "depends_on": [
     "BUREAU-LIVE-REGISTER-V1-T005"

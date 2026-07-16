@@ -165,6 +165,19 @@ def test_command_classification_fails_closed_for_unknown_commands() -> None:
         SimpleNamespace(command="worktree-hygiene", write_plan=None, apply_plan=None)
     ) is False
     assert bureau_cli._command_mutates(SimpleNamespace(command="doctor")) is True
+    assert (
+        bureau_cli._command_mutates(SimpleNamespace(command="migrate-leases")) is True
+    )
+    assert (
+        bureau_cli._command_mutates(
+            SimpleNamespace(
+                command="migrate-leases",
+                apply_plan=None,
+                write_plan=None,
+            )
+        )
+        is False
+    )
 
 
 def test_mutation_gate_blocks_incompatible_runtime(registry_factory, monkeypatch, capsys) -> None:

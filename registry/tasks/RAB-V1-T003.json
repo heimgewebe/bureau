@@ -19,7 +19,7 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
       "mode": "write",
       "isolation": "none"
     }
@@ -30,7 +30,9 @@
     "working_repository": "/home/alex/repos/lenskit",
     "grabowski_resources": [
       "repo:/home/alex/repos/lenskit",
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+      "path:/home/alex/repos/bureau/registry/tasks/RAB-V1-T003.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/REPOBRIEF-AGENT-BENCHMARK-V1.json"
     ],
     "approval": {
       "action_class": "queue_mutation",
@@ -78,6 +80,24 @@
       "test sufficiency",
       "review completeness",
       "merge readiness"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "RepoBrief adoption is decided from Lenskit evidence and recorded as Bureau task and initiative truth.",
+      "effect_boundaries": [
+        "Adoption decision task truth"
+      ],
+      "catalog_entry_sha256": "f06be94394f82fc1d429ef81452e86673070b93d0f1e28f4c2a7b3506a3ee080",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   }
 }

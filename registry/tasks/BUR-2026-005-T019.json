@@ -19,7 +19,17 @@
   ],
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.schema",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "state.bureau",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -29,7 +39,10 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/repos/bureau/.bureau-scopes/schema",
+      "path:/home/alex/.local/state/bureau",
+      "path:/home/alex/repos/bureau/registry/tasks/BUR-2026-005-T019.json"
     ]
   },
   "acceptance": [
@@ -66,6 +79,26 @@
       "dispatch_authority",
       "merge_authority",
       "backward_compatibility_without_review"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Digest-bound approval artifacts require policy code, artifact schemas and state-root evidence storage.",
+      "effect_boundaries": [
+        "Approval digest code",
+        "Approval artifact schema",
+        "State-root evidence"
+      ],
+      "catalog_entry_sha256": "6eae45e4a3c53e5b79b32e28a86b2ba37fa555803cc0ae526e8f5f95e2fc40db",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   }
 }

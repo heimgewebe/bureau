@@ -1,0 +1,751 @@
+{
+  "schema_version": 1,
+  "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+  "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+  "source_claim_resource": "repo.bureau",
+  "entries": {
+    "BUR-2026-003-T005": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "component.bureau.registry",
+        "component.bureau.schema"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+        "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+        "path:/home/alex/repos/bureau/.bureau-scopes/schema"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Repo discovery changes Bureau scanner code plus the repository registry and its validation contract.",
+      "effect_boundaries": [
+        "Bureau core scanner code",
+        "Registry repository declarations",
+        "Registry schema validation"
+      ]
+    },
+    "BUR-2026-003-T006": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "component.bureau.registry",
+        "component.bureau.schema"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+        "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+        "path:/home/alex/repos/bureau/.bureau-scopes/schema"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Fetch/import orchestration changes Bureau import code, registry materialization and provenance schemas.",
+      "effect_boundaries": [
+        "Bureau import orchestration",
+        "Registry mutation boundary",
+        "Import provenance schema"
+      ]
+    },
+    "BUR-2026-003-T008": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "component.bureau.registry"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+        "path:/home/alex/repos/bureau/.bureau-scopes/registry"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Steuerboard candidates are interpreted by Bureau code and may create reviewed Registry task material only.",
+      "effect_boundaries": [
+        "Candidate interpretation code",
+        "Reviewed Registry task creation"
+      ]
+    },
+    "BUR-2026-003-T009": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "component.bureau.runtime",
+        "component.bureau.ops"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+        "service:bureau-status-capsule",
+        "path:/home/alex/repos/bureau/.bureau-scopes/ops-automation"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Runtime approval enforcement spans Bureau policy code, installed runtime effects and versioned operator automation.",
+      "effect_boundaries": [
+        "Approval policy code",
+        "Runtime effect gate",
+        "Versioned automation sources"
+      ]
+    },
+    "BUR-2026-005-T005": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "state.bureau",
+        "component.bureau.schema"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+        "path:/home/alex/.local/state/bureau",
+        "path:/home/alex/repos/bureau/.bureau-scopes/schema"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "The webhook inbox is an append-only Bureau state surface with source-verification and event schemas.",
+      "effect_boundaries": [
+        "Inbox implementation",
+        "Append-only state store",
+        "Webhook event schema"
+      ]
+    },
+    "BUR-2026-005-T006": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+        "path:/home/alex/repos/bureau/docs"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Dispatcher policy assessment changes policy code/tests and its reviewed safety documentation, not the whole repository.",
+      "effect_boundaries": [
+        "Dispatcher policy code and tests",
+        "Reviewed safety contract"
+      ]
+    },
+    "BUR-2026-005-T007": {
+      "replacement_claim_resources": [
+        "component.bureau.docs",
+        "component.bureau.ops"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/docs",
+        "path:/home/alex/repos/bureau/.bureau-scopes/ops-automation"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "The task is limited to the automation runbook and versioned operations surfaces.",
+      "effect_boundaries": [
+        "Operations documentation",
+        "Automation install/disable/inspect sources"
+      ]
+    },
+    "BUR-2026-005-T008": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "component.bureau.registry",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+        "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+        "path:/home/alex/repos/bureau/docs"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Plan pinning freshness spans eligibility code, current-plan Registry semantics and the documented compatibility strategy.",
+      "effect_boundaries": [
+        "Plan freshness code",
+        "Registry plan semantics",
+        "Compatibility documentation"
+      ]
+    },
+    "BUR-2026-005-T017": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "state.bureau",
+        "component.bureau.registry"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+        "path:/home/alex/.local/state/bureau",
+        "path:/home/alex/repos/bureau/.bureau-scopes/registry"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Receipt normalization is bounded to StateStore handling and Registry verification reconciliation.",
+      "effect_boundaries": [
+        "Receipt normalization code",
+        "Bureau state rows",
+        "Registry verification projection"
+      ]
+    },
+    "BUR-2026-005-T019": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "component.bureau.schema",
+        "state.bureau"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+        "path:/home/alex/repos/bureau/.bureau-scopes/schema",
+        "path:/home/alex/.local/state/bureau"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Digest-bound approval artifacts require policy code, artifact schemas and state-root evidence storage.",
+      "effect_boundaries": [
+        "Approval digest code",
+        "Approval artifact schema",
+        "State-root evidence"
+      ]
+    },
+    "BUR-2026-005-T020": {
+      "replacement_claim_resources": [
+        "component.bureau.core"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/src/bureau/status_capsule.py"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "The registered affected code is exactly status_capsule.py::_safe_extract.",
+      "effect_boundaries": [
+        "Status capsule archive extraction"
+      ]
+    },
+    "BUREAU-TRUTH-MODEL-V2-T004": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "state.bureau",
+        "component.bureau.registry"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+        "path:/home/alex/.local/state/bureau",
+        "path:/home/alex/repos/bureau/.bureau-scopes/registry"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "Shadow lifecycle proposals compare StateStore evidence with canonical Registry outcomes.",
+      "effect_boundaries": [
+        "Lifecycle proposal code",
+        "Shadow lifecycle ledger",
+        "Canonical Registry comparison"
+      ]
+    },
+    "BUREAU-TRUTH-MODEL-V2-T005": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "state.bureau"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+        "path:/home/alex/.local/state/bureau"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Repository frontier composition is a Bureau read model over tasks, claims, runs, leases and PR observations.",
+      "effect_boundaries": [
+        "Frontier composition code",
+        "Operational state projections"
+      ]
+    },
+    "BUREAU-TRUTH-MODEL-V2-T006": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+        "path:/home/alex/repos/bureau/docs"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "Backlog revalidation edits reviewed task classifications and records the classification contract.",
+      "effect_boundaries": [
+        "Reviewed task records",
+        "Backlog classification evidence"
+      ]
+    },
+    "BUREAU-TRUTH-MODEL-V2-T007": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "state.bureau"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+        "path:/home/alex/.local/state/bureau"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Live Register indexing changes only its projection code and state-store representation.",
+      "effect_boundaries": [
+        "Live Register projection code",
+        "Materialized state index"
+      ]
+    },
+    "BUREAU-TRUTH-MODEL-V2-T008": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "state.bureau",
+        "component.bureau.worktree-admin"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+        "path:/home/alex/.local/state/bureau",
+        "path:/home/alex/repos/bureau/.bureau-scopes/worktree-admin"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Workspace reconciliation spans workspace-state code, StateStore rows and the explicit worktree-admin effect gate.",
+      "effect_boundaries": [
+        "Workspace reconciliation code",
+        "Workspace state rows",
+        "Worktree administration gate"
+      ]
+    },
+    "BUREAU-TRUTH-MODEL-V2-T009": {
+      "replacement_claim_resources": [
+        "component.bureau.core"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/src/bureau/status_projection.py",
+        "path:/home/alex/repos/bureau/src/bureau/v2.py"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Health alignment is confined to status projection and Doctor aggregation code.",
+      "effect_boundaries": [
+        "Status projection health logic",
+        "Doctor aggregation logic"
+      ]
+    },
+    "BUREAU-TRUTH-MODEL-V2-T010": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "state.bureau",
+        "component.bureau.registry"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+        "path:/home/alex/.local/state/bureau",
+        "path:/home/alex/repos/bureau/.bureau-scopes/registry"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Stale candidate revalidation compares Live Register state with current Registry and PR evidence.",
+      "effect_boundaries": [
+        "Candidate reconciliation code",
+        "Live Register state",
+        "Registry task truth"
+      ]
+    },
+    "CCM-V1-T005": {
+      "replacement_claim_resources": [
+        "component.bureau.registry"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/registry"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "The pilot executes in Vibe-Lab; Bureau participation is limited to evidence-bound task and decision records.",
+      "effect_boundaries": [
+        "Bureau experiment task records"
+      ]
+    },
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T032": {
+      "replacement_claim_resources": [
+        "component.bureau.registry"
+      ],
+      "replacement_grabowski_resources": [],
+      "include_initiative_resource": false,
+      "rationale": "Grabowski owns implementation; its Bureau dependency is read-only task and validation truth.",
+      "effect_boundaries": [
+        "Read-only Bureau task truth"
+      ]
+    },
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T003": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+        "path:/home/alex/repos/bureau/docs"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "The Steuerboard decision changes bounded role/task truth and architecture documentation in Bureau.",
+      "effect_boundaries": [
+        "Steuerboard role decision record",
+        "Bureau architecture documentation"
+      ]
+    },
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T006": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+        "path:/home/alex/repos/bureau/docs"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "Chronik event selection is recorded as Bureau task/contract truth and supporting architecture documentation.",
+      "effect_boundaries": [
+        "Chronik event contract task truth",
+        "Operator event documentation"
+      ]
+    },
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T015": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "component.bureau.ops",
+        "state.bureau"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/src/bureau/codex_bridge.py",
+        "path:/home/alex/repos/bureau/.bureau-scopes/ops-automation",
+        "path:/home/alex/.local/state/bureau"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Codex bridge normalization is limited to its bridge implementation, scheduled operations and bridge state.",
+      "effect_boundaries": [
+        "Codex bridge implementation",
+        "Scheduled bridge automation",
+        "Bridge state evidence"
+      ]
+    },
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T016": {
+      "replacement_claim_resources": [
+        "component.bureau.ops",
+        "component.bureau.docs",
+        "state.bureau"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/ops-automation",
+        "path:/home/alex/repos/bureau/docs",
+        "path:/home/alex/.local/state/bureau"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "The connector probe decision concerns its scheduler/probe sources, consumer contract and observation state.",
+      "effect_boundaries": [
+        "Probe automation",
+        "Consumer/freshness documentation",
+        "Probe observation state"
+      ]
+    },
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T017": {
+      "replacement_claim_resources": [
+        "component.bureau.ops",
+        "component.bureau.runtime",
+        "component.bureau.core"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/ops-automation",
+        "service:bureau-status-capsule",
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Scheduler canonicalization spans versioned automation, immutable runtime identity and launcher/drift code.",
+      "effect_boundaries": [
+        "Scheduler source files",
+        "Immutable Bureau runtime",
+        "Launcher and drift code"
+      ]
+    },
+    "OPERATOR-INTEGRATION-LOOP-V1-T001": {
+      "replacement_claim_resources": [
+        "component.bureau.registry"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/registry"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Fallback patch executors live in Grabowski; Bureau supplies read-only policy and task truth.",
+      "effect_boundaries": [
+        "Read-only executor policy/task truth"
+      ]
+    },
+    "OPERATOR-INTEGRATION-LOOP-V1-T003": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "state.bureau"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+        "path:/home/alex/.local/state/bureau"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "The outbox implementation is external-first; Bureau contributes bounded task truth and lifecycle evidence state.",
+      "effect_boundaries": [
+        "Bureau task/event contract",
+        "Lifecycle evidence state"
+      ]
+    },
+    "OPERATOR-INTEGRATION-LOOP-V1-T005": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "state.bureau",
+        "component.bureau.lease-contract",
+        "component.bureau.worktree-admin",
+        "component.bureau.registry"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+        "path:/home/alex/.local/state/bureau",
+        "path:/home/alex/repos/bureau/.bureau-scopes/lease-contract",
+        "path:/home/alex/repos/bureau/.bureau-scopes/worktree-admin",
+        "path:/home/alex/repos/bureau/.bureau-scopes/registry"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Collision-safe pickup joins eligibility code, operational state, exact lease policy, worktree administration and task truth.",
+      "effect_boundaries": [
+        "Ready-selection code",
+        "Live claim state",
+        "Lease contract",
+        "Worktree administration",
+        "Registry task truth"
+      ]
+    },
+    "OPERATOR-INTEGRATION-LOOP-V1-T006": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "component.bureau.ops",
+        "state.bureau",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+        "path:/home/alex/repos/bureau/.bureau-scopes/ops-automation",
+        "path:/home/alex/.local/state/bureau",
+        "path:/home/alex/repos/bureau/docs"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "The nightly cycle requires bounded observation code, scheduled execution, diagnostic state and its no-mutation contract.",
+      "effect_boundaries": [
+        "Observe-and-diagnose code",
+        "Nightly automation",
+        "Diagnostic state",
+        "No-mutation runbook"
+      ]
+    },
+    "OPERATOR-INTEGRATION-LOOP-V1-T007": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "state.bureau"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+        "path:/home/alex/.local/state/bureau"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Measurement runs in Vibe-Lab and Grabowski; Bureau is a read-only source of task and outcome evidence.",
+      "effect_boundaries": [
+        "Read-only task truth",
+        "Read-only outcome evidence"
+      ]
+    },
+    "OPERATOR-MACHINE-READABILITY-V1-T010": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "component.bureau.runtime"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+        "service:bureau-status-capsule"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "The end-to-end proof reads canonical Registry truth and the immutable Bureau runtime; implementation occurs in other repositories.",
+      "effect_boundaries": [
+        "Canonical Registry read",
+        "Immutable runtime read"
+      ]
+    },
+    "OPERATOR-MACHINE-READABILITY-V1-T011": {
+      "replacement_claim_resources": [
+        "component.bureau.runtime",
+        "component.bureau.lease-contract"
+      ],
+      "replacement_grabowski_resources": [
+        "service:bureau-status-capsule",
+        "path:/home/alex/repos/bureau/.bureau-scopes/lease-contract"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "The unification target is the immutable Bureau runtime consumed by Grabowski and its exact lease contract.",
+      "effect_boundaries": [
+        "Immutable runtime identity",
+        "Lease consumer contract"
+      ]
+    },
+    "OPERATOR-MACHINE-READABILITY-V1-T014": {
+      "replacement_claim_resources": [
+        "component.bureau.core"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/src/bureau/state_root_artifacts.py"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "The residual rename race is located in the state-root artifact effect implementation.",
+      "effect_boundaries": [
+        "Descriptor-relative state-root rename code"
+      ]
+    },
+    "OPERATOR-MACHINE-READABILITY-V1-T015": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "state.bureau"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/src/bureau/state_root_artifacts.py",
+        "path:/home/alex/.local/state/bureau"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Crash recovery extends the state-root migration implementation and its durable recovery ledger.",
+      "effect_boundaries": [
+        "State-root migration code",
+        "Durable recovery state"
+      ]
+    },
+    "OPERATOR-MACHINE-READABILITY-V1-T016": {
+      "replacement_claim_resources": [
+        "component.bureau.core",
+        "component.bureau.ops",
+        "component.bureau.runtime"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/src/bureau/runtime_refresh.py",
+        "path:/home/alex/repos/bureau/.bureau-scopes/ops-automation",
+        "service:bureau-status-capsule"
+      ],
+      "include_initiative_resource": false,
+      "rationale": "Runtime refresh is bounded to its runner, versioned installer/automation and immutable deployment target.",
+      "effect_boundaries": [
+        "Runtime refresh runner",
+        "Installer and scheduler sources",
+        "Immutable Bureau runtime"
+      ]
+    },
+    "OPERATOR-PC-HYGIENE-V1-T002": {
+      "replacement_claim_resources": [],
+      "replacement_grabowski_resources": [],
+      "include_initiative_resource": false,
+      "rationale": "The watchdog fix belongs to Grabowski and heim-pc; Bureau participation is only this exact task record.",
+      "effect_boundaries": [
+        "Exact Bureau task record only"
+      ]
+    },
+    "OPERATOR-PC-HYGIENE-V1-T003": {
+      "replacement_claim_resources": [],
+      "replacement_grabowski_resources": [],
+      "include_initiative_resource": false,
+      "rationale": "The privileged cleanup path belongs to Grabowski/heim-pc; Bureau participation is only this exact task record.",
+      "effect_boundaries": [
+        "Exact Bureau task record only"
+      ]
+    },
+    "OPERATOR-TOOLING-FOCUS-V1-T001": {
+      "replacement_claim_resources": [],
+      "replacement_grabowski_resources": [],
+      "include_initiative_resource": false,
+      "rationale": "The monitoring decision belongs to host, infra and Leitstand; Bureau participation is only this exact task record.",
+      "effect_boundaries": [
+        "Exact Bureau task record only"
+      ]
+    },
+    "RAB-V1-T003": {
+      "replacement_claim_resources": [
+        "component.bureau.registry"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/registry"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "RepoBrief adoption is decided from Lenskit evidence and recorded as Bureau task and initiative truth.",
+      "effect_boundaries": [
+        "Adoption decision task truth"
+      ]
+    },
+    "RPU-V1-T023": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "The Lenskit call-graph implementation reads only its exact Bureau task, shared initiative truth and current plan; it does not mutate Bureau code, runtime or Registry state.",
+      "effect_boundaries": [
+        "Exact Bureau task record",
+        "RepoBrief evidence-context initiative record",
+        "Current evidence call-graph plan"
+      ]
+    },
+    "RPU-V1-T024": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "The Lenskit benchmark reads only its exact Bureau task, shared initiative truth and promotion plan; benchmark effects remain in Lenskit.",
+      "effect_boundaries": [
+        "Exact Bureau task record",
+        "RepoBrief evidence-context initiative record",
+        "Current benchmark and promotion plan"
+      ]
+    },
+    "RPU-V1-T025": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "The Lenskit edit-context compiler reads only its exact Bureau task, shared initiative truth and current plan; all implementation effects remain in Lenskit.",
+      "effect_boundaries": [
+        "Exact Bureau task record",
+        "RepoBrief evidence-context initiative record",
+        "Current edit-context plan"
+      ]
+    },
+    "RPU-V1-T026": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "The runtime-overlay work reads only its exact Bureau task, shared initiative truth and current plan; trace production and overlay code remain in Lenskit.",
+      "effect_boundaries": [
+        "Exact Bureau task record",
+        "RepoBrief evidence-context initiative record",
+        "Current runtime-overlay plan"
+      ]
+    },
+    "RPU-V1-T027": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "The SCIP adapter reads only its exact Bureau task, shared initiative truth and current plan; adapter and benchmark effects remain in Lenskit.",
+      "effect_boundaries": [
+        "Exact Bureau task record",
+        "RepoBrief evidence-context initiative record",
+        "Current multilingual-adapter plan"
+      ]
+    },
+    "RPU-V1-T028": {
+      "replacement_claim_resources": [
+        "component.bureau.registry",
+        "component.bureau.docs"
+      ],
+      "replacement_grabowski_resources": [
+        "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md"
+      ],
+      "include_initiative_resource": true,
+      "rationale": "The relation-overlay work reads only its exact Bureau task, shared initiative truth and current plan; build, test and contract extraction effects remain in Lenskit.",
+      "effect_boundaries": [
+        "Exact Bureau task record",
+        "RepoBrief evidence-context initiative record",
+        "Current build-test-contract overlay plan"
+      ]
+    }
+  },
+  "does_not_establish": [
+    "automatic scope correctness without review",
+    "queue mutation",
+    "task readiness",
+    "task claim or dispatch authority",
+    "merge or deployment authority",
+    "mutation of terminal historical tasks"
+  ]
+}

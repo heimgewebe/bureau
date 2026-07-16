@@ -15,8 +15,8 @@
     "working_repository": "/home/alex/repos/grabowski",
     "grabowski_resources": [
       "host:heim-pc",
-      "repo:/home/alex/repos/bureau",
-      "repo:/home/alex/repos/grabowski"
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-PC-HYGIENE-V1-T002.json"
     ]
   },
   "claims": [
@@ -52,7 +52,25 @@
       "security_correctness",
       "merge_readiness"
     ],
-    "live_audit_finding": "operator watchdog caused MCP tool interruption and service restart on 2026-07-08; local drop-in changed it to --check-only."
+    "live_audit_finding": "operator watchdog caused MCP tool interruption and service restart on 2026-07-08; local drop-in changed it to --check-only.",
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "The watchdog fix belongs to Grabowski and heim-pc; Bureau participation is only this exact task record.",
+      "effect_boundaries": [
+        "Exact Bureau task record only"
+      ],
+      "catalog_entry_sha256": "fddc511099f9a74a2a28a476944198bd8ec98ff632f24ee945b82b770b9faa7b",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   },
   "depends_on": []
 }

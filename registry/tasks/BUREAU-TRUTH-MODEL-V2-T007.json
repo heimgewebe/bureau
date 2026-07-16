@@ -6,12 +6,19 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/.local/state/bureau",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T007.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "state.bureau",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -60,6 +67,25 @@
       "dispatch authority",
       "merge authority",
       "deployment authority"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Live Register indexing changes only its projection code and state-store representation.",
+      "effect_boundaries": [
+        "Live Register projection code",
+        "Materialized state index"
+      ],
+      "catalog_entry_sha256": "70724e1ac10b58218d8b8428cf2848bc4bf7cac11e1e6487e37ec6aae67ef796",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   }
 }

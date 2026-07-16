@@ -6,12 +6,26 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/.local/state/bureau",
+      "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T004.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/BUREAU-TRUTH-MODEL-V2.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "state.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -60,6 +74,26 @@
       "dispatch authority",
       "merge authority",
       "deployment authority"
-    ]
+    ],
+    "lease_scope_migration": {
+      "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "source_broad_resource_key": "repo:/home/alex/repos/bureau",
+      "source_claim_resource": "repo.bureau",
+      "rationale": "Shadow lifecycle proposals compare StateStore evidence with canonical Registry outcomes.",
+      "effect_boundaries": [
+        "Lifecycle proposal code",
+        "Shadow lifecycle ledger",
+        "Canonical Registry comparison"
+      ],
+      "catalog_entry_sha256": "59e46c3b8ee689f2bb3e1688ca0584cd702d4ab1ba663bbabaa338375ffa1def",
+      "does_not_establish": [
+        "queue mutation",
+        "task readiness",
+        "task claim or dispatch authority",
+        "merge or deployment authority",
+        "verification authority",
+        "safe mutation of terminal historical tasks"
+      ]
+    }
   }
 }

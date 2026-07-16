@@ -71,8 +71,8 @@
   "metadata": {
     "source": "Diff-bound self-review of heimgewebe/grabowski PR #235 on 2026-07-16",
     "finding": "Same-UID arbitrary code can construct the user-owned marker path without presenting it literally in argv, and pre-existing tmux or out-of-band processes are outside the typed tool policy boundary.",
-    "pr_head": "69a740d5ba121134444cc41707805ef6e22e546d",
-    "diff_sha256": "9c8aca6e65bee1e4c33c926c4a7121e2c0c57dd3c039470214bc582696ca4f64",
+    "pr_head": "fe59844f95668b30fc40d404fe9e9e078e8c2788",
+    "diff_sha256": "d0bb81ab04c258b21b453d090e5a36d548df75de0d0d1de1b5bb55745d1f7ff8",
     "decision": "Do not overclaim T001. Merge its scoped policy and recovery improvements only with an explicit boundary statement; retain initiative completion until this OS-separated authority task is complete.",
     "does_not_establish": [
       "permission to weaken typed recovery evidence",

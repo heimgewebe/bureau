@@ -77,13 +77,22 @@
     "github_pr": 240,
     "branch": "feat/konvergenz-consumer-v1",
     "initial_reviewed_head": "95249212af0e6ce022a745e6cc7f805f769a269e",
-    "current_head": "bc7c2ab16aca868ea6991b8f77f3028d3f9b3e6c",
+    "current_head": "78124dc4a1747d09842ed52771c42a05b52f58a0",
     "protocol_repository": "heimgewebe/konvergenzregelkreis",
     "protocol_head": "83ed435bf9eb490e81a6ff2103b6c1397440d40b",
     "does_not_establish": [
       "merge readiness",
       "deployment completion",
       "runtime health before live readback"
-    ]
+    ],
+    "previous_head": "bc7c2ab16aca868ea6991b8f77f3028d3f9b3e6c",
+    "base_reconciled_with": "c266f809018a44ca5a11dfb38495e1a5a57b18c8",
+    "integration_evidence": {
+      "focused_receipt": "07015f69fea60ba13ff96972a8b3cfaeb85748302787cadf4a1116d0a9ed9b85",
+      "full_validate_receipt": "437c0533a09da3bdc42d24fa81903b95e093f2e01368b5a51e09edb2396646bf",
+      "runtime_staging_receipt": "829b0509028125002cdbfe53228a668137f5f8028e8ed3404a5d0909d738d83a",
+      "terminal_smoke_receipt": "23756c752ccd2dbcf0af1e6353f411bfe57b073196cb9bc0d1fe40b9393becc3",
+      "conflict_smoke_receipt": "f3d59f1ebc25dd30c0fd4e463ccfacbe9c4eb47c061ba9abfe12cfec9a1d6a89"
+    }
   }
 }

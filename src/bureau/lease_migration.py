@@ -19,6 +19,7 @@ from .v2 import plan_sha256
 
 MIGRATION_ID = "BUREAU-TRUTH-MODEL-V2-T013"
 CATALOG_RELATIVE_PATH = Path("registry/lease-migrations") / f"{MIGRATION_ID}.json"
+SNAPSHOT_METADATA_RELATIVE_PATH = Path(".bureau-runtime-snapshot.json")
 SOURCE_CLAIM_RESOURCE = "repo.bureau"
 TERMINAL_STATES = {"verified", "cancelled", "superseded"}
 MAX_BATCH_SIZE = 5
@@ -63,6 +64,33 @@ def _git_value(root: Path, *args: str) -> str:
 
 def _git_head(root: Path) -> str:
     return _git_value(root, "rev-parse", "HEAD")
+
+
+def _registry_base_commit(root: Path) -> str:
+    try:
+        return _git_head(root)
+    except LeaseMigrationError as git_error:
+        snapshot_path = root / SNAPSHOT_METADATA_RELATIVE_PATH
+        if not snapshot_path.is_file():
+            raise git_error
+        snapshot = legacy.read_json(snapshot_path)
+        if (
+            snapshot.get("schema_version") != 1
+            or snapshot.get("kind") != "bureau_registry_snapshot"
+        ):
+            raise LeaseMigrationError(
+                "runtime Registry snapshot metadata has unsupported schema or kind"
+            ) from git_error
+        source_commit = snapshot.get("source_commit")
+        if (
+            not isinstance(source_commit, str)
+            or len(source_commit) not in {40, 64}
+            or any(char not in "0123456789abcdef" for char in source_commit)
+        ):
+            raise LeaseMigrationError(
+                "runtime Registry snapshot metadata has invalid source_commit"
+            ) from git_error
+        return source_commit
 
 
 def _dirty_paths(root: Path) -> list[str]:
@@ -329,7 +357,7 @@ def broad_bureau_lease_inventory(registry: Registry) -> dict[str, Any]:
         "migration_id": MIGRATION_ID,
         "registry": {
             "root": str(registry.root),
-            "base_commit": _git_head(registry.root),
+            "base_commit": _registry_base_commit(registry.root),
             "queue_sha256": _queue_sha256(registry),
         },
         "catalog": {

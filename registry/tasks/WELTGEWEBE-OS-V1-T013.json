@@ -13,10 +13,22 @@
     "lane": "later",
     "rank": 11
   },
-  "claims": [],
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.konvergenzregelkreis",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
   "execution": {
-    "mode": "manual",
-    "policy": "manual"
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
   },
   "required_capabilities": [
     "protocol-design",
@@ -54,6 +66,8 @@
   "metadata": {
     "registered_at": "2026-07-15T20:50:00Z",
     "ecosystem_role": "portable-control-loop",
-    "blocked_resource": "repo.konvergenzregelkreis is not present in Bureau main at registration time"
+    "resource_registration": "repo.konvergenzregelkreis",
+    "resource_registered_at": "2026-07-16T05:55:00+02:00",
+    "dependency_status": "WELTGEWEBE-OS-V1-T002 remains required before execution"
   }
 }

@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "id": "repo.konvergenzregelkreis",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/konvergenzregelkreis",
+  "github_slug": "heimgewebe/konvergenzregelkreis",
+  "grabowski_key": "repo:/home/alex/repos/konvergenzregelkreis"
+}

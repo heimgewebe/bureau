@@ -3,7 +3,7 @@
   "id": "KONVERGENZREGELKREIS-V1-T009",
   "initiative": "KONVERGENZREGELKREIS-V1",
   "title": "Grabowski-Abschluss an den Konvergenzregelkreis binden",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 1
@@ -81,9 +81,9 @@
     "protocol_repository": "heimgewebe/konvergenzregelkreis",
     "protocol_head": "83ed435bf9eb490e81a6ff2103b6c1397440d40b",
     "does_not_establish": [
-      "merge readiness",
-      "deployment completion",
-      "runtime health before live readback"
+      "all future Grabowski closures automatically carry convergence evidence",
+      "supplied deployment or runtime evidence is true beyond its own authority",
+      "the convergence protocol grants mutation, merge or task authority"
     ],
     "previous_head": "bc7c2ab16aca868ea6991b8f77f3028d3f9b3e6c",
     "base_reconciled_with": "c266f809018a44ca5a11dfb38495e1a5a57b18c8",
@@ -95,6 +95,101 @@
       "conflict_smoke_receipt": "f3d59f1ebc25dd30c0fd4e463ccfacbe9c4eb47c061ba9abfe12cfec9a1d6a89"
     },
     "incorrect_intermediate_head": "78124dc4a1747d09842ed52771c42a05b52f58a0",
-    "head_correction_evidence": "git rev-parse HEAD and Bureau github-observe agreed at 2026-07-16T07:49:25Z"
+    "head_correction_evidence": "git rev-parse HEAD and Bureau github-observe agreed at 2026-07-16T07:49:25Z",
+    "verified_at": "2026-07-16",
+    "verification_note": "PR #240 wurde auf dem exakt gebundenen Head gemergt, der byteidentische Mergecommit edb77451 wurde als immutable Grabowski-Runtime ausgerollt, der installierte Grip bestand positive und negative Live-Abnahme und Chronik importierte den einmaligen Abschlussbeleg.",
+    "implementation": {
+      "pull_request": "heimgewebe/grabowski#240",
+      "head_sha": "78124dc852982f81f89c717d52e5f528f973e0b8",
+      "merge_commit_sha": "edb77451eb8c017a98a94d3e92ccf87a57b3e72e",
+      "diff_sha256": "e955160ebf11132409a67fe8af6f39b924439337539838699c933b262acbf279"
+    },
+    "deployment": {
+      "preflight_receipt_sha256": "4c707fde47583995a6e85fd61aeb02dd8bb17a16eece45f634e25484fc978ee6",
+      "apply_receipt_sha256": "3d4df5a014efba09522401fd0920241b3edbcdf977dfe0ea54c9228b61cbb8f7",
+      "release_id": "edb77451eb8c-srcset5d0b6eacfb50-locke6664d600b6c-contractf450350a5ecc",
+      "source_sha256": "ae0ebbba0f80fce3f8a51659d872915d3a6eba834168e8bcd67b890b4a3e836c",
+      "runtime_lock_sha256": "e6664d600b6cbaf0bf649b9f6ef3cc5e938e219e15c552a24fa47c5acdc77855",
+      "entrypoint_contract_sha256": "f450350a5eccaa674f0872715e01fa44648b32ccbc647aa3e2cfb3e6a41787cb"
+    },
+    "live_verification": {
+      "terminal_receipt_sha256": "46c113e05455856ab4f744e7e969de35614717237dbe7ba55e5ad5c2f30398d8",
+      "terminal_status": "terminally_closed",
+      "terminal_closure_allowed": true,
+      "negative_receipt_sha256": "c2c36d4eee360e8be57606757003a0e2448c01437c7fefb7fb255f31ab2436dc",
+      "negative_status": "conflicting_evidence",
+      "negative_closure_allowed": false
+    },
+    "chronik": {
+      "event_id": "sha256:275745de84806f3524bf9a87e46cbcd520a32080ac29a83b59703c22d3d487e1",
+      "import_receipt_sha256": "9d4ef5719aef8507dc3e06d3f070df34c065f375058896152c53a5d7b3fb2408",
+      "source_sha256": "805017e3ab57d9f8960d43ed1120766d1170e30f5bfe73c316b14f0bc3304d6c",
+      "imported": 1,
+      "skipped_existing": 0
+    },
+    "validated_acceptance": {
+      "read-only-consumer": "Der veröffentlichte Grip ist effect=read_only; Live-Receipts weisen keine Mutation aus und der Vertrag übernimmt keine fremde Wahrheitsdomäne.",
+      "identity-binding": "Request-SHA, Protokoll-Head, sauberer Checkout und Evaluator-SHA werden vor und nach der Auswertung geprüft; Vollvalidierung und Runtime-Staging bestanden.",
+      "terminal-gate": "Der installierte positive R2-Pilot ergab terminally_closed und closure_allowed=true.",
+      "negative-control": "Die bytegebundene Negativkontrolle ergab conflicting_evidence und closure_allowed=false.",
+      "runtime-packaging": "Der Mergecommit wurde als immutable Release edb77451eb8c-srcset5d0b6eacfb50-locke6664d600b6c-contractf450350a5ecc ausgerollt; Manifest- und Quellenidentität sind gültig.",
+      "live-proof": "Die installierte Runtime lieferte die Receipts 46c113e0…98d8 und c2c36d4e…36dc mit den erwarteten gegensätzlichen Entscheidungen.",
+      "closeout": "Bureau bindet PR-Head, Mergecommit, Deployment und Live-Receipts; Chronik importierte Event sha256:275745de…487e1 mit Receipt 9d4ef571…2408."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "source_ref": "heimgewebe/grabowski#240",
+          "number": 240,
+          "head_sha": "78124dc852982f81f89c717d52e5f528f973e0b8",
+          "merge_commit_sha": "edb77451eb8c017a98a94d3e92ccf87a57b3e72e",
+          "diff_sha256": "e955160ebf11132409a67fe8af6f39b924439337539838699c933b262acbf279",
+          "task_id": "KONVERGENZREGELKREIS-V1-T009"
+        },
+        {
+          "kind": "runtime_probe",
+          "authority": "grabowski-runtime",
+          "source_ref": "deployment-identity@edb77451eb8c017a98a94d3e92ccf87a57b3e72e",
+          "commit_sha": "edb77451eb8c017a98a94d3e92ccf87a57b3e72e",
+          "release_id": "edb77451eb8c-srcset5d0b6eacfb50-locke6664d600b6c-contractf450350a5ecc",
+          "deployment_receipt_sha256": "3d4df5a014efba09522401fd0920241b3edbcdf977dfe0ea54c9228b61cbb8f7",
+          "task_id": "KONVERGENZREGELKREIS-V1-T009"
+        },
+        {
+          "kind": "convergence_receipt",
+          "authority": "grabowski-runtime",
+          "source_ref": "convergence-assess/terminal",
+          "receipt_sha256": "46c113e05455856ab4f744e7e969de35614717237dbe7ba55e5ad5c2f30398d8",
+          "status": "terminally_closed",
+          "closure_allowed": true,
+          "task_id": "KONVERGENZREGELKREIS-V1-T009"
+        },
+        {
+          "kind": "convergence_receipt",
+          "authority": "grabowski-runtime",
+          "source_ref": "convergence-assess/negative-control",
+          "receipt_sha256": "c2c36d4eee360e8be57606757003a0e2448c01437c7fefb7fb255f31ab2436dc",
+          "status": "conflicting_evidence",
+          "closure_allowed": false,
+          "task_id": "KONVERGENZREGELKREIS-V1-T009"
+        },
+        {
+          "kind": "chronik_event",
+          "authority": "chronik",
+          "source_ref": "agent.ledger/sha256:275745de84806f3524bf9a87e46cbcd520a32080ac29a83b59703c22d3d487e1",
+          "event_id": "sha256:275745de84806f3524bf9a87e46cbcd520a32080ac29a83b59703c22d3d487e1",
+          "receipt_sha256": "9d4ef5719aef8507dc3e06d3f070df34c065f375058896152c53a5d7b3fb2408",
+          "task_id": "KONVERGENZREGELKREIS-V1-T009"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "443d732f062d82e9db4e3820d782a85564ed29fba6bf2d860fc9630f0f0a1a3b",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   }
 }

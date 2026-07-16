@@ -55,16 +55,7 @@ jobs:
             --ref HEAD \
             --apply > "$report"
           cat "$report"
-          python - "$report" >> "$GITHUB_OUTPUT" <<'PY'
-          import json
-          import sys
-
-          with open(sys.argv[1], encoding="utf-8") as handle:
-              report = json.load(handle)
-          print(f"changed={str(report['changed']).lower()}")
-          print(f"source_commit={report['commit_sha']}")
-          print(f"document_sha256={report['document_sha256']}")
-          PY
+          python -m bureau.source_sync_output "$report" >> "$GITHUB_OUTPUT"
 
       - name: Validate changed snapshot
         if: steps.sync.outputs.changed == 'true'

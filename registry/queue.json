@@ -1,7 +1,6 @@
 {
   "lanes": {
     "later": [
-      "WELTGEWEBE-OS-V1-T003",
       "WELTGEWEBE-OS-V1-T004",
       "WELTGEWEBE-OS-V1-T005",
       "WELTGEWEBE-OS-V1-T006",
@@ -85,7 +84,7 @@
       "RPU-V1-T025"
     ],
     "now": [
-      "WELTGEWEBE-OS-V1-T002",
+      "WELTGEWEBE-OS-V1-T003",
       "CCM-V1-T002",
       "CCM-V1-T003",
       "CCM-V1-T004"

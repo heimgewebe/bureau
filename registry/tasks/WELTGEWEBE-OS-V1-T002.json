@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-OS-V1-T002",
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "Multi-Instanz-Wahrheit und Ereignisrückgrat schließen",
-  "state": "ready",
+  "state": "verified",
   "goal": "Alle prozesslokalen Autoritätsreste inventarisieren und Shared Auth State, abgeleitete Caches, Transactional Outbox, idempotente Konsumenten und Zwei-API-Kohärenz in kleinen beweisgebundenen Slices umsetzen.",
   "depends_on": [
     "WELTGEWEBE-OS-V1-T001"
@@ -74,6 +74,26 @@
       "WELTGEWEBE-OS-005"
     ],
     "unblocked_at": "2026-07-15T21:45:44Z",
-    "dependency_receipt": "WELTGEWEBE-OS-V1-T001 verified by Weltgewebe merge cb66183b and Bureau runtime refresh f5f7d5d1"
+    "dependency_receipt": "WELTGEWEBE-OS-V1-T001 verified by Weltgewebe merge cb66183b and Bureau runtime refresh f5f7d5d1",
+    "verified_at": "2026-07-16T05:01:02Z",
+    "weltgewebe_pr": "heimgewebe/weltgewebe#1446",
+    "weltgewebe_pr_head": "184f6bb33d8a5cea74d7d5380f2ddedf3d4c9dfd",
+    "weltgewebe_merge_commit": "2464afba07c3a4dc61664943482392c9c34e5107",
+    "weltgewebe_pr_diff_sha256": "48f0f19bcd21587a819c09d2f3fe69c6ee535d941c60482101f57283737cc96a",
+    "github_ci_run": "heimgewebe/weltgewebe/actions/runs/29470692327",
+    "review_evidence_run": "heimgewebe/weltgewebe/actions/runs/29470773945",
+    "review_evidence_attempt": 2,
+    "verification": {
+      "generators_sha256": "b05544a93f180b60f5b247069e935b2d5070d2a14ae437f9c106498c5c158cb2",
+      "clippy_sha256": "45c99f6a84818d3b441696ea8e77ced5acd3b55198be47cdfc8d0c90f1fb67be",
+      "api_suite_sha256": "76f1927abc95a84482a54cb1bd4ae628df91ce526d6e64298280344ee69a7a87",
+      "multi_instance_guard_sha256": "0a2536b5ff4a72f9fc59edcb2b19238f81ac3e090ff32564cd42a8144828a142",
+      "ci_validate_sha256": "47744347727dd2a972a1c60ee4ed43ad328ae9ec309ce320dab057c96dfcaf5f",
+      "task_sha256": "c619c6e1b1884160cd7a92ed3aa89936a8550873959a30cb40e9f2064ae7b539",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65"
+    },
+    "source_ref": "heimgewebe/weltgewebe#1446; merge 2464afba07c3a4dc61664943482392c9c34e5107; CI 29470692327; review evidence 29470773945 attempt 2",
+    "receipt_sha256": "48f0f19bcd21587a819c09d2f3fe69c6ee535d941c60482101f57283737cc96a",
+    "task_id": "WELTGEWEBE-OS-V1-T002"
   }
 }

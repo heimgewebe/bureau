@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Publish only small source-reviewed batches. Do not trade catalogue size for weaker Commons evidence, stale links, private locations or synthetic geometry."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-16",
+    "source": "COMMONWORLD-PUBLIC-GLOBE-V1-T012 closeout",
+    "queue_mutated": false,
+    "scheduling_boundary": "follow-up after real editorial use and source review",
+    "does_not_establish": [
+      "automatic publication authority",
+      "fixed target of exactly 50 entries",
+      "permission to invent map geometry",
+      "complete global representativeness"
+    ]
+  },
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T013",
+  "title": "Grow the trust-first Commonworld catalogue from 30 toward 40–50 Commons",
+  "state": "planned",
+  "goal": "Add further small, source-backed catalogue batches that reduce remaining regional and domain gaps while preserving privacy, action-link evidence, freshness dates and one canonical CommonProject identity per Commons.",
+  "priority": {
+    "lane": "later",
+    "rank": 910
+  },
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T012"
+  ],
+  "acceptance": [
+    {
+      "id": "small-reviewed-batches",
+      "assertion": "Each publication batch is independently reviewable, source-checked and bound to an exact commit and public readback."
+    },
+    {
+      "id": "remaining-gaps",
+      "assertion": "Selection is driven by measured regional and domain gaps, including additional southern-hemisphere, care, water, housing, repair and local-network cases where primary-near evidence exists."
+    },
+    {
+      "id": "quality-preserved",
+      "assertion": "Every new identity has official or primary-near sources, real action links, an explicit review date and a next-review date."
+    },
+    {
+      "id": "privacy-preserved",
+      "assertion": "No private site, household, router, roof, clinic, plot or infrastructure path is reconstructed, and public geometry requires a separately justified source."
+    },
+    {
+      "id": "growth-not-ceiling",
+      "assertion": "Coverage contracts use minimums and diversity properties rather than a fixed catalogue-size ceiling."
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Do not add a backend merely for convenience. Compare privacy, abuse handling, operational burden, retention and traceability against the existing public GitHub path."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-16",
+    "source": "COMMONWORLD-PUBLIC-GLOBE-V1-T012 closeout",
+    "queue_mutated": false,
+    "observed_limit": "The preferred GitHub issue path is public and account-bound; the local JSON fallback does not transmit itself.",
+    "does_not_establish": [
+      "need for a Commonworld account system",
+      "need for a permanent database",
+      "permission to collect unnecessary contact data",
+      "provider SLA"
+    ]
+  },
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T014",
+  "title": "Evaluate a lower-barrier and privacy-capable Commons proposal channel",
+  "state": "planned",
+  "goal": "Determine whether Commonworld needs an additional non-public or lower-barrier submission path, and adopt it only if it improves access without weakening spam control, traceability, data minimisation or the static publication boundary.",
+  "priority": {
+    "lane": "later",
+    "rank": 920
+  },
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T012"
+  ],
+  "acceptance": [
+    {
+      "id": "real-use-evidence",
+      "assertion": "The decision uses observed proposal-path use, abandonment and privacy needs rather than hypothetical demand alone."
+    },
+    {
+      "id": "option-comparison",
+      "assertion": "GitHub, email, serverless form, structured download and a small backend are compared for privacy, spam, retention, accessibility, cost and editorial traceability."
+    },
+    {
+      "id": "data-minimisation",
+      "assertion": "Any adopted path collects only necessary data, states retention and deletion rules and keeps contact data out of the public catalogue."
+    },
+    {
+      "id": "no-auto-publish",
+      "assertion": "No alternative channel can publish a CommonProject without the existing editorial and repository review boundary."
+    },
+    {
+      "id": "operational-proof",
+      "assertion": "An adopted path has tested abuse limits, failure states, monitoring, accessibility and a documented shutdown or migration path."
+    }
+  ]
+}

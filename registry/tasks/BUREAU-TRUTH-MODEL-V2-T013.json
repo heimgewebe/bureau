@@ -29,7 +29,7 @@
   ],
   "id": "BUREAU-TRUTH-MODEL-V2-T013",
   "title": "Migrate nonterminal legacy Bureau tasks to exact lease scopes",
-  "state": "planned",
+  "state": "verified",
   "goal": "Remove deprecated broad Bureau repository leases from all nonterminal tasks in bounded, reviewed batches while preserving each task's real conflict boundary, binding every proposal to current Registry hashes and refusing speculative bulk rewrites.",
   "priority": {
     "lane": "later",
@@ -110,6 +110,112 @@
     },
     "path_contract": "Absolute host paths are intentional execution identities in the current Bureau/Grabowski contract. Portability must be introduced through typed repository-resource resolution, not by interpreting relative path leases differently per checkout.",
     "hash_semantics": "Planned tasks do not carry verification.task_sha256 or plan_sha256. Bureau requires those stamps for verified terminal states; T013 instead requires every generated migration plan to bind current source hashes before any apply effect.",
-    "registration_context": "T013 is introduced in the same Registry PR that closes T011. Its creation does not claim that the closeout PR was already merged at registered_at."
+    "registration_context": "T013 is introduced in the same Registry PR that closes T011. Its creation does not claim that the closeout PR was already merged at registered_at.",
+    "verified_at": "2026-07-16T01:39:10Z",
+    "completion": {
+      "kind": "bureau.task_completion_evidence",
+      "schema_version": 1,
+      "task_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "verified_at": "2026-07-16T01:39:10Z",
+      "migration": {
+        "implementation_pr": 614,
+        "implementation_head": "d010136a95cc9318b828ef6ca8eff460811b6b73",
+        "merge_commit": "a7ef897c2d14a46028dd7790abacaa11258c8e94",
+        "local_full_index_patch_sha256": "b403cbd022e1a8f456e1550b8064d6bdc85f4d873d80e69687e831ad704fe5ff",
+        "github_diff_sha256": "3c072644b6267d85c9df1c6bc6230cd73d4d0c562d073797764109ab80667b92",
+        "changed_file_count": 53,
+        "migrated_nonterminal_tasks": 44,
+        "preserved_terminal_task": "RPU-V1-T023",
+        "queue_mutated": false
+      },
+      "runtime_snapshot_follow_up": {
+        "live_regression_receipt": "grabowski-job-ef1b77a8eb59",
+        "fix_pr": 618,
+        "fix_head": "331261cf20c344bca1d3898970dc668d00c6850c",
+        "merge_commit": "0190fe2ea0b72408e0cedd77d7bb6bc2a58c9b5d",
+        "local_full_index_patch_sha256": "86a8e96a5cba0fbcc237b6b053b50419deaeaafd4cb9e4c68244256c843a9f82",
+        "github_diff_sha256": "b3788613047fc87095bd38435574f666a144e0afcfc4b6af7fab9f621101a4cb"
+      },
+      "validation": {
+        "ruff_receipt": "grabowski-job-3ab07a5b1bbd",
+        "pytest_receipt": "grabowski-job-da79fba37ee0",
+        "tests_passed": 608,
+        "github_checks": [
+          "validate (3.10)",
+          "validate (3.12)"
+        ],
+        "registry_check_valid": true,
+        "registry_truth_strict_valid": true
+      },
+      "deployment": {
+        "apply_receipt": "grabowski-job-809d81253bb2",
+        "deployed_source_commit": "0190fe2ea0b72408e0cedd77d7bb6bc2a58c9b5d",
+        "manifest_sha256": "6ddf48e72410f4591fa49f7792832f73d414ba0a01415d8f9c1c878431f868ea",
+        "registry_snapshot_tree_sha256": "3d15500aac0d607c1badb43f3827cd6534a1c90658b83b99c64fe78221f687c4",
+        "runtime_identity_status": "ok",
+        "live_readback_receipt": "grabowski-job-0b2e7681b77c",
+        "idempotence_receipt": "grabowski-job-9eeac5d0325d",
+        "idempotence_reused": true,
+        "runtime_result_sha256": "4f61ae7ec0022ab3769d2cec0c3757a0ca4d609119f9007d0c16e5ab7908019f"
+      },
+      "live_inventory": {
+        "base_commit": "0190fe2ea0b72408e0cedd77d7bb6bc2a58c9b5d",
+        "count": 0,
+        "actionable_count": 0,
+        "refused_count": 0,
+        "inventory_sha256": "545e4fbc51e770421e865ddb9f71208fc942f65558c93d7f495473705ab95235",
+        "queue_sha256": "e1cac08fb91adf4fa2914cc73ef4bc2c0917687963db1817dfcd8ead475ca13f"
+      },
+      "acceptance_proof": {
+        "inventory-command": "installed immutable runtime inventory succeeds and reports 0/0/0",
+        "dry-run-command": "covered by migration tests and reviewed batch execution",
+        "hash-bound-plan": "all ten applied plans were bound to head, queue, catalog, inventory, task and diff hashes",
+        "scope-by-semantics": "44 nonterminal tasks migrated through reviewed semantic catalog entries",
+        "ambiguous-scope-refusal": "planner blocks the full plan when any semantic refusal exists",
+        "batch-review": "ten batches, each containing at most five tasks, were reviewed and committed separately",
+        "ready-before-promotion": "queue was unchanged and no migrated task was promoted by the migration",
+        "doctor-clean": "installed runtime reports zero nonterminal broad Bureau lease findings",
+        "no-hidden-authority": "migration approval requires reviewed_plan and grants no queue, dispatch, merge, deploy or verification authority"
+      },
+      "source_refs": [
+        "github-pr:heimgewebe/bureau#614@d010136a95cc9318b828ef6ca8eff460811b6b73:a7ef897c2d14a46028dd7790abacaa11258c8e94",
+        "github-pr:heimgewebe/bureau#618@331261cf20c344bca1d3898970dc668d00c6850c:0190fe2ea0b72408e0cedd77d7bb6bc2a58c9b5d",
+        "grabowski-job:0b2e7681b77c",
+        "grabowski-job:9eeac5d0325d"
+      ],
+      "does_not_establish": [
+        "future runtime health",
+        "future main stability",
+        "automatic verification authority for other tasks",
+        "permission to rewrite terminal historical tasks"
+      ],
+      "evidence_sha256": "b1ac9abff8f9c4334da262e25ab4a0b147ba00d130d31b2935ecd26048bae315"
+    },
+    "verification_receipt": {
+      "kind": "bureau.task_verification_receipt",
+      "schema_version": 1,
+      "task_id": "BUREAU-TRUTH-MODEL-V2-T013",
+      "outcome": "verified-after-merge-deploy-live-readback",
+      "evidence_sha256": "b1ac9abff8f9c4334da262e25ab4a0b147ba00d130d31b2935ecd26048bae315",
+      "source_refs": [
+        "github-pr:heimgewebe/bureau#614@d010136a95cc9318b828ef6ca8eff460811b6b73:a7ef897c2d14a46028dd7790abacaa11258c8e94",
+        "github-pr:heimgewebe/bureau#618@331261cf20c344bca1d3898970dc668d00c6850c:0190fe2ea0b72408e0cedd77d7bb6bc2a58c9b5d",
+        "grabowski-job:0b2e7681b77c",
+        "grabowski-job:9eeac5d0325d"
+      ],
+      "verified_at": "2026-07-16T01:39:10Z",
+      "receipt_id": "task-verification:BUREAU-TRUTH-MODEL-V2-T013:b1ac9abff8f9c433",
+      "receipt_sha256": "b709fc9d7acf130fb10ad4ad578e9a856e7d67e4be84b53563adadc33346047a"
+    },
+    "verification": {
+      "task_sha256": "7b030a51ec892fd0636e72970541a24c4949a5953de0e144f6e0bcaed9f98e0d",
+      "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8",
+      "verified_at": "2026-07-16T01:39:10Z",
+      "source": "reviewed_multi_source_completion",
+      "source_ref": "task-verification:BUREAU-TRUTH-MODEL-V2-T013:b1ac9abff8f9c433",
+      "evidence_sha256": "b1ac9abff8f9c4334da262e25ab4a0b147ba00d130d31b2935ecd26048bae315",
+      "receipt_id": "task-verification:BUREAU-TRUTH-MODEL-V2-T013:b1ac9abff8f9c433",
+      "receipt_sha256": "b709fc9d7acf130fb10ad4ad578e9a856e7d67e4be84b53563adadc33346047a"
+    }
   }
 }

@@ -6,9 +6,15 @@
     "DB-PROOF-001",
     "DEPLOY-DNS-001",
     "DOCMETA-FRESHNESS-001",
-    "DOMAIN-PG-001"
+    "DOMAIN-PG-001",
+    "WELTGEWEBE-OS-001",
+    "WELTGEWEBE-OS-006",
+    "WELTGEWEBE-OS-007",
+    "WELTGEWEBE-OS-008",
+    "WELTGEWEBE-OS-009",
+    "WELTGEWEBE-OS-010"
   ],
-  "commit_sha": "11b9976cc4b0c174a325e926b8f5229b9ae7c3f1",
+  "commit_sha": "513a4a3ca4cdc37afc2d4d18fb64b402baa6c9b4",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -1476,10 +1482,10 @@
       "updated_at": "2026-06-18"
     },
     {
-      "acceptance_count": 5,
+      "acceptance_count": 4,
       "area": "infra",
       "effort": "M",
-      "evidence_count": 6,
+      "evidence_count": 4,
       "id": "DOMAIN-PG-002",
       "link_counts": {
         "docs": 2,
@@ -1492,21 +1498,18 @@
       "risk": "high",
       "source_task": {
         "acceptance": [
-          "Option A ist entschieden: Der aktuelle PostgreSQL-Domain-Pfad ist auf hoechstens eine API-Instanz begrenzt; kein Cross-Instance-Kohaerenz-Claim",
-          "Decision-Report und Cutover-Blueprint benennen Risiko, operative Folgen, Review-Trigger, Parsergrenzen und Nicht-Beweise",
-          "Der statische Guard akzeptiert an services.api.scale und services.api.deploy.replicas nur literal 0/1, verbietet direkte services.api.replicas, trennt ausfuehrbare CLI-Werte von Dokumentationsplatzhaltern, prueft Docker-Compose-CLI-Formen inklusive --scale api=*, --scale=api=* und scale api=* und entfernt Caddy-Kommentare vor der Direktiverkennung",
-          "Der Guard ist in einem unabhaengigen CI-Job und der Guard-Orchestrierung angebunden; gezielte Fixtures plus Real-Repo-Drift-Check sind gruen",
-          "Die Entscheidung beweist weder den Live-Containerstand noch Runtime-Korrektheit oder PostgreSQL-Cutover-Readiness"
+          "PostgreSQL-backed production state is coherent across API processes",
+          "Transactional outbox and idempotent consumption are guarded",
+          "Two API instances and a restart state pass against one database",
+          "Production replica activation remains a separate rollout decision"
         ],
         "area": "infra",
         "effort": "M",
         "evidence": [
           "docs/reports/domain-postgres-instance-coherence-decision.md",
-          "docs/blueprints/domain-data-postgres-cutover.md",
-          "scripts/guard/domain-single-instance-guard.sh",
-          "scripts/tests/test_domain_single_instance_guard.sh",
-          ".github/workflows/ci.yml",
-          "scripts/guard/run.sh"
+          "apps/api/tests/db_multi_instance_foundation.rs",
+          "scripts/guard/domain-multi-instance-guard.sh",
+          "scripts/tests/test_domain_multi_instance_guard.sh"
         ],
         "id": "DOMAIN-PG-002",
         "links": {
@@ -1525,12 +1528,12 @@
         "risk": "high",
         "status": "done",
         "title": "Single-Instance-Invariante oder Multi-Instance-Kohaerenz entscheiden",
-        "updated_at": "2026-06-19"
+        "updated_at": "2026-07-16"
       },
-      "source_task_sha256": "fa401dee6d4251acfef1ea87daad2e9c9c057a8dc500a56cbe16a7e973c35dc8",
+      "source_task_sha256": "14f757ccacaf02ff2c0e234c0c267863ec95b6143072699c2fcc8eb056010e3f",
       "status": "done",
       "title": "Single-Instance-Invariante oder Multi-Instance-Kohaerenz entscheiden",
-      "updated_at": "2026-06-19"
+      "updated_at": "2026-07-16"
     },
     {
       "acceptance_count": 3,
@@ -2374,10 +2377,538 @@
       "status": "done",
       "title": "Bestehende Planning-Registration-Findings triagieren und Ratchet vorbereiten",
       "updated_at": "2026-06-03"
+    },
+    {
+      "acceptance_count": 4,
+      "area": "governance",
+      "effort": "M",
+      "evidence_count": 7,
+      "id": "WELTGEWEBE-OS-001",
+      "link_counts": {
+        "docs": 3,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 2,
+      "owner": "governance",
+      "priority": "high",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "Kanonische Architektur, ADRs, Föderationskern, Masterplan und Statusbericht sind auf main",
+          "Roadmap, Task-Control, Techstack und Repository-Wahrheitsmodell verweisen konsistent auf Weltgewebe OS",
+          "Kein Dokument behauptet eine bereits erfolgte Kubernetes-, HA- oder Föderationsmigration",
+          "Bureau führt eine schema-konforme Gesamtinitiative mit abhängigen Systemtasks"
+        ],
+        "area": "governance",
+        "effort": "M",
+        "evidence": [
+          "architecture/weltgewebe-os.md",
+          "docs/adr/ADR-0010__kubernetes-kanonische-plattform.md",
+          "docs/adr/ADR-0011__foederierte-gewebezellen.md",
+          "docs/adr/ADR-0012__ereignisrueckgrat-transactional-outbox.md",
+          "docs/specs/federation-core.md",
+          "docs/blueprints/weltgewebe-os-masterplan.md",
+          "docs/reports/weltgewebe-os-foundation-status.md"
+        ],
+        "id": "WELTGEWEBE-OS-001",
+        "links": {
+          "docs": [
+            "architecture/weltgewebe-os.md",
+            "docs/blueprints/weltgewebe-os-masterplan.md",
+            "docs/reports/weltgewebe-os-foundation-status.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "Merge auf main und Post-Merge-Guards fehlen",
+          "Bureau-Gesamtinitiative und Ökosystem-Folgetasks sind bis zur separaten Registry-Veröffentlichung noch nicht kanonisch"
+        ],
+        "owner": "governance",
+        "priority": "high",
+        "risk": "medium",
+        "status": "partial",
+        "title": "Weltgewebe-OS-Verfassung und Architekturentscheidungen verankern",
+        "updated_at": "2026-07-15"
+      },
+      "source_task_sha256": "57ac573de6172e82708c279d2bfa432968840bb4f5d0ad2b46a748c56e97cd6d",
+      "status": "partial",
+      "title": "Weltgewebe-OS-Verfassung und Architekturentscheidungen verankern",
+      "updated_at": "2026-07-15"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "api",
+      "effort": "M",
+      "evidence_count": 5,
+      "id": "WELTGEWEBE-OS-002",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "api",
+      "priority": "high",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "Jeder relevante API-Zustand ist nach Autorität, Persistenz, Lebensdauer, Eigentümer und Fehlerwirkung klassifiziert",
+          "Shared Auth State, Rate Limits, Domain-Projektion und Outbox sind implementiert",
+          "Der frühere Single-Instance-Guard ist im selben Beweisschnitt durch den Multi-Instance-Guard ersetzt"
+        ],
+        "area": "api",
+        "effort": "M",
+        "evidence": [
+          "docs/reports/domain-postgres-instance-coherence-decision.md",
+          "apps/api/migrations/20260716000001_multi_instance_foundation.up.sql",
+          "apps/api/tests/db_multi_instance_foundation.rs",
+          "scripts/guard/domain-multi-instance-guard.sh",
+          "scripts/tests/test_domain_multi_instance_guard.sh"
+        ],
+        "id": "WELTGEWEBE-OS-002",
+        "links": {
+          "docs": [
+            "docs/reports/domain-postgres-instance-coherence-decision.md",
+            "docs/reports/weltgewebe-os-foundation-status.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "api",
+        "priority": "high",
+        "risk": "medium",
+        "status": "done",
+        "title": "Multi-Instance-State-Audit durchführen",
+        "updated_at": "2026-07-16"
+      },
+      "source_task_sha256": "4a2352e3667cc4574148f8110750e0fa9cd47b449d78c36ce7fda35b9a8391e0",
+      "status": "done",
+      "title": "Multi-Instance-State-Audit durchführen",
+      "updated_at": "2026-07-16"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "auth",
+      "effort": "L",
+      "evidence_count": 5,
+      "id": "WELTGEWEBE-OS-003",
+      "link_counts": {
+        "docs": 3,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "auth",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "Kein produktionsrelevanter Auth-Zwischenzustand hängt ausschließlich an einem API-Prozess",
+          "Zwei API-Instanzen können denselben Auth-Vorgang sicher fortsetzen",
+          "Ablauf, Einmaligkeit, Replay-Schutz und Bereinigung sind getestet"
+        ],
+        "area": "auth",
+        "effort": "L",
+        "evidence": [
+          "docs/reports/domain-postgres-instance-coherence-decision.md",
+          "apps/api/migrations/20260716000001_multi_instance_foundation.up.sql",
+          "apps/api/tests/db_multi_instance_foundation.rs",
+          "scripts/guard/domain-multi-instance-guard.sh",
+          "scripts/tests/test_domain_multi_instance_guard.sh"
+        ],
+        "id": "WELTGEWEBE-OS-003",
+        "links": {
+          "docs": [
+            "docs/blueprints/auth-roadmap.md",
+            "docs/reports/weltgewebe-os-foundation-status.md",
+            "docs/reports/domain-postgres-instance-coherence-decision.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "auth",
+        "priority": "high",
+        "risk": "high",
+        "status": "done",
+        "title": "Autoritative Auth-Zwischenzustände gemeinsam persistieren",
+        "updated_at": "2026-07-16"
+      },
+      "source_task_sha256": "8bc1d2b55cc34c3a8322ba6dff15498e76248c026012578e6f9d3a7263af247d",
+      "status": "done",
+      "title": "Autoritative Auth-Zwischenzustände gemeinsam persistieren",
+      "updated_at": "2026-07-16"
+    },
+    {
+      "acceptance_count": 4,
+      "area": "api",
+      "effort": "L",
+      "evidence_count": 5,
+      "id": "WELTGEWEBE-OS-004",
+      "link_counts": {
+        "docs": 3,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "api",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "Fachmutation und Outbox-Eintrag sind atomar",
+          "Relay setzt nach Absturz ohne Ereignisverlust fort",
+          "Doppelte Veröffentlichung erzeugt keine doppelte Fachwirkung",
+          "Rückstand, Fehler und Quarantäne sind beobachtbar"
+        ],
+        "area": "api",
+        "effort": "L",
+        "evidence": [
+          "docs/reports/domain-postgres-instance-coherence-decision.md",
+          "apps/api/migrations/20260716000001_multi_instance_foundation.up.sql",
+          "apps/api/tests/db_multi_instance_foundation.rs",
+          "scripts/guard/domain-multi-instance-guard.sh",
+          "scripts/tests/test_domain_multi_instance_guard.sh"
+        ],
+        "id": "WELTGEWEBE-OS-004",
+        "links": {
+          "docs": [
+            "docs/adr/ADR-0012__ereignisrueckgrat-transactional-outbox.md",
+            "docs/reports/weltgewebe-os-foundation-status.md",
+            "docs/reports/domain-postgres-instance-coherence-decision.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "api",
+        "priority": "high",
+        "risk": "high",
+        "status": "done",
+        "title": "Transactional Outbox und versioniertes Ereignisrückgrat einführen",
+        "updated_at": "2026-07-16"
+      },
+      "source_task_sha256": "e3deb7a8878dd9f2b2d2a36ea875f1870bcf9e059d52734c2e8c4061cab5d779",
+      "status": "done",
+      "title": "Transactional Outbox und versioniertes Ereignisrückgrat einführen",
+      "updated_at": "2026-07-16"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "api",
+      "effort": "L",
+      "evidence_count": 5,
+      "id": "WELTGEWEBE-OS-005",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "api",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "Zwei API-Instanzen gegen dieselbe Datenbank liefern nach Lesen, Schreiben, Neustart und verzögerten Ereignissen konsistente Ergebnisse",
+          "Cacheinvalidierung und Deduplikation sind belegt",
+          "Der Single-Instance-Guard wird nur in demselben diffgebundenen Schnitt durch einen stärkeren Multi-Instance-Guard ersetzt"
+        ],
+        "area": "api",
+        "effort": "L",
+        "evidence": [
+          "docs/reports/domain-postgres-instance-coherence-decision.md",
+          "apps/api/migrations/20260716000001_multi_instance_foundation.up.sql",
+          "apps/api/tests/db_multi_instance_foundation.rs",
+          "scripts/guard/domain-multi-instance-guard.sh",
+          "scripts/tests/test_domain_multi_instance_guard.sh"
+        ],
+        "id": "WELTGEWEBE-OS-005",
+        "links": {
+          "docs": [
+            "docs/reports/domain-postgres-instance-coherence-decision.md",
+            "docs/blueprints/weltgewebe-os-masterplan.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "api",
+        "priority": "high",
+        "risk": "high",
+        "status": "done",
+        "title": "Zwei-API-Kohärenz und Guard-Ablösung beweisen",
+        "updated_at": "2026-07-16"
+      },
+      "source_task_sha256": "3af8d3345adb51f94420b4f2281933ef7aef7092710ab74de0c71092642fceae",
+      "status": "done",
+      "title": "Zwei-API-Kohärenz und Guard-Ablösung beweisen",
+      "updated_at": "2026-07-16"
+    },
+    {
+      "acceptance_count": 4,
+      "area": "infra",
+      "effort": "XL",
+      "evidence_count": 2,
+      "id": "WELTGEWEBE-OS-006",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 1,
+      "owner": "infra",
+      "priority": "medium",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "Ein leerer lokaler Cluster wird aus versionierten Artefakten reproduzierbar aufgebaut",
+          "Dieselben App-Basen werden in CI und Staging verwendet",
+          "Compose bleibt ein begrenzter, getesteter Nebenpfad statt einer zweiten Wahrheit",
+          "Keine Produktionsmigration erfolgt vor WELTGEWEBE-OS-005"
+        ],
+        "area": "infra",
+        "effort": "XL",
+        "evidence": [
+          "docs/adr/ADR-0010__kubernetes-kanonische-plattform.md",
+          "architecture/weltgewebe-os.md"
+        ],
+        "id": "WELTGEWEBE-OS-006",
+        "links": {
+          "docs": [
+            "docs/adr/ADR-0010__kubernetes-kanonische-plattform.md",
+            "docs/blueprints/weltgewebe-os-masterplan.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "Kanonische platform-Struktur, lokale Clusterreferenz, Flux-, Gateway-, Netzwerk-, Secret-, Policy- und Telemetriebeweise"
+        ],
+        "owner": "infra",
+        "priority": "medium",
+        "risk": "high",
+        "status": "open",
+        "title": "Kubernetes- und GitOps-Grundlage reproduzierbar aufbauen",
+        "updated_at": "2026-07-16"
+      },
+      "source_task_sha256": "5278bef9eac3d87b092396d51d28622458415a97954fdd93962a2d992a0439b6",
+      "status": "open",
+      "title": "Kubernetes- und GitOps-Grundlage reproduzierbar aufbauen",
+      "updated_at": "2026-07-16"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "infra",
+      "effort": "L",
+      "evidence_count": 2,
+      "id": "WELTGEWEBE-OS-007",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 2,
+      "owner": "infra",
+      "priority": "medium",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "Eine Nutzer- oder Föderationswirkung ist von Anfrage über Ereignis und Deployment bis Receipt korrelierbar",
+          "SLOs und Fehlerbudgets sind messbar",
+          "Leitstand und Schauwerk konsumieren Projektionen statt neue Wahrheiten zu erzeugen"
+        ],
+        "area": "infra",
+        "effort": "L",
+        "evidence": [
+          "architecture/weltgewebe-os.md",
+          "docs/blueprints/weltgewebe-os-masterplan.md"
+        ],
+        "id": "WELTGEWEBE-OS-007",
+        "links": {
+          "docs": [
+            "architecture/weltgewebe-os.md",
+            "docs/blueprints/weltgewebe-os-masterplan.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "Korrelationsvertrag für Trace, Event, Deployment, Zellbeziehung und Grabowski-Receipt",
+          "SLO-Dashboards und getestete Alarme"
+        ],
+        "owner": "infra",
+        "priority": "medium",
+        "risk": "medium",
+        "status": "blocked",
+        "title": "Observability Spine über Runtime, Ereignisse und Receipts verbinden",
+        "updated_at": "2026-07-15"
+      },
+      "source_task_sha256": "e370bd9273d03f8f3ddd47c838fc6605c615bbd56f1867e804b5c1109491b4cc",
+      "status": "blocked",
+      "title": "Observability Spine über Runtime, Ereignisse und Receipts verbinden",
+      "updated_at": "2026-07-15"
+    },
+    {
+      "acceptance_count": 4,
+      "area": "infra",
+      "effort": "XL",
+      "evidence_count": 1,
+      "id": "WELTGEWEBE-OS-008",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 1,
+      "owner": "infra",
+      "priority": "medium",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "API-, Datenbank- und Messagingausfälle wurden kontrolliert geprobt",
+          "Kein bestätigter Fachvorgang geht verloren",
+          "RTO, RPO, Upgrade und Rollback sind gemessen",
+          "Ein Einzelhost wird nicht als HA-Beleg verwendet"
+        ],
+        "area": "infra",
+        "effort": "XL",
+        "evidence": [
+          "docs/blueprints/weltgewebe-os-masterplan.md"
+        ],
+        "id": "WELTGEWEBE-OS-008",
+        "links": {
+          "docs": [
+            "docs/blueprints/weltgewebe-os-masterplan.md",
+            "docs/reports/weltgewebe-os-foundation-status.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "Fehlerdomänen, repliziertes PostgreSQL und JetStream, PITR, Blank-Cluster-Restore, gemessene RTO/RPO"
+        ],
+        "owner": "infra",
+        "priority": "medium",
+        "risk": "high",
+        "status": "blocked",
+        "title": "Hochverfügbare Referenzzelle mit Restore und Failover beweisen",
+        "updated_at": "2026-07-15"
+      },
+      "source_task_sha256": "8b2e9a16cbe1c0974d75e2ee61602e9d403aa2c689f42a8cab456811938cc21d",
+      "status": "blocked",
+      "title": "Hochverfügbare Referenzzelle mit Restore und Failover beweisen",
+      "updated_at": "2026-07-15"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "governance",
+      "effort": "XL",
+      "evidence_count": 2,
+      "id": "WELTGEWEBE-OS-009",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 1,
+      "owner": "governance",
+      "priority": "medium",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "Unabhängige Testzellen prüfen Identität, Signatur, Reichweite, Wiederholung, Aktualisierung und Löschung",
+          "Öffentliche Föderation benötigt keinen internen Cluster- oder NATS-Zugriff",
+          "Unbekannte Versionen und Zellen werden fail-closed oder quarantänisiert"
+        ],
+        "area": "governance",
+        "effort": "XL",
+        "evidence": [
+          "docs/adr/ADR-0011__foederierte-gewebezellen.md",
+          "docs/specs/federation-core.md"
+        ],
+        "id": "WELTGEWEBE-OS-009",
+        "links": {
+          "docs": [
+            "docs/specs/federation-core.md",
+            "docs/adr/ADR-0011__foederierte-gewebezellen.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "Wire-Protokoll, Zellschlüssel, Inbox/Outbox, Versionsaushandlung, Quarantäne und positive/negative Konformitätstests"
+        ],
+        "owner": "governance",
+        "priority": "medium",
+        "risk": "high",
+        "status": "blocked",
+        "title": "Föderationsprotokoll v0 und Konformitätssuite entwickeln",
+        "updated_at": "2026-07-15"
+      },
+      "source_task_sha256": "638d4e066099bb3a62603bfc06e98fc567b3ea5bb6bd83be36aebbc51421897a",
+      "status": "blocked",
+      "title": "Föderationsprotokoll v0 und Konformitätssuite entwickeln",
+      "updated_at": "2026-07-15"
+    },
+    {
+      "acceptance_count": 4,
+      "area": "web",
+      "effort": "XL",
+      "evidence_count": 2,
+      "id": "WELTGEWEBE-OS-010",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 1,
+      "owner": "product",
+      "priority": "medium",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "Zellübergreifende Knoten, Fäden und ein gemeinsamer Raum funktionieren",
+          "Beide Zellen bleiben bei Trennung lokal arbeitsfähig",
+          "Wiederverbindung konvergiert ohne stille Datenverluste",
+          "Lokale Moderation und Reichweiten bleiben wirksam"
+        ],
+        "area": "web",
+        "effort": "XL",
+        "evidence": [
+          "docs/blueprints/weltgewebe-os-masterplan.md",
+          "docs/specs/federation-core.md"
+        ],
+        "id": "WELTGEWEBE-OS-010",
+        "links": {
+          "docs": [
+            "docs/blueprints/weltgewebe-os-masterplan.md",
+            "docs/specs/federation-core.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [
+          "Zwei unabhängige Zellen, Zellbeziehung, gemeinsamer Raum, Nachbarschaftssuche und Partition-Recovery"
+        ],
+        "owner": "product",
+        "priority": "medium",
+        "risk": "high",
+        "status": "blocked",
+        "title": "Zwei-Zellen-Nachbarschaft als Produktbeweis umsetzen",
+        "updated_at": "2026-07-15"
+      },
+      "source_task_sha256": "5677a098d7380479eede84a20df2b507161724ff1e0f9157f800be1bb842a10b",
+      "status": "blocked",
+      "title": "Zwei-Zellen-Nachbarschaft als Produktbeweis umsetzen",
+      "updated_at": "2026-07-15"
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "8fce832f4c78b568f4f615de816c169d2054388ed9771d5edf3a1fc4fd0cdeb2",
+  "index_sha256": "54223547c4589f594ee0d776980f8f35afcfa48efca8ac41ed4dea61705fb84b",
   "ref": "HEAD",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",
@@ -2393,12 +2924,12 @@
   "source_schema_version": "1.0.0",
   "source_system": "weltgewebe-task-control",
   "status_counts": {
-    "blocked": 2,
+    "blocked": 6,
     "contradicted": 0,
-    "done": 33,
+    "done": 37,
     "obsolete": 0,
-    "open": 0,
-    "partial": 5
+    "open": 1,
+    "partial": 6
   },
-  "task_count": 40
+  "task_count": 50
 }

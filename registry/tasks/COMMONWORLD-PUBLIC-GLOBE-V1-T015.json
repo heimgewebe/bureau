@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Automate reminders and validation, not editorial acceptance. Human review remains required for Commons character, legal/privacy judgement and publication."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-16",
+    "source": "COMMONWORLD-PUBLIC-GLOBE-V1-T012 closeout",
+    "queue_mutated": false,
+    "first_catalogue_review_due": "2026-10-16",
+    "does_not_establish": [
+      "automatic editorial acceptance",
+      "automatic legal judgement",
+      "source durability",
+      "provider SLA"
+    ]
+  },
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T015",
+  "title": "Operationalise Commonworld editorial review and freshness follow-up",
+  "state": "planned",
+  "goal": "Turn the proposal and freshness contracts into a reviewable editorial operating loop that detects stale sources, duplicate candidates and overdue catalogue reviews without granting automation publication authority.",
+  "priority": {
+    "lane": "later",
+    "rank": 930
+  },
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T012"
+  ],
+  "acceptance": [
+    {
+      "id": "candidate-traceability",
+      "assertion": "Submitted, needs-information, accepted, rejected, withdrawn, published and superseded candidates remain traceable through stable status and reason codes."
+    },
+    {
+      "id": "freshness-review",
+      "assertion": "The first 30-entry catalogue review is performed by 2026-10-16 and records source, action-link, activity and privacy outcomes."
+    },
+    {
+      "id": "stale-fail-visible",
+      "assertion": "Broken or stale sources become explicit editorial findings and cannot silently remain evidence for new publication claims."
+    },
+    {
+      "id": "duplicate-control",
+      "assertion": "Candidate review checks stable identity, title and official-domain duplication before acceptance."
+    },
+    {
+      "id": "human-publication-boundary",
+      "assertion": "Automation may prepare evidence and reminders but cannot accept or publish a candidate without review-before-effect."
+    }
+  ]
+}

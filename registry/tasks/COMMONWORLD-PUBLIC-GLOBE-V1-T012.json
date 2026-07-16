@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Catalogue publication remains bound to an isolated worktree, exact-head review, green CI, GitHub Pages deployment and public byte readback. A public proposal is never direct publication authority."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-16",
+    "source": "bureau_live_register",
+    "live_register_event_id": 570,
+    "live_register_candidate_id": "commonworld-phase5-catalog-30-50-editorial-path-v1",
+    "live_register_created_at": "2026-07-16T19:02:14.126320Z",
+    "live_register_source": "chatgpt",
+    "promotion_required_from_event": true,
+    "queue_mutated": false,
+    "completed_at": "2026-07-16",
+    "verification": {
+      "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T012",
+      "authority": "commonworld-project-operator",
+      "decision": "phase5_editorial_path_and_trust_first_catalog_slice_merged_deployed_and_live_verified",
+      "repository": "heimgewebe/commonworld",
+      "implementation_pr": 80,
+      "pr_head": "cce683ba769e1bb0b60b14cf0087e3ac1e529bbb",
+      "pr_base": "309b483bcd00dd3f52d21b3e9eb3b87e0ff193a3",
+      "merge_commit": "24968a790ce028693b1cd92e00a1778b270ef451",
+      "reviewed_diff_path": "/home/alex/iCloud/Drive/halde/commonworld-pr-80-cce683b-full.diff",
+      "diff_sha256": "3ad6850b8652cc5584d3a3804947b09ceb5fb01efbfbc7afc6f69b3cf9f852e2",
+      "self_review_path": "/home/alex/iCloud/Drive/halde/commonworld-pr-80-cce683b-self-review.md",
+      "self_review_sha256": "7ff70b2de56c3bb0de7a9ebe1c4bf601daec6fd4d9aa5b5516b5b0b008d5e8a1",
+      "github_validate_run_id": 29533585554,
+      "github_codeql_run_id": 29533585247,
+      "github_pages_run_id": 29533585090,
+      "github_checks": "PASS",
+      "premerge_validation": {
+        "javascript_tests": "40/40 PASS",
+        "python_tests": "375/375 PASS",
+        "public_browser_scenarios": "17/17 PASS",
+        "proposal_browser_scenarios": "9/9 PASS",
+        "git_diff_check": "PASS",
+        "reproducible_build": "PASS"
+      },
+      "live_verification": {
+        "public_url": "https://commonworld.net/",
+        "proposal_url": "https://commonworld.net/propose.html",
+        "catalog_entry_count": 30,
+        "central_files_byte_equal": "22/22 PASS",
+        "live_static_smoke": "PASS",
+        "live_proposal_browser_dry_run": "PASS",
+        "issue_sent": false,
+        "catalog_entry_count_after_dry_run": 30,
+        "new_public_geometry_count": 0
+      },
+      "source_checks": {
+        "new_official_sources": "17/17 HTTP 200",
+        "new_action_links": "26/26 HTTP 200",
+        "reviewed_at": "2026-07-16",
+        "next_review_at": "2026-10-16"
+      },
+      "acceptance": {
+        "public-proposal-path": "PASS",
+        "no-automatic-publication": "PASS",
+        "machine-readable-editorial-contract": "PASS",
+        "structured-acceptance-and-rejection": "PASS",
+        "privacy-fail-closed": "PASS",
+        "canonical-catalog-source": "PASS",
+        "regional-and-domain-balance": "PASS",
+        "public-deployment": "PASS"
+      },
+      "explicit_nonclaims": [
+        "The public GitHub path is private or anonymous.",
+        "The local JSON download transmits itself to the editorial team.",
+        "Client-side validation alone establishes editorial acceptance.",
+        "The catalogue has reached 50 entries.",
+        "Regional catalogue diversity establishes equivalent public map coverage.",
+        "WCAG conformance beyond the tested browser and semantic surface."
+      ],
+      "task_sha256": "7031ba547ba073e29e7878b1f3000a6cd7ccc7053aecf963b7d62a315cd92afd",
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4"
+    },
+    "does_not_establish": [
+      "future source availability",
+      "private submission support",
+      "automatic editorial capacity",
+      "complete global representativeness",
+      "future merge readiness"
+    ]
+  },
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T012",
+  "title": "Deliver the public editorial proposal path and grow the trusted catalogue to 30 Commons",
+  "state": "verified",
+  "goal": "Provide a public but non-publishing proposal path, a machine-readable editorial lifecycle and a trust-first catalogue expansion from 20 to at least 30 sourced Commons without exposing private locations or creating synthetic map geometry.",
+  "priority": {
+    "lane": "later",
+    "rank": 900
+  },
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "public-proposal-path",
+      "assertion": "A person can prepare a public Commons proposal on commonworld.net without the proposal automatically changing the catalogue."
+    },
+    {
+      "id": "editorial-contract",
+      "assertion": "Proposal fields, statuses, transitions, checks and structured rejection reasons are machine-readable and tested."
+    },
+    {
+      "id": "privacy-boundary",
+      "assertion": "Sensitive locations, contact data and private community-network infrastructure are rejected or kept hidden, and no synthetic geometry is published."
+    },
+    {
+      "id": "catalogue-balance",
+      "assertion": "The public catalogue contains at least 30 source-backed identities and reduces documented regional and domain gaps."
+    },
+    {
+      "id": "public-proof",
+      "assertion": "The exact reviewed head is merged, main CI and Pages are green, public files match the merge commit and the proposal path passes a no-submit live browser dry run."
+    }
+  ]
+}

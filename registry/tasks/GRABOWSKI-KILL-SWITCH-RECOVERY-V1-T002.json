@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "initiative": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1",
+  "state": "blocked",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/.local/state/grabowski/operator-kill-switch",
+      "host:heim-pc",
+      "service:grabowski-operator.service",
+      "service:grabowski-rootbroker"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "id": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1-T002",
+  "title": "Move blockade marker authority across an OS identity boundary",
+  "priority": {
+    "lane": "next",
+    "rank": 2
+  },
+  "depends_on": [
+    "GRABOWSKI-KILL-SWITCH-RECOVERY-V1-T001"
+  ],
+  "goal": "Turn the typed blockade lifecycle from a same-UID policy boundary into a kernel-enforced authority boundary that arbitrary operator-UID code, existing tmux panes and out-of-band local processes cannot bypass.",
+  "acceptance": [
+    {
+      "id": "separate-owner",
+      "assertion": "The canonical marker and its parent are owned by root or a dedicated service identity and are not writable, replaceable or unlinkable by the Grabowski operator UID."
+    },
+    {
+      "id": "broker-only-lifecycle",
+      "assertion": "Engage, exact hash-bound disarm, quarantine and restore are exposed only through a narrow broker contract with explicit action allowlists, caller identity, audit binding and fail-closed readback."
+    },
+    {
+      "id": "same-uid-denial",
+      "assertion": "Live tests prove that arbitrary terminal, durable-job, persistent-task, operation, fleet-local and existing tmux execution under the operator UID cannot create, replace, remove or restore the canonical marker, including paths assembled dynamically at runtime."
+    },
+    {
+      "id": "migration-atomicity",
+      "assertion": "Cutover from the user-owned marker path is atomic, reversible and hash-bound; crashes leave either the old verified state or the new verified broker-owned state, never two conflicting authorities."
+    },
+    {
+      "id": "external-stop-boundary",
+      "assertion": "The environment kill switch remains outside in-band broker disarm authority and continues to require external administrative clearing."
+    },
+    {
+      "id": "quality-and-live-proof",
+      "assertion": "Focused security tests, full validation, diff-bound review, deployment provenance and live denial/readback receipts pass without using the production marker for destructive test setup."
+    }
+  ],
+  "metadata": {
+    "source": "Diff-bound self-review of heimgewebe/grabowski PR #235 on 2026-07-16",
+    "finding": "Same-UID arbitrary code can construct the user-owned marker path without presenting it literally in argv, and pre-existing tmux or out-of-band processes are outside the typed tool policy boundary.",
+    "pr_head": "69a740d5ba121134444cc41707805ef6e22e546d",
+    "diff_sha256": "9c8aca6e65bee1e4c33c926c4a7121e2c0c57dd3c039470214bc582696ca4f64",
+    "decision": "Do not overclaim T001. Merge its scoped policy and recovery improvements only with an explicit boundary statement; retain initiative completion until this OS-separated authority task is complete.",
+    "does_not_establish": [
+      "permission to weaken typed recovery evidence",
+      "permission to expose a broad root shell",
+      "permission to clear the environment kill switch in band",
+      "implementation complete",
+      "deployment complete"
+    ],
+    "blocked_reason": "Depends on deployment and live verification of GRABOWSKI-KILL-SWITCH-RECOVERY-V1-T001."
+  }
+}

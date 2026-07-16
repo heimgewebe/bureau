@@ -54,7 +54,7 @@
     },
     {
       "id": "generic-mutation-denied",
-      "assertion": "KILL_SWITCH_PATH is rejected by generic create, replace, remove, destroy, terminal and indirect execution surfaces regardless of trusted_owner; tests prove no other protected-path contract regresses."
+      "assertion": "KILL_SWITCH_PATH is rejected by generic create, replace, remove and destroy tools regardless of trusted_owner; explicit direct-command targets are denied and active strong path/repository blockades close opaque command channels. This policy layer does not claim kernel isolation from arbitrary same-UID out-of-band execution."
     },
     {
       "id": "typed-engage",
@@ -130,7 +130,9 @@
       "permission to bypass environment kill switch",
       "permission to weaken fail-closed behavior",
       "permission to modify foreign worktrees or leases",
+      "kernel isolation from arbitrary same-UID or pre-existing out-of-band execution",
       "implementation complete"
-    ]
+    ],
+    "follow_up_task": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1-T002"
   }
 }

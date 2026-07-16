@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1",
-  "state": "ready",
+  "state": "verified",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -54,7 +54,7 @@
     },
     {
       "id": "generic-mutation-denied",
-      "assertion": "KILL_SWITCH_PATH is rejected by generic create, replace, remove, destroy, terminal and indirect execution surfaces regardless of trusted_owner; tests prove no other protected-path contract regresses."
+      "assertion": "KILL_SWITCH_PATH is rejected by generic create, replace, remove and destroy tools regardless of trusted_owner; explicit direct-command targets are denied and active strong path/repository blockades close opaque command channels. This policy layer does not claim kernel isolation from arbitrary same-UID out-of-band execution."
     },
     {
       "id": "typed-engage",
@@ -87,7 +87,7 @@
     "observed": {
       "marker_path": "/home/alex/.local/state/grabowski/operator-kill-switch",
       "marker_sha256": "1a66d92ea0d5ec2ef463545bf58a181eaca5f7955c3d502dc48810bca8f674f3",
-      "marker_content": "T030 live denial proof 2026-07-14\\n",
+      "marker_content": "T030 live denial proof 2026-07-14\n",
       "created_at": "2026-07-14T16:44:48.024023+00:00",
       "audit_operation": "create",
       "audit_chain_valid": true,
@@ -130,7 +130,49 @@
       "permission to bypass environment kill switch",
       "permission to weaken fail-closed behavior",
       "permission to modify foreign worktrees or leases",
+      "kernel isolation from arbitrary same-UID or pre-existing out-of-band execution",
       "implementation complete"
-    ]
+    ],
+    "follow_up_task": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1-T002",
+    "verified_at": "2026-07-16T01:19:00Z",
+    "implementation_pr": "https://github.com/heimgewebe/grabowski/pull/235",
+    "implementation_head": "fe59844f95668b30fc40d404fe9e9e078e8c2788",
+    "merge_commit": "0b09e6d7dfdb0b3171d33d5bd782d37eb36e7134",
+    "review_diff_sha256": "d0bb81ab04c258b21b453d090e5a36d548df75de0d0d1de1b5bb55745d1f7ff8",
+    "validation": {
+      "tests_passed": 1789,
+      "tests_skipped": 1,
+      "ci": [
+        "python-3.10",
+        "python-3.12"
+      ],
+      "repository_gates": "passed"
+    },
+    "deployment": {
+      "repo_head": "0b09e6d7dfdb0b3171d33d5bd782d37eb36e7134",
+      "release_id": "0b09e6d7dfdb-srcsetb0de45d3505d-locke6664d600b6c-contract51062bb6992c",
+      "source_sha256": "5f982b1886cad82ca39dca828b06806bc0f5a07ef59782887c175268659f206b",
+      "runtime_lock_sha256": "e6664d600b6cbaf0bf649b9f6ef3cc5e938e219e15c552a24fa47c5acdc77855",
+      "entrypoint_contract_sha256": "51062bb6992c6a849781b39b08d9fa1924b90c996b9a77b661b36fa6c521d6b4",
+      "healthy": true,
+      "deployment_complete": true,
+      "deployment_integrity_valid": true,
+      "audit_valid": true,
+      "kill_switch_engaged": false
+    },
+    "live_probe": {
+      "mode": "isolated temporary state using deployed release",
+      "matching_path_blocked": true,
+      "outside_path_allowed": true,
+      "opaque_command_denied": true,
+      "exact_disarm_completed": true,
+      "marker_absent_after_disarm": true,
+      "audit_valid": true,
+      "production_marker_touched": false
+    },
+    "verification": {
+      "task_sha256": "2bc7b23b5a9f34b7fa3b970f3d58ea21337536b275bc3cc341b5732af672e25c",
+      "plan_sha256": "5f590ce2c84607ac03d24d4e364a3aad2d970f099d25acdf4a3b2ee0899f8ea6"
+    }
   }
 }

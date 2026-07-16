@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "id": "KONVERGENZREGELKREIS-V1",
+  "title": "Konvergenzregelkreis operativ aktivieren",
+  "state": "committed",
+  "commitment": "now",
+  "goal": "Den öffentlichen zustandslosen Konvergenzvertrag als echten, receipt-gebundenen Abschluss-Gate in Grabowski und nachfolgend in geeigneten Ökosystem-Consumern aktivieren, ohne fremde Wahrheitsdomänen zu duplizieren.",
+  "completion": [
+    "Mindestens ein produktiv installierter Consumer wertet hash- und commitgebundene Requests gegen das öffentliche Protokoll aus.",
+    "Nur terminally_closed erlaubt den Hochrisikoabschluss; fehlende, veraltete, blockierte oder widersprüchliche Evidenz sperrt fail-closed.",
+    "Der Consumer besitzt keine Task-, Lease-, Merge-, Deployment-, Runtime-, Bureau- oder Chronik-Wahrheit.",
+    "Merge, Deployment, Live-Readback, Bureau-Abschluss und Chronikbeleg sind miteinander gebunden."
+  ],
+  "parallelism": {
+    "max_active_tasks": 2
+  },
+  "metadata": {
+    "registered_at": "2026-07-16T09:04:00+02:00",
+    "source_repository": "heimgewebe/konvergenzregelkreis",
+    "protocol_release": "v1.0.0",
+    "source_plan": "KONVERGENZREGELKREIS-V1 masterplan",
+    "does_not_establish": [
+      "consumer runtime truth",
+      "permission to bypass repository or deployment gates"
+    ]
+  }
+}

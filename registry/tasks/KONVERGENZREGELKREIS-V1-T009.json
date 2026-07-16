@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "id": "KONVERGENZREGELKREIS-V1-T009",
+  "initiative": "KONVERGENZREGELKREIS-V1",
+  "title": "Grabowski-Abschluss an den Konvergenzregelkreis binden",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "goal": "Einen read-only Grabowski-Grip bereitstellen, der einen hashgebundenen Assessment-Request gegen einen exakten, sauberen Protokollcommit auswertet und Hochrisikoabschlüsse ausschließlich bei terminally_closed freigibt.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Alex hat die vollständige operative Aktivierung am 2026-07-16 ausdrücklich mit „alles umsetzen“ autorisiert; CI, diffgebundener Review, Merge- und Deploymentgates bleiben verpflichtend."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.konvergenzregelkreis",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "chronik",
+    "protocol-design",
+    "python",
+    "schemas"
+  ],
+  "acceptance": [
+    {
+      "id": "read-only-consumer",
+      "assertion": "Der Consumer führt keine Mutation aus und übernimmt keine fremde Wahrheitsdomäne."
+    },
+    {
+      "id": "identity-binding",
+      "assertion": "Requestbytes, Protokoll-Git-Head, sauberer Checkout und Evaluatoridentität sind vor und nach der Auswertung gebunden."
+    },
+    {
+      "id": "terminal-gate",
+      "assertion": "Nur terminally_closed erlaubt Closure; alle übrigen fachlichen Statuswerte blockieren mit konsistentem Receipt."
+    },
+    {
+      "id": "negative-control",
+      "assertion": "Ein widersprüchlicher Deploymentbeleg ergibt reproduzierbar conflicting_evidence und blockiert Closure."
+    },
+    {
+      "id": "runtime-packaging",
+      "assertion": "Der reproduzierbare Grabowski-Runtime-Stager installiert den Consumer vollständig und der MCP-Probevertrag bleibt grün."
+    },
+    {
+      "id": "live-proof",
+      "assertion": "Nach Merge und Runtime-Deployment bestehen ein terminaler und ein konfliktbehafteter Live-Aufruf des installierten Grips."
+    },
+    {
+      "id": "closeout",
+      "assertion": "Bureau und Chronik binden geprüften PR-Head, Mergecommit, Deploymentidentität und Live-Receipts."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-16T09:04:00+02:00",
+    "github_repository": "heimgewebe/grabowski",
+    "github_pr": 240,
+    "branch": "feat/konvergenz-consumer-v1",
+    "initial_reviewed_head": "95249212af0e6ce022a745e6cc7f805f769a269e",
+    "current_head": "bc7c2ab16aca868ea6991b8f77f3028d3f9b3e6c",
+    "protocol_repository": "heimgewebe/konvergenzregelkreis",
+    "protocol_head": "83ed435bf9eb490e81a6ff2103b6c1397440d40b",
+    "does_not_establish": [
+      "merge readiness",
+      "deployment completion",
+      "runtime health before live readback"
+    ]
+  }
+}

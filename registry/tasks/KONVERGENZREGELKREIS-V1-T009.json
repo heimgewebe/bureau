@@ -77,7 +77,7 @@
     "github_pr": 240,
     "branch": "feat/konvergenz-consumer-v1",
     "initial_reviewed_head": "95249212af0e6ce022a745e6cc7f805f769a269e",
-    "current_head": "78124dc4a1747d09842ed52771c42a05b52f58a0",
+    "current_head": "78124dc852982f81f89c717d52e5f528f973e0b8",
     "protocol_repository": "heimgewebe/konvergenzregelkreis",
     "protocol_head": "83ed435bf9eb490e81a6ff2103b6c1397440d40b",
     "does_not_establish": [
@@ -93,6 +93,8 @@
       "runtime_staging_receipt": "829b0509028125002cdbfe53228a668137f5f8028e8ed3404a5d0909d738d83a",
       "terminal_smoke_receipt": "23756c752ccd2dbcf0af1e6353f411bfe57b073196cb9bc0d1fe40b9393becc3",
       "conflict_smoke_receipt": "f3d59f1ebc25dd30c0fd4e463ccfacbe9c4eb47c061ba9abfe12cfec9a1d6a89"
-    }
+    },
+    "incorrect_intermediate_head": "78124dc4a1747d09842ed52771c42a05b52f58a0",
+    "head_correction_evidence": "git rev-parse HEAD and Bureau github-observe agreed at 2026-07-16T07:49:25Z"
   }
 }

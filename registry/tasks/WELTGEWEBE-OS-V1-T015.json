@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T015",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Reconciler-Buildimage und Upgradepfad eigenständig härten",
+  "state": "planned",
+  "goal": "Das derzeit extern bezogene digestgepinnte Node-Buildimage durch ein minimales, repositoryeigenes und provenancegebundenes Buildimage mit kontrollierter Aktualisierung ersetzen und Installation sowie Upgrade des root-eigenen Reconciler-Vertrags atomar und rückfallfähig machen.",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T014"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 13
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "docker",
+    "supply-chain-security",
+    "systemd",
+    "deployment",
+    "recovery"
+  ],
+  "acceptance": [
+    {
+      "id": "owned-build-image",
+      "assertion": "Ein minimales versioniertes Buildimage wird reproduzierbar gebaut, an Quellcommit und Digest gebunden und ohne floating Tags vom Reconciler verwendet.",
+      "evidence_type": "object",
+      "verifier": "reproducible image build and digest receipt"
+    },
+    {
+      "id": "dependency-lifecycle",
+      "assertion": "Basisimage- und Paketaktualisierungen besitzen einen überprüfbaren Rotations-, Schwachstellen- und Rückfallvertrag statt eines still veraltenden Hardcode-Digests.",
+      "evidence_type": "object",
+      "verifier": "rotation drill and vulnerability policy"
+    },
+    {
+      "id": "atomic-upgrade",
+      "assertion": "Helfer, Units, Konfiguration und Manifest werden als ein atomarer Vertrag installiert; ein Fehler vor erfolgreichem Start lässt die vorherige funktionierende Installation unverändert oder stellt sie nachweisbar wieder her.",
+      "evidence_type": "object",
+      "verifier": "upgrade failure injection and rollback receipt"
+    },
+    {
+      "id": "service-sandbox",
+      "assertion": "Die systemd-Sandbox ist mit expliziten Lese- und Schreibpfaden so weit wie mit Git, Docker und Releaseverwaltung vereinbar gehärtet und durch negative Laufzeittests belegt.",
+      "evidence_type": "object",
+      "verifier": "systemd security analysis and denied-path tests"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-16T06:50:00+02:00",
+    "source_repository": "heimgewebe/weltgewebe",
+    "source_pr": 1445,
+    "reason": "Nicht blockierende Ausbauachse nach dem fail-closed Merge-to-Live-Grundvertrag."
+  }
+}

@@ -41,7 +41,9 @@
       "weakened kill-switch semantics",
       "merge or deployment authority"
     ],
-    "waiting_reason": "T001 provides scoped policy, typed lifecycle and evidence-bound recovery. Initiative completion still requires T002 to move canonical marker authority to a root- or dedicated-service-owned boundary that arbitrary same-UID execution cannot bypass.",
-    "follow_up_task": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1-T002"
+    "waiting_reason": "T001 is merged, deployed and live-verified. Initiative completion still requires ready task T002 to move canonical marker authority to a root- or dedicated-service-owned boundary that arbitrary same-UID execution cannot bypass.",
+    "follow_up_task": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1-T002",
+    "verified_task": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1-T001",
+    "next_task": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1-T002"
   }
 }

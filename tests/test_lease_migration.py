@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -335,3 +336,57 @@ def test_cli_inventory_and_dry_run_do_not_create_state_store(
     assert plan["task_ids"] == [TASK_ID]
     assert not state_root.exists()
     assert git(root, "status", "--porcelain") == ""
+
+
+def test_inventory_reads_source_commit_from_runtime_snapshot(
+    registry_factory, tmp_path
+) -> None:
+    root = setup_registry(registry_factory)
+    source_commit = git(root, "rev-parse", "HEAD")
+    snapshot = tmp_path / "registry-snapshot"
+    shutil.copytree(root, snapshot, ignore=shutil.ignore_patterns(".git"))
+    (snapshot / ".bureau-runtime-snapshot.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "kind": "bureau_registry_snapshot",
+                "source_commit": source_commit,
+                "tree_sha256": "0" * 64,
+                "paths": [],
+            },
+            separators=(",", ":"),
+        )
+        + "\n"
+    )
+
+    inventory = broad_bureau_lease_inventory(Registry.load(snapshot))
+
+    assert inventory["registry"]["root"] == str(snapshot)
+    assert inventory["registry"]["base_commit"] == source_commit
+    assert inventory["count"] == 1
+    assert inventory["actionable_count"] == 1
+    assert inventory["refused_count"] == 0
+
+
+def test_inventory_refuses_invalid_runtime_snapshot_source_commit(
+    registry_factory, tmp_path
+) -> None:
+    root = setup_registry(registry_factory)
+    snapshot = tmp_path / "registry-snapshot"
+    shutil.copytree(root, snapshot, ignore=shutil.ignore_patterns(".git"))
+    (snapshot / ".bureau-runtime-snapshot.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "kind": "bureau_registry_snapshot",
+                "source_commit": "not-a-commit",
+                "tree_sha256": "0" * 64,
+                "paths": [],
+            },
+            separators=(",", ":"),
+        )
+        + "\n"
+    )
+
+    with pytest.raises(LeaseMigrationError, match="invalid source_commit"):
+        broad_bureau_lease_inventory(Registry.load(snapshot))

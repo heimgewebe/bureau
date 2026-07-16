@@ -11,6 +11,7 @@ def test_source_sync_workflow_contract():
         "cancel-in-progress: false",
         "source-sync weltgewebe",
         "--apply",
+        'python -m bureau.source_sync_output "$report"',
         "registry/sources/weltgewebe.json",
         "make validate",
         "Unexpected changed paths",
@@ -21,6 +22,9 @@ def test_source_sync_workflow_contract():
     )
     for value in required:
         assert value in text
+    assert "report['changed']" not in text
+    assert "report['commit_sha']" not in text
+    assert "report['document_sha256']" not in text
     assert "pull-requests: write" not in text
     assert "gh pr create" not in text
     assert "gh pr edit" not in text

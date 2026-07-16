@@ -3,13 +3,13 @@
   "id": "WELTGEWEBE-OS-V1-T003",
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "Kubernetes- und GitOps-Grundlage reproduzierbar aufbauen",
-  "state": "blocked",
+  "state": "ready",
   "goal": "Eine kanonische Plattformbasis mit lokalem Referenzcluster, GitOps, Gateway, Netzwerkpolicies, Secrets, Telemetrie und streng begrenztem Compose-Nebenpfad aufbauen.",
   "depends_on": [
     "WELTGEWEBE-OS-V1-T002"
   ],
   "priority": {
-    "lane": "later",
+    "lane": "now",
     "rank": 1
   },
   "claims": [
@@ -63,6 +63,10 @@
   ],
   "metadata": {
     "registered_at": "2026-07-15T20:50:00Z",
-    "world_task": "WELTGEWEBE-OS-006"
+    "world_task": "WELTGEWEBE-OS-006",
+    "unblocked_at": "2026-07-16T05:01:02Z",
+    "dependency_receipt": "WELTGEWEBE-OS-V1-T002 verified by Weltgewebe PR #1446 merge 2464afba07c3a4dc61664943482392c9c34e5107; required merge gate, Web E2E and review evidence gate passed",
+    "source_ref": "heimgewebe/weltgewebe#1446; merge 2464afba07c3a4dc61664943482392c9c34e5107",
+    "receipt_sha256": "48f0f19bcd21587a819c09d2f3fe69c6ee535d941c60482101f57283737cc96a"
   }
 }

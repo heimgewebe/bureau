@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T014",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Vollständige Produktionsrelease-Identität belegen",
+  "state": "planned",
+  "goal": "Den bereits commitgebundenen Merge-to-Live-Vertrag um eine rekonstruierbare, geheimnisfreie Identität von API-, Edge- und Build-Images, Laufzeitkonfiguration und Kartenbestand erweitern, ohne diese beweglichen Laufzeitwahrheiten mit dem Git-Commit gleichzusetzen.",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T002"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 12
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "deployment",
+    "supply-chain-security",
+    "docker",
+    "systemd",
+    "python"
+  ],
+  "acceptance": [
+    {
+      "id": "complete-release-identity",
+      "assertion": "Jeder verifizierte Produktionsbeleg bindet Commit, Webartefakt, API- und Edge-Image-Digests, redigierten Laufzeitkonfigurationsdigest und Kartenmanifestdigest eindeutig.",
+      "evidence_type": "object",
+      "verifier": "production receipt schema and exact live readback"
+    },
+    {
+      "id": "no-secret-disclosure",
+      "assertion": "Konfigurationsbelege enthalten ausschließlich erlaubte Schlüssel- oder Digestprojektionen und geben keine Laufzeitgeheimnisse preis.",
+      "evidence_type": "object",
+      "verifier": "negative fixtures and secret scan"
+    },
+    {
+      "id": "drift-and-recovery",
+      "assertion": "Ein veränderter Image-, Konfigurations- oder Kartenbestand wird unabhängig vom Git-Commit als Drift erkannt; ein fehlender historischer Wert wird als Lücke statt als erfundene Identität ausgewiesen.",
+      "evidence_type": "object",
+      "verifier": "drift and recovery integration tests"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-16T06:50:00+02:00",
+    "source_repository": "heimgewebe/weltgewebe",
+    "source_pr": 1445,
+    "reason": "Bewusste Grenze des Merge-to-Live-Vertrags: PR 1445 belegt Code- und Webartefaktidentität, nicht die vollständige bewegliche Runtimeidentität."
+  }
+}

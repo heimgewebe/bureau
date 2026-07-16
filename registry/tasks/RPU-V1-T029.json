@@ -3,7 +3,7 @@
   "id": "RPU-V1-T029",
   "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
   "title": "Scale-indexed call navigation and representative benchmark",
-  "state": "planned",
+  "state": "verified",
   "goal": "Remove repeated linear scans from caller, callee and reference navigation using a measured deterministic index representation without creating a second unbound truth source.",
   "depends_on": [
     "RPU-V1-T024"
@@ -74,6 +74,183 @@
       "claim_resource": "component.bureau.registry",
       "task_resource_key": "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T029.json",
       "reason": "Keep Bureau intake and unrelated registry writes available while Lenskit implementation runs in an isolated worktree."
+    },
+    "verified_at": "2026-07-16T11:27:13Z",
+    "implementation_branch": "feat/repobrief-call-navigation-scale-index-v1",
+    "implementation_base": "fafa115c1bb291742f5a7e10ba5ab21e33baa902",
+    "implementation_commits": [
+      "8e0f7dabaf53d892414224e7dcc19bfbc857a9ae",
+      "36fa19e94f6e01ad7eaabfcefabf947272e78f98",
+      "8f83d7cac49250519435f59511c91aa557028d7f"
+    ],
+    "implementation_pr": "heimgewebe/lenskit#1022",
+    "implementation_pr_url": "https://github.com/heimgewebe/lenskit/pull/1022",
+    "implementation_head": "8f83d7cac49250519435f59511c91aa557028d7f",
+    "implementation_result_commit": "f22bc5b119f0e61b6fa637d11d2c4e6959798637",
+    "integration_method": "squash",
+    "integration_tree": "0cd0fcab7ed89be34ab0f33845456c4baf2cf14b",
+    "integration_identity": {
+      "head_is_ancestor_of_main": false,
+      "head_tree_equals_result_tree": true,
+      "note": "GitHub integrierte die drei geprüften Commits als einen Squash-Commit; der Inhalt ist baumidentisch, die ursprüngliche Commit-Abstammung blieb jedoch nicht erhalten."
+    },
+    "reviewed_diff": {
+      "path": "/home/alex/iCloud/Drive/halde/lenskit-pr-1022-rpu-v1-t029.patch",
+      "sha256": "84526dd84ea55a3c7157cf4f23e81c30094a85adda29d38d7f079c75a9932c7d",
+      "bytes": 131829,
+      "file_count": 8,
+      "additions": 2259,
+      "deletions": 73
+    },
+    "self_review": {
+      "path": "/home/alex/iCloud/Drive/halde/lenskit-pr-1022-rpu-v1-t029-self-review.md",
+      "sha256": "6b5882671b562ba647798bada5cd3207390ffc0806f2557c9b80cfddba1f13b3",
+      "bound_head": "8f83d7cac49250519435f59511c91aa557028d7f",
+      "bound_diff_sha256": "84526dd84ea55a3c7157cf4f23e81c30094a85adda29d38d7f079c75a9932c7d",
+      "verdict": "PASS_WITH_RECORDED_RESIDUALS"
+    },
+    "measurement": {
+      "committed_artifact": "docs/proofs/repobrief-call-navigation-scale-index-v1.measurement.json",
+      "committed_artifact_sha256": "ddd3b7e3a25d829683d0c75ca8f9f3020463fba9ce90a034db6b7f977b31e5d9",
+      "proof": "docs/proofs/repobrief-call-navigation-scale-index-v1-proof.md",
+      "proof_binds_committed_artifact_sha256": true,
+      "contains_absolute_home_or_worktree_path": false,
+      "post_merge_reproduction_sha256": "0d288125a542cbbc1b816d06a42669580c92430b83e5ba8e309c7a06fbbd2f75",
+      "selected": "process_local_in_memory_index",
+      "cache_max_entries": 2,
+      "synthetic_50000": {
+        "linear_warm_median_ms": 731.918539,
+        "ram_warm_median_ms": 54.481811,
+        "speedup": 13.434181528951012,
+        "sidecar_bundle_overhead_ratio": 0.13251349431587006
+      },
+      "representative_lenskit": {
+        "call_count": 54776,
+        "linear_warm_median_ms": 966.374488,
+        "ram_warm_median_ms": 41.09035,
+        "speedup": 23.518283197879796,
+        "sidecar_bundle_overhead_ratio": 0.16896123014788286
+      },
+      "mcp": {
+        "cold_batch_median_ms": 778.379556,
+        "warm_batch_median_ms": 5.703374,
+        "warm_p95_ms": 6.149232,
+        "cold_warm_byte_equivalent": true
+      }
+    },
+    "toctou_hardening": {
+      "call_graph_rechecked_after_index_build": true,
+      "symbol_index_rechecked_after_index_build": true,
+      "call_graph_rechecked_after_symbol_index_build": true,
+      "cache_insert_after_final_rechecks_only": true,
+      "error_codes": [
+        "python_call_graph_source_changed_during_load",
+        "python_symbol_index_source_changed_during_load"
+      ],
+      "regression_tests_mutate_source_inside_build_call": true
+    },
+    "validation": [
+      "GitHub PR #1022: alle verpflichtenden Checks grün.",
+      "Post-Merge: 40 fokussierte Call-Navigation-Tests bestanden.",
+      "Post-Merge: 935 RepoBrief-/Bundle-/Artefakttests bestanden.",
+      "Post-Merge: 39 Parity-Tests bestanden.",
+      "Post-Merge: vollständige nicht-browsergebundene Suite 4.137 bestanden, 1 übersprungen, 13 deselektiert.",
+      "Ruff check mit ruff-ci.toml bestanden; Maintainability-Ratchet bestanden.",
+      "git diff --check für Basis bis geprüftem Head bestanden.",
+      "Release-Vertrag geprüft: Distribution bleibt ohne gesonderte schriftliche Freigabe blockiert."
+    ],
+    "release_candidate": {
+      "candidate": "4.0-rc.1-gf22bc5b119f0",
+      "source_commit": "f22bc5b119f0e61b6fa637d11d2c4e6959798637",
+      "git_tree": "0cd0fcab7ed89be34ab0f33845456c4baf2cf14b",
+      "archive_sha256": "989ba0205571854a5a3a54acdbeadd855fade9ded618bab13644068c9a08ebc8",
+      "manifest_sha256": "0455e7e096d4cabd79d8707b753789daa14f3ca9173461bbed486e774a9bb21c",
+      "verification": "pass",
+      "distribution": "blocked_without_separate_written_permission",
+      "published": false
+    },
+    "known_residuals": [
+      {
+        "id": "ruff-format-baseline",
+        "status": "registered_follow_up",
+        "task": "RPU-V1-T033",
+        "finding": "ruff format --check mit der gepinnten Ruff-Version 0.15.13 würde vier geprüfte Dateien neu formatieren.",
+        "reason_not_fixed_in_t029": "Eine Vollformatierung von repobrief_access.py würde breite ältere Bereiche außerhalb des T029-Scope ändern."
+      },
+      {
+        "id": "post_fingerprint_micro_window",
+        "status": "bounded_residual_risk",
+        "finding": "Ein theoretischer Quellenwechsel nach dem letzten Fingerprint und vor Rückgabe oder Cacheaufnahme bleibt ohne Dateisperre oder unveränderlichen Snapshot möglich."
+      },
+      {
+        "id": "squash_ancestry",
+        "status": "recorded_integration_deviation",
+        "finding": "Der geprüfte PR-Head ist wegen Squash-Merge kein Vorfahr von Main; die Git-Bäume sind identisch."
+      }
+    ],
+    "completion_summary": "Lenskit PR #1022 ersetzt wiederholte lineare Call-Navigationsscans durch einen quellengebundenen, auf zwei Bundles begrenzten RAM-Index, schließt die geprüften Call-/Symbolindex-TOCTOU-Fenster fail-closed und belegt bytegleiche Antworten sowie zweistellige Warm-Latenzgewinne. Ein produktiver Sidecar wurde wegen zusätzlicher Bundle-Größe ohne Warm-Vorteil verworfen.",
+    "verified_acceptance": {
+      "rpu-v1-t029-alternatives": "Der feste Benchmark vergleicht linearen Scan, prozesslokalen RAM-Index und hashgebundenen Sidecar für Build/Kaltladen, Bundle-Größe, Speicher und wiederholte MCP-Latenz; gewählt wurde der RAM-Index.",
+      "rpu-v1-t029-equivalence": "Fokussierte Tests und Benchmarkbelege bestätigen bytegleiche geordnete Ergebnisse zwischen kalten und warmen/indexierten Pfaden einschließlich fail-closed Quellenwechseln.",
+      "rpu-v1-t029-scale": "Der Nachlauf umfasst exakt 50.000 synthetische Calls sowie Lenskit mit 54.776 Calls, Verteilungen für kalte und warme Läufe und Maschinenkontext.",
+      "rpu-v1-t029-integrity": "Persistierter Sidecar und RAM-Index sind an kanonische Quellenidentität und deklarierte Hash-/Byteangaben gebunden; nach Indexaufbau werden relevante Quellen erneut geprüft und bei Abweichung nicht gecacht."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "RPU-V1-T029",
+          "number": 1022,
+          "source_ref": "heimgewebe/lenskit#1022",
+          "base_commit_sha": "fafa115c1bb291742f5a7e10ba5ab21e33baa902",
+          "head_commit_sha": "8f83d7cac49250519435f59511c91aa557028d7f",
+          "merge_commit_sha": "f22bc5b119f0e61b6fa637d11d2c4e6959798637",
+          "diff_sha256": "84526dd84ea55a3c7157cf4f23e81c30094a85adda29d38d7f079c75a9932c7d"
+        },
+        {
+          "kind": "self_review",
+          "authority": "local_artifact",
+          "task_id": "RPU-V1-T029",
+          "source_ref": "/home/alex/iCloud/Drive/halde/lenskit-pr-1022-rpu-v1-t029-self-review.md",
+          "artifact_sha256": "6b5882671b562ba647798bada5cd3207390ffc0806f2557c9b80cfddba1f13b3",
+          "head_commit_sha": "8f83d7cac49250519435f59511c91aa557028d7f",
+          "diff_sha256": "84526dd84ea55a3c7157cf4f23e81c30094a85adda29d38d7f079c75a9932c7d",
+          "verdict": "PASS_WITH_RECORDED_RESIDUALS"
+        },
+        {
+          "kind": "measurement",
+          "authority": "repository_artifact",
+          "task_id": "RPU-V1-T029",
+          "source_ref": "docs/proofs/repobrief-call-navigation-scale-index-v1.measurement.json",
+          "artifact_sha256": "ddd3b7e3a25d829683d0c75ca8f9f3020463fba9ce90a034db6b7f977b31e5d9"
+        },
+        {
+          "kind": "post_merge_test_suite",
+          "authority": "local_execution_receipts",
+          "task_id": "RPU-V1-T029",
+          "source_ref": "lenskit@f22bc5b119f0e61b6fa637d11d2c4e6959798637",
+          "full_passed": 4137,
+          "focused_passed": 40,
+          "integration_passed": 935,
+          "parity_passed": 39
+        },
+        {
+          "kind": "release_candidate",
+          "authority": "local_release_verifier",
+          "task_id": "RPU-V1-T029",
+          "source_ref": "4.0-rc.1-gf22bc5b119f0",
+          "archive_sha256": "989ba0205571854a5a3a54acdbeadd855fade9ded618bab13644068c9a08ebc8",
+          "manifest_sha256": "0455e7e096d4cabd79d8707b753789daa14f3ca9173461bbed486e774a9bb21c",
+          "published": false
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "b29045879067d96a7c6bc694784bb7d02c5f777848e28d4f1ddd11b06906caa4",
+      "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db"
     }
   }
 }

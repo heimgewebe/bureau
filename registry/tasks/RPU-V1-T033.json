@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T033",
+  "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
+  "title": "Establish a scoped Ruff formatting baseline for RepoBrief navigation",
+  "state": "planned",
+  "goal": "Resolve the pinned Ruff formatter drift in the RepoBrief call-navigation files through a reviewable style-only change and make the applicable formatting gate explicit without mixing semantic refactors into the cleanup.",
+  "depends_on": [
+    "RPU-V1-T029"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 110
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "grabowski_resources": [
+      "component:chore/repobrief-ruff-format-baseline-v1",
+      "path:/home/alex/repos/.lenskit-worktrees/repobrief-ruff-format-baseline-v1",
+      "repo:/home/alex/repos/lenskit:branch:chore/repobrief-ruff-format-baseline-v1",
+      "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T033.json"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "rpu-v1-t033-pinned-formatter",
+      "assertion": "The exact repository-pinned Ruff version formats and then accepts the four T029 navigation and benchmark files with no remaining formatter drift."
+    },
+    {
+      "id": "rpu-v1-t033-semantic-neutrality",
+      "assertion": "AST-normalized Python structure and all focused, integration, parity and complete non-browser test results prove that the cleanup changes formatting only."
+    },
+    {
+      "id": "rpu-v1-t033-review-scope",
+      "assertion": "The patch is isolated from producer refactors and feature work, explicitly reports broad legacy-file churn and is diff-reviewed as a style-only change before merge."
+    },
+    {
+      "id": "rpu-v1-t033-gate-contract",
+      "assertion": "The repository documents or enforces the intended Ruff format check scope so future tasks cannot report it as passed when only Ruff lint was executed."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-16T11:27:13Z",
+    "source_task": "RPU-V1-T029",
+    "source_pr": "heimgewebe/lenskit#1022",
+    "source_finding": "ruff format --check with pinned Ruff 0.15.13 reports four T029 files as requiring formatting; repobrief_access.py would produce broad pre-existing style churn.",
+    "does_not_establish": [
+      "semantic_improvement",
+      "performance_improvement",
+      "permission_to_mix_refactoring",
+      "repository_wide_format_convergence"
+    ],
+    "bureau_always_open_scope": {
+      "claim_resource": "component.bureau.registry",
+      "task_resource_key": "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T033.json",
+      "reason": "Keep Bureau intake and unrelated registry writes available while the isolated Lenskit formatting cleanup is reviewed."
+    }
+  }
+}

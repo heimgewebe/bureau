@@ -68,10 +68,10 @@
       "RPU-V1-T028",
       "SEMANTAH-E2E-PORTABILITY-V1-T001",
       "WGX-JUSTFILE-INTEGRITY-V1-T001",
-      "RPU-V1-T029",
       "RPU-V1-T030",
       "RPU-V1-T031",
-      "RPU-V1-T032"
+      "RPU-V1-T032",
+      "RPU-V1-T033"
     ],
     "next": [
       "RAB-V1-T002B",

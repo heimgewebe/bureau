@@ -19,3 +19,12 @@ Der Graph ist Navigationsevidenz, keine zweite Inhaltswahrheit. `canonical_md` b
 ## Promotionsregel
 
 Ein eindrucksvoller Graph reicht nicht. Eine Standardroute ist erst zulässig, wenn ein fixes Goldset mindestens 0,97 S1-Präzision, keinen Fallrückschritt und mindestens 40 Prozent weniger Kontextpfade bei gleichem oder besserem Ziel-Recall belegt.
+
+## Nachlauf aus der PR-1018-Review
+
+6. **Skalierte Navigation (`RPU-V1-T029`).** Persistierte Pre-Aggregation wird gegen einen beim Laden erzeugten In-Memory-Index und den bisherigen linearen Scan gemessen. Entscheidend sind Ergebnisgleichheit, Bundle-Größe, Speicher und wiederholte MCP-Latenz.
+7. **Producer- und Vertragszerlegung (`RPU-V1-T030`).** Scope-Erfassung, Call-Aufzeichnung, Auflösung und Validierung werden ohne Semantikdrift getrennt; generative AST-Tests falsifizieren Range- und Scope-Annahmen.
+8. **Inkrementelle und parallele Erzeugung (`RPU-V1-T031`).** Datei-Reuse und begrenzte Parallelität sind nur zulässig, wenn sie bytegleich zu einem sauberen Vollaufbau bleiben und korrekt invalidieren.
+9. **Kontrollierte S1-Rekall-Erweiterung (`RPU-V1-T032`).** Vererbung, Mixins, `super()`, Receiver-Aliase und Import-Sonderfälle werden reason-spezifisch gemessen. Ohne bestandenes 0,97-Präzisionsgate bleiben sie S0.
+
+Diese Phasen sind keine Nachbesserungsbehauptung für den bereits gemergten V1-Graphen. Sie trennen Skalierung, Wartbarkeit und höheren Recall von den konservativen Beweisgrenzen des bestehenden Artefakts.

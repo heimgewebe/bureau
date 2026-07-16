@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T029",
+  "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
+  "title": "Scale-indexed call navigation and representative benchmark",
+  "state": "planned",
+  "goal": "Remove repeated linear scans from caller, callee and reference navigation using a measured deterministic index representation without creating a second unbound truth source.",
+  "depends_on": [
+    "RPU-V1-T024"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 70
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "48d1797553ddb233a9b64b22e50436ca5c6ac291",
+    "grabowski_resources": [
+      "component:feat/repobrief-call-navigation-scale-index-v1",
+      "path:/home/alex/repos/.lenskit-worktrees/repobrief-call-navigation-scale-index-v1",
+      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-call-navigation-scale-index-v1",
+      "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T029.json"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "rpu-v1-t029-alternatives",
+      "assertion": "A fixed benchmark compares artifact pre-aggregation, load-time in-memory indexing and the current linear scan for build time, bundle bytes, peak memory and repeated MCP latency before one representation is selected."
+    },
+    {
+      "id": "rpu-v1-t029-equivalence",
+      "assertion": "Indexed and non-indexed navigation return byte-equivalent ordered results, limits, filters, evidence levels, source ranges, freshness and fail-closed errors on a shared fixture corpus."
+    },
+    {
+      "id": "rpu-v1-t029-scale",
+      "assertion": "A deterministic benchmark includes at least a synthetic 50,000-call tier and one representative real repository, reports cold-load and warm-query distributions, and records machine context."
+    },
+    {
+      "id": "rpu-v1-t029-integrity",
+      "assertion": "Any persisted index is hash-bound to the canonical call records and rejected on mismatch; an in-memory index cannot outlive or silently replace its source artifact."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T22:40:00Z",
+    "source_request": "Post-merge reviews for Lenskit PR #1018 were live-verified; confirmed optimization work is registered separately from the corrective follow-up.",
+    "architecture_axis": "evidence-graded coding context graph",
+    "review_origin": "Lenskit PR #1018 post-merge performance review",
+    "does_not_establish": [
+      "better_agent_outcomes",
+      "default_promotion",
+      "call_graph_completeness"
+    ],
+    "bureau_always_open_scope": {
+      "claim_resource": "component.bureau.registry",
+      "task_resource_key": "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T029.json",
+      "reason": "Keep Bureau intake and unrelated registry writes available while Lenskit implementation runs in an isolated worktree."
+    }
+  }
+}

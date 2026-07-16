@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T031",
+  "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
+  "title": "Incremental and bounded-parallel call-graph generation",
+  "state": "planned",
+  "goal": "Avoid unconditional full-repository parsing by adding hash-bound file reuse and bounded parallel parsing while proving equivalence to a clean full rebuild.",
+  "depends_on": [
+    "RPU-V1-T029",
+    "RPU-V1-T030"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 90
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "48d1797553ddb233a9b64b22e50436ca5c6ac291",
+    "grabowski_resources": [
+      "component:feat/repobrief-call-graph-incremental-parallel-v1",
+      "path:/home/alex/repos/.lenskit-worktrees/repobrief-call-graph-incremental-parallel-v1",
+      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-call-graph-incremental-parallel-v1",
+      "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T031.json"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "rpu-v1-t031-invalidation",
+      "assertion": "Changed, added, deleted, renamed and parser-version-affected files are deterministically invalidated; reused records retain source-content and producer-version bindings."
+    },
+    {
+      "id": "rpu-v1-t031-equivalence",
+      "assertion": "Full, incremental and bounded-parallel builds produce byte-equivalent canonical call ordering and identical diagnostics for the same repository state."
+    },
+    {
+      "id": "rpu-v1-t031-bounds",
+      "assertion": "Worker count, memory budget and fallback behavior are explicit and deterministic; unsupported environments fall back to the proven serial path without partial artifacts."
+    },
+    {
+      "id": "rpu-v1-t031-benefit",
+      "assertion": "Representative cold and small-delta benchmarks justify retaining each optimization and report regressions as well as wins."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T22:40:00Z",
+    "source_request": "Post-merge reviews for Lenskit PR #1018 were live-verified; confirmed optimization work is registered separately from the corrective follow-up.",
+    "architecture_axis": "evidence-graded coding context graph",
+    "review_origin": "Lenskit PR #1018 post-merge generation-performance review",
+    "does_not_establish": [
+      "freshness_without_input_binding",
+      "faster_all_workloads",
+      "semantic_correctness"
+    ],
+    "bureau_always_open_scope": {
+      "claim_resource": "component.bureau.registry",
+      "task_resource_key": "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T031.json",
+      "reason": "Keep Bureau intake and unrelated registry writes available while Lenskit implementation runs in an isolated worktree."
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T032",
+  "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
+  "title": "Controlled S1 recall expansion for object-oriented and import edges",
+  "state": "planned",
+  "goal": "Evaluate inheritance, mixin, super, receiver-alias and selected import patterns as separately reason-coded candidates, promoting only classes that preserve the registered S1 precision threshold.",
+  "depends_on": [
+    "RPU-V1-T024",
+    "RPU-V1-T030"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 100
+  },
+  "claims": [
+    {
+      "resource": "repo.lenskit",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit",
+    "baseline_commit": "48d1797553ddb233a9b64b22e50436ca5c6ac291",
+    "grabowski_resources": [
+      "component:feat/repobrief-call-graph-s1-recall-v1",
+      "path:/home/alex/repos/.lenskit-worktrees/repobrief-call-graph-s1-recall-v1",
+      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-call-graph-s1-recall-v1",
+      "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T032.json"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "rpu-v1-t032-candidates",
+      "assertion": "Inheritance, mixins, super calls, receiver aliases, star imports, module __getattr__ and transitive imports are measured as separate reason classes rather than one broad heuristic."
+    },
+    {
+      "id": "rpu-v1-t032-promotion",
+      "assertion": "A reason class becomes S1 only when the fixed goldset meets at least 0.97 precision with no registered case regression; otherwise candidates remain explicit S0."
+    },
+    {
+      "id": "rpu-v1-t032-negative",
+      "assertion": "Dynamic attribute dispatch, monkey patching, ambiguous multiple inheritance and unresolved star exports remain fail-closed and are never promoted by name similarity alone."
+    },
+    {
+      "id": "rpu-v1-t032-reporting",
+      "assertion": "The evaluation reports per-reason precision, recall, abstention and false-positive examples and preserves the no-transitive-import-resolution non-claim unless a bounded resolver is separately proven."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T22:40:00Z",
+    "source_request": "Post-merge reviews for Lenskit PR #1018 were live-verified; confirmed optimization work is registered separately from the corrective follow-up.",
+    "architecture_axis": "evidence-graded coding context graph",
+    "review_origin": "Lenskit PR #1018 post-merge recall review",
+    "promotion_thresholds": {
+      "minimum_s1_precision": 0.97,
+      "no_case_regression": true
+    },
+    "does_not_establish": [
+      "dynamic_dispatch_completeness",
+      "runtime_reachability",
+      "default_promotion"
+    ],
+    "bureau_always_open_scope": {
+      "claim_resource": "component.bureau.registry",
+      "task_resource_key": "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T032.json",
+      "reason": "Keep Bureau intake and unrelated registry writes available while Lenskit implementation runs in an isolated worktree."
+    }
+  }
+}

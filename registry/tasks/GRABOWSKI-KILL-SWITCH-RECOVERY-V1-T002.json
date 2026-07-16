@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1",
-  "state": "blocked",
+  "state": "ready",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -81,6 +81,12 @@
       "implementation complete",
       "deployment complete"
     ],
-    "blocked_reason": "Depends on deployment and live verification of GRABOWSKI-KILL-SWITCH-RECOVERY-V1-T001."
+    "ready_reason": "T001 is merged, deployed and live-verified; the remaining scope is the separate OS-identity authority boundary.",
+    "dependency_evidence": {
+      "task": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1-T001",
+      "state": "verified",
+      "merge_commit": "0b09e6d7dfdb0b3171d33d5bd782d37eb36e7134",
+      "release_id": "0b09e6d7dfdb-srcsetb0de45d3505d-locke6664d600b6c-contract51062bb6992c"
+    }
   }
 }

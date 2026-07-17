@@ -63,6 +63,69 @@ def test_configured_state_database_sidecars_stay_known(
     assert known["custom.sqlite3-shm"] == "sqlite-sidecar"
 
 
+def _write_runtime_refresh_json(path, kind):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps({"schema_version": 1, "kind": kind}) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _runtime_refresh_fixture(state_root):
+    refresh = state_root / "runtime-refresh"
+    digest = "a" * 64
+    commit = "b" * 40
+    _write_runtime_refresh_json(
+        refresh / "observations" / "observation.json",
+        "bureau_runtime_refresh_observation",
+    )
+    _write_runtime_refresh_json(
+        refresh / "latest-observation.json",
+        "bureau_runtime_refresh_observation",
+    )
+    _write_runtime_refresh_json(
+        refresh / "intents" / f"{digest}.json",
+        "bureau_runtime_refresh_intent",
+    )
+    _write_runtime_refresh_json(
+        refresh / "attempts" / digest / "started.json",
+        "bureau_runtime_refresh_attempt_start",
+    )
+    (refresh / "workspaces" / commit).mkdir(parents=True)
+    return refresh
+
+
+def test_runtime_refresh_directory_stays_known_active_state_root_entry(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    _runtime_refresh_fixture(store.state_root)
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is True
+    assert report["unknown_entries"] == []
+    known = {entry["name"]: entry["class"] for entry in report["known_entries"]}
+    assert known["runtime-refresh"] == "runtime-refresh-directory"
+
+
+def test_runtime_refresh_directory_with_foreign_child_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    refresh = _runtime_refresh_fixture(store.state_root)
+    (refresh / "operator-note.txt").write_text("foreign\n", encoding="utf-8")
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "runtime-refresh", "type": "directory", "class": "unknown"}
+    ]
+
+
 def test_deployment_evidence_directory_stays_known_active_state_root_entry(
     registry_factory, tmp_path, monkeypatch
 ):

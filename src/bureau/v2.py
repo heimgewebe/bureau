@@ -5,6 +5,7 @@ import json
 import os
 import re
 import sqlite3
+import stat
 import subprocess
 import uuid
 from collections.abc import Callable, Iterable, Iterator
@@ -1026,6 +1027,174 @@ _RECOVERY_BUNDLE_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\.bundle")
 _RECOVERY_BUNDLE_MAX_COUNT = 64
 _RECOVERY_BUNDLE_MAX_BYTES = 512 * 1024 * 1024
 _RECOVERY_CHECKSUM_MAX_BYTES = 4096
+_RUNTIME_REFRESH_JSON_MAX_BYTES = 256 * 1024
+_RUNTIME_REFRESH_MAX_RECORDS = 1024
+_RUNTIME_REFRESH_MAX_ATTEMPTS = 256
+_RUNTIME_REFRESH_MAX_WORKSPACES = 64
+_RUNTIME_REFRESH_HASH_RE = re.compile(r"[0-9a-f]{64}")
+_RUNTIME_REFRESH_COMMIT_RE = re.compile(r"[0-9a-f]{40}")
+_RUNTIME_REFRESH_ALLOWED_CHILDREN = {
+    "attempts",
+    "intents",
+    "latest-observation.json",
+    "observations",
+    "workspaces",
+}
+
+
+def _runtime_refresh_json_kind(path: Path, expected_kind: str) -> bool:
+    try:
+        info = path.lstat()
+        if (
+            stat.S_ISLNK(info.st_mode)
+            or not stat.S_ISREG(info.st_mode)
+            or info.st_size > _RUNTIME_REFRESH_JSON_MAX_BYTES
+        ):
+            return False
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return False
+    return isinstance(payload, dict) and payload.get("kind") == expected_kind
+
+
+def _runtime_refresh_record_directory(
+    path: Path, *, expected_kind: str, maximum_count: int
+) -> bool:
+    try:
+        info = path.lstat()
+        children = sorted(path.iterdir(), key=lambda item: item.name)
+    except OSError:
+        return False
+    if stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode):
+        return False
+    if not children or len(children) > maximum_count:
+        return False
+    for child in children:
+        if (
+            _RUNTIME_REFRESH_HASH_RE.fullmatch(child.stem) is None
+            or child.suffix != ".json"
+            or not _runtime_refresh_json_kind(child, expected_kind)
+        ):
+            return False
+    return True
+
+
+def _runtime_refresh_attempts_directory(path: Path) -> bool:
+    try:
+        info = path.lstat()
+        attempts = sorted(path.iterdir(), key=lambda item: item.name)
+    except OSError:
+        return False
+    if (
+        stat.S_ISLNK(info.st_mode)
+        or not stat.S_ISDIR(info.st_mode)
+        or not attempts
+        or len(attempts) > _RUNTIME_REFRESH_MAX_ATTEMPTS
+    ):
+        return False
+    allowed = {
+        "started.json": "bureau_runtime_refresh_attempt_start",
+        "result.json": "bureau_runtime_refresh_result",
+    }
+    for attempt in attempts:
+        try:
+            attempt_info = attempt.lstat()
+            children = sorted(attempt.iterdir(), key=lambda item: item.name)
+        except OSError:
+            return False
+        if (
+            _RUNTIME_REFRESH_HASH_RE.fullmatch(attempt.name) is None
+            or stat.S_ISLNK(attempt_info.st_mode)
+            or not stat.S_ISDIR(attempt_info.st_mode)
+            or not children
+            or len(children) > len(allowed)
+        ):
+            return False
+        for child in children:
+            expected_kind = allowed.get(child.name)
+            if expected_kind is None or not _runtime_refresh_json_kind(
+                child, expected_kind
+            ):
+                return False
+    return True
+
+
+def _runtime_refresh_observations_directory(path: Path) -> bool:
+    try:
+        info = path.lstat()
+        observations = sorted(path.iterdir(), key=lambda item: item.name)
+    except OSError:
+        return False
+    if (
+        stat.S_ISLNK(info.st_mode)
+        or not stat.S_ISDIR(info.st_mode)
+        or not observations
+        or len(observations) > _RUNTIME_REFRESH_MAX_RECORDS
+    ):
+        return False
+    return all(
+        observation.suffix == ".json"
+        and _runtime_refresh_json_kind(
+            observation, "bureau_runtime_refresh_observation"
+        )
+        for observation in observations
+    )
+
+
+def _runtime_refresh_workspaces_directory(path: Path) -> bool:
+    try:
+        info = path.lstat()
+        workspaces = sorted(path.iterdir(), key=lambda item: item.name)
+    except OSError:
+        return False
+    if (
+        stat.S_ISLNK(info.st_mode)
+        or not stat.S_ISDIR(info.st_mode)
+        or len(workspaces) > _RUNTIME_REFRESH_MAX_WORKSPACES
+    ):
+        return False
+    for workspace in workspaces:
+        try:
+            workspace_info = workspace.lstat()
+        except OSError:
+            return False
+        if (
+            _RUNTIME_REFRESH_COMMIT_RE.fullmatch(workspace.name) is None
+            or stat.S_ISLNK(workspace_info.st_mode)
+            or not stat.S_ISDIR(workspace_info.st_mode)
+        ):
+            return False
+    return True
+
+
+def _is_runtime_refresh_directory(entry: Path) -> bool:
+    try:
+        info = entry.lstat()
+        children = {child.name: child for child in entry.iterdir()}
+    except OSError:
+        return False
+    if (
+        stat.S_ISLNK(info.st_mode)
+        or not stat.S_ISDIR(info.st_mode)
+        or set(children) != _RUNTIME_REFRESH_ALLOWED_CHILDREN
+    ):
+        return False
+    return (
+        _runtime_refresh_attempts_directory(children["attempts"])
+        and _runtime_refresh_record_directory(
+            children["intents"],
+            expected_kind="bureau_runtime_refresh_intent",
+            maximum_count=_RUNTIME_REFRESH_MAX_RECORDS,
+        )
+        and _runtime_refresh_json_kind(
+            children["latest-observation.json"],
+            "bureau_runtime_refresh_observation",
+        )
+        and _runtime_refresh_observations_directory(children["observations"])
+        and _runtime_refresh_workspaces_directory(children["workspaces"])
+    )
+
+
 def _is_deployment_evidence_directory(entry: Path) -> bool:
     try:
         releases = sorted(entry.iterdir(), key=lambda item: item.name)
@@ -1258,6 +1427,16 @@ def _classify_state_root_entry(entry: Path, database_name: str) -> dict[str, str
             "name": name,
             "type": entry_type,
             "class": "reviewed-plan-directory",
+        }
+    if (
+        name == "runtime-refresh"
+        and entry_type == "directory"
+        and _is_runtime_refresh_directory(entry)
+    ):
+        return {
+            "name": name,
+            "type": entry_type,
+            "class": "runtime-refresh-directory",
         }
     if (
         name == "deployments"

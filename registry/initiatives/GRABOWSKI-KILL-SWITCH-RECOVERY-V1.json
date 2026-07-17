@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "GRABOWSKI-KILL-SWITCH-RECOVERY-V1",
   "title": "Grabowski kill-switch recovery and proof isolation",
-  "state": "waiting",
+  "state": "active",
   "commitment": "next",
   "goal": "Prevent test or generic trusted-owner mutations from activating the production operator kill switch, and provide one narrow hash-bound recovery path that preserves fail-closed behavior.",
   "current_plan": {

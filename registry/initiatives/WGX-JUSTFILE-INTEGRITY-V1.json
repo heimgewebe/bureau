@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "WGX-JUSTFILE-INTEGRITY-V1",
   "title": "WGX Justfile integrity",
-  "state": "committed",
+  "state": "active",
   "commitment": "later",
   "goal": "Das auf main bereits nicht parsebare WGX-Justfile reparieren und einen CI-Parser-Gate gegen erneute Syntaxregressionen einführen.",
   "completion": [

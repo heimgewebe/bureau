@@ -3,7 +3,7 @@
   "id": "KONVERGENZREGELKREIS-V1-T010",
   "initiative": "KONVERGENZREGELKREIS-V1",
   "title": "Bind Bureau PR 653 to an honest R1 convergence closeout",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 2
@@ -80,7 +80,102 @@
     "does_not_establish": [
       "retroactive merge authority",
       "runtime deployment",
-      "automatic terminal closure"
-    ]
+      "automatic terminal closure",
+      "RepoGround runtime deployment or parity",
+      "completion of T025, T026 or T027",
+      "absence of all historical Lenskit names"
+    ],
+    "verified_at": "2026-07-17",
+    "verification_note": "Bureau PR #653 was reconciled after merge without retroactive authorization: exact GitHub merge, field review and five green checks were bound into an R1 request; the installed read-only convergence-assess grip returned terminally_closed and Chronik imported the exact completed event.",
+    "implementation": {
+      "pull_request": "heimgewebe/bureau#653",
+      "head_sha": "83cc1edfd0055c74b2767e106e4d45883e975682",
+      "merge_commit_sha": "1ad4b644c615c616082d7e3275521bd85a926ea2",
+      "diff_sha256": "7460639c4e15ae1c8dc342552c3102844e782741107c70a32e4458dd85257f93",
+      "patch_path": "/home/alex/iCloud/Drive/halde/bureau-pr653-repoground-active-bindings.patch",
+      "field_review_result": "pass",
+      "github_checks_terminal": 5,
+      "github_checks_green": 5
+    },
+    "closeout_registration": {
+      "pull_request": "heimgewebe/bureau#654",
+      "head_sha": "cfbe5af04807599ecaa1f1e8feb26abb7682a61f",
+      "merge_commit_sha": "1eb003e0cc241f10133ddbcd1369d102a4860480"
+    },
+    "convergence": {
+      "risk_level": "R1",
+      "assessment_id": "bureau-pr653-repoground-active-bindings-r1",
+      "request_path": "/home/alex/iCloud/Drive/halde/bureau-pr653-convergence-r1/assessment-request.json",
+      "request_sha256": "c8756705de2554695e18a94aba43b19a4e0e59dec2f57cae2c70395496885f68",
+      "protocol_head": "83ed435bf9eb490e81a6ff2103b6c1397440d40b",
+      "evaluator_sha256": "6ba98fccff59431c974fb17caa360301f38f8f2c0b756e1cf49f8c1a13e10bcc",
+      "profile_sha256": "3c835150b635f5efd90d055a19acb3c080b33827f5934759916f7632bd531e6a",
+      "grip_receipt_sha256": "3bee2879196735489f9882c3fc075e49a89a86fada6629fb4d2f7e62f4670bf5",
+      "grip_output_sha256": "5fe228b4b7e8d7196ac2fb2a0cf8ff9e1db24bbf69a8ba36c2433c7d07b70c8a",
+      "grip_envelope_path": "/home/alex/iCloud/Drive/halde/bureau-pr653-convergence-r1/grip-receipt-envelope.json",
+      "grip_envelope_file_sha256": "4ecba23e12c1154bbad94b34ec9ba7245b0c41a6971f3c4963cfae7885d78436",
+      "evidence_index_path": "/home/alex/iCloud/Drive/halde/bureau-pr653-convergence-r1/evidence-index.json",
+      "evidence_index_sha256": "0161c4dca28afa7329e360c1f6281bca1c53674d78314a8aad4b24d30f5a44ab",
+      "status": "terminally_closed",
+      "closure_allowed": true,
+      "missing_evidence": [],
+      "conflicts": [],
+      "blocked_by": []
+    },
+    "chronik": {
+      "event_id": "sha256:3b4c41858660759d11a7717be9621af2e550041e1d197e23cefd4894e875615f",
+      "ledger_path": "/home/alex/.local/state/chronik/data/agent.ledger.jsonl",
+      "source_path": "/home/alex/.local/state/grabowski/chronik-outbox/grabowski_task-003d1abb3b4e434a94c12580-a1.jsonl",
+      "import_receipt_path": "/home/alex/.local/state/chronik/import-receipts/10ffd6657facdad0aa08efc1733e006a165971cf86b3e427d739f6926ec16805.receipt.json",
+      "import_receipt_declared_sha256": "87cda56716138f2dbf430835de1abdb7a4b01d1c1cf71e7d63aec298b0deeb0b",
+      "import_receipt_file_sha256": "24f6e651ff3bd92af505eefe67cef5bf47dd19872b3f648d80e4e8d1979b38d0",
+      "imported": 1,
+      "skipped_existing": 1
+    },
+    "validated_acceptance": {
+      "no-retroactive-authorization": "The closeout task was registered after PR 653 merged and explicitly records that it reconciles evidence rather than authorizing the prior merge.",
+      "identity-binding": "The assessment binds PR head 83cc1edfd0055c74b2767e106e4d45883e975682, merge commit 1ad4b644c615c616082d7e3275521bd85a926ea2 and protocol head 83ed435bf9eb490e81a6ff2103b6c1397440d40b.",
+      "review-binding": "The request binds field-review PASS, five terminal green GitHub checks and diff SHA-256 7460639c4e15ae1c8dc342552c3102844e782741107c70a32e4458dd85257f93.",
+      "assessment-honesty": "The installed hash-bound read-only grip returned terminally_closed with no missing evidence, conflict or blocker; receipt 3bee2879…0bf5 is persisted in the evidence bundle.",
+      "closeout-persistence": "Chronik imported completed event sha256:3b4c4185…615f into agent.ledger with declared import receipt 87cda567…eb0b; the exact receipt bytes are preserved in the evidence bundle."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "source_ref": "heimgewebe/bureau#653",
+          "number": 653,
+          "head_sha": "83cc1edfd0055c74b2767e106e4d45883e975682",
+          "merge_commit_sha": "1ad4b644c615c616082d7e3275521bd85a926ea2",
+          "diff_sha256": "7460639c4e15ae1c8dc342552c3102844e782741107c70a32e4458dd85257f93",
+          "task_id": "KONVERGENZREGELKREIS-V1-T010"
+        },
+        {
+          "kind": "convergence_receipt",
+          "authority": "grabowski-runtime",
+          "source_ref": "convergence-assess/bureau-pr653-repoground-active-bindings-r1",
+          "receipt_sha256": "3bee2879196735489f9882c3fc075e49a89a86fada6629fb4d2f7e62f4670bf5",
+          "request_sha256": "c8756705de2554695e18a94aba43b19a4e0e59dec2f57cae2c70395496885f68",
+          "status": "terminally_closed",
+          "closure_allowed": true,
+          "task_id": "KONVERGENZREGELKREIS-V1-T010"
+        },
+        {
+          "kind": "chronik_event",
+          "authority": "chronik",
+          "source_ref": "agent.ledger/sha256:3b4c41858660759d11a7717be9621af2e550041e1d197e23cefd4894e875615f",
+          "event_id": "sha256:3b4c41858660759d11a7717be9621af2e550041e1d197e23cefd4894e875615f",
+          "receipt_sha256": "87cda56716138f2dbf430835de1abdb7a4b01d1c1cf71e7d63aec298b0deeb0b",
+          "task_id": "KONVERGENZREGELKREIS-V1-T010"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "2ca197acb43b6d0105f23eb2180fc4d90948793b8c1c9248a57f1490aab19b5c",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   }
 }

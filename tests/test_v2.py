@@ -1600,6 +1600,41 @@ def test_what_now_explains_blockers_when_no_task_is_eligible(
     assert "missing capabilities: repository" in result["blocked"][0]["reasons"]
 
 
+def test_what_now_compact_projection_omits_high_volume_details(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(3, mode="write")
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    result = dispatcher.what_now({"repository"}, limit=2, compact=True)
+
+    assert result["projection"] == "compact"
+    assert result["selected"]["task_id"] == "BUR-TEST-001-T001"
+    assert "claims" not in result["selected"]
+    assert "approval_contract" not in result["selected"]
+    assert result["lifecycle"]["total"] == 1
+    assert "task_states" not in json.dumps(result["lifecycle"])
+    assert "latest_candidates" not in result["live_register"]["summary"]
+    assert len(result["blocked"]) <= 2
+    assert result["blocker_summary"]["blocked_returned"] <= 2
+    assert "repair_task_candidates" not in result["runtime_truth"]
+    assert "repair_recommendations" not in result["runtime_truth"]
+    assert "repair_task_candidate_count" in result["runtime_truth"]
+
+
+def test_what_now_compact_projection_reports_blocker_truncation(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(3, mode="write")
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    result = dispatcher.what_now(set(), limit=1, compact=True)
+
+    assert result["blocker_summary"]["total_blocked"] == 3
+    assert result["blocker_summary"]["blocked_returned"] == 1
+    assert result["blocker_summary"]["blocked_truncated"] is True
+
+
 def test_what_now_treats_planned_review_before_effect_as_operator_eligible(
     registry_factory, tmp_path, monkeypatch
 ):
@@ -1657,6 +1692,30 @@ def test_what_now_cli_is_read_only_and_json_emits_ranked_answer(
     ]
     envelope_dir = state / "envelopes"
     assert not envelope_dir.exists() or list(envelope_dir.iterdir()) == []
+
+
+def test_what_now_cli_compact_flag_selects_compact_projection(
+    registry_factory, tmp_path, monkeypatch, capsys
+):
+    root = registry_factory(1, mode="write")
+    monkeypatch.setenv("BUREAU_STATE_DIR", str(tmp_path / "state"))
+
+    result = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--json",
+            "what-now",
+            "--capability",
+            "repository",
+            "--compact",
+        ]
+    )
+    output = json.loads(capsys.readouterr().out)
+
+    assert result == 0
+    assert output["projection"] == "compact"
+    assert output["selected"]["task_id"] == "BUR-TEST-001-T001"
 
 
 def test_what_now_includes_live_register_context(registry_factory, tmp_path, monkeypatch):

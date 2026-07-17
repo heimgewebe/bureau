@@ -173,6 +173,7 @@ def parser() -> argparse.ArgumentParser:
     what_now.add_argument("--capability", action="append", default=[])
     what_now.add_argument("--resource")
     what_now.add_argument("--limit", type=int, default=5)
+    what_now.add_argument("--compact", action="store_true")
     repo_balls = sub.add_parser("repo-balls")
     repo_balls.add_argument("--capability", action="append", default=[])
     live_register = sub.add_parser("live-register")
@@ -842,7 +843,10 @@ def main(argv: list[str] | None = None) -> int:
             value = dispatcher.explain_next(set(args.capability), resource=args.resource)
         elif args.command == "what-now":
             value = dispatcher.what_now(
-                set(args.capability), resource=args.resource, limit=args.limit
+                set(args.capability),
+                resource=args.resource,
+                limit=args.limit,
+                compact=args.compact,
             )
         elif args.command == "repo-balls":
             value = dispatcher.repo_balls(set(args.capability))

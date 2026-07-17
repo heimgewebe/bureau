@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import threading
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
@@ -207,6 +208,57 @@ def test_github_open_pull_requests_cap_reached_fails_closed(monkeypatch):
         bureau_v2._github_open_pull_requests("heimgewebe/bureau")
     assert "BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT" in str(excinfo.value)
     assert "fails closed" in str(excinfo.value)
+
+
+def test_open_pr_guard_worker_count_is_bounded(monkeypatch):
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_WORKERS", "1000")
+    assert bureau_v2._open_pr_claim_guard_workers(100) == 32
+
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_WORKERS", "invalid")
+    assert bureau_v2._open_pr_claim_guard_workers(100) == 8
+
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_WORKERS", "0")
+    assert bureau_v2._open_pr_claim_guard_workers(3) == 3
+
+
+def test_open_pr_observation_parallelizes_distinct_repositories(monkeypatch):
+    barrier = threading.Barrier(2)
+    calls: list[str] = []
+    lock = threading.Lock()
+
+    def observe(repository):
+        with lock:
+            calls.append(repository)
+        barrier.wait(timeout=2)
+        return [{"number": 1, "title": repository}]
+
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_WORKERS", "2")
+    monkeypatch.setattr(bureau_v2, "_github_open_pull_requests", observe)
+
+    observed, errors = bureau_v2._observe_open_pull_requests(
+        ["heimgewebe/alpha", "heimgewebe/beta", "heimgewebe/alpha"]
+    )
+
+    assert errors == {}
+    assert sorted(calls) == ["heimgewebe/alpha", "heimgewebe/beta"]
+    assert sorted(observed) == ["heimgewebe/alpha", "heimgewebe/beta"]
+
+
+def test_open_pr_observation_keeps_failures_repository_scoped(monkeypatch):
+    def observe(repository):
+        if repository == "heimgewebe/broken":
+            raise bureau_v2.OpenPullRequestObservationError("unavailable")
+        return []
+
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_WORKERS", "2")
+    monkeypatch.setattr(bureau_v2, "_github_open_pull_requests", observe)
+
+    observed, errors = bureau_v2._observe_open_pull_requests(
+        ["heimgewebe/healthy", "heimgewebe/broken"]
+    )
+
+    assert observed == {"heimgewebe/healthy": []}
+    assert errors == {"heimgewebe/broken": "unavailable"}
 
 
 def test_open_pull_request_body_task_id_blocks_same_task(registry_factory, tmp_path, monkeypatch):

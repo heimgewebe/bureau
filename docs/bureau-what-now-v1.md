@@ -44,6 +44,12 @@ The JSON response contains:
 - `ranking_contract`: explicit source/order/does-not-use declaration.
 - `does_not_establish`: non-authority boundaries.
 
+## Performance and compact projection
+
+Open pull-request safety remains fresh and fail-closed, but distinct repositories are queried concurrently with a bounded worker pool. `BUREAU_OPEN_PR_CLAIM_GUARD_WORKERS` may tune the pool from 1 to 32; invalid values fall back to 8. No cache or stale snapshot is used for claim safety.
+
+Use `bureau what-now --compact` when an operator or machine consumer needs the decision rather than the complete evidence envelope. The compact projection keeps selected tasks, bounded blockers, top blocker counts, lifecycle inconsistencies and live-register counts while omitting full task claims, approval envelopes, lifecycle task maps and candidate history. The default output remains backward-compatible and complete.
+
 ## Boundary
 
 `what-now` is a read-only answer. It is not a claim, checkout, dispatch, merge, queue repair or approval gate. It can recommend that a planned review-before-effect task should be handled next, but the follow-up mutation must still go through the relevant approval and review path.

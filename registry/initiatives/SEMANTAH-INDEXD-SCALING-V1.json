@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "id": "SEMANTAH-INDEXD-SCALING-V1",
+  "title": "SemantAH indexd scaling",
+  "state": "active",
+  "commitment": "later",
+  "goal": "Reduce indexd search/write contention and define evidence-based exact-search and ANN boundaries without weakening deterministic ranking, snapshot consistency, persistence or bounded-memory contracts.",
+  "completion": [
+    "Search ranking and snippet materialization execute outside the shared mutable store lock while each request observes one consistent namespace snapshot.",
+    "The snapshot path has measured latency, allocation and writer-blocking evidence against the established real-workload benchmark.",
+    "Exact search remains the default below a measured threshold and any ANN path has explicit recall, memory, rebuild, persistence and fallback contracts.",
+    "Architecture and performance documentation distinguish implemented behavior, measured limits and future plans."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-17T22:20:00+02:00",
+    "source_live_register_events": [613, 614, 615],
+    "baseline_task": "SEMANTAH-USEFULNESS-V1-T001",
+    "baseline_implementation_pr": "heimgewebe/semantAH#260",
+    "does_not_establish": [
+      "production capacity",
+      "ANN readiness",
+      "permission to replace exact search without recall evidence"
+    ]
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "id": "SEMANTAH-USEFULNESS-V1-T001",
+  "initiative": "SEMANTAH-USEFULNESS-V1",
+  "title": "Benchmark indexd search under realistic namespace sizes and concurrency",
+  "state": "verified",
+  "goal": "Establish a reproducible, production-path benchmark for indexd search latency, allocation pressure and writer blocking across realistic vector counts, dimensions and concurrent search/upsert load, with fail-closed same-environment regression budgets.",
+  "priority": {
+    "lane": "later",
+    "rank": 900
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/semantAH"
+  },
+  "claims": [
+    {
+      "resource": "repo.semantah",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "production-search-path",
+      "assertion": "The benchmark exercises the production Axum /index/search handler including deserialization, query normalization, Tokio RwLock read_owned and spawn_blocking ranking."
+    },
+    {
+      "id": "realistic-workload-profiles",
+      "assertion": "Named smoke, standard and full profiles cover explicit vector counts and dimensions; writer p95 uses at least 20 samples."
+    },
+    {
+      "id": "machine-readable-evidence",
+      "assertion": "The benchmark writes versioned JSON with p50/p95/p99 latency, allocations, concurrent search latency and writer lock-wait/end-to-end metrics."
+    },
+    {
+      "id": "fail-closed-comparison",
+      "assertion": "Baseline comparison is bound to environment, package, runtime, measurement, budget and scenario contracts and writes the report before exit status 2 on failure."
+    },
+    {
+      "id": "repository-gates",
+      "assertion": "Workspace tests, checks, Clippy and the benchmark-specific gates pass on the reviewed implementation head; GitHub checks pass before merge."
+    },
+    {
+      "id": "explicit-nonclaims",
+      "assertion": "Evidence is documented as synthetic host-bound decision input and does not claim production capacity, ANN readiness or lock-free correctness."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_live_register",
+    "live_register_event_id": 612,
+    "live_register_candidate_id": "semantah-indexd-real-workload-benchmark-v1",
+    "live_register_created_at": "2026-07-17T06:23:03.695608Z",
+    "live_register_source": "operator",
+    "promotion_required_from_event": true,
+    "does_not_establish": [
+      "production capacity",
+      "production latency",
+      "network or reverse-proxy latency",
+      "ANN activation readiness",
+      "lock-free search correctness",
+      "cross-host comparability without a controlled baseline"
+    ],
+    "registered_at": "2026-07-17T06:23:03Z",
+    "verified_at": "2026-07-17",
+    "implementation_repo": "heimgewebe/semantAH",
+    "implementation_pr": 260,
+    "implementation_head_sha": "0a6e67f23b640ee362fd6cd6b9e548637da1ad5c",
+    "implementation_merge_commit": "e704543b4330b2df4f9d57a9feeb99508cfcae6f",
+    "implementation_diff_sha256": "3d30606c6dcdcc18ec97f0544d1a124bda81adbcf7dfebf34fb74fb559caf26b",
+    "benchmark_report_sha256": "34f7ccbe07bb5a57ca0eb8c5ec0ac549f49930da98f4a3ef2e82ced212b54475",
+    "benchmark_report_schema": "indexd-real-workload-benchmark-v1",
+    "benchmark_environment_id": "heim-pc-indexd-release-v1",
+    "benchmark_source_commit": "0a6e67f23b640ee362fd6cd6b9e548637da1ad5c",
+    "standard_profile_metrics": [
+      {
+        "scenario": "standard-5k-384",
+        "sequential_p50_ms": 0.633514,
+        "sequential_p95_ms": 0.699544,
+        "sequential_p99_ms": 0.779456,
+        "concurrent_search_p95_ms": 1.50998,
+        "writer_lock_wait_p95_ms": 0.836136,
+        "allocated_kib_per_search": 76.984375,
+        "writer_samples": 20
+      },
+      {
+        "scenario": "standard-10k-768",
+        "sequential_p50_ms": 3.619894,
+        "sequential_p95_ms": 4.422819,
+        "sequential_p99_ms": 5.509397,
+        "concurrent_search_p95_ms": 7.45157,
+        "writer_lock_wait_p95_ms": 3.785935,
+        "allocated_kib_per_search": 142.484375,
+        "writer_samples": 20
+      },
+      {
+        "scenario": "standard-10k-1536",
+        "sequential_p50_ms": 5.90069,
+        "sequential_p95_ms": 6.906387,
+        "sequential_p99_ms": 6.916647,
+        "concurrent_search_p95_ms": 16.647711,
+        "writer_lock_wait_p95_ms": 8.848609,
+        "allocated_kib_per_search": 273.484375,
+        "writer_samples": 20
+      }
+    ],
+    "validation": [
+      "cargo check --workspace --locked passed.",
+      "cargo check --locked -p indexd --bench indexd_real_workload passed.",
+      "cargo test --workspace --all-features --locked passed.",
+      "cargo clippy --workspace --all-features -- -D warnings passed.",
+      "cargo clippy -p indexd --bench indexd_real_workload -- -D warnings passed.",
+      "Positive and negative benchmark contract cases passed, including missing-baseline fail-fast and environment, schema, budget, warmup and duplicate-scenario rejection.",
+      "All eight GitHub checks on PR #260 passed before the SHA-bound squash merge."
+    ],
+    "verified_acceptance": {
+      "production-search-path": "The custom harness dispatches in-process Axum /index/search requests through the current production handler and shared store lock path.",
+      "realistic-workload-profiles": "Smoke, standard and full profiles are explicit; all use at least 20 writer operations.",
+      "machine-readable-evidence": "Commit-bound standard report SHA-256 34f7ccbe07bb5a57ca0eb8c5ec0ac549f49930da98f4a3ef2e82ced212b54475 uses schema indexd-real-workload-benchmark-v1.",
+      "fail-closed-comparison": "Same-environment comparison passed; environment/schema/budget/warmup/duplicate and regression cases wrote reports and exited 2; missing baseline failed before measurement.",
+      "repository-gates": "Local workspace and benchmark gates passed; PR #260 had eight successful GitHub checks and merged from exact head 0a6e67f23b640ee362fd6cd6b9e548637da1ad5c.",
+      "explicit-nonclaims": "Documentation and report explicitly exclude production capacity, production latency, ANN readiness, lock-free correctness and uncontrolled cross-host comparison."
+    },
+    "outcome": "PR #260 added the real-workload benchmark and fail-closed comparison contract. Measurements show increasing writer blocking under linear exact search, providing evidence for the already registered snapshot-lock and ANN-threshold follow-ups.",
+    "verification": {
+      "task_sha256": "c09908bfb468e07206fd26b38a6615c6c9c211f614c32ea6c7039a579d175115",
+      "plan_sha256": "a2fb3ac28b0c34f9a1ab4b36c5ad1786c0643e773adc3b2dcf533e11ad1145b6",
+      "source": "github_pull_request_and_commit_bound_benchmark",
+      "verified_at": "2026-07-17T15:56:25+02:00",
+      "implementation_pr": 260,
+      "implementation_head_sha": "0a6e67f23b640ee362fd6cd6b9e548637da1ad5c",
+      "merge_commit_sha": "e704543b4330b2df4f9d57a9feeb99508cfcae6f",
+      "diff_sha256": "3d30606c6dcdcc18ec97f0544d1a124bda81adbcf7dfebf34fb74fb559caf26b",
+      "benchmark_report_sha256": "34f7ccbe07bb5a57ca0eb8c5ec0ac549f49930da98f4a3ef2e82ced212b54475"
+    }
+  }
+}

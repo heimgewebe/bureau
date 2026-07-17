@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau"
+  ],
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T064",
+  "title": "Preserve literal shell payloads across durable dispatch",
+  "state": "planned",
+  "goal": "Preserve the exact argv and shell-script bytes supplied to durable task dispatch so shell variables, heredocs and foreign template syntax are evaluated only by the intended runtime, never prematurely by the connector or dispatch serialization layer.",
+  "priority": {
+    "lane": "next",
+    "rank": 640
+  },
+  "depends_on": [],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Trace and fix serialization across the complete connector-to-launcher path. Do not enable generic synchronous shell execution or implicit environment expansion."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "byte-preserving-path",
+      "assertion": "Request parsing, receipt serialization, durable store, launcher construction and systemd execution preserve every argv element exactly; the executed argv digest equals the accepted request digest."
+    },
+    {
+      "id": "no-implicit-expansion",
+      "assertion": "Strings containing ${cluster}, ${expected}, $HOME, command substitutions, heredocs or GitHub ${{ ... }} syntax are not expanded, formatted or templated by Grabowski unless the selected typed operation explicitly declares an exact-token placeholder contract."
+    },
+    {
+      "id": "typed-placeholders-only",
+      "assertion": "Existing typed operation placeholders remain allowlisted, exact-token-only and separate from arbitrary task argv; unknown placeholders fail before execution rather than becoming empty strings."
+    },
+    {
+      "id": "security-boundary",
+      "assertion": "The fix does not broaden shell authority, import caller environment secrets or weaken argv validation, canonical digest binding, output limits or durable routing."
+    },
+    {
+      "id": "tests",
+      "assertion": "End-to-end tests pass literal variable forms through MCP request, task database, systemd launcher and a probe process, covering empty caller variables, Unicode, quotes, newlines, heredocs and nested template syntax."
+    },
+    {
+      "id": "live-proof",
+      "assertion": "A deployed durable task writes a receipt proving literal ${cluster} and ${expected} reached the shell and were expanded there, while the stored and launched argv digests remain identical."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-17",
+    "source": "Weltgewebe OS T003 Direct-proof closeout",
+    "live_reproduction": {
+      "surface": "grabowski_task_start durable bash payload",
+      "observed_behavior": "${cluster} and ${expected} were replaced with empty strings before bash execution, producing a false check against -.json although the underlying proof receipt was correct.",
+      "consequence": "A valid Direct proof was wrapped by a false negative and required a second literal-path verification."
+    },
+    "does_not_establish": [
+      "that bash performed the premature expansion",
+      "permission to accept arbitrary template substitution",
+      "permission to weaken shell-composition routing",
+      "that all earlier task receipts are affected"
+    ]
+  }
+}

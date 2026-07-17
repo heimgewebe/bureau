@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau"
+  ],
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T062",
+  "title": "Migrate durable task and resource stores across deployed schemas",
+  "state": "ready",
+  "goal": "Restore durable task and resource operations after a runtime or code upgrade by detecting deployed SQLite schema revisions, applying explicit crash-safe forward migrations and preserving tasks, attempts, leases and audit identity without silently accepting unknown or corrupt stores.",
+  "priority": {
+    "lane": "now",
+    "rank": 620
+  },
+  "depends_on": [],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_tasks.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_resources.py",
+      "path:/home/alex/repos/grabowski/tests/test_tasks.py",
+      "path:/home/alex/repos/grabowski/tests/test_resources.py"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Implement schema detection and migration only. Never discard, recreate or downgrade a live store without a verified backup and explicit recovery evidence."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "version-inventory",
+      "assertion": "Task and resource stores expose their observed schema version, code-supported versions and required migration path before any mutation; unknown, future or corrupt schemas fail closed with a bounded recovery instruction."
+    },
+    {
+      "id": "crash-safe-migration",
+      "assertion": "Supported old schemas migrate under an exclusive store lock in explicit transactions with a verified pre-migration backup, idempotent retry and post-migration integrity checks."
+    },
+    {
+      "id": "semantic-preservation",
+      "assertion": "Migration preserves task IDs, attempts, terminal outcomes, outcome_unknown state, resource leases, expiry data, owner identity, argv digests and audit references exactly unless a documented schema transformation requires an equivalence proof."
+    },
+    {
+      "id": "mixed-version-boundary",
+      "assertion": "A stale runtime cannot write a newer store. Rolling deployment behavior is specified and tested so incompatible readers fail before changing records."
+    },
+    {
+      "id": "tests",
+      "assertion": "Fixtures cover every supported historical schema, already-current stores, interrupted migration, concurrent openers, future versions, malformed metadata, backup failure and byte-stable no-op reruns."
+    },
+    {
+      "id": "live-proof",
+      "assertion": "After merge and deployment, copies of the production task and resource stores migrate successfully, then live task list/start/status and resource lease operations succeed without record loss; exact runtime and receipt hashes are retained."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-17",
+    "source": "Weltgewebe OS T003 Bureau closeout on heim-pc",
+    "live_reproduction": {
+      "task_error": "Unsupported task database schema; upgrade Grabowski before listing tasks.",
+      "resource_error": "Unsupported resource database schema; upgrade Grabowski before using resource leases.",
+      "affected_surfaces": [
+        "grabowski_task_list",
+        "grabowski_task_start",
+        "remote durable tasks",
+        "resource-backed dispatch"
+      ],
+      "observed_consequence": "General durable dispatch and SSH-host artifact reconstruction became unavailable during the closeout while narrower Git and GitHub adapters still worked."
+    },
+    "related_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T061",
+    "relationship_to_existing": "T061 measures compatibility as a deferred hardening topic. T062 records the now-reproduced production incompatibility and requires an explicit migration path.",
+    "does_not_establish": [
+      "that either live database is corrupt",
+      "permission to delete or recreate a store",
+      "permission to weaken fail-closed schema checks",
+      "that all future schemas are automatically compatible"
+    ]
+  }
+}

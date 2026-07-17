@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "id": "SEMANTAH-INDEXD-SCALING-V1-T001",
+  "initiative": "SEMANTAH-INDEXD-SCALING-V1",
+  "title": "Evaluate snapshot-based indexd search outside the shared store lock",
+  "state": "planned",
+  "goal": "Move indexd exact-search ranking and snippet materialization outside the shared mutable store lock by taking a bounded immutable namespace snapshot, while preserving one-request consistency, deterministic ranking, persistence compatibility and measured memory limits.",
+  "priority": {
+    "lane": "later",
+    "rank": 900
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/semantAH"
+  },
+  "claims": [
+    {
+      "resource": "repo.semantah",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "github",
+    "rust",
+    "benchmarking",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SEMANTAH-USEFULNESS-V1-T001"
+  ],
+  "acceptance": [
+    {
+      "id": "bounded-namespace-snapshot",
+      "assertion": "The read-lock is held only long enough to validate dimensions and clone immutable Arc-backed references for the selected namespace; no embedding vectors or metadata values are deep-cloned per search."
+    },
+    {
+      "id": "ranking-outside-lock",
+      "assertion": "Dot-product ranking, deterministic tie ordering and snippet materialization execute after the shared store read-lock has been released."
+    },
+    {
+      "id": "request-snapshot-consistency",
+      "assertion": "Each search observes one internally consistent namespace snapshot even when concurrent upsert or delete operations replace live entries after snapshot capture."
+    },
+    {
+      "id": "behavior-and-persistence-compatible",
+      "assertion": "Public search errors, dimensionality behavior, zero-query ordering, result scores, snippets and JSONL persistence remain compatible with the pre-change implementation."
+    },
+    {
+      "id": "measured-contention-improvement",
+      "assertion": "The commit-bound real-workload benchmark shows a material writer lock-wait reduction on medium and large standard scenarios; search latency and allocation changes are reported and any regression budget breach blocks merge."
+    },
+    {
+      "id": "bounded-memory-contract",
+      "assertion": "Per-search snapshot memory is O(namespace entries) pointer/reference storage rather than O(entries × dimensions), with an explicit report of allocation cost and no unbounded retained snapshot registry."
+    },
+    {
+      "id": "repository-gates",
+      "assertion": "Focused concurrency and persistence regressions, full workspace tests, Clippy, benchmark contract checks and exact-head GitHub checks pass before merge."
+    },
+    {
+      "id": "explicit-nonclaims",
+      "assertion": "The task does not establish production capacity, ANN readiness, lock-free writes, or correctness beyond the tested exact-search and persistence contracts."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_live_register",
+    "live_register_event_id": 613,
+    "live_register_candidate_id": "semantah-indexd-lock-snapshot-v1",
+    "live_register_created_at": "2026-07-17T06:23:25.936766Z",
+    "live_register_source": "operator",
+    "promotion_required_from_event": true,
+    "does_not_establish": [
+      "production capacity",
+      "production latency",
+      "ANN activation readiness",
+      "lock-free write execution",
+      "permission to weaken deterministic exact ranking or persistence semantics"
+    ],
+    "registered_at": "2026-07-17T20:25:00Z",
+    "baseline_task": "SEMANTAH-USEFULNESS-V1-T001",
+    "baseline_pr": "heimgewebe/semantAH#260",
+    "baseline_report_sha256": "34f7ccbe07bb5a57ca0eb8c5ec0ac549f49930da98f4a3ef2e82ced212b54475",
+    "design_boundary": "Arc-backed immutable entries and request-local namespace snapshots; no global snapshot registry and no full vector clone per search.",
+    "provisional_budgets": {
+      "writer_lock_wait_p95_reduction_medium_min_ratio": 0.75,
+      "writer_lock_wait_p95_reduction_large_min_ratio": 0.75,
+      "sequential_search_p95_regression_max_ratio": 1.2,
+      "allocated_kib_per_search_regression_max_ratio": 2.5
+    }
+  }
+}

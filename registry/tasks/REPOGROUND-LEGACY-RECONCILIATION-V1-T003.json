@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T003",
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "title": "Decide and enforce RepoGround product boundaries",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 1
+  },
+  "goal": "Bewerte Atlas, Omniwandler und den destruktiven Standalone-Repomerger gegen den RepoGround-Kernzweck und lagere, kapsle oder entferne Teilprodukte anhand belegter Nutzung und Sicherheitsfolgen.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "baseline_commit": "d54a3f3d53818f03405cab5e84e3a5086d4b81ad",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "architecture-review",
+    "consumer-search",
+    "security-review",
+    "git"
+  ],
+  "acceptance": [
+    {
+      "id": "repomerger-boundary",
+      "assertion": "Der Standalone-Repomerger mit optionaler Quellordner-Löschung ist nicht unklar mit dem RepoGround-Kern verflochten; benötigte sichere Funktionen sind übernommen oder das Werkzeug ist isoliert."
+    },
+    {
+      "id": "omniwandler-boundary",
+      "assertion": "Omniwandler besitzt einen aktuellen Consumer und klaren RepoGround-Zweck oder ist aus dem Kernrepository ausgelagert beziehungsweise archiviert."
+    },
+    {
+      "id": "atlas-decision",
+      "assertion": "Für Atlas liegt eine belastbare Keep/Split/Remove-Entscheidung mit Nutzung, Sicherheitsfläche, Wartungskosten und Migrationspfad vor; die Entscheidung erfolgt nicht allein anhand statischer Referenzen."
+    },
+    {
+      "id": "surface-coherence",
+      "assertion": "README, CLI, Service und Pakete zeigen anschließend eine klare Produktgrenze ohne versteckte zweite Produktfamilie."
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-LEGACY-RECONCILIATION-V1-T001"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-17T23:07:14+02:00",
+    "audit_evidence": "Atlas berührt 106 Dateien und rund 31.395 Zeilen; externe aktuelle Consumer wurden lokal nicht gefunden. Omniwandler ist optionales GUI-Templatewerkzeug. Repomerger kann Quellordner nach Merge löschen.",
+    "does_not_establish": [
+      "Dass Atlas nutzlos ist",
+      "Dass externe unverfügbare Consumer nicht existieren"
+    ]
+  }
+}

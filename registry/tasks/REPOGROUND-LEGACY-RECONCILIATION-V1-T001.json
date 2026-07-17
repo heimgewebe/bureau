@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T001",
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "title": "Remove high-confidence RepoGround debris and false-green surfaces",
+  "state": "ready",
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "goal": "Beseitige nur die durch aktuellen Live-Readback eindeutig belegten Altlasten: gebrochene Einstiegslinks, leere Platzhalter, unreferenzierte Root-Benchmarks, doppelte Hilfsskripte, veraltete RepoBrief-Release-Anleitung und den derzeit stets leer durchlaufenden validate-merges-Workflow.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "baseline_commit": "d54a3f3d53818f03405cab5e84e3a5086d4b81ad",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "python",
+    "consumer-search"
+  ],
+  "acceptance": [
+    {
+      "id": "entry-links",
+      "assertion": "README und Getting Started enthalten keine gebrochenen lokalen Links und verweisen ausschließlich auf vorhandene aktuelle RepoGround-Einstiege."
+    },
+    {
+      "id": "release-surface",
+      "assertion": "Release-Dokumentation, Requirements und Verifier besitzen genau einen kanonischen RepoGround-Pfad; ein letzter Consumer- und Artefakt-Scan belegt vor Entfernung alter RepoBrief-Kompatibilität deren Nichtnutzung."
+    },
+    {
+      "id": "false-green-ci",
+      "assertion": "validate-merges validiert reale versionierte Eingaben oder ist entfernt; ein fehlender merges-Ordner darf nicht bei jeder Kernänderung als erfolgreicher Schutzlauf erscheinen."
+    },
+    {
+      "id": "root-hygiene",
+      "assertion": "Leere data- und mock_hub-Platzhalter, unreferenzierte SSE-Benchmarks und identische Publikationshelfer sind entfernt, zusammengeführt oder mit einem aktuellen ausführbaren Zweck belegt."
+    },
+    {
+      "id": "verification",
+      "assertion": "Vollständige Tests, Lint, relevante Workflows und ein frischer GitHub-main-Readback sind grün."
+    }
+  ],
+  "depends_on": [],
+  "metadata": {
+    "registered_at": "2026-07-17T23:07:14+02:00",
+    "audit_evidence": "1117 tracked files; three broken current links; no merges directory; no GitHub releases or tags; no local RepoBrief release candidates; duplicate release inputs and publication scripts; empty data/.gitkeep and mock_hub YAML.",
+    "does_not_establish": [
+      "Entfernbarkeit aktiver Runtime-Kompatibilität",
+      "Entfernbarkeit von Atlas"
+    ]
+  }
+}

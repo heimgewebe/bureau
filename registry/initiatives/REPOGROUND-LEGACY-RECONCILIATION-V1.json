@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "title": "RepoGround Altlasten-Reconciliation",
+  "state": "candidate",
+  "commitment": "next",
+  "goal": "RepoGround auf einen klaren, wartbaren und belegbar genutzten Produktkern reduzieren, ohne laufende Verbraucher, persistierte Verträge oder den kontrollierten Runtime-Cutover zu brechen.",
+  "completion": [
+    "Offensichtlich tote, doppelte oder irreführende Oberflächen sind entfernt oder in einen belegten Zweck überführt.",
+    "Lenskit-, repoLens-, rLens- und RepoBrief-Kompatibilität besitzt Nutzungstelemetrie, konkrete Entfernungskriterien und einen begrenzten Ausstiegspfad.",
+    "RepoGround-fremde Teilprodukte sind anhand ihres Nutzens entweder klar abgegrenzt, ausgelagert oder entfernt.",
+    "Die höchste bestehende Kernkomplexität und die tolerierte C901-Schuld sind messbar reduziert.",
+    "Dokumentations-, Beweis-, Aufgaben- und CI-Kontrollflächen bilden keine widersprüchlichen Parallelwahrheiten mehr.",
+    "Alle Änderungen sind durch aktuelle Consumer-Inventare, Tests, CI und Runtime-Readback belegt."
+  ],
+  "parallelism": {
+    "max_active_tasks": 2
+  },
+  "metadata": {
+    "registered_at": "2026-07-17T23:07:14+02:00",
+    "source": "live read-only audit of heimgewebe/repoground at d54a3f3d53818f03405cab5e84e3a5086d4b81ad",
+    "scope_note": "Die Initiative registriert Folgearbeit. Sie autorisiert weder sofortige Kompatibilitätslöschung noch Eingriffe in den laufenden Runtime-Cutover.",
+    "does_not_establish": [
+      "Dass jeder statisch nicht referenzierte Python-Baustein ungenutzt ist",
+      "Dass historische Evidenz gelöscht werden darf",
+      "Dass rlens.service vor erfolgreichem RepoGround-Cutover beendet werden darf"
+    ]
+  }
+}

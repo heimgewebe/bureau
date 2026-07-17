@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T002",
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "title": "Bound and complete the Lenskit RepoBrief rLens compatibility exit",
+  "state": "blocked",
+  "priority": {
+    "lane": "next",
+    "rank": 2
+  },
+  "goal": "Ersetze die pauschale Kompatibilitätszusage für die gesamte 3.x-Linie durch gemessene Consumer-Nutzung, konkrete Ausstiegskriterien und eine kontrollierte Entfernung alter Namen und Dienste nach dem Runtime-Cutover.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "baseline_commit": "d54a3f3d53818f03405cab5e84e3a5086d4b81ad",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground",
+      "component:repoground:runtime-cutover",
+      "path:/home/alex/.local/share/repoground-runtime"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "runtime-observation",
+    "consumer-inventory"
+  ],
+  "acceptance": [
+    {
+      "id": "consumer-telemetry",
+      "assertion": "Import-Shim, alte CLI-Einstiege, alte Dienstnamen und persistierte Legacy-IDs besitzen belastbare Nutzungs- oder Inventarevidenz."
+    },
+    {
+      "id": "exit-contract",
+      "assertion": "Jede Kompatibilitätsfläche hat ein explizites Entfernungskriterium, einen Besitzer und einen begrenzten Zeithorizont statt der pauschalen gesamten 3.x-Linie."
+    },
+    {
+      "id": "runtime-cutover",
+      "assertion": "repoground.service ist parallel getestet, Verbraucher sind migriert und rlens.service wird erst nach erfolgreichem Readback kontrolliert entfernt."
+    },
+    {
+      "id": "internal-language",
+      "assertion": "Aktuelle Kernmodule und aktuelle Dokumentation verwenden RepoGround-Begriffe; alte Namen verbleiben nur in klar gekapselten Adapter- oder Historienflächen."
+    }
+  ],
+  "depends_on": [],
+  "metadata": {
+    "registered_at": "2026-07-17T23:07:14+02:00",
+    "blocker": "Aktiver fremder Runtime-Cutover-Lease und laufender rlens.service auf 127.0.0.1:8787.",
+    "does_not_establish": [
+      "Freigabe zum Stoppen von rlens.service",
+      "Nullverbrauch alter Importpfade"
+    ]
+  }
+}

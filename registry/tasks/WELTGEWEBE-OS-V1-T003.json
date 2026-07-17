@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-OS-V1-T003",
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "Kubernetes- und GitOps-Grundlage reproduzierbar aufbauen",
-  "state": "ready",
+  "state": "verified",
   "goal": "Eine kanonische Plattformbasis mit lokalem Referenzcluster, GitOps, Gateway, Netzwerkpolicies, Secrets, Telemetrie und streng begrenztem Compose-Nebenpfad aufbauen.",
   "depends_on": [
     "WELTGEWEBE-OS-V1-T002"
@@ -66,7 +66,89 @@
     "world_task": "WELTGEWEBE-OS-006",
     "unblocked_at": "2026-07-16T05:01:02Z",
     "dependency_receipt": "WELTGEWEBE-OS-V1-T002 verified by Weltgewebe PR #1446 merge 2464afba07c3a4dc61664943482392c9c34e5107; required merge gate, Web E2E and review evidence gate passed",
-    "source_ref": "heimgewebe/weltgewebe#1446; merge 2464afba07c3a4dc61664943482392c9c34e5107",
-    "receipt_sha256": "48f0f19bcd21587a819c09d2f3fe69c6ee535d941c60482101f57283737cc96a"
+    "source_ref": "heimgewebe/weltgewebe#1454; head 78e7f5d341f42a38c7b738e76f42eaa8887e20fc; squash merge 2014ad51229f2f06d26d6dac7b8287cb1be4d056; exact tree 64faf694b4bbd74fc83f0a01c27d8d6c6e714ae1; review evidence 29562632426; kubernetes-platform 29563032732; production live contract 29563032801",
+    "receipt_sha256": "87effdc260f9b93d3fb613b1bce9c98ecfe0ac7b2ccba20973560f27b2b35978",
+    "verified_at": "2026-07-17T07:45:18Z",
+    "weltgewebe_pr": "heimgewebe/weltgewebe#1454",
+    "weltgewebe_pr_head": "78e7f5d341f42a38c7b738e76f42eaa8887e20fc",
+    "weltgewebe_merge_commit": "2014ad51229f2f06d26d6dac7b8287cb1be4d056",
+    "weltgewebe_merge_mode": "squash",
+    "weltgewebe_merge_tree": "64faf694b4bbd74fc83f0a01c27d8d6c6e714ae1",
+    "weltgewebe_pr_diff_sha256": "87effdc260f9b93d3fb613b1bce9c98ecfe0ac7b2ccba20973560f27b2b35978",
+    "full_binary_diff_sha256": "9a69c7ad5ab3b2f92746678d729c976d8f2676e35fd1a0d3a462b069aee23989",
+    "github_ci_run": "heimgewebe/weltgewebe/actions/runs/29563032763",
+    "production_live_contract_run": "heimgewebe/weltgewebe/actions/runs/29563032801",
+    "kubernetes_platform_run": "heimgewebe/weltgewebe/actions/runs/29563032732",
+    "review_evidence_run": "heimgewebe/weltgewebe/actions/runs/29562632426",
+    "direct_receipt_sha256": "faa81f98b371e6ef58272a0554e2c1abe70ab8258fac44ac3bda3683bb316040",
+    "gitops_receipt_sha256": "fb6f008f8a62f7a6977e932c680f68e200ec51d54e8c50aa97f144b3f4100635",
+    "task_id": "WELTGEWEBE-OS-V1-T003",
+    "outcome": "Kubernetes- und GitOps-Grundlage ist reproduzierbar aus versionierten Artefakten aufgebaut, direkt und über Flux bewiesen, auf main inhaltsgleich gemergt und ohne verbleibenden Referenzcluster geschlossen.",
+    "validated_acceptance": {
+      "blank-cluster-bootstrap": "Direct- und GitOps-Beweis auf Head 78e7f5d341f42a38c7b738e76f42eaa8887e20fc liefen jeweils in einem neuen Drei-Node-kind-Cluster erfolgreich; Receipts faa81f98b371e6ef58272a0554e2c1abe70ab8258fac44ac3bda3683bb316040 und fb6f008f8a62f7a6977e932c680f68e200ec51d54e8c50aa97f144b3f4100635; beide Cluster wurden entfernt.",
+      "same-app-base": "Local-, CI- und Produktionsziele rendern aus derselben Basis mit begrenzten Overlays; geprüfter Head und Squash-Merge haben denselben Git-Baum 64faf694b4bbd74fc83f0a01c27d8d6c6e714ae1; CI und Production live contract sind grün.",
+      "platform-contracts": "make validate, Kubernetes contract, realer API-Restart mit zwei ersetzten Replikaten, Gateway-HTTP-Antworten, Network Policies, restricted Pod Security, Non-root, Ressourcen- und Telemetrieverträge bestanden.",
+      "compose-boundary": "compose-smoke auf dem Merge-Commit ist grün; Direct- und GitOps-Receipts bestätigen production_changed=false; Compose bleibt Entwicklungs-/Recoverypfad statt zweiter Plattformwahrheit."
+    },
+    "does_not_establish": [
+      "hochverfuegbare_datenbank_oder_jetstream_redundanz",
+      "mehrere_reale_fehlerdomaenen",
+      "pitr_und_blank_cluster_restore",
+      "gemessene_rto_rpo_oder_fehlerbudgets"
+    ],
+    "verification": {
+      "review_diff_sha256": "87effdc260f9b93d3fb613b1bce9c98ecfe0ac7b2ccba20973560f27b2b35978",
+      "full_binary_diff_sha256": "9a69c7ad5ab3b2f92746678d729c976d8f2676e35fd1a0d3a462b069aee23989",
+      "merge_tree_sha1": "64faf694b4bbd74fc83f0a01c27d8d6c6e714ae1",
+      "direct_receipt_sha256": "faa81f98b371e6ef58272a0554e2c1abe70ab8258fac44ac3bda3683bb316040",
+      "gitops_receipt_sha256": "fb6f008f8a62f7a6977e932c680f68e200ec51d54e8c50aa97f144b3f4100635",
+      "review_evidence_verdict": "PASS",
+      "main_kubernetes_platform": "success",
+      "main_production_live_contract": "success",
+      "task_sha256": "9a597506072b67f48f761d7258da8a74e48679a3a0b1a97ab1778afa3a407049",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+      "task_source_ref": "registry/tasks/WELTGEWEBE-OS-V1-T003.json@closeout-revision",
+      "plan_source_ref": "registry/initiatives/WELTGEWEBE-OS-V1.json:current_plan"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "WELTGEWEBE-OS-V1-T003",
+          "source_ref": "heimgewebe/weltgewebe#1454",
+          "number": 1454,
+          "head_sha": "78e7f5d341f42a38c7b738e76f42eaa8887e20fc",
+          "merge_commit_sha": "2014ad51229f2f06d26d6dac7b8287cb1be4d056",
+          "diff_sha256": "87effdc260f9b93d3fb613b1bce9c98ecfe0ac7b2ccba20973560f27b2b35978"
+        },
+        {
+          "kind": "runtime_probe",
+          "authority": "weltgewebe-kind-direct",
+          "task_id": "WELTGEWEBE-OS-V1-T003",
+          "source_ref": "/home/alex/.local/state/weltgewebe/receipts/t003-78e7f5d341f42a38/weltgewebe-t003-direct-78e7f5d3-final-78e7f5d341f42a38c7b738e76f42eaa8887e20fc.json",
+          "commit_sha": "78e7f5d341f42a38c7b738e76f42eaa8887e20fc",
+          "content_sha256": "faa81f98b371e6ef58272a0554e2c1abe70ab8258fac44ac3bda3683bb316040"
+        },
+        {
+          "kind": "runtime_probe",
+          "authority": "weltgewebe-flux-gitops",
+          "task_id": "WELTGEWEBE-OS-V1-T003",
+          "source_ref": "/home/alex/.local/state/weltgewebe/receipts/t003-78e7f5d341f42a38/weltgewebe-t003-gitops-78e7f5d3-final-78e7f5d341f42a38c7b738e76f42eaa8887e20fc.json",
+          "commit_sha": "78e7f5d341f42a38c7b738e76f42eaa8887e20fc",
+          "content_sha256": "fb6f008f8a62f7a6977e932c680f68e200ec51d54e8c50aa97f144b3f4100635"
+        },
+        {
+          "kind": "test_run",
+          "authority": "github-actions",
+          "task_id": "WELTGEWEBE-OS-V1-T003",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/29563032732",
+          "commit_sha": "2014ad51229f2f06d26d6dac7b8287cb1be4d056",
+          "content_sha256": "9a69c7ad5ab3b2f92746678d729c976d8f2676e35fd1a0d3a462b069aee23989"
+        }
+      ]
+    }
   }
 }

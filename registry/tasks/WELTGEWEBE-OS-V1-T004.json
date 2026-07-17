@@ -3,13 +3,13 @@
   "id": "WELTGEWEBE-OS-V1-T004",
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "Hochverfügbare Referenzzelle und Recovery messen",
-  "state": "blocked",
+  "state": "ready",
   "goal": "Eine reale oder realistisch fehlertolerante Gewebe-Zelle mit mehreren Fehlerdomänen, PostgreSQL-/JetStream-Redundanz, PITR, Blank-Cluster-Restore und gemessenen SLOs aufbauen.",
   "depends_on": [
     "WELTGEWEBE-OS-V1-T003"
   ],
   "priority": {
-    "lane": "later",
+    "lane": "now",
     "rank": 2
   },
   "claims": [
@@ -60,6 +60,10 @@
   ],
   "metadata": {
     "registered_at": "2026-07-15T20:50:00Z",
-    "world_task": "WELTGEWEBE-OS-008"
+    "world_task": "WELTGEWEBE-OS-008",
+    "unblocked_at": "2026-07-17T07:45:18Z",
+    "dependency_receipt": "WELTGEWEBE-OS-V1-T003 verified by Weltgewebe PR #1454 head 78e7f5d341f42a38c7b738e76f42eaa8887e20fc, squash merge 2014ad51229f2f06d26d6dac7b8287cb1be4d056, exact tree 64faf694b4bbd74fc83f0a01c27d8d6c6e714ae1, two R3 reviews, Direct/GitOps receipts and green main Kubernetes/production contracts.",
+    "source_ref": "heimgewebe/weltgewebe#1454; merge 2014ad51229f2f06d26d6dac7b8287cb1be4d056; kubernetes-platform 29563032732; production live contract 29563032801",
+    "receipt_sha256": "87effdc260f9b93d3fb613b1bce9c98ecfe0ac7b2ccba20973560f27b2b35978"
   }
 }

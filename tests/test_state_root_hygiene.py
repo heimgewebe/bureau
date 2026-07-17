@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 
+from bureau import runtime_refresh
 from bureau.core import Dispatcher, Registry, StateStore
 from bureau.v2 import state_root_hygiene
 
@@ -61,6 +62,126 @@ def test_configured_state_database_sidecars_stay_known(
     assert known["custom.sqlite3"] == "sqlite-database"
     assert known["custom.sqlite3-wal"] == "sqlite-sidecar"
     assert known["custom.sqlite3-shm"] == "sqlite-sidecar"
+
+
+def _write_runtime_refresh_json(path, payload):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+
+
+def _runtime_refresh_fixture(state_root):
+    refresh = state_root / "runtime-refresh"
+    main_commit = "b" * 40
+    target_sha256 = "c" * 64
+    observation = runtime_refresh.bind_digest(
+        {
+            "schema_version": 1,
+            "kind": "bureau_runtime_refresh_observation",
+            "main_commit": main_commit,
+            "target_sha256": target_sha256,
+        },
+        "observation_sha256",
+    )
+    observation_name = (
+        "20260717T040031.893008Z-"
+        f"{main_commit[:12]}-{observation['observation_sha256'][:12]}.json"
+    )
+    _write_runtime_refresh_json(refresh / "observations" / observation_name, observation)
+    _write_runtime_refresh_json(refresh / "latest-observation.json", observation)
+    intent = runtime_refresh.bind_digest(
+        {
+            "schema_version": 1,
+            "kind": "bureau_runtime_refresh_intent",
+            "main_commit": main_commit,
+            "target_sha256": target_sha256,
+        },
+        "intent_sha256",
+    )
+    _write_runtime_refresh_json(
+        refresh / "intents" / f"{intent['intent_sha256']}.json", intent
+    )
+    started = runtime_refresh.bind_digest(
+        {
+            "schema_version": 1,
+            "kind": "bureau_runtime_refresh_attempt_start",
+            "main_commit": main_commit,
+            "target_sha256": target_sha256,
+            "intent_sha256": intent["intent_sha256"],
+        },
+        "start_sha256",
+    )
+    _write_runtime_refresh_json(
+        refresh / "attempts" / target_sha256 / "started.json", started
+    )
+    (refresh / "workspaces" / main_commit / ".git").mkdir(parents=True)
+    return refresh
+
+
+def test_runtime_refresh_directory_stays_known_active_state_root_entry(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    _runtime_refresh_fixture(store.state_root)
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is True
+    assert report["unknown_entries"] == []
+    known = {entry["name"]: entry["class"] for entry in report["known_entries"]}
+    assert known["runtime-refresh"] == "runtime-refresh-directory"
+
+
+def test_runtime_refresh_directory_with_foreign_child_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    refresh = _runtime_refresh_fixture(store.state_root)
+    (refresh / "operator-note.txt").write_text("foreign\n", encoding="utf-8")
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "runtime-refresh", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_runtime_refresh_directory_with_tampered_digest_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    refresh = _runtime_refresh_fixture(store.state_root)
+    latest = refresh / "latest-observation.json"
+    payload = json.loads(latest.read_text(encoding="utf-8"))
+    payload["main_commit"] = "d" * 40
+    latest.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "runtime-refresh", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_runtime_refresh_directory_with_unbound_observation_name_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    refresh = _runtime_refresh_fixture(store.state_root)
+    observation = next((refresh / "observations").iterdir())
+    observation.rename(observation.with_name("observation.json"))
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "runtime-refresh", "type": "directory", "class": "unknown"}
+    ]
 
 
 def test_deployment_evidence_directory_stays_known_active_state_root_entry(

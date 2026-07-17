@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "KONVERGENZREGELKREIS-V1",
   "title": "Konvergenzregelkreis operativ aktivieren",
-  "state": "committed",
+  "state": "completion-ready",
   "commitment": "now",
   "goal": "Den öffentlichen zustandslosen Konvergenzvertrag als echten, receipt-gebundenen Abschluss-Gate in Grabowski und nachfolgend in geeigneten Ökosystem-Consumern aktivieren, ohne fremde Wahrheitsdomänen zu duplizieren.",
   "completion": [

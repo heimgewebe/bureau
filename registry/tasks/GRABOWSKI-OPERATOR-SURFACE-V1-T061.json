@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T061",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Measure deferred convergence hardening before adding complexity",
+  "state": "planned",
+  "goal": "Evaluate the remaining review suggestions for connector-snapshot persistence, root-task backend routing and convergence evidence validation under reproducible concurrency, latency and failure tests, then implement only changes with demonstrated safety or operational benefit.",
+  "priority": {
+    "lane": "later",
+    "rank": 610
+  },
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T060"
+  ],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Do not simplify defensive persistence or add rate limiting from intuition alone. Preserve compatibility and fail-closed behavior."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau"
+  ],
+  "acceptance": [
+    {
+      "id": "connector-measurement",
+      "assertion": "Multi-process bind tests measure lock contention, duplicate identical binds, stale-release invalidation and receipt durability; idempotency or rate limits are added only when they preserve exact release and declaration binding."
+    },
+    {
+      "id": "connector-projection-consistency",
+      "assertion": "For the same live receipt and runtime release, grabowski_status and grabowski_contract_drift either report the same connector observability state or explicitly expose and test their intentionally different claim boundaries."
+    },
+    {
+      "id": "root-backend-measurement",
+      "assertion": "Root and user backend routing is mapped across start, observe, status, logs, cancel, resume and reconcile paths; any abstraction proves behavior parity for pre-dispatch failure, outcome_unknown and terminal lease release."
+    },
+    {
+      "id": "decision-table",
+      "assertion": "Convergence classifications are represented by an explicit tested decision table covering all supported mixed signals, while invalid input remains distinct from unknown evidence."
+    },
+    {
+      "id": "abuse-budget",
+      "assertion": "CPU, JSON hashing and receipt costs are measured at maximum supported batch sizes before a session or owner rate limit is proposed; read-only use is not throttled without evidence."
+    },
+    {
+      "id": "compatibility",
+      "assertion": "Public tool count, existing grip receipts, stored connector receipts and task database compatibility remain unchanged or have an explicit migration contract."
+    },
+    {
+      "id": "tests",
+      "assertion": "Focused concurrent tests and full repository validation pass on the exact reviewed head, with performance results and rejected optimizations documented."
+    },
+    {
+      "id": "non-goals",
+      "assertion": "The task does not weaken no-follow, private-file, self-hash, outcome_unknown, lease, audit or non-authority contracts merely to reduce code size."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-17",
+    "source": "Deferred, non-critical findings from reviews of Grabowski PRs #256-#258 and the post-deploy live readback of PR #260.",
+    "reviewed_topics": [
+      "connector bind idempotency and concurrent access",
+      "connector status-versus-contract-drift projection consistency",
+      "root backend routing abstraction and recovery tests",
+      "central evidence validation, classification table and abuse budget"
+    ],
+    "live_projection_finding": {
+      "runtime_head": "0bcaab97dc209b0ea3c183eda47e16754c68cd89",
+      "status_receipt_sha256": "82dd435c1c0a62f743c1f24677d7f094c0a86611e55fb4dddfc90a08b9651e81",
+      "status_claim": "client snapshot observable, fresh and matched for 141 tools",
+      "contract_drift_claim": "connector_snapshot_observable=false",
+      "severity": "observability inconsistency; runtime tool contract itself matches"
+    },
+    "does_not_establish": [
+      "that current persistence is unsafe",
+      "that a class hierarchy is preferable",
+      "that rate limiting is required",
+      "that the matched connector receipt is invalid",
+      "permission to combine unrelated migrations"
+    ]
+  }
+}

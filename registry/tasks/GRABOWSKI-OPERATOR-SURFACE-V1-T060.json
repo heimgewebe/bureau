@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T060",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Classify historical convergence states with bound evidence",
+  "state": "planned",
+  "goal": "Build a bounded, reproducible backfill over historical Grabowski and Bureau attention records using the deployed convergence-state classifier, without rewriting source history, inferring completion or flattening contradictory evidence.",
+  "priority": {
+    "lane": "next",
+    "rank": 600
+  },
+  "depends_on": [],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "path:/home/alex/.local/state/grabowski/operator-obligations",
+      "path:/home/alex/.local/state/bureau/bureau.sqlite3"
+    ],
+    "approval": {
+      "action_class": "read_only_observation",
+      "required_level": "operator",
+      "note": "Read and classify existing records only. Any later source-state mutation requires a separate reviewed plan and exact task binding."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "bureau"
+  ],
+  "acceptance": [
+    {
+      "id": "bounded-inventory",
+      "assertion": "The backfill selects an explicit bounded record set with source identifiers, observation timestamps and stable content hashes; omitted records and truncation are reported."
+    },
+    {
+      "id": "deployed-classifier",
+      "assertion": "Every selected record is evaluated with the deployed convergence-state-classify contract and the exact runtime release, request hash and receipt hash are retained."
+    },
+    {
+      "id": "contradictions-visible",
+      "assertion": "Resolved, superseded, blocked, expected and defect signals follow the documented decision table; incompatible terminal signals remain conflicted rather than being silently prioritized."
+    },
+    {
+      "id": "no-history-rewrite",
+      "assertion": "The backfill produces a separate projection and never edits Bureau task files, queues, operator-obligation history, GitHub state or Chronik receipts."
+    },
+    {
+      "id": "no-auto-close",
+      "assertion": "A classification never establishes task completion, safe retry, root cause, merge readiness or authority to close an operator obligation."
+    },
+    {
+      "id": "reproducible-output",
+      "assertion": "The final summary reports counts by classification, integrity errors, truncation, conflicted records and per-source evidence references in a deterministic machine-readable artifact."
+    },
+    {
+      "id": "tests",
+      "assertion": "Fixtures cover resolved plus blocked, superseded plus blocked, conflicting terminal signals, missing evidence, invalid records and deterministic reruns."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-17",
+    "source": "Post-merge review and closeout of Grabowski PRs #255-#258 and follow-up PR #260.",
+    "origin_operator_obligation": "goo-grabowski-convergence-20260716",
+    "nonclaims": [
+      "existing historical records are defective",
+      "classification authorizes mutation",
+      "classification proves root cause",
+      "all attention records are safe to retry"
+    ],
+    "related_pull_requests": [
+      "heimgewebe/grabowski#258",
+      "heimgewebe/grabowski#260"
+    ]
+  }
+}

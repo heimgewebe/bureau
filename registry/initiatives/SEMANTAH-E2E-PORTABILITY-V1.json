@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "SEMANTAH-E2E-PORTABILITY-V1",
   "title": "SemantAH E2E port portability",
-  "state": "committed",
+  "state": "active",
   "commitment": "later",
   "goal": "Den Push-Index-E2E-Test von der festen Bindung an 127.0.0.1:8080 entkoppeln, ohne Prozessbereinigung oder Readiness-Nachweis abzuschwächen.",
   "completion": [

@@ -5,6 +5,7 @@ import json
 import os
 import re
 import sqlite3
+import stat
 import subprocess
 import uuid
 from collections.abc import Callable, Iterable, Iterator
@@ -16,7 +17,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from . import legacy
+from . import legacy, runtime_refresh
 from .adapters import AdapterRegistry
 from .approval import explicit_operator_approval, require_approval, task_approval_contract
 from .rlens_policy import (
@@ -1026,6 +1027,247 @@ _RECOVERY_BUNDLE_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\.bundle")
 _RECOVERY_BUNDLE_MAX_COUNT = 64
 _RECOVERY_BUNDLE_MAX_BYTES = 512 * 1024 * 1024
 _RECOVERY_CHECKSUM_MAX_BYTES = 4096
+_RUNTIME_REFRESH_JSON_MAX_BYTES = runtime_refresh.MAX_JSON_BYTES
+_RUNTIME_REFRESH_MAX_RECORDS = 1024
+_RUNTIME_REFRESH_MAX_ATTEMPTS = 256
+_RUNTIME_REFRESH_MAX_WORKSPACES = 64
+_RUNTIME_REFRESH_HASH_RE = re.compile(r"[0-9a-f]{64}")
+_RUNTIME_REFRESH_COMMIT_RE = re.compile(r"[0-9a-f]{40}")
+_RUNTIME_REFRESH_OBSERVATION_RE = re.compile(
+    r"(?P<stamp>[0-9]{8}T[0-9]{6}\.[0-9]{6}Z)-"
+    r"(?P<commit>[0-9a-f]{12})-(?P<digest>[0-9a-f]{12})\.json"
+)
+_RUNTIME_REFRESH_ALLOWED_CHILDREN = {
+    "attempts",
+    "intents",
+    "latest-observation.json",
+    "observations",
+    "workspaces",
+}
+
+
+def _runtime_refresh_json(
+    path: Path, *, expected_kind: str, digest_field: str
+) -> dict[str, Any] | None:
+    try:
+        info = path.lstat()
+        if (
+            stat.S_ISLNK(info.st_mode)
+            or not stat.S_ISREG(info.st_mode)
+            or info.st_size > _RUNTIME_REFRESH_JSON_MAX_BYTES
+        ):
+            return None
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if (
+            not isinstance(payload, dict)
+            or payload.get("schema_version") != runtime_refresh.SCHEMA_VERSION
+            or payload.get("kind") != expected_kind
+        ):
+            return None
+        runtime_refresh.verify_digest(payload, digest_field)
+    except (
+        OSError,
+        UnicodeDecodeError,
+        json.JSONDecodeError,
+        runtime_refresh.RuntimeRefreshError,
+    ):
+        return None
+    return payload
+
+
+def _runtime_refresh_record_directory(
+    path: Path,
+    *,
+    expected_kind: str,
+    digest_field: str,
+    maximum_count: int,
+) -> bool:
+    try:
+        info = path.lstat()
+        children = sorted(path.iterdir(), key=lambda item: item.name)
+    except OSError:
+        return False
+    if (
+        stat.S_ISLNK(info.st_mode)
+        or not stat.S_ISDIR(info.st_mode)
+        or len(children) > maximum_count
+    ):
+        return False
+    for child in children:
+        payload = _runtime_refresh_json(
+            child, expected_kind=expected_kind, digest_field=digest_field
+        )
+        digest = None if payload is None else payload.get(digest_field)
+        if (
+            not isinstance(digest, str)
+            or _RUNTIME_REFRESH_HASH_RE.fullmatch(digest) is None
+            or child.name != f"{digest}.json"
+        ):
+            return False
+    return True
+
+
+def _runtime_refresh_attempts_directory(path: Path) -> bool:
+    try:
+        info = path.lstat()
+        attempts = sorted(path.iterdir(), key=lambda item: item.name)
+    except OSError:
+        return False
+    if (
+        stat.S_ISLNK(info.st_mode)
+        or not stat.S_ISDIR(info.st_mode)
+        or len(attempts) > _RUNTIME_REFRESH_MAX_ATTEMPTS
+    ):
+        return False
+    for attempt in attempts:
+        try:
+            attempt_info = attempt.lstat()
+            children = {child.name: child for child in attempt.iterdir()}
+        except OSError:
+            return False
+        if (
+            _RUNTIME_REFRESH_HASH_RE.fullmatch(attempt.name) is None
+            or stat.S_ISLNK(attempt_info.st_mode)
+            or not stat.S_ISDIR(attempt_info.st_mode)
+            or set(children) not in ({"started.json"}, {"started.json", "result.json"})
+        ):
+            return False
+        started = _runtime_refresh_json(
+            children["started.json"],
+            expected_kind="bureau_runtime_refresh_attempt_start",
+            digest_field="start_sha256",
+        )
+        if (
+            started is None
+            or started.get("target_sha256") != attempt.name
+            or _RUNTIME_REFRESH_HASH_RE.fullmatch(
+                str(started.get("intent_sha256", ""))
+            )
+            is None
+            or _RUNTIME_REFRESH_COMMIT_RE.fullmatch(
+                str(started.get("main_commit", ""))
+            )
+            is None
+        ):
+            return False
+        result_path = children.get("result.json")
+        if result_path is None:
+            continue
+        result = _runtime_refresh_json(
+            result_path,
+            expected_kind="bureau_runtime_refresh_result",
+            digest_field="result_sha256",
+        )
+        if (
+            result is None
+            or result.get("target_sha256") != attempt.name
+            or result.get("intent_sha256") != started.get("intent_sha256")
+            or result.get("main_commit") != started.get("main_commit")
+        ):
+            return False
+    return True
+
+
+def _runtime_refresh_observations_directory(path: Path) -> set[str] | None:
+    try:
+        info = path.lstat()
+        observations = sorted(path.iterdir(), key=lambda item: item.name)
+    except OSError:
+        return None
+    if (
+        stat.S_ISLNK(info.st_mode)
+        or not stat.S_ISDIR(info.st_mode)
+        or not observations
+        or len(observations) > _RUNTIME_REFRESH_MAX_RECORDS
+    ):
+        return None
+    digests: set[str] = set()
+    for observation in observations:
+        match = _RUNTIME_REFRESH_OBSERVATION_RE.fullmatch(observation.name)
+        payload = _runtime_refresh_json(
+            observation,
+            expected_kind="bureau_runtime_refresh_observation",
+            digest_field="observation_sha256",
+        )
+        if match is None or payload is None:
+            return None
+        digest = payload.get("observation_sha256")
+        main_commit = payload.get("main_commit")
+        if (
+            not isinstance(digest, str)
+            or _RUNTIME_REFRESH_HASH_RE.fullmatch(digest) is None
+            or not isinstance(main_commit, str)
+            or _RUNTIME_REFRESH_COMMIT_RE.fullmatch(main_commit) is None
+            or match.group("commit") != main_commit[:12]
+            or match.group("digest") != digest[:12]
+        ):
+            return None
+        digests.add(digest)
+    return digests
+
+
+def _runtime_refresh_workspaces_directory(path: Path) -> bool:
+    try:
+        info = path.lstat()
+        workspaces = sorted(path.iterdir(), key=lambda item: item.name)
+    except OSError:
+        return False
+    if (
+        stat.S_ISLNK(info.st_mode)
+        or not stat.S_ISDIR(info.st_mode)
+        or len(workspaces) > _RUNTIME_REFRESH_MAX_WORKSPACES
+    ):
+        return False
+    for workspace in workspaces:
+        try:
+            workspace_info = workspace.lstat()
+            git_info = (workspace / ".git").lstat()
+        except OSError:
+            return False
+        if (
+            _RUNTIME_REFRESH_COMMIT_RE.fullmatch(workspace.name) is None
+            or stat.S_ISLNK(workspace_info.st_mode)
+            or not stat.S_ISDIR(workspace_info.st_mode)
+            or stat.S_ISLNK(git_info.st_mode)
+            or not stat.S_ISDIR(git_info.st_mode)
+        ):
+            return False
+    return True
+
+
+def _is_runtime_refresh_directory(entry: Path) -> bool:
+    try:
+        info = entry.lstat()
+        children = {child.name: child for child in entry.iterdir()}
+    except OSError:
+        return False
+    if (
+        stat.S_ISLNK(info.st_mode)
+        or not stat.S_ISDIR(info.st_mode)
+        or set(children) != _RUNTIME_REFRESH_ALLOWED_CHILDREN
+    ):
+        return False
+    observations = _runtime_refresh_observations_directory(children["observations"])
+    latest = _runtime_refresh_json(
+        children["latest-observation.json"],
+        expected_kind="bureau_runtime_refresh_observation",
+        digest_field="observation_sha256",
+    )
+    return bool(
+        observations is not None
+        and latest is not None
+        and latest.get("observation_sha256") in observations
+        and _runtime_refresh_attempts_directory(children["attempts"])
+        and _runtime_refresh_record_directory(
+            children["intents"],
+            expected_kind="bureau_runtime_refresh_intent",
+            digest_field="intent_sha256",
+            maximum_count=_RUNTIME_REFRESH_MAX_RECORDS,
+        )
+        and _runtime_refresh_workspaces_directory(children["workspaces"])
+    )
+
+
 def _is_deployment_evidence_directory(entry: Path) -> bool:
     try:
         releases = sorted(entry.iterdir(), key=lambda item: item.name)
@@ -1258,6 +1500,16 @@ def _classify_state_root_entry(entry: Path, database_name: str) -> dict[str, str
             "name": name,
             "type": entry_type,
             "class": "reviewed-plan-directory",
+        }
+    if (
+        name == "runtime-refresh"
+        and entry_type == "directory"
+        and _is_runtime_refresh_directory(entry)
+    ):
+        return {
+            "name": name,
+            "type": entry_type,
+            "class": "runtime-refresh-directory",
         }
     if (
         name == "deployments"

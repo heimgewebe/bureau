@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T021",
   "initiative": "BUR-2026-005",
   "title": "Bound and compact fresh open-PR observation for what-now",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 5
@@ -91,6 +91,82 @@
       "runtime_repair_details_omitted": true,
       "projection": "compact",
       "baseline_to_current_speedup": 20.14
+    },
+    "verified_at": "2026-07-17T13:36:15.727575Z",
+    "outcome": "Bureau PR #631 merged bounded concurrent fresh open-PR observation and an opt-in compact what-now projection. The implementation is present in the current immutable Bureau runtime and passed a fresh live compact readback during closeout.",
+    "implementation_pr": "heimgewebe/bureau#631",
+    "implementation_head": "b4b038da493536a04d13c0c9a2eb2d1ef59f5da0",
+    "implementation_merge_commit": "770597460620b4bb6f7cea7bae577dfc8a0931ff",
+    "implementation_merge_parent": "363d932a3054dc71004a1bdd0e4c66fb91cbffd7",
+    "implementation_merge_tree": "59f7260f313fa14ded0527ef0677da3695bef603",
+    "implementation_merge_result_diff_sha256": "5e2350b423564802170b405d0d2f2401128c6ca9781a35ad885357199c4f107e",
+    "implementation_merge_result_diff_bytes": 24111,
+    "github_pull_diff_sha256": "686a892b146f2db72fd9d9fb0cd78082f10a79efc1e37f01b48bd0a74a55ec85",
+    "closeout_base_commit": "702abea907301e1573a87ef1a58256cdfeae917a",
+    "current_runtime_source_commit": "d2a3d1da948c8356ce9277a321392d6f0f21d61c",
+    "current_runtime_release_id": "d2a3d1da948c-srcff88bbb7c6a5",
+    "current_runtime_readback": {
+      "measured_at": "2026-07-17T13:33:14Z",
+      "elapsed_seconds": 2.19446,
+      "stdout_bytes": 14344,
+      "stdout_sha256": "a44063e5e293af8fde3f90e3c1b993516c2c0c907219243318247624699b2d74",
+      "returncode": 0
+    },
+    "validation": [
+      "PR #631 is merged at exact head b4b038da493536a04d13c0c9a2eb2d1ef59f5da0 into merge commit 770597460620b4bb6f7cea7bae577dfc8a0931ff.",
+      "Validate on Python 3.10 and 3.12, CodeQL actions, CodeQL python and aggregate CodeQL all succeeded on the exact implementation head.",
+      "The merged implementation diff reconstructed from first parent 363d932a3054dc71004a1bdd0e4c66fb91cbffd7 is 24,111 bytes with SHA-256 5e2350b423564802170b405d0d2f2401128c6ca9781a35ad885357199c4f107e.",
+      "The initial exact-head benchmark already recorded in this task measured 1.320424 seconds and 8,699 bytes over 17 repository resources, a 20.14x speedup over the 26.587472-second sequential baseline.",
+      "Current immutable runtime source d2a3d1da948c8356ce9277a321392d6f0f21d61c contains the implementation merge and completed a fresh compact readback in 2.19446 seconds with 14,344 output bytes and no stderr."
+    ],
+    "verified_acceptance": {
+      "fresh-parallel-observation": "Distinct repositories are deduplicated and observed concurrently through the existing fresh gh pr list path; no cache or eventually consistent search index was introduced.",
+      "bounded-fail-closed": "Worker concurrency is bounded and configurable, duplicate repositories are deduplicated, and repository observation failures remain fail-closed for affected resources.",
+      "compact-projection": "The compact projection preserves selection and aggregate blocker truth while the full default projection remains available.",
+      "measured-effect": "The exact implementation head recorded 1.320424 seconds and 8,699 bytes versus a 26.587472-second baseline; current immutable-runtime readback also completed successfully.",
+      "full-validation": "All required GitHub checks passed on the exact implementation head, and the current immutable runtime passed a fresh live readback."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "BUR-2026-005-T021",
+          "source_ref": "heimgewebe/bureau#631",
+          "number": 631,
+          "head_sha": "b4b038da493536a04d13c0c9a2eb2d1ef59f5da0",
+          "merge_commit_sha": "770597460620b4bb6f7cea7bae577dfc8a0931ff",
+          "merge_result_diff_sha256": "5e2350b423564802170b405d0d2f2401128c6ca9781a35ad885357199c4f107e"
+        },
+        {
+          "kind": "runtime_readback",
+          "authority": "bureau-immutable-runtime",
+          "task_id": "BUR-2026-005-T021",
+          "source_ref": "grabowski-job-f1fc7b9b044a",
+          "commit_sha": "d2a3d1da948c8356ce9277a321392d6f0f21d61c",
+          "result": "PASS",
+          "elapsed_seconds": 2.19446,
+          "content_bytes": 14344,
+          "content_sha256": "a44063e5e293af8fde3f90e3c1b993516c2c0c907219243318247624699b2d74",
+          "receipt_sha256": "340cd6d1ea08a0f1fc6a9df84a94ea3bbf637d7f4d86ee4f90524eaba2ee623e"
+        }
+      ]
+    },
+    "tradeoffs": [
+      "Fresh repository observations create a bounded burst of concurrent gh processes in exchange for lower wall-clock latency.",
+      "Compact output is intentionally lossy and opt-in; consumers requiring complete evidence must use the default projection.",
+      "Observed latency remains dependent on GitHub and network variance; the measured multiplier is not a fixed service-level guarantee."
+    ],
+    "verification": {
+      "task_sha256": "f7fbbc8d1f8fdd9bf34c90995e430d4f868ae1bbac89e9d7c78a19dba975666a",
+      "plan_sha256": "653fa6a056506c94d5654ba5e3c16f9c31032767f0e1c844a8cb4714c50ce917",
+      "task_source_sha256": "0380480f809c5b4e6aee75e783efa0409525a8f4013de1cafa61545c1ee91b14",
+      "task_source_ref": "registry/tasks/BUR-2026-005-T021.json@702abea907301e1573a87ef1a58256cdfeae917a",
+      "plan_document_sha256": "bbfd94352038b4dda8c46493d2250e3fe839417d7ebb4b903e363963075659ac",
+      "plan_source_ref": "docs/plans/bureau-runtime-automation-baseline-v1.md@702abea907301e1573a87ef1a58256cdfeae917a",
+      "evidence_source": "github_pull_request_and_current_immutable_runtime_readback"
     }
   }
 }

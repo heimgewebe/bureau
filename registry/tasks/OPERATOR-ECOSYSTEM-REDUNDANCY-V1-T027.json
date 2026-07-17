@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T027",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Reconcile stale RepoGround migration workspaces and the runtime-cutover lease",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 6
+  },
+  "goal": "Classify and safely close or preserve the three incomplete RepoGround migration workspaces and resolve the runtime-cutover lease without deleting evidence, stopping live work or force-releasing a foreign owner.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:repoground:runtime-cutover",
+      "path:/home/alex/.local/share/repoground-runtime",
+      "host:heim-pc"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.repoground",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "grabowski",
+    "agent-workspace",
+    "resource-leases",
+    "git",
+    "evidence-preservation"
+  ],
+  "acceptance": [
+    {
+      "id": "live-owner-check",
+      "assertion": "Tasks, processes, tmux sessions, workspace receipts and lease timestamps are re-read before any close, abandon, cleanup or release action."
+    },
+    {
+      "id": "workspace-classification",
+      "assertion": "Each RepoGround workspace is classified as active, failed with salvage, stale-abandonable or already superseded using immutable evidence."
+    },
+    {
+      "id": "evidence-preserved",
+      "assertion": "Workspace manifests, results, logs, receipts and any unique commits remain preserved; checkout deletion requires a separate cleanup plan and exact confirmation."
+    },
+    {
+      "id": "lease-resolution",
+      "assertion": "The runtime-cutover lease is retained for a live owner, transferred through an explicit supported path, or released only after inactivity and ownership are proven."
+    },
+    {
+      "id": "unblocked-successor",
+      "assertion": "T025 can acquire its exact resources without conflict, or remains explicitly blocked by a named live owner with evidence."
+    }
+  ],
+  "depends_on": [],
+  "metadata": {
+    "registered_at": "2026-07-17T22:25:00+02:00",
+    "source_observation": "Workspace 835a1520f349 has a failed unchanged writer and live tmux session; workspaces 259b014f842a and 3042fdd262d0 are incomplete with missing writer worktrees; the cutover lease has no visible running task.",
+    "does_not_establish": [
+      "permission to kill tmux sessions",
+      "permission to delete worktrees",
+      "permission to force-release leases"
+    ]
+  }
+}

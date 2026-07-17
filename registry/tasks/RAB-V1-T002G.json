@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "id": "RAB-V1-T002G",
+  "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
+  "title": "Harden Claude executable identity for current packaged binaries",
+  "state": "ready",
+  "goal": "Replace the obsolete 64 MiB in-memory Claude executable identity gate with bounded regular-file validation and streamed hashing that safely supports the current packaged Claude binary without starting a provider process.",
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "depends_on": [
+    "RAB-V1-T002E"
+  ],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.lenskit",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Provider use is forbidden. Repair and prove executable identity handling synthetically and against the installed binary only."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "rab-v1-t002g-regular-file-boundary",
+      "assertion": "Claude identity resolves one executable regular file, rejects empty, special, changing or unreasonably large files, and records exact size and resolved path."
+    },
+    {
+      "id": "rab-v1-t002g-streamed-hash",
+      "assertion": "SHA-256 is computed in bounded chunks without reading the entire executable into memory; a before/after stat identity check detects replacement or mutation during hashing."
+    },
+    {
+      "id": "rab-v1-t002g-current-binary",
+      "assertion": "A provider-free exact-path test accepts and hashes the installed 259,820,344-byte Claude 2.1.208 executable and matches an independently computed SHA-256."
+    },
+    {
+      "id": "rab-v1-t002g-regression",
+      "assertion": "Tests cover empty, oversized, non-regular, changed-during-read and ordinary small executable cases plus the complete Grabowski suite and CI."
+    },
+    {
+      "id": "rab-v1-t002g-no-provider",
+      "assertion": "No provider process, model token or provider cost is produced; this task does not authorize T002F retry or any replacement live pair."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-15T15:20:19.344252Z",
+    "triggered_by": "RAB-V1-T002F",
+    "trigger_job": "grabowski-job-f01e3dd5ef64",
+    "trigger_failure_event_sha256": "a655b70ab8f015746dd874424305790d04ed29550d85fca8e1bc343c850ed74b",
+    "current_executable_bytes": 259820344,
+    "obsolete_limit_bytes": 67108864,
+    "provider_use_permitted": false,
+    "provider_processes_started": 0,
+    "observed_cost_usd": 0.0,
+    "does_not_establish": [
+      "permission_for_new_live_pair",
+      "RepoBrief usefulness",
+      "provider availability",
+      "full benchmark permission",
+      "default promotion"
+    ]
+  }
+}

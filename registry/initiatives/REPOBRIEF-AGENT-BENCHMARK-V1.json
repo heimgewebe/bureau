@@ -60,7 +60,7 @@
       },
       "RAB-V1-T002": {
         "state": "blocked",
-        "condition": "Blocked until T002E is verified and T002F is separately authorized, executed once and verified."
+        "condition": "Blocked until T002G is verified and T002H is separately authorized, executed once and verified."
       },
       "RAB-V1-T003": {
         "state": "planned",
@@ -98,17 +98,25 @@
         "outcome": "Exact adapter, planner and export contracts were hardened and verified without provider use; Grabowski PR #195 and Lenskit PR #1002 are merged."
       },
       "RAB-V1-T002F": {
+        "state": "blocked",
+        "authorization_status": "consumed",
+        "execution_status": "failed_pre_dispatch",
+        "outcome": "The fresh r2 one-shot launch failed before any condition or provider intent because the installed 259,820,344-byte Claude executable exceeded the obsolete 64 MiB identity limit. Provider intents: 0; cost: USD 0; retry prohibited.",
+        "failure_event_sha256": "a655b70ab8f015746dd874424305790d04ed29550d85fca8e1bc343c850ed74b"
+      },
+      "RAB-V1-T002G": {
         "state": "ready",
-        "authorization_status": "approved_unconsumed",
-        "execution_status": "prepared_not_started",
-        "pair_id": "repobrief-agent-benchmark-v1-20260713:nav-lenskit-mcp-startup:r2",
-        "preparation_manifest_sha256": "b761d053eb8c26b2073dd86eb5e722457f86002a741afac57fc8f642f80bac98",
-        "provider_processes_started": 0,
-        "condition": "Immediate pre-dispatch revalidation must pass; then exactly one baseline and one treatment process may run without retry."
+        "condition": "Repair executable identity handling without provider use and prove the installed packaged binary."
+      },
+      "RAB-V1-T002H": {
+        "state": "planned",
+        "authorization_status": "not_authorized",
+        "execution_status": "not_started",
+        "condition": "Requires verified T002G, fresh state, separate review and no known provider/session-limit blockade."
       }
     },
     "default_promoted": false,
-    "sequencing": "Keep failed T002B and consumed invalid T002D visible, harden exact live preparation contracts in T002E without provider use, separately authorize a fresh one-shot pair in T002F, execute the real paired benchmark only after a valid pair, decide adoption, and only then prioritize later optimization work.",
+    "sequencing": "Keep failed T002B, consumed invalid T002D and consumed pre-dispatch T002F visible; harden packaged executable identity in T002G without provider use; wait out known provider unavailability; then prepare and separately authorize a completely fresh T002H pair. Only after a valid pair may the real paired benchmark proceed.",
     "does_not_establish": [
       "general agent quality improvement",
       "answer correctness outside the fixed taskset",

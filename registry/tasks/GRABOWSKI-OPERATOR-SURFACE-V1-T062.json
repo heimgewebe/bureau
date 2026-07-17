@@ -87,6 +87,13 @@
       "permission to delete or recreate a store",
       "permission to weaken fail-closed schema checks",
       "that all future schemas are automatically compatible"
-    ]
+    ],
+    "additional_live_reproduction": {
+      "observed_at": "2026-07-17T15:18:03Z",
+      "source": "Schauwerk PR #100 merge and Miro closeout",
+      "task_error": "Unsupported task database schema; upgrade Grabowski before listing tasks.",
+      "resource_error": "Unsupported resource database schema; upgrade Grabowski before using resource leases.",
+      "handling": "No database migration, recreation or schema repair was attempted; narrower live adapters were used with independent readback."
+    }
   }
 }

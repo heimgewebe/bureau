@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T065",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Make Captain final status agree with verified mutation outcome",
+  "state": "planned",
+  "goal": "Ensure captain-run returns a successful top-level status and process exit code when the requested mutation was performed and post-mutation verification passed, while preserving fail-closed handling for unknown outcomes.",
+  "depends_on": [],
+  "priority": {
+    "lane": "later",
+    "rank": 650
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "approval": {
+      "required_level": "reviewed_plan",
+      "action_class": "repository_mutation",
+      "note": "Repair only result aggregation and exit semantics. Never reinterpret a missing or failed post-mutation readback as success and never repeat an already observed mutation."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau"
+  ],
+  "acceptance": [
+    {
+      "id": "single-source-outcome",
+      "assertion": "Top-level status is derived from typed per-action execution and verification outcomes, not an unset compatibility field."
+    },
+    {
+      "id": "exit-contract",
+      "assertion": "A performed mutation with successful post-readback exits zero; blocked, failed and outcome-unknown states retain distinct nonzero semantics."
+    },
+    {
+      "id": "no-double-effect",
+      "assertion": "Status aggregation never retries or repeats a mutation merely because response shaping failed."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover successful merge, blocked merge, provider failure, successful mutation with response-shaping failure and outcome-unknown readback."
+    },
+    {
+      "id": "live-proof",
+      "assertion": "A bounded Captain operation produces matching action, receipt, top-level status and process exit with independent provider readback."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-17T15:18:03Z",
+    "source": "Schauwerk PR #100 Captain merge closeout",
+    "live_reproduction": {
+      "operation": "captain pr-merge",
+      "observed_process_exit": 3,
+      "top_level_status": null,
+      "mutation_observed": true,
+      "post_merge_verification": "PASS",
+      "guard_leases_released": true,
+      "independent_provider_readback": "PR MERGED and main contains the exact reviewed head"
+    },
+    "does_not_establish": [
+      "that the merge itself failed",
+      "permission to coerce unknown outcomes to success",
+      "permission to retry an already merged pull request"
+    ]
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "id": "SCHAUWERK-COMPANION-HOST-HARDENING-V1-T001",
+  "initiative": "SCHAUWERK-COMPANION-HOST-HARDENING-V1",
+  "title": "Deploy companion on a header-capable free host",
+  "state": "planned",
+  "goal": "Provide a repository-controlled free HTTPS deployment for the existing deterministic companion bundle that passes the complete security-header doctor and remains loadable inside authenticated Miro.",
+  "depends_on": [],
+  "priority": {
+    "lane": "later",
+    "rank": 710
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "approval": {
+      "required_level": "reviewed_plan",
+      "action_class": "repository_mutation",
+      "note": "Use only free hosting already authorized by the user. Preserve deterministic build digests, least privilege and real Miro readback. Do not enable paid plans or alter account recovery/MFA."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "https",
+    "miro",
+    "web-sdk"
+  ],
+  "acceptance": [
+    {
+      "id": "durable-free-host",
+      "assertion": "The deployment is free, durable, repository-controlled and HTTPS-enforced."
+    },
+    {
+      "id": "byte-identity",
+      "assertion": "Every deployed release file matches the deterministic build manifest exactly."
+    },
+    {
+      "id": "security-headers",
+      "assertion": "Real responses satisfy the complete release-doctor header contract without relying on repository-only _headers files."
+    },
+    {
+      "id": "miro-compatibility",
+      "assertion": "Launcher and panel load inside authenticated Miro and read-only Web SDK calls still succeed."
+    },
+    {
+      "id": "no-regression",
+      "assertion": "GitHub Pages remains a documented fallback until the hardened host is independently proven."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-17T15:18:03Z",
+    "source": "Schauwerk PR #100 Pages live readback",
+    "current_fallback_url": "https://heimgewebe.github.io/schauwerk/",
+    "current_build_digest": "7ffbe6210037e17886471f648e2fefaf853815cf4c2de18fef2e43b7ff8313db",
+    "observed_missing_headers": [
+      "Content-Security-Policy",
+      "X-Frame-Options",
+      "Permissions-Policy",
+      "Referrer-Policy",
+      "X-Content-Type-Options"
+    ],
+    "current_miro_embedding": "verified_successful"
+  }
+}

@@ -70,7 +70,9 @@
       "RPU-V1-T030",
       "RPU-V1-T031",
       "RPU-V1-T032",
-      "RPU-V1-T033"
+      "RPU-V1-T033",
+      "SCHAUWERK-COMPANION-HOST-HARDENING-V1-T001",
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T065"
     ],
     "next": [
       "RAB-V1-T002B",

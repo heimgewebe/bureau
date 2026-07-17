@@ -2,19 +2,19 @@
   "schema_version": 1,
   "id": "SCHAUWERK-LIVE-COMPANION-VISUAL-TRUTH-V1",
   "title": "Schauwerk Live Companion and Visual Truth v1",
-  "state": "active",
-  "commitment": "now",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Close the gap between deterministic Schauwerk composition and observable Miro reality through provider-reference drift checks, a deployable Web SDK companion contract, authenticated visual evidence and a small Golden Board corpus.",
   "current_plan": {
     "repository": "bureau",
     "path": "docs/plans/schauwerk-live-companion-visual-truth-v1.md"
   },
   "completion": [
-    "The Miro capability audit separates the observed live catalogue, an explicit official-reference snapshot and Schauwerk adapter coverage without claiming provider support that is not live.",
-    "The Web SDK companion has a deterministic release manifest and HTTPS deployment doctor while Developer App registration, installation and authorization remain explicit external gates.",
-    "Authenticated provider captures can be validated and receipt-bound to an exact repeatable board snapshot without accepting login, access-denied or unauthenticated pages as evidence.",
+    "The Miro capability audit separates observed live catalogue, official-reference snapshot and adapter coverage.",
+    "The deterministic Web SDK companion is merged, deployed to repository-owned HTTPS hosting and its fail-closed release doctor records the missing GitHub Pages security headers without inventing a PASS.",
+    "Authenticated provider captures remain receipt-bound to exact board and image evidence.",
     "Three intentionally distinct Golden Board compositions pass deterministic package, preview and quality checks.",
-    "Implementation, tests, CI, complete diff, diff-bound review and post-merge validation are complete; any remaining provider-side gate is recorded precisely."
+    "PR #100, CI, complete diff, bound review, Pages deployment, Developer App installation and authenticated in-board Web SDK readback are complete."
   ],
   "parallelism": {
     "max_active_tasks": 1
@@ -29,6 +29,12 @@
       "availability_of_rest_credentials",
       "universal_aesthetic_quality",
       "permission_to_modify_existing_or_unrelated_boards"
-    ]
+    ],
+    "completed_at": "2026-07-17T15:18:03Z",
+    "verified_task": "SCHAUWERK-LIVE-COMPANION-VISUAL-TRUTH-V1-T001",
+    "implementation_pull_request": "heimgewebe/schauwerk#100",
+    "implementation_merge_commit": "a4aca3e22e2cb58f484e428901051309e65522c1",
+    "outcome": "The companion is live on GitHub Pages and operates inside Miro with read-only board access. Header-capable hosting remains an explicit separate hardening initiative because GitHub Pages lacks the required response headers even though the real Miro embedding succeeded.",
+    "successor_initiative": "SCHAUWERK-COMPANION-HOST-HARDENING-V1"
   }
 }

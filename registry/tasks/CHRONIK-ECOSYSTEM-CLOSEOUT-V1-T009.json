@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
+  "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
+  "title": "Chronik-Outbox terminalitätsgebunden kompaktieren",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 90
+  },
+  "goal": "Lose, taskversuchsgebundene Grabowski-Outbox-Quellen nach belegter Terminalität verlustfrei in wenige unveränderliche, hashgebundene Replay-Bundles überführen, ohne aktive Quellen zu verschieben, Receipts zur Autorität zu erheben oder den Chronik-Ledger als operative Wahrheit zu ersetzen.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik",
+      "component:chronik-outbox-import"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.chronik",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [
+    "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T006"
+  ],
+  "acceptance": [
+    {
+      "id": "terminality-and-grace-bound",
+      "assertion": "Only valid sources whose final event is agent.run.completed or agent.run.blocked, whose configurable grace period elapsed, and whose file identity remains stable may be selected; active started-only and changing sources remain loose."
+    },
+    {
+      "id": "ledger-and-receipt-bound",
+      "assertion": "Compaction requires an intact source/SHA-bound import receipt and exact presence of every source event in the actual Chronik ledger, while receipts remain explicitly nonauthoritative and reconstructible."
+    },
+    {
+      "id": "atomic-replay-bundle",
+      "assertion": "Bundle and manifest are immutable, canonical SHA-256-bound, fsynced, fully read back and path-safe before any loose source is removed; partial, orphaned, symlinked or corrupt artifacts fail closed."
+    },
+    {
+      "id": "complete-loss-recovery",
+      "assertion": "An isolated empty-ledger and missing-receipt simulation restores all bundled events and recreates receipts from bundle evidence without source loss or divergent event-id acceptance."
+    },
+    {
+      "id": "crash-race-and-rollback-proof",
+      "assertion": "Tests cover publish, directory fsync and unlink failures, source mutation before removal, duplicate and conflicting event IDs across loose and bundled sources, repeated apply and relocatable restore."
+    },
+    {
+      "id": "bounded-scale",
+      "assertion": "Deterministic benchmarks at live-shaped and 10000-source scale remove the eligible loose files, keep at most one full ledger scan per import and remain below the two-minute timer interval."
+    },
+    {
+      "id": "reviewed-release-and-live-proof",
+      "assertion": "The exact reviewed diff passes focused and full tests, role and local smoke gates, GitHub CI, merge-bound deployment, live dry-run, controlled apply, repeated import and ledger-integrity readback with the timer restored."
+    }
+  ],
+  "rollback": {
+    "trigger": "Any bundle cannot replay the exact original events, an active or changed source is removed, a partial artifact is accepted, ledger integrity changes unexpectedly, or the importer exceeds the timer safety budget.",
+    "procedure": "Stop compaction, retain every bundle and remaining loose source, restore the previous immutable Chronik release, reconstruct removed loose files from manifest-bound bundle byte ranges if needed, run isolated ledger replay and integrity verification, and resume the import timer only after a clean readback."
+  },
+  "stop": {
+    "conditions": [
+      "a foreign Chronik worktree, process, task or lease overlaps the selected implementation or live outbox path",
+      "the live dry-run reports active, invalid, receiptless, stale-receipt or ledger-unconfirmed sources as eligible",
+      "bundle or manifest durability cannot be established before source removal",
+      "the empty-ledger recovery simulation or exact event-id/payload comparison fails",
+      "the controlled live apply would require deleting a source younger than the approved grace period"
+    ]
+  },
+  "metadata": {
+    "source": "bureau_live_register",
+    "live_register_event_id": 624,
+    "live_register_candidate_id": "CHRONIK-OUTBOX-SOURCE-COMPACTION-V1",
+    "live_register_created_at": "2026-07-17T07:53:56.115297Z",
+    "live_register_source": "chatgpt:chronik-pr-227-closeout",
+    "promotion_plan_sha256": "906d232b95612a4a35e7b4cd4e4880272e007924774ea6fbc926a792fa6ea842",
+    "implementation_draft": {
+      "chronik_commit": "2bba3d27557dc0b0c5122529f2053fe78c737572",
+      "reviewed_diff_sha256": "d1922804e20fc8c0b39887287384633ef3166a5554ec2c7f8796ec47b72580e7",
+      "tests": "345 passed",
+      "benchmarks": [
+        "2650-source live-shaped passed",
+        "10000-source scale passed"
+      ],
+      "status": "local_reviewed_not_published"
+    },
+    "does_not_establish": [
+      "queue_truth",
+      "claim_authority",
+      "dispatch_authority",
+      "merge_readiness",
+      "live_compaction_completed",
+      "deployment_completed"
+    ]
+  }
+}

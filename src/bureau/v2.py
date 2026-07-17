@@ -7,7 +7,8 @@ import re
 import sqlite3
 import subprocess
 import uuid
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterable, Iterator
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager, suppress
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
@@ -117,6 +118,26 @@ def _open_pr_claim_guard_limit() -> int:
     return value
 
 
+DEFAULT_OPEN_PR_CLAIM_GUARD_WORKERS = 8
+MAX_OPEN_PR_CLAIM_GUARD_WORKERS = 32
+
+
+def _open_pr_claim_guard_workers(repository_count: int) -> int:
+    if repository_count <= 1:
+        return max(repository_count, 1)
+    configured = os.environ.get("BUREAU_OPEN_PR_CLAIM_GUARD_WORKERS")
+    if configured is None:
+        value = DEFAULT_OPEN_PR_CLAIM_GUARD_WORKERS
+    else:
+        try:
+            value = int(configured)
+        except ValueError:
+            value = DEFAULT_OPEN_PR_CLAIM_GUARD_WORKERS
+    if value < 1:
+        value = DEFAULT_OPEN_PR_CLAIM_GUARD_WORKERS
+    return min(value, MAX_OPEN_PR_CLAIM_GUARD_WORKERS, repository_count)
+
+
 def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
     binary = os.environ.get("BUREAU_GH_BIN", "gh")
     limit = str(_open_pr_claim_guard_limit())
@@ -167,6 +188,40 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
             f"({_open_pr_claim_guard_limit()}); coverage is bounded and fails closed"
         )
     return [item for item in value if isinstance(item, dict)]
+
+
+def _observe_open_pull_requests(
+    repositories: Iterable[str],
+) -> tuple[dict[str, list[dict[str, Any]]], dict[str, str]]:
+    ordered = tuple(dict.fromkeys(repositories))
+    observed: dict[str, list[dict[str, Any]]] = {}
+    errors: dict[str, str] = {}
+    if not ordered:
+        return observed, errors
+
+    workers = _open_pr_claim_guard_workers(len(ordered))
+    if workers == 1:
+        for repository in ordered:
+            try:
+                observed[repository] = _github_open_pull_requests(repository)
+            except OpenPullRequestObservationError as exc:
+                errors[repository] = str(exc)
+        return observed, errors
+
+    with ThreadPoolExecutor(
+        max_workers=workers, thread_name_prefix="bureau-open-pr"
+    ) as executor:
+        futures = {
+            executor.submit(_github_open_pull_requests, repository): repository
+            for repository in ordered
+        }
+        for future in as_completed(futures):
+            repository = futures[future]
+            try:
+                observed[repository] = future.result()
+            except OpenPullRequestObservationError as exc:
+                errors[repository] = str(exc)
+    return observed, errors
 
 
 @dataclass(frozen=True)
@@ -466,50 +521,54 @@ def _repo_write_guard_failure_reservations(
 def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Reservation]:
     """Represent open GitHub PRs as conservative repo write blockers.
 
-    The guard is repository-scoped for write safety and task-aware for duplicate
-    diagnostics. PR body, title, branch name and structured metadata are scanned
-    for Registry task IDs so a direct branch/PR created without a Bureau claim is
-    observed as an external reservation on the next frontier or claim cycle.
+    Repository remotes are resolved locally, then distinct GitHub repositories
+    are observed concurrently with the same fresh ``gh pr list`` contract used
+    for claim-time safety. Failures remain scoped to every affected resource.
     """
     if os.environ.get("BUREAU_OPEN_PR_CLAIM_GUARD", "1") in {"0", "false", "False"}:
         return []
+
     result: list[legacy.Reservation] = []
-    observed: dict[str, list[dict[str, Any]]] = {}
-    observation_errors: dict[str, str] = {}
-    for resource in registry.resources.values():
-        if resource.type != "git-repository":
-            continue
+    resources = [
+        resource
+        for resource in registry.resources.values()
+        if resource.type == "git-repository"
+    ]
+    repositories_by_resource: dict[str, str] = {}
+    resource_errors: dict[str, str] = {}
+
+    for resource in resources:
         if not resource.path:
-            result.append(
-                _repo_write_guard_failure_reservation(
-                    resource,
-                    f"cannot observe configured repository {resource.id}: missing path",
-                )
+            resource_errors[resource.id] = (
+                f"cannot observe configured repository {resource.id}: missing path"
             )
             continue
         try:
             repository = _github_repository_for_path(Path(resource.path).expanduser())
         except OpenPullRequestObservationError as exc:
-            result.append(_repo_write_guard_failure_reservation(resource, str(exc)))
+            resource_errors[resource.id] = str(exc)
             continue
+        if repository is not None:
+            repositories_by_resource[resource.id] = repository
+
+    observed, observation_errors = _observe_open_pull_requests(
+        repositories_by_resource.values()
+    )
+    for resource in resources:
+        resource_error = resource_errors.get(resource.id)
+        if resource_error is not None:
+            result.append(_repo_write_guard_failure_reservation(resource, resource_error))
+            continue
+        repository = repositories_by_resource.get(resource.id)
         if repository is None:
             continue
-        if repository in observation_errors:
+        observation_error = observation_errors.get(repository)
+        if observation_error is not None:
             result.append(
-                _repo_write_guard_failure_reservation(
-                    resource, observation_errors[repository]
-                )
+                _repo_write_guard_failure_reservation(resource, observation_error)
             )
             continue
-        if repository not in observed:
-            try:
-                observed[repository] = _github_open_pull_requests(repository)
-            except OpenPullRequestObservationError as exc:
-                observation_errors[repository] = str(exc)
-                result.append(_repo_write_guard_failure_reservation(resource, str(exc)))
-                continue
-        pull_requests = observed[repository]
-        for pull_request in pull_requests:
+        for pull_request in observed.get(repository, []):
             number = pull_request.get("number")
             if not isinstance(number, int):
                 continue
@@ -1662,6 +1721,127 @@ class StateStore:
         return {"integrity": integrity, "foreign_key_errors": foreign, "schema_version": version}
 
 
+def _compact_what_now_task_card(
+    card: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    if card is None:
+        return None
+    keys = (
+        "task_id",
+        "title",
+        "rank_key",
+        "priority",
+        "queue_lane",
+        "effective_state",
+        "initiative",
+        "execution",
+        "missing_capabilities",
+        "claim_resources",
+        "eligible",
+        "claim_eligible",
+        "resource_eligible",
+        "soft_reasons",
+        "blocker_reasons",
+        "cross_repository_reasons",
+    )
+    return {key: card[key] for key in keys if key in card}
+
+
+def _compact_what_now_runtime_truth(
+    runtime_truth: dict[str, Any],
+) -> dict[str, Any]:
+    keys = (
+        "next_task_available",
+        "selected_task_id",
+        "selected_via",
+        "eligible_task_count",
+        "normal_task_available",
+        "normal_eligible_task_count",
+        "closure_bridge_task_available",
+        "closure_bridge_eligible_task_count",
+        "lifecycle_mismatch",
+        "health_blocks_normal_claim",
+        "repair_task_required",
+        "repair_task_candidate_count",
+    )
+    compact = {key: runtime_truth.get(key) for key in keys}
+    compact["repair_details_omitted"] = bool(
+        runtime_truth.get("repair_recommendations")
+        or runtime_truth.get("repair_task_candidates")
+    )
+    return compact
+
+
+def _compact_what_now_result(
+    result: dict[str, Any], *, blocked_limit: int
+) -> dict[str, Any]:
+    compact = dict(result)
+    compact["projection"] = "compact"
+    compact["runtime_truth"] = _compact_what_now_runtime_truth(
+        result["runtime_truth"]
+    )
+    compact["selected"] = _compact_what_now_task_card(result.get("selected"))
+    compact["ranked_eligible"] = [
+        _compact_what_now_task_card(card)
+        for card in result["ranked_eligible"]
+    ]
+    blocked = result["blocked"]
+    compact["blocked"] = [
+        _compact_what_now_task_card(card) for card in blocked[:blocked_limit]
+    ]
+
+    reason_counts = result["blocker_summary"]["reason_counts"]
+    ranked_reasons = sorted(
+        reason_counts.items(), key=lambda item: (-item[1], item[0])
+    )
+    blocked_returned = min(len(blocked), blocked_limit)
+    total_blocked = result["blocker_summary"]["total_blocked"]
+    compact["blocker_summary"] = {
+        "total_blocked": total_blocked,
+        "blocked_returned": blocked_returned,
+        "blocked_truncated": total_blocked > blocked_returned,
+        "unique_reason_count": len(ranked_reasons),
+        "reason_counts": dict(ranked_reasons[:20]),
+        "reasons_truncated": len(ranked_reasons) > 20,
+    }
+
+    lifecycle = result["lifecycle"]
+    inconsistent = [
+        {
+            "initiative_id": item["initiative_id"],
+            "declared_state": item["declared_state"],
+            "recommended_state": item["recommended_state"],
+        }
+        for item in lifecycle
+        if not item["consistent"]
+    ]
+    compact["lifecycle"] = {
+        "total": len(lifecycle),
+        "inconsistent_count": len(inconsistent),
+        "inconsistent": inconsistent,
+    }
+
+    live_context = result["live_register"]
+    live_summary = live_context.get("summary", {})
+    summary_keys = (
+        "active_thread_focus_count",
+        "active_focus_override_count",
+        "candidate_history_count",
+        "history_total_records",
+        "history_loaded_records",
+        "history_truncated",
+        "coverage_complete",
+    )
+    compact["live_register"] = {
+        "schema_version": live_context.get("schema_version"),
+        "repo": live_context.get("repo"),
+        "source": live_context.get("source"),
+        "coverage_complete": live_context.get("coverage_complete"),
+        "summary": {key: live_summary.get(key) for key in summary_keys},
+    }
+    return compact
+
+
 class Dispatcher(legacy.Dispatcher):
     def __init__(
         self,
@@ -2495,6 +2675,7 @@ class Dispatcher(legacy.Dispatcher):
         *,
         resource: str | None = None,
         limit: int = 5,
+        compact: bool = False,
     ) -> dict[str, Any]:
         """Return a compact, read-only answer to what should happen next.
 
@@ -2517,7 +2698,7 @@ class Dispatcher(legacy.Dispatcher):
         from .live_register import live_register_context
 
         live_context = live_register_context(self.store, repo=resource, limit=50)
-        return {
+        result = {
             "schema_version": 1,
             "resource": resource,
             "capabilities": sorted(capabilities),
@@ -2561,6 +2742,11 @@ class Dispatcher(legacy.Dispatcher):
                 "merge readiness",
             ],
         }
+        return (
+            _compact_what_now_result(result, blocked_limit=max(limit, 1))
+            if compact
+            else result
+        )
 
     def repo_balls(self, capabilities: set[str]) -> dict[str, Any]:
         open_pr_reservations = self._open_pr_reservations(strict=False)

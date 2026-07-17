@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T021",
+  "initiative": "BUR-2026-005",
+  "title": "Bound and compact fresh open-PR observation for what-now",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 5
+  },
+  "goal": "Reduce what-now latency and output volume without weakening the fresh fail-closed open pull-request claim guard.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/v2.py",
+      "path:/home/alex/repos/bureau/src/bureau/cli.py",
+      "path:/home/alex/repos/bureau/tests/test_claim_guard.py",
+      "path:/home/alex/repos/bureau/tests/test_v2.py",
+      "path:/home/alex/repos/bureau/docs/bureau-what-now-v1.md",
+      "path:/home/alex/repos/bureau/registry/tasks/BUR-2026-005-T021.json"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.docs",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "fresh-parallel-observation",
+      "assertion": "Distinct GitHub repositories are observed concurrently through the existing fresh gh pr list path; no cache or search-index snapshot weakens claim safety."
+    },
+    {
+      "id": "bounded-fail-closed",
+      "assertion": "Concurrency is bounded and configurable, duplicate repository observations are deduplicated, and one repository failure remains a fail-closed blocker only for affected resources."
+    },
+    {
+      "id": "compact-projection",
+      "assertion": "what-now offers a compact projection that retains decision and blocker truth while omitting high-volume evidence details; full output remains available by default."
+    },
+    {
+      "id": "measured-effect",
+      "assertion": "A live before/after benchmark records frontier latency and compact JSON size on the exact reviewed head."
+    },
+    {
+      "id": "full-validation",
+      "assertion": "Focused tests and complete Bureau validation pass on the exact reviewed head."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-17T03:15:00Z",
+    "source": "live bureau what-now profiling",
+    "baseline": {
+      "scoped_what_now_seconds": 7.67,
+      "fresh_frontier_seconds_latest": 26.587472,
+      "registry_seconds": 0.048396,
+      "lifecycle_seconds": 0.004873,
+      "live_register_seconds": 0.00494,
+      "json_exceeded_bytes": 65536
+    },
+    "safety_boundary": "Do not cache or use eventually consistent search results for claim-time PR truth. Preserve per-repository fail-closed diagnostics and configured PR count cap.",
+    "does_not_establish": [
+      "claim authority",
+      "merge readiness",
+      "permission to delete historical worktrees",
+      "absence of GitHub API latency variance"
+    ],
+    "measurement": {
+      "measured_at": "2026-07-17T03:43:46.594394Z",
+      "elapsed_seconds": 1.320424,
+      "json_bytes": 8699,
+      "git_repository_resources": 17,
+      "blocked_returned": 3,
+      "blocked_truncated": true,
+      "total_blocked": 144,
+      "runtime_repair_details_omitted": true,
+      "projection": "compact",
+      "baseline_to_current_speedup": 20.14
+    }
+  }
+}

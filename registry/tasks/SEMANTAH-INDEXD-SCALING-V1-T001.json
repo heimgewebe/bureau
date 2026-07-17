@@ -3,7 +3,7 @@
   "id": "SEMANTAH-INDEXD-SCALING-V1-T001",
   "initiative": "SEMANTAH-INDEXD-SCALING-V1",
   "title": "Evaluate snapshot-based indexd search outside the shared store lock",
-  "state": "planned",
+  "state": "verified",
   "goal": "Move indexd exact-search ranking and snippet materialization outside the shared mutable store lock by taking a bounded immutable namespace snapshot, while preserving one-request consistency, deterministic ranking, persistence compatibility and measured memory limits.",
   "priority": {
     "lane": "later",
@@ -34,7 +34,7 @@
   "acceptance": [
     {
       "id": "bounded-namespace-snapshot",
-      "assertion": "The read-lock is held only long enough to validate dimensions and clone immutable Arc-backed references for the selected namespace; no embedding vectors or metadata values are deep-cloned per search."
+      "assertion": "The read lock is held only long enough to clone one immutable namespace Arc and read dimensionality; snapshot capture is O(1) and does not clone keys, vectors, metadata or one pointer per entry."
     },
     {
       "id": "ranking-outside-lock",
@@ -54,7 +54,7 @@
     },
     {
       "id": "bounded-memory-contract",
-      "assertion": "Per-search snapshot memory is O(namespace entries) pointer/reference storage rather than O(entries × dimensions), with an explicit report of allocation cost and no unbounded retained snapshot registry."
+      "assertion": "Per-search snapshot memory is O(1). An overlapping writer may shallow-clone O(namespace entries) key/index and Arc-pointer storage once, but embeddings and metadata remain shared and no snapshot registry is retained."
     },
     {
       "id": "repository-gates",
@@ -75,20 +75,112 @@
     "does_not_establish": [
       "production capacity",
       "production latency",
+      "network or reverse-proxy latency",
       "ANN activation readiness",
-      "lock-free write execution",
-      "permission to weaken deterministic exact ranking or persistence semantics"
+      "lock-free writes",
+      "zero-cost overlapping copy-on-write",
+      "cross-host comparability without a controlled baseline"
     ],
     "registered_at": "2026-07-17T20:25:00Z",
     "baseline_task": "SEMANTAH-USEFULNESS-V1-T001",
     "baseline_pr": "heimgewebe/semantAH#260",
-    "baseline_report_sha256": "34f7ccbe07bb5a57ca0eb8c5ec0ac549f49930da98f4a3ef2e82ced212b54475",
-    "design_boundary": "Arc-backed immutable entries and request-local namespace snapshots; no global snapshot registry and no full vector clone per search.",
-    "provisional_budgets": {
-      "writer_lock_wait_p95_reduction_medium_min_ratio": 0.75,
-      "writer_lock_wait_p95_reduction_large_min_ratio": 0.75,
-      "sequential_search_p95_regression_max_ratio": 1.2,
-      "allocated_kib_per_search_regression_max_ratio": 2.5
+    "baseline_report_sha256": "fb2c62a293f8046588e0fa20dde0edbb98915826e3e9cbfa63eae54dc54b4de2",
+    "design_boundary": "O(1) Arc-backed immutable namespace snapshot; contiguous exact-search entries plus key index; shallow copy-on-write only for an overlapping writer; no global snapshot registry and no embedding or metadata deep clone.",
+    "verified_at": "2026-07-17T23:30:12+02:00",
+    "implementation_repo": "heimgewebe/semantAH",
+    "implementation_pr": 261,
+    "implementation_head_sha": "2b42a5339bd90cb8ffe1519967fd51113be70a1a",
+    "implementation_merge_commit": "ad8d22606216adf81ec9914dcfa4cb9bfcd3662f",
+    "implementation_tree_sha": "ed05314d6d26658030bd234e52adbe74b23c210a",
+    "implementation_diff_sha256": "6ea94520eb698b5666ad8573a2035692e96e430c5e32f72a9700cd406030d965",
+    "baseline_source_commit": "e704543b4330b2df4f9d57a9feeb99508cfcae6f",
+    "benchmark_report_sha256": "041ddef812a34db595f7a129665ffd83029a0c50eb5d620f0e75d9bc2e75f1e9",
+    "benchmark_report_schema": "indexd-real-workload-benchmark-v2",
+    "benchmark_environment_id": "heim-pc-indexd-ab-v2-final",
+    "benchmark_passed": true,
+    "standard_profile_metrics": [
+      {
+        "scenario": "standard-5k-384",
+        "sequential_p50_ms": 0.524433,
+        "sequential_p95_ms": 0.616384,
+        "sequential_p99_ms": 0.780145,
+        "allocated_kib_per_search": 76.814453125,
+        "concurrent_search_p95_ms": 0.777825,
+        "writer_lock_wait_p95_ms": 0.00011,
+        "writer_end_to_end_max_ms": 0.221561,
+        "writer_lock_wait_change_percent": -99.98453240040271,
+        "writer_end_to_end_max_change_percent": -75.9338934539747
+      },
+      {
+        "scenario": "standard-10k-768",
+        "sequential_p50_ms": 2.629805,
+        "sequential_p95_ms": 2.986857,
+        "sequential_p99_ms": 3.173798,
+        "allocated_kib_per_search": 142.3154296875,
+        "concurrent_search_p95_ms": 2.901296,
+        "writer_lock_wait_p95_ms": 5e-05,
+        "writer_end_to_end_max_ms": 0.486403,
+        "writer_lock_wait_change_percent": -99.99865440959395,
+        "writer_end_to_end_max_change_percent": -88.19760828336436
+      },
+      {
+        "scenario": "standard-10k-1536",
+        "sequential_p50_ms": 4.348325,
+        "sequential_p95_ms": 4.842127,
+        "sequential_p99_ms": 5.349,
+        "allocated_kib_per_search": 273.31640625,
+        "concurrent_search_p95_ms": 7.157031,
+        "writer_lock_wait_p95_ms": 5e-05,
+        "writer_end_to_end_max_ms": 0.515113,
+        "writer_lock_wait_change_percent": -99.99920889030093,
+        "writer_end_to_end_max_change_percent": -93.83642812374886
+      }
+    ],
+    "regression_budgets": {
+      "sequential_p50_percent": 5.0,
+      "sequential_p95_percent": 10.0,
+      "sequential_p99_percent": 15.0,
+      "sequential_latency_absolute_slack_ns": 150000,
+      "allocation_bytes_per_search_percent": 5.0,
+      "concurrent_search_p95_percent": 10.0,
+      "writer_lock_wait_p95_percent": 15.0,
+      "writer_end_to_end_max_percent": 15.0,
+      "writer_lock_wait_p95_min_improvement_percent": 75.0,
+      "writer_end_to_end_max_min_improvement_percent": 75.0,
+      "writer_improvement_min_dimensions": 768
+    },
+    "validation": [
+      "cargo test --workspace --all-features --locked passed on exact head 2b42a5339bd90cb8ffe1519967fd51113be70a1a.",
+      "cargo clippy --workspace --all-features --locked -- -D warnings passed.",
+      "cargo clippy --locked -p indexd --bench indexd_real_workload -- -D warnings passed.",
+      "Changed-file rustfmt --check and git diff --check passed.",
+      "Snapshot consistency across update and delete, Arc reuse under copy-on-write, lock release with a retained snapshot, HTTP search, migration and persistence roundtrips passed.",
+      "Fail-closed benchmark cases rejected insufficient writer improvement, unsupported lock transition and report schema v1 after writing a report.",
+      "All eight GitHub checks on PR #261 succeeded before the SHA-bound squash merge."
+    ],
+    "verified_acceptance": {
+      "bounded-namespace-snapshot": "API captures one Arc<NamespaceItems> under a short read lock; the focused lock-release test acquires a write lock while the snapshot remains retained.",
+      "ranking-outside-lock": "The production handler releases state.store.read() before spawn_blocking exact ranking and snippet materialization.",
+      "request-snapshot-consistency": "Focused tests prove original, post-update and post-delete snapshots retain their own internally consistent entries and snippets.",
+      "behavior-and-persistence-compatible": "Full workspace, HTTP, exact-search, dimensionality, zero-query, migration and JSONL roundtrip tests passed; reviewed head and merge trees are identical.",
+      "measured-contention-improvement": "Controlled same-host v2 A/B passed all budgets. Writer lock-wait p95 improved by more than 99.99% and writer end-to-end maximum by 82.6% to 93.5% across standard scenarios.",
+      "bounded-memory-contract": "Snapshot capture clones one namespace Arc. Copy-on-write tests prove unchanged StoredItem Arcs are reused; only namespace index and pointer storage are shallow-cloned for an overlapping writer.",
+      "repository-gates": "Exact-head local gates and all eight GitHub checks passed before merge.",
+      "explicit-nonclaims": "Task and performance documentation exclude production capacity, production latency, ANN readiness, lock-free writes, zero-cost overlapping updates and uncontrolled cross-host comparison."
+    },
+    "outcome": "SemantAH PR #261 moved exact ranking and snippet materialization outside the shared store lock using O(1) immutable namespace snapshots. Controlled A/B evidence shows lower search latency and near-elimination of writer blocking while retaining deterministic exact ranking and the JSONL persistence contract.",
+    "verification": {
+      "task_sha256": "589b9713641a79f1fcb89dd5501cd3909ccde8269d3848241dd1e31045333b24",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "source": "github_pull_request_and_controlled_ab_benchmark",
+      "verified_at": "2026-07-17T23:30:12+02:00",
+      "implementation_pr": 261,
+      "implementation_head_sha": "2b42a5339bd90cb8ffe1519967fd51113be70a1a",
+      "merge_commit_sha": "ad8d22606216adf81ec9914dcfa4cb9bfcd3662f",
+      "tree_sha": "ed05314d6d26658030bd234e52adbe74b23c210a",
+      "diff_sha256": "6ea94520eb698b5666ad8573a2035692e96e430c5e32f72a9700cd406030d965",
+      "baseline_report_sha256": "fb2c62a293f8046588e0fa20dde0edbb98915826e3e9cbfa63eae54dc54b4de2",
+      "benchmark_report_sha256": "041ddef812a34db595f7a129665ffd83029a0c50eb5d620f0e75d9bc2e75f1e9"
     }
   }
 }

@@ -14,7 +14,7 @@
   ],
   "claims": [
     {
-      "resource": "repo.lenskit",
+      "resource": "repo.repoground",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -27,9 +27,9 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/lenskit",
+    "working_repository": "/home/alex/repos/repoground",
     "grabowski_resources": [
-      "repo:/home/alex/repos/lenskit",
+      "repo:/home/alex/repos/repoground",
       "path:/home/alex/repos/bureau/.bureau-scopes/registry",
       "path:/home/alex/repos/bureau/registry/tasks/RAB-V1-T003.json",
       "path:/home/alex/repos/bureau/registry/initiatives/REPOBRIEF-AGENT-BENCHMARK-V1.json"

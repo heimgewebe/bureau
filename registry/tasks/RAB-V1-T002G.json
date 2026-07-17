@@ -19,7 +19,7 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.lenskit",
+      "resource": "repo.repoground",
       "mode": "read",
       "isolation": "none"
     }

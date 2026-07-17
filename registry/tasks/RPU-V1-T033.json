@@ -14,7 +14,7 @@
   },
   "claims": [
     {
-      "resource": "repo.lenskit",
+      "resource": "repo.repoground",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -33,11 +33,11 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/lenskit",
+    "working_repository": "/home/alex/repos/repoground",
     "grabowski_resources": [
       "component:chore/repobrief-ruff-format-baseline-v1",
       "path:/home/alex/repos/.lenskit-worktrees/repobrief-ruff-format-baseline-v1",
-      "repo:/home/alex/repos/lenskit:branch:chore/repobrief-ruff-format-baseline-v1",
+      "repo:/home/alex/repos/repoground:branch:chore/repobrief-ruff-format-baseline-v1",
       "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T033.json"
     ]
   },

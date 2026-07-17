@@ -15,7 +15,7 @@
   },
   "claims": [
     {
-      "resource": "repo.lenskit",
+      "resource": "repo.repoground",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -34,12 +34,12 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/lenskit",
+    "working_repository": "/home/alex/repos/repoground",
     "baseline_commit": "48d1797553ddb233a9b64b22e50436ca5c6ac291",
     "grabowski_resources": [
       "component:feat/repobrief-call-graph-incremental-parallel-v1",
       "path:/home/alex/repos/.lenskit-worktrees/repobrief-call-graph-incremental-parallel-v1",
-      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-call-graph-incremental-parallel-v1",
+      "repo:/home/alex/repos/repoground:branch:feat/repobrief-call-graph-incremental-parallel-v1",
       "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T031.json"
     ]
   },

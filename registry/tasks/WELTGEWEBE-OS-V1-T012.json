@@ -14,7 +14,7 @@
   },
   "claims": [
     {
-      "resource": "repo.lenskit",
+      "resource": "repo.repoground",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -22,7 +22,7 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/lenskit"
+    "working_repository": "/home/alex/repos/repoground"
   },
   "required_capabilities": [
     "python",

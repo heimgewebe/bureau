@@ -19,7 +19,7 @@
       "isolation": "none"
     },
     {
-      "resource": "repo.lenskit",
+      "resource": "repo.repoground",
       "mode": "read",
       "isolation": "none"
     }
@@ -30,7 +30,7 @@
     "working_repository": "/home/alex/repos/grabowski",
     "grabowski_resources": [
       "repo:/home/alex/repos/grabowski",
-      "repo:/home/alex/repos/lenskit"
+      "repo:/home/alex/repos/repoground"
     ],
     "approval": {
       "action_class": "agent_dispatch",

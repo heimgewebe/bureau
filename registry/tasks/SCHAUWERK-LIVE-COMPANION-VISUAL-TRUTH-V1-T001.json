@@ -89,19 +89,19 @@
       "pixel_identical_provider_rendering",
       "universal_aesthetic_quality"
     ],
-    "implementation_status": "repository_implementation_merged_external_live_gates_blocked",
-    "blocked_at": "2026-07-17T06:54:58Z",
-    "block_reason": "The repository implementation is merged and post-merge validated, but no authenticated public hosting credential is available and both scoped Miro browser profiles resolve to the signup page. Public HTTPS deployment, Developer App registration, team installation, Web SDK authorization and an authenticated Visual Truth capture therefore remain unevidenced.",
+    "implementation_status": "repository_merged_visual_truth_verified_temporary_https_verified_human_miro_terms_and_durable_hosting_blocked",
+    "blocked_at": "2026-07-17T08:18:39Z",
+    "block_reason": "The merged implementation now has a live byte-verified HTTPS preview and a checked authenticated Visual Truth receipt. Completion remains blocked because the anonymous Cloudflare Worker is temporary and unclaimed, while Miro Developer team creation requires a human to attest legal authority and accept the Developer Terms on behalf of the organization before the app, team installation and Web SDK authorization can exist.",
     "blockers": [
       {
-        "evidence": "Wrangler 4.111.0 reports not authenticated; no Cloudflare, Netlify or Vercel token is present in the execution environment.",
-        "id": "public-https-hosting",
-        "required_resolution": "Authenticate one approved hosting account and deploy the exact companion bundle with the required response headers."
+        "id": "durable-public-https-hosting",
+        "evidence": "The exact companion bundle was deployed to an anonymous Cloudflare Worker and passed the fail-closed HTTPS doctor for all eight release files and required headers. The deployment is a time-limited temporary preview, remains unclaimed, and no approved durable hosting credential is available.",
+        "required_resolution": "Claim or redeploy the exact release on an approved durable HTTPS host, preserve html_handling=none and the required headers, then rerun the receipt-bound HTTPS doctor."
       },
       {
-        "evidence": "Both SchauwerkWorkerProfile and SchauwerkEducationSnapshotProfile redirected the Developer Dashboard URL to https://miro.com/de/signup/.",
-        "id": "miro-developer-session",
-        "required_resolution": "Reauthenticate the scoped Miro education profile, then create/configure/install the Web SDK app and verify it in-board."
+        "id": "miro-developer-terms-attestation",
+        "evidence": "The scoped Education profile is authenticated and the Developer Apps dashboard is accessible. Creating the first Developer team requires a checkbox attesting authority to accept Miro Developer Terms, Terms of Service and Privacy Policy on behalf of the organization. No such attestation was made by the agent.",
+        "required_resolution": "An authorized human must accept the Miro Developer terms. Then create Schauwerk Companion, configure only boards:read with the verified HTTPS app URL, install it into the Developer team and verify the in-board readback."
       }
     ],
     "implementation_evidence": {
@@ -118,15 +118,41 @@
       "schauwerk_pull_request": "heimgewebe/schauwerk#99"
     },
     "satisfied_acceptance": {
-      "companion-release": "Merged release manifest, local verifier, fail-closed HTTPS doctor and explicit gate-status contract; actual public deployment remains blocked.",
+      "companion-release": "Merged release contract plus a live temporary HTTPS deployment passed the fail-closed doctor for all eight files, exact digests, content types and security headers; durable hosting remains part of live-gates.",
       "golden-boards": "Three distinct system-landscape, decision-flow and narrative-journey compositions compile and preview with zero blockers.",
       "merge-gates": "Full patches, SHA-256 and sizes published; bound PASS reviews, green CI, mergeability and post-merge validation completed.",
       "provider-drift": "Merged and live-read: 33 observed tools, three documented tools absent live and five live tools absent from the reference; the live catalogue remains operational authority.",
-      "visual-truth": "Merged strict PNG/JPEG/WebP receipt path with snapshot recomputation, allowlist/provider binding and negative-page rejection; actual authenticated capture remains blocked."
+      "visual-truth": "An authenticated 1912x995 Miro capture was bound to the twice-identical sanitized snapshot dbfc336f44858ed6c8ae7fb3a1ce673a2b60740a103b95bc7e98a056e1832720 and independently checked as receipt 4d0dc02f92f3509db44666d581f1564f0ab7caa342c268548ef2d77f740de890."
     },
     "open_acceptance": [
       "live-gates"
     ],
-    "next_action": "Authenticate an approved HTTPS host and the scoped Miro education profile; deploy and doctor the exact companion bundle, create/install the Developer App, run an authenticated in-board readback and create the first Visual Truth receipt."
+    "next_action": "Have an authorized human accept the Miro Developer terms; then create and install Schauwerk Companion with only boards:read, point it at a durable doctor-verified HTTPS deployment, and complete the in-board Web SDK readback.",
+    "live_evidence": {
+      "observed_at": "2026-07-17T08:18:39Z",
+      "temporary_https": {
+        "host": "schauwerk-companion-preview.abalone-stilton.workers.dev",
+        "build_digest": "7ffbe6210037e17886471f648e2fefaf853815cf4c2de18fef2e43b7ff8313db",
+        "release_digest": "63ab922a91001ffc5657602617e4bda5226e9dcdeb76f9686da6fa023eafadf7",
+        "file_count": 8,
+        "doctor_success": true,
+        "durable": false,
+        "claimed": false
+      },
+      "visual_truth": {
+        "board_content_digest": "dbfc336f44858ed6c8ae7fb3a1ce673a2b60740a103b95bc7e98a056e1832720",
+        "capture_sha256": "3767630f667cb17d06268d8afc37c3c3a16c9159cd3b635cedb98e68f32a46aa",
+        "receipt_digest": "4d0dc02f92f3509db44666d581f1564f0ab7caa342c268548ef2d77f740de890",
+        "receipt_sha256": "fe6bc6b7f1fc407a297a2f6d4abcef7d370fd09a4915ca06d2233fc6b4add9ed",
+        "independent_check_success": true
+      },
+      "miro_developer_dashboard": {
+        "authenticated": true,
+        "existing_app_count": 0,
+        "developer_team_exists": false,
+        "terms_attestation_required": true,
+        "agent_attested": false
+      }
+    }
   }
 }

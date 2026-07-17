@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-MAP-EDGE-FEATURE-STATE-V1",
+  "initiative": "WELTGEWEBE-EDGE-PERFORMANCE-V1",
+  "title": "Weltgewebe: MapLibre Edge-Updates bei belegter Last auf Feature-State umstellen",
+  "state": "inbox",
+  "goal": "Die Kosten der minütlichen GeoJSON-Reprojektion auf Zielgeräten messen und nur bei belegten Rucklern oder aufgehobener 250-Edge-Grenze auf MapLibre Feature-State umstellen.",
+  "priority": {
+    "lane": "later",
+    "rank": 41
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "browser",
+    "profiling"
+  ],
+  "depends_on": [
+    "WELTGEWEBE-FADEN-VERFALL-V1-T001"
+  ],
+  "acceptance": [
+    {
+      "id": "device-profile",
+      "assertion": "Browserprofile auf Zielgeräten messen 250, 1.000 und 10.000 repräsentative Edge-Geometrien mit Main-Thread-Zeit, Frame-Drops und Worker-Kosten.",
+      "evidence_type": "object",
+      "verifier": "browser trace bundle and summarized thresholds"
+    },
+    {
+      "id": "evidence-gate",
+      "assertion": "Feature-State wird nur umgesetzt, wenn die 250-Edge-Kartengrenze aufgehoben wird oder das Profil einen vorab definierten Ruckel- oder Zeitgrenzwert überschreitet.",
+      "evidence_type": "object",
+      "verifier": "explicit go/no-go decision bound to traces"
+    },
+    {
+      "id": "state-lifecycle",
+      "assertion": "Feature-IDs, Add, Remove, Filter, Datenreload und MapLibre-Style-Reload erhalten korrekte opacity-States ohne Geisterkanten.",
+      "evidence_type": "object",
+      "verifier": "MapLibre integration and negative regression tests"
+    },
+    {
+      "id": "exact-expiry",
+      "assertion": "Der separate exakte expires_at-Timer entfernt den nächsten Faden weiterhin an der kanonischen Ablaufgrenze; die minütliche lineare Blende bleibt semantisch unverändert.",
+      "evidence_type": "object",
+      "verifier": "fixed-clock browser boundary test"
+    }
+  ],
+  "metadata": {
+    "source": "PR #1461 critical frontend performance review",
+    "registered_at": "2026-07-17T15:18:00Z",
+    "current_fact": "The map loader currently requests the API default of at most 250 edges, and PR #1461 parses lifecycle timestamps once before periodic numeric opacity updates.",
+    "does_not_establish": [
+      "that setData currently causes visible jank",
+      "permission to increase the map edge limit",
+      "that feature-state is simpler or safer for the current data bound"
+    ]
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-EDGE-PROJECTION-INDEX-BENCH-V1",
+  "initiative": "WELTGEWEBE-EDGE-PERFORMANCE-V1",
+  "title": "Weltgewebe: Edge-Projektionen mit 500.000 Kanten profilieren und bedarfsgerecht indexieren",
+  "state": "inbox",
+  "goal": "Die nach PR #1461 verbleibenden linearen Scans unter repräsentativer Höchstlast messen und nur bei belegter Budgetüberschreitung einen konsistenten Source-, Target- oder Ablaufindex einführen.",
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "profiling",
+    "postgresql"
+  ],
+  "depends_on": [
+    "WELTGEWEBE-FADEN-VERFALL-V1-T001"
+  ],
+  "acceptance": [
+    {
+      "id": "representative-profile",
+      "assertion": "Ein reproduzierbarer Release-Benchmark mit 500.000 repräsentativen Edges misst ungefilterte Offsetlisten, seltene source_id/target_id-Filter, Cursorlisten und Account-Detailprojektionen.",
+      "evidence_type": "object",
+      "verifier": "version-bound benchmark receipt with fixture hash"
+    },
+    {
+      "id": "budget-evidence",
+      "assertion": "CPU-Zeit, Speicher, p50 und p95 besitzen vorab definierte Budgets; ein Index wird nur implementiert, wenn mindestens ein relevantes Budget reproduzierbar überschritten wird.",
+      "evidence_type": "object",
+      "verifier": "before/after benchmark report"
+    },
+    {
+      "id": "all-write-paths",
+      "assertion": "Ein eingeführter Index bleibt über JSONL-Create, PostgreSQL-Create, Projection-Refresh, Replay, Update und Remove atomar konsistent.",
+      "evidence_type": "object",
+      "verifier": "cross-path consistency and stale-index negative tests"
+    },
+    {
+      "id": "memory-tradeoff",
+      "assertion": "Zusätzlicher Speicherbedarf wird bei 500.000 Edges gemessen und gegen den CPU- und Latenzgewinn abgewogen.",
+      "evidence_type": "object",
+      "verifier": "resident-memory comparison"
+    }
+  ],
+  "metadata": {
+    "source": "PR #1461 critical performance review",
+    "registered_at": "2026-07-17T15:18:00Z",
+    "current_fact": "PR #1461 removes repeated RFC3339 parsing from request-time projection checks and orders cheap endpoint predicates before lifecycle evaluation; full scans may remain for sparse filters, cursor pagination and account relations.",
+    "does_not_establish": [
+      "that an index is currently required",
+      "that 500,000 edges are currently resident in production",
+      "permission to change persistence semantics"
+    ]
+  }
+}

@@ -76,7 +76,6 @@
     "weltgewebe_merge_tree": "64faf694b4bbd74fc83f0a01c27d8d6c6e714ae1",
     "weltgewebe_pr_diff_sha256": "87effdc260f9b93d3fb613b1bce9c98ecfe0ac7b2ccba20973560f27b2b35978",
     "full_binary_diff_sha256": "9a69c7ad5ab3b2f92746678d729c976d8f2676e35fd1a0d3a462b069aee23989",
-    "review_artifact_patch_sha256": "9142df6fce259ee67b0ff4f5c4523955ee340e8a18aca9d3caeaa8f381931a6e",
     "github_ci_run": "heimgewebe/weltgewebe/actions/runs/29563032763",
     "production_live_contract_run": "heimgewebe/weltgewebe/actions/runs/29563032801",
     "kubernetes_platform_run": "heimgewebe/weltgewebe/actions/runs/29563032732",
@@ -106,7 +105,7 @@
       "review_evidence_verdict": "PASS",
       "main_kubernetes_platform": "success",
       "main_production_live_contract": "success",
-      "task_sha256": "58e6916580f0c45f7ba41cfbc1ec557f903e2ceb0012f4181969e9fd2454a053",
+      "task_sha256": "9a597506072b67f48f761d7258da8a74e48679a3a0b1a97ab1778afa3a407049",
       "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
       "task_source_ref": "registry/tasks/WELTGEWEBE-OS-V1-T003.json@closeout-revision",
       "plan_source_ref": "registry/initiatives/WELTGEWEBE-OS-V1.json:current_plan"

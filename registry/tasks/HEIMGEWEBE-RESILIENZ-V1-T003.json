@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T003",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "title": "Add coupling and failure semantics to stable relations",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 20
+  },
+  "goal": "Classify operationally relevant Systemkatalog relations by coupling, failure policy, authority direction and optional recovery edge.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/systemkatalog",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User explicitly authorized full registration and implementation on 2026-07-18; live-state, claims, diff review, CI, merge and runtime evidence remain mandatory."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "grabowski",
+    "systemkatalog",
+    "graph-validation",
+    "python"
+  ],
+  "acceptance": [
+    {
+      "id": "bounded-scope",
+      "assertion": "Only stable authority- or failure-relevant relations receive resilience fields."
+    },
+    {
+      "id": "coupling",
+      "assertion": "Relations distinguish synchronous blocking, durable asynchronous, lossy asynchronous, observational and manual coupling."
+    },
+    {
+      "id": "failure-policy",
+      "assertion": "Relations declare block, queue, degrade, fallback or ignore behavior and preserve authority direction."
+    },
+    {
+      "id": "contradiction-tests",
+      "assertion": "Validators reject invalid authority reversal, fallback cycles and unsupported recovery references."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-18T01:28:00+02:00",
+    "operator_obligation": "goo-heimgewebe-resilienz-v1-20260718",
+    "does_not_establish": [
+      "implementation success before owner-repository evidence",
+      "authority outside the listed source systems"
+    ]
+  },
+  "depends_on": [
+    "HEIMGEWEBE-RESILIENZ-V1-T002"
+  ]
+}

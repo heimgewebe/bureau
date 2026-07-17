@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T005",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "title": "Converge stale task projections and terminal cleanup",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 30
+  },
+  "goal": "Implement projection convergence so real terminal task outcomes release operational claims and leave historical evidence while interrupted or unknown outcomes remain visible.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User explicitly authorized full registration and implementation on 2026-07-18; live-state, claims, diff review, CI, merge and runtime evidence remain mandatory."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "sqlite",
+    "python",
+    "systemd"
+  ],
+  "acceptance": [
+    {
+      "id": "projection-correctness",
+      "assertion": "Completed, failed and explicitly abandoned current attempts leave active projections after authoritative reconciliation."
+    },
+    {
+      "id": "interrupted-semantics",
+      "assertion": "Interrupted and outcome-unknown records are not silently treated as running or safely retryable."
+    },
+    {
+      "id": "claim-release",
+      "assertion": "Only terminal receipt-bound current attempts release exact unchanged task leases."
+    },
+    {
+      "id": "regression-evidence",
+      "assertion": "Tests cover stale running projections, retries, same-second races, resumed attempts and foreign-owner leases."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-18T01:28:00+02:00",
+    "operator_obligation": "goo-heimgewebe-resilienz-v1-20260718",
+    "does_not_establish": [
+      "implementation success before owner-repository evidence",
+      "authority outside the listed source systems"
+    ]
+  },
+  "depends_on": [
+    "HEIMGEWEBE-RESILIENZ-V1-T004"
+  ]
+}

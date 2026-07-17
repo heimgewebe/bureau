@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T009",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "title": "Prove foundational Weltgewebe recovery",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 70
+  },
+  "goal": "Complete bounded failure and restore evidence for the Weltgewebe reference cell, PostgreSQL, JetStream and service return-to-primary semantics.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User explicitly authorized full registration and implementation on 2026-07-18; live-state, claims, diff review, CI, merge and runtime evidence remain mandatory."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "runtime.wg-prod-1",
+      "mode": "exclusive",
+      "isolation": "namespace"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "grabowski",
+    "kubernetes",
+    "postgresql",
+    "nats",
+    "backup",
+    "recovery"
+  ],
+  "acceptance": [
+    {
+      "id": "isolated-failure",
+      "assertion": "Failure exercises are isolated, rollback-bound and never destroy the sole recoverable copy."
+    },
+    {
+      "id": "data-restore",
+      "assertion": "A clean target reconstructs authoritative PostgreSQL and JetStream state from documented recovery inputs."
+    },
+    {
+      "id": "service-verification",
+      "assertion": "Frontend, API, auth and representative domain behavior pass after recovery."
+    },
+    {
+      "id": "split-brain",
+      "assertion": "Negative controls prove no simultaneous conflicting primary authority or duplicate irreversible effects."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-18T01:28:00+02:00",
+    "operator_obligation": "goo-heimgewebe-resilienz-v1-20260718",
+    "does_not_establish": [
+      "implementation success before owner-repository evidence",
+      "authority outside the listed source systems"
+    ]
+  },
+  "depends_on": [
+    "HEIMGEWEBE-RESILIENZ-V1-T008",
+    "WELTGEWEBE-OS-V1-T004"
+  ]
+}

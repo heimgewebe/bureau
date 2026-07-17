@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T006",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "title": "Integrate failure-domain capacity into coordination",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "goal": "Extend Bureau claims and Grabowski non-conflict evidence with critical failure-domain capacity and shared recovery-path conflicts.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User explicitly authorized full registration and implementation on 2026-07-18; live-state, claims, diff review, CI, merge and runtime evidence remain mandatory."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "concurrency",
+    "sqlite",
+    "python"
+  ],
+  "acceptance": [
+    {
+      "id": "typed-domains",
+      "assertion": "Failure domains are typed resources or validated metadata, not free-form scheduling labels."
+    },
+    {
+      "id": "capacity",
+      "assertion": "Critical domains can declare capacity and exclusivity without reintroducing a global one-ball lock."
+    },
+    {
+      "id": "nonconflict",
+      "assertion": "Disjoint file work is denied when both changes endanger the same critical domain or recovery path."
+    },
+    {
+      "id": "parallel-proof",
+      "assertion": "Independent changes remain parallelizable with complete, hash-bound scope evidence."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-18T01:28:00+02:00",
+    "operator_obligation": "goo-heimgewebe-resilienz-v1-20260718",
+    "does_not_establish": [
+      "implementation success before owner-repository evidence",
+      "authority outside the listed source systems"
+    ]
+  },
+  "depends_on": [
+    "HEIMGEWEBE-RESILIENZ-V1-T002",
+    "HEIMGEWEBE-RESILIENZ-V1-T004"
+  ]
+}

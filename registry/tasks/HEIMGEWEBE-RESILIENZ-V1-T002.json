@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T002",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "title": "Add system criticality and failure domains",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 10
+  },
+  "goal": "Extend the static Systemkatalog inventory with validated criticality and failure-domain semantics while preserving its status-free authority boundary.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/systemkatalog",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User explicitly authorized full registration and implementation on 2026-07-18; live-state, claims, diff review, CI, merge and runtime evidence remain mandatory."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "grabowski",
+    "systemkatalog",
+    "json-schema",
+    "python"
+  ],
+  "acceptance": [
+    {
+      "id": "criticality-schema",
+      "assertion": "Systems support foundational, essential, supporting and optional criticality with explicit unknown handling."
+    },
+    {
+      "id": "failure-domain-schema",
+      "assertion": "Systems declare bounded stable failure-domain references without live health or inferred topology."
+    },
+    {
+      "id": "validated-data",
+      "assertion": "Initial classifications for critical operator and Weltgewebe systems are reviewed, sourced and schema-valid."
+    },
+    {
+      "id": "rendering",
+      "assertion": "Human and machine-readable catalog projections expose the new semantics deterministically."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-18T01:28:00+02:00",
+    "operator_obligation": "goo-heimgewebe-resilienz-v1-20260718",
+    "does_not_establish": [
+      "implementation success before owner-repository evidence",
+      "authority outside the listed source systems"
+    ]
+  },
+  "depends_on": [
+    "HEIMGEWEBE-RESILIENZ-V1-T001"
+  ]
+}

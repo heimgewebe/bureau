@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T005",
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "title": "Consolidate RepoGround documentation proof task and CI control planes",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 3
+  },
+  "goal": "Reduziere parallele Kontrollwahrheiten und Kontextballast, ohne überprüfbare Evidenz zu verlieren: historische Beweise archivieren, aktuelle Dokumente klar begrenzen, lokale Aufgabenwahrheit an Bureau anbinden und CI-Gates nach realer Wirkung ordnen.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "baseline_commit": "d54a3f3d53818f03405cab5e84e3a5086d4b81ad",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "documentation-architecture",
+    "ci-analysis",
+    "bureau",
+    "context-quality-evaluation"
+  ],
+  "acceptance": [
+    {
+      "id": "truth-layers",
+      "assertion": "Aktuelle Architektur-, Status- und Bedienwahrheit ist von historischen Proofs und Diagnosesnapshots eindeutig getrennt; alte Evidenz bleibt auffindbar, aber nicht normativ."
+    },
+    {
+      "id": "context-budget",
+      "assertion": "Standard-Bundles und Retrieval gewichten oder schließen historische Proof-/Diagnostikflächen so aus, dass Kontextqualität messbar steigt, ohne benötigte Evidenz unzugänglich zu machen."
+    },
+    {
+      "id": "task-truth",
+      "assertion": "docs/tasks ist keine konkurrierende kanonische Aufgabenquelle mehr; notwendige Repo-Sichten werden aus Bureau oder einer eindeutig abgeleiteten Projektion erzeugt."
+    },
+    {
+      "id": "ci-value",
+      "assertion": "Die 23 Workflows sind nach Pflichtschutz, schnellem Fachfeedback, Diagnose und historischem Ballast klassifiziert; doppelte Testausführung und no-op Gates werden entfernt oder als wiederverwendbare dünne Gates konsolidiert."
+    },
+    {
+      "id": "freshness",
+      "assertion": "Dokumentations- und Link-Freshness erkennt Umbenennungsdrift wie die aktuell drei gebrochenen Einstiegslinks."
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-LEGACY-RECONCILIATION-V1-T001"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-17T23:07:14+02:00",
+    "audit_evidence": "50.506 Dokumentationszeilen, davon 20.016 Proofs und 7.430 Diagnostik; 10.059 Zeilen dokument-/statusorientierte Tests ohne direkten Produktimport; lokaler task-index als zweite Aufgabenwahrheit; 23 Workflows.",
+    "does_not_establish": [
+      "Dass Proofs wertlos sind",
+      "Dass fachlich getrennte Parity-Workflows identisch sind",
+      "Dass jede doppelte Testausführung entfernt werden muss"
+    ]
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T004",
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "title": "Reduce RepoGround core complexity and prove live module reachability",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 2
+  },
+  "goal": "Reduziere die größten Monolithen und die tolerierte Komplexitätsschuld, während dynamisch geladene Einstiegspunkte von tatsächlich toten API-Flächen unterschieden werden.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "baseline_commit": "d54a3f3d53818f03405cab5e84e3a5086d4b81ad",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "python",
+    "architecture-refactoring",
+    "runtime-tracing",
+    "benchmarking"
+  ],
+  "acceptance": [
+    {
+      "id": "complexity-budget",
+      "assertion": "Die C901-Baseline sinkt von 213 Findings und Maximum 170 anhand eines vorab festgelegten Budgets; eine bloße Baseline-Neuschreibung ist unzulässig."
+    },
+    {
+      "id": "monolith-slices",
+      "assertion": "merge.py, Pythonista build.py, repobrief_access.py und service/app.py sind entlang klarer Verantwortlichkeiten zerlegt, ohne Verhalten oder Sicherheitsgrenzen zu verlieren."
+    },
+    {
+      "id": "reachability",
+      "assertion": "Für statisch eingangslose Produktionsmodule existiert Import-, CLI-, Plugin- oder Laufzeittelemetrie; nur belegbar tote Flächen werden entfernt."
+    },
+    {
+      "id": "performance",
+      "assertion": "Refactorings besitzen vorher/nachher Laufzeit- und Speicherbelege für zentrale Bundle-, Query-, Service- und Atlas-Pfade."
+    },
+    {
+      "id": "regression",
+      "assertion": "Bestehende Verträge, Bundle-Determinismus, MCP, Service und Frontends bleiben durch Tests und End-to-End-Readback belegt."
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-LEGACY-RECONCILIATION-V1-T003"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-17T23:07:14+02:00",
+    "audit_evidence": "88.541 Implementierungszeilen; merge.py 7.064 Zeilen; Pythonista build.py 4.030; repobrief_access.py 3.082; 61 statisch eingangslose Produktionsmodule als Prüfmenge, nicht als Löschbeweis.",
+    "does_not_establish": [
+      "Toter Code allein durch statische Importanalyse",
+      "Dass große Dateien automatisch fehlerhaft sind"
+    ]
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "id": "BUR-2026-005-T022",
+  "initiative": "BUR-2026-005",
+  "title": "Decouple runtime refresh from Grabowski aggregate DB schema",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "goal": "Replace Bureau runtime-refresh coupling to Grabowski’s aggregate resource-database schema with an explicit versioned lease-subsystem compatibility contract so unrelated additive Grabowski schema changes do not require a manual Bureau bootstrap while unknown lease semantics still fail closed.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "component:bureau.runtime-refresh",
+      "component:grabowski.resource-store-schema",
+      "path:/home/alex/repos/bureau/src/bureau/runtime_refresh.py",
+      "path:/home/alex/repos/bureau/tests/test_runtime_refresh.py",
+      "path:/home/alex/repos/bureau/registry/tasks/BUR-2026-005-T022.json"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.lease-contract",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.docs",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "subsystem-version-contract",
+      "assertion": "Grabowski exposes a stable, explicit resource-lease schema or capability version separate from its aggregate database schema, and Bureau validates that exact lease contract before reading lease rows."
+    },
+    {
+      "id": "additive-db-evolution",
+      "assertion": "A change to unrelated Grabowski tables does not block Bureau runtime refresh when the resource-lease contract is unchanged; tests reproduce the schema-1-to-schema-2 incident without a direct installer bootstrap."
+    },
+    {
+      "id": "unknown-semantics-fail-closed",
+      "assertion": "Missing, future, corrupt or semantically incompatible resource-lease contract versions fail closed before runtime mutation with bounded recovery diagnostics."
+    },
+    {
+      "id": "mixed-version-bootstrap",
+      "assertion": "The oldest supported installed Bureau runtime can safely promote a reviewed compatibility update across supported Grabowski schema transitions using the normal intent, exact lease, durable apply and immutable readback path."
+    },
+    {
+      "id": "cross-repo-proof",
+      "assertion": "Exact-head tests cover Bureau and Grabowski readers/writers, mixed versions, additive aggregate-schema changes and incompatible lease-schema changes; both repositories pass complete validation and CI."
+    },
+    {
+      "id": "live-end-to-end",
+      "assertion": "A live promotion on copies of the production stores and then on the real runtime proves no manual direct-installer bypass is required, all exact leases are released, and runtime lag returns to zero."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-17T17:31:30Z",
+    "source": "live runtime-refresh schema-2 bootstrap incident",
+    "incident": {
+      "blocked_task_id": "3ee96018ba4e40738c01f843",
+      "blocked_reason": "lease-database-schema-unsupported",
+      "grabowski_resource_db_schema": "2",
+      "bureau_runtime_before_fix": "d2a3d1da948c8356ce9277a321392d6f0f21d61c",
+      "compatibility_fix_pr": "heimgewebe/bureau#650",
+      "compatibility_fix_merge": "ad82b8df1844697e01129efb06e60ce451ff8874"
+    },
+    "relationship": {
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T062": "Migrates Grabowski task and resource stores but does not define a consumer-specific lease compatibility contract for Bureau."
+    },
+    "safety_boundary": "Do not infer lease compatibility from table shape alone, accept arbitrary future aggregate database schemas, weaken owner/hash/expiry/path checks, or grant deployment authority.",
+    "does_not_establish": [
+      "automatic cross-repository merge authority",
+      "compatibility with unknown lease semantics",
+      "future runtime health",
+      "permission to mutate canonical dirty checkouts"
+    ]
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau"
+  ],
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T063",
+  "title": "Make artifact transfer redaction total and self-contained",
+  "state": "planned",
+  "goal": "Make artifact push and pull error handling total, bounded and redacted even when the operator module does not expose a private redaction helper, while preserving create-only destination and exact SHA-256 verification contracts.",
+  "priority": {
+    "lane": "next",
+    "rank": 630
+  },
+  "depends_on": [],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_artifacts.py",
+      "path:/home/alex/repos/grabowski/tests/test_artifacts.py"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Repair response shaping and redaction only. Do not weaken host registration, create-only writes or source/destination digest verification."
+    }
+  },
+  "acceptance": [
+    {
+      "id": "explicit-redactor",
+      "assertion": "Artifact transfer uses a public shared redaction function or an injected callable with a defined fallback; no path dereferences an optional private operator attribute."
+    },
+    {
+      "id": "total-errors",
+      "assertion": "Local validation, SSH/SCP failure, destination collision, source drift and destination hash mismatch each return a bounded redacted error without NameError, AttributeError or leaking command output."
+    },
+    {
+      "id": "integrity-unchanged",
+      "assertion": "Successful push and pull still require registered hosts, create-only destination semantics, expected source SHA-256 and independently verified destination SHA-256."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover an operator with and without redaction helpers, secret-bearing stderr, missing SSH host, transfer failure, collision, hash mismatch and successful exact transfer."
+    },
+    {
+      "id": "live-proof",
+      "assertion": "A deployed transfer to a registered SSH host succeeds with matching source and destination hashes, while an induced failure returns only bounded redacted diagnostics."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-17",
+    "source": "Weltgewebe OS T003 diff-artifact relay",
+    "live_reproduction": {
+      "surface": "grabowski_artifact_push",
+      "observed_error": "name '_redact_text' is not defined",
+      "context": "A create-only SHA-bound push from heim-pc to heimserver failed inside response redaction before a trustworthy transfer receipt could be produced."
+    },
+    "does_not_establish": [
+      "that SSH connectivity was otherwise healthy",
+      "permission to bypass host registration",
+      "permission to expose raw stderr",
+      "permission to treat an unverified copy as delivered"
+    ]
+  }
+}

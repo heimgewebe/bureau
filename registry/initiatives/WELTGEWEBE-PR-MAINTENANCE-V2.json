@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-PR-MAINTENANCE-V2",
+  "title": "Weltgewebe node mutation PR hardening and supersession",
+  "goal": "Finish the safe node edit/delete implementation on current main, preserve crash and reference integrity, obtain exact-head review evidence, and retire the conflicting predecessor without merging its direct edge mutation model.",
+  "state": "active",
+  "commitment": "now",
+  "completion": [
+    "PR #1440 or a traceable replacement contains the reviewed crash-safe and fail-closed node mutation implementation on current main.",
+    "The exact final head passes required CI and has a downloadable SHA-256-bound final diff before any merge.",
+    "PR #1424 is closed as superseded only after any non-conflicting unique requirements have been reconciled explicitly."
+  ],
+  "current_plan": {
+    "repository": "bureau",
+    "path": "registry/initiatives/WELTGEWEBE-PR-MAINTENANCE-V2.json"
+  },
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-15T14:29:01Z",
+    "repo": "heimgewebe/weltgewebe",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "source": "live open-PR, CI, Git ancestry and dirty-worktree audit on 2026-07-15",
+    "safety_boundary": "Do not overwrite or clean the existing dirty node-edit-delete worktree. Do not merge until the exact current GitHub diff has external review opportunity, required checks are green and review evidence is valid.",
+    "observed_open_prs": [],
+    "does_not_establish": [
+      "merge_authorization",
+      "production_deployment",
+      "production_runtime_verification"
+    ],
+    "closed_superseded_pr": "heimgewebe/weltgewebe#1424",
+    "current_successor_head": "31c649afc737f5df7ab4af6505646659c361ff1b",
+    "deferred_followups": [
+      "WELTGEWEBE-PR-MAINTENANCE-V2-T003",
+      "WELTGEWEBE-PR-MAINTENANCE-V2-T004",
+      "WELTGEWEBE-PR-MAINTENANCE-V2-T005"
+    ],
+    "merged_successor": {
+      "pull_request": "heimgewebe/weltgewebe#1440",
+      "merge_commit": "7b65127e852561997fa6a45b8cb3bfcef38e1eb8",
+      "merged_at": "2026-07-15T18:21:49Z"
+    },
+    "primary_completion": "Node mutation hardening and predecessor supersession are complete; measurement, action-bar and accountability follow-ups remain independently ready."
+  }
+}

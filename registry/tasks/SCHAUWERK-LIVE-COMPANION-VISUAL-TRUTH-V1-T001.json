@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "id": "SCHAUWERK-LIVE-COMPANION-VISUAL-TRUTH-V1-T001",
+  "initiative": "SCHAUWERK-LIVE-COMPANION-VISUAL-TRUTH-V1",
+  "title": "Implement Live Companion and Visual Truth vertical slice",
+  "state": "ready",
+  "goal": "Implement provider-reference drift auditing, a receipt-bound companion release and HTTPS doctor, authenticated visual capture receipts and three Golden Board reference compositions in Schauwerk.",
+  "depends_on": [],
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "approval": {
+      "required_level": "reviewed_plan",
+      "action_class": "repository_mutation",
+      "note": "The user explicitly authorized implementation and the public HTTPS/Miro Developer App path. Repository merge still requires a complete diff, green CI and diff-bound review. Provider mutations may target only exact allowlisted test resources and require readback."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "miro",
+    "web-sdk",
+    "https",
+    "visual-regression"
+  ],
+  "acceptance": [
+    {
+      "id": "provider-drift",
+      "assertion": "The capability audit reports observed live tools, official-reference tools, live/reference differences and adapter coverage as separate evidence layers.",
+      "evidence_type": "object",
+      "verifier": "tests, live audit fixture and merged implementation"
+    },
+    {
+      "id": "companion-release",
+      "assertion": "A deterministic release manifest binds a verified companion build to an HTTPS app URL, expected scopes and non-secret Developer App identity, and a doctor validates deployed content and security headers fail-closed.",
+      "evidence_type": "object",
+      "verifier": "tests and receipt-bound deployment check"
+    },
+    {
+      "id": "visual-truth",
+      "assertion": "An authenticated provider capture is validated and receipt-bound to an exact repeatable board snapshot, image digest, dimensions and explicit authentication evidence; unauthenticated pages cannot pass.",
+      "evidence_type": "object",
+      "verifier": "tests and generated visual-truth receipt"
+    },
+    {
+      "id": "golden-boards",
+      "assertion": "Three intentionally distinct reference compositions cover system landscape, decision flow and narrative journey and pass deterministic quality and preview checks.",
+      "evidence_type": "object",
+      "verifier": "fixtures, package checks and regression tests"
+    },
+    {
+      "id": "live-gates",
+      "assertion": "Public hosting, Developer App registration, team installation and authorization are verified by live readback or remain explicitly open without being inferred from local builds or MCP OAuth.",
+      "evidence_type": "object",
+      "verifier": "deployment receipt or explicit blocked-gate receipt"
+    },
+    {
+      "id": "merge-gates",
+      "assertion": "Tests, CI, full downloadable diff, head- and diff-bound review, mergeability and post-merge validation pass before verification.",
+      "evidence_type": "object",
+      "verifier": "GitHub and local receipts"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-17T04:37:01Z",
+    "source_request": "freigabe erteilt. registrieren und umsetzen. @grabowski",
+    "implementation_worktree": "/home/alex/repos/.schauwerk-worktrees/live-companion-visual-truth-v1",
+    "implementation_branch": "feat/live-companion-visual-truth-v1",
+    "does_not_establish": [
+      "automatic_provider_app_creation",
+      "automatic_oauth_consent",
+      "rest_token_availability",
+      "pixel_identical_provider_rendering",
+      "universal_aesthetic_quality"
+    ]
+  }
+}

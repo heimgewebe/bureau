@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "id": "SCHAUWERK-LIVE-COMPANION-VISUAL-TRUTH-V1",
+  "title": "Schauwerk Live Companion and Visual Truth v1",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Close the gap between deterministic Schauwerk composition and observable Miro reality through provider-reference drift checks, a deployable Web SDK companion contract, authenticated visual evidence and a small Golden Board corpus.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/schauwerk-live-companion-visual-truth-v1.md"
+  },
+  "completion": [
+    "The Miro capability audit separates the observed live catalogue, an explicit official-reference snapshot and Schauwerk adapter coverage without claiming provider support that is not live.",
+    "The Web SDK companion has a deterministic release manifest and HTTPS deployment doctor while Developer App registration, installation and authorization remain explicit external gates.",
+    "Authenticated provider captures can be validated and receipt-bound to an exact repeatable board snapshot without accepting login, access-denied or unauthenticated pages as evidence.",
+    "Three intentionally distinct Golden Board compositions pass deterministic package, preview and quality checks.",
+    "Implementation, tests, CI, complete diff, diff-bound review and post-merge validation are complete; any remaining provider-side gate is recorded precisely."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-17T04:37:01Z",
+    "source_request": "freigabe erteilt. registrieren und umsetzen. @grabowski",
+    "authorization": "User authorized public HTTPS companion deployment and the associated Miro Developer App path on 2026-07-17.",
+    "does_not_establish": [
+      "automatic_miro_developer_app_creation",
+      "automatic_team_installation_or_oauth_consent",
+      "availability_of_rest_credentials",
+      "universal_aesthetic_quality",
+      "permission_to_modify_existing_or_unrelated_boards"
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "SCHAUWERK-COMPANION-HOST-HARDENING-V1",
+  "title": "Schauwerk Companion host security hardening",
+  "state": "active",
+  "commitment": "later",
+  "goal": "Move or front the proven Miro Companion with a free durable HTTPS host that emits the complete required security-header contract while preserving deterministic bytes and successful Miro embedding.",
+  "completion": [
+    "A free durable host serves the exact deterministic companion build under repository-controlled deployment.",
+    "CSP including the intended frame-ancestors policy, X-Frame-Options policy as applicable, Permissions-Policy, Referrer-Policy and X-Content-Type-Options are verified from real responses.",
+    "The fail-closed release doctor passes against the live host and the companion still loads inside authenticated Miro.",
+    "No paid service, weakened TLS, secret exposure or unverified proxy path is introduced."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-17T15:18:03Z",
+    "source": "Schauwerk PR #100 Pages and Miro closeout",
+    "predecessor": "SCHAUWERK-LIVE-COMPANION-VISUAL-TRUTH-V1",
+    "live_finding": "GitHub Pages is durable and embeds successfully in Miro, but actual responses omit CSP, X-Frame-Options, Permissions-Policy, Referrer-Policy and X-Content-Type-Options. Therefore the public HTTPS fallback passes while the full release doctor correctly fails.",
+    "does_not_establish": [
+      "that GitHub Pages is unavailable",
+      "that current Miro embedding is blocked",
+      "permission to purchase hosting",
+      "permission to weaken the release doctor"
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-EDGE-PERFORMANCE-V1",
+  "title": "Weltgewebe edge projection performance evidence",
+  "state": "active",
+  "commitment": "later",
+  "goal": "Measure the remaining backend and map projection costs after PR #1461 removes repeated timestamp parsing, and introduce indexes or MapLibre feature-state updates only when reproducible target-scale evidence proves their benefit.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "registry/tasks/WELTGEWEBE-EDGE-PROJECTION-INDEX-BENCH-V1.json"
+  },
+  "completion": [
+    "A reproducible 500,000-edge backend profile covers unfiltered lists, sparse endpoint filters, cursor pagination and account relation projections with CPU, latency and memory evidence.",
+    "Any secondary source, target or expiry index is justified by an exceeded budget and remains consistent across JSONL and PostgreSQL create, refresh, replay and removal paths.",
+    "Browser profiles cover 250, 1,000 and 10,000 representative map edges on target devices before replacing periodic GeoJSON updates with feature-state.",
+    "Exact expires_at removal, filter correctness and style-reload behavior remain proven under any accepted optimization."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-17T15:18:00Z",
+    "github": "heimgewebe/weltgewebe",
+    "source": "Critical review and measured follow-up analysis of Weltgewebe PR #1461 on 2026-07-17",
+    "source_pull_request": "heimgewebe/weltgewebe#1461",
+    "safety_boundary": "Registration does not authorize a cache index, browser rendering rewrite, API limit increase, merge or deployment. Optimization requires reproducible evidence and must preserve lifecycle truth.",
+    "does_not_establish": [
+      "that the current linear scans violate a production budget",
+      "that setData currently causes visible jank at the 250-edge map limit",
+      "permission to increase browser data limits",
+      "merge readiness of PR #1461"
+    ]
+  }
+}

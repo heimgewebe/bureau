@@ -29,6 +29,7 @@ DEFAULT_REQUIRED_CHECKS = ("validate (3.10)", "validate (3.12)")
 DEFAULT_SLO_SECONDS = 5400
 DEFAULT_INTENT_TTL_SECONDS = 900
 DEFAULT_MIN_LEASE_REMAINING_SECONDS = 600
+SUPPORTED_GRABOWSKI_RESOURCE_DB_SCHEMAS = frozenset({"1", "2"})
 DEFAULT_GRABOWSKI_RESOURCE_DB = Path("~/.local/state/grabowski/resources.sqlite3").expanduser()
 MAX_JSON_BYTES = 256 * 1024
 
@@ -582,10 +583,15 @@ def validate_live_lease_binding(
         schema = connection.execute(
             "SELECT value FROM metadata WHERE key='schema_version'"
         ).fetchone()
-        if schema is None or schema["value"] != "1":
+        observed_schema = schema["value"] if schema is not None else None
+        if observed_schema not in SUPPORTED_GRABOWSKI_RESOURCE_DB_SCHEMAS:
             raise RuntimeRefreshError(
                 "lease-database-schema-unsupported",
                 "Grabowski resource database schema is unsupported",
+                details={
+                    "observed": observed_schema,
+                    "supported": sorted(SUPPORTED_GRABOWSKI_RESOURCE_DB_SCHEMAS),
+                },
             )
         placeholders = ",".join("?" for _ in keys)
         rows = connection.execute(
@@ -656,6 +662,7 @@ def validate_live_lease_binding(
         "owner_id": owner,
         "task_id": task_id,
         "resource_db": str(path),
+        "resource_db_schema_version": observed_schema,
         "resource_keys": keys,
         "min_expires_at_unix": min(item["expires_at_unix"] for item in snapshots),
         "lease_snapshots": snapshots,

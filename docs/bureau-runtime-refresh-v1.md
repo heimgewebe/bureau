@@ -117,7 +117,7 @@ Die tatsächlichen Werte sind die kanonischen absoluten Pfade aus
 Wirkung die private Grabowski-Datenbank
 `~/.local/state/grabowski/resources.sqlite3` read-only und verlangt:
 
-- Schema 1;
+- Schema 1 oder 2; unbekannte Versionen bleiben fail-closed blockiert;
 - jede exakte Ressourcenzeile vorhanden;
 - identischer Owner;
 - gültige Zeitordnung und mindestens zehn Minuten Restlaufzeit;
@@ -125,7 +125,10 @@ Wirkung die private Grabowski-Datenbank
 - private, reguläre, nicht verlinkte Datenbank im Besitz des aktuellen Nutzers.
 
 Der Datenbankpfad ist im installierten CLI nicht überschreibbar. Testcode kann die
-Prüffunktion mit einer synthetischen Datenbank aufrufen.
+Prüffunktion mit einer synthetischen Datenbank aufrufen. Schema 2 ergänzt die
+Grabowski-Datenbank um Terminalisierungs- und Authority-Tabellen, lässt aber die von
+Bureau gelesene Lease-Projektion unverändert. Die beobachtete Schema-Version wird in
+die Lease-Bindung und damit in das Ergebnisreceipt aufgenommen.
 
 ### 4. `apply`
 

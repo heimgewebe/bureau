@@ -125,6 +125,7 @@ def lease_for(
     root: Path,
     intent: dict[str, Any],
     *,
+    schema_version: str = "1",
     owner_id: str = "chatgpt-t016",
     expires_at: datetime | None = None,
     omit: set[str] | None = None,
@@ -133,7 +134,10 @@ def lease_for(
     database.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(database)
     connection.execute("CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
-    connection.execute("INSERT INTO metadata(key, value) VALUES('schema_version', '1')")
+    connection.execute(
+        "INSERT INTO metadata(key, value) VALUES('schema_version', ?)",
+        (schema_version,),
+    )
     connection.execute(
         """
         CREATE TABLE leases (
@@ -343,6 +347,33 @@ def test_lease_binding_requires_live_complete_private_database(tmp_path: Path) -
     with pytest.raises(refresh.RuntimeRefreshError) as public:
         refresh.validate_live_lease_binding(intent, binding, resource_db=live_db, now=NOW)
     assert public.value.code == "lease-database-mode-invalid"
+
+
+def test_lease_binding_accepts_schema_2_and_rejects_unknown_schema(tmp_path: Path) -> None:
+    _, _, intent, _ = prepare_candidate_intent(tmp_path)
+
+    binding, schema_2_db = lease_for(tmp_path / "schema-2", intent, schema_version="2")
+    observed = refresh.validate_live_lease_binding(
+        intent,
+        binding,
+        resource_db=schema_2_db,
+        now=NOW,
+    )
+    assert observed["resource_db_schema_version"] == "2"
+
+    binding, schema_3_db = lease_for(tmp_path / "schema-3", intent, schema_version="3")
+    with pytest.raises(refresh.RuntimeRefreshError) as unsupported:
+        refresh.validate_live_lease_binding(
+            intent,
+            binding,
+            resource_db=schema_3_db,
+            now=NOW,
+        )
+    assert unsupported.value.code == "lease-database-schema-unsupported"
+    assert unsupported.value.details == {
+        "observed": "3",
+        "supported": ["1", "2"],
+    }
 
 
 def git(cwd: Path, *arguments: str) -> str:

@@ -33,7 +33,7 @@
     {
       "isolation": "worktree",
       "mode": "write",
-      "resource": "repo.lenskit"
+      "resource": "repo.repoground"
     }
   ],
   "depends_on": [
@@ -47,11 +47,11 @@
     },
     "baseline_commit": "f9b47a212fb20bebe32125889b92a8963d1213bc",
     "grabowski_resources": [
-      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-symbol-call-graph-v1"
+      "repo:/home/alex/repos/repoground:branch:feat/repobrief-symbol-call-graph-v1"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/lenskit"
+    "working_repository": "/home/alex/repos/repoground"
   },
   "goal": "Produce a deterministic Python static call-reference index and expose bounded read-only reference/caller lookups through RepoBrief MCP with exact source ranges, freshness and explicit ambiguity.",
   "id": "RSCG-V1-T001",

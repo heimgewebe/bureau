@@ -14,7 +14,7 @@
   ],
   "claims": [
     {
-      "resource": "repo.lenskit",
+      "resource": "repo.repoground",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -32,9 +32,9 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/lenskit",
+    "working_repository": "/home/alex/repos/repoground",
     "grabowski_resources": [
-      "repo:/home/alex/repos/lenskit",
+      "repo:/home/alex/repos/repoground",
       "repo:/home/alex/repos/grabowski",
       "repo:/home/alex/repos/weltgewebe"
     ],

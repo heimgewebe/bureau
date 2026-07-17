@@ -15,7 +15,7 @@
   },
   "claims": [
     {
-      "resource": "repo.lenskit",
+      "resource": "repo.repoground",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -39,12 +39,12 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/lenskit",
+    "working_repository": "/home/alex/repos/repoground",
     "baseline_commit": "f9b47a212fb20bebe32125889b92a8963d1213bc",
     "grabowski_resources": [
       "component:repobrief-evidence-call-graph-v1",
       "path:/home/alex/repos/.lenskit-worktrees/repobrief-evidence-call-graph-v1",
-      "repo:/home/alex/repos/lenskit:branch:feat/repobrief-evidence-call-graph-v1",
+      "repo:/home/alex/repos/repoground:branch:feat/repobrief-evidence-call-graph-v1",
       "path:/home/alex/repos/bureau/docs/plans/repobrief-evidence-call-graph-v1.md",
       "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T025.json",
       "path:/home/alex/repos/bureau/registry/initiatives/REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1.json"

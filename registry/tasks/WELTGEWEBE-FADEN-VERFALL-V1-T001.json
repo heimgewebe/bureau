@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-FADEN-VERFALL-V1-T001",
+  "initiative": "WELTGEWEBE-FADEN-VERFALL-V1",
+  "title": "Weltgewebe: Fäden lösen sich sukzessive innerhalb von 7 Tagen auf",
+  "state": "ready",
+  "goal": "Den fachlichen Lebenszyklus unverzwirnter Fäden so implementieren, dass sie ab ihrer kanonischen Entstehung über exakt 168 Stunden deterministisch verfallen, danach aus aktiven Projektionen verschwinden und historische Webungswahrheit erhalten bleibt; dauerhaftes Garn bleibt ausgenommen und separat modelliert.",
+  "priority": {
+    "lane": "now",
+    "rank": 3
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "postgresql"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "canonical-clock",
+      "assertion": "Die Entstehungszeit jedes unverzwirnten Fadens stammt aus einer kanonischen Fachquelle; Alter und Ablauf werden deterministisch als 168-Stunden-Grenze berechnet und nicht aus Clientzeit oder Renderzeit abgeleitet.",
+      "evidence_type": "object",
+      "verifier": "fixed-clock domain and persistence tests"
+    },
+    {
+      "id": "continuous-decay",
+      "assertion": "Aktive API- und Kartenprojektionen bilden den fortschreitenden Verfall kontinuierlich und monoton ab; an der Ablaufgrenze verschwindet der Faden aus aktiven Ansichten, ohne historische Ereignisse oder Auditwahrheit zu löschen.",
+      "evidence_type": "object",
+      "verifier": "API and web boundary tests with fixed clocks"
+    },
+    {
+      "id": "storage-parity",
+      "assertion": "JSONL- und PostgreSQL-Pfade liefern an Entstehung, Zwischenständen, exakt 168 Stunden und danach dieselbe Sicht; Migration, Replay und wiederholte Ausführung sind deterministisch und idempotent.",
+      "evidence_type": "object",
+      "verifier": "JSONL/PostgreSQL parity, migration and replay receipts"
+    },
+    {
+      "id": "yarn-exemption",
+      "assertion": "Verzwirntes dauerhaftes Garn verfällt nicht aufgrund dieser Aufgabe; wo der bestehende Vertrag Garn nicht eindeutig modelliert, wird kein stilles Feld oder Ersatzheuristik erfunden.",
+      "evidence_type": "object",
+      "verifier": "domain invariant and negative regression tests"
+    },
+    {
+      "id": "security-compatibility",
+      "assertion": "Autorisierung, Sichtbarkeit, Mandantengrenzen, Schreibschutz und bestehende Webungsaktionen bleiben unverändert oder besitzen einen expliziten getesteten Migrationsvertrag.",
+      "evidence_type": "object",
+      "verifier": "focused authorization and compatibility tests"
+    },
+    {
+      "id": "exact-head-proof",
+      "assertion": "PR #1461 ist gegen aktuellen Main revalidiert; alle erforderlichen CI- und Review-Gates sind auf demselben Head grün, der vollständige Diff ist vor Merge extern verfügbar und Main wird nach Merge erneut geprüft.",
+      "evidence_type": "object",
+      "verifier": "GitHub exact-head checks, review receipt and merge readback"
+    },
+    {
+      "id": "separate-followups",
+      "assertion": "Konfigurationsbereinigung, Cache-Kompaktion und die vollständige Garn-/Verzwirnungsdomäne bleiben als Kandidaten 640, 641 und 642 getrennt und werden nicht verdeckt in diesen Patch aufgenommen.",
+      "evidence_type": "object",
+      "verifier": "diff scope review and Bureau live-register readback"
+    },
+    {
+      "id": "source-event-bound",
+      "assertion": "Metadaten bewahren Live-Register-Event 639, Kandidaten-ID und direkte Nutzerquelle unverändert.",
+      "evidence_type": "object",
+      "verifier": "registry task JSON review"
+    },
+    {
+      "id": "reviewed-before-effect",
+      "assertion": "Registrierung allein verleiht weder Merge- noch Deployautorität; jeder Repositoryeffekt bleibt review-before-effect.",
+      "evidence_type": "object",
+      "verifier": "approval contract and PR review"
+    }
+  ],
+  "metadata": {
+    "source": "bureau_live_register",
+    "live_register_event_id": 639,
+    "live_register_candidate_id": "weltgewebe-faden-verfall-v1-t001",
+    "live_register_created_at": "2026-07-17T11:44:28.113139Z",
+    "live_register_source": "chatgpt:user-directive:2026-07-17",
+    "promotion_required_from_event": true,
+    "does_not_establish": [
+      "merge readiness of PR #1461",
+      "green CI",
+      "production deployment",
+      "permission to delete historical events",
+      "a complete yarn or braiding domain",
+      "completion of candidates 640, 641 or 642"
+    ],
+    "registered_at": "2026-07-17T14:15:00Z",
+    "source_pull_request": "heimgewebe/weltgewebe#1461",
+    "source_pull_request_head_at_registration": "167b95469146c35fdb20721c3ef1bd7eb0b71ef3",
+    "direct_user_authorization": "User directive on 2026-07-17 to implement seven-day thread decay and keep yarn durable.",
+    "queue_decision": "Ready but intentionally not added to registry/queue.json because the implementation PR already exists and queue.json is concurrently modified by Bureau PR #645.",
+    "related_candidate_events": {
+      "configuration_cleanup": 640,
+      "cache_compaction": 641,
+      "yarn_domain": 642
+    }
+  }
+}

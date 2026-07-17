@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-FADEN-VERFALL-V1",
+  "title": "Weltgewebe temporal thread lifecycle",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Implement the user-authorized seven-day lifecycle of unbraided Weltgewebe threads as a deterministic, history-preserving domain projection while keeping durable yarn and adjacent cleanup work outside this first task.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/weltgewebe-faden-verfall-v1.md"
+  },
+  "completion": [
+    "Unbraided threads decay deterministically from their canonical creation time over exactly 168 hours and disappear from active projections after expiry without erasing historical events.",
+    "Braided durable yarn remains exempt until a separately registered domain model defines and proves its lifecycle.",
+    "JSONL and PostgreSQL paths agree at clock boundaries, migration and replay are deterministic, and API and web projections preserve authorization and visibility contracts.",
+    "The implementation is merged only after exact-head CI, review evidence and a full downloadable diff establish the changed behavior.",
+    "Configuration cleanup, cache compaction and the complete yarn domain remain independently tracked rather than being hidden in the decay patch."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-17T14:08:00Z",
+    "github": "heimgewebe/weltgewebe",
+    "source": "Bureau live-register candidate event 639 and direct user authorization on 2026-07-17",
+    "source_pull_request": "heimgewebe/weltgewebe#1461",
+    "source_pull_request_head": "167b95469146c35fdb20721c3ef1bd7eb0b71ef3",
+    "source_candidate_id": "weltgewebe-faden-verfall-v1-t001",
+    "followup_candidate_events": [
+      640,
+      641,
+      642
+    ],
+    "safety_boundary": "No production deployment, data deletion, cache purge, configuration rewrite or foreign worktree mutation follows from registration. Historical truth must remain reconstructable and yarn must not be inferred from thread decay alone.",
+    "does_not_establish": [
+      "merge readiness of PR #1461",
+      "production runtime correctness",
+      "permission to delete expired history",
+      "a complete yarn or braiding domain",
+      "completion of configuration cleanup",
+      "completion of cache compaction"
+    ]
+  }
+}

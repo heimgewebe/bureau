@@ -3,7 +3,7 @@
   "id": "SCHAUWERK-LIVE-COMPANION-VISUAL-TRUTH-V1-T001",
   "initiative": "SCHAUWERK-LIVE-COMPANION-VISUAL-TRUTH-V1",
   "title": "Implement Live Companion and Visual Truth vertical slice",
-  "state": "ready",
+  "state": "blocked",
   "goal": "Implement provider-reference drift auditing, a receipt-bound companion release and HTTPS doctor, authenticated visual capture receipts and three Golden Board reference compositions in Schauwerk.",
   "depends_on": [],
   "priority": {
@@ -88,6 +88,45 @@
       "rest_token_availability",
       "pixel_identical_provider_rendering",
       "universal_aesthetic_quality"
-    ]
+    ],
+    "implementation_status": "repository_implementation_merged_external_live_gates_blocked",
+    "blocked_at": "2026-07-17T06:54:58Z",
+    "block_reason": "The repository implementation is merged and post-merge validated, but no authenticated public hosting credential is available and both scoped Miro browser profiles resolve to the signup page. Public HTTPS deployment, Developer App registration, team installation, Web SDK authorization and an authenticated Visual Truth capture therefore remain unevidenced.",
+    "blockers": [
+      {
+        "evidence": "Wrangler 4.111.0 reports not authenticated; no Cloudflare, Netlify or Vercel token is present in the execution environment.",
+        "id": "public-https-hosting",
+        "required_resolution": "Authenticate one approved hosting account and deploy the exact companion bundle with the required response headers."
+      },
+      {
+        "evidence": "Both SchauwerkWorkerProfile and SchauwerkEducationSnapshotProfile redirected the Developer Dashboard URL to https://miro.com/de/signup/.",
+        "id": "miro-developer-session",
+        "required_resolution": "Reauthenticate the scoped Miro education profile, then create/configure/install the Web SDK app and verify it in-board."
+      }
+    ],
+    "implementation_evidence": {
+      "bureau_registration_merge_commit": "ee3d0660434ce59d401675772a2e5c8d4dc07132",
+      "bureau_registration_pr": "heimgewebe/bureau#632",
+      "ci": "CodeQL and Python 3.11/3.12 validation succeeded",
+      "full_patch_sha256": "3a837a4aacd3ebaddefa656120f900c615c4beaa766e96c8d736862b63525633",
+      "full_patch_size_bytes": 140320,
+      "full_patch_url": "https://gist.github.com/alexdermohr/36c3fb51081bec099bbf02b64830ba77",
+      "post_merge_validation": "711 tests plus Ruff, compileall and registry validation passed on f2a8c8281a3e01fff2dc6f9ad057d58ad45a28f8",
+      "review_verdict": "PASS",
+      "schauwerk_head": "ed536ea899cb95e13e8635921e88a32abd02a239",
+      "schauwerk_merge_commit": "f2a8c8281a3e01fff2dc6f9ad057d58ad45a28f8",
+      "schauwerk_pull_request": "heimgewebe/schauwerk#99"
+    },
+    "satisfied_acceptance": {
+      "companion-release": "Merged release manifest, local verifier, fail-closed HTTPS doctor and explicit gate-status contract; actual public deployment remains blocked.",
+      "golden-boards": "Three distinct system-landscape, decision-flow and narrative-journey compositions compile and preview with zero blockers.",
+      "merge-gates": "Full patches, SHA-256 and sizes published; bound PASS reviews, green CI, mergeability and post-merge validation completed.",
+      "provider-drift": "Merged and live-read: 33 observed tools, three documented tools absent live and five live tools absent from the reference; the live catalogue remains operational authority.",
+      "visual-truth": "Merged strict PNG/JPEG/WebP receipt path with snapshot recomputation, allowlist/provider binding and negative-page rejection; actual authenticated capture remains blocked."
+    },
+    "open_acceptance": [
+      "live-gates"
+    ],
+    "next_action": "Authenticate an approved HTTPS host and the scoped Miro education profile; deploy and doctor the exact companion bundle, create/install the Developer App, run an authenticated in-board readback and create the first Visual Truth receipt."
   }
 }

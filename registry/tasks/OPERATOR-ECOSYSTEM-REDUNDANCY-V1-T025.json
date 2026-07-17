@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T025",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Cut over the active RepoGround runtime without losing rollback",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 5
+  },
+  "goal": "Build and verify a parallel RepoGround runtime from an exact published commit, migrate active consumers, and replace rlens.service only after live parity, rollback and convergence evidence are complete.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground",
+      "path:/home/alex/.local/share/repoground-runtime",
+      "service:rlens.service",
+      "service:repoground.service",
+      "host:heim-pc"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "operator",
+      "note": "Alex instructed Grabowski on 2026-07-17 to inspect system convergence and autonomously integrate matching components; runtime replacement remains fail-closed and rollback-bound."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.konvergenzregelkreis",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "systemd",
+    "runtime-deployment",
+    "convergence"
+  ],
+  "acceptance": [
+    {
+      "id": "exact-source",
+      "assertion": "The parallel runtime is built from an exact clean RepoGround commit that is published on origin/main and recorded in the deployment receipt."
+    },
+    {
+      "id": "parallel-first",
+      "assertion": "The RepoGround runtime uses a separate immutable runtime path and can be probed while rlens.service remains active and unchanged."
+    },
+    {
+      "id": "consumer-parity",
+      "assertion": "All active local consumers and MCP entrypoints pass contract, freshness, query and negative-control probes against RepoGround."
+    },
+    {
+      "id": "rollback-proof",
+      "assertion": "A bounded rollback to the previously active rlens.service and runtime is tested or mechanically proven before cutover."
+    },
+    {
+      "id": "controlled-cutover",
+      "assertion": "Only after parity and rollback proof is repoground.service made active and rlens.service retired or disabled; service, port, process and client readback agree."
+    },
+    {
+      "id": "convergence-gate",
+      "assertion": "An R2 convergence assessment is terminally_closed and its receipt binds source, deployment, live verification, Bureau closeout and Chronik evidence."
+    }
+  ],
+  "depends_on": [],
+  "rollback": {
+    "trigger": "RepoGround parity, live health, client compatibility or convergence assessment fails after activation.",
+    "procedure": "Reactivate the recorded rlens.service deployment, restore the previous client bindings, verify service and query health, and leave T025 blocked with receipts."
+  },
+  "stop": {
+    "conditions": [
+      "the existing runtime-cutover lease has an active foreign owner or task",
+      "the RepoGround source checkout is dirty, unpublished or not equal to the expected commit",
+      "the parallel runtime cannot be isolated from the active rlens.service",
+      "any active consumer lacks an explicit compatibility result",
+      "rollback identity or previous service state is unavailable",
+      "the convergence assessment is not terminally_closed"
+    ]
+  },
+  "metadata": {
+    "registered_at": "2026-07-17T22:25:00+02:00",
+    "source_observation": "On 2026-07-17 rlens.service was active, repoground.service and /home/alex/.local/share/repoground-runtime were absent, while a runtime-cutover lease existed without a visible running task.",
+    "does_not_establish": [
+      "permission to force-release a foreign lease",
+      "permission to stop rlens.service before parallel verification",
+      "future runtime health"
+    ]
+  }
+}

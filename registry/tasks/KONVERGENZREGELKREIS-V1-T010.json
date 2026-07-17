@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "id": "KONVERGENZREGELKREIS-V1-T010",
+  "initiative": "KONVERGENZREGELKREIS-V1",
+  "title": "Bind Bureau PR 653 to an honest R1 convergence closeout",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "goal": "Create and evaluate a hash-bound R1 convergence request for Bureau PR 653 that binds the exact diff artifact, field review, CI, merge commit and this post-merge reconciliation task without pretending that the task authorized the already completed merge.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/konvergenzregelkreis",
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.konvergenzregelkreis",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "bureau",
+    "github",
+    "grabowski",
+    "chronik",
+    "convergence",
+    "schemas"
+  ],
+  "acceptance": [
+    {
+      "id": "no-retroactive-authorization",
+      "assertion": "The closeout states that T010 reconciles evidence after merge and does not claim to have authorized PR 653."
+    },
+    {
+      "id": "identity-binding",
+      "assertion": "The request binds PR head 83cc1edfd0055c74b2767e106e4d45883e975682, merge commit 1ad4b644c615c616082d7e3275521bd85a926ea2 and protocol head 83ed435bf9eb490e81a6ff2103b6c1397440d40b."
+    },
+    {
+      "id": "review-binding",
+      "assertion": "The request binds field-review PASS, all five green GitHub checks and diff SHA-256 7460639c4e15ae1c8dc342552c3102844e782741107c70a32e4458dd85257f93."
+    },
+    {
+      "id": "assessment-honesty",
+      "assertion": "The installed convergence-assess grip either returns terminally_closed with a receipt or blocks closeout with explicit missing or conflicting evidence; no status is fabricated."
+    },
+    {
+      "id": "closeout-persistence",
+      "assertion": "The task is updated to verified only after the convergence receipt and Chronik event are persisted and validated."
+    }
+  ],
+  "depends_on": [],
+  "metadata": {
+    "registered_at": "2026-07-17T22:25:00+02:00",
+    "source_observation": "PR 653 was merged with complete technical evidence but no migration-specific Bureau task reference, which prevents an honest R1 terminal closeout until post-merge reconciliation is registered.",
+    "known_evidence": {
+      "pull_request": "heimgewebe/bureau#653",
+      "head_sha": "83cc1edfd0055c74b2767e106e4d45883e975682",
+      "merge_commit_sha": "1ad4b644c615c616082d7e3275521bd85a926ea2",
+      "diff_sha256": "7460639c4e15ae1c8dc342552c3102844e782741107c70a32e4458dd85257f93",
+      "patch_path": "/home/alex/iCloud/Drive/halde/bureau-pr653-repoground-active-bindings.patch"
+    },
+    "does_not_establish": [
+      "retroactive merge authority",
+      "runtime deployment",
+      "automatic terminal closure"
+    ]
+  }
+}

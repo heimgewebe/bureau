@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Converge active RepoGround names and metadata without rewriting history",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 80
+  },
+  "goal": "Replace active Lenskit, rLens and RepoBrief product-identity references in Metarepo, Systemkatalog and current consumer documentation with RepoGround while preserving historical evidence, compatibility aliases and stable wire-contract field names.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/metarepo",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/metarepo",
+      "repo:/home/alex/repos/systemkatalog",
+      "repo:/home/alex/repos/repoground",
+      "repo:/home/alex/repos/bureau"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.metarepo",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.repoground",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "github",
+    "grabowski",
+    "system-catalog",
+    "migration"
+  ],
+  "acceptance": [
+    {
+      "id": "active-inventory",
+      "assertion": "Every active fleet, catalog, entrypoint and current consumer reference to Lenskit, rLens or RepoBrief is classified as identity, compatibility alias, stable contract field or history."
+    },
+    {
+      "id": "canonical-identity",
+      "assertion": "Active product and repository identity uses RepoGround consistently in Metarepo, Systemkatalog and current documentation."
+    },
+    {
+      "id": "history-preserved",
+      "assertion": "Completed tasks, receipts, archived documents, historical commits and quoted prior names are not rewritten."
+    },
+    {
+      "id": "contract-compatibility",
+      "assertion": "Stable fields such as rlens_context_ref are renamed only through an explicit versioned schema migration with compatibility tests; otherwise they remain documented aliases."
+    },
+    {
+      "id": "consumer-proof",
+      "assertion": "Repository validation and affected consumer tests pass on exact reviewed heads with no broken links or missing fleet/catalog entries."
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T025"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-17T22:25:00+02:00",
+    "source_observation": "Current Metarepo and Systemkatalog active text still contains Lenskit/RepoBrief identity while RepoGround is published and Bureau active bindings now use repo.repoground.",
+    "does_not_establish": [
+      "permission to rewrite historical evidence",
+      "permission to break versioned schemas",
+      "runtime correctness"
+    ]
+  }
+}

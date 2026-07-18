@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "id": "SEMANTAH-USEFULNESS-V1-T002",
+  "initiative": "SEMANTAH-USEFULNESS-V1",
+  "title": "Reconcile SemantAH architecture and performance documentation with live code",
+  "state": "verified",
+  "goal": "Make SemantAH's architecture, API and performance documentation describe the implemented indexd search, snapshot, locking and persistence behavior accurately, while marking historical HNSW and roadmap material as unimplemented unless supported by current code.",
+  "priority": {
+    "lane": "later",
+    "rank": 901
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/semantAH"
+  },
+  "claims": [
+    {
+      "resource": "repo.semantah",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "SEMANTAH-USEFULNESS-V1-T001"
+  ],
+  "acceptance": [
+    {
+      "id": "canonical-architecture-truth",
+      "assertion": "A canonical indexd architecture document states the implemented exact-search, namespace snapshot, locking and JSONL persistence behavior and links to the relevant user-facing documentation."
+    },
+    {
+      "id": "historical-plans-labelled",
+      "assertion": "Historical HNSW, ANN and roadmap documents are explicitly labelled as proposals or historical plans rather than implemented runtime behavior."
+    },
+    {
+      "id": "api-contract-corrected",
+      "assertion": "The indexd API reference no longer calls search a stub, does not invent response rationales and explicitly states that accepted filters are not currently applied."
+    },
+    {
+      "id": "documentation-regression-guard",
+      "assertion": "An automated guard checks canonical statements, stale implementation claims and relative documentation links."
+    },
+    {
+      "id": "repository-gates",
+      "assertion": "The documentation guard, Python unit tests, Rust tests, Clippy, Ruff and diff hygiene pass on the reviewed implementation head; GitHub checks pass before merge."
+    },
+    {
+      "id": "explicit-nonclaims",
+      "assertion": "The reconciliation does not claim ANN readiness, production capacity, network latency, lock-free behavior or implementation of historical roadmap proposals."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_live_register",
+    "live_register_event_id": 615,
+    "live_register_candidate_id": "semantah-architecture-doc-reconcile-v1",
+    "live_register_created_at": "2026-07-17T06:25:07.064309Z",
+    "live_register_source": "operator",
+    "promotion_required_from_event": true,
+    "does_not_establish": [
+      "ANN or HNSW activation readiness",
+      "production capacity or production latency",
+      "network or reverse-proxy latency",
+      "lock-free search correctness",
+      "implementation of historical roadmap proposals",
+      "filter execution semantics beyond the documented current limitation"
+    ],
+    "registered_at": "2026-07-17T06:25:07Z",
+    "verified_at": "2026-07-18",
+    "implementation_repo": "heimgewebe/semantAH",
+    "implementation_pr": 263,
+    "implementation_head_sha": "32a6c5327393f540d68fd3c19fb91f4352c9bab2",
+    "implementation_base_sha": "13f65d9f43bbc711ac5a74e90ce76155613d3c57",
+    "implementation_merge_commit": "d53000a909946a0381a8b365c4af7abd2456e8f6",
+    "implementation_diff_sha256": "02eacf928cfb2643b647457abe4d41eda3fe3cdb5f9c2bae195adb74d593626e",
+    "changed_paths": [
+      "README.md",
+      "crates/indexd/README.md",
+      "crates/indexd/src/main.rs",
+      "docs/README.md",
+      "docs/blueprint.md",
+      "docs/config-reference.md",
+      "docs/hauski.md",
+      "docs/indexd-api.md",
+      "docs/indexd-architecture.md",
+      "docs/roadmap.md",
+      "docs/semantAH brainstorm.md",
+      "docs/semantAH/comprehensive-optimization-strategy.md",
+      "tests/test_indexd_documentation_truth.py"
+    ],
+    "validation": [
+      "pytest -q tests/test_indexd_documentation_truth.py passed with 5 tests.",
+      "pytest -q -m 'not integration' passed with 106 tests; two optional dependency cases were skipped.",
+      "cargo test --workspace --all-features --locked passed.",
+      "cargo clippy --workspace --all-features -- -D warnings passed.",
+      "ruff check tests/test_indexd_documentation_truth.py passed.",
+      "git diff --check passed.",
+      "All eight GitHub checks on PR #263 passed before the SHA-bound squash merge."
+    ],
+    "verified_acceptance": {
+      "canonical-architecture-truth": "docs/indexd-architecture.md is the canonical current-state description and is linked from the documentation index and component documentation.",
+      "historical-plans-labelled": "Blueprint, roadmap, HausKI and strategy material now distinguish historical proposals from implemented behavior and refer back to the canonical architecture truth.",
+      "api-contract-corrected": "docs/indexd-api.md describes exact search output, removes invented rationales and records that filters are accepted but not applied.",
+      "documentation-regression-guard": "tests/test_indexd_documentation_truth.py checks canonical statements, stale claims and resolvable relative links; five focused tests passed.",
+      "repository-gates": "Focused and unit Python gates, complete Rust tests, workspace Clippy, Ruff and diff hygiene passed; PR #263 had eight successful GitHub checks and merged from exact head 32a6c5327393f540d68fd3c19fb91f4352c9bab2.",
+      "explicit-nonclaims": "The canonical documentation separates current exact search and persistence from unimplemented ANN/HNSW proposals and makes no production-capacity or lock-free claim."
+    },
+    "outcome": "PR #263 established a canonical indexd architecture truth, corrected API and component documentation, labelled historical HNSW and roadmap claims, and added a regression guard so future documentation drift fails tests.",
+    "verification": {
+      "task_sha256": "af092df37f74f87965e269eaf9850f06f8bb7a594caa4fe2ded09498fbac1d9c",
+      "plan_sha256": "a2fb3ac28b0c34f9a1ab4b36c5ad1786c0643e773adc3b2dcf533e11ad1145b6",
+      "source": "github_pull_request_and_commit_bound_documentation_review",
+      "verified_at": "2026-07-18T05:21:47+02:00",
+      "implementation_pr": 263,
+      "implementation_head_sha": "32a6c5327393f540d68fd3c19fb91f4352c9bab2",
+      "merge_commit_sha": "d53000a909946a0381a8b365c4af7abd2456e8f6",
+      "diff_sha256": "02eacf928cfb2643b647457abe4d41eda3fe3cdb5f9c2bae195adb74d593626e"
+    }
+  }
+}

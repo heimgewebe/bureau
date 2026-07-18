@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T002",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "title": "Phase 1: Bestehende Kontextflächen dünn komponieren",
+  "state": "blocked",
+  "priority": {
+    "lane": "later",
+    "rank": 1
+  },
+  "goal": "Vorhandene Agent-Impact-, Query-Kontext-, PR-Delta-, Entry-, Symbol-, Call-Graph-, Citation- und Live-Evidenzflächen zu einem kompakten aufgabenbezogenen Grabowski-Kontext zusammenstellen, ohne neue Grundvertragsschicht.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.repoground",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "reuse",
+      "assertion": "Bestehende RepoGround-Verträge werden wiederverwendet; ein neuer Datentyp ist nur mit produktivem Consumer und End-to-End-Test zulässig."
+    },
+    {
+      "id": "inputs",
+      "assertion": "Eingaben sind Repository-Identität, Basis- und Zielrevision oder gebundener Diff, Aufgabenklasse und hartes Kontextbudget."
+    },
+    {
+      "id": "outputs",
+      "assertion": "Ausgabe enthält direkte Änderungen, kausal betroffene Pfade/Symbole, begründete Tests/Gates, kurze Live-Ranges, Authority-geordnete Regeln, Lücken, Stop-Kriterien sowie verwendete und übersprungene Retrieval-Lanes."
+    },
+    {
+      "id": "determinism",
+      "assertion": "Identische Eingaben erzeugen deterministische Ausgabe; Basis, Ziel und Dirty Overlay bleiben getrennt."
+    },
+    {
+      "id": "budget",
+      "assertion": "Die Ausgabe ist messbar kompakter als das heutige allgemeine Kontextpaket und enthält keinen Vollrepo-Dump."
+    },
+    {
+      "id": "negative_semantics",
+      "assertion": "Der Composer behauptet weder Wahrheit, Vollständigkeit, Patchkorrektheit, Merge-Reife noch Runtime-Verhalten."
+    }
+  ],
+  "metadata": {
+    "github_issue": "heimgewebe/bureau#684",
+    "note": "GitHub issue #684 is referenced for context but does not establish Bureau truth.",
+    "phase": 1,
+    "does_not_establish": [
+      "measured worldgewebe utility",
+      "default routing authority"
+    ]
+  },
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T001"
+  ]
+}

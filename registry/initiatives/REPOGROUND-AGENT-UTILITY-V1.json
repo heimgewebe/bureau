@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-AGENT-UTILITY-V1",
+  "title": "RepoGround Agent Utility v1",
+  "state": "committed",
+  "commitment": "now",
+  "goal": "RepoGround als kleine, read-only und commit-gebundene Evidenz- und Kontextkomponente unter Grabowski nutzen: zuerst Publikationswahrheit reparieren, dann vorhandene Kontextflächen dünn komponieren, den Nutzen am Weltgewebe messen und nur bei bestandenem Gate generalisieren.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/repoground-agent-utility-v1.md"
+  },
+  "completion": [
+    "Grabowski-Consumer is bound to the canonical manifest-publications catalog.",
+    "A thin context-composer is established without a new base contract layer.",
+    "Weltgewebe-Vertical pilot/Change Capsule is validated against DB/Auth, Web/Map, Deployment/Kubernetes.",
+    "Generalization is achieved only after passing the T003 gate."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "github_issues": [
+      "heimgewebe/bureau#681",
+      "heimgewebe/bureau#682",
+      "heimgewebe/bureau#683",
+      "heimgewebe/bureau#684"
+    ],
+    "note": "GitHub issues #681-684 are referenced for context but do not establish Bureau truth.",
+    "parked_github_issues": [
+      "heimgewebe/bureau#637",
+      "heimgewebe/bureau#638",
+      "heimgewebe/bureau#642"
+    ],
+    "authority": {
+      "bureau": "plan_sequence_and_task_state",
+      "github": "commit_pr_ci_and_merge",
+      "weltgewebe": "repository_rules_contracts_and_domain_truth",
+      "grabowski": "live_operations_and_runtime_evidence",
+      "repoground": "diagnostic_navigation_evidence_addresses_and_change_context"
+    },
+    "does_not_establish": [
+      "implementation",
+      "measured agent benefit",
+      "merge readiness",
+      "deployment readiness",
+      "permission to mutate foreign state",
+      "completeness"
+    ]
+  }
+}

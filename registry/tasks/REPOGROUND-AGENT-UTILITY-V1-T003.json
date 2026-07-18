@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T003",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "title": "Phase 2: Weltgewebe-Vertikalpilot für Änderungskontext",
+  "state": "blocked",
+  "priority": {
+    "lane": "later",
+    "rank": 2
+  },
+  "goal": "Eine einzige Weltgewebe Change Capsule an Datenbank/Auth, Web/Karte und Deployment/Kubernetes gegen den heutigen Grabowski-/Agentenworkflow messen.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/weltgewebe"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.repoground",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "three_classes",
+      "assertion": "Je ein revisionsgebundener Goldfall für Datenbank/Auth, Web/Karte und Deployment/Kubernetes sowie mindestens ein kontrollierter Livefall liegen vor."
+    },
+    {
+      "id": "paired_baseline",
+      "assertion": "Jeder Fall wird gegen denselben heutigen Grabowski-/Agentenworkflow ohne Kapsel verglichen."
+    },
+    {
+      "id": "quality",
+      "assertion": "Kein Goldfall zeigt Qualitätsregression, falsche Freshness oder unbelegte Vollständigkeit."
+    },
+    {
+      "id": "promotion_gate",
+      "assertion": "In mindestens zwei Fällen wird entweder ein zusätzliches kritisches Ziel korrekt erkannt oder Toolaufrufe, Kontexttokens, Zeit oder Korrekturschleifen sinken um mindestens zwanzig Prozent."
+    },
+    {
+      "id": "delivery_chain",
+      "assertion": "Die Kapsel verbindet Änderung, betroffene Pfade/Symbole, Tests, Contracts, CI, Deployment, Runtime-Proof und Rückfallrisiken, ohne Repo- und Runtime-Wahrheit zu vermischen."
+    },
+    {
+      "id": "delivery",
+      "assertion": "Isolierter aktueller Weltgewebe-Head, vollständiges Diff-Artefakt, Head-/Diff-SHA-256-Review und grüne CI liegen vor."
+    }
+  ],
+  "metadata": {
+    "github_issue": "heimgewebe/bureau#683",
+    "note": "GitHub issue #683 is referenced for context but does not establish Bureau truth.",
+    "phase": 2,
+    "profiles": [
+      "database_auth",
+      "web_map",
+      "deployment_kubernetes"
+    ],
+    "does_not_establish": [
+      "general repository utility",
+      "default promotion before gate"
+    ]
+  },
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T001",
+    "REPOGROUND-AGENT-UTILITY-V1-T002"
+  ]
+}

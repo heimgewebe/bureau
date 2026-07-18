@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T001",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "title": "Phase 0: Kanonischen Publikationskatalog an alle Grabowski-Consumer binden",
+  "state": "planned",
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "goal": "Query, Preflight, Freshness, Context Pack, Symbol- und Call-Graph auf dieselbe validierte Latest-Complete-Publikation unter manifest-publications binden; merges nur als sichtbaren historischen Fallback führen.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "canonical_catalog",
+      "assertion": "Alle Consumer wählen für dieselbe Repository-/Branch-Anfrage dieselbe validierte Manifest-SHA-256 aus manifest-publications."
+    },
+    {
+      "id": "identity",
+      "assertion": "owner/repo, owner__repo und kurze Namen werden deterministisch aufgelöst; Mehrdeutigkeit blockiert fail-closed."
+    },
+    {
+      "id": "freshness",
+      "assertion": "Freshness unterscheidet fresh, stale, dirty_overlay, source_unavailable, provenance_missing und unknown; ein dirty Checkout wird niemals fresh."
+    },
+    {
+      "id": "authority",
+      "assertion": "Antworten weisen Consumer-Root, Authority, Manifestpfad und -SHA, Quellcommit, Auswahl- oder Ablehnungsgrund und historische Fallbacks aus."
+    },
+    {
+      "id": "read_only",
+      "assertion": "Abfragen verändern weder Registry noch Bundle; Vorher-/Nachher-Readbacks binden Dateimenge und relevante Metadaten."
+    },
+    {
+      "id": "e2e",
+      "assertion": "RepoGround und Weltgewebe werden End-to-End gegen die aktuelle Publikation abgefragt; alle Consumer stimmen auf dieselbe Manifestidentität überein."
+    },
+    {
+      "id": "delivery",
+      "assertion": "Isolierter aktueller Grabowski-Head, vollständiges Diff-Artefakt, Head-/Diff-SHA-256-Review, grüne CI, Merge- und Runtime-Readback liegen vor."
+    }
+  ],
+  "metadata": {
+    "github_issue": "heimgewebe/bureau#681",
+    "note": "GitHub issue #681 is referenced for context but does not establish Bureau truth.",
+    "phase": 0,
+    "only_immediate_task": true,
+    "does_not_establish": [
+      "agent utility",
+      "patch correctness",
+      "merge readiness before gates"
+    ]
+  },
+  "depends_on": []
+}

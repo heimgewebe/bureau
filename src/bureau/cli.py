@@ -39,6 +39,7 @@ from .live_register import (
     write_live_promote_plan,
 )
 from .read_only_state import ReadOnlyStateStore
+from .resource_lifecycle import resource_lifecycle_contract
 from .rlens_policy import evaluate_registry_rlens_policy
 from .runtime_identity import bureau_runtime_identity, require_mutation_compatible
 
@@ -113,6 +114,8 @@ def parser() -> argparse.ArgumentParser:
     migrate_leases.add_argument("--batch-size", type=int, default=5)
     migrate_leases.add_argument("--after-task-id")
     sub.add_parser("runtime-drift-check")
+    resource_lifecycle = sub.add_parser("resource-lifecycle-contract")
+    resource_lifecycle.add_argument("--kind", dest="resource_kind")
     lease_contract = sub.add_parser("lease-contract")
     lease_contract.add_argument("--operation", dest="operation")
     lease_contract.add_argument("--subject")
@@ -415,6 +418,7 @@ _READ_ONLY_COMMANDS = frozenset(
         "live-list",
         "live-retention",
         "repo-balls",
+        "resource-lifecycle-contract",
         "registry-truth",
         "rlens-policy",
         "run",
@@ -512,6 +516,13 @@ def main(argv: list[str] | None = None) -> int:
             if blocked is not None:
                 emit(blocked, args.json)
                 return 2
+        if args.command == "resource-lifecycle-contract":
+            try:
+                value = resource_lifecycle_contract(args.resource_kind)
+            except ValueError as exc:
+                raise StateError(str(exc)) from exc
+            emit(value, args.json)
+            return 0
         if args.command == "lease-contract":
             try:
                 if args.resource_key:

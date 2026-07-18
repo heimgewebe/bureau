@@ -50,6 +50,14 @@ _READ_COMMANDS: dict[str, dict[str, Any]] = {
         "effect": "none",
         "conflict_scope": "none",
     },
+    "resource-lifecycle-contract": {
+        "availability_class": "checkout_independent_read",
+        "git_repository_lease_required": False,
+        "registry_catalog_required": False,
+        "state_store_required": False,
+        "effect": "none",
+        "conflict_scope": "none",
+    },
     "live-register": {
         "availability_class": "always_on_operational_append",
         "git_repository_lease_required": False,

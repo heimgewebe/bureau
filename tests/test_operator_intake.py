@@ -739,6 +739,37 @@ def test_publication_wraps_unknown_publisher_failure_as_ambiguous(registry_facto
     assert "remote branch head" in caught.value.required_readback
 
 
+@pytest.mark.parametrize(
+    ("remote", "expected"),
+    [
+        ("git@github.com:heimgewebe/bureau.git", "heimgewebe/bureau"),
+        ("ssh://git@github.com/heimgewebe/bureau.git", "heimgewebe/bureau"),
+        ("https://github.com/heimgewebe/bureau", "heimgewebe/bureau"),
+        ("https://github.com/heimgewebe/bureau.git/", "heimgewebe/bureau"),
+    ],
+)
+def test_github_slug_accepts_only_canonical_github_remote_forms(remote, expected):
+    assert SubprocessTaskPublisher._github_slug(remote) == expected
+
+
+@pytest.mark.parametrize(
+    "remote",
+    [
+        "https://example.invalid/github.com/heimgewebe/bureau.git",
+        "https://github.com.evil.invalid/heimgewebe/bureau.git",
+        "http://github.com/heimgewebe/bureau.git",
+        "https://github.com/heimgewebe/bureau/extra.git",
+        "https://github.com/heimgewebe/bureau.git?token=secret",
+        "git@github.com:../bureau.git",
+        "github.com/heimgewebe/bureau.git",
+    ],
+)
+def test_github_slug_rejects_noncanonical_or_ambiguous_remotes(remote):
+    with pytest.raises(OperatorIntakeError) as caught:
+        SubprocessTaskPublisher._github_slug(remote)
+    assert caught.value.code == "github-remote-invalid"
+
+
 class LocalGitPublisher(SubprocessTaskPublisher):
     @staticmethod
     def _github_slug(remote: str) -> str:

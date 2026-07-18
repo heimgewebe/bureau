@@ -39,6 +39,7 @@ MAX_SIMILARITY_RESULTS = 5
 _SOURCE_SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 _IDEMPOTENCY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,199}$")
 _BRANCH_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$")
+_GITHUB_SLUG_COMPONENT_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
 _GENERIC_ACCEPTANCE_IDS = {"source-event-bound", "reviewed-before-effect"}
 
@@ -1262,16 +1263,27 @@ class SubprocessTaskPublisher:
     @staticmethod
     def _github_slug(remote: str) -> str:
         value = remote.strip()
-        if value.startswith("git@github.com:"):
-            value = value.removeprefix("git@github.com:")
-        elif "github.com/" in value:
-            value = value.split("github.com/", 1)[1]
-        value = value.removesuffix(".git").strip("/")
-        if value.count("/") != 1:
+        prefixes = (
+            "git@github.com:",
+            "ssh://git@github.com/",
+            "https://github.com/",
+        )
+        prefix = next((item for item in prefixes if value.startswith(item)), None)
+        if prefix is None:
             raise OperatorIntakeError(
                 "github-remote-invalid", "origin remote is not a GitHub repository"
             )
-        return value
+        slug = value.removeprefix(prefix).removesuffix("/").removesuffix(".git")
+        parts = slug.split("/")
+        if (
+            len(parts) != 2
+            or any(part in {"", ".", ".."} for part in parts)
+            or any(_GITHUB_SLUG_COMPONENT_RE.fullmatch(part) is None for part in parts)
+        ):
+            raise OperatorIntakeError(
+                "github-remote-invalid", "origin remote is not a GitHub repository"
+            )
+        return "/".join(parts)
 
     def publish(
         self,

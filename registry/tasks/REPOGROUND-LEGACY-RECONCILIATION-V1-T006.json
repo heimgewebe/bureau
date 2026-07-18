@@ -3,7 +3,7 @@
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T006",
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
   "title": "Repair RepoGround runtime false-green health and content-search contracts",
-  "state": "ready",
+  "state": "blocked",
   "priority": {
     "lane": "now",
     "rank": 2
@@ -77,6 +77,10 @@
   "metadata": {
     "registered_at": "2026-07-18T02:35:00+02:00",
     "discovered_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T025",
+    "implemented_at": "2026-07-18T06:32:57+02:00",
+    "blocked_at": "2026-07-18T06:34:18+02:00",
+    "block_reason": "RepoGround PR #1041 is merged and all source gates passed, but the mandatory parallel runtime probe, controlled deployment and live readback cannot be executed in this session because the installed Grabowski app has no registered tool namespace.",
+    "next_action": "With a registered Grabowski host connector, build an immutable runtime from merge commit 7777f6fd690e504e11e26fbaa4ab5c4d2fc4a637, probe it in parallel, verify /api/health and content-only retrieval, prove rollback, then deploy and close T006 only after live readback.",
     "live_evidence": {
       "runtime_head": "d54a3f3d53818f03405cab5e84e3a5086d4b81ad",
       "parallel_parity_receipt": {
@@ -93,10 +97,36 @@
       "launcher_probe": "/health",
       "service_probe": "/api/health"
     },
+    "implementation": {
+      "repository": "heimgewebe/repoground",
+      "pull_request": 1041,
+      "base_commit": "9bca73f70021f941feb22883d0020f963530ff29",
+      "reviewed_head": "91bd1e21da924c1a6d65e6f8f0e8b40c29135617",
+      "merge_commit": "7777f6fd690e504e11e26fbaa4ab5c4d2fc4a637",
+      "changed_files": 3,
+      "diff_sha256": "dc67e01d811da029ed7212354a19913a7a67d0597537c97ea055d88ec0502c58",
+      "workflow_runs_terminal_success": 10,
+      "scope": [
+        "merger/repoground/core/merge.py",
+        "merger/repoground/tests/test_runtime_contract_regressions.py",
+        "scripts/repoground-launcher.sh"
+      ],
+      "production_deployed": false
+    },
+    "validated_acceptance": {
+      "health-contract": "PASS for source contract and regression tests; live started-service proof pending",
+      "content-projection": "PASS in retrieval-only fixture",
+      "content-query": "PASS for content-only, path-only and missing-token controls",
+      "no-false-green": "PASS for source regression suite and existing negative controls",
+      "compatibility": "PASS in full GitHub CI and deterministic release build",
+      "published-proof": "BLOCKED after merge: parallel runtime probe, production deployment and live readback pending"
+    },
     "does_not_establish": [
-      "root cause of the empty content projection",
-      "permission to alter the running production service before a new parallel proof",
-      "removability of legacy aliases"
+      "current production runtime state after the last host readback",
+      "successful deployment of merge commit 7777f6fd690e504e11e26fbaa4ab5c4d2fc4a637",
+      "permission to alter the running production service without a new parallel proof",
+      "removability of legacy aliases",
+      "authoritative Grabowski convergence closure"
     ]
   }
 }

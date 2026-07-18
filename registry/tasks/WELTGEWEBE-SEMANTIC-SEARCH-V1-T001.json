@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T001",
+  "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
+  "title": "Architekturvertrag, Wahrheitsgrenzen und Semantic-Search-Hard-Cut",
+  "state": "planned",
+  "goal": "Den verbindlichen Architektur-, Daten-, Sichtbarkeits-, Ranking- und Ablösevertrag für eine interne hybride Suche im realen Weltgewebe-Repository veröffentlichen, bevor Datenbank-, Embedding-, Worker-, API- oder UI-Laufzeit implementiert wird.",
+  "priority": {
+    "lane": "later",
+    "rank": 100
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Die Umsetzung nach Merge dieser Registrierung ist durch die direkte Nutzeranweisung autorisiert; der Task bleibt bis dahin außerhalb des Dispatch-Kanons."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "canonical-truth",
+      "assertion": "Der Vertrag erklärt PostgreSQL zur einzigen persistenten Wahrheit und Suchdaten einschließlich Embeddings zu vollständig regenerierbaren Projektionen."
+    },
+    {
+      "id": "visibility-before-retrieval",
+      "assertion": "Der Vertrag erzwingt Sichtbarkeit und Löschstatus vor Kandidatenauswahl und Ranking und listet zulässige sowie ausgeschlossene Felder explizit."
+    },
+    {
+      "id": "hybrid-ranking",
+      "assertion": "Der Vertrag fixiert exakte Titel, exakte Tags, Titelpräfix, Schreibfehlertoleranz, PostgreSQL-Volltext, semantische Ähnlichkeit und stabile Tie-Breaks als gewichtete, testbare Rangfolge; reine Vektorsuche ist ausgeschlossen."
+    },
+    {
+      "id": "generation-bound-models",
+      "assertion": "Modell- und Dimensionswechsel sind an vollständige Indexgenerationen gebunden; Vektoren verschiedener Modelle oder Revisionen dürfen nicht gemischt werden."
+    },
+    {
+      "id": "hard-cut",
+      "assertion": "Der Vertrag verbietet separate Semantic-Service-Runtime, JSONL-Store, dauerhafte SemantAH-Git- oder Cargo-Abhängigkeit, Commonworld-Anbindung, Shadow-Modus und automatische Fäden, Beziehungen, Löschungen oder Zusammenführungen aus Ähnlichkeit."
+    },
+    {
+      "id": "quality-gates",
+      "assertion": "Der Vertrag enthält die beschlossenen Relevanz-, Unsichtbarkeits-, Ausfall-, Revisions-, Rebuild-, Multi-Instance-, Backup-, Kosten- und ANN-Gates sowie ein reproduzierbares Goldset-Grundformat."
+    },
+    {
+      "id": "task-boundaries",
+      "assertion": "T001 bleibt ein Architektur- und Testgrundlagen-Schnitt; pgvector, Embedding-Provider, Worker, API, Websuche, Rollout und SemantAH-Archivierung bleiben den Tasks T002 bis T009 zugeordnet."
+    },
+    {
+      "id": "repository-gates",
+      "assertion": "Die Umsetzung wird im isolierten Weltgewebe-Worktree gegen den aktuellen origin/main-Stand geprüft, besitzt ein vollständiges externes Diff-Artefakt, einen Head- und Diff-SHA256-gebundenen Self-Review und grüne CI vor Merge."
+    }
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "task_profile": "repo_change",
+    "skip_reason": "live_first_primary",
+    "note": "Der Livezustand von Git, PR, CI, Worktrees, Leases und Produktion ist primär; für Bureau war beim Registrierungs-Readback kein RepoGround-Bundle verfügbar."
+  },
+  "metadata": {
+    "source": "direct_operator_instruction",
+    "registered_at": "2026-07-18",
+    "dispatch_policy": "Not queued. Start only after this registration merges and the exact Weltgewebe live state is read again.",
+    "production_prerequisite_observation": {
+      "observed_at": "2026-07-18T16:36:40+02:00",
+      "status": "degraded",
+      "detail": "The production reconcile service was failed, Caddy was inactive and no listener on ports 80 or 443 was observed. Revalidate before T008; T001 does not repair production."
+    },
+    "does_not_establish": [
+      "runtime implementation",
+      "pgvector support",
+      "selected embedding model",
+      "semantic relevance improvement",
+      "production readiness",
+      "SemantAH archive authority"
+    ]
+  }
+}

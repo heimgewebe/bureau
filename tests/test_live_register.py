@@ -150,7 +150,8 @@ def test_live_register_worker_id_and_export_retention(registry_factory, tmp_path
 
 
 def test_live_promote_plan_requires_review_and_applies_task_file(
-    registry_factory, tmp_path,
+    registry_factory,
+    tmp_path,
 ):
     root, registry, store = setup_live(registry_factory, tmp_path)
     result = live_register_record(
@@ -190,7 +191,8 @@ def test_live_promote_plan_requires_review_and_applies_task_file(
 
 
 def test_candidate_supersession_projects_latest_and_preserves_history(
-    registry_factory, tmp_path,
+    registry_factory,
+    tmp_path,
 ):
     _root, registry, store = setup_live(registry_factory, tmp_path)
     first = live_register_record(
@@ -228,7 +230,8 @@ def test_candidate_supersession_projects_latest_and_preserves_history(
 
 
 def test_candidate_close_event_removes_candidate_from_open_projection(
-    registry_factory, tmp_path,
+    registry_factory,
+    tmp_path,
 ):
     _root, registry, store = setup_live(registry_factory, tmp_path)
     first = live_register_record(
@@ -261,10 +264,7 @@ def test_candidate_close_event_removes_candidate_from_open_projection(
     listed = live_register_list(store, kind="candidate_task")
     assert listed["summary"]["open_candidate_count"] == 0
     assert listed["summary"]["promotion_required_count"] == 0
-    assert (
-        listed["summary"]["latest_candidates"][0]["event_id"]
-        == corrected_closed["event_id"]
-    )
+    assert listed["summary"]["latest_candidates"][0]["event_id"] == corrected_closed["event_id"]
     assert listed["summary"]["latest_candidates"][0]["record"]["status"] == "closed"
 
     from bureau.live_register import write_live_promote_plan
@@ -402,7 +402,8 @@ def test_candidate_supersession_supports_legacy_event_identity(registry_factory,
 
 
 def test_candidate_supersession_reports_missing_legacy_status(
-    registry_factory, tmp_path,
+    registry_factory,
+    tmp_path,
 ):
     _root, registry, store = setup_live(registry_factory, tmp_path)
     malformed_payload = {
@@ -425,9 +426,7 @@ def test_candidate_supersession_reports_missing_legacy_status(
         )
         event_id = int(cursor.lastrowid)
 
-    with pytest.raises(
-        StateError, match=rf"candidate event {event_id} is missing required status"
-    ):
+    with pytest.raises(StateError, match=rf"candidate event {event_id} is missing required status"):
         live_register_record(
             registry,
             store,
@@ -442,7 +441,8 @@ def test_candidate_supersession_reports_missing_legacy_status(
 
 
 def test_live_promote_plan_rejects_superseded_candidate_event(
-    registry_factory, tmp_path,
+    registry_factory,
+    tmp_path,
 ):
     _root, registry, store = setup_live(registry_factory, tmp_path)
     first = live_register_record(
@@ -488,7 +488,9 @@ def test_live_promote_plan_rejects_superseded_candidate_event(
 
 
 def test_live_register_cli_corrects_and_closes_candidate(
-    registry_factory, tmp_path, capsys,
+    registry_factory,
+    tmp_path,
+    capsys,
 ):
     root, _registry, _store = setup_live(registry_factory, tmp_path)
     state_root = tmp_path / "candidate-cli-state"
@@ -559,7 +561,8 @@ def test_live_register_cli_corrects_and_closes_candidate(
 
 
 def test_live_promote_plan_uses_full_candidate_history_beyond_list_limit(
-    registry_factory, tmp_path,
+    registry_factory,
+    tmp_path,
 ):
     _root, registry, store = setup_live(registry_factory, tmp_path)
     candidate = live_register_record(
@@ -607,9 +610,7 @@ def test_live_promote_plan_uses_full_candidate_history_beyond_list_limit(
     assert plan["plan"]["event_id"] == candidate["event_id"]
 
 
-def test_live_projection_remains_complete_beyond_history_limit(
-    registry_factory, tmp_path
-):
+def test_live_projection_remains_complete_beyond_history_limit(registry_factory, tmp_path):
     _root, registry, store = setup_live(registry_factory, tmp_path)
     old = live_register_record(
         registry,
@@ -638,9 +639,7 @@ def test_live_projection_remains_complete_beyond_history_limit(
     listed = live_register_list(store, repo="repo.alpha", limit=50)
     context = live_register_context(store, repo="repo.alpha", limit=50)
     repo_context = live_register_repo_context(store, "repo.alpha", limit=50)
-    conflicts = live_register_conflict_report(
-        registry, store, repo="repo.alpha", limit=50
-    )
+    conflicts = live_register_conflict_report(registry, store, repo="repo.alpha", limit=50)
 
     for value in (listed, context, conflicts):
         assert value["coverage_complete"] is True
@@ -661,9 +660,7 @@ def test_live_projection_remains_complete_beyond_history_limit(
     assert conflicts["summary"]["projection_total_records"] == 121
 
 
-def test_live_projection_uses_one_complete_snapshot(
-    registry_factory, tmp_path, monkeypatch
-):
+def test_live_projection_uses_one_complete_snapshot(registry_factory, tmp_path, monkeypatch):
     _root, _registry, store = setup_live(registry_factory, tmp_path)
 
     from bureau import live_register as live_register_module
@@ -680,7 +677,6 @@ def test_live_projection_uses_one_complete_snapshot(
 
     assert report["coverage_complete"] is True
     assert report["summary"]["history_total_records"] == 0
-
 
 
 def test_live_conflicts_fail_closed_when_projection_coverage_is_incomplete(
@@ -859,4 +855,20 @@ def test_active_deferred_candidate_must_remain_promotion_required(tmp_path):
             repo="repo.alpha",
             status="promoted",
             catalog_validation="deferred",
+        )
+
+
+def test_operator_context_is_candidate_only(registry_factory, tmp_path) -> None:
+    registry = Registry.load(registry_factory())
+    store = StateStore(tmp_path / "state.sqlite3")
+
+    with pytest.raises(StateError, match="operator_context is only valid"):
+        live_register_record(
+            registry,
+            store,
+            kind="thread_focus",
+            thread_id="thread-not-candidate",
+            title="not a candidate",
+            source="test",
+            operator_context={"idempotency_key": "forbidden"},
         )

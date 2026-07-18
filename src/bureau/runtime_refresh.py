@@ -1,8 +1,9 @@
 """Gated, one-shot refresh of the immutable Bureau runtime.
 
 The observer is read-only with respect to Git, Registry truth and the deployed
-runtime.  The apply path requires an explicit hash-bound intent plus externally
-supplied Grabowski lease evidence.  It never retries an attempt whose durable
+runtime.  The apply path requires an explicit hash-bound intent plus an externally
+supplied owner/task binding verified against live Grabowski leases.  It never retries
+an attempt whose durable
 start record already exists.
 """
 
@@ -551,12 +552,38 @@ def validate_live_lease_binding(
     resource_db: Path = DEFAULT_GRABOWSKI_RESOURCE_DB,
     now: datetime | None = None,
     min_remaining_seconds: int = DEFAULT_MIN_LEASE_REMAINING_SECONDS,
+    required_metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     owner, task_id = _validate_binding_identity(binding)
     if not isinstance(min_remaining_seconds, int) or min_remaining_seconds < 30:
         raise RuntimeRefreshError(
             "lease-minimum-invalid", "minimum lease lifetime must be at least 30 seconds"
         )
+    if required_metadata is not None:
+        if not isinstance(required_metadata, dict):
+            raise RuntimeRefreshError(
+                "lease-required-metadata-invalid",
+                "required lease metadata must be an object",
+            )
+        try:
+            required_metadata_bytes = json.dumps(
+                required_metadata,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode("utf-8")
+        except (TypeError, ValueError) as exc:
+            raise RuntimeRefreshError(
+                "lease-required-metadata-invalid",
+                "required lease metadata is not canonical JSON",
+            ) from exc
+        if len(required_metadata_bytes) > 16_384:
+            raise RuntimeRefreshError(
+                "lease-required-metadata-invalid",
+                "required lease metadata is too large",
+            )
+    else:
+        required_metadata_bytes = None
     required = intent.get("required_resource_keys")
     if (
         not isinstance(required, list)
@@ -596,7 +623,7 @@ def validate_live_lease_binding(
         placeholders = ",".join("?" for _ in keys)
         rows = connection.execute(
             f"SELECT resource_key, owner_id, acquired_at_unix, updated_at_unix, "
-            f"expires_at_unix, metadata_sha256 FROM leases "
+            f"expires_at_unix, metadata_sha256, metadata_json FROM leases "
             f"WHERE resource_key IN ({placeholders}) ORDER BY resource_key",
             keys,
         ).fetchall()
@@ -612,15 +639,16 @@ def validate_live_lease_binding(
     finally:
         if "connection" in locals():
             connection.close()
-    snapshots = [dict(row) for row in rows]
-    observed_keys = [item["resource_key"] for item in snapshots]
+    raw_snapshots = [dict(row) for row in rows]
+    observed_keys = [item["resource_key"] for item in raw_snapshots]
     if observed_keys != keys:
         raise RuntimeRefreshError(
             "lease-resources-missing",
             "required live Grabowski leases are missing",
             details={"missing": sorted(set(keys) - set(observed_keys))},
         )
-    for item in snapshots:
+    snapshots: list[dict[str, Any]] = []
+    for item in raw_snapshots:
         if item["owner_id"] != owner:
             raise RuntimeRefreshError(
                 "lease-owner-mismatch",
@@ -649,15 +677,57 @@ def validate_live_lease_binding(
                 },
             )
         digest = item["metadata_sha256"]
+        metadata_json = item.get("metadata_json")
         if (
             not isinstance(digest, str)
             or len(digest) != 64
             or any(char not in "0123456789abcdef" for char in digest)
+            or not isinstance(metadata_json, str)
         ):
             raise RuntimeRefreshError(
                 "lease-metadata-invalid",
-                "a required Grabowski lease has an invalid metadata digest",
+                "a required Grabowski lease has invalid metadata evidence",
             )
+        try:
+            metadata = json.loads(metadata_json)
+        except json.JSONDecodeError as exc:
+            raise RuntimeRefreshError(
+                "lease-metadata-invalid",
+                "a required Grabowski lease has malformed metadata JSON",
+            ) from exc
+        if not isinstance(metadata, dict):
+            raise RuntimeRefreshError(
+                "lease-metadata-invalid",
+                "a required Grabowski lease metadata value is not an object",
+            )
+        canonical_metadata = json.dumps(
+            metadata,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+        if hashlib.sha256(canonical_metadata).hexdigest() != digest:
+            raise RuntimeRefreshError(
+                "lease-metadata-digest-mismatch",
+                "a required Grabowski lease metadata hash does not match its JSON",
+                details={"resource_key": item["resource_key"]},
+            )
+        if required_metadata is not None:
+            mismatched = {
+                key: {"expected": value, "observed": metadata.get(key)}
+                for key, value in required_metadata.items()
+                if metadata.get(key) != value
+            }
+            if mismatched:
+                raise RuntimeRefreshError(
+                    "lease-metadata-binding-mismatch",
+                    "a required Grabowski lease is not bound to the requested effect",
+                    details={
+                        "resource_key": item["resource_key"],
+                        "mismatched": mismatched,
+                    },
+                )
+        snapshots.append({key: value for key, value in item.items() if key != "metadata_json"})
     normalized = {
         "owner_id": owner,
         "task_id": task_id,
@@ -668,6 +738,11 @@ def validate_live_lease_binding(
         "lease_snapshots": snapshots,
         "observed_at_unix": current_unix,
         "minimum_remaining_seconds": min_remaining_seconds,
+        "required_metadata_sha256": (
+            hashlib.sha256(required_metadata_bytes).hexdigest()
+            if required_metadata_bytes is not None
+            else None
+        ),
     }
     normalized["lease_binding_sha256"] = sha256_bytes(canonical_bytes(normalized))
     return normalized

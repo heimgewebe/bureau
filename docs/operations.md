@@ -153,6 +153,26 @@ bureau --root . --json live-promote-plan \
 
 Apply requires `review.status=reviewed` and does not mutate the queue.
 
+## Operator-native candidate intake and task publication
+
+ChatGPT through Grabowski is the executing operator; the user is observer and steersman. Bureau exposes a machine-first candidate-to-task path that reuses the Live Register, Registry schemas, Approval runtime, exact leases and GitHub readback instead of creating a second task authority.
+
+The four transport commands are:
+
+```bash
+bureau --json operator-candidate-record --request candidate-request.json
+bureau --json operator-candidate-assess --candidate-id candidate-...
+bureau --root /clean/bureau --json operator-task-propose \
+  --candidate-id candidate-... --task-json task.json \
+  --publishing-task-id EXISTING-TASK-ID --write-plan proposal.json
+bureau --root /clean/bureau --json operator-task-publish \
+  --plan proposal.json --preview
+```
+
+Apply additionally requires a reviewed proposal, a live owner/task lease binding, the exact task-file lease, the short Registry-publication gate, an isolated workspace root and a create-only receipt path. Bureau reads Grabowski's private resource database directly; supplied JSON is not treated as lease authority. Publication creates a branch and pull request only. It never queues, claims, dispatches, merges, deploys or verifies the proposed task.
+
+See `docs/bureau-operator-intake-v1.md` for schemas, failure semantics, idempotency and non-claims.
+
 ## Repository-scoped balls
 
 Bureau can project one current ball per repository resource without changing queue state:

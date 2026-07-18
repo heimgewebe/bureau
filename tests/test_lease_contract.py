@@ -50,9 +50,7 @@ def test_registry_task_scopes_are_object_specific() -> None:
     assert first_operation["required_resource_keys"] == [
         "path:/home/alex/repos/bureau/registry/tasks/BUR-ONE-T001.json"
     ]
-    assert first_operation["forbidden_resource_keys"] == [
-        "repo:/home/alex/repos/bureau"
-    ]
+    assert first_operation["forbidden_resource_keys"] == ["repo:/home/alex/repos/bureau"]
 
 
 def test_registry_initiative_scope_rejects_path_traversal() -> None:
@@ -68,9 +66,7 @@ def test_broad_bureau_repo_lease_is_blocked_for_normal_work() -> None:
     report = diagnose_bureau_resource_keys(["repo:/home/alex/repos/bureau"])
 
     assert report["healthy"] is False
-    assert [item["code"] for item in report["findings"]] == [
-        "broad-bureau-repo-lease-forbidden"
-    ]
+    assert [item["code"] for item in report["findings"]] == ["broad-bureau-repo-lease-forbidden"]
 
 
 def test_bounded_emergency_repo_lease_requires_justification() -> None:
@@ -101,9 +97,7 @@ def test_merge_uses_short_gate_without_global_repo_lease() -> None:
     too_long = diagnose_bureau_resource_keys(
         [BUREAU_MERGE_GATE_KEY], phase="merge", ttl_seconds=3600
     )
-    valid = diagnose_bureau_resource_keys(
-        [BUREAU_MERGE_GATE_KEY], phase="merge", ttl_seconds=120
-    )
+    valid = diagnose_bureau_resource_keys([BUREAU_MERGE_GATE_KEY], phase="merge", ttl_seconds=120)
 
     assert missing["healthy"] is False
     assert too_long["healthy"] is False
@@ -137,6 +131,7 @@ def test_all_mutation_operations_avoid_global_repo_lease() -> None:
         "registry-task-write": "BUR-TEST-T001",
         "registry-initiative-write": "BUR-TEST",
         "registry-resource-write": "component.example",
+        "registry-publication": None,
         "registry-queue-write": None,
         "bureau-core-write": None,
         "bureau-schema-write": None,
@@ -160,9 +155,7 @@ def test_registry_lease_findings_detect_claim_derived_global_key() -> None:
 
     registry = SimpleNamespace(
         queue={"now": [], "next": [], "later": []},
-        resources={
-            "repo.bureau": SimpleNamespace(grabowski_key="repo:/home/alex/repos/bureau")
-        },
+        resources={"repo.bureau": SimpleNamespace(grabowski_key="repo:/home/alex/repos/bureau")},
         tasks={
             "TASK-1": SimpleNamespace(
                 id="TASK-1",
@@ -210,3 +203,46 @@ def test_emergency_repo_lease_rejects_missing_expected_boundary() -> None:
 
     assert report["healthy"] is False
     assert report["expected_boundary_present"] is False
+
+
+def test_operator_intake_read_and_plan_contracts_are_explicit() -> None:
+    expected = {
+        "operator-candidate-record": {
+            "availability_class": "always_on_operational_append",
+            "effect": "append_only_state_store_candidate_event",
+            "state_store_required": True,
+        },
+        "operator-candidate-assess": {
+            "availability_class": "registry_backed_operational_read",
+            "effect": "derived_read_only_candidate_assessment",
+            "state_store_required": True,
+        },
+        "operator-task-propose": {
+            "availability_class": "registry_backed_create_only_plan",
+            "effect": "create_only_external_review_plan",
+            "state_store_required": True,
+        },
+        "operator-task-publish-preview": {
+            "availability_class": "registry_backed_operational_read",
+            "effect": "validated_read_only_publication_preview",
+            "state_store_required": True,
+        },
+    }
+    for operation, fields in expected.items():
+        contract = bureau_lease_contract(operation)
+        observed = contract["commands"][operation]
+        assert observed["git_repository_lease_required"] is False
+        for key, value in fields.items():
+            assert observed[key] == value
+
+
+def test_registry_publication_contract_uses_short_dedicated_gate() -> None:
+    from bureau.lease_contract import BUREAU_REGISTRY_PUBLICATION_GATE_KEY
+
+    contract = bureau_lease_contract("registry-publication")
+    operation = contract["commands"]["registry-publication"]
+
+    assert operation["required_resource_keys"] == [BUREAU_REGISTRY_PUBLICATION_GATE_KEY]
+    assert operation["maximum_ttl_seconds"] == 300
+    assert operation["effect"] == ("reviewed_task_file_branch_and_pull_request_publication")
+    assert operation["forbidden_resource_keys"] == ["repo:/home/alex/repos/bureau"]

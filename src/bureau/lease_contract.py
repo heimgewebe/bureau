@@ -9,8 +9,9 @@ LEASE_CONTRACT_SCHEMA_VERSION = 2
 BUREAU_REPOSITORY_ROOT = Path("/home/alex/repos/bureau")
 BROAD_BUREAU_REPOSITORY_KEY = f"repo:{BUREAU_REPOSITORY_ROOT}"
 BUREAU_MERGE_GATE_KEY = f"path:{BUREAU_REPOSITORY_ROOT}/.bureau-scopes/merge-main"
-BUREAU_WORKTREE_ADMIN_KEY = (
-    f"path:{BUREAU_REPOSITORY_ROOT}/.bureau-scopes/worktree-admin"
+BUREAU_WORKTREE_ADMIN_KEY = f"path:{BUREAU_REPOSITORY_ROOT}/.bureau-scopes/worktree-admin"
+BUREAU_REGISTRY_PUBLICATION_GATE_KEY = (
+    f"path:{BUREAU_REPOSITORY_ROOT}/.bureau-scopes/registry-publication"
 )
 MAX_EMERGENCY_REPO_LEASE_TTL_SECONDS = 300
 
@@ -70,6 +71,42 @@ _READ_COMMANDS: dict[str, dict[str, Any]] = {
             "cli": "--catalog-validation deferred",
             "nonclaims": ["repo_exists", "task_exists", "registry_binding_valid"],
         },
+    },
+    "operator-candidate-record": {
+        "availability_class": "always_on_operational_append",
+        "git_repository_lease_required": False,
+        "registry_catalog_required": "strict_mode_only",
+        "state_store_required": True,
+        "effect": "append_only_state_store_candidate_event",
+        "conflict_scope": "sqlite_immediate_transaction_and_idempotency_key",
+        "fallback": {
+            "mode": "deferred_catalog_validation",
+            "nonclaims": ["repo_exists", "task_exists", "registry_binding_valid"],
+        },
+    },
+    "operator-candidate-assess": {
+        "availability_class": "registry_backed_operational_read",
+        "git_repository_lease_required": False,
+        "registry_catalog_required": True,
+        "state_store_required": True,
+        "effect": "derived_read_only_candidate_assessment",
+        "conflict_scope": "none",
+    },
+    "operator-task-propose": {
+        "availability_class": "registry_backed_create_only_plan",
+        "git_repository_lease_required": False,
+        "registry_catalog_required": True,
+        "state_store_required": True,
+        "effect": "create_only_external_review_plan",
+        "conflict_scope": "caller_selected_plan_path_create_only",
+    },
+    "operator-task-publish-preview": {
+        "availability_class": "registry_backed_operational_read",
+        "git_repository_lease_required": False,
+        "registry_catalog_required": True,
+        "state_store_required": True,
+        "effect": "validated_read_only_publication_preview",
+        "conflict_scope": "none",
     },
     "live-list": {
         "availability_class": "checkout_independent_operational_read",
@@ -150,6 +187,13 @@ _MUTATION_OPERATIONS: dict[str, dict[str, Any]] = {
         "component_resource": "component.bureau.registry",
         "effect": "reviewed_git_registry_mutation",
         "conflict_scope": "single_resource_file_compare_and_swap",
+    },
+    "registry-publication": {
+        "path": ".bureau-scopes/registry-publication",
+        "component_resource": "component.bureau.registry",
+        "effect": "reviewed_task_file_branch_and_pull_request_publication",
+        "conflict_scope": "registry_publication_gate",
+        "maximum_ttl_seconds": MAX_EMERGENCY_REPO_LEASE_TTL_SECONDS,
     },
     "registry-queue-write": {
         "path": "registry/queue.json",
@@ -294,9 +338,7 @@ def diagnose_bureau_resource_keys(
 ) -> dict[str, Any]:
     """Diagnose an intended Bureau resource set without acquiring any lease."""
     if phase not in {"work", "worktree-admin", "merge", "emergency-recovery"}:
-        raise ValueError(
-            "phase must be work, worktree-admin, merge or emergency-recovery"
-        )
+        raise ValueError("phase must be work, worktree-admin, merge or emergency-recovery")
     keys = sorted(set(resource_keys))
     normalized_expected_head = expected_head.strip() if expected_head else None
     normalized_expected_state = expected_state.strip() if expected_state else None
@@ -409,11 +451,7 @@ def diagnose_bureau_resource_keys(
 
 def registry_bureau_lease_findings(registry: Any) -> list[dict[str, Any]]:
     """Report nonterminal tasks that still request the deprecated global Bureau repo lease."""
-    lanes = {
-        task_id: lane
-        for lane, task_ids in registry.queue.items()
-        for task_id in task_ids
-    }
+    lanes = {task_id: lane for lane, task_ids in registry.queue.items() for task_id in task_ids}
     findings: list[dict[str, Any]] = []
     for task in registry.tasks.values():
         if task.state in _TERMINAL_TASK_STATES:

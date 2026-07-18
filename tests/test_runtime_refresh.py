@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import os
@@ -129,6 +130,8 @@ def lease_for(
     owner_id: str = "chatgpt-t016",
     expires_at: datetime | None = None,
     omit: set[str] | None = None,
+    metadata: dict[str, Any] | None = None,
+    metadata_digest: str | None = None,
 ) -> tuple[dict[str, Any], Path]:
     database = root / "resources.sqlite3"
     database.parent.mkdir(parents=True, exist_ok=True)
@@ -156,12 +159,20 @@ def lease_for(
     acquired = int((NOW - timedelta(minutes=1)).timestamp())
     expiry = int((expires_at or NOW + timedelta(hours=1)).timestamp())
     omitted = omit or set()
+    lease_metadata = metadata or {}
+    metadata_json = json.dumps(
+        lease_metadata,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    )
+    digest = metadata_digest or hashlib.sha256(metadata_json.encode("utf-8")).hexdigest()
     for key in intent["required_resource_keys"]:
         if key in omitted:
             continue
         connection.execute(
             "INSERT INTO leases VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)",
-            (key, owner_id, "test", acquired, acquired, expiry, "a" * 64, "{}"),
+            (key, owner_id, "test", acquired, acquired, expiry, digest, metadata_json),
         )
     connection.commit()
     connection.close()
@@ -347,6 +358,63 @@ def test_lease_binding_requires_live_complete_private_database(tmp_path: Path) -
     with pytest.raises(refresh.RuntimeRefreshError) as public:
         refresh.validate_live_lease_binding(intent, binding, resource_db=live_db, now=NOW)
     assert public.value.code == "lease-database-mode-invalid"
+
+
+def test_lease_binding_verifies_metadata_digest_and_required_binding(tmp_path: Path) -> None:
+    _, _, intent, _ = prepare_candidate_intent(tmp_path)
+    required = {
+        "task_id": "grabowski-task-t016",
+        "operation": "runtime-refresh",
+    }
+    binding, live_db = lease_for(tmp_path / "metadata-live", intent, metadata=required)
+    observed = refresh.validate_live_lease_binding(
+        intent,
+        binding,
+        resource_db=live_db,
+        now=NOW,
+        required_metadata=required,
+    )
+    assert (
+        observed["required_metadata_sha256"]
+        == hashlib.sha256(
+            json.dumps(required, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+    )
+    assert all("metadata_json" not in item for item in observed["lease_snapshots"])
+
+    binding, tampered_db = lease_for(
+        tmp_path / "metadata-tampered",
+        intent,
+        metadata=required,
+        metadata_digest="0" * 64,
+    )
+    with pytest.raises(refresh.RuntimeRefreshError) as digest_error:
+        refresh.validate_live_lease_binding(
+            intent,
+            binding,
+            resource_db=tampered_db,
+            now=NOW,
+            required_metadata=required,
+        )
+    assert digest_error.value.code == "lease-metadata-digest-mismatch"
+
+    binding, wrong_db = lease_for(
+        tmp_path / "metadata-wrong-binding",
+        intent,
+        metadata={**required, "operation": "other"},
+    )
+    with pytest.raises(refresh.RuntimeRefreshError) as binding_error:
+        refresh.validate_live_lease_binding(
+            intent,
+            binding,
+            resource_db=wrong_db,
+            now=NOW,
+            required_metadata=required,
+        )
+    assert binding_error.value.code == "lease-metadata-binding-mismatch"
+    assert binding_error.value.details["mismatched"] == {
+        "operation": {"expected": "runtime-refresh", "observed": "other"}
+    }
 
 
 def test_lease_binding_accepts_schema_2_and_rejects_unknown_schema(tmp_path: Path) -> None:

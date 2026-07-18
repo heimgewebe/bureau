@@ -38,6 +38,16 @@ from .live_register import (
     live_retention_report,
     write_live_promote_plan,
 )
+from .operator_intake import (
+    DEFAULT_GRABOWSKI_RESOURCE_DB,
+    OperatorIntakeError,
+    candidate_assess,
+    candidate_record_request,
+    publication_preview,
+    publish_task_proposal,
+    read_json_object_file,
+    task_propose,
+)
 from .read_only_state import ReadOnlyStateStore
 from .resource_lifecycle import resource_lifecycle_contract
 from .rlens_policy import evaluate_registry_rlens_policy
@@ -229,6 +239,32 @@ def parser() -> argparse.ArgumentParser:
     live_export.add_argument("--limit", type=int, default=100)
     live_retention = sub.add_parser("live-retention")
     live_retention.add_argument("--limit", type=int, default=500)
+    candidate_record_parser = sub.add_parser("operator-candidate-record")
+    candidate_record_parser.add_argument("--request", required=True)
+    candidate_assess_parser = sub.add_parser("operator-candidate-assess")
+    candidate_assess_selector = candidate_assess_parser.add_mutually_exclusive_group(required=True)
+    candidate_assess_selector.add_argument("--candidate-id")
+    candidate_assess_selector.add_argument("--event-id", type=int)
+    candidate_assess_parser.add_argument("--initiative")
+    candidate_assess_parser.add_argument("--task-id")
+    task_propose_parser = sub.add_parser("operator-task-propose")
+    task_propose_selector = task_propose_parser.add_mutually_exclusive_group(required=True)
+    task_propose_selector.add_argument("--candidate-id")
+    task_propose_selector.add_argument("--event-id", type=int)
+    task_propose_parser.add_argument("--task-json", required=True)
+    task_propose_parser.add_argument("--publishing-task-id", required=True)
+    task_propose_parser.add_argument("--write-plan", required=True)
+    task_propose_parser.add_argument("--unresolved-field", action="append", default=[])
+    task_propose_parser.add_argument("--placeholder-justification")
+    task_publish_parser = sub.add_parser("operator-task-publish")
+    task_publish_parser.add_argument("--plan", required=True)
+    task_publish_mode = task_publish_parser.add_mutually_exclusive_group()
+    task_publish_mode.add_argument("--preview", action="store_true")
+    task_publish_mode.add_argument("--apply", action="store_true")
+    task_publish_parser.add_argument("--lease-binding")
+    task_publish_parser.add_argument("--resource-db")
+    task_publish_parser.add_argument("--workspace-root")
+    task_publish_parser.add_argument("--receipt")
     claim = sub.add_parser("claim-next")
     claim.add_argument("--worker", required=True)
     claim.add_argument("--kind", default="interactive-agent")
@@ -417,6 +453,7 @@ _READ_ONLY_COMMANDS = frozenset(
         "live-export",
         "live-list",
         "live-retention",
+        "operator-candidate-assess",
         "repo-balls",
         "resource-lifecycle-contract",
         "registry-truth",
@@ -454,6 +491,8 @@ def _command_mutates(args: argparse.Namespace) -> bool:
         return bool(args.write_plan or args.apply_plan)
     if command == "live-promote-plan":
         return bool(args.write_plan or args.apply_plan)
+    if command == "operator-task-publish":
+        return bool(args.apply)
     # Fail closed for every command not explicitly proven read-only. This also
     # makes newly added commands mutation-gated until they are classified.
     return command not in _READ_ONLY_COMMANDS
@@ -469,9 +508,7 @@ def main(argv: list[str] | None = None) -> int:
         state_root = Path(args.state_root).expanduser() if args.state_root else None
         _CLI_RUNTIME_IDENTITY = bureau_runtime_identity(root, state_path=_state_path(args))
         _CLI_RUNTIME_IDENTITY["registry_selection"] = registry_selection
-        operational_registry = bool(
-            _CLI_RUNTIME_IDENTITY.get("registry", {}).get("bureau_project")
-        )
+        operational_registry = bool(_CLI_RUNTIME_IDENTITY.get("registry", {}).get("bureau_project"))
         _CLI_JSON_ENVELOPE = (
             args.json_envelope
             or os.environ.get("BUREAU_JSON_ENVELOPE") == "1"
@@ -480,9 +517,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "runtime-identity":
             emit({"status": "ok"}, args.json)
             return 0
-        canonical_registry = _CLI_RUNTIME_IDENTITY.get("manifest", {}).get(
-            "canonical_registry", {}
-        )
+        canonical_registry = _CLI_RUNTIME_IDENTITY.get("manifest", {}).get("canonical_registry", {})
         if (
             registry_selection == "canonical-runtime-default"
             and canonical_registry.get("valid") is not True
@@ -498,6 +533,41 @@ def main(argv: list[str] | None = None) -> int:
                 args.json,
             )
             return 2
+        if args.command in {"live-register", "operator-candidate-record"}:
+            append_registry = (
+                Registry.load(root)
+                if (args.command == "live-register" and args.catalog_validation == "strict")
+                else None
+            )
+            request: dict[str, Any] | None = None
+            if args.command == "operator-candidate-record":
+                request = read_json_object_file(args.request, field="request")
+                if request.get("catalog_validation", "strict") == "strict":
+                    append_registry = Registry.load(root)
+            store = StateStore(state_path, state_root)
+            if args.command == "live-register":
+                value = live_register_record(
+                    append_registry,
+                    store,
+                    kind=args.kind,
+                    title=args.title,
+                    source=args.source,
+                    thread_id=args.thread_id,
+                    worker_id=args.worker_id,
+                    repo=args.repo,
+                    task_id=args.task_id,
+                    candidate_id=args.candidate_id,
+                    supersedes_event_id=args.supersedes_event_id,
+                    status=args.status,
+                    promotion_required=args.promotion_required,
+                    note=args.note,
+                    catalog_validation=args.catalog_validation,
+                )
+            else:
+                assert request is not None
+                value = candidate_record_request(append_registry, store, request)
+            emit(value, args.json)
+            return 0
         if _command_mutates(args) and registry_selection == "canonical-runtime-default":
             emit(
                 {
@@ -568,27 +638,6 @@ def main(argv: list[str] | None = None) -> int:
                 value = live_retention_report(store, limit=args.limit)
             emit(value, args.json)
             return 0
-        if args.command == "live-register" and args.catalog_validation == "deferred":
-            store = StateStore(state_path, state_root)
-            value = live_register_record(
-                None,
-                store,
-                kind=args.kind,
-                title=args.title,
-                source=args.source,
-                thread_id=args.thread_id,
-                worker_id=args.worker_id,
-                repo=args.repo,
-                task_id=args.task_id,
-                candidate_id=args.candidate_id,
-                supersedes_event_id=args.supersedes_event_id,
-                status=args.status,
-                promotion_required=args.promotion_required,
-                note=args.note,
-                catalog_validation="deferred",
-            )
-            emit(value, args.json)
-            return 0
         if args.command == "runtime-drift-check":
             value = runtime_drift_check(root, state_db=state_path, state_root=state_root)
             emit(value, args.json)
@@ -611,15 +660,11 @@ def main(argv: list[str] | None = None) -> int:
                 )
             )
             if effects > 1:
-                raise StateError(
-                    "use only one of --write-plan, --apply-plan or --rollback-receipt"
-                )
+                raise StateError("use only one of --write-plan, --apply-plan or --rollback-receipt")
             artifact_root = _state_root_path(args)
             if args.write_plan:
                 if not args.entry or not args.destination_root:
-                    raise StateError(
-                        "--write-plan requires --entry and --destination-root"
-                    )
+                    raise StateError("--write-plan requires --entry and --destination-root")
                 value = write_state_root_migration_plan(
                     artifact_root,
                     args.entry,
@@ -629,31 +674,21 @@ def main(argv: list[str] | None = None) -> int:
                 )
             elif args.apply_plan:
                 if args.entry or args.destination_root:
-                    raise StateError(
-                        "--entry and --destination-root cannot accompany --apply-plan"
-                    )
+                    raise StateError("--entry and --destination-root cannot accompany --apply-plan")
                 value = apply_state_root_migration_plan(Path(args.apply_plan))
-                value["post_hygiene"] = state_root_hygiene(
-                    artifact_root, _state_path(args)
-                )
+                value["post_hygiene"] = state_root_hygiene(artifact_root, _state_path(args))
             elif args.rollback_receipt:
                 if args.entry or args.destination_root:
                     raise StateError(
                         "--entry and --destination-root cannot accompany --rollback-receipt"
                     )
                 value = rollback_state_root_migration(Path(args.rollback_receipt))
-                value["post_hygiene"] = state_root_hygiene(
-                    artifact_root, _state_path(args)
-                )
+                value["post_hygiene"] = state_root_hygiene(artifact_root, _state_path(args))
             else:
                 if args.entry or args.destination_root:
-                    raise StateError(
-                        "--entry and --destination-root require --write-plan"
-                    )
+                    raise StateError("--entry and --destination-root require --write-plan")
                 value = managed_state_root_inventory(artifact_root)
-                value["state_root_hygiene"] = state_root_hygiene(
-                    artifact_root, _state_path(args)
-                )
+                value["state_root_hygiene"] = state_root_hygiene(artifact_root, _state_path(args))
             emit(value, args.json)
             return 0
         if args.command == "worktree-hygiene":
@@ -684,9 +719,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "registry-truth":
             from .registry_truth import registry_truth_diagnostics
 
-            value = registry_truth_diagnostics(
-                root, probe_baselines=not args.no_baseline_probe
-            )
+            value = registry_truth_diagnostics(root, probe_baselines=not args.no_baseline_probe)
             emit(value, args.json)
             return 1 if args.strict and not value["healthy"] else 0
         registry = Registry.load(root)
@@ -706,9 +739,7 @@ def main(argv: list[str] | None = None) -> int:
 
             if args.apply_plan:
                 if args.write_plan or args.after_task_id or args.batch_size != 5:
-                    raise StateError(
-                        "--apply-plan cannot be combined with planning options"
-                    )
+                    raise StateError("--apply-plan cannot be combined with planning options")
                 value = apply_lease_migration_plan(registry, args.apply_plan)
             elif args.write_plan:
                 value = write_lease_migration_plan(
@@ -827,8 +858,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         store = (
             ReadOnlyStateStore(state_path, state_root)
-            if not _command_mutates(args)
-            and registry_selection == "canonical-runtime-default"
+            if not _command_mutates(args) and registry_selection == "canonical-runtime-default"
             else StateStore(state_path, state_root)
         )
         adapter_registry = adapters(args)
@@ -880,24 +910,6 @@ def main(argv: list[str] | None = None) -> int:
                 )
             else:
                 value = queue_reconcile_report(registry, store, resource=args.resource)
-        elif args.command == "live-register":
-            value = live_register_record(
-                registry,
-                store,
-                kind=args.kind,
-                title=args.title,
-                source=args.source,
-                thread_id=args.thread_id,
-                worker_id=args.worker_id,
-                repo=args.repo,
-                task_id=args.task_id,
-                candidate_id=args.candidate_id,
-                supersedes_event_id=args.supersedes_event_id,
-                status=args.status,
-                promotion_required=args.promotion_required,
-                note=args.note,
-                catalog_validation=args.catalog_validation,
-            )
         elif args.command == "live-conflicts":
             value = dispatcher.live_conflicts(
                 set(args.capability), resource=args.repo, limit=args.limit
@@ -920,6 +932,48 @@ def main(argv: list[str] | None = None) -> int:
                 value = apply_live_promote_plan(registry, path=args.apply_plan)
             else:
                 raise StateError("live-promote-plan requires --write-plan or --apply-plan")
+        elif args.command == "operator-candidate-assess":
+            value = candidate_assess(
+                registry,
+                store,
+                candidate_id=args.candidate_id,
+                event_id=args.event_id,
+                initiative=args.initiative,
+                task_id=args.task_id,
+            )
+        elif args.command == "operator-task-propose":
+            task_json = read_json_object_file(args.task_json, field="task")
+            value = task_propose(
+                registry,
+                store,
+                task_json=task_json,
+                publishing_task_id=args.publishing_task_id,
+                path=args.write_plan,
+                candidate_id=args.candidate_id,
+                event_id=args.event_id,
+                unresolved_fields=args.unresolved_field,
+                placeholder_justification=args.placeholder_justification,
+            )
+        elif args.command == "operator-task-publish":
+            if args.apply:
+                if not args.lease_binding or not args.workspace_root or not args.receipt:
+                    raise StateError(
+                        "--apply requires --lease-binding, --workspace-root and --receipt"
+                    )
+                lease_binding = read_json_object_file(args.lease_binding, field="lease-binding")
+                value = publish_task_proposal(
+                    registry,
+                    store,
+                    plan_path=args.plan,
+                    lease_binding=lease_binding,
+                    workspace_root=args.workspace_root,
+                    receipt_path=args.receipt,
+                    resource_db=args.resource_db or DEFAULT_GRABOWSKI_RESOURCE_DB,
+                )
+            else:
+                if args.lease_binding or args.resource_db or args.workspace_root or args.receipt:
+                    raise StateError("publication effect arguments require --apply")
+                value = publication_preview(registry, store, plan_path=args.plan)
         elif args.command == "claim-next":
             try:
                 value = dispatcher.claim_next(
@@ -1006,6 +1060,21 @@ def main(argv: list[str] | None = None) -> int:
     except NoEligibleTask as exc:
         emit({"status": "no-eligible-task", "detail": str(exc)}, args.json)
         return 3
+    except OperatorIntakeError as exc:
+        emit(exc.payload(), args.json)
+        return 2
+    except StateError as exc:
+        if getattr(args, "command", "").startswith("operator-"):
+            emit(
+                OperatorIntakeError(
+                    "operator-intake-invalid",
+                    str(exc),
+                ).payload(),
+                args.json,
+            )
+            return 2
+        print(f"bureau: {exc}", file=sys.stderr)
+        return 2
     except BureauError as exc:
         print(f"bureau: {exc}", file=sys.stderr)
         return 2

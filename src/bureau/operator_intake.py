@@ -311,6 +311,10 @@ def candidate_record(
     if replayed is not None:
         return replayed
 
+    bound_registry = registry
+    if registry is not None:
+        bound_registry, _ = _canonical_registry_snapshot(registry)
+
     generated_observed_at = checked_observed or legacy.utc_now()
     selected_candidate_id = candidate_id or _candidate_id_for_key(key)
     context = {
@@ -335,7 +339,7 @@ def candidate_record(
     }
     try:
         recorded = live_register_record(
-            registry,
+            bound_registry,
             store,
             kind="candidate_task",
             title=str(checked_title),
@@ -409,7 +413,7 @@ def _task_text(task: Any) -> str:
     return " ".join(str(value) for value in (task.title, raw.get("goal")) if value)
 
 
-def candidate_assess(
+def _candidate_assess(
     registry: Registry,
     store: StateStore,
     *,
@@ -583,6 +587,27 @@ def candidate_assess(
     }
 
 
+def candidate_assess(
+    registry: Registry,
+    store: StateStore,
+    *,
+    candidate_id: str | None = None,
+    event_id: int | None = None,
+    initiative: str | None = None,
+    task_id: str | None = None,
+) -> dict[str, Any]:
+    """Assess one candidate against a clean, HEAD-bound Registry snapshot."""
+    bound_registry, _ = _canonical_registry_snapshot(registry)
+    return _candidate_assess(
+        bound_registry,
+        store,
+        candidate_id=candidate_id,
+        event_id=event_id,
+        initiative=initiative,
+        task_id=task_id,
+    )
+
+
 def _git_value(root: Path, *arguments: str) -> str:
     env = {
         **os.environ,
@@ -609,11 +634,64 @@ def _git_value(root: Path, *arguments: str) -> str:
     return process.stdout.strip()
 
 
-def _registry_identity(registry: Registry) -> dict[str, str]:
-    return {
-        "commit": _git_value(registry.root, "rev-parse", "HEAD"),
-        "registry_tree": _git_value(registry.root, "rev-parse", "HEAD:registry"),
+def _registry_status(root: Path) -> list[str]:
+    status = _git_value(
+        root,
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all",
+        "--",
+        "registry",
+        "schemas",
+    )
+    return [line for line in status.splitlines() if line]
+
+
+def _raise_dirty_registry(entries: list[str]) -> None:
+    raise OperatorIntakeError(
+        "registry-working-tree-dirty",
+        "Registry sources differ from HEAD",
+        retryable=True,
+        details={
+            "entries": entries[:20],
+            "entry_count": len(entries),
+            "truncated": len(entries) > 20,
+        },
+    )
+
+
+def _canonical_registry_snapshot(registry: Registry) -> tuple[Registry, dict[str, str]]:
+    root = registry.root.expanduser().resolve()
+    before = {
+        "commit": _git_value(root, "rev-parse", "HEAD"),
+        "registry_tree": _git_value(root, "rev-parse", "HEAD:registry"),
     }
+    dirty = _registry_status(root)
+    if dirty:
+        _raise_dirty_registry(dirty)
+    try:
+        bound_registry = Registry.load(root)
+    except Exception as exc:
+        raise OperatorIntakeError(
+            "registry-reload-failed",
+            f"cannot reload canonical Registry snapshot: {str(exc)[:2000]}",
+            retryable=True,
+        ) from exc
+    after = {
+        "commit": _git_value(root, "rev-parse", "HEAD"),
+        "registry_tree": _git_value(root, "rev-parse", "HEAD:registry"),
+    }
+    dirty = _registry_status(root)
+    if dirty:
+        _raise_dirty_registry(dirty)
+    if after != before:
+        raise OperatorIntakeError(
+            "registry-snapshot-drift",
+            "Registry HEAD changed while the canonical snapshot was loaded",
+            retryable=True,
+            details={"before": before, "after": after},
+        )
+    return bound_registry, before
 
 
 def _render_task(task_json: dict[str, Any]) -> bytes:
@@ -732,6 +810,7 @@ def task_propose(
     placeholder_justification: str | None = None,
 ) -> dict[str, Any]:
     """Write one source-, Registry- and candidate-bound task proposal."""
+    registry, identity = _canonical_registry_snapshot(registry)
     event = current_candidate_record(store, candidate_id=candidate_id, event_id=event_id)
     if event["record"].get("status") not in ACTIVE_LIVE_STATUSES:
         raise OperatorIntakeError(
@@ -760,7 +839,7 @@ def task_propose(
             details={"acceptance_ids": sorted(generic_ids)},
         )
     _validate_task_semantics(registry, bound_task)
-    assessment = candidate_assess(
+    assessment = _candidate_assess(
         registry,
         store,
         event_id=int(event["event_id"]),
@@ -773,7 +852,6 @@ def task_propose(
             "candidate assessment found an exact duplicate",
             details={"findings": assessment["exact_duplicates"]},
         )
-    identity = _registry_identity(registry)
     task_id = str(bound_task["id"])
     target_path = f"registry/tasks/{task_id}.json"
     content = _render_task(bound_task)
@@ -901,7 +979,7 @@ def _validated_proposal(
         expected_reference=expected_proposal_sha,
         task_id=str(plan.get("task_id")),
     )
-    identity = _registry_identity(registry)
+    registry, identity = _canonical_registry_snapshot(registry)
     if plan.get("registry") != identity:
         raise OperatorIntakeError(
             "registry-drift",

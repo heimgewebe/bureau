@@ -444,6 +444,133 @@ def test_task_proposal_binds_candidate_registry_and_review(registry_factory, tmp
     }
 
 
+def test_canonical_registry_snapshot_rejects_head_drift(registry_factory, monkeypatch):
+    _, registry = _committed_registry(registry_factory)
+    real_git_value = operator_intake_module._git_value
+    head_reads = 0
+
+    def drifting_git_value(root: Path, *arguments: str) -> str:
+        nonlocal head_reads
+        value = real_git_value(root, *arguments)
+        if arguments == ("rev-parse", "HEAD"):
+            head_reads += 1
+            if head_reads == 2:
+                return "f" * 40
+        return value
+
+    monkeypatch.setattr(operator_intake_module, "_git_value", drifting_git_value)
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        operator_intake_module._canonical_registry_snapshot(registry)
+
+    assert caught.value.code == "registry-snapshot-drift"
+    assert caught.value.retryable is True
+
+
+def test_candidate_record_rejects_dirty_registry_worktree(registry_factory, tmp_path):
+    root, _ = _committed_registry(registry_factory)
+    task_path = root / "registry" / "tasks" / "BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text())
+    task["title"] = "Uncommitted Registry title"
+    task_path.write_text(json.dumps(task, indent=2) + "\n")
+    dirty_registry = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        candidate_record(
+            dirty_registry,
+            store,
+            idempotency_key="source:dirty-registry",
+            title="Dirty Registry candidate",
+            source_kind="conversation",
+            source_locator="chat:dirty-registry",
+            source_sha256="c" * 64,
+            desired_outcome="Reject uncommitted Registry truth",
+            repo="repo.alpha",
+        )
+
+    assert caught.value.code == "registry-working-tree-dirty"
+
+
+def test_candidate_assess_rejects_dirty_registry_schema(registry_factory, tmp_path):
+    root, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    recorded = _record(registry, store)
+    schema_path = root / "schemas" / "task.v1.schema.json"
+    schema = json.loads(schema_path.read_text())
+    schema["title"] = "Uncommitted task schema"
+    schema_path.write_text(json.dumps(schema, indent=2) + "\n")
+    dirty_registry = Registry.load(root)
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        candidate_assess(
+            dirty_registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+        )
+
+    assert caught.value.code == "registry-working-tree-dirty"
+
+
+def test_task_proposal_rejects_dirty_registry_worktree(registry_factory, tmp_path):
+    root, clean_registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    recorded = _record(clean_registry, store)
+    task_path = root / "registry" / "tasks" / "BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text())
+    task["title"] = "Uncommitted Registry title"
+    task_path.write_text(json.dumps(task, indent=2) + "\n")
+    dirty_registry = Registry.load(root)
+    plan_path = tmp_path / "proposal.json"
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        task_propose(
+            dirty_registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+            task_json=_task(root),
+            publishing_task_id="BUR-TEST-001-T001",
+            path=plan_path,
+        )
+
+    assert caught.value.code == "registry-working-tree-dirty"
+    assert not plan_path.exists()
+
+
+def test_candidate_assess_reloads_registry_after_stale_object(registry_factory, tmp_path):
+    root, clean_registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    recorded = candidate_record(
+        clean_registry,
+        store,
+        idempotency_key="source:stale-registry",
+        title="Uncommitted Registry title",
+        source_kind="conversation",
+        source_locator="chat:stale-registry",
+        source_sha256="b" * 64,
+        desired_outcome="Uncommitted Registry title",
+        repo="repo.alpha",
+    )
+    task_path = root / "registry" / "tasks" / "BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text())
+    task["title"] = "Uncommitted Registry title"
+    task_path.write_text(json.dumps(task, indent=2) + "\n")
+    stale_registry = Registry.load(root)
+    _git(root, "checkout", "--", "registry/tasks/BUR-TEST-001-T001.json")
+
+    result = candidate_assess(
+        stale_registry,
+        store,
+        candidate_id=recorded["candidate_id"],
+    )
+
+    assert all(
+        item.get("title") != "Uncommitted Registry title"
+        for item in result["similarity_suggestions"]
+    )
+    assert _git(root, "status", "--porcelain=v1", "--", "registry") == ""
+
+
 def test_task_proposal_rejects_generic_acceptance_without_justification(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
@@ -460,6 +587,23 @@ def test_task_proposal_rejects_generic_acceptance_without_justification(registry
             path=tmp_path / "proposal.json",
         )
     assert caught.value.code == "generic-placeholder-rejected"
+
+
+def test_publication_preview_rejects_dirty_registry_worktree(registry_factory, tmp_path):
+    root, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    _review(plan_path)
+    task_path = root / "registry" / "tasks" / "BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text())
+    task["title"] = "Uncommitted Registry title"
+    task_path.write_text(json.dumps(task, indent=2) + "\n")
+    dirty_registry = Registry.load(root)
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publication_preview(dirty_registry, store, plan_path=plan_path)
+
+    assert caught.value.code == "registry-working-tree-dirty"
 
 
 def test_publication_preview_requires_review_and_returns_exact_leases(registry_factory, tmp_path):

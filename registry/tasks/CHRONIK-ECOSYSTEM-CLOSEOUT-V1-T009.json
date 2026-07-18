@@ -3,7 +3,7 @@
   "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
   "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
   "title": "Chronik-Outbox terminalitätsgebunden kompaktieren",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 2
@@ -88,23 +88,12 @@
     "live_register_created_at": "2026-07-17T07:53:56.115297Z",
     "live_register_source": "chatgpt:chronik-pr-227-closeout",
     "promotion_plan_sha256": "906d232b95612a4a35e7b4cd4e4880272e007924774ea6fbc926a792fa6ea842",
-    "implementation_draft": {
-      "chronik_commit": "2bba3d27557dc0b0c5122529f2053fe78c737572",
-      "reviewed_diff_sha256": "d1922804e20fc8c0b39887287384633ef3166a5554ec2c7f8796ec47b72580e7",
-      "tests": "345 passed",
-      "benchmarks": [
-        "2650-source live-shaped passed",
-        "10000-source scale passed"
-      ],
-      "status": "local_reviewed_not_published"
-    },
     "does_not_establish": [
-      "queue_truth",
-      "claim_authority",
-      "dispatch_authority",
-      "merge_readiness",
-      "live_compaction_completed",
-      "deployment_completed"
+      "future timer success",
+      "future ledger integrity",
+      "future writer correctness after a runtime change",
+      "authorization to remove quarantine evidence",
+      "completion of another Chronik or operator-ecosystem task"
     ],
     "live_incident_2026_07_18": {
       "symptom": "chronik-outbox-import.service failed before new T025 events because loose and bundled variants shared source paths with different bytes.",
@@ -132,6 +121,420 @@
       },
       "effect_on_plan": "The local implementation draft must be amended before publication; existing duplicate/conflict tests did not prevent post-bundle recreation by the producer."
     },
-    "priority_reason": "A real live importer outage demonstrated that post-bundle source recreation is a current integrity defect, not a later-only storage optimization."
+    "priority_reason": "A real live importer outage demonstrated that post-bundle source recreation is a current integrity defect, not a later-only storage optimization.",
+    "verified_at": "2026-07-18T23:20:00+02:00",
+    "outcome": "Chronik compacts terminal Grabowski outbox sources into immutable, replayable, generation-aware bundles under a shared writer/compaction lock. Grabowski emits content-addressed task events, suppresses archived duplicates, permits only explicit disjoint successor generations, and bounds lock acquisition. Historical rewrite conflicts are preserved in quarantine, the controlled production apply is idempotent, the production ledger is valid, and the import timer is restored.",
+    "implementation": {
+      "chronik": [
+        {
+          "pull_request": 228,
+          "title": "feat: compact terminal Grabowski outbox sources",
+          "reviewed_base": "173275240d004ac2f3155d7652abcf67dcb894a2",
+          "reviewed_head": "2bba3d27557dc0b0c5122529f2053fe78c737572",
+          "merge_commit": "dc90cd3c3bd8bf4bb73d7c62f0fbe42c2498b8b6",
+          "merged_at": "2026-07-17T21:26:45Z",
+          "reviewed_diff_sha256": "d1922804e20fc8c0b39887287384633ef3166a5554ec2c7f8796ec47b72580e7",
+          "changed_files": 6,
+          "additions": 1493,
+          "deletions": 17
+        },
+        {
+          "pull_request": 229,
+          "title": "Guard compacted Grabowski outbox sources with a reconstructed archive index",
+          "reviewed_base": "dc90cd3c3bd8bf4bb73d7c62f0fbe42c2498b8b6",
+          "reviewed_head": "407c28e931d7dbda853dc9c9b6b1742766121f03",
+          "merge_commit": "72d5440a5456891bc8afa311d4796c0dea0b589d",
+          "merged_at": "2026-07-18T02:55:32Z"
+        },
+        {
+          "pull_request": 230,
+          "title": "fix: preserve distinct outbox source generations",
+          "reviewed_base": "72d5440a5456891bc8afa311d4796c0dea0b589d",
+          "reviewed_head": "c4611564625e73a6eb2b8016c4107cfd86150731",
+          "merge_commit": "d8a7510c64b651fbf4d67bf0c1c622e954734652",
+          "merged_at": "2026-07-18T03:18:26Z"
+        },
+        {
+          "pull_request": 232,
+          "title": "Serialize Chronik compaction with outbox writers",
+          "reviewed_base": "d8a7510c64b651fbf4d67bf0c1c622e954734652",
+          "reviewed_head": "0b3849d65a2051874c3b9f0efde64b5c2e528cb1",
+          "merge_commit": "73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+          "merged_at": "2026-07-18T04:16:11Z"
+        }
+      ],
+      "grabowski": [
+        {
+          "pull_request": 274,
+          "title": "fix: content-address Chronik task events",
+          "reviewed_base": "248b098417b1c361c263cd70984dd0b914b42582",
+          "reviewed_head": "56980c523bc7ef07aac05a3d7ebc1a6f5d13dac6",
+          "merge_commit": "be671abc1a01397acdc23772b716675384002f3d",
+          "merged_at": "2026-07-18T03:18:15Z"
+        },
+        {
+          "pull_request": 299,
+          "title": "fix: guard Chronik postbundle successor writes",
+          "reviewed_base": "93d753624420de449ff2edda99b61298ff558d76",
+          "reviewed_head": "e9e967c39275b0b271fb230519bbbd33b3fa5774",
+          "merge_commit": "2a11a714e59faa84e7b8e7678199b093341a22b6",
+          "merged_at": "2026-07-18T20:30:42Z",
+          "changed_files": 3,
+          "additions": 1009,
+          "deletions": 22
+        },
+        {
+          "pull_request": 300,
+          "title": "fix: bound Chronik writer lock acquisition",
+          "reviewed_base": "979e10c4d22038ae9a56f48f5edbdfdf343e0549",
+          "reviewed_head": "064523e7b26261fa468b25aace9628b8975f928d",
+          "merge_commit": "8b460dffac64e5d14680c43e860466c05ea48021",
+          "merged_at": "2026-07-18T20:56:21Z",
+          "reviewed_diff_sha256": "817689c9de563a4dc881f17b754ecf605f0962abb0911d1e55895680cd951eeb",
+          "merge_tree_equals_reviewed_head": true
+        }
+      ]
+    },
+    "deployment": {
+      "chronik": {
+        "release_commit": "73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+        "release_path": "/home/alex/.local/lib/chronik/releases/73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+        "current_target": "/home/alex/.local/lib/chronik/releases/73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+        "coding_memory_sha256": "836e0148944777bdd2752d906ab1739e1f4d7be840e80eb8f222bda63afa010e",
+        "deploy_receipt_path": "/home/alex/.local/state/chronik/postbundle-rewrite-guard/chronik-lock-deploy-receipt.json",
+        "deploy_receipt_sha256": "59507bf443002e3a591ac7003bce7a919a129d2af8533cd4d2939d6616eed52d",
+        "focused_tests": 30,
+        "full_tests": 356,
+        "github_checks": 16
+      },
+      "grabowski": {
+        "runtime_commit": "8b460dffac64e5d14680c43e860466c05ea48021",
+        "release_id": "8b460dffac64-srcsetfbf452511705-locke6664d600b6c-contract6a403b6c950a",
+        "healthy": true,
+        "deployment_complete": true,
+        "deployment_integrity_valid": true,
+        "audit_valid": true,
+        "kill_switch_engaged": false
+      },
+      "chronik_import_timer": "enabled/active/waiting",
+      "chronik_import_service": "successful one-shot, inactive/dead, exit status 0"
+    },
+    "validation": {
+      "grabowski_pr_300": {
+        "focused_tests": "34 passed",
+        "full_tests": "2220 passed, 2 skipped",
+        "full_validation_job": "grabowski-job-be61afeb7d0e",
+        "full_validation_receipt_sha256": "5ba19e637d134493e9232a2b762e032e800d3d329e4a188a2b4f3023c1773768",
+        "reviewed_diff_sha256": "817689c9de563a4dc881f17b754ecf605f0962abb0911d1e55895680cd951eeb",
+        "github_ci": "Actions, Python analysis, CodeQL, Python 3.10 and Python 3.12 passed"
+      },
+      "chronik_pr_232": {
+        "focused_tests": "30 passed",
+        "full_tests": "356 passed",
+        "github_ci": "16 checks passed"
+      }
+    },
+    "quarantine": {
+      "principle": "Evidence was moved and hash-bound; no conflicting source was deleted.",
+      "batches": [
+        {
+          "path": "/home/alex/.local/state/grabowski/chronik-outbox-quarantine/2026-07-18-conflicting-loose-rewrite",
+          "source_count": 1,
+          "receipt_path": "/home/alex/.local/state/grabowski/chronik-outbox-quarantine/2026-07-18-conflicting-loose-rewrite/quarantine-receipt.json",
+          "receipt_sha256": "feb0457f604241873d8a20e793dd3dd63304744a23f23ae2acb23c9a331e7153"
+        },
+        {
+          "path": "/home/alex/.local/state/grabowski/chronik-outbox-quarantine/2026-07-18-recreated-43-before-writer-guard",
+          "source_count": 43,
+          "receipt_path": "/home/alex/.local/state/grabowski/chronik-outbox-quarantine/2026-07-18-recreated-43-before-writer-guard/batch-quarantine-receipt.json",
+          "receipt_sha256": "aa893e3237605efe0cc143fadc2adf320c8fb6e9ab38d40e4b7054e3dc2065c7"
+        },
+        {
+          "path": "/home/alex/.local/state/grabowski/chronik-outbox-quarantine/2026-07-18-shorter-post-bundle-rewrites",
+          "source_count": 42,
+          "receipt_path": "/home/alex/.local/state/grabowski/chronik-outbox-quarantine/2026-07-18-shorter-post-bundle-rewrites/batch-quarantine-receipt.json",
+          "receipt_sha256": "ea9d64220d5d750d57078374f9bacf6777372b46eb7941954c2dc3dfcab0656c"
+        }
+      ],
+      "total_preserved_sources": 86,
+      "deleted_sources": 0
+    },
+    "production_compaction": {
+      "receipt_path": "/home/alex/.local/state/chronik/postbundle-rewrite-guard/production-compaction-v2.json",
+      "receipt_file_sha256": "35c268ff2a875c391adc384bbb7593901735023db9660ddb664ac5d60f382414",
+      "result_path": "/home/alex/.local/state/chronik/postbundle-rewrite-guard/production-compaction-result-v2.json",
+      "result_sha256": "a8faeaefc625ca20721649f1465784d10063a134023431d858b04d9fd11a5941",
+      "preflight_sha256": "f5e5d849d8de56417d632cd638d66f3429f99ea9114ecfc5d4b1c12a0efbf795",
+      "eligible_sources": 1878,
+      "sources_removed": 1878,
+      "eligible_events": 3719,
+      "errors": [],
+      "bundle_sha256": "73b268136e31f21c5a73117cef746479baffaf00b925257a683a8e3dd4b9303a",
+      "manifest_sha256": "4dc207e9ec057d4a6d5bfc58d5cf445f45c6ba0b69b7ea5e03a2d001e0c4a2e3",
+      "archive_manifest_count": 2,
+      "archive_source_generations": 3708,
+      "archive_distinct_source_names": 3665,
+      "archive_multi_generation_source_names": 43,
+      "first_import": {
+        "events_imported": 2,
+        "events_skipped_existing": 7372,
+        "errors": [],
+        "receipt_sha256": "ed55c8ee5d683a186065e9e23e0f02c1e38fce828e6a81769a719e730729f9d1"
+      },
+      "second_import": {
+        "events_imported": 0,
+        "events_skipped_existing": 7374,
+        "receipts_written": 0,
+        "receipts_reused": 3710,
+        "errors": [],
+        "receipt_sha256": "9db1111e1d4140b94a06db0c21bb76700791da7de00250c16ade1d123cddeb21"
+      },
+      "ledger_byte_identical_between_imports": true,
+      "ledger_sha256_after_both": "a04f4e196e40dd3235fd32d5381d3b245762b8ce733b9fd3126c1cba4622e313"
+    },
+    "live_proof": {
+      "writer_guard": {
+        "path": "/home/alex/.local/state/chronik/postbundle-rewrite-guard/live-writer-proof-v2.json",
+        "file_sha256": "b932319ccd8f98f33f50d604ecd46eeb8b252cb23e99470e17f870727ae4430",
+        "all_passed": true,
+        "establishes": [
+          "archived duplicates are suppressed without loose-source recreation",
+          "disjoint successor generations are serialized and idempotent",
+          "manipulated event IDs, missing archive indexes and hardlink locks fail closed",
+          "the production outbox was untouched by the isolated proof"
+        ]
+      },
+      "bounded_writer_lock": {
+        "path": "/home/alex/.local/state/chronik/t009-closeout/bounded-writer-lock-proof.json",
+        "file_sha256": "3416970db4660e575511ff7f5be88ce9605d0b47f09fd7ab0e735ce177487713",
+        "receipt_sha256": "668f17cae4dcfb72444f4be64e8f7c29d960a1fbf75cd2159b95d89c84ce5e61",
+        "job": "grabowski-job-b0a9f8408b3c",
+        "job_finalization_receipt_sha256": "b3f3e7dedc4908e34ec703240ba93eb4eaf0dc17009a05a8acb62a23dfa66a3f",
+        "elapsed_seconds": 0.050228821113705635,
+        "loose_source_created": false,
+        "production_outbox_touched": false
+      },
+      "final_readback": {
+        "path": "/home/alex/.local/state/chronik/t009-closeout/final-live-readback-v2.json",
+        "file_sha256": "911bfa348e132ffd95227f9d871425efcae4d136bad66458b7b730a191df85ca",
+        "receipt_sha256": "1fd7406b41bae054688015dd409cb0a8bd9ad1c41ac62ec84001f4e1eaffb93e",
+        "job": "grabowski-job-cb548a264fb6",
+        "job_finalization_receipt_sha256": "621afd954b8c65f172d7eb8b9c20691f37c510865add64d1b11c12608f8b878d",
+        "ledger_path": "/home/alex/.local/state/chronik/data/agent.ledger.jsonl",
+        "valid_records": 7388,
+        "invalid_records": 0,
+        "integrity_valid": true,
+        "ledger_sha256": "527b8f46c1a24b1de37903d0562d304e07c1a7084c03ff58dd209d58959ed3b8",
+        "archive_source_generations": 3708,
+        "loose_sources": 5,
+        "loose_source_classes": {
+          "name_not_archived": 5
+        },
+        "payload_conflicts": 0,
+        "timer": "active/waiting",
+        "import_service": "success, exit status 0"
+      }
+    },
+    "superseded_evidence_correction": {
+      "superseded_path": "/home/alex/.local/state/chronik/t009-closeout/final-live-readback.json",
+      "superseded_file_sha256": "f869d62d2febfa672be065e4e7350254291c1d2e37f7783a33382f947708e5c1",
+      "superseded_receipt_sha256": "9d77a4a6a3479dfd05cedc99fc58322e4d3a5d102fa6cdc7483106a548c2e48d",
+      "reason": "Chronik was imported before CHRONIK_DATA_DIR was bound, so V1 observed an empty working-directory data path.",
+      "corrected_by": "/home/alex/.local/state/chronik/t009-closeout/final-live-readback-v2.json",
+      "correction_changes": "Evidence path binding only; no production data, bundle, receipt, service or runtime was mutated."
+    },
+    "acceptance_evidence": {
+      "terminality-and-grace-bound": "PR #228 selects only stable terminal completed/blocked sources after the configured grace period; live apply skipped one nonterminal and one receipt-invalid-or-missing source.",
+      "ledger-and-receipt-bound": "The compactor requires source/SHA-bound receipts and actual ledger confirmation. Receipts remain nonauthoritative; both bundles replay through the normal importer.",
+      "atomic-replay-bundle": "PRs #228, #229 and #230 publish canonical hash-bound bundles, manifests and a generation-aware archive index before unlink; production apply published two valid bundles and 3708 source generations with zero errors.",
+      "complete-loss-recovery": "The reviewed Chronik suite covers empty-ledger and missing-receipt replay. Production import reused bundle evidence and the second run was byte-idempotent.",
+      "crash-race-and-rollback-proof": "Chronik tests cover publish, fsync, unlink, source mutation, duplicate/conflicting events and repeated apply; Grabowski #299 validates archive evidence and serializes successor writes under the same lock.",
+      "bounded-scale": "The reviewed compactor passed live-shaped and 10000-source benchmarks; production apply compacted 1878 sources and both imports remained below the two-minute timer interval.",
+      "reviewed-release-and-live-proof": "Chronik #232 and Grabowski #300 are merged and live. Controlled apply, two imports, final ledger readback, active timer and successful importer are hash-bound in the cited receipts.",
+      "post-bundle-rewrite-guard": "Grabowski #274 content-addresses complete event payloads, #299 validates archive generations and suppresses archived duplicates, and #300 bounds lock waiting. Eighty-six historical conflicts remain preserved in quarantine with receipts and zero current payload conflicts remain."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
+          "source_ref": "heimgewebe/chronik#228",
+          "number": 228,
+          "head_sha": "2bba3d27557dc0b0c5122529f2053fe78c737572",
+          "merge_commit_sha": "dc90cd3c3bd8bf4bb73d7c62f0fbe42c2498b8b6",
+          "diff_sha256": "d1922804e20fc8c0b39887287384633ef3166a5554ec2c7f8796ec47b72580e7"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
+          "source_ref": "heimgewebe/chronik#229",
+          "number": 229,
+          "head_sha": "407c28e931d7dbda853dc9c9b6b1742766121f03",
+          "merge_commit_sha": "72d5440a5456891bc8afa311d4796c0dea0b589d"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
+          "source_ref": "heimgewebe/chronik#230",
+          "number": 230,
+          "head_sha": "c4611564625e73a6eb2b8016c4107cfd86150731",
+          "merge_commit_sha": "d8a7510c64b651fbf4d67bf0c1c622e954734652"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
+          "source_ref": "heimgewebe/chronik#232",
+          "number": 232,
+          "head_sha": "0b3849d65a2051874c3b9f0efde64b5c2e528cb1",
+          "merge_commit_sha": "73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
+          "source_ref": "heimgewebe/grabowski#274",
+          "number": 274,
+          "head_sha": "56980c523bc7ef07aac05a3d7ebc1a6f5d13dac6",
+          "merge_commit_sha": "be671abc1a01397acdc23772b716675384002f3d"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
+          "source_ref": "heimgewebe/grabowski#299",
+          "number": 299,
+          "head_sha": "e9e967c39275b0b271fb230519bbbd33b3fa5774",
+          "merge_commit_sha": "2a11a714e59faa84e7b8e7678199b093341a22b6"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
+          "source_ref": "heimgewebe/grabowski#300",
+          "number": 300,
+          "head_sha": "064523e7b26261fa468b25aace9628b8975f928d",
+          "merge_commit_sha": "8b460dffac64e5d14680c43e860466c05ea48021",
+          "diff_sha256": "817689c9de563a4dc881f17b754ecf605f0962abb0911d1e55895680cd951eeb"
+        },
+        {
+          "kind": "runtime_deploy",
+          "authority": "chronik",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
+          "source_ref": "/home/alex/.local/lib/chronik/releases/73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+          "commit_sha": "73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+          "receipt_sha256": "59507bf443002e3a591ac7003bce7a919a129d2af8533cd4d2939d6616eed52d"
+        },
+        {
+          "kind": "runtime_deploy",
+          "authority": "grabowski",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
+          "source_ref": "8b460dffac64-srcsetfbf452511705-locke6664d600b6c-contract6a403b6c950a",
+          "commit_sha": "8b460dffac64e5d14680c43e860466c05ea48021",
+          "content_sha256": "817689c9de563a4dc881f17b754ecf605f0962abb0911d1e55895680cd951eeb"
+        },
+        {
+          "kind": "test_receipt",
+          "authority": "grabowski",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
+          "source_ref": "grabowski-job-be61afeb7d0e",
+          "receipt_sha256": "5ba19e637d134493e9232a2b762e032e800d3d329e4a188a2b4f3023c1773768",
+          "commit_sha": "064523e7b26261fa468b25aace9628b8975f928d"
+        },
+        {
+          "kind": "quarantine_receipt",
+          "authority": "grabowski",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
+          "source_ref": "/home/alex/.local/state/grabowski/chronik-outbox-quarantine/2026-07-18-shorter-post-bundle-rewrites/batch-quarantine-receipt.json",
+          "receipt_sha256": "ea9d64220d5d750d57078374f9bacf6777372b46eb7941954c2dc3dfcab0656c"
+        },
+        {
+          "kind": "production_compaction_receipt",
+          "authority": "chronik",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
+          "source_ref": "/home/alex/.local/state/chronik/postbundle-rewrite-guard/production-compaction-v2.json",
+          "receipt_sha256": "35c268ff2a875c391adc384bbb7593901735023db9660ddb664ac5d60f382414",
+          "commit_sha": "73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f"
+        },
+        {
+          "kind": "writer_live_readback",
+          "authority": "grabowski",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
+          "source_ref": "/home/alex/.local/state/chronik/postbundle-rewrite-guard/live-writer-proof-v2.json",
+          "content_sha256": "b932319ccd8f98f33f50d604ecd46eeb8b252cb23e99470e17f870727ae4430",
+          "commit_sha": "2a11a714e59faa84e7b8e7678199b093341a22b6"
+        },
+        {
+          "kind": "bounded_lock_live_readback",
+          "authority": "grabowski",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
+          "source_ref": "/home/alex/.local/state/chronik/t009-closeout/bounded-writer-lock-proof.json",
+          "receipt_sha256": "668f17cae4dcfb72444f4be64e8f7c29d960a1fbf75cd2159b95d89c84ce5e61",
+          "commit_sha": "8b460dffac64e5d14680c43e860466c05ea48021"
+        },
+        {
+          "kind": "final_live_readback",
+          "authority": "chronik",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
+          "source_ref": "/home/alex/.local/state/chronik/t009-closeout/final-live-readback-v2.json",
+          "receipt_sha256": "1fd7406b41bae054688015dd409cb0a8bd9ad1c41ac62ec84001f4e1eaffb93e",
+          "content_sha256": "911bfa348e132ffd95227f9d871425efcae4d136bad66458b7b730a191df85ca"
+        }
+      ]
+    },
+    "closure_truth_boundary": {
+      "establishes": [
+        "the reviewed Chronik compactor, generation-aware archive index and shared compaction lock are merged and deployed",
+        "the reviewed Grabowski content-addressed writer, post-bundle successor guard and bounded lock wait are merged and deployed",
+        "eighty-six historical conflicts are preserved in quarantine with hash-bound receipts and no deletion claim",
+        "the controlled production apply compacted 1878 eligible sources without errors and two imports were idempotent",
+        "the corrected production-ledger readback contains 7388 valid and zero invalid records with zero current payload conflicts",
+        "the Chronik import timer is active/waiting and the last one-shot service completed successfully"
+      ],
+      "does_not_establish": [
+        "future timer success",
+        "future ledger integrity",
+        "future behavior after a Chronik or Grabowski runtime change",
+        "permission to delete quarantined evidence",
+        "completion of another task"
+      ]
+    },
+    "bureau_closeout_validation": {
+      "base_head": "eef85b7afbc306f7a3cbbbf83ff7cfb74d79e697",
+      "changed_paths": [
+        "registry/tasks/CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009.json"
+      ],
+      "task_hash_and_registry_gates": {
+        "job": "grabowski-job-437ccc214622",
+        "result": "PASS",
+        "checks": [
+          "bureau check",
+          "bureau doctor readback",
+          "registry-truth --strict --no-baseline-probe"
+        ],
+        "finalization_receipt_sha256": "5a8f6e1f65bac236b47c19c6d0345cc0b72b22ba9bf073cf7a2fc9b253bdd295",
+        "payload_sha256": "18a1c05254d24b22de40794df2d3906d1be39df073d4072157c9730798d34480",
+        "doctor_boundary": "Doctor remains globally unhealthy only because of pre-existing foreign state-root hygiene and initiative lifecycle warnings; T009 check and strict registry truth have zero errors."
+      },
+      "full_tests": {
+        "job": "grabowski-job-781344f7b8d3",
+        "result": "PASS",
+        "passed": 704,
+        "failed": 0,
+        "collected_files": 52,
+        "finalization_receipt_sha256": "41b04b1ca79ba9fad85bb62ec6234d7f1591bb84310bf7aa67111bc2f6b3a137",
+        "payload_sha256": "e83fa915b403bb726aa44792c9871ffc07d1d1d8243d7874a4181a58eb52a653"
+      },
+      "truth_boundary": "These receipts validate the pre-commit closeout content. Final merge readiness additionally requires unchanged diff identity and green GitHub CI."
+    },
+    "verification": {
+      "task_sha256": "0c5a6b68c0ed34d87e95610b4c8513d78076f0899042346c66ddd414fed2f749",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   }
 }

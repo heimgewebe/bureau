@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T002",
+  "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
+  "title": "Synthetisches Relevanz-Goldset und lokale Embedding-Modellwahl",
+  "state": "ready",
+  "goal": "Ein reproduzierbares, ausschließlich synthetisches deutsches Relevanz-Goldset und einen offline ausführbaren Benchmark bereitstellen, der die lexikalische Basis, PostgreSQL-Volltext/Trigramm-Referenzen und lokale mehrsprachige Embedding-Kandidaten vergleicht und eine belegte Modell- oder Stopentscheidung erzeugt.",
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Durch die direkte Nutzeranweisung zur Fortsetzung autorisiert. Keine Produktion, keine realen Daten und keine kostenpflichtigen Provider."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "postgresql-reference",
+    "local-embeddings",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T001"
+  ],
+  "acceptance": [
+    {
+      "id": "synthetic-only",
+      "assertion": "Alle Dokumente, Anfragen, Sichtbarkeitsfälle und Negativbeispiele sind synthetisch; reale oder pseudonymisierte Nutzer-, Standort-, Kommunikations- oder Moderationsdaten sind ausgeschlossen."
+    },
+    {
+      "id": "representative-goldset",
+      "assertion": "Das Goldset deckt exakte Titel, exakte Tags, Präfixe, Schreibfehler, natürliche semantische Anfragen, Mehrdeutigkeit, Unsichtbarkeit, Löschung und harte Negativfälle in deutscher Sprache ab und bleibt maschinenlesbar validierbar."
+    },
+    {
+      "id": "reproducible-baselines",
+      "assertion": "Ein deterministischer Offline-Harness misst mindestens die bestehende lexikalische Basis sowie reproduzierbare FTS-/Trigramm-Referenzen und dokumentiert Tokenisierung, Normalisierung, Tie-Breaks und Messformeln."
+    },
+    {
+      "id": "local-model-comparison",
+      "assertion": "Mindestens ein kompaktes lokales mehrsprachiges Embedding-Modell und, sofern auf dem Heim-PC ohne Kosten verfügbar, qwen3-embedding:8b als Qualitätsmaßstab werden auf identischem Input verglichen; Modell-ID, Revision, Dimension und Laufzeitumgebung sind gebunden."
+    },
+    {
+      "id": "quality-decision",
+      "assertion": "Die Auswertung belegt Top-3-Relevanz, falsche Top-1-Treffer, Erhalt exakter Titel-/Tagtreffer, Laufzeit und Ressourcenbedarf und wählt das kleinste Modell, das die Qualitätsgrenzen erfüllt, oder stoppt den Embedding-Pfad bei unbedeutendem Zusatznutzen."
+    },
+    {
+      "id": "privacy-fail-closed",
+      "assertion": "Der Benchmark verweigert nichtsynthetische oder PII-markierte Fixtures und enthält Regressionstests für E-Mail-ähnliche sowie weitere eindeutig personenbezogene Muster; jede spätere Nutzung realer oder pseudonymisierter Daten erfordert einen separaten Datenschutzfreigabepfad."
+    },
+    {
+      "id": "provider-boundary",
+      "assertion": "OpenRouter-Free bleibt optional, synthetisch, hart begrenzt und ohne angenommene Zugangsdaten; kostenpflichtige APIs und Produktionsabhängigkeiten sind ausgeschlossen."
+    },
+    {
+      "id": "no-runtime-effect",
+      "assertion": "T002 verändert keine Produktionsdatenbank, Such-API, Worker, Weboberfläche, Deploymentkonfiguration oder SemantAH-Runtime und behauptet keine produktive Suchqualität."
+    },
+    {
+      "id": "repository-gates",
+      "assertion": "Der finale Weltgewebe-Head besitzt reproduzierbare Tests, vollständiges Diff-Artefakt, exakte Reviewbindung und grüne erforderliche CI vor Merge."
+    }
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "task_profile": "repo_change",
+    "skip_reason": "live_first_primary",
+    "note": "Git, Worktrees, lokale Modellverfügbarkeit, PR und CI werden live gelesen; RepoGround kann ergänzen, ersetzt aber keine Messung."
+  },
+  "metadata": {
+    "source": "direct_operator_instruction",
+    "registered_at": "2026-07-18",
+    "data_class": "synthetic-only",
+    "cost_policy": "zero external spend",
+    "production_fix_coordination": "Der unabhängige Produktionsfix #1492 läuft in einem fremden isolierten Worktree und wird weder übernommen noch dupliziert.",
+    "does_not_establish": [
+      "selected production embedding model",
+      "pgvector readiness",
+      "runtime implementation",
+      "production rollout",
+      "public live proof",
+      "SemantAH archive authority"
+    ]
+  }
+}

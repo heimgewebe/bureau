@@ -46,6 +46,14 @@
       "public live proof",
       "permission to archive SemantAH before T008",
       "permission to mutate foreign worktrees, leases, tasks, processes or deployments"
-    ]
+    ],
+    "progress": {
+      "verified_tasks": [
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T001"
+      ],
+      "current_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T002",
+      "updated_at": "2026-07-18",
+      "t001_merge_commit": "f00afacc7be4cc551c81c5511faf5f817b04f700"
+    }
   }
 }

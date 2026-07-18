@@ -3,7 +3,7 @@
   "id": "HEIMGEWEBE-RESILIENZ-V1-T006",
   "initiative": "HEIMGEWEBE-RESILIENZ-V1",
   "title": "Integrate failure-domain capacity into coordination",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 40
@@ -64,7 +64,25 @@
     "does_not_establish": [
       "implementation success before owner-repository evidence",
       "authority outside the listed source systems"
-    ]
+    ],
+    "verification": {
+      "verified_at": "2026-07-18T06:55:19+02:00",
+      "repository": "heimgewebe/bureau",
+      "pull_request": 665,
+      "source_commit": "656146efa61f69a815f3d1c5c662735885019f2c",
+      "merge_commit": "10491da573269424791b9640144a5686eb1be6f7",
+      "patch_path": "/home/alex/iCloud/Drive/halde/bureau-failure-domain-capacity-v1-656146e.patch",
+      "patch_sha256": "026d5603d3035e12eeff935793cd6ae1d5efb5afe1d0b02b57522d8fe3f0740c",
+      "checks": [
+        "python-3.10",
+        "python-3.12",
+        "codeql",
+        "registry-check"
+      ],
+      "main_readback": true,
+      "task_sha256": "2aaa5838156658ca2899aa93e2567d29f441c5233421348337d04abeb73e627e",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   },
   "depends_on": [
     "HEIMGEWEBE-RESILIENZ-V1-T002",

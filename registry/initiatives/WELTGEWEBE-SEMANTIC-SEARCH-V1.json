@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
+  "title": "Weltgewebe Semantic Search v1",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Eine interne, hybride und sichtbarkeitsgebundene Weltgewebe-Suche aus exakten Treffern, PostgreSQL-Volltext, Trigrammen und Embeddings aufbauen; PostgreSQL bleibt kanonisch, der semantische Index bleibt regenerierbar und SemantAH wird erst nach öffentlichem Live-Beweis aus dem aktiven Ökosystem entfernt.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/weltgewebe-semantic-search-v1.md"
+  },
+  "completion": [
+    "Die hybride Suche wahrt exakte Titel- und Tagtreffer, bestehende Filter und stabile Tie-Breaks; semantische Ähnlichkeit ergänzt, ersetzt oder fingiert keine kuratierten Beziehungen.",
+    "Sichtbarkeit wird vor der Kandidatenauswahl durchgesetzt; gelöschte, verborgene, private oder nicht mehr sichtbare Inhalte erscheinen weder lexikalisch noch semantisch.",
+    "PostgreSQL ist die einzige persistente Wahrheit; Suchprojektion und Embeddings sind reproduzierbar regenerierbar, revisions- und generationsgebunden und mischen keine Modelle.",
+    "T008 belegt den direkten Rollout mit grüner CI, reproduzierbarer Abnahme und öffentlichem Live-Readback.",
+    "Erst nach T008 schließt T009 die abgelösten SemantAH-Initiativen, entfernt aktive Laufzeitrollen und archiviert heimgewebe/semantAH mit bereinigtem Bureau- und Systemkatalog-Readback."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-18",
+    "source": "direct_operator_instruction",
+    "implementation_repository": "heimgewebe/weltgewebe",
+    "archive_candidate_repository": "heimgewebe/semantAH",
+    "supersede_after_public_live_proof": [
+      "SEMANTAH-USEFULNESS-V1",
+      "SEMANTAH-INDEXD-SCALING-V1",
+      "SEMANTAH-E2E-PORTABILITY-V1"
+    ],
+    "hard_cut": {
+      "separate_semantah_runtime": false,
+      "jsonl_persistence": false,
+      "standalone_indexd_service": false,
+      "commonworld_integration": false,
+      "shadow_mode": false,
+      "automatic_similarity_mutations": false,
+      "ann_without_measured_need": false
+    },
+    "does_not_establish": [
+      "pgvector production availability",
+      "embedding model selection",
+      "search relevance quality",
+      "production rollout readiness",
+      "public live proof",
+      "permission to archive SemantAH before T008",
+      "permission to mutate foreign worktrees, leases, tasks, processes or deployments"
+    ]
+  }
+}

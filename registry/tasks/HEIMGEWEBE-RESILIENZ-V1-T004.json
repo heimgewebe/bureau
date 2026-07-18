@@ -3,7 +3,7 @@
   "id": "HEIMGEWEBE-RESILIENZ-V1-T004",
   "initiative": "HEIMGEWEBE-RESILIENZ-V1",
   "title": "Define the evidence-preserving resource lifecycle contract",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 20
@@ -69,7 +69,25 @@
     "does_not_establish": [
       "implementation success before owner-repository evidence",
       "authority outside the listed source systems"
-    ]
+    ],
+    "verification": {
+      "verified_at": "2026-07-18T04:39:41+02:00",
+      "repository": "heimgewebe/bureau",
+      "pull_request": 662,
+      "source_commit": "cd302b0e2895657b7a2384cb02d125f4d51d158f",
+      "merge_commit": "9a901b846cf98f54ff13417b18ca1a5d04b37e5b",
+      "patch_path": "/home/alex/iCloud/Drive/halde/bureau-heimgewebe-resource-lifecycle-v1-cd302b0.patch",
+      "patch_sha256": "ace61cd952b4c48e1339d9535dcc0f7fd079eb57dac66ea5b8c6901e578e01b2",
+      "checks": [
+        "python-3.10",
+        "python-3.12",
+        "codeql",
+        "registry-check"
+      ],
+      "main_readback": true,
+      "task_sha256": "70937856d2379f7b9bd187247240c6bbd27778180d5f1f94025d841dc0e451df",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   },
   "depends_on": [
     "HEIMGEWEBE-RESILIENZ-V1-T001"

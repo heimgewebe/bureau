@@ -3,7 +3,7 @@
   "id": "HEIMGEWEBE-RESILIENZ-V1-T005",
   "initiative": "HEIMGEWEBE-RESILIENZ-V1",
   "title": "Converge stale task projections and terminal cleanup",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 30
@@ -43,7 +43,7 @@
   "acceptance": [
     {
       "id": "projection-correctness",
-      "assertion": "Completed, failed and explicitly abandoned current attempts leave active projections after authoritative reconciliation."
+      "assertion": "Completed, failed and explicitly abandoned current attempts leave no active projections after authoritative reconciliation."
     },
     {
       "id": "interrupted-semantics",
@@ -69,6 +69,72 @@
       "ready_at": "2026-07-18T04:39:41+02:00",
       "dependency": "HEIMGEWEBE-RESILIENZ-V1-T004",
       "dependency_merge_commit": "9a901b846cf98f54ff13417b18ca1a5d04b37e5b"
+    },
+    "verification": {
+      "verified_at": "2026-07-18T07:24:58+02:00",
+      "owner_repository": "heimgewebe/grabowski",
+      "deployed_commit": "711ce87ddbcf8f8d1bbb9a73445c779d0896c37f",
+      "runtime_release": "711ce87ddbcf-srcset2ffa8fcdf1cb-locke6664d600b6c-contract61f5d0966448",
+      "implementation_evidence": [
+        {
+          "pull_request": 191,
+          "merge_commit": "e72e012818525ee785a3cc76c0c05b741b72b2eb",
+          "covers": [
+            "same-second lease races"
+          ]
+        },
+        {
+          "pull_request": 246,
+          "merge_commit": "2ea75d95548c6ae98d3b322a29f2033139394ce8",
+          "covers": [
+            "active attention terminal projections"
+          ]
+        },
+        {
+          "pull_request": 267,
+          "merge_commit": "bef82add90ca21d02135b0a755cb0b2a130a62c8",
+          "covers": [
+            "receipt-bound terminal release",
+            "foreign-owner lease safety"
+          ]
+        },
+        {
+          "pull_request": 270,
+          "merge_commit": "ff773e8468394cbbef565564eccf4d611ed6d638",
+          "covers": [
+            "interrupted and outcome-unknown semantics",
+            "current-attempt convergence"
+          ]
+        }
+      ],
+      "test_evidence": {
+        "focused": "131 passed, 14 subtests passed",
+        "full": "2064 passed, 2 skipped",
+        "commit": "711ce87ddbcf8f8d1bbb9a73445c779d0896c37f"
+      },
+      "runtime_evidence": {
+        "healthy": true,
+        "deployment_complete": true,
+        "deployment_integrity_valid": true,
+        "audit_valid": true,
+        "kill_switch_engaged": false
+      },
+      "reconcile_evidence": {
+        "initial_scanned": 16,
+        "initial_terminal_refreshed": 13,
+        "initial_exact_leases_released": 13,
+        "subsequent_terminal_leases_released": 4,
+        "resumed": 0,
+        "foreign_leases_modified": false,
+        "authoritative_observer": "systemd-user"
+      },
+      "task_sha256": "84950727b508ba4b24d86b61e97286474de7587ca4ee7f3eb549309f0e42f5aa",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "review_fix": {
+        "thread": "PRRT_kwDOTG2jCs6R9RLr",
+        "url": "https://github.com/heimgewebe/bureau/pull/675#discussion_r3607704368",
+        "change": "Corrected the inverted projection-correctness acceptance criterion."
+      }
     }
   },
   "depends_on": [

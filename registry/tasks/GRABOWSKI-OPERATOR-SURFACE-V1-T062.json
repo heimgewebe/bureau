@@ -94,6 +94,15 @@
       "task_error": "Unsupported task database schema; upgrade Grabowski before listing tasks.",
       "resource_error": "Unsupported resource database schema; upgrade Grabowski before using resource leases.",
       "handling": "No database migration, recreation or schema repair was attempted; narrower live adapters were used with independent readback."
-    }
+    },
+    "current_live_status": {
+      "observed_at": "2026-07-18T10:22:30Z",
+      "task_store": "Task list/start/status surfaces operate successfully with the current schema-v2 store.",
+      "resource_store": "Resource list/acquire/inspect surfaces operate successfully with the current schema-v2 store.",
+      "previous_error": "The previously recorded unsupported-schema errors are no longer reproducible in the deployed runtime.",
+      "mutation_boundary": "No database migration, recreation, downgrade or record rewrite was performed during this verification.",
+      "remaining_acceptance": "Explicit historical-schema migrations, verified backups, interrupted/concurrent migration fixtures, mixed-version write prevention and production-copy preservation proof remain required before verification."
+    },
+    "implementation_status": "live_incident_resolved_full_migration_contract_still_open"
   }
 }

@@ -24,6 +24,13 @@
       "that current Miro embedding is blocked",
       "permission to purchase hosting",
       "permission to weaken the release doctor"
-    ]
+    ],
+    "implementation_progress": {
+      "observed_at": "2026-07-18T10:22:30Z",
+      "repository_host": "Merged in heimgewebe/schauwerk#102 at 59d48c33adec0eab62af1a139d18412242d6bb37.",
+      "internal_runtime": "Verified, hardened loopback backend active on Heimberry.",
+      "remaining_gate": "One interactive provider-owner authorization, then public release-doctor and authenticated Miro readback against the hardened URL."
+    },
+    "current_blocker": "Cloudflare GitHub OAuth or Tailscale Funnel requires an interactive owner login/approval. No account bypass or paid plan is authorized."
   }
 }

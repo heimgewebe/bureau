@@ -3,7 +3,7 @@
   "id": "SCHAUWERK-COMPANION-HOST-HARDENING-V1-T001",
   "initiative": "SCHAUWERK-COMPANION-HOST-HARDENING-V1",
   "title": "Deploy companion on a header-capable free host",
-  "state": "planned",
+  "state": "blocked",
   "goal": "Provide a repository-controlled free HTTPS deployment for the existing deterministic companion bundle that passes the complete security-header doctor and remains loadable inside authenticated Miro.",
   "depends_on": [],
   "priority": {
@@ -72,6 +72,37 @@
       "Referrer-Policy",
       "X-Content-Type-Options"
     ],
-    "current_miro_embedding": "verified_successful"
+    "current_miro_embedding": "verified_successful",
+    "block_reason": "The verified header-capable backend is running only on Heimberry loopback. Public HTTPS exposure requires one interactive owner authorization at Cloudflare or Tailscale; no safe noninteractive authorization path is available.",
+    "implementation_status": "repository_host_merged_internal_backend_live_public_cutover_blocked",
+    "implementation_evidence": {
+      "schauwerk_pull_request": "heimgewebe/schauwerk#102",
+      "reviewed_base_sha": "17956131e758173c081f54d0b3d5c8aef1b54c3f",
+      "reviewed_head_sha": "490b2a3390834d39282177d7a6949e5586eab516",
+      "merge_commit_sha": "59d48c33adec0eab62af1a139d18412242d6bb37",
+      "final_patch_sha256": "8665365bff6f5cbb5326b77719d4f6a0e3c90722bfe3a0e297561877147e4867",
+      "final_patch_size_bytes": 23259,
+      "final_patch_url": "https://gist.github.com/alexdermohr/a0b427fe317151a2b9527785854a0e9d",
+      "validation": "720 tests passed; 229 Miro tests included; 6 focused host tests; Ruff passed; six GitHub checks passed.",
+      "heimberry": {
+        "backend": "127.0.0.1:18082",
+        "service": "schauwerk-companion.service enabled and active/running",
+        "build_digest": "7ffbe6210037e17886471f648e2fefaf853815cf4c2de18fef2e43b7ff8313db",
+        "server_sha256": "05957c3e3e62807dd62abc57cbfb57e82d40980e8283e9f530598d2d6968445c",
+        "unit_sha256": "e39ad9949e58525f224fb5d011f8b2c1798c96f4030483f8964ad22c625dfbfe",
+        "archive_sha256": "a147f16257a36178cc16f06708385017c606d37a1ba42747a9b1a12b32d9945c",
+        "readback": "GET/HEAD, exact body digest, CSP/frame-ancestors, Permissions-Policy, Referrer-Policy, nosniff and HSTS passed; writes return 405."
+      }
+    },
+    "satisfied_acceptance": {
+      "byte-identity": "The internal Heimberry deployment serves the exact deterministic build digest 7ffbe6210037e17886471f648e2fefaf853815cf4c2de18fef2e43b7ff8313db from a digest-bound release after atomic receipt and file verification.",
+      "no-regression": "The existing repository-owned GitHub Pages fallback remains unchanged, public and functional while the hardened public cutover is blocked."
+    },
+    "open_acceptance": {
+      "durable-free-host": "Not satisfied: the header-capable service is currently loopback-only and has no public HTTPS URL.",
+      "security-headers": "Backend responses satisfy the header contract, but no public release-doctor PASS exists yet.",
+      "miro-compatibility": "The existing Pages URL remains proven in Miro; the new hardened URL cannot be tested until public exposure is authorized."
+    },
+    "observed_at": "2026-07-18T10:22:30Z"
   }
 }

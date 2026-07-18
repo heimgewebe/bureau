@@ -1,77 +1,348 @@
 {
-  "schema_version": 1,
+  "acceptance": [
+    {
+      "assertion": "Only valid sources whose final event is agent.run.completed or agent.run.blocked, whose configurable grace period elapsed, and whose file identity remains stable may be selected; active started-only and changing sources remain loose.",
+      "id": "terminality-and-grace-bound"
+    },
+    {
+      "assertion": "Compaction requires an intact source/SHA-bound import receipt and exact presence of every source event in the actual Chronik ledger, while receipts remain explicitly nonauthoritative and reconstructible.",
+      "id": "ledger-and-receipt-bound"
+    },
+    {
+      "assertion": "Bundle and manifest are immutable, canonical SHA-256-bound, fsynced, fully read back and path-safe before any loose source is removed; partial, orphaned, symlinked or corrupt artifacts fail closed.",
+      "id": "atomic-replay-bundle"
+    },
+    {
+      "assertion": "An isolated empty-ledger and missing-receipt simulation restores all bundled events and recreates receipts from bundle evidence without source loss or divergent event-id acceptance.",
+      "id": "complete-loss-recovery"
+    },
+    {
+      "assertion": "Tests cover publish, directory fsync and unlink failures, source mutation before removal, duplicate and conflicting event IDs across loose and bundled sources, repeated apply and relocatable restore.",
+      "id": "crash-race-and-rollback-proof"
+    },
+    {
+      "assertion": "Deterministic benchmarks at live-shaped and 10000-source scale remove the eligible loose files, keep at most one full ledger scan per import and remain below the two-minute timer interval.",
+      "id": "bounded-scale"
+    },
+    {
+      "assertion": "The exact reviewed diff passes focused and full tests, role and local smoke gates, GitHub CI, merge-bound deployment, live dry-run, controlled apply, repeated import and ledger-integrity readback with the timer restored.",
+      "id": "reviewed-release-and-live-proof"
+    },
+    {
+      "assertion": "After a source is manifest-bound and removed, the producer and terminalization paths cannot recreate, truncate or rewrite the same logical source path. A later duplicate must be byte-identical or fail closed into an evidence-preserving quarantine with an explicit receipt.",
+      "id": "post-bundle-rewrite-guard"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.chronik"
+    }
+  ],
+  "depends_on": [
+    "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T006"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik",
+      "component:chronik-outbox-import"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik"
+  },
+  "goal": "Lose, taskversuchsgebundene Grabowski-Outbox-Quellen nach belegter Terminalität verlustfrei in wenige unveränderliche, hashgebundene Replay-Bundles überführen, ohne aktive Quellen zu verschieben, Receipts zur Autorität zu erheben oder den Chronik-Ledger als operative Wahrheit zu ersetzen.",
   "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
   "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
-  "title": "Chronik-Outbox terminalitätsgebunden kompaktieren",
-  "state": "planned",
+  "metadata": {
+    "acceptance_evidence": {
+      "atomic-replay-bundle": "PRs #228 and #229 cover atomic bundle, manifest and reconstructed index publication with fail-closed readback. Live bundle, manifest and archive-index hashes are bound in the compaction proof before 1878 loose sources were removed.",
+      "bounded-scale": "PR #228 passed live-shaped 2650-source and 10000-source benchmarks well below the two-minute timer interval with one ledger scan and no errors; PR #229 repeated a 10000-source archive-index benchmark successfully.",
+      "complete-loss-recovery": "PR #228 reports passing empty-ledger plus missing-receipt recovery that restores all bundled events and recreates receipts from bundle evidence.",
+      "crash-race-and-rollback-proof": "PRs #228, #229, #230 and #232 cover publish/fsync/unlink failures, source races, duplicate/conflicting generations, relocatable restore and the shared lock. The final Chronik chain passed 356 tests at PR #232.",
+      "ledger-and-receipt-bound": "PR #228 validation and the live apply require intact source/SHA receipts and exact ledger presence. Both post-compaction imports completed without errors; receipts remain explicitly nonauthoritative.",
+      "post-bundle-rewrite-guard": "The deployed Grabowski guard recomputes event IDs, validates archive evidence and uses the same private lock. Five live cases prove archived suppression, one-time disjoint successor writing after lock release and fail-closed behavior for forged IDs, missing index and invalid lock evidence.",
+      "reviewed-release-and-live-proof": "The exact Chronik PR chain and Grabowski PR #299 were reviewed, CI-green, merged and deployed. Runtime identities match 73a8df1 and 2a11a714; live dry-run/apply, two imports, ledger hash readback, successful systemd import and timer restoration passed.",
+      "terminality-and-grace-bound": "PR #228 implements terminality, grace, stable-identity, receipt and ledger eligibility. The live dry-run found 1877 eligible and retained one nonterminal source; the apply compacted 1878 terminal sources after one additional terminal source arrived and retained the remaining nonterminal source."
+    },
+    "closure_truth_boundary": {
+      "does_not_establish": [
+        "future timer success",
+        "future ledger integrity after new writes",
+        "automatic bundle deletion or rollup authority",
+        "completion or authorization of T008"
+      ],
+      "establishes": [
+        "the Chronik compactor, archive generation model and shared lock are merged and deployed at 73a8df1",
+        "the archive-aware Grabowski writer guard is merged and deployed at 2a11a714",
+        "the production archive has two manifest generations and 43 source names with two generations",
+        "an immediate repeated post-compaction import imported zero events and left the ledger byteidentical",
+        "the Chronik import timer was restored enabled and active/waiting after a successful one-shot import"
+      ]
+    },
+    "deployment": {
+      "chronik_current_commit": "73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+      "chronik_release_path": "/home/alex/.local/lib/chronik/releases/73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+      "grabowski_deploy_finalization_receipt_sha256": "212e698368a5f9de2f09b64a5c7ef34f053ab7665dcbd6193d8400839abf82f6",
+      "grabowski_deploy_job": "grabowski-job-f1d89e49238b",
+      "grabowski_module_sha256": "b3414774b047831871dd6c5ec9efe3fe78885553f23426512442d6634bf7acfa",
+      "grabowski_runtime_commit": "2a11a714e59faa84e7b8e7678199b093341a22b6",
+      "grabowski_runtime_release": "2a11a714e59f-srcset82e51022179e-locke6664d600b6c-contract6a403b6c950a",
+      "runtime_integrity": "manifest, provenance, runtime binding and module digest valid"
+    },
+    "does_not_establish": [
+      "future timer success after the recorded healthy readback",
+      "future ledger integrity after new external writes",
+      "completion or authorization of CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T008",
+      "permission for automatic deletion or bundle rollup"
+    ],
+    "implementation": {
+      "chronik_pull_requests": [
+        {
+          "diff_sha256": "d1922804e20fc8c0b39887287384633ef3166a5554ec2c7f8796ec47b72580e7",
+          "merge_commit": "dc90cd3c3bd8bf4bb73d7c62f0fbe42c2498b8b6",
+          "number": 228,
+          "reviewed_base": "173275240d004ac2f3155d7652abcf67dcb894a2",
+          "reviewed_head": "2bba3d27557dc0b0c5122529f2053fe78c737572",
+          "title": "feat: compact terminal Grabowski outbox sources"
+        },
+        {
+          "diff_sha256": "1b0f8cf366ecfaf3e11d9d7e5b5a9152c79bc0ae6c516bea09dc7ee916708047",
+          "field_review_sha256": "b4bc80b7dec7daa1a1958ff3b800f1c91625371860c8602529bfcd3da5f2c221",
+          "merge_commit": "72d5440a5456891bc8afa311d4796c0dea0b589d",
+          "number": 229,
+          "reviewed_base": "dc90cd3c3bd8bf4bb73d7c62f0fbe42c2498b8b6",
+          "reviewed_head": "407c28e931d7dbda853dc9c9b6b1742766121f03",
+          "title": "Guard compacted Grabowski outbox sources with a reconstructed archive index"
+        },
+        {
+          "diff_sha256": "71471c0a456ea85a036088caf78ecb8a5b5e14ac7676272a364661f03a9c5897",
+          "merge_commit": "d8a7510c64b651fbf4d67bf0c1c622e954734652",
+          "number": 230,
+          "reviewed_base": "72d5440a5456891bc8afa311d4796c0dea0b589d",
+          "reviewed_head": "c4611564625e73a6eb2b8016c4107cfd86150731",
+          "title": "fix: preserve distinct outbox source generations"
+        },
+        {
+          "diff_sha256": "72ad4bb00272afbd55b0541df772506d4cab8db05f569e856ceb806bd70f9cf0",
+          "merge_commit": "73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+          "number": 232,
+          "reviewed_base": "d8a7510c64b651fbf4d67bf0c1c622e954734652",
+          "reviewed_head": "0b3849d65a2051874c3b9f0efde64b5c2e528cb1",
+          "title": "Serialize Chronik compaction with outbox writers"
+        }
+      ],
+      "chronik_release_commit": "73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+      "chronik_repository": "heimgewebe/chronik",
+      "grabowski_diff_sha256": "f26d79313bdad1b704e355a9e726fbb2273f1e96de20ee2b7a7279b7f81670d8",
+      "grabowski_merge_commit": "2a11a714e59faa84e7b8e7678199b093341a22b6",
+      "grabowski_pull_request": 299,
+      "grabowski_repository": "heimgewebe/grabowski",
+      "grabowski_reviewed_base": "93d753624420de449ff2edda99b61298ff558d76",
+      "grabowski_reviewed_head": "e9e967c39275b0b271fb230519bbbd33b3fa5774",
+      "grabowski_self_review_sha256": "7df44b1605ed78cdebf4ef948149289f7303e592cab9285b2f6eddedbee39338"
+    },
+    "implementation_draft": {
+      "benchmarks": [
+        "2650-source live-shaped passed",
+        "10000-source scale passed"
+      ],
+      "chronik_commit": "2bba3d27557dc0b0c5122529f2053fe78c737572",
+      "historical_note": "The original reviewed compactor slice was retained and subsequently hardened for archive indexing, multiple generations and a shared writer/compaction lock.",
+      "reviewed_diff_sha256": "d1922804e20fc8c0b39887287384633ef3166a5554ec2c7f8796ec47b72580e7",
+      "status": "published_as_pr_228_then_hardened_by_prs_229_230_232_and_grabowski_pr_299",
+      "tests": "345 passed"
+    },
+    "live_compaction": {
+      "archive_distinct_source_names_after": 3665,
+      "archive_index_file_sha256": "3b28e2bf4dd10b5fd62294e2e81efa5dfce1a168e6bd6c3f5ea2c89090433f64",
+      "archive_manifest_count_after": 2,
+      "archive_manifest_count_before": 1,
+      "archive_sources_after": 3708,
+      "bundle_sha256": "618c3dfbc60a005681a9626c6f4109e6ad4f04c7c084a1a66a102beaebd998c9",
+      "compaction_result_path": "/home/alex/.local/state/chronik/postbundle-rewrite-guard/production-compaction-result-v2.json",
+      "compaction_result_sha256": "6efa7ad96a8dd9b3688b70d9b4c666bf5f5d64d81ac276e33be9be09b1b2491b",
+      "eligible_sources_dry_run": 1877,
+      "events_compacted": 3719,
+      "first_import_events_imported": 2,
+      "import_1_path": "/home/alex/.local/state/chronik/postbundle-rewrite-guard/post-compaction-import-1-v2.json",
+      "import_1_sha256": "97de45b25314132bfc4a76874c5ce2583a9039ff58955a005dc6a91363133f46",
+      "import_2_path": "/home/alex/.local/state/chronik/postbundle-rewrite-guard/post-compaction-import-2-v2.json",
+      "import_2_sha256": "9a77e2c57a16faee94b050ace6a73361632f4671b12556dad9d2097f07a9f867",
+      "ledger_bytes_after_both_imports": 22165242,
+      "ledger_sha256_after_both_imports": "743c21c7c7bdeaadc8741ce11b6cde07946c099917df2f406da7964bcbab47ad",
+      "manifest_sha256": "f3d9551e4d5aa09b3298d814eddc42d48aa408f8bcf3d01c3b8b04101aae8185",
+      "manual_post_compaction_import_service": "status=0/SUCCESS",
+      "max_generations_per_source_name": 2,
+      "multi_generation_source_names_after": 43,
+      "nonterminal_sources_retained": 1,
+      "preflight_path": "/home/alex/.local/state/chronik/postbundle-rewrite-guard/production-compaction-preflight-v2.json",
+      "preflight_sha256": "54db704ac32ce03177704e2f8adc95015221b4d00ae716160b810f409809296f",
+      "proof_path": "/home/alex/.local/state/chronik/postbundle-rewrite-guard/production-compaction-v2.json",
+      "proof_sha256": "881b62a835fe8816e0884c1114b95ed48c575e00d0a9640de2e557b31d4a72fa",
+      "second_import_events_imported": 0,
+      "sources_compacted_and_removed": 1878,
+      "task": "1d9936853c9d4d51b3c757ee",
+      "terminalization_sha256": "ffef15ae43856748a0766bec28a324b5270ffb7c605b905e65004f5a42957c26",
+      "timer_after_restore": "enabled/active/waiting"
+    },
+    "live_incident_2026_07_18": {
+      "authority_validation": {
+        "fail": 0,
+        "pass": 42,
+        "path": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/chronik-conflict-authority-validation.json",
+        "sha256": "4c057f82f3555e9ed57669f7880db9cb177a5f9c173ebba70b2d36e82e3a8b2c"
+      },
+      "batch_quarantine_receipt": {
+        "path": "/home/alex/.local/state/grabowski/chronik-outbox-quarantine/2026-07-18-shorter-post-bundle-rewrites/batch-quarantine-receipt.json",
+        "sha256": "ea9d64220d5d750d57078374f9bacf6777372b46eb7941954c2dc3dfcab0656c"
+      },
+      "conflict_count": 43,
+      "effect_on_plan": "Resolved by the published Chronik generation/index/lock chain and the deployed Grabowski archive-aware writer guard.",
+      "first_quarantine_receipt": {
+        "path": "/home/alex/.local/state/grabowski/chronik-outbox-quarantine/2026-07-18-conflicting-loose-rewrite/quarantine-receipt.json",
+        "sha256": "feb0457f604241873d8a20e793dd3dd63304744a23f23ae2acb23c9a331e7153"
+      },
+      "pattern": "Later loose terminal-only rewrites were strict, shorter event subsets of older complete manifest-bound started/terminal pairs.",
+      "post_repair": {
+        "conflict_count": 0,
+        "import_service_result": "success",
+        "prepared_sources": 2884,
+        "timer": "active-waiting"
+      },
+      "resolution": {
+        "chronik_merge_commit": "73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+        "compaction_proof_sha256": "881b62a835fe8816e0884c1114b95ed48c575e00d0a9640de2e557b31d4a72fa",
+        "grabowski_merge_commit": "2a11a714e59faa84e7b8e7678199b093341a22b6",
+        "status": "resolved",
+        "writer_live_proof_sha256": "b932319ccd8f98f33f50d604ecd46eeb8b252cb23e99470e17f870727ae4430a"
+      },
+      "symptom": "chronik-outbox-import.service failed before new T025 events because loose and bundled variants shared source paths with different bytes."
+    },
+    "live_register_candidate_id": "CHRONIK-OUTBOX-SOURCE-COMPACTION-V1",
+    "live_register_created_at": "2026-07-17T07:53:56.115297Z",
+    "live_register_event_id": 624,
+    "live_register_source": "chatgpt:chronik-pr-227-closeout",
+    "live_writer_guard": {
+      "cases": {
+        "archived_duplicate_suppressed": true,
+        "disjoint_successor_waited_for_shared_lock_and_wrote_once": true,
+        "hardlinked_lock_failed_closed": true,
+        "missing_archive_index_failed_closed": true,
+        "payload_event_id_mismatch_failed_closed": true
+      },
+      "production_outbox_touched": false,
+      "receipt_path": "/home/alex/.local/state/chronik/postbundle-rewrite-guard/live-writer-proof-v2.json",
+      "receipt_sha256": "b932319ccd8f98f33f50d604ecd46eeb8b252cb23e99470e17f870727ae4430a",
+      "task": "29d1743d962242248e5eaa41",
+      "terminalization_sha256": "896036907f8c5228f6d91117ddec151b5c4530df6f39e98f123bde86eec5070c"
+    },
+    "outcome": "Chronik now compacts only validated terminal loose Grabowski sources into immutable replay bundles under the same private writer/compaction lock used by the deployed producer. The live archive contains two manifest generations and 43 source names with two distinct generations; repeated post-compaction import is idempotent and the timer is restored.",
+    "priority_reason": "A real live importer outage demonstrated that post-bundle source recreation is a current integrity defect, not a later-only storage optimization.",
+    "promotion_plan_sha256": "906d232b95612a4a35e7b4cd4e4880272e007924774ea6fbc926a792fa6ea842",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "kind": "pull_request_chain",
+          "merge_commit_sha": "73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+          "source_ref": "heimgewebe/chronik#228,#229,#230,#232",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009"
+        },
+        {
+          "authority": "github",
+          "diff_sha256": "f26d79313bdad1b704e355a9e726fbb2273f1e96de20ee2b7a7279b7f81670d8",
+          "head_sha": "e9e967c39275b0b271fb230519bbbd33b3fa5774",
+          "kind": "pull_request",
+          "merge_commit_sha": "2a11a714e59faa84e7b8e7678199b093341a22b6",
+          "source_ref": "heimgewebe/grabowski#299",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009"
+        },
+        {
+          "authority": "grabowski",
+          "commit_sha": "2a11a714e59faa84e7b8e7678199b093341a22b6",
+          "kind": "runtime_deploy",
+          "receipt_sha256": "212e698368a5f9de2f09b64a5c7ef34f053ab7665dcbd6193d8400839abf82f6",
+          "source_ref": "grabowski-job-f1d89e49238b",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009"
+        },
+        {
+          "authority": "grabowski",
+          "kind": "live_writer_proof",
+          "receipt_sha256": "b932319ccd8f98f33f50d604ecd46eeb8b252cb23e99470e17f870727ae4430a",
+          "source_ref": "/home/alex/.local/state/chronik/postbundle-rewrite-guard/live-writer-proof-v2.json",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009"
+        },
+        {
+          "archive_index_sha256": "3b28e2bf4dd10b5fd62294e2e81efa5dfce1a168e6bd6c3f5ea2c89090433f64",
+          "authority": "chronik",
+          "kind": "live_compaction_proof",
+          "ledger_sha256": "743c21c7c7bdeaadc8741ce11b6cde07946c099917df2f406da7964bcbab47ad",
+          "receipt_sha256": "881b62a835fe8816e0884c1114b95ed48c575e00d0a9640de2e557b31d4a72fa",
+          "source_ref": "/home/alex/.local/state/chronik/postbundle-rewrite-guard/production-compaction-v2.json",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "review": {
+      "blocking_findings": [],
+      "grabowski_diff_sha256": "f26d79313bdad1b704e355a9e726fbb2273f1e96de20ee2b7a7279b7f81670d8",
+      "grabowski_reviewed_head": "e9e967c39275b0b271fb230519bbbd33b3fa5774",
+      "grabowski_self_review_sha256": "7df44b1605ed78cdebf4ef948149289f7303e592cab9285b2f6eddedbee39338",
+      "result": "PASS"
+    },
+    "source": "bureau_live_register",
+    "validation": {
+      "chronik_pr_228": {
+        "empty_ledger_missing_receipt_recovery": "PASS",
+        "github_ci": "all reported required checks passed",
+        "live_shaped_benchmark": "2650 sources removed in 3.56 s; repeat import 4.59 s; one ledger scan",
+        "local_smoke": "PASS",
+        "role_contract": "PASS",
+        "ruff": "PASS",
+        "scale_benchmark": "10000 sources removed in 13.26 s; repeat import 17.27 s; one ledger scan",
+        "tests": "345 passed"
+      },
+      "chronik_pr_229": "24 focused tests; 348 collected with exit 0; 10000-source benchmark PASS; GitHub CI passed",
+      "chronik_pr_230": "47 focused tests; 352 full tests; role contract and diff check PASS",
+      "chronik_pr_232": "30 focused compaction tests; 356 full tests; Ruff and diff check PASS; GitHub CI passed",
+      "grabowski_pr_299": {
+        "focused_tests": "33 passed",
+        "full_validation": "2212 passed, 2 skipped",
+        "full_validation_task": "849b378a21aa4559bc5b2e55",
+        "full_validation_terminalization_sha256": "11888e48d23e08b6fcff2a001e48a59a7368744508868a2550c7ae298d397fd5",
+        "github_ci": "validation on Python 3.10/3.12 and CodeQL Python/Actions passed",
+        "ruff": "PASS"
+      }
+    },
+    "verification": {
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "source": "exact merged PRs plus deployed runtime and live compaction receipts",
+      "task_sha256": "256a92c7252cb31a8ead3b43929cd5152836239abceb0b06500370bb185c86ac",
+      "verified_at": "2026-07-18T21:22:13Z",
+      "verified_by": "chatgpt-chronik-postbundle-rewrite-guard-20260718"
+    },
+    "verified_at": "2026-07-18T21:22:13Z"
+  },
   "priority": {
     "lane": "next",
     "rank": 2
   },
-  "goal": "Lose, taskversuchsgebundene Grabowski-Outbox-Quellen nach belegter Terminalität verlustfrei in wenige unveränderliche, hashgebundene Replay-Bundles überführen, ohne aktive Quellen zu verschieben, Receipts zur Autorität zu erheben oder den Chronik-Ledger als operative Wahrheit zu ersetzen.",
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/chronik",
-    "grabowski_resources": [
-      "repo:/home/alex/repos/chronik",
-      "component:chronik-outbox-import"
-    ]
-  },
-  "claims": [
-    {
-      "resource": "repo.chronik",
-      "mode": "write",
-      "isolation": "worktree"
-    }
-  ],
   "required_capabilities": [
     "repository",
     "shell",
     "github",
     "grabowski"
   ],
-  "depends_on": [
-    "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T006"
-  ],
-  "acceptance": [
-    {
-      "id": "terminality-and-grace-bound",
-      "assertion": "Only valid sources whose final event is agent.run.completed or agent.run.blocked, whose configurable grace period elapsed, and whose file identity remains stable may be selected; active started-only and changing sources remain loose."
-    },
-    {
-      "id": "ledger-and-receipt-bound",
-      "assertion": "Compaction requires an intact source/SHA-bound import receipt and exact presence of every source event in the actual Chronik ledger, while receipts remain explicitly nonauthoritative and reconstructible."
-    },
-    {
-      "id": "atomic-replay-bundle",
-      "assertion": "Bundle and manifest are immutable, canonical SHA-256-bound, fsynced, fully read back and path-safe before any loose source is removed; partial, orphaned, symlinked or corrupt artifacts fail closed."
-    },
-    {
-      "id": "complete-loss-recovery",
-      "assertion": "An isolated empty-ledger and missing-receipt simulation restores all bundled events and recreates receipts from bundle evidence without source loss or divergent event-id acceptance."
-    },
-    {
-      "id": "crash-race-and-rollback-proof",
-      "assertion": "Tests cover publish, directory fsync and unlink failures, source mutation before removal, duplicate and conflicting event IDs across loose and bundled sources, repeated apply and relocatable restore."
-    },
-    {
-      "id": "bounded-scale",
-      "assertion": "Deterministic benchmarks at live-shaped and 10000-source scale remove the eligible loose files, keep at most one full ledger scan per import and remain below the two-minute timer interval."
-    },
-    {
-      "id": "reviewed-release-and-live-proof",
-      "assertion": "The exact reviewed diff passes focused and full tests, role and local smoke gates, GitHub CI, merge-bound deployment, live dry-run, controlled apply, repeated import and ledger-integrity readback with the timer restored."
-    },
-    {
-      "id": "post-bundle-rewrite-guard",
-      "assertion": "After a source is manifest-bound and removed, the producer and terminalization paths cannot recreate, truncate or rewrite the same logical source path. A later duplicate must be byte-identical or fail closed into an evidence-preserving quarantine with an explicit receipt."
-    }
-  ],
   "rollback": {
-    "trigger": "Any bundle cannot replay the exact original events, an active or changed source is removed, a partial artifact is accepted, ledger integrity changes unexpectedly, or the importer exceeds the timer safety budget.",
-    "procedure": "Stop compaction, retain every bundle and remaining loose source, restore the previous immutable Chronik release, reconstruct removed loose files from manifest-bound bundle byte ranges if needed, run isolated ledger replay and integrity verification, and resume the import timer only after a clean readback."
+    "procedure": "Stop compaction, retain every bundle and remaining loose source, restore the previous immutable Chronik release, reconstruct removed loose files from manifest-bound bundle byte ranges if needed, run isolated ledger replay and integrity verification, and resume the import timer only after a clean readback.",
+    "trigger": "Any bundle cannot replay the exact original events, an active or changed source is removed, a partial artifact is accepted, ledger integrity changes unexpectedly, or the importer exceeds the timer safety budget."
   },
+  "schema_version": 1,
+  "state": "verified",
   "stop": {
     "conditions": [
       "a foreign Chronik worktree, process, task or lease overlaps the selected implementation or live outbox path",
@@ -81,57 +352,5 @@
       "the controlled live apply would require deleting a source younger than the approved grace period"
     ]
   },
-  "metadata": {
-    "source": "bureau_live_register",
-    "live_register_event_id": 624,
-    "live_register_candidate_id": "CHRONIK-OUTBOX-SOURCE-COMPACTION-V1",
-    "live_register_created_at": "2026-07-17T07:53:56.115297Z",
-    "live_register_source": "chatgpt:chronik-pr-227-closeout",
-    "promotion_plan_sha256": "906d232b95612a4a35e7b4cd4e4880272e007924774ea6fbc926a792fa6ea842",
-    "implementation_draft": {
-      "chronik_commit": "2bba3d27557dc0b0c5122529f2053fe78c737572",
-      "reviewed_diff_sha256": "d1922804e20fc8c0b39887287384633ef3166a5554ec2c7f8796ec47b72580e7",
-      "tests": "345 passed",
-      "benchmarks": [
-        "2650-source live-shaped passed",
-        "10000-source scale passed"
-      ],
-      "status": "local_reviewed_not_published"
-    },
-    "does_not_establish": [
-      "queue_truth",
-      "claim_authority",
-      "dispatch_authority",
-      "merge_readiness",
-      "live_compaction_completed",
-      "deployment_completed"
-    ],
-    "live_incident_2026_07_18": {
-      "symptom": "chronik-outbox-import.service failed before new T025 events because loose and bundled variants shared source paths with different bytes.",
-      "conflict_count": 43,
-      "pattern": "Later loose terminal-only rewrites were strict, shorter event subsets of older complete manifest-bound started/terminal pairs.",
-      "authority_validation": {
-        "pass": 42,
-        "fail": 0,
-        "path": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/chronik-conflict-authority-validation.json",
-        "sha256": "4c057f82f3555e9ed57669f7880db9cb177a5f9c173ebba70b2d36e82e3a8b2c"
-      },
-      "first_quarantine_receipt": {
-        "path": "/home/alex/.local/state/grabowski/chronik-outbox-quarantine/2026-07-18-conflicting-loose-rewrite/quarantine-receipt.json",
-        "sha256": "feb0457f604241873d8a20e793dd3dd63304744a23f23ae2acb23c9a331e7153"
-      },
-      "batch_quarantine_receipt": {
-        "path": "/home/alex/.local/state/grabowski/chronik-outbox-quarantine/2026-07-18-shorter-post-bundle-rewrites/batch-quarantine-receipt.json",
-        "sha256": "ea9d64220d5d750d57078374f9bacf6777372b46eb7941954c2dc3dfcab0656c"
-      },
-      "post_repair": {
-        "conflict_count": 0,
-        "prepared_sources": 2884,
-        "import_service_result": "success",
-        "timer": "active-waiting"
-      },
-      "effect_on_plan": "The local implementation draft must be amended before publication; existing duplicate/conflict tests did not prevent post-bundle recreation by the producer."
-    },
-    "priority_reason": "A real live importer outage demonstrated that post-bundle source recreation is a current integrity defect, not a later-only storage optimization."
-  }
+  "title": "Chronik-Outbox terminalitätsgebunden kompaktieren"
 }

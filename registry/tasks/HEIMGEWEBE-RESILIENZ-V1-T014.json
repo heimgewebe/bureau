@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T014",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "title": "Evaluate resilience benefit and remove dead weight",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 120
+  },
+  "goal": "Measure whether the implemented mechanisms reduce stale work, recovery uncertainty and common-mode risk enough to justify their maintenance cost, then remove or simplify fields that do not change decisions.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/vibe-lab",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User explicitly authorized full registration and implementation on 2026-07-18; live-state, claims, diff review, CI, merge and runtime evidence remain mandatory."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.vibe-lab",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.chronik",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "grabowski",
+    "vibe-lab",
+    "evaluation",
+    "statistics",
+    "python"
+  ],
+  "acceptance": [
+    {
+      "id": "baseline",
+      "assertion": "Before/after evidence covers stale projections, orphan claims, recovery success, closure duration, recurring failures and operational friction."
+    },
+    {
+      "id": "decision-use",
+      "assertion": "Each retained field or gate demonstrates at least one real decision it changed or risk it exposed."
+    },
+    {
+      "id": "rollback",
+      "assertion": "Unused, duplicative or false-blocking mechanisms have a reviewed simplification or removal path."
+    },
+    {
+      "id": "closeout",
+      "assertion": "Bureau, Systemkatalog, Chronik and convergence evidence agree on completed scope and explicit residual risks."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-18T01:28:00+02:00",
+    "operator_obligation": "goo-heimgewebe-resilienz-v1-20260718",
+    "does_not_establish": [
+      "implementation success before owner-repository evidence",
+      "authority outside the listed source systems"
+    ]
+  },
+  "depends_on": [
+    "HEIMGEWEBE-RESILIENZ-V1-T002",
+    "HEIMGEWEBE-RESILIENZ-V1-T003",
+    "HEIMGEWEBE-RESILIENZ-V1-T004",
+    "HEIMGEWEBE-RESILIENZ-V1-T005",
+    "HEIMGEWEBE-RESILIENZ-V1-T006",
+    "HEIMGEWEBE-RESILIENZ-V1-T007",
+    "HEIMGEWEBE-RESILIENZ-V1-T008",
+    "HEIMGEWEBE-RESILIENZ-V1-T009",
+    "HEIMGEWEBE-RESILIENZ-V1-T010",
+    "HEIMGEWEBE-RESILIENZ-V1-T011",
+    "HEIMGEWEBE-RESILIENZ-V1-T012",
+    "HEIMGEWEBE-RESILIENZ-V1-T013"
+  ]
+}

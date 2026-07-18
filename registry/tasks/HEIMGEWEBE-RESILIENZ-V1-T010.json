@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T010",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "title": "Prove Grabowski runtime and broker recovery",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 80
+  },
+  "goal": "Exercise Grabowski runtime, audit, connector and privileged-broker recovery through declared bounded paths and evidence-bound return conditions.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User explicitly authorized full registration and implementation on 2026-07-18; live-state, claims, diff review, CI, merge and runtime evidence remain mandatory."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "grabowski",
+    "systemd",
+    "security",
+    "recovery",
+    "python"
+  ],
+  "acceptance": [
+    {
+      "id": "runtime-recovery",
+      "assertion": "A lost or invalid runtime release can be restored to a manifest-bound healthy release."
+    },
+    {
+      "id": "audit-continuity",
+      "assertion": "Audit-chain recovery preserves or explicitly repairs integrity without silent truncation."
+    },
+    {
+      "id": "connector-boundary",
+      "assertion": "Runtime health and connector snapshot readiness remain distinct and high-risk actions fail closed when required."
+    },
+    {
+      "id": "broker-recovery",
+      "assertion": "Privileged broker recovery is demonstrated without broadening templates or exposing secrets."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-18T01:28:00+02:00",
+    "operator_obligation": "goo-heimgewebe-resilienz-v1-20260718",
+    "does_not_establish": [
+      "implementation success before owner-repository evidence",
+      "authority outside the listed source systems"
+    ]
+  },
+  "depends_on": [
+    "HEIMGEWEBE-RESILIENZ-V1-T008"
+  ]
+}

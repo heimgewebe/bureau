@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T012",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "title": "Collect slow resilience variables",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 100
+  },
+  "goal": "Implement a source-bound snapshot collector for slow deterioration without creating a synthetic truth store or automatic task authority.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User explicitly authorized full registration and implementation on 2026-07-18; live-state, claims, diff review, CI, merge and runtime evidence remain mandatory."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.infra",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.chronik",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.leitstand",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "grabowski",
+    "infra",
+    "chronik",
+    "metrics",
+    "python"
+  ],
+  "acceptance": [
+    {
+      "id": "bounded-metrics",
+      "assertion": "The first snapshot contains attention age, terminal-projection lag, recurring failure signatures, recovery-proof age, temporary-resource growth and closure duration."
+    },
+    {
+      "id": "source-binding",
+      "assertion": "Every value names authority, observation time, coverage and uncertainty."
+    },
+    {
+      "id": "historical-axis",
+      "assertion": "Snapshots can be appended to Chronik idempotently and rendered without changing source truth."
+    },
+    {
+      "id": "no-score",
+      "assertion": "No opaque global health score or automatic task creation is introduced."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-18T01:28:00+02:00",
+    "operator_obligation": "goo-heimgewebe-resilienz-v1-20260718",
+    "does_not_establish": [
+      "implementation success before owner-repository evidence",
+      "authority outside the listed source systems"
+    ]
+  },
+  "depends_on": [
+    "HEIMGEWEBE-RESILIENZ-V1-T005",
+    "HEIMGEWEBE-RESILIENZ-V1-T007"
+  ]
+}

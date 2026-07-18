@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T001",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "title": "Audit resilience gaps and existing mechanisms",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "goal": "Produce a commit-bound gap matrix mapping each of the ten resilience principles to existing contracts, concrete live defects, missing behavior, truth owner, pilot and stop criterion.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/systemkatalog",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User explicitly authorized full registration and implementation on 2026-07-18; live-state, claims, diff review, CI, merge and runtime evidence remain mandatory."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.konvergenzregelkreis",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.chronik",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.repoground",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.infra",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.schauwerk",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "system-architecture",
+    "schemas"
+  ],
+  "acceptance": [
+    {
+      "id": "complete-matrix",
+      "assertion": "All ten principles map to existing mechanisms, gaps, owners, pilots and stop criteria."
+    },
+    {
+      "id": "live-evidence",
+      "assertion": "The matrix includes current task-projection, lease, connector and recovery evidence with timestamps and epistemic limits."
+    },
+    {
+      "id": "no-duplicate-owner",
+      "assertion": "Every proposed field and effect has exactly one existing truth owner."
+    },
+    {
+      "id": "implementation-order",
+      "assertion": "The matrix derives an evidence-based dependency order and identifies work that must wait for foreign claims."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-18T01:28:00+02:00",
+    "operator_obligation": "goo-heimgewebe-resilienz-v1-20260718",
+    "does_not_establish": [
+      "implementation success before owner-repository evidence",
+      "authority outside the listed source systems"
+    ]
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T011",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "title": "Prove RepoGround cutover and rollback",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 90
+  },
+  "goal": "Use the active RepoGround migration as a declarative failover pilot with canary, bounded degradation, rollback and consumer verification.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User explicitly authorized full registration and implementation on 2026-07-18; live-state, claims, diff review, CI, merge and runtime evidence remain mandatory."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.schauwerk",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "grabowski",
+    "repoground",
+    "systemd",
+    "migration",
+    "recovery"
+  ],
+  "acceptance": [
+    {
+      "id": "canary",
+      "assertion": "A parallel canary is identity-bound and cannot become primary before consumer verification."
+    },
+    {
+      "id": "rollback",
+      "assertion": "The legacy runtime remains a tested bounded rollback until the replacement passes all gates."
+    },
+    {
+      "id": "consumer-proof",
+      "assertion": "Bureau and Schauwerk consumers read the intended RepoGround source without hidden Lenskit dependency."
+    },
+    {
+      "id": "retirement",
+      "assertion": "Legacy retirement occurs only after rollback evidence, observation window and cleanup acceptance pass."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-18T01:28:00+02:00",
+    "operator_obligation": "goo-heimgewebe-resilienz-v1-20260718",
+    "does_not_establish": [
+      "implementation success before owner-repository evidence",
+      "authority outside the listed source systems"
+    ]
+  },
+  "depends_on": [
+    "HEIMGEWEBE-RESILIENZ-V1-T008"
+  ]
+}

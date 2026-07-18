@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "repo.infra",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/infra",
+  "github_slug": "heimgewebe/infra",
+  "grabowski_key": "repo:/home/alex/repos/infra",
+  "metadata": {
+    "purpose": "Infrastructure collectors and host-level operational integration."
+  }
+}

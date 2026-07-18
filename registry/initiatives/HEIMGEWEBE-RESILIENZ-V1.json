@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "id": "HEIMGEWEBE-RESILIENZ-V1",
+  "title": "Heimgewebe resilience architecture",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Implement the ten validated ecosystem-derived resilience mechanisms across the existing Heimgewebe truth owners without creating a new control plane, status truth or autonomous authority.",
+  "completion": [
+    "Stable systems and relevant relations declare criticality, failure domains, coupling, failure policy and reviewed recovery semantics without storing live status in Systemkatalog.",
+    "Temporary operational resources have owner, terminal condition, retention, orphan detection and evidence-preserving cleanup behavior.",
+    "Bureau and Grabowski prevent unsafe parallel work across shared critical failure domains while retaining proven disjoint parallelism.",
+    "Foundational functions have explicit primary and recovery paths, common-mode risk classification and successful bounded recovery evidence.",
+    "Konvergenzregelkreis requires lifecycle, degraded-mode, recovery and split-brain evidence according to risk and target criticality.",
+    "Slow deterioration is observed through source-bound snapshots without a synthetic global health score or automatic task authority.",
+    "Declarative failover uses only predeclared, verified paths with bounded degradation, return conditions and no authority transfer.",
+    "Schauwerk renders the resilience model without becoming a truth owner, and Vibe-Lab evaluates measured benefit against operational cost."
+  ],
+  "parallelism": {
+    "max_active_tasks": 4
+  },
+  "metadata": {
+    "registered_at": "2026-07-18T01:28:00+02:00",
+    "source": "user-authorized system review",
+    "operator_obligation": "goo-heimgewebe-resilienz-v1-20260718",
+    "principles": [
+      "response-diversity",
+      "managed-connectivity",
+      "functional-coherence",
+      "lifecycle-regeneration",
+      "disturbance-proof",
+      "slow-variables",
+      "polycentric-authority",
+      "declarative-rewiring",
+      "keystone-criticality",
+      "carrying-capacity"
+    ],
+    "does_not_establish": [
+      "a new resilience control plane",
+      "automatic truth transfer between systems",
+      "free-form adaptive failover",
+      "permission to mutate foreign dirty worktrees",
+      "completion before PR, merge, deployment and live evidence"
+    ]
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T007",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "title": "Catalog recovery paths and common-mode risk",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "goal": "Add reviewed primary/recovery path references and independence classification for foundational and essential functions.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/systemkatalog",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User explicitly authorized full registration and implementation on 2026-07-18; live-state, claims, diff review, CI, merge and runtime evidence remain mandatory."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "grabowski",
+    "systemkatalog",
+    "recovery-design",
+    "python"
+  ],
+  "acceptance": [
+    {
+      "id": "path-model",
+      "assertion": "Critical functions reference primary and recovery modes without embedding live readiness."
+    },
+    {
+      "id": "common-mode",
+      "assertion": "Recovery independence is classified as independent, partially shared, same failure domain or unknown with sources."
+    },
+    {
+      "id": "accepted-risk",
+      "assertion": "Single-path risks can be explicitly accepted instead of receiving fictional redundancy."
+    },
+    {
+      "id": "initial-inventory",
+      "assertion": "Weltgewebe data, Grabowski runtime, production release and RepoGround cutover are represented."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-18T01:28:00+02:00",
+    "operator_obligation": "goo-heimgewebe-resilienz-v1-20260718",
+    "does_not_establish": [
+      "implementation success before owner-repository evidence",
+      "authority outside the listed source systems"
+    ]
+  },
+  "depends_on": [
+    "HEIMGEWEBE-RESILIENZ-V1-T002",
+    "HEIMGEWEBE-RESILIENZ-V1-T003"
+  ]
+}

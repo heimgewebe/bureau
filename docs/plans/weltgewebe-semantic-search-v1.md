@@ -88,8 +88,8 @@ Brauchbare SemantAH-Konzepte wie Providergrenzen, Dimensionsprüfung, Normalisie
 
 ## Taskkette
 
-1. **T001 – Architekturvertrag, Wahrheitsgrenzen und Hard Cut:** reale Codeorganisation prüfen; diesen Vertrag und die Goldset-Grundlage im Weltgewebe veröffentlichen.
-2. **T002 – Relevanz-Goldset und Embedding-Modellwahl:** lexikalische Basis, FTS/Trigramme, lokales Modell, `qwen3-embedding:8b` und optional OpenRouter-Free vergleichen.
+1. **T001 – Architekturvertrag, Wahrheitsgrenzen und Hard Cut – verifiziert:** Vertrag und Goldset-Grundlage wurden über Weltgewebe-PR #1485 veröffentlicht.
+2. **T002 – Relevanz-Goldset und Embedding-Modellwahl – bereit:** synthetische lexikalische Basis, FTS/Trigramm-Referenzen und lokale Modelle vergleichen; OpenRouter-Free bleibt optional, synthetisch und kostenhart begrenzt.
 3. **T003 – PostgreSQL-Suchgrundlage und pgvector-Fähigkeit:** Erweiterungsfähigkeit, Schema, Migration, Backup/Restore/PITR und Betriebsbild belegen.
 4. **T004 – interner Embedding- und Ranking-Kern:** Providergrenze, Normalisierung, Dimensions- und Generationsprüfung sowie hybrides Ranking implementieren.
 5. **T005 – idempotente Projektion, Worker, Backfill und Löschfortpflanzung:** revisionssichere Multi-Instance-Verarbeitung und reproduzierbaren Neuaufbau liefern.
@@ -99,6 +99,12 @@ Brauchbare SemantAH-Konzepte wie Providergrenzen, Dimensionsprüfung, Normalisie
 9. **T009 – SemantAH stilllegen und bereinigen:** erst nach T008 Runtime-Rollen entfernen, Repository archivieren und Bureau/Systemkatalog nachziehen.
 
 Nach öffentlichem T008-Beweis supersedet oder schließt T009 `SEMANTAH-USEFULNESS-V1`, `SEMANTAH-INDEXD-SCALING-V1` und `SEMANTAH-E2E-PORTABILITY-V1`. Vorher bleiben sie unverändert.
+
+## Fortschritt
+
+- **T001 ist verifiziert:** Weltgewebe-PR #1485 wurde als Merge-Commit `f00afacc7be4cc551c81c5511faf5f817b04f700` nach grüner CI und zweiachsigem R2-Review gemergt. Der vollständige GitHub-Diff ist an SHA-256 `745483199f2b955a8ac37521445a85f8b9543e92ecf3ff69ed99b3a21ae7554f` gebunden.
+- **T002 ist der aktuelle Task:** ausschließlich synthetisches Goldset, reproduzierbare Offline-Baselines und lokale Modellmessung. Keine Produktion, keine realen oder pseudonymisierten Daten, keine kostenpflichtige API.
+- **Produktionsreparatur bleibt getrennt:** Der laufende Fix #1492 besitzt einen fremden isolierten Worktree und eigene Claims; diese Initiative dupliziert oder übernimmt ihn nicht.
 
 ## Umsetzungsschnitt T001
 

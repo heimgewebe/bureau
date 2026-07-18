@@ -3,11 +3,11 @@
   "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T001",
   "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
   "title": "Architekturvertrag, Wahrheitsgrenzen und Semantic-Search-Hard-Cut",
-  "state": "planned",
+  "state": "verified",
   "goal": "Den verbindlichen Architektur-, Daten-, Sichtbarkeits-, Ranking- und Ablösevertrag für eine interne hybride Suche im realen Weltgewebe-Repository veröffentlichen, bevor Datenbank-, Embedding-, Worker-, API- oder UI-Laufzeit implementiert wird.",
   "priority": {
     "lane": "later",
-    "rank": 100
+    "rank": 900
   },
   "execution": {
     "mode": "interactive-agent",
@@ -88,6 +88,44 @@
       "semantic relevance improvement",
       "production readiness",
       "SemantAH archive authority"
-    ]
+    ],
+    "verified_at": "2026-07-18",
+    "outcome": "Weltgewebe PR #1485 published and merged the Semantic Search v1 architecture contract, synthetic goldset schema and fixture, validator, tests and repository integration without adding runtime, database, provider, deployment or SemantAH dependencies.",
+    "implementation": {
+      "repository": "heimgewebe/weltgewebe",
+      "pull_request": 1485,
+      "base_sha": "e025715fbcbcbcc64f98efc8ef8cfb1455530888",
+      "head_sha": "43ef0b6361150e89d5a57d24ecc774cc5c256a7a",
+      "merge_commit": "f00afacc7be4cc551c81c5511faf5f817b04f700",
+      "merged_at": "2026-07-18T17:11:25Z",
+      "canonical_diff_sha256": "745483199f2b955a8ac37521445a85f8b9543e92ecf3ff69ed99b3a21ae7554f"
+    },
+    "validation": [
+      "Synthetic relevance-goldset validator and all eight focused regression tests passed.",
+      "Justfile recipe inventory and just contracts-search-check passed after the missing recipe was added during review.",
+      "Generated-files guard, blocking documentation validations, required merge gate, PostgreSQL integration proofs, Web E2E and CodeQL passed on the final head.",
+      "The R2 review-evidence gate accepted two distinct PASS reports on correctness and privacy bound to the final head and diff.",
+      "The isolated implementation worktree, local branch, remote branch and owner claim were removed after merge."
+    ],
+    "verified_acceptance": {
+      "canonical-truth": "architecture/semantic-search.md defines PostgreSQL as the only persistent truth and all search representations as regenerable projections.",
+      "visibility-before-retrieval": "The contract applies visibility and deletion state before retrieval and excludes authentication, moderation, private conversation, hidden-location and other non-search data.",
+      "hybrid-ranking": "The contract fixes lexical priority classes before semantic similarity, requires stable tie-breaks and forbids pure vector search.",
+      "generation-bound-models": "Provider, model, revision, dimension, document normalization and generation identity are bound and cross-generation mixing is forbidden.",
+      "hard-cut": "No separate semantic runtime, JSONL search persistence, standalone indexd, SemantAH dependency, Commonworld integration, shadow mode or automatic similarity mutation was added.",
+      "quality-gates": "A machine-readable synthetic goldset schema, fixture, validator and eight regression tests were merged.",
+      "task-boundaries": "T001 added no pgvector, model provider, worker, API, web search, rollout or SemantAH archive effect.",
+      "repository-gates": "The exact final diff was hash-bound, required CI and two-axis R2 review evidence passed before merge."
+    },
+    "verification": {
+      "source": "GitHub pull request, exact-head status checks and review-evidence readback",
+      "source_ref": "heimgewebe/weltgewebe#1485",
+      "verified_at": "2026-07-18T17:11:25Z",
+      "head_sha": "43ef0b6361150e89d5a57d24ecc774cc5c256a7a",
+      "merge_commit": "f00afacc7be4cc551c81c5511faf5f817b04f700",
+      "diff_sha256": "745483199f2b955a8ac37521445a85f8b9543e92ecf3ff69ed99b3a21ae7554f",
+      "task_sha256": "7d685f921b0377a8164df6744f38c411be05aee5c6aa7157db8e736ac6bc4443",
+      "plan_sha256": "18002b2b2def870ec6e5dd91cd15d19aaade6f053cac144ca85e2862234a709e"
+    }
   }
 }

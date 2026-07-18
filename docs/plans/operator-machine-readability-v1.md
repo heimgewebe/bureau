@@ -1,10 +1,19 @@
 # Operator Machine Readability v1
 
-Stand: 2026-07-13
+Stand: 2026-07-18
 
 ## Zweck
 
-Das Operator-Ökosystem wird so ausgerichtet, dass ChatGPT über Grabowski der ausführende Operator ist. Der Mensch liefert Ziel, Bedeutung, Freigaben und Abbruchentscheidungen; er soll nicht als Shell-Ausführer, Dateisystem-Navigator oder Statusaggregator dienen.
+Das Operator-Ökosystem wird so ausgerichtet, dass ChatGPT über Grabowski der ausführende Operator ist. Der Nutzer ist Beobachter und Steuermann: Er setzt Ziel, Bedeutung, Priorität, Risikotoleranz und notwendige Freigaben, interveniert bei Bedarf und kann abbrechen. Der Operator liest den Livezustand, wählt Wahrheitsquellen, plant, registriert, führt aus, verifiziert, reconciliert unklare Effekte und berichtet. Operative Hilfsarbeit wird nicht an den Nutzer zurückdelegiert.
+
+## Arbeitsvertrag: Operator und Beobachter/Steuermann
+
+| Rolle | Verantwortung | Nicht die Aufgabe der Rolle |
+|---|---|---|
+| ChatGPT über Grabowski — Operator | Livezustand prüfen; Primärquellen wählen; Arbeit planen und im Bureau registrieren; Claims und Leases beachten; autonom ausführen; Tests, CI, Diff, Deployment und Readback verifizieren; unklare Effekte reconciliieren; Ergebnis und Restlücken belegt melden. | Ziele oder Werte des Nutzers erfinden; explizite Kosten-, Sicherheits-, Datenschutz-, Irreversibilitäts- oder Freigabegates umgehen. |
+| Nutzer — Beobachter und Steuermann | Ziel und Sinn bestimmen; Prioritäten und Risikotoleranz setzen; notwendige Freigaben geben; Kurs korrigieren; stoppen. | Shell-Befehle ausführen; Dateien suchen oder editieren; Status aus mehreren Systemen zusammensetzen; Routine-Reviews, Retries, Readbacks oder Task-Buchhaltung übernehmen. |
+
+Der Begriff `observer` in technischen Quellbeobachtern bleibt davon getrennt: GitHub-, Runtime- oder Prozess-Observer liefern Fakten. Sie sind keine Beschreibung der menschlichen Systemrolle.
 
 Der erste produktive Slice ist über `heim-pc` PR #37 umgesetzt: ein statischer, maschinenlesbarer Host-Einstieg mit lokalen Projektionen, Wahrheitsquellen und Sicherheitsgrenzen. Dieses Programm erfasst die belegten Restlücken, ohne eine neue konkurrierende Wahrheitsschicht einzuführen.
 
@@ -21,6 +30,23 @@ Eine hybride Kette:
 5. Git, GitHub, CI, systemd, Logs und Healthchecks bleiben Primärquellen für aktuellen Zustand.
 6. RepoBrief/Lenskit liefert nur provenance-gebundenen Repository-Kontext.
 7. Metarepo hält Fleet-Mitgliedschaft und zentrale Verträge.
+
+### Machine-Operability als primäres Optimierungsziel
+
+Eine Oberfläche ist nicht deshalb gut, weil ein Mensch sie bequem bedienen kann. Sie ist gut, wenn der Operator sie zuverlässig, sparsam und ohne versteckte Gesprächserinnerung konsumieren kann. Primäre Anforderungen sind:
+
+- typisierte Ein- und Ausgaben mit stabiler Schema-Version und stabilen Fehlercodes;
+- kompakte Standardantworten und gezielte Detailauflösung über stabile Identitäten;
+- Idempotenzschlüssel, exakte Preconditions, Compare-and-swap und Driftverweigerung;
+- Quellen-, Commit-, Tree-, Plan-, Diff- und Receipt-Bindung;
+- explizite Felder für `effect_started`, Mehrdeutigkeit, Retrybarkeit und erforderlichen Readback;
+- keine Prosa-Auswertung als Steuerlogik und kein vollständiges Laden großer Register ohne Bedarf;
+- autonome Nutzung ohne Shell-, Dateisystem- oder JSON-Arbeit des Nutzers;
+- messbare Werkzeugaufrufe, Bytes, Latenz, Fehlversuche, Duplikatvermeidung und menschliche Interventionen.
+
+CLI bleibt wichtig, aber anders gewichtet: als deterministischer Transport, lokaler Diagnosepfad und rückrollbarer Fallback. Die primäre Produktfläche für operative Nutzung sind typisierte Grabowski-Aufrufe auf einer einmalig implementierten Bureau-Domänenlogik. Menschenlesbare Dashboards, Berichte und Visualisierungen bleiben für Beobachtung und Steuerung wichtig, dürfen aber keine Voraussetzung für Ausführung, Readback oder Task-Buchhaltung sein. Eine HTTP-API ist erst gerechtfertigt, wenn ein realer entfernter Verbraucher belegt ist.
+
+`Review` bezeichnet eine policy- und evidenzgebundene Prüfung, nicht automatisch manuelle Menschenarbeit. Operator-Self-Review ist zulässig, wenn der aktive Vertrag dies erlaubt; der Nutzer wird nur einbezogen, wenn ein Steuergate, Kostenrisiko, Sicherheitsrisiko, Datenschutzbezug oder irreversible Wirkung dies verlangt.
 
 ### Verworfener Alternativpfad
 
@@ -51,6 +77,7 @@ Alle Einstiegslogik ausschließlich in Grabowski einzubauen wäre kurzfristig ei
 9. heim-pc: optionale Hostzustände nur provenance-gebunden erzeugen; Abwesenheit bleibt gültig.
 10. End-to-End: beweisen, dass ein frischer Operator ohne Gesprächsvorwissen beim richtigen Host-, System-, Task- und Runtime-Kanon landet.
 11. Grabowski/Bureau: den sicheren Übergangszustand aus kanonischem Manifest-Release und separat hashgebundenem Vertrags-Venv auf eine einzige Release-Identität konsolidieren.
+12. Bureau/Grabowski: Kandidatenaufnahme, semantisch begrenzte Bewertung, reviewgebundene Task-Vorschläge und PR-Veröffentlichung als operator-native, typisierte und receipt-fähige Fläche bereitstellen; `BUR-2026-003-T008` bleibt nur Steuerboard-Quelladapter.
 
 ## Grenzen
 
@@ -58,6 +85,8 @@ Alle Einstiegslogik ausschließlich in Grabowski einzubauen wäre kurzfristig ei
 - Kein breiter Scan des Home-Verzeichnisses.
 - Keine Secret-, Browserprofil-, Keyring- oder privaten Inhaltsflächen.
 - Kein automatisches Queuing, Claiming, Dispatching, Mergen oder Deployen durch diese Registrierung.
+- Keine für Menschen optimierte Paralleloberfläche als Primärprodukt. Menschenlesbare Ausgaben sind Projektionen; die operator-native typisierte Fläche ist maßgeblich.
+- Der Rollenvertrag hebt keine expliziten Kosten-, Sicherheits-, Datenschutz-, Irreversibilitäts- oder Freigabegates auf.
 - Prosa und generierte Ansichten bleiben Projektionen; aktuelle Primärquellen haben Vorrang.
 - Unbekannte Provenienz führt zu `unknown` oder Blockierung, nicht zu einem Aktualitätsclaim.
 - Strukturelle Connector-Kompatibilität belegt weder Modellverständnis noch korrektes künftiges Verhalten.
@@ -72,7 +101,10 @@ Das Programm ist abgeschlossen, wenn ein frischer ChatGPT-Operator über Grabows
 - fremde Writes in geleasten Worktrees verhindert oder eindeutig attribuiert;
 - keine stale installierte Bureau- oder Contract-Runtime benutzt;
 - RepoBrief-Kontext nur mit belegter Provenienz als aktuell behandelt;
-- einen reproduzierbaren End-to-End-Test ohne menschliche Shell-Hilfe besteht.
+- einen reproduzierbaren End-to-End-Test ohne menschliche Shell-Hilfe besteht;
+- Kandidaten und Task-Vorschläge typisiert, idempotent und quellengebunden verarbeitet;
+- keine manuelle JSON-Bearbeitung, Dateisuche oder Statusaggregation an den Nutzer delegiert;
+- CLI nur als Transport oder Diagnosefallback und nicht als menschliche Hauptbedienoberfläche benötigt.
 
 ## Nichtbelege
 

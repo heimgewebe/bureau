@@ -2,21 +2,20 @@
   "schema_version": 1,
   "id": "BUR-2026-003-T008",
   "initiative": "BUR-2026-003",
-  "title": "Pull candidate planning through existing Steuerboard artifacts",
+  "title": "Adapt Steuerboard evidence to operator-native Bureau intake",
   "state": "planned",
   "priority": {
     "lane": "later",
     "rank": 80
   },
-  "goal": "Use existing Steuerboard artifacts as candidate evidence and convert them into Bureau tasks only when provenance and acceptance criteria are explicit.",
+  "goal": "Consume existing Steuerboard artifacts only as a source adapter for the canonical operator-native candidate assessment and reviewed task proposal surface in OPERATOR-MACHINE-READABILITY-V1-T017; do not implement a second intake, deduplication or promotion authority.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
-    "baseline_commit": "a19c6f0779bc0955ec36f941b9969f2c69079d92",
+    "baseline_commit": "04bd3b8c7c5da8cfdcd50b23230bdd5b3c21befe",
     "grabowski_resources": [
       "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
-      "path:/home/alex/repos/bureau/.bureau-scopes/registry",
       "path:/home/alex/repos/bureau/registry/tasks/BUR-2026-003-T008.json"
     ]
   },
@@ -40,20 +39,32 @@
   "acceptance": [
     {
       "id": "artifact-provenance",
-      "assertion": "Candidate tasks preserve source artifact path, hash, and generated-at evidence.",
+      "assertion": "The adapter preserves source artifact path or opaque locator, content hash, generated-at or observed-at evidence and source kind in the canonical candidate record.",
       "verifier": "fixture",
       "evidence_type": "object"
     },
     {
+      "id": "canonical-core-reuse",
+      "assertion": "Steuerboard-specific code calls the T017 domain surface and contains no independent task generation, deduplication, review or publication rules.",
+      "verifier": "architecture test",
+      "evidence_type": "boolean"
+    },
+    {
       "id": "dedupe",
-      "assertion": "Existing tasks are detected so duplicate task cutting is avoided.",
+      "assertion": "Exact duplicate detection and bounded similarity suggestions are delegated to the canonical assessment surface; no semantic match is acted on automatically.",
       "verifier": "tests",
-      "evidence_type": "string"
+      "evidence_type": "object"
     },
     {
       "id": "acceptance-required",
-      "assertion": "No candidate is promoted without explicit acceptance criteria and approval class.",
+      "assertion": "No candidate reaches a durable task proposal without explicit acceptance criteria, claims, approval class, source binding and unresolved-field reporting.",
       "verifier": "regression test",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "operator-consumption",
+      "assertion": "The adapter is consumable through the typed Grabowski route and requires no human shell work, file inspection or manual Registry JSON editing.",
+      "verifier": "fresh-session smoke",
       "evidence_type": "boolean"
     }
   ],
@@ -79,10 +90,16 @@
         "verification authority",
         "safe mutation of terminal historical tasks"
       ]
+    },
+    "operator_native_reframe": {
+      "registered_at": "2026-07-18T05:30:00+02:00",
+      "core_task": "OPERATOR-MACHINE-READABILITY-V1-T017",
+      "reason": "The user is observer and steersman; ChatGPT through Grabowski is the operator. Source-specific artifacts must feed one machine-first operator surface rather than create a human-oriented or duplicate workflow."
     }
   },
   "depends_on": [
     "BUR-2026-003-T004",
-    "BUR-2026-003-T005"
+    "BUR-2026-003-T005",
+    "OPERATOR-MACHINE-READABILITY-V1-T017"
   ]
 }

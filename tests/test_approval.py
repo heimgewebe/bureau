@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
 from bureau import approval
@@ -233,3 +236,14 @@ def test_registry_mutation_requires_reviewed_plan() -> None:
     )
     assert allowed["allowed"] is True
     assert allowed["evidence"]["level"] == "reviewed_plan"
+
+
+def test_task_schema_action_classes_match_approval_runtime() -> None:
+    root = Path(__file__).resolve().parents[1]
+    schema = json.loads((root / "schemas" / "task.v1.schema.json").read_text())
+    declared = set(
+        schema["properties"]["execution"]["properties"]["approval"]["properties"]
+        ["action_class"]["enum"]
+    )
+    runtime = set(approval.READ_ONLY_ACTIONS) | set(approval.APPROVAL_RULES)
+    assert declared == runtime

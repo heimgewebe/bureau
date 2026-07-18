@@ -405,14 +405,18 @@
           "properties": {
             "action_class": {
               "enum": [
-                "read_only_observation",
-                "proposal_preview",
-                "repository_mutation",
-                "source_import",
                 "agent_dispatch",
-                "task_creation_from_external_evidence",
+                "dry_run",
+                "proposal_preview",
                 "queue_mutation",
-                "runtime_mutation"
+                "read_only_observation",
+                "registry_mutation",
+                "repository_mutation",
+                "runtime_mutation",
+                "source_import",
+                "state_root_migration",
+                "task_creation_from_external_evidence",
+                "worktree_cleanup"
               ]
             },
             "note": {

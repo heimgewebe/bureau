@@ -13,7 +13,7 @@
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/repoground",
-    "baseline_commit": "d54a3f3d53818f03405cab5e84e3a5086d4b81ad",
+    "baseline_commit": "9bca73f70021f941feb22883d0020f963530ff29",
     "grabowski_resources": [
       "repo:/home/alex/repos/repoground",
       "component:repoground:runtime-cutover",
@@ -59,10 +59,66 @@
   "depends_on": [],
   "metadata": {
     "registered_at": "2026-07-17T23:07:14+02:00",
-    "blocker": "Aktiver fremder Runtime-Cutover-Lease und laufender rlens.service auf 127.0.0.1:8787.",
+    "blocker": "Genau eine fremde Claude-MCP-Sitzung nutzt weiterhin den alten Lenskit-/RepoBrief-Launcher, den alten Repositorypfad und den alten Bundlepfad. Der Prozess wird nicht beendet. Das vertragliche 30-Tage-Nullnutzungsfenster kann erst nach seinem natürlichen Ende beginnen.",
     "does_not_establish": [
-      "Freigabe zum Stoppen von rlens.service",
-      "Nullverbrauch alter Importpfade"
+      "Nullverbrauch alter Import- und Kommandopfade",
+      "Ablauf des 30-Tage-Nullnutzungsfensters",
+      "Freigabe zum Beenden oder Verändern des fremden Claude-MCP-Prozesses",
+      "Entfernbarkeit persistierter versionierter Legacy-IDs"
+    ],
+    "runtime_cutover": {
+      "status": "completed-and-verified",
+      "completed_at": "2026-07-18T06:21:58+02:00",
+      "repoground_main_commit": "9bca73f70021f941feb22883d0020f963530ff29",
+      "implementation_prs": [
+        1040,
+        1042
+      ],
+      "service": {
+        "canonical_unit": "repoground.service",
+        "canonical_state": "loaded-active-running-enabled",
+        "legacy_unit": "rlens.service",
+        "legacy_state": "not-found-inactive-dead",
+        "health_status": "ok",
+        "server_version": "9bca73f7",
+        "auth_enabled": true,
+        "running_jobs": 0,
+        "service_artifact_count_before": 2,
+        "service_artifact_count_after": 2,
+        "restart_readback_count": 2
+      },
+      "mcp": {
+        "canonical_server_name": "repoground",
+        "canonical_resource_scheme": "repoground",
+        "resource_count": 29,
+        "resource_read_verified": true,
+        "tool_count": 7
+      },
+      "bundle_copy": {
+        "source_preserved": true,
+        "file_count": 26,
+        "byte_count": 44014357,
+        "manifest_sha256": "a329cf4e47fef9abcfeb9f22751e29a7adca9d8ebb072315f7bda034c56ac745"
+      },
+      "environment": {
+        "canonical_path": "/home/alex/.config/repoground/env",
+        "mode": "0600",
+        "value_equivalence_verified": true,
+        "secret_values_recorded": false
+      }
+    },
+    "evidence": {
+      "post_cutover_inventory": "/home/alex/iCloud/Drive/halde/repoground-compatibility-inventory-post-cutover-20260718.json",
+      "post_cutover_inventory_sha256": "3f7a74e4b511a119837c1abfce7b6f8f79c0f808780f26a7177bdebd673bd47a",
+      "bundle_migration_receipt": "/home/alex/iCloud/Drive/halde/repoground-bundle-migration-20260718.json",
+      "environment_migration_receipt": "/home/alex/iCloud/Drive/halde/repoground-environment-migration-20260718.json",
+      "rollback_backup": "/home/alex/iCloud/Drive/halde/repoground-host-cutover-backup-20260718"
+    },
+    "remaining_actions": [
+      "Den fremden Claude-MCP-Prozess nicht beenden oder verändern.",
+      "Nach seinem natürlichen Ende ein 30-Tage-Nullnutzungsfenster für alte CLI-, Repository-, Bundle- und Environmentflächen beginnen.",
+      "Erst nach belegtem Nullverbrauch alte Konfigurationen und Adapter gemäß RepoGround-Kompatibilitätsvertrag entfernen.",
+      "T002 erst schließen, wenn alle verbleibenden Verbraucher migriert und die Entfernungskriterien erfüllt sind."
     ]
   }
 }

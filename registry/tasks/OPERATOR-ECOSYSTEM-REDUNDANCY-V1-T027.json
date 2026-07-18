@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T027",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Reconcile stale RepoGround migration workspaces and the runtime-cutover lease",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 6
@@ -73,7 +73,93 @@
     "does_not_establish": [
       "permission to kill tmux sessions",
       "permission to delete worktrees",
-      "permission to force-release leases"
-    ]
+      "permission to force-release leases",
+      "checkout deletion",
+      "future absence of stale workspaces or leases",
+      "completion of T025"
+    ],
+    "verified_at": "2026-07-18T01:42:00+02:00",
+    "verification_note": "Three stale RepoGround migration workspaces were re-read and receipt-closed without deleting worktrees or unique evidence; the old owner had no running task, its exact leases were released without force, and T025 acquired the successor resources.",
+    "workspace_reconciliation": [
+      {
+        "workspace_id": "gaw-repoground-v3-base-lenskit-to-repoground-3042fdd262d0",
+        "classification": "abandoned_stale_workspace",
+        "receipt_sha256": "760e0d2f93a0813df138a4914e1751c5aff6cdc45b2cdf9f9e342e6f527e77e0",
+        "writer_worktree": "missing",
+        "unique_commit": false
+      },
+      {
+        "workspace_id": "gaw-repoground-v3-base-lenskit-to-repoground-259b014f842a",
+        "classification": "abandoned_stale_workspace",
+        "receipt_sha256": "b23f2e06cf81256015d95d695c41177b60055cfbf46badec683e5b1537f5d183",
+        "writer_worktree": "missing",
+        "unique_commit": false
+      },
+      {
+        "workspace_id": "gaw-repoground-v3-base-lenskit-to-repoground-835a1520f349",
+        "classification": "abandoned_stale_workspace",
+        "receipt_sha256": "be3dd0eb3037b3e6eb9363daea5a7becf1384e9ac6dfb58cac929b4719f39425",
+        "writer_head": "ca082fb9426ce2de83a15b706a53bca5b1fae2be",
+        "base_head": "ca082fb9426ce2de83a15b706a53bca5b1fae2be",
+        "unique_commit": false,
+        "dirty": false,
+        "tmux_shell_removed": true,
+        "writer_worktree_preserved": true
+      }
+    ],
+    "lease_resolution": {
+      "old_owner": "chatgpt-repoground-consumers-runtime-20260717",
+      "force_release": false,
+      "old_owner_active_leases_after": 0,
+      "successor_owner": "chatgpt-repoground-runtime-cutover-20260718",
+      "successor_required_resources_acquired": true,
+      "readback_path": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/resource-lease-readback.json",
+      "readback_sha256": "47d51f92079b18266a10df0869c861140a821355c70102fd75351917ae5acc58"
+    },
+    "validated_acceptance": {
+      "live-owner-check": "PASS",
+      "workspace-classification": "PASS",
+      "evidence-preserved": "PASS",
+      "lease-resolution": "PASS",
+      "unblocked-successor": "PASS"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "workspace_closeout",
+          "authority": "grabowski",
+          "source_ref": "workspace:gaw-repoground-v3-base-lenskit-to-repoground-3042fdd262d0",
+          "receipt_sha256": "760e0d2f93a0813df138a4914e1751c5aff6cdc45b2cdf9f9e342e6f527e77e0",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T027"
+        },
+        {
+          "kind": "workspace_closeout",
+          "authority": "grabowski",
+          "source_ref": "workspace:gaw-repoground-v3-base-lenskit-to-repoground-259b014f842a",
+          "receipt_sha256": "b23f2e06cf81256015d95d695c41177b60055cfbf46badec683e5b1537f5d183",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T027"
+        },
+        {
+          "kind": "workspace_closeout",
+          "authority": "grabowski",
+          "source_ref": "workspace:gaw-repoground-v3-base-lenskit-to-repoground-835a1520f349",
+          "receipt_sha256": "be3dd0eb3037b3e6eb9363daea5a7becf1384e9ac6dfb58cac929b4719f39425",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T027"
+        },
+        {
+          "kind": "resource_readback",
+          "authority": "grabowski-resources",
+          "source_ref": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/resource-lease-readback.json",
+          "receipt_sha256": "47d51f92079b18266a10df0869c861140a821355c70102fd75351917ae5acc58",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T027"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "738f9bf7ef0a1b9d9eb94adef8e725fb5d0f536163361df620efa443aceebf5f",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    }
   }
 }

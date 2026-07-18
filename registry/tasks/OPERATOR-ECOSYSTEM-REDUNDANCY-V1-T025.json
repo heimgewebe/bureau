@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T025",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Cut over the active RepoGround runtime without losing rollback",
-  "state": "ready",
+  "state": "blocked",
   "priority": {
     "lane": "now",
     "rank": 5
@@ -104,7 +104,96 @@
     "does_not_establish": [
       "permission to force-release a foreign lease",
       "permission to stop rlens.service before parallel verification",
-      "future runtime health"
+      "future runtime health",
+      "authoritative convergence grip execution",
+      "fix of shared empty FTS content projection",
+      "fix of repository example launcher health path",
+      "absence of all legacy compatibility names"
+    ],
+    "implemented_at": "2026-07-18T02:03:16+02:00",
+    "blocked_at": "2026-07-18T02:29:58+02:00",
+    "block_reason": "The immutable RepoGround runtime is live and locally R2-terminal, but the mandatory hash-bound Grabowski convergence-assess call is blocked by the platform safety layer whenever the exact published protocol head is supplied. No authoritative allow_closure receipt exists.",
+    "next_action": "Re-run the unchanged convergence-assess grip when the platform permits the exact protocol-head parameter; accept closure only if request SHA-256 0b6a2684…b35d and protocol head 83ed435b…d40b are returned with terminally_closed.",
+    "implementation": {
+      "source_head": "d54a3f3d53818f03405cab5e84e3a5086d4b81ad",
+      "source_pull_request": "heimgewebe/repoground#1038",
+      "source_merge_commit": "d54a3f3d53818f03405cab5e84e3a5086d4b81ad",
+      "current_origin_main": "a33400f7090c368838bcdf02bcf2087c719fae84",
+      "current_main_runtime_code_divergence": false,
+      "runtime_path": "/home/alex/.local/share/repoground-runtime/d54a3f3d53818f03405cab5e84e3a5086d4b81ad",
+      "service": "repoground.service",
+      "listen": "127.0.0.1:8787",
+      "service_state": "active-enabled",
+      "legacy_service_state": "rlens.service inactive-disabled",
+      "rollback_used": false,
+      "tests": "4350 passed, 1 skipped",
+      "github_checks_terminal_green_or_skipped": 21,
+      "receipts": {
+        "parallel_parity": {
+          "path": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/parallel-parity-receipt.json",
+          "sha256": "43166b1ed10b11541810ad2a92cf0ceeb6564cce59b12906cf3bd784eaa09c0f"
+        },
+        "rollback_proof": {
+          "path": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/rollback-proof.json",
+          "sha256": "1db7a036d60a2fb7d5c25f155926da3b94d1d31c1031f2cdef705d166ae1860f"
+        },
+        "cutover": {
+          "path": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/cutover-receipt.json",
+          "sha256": "fd51b517a53123365b6821d3c22c120ee2b8d20f73b606a5a5f5c884d642384a"
+        },
+        "final_live_verification": {
+          "path": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/final-live-verification.json",
+          "sha256": "4d0e50e8e7d58a536e0a9902321bca107ee54c2b5dbbac02f81bbef7b95720b1"
+        },
+        "field_review": {
+          "path": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/runtime-cutover-field-review.json",
+          "sha256": "c67d931e9777279982d9977cfb2334525aadebed30e00d319662ebf79aa80308"
+        },
+        "fixture_cleanup": {
+          "path": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/fixture-cleanup-receipt.json",
+          "sha256": "44ecd1067fc67f4191d85a5a1f01a70d218cdf91e5c4484aa942cfbb6d38e531"
+        },
+        "launcher_migration": {
+          "path": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/launchers/launcher-migration.json",
+          "sha256": "40040b2b50fe5dea689822b871f2ecdedfcbab1f4a278ba33d0e46c93c65c91b"
+        },
+        "chronik_import": {
+          "path": "/home/alex/.local/state/chronik/import-receipts/5e88166c6a0756f3270399e063019a2745bff6106f721e2e90544258d12214a0.receipt.json",
+          "declared_sha256": "d43fce724fef28c872f5ffb7ffcefff8e06f0a45ed583ae981ed58d8fa668234",
+          "file_sha256": "d874439b9941795ace3e062f8870960255266513b2b3ac4c3750e6889b956199"
+        }
+      }
+    },
+    "convergence": {
+      "risk_level": "R2",
+      "request_path": "/home/alex/iCloud/Drive/halde/rg-t025-r2/request.json",
+      "request_sha256": "0b6a2684a4949b6e3afaa14cdd6f4f772e19113b15abb7aa55dcac21c3d2b35d",
+      "protocol_head": "83ed435bf9eb490e81a6ff2103b6c1397440d40b",
+      "local_reference_status": "terminally_closed",
+      "local_missing_evidence": [],
+      "local_conflicts": [],
+      "local_blocked_by": [],
+      "authoritative_grip_status": "unavailable_platform_blocked",
+      "authoritative_closure_allowed": false,
+      "platform_blocker_path": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/grip-platform-blocker.json",
+      "platform_blocker_sha256": "4e1ed200d8273777cedf55a08481d9aa6ca6a5fec286c7217bc3fb2d59a0e689",
+      "preflight_receipts": [
+        "e1e130a43af9feeee54ab599010653d53ed67598dc1a00408920594efaadc8fe",
+        "ed81ae4d21987ac0f5e4c580978a1fc54ebeefddda7597f5fbed35f2f74d14e4"
+      ]
+    },
+    "validated_acceptance": {
+      "exact-source": "PASS",
+      "parallel-first": "PASS",
+      "consumer-parity": "PASS with shared non-regression FTS defect recorded in follow-up T006",
+      "rollback-proof": "PASS",
+      "controlled-cutover": "PASS",
+      "convergence-gate": "BLOCKED: local evaluator terminally_closed, mandatory Grabowski receipt unavailable"
+    },
+    "known_residuals": [
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T006",
+      "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009",
+      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026"
     ]
   }
 }

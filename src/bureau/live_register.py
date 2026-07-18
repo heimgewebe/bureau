@@ -146,9 +146,7 @@ def _candidate_identity(item: dict[str, Any]) -> str:
 
 
 def _candidate_projection(records: list[dict[str, Any]]) -> dict[str, Any]:
-    candidates = [
-        item for item in records if item["record"].get("kind") == "candidate_task"
-    ]
+    candidates = [item for item in records if item["record"].get("kind") == "candidate_task"]
     superseded_event_ids = {
         int(item["record"]["supersedes_event_id"])
         for item in candidates
@@ -194,6 +192,7 @@ def live_register_record(
     promotion_required: bool | None = None,
     note: str | None = None,
     catalog_validation: str = "strict",
+    operator_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Append one gitless operational Bureau live-register event."""
     if catalog_validation not in {"strict", "deferred"}:
@@ -202,24 +201,20 @@ def live_register_record(
         raise StateError("strict catalog validation requires a loaded Bureau registry")
     validation_registry = registry if catalog_validation == "strict" else None
     checked_kind = _validate_kind(kind)
-    checked_status = (
-        _validate_status(checked_kind, status) if status is not None else None
-    )
+    if checked_kind != "candidate_task" and operator_context is not None:
+        raise StateError("operator_context is only valid for candidate_task")
+    checked_status = _validate_status(checked_kind, status) if status is not None else None
     if catalog_validation == "deferred" and checked_kind == "candidate_task":
         if checked_status == "promoted":
             raise StateError("deferred candidate_task cannot claim promoted status")
         if checked_status in {None, *ACTIVE_LIVE_STATUSES}:
             if promotion_required is False:
-                raise StateError(
-                    "active deferred candidate_task requires promotion_required=true"
-                )
+                raise StateError("active deferred candidate_task requires promotion_required=true")
             promotion_required = True
     checked_title = _optional_text(title, field="title", max_length=240)
     assert checked_title is not None
     checked_source = _optional_text(source, field="source", max_length=80) or "operator"
-    checked_thread_id = _validate_thread_id(
-        thread_id, required=(checked_kind == "thread_focus")
-    )
+    checked_thread_id = _validate_thread_id(thread_id, required=(checked_kind == "thread_focus"))
     checked_worker_id = _validate_worker_id(worker_id)
     checked_repo = _validate_repo(validation_registry, repo)
     checked_task_id = _validate_task(validation_registry, task_id)
@@ -229,12 +224,17 @@ def live_register_record(
         raise StateError(f"repo is required for {checked_kind}")
     if supersedes_event_id is not None and supersedes_event_id < 1:
         raise StateError("supersedes_event_id must be a positive integer")
+    if operator_context is not None:
+        if not isinstance(operator_context, dict):
+            raise StateError("operator_context must be an object")
+        rendered_context = legacy.canonical_json(operator_context)
+        if len(rendered_context.encode("utf-8")) > 16_384:
+            raise StateError("operator_context must be at most 16384 bytes")
+        operator_context = json.loads(rendered_context)
     if checked_kind != "candidate_task" and (
         checked_candidate_id is not None or supersedes_event_id is not None
     ):
-        raise StateError(
-            "candidate_id and supersedes_event_id are only valid for candidate_task"
-        )
+        raise StateError("candidate_id and supersedes_event_id are only valid for candidate_task")
 
     with store.immediate() as connection:
         if checked_kind == "candidate_task":
@@ -249,17 +249,11 @@ def live_register_record(
             ).fetchall()
             existing = [_decode_live_row(row) for row in rows]
             candidates = [
-                item
-                for item in existing
-                if item["record"].get("kind") == "candidate_task"
+                item for item in existing if item["record"].get("kind") == "candidate_task"
             ]
             if supersedes_event_id is not None:
                 previous = next(
-                    (
-                        item
-                        for item in candidates
-                        if int(item["event_id"]) == supersedes_event_id
-                    ),
+                    (item for item in candidates if int(item["event_id"]) == supersedes_event_id),
                     None,
                 )
                 if previous is None:
@@ -271,14 +265,10 @@ def live_register_record(
                     item["record"].get("supersedes_event_id") == supersedes_event_id
                     for item in candidates
                 ):
-                    raise StateError(
-                        f"candidate event {supersedes_event_id} is already superseded"
-                    )
+                    raise StateError(f"candidate event {supersedes_event_id} is already superseded")
                 inherited_id = _candidate_identity(previous)
                 if checked_candidate_id is not None and checked_candidate_id != inherited_id:
-                    raise StateError(
-                        "candidate_id must match the superseded candidate identity"
-                    )
+                    raise StateError("candidate_id must match the superseded candidate identity")
                 previous_repo = previous["record"].get("repo")
                 if checked_repo is not None and checked_repo != previous_repo:
                     raise StateError("candidate repo cannot change across supersession")
@@ -286,9 +276,7 @@ def live_register_record(
                 if checked_task_id is None:
                     checked_task_id = previous["record"].get("task_id")
                 if promotion_required is None:
-                    promotion_required = bool(
-                        previous["record"].get("promotion_required", False)
-                    )
+                    promotion_required = bool(previous["record"].get("promotion_required", False))
                 if checked_status is None:
                     previous_status = previous["record"].get("status")
                     if not isinstance(previous_status, str) or not previous_status.strip():
@@ -333,6 +321,7 @@ def live_register_record(
             "candidate_id": checked_candidate_id,
             "supersedes_event_id": supersedes_event_id,
             "note": checked_note,
+            "operator_intake": operator_context,
         }
         payload.update({key: value for key, value in optional.items() if value is not None})
         created_at = legacy.utc_now()
@@ -483,6 +472,45 @@ def _load_all_candidate_records(store: StateStore) -> list[dict[str, Any]]:
     ]
 
 
+def candidate_records(store: StateStore) -> list[dict[str, Any]]:
+    """Return all append-only candidate events in event order."""
+    return _load_all_candidate_records(store)
+
+
+def current_candidate_records(store: StateStore) -> list[dict[str, Any]]:
+    """Return one latest event per candidate identity in stable event order."""
+    return _candidate_projection(_load_all_candidate_records(store))["latest"]
+
+
+def current_candidate_record(
+    store: StateStore,
+    *,
+    candidate_id: str | None = None,
+    event_id: int | None = None,
+) -> dict[str, Any]:
+    """Return one current candidate event and reject stale or ambiguous selectors."""
+    if (candidate_id is None) == (event_id is None):
+        raise StateError("use exactly one of candidate_id or event_id")
+    projection = _candidate_projection(_load_all_candidate_records(store))
+    latest = projection["latest"]
+    if event_id is not None:
+        match = next(
+            (item for item in latest if int(item["event_id"]) == event_id),
+            None,
+        )
+        if match is None:
+            raise StateError(f"candidate event {event_id} is unknown or superseded")
+        return match
+    checked_id = _validate_candidate_id(candidate_id)
+    match = next(
+        (item for item in latest if _candidate_identity(item) == checked_id),
+        None,
+    )
+    if match is None:
+        raise StateError(f"candidate {checked_id} is unknown")
+    return match
+
+
 def _active_latest(
     records: list[dict[str, Any]], key_fields: tuple[str, ...]
 ) -> list[dict[str, Any]]:
@@ -541,9 +569,7 @@ def _summary(records: list[dict[str, Any]]) -> dict[str, Any]:
         "active_focus_override_count": len(active_focus_overrides),
         "open_candidate_count": len(open_candidates),
         "candidate_history_count": candidate_projection["history_count"],
-        "superseded_candidate_event_count": candidate_projection[
-            "superseded_event_count"
-        ],
+        "superseded_candidate_event_count": candidate_projection["superseded_event_count"],
         "promotion_required_count": len(promotion_required),
         "active_thread_focus": active_thread_focus,
         "active_focus_overrides": active_focus_overrides,
@@ -602,9 +628,7 @@ def live_register_list(
         history_metadata,
         projection_metadata,
     ) = _load_live_projection_snapshot(store, limit=limit)
-    history_records = _filter_records(
-        history_records, kind=kind, repo=repo, thread_id=thread_id
-    )
+    history_records = _filter_records(history_records, kind=kind, repo=repo, thread_id=thread_id)
     projection_records = _filter_records(
         projection_records, kind=kind, repo=repo, thread_id=thread_id
     )
@@ -652,9 +676,7 @@ def live_register_context(
     }
 
 
-def live_register_repo_context(
-    store: StateStore, repo: str, *, limit: int = 100
-) -> dict[str, Any]:
+def live_register_repo_context(store: StateStore, repo: str, *, limit: int = 100) -> dict[str, Any]:
     context = live_register_context(store, repo=repo, limit=limit)
     summary = context["summary"]
     return {
@@ -679,9 +701,7 @@ def _run_repo_resources(registry: Registry, run: dict[str, Any]) -> list[str]:
     task = registry.tasks.get(str(run["task_id"]))
     if task is None:
         return []
-    return sorted(
-        claim.resource for claim in task.claims if claim.resource.startswith("repo.")
-    )
+    return sorted(claim.resource for claim in task.claims if claim.resource.startswith("repo."))
 
 
 def _repo_has_active_run(registry: Registry, run: dict[str, Any], repo: str) -> bool:
@@ -830,8 +850,7 @@ def _suggested_task_json(
             {
                 "id": "source-event-bound",
                 "assertion": (
-                    "Task metadata preserves the originating live-register event id "
-                    "and source."
+                    "Task metadata preserves the originating live-register event id and source."
                 ),
             },
             {

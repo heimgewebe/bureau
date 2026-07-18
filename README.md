@@ -56,6 +56,10 @@ The cross-owner lifecycle vocabulary in
 idempotent cleanup and orphan handling without claiming current resource state or transferring
 authority between Bureau, Grabowski, Git, Chronik, RepoGround and product runtimes.
 
+Failure-domain coordination in `docs/architecture/failure-domain-capacity-v1.md` reuses typed
+Registry resources and bounded capacity claims. Hash-bound scope evidence travels with execution
+envelopes and Grabowski handoffs; it does not establish runtime health, dispatch or merge authority.
+
 ## Quick start
 
 ```bash

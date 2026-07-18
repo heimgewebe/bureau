@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-OS-V1-T004",
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "Hochverfügbare Referenzzelle und Recovery messen",
-  "state": "ready",
+  "state": "verified",
   "goal": "Eine reale oder realistisch fehlertolerante Gewebe-Zelle mit mehreren Fehlerdomänen, PostgreSQL-/JetStream-Redundanz, PITR, Blank-Cluster-Restore und gemessenen SLOs aufbauen.",
   "depends_on": [
     "WELTGEWEBE-OS-V1-T003"
@@ -63,7 +63,204 @@
     "world_task": "WELTGEWEBE-OS-008",
     "unblocked_at": "2026-07-17T07:45:18Z",
     "dependency_receipt": "WELTGEWEBE-OS-V1-T003 verified by Weltgewebe PR #1454 head 78e7f5d341f42a38c7b738e76f42eaa8887e20fc, squash merge 2014ad51229f2f06d26d6dac7b8287cb1be4d056, exact tree 64faf694b4bbd74fc83f0a01c27d8d6c6e714ae1, two R3 reviews, Direct/GitOps receipts and green main Kubernetes/production contracts.",
-    "source_ref": "heimgewebe/weltgewebe#1454; merge 2014ad51229f2f06d26d6dac7b8287cb1be4d056; kubernetes-platform 29563032732; production live contract 29563032801",
-    "receipt_sha256": "87effdc260f9b93d3fb613b1bce9c98ecfe0ac7b2ccba20973560f27b2b35978"
+    "source_ref": "heimgewebe/weltgewebe#1462; head fa1c00b2ea91b23d7f56dd7f8b6fcd3d15bcbd32; squash merge ee29974a02665a79bad7f18367542f1330b42b75; exact tree 5f4ba17814c257ba13a2ea3f9f00a4060e3b2d92; PR kubernetes-platform 29636812745; main kubernetes-platform 29637617847; main CI 29637617853; review evidence 29636849231; production live contract 29637617830",
+    "receipt_sha256": "049381622f4429b476439a46b3604ab2275637881e5cf707c25e4d73898254ba",
+    "verified_at": "2026-07-18T20:26:18Z",
+    "weltgewebe_pr": "heimgewebe/weltgewebe#1462",
+    "weltgewebe_pr_head": "fa1c00b2ea91b23d7f56dd7f8b6fcd3d15bcbd32",
+    "weltgewebe_merge_commit": "ee29974a02665a79bad7f18367542f1330b42b75",
+    "weltgewebe_merge_mode": "squash",
+    "weltgewebe_merge_tree": "5f4ba17814c257ba13a2ea3f9f00a4060e3b2d92",
+    "weltgewebe_pr_diff_sha256": "f7eda0fb1cf5cb7ae6b5737f09e243a0bf7da54ca2373b8622b8eae3d49794ab",
+    "github_pr_ci_run": "heimgewebe/weltgewebe/actions/runs/29636812762",
+    "github_main_ci_run": "heimgewebe/weltgewebe/actions/runs/29637617853",
+    "kubernetes_platform_pr_run": "heimgewebe/weltgewebe/actions/runs/29636812745",
+    "kubernetes_platform_main_run": "heimgewebe/weltgewebe/actions/runs/29637617847",
+    "review_evidence_run": "heimgewebe/weltgewebe/actions/runs/29636849231",
+    "production_live_contract_run": "heimgewebe/weltgewebe/actions/runs/29637617830",
+    "pr_ha_receipt_sha256": "049381622f4429b476439a46b3604ab2275637881e5cf707c25e4d73898254ba",
+    "main_ha_receipt_sha256": "35919e81d8258079c7e6c1b99a954418ca8e18672504745eea440ee0ae359446",
+    "production_live_receipt_sha256": "9a22c1c9b28ba8e6ea0acffebdf5c68de0f406175a6918d4b381c5c951c87b02",
+    "barman_sidecar_digest": "sha256:990361af3319f9e23aafa0f6d7981f99bf1f69b4e6a85cf1bc7d71d6f09bb288",
+    "task_id": "WELTGEWEBE-OS-V1-T004",
+    "outcome": "Eine zonierte Drei-Knoten-Referenzzelle hat einen einzelnen Zonenausfall, PostgreSQL-Promotion, API- und JetStream-Erholung, Datenkontinuität, Blank-Cluster-PITR, fortgesetzte WAL-Archivierung sowie gemessene Upgrade-, Rollback-, RTO-, RPO- und Fehlerbudgetziele auf PR-Head und Mergecommit bestanden. Der Kind-Proof änderte Produktion nicht; ein separater Production-Live-Contract verifizierte den exakten Mergecommit in Frontend und API.",
+    "validated_acceptance": {
+      "failure-domains": "API, NATS und PostgreSQL liefen jeweils mit drei Instanzen über zone-a, zone-b und zone-c; CNPG-Operator und Restore-Topologie blieben über drei Worker verteilt.",
+      "failover": "Der Worker in zone-a wurde gestoppt; PostgreSQL promotete von postgres-ha-1 auf postgres-ha-2. Im PR-Receipt betrugen PostgreSQL-, API- und NATS-RTO 57.821 s, 63.749 s und 64.105 s; der Main-Wiederholungslauf bestätigte 51.511 s, 57.364 s und 57.627 s. Eine bestätigte Domain-Mutation und zwei JetStream-Nachrichten blieben erhalten; bestätigter Verlust war jeweils null.",
+      "recovery": "WAL 000000020000000000000007 wurde archiviert, Barman-Backup t004-fa1c00b2 beendet und PITR in einen leeren separaten Cluster ausgeführt. Marker und Mutation vor Zielzeit waren vorhanden, die Mutation nach Zielzeit fehlte erwartungsgemäß; der Restore-Cluster archivierte danach WAL 00000003000000000000000D weiter.",
+      "measured-objectives": "PR: Restore-RTO 135.372 s, RPO-Obergrenze 2.966 s, Upgrade 131.020 s, Rollback 131.509 s, 119/119 Availability-Samples je Phase, null Fehlsamples und null beobachtete Ausfallzeit. Main: Restore-RTO 133.572 s, RPO-Obergrenze 3.112 s, Upgrade 129.238 s mit 116 Samples, Rollback 132.287 s mit 119 Samples, ebenfalls null Fehlsamples und null Ausfallzeit. Beide 99,9-Prozent-Referenzbudgets wurden mit Verbrauchsverhältnis 0 eingehalten."
+    },
+    "closeout_criteria": {
+      "single-failure": "Ein zonierter Worker fiel aus; CNPG promotete auf einen verbleibenden Knoten, API und NATS erholten sich und der dreiknotige Operator blieb verteilt.",
+      "data-safety": "Eine bestätigte Datenbankmutation und zwei bestätigte JetStream-Nachrichten blieben erhalten; null bestätigte Mutationen oder Nachrichten gingen verloren.",
+      "restore-proof": "Konkretes WAL-Segment archiviert, Barman-Backup abgeschlossen, PITR in einen leeren Cluster durchgeführt, Post-Target-Mutation ausgeschlossen und WAL-Archivierung aus dem Restore-Cluster fortgesetzt.",
+      "measured-objectives": "Failover-, API-, NATS- und Restore-RTO, WAL-Latenzen, Upgrade, Rollback und 99,9-Prozent-Fehlerbudget wurden in zwei commitgebundenen Läufen gemessen."
+    },
+    "measurement_summary": {
+      "pr_head": {
+        "commit": "fa1c00b2ea91b23d7f56dd7f8b6fcd3d15bcbd32",
+        "postgres_rto_seconds": 57.821,
+        "api_rto_seconds": 63.749,
+        "nats_rto_seconds": 64.105,
+        "restore_rto_seconds": 135.372,
+        "restore_continuity_seconds": 3.132,
+        "primary_wal_archive_latency_seconds": 2.675,
+        "rpo_upper_bound_seconds": 2.966,
+        "upgrade_seconds": 131.02,
+        "rollback_seconds": 131.509,
+        "upgrade_availability_samples": 119,
+        "rollback_availability_samples": 119,
+        "failed_availability_samples": 0,
+        "observed_unavailable_seconds": 0.0,
+        "error_budget_objective": 0.999,
+        "measurement_window_seconds": 262.529,
+        "consumed_budget_ratio": 0.0
+      },
+      "main_merge": {
+        "commit": "ee29974a02665a79bad7f18367542f1330b42b75",
+        "postgres_rto_seconds": 51.511,
+        "api_rto_seconds": 57.364,
+        "nats_rto_seconds": 57.627,
+        "restore_rto_seconds": 133.572,
+        "restore_continuity_seconds": 3.281,
+        "primary_wal_archive_latency_seconds": 2.728,
+        "rpo_upper_bound_seconds": 3.112,
+        "upgrade_seconds": 129.238,
+        "rollback_seconds": 132.287,
+        "upgrade_availability_samples": 116,
+        "rollback_availability_samples": 119,
+        "failed_availability_samples": 0,
+        "observed_unavailable_seconds": 0.0,
+        "error_budget_objective": 0.999,
+        "measurement_window_seconds": 261.525,
+        "consumed_budget_ratio": 0.0
+      }
+    },
+    "does_not_establish": [
+      "multi_region_oder_multi_cloud_produktions_ha",
+      "gleichzeitige_zerstoerung_von_zwei_zonen",
+      "belastbares_produktionslast_slo",
+      "semantische_kompatibilitaet_einer_inkompatiblen_anwendungsmigration",
+      "produktiver_ha_cutover_durch_den_kind_test",
+      "produktionsmutation_durch_den_ha_proof"
+    ],
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "WELTGEWEBE-OS-V1-T004",
+          "source_ref": "heimgewebe/weltgewebe#1462",
+          "number": 1462,
+          "head_sha": "fa1c00b2ea91b23d7f56dd7f8b6fcd3d15bcbd32",
+          "merge_commit_sha": "ee29974a02665a79bad7f18367542f1330b42b75",
+          "merge_tree_sha1": "5f4ba17814c257ba13a2ea3f9f00a4060e3b2d92",
+          "diff_sha256": "f7eda0fb1cf5cb7ae6b5737f09e243a0bf7da54ca2373b8622b8eae3d49794ab"
+        },
+        {
+          "kind": "test_run",
+          "authority": "github-actions",
+          "task_id": "WELTGEWEBE-OS-V1-T004",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/29636812745",
+          "workflow_run_id": 29636812745,
+          "job_id": 88060515702,
+          "commit_sha": "fa1c00b2ea91b23d7f56dd7f8b6fcd3d15bcbd32",
+          "artifact_id": 8427532844,
+          "content_sha256": "049381622f4429b476439a46b3604ab2275637881e5cf707c25e4d73898254ba"
+        },
+        {
+          "kind": "runtime_probe",
+          "authority": "weltgewebe-kind-ha-reference",
+          "task_id": "WELTGEWEBE-OS-V1-T004",
+          "source_ref": "/home/alex/iCloud/Drive/halde/weltgewebe-ha-receipts/run-29636812745/wg-ha-29636812745-1-fa1c00b2ea91b23d7f56dd7f8b6fcd3d15bcbd32-ha-recovery.json",
+          "commit_sha": "fa1c00b2ea91b23d7f56dd7f8b6fcd3d15bcbd32",
+          "content_sha256": "049381622f4429b476439a46b3604ab2275637881e5cf707c25e4d73898254ba"
+        },
+        {
+          "kind": "test_run",
+          "authority": "github-actions",
+          "task_id": "WELTGEWEBE-OS-V1-T004",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/29637617847",
+          "workflow_run_id": 29637617847,
+          "job_id": 88062600578,
+          "commit_sha": "ee29974a02665a79bad7f18367542f1330b42b75",
+          "artifact_id": 8427787505,
+          "content_sha256": "35919e81d8258079c7e6c1b99a954418ca8e18672504745eea440ee0ae359446"
+        },
+        {
+          "kind": "runtime_probe",
+          "authority": "weltgewebe-kind-ha-reference",
+          "task_id": "WELTGEWEBE-OS-V1-T004",
+          "source_ref": "/home/alex/iCloud/Drive/halde/weltgewebe-ha-receipts/run-29637617847/wg-ha-29637617847-1-ee29974a02665a79bad7f18367542f1330b42b75-ha-recovery.json",
+          "commit_sha": "ee29974a02665a79bad7f18367542f1330b42b75",
+          "content_sha256": "35919e81d8258079c7e6c1b99a954418ca8e18672504745eea440ee0ae359446"
+        },
+        {
+          "kind": "production_probe",
+          "authority": "weltgewebe-production-live-contract",
+          "task_id": "WELTGEWEBE-OS-V1-T004",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/29637617830",
+          "workflow_run_id": 29637617830,
+          "job_id": 88062590797,
+          "commit_sha": "ee29974a02665a79bad7f18367542f1330b42b75",
+          "artifact_id": 8427652508,
+          "content_sha256": "9a22c1c9b28ba8e6ea0acffebdf5c68de0f406175a6918d4b381c5c951c87b02"
+        },
+        {
+          "kind": "test_run",
+          "authority": "github-actions",
+          "task_id": "WELTGEWEBE-OS-V1-T004",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/29637617853",
+          "workflow_run_id": 29637617853,
+          "commit_sha": "ee29974a02665a79bad7f18367542f1330b42b75"
+        },
+        {
+          "kind": "review_evidence",
+          "authority": "github-actions",
+          "task_id": "WELTGEWEBE-OS-V1-T004",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/29636849231",
+          "workflow_run_id": 29636849231,
+          "job_id": 88062444783,
+          "commit_sha": "fa1c00b2ea91b23d7f56dd7f8b6fcd3d15bcbd32",
+          "verdict": "PASS",
+          "base_sha": "842c50fd6e4905f8bc768685d814eec4f0dd413e",
+          "merge_base_sha": "842c50fd6e4905f8bc768685d814eec4f0dd413e",
+          "diff_sha256": "f7eda0fb1cf5cb7ae6b5737f09e243a0bf7da54ca2373b8622b8eae3d49794ab",
+          "artifact_id": 8427573468,
+          "artifact_sha256": "11743fd8e2adde6e53206f6703690b0f3ac77a2a3eb9368ffa601384a50169d9",
+          "accepted_report_sha256s": [
+            "05c15b033e4dca4273cebcbc44431a30d7b8b1a4d80cab665efa0bd645ad474d",
+            "c21f642833db597f5b99ab743b525e79440f4b2de279b15479c330e8185d43ad"
+          ],
+          "risk_class": "R3",
+          "accepted_review_count": 2
+        }
+      ]
+    },
+    "weltgewebe_review_base": "842c50fd6e4905f8bc768685d814eec4f0dd413e",
+    "review_report_sha256s": [
+      "05c15b033e4dca4273cebcbc44431a30d7b8b1a4d80cab665efa0bd645ad474d",
+      "c21f642833db597f5b99ab743b525e79440f4b2de279b15479c330e8185d43ad"
+    ],
+    "review_evidence_artifact_sha256": "11743fd8e2adde6e53206f6703690b0f3ac77a2a3eb9368ffa601384a50169d9",
+    "verification": {
+      "review_diff_sha256": "f7eda0fb1cf5cb7ae6b5737f09e243a0bf7da54ca2373b8622b8eae3d49794ab",
+      "merge_tree_sha1": "5f4ba17814c257ba13a2ea3f9f00a4060e3b2d92",
+      "pr_ha_receipt_sha256": "049381622f4429b476439a46b3604ab2275637881e5cf707c25e4d73898254ba",
+      "main_ha_receipt_sha256": "35919e81d8258079c7e6c1b99a954418ca8e18672504745eea440ee0ae359446",
+      "production_live_receipt_sha256": "9a22c1c9b28ba8e6ea0acffebdf5c68de0f406175a6918d4b381c5c951c87b02",
+      "review_evidence_verdict": "PASS",
+      "main_ci": "success",
+      "main_kubernetes_platform": "success",
+      "main_production_live_contract": "success",
+      "task_sha256": "8e0e7d4713ad55371be0cefb719026fddabba897871e502dea2da36b5c935188",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+      "task_source_ref": "registry/tasks/WELTGEWEBE-OS-V1-T004.json@closeout-revision",
+      "plan_source_ref": "registry/initiatives/WELTGEWEBE-OS-V1.json:current_plan",
+      "review_base_sha": "842c50fd6e4905f8bc768685d814eec4f0dd413e",
+      "review_evidence_artifact_sha256": "11743fd8e2adde6e53206f6703690b0f3ac77a2a3eb9368ffa601384a50169d9"
+    }
   }
 }

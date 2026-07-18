@@ -51,6 +51,11 @@ Runtime automation follows the contract in `docs/runtime-automation-contract.md`
 remain one-shot callable, observer facts stay source-attributed, status projection is read-only,
 and merge, cleanup and completion authority are not implicit automation powers.
 
+The cross-owner lifecycle vocabulary in
+`docs/architecture/resource-lifecycle-contract-v1.md` defines terminal evidence, retention,
+idempotent cleanup and orphan handling without claiming current resource state or transferring
+authority between Bureau, Grabowski, Git, Chronik, RepoGround and product runtimes.
+
 ## Quick start
 
 ```bash

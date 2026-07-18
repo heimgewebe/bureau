@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://heimgewebe.local/bureau/resource-lifecycle.v1.schema.json",
+  "title": "Bureau cross-owner resource lifecycle contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "coverage",
+    "invariant",
+    "resource_classes",
+    "migration_sequence",
+    "does_not_establish"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "kind": {
+      "const": "bureau_resource_lifecycle_contract"
+    },
+    "coverage": {
+      "const": "cross-owner-evidence-preserving"
+    },
+    "invariant": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resource_classes": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/resourceClass"
+      }
+    },
+    "migration_sequence": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "does_not_establish": {
+      "$ref": "#/$defs/strings"
+    }
+  },
+  "$defs": {
+    "strings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "terminal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_kind",
+        "accepted_states",
+        "forbidden_inferences"
+      ],
+      "properties": {
+        "authority_kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "accepted_states": {
+          "$ref": "#/$defs/strings"
+        },
+        "forbidden_inferences": {
+          "$ref": "#/$defs/strings"
+        }
+      }
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operational_claim",
+        "historical_evidence"
+      ],
+      "properties": {
+        "operational_claim": {
+          "type": "string",
+          "minLength": 1
+        },
+        "historical_evidence": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "cleanup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trigger",
+        "action",
+        "idempotency"
+      ],
+      "properties": {
+        "trigger": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "idempotency": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "orphan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observation",
+        "action"
+      ],
+      "properties": {
+        "observation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "resourceClass": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority",
+        "operational_owner",
+        "terminal_evidence",
+        "retention",
+        "cleanup",
+        "orphan_detection",
+        "migration_owners"
+      ],
+      "properties": {
+        "authority": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operational_owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_evidence": {
+          "$ref": "#/$defs/terminal"
+        },
+        "retention": {
+          "$ref": "#/$defs/retention"
+        },
+        "cleanup": {
+          "$ref": "#/$defs/cleanup"
+        },
+        "orphan_detection": {
+          "$ref": "#/$defs/orphan"
+        },
+        "migration_owners": {
+          "$ref": "#/$defs/strings"
+        }
+      }
+    }
+  }
+}

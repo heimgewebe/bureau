@@ -5,8 +5,8 @@
   "title": "Chronik-Outbox terminalitätsgebunden kompaktieren",
   "state": "planned",
   "priority": {
-    "lane": "later",
-    "rank": 90
+    "lane": "next",
+    "rank": 2
   },
   "goal": "Lose, taskversuchsgebundene Grabowski-Outbox-Quellen nach belegter Terminalität verlustfrei in wenige unveränderliche, hashgebundene Replay-Bundles überführen, ohne aktive Quellen zu verschieben, Receipts zur Autorität zu erheben oder den Chronik-Ledger als operative Wahrheit zu ersetzen.",
   "execution": {
@@ -62,6 +62,10 @@
     {
       "id": "reviewed-release-and-live-proof",
       "assertion": "The exact reviewed diff passes focused and full tests, role and local smoke gates, GitHub CI, merge-bound deployment, live dry-run, controlled apply, repeated import and ledger-integrity readback with the timer restored."
+    },
+    {
+      "id": "post-bundle-rewrite-guard",
+      "assertion": "After a source is manifest-bound and removed, the producer and terminalization paths cannot recreate, truncate or rewrite the same logical source path. A later duplicate must be byte-identical or fail closed into an evidence-preserving quarantine with an explicit receipt."
     }
   ],
   "rollback": {
@@ -101,6 +105,33 @@
       "merge_readiness",
       "live_compaction_completed",
       "deployment_completed"
-    ]
+    ],
+    "live_incident_2026_07_18": {
+      "symptom": "chronik-outbox-import.service failed before new T025 events because loose and bundled variants shared source paths with different bytes.",
+      "conflict_count": 43,
+      "pattern": "Later loose terminal-only rewrites were strict, shorter event subsets of older complete manifest-bound started/terminal pairs.",
+      "authority_validation": {
+        "pass": 42,
+        "fail": 0,
+        "path": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/chronik-conflict-authority-validation.json",
+        "sha256": "4c057f82f3555e9ed57669f7880db9cb177a5f9c173ebba70b2d36e82e3a8b2c"
+      },
+      "first_quarantine_receipt": {
+        "path": "/home/alex/.local/state/grabowski/chronik-outbox-quarantine/2026-07-18-conflicting-loose-rewrite/quarantine-receipt.json",
+        "sha256": "feb0457f604241873d8a20e793dd3dd63304744a23f23ae2acb23c9a331e7153"
+      },
+      "batch_quarantine_receipt": {
+        "path": "/home/alex/.local/state/grabowski/chronik-outbox-quarantine/2026-07-18-shorter-post-bundle-rewrites/batch-quarantine-receipt.json",
+        "sha256": "ea9d64220d5d750d57078374f9bacf6777372b46eb7941954c2dc3dfcab0656c"
+      },
+      "post_repair": {
+        "conflict_count": 0,
+        "prepared_sources": 2884,
+        "import_service_result": "success",
+        "timer": "active-waiting"
+      },
+      "effect_on_plan": "The local implementation draft must be amended before publication; existing duplicate/conflict tests did not prevent post-bundle recreation by the producer."
+    },
+    "priority_reason": "A real live importer outage demonstrated that post-bundle source recreation is a current integrity defect, not a later-only storage optimization."
   }
 }

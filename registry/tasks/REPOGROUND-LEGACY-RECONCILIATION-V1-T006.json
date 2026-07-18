@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T006",
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "title": "Repair RepoGround runtime false-green health and content-search contracts",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "goal": "Fix the two runtime contract defects exposed by T025: the repository launcher probes /health although the API contract exposes /api/health, and retrieval artifacts populate path tokens while leaving FTS content empty so content queries silently return no hits.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "baseline_commit": "a33400f7090c368838bcdf02bcf2087c719fae84",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "python",
+    "runtime-testing",
+    "retrieval",
+    "systemd"
+  ],
+  "acceptance": [
+    {
+      "id": "health-contract",
+      "assertion": "The canonical launcher and service contract use one tested health endpoint; a started service passes the launcher probe and an unavailable or wrong-version service fails closed."
+    },
+    {
+      "id": "content-projection",
+      "assertion": "A retrieval build from a fixture with source text writes non-empty searchable content rows, not only path_tokens, and preserves deterministic metadata."
+    },
+    {
+      "id": "content-query",
+      "assertion": "A query for a symbol or phrase present only in file content returns the expected file; a path-only control remains functional and a missing phrase returns zero hits."
+    },
+    {
+      "id": "no-false-green",
+      "assertion": "Regression tests fail against the pre-fix /health mismatch and empty-content artifact, and verify negative authentication, traversal and stale-index semantics."
+    },
+    {
+      "id": "compatibility",
+      "assertion": "Existing RepoGround CLI, MCP, release and legacy compatibility tests remain green; historical schemas and names are not rewritten."
+    },
+    {
+      "id": "published-proof",
+      "assertion": "The exact reviewed diff passes full local tests and GitHub CI, is merged, and is verified through a parallel runtime probe before production deployment."
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-LEGACY-RECONCILIATION-V1-T001"
+  ],
+  "rollback": {
+    "trigger": "Health probes accept an unhealthy service, retrieval output changes incompatibly, content indexing causes unacceptable size or latency, or existing path queries regress.",
+    "procedure": "Keep the production runtime on d54a3f3d, revert the source change, preserve failing fixture artifacts and query receipts, and leave this task blocked until a bounded replacement passes both path and content probes."
+  },
+  "stop": {
+    "conditions": [
+      "a foreign RepoGround writer overlaps the intended files or worktree",
+      "the current main head differs from the recorded baseline before branch creation",
+      "the content source cannot be identified without changing public artifact semantics",
+      "the fix would require rewriting historical bundles or compatibility schemas"
+    ]
+  },
+  "metadata": {
+    "registered_at": "2026-07-18T02:35:00+02:00",
+    "discovered_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T025",
+    "live_evidence": {
+      "runtime_head": "d54a3f3d53818f03405cab5e84e3a5086d4b81ad",
+      "parallel_parity_receipt": {
+        "path": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/parallel-parity-receipt.json",
+        "sha256": "43166b1ed10b11541810ad2a92cf0ceeb6564cce59b12906cf3bd784eaa09c0f"
+      },
+      "old_fts_rows": 2,
+      "old_nonempty_content_rows": 0,
+      "new_fts_rows": 2,
+      "new_nonempty_content_rows": 0,
+      "path_query_result": "sample.py returned identically",
+      "content_query_result": "zero hits on both runtimes",
+      "launcher_script": "scripts/repoground-launcher.sh",
+      "launcher_probe": "/health",
+      "service_probe": "/api/health"
+    },
+    "does_not_establish": [
+      "root cause of the empty content projection",
+      "permission to alter the running production service before a new parallel proof",
+      "removability of legacy aliases"
+    ]
+  }
+}

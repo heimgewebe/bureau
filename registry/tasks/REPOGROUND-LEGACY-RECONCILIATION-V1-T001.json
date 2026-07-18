@@ -3,7 +3,7 @@
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T001",
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
   "title": "Remove high-confidence RepoGround debris and false-green surfaces",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 1
@@ -34,23 +34,33 @@
   "acceptance": [
     {
       "id": "entry-links",
-      "assertion": "README und Getting Started enthalten keine gebrochenen lokalen Links und verweisen ausschließlich auf vorhandene aktuelle RepoGround-Einstiege."
+      "assertion": "README und Getting Started enthalten keine gebrochenen lokalen Links und verweisen ausschließlich auf vorhandene aktuelle RepoGround-Einstiege.",
+      "evidence_type": "string",
+      "verifier": "tests/test_repository_hygiene.py plus GitHub pytest-full"
     },
     {
       "id": "release-surface",
-      "assertion": "Release-Dokumentation, Requirements und Verifier besitzen genau einen kanonischen RepoGround-Pfad; ein letzter Consumer- und Artefakt-Scan belegt vor Entfernung alter RepoBrief-Kompatibilität deren Nichtnutzung."
+      "assertion": "Release-Dokumentation, Requirements und Verifier besitzen genau einen kanonischen RepoGround-Pfad; ein letzter Consumer- und Artefakt-Scan belegt vor Entfernung alter RepoBrief-Kompatibilität deren Nichtnutzung.",
+      "evidence_type": "string",
+      "verifier": "release-candidate, semantic-lock and source-bound verifier checks"
     },
     {
       "id": "false-green-ci",
-      "assertion": "validate-merges validiert reale versionierte Eingaben oder ist entfernt; ein fehlender merges-Ordner darf nicht bei jeder Kernänderung als erfolgreicher Schutzlauf erscheinen."
+      "assertion": "validate-merges validiert reale versionierte Eingaben oder ist entfernt; ein fehlender merges-Ordner darf nicht bei jeder Kernänderung als erfolgreicher Schutzlauf erscheinen.",
+      "evidence_type": "string",
+      "verifier": "Git diff and GitHub contracts/test workflow readback"
     },
     {
       "id": "root-hygiene",
-      "assertion": "Leere data- und mock_hub-Platzhalter, unreferenzierte SSE-Benchmarks und identische Publikationshelfer sind entfernt, zusammengeführt oder mit einem aktuellen ausführbaren Zweck belegt."
+      "assertion": "Leere data- und mock_hub-Platzhalter, unreferenzierte SSE-Benchmarks und identische Publikationshelfer sind entfernt, zusammengeführt oder mit einem aktuellen ausführbaren Zweck belegt.",
+      "evidence_type": "string",
+      "verifier": "tests/test_repository_hygiene.py plus merged diff"
     },
     {
       "id": "verification",
-      "assertion": "Vollständige Tests, Lint, relevante Workflows und ein frischer GitHub-main-Readback sind grün."
+      "assertion": "Vollständige Tests, Lint, relevante Workflows und ein frischer GitHub-main-Readback sind grün.",
+      "evidence_type": "string",
+      "verifier": "GitHub PR checks and fresh main SHA readback"
     }
   ],
   "depends_on": [],
@@ -60,6 +70,49 @@
     "does_not_establish": [
       "Entfernbarkeit aktiver Runtime-Kompatibilität",
       "Entfernbarkeit von Atlas"
-    ]
+    ],
+    "verified_at": "2026-07-18T01:55:40+02:00",
+    "implementation_pull_request": {
+      "repository": "heimgewebe/repoground",
+      "number": 1039,
+      "url": "https://github.com/heimgewebe/repoground/pull/1039",
+      "head_sha": "9b2ce7bc1c58a33e11daa21638291c311c415d43",
+      "merge_commit_sha": "a33400f7090c368838bcdf02bcf2087c719fae84"
+    },
+    "fresh_main_head": "a33400f7090c368838bcdf02bcf2087c719fae84",
+    "change_summary": {
+      "files_changed": 41,
+      "insertions": 162,
+      "deletions": 2340,
+      "c901_findings_before": 213,
+      "c901_findings_after": 212
+    },
+    "verification_summary": {
+      "local_pytest": "4340 passed, 1 skipped, 13 deselected",
+      "github_pytest_full": "PASS",
+      "github_browser_tests": "PASS",
+      "github_release_candidate": "PASS",
+      "github_semantic_lock": "PASS",
+      "github_codeql": "PASS",
+      "github_contract_deletion_guard": "PASS",
+      "ruff": "PASS",
+      "doc_freshness": "92/92 fresh"
+    },
+    "verified_acceptance": {
+      "entry-links": "PASS; current entry-document local links resolve and are regression-tested.",
+      "release-surface": "PASS; current docs, locks, builder and verifier use RepoGround. Protected legacy schemas remain inert compatibility artifacts for T002.",
+      "false-green-ci": "PASS; validate-merges and its unconsumed validator were removed.",
+      "root-hygiene": "PASS; empty placeholders, unreferenced SSE scripts and duplicate publication implementation were removed or consolidated.",
+      "verification": "PASS; all GitHub checks passed and the merge commit is the fresh main head."
+    },
+    "residual_scope": [
+      "Protected RepoBrief schemas remain for the controlled compatibility exit T002.",
+      "Active rlens.service, MCP protocol identifiers and Python import compatibility remain unchanged.",
+      "Historical proofs, diagnostics and completed task evidence retain historical names."
+    ],
+    "verification": {
+      "task_sha256": "6d9f03a8e24ab9592d1667552993fc555a53a64688c27e36ffeca17fdf49e7c0",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   }
 }

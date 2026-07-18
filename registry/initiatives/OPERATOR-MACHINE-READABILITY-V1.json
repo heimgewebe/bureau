@@ -3,8 +3,8 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Make the operator ecosystem machine-first",
   "state": "active",
-  "commitment": "later",
-  "goal": "Make ChatGPT through Grabowski the deterministic machine operator by connecting the canonical heim-pc entry, typed runtime and catalog reads, observable source identity, enforced write ownership and provenance-bound context without creating a second task, runtime or architecture truth.",
+  "commitment": "next",
+  "goal": "Make ChatGPT through Grabowski the deterministic machine operator while the user remains observer and steersman: the user supplies goals, meaning, priorities, risk tolerance, approvals, interventions and stop decisions; the operator observes live state, plans, registers, executes, verifies and reports through typed, provenance-bound surfaces without creating a second task, runtime or architecture truth.",
   "current_plan": {
     "repository": "bureau",
     "path": "docs/plans/operator-machine-readability-v1.md"
@@ -20,7 +20,8 @@
     "Systemkatalog stable semantics are available through a typed read-only operator surface with explicit non-claims.",
     "Metarepo contracts resolve reproducibly in isolated worktrees without hidden sibling-path or environment assumptions.",
     "Optional heim-pc state projections carry generator, source, timestamp and content provenance; absence remains a valid state.",
-    "A fresh end-to-end consumer test reaches the correct host, semantic, task and runtime truths without human shell assistance."
+    "A fresh end-to-end consumer test reaches the correct host, semantic, task and runtime truths without human shell assistance.",
+    "Bureau candidate intake, assessment and reviewed task publication are consumable through typed operator-native calls without human shell work, manual JSON editing or prose parsing; CLI remains a transport and diagnostic fallback."
   ],
   "parallelism": {
     "max_active_tasks": 2
@@ -51,6 +52,49 @@
       "merge_readiness",
       "automatic_dispatch_authority",
       "permission_to_read_private_home_content"
+    ],
+    "role_contract": {
+      "schema_version": 1,
+      "effective_from": "2026-07-18",
+      "operator": "ChatGPT through Grabowski",
+      "observer_and_steersman": "user",
+      "operator_responsibilities": [
+        "observe_live_state",
+        "select_truth_sources",
+        "plan",
+        "register_work",
+        "execute",
+        "verify",
+        "reconcile_ambiguous_effects",
+        "report"
+      ],
+      "observer_and_steersman_responsibilities": [
+        "set_goals",
+        "define_meaning",
+        "set_priorities",
+        "set_risk_tolerance",
+        "grant_required_approvals",
+        "intervene",
+        "abort"
+      ],
+      "must_not_delegate_to_user": [
+        "shell_execution",
+        "filesystem_navigation",
+        "status_aggregation",
+        "routine_task_bookkeeping",
+        "manual_json_editing",
+        "routine_retry_or_readback"
+      ],
+      "authority_boundary": "The role split does not override explicit cost, safety, privacy, irreversible-effect or approval gates."
+    },
+    "machine_operability_correction": {
+      "registered_at": "2026-07-18T05:30:00+02:00",
+      "source": "explicit user intervention",
+      "task": "OPERATOR-MACHINE-READABILITY-V1-T017",
+      "correction": "Human-facing convenience is secondary. Primary surfaces are optimized for deterministic operator consumption."
+    },
+    "additional_registered_tasks": [
+      "OPERATOR-MACHINE-READABILITY-V1-T017"
     ]
   }
 }

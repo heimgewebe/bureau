@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T017",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Make Bureau candidate intake and task promotion operator-native",
+  "state": "planned",
+  "goal": "Let ChatGPT through Grabowski record, assess, deduplicate, propose and publish durable Bureau tasks through typed, idempotent, source-bound and receipt-producing machine surfaces, while the user remains observer and steersman and is never required to run shell commands, inspect files or edit Registry JSON.",
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-MACHINE-READABILITY-V1-T017.json",
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "approval": {
+      "action_class": "registry_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Candidate recording remains append-only operational evidence. Durable task publication mutates reviewed Registry material and must route through the enforced registry_mutation approval rule with a digest-bound reviewed plan."
+    }
+  },
+  "claims": [
+    {
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "bureau",
+    "grabowski",
+    "github"
+  ],
+  "depends_on": [
+    "BUREAU-LIVE-REGISTER-V1-T004",
+    "BUR-2026-003-T004"
+  ],
+  "acceptance": [
+    {
+      "id": "role-contract",
+      "assertion": "Machine-readable contracts and operator guidance name ChatGPT through Grabowski as the executing operator and the user as observer and steersman. The operator owns live observation, planning, registration, execution, verification and reporting; the user owns goals, meaning, priorities, risk tolerance, approvals, intervention and abort decisions.",
+      "verifier": "contract and fresh-session tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "typed-candidate-record",
+      "assertion": "One typed call records an append-only candidate with stable candidate ID, idempotency key, source kind, source locator or opaque reference, source digest when available, observed-at timestamp, repository binding, desired outcome, catalog-validation status and explicit non-claims. Repeated identical calls return the existing identity without a duplicate effect.",
+      "verifier": "unit and integration tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "typed-candidate-assessment",
+      "assertion": "One typed read or plan call returns exact duplicate findings, bounded semantic similarity candidates, source freshness, target initiative, proposed scope and claims, risk and approval class, missing acceptance evidence and a decision of promote, merge, refine, defer or drop. Similarity never merges, closes or suppresses work automatically.",
+      "verifier": "goldset and negative tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "reviewed-task-proposal",
+      "assertion": "A task proposal binds candidate identity and current event, source digests, exact Registry commit and tree, target task path, complete task JSON, task JSON hash, proposed diff hash, duplicate evidence, unresolved fields, approval requirement and review status. Generic placeholder acceptance, capabilities or claims are rejected unless explicitly justified. Review authority is policy-bound: operator self-review is valid where the active contract permits it; the user is involved only when a steering, cost, safety, privacy or irreversibility gate explicitly requires human approval.",
+      "verifier": "schema and drift tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "operator-native-publication",
+      "assertion": "A typed publication call accepts only a reviewed proposal with unchanged plan bytes and Registry base, acquires exact Bureau file and effect-gate leases, creates an isolated branch and pull request, validates the exact diff, records a durable receipt and releases leases. It performs no queue mutation, claim, dispatch, merge, deployment or task verification.",
+      "verifier": "isolated end-to-end test",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-human-operations",
+      "assertion": "The primary success path requires no human shell command, filesystem navigation, manual JSON edit, status aggregation or copy-paste review ceremony. CLI commands remain implementation transport and bounded diagnostic fallback, not the product interface.",
+      "verifier": "fresh conversation-independent consumer test",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "typed-failure-and-readback",
+      "assertion": "All failures use stable machine codes with retryability, effect_started, ambiguity and required_readback fields. Ambiguous publication triggers bounded authoritative readback and never blind retry.",
+      "verifier": "fault-injection tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "machine-efficiency",
+      "assertion": "The operator surface returns bounded compact results by default, supports detail expansion by stable identifiers, avoids prose parsing and whole-registry loading, and measures tool calls, bytes, latency, duplicate prevention and manual-intervention count against the existing CLI-only path.",
+      "verifier": "before/after benchmark",
+      "evidence_type": "object"
+    },
+    {
+      "id": "transport-neutral-core",
+      "assertion": "Business rules live once in Bureau domain code. CLI and Grabowski tools are thin adapters; no HTTP service is added without a separately evidenced remote consumer.",
+      "verifier": "architecture and import-boundary tests",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "fresh-session-adoption",
+      "assertion": "A fresh ChatGPT/Grabowski session with no conversation memory can discover the typed route, record one candidate, assess it, produce a reviewed proposal fixture and exercise a no-effect publication preview without human operational assistance.",
+      "verifier": "reproducible consumer receipt",
+      "evidence_type": "object"
+    }
+  ],
+  "rollback": {
+    "strategy": "Disable the typed Grabowski adapters and retain the existing Bureau Live Register and reviewed promotion CLI paths; no candidate or Registry history is rewritten."
+  },
+  "metadata": {
+    "registered_at": "2026-07-18T05:30:00+02:00",
+    "source_request": "User clarified that ChatGPT is the operator and the user is observer and steersman; all built surfaces are primarily for operator consumption.",
+    "supersedes_assumption": "CLI quality is not evaluated as human convenience. It is evaluated only as machine transport, deterministic fallback and implementation boundary.",
+    "reuses": [
+      "Bureau Live Register candidate identity and append-only supersession",
+      "BUREAU-LIVE-REGISTER-V1-T004 reviewed promotion plan",
+      "BUR-2026-003-T004 approval path",
+      "Grabowski typed tools, leases, readback and receipts"
+    ],
+    "source_adapter_task": "BUR-2026-003-T008",
+    "does_not_establish": [
+      "task_implementation",
+      "queue_truth",
+      "claim_or_dispatch_authority",
+      "automatic_semantic_deduplication",
+      "merge_or_deployment_authority",
+      "permission_to_bypass_explicit_safety_cost_privacy_or_irreversibility_gates"
+    ],
+    "review_semantics": "Review is an evidence and policy property, not a synonym for manual human operation.",
+    "approval_contract": "The task-level effect contract uses registry_mutation because that rule actually enforces reviewed_plan; task_creation_from_external_evidence currently accepts operator-level evidence and would be too weak for durable publication."
+  }
+}

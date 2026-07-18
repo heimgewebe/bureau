@@ -3,9 +3,9 @@
   "id": "HEIMGEWEBE-RESILIENZ-V1-T005",
   "initiative": "HEIMGEWEBE-RESILIENZ-V1",
   "title": "Converge stale task projections and terminal cleanup",
-  "state": "planned",
+  "state": "ready",
   "priority": {
-    "lane": "later",
+    "lane": "next",
     "rank": 30
   },
   "goal": "Implement projection convergence so real terminal task outcomes release operational claims and leave historical evidence while interrupted or unknown outcomes remain visible.",
@@ -64,7 +64,12 @@
     "does_not_establish": [
       "implementation success before owner-repository evidence",
       "authority outside the listed source systems"
-    ]
+    ],
+    "readiness": {
+      "ready_at": "2026-07-18T04:39:41+02:00",
+      "dependency": "HEIMGEWEBE-RESILIENZ-V1-T004",
+      "dependency_merge_commit": "9a901b846cf98f54ff13417b18ca1a5d04b37e5b"
+    }
   },
   "depends_on": [
     "HEIMGEWEBE-RESILIENZ-V1-T004"

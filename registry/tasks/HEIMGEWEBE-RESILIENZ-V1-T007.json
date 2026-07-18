@@ -3,7 +3,7 @@
   "id": "HEIMGEWEBE-RESILIENZ-V1-T007",
   "initiative": "HEIMGEWEBE-RESILIENZ-V1",
   "title": "Catalog recovery paths and common-mode risk",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 50
@@ -63,7 +63,25 @@
     "does_not_establish": [
       "implementation success before owner-repository evidence",
       "authority outside the listed source systems"
-    ]
+    ],
+    "verification": {
+      "verified_at": "2026-07-18T04:39:41+02:00",
+      "repository": "heimgewebe/systemkatalog",
+      "pull_request": 142,
+      "source_commit": "cd33d744d6a779507772bb63ba8d5364791d9fcc",
+      "merge_commit": "3cecde159552a7e0eff94fca94add0051017d9cc",
+      "patch_path": "/home/alex/iCloud/Drive/halde/systemkatalog-heimgewebe-resilience-semantics-v1-cd33d74.patch",
+      "patch_sha256": "d001109332a0eb3b831a9100fbb3a5dc09836ed19afc63af862aa91fedf2ce99",
+      "checks": [
+        "repository-contract",
+        "ecosystem-map",
+        "codeql",
+        "unit-tests"
+      ],
+      "main_readback": true,
+      "task_sha256": "2bfe0cc341c0c6228d921c7b2bc0850b0870eb61a12be6dae329e20292a3a79c",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   },
   "depends_on": [
     "HEIMGEWEBE-RESILIENZ-V1-T002",

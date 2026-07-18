@@ -3,7 +3,7 @@
   "id": "HEIMGEWEBE-RESILIENZ-V1-T001",
   "initiative": "HEIMGEWEBE-RESILIENZ-V1",
   "title": "Audit resilience gaps and existing mechanisms",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 0
@@ -98,6 +98,23 @@
     "does_not_establish": [
       "implementation success before owner-repository evidence",
       "authority outside the listed source systems"
-    ]
+    ],
+    "verification": {
+      "verified_at": "2026-07-18T04:39:41+02:00",
+      "repository": "heimgewebe/systemkatalog",
+      "pull_request": 141,
+      "source_commit": "775e3047bb7a5479b29c493f8387604a8d8d6c5a",
+      "merge_commit": "7358710e7ac7b4cef8f8b2471b68692044812749",
+      "patch_path": "/home/alex/iCloud/Drive/halde/systemkatalog-heimgewebe-resilience-audit-v1-775e304.patch",
+      "patch_sha256": "587630c7dd9089d95a92f3b8d244674615d2d25210c0459be80b4a71b160ae86",
+      "checks": [
+        "repository-contract",
+        "catalog-validation",
+        "unit-tests"
+      ],
+      "main_readback": true,
+      "task_sha256": "685abcd9eb02f9e0424aa9cdaa15908ded1ce1ab379ac04af80b7fd4acd6fec1",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   }
 }

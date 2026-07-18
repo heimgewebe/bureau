@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T004",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "title": "Phase 3: Generalisierung nur nach bestandenem Weltgewebe-Gate",
+  "state": "blocked",
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "goal": "Nur die im Weltgewebe-Pilot bewährten repo-unabhängigen Teile als kleine allgemeine Grabowski-Fläche extrahieren.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.repoground",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "gate_bound",
+      "assertion": "Der Task beginnt nur, wenn T003 das dokumentierte Promotion-Gate bestanden hat; andernfalls wird er geschlossen oder neu geschnitten."
+    },
+    {
+      "id": "minimal_surface",
+      "assertion": "Der Startumfang bleibt auf change_impact, find_relevant_tests und ground_claim begrenzt."
+    },
+    {
+      "id": "explicit_routing",
+      "assertion": "Grabowski kann native_live_tools, repoground_context, combined oder no_additional_retrieval explizit wählen."
+    },
+    {
+      "id": "second_proof",
+      "assertion": "RepoGround und ein weiteres aktives Repository bestehen einen gepaarten Baseline-Vergleich ohne zentrale Regression."
+    },
+    {
+      "id": "no_platform_by_hope",
+      "assertion": "Ohne Messvorteil erfolgt keine Default-Promotion und kein Ausbau zu Router, Föderation, Embedding-Lane oder Control-Plane."
+    }
+  ],
+  "metadata": {
+    "github_issue": "heimgewebe/bureau#682",
+    "note": "GitHub issue #682 is advisory and does not establish Bureau truth.",
+    "conditional_on_promotion_gate": true,
+    "phase": 3
+  },
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T003"
+  ]
+}

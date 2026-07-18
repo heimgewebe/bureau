@@ -3,9 +3,9 @@
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T006",
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
   "title": "Repair RepoGround runtime false-green health and content-search contracts",
-  "state": "blocked",
+  "state": "verified",
   "priority": {
-    "lane": "now",
+    "lane": "later",
     "rank": 2
   },
   "goal": "Fix the two runtime contract defects exposed by T025: the repository launcher probes /health although the API contract exposes /api/health, and retrieval artifacts populate path tokens while leaving FTS content empty so content queries silently return no hits.",
@@ -63,8 +63,8 @@
     "REPOGROUND-LEGACY-RECONCILIATION-V1-T001"
   ],
   "rollback": {
-    "trigger": "Health probes accept an unhealthy service, retrieval output changes incompatibly, content indexing causes unacceptable size or latency, or existing path queries regress.",
-    "procedure": "Keep the production runtime on d54a3f3d, revert the source change, preserve failing fixture artifacts and query receipts, and leave this task blocked until a bounded replacement passes both path and content probes."
+    "trigger": "The production service fails health or authentication checks, content rows become empty, path lookup regresses, or retrieval latency or artifact compatibility degrades materially.",
+    "procedure": "Restore the saved pre-cutover unit from the T006 proof directory, point RepoGround back to retained runtime 9bca73f70021f941feb22883d0020f963530ff29, daemon-reload, restart repoground.service, and require health, version and path-query readback before further work."
   },
   "stop": {
     "conditions": [
@@ -78,24 +78,40 @@
     "registered_at": "2026-07-18T02:35:00+02:00",
     "discovered_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T025",
     "implemented_at": "2026-07-18T06:32:57+02:00",
-    "blocked_at": "2026-07-18T06:34:18+02:00",
-    "block_reason": "RepoGround PR #1041 is merged and all source gates passed, but the mandatory parallel runtime probe, controlled deployment and live readback cannot be executed in this session because the installed Grabowski app has no registered tool namespace.",
-    "next_action": "With a registered Grabowski host connector, build an immutable runtime from merge commit 7777f6fd690e504e11e26fbaa4ab5c4d2fc4a637, probe it in parallel, verify /api/health and content-only retrieval, prove rollback, then deploy and close T006 only after live readback.",
     "live_evidence": {
-      "runtime_head": "d54a3f3d53818f03405cab5e84e3a5086d4b81ad",
-      "parallel_parity_receipt": {
-        "path": "/home/alex/.local/state/repoground-cutover/d54a3f3d53818f03405cab5e84e3a5086d4b81ad/parallel-parity-receipt.json",
-        "sha256": "43166b1ed10b11541810ad2a92cf0ceeb6564cce59b12906cf3bd784eaa09c0f"
+      "runtime_head": "3b3d6f195a3344b15cb4a7a2adcf139e3f8a2ac1",
+      "service": "repoground.service",
+      "service_active": true,
+      "service_enabled": true,
+      "port": 8787,
+      "auth_enabled": true,
+      "full_test_result": "4385 passed, 1 skipped, 4 legacy warnings",
+      "full_test_receipt_sha256": "13a2d43981d6f0b12fbf9027ea4c1fc5c92804f8280eede1ba33143115b77a31",
+      "release_archive_sha256": "d2fe19e8ec5933122cfc3149d85c8a3e5f3dc34e63f7a047d0bb6a701b45e8e8",
+      "canary_proof": {
+        "path": "/home/alex/.local/state/repoground-t006-live-proof/canary-proof.json",
+        "sha256": "fe48bcb1c4cea9dd9dc6a35c8ca490015fd9df290eee980f326d8f1df9e39105"
       },
-      "old_fts_rows": 2,
-      "old_nonempty_content_rows": 0,
-      "new_fts_rows": 2,
-      "new_nonempty_content_rows": 0,
-      "path_query_result": "sample.py returned identically",
-      "content_query_result": "zero hits on both runtimes",
-      "launcher_script": "scripts/repoground-launcher.sh",
-      "launcher_probe": "/health",
-      "service_probe": "/api/health"
+      "rollback_proof": {
+        "path": "/home/alex/.local/state/repoground-t006-live-proof/rollback-proof.json",
+        "sha256": "2a49e57455522620bc8560a6000a11bdc31948164abd478b7a846a7c15f1dce9"
+      },
+      "production_proof": {
+        "path": "/home/alex/.local/state/repoground-t006-live-proof/production-proof.json",
+        "sha256": "5c092c4632616a2a1e54c9f14534a6c54b1005a02415ad3f51e5a23565c3da3e"
+      },
+      "final_live_receipt": {
+        "path": "/home/alex/.local/state/repoground-t006-live-proof/final-live.json",
+        "sha256": "5ff6ff96303a88d497036020370b3af29bf2bb3751f15ec1b4acd9557f1e0c7d"
+      },
+      "content_query_result": "one hit for src/pathonlymarker_t006.py",
+      "path_query_result": "one hit for src/pathonlymarker_t006.py",
+      "missing_query_result": "zero hits",
+      "fts_rows": 2,
+      "nonempty_content_rows": 2,
+      "old_runtime_retained": "9bca73f70021f941feb22883d0020f963530ff29",
+      "canary_removed": true,
+      "port_8788_free": true
     },
     "implementation": {
       "repository": "heimgewebe/repoground",
@@ -111,22 +127,33 @@
         "merger/repoground/tests/test_runtime_contract_regressions.py",
         "scripts/repoground-launcher.sh"
       ],
-      "production_deployed": false
+      "production_deployed": true,
+      "production_commit": "3b3d6f195a3344b15cb4a7a2adcf139e3f8a2ac1",
+      "production_unit_sha256": "d6c155978242ad3ca02ace4c8b76cc5d004f938aae17c17be276f2f727ae643b",
+      "full_local_tests": "4385 passed, 1 skipped"
     },
     "validated_acceptance": {
-      "health-contract": "PASS for source contract and regression tests; live started-service proof pending",
-      "content-projection": "PASS in retrieval-only fixture",
-      "content-query": "PASS for content-only, path-only and missing-token controls",
-      "no-false-green": "PASS for source regression suite and existing negative controls",
-      "compatibility": "PASS in full GitHub CI and deterministic release build",
-      "published-proof": "BLOCKED after merge: parallel runtime probe, production deployment and live readback pending"
+      "health-contract": "PASS: canonical /api/health launcher contract, exact production version and unauthenticated 401 readback",
+      "content-projection": "PASS: 2 of 2 fixture FTS rows contain searchable content in canary and production artifacts",
+      "content-query": "PASS: content-only and path-only queries return src/pathonlymarker_t006.py; missing token returns zero",
+      "no-false-green": "PASS: old runtime reproduced 0 content rows and zero content hits before the new runtime passed the same live fixture",
+      "compatibility": "PASS: 4,385 tests passed with one skip and four known legacy warnings",
+      "published-proof": "PASS: merged source fix, immutable current-main release, parallel canary, practical rollback, production cutover and final cleanup are hash-bound"
     },
     "does_not_establish": [
-      "current production runtime state after the last host readback",
-      "successful deployment of merge commit 7777f6fd690e504e11e26fbaa4ab5c4d2fc4a637",
-      "permission to alter the running production service without a new parallel proof",
-      "removability of legacy aliases",
-      "authoritative Grabowski convergence closure"
-    ]
+      "that every pre-existing retrieval bundle has been rebuilt",
+      "that legacy aliases may be removed",
+      "authoritative closure of OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T025",
+      "future RepoGround runtime immutability after later deployments"
+    ],
+    "former_blocked_at": "2026-07-18T06:34:18+02:00",
+    "former_block_reason": "RepoGround PR #1041 is merged and all source gates passed, but the mandatory parallel runtime probe, controlled deployment and live readback cannot be executed in this session because the installed Grabowski app has no registered tool namespace.",
+    "former_next_action": "With a registered Grabowski host connector, build an immutable runtime from merge commit 7777f6fd690e504e11e26fbaa4ab5c4d2fc4a637, probe it in parallel, verify /api/health and content-only retrieval, prove rollback, then deploy and close T006 only after live readback.",
+    "verified_at": "2026-07-18T09:31:48.269240+02:00",
+    "resolution_summary": "RepoGround source fix PR #1041 was already merged, but production still ran the earlier 9bca73f7 runtime and reproduced empty FTS content. Current main 3b3d6f19 passed 4,385 tests, was deployed first as an immutable parallel canary, passed content/path/missing-query and rollback proofs, then replaced production on port 8787 with exact version and auth readback.",
+    "verification": {
+      "task_sha256": "46d70b307e49c3f62d6ed4681a66e420974d8dc4666b2aab44f1f137f3aa528d",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   }
 }

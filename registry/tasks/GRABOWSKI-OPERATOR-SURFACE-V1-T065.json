@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T065",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Make Captain final status agree with verified mutation outcome",
-  "state": "planned",
+  "state": "verified",
   "goal": "Ensure captain-run returns a successful top-level status and process exit code when the requested mutation was performed and post-mutation verification passed, while preserving fail-closed handling for unknown outcomes.",
   "depends_on": [],
   "priority": {
@@ -75,6 +75,29 @@
       "that the merge itself failed",
       "permission to coerce unknown outcomes to success",
       "permission to retry an already merged pull request"
-    ]
+    ],
+    "implementation_status": "completed_merged_deployed_live_verified",
+    "implementation_evidence": {
+      "pull_request": "heimgewebe/grabowski#269",
+      "merge_and_runtime_commit": "f1475fe9e5d69e88bd80a85d9bff22a0392a951f",
+      "validation": "2038 tests passed; 2 expected skips; repository gates passed",
+      "live_readback": "grip_run returned top-level status passed and the same receipt_sha256 as the signed nested receipt",
+      "mutation_semantics": "No mutation was retried or repeated while repairing response projection."
+    },
+    "satisfied_acceptance": {
+      "single-source-outcome": "The public top-level status is projected from the signed typed receipt; existing receipt and output structures remain unchanged.",
+      "exit-contract": "Successful verified operations now expose status=passed at top level; blocked paths remain non-successful in regression tests.",
+      "no-double-effect": "The fix changes only result projection after execution and never retries an observed mutation.",
+      "tests": "Positive and blocked Captain regressions passed within the full 2038-test suite; all repository gates passed.",
+      "live-proof": "After deployment at f1475fe9e5d69e88bd80a85d9bff22a0392a951f, a bounded grip operation returned matching top-level and signed-receipt status and digest."
+    },
+    "completed_at": "2026-07-18T10:22:30Z",
+    "verified_at": "2026-07-18T10:22:30Z",
+    "outcome": "Captain status projection and process outcome now agree with the signed verified operation result without repeating mutations.",
+    "verification": {
+      "task_sha256": "3c190c17fcee38871b5d4f5c3d31b1421accd4aec967daa0ef5c06825139ceaa",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "verified_at": "2026-07-18T10:22:30Z"
+    }
   }
 }

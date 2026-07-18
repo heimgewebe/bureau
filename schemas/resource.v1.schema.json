@@ -8,9 +8,10 @@
   "properties": {
     "schema_version": {"const": 1},
     "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{0,254}$"},
-    "type": {"enum": ["group", "git-repository", "component", "path", "host", "service", "external", "capacity"]},
+    "type": {"enum": ["group", "git-repository", "component", "path", "host", "service", "external", "capacity", "failure-domain", "recovery-path"]},
     "parent": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{0,254}$"},
     "capacity": {"type": "integer", "minimum": 1},
+    "criticality": {"enum": ["foundational", "essential", "important", "supporting", "optional"]},
     "path": {"type": "string", "minLength": 1},
     "github_slug": {
       "type": "string",
@@ -20,6 +21,7 @@
     "metadata": {"type": "object"}
   },
   "allOf": [
-    {"if": {"properties": {"type": {"const": "capacity"}}, "required": ["type"]}, "then": {"required": ["capacity"]}}
+    {"if": {"properties": {"type": {"enum": ["capacity", "failure-domain", "recovery-path"]}}, "required": ["type"]}, "then": {"required": ["capacity"]}},
+    {"if": {"properties": {"type": {"enum": ["failure-domain", "recovery-path"]}}, "required": ["type"]}, "then": {"required": ["criticality"]}}
   ]
 }

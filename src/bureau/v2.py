@@ -20,6 +20,11 @@ from typing import Any
 from . import legacy, runtime_refresh
 from .adapters import AdapterRegistry
 from .approval import explicit_operator_approval, require_approval, task_approval_contract
+from .coordination_scope import (
+    coordination_scope_for_task,
+    coordination_scope_sha256,
+    validate_coordination_scope,
+)
 from .rlens_policy import (
     evaluate_task_rlens_policy,
     rlens_policy_block_reason,
@@ -967,6 +972,7 @@ class Registry(legacy.Registry):
                 )
             if task.mode == "grabowski-operation" and not task.execution.get("operation"):
                 errors.append(f"grabowski-operation {task.id} requires execution.operation")
+            errors.extend(validate_coordination_scope(task, self.resources))
             if task.state == "verified":
                 verification = task.raw.get("metadata", {}).get("verification", {})
                 expected_plan = plan_sha256(self, task.initiative)
@@ -2505,6 +2511,9 @@ class Dispatcher(legacy.Dispatcher):
                 "baseline_commit": baseline,
                 "runtime_truth": runtime_truth,
             }
+            coordination_scope = coordination_scope_for_task(selected)
+            if coordination_scope is not None:
+                envelope["coordination_scope"] = coordination_scope
             rlens_context_policy = evaluate_task_rlens_policy(selected.raw)
             envelope["rlens_context_policy"] = rlens_context_policy
             rlens_context_ref = task_rlens_context_ref(selected.raw)
@@ -3422,8 +3431,32 @@ def fail_run(store: StateStore, run_id: str, error: str, state: str = "failed") 
     return store.run(run_id)
 
 
+def _claim_bound_envelope(
+    store: StateStore,
+    run_id: str,
+    expected_sha256: str,
+) -> dict[str, Any]:
+    with store.connect() as connection:
+        row = connection.execute(
+            "SELECT envelope_json,envelope_sha256 FROM runs WHERE run_id=?", (run_id,)
+        ).fetchone()
+    if row is None:
+        raise legacy.StateError(f"unknown run {run_id}")
+    try:
+        envelope = json.loads(row["envelope_json"])
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise legacy.StateError(f"run {run_id} has invalid envelope JSON") from exc
+    if not isinstance(envelope, dict):
+        raise legacy.StateError(f"run {run_id} envelope root must be an object")
+    observed_sha256 = legacy.sha256_json(envelope)
+    if row["envelope_sha256"] != expected_sha256 or observed_sha256 != expected_sha256:
+        raise legacy.StateError(f"run {run_id} envelope integrity mismatch")
+    return envelope
+
+
 def grabowski_handoff(registry: Registry, store: StateStore, run_id: str) -> dict[str, Any]:
     run = store.run(run_id)
+    envelope = _claim_bound_envelope(store, run_id, run["envelope_sha256"])
     task = registry.tasks[run["task_id"]]
     keys = grabowski_resource_keys_for_task(registry.resources, task)
     result: dict[str, Any] = {
@@ -3450,6 +3483,15 @@ def grabowski_handoff(registry: Registry, store: StateStore, run_id: str) -> dic
         "io_weight": int(task.execution.get("io_weight", 100)),
         "memory_max_bytes": task.execution.get("memory_max_bytes"),
     }
+    coordination_scope = envelope.get("coordination_scope")
+    if coordination_scope is not None:
+        if not isinstance(coordination_scope, dict):
+            raise legacy.StateError(f"run {run_id} has invalid claim-bound coordination scope")
+        scope_sha256 = coordination_scope.get("scope_sha256")
+        if scope_sha256 != coordination_scope_sha256(coordination_scope):
+            raise legacy.StateError(f"run {run_id} coordination scope integrity mismatch")
+        result["coordination_scope"] = coordination_scope
+        result["coordination_scope_sha256"] = scope_sha256
     rlens_context_policy = evaluate_task_rlens_policy(task.raw)
     result["rlens_context_policy"] = rlens_context_policy
     rlens_context_ref = task_rlens_context_ref(task.raw)

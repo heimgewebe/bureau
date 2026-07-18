@@ -109,6 +109,7 @@ class Resource:
     path: str | None
     github_slug: str | None
     grabowski_key: str | None
+    criticality: str | None = None
 
 
 @dataclass(frozen=True)
@@ -278,6 +279,7 @@ class Registry:
                 path=raw.get("path"),
                 github_slug=raw.get("github_slug"),
                 grabowski_key=raw.get("grabowski_key"),
+                criticality=raw.get("criticality"),
             )
             self._unique(self.resources, item.id, item, path)
         for path in self._files(self.root / "registry/initiatives"):
@@ -370,8 +372,19 @@ class Registry:
                 errors.append(f"invalid resource id {resource.id}")
             if resource.parent and resource.parent not in self.resources:
                 errors.append(f"resource {resource.id} has unknown parent {resource.parent}")
-            if resource.type == "capacity" and (not resource.capacity or resource.capacity < 1):
-                errors.append(f"capacity resource {resource.id} needs positive capacity")
+            bounded_types = {"capacity", "failure-domain", "recovery-path"}
+            if resource.type in bounded_types and (
+                not resource.capacity or resource.capacity < 1
+            ):
+                errors.append(f"bounded resource {resource.id} needs positive capacity")
+            if resource.type in {"failure-domain", "recovery-path"} and resource.criticality not in {
+                "foundational",
+                "essential",
+                "important",
+                "supporting",
+                "optional",
+            }:
+                errors.append(f"resilience resource {resource.id} needs valid criticality")
             if resource.github_slug is not None:
                 if resource.type != "git-repository":
                     errors.append(

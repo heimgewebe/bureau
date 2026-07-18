@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-OS-V1-T005",
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "Föderationskern und Zwei-Zellen-Nachbarschaft beweisen",
-  "state": "blocked",
+  "state": "ready",
   "goal": "Zellidentität, globale Objektadressen, signierte Ereignisse, Reichweiten, Quarantäne, gemeinsame Räume und einen unabhängigen Zwei-Zellen-Pilot implementieren.",
   "depends_on": [
     "WELTGEWEBE-OS-V1-T002",
@@ -11,7 +11,7 @@
     "WELTGEWEBE-OS-V1-T004"
   ],
   "priority": {
-    "lane": "later",
+    "lane": "now",
     "rank": 3
   },
   "claims": [
@@ -66,6 +66,10 @@
     "world_tasks": [
       "WELTGEWEBE-OS-009",
       "WELTGEWEBE-OS-010"
-    ]
+    ],
+    "unblocked_at": "2026-07-18T20:26:18Z",
+    "dependency_receipt": "WELTGEWEBE-OS-V1-T002, WELTGEWEBE-OS-V1-T003 und WELTGEWEBE-OS-V1-T004 sind verified; T004 ist durch Weltgewebe PR #1462, commitgebundene PR-/Main-HA-Receipts und den separaten Production-Live-Contract belegt.",
+    "source_ref": "WELTGEWEBE-OS-V1-T004 closeout; heimgewebe/weltgewebe#1462; merge ee29974a02665a79bad7f18367542f1330b42b75; PR HA receipt 049381622f4429b476439a46b3604ab2275637881e5cf707c25e4d73898254ba; main HA receipt 35919e81d8258079c7e6c1b99a954418ca8e18672504745eea440ee0ae359446",
+    "task_id": "WELTGEWEBE-OS-V1-T005"
   }
 }

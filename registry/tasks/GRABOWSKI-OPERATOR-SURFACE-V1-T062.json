@@ -17,7 +17,7 @@
   ],
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T062",
   "title": "Migrate durable task and resource stores across deployed schemas",
-  "state": "ready",
+  "state": "verified",
   "goal": "Restore durable task and resource operations after a runtime or code upgrade by detecting deployed SQLite schema revisions, applying explicit crash-safe forward migrations and preserving tasks, attempts, leases and audit identity without silently accepting unknown or corrupt stores.",
   "priority": {
     "lane": "now",
@@ -103,6 +103,119 @@
       "mutation_boundary": "No database migration, recreation, downgrade or record rewrite was performed during this verification.",
       "remaining_acceptance": "Explicit historical-schema migrations, verified backups, interrupted/concurrent migration fixtures, mixed-version write prevention and production-copy preservation proof remain required before verification."
     },
-    "implementation_status": "live_incident_resolved_full_migration_contract_still_open"
+    "implementation_status": "verified",
+    "implemented_at": "2026-07-19T18:19:26Z",
+    "deployed_at": "2026-07-19T18:26:10Z",
+    "verified_at": "2026-07-19T20:51:55+02:00",
+    "verification_note": "PR #298 ported the crash-safe task/resource store migrations onto current Grabowski main, passed the complete validation suite, merged through an exact head-bound squash, deployed from a clean detached source and was verified live with current, write-compatible task schema 5 and resource schema 2 stores.",
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 298,
+      "reviewed_head": "acb68e68d70f7df93cd96055fdd90e4e29c51812",
+      "merge_commit": "49de1b260e2dd457c312cb9c33d9e5d3a14c1f35",
+      "validated_tree": "204d60317cd16dbc9bf097a1146f5d25229d86d5",
+      "diff_path": "/home/alex/iCloud/Drive/halde/grabowski-t062-schema-migrations-v2-final.diff",
+      "diff_sha256": "518fd237e1ba3aac87ac42420d12a86b0c5b09a3ffcab06e65e39f83acaab251",
+      "diff_bytes": 127165,
+      "self_review_path": "/home/alex/.local/state/grabowski/evidence/t062-schema-migrations-v2-self-review-acb68e68.json",
+      "self_review_sha256": "0a7450edb59d326c595851d1ae654ecefb9e04175a2277c0621c0c59af6d1e21",
+      "deployment": {
+        "release_id": "49de1b260e2d-srcset97c055a07be3-locke6664d600b6c-contractfdc92f471a95",
+        "job_unit": "grabowski-job-9125a3d9681c",
+        "source_identity_sha256": "9c56e896323fab3436b21d7b3ea44a5fdd6ba06f84f748c71bc9671b1ffe96e2",
+        "finalization_receipt_sha256": "e434e962f4daea02e1cf717d96018f3776d23f88b5a8ea03482fc814041f3cdb",
+        "payload_sha256": "5fdb569db766910b4204a4c3598687792fc236e728c19c7f64ea968e500d6ce5"
+      },
+      "validation": {
+        "focused_task_id": "f8ba759f3b374e6ca7048c7e",
+        "full_task_id": "4b746fadd8554855920bdc77",
+        "full_tests": 2351,
+        "expected_skips": 2,
+        "access_policy": "pass",
+        "tool_surface": "pass",
+        "operator_context": "current",
+        "publication_profiles": "current",
+        "runtime_lock": "pass",
+        "deploy_tooling_lock": "pass",
+        "secret_scan": "pass"
+      },
+      "live_schema_inventory": {
+        "tasks": {
+          "observed_version": "5",
+          "current_version": "5",
+          "supported_versions": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "status": "current",
+          "migration_required": false,
+          "mutation_performed": false,
+          "write_compatible": true
+        },
+        "resources": {
+          "observed_version": "2",
+          "current_version": "2",
+          "supported_versions": [
+            "1",
+            "2"
+          ],
+          "status": "current",
+          "migration_required": false,
+          "mutation_performed": false,
+          "write_compatible": true
+        }
+      },
+      "live_health": {
+        "healthy": true,
+        "repo_head": "49de1b260e2dd457c312cb9c33d9e5d3a14c1f35",
+        "deployment_integrity_valid": true,
+        "audit_valid": true,
+        "audit_writable": true,
+        "audit_state": "ready",
+        "kill_switch_engaged": false
+      }
+    },
+    "validated_acceptance": {
+      "version-inventory": "PASS: Installed runtime exposes bounded read-only schema inventories. Tasks report current schema 5 with supported versions 1-5; resources report current schema 2 with supported versions 1-2. Both report no migration required, no mutation performed and write compatibility.",
+      "crash-safe-migration": "PASS: Exclusive directory locks, BEGIN IMMEDIATE transactions, verified create-only SQLite backups, directory fsync, idempotent backup reuse and rollback are implemented and covered by migration, backup-failure, interrupted-open and concurrent-opener tests.",
+      "semantic-preservation": "PASS: Historical schema fixtures verify preservation of task IDs, attempts, terminalization and outcome state plus resource owner, lease, expiry and metadata identity. The live stores remain operational and current after deployment.",
+      "mixed-version-boundary": "PASS: Future, corrupt, incomplete and ambiguous schemas fail before mutation; rolling-upgrade inventory explicitly marks pre-T062 overlap with future schemas unsupported and requires a full runtime drain.",
+      "tests": "PASS: 2,351 full tests passed with two expected skips; focused task/resource tests and policy, generated-contract, runtime-lock, deploy-tooling and secret gates all passed.",
+      "live-proof": "PASS: Exact merge commit 49de1b26 was deployed from a clean detached, leased source. Runtime health is green and live task/resource inventories report current write-compatible schemas without inventory mutation; subsequent task and resource operations, including the isolated writer-handoff proof, completed against the deployed stores. No claim is made that the already-current production stores required a new backup during this deployment."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T062",
+          "source_ref": "github-pr:heimgewebe/grabowski#298@acb68e68d70f7df93cd96055fdd90e4e29c51812:49de1b260e2dd457c312cb9c33d9e5d3a14c1f35",
+          "content_sha256": "518fd237e1ba3aac87ac42420d12a86b0c5b09a3ffcab06e65e39f83acaab251"
+        },
+        {
+          "kind": "deployment_receipt",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T062",
+          "source_ref": "grabowski-job:grabowski-job-9125a3d9681c@49de1b260e2dd457c312cb9c33d9e5d3a14c1f35",
+          "content_sha256": "e434e962f4daea02e1cf717d96018f3776d23f88b5a8ea03482fc814041f3cdb"
+        },
+        {
+          "kind": "live_schema_readback",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T062",
+          "source_ref": "grabowski-schema-inventory:tasks-v5:resources-v2@49de1b260e2dd457c312cb9c33d9e5d3a14c1f35",
+          "content_sha256": "5da8e8230930093dc4338db564bfa8c0d38bcfc6b8781b791c370a3b3f62efda"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "cc7f80bc4972bbd93a7227a6fd8be267a1ca73f80c4407e8037229fa26b3139e",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

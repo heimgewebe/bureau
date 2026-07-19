@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T066",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Auditsegmente und schreibfähigen Runtime-Healthvertrag einführen",
+  "state": "planned",
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/.local/state/grabowski/write-audit.jsonl",
+      "path:/home/alex/.local/state/grabowski/audit-segments",
+      "path:/home/alex/.local/state/grabowski/audit-archive",
+      "service:grabowski-operator.service"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "systemd",
+    "grabowski",
+    "audit",
+    "runtime-deployment"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "sealed-segment-chain",
+      "assertion": "Every completed audit segment is immutable, regular-file and hash-bound through a create-only manifest; the next segment genesis binds predecessor path, byte size, record count, final record hash and whole-file SHA-256."
+    },
+    {
+      "id": "automatic-headroom-rotation",
+      "assertion": "The runtime rotates under one interprocess lock before the active segment lacks space for the maximum accepted record plus safety reserve, with directory fsyncs and no lost, duplicated or reordered accepted records across crashes and concurrent writers."
+    },
+    {
+      "id": "complete-verification",
+      "assertion": "Audit verification validates every declared archived segment, every cross-segment link and the active segment, and fails closed for missing, replaced, truncated, reordered, hardlinked or symlinked artifacts."
+    },
+    {
+      "id": "writable-health-contract",
+      "assertion": "Runtime health exposes audit_valid separately from audit_writable, exact active bytes, configured maximum, reserve and threshold state; mutating entrypoints fail before effects when the audit cannot durably record the full operation and required postflight."
+    },
+    {
+      "id": "manual-recovery-compatibility",
+      "assertion": "The 2026-07-19 manual recovery artifacts remain preserved and are either imported through an explicit verified compatibility manifest or reported as legacy recovery evidence without silently claiming full automatic-chain coverage."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover boundary-sized records, concurrent appenders, rotation races, crash points before and after rename and fsync, corrupt predecessor manifests, multiple rotations, legacy records and health threshold transitions."
+    },
+    {
+      "id": "deployment-live-proof",
+      "assertion": "The reviewed merge head is deployed and a bounded isolated-state proof forces a threshold rotation, verifies the complete resulting chain and confirms normal production mutation remains writable."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_operator_intake",
+    "source_event_id": 748,
+    "source_candidate_id": "candidate-7af6baaa920db2b5b6907fc5",
+    "source_observation": "On 2026-07-19 the active 16 MiB audit reached 16,776,989 of 16,777,216 bytes; valid verification still reported healthy while candidate recording failed. Manual recovery restored writes, but the deployed source contained no automatic rotation.",
+    "does_not_establish": [
+      "permission to delete historical audit evidence",
+      "permission to weaken tamper evidence",
+      "permission to treat a valid but non-writable audit as operator-ready",
+      "future absence of storage exhaustion"
+    ]
+  }
+}

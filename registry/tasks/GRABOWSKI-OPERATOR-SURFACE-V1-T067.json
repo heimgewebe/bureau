@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T067",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Browser- und GUI-Workerzustände frisch konvergieren",
+  "state": "planned",
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/.local/state/grabowski/workers",
+      "service:grabowski-operator.service"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "systemd",
+    "grabowski",
+    "browser-worker",
+    "gui-worker"
+  ],
+  "depends_on": [
+    "HEIMGEWEBE-RESILIENZ-V1-T005"
+  ],
+  "acceptance": [
+    {
+      "id": "fresh-active-reconciliation",
+      "assertion": "Before browser or GUI worker list output claims an entry is active, launching or stopping, the implementation performs one bounded current systemd observation and reconciles the stored lifecycle state without trusting stale registry text."
+    },
+    {
+      "id": "actionable-default-view",
+      "assertion": "Default worker-list output is bounded and contains current active, ambiguous or operator-actionable records only; completed, stopped and interrupted history is available through an explicit bounded history view with pagination."
+    },
+    {
+      "id": "terminal-lease-release",
+      "assertion": "Freshly observed terminal workers release only their exact unchanged worker-owned port, profile and display leases while foreign or ambiguous leases remain untouched and visible."
+    },
+    {
+      "id": "evidence-preserved",
+      "assertion": "Worker manifests, launcher identity, final systemd observation and receipts remain preserved; convergence changes projections and exact terminal leases, not historical evidence."
+    },
+    {
+      "id": "shared-lifecycle-core",
+      "assertion": "Browser and GUI workers use one tested lifecycle reconciliation primitive for systemd states, timestamps and terminal classification while retaining type-specific profile, port and display validation."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover missing transient units, completed and interrupted units, stale running records, same-second state changes, unknown systemd results, foreign leases, pagination and preservation of historical receipts."
+    },
+    {
+      "id": "live-proof",
+      "assertion": "After deployment, fresh list and status readbacks no longer report the two observed absent browser units as running, and one bounded new worker lifecycle proves active-to-terminal convergence and exact lease release."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_operator_intake",
+    "source_event_id": 749,
+    "source_candidate_id": "candidate-d27c1d152f2a003918c35e6d",
+    "source_observation": "The 2026-07-19 audit found 75 browser and 8 GUI history records. At least two browser records were projected as running although fresh systemd readback returned LoadState=not-found, ActiveState=inactive and SubState=dead.",
+    "does_not_establish": [
+      "permission to delete worker history",
+      "permission to release foreign leases",
+      "absence of future systemd observation ambiguity",
+      "worker action success from registry state alone"
+    ]
+  }
+}

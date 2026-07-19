@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T021",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Prevent source-digest false duplicates in Bureau operator intake",
+  "state": "planned",
+  "goal": "Refine Bureau operator-intake deduplication so candidates derived from the same source artifact but carrying different desired outcomes or repository targets are not classified as exact duplicates, while genuine identity and replay duplicates remain deterministic and fail closed.",
+  "priority": {
+    "lane": "next",
+    "rank": 21
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/operator_intake.py",
+      "path:/home/alex/repos/bureau/tests/test_operator_intake.py"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Dedupe changes must preserve append-only candidate history, idempotent replay and advisory-only similarity semantics."
+    }
+  },
+  "claims": [
+    {
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "bureau",
+    "grabowski",
+    "github"
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T017"
+  ],
+  "acceptance": [
+    {
+      "id": "reproduce-live-finding",
+      "assertion": "A regression fixture reproduces events 740, 741 and 742: one source digest, distinct titles and desired outcomes, and targets in repo.weltgewebe and repo.grabowski.",
+      "verifier": "regression test",
+      "evidence_type": "object"
+    },
+    {
+      "id": "exact-identity-contract",
+      "assertion": "Exact duplicate classification requires a documented task or candidate identity equivalence and cannot be established by source_sha256 alone when repository, desired outcome or target task differs.",
+      "verifier": "contract and unit tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "replay-preservation",
+      "assertion": "Identical idempotency-key replays, duplicate candidate IDs and duplicate explicit task IDs remain exact, deterministic and side-effect-free.",
+      "verifier": "idempotency tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "advisory-source-link",
+      "assertion": "A shared source digest may be reported as a bounded advisory relationship, but it never automatically merges, closes, suppresses or blocks proposal of a semantically distinct candidate.",
+      "verifier": "assessment tests",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "publication-proof",
+      "assertion": "After the fix, the three PR #1489 follow-up candidates can each produce an independent reviewed task proposal with the correct repository claim and no false exact-duplicate error.",
+      "verifier": "operator-intake integration test",
+      "evidence_type": "object"
+    }
+  ],
+  "rollback": {
+    "strategy": "Restore the previous advisory output while retaining all candidate events; if exactness is uncertain, defer promotion rather than silently merging distinct work."
+  },
+  "metadata": {
+    "registered_at": "2026-07-19T06:13:03+02:00",
+    "source_locator": "bureau:events:740,741,742",
+    "source_sha256": "75c09a627e21977aa66c562d4f426210fe74bff58e99e01ad66065149a857637",
+    "candidate_id": "candidate-264ce070d503f6ab01aa9f6f",
+    "candidate_event_id": 743,
+    "live_reproduction": {
+      "candidate_ids": [
+        "candidate-fe3abe2186588519f248c019",
+        "candidate-a9acb7f74893fa7d2d270fc7",
+        "candidate-c31d976dd43352cb168e1415"
+      ],
+      "observed_decision": "merge",
+      "reason": "same source_sha256",
+      "distinct_repositories": [
+        "repo.weltgewebe",
+        "repo.grabowski"
+      ]
+    },
+    "does_not_establish": [
+      "candidate data loss",
+      "automatic task promotion",
+      "task readiness",
+      "registry mutation outside the reviewed publication path"
+    ]
+  }
+}

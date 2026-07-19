@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T020",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Implement a typed Grabowski operation lifecycle vertical slice",
+  "state": "planned",
+  "goal": "Expose operation.start, operation.status, operation.continue, operation.review and operation.close as one thin typed Grabowski lifecycle over existing Bureau tasks, leases, durable executions, review evidence, readbacks and cleanup without introducing a second task or repository truth.",
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "The slice must compose existing authorities and receipts; it may not create generic shell, merge, deployment or task-truth authority."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau"
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T017"
+  ],
+  "acceptance": [
+    {
+      "id": "single-operation-identity",
+      "assertion": "All five calls address one stable operation identity bound to the canonical Bureau task, repository, branch or deployment target, expected base and active resource leases.",
+      "verifier": "contract and lifecycle tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "typed-phase-results",
+      "assertion": "Each call returns a bounded typed result with current phase, terminality, effect_started, ambiguity, required_readback, evidence references and explicit non-claims; prose parsing is unnecessary.",
+      "verifier": "schema and consumer tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "authority-composition",
+      "assertion": "The lifecycle reuses existing Bureau task truth, Grabowski durable tasks, resource leases, review gates, GitHub readbacks and checkout lifecycle tools; no operation call can bypass their independent policy checks.",
+      "verifier": "negative authorization tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "continuation-safety",
+      "assertion": "operation.continue resumes only a reconciled non-terminal phase, rejects stale generation or changed bindings and never blindly retries a mutation after an ambiguous result.",
+      "verifier": "fault-injection tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "review-and-close",
+      "assertion": "operation.review binds exact diff and evidence hashes, while operation.close requires terminal readbacks, releases only owned leases and archives or cleans only eligible owned checkouts.",
+      "verifier": "end-to-end lifecycle receipt",
+      "evidence_type": "object"
+    },
+    {
+      "id": "fresh-session-use",
+      "assertion": "A fresh operator session can discover and use the vertical slice to progress one real repository task from start through close without human shell assistance or a hidden second status model.",
+      "verifier": "fresh-session consumer proof",
+      "evidence_type": "object"
+    }
+  ],
+  "rollback": {
+    "strategy": "Disable the operation adapters and continue using the underlying task, lease, Git, review and cleanup tools directly; retain all durable operation receipts for diagnosis."
+  },
+  "metadata": {
+    "registered_at": "2026-07-19T06:10:48+02:00",
+    "source_pr": "heimgewebe/weltgewebe#1489",
+    "source_diff_sha256": "ab673daedea3bf553917c4bd32cbca35295e0e198029bc41160c582007ced46d",
+    "candidate_id": "candidate-c31d976dd43352cb168e1415",
+    "candidate_event_id": 742,
+    "source_finding": "The canonical Weltgewebe repository contract now cleanly separates repo contract authority from external operator execution, enabling the first operation lifecycle slice.",
+    "does_not_establish": [
+      "implementation",
+      "generic execution authority",
+      "task readiness",
+      "merge or deployment authority"
+    ]
+  }
+}

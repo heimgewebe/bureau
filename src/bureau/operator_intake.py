@@ -28,6 +28,7 @@ from .live_register import (
     current_candidate_records,
     live_register_record,
 )
+from .runtime_identity import bureau_runtime_identity
 from .runtime_refresh import (
     DEFAULT_GRABOWSKI_RESOURCE_DB,
     RuntimeRefreshError,
@@ -313,7 +314,7 @@ def candidate_record(
 
     bound_registry = registry
     if registry is not None:
-        bound_registry, _ = _canonical_registry_snapshot(registry)
+        bound_registry, _ = _canonical_read_registry_snapshot(registry)
 
     generated_observed_at = checked_observed or legacy.utc_now()
     selected_candidate_id = candidate_id or _candidate_id_for_key(key)
@@ -597,7 +598,7 @@ def candidate_assess(
     task_id: str | None = None,
 ) -> dict[str, Any]:
     """Assess one candidate against a clean, HEAD-bound Registry snapshot."""
-    bound_registry, _ = _canonical_registry_snapshot(registry)
+    bound_registry, _ = _canonical_read_registry_snapshot(registry)
     return _candidate_assess(
         bound_registry,
         store,
@@ -659,6 +660,69 @@ def _raise_dirty_registry(entries: list[str]) -> None:
         },
     )
 
+
+
+def _runtime_snapshot_binding(root: Path) -> dict[str, str] | None:
+    try:
+        identity = bureau_runtime_identity(root)
+        compatibility = identity.get("compatibility", {})
+        manifest = identity.get("manifest", {})
+        canonical = manifest.get("canonical_registry", {})
+        canonical_root = Path(str(canonical.get("root", ""))).expanduser().resolve()
+        source_commit = str(canonical.get("source_commit", ""))
+        tree_sha256 = str(canonical.get("tree_sha256", ""))
+        inventory_sha256 = str(canonical.get("inventory_sha256", ""))
+    except (OSError, TypeError, ValueError):
+        return None
+    if (
+        compatibility.get("status") != "canonical-read-only"
+        or manifest.get("valid") is not True
+        or canonical.get("valid") is not True
+        or canonical_root != root
+        or re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", source_commit) is None
+        or _SOURCE_SHA_RE.fullmatch(tree_sha256) is None
+        or _SOURCE_SHA_RE.fullmatch(inventory_sha256) is None
+    ):
+        return None
+    return {
+        "commit": source_commit,
+        "registry_tree": tree_sha256,
+        "inventory_sha256": inventory_sha256,
+    }
+
+
+def _canonical_read_registry_snapshot(
+    registry: Registry,
+) -> tuple[Registry, dict[str, str]]:
+    try:
+        return _canonical_registry_snapshot(registry)
+    except OperatorIntakeError as git_error:
+        if git_error.code != "registry-git-read-failed":
+            raise
+        root = registry.root.expanduser().resolve()
+        before = _runtime_snapshot_binding(root)
+        if before is None:
+            raise
+        try:
+            bound_registry = Registry.load(root)
+        except Exception as exc:
+            raise OperatorIntakeError(
+                "registry-reload-failed",
+                f"cannot reload canonical Registry snapshot: {str(exc)[:2000]}",
+                retryable=True,
+            ) from exc
+        after = _runtime_snapshot_binding(root)
+        if after != before:
+            raise OperatorIntakeError(
+                "registry-snapshot-drift",
+                "immutable Registry snapshot changed while it was loaded",
+                retryable=True,
+                details={"before": before, "after": after},
+            ) from git_error
+        return bound_registry, {
+            "commit": before["commit"],
+            "registry_tree": before["registry_tree"],
+        }
 
 def _canonical_registry_snapshot(registry: Registry) -> tuple[Registry, dict[str, str]]:
     root = registry.root.expanduser().resolve()

@@ -50,24 +50,91 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T073",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
-    "blocking_condition": "docs/generated/operator-context.v1.json is actively leased by chatgpt-t062-finalize-20260719-v3 through 2026-07-19T23:54:53+02:00; final independent review also lacks a PASS receipt.",
+    "blocking_condition": "The archived PR and deployment checkouts are inside the mandatory 24-hour cleanup grace; physical removal and final verification are permitted after 2026-07-20T22:45:40Z.",
     "current_evidence": {
-      "codeql": "passed",
-      "disposable_projection_refresh": "exactly one generated source-hash line changes",
-      "focused_tests": "15/15 passed on final head",
-      "full_validation": "2353 tests, 2 skipped, exactly one local failure: test_generated_context_is_current",
+      "audit": "audit chain valid and writable; kill switch not engaged",
+      "codeql": "passed on remote head 30716dea6c8dceceff3f66e4f09ebbd430e0fa2d",
+      "deploy_check": "make deploy-check passed",
+      "focused_tests": "task-attention regression tests passed",
+      "full_validation": "make validate passed: 2356 tests passed, 2 skipped",
       "git_diff_check": "passed",
-      "github_validation": "two jobs failed in Validate repository step"
+      "github_validation": "CodeQL, Python 3.10, Python 3.12, Analyze actions and Analyze python all passed",
+      "merge": "PR #309 squash-merged as c501dbb8189c0f7bc89473ab9b7c064581a32162",
+      "runtime": "exact merge commit deployed and runtime health/integrity readbacks passed",
+      "task_attention_readback": "read-only reconciliation scanned 20 outcomes: 20 valid, 0 invalid"
     },
-    "diff_sha256": "45e7746deeaf8bcaca510dc6c49318527e8ffebee641e1d0386eb53567f7a28e",
+    "diff_sha256": "72a4045126899c9152e65f782c79805339a49d4205f27f78ceb979c59a3e1433",
     "does_not_establish": [
-      "merge_readiness",
-      "deployment_authority",
-      "green_full_validation",
-      "independent_review_pass",
-      "permission_to_override_foreign_leases"
+      "physical_worktree_removal_before_cleanup_grace",
+      "final_task_verification_before_physical_cleanup"
     ],
-    "observed_base": "49de1b260e2dd457c312cb9c33d9e5d3a14c1f35",
+    "implementation": {
+      "cleanup": {
+        "deployment_checkout_archive_id": "20260719T224540Z-f3d64e86199a",
+        "deployment_checkout_coordination": {
+          "processes": 0,
+          "resource_leases": 0,
+          "tasks": 0
+        },
+        "earliest_cleanup_at": "2026-07-20T22:45:40Z",
+        "retention_until_unix": 1787093116,
+        "rollback_refs_preserved": true,
+        "status": "archived_pending_mandatory_grace",
+        "writer_checkout_archive_id": "20260719T224523Z-38dda6a1ca80",
+        "writer_checkout_coordination": {
+          "processes": 0,
+          "resource_leases": 0,
+          "tasks": 0
+        }
+      },
+      "deployment": {
+        "audit_valid": true,
+        "audit_writable": true,
+        "deployed_commit": "c501dbb8189c0f7bc89473ab9b7c064581a32162",
+        "deployment_complete": true,
+        "deployment_integrity_valid": true,
+        "job_result": "success",
+        "job_unit": "grabowski-job-5c9bc0ef3a3d",
+        "kill_switch_engaged": false,
+        "release_id": "c501dbb8189c-srcset2b647a2c8932-locke6664d600b6c-contract1add9fdbb62b",
+        "runtime_healthy": true
+      },
+      "live_function": {
+        "grip": "task-attention-reconciliation",
+        "invalid_outcome": 0,
+        "mode": "read-only",
+        "receipt_sha256": "3e3725b3b17510b56845c18a818979c5e8fbf0e2843c51b9dcbd79ddb8587294",
+        "scanned": 20,
+        "valid_outcome": 20
+      },
+      "merge": {
+        "merge_commit": "c501dbb8189c0f7bc89473ab9b7c064581a32162",
+        "merged_at": "2026-07-19T22:30:05Z",
+        "remote_feature_branch_deleted": true,
+        "status": "merged"
+      },
+      "pull_request": 309,
+      "repository": "heimgewebe/grabowski",
+      "review": {
+        "base_sha": "c47ed4b12cc7856b46d5a0764e74777eab7d207a",
+        "diff_sha256": "72a4045126899c9152e65f782c79805339a49d4205f27f78ceb979c59a3e1433",
+        "finding": "No blocking findings; digest-bound lifecycle evidence remains authoritative and integrity failures propagate fail-closed.",
+        "remote_head_sha": "30716dea6c8dceceff3f66e4f09ebbd430e0fa2d",
+        "shared_tree_sha": "b86f9eba27215bc23ba49d6aa429d0f13ec2d4bc",
+        "status": "passed",
+        "validated_local_head_sha": "b07a5d2ce540ecd684d649fda83d782750d822ed"
+      },
+      "validation": {
+        "github_checks": "all-success",
+        "make_deploy_check": "passed",
+        "make_deploy_check_task_id": "8efdde1570884c02a8411de2",
+        "make_deploy_check_terminalization_sha256": "cf708182d4c9681b24e028370c21dcea3ac9ab893b744554806b934e3184f1dc",
+        "make_validate": "passed",
+        "make_validate_task_id": "c45b16f39ece4baf8c43a76a",
+        "make_validate_terminalization_sha256": "00dbde07e59db228d4ea01b20d7488f17514675630843cdef1e68f10de2b898c"
+      }
+    },
+    "observed_base": "c47ed4b12cc7856b46d5a0764e74777eab7d207a",
     "operator_intake": {
       "candidate_id": "candidate-43f9279b96b12935db58b3db",
       "does_not_establish": [
@@ -88,11 +155,20 @@
         "sha256": "45e7746deeaf8bcaca510dc6c49318527e8ffebee641e1d0386eb53567f7a28e"
       }
     },
+    "progress_updated_at": "2026-07-19T22:47:29Z",
     "source": "pr_closeout_followup",
-    "source_head": "65461f5b22972d4cbb617a585b236c4831902564",
+    "source_head": "30716dea6c8dceceff3f66e4f09ebbd430e0fa2d",
     "source_pr": 309,
     "source_repository": "heimgewebe/grabowski",
-    "source_tree": "4511acd68694cbb0806d69869271101aa16765b1"
+    "source_tree": "b86f9eba27215bc23ba49d6aa429d0f13ec2d4bc",
+    "validated_acceptance": {
+      "clean-closeout": "PENDING: both clean checkouts are archived with recovery refs, but physical removal is blocked by the mandatory 24-hour cleanup grace until 2026-07-20T22:45:40Z.",
+      "diff-bound-review": "PASS: review was bound to exact base, remote head, shared tree and diff digest and found no blocker.",
+      "exact-merge-and-runtime": "PASS: PR #309 was merged SHA-bound; exact merge c501dbb was deployed and verified through runtime, audit, kill-switch and functional readbacks.",
+      "fresh-head-and-base": "PASS: live PR, branch, CI, checkout, task, process and lease state were re-read before mutation and again before merge.",
+      "green-validation": "PASS: final tree passed focused tests, git diff --check, make validate, make deploy-check and all GitHub checks.",
+      "lease-safe-projection": "PASS: the projection was regenerated only after the foreign lease expired and under an own branch lease."
+    }
   },
   "priority": {
     "lane": "next",

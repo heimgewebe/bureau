@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T066",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Auditsegmente und schreibfähigen Runtime-Healthvertrag einführen",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 1
@@ -76,6 +76,86 @@
       "permission to weaken tamper evidence",
       "permission to treat a valid but non-writable audit as operator-ready",
       "future absence of storage exhaustion"
-    ]
+    ],
+    "implemented_at": "2026-07-19T10:41:41Z",
+    "deployed_at": "2026-07-19T10:45:51Z",
+    "verified_at": "2026-07-19T11:19:11.221880Z",
+    "verification_note": "PR #303 added automatic fail-closed audit segmentation, complete segment-chain verification, legacy recovery compatibility, sealed-segment caching and a writable health contract. The exact merge head was deployed and live health confirmed a valid, writable audit with the kill switch disengaged.",
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 303,
+      "reviewed_head": "17b6438c33cf8105d221d8b47ad110d82b5b4f10",
+      "merge_commit": "60d2bf1582b378c596651e8b499498db4918bf2e",
+      "diff_path": "/home/alex/iCloud/Drive/halde/grabowski-t066-audit-segment-lifecycle.diff",
+      "diff_sha256": "69bcf3ca23355d3906e2670949626a9b98631b571f492adda211e56d30cae010",
+      "deployment": {
+        "release_id": "60d2bf1582b3-srcsetc717833fb75c-locke6664d600b6c-contract2c47105e3c8e",
+        "job_unit": "grabowski-job-0a3385ce63b3",
+        "source_identity_sha256": "a7dc45c89eeafb9b30a3f9fc29b0c52eb39ffdff6b3aafc1cc2853ec99af63f1",
+        "finalization_receipt_sha256": "cb7d966cf6278c9663e91097098dcfeefc22a6a0c4404031ed2b8e138810d00a",
+        "payload_sha256": "7c0059ea6f7a28a376251acc0a6901f2d11000bcd4e56322f7de30cd21efad52"
+      },
+      "validation": {
+        "full_tests": 2270,
+        "expected_skips": 2,
+        "focused_tests": 37,
+        "focused_subtests": 21,
+        "tool_count": 152,
+        "tool_surface": "pass",
+        "runtime_lock": "pass",
+        "secret_scan": "pass"
+      },
+      "live_health": {
+        "healthy": true,
+        "repo_head": "60d2bf1582b378c596651e8b499498db4918bf2e",
+        "audit_valid": true,
+        "audit_writable": true,
+        "audit_state": "ready",
+        "audit_archived_segment_count": 2,
+        "audit_total_records": 19995,
+        "audit_rotation_required": false,
+        "kill_switch_engaged": false
+      }
+    },
+    "validated_acceptance": {
+      "sealed-segment-chain": "PASS: create-only private manifests bind path, bytes, records, final record hash, whole-file digest and predecessor manifest identity; tamper and unsafe file bindings fail closed.",
+      "automatic-headroom-rotation": "PASS: rotation occurs under a separate interprocess lock before reserve exhaustion; four-process concurrency and crash-boundary tests showed no loss or duplicates.",
+      "complete-verification": "PASS: all archived and active segments are verified; tests cover symlink, hardlink, missing, replaced, truncated, reordered, cyclic and manifest-drift cases.",
+      "writable-health-contract": "PASS: live health separately reports audit_valid and audit_writable with exact capacity fields and currently reports ready/writable.",
+      "manual-recovery-compatibility": "PASS: both observed manual recovery forms are preserved and verified through explicit compatibility handling.",
+      "tests": "PASS: 2,270 full tests plus 37 focused tests and 21 subtests passed.",
+      "deployment-live-proof": "PASS: exact merge head 60d2bf15 was deployed; the same reviewed head passed forced isolated rotations and live production health confirms normal writes remain ready."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T066",
+          "source_ref": "github-pr:heimgewebe/grabowski#303@17b6438c33cf8105d221d8b47ad110d82b5b4f10:60d2bf1582b378c596651e8b499498db4918bf2e",
+          "content_sha256": "69bcf3ca23355d3906e2670949626a9b98631b571f492adda211e56d30cae010"
+        },
+        {
+          "kind": "deployment_receipt",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T066",
+          "source_ref": "grabowski-job:grabowski-job-0a3385ce63b3@60d2bf1582b378c596651e8b499498db4918bf2e",
+          "content_sha256": "cb7d966cf6278c9663e91097098dcfeefc22a6a0c4404031ed2b8e138810d00a"
+        },
+        {
+          "kind": "live_health_readback",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T066",
+          "source_ref": "grabowski-runtime-health:60d2bf1582b378c596651e8b499498db4918bf2e:records-19995",
+          "content_sha256": "7c0059ea6f7a28a376251acc0a6901f2d11000bcd4e56322f7de30cd21efad52"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "941a5605a6a3e7ebe215726b62327da5f74fc7a1c531fe027c00774a459de3a9",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

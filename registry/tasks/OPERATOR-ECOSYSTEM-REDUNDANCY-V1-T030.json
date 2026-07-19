@@ -3,8 +3,8 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T030",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "RepoBrief-Quellcheckouts nach RepoGround-Cutover schließen",
-  "state": "planned",
-  "goal": "Livebefund: Kein Prozess nutzt RepoBrief, Lenskit oder rLens; dennoch liegen 43 alte RepoBrief-Quellcheckouts parallel zu 42 RepoGround-Quellcheckouts. Aufgabe: absolute Receipt- und Consumerreferenzen inventarisieren, erforderliche historische Quellen hashgebunden bewahren, übrige Altquellen sicher schließen und den RepoGround-Publikationspfad unverändert verifizieren.",
+  "state": "blocked",
+  "goal": "Liveinventur 2026-07-19: Die aktive RepoGround-Fleet-Publikation verwendet standardmäßig `/home/alex/repos/.repoground-sources`; `.repobrief-sources` wird im aktuellen Publisher nur noch als auszuschließende Fleetwurzel genannt. Es laufen keine Prozesse aus dem Altpfad. Die alte Fläche enthält 43 Checkouts mit 424 MiB, die neue 42 mit 160 MiB; 41 Namen überschneiden sich, alt-only sind `heim-assi` und `vault-gewebe`, neu-only ist `repoground`. Zahlreiche absolute Altpfadreferenzen liegen in unveränderlichen Task-Outcomes, Audit-, Verifier-, Benchmark- und Archivbelegen und dürfen nicht umgeschrieben werden. Aufgabe: nach Abschluss der fremden RepoGround-Publisher-Arbeit jeden Altcheckout auf Dirty-State, Git-Bindung, Lease, Prozess und Recoverybeleg klassifizieren, benötigte Wiederherstellung hashgebunden sichern und nur terminale redundante Checkouts entfernen; historische Receipts bleiben unverändert.",
   "priority": {
     "lane": "next",
     "rank": 81
@@ -43,20 +43,28 @@
   ],
   "acceptance": [
     {
-      "id": "source-event-bound",
-      "assertion": "Task metadata preserves the originating live-register event id and source."
+      "id": "active-publisher-boundary",
+      "assertion": "The current installed publisher and systemd timer are re-read and prove `.repoground-sources` is the active source root; `.repobrief-sources` is not opened as a publication source."
     },
     {
-      "id": "reviewed-before-effect",
-      "assertion": "Any repository effect remains review-before-effect and does not follow from the live event alone."
+      "id": "historical-references-immutable",
+      "assertion": "Task outcomes, audits, verifier runs, benchmark artifacts and archive manifests that mention the legacy absolute path are preserved byte-for-byte and are not treated as active consumers."
     },
     {
-      "id": "reference-inventory",
-      "assertion": "Absolute receipt, benchmark and consumer references to RepoBrief source paths are inventoried."
+      "id": "checkout-by-checkout-classification",
+      "assertion": "All 43 legacy directories receive individual dirty-state, Git common-dir, branch/head, process, lease, archive and retention classification before any removal."
+    },
+    {
+      "id": "old-only-repositories-explained",
+      "assertion": "The old-only `heim-assi` and `vault-gewebe` checkouts are classified against the active RepoGround exclusion policy and retained or archived with explicit reason."
+    },
+    {
+      "id": "no-foreign-overlap",
+      "assertion": "No implementation begins while another owner holds the RepoGround repository, publisher script or fleet-runtime components."
     },
     {
       "id": "repoground-readback",
-      "assertion": "Canonical RepoGround publication and read paths remain healthy after closeout."
+      "assertion": "After any eventual cleanup, the hourly publisher uses only `.repoground-sources`, completes successfully, and existing manifests remain readable."
     }
   ],
   "metadata": {
@@ -72,6 +80,36 @@
       "claim_authority",
       "dispatch_authority",
       "merge_readiness"
-    ]
+    ],
+    "live_evidence": {
+      "observed_at": "2026-07-19",
+      "legacy_source_root": "/home/alex/repos/.repobrief-sources",
+      "canonical_source_root": "/home/alex/repos/.repoground-sources",
+      "legacy_count": 43,
+      "canonical_count": 42,
+      "shared_names": 41,
+      "legacy_only": [
+        "heimgewebe__heim-assi__main",
+        "heimgewebe__vault-gewebe__main"
+      ],
+      "canonical_only": [
+        "heimgewebe__repoground__main"
+      ],
+      "legacy_size_mib": 424,
+      "canonical_size_mib": 160,
+      "legacy_process_count": 0,
+      "active_publisher_default": ".repoground-sources",
+      "active_legacy_reference_role": "fleet-root exclusion only",
+      "historical_reference_classes": [
+        "task-outcomes",
+        "write-audit",
+        "recovery-preimages",
+        "checkout-archive-manifest",
+        "bureau-verifier-runs",
+        "agent-benchmarks",
+        "retired-runtime-backups"
+      ],
+      "current_conflict_owner": "chatgpt-repoground-fleet-publisher-hygiene-20260719"
+    }
   }
 }

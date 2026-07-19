@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T029",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Aktive systemd-Altgenerationen aus dem Livepfad entfernen",
-  "state": "planned",
+  "state": "verified",
   "goal": "Liveinventur 2026-07-19: Im aktiven User-systemd-Pfad liegen vier Backup-Units, zwei seit 2025 verwaiste Vim-Swapdateien und eine ausdrücklich retired Tunnel-Unit. `grabowski-watchdog.service` und `systemkatalog-repobrief-localize.service` sind statische, inaktive Units ohne Trigger oder Reverse-Bindung. `rlens.service` ist nicht mehr geladen, während drei Drop-ins weiter im Livepfad liegen. `omni-mirror-org.timer` und `heimgewebe-mirror.timer` sind deaktivierte Parallelgenerationen; der kanonische `omnipull.timer` ist aktiv. Aufgabe: exakte Dateien und Unitdefinitionen hashgebunden außerhalb des Livepfads archivieren, nur belegte Altgenerationen entfernen, `daemon-reload` ausführen und aktive Watchdog-, RepoGround- sowie Omnipull-Pfade unverändert live bestätigen.",
   "priority": {
     "lane": "now",
@@ -109,6 +109,65 @@
         "repoground.service",
         "omnipull.timer"
       ]
+    },
+    "implemented_at": "2026-07-19T07:26:30Z",
+    "verified_at": "2026-07-19T07:30:36Z",
+    "verification_note": "Four backup units, two Vim swap files, one retired unit, two untriggered static services, three orphaned rlens drop-ins and two disabled mirror timers were moved out of the live user-systemd path into a private hash-bound archive. After daemon-reload all five legacy unit identities are not-found, while RepoGround, Omnipull and the three protected Grabowski timers remain healthy.",
+    "implementation": {
+      "effect_mode": "live-runtime-hygiene-no-repository-code",
+      "archive_root": "/home/alex/.local/state/heim-pc/systemd-generation-hygiene-v1/20260719T072629.872511Z",
+      "plan_path": "/home/alex/.local/state/heim-pc/systemd-generation-hygiene-v1/20260719T072629.872511Z/plan.json",
+      "plan_sha256": "c3cde13acf734763c86bca4ab2cf6274bb5ea07c4d1eb69d0a505af42f5ff535",
+      "receipt_path": "/home/alex/.local/state/heim-pc/systemd-generation-hygiene-v1/20260719T072629.872511Z/receipt.json",
+      "receipt_sha256": "ff604b8ebbbbcad37469d5cc5b7bb900bf0cf70a93ed2b6ac39867209bfa6fb1",
+      "archived_file_count": 14,
+      "removed_units": [
+        "grabowski-watchdog.service",
+        "systemkatalog-repobrief-localize.service",
+        "rlens.service",
+        "omni-mirror-org.timer",
+        "heimgewebe-mirror.timer"
+      ],
+      "protected_units": [
+        "grabowski-operator-watchdog.timer",
+        "grabowski-tunnel-watchdog.timer",
+        "grabowski-observer.timer",
+        "repoground.service",
+        "omnipull.timer"
+      ],
+      "repository_changes": false,
+      "automatic_rollback_used": false,
+      "initial_postflight_interruption": {
+        "effect_state": "effects_completed_before_receipt",
+        "reason": "grabowski-observer.timer was active/running during its trigger instead of active/waiting",
+        "unchanged_mutation_retry_used": false,
+        "resolution": "fresh readback accepted waiting or running for active timers and revalidated all 14 archive hashes and every protected unit"
+      }
+    },
+    "validated_acceptance": {
+      "pure-file-debris-bound": "PASS: plan records exact source paths, hashes, sizes, modes, mtimes, inodes and device identities before effects.",
+      "untriggered-unit-proof": "PASS: both static services were inactive/static with no reverse dependencies immediately before removal.",
+      "rlens-base-absent": "PASS: rlens.service was not-found, reverse-dependency-free and all three drop-ins are preserved in the archive.",
+      "mirror-generation-boundary": "PASS: both parallel timers were inactive/disabled; omnipull.timer was active/enabled and its service result remained success.",
+      "reversible-hygiene": "PASS: 14 files were renamed into a private archive with unchanged SHA-256 and a create-only plan plus receipt; no repository was modified.",
+      "post-state": "PASS: removed units are not-found; RepoGround is active/running, Omnipull is active/waiting, and protected Grabowski timers are active in waiting or running trigger state."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "runtime_hygiene_receipt",
+          "authority": "heim-pc-systemd",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T029",
+          "source_ref": "/home/alex/.local/state/heim-pc/systemd-generation-hygiene-v1/20260719T072629.872511Z/receipt.json",
+          "content_sha256": "ff604b8ebbbbcad37469d5cc5b7bb900bf0cf70a93ed2b6ac39867209bfa6fb1"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "2bda512ddd5b1af5ed1aeea6ee8dd0a9c0f57566b6ba9b553f508aa6ae12d695",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   }
 }

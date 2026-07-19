@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T031",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Generationenabschluss für Cutover und Systemablösung erzwingen",
-  "state": "planned",
+  "state": "verified",
   "goal": "Systemischer Befund: Neue Runtime- oder Produktgenerationen werden häufig erfolgreich aktiviert, während Vorgängerdienste, Konfigurationen, Quellen, Sessions, Worktrees, Fleet-Einträge und Katalogsemantik teilweise offen bleiben. Aufgabe: einen fail-closed Abschlussvertrag einführen, der Vorgänger je Fläche als entfernt, archiviert, Recovery oder weiterhin benötigt klassifiziert und erst dann terminalen Closeout erlaubt. Kein neues Statusregister; bestehende Quellwahrheiten und Receipts bleiben autoritativ.",
   "priority": {
     "lane": "now",
@@ -58,6 +58,61 @@
       "claim_authority",
       "dispatch_authority",
       "merge_readiness"
-    ]
+    ],
+    "implemented_at": "2026-07-19T09:41:34Z",
+    "verified_at": "2026-07-19T10:40:12.067489Z",
+    "verification_note": "PR #708 introduced the opt-in, fail-closed generation transition and predecessor closeout contract. The contract validates exact predecessor coverage, dispositions, source evidence, canonical hash binding and non-authority boundaries without creating a second runtime or registry truth.",
+    "implementation": {
+      "effect_mode": "repository-contract-review-before-effect",
+      "repository": "heimgewebe/bureau",
+      "pull_request": 708,
+      "reviewed_head": "c7cb06be2ed97b5d4440fbaa9093c757014da588",
+      "merge_commit": "1fca33a9945cb25dac9eb5ef0d5b29619eb6d2a7",
+      "diff_path": "/home/alex/iCloud/Drive/halde/bureau-t031-generation-closeout-contract.diff",
+      "diff_sha256": "12e222b66465d409a36fffb9325edd32df584b620e88bbaa755e260846d036fd",
+      "files": [
+        "schemas/task.v1.schema.json",
+        "src/bureau/generation_closeout.py",
+        "src/bureau/v2.py",
+        "tests/test_generation_closeout.py"
+      ],
+      "validation": {
+        "full_tests": 722,
+        "focused_tests": 15,
+        "broad_tests": 134,
+        "ruff": "pass",
+        "systemkatalog_boundary": "pass"
+      }
+    },
+    "validated_acceptance": {
+      "source-event-bound": "PASS: live-register event 737, candidate id and source remain unchanged in metadata.",
+      "reviewed-before-effect": "PASS: implementation was isolated, diff-reviewed, fully validated and merged through PR #708 after green CI.",
+      "predecessor-classification": "PASS: terminal declared generation transitions require exact one-to-one classification as removed, archived, recovery or still-required, with disposition-specific evidence.",
+      "no-second-truth": "PASS: the validator reads optional metadata in the existing task document and grants no source, effect or recovery authority."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T031",
+          "source_ref": "github-pr:heimgewebe/bureau#708@c7cb06be2ed97b5d4440fbaa9093c757014da588:1fca33a9945cb25dac9eb5ef0d5b29619eb6d2a7",
+          "content_sha256": "12e222b66465d409a36fffb9325edd32df584b620e88bbaa755e260846d036fd"
+        },
+        {
+          "kind": "validation_receipt",
+          "authority": "grabowski-task",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T031",
+          "source_ref": "grabowski-task:f5ddde73861541d0b3e6639e",
+          "content_sha256": "3bbf6a4a4808ee4b3c8bbf25901d84e2bc09627f3bd18790331db09414035beb"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "67656e7ad785f4b52e60b1e073e682fe86677d4444f7a43a12b46082b3b352f6",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    }
   }
 }

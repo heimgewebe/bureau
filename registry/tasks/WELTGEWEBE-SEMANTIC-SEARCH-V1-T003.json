@@ -3,11 +3,11 @@
   "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T003",
   "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
   "title": "PostgreSQL-Suchgrundlage und pgvector-Fähigkeit belegen",
-  "state": "ready",
+  "state": "verified",
   "goal": "PostgreSQL als kanonische Suchwahrheit praktisch belegen, verfügbare Extensions und Versionsgrenzen prüfen, FTS- und pg_trgm-Verhalten gegen den T002-Harness abgleichen, pgvector-Fähigkeit ohne Vorannahme prüfen und ein migrationsfähiges, regenerierbares Projektionsschema einschließlich Backup-, Restore-, PITR- und Multi-Instance-Grenzen entwerfen.",
   "priority": {
-    "lane": "now",
-    "rank": 10
+    "lane": "later",
+    "rank": 900
   },
   "execution": {
     "mode": "interactive-agent",
@@ -99,14 +99,112 @@
     "reference_model_scope": "local synthetic benchmark candidate only; not a production approval",
     "cost_policy": "zero external spend",
     "does_not_establish": [
-      "pgvector production availability before measurement",
+      "production semantic search",
+      "pgvector production availability",
+      "vector persistence",
       "production embedding model selection",
-      "search API readiness",
-      "worker or backfill readiness",
-      "web search readiness",
-      "production rollout",
-      "public live proof",
+      "search API",
+      "embedding worker",
+      "backfill",
+      "web search UI",
+      "production deployment",
+      "production PITR behavior",
+      "real-user relevance",
+      "public T008 live proof",
       "SemantAH archive authority"
-    ]
+    ],
+    "verified_at": "2026-07-19",
+    "outcome": "Weltgewebe PR #1500 veröffentlichte und mergte den ausführbaren, aber nicht automatisch ausrollbaren PostgreSQL-Suchgrundlagenbeleg. PostgreSQL 16.14 mit pg_trgm 1.6 wurde praktisch geprüft; pgvector war im gepinnten Image nicht verfügbar und führt deshalb fail-closed zu keiner angenommenen Vektorpersistenz oder ANN-Implementierung.",
+    "implementation": {
+      "repository": "heimgewebe/weltgewebe",
+      "pull_request": 1500,
+      "base_sha": "b5a9383fc36b381bf5a68fd2e9a287d13f2caa82",
+      "head_sha": "35dea9a90cf0bb84f167ed596e3cb5de1423ca6a",
+      "merge_commit": "bbeb7c63f6ce0a807d0203a7062198a545a2a6a5",
+      "merged_at": "2026-07-19T14:38:16Z",
+      "merge_tree": "e7b337ba094e9e024529629b21ed3cd25b1d603d",
+      "canonical_github_diff_sha256": "573cff9cabb87cd3f43f8a5d2ef8ba03f6f90a596fc7c4ae97f8966d3373bcd2",
+      "local_binary_diff_sha256": "dabc3b428b1f73f89e4407df4eb387ac4624a6c432565e6642fa9a5c3f18e752",
+      "local_binary_diff": {
+        "files": 10,
+        "additions": 2919,
+        "deletions": 13,
+        "bytes": 116924
+      }
+    },
+    "postgresql_evidence": {
+      "server_version": "16.14",
+      "pg_trgm": {
+        "available": true,
+        "version": "1.6",
+        "installed_by_proof": true
+      },
+      "pgvector": {
+        "available": false,
+        "decision": "stop before vector persistence or ANN"
+      },
+      "pgcrypto": {
+        "available": true,
+        "installed_by_t003": false
+      },
+      "fts_trigram_quality": {
+        "natural_top3": "14/19",
+        "false_top1": 0,
+        "leaks": 0
+      },
+      "projection_regeneration": "deterministic digest reproduced",
+      "backup_restore": "identical projection digest after dump and restore",
+      "same_version_conflict": "equal-version content or visibility changes rejected",
+      "authorization_boundary": "generation, status, visibility, allow-list and filters applied before ranking"
+    },
+    "validation": {
+      "docmeta_pass": 816,
+      "agent_pass": 191,
+      "ci_pass": 294,
+      "focused_python_pass": 38,
+      "make_ci_validate": "pass",
+      "just_ci": "pass",
+      "rust_fmt_compile_clippy": "pass",
+      "postgresql_live_proof_receipt_sha256": "71988ed97208969ad5a4e608d0e6747cdc701bb83971796ef89c1987749daf27",
+      "source_manifest_sha256": "6151e9419c71b66d07ea0472e2714171e7c40dfea8b10bfcaab5ef47081c85bc",
+      "review_axes": [
+        "correctness",
+        "data-integrity"
+      ],
+      "required_checks": [
+        "Required merge gate",
+        "Review evidence gate",
+        "Web E2E",
+        "CodeQL",
+        "Blocking doc validations",
+        "PostgreSQL integration proofs",
+        "test and lint (rust)",
+        "Cloudflare Pages",
+        "Vercel"
+      ]
+    },
+    "verified_acceptance": {
+      "extension-version-evidence": "PostgreSQL 16.14 und pg_trgm 1.6 wurden lokal und in GitHub CI ausgeführt. pgvector war nicht verfügbar; der Vertrag stoppt deshalb vor Vektorpersistenz und ANN.",
+      "migration-safe-projection-schema": "Der ausführbare Up-/Down-Vertrag liegt unter contracts/search statt im automatisch ausgerollten SQLx-Migrationspfad; domain_nodes bleibt kanonisch und beim Down-Vertrag erhalten.",
+      "visibility-deletion-boundary": "Unsichtbare und gelöschte Knoten, leere Zulassungsmengen, inaktive Generationen und unzulässige Sichtbarkeiten liefern vor Ranking keine Kandidaten.",
+      "projection-identity": "Projektions- und Generationsidentität binden Source-Version, Source-Revision, Content-SHA-256, Provider, Modell-ID, Modellrevision, Dimension, Dokumentrevision, Normalisierungsrevision und Generation.",
+      "no-generation-mixing": "Aktive Generation und vollständige Generationsidentität sind Abfrage- und Schreibgrenze; falsche Dimensionen, nichtendliche Werte und inaktive Generationen werden abgelehnt.",
+      "fts-trigram-parity": "Der reale PostgreSQL-Pfad erreichte 14 von 19 natürlichen Top-3-Fällen, 0 falsche Top-1 und 0 unzulässige Treffer.",
+      "backup-restore-regeneration": "Deterministischer Neuaufbau sowie Datenbanksicherung und Wiederherstellung erzeugten denselben Projektions-Digest.",
+      "multi-instance-conflict-boundaries": "Schreibvorgänge werden generations- und knotengebunden serialisiert; veraltete Revisionen und gleichversionige Inhalts- oder Sichtbarkeitskonflikte werden abgelehnt.",
+      "ann-measured-only": "Kein ANN- oder HNSW-Index wurde implementiert. Die fehlende pgvector-Verfügbarkeit bestätigt die messungsgebundene Stopentscheidung.",
+      "repository-gates": "Der vollständige GitHub-Diff war hashgebunden; zwei R3-Berichte und alle erforderlichen Prüfungen waren vor Merge grün; der Main-Tree ist für alle zehn Dateien identisch zum geprüften Head.",
+      "no-production-effects": "Der Merge enthält keine Search-API, keinen Worker, Backfill, Webschnitt, produktive Migration, Deploymentänderung oder SemantAH-Stilllegung."
+    },
+    "verification": {
+      "source": "GitHub pull request, exact-head checks, local and CI PostgreSQL proofs, hash-bound reviews and merged-main tree readback",
+      "source_ref": "heimgewebe/weltgewebe#1500",
+      "verified_at": "2026-07-19T14:38:16Z",
+      "head_sha": "35dea9a90cf0bb84f167ed596e3cb5de1423ca6a",
+      "merge_commit": "bbeb7c63f6ce0a807d0203a7062198a545a2a6a5",
+      "diff_sha256": "573cff9cabb87cd3f43f8a5d2ef8ba03f6f90a596fc7c4ae97f8966d3373bcd2",
+      "task_sha256": "11b916f88a7b2b79f4ca9641c04a293c781e4d3181c49ae44ac92bc23271910c",
+      "plan_sha256": "18002b2b2def870ec6e5dd91cd15d19aaade6f053cac144ca85e2862234a709e"
+    }
   }
 }

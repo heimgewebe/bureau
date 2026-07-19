@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Do not infer WCAG conformance from automated checks alone. Preserve the public globe, filters and proposal flow while adding exact browser-mode evidence, bounded keyboard-path tests, exact-head review, green CI, Pages deployment and public readback."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-19",
+    "source": "Commonworld PR #104 closeout and validator-hardening review follow-up",
+    "source_repository": "heimgewebe/commonworld",
+    "source_pr": 104,
+    "source_merge_commit": "27c5acd427eb95eba66e10547667ce090f509914",
+    "source_diff_sha256": "f6adc9b4763b2daa5d371ecaaee234e20bc8c3de52d811253f57f677cdbaca43",
+    "queue_mutated": false,
+    "observed_limit": "The existing browser and validator evidence does not establish forced-colors behaviour, increased-contrast behaviour, complete keyboard-only navigation or visible-focus integrity across the public Commonworld surfaces.",
+    "does_not_establish": [
+      "complete WCAG conformance",
+      "screen-reader product usability",
+      "physical Mobile Safari behaviour",
+      "automatic accessibility acceptance",
+      "absence of future browser regressions"
+    ]
+  },
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T016",
+  "title": "Verify forced-colors, increased-contrast and keyboard focus across Commonworld",
+  "state": "planned",
+  "goal": "Make the public globe, discovery filters and Commons proposal path resilient under forced-colors and increased-contrast preferences, and prove that all interactive controls remain keyboard-reachable with visible, unclipped focus and correct semantic state without claiming broader accessibility conformance than the evidence supports.",
+  "priority": {
+    "lane": "later",
+    "rank": 940
+  },
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T012"
+  ],
+  "acceptance": [
+    {
+      "id": "forced-colors-surface",
+      "assertion": "With forced-colors active, the globe controls, layer and search controls, presence filters, proposal fields, validation messages and primary actions remain visible, distinguishable and operable without relying only on author-defined color."
+    },
+    {
+      "id": "increased-contrast-surface",
+      "assertion": "Where the browser exposes an increased-contrast preference, the public surfaces preserve readable text, boundaries, selected states and focus indicators without clipping, overlap or loss of meaning."
+    },
+    {
+      "id": "keyboard-paths",
+      "assertion": "A keyboard-only browser path reaches every public interactive control in logical order, operates disclosures, filters, globe/layer navigation and the proposal form, and encounters no focus trap or unreachable control."
+    },
+    {
+      "id": "visible-focus-integrity",
+      "assertion": "Every keyboard-focusable control has a visible focus indication that is not hidden by overlays, viewport edges, scrolling containers or active-state styling in the tested viewport matrix."
+    },
+    {
+      "id": "semantic-state-preserved",
+      "assertion": "Labels and checked, selected, expanded, disabled, invalid and error states remain programmatically exposed after any CSS or interaction repair."
+    },
+    {
+      "id": "evidence-bound-closeout",
+      "assertion": "The closeout records exact browsers, modes and viewport profiles, automated and manual evidence, repaired findings, explicit nonclaims, reviewed diff identity, CI, Pages deployment and public readback."
+    }
+  ]
+}

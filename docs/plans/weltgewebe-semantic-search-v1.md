@@ -10,7 +10,7 @@ Die Initiative liefert keine allgemeine Semantikplattform. Sie verbessert aussch
 
 Würde maximale kurzfristige Liefergeschwindigkeit höher gewichtet als Wahrheitsgrenzen und Datenschutz, wäre ein externer Embedding-Dienst mit separatem Index schneller aufzusetzen. Dieser Pfad wird verworfen: Er schafft eine zweite Zustandswahrheit, neue Kosten- und Verfügbarkeitsabhängigkeiten sowie zusätzliche Lösch- und Sichtbarkeitsrisiken.
 
-Würde ausschließlich lokale Souveränität gewichtet, könnte ein großes lokales Modell unabhängig von gemessener Relevanz gewählt werden. Auch das wird verworfen: Das kleinste lokale mehrsprachige Modell gewinnt, sofern es die Qualitätsgrenzen erfüllt. `qwen3-embedding:8b` dient nur als lokaler Qualitätsmaßstab. Ein kostenloser OpenRouter-Endpunkt ist höchstens ein begrenzter Gegenkandidat mit synthetischen oder nicht sensiblen Daten und ohne Produktionsabhängigkeit oder angenommenen API-Schlüssel.
+Würde ausschließlich lokale Souveränität gewichtet, könnte ein großes lokales Modell unabhängig von gemessener Relevanz gewählt werden. Auch das wird verworfen: Das kleinste lokale mehrsprachige Modell gewinnt, sofern es die Qualitätsgrenzen erfüllt. Der T002-Benchmark identifizierte `qwen3-embedding:8b` als einzigen getesteten Kandidaten, der alle harten T002-Gates erfüllte. Das macht ihn zum lokalen Referenzkandidaten für T003/T004, nicht zum Produktionsmodell. Ein kostenloser OpenRouter-Endpunkt bleibt höchstens ein begrenzter Gegenkandidat mit synthetischen oder nicht sensiblen Daten und ohne Produktionsabhängigkeit oder angenommenen API-Schlüssel.
 
 ## Wahrheits- und Datenvertrag
 
@@ -45,9 +45,21 @@ Reine Vektorsuche ist verboten. Der Server kombiniert testbar und mit stabilen T
 
 Bestehende Filter bleiben erhalten. Semantische Ähnlichkeit darf keinen echten Faden, keine kuratierte Beziehung und keine gemeinsame Autorenschaft vortäuschen. „Ähnliche Knoten“ ist eine getrennte, ausdrücklich maschinell berechnete Oberfläche.
 
-## Modellwahl
+## T002-Modell- und Baselinebeleg
 
-T002 vergleicht die bestehende lexikalische Suche, PostgreSQL-Volltext und Trigramme, ein kompaktes lokales mehrsprachiges Modell sowie lokales `qwen3-embedding:8b` als Qualitätsmaßstab. OpenRouter-Free ist nur ein optionaler, begrenzter Gegenkandidat mit synthetischen oder nicht sensiblen Daten, ohne Produktionsabhängigkeit und ohne Annahme eines vorhandenen Schlüssels. Das kleinste lokale Modell gewinnt, sofern es die Qualitätsgrenzen erfüllt.
+Der gemergte synthetische Benchmark verglich auf identischem Goldset:
+
+| Pfad | natürliche Top-3 | falsche Top-1 | Lecks |
+| --- | ---: | ---: | ---: |
+| bestehende Client-Teilstringsuche | 0/19 | 0 | 0 |
+| FTS-/Trigramm-Referenz | 11/19 | 1 | 0 |
+| `qwen3-embedding:0.6b` | 18/19 | 3 | 0 |
+| `qwen3-embedding:4b` | 19/19 | 2 | 0 |
+| `qwen3-embedding:8b` | 19/19 | 1 | 0 |
+
+Nur `qwen3-embedding:8b` erfüllte alle harten T002-Gates. Der Befund gilt ausschließlich für den lokalen synthetischen Harness. Er belegt weder Produktionslatenz noch PostgreSQL-Parität, pgvector-Fähigkeit, Betriebsstabilität oder eine Produktionsfreigabe des Modells.
+
+T002 bindet Dataset, Schema, Benchmarkquelle, Goldset-Validator, Modellidentität und Ergebnisaggregate per SHA-256. Der Harness verweigert Modellwechsel während eines Laufs, nichtendliche oder dimensionsinkonsistente Vektoren, doppelte JSON-Schlüssel, unbekannte Ergebnisfelder, übergroße Antworten sowie PII- oder nichtsynthetisch markierte Fixtures. Rohvektoren und Providerrohdaten werden nicht persistiert.
 
 ## Qualitätsgates
 
@@ -89,8 +101,8 @@ Brauchbare SemantAH-Konzepte wie Providergrenzen, Dimensionsprüfung, Normalisie
 ## Taskkette
 
 1. **T001 – Architekturvertrag, Wahrheitsgrenzen und Hard Cut – verifiziert:** Vertrag und Goldset-Grundlage wurden über Weltgewebe-PR #1485 veröffentlicht.
-2. **T002 – Relevanz-Goldset und Embedding-Modellwahl – bereit:** synthetische lexikalische Basis, FTS/Trigramm-Referenzen und lokale Modelle vergleichen; OpenRouter-Free bleibt optional, synthetisch und kostenhart begrenzt.
-3. **T003 – PostgreSQL-Suchgrundlage und pgvector-Fähigkeit:** Erweiterungsfähigkeit, Schema, Migration, Backup/Restore/PITR und Betriebsbild belegen.
+2. **T002 – Relevanz-Goldset und Embedding-Modellwahl – verifiziert:** Weltgewebe-PR #1495 veröffentlichte den synthetischen Harness, Integritätsbindungen und lokalen Modellvergleich; `qwen3-embedding:8b` ist nur Referenzkandidat.
+3. **T003 – PostgreSQL-Suchgrundlage und pgvector-Fähigkeit – aktuell:** Erweiterungsfähigkeit, Schema, Migration, FTS-/Trigramm-Parität, Backup/Restore/PITR und Multi-Instance-Grenzen belegen, ohne Runtime- oder Produktionseffekt.
 4. **T004 – interner Embedding- und Ranking-Kern:** Providergrenze, Normalisierung, Dimensions- und Generationsprüfung sowie hybrides Ranking implementieren.
 5. **T005 – idempotente Projektion, Worker, Backfill und Löschfortpflanzung:** revisionssichere Multi-Instance-Verarbeitung und reproduzierbaren Neuaufbau liefern.
 6. **T006 – hybride serverseitige Such-API:** Sichtbarkeit vor Retrieval, bestehende Filter und technischen lexikalischen Fallback liefern.
@@ -98,21 +110,26 @@ Brauchbare SemantAH-Konzepte wie Providergrenzen, Dimensionsprüfung, Normalisie
 8. **T008 – vollständige Abnahme, direkter Rollout und öffentlicher Live-Beweis:** grüne CI, direkter Rollout, öffentlicher Readback und Betriebsbelege.
 9. **T009 – SemantAH stilllegen und bereinigen:** erst nach T008 Runtime-Rollen entfernen, Repository archivieren und Bureau/Systemkatalog nachziehen.
 
-Nach öffentlichem T008-Beweis supersedet oder schließt T009 `SEMANTAH-USEFULNESS-V1`, `SEMANTAH-INDEXD-SCALING-V1` und `SEMANTAH-E2E-PORTABILITY-V1`. Vorher bleiben sie unverändert.
+Nach öffentlichem T008-Beweis supersedet oder schließt T009 `SEMANTAH-USEFULNESS-V1`, `SEMANTAH-INDEXD-SCALING-V1` und `SEMANTAH-E2E-PORTABILITY-V1`. Vorher bleiben Repository, Initiativen und aktive SemantAH-Rollen unverändert.
 
 ## Fortschritt
 
 - **T001 ist verifiziert:** Weltgewebe-PR #1485 wurde als Merge-Commit `f00afacc7be4cc551c81c5511faf5f817b04f700` nach grüner CI und zweiachsigem R2-Review gemergt. Der vollständige GitHub-Diff ist an SHA-256 `745483199f2b955a8ac37521445a85f8b9543e92ecf3ff69ed99b3a21ae7554f` gebunden.
-- **T002 ist der aktuelle Task:** ausschließlich synthetisches Goldset, reproduzierbare Offline-Baselines und lokale Modellmessung. Keine Produktion, keine realen oder pseudonymisierten Daten, keine kostenpflichtige API.
-- **Produktionsreparatur bleibt getrennt:** Der laufende Fix #1492 besitzt einen fremden isolierten Worktree und eigene Claims; diese Initiative dupliziert oder übernimmt ihn nicht.
+- **T002 ist verifiziert:** Weltgewebe-PR #1495 wurde mit attestiertem Head `31ca3c433dcaf3b941c5e1c95167a68e9f68ceb8` und Merge-Commit `adc060cfbb9d055a7b63c494fa042e7c57ca7bea` gemergt. Der kanonische GitHub-Diff ist an SHA-256 `b54ec09ce52fe7e109b18da8f4ed7e5fc5e33783ff75252dd354c605ec6988e7` gebunden; der lokale Binärdiff an `6ffdc08f17d68ecb72a0a4dfe8ade167ab47dabbe6b0cf7a1a35410e4e2e1375`.
+- **T003 ist der aktuelle Task:** reale PostgreSQL-, Extension-, Schema-, Paritäts-, Backup-/Restore-/PITR- und Regenerationsfähigkeit belegen, bevor Embedding- oder Ranking-Runtime entsteht.
+- **SemantAH bleibt unverändert:** keine Archivierung, keine Runtime-Entfernung und keine Bereinigung vor T008/T009.
 
-## Umsetzungsschnitt T001
+## T002-Test- und Reviewbindung
 
-T001 verändert noch keine Datenbank, Such-API, Produktionskonfiguration oder SemantAH-Runtime. Der Weltgewebe-PR enthält nach Prüfung der realen Struktur nur den kanonischen Architekturvertrag, eine maschinenlesbare Goldset-Grundlage mit Validierung, explizite Nichtziele und Taskgrenzen. Vor Merge sind ein vollständiges externes Diff-Artefakt, ein an exakten Head und Diff-SHA256 gebundener Self-Review und grüne CI Pflicht.
+Auf dem veröffentlichten T002-Head bestanden 816 Docmeta-, 191 Agent- und 277 CI-Prüfungen, 27 fokussierte Semantic-Search-Tests sowie Generator-, Struktur-, Shell-, Plattform- und Vertragsgates; 11 Skips waren erwartet. Zwei getrennte R2-Self-Reviews auf den Achsen Correctness und Data Integrity wurden vom repository-eigenen Review-Evidence-Gate akzeptiert. Required Merge Gate, Review Evidence Gate, Web E2E, CodeQL, Docs Guard, PostgreSQL Integration Proofs, Cloudflare Pages und Vercel waren vor Merge grün.
 
-## Aktuelle Betriebsabhängigkeit
+T002 implementiert keine PostgreSQL-Migration, Search-API, Worker-, Web- oder Deploymentfunktion. Der Merge veröffentlicht Architektur-, Benchmark- und Testbelege, aber keine produktive semantische Suche.
 
-Am 18. Juli 2026 um 16:36:40 Uhr MESZ wurde auf `wg-prod-1` ein fehlgeschlagener Produktions-Reconciler, inaktives Caddy und kein Listener auf 80/443 beobachtet. Das ist kein T001-Implementierungsfehler und wird hier nicht repariert. Der Zustand muss vor T008 neu gelesen und gegebenenfalls über einen bereits bestehenden oder separat registrierten Betriebsauftrag behoben werden.
+## Aktuelle öffentliche Produktionsprüfung
+
+Der erste T002-Readback unmittelbar nach Merge beobachtete noch den vorangehenden Live-Commit `d9a5377a07e4e9728778f327fa87668945d007cf`. Beim erneuten Bureau-Closeout-Readback am 19. Juli 2026 bestanden DNS für Root, WWW und API, HTTP→HTTPS, beide HTTPS-Roots, Map-Route, API-Readiness, Version-JSON, lokalen Basemap-Stil, Glyphen sowie stabile und versionierte Hamburg- und Schleswig-Holstein-PMTiles. Der dabei öffentlich gelesene Live-Commit war `b5a9383fc36b381bf5a68fd2e9a287d13f2caa82`; Git bestätigt den T002-Merge-Commit `adc060cfbb9d055a7b63c494fa042e7c57ca7bea` als dessen Vorfahren.
+
+Das belegt, dass der T002-Quellstand inzwischen in der ausgelieferten Commitlinie enthalten ist und die bestehende öffentliche Oberfläche gesund ist. Es belegt weiterhin keine produktive semantische Suche: PR #1495 besitzt keinen Runtime- oder Deployschnitt. Ein semantischer öffentlicher Live-Beweis bleibt T008 vorbehalten.
 
 ## Stopbedingungen
 

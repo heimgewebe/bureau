@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T003",
+  "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
+  "title": "PostgreSQL-Suchgrundlage und pgvector-Fähigkeit belegen",
+  "state": "ready",
+  "goal": "PostgreSQL als kanonische Suchwahrheit praktisch belegen, verfügbare Extensions und Versionsgrenzen prüfen, FTS- und pg_trgm-Verhalten gegen den T002-Harness abgleichen, pgvector-Fähigkeit ohne Vorannahme prüfen und ein migrationsfähiges, regenerierbares Projektionsschema einschließlich Backup-, Restore-, PITR- und Multi-Instance-Grenzen entwerfen.",
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Durch die direkte Nutzeranweisung zur Fortsetzung autorisiert. T003 bleibt auf lokale und testgebundene Repository-, PostgreSQL- und Migrationsbelege begrenzt und hat keine Produktionseffekte."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "postgresql",
+    "database-migrations",
+    "backup-restore",
+    "python",
+    "rust",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T002"
+  ],
+  "acceptance": [
+    {
+      "id": "extension-version-evidence",
+      "assertion": "Die tatsächlich verfügbaren PostgreSQL-Versionen, installierbaren oder bereits vorhandenen Extensions und Betriebsgrenzen für FTS, pg_trgm und pgvector werden auf den vorgesehenen lokalen und CI-Pfaden reproduzierbar belegt; fehlendes pgvector führt zu einer dokumentierten Stop- oder Alternativentscheidung statt zu einer Annahme."
+    },
+    {
+      "id": "migration-safe-projection-schema",
+      "assertion": "Ein vorwärts- und rückwärtsbewertetes migrationsfähiges Schema beschreibt die vollständig regenerierbare Suchprojektion, ohne PostgreSQLs kanonische Knotentabellen oder bestehende Schreibpfade durch eine zweite Wahrheit zu ersetzen."
+    },
+    {
+      "id": "visibility-deletion-boundary",
+      "assertion": "Sichtbarkeit, Löschstatus und zulässiger Suchkontext werden als harte Datenbankgrenze vor jeder lexikalischen oder semantischen Kandidatenauswahl modelliert und durch Negativtests belegt."
+    },
+    {
+      "id": "projection-identity",
+      "assertion": "Jeder Projektionsdatensatz bindet mindestens Source-Revision, Content-SHA-256, Modell-ID, Modellrevision, Dimension und Indexgeneration; veraltete Revisionen und unvollständige Identitäten werden fail-closed abgelehnt."
+    },
+    {
+      "id": "no-generation-mixing",
+      "assertion": "Schema, Constraints und Abfragevertrag verhindern, dass Embeddings verschiedener Modelle, Revisionen, Dimensionen oder Indexgenerationen gemeinsam gerankt werden."
+    },
+    {
+      "id": "fts-trigram-parity",
+      "assertion": "PostgreSQL-FTS und pg_trgm werden auf identischem synthetischem T002-Goldset gegen die bisherige Referenzimplementierung gemessen; Abweichungen bei Tokenisierung, Normalisierung, Rangfolge und Tie-Breaks sind einzeln erklärt und reproduzierbar."
+    },
+    {
+      "id": "backup-restore-regeneration",
+      "assertion": "Backup, Restore und PITR umfassen die Suchprojektion nachweisbar oder ein vollständiger, deterministischer Neuaufbau aus der kanonischen PostgreSQL-Wahrheit ist mit Integritäts- und Vollständigkeitsprüfung belegt."
+    },
+    {
+      "id": "multi-instance-conflict-boundaries",
+      "assertion": "Die Konflikt-, Sperr-, Revisions- und Idempotenzgrenzen für mehrere API- oder Worker-Instanzen sind dokumentiert und mit mindestens einem konkurrierenden Schreib- oder Rebuild-Szenario getestet, ohne bereits einen Produktionsworker einzuführen."
+    },
+    {
+      "id": "ann-measured-only",
+      "assertion": "ANN, HNSW oder andere approximative Indizes werden nicht implementiert; ein späterer Einsatz bleibt an gemessenen Weltgewebe-Skalierungsbedarf, Recall-Beleg und Betriebsfolgen gebunden."
+    },
+    {
+      "id": "repository-gates",
+      "assertion": "Vor Merge liegen vollständiges Diff-Artefakt, exakte Head- und Diffbindung, mindestens ein R2-Review, grüne erforderliche CI und ein Readback des gemergten Main-Trees vor."
+    },
+    {
+      "id": "no-production-effects",
+      "assertion": "T003 implementiert keine Search-API, keinen Embedding-Worker, keine Websuche, keinen produktiven Backfill, kein Produktionsdeployment und keine SemantAH-Stilllegung."
+    }
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "task_profile": "repo_change",
+    "skip_reason": "live_first_primary",
+    "note": "PostgreSQL-, Extension-, Git-, CI- und Betriebsbelege müssen live und commitgebunden erhoben werden; RepoGround ist nur ergänzender Repository-Kontext."
+  },
+  "metadata": {
+    "source": "direct_operator_instruction",
+    "registered_at": "2026-07-19",
+    "predecessor": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T002",
+    "reference_model_candidate": "qwen3-embedding:8b",
+    "reference_model_scope": "local synthetic benchmark candidate only; not a production approval",
+    "cost_policy": "zero external spend",
+    "does_not_establish": [
+      "pgvector production availability before measurement",
+      "production embedding model selection",
+      "search API readiness",
+      "worker or backfill readiness",
+      "web search readiness",
+      "production rollout",
+      "public live proof",
+      "SemantAH archive authority"
+    ]
+  }
+}

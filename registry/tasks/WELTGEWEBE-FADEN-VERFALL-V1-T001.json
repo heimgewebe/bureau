@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-FADEN-VERFALL-V1-T001",
   "initiative": "WELTGEWEBE-FADEN-VERFALL-V1",
   "title": "Weltgewebe: Fäden lösen sich sukzessive innerhalb von 7 Tagen auf",
-  "state": "ready",
+  "state": "verified",
   "goal": "Den fachlichen Lebenszyklus unverzwirnter Fäden so implementieren, dass sie ab ihrer kanonischen Entstehung über exakt 168 Stunden deterministisch verfallen, danach aus aktiven Projektionen verschwinden und historische Webungswahrheit erhalten bleibt; dauerhaftes Garn bleibt ausgenommen und separat modelliert.",
   "priority": {
     "lane": "now",
@@ -92,12 +92,11 @@
     "live_register_source": "chatgpt:user-directive:2026-07-17",
     "promotion_required_from_event": true,
     "does_not_establish": [
-      "merge readiness of PR #1461",
-      "green CI",
-      "production deployment",
-      "permission to delete historical events",
+      "permission to delete historical events or persisted expired projections",
       "a complete yarn or braiding domain",
-      "completion of candidates 640, 641 or 642"
+      "readiness or completion of candidates 640, 641 or 642",
+      "a retroactive expiry migration for legacy records without expires_at",
+      "absence of future lifecycle regressions"
     ],
     "registered_at": "2026-07-17T14:15:00Z",
     "source_pull_request": "heimgewebe/weltgewebe#1461",
@@ -108,6 +107,87 @@
       "configuration_cleanup": 640,
       "cache_compaction": 641,
       "yarn_domain": 642
+    },
+    "merged_at": "2026-07-18T21:31:25Z",
+    "deployed_at": "2026-07-18T21:43:36Z",
+    "verified_at": "2026-07-19T11:47:58Z",
+    "implementation": {
+      "repository": "heimgewebe/weltgewebe",
+      "pull_request": 1461,
+      "reviewed_head": "99ac88807ba4c3a0d49e1d5efc9a75624033487e",
+      "merge_commit": "842c50fd6e4905f8bc768685d814eec4f0dd413e",
+      "diff_sha256": "b4df06f254718f6b9cf7c6f0ea3c334d3a27c742bb84423803d1629fd28612d4"
+    },
+    "validation": {
+      "github_checks": {
+        "review_evidence_gate": "success",
+        "required_merge_gate": "success",
+        "web_e2e": "success",
+        "web_ci": "success",
+        "rust_test_and_lint": "success",
+        "postgresql_integration_proofs": "success",
+        "domain_edge_write_path_proof": "success",
+        "domain_schema_validation": "success",
+        "codeql": "success"
+      },
+      "main_readback": {
+        "observed_main": "b5a9383fc36b381bf5a68fd2e9a287d13f2caa82",
+        "merge_commit_is_ancestor": true,
+        "commits_after_merge": 47,
+        "merge_base": "842c50fd6e4905f8bc768685d814eec4f0dd413e"
+      },
+      "production_deployment": {
+        "deployment_id": 5493094145,
+        "environment": "operator",
+        "production_environment": true,
+        "sha": "842c50fd6e4905f8bc768685d814eec4f0dd413e",
+        "state": "success",
+        "environment_url": "https://weltgewebe-os.de",
+        "completed_at": "2026-07-18T21:43:36Z"
+      },
+      "followup_candidates": {
+        "640": "observed_refine",
+        "641": "observed_refine",
+        "642": "observed_refine"
+      }
+    },
+    "validated_acceptance": {
+      "canonical-clock": "PASS: The API server owns created_at and derives expires_at as exactly 168 hours; client timestamps remain rejected and fixed-clock tests cover the boundary.",
+      "continuous-decay": "PASS: API list, single-get and account projections hide expired Fäden; the map computes monotonic linear opacity and schedules exact expiry separately from the minute refresh.",
+      "storage-parity": "PASS WITH EXPLICIT LEGACY BOUNDARY: JSONL persists and round-trips both timestamps; PostgreSQL stores expires_at in the existing payload and reconstructs it on reload. No guessed legacy backfill is performed.",
+      "yarn-exemption": "PASS: Records without expires_at remain visible only as legacy/future explicit Garn compatibility; the patch adds no guessed Garn field or public Garn CRUD.",
+      "security-compatibility": "PASS: The diff does not alter authorization boundaries; required merge, Rust, PostgreSQL, domain-contract, security and web gates all succeeded on the reviewed head.",
+      "exact-head-proof": "PASS: Reviewed head 99ac8880 passed review and required merge gates, merged as 842c50fd, remains an ancestor of current main, and that exact merge commit reached successful production deployment.",
+      "separate-followups": "PASS: Live-register candidates 640, 641 and 642 remain separate observed/refine candidates and were not folded into PR #1461.",
+      "source-event-bound": "PASS: Event 639, candidate ID and direct user source remain unchanged in this task.",
+      "reviewed-before-effect": "PASS: PR #1461 carried a successful review-evidence gate before merge; deployment followed the reviewed merge commit."
+    },
+    "outcome": "Seven-day Faden decay is merged and live: new unverzwirnte Fäden expire exactly after 168 hours, disappear from active projections at the boundary, fade continuously on the map, and preserve historical persistence; Garn and legacy migration remain separate.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "source_ref": "github-pr:heimgewebe/weltgewebe#1461@99ac88807ba4c3a0d49e1d5efc9a75624033487e:842c50fd6e4905f8bc768685d814eec4f0dd413e",
+          "content_sha256": "b4df06f254718f6b9cf7c6f0ea3c334d3a27c742bb84423803d1629fd28612d4"
+        },
+        {
+          "kind": "production_deployment",
+          "authority": "github-deployments",
+          "source_ref": "github-deployment:heimgewebe/weltgewebe#5493094145@842c50fd6e4905f8bc768685d814eec4f0dd413e:success"
+        },
+        {
+          "kind": "main_ancestry_readback",
+          "authority": "github",
+          "source_ref": "github-main:heimgewebe/weltgewebe@b5a9383fc36b381bf5a68fd2e9a287d13f2caa82:contains-842c50fd6e4905f8bc768685d814eec4f0dd413e"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "78bf245a1db1034c43cc2ef92787765debb2afe8369978883ab958ed0502b885",
+      "plan_sha256": "0be2a28907be99c30d904864c164681b001510e9f8c2bf88894812116b833af6"
     }
   }
 }

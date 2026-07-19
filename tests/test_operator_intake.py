@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 import sqlite3
 import subprocess
 import threading
@@ -13,6 +14,7 @@ import pytest
 
 from bureau import cli as bureau_cli
 from bureau import operator_intake as operator_intake_module
+from bureau import runtime_identity as runtime_identity_module
 from bureau.core import Registry, StateStore
 from bureau.lease_contract import (
     BUREAU_REGISTRY_PUBLICATION_GATE_KEY,
@@ -29,6 +31,7 @@ from bureau.operator_intake import (
     publish_task_proposal,
     task_propose,
 )
+from bureau.registry_snapshot import snapshot_tree_sha256
 
 
 def _git(root: Path, *args: str) -> str:
@@ -50,6 +53,73 @@ def _committed_registry(registry_factory) -> tuple[Path, Registry]:
     _git(root, "commit", "-m", "fixture")
     return root, Registry.load(root)
 
+
+
+def _runtime_snapshot_registry(
+    source: Path,
+    tmp_path: Path,
+    monkeypatch,
+) -> tuple[Registry, Path]:
+    snapshot = tmp_path / "runtime-snapshot"
+    paths: list[Path] = []
+    for candidate in sorted(source.rglob("*")):
+        relative = candidate.relative_to(source)
+        if ".git" in relative.parts or not candidate.is_file():
+            continue
+        destination = snapshot / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(candidate, destination)
+        paths.append(relative)
+    tree_sha256 = snapshot_tree_sha256(snapshot, paths)
+    assert tree_sha256 is not None
+    source_commit = _git(source, "rev-parse", "HEAD")
+    inventory = snapshot / ".bureau-runtime-snapshot.json"
+    inventory.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "kind": "bureau_registry_snapshot",
+                "source_commit": source_commit,
+                "tree_sha256": tree_sha256,
+                "paths": [path.as_posix() for path in paths],
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        + "\n"
+    )
+    inventory_sha256 = hashlib.sha256(inventory.read_bytes()).hexdigest()
+
+    module_path = Path(runtime_identity_module.__file__).resolve()
+    release_root = module_path.parents[2]
+    module_sha256 = runtime_identity_module._sha256(module_path)
+    package_tree_sha256 = runtime_identity_module._package_tree_sha256(release_root)
+    assert module_sha256 is not None
+    assert package_tree_sha256 is not None
+    manifest = tmp_path / "deployment-manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "kind": "bureau_runtime_deployment",
+                "immutable_release_path": str(release_root),
+                "module_path": str(module_path),
+                "module_sha256": module_sha256,
+                "package_tree_sha256": package_tree_sha256,
+                "source_commit": source_commit,
+                "release_id": f"{source_commit[:12]}-test",
+                "canonical_registry_root": str(snapshot),
+                "canonical_registry_inventory_path": str(inventory),
+                "canonical_registry_inventory_sha256": inventory_sha256,
+                "canonical_registry_tree_sha256": tree_sha256,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        + "\n"
+    )
+    monkeypatch.setenv("BUREAU_RUNTIME_MANIFEST", str(manifest))
+    return Registry.load(snapshot), snapshot
 
 def _record(registry: Registry, store: StateStore, *, key: str = "source:alpha"):
     return candidate_record(
@@ -383,6 +453,80 @@ def test_candidate_record_rejects_idempotency_conflict(registry_factory, tmp_pat
     assert caught.value.code == "idempotency-conflict"
     assert caught.value.effect_started is False
 
+
+
+def test_candidate_assess_accepts_manifest_bound_runtime_snapshot(
+    registry_factory, tmp_path, monkeypatch
+):
+    root, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    recorded = _record(registry, store)
+    snapshot_registry, _ = _runtime_snapshot_registry(root, tmp_path, monkeypatch)
+
+    result = candidate_assess(
+        snapshot_registry,
+        store,
+        candidate_id=recorded["candidate_id"],
+        initiative="BUR-TEST-001",
+        task_id="BUR-TEST-001-T099",
+    )
+
+    assert result["decision"] == "promote"
+    assert result["advisory_only"] is True
+
+
+def test_candidate_assess_rejects_runtime_snapshot_with_invalid_manifest(
+    registry_factory, tmp_path, monkeypatch
+):
+    root, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    recorded = _record(registry, store)
+    snapshot_registry, _ = _runtime_snapshot_registry(root, tmp_path, monkeypatch)
+    manifest = tmp_path / "deployment-manifest.json"
+    payload = json.loads(manifest.read_text())
+    payload["module_sha256"] = "0" * 64
+    manifest.write_text(json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n")
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        candidate_assess(
+            snapshot_registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+        )
+
+    assert caught.value.code == "registry-git-read-failed"
+
+
+
+def test_candidate_assess_rejects_runtime_snapshot_drift_during_reload(
+    registry_factory, tmp_path, monkeypatch
+):
+    root, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    recorded = _record(registry, store)
+    snapshot_registry, snapshot = _runtime_snapshot_registry(root, tmp_path, monkeypatch)
+    original_load = Registry.load
+    target = snapshot / "registry/tasks/BUR-TEST-001-T001.json"
+
+    def drifting_load(candidate_root):
+        loaded = original_load(candidate_root)
+        if Path(candidate_root).resolve() == snapshot.resolve():
+            payload = json.loads(target.read_text())
+            payload["title"] = "Tampered during reload"
+            target.write_text(json.dumps(payload, indent=2) + "\n")
+        return loaded
+
+    monkeypatch.setattr(operator_intake_module.Registry, "load", staticmethod(drifting_load))
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        candidate_assess(
+            snapshot_registry,
+            store,
+            candidate_id=recorded["candidate_id"],
+        )
+
+    assert caught.value.code == "registry-snapshot-drift"
+    assert caught.value.retryable is True
 
 def test_candidate_assessment_is_advisory_and_promotes_complete_input(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)

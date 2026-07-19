@@ -1,0 +1,119 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Fresh Doctor derivation and task-state readback justify and then observe OPERATOR-ECOSYSTEM-REDUNDANCY-V1, REPOGROUND-AGENT-UTILITY-V1 and REPOGROUND-LEGACY-RECONCILIATION-V1 as waiting, plus SEMANTAH-INDEXD-SCALING-V1, SEMANTAH-USEFULNESS-V1 and WELTGEWEBE-FADEN-VERFALL-V1 as completion-ready; no unrelated initiative state changes.",
+      "id": "lifecycle-reconciled"
+    },
+    {
+      "assertion": "Only RAB-V1-T002B, RAB-V1-T002, WELTGEWEBE-OS-V1-T007, WELTGEWEBE-OS-V1-T008 and WELTGEWEBE-OS-V1-T011 are removed from next/later queue lanes after fresh preimage confirmation. Their durable task states remain blocked and no ready or planned actionable task is dropped.",
+      "id": "queue-actionable"
+    },
+    {
+      "assertion": "pr-evidence, promotion-plans, runtime-refresh and schauwerk-host-closeout-20260718.patch are individually inventoried and hash-bound. Each is either recognized by the canonical model or moved through a reversible audited transaction into an existing canonical evidence, plan or deployment area. No evidence bytes are deleted and no live reference is silently broken.",
+      "id": "state-root-hygiene"
+    },
+    {
+      "assertion": "After the exact changes, Bureau Doctor reports no lifecycle mismatch, no backlog-task-not-actionable queue findings and healthy state-root hygiene for these artifacts. Database integrity remains ok and missing envelope/receipt counts remain zero.",
+      "id": "health-gates"
+    },
+    {
+      "assertion": "bureau check and strict Registry truth report zero errors; the exact changed-path set is limited to the six initiative files, queue.json and any explicitly reviewed state-root classification code/tests or relocation receipt required by the fresh inventory.",
+      "id": "registry-truth"
+    },
+    {
+      "assertion": "Focused lifecycle, queue and state-root tests plus the complete Bureau test suite pass. The final head and diff are SHA-256-bound to a PASS self-review, GitHub CI is green, and merge/readback show the canonical immutable runtime snapshot at the merged commit.",
+      "id": "tests-review-ci"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.registry"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly ordered implementation. Registry edits, state-root relocation, publication and merge remain bound to exact preimages, narrow leases, review evidence and authoritative post-state readback.",
+      "required_level": "reviewed_plan"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/registry/initiatives/OPERATOR-ECOSYSTEM-REDUNDANCY-V1.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/REPOGROUND-AGENT-UTILITY-V1.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/REPOGROUND-LEGACY-RECONCILIATION-V1.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/SEMANTAH-INDEXD-SCALING-V1.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/SEMANTAH-USEFULNESS-V1.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/WELTGEWEBE-FADEN-VERFALL-V1.json",
+      "path:/home/alex/repos/bureau/registry/queue.json",
+      "path:/home/alex/.local/state/bureau/pr-evidence",
+      "path:/home/alex/.local/state/bureau/promotion-plans",
+      "path:/home/alex/.local/state/bureau/runtime-refresh",
+      "path:/home/alex/.local/state/bureau/schauwerk-host-closeout-20260718.patch"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Restore a truthful and claimable Bureau frontier from the fresh 7f291e4 runtime by reconciling the six currently proven initiative lifecycle mismatches, removing only five non-actionable blocked tasks from active queue lanes, and classifying or reversibly relocating the four known state-root hygiene artifacts without deleting evidence or weakening fail-closed health gates.",
+  "id": "BUREAU-TRUTH-MODEL-V2-T016",
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "metadata": {
+    "deduplication": "Canonical candidate assessment returned promote with no exact duplicates or similarity suggestions. Fresh GitHub observation found no open Bureau pull requests.",
+    "does_not_establish": [
+      "task implementation",
+      "queue mutation before reviewed execution",
+      "claim or dispatch authority",
+      "safe deletion of state-root evidence",
+      "automatic merge",
+      "future health after unrelated Registry changes"
+    ],
+    "fresh_scope_path": "/home/alex/.local/state/grabowski/operator-probes/20260719-bureau-repair-scope-7f291e4.json",
+    "fresh_scope_sha256": "e13088fe7bff858313a9bd7d82b77f7a726b58e0c77fb84b60e0d622efc67b47",
+    "observed_at": "2026-07-19T14:17:00Z",
+    "observed_registry_commit": "7f291e4ae3bac5eac4bc364e7cc0033b331a933f",
+    "observed_registry_tree": "49a9a31fea0be1a48f206ee054ce9d02e0a5c9e986a0f9ab0032e28cd093b163",
+    "registered_from_candidate": "candidate-fdcdcc756d48cfac64f93d60",
+    "scope_change_from_original_candidate": "SCHAUWERK-COMPANION-HOST-HARDENING-V1 is already completed and removed from scope; WELTGEWEBE-FADEN-VERFALL-V1 is newly completion-ready; queue findings decreased from six to five.",
+    "source_digest": "7c4e5328ca951b3d6e44c11e0c4ccc6e65cd5839da406cd53a5653ac55d88fb9",
+    "source_event_id": 763,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-fdcdcc756d48cfac64f93d60",
+      "event_id": 763,
+      "event_created_at": "2026-07-19T11:10:07.873654Z",
+      "request_sha256": "bb9152863f316782f72b625088b8fbc051338f1152eeb13c9ecce563c0486f4d",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator-live-audit",
+        "locator": "/home/alex/.local/state/grabowski/operator-probes/20260719-bureau-current-health-summary.json",
+        "observed_at": "2026-07-19T11:10:07.868528Z",
+        "sha256": "7c4e5328ca951b3d6e44c11e0c4ccc6e65cd5839da406cd53a5653ac55d88fb9"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "bureau",
+    "grabowski",
+    "github"
+  ],
+  "rollback": {
+    "strategy": "Revert the reviewed Registry commit and restore every relocated state-root object from its audited transaction or recorded source/destination hash mapping. Do not rewrite task history, candidate history or evidence content."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Repair Bureau coordination truth across lifecycle, queue and state-root hygiene"
+}

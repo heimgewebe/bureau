@@ -25,6 +25,7 @@ from .coordination_scope import (
     coordination_scope_sha256,
     validate_coordination_scope,
 )
+from .generation_closeout import validate_generation_closeout
 from .rlens_policy import (
     evaluate_task_rlens_policy,
     rlens_policy_block_reason,
@@ -973,6 +974,7 @@ class Registry(legacy.Registry):
             if task.mode == "grabowski-operation" and not task.execution.get("operation"):
                 errors.append(f"grabowski-operation {task.id} requires execution.operation")
             errors.extend(validate_coordination_scope(task, self.resources))
+            errors.extend(validate_generation_closeout(task.raw))
             if task.state == "verified":
                 verification = task.raw.get("metadata", {}).get("verification", {})
                 expected_plan = plan_sha256(self, task.initiative)

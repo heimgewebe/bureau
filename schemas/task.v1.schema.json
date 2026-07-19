@@ -1,5 +1,213 @@
 {
   "$defs": {
+    "generation_closeout": {
+      "additionalProperties": false,
+      "properties": {
+        "classifications": {
+          "items": {
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "disposition": {
+                      "const": "archived"
+                    }
+                  },
+                  "required": [
+                    "disposition"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "archive_ref"
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "disposition": {
+                      "const": "recovery"
+                    }
+                  },
+                  "required": [
+                    "disposition"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "recovery_ref"
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "disposition": {
+                      "const": "still-required"
+                    }
+                  },
+                  "required": [
+                    "disposition"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "reason"
+                  ]
+                }
+              }
+            ],
+            "properties": {
+              "archive_ref": {
+                "maxLength": 1024,
+                "minLength": 1,
+                "type": "string"
+              },
+              "disposition": {
+                "enum": [
+                  "removed",
+                  "archived",
+                  "recovery",
+                  "still-required"
+                ]
+              },
+              "evidence_sha256": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              "observed_at": {
+                "format": "date-time",
+                "type": "string"
+              },
+              "reason": {
+                "maxLength": 1024,
+                "minLength": 1,
+                "type": "string"
+              },
+              "recovery_ref": {
+                "maxLength": 1024,
+                "minLength": 1,
+                "type": "string"
+              },
+              "source_ref": {
+                "maxLength": 1024,
+                "minLength": 1,
+                "type": "string"
+              },
+              "surface_id": {
+                "pattern": "^[A-Za-z0-9_.:-]{1,160}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "surface_id",
+              "disposition",
+              "source_ref",
+              "evidence_sha256",
+              "observed_at"
+            ],
+            "type": "object"
+          },
+          "maxItems": 100,
+          "minItems": 1,
+          "type": "array"
+        },
+        "closeout_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "does_not_establish": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 3,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "transition_id": {
+          "pattern": "^[A-Za-z0-9_.:-]{1,160}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "transition_id",
+        "classifications",
+        "closeout_sha256",
+        "does_not_establish"
+      ],
+      "type": "object"
+    },
+    "generation_transition": {
+      "additionalProperties": false,
+      "properties": {
+        "does_not_establish": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 3,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "predecessors": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "source_ref": {
+                "maxLength": 1024,
+                "minLength": 1,
+                "type": "string"
+              },
+              "surface_id": {
+                "pattern": "^[A-Za-z0-9_.:-]{1,160}$",
+                "type": "string"
+              },
+              "surface_kind": {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "surface_id",
+              "surface_kind",
+              "source_ref"
+            ],
+            "type": "object"
+          },
+          "maxItems": 100,
+          "minItems": 1,
+          "type": "array"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "successor_ref": {
+          "maxLength": 1024,
+          "minLength": 1,
+          "type": "string"
+        },
+        "transition_id": {
+          "pattern": "^[A-Za-z0-9_.:-]{1,160}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "transition_id",
+        "successor_ref",
+        "predecessors",
+        "does_not_establish"
+      ],
+      "type": "object"
+    },
     "rlens_context_ref": {
       "additionalProperties": false,
       "properties": {
@@ -538,6 +746,14 @@
       "type": "string"
     },
     "metadata": {
+      "properties": {
+        "generation_closeout": {
+          "$ref": "#/$defs/generation_closeout"
+        },
+        "generation_transition": {
+          "$ref": "#/$defs/generation_transition"
+        }
+      },
       "type": "object"
     },
     "priority": {

@@ -1,0 +1,149 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Salvage ist nur zulässig, wenn der ursprüngliche Writer belegbar terminal in failed, cancelled, timed_out oder signalled ist; outcome_unknown, interrupted und observation_error blockieren bis zu einer eindeutigen Task-Reconciliation. Offene Start-Intents, laufende Writer oder bereits gestartete Handoffs blockieren ebenfalls.",
+      "id": "strict-eligibility"
+    },
+    {
+      "assertion": "Manifest, ursprüngliche Writer-Task, ursprünglicher Befehlshash, Receipt, Exitklassifikation und Ereignishistorie bleiben byte- und identitätsgleich erhalten. Salvage ergänzt ausschließlich append-only Versuch- und Snapshot-Evidenz.",
+      "id": "immutable-original-evidence"
+    },
+    {
+      "assertion": "Vor jeder Salvageentscheidung wird der vollständige Git-Arbeitszustand deterministisch erfasst: HEAD, Branch, Index, staged und unstaged Diff, untracked Dateien, Dateimodi, Symlinkziele, Submodulezustände und relevante Git-Konfiguration. Jeder Bestandteil wird content-addressed gebunden; ein zusammenfassender Snapshot-SHA-256 identifiziert exakt den Ausgangszustand.",
+      "id": "complete-dirty-snapshot"
+    },
+    {
+      "assertion": "Änderungen außerhalb der erlaubten Pfade, verbotene oder sensible Dateien, unerwartete Symlinks, Submodule-Drift, Special Files, Git-Metadaten, nicht allowlistete Binärdateien und nicht vollständig lesbare Inhalte führen fail-closed zur Ablehnung. Ein Dirty-Zustand erweitert niemals den ursprünglichen Workspace-Scope.",
+      "id": "scope-and-object-safety"
+    },
+    {
+      "assertion": "Snapshot, Manifest und Inhaltsobjekte werden außerhalb des Writer-Worktrees create-only, atomar und verzeichnissynchronisiert gespeichert. Teilweise Snapshots sind nicht verwendbar; Recovery erkennt und verwirft unvollständige temporäre Generationen ohne die Arbeitskopie zu verändern.",
+      "id": "durable-create-only-archive"
+    },
+    {
+      "assertion": "Der Operatorentscheid bindet Workspace-ID, Snapshot-SHA-256, erwarteten Head und Branch, erlaubte Pfade, ursprüngliche Task und Receipt, Replacement-argv-SHA-256, Launch-Nonce sowie Ablaufzeit. Derselbe Entscheid kann nicht für einen veränderten Worktree oder einen anderen Workspace wiederverwendet werden.",
+      "id": "explicit-salvage-decision"
+    },
+    {
+      "assertion": "Unmittelbar vor dem Ersatzstart werden Git-Zustand, exakter Dirty-Snapshot, Checkout-Lifecycle, Workspace- und Komponentenleases, Route-Gate und Start-Intents erneut geprüft. Jede Abweichung blockiert vor Taskstart und verbraucht keinen Handoffversuch.",
+      "id": "prestart-revalidation"
+    },
+    {
+      "assertion": "Pro Workspace existiert höchstens ein Dirty-Salvage-Handoff. Start-Intent, Launch-Nonce und paginierte Task-Reconciliation verhindern Doppelstarts auch bei verlorener Startantwort; mehrere passende Kandidaten bleiben mehrdeutig und blockiert.",
+      "id": "single-salvage-handoff"
+    },
+    {
+      "assertion": "Der Salvage-Snapshot bildet die geerbte Änderungsschicht. Nach dem Ersatzversuch werden neue Änderungen separat gegen diesen Snapshot und die kombinierte Endänderung gegen den ursprünglichen Base-Head ausgewiesen. Keine Projektion darf geerbte und neu erzeugte Änderungen still zusammenfassen.",
+      "id": "inherited-versus-new-delta"
+    },
+    {
+      "assertion": "Collection akzeptiert nur den finalen gebundenen Salvageversuch, den exakten Snapshot, dessen unveränderte Inhaltsobjekte, das passende Writer-Receipt und die kombinierte Endänderung. Tests und Review laufen auf der kombinierten Änderung; Befunde referenzieren zusätzlich geerbte und neue Deltas.",
+      "id": "collection-binding"
+    },
+    {
+      "assertion": "Abbrüche während Snapshot, Entscheidung, Start, Reconciliation oder Collection besitzen idempotente Recoverypfade. Closeout erhält Snapshot und Receipts nach Retentionvertrag, löst Leases nur nach terminalem Readback und verändert oder löscht niemals fremde Dirty-States.",
+      "id": "recovery-and-closeout"
+    },
+    {
+      "assertion": "Öffentliche Status-, Event- und Auditflächen enthalten nur IDs, Zustände und Hashes. Vollständige Befehle, Dateiinhalte und potenziell sensible Diffausschnitte bleiben in privaten, zugriffsbeschränkten Artefakten.",
+      "id": "privacy"
+    },
+    {
+      "assertion": "Regressionstests decken out-of-scope und verbotene Dateien, Symlink- und Submodulewechsel, untracked Verzeichnisse, Binärdateien, Index-Worktree-Divergenz, Snapshot- und fsync-Fehler, Dirty-Drift nach Entscheidung, Leaseablauf, verlorene Startantwort, mehrere Kandidatentasks, manipulierte Snapshotobjekte und Collection gegen den falschen Versuch ab.",
+      "id": "failure-regressions"
+    },
+    {
+      "assertion": "Ein isolierter Livebeweis erzeugt einen sauber gescheiterten Writer mit erlaubten uncommitteten Änderungen, friert den Dirty-Snapshot ein, startet genau einen Ersatzwriter, weist inherited und new delta getrennt aus, sammelt die kombinierte Änderung mit unabhängigen Tests und Review und schließt Workspace sowie Leases ohne Evidenzverlust.",
+      "id": "live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T037",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T055"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Registrierung autorisiert keine automatische Übernahme eines Dirty-Worktrees. Jeder Salvagefall benötigt einen separaten snapshot- und workspacegebundenen Operatorentscheid; Merge und Deployment bleiben eigene Gates.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Wertvolle, uncommittete Änderungen eines belegbar gescheiterten Agent-Workspace-Writers sollen vor einem operator-nativen Ersatzversuch unveränderlich gesichert, exakt geprüft und getrennt von neuen Änderungen gesammelt werden können, ohne Originalevidenz, Scopegrenzen oder Git-Wahrheit zu überschreiben.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T070",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "clean_handoff_snapshot_commit": "bb0d0ff",
+    "does_not_establish": [
+      "dass der saubere Writer-Handoff bereits gemergt oder live ist",
+      "Erlaubnis zur automatischen Übernahme beliebiger Dirty-States",
+      "Erlaubnis zum Lesen oder Veröffentlichen sensibler Dateiinhalte",
+      "Erlaubnis zur Änderung fremder Worktrees oder Leases",
+      "Merge-, Deployment- oder Live-Salvage-Erfolg"
+    ],
+    "priority_rationale": "Next rank 40: hoher Wiederherstellungsnutzen, aber erst nach konfliktfreier Integration des sauberen Writer-Handoffs und hinter der nativen Auditrotation T069.",
+    "publication_registry_base": "433488707c85a28c9bec236afa190789b858e370",
+    "review_serialization_contract": "raw-review-block-replacement-v1",
+    "source": "Bureau candidate 761 from issue 687 follow-up",
+    "source_candidate_id": "candidate-db56dba3089c57620ee5b76d",
+    "source_event_id": 761,
+    "source_issue": "heimgewebe/bureau#687",
+    "source_observation": "Der implementierte saubere Writer-Handoff blockiert absichtlich bei einem Dirty-Worktree. Ohne getrennten Salvagevertrag können wertvolle in-scope Änderungen eines gescheiterten Writers weder sicher übernommen noch beweisbar verworfen werden.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-db56dba3089c57620ee5b76d",
+      "event_id": 761,
+      "event_created_at": "2026-07-19T10:38:13.532306Z",
+      "request_sha256": "48a48e125dc60afb7ee0d6a18abf5c4ad262914b89cc6f1fa2f4ecbef73313de",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "github-issue-followup",
+        "locator": "https://github.com/heimgewebe/bureau/issues/687",
+        "observed_at": "2026-07-19T12:36:17+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 40
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "git",
+    "grabowski",
+    "filesystem-durability",
+    "concurrency",
+    "recovery"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "note": "Task-, Lease-, Checkout-, Snapshot-, Dateisystem- und Start-Reconciliation-Verträge müssen direkt und hashgebunden geprüft werden; Repositorykontext allein genügt nicht.",
+    "skip_reason": "live_first_primary",
+    "task_profile": "security_or_runtime_change"
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Fehlgeschlagene Dirty-Writer hashgebunden und fail-closed salvagen"
+}

@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T019",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Hash-pin PyYAML in the Weltgewebe Agent Safety workflow",
-  "state": "planned",
+  "state": "verified",
   "goal": "Make the Weltgewebe Agent Safety dependency installation reproducible and fail closed by binding PyYAML to reviewed package hashes instead of relying on a version constraint alone.",
   "priority": {
     "lane": "later",
@@ -77,6 +77,54 @@
       "a known dependency compromise",
       "task readiness",
       "merge readiness"
-    ]
+    ],
+    "verified_at": "2026-07-19T16:50:50+02:00",
+    "implementation": {
+      "pull_request": 1497,
+      "base": "bbeb7c63f6ce0a807d0203a7062198a545a2a6a5",
+      "head": "e8e2ff731cb0d2379a086817005d33acfcaeec35",
+      "merge_commit": "76c26e9b670a0b5b9b663cd91556ab7851fd42e2",
+      "github_text_diff_sha256": "cc6071afc36c45550fce6fcb29942b68efe1ac668ddbf72f8c47e315bbaed3f6",
+      "full_index_diff_sha256": "8a77a48a90ef8724a267f3d60e5a3205458455e7ff0cc8179583fab2349fece1",
+      "pyyaml_artifact_set_sha256": "9f33626f8cbf4de0bfe3237d88489b983a7f2097703c2ac16a6b22c5ff7a55e1",
+      "reviewed_artifact_count": 28
+    },
+    "validation": {
+      "agent_tests": "201 passed",
+      "targeted_review_tests": "59 passed",
+      "full_just_check": "passed on final PR head",
+      "agent_contract_ajv": "passed",
+      "agent_safety_ci": "passed",
+      "required_merge_gate": "passed",
+      "web_e2e": "passed",
+      "review_evidence_gate": "passed on rerun attempt 2",
+      "security_review": {
+        "checks": 20,
+        "failed": 0,
+        "sha256": "b63fb313001c6f34395b358aed7f8b50f93ff2fb2f20cfb69733bf84f3a58840"
+      },
+      "correctness_review": {
+        "checks": 16,
+        "failed": 0,
+        "sha256": "8dc2a69372e80092e46ce49340ef7567c3d382566125464aa2207e303226b3b8"
+      }
+    },
+    "acceptance_evidence": {
+      "reviewed-hash-set": "tools/py/uv.lock binds 28 PyYAML 6.0.2 source and wheel artifacts by HTTPS URL, SHA-256 and size; validate_agent_tooling_lock.py binds the complete reviewed set and update documentation requires review.",
+      "fail-closed-install": "The Agent Safety workflow validates the reviewed lock before uv sync --locked and no longer performs an ad-hoc PyYAML pip install.",
+      "negative-proof": "Tests reject a wrong hash, a missing hash, an added unreviewed distribution and pyproject version drift.",
+      "gate-preservation": "All current-head CI, required merge gate, independent reviews and the post-merge main readback passed."
+    },
+    "live_readback": {
+      "origin_main": "76c26e9b670a0b5b9b663cd91556ab7851fd42e2",
+      "detached_main_check": "just agent-contract-check passed",
+      "tooling_lock_status": "valid with zero findings",
+      "repo_agent_contract_status": "valid with zero findings"
+    },
+    "verification_note": "Weltgewebe PR #1497 merged the exact hash-bound PyYAML tooling path and parser hardening. Current-main CI, two exact reviews, the review-evidence gate and a detached post-merge validator readback all passed.",
+    "verification": {
+      "task_sha256": "5e28e3e083ed1adbd2dc6312babdb9d58c9acb0309e22a17c4f77584dbc7db9e",
+      "plan_sha256": "5bd32f4906cc9af27a3f99c7ab886eb9df7f8e5f4e9247c450bc492e64d28b06"
+    }
   }
 }

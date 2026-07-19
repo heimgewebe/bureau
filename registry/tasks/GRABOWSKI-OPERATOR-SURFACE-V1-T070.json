@@ -1,0 +1,140 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Eine gemeinsame typisierte Lifecycle-Klassifikation bestimmt aus aktuellen Task-, Workspace-, Lease-, Checkout-, Prozess-, tmux- und Receipt-Belegen, ob ein Zustand aktiv, blockierend, recovery-pflichtig, terminal-archivierbar, bereits archiviert, mehrdeutig oder unberührbar ist; historische Statusprosa allein begründet nie Cleanup-Autorität.",
+      "id": "typed-lifecycle-classification"
+    },
+    {
+      "assertion": "Archivierung ist nur zulässig, wenn der Zustand terminal ist, keine aktive exakte Lease, kein lebender Prozess, keine offene Taskrolle, keine fremde Retention, keine Shared-Workspace-Referenz und kein dirty Checkout vorliegt; unbekannte oder widersprüchliche Beobachtungen blockieren den Effekt.",
+      "id": "fail-closed-archive-eligibility"
+    },
+    {
+      "assertion": "Terminale Taskdatensätze werden nach konfigurierbarer Mindestaufbewahrung vollständig, reihenfolge- und hashgebunden in create-only Segmente überführt; Segmentmanifest, Quellbereich, Record-Anzahl, erster und letzter Datensatzhash sowie Gesamt-SHA-256 werden vor Änderung der aktiven Projektion verifiziert und fsync-sicher persistiert.",
+      "id": "immutable-task-archives"
+    },
+    {
+      "assertion": "Eindeutig verwaiste Workspaces können nach aktuellem Live-Readback idempotent geschlossen werden; Manifest, Rollen, Abschlussbeleg, Cleanup-Intent und Recovery-Referenzen bleiben vollständig archiviert. Fehlende Worktrees werden nicht als erfolgreiche Löschung umgedeutet.",
+      "id": "workspace-close-and-archive"
+    },
+    {
+      "assertion": "Checkout-Retentionen dürfen nur vom exakten unveränderten Eigentümer oder nach belegtem Ablauf und separater Recovery-Archivierung konvergiert werden. Fremde, aktive oder widersprüchliche Retentionen bleiben unverändert sichtbar.",
+      "id": "retention-owner-safety"
+    },
+    {
+      "assertion": "Standardansichten für Tasks und Workspaces zeigen nur aktive, blockierende, mehrdeutige, resumierbare oder entscheidungspflichtige Zustände. Archivierte Historie bleibt über typisierte, paginierte Drill-down-Oberflächen vollständig lesbar und wird nicht zu einer zweiten Lifecycle-Wahrheit.",
+      "id": "bounded-current-projections"
+    },
+    {
+      "assertion": "Jeder Effekt besitzt einen plan- und quellhashgebundenen Dry-Run, exakte Leases, ein create-only Receipt, einen idempotenten Wiederholungsweg und Post-State-Readback. Teilwirkungen und unbekannte Transportausgänge führen zu Recovery-Status statt unverändertem Retry.",
+      "id": "idempotent-recovery-and-readback"
+    },
+    {
+      "assertion": "Archivierung und Projektion dürfen automatisch nach Vertrag erfolgen; physisches Löschen archivierter Task-, Workspace- oder Recovery-Belege ist nicht Bestandteil dieser Aufgabe und benötigt eine eigene explizite Aufbewahrungs- und Autorisierungsentscheidung.",
+      "id": "retention-and-pruning-separation"
+    },
+    {
+      "assertion": "Tests decken parallele Task-Abschlüsse, unterbrochene Archivierung, korrupte oder fehlende Segmente, Shared-Workspace-Referenzen, session-only tmux-Zustände, dirty Checkouts, fremde und abgelaufene Retentionen, Registry- und Lease-Drift, idempotente Wiederholung sowie unbekannte systemd- und Prozessbeobachtungen ab.",
+      "id": "regression-tests"
+    },
+    {
+      "assertion": "Der geprüfte Merge-Head ist deployt. Ein isolierter Live-Beweis archiviert einen kontrollierten terminalen Tasksatz, schließt einen kontrollierten stale Workspace, zeigt unveränderte aktive und geschützte Zustände und verifiziert Archive, Receipts, Auditkette und normale Grabowski-Mutationen danach.",
+      "id": "deployment-live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Implementierung und Deployment sind getrennt zu prüfen. Historische Belege dürfen nicht stillschweigend gelöscht werden; Pruning erfordert einen eigenen, engeren Vertrag.",
+      "required_level": "reviewed_plan"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/.local/state/grabowski/tasks",
+      "path:/home/alex/.local/state/grabowski/agent-workspaces",
+      "path:/home/alex/.local/state/grabowski/checkout-retention",
+      "path:/home/alex/.local/state/grabowski/task-archives",
+      "path:/home/alex/.local/state/grabowski/workspace-archives"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Grabowski soll terminale Taskdatensätze, abgeschlossene Workspace-Zustände und abgelaufene Checkout-Retentionen nach expliziten, live geprüften Regeln in unveränderliche Archive überführen und die aktuellen Projektionen auf handlungsrelevante Zustände begrenzen, ohne aktive, dirty, mehrdeutige, gemeinsam referenzierte oder fremd geschützte Arbeit anzutasten.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T070",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to delete archived historical evidence",
+      "permission to touch dirty checkouts",
+      "permission to override foreign retention owners",
+      "permission to collapse exact leases into aggregate authority",
+      "automatic merge or deployment authority",
+      "safety of heuristic process or workspace attribution"
+    ],
+    "publication_rebase": {
+      "generation": 2,
+      "previous_registry_commit": "1fca33a9945cb25dac9eb5ef0d5b29619eb6d2a7",
+      "reason": "remote-main-drift-before-effect",
+      "supersedes_proposal_sha256": "186ff10534749984d3444c206e71009a47e1414985902a06d8d022a865b92853"
+    },
+    "registered_at": "2026-07-19",
+    "relationship_to_t068": "T068 erzeugt ausschließlich eine bounded read-only Projektion und schließt automatische Cleanup-Autorität ausdrücklich aus. T070 implementiert die getrennte Lifecycle-, Archivierungs- und Konvergenzschicht.",
+    "source": "bureau_operator_intake",
+    "source_candidate_id": "candidate-4a4e46c43eebe8dc155a5c7a",
+    "source_event_id": 758,
+    "source_observation": "Die Liveprüfung am 19. Juli 2026 zeigte 8.634 Taskdatensätze, davon 8.557 terminal und 1.752 in der Attention-Projektion, sowie 42 Workspace-Manifeste. Vier bereits archivierte saubere Worktrees konnten sicher entfernt und sieben eindeutig verwaiste Workspace-Zustände geschlossen werden. Fremde Retentionen, dirty Checkouts, Shared-Reference- und session-only-Fälle blockierten korrekt.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-4a4e46c43eebe8dc155a5c7a",
+      "event_id": 758,
+      "event_created_at": "2026-07-19T08:37:14.834594Z",
+      "request_sha256": "89b74cfad600d7ca37d965b9bcad098cddef77c44c0ded10ca905f7584857f63",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "live_runtime_audit",
+        "locator": "grabowski-live-audit:2026-07-19T08:33Z",
+        "observed_at": "2026-07-19T08:33:25Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "systemd",
+    "grabowski",
+    "git",
+    "filesystem-durability",
+    "recovery",
+    "audit"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "note": "Taskstore, Workspaces, Leases, Checkouts, Prozesse, tmux, Runtime und Audit müssen live und hashgebunden geprüft werden; Repository-Kontext allein begründet keine Cleanup-Sicherheit.",
+    "skip_reason": "live_first_primary",
+    "task_profile": "security_or_runtime_change"
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Terminale Task- und Workspace-Historie hashgebunden verdichten"
+}

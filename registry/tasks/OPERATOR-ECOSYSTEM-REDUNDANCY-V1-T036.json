@@ -1,0 +1,100 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die in HausKI vendorten Heimlern-Crates sind gegen den aktuellen HausKI-Commit geprüft; Build, Tests und Abhängigkeitsauflösung beweisen, dass sie nach Archivierung keine Laufzeit- oder Fetch-Abhängigkeit vom Heimlern-Remote besitzen.",
+      "id": "hauski-vendored-independence"
+    },
+    {
+      "assertion": "Alle weiterhin normativen Heimlern-Schemas, Protobufs und Consumerverträge sind an exakte Commits gebunden in Metarepo oder einer anderen kanonischen Autorität gesichert; die Repository-Kopie ist ausdrücklich historisch klassifiziert.",
+      "id": "normative-contract-freeze"
+    },
+    {
+      "assertion": "Der deprecated Aussensensor-Direktpfad und ALLOW_HEIMLERN_MVP sind entfernt oder terminal fail-closed stillgelegt; Tests und Readbacks belegen, dass kein unbeabsichtigter Direkt-Ingest verbleibt.",
+      "id": "aussensensor-direct-path"
+    },
+    {
+      "assertion": "Grabowskis offline_proposal_only-Grenze bleibt nachweislich erhalten; Archivierung erweitert weder Lern- noch Ausführungsautorität.",
+      "id": "grabowski-offline-boundary"
+    },
+    {
+      "assertion": "GitHub-Archivierung erfolgt erst nach grünen repository-spezifischen Checks, Consumer-Readbacks und einer frischen Lease-/Remote-Prüfung; ein unklarer Ausgang wird nicht blind wiederholt.",
+      "id": "archive-after-gates"
+    },
+    {
+      "assertion": "Nach belegter Archivierung werden Systemkatalog, Bureau und Organisationsprojektionen auf archived_reference aktualisiert und gegen GitHub zurückgelesen.",
+      "id": "projection-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.heimlern"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T033"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die kostenfreie, gategebundene Umsetzung ausdrücklich autorisiert. GitHub-Archivierung bleibt bis zu vollständigen Consumer-, Vertrags-, Test- und Readback-Belegen gesperrt.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heimlern"
+  },
+  "goal": "Heimlern nur nach einem vollständigen Consumer-, Vertrags- und Kompatibilitäts-Freeze archivieren. Fehlende aktive Runtime ist allein kein Archivierungsbeweis. Vor dem GitHub-Archivschritt müssen vendorte HausKI-Crates remote-unabhängig, normative Heimlern-Verträge kanonisch gesichert, der deprecated Aussensensor-Direktpfad terminal behandelt und Grabowskis Offline-Lerngrenze erhalten sein; danach sind Systemkatalog-, Bureau- und Organisationsprojektionen zu aktualisieren.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T036",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "repository_archive_authority_before_all_gates",
+      "permission_to_delete_historical_contracts",
+      "remote_independence_without_build_and_fetch_proof",
+      "authority_expansion_for_grabowski",
+      "completion_of_the_archival_work"
+    ],
+    "operator_intake_candidate_id": "candidate-1aba9d4568b243618f259052",
+    "operator_intake_event_id": 788,
+    "source": "systemkatalog_repository_lifecycle_audit",
+    "source_head": "59d082b078af63dbf6f9b65a318907d1b2e9fc09",
+    "source_merge_commit": "089e4ed6fe3de50cf9069293ec28f59b6c5d90ff",
+    "source_pull_request": "heimgewebe/systemkatalog#143",
+    "source_segment_sha256": "20ee5ace62ca18fd09e5a35e8f13ca93d59ced31e47fd74cafc7d0728bcef4cb",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-1aba9d4568b243618f259052",
+      "event_id": 788,
+      "event_created_at": "2026-07-19T19:29:13.188524Z",
+      "request_sha256": "ccae15913b67dd47de31abf938ea3e57444d49d22faea49fb350080f0fbbeaca",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "repository_audit_segment",
+        "locator": "heimgewebe/systemkatalog@089e4ed6fe3de50cf9069293ec28f59b6c5d90ff:docs/audits/repository-lifecycle-classification-2026-07-19.v1.json#/classifications/heimgewebe~1heimlern",
+        "observed_at": "2026-07-19T20:51:50+02:00",
+        "sha256": "20ee5ace62ca18fd09e5a35e8f13ca93d59ced31e47fd74cafc7d0728bcef4cb"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 201
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "grabowski",
+    "rust"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Heimlern-Kompatibilitäts-Freeze und Archivierung"
+}

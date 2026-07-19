@@ -212,6 +212,10 @@
           "content_sha256": "5da8e8230930093dc4338db564bfa8c0d38bcfc6b8781b791c370a3b3f62efda"
         }
       ]
+    },
+    "verification": {
+      "task_sha256": "cc7f80bc4972bbd93a7227a6fd8be267a1ca73f80c4407e8037229fa26b3139e",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
     }
   }
 }

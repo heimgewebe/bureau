@@ -1,0 +1,101 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The native execution receipt separately records provider-created layout objects, board_list_items-visible objects and connector evidence; it no longer assumes that every connector appears in the general board inventory.",
+      "id": "inventory-visibility-contract"
+    },
+    {
+      "assertion": "A layout whose operation readback and layout_read prove all connectors completes successfully even when board_list_items omits those connectors; the receipt does not claim partial mutation.",
+      "id": "truthful-completion"
+    },
+    {
+      "assertion": "Negative tests prove that absent, malformed or fewer-than-declared connectors still fail closed and cannot be hidden by the visibility reconciliation.",
+      "id": "missing-connector-fail-closed"
+    },
+    {
+      "assertion": "The Miro quality path consumes layout-read connector evidence or reports connector observability as unavailable; it never silently converts an unobservable connector count into zero.",
+      "id": "quality-evidence-axis"
+    },
+    {
+      "assertion": "Unit, integration and full Schauwerk tests pass, and one isolated live Miro acceptance binds board inventory, layout_read and operation receipts without creating duplicate board content.",
+      "id": "regression-and-live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.schauwerk"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user has authorized cost-free Schauwerk optimization. Work must remain isolated, diff-reviewed, test-bound and must not repeat the already completed live board mutation.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk"
+  },
+  "goal": "Make Schauwerk native delivery and visual quality verification distinguish provider-created connectors from the inventory exposed by board_list_items, so a complete layout does not produce a false failed or partial-mutation receipt while genuinely missing connectors still fail closed.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T036",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to recreate or duplicate the live board",
+      "provider-wide atomicy",
+      "automatic aesthetic acceptance",
+      "that board_list_items will expose connectors in future provider versions"
+    ],
+    "live_evidence": {
+      "board_alias": "operator-ecosystem-heim-pc-20260719",
+      "board_inventory_visible_count": 34,
+      "layout_read_connector_count": 6,
+      "layout_read_summary_sha256": "0f282e6cbf3e180690018fb78fb754955f2db2a221143ed7c07bfe96394a183b",
+      "native_execution_sha256": "6bfeafbe57df80ab2965c61a96642ad735d3bf6181d2edd80a97e9b348c036a9",
+      "provider_created_count": 40,
+      "snapshot_content_sha256": "86d4fbd74e90da42c8a4130295cdc35a7d1758c6a9dfc31abc54db96252d0275"
+    },
+    "proposal_replaces_local_plan": "49bde60941aff42b5ae525c146da5b1621ff5c7b6fb7ffc36996477e828a15ee (review serialization changed nested key order; never published)",
+    "registered_from": "operator-ecosystem-heim-pc-20260719 live delivery finding",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-8dba069f8f79c28e5373cdc5",
+      "event_id": 780,
+      "event_created_at": "2026-07-19T18:09:52.787857Z",
+      "request_sha256": "98397620d8a4fa63660befcaadee416fe6bcff2d3c19633b77fe5d760ca7434d",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live_runtime_finding",
+        "locator": "operator-ecosystem-heim-pc-20260719@eaa087839f2fff2c",
+        "observed_at": "2026-07-19T19:59:10+02:00",
+        "sha256": "6bfeafbe57df80ab2965c61a96642ad735d3bf6181d2edd80a97e9b348c036a9"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 36
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "github",
+    "miro",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Make Miro connector observability truthful in Schauwerk"
+}

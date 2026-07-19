@@ -1,0 +1,124 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Task-Schema, verified-task verification hashes, Registry-Basis, Reviewbindung und Zielpfad werden vollständig geprüft, bevor ein Publikations-Workspace, Commit, Push oder Pull Request erzeugt wird.",
+      "evidence_type": "object",
+      "id": "validate-before-remote-effect",
+      "verifier": "unit and integration tests"
+    },
+    {
+      "assertion": "Ein vorhandener Publikations-Workspace wird anhand von Proposal-SHA-256, Basiscommit, Branch, Git-Zustand, Zielpfad, Zieldateihash, Tasks, Prozessen und Leases klassifiziert. Nur ein exakter inaktiver Vor-Effekt-Zustand darf idempotent fortgesetzt oder unveränderlich als Recovery-Beleg archiviert werden; dirty, fremde oder mehrdeutige Zustände blockieren.",
+      "evidence_type": "object",
+      "id": "exact-workspace-reconciliation",
+      "verifier": "fault-injection and lifecycle tests"
+    },
+    {
+      "assertion": "Fehler werden nach letzter belegter Phase unterschieden: lokal vor Commit, lokal vor Push, Push-Ausgang unklar, PR-Ausgang unklar oder Remote-Readback widersprüchlich. publication-unclear ist ausschließlich für mögliche Remote-Effekte zulässig.",
+      "evidence_type": "object",
+      "id": "effect-phase-classification",
+      "verifier": "typed failure contract tests"
+    },
+    {
+      "assertion": "Bei belegtem Vor-Remote-Fehler werden ausschließlich unveränderte owner-gebundene Publikationsleases automatisch freigegeben. Bei möglichem Remote-Effekt bleiben sie bis zum autoritativen Branch-, PR- und Dateireadback erhalten; Wiederholung ohne Readback bleibt verboten.",
+      "evidence_type": "object",
+      "id": "lease-release-contract",
+      "verifier": "lease database and recovery tests"
+    },
+    {
+      "assertion": "Derselbe reviewed Proposal-Aufruf liefert nach einem klaren Vor-Effekt-Abbruch ohne Doppelworkspace, Doppelcommit, Doppelpush oder Doppel-PR entweder den vorhandenen terminalen Receipt oder setzt exakt den zulässigen Zustand fort.",
+      "evidence_type": "object",
+      "id": "idempotent-retry",
+      "verifier": "end-to-end idempotency test"
+    },
+    {
+      "assertion": "Ein isolierter Livebeweis reproduziert den T072-Befund mit vorhandenen Workspace- und Verifikationsfehlern, zeigt klare Vor-Remote-Klassifikation und Lease-Freigabe, publiziert danach genau einen Testtask und verifiziert Branch, PR, Remote-Datei, Receipt sowie sauberen Recoveryzustand.",
+      "evidence_type": "object",
+      "id": "live-regression-proof",
+      "verifier": "isolated live proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T017"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Härtung darf unklare Push- oder PR-Ausgänge nicht zu sicheren Fehlschlägen umdeuten. Recovery muss remote Readback, Workspace-Identität und Lease-Eigentum exakt binden.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/operator_intake.py",
+      "path:/home/alex/repos/bureau/tests/test_operator_intake.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Den Bureau-Operator-Intake-Publisher so härten, dass exakte lokale Vor-Effekt-Zustände idempotent fortgesetzt oder recovery-sicher archiviert werden, lokale Validierungsfehler nicht als unklarer Remote-Effekt erscheinen und exakte Leases bei belegter Effektfreiheit automatisch freigegeben werden.",
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T022",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass jeder publication-unclear-Ausgang lokal und effektfrei ist",
+      "Erlaubnis zum Löschen fremder oder dirty Workspaces",
+      "Erlaubnis zur Freigabe fremder oder veränderter Leases",
+      "automatische Merge- oder Deployment-Autorität"
+    ],
+    "friction_event_id": "f1ba3495e2c94316ae344a6f004e1227",
+    "incident_proposal_id": "00a30270eb4a31c2e2626c0d04e88f9a302f104582c13ef0ee3c79e140590863",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-6cf64fb232ec9970dd4e8603",
+      "event_id": 776,
+      "event_created_at": "2026-07-19T15:34:38.868206Z",
+      "request_sha256": "6426b15aa769ae7ebc4f6a8767d92b92559010dd505d97d3c4fd3d53310c71d4",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "live_runtime_audit",
+        "locator": "grabowski-live-audit:operator-intake-t072-2026-07-19",
+        "observed_at": "2026-07-19T15:28:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-07-19T17:35:00+02:00",
+    "related_candidate_id": "candidate-d95ea8ee157c2b27483967be",
+    "source": "bureau_operator_intake",
+    "source_candidate_id": "candidate-6cf64fb232ec9970dd4e8603",
+    "source_event_id": 776,
+    "source_observation": "Beim T072-Closeout blockierte ein exakter verwaister Vor-Effekt-Workspace als workspace-exists. Ein fehlender task_sha256/plan_sha256-Vertrag wurde danach als publication-unclear gemeldet und hielt Leases, obwohl autoritativer Readback keinen Remote-Branch, keinen PR und keine Remote-Datei zeigte. Der kanonische Abschluss erfolgte unabhängig über PR #722."
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 22
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "bureau",
+    "grabowski",
+    "git",
+    "github",
+    "recovery"
+  ],
+  "rollback": {
+    "strategy": "Den bisherigen fail-closed Publisher wiederherstellen; vorhandene Recovery-Workspaces, Kandidaten-, Friktions- und Publikationsbelege bleiben unverändert erhalten. Bei unsicherer Phase weiterhin publication-unclear melden und keinen Retry starten."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bureau-Publikation vor Remote-Effekt deterministisch reconciliieren"
+}

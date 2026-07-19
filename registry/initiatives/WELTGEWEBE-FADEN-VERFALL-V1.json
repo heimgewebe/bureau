@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "WELTGEWEBE-FADEN-VERFALL-V1",
   "title": "Weltgewebe temporal thread lifecycle",
-  "state": "active",
+  "state": "completion-ready",
   "commitment": "now",
   "goal": "Implement the user-authorized seven-day lifecycle of unbraided Weltgewebe threads as a deterministic, history-preserving domain projection while keeping durable yarn and adjacent cleanup work outside this first task.",
   "current_plan": {

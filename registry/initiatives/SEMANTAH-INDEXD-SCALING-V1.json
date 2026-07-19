@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "SEMANTAH-INDEXD-SCALING-V1",
   "title": "SemantAH indexd scaling",
-  "state": "active",
+  "state": "completion-ready",
   "commitment": "later",
   "goal": "Reduce indexd search/write contention and define evidence-based exact-search and ANN boundaries without weakening deterministic ranking, snapshot consistency, persistence or bounded-memory contracts.",
   "completion": [

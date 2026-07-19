@@ -1,6 +1,6 @@
 # Bureau State-Root-Artefakte v1
 
-Stand: 2026-07-13
+Stand: 2026-07-19
 
 ## Zweck
 
@@ -44,6 +44,24 @@ Autorität: geprüfter Vorschlag. Der Plan erzeugt allein keine Registry-, Queue
 Dispatch- oder Merge-Autorität.
 
 Retention: bis zur Anwendung oder belegten Ablösung; kein automatisches Löschen.
+
+### Weitere aktive, streng validierte Flächen
+
+`pr-evidence/` ist nur bekannt, wenn jedes direkte Kind eine positive PR-Nummer als
+Verzeichnisname trägt und ausschließlich nichtleere, reguläre, nicht gesymlinkte
+`.patch`-Dateien innerhalb enger Anzahl- und Größenlimits enthält. `promotion-plans/`
+wird nur bei vollständiger Event-, Initiative-, Task-, Review- und Non-Claim-Bindung als
+historische Generatorfläche erkannt. Da ihre älteren `plan_sha256` nicht dem heutigen
+Hashvertrag entsprechen, bleibt sie Archivkandidat und erhält keine aktuelle
+Vorschlagsautorität.
+
+`runtime-refresh/task-bindings/` ist als reservierte Laufzeitfläche nur im leeren Zustand
+bekannt. Sobald ein Produzent dort Inhalte schreibt, bleibt Doctor fail-closed ungesund,
+bis für deren Format ein eigener enger Vertrag existiert.
+
+Eine lose Datei `schauwerk-host-closeout-YYYYMMDD.patch` ist historische
+Closeout-Evidenz und wird als Archivkandidat ausgewiesen. Diese Klassifikation verschiebt
+oder löscht die Datei nicht und verleiht ihr keine aktuelle Registry-Autorität.
 
 ## Read-only Inventur
 

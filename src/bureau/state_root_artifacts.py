@@ -41,6 +41,12 @@ _COMPLETION_REVIEW_AXES = {
 _REVIEWED_PLAN_NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,191}\.json")
 _REVIEWED_PLAN_MAX_COUNT = 256
 _REVIEWED_PLAN_MAX_BYTES = 512 * 1024
+_PR_EVIDENCE_DIRECTORY_RE = re.compile(r"[1-9][0-9]{0,9}")
+_PR_EVIDENCE_PATCH_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,191}\.patch")
+_PR_EVIDENCE_MAX_DIRECTORIES = 256
+_PR_EVIDENCE_MAX_PATCHES_PER_DIRECTORY = 32
+_PR_EVIDENCE_MAX_PATCH_BYTES = 32 * 1024 * 1024
+_PR_EVIDENCE_HEADER_MAX_BYTES = 64 * 1024
 _MIGRATION_ENTRY_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,255}")
 _MIGRATION_MAX_ENTRIES = 256
 _MIGRATION_MAX_FILES_PER_ENTRY = 4096
@@ -756,6 +762,72 @@ def completion_evidence_directory_valid(entry: Path) -> bool:
     return bool(completion_evidence_inventory(entry)["valid"])
 
 
+def pr_evidence_directory_valid(entry: Path) -> bool:
+    """Validate PR-numbered directories containing bounded regular patch files."""
+
+    try:
+        info = entry.lstat()
+        directories = sorted(entry.iterdir(), key=lambda item: item.name)
+    except OSError:
+        return False
+    if (
+        stat.S_ISLNK(info.st_mode)
+        or not stat.S_ISDIR(info.st_mode)
+        or not directories
+        or len(directories) > _PR_EVIDENCE_MAX_DIRECTORIES
+    ):
+        return False
+    for directory in directories:
+        try:
+            directory_info = directory.lstat()
+            patches = sorted(directory.iterdir(), key=lambda item: item.name)
+        except OSError:
+            return False
+        if (
+            _PR_EVIDENCE_DIRECTORY_RE.fullmatch(directory.name) is None
+            or stat.S_ISLNK(directory_info.st_mode)
+            or not stat.S_ISDIR(directory_info.st_mode)
+            or not patches
+            or len(patches) > _PR_EVIDENCE_MAX_PATCHES_PER_DIRECTORY
+        ):
+            return False
+        for patch in patches:
+            try:
+                patch_info = patch.lstat()
+            except OSError:
+                return False
+            if (
+                _PR_EVIDENCE_PATCH_RE.fullmatch(patch.name) is None
+                or stat.S_ISLNK(patch_info.st_mode)
+                or not stat.S_ISREG(patch_info.st_mode)
+                or patch_info.st_size <= 0
+                or patch_info.st_size > _PR_EVIDENCE_MAX_PATCH_BYTES
+            ):
+                return False
+            try:
+                with patch.open("rb") as handle:
+                    header = handle.read(_PR_EVIDENCE_HEADER_MAX_BYTES)
+            except OSError:
+                return False
+            raw_diff = header.startswith(b"diff --git ")
+            format_patch = (
+                re.match(
+                    rb"From [0-9a-f]{40} Mon Sep 17 00:00:00 2001\n",
+                    header,
+                )
+                is not None
+                and b"\nSubject: [PATCH" in header
+                and b"\ndiff --git " in header
+            )
+            if (
+                not (raw_diff or format_patch)
+                or b"\n--- " not in header
+                or b"\n+++ " not in header
+            ):
+                return False
+    return True
+
+
 def _reviewed_plan_hash_matches(payload: dict[str, Any]) -> tuple[bool, str]:
     claimed = payload.get("plan_sha256")
     if re.fullmatch(r"[0-9a-f]{64}", str(claimed or "")) is None:
@@ -897,6 +969,62 @@ def reviewed_plan_inventory(entry: Path) -> dict[str, Any]:
 
 def reviewed_plan_directory_valid(entry: Path) -> bool:
     return bool(reviewed_plan_inventory(entry)["valid"])
+
+
+def legacy_promotion_plan_directory_valid(entry: Path) -> bool:
+    """Recognize bounded historical promotion plans without granting current digest authority."""
+
+    try:
+        info = entry.lstat()
+        plans = sorted(entry.iterdir(), key=lambda item: item.name)
+    except OSError:
+        return False
+    if (
+        stat.S_ISLNK(info.st_mode)
+        or not stat.S_ISDIR(info.st_mode)
+        or not plans
+        or len(plans) > _REVIEWED_PLAN_MAX_COUNT
+    ):
+        return False
+    for path in plans:
+        try:
+            payload, _ = _json_file(path, maximum_bytes=_REVIEWED_PLAN_MAX_BYTES)
+        except (OSError, legacy.StateError):
+            return False
+        digest_matches, digest_mode = _reviewed_plan_hash_matches(payload)
+        review = payload.get("review")
+        task = payload.get("task_json")
+        source_event = payload.get("source_event")
+        nonclaims = payload.get("does_not_establish")
+        checks = (
+            _REVIEWED_PLAN_NAME_RE.fullmatch(path.name) is not None,
+            payload.get("schema_version") == 2,
+            payload.get("command") == "live-promote-plan",
+            isinstance(payload.get("event_id"), int) and payload["event_id"] > 0,
+            isinstance(payload.get("initiative"), str)
+            and legacy.ID_RE.fullmatch(payload["initiative"]) is not None,
+            isinstance(payload.get("task_id"), str)
+            and legacy.ID_RE.fullmatch(payload["task_id"]) is not None,
+            not digest_matches and digest_mode == "plan digest mismatch",
+            isinstance(review, dict)
+            and review.get("required") is True
+            and review.get("status") == "reviewed"
+            and isinstance(review.get("reviewer"), str)
+            and bool(review["reviewer"].strip()),
+            isinstance(task, dict)
+            and task.get("id") == payload.get("task_id")
+            and task.get("initiative") == payload.get("initiative"),
+            isinstance(source_event, dict)
+            and source_event.get("event_id") == payload.get("event_id")
+            and isinstance(source_event.get("record"), dict)
+            and source_event["record"].get("kind") == "candidate_task",
+            isinstance(nonclaims, list)
+            and bool(nonclaims)
+            and all(isinstance(item, str) and item.strip() for item in nonclaims),
+        )
+        if not all(checks):
+            return False
+    return True
 
 
 def managed_state_root_inventory(state_root: Path) -> dict[str, Any]:

@@ -113,6 +113,7 @@ def _runtime_refresh_fixture(state_root):
     _write_runtime_refresh_json(
         refresh / "attempts" / target_sha256 / "started.json", started
     )
+    (refresh / "task-bindings").mkdir()
     (refresh / "workspaces" / main_commit / ".git").mkdir(parents=True)
     return refresh
 
@@ -175,6 +176,24 @@ def test_runtime_refresh_directory_with_unbound_observation_name_remains_unknown
     refresh = _runtime_refresh_fixture(store.state_root)
     observation = next((refresh / "observations").iterdir())
     observation.rename(observation.with_name("observation.json"))
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "runtime-refresh", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_runtime_refresh_directory_with_nonempty_task_bindings_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    refresh = _runtime_refresh_fixture(store.state_root)
+    (refresh / "task-bindings" / "foreign.json").write_text(
+        "{}\n", encoding="utf-8"
+    )
 
     report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
 
@@ -491,6 +510,10 @@ def test_legacy_state_root_artifacts_are_archive_candidates(
             "file",
             "legacy-evidence-artifact",
         ),
+        "schauwerk-host-closeout-20260718.patch": (
+            "file",
+            "legacy-closeout-patch-artifact",
+        ),
         "lenskit-codex-handoff-20260630T0921.json": (
             "file",
             "legacy-agent-handoff-artifact",
@@ -689,8 +712,8 @@ def _write_completion_evidence(state_root, *, corrupt_diff=False, foreign=False)
     return bundle
 
 
-def _write_reviewed_plan(state_root, *, corrupt_hash=False):
-    plans = state_root / "plans"
+def _write_reviewed_plan(state_root, *, corrupt_hash=False, directory_name="plans"):
+    plans = state_root / directory_name
     plans.mkdir()
     event_id = 42
     initiative = "TEST-INITIATIVE-V1"
@@ -732,6 +755,113 @@ def _write_reviewed_plan(state_root, *, corrupt_hash=False):
     target = plans / "test-plan.json"
     target.write_text(json.dumps(plan, indent=2) + "\n", encoding="utf-8")
     return target
+
+
+def _write_pr_evidence(state_root, *, foreign=False, symlink=False):
+    evidence = state_root / "pr-evidence" / "720"
+    evidence.mkdir(parents=True)
+    patch = evidence / "registration.patch"
+    patch.write_text(
+        "diff --git a/a b/a\n--- a/a\n+++ b/a\n", encoding="utf-8"
+    )
+    if foreign:
+        (evidence / "operator-note.txt").write_text("foreign\n", encoding="utf-8")
+    if symlink:
+        backup = evidence / "registration.real.patch"
+        patch.rename(backup)
+        patch.symlink_to(backup.name)
+    return patch
+
+
+def test_pr_evidence_is_active_and_legacy_promotion_plans_are_archived(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    _write_pr_evidence(store.state_root)
+    _write_reviewed_plan(
+        store.state_root, corrupt_hash=True, directory_name="promotion-plans"
+    )
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is True
+    assert report["unknown_entries"] == []
+    known = {entry["name"]: entry["class"] for entry in report["known_entries"]}
+    assert known["pr-evidence"] == "pr-evidence-directory"
+    assert report["archive_candidate_entries"] == [
+        {
+            "name": "promotion-plans",
+            "type": "directory",
+            "class": "legacy-promotion-plan-directory",
+        }
+    ]
+
+
+def test_pr_evidence_with_foreign_file_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    _write_pr_evidence(store.state_root, foreign=True)
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "pr-evidence", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_pr_evidence_with_invalid_patch_content_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    patch = _write_pr_evidence(store.state_root)
+    patch.write_text("not a git diff\n", encoding="utf-8")
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "pr-evidence", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_pr_evidence_symlink_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    _write_pr_evidence(store.state_root, symlink=True)
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "pr-evidence", "type": "directory", "class": "unknown"}
+    ]
+
+
+def test_invalid_legacy_promotion_plan_remains_unknown(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    registry, store = setup_state(root, tmp_path, monkeypatch)
+    target = _write_reviewed_plan(
+        store.state_root, corrupt_hash=True, directory_name="promotion-plans"
+    )
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    payload["task_id"] = "OTHER-TASK-V1-T001"
+    target.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+    report = Dispatcher(registry, store).doctor()["state_root_hygiene"]
+
+    assert report["healthy"] is False
+    assert report["unknown_entries"] == [
+        {"name": "promotion-plans", "type": "directory", "class": "unknown"}
+    ]
 
 
 def test_completion_evidence_and_reviewed_plans_are_known_active_entries(

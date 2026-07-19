@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "SEMANTAH-USEFULNESS-V1",
   "title": "semantAH Semantic Evidence Service usefulness proof",
-  "state": "candidate",
+  "state": "completion-ready",
   "commitment": "later",
   "goal": "Prove or reject semantAH as a source-grounded Semantic Evidence Service through deterministic RepoBrief evidence, contract repair, real documentation ingest, and retrieval evaluation before any consumer integration.",
   "current_plan": {

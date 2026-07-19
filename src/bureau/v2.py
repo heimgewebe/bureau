@@ -34,6 +34,8 @@ from .rlens_policy import (
 from .schema_validation import DocumentSchemaError, SchemaSet
 from .state_root_artifacts import (
     completion_evidence_directory_valid,
+    legacy_promotion_plan_directory_valid,
+    pr_evidence_directory_valid,
     reviewed_plan_directory_valid,
 )
 
@@ -1000,7 +1002,9 @@ STATE_ROOT_ARCHIVE_CANDIDATE_CLASSES = {
     "legacy-agent-handoff-artifact",
     "legacy-archive-directory",
     "legacy-coding-delegator-artifact",
+    "legacy-closeout-patch-artifact",
     "legacy-evidence-artifact",
+    "legacy-promotion-plan-directory",
     "legacy-manual-maintenance-directory",
     "legacy-merge-gatekeeper-artifact",
     "legacy-merge-gatekeeper-runs",
@@ -1050,6 +1054,7 @@ _RUNTIME_REFRESH_ALLOWED_CHILDREN = {
     "intents",
     "latest-observation.json",
     "observations",
+    "task-bindings",
     "workspaces",
 }
 
@@ -1243,6 +1248,19 @@ def _runtime_refresh_workspaces_directory(path: Path) -> bool:
     return True
 
 
+def _is_empty_real_directory(path: Path) -> bool:
+    try:
+        info = path.lstat()
+        children = list(path.iterdir())
+    except OSError:
+        return False
+    return (
+        not stat.S_ISLNK(info.st_mode)
+        and stat.S_ISDIR(info.st_mode)
+        and not children
+    )
+
+
 def _is_runtime_refresh_directory(entry: Path) -> bool:
     try:
         info = entry.lstat()
@@ -1272,6 +1290,7 @@ def _is_runtime_refresh_directory(entry: Path) -> bool:
             digest_field="intent_sha256",
             maximum_count=_RUNTIME_REFRESH_MAX_RECORDS,
         )
+        and _is_empty_real_directory(children["task-bindings"])
         and _runtime_refresh_workspaces_directory(children["workspaces"])
     )
 
@@ -1453,6 +1472,7 @@ def _legacy_state_root_class(name: str, entry_type: str) -> str | None:
             "legacy-review-steward-artifact",
         ),
         (r"pr\d+-merged\.json", "legacy-pr-merge-artifact"),
+        (r"schauwerk-host-closeout-\d{8}\.patch", "legacy-closeout-patch-artifact"),
         (r"ollama-wg-.+\.(json|py|txt)", "legacy-operator-artifact"),
         (r"weltgewebe-.+\.txt", "legacy-weltgewebe-artifact"),
         (r"wg-coordinator\.\d+", "legacy-wg-artifact"),
@@ -1500,6 +1520,16 @@ def _classify_state_root_entry(entry: Path, database_name: str) -> dict[str, str
             "class": "completion-evidence-directory",
         }
     if (
+        name == "pr-evidence"
+        and entry_type == "directory"
+        and pr_evidence_directory_valid(entry)
+    ):
+        return {
+            "name": name,
+            "type": entry_type,
+            "class": "pr-evidence-directory",
+        }
+    if (
         name == "plans"
         and entry_type == "directory"
         and reviewed_plan_directory_valid(entry)
@@ -1508,6 +1538,16 @@ def _classify_state_root_entry(entry: Path, database_name: str) -> dict[str, str
             "name": name,
             "type": entry_type,
             "class": "reviewed-plan-directory",
+        }
+    if (
+        name == "promotion-plans"
+        and entry_type == "directory"
+        and legacy_promotion_plan_directory_valid(entry)
+    ):
+        return {
+            "name": name,
+            "type": entry_type,
+            "class": "legacy-promotion-plan-directory",
         }
     if (
         name == "runtime-refresh"

@@ -1,0 +1,112 @@
+{
+  "acceptance": [
+    {
+      "assertion": "PR #309 wird vor weiterer Mutation gegen den dann aktuellen origin/main-, PR-Head-, Mergefähigkeits-, Dirty-State-, Task-, Prozess- und Lease-Zustand erneut geprüft; der bestehende Head 65461f5b22972d4cbb617a585b236c4831902564 wird nicht blind als aktuell angenommen.",
+      "id": "fresh-head-and-base"
+    },
+    {
+      "assertion": "Die deterministischen Operator-Kontextprojektionen werden erst nach belegter Freigabe oder rechtmäßiger eigener Lease regeneriert; fremde Leases, Worktrees, Prozesse und Dirty States werden weder überschrieben noch aufgehoben.",
+      "id": "lease-safe-projection"
+    },
+    {
+      "assertion": "Der finale exakte PR-Head besteht die fokussierten Task-Attention-Tests, git diff --check, die vollständige Repository-Validierung sowie alle GitHub-Prüfungen ohne ausgenommenen Projektionsfehler.",
+      "id": "green-validation"
+    },
+    {
+      "assertion": "Ein finaler sicherheitsorientierter Review ist an exakten Head, Basis und Diff-Digest gebunden und ergibt PASS; der vollständige nicht-triviale Diff liegt vor dem Merge als Downloadartefakt vor.",
+      "id": "diff-bound-review"
+    },
+    {
+      "assertion": "Nur bei vollständiger Belegkette wird PR #309 aus dem Draft genommen und gemergt; anschließend wird ausschließlich der exakte Mergecommit deployt und durch Runtime-, Audit-, Kill-Switch- und Funktions-Readbacks verifiziert.",
+      "id": "exact-merge-and-runtime"
+    },
+    {
+      "assertion": "Bureau-Status, PR-Belege und Runtime-Wahrheit stimmen überein; temporäre Worktrees und eigene Leases werden entfernt, fremde Zustände bleiben unberührt.",
+      "id": "clean-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_task_attention.py",
+      "component:tests/test_task_attention.py",
+      "component:docs/generated/operator-context.v1.json",
+      "component:docs/generated/operator-context.md",
+      "github-pr:heimgewebe/grabowski#309"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Grabowski PR #309 nach Freigabe der fremd geleasten deterministischen Operator-Kontextprojektion auf einem frischen Hauptbranchstand vollständig schließen: Projektion ohne Lease-Override regenerieren, exakten Head vollständig validieren und unabhängig diffgebunden reviewen, nur bei grüner Belegkette mergen, den exakten Merge in die Runtime deployen, live verifizieren und sauber aufräumen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T073",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "blocking_condition": "docs/generated/operator-context.v1.json is actively leased by chatgpt-t062-finalize-20260719-v3 through 2026-07-19T23:54:53+02:00; final independent review also lacks a PASS receipt.",
+    "current_evidence": {
+      "codeql": "passed",
+      "disposable_projection_refresh": "exactly one generated source-hash line changes",
+      "focused_tests": "15/15 passed on final head",
+      "full_validation": "2353 tests, 2 skipped, exactly one local failure: test_generated_context_is_current",
+      "git_diff_check": "passed",
+      "github_validation": "two jobs failed in Validate repository step"
+    },
+    "diff_sha256": "45e7746deeaf8bcaca510dc6c49318527e8ffebee641e1d0386eb53567f7a28e",
+    "does_not_establish": [
+      "merge_readiness",
+      "deployment_authority",
+      "green_full_validation",
+      "independent_review_pass",
+      "permission_to_override_foreign_leases"
+    ],
+    "observed_base": "49de1b260e2dd457c312cb9c33d9e5d3a14c1f35",
+    "operator_intake": {
+      "candidate_id": "candidate-43f9279b96b12935db58b3db",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-19T20:07:47.799964Z",
+      "event_id": 791,
+      "request_sha256": "ec9a6cbf2e26143a68c95f1f066d7679ae22a0fa117f14d669ea96222edee8f9",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github_pull_request",
+        "locator": "github:heimgewebe/grabowski#309@65461f5b22972d4cbb617a585b236c4831902564",
+        "observed_at": "2026-07-19T22:05:33+02:00",
+        "sha256": "45e7746deeaf8bcaca510dc6c49318527e8ffebee641e1d0386eb53567f7a28e"
+      }
+    },
+    "source": "pr_closeout_followup",
+    "source_head": "65461f5b22972d4cbb617a585b236c4831902564",
+    "source_pr": 309,
+    "source_repository": "heimgewebe/grabowski",
+    "source_tree": "4511acd68694cbb0806d69869271101aa16765b1"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 15
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "github",
+    "grabowski",
+    "runtime-deployment",
+    "audit"
+  ],
+  "schema_version": 1,
+  "state": "blocked",
+  "title": "PR #309 lease-sicher validieren, reviewen und abschließen"
+}

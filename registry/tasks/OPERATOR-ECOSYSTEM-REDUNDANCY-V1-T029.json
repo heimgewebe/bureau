@@ -12,13 +12,23 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/heim-pc"
+    "working_repository": "/home/alex/repos/heim-pc",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heim-pc",
+      "path:/home/alex/.config/systemd/user",
+      "host:heim-pc"
+    ]
   },
   "claims": [
     {
       "resource": "repo.heim-pc",
       "mode": "write",
       "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
     }
   ],
   "required_capabilities": [

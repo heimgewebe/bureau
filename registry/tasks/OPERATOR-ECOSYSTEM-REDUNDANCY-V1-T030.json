@@ -12,13 +12,24 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/repoground"
+    "working_repository": "/home/alex/repos/repoground",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground",
+      "path:/home/alex/repos/.repobrief-sources",
+      "path:/home/alex/repos/.repoground-sources",
+      "host:heim-pc"
+    ]
   },
   "claims": [
     {
       "resource": "repo.repoground",
       "mode": "write",
       "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
     }
   ],
   "required_capabilities": [

@@ -12,13 +12,24 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/infra"
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/infra",
+      "path:/home/alex/.config/grabowski/fleet.json",
+      "host:heim-pc",
+      "host:heimserver"
+    ]
   },
   "claims": [
     {
       "resource": "repo.infra",
       "mode": "write",
       "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
     }
   ],
   "required_capabilities": [

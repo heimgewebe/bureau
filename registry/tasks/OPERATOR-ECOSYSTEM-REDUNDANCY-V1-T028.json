@@ -11,13 +11,26 @@
   },
   "execution": {
     "mode": "interactive-agent",
-    "policy": "review-before-effect"
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/sichter",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/sichter",
+      "service:sichter-worker.service",
+      "service:sichter-autoreview.timer",
+      "path:/home/alex/.local/state/sichter/queue",
+      "host:heim-pc"
+    ]
   },
   "claims": [
     {
       "resource": "repo.sichter",
       "mode": "write",
       "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
     }
   ],
   "required_capabilities": [

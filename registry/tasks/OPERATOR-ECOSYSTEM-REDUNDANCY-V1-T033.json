@@ -2,9 +2,9 @@
   "schema_version": 1,
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T033",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
-  "title": "Historische Repositories klassifizieren und organisatorisch archivieren",
+  "title": "Historische Repositories klassifizieren und Archivierungsaufgaben registrieren",
   "state": "planned",
-  "goal": "Livebefund: Kein Repository der Organisation ist archiviert, obwohl Heimlern ausdrücklich eingefrorene historische Referenz ist und Heimgeist, ACS, Leitwerk sowie SemantAH erhebliche Rollenüberlappungen oder überholte Consumerketten zeigen. Aufgabe: Consumer, Runtime, Contracts, PRs und historische Belege je Repository prüfen; aktive, Referenz-, Migrations- und Archivrollen eindeutig setzen; nur vollständig abgelöste Repositories archivieren und Systemkatalog, Fleet sowie RepoGround danach aktualisieren. Alte Dependabot-PRs werden dabei gesammelt klassifiziert.",
+  "goal": "Livebefund: Kein Repository der Organisation ist archiviert, obwohl Heimlern ausdrücklich eingefrorene historische Referenz ist und Heimgeist, ACS, Leitwerk sowie SemantAH erhebliche Rollenüberlappungen oder überholte Consumerketten zeigen. Aufgabe: Consumer, Runtime, Contracts, PRs und historische Belege je Repository prüfen; aktive, Referenz-, Migrations- und Archivrollen eindeutig setzen; für jeden belegten Archivkandidaten eine eigene ressourcenspezifische Folgeaufgabe registrieren. Diese Aufgabe selbst archiviert kein Repository. Alte Dependabot-PRs werden gesammelt klassifiziert.",
   "priority": {
     "lane": "later",
     "rank": 200
@@ -43,8 +43,8 @@
       "assertion": "Runtime, contracts, open PRs and downstream consumers are checked for every archive candidate."
     },
     {
-      "id": "archive-readback",
-      "assertion": "GitHub archive state, Systemkatalog, Fleet and RepoGround inventory agree after each archival action."
+      "id": "archive-actions-split",
+      "assertion": "Every proposed GitHub archival action is published as a separate repository-specific task with exact consumer and post-state acceptance; this task performs no archival mutation."
     }
   ],
   "metadata": {
@@ -59,7 +59,8 @@
       "queue_truth",
       "claim_authority",
       "dispatch_authority",
-      "merge_readiness"
+      "merge_readiness",
+      "repository_archive_authority"
     ]
   }
 }

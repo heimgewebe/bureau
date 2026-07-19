@@ -39,7 +39,7 @@
   "acceptance": [
     {
       "id": "fresh-active-reconciliation",
-      "assertion": "Before browser or GUI worker list output claims an entry is active, launching or stopping, the implementation performs one bounded current systemd observation and reconciles the stored lifecycle state without trusting stale registry text."
+      "assertion": "Before browser or GUI worker list output claims an entry is active, launching or ambiguous, the read-only list performs one bounded current systemd observation and projects the observed state transiently without changing the stored registry state, releasing leases or deleting ephemeral paths."
     },
     {
       "id": "actionable-default-view",
@@ -47,7 +47,7 @@
     },
     {
       "id": "terminal-lease-release",
-      "assertion": "Freshly observed terminal workers release only their exact unchanged worker-owned port, profile and display leases while foreign or ambiguous leases remain untouched and visible."
+      "assertion": "An explicit worker status or successful stop reconciliation persists the observed terminal lifecycle and releases only exact unchanged worker-owned port, profile and display leases; foreign or ambiguous leases remain untouched and visible."
     },
     {
       "id": "evidence-preserved",
@@ -55,7 +55,7 @@
     },
     {
       "id": "shared-lifecycle-core",
-      "assertion": "Browser and GUI workers use one tested lifecycle reconciliation primitive for systemd states, timestamps and terminal classification while retaining type-specific profile, port and display validation."
+      "assertion": "Browser and GUI workers use one tested lifecycle core for systemd observation, timestamps and terminal classification; list uses its read-only projection path while status and stop use the explicit persistent reconciliation path, retaining type-specific profile, port and display validation."
     },
     {
       "id": "tests",
@@ -63,7 +63,7 @@
     },
     {
       "id": "live-proof",
-      "assertion": "After deployment, fresh list and status readbacks no longer report the two observed absent browser units as running, and one bounded new worker lifecycle proves active-to-terminal convergence and exact lease release."
+      "assertion": "After deployment, fresh read-only list output no longer reports the observed absent browser units as running, explicit status readback persists their terminal convergence and exact lease release, and one bounded new worker lifecycle proves active-to-terminal behavior."
     }
   ],
   "metadata": {
@@ -76,6 +76,15 @@
       "permission to release foreign leases",
       "absence of future systemd observation ambiguity",
       "worker action success from registry state alone"
-    ]
+    ],
+    "contract_amendment": {
+      "amended_at": "2026-07-19T11:30:00Z",
+      "reason": "The browser and GUI worker list tools are immutable baseline read-only surfaces. Persistent registry convergence and lease release therefore remain on the existing status and stop surfaces; list performs fresh transient projection only.",
+      "does_not_establish": [
+        "implementation completion",
+        "deployment success",
+        "task verification"
+      ]
+    }
   }
 }

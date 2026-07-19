@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T029",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Aktive systemd-Altgenerationen aus dem Livepfad entfernen",
+  "state": "planned",
+  "goal": "Livebefund: Der aktive User-Unit-Pfad enthält Backup-Units, Vim-Swapdateien, eine retired Tunnel-Unit, verwaiste rLens-Drop-ins, einen unreferenzierten RepoBrief-Lokalisierer und einen alten Grabowski-Watchdog ohne Trigger. Aufgabe: jeden Consumer und Trigger lesen, historische Belege außerhalb des Livepfads sichern, nur eindeutig abgelöste Dateien entfernen und systemd-Zustand sowie aktive Dienste danach erneut prüfen.",
+  "priority": {
+    "lane": "now",
+    "rank": 8
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc"
+  },
+  "claims": [
+    {
+      "resource": "repo.heim-pc",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "source-event-bound",
+      "assertion": "Task metadata preserves the originating live-register event id and source."
+    },
+    {
+      "id": "reviewed-before-effect",
+      "assertion": "Any repository effect remains review-before-effect and does not follow from the live event alone."
+    },
+    {
+      "id": "consumer-inventory",
+      "assertion": "Every candidate unit, drop-in, backup or swap file has a trigger and consumer readback."
+    },
+    {
+      "id": "reversible-hygiene",
+      "assertion": "Historical evidence is preserved outside the active unit path before removal."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_live_register",
+    "live_register_event_id": 735,
+    "live_register_candidate_id": "HEIM-PC-SYSTEMD-GENERATION-HYGIENE-V1",
+    "live_register_created_at": "2026-07-19T03:46:30.360374Z",
+    "live_register_source": "chatgpt-operator-redundancy-20260719",
+    "promotion_required_from_event": true,
+    "does_not_establish": [
+      "registry_task_truth",
+      "queue_truth",
+      "claim_authority",
+      "dispatch_authority",
+      "merge_readiness"
+    ]
+  }
+}

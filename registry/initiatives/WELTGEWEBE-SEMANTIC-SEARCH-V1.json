@@ -50,9 +50,10 @@
     "progress": {
       "verified_tasks": [
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T001",
-        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T002"
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T002",
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T003"
       ],
-      "current_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T003",
+      "current_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T004",
       "updated_at": "2026-07-19",
       "t001_merge_commit": "f00afacc7be4cc551c81c5511faf5f817b04f700",
       "t002_merge_commit": "adc060cfbb9d055a7b63c494fa042e7c57ca7bea",
@@ -61,6 +62,17 @@
         "candidate": "qwen3-embedding:8b",
         "scope": "local synthetic reference candidate for T003/T004 only",
         "production_approved": false
+      },
+      "t003_merge_commit": "bbeb7c63f6ce0a807d0203a7062198a545a2a6a5",
+      "t003_pull_request": 1500,
+      "t003_postgresql_decision": {
+        "postgresql_version": "16.14",
+        "pg_trgm_version": "1.6",
+        "pgvector_available": false,
+        "vector_persistence_approved": false,
+        "fts_trigram_natural_top3": "14/19",
+        "false_top1": 0,
+        "leaks": 0
       }
     }
   }

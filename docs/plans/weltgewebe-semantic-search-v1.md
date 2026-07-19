@@ -102,8 +102,8 @@ Brauchbare SemantAH-Konzepte wie Providergrenzen, Dimensionsprüfung, Normalisie
 
 1. **T001 – Architekturvertrag, Wahrheitsgrenzen und Hard Cut – verifiziert:** Vertrag und Goldset-Grundlage wurden über Weltgewebe-PR #1485 veröffentlicht.
 2. **T002 – Relevanz-Goldset und Embedding-Modellwahl – verifiziert:** Weltgewebe-PR #1495 veröffentlichte den synthetischen Harness, Integritätsbindungen und lokalen Modellvergleich; `qwen3-embedding:8b` ist nur Referenzkandidat.
-3. **T003 – PostgreSQL-Suchgrundlage und pgvector-Fähigkeit – aktuell:** Erweiterungsfähigkeit, Schema, Migration, FTS-/Trigramm-Parität, Backup/Restore/PITR und Multi-Instance-Grenzen belegen, ohne Runtime- oder Produktionseffekt.
-4. **T004 – interner Embedding- und Ranking-Kern:** Providergrenze, Normalisierung, Dimensions- und Generationsprüfung sowie hybrides Ranking implementieren.
+3. **T003 – PostgreSQL-Suchgrundlage und pgvector-Fähigkeit – verifiziert:** PR #1500 belegt PostgreSQL 16.14, pg_trgm 1.6, Projektion, Regeneration, Backup/Restore und Konfliktgrenzen; pgvector bleibt mangels Verfügbarkeit gestoppt.
+4. **T004 – interner Embedding- und Ranking-Kern – aktuell:** Providergrenze, Normalisierung, Dimensions- und Generationsprüfung, hybrides Ranking und lexikalischen Ausfallpfad implementieren; noch ohne Persistenz, Worker, API oder Web.
 5. **T005 – idempotente Projektion, Worker, Backfill und Löschfortpflanzung:** revisionssichere Multi-Instance-Verarbeitung und reproduzierbaren Neuaufbau liefern.
 6. **T006 – hybride serverseitige Such-API:** Sichtbarkeit vor Retrieval, bestehende Filter und technischen lexikalischen Fallback liefern.
 7. **T007 – Websuche und „Ähnliche Knoten“:** Suchoberfläche integrieren und maschinelle Ähnlichkeit klar von Beziehungen trennen.
@@ -116,7 +116,8 @@ Nach öffentlichem T008-Beweis supersedet oder schließt T009 `SEMANTAH-USEFULNE
 
 - **T001 ist verifiziert:** Weltgewebe-PR #1485 wurde als Merge-Commit `f00afacc7be4cc551c81c5511faf5f817b04f700` nach grüner CI und zweiachsigem R2-Review gemergt. Der vollständige GitHub-Diff ist an SHA-256 `745483199f2b955a8ac37521445a85f8b9543e92ecf3ff69ed99b3a21ae7554f` gebunden.
 - **T002 ist verifiziert:** Weltgewebe-PR #1495 wurde mit attestiertem Head `31ca3c433dcaf3b941c5e1c95167a68e9f68ceb8` und Merge-Commit `adc060cfbb9d055a7b63c494fa042e7c57ca7bea` gemergt. Der kanonische GitHub-Diff ist an SHA-256 `b54ec09ce52fe7e109b18da8f4ed7e5fc5e33783ff75252dd354c605ec6988e7` gebunden; der lokale Binärdiff an `6ffdc08f17d68ecb72a0a4dfe8ade167ab47dabbe6b0cf7a1a35410e4e2e1375`.
-- **T003 ist der aktuelle Task:** reale PostgreSQL-, Extension-, Schema-, Paritäts-, Backup-/Restore-/PITR- und Regenerationsfähigkeit belegen, bevor Embedding- oder Ranking-Runtime entsteht.
+- **T003 ist verifiziert:** Weltgewebe-PR #1500 wurde mit Head `35dea9a90cf0bb84f167ed596e3cb5de1423ca6a` und Merge-Commit `bbeb7c63f6ce0a807d0203a7062198a545a2a6a5` gemergt. PostgreSQL 16.14 und pg_trgm 1.6 sind belegt; pgvector ist im gepinnten Image nicht verfügbar und wurde nicht fingiert.
+- **T004 ist der aktuelle Task:** internen Provider-, Normalisierungs-, Dimensions-, Generations- und Hybrid-Ranking-Kern auf synthetischer Grundlage implementieren; qwen3-embedding:8b bleibt Referenzkandidat, nicht Produktionsmodell.
 - **SemantAH bleibt unverändert:** keine Archivierung, keine Runtime-Entfernung und keine Bereinigung vor T008/T009.
 
 ## T002-Test- und Reviewbindung
@@ -124,6 +125,16 @@ Nach öffentlichem T008-Beweis supersedet oder schließt T009 `SEMANTAH-USEFULNE
 Auf dem veröffentlichten T002-Head bestanden 816 Docmeta-, 191 Agent- und 277 CI-Prüfungen, 27 fokussierte Semantic-Search-Tests sowie Generator-, Struktur-, Shell-, Plattform- und Vertragsgates; 11 Skips waren erwartet. Zwei getrennte R2-Self-Reviews auf den Achsen Correctness und Data Integrity wurden vom repository-eigenen Review-Evidence-Gate akzeptiert. Required Merge Gate, Review Evidence Gate, Web E2E, CodeQL, Docs Guard, PostgreSQL Integration Proofs, Cloudflare Pages und Vercel waren vor Merge grün.
 
 T002 implementiert keine PostgreSQL-Migration, Search-API, Worker-, Web- oder Deploymentfunktion. Der Merge veröffentlicht Architektur-, Benchmark- und Testbelege, aber keine produktive semantische Suche.
+
+## T003-PostgreSQL-, Projektions- und Betriebsbeleg
+
+PR #1500 veröffentlichte einen ausführbaren Suchprojektionsvertrag unter `contracts/search`, aber bewusst keine automatisch ausgerollte SQLx-Migration. Der Merge verändert daher keine Produktionsdatenbank. Der Beleg lief lokal und in GitHub CI gegen PostgreSQL 16.14 und pg_trgm 1.6. `pgvector` war im gepinnten Image nicht verfügbar; T003 stoppt deshalb vor Vektorpersistenz und ANN-Indizes.
+
+Der reale FTS-/Trigramm-Pfad erreichte auf dem synthetischen T002-Goldset 14/19 natürliche Top-3-Treffer, 0 falsche Top-1 und 0 Sichtbarkeitslecks. Sichtbarkeit, Löschstatus, aktive Generation, explizite Autorisierung und Filter werden vor dem Ranking erzwungen. Deterministischer Neuaufbau und `pg_dump`/`pg_restore` erzeugten identische Projektions-Digests.
+
+Der GitHub-Diff ist an SHA-256 `573cff9cabb87cd3f43f8a5d2ef8ba03f6f90a596fc7c4ae97f8966d3373bcd2` gebunden. Zwei R3-Berichte sowie alle Required-Gates waren grün. Der gemergte Main-Tree ist für alle zehn T003-Dateien identisch zum geprüften Head.
+
+T003 belegt keine Produktions-PITR-Laufzeit, reale Nutzerrelevanz, Produktionslatenz, pgvector-Paketierung, Worker, API, Websuche oder öffentlichen semantischen Livezustand.
 
 ## Aktuelle öffentliche Produktionsprüfung
 

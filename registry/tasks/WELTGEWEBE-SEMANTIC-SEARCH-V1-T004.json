@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T004",
+  "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
+  "title": "Interner Embedding- und Hybrid-Ranking-Kern",
+  "state": "ready",
+  "goal": "Einen internen, providerbegrenzten und vollständig testbaren Embedding- und Hybrid-Ranking-Kern implementieren, ohne bereits Projektion, Worker, API, Weboberfläche oder Produktionseffekt einzuführen.",
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Durch die direkte Nutzeranweisung autorisiert. T004 bleibt auf internen Kern, synthetische Belege und lokale kostenfreie Modelle begrenzt."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "rust",
+    "local-embeddings",
+    "search-ranking",
+    "privacy",
+    "testing",
+    "grabowski"
+  ],
+  "depends_on": [
+    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T003"
+  ],
+  "acceptance": [
+    {
+      "id": "provider-boundary",
+      "assertion": "Eine interne Providergrenze bindet Modell-ID, Modellrevision, Dimension und Laufzeitidentität; externe oder kostenpflichtige Provider bleiben ausgeschlossen."
+    },
+    {
+      "id": "normalization-contract",
+      "assertion": "Index und Anfrage nutzen dieselbe versionsgebundene Normalisierung mit deterministischen Tests."
+    },
+    {
+      "id": "dimension-finiteness",
+      "assertion": "Nichtendliche Werte, falsche Dimensionen, leere oder übergroße Vektoren und Modellwechsel während eines Laufs werden abgelehnt."
+    },
+    {
+      "id": "generation-identity",
+      "assertion": "Jedes Ranking arbeitet gegen genau eine vollständige Generationsidentität; verschiedene Modelle, Revisionen oder Dimensionen werden nie gemeinsam verglichen."
+    },
+    {
+      "id": "hybrid-ranking-precedence",
+      "assertion": "Exakter Titel, exaktes Tag und Titelpräfix behalten Vorrang; Trigramm, Volltext und semantische Ähnlichkeit ergänzen ohne Beziehungen zu fingieren."
+    },
+    {
+      "id": "deterministic-ties",
+      "assertion": "Teilrankings und Fusion besitzen stabile Tie-Breaks und reproduzieren bei identischem Input dieselbe vollständige Rangfolge."
+    },
+    {
+      "id": "lexical-fallback",
+      "assertion": "Fehlender oder fehlerhafter Embedding-Pfad fällt auf den lexikalischen Kern zurück und blockiert keine fachliche Knotenänderung."
+    },
+    {
+      "id": "quality-gates",
+      "assertion": "Exakte Titel und Tags bleiben Rang 1; mindestens 85 Prozent der natürlichen Fälle treffen Top-3; falsche Top-1 nehmen nicht zu und unzulässige Treffer bleiben null."
+    },
+    {
+      "id": "model-decision",
+      "assertion": "qwen3-embedding:8b bleibt Referenzkandidat. T004 bindet Qualität, Latenz und Ressourcen und wählt das kleinste kostenfreie lokale Modell, das alle Gates erfüllt, oder stoppt."
+    },
+    {
+      "id": "privacy-boundary",
+      "assertion": "Nur autorisierte synthetische Suchfelder gelangen in den Kern; PII-Muster, nichtsynthetische Fixtures und verborgene Felder werden abgelehnt."
+    },
+    {
+      "id": "repository-gates",
+      "assertion": "Vor Merge liegen vollständiges Diff-Artefakt, exakte Head- und Diffbindung, zweiachsige Reviewevidenz, grüne erforderliche CI und Main-Readback vor."
+    },
+    {
+      "id": "no-runtime-effect",
+      "assertion": "T004 implementiert keine persistente Projektion, pgvector-Migration, Worker-, Backfill-, Search-API-, Web-, Deployment- oder SemantAH-Funktion."
+    }
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "task_profile": "repo_change",
+    "skip_reason": "live_first_primary",
+    "note": "Modelllaufzeit, Git, Tests, PR und CI müssen live und commitgebunden gemessen werden; RepoGround ergänzt nur Repository-Kontext."
+  },
+  "metadata": {
+    "source": "direct_operator_instruction",
+    "registered_at": "2026-07-19",
+    "predecessor": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T003",
+    "reference_model_candidate": "qwen3-embedding:8b",
+    "reference_model_scope": "local synthetic candidate only; not production approved",
+    "cost_policy": "zero external spend",
+    "postgresql_basis": "T003 verified PostgreSQL 16.14 and pg_trgm 1.6; pgvector unavailable in pinned image",
+    "pgvector_decision": "No vector persistence or ANN in T004; any later storage path requires separate packaging and operations proof.",
+    "does_not_establish": [
+      "production embedding model",
+      "pgvector availability",
+      "persistent vector store",
+      "projection worker",
+      "backfill",
+      "search API",
+      "web UI",
+      "production rollout",
+      "public live proof",
+      "SemantAH archive authority"
+    ]
+  }
+}

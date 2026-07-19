@@ -4,7 +4,7 @@
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Aktive systemd-Altgenerationen aus dem Livepfad entfernen",
   "state": "planned",
-  "goal": "Livebefund: Der aktive User-Unit-Pfad enthält Backup-Units, Vim-Swapdateien, eine retired Tunnel-Unit, verwaiste rLens-Drop-ins, einen unreferenzierten RepoBrief-Lokalisierer und einen alten Grabowski-Watchdog ohne Trigger. Aufgabe: jeden Consumer und Trigger lesen, historische Belege außerhalb des Livepfads sichern, nur eindeutig abgelöste Dateien entfernen und systemd-Zustand sowie aktive Dienste danach erneut prüfen.",
+  "goal": "Liveinventur 2026-07-19: Im aktiven User-systemd-Pfad liegen vier Backup-Units, zwei seit 2025 verwaiste Vim-Swapdateien und eine ausdrücklich retired Tunnel-Unit. `grabowski-watchdog.service` und `systemkatalog-repobrief-localize.service` sind statische, inaktive Units ohne Trigger oder Reverse-Bindung. `rlens.service` ist nicht mehr geladen, während drei Drop-ins weiter im Livepfad liegen. `omni-mirror-org.timer` und `heimgewebe-mirror.timer` sind deaktivierte Parallelgenerationen; der kanonische `omnipull.timer` ist aktiv. Aufgabe: exakte Dateien und Unitdefinitionen hashgebunden außerhalb des Livepfads archivieren, nur belegte Altgenerationen entfernen, `daemon-reload` ausführen und aktive Watchdog-, RepoGround- sowie Omnipull-Pfade unverändert live bestätigen.",
   "priority": {
     "lane": "now",
     "rank": 8
@@ -39,20 +39,28 @@
   "depends_on": [],
   "acceptance": [
     {
-      "id": "source-event-bound",
-      "assertion": "Task metadata preserves the originating live-register event id and source."
+      "id": "pure-file-debris-bound",
+      "assertion": "The four backup units, two Vim swap files and one retired unit are listed with exact paths, hashes and mtimes before archival and removal from the active systemd directory."
     },
     {
-      "id": "reviewed-before-effect",
-      "assertion": "Any repository effect remains review-before-effect and does not follow from the live event alone."
+      "id": "untriggered-unit-proof",
+      "assertion": "`grabowski-watchdog.service` and `systemkatalog-repobrief-localize.service` remain untriggered, inactive and without active consumers immediately before removal."
     },
     {
-      "id": "consumer-inventory",
-      "assertion": "Every candidate unit, drop-in, backup or swap file has a trigger and consumer readback."
+      "id": "rlens-base-absent",
+      "assertion": "`rlens.service` is not loaded and its three remaining drop-ins have no base unit or active consumer; RepoGround migration documents remain preserved as historical evidence."
+    },
+    {
+      "id": "mirror-generation-boundary",
+      "assertion": "Disabled `omni-mirror-org.timer` and `heimgewebe-mirror.timer` are treated as legacy generations only after the active `omnipull.timer` ownership and latest successful state are re-read."
     },
     {
       "id": "reversible-hygiene",
-      "assertion": "Historical evidence is preserved outside the active unit path before removal."
+      "assertion": "All removed files are archived outside the active unit path with a manifest and sha256 values; no repository history is deleted."
+    },
+    {
+      "id": "post-state",
+      "assertion": "After daemon-reload, operator watchdog, tunnel watchdog, safety observer, RepoGround and Omnipull remain healthy and no removed legacy unit or drop-in is loaded."
     }
   ],
   "metadata": {
@@ -68,6 +76,39 @@
       "claim_authority",
       "dispatch_authority",
       "merge_readiness"
-    ]
+    ],
+    "live_evidence": {
+      "observed_at": "2026-07-19",
+      "pure_file_debris": [
+        "espanso.service.bak-20260515-112850",
+        "grabowski-reconcile-tasks.service.bak-explicit-refresh-20260630T051201Z",
+        "grabowski-reconcile-tasks.service.bak-20260630T045936Z",
+        "rdp-display-auto.service.bak.20260705-021216",
+        ".heimgewebe-mirror.timer.swp",
+        ".repolensd.service.swp",
+        "tunnel-client-heim-assi-stdio.service.retired.20260625-055150"
+      ],
+      "static_untriggered_units": [
+        "grabowski-watchdog.service",
+        "systemkatalog-repobrief-localize.service"
+      ],
+      "rlens_load_state": "not-found",
+      "rlens_dropins": [
+        "runtime-checkout.conf",
+        "override.conf",
+        "restart-control.conf"
+      ],
+      "disabled_parallel_timers": [
+        "omni-mirror-org.timer",
+        "heimgewebe-mirror.timer"
+      ],
+      "protected_active_surfaces": [
+        "grabowski-operator-watchdog.timer",
+        "grabowski-tunnel-watchdog.timer",
+        "grabowski-observer.timer",
+        "repoground.service",
+        "omnipull.timer"
+      ]
+    }
   }
 }

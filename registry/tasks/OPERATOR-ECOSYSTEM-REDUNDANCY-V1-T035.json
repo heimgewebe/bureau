@@ -48,9 +48,8 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T035",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "metadata": {
-    "closeout_required": "Nach Registrierung wird T035 zusammen mit T028 in einem gesonderten, diffgebundenen Closeout als verified markiert.",
+    "closeout_required": "Erfüllt durch den gemeinsamen diffgebundenen T028/T035-Closeout; beide Tasks werden mit diesem Registry-Commit verified.",
     "does_not_establish": [
-      "Bureau verification before the closeout change",
       "general correctness of all Sichter review logic",
       "absence of historical Autofix refs before the proof window",
       "absence of unrelated concurrent repository changes outside the exact sweep interval"
@@ -100,6 +99,57 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "implemented_at": "2026-07-19T08:32:24Z",
+    "verified_at": "2026-07-19T13:21:54+02:00",
+    "outcome": "verified",
+    "verification_note": "PR #267 bindet Hilfe, Version, unbekannte Argumente und SICHTER_DRY_RUN fail-closed. Der terminale 35-Repository-Vollsweep erzeugte im exakten Zeitfenster weder Pull Requests noch passende lokale oder origin-Autofix-Refs; die unbeabsichtigten PRs #1050 und #659 sowie ihre Branches sind geschlossen beziehungsweise entfernt.",
+    "validated_acceptance": {
+      "argument-fail-closed": "PASS: Unbekannte und mehrere Argumente sowie ungültige MODE-/Dry-Run-Werte enden vor Zustandsaufbau mit EX_USAGE 64.",
+      "read-only-help-version": "PASS: Hilfe und Version sind durch Laufzeittests rein lesend und erzeugen keine Zustandsverzeichnisse.",
+      "dry-run-non-effect": "PASS: Integrationsbelege zeigen keine Clone-, Branch-, Commit-, Push- oder PR-Effekte.",
+      "incident-cleanup": "PASS: RepoGround PR #1050 und Metarepo PR #659 sind geschlossen, Remote-Branches fehlen und passende Grabowski-Refs fehlen.",
+      "live-full-sweep-proof": "PASS: Task 534035e48e6e4d6b80811df7 prüfte 35 Repositories; PR- und 962-Checkout-Ref-Readback ergaben keine neuen Effekte."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T035",
+          "source_ref": "github-pr:heimgewebe/sichter#267@3dbb18dc93c9187d47f4054750b4976b7c59b1c1:f4359f0817d7db6b3f821bcdce7be12c18e561cc",
+          "content_sha256": "dc5318cea9a86bcc66010318556d6c97e090eb4efb8688acc3ffe5c30c678883",
+          "number": 267
+        },
+        {
+          "kind": "validation_receipt",
+          "authority": "grabowski-task",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T035",
+          "source_ref": "grabowski-task:534035e48e6e4d6b80811df7",
+          "content_sha256": "5060521193ef439d5afcc2b8615551a942747f5ce9edc8ea9bd6f1882650dff4"
+        },
+        {
+          "kind": "verification_receipt",
+          "authority": "local-filesystem",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T035",
+          "source_ref": "file:/home/alex/.local/state/sichter/dry-run-proof/20260719-t028-t035/verification.json",
+          "content_sha256": "ba0a71ffe13ac7b703baceebde963dac4cb2445ad1ffbf1e77e1493115115df5"
+        },
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T035",
+          "source_ref": "github-pr:heimgewebe/bureau#712@740a42f967ff1fc9d059d465c7188deef1360569:7e46d86264dbe3f287964de1e42baaab0bf51bd7",
+          "content_sha256": "ad27355c7dabfe1b96035dfd904b2c6c8345c0669491048bc7103cd18c3374ed",
+          "number": 712
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "7ea6776abe75b7e0a8ba693703805139458f08af13abafad73d97b0c78861e6f",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   },
   "priority": {
@@ -112,6 +162,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Sichter-CLI-Hilfe und Dry-Run strikt nichtwirkend machen"
 }

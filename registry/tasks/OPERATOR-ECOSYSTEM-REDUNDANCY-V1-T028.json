@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T028",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Sichter-Legacy-Queueebene stilllegen und direkten Review-Sweep erhalten",
-  "state": "planned",
+  "state": "verified",
   "goal": "Livebeweis 2026-07-19: `sichter-autoreview.timer` startet `bin/sichter-pr-sweep --all`, das Repositories direkt prüft und nicht in die Python-Queue schreibt. Parallel läuft seit 2026-07-05 ein Python-Worker auf `~/.local/state/sichter/queue`, ohne einen einzigen belegten Livejob; die Queue ist leer. Der einzige passende Producer, `sichter-api.service` auf Port 5055, ist inaktiv, besitzt keine Journaleinträge, keinen Listener und keine aktiven Consumerreferenzen. Alte `hauski-*`-Skripte zeigen zudem auf den nicht existierenden anderen Pfad `/home/alex/sichter/queue`. Aufgabe: die verwaiste Python-API/Queue/Worker-Runtime reversibel aus dem aktiven systemd-Pfad nehmen, historische Code- und Zustandsbelege erhalten und den funktionierenden direkten Bash-Sweep unverändert live verifizieren.",
   "priority": {
     "lane": "now",
@@ -87,6 +87,239 @@
       "api_port_5055_listener": false,
       "surviving_timer_last_trigger": "2026-07-18T21:50:49+02:00",
       "surviving_sweep_finished": "2026-07-18T21:51:42+02:00"
+    },
+    "implemented_at": "2026-07-19T08:32:24Z",
+    "verified_at": "2026-07-19T13:21:54+02:00",
+    "verification_note": "PR #266 entfernte die verwaiste API/Queue/Worker-Laufzeit reversibel aus dem aktiven systemd-Pfad; PR #267 machte den verbleibenden Sweep-CLI-Pfad fail-closed und fügte einen strikt nichtwirkenden Dry-Run hinzu. Archiv-, systemd-, Port-, Queue-, GitHub- und Ref-Readbacks sowie ein vollständiger 35-Repository-Dry-Run sind gebunden.",
+    "implementation": {
+      "repository": "heimgewebe/sichter",
+      "runtime_retirement": {
+        "pull_request": 266,
+        "reviewed_head": "a39d1f2810168315b98585a8f6253c71ebe08682",
+        "merge_commit": "c9acde672ba526dfb306279837e1810d31e8fedd",
+        "diff_sha256": "23c3dae603e93c41649504d40f8da08d6f4f20a84c7e3fffd60a114664dfc37b",
+        "tests": "290 tests plus 9 subtests",
+        "checks_all_success": true
+      },
+      "cli_non_effect_guard": {
+        "pull_request": 267,
+        "reviewed_head": "3dbb18dc93c9187d47f4054750b4976b7c59b1c1",
+        "merge_commit": "f4359f0817d7db6b3f821bcdce7be12c18e561cc",
+        "diff_sha256": "dc5318cea9a86bcc66010318556d6c97e090eb4efb8688acc3ffe5c30c678883",
+        "tests": "298 tests plus 9 subtests",
+        "checks_all_success": true
+      },
+      "runtime_archive": {
+        "path": "/home/alex/.local/state/sichter/retired-runtime/20260719T074800Z-t028/manifest.json",
+        "manifest_sha256": "a81a84d9e6efb741a19b36bcc5993c0217f903dfc471909e8cb0f597cacc91ff",
+        "archived_file_count": 6
+      },
+      "full_dry_run": {
+        "task_id": "534035e48e6e4d6b80811df7",
+        "terminalization_sha256": "0d46218030f53d28d0ef1bd63b9320996c46d835d6e2d5e8c0c4adc6b387a8bc",
+        "lifecycle_receipt_sha256": "5060521193ef439d5afcc2b8615551a942747f5ce9edc8ea9bd6f1882650dff4",
+        "repositories_observed": 35,
+        "github_prs_created": [],
+        "matching_autofix_refs": [],
+        "repositories_scanned_for_refs": 962
+      },
+      "post_state": {
+        "autoreview_timer": "loaded/active/waiting/enabled/success",
+        "api_service": "not-found/inactive/dead",
+        "worker_service": "not-found/inactive/dead",
+        "ws_selftest_timer": "not-found/inactive/dead",
+        "port_5055_listener": false,
+        "legacy_queue_files": []
+      }
+    },
+    "validated_acceptance": {
+      "producer-consumer-proof": "PASS: Direkter Sweep ist der einzige aktive Laufpfad; API-Port, API-/Worker-Units und Queueproducer fehlen, die Queue ist leer.",
+      "reversible-runtime-retirement": "PASS: Sechs Unit- und Drop-in-Dateien sind unter einem SHA256-gebundenen Archivmanifest erhalten und aus dem aktiven User-systemd-Pfad entfernt.",
+      "direct-sweep-preserved": "PASS: sichter-autoreview.timer ist gesund; der terminale --all-Dry-Run prüfte 35 Repositories ohne Fehler.",
+      "queue-path-drift-visible": "PASS: Die inkompatiblen .job-Clients sind fail-closed stillgelegt und verweisen sichtbar auf bin/sichter-pr-sweep --all.",
+      "post-state": "PASS: Legacy-Units sind not-found, Port 5055 ist ungebunden, Queue leer und der Surviving-Timer aktiv."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T028",
+          "source_ref": "github-pr:heimgewebe/sichter#266@a39d1f2810168315b98585a8f6253c71ebe08682:c9acde672ba526dfb306279837e1810d31e8fedd",
+          "content_sha256": "23c3dae603e93c41649504d40f8da08d6f4f20a84c7e3fffd60a114664dfc37b",
+          "number": 266
+        },
+        {
+          "kind": "runtime_archive",
+          "authority": "local-filesystem",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T028",
+          "source_ref": "file:/home/alex/.local/state/sichter/retired-runtime/20260719T074800Z-t028/manifest.json",
+          "content_sha256": "a81a84d9e6efb741a19b36bcc5993c0217f903dfc471909e8cb0f597cacc91ff"
+        },
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T028",
+          "source_ref": "github-pr:heimgewebe/sichter#267@3dbb18dc93c9187d47f4054750b4976b7c59b1c1:f4359f0817d7db6b3f821bcdce7be12c18e561cc",
+          "content_sha256": "dc5318cea9a86bcc66010318556d6c97e090eb4efb8688acc3ffe5c30c678883",
+          "number": 267
+        },
+        {
+          "kind": "validation_receipt",
+          "authority": "grabowski-task",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T028",
+          "source_ref": "grabowski-task:534035e48e6e4d6b80811df7",
+          "content_sha256": "5060521193ef439d5afcc2b8615551a942747f5ce9edc8ea9bd6f1882650dff4"
+        }
+      ]
+    },
+    "generation_transition": {
+      "schema_version": 1,
+      "transition_id": "sichter-direct-sweep-v1",
+      "successor_ref": "repo.sichter@f4359f0817d7db6b3f821bcdce7be12c18e561cc:pkg/systemd/user/sichter-autoreview.timer+bin/sichter-pr-sweep",
+      "predecessors": [
+        {
+          "surface_id": "sichter-api-unit",
+          "surface_kind": "systemd-user-unit",
+          "source_ref": "/home/alex/.config/systemd/user/sichter-api.service"
+        },
+        {
+          "surface_id": "sichter-api-override",
+          "surface_kind": "systemd-user-drop-in",
+          "source_ref": "/home/alex/.config/systemd/user/sichter-api.service.d/override.conf"
+        },
+        {
+          "surface_id": "sichter-worker-unit",
+          "surface_kind": "systemd-user-unit",
+          "source_ref": "/home/alex/.config/systemd/user/sichter-worker.service"
+        },
+        {
+          "surface_id": "sichter-worker-override",
+          "surface_kind": "systemd-user-drop-in",
+          "source_ref": "/home/alex/.config/systemd/user/sichter-worker.service.d/override.conf"
+        },
+        {
+          "surface_id": "sichter-ws-selftest-timer",
+          "surface_kind": "systemd-user-timer",
+          "source_ref": "/home/alex/.config/systemd/user/sichter-ws-selftest.timer"
+        },
+        {
+          "surface_id": "sichter-ws-selftest-service",
+          "surface_kind": "systemd-user-unit",
+          "source_ref": "/home/alex/.config/systemd/user/sichter-ws-selftest.service"
+        },
+        {
+          "surface_id": "legacy-job-queue-clients",
+          "surface_kind": "repository-behavior",
+          "source_ref": "repo.sichter@c9acde672ba526dfb306279837e1810d31e8fedd:bin/hauski-watch+bin/hauski-work"
+        },
+        {
+          "surface_id": "legacy-api-worker-source",
+          "surface_kind": "compatibility-source",
+          "source_ref": "repo.sichter@f4359f0817d7db6b3f821bcdce7be12c18e561cc:apps/api+apps/worker+pkg/systemd/user"
+        },
+        {
+          "surface_id": "legacy-queue-evidence",
+          "surface_kind": "runtime-state-evidence",
+          "source_ref": "/home/alex/.local/state/sichter/queue"
+        }
+      ],
+      "does_not_establish": [
+        "source_truth",
+        "effect_authority",
+        "recovery_completion",
+        "fitness_of_legacy_compatibility_code"
+      ]
+    },
+    "generation_closeout": {
+      "schema_version": 1,
+      "transition_id": "sichter-direct-sweep-v1",
+      "classifications": [
+        {
+          "surface_id": "sichter-api-unit",
+          "disposition": "archived",
+          "source_ref": "/home/alex/.config/systemd/user/sichter-api.service",
+          "evidence_sha256": "3a0c2e7556c21d810115f110e468bc27e8d774e7490f95684fcc90cac8e3f860",
+          "observed_at": "2026-07-19T13:21:54+02:00",
+          "archive_ref": "/home/alex/.local/state/sichter/retired-runtime/20260719T074800Z-t028/sichter-api.service"
+        },
+        {
+          "surface_id": "sichter-api-override",
+          "disposition": "archived",
+          "source_ref": "/home/alex/.config/systemd/user/sichter-api.service.d/override.conf",
+          "evidence_sha256": "ca9678f62eb591a84abec5dbf30e3ae2015844d9ea7f42a9f4cf6073f9962d06",
+          "observed_at": "2026-07-19T13:21:54+02:00",
+          "archive_ref": "/home/alex/.local/state/sichter/retired-runtime/20260719T074800Z-t028/sichter-api.service.d/override.conf"
+        },
+        {
+          "surface_id": "sichter-worker-unit",
+          "disposition": "archived",
+          "source_ref": "/home/alex/.config/systemd/user/sichter-worker.service",
+          "evidence_sha256": "b36ef9c9d4c70088ac49454eae5e0465c09ad69b1ab66f3972cd848594687d1e",
+          "observed_at": "2026-07-19T13:21:54+02:00",
+          "archive_ref": "/home/alex/.local/state/sichter/retired-runtime/20260719T074800Z-t028/sichter-worker.service"
+        },
+        {
+          "surface_id": "sichter-worker-override",
+          "disposition": "archived",
+          "source_ref": "/home/alex/.config/systemd/user/sichter-worker.service.d/override.conf",
+          "evidence_sha256": "ca9678f62eb591a84abec5dbf30e3ae2015844d9ea7f42a9f4cf6073f9962d06",
+          "observed_at": "2026-07-19T13:21:54+02:00",
+          "archive_ref": "/home/alex/.local/state/sichter/retired-runtime/20260719T074800Z-t028/sichter-worker.service.d/override.conf"
+        },
+        {
+          "surface_id": "sichter-ws-selftest-timer",
+          "disposition": "archived",
+          "source_ref": "/home/alex/.config/systemd/user/sichter-ws-selftest.timer",
+          "evidence_sha256": "1954dae4344d29377138c288f2524bf5fcf9120ceb09cca6b87502a59138b23b",
+          "observed_at": "2026-07-19T13:21:54+02:00",
+          "archive_ref": "/home/alex/.local/state/sichter/retired-runtime/20260719T074800Z-t028/sichter-ws-selftest.timer"
+        },
+        {
+          "surface_id": "sichter-ws-selftest-service",
+          "disposition": "archived",
+          "source_ref": "/home/alex/.config/systemd/user/sichter-ws-selftest.service",
+          "evidence_sha256": "c54e3a175cbe1ecc4017e9cff6a3828abb6a64fe284aa0ca71701201526456bc",
+          "observed_at": "2026-07-19T13:21:54+02:00",
+          "archive_ref": "/home/alex/.local/state/sichter/retired-runtime/20260719T074800Z-t028/sichter-ws-selftest.service"
+        },
+        {
+          "surface_id": "legacy-job-queue-clients",
+          "disposition": "removed",
+          "source_ref": "repo.sichter@c9acde672ba526dfb306279837e1810d31e8fedd:bin/hauski-watch+bin/hauski-work",
+          "evidence_sha256": "23c3dae603e93c41649504d40f8da08d6f4f20a84c7e3fffd60a114664dfc37b",
+          "observed_at": "2026-07-19T13:21:54+02:00"
+        },
+        {
+          "surface_id": "legacy-api-worker-source",
+          "disposition": "still-required",
+          "source_ref": "repo.sichter@f4359f0817d7db6b3f821bcdce7be12c18e561cc:apps/api+apps/worker+pkg/systemd/user",
+          "evidence_sha256": "23c3dae603e93c41649504d40f8da08d6f4f20a84c7e3fffd60a114664dfc37b",
+          "observed_at": "2026-07-19T13:21:54+02:00",
+          "reason": "Explizite, standardmäßig deaktivierte Kompatibilitäts- und Recoveryfläche; keine Live- oder Aufgabenwahrheit."
+        },
+        {
+          "surface_id": "legacy-queue-evidence",
+          "disposition": "still-required",
+          "source_ref": "/home/alex/.local/state/sichter/queue",
+          "evidence_sha256": "ba0a71ffe13ac7b703baceebde963dac4cb2445ad1ffbf1e77e1493115115df5",
+          "observed_at": "2026-07-19T13:21:54+02:00",
+          "reason": "Leere forensische Zustandsfläche bleibt bis zur separaten Retentionsentscheidung erhalten; kein Producer oder Consumer ist aktiv."
+        }
+      ],
+      "does_not_establish": [
+        "source_truth",
+        "effect_authority",
+        "recovery_completion",
+        "deletion_of_repository_history"
+      ],
+      "closeout_sha256": "958ecc7bba5ad52d6c264b4f445bbefa86f898bd2f04ec38f6087726c7606648"
+    },
+    "verification": {
+      "task_sha256": "296a1720d834dc30ff91d482f9f4129a4df980bfdf9610f9552ef8994af46fbb",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   }
 }

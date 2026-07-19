@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T033",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Historische Repositories klassifizieren und Archivierungsaufgaben registrieren",
-  "state": "planned",
+  "state": "verified",
   "goal": "Livebefund: Kein Repository der Organisation ist archiviert, obwohl Heimlern ausdrücklich eingefrorene historische Referenz ist und Heimgeist, ACS, Leitwerk sowie SemantAH erhebliche Rollenüberlappungen oder überholte Consumerketten zeigen. Aufgabe: Consumer, Runtime, Contracts, PRs und historische Belege je Repository prüfen; aktive, Referenz-, Migrations- und Archivrollen eindeutig setzen; für jeden belegten Archivkandidaten eine eigene ressourcenspezifische Folgeaufgabe registrieren. Diese Aufgabe selbst archiviert kein Repository. Alte Dependabot-PRs werden gesammelt klassifiziert.",
   "priority": {
     "lane": "later",
@@ -55,12 +55,134 @@
     "live_register_source": "chatgpt-operator-redundancy-20260719",
     "promotion_required_from_event": true,
     "does_not_establish": [
-      "registry_task_truth",
       "queue_truth",
       "claim_authority",
       "dispatch_authority",
       "merge_readiness",
-      "repository_archive_authority"
-    ]
+      "repository_archive_authority",
+      "repository_archival_completed",
+      "followup_task_completion",
+      "dependabot_queue_cleanup",
+      "authorization_to_archive_before_followup_acceptance"
+    ],
+    "verified_at": "2026-07-19T23:24:11+02:00",
+    "outcome": "verified",
+    "verification_note": "Systemkatalog PR #143 klassifiziert fünf Repositories und die alte Dependabot-Queue diagnostisch, ohne Archivierungswirkung. Heimlern und Leitwerk wurden als blockierte Archivkandidaten erfasst; Heimgeist und Agent Control Surface bleiben durch T034 abgedeckt, SemantAH bleibt aktiv. T036, T037 und T038 sind getrennt als planned registriert und auf Bureau main zurückgelesen.",
+    "validated_acceptance": {
+      "source-event-bound": "PASS: Der ursprüngliche Live-Register-Bezug bleibt erhalten; der vertiefte Audit ist zusätzlich an Systemkatalog PR #143, Head 59d082b078af63dbf6f9b65a318907d1b2e9fc09, Mergecommit 089e4ed6fe3de50cf9069293ec28f59b6c5d90ff und Diff-SHA-256 fa5a0b8d27744e2a17701a792e277420d10d81d62738791283459ed63f6383fc gebunden.",
+      "reviewed-before-effect": "PASS: PR #143 und die Bureau-Registrierungs-PRs wurden diff- und headgebunden geprüft; Pflicht-CI war grün. T033 selbst führte keine Repositoryarchivierung aus.",
+      "consumer-graph": "PASS: Der Audit prüft Runtime, Verträge, offene PRs und Consumer für Heimlern, Leitwerk, Heimgeist, Agent Control Surface und SemantAH; Nicht-Archivkandidaten bleiben unter T034 beziehungsweise aktiv.",
+      "archive-actions-split": "PASS: Heimlern wurde als T036 und Leitwerk als T037 jeweils ressourcenspezifisch geplant; die 22 alten Dependabot-PRs wurden als T038 separat geplant. Keine Folgeaufgabe ist durch diesen Closeout bereits umgesetzt."
+    },
+    "systemkatalog_audit_observed": {
+      "repository": "heimgewebe/systemkatalog",
+      "pull_request": 143,
+      "head": "59d082b078af63dbf6f9b65a318907d1b2e9fc09",
+      "merge_commit": "089e4ed6fe3de50cf9069293ec28f59b6c5d90ff",
+      "diff_sha256": "fa5a0b8d27744e2a17701a792e277420d10d81d62738791283459ed63f6383fc",
+      "files": 4,
+      "ci_checks": [
+        "CodeQL",
+        "Analyze (actions)",
+        "Analyze (python)",
+        "Validate Ecosystem Map",
+        "Repository Contract",
+        "Secret Scan"
+      ],
+      "post_merge_tests": {
+        "repository_lifecycle_tests": "6 passed",
+        "repository_suite": "125 passed, 1 skipped",
+        "ecosystem_suite": "22 passed",
+        "validators": [
+          "repository validation",
+          "ecosystem map",
+          "map render check",
+          "artifact manifest check"
+        ]
+      }
+    },
+    "registered_followups": [
+      {
+        "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T036",
+        "state": "planned",
+        "bureau_pull_request": 733,
+        "head": "44d9e9bdd026d8aac0ca3cc071ee7bdcddd84043",
+        "merge_commit": "520107da98f0e7ed047c7ff6ca427de55926119e",
+        "diff_sha256": "21783c0972a236d69b513dbeffe0a1da9cbd0ae307faeddbe7d34ada29bbcff5",
+        "scope": "Kompatibilitäts-Freeze für Heimlern vor jeder Archivierung"
+      },
+      {
+        "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T037",
+        "state": "planned",
+        "bureau_pull_request": 738,
+        "head": "3664ecbf3eefa0a1d2892ad721b9c2a7cd0fd424",
+        "merge_commit": "f67e7a5408282218bf0c9c554b0e6212ba49f306",
+        "diff_sha256": "21cd6a4b68c812d5aec30649568855a002facc52a1681051a47591ac293b218c",
+        "scope": "Normativer Freeze für Leitwerk vor jeder Archivierung"
+      },
+      {
+        "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T038",
+        "state": "planned",
+        "bureau_pull_request": 739,
+        "head": "dc4bd7035be1118f820f251e0eb768e56a1b0514",
+        "merge_commit": "672bbf543fc790f6caac5ea8cebf4695603caf7b",
+        "diff_sha256": "20c6af40b2e4b8ea7abc9e802904b8f4bb2d2497e6c39bfe4e34af066e7bab51",
+        "scope": "Einzelfallprüfung der 22 alten Dependabot-PRs anhand konkreter Belege"
+      }
+    ],
+    "publication_prerequisite": {
+      "bureau_pull_request": 737,
+      "merge_commit": "6dc55f852794afdd9b1526171cd65a1ec77fb23a",
+      "diff_sha256": "69be9cbb09d32a30bf06f6eaac6516279222794e216b085564675e618e9ec355",
+      "purpose": "Exakte Ressourcen repo.leitwerk, repo.hauski und repo.hauski-audio"
+    },
+    "superseded_publication": {
+      "pull_request": 734,
+      "state": "CLOSED",
+      "reason": "Der PR beanspruchte repo.metarepo, obwohl Leitwerk das Arbeitsrepository war; ersetzt durch den korrekt ressourcengebundenen PR #738",
+      "branch_deleted": false
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T033",
+          "source_ref": "github-pr:heimgewebe/systemkatalog#143@59d082b078af63dbf6f9b65a318907d1b2e9fc09:089e4ed6fe3de50cf9069293ec28f59b6c5d90ff",
+          "content_sha256": "fa5a0b8d27744e2a17701a792e277420d10d81d62738791283459ed63f6383fc",
+          "number": 143
+        },
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T033",
+          "source_ref": "github-pr:heimgewebe/bureau#733@44d9e9bdd026d8aac0ca3cc071ee7bdcddd84043:520107da98f0e7ed047c7ff6ca427de55926119e",
+          "content_sha256": "21783c0972a236d69b513dbeffe0a1da9cbd0ae307faeddbe7d34ada29bbcff5",
+          "number": 733
+        },
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T033",
+          "source_ref": "github-pr:heimgewebe/bureau#738@3664ecbf3eefa0a1d2892ad721b9c2a7cd0fd424:f67e7a5408282218bf0c9c554b0e6212ba49f306",
+          "content_sha256": "21cd6a4b68c812d5aec30649568855a002facc52a1681051a47591ac293b218c",
+          "number": 738
+        },
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T033",
+          "source_ref": "github-pr:heimgewebe/bureau#739@dc4bd7035be1118f820f251e0eb768e56a1b0514:672bbf543fc790f6caac5ea8cebf4695603caf7b",
+          "content_sha256": "20c6af40b2e4b8ea7abc9e802904b8f4bb2d2497e6c39bfe4e34af066e7bab51",
+          "number": 739
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "92b48d00dd811a81241f927669ed23814d7ba7d9d55c3f0af74ef0569182ed7e",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    }
   }
 }

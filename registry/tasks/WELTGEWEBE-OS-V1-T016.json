@@ -1,0 +1,108 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Jedes erzwungene WAL-Segment wird sowohl über PostgreSQL-Archiverzustand als auch durch eine objektstore-nahe, read-only und segmentgenaue Evidenz bestätigt; ein Archivierungsbefehl wird nicht fälschlich als Existenzprobe verwendet.",
+      "evidence_type": "object",
+      "id": "wal-object-evidence",
+      "verifier": "segment-bound object-store receipt and PostgreSQL cross-check"
+    },
+    {
+      "assertion": "Gateway und direkte API werden über den gesamten HA-Beweis kontinuierlich und zeitgebunden gesampelt; Receipt und Tests unterscheiden wahrgenommene Gateway-Ausfallzeit, direkte API-Ausfallzeit, Stichprobenzahl und Messlücken.",
+      "evidence_type": "object",
+      "id": "continuous-availability",
+      "verifier": "continuous availability trace and deterministic aggregation tests"
+    },
+    {
+      "assertion": "Restore- und Failover-Receipts trennen fachliche Dienstverfügbarkeit vom vollständigen Wiederaufbau aller Replikate; die bisher konservative Vollredundanz-RTO bleibt als eigene Kennzahl erhalten.",
+      "evidence_type": "object",
+      "id": "rto-semantics",
+      "verifier": "service-ready and full-redundancy RTO receipt"
+    },
+    {
+      "assertion": "Cleanupfehler verdecken den primären Prooffehler nicht und erzeugen begrenzte Diagnoseevidenz; PostgreSQL-Serviceidentität wird aus dem Clusternamen abgeleitet, und die Migrations-Retrypolitik ist gegen transiente Wahl- oder Netzunterbrechungen sowie doppelte Ausführung getestet.",
+      "evidence_type": "object",
+      "id": "cleanup-and-coupling",
+      "verifier": "failure injection, cleanup receipt and migration idempotency tests"
+    },
+    {
+      "assertion": "Der externe Proof-Object-Store verwendet laufbezogene Zugangsdaten und einen expliziten minimalen Berechtigungs- oder Proof-only-Grenzvertrag; NATS-, WAL-, PITR- und Kind-Speicherbudgets werden vor dem Lauf geprüft und im Receipt ausgewiesen.",
+      "evidence_type": "object",
+      "id": "proof-security-and-capacity",
+      "verifier": "credential scope, authorization and capacity preflight receipt"
+    },
+    {
+      "assertion": "Pre-pull, paralleles Warten unabhängiger Komponenten, Logging und eine mögliche Modulaufteilung werden nur mit unverändertem Verhalten, vollständigen Vertragstests und gemessener Laufzeitwirkung übernommen; Determinismus und Diagnosequalität dürfen nicht sinken.",
+      "evidence_type": "object",
+      "id": "measured-maintainability",
+      "verifier": "before-after runtime benchmark and behavior-preserving contract suite"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T004"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den bestehenden T004-HA-Beweis um objektstore-nahe WAL-Evidenz, kontinuierliche Verfügbarkeitsmessung, getrennte RTO-Semantik, fehlersicheres Cleanup sowie explizite Credential-, Kapazitäts- und Wartungsverträge ergänzen, ohne die aktuellen SLO- oder Fail-closed-Gates abzuschwächen.",
+  "id": "WELTGEWEBE-OS-V1-T016",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "reason": "Nicht blockierende, nach Liveprüfung belastbare Härtungsachse aus der Review-Reconciliation zu PR #1483; widerlegte Forderungen sind ausgeschlossen.",
+    "registered_at": "2026-07-19T06:23:00+02:00",
+    "source_head": "af2940fce5492137b88bac88af8386cea56fe676",
+    "source_pr": 1483,
+    "source_repository": "heimgewebe/weltgewebe",
+    "source_sha256": "7e566e37cd8372bccaeb4b041afdb917d707feeaa606f838ed99df8619f7e0f5",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-8fabfa91dbf59a94d9d9ccc0",
+      "event_id": 745,
+      "event_created_at": "2026-07-19T04:24:19.219439Z",
+      "request_sha256": "6640daae914373b36f747399c199787a8e7c777faeb8087b3300a2708c818dfa",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "review-reconciliation",
+        "locator": "github:heimgewebe/weltgewebe#1483@af2940fce5492137b88bac88af8386cea56fe676",
+        "observed_at": "2026-07-19T04:24:19.214013Z",
+        "sha256": "7e566e37cd8372bccaeb4b041afdb917d707feeaa606f838ed99df8619f7e0f5"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 14
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "kubernetes",
+    "docker",
+    "postgresql",
+    "object-storage",
+    "security",
+    "performance",
+    "recovery"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "HA-Referenzbeweis mess- und wartungsfest härten"
+}

@@ -1,0 +1,117 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Unbekannte oder mehrere CLI-Argumente sowie ungültige MODE- oder SICHTER_DRY_RUN-Werte enden vor jeder Laufzeiteinrichtung mit EX_USAGE 64.",
+      "id": "argument-fail-closed"
+    },
+    {
+      "assertion": "Hilfe und Version sind rein lesend und erzeugen keine Zustandsverzeichnisse oder Repositoryeffekte.",
+      "id": "read-only-help-version"
+    },
+    {
+      "assertion": "SICHTER_DRY_RUN=1 klont keine fehlenden Repositories und erzeugt keine Branches, Commits, Pushes oder Pull Requests.",
+      "id": "dry-run-non-effect"
+    },
+    {
+      "assertion": "Die unbeabsichtigten Pull Requests und Autofix-Refs sind nach Zustandsprüfung geschlossen beziehungsweise entfernt.",
+      "id": "incident-cleanup"
+    },
+    {
+      "assertion": "Ein terminal erfolgreicher `--all`-Dry-Run prüft alle Organisationsrepositories und belegt im exakten Laufzeitfenster die Abwesenheit neuer PRs und passender Autofix-Refs.",
+      "id": "live-full-sweep-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.sichter"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/sichter",
+      "host:heim-pc",
+      "path:/home/alex/.local/state/sichter/dry-run-proof/20260719-t028-t035"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/sichter"
+  },
+  "goal": "Den während T028 beobachteten Sicherheitsdefekt dauerhaft schließen: `sichter-pr-sweep --help` darf keinen mutierenden Standardsweep auslösen. Unbekannte oder mehrdeutige Argumente müssen vor jeder Laufzeiteinrichtung fail-closed enden; Hilfe und Version müssen rein lesend sein; ein vollständiger Dry-Run muss Änderungen erkennen, ohne Checkouts, Branches, Commits, Pushes oder Pull Requests zu erzeugen.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T035",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "closeout_required": "Nach Registrierung wird T035 zusammen mit T028 in einem gesonderten, diffgebundenen Closeout als verified markiert.",
+    "does_not_establish": [
+      "Bureau verification before the closeout change",
+      "general correctness of all Sichter review logic",
+      "absence of historical Autofix refs before the proof window",
+      "absence of unrelated concurrent repository changes outside the exact sweep interval"
+    ],
+    "implementation_observed": {
+      "checks_all_success": true,
+      "merge_commit": "f4359f0817d7db6b3f821bcdce7be12c18e561cc",
+      "pull_request": 267,
+      "repository": "heimgewebe/sichter",
+      "tests": "298 tests plus 9 subtests"
+    },
+    "incident_cleanup_observed": {
+      "grabowski_matching_local_or_origin_refs": [],
+      "metarepo_pr_659_state": "CLOSED",
+      "metarepo_remote_branch_absent": true,
+      "repoground_pr_1050_state": "CLOSED",
+      "repoground_remote_branch_absent": true
+    },
+    "registered_at": "2026-07-19T13:06:00+02:00",
+    "runtime_evidence_observed": {
+      "github_prs_created_during_sweep": [],
+      "matching_autofix_refs": [],
+      "repositories_observed": 35,
+      "repositories_scanned_for_refs": 962,
+      "task_id": "534035e48e6e4d6b80811df7",
+      "task_returncode": 0,
+      "task_state": "completed",
+      "verification_file_sha256": "ba0a71ffe13ac7b703baceebde963dac4cb2445ad1ffbf1e77e1493115115df5"
+    },
+    "source": "operator_live_incident",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-99a08bae7bef6f387f8fa77b",
+      "event_id": 762,
+      "event_created_at": "2026-07-19T10:52:22.207554Z",
+      "request_sha256": "f5a2a630996dd693359de3cf225658d215e88904a4d85a3a8ca59efc9c5e9d02",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator-incident",
+        "locator": "/home/alex/.local/state/sichter/dry-run-proof/20260719-t028-t035/verification.json",
+        "observed_at": "2026-07-19T12:44:00+02:00",
+        "sha256": "ba0a71ffe13ac7b703baceebde963dac4cb2445ad1ffbf1e77e1493115115df5"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 0
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Sichter-CLI-Hilfe und Dry-Run strikt nichtwirkend machen"
+}

@@ -40,11 +40,307 @@
       "physical Mobile Safari behaviour",
       "automatic accessibility acceptance",
       "absence of future browser regressions"
-    ]
+    ],
+    "completed_at": "2026-07-19",
+    "verification": {
+      "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T016",
+      "authority": "commonworld-project-operator",
+      "decision": "forced_colors_increased_contrast_keyboard_paths_and_review_hardened_browser_geometry_merged_deployed_and_live_verified",
+      "repository": "heimgewebe/commonworld",
+      "implementation_pr": 106,
+      "pr_head": "d852e5c3f6e31fe856facb7b191288a136d33298",
+      "pr_base": "27c5acd427eb95eba66e10547667ce090f509914",
+      "implementation_commits": [
+        "7f595dd",
+        "d852e5c"
+      ],
+      "merge_commit": "b653975ce45274f4b023986eb4628c2554459c96",
+      "reviewed_diff_url": "https://github.com/heimgewebe/commonworld/pull/106.diff",
+      "diff_sha256": "45571a999690df89b4352000e049423759b61d2a7b11cd3aabff7379f9b462a4",
+      "repaired_findings": [
+        "Reduced-motion CSS used a minimal transition duration, which briefly animated focus-outline width and exposed the prior three-pixel value; transitions are now disabled in reduced-motion mode.",
+        "The canonical active-script inventory omitted the new accessibility browser smoke and now records it.",
+        "The existing layer-order smoke read its MutationObserver log before the next-frame panel event on CI; it now waits for the observed event before asserting the unchanged ordering invariant.",
+        "Two trailing blank lines detected by git diff --check were removed.",
+        "The former overlap-only focus predicate accepted a one-pixel intersection; focusable controls that fit must now be fully contained in the layout viewport, with an explicit oversized-control rule.",
+        "The former timeout-boundary return could hide late focus settlement; late settlement is now a structured warning after one second and missing containment remains a hard failure after three seconds.",
+        "Focus diagnostics now use one explicit plain-object geometry reader, a consistent layout viewport and recorded scroll coordinates.",
+        "The existing landscape lane smoke measured a 48-pixel lane during scale(0.96), producing exactly 46.08 pixels in CI; it now waits for the computed scale(1) state before enforcing unchanged size thresholds.",
+        "No automatic push workflows had appeared for final merge 7817eca before manual compensation at 18:16Z; exact Pages rebuild and production readback were invoked explicitly and the observed gap is recorded rather than treated as green CI."
+      ],
+      "local_evidence": {
+        "make_validate": {
+          "result": "PASS",
+          "grabowski_task_id": "23004fbee19a45c4aee131b4",
+          "lifecycle_receipt_sha256": "ae45e89dae105b584e90e7dd3c047b7d5dc595f9017c5e1aafa4be1e5fd07a6d"
+        },
+        "full_browser_smoke": {
+          "result": "PASS",
+          "grabowski_task_id": "403f6099fbe141e9a9612202",
+          "lifecycle_receipt_sha256": "85598c98308d2b61509d0f97247ef1d7ce71b5af3c544c44d20e9c89dbd7e9bf"
+        },
+        "public_browser_after_ci_fix": {
+          "result": "PASS",
+          "grabowski_task_id": "16a88a5036a2495a92060ca9",
+          "lifecycle_receipt_sha256": "26e9030c9533e0ddff0bc456b5da63eec8a51b73eecb5f004a51459649663fa"
+        },
+        "targeted_python_tests": "37/37 PASS",
+        "reproducible_build": "PASS; no generated dirty state",
+        "git_diff_check": "PASS",
+        "operator_review": "Final hash-bound diff, CSS cascade, semantic-state assertions and live source were reviewed; no manual screen-reader or physical-device session was performed.",
+        "review_hardening_targeted_accessibility": "PASS; no late-focus-settlement warnings",
+        "review_hardening_public_browser": {
+          "result": "PASS",
+          "grabowski_task_id": "50c6fceba46c4ccb8d2a29fa",
+          "lifecycle_receipt_sha256": "2f97ca54cd0934538d7f746246b8d2b65b0e5306a086f671941697a2183784bd"
+        },
+        "review_hardening_make_validate": {
+          "result": "PASS",
+          "grabowski_task_id": "b5a96acbcc854df6b2d44bee",
+          "lifecycle_receipt_sha256": "fc0e688bd42d2a0af1bbca131a8f3406e99da83aef706cb8287a139369d77381"
+        },
+        "review_hardening_full_browser": {
+          "result": "PASS",
+          "grabowski_task_id": "0a6516e3c72f4445a2c9f284",
+          "lifecycle_receipt_sha256": "de9824964bf76245430a5ceb1c69d8ab7150392439bb8ed87f8529c9cd75ae73"
+        }
+      },
+      "browser_matrix": {
+        "harness": "Playwright 1.61.1",
+        "local_browser": "Google Chrome 150.0.7871.46",
+        "preferences": [
+          "forced-colors: active",
+          "prefers-contrast: more",
+          "prefers-reduced-motion: reduce"
+        ],
+        "viewports": [
+          "1280x900 public globe and contrast paths",
+          "1024x768 proposal forced-colors path"
+        ],
+        "scenarios": {
+          "forced-colors-public-keyboard": "PASS; 18 globe focus targets and 93 text-view focus targets",
+          "forced-colors-proposal-keyboard": "PASS; 25 initial and 27 geographic-form focus targets",
+          "increased-contrast-public": "PASS",
+          "increased-contrast-proposal": "PASS"
+        }
+      },
+      "github_evidence": {
+        "pull_request_validate_run_id": 29693145279,
+        "pull_request_codeql_run_id": 29693144009,
+        "main_validate_run_id": 29693527504,
+        "main_codeql_run_id": 29693527174,
+        "github_checks": "PASS",
+        "pr109_validate_run_id": 29694685837,
+        "pr109_codeql_run_id": 29694684984,
+        "pr110_validate_run_id": 29697926782,
+        "pr110_codeql_run_id": 29697925291,
+        "pr110_validate_result": "PASS",
+        "final_merge_commit": "7817eca669d351baa6d8c9e841ebc5fa4b09ab19",
+        "automatic_post_merge_validate_run": null,
+        "merge_tree_equal_to_green_pr_head_tree": true
+      },
+      "deployment": {
+        "pages_run_id": 29693527011,
+        "production_readback_run_id": 29693527523,
+        "deployment_id": 5512085224,
+        "deployment_sha": "b653975ce45274f4b023986eb4628c2554459c96",
+        "deployment_state": "success",
+        "readback_receipt_sha256": "9be0aceb4c67b4997452a2a84bbef25e7ae3d8b19ca8b9a9167f6b5578f44b64",
+        "readback_verdict": "pass",
+        "final_pages_build": {
+          "trigger": "manual GitHub Pages build API because no automatic merge-sha workflow runs were created",
+          "source": "main:/",
+          "build_type": "legacy",
+          "commit": "7817eca669d351baa6d8c9e841ebc5fa4b09ab19",
+          "created_at": "2026-07-19T18:16:42Z",
+          "completed_at": "2026-07-19T18:17:19Z",
+          "status": "built"
+        },
+        "final_production_readback_run_id": 29698483438,
+        "final_deployment_sha": "7817eca669d351baa6d8c9e841ebc5fa4b09ab19",
+        "final_readback_receipt_sha256": "81fc6806bb4b0a569c20ae0bd4d4aa63528fe5b2f7607a6a3be5481a6c192334",
+        "final_readback_verdict": "pass"
+      },
+      "live_verification": {
+        "public_url": "https://commonworld.net/",
+        "proposal_url": "https://commonworld.net/propose.html",
+        "exact_pages_sha": "7817eca669d351baa6d8c9e841ebc5fa4b09ab19",
+        "public_index_css_sha256": "29410a8181cd107db987eb4be8783fbb29e4f4d8dfb4164e9875a65c2daaa6a9",
+        "public_index_css_byte_equal_to_merge": true,
+        "forced_colors_contract_present": true,
+        "increased_contrast_contract_present": true,
+        "reduced_motion_transition_disable_present": true,
+        "four_pixel_focus_contract_present": true,
+        "http_status": 200,
+        "exact_public_files": {
+          "index.html": "80c6cc5b8e024955f97f6c95112d8ffda4fdcf14f036b3935e42155fd6d8a6d2",
+          "propose.html": "e07cc8ece6ed021c0117beb8ce583a82f53978c85a0fd206e0246b1a693a8bca",
+          "catalog/catalog.json": "75863bb2e27aab34319dcb7a46f2a45e76c691ff333e8f622f6b63921e53ed61"
+        }
+      },
+      "bureau_baseline": {
+        "registry_truth_errors": 0,
+        "registry_truth_healthy": true,
+        "doctor_healthy": false,
+        "doctor_limitation": "Pre-existing unrelated lifecycle, queue, lease-scope and legacy evidence findings remain; no T016-specific baseline error was present."
+      },
+      "acceptance": {
+        "forced-colors-surface": "PASS in Chromium automation for public and proposal surfaces",
+        "increased-contrast-surface": "PASS in Chromium automation for public and proposal surfaces",
+        "keyboard-paths": "PASS for bounded globe, filter, settings, text-view, catalogue and proposal journeys",
+        "visible-focus-integrity": "PASS for visible outlines, full layout-viewport containment where controls fit, explicit oversized-control spanning, overlay occlusion checks and bounded late-settlement telemetry.",
+        "semantic-state-preserved": "PASS for expanded, checked, pressed, disabled, invalid and focused-error states",
+        "evidence-bound-closeout": "PASS with exact diff, local receipts, CI runs, merge SHA, Pages deployment and byte-equal public CSS readback"
+      },
+      "explicit_nonclaims": [
+        "Complete WCAG conformance.",
+        "Screen-reader product usability.",
+        "Physical Mobile Safari behaviour.",
+        "Accessibility acceptance outside the tested Chromium modes, paths and viewport profiles.",
+        "Absence of future browser, CDN or client-network regressions.",
+        "Existence of an automatic push-triggered validation run for final merge 7817eca; validation is instead bound by identical PR-head and merge trees plus the green PR run.",
+        "The one-second late-focus warning threshold as a general product performance SLO."
+      ],
+      "task_sha256": "4ba26e5113c38f2eac53a14cd712d94d1869fa8282d39f4a58a922f821a9e556",
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4",
+      "bureau_closeout_validation": {
+        "result": "PASS",
+        "tests": "722/722 PASS",
+        "registry_check": "valid",
+        "systemkatalog_boundary": "PASS",
+        "grabowski_task_id": "8789a2c3d287479bb41300a3",
+        "lifecycle_receipt_sha256": "0c9848a08ce4809ab3b8270f534b6c37055b69f2d831346627f035599f56b183",
+        "registry_task_count": 572
+      },
+      "review_hardening": {
+        "source": "User-provided Playwright review of PR #109 follow-up patch",
+        "finding_assessments": [
+          {
+            "id": "domrect-serialization",
+            "assessment": "already_satisfied",
+            "reason": "The existing diagnostic already copied all DOMRect coordinates into a plain JSON object before crossing the Playwright boundary."
+          },
+          {
+            "id": "claimed-left-2000-critical-bug",
+            "assessment": "rejected",
+            "reason": "The previous intersection predicate already rejected left=2000 for a 1280-pixel viewport because 2000 < 1280 is false."
+          },
+          {
+            "id": "partial-visibility-contract",
+            "assessment": "accepted_and_hardened",
+            "result": "Controls that fit must be fully contained within the layout viewport with one-pixel subpixel tolerance; oversized controls must span the viewport on the oversized axis."
+          },
+          {
+            "id": "timeout-masking",
+            "assessment": "accepted_and_hardened",
+            "result": "A single diagnostic polling path emits machine-readable late-focus warnings after 1000ms and fails hard after 3000ms instead of silently swallowing a timeout."
+          },
+          {
+            "id": "browser-node-context-separation",
+            "assessment": "accepted_with_alternative",
+            "result": "Browser geometry is read by one explicit page.evaluate diagnostic function; viewport policy and warning classification remain in Node."
+          },
+          {
+            "id": "forced-scroll-in-test",
+            "assessment": "rejected",
+            "reason": "Calling focus() or scrollIntoView() from the test would repair the tested UI path and could hide a real keyboard-focus defect."
+          }
+        ],
+        "pull_requests": [
+          {
+            "number": 109,
+            "head_sha": "cafd3e75d58568e74de62fef3141730e1d7c77a8",
+            "merge_commit": "f97928a727a1bffdfc3a1a35a97dbcb98f6ef25b",
+            "diff_sha256": "59660a116e97c60a4d25947bf08ece29ec4b7b82a672a3a630fface5f8849d84",
+            "purpose": "Bound the original focus-settlement wait without weakening the intersection invariant."
+          },
+          {
+            "number": 110,
+            "head_sha": "71f7cc4434ac4034cee2e9f7100e65cb87310a54",
+            "merge_commit": "7817eca669d351baa6d8c9e841ebc5fa4b09ab19",
+            "diff_sha256": "6a5e840a5ae04a579f4292413da8c340b6fc76e2b41d45b9159e91556d820835",
+            "purpose": "Require full viewport containment, expose late settlements, unify diagnostics and wait for stable landscape transforms before geometry assertions."
+          }
+        ],
+        "tree_identity": {
+          "pr_head_tree_oid": "cd53ad55576da4aaa3d06237fe55cdb926e31f9e",
+          "merge_tree_oid": "cd53ad55576da4aaa3d06237fe55cdb926e31f9e",
+          "equal": true
+        },
+        "observed_ci_trigger_gap": {
+          "cause": "not established",
+          "compensation": "The exact PR-head tree passed GitHub validation and equals the merge tree; the existing Pages source was manually rebuilt for the merge SHA and the repository workflow was manually dispatched for an exact-SHA production readback.",
+          "automatic_runs_observed_before_manual_compensation": 0,
+          "observed_at": "2026-07-19T18:16:00Z"
+        }
+      }
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T016",
+          "repository": "heimgewebe/commonworld",
+          "number": 106,
+          "state": "merged",
+          "head_sha": "d852e5c3f6e31fe856facb7b191288a136d33298",
+          "merge_commit": "b653975ce45274f4b023986eb4628c2554459c96",
+          "diff_sha256": "45571a999690df89b4352000e049423759b61d2a7b11cd3aabff7379f9b462a4"
+        },
+        {
+          "kind": "production_readback_receipt",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T016",
+          "repository": "heimgewebe/commonworld",
+          "workflow_run_id": 29693527523,
+          "receipt_id": "commonworld.pages-production-readback.v1",
+          "receipt_sha256": "9be0aceb4c67b4997452a2a84bbef25e7ae3d8b19ca8b9a9167f6b5578f44b64",
+          "merge_commit": "b653975ce45274f4b023986eb4628c2554459c96",
+          "verdict": "pass"
+        },
+        {
+          "kind": "http_byte_readback",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T016",
+          "url": "https://commonworld.net/index.css",
+          "source_ref": "b653975ce45274f4b023986eb4628c2554459c96:index.css",
+          "sha256": "6a3925f90bab7d2fc558a494c29dd86642b2a12eb6c9fd304b53e464548f6fb7",
+          "merge_commit": "b653975ce45274f4b023986eb4628c2554459c96"
+        },
+        {
+          "kind": "pull_request",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T016",
+          "repository": "heimgewebe/commonworld",
+          "number": 110,
+          "state": "merged",
+          "head_sha": "71f7cc4434ac4034cee2e9f7100e65cb87310a54",
+          "merge_commit": "7817eca669d351baa6d8c9e841ebc5fa4b09ab19",
+          "diff_sha256": "6a5e840a5ae04a579f4292413da8c340b6fc76e2b41d45b9159e91556d820835"
+        },
+        {
+          "kind": "production_readback_receipt",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T016",
+          "repository": "heimgewebe/commonworld",
+          "workflow_run_id": 29698483438,
+          "receipt_id": "commonworld.pages-production-readback.v1",
+          "receipt_sha256": "81fc6806bb4b0a569c20ae0bd4d4aa63528fe5b2f7607a6a3be5481a6c192334",
+          "merge_commit": "7817eca669d351baa6d8c9e841ebc5fa4b09ab19",
+          "verdict": "pass"
+        },
+        {
+          "kind": "http_byte_readback",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T016",
+          "url": "https://commonworld.net/index.css",
+          "source_ref": "7817eca669d351baa6d8c9e841ebc5fa4b09ab19:index.css",
+          "sha256": "29410a8181cd107db987eb4be8783fbb29e4f4d8dfb4164e9875a65c2daaa6a9",
+          "merge_commit": "7817eca669d351baa6d8c9e841ebc5fa4b09ab19"
+        }
+      ]
+    }
   },
   "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T016",
   "title": "Verify forced-colors, increased-contrast and keyboard focus across Commonworld",
-  "state": "planned",
+  "state": "verified",
   "goal": "Make the public globe, discovery filters and Commons proposal path resilient under forced-colors and increased-contrast preferences, and prove that all interactive controls remain keyboard-reachable with visible, unclipped focus and correct semantic state without claiming broader accessibility conformance than the evidence supports.",
   "priority": {
     "lane": "later",

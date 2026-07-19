@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "claims": [
+    {
+      "resource": "repo.commonworld",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Diagnose the missing automatic push-triggered workflows without assuming the token cause. Preserve exact-SHA validation, avoid duplicate deployments, and require a reviewed recovery path before changing authentication or workflow triggers."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-19",
+    "source": "COMMONWORLD-PUBLIC-GLOBE-V1-T016 review-hardening closeout",
+    "source_repository": "heimgewebe/commonworld",
+    "source_pr": 110,
+    "source_head": "71f7cc4434ac4034cee2e9f7100e65cb87310a54",
+    "source_merge_commit": "7817eca669d351baa6d8c9e841ebc5fa4b09ab19",
+    "source_diff_sha256": "6a5e840a5ae04a579f4292413da8c340b6fc76e2b41d45b9159e91556d820835",
+    "queue_mutated": false,
+    "observed_limit": "After PR #110 merged, GitHub created no automatic workflow runs for the merge SHA even though validate and production-readback declare push-to-main triggers. The exact Pages build and production readback had to be invoked explicitly. The cause was not established.",
+    "does_not_establish": [
+      "that a specific GitHub token type caused the missing workflow runs",
+      "that every future merge will miss workflows",
+      "authorization to weaken branch protection or exact-SHA evidence",
+      "authorization to duplicate deployments or bypass review"
+    ]
+  },
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T018",
+  "title": "Restore automatic exact-SHA post-merge evidence for Commonworld",
+  "state": "planned",
+  "goal": "Determine why an accepted Commonworld merge can update main without creating the declared push-triggered validation and production-readback runs, then establish one idempotent, observable and fail-closed path that automatically produces exact-merge-SHA CI, Pages deployment and public readback evidence.",
+  "priority": {
+    "lane": "later",
+    "rank": 960
+  },
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T016"
+  ],
+  "acceptance": [
+    {
+      "id": "reproducible-trigger-boundary",
+      "assertion": "A bounded test matrix distinguishes merge actor, authentication path, merge method and GitHub event type, and records which combinations do or do not create push-triggered runs without mutating production repeatedly."
+    },
+    {
+      "id": "root-cause-evidence",
+      "assertion": "The selected explanation is supported by GitHub-owned event, check-run or workflow evidence and is not inferred solely from token folklore or timing."
+    },
+    {
+      "id": "single-exact-sha-path",
+      "assertion": "Every accepted main update produces one authoritative validation result and one exact-SHA deployment/readback chain, either through native push triggers or an explicitly designed dispatch bridge."
+    },
+    {
+      "id": "idempotent-recovery",
+      "assertion": "Missing-trigger recovery is retry-safe, refuses stale SHAs, does not duplicate a successful deployment, and leaves an auditable receipt."
+    },
+    {
+      "id": "no-policy-weakening",
+      "assertion": "The repair does not weaken review, branch protection, CI, deployment identity or public-readback requirements."
+    },
+    {
+      "id": "live-proof",
+      "assertion": "Closeout includes a reviewed diff, green tests, a real merged canary or equivalent bounded proof, exact-SHA Pages deployment and public production readback."
+    }
+  ]
+}

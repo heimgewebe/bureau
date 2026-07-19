@@ -4,9 +4,9 @@
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
   "title": "Bound retention for historical symlink-bearing publications",
   "goal": "Make RepoGround retention safely process historical publication generations whose candidate tree contains the legacy internal .repobrief-generations/current symlink, without following links, weakening path confinement, rewriting retained evidence, or changing canonical new publication output.",
-  "state": "planned",
+  "state": "verified",
   "priority": {
-    "lane": "next",
+    "lane": "later",
     "rank": 4
   },
   "depends_on": [
@@ -61,9 +61,159 @@
     "source": "Live RepoGround publisher readback after merged PR #1054.",
     "audit_evidence": "The successful 2026-07-19 publisher run reported prune_failed=1 for heimgewebe/bureau because historical publication 20260718T170140Z-9de6cc811c6a contains .repobrief-generations/heimgewebe__bureau__main-max-260718-1701_merge/current. Publication itself succeeded; retention refused deletion safely.",
     "does_not_establish": [
-      "That arbitrary symlinks are safe to retain or delete",
-      "That the historical candidate may be rewritten in place",
-      "That the warning blocks RepoGround publication correctness"
-    ]
+      "that arbitrary symlinks are accepted",
+      "that every old publication should be removed immediately",
+      "that historical publication or transaction evidence may be rewritten",
+      "future health after later deployments"
+    ],
+    "implemented_at": "2026-07-19T21:39:59+02:00",
+    "verified_at": "2026-07-19T23:28:22+02:00",
+    "resolution_summary": "RepoGround PR #1055 begrenzt die historische Symlink-Anerkennung auf current -> <64-stelliger SHA-256-Ordner> an genau zwei internen Positionen. Der finale Head bestand 4.429 Tests mit 2 Skips und GitHub-CI, wurde als Mergecommit 8dbad67a exakt installiert und entfernte im kontrollierten Livefall ausschließlich den vorab identifizierten Bureau-Kandidaten. Alle 630 älteren Retention-Belege, Nachbarpublikationen, geschützten Ziele und stabilen Manifestziele blieben unverändert; eine neue terminale deleted-Transaktion wurde append-only ergänzt. Nach Wiederherstellung des zuvor extern gestoppten, weiterhin aktivierten Timers lief ein verpasster regulärer, auf acht Publikationen begrenzter Policy-Lauf nach; er endete ohne Fehler, veröffentlichte den exakten RepoGround-Mergecommit und hielt für Bureau drei Versionen zurück. Die anschließende Abschlussprüfung erkannte zusätzlich, dass aktive Generationsschreiber noch den historischen Namen .repobrief-generations verwendeten. RepoGround PR #1056 stellte neue Ausgaben auf .repoground-generations um, ließ den alten Namen ausschließlich als begrenzte historische Lesekompatibilität bestehen, bestand 4.433 Tests mit 2 Skips sowie alle GitHub-Prüfungen und wurde als Mergecommit 572e9d5d bytegleich installiert.",
+    "implementation": {
+      "repository": "heimgewebe/repoground",
+      "pull_request": 1055,
+      "base_commit": "8a49b23e3005542fdcf755ee7ce3a1cff692b4bf",
+      "reviewed_head": "744f3341aa441722660c6a5d826929eb9b157ac4",
+      "merge_commit": "8dbad67aaa13470de66d6eead3c27f6f583dd0b3",
+      "changed_files": [
+        "scripts/ops/repoground-publish-fleet",
+        "merger/repoground/tests/test_fleet_runtime.py"
+      ],
+      "diff_sha256": "5dfc24b472290eb5614f8a8f79ea02a1c75368354cb11590eaf1aa49f5066765",
+      "github_ci": "all required and observed checks passed",
+      "full_local_tests": "4429 passed, 2 skipped",
+      "full_test_receipt": {
+        "path": "/home/alex/.local/state/repoground/evidence/t007-final-head-pytest.txt",
+        "sha256": "563c1b7bc0426e2dad0cf3add021cc418e8a04b39da87b318a3f0d5640415cd3"
+      },
+      "publisher_sha256": "8681c13acebb62bd881ba2eb3e48112b80bcb3af2d14ea976281ceada23eb9a2",
+      "runtime_commit": "8dbad67aaa13470de66d6eead3c27f6f583dd0b3",
+      "canonical_writer_followup": {
+        "pull_request": 1056,
+        "base_commit": "8dbad67aaa13470de66d6eead3c27f6f583dd0b3",
+        "reviewed_head": "f7812af8580cba29757c59489f1e67007b5a2b33",
+        "merge_commit": "572e9d5dd818e57b5e4b8d3a43660eca525be3a6",
+        "changed_files": [
+          "merger/repoground/core/bundle_generation.py",
+          "merger/repoground/tests/test_bundle_generation.py",
+          "merger/repoground/tests/test_fleet_runtime.py",
+          "merger/repoground/tests/test_ground_snapshot_cli.py",
+          "merger/repoground/tests/test_merges_dir_drift.py",
+          "scripts/ops/repoground-publish-fleet",
+          "scripts/repoground-post-merge-surface-smoke.sh"
+        ],
+        "github_ci": "all required and observed checks passed",
+        "full_local_tests": "4433 passed, 2 skipped",
+        "full_test_receipt": {
+          "path": "/home/alex/.local/state/repoground/evidence/t007-canonical-generation-root-pytest.txt",
+          "sha256": "cb8bf74b376f425dcce28c34012e8cdd9f0c701c9ce6c061617b655c50dccea2"
+        },
+        "effect": "New bundle generations use .repoground-generations; .repobrief-generations remains read-only historical compatibility."
+      },
+      "final_runtime": {
+        "commit": "572e9d5dd818e57b5e4b8d3a43660eca525be3a6",
+        "path": "/home/alex/.local/share/repoground-runtime/572e9d5dd818e57b5e4b8d3a43660eca525be3a6",
+        "publisher_sha256": "a7080f166018a7d10971145f7b576a0e2fbdd1c25aabb47b0830f5fd2680891d",
+        "installed_matches_runtime": true,
+        "service": "active/running, enabled, zero restarts",
+        "timer": "active/waiting, enabled",
+        "next_timer_run": "2026-07-20T00:08:11+02:00"
+      }
+    },
+    "live_evidence": {
+      "dry_run": {
+        "path": "/home/alex/.local/state/repoground/evidence/t007-bureau-retention-dry-run.json",
+        "sha256": "e018ad6c08ac8a1de8d779b847883c797df682e6b2f2c8a7bfd2d29c16f1f8fc",
+        "versions": 16,
+        "planned_candidate_count": 13
+      },
+      "before": {
+        "path": "/home/alex/.local/state/repoground/evidence/t007-live-before.json",
+        "sha256": "89cbe023ebea5d9415577fb29f6f3ed948e77e33b59afe0d9827735bba627947",
+        "existing_transactions": 630,
+        "existing_transactions_set_sha256": "dcbc240c7ce52dfa06a69424cfe3e7b487e5348a343a6ee22f8c93460f3d52cf"
+      },
+      "candidate": {
+        "path": "/home/alex/repos/manifest-publications/bundles/heimgewebe__bureau/main/20260718T170140Z-9de6cc811c6a",
+        "bytes": 71630156,
+        "tree_sha256": "290dc9ce7321e9ff61f5af4f4e623ce589201561092284e205bd98fa904ff08a",
+        "symlink_target": "9df2f4aa6ae503377fd9e37d4868299e9094f8f268f46fb96d611789bb3ddf3f"
+      },
+      "transaction": {
+        "id": "bf5ef0918cec475d8f9228559c55831d",
+        "state": "deleted",
+        "receipt_sha256": "62d34098e20ea00bd65c39e8935b2e0e31d1af12784574818710e8e94d5e457d"
+      },
+      "after": {
+        "path": "/home/alex/.local/state/repoground/evidence/t007-live-after.json",
+        "sha256": "bd7ee81213691d0bc7cd21f45af84b4769682c60f5e27285d0740792b52471a7",
+        "transactions": 631,
+        "all_transactions_deleted": true,
+        "old_transactions_unchanged": true,
+        "controls_unchanged": true,
+        "stable_manifest_targets_unchanged": true,
+        "quarantine_empty": true,
+        "exact_group_entry_difference": [
+          "20260718T170140Z-9de6cc811c6a"
+        ]
+      },
+      "reconcile_dry_run": {
+        "path": "/home/alex/logs/repoground-publish/fleet-prune-dry-run-last.json",
+        "sha256": "0b10b57047ab234f0c9256aa841fb583aecd23b9188a1981e78c8d86d8e664d3",
+        "status": "ok",
+        "transactions": 631,
+        "non_deleted": 0
+      },
+      "scheduled_followup": {
+        "trigger": "persistent timer catch-up after restoring the enabled but stopped timer",
+        "receipt": {
+          "path": "/home/alex/logs/repoground-publish/fleet-last.json",
+          "sha256": "806bd5cb431957aa1488a3a19ff72c42eb33fe61276a93afaadc848f127e6f84"
+        },
+        "status": "ok",
+        "mode": "if-changed",
+        "tool_commit": "8dbad67aaa13470de66d6eead3c27f6f583dd0b3",
+        "failed": 0,
+        "prune_failed": 0,
+        "published": 8,
+        "queued": 3,
+        "retention": 3,
+        "bureau": {
+          "source_sha": "e54a62e3818b607c2b8af764f819ef532fbea838",
+          "published_path": "/home/alex/repos/manifest-publications/bundles/heimgewebe__bureau/main/20260719T200453Z-54bf8e573d71",
+          "found_before": 16,
+          "policy_removed_count": 13,
+          "policy_removed_bytes": 923011536,
+          "localized_removed_count": 14,
+          "localized_removed_bytes": 497306248,
+          "retained": [
+            "20260719T200453Z-54bf8e573d71",
+            "20260719T190532Z-ab0dd9369255",
+            "20260719T170919Z-22c273de1ba2"
+          ]
+        },
+        "repoground": {
+          "source_sha": "8dbad67aaa13470de66d6eead3c27f6f583dd0b3",
+          "published_path": "/home/alex/repos/manifest-publications/bundles/heimgewebe__repoground/main/20260719T200650Z-463a0cb6b764"
+        },
+        "transactions_after": 682,
+        "transaction_state_counts": {
+          "deleted": 682
+        },
+        "interpretation": "This later scheduled policy run is separate from the preceding single-candidate controlled proof; it intentionally applied retention=3 to changed fleet publications."
+      }
+    },
+    "validated_acceptance": {
+      "reproduce": "PASS: real historical Bureau candidate and original prune warning shape reproduced read-only.",
+      "bounded-resolution": "PASS: only current at .repobrief-generations/<scope>/current or bundle/.repobrief-generations/<scope>/current with one relative SHA-256 sibling directory is accepted; links are read with lstat/readlink and never followed.",
+      "unsafe-still-rejected": "PASS: tests cover absolute, parent traversal, chained, dangling, misplaced, wrong-name, target-swap, substituted-parent and special-file cases; source remains untouched.",
+      "canonical-writer-unchanged": "PASS: PR #1056 moved all active generation writes to .repoground-generations while retaining .repobrief-generations only for bounded historical reads; no active RepoBrief writer fallback remains.",
+      "live-proof": "PASS: one exact unprotected candidate was transactionally deleted; all 630 older receipts and all protected/current controls remained hash-identical; post-run reconciliation reports 631 deleted and zero non-terminal transactions."
+    },
+    "verification": {
+      "task_sha256": "e69140eca136693b00b029eef5aae1beb5ca66b07b2ffe90fa40b288a532b3aa",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "finalized_at": "2026-07-19T23:28:22+02:00"
   }
 }

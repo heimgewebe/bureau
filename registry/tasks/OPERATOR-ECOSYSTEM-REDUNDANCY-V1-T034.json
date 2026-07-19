@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T034",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Gemeinsame SQLite-Migrationsprimitiven nach T062 extrahieren",
+  "state": "blocked",
+  "goal": "Nach dem gemergten, deployten und live stabilisierten T062-Pfad die aktuell doppelt implementierten internen SQLite-Primitiven für Store-Verzeichnislock, read-only beziehungsweise immutable Inventur, Dateiidentitäts-Race-Erkennung, Integritäts- und Fingerprintprüfung, verifizierte Backup-Publikation sowie atomaren Migrations-Open in einen gemeinsamen getesteten Kern überführen. Store-spezifische Schemas, Validatoren, Migrationspläne und Recoverytexte bleiben bei Task- und Resource-Store. Kein Verhalten ändern und keine T062-Auslieferung mit diesem Refactoring koppeln.",
+  "priority": {
+    "lane": "next",
+    "rank": 83
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_tasks.py",
+      "component:src/grabowski_resources.py",
+      "component:shared-sqlite-migration-core"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T062"
+  ],
+  "acceptance": [
+    {
+      "id": "post-stabilization-only",
+      "assertion": "Implementation starts only after T062 is merged, deployed and the task/resource stores plus reconciler have stable live readbacks."
+    },
+    {
+      "id": "store-specific-truth-retained",
+      "assertion": "Task and resource schema definitions, validators, migration maps and recovery contracts remain store-owned and independently testable."
+    },
+    {
+      "id": "shared-primitives-only",
+      "assertion": "Only behaviorally identical infrastructure primitives are shared; no broad store abstraction or second state authority is introduced."
+    },
+    {
+      "id": "behavior-parity",
+      "assertion": "All existing migration, WAL, race, backup, rollback, future-schema and byte-stability tests pass unchanged in Python 3.10 and 3.12, with focused tests for the shared core."
+    }
+  ],
+  "metadata": {
+    "source": "pr_review_followup",
+    "source_repository": "heimgewebe/grabowski",
+    "source_pr": 298,
+    "source_head": "eadc83d2e53818873498abad2e929d9febf834ee",
+    "review_finding": "Task and resource stores duplicate substantial SQLite migration infrastructure; duplication is non-blocking for T062 but raises future drift risk.",
+    "does_not_establish": [
+      "t062_merge_readiness",
+      "deployment_authority",
+      "shared_schema_truth",
+      "cross_store_transaction_authority"
+    ]
+  }
+}

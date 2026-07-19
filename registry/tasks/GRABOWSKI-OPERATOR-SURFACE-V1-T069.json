@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T069",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Native sichere Auditrotation vor dem Append-Hardlimit bereitstellen",
+  "state": "planned",
+  "goal": "Grabowski soll sein Auditlog vor Erreichen des 16-MiB-Append-Hardlimits über eine typisierte, atomare und recovery-fähige Operatoroberfläche selbst sicher rotieren können, ohne manuelle direkte Dateimanipulation oder stillschweigende Unterbrechung der Hashkette.",
+  "priority": {
+    "lane": "next",
+    "rank": 30
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Implementierung, Deployment und Live-Rotation sind getrennt zu prüfen. Die Registrierung autorisiert keine sofortige erneute Rotation und keine Archivlöschung."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "filesystem-durability",
+    "concurrency",
+    "recovery",
+    "systemd",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "prelimit-threshold",
+      "assertion": "Grabowski erkennt einen konfigurierten Sicherheits-Schwellenwert deutlich vor dem 16-MiB-Hardlimit und kann Rotation anfordern oder fail-closed blockieren, bevor normale Audit-Appends unmöglich werden."
+    },
+    {
+      "id": "exclusive-append-rotation-lock",
+      "assertion": "Append und Rotation teilen einen exklusiven, pro Auditlog eindeutigen Lock; parallele Appends, Doppelrotationen und Rotation gegen einen wechselnden Logstand werden deterministisch verhindert."
+    },
+    {
+      "id": "immutable-complete-archive",
+      "assertion": "Das alte Auditlog wird vollständig und byteidentisch archiviert; Archivgröße und SHA-256 werden vor Umschaltung gelesen und in einem unveränderlichen Rotationsmanifest gebunden."
+    },
+    {
+      "id": "old-end-hash-binding",
+      "assertion": "Die vollständige alte Kette wird vor Rotation verifiziert und ihr letzter Datensatzhash wird gemeinsam mit Archivhash, Archividentität und Rotationsmanifest in der neuen Genesis gebunden."
+    },
+    {
+      "id": "durable-fsync-atomicity",
+      "assertion": "Archiv, Manifest, neuer Loganfang und betroffene Verzeichnisse werden in nachweisbar sicherer Reihenfolge geschrieben und fsync-synchronisiert; die sichtbare Umschaltung erfolgt atomar."
+    },
+    {
+      "id": "postrotation-verification",
+      "assertion": "Die neue Genesis und die neue Kette werden unmittelbar nach Umschaltung vollständig verifiziert; bei Verifikationsfehler bleibt der Zustand fail-closed und liefert einen typisierten Recoverybefund."
+    },
+    {
+      "id": "interruption-recovery",
+      "assertion": "Für Abbrüche vor Archivabschluss, nach Archivabschluss, nach Manifestpersistenz, während Umschaltung und vor erster neuer Append-Operation existiert ein idempotenter Recoverypfad ohne Datenverlust oder ungebundene Kettenzweige."
+    },
+    {
+      "id": "retention-pruning-contract",
+      "assertion": "Ein expliziter Aufbewahrungs- und Pruningvertrag erhält Auditwahrheit, Manifest- und Genesis-Bindungen; Archive werden nie automatisch oder stillschweigend gelöscht und jede spätere Löschung benötigt gesonderte Autorität und Belege."
+    },
+    {
+      "id": "typed-operator-surface",
+      "assertion": "Vorprüfung, Rotation, Status, Verifikation und Recovery sind über typisierte Grabowski-Oberflächen mit begrenzten Antworten und Auditbelegen verfügbar; Shell- und direkter Dateizugriff sind kein normaler Operatorpfad."
+    },
+    {
+      "id": "failure-regressions",
+      "assertion": "Regressionstests decken parallele Append- und Rotationsversuche, ein nahezu volles oder volles Log, beschädigte alte Kette, fehlenden Speicherplatz, fsync-Fehler, abgebrochene Rotation und wiederholten Recoveryaufruf ab."
+    },
+    {
+      "id": "live-append-proof",
+      "assertion": "Ein kontrollierter Livebeweis zeigt: alte Kette gültig, Archiv hashgebunden, neue Genesis gültig, neue Kette gültig und ein normaler typisierter Audit-Append nach Rotation erfolgreich."
+    },
+    {
+      "id": "no-silent-chain-break",
+      "assertion": "Kein Erfolgspfad kann eine neue Auditdatei ohne überprüfbare Bindung an die alte Kette erzeugen; unbekannte, teilweise oder widersprüchliche Zustände werden als Fehler und nicht als erfolgreiche Rotation berichtet."
+    }
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "task_profile": "security_or_runtime_change",
+    "skip_reason": "live_first_primary",
+    "note": "Auditdatei, Runtime, Locks, Deployment und Livebeweis müssen direkt gelesen und hashgebunden werden; Repository-Kontext allein genügt nicht."
+  },
+  "metadata": {
+    "source": "T002 operator run on 2026-07-19",
+    "registered_at": "2026-07-19",
+    "observed_hard_limit_bytes": 16777216,
+    "observed_previous_record_count": 19308,
+    "observed_remaining_bytes": 227,
+    "source_observation": "Während des Weltgewebe-T002-Operatorlaufs erreichte das Grabowski-Auditlog das 16-MiB-Hardlimit. Eine einmalige atomare manuelle Rotation archivierte das alte Log vollständig und hashidentisch, band alten Endhash, Archivhash und Manifesthash in eine neue Genesis, validierte die neue Kette und ermöglichte danach wieder einen normalen Claim-Append. Dieser Notfallpfad ist kein dauerhaft zulässiger Operatorvertrag.",
+    "priority_rationale": "Next rank 30: wichtig vor erneuter Logerschöpfung, verdrängt aber nicht WELTGEWEBE-SEMANTIC-SEARCH-V1-T003; bei erneut raschem Größenwachstum neu priorisieren.",
+    "does_not_establish": [
+      "existing native rotation support",
+      "permission for manual direct audit-file mutation as routine practice",
+      "permission to delete existing audit archives",
+      "proof that the current threshold is sufficient for all workloads",
+      "successful implementation or deployment",
+      "future rotation safety without exact live preflight"
+    ]
+  }
+}

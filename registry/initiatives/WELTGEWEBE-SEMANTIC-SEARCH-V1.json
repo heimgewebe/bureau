@@ -40,8 +40,8 @@
     },
     "does_not_establish": [
       "pgvector production availability",
-      "embedding model selection",
-      "search relevance quality",
+      "production embedding model selection",
+      "search relevance quality in production",
       "production rollout readiness",
       "public live proof",
       "permission to archive SemantAH before T008",
@@ -49,11 +49,19 @@
     ],
     "progress": {
       "verified_tasks": [
-        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T001"
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T001",
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T002"
       ],
-      "current_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T002",
-      "updated_at": "2026-07-18",
-      "t001_merge_commit": "f00afacc7be4cc551c81c5511faf5f817b04f700"
+      "current_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T003",
+      "updated_at": "2026-07-19",
+      "t001_merge_commit": "f00afacc7be4cc551c81c5511faf5f817b04f700",
+      "t002_merge_commit": "adc060cfbb9d055a7b63c494fa042e7c57ca7bea",
+      "t002_pull_request": 1495,
+      "t002_model_decision": {
+        "candidate": "qwen3-embedding:8b",
+        "scope": "local synthetic reference candidate for T003/T004 only",
+        "production_approved": false
+      }
     }
   }
 }

@@ -3,11 +3,11 @@
   "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T002",
   "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
   "title": "Synthetisches Relevanz-Goldset und lokale Embedding-Modellwahl",
-  "state": "ready",
+  "state": "verified",
   "goal": "Ein reproduzierbares, ausschließlich synthetisches deutsches Relevanz-Goldset und einen offline ausführbaren Benchmark bereitstellen, der die lexikalische Basis, PostgreSQL-Volltext/Trigramm-Referenzen und lokale mehrsprachige Embedding-Kandidaten vergleicht und eine belegte Modell- oder Stopentscheidung erzeugt.",
   "priority": {
-    "lane": "now",
-    "rank": 10
+    "lane": "later",
+    "rank": 900
   },
   "execution": {
     "mode": "interactive-agent",
@@ -16,7 +16,7 @@
     "approval": {
       "action_class": "repository_mutation",
       "required_level": "operator",
-      "note": "Durch die direkte Nutzeranweisung zur Fortsetzung autorisiert. Keine Produktion, keine realen Daten und keine kostenpflichtigen Provider."
+      "note": "Durch die direkte Nutzeranweisung autorisiert. Keine Produktion, keine realen Daten und keine kostenpflichtigen Provider."
     }
   },
   "claims": [
@@ -79,21 +79,122 @@
     "mode": "live-first",
     "task_profile": "repo_change",
     "skip_reason": "live_first_primary",
-    "note": "Git, Worktrees, lokale Modellverfügbarkeit, PR und CI werden live gelesen; RepoGround kann ergänzen, ersetzt aber keine Messung."
+    "note": "Git, Worktrees, lokale Modellverfügbarkeit, PR und CI wurden live gelesen; RepoGround ergänzte, ersetzte aber keine Messung."
   },
   "metadata": {
     "source": "direct_operator_instruction",
     "registered_at": "2026-07-18",
+    "verified_at": "2026-07-19",
     "data_class": "synthetic-only",
     "cost_policy": "zero external spend",
-    "production_fix_coordination": "Der unabhängige Produktionsfix #1492 läuft in einem fremden isolierten Worktree und wird weder übernommen noch dupliziert.",
+    "outcome": "Weltgewebe PR #1495 veröffentlichte und mergte den ausschließlich synthetischen Relevanz-Harness, die vollständigen begrenzten Rangfolgen, Integritätsbindungen und lokalen Modellmessungen. qwen3-embedding:8b erfüllte als einziger getesteter lokaler Kandidat alle harten T002-Gates und ist deshalb Referenzkandidat für T003/T004, nicht Produktionsmodell.",
+    "implementation": {
+      "repository": "heimgewebe/weltgewebe",
+      "pull_request": 1495,
+      "base_sha": "d9a5377a07e4e9728778f327fa87668945d007cf",
+      "head_sha": "31ca3c433dcaf3b941c5e1c95167a68e9f68ceb8",
+      "merge_commit": "adc060cfbb9d055a7b63c494fa042e7c57ca7bea",
+      "merged_at": "2026-07-19T06:25:33Z",
+      "merge_tree": "5db77da13e7c12c3a868e78aa138d44603c68c09",
+      "canonical_github_diff_sha256": "b54ec09ce52fe7e109b18da8f4ed7e5fc5e33783ff75252dd354c605ec6988e7",
+      "local_binary_diff_sha256": "6ffdc08f17d68ecb72a0a4dfe8ade167ab47dabbe6b0cf7a1a35410e4e2e1375",
+      "local_binary_diff": {
+        "files": 8,
+        "additions": 5464,
+        "deletions": 77,
+        "bytes": 216515
+      }
+    },
+    "model_comparison": {
+      "existing_client_substring": {
+        "natural_top3": "0/19",
+        "false_top1": 0,
+        "leaks": 0
+      },
+      "fts_trigram_reference": {
+        "natural_top3": "11/19",
+        "false_top1": 1,
+        "leaks": 0
+      },
+      "qwen3-embedding:0.6b": {
+        "natural_top3": "18/19",
+        "false_top1": 3,
+        "leaks": 0
+      },
+      "qwen3-embedding:4b": {
+        "natural_top3": "19/19",
+        "false_top1": 2,
+        "leaks": 0
+      },
+      "qwen3-embedding:8b": {
+        "natural_top3": "19/19",
+        "false_top1": 1,
+        "leaks": 0,
+        "decision": "only tested local candidate satisfying all T002 hard gates; local reference candidate only"
+      }
+    },
+    "validation": {
+      "docmeta_pass": 816,
+      "agent_pass": 191,
+      "ci_pass": 277,
+      "expected_skips": 11,
+      "focused_semantic_search_pass": 27,
+      "other_gates": [
+        "generator",
+        "structure",
+        "shell",
+        "platform",
+        "contract"
+      ],
+      "local_model_measurement_receipt_sha256": "4ea4ddf5dae19931ea4b73a439b473fab4f84fcca8be7227ffcdf2d6ead4d5bd",
+      "full_gate_receipt_sha256": "c0122e0449e076175d91743f93fbc112e38237a342e5a877388270b711c0e301",
+      "review_axes": [
+        "correctness",
+        "data-integrity"
+      ],
+      "required_checks": [
+        "Required merge gate",
+        "Review evidence gate",
+        "Web E2E",
+        "CodeQL",
+        "Docs Guard",
+        "PostgreSQL integration proofs",
+        "Cloudflare Pages",
+        "Vercel"
+      ]
+    },
+    "verified_acceptance": {
+      "synthetic-only": "Alle Benchmark- und Goldset-Daten sind synthetisch; PII- und Nichtsynthetik-Marker werden fail-closed abgelehnt.",
+      "representative-goldset": "Die gemergte Fixture deckt exakte, lexikalische, semantische, mehrdeutige, unsichtbare, gelöschte und harte Negativfälle mit strikt validiertem Schema ab.",
+      "reproducible-baselines": "Der deterministische Harness erzeugt vollständige Top-10-Rangfolgen und rekonstruiert Aggregate aus Einzelfällen für Client-Teilstring sowie FTS-/Trigramm-Referenzen.",
+      "local-model-comparison": "qwen3-embedding:0.6b, 4b und 8b wurden auf identischem synthetischem Input mit gebundener Modellidentität vor und nach der Messung verglichen.",
+      "quality-decision": "Nur qwen3-embedding:8b erfüllte alle harten T002-Gates; die Entscheidung ist ausdrücklich auf einen lokalen Referenzkandidaten begrenzt.",
+      "privacy-fail-closed": "Sichtbarkeit und Löschstatus gelten vor Retrieval; PII-Negativtests, striktes JSON, begrenzte Antworten und keine Speicherung von Rohvektoren oder Providerrohdaten sind belegt.",
+      "provider-boundary": "Es wurde kein externer oder kostenpflichtiger Provider aktiviert; der Lauf nutzte einen numerischen lokalen Loopback-Ollama-Endpunkt ohne Proxy oder Redirect.",
+      "no-runtime-effect": "Der PR enthält Architektur, synthetische Benchmarks und Tests, aber keine Datenbankmigration, API, Worker-, Web- oder Deploymentfunktion und keine SemantAH-Änderung.",
+      "repository-gates": "Das vollständige Diff war hashgebunden; zwei getrennte R2-Reviews und alle Required-Gates waren vor Merge grün."
+    },
     "does_not_establish": [
-      "selected production embedding model",
-      "pgvector readiness",
-      "runtime implementation",
-      "production rollout",
-      "public live proof",
+      "production semantic search",
+      "PostgreSQL FTS or trigram parity",
+      "pgvector production capability",
+      "qwen3-embedding:8b production approval",
+      "search API",
+      "embedding worker",
+      "web search UI",
+      "production deployment",
+      "T008 public live proof",
       "SemantAH archive authority"
-    ]
+    ],
+    "verification": {
+      "source": "GitHub pull request, exact-head checks, local hash-bound receipts and public readiness readback",
+      "source_ref": "heimgewebe/weltgewebe#1495",
+      "verified_at": "2026-07-19T06:25:33Z",
+      "head_sha": "31ca3c433dcaf3b941c5e1c95167a68e9f68ceb8",
+      "merge_commit": "adc060cfbb9d055a7b63c494fa042e7c57ca7bea",
+      "diff_sha256": "b54ec09ce52fe7e109b18da8f4ed7e5fc5e33783ff75252dd354c605ec6988e7",
+      "task_sha256": "fe4feff9a6c3a0898ff67f8e3fa6747ec634fda2d740e19541c8c9c1c1edaa4a",
+      "plan_sha256": "18002b2b2def870ec6e5dd91cd15d19aaade6f053cac144ca85e2862234a709e"
+    }
   }
 }

@@ -1,0 +1,89 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The deployed T022 publisher creates exactly one branch, one commit and one open pull request containing only this task file, with exact remote hash and receipt readback; the pull request is then closed without merge and its branch is deleted.",
+      "evidence_type": "object",
+      "id": "single-disposable-publication",
+      "verifier": "isolated live publication and cleanup receipt"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.bureau"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T022"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "registry_mutation",
+      "note": "This is an isolated live canary. The generated pull request must be verified and then closed without merge; it grants no deployment or queue authority.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-MACHINE-READABILITY-V1-T023.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Prove one deployed T022 publication end to end as a disposable open pull request, then close it without merging any test task into Registry truth.",
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T023",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "metadata": {
+    "canary": {
+      "disposable": true,
+      "expected_runtime_commit": "ebbc425588c0cfb671883e8e3cc14dd323f2c738",
+      "must_not_merge": true,
+      "source_task": "OPERATOR-MACHINE-READABILITY-V1-T022"
+    },
+    "does_not_establish": [
+      "registry task truth unless merged",
+      "merge authority",
+      "deployment authority",
+      "queue readiness"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-9d2810a5572cbe6be162a526",
+      "event_id": 802,
+      "event_created_at": "2026-07-19T21:38:33.174494Z",
+      "request_sha256": "152ca3588f5d995a482d85a6a90d48a32fba6a65cc6d4bccc04a731e4d4e896a",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live_runtime_audit",
+        "locator": "bureau-runtime-canary:OPERATOR-MACHINE-READABILITY-V1-T022@8c4c448e9b475412164be592b4648c3644dab655",
+        "observed_at": "2026-07-19T21:38:33.168806Z",
+        "sha256": "ad80c712eb218828bef40d9fce81aa60390ea8e7869cb964925a601895069fd9"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 999
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "bureau",
+    "grabowski",
+    "git",
+    "github",
+    "recovery"
+  ],
+  "rollback": {
+    "strategy": "Close the canary pull request without merge, delete its remote branch, preserve the publication receipt and leave Registry main unchanged."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Disposable T022 deployed-publisher live canary"
+}

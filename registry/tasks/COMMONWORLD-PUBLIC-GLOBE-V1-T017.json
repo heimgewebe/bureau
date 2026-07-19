@@ -1,0 +1,101 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The CommonProject schema defines commons_type with exactly the same eleven-value vocabulary as the proposal schema, without a second divergent enum.",
+      "id": "canonical-schema"
+    },
+    {
+      "assertion": "Every canonical Commonworld catalog record contains one explicit commons_type value that has been reviewed against the record's public evidence rather than silently inferred.",
+      "id": "catalog-materialization"
+    },
+    {
+      "assertion": "After migration, canonical catalog validation rejects missing, null and unknown commons_type values fail-closed.",
+      "id": "canonical-validation"
+    },
+    {
+      "assertion": "Runtime theme derivation remains only for explicitly documented legacy or external inputs, never overrides an explicit value, and is covered by precedence and invalid-value tests.",
+      "id": "compatibility-boundary"
+    },
+    {
+      "assertion": "Category assignment uses public catalog evidence only, creates no location or access claims, and records any genuinely ambiguous classifications for editorial review.",
+      "id": "privacy-and-provenance"
+    },
+    {
+      "assertion": "Closeout includes the reviewed migration diff, exact-head unit and browser tests, green CI, Pages deployment and public readback of representative categories.",
+      "id": "evidence-bound-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T007"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Migrate the canonical CommonProject schema and catalog in an isolated worktree. Do not infer Commons-Art from hidden or private data. Require exact-head tests, complete diff review, green CI, Pages deployment and public readback before closeout.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Add an explicit, editorially reviewed commons_type to the canonical CommonProject schema and every canonical catalog record, then restrict deterministic theme derivation to a clearly isolated compatibility path for older external inputs.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T017",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "that theme-derived categories are editorial truth",
+      "that external catalogs use the same vocabulary",
+      "that all future Commons fit one primary category",
+      "automatic migration without review"
+    ],
+    "observed_limit": "PR #105 exposes Commons-Art immediately by deriving missing values from ordered public theme rules. This is deterministic and tested, but the canonical CommonProject schema and current catalog records still do not carry an explicit editorially reviewed commons_type value.",
+    "queue_mutated": false,
+    "registered_at": "2026-07-19",
+    "source": "Commonworld PR #105 implementation review follow-up",
+    "source_diff_sha256": "e691d71765dcaabde697f5ba459d0ad5167a152f91b09e87ae0e185aa47e205e",
+    "source_head": "60fdd124f0e646efb839d1991f084d4ad7e2eb9a",
+    "source_pr": 105,
+    "source_repository": "heimgewebe/commonworld",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-4c0241aaddcddbcfd29bd1f6",
+      "event_id": 779,
+      "event_created_at": "2026-07-19T15:48:04.125739Z",
+      "request_sha256": "750f1875f8bb7192624bc707245ba6080ea3aed52f1f44afd35b9460b3c0b02b",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "chatgpt:commonworld-pr105-review-follow-up",
+        "observed_at": "2026-07-19T15:48:04.120161Z",
+        "sha256": "e691d71765dcaabde697f5ba459d0ad5167a152f91b09e87ae0e185aa47e205e"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 950
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Materialize Commons-Art in the canonical CommonProject catalog"
+}

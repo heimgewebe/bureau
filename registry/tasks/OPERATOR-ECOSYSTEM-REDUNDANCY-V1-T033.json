@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T033",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Historische Repositories klassifizieren und Archivierungsaufgaben registrieren",
+  "state": "planned",
+  "goal": "Livebefund: Kein Repository der Organisation ist archiviert, obwohl Heimlern ausdrücklich eingefrorene historische Referenz ist und Heimgeist, ACS, Leitwerk sowie SemantAH erhebliche Rollenüberlappungen oder überholte Consumerketten zeigen. Aufgabe: Consumer, Runtime, Contracts, PRs und historische Belege je Repository prüfen; aktive, Referenz-, Migrations- und Archivrollen eindeutig setzen; für jeden belegten Archivkandidaten eine eigene ressourcenspezifische Folgeaufgabe registrieren. Diese Aufgabe selbst archiviert kein Repository. Alte Dependabot-PRs werden gesammelt klassifiziert.",
+  "priority": {
+    "lane": "later",
+    "rank": 200
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/systemkatalog"
+  },
+  "claims": [
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T031"
+  ],
+  "acceptance": [
+    {
+      "id": "source-event-bound",
+      "assertion": "Task metadata preserves the originating live-register event id and source."
+    },
+    {
+      "id": "reviewed-before-effect",
+      "assertion": "Any repository effect remains review-before-effect and does not follow from the live event alone."
+    },
+    {
+      "id": "consumer-graph",
+      "assertion": "Runtime, contracts, open PRs and downstream consumers are checked for every archive candidate."
+    },
+    {
+      "id": "archive-actions-split",
+      "assertion": "Every proposed GitHub archival action is published as a separate repository-specific task with exact consumer and post-state acceptance; this task performs no archival mutation."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_live_register",
+    "live_register_event_id": 739,
+    "live_register_candidate_id": "ECOSYSTEM-REPOSITORY-LIFECYCLE-ARCHIVAL-V1",
+    "live_register_created_at": "2026-07-19T03:47:37.213451Z",
+    "live_register_source": "chatgpt-operator-redundancy-20260719",
+    "promotion_required_from_event": true,
+    "does_not_establish": [
+      "registry_task_truth",
+      "queue_truth",
+      "claim_authority",
+      "dispatch_authority",
+      "merge_readiness",
+      "repository_archive_authority"
+    ]
+  }
+}

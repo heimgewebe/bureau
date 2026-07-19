@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T030",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "RepoBrief-Quellcheckouts nach RepoGround-Cutover schließen",
+  "state": "planned",
+  "goal": "Livebefund: Kein Prozess nutzt RepoBrief, Lenskit oder rLens; dennoch liegen 43 alte RepoBrief-Quellcheckouts parallel zu 42 RepoGround-Quellcheckouts. Aufgabe: absolute Receipt- und Consumerreferenzen inventarisieren, erforderliche historische Quellen hashgebunden bewahren, übrige Altquellen sicher schließen und den RepoGround-Publikationspfad unverändert verifizieren.",
+  "priority": {
+    "lane": "next",
+    "rank": 81
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground",
+      "path:/home/alex/repos/.repobrief-sources",
+      "path:/home/alex/repos/.repoground-sources",
+      "host:heim-pc"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T025",
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026"
+  ],
+  "acceptance": [
+    {
+      "id": "source-event-bound",
+      "assertion": "Task metadata preserves the originating live-register event id and source."
+    },
+    {
+      "id": "reviewed-before-effect",
+      "assertion": "Any repository effect remains review-before-effect and does not follow from the live event alone."
+    },
+    {
+      "id": "reference-inventory",
+      "assertion": "Absolute receipt, benchmark and consumer references to RepoBrief source paths are inventoried."
+    },
+    {
+      "id": "repoground-readback",
+      "assertion": "Canonical RepoGround publication and read paths remain healthy after closeout."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_live_register",
+    "live_register_event_id": 736,
+    "live_register_candidate_id": "REPOGROUND-REPOBRIEF-SOURCE-CLOSEOUT-V1",
+    "live_register_created_at": "2026-07-19T03:46:46.864453Z",
+    "live_register_source": "chatgpt-operator-redundancy-20260719",
+    "promotion_required_from_event": true,
+    "does_not_establish": [
+      "registry_task_truth",
+      "queue_truth",
+      "claim_authority",
+      "dispatch_authority",
+      "merge_readiness"
+    ]
+  }
+}

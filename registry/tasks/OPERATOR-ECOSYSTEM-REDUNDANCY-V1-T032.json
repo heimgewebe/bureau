@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T032",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Heimserver aus aktiver Fleet- und Infrastrukturwahrheit schließen",
+  "state": "blocked",
+  "goal": "Livebefund: Heimserver ist in Grabowskis Fleet weiterhin aktiviert, der SSH-Readback endet jedoch mit No route to host. Infra PR #131 enthält bereits die lokal validierte Entfernung aus aktiver Geräte-, Rollen- und Expositionswahrheit, ist aber durch externe CI-Voraussetzungen blockiert. Aufgabe: PR und Blocker evidenzgebunden abschließen, danach Fleet, SSH-Ziele, Cockpit-Einstiege und Runbooks konsistent migrieren; historische Runtimebelege bleiben nichtautoritativ erhalten.",
+  "priority": {
+    "lane": "next",
+    "rank": 82
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/infra",
+      "path:/home/alex/.config/grabowski/fleet.json",
+      "host:heim-pc",
+      "host:heimserver"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.infra",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020"
+  ],
+  "acceptance": [
+    {
+      "id": "source-event-bound",
+      "assertion": "Task metadata preserves the originating live-register event id and source."
+    },
+    {
+      "id": "reviewed-before-effect",
+      "assertion": "Any repository effect remains review-before-effect and does not follow from the live event alone."
+    },
+    {
+      "id": "infra-pr-bound",
+      "assertion": "Infra PR #131 and its external CI blocker are re-read before mutation."
+    },
+    {
+      "id": "fleet-convergence",
+      "assertion": "Fleet, SSH targets, runbooks and catalog agree after retirement."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_live_register",
+    "live_register_event_id": 738,
+    "live_register_candidate_id": "HEIMSERVER-ACTIVE-TRUTH-RETIREMENT-V1",
+    "live_register_created_at": "2026-07-19T03:47:26.267079Z",
+    "live_register_source": "chatgpt-operator-redundancy-20260719",
+    "promotion_required_from_event": true,
+    "does_not_establish": [
+      "registry_task_truth",
+      "queue_truth",
+      "claim_authority",
+      "dispatch_authority",
+      "merge_readiness"
+    ]
+  }
+}

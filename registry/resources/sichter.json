@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "id": "repo.sichter",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/sichter",
+  "github_slug": "heimgewebe/sichter",
+  "grabowski_key": "repo:/home/alex/repos/sichter"
+}

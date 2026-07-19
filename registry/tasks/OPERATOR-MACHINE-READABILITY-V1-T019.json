@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T019",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Hash-pin PyYAML in the Weltgewebe Agent Safety workflow",
+  "state": "planned",
+  "goal": "Make the Weltgewebe Agent Safety dependency installation reproducible and fail closed by binding PyYAML to reviewed package hashes instead of relying on a version constraint alone.",
+  "priority": {
+    "lane": "later",
+    "rank": 19
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/.github/workflows/agent-safety-preflight.yml"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Workflow and dependency changes require exact package provenance, current-main CI and no weakening of the Agent contract gate."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "reviewed-hash-set",
+      "assertion": "The exact supported PyYAML distributions are recorded with reviewed SHA-256 hashes, Python and platform compatibility, and an update procedure that cannot silently widen the accepted artifact set.",
+      "verifier": "dependency manifest review",
+      "evidence_type": "object"
+    },
+    {
+      "id": "fail-closed-install",
+      "assertion": "The Agent Safety workflow installs PyYAML with hash verification and fails before contract validation when the artifact, version or hash differs from the reviewed set.",
+      "verifier": "workflow integration test",
+      "evidence_type": "object"
+    },
+    {
+      "id": "negative-proof",
+      "assertion": "Tests or a reproducible local workflow fixture prove that a wrong hash, missing hash and unlisted distribution are rejected without fallback to an unhashed installation.",
+      "verifier": "negative dependency tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "gate-preservation",
+      "assertion": "All Agent contract, schema, readiness and generated-artifact checks remain unchanged in authority and pass on current main after the dependency hardening.",
+      "verifier": "current-main CI",
+      "evidence_type": "boolean"
+    }
+  ],
+  "rollback": {
+    "strategy": "Revert only the dependency installation change to the last reviewed version-pinned workflow while preserving all Agent Safety checks; never bypass the workflow on package resolution failure."
+  },
+  "metadata": {
+    "registered_at": "2026-07-19T06:10:37+02:00",
+    "source_pr": "heimgewebe/weltgewebe#1489",
+    "source_diff_sha256": "ab673daedea3bf553917c4bd32cbca35295e0e198029bc41160c582007ced46d",
+    "candidate_id": "candidate-a9acb7f74893fa7d2d270fc7",
+    "candidate_event_id": 741,
+    "source_finding": "The workflow pins PyYAML by version but not by package hash.",
+    "does_not_establish": [
+      "a known dependency compromise",
+      "task readiness",
+      "merge readiness"
+    ]
+  }
+}

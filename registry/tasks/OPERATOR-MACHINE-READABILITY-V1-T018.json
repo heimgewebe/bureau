@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T018",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Migrate Weltgewebe legacy validation commands and duplicate preflights",
+  "state": "planned",
+  "goal": "After consumer parity is proven, replace free-form validation_commands, legacy minimal parsers and duplicate Agent preflight surfaces in Weltgewebe with named fail-closed validation profiles and one canonical contract path, then remove only the superseded compatibility code.",
+  "priority": {
+    "lane": "later",
+    "rank": 18
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/weltgewebe"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Migration may remove compatibility paths only after exact consumer inventory, parity tests and rollback evidence."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau"
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T017"
+  ],
+  "acceptance": [
+    {
+      "id": "consumer-inventory",
+      "assertion": "Every consumer of validation_commands, legacy Agent contract parsers and duplicate preflight entrypoints is inventoried with exact repository path, invocation source and current compatibility requirement.",
+      "verifier": "repository search and consumer matrix",
+      "evidence_type": "object"
+    },
+    {
+      "id": "named-profile-parity",
+      "assertion": "Named validation profiles cover every retained validation intent with deterministic argv, fail-closed result semantics and negative tests for omitted, unknown or softened checks.",
+      "verifier": "unit and integration tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "single-canonical-path",
+      "assertion": "Agent contract interpretation and preflight reach one canonical implementation; compatibility adapters are thin projections and cannot establish an independent truth or execution authority.",
+      "verifier": "architecture and drift tests",
+      "evidence_type": "boolean"
+    },
+    {
+      "id": "safe-removal",
+      "assertion": "Superseded parsers and free-form command fields are removed only after current-main CI, fresh-session consumer proof and rollback fixtures pass; no unrelated task or runtime behavior changes.",
+      "verifier": "current-main CI and rollback test",
+      "evidence_type": "object"
+    }
+  ],
+  "rollback": {
+    "strategy": "Restore the compatibility adapters while retaining the canonical agent-contract.json schema and named profile definitions; never restore a generic repository write operator."
+  },
+  "metadata": {
+    "registered_at": "2026-07-19T06:10:16+02:00",
+    "source_pr": "heimgewebe/weltgewebe#1489",
+    "source_diff_sha256": "ab673daedea3bf553917c4bd32cbca35295e0e198029bc41160c582007ced46d",
+    "candidate_id": "candidate-fe3abe2186588519f248c019",
+    "candidate_event_id": 740,
+    "source_finding": "Legacy validation_commands, minimal parsers and duplicate preflight surfaces remain intentionally transitional after the canonical Agent contract merge.",
+    "does_not_establish": [
+      "consumer parity",
+      "permission to remove compatibility code before proof",
+      "task readiness",
+      "merge readiness"
+    ]
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The adapter accepts one reviewed merge commit, verifies its tree and remote-main binding, creates a clean detached versioned release checkout, installs frozen dependencies, builds the runtime and records exact source and artifact identities before switching services.",
+      "id": "immutable-release-identity"
+    },
+    {
+      "assertion": "leitstand.service and leitstand-storage-health.service are generated from reviewed templates or typed configuration, switched as one bounded transaction, and automatically restored to the previous verified release when any post-switch assertion fails.",
+      "id": "coupled-unit-transaction"
+    },
+    {
+      "assertion": "Local and canonical HTTPS health, active and removed route matrices, permanent RepoGround redirect, listener ownership, process cwd, unit working directories, storage-producer result and clean release status are verified with structured parsers rather than fragile raw-header matching.",
+      "id": "structured-readbacks"
+    },
+    {
+      "assertion": "Each attempt writes an immutable receipt with old and new release IDs, unit hashes, health and route evidence, outcome classification and rollback evidence; an already completed identical deployment is detected without repeating effects.",
+      "id": "receipt-and-idempotency"
+    },
+    {
+      "assertion": "Runbooks, operator catalog and repository entry points identify the actual user-systemd production path and clearly distinguish it from optional Docker/Compose or static-preview paths.",
+      "id": "production-contract-alignment"
+    },
+    {
+      "assertion": "Automated tests cover pre-switch failure, unit-generation drift, health failure, route-readback failure, producer failure, automatic rollback and verification-script false negatives such as CRLF-sensitive redirect parsing.",
+      "id": "failure-tests"
+    },
+    {
+      "assertion": "A reviewed merged release is deployed through the adapter, exact commit and tree are live, all required snapshots are within their source-specific freshness limits, removed routes remain 404, and the prior release remains available as bounded rollback evidence.",
+      "id": "live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.leitstand"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-PC-HYGIENE-V1-T004",
+    "STORAGE-LIFECYCLE-V1-T007"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "User authorized autonomous task completion on 2026-07-19; exact live state, isolated worktree, diff-bound review, green CI, merge and fail-closed deployment readback remain mandatory.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand"
+  },
+  "goal": "Implement and adopt one first-class, receipt-bound deployment adapter for immutable Leitstand user-systemd releases so exact source identity, build, coupled unit switching, rollback and live readbacks are reproducible instead of reconstructed ad hoc.",
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T015",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation before owner-repository PR and merge",
+      "permission to alter foreign dirty checkouts or units",
+      "successful deployment without exact post-effect readbacks"
+    ],
+    "observed_failure": "The first safe rollout attempt restored the prior release because a raw HTTP-header regex mishandled CRLF despite healthy service and route behavior.",
+    "registered_from": "Leitstand PR #174 deployment closeout on 2026-07-19",
+    "source_deployment_receipt": "/home/alex/.local/state/leitstand/deployments/1484a584af057707c22667959785330482aa1f4c/deploy-result.json",
+    "source_merge_commit": "1484a584af057707c22667959785330482aa1f4c",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-5a1b542082d2a81a02e5c9dd",
+      "event_id": 777,
+      "event_created_at": "2026-07-19T15:34:49.607560Z",
+      "request_sha256": "ae1a882676bd8b7a745ffd8312fe94a10d08e21dc23a9f2bae1dc951a513a623",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-rebase",
+        "locator": "/home/alex/.local/state/grabowski/bureau-intake/proposals/258e6ca269bb354acb60c5a07283d7805247f5d8daab71c58cdf4c9199901021/plan.json",
+        "observed_at": "2026-07-19T16:30:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 15
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "grabowski",
+    "systemd",
+    "deployment",
+    "rollback",
+    "runtime-readback"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Leitstand versioned user-systemd deployment adapter"
+}

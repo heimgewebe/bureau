@@ -3,7 +3,7 @@
   "id": "SCHAUWERK-COMPANION-HOST-HARDENING-V1-T001",
   "initiative": "SCHAUWERK-COMPANION-HOST-HARDENING-V1",
   "title": "Deploy companion on a header-capable free host",
-  "state": "blocked",
+  "state": "verified",
   "goal": "Provide a repository-controlled free HTTPS deployment for the existing deterministic companion bundle that passes the complete security-header doctor and remains loadable inside authenticated Miro.",
   "depends_on": [],
   "priority": {
@@ -64,7 +64,7 @@
     "registered_at": "2026-07-17T15:18:03Z",
     "source": "Schauwerk PR #100 Pages live readback",
     "current_fallback_url": "https://heimgewebe.github.io/schauwerk/",
-    "current_build_digest": "7ffbe6210037e17886471f648e2fefaf853815cf4c2de18fef2e43b7ff8313db",
+    "current_build_digest": "5b23d1eef7f140cafda7d3844abc1cec1f1a8d0689a7604aae1b927cadac9573",
     "observed_missing_headers": [
       "Content-Security-Policy",
       "X-Frame-Options",
@@ -73,8 +73,7 @@
       "X-Content-Type-Options"
     ],
     "current_miro_embedding": "verified_successful",
-    "block_reason": "The verified header-capable backend is running only on Heimberry loopback. Public HTTPS exposure requires one interactive owner authorization at Cloudflare or Tailscale; no safe noninteractive authorization path is available.",
-    "implementation_status": "repository_host_merged_internal_backend_live_public_cutover_blocked",
+    "implementation_status": "completed_public_funnel_release_doctor_and_authenticated_miro_readback_verified",
     "implementation_evidence": {
       "schauwerk_pull_request": "heimgewebe/schauwerk#102",
       "reviewed_base_sha": "17956131e758173c081f54d0b3d5c8aef1b54c3f",
@@ -92,17 +91,145 @@
         "unit_sha256": "e39ad9949e58525f224fb5d011f8b2c1798c96f4030483f8964ad22c625dfbfe",
         "archive_sha256": "a147f16257a36178cc16f06708385017c606d37a1ba42747a9b1a12b32d9945c",
         "readback": "GET/HEAD, exact body digest, CSP/frame-ancestors, Permissions-Policy, Referrer-Policy, nosniff and HSTS passed; writes return 405."
+      },
+      "public_closeout": {
+        "provider": "Tailscale Funnel",
+        "public_url": "https://heimberry.tail6dbb90.ts.net/",
+        "free_tier": true,
+        "https_enforced": true,
+        "backend": "127.0.0.1:18082",
+        "service": "schauwerk-companion.service active/running",
+        "build_digest": "5b23d1eef7f140cafda7d3844abc1cec1f1a8d0689a7604aae1b927cadac9573",
+        "server_sha256": "bee9863328f6b8afd8044a15199b46edd5d452aa4a07d941ba591b110237a581",
+        "release_digest": "a03cbdc1d7121a16620ddaead0837e191c7a79eff317998c9a23cb7a1b73fd4c",
+        "release_manifest": {
+          "path": "/home/alex/.local/state/schauwerk/evidence/tailscale-funnel-release-20260719-v2.json",
+          "sha256": "d71e80d62fc50621b430f58bcfd02b0500d63ad719e39408f6415cc749bc7590"
+        },
+        "public_readback": {
+          "path": "/home/alex/.local/state/schauwerk/evidence/tailscale-funnel-public-readback-20260719-v2.json",
+          "sha256": "abf537eb6d2253b395c0a1ab36d41be3335acc9f46a6f052e053252f9f971170"
+        },
+        "release_doctor_job": "grabowski-job-77482ef55841",
+        "release_doctor_receipt_sha256": "ce45c685bd82c7d58c68a2602e472e4136733e29c1c78f2cf55fb0a594279308",
+        "release_doctor_result": "PASS: all eight public files returned 200 with exact SHA-256, expected content types and required security headers."
+      },
+      "csp_runtime_fix": {
+        "schauwerk_pull_request": "heimgewebe/schauwerk#104",
+        "reviewed_base_sha": "59d48c33adec0eab62af1a139d18412242d6bb37",
+        "reviewed_head_sha": "ca2e6ca27452d75c741d8eea6562697acaf2ef2c",
+        "merge_commit_sha": "5ef44d5503359ceac35bb366047bbb4449c0f723",
+        "merge_parents_verified": [
+          "59d48c33adec0eab62af1a139d18412242d6bb37",
+          "ca2e6ca27452d75c741d8eea6562697acaf2ef2c"
+        ],
+        "final_patch_path": "/home/alex/iCloud/Drive/halde/schauwerk-miro-sdk-runtime-csp-v1.diff",
+        "final_patch_sha256": "32f8f375eef413d9e1b160dc28c7de8bf4b8b2b554c37ac5bf1e3f3a8158a993",
+        "final_patch_size_bytes": 8501,
+        "self_review": {
+          "path": "/home/alex/.local/state/schauwerk/evidence/miro-sdk-runtime-csp-v1-self-review.json",
+          "sha256": "c2ac531c84f1953219febbcfc80f7332bd194a1e3bc0b2c13e275625c8d69420",
+          "result": "PASS"
+        },
+        "ci": "Python 3.11/3.12, CodeQL Python, JavaScript/TypeScript and Actions passed at the exact reviewed head.",
+        "root_cause": "Miro loads versioned SDK runtime chunks below https://miro.com/app/static/; the previous CSP allowed only the bootstrap file and caused SdkConnectionError."
+      },
+      "miro_closeout": {
+        "app_name": "Schauwerk Companion",
+        "app_id": "3458764678469340030",
+        "team": "Education team",
+        "saved_app_url": "https://heimberry.tail6dbb90.ts.net/",
+        "enabled_scopes": [
+          "boards:read"
+        ],
+        "write_scopes_enabled": false,
+        "authenticated_board": true,
+        "launcher_frame_persistent": true,
+        "real_catalog_click": true,
+        "panel_frame_loaded": true,
+        "sdk_calls": [
+          "board.getInfo",
+          "board.getSelection",
+          "board.get(type=frame)",
+          "board.get(id=frame)"
+        ],
+        "selection_count": 0,
+        "frame_count": 5,
+        "sdk_error": null,
+        "readback": {
+          "path": "/home/alex/.local/state/schauwerk/evidence/miro-companion-public-readback-20260719-v2.json",
+          "sha256": "e5d6466a8a8e47559508cb2831de23a6aa984c9de891dbfea0103ab792ad6ea2",
+          "success": true
+        },
+        "screenshot": {
+          "path": "/home/alex/.local/state/schauwerk/evidence/miro-companion-public-in-board-20260719-v2.png",
+          "sha256": "d498660db4fe1638833846b526793fe2df4fe3c15ab3dd2634bfcbd900d40282",
+          "bytes": 161456
+        }
       }
     },
     "satisfied_acceptance": {
-      "byte-identity": "The internal Heimberry deployment serves the exact deterministic build digest 7ffbe6210037e17886471f648e2fefaf853815cf4c2de18fef2e43b7ff8313db from a digest-bound release after atomic receipt and file verification.",
-      "no-regression": "The existing repository-owned GitHub Pages fallback remains unchanged, public and functional while the hardened public cutover is blocked."
+      "durable-free-host": "PASS: Tailscale Funnel persistently exposes the Heimberry loopback service over enforced HTTPS without a paid plan; the exact systemd release path is active and read back.",
+      "byte-identity": "PASS: the release doctor returned exact SHA-256 matches for all eight public files against deterministic build digest 5b23d1eef7f140cafda7d3844abc1cec1f1a8d0689a7604aae1b927cadac9573.",
+      "security-headers": "PASS: live public responses emit path-scoped Miro SDK CSP, frame-ancestors, Permissions-Policy, Referrer-Policy, nosniff, HSTS and no-store.",
+      "miro-compatibility": "PASS: the authenticated Education-team board kept the launcher connected, displayed the app in the catalogue, opened panel.html after a real click and completed read-only board plus frame readbacks without SDK error.",
+      "no-regression": "PASS: the repository-owned GitHub Pages fallback remains unchanged and documented while the canonical hardened URL is the Tailscale Funnel endpoint."
     },
-    "open_acceptance": {
-      "durable-free-host": "Not satisfied: the header-capable service is currently loopback-only and has no public HTTPS URL.",
-      "security-headers": "Backend responses satisfy the header contract, but no public release-doctor PASS exists yet.",
-      "miro-compatibility": "The existing Pages URL remains proven in Miro; the new hardened URL cannot be tested until public exposure is authorized."
+    "open_acceptance": {},
+    "observed_at": "2026-07-19T14:01:16+02:00",
+    "resolved_blockers": [
+      {
+        "id": "public-provider-authorization",
+        "resolved_at": "2026-07-19T14:01:16+02:00",
+        "resolution": "The user explicitly authorized the free Tailscale Funnel path; operator permission and Funnel were enabled and read back without paid services."
+      },
+      {
+        "id": "miro-sdk-runtime-csp",
+        "resolved_at": "2026-07-19T14:01:16+02:00",
+        "resolution": "Schauwerk PR #104 path-scoped script authority to Miro static SDK chunks, preserving standalone deployment and read-only scopes."
+      }
+    ],
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "task_id": "SCHAUWERK-COMPANION-HOST-HARDENING-V1-T001",
+          "kind": "pull_request",
+          "authority": "github",
+          "source_ref": "heimgewebe/schauwerk#104",
+          "head_sha": "ca2e6ca27452d75c741d8eea6562697acaf2ef2c",
+          "merge_commit_sha": "5ef44d5503359ceac35bb366047bbb4449c0f723",
+          "diff_sha256": "32f8f375eef413d9e1b160dc28c7de8bf4b8b2b554c37ac5bf1e3f3a8158a993"
+        },
+        {
+          "task_id": "SCHAUWERK-COMPANION-HOST-HARDENING-V1-T001",
+          "kind": "https_release_doctor",
+          "authority": "tailscale-funnel",
+          "source_ref": "/home/alex/.local/state/schauwerk/evidence/tailscale-funnel-public-readback-20260719-v2.json",
+          "content_sha256": "abf537eb6d2253b395c0a1ab36d41be3335acc9f46a6f052e053252f9f971170"
+        },
+        {
+          "task_id": "SCHAUWERK-COMPANION-HOST-HARDENING-V1-T001",
+          "kind": "miro_web_sdk_readback",
+          "authority": "miro-authenticated-browser",
+          "source_ref": "/home/alex/.local/state/schauwerk/evidence/miro-companion-public-readback-20260719-v2.json",
+          "content_sha256": "e5d6466a8a8e47559508cb2831de23a6aa984c9de891dbfea0103ab792ad6ea2"
+        },
+        {
+          "task_id": "SCHAUWERK-COMPANION-HOST-HARDENING-V1-T001",
+          "kind": "visual_evidence",
+          "authority": "miro-authenticated-browser",
+          "source_ref": "/home/alex/.local/state/schauwerk/evidence/miro-companion-public-in-board-20260719-v2.png",
+          "content_sha256": "d498660db4fe1638833846b526793fe2df4fe3c15ab3dd2634bfcbd900d40282"
+        }
+      ]
     },
-    "observed_at": "2026-07-18T10:22:30Z"
+    "completed_at": "2026-07-19T14:01:16+02:00",
+    "outcome": "The deterministic companion is served byte-identically through a free persistent Tailscale Funnel with the complete security-header contract. The authenticated Miro app uses only boards:read, appears in the catalogue, opens the public panel and completes board plus frame readbacks without SDK error.",
+    "verification": {
+      "task_sha256": "7b3d9e9ec1884347268daa8a218bc8abe28c2dbd80ea67d8580e2ddab0e1ed58",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   }
 }

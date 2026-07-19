@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "id": "SCHAUWERK-MIRO-APP-ASSET-LIFECYCLE-V1-T001",
+  "initiative": "SCHAUWERK-MIRO-APP-ASSET-LIFECYCLE-V1",
+  "title": "Make Miro app icons repository-controlled",
+  "state": "planned",
+  "goal": "Move the already verified Schauwerk Companion outline and colored icons into a deterministic repository contract, test their provider constraints and update the existing app with exact digest-bound readback.",
+  "depends_on": [],
+  "priority": {
+    "lane": "later",
+    "rank": 720
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "approval": {
+      "required_level": "reviewed_plan",
+      "action_class": "repository_mutation",
+      "note": "Update only icon assets of existing Schauwerk Companion. Preserve app ID, Education-team installation, Funnel URL and exactly boards:read. Do not recreate or remove the app."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "github",
+    "miro",
+    "browser"
+  ],
+  "acceptance": [
+    {
+      "id": "canonical-assets",
+      "assertion": "Outline and colored icons are committed as canonical assets or generated deterministically from one committed source, with stable SHA-256 and no external font dependency."
+    },
+    {
+      "id": "provider-contract-tests",
+      "assertion": "Tests enforce square dimensions, supported SVG structure, monochrome outline semantics and deterministic bytes; invalid icons fail closed."
+    },
+    {
+      "id": "operator-contract",
+      "assertion": "Documentation and a receipt format bind app ID, asset digests, upload responses and provider readback without storing credentials or session material."
+    },
+    {
+      "id": "live-readback",
+      "assertion": "The existing app metadata reports both repository-controlled icons and an authenticated Education-team board renders the catalogue entry after a fresh load."
+    },
+    {
+      "id": "least-privilege",
+      "assertion": "App ID, team installation, canonical Funnel URL and exactly boards:read remain unchanged; no paid feature or broader provider mutation is used."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-19T14:01:16+02:00",
+    "source": "SCHAUWERK-COMPANION-HOST-HARDENING-V1-T001 closeout",
+    "current_evidence_only_assets": "/home/alex/.local/state/schauwerk/evidence/miro-app-icons-20260719",
+    "does_not_establish": [
+      "that icon upload is required for current runtime correctness",
+      "permission to alter app scopes",
+      "permission to recreate or uninstall the app"
+    ]
+  }
+}

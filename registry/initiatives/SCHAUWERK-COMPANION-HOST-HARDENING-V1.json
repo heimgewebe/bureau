@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "SCHAUWERK-COMPANION-HOST-HARDENING-V1",
   "title": "Schauwerk Companion host security hardening",
-  "state": "active",
-  "commitment": "later",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Move or front the proven Miro Companion with a free durable HTTPS host that emits the complete required security-header contract while preserving deterministic bytes and successful Miro embedding.",
   "completion": [
     "A free durable host serves the exact deterministic companion build under repository-controlled deployment.",
@@ -26,11 +26,24 @@
       "permission to weaken the release doctor"
     ],
     "implementation_progress": {
-      "observed_at": "2026-07-18T10:22:30Z",
-      "repository_host": "Merged in heimgewebe/schauwerk#102 at 59d48c33adec0eab62af1a139d18412242d6bb37.",
-      "internal_runtime": "Verified, hardened loopback backend active on Heimberry.",
-      "remaining_gate": "One interactive provider-owner authorization, then public release-doctor and authenticated Miro readback against the hardened URL."
+      "observed_at": "2026-07-19T14:01:16+02:00",
+      "repository_host": "Merged in heimgewebe/schauwerk#102 and runtime-CSP closeout #104.",
+      "public_runtime": "Verified Tailscale Funnel at https://heimberry.tail6dbb90.ts.net/ with release-doctor PASS.",
+      "miro": "Verified in Education team with only boards:read; launcher, catalogue click, panel and frame readback passed.",
+      "remaining_gate": null
     },
-    "current_blocker": "Cloudflare GitHub OAuth or Tailscale Funnel requires an interactive owner login/approval. No account bypass or paid plan is authorized."
+    "completed_at": "2026-07-19T14:01:16+02:00",
+    "verified_task": "SCHAUWERK-COMPANION-HOST-HARDENING-V1-T001",
+    "implementation_pull_requests": [
+      "heimgewebe/schauwerk#102",
+      "heimgewebe/schauwerk#104"
+    ],
+    "implementation_merge_commits": [
+      "59d48c33adec0eab62af1a139d18412242d6bb37",
+      "5ef44d5503359ceac35bb366047bbb4449c0f723"
+    ],
+    "canonical_public_url": "https://heimberry.tail6dbb90.ts.net/",
+    "outcome": "The free persistent Tailscale Funnel serves the exact deterministic companion release with the full header contract, and authenticated Miro launcher, catalogue entry, panel and read-only SDK calls are verified.",
+    "successor_initiative": "SCHAUWERK-MIRO-APP-ASSET-LIFECYCLE-V1"
   }
 }

@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "id": "SCHAUWERK-MIRO-APP-ASSET-LIFECYCLE-V1",
+  "title": "Schauwerk Miro app asset lifecycle v1",
+  "state": "active",
+  "commitment": "later",
+  "goal": "Make the verified Schauwerk Companion Developer App icons deterministic, repository-controlled and reproducibly deployable without changing scopes, app identity or runtime behavior.",
+  "completion": [
+    "Outline and colored Miro app icons live in the Schauwerk repository with deterministic generation or canonical source files and digest tests.",
+    "The release or operator contract documents exact icon dimensions, monochrome outline requirements, upload procedure and readback.",
+    "The existing private Developer App is updated from the repository assets and the authenticated Education-team catalogue renders the expected icon.",
+    "No additional Miro scope, team removal, app recreation or paid provider feature is introduced."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-19T14:01:16+02:00",
+    "source": "SCHAUWERK-COMPANION-HOST-HARDENING-V1-T001 closeout",
+    "predecessor": "SCHAUWERK-COMPANION-HOST-HARDENING-V1",
+    "live_finding": "The verified app icons currently exist only as local evidence files and provider metadata, not as canonical repository assets.",
+    "current_icon_evidence": {
+      "directory": "/home/alex/.local/state/schauwerk/evidence/miro-app-icons-20260719",
+      "outline_sha256": "6ed0fea92b062d6b337eae240655837202f59727444d887b8eb30065958bc5c9",
+      "colored_sha256": "093bd24b1fabd5bfbef88f9c3eb5a9899bc294cf4ca263228d9698fb5d0585bd",
+      "manifest_sha256": "7dc2301814e9abb83521235a8363c7e8d516365103500cd7fa1fcf555f2214ea"
+    },
+    "does_not_establish": [
+      "that the current provider icons are missing or broken",
+      "permission to recreate the Miro app",
+      "permission to broaden Miro scopes",
+      "permission to remove the app for the team"
+    ]
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T007",
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "title": "Bound retention for historical symlink-bearing publications",
+  "goal": "Make RepoGround retention safely process historical publication generations whose candidate tree contains the legacy internal .repobrief-generations/current symlink, without following links, weakening path confinement, rewriting retained evidence, or changing canonical new publication output.",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 4
+  },
+  "depends_on": [
+    "REPOGROUND-LEGACY-RECONCILIATION-V1-T001"
+  ],
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ],
+    "baseline_commit": "8a49b23e3005542fdcf755ee7ce3a1cff692b4bf"
+  },
+  "required_capabilities": [
+    "python",
+    "filesystem-safety",
+    "retention",
+    "testing"
+  ],
+  "acceptance": [
+    {
+      "id": "reproduce",
+      "assertion": "A regression fixture reproduces the observed historical candidate shape containing .repobrief-generations/<generation>/current and the current fail-closed warning."
+    },
+    {
+      "id": "bounded-resolution",
+      "assertion": "Any accepted historical symlink is validated without following it during tree identity calculation, resolves only within the same quarantined candidate, and cannot reference an absolute path, parent traversal, another transaction, or content outside the managed publication root."
+    },
+    {
+      "id": "unsafe-still-rejected",
+      "assertion": "Absolute, escaping, dangling, chained, special-file, substituted-parent and post-validation symlink cases remain fail-closed and leave the source publication untouched."
+    },
+    {
+      "id": "canonical-writer-unchanged",
+      "assertion": "New retention transactions and new publication output continue to use only current RepoGround paths and contracts; no active RepoBrief alias or writer fallback is restored."
+    },
+    {
+      "id": "live-proof",
+      "assertion": "A controlled live retention run clears the specific Bureau warning or explicitly classifies the affected historical publication as protected, while current manifests, the 630 terminal v1 transaction receipts and active publication targets remain intact."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-19T18:10:00+02:00",
+    "source": "Live RepoGround publisher readback after merged PR #1054.",
+    "audit_evidence": "The successful 2026-07-19 publisher run reported prune_failed=1 for heimgewebe/bureau because historical publication 20260718T170140Z-9de6cc811c6a contains .repobrief-generations/heimgewebe__bureau__main-max-260718-1701_merge/current. Publication itself succeeded; retention refused deletion safely.",
+    "does_not_establish": [
+      "That arbitrary symlinks are safe to retain or delete",
+      "That the historical candidate may be rewritten in place",
+      "That the warning blocks RepoGround publication correctness"
+    ]
+  }
+}

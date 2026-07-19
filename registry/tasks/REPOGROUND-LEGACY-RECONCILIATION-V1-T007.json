@@ -67,8 +67,8 @@
       "future health after later deployments"
     ],
     "implemented_at": "2026-07-19T21:39:59+02:00",
-    "verified_at": "2026-07-19T22:10:40.343885+02:00",
-    "resolution_summary": "RepoGround PR #1055 begrenzt die historische Symlink-Anerkennung auf current -> <64-stelliger SHA-256-Ordner> an genau zwei internen Positionen. Der finale Head bestand 4.429 Tests mit 2 Skips und GitHub-CI, wurde als Mergecommit 8dbad67a exakt installiert und entfernte im kontrollierten Livefall ausschließlich den vorab identifizierten Bureau-Kandidaten. Alle 630 älteren Retention-Belege, Nachbarpublikationen, geschützten Ziele und stabilen Manifestziele blieben unverändert; eine neue terminale deleted-Transaktion wurde append-only ergänzt. Nach Wiederherstellung des zuvor extern gestoppten, weiterhin aktivierten Timers lief ein verpasster regulärer, auf acht Publikationen begrenzter Policy-Lauf nach; er endete ohne Fehler, veröffentlichte den exakten RepoGround-Mergecommit und hielt für Bureau drei Versionen zurück.",
+    "verified_at": "2026-07-19T23:28:22+02:00",
+    "resolution_summary": "RepoGround PR #1055 begrenzt die historische Symlink-Anerkennung auf current -> <64-stelliger SHA-256-Ordner> an genau zwei internen Positionen. Der finale Head bestand 4.429 Tests mit 2 Skips und GitHub-CI, wurde als Mergecommit 8dbad67a exakt installiert und entfernte im kontrollierten Livefall ausschließlich den vorab identifizierten Bureau-Kandidaten. Alle 630 älteren Retention-Belege, Nachbarpublikationen, geschützten Ziele und stabilen Manifestziele blieben unverändert; eine neue terminale deleted-Transaktion wurde append-only ergänzt. Nach Wiederherstellung des zuvor extern gestoppten, weiterhin aktivierten Timers lief ein verpasster regulärer, auf acht Publikationen begrenzter Policy-Lauf nach; er endete ohne Fehler, veröffentlichte den exakten RepoGround-Mergecommit und hielt für Bureau drei Versionen zurück. Die anschließende Abschlussprüfung erkannte zusätzlich, dass aktive Generationsschreiber noch den historischen Namen .repobrief-generations verwendeten. RepoGround PR #1056 stellte neue Ausgaben auf .repoground-generations um, ließ den alten Namen ausschließlich als begrenzte historische Lesekompatibilität bestehen, bestand 4.433 Tests mit 2 Skips sowie alle GitHub-Prüfungen und wurde als Mergecommit 572e9d5d bytegleich installiert.",
     "implementation": {
       "repository": "heimgewebe/repoground",
       "pull_request": 1055,
@@ -87,7 +87,38 @@
         "sha256": "563c1b7bc0426e2dad0cf3add021cc418e8a04b39da87b318a3f0d5640415cd3"
       },
       "publisher_sha256": "8681c13acebb62bd881ba2eb3e48112b80bcb3af2d14ea976281ceada23eb9a2",
-      "runtime_commit": "8dbad67aaa13470de66d6eead3c27f6f583dd0b3"
+      "runtime_commit": "8dbad67aaa13470de66d6eead3c27f6f583dd0b3",
+      "canonical_writer_followup": {
+        "pull_request": 1056,
+        "base_commit": "8dbad67aaa13470de66d6eead3c27f6f583dd0b3",
+        "reviewed_head": "f7812af8580cba29757c59489f1e67007b5a2b33",
+        "merge_commit": "572e9d5dd818e57b5e4b8d3a43660eca525be3a6",
+        "changed_files": [
+          "merger/repoground/core/bundle_generation.py",
+          "merger/repoground/tests/test_bundle_generation.py",
+          "merger/repoground/tests/test_fleet_runtime.py",
+          "merger/repoground/tests/test_ground_snapshot_cli.py",
+          "merger/repoground/tests/test_merges_dir_drift.py",
+          "scripts/ops/repoground-publish-fleet",
+          "scripts/repoground-post-merge-surface-smoke.sh"
+        ],
+        "github_ci": "all required and observed checks passed",
+        "full_local_tests": "4433 passed, 2 skipped",
+        "full_test_receipt": {
+          "path": "/home/alex/.local/state/repoground/evidence/t007-canonical-generation-root-pytest.txt",
+          "sha256": "cb8bf74b376f425dcce28c34012e8cdd9f0c701c9ce6c061617b655c50dccea2"
+        },
+        "effect": "New bundle generations use .repoground-generations; .repobrief-generations remains read-only historical compatibility."
+      },
+      "final_runtime": {
+        "commit": "572e9d5dd818e57b5e4b8d3a43660eca525be3a6",
+        "path": "/home/alex/.local/share/repoground-runtime/572e9d5dd818e57b5e4b8d3a43660eca525be3a6",
+        "publisher_sha256": "a7080f166018a7d10971145f7b576a0e2fbdd1c25aabb47b0830f5fd2680891d",
+        "installed_matches_runtime": true,
+        "service": "active/running, enabled, zero restarts",
+        "timer": "active/waiting, enabled",
+        "next_timer_run": "2026-07-20T00:08:11+02:00"
+      }
     },
     "live_evidence": {
       "dry_run": {
@@ -176,12 +207,13 @@
       "reproduce": "PASS: real historical Bureau candidate and original prune warning shape reproduced read-only.",
       "bounded-resolution": "PASS: only current at .repobrief-generations/<scope>/current or bundle/.repobrief-generations/<scope>/current with one relative SHA-256 sibling directory is accepted; links are read with lstat/readlink and never followed.",
       "unsafe-still-rejected": "PASS: tests cover absolute, parent traversal, chained, dangling, misplaced, wrong-name, target-swap, substituted-parent and special-file cases; source remains untouched.",
-      "canonical-writer-unchanged": "PASS: only publisher retention reader and regression tests changed; no RepoBrief writer fallback or new legacy generation output was introduced.",
+      "canonical-writer-unchanged": "PASS: PR #1056 moved all active generation writes to .repoground-generations while retaining .repobrief-generations only for bounded historical reads; no active RepoBrief writer fallback remains.",
       "live-proof": "PASS: one exact unprotected candidate was transactionally deleted; all 630 older receipts and all protected/current controls remained hash-identical; post-run reconciliation reports 631 deleted and zero non-terminal transactions."
     },
     "verification": {
-      "task_sha256": "3c5a3a2d268a8c7451820a3073825c4b7b1b73c1fdef0888e89684930c32fe25",
+      "task_sha256": "e69140eca136693b00b029eef5aae1beb5ca66b07b2ffe90fa40b288a532b3aa",
       "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
-    }
+    },
+    "finalized_at": "2026-07-19T23:28:22+02:00"
   }
 }

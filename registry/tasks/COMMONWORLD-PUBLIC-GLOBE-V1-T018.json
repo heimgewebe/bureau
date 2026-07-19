@@ -1,0 +1,120 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The globe implements and tests planet, macroregion, region, local and focus states whose data forms become semantically more precise rather than merely larger.",
+      "id": "semantic-zoom-states"
+    },
+    {
+      "assertion": "Hue uses exactly the existing eleven-value Commons type vocabulary shared by filter, map, legend and text; no second active category system or blended type colour is introduced.",
+      "id": "canonical-type-colour"
+    },
+    {
+      "assertion": "Coverage state remains a separate pattern and text channel; the current catalog is explicitly unassessed, and catalog absence or numeric zero is never presented as assessed Commons absence.",
+      "id": "coverage-and-unknown-pattern"
+    },
+    {
+      "assertion": "V1 uses deterministic derived spatial buckets from public geometry only. Any future source-backed aggregate-only public region context remains outside CommonProject until its provenance, privacy and zoom contract are separately proven.",
+      "id": "aggregate-region-model"
+    },
+    {
+      "assertion": "Hidden locations never enter geographic geometry or buckets. Privacy-sensitive approximate aggregation obeys coarsening, minimum-uncertainty and k=5 release rules without exposing member identities.",
+      "id": "privacy-and-small-counts"
+    },
+    {
+      "assertion": "The prepared catalog projection provides bounded planet and macroregion GeoJSON-equivalent aggregates, progressively replaced by existing truthful local points, approximate zones and public extents without per-frame reaggregation.",
+      "id": "projection-and-map-layers"
+    },
+    {
+      "assertion": "A compact touch- and keyboard-operable legend and a live textual geographic summary expose the same filtered identity set, type meanings, location precision and unassessed-coverage boundary without relying on colour alone.",
+      "id": "legend-and-text-equivalent"
+    },
+    {
+      "assertion": "Search and all intent filters update aggregate and local map layers plus text output from exactly the same visible CommonProject identity set, with deterministic caching and no anchor-based double counting.",
+      "id": "filter-parity"
+    },
+    {
+      "assertion": "Focused unit and contract tests cover geometry representatives, two-level buckets, identity deduplication, hidden exclusion, filter parity, coverage semantics, deterministic output, noninteractive aggregates, accessibility and performance guardrails.",
+      "id": "automated-evidence"
+    },
+    {
+      "assertion": "Closeout binds full diff and SHA-256 to the exact PR head, records green required CI, identifies the exact merge commit, proves the matching GitHub Pages deployment and performs desktop and mobile/iPad browser readback of zoom transitions, colours, pattern, filters and text parity.",
+      "id": "production-readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T007"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "User explicitly authorized registration, implementation, PR, merge, deployment and live readback for COMMONWORLD-GEOGRAPHIC-IMPRESSIONS-V1. Implement only a derived read-only geographic presentation. Do not add accounts, project administration, hidden-location geometry, inferred country membership or a second public write path.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Make publicly evidenced geographic Commons visible from the complete globe through deterministic, privacy-preserving, filter-consistent semantic zoom, using the existing eleven Commons types for hue, explicit unassessed-coverage semantics and progressive dissolution into truthful public points, zones and extents.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T018",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "assessed global Commons coverage",
+      "country-level completeness",
+      "absence of Commons where the catalog has no record",
+      "permission to reconstruct hidden locations",
+      "a new CommonProject location mode",
+      "a Commonworld administration or publication path",
+      "pairwise color discrimination without labels or patterns"
+    ],
+    "observed_limit": "The current public map exposes exact anchors, approximate zones and public extents only at regional/local zoom. It lacks a truthful planet-to-region distribution of the existing eleven Commons types and currently has no assessed geographic coverage basis or canonical country-region projection.",
+    "queue_mutated": false,
+    "registered_at": "2026-07-19",
+    "source": "User-directed Commonworld geographic impressions and semantic color zoom implementation",
+    "source_repository": "heimgewebe/commonworld",
+    "work_marker": "COMMONWORLD-GEOGRAPHIC-IMPRESSIONS-V1",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-7be9e0f2372a4fb73b893825",
+      "event_id": 797,
+      "event_created_at": "2026-07-19T20:58:45.581693Z",
+      "request_sha256": "27e13829aea5ced76117a2ab9ba2131ca2492e183ade40ad80de77b0c379e3da",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chatgpt:commonworld-geographic-impressions-self-20260719",
+        "observed_at": "2026-07-19T22:45:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 120
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Render truthful geographic Commons impressions across semantic zoom"
+}

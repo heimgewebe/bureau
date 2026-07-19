@@ -1,0 +1,196 @@
+{
+  "acceptance": [
+    {
+      "assertion": "GPT-5.6 Sol high und Claude Fable 5 high besitzen denselben S-Klassen-Grundrang; Aufgabenpassung, Effort, Harness, Ergebnisdaten und Quotenlage dürfen sie gegeneinander ordnen, Anbieteridentität oder feste Anbieteranteile dagegen nicht.",
+      "id": "frontier-peer-prior"
+    },
+    {
+      "assertion": "Sol xhigh ist ein begründungsbedürftiger Eskalationspfad. Claude Opus 4.8, GPT-5.6 Terra high, Claude Sonnet 5 high und Grok 4.5 high bilden die A-Klasse für anspruchsvolle Arbeit; niedrigere Effort- und Durchsatzprofile bleiben darunter und werden auf passende Taskklassen begrenzt.",
+      "id": "quality-and-effort-hierarchy"
+    },
+    {
+      "assertion": "Jede Route ist an ihren eigenen und gegebenenfalls übergeordneten Quotenpool gebunden. Reserveschwellen und Parallelitätsgrenzen werden fail-closed berücksichtigt; bezahlte oder kostenunklare Fallbacks bleiben deaktiviert und unbekannte Quoten begründen keine behauptete Verfügbarkeit.",
+      "id": "quota-pool-gates"
+    },
+    {
+      "assertion": "Adaptive Umsortierung verwendet nur vergleichbare taskklassen- und routengebundene Ergebnisse wie First-Pass-, CI- und Merge-Erfolg, Reviewbefunde, Nacharbeit, Rollback, Falschaussagen, Scope-Treue, Laufzeit und Quotenverbrauch. Reine Zugriffstests und Herstellerangaben gelten nicht als lokale Erfolgsbelege.",
+      "id": "adaptive-outcomes"
+    },
+    {
+      "assertion": "Bei Reviewbedarf wird ein unabhängiger Reviewer aus einer anderen Modelllinie und nach Möglichkeit Anbieterfamilie gewählt; Co-Primaries begründen keine parallele Writer-Autorität, und Grabowski bleibt alleiniger Integrator.",
+      "id": "independent-review"
+    },
+    {
+      "assertion": "Automatisch wählbare externe Routen haben belegten Null-Grenzkostenpfad über vorhandene Abos oder freie Kontingente; Pay-as-you-go-Fallbacks sind deaktiviert, und automatische Ausführung bleibt separat autorisierungspflichtig.",
+      "id": "zero-marginal-cost"
+    },
+    {
+      "assertion": "Der exakte PR-Head 09d4780075cb81c291596aaeecec7d6b0441dfe0 bestand den lokalen Make-Testtask c8205c2775c649119bd66651 mit Returncode 0 sowie alle GitHub-Prüfungen von PR #289.",
+      "id": "tests-and-ci"
+    },
+    {
+      "assertion": "PR #289 ist mit Merge-Commit 3eaaee0f0c9ed168a36531415a825baa02bc2bc1 gemergt. Die laufende Grabowski-Runtime enthält diesen Merge, der kanonische Katalog validiert 22 Modelle, 10 Harnesses, 12 Quotenpools und 29 Routen, und ein Live-Routing-Readback weist Fable 5 high und Sol high als S-Klassen-Co-Primaries aus.",
+      "id": "merge-and-live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Die Implementierung, Veröffentlichung und Runtime-Aktivierung wurden getrennt geprüft; diese Registry-Publikation dokumentiert ausschließlich den bereits belegten Zustand und erteilt keine neue Ausführungs-, Merge- oder Deployment-Autorität.",
+      "required_level": "reviewed_plan"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/.config/grabowski/coding-agent-catalog.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die Auswahl von Coding-Agenten anhand von Modellklasse, Effort, Aufgabenpassung, Harness, Quotenlage und beobachteten Ergebnissen zu steuern, ohne Anbieterparität, bezahlte Fallbacks oder unbelegte Modellüberlegenheit als Routingziel zu verwenden.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T072",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "allgemeine Benchmarküberlegenheit eines Modells",
+      "exakte oder dauerhaft verfügbare Providerquoten",
+      "automatische Ausführungs-, Merge- oder Deployment-Autorität",
+      "dass Co-Primaries gleichzeitig schreiben dürfen",
+      "dass kostenfreie Kontingente künftig unverändert bleiben"
+    ],
+    "implementation": {
+      "deployment": {
+        "audit_valid": true,
+        "audit_writable": true,
+        "kill_switch_engaged": false,
+        "runtime_contains_merge": true,
+        "runtime_healthy": true,
+        "runtime_release_id": "60d2bf1582b3-srcsetc717833fb75c-locke6664d600b6c-contract2c47105e3c8e",
+        "runtime_repo_head": "60d2bf1582b378c596651e8b499498db4918bf2e"
+      },
+      "diff_path": "/home/alex/iCloud/Drive/halde/grabowski-pr289-09d478-final.diff",
+      "diff_sha256": "c8d8dc383a363ccdcc4f1ab626db193f0970ae5cf1a1a81c3b1f6993762fcf67",
+      "live_routing": {
+        "co_primary": "codex-sol-high",
+        "primary": "claude-fable-5-high",
+        "recommendation_sha256": "d3a1ba953f3aa5d5203e0a989b61437b3d23a454d8a15e593be9728ec9e736ba",
+        "reviewer": "codex-sol-high",
+        "task_class": "architecture"
+      },
+      "merge_commit": "3eaaee0f0c9ed168a36531415a825baa02bc2bc1",
+      "pull_request": 289.0,
+      "repository": "heimgewebe/grabowski",
+      "reviewed_head": "09d4780075cb81c291596aaeecec7d6b0441dfe0",
+      "validation": {
+        "catalog_harness_count": 10.0,
+        "catalog_model_count": 22.0,
+        "catalog_quota_pool_count": 12.0,
+        "catalog_route_count": 29.0,
+        "catalog_sha256": "e2b3ca34beacb6d45d1cfe53dec935ebd459b2733144ae08c676a8bdd195afad",
+        "catalog_valid": true,
+        "github_checks": "all-success",
+        "local_returncode": 0.0,
+        "local_task_id": "c8205c2775c649119bd66651"
+      }
+    },
+    "implemented_at": "2026-07-18T15:18:45Z",
+    "merged_at": "2026-07-18T15:29:45Z",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "content_sha256": "c8d8dc383a363ccdcc4f1ab626db193f0970ae5cf1a1a81c3b1f6993762fcf67",
+          "kind": "github_pull_request",
+          "source_ref": "github-pr:heimgewebe/grabowski#289@09d4780075cb81c291596aaeecec7d6b0441dfe0:3eaaee0f0c9ed168a36531415a825baa02bc2bc1",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T072"
+        },
+        {
+          "authority": "grabowski-runtime",
+          "content_sha256": "fddee458be7844c42a164c5591e403922643643913d5bfbc67f4295220f837ff",
+          "kind": "task_receipt",
+          "source_ref": "grabowski-task:c8205c2775c649119bd66651@09d4780075cb81c291596aaeecec7d6b0441dfe0",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T072"
+        },
+        {
+          "authority": "grabowski-runtime",
+          "content_sha256": "dab67a81849d79c42b7aeb44b7f12c40f8f093d43dfdca5b95ac049d3ed4ff45",
+          "kind": "live_catalog_readback",
+          "source_ref": "grabowski-coding-agent-catalog:e2b3ca34beacb6d45d1cfe53dec935ebd459b2733144ae08c676a8bdd195afad@60d2bf1582b378c596651e8b499498db4918bf2e",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T072"
+        },
+        {
+          "authority": "grabowski-runtime",
+          "content_sha256": "d3a1ba953f3aa5d5203e0a989b61437b3d23a454d8a15e593be9728ec9e736ba",
+          "kind": "live_route_readback",
+          "source_ref": "grabowski-coding-agent-route:architecture@60d2bf1582b378c596651e8b499498db4918bf2e",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T072"
+        }
+      ],
+      "schema_version": 1.0,
+      "status": "satisfied"
+    },
+    "source": "bureau_operator_intake",
+    "source_candidate_id": "candidate-44701d712a7963b6b6069c28",
+    "source_event_id": 772.0,
+    "source_observation": "Der zuvor als unbekannt gemeldete Testtask ist terminal erfolgreich. PR #289 enthält beide lokalen Routercommits, wurde mit grüner CI gemergt und ist in der laufenden Runtime enthalten; der Live-Katalog und ein Architektur-Routing-Readback bestätigen die gewünschte Hierarchie. Der isolierte Checkout ist sauber und ohne aktive Tasks, Prozesse oder Resource-Leases.",
+    "validated_acceptance": {
+      "adaptive-outcomes": "PASS: Live-Katalog veröffentlicht die begrenzten Outcome-Metriken, Mindeststichprobe und Strafgrenzen; Zugriffstests sind ausdrücklich keine Outcomes.",
+      "frontier-peer-prior": "PASS: Live-Katalog führt Sol high und Fable 5 high mit S-Klasse und identischem Base-Rank 100; provider_peer_balance ist deaktiviert.",
+      "independent-review": "PASS: Live-Routing wählte Fable als Primary und Sol aus einer anderen Anbieterfamilie als Reviewer; Co-Primary-Autorität bleibt ausgeschlossen.",
+      "merge-and-live-proof": "PASS: Merge-Abstammung zur Runtime wurde über GitHub Compare belegt; Katalog und Router liefern den neuen Vertrag live.",
+      "quality-and-effort-hierarchy": "PASS: Katalog trennt S, A, B und C und führt Sol xhigh nur als Eskalationsroute.",
+      "quota-pool-gates": "PASS: Parent-Pool-Gates sind im gemergten Fix 09d478 enthalten; Live-Katalog validiert alle Poolbindungen.",
+      "tests-and-ci": "PASS: Lokaler Task endete success/0; GitHub-CodeQL und Validate 3.10/3.12 waren erfolgreich.",
+      "zero-marginal-cost": "PASS: Automatisch aktivierte Routen verwenden Abo- oder freie Kontingente, während OpenRouter, kostenunklare Cline-Pfade und lokale Modelle nach Nutzerpräferenz deaktiviert bleiben."
+    },
+    "verification": {
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "task_sha256": "fe14bdfc950912ae02615a70dcce6c8c7d3462762988f793ba96660e42840580"
+    },
+    "verified_at": "2026-07-19T15:00:29Z",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-44701d712a7963b6b6069c28",
+      "event_id": 772,
+      "event_created_at": "2026-07-19T15:00:29.573724Z",
+      "request_sha256": "fd62774260e3eb4a32a13264c8545d1a545fa39e38a58a6b74752657263bb63e",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github_pull_request",
+        "locator": "github:heimgewebe/grabowski#289@09d4780075cb81c291596aaeecec7d6b0441dfe0",
+        "observed_at": "2026-07-19T15:00:29.568556Z",
+        "sha256": "c8d8dc383a363ccdcc4f1ab626db193f0970ae5cf1a1a81c3b1f6993762fcf67"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1.0
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "routing",
+    "github",
+    "runtime-deployment",
+    "audit"
+  ],
+  "schema_version": 1.0,
+  "state": "verified",
+  "title": "Adaptives Frontier-Peer-Routing für Coding-Agenten verifizieren"
+}

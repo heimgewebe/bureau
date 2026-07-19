@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T028",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Sichter-Dauerworker prüfen und Reviewpfad konvergieren",
+  "state": "planned",
+  "goal": "Livebefund: Der dauerhafte Sichter-Worker wartet seit dem 5. Juli ausschließlich auf eine lokale Queue, zeigt praktisch keine CPU-Aktivität und keine Journaleinträge. Der periodische Review-Sweep arbeitet dagegen erfolgreich. Aufgabe: Producer und Consumer belegen, unnötige Dauerlaufzeit beenden, genau einen Reviewpfad behalten und den Postzustand prüfen.",
+  "priority": {
+    "lane": "now",
+    "rank": 7
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "claims": [
+    {
+      "resource": "repo.sichter",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "source-event-bound",
+      "assertion": "Task metadata preserves the originating live-register event id and source."
+    },
+    {
+      "id": "reviewed-before-effect",
+      "assertion": "Any repository effect remains review-before-effect and does not follow from the live event alone."
+    },
+    {
+      "id": "live-role-proof",
+      "assertion": "Queue producer, worker consumer and surviving review authority are proven before any service change."
+    },
+    {
+      "id": "post-state",
+      "assertion": "Worker, timer, queue and review path are re-read after effects."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_live_register",
+    "live_register_event_id": 734,
+    "live_register_candidate_id": "SICHTER-WORKER-RETIREMENT-V1",
+    "live_register_created_at": "2026-07-19T03:46:19.877859Z",
+    "live_register_source": "chatgpt-operator-redundancy-20260719",
+    "promotion_required_from_event": true,
+    "does_not_establish": [
+      "registry_task_truth",
+      "queue_truth",
+      "claim_authority",
+      "dispatch_authority",
+      "merge_readiness"
+    ]
+  }
+}

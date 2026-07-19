@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T068",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Aktuelle Operatorarbeit über Tasks, Leases, Checkouts und Sessions verdichten",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "systemd",
+    "git",
+    "tmux"
+  ],
+  "depends_on": [
+    "HEIMGEWEBE-RESILIENZ-V1-T005",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T042"
+  ],
+  "acceptance": [
+    {
+      "id": "source-bound-grouping",
+      "assertion": "A read-only projection groups exact tasks, resource leases, linked checkouts, tmux sessions, visible processes and worker records by explicit owner, task, workspace, branch and path bindings; heuristic matches remain separately labelled and never become authority."
+    },
+    {
+      "id": "bounded-current-view",
+      "assertion": "The default view is bounded and distinguishes active, blocking, resumable, terminal archived and unknown work, while raw task, lease, checkout, tmux and worker histories remain available through typed drill-down surfaces."
+    },
+    {
+      "id": "no-second-truth",
+      "assertion": "The projection stores no independently mutable lifecycle state and names the authoritative source, observation time, completeness and uncertainty for every grouped item."
+    },
+    {
+      "id": "lease-aggregation-without-loss",
+      "assertion": "Exact child leases remain independently enforceable, but the operator view reports the number and resource classes under each parent operation instead of presenting every child claim as unrelated work."
+    },
+    {
+      "id": "attention-relevance",
+      "assertion": "Historical failed, interrupted and terminal records do not enter the current attention set unless they still have a live exact blocker, unresolved outcome, retained recovery obligation or explicit operator decision requirement."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover one operation with many component leases, shared repositories with disjoint owners, stale tmux sessions, missing worktrees, terminal tasks with retained evidence, ambiguous heuristic links, truncation and incomplete source snapshots."
+    },
+    {
+      "id": "live-proof",
+      "assertion": "A deployed live readback renders the observed high-cardinality state as bounded parent operations with counts and drill-down references, and does not alter any task, lease, checkout, session, process or worker record."
+    }
+  ],
+  "metadata": {
+    "source": "bureau_operator_intake",
+    "source_event_id": 750,
+    "source_candidate_id": "candidate-aa8a5d15a2820c8055d193b7",
+    "source_observation": "The 2026-07-19 audit observed 8,519 task records, 1,723 attention projections, 110 active leases, 161 Grabowski worktrees and 47 tmux sessions. Exact sources remain authoritative; the defect is operator-level current-work comprehension.",
+    "does_not_establish": [
+      "new queue or claim authority",
+      "automatic cleanup authority",
+      "permission to collapse exact leases",
+      "complete same-user process attribution",
+      "future action safety from a projection alone"
+    ]
+  }
+}

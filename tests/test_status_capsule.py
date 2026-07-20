@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import shutil
 import subprocess
 import sys
+import tarfile
+import warnings
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -14,6 +17,7 @@ from bureau.status_capsule import (
     CapsuleError,
     _atomic_json,
     _compact_repo_balls,
+    _safe_extract,
     _seal,
     failure_path,
     main,
@@ -65,6 +69,85 @@ def tree_digest(root: Path) -> str:
         digest.update(path.read_bytes())
     return digest.hexdigest()
 
+
+
+def test_safe_extract_uses_explicit_filter_and_extracts_regular_entries(
+    tmp_path, monkeypatch
+):
+    archive = tmp_path / "registry.tar"
+    payload = b"{}\n"
+    with tarfile.open(archive, "w") as handle:
+        directory = tarfile.TarInfo("registry/")
+        directory.type = tarfile.DIRTYPE
+        directory.mode = 0o755
+        handle.addfile(directory)
+        regular = tarfile.TarInfo("registry/queue.json")
+        regular.mode = 0o644
+        regular.size = len(payload)
+        handle.addfile(regular, io.BytesIO(payload))
+
+    observed = {}
+    original_extractall = tarfile.TarFile.extractall
+
+    def capture_extractall(
+        self, path=".", members=None, *, numeric_owner=False, filter=None
+    ):
+        observed["filter"] = filter
+        return original_extractall(
+            self,
+            path,
+            members=members,
+            numeric_owner=numeric_owner,
+            filter=filter,
+        )
+
+    monkeypatch.setattr(tarfile.TarFile, "extractall", capture_extractall)
+    destination = tmp_path / "extract"
+    destination.mkdir()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        _safe_extract(archive, destination)
+
+    assert observed["filter"] == "fully_trusted"
+    assert (destination / "registry").is_dir()
+    assert (destination / "registry/queue.json").read_bytes() == payload
+
+
+@pytest.mark.parametrize(
+    ("member_name", "entry_type", "linkname", "expected_error"),
+    [
+        ("../escape", tarfile.REGTYPE, "", "unsafe path"),
+        ("registry/symlink", tarfile.SYMTYPE, "queue.json", "unsupported link"),
+        (
+            "registry/hardlink",
+            tarfile.LNKTYPE,
+            "registry/queue.json",
+            "unsupported link",
+        ),
+        ("registry/fifo", tarfile.FIFOTYPE, "", "unsupported entry"),
+    ],
+)
+def test_safe_extract_refuses_traversal_links_and_special_entries(
+    tmp_path, member_name, entry_type, linkname, expected_error
+):
+    archive = tmp_path / "unsafe.tar"
+    member = tarfile.TarInfo(member_name)
+    member.type = entry_type
+    member.linkname = linkname
+    payload = b"unsafe" if entry_type == tarfile.REGTYPE else None
+    if payload is not None:
+        member.size = len(payload)
+
+    with tarfile.open(archive, "w") as handle:
+        handle.addfile(member, io.BytesIO(payload) if payload is not None else None)
+
+    destination = tmp_path / "extract"
+    destination.mkdir()
+    with pytest.raises(CapsuleError, match=expected_error):
+        _safe_extract(archive, destination)
+
+    assert not (tmp_path / "escape").exists()
 
 
 def test_atomic_write_resolves_parent_alias_before_publication(tmp_path, monkeypatch):

@@ -73,6 +73,71 @@
       "permission to bypass runtime identity guards",
       "automatic correctness of a runtime refresh",
       "task completion without exact deployment and live readback evidence"
-    ]
+    ],
+    "runtime_refresh": {
+      "task_id": "f3bf4ff5482245b6a8325170",
+      "intent_sha256": "9f133e1ce7c00cf502484f54267774d5ae81fe305a0b7a6d5d78414f318c1143",
+      "target_sha256": "18840f66f10bd1c99591e799c5649ee77bf7450541babae6e5ab28bbdfd78809",
+      "result_sha256": "84ec2cb7cd75a00d639b39b3b82824afd579137417fba2a80e0d4a0ca4b59597",
+      "source_commit": "11abb346f33223b28846f135f948ee077bfb776d",
+      "release_id": "11abb346f332-srcbbdb0e7bf84d",
+      "manifest_sha256": "78397a4036f6f560684ab0c5787bec9ba927a5e0f65f80f7b1102c1d6f3f1236",
+      "package_tree_sha256": "bbdb0e7bf84d57a8699ffd07e090f57a765f33cdb145f52c230922536738c21a",
+      "registry_snapshot_tree_sha256": "297919df3d3fd3673092bf383ba0c7fe6f35fecd38c1225dd45744ddf0dfb7db",
+      "bureau_launcher_sha256": "d35e74f2798ede45ae9c4dee95097561d1d4b4b6dcfc7c2bb1ae34d43a7b08ce",
+      "runtime_refresh_launcher_sha256": "31f10cd188d5a20908ee6e7b34b29145a40e2a8c0ed059452a6177690a208302",
+      "already_current_observation_sha256": "efc96ad48f9b94ebf8f6dcdb0f22551aced9600fc1b6ae20695b6ae7b1db50b0",
+      "rollback_directory": "/home/alex/.local/share/bureau/backups/20260720T014755.540940Z"
+    },
+    "clean_registry_readback": {
+      "root": "/home/alex/tmp/bureau-t015-verification-11abb346",
+      "head": "11abb346f33223b28846f135f948ee077bfb776d",
+      "origin_main": "11abb346f33223b28846f135f948ee077bfb776d",
+      "status_clean": true,
+      "compatibility_status": "compatible",
+      "mutation_allowed": true,
+      "reason_codes": [],
+      "registry_valid": true,
+      "state_integrity": "ok"
+    },
+    "validation": [
+      "Bureau runtime-refresh observation 40b1daef365f9d2b9ba2827130aa0d0afaaa896b21e16d75efb7940b3e3f9b6d bound target commit 11abb346f33223b28846f135f948ee077bfb776d to merged PR #750 and successful validate (3.10)/(3.12) checks.",
+      "Durable Grabowski task f3bf4ff5482245b6a8325170 completed once with resume_policy=never and result_sha256 84ec2cb7cd75a00d639b39b3b82824afd579137417fba2a80e0d4a0ca4b59597.",
+      "Installer readback validated manifest, immutable package tree, both launchers, Registry snapshot, bureau check and runtime identity on source commit 11abb346f33223b28846f135f948ee077bfb776d.",
+      "Post-refresh observation efc96ad48f9b94ebf8f6dcdb0f22551aced9600fc1b6ae20695b6ae7b1db50b0 reports already_current and lag_commits=0.",
+      "Clean explicit Registry checkout reports compatibility=compatible, mutation_allowed=true, no reason codes, valid Registry and state integrity ok.",
+      "No stale-runtime guard or reason-code handling was changed; the existing reviewed runtime-refresh and identity contracts performed all gating."
+    ],
+    "evidence_path": "/home/alex/.local/state/bureau/evidence/bureau-truth-model-v2-t015-closeout.json",
+    "tradeoffs": [
+      "The default installed Registry snapshot remains read-only by design; mutation_allowed=true is asserted only for an explicit clean current checkout.",
+      "Later Bureau main commits require a new exact runtime refresh and do not inherit this freshness claim automatically."
+    ],
+    "closeout_prepared_at": "2026-07-20T01:57:43.865357Z",
+    "deployment_outcome": "The immutable Bureau release, both launchers and the canonical Registry snapshot were refreshed through the reviewed fail-closed runtime-refresh path to exact main commit 11abb346f33223b28846f135f948ee077bfb776d. A clean explicit Registry checkout reports compatibility=compatible and mutation_allowed=true; a second GitHub observation reports already_current with zero lag.",
+    "acceptance_evidence": {
+      "identity-ok": "PASS: exact clean checkout and immutable release both identify 11abb346f33223b28846f135f948ee077bfb776d; compatibility is compatible and mutation_allowed is true.",
+      "verification-stamp": "CONTRACT: acceptance requires a successful verification-stamp against the exact merged task revision and current initiative plan; the readback belongs only in metadata.verification.",
+      "deployment-binding": "PASS: release 11abb346f332-srcbbdb0e7bf84d, manifest 78397a4036f6f560684ab0c5787bec9ba927a5e0f65f80f7b1102c1d6f3f1236, package tree bbdb0e7bf84d57a8699ffd07e090f57a765f33cdb145f52c230922536738c21a and Registry snapshot tree 297919df3d3fd3673092bf383ba0c7fe6f35fecd38c1225dd45744ddf0dfb7db share the same source commit.",
+      "no-bypass": "PASS: deployment used a reviewed intent, exact live Grabowski leases, fresh GitHub/CI re-observation, one-shot effect ledger and post-install readback; guards were not weakened.",
+      "tests": "PASS: both required GitHub matrix checks succeeded on the deployed source; bureau check, runtime identity, installer readback and already-current live probe pass."
+    },
+    "closeout_protocol": "Two-stage closeout: first merge deployment evidence with a prepared stable task/plan hash; then refresh the immutable runtime to the exact merge commit, read verification-stamp, and change only state plus metadata.verification.",
+    "verification": {
+      "prepared_at": "2026-07-20T01:57:43.865357Z",
+      "acceptance_ids": [
+        "identity-ok",
+        "verification-stamp",
+        "deployment-binding",
+        "no-bypass",
+        "tests"
+      ],
+      "verification_note": "Hash binding is prepared for the deployment-evidence task revision. Final verification-stamp readback and verified state require merge plus an exact runtime refresh to the resulting merge commit.",
+      "task_sha256": "e8b6ab8a245aec5fef41d04c24fa677d52482e6600d168e3d25a76473a4406be",
+      "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8",
+      "evidence_path": "/home/alex/.local/state/bureau/evidence/bureau-truth-model-v2-t015-closeout.json",
+      "evidence_sha256": "1462c962ed67648451e86f21619ff323dd39e522d541fc4ab128bef4a4e731e7",
+      "runtime_result_sha256": "84ec2cb7cd75a00d639b39b3b82824afd579137417fba2a80e0d4a0ca4b59597"
+    }
   }
 }

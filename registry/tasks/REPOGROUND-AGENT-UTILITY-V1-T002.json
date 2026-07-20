@@ -3,9 +3,9 @@
   "id": "REPOGROUND-AGENT-UTILITY-V1-T002",
   "initiative": "REPOGROUND-AGENT-UTILITY-V1",
   "title": "Phase 1: Bestehende Kontextflächen dünn komponieren",
-  "state": "blocked",
+  "state": "ready",
   "priority": {
-    "lane": "later",
+    "lane": "now",
     "rank": 1
   },
   "goal": "Vorhandene Agent-Impact-, Query-Kontext-, PR-Delta-, Entry-, Symbol-, Call-Graph-, Citation- und Live-Evidenzflächen zu einem kompakten aufgabenbezogenen Grabowski-Kontext zusammenstellen, ohne neue Grundvertragsschicht.",

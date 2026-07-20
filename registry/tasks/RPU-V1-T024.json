@@ -147,6 +147,10 @@
         }
       ]
     },
-    "verified_at": "2026-07-20T10:00:04Z"
+    "verified_at": "2026-07-20T10:00:04Z",
+    "verification": {
+      "task_sha256": "c7767d4444416f8ce4bc0c09672cfb345224373101d8f08a31fa13194cf9dff1",
+      "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db"
+    }
   }
 }

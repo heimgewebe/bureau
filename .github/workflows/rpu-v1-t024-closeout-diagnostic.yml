@@ -3,35 +3,66 @@ name: RPU T024 closeout diagnostic
 on:
   pull_request:
     paths:
-      - "registry/queue.json"
       - "registry/tasks/RPU-V1-T024.json"
+      - "registry/initiatives/REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1.json"
       - ".github/workflows/rpu-v1-t024-closeout-diagnostic.yml"
 
 permissions:
   contents: read
 
 jobs:
-  validate-log:
+  verification-hashes:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-      - run: python -m pip install -e '.[dev]'
-      - name: Capture complete validation output
+      - name: Compute Bureau verification hashes
         shell: bash
         run: |
-          set +e
-          make validate > validation.log 2>&1
-          status=$?
-          printf '%s\n' "$status" > validation-exit-code.txt
-          exit 0
-      - name: Upload validation evidence
+          python - <<'PY' > verification-hashes.json
+          import hashlib
+          import json
+          from pathlib import Path
+
+          task = json.loads(
+              Path("registry/tasks/RPU-V1-T024.json").read_text(encoding="utf-8")
+          )
+          task.pop("state", None)
+          metadata = task.get("metadata")
+          if isinstance(metadata, dict):
+              metadata.pop("verification", None)
+              if not metadata:
+                  task.pop("metadata", None)
+
+          initiative = json.loads(
+              Path(
+                  "registry/initiatives/REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1.json"
+              ).read_text(encoding="utf-8")
+          )
+          plan = initiative.get("current_plan") or {}
+
+          def digest(value):
+              payload = json.dumps(
+                  value,
+                  ensure_ascii=False,
+                  sort_keys=True,
+                  separators=(",", ":"),
+              ).encode()
+              return hashlib.sha256(payload).hexdigest()
+
+          print(
+              json.dumps(
+                  {
+                      "task_sha256": digest(task),
+                      "plan_sha256": digest(plan),
+                  },
+                  indent=2,
+                  sort_keys=True,
+              )
+          )
+          PY
+      - name: Upload verification hashes
         uses: actions/upload-artifact@v7
         with:
-          name: rpu-v1-t024-closeout-diagnostic
-          path: |
-            validation.log
-            validation-exit-code.txt
+          name: rpu-v1-t024-verification-hashes
+          path: verification-hashes.json
           retention-days: 1

@@ -3,7 +3,7 @@
   "id": "LSV-V1-T007",
   "initiative": "LEITSTAND-VISUAL-LAYER-V1",
   "title": "Visualization pilot evidence",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 70
@@ -57,9 +57,43 @@
   "metadata": {
     "created_from_plan": "docs/plans/leitstand-visualization-layer-v1.md",
     "does_not_establish": [
-      "production_rollout_ready",
       "all_sources_complete",
-      "runtime_correctness"
-    ]
+      "comprehensive_source_coverage",
+      "future_runtime_correctness",
+      "production_rollout_ready",
+      "public_export_safety",
+      "runtime_correctness",
+      "source_truth",
+      "task_readiness",
+      "visual_perfection"
+    ],
+    "verified_at": "2026-07-20T12:48:05Z",
+    "current_leitstand_head": "ba87ba9f2b138b757d6d09a40b04e5fa28facad0",
+    "outcome": "The visualization pilot is implemented and merged through Leitstand PR #179 with digest-bound real source identities, explicit synthetic fault-injection labels and a tested view-only boundary.",
+    "implementation_pr": "heimgewebe/leitstand#179",
+    "implementation_head": "23f1777e5cdd98360258aec2f71d659a91fa100b",
+    "implementation_merge_commit": "ba87ba9f2b138b757d6d09a40b04e5fa28facad0",
+    "pilot_report": "docs/reports/visualization-pilot-2026-07-20.json",
+    "pilot_report_human": "docs/reports/visualization-pilot-2026-07-20.md",
+    "validation": {
+      "full_tests": "229/229 passed across 36 files",
+      "full_test_receipt_sha256": "c0a9058431badde86eabfc4341b09f75dab6d446e5bacda11053ac5f0a1d3b91",
+      "focused_tests": "28/28 passed across 5 files",
+      "focused_test_receipt_sha256": "7eb6533911e7ca6cfc08a864480fd1b78f22f91ae4330484742df43fde6e503e",
+      "typecheck_receipt_sha256": "eda0ceb32a86e545c48d4b0ae391187fa0b6251ceaaa69272d1227eb95eb5e7d",
+      "lint_receipt_sha256": "2a12a776f6c7f472530ee656abc1bc9c2543e838e46f94bb3717bf3edb9a1439",
+      "build_receipt_sha256": "d8d0f9a85525ac7b05ab7ac100b2e2c44ae661ff0f66080c2fbb33364fa48791",
+      "browser_shell_receipt_sha256": "0909afd98ffd22a5ca4967450a74e04c0a69b0e7566513dbd069debbd8e8c766",
+      "github_checks": "all required PR #179 checks passed before merge"
+    },
+    "verified_acceptance": {
+      "real-artifact-pilot": "The machine report records digest- and commit-bound real artifacts for Systemkatalog, RepoGround, Chronik, WGX and semantAH while copying no private source content.",
+      "degraded-behavior-recorded": "The report and tests cover missing, corrupt, stale and export-safety-failing states. Missing/corrupt inputs are explicitly synthetic fault injection and cannot be mistaken for live incidents; stale and export-safety failure include real artifacts.",
+      "no-write-paths": "The report declares an empty write-capability set and forbids task dispatch, source repair, repository mutation, merge, deployment and external refresh; the change adds only reports and tests."
+    },
+    "verification": {
+      "task_sha256": "2127f5a82b4b3537556e80dcc4e3d6cfae53488643713a90012393fd3fef8076",
+      "plan_sha256": "217a91b5a66a143e0440d2a7d656a5d0fada62b52778cf3285349e7667bd8621"
+    }
   }
 }

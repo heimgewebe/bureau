@@ -1,0 +1,110 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die exakt zur laufenden checkout_archive-Operation gehörende Lease desselben Owners und Checkout-Ziels wird bei der Lifecycle-Vorbedingung nicht als fremder oder unabhängiger resources-Blocker gezählt.",
+      "id": "self-lease-not-a-foreign-blocker"
+    },
+    {
+      "assertion": "Jede fremde, erneuerte, ungebundene oder zielabweichende Lease sowie aktive Tasks oder Prozesse blockieren die Archivierung weiterhin fail-closed.",
+      "id": "foreign-work-still-blocks"
+    },
+    {
+      "assertion": "Die Implementierung bindet entweder die Lease-Erzeugung nach die autoritative Vorprüfung oder schließt ausschließlich die exakte eigene Operation-Lease anhand Owner, Ressourcenschlüssel, Checkout-Pfad und erwarteter Head-/Branch-Identität aus.",
+      "id": "lease-ordering-or-filtering-bound"
+    },
+    {
+      "assertion": "Jeder terminale Fehler vor oder nach möglichem Archivierungseffekt gibt die eigene Operation-Lease nach autoritativem Readback frei; unklare Effekte bleiben blockiert und werden nicht blind wiederholt.",
+      "id": "failure-path-releases-own-lease"
+    },
+    {
+      "assertion": "Ein sauberer detached Worktree ohne fremde Lifecycle-Bezüge wird archiviert; Archiv-ID, Recovery-Refs, erwarteter Head und unveränderte Fremdzustände werden zurückgelesen.",
+      "id": "archive-success-readback"
+    },
+    {
+      "assertion": "Tests decken Erfolg ohne Vorbezug, die selbst erzeugte Archiv-Lease, fremde Lease, erneuerte Lease, aktiven Task, aktiven Prozess, Head-/Branch-Abweichung, Fehler vor Effekt, unklaren Effekt und sichere Wiederholung ab.",
+      "id": "regression-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T078"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/.local/state/grabowski/resources.sqlite3"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Verhindern, dass grabowski_checkout_archive einen ansonsten sauberen, exakt gebundenen Worktree allein wegen der von derselben Archivoperation erzeugten Operation-Lease als lifecycle-blockiert abweist, ohne fremde Leases, Tasks oder Prozesse zu übergehen oder die fail-closed Sicherheitsgrenze zu schwächen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T079",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "candidate_id": "candidate-79ffd9efc4dee481d0f1dc87",
+    "does_not_establish": [
+      "abschließende interne Root Cause jenseits der beobachteten Lease-Reihenfolge",
+      "Abwesenheit weiterer Checkout-Lifecycle-Fehler",
+      "Berechtigung zum Force-Release fremder Leases",
+      "Berechtigung zum Entfernen fremder Worktrees"
+    ],
+    "event_id": 842,
+    "live_evidence": {
+      "archive_effect_observed": false,
+      "blocking_owner": "operator:repoground-agent-utility-v1-t001-closeout-20260720",
+      "blocking_resource": "repo:/home/alex/repos/bureau:operation:checkout-archive:repoground-agent-utility-v1-t001-closeout-20260720",
+      "checkout_path": "/home/alex/repos/.bureau-worktrees/repoground-agent-utility-v1-t001-closeout-20260720",
+      "expected_head": "39573093415e73739062e42d9695db31b47f804e",
+      "observed_blocker_count": 1,
+      "operation": "grabowski_checkout_archive",
+      "repository": "/home/alex/repos/bureau",
+      "reproduced": true,
+      "worktree_removal_observed": false
+    },
+    "registered_at": "2026-07-20T17:26:09+02:00",
+    "source": "operator_runtime_incident",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-79ffd9efc4dee481d0f1dc87",
+      "event_id": 842,
+      "event_created_at": "2026-07-20T15:26:09.585610Z",
+      "request_sha256": "28e7066defedc6d66c9bbef8085bda8e829876562fbc432de1a6768930df9420",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator_runtime_incident",
+        "locator": "grabowski_checkout_archive repo=/home/alex/repos/bureau checkout=/home/alex/repos/.bureau-worktrees/repoground-agent-utility-v1-t001-closeout-20260720 expected_head=39573093415e73739062e42d9695db31b47f804e",
+        "observed_at": "2026-07-20T15:26:09.574895Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 216
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "resource-leases",
+    "checkout-lifecycle"
+  ],
+  "schema_version": 1,
+  "state": "blocked",
+  "title": "checkout_archive gegen eigene Archiv-Lease entkoppeln"
+}

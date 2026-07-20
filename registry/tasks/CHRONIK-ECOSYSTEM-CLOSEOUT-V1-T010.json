@@ -1,0 +1,141 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der append-only JSONL-Ledger bleibt die alleinige Ereignisautorität. Der Index ist abgeleitet, enthält keine eigenständige Ereigniswahrheit und kann deterministisch vollständig aus dem Ledger rekonstruiert werden.",
+      "id": "ledger-remains-authority"
+    },
+    {
+      "assertion": "Der Index bewahrt die globale Konflikterkennung für jede historische Identität mit vollständiger Payloadlänge und vollständigem SHA-256-Digest; identische Wiederholungen werden übersprungen, abweichende Payloads für dieselbe Identität scheitern geschlossen.",
+      "id": "exact-global-conflict-semantics"
+    },
+    {
+      "assertion": "Indexaufbau und inkrementelle Aktualisierung sind unter dem bestehenden Writer-Lock atomar, fsync- und rollbackgebunden. Teilweise Ledger- oder Indexschreibvorgänge werden weder als erfolgreich gemeldet noch beim nächsten Lauf still akzeptiert.",
+      "id": "crash-safe-publication"
+    },
+    {
+      "assertion": "Jeder veröffentlichte Indexzustand ist mindestens an Ledger-Dateiidentität, verarbeiteten Byteoffset und einen integritätsprüfbaren Ledger-Präfixzustand gebunden. Trunkierung, Ersetzung, Rückschritt, unvollständige letzte Zeile oder nicht erklärbare Drift erzwingen einen verifizierten Rebuild oder einen fail-closed Fehler.",
+      "id": "snapshot-and-drift-binding"
+    },
+    {
+      "assertion": "Beschädigte, manipulierte, veraltete, symlinkbeeinflusste oder schemafremde Indexartefakte werden nicht verwendet. Tests decken Hashfehler, abgeschnittene Dateien, falsche Offsets, fremde Dateiinodes, ungültige Identitäten und atomare Publikationsfehler ab.",
+      "id": "corruption-and-path-safety"
+    },
+    {
+      "assertion": "Nach erfolgreichem Aufbau benötigt ein gewöhnlicher write_payload_unique_groups-Aufruf keinen vollständigen historischen Ledger-Scan. Ein vollständiger Scan ist nur für expliziten Erstaufbau, verifizierten Rebuild oder Integritätsdiagnose zulässig und wird im Ergebnis beziehungsweise Receipt sichtbar ausgewiesen.",
+      "id": "steady-state-no-full-scan"
+    },
+    {
+      "assertion": "Deterministische Benchmarks mit mindestens 100000 eindeutigen historischen Ereignissen und großen zulässigen Payloads belegen begrenzten Peak-Speicher, steady-state Laufzeit unabhängig von der vollständigen Historiengröße sowie einen reproduzierbaren Rebuild. Messmethode, Datensatz und Rohwerte werden festgehalten; unbelegte Produktionshochrechnungen sind ausgeschlossen.",
+      "id": "bounded-memory-and-scale"
+    },
+    {
+      "assertion": "Bestehende Ledger bleiben ohne Migration lesbar. Ein fehlender Index wird sicher aufgebaut, ein bewusst entfernter Index kann ohne Datenverlust neu erzeugt werden, und ein Rollback auf die vorherige Chronik-Version erfordert keine Ledgeränderung.",
+      "id": "compatibility-and-recovery"
+    },
+    {
+      "assertion": "Der exakte Diff besteht Fokustests, Vollsuite, Rollenvertrag, statische Prüfungen und GitHub-CI. Merge, Deployment des Importers und jede Aktivierung von chronik.service bleiben getrennte, commitgebundene Entscheidungen mit Readback und Rollback.",
+      "id": "reviewed-release-boundary"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.chronik"
+    }
+  ],
+  "depends_on": [
+    "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T009"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 20. Juli 2026 nach Prüfung des konkreten Folgehebels mit „weiter @grabowski“ die Fortsetzung autorisiert; Merge und Runtime-Deployment bleiben an eigene frische Gates gebunden.",
+      "required_level": "reviewed_plan"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik",
+      "component:chronik-identity-index"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik"
+  },
+  "goal": "Einen persistenten, vollständig aus dem append-only Chronik-Ledger rekonstruierbaren Identitätsindex einführen, der steady-state Eindeutigkeitsprüfungen ohne vollständigen Ledger-Scan ermöglicht, globale Konflikterkennung bewahrt und bei Korruption, Absturz oder Drift fail-closed reagiert.",
+  "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T010",
+  "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
+  "metadata": {
+    "does_not_establish": [
+      "automatic deployment permission",
+      "permission to activate chronik.service",
+      "production performance before live measurement",
+      "permission to delete or rewrite ledger history",
+      "index authority independent of the ledger"
+    ],
+    "proposal_refresh": {
+      "reason": "Bureau main advanced before publication; the stale proposal was not applied.",
+      "registry_commit": "e5b2f7d12f981451d81d59383c99fd4375e4d905",
+      "supersedes_proposal_sha256": "05f5f6c9feb930e53b4913b874f0f186c04c817025bb389a4c69759d3105ddf6"
+    },
+    "source_candidate_id": "candidate-0606e3b1097e0c9e0d418bfc",
+    "source_context": "Follow-up from the verified Chronik hot-path fingerprint optimization: the remaining asymptotic bottleneck is the complete historical identity scan on every grouped write.",
+    "source_diff_sha256": "c909225be10731e4bb2f74f06ceaa8d05a60d086409f53858e8d5db24f683780",
+    "source_event_id": 818,
+    "source_merge_commit": "362dc58521d11951242d115f0213e8db8140a057",
+    "source_pull_request": 236,
+    "source_review_head": "c049b772db2bb4d99a71ccda8b0cafd614731519",
+    "truth_boundaries": {
+      "bureau": "task and verification truth",
+      "chronik_ledger": "append-only event authority",
+      "grabowski": "execution, lease and runtime evidence",
+      "identity_index": "derived acceleration structure only"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-0606e3b1097e0c9e0d418bfc",
+      "event_id": 818,
+      "event_created_at": "2026-07-20T04:42:55.456269Z",
+      "request_sha256": "88c57e513df2334cf64d24168046ee4c201cd6664d27b2c6aff3dcaf6908148e",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator-review",
+        "locator": "PR 236 head c049b772db2bb4d99a71ccda8b0cafd614731519",
+        "observed_at": "2026-07-20T04:39:07Z",
+        "sha256": "c909225be10731e4bb2f74f06ceaa8d05a60d086409f53858e8d5db24f683780"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "benchmark"
+  ],
+  "rollback": {
+    "procedure": "Featurebranch und Indexartefakte verwerfen, den unveränderten JSONL-Ledger beibehalten, auf die letzte geprüfte Chronik-Version zurückgehen und den bisherigen Vollscan-Pfad weiterverwenden. Bereits erzeugte Indexartefakte werden nur nach hashgebundener Beweissicherung quarantänisiert; der Ledger wird nicht zurückgeschrieben.",
+    "trigger": "Jede Abweichung der Ledger-Semantik, ein nicht reproduzierbarer Indexzustand, fehlgeschlagene Crash-Recovery, Regression der vollständigen Tests oder ein negativer Scale-Benchmark."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "stop": {
+    "conditions": [
+      "Ein fremder Chronik-Worktree, Prozess, Task oder Lease überschneidet sich mit den ausgewählten Dateien oder Runtimepfaden.",
+      "Die gewählte Indexstruktur kann Konfliktsemantik nur probabilistisch statt mit vollständigem SHA-256 bewahren.",
+      "Ledger und Index können bei einem simulierten Absturz in einen still akzeptierten divergenten Zustand geraten.",
+      "Die Umsetzung würde den Index zur Ereignisautorität erheben oder eine nicht rekonstruierbare Wahrheit einführen.",
+      "Ein bestehender Produktionsindex oder Runtimepfad müsste ohne separat genehmigte Migration verändert werden."
+    ]
+  },
+  "title": "Chronik-Identitätsindex persistent und ledgergebunden machen"
+}

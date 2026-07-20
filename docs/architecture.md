@@ -48,9 +48,9 @@ forgotten.
 | Concern | Primary owner | Bureau Core role | Bureau Ops role |
 |---|---|---|---|
 | Queue order and dependency unlocking | Bureau | Owns claims, stale overlays and receipts | May propose task changes |
-| Concrete execution | Grabowski | Binds external identity | May request or observe dispatch |
+| Concrete execution, live precondition revalidation and Git/network/branch/worktree effects | Grabowski | Binds external identity | May request or observe dispatch |
 | Pull requests, reviews and CI | GitHub | Stores Bureau evidence about tasks | May observe PR facts and derive findings |
-| Readiness evidence | Steuerboard | Requires explicit evidence before unlock | May point to missing or stale evidence |
+| Read-only repository observation and source-bound readiness/evidence derivation | Steuerboard | May require or cite explicit evidence before unlock; never treats derivation as approval | May point to missing or stale evidence |
 | Research and decisions | Cabinet | References decisions when tasks need them | May import bounded findings through a bridge |
 | Visual projection | Schauwerk | No visual truth ownership | May expose Bureau facts for projection |
 | Events | Chronik | May bind receipts to append-only events | May emit or consume event references |

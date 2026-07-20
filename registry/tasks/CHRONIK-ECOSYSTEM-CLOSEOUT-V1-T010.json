@@ -66,11 +66,11 @@
   "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
   "metadata": {
     "does_not_establish": [
-      "automatic deployment permission",
+      "deployment of Chronik merge commit 75541b2b033d5a5d19b0d1de4c1cdff631536a71",
       "permission to activate chronik.service",
-      "production performance before live measurement",
-      "permission to delete or rewrite ledger history",
-      "index authority independent of the ledger"
+      "production latency, RSS, throughput or durability from the synthetic benchmark",
+      "safety of a same-user noncooperating writer that bypasses the ledger lock",
+      "a production index-size or maintenance budget"
     ],
     "proposal_refresh": {
       "reason": "Bureau main advanced before publication; the stale proposal was not applied.",
@@ -109,6 +109,122 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "acceptance_evidence": {
+      "ledger-remains-authority": "Chronik PR #237 stores only derived SQLite identity state; ledger bytes remain authoritative. Missing derived state rebuilds from the ledger, and rollback does not rewrite the ledger.",
+      "exact-global-conflict-semantics": "The final implementation binds the complete payload fingerprint, identity key, identity value and exact binary JSONL byte range. Focus and full suites pass on final head 44694b86d75d389b73ffbd0c60583c0a3fa40495.",
+      "crash-safe-publication": "The hard-crash test terminates after ledger fsync and before SQLite commit; the next run catches the derived index up. Uncertain SQLite commit outcomes are surfaced rather than falsely rolling back authoritative ledger bytes.",
+      "snapshot-and-drift-binding": "Device, inode, byte offset, timestamps, rolling prefix SHA-256 and record digests bind indexed state. Truncation, replacement and prefix mutation fail closed or require validated replay.",
+      "corruption-and-path-safety": "Symlinks, ownership/mode errors, corrupt state and schema drift fail closed. Self-review found and fixed a same-name trigger-definition gap; the normalized CREATE TABLE/CREATE TRIGGER definitions are now bound and regression-tested.",
+      "steady-state-no-full-scan": "The 100000-event fixture reports steady mode with target_scans=0 and target_records_scanned=0; rebuild remains explicitly linear.",
+      "bounded-memory-and-scale": "The documented 100000-event synthetic measurement completed rebuild in 3.6420401600189507 s and steady state in 0.0028964472003281116 s with Python peaks 62691 and 29065 bytes. These values establish only the local fixture path and are not production latency or RSS claims.",
+      "compatibility-and-recovery": "Existing call signatures and existing result-key types remain available. Older releases ignore the derived index; rollback can restore the previous immutable release and discard or quarantine the index without modifying ledger history.",
+      "reviewed-release-boundary": "PR #237 passed exact self-review and all final-head checks, merged as 75541b2b033d5a5d19b0d1de4c1cdff631536a71, and all seven post-merge workflows passed. No deployment or chronik.service activation was performed."
+    },
+    "implementation": {
+      "repository": "heimgewebe/chronik",
+      "pull_request": 237,
+      "pull_request_url": "https://github.com/heimgewebe/chronik/pull/237",
+      "reviewed_base": "362dc58521d11951242d115f0213e8db8140a057",
+      "initial_feature_commit": "d88cd4e5a40e8ca4cf8365a77f2c7113bf0823ac",
+      "final_reviewed_head": "44694b86d75d389b73ffbd0c60583c0a3fa40495",
+      "merge_commit": "75541b2b033d5a5d19b0d1de4c1cdff631536a71",
+      "merge_parents": [
+        "362dc58521d11951242d115f0213e8db8140a057",
+        "44694b86d75d389b73ffbd0c60583c0a3fa40495"
+      ],
+      "raw_diff_sha256": "7a4c5b8fee2535f0030c0520e86ec6731c4c970ef9af8f0a021ecc8e010fa43f",
+      "raw_diff_bytes": 92755,
+      "raw_diff_url": "https://gist.githubusercontent.com/alexdermohr/8b5195d836c07356e13358a0af08d21a/raw/247ea5f03de25ffd9bd2882e7611f728b76c5742/chronik-persistent-identity-index-t010-final.diff",
+      "superseded_initial_diff_sha256": "3f35bdb8b447e6514c6ca82f38da65040df5042462bea4bd49c2ac2d68b20d38"
+    },
+    "review": {
+      "result": "PASS",
+      "blocking_findings": [],
+      "self_review_url": "https://github.com/heimgewebe/chronik/pull/237#issuecomment-5023770537",
+      "reviewed_base": "362dc58521d11951242d115f0213e8db8140a057",
+      "reviewed_head": "44694b86d75d389b73ffbd0c60583c0a3fa40495",
+      "diff_sha256": "7a4c5b8fee2535f0030c0520e86ec6731c4c970ef9af8f0a021ecc8e010fa43f",
+      "resolved_finding": "Same-name SQLite trigger definitions were not initially bound; final head validates normalized table and trigger definitions and adds a regression test."
+    },
+    "validation": {
+      "focused_identity_index": {
+        "result": "29 passed",
+        "receipt_sha256": "a44d07dfe63e4dc1b4f8d88cda33a7200fe16ac0194118d95dd4528e45e15a3d"
+      },
+      "full_suite": {
+        "result": "409 passed, 1 existing Starlette/httpx2 deprecation warning",
+        "receipt_sha256": "607fc4d09682317a263bd7c25d885cd5fb44c3cde8af9574a8ca703581337940"
+      },
+      "role_contract": "PASS",
+      "compileall": "PASS",
+      "git_diff_check": "PASS",
+      "final_head_ci": "16 check-runs completed successfully on 44694b86d75d389b73ffbd0c60583c0a3fa40495; skipped event-inapplicable checks were not failures",
+      "post_merge_ci": "7 of 7 workflow runs completed successfully on 75541b2b033d5a5d19b0d1de4c1cdff631536a71",
+      "post_merge_codeql_url": "https://github.com/heimgewebe/chronik/actions/runs/29753818847"
+    },
+    "deployment_evaluation": {
+      "evaluated_at": "2026-07-20T15:29:05.172979Z",
+      "decision": "not_deployed_separate_gate_required",
+      "deployed_commit": "73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+      "current_release_path": "/home/alex/.local/lib/chronik/releases/73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+      "import_service": "chronik-outbox-import.service loaded static; latest observed run exited 0 at 2026-07-20T17:26:10+02:00",
+      "import_timer": "chronik-outbox-import.timer enabled and active/waiting on a two-minute cadence",
+      "chronik_service": "not-found and inactive; not activated",
+      "production_ledger_path": "/home/alex/.local/state/chronik/data/agent.ledger.jsonl",
+      "production_ledger_bytes_observed": 7754318,
+      "identity_index_present_in_production_data_dir": false,
+      "filesystem_free_bytes_observed": 1037667274752,
+      "reversibility": "The importer resolves code through the immutable current-release symlink. A controlled rollback can restore the previous symlink and quarantine or remove only derived index state while preserving ledger bytes.",
+      "missing_before_live_rollout": [
+        "pause and read back the two-minute timer and wait for the oneshot importer to become inactive",
+        "prepare and verify an immutable release for merge commit 75541b2b033d5a5d19b0d1de4c1cdff631536a71",
+        "capture ledger identity, byte count and SHA-256 before first index build",
+        "establish an explicit first-build disk budget without extrapolating the synthetic benchmark",
+        "run one controlled import, verify index integrity and steady-state behavior, then repeat idempotently",
+        "prove rollback to 73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f without ledger loss",
+        "restore and read back the timer only after the live proof passes"
+      ],
+      "follow_up_task": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T011"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "authority": "github",
+          "kind": "pull_request",
+          "source_ref": "heimgewebe/chronik#237",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T010",
+          "head_sha": "44694b86d75d389b73ffbd0c60583c0a3fa40495",
+          "diff_sha256": "7a4c5b8fee2535f0030c0520e86ec6731c4c970ef9af8f0a021ecc8e010fa43f",
+          "merge_commit_sha": "75541b2b033d5a5d19b0d1de4c1cdff631536a71"
+        },
+        {
+          "authority": "github",
+          "kind": "post_merge_ci",
+          "source_ref": "heimgewebe/chronik@75541b2b033d5a5d19b0d1de4c1cdff631536a71",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T010",
+          "status": "7_of_7_success"
+        },
+        {
+          "authority": "grabowski",
+          "kind": "deployment_readback",
+          "source_ref": "/home/alex/.local/lib/chronik/current",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T010",
+          "deployed_commit_sha": "73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+          "status": "not_deployed"
+        }
+      ]
+    },
+    "outcome": "Chronik now contains a merged, ledger-authoritative persistent identity index whose final exact diff passed review and CI. Runtime rollout remains intentionally separate and is registered as T011.",
+    "verified_at": "2026-07-20T15:29:05.172979Z",
+    "verification": {
+      "verified_at": "2026-07-20T15:29:05.172979Z",
+      "verified_by": "chatgpt-chronik-t010-identity-index-20260720",
+      "source": "exact Chronik PR #237, final-head and post-merge GitHub CI, immutable diff readback and live deployment observation",
+      "task_sha256": "b2f0d543d89a2792ce248316c9eab38db3e5641ea63d15f95d2b74ef47a32b53",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
     }
   },
   "priority": {
@@ -127,7 +243,7 @@
     "trigger": "Jede Abweichung der Ledger-Semantik, ein nicht reproduzierbarer Indexzustand, fehlgeschlagene Crash-Recovery, Regression der vollständigen Tests oder ein negativer Scale-Benchmark."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "stop": {
     "conditions": [
       "Ein fremder Chronik-Worktree, Prozess, Task oder Lease überschneidet sich mit den ausgewählten Dateien oder Runtimepfaden.",

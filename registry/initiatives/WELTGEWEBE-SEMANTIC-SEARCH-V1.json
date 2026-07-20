@@ -51,10 +51,11 @@
       "verified_tasks": [
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T001",
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T002",
-        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T003"
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T003",
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T004"
       ],
-      "current_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T004",
-      "updated_at": "2026-07-19",
+      "current_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T005",
+      "updated_at": "2026-07-20",
       "t001_merge_commit": "f00afacc7be4cc551c81c5511faf5f817b04f700",
       "t002_merge_commit": "adc060cfbb9d055a7b63c494fa042e7c57ca7bea",
       "t002_pull_request": 1495,
@@ -73,7 +74,39 @@
         "fts_trigram_natural_top3": "14/19",
         "false_top1": 0,
         "leaks": 0
-      }
+      },
+      "t004_primary": {
+        "pull_request": 1502,
+        "head_sha": "9fbc592d3301d3c156a931ed18112a76ff55e1da",
+        "merge_commit": "9f44895337b2ecf97f83a125ca30f1247d98745f",
+        "binary_diff_sha256": "b4fb532d9a10f84ea41c4d0603accbb3a3bd471a673f3859913f76aa141a2c4c"
+      },
+      "t004_hardening": {
+        "pull_request": 1506,
+        "head_sha": "fc710aa4c0d0819d4acaef5b0034f8d88a9eb6b2",
+        "merge_commit": "4c6ef9e8fec0a2b17cc5babb5b0e02798002b89b",
+        "binary_diff_sha256": "ef9d37a139cbfbce837e4904a2c11f1ad05a37d519ed7027f9a760d9181af655"
+      },
+      "t004_model_decision": {
+        "smallest_qualified_local_candidate": "qwen3-embedding:4b",
+        "comparison_candidate": "qwen3-embedding:8b",
+        "ranking_revision": "weltgewebe-hybrid-ranking-v2",
+        "natural_top3": {
+          "t003_postgresql": "14/19",
+          "qwen3-embedding:0.6b": "14/19",
+          "qwen3-embedding:4b": "18/19",
+          "qwen3-embedding:8b": "19/19"
+        },
+        "false_top1": 0,
+        "visibility_leaks": 0,
+        "raw_vectors_persisted": false,
+        "production_approved": false
+      },
+      "t004_main_readback": {
+        "main_sha": "de8ec3da449d8fff2f0495e9c685eebb3c0dc061",
+        "hardening_files_identical_to_head": true
+      },
+      "t005_scope": "idempotent PostgreSQL projection, revision-bound worker, backfill, full rebuild and deletion/visibility propagation; no API, web or production rollout"
     }
   }
 }

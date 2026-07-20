@@ -93,7 +93,8 @@
       "WELTGEWEBE-OS-V1-T005",
       "CCM-V1-T002",
       "CCM-V1-T003",
-      "CCM-V1-T004"
+      "CCM-V1-T004",
+      "WELTGEWEBE-SEMANTIC-SEARCH-V1-T005"
     ]
   },
   "queue_policy": "skip-blocked",

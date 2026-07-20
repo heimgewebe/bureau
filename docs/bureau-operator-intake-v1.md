@@ -1,6 +1,6 @@
 # Bureau operator-native intake v1
 
-Stand: 2026-07-18
+Stand: 2026-07-20
 
 ## Rolle und Zweck
 
@@ -31,11 +31,14 @@ Die Aufnahme begründet keine Registry-, Queue-, Readiness-, Claim- oder Dispatc
 Die Bewertung ist read-only und liefert:
 
 - Source-Freshness und Katalogvalidierung;
-- exakte Duplikatbefunde über Kandidaten-ID, Source-Digest oder vorhandene Task-ID;
+- exakte Duplikatbefunde nur über dieselbe Kandidaten-ID oder eine explizit identische Task-ID;
+- höchstens 20 gemeinsame Source-Digests als separate, ausschließlich beratende `source_relationships` mit Gesamtzahl und Trunkierungsindikator;
 - höchstens fünf deterministische Ähnlichkeitshinweise;
 - Zielinitiative, vorgeschlagene Claims, Risiko- und Approval-Verträge;
 - fehlende Felder;
 - eine Entscheidung `promote`, `merge`, `refine`, `defer` oder `drop`.
+
+Ein gemeinsamer Source-Digest begründet allein keine Identitätsgleichheit. Kandidaten aus demselben Review-Artefakt bleiben unabhängig vorschlagsfähig, wenn Repository, gewünschtes Ergebnis oder explizite Task-Bindung abweichen. Idempotente Wiederholungen werden bereits bei der Aufnahme über Kandidaten-ID, Idempotenzschlüssel und Request-Hash abgefangen.
 
 Ähnlichkeit ist ausschließlich beratend. Sie darf nie automatisch mergen, schließen, unterdrücken oder Registry-Wahrheit verändern.
 

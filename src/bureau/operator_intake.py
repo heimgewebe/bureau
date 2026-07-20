@@ -45,6 +45,7 @@ from .worktree_hygiene import _process_references
 
 OPERATOR_INTAKE_SCHEMA_VERSION = 1
 MAX_SIMILARITY_RESULTS = 5
+MAX_SOURCE_RELATIONSHIPS = 20
 _SOURCE_SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 _IDEMPOTENCY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,199}$")
 _BRANCH_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$")
@@ -619,8 +620,10 @@ def _candidate_assess(
     if selected_initiative is not None and selected_initiative not in registry.initiatives:
         raise OperatorIntakeError("initiative-unknown", f"unknown initiative {selected_initiative}")
     exact: list[dict[str, Any]] = []
+    source_relationships: list[dict[str, Any]] = []
     source = context.get("source") if isinstance(context.get("source"), dict) else {}
     source_sha = source.get("sha256")
+    requested_task_id = task_id or record.get("task_id")
     for existing in registry.tasks.values():
         metadata = existing.raw.get("metadata")
         metadata = metadata if isinstance(metadata, dict) else {}
@@ -640,37 +643,70 @@ def _candidate_assess(
             and isinstance(existing_source, dict)
             and existing_source.get("sha256") == source_sha
         ):
-            exact.append(
+            source_relationships.append(
                 {
                     "kind": "task-source-digest",
                     "task_id": existing.id,
                     "reason": "same source_sha256",
+                    "identity_equivalent": binding.get("candidate_id") == identity,
                 }
             )
-    if task_id and task_id in registry.tasks:
-        exact.append({"kind": "task-id", "task_id": task_id, "reason": "task_id exists"})
+    if requested_task_id and requested_task_id in registry.tasks:
+        exact.append(
+            {
+                "kind": "task-id",
+                "task_id": requested_task_id,
+                "reason": "task_id exists",
+            }
+        )
     for other in current_candidate_records(store):
         if (
             int(other["event_id"]) == int(event["event_id"])
             or _candidate_identity(other) == identity
         ):
             continue
-        other_context = _operator_context(other["record"])
+        other_record = other["record"]
+        other_context = _operator_context(other_record)
+        if record.get("task_id") and other_record.get("task_id") == record.get("task_id"):
+            exact.append(
+                {
+                    "kind": "candidate-task-id",
+                    "candidate_id": _candidate_identity(other),
+                    "event_id": other["event_id"],
+                    "task_id": record.get("task_id"),
+                    "reason": "same explicit task_id",
+                }
+            )
         other_source = other_context.get("source")
         if (
             source_sha
             and isinstance(other_source, dict)
             and other_source.get("sha256") == source_sha
         ):
-            exact.append(
+            source_relationships.append(
                 {
                     "kind": "candidate-source-digest",
                     "candidate_id": _candidate_identity(other),
                     "event_id": other["event_id"],
                     "reason": "same source_sha256",
+                    "identity_equivalent": False,
+                    "same_repository": other_record.get("repo") == record.get("repo"),
+                    "same_desired_outcome": other_context.get("desired_outcome")
+                    == context.get("desired_outcome"),
+                    "same_explicit_task_id": bool(
+                        record.get("task_id")
+                        and other_record.get("task_id") == record.get("task_id")
+                    ),
                 }
             )
-    deduped_exact = list({legacy.canonical_json(item): item for item in exact}.values())
+    deduped_exact = sorted(
+        {legacy.canonical_json(item): item for item in exact}.values(),
+        key=legacy.canonical_json,
+    )
+    deduped_source_relationships = sorted(
+        {legacy.canonical_json(item): item for item in source_relationships}.values(),
+        key=legacy.canonical_json,
+    )
     candidate_text = _candidate_text(event)
     similar: list[dict[str, Any]] = []
     for existing in registry.tasks.values():
@@ -742,13 +778,13 @@ def _candidate_assess(
         },
         "target": {
             "initiative": selected_initiative,
-            "task_id": task_id,
+            "task_id": requested_task_id,
             "claims": claims,
             "risk": "medium" if claims else "unknown",
             "implementation_approval": (
                 task_approval_contract(
                     {
-                        "id": task_id,
+                        "id": requested_task_id,
                         "execution": {
                             "mode": "interactive-agent",
                             "policy": "review-before-effect",
@@ -756,12 +792,18 @@ def _candidate_assess(
                         "claims": claims,
                     }
                 )
-                if task_id
+                if requested_task_id
                 else None
             ),
             "publication_approval": approval_decision("registry_mutation", None),
         },
         "exact_duplicates": deduped_exact,
+        "source_relationships": deduped_source_relationships[:MAX_SOURCE_RELATIONSHIPS],
+        "source_relationships_summary": {
+            "total_count": len(deduped_source_relationships),
+            "returned_count": min(len(deduped_source_relationships), MAX_SOURCE_RELATIONSHIPS),
+            "truncated": len(deduped_source_relationships) > MAX_SOURCE_RELATIONSHIPS,
+        },
         "similarity_suggestions": similar[:MAX_SIMILARITY_RESULTS],
         "missing_fields": missing,
         "advisory_only": True,

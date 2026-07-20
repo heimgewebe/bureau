@@ -3,7 +3,7 @@
   "id": "BUR-2026-005-T020",
   "initiative": "BUR-2026-005",
   "title": "Make status capsule TAR extraction explicit for Python 3.14",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 119
@@ -89,6 +89,73 @@
         "verification authority",
         "safe mutation of terminal historical tasks"
       ]
+    },
+    "verified_at": "2026-07-20T21:09:33.000204Z",
+    "outcome": "Bureau PR #789 made status-capsule TAR extraction version-stable by passing an explicit fully_trusted tarfile filter after the existing fail-closed member validation. The exact implementation head passed local full validation and GitHub Python 3.10/3.12 plus CodeQL, was merged, and is present on main.",
+    "implementation_pr": "heimgewebe/bureau#789",
+    "implementation_head": "f4671f439cf5cd8ac260197e8ec75e812a7791d9",
+    "implementation_base": "ba4fd394863e4b59d74745f8e943fc5371e308ad",
+    "implementation_merge_commit": "0d6cb9d3e96a2ed89f3d437cb56681f2e00fdc5f",
+    "implementation_tree": "8d6fc131e5265e289a6752bea5281f8800f6c110",
+    "github_pr_diff_sha256": "09587a8e833c03e92711a4863f512ea7ad42c0ec3d59d1503fbc83c571d40ea9",
+    "validation": [
+      "Exact implementation head f4671f439cf5cd8ac260197e8ec75e812a7791d9: local make validate passed with Ruff, 785 tests, systemkatalog boundary and bureau check valid: True.",
+      "GitHub PR #789 validate (3.10) passed on the exact implementation head.",
+      "GitHub PR #789 validate (3.12) passed on the exact implementation head.",
+      "GitHub PR #789 CodeQL actions, CodeQL python and aggregate CodeQL all passed on the exact implementation head.",
+      "The focused regression test escalates DeprecationWarning to an error around _safe_extract; its Python 3.12 CI pass proves the changed extraction call no longer emits the targeted warning on that supported CI runtime.",
+      "Post-merge readback shows origin/main at merge commit 0d6cb9d3e96a2ed89f3d437cb56681f2e00fdc5f and src/bureau/status_capsule.py contains handle.extractall(destination, filter=\"fully_trusted\").",
+      "The merge-commit tree and exact implementation-head tree are identical at 8d6fc131e5265e289a6752bea5281f8800f6c110."
+    ],
+    "verified_acceptance": {
+      "bur-2026-005-t020-live-warning": "Before-change evidence is the task source observation from GitHub run 29245925498 with 19 DeprecationWarning instances at the implicit extractall call. After the change, the focused warning-as-error regression passed in the PR Python 3.12 validation job.",
+      "bur-2026-005-t020-explicit-filter": "_safe_extract now passes filter=\"fully_trusted\" explicitly. This preserves the prior extraction semantics while preventing Python 3.14 from changing behavior through a new default.",
+      "bur-2026-005-t020-security-invariants": "Regression tests prove path traversal, symbolic links, hard links and FIFO/special entries remain fail-closed, while normal files and directories still extract.",
+      "bur-2026-005-t020-no-warning-suppression": "No global or local warning suppression was introduced; the regression test instead turns DeprecationWarning into an error.",
+      "bur-2026-005-t020-full-validation": "Local full validation passed and all supported CI Python matrix jobs (3.10 and 3.12) plus CodeQL passed on the exact implementation head."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "BUR-2026-005-T020",
+          "source_ref": "heimgewebe/bureau#789",
+          "number": 789,
+          "head_sha": "f4671f439cf5cd8ac260197e8ec75e812a7791d9",
+          "merge_commit_sha": "0d6cb9d3e96a2ed89f3d437cb56681f2e00fdc5f",
+          "diff_sha256": "09587a8e833c03e92711a4863f512ea7ad42c0ec3d59d1503fbc83c571d40ea9"
+        },
+        {
+          "kind": "post_merge_source_readback",
+          "authority": "git-origin-main",
+          "task_id": "BUR-2026-005-T020",
+          "commit_sha": "0d6cb9d3e96a2ed89f3d437cb56681f2e00fdc5f",
+          "tree_sha": "8d6fc131e5265e289a6752bea5281f8800f6c110",
+          "result": "PASS"
+        }
+      ]
+    },
+    "tradeoffs": [
+      "filter=\"fully_trusted\" is intentionally safe here only because _safe_extract rejects traversal, links and special entries before extraction; that ordering is part of the security contract and must be revisited if member validation changes.",
+      "Python 3.14 was not a configured CI matrix runtime for this repository at closeout; the compatibility result is established by making the filter explicit and by passing every currently supported CI Python version, not by a direct Python 3.14 job."
+    ],
+    "verification": {
+      "verified_at": "2026-07-20T21:09:33.000223Z",
+      "acceptance_ids": [
+        "bur-2026-005-t020-live-warning",
+        "bur-2026-005-t020-explicit-filter",
+        "bur-2026-005-t020-security-invariants",
+        "bur-2026-005-t020-no-warning-suppression",
+        "bur-2026-005-t020-full-validation"
+      ],
+      "verification_note": "PR #789 is merged as 0d6cb9d3e96a2ed89f3d437cb56681f2e00fdc5f; exact-head local validation, Python 3.10/3.12 CI and CodeQL passed; post-merge main contains the explicit filter and has the same tree as the reviewed implementation head.",
+      "task_source_ref": "registry/tasks/BUR-2026-005-T020.json@0d6cb9d3e96a2ed89f3d437cb56681f2e00fdc5f",
+      "evidence_source": "github_pull_request_ci_and_post_merge_origin_main_readback",
+      "task_sha256": "3d15ad10320070c1a5526de5268283824bc0842363f1345691a7d0831fabbf69",
+      "plan_sha256": "653fa6a056506c94d5654ba5e3c16f9c31032767f0e1c844a8cb4714c50ce917"
     }
   }
 }

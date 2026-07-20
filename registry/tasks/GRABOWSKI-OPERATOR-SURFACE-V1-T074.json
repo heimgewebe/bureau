@@ -1,0 +1,200 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die installierte und effektive Safety-Observer-Unit besitzt keine aktivierenden oder koppelnden Wants-, BindsTo-, PartOf-, Upholds- oder vergleichbaren Beziehungen zu Operator oder Tunnel; After ordnet ausschließlich die Ausführungsreihenfolge.",
+      "id": "order-only-observer"
+    },
+    {
+      "assertion": "Die auf systemd 249 im User-Manager nicht ausführbaren Direktiven PrivateDevices, ProtectKernelModules und ProtectKernelLogs sind entfernt, während die nachweislich kompatiblen Schutz-, Ressourcen- und Schreibpfadgrenzen erhalten bleiben.",
+      "id": "compatible-hardening"
+    },
+    {
+      "assertion": "Die Unit wird commitgebunden, symlink- und TOCTOU-gehärtet atomar installiert; die unmittelbar verdrängte inkompatible Unit bleibt als versteckte, nicht geladene Retention-Datei mit belegter Byteidentität erhalten.",
+      "id": "atomic-install-and-retention"
+    },
+    {
+      "assertion": "Die exakten Heads der PRs #314 und #316 bestehen vollständige Validierung, GitHub-CI und einen head- sowie diffgebundenen High-Critical-Review; der fokussierte Deployment-Test besteht auf dem finalen Mergecommit.",
+      "id": "review-tests-ci"
+    },
+    {
+      "assertion": "PR #314 ist als c47ed4b12cc7856b46d5a0764e74777eab7d207a und PR #316 als fdbcd40f23818111ded3cc76ae3008720179583e gemergt; ausschließlich der finale Mergecommit ist vollständig und integritätsgültig in der laufenden Grabowski-Runtime aktiv.",
+      "id": "exact-merge-and-deploy"
+    },
+    {
+      "assertion": "Ein realer Observer-Lauf endet mit Result=success, ActiveState=inactive und SubState=dead; Operator und Tunnel bleiben aktiv, behalten ihre Invocation-IDs und Startzeitpunkte und weisen jeweils NRestarts=0 auf.",
+      "id": "live-execution-without-restart"
+    },
+    {
+      "assertion": "Runtime, Deployment-Integrität, Auditkette und Audit-Schreibbarkeit sind grün, der Kill-Switch ist nicht aktiv und der Observer-Timer ist geladen, aktiviert und wartend.",
+      "id": "runtime-audit-health"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "registry_mutation",
+      "note": "Diese Registry-Publikation dokumentiert ausschließlich den bereits reviewten, gemergten, exakt deployten und live verifizierten Zustand. Sie erteilt keine neue Implementierungs-, Merge-, Deployment- oder Laufzeitautorität.",
+      "required_level": "reviewed_plan"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "service:grabowski-safety-observer.service",
+      "service:grabowski-observer.timer",
+      "service:grabowski-operator.service",
+      "service:tunnel-client-grabowski.service",
+      "path:/home/alex/.config/systemd/user/grabowski-safety-observer.service"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den Safety-Observer als rein ordnende, nicht aktivierende systemd-User-Unit betreiben, inkompatible Capability-Härtungen fail-closed erkennen, verdrängte Unit-Dateien monoton erhalten und den exakten Merge- und Livezustand ohne Neustart von Operator oder Tunnel belegen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T074",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "allgemeine Kompatibilität jeder systemd-Version",
+      "Abwesenheit künftiger Connector- oder Tunnelstörungen",
+      "dass die versteckte Retention-Datei von systemd geladen wird",
+      "neue Merge-, Deployment- oder Laufzeitautorität"
+    ],
+    "implementation": {
+      "audit": {
+        "chain_valid": true,
+        "kill_switch_engaged": false,
+        "last_record_sha256": "39f35120c7c899abc90d1149b682d8953ba14169f395bcf2afe64fbb80eeaa44",
+        "writable": true
+      },
+      "deployment": {
+        "deployed_commit": "fdbcd40f23818111ded3cc76ae3008720179583e",
+        "deployment_complete": true,
+        "deployment_integrity_valid": true,
+        "job_unit": "grabowski-job-45e62f972d04",
+        "payload_sha256": "a40db9cea643c0dfff7a43c4efaa72885b6411a96ebbe6cee0bd81637c3a4ed1",
+        "receipt_sha256": "7aa634dbaf1efaff2a8974e29e1facf5a83df7ddb384efd02ca85fe338b41ebb",
+        "runtime_healthy": true,
+        "runtime_release_id": "fdbcd40f2381-srcset41e072a99667-locke6664d600b6c-contract1add9fdbb62b"
+      },
+      "live_execution": {
+        "observer_active_state": "inactive",
+        "observer_result": "success",
+        "observer_sub_state": "dead",
+        "operator_invocation_id": "0adb9d1c00734ff4bbbecd3617bbbe53",
+        "operator_restarts": 0,
+        "timer_state": "active/waiting",
+        "timer_unit": "grabowski-observer.timer",
+        "tunnel_invocation_id": "7d57120af0ef483bbb2a79692c87b83a",
+        "tunnel_restarts": 0
+      },
+      "pull_requests": {
+        "activation_race": {
+          "merge_commit": "c47ed4b12cc7856b46d5a0764e74777eab7d207a",
+          "number": 314,
+          "status": "merged"
+        },
+        "user_systemd_compatibility": {
+          "base_sha": "1a0da803be342b02e5ea3cc070fb8f0da2972c68",
+          "merge_commit": "fdbcd40f23818111ded3cc76ae3008720179583e",
+          "number": 316,
+          "review_findings_fixed": 3,
+          "review_gate": "PASS",
+          "review_iterations": 5,
+          "review_task_id": "c72e121dac8b4d0093bfccb1",
+          "review_uncertainty": 0.03,
+          "reviewed_head": "f350b88569a5a7b2dcbbf894055a08d90617f410",
+          "status": "merged"
+        }
+      },
+      "repository": "heimgewebe/grabowski",
+      "retention": {
+        "contains_removed_incompatible_directives": true,
+        "hidden": true,
+        "loaded_by_systemd": false,
+        "mode": "0644",
+        "path": "/home/alex/.config/systemd/user/.grabowski-safety-observer.service.retained-5d2e423be7f051a0f0bd837b",
+        "sha256": "74fb5c5fd88db1d1146d158054f6f1674a53b725cfbe229dffd808f5b1c57e00"
+      },
+      "unit": {
+        "binds_to": [],
+        "drop_in_paths": [],
+        "fragment_path": "/home/alex/.config/systemd/user/grabowski-safety-observer.service",
+        "installed_mode": "0644",
+        "installed_sha256": "8477433d654e30b183e1edf3fbc38f40161ef3bcaaec8cef77f987a13780f44a",
+        "part_of": [],
+        "source_bytes_equal": true,
+        "wants": []
+      },
+      "validation": {
+        "focused_tests": {
+          "count": 56,
+          "lifecycle_receipt_sha256": "7d243e724519294d9b4be2929b21701d84c91cab08c24b7e454c0241a24d673e",
+          "status": "passed",
+          "task_id": "cf41a0e4de0445adb6b21a8c"
+        },
+        "full_validate": "passed during exact deployment",
+        "github_checks": "all-success"
+      }
+    },
+    "source": "bureau_operator_intake",
+    "source_candidate_id": "candidate-3c5c945cccef63a07ff1943d",
+    "source_event_id": 811,
+    "source_observation": "PR #314 schloss die Aktivierungsrace. Der erste Live-Deploy deckte auf systemd 249 drei im User-Manager inkompatible Härtungsdirektiven auf. PR #316 entfernte ausschließlich diese Direktiven und ergänzte einen realen Ausführungsgate. Der finale Merge ist exakt deployt und live erfolgreich.",
+    "validated_acceptance": {
+      "atomic-install-and-retention": "PASS: installierte und Quell-Unit sind bytegleich; die verdrängte inkompatible Unit ist verborgen erhalten und nicht FragmentPath.",
+      "compatible-hardening": "PASS: die drei auf diesem User-Manager inkompatiblen Direktiven sind effektiv no; die übrige Sandbox ist effektiv aktiv und der reale Lauf gelingt.",
+      "exact-merge-and-deploy": "PASS: Runtime-Identität und alle Integritätsflags binden exakt fdbcd40f23818111ded3cc76ae3008720179583e.",
+      "live-execution-without-restart": "PASS: Observer erfolgreich; Operator und Tunnel behalten Invocation-ID und Startzeit, NRestarts bleibt 0.",
+      "order-only-observer": "PASS: effektiver Readback zeigt leere Wants, BindsTo und PartOf; After enthält nur Ordnungsbeziehungen und Systemziele.",
+      "review-tests-ci": "PASS: beide PRs wurden nur nach grüner CI und Review gemergt; 56 fokussierte Tests bestehen auf dem finalen Merge.",
+      "runtime-audit-health": "PASS: Runtime gesund; Auditkette gültig und schreibbar; Kill-Switch aus; Timer aktiv/wartend."
+    },
+    "verification": {
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "task_sha256": "264af0668e8e40057b9be89bf86869aaadc297a8aaab142434ded2da6eaf3d2c"
+    },
+    "verified_at": "2026-07-20T01:46:20Z",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-3c5c945cccef63a07ff1943d",
+      "event_id": 811,
+      "event_created_at": "2026-07-20T01:46:20.357270Z",
+      "request_sha256": "5c258e493b3ffe6528dc8545d4e85bf9311d707bb72c810b278ff8b5eb90f34f",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github_pull_request",
+        "locator": "github:heimgewebe/grabowski#316@f350b88569a5a7b2dcbbf894055a08d90617f410",
+        "observed_at": "2026-07-20T01:46:20.351926Z",
+        "sha256": "dbff56177bd683f5334bb8553796060aba85bac64f29dfa08dd8da5f86d535d6"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "systemd",
+    "github",
+    "grabowski",
+    "runtime-deployment",
+    "audit"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Observer-Deploy-Race und User-systemd-Kompatibilität verifizieren"
+}

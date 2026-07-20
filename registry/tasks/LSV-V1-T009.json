@@ -1,0 +1,114 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Eine explizite, versionierte Matrix benennt die wichtigsten Leitstand-Ansichten und prüft jede davon mindestens in einem Desktop- und einem mobilen Viewport.",
+      "evidence_type": "object",
+      "id": "view-matrix",
+      "verifier": "browser regression suite and matrix review"
+    },
+    {
+      "assertion": "Die Suite prüft Dokument- und Komponentenüberläufe gegen das tatsächlich ausgelieferte Produkt-CSS; Test-Harness-Stile dürfen Box-Sizing, Breiten- oder Überlaufverträge nicht vorwegnehmen oder kaschieren.",
+      "evidence_type": "boolean",
+      "id": "overflow-and-product-css",
+      "verifier": "negative browser tests"
+    },
+    {
+      "assertion": "Tastaturbedienung, sichtbarer Fokus, Fokus-Rückgabe, Fokusbegrenzung in modalen Oberflächen und Escape-Verhalten werden für relevante Ansichten automatisiert geprüft.",
+      "evidence_type": "object",
+      "id": "keyboard-focus-modal",
+      "verifier": "browser accessibility tests"
+    },
+    {
+      "assertion": "Reduzierte Bewegung sowie fehlende, veraltete, beschädigte und leer gelieferte Quelldaten besitzen reproduzierbare Browserfälle ohne JavaScript- oder Layoutabbruch.",
+      "evidence_type": "object",
+      "id": "motion-and-degraded-states",
+      "verifier": "browser fixture matrix"
+    },
+    {
+      "assertion": "Jeder Browserbeleg ist an exakten Git-Commit, Build-Digest, Viewport und geladene Leitstand-Assets gebunden; Konsolen-, Seiten- und relevante HTTP-Fehler führen fail-closed zum Testfehler.",
+      "evidence_type": "object",
+      "id": "build-bound-evidence",
+      "verifier": "CI receipt and evidence schema"
+    },
+    {
+      "assertion": "Die Browserprüfung führt keine Taskausführung, Quellenreparatur, externe Mutation oder zweite Zustandswahrheit ein.",
+      "evidence_type": "boolean",
+      "id": "read-only-boundary",
+      "verifier": "diff and network boundary review"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.leitstand"
+    }
+  ],
+  "depends_on": [
+    "LSV-V1-T007"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Umsetzung verändert ausschließlich den Leitstand-Code und seine CI-/Browserprüfungen in einem isolierten Worktree; externe Systeme und Quelldaten bleiben read-only.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand"
+  },
+  "goal": "Einen reproduzierbaren, buildgebundenen Browser-Regressionsvertrag für die wichtigsten Leitstand-Ansichten schaffen, der Desktop- und Mobilzustände, horizontalen Überlauf, Tastatur- und Fokusführung, modale Oberflächen, reduzierte Bewegung sowie fehlende, veraltete und beschädigte Quelldaten prüft, ohne Produktfehler durch Test-Harness-CSS zu verdecken.",
+  "id": "LSV-V1-T009",
+  "initiative": "LEITSTAND-VISUAL-LAYER-V1",
+  "metadata": {
+    "alternative_axis": "Prüfvertrag vor systemweiter UI-Konsolidierung.",
+    "does_not_establish": [
+      "visual_perfection",
+      "all_browsers_covered",
+      "runtime_source_correctness",
+      "write_authority"
+    ],
+    "source_observation": "Die reale Abnahme der Vollbild-Systemkarte fand Desktop-Navigationsüberlauf und nicht umbrechende mobile Quellenpfade, die Unit- und bisherige Shell-Tests nicht erkannten.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-162023b441124d6d29947ca2",
+      "event_id": 821,
+      "event_created_at": "2026-07-20T05:18:41.671208Z",
+      "request_sha256": "9623409a47d7054eae767856396ac23ee76f967995fbe0f8bd3d4fb1d18d405e",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator_observation",
+        "locator": "operator-observation:leitstand-system-map-fullscreen-ux-v1:cross-view-browser-gap",
+        "observed_at": "2026-07-20T07:15:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 80
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "rollback": {
+    "strategy": "Den erweiterten Browserjob und seine View-Matrix deaktivieren beziehungsweise auf den vorherigen Shell-Regressionsumfang zurücksetzen; Produktdaten und Laufzeitstate werden nicht migriert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Leitstand-Ansichten browserbasiert auf Bedienbarkeit prüfen"
+}

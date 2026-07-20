@@ -80,6 +80,84 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "completed_at": "2026-07-20",
+    "verification": {
+      "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T019",
+      "authority": "commonworld-project-operator",
+      "decision": "duplicate_catalogue_startup_delivery_measured_reduced_merged_deployed_and_live_verified",
+      "repository": "heimgewebe/commonworld",
+      "implementation_pr": 119,
+      "pr_head": "b0efb5560e51a5c207930a5129f30ca8ad813ab1",
+      "pr_base": "8ca8fb6d57108f18068a7a868a7f8addd1f46efc",
+      "merge_commit": "0471abc348b0d593758e87ec4272417844479cf3",
+      "diff_sha256": "f8f56922d2332a13a3fd754da5057a07d9987712eed57d199cd1883f6c2f2954",
+      "diff_bytes": 100462,
+      "github_premerge_validate_run_id": 29738921970,
+      "github_main_validate_run_id": 29739496820,
+      "github_main_codeql_run_id": 29739496632,
+      "github_pages_workflow_run_id": 29739496139,
+      "github_production_readback_run_id": 29739496870,
+      "github_checks": "PASS",
+      "premerge_validation": {
+        "javascript_tests": "64/64 PASS",
+        "python_tests": "453/453 PASS",
+        "reproducible_build": "PASS",
+        "failure_safe_browser_smoke": "PASS",
+        "codeql_actions": "PASS",
+        "codeql_python": "PASS",
+        "codeql_javascript_typescript": "PASS"
+      },
+      "delivery_measurement": {
+        "catalog_entries": 41,
+        "startup_project_json_requests_before": 41,
+        "startup_project_json_requests_after": 0,
+        "first_party_startup_requests_before": 51,
+        "first_party_startup_requests_after": 9,
+        "catalogue_gzip_bytes_before": 72315,
+        "catalogue_gzip_bytes_after": 20526,
+        "catalogue_gzip_reduction_bytes": 51789,
+        "catalogue_gzip_reduction_percent": 71.6,
+        "dom_nodes_before": 1687,
+        "dom_nodes_after": 1687,
+        "mobile_runtime_ready_ms_at_4x_cpu": 785,
+        "desktop_runtime_ready_ms_at_4x_cpu": 605,
+        "first_party_surface_sha256": "87945c873381e202f8ac349e742f7f08840dc37c91c1b65f37d7933ccd0a3610"
+      },
+      "production_verification": {
+        "public_url": "https://commonworld.net/",
+        "deployment_id": 5521089654,
+        "deployment_state": "success",
+        "deployment_sha": "0471abc348b0d593758e87ec4272417844479cf3",
+        "readback_verdict": "pass",
+        "readback_receipt_id": "commonworld.pages-production-readback.v1",
+        "readback_receipt_sha256": "a92c264ca4a65ec6457771bb59d872880f1393a7e3a11c9dac1d474f49273398",
+        "catalog_entry_count": 41,
+        "exact_public_files": "3/3 PASS",
+        "root_http_status": 200,
+        "proposal_http_status": 200,
+        "catalog_http_status": 200,
+        "catalog_access": "static_read_only",
+        "api_runtime": false,
+        "write_path": false
+      },
+      "acceptance": {
+        "measured-baseline": "PASS",
+        "threshold-contract": "PASS",
+        "option-comparison": "PASS",
+        "single-truth-preserved": "PASS",
+        "bounded-delivery": "PASS",
+        "evidence-bound-closeout": "PASS"
+      },
+      "explicit_nonclaims": [
+        "The measurements establish a universal performance ranking across all devices or networks.",
+        "The catalogue may grow without future remeasurement.",
+        "A backend or runtime API is justified.",
+        "No-JavaScript or privacy behavior may be weakened.",
+        "The public readback establishes GitHub Pages SLA or absence of all transient CDN failures."
+      ],
+      "task_sha256": "b10967b71541bc5905b6a7c705ca71af14b6aaec056741aa0121e8905055380d",
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4"
     }
   },
   "priority": {
@@ -94,6 +172,6 @@
     "browser"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Measure and reduce duplicate catalogue delivery"
 }

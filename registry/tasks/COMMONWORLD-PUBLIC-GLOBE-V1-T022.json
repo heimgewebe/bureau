@@ -1,0 +1,113 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A documented comparison evaluates at least hierarchical equal-area or bounded-distortion geodesic schemes for deterministic browser use, licensing, bundle size, parent-child hierarchy, antimeridian and polar behavior without presupposing one library.",
+      "id": "option-and-standard-review"
+    },
+    {
+      "assertion": "The selected scheme defines stable planet, macroregion and region cells with explicit maximum area/distortion bounds, deterministic identifiers and parent containment across the antimeridian and near both poles.",
+      "id": "bounded-cell-semantics"
+    },
+    {
+      "assertion": "Hidden locations remain excluded before cell derivation, and k=5, uncertainty-diameter, coarsening and complement-differencing protections are applied to released identities independently of cell-system internals.",
+      "id": "privacy-preservation"
+    },
+    {
+      "assertion": "Type hue, unassessed-coverage pattern/text, precision geometry, unique-identity counts and constant-size non-density aggregate marks retain the T018 visual semantics without colour-only communication.",
+      "id": "semantic-and-visual-parity"
+    },
+    {
+      "assertion": "A versioned migration contract defines compatibility with the shipped degree-grid projection, deterministic fallback behavior and cache invalidation without changing CommonProject or public location precision semantics.",
+      "id": "migration-and-fallback"
+    },
+    {
+      "assertion": "Map aggregates, text summaries, search and intent filters use one visible identity set and stable ordering at every zoom level, including cells crossing the antimeridian.",
+      "id": "filter-and-text-parity"
+    },
+    {
+      "assertion": "Aggregation is prepared per catalog snapshot rather than per animation frame, with measured browser memory, transfer and interaction thresholds at 500 and 5000 Commons and no unbounded dependency growth.",
+      "id": "performance-bound"
+    },
+    {
+      "assertion": "Focused tests cover antimeridian crossing, polar points and polygons, MultiPolygon components, holes, parent transitions, identity deduplication, deterministic output, privacy suppression, keyboard/touch legend behavior and reduced-motion modes.",
+      "id": "edge-case-evidence"
+    },
+    {
+      "assertion": "Closeout binds the full diff to the exact PR head, records green CI and review, identifies merge and deployment commits and verifies production on desktop, smartphone and iPad without claiming global coverage completeness.",
+      "id": "evidence-bound-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T018"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Registration does not authorize a library or grid choice. Compare standards and implementations first, retain deterministic static output and prove antimeridian, polar, privacy and accessibility behavior before replacing the shipped V1 buckets.",
+      "required_level": "reviewed_plan"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Replace or supplement the initial longitude-latitude degree grids with a deterministic hierarchical geodesic aggregation scheme whose cells remain area- and distortion-bounded near the antimeridian and poles while preserving privacy release rules, semantic zoom meaning, filter parity and static-browser performance.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T022",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "selection of H3, S2 or another grid system",
+      "permission to imply equal catalog coverage",
+      "permission to expose hidden locations",
+      "automatic replacement of the shipped degree-grid fallback",
+      "automatic task readiness"
+    ],
+    "queue_mutated": false,
+    "registered_at": "2026-07-20",
+    "source": "Commonworld geographic impressions T018 closeout follow-up",
+    "source_repository": "heimgewebe/commonworld",
+    "work_marker": "COMMONWORLD-GEODESIC-AGGREGATION-BUCKETS-V1",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-5b8cdfc1a88f7ab97195e05a",
+      "event_id": 807,
+      "event_created_at": "2026-07-19T22:42:41.875975Z",
+      "request_sha256": "c1c8b222dc34f8e597081c28bdc0342ae59090328a2650c4122a475a82994b20",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "implementation-review",
+        "locator": "chatgpt:commonworld-geographic-impressions-self-review-20260719",
+        "observed_at": "2026-07-19T23:55:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 990
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Adopt distortion-bounded geodesic aggregation buckets"
+}

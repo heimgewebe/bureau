@@ -3,7 +3,7 @@
   "id": "RPU-V1-T025",
   "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
   "title": "Call-graph-aware edit context compiler",
-  "state": "planned",
+  "state": "verified",
   "goal": "Integrate proven caller/callee evidence into agent impact and token-budget edit context without turning graph relations into impact or test-sufficiency verdicts.",
   "depends_on": [
     "RPU-V1-T023",
@@ -87,6 +87,63 @@
         "verification authority",
         "safe mutation of terminal historical tasks"
       ]
+    },
+    "pr_completion": {
+      "auto_verify": true,
+      "head_sha": "502ab91c94d8d958e6b2b33ed3091220306bbc60",
+      "number": 1064,
+      "post_merge_required": false,
+      "repo": "heimgewebe/repoground"
+    },
+    "implementation_base": "b62e676be855be8bc6ed318146e84e0d20e86217",
+    "implementation_pr": "heimgewebe/repoground#1064",
+    "implementation_head": "502ab91c94d8d958e6b2b33ed3091220306bbc60",
+    "implementation_merge_commit": "4aaaff8ca0c38f745f29d8f57d50d61f4568cdc3",
+    "implementation_merged_at": "2026-07-20T22:30:29Z",
+    "implementation_diff_sha256": "f4e3f08aaf75b9ad8ad7f96692cd1e54bf202e41c8c8f366233649efa54b7341",
+    "implementation_patch_url": "https://github.com/heimgewebe/repoground/pull/1064.diff",
+    "outcome": "RepoGround edit context now consumes optional Python call-graph evidence, separately budgets target definitions, direct callers, direct callees, entrypoints, tests, contracts and unresolved risk boundaries, and preserves explicit non-verdicts instead of promoting uncertain relations to impact claims.",
+    "validation": [
+      "Exact PR head 502ab91c94d8d958e6b2b33ed3091220306bbc60 was reviewed against diff SHA-256 f4e3f08aaf75b9ad8ad7f96692cd1e54bf202e41c8c8f366233649efa54b7341.",
+      "All reported GitHub checks passed, including pytest-full, browser-tests, release-candidate, Ruff, CodeQL, RepoGround CodeQL policy, contracts validation, task-index and ai-context guard.",
+      "The PR reports 4,416 passed and two expected skips on the reviewed head; the dedicated adapter and edit-context tests cover S1 caller/callee selection, separate section budgets, source ranges, freshness, omission reasons and non-verdicts.",
+      "The optional python_call_graph_json source remains non-blocking when absent; only S1 uniquely resolved relations are promoted to direct caller/callee context, while uncertain or incomplete evidence stays in unresolved risk boundaries.",
+      "Head-bound self-review found and removed the pre-publication unbounded omitted-item payload; final sections expose bounded selected items plus aggregate omitted_count and omission_reasons."
+    ],
+    "verified_acceptance": {
+      "rpu-v1-t025-selection": "PASS: Edit context exposes independent bounded sections for target_definitions, direct_callers, direct_callees, entrypoints, tests, contracts and unresolved_risk_boundaries.",
+      "rpu-v1-t025-trace": "PASS: Selected call relations retain call-site and peer-definition source ranges, evidence level, resolution status/reason, freshness identity and explicit omission_reason; bounded sections also report aggregate omission reasons.",
+      "rpu-v1-t025-nonverdict": "PASS: The compiler explicitly lists complete_blast_radius, runtime_breakage, test_sufficiency and merge_readiness as non-verdicts and does not upgrade S0/candidate/ambiguous evidence to direct relations."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "RPU-V1-T025",
+          "number": 1064,
+          "repo": "heimgewebe/repoground",
+          "source_ref": "heimgewebe/repoground#1064",
+          "base_commit_sha": "b62e676be855be8bc6ed318146e84e0d20e86217",
+          "head_commit_sha": "502ab91c94d8d958e6b2b33ed3091220306bbc60",
+          "merge_commit_sha": "4aaaff8ca0c38f745f29d8f57d50d61f4568cdc3",
+          "diff_sha256": "f4e3f08aaf75b9ad8ad7f96692cd1e54bf202e41c8c8f366233649efa54b7341"
+        },
+        {
+          "kind": "review_artifact",
+          "authority": "grabowski-local",
+          "task_id": "RPU-V1-T025",
+          "source_ref": "/home/alex/audits/repoground/rpu-v1-t025-call-graph-edit-context.diff",
+          "content_sha256": "f4e3f08aaf75b9ad8ad7f96692cd1e54bf202e41c8c8f366233649efa54b7341"
+        }
+      ]
+    },
+    "verified_at": "2026-07-20T22:30:29Z",
+    "verification": {
+      "task_sha256": "3b2b7f01cf82eb71dfa4e51a106df271edbdd5cebe0c20ddb179ca2b079b87d8",
+      "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db"
     }
   }
 }

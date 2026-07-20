@@ -3,7 +3,7 @@
   "id": "RPU-V1-T024",
   "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
   "title": "Symbol call graph goldset and promotion benchmark",
-  "state": "planned",
+  "state": "verified",
   "goal": "Measure precision, unresolved honesty, context compression and coding-agent task quality before any default promotion.",
   "depends_on": [
     "RPU-V1-T023"
@@ -91,6 +91,66 @@
         "verification authority",
         "safe mutation of terminal historical tasks"
       ]
+    },
+    "pr_completion": {
+      "auto_verify": true,
+      "head_sha": "1761b9e144c023092bdedca4879a799f888ef618",
+      "number": 1061,
+      "post_merge_required": false,
+      "repo": "heimgewebe/repoground"
+    },
+    "implementation_base": "765d2a5287c9494655b3af1f6d6247376f0788dd",
+    "implementation_pr": "heimgewebe/repoground#1061",
+    "implementation_head": "1761b9e144c023092bdedca4879a799f888ef618",
+    "implementation_merge_commit": "f7f9ef29a45e0f3b43e303e8e4bf5bc888dfb1d3",
+    "implementation_merged_at": "2026-07-20T10:00:04Z",
+    "implementation_diff_sha256": "27f4c356a78e515218527ff9c8702c7dc614f317721242cce7a4aca7ea35e736",
+    "implementation_patch_url": "https://github.com/heimgewebe/repoground/pull/1061.patch",
+    "outcome": "RepoGround now has a fixed Python call-graph quality goldset, separate precision, recall, honesty, compression and navigation-task metrics, a fail-closed promotion gate, and commit-bound CI evidence while default promotion remains false.",
+    "validation": [
+      "All eight final-head GitHub workflow groups passed: Python Call Graph Goldset, test-suite, lint, CodeQL, contracts-validate, task-index, ai-context guard and Doc-Freshness.",
+      "The dedicated benchmark slice passed 40 focused tests, Ruff, JSON validation and structural diff checks.",
+      "The repository-wide Pytest, Playwright, WebUI and release-candidate jobs passed on exact head 1761b9e144c023092bdedca4879a799f888ef618.",
+      "The fixed goldset reports S1 precision 1.0, target recall 1.0, zero false positives and zero false negatives across 13 scored categories.",
+      "Deterministic navigation tasks preserve recall while reducing aggregate context paths from 11 to 5 and tool calls from 9 to 3.",
+      "The exact CI-generated PR diff contains nine files, 1425 additions, zero deletions and SHA-256 27f4c356a78e515218527ff9c8702c7dc614f317721242cce7a4aca7ea35e736.",
+      "Head-bound self-review passed with no unresolved review threads and no producer or default-route mutation."
+    ],
+    "verified_acceptance": {
+      "rpu-v1-t024-goldset": "A fixed Python-scored goldset covers all registered call categories, includes German Unicode identifier and UTF-8 handling, and preserves dynamic, ambiguous and shadowed cases as explicit non-S1 evidence.",
+      "rpu-v1-t024-metrics": "The reviewable JSON report separates S1 precision, target recall, false-positive classes, unresolved share, serialized bytes, build time, context paths, tool calls and deterministic navigation-task outcomes.",
+      "rpu-v1-t024-promotion": "All registered thresholds pass on the fixed evidence, but the report sets only eligible_for_review=true and keeps default_promoted=false with Bureau as decision authority."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "RPU-V1-T024",
+          "number": 1061,
+          "repo": "heimgewebe/repoground",
+          "source_ref": "heimgewebe/repoground#1061",
+          "base_commit_sha": "765d2a5287c9494655b3af1f6d6247376f0788dd",
+          "head_commit_sha": "1761b9e144c023092bdedca4879a799f888ef618",
+          "merge_commit_sha": "f7f9ef29a45e0f3b43e303e8e4bf5bc888dfb1d3",
+          "diff_sha256": "27f4c356a78e515218527ff9c8702c7dc614f317721242cce7a4aca7ea35e736"
+        },
+        {
+          "kind": "benchmark_artifact",
+          "authority": "github_actions",
+          "task_id": "RPU-V1-T024",
+          "source_ref": "heimgewebe/repoground/actions/runs/29733246482/artifacts/8457174215",
+          "artifact_sha256": "7e75398af1581e0e4184636e1ca76012ea441ea0116a5c6dfda5fd0ef6a29a99",
+          "report_sha256": "309eea13817885a934d1bc27da4911c72997aacaa23306a4d56816d250094382"
+        }
+      ]
+    },
+    "verified_at": "2026-07-20T10:00:04Z",
+    "verification": {
+      "task_sha256": "c7767d4444416f8ce4bc0c09672cfb345224373101d8f08a31fa13194cf9dff1",
+      "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db"
     }
   }
 }

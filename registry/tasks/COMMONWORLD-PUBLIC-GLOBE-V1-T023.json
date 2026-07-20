@@ -1,0 +1,108 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The validator deterministically measures the freshly built bootstrap with gzip mtime zero, enforces the warning and maximum contract thresholds fail-closed, and requires committed evidence to match the fresh measurement.",
+      "id": "fresh-bootstrap-budget"
+    },
+    {
+      "assertion": "Missing browser scenarios, missing blockedCatalogRequests fields, invalid booleans or negative or non-integer values, and observed nonzero requests produce distinct accurate diagnostics.",
+      "id": "missing-scenario-diagnostics"
+    },
+    {
+      "assertion": "Runner and validator consume one declarative canonical smoke plan while preserving fail-closed order, required result bindings and negative tests for omitted, reordered or bypassed steps.",
+      "id": "canonical-smoke-plan"
+    },
+    {
+      "assertion": "Bootstrap normalization tolerates whitespace, requires exactly one export assignment match and fails clearly for zero or multiple matches without changing the comparable compile-time method unnecessarily.",
+      "id": "robust-compile-measurement"
+    },
+    {
+      "assertion": "Repository evidence remains deterministic and sufficient for local validation; raw data is retained only where needed or preserved as digest-bound automated CI artifacts without deleting authoritative evidence.",
+      "id": "evidence-bounded"
+    },
+    {
+      "assertion": "Architecture documentation defines full-bootstrap, warning, hard-failure and measured segmentation or slim-start-model thresholds without using project count alone.",
+      "id": "migration-thresholds-documented"
+    },
+    {
+      "assertion": "Focused unit and negative contract tests, JavaScript and Python tests, build, make validate, canonical browser smoke, catalog measurement and unchanged-surface checks pass on the exact final head.",
+      "id": "full-validation"
+    },
+    {
+      "assertion": "Closeout records exact base, head, diff and merge identities, green CI including CodeQL, Pages deployment and production readback proving zero startup project JSON requests, the build-bound marker and continued public JSON availability.",
+      "id": "live-readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T019"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Implement in an isolated clean checkout; preserve public JSON, SEO and no-JS surfaces; bind review, browser evidence and deployment readback to exact immutable identities.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Harden the build-bound Commonworld catalogue delivery contract with fresh bootstrap budget measurement, precise failure diagnostics, a canonical browser-smoke plan, robust compile measurement, bounded evidence and documented migration thresholds without changing the public product surface.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T023",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to change the visible Commonworld product",
+      "permission to remove public project JSON files or no-JS output",
+      "permission to weaken smoke ordering or fresh-result binding",
+      "permission to reuse T019 review evidence after any diff change"
+    ],
+    "queue_mutated": false,
+    "registered_at": "2026-07-20",
+    "source": "ChatGPT operator request: Commonworld catalog delivery hardening after T019 review",
+    "source_pr": 119,
+    "source_repository": "heimgewebe/commonworld",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-97f35c41a2f9eb8d947652c7",
+      "event_id": 840,
+      "event_created_at": "2026-07-20T14:23:04.661778Z",
+      "request_sha256": "b957cae459539fda295cfbb0df3c88ba9dc1ff939b5a7c1885fec61da02bb4ef",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chatgpt:commonworld-catalog-delivery-hardening-after-t019:2026-07-20",
+        "observed_at": "2026-07-20T15:00:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Harden catalog delivery budget and smoke orchestration"
+}

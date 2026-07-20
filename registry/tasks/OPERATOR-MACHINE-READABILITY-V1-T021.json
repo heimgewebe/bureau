@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T021",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Prevent source-digest false duplicates in Bureau operator intake",
-  "state": "planned",
+  "state": "verified",
   "goal": "Refine Bureau operator-intake deduplication so candidates derived from the same source artifact but carrying different desired outcomes or repository targets are not classified as exact duplicates, while genuine identity and replay duplicates remain deterministic and fail closed.",
   "priority": {
     "lane": "next",
@@ -95,10 +95,85 @@
       ]
     },
     "does_not_establish": [
-      "candidate data loss",
       "automatic task promotion",
-      "task readiness",
-      "registry mutation outside the reviewed publication path"
-    ]
+      "semantic identity beyond explicit candidate or task identity",
+      "future runtime health",
+      "completion of OPERATOR-MACHINE-READABILITY-V1-T017"
+    ],
+    "verified_at": "2026-07-20T06:04:30.561688Z",
+    "implementation": {
+      "repository": "heimgewebe/bureau",
+      "pull_request": 761,
+      "base_commit": "310fdd42a3d3f68303fb2c2fc15c7dec000616d9",
+      "head_commit": "9554962b23c52046b25dde1894fa1269ae770ade",
+      "merge_commit": "83e2e25313e10d776346a87be8cfcd191d3dbe71",
+      "merged_at": "2026-07-20T05:46:57Z",
+      "github_patch_sha256": "84a2e1ce778101cbc4f9df60ed5d5df13a0022f2f90dd9e73e6e6a9f9da6ca5e",
+      "changed_files": [
+        "docs/bureau-operator-intake-v1.md",
+        "src/bureau/operator_intake.py",
+        "tests/test_operator_intake.py"
+      ]
+    },
+    "validation": {
+      "focused_operator_intake_tests": "21 passed",
+      "full_validate_pre_rebase": "769 passed; Ruff, Systemkatalog boundary, Registry and StateStore valid",
+      "full_validate_post_rebase": "exit 0 on exact head 9554962b23c52046b25dde1894fa1269ae770ade",
+      "pull_request_checks": {
+        "validate_3_10": "success",
+        "validate_3_12": "success",
+        "codeql": "success",
+        "analyze_actions": "success",
+        "analyze_python": "success"
+      },
+      "main_checks": {
+        "commit": "83e2e25313e10d776346a87be8cfcd191d3dbe71",
+        "validate": "success",
+        "codeql": "success"
+      }
+    },
+    "acceptance_evidence": {
+      "reproduce-live-finding": "The regression fixture models events 740, 741 and 742 with one source digest, distinct outcomes and repo.weltgewebe/repo.grabowski targets.",
+      "exact-identity-contract": "Exact duplicates now require candidate identity or explicit task identity; source_sha256 is emitted only in advisory source_relationships.",
+      "replay-preservation": "Existing idempotency tests remain green and a new negative test proves duplicate explicit task IDs still return merge.",
+      "advisory-source-link": "Shared-source output is deterministically sorted, capped at 20 and includes total_count, returned_count and truncated without changing task truth.",
+      "publication-proof": "The integration regression creates three independent reviewed proposals and publication previews for the 740/741/742 shape."
+    },
+    "runtime_deployment": {
+      "intent_sha256": "2f75fba08c49f23807543b56efdcf9afb0cb2c77f55ab29a67811e6c78752a86",
+      "target_sha256": "8efd8cd2c6aa20b7761ae2e3de9eb17f58495e882ce1fe86050679b70f8b29e7",
+      "result_sha256": "a03b6315008bbfb7307e9efb37462c5adbc1f6719565363fbc51f4f45fc06843",
+      "release_id": "83e2e25313e1-src92a9cbf6aa6a",
+      "manifest_sha256": "45c8002e5b5b192eb14538148d02be08bd18575857e76ef9bdaf9c98b0905b5c",
+      "source_commit": "83e2e25313e10d776346a87be8cfcd191d3dbe71",
+      "status": "deployed",
+      "runtime_identity_valid": true,
+      "registry_snapshot_tree_sha256": "984f9b68df83684cff964441ad5efe21ab1b05bfe24cc21b777d100c60ea6714"
+    },
+    "live_readback": {
+      "before": {
+        "candidate_id": "candidate-c31d976dd43352cb168e1415",
+        "event_id": 742,
+        "decision": "merge",
+        "reason": "events 740 and 741 were exact solely because of shared source_sha256"
+      },
+      "after": {
+        "events": [
+          740,
+          741,
+          742
+        ],
+        "decision_each": "promote",
+        "exact_duplicates_each": [],
+        "source_relationship_count_each": 2,
+        "source_relationships_truncated_each": false
+      }
+    },
+    "verification_note": "Bureau PR #761 replaced source-digest identity with bounded advisory relationships. Exact-head tests, PR and main CI, immutable runtime deployment and live assessments of events 740, 741 and 742 all passed.",
+    "verification": {
+      "task_sha256": "67821bb43637d2ee4118d519a61ac8238ab5030b8690f8c70d4d38117530dcce",
+      "plan_sha256": "5bd32f4906cc9af27a3f99c7ab886eb9df7f8e5f4e9247c450bc492e64d28b06",
+      "verified_at": "2026-07-20T06:04:30.561688Z"
+    }
   }
 }

@@ -567,7 +567,7 @@ def test_candidate_assessment_is_advisory_and_promotes_complete_input(registry_f
     assert result["target"]["publication_approval"]["allowed"] is False
 
 
-def test_candidate_assessment_reports_exact_source_duplicate(registry_factory, tmp_path):
+def test_candidate_assessment_reports_shared_source_as_advisory(registry_factory, tmp_path):
     _, registry = _committed_registry(registry_factory)
     store = StateStore(tmp_path / "state.sqlite3")
     first = _record(registry, store)
@@ -579,19 +579,198 @@ def test_candidate_assessment_reports_exact_source_duplicate(registry_factory, t
         source_kind="conversation",
         source_locator="chat:beta",
         source_sha256="a" * 64,
-        desired_outcome="Same source observed again",
-        repo="repo.alpha",
+        desired_outcome="Implement a different result from the shared review artifact",
+        repo="repo.beta",
     )
     result = candidate_assess(registry, store, candidate_id=second["candidate_id"])
-    assert result["decision"] == "merge"
-    assert result["exact_duplicates"] == [
+    assert result["decision"] == "promote"
+    assert result["exact_duplicates"] == []
+    assert result["source_relationships"] == [
         {
             "kind": "candidate-source-digest",
             "candidate_id": first["candidate_id"],
             "event_id": first["event_id"],
             "reason": "same source_sha256",
+            "identity_equivalent": False,
+            "same_repository": False,
+            "same_desired_outcome": False,
+            "same_explicit_task_id": False,
         }
     ]
+    assert result["source_relationships_summary"] == {
+        "total_count": 1,
+        "returned_count": 1,
+        "truncated": False,
+    }
+
+
+def test_candidate_assessment_keeps_explicit_task_identity_exact(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = candidate_record(
+        registry,
+        store,
+        idempotency_key="task-identity:first",
+        candidate_id="candidate-task-identity-first",
+        title="First task-bound candidate",
+        source_kind="conversation",
+        source_locator="chat:task-identity:first",
+        source_sha256="1" * 64,
+        desired_outcome="Keep the first explicit task binding",
+        repo="repo.alpha",
+        task_id="BUR-TEST-001-T001",
+    )
+    second = candidate_record(
+        registry,
+        store,
+        idempotency_key="task-identity:second",
+        candidate_id="candidate-task-identity-second",
+        title="Second task-bound candidate",
+        source_kind="conversation",
+        source_locator="chat:task-identity:second",
+        source_sha256="2" * 64,
+        desired_outcome="Attempt a second binding to the same explicit task",
+        repo="repo.beta",
+        task_id="BUR-TEST-001-T001",
+    )
+
+    result = candidate_assess(registry, store, candidate_id=second["candidate_id"])
+
+    assert result["decision"] == "merge"
+    assert {finding["kind"] for finding in result["exact_duplicates"]} == {
+        "candidate-task-id",
+        "task-id",
+    }
+    candidate_finding = next(
+        finding
+        for finding in result["exact_duplicates"]
+        if finding["kind"] == "candidate-task-id"
+    )
+    assert candidate_finding["candidate_id"] == first["candidate_id"]
+    assert result["source_relationships"] == []
+
+
+def test_candidate_assessment_bounds_shared_source_relationships(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    for index in range(operator_intake_module.MAX_SOURCE_RELATIONSHIPS + 5):
+        candidate_record(
+            registry,
+            store,
+            idempotency_key=f"shared-source:{index}",
+            title=f"Shared source candidate {index}",
+            source_kind="pull-request-diff",
+            source_locator="github:heimgewebe/weltgewebe#1489",
+            source_sha256="8" * 64,
+            desired_outcome=f"Implement independent outcome {index}",
+            repo="repo.alpha" if index % 2 == 0 else "repo.beta",
+        )
+    target = candidate_record(
+        registry,
+        store,
+        idempotency_key="shared-source:target",
+        title="Shared source target",
+        source_kind="pull-request-diff",
+        source_locator="github:heimgewebe/weltgewebe#1489",
+        source_sha256="8" * 64,
+        desired_outcome="Implement the final independent outcome",
+        repo="repo.beta",
+    )
+
+    result = candidate_assess(registry, store, candidate_id=target["candidate_id"])
+
+    assert result["decision"] == "promote"
+    assert len(result["source_relationships"]) == operator_intake_module.MAX_SOURCE_RELATIONSHIPS
+    assert result["source_relationships_summary"] == {
+        "total_count": operator_intake_module.MAX_SOURCE_RELATIONSHIPS + 5,
+        "returned_count": operator_intake_module.MAX_SOURCE_RELATIONSHIPS,
+        "truncated": True,
+    }
+
+
+def test_shared_source_candidates_keep_independent_reviewed_proposals(
+    registry_factory, tmp_path
+):
+    root, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    source_sha256 = "7" * 64
+    requests = [
+        {
+            "idempotency_key": "source:740",
+            "title": "Weltgewebe validation profile migration",
+            "desired_outcome": "Replace legacy validation commands in Weltgewebe",
+            "repo": "repo.alpha",
+            "task_id": "BUR-TEST-001-T097",
+        },
+        {
+            "idempotency_key": "source:741",
+            "title": "Weltgewebe workflow dependency pinning",
+            "desired_outcome": "Hash-pin the workflow dependency set",
+            "repo": "repo.alpha",
+            "task_id": "BUR-TEST-001-T098",
+        },
+        {
+            "idempotency_key": "source:742",
+            "title": "Grabowski operation lifecycle",
+            "desired_outcome": "Implement a typed operation lifecycle in Grabowski",
+            "repo": "repo.beta",
+            "task_id": "BUR-TEST-001-T099",
+        },
+    ]
+    recorded = [
+        candidate_record(
+            registry,
+            store,
+            idempotency_key=request["idempotency_key"],
+            title=request["title"],
+            source_kind="pull-request-diff",
+            source_locator="github:heimgewebe/weltgewebe#1489",
+            source_sha256=source_sha256,
+            desired_outcome=request["desired_outcome"],
+            repo=request["repo"],
+        )
+        for request in requests
+    ]
+
+    previews = []
+    for request, candidate in zip(requests, recorded, strict=True):
+        assessment = candidate_assess(
+            registry,
+            store,
+            candidate_id=candidate["candidate_id"],
+            initiative="BUR-TEST-001",
+            task_id=request["task_id"],
+        )
+        assert assessment["decision"] == "promote"
+        assert assessment["exact_duplicates"] == []
+        assert len(assessment["source_relationships"]) == 2
+
+        task = _task(root, request["task_id"])
+        task["title"] = request["title"]
+        task["goal"] = request["desired_outcome"]
+        task["claims"] = [
+            {"resource": request["repo"], "mode": "write", "isolation": "worktree"}
+        ]
+        proposal_path = tmp_path / f"{request['task_id']}.proposal.json"
+        task_propose(
+            registry,
+            store,
+            task_json=task,
+            publishing_task_id="BUR-TEST-001-T001",
+            path=proposal_path,
+            candidate_id=candidate["candidate_id"],
+        )
+        _review(proposal_path)
+        previews.append(publication_preview(registry, store, plan_path=proposal_path))
+
+    assert [preview["task_id"] for preview in previews] == [
+        request["task_id"] for request in requests
+    ]
+    assert len({preview["proposal_sha256"] for preview in previews}) == 3
 
 
 def test_task_proposal_binds_candidate_registry_and_review(registry_factory, tmp_path):

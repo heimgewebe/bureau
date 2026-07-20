@@ -3,7 +3,7 @@
   "id": "LSV-V1-T006",
   "initiative": "LEITSTAND-VISUAL-LAYER-V1",
   "title": "RepoBrief observability view",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 60
@@ -56,9 +56,35 @@
     "created_from_plan": "docs/plans/leitstand-visualization-layer-v1.md",
     "evidence_anchor_example": "/home/alex/repos/merges/leitstand-max-260705-0643",
     "does_not_establish": [
-      "repo_understanding",
+      "all_visual_states",
+      "future_runtime_correctness",
       "public_export_safety",
-      "review_completeness"
-    ]
+      "repo_understanding",
+      "review_completeness",
+      "source_system_correctness"
+    ],
+    "verified_at": "2026-07-20T12:05:00Z",
+    "current_leitstand_head": "4218e10ab4ea9dc029c98009f4f142c7bbcc81eb",
+    "validation": {
+      "focused_view_and_controller_tests": "37 passed across 5 files on current Leitstand head",
+      "browser_shell_mobile": "21/21 passed against sealed production release",
+      "browser_shell_desktop": "13/13 passed against sealed production release",
+      "live_service": "leitstand.service active/running, NRestarts=0, exact release commit 4218e10ab4ea9dc029c98009f4f142c7bbcc81eb",
+      "focused_test_receipt_sha256": "bd7671e0a828fac9832573865cf95a829e0d9ad6ddcaff081e534cf88ff22864",
+      "browser_shell_receipt_sha256": "aea066b3fd584d1d2e289fdd23da1a6ae3468c3a6ee87def237ba050e65ebcd0"
+    },
+    "outcome": "Implemented through Leitstand PR #147 and retained on current production main under the canonical RepoGround name.",
+    "implementation_pr": "heimgewebe/leitstand#147",
+    "implementation_head": "bdf9898f2f6a477671f93d9884ef1de3ef9af7fc",
+    "implementation_merge_commit": "bc61b28c06fd02c9d2b97088bf80c1e8a4f45d40",
+    "verified_acceptance": {
+      "bundle-list": "src/controllers/repoBrief.ts and src/views/repobriefs.ejs list repository, bundle stem, generated time, snapshot and preflight status, manifest and required artifacts.",
+      "export-safety-visible": "Export-safety status, public-export readiness and warnings are rendered independently; missing input degrades to unknown rather than green.",
+      "local-only-links": "Bundle directory, reading pack and canonical dump are rendered as local operator pointers, not public URLs, unless an upstream contract explicitly marks export readiness."
+    },
+    "verification": {
+      "task_sha256": "ac0836af1ed4da5953bd15b54aa9974d8fc3844449ea2f88d7ba96af156ea395",
+      "plan_sha256": "217a91b5a66a143e0440d2a7d656a5d0fada62b52778cf3285349e7667bd8621"
+    }
   }
 }

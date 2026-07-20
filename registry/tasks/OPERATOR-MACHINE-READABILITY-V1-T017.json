@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T017",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Make Bureau candidate intake and task promotion operator-native",
-  "state": "planned",
+  "state": "verified",
   "goal": "Let ChatGPT through Grabowski record, assess, deduplicate, propose and publish durable Bureau tasks through typed, idempotent, source-bound and receipt-producing machine surfaces, while the user remains observer and steersman and is never required to run shell commands, inspect files or edit Registry JSON.",
   "priority": {
     "lane": "now",
@@ -129,14 +129,167 @@
     ],
     "source_adapter_task": "BUR-2026-003-T008",
     "does_not_establish": [
-      "task_implementation",
-      "queue_truth",
-      "claim_or_dispatch_authority",
-      "automatic_semantic_deduplication",
-      "merge_or_deployment_authority",
-      "permission_to_bypass_explicit_safety_cost_privacy_or_irreversibility_gates"
+      "future_runtime_health",
+      "platform_enforced_client_snapshot_identity",
+      "universal_dynamic_tool_schema_refresh_for_already_open_sessions",
+      "automatic_merge_or_deployment_authority",
+      "queue_or_dispatch_authority_from_the_no_effect_acceptance_preview"
     ],
     "review_semantics": "Review is an evidence and policy property, not a synonym for manual human operation.",
-    "approval_contract": "The implementation task is gated as repository_mutation because it writes Bureau and Grabowski code. Durable candidate-to-Registry publication is a separate operation-level registry_mutation requiring reviewed_plan; neither gate substitutes for the other."
+    "approval_contract": "The implementation task is gated as repository_mutation because it writes Bureau and Grabowski code. Durable candidate-to-Registry publication is a separate operation-level registry_mutation requiring reviewed_plan; neither gate substitutes for the other.",
+    "verified_at": "2026-07-20T21:09:11.060273Z",
+    "implementation": {
+      "bureau": {
+        "repository": "heimgewebe/bureau",
+        "pull_request": 788,
+        "head_commit": "de9e4d0b67954cf723490440190416aa80e5e827",
+        "merge_commit": "ba4fd394863e4b59d74745f8e943fc5371e308ad",
+        "merged_at": "2026-07-20T18:15:32Z",
+        "live_pr_state": "MERGED",
+        "github_diff_sha256": "831bb4c96c07d2a242bb0630aed0a1a3f503f3e4fa4969bd5a1e79afc4e1c778"
+      },
+      "grabowski": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 332,
+        "base_commit": "4365f66b97a3a64258bd0f83383c3a21da05fd85",
+        "head_commit": "1eadfa4425a563a932d6689e449a9e30a2cf827f",
+        "merge_commit": "29abfc87a9a45300a4703a6385c82787b3e6bee7",
+        "merged_at": "2026-07-20T20:03:05Z",
+        "reviewed_tree": "4ff12b002c5822a5434c3122afb515b44b7864e4",
+        "full_index_diff_sha256": "02552f521a5d9b7af8d121d24a2ece72b1455e28050ed9b965703ca6f05fa079",
+        "self_review_sha256": "e87798d262f7fc46679702443b55b3339ddc7e2ff5b1ba72ca946617c60fe556"
+      }
+    },
+    "validation": {
+      "bureau": {
+        "full_validate": "780 tests passed; Ruff, Systemkatalog boundary, Registry and StateStore valid",
+        "pull_request_checks": {
+          "validate_3_10": "success",
+          "validate_3_12": "success",
+          "codeql": "success",
+          "analyze_actions": "success",
+          "analyze_python": "success",
+          "claude": "skipped"
+        }
+      },
+      "grabowski": {
+        "full_validate": "2441 tests passed; 2 skipped; all remaining validation stages passed",
+        "pull_request_checks": {
+          "validate_3_10": "success",
+          "validate_3_12": "success",
+          "codeql": "success",
+          "analyze_actions": "success",
+          "analyze_python": "success"
+        }
+      }
+    },
+    "deployment": {
+      "bureau": {
+        "source_commit": "ba4fd394863e4b59d74745f8e943fc5371e308ad",
+        "release_id": "ba4fd394863e-srccc8b3e1cb607",
+        "manifest_sha256": "e9de5a3104ea5348ae01c3ed6d427e93b5fcc223df78f7c0c6546d80f7c9c19b",
+        "result_sha256": "3a24e1ce5f36076d3bdf8f55046f67ab8fe684359fffef2b95c8ca6454dcc6ea",
+        "runtime_identity_valid": true
+      },
+      "grabowski": {
+        "source_commit": "29abfc87a9a45300a4703a6385c82787b3e6bee7",
+        "release_id": "29abfc87a9a4-srcset38a78c585776-locke6664d600b6c-contract2ada01660eb3",
+        "expected_tool_count": 155,
+        "registered_tool_count": 155,
+        "tool_names_sha256": "f80a4cbd82ec894b4fe0f6256fe634f998334f535903b4bc6c4f673b1e864670",
+        "runtime_matches_deployment_contract": true,
+        "runtime_integrity_valid": true
+      }
+    },
+    "live_e2e": {
+      "cli": {
+        "receipt_sha256": "92437bbaf84cd78e81ef8e088deb654126d85d69df854b358474ecf57ada4661",
+        "path": "/home/alex/.local/state/grabowski/artifacts/operator-machine-readability-t017/live-cli/cli-e2e-receipt.json",
+        "result": "record -> assess(promote) -> propose -> review(reviewed) -> preview(no effect); exact review replay existing and idempotent"
+      },
+      "typed_mcp": {
+        "receipt_sha256": "5cc6a1a6190c60468f7d328ca2e77b7916fbb3c0cbfbcafc1b751e1df46afc15",
+        "path": "/home/alex/.local/state/grabowski/artifacts/operator-machine-readability-t017/grabowski-adapter/typed-e2e-receipt.json",
+        "candidate_id": "candidate-efd8f08c0bbe1180aff3c4bb",
+        "proposal_id": "e3d8719a5190e85330f8b5b22dc527a4857b065e73091f00193020f8f0b20a0b",
+        "result": "fresh MCP process discovered 155 tools and executed record -> assess(promote) -> propose -> review(reviewed) -> preview(ready, effect_started=false); exact review replay existing and idempotent",
+        "manual_proposal_edits": 0,
+        "canonical_registry_mutated": false
+      }
+    },
+    "fresh_session_adoption": {
+      "verdict": "PASS",
+      "receipt_sha256": "037ab5a64fe76d1144089f60b4bdffacc579ba6799ba65633683c630d530a42e",
+      "path": "/home/alex/.local/state/grabowski/artifacts/operator-machine-readability-t017/grabowski-adapter/fresh-session-adoption-receipt.json",
+      "conversation_handoff_used": false,
+      "orientation": "machine_readable_operator_context",
+      "listed_tool_count": 155,
+      "review_tool": "grabowski_bureau_task_review",
+      "executed_path": [
+        "record",
+        "assess",
+        "propose",
+        "review",
+        "preview"
+      ]
+    },
+    "efficiency_benchmark": {
+      "receipt_sha256": "abe7acad3440b08726b86b967c738605c7f3789dca5373640ddc15031221906a",
+      "path": "/home/alex/.local/state/grabowski/artifacts/operator-machine-readability-t017/grabowski-adapter/efficiency-benchmark.json",
+      "scope": "record-assess-propose-review-preview",
+      "cli": {
+        "interface_calls": 5,
+        "payload_proxy_bytes": 33394,
+        "latency_ns": 6388739937,
+        "manual_proposal_edits": 0
+      },
+      "typed_mcp": {
+        "interface_calls": 5,
+        "payload_proxy_bytes": 31520,
+        "latency_ns": 11544783914,
+        "manual_proposal_edits": 0
+      },
+      "delta": {
+        "interface_calls": 0,
+        "payload_proxy_percent": -5.6117865484817635,
+        "latency_percent": 80.70517860868125
+      },
+      "interpretation": "Typed MCP did not improve call count or latency in this run; measured benefit is typed discovery, exact authority boundary and machine-readable contract. Both paths prevented one duplicate review effect through idempotent exact replay."
+    },
+    "verified_acceptance": {
+      "role-contract": "PASS: machine-readable operator context and fresh-session execution preserve ChatGPT-through-Grabowski as operator and user as observer/steersman.",
+      "typed-candidate-record": "PASS: typed record returned stable candidate identity; idempotency behavior is covered by integration tests and receipts.",
+      "typed-candidate-assessment": "PASS: typed assessment returned promote with bounded structured evidence.",
+      "reviewed-task-proposal": "PASS: proposal was digest-bound and reviewed by the new hash-bound review operation with no caller-controlled reviewed_at.",
+      "operator-native-publication": "PASS: Bureau publication adapter and approval/readback contract are implemented and validated; live acceptance exercised the required no-effect publication preview rather than mutating canonical Registry.",
+      "no-human-operations": "PASS: fresh MCP process completed the required path with zero manual proposal edits or user operational assistance.",
+      "typed-failure-and-readback": "PASS: stable failure/ambiguity/readback behavior is covered by Bureau integration/fault tests and Grabowski adapter contracts.",
+      "machine-efficiency": "PASS: reproducible CLI-vs-typed benchmark records calls, payload proxies, latency, duplicate prevention and manual intervention count without claiming a speed improvement.",
+      "transport-neutral-core": "PASS: Bureau owns business rules; CLI and Grabowski remain thin adapters and no new HTTP service was introduced.",
+      "fresh-session-adoption": "PASS: independent fresh MCP client, oriented only from machine-readable operator context, discovered and executed the typed route through reviewed no-effect preview."
+    },
+    "residual_followups": [
+      {
+        "task": "OPERATOR-MACHINE-READABILITY-V1-T002",
+        "reason": "Already-open client sessions may retain a pre-deployment/frozen tool schema even when the server runtime is updated. T002 already owns connector snapshot identity, stale-state detection and reconnection behavior, so no duplicate T023 task is created."
+      }
+    ],
+    "verification_note": "Bureau PR #788 and Grabowski PR #332 are merged, both implementations passed their full validation and required CI, both runtimes were deployed with exact source identity, a fresh independent MCP client discovered the 155-tool contract and executed record/assess/propose/review/preview without conversation handoff or manual proposal edits, and the reproducible benchmark plus idempotent replay evidence are recorded. The residual stale-session schema observation is assigned to existing OMR-T002 and does not invalidate T017 fresh-session acceptance.",
+    "verification": {
+      "verified_at": "2026-07-20T21:09:11.060273Z",
+      "evidence_set": [
+        "bureau-pr-788",
+        "bureau-runtime-ba4fd394863e",
+        "grabowski-pr-332",
+        "grabowski-runtime-29abfc87a9a4",
+        "cli-e2e-receipt:92437bbaf84cd78e81ef8e088deb654126d85d69df854b358474ecf57ada4661",
+        "typed-e2e-receipt:5cc6a1a6190c60468f7d328ca2e77b7916fbb3c0cbfbcafc1b751e1df46afc15",
+        "fresh-session-adoption:037ab5a64fe76d1144089f60b4bdffacc579ba6799ba65633683c630d530a42e",
+        "efficiency-benchmark:abe7acad3440b08726b86b967c738605c7f3789dca5373640ddc15031221906a"
+      ],
+      "followup_task": "OPERATOR-MACHINE-READABILITY-V1-T002",
+      "task_sha256": "849595353cace91c1d090bd2f0b69d9a4961f556ca459b6dca99c40a63f70233",
+      "plan_sha256": "5bd32f4906cc9af27a3f99c7ab886eb9df7f8e5f4e9247c450bc492e64d28b06"
+    }
   }
 }

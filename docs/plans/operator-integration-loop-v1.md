@@ -90,7 +90,9 @@ Ergebnis: Ein Agent kann die nächste erlaubte Aufgabe atomar übernehmen, ohne 
 
 ### Phase 6 – Nächtlich beobachten, noch nicht autonom reparieren
 
-Der Rechner prüft nachts Repos, schnelle Validierung, RepoBrief-Frische, fehlgeschlagene Dienste und wiederkehrende Friction. Er erzeugt einen morgendlichen Digest und Vorschläge. Der erste produktive Stand mutiert keine Repos und legt nicht automatisch neue Tasks an.
+Der Rechner prüft nachts Repos, schnelle Validierung, RepoGround-Frische, fehlgeschlagene Dienste und wiederkehrende Friction. Zusätzlich liest er `grabowski_audit_projection`: eine verifizierte, read-only Ableitung der Audit-Kette mit festen 24-Stunden-, 7-Tage-, 30-Tage- und Gesamtfenstern. Die Projektion liefert Trends und proposal-only Muster, ersetzt aber weder Runtime Health, Task Store, Live-Leases, Friction-Closeouts noch Execution-Governor-Outcomes.
+
+Der morgendliche Digest dedupliziert unveränderte Befunde mit `findings_sha256`. `source_binding.snapshot_sha256` bleibt die exakte Quellenidentität und verhindert keine Deduplizierung, wenn nur der Audit-Kopf fortschreitet. Der vollständige `projection_sha256` bleibt der zeitgebundene Receipt der einzelnen Abfrage. Ein wachsender Audit-Kopf, fehlende Primärdaten oder eine ungültige Kette werden ausdrücklich als degradierter Zustand gemeldet und nicht zu Grün interpoliert. Der erste produktive Stand mutiert keine Repos und legt nicht automatisch neue Tasks an.
 
 Ergebnis: Der PC liefert morgens einen belegten Gesundheits- und Handlungsüberblick, ohne im Schlaf unerwartet umzubauen.
 
@@ -124,6 +126,7 @@ Diese Initiative dupliziert bestehende Arbeit nicht:
 - `OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T009` schärft WGX auf tatsächlich gemeinsame Prüfungen.
 - `CABINET-GEMINI-MAINT-V1-T005` entscheidet separat über eine wiederkehrende Cabinet-Gemini-Wartung; daraus folgt keine allgemeine Executor-Freigabe.
 - `RPU-V1-T012` und `RPU-V1-T021` liefern das Muster für konservative Vibe-Lab-Auswertung ohne automatische Promotion.
+- `GRABOWSKI-OPERATOR-SURFACE-V1-T077` liefert die verifizierte Audit-Projektion; T006 konsumiert sie nur als abgeleitete, proposal-only Beobachtung.
 
 ## Risiken und Gegenmaßnahmen
 

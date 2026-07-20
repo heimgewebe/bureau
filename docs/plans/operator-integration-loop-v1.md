@@ -126,7 +126,7 @@ Diese Initiative dupliziert bestehende Arbeit nicht:
 - `OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T009` schärft WGX auf tatsächlich gemeinsame Prüfungen.
 - `CABINET-GEMINI-MAINT-V1-T005` entscheidet separat über eine wiederkehrende Cabinet-Gemini-Wartung; daraus folgt keine allgemeine Executor-Freigabe.
 - `RPU-V1-T012` und `RPU-V1-T021` liefern das Muster für konservative Vibe-Lab-Auswertung ohne automatische Promotion.
-- `GRABOWSKI-OPERATOR-SURFACE-V1-T076` liefert die verifizierte Audit-Projektion; T006 konsumiert sie nur als abgeleitete, proposal-only Beobachtung.
+- `GRABOWSKI-OPERATOR-SURFACE-V1-T077` liefert die verifizierte Audit-Projektion; T006 konsumiert sie nur als abgeleitete, proposal-only Beobachtung.
 
 ## Risiken und Gegenmaßnahmen
 

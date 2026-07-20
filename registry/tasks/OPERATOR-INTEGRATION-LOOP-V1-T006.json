@@ -130,7 +130,7 @@
       ]
     },
     "audit_projection_contract": {
-      "producer_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T076",
+      "producer_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T077",
       "tool": "grabowski_audit_projection",
       "required_companion_reads": [
         "grabowski_runtime_health",
@@ -155,6 +155,6 @@
     "OPERATOR-INTEGRATION-LOOP-V1-T003",
     "OPERATOR-INTEGRATION-LOOP-V1-T004",
     "OPERATOR-INTEGRATION-LOOP-V1-T005",
-    "GRABOWSKI-OPERATOR-SURFACE-V1-T076"
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T077"
   ]
 }

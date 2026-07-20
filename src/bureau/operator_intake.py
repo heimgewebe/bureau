@@ -69,6 +69,8 @@ _REMOTE_EFFECT_PHASES = {
 }
 _AT_FDCWD = -100
 _RENAME_NOREPLACE = 1
+_RENAME_EXCHANGE = 2
+MAX_PROPOSAL_BYTES = 4 * 1024 * 1024
 
 
 def _fsync_directory(path: Path) -> None:
@@ -141,6 +143,157 @@ def _rename_noreplace(
     if result != 0:
         error_number = ctypes.get_errno()
         raise OSError(error_number, os.strerror(error_number), str(target))
+
+
+def _rename_exchange(
+    source: Path | str,
+    target: Path | str,
+    *,
+    source_dir_fd: int = _AT_FDCWD,
+    target_dir_fd: int = _AT_FDCWD,
+) -> None:
+    """Atomically exchange two existing directory entries."""
+    libc = ctypes.CDLL(None, use_errno=True)
+    renameat2 = getattr(libc, "renameat2", None)
+    if renameat2 is None:
+        raise OSError(errno.ENOSYS, "renameat2(RENAME_EXCHANGE) is unavailable")
+    renameat2.argtypes = [
+        ctypes.c_int,
+        ctypes.c_char_p,
+        ctypes.c_int,
+        ctypes.c_char_p,
+        ctypes.c_uint,
+    ]
+    renameat2.restype = ctypes.c_int
+    result = renameat2(
+        source_dir_fd,
+        os.fsencode(source),
+        target_dir_fd,
+        os.fsencode(target),
+        _RENAME_EXCHANGE,
+    )
+    if result != 0:
+        error_number = ctypes.get_errno()
+        raise OSError(error_number, os.strerror(error_number), str(target))
+
+
+def _regular_file_identity(value: os.stat_result) -> tuple[int, int, int, int, int]:
+    return (value.st_dev, value.st_ino, value.st_mode, value.st_size, value.st_mtime_ns)
+
+
+def _directory_path_matches_descriptor(path: Path, descriptor: int) -> bool:
+    """Return whether the current directory path still names the opened directory."""
+    try:
+        current = path.stat()
+        opened = os.fstat(descriptor)
+    except OSError:
+        return False
+    return (
+        stat.S_ISDIR(current.st_mode)
+        and stat.S_ISDIR(opened.st_mode)
+        and current.st_dev == opened.st_dev
+        and current.st_ino == opened.st_ino
+    )
+
+
+def _read_bounded_regular_file(
+    path: Path,
+    *,
+    field: str,
+) -> tuple[bytes, tuple[int, int, int, int, int]]:
+    """Read exact no-follow bytes and stable identity from one bounded regular file."""
+    try:
+        path_before = path.lstat()
+    except OSError as exc:
+        raise OperatorIntakeError(
+            f"{field}-read-failed",
+            f"cannot inspect {field} file {path}: {exc}",
+            retryable=isinstance(exc, (BlockingIOError, InterruptedError)),
+            details={"path": str(path)},
+        ) from exc
+    if not stat.S_ISREG(path_before.st_mode):
+        raise OperatorIntakeError(
+            f"{field}-type-invalid",
+            f"{field} must be a no-follow regular file",
+            details={"path": str(path), "mode": stat.filemode(path_before.st_mode)},
+        )
+    if path_before.st_size > MAX_PROPOSAL_BYTES:
+        raise OperatorIntakeError(
+            f"{field}-too-large",
+            f"{field} exceeds the bounded {MAX_PROPOSAL_BYTES}-byte limit",
+            details={"path": str(path), "size": path_before.st_size},
+        )
+    descriptor = -1
+    try:
+        descriptor = os.open(
+            path,
+            os.O_RDONLY | os.O_CLOEXEC | getattr(os, "O_NOFOLLOW", 0),
+        )
+        opened_before = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(opened_before.st_mode)
+            or opened_before.st_dev != path_before.st_dev
+            or opened_before.st_ino != path_before.st_ino
+        ):
+            raise OperatorIntakeError(
+                f"{field}-changed-during-read",
+                f"{field} changed before descriptor binding",
+                retryable=True,
+                details={"path": str(path)},
+            )
+        chunks: list[bytes] = []
+        remaining = MAX_PROPOSAL_BYTES + 1
+        while remaining:
+            chunk = os.read(descriptor, min(65536, remaining))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        raw = b"".join(chunks)
+        opened_after = os.fstat(descriptor)
+        path_after = path.lstat()
+    except OperatorIntakeError:
+        raise
+    except OSError as exc:
+        raise OperatorIntakeError(
+            f"{field}-read-failed",
+            f"cannot read {field} file {path}: {exc}",
+            retryable=isinstance(exc, (BlockingIOError, InterruptedError)),
+            details={"path": str(path)},
+        ) from exc
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+    if len(raw) > MAX_PROPOSAL_BYTES:
+        raise OperatorIntakeError(
+            f"{field}-too-large",
+            f"{field} exceeds the bounded {MAX_PROPOSAL_BYTES}-byte limit",
+            details={"path": str(path), "size": len(raw)},
+        )
+    identity = _regular_file_identity(opened_after)
+    if (
+        _regular_file_identity(path_before) != identity
+        or _regular_file_identity(opened_before) != identity
+        or _regular_file_identity(path_after) != identity
+        or len(raw) != opened_after.st_size
+    ):
+        raise OperatorIntakeError(
+            f"{field}-changed-during-read",
+            f"{field} changed while its exact bytes were read",
+            retryable=True,
+            details={"path": str(path)},
+        )
+    return raw, identity
+
+
+def _before_proposal_review_exchange(path: Path) -> None:
+    """Fault-injection seam immediately before the review CAS exchange."""
+
+
+
+def _after_proposal_review_exchange(path: Path) -> None:
+    """Fault-injection seam immediately after the review CAS exchange."""
+
 
 
 def _open_directory_beneath(root: Path, relative: Path) -> int:
@@ -1221,21 +1374,356 @@ def _proposal_unsigned(plan: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in plan.items() if key not in {"proposal_sha256", "review"}}
 
 
+def review_task_proposal(
+    *,
+    plan_path: str | Path,
+    reviewer: str,
+    expected_proposal_sha256: str,
+) -> dict[str, Any]:
+    """Bind one operator review to exact proposal bytes through an atomic local CAS."""
+    path = Path(plan_path).expanduser().absolute()
+    checked_reviewer = _checked_text(reviewer, field="reviewer", maximum=200)
+    assert checked_reviewer is not None
+    checked_expected = _checked_text(
+        expected_proposal_sha256,
+        field="expected_proposal_sha256",
+        maximum=64,
+    )
+    assert checked_expected is not None
+    if _SOURCE_SHA_RE.fullmatch(checked_expected) is None:
+        raise OperatorIntakeError(
+            "proposal-digest-invalid",
+            "expected_proposal_sha256 must be a lowercase SHA-256 digest",
+        )
+    plan_bytes, plan_identity = _read_bounded_regular_file(path, field="proposal")
+    try:
+        plan = json.loads(plan_bytes)
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise OperatorIntakeError(
+            "proposal-json-invalid",
+            f"cannot parse task proposal: {exc}",
+            details={"path": str(path)},
+        ) from exc
+    if not isinstance(plan, dict) or plan.get("kind") != "bureau_operator_task_proposal":
+        raise OperatorIntakeError("proposal-kind-invalid", "unsupported operator task proposal")
+    proposal_sha256 = legacy.sha256_json(_proposal_unsigned(plan))
+    if plan.get("proposal_sha256") != proposal_sha256:
+        raise OperatorIntakeError(
+            "proposal-integrity-invalid",
+            "task proposal hash does not match its content",
+        )
+    if proposal_sha256 != checked_expected:
+        raise OperatorIntakeError(
+            "proposal-review-reference-mismatch",
+            "expected proposal digest does not match the exact plan bytes",
+            details={"expected": checked_expected, "observed": proposal_sha256},
+        )
+    unresolved = plan.get("unresolved_fields")
+    if not isinstance(unresolved, list):
+        raise OperatorIntakeError(
+            "proposal-unresolved-invalid",
+            "proposal unresolved_fields must be a list",
+        )
+    if unresolved:
+        raise OperatorIntakeError(
+            "proposal-unresolved",
+            "proposal cannot be reviewed while unresolved fields remain",
+            details={"unresolved_fields": unresolved},
+        )
+    task_id = _checked_text(plan.get("task_id"), field="task_id", maximum=240)
+    assert task_id is not None
+    review = plan.get("review")
+    if not isinstance(review, dict):
+        raise OperatorIntakeError("review-invalid", "proposal review must be an object")
+    if review.get("status") == "reviewed":
+        same_review = (
+            review.get("reviewer") == checked_reviewer
+            and review.get("reviewed_proposal_sha256") == proposal_sha256
+        )
+        if not same_review:
+            raise OperatorIntakeError(
+                "review-conflict",
+                "proposal is already bound to a different review",
+                details={"path": str(path), "review": review},
+            )
+        approval = require_approval(
+            "registry_mutation",
+            reviewed_plan_approval(
+                reviewer=checked_reviewer,
+                reference=proposal_sha256,
+                task_id=task_id,
+                scope="registry_mutation",
+            ),
+            expected_reference=proposal_sha256,
+            task_id=task_id,
+        )
+        plan_file_sha256 = hashlib.sha256(plan_bytes).hexdigest()
+        return {
+            "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
+            "kind": "bureau_task_review_result",
+            "status": "existing",
+            "effect_started": False,
+            "retryable": False,
+            "ambiguity": False,
+            "required_readback": [],
+            "idempotent_replay": True,
+            "path": str(path),
+            "proposal_sha256": proposal_sha256,
+            "plan_file_sha256_before": plan_file_sha256,
+            "plan_file_sha256_after": plan_file_sha256,
+            "review": review,
+            "approval": approval,
+            "does_not_establish": [
+                "registry_mutation",
+                "queue_mutation",
+                "publication_effect",
+            ],
+        }
+    if review.get("required") is not True or review.get("status") != "pending":
+        raise OperatorIntakeError(
+            "review-state-invalid",
+            "proposal review must be required and pending before review",
+            details={"review": review},
+        )
+    selected_reviewed_at = legacy.utc_now()
+    plan["review"] = {
+        "required": True,
+        "status": "reviewed",
+        "reviewer": checked_reviewer,
+        "reviewed_at": selected_reviewed_at,
+        "reviewed_proposal_sha256": proposal_sha256,
+    }
+    approval = require_approval(
+        "registry_mutation",
+        reviewed_plan_approval(
+            reviewer=checked_reviewer,
+            reference=proposal_sha256,
+            task_id=task_id,
+            scope="registry_mutation",
+        ),
+        expected_reference=proposal_sha256,
+        task_id=task_id,
+    )
+    reviewed_bytes = (
+        json.dumps(plan, indent=2, ensure_ascii=False) + "\n"
+    ).encode("utf-8")
+    plan_sha256_before = hashlib.sha256(plan_bytes).hexdigest()
+    plan_sha256_after = hashlib.sha256(reviewed_bytes).hexdigest()
+    parent_descriptor = -1
+    temporary_path: Path | None = None
+    exchanged = False
+    try:
+        parent_descriptor = os.open(
+            path.parent,
+            os.O_RDONLY
+            | getattr(os, "O_DIRECTORY", 0)
+            | getattr(os, "O_NOFOLLOW", 0),
+        )
+        if not _directory_path_matches_descriptor(path.parent, parent_descriptor):
+            raise OperatorIntakeError(
+                "proposal-review-parent-changed",
+                "proposal parent changed before temporary-file binding",
+                retryable=True,
+                details={"path": str(path), "effect_started": False},
+            )
+        descriptor, raw_temporary = tempfile.mkstemp(
+            prefix=f".{path.name}.review-",
+            dir=f"/proc/self/fd/{parent_descriptor}",
+        )
+        temporary_path = Path(raw_temporary)
+        try:
+            os.fchmod(descriptor, 0o600)
+            offset = 0
+            while offset < len(reviewed_bytes):
+                written = os.write(descriptor, reviewed_bytes[offset:])
+                if written <= 0:
+                    raise OSError(errno.EIO, "proposal review write stalled")
+                offset += written
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+        _before_proposal_review_exchange(path)
+        if not _directory_path_matches_descriptor(path.parent, parent_descriptor):
+            raise OperatorIntakeError(
+                "proposal-review-parent-changed",
+                "proposal parent changed before the atomic review exchange",
+                retryable=True,
+                details={"path": str(path), "effect_started": False},
+            )
+        _rename_exchange(
+            temporary_path.name,
+            path.name,
+            source_dir_fd=parent_descriptor,
+            target_dir_fd=parent_descriptor,
+        )
+        exchanged = True
+        os.fsync(parent_descriptor)
+        displaced_bytes, displaced_identity = _read_bounded_regular_file(
+            temporary_path,
+            field="proposal-displaced",
+        )
+        if displaced_bytes != plan_bytes or displaced_identity[:4] != plan_identity[:4]:
+            _rename_exchange(
+                temporary_path.name,
+                path.name,
+                source_dir_fd=parent_descriptor,
+                target_dir_fd=parent_descriptor,
+            )
+            exchanged = False
+            os.fsync(parent_descriptor)
+            os.unlink(temporary_path.name, dir_fd=parent_descriptor)
+            temporary_path = None
+            os.fsync(parent_descriptor)
+            raise OperatorIntakeError(
+                "proposal-review-conflict",
+                "proposal changed before the atomic review exchange; foreign bytes were restored",
+                retryable=True,
+                details={"path": str(path), "rollback_complete": True},
+            )
+        _after_proposal_review_exchange(path)
+        if not _directory_path_matches_descriptor(path.parent, parent_descriptor):
+            raise OperatorIntakeError(
+                "proposal-review-parent-ambiguous",
+                "proposal parent changed after the atomic review exchange",
+                retryable=False,
+                effect_started=True,
+                ambiguity=True,
+                required_readback=[
+                    f"directory identity for {path.parent}",
+                    f"exact proposal bytes at {path}",
+                ],
+                details={
+                    "path": str(path),
+                    "displaced_path": str(temporary_path),
+                },
+            )
+        bound_target_path = Path(f"/proc/self/fd/{parent_descriptor}") / path.name
+        observed_bytes, _ = _read_bounded_regular_file(
+            bound_target_path,
+            field="proposal-reviewed",
+        )
+        if observed_bytes != reviewed_bytes:
+            raise OperatorIntakeError(
+                "proposal-review-readback-ambiguous",
+                "review exchange completed but exact reviewed bytes were not readable",
+                retryable=False,
+                effect_started=True,
+                ambiguity=True,
+                required_readback=[f"exact proposal bytes at {path}"],
+                details={
+                    "path": str(path),
+                    "expected_plan_file_sha256": plan_sha256_after,
+                    "observed_plan_file_sha256": hashlib.sha256(observed_bytes).hexdigest(),
+                    "displaced_path": str(temporary_path),
+                },
+            )
+        if not _directory_path_matches_descriptor(path.parent, parent_descriptor):
+            raise OperatorIntakeError(
+                "proposal-review-parent-ambiguous",
+                "proposal parent changed before review completion",
+                retryable=False,
+                effect_started=True,
+                ambiguity=True,
+                required_readback=[
+                    f"directory identity for {path.parent}",
+                    f"exact proposal bytes at {path}",
+                ],
+                details={
+                    "path": str(path),
+                    "displaced_path": str(temporary_path),
+                },
+            )
+        os.unlink(temporary_path.name, dir_fd=parent_descriptor)
+        temporary_path = None
+        os.fsync(parent_descriptor)
+    except OperatorIntakeError as exc:
+        if temporary_path is not None and not exchanged:
+            with contextlib.suppress(OSError):
+                os.unlink(temporary_path.name, dir_fd=parent_descriptor)
+                os.fsync(parent_descriptor)
+        if exchanged and not (exc.effect_started and exc.ambiguity):
+            raise OperatorIntakeError(
+                "proposal-review-effect-ambiguous",
+                "review exchange started before a typed verification failure",
+                retryable=False,
+                effect_started=True,
+                ambiguity=True,
+                required_readback=[f"exact proposal bytes at {path}"],
+                details={
+                    "path": str(path),
+                    "cause_code": exc.code,
+                    "displaced_path": str(temporary_path)
+                    if temporary_path is not None
+                    else None,
+                },
+            ) from exc
+        raise
+    except OSError as exc:
+        raise OperatorIntakeError(
+            "proposal-review-write-ambiguous" if exchanged else "proposal-review-write-failed",
+            f"cannot atomically bind proposal review: {exc}",
+            retryable=not exchanged,
+            effect_started=exchanged,
+            ambiguity=exchanged,
+            required_readback=[f"exact proposal bytes at {path}"] if exchanged else [],
+            details={
+                "path": str(path),
+                "error_type": type(exc).__name__,
+                "displaced_path": str(temporary_path) if temporary_path is not None else None,
+            },
+        ) from exc
+    except Exception as exc:
+        if not exchanged:
+            raise
+        raise OperatorIntakeError(
+            "proposal-review-effect-ambiguous",
+            "review exchange started before an unexpected verification failure",
+            retryable=False,
+            effect_started=True,
+            ambiguity=True,
+            required_readback=[f"exact proposal bytes at {path}"],
+            details={
+                "path": str(path),
+                "error_type": type(exc).__name__,
+                "displaced_path": str(temporary_path) if temporary_path is not None else None,
+            },
+        ) from exc
+    finally:
+        if temporary_path is not None and not exchanged and parent_descriptor >= 0:
+            with contextlib.suppress(OSError):
+                os.unlink(temporary_path.name, dir_fd=parent_descriptor)
+        if parent_descriptor >= 0:
+            os.close(parent_descriptor)
+    return {
+        "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
+        "kind": "bureau_task_review_result",
+        "status": "reviewed",
+        "effect_started": True,
+        "retryable": False,
+        "ambiguity": False,
+        "required_readback": [],
+        "idempotent_replay": False,
+        "path": str(path),
+        "proposal_sha256": proposal_sha256,
+        "plan_file_sha256_before": plan_sha256_before,
+        "plan_file_sha256_after": plan_sha256_after,
+        "review": plan["review"],
+        "approval": approval,
+        "does_not_establish": [
+            "registry_mutation",
+            "queue_mutation",
+            "publication_effect",
+        ],
+    }
+
+
 def _validated_proposal(
     registry: Registry,
     store: StateStore,
     *,
     plan_path: Path,
 ) -> tuple[dict[str, Any], bytes, dict[str, Any]]:
-    try:
-        plan_bytes = plan_path.read_bytes()
-    except OSError as exc:
-        raise OperatorIntakeError(
-            "proposal-read-failed",
-            f"cannot read task proposal {plan_path}: {exc}",
-            retryable=isinstance(exc, (BlockingIOError, InterruptedError)),
-            details={"path": str(plan_path)},
-        ) from exc
+    plan_bytes, _ = _read_bounded_regular_file(plan_path, field="proposal")
     try:
         plan = json.loads(plan_bytes)
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
@@ -1342,7 +1830,7 @@ def publication_preview(
     *,
     plan_path: str | Path,
 ) -> dict[str, Any]:
-    path = Path(plan_path).expanduser().resolve()
+    path = Path(plan_path).expanduser().absolute()
     plan, plan_bytes, approval_result = _validated_proposal(registry, store, plan_path=path)
     task_id = str(plan["task_id"])
     required_keys = sorted(
@@ -1507,17 +1995,9 @@ def publish_task_proposal(
     publisher: TaskPublisher | None = None,
 ) -> dict[str, Any]:
     """Publish one reviewed task proposal without queue, merge or deployment effects."""
-    path = Path(plan_path).expanduser().resolve()
-    receipt = Path(receipt_path).expanduser().resolve()
-    try:
-        plan_bytes = path.read_bytes()
-    except OSError as exc:
-        raise OperatorIntakeError(
-            "proposal-read-failed",
-            f"cannot read task proposal {path}: {exc}",
-            retryable=isinstance(exc, (BlockingIOError, InterruptedError)),
-            details={"path": str(path)},
-        ) from exc
+    path = Path(plan_path).expanduser().absolute()
+    receipt = Path(receipt_path).expanduser().absolute()
+    plan_bytes, _ = _read_bounded_regular_file(path, field="proposal")
     plan_file_sha = hashlib.sha256(plan_bytes).hexdigest()
     try:
         plan_for_replay = json.loads(plan_bytes)
@@ -1529,16 +2009,10 @@ def publish_task_proposal(
         raise OperatorIntakeError(
             "proposal-object-required", "task proposal JSON must be an object"
         )
-    if receipt.exists():
+    if os.path.lexists(receipt):
+        receipt_bytes, _ = _read_bounded_regular_file(receipt, field="receipt")
         try:
-            existing = json.loads(receipt.read_bytes())
-        except OSError as exc:
-            raise OperatorIntakeError(
-                "receipt-read-failed",
-                f"cannot read publication receipt {receipt}: {exc}",
-                retryable=isinstance(exc, (BlockingIOError, InterruptedError)),
-                details={"path": str(receipt)},
-            ) from exc
+            existing = json.loads(receipt_bytes)
         except (json.JSONDecodeError, UnicodeDecodeError) as exc:
             raise OperatorIntakeError(
                 "receipt-invalid", f"cannot parse publication receipt: {exc}"
@@ -1621,15 +2095,7 @@ def publish_task_proposal(
         raise error
 
     def assert_plan_unchanged() -> None:
-        try:
-            current_bytes = path.read_bytes()
-        except OSError as exc:
-            raise OperatorIntakeError(
-                "plan-read-failed",
-                f"cannot reread reviewed plan {path}: {exc}",
-                retryable=isinstance(exc, (BlockingIOError, InterruptedError)),
-                details={"path": str(path)},
-            ) from exc
+        current_bytes, _ = _read_bounded_regular_file(path, field="plan")
         observed = hashlib.sha256(current_bytes).hexdigest()
         if observed != plan_file_sha:
             raise OperatorIntakeError(

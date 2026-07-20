@@ -222,6 +222,11 @@ def test_operator_intake_read_and_plan_contracts_are_explicit() -> None:
             "effect": "create_only_external_review_plan",
             "state_store_required": True,
         },
+        "operator-task-review": {
+            "availability_class": "external_plan_compare_and_swap",
+            "effect": "hash_bound_external_review_plan_update",
+            "state_store_required": False,
+        },
         "operator-task-publish-preview": {
             "availability_class": "registry_backed_operational_read",
             "effect": "validated_read_only_publication_preview",

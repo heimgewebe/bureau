@@ -29,6 +29,7 @@ from bureau.operator_intake import (
     candidate_record_request,
     publication_preview,
     publish_task_proposal,
+    review_task_proposal,
     task_propose,
 )
 from bureau.registry_snapshot import snapshot_tree_sha256
@@ -771,6 +772,349 @@ def test_shared_source_candidates_keep_independent_reviewed_proposals(
         request["task_id"] for request in requests
     ]
     assert len({preview["proposal_sha256"] for preview in previews}) == 3
+
+
+def test_task_review_binds_exact_pending_proposal_and_enables_preview(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    pending = json.loads(plan_path.read_text())
+
+    result = review_task_proposal(
+        plan_path=plan_path,
+        reviewer="ChatGPT through Grabowski",
+        expected_proposal_sha256=pending["proposal_sha256"],
+    )
+
+    assert result["status"] == "reviewed"
+    assert result["effect_started"] is True
+    assert result["ambiguity"] is False
+    assert result["review"]["reviewed_proposal_sha256"] == pending["proposal_sha256"]
+    assert result["approval"]["allowed"] is True
+    assert result["plan_file_sha256_before"] != result["plan_file_sha256_after"]
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    assert preview["status"] == "ready"
+
+
+def test_task_review_exact_replay_is_idempotent(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
+    first = review_task_proposal(
+        plan_path=plan_path,
+        reviewer="operator-self-review",
+        expected_proposal_sha256=proposal_sha256,
+    )
+
+    replay = review_task_proposal(
+        plan_path=plan_path,
+        reviewer="operator-self-review",
+        expected_proposal_sha256=proposal_sha256,
+    )
+
+    assert first["status"] == "reviewed"
+    assert replay["status"] == "existing"
+    assert replay["effect_started"] is False
+    assert replay["idempotent_replay"] is True
+    assert replay["plan_file_sha256_before"] == first["plan_file_sha256_after"]
+
+
+def test_task_review_rejects_reference_unresolved_and_conflicting_reviewer(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    pending = json.loads(plan_path.read_text())
+    initial_bytes = plan_path.read_bytes()
+
+    with pytest.raises(OperatorIntakeError) as mismatch:
+        review_task_proposal(
+            plan_path=plan_path,
+            reviewer="operator-self-review",
+            expected_proposal_sha256="f" * 64,
+        )
+    assert mismatch.value.code == "proposal-review-reference-mismatch"
+    assert plan_path.read_bytes() == initial_bytes
+
+    pending["unresolved_fields"] = ["acceptance.runtime"]
+    unsigned = {
+        key: value for key, value in pending.items() if key not in {"proposal_sha256", "review"}
+    }
+    from bureau.legacy import sha256_json
+
+    pending["proposal_sha256"] = sha256_json(unsigned)
+    plan_path.write_text(json.dumps(pending, indent=2) + "\n")
+    unresolved_bytes = plan_path.read_bytes()
+    with pytest.raises(OperatorIntakeError) as unresolved:
+        review_task_proposal(
+            plan_path=plan_path,
+            reviewer="operator-self-review",
+            expected_proposal_sha256=pending["proposal_sha256"],
+        )
+    assert unresolved.value.code == "proposal-unresolved"
+    assert plan_path.read_bytes() == unresolved_bytes
+
+    pending["unresolved_fields"] = []
+    unsigned = {
+        key: value for key, value in pending.items() if key not in {"proposal_sha256", "review"}
+    }
+    pending["proposal_sha256"] = sha256_json(unsigned)
+    plan_path.write_text(json.dumps(pending, indent=2) + "\n")
+    review_task_proposal(
+        plan_path=plan_path,
+        reviewer="first-reviewer",
+        expected_proposal_sha256=pending["proposal_sha256"],
+    )
+    reviewed_bytes = plan_path.read_bytes()
+    with pytest.raises(OperatorIntakeError) as conflict:
+        review_task_proposal(
+            plan_path=plan_path,
+            reviewer="second-reviewer",
+            expected_proposal_sha256=pending["proposal_sha256"],
+        )
+    assert conflict.value.code == "review-conflict"
+    assert plan_path.read_bytes() == reviewed_bytes
+
+
+def test_task_review_cas_restores_foreign_pre_exchange_bytes(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
+    foreign = json.loads(plan_path.read_text())
+    foreign["review"]["foreign_marker"] = True
+    foreign_bytes = (json.dumps(foreign, indent=2) + "\n").encode()
+
+    def replace_before_exchange(path: Path) -> None:
+        path.write_bytes(foreign_bytes)
+
+    monkeypatch.setattr(
+        operator_intake_module,
+        "_before_proposal_review_exchange",
+        replace_before_exchange,
+    )
+    with pytest.raises(OperatorIntakeError) as caught:
+        review_task_proposal(
+            plan_path=plan_path,
+            reviewer="operator-self-review",
+            expected_proposal_sha256=proposal_sha256,
+        )
+
+    assert caught.value.code == "proposal-review-conflict"
+    assert caught.value.effect_started is False
+    assert caught.value.details["rollback_complete"] is True
+    assert plan_path.read_bytes() == foreign_bytes
+
+
+def test_task_review_post_exchange_drift_is_ambiguous(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
+    foreign_bytes = b'{"foreign":true}\n'
+
+    def replace_after_exchange(path: Path) -> None:
+        path.write_bytes(foreign_bytes)
+
+    monkeypatch.setattr(
+        operator_intake_module,
+        "_after_proposal_review_exchange",
+        replace_after_exchange,
+    )
+    with pytest.raises(OperatorIntakeError) as caught:
+        review_task_proposal(
+            plan_path=plan_path,
+            reviewer="operator-self-review",
+            expected_proposal_sha256=proposal_sha256,
+        )
+
+    assert caught.value.code == "proposal-review-readback-ambiguous"
+    assert caught.value.effect_started is True
+    assert caught.value.ambiguity is True
+    assert caught.value.required_readback == (f"exact proposal bytes at {plan_path}",)
+    assert plan_path.read_bytes() == foreign_bytes
+
+
+def test_task_review_unexpected_post_exchange_failure_is_ambiguous(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
+
+    def fail_after_exchange(path: Path) -> None:
+        raise RuntimeError(f"unexpected readback failure for {path}")
+
+    monkeypatch.setattr(
+        operator_intake_module,
+        "_after_proposal_review_exchange",
+        fail_after_exchange,
+    )
+    with pytest.raises(OperatorIntakeError) as caught:
+        review_task_proposal(
+            plan_path=plan_path,
+            reviewer="operator-self-review",
+            expected_proposal_sha256=proposal_sha256,
+        )
+
+    assert caught.value.code == "proposal-review-effect-ambiguous"
+    assert caught.value.effect_started is True
+    assert caught.value.ambiguity is True
+    assert caught.value.required_readback == (f"exact proposal bytes at {plan_path}",)
+    assert caught.value.details["error_type"] == "RuntimeError"
+
+
+def test_task_review_parent_swap_before_exchange_is_fail_closed(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_dir = tmp_path / "plans"
+    plan_dir.mkdir()
+    plan_path = _proposal(registry, store, plan_dir)
+    proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
+    original_bytes = plan_path.read_bytes()
+    moved_dir = tmp_path / "plans-moved"
+    foreign_bytes = b'{"foreign":true}\n'
+
+    def swap_parent(path: Path) -> None:
+        path.parent.rename(moved_dir)
+        path.parent.mkdir()
+        path.write_bytes(foreign_bytes)
+
+    monkeypatch.setattr(
+        operator_intake_module,
+        "_before_proposal_review_exchange",
+        swap_parent,
+    )
+    with pytest.raises(OperatorIntakeError) as caught:
+        review_task_proposal(
+            plan_path=plan_path,
+            reviewer="operator-self-review",
+            expected_proposal_sha256=proposal_sha256,
+        )
+
+    assert caught.value.code == "proposal-review-parent-changed"
+    assert caught.value.effect_started is False
+    assert (moved_dir / plan_path.name).read_bytes() == original_bytes
+    assert plan_path.read_bytes() == foreign_bytes
+
+
+def test_task_review_parent_swap_after_exchange_is_ambiguous(
+    registry_factory, tmp_path, monkeypatch
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_dir = tmp_path / "plans"
+    plan_dir.mkdir()
+    plan_path = _proposal(registry, store, plan_dir)
+    proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
+    moved_dir = tmp_path / "plans-moved"
+    foreign_bytes = b'{"foreign":true}\n'
+
+    def swap_parent(path: Path) -> None:
+        path.parent.rename(moved_dir)
+        path.parent.mkdir()
+        path.write_bytes(foreign_bytes)
+
+    monkeypatch.setattr(
+        operator_intake_module,
+        "_after_proposal_review_exchange",
+        swap_parent,
+    )
+    with pytest.raises(OperatorIntakeError) as caught:
+        review_task_proposal(
+            plan_path=plan_path,
+            reviewer="operator-self-review",
+            expected_proposal_sha256=proposal_sha256,
+        )
+
+    assert caught.value.code == "proposal-review-parent-ambiguous"
+    assert caught.value.effect_started is True
+    assert caught.value.ambiguity is True
+    assert f"directory identity for {plan_path.parent}" in caught.value.required_readback
+    assert json.loads((moved_dir / plan_path.name).read_text())["review"]["status"] == "reviewed"
+    assert plan_path.read_bytes() == foreign_bytes
+
+
+def test_task_review_rejects_symlink_plan(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    proposal_sha256 = json.loads(plan_path.read_text())["proposal_sha256"]
+    link = tmp_path / "proposal-link.json"
+    link.symlink_to(plan_path)
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        review_task_proposal(
+            plan_path=link,
+            reviewer="operator-self-review",
+            expected_proposal_sha256=proposal_sha256,
+        )
+
+    assert caught.value.code == "proposal-type-invalid"
+
+
+def test_publication_preview_rejects_symlink_plan(registry_factory, tmp_path):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    _review(plan_path)
+    link = tmp_path / "reviewed-proposal-link.json"
+    link.symlink_to(plan_path)
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publication_preview(registry, store, plan_path=link)
+
+    assert caught.value.code == "proposal-type-invalid"
+
+
+def test_publication_effect_rejects_symlink_plan_and_receipt(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    _review(plan_path)
+    plan_link = tmp_path / "reviewed-proposal-effect-link.json"
+    plan_link.symlink_to(plan_path)
+
+    with pytest.raises(OperatorIntakeError) as plan_error:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_link,
+            lease_binding={},
+            workspace_root=tmp_path / "workspace",
+            receipt_path=tmp_path / "receipt.json",
+            publisher=FakePublisher(),
+        )
+    assert plan_error.value.code == "proposal-type-invalid"
+
+    receipt_target = tmp_path / "foreign-receipt.json"
+    receipt_target.write_text("{}\n")
+    receipt_link = tmp_path / "receipt-link.json"
+    receipt_link.symlink_to(receipt_target)
+    with pytest.raises(OperatorIntakeError) as receipt_error:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding={},
+            workspace_root=tmp_path / "workspace",
+            receipt_path=receipt_link,
+            publisher=FakePublisher(),
+        )
+    assert receipt_error.value.code == "receipt-type-invalid"
 
 
 def test_task_proposal_binds_candidate_registry_and_review(registry_factory, tmp_path):
@@ -2693,7 +3037,26 @@ def test_cli_adapters_preserve_domain_results_without_extra_authority(
     )
     proposed = _cli_result(capsys)
     assert proposed["kind"] == "bureau_task_proposal_result"
-    _review(plan_path)
+
+    assert (
+        bureau_cli.main(
+            [
+                *common,
+                "operator-task-review",
+                "--plan",
+                str(plan_path),
+                "--reviewer",
+                "ChatGPT through Grabowski",
+                "--proposal-sha256",
+                proposed["proposal_sha256"],
+            ]
+        )
+        == 0
+    )
+    reviewed = _cli_result(capsys)
+    assert reviewed["kind"] == "bureau_task_review_result"
+    assert reviewed["status"] == "reviewed"
+    assert reviewed["approval"]["allowed"] is True
 
     assert (
         bureau_cli.main([*common, "operator-task-publish", "--plan", str(plan_path), "--preview"])

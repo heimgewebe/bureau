@@ -46,6 +46,7 @@ from .operator_intake import (
     publication_preview,
     publish_task_proposal,
     read_json_object_file,
+    review_task_proposal,
     task_propose,
 )
 from .read_only_state import ReadOnlyStateStore
@@ -256,6 +257,10 @@ def parser() -> argparse.ArgumentParser:
     task_propose_parser.add_argument("--write-plan", required=True)
     task_propose_parser.add_argument("--unresolved-field", action="append", default=[])
     task_propose_parser.add_argument("--placeholder-justification")
+    task_review_parser = sub.add_parser("operator-task-review")
+    task_review_parser.add_argument("--plan", required=True)
+    task_review_parser.add_argument("--reviewer", required=True)
+    task_review_parser.add_argument("--proposal-sha256", required=True)
     task_publish_parser = sub.add_parser("operator-task-publish")
     task_publish_parser.add_argument("--plan", required=True)
     task_publish_mode = task_publish_parser.add_mutually_exclusive_group()
@@ -953,6 +958,12 @@ def main(argv: list[str] | None = None) -> int:
                 event_id=args.event_id,
                 unresolved_fields=args.unresolved_field,
                 placeholder_justification=args.placeholder_justification,
+            )
+        elif args.command == "operator-task-review":
+            value = review_task_proposal(
+                plan_path=args.plan,
+                reviewer=args.reviewer,
+                expected_proposal_sha256=args.proposal_sha256,
             )
         elif args.command == "operator-task-publish":
             if args.apply:

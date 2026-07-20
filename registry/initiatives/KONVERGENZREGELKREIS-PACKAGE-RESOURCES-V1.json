@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "KONVERGENZREGELKREIS-PACKAGE-RESOURCES-V1",
+  "title": "Konvergenzregelkreis-Vertragsressourcen paketintern binden",
+  "state": "active",
+  "commitment": "later",
+  "goal": "Den Installations- und Ressourcenvertrag des Python-Pakets regelkreis so migrieren, dass Protokolle und Profile CWD-unabhängig paketintern aufgelöst werden, ohne die bestehende v1/v2-Auswertungssemantik oder installierte Consumer stillschweigend zu brechen.",
+  "completion": [
+    "Ein installiertes Wheel findet Protokolle und Profile unabhängig vom Arbeitsverzeichnis über einen paketgebundenen Ressourcenvertrag.",
+    "Für die bisherige Ablage unter share/konvergenzregelkreis existiert ein expliziter Kompatibilitäts- oder Cutover-Pfad.",
+    "v1/v2-Auswertung, Statuspräzedenz, Profilhashbindung und öffentliche CLI-Semantik bleiben bei identischer Ressourcenidentität vertragsgleich.",
+    "Wheel-Build, frische Installation und validate-contracts außerhalb eines Repository-Checkouts sind reproduzierbar grün."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-20T23:59:17+02:00",
+    "source_repository": "heimgewebe/konvergenzregelkreis",
+    "source_observation": "Peer-Review zu konvergenzregelkreis PR #4 empfahl importlib.resources. PR #4 behielt bewusst das bestehende setuptools-data-files-Layout unter share/konvergenzregelkreis bei, weil eine Ressourcenmigration einen eigenen Packaging- und Kompatibilitätsvertrag benötigt.",
+    "source_pull_request": "heimgewebe/konvergenzregelkreis#4",
+    "source_merge_commit": "3a07481d387a991c6697e30f05a3f42064242add",
+    "does_not_establish": [
+      "dass die aktuelle share-Ablage defekt ist",
+      "dass importlib.resources ohne Layoutmigration drop-in-kompatibel ist",
+      "dass PR #4 diese Packaging-Migration umgesetzt hat",
+      "eine Runtime-Deploymentpflicht"
+    ]
+  }
+}

@@ -100,6 +100,14 @@ _READ_COMMANDS: dict[str, dict[str, Any]] = {
         "effect": "create_only_external_review_plan",
         "conflict_scope": "caller_selected_plan_path_create_only",
     },
+    "operator-task-review": {
+        "availability_class": "external_plan_compare_and_swap",
+        "git_repository_lease_required": False,
+        "registry_catalog_required": False,
+        "state_store_required": False,
+        "effect": "hash_bound_external_review_plan_update",
+        "conflict_scope": "plan_path_atomic_compare_and_swap",
+    },
     "operator-task-publish-preview": {
         "availability_class": "registry_backed_operational_read",
         "git_repository_lease_required": False,

@@ -1,0 +1,95 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Route claude-fable-5-high besteht die kanonische Worker-Routing-Validierung und wird für eine passende Reviewaufgabe ohne den Fehler „plan-mode route must be review_only“ ausgewählt oder als gültiger Kandidat bewertet.",
+      "evidence_type": "object",
+      "id": "valid-review-route",
+      "verifier": "Routing-Katalogtest und Live-Routing-Readback"
+    },
+    {
+      "assertion": "Der kanonische Vertrag weist der Route ausschließlich Reviewautorität zu; Writer-, Planungs-, Merge-, Deployment- und Kostenautorität bleiben ausgeschlossen und werden maschinenlesbar geprüft.",
+      "evidence_type": "object",
+      "id": "review-only-authority",
+      "verifier": "Policy- und Negativtests"
+    },
+    {
+      "assertion": "Kanonische Quelle, Laufzeitprojektion und Operator-Katalog stimmen nach der Änderung digestgebunden überein; eine veraltete lokale Projektion wird nicht als Erfolg gewertet.",
+      "evidence_type": "object",
+      "id": "configuration-projection",
+      "verifier": "Runtime-Identity-, Katalog- und Projektions-Readback"
+    },
+    {
+      "assertion": "Ein fehlgeschlagenes oder erschöpftes Reviewer-Kontingent führt nicht automatisch zu einem kostenpflichtigen API-Aufruf; Zusatzkosten erfordern weiterhin eine separate ausdrückliche Autorisierung.",
+      "evidence_type": "object",
+      "id": "no-paid-fallback",
+      "verifier": "Routing-Fallback- und Budgettest"
+    },
+    {
+      "assertion": "Gezielte Tests decken gültige review_only-Routen, ungültige Planmodus-Kombinationen, Modellauswahl und fail-closed Verhalten ab; Repository-CI und diffgebundener Review sind grün.",
+      "evidence_type": "object",
+      "id": "regression-suite",
+      "verifier": "Testprotokoll, CI und Reviewbeleg"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die ungültige zentrale Route claude-fable-5-high so korrigieren und absichern, dass Fable für unabhängige, nur lesende Reviews routbar ist, ohne Writer-, Planungs- oder zusätzliche Kostenautorität zu erhalten.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T076",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Fehler im Fable-Modell",
+      "Berechtigung für kostenpflichtige Provider",
+      "Mergebereitschaft"
+    ],
+    "observed_error": "claude-fable-5-high: plan-mode route must be review_only",
+    "source": "Live-Routingfehler während Weltgewebe PR #1507 Review",
+    "source_configuration": "/home/alex/.config/grabowski/worker-routing.json",
+    "source_configuration_sha256": "a9769fd692c8952d2272cc566e33e906d64321f19622fa6522ef48e0f4053f80",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c751ec7571a087e9fa02b5d5",
+      "event_id": 829,
+      "event_created_at": "2026-07-20T07:13:57.574215Z",
+      "request_sha256": "9aa1bb3c236032f573b52b52c7d2512cd0a1103c6897061807e00825ca9fe82f",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "runtime-config-validation",
+        "locator": "file:///home/alex/.config/grabowski/worker-routing.json#claude-fable-5-high",
+        "observed_at": "2026-07-20T06:41:00Z",
+        "sha256": "a9769fd692c8952d2272cc566e33e906d64321f19622fa6522ef48e0f4053f80"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 76
+  },
+  "required_capabilities": [
+    "python",
+    "json-schema",
+    "routing-policy",
+    "agent-review",
+    "repository"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Fable-Reviewroute auf review_only kanonisieren"
+}

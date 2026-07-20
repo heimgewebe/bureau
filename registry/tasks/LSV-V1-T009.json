@@ -93,6 +93,59 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verified_at": "2026-07-20T21:43:24Z",
+    "current_leitstand_head": "d0cee76e69fe5f6a1fd74f321165c47d6f3872c7",
+    "outcome": "Die buildgebundene reale Browser-Regressionssuite ist über Leitstand PR #180 gemergt, als kanonischer Release d0cee76e... deployed und lokal sowie über den kanonischen HTTPS-Ursprung erfolgreich postflight-verifiziert.",
+    "implementation_pr": "heimgewebe/leitstand#180",
+    "implementation_head": "1d3b67ae8d1969c5885d6263a8c466f8e4a0e28a",
+    "implementation_merge_commit": "d0cee76e69fe5f6a1fd74f321165c47d6f3872c7",
+    "implementation_diff_sha256": "f9ec34860e3304b7a06d1f2497fe84b97e03112b6c53bfca498fa2124221b921",
+    "implementation_patch_bytes": 37638,
+    "validation": {
+      "final_base": "ba87ba9f2b138b757d6d09a40b04e5fa28facad0",
+      "final_head": "1d3b67ae8d1969c5885d6263a8c466f8e4a0e28a",
+      "self_review": "PASS, bound to final head/base and implementation_diff_sha256",
+      "github_checks": "All current PR #180 checks passed before merge: CI build, CodeQL, ai-context guards, security hygiene and Cloudflare Pages.",
+      "full_local_gate_task": "8e55872a7150441a8d332e60",
+      "full_local_gate_lifecycle_receipt_sha256": "1b30992987c85e81a29be4b58965ddef6adc0f1d1cc85f2c4dca494d859525a0",
+      "browser_view_receipt_sha256": "ffba6c2a8fcf901d9d929701656f6b915ab8c0577ce0c970b793f6a210bcee9a",
+      "browser_view_receipt_file_sha256": "89d07223e213d66ca8560f539b598f91c8b299893e1a41baea4cdf227eefb282",
+      "build_dist_sha256": "360672fea5f321ccecd541e0e3d88e15b867e779ffb0e36221ce8a1f59889342",
+      "matrix_sha256": "7ac1254452190ef894921581ae3efd869c26e87184604897eef47dfaf5195474",
+      "browser_checks": 185,
+      "route_viewport_pairs": 12,
+      "fullscreen_viewports": 2,
+      "scenario_count": 6
+    },
+    "deployment": {
+      "required": true,
+      "source_commit": "d0cee76e69fe5f6a1fd74f321165c47d6f3872c7",
+      "release_path": "/home/alex/.local/lib/leitstand/releases/d0cee76e69fe5f6a1fd74f321165c47d6f3872c7-runtime-v1",
+      "release_tree_sha256": "25e54eed4ea4c29507b4bdc4827f121276dfda1792c00dc267a3b2155713a5af",
+      "deployment_receipt_sha256": "2325f3ace329b9bae5b2733973cb2aebf8b5cd7f68ba717f5ee635a45a741c1a",
+      "deploy_switch_receipt_sha256": "11c059662d8c427a161591bfdbf9f7b6dfffa0c11c37b829173982d389c6820c",
+      "independent_verify_task": "8038455fb79341e7b75484a1",
+      "independent_verify_lifecycle_receipt_sha256": "aa04ff04402b11c982a432ff81da0dce1718db97cec3ca92de791838d5a9ba00",
+      "local_health_status": "ok",
+      "canonical_health_status": "ok",
+      "listener": "127.0.0.1:3000",
+      "web_service": "active/running, NRestarts=0",
+      "storage_producer": "Result=success, ExecMainStatus=0",
+      "active_routes": "/, /health, /bureau, /checkouts, /storage-health, /ecosystem-map and /repoground returned 200 locally and canonically",
+      "read_only_route_guards": "/repobriefs returned 301 to /repoground; POST /events and removed legacy routes returned 404"
+    },
+    "verified_acceptance": {
+      "view-matrix": "Versionierte Matrix mit sechs realen Leitstand-Ansichten auf 390x844 und 1440x900; 12 Route-/Viewport-Paare im commitgebundenen Browser-Receipt.",
+      "overflow-and-product-css": "Die Suite lädt Produkt-CSS ohne Harness-CSS, prüft Dokument- und Komponentenüberlauf und fand sowie behob den mobilen RepoGround-Codeüberlauf.",
+      "keyboard-focus-modal": "Skip-Link, mobile Navigation mit Escape-Fokusrückgabe sowie Vollbilddialog mit Fokusfalle und Escape-Fokusrückgabe werden real im Browser geprüft.",
+      "motion-and-degraded-states": "Reproduzierbare Fälle für valid, missing, corrupt, stale, empty und prefers-reduced-motion: reduce bestanden; dynamische Kartenknoten/-kanten besitzen unter Reduced Motion keine Übergänge.",
+      "build-bound-evidence": "Receipt bindet Commit 1d3b67ae..., Build-Digest, Matrix-Digest, Viewports und geladene Leitstand-/Mermaid-Assets; Seiten-, Konsolen-, Netzwerk- und relevante HTTP-Fehler sind fail-closed.",
+      "read-only-boundary": "Browserlauf bindet nur an 127.0.0.1, meldet externalMutations=false; Observer-Invariant-Guard fand keine mutierenden HTTP-Methoden und der Live-Postflight bestätigt POST /events=404."
+    },
+    "verification": {
+      "task_sha256": "3fe2689d414f329b9df7f4e3975aa069653277e10fafbcadb6637ef397ef40ff",
+      "plan_sha256": "217a91b5a66a143e0440d2a7d656a5d0fada62b52778cf3285349e7667bd8621"
     }
   },
   "priority": {
@@ -109,6 +162,6 @@
     "strategy": "Den erweiterten Browserjob und seine View-Matrix deaktivieren beziehungsweise auf den vorherigen Shell-Regressionsumfang zurücksetzen; Produktdaten und Laufzeitstate werden nicht migriert."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Leitstand-Ansichten browserbasiert auf Bedienbarkeit prüfen"
 }

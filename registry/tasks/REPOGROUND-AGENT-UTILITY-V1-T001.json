@@ -3,7 +3,7 @@
   "id": "REPOGROUND-AGENT-UTILITY-V1-T001",
   "initiative": "REPOGROUND-AGENT-UTILITY-V1",
   "title": "Phase 0: Kanonischen Publikationskatalog an alle Grabowski-Consumer binden",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 1
@@ -63,7 +63,66 @@
       "agent utility",
       "patch correctness",
       "merge readiness before gates"
-    ]
+    ],
+    "verification": {
+      "task_sha256": "7a90abb0d3277b96857f099eb06e231e366abb92296e121415fdc0fdad77808e",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+      "verified_at": "2026-07-20T16:44:21+02:00",
+      "implementation": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 294,
+        "base_commit": "8b460dffac64e5d14680c43e860466c05ea48021",
+        "feature_commit": "efdbe4e873f662a3a77ffb3739edecb54383e1ac",
+        "merge_commit": "adc3399e189986bc7311a34448e46085aaab711d",
+        "hardening_pull_request": 301,
+        "hardening_feature_commit": "569e0e6617586d794351b1de2be35f7a7ceb61c4",
+        "hardening_merge_commit": "dfdc7a277b439b563d7508ca182ca4d2527f5d07"
+      },
+      "runtime": {
+        "grabowski_commit": "224e5b3c5e04c8172f550fd20c937f3a7692164b",
+        "deployment_integrity": "valid",
+        "audit_chain": "valid"
+      },
+      "tests": {
+        "targeted": "92 passed; 18 subtests; 0 failed",
+        "full": "2423 passed; 668 subtests; 2 skipped; 0 failed"
+      },
+      "publications": {
+        "repoground": {
+          "stem": "heimgewebe__repoground__main-max-260720-1303",
+          "manifest_sha256": "8cc20d5aab4e1ae1add10ab659673ca8648c93b71728b8583ffd4293a7e8540a",
+          "source_commit": "f7f9ef29a45e0f3b43e303e8e4bf5bc888dfb1d3",
+          "freshness": "fresh_exact"
+        },
+        "grabowski": {
+          "stem": "heimgewebe__grabowski__main-max-260720-1005",
+          "manifest_sha256": "9b04a941033a9f2c3368b9c24a9cc1f13bb95cc408eea8c071b4410b348a74af",
+          "source_commit": "224e5b3c5e04c8172f550fd20c937f3a7692164b",
+          "freshness": "fresh_exact"
+        },
+        "weltgewebe": {
+          "stem": "heimgewebe__weltgewebe__main-max-260720-1409",
+          "manifest_sha256": "706f437221fcbb9f7c589d9e09c6b664e5b0554351637ae4728900399870ce7b",
+          "source_commit": "de8ec3da449d8fff2f0495e9c685eebb3c0dc061"
+        },
+        "consumer_convergence": [
+          "bundle_discover",
+          "freshness_check",
+          "preflight",
+          "query_existing_index",
+          "context_pack",
+          "find_symbol",
+          "get_callers"
+        ],
+        "legacy_fallback_rows": 0
+      },
+      "non_claims": [
+        "tool access does not prove semantic reading",
+        "publication freshness does not prove answer correctness",
+        "resolved evidence does not prove relevance to a later answer",
+        "runtime identity does not by itself prove every future request succeeds"
+      ]
+    }
   },
   "depends_on": []
 }

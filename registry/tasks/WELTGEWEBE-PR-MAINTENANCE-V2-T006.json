@@ -1,0 +1,101 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Browser-Regressionsfall erzeugt beim Löschen eines Knotens eine 412-Antwort, weist nach, dass der Knoten erhalten bleibt, und prüft die sichtbare, verständliche Fehlermeldung im Reiter Bearbeiten.",
+      "evidence_type": "object",
+      "id": "delete-conflict-visibility",
+      "verifier": "Playwright-Test mit gemockter DELETE-412-Antwort"
+    },
+    {
+      "assertion": "Browser- oder Komponentenprüfungen belegen sowohl den Zustand nach Abbrechen eines geöffneten Formulars als auch den sicheren Rückfall auf Übersicht ohne offenes Formular, wenn eine Weber- oder Adminberechtigung während der Bearbeitung verloren geht.",
+      "evidence_type": "object",
+      "id": "cancel-and-role-transition",
+      "verifier": "gezielte Rollenwechsel- und Abbruchtests"
+    },
+    {
+      "assertion": "Für Gäste wird die Zwei-Reiter-Navigation mit Pfeiltasten, Home und End getrennt geprüft; Fokus, aria-selected und sichtbares Tabpanel bleiben konsistent.",
+      "evidence_type": "object",
+      "id": "guest-keyboard-contract",
+      "verifier": "Playwright-Tastaturtest für Gastrolle"
+    },
+    {
+      "assertion": "Die Beziehung zwischen aria-controls und nur aktiv gerenderten Tabpanels wird gegen den ARIA-Tabvertrag geprüft und entweder dokumentiert beibehalten oder so angepasst, dass keine Referenz auf ein dauerhaft fehlendes Panel entsteht.",
+      "evidence_type": "object",
+      "id": "aria-controls-decision",
+      "verifier": "Accessibility-Review und DOM-Vertragstest"
+    },
+    {
+      "assertion": "Eine explizite UX-Entscheidung legt fest, ob mutationError beim Tabwechsel erhalten bleibt oder geleert wird; der gewählte Lebenszyklus wird durch einen Regressionstest und verständliche sichtbare Rückmeldung belegt.",
+      "evidence_type": "object",
+      "id": "mutation-error-lifecycle",
+      "verifier": "Komponenten- oder Browser-Regressionsprüfung"
+    },
+    {
+      "assertion": "Der finale Head besteht Svelte-/TypeScript-Prüfung, den vollständigen Web-Testlauf und einen diffgebundenen Review; vor dem Merge liegt ein herunterladbarer vollständiger Patch vor.",
+      "evidence_type": "object",
+      "id": "exact-review-and-ci",
+      "verifier": "CI, Reviewbeleg und Patchdigest"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die mit Weltgewebe PR #1507 eingeführte Trennung von Übersicht und Bearbeitungsaktionen gegen Berechtigungswechsel, Konfliktfehler, Abbruchpfade und ARIA-/Tastaturrandfälle vollständig absichern, ohne die Produktregel gemeinschaftlicher Knotenbearbeitung zu verändern.",
+  "id": "WELTGEWEBE-PR-MAINTENANCE-V2-T006",
+  "initiative": "WELTGEWEBE-PR-MAINTENANCE-V2",
+  "metadata": {
+    "does_not_establish": [
+      "Produktfehler in PR #1507",
+      "Änderung der gemeinschaftlichen Bearbeitungsberechtigung",
+      "Mergebereitschaft"
+    ],
+    "source": "Weltgewebe PR #1507 unabhängige Reviews",
+    "source_head": "7ccb135b3d1c213d81ebd866f9c3715c81a6c1b1",
+    "source_pull_request": "heimgewebe/weltgewebe#1507",
+    "source_review_sha256": "bdffa3026d06289dc53ffb841507bde7b145f6f5ec1bd599a99af748aa699d8f",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-e2cc145ff0145f7d3aefd8f2",
+      "event_id": 828,
+      "event_created_at": "2026-07-20T07:13:41.462934Z",
+      "request_sha256": "a8cff373fcf164e84cbd79c936e68787ff6c8133e137691e11229dc5924243b6",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "review-finding",
+        "locator": "https://github.com/heimgewebe/weltgewebe/pull/1507#issuecomment-5019538012",
+        "observed_at": "2026-07-20T06:53:00Z",
+        "sha256": "bdffa3026d06289dc53ffb841507bde7b145f6f5ec1bd599a99af748aa699d8f"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 36
+  },
+  "required_capabilities": [
+    "svelte",
+    "typescript",
+    "playwright",
+    "accessibility-review",
+    "repository"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Knoten-Reiter Bearbeiten durch Randfalltests härten"
+}

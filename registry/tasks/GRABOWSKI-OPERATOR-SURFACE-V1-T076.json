@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T076",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Audit-Kette in eine verifizierte Betriebsprojektion verdichten",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "goal": "Die manipulationsanzeigende Grabowski-Audit-Kette durch eine strikt lesende, jederzeit rekonstruierbare und quellengebundene Projektion für 24 Stunden, 7 Tage, 30 Tage und den Gesamtbestand operational nutzbar machen, ohne eine zweite Wahrheit, automatische Task-Erzeugung oder selbständernde Routing-Autorität einzuführen.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/.local/state/grabowski/write-audit.jsonl",
+      "path:/home/alex/.local/state/grabowski/audit-segments",
+      "path:/home/alex/.local/state/grabowski/audit-archive"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Die Implementierung verändert nur Grabowski-Code und Verträge. Die produktive Projektion bleibt read-only und darf weder Audit-Rohdaten umschreiben noch Bureau, Routing oder Policies mutieren."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "audit",
+    "runtime-deployment",
+    "bureau"
+  ],
+  "acceptance": [
+    {
+      "id": "verified-source-only",
+      "assertion": "Die Projektion verweigert eine ungültige Audit-Kette, liest alle aktiven und archivierten Segmente ausschließlich über den bestehenden verifizierten Kettenleser und bindet jeden Snapshot an Datensatzanzahl, letzten Record-SHA-256, Zeitspanne und einen deterministischen Snapshot-SHA-256."
+    },
+    {
+      "id": "fixed-bounded-windows",
+      "assertion": "Ein typisiertes read-only Werkzeug liefert feste 24-Stunden-, 7-Tage-, 30-Tage- und Gesamtfenster mit begrenzten Top-N-Ausgaben für Operationen, Fehlersignale, Bureau-Codes, Ressourcentypen, Task- und Lease-Aktivität sowie ausgewählte Mutations-, Rollback- und Recovery-Belege."
+    },
+    {
+      "id": "privacy-and-authority-boundary",
+      "assertion": "Die Ausgabe enthält keine Rohpfade, argv, Umgebungswerte, Secrets oder Besitzer-Metadaten; ungewöhnliche Dimensionswerte werden auf einen festen Redaktionsmarker reduziert. Sie erklärt ausdrücklich, dass sie weder Kausalität, Erfolgsquote, Produktivität, aktuelle Lease-Wahrheit, sicheren Retry noch Task- oder Routing-Autorität belegt."
+    },
+    {
+      "id": "concurrent-growth-truthful",
+      "assertion": "Wenn die Audit-Kette während der Berechnung wächst, bleibt die ursprüngliche Snapshot-Bindung erhalten und die Projektion meldet den Fortschritt explizit, statt sich still an einen anderen Kettenkopf zu binden."
+    },
+    {
+      "id": "dedupe-and-receipt-identities",
+      "assertion": "Die Ausgabe besitzt einen vollständigen zeitgebundenen Projektionshash und einen separaten Befundhash ohne bewegliche Fenstergrenzen. Der Nachtlauf dedupliziert unveränderte Befunde mit findings_sha256; snapshot_sha256 bleibt die exakte Quellenidentität und blockiert keine Deduplizierung bei bloßem Kettenfortschritt."
+    },
+    {
+      "id": "proposal-only-patterns",
+      "assertion": "Wiederkehrende Bureau-Vertragsfehler, unklare Ausführungsausgänge und Lease-Rückgewinnungen werden nur als gruppierte, nicht-kausale Vorschlagsmuster ausgegeben; daraus entstehen keine automatischen Bureau-Tasks, Policy-Änderungen oder Ausführungsfreigaben."
+    },
+    {
+      "id": "consumer-boundary",
+      "assertion": "Dokumentation und Bureau-Nachtlaufvertrag verlangen für aktuelle Zustände weiterhin Runtime Health, Task Store, Live-Leases, Friction Summary und Execution Governor; die Audit-Projektion ersetzt keine dieser Primär- oder Overlay-Wahrheiten."
+    },
+    {
+      "id": "review-test-live-deploy",
+      "assertion": "Der finale Diff besteht gezielte und vollständige Repository-Validierung, diffgebundenen Review und GitHub-CI, wird nur bei grünen Gates gemergt, exakt deployt und gegen die reale mehrsegmentige Audit-Kette mit Runtime-Identität, Audit- und Kill-Switch-Readback geprüft."
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T058",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T066"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-20T08:10:00+02:00",
+    "source": "operator_live_audit",
+    "source_observation": "Die am 20. Juli 2026 live verifizierte Audit-Kette umfasste mehr als 22.900 Datensätze über zwei Archivsegmente plus aktive Datei. Recovery, Rollback und Sicherheitsbindungen nutzen sie bereits, während allgemeine Trend- und Fehlercluster bisher nur durch manuelle Vollscans ableitbar waren.",
+    "implementation_branch": "feat/audit-projection-v1",
+    "planned_consumer": "OPERATOR-INTEGRATION-LOOP-V1-T006",
+    "does_not_establish": [
+      "Kausalität historischer Fehler",
+      "Task-Erfolgsquoten aus Audit-Ereignissen",
+      "Produktivitäts- oder Kostenwirkung",
+      "Berechtigung zu automatischer Task-Erzeugung",
+      "Berechtigung zu automatischer Routing-Promotion",
+      "Forensik gegen vollständige Root-Kompromittierung",
+      "Merge- oder Deployment-Bereitschaft vor finalen Gates"
+    ],
+    "implementation_pr": "heimgewebe/grabowski#321",
+    "implementation_head": "3f288e7644d7482dc172ad9e577548b4cc4e695a",
+    "implementation_base": "fb3ebbde3f054178ef4f5ea1259bc6a687baea7f",
+    "implementation_diff_sha256": "6cc0fce4ec75ac5c706c9e8875a187c7ba2cc3f6d6ced4e974ab092bf98ad68c",
+    "local_validation_receipt_sha256": "0e239a9bda17a11a836cae08201cdb28530216358b98f8078fed8e9e382445cb",
+    "local_validation_summary": "2420 tests passed, 2 expected skips; all remaining validation gates passed",
+    "github_ci": "all required PR #321 checks passed for exact head",
+    "merge_status": "blocked_before_dispatch_by_foreign_live_repository_operation_lease",
+    "merge_non_effect": "PR remained OPEN and CLEAN; no GitHub mutation was dispatched"
+  }
+}

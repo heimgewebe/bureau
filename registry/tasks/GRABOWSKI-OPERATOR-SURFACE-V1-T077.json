@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T077",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Einmalige Operation-Leases nach belegtem Effekt schließen",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 215
+  },
+  "goal": "Verhindern, dass eine selbstbezogene einmalige Operation-Lease wie worktree-add nach belegter Effektausführung oder terminalem Worker unnötig unabhängige Merge- und Repository-Gates blockiert, ohne fremde Arbeit zu erraten, Leases gewaltsam freizugeben oder den fail-closed Merge-Guard zu schwächen.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/.local/state/grabowski/resources.sqlite3",
+      "path:/home/alex/.local/state/grabowski/tasks.sqlite3"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Die Aufgabe darf nur einen identitätsgebundenen Closeout-Pfad für eigene einmalige Operationen ergänzen; kein Force-Release fremder Leases und kein Merge-Guard-Bypass."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "resource-leases",
+    "task-lifecycle"
+  ],
+  "acceptance": [
+    {
+      "id": "effect-bound-operation-closeout",
+      "assertion": "Einmalige selbstbezogene Operation-Leases erhalten einen expliziten Closeout-Pfad, der Eigentümer, exakten Ressourcenschlüssel, erwartete Lease-Identität und einen autoritativen Nachweis des abgeschlossenen oder nicht begonnenen Effekts bindet."
+    },
+    {
+      "id": "no-foreign-force-release",
+      "assertion": "Der normale Pfad kann keine fremde Lease freigeben, keine aktive oder veränderte Lease schließen und keinen abgelaufenen Kalendereintrag allein als Abschlussbeweis behandeln."
+    },
+    {
+      "id": "worktree-add-readback",
+      "assertion": "Für worktree-add unterscheidet der Closeout belegbar zwischen nicht begonnen, erfolgreich mit exakt gebundenem Worktree, unklarem Ausgang und weiter laufender Arbeit; nur eindeutige eigene Endzustände erlauben Freigabe."
+    },
+    {
+      "id": "merge-guard-remains-fail-closed",
+      "assertion": "Der Merge-Guard bleibt bei jeder live aktiven, fremden, unklaren oder nicht gebundenen Repository-Operation blockierend; T077 ändert nur den vorherigen sauberen Lebenszyklus der Operation-Lease."
+    },
+    {
+      "id": "terminal-task-not-sufficient-alone",
+      "assertion": "Ein terminaler oder fehlgeschlagener Worker reicht allein nicht zur Freigabe, wenn Operationseigentümer, Effektidentität oder aktueller Zielzustand nicht übereinstimmen."
+    },
+    {
+      "id": "regression-proof",
+      "assertion": "Tests decken erfolgreiche Erstellung, Fehler vor Effekt, Fehler nach möglichem Effekt, fremden Eigentümer, erneuerte Lease, veränderten Worktree, unklaren Zielzustand und unverändert blockierenden Merge-Guard ab."
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T058"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-20T09:05:00+02:00",
+    "source": "grabowski_friction_record",
+    "friction_event_id": "56da33fa4bd44393ae4d98c081060fcd",
+    "live_evidence": {
+      "blocked_pr": "heimgewebe/grabowski#321",
+      "blocked_head": "3f288e7644d7482dc172ad9e577548b4cc4e695a",
+      "blocking_resource": "repo:/home/alex/repos/grabowski:operation:worktree-add:operator-complexity-simplification-v1",
+      "blocking_owner": "operator:operator-complexity-simplification-v1-20260720",
+      "associated_task": "4fb0da76c6614ee98f4ab8f4",
+      "associated_task_state": "failed",
+      "merge_dispatch_called": false,
+      "github_mutation_observed": false
+    },
+    "does_not_establish": [
+      "dass die fremde Lease sicher freigegeben werden durfte",
+      "dass der terminale Worker Eigentümer der Operation-Lease war",
+      "dass der Worktree-Erstellungseffekt vollständig oder fehlerfrei war",
+      "Berechtigung zu Force-Release oder Merge-Guard-Bypass",
+      "Merge- oder Deployment-Bereitschaft von PR #321"
+    ]
+  }
+}

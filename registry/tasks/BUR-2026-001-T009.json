@@ -45,7 +45,31 @@
     "frontier_report_sha256": "050d025dbe3cb379e6733cec1d3959d022fee950ce5821bd71cbf74b02de5b65",
     "frontier_score": 129,
     "source_branch": "feat/operator-workspace-v1",
-    "source_repository": "/home/alex/repos/grabowski"
+    "source_repository": "/home/alex/repos/grabowski",
+    "cancellation": {
+      "cancelled_at": "2026-07-20T22:12:05Z",
+      "authority": "operator-autonomous-queue-processing",
+      "reason": "The closure-lane binding target became obsolete before execution: the exact lane is absent from the current Bureau agent-frontier report, the source branch no longer exists on the Grabowski remote, and GitHub has no pull request with that head branch.",
+      "binding_performed": false,
+      "claim_established": false,
+      "external_execution_authorized": false,
+      "frontier_report": "/home/alex/.local/state/bureau-agent-frontier/latest-report.json",
+      "frontier_report_sha256": "871163e4056c02f1c7d0942dea5cd5334e5a4ce003e158279dc06ee6e2cfbed4",
+      "lane_present_in_current_frontier": false,
+      "source_branch_remote_present": false,
+      "matching_pull_requests": 0,
+      "evidence_commands": {
+        "remote_branch_lookup_argv_sha256": "87b2de5329207c9ff9c8d927dff56d2e6e316d6f7cd8336bd394396266d08286",
+        "github_pr_lookup_argv_sha256": "df9845b7a72274b73152d91548743ab44ac4e6d74c1236cee027003a6f7287d8",
+        "frontier_exact_lookup_argv_sha256": "63ed33ee86c830eb864000c925caca1fa73e615662389732f3b722b5de375c7b"
+      },
+      "does_not_establish": [
+        "that the historical lane never existed",
+        "that the historical source branch contained no useful work",
+        "that any deleted branch was merged",
+        "that the original closure-binding acceptance criteria were satisfied"
+      ]
+    }
   },
   "priority": {
     "lane": "next",
@@ -57,6 +81,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "cancelled",
   "title": "Bind grabowski feat/operator-workspace-v1 closure lane"
 }

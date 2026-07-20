@@ -101,6 +101,88 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verified_at": "2026-07-20T01:28:30Z",
+    "implementation": {
+      "repository": "heimgewebe/commonworld",
+      "pull_request": 113,
+      "base_head": "02c289dd88644b64583a0860ddfc040e1e3cc6ec",
+      "primary_head": "f4823bb5597331125351529316f11b2cf4c9a70c",
+      "merge_commit": "68102b0575f4101e6a4275983094d33ec78a3b20",
+      "branch": "feat/geographic-impressions-self-v1",
+      "worktree": "/home/alex/repos/.commonworld-worktrees/geographic-impressions-self-v1",
+      "diff_sha256": "88799f33b07935609432891b257a69a04d982ab33a432002fea2ce33027e8182",
+      "diff_url": "https://github.com/heimgewebe/commonworld/pull/113.diff"
+    },
+    "validation": {
+      "local_exact_head": [
+        "npm run build: PASS",
+        "make validate: PASS",
+        "npm run smoke:browser: PASS",
+        "JavaScript core tests: 62 PASS",
+        "visual-semantics contract tests: 32 PASS",
+        "Python tests: 55 PASS",
+        "git diff --check: PASS"
+      ],
+      "browser_matrix": "Desktop, smartphone, iPad portrait and landscape; touch, keyboard, reduced motion and increased contrast; filter/text parity; 500 and 5000 Commons; catalog and provider failure paths; three aggregate zoom levels and local dissolution.",
+      "github_ci": {
+        "codeql": {
+          "run_id": 29710773285,
+          "head_sha": "68102b0575f4101e6a4275983094d33ec78a3b20",
+          "result": "PASS"
+        },
+        "validate": {
+          "run_id": 29710773643,
+          "head_sha": "68102b0575f4101e6a4275983094d33ec78a3b20",
+          "result": "PASS"
+        },
+        "pages": {
+          "run_id": 29710773132,
+          "head_sha": "68102b0575f4101e6a4275983094d33ec78a3b20",
+          "result": "PASS after one infrastructure-only rerun",
+          "initial_failure": "GitHub Pages deployment creation returned HTTP 503 after a successful build; the unchanged artifact deployed successfully on rerun."
+        },
+        "production_readback": {
+          "run_id": 29710773619,
+          "head_sha": "68102b0575f4101e6a4275983094d33ec78a3b20",
+          "result": "PASS"
+        }
+      },
+      "live_http": {
+        "url": "https://commonworld.net/",
+        "task_id": "11104561ce52486aa0b6f204",
+        "result": "PASS",
+        "terminalization_sha256": "ac47e86839e441677cc889225cfe1694a20748c5131f7c17dff5867e3b7aefcb",
+        "lifecycle_receipt_sha256": "267597064039ce9a12072d607bd0d693ed880d2b1a532bddd96098933045d9c7",
+        "scope": "Public shell, proposal page, catalog and runtime assets returned HTTP 200; deployed runtime asset hashes matched the exact checked-out implementation."
+      },
+      "live_browser": {
+        "url": "https://commonworld.net/",
+        "task_id": "3d76ffe5c7ac48c684422097",
+        "result": "PASS",
+        "terminalization_sha256": "1c2b0d6c8dc90e909107a4522dae1439cb780ea5fc2732d9675f292c632801fa",
+        "lifecycle_receipt_sha256": "537d79ae04ca4d9a6a7d21e2f46242a6eff5900b8bd14909d3d4a3288dd3cd2e",
+        "scope": "Headless live assertions passed for desktop planet-to-local semantic zoom, eleven legend codes, explicit unassessed coverage, Le Nid map/text parity, mobile and iPad legend bounds, horizontal overflow and 44px touch targets.",
+        "nonclaim": "The isolated task retained screenshots on the Heim-PC but exposed no image bytes to this session, so no subjective visual-aesthetic judgment is claimed."
+      }
+    },
+    "verified_acceptance": {
+      "semantic-zoom-states": "PASS; live and local browser assertions cover planet, macroregion, region, local and selected-focus states with distinct aggregate or released geometry forms.",
+      "canonical-type-colour": "PASS; contracts, validators, legend and runtime use one eleven-value Commons type vocabulary with one non-colour code per type and no blended category colours.",
+      "coverage-and-unknown-pattern": "PASS; coverage is explicitly unassessed in map and text copy, with separate neutral pattern/text semantics and no inference of density or absence.",
+      "aggregate-region-model": "PASS; V1 derives deterministic 30-degree, 10-degree and 4-degree buckets only from released public geometry and does not add source-free country membership or a new CommonProject field.",
+      "privacy-and-small-counts": "PASS; hidden locations are excluded before derivation; approximate releases obey k=5, coarsening, complement differencing protection and minimum-diameter rules without aggregate interactivity or member IDs.",
+      "projection-and-map-layers": "PASS; the catalog projection is prepared once, cached by filtered identity set and progressively dissolves into public extents, approximate zones and exact anchors.",
+      "legend-and-text-equivalent": "PASS; the collapsible legend is keyboard/touch operable, uses labels and two-letter codes in addition to colour, and the geographic text summary shares the same filtered identities and nonclaims.",
+      "filter-parity": "PASS; search and intent filters drive map aggregates, local map representations, results and text cards from one visible CommonProject set; live Le Nid parity was rechecked.",
+      "automated-evidence": "PASS; focused geometry, privacy, contract, browser, accessibility, failure and 500/5000-record performance tests passed on the exact PR head and merge commit.",
+      "production-readback": "PASS; diff SHA-256 is bound to exact PR head f4823bb5597331125351529316f11b2cf4c9a70c, PR #113 merged as 68102b0575f4101e6a4275983094d33ec78a3b20, all exact-commit workflows passed, live asset hashes matched and desktop/mobile/iPad assertions exited successfully."
+    },
+    "outcome": "Commonworld now leaves truthful, privacy-preserving geographic Commons impressions from the full globe through progressively finer semantic zoom. Hue communicates the canonical Commons type, pattern and text communicate unassessed coverage, geometry communicates release precision, and released numbers count unique visible identities. The feature remains a read-only discovery layer and creates neither a completeness claim nor a second publication or administration path.",
+    "self_review": "PASS; closeout is bound to the complete diff digest, exact PR head, merge ancestry, exact-commit CI, Pages deployment, runtime asset hashes and independent live browser assertions. The first Pages deploy failure is classified only from GitHub’s explicit HTTP 503 annotation and was resolved by rerunning the unchanged deployment. This evidence does not establish global coverage completeness, physical Mobile Safari rendering, subjective visual quality, hidden-location safety beyond the implemented contracts, or future source-backed regional context.",
+    "verification": {
+      "task_sha256": "7461151fd88dba6479a4910b1044c8c5636e26b36dcc3146c7639ed40a054ac2",
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4"
     }
   },
   "priority": {
@@ -115,6 +197,6 @@
     "browser"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Render truthful geographic Commons impressions across semantic zoom"
 }

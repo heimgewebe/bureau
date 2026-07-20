@@ -3,7 +3,7 @@
   "initiative": "BUREAU-TRUTH-MODEL-V2",
   "id": "BUREAU-TRUTH-MODEL-V2-T015",
   "title": "Restore Bureau release and Registry identity before verification stamps",
-  "state": "planned",
+  "state": "verified",
   "goal": "Restore exact identity between the installed immutable Bureau release, canonical Registry snapshot and current origin/main so verification-stamp and other mutation-gated truth operations can run without stale-runtime-blocked results.",
   "priority": {
     "lane": "next",
@@ -132,12 +132,26 @@
         "no-bypass",
         "tests"
       ],
-      "verification_note": "Hash binding is prepared for the deployment-evidence task revision. Final verification-stamp readback and verified state require merge plus an exact runtime refresh to the resulting merge commit.",
+      "verification_note": "PASS: verification-stamp succeeded against a clean exact Git checkout whose HEAD and origin/main matched the immutable Bureau runtime source commit. The task state is now verified without changing the stable task revision or initiative plan hash.",
       "task_sha256": "e8b6ab8a245aec5fef41d04c24fa677d52482e6600d168e3d25a76473a4406be",
       "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8",
       "evidence_path": "/home/alex/.local/state/bureau/evidence/bureau-truth-model-v2-t015-closeout.json",
       "evidence_sha256": "1462c962ed67648451e86f21619ff323dd39e522d541fc4ab128bef4a4e731e7",
-      "runtime_result_sha256": "84ec2cb7cd75a00d639b39b3b82824afd579137417fba2a80e0d4a0ca4b59597"
+      "runtime_result_sha256": "4555eec2c8b5c6498cc321f9acce934b78568009e025d6c362447ecbc3b15bb3",
+      "verified_at": "2026-07-20T02:34:34.448247Z",
+      "final_stamp": {
+        "observed_at": "2026-07-20T02:34:34.448247Z",
+        "registry_commit": "dfd4f9dbc8ad461000184f6bc61321cb97ead4b8",
+        "runtime_source_commit": "dfd4f9dbc8ad461000184f6bc61321cb97ead4b8",
+        "runtime_release_id": "dfd4f9dbc8ad-srcbbdb0e7bf84d",
+        "runtime_manifest_sha256": "b7158a6a093affaca5b4c74192b9f5e43d334b3a715e3670fc12294bc8872cc6",
+        "post_refresh_observation_sha256": "56c1d6f05cfb6182cfed13fa2819d54336249be067ef63f64463e1bc538739d1",
+        "compatibility_status": "compatible",
+        "mutation_allowed": true,
+        "reason_codes": [],
+        "task_sha256": "e8b6ab8a245aec5fef41d04c24fa677d52482e6600d168e3d25a76473a4406be",
+        "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8"
+      }
     }
   }
 }

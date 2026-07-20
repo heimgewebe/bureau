@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T005",
+  "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
+  "title": "Idempotente Suchprojektion, Worker, Backfill und Löschfortpflanzung",
+  "state": "ready",
+  "goal": "Eine vollständig regenerierbare PostgreSQL-Suchprojektion mit revisionsgebundener, idempotenter und Multi-Instance-sicherer Worker-Verarbeitung implementieren, einschließlich Backfill, vollständigem Rebuild sowie korrekter Fortpflanzung von Lösch-, Sichtbarkeits- und Revisionsänderungen, ohne Search-API, Weboberfläche oder Produktionsrollout einzuführen.",
+  "priority": {
+    "lane": "now",
+    "rank": 50
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Durch die direkte Nutzeranweisung autorisiert. T005 ist ausschließlich die Projektions-, Worker-, Backfill- und Löschfortpflanzungsstufe; API, Web und Produktion bleiben nachgelagert."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "rust",
+    "postgresql",
+    "database-migrations",
+    "background-workers",
+    "multi-instance-concurrency",
+    "local-embeddings",
+    "privacy",
+    "backup-restore",
+    "testing",
+    "grabowski"
+  ],
+  "depends_on": [
+    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T004"
+  ],
+  "acceptance": [
+    {
+      "id": "canonical-postgresql-truth",
+      "assertion": "Kanonische Knoten- und Sichtbarkeitsdaten bleiben in PostgreSQL maßgeblich. Die Suchprojektion ist abgeleitet, prüfbar und vollständig regenerierbar und erzeugt keine zweite fachliche Wahrheit."
+    },
+    {
+      "id": "projection-schema-identity",
+      "assertion": "Jeder Projektionsdatensatz bindet mindestens Knoten-ID, Source-Revision, Content-SHA-256, Sichtbarkeitsklasse, Dokumentrevision, Provider, Modell-ID, Modellrevision, Dimension, Normalisierungsrevision, Rankingrevision und Indexgeneration."
+    },
+    {
+      "id": "idempotent-revision-bound-worker",
+      "assertion": "Wiederholte Zustellung derselben Arbeit ist wirkungsidentisch. Ein Worker schreibt nur, wenn Source-Revision, Inhalt, Sichtbarkeit und vollständige Generationsidentität weiterhin dem autoritativen PostgreSQL-Stand entsprechen."
+    },
+    {
+      "id": "stale-results-fail-closed",
+      "assertion": "Ergebnisse veralteter, langsamer oder nach einem Modell- beziehungsweise Revisionswechsel fertiggestellter Worker werden verworfen und dürfen neuere Projektionen weder überschreiben noch reaktivieren."
+    },
+    {
+      "id": "multi-instance-safety",
+      "assertion": "Mehrere Worker-Instanzen können parallel arbeiten, ohne Doppelwirkung, verlorene Aktualisierungen, Generationenmischung oder unsichere Sperrübernahme; Konflikt- und Retry-Grenzen sind deterministisch getestet."
+    },
+    {
+      "id": "provider-outage-isolation",
+      "assertion": "Provider-Nichtverfügbarkeit blockiert keine fachliche Knotenänderung. Die Projektion wird nachvollziehbar als ausstehend markiert und später idempotent nachgeholt; Identitäts- und Datenfehler bleiben fail-closed."
+    },
+    {
+      "id": "deletion-visibility-propagation",
+      "assertion": "Löschung, Unsichtbarkeit, geänderte Autorisierung oder eine nicht mehr zulässige Sichtbarkeitsklasse entfernen beziehungsweise sperren die Projektion transaktional so, dass kein veralteter Worker den Eintrag wieder sichtbar machen kann."
+    },
+    {
+      "id": "revision-propagation",
+      "assertion": "Änderungen indexierbarer Felder, Sprache, Tags, Sichtbarkeit, Dokumentrevision oder Modellgeneration erzeugen genau die erforderliche neue Projektionsarbeit; irrelevante Änderungen erzeugen keine unnötige Embedding-Arbeit."
+    },
+    {
+      "id": "backfill-and-full-rebuild",
+      "assertion": "Ein begrenzbarer Backfill und ein vollständiger Neuaufbau aus der kanonischen PostgreSQL-Wahrheit sind unterbrochen fortsetzbar, idempotent und liefern mit identischem Input denselben Vollständigkeits- und Integritätsdigest."
+    },
+    {
+      "id": "generation-cutover",
+      "assertion": "Ein Modell-, Dimensions- oder Revisionswechsel baut eine neue vollständige Generation auf. Aktivierung und Rückfall sind atomar; unvollständige Generationen werden nie abgefragt oder mit der aktiven Generation gemischt."
+    },
+    {
+      "id": "operational-evidence",
+      "assertion": "Queue-Tiefe, ausstehende, veraltete, fehlgeschlagene und verworfene Arbeiten, aktive Generation, Rebuild-Fortschritt und letzte erfolgreiche Projektion sind messbar, ohne Rohvektoren oder sensible Inhalte in Logs oder Receipts zu schreiben."
+    },
+    {
+      "id": "backup-restore-regeneration",
+      "assertion": "Backup, Restore und PITR erhalten die Projektionswahrheit oder belegen einen vollständigen, deterministischen Neuaufbau; die kanonischen Knotendaten bleiben in jedem Fall vorrangig."
+    },
+    {
+      "id": "ann-measured-only",
+      "assertion": "ANN, HNSW oder andere approximative Indizes werden nicht eingeführt. Ein späterer Einsatz erfordert gemessenen Weltgewebe-Bedarf, Recall-Beleg und eine eigene Betriebsentscheidung."
+    },
+    {
+      "id": "repository-gates",
+      "assertion": "Vor Merge liegen vollständiges Diff-Artefakt, exakte Head- und Diffbindung, Reviews auf Correctness und Data Integrity, grüne erforderliche CI sowie ein Readback des gemergten Main-Trees vor."
+    },
+    {
+      "id": "no-product-or-production-surface",
+      "assertion": "T005 implementiert keine Search-API, keine Websuche, keine Oberfläche für ähnliche Knoten, keinen Produktionsrollout, keinen öffentlichen Live-Beweis und keine SemantAH-Stilllegung."
+    }
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "task_profile": "repo_change",
+    "skip_reason": "live_first_primary",
+    "note": "Datenbank-, Worker-, Nebenläufigkeits-, Git-, CI- und Betriebsbelege müssen live und commitgebunden erhoben werden; RepoGround ergänzt nur Repository-Kontext."
+  },
+  "metadata": {
+    "source": "direct_operator_instruction",
+    "registered_at": "2026-07-20",
+    "predecessor": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T004",
+    "stage": "projection-worker-backfill-deletion-propagation",
+    "reference_ranking_revision": "weltgewebe-hybrid-ranking-v2",
+    "smallest_qualified_local_t004_model": "qwen3-embedding:4b",
+    "comparison_model": "qwen3-embedding:8b",
+    "production_model_approved": false,
+    "cost_policy": "zero external spend unless separately approved",
+    "postgresql_basis": "T003 verified PostgreSQL 16.14 and pg_trgm 1.6; pgvector unavailable in the pinned image",
+    "architecture_constraints": {
+      "postgresql_canonical": true,
+      "projection_regenerable": true,
+      "worker_revision_bound": true,
+      "stale_results_rejected": true,
+      "provider_outage_blocks_node_mutation": false,
+      "generation_mixing_allowed": false,
+      "ann_without_measured_need": false
+    },
+    "does_not_establish": [
+      "production embedding model",
+      "pgvector production availability",
+      "search API",
+      "web search UI",
+      "similar nodes UI",
+      "hybrid ranking in production",
+      "production rollout",
+      "public live proof",
+      "SemantAH archive authority",
+      "permission to mutate WELTGEWEBE-OS-V1-T005 or other foreign tasks"
+    ]
+  }
+}

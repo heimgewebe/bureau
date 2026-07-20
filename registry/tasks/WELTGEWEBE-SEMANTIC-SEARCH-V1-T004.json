@@ -3,11 +3,11 @@
   "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T004",
   "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
   "title": "Interner Embedding- und Hybrid-Ranking-Kern",
-  "state": "ready",
-  "goal": "Einen internen, providerbegrenzten und vollständig testbaren Embedding- und Hybrid-Ranking-Kern implementieren, ohne bereits Projektion, Worker, API, Weboberfläche oder Produktionseffekt einzuführen.",
+  "state": "verified",
+  "goal": "Einen internen, providerbegrenzten und vollständig testbaren Embedding- und Hybrid-Ranking-Kern implementieren, ohne Projektion, Worker, API, Weboberfläche oder Produktionseffekt einzuführen.",
   "priority": {
-    "lane": "now",
-    "rank": 10
+    "lane": "later",
+    "rank": 900
   },
   "execution": {
     "mode": "interactive-agent",
@@ -16,7 +16,7 @@
     "approval": {
       "action_class": "repository_mutation",
       "required_level": "operator",
-      "note": "Durch die direkte Nutzeranweisung autorisiert. T004 bleibt auf internen Kern, synthetische Belege und lokale kostenfreie Modelle begrenzt."
+      "note": "Durch die direkte Nutzeranweisung autorisiert. T004 blieb auf einen internen, synthetisch belegten Referenzkern und lokale kostenfreie Modelle begrenzt."
     }
   },
   "claims": [
@@ -58,15 +58,15 @@
     },
     {
       "id": "hybrid-ranking-precedence",
-      "assertion": "Exakter Titel, exaktes Tag und Titelpräfix behalten Vorrang; Trigramm, Volltext und semantische Ähnlichkeit ergänzen ohne Beziehungen zu fingieren."
+      "assertion": "Die autoritative, bereits sichtbarkeitsgefilterte T003-PostgreSQL-Reihenfolge bleibt unverändert maßgeblich; T004 darf höchstens einen sicheren semantischen Zusatzkandidaten anhängen und keine zweite lexikalische Wahrheit berechnen."
     },
     {
       "id": "deterministic-ties",
-      "assertion": "Teilrankings und Fusion besitzen stabile Tie-Breaks und reproduzieren bei identischem Input dieselbe vollständige Rangfolge."
+      "assertion": "Semantische Gleichstände werden nach aufsteigender Knoten-ID entschieden; identischer Input reproduziert dieselbe vollständige Rangfolge."
     },
     {
       "id": "lexical-fallback",
-      "assertion": "Fehlender oder fehlerhafter Embedding-Pfad fällt auf den lexikalischen Kern zurück und blockiert keine fachliche Knotenänderung."
+      "assertion": "Nur nachgewiesene Provider-Nichtverfügbarkeit aktiviert den lexikalischen Fallback. Identitäts-, Datenschutz-, Dimensions-, Generations- und sonstige Fehler bleiben fail-closed."
     },
     {
       "id": "quality-gates",
@@ -74,7 +74,7 @@
     },
     {
       "id": "model-decision",
-      "assertion": "qwen3-embedding:8b bleibt Referenzkandidat. T004 bindet Qualität, Latenz und Ressourcen und wählt das kleinste kostenfreie lokale Modell, das alle Gates erfüllt, oder stoppt."
+      "assertion": "qwen3-embedding:4b ist der kleinste getestete lokale Kandidat, der alle T004-Gates erfüllt. qwen3-embedding:8b bleibt der stärkere Vergleichskandidat; beide Aussagen sind keine Produktionsfreigabe."
     },
     {
       "id": "privacy-boundary",
@@ -82,28 +82,111 @@
     },
     {
       "id": "repository-gates",
-      "assertion": "Vor Merge liegen vollständiges Diff-Artefakt, exakte Head- und Diffbindung, zweiachsige Reviewevidenz, grüne erforderliche CI und Main-Readback vor."
+      "assertion": "Vollständige Binärdiffs, exakte Head-, Base- und Mergebindungen, zweiachsige Reviewevidenz, grüne erforderliche CI und ein byteweiser Main-Readback liegen vor."
     },
     {
       "id": "no-runtime-effect",
-      "assertion": "T004 implementiert keine persistente Projektion, pgvector-Migration, Worker-, Backfill-, Search-API-, Web-, Deployment- oder SemantAH-Funktion."
+      "assertion": "T004 implementiert keine persistente Projektion, pgvector-Migration, Worker-, Backfill-, Search-API-, Web-, Deployment-, Produktionsranking- oder SemantAH-Funktion."
     }
   ],
   "rlens_policy": {
     "mode": "live-first",
     "task_profile": "repo_change",
     "skip_reason": "live_first_primary",
-    "note": "Modelllaufzeit, Git, Tests, PR und CI müssen live und commitgebunden gemessen werden; RepoGround ergänzt nur Repository-Kontext."
+    "note": "Modelllaufzeit, Git, Tests, PR und CI wurden live und commitgebunden gemessen; RepoGround ergänzt nur Repository-Kontext."
   },
   "metadata": {
     "source": "direct_operator_instruction",
     "registered_at": "2026-07-19",
+    "verified_at": "2026-07-20",
     "predecessor": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T003",
-    "reference_model_candidate": "qwen3-embedding:8b",
-    "reference_model_scope": "local synthetic candidate only; not production approved",
-    "cost_policy": "zero external spend",
-    "postgresql_basis": "T003 verified PostgreSQL 16.14 and pg_trgm 1.6; pgvector unavailable in pinned image",
-    "pgvector_decision": "No vector persistence or ANN in T004; any later storage path requires separate packaging and operations proof.",
+    "outcome": "Weltgewebe-PR #1502 implementierte den internen Hybrid-Ranking-Beweiskern. PR #1506 härtete Rankinggrenzen, Receipt-Aggregate und Beweisführung. qwen3-embedding:4b ist der kleinste lokale T004-Kandidat, der alle Qualitätsgates erfüllt; qwen3-embedding:8b bleibt der stärkere Vergleichskandidat. T004 erzeugt weiterhin keinen Produktionseffekt.",
+    "implementation": {
+      "repository": "heimgewebe/weltgewebe",
+      "primary": {
+        "pull_request": 1502,
+        "base_sha": "76c26e9b670a0b5b9b663cd91556ab7851fd42e2",
+        "head_sha": "9fbc592d3301d3c156a931ed18112a76ff55e1da",
+        "merge_commit": "9f44895337b2ecf97f83a125ca30f1247d98745f",
+        "merged_at": "2026-07-20T02:13:38Z",
+        "local_binary_diff_sha256": "b4fb532d9a10f84ea41c4d0603accbb3a3bd471a673f3859913f76aa141a2c4c",
+        "local_binary_diff_bytes": 160704
+      },
+      "hardening": {
+        "pull_request": 1506,
+        "base_sha": "9f44895337b2ecf97f83a125ca30f1247d98745f",
+        "head_sha": "fc710aa4c0d0819d4acaef5b0034f8d88a9eb6b2",
+        "merge_commit": "4c6ef9e8fec0a2b17cc5babb5b0e02798002b89b",
+        "merged_at": "2026-07-20T05:50:11Z",
+        "local_binary_diff_sha256": "ef9d37a139cbfbce837e4904a2c11f1ad05a37d519ed7027f9a760d9181af655",
+        "local_binary_diff_bytes": 59959
+      }
+    },
+    "ranking_evidence": {
+      "receipt_schema_version": 2,
+      "ranking_revision": "weltgewebe-hybrid-ranking-v2",
+      "case_count": 24,
+      "natural_case_count": 19,
+      "t003_postgresql_natural_top3": "14/19",
+      "qwen3_embedding_0_6b_natural_top3": "14/19",
+      "qwen3_embedding_4b_natural_top3": "18/19",
+      "qwen3_embedding_8b_natural_top3": "19/19",
+      "false_top1": 0,
+      "visibility_leaks": 0,
+      "smallest_qualified_local_model": "qwen3-embedding:4b",
+      "comparison_model": "qwen3-embedding:8b",
+      "semantic_append_limit": 1,
+      "semantic_tie_breaker": "node_id_ascending",
+      "fallback_condition": "ProviderUnavailableError only",
+      "raw_vectors_persisted": false,
+      "production_approved": false
+    },
+    "main_readback": {
+      "repository_main_sha": "de8ec3da449d8fff2f0495e9c685eebb3c0dc061",
+      "verified_at": "2026-07-20",
+      "method": "GitHub tree blob comparison against PR #1506 head",
+      "all_t004_hardening_files_identical": true,
+      "file_blobs": {
+        "architecture/semantic-search.md": "c0503c1042ae260f3667b502a17f42d08352fdb3",
+        "contracts/search/examples/hybrid-ranking-core.heim-pc.json": "db01746568e74cf13aeef8769d5913c40d4f439a",
+        "contracts/search/hybrid-ranking-core-receipt.schema.json": "522b21fede6af844a178a804eb6adebab406660d",
+        "scripts/ci/tests/test_semantic_search_ranking_core.py": "3f9875b01c35a550f5c1d23af333bf91ccff3efa",
+        "scripts/search/hybrid_ranking_core.py": "d8ddfac8de195763cf2cd820be87f3c6d7941f72",
+        "scripts/search/probe_hybrid_ranking_core.py": "c0e0da0047936e6aef0cc18395dad7338d056e11"
+      }
+    },
+    "validation": {
+      "receipt_checker": "pass",
+      "review_axes": [
+        "correctness",
+        "data-integrity"
+      ],
+      "required_checks": [
+        "Required merge gate",
+        "Review evidence gate",
+        "PostgreSQL integration proofs",
+        "Web E2E",
+        "CodeQL",
+        "Blocking doc validations",
+        "Cloudflare Pages",
+        "Vercel"
+      ],
+      "review_evidence_note": "PR #1506 besaß frühere fehlgeschlagene oder abgebrochene Review-Evidence-Läufe; der finale headgebundene Lauf vor Merge war erfolgreich."
+    },
+    "verified_acceptance": {
+      "provider-boundary": "Nur lokale Provideridentitäten sind zulässig; Modell- und Laufzeitidentität werden vor und nach getrennten Dokument- und Anfrageaufrufen geprüft.",
+      "normalization-contract": "Dokumente und Anfragen sind an weltgewebe-search-normalization-v1 gebunden.",
+      "dimension-finiteness": "Dimension, Endlichkeit, Nullvektoren, Bool-Werte und Text-/Kandidatengrenzen besitzen Negativtests.",
+      "generation-identity": "Provider, Modell, Revision, Laufzeit, Dimension, Dokument-, Normalisierungs- und Rankingrevision bilden eine vollständige Generationsidentität.",
+      "hybrid-ranking-precedence": "Die T003-PostgreSQL-Reihenfolge bleibt autoritativ; höchstens ein ausreichend klarer semantischer Zusatzkandidat wird angehängt.",
+      "deterministic-ties": "Semantische Gleichstände werden explizit nach aufsteigender Knoten-ID entschieden.",
+      "lexical-fallback": "Nur ProviderUnavailableError fällt lexikalisch zurück; alle anderen Grenzfehler bleiben fail-closed.",
+      "quality-gates": "4B erreicht 18/19, 8B 19/19 natürliche Top-3; beide mit 0 falschen Top-1 und 0 Lecks.",
+      "model-decision": "4B ist der kleinste qualifizierte lokale T004-Kandidat; 8B bleibt Vergleichsobergrenze. Keine Produktionsfreigabe.",
+      "privacy-boundary": "Receipt und Tests enthalten keine Rohvektoren oder Providerrohdaten und verweigern nichtsynthetische oder PII-haltige Fixtures.",
+      "repository-gates": "PR #1502 und #1506 wurden mit grünen finalen Gates gemergt; die sechs Hardening-Dateien sind auf aktuellem Main blobidentisch zum geprüften Head.",
+      "no-runtime-effect": "Keine Projektion, Migration, Worker-, Backfill-, API-, Web-, Deployment-, Produktionsranking- oder SemantAH-Wirkung wurde eingeführt."
+    },
     "does_not_establish": [
       "production embedding model",
       "pgvector availability",
@@ -112,9 +195,24 @@
       "backfill",
       "search API",
       "web UI",
+      "hybrid ranking in production",
       "production rollout",
       "public live proof",
       "SemantAH archive authority"
-    ]
+    ],
+    "verification": {
+      "source": "GitHub pull requests, exact Git objects, final check rollups, receipt checker and current-main blob readback",
+      "source_refs": [
+        "heimgewebe/weltgewebe#1502",
+        "heimgewebe/weltgewebe#1506"
+      ],
+      "verified_at": "2026-07-20",
+      "final_head_sha": "fc710aa4c0d0819d4acaef5b0034f8d88a9eb6b2",
+      "final_merge_commit": "4c6ef9e8fec0a2b17cc5babb5b0e02798002b89b",
+      "final_diff_sha256": "ef9d37a139cbfbce837e4904a2c11f1ad05a37d519ed7027f9a760d9181af655",
+      "main_readback_sha": "de8ec3da449d8fff2f0495e9c685eebb3c0dc061",
+      "task_sha256": "917e6a932e05ca34aa784deaa42ecd136c332b7fb65cc0469f2f2f9533be7aea",
+      "plan_sha256": "18002b2b2def870ec6e5dd91cd15d19aaade6f053cac144ca85e2862234a709e"
+    }
   }
 }

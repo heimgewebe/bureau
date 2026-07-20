@@ -1,0 +1,94 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A typed rebind or refresh operation requires the expected current connector snapshot identity and the exact target runtime, tool-catalog and instruction-contract identities; any mismatch or unobservable identity fails before effect.",
+      "id": "exact-rebind-contract"
+    },
+    {
+      "assertion": "The operation changes only the connector snapshot binding or refresh state required for the exact target identity and does not mutate repositories, Bureau Registry or Queue state, dispatch work, bypass gates or claim client comprehension.",
+      "id": "bounded-effect"
+    },
+    {
+      "assertion": "An already-current compatible snapshot is handled idempotently, while any ambiguous transport or partial effect produces an explicit required readback and is never retried unchanged.",
+      "id": "idempotency-and-ambiguity"
+    },
+    {
+      "assertion": "After a clear effect, the runtime re-reads connector snapshot identity and structural compatibility; operator_ready may become true only when no independent readiness blocker remains.",
+      "id": "post-state-readback"
+    },
+    {
+      "assertion": "Tests cover stale-to-current rebind, already-current replay, incompatible target identity, unobservable snapshot identity, runtime drift between preflight and effect, and ambiguous effect outcome.",
+      "id": "regression-tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T002"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Add one narrow fail-closed operator effect that can rebind or refresh the connector snapshot to an explicitly expected current runtime and tool-contract identity, while keeping snapshot observability, compatibility classification and client behavior as separate authorities.",
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T023",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "client instruction comprehension",
+      "future client behavior",
+      "transport root cause",
+      "permission to bypass snapshot compatibility gates",
+      "automatic task readiness",
+      "merge or deployment authority"
+    ],
+    "observed_at": "2026-07-20",
+    "relationship_to_t002": "T002 owns read-only snapshot identity and compatibility observability. T023 owns only the bounded repair effect after that identity is observable.",
+    "source": "bureau_operator_intake",
+    "source_candidate_id": "candidate-578cc8cdf31c7940b5dbfa5b",
+    "source_event_id": 857,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-578cc8cdf31c7940b5dbfa5b",
+      "event_id": 857,
+      "event_created_at": "2026-07-20T21:44:36.419799Z",
+      "request_sha256": "69247cfa0a2e303c262286b6de0b6efbafa8c3ce0a25f7c8bdf6c2a86897ec13",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "live_runtime_audit",
+        "locator": "grabowski_status:client_snapshot_stale+friction:2f87af7ef5a147dda522557f848ae388@2026-07-20",
+        "observed_at": "2026-07-20T21:44:36.413066Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 923
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Expose a bounded connector snapshot rebind operation"
+}

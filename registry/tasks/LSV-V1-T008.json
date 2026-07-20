@@ -1,0 +1,113 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Eine gemeinsame, versionierte UI-Schicht besitzt die wiederkehrenden Verträge für Seitenrahmen, Panels, Statuszustände, Aktionen, Fokusdarstellung, Abstände und responsive Raster; ansichtsspezifische CSS-Ausnahmen bleiben begründet und eng begrenzt.",
+      "evidence_type": "object",
+      "id": "shared-ui-contract",
+      "verifier": "architecture review and shared stylesheet tests"
+    },
+    {
+      "assertion": "Mindestens die Ökosystemkarte sowie die priorisierten Status-, Aufgaben- und Repository-Ansichten verwenden die gemeinsame Schicht, ohne ihre quellgebundene Semantik oder degradierte Zustände zu verlieren.",
+      "evidence_type": "object",
+      "id": "priority-view-migration",
+      "verifier": "view diff and rendered browser matrix"
+    },
+    {
+      "assertion": "Primäre Inhalte und Handlungen erscheinen vor technischen Provenienzdetails; Quellen-, Prüf- und Nichtbehauptungsinformationen bleiben vollständig erreichbar und barrierefrei ausgezeichnet.",
+      "evidence_type": "boolean",
+      "id": "information-hierarchy",
+      "verifier": "DOM order and accessibility review"
+    },
+    {
+      "assertion": "Die migrierten Ansichten besitzen keine horizontalen Dokumentüberläufe in den vereinbarten Desktop- und Mobilviewports und verwenden konsistente sichtbare Fokus-, Tastatur- und Zielgrößenverträge.",
+      "evidence_type": "object",
+      "id": "responsive-and-focus",
+      "verifier": "build-bound browser regression suite"
+    },
+    {
+      "assertion": "Ein Vorher-Nachher-Beleg quantifiziert entfernte oder zentralisierte Style-Duplikate, verbleibende Ausnahmen und die Auswirkungen auf Bundle-, Wartungs- und Testoberfläche.",
+      "evidence_type": "object",
+      "id": "measurable-consolidation",
+      "verifier": "duplication and bundle report"
+    },
+    {
+      "assertion": "Die gemeinsame UI-Schicht besitzt keine eigene Projekt-, Task-, Health- oder Quellenwahrheit und führt keine Mutation, Reparatur oder Dispatch-Autorität ein.",
+      "evidence_type": "boolean",
+      "id": "truth-and-write-boundary",
+      "verifier": "data-flow and network boundary review"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.leitstand"
+    }
+  ],
+  "depends_on": [
+    "LSV-V1-T007"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Umsetzung verändert ausschließlich Leitstands Darstellungs- und Testcode in einem isolierten Worktree; Quellsysteme, Aufgaben und Laufzeitwahrheit bleiben unverändert.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand"
+  },
+  "goal": "Wiederholte Inline-Stile und abweichende UI-Muster der wichtigsten Leitstand-Ansichten schrittweise in eine gemeinsame, read-only Design- und Komponentenebene überführen und dabei Informationshierarchie, Abstände, Panels, Statusdarstellung, Aktionen, Fokuszustände und responsive Layouts vereinheitlichen, ohne eine zweite Zustandswahrheit oder neue Schreibautorität zu schaffen.",
+  "id": "LSV-V1-T008",
+  "initiative": "LEITSTAND-VISUAL-LAYER-V1",
+  "metadata": {
+    "alternative_axis": "Ansichtsübergreifende Wartbarkeit statt weiterer isolierter kosmetischer Korrekturen.",
+    "does_not_establish": [
+      "complete_design_system",
+      "visual_perfection",
+      "all_views_migrated",
+      "runtime_source_correctness",
+      "write_authority"
+    ],
+    "source_observation": "Die Vollbild-Systemkartenarbeit zeigte mehrfach definierte Layout-, Fokus-, Karten- und Statusmuster zwischen Shell-CSS, Inline-Styles und dynamisch injiziertem CSS.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-1090c36b83689b4f3c4a4d94",
+      "event_id": 820,
+      "event_created_at": "2026-07-20T05:18:15.746808Z",
+      "request_sha256": "860e74493920092bfa8c8b8f8d5da2c44872cda07ebdce63e7f45759d48872d8",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator_observation",
+        "locator": "operator-observation:leitstand-system-map-fullscreen-ux-v1:shared-ui-drift",
+        "observed_at": "2026-07-20T07:15:00+02:00",
+        "sha256": "36a5cc36ec54d5ffcef467a4edb77ae90364d52e8db2a22fc3fa2dd6d5a3062c"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 81
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "rollback": {
+    "strategy": "Die migrierten Ansichten einzeln auf ihre vorherigen lokalen Styles zurückführen; gemeinsame Tokens und Komponenten erst entfernen, wenn keine Ansicht sie mehr konsumiert. Daten- und Zustandsmodelle bleiben unberührt."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Leitstand-Ansichten auf ein gemeinsames UI-System konsolidieren"
+}

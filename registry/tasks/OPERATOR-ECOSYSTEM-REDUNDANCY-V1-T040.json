@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T040",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Aktuelle HausKI-Abhängigkeitsbefunde einzeln prüfen",
+  "state": "planned",
+  "goal": "Die nach Abschluss der historischen T038-Queue noch live gemeldeten Abhängigkeitsbefunde in HausKI werden einzeln inventarisiert, gegen den aktuellen Hauptzweig dedupliziert und evidenzgebunden behoben oder terminal eingeordnet.",
+  "priority": {
+    "lane": "later",
+    "rank": 204
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/hausKI",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/hausKI"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Der Nutzer hat die kostenfreie Umsetzung der Folgeaufgaben autorisiert. Jede Änderung bleibt repository-spezifisch, isoliert, diff-geprüft, testgebunden und ohne pauschale Unterdrückung von Befunden."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.hauski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "github",
+    "grabowski"
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T038"
+  ],
+  "acceptance": [
+    {
+      "id": "live-inventory",
+      "assertion": "Die Livequelle ist vollständig mit stabiler Befund-ID, Manifest, Paket, Advisory, Schweregrad und aktuellem Zustand inventarisiert; aggregierte Push-Zahlen gelten nicht als Einzelbefund."
+    },
+    {
+      "id": "dedupe-after-t038",
+      "assertion": "Jeder Befund wird gegen den T038-Mergecommit und den aktuellen Hauptzweig geprüft; bereits behobene oder veraltete Meldungen werden als solche belegt statt erneut bearbeitet."
+    },
+    {
+      "id": "evidence-per-finding",
+      "assertion": "Fixverfügbarkeit, direkte oder transitive Herkunft und Laufzeitreichweite werden nur behauptet, wenn die jeweilige Quelle dies trägt."
+    },
+    {
+      "id": "reviewed-repository-effect",
+      "assertion": "Eine Behebung erfolgt nur in einem repository-spezifischen isolierten Worktree über einen diff- und headgebundenen Pull Request mit grünen relevanten Tests und Pflichtchecks."
+    },
+    {
+      "id": "terminal-readback",
+      "assertion": "Jeder bearbeitete Befund besitzt einen abschließenden Live-Readback; Alter, Anzahl oder transitive Herkunft allein rechtfertigen weder Unterdrückung noch Schließung."
+    }
+  ],
+  "metadata": {
+    "source": "operator_intake",
+    "operator_intake_candidate_id": "candidate-operator-ecosystem-t040-hauski-v2",
+    "operator_intake_event_id": 826,
+    "reported_aggregate_counts": {
+      "total": 40,
+      "high": 16,
+      "moderate": 14,
+      "low": 10
+    },
+    "does_not_establish": [
+      "individual_finding_truth",
+      "runtime_reachability",
+      "fix_availability",
+      "blanket_suppression_authority",
+      "completion_of_remediation"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-operator-ecosystem-t040-hauski-v2",
+      "event_id": 826,
+      "request_sha256": "70f6914e81ceefb1d3c1c01791c33af8535677fbd544809c1a748a5c87586e5f",
+      "source": {
+        "kind": "repository_maintenance_observation",
+        "locator": "bureau-intake:t040-hauski-current-dependency-audit.json",
+        "observed_at": "2026-07-20T07:39:09+02:00",
+        "sha256": "68f3aefe9fa5f850e8c2dad9158b45f6d7ce0df5699430ee4d992bf0e2be7a7c",
+        "freshness": "digest-bound",
+        "does_not_establish": []
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  }
+}

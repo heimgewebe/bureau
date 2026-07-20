@@ -93,7 +93,8 @@
       "CCM-V1-T002",
       "CCM-V1-T003",
       "CCM-V1-T004",
-      "WELTGEWEBE-SEMANTIC-SEARCH-V1-T005"
+      "WELTGEWEBE-SEMANTIC-SEARCH-V1-T005",
+      "REPOGROUND-AGENT-UTILITY-V1-T002"
     ]
   },
   "queue_policy": "skip-blocked",

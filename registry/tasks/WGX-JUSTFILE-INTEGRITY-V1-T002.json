@@ -3,7 +3,7 @@
   "id": "WGX-JUSTFILE-INTEGRITY-V1-T002",
   "initiative": "WGX-JUSTFILE-INTEGRITY-V1",
   "title": "Reconcile repository-wide Justfile lint formatter baseline",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 92
@@ -52,6 +52,73 @@
     "does_not_establish": [
       "permission to mass-format unrelated files in WGX PR #644",
       "failure of the Justfile parser gate"
-    ]
+    ],
+    "verified_at": "2026-07-21T21:06:24Z",
+    "outcome": "WGX PR #645 vereinheitlicht den lokalen Justfile-shfmt-Vertrag mit den bestehenden GitHub-CI-Pfaden auf `shfmt -d`, ergänzt eine Regression gegen erneuten Flag-Drift und wurde als Mergecommit 40d2c3ddc1bced1dd37ff4c3c2a7dd9940d72646 veröffentlicht. Ein frischer Checkout dieses main-Stands besteht `just lint` und `tests/shell_ci.bats`; die relevanten Push-Workflows auf demselben Commit sind erfolgreich.",
+    "validated_acceptance": {
+      "baseline": "PASS: Frischer Checkout von main@40d2c3ddc1bced1dd37ff4c3c2a7dd9940d72646 besteht `just lint` ohne repositoryweite shfmt-Differenzen.",
+      "consistency": "PASS: Justfile verwendet `shfmt -d`; `.github/workflows/ci.yml` und `.github/workflows/shell-docs.yml` verwenden denselben Formatter-Vertrag. `tests/shell_ci.bats` bindet beide CI-Pfade und den Justfile-Aufruf regressionsfest.",
+      "scope": "PASS: Der reviewte und gemergte Diff ändert nur `Justfile` und `tests/shell_ci.bats`; es wurde keine Shell-Quelldatei massenformatiert."
+    },
+    "verification": {
+      "source": "github_pr_ci_and_postmerge_local_readback",
+      "source_ref": "github-pr:heimgewebe/wgx#645",
+      "repository": "heimgewebe/wgx",
+      "pull_request": 645,
+      "base_commit": "ce503d6e72dc7609d559bde2a5f6970cb543e5d6",
+      "reviewed_head": "b59648bf86a9ec42f91815ab366841287a345461",
+      "merge_commit": "40d2c3ddc1bced1dd37ff4c3c2a7dd9940d72646",
+      "final_diff_sha256": "387653081a16656d299ad55cc66ae07c842cd92b72e58f02424634d6759958a8",
+      "pre_closeout_task_sha256": "6b579bc93f6bc18cd44d71d400afef3722cc816b19c182ba6cd4878a7cd02561",
+      "initiative_sha256": "efe9db3174763c06488568b7a88b7d20072a36cc790b63ce8d1c7acf42c11335",
+      "local_validation": {
+        "commit_sha": "40d2c3ddc1bced1dd37ff4c3c2a7dd9940d72646",
+        "just lint": "pass",
+        "bats tests/shell_ci.bats": "3/3 pass"
+      },
+      "main_push_workflows": {
+        "ai-context guard": 29868115471,
+        "wgx-guard": 29868116666,
+        "Justfile integrity": 29868115994,
+        "security": 29868115941,
+        "shell-docs": 29868115649,
+        "CodeQL": 29868114179
+      },
+      "task_sha256": "3f559f58ba76bf3b015760ae0fc2b7d1e00326728ad3ccfbc55aab958ebfc85f",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "WGX-JUSTFILE-INTEGRITY-V1-T002",
+          "source_ref": "heimgewebe/wgx#645",
+          "number": 645,
+          "head_sha": "b59648bf86a9ec42f91815ab366841287a345461",
+          "merge_commit_sha": "40d2c3ddc1bced1dd37ff4c3c2a7dd9940d72646",
+          "diff_sha256": "387653081a16656d299ad55cc66ae07c842cd92b72e58f02424634d6759958a8"
+        },
+        {
+          "kind": "test_run",
+          "authority": "github-actions",
+          "task_id": "WGX-JUSTFILE-INTEGRITY-V1-T002",
+          "source_ref": "heimgewebe/wgx/actions/runs/29868115649",
+          "workflow_run_id": 29868115649,
+          "commit_sha": "40d2c3ddc1bced1dd37ff4c3c2a7dd9940d72646",
+          "conclusion": "success"
+        },
+        {
+          "kind": "test_run",
+          "authority": "heim-pc",
+          "task_id": "WGX-JUSTFILE-INTEGRITY-V1-T002",
+          "source_ref": "local:wgx-justfile-integrity-t002-postmerge",
+          "commit_sha": "40d2c3ddc1bced1dd37ff4c3c2a7dd9940d72646",
+          "result": "just-lint-pass-and-shell-ci-3-of-3"
+        }
+      ]
+    }
   }
 }

@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "WGX-JUSTFILE-INTEGRITY-V1-T004",
+  "initiative": "WGX-JUSTFILE-INTEGRITY-V1",
+  "title": "Isolate local WGX Bats fixtures from ambient Git hooks and repository identity",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 94
+  },
+  "goal": "Die lokale vollständige Bats-Suite so isolieren, dass temporäre Git-Repositories und Ownership-Guards nicht von benutzerweiten Pre-Push-Hooks oder geerbter Repository-Identität beeinflusst werden, ohne produktive Schutzmechanismen abzuschwächen.",
+  "depends_on": [
+    "WGX-JUSTFILE-INTEGRITY-V1-T002"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/wgx",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Getrennter lokaler Testisolationsbefund aus T002; GitHub `bats -r tests` ist grün. Produktions-Hooks und Ownership-Regeln dürfen nicht abgeschwächt werden."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.wgx",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "local-suite",
+      "assertion": "`bats -r tests` läuft auf einem sauberen aktuellen main im üblichen heim-pc-Entwicklungsumfeld erfolgreich."
+    },
+    {
+      "id": "identity-isolation",
+      "assertion": "Contracts-Ownership-Fixtures kontrollieren oder bereinigen geerbte Repository-Identitätsvariablen explizit und behalten ihre positiven und negativen Semantikerwartungen."
+    },
+    {
+      "id": "hook-isolation",
+      "assertion": "Reload-/Routine-Testfixtures neutralisieren benutzerweite oder repositoryweite Push-Hooks ausschließlich in ihren temporären Test-Repositories; produktive Main-Push-Schutzregeln bleiben unverändert."
+    },
+    {
+      "id": "ci-parity",
+      "assertion": "GitHub `bats -r tests` bleibt grün und lokale sowie CI-Testsemantik unterscheiden sich nicht aufgrund ambienter Git-Konfiguration."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-21T21:06:24Z",
+    "source_task": "WGX-JUSTFILE-INTEGRITY-V1-T002",
+    "source_repository": "heimgewebe/wgx",
+    "source_finding": "Auf sauberem main@ce503d6e72dc7609d559bde2a5f6970cb543e5d6 reproduzierten lokale Teil-Suites 13 Fehler: Contracts-Ownership-Tests wurden durch ambiente Repository-Identität beeinflusst; Reload-/Routine-Fixtures scheiterten, weil ein ambienter Pre-Push-Hook temporäre Pushes auf main blockierte. GitHub Actions `bats -r tests` auf PR #645 war dagegen erfolgreich, was auf eine lokale Testisolationslücke statt eine T002-Produktregression weist.",
+    "does_not_establish": [
+      "Fehler des in T002 reparierten shfmt-Vertrags",
+      "Berechtigung, produktive Pre-Push- oder Ownership-Schutzregeln abzuschwächen",
+      "CI-Regression auf PR #645"
+    ]
+  }
+}

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1",
   "title": "RepoGround Altlasten-Reconciliation",
-  "state": "candidate",
+  "state": "waiting",
   "commitment": "next",
   "goal": "RepoGround auf einen klaren, wartbaren und belegbar genutzten Produktkern reduzieren, ohne laufende Verbraucher, persistierte Verträge oder den kontrollierten Runtime-Cutover zu brechen.",
   "completion": [

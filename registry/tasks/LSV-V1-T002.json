@@ -3,7 +3,7 @@
   "id": "LSV-V1-T002",
   "initiative": "LEITSTAND-VISUAL-LAYER-V1",
   "title": "Leitstand map loader",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 20
@@ -58,6 +58,29 @@
       "rendered_view_ready",
       "cabinet_manifest_correctness",
       "runtime_correctness"
-    ]
+    ],
+    "verified_at": "2026-07-21T09:46:47Z",
+    "current_leitstand_head": "550ee75ff365cdc0b82e82a10557817fb9d12130",
+    "outcome": "Historically implemented together with T003 through Leitstand PR #145. The original Cabinet loader satisfied the file-only, no-Git/no-fetch contract at merge; later merged hardening migrated source ownership to Systemkatalog and added bounded local read-only Git integrity checks without introducing remote fetch or mutation authority.",
+    "implementation_pr": "heimgewebe/leitstand#145",
+    "implementation_head": "a2d19414ca6ccccfa91eaa633a68e0c59aa5029e",
+    "implementation_merge_commit": "b5bcd659c79df7cb6a4225bcdb9cf7d5774697a5",
+    "implementation_diff_sha256": "4811fb383026c57019856709021d03a81fd5f30b2a44e79df0f5f3b97082ac3a",
+    "validation": {
+      "implementation_ci": "PR #145 passed CI build, security-hygiene, ai-context guards and Cloudflare Pages before merge.",
+      "implementation_patch_sha256": "4811fb383026c57019856709021d03a81fd5f30b2a44e79df0f5f3b97082ac3a",
+      "implementation_patch_bytes": 21559,
+      "current_live": "Current Leitstand main 550ee75ff365cdc0b82e82a10557817fb9d12130 is deployed; /ecosystem-map returns HTTP 200 and the dashboard links to it.",
+      "contract_evolution": "The exact PR #145 implementation used local readFile/path access only. Subsequent commits #162/#163/#165 added Systemkatalog source migration and bounded local Git integrity verification; this is later hardening, not evidence that the original file-only deliverable was absent."
+    },
+    "verified_acceptance": {
+      "read-only-loader": "At PR #145 head a2d19414ca6ccccfa91eaa633a68e0c59aa5029e, src/controllers/ecosystemMap.ts read only the configured local manifest and artifacts via node:fs/promises and path helpers; the PR boundary explicitly recorded no Git/fetch, no Cabinet editing and no task dispatch. Later local Git integrity checks remain read-only but are outside the original acceptance snapshot.",
+      "state-model": "The PR #145 loader typed source_kind as artifact/missing/corrupt and freshness_state as fresh/stale/unknown, with tests for valid, missing and stale states; current main additionally contains an explicit corrupt-manifest regression test.",
+      "public-boundary": "PR #145 view data carried source repository, source commit and does_not_establish non-claims. Current main retains and strengthens this boundary with commit/hash binding and explicit runtime-correctness non-claims."
+    },
+    "verification": {
+      "task_sha256": "643673cc3cb0a98fd0f0b26f8e2e95bbbac5abe32626f61f575eb3e696520c47",
+      "plan_sha256": "217a91b5a66a143e0440d2a7d656a5d0fada62b52778cf3285349e7667bd8621"
+    }
   }
 }

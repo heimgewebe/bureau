@@ -1,0 +1,76 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Eine vollständige gültige requested_scope-Anfrage liefert deterministisch entweder einen hashgebundenen Nichtkonflikt-Nachweis oder eine strukturierte begründete Ablehnung; interne KeyError- oder Adapterausnahmen sind kein zulässiges Ergebnis.",
+      "id": "deterministic-scope-result"
+    },
+    {
+      "assertion": "Fehlende, unvollständige oder widersprüchliche Scope-Evidenz führt weiterhin fail-closed zur Ablehnung und erzeugt niemals einen Nichtkonflikt-Nachweis.",
+      "id": "fail-closed-on-insufficient-evidence"
+    },
+    {
+      "assertion": "Ein erfolgreicher Nachweis ist an anfragenden Owner, blockierte Ressource, angefragte Ressourcen, vollständigen Scope und begrenzte Gültigkeitsdauer gebunden und kann nicht auf einen anderen Scope wiederverwendet werden.",
+      "id": "proof-binding"
+    },
+    {
+      "assertion": "Regressionstests decken den beobachteten internen proof-Fehler, gültige Symbolscope-Anfragen, unvollständige Scopes, echte Überschneidung und erfolgreiche disjunkte Bewertung ab.",
+      "id": "regression-coverage"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/.local/state/grabowski/resources.sqlite3"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Sicherstellen, dass grabowski_resource_nonconflict_assess vollständige Scope-Anfragen deterministisch mit einem gebundenen Nichtkonflikt-Nachweis oder einer begründeten fail-closed Ablehnung beantwortet, statt bei gültigen Anfragen intern abzubrechen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T080",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "priority": {
+    "lane": "later",
+    "rank": 217
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "resource-leases"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Nichtkonflikt-Bewertung gegen interne Scope-Fehler härten",
+  "metadata": {
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-a820132539f568d0bbf7d66b",
+      "event_id": 869,
+      "event_created_at": "2026-07-21T06:35:09.875122Z",
+      "request_sha256": "f9d0a10ce44701f751deeaaad48b7830618f9281afc56d6e9a5b466b5e40cd95",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator_finding",
+        "locator": "grabowski:grabowski_resource_nonconflict_assess",
+        "observed_at": "2026-07-21T06:35:09.860144Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  }
+}

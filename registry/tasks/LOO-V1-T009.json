@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "id": "LOO-V1-T009",
+  "initiative": "LEITSTAND-OPERATOR-OBSERVABILITY-V1",
+  "title": "Canonical operator snapshot wrapper binding",
+  "state": "verified",
+  "depends_on": [
+    "LOO-V1-T007"
+  ],
+  "goal": "Version, release-bind, install and test the Leitstand operator snapshot launcher so Bureau task truth is consumed only from the canonical digest-validated runtime registry snapshot while the format bridge is loaded from the same immutable Leitstand release.",
+  "priority": {
+    "lane": "later",
+    "rank": 260
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "versioned-release-wrapper",
+      "assertion": "The operator snapshot launcher is versioned in Leitstand, sealed as a critical release artifact, and resolves the format bridge from the same immutable release rather than a mutable checkout.",
+      "verifier": "release manifest, diff and runtime review",
+      "evidence_type": "object"
+    },
+    {
+      "id": "canonical-bureau-snapshot-binding",
+      "assertion": "Bureau task truth is accepted only from the canonical runtime snapshot named by the Bureau deployment manifest and bound to source commit, inventory SHA-256 and complete registry-tree SHA-256.",
+      "verifier": "wrapper tests and live verify-only receipt",
+      "evidence_type": "object"
+    },
+    {
+      "id": "fail-closed-input-integrity",
+      "assertion": "Tampered files, undeclared task files, symlink path components and snapshot-root escapes fail closed before artifact generation.",
+      "verifier": "negative regression tests",
+      "evidence_type": "object"
+    },
+    {
+      "id": "exact-installed-release-bytes",
+      "assertion": "The host-local launcher is installed atomically from a successfully verified immutable release and its SHA-256 matches the release artifact exactly.",
+      "verifier": "artifact stat and installation receipt",
+      "evidence_type": "object"
+    },
+    {
+      "id": "live-producer-success",
+      "assertion": "The real Leitstand operator snapshot producer completes successfully with the installed wrapper and emits source-binding evidence for its Leitstand release and canonical Bureau snapshot.",
+      "verifier": "systemd service status and journal readback",
+      "evidence_type": "object"
+    },
+    {
+      "id": "read-only-boundary",
+      "assertion": "The wrapper adds no Bureau or Grabowski mutation, task dispatch or source repair path and continues to write only Leitstand-local snapshot artifacts.",
+      "verifier": "diff, observer invariant and live route review",
+      "evidence_type": "boolean"
+    }
+  ],
+  "metadata": {
+    "created_from_plan": "docs/plans/leitstand-operator-observability-hardening-v1.md",
+    "recovered_followup_candidate": "candidate-33c740af1799cc00f6312a9c",
+    "candidate_reconciliation": "The referenced historical follow-up candidate is no longer present in the current typed Bureau intake, and LOO-V1-T009 was absent from fresh origin/main before registration. The task was reconstructed from prior evidence, implemented and verified before canonical closeout.",
+    "does_not_establish": [
+      "future_runtime_health",
+      "future_bureau_snapshot_freshness",
+      "bureau_write_authority",
+      "grabowski_write_authority"
+    ],
+    "implementation_pr": "heimgewebe/leitstand#182",
+    "implementation_head": "9acc4af51f3472914d39f1cb11d4f9d112d53529",
+    "implementation_base": "881969479fb7f969285d9315c042eea3bc94f223",
+    "implementation_merge_commit": "550ee75ff365cdc0b82e82a10557817fb9d12130",
+    "implementation_diff_sha256": "a91d17d49f758de254a82a016be22dad0196e96832b3ebf9eaa69ecaab339c5b",
+    "implementation_patch_bytes": 28339,
+    "validation": {
+      "self_review": "PASS; final review closed undeclared-task, symlink-component and TOCTOU reread gaps before merge.",
+      "github_checks": "All current PR #182 checks passed before merge: CI build, CodeQL, ai-context guards, security hygiene and Cloudflare Pages.",
+      "focused_wrapper_tests": "6/6 passed",
+      "release_runtime_tests": "32/32 passed",
+      "full_local_gate_task": "88dd050190c442bda35f133c",
+      "full_local_gate_lifecycle_receipt_sha256": "e1cc8955f3a1e8c10155dd8df6fb805038aea04aed14d576d11fcb9afed8a135",
+      "installed_verify_task": "ff83afa9f7a44f1a82412723",
+      "installed_verify_lifecycle_receipt_sha256": "df8e566762b703600f6343eace4d66882b5c58118e0ee11eeb4459f836471900",
+      "installed_verify_bureau_source_commit": "1a5f68e7de17651c54a34dd79f7f74a4d9ae19a4",
+      "installed_verify_bureau_tree_sha256": "04272aec0d66b17cb31e335e8ef4e886dc6e85abd82de09a595e80d2a0857081",
+      "installed_verify_bureau_inventory_sha256": "4b9c2183e7f99f720a3271f5e2816daf2ac6f2a7ed735716e6d2d61c2bf0968b"
+    },
+    "deployment": {
+      "required": true,
+      "source_commit": "550ee75ff365cdc0b82e82a10557817fb9d12130",
+      "release_path": "/home/alex/.local/lib/leitstand/releases/550ee75ff365cdc0b82e82a10557817fb9d12130-runtime-v1",
+      "release_tree_sha256": "7cd0b7382c8730b339a2e3c1357f852cad015d3c8bb756145d4623f5429371f5",
+      "deployment_receipt_sha256": "34e4c923bec3c9fff88bf5e5024460448842f33bc710064b7077223efd5a1a9f",
+      "deploy_switch_receipt_sha256": "6d30af59b1ffb50d1c690536d73eefe31f5df9019d202258fab33cc7d31804c5",
+      "deploy_task": "331b804dc88a46d9a474a186",
+      "deploy_task_lifecycle_receipt_sha256": "50cd0435d1dfeb4e0bc8b702f481ab892b6ba875f0561658e00c30efc2f3a0a4",
+      "independent_verify_task": "03bd1257acc849fd808027da",
+      "independent_verify_lifecycle_receipt_sha256": "c7f597c981d9a7db075304057159b42dc23087e2e12519a0ccdc1a1c110c43b9",
+      "local_health_status": "ok",
+      "canonical_health_status": "ok",
+      "web_service": "active/running, NRestarts=0",
+      "read_only_route_guard": "POST /events returned 404 after deployment"
+    },
+    "installation": {
+      "release_wrapper_path": "/home/alex/.local/lib/leitstand/releases/550ee75ff365cdc0b82e82a10557817fb9d12130-runtime-v1/scripts/leitstand-export-operator-snapshots",
+      "installed_wrapper_path": "/home/alex/.local/bin/leitstand-export-operator-snapshots",
+      "wrapper_sha256": "165afd91cf4609b800a26fa65e56edb5b4d3c811ef95cb3002cd44ceaadb94f0",
+      "installed_mode": "0700",
+      "atomic_install_task": "549a803d29a640678abf516d",
+      "atomic_install_lifecycle_receipt_sha256": "8f6d587fbc58952992dad057e3a0d1b37bf993cb74a661a9abdc9e41a319f6be"
+    },
+    "live_producer": {
+      "service": "leitstand-operator-snapshots.service",
+      "result": "success",
+      "exec_main_status": 0,
+      "observed_at": "2026-07-21T07:41:01+02:00",
+      "leitstand_release_commit": "550ee75ff365cdc0b82e82a10557817fb9d12130",
+      "bureau_source_commit": "1a5f68e7de17651c54a34dd79f7f74a4d9ae19a4",
+      "bureau_source_tree_sha256": "04272aec0d66b17cb31e335e8ef4e886dc6e85abd82de09a595e80d2a0857081",
+      "bureau_inventory_sha256": "4b9c2183e7f99f720a3271f5e2816daf2ac6f2a7ed735716e6d2d61c2bf0968b",
+      "bureau_raw_count": 604,
+      "checkout_raw_count": 176
+    },
+    "verified_acceptance": {
+      "versioned-release-wrapper": "Leitstand PR #182 versions scripts/leitstand-export-operator-snapshots, adds it to CRITICAL_ARTIFACTS, and resolves export-operator-snapshots.mjs from the same immutable release.",
+      "canonical-bureau-snapshot-binding": "The installed wrapper validated the Bureau deployment manifest, source commit 1a5f68e7..., inventory SHA-256 and full registry-tree SHA-256 before any producer write path.",
+      "fail-closed-input-integrity": "Six focused tests cover valid binding plus tampered tree, snapshot-root escape, undeclared task injection and symlink-component failures; queue and task JSON are consumed from the exact bytes used for the verified tree digest.",
+      "exact-installed-release-bytes": "The host wrapper was atomically replaced only after successful release deployment and independent verification; installed and release SHA-256 both equal 165afd91cf4609b800a26fa65e56edb5b4d3c811ef95cb3002cd44ceaadb94f0.",
+      "live-producer-success": "leitstand-operator-snapshots.service completed successfully with the installed wrapper and emitted structured source-binding evidence for Leitstand release 550ee75... and the canonical Bureau snapshot.",
+      "read-only-boundary": "Observer-Invariant-Guard passed; the wrapper reads Bureau and Grabowski state, performs no task dispatch or source repair, and only writes temporary raw inputs plus Leitstand-local output artifacts through the existing bridge."
+    },
+    "verification": {
+      "task_sha256": "729ffd3e1bde1d946924054997cac58d32ebab0f7a3bdd1accbb155455b7f51a",
+      "plan_sha256": "69e170cf832449b00f1257b359c99acc0b40bbae28278f779d4da0ce799fa053"
+    }
+  }
+}

@@ -3,7 +3,7 @@
   "id": "LSV-V1-T003",
   "initiative": "LEITSTAND-VISUAL-LAYER-V1",
   "title": "Ecosystem map source view",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 30
@@ -65,6 +65,30 @@
       "map_truth",
       "rendering_correctness",
       "runtime_correctness"
-    ]
+    ],
+    "verified_at": "2026-07-21T09:46:47Z",
+    "current_leitstand_head": "550ee75ff365cdc0b82e82a10557817fb9d12130",
+    "outcome": "Implemented together with T002 through Leitstand PR #145: /ecosystem-map, the dashboard entry, provenance/freshness presentation and visible view-only boundary shipped in one merge and remain present in the current production release with later rendering and source-alignment hardening.",
+    "implementation_pr": "heimgewebe/leitstand#145",
+    "implementation_head": "a2d19414ca6ccccfa91eaa633a68e0c59aa5029e",
+    "implementation_merge_commit": "b5bcd659c79df7cb6a4225bcdb9cf7d5774697a5",
+    "implementation_diff_sha256": "4811fb383026c57019856709021d03a81fd5f30b2a44e79df0f5f3b97082ac3a",
+    "validation": {
+      "implementation_ci": "PR #145 passed CI build, security-hygiene, ai-context guards and Cloudflare Pages before merge.",
+      "implementation_patch_sha256": "4811fb383026c57019856709021d03a81fd5f30b2a44e79df0f5f3b97082ac3a",
+      "implementation_patch_bytes": 21559,
+      "implementation_files": "PR #145 changed src/server.ts, src/views/ecosystem-map.ejs, src/views/index.ejs, src/controllers/ecosystemMap.ts and controller tests.",
+      "current_live": "Current Leitstand main 550ee75ff365cdc0b82e82a10557817fb9d12130 is deployed; / and /ecosystem-map return HTTP 200, the dashboard contains /ecosystem-map, and the map page visibly states Nur Ansicht and Systemkatalog ownership."
+    },
+    "verified_acceptance": {
+      "route-renders": "PR #145 added the /ecosystem-map server route and source view. Controller coverage included valid and missing sources; the current production route returns HTTP 200.",
+      "dashboard-card": "PR #145 modified src/views/index.ejs to expose the ecosystem map; the current live dashboard contains /ecosystem-map and source freshness/status text.",
+      "boundary-visible": "The shipped source view made the canonical source owner and non-claims visible. Current production strengthens this wording to Nur Ansicht and states that Systemkatalog owns systems, relationships and meanings.",
+      "no-action-buttons": "PR #145 introduced no dispatch, edit, merge, repair or external refresh mutation path. Current view remains read-only; its buttons are local fullscreen controls, not external-system actions."
+    },
+    "verification": {
+      "task_sha256": "6eb11507d758321fadcf1eeffade6aac433b6cd1e517f31c052e4c1a46ddd50f",
+      "plan_sha256": "217a91b5a66a143e0440d2a7d656a5d0fada62b52778cf3285349e7667bd8621"
+    }
   }
 }

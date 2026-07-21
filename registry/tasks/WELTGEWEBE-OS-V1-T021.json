@@ -1,0 +1,99 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Alle auf dem dann aktuellen main verwendeten JavaScript-GitHub-Actions, die Node-20-Deklarationen oder entsprechende Runner-Warnungen erzeugen, werden vollständig inventarisiert; mindestens der aus Review-Evidence-Lauf 29855770929 belegte actions/upload-artifact-Pfad wird geprüft, während actions/cache und markdownlint-cli2-action nur bei frischem Beleg als betroffen gelten.",
+      "evidence_type": "object",
+      "id": "runtime-audit",
+      "verifier": "GitHub-Workflow-Inventar, Runner-Logs und upstream action.yml/readme"
+    },
+    {
+      "assertion": "Für jede tatsächlich geänderte Action wird der neue vollständige Commit-SHA gegen das offizielle Upstream-Release verifiziert und im Diff nachvollziehbar dokumentiert; Floating Tags werden nicht eingeführt.",
+      "evidence_type": "object",
+      "id": "upstream-pin-verification",
+      "verifier": "Offizielle Upstream-Repository-Tags und exakte SHA-Readbacks"
+    },
+    {
+      "assertion": "Die Härtung verändert keine GitHub-Workflow-Berechtigungen, Events, Environment-Bindungen, Secret-Flüsse oder ausführbaren Projektskripte außer soweit für die belegte Action-Kompatibilität zwingend erforderlich; jede Ausnahme wird separat als Sicherheitsänderung behandelt.",
+      "evidence_type": "object",
+      "id": "privilege-invariance",
+      "verifier": "Exakter Workflow-Diff und Security-Review"
+    },
+    {
+      "assertion": "Alle direkt betroffenen Workflows laufen auf dem finalen Head erfolgreich; Required Merge Gate und risikoadäquate Review-Evidenz sind grün, bevor ein Merge erfolgt.",
+      "evidence_type": "object",
+      "id": "workflow-proofs",
+      "verifier": "GitHub Actions Checks, Review Evidence Gate und finaler Head-/Diff-Readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Durch die Nutzeranweisung „@grabowski umsetzen“ vom 21. Juli 2026 für die nach dem Abschluss von PR #1504 benannte Restarbeit autorisiert. Umsetzung ausschließlich isoliert und ohne Veränderung fremder Dirty-States, Worktrees oder Leases.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die nach PR #1504 verbleibenden JavaScript-Action-Runtimewarnungen in Weltgewebes GitHub-Workflows systematisch auditieren und nur dort beheben, wo ein tatsächlich veralteter Node-20-Runtimepfad belegt ist. Betroffene Actions werden auf offiziell verifizierte, Node-24-kompatible Releases mit unveränderlichen Commit-SHAs gehärtet, ohne Workflow-Berechtigungen, Trigger oder Secret-Flüsse beiläufig zu verändern.",
+  "id": "WELTGEWEBE-OS-V1-T021",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "actions/cache is affected before fresh verification",
+      "markdownlint-cli2-action is affected before fresh verification",
+      "queue_truth",
+      "task_readiness",
+      "claim_or_dispatch_authority",
+      "merge_or_deployment_authority"
+    ],
+    "registered_at": "2026-07-21T21:12:00+02:00",
+    "source_diff_sha256": "5d9591e0a87d94084ac45d0df9cd765d8ebf05dde6994f8b6ea1b4d84bec2efa",
+    "source_pr": 1504,
+    "source_repository": "heimgewebe/weltgewebe",
+    "source_review_evidence_run": 29855770929,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-174890f82546093e6bf8a390",
+      "event_id": 893,
+      "event_created_at": "2026-07-21T19:12:28.134063Z",
+      "request_sha256": "efdca5df7c1296d2aadb932fb8fecd3d3a62a347b0ebda50a04197ef4ee2a1c3",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github-pull-request-review",
+        "locator": "https://github.com/heimgewebe/weltgewebe/pull/1504",
+        "observed_at": "2026-07-21T19:12:28.129113Z",
+        "sha256": "5d9591e0a87d94084ac45d0df9cd765d8ebf05dde6994f8b6ea1b4d84bec2efa"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 21
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Die Action-Pin-Änderungen auf die zuvor verifizierten vollständigen Commit-SHAs zurücksetzen; keine Workflow-Berechtigungs- oder Triggeränderungen in denselben Rollback mischen."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Verbleibende GitHub-Actions-Runtimepfade auf Node 24 härten"
+}

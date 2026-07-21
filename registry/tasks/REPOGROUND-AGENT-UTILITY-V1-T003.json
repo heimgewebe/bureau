@@ -3,10 +3,10 @@
   "id": "REPOGROUND-AGENT-UTILITY-V1-T003",
   "initiative": "REPOGROUND-AGENT-UTILITY-V1",
   "title": "Phase 2: Weltgewebe-Vertikalpilot für Änderungskontext",
-  "state": "ready",
+  "state": "blocked",
   "priority": {
-    "lane": "now",
-    "rank": 2
+    "lane": "later",
+    "rank": 3
   },
   "goal": "Eine einzige Weltgewebe Change Capsule an Datenbank/Auth, Web/Karte und Deployment/Kubernetes gegen den heutigen Grabowski-/Agentenworkflow messen.",
   "execution": {
@@ -71,13 +71,25 @@
     ],
     "unblocked_at": "2026-07-21T11:31:00+02:00",
     "unblock_reason": "Both declared dependencies REPOGROUND-AGENT-UTILITY-V1-T001 and REPOGROUND-AGENT-UTILITY-V1-T002 are verified on canonical Bureau main.",
+    "pilot_pr": "heimgewebe/weltgewebe#1520",
+    "pilot_head": "d609d908ca3c5f16607c588cf8c9f567faa19d03",
+    "pilot_diff_sha256": "6743bbf80ac5367c87a4bee56f8cc4cc5284d3af1e256f561ee58f0891dcc3d5",
+    "pilot_merge_commit": "9db5ed7a1d0ddd0d16769f373be9b1cc36c9d91b",
+    "pilot_merged_at": "2026-07-21T18:13:08+02:00",
+    "pilot_outcome": "mechanical_compactness_pass_delivery_chain_blocked",
+    "blocked_reason": "The healthy current Weltgewebe publication contains python_call_graph_json with 22127878 bytes, exceeding the RepoGround read-only adapter limit of 16777216 bytes. Agent impact therefore degrades with artifact_too_large and the symbol/test/call-graph delivery chain is not proven.",
+    "promotion_recommendation": "withhold_default_promotion",
     "does_not_establish": [
       "general repository utility",
-      "default promotion before gate"
+      "default RepoGround promotion",
+      "semantic completeness",
+      "automatic related-test completeness",
+      "automatic symbol-impact completeness"
     ]
   },
   "depends_on": [
     "REPOGROUND-AGENT-UTILITY-V1-T001",
-    "REPOGROUND-AGENT-UTILITY-V1-T002"
+    "REPOGROUND-AGENT-UTILITY-V1-T002",
+    "REPOGROUND-AGENT-UTILITY-V1-T007"
   ]
 }

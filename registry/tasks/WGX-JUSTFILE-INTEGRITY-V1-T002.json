@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "id": "WGX-JUSTFILE-INTEGRITY-V1-T002",
+  "initiative": "WGX-JUSTFILE-INTEGRITY-V1",
+  "title": "Repair WGX metrics contract schema reference",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 92
+  },
+  "depends_on": [
+    "WGX-JUSTFILE-INTEGRITY-V1-T001"
+  ],
+  "goal": "Die WGX-Vertragsvalidierung wieder lauffähig machen, indem die bestehende METRICS_SCHEMA_URL auf eine verfügbare, stabile und versionsgebundene Schemaquelle zeigt und ein frisch erzeugter Metrics-Snapshot erfolgreich gegen genau diese Quelle validiert.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/wgx",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Eigenständiger Folgebefund aus der Live-Verifikation von WGX-JUSTFILE-INTEGRITY-V1-T001; nicht in den abgeschlossenen T001-Diff zurückmischen."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.wgx",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "schema-source-available",
+      "assertion": "Die konfigurierte Metrics-Schemaquelle ist stabil erreichbar und liefert das erwartete JSON-Schema statt HTTP 404."
+    },
+    {
+      "id": "contracts-validate-green",
+      "assertion": "`just wgx metrics snapshot` gefolgt von `just contracts validate` ist auf aktuellem main erfolgreich."
+    },
+    {
+      "id": "regression",
+      "assertion": "Ein automatisierter Test oder CI-Gate schlägt fehl, wenn die Schemaquelle nicht erreichbar oder kein gültiges Schema ist."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-21T19:11:07Z",
+    "source_task": "WGX-JUSTFILE-INTEGRITY-V1-T001",
+    "source_pr": "heimgewebe/wgx#644",
+    "source_merge": "ce503d6e72dc7609d559bde2a5f6970cb543e5d6",
+    "evidence": "Auf dem gemergten T001-Inhaltsstand: `just wgx metrics snapshot` Exit 0; `just contracts validate` Exit 2. Die bereits vor T001 konfigurierte raw.githubusercontent.com-Schema-URL lieferte bei direktem Readback HTTP 404.",
+    "does_not_establish": [
+      "permission to change unrelated contract schemas",
+      "T001 regression"
+    ]
+  }
+}

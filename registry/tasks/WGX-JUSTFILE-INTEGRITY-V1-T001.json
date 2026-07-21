@@ -3,7 +3,7 @@
   "id": "WGX-JUSTFILE-INTEGRITY-V1-T001",
   "initiative": "WGX-JUSTFILE-INTEGRITY-V1",
   "title": "Repair Justfile syntax and add CI parser gate",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 91
@@ -52,6 +52,28 @@
     "does_not_establish": [
       "T006 regression",
       "permission to mix unrelated changes into prior consumer PR"
-    ]
+    ],
+    "verified_at": "2026-07-21T19:11:07Z",
+    "closeout": {
+      "pull_request": "heimgewebe/wgx#644",
+      "base": "01efb27f424466c951a196f095c549d1afdd10da",
+      "head": "81913953a6c0bbd98845e4fa3674cd6feb99760f",
+      "diff_sha256": "9a096db04d5c5d3b1e58fadf24f6dd33e8f15fa8efa2c95553c1f8a849d8673d",
+      "merge_commit": "ce503d6e72dc7609d559bde2a5f6970cb543e5d6",
+      "main_readback": {
+        "justfile_parse": "pass",
+        "parser_gate_script": "pass",
+        "workflow_present": true
+      },
+      "ci": "all relevant PR checks green before merge",
+      "independent_followups": [
+        "WGX-JUSTFILE-INTEGRITY-V1-T002",
+        "WGX-JUSTFILE-INTEGRITY-V1-T003"
+      ]
+    },
+    "verification": {
+      "task_sha256": "d0b3ec615d3488d02ce8dd1829c5afdbe0a8cb52426f9fcc4e26e958afc85189",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   }
 }

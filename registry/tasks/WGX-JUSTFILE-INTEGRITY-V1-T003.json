@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "WGX-JUSTFILE-INTEGRITY-V1-T003",
+  "initiative": "WGX-JUSTFILE-INTEGRITY-V1",
+  "title": "Align local shell lint contract with WGX CI",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 93
+  },
+  "depends_on": [
+    "WGX-JUSTFILE-INTEGRITY-V1-T001"
+  ],
+  "goal": "Den lokalen `just lint`-Shellformatvertrag mit dem tatsächlich in GitHub CI verwendeten Formatvertrag konsistent machen und den Zielpfad auf sauberem main grün bekommen, ohne CI-Prüfungen abzuschwächen oder unverbundene Großformatierungen zu verstecken.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/wgx",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Eigenständiger Folgebefund aus der Live-Verifikation von WGX-JUSTFILE-INTEGRITY-V1-T001; nicht in den abgeschlossenen T001-Diff zurückmischen."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.wgx",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "formatter-contract-parity",
+      "assertion": "Lokaler `just lint`-Shellformatcheck und die GitHub-CI-Shellformatprüfung verwenden einen dokumentiert konsistenten shfmt-Vertrag."
+    },
+    {
+      "id": "lint-green",
+      "assertion": "`just lint` ist auf sauberem aktuellem main erfolgreich."
+    },
+    {
+      "id": "bounded-normalization",
+      "assertion": "Falls bestehende Shell-Dateien normalisiert werden müssen, ist der Umfang explizit reviewbar und wird nicht mit fachfremden Änderungen vermischt."
+    },
+    {
+      "id": "ci-not-weakened",
+      "assertion": "Die bestehende GitHub-CI-Shellprüfung bleibt mindestens gleich streng oder eine Abweichung wird begründet und getestet."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-21T19:11:07Z",
+    "source_task": "WGX-JUSTFILE-INTEGRITY-V1-T001",
+    "source_pr": "heimgewebe/wgx#644",
+    "source_merge": "ce503d6e72dc7609d559bde2a5f6970cb543e5d6",
+    "evidence": "Auf dem gemergten T001-Inhaltsstand endet `just lint` mit Exit 1, während die PR-CI-Shell-Lanes nach Formatierung mit dem CI-eigenen plain-shfmt-Vertrag grün sind. Der lokale Justfile-Lintpfad nutzt einen abweichenden shfmt-Optionssatz.",
+    "does_not_establish": [
+      "permission for unrelated repository-wide formatting",
+      "CI failure on merged main"
+    ]
+  }
+}

@@ -52,8 +52,8 @@ Extraction into a separate `bureau-ops` package is a later decision, not the fir
 | Bureau Core | Commitments, queue order, dependencies, claims, envelopes and revision-bound receipts. |
 | Bureau Ops | Observes external systems, derives findings, proposes tasks and materialises explicit receipts. |
 | GitHub | Branches, pull requests, reviews and CI facts. |
-| Grabowski | Processes, hosts, leases, durable jobs and concrete workers. |
-| Steuerboard | Action-specific readiness and specialised evidence. |
+| Grabowski | Processes, hosts, leases, durable jobs and concrete workers, plus live precondition revalidation and Git/network/branch/worktree effects. |
+| Steuerboard | Read-only repository observation and source-bound readiness/evidence derivation; never approval or execution authority. |
 | Cabinet | Readable research, synthesis and decisions. |
 | Schauwerk | Visual projections. |
 | Chronik | Append-only events. |

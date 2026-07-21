@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T003",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Decide and narrow Steuerboard role",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 60
@@ -95,6 +95,87 @@
         "verification authority",
         "safe mutation of terminal historical tasks"
       ]
+    },
+    "implementation_status": "verified",
+    "verified_at": "2026-07-20T22:51:20Z",
+    "authority_decision": {
+      "steuerboard": "Owns read-only repository observation and source-bound readiness/evidence derivation only; it has no approval or execution authority.",
+      "grabowski": "Owns live precondition revalidation and concrete Git, network, branch, worktree, host, process, lease, durable-task and worker effects.",
+      "bureau": "Owns commitments, queue order, coordination claims and revision-bound completion truth.",
+      "cabinet_systemkatalog": "No current Steuerboard execution consumer was found; readable research/decision projection remains separate from execution authority."
+    },
+    "implementation": {
+      "repository": "heimgewebe/steuerboard",
+      "pull_request": 92,
+      "base_commit": "58bb6a95f241ae953dafa8d3c9d7fc4969270eb4",
+      "reviewed_head": "b60b3347ae57318bdcfb09c38c2723535b0082fa",
+      "merge_commit": "28f9660f5e3237cf469826800e69ded85a9b40aa",
+      "diff_sha256": "48249de1995e28ce55e61eb43f93d819ee64c14643b5f59942f586c774d39894",
+      "current_main_readback": "28f9660f5e3237cf469826800e69ded85a9b40aa",
+      "retired_mutation_surfaces": [
+        "remote-refresh fetch-origin-prune",
+        "action run-git-pull-ff-only",
+        "action run-switch-main"
+      ]
+    },
+    "fresh_validation": {
+      "isolated_deploy_check_job": "grabowski-job-e2325e3ee751",
+      "isolated_deploy_check_status": "succeeded",
+      "isolated_deploy_check_receipt_sha256": "994900b809b894d98b6cd99391412e542da5cb1b5e027f37241a71034b0a0ff2",
+      "isolated_deploy_check_payload_sha256": "d83ba358618caca47c4b59d400b72b2076184f61b6b7f0f02a899ba360e7f4a3",
+      "tests_passed": 1453,
+      "schema_examples": "41 schemas and 234 examples validated",
+      "smoke": "all entrypoints exited 0 and emitted valid JSON",
+      "host_contaminated_run": {
+        "job": "grabowski-job-dfd5490b25b0",
+        "status": "failed",
+        "failed_tests": 22,
+        "cause": "An unexplained /tmp/.git marker caused synthetic /tmp/test-repo paths to be classified as inside a Git worktree.",
+        "does_not_establish": "a Steuerboard code regression; the same commit passed the full deploy-check in a mount namespace with clean /tmp.",
+        "follow_up_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T042"
+      }
+    },
+    "consumer_proof": {
+      "grabowski": "Current source uses Steuerboard only as repo_state_context=steuerboard_operator_report and explicitly does not establish steuerboard_report_action_approval; no retired mutation command invocation was found.",
+      "bureau": "Current source contains no invocation of run-switch-main, run-git-pull-ff-only or fetch-origin-prune; stale ownership wording was narrowed in README.md, docs/architecture.md, docs/ownership.md and docs/plans/bureau-boundary-ops-v1.md by this closeout.",
+      "cabinet_systemkatalog": "GitHub resolves heimgewebe/cabinet to heimgewebe/systemkatalog; current code search found no Steuerboard reference and no run-switch-main consumer."
+    },
+    "validated_acceptance": {
+      "authority-decision": "PASS: one normative boundary now states Steuerboard is read-only observation/readiness-evidence derivation, while Grabowski owns live revalidation and execution effects.",
+      "consumer-proof": "PASS: Grabowski was inspected as a read-only report consumer; Bureau has no retired command invocations and its stale owner text is corrected; Cabinet/Systemkatalog has no current consumer.",
+      "mutation-boundary": "PASS: switch-main, git-pull-ff-only and fetch-origin-prune are classified retired_compatibility/fail-closed in Steuerboard; concrete Git/network/branch/worktree effects are assigned to Grabowski.",
+      "migration-or-keep": "PASS: the reduced keep-plan from Steuerboard PR #92 is retained and freshly validated with 1,453 tests plus schema/example and smoke checks; no active consumer requires restoration of mutation authority."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T003",
+          "source_ref": "github-pr:heimgewebe/steuerboard#92@b60b3347ae57318bdcfb09c38c2723535b0082fa:28f9660f5e3237cf469826800e69ded85a9b40aa",
+          "content_sha256": "48249de1995e28ce55e61eb43f93d819ee64c14643b5f59942f586c774d39894"
+        },
+        {
+          "kind": "job_finalization_receipt",
+          "authority": "grabowski-runtime",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T003",
+          "source_ref": "grabowski-job:grabowski-job-e2325e3ee751@28f9660f5e3237cf469826800e69ded85a9b40aa",
+          "content_sha256": "994900b809b894d98b6cd99391412e542da5cb1b5e027f37241a71034b0a0ff2"
+        },
+        {
+          "kind": "consumer_readback",
+          "authority": "operator-live-readback",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T003",
+          "source_ref": "consumer-proof:/home/alex/audits/steuerboard/t003-consumer-proof.json@2026-07-20T22:51:20Z",
+          "content_sha256": "f6598d7b85bbf15ac3b68c605d929da4538108a386d7c62c5ea10552a1928f02"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "9021c6182bae1bc3e458dcb5d05af8a36d25bb9b2505a9648448b9d61542db5f",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   },
   "depends_on": []

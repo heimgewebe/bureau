@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T042",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Classify and contain stray /tmp Git marker",
+  "state": "planned",
+  "goal": "Determine the provenance and live ownership of the unexplained /tmp/.git marker, then remove, relocate or contain it only if safe, and make temporary-repository tests robust against unrelated ancestor Git markers without weakening real worktree guards.",
+  "priority": {
+    "lane": "later",
+    "rank": 206
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/steuerboard",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/steuerboard"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.steuerboard",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "provenance",
+      "assertion": "The /tmp/.git marker is classified with owner/provenance and current process/task/worktree dependencies before any effect."
+    },
+    {
+      "id": "no-foreign-loss",
+      "assertion": "No marker is deleted or changed while it may belong to an active or foreign workflow; uncertainty fails closed."
+    },
+    {
+      "id": "bounded-remediation",
+      "assertion": "If safe, stale host residue is removed through a bounded auditable path; otherwise Steuerboard tests are isolated or hardened without weakening production worktree detection."
+    },
+    {
+      "id": "regression-proof",
+      "assertion": "Steuerboard deploy-check passes in the normal host environment and a synthetic ancestor-marker case proves the intended temporary-repository behavior."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-20T22:51:20Z",
+    "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T003",
+    "source_finding": "A host-level /tmp/.git directory dated 2026-07-12 caused 22 Steuerboard tests to misclassify /tmp/test-repo as inside a Git worktree; a clean-/tmp Bubblewrap run passed all 1,453 tests.",
+    "failed_host_job": "grabowski-job-dfd5490b25b0",
+    "isolated_green_job": "grabowski-job-e2325e3ee751",
+    "does_not_establish": [
+      "that /tmp/.git is stale",
+      "that it is safe to delete",
+      "that Steuerboard production worktree detection is incorrect",
+      "ownership of the marker"
+    ]
+  }
+}

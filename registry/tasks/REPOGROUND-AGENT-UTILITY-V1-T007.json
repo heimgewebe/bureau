@@ -3,12 +3,12 @@
   "id": "REPOGROUND-AGENT-UTILITY-V1-T007",
   "initiative": "REPOGROUND-AGENT-UTILITY-V1",
   "title": "RepoGround-Impact-Kontext für große Call-Graph-Artefakte skalierbar machen",
-  "state": "blocked",
+  "state": "ready",
   "priority": {
-    "lane": "later",
-    "rank": 7
+    "lane": "now",
+    "rank": 2
   },
-  "goal": "Den im T003-Weltgewebe-Pilot belegten Skalierungsbruch beseitigen, bei dem python_call_graph_json mit 22.127.878 Byte die 16-MiB-Grenze des Read-only-Adapters überschreitet, sodass der Agent-Impact-Kontext fail-closed degradiert und automatische Symbol-, Test- und Call-Graph-Beziehungen nicht verfügbar sind.",
+  "goal": "Den im T003-Weltgewebe-Pilot belegten Skalierungsbruch beseitigen, bei dem python_call_graph_json die 16-MiB-Grenze des Read-only-Adapters überschreitet, sodass der Agent-Impact-Kontext fail-closed degradiert und automatische Symbol-, Test- und Call-Graph-Beziehungen nicht verfügbar sind.",
   "depends_on": [
     "REPOGROUND-AGENT-UTILITY-V1-T006"
   ],
@@ -72,8 +72,18 @@
     "source_merge_commit": "9db5ed7a1d0ddd0d16769f373be9b1cc36c9d91b",
     "source_bundle": "heimgewebe__weltgewebe__main-max-260721-0745",
     "source_bundle_manifest_sha256": "34f6ac4682db840efba13e56164d0847a6d3099d16cfb2a6047e8eac6c19f31f",
-    "source_finding": "The healthy current Weltgewebe bundle contains python_call_graph_json with 22127878 bytes, exceeding readonly_adapter.MAX_ARTIFACT_BYTES=16777216 and causing artifact_too_large in all four T003 pilot cases.",
+    "source_finding": "The healthy Weltgewebe bundle observed during the first T003 pilot contained python_call_graph_json with 22127878 bytes, exceeding readonly_adapter.MAX_ARTIFACT_BYTES=16777216 and causing artifact_too_large in all four pilot cases.",
     "scope_reason": "T006 fixes false call_graph lane reporting in Grabowski. It does not make the oversized RepoGround call-graph artifact consumable. T007 therefore isolates bounded large-artifact access from composer truthfulness.",
+    "unblocked_at": "2026-07-21T18:42:00+02:00",
+    "unblock_reason": "REPOGROUND-AGENT-UTILITY-V1-T006 is verified. The post-T006 three-case pilot proves the lane-truth defect is fixed while the large-artifact blocker remains.",
+    "latest_observation": {
+      "measurement_sha256": "0ce6f5a88c6d61801e46cb644a1aba5efc31dfe5ef4b254faabb95e33b850bc8",
+      "bundle_stem": "heimgewebe__weltgewebe__main-max-260721-1614",
+      "python_call_graph_bytes": 22411587,
+      "readonly_adapter_max_bytes": 16777216,
+      "error_code": "artifact_too_large",
+      "t006_truth_regression_passed": true
+    },
     "does_not_establish": [
       "call-graph completeness",
       "semantic completeness",

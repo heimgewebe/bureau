@@ -3,7 +3,7 @@
   "id": "REPOGROUND-AGENT-UTILITY-V1-T006",
   "initiative": "REPOGROUND-AGENT-UTILITY-V1",
   "title": "RepoGround-Composer: Call-Graph-Lane nur bei tatsächlicher Nutzung melden",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 2
@@ -80,6 +80,41 @@
       "merge readiness",
       "default RepoGround promotion"
     ],
-    "scope_reason": "This is a Grabowski composer truthfulness defect discovered by the T003 pilot and must be corrected separately from RepoGround PR #1070."
+    "scope_reason": "This is a Grabowski composer truthfulness defect discovered by the T003 pilot and must be corrected separately from RepoGround PR #1070.",
+    "verification": {
+      "task_sha256": "7fb849912922c0cc0dc8de793d6d0f8dc0a308f39f44478d1ca95262ef4d6f32",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+      "verified_at": "2026-07-21T18:42:00+02:00",
+      "implementation": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 351,
+        "base_commit": "c789ea8c13db7179776622a286211f7136ae5f8c",
+        "feature_commit": "13e49be39e4f4e67702ab851b15153a1daed3db2",
+        "merge_commit": "eaaf8307009df70bba549c571ec376a4fc7743e0"
+      },
+      "ci": {
+        "validate_python_3_10": "pass",
+        "validate_python_3_12": "pass",
+        "codeql": "pass"
+      },
+      "runtime": {
+        "deployed_commit": "846faa1762bf84bb61a56a3decb0926eaf9e4ea5",
+        "contains_t006_merge": true,
+        "deployment_integrity": "valid"
+      },
+      "pilot_regression": {
+        "measurement_sha256": "0ce6f5a88c6d61801e46cb644a1aba5efc31dfe5ef4b254faabb95e33b850bc8",
+        "cases": [
+          "database_auth_pr1295",
+          "web_map_pr1514",
+          "deployment_kubernetes_pr1458"
+        ],
+        "call_graph_used_false_in_all_cases": true,
+        "call_graph_skipped_true_in_all_cases": true,
+        "artifact_too_large_gap_preserved_in_all_cases": true,
+        "mechanical_promotion_gate_passed": true,
+        "result": "pass"
+      }
+    }
   }
 }

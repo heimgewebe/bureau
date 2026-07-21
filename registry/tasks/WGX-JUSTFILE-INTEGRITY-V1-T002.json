@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "id": "WGX-JUSTFILE-INTEGRITY-V1-T002",
+  "initiative": "WGX-JUSTFILE-INTEGRITY-V1",
+  "title": "Reconcile repository-wide Justfile lint formatter baseline",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 92
+  },
+  "goal": "Den repositoryweiten Format-Drift beheben oder den Justfile-Lintvertrag so konsistent ausrichten, dass `just lint` auf einem sauberen main ohne massenhafte vorbestehende shfmt-Differenzen erfolgreich läuft.",
+  "depends_on": [
+    "WGX-JUSTFILE-INTEGRITY-V1-T001"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/wgx",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Unabhängiger Bestandsfehler aus WGX-JUSTFILE-INTEGRITY-V1-T001; nicht in den abgeschlossenen Parser-Gate-Diff mischen."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.wgx",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "baseline",
+      "assertion": "`just lint` läuft auf einem sauberen aktuellen main ohne vorbestehende shfmt-Differenzen erfolgreich."
+    },
+    {
+      "id": "consistency",
+      "assertion": "Lokale Justfile-Lintregeln und die in GitHub CI verwendeten shfmt-Regeln sind absichtlich konsistent oder die Abweichung ist explizit dokumentiert und getestet."
+    },
+    {
+      "id": "scope",
+      "assertion": "Die Bereinigung wird in einem eigenen isolierten Diff umgesetzt und nicht mit dem Justfile-Parser-Gate vermischt."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-21T19:12:34Z",
+    "source_task": "WGX-JUSTFILE-INTEGRITY-V1-T001",
+    "source_repository": "heimgewebe/wgx",
+    "source_file": "Justfile",
+    "source_finding": "`just lint` scheitert nach der Parserreparatur an umfangreichem repositoryweitem shfmt-Drift; zugleich verwenden lokales Justfile-Lint und GitHub Shell-Lint unterschiedliche shfmt-Optionen.",
+    "does_not_establish": [
+      "permission to mass-format unrelated files in WGX PR #644",
+      "failure of the Justfile parser gate"
+    ]
+  }
+}

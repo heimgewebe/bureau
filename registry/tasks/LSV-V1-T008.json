@@ -92,6 +92,92 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verified_at": "2026-07-20T22:50:00Z",
+    "current_leitstand_head": "881969479fb7f969285d9315c042eea3bc94f223",
+    "outcome": "Die priorisierten Leitstand-Ansichten verwenden eine kleine gemeinsame read-only UI-Schicht mit zentralen Tokens, Fokus-, Responsive-, Status-, Oberflächen- und Aktionsverträgen; PR #181 ist gemergt, commitgebunden deployed und live verifiziert.",
+    "implementation_pr": "heimgewebe/leitstand#181",
+    "implementation_head": "8a20f546c1e8acdc816282589d63524d581c042f",
+    "implementation_merge_commit": "881969479fb7f969285d9315c042eea3bc94f223",
+    "implementation_diff_sha256": "155b55c37df1cfc85406fd5930566c65e2720e2aab2d750dfde7af0c6be29c54",
+    "implementation_patch_bytes": 53931,
+    "validation": {
+      "final_base": "d0cee76e69fe5f6a1fd74f321165c47d6f3872c7",
+      "final_head": "8a20f546c1e8acdc816282589d63524d581c042f",
+      "self_review": "PASS, bound to final head/base and implementation_diff_sha256; no newly added mutation-like HTTP, process or file-write paths found in exact diff.",
+      "github_checks": "All current PR #181 checks passed before merge: CI build, CodeQL, ai-context guards, security hygiene and Cloudflare Pages.",
+      "vitest": "242/242 passed",
+      "release_runtime": "32/32 passed",
+      "browser_shell": {
+        "mobile": "21/21",
+        "desktop": "13/13"
+      },
+      "browser_view_task": "0ed5ba6da323497aa8603b84",
+      "browser_view_lifecycle_receipt_sha256": "801f8cdfa56cf24a8a0897ba5fe6841bb0f4ea4a7c45ac1019a6c85b388bf579",
+      "browser_view_receipt_sha256": "b010024550a4b1005be241edc38dd59c56b9fa3d5d976cc37d786e283e0df83b",
+      "browser_view_receipt_file_sha256": "f0eb6217578789ca4d04e10191d8a978ec3d3d71147e2b2f876adb61f98c4eab",
+      "build_dist_sha256": "9f0e6b0a320c7f7b544077b905cd2dd3a8a70af50f8a6347588c6f8f57284ec5",
+      "matrix_sha256": "7ac1254452190ef894921581ae3efd869c26e87184604897eef47dfaf5195474",
+      "browser_checks": 197,
+      "route_viewport_pairs": 12,
+      "fullscreen_viewports": 2,
+      "scenario_count": 6,
+      "repository_guard_task": "2d2d029e61fe4803a55553b3",
+      "repository_guard_lifecycle_receipt_sha256": "f436a56c839d53a3b5c82360609844f7103e8cf93485d419ebe751c1070e7a16"
+    },
+    "consolidation": {
+      "inline_style_blocks_before": 6,
+      "inline_style_blocks_after": 5,
+      "inline_style_bytes_before": 22671,
+      "inline_style_bytes_after": 13362,
+      "inline_style_bytes_reduced": 9309,
+      "inline_style_bytes_reduction_percent": 41.1,
+      "inline_style_attributes_before": 3,
+      "inline_style_attributes_after": 0,
+      "view_local_plain_body_foundations_before": 6,
+      "view_local_plain_body_foundations_after": 0,
+      "view_local_plain_main_foundations_before": 6,
+      "view_local_plain_main_foundations_after": 0,
+      "shared_head_views_before": 0,
+      "shared_head_views_after": 6,
+      "shared_ui_asset_bytes": 5886,
+      "shared_ui_asset_sha256": "e4a9cbff3be06c9898c1fea2f3128b98f95390ec6d36948c3d3076ed807e7942",
+      "aggregate_primary_view_style_source_delta_bytes": -3423,
+      "remaining_exceptions": "Five bounded view-local style blocks remain for dashboard-, board-, checkout-, storage- and ecosystem-map-specific layout/interaction rules; RepoGround requires no local style block.",
+      "maintenance_effect": "Shared foundations are versioned once in ui-system.css and loaded through _ui-head across all six primary views.",
+      "test_surface_effect": "Static contract tests plus the real browser matrix require the shared UI asset and prevent shared foundations from drifting back into view-local CSS."
+    },
+    "deployment": {
+      "required": true,
+      "source_commit": "881969479fb7f969285d9315c042eea3bc94f223",
+      "release_path": "/home/alex/.local/lib/leitstand/releases/881969479fb7f969285d9315c042eea3bc94f223-runtime-v1",
+      "release_tree_sha256": "426134f23866632259b70bcc5842e0c20f41f0f04aa31d989ed07a354d5f30ed",
+      "deployment_receipt_sha256": "ace49f8bdbb1f441dfbc7caecaebbf6519f949db39f278dc5d69f25038c396c9",
+      "deploy_switch_receipt_sha256": "e356e9a8dd6e804c0cee77a376af27821576022ac5421e6d5596c6787130da14",
+      "deploy_task": "b46387d48e844e34bd016888",
+      "deploy_task_lifecycle_receipt_sha256": "c9df460dab0fa79ef8632fbed8fa72feed863190290157bf60776c6ab1389c22",
+      "independent_verify_task": "475c05fbe1504ca58c613c93",
+      "independent_verify_lifecycle_receipt_sha256": "affa973b89855008f8821efddb3003b5448df37eb82701908035e6a53106dcc5",
+      "web_service": "active/running, NRestarts=0",
+      "local_health_status": "ok",
+      "canonical_health_status": "ok",
+      "active_routes": "/, /health, /bureau, /checkouts, /storage-health, /ecosystem-map and /repoground returned 200 locally and canonically",
+      "shared_ui_live": "ui-system.css returned 200 with 5886 bytes locally and canonically; dashboard HTML references /assets/ui-system.css.",
+      "read_only_route_guards": "/repobriefs redirected to /repoground; POST /events and removed legacy routes returned 404",
+      "live_asset_task": "6751dee116114f9a819927c2",
+      "live_asset_lifecycle_receipt_sha256": "5e323ee6c38ee6b2e776a60e5c21aead2f7ec626674e7dd35a9cfa7fc261aa48"
+    },
+    "verified_acceptance": {
+      "shared-ui-contract": "ui-system.css centralizes versioned tokens, surfaces, spacing, metadata, status colors, tables, visible focus, 44px action sizing, responsive behavior, provenance disclosure and reduced motion; _ui-head owns ordered product stylesheet loading.",
+      "priority-view-migration": "Dashboard/status, Bureau/tasks, RepoGround/repository, ecosystem map, checkout health and storage health all load the shared layer; browser receipt observes ui-system.css on all 12 real route/viewport pairs.",
+      "information-hierarchy": "Bureau, checkout and RepoGround primary operational content precedes native keyboard-accessible details for technical provenance; Bureau keeps source kind and freshness visible in the collapsed summary after the browser matrix exposed and caused repair of a hidden stale-state regression.",
+      "responsive-and-focus": "Build-bound browser matrix passed at 390x844 and 1440x900 with no document overflow, visible focus contracts, skip link, mobile Escape focus restoration, fullscreen focus trap/Escape restoration and reduced-motion assertions.",
+      "measurable-consolidation": "Inline style bytes fell 22671 -> 13362 (-9309, -41.1%); inline style attributes 3 -> 0; plain per-view body/main foundations 6 -> 0 each; six views now share _ui-head; the cacheable shared UI asset is 5886 bytes and five bounded view-specific style exceptions remain.",
+      "truth-and-write-boundary": "Exact-diff review found no newly added mutation-like HTTP, process or file-write paths; Observer-Invariant-Guard passed; browser receipt reports externalMutations=false and live POST /events remains 404."
+    },
+    "verification": {
+      "task_sha256": "4003bff00cffeb05024a11e98e23af9e53e66e9b27dd088da055e3e90fd9bfc1",
+      "plan_sha256": "217a91b5a66a143e0440d2a7d656a5d0fada62b52778cf3285349e7667bd8621"
     }
   },
   "priority": {
@@ -108,6 +194,6 @@
     "strategy": "Die migrierten Ansichten einzeln auf ihre vorherigen lokalen Styles zurückführen; gemeinsame Tokens und Komponenten erst entfernen, wenn keine Ansicht sie mehr konsumiert. Daten- und Zustandsmodelle bleiben unberührt."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Leitstand-Ansichten auf ein gemeinsames UI-System konsolidieren"
 }

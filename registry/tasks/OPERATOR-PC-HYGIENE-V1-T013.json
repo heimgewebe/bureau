@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-PC-HYGIENE-V1-T013",
+  "initiative": "OPERATOR-PC-HYGIENE-V1",
+  "title": "Repair Grabowski local GitHub DNS resolution path",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 213
+  },
+  "goal": "Restore reliable local GitHub name resolution for Grabowski git and gh operations on heim-pc without weakening resolver, recovery or network-security safeguards.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/infra",
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/infra",
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-PC-HYGIENE-V1-T013.json"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "shell",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "root-cause",
+      "assertion": "The failure is reproduced and attributed to the actual local resolver, network namespace or transport boundary; a GitHub outage or general internet failure is not inferred from the original symptom alone."
+    },
+    {
+      "id": "bounded-repair",
+      "assertion": "The repair restores getent or resolvectl resolution for github.com and bounded Grabowski-local gh and git read operations without globally bypassing systemd-resolved or hard-coding GitHub IP addresses as the permanent fix."
+    },
+    {
+      "id": "resolver-safety",
+      "assertion": "The change preserves DNS resolution for unrelated services and records the exact pre-state, changed setting or unit, rollback path and post-state."
+    },
+    {
+      "id": "transport-proof",
+      "assertion": "After the repair, at least one read-only GitHub API operation and one read-only Git fetch or ls-remote style operation succeed through the same local Grabowski execution path that previously failed."
+    },
+    {
+      "id": "fallback-separation",
+      "assertion": "The healthy GitHub connector remains documented as a fallback transport but is not treated as proof that Grabowski-local DNS is repaired."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-21T10:00:00+02:00",
+    "source": "REPOGROUND-AGENT-UTILITY-V1-T002 closeout",
+    "source_friction_event": "2c1cd0cd7e18461391f3c9be85b9e318",
+    "live_finding": "Grabowski-local gh calls and git fetch could not resolve github.com. resolvectl query github.com returned REFUSED while direct dig @1.1.1.1 github.com succeeded. systemd-resolved was active. A recovery-gated restart completed successfully but getent/resolvectl resolution still failed. GitHub connector transport remained healthy and was used only as a bounded fallback.",
+    "attempted_remediation": {
+      "systemd_resolved_restart": "completed",
+      "post_restart_local_resolution": "still_failed",
+      "direct_upstream_dns": "succeeded",
+      "repository_mutation_from_failed_local_transport": false
+    },
+    "does_not_establish": [
+      "GitHub outage",
+      "general internet failure",
+      "safe DNS configuration mutation",
+      "permission to bypass systemd-resolved",
+      "permission to hard-code GitHub addresses",
+      "connector transport equivalence with local git or gh transport"
+    ],
+    "next_action": "Re-read current link and resolver configuration, identify the source of the REFUSED response, apply only a bounded reversible repair, then prove both resolver and local GitHub transport paths before closing."
+  },
+  "depends_on": []
+}

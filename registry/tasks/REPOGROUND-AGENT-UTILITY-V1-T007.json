@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T007",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "title": "RepoGround-Impact-Kontext für große Call-Graph-Artefakte skalierbar machen",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "goal": "Den im T003-Weltgewebe-Pilot belegten Skalierungsbruch beseitigen, bei dem python_call_graph_json die 16-MiB-Grenze des Read-only-Adapters überschreitet, sodass der Agent-Impact-Kontext fail-closed degradiert und automatische Symbol-, Test- und Call-Graph-Beziehungen nicht verfügbar sind.",
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T006"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "repoground",
+    "bounded-io"
+  ],
+  "acceptance": [
+    {
+      "id": "bounded-large-artifact-access",
+      "assertion": "Agent-Impact-Abfragen können ein gesundes python_call_graph_json oberhalb von 16 MiB zielgerichtet und speicherbegrenzt konsumieren, ohne das vollständige Artefakt blind in den Speicher zu laden oder die globale Sicherheitsgrenze pauschal anzuheben."
+    },
+    {
+      "id": "fail-closed-integrity",
+      "assertion": "Hash-, Größen-, Run-ID- und Manifestbindung bleiben erhalten; unvollständige, veränderte, inkohärente oder unlesbare Artefakte degradieren weiterhin explizit und werden nie als vollständige Call-Graph-Evidenz dargestellt."
+    },
+    {
+      "id": "weltgewebe-regression",
+      "assertion": "Der revisionsgebundene T003-Drei-Fälle-Pilot plus kontrollierter Livefall wird nach dem Fix erneut gemessen; der bisherige artifact_too_large-Blocker verschwindet und related_tests, target_symbols und call_graph werden nur bei tatsächlich belegter Evidenz gefüllt."
+    },
+    {
+      "id": "resource-bound",
+      "assertion": "Die Lösung belegt feste oder konfigurationsgebundene Obergrenzen für Speicher, Laufzeit und Ergebnisgröße; große Repositories erzeugen keinen ungebundenen Vollscan pro Agent-Abfrage."
+    },
+    {
+      "id": "tests-review",
+      "assertion": "Gezielte Large-Artifact-, Manipulations-, Freshness- und Regressionstests sowie relevante RepoGround-Suites sind grün; vor Merge liegen exakter Head, Diff-SHA-256 und Review vor."
+    }
+  ],
+  "metadata": {
+    "registered_from_task": "REPOGROUND-AGENT-UTILITY-V1-T003",
+    "source_pr": "heimgewebe/weltgewebe#1520",
+    "source_merge_commit": "9db5ed7a1d0ddd0d16769f373be9b1cc36c9d91b",
+    "source_bundle": "heimgewebe__weltgewebe__main-max-260721-0745",
+    "source_bundle_manifest_sha256": "34f6ac4682db840efba13e56164d0847a6d3099d16cfb2a6047e8eac6c19f31f",
+    "source_finding": "The healthy Weltgewebe bundle observed during the first T003 pilot contained python_call_graph_json with 22127878 bytes, exceeding readonly_adapter.MAX_ARTIFACT_BYTES=16777216 and causing artifact_too_large in all four pilot cases.",
+    "scope_reason": "T006 fixes false call_graph lane reporting in Grabowski. It does not make the oversized RepoGround call-graph artifact consumable. T007 therefore isolates bounded large-artifact access from composer truthfulness.",
+    "unblocked_at": "2026-07-21T18:42:00+02:00",
+    "unblock_reason": "REPOGROUND-AGENT-UTILITY-V1-T006 is verified. The post-T006 three-case pilot proves the lane-truth defect is fixed while the large-artifact blocker remains.",
+    "latest_observation": {
+      "measurement_sha256": "0ce6f5a88c6d61801e46cb644a1aba5efc31dfe5ef4b254faabb95e33b850bc8",
+      "bundle_stem": "heimgewebe__weltgewebe__main-max-260721-1614",
+      "python_call_graph_bytes": 22411587,
+      "readonly_adapter_max_bytes": 16777216,
+      "error_code": "artifact_too_large",
+      "t006_truth_regression_passed": true
+    },
+    "does_not_establish": [
+      "call-graph completeness",
+      "semantic completeness",
+      "test sufficiency",
+      "runtime correctness",
+      "merge readiness",
+      "default RepoGround promotion"
+    ]
+  }
+}

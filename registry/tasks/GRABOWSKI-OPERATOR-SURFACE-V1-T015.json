@@ -45,7 +45,72 @@
     "phase": "review-gate-followup",
     "reason": "CI integration is useful but distinct from the local gate hardening in PR #111.",
     "related_pr": "heimgewebe/grabowski#111",
-    "source": "Grabowski PR #111 review follow-up"
+    "source": "Grabowski PR #111 review follow-up",
+    "implementation_status": "verified",
+    "verified_at": "2026-07-21T10:48:25Z",
+    "verification_note": "PR #345 added a trusted default-branch review-evidence status workflow and sanitized CI projection, preserved the local review-gate policy boundary, passed exact head/diff-bound high-critical self-review and full validation, was merged and deployed from the exact merged main commit, and produced the expected sanitized PASS projection in a deployed-runtime smoke test. The status remains advisory until branch protection is deliberately changed.",
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 345,
+      "reviewed_head": "a5fc9bdfe1fb07851638436ed3d61af2005e6689",
+      "merge_commit": "98a534b2883d2a826244694280f2b46faa3fccd1",
+      "diff_sha256": "495f4c86a8264618282abd89bfa5dff91c4b2fae62721a47210ddcff4c30b28c",
+      "self_review_audit_sha256": "fda9738c6952330a1908b439ef3495018361246aa1a628ef591c7685d724f4ad",
+      "validation": {
+        "final_review_gate_tests": 113,
+        "full_repository_tests": 2552,
+        "full_repository_skipped": 2,
+        "github_ci": "validate Python 3.10/3.12 and CodeQL passed on the final reviewed head",
+        "self_review": "high_critical PASS with 5 head/diff-bound iterations and zero material findings"
+      },
+      "deployment": {
+        "repo_head": "98a534b2883d2a826244694280f2b46faa3fccd1",
+        "release_id": "98a534b2883d-srcset03d8925ed698-locke6664d600b6c-contract2ada01660eb3",
+        "job": "grabowski-job-3b052815b74f",
+        "finalization_receipt_sha256": "c1c89b40690a88d1ac941aa17c0710553a0f566a3f0086ebbcc248aed8fd0869",
+        "runtime_health": "healthy; deployment complete; integrity valid; audit valid and writable; kill switch false"
+      },
+      "live_smoke": {
+        "kind": "sanitized_review_gate_status_projection",
+        "projection_sha256": "e3320b8bf5eb6e6e41d34c6fac6403def1e58524f3bb28e5a9057e4e42c02ade",
+        "audit_sha256": "fda9738c6952330a1908b439ef3495018361246aa1a628ef591c7685d724f4ad",
+        "head_sha": "a5fc9bdfe1fb07851638436ed3d61af2005e6689",
+        "diff_sha256": "495f4c86a8264618282abd89bfa5dff91c4b2fae62721a47210ddcff4c30b28c",
+        "gate_verdict": "PASS",
+        "private_evidence_included": false
+      },
+      "rollout_status": "advisory; Review evidence gate has not been made a required branch-protection check by this task"
+    },
+    "validated_acceptance": {
+      "ci-boundary": "PASS: Default-branch issue_comment evaluation uses the ephemeral GITHUB_TOKEN with read/read/statuses-write permissions, write-capable actor authorization, bounded exact comment revalidation, and a sanitized projection that excludes private audit prose and secrets.",
+      "evidence-inputs": "PASS: Documentation defines committed workflow/schema code, sanitized uploaded status projections, digest-only audit references, exact head/diff stale detection, and the write-operator trust boundary.",
+      "required-check-plan": "PASS: Rollout is documented as advisory, observation, then optional branch-protection requirement; high-critical depth and independent platform review remain separate, and rollback removes the branch-protection requirement first.",
+      "tests": "PASS: Tests cover missing evidence, unknown fields, stale head, stale diff, red evidence, green evidence, weaker review depth/tier, unauthorized and superseded comments, edited comments, recursion, and workflow permissions; final repository validation passed 2552 tests with 2 skipped."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T015",
+          "source_ref": "github-pr:heimgewebe/grabowski#345@a5fc9bdfe1fb07851638436ed3d61af2005e6689:98a534b2883d2a826244694280f2b46faa3fccd1",
+          "content_sha256": "495f4c86a8264618282abd89bfa5dff91c4b2fae62721a47210ddcff4c30b28c"
+        },
+        {
+          "kind": "job_finalization_receipt",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T015",
+          "source_ref": "grabowski-job:grabowski-job-3b052815b74f@98a534b2883d2a826244694280f2b46faa3fccd1",
+          "content_sha256": "c1c89b40690a88d1ac941aa17c0710553a0f566a3f0086ebbcc248aed8fd0869"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "73b28f02774dbbeeeda9bb75b80a867407d7e37db76093f8c4d54ef88c943c0b",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   },
   "priority": {
     "lane": "later",
@@ -57,6 +122,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Run review gate as CI status"
 }

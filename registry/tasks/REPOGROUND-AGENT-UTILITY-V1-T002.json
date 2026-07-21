@@ -65,6 +65,8 @@
     ],
     "verification": {
       "verified_at": "2026-07-21T09:30:37+02:00",
+      "task_sha256": "acdff2990391c9435f5fc8e3e1ff548ad738d6881758989c0c9aa7258dc255bb",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
       "implementation": {
         "repository": "heimgewebe/grabowski",
         "pull_request": 331,

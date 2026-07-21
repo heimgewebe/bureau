@@ -82,6 +82,97 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verified_at": "2026-07-20T22:10:48+02:00",
+    "outcome": "verified",
+    "verification_note": "T036 ist erfüllt: HausKI ist durch vendorte, remote-unabhängige Heimlern-Crates kompatibilitätsgefroren; Heimlern wurde erst nach grünen Archiv-Gates auf GitHub archiviert. Metarepo und Systemkatalog stellen Heimlern nur noch als archivierte Referenz ohne aktive Fleet-, Runtime-, Queue-, Routing-, Dispatch-, Vertrags- oder Produktionsautorität dar. Normative und historische Verträge bleiben erhalten und sind an exakte Commits beziehungsweise Inhalts-Hashes gebunden.",
+    "validated_acceptance": {
+      "hauski-vendored-independence": "PASS: HausKI PR #759 wurde nach grünen Cargo-, Vendor-, Validator- und GitHub-Prüfungen gemergt; Merge-Commit 4af4d397c67acefd3dc385393f1ef55b88adc097. Direkte Remote-Heimlern-Referenzen und ALLOW_HEIMLERN_MVP sind verboten.",
+      "normative-contract-freeze": "PASS: Heimlern PR #205 band die Archivbereitschaft normativ; Metarepo und Systemkatalog erhalten historische beziehungsweise exakt gebundene Vertragsreferenzen. Normative Verträge wurden nicht gelöscht.",
+      "aussensensor-direct-path": "PASS: Metarepo PR #661 entfernte Heimlern aus aktiver Fleet und Command-Dispatch; der direkte Aussen-zu-Heimlern-E2E-Pfad ist bedingungslos fail-closed und nicht per Umgebung reaktivierbar.",
+      "grabowski-offline-boundary": "PASS: Keine Änderung erweitert Lern- oder Ausführungsautorität; Systemkatalog weist Heimlern keine aktive Runtime-, Queue-, Routing-, Vertrags- oder Produktionsautorität zu.",
+      "archive-after-gates": "PASS: Heimlern wurde nach Merge von Archivbereitschaft PR #205 und grünen Rust-/Python-/GitHub-Gates archiviert. Frischer GitHub-Readback bestätigt isArchived=true und main f74579cbe46d5f5f7b95c4c3431da03efb67cc85.",
+      "projection-closeout": "PASS: Metarepo PR #661 und Systemkatalog PR #145 wurden gegen exakte Heads mit grüner lokaler und GitHub-CI gemergt; beide Projektionen klassifizieren Heimlern ausschließlich als archived_reference beziehungsweise archived-reference."
+    },
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_heimlern_archived_reference",
+      "hauski": {
+        "merge_commit": "4af4d397c67acefd3dc385393f1ef55b88adc097",
+        "compatibility_freeze": "PASS"
+      },
+      "heimlern": {
+        "merge_commit": "f74579cbe46d5f5f7b95c4c3431da03efb67cc85",
+        "main_commit": "f74579cbe46d5f5f7b95c4c3431da03efb67cc85",
+        "is_archived": true,
+        "archive_readiness_path": "docs/archive-readiness.v1.json",
+        "archive_readiness_sha256": "bbf1d19865812b9584a3645ecd031f0854ee6110849d249692b4ac62d8f8d1e0"
+      },
+      "metarepo": {
+        "pull_request": 661,
+        "implementation_head": "922f19e84b04cc637c2dbaa416cdceb342fd88ba",
+        "merge_commit": "b215b418a038ff535f07b7888fd6adeb3f4de51c",
+        "reviewed_patch_sha256": "ca06247d243d67aa67ee8724fb6fab3a9ee5260296febdb43e19c2840f18f535",
+        "local_tests": "PASS",
+        "github_checks": "PASS",
+        "direct_dispatch_or_e2e_to_heimlern": false
+      },
+      "systemkatalog": {
+        "pull_request": 145,
+        "implementation_commit": "27924b7cd1b2506dae121052efb4a195804d1554",
+        "final_head": "dc82307b517c370e7aeb96babe264656adcad781",
+        "merge_commit": "4d8549965240f50b784e27960d942dc6389f16b3",
+        "reviewed_patch_sha256": "7d69cbfbbd3d04c2a210bb75a795f9090cad4d6b573e70ee98f27a07b8e3971b",
+        "local_canonical_ci": "PASS: 131 tests, 1 expected skip",
+        "github_checks": "PASS: 6/6",
+        "classification": "archived_reference"
+      },
+      "authority_boundary": {
+        "active_runtime": false,
+        "active_queue": false,
+        "active_routing": false,
+        "active_dispatch": false,
+        "active_contract_authority": false,
+        "writes_production": false,
+        "historical_and_normative_contracts_retained": true
+      }
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "repository_merge",
+          "authority": "github",
+          "source_ref": "heimgewebe/hausKI",
+          "merge_commit_sha": "4af4d397c67acefd3dc385393f1ef55b88adc097"
+        },
+        {
+          "kind": "repository_archive_readback",
+          "authority": "github",
+          "source_ref": "heimgewebe/heimlern",
+          "main_sha": "f74579cbe46d5f5f7b95c4c3431da03efb67cc85",
+          "isArchived": true
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "source_ref": "heimgewebe/metarepo#661",
+          "head_sha": "922f19e84b04cc637c2dbaa416cdceb342fd88ba",
+          "merge_commit_sha": "b215b418a038ff535f07b7888fd6adeb3f4de51c"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "source_ref": "heimgewebe/systemkatalog#145",
+          "head_sha": "dc82307b517c370e7aeb96babe264656adcad781",
+          "merge_commit_sha": "4d8549965240f50b784e27960d942dc6389f16b3"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "5a51a2fb1a9c79afa544d3aa53cc6297649c6dd2311c1e6d1dd6b2383fa08246",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   },
   "priority": {
@@ -95,6 +186,6 @@
     "rust"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Heimlern-Kompatibilitäts-Freeze und Archivierung"
 }

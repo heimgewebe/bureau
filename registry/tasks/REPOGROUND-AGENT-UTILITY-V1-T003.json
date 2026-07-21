@@ -3,9 +3,9 @@
   "id": "REPOGROUND-AGENT-UTILITY-V1-T003",
   "initiative": "REPOGROUND-AGENT-UTILITY-V1",
   "title": "Phase 2: Weltgewebe-Vertikalpilot für Änderungskontext",
-  "state": "blocked",
+  "state": "ready",
   "priority": {
-    "lane": "later",
+    "lane": "now",
     "rank": 2
   },
   "goal": "Eine einzige Weltgewebe Change Capsule an Datenbank/Auth, Web/Karte und Deployment/Kubernetes gegen den heutigen Grabowski-/Agentenworkflow messen.",
@@ -69,6 +69,8 @@
       "web_map",
       "deployment_kubernetes"
     ],
+    "unblocked_at": "2026-07-21T11:31:00+02:00",
+    "unblock_reason": "Both declared dependencies REPOGROUND-AGENT-UTILITY-V1-T001 and REPOGROUND-AGENT-UTILITY-V1-T002 are verified on canonical Bureau main.",
     "does_not_establish": [
       "general repository utility",
       "default promotion before gate"

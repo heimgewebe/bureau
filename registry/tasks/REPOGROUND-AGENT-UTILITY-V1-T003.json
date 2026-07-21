@@ -77,8 +77,27 @@
     "pilot_merge_commit": "9db5ed7a1d0ddd0d16769f373be9b1cc36c9d91b",
     "pilot_merged_at": "2026-07-21T18:13:08+02:00",
     "pilot_outcome": "mechanical_compactness_pass_delivery_chain_blocked",
-    "blocked_reason": "The healthy current Weltgewebe publication contains python_call_graph_json with 22127878 bytes, exceeding the RepoGround read-only adapter limit of 16777216 bytes. Agent impact therefore degrades with artifact_too_large and the symbol/test/call-graph delivery chain is not proven.",
+    "blocked_reason": "T006 is verified and the false call_graph-used claim is fixed. T003 remains blocked only because the current healthy Weltgewebe publication contains python_call_graph_json with 22411587 bytes, exceeding the RepoGround read-only adapter limit of 16777216 bytes; related_tests, target_symbols and call-graph delivery evidence therefore remain unavailable.",
     "promotion_recommendation": "withhold_default_promotion",
+    "post_t006_measurement": {
+      "measured_at": "2026-07-21T18:40:00+02:00",
+      "measurement_sha256": "0ce6f5a88c6d61801e46cb644a1aba5efc31dfe5ef4b254faabb95e33b850bc8",
+      "grabowski_runtime_commit": "846faa1762bf84bb61a56a3decb0926eaf9e4ea5",
+      "t006_merge_commit": "eaaf8307009df70bba549c571ec376a4fc7743e0",
+      "bundle_stem": "heimgewebe__weltgewebe__main-max-260721-1614",
+      "results": {
+        "database_auth_reduction_pct": 83.972,
+        "web_map_reduction_pct": 58.979,
+        "deployment_kubernetes_reduction_pct": 68.236,
+        "critical_path_coverage_all_cases": 1.0,
+        "mechanical_promotion_gate_passed": true,
+        "t006_truth_regression_passed": true,
+        "call_graph_used_false_in_all_cases": true,
+        "call_graph_skipped_true_in_all_cases": true,
+        "artifact_too_large_gap_preserved_in_all_cases": true
+      },
+      "outcome": "blocked_on_t007"
+    },
     "does_not_establish": [
       "general repository utility",
       "default RepoGround promotion",

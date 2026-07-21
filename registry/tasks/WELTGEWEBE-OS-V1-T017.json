@@ -1,0 +1,178 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Conversation und Message sind als kanonische PostgreSQL-Tabellen mit genau einem öffentlichen Standardgespräch je Knoten, stabiler Sortierung, Autoren-Snapshot, Änderungszeit und nachvollziehbarer Tombstone-Löschung implementiert; bestehende Knoten werden deterministisch nachgezogen.",
+      "id": "canonical-data-model"
+    },
+    {
+      "assertion": "Die JSON-Schemas stimmen mit dem tatsächlich verwendeten Account- und Persistenzmodell überein und behaupten keine produktive Rollenidentität, die im Runtimepfad nicht existiert.",
+      "id": "contract-runtime-parity"
+    },
+    {
+      "assertion": "Öffentlich sichtbare Knotengespräche sind lesbar; nur Weber und Admin dürfen Beiträge erstellen; Autoren dürfen eigene Beiträge ändern oder löschen; Admin darf moderieren; fremde oder veraltete Mutationen werden fail-closed abgelehnt.",
+      "id": "authorized-api"
+    },
+    {
+      "assertion": "Nachrichtenlisten sind cursorbasiert und begrenzt, Erstellungen idempotent und Schreibraten serverseitig begrenzt; User-Content wird als Klartext behandelt.",
+      "id": "bounded-delivery"
+    },
+    {
+      "assertion": "Conversation- und Message-Mutationen erzeugen atomare, datensparsame Outbox-Ereignisse, ohne bei jedem Beitrag die Kartenprojektion unnötig zu invalidieren.",
+      "id": "atomic-events"
+    },
+    {
+      "assertion": "Das Knotenpanel besitzt einen zugänglichen Gespräch-Tab mit leerem Zustand, Gast-Hinweis, Entwurfserhalt, Erstellen, Bearbeiten, Tombstone-Löschen und inkrementeller Aktualisierung nur bei geöffnetem Tab.",
+      "id": "node-panel-conversation"
+    },
+    {
+      "assertion": "Der bestehende Governance-Gesprächspfad bleibt funktionsfähig; eine spätere Konvergenz wird als eigene Bureau-Folgeaufgabe registriert und keine ungeprüfte Datenmigration erzwungen.",
+      "id": "governance-coexistence"
+    },
+    {
+      "assertion": "Vor Merge liegen PostgreSQL-, API-, Web- und Browserbelege, ein vollständiges Diff-Artefakt, exakte Head- und Diffbindung, unabhängiger Review und grüne erforderliche CI vor; danach werden Merge, exakter Live-Readback und Aufräumen belegt.",
+      "id": "proof-and-release"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Direkt durch die Nutzeranweisung vom 19. Juli 2026 nach vorgelegtem und geprüftem Plan autorisiert. Umsetzung nur in isoliertem Worktree; fremde Dirty-States, Worktrees und Leases bleiben unverändert.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die vorhandenen Conversation- und Message-Verträge in einen vollständigen öffentlichen Knotengesprächspfad überführen: kanonische PostgreSQL-Persistenz, atomare Ereignisse, autorisierte und konfliktgeschützte API-Mutationen sowie einen zugänglichen Gesprächs-Tab im Knotenpanel, ohne private Nachrichten, Anhänge oder eine zweite dauerhafte Nachrichtenarchitektur einzuführen.",
+  "id": "WELTGEWEBE-OS-V1-T017",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-a796b36824a9f94813d45e88",
+    "cost_policy": "zero external spend",
+    "does_not_establish": [
+      "private messaging",
+      "attachments",
+      "audio or video",
+      "nested discussion trees",
+      "online presence",
+      "federated conversation delivery",
+      "AI summaries",
+      "automatic migration of governance_messages"
+    ],
+    "event_id": 782,
+    "implementation_evidence": {
+      "conversation_probe": {
+        "conversation_id": "7e914096-a3c2-581a-863f-480ecb8208cc",
+        "node_id": "075175a0-796a-4c4e-a5e7-c007b317830c",
+        "status": 200
+      },
+      "feature_head": "06e8aab468eb3c1ae3fff079912389f5a4f01e84",
+      "final_diff_sha256": "2394ce1268ad4ae188591018876cffc154c81eb0a695343363bd307f0903f7cb",
+      "merge_commit": "2b2feaf11a1a6da0dc573764e4fe7c14a358685b",
+      "production_commit": "2b2feaf11a1a6da0dc573764e4fe7c14a358685b",
+      "production_live_run": 29726413818,
+      "pull_request": "heimgewebe/weltgewebe#1501",
+      "validation": {
+        "gitops": "PASS",
+        "ha_recovery": "PASS",
+        "independent_review": "PASS",
+        "postgresql": "PASS",
+        "python_guards": "319 passed, 17 skipped",
+        "rust": "382/382",
+        "web": "163/163"
+      }
+    },
+    "registered_at": "2026-07-19",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "head_sha": "06e8aab468eb3c1ae3fff079912389f5a4f01e84",
+          "kind": "pull_request",
+          "merge_commit_sha": "2b2feaf11a1a6da0dc573764e4fe7c14a358685b",
+          "number": 1501,
+          "source_ref": "https://github.com/heimgewebe/weltgewebe/pull/1501",
+          "task_id": "WELTGEWEBE-OS-V1-T017"
+        },
+        {
+          "authority": "weltgewebe-production",
+          "conversation_id": "7e914096-a3c2-581a-863f-480ecb8208cc",
+          "kind": "live_probe",
+          "receipt_sha256": "1d697ae1d88952c618e4c03213b8f809549eb25619f14fe9b3736ee4f4c60c84",
+          "runtime_sha": "2b2feaf11a1a6da0dc573764e4fe7c14a358685b",
+          "source_ref": "https://weltgewebe.net/api/version",
+          "task_id": "WELTGEWEBE-OS-V1-T017"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "source": "direct_operator_instruction",
+    "verification": {
+      "deployed_runtime_sha": "2b2feaf11a1a6da0dc573764e4fe7c14a358685b",
+      "implementation_sha": "06e8aab468eb3c1ae3fff079912389f5a4f01e84",
+      "merge_commit_sha": "2b2feaf11a1a6da0dc573764e4fe7c14a358685b",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+      "plan_source_ref": "registry/initiatives/WELTGEWEBE-OS-V1.json:current_plan",
+      "review_diff_sha256": "2394ce1268ad4ae188591018876cffc154c81eb0a695343363bd307f0903f7cb",
+      "source": "github_ci_production_live_and_browser_readback",
+      "source_ref": "https://github.com/heimgewebe/weltgewebe/actions/runs/29726413818",
+      "task_sha256": "af20ac46905f3cb6d29bb8017f648a2e577d7670d1b9d365060967ce1e1afe1c",
+      "task_source_ref": "registry/tasks/WELTGEWEBE-OS-V1-T017.json@closeout-revision"
+    },
+    "verified_at": "2026-07-20T10:10:00+02:00",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-a796b36824a9f94813d45e88",
+      "event_id": 782,
+      "event_created_at": "2026-07-19T19:08:27.312333Z",
+      "request_sha256": "b9ecdc2685b59461a1769ed2ddfc8fdfdb0602301bf99eb8c60d7fd030291677",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "direct_operator_instruction",
+        "locator": "chatgpt-project:weltgewebe:2026-07-19",
+        "observed_at": "2026-07-19T19:45:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 17
+  },
+  "required_capabilities": [
+    "repository",
+    "postgresql",
+    "database-migrations",
+    "rust",
+    "svelte",
+    "typescript",
+    "playwright",
+    "grabowski"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "note": "Git-, PostgreSQL-, API-, Browser-, CI- und Produktionsbelege müssen live und commitgebunden erhoben werden; RepoGround dient nur als ergänzender Kontext.",
+    "skip_reason": "live_first_primary",
+    "task_profile": "repo_change"
+  },
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Öffentlichen Gesprächsraum je Knoten produktiv einführen"
+}

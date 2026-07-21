@@ -3,7 +3,7 @@
   "id": "HEIMGEWEBE-RESILIENZ-V1-T008",
   "initiative": "HEIMGEWEBE-RESILIENZ-V1",
   "title": "Extend convergence evidence profiles for resilience",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 60
@@ -63,7 +63,32 @@
     "does_not_establish": [
       "implementation success before owner-repository evidence",
       "authority outside the listed source systems"
-    ]
+    ],
+    "verification": {
+      "verified_at": "2026-07-20T18:36:04+02:00",
+      "repository": "heimgewebe/konvergenzregelkreis",
+      "pull_request": 3,
+      "source_commit": "b6b770791accd692fe85fe8fd1051b50d5b87f21",
+      "merge_commit": "482ab39b30fe8d2a0f82778c6d5771bc72e12581",
+      "base_commit": "83ed435bf9eb490e81a6ff2103b6c1397440d40b",
+      "patch_ref": "github:heimgewebe/konvergenzregelkreis#3",
+      "patch_sha256": "41c2cd8b9569c4b6699a05f72dda0938bc1375dabebc3386d03d548bf1f98ce0",
+      "self_review_ref": "https://github.com/heimgewebe/konvergenzregelkreis/pull/3#issuecomment-5024599368",
+      "checks": [
+        "python-3.10",
+        "python-3.12",
+        "python-3.14",
+        "wheel-isolation",
+        "codeql-actions",
+        "codeql-python",
+        "codeql",
+        "local-contract-tests"
+      ],
+      "main_readback": true,
+      "deployment_required": false,
+      "task_sha256": "6e2d7fc3a685dfe3e5a3d419273564fb856b37167f4888b95fd6d00db707cb2a",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   },
   "depends_on": [
     "HEIMGEWEBE-RESILIENZ-V1-T007"

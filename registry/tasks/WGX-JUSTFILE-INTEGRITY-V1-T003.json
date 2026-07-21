@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "id": "WGX-JUSTFILE-INTEGRITY-V1-T003",
+  "initiative": "WGX-JUSTFILE-INTEGRITY-V1",
+  "title": "Repair remote schema handling for Justfile contracts validation",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 93
+  },
+  "goal": "Den `contracts validate`-Pfad so reparieren, dass die konfigurierte Remote-Metrics-Schema-URL zuverlässig bezogen und mit ajv-cli validiert wird, statt als lokaler Dateipfad fehlzuschlagen.",
+  "depends_on": [
+    "WGX-JUSTFILE-INTEGRITY-V1-T001"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/wgx",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Unabhängiger Bestandsfehler aus WGX-JUSTFILE-INTEGRITY-V1-T001; nicht in den abgeschlossenen Parser-Gate-Diff mischen."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.wgx",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "remote-schema",
+      "assertion": "`just contracts validate` kann das konfigurierte Remote-Schema beziehen und `metrics.json` dagegen validieren."
+    },
+    {
+      "id": "failure-mode",
+      "assertion": "Netzwerk-, Download- und Schemafehler schlagen explizit und diagnostizierbar fehl; eine URL wird nicht still als lokaler Dateipfad behandelt."
+    },
+    {
+      "id": "regression",
+      "assertion": "Ein Regressionstest deckt den bisherigen Fehler `Cannot find schema https://...` ab."
+    },
+    {
+      "id": "scope",
+      "assertion": "Die Reparatur wird in einem eigenen isolierten Diff umgesetzt und nicht mit dem abgeschlossenen Justfile-Parser-Gate vermischt."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-21T19:12:34Z",
+    "source_task": "WGX-JUSTFILE-INTEGRITY-V1-T001",
+    "source_repository": "heimgewebe/wgx",
+    "source_file": "Justfile",
+    "source_finding": "`just contracts validate` erreicht nach der Parserreparatur ajv-cli@5, das die Remote-Schema-URL als lokalen Pfad interpretiert und mit Cannot find schema fehlschlägt.",
+    "does_not_establish": [
+      "failure of the Justfile parser gate",
+      "permission to mix contract transport changes into WGX PR #644"
+    ]
+  }
+}

@@ -1,0 +1,123 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein read-only, paginierter Vollscan erfasst alle Attention-Datensätze und bindet Anzahl, Zustände, Fehlerklassen, Zeitspanne, Task-IDs und vorhandene Dateidigestwerte in ein unveränderliches Manifest; die Ausgangslage vom 20. Juli 2026 mit 2.033 Datensätzen, 981 invalid_evidence, davon 956 TaskAttentionIntegrityError und 25 im Reconciliation-Scan sichtbaren FileNotFoundError, wird reproduzierbar erklärt oder mit einem belegten neueren Bestand supersediert.",
+      "id": "complete-baseline"
+    },
+    {
+      "assertion": "Die Migration trennt mindestens ungültige Legacy-Feldschemata, physisch fehlende Receipts, unvollständige Lifecycle-Bindungen, Digestkonflikte und beschädigte Dateien; insbesondere wird die Differenz zwischen den 25 im Reconciliation-Scan sichtbaren fehlenden Belegen und den 102 im direkten Outcome-Audit fehlenden Dateien zustands- und pfadgenau erklärt.",
+      "id": "legacy-cause-separation"
+    },
+    {
+      "assertion": "Kein Outcome, Terminalisierungsdigest oder Lifecycle-Receipt wird aus Statusprosa, Exitcodes oder plausiblen Annahmen synthetisiert. Rekonstruktion ist nur zulässig, wenn ursprüngliche private Receipt-Bytes, Task-Bindung, Dateidigest und Übergangskette vollständig validierbar sind; andernfalls bleibt der Fall explizit irreparabel.",
+      "id": "no-invented-authority"
+    },
+    {
+      "assertion": "Der Migrationspfad besitzt Dry-Run und Apply, ist create-only beziehungsweise compare-and-swap-gebunden, symlink- und TOCTOU-gehärtet, crash-sicher, wiederholbar und erzeugt pro Fall ein Receipt sowie ein Gesamtmanifest mit Vorher-/Nachher-Digests.",
+      "id": "atomic-idempotent-migration"
+    },
+    {
+      "assertion": "Nicht rekonstruierbare historische Fälle erhalten eine eigene maschinenlesbare Klassifikation, die weder aktuelle Integritätsfehler versteckt noch automatische Wiederaufnahme, Erfolg oder Entscheidung behauptet; historische Irreparabilität und neu auftretende invalid_evidence bleiben getrennt auswertbar.",
+      "id": "explicit-irreparable-class"
+    },
+    {
+      "assertion": "Tests decken alle Legacy-Formen, fehlende Dateien, beschädigte JSON-Daten, konkurrierende Bindungsänderungen, wiederholte Ausführung und mindestens 2.500 Datensätze ab; vollständige Repository-Validierung und Deployment-Check bestehen.",
+      "id": "regression-and-scale"
+    },
+    {
+      "assertion": "Der finale Head besteht diffgebundenen Sicherheitsreview und GitHub-CI, wird nur bei grünen Gates gemergt, exakt deployt und durch vollständigen Live-Vollscan, Runtime-Identität, Auditkette und Kill-Switch-Readback verifiziert.",
+      "id": "exact-review-merge-deploy"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "state_root_migration",
+      "note": "Die Aufgabe darf produktive Task- und Outcome-Evidenz erst nach einem vollständigen Dry-Run, unveränderlichem Bestandsmanifest, Recovery-Plan und diffgebundenem Review verändern.",
+      "required_level": "reviewed_plan"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/.local/state/grabowski/tasks.db",
+      "path:/home/alex/.local/state/grabowski/task-outcomes",
+      "path:/home/alex/.local/state/grabowski/task-attention"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den historischen Bestand ungültiger oder fehlender Task-Outcome-Belege vollständig inventarisieren und ohne erfundene Autorität in einen eindeutigen Zustand überführen: beweisbar rekonstruierbare Legacy-Belege werden digestgebunden und create-only migriert, nicht rekonstruierbare Fälle werden dauerhaft, maschinenlesbar und getrennt von aktueller Integrität als historisch irreparabel klassifiziert.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T075",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass jeder Legacy-Beleg rekonstruierbar ist",
+      "dass historische fehlgeschlagene Tasks erfolgreich waren",
+      "Berechtigung zur ungeprüften Mutation des Task-Stores",
+      "dass die 981 Fälle durch PR #317 verursacht wurden"
+    ],
+    "implementation_context": {
+      "baseline": {
+        "actionable": 1051,
+        "decision_deferred": 1,
+        "direct_missing_outcomes": 102,
+        "integrity_error_max_utc": "2026-07-17T03:10:45Z",
+        "integrity_error_min_utc": "2026-06-28T13:18:45Z",
+        "integrity_errors": 956,
+        "invalid_evidence": 981,
+        "missing_max_utc": "2026-06-28T13:15:18Z",
+        "missing_min_utc": "2026-06-27T13:08:43Z",
+        "reconciliation_file_not_found": 25,
+        "total_attention": 2033
+      },
+      "live_release_id": "3631e2f04ad0-srcset9afdcc8219f3-locke6664d600b6c-contract1add9fdbb62b",
+      "trigger_merge_commit": "3631e2f04ad045ed02c598eb55b2f4bf4db19f0a",
+      "trigger_pr": 317
+    },
+    "source": "operator_live_readback",
+    "source_observation": "Nach Deployment von Grabowski PR #317 auf Commit 3631e2f04ad045ed02c598eb55b2f4bf4db19f0a zeigte ein vollständiger paginierter Task-Attention-Scan 2.033 Datensätze: 1.051 actionable, 1 decision_deferred und 981 invalid_evidence. Davon waren 956 ältere Outcome-Dateien mit ungültigem Feldschema und 25 im Reconciliation-Pfad fehlende Belege. Die Integritätsfehler stammen aus dem Zeitraum 28. Juni bis 17. Juli 2026; die direkt festgestellten fehlenden Dateien aus dem Zeitraum 27. bis 28. Juni 2026.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-f12d0378eff723d757defcb0",
+      "event_id": 812,
+      "event_created_at": "2026-07-20T02:53:04.823261Z",
+      "request_sha256": "50674a236b6ec5bded952d1e5eed427a1264c7b2532f8140e2586c5b517c912e",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator_live_readback",
+        "locator": "grabowski-live:runtime@3631e2f04ad045ed02c598eb55b2f4bf4db19f0a/task-attention-full-scan/2026-07-20T02:42:24Z",
+        "observed_at": "2026-07-20T02:42:24Z",
+        "sha256": "24fd0c4384e4ac86bafb723d6b1666d61e976a4eb49b6031004dda6188d2703f"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "sqlite",
+    "grabowski",
+    "runtime-deployment",
+    "audit",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Historische Task-Attention-Evidenz rekonstruieren oder explizit klassifizieren"
+}

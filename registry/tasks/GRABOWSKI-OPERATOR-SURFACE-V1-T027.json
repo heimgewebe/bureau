@@ -46,7 +46,63 @@
     "reason": "Pydantic/JSON Schema modeling was intentionally deferred from PR #111 to avoid widening the gate hardening patch.",
     "related_pr": "heimgewebe/grabowski#111",
     "renumbered_from": "GRABOWSKI-OPERATOR-SURFACE-V1-T014 during rebase because main already contains verified T014",
-    "source": "Grabowski PR #111 review follow-up"
+    "source": "Grabowski PR #111 review follow-up",
+    "implementation_status": "verified",
+    "verified_at": "2026-07-21T07:07:25Z",
+    "verification_note": "PR #341 introduced dependency-free machine-validated schema models for self-review, optional external-review and legacy Claude evidence, integrated the existing evidence loaders without changing required-versus-advisory gate semantics, preserved schema_version 1 compatibility, and was deployed from the exact merged main commit.",
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 341,
+      "reviewed_head": "3ffdf0e50741b533a2e97c6cd17723100e70e16d",
+      "merge_commit": "e5ec3f699499efcfd36d4b320fb9339988e18368",
+      "diff_sha256": "fb6a5cab701ae0484bfbfbda9ab6ea5edd31c37fb1716c2c439bf3da962adcfb",
+      "self_review_audit_sha256": "392bdd0477d72ad0dd0f6f4e61f1138e9e21bf335e9be65362f71f9e08086aae",
+      "validation": {
+        "focused_schema_tests": 9,
+        "existing_pr_review_gate_tests": 97,
+        "full_repository_tests": 2471,
+        "full_repository_skipped": 2,
+        "post_rebase_regression_tests": 106,
+        "github_ci": "validate Python 3.10/3.12 and CodeQL passed on reviewed head"
+      },
+      "deployment": {
+        "repo_head": "e5ec3f699499efcfd36d4b320fb9339988e18368",
+        "release_id": "e5ec3f699499-srcset03d8925ed698-locke6664d600b6c-contract2ada01660eb3",
+        "job": "grabowski-job-33beb1a89606",
+        "finalization_receipt_sha256": "30967ec6c8d73b650e2d8f18c49dd7d7cecfeb9dc8d87834920dc3790a01b51d",
+        "runtime_health": "healthy; deployment complete; integrity valid; audit valid and writable; kill switch false"
+      }
+    },
+    "validated_acceptance": {
+      "schema-models": "PASS: One dependency-free schema model layer covers self-review, external review and Claude evidence and emits Draft 2020-12 JSON Schema with strict top-level field boundaries.",
+      "loader-integration": "PASS: Required self-review validation is fail-closed; optional external and Claude structural failures remain advisory, preserving existing gate policy semantics.",
+      "migration-boundary": "PASS: schema_version 1 remains the compatibility boundary; deprecated diagnostic self-review fields remain structurally accepted without regaining policy authority.",
+      "tests": "PASS: 9 focused schema tests cover valid evidence, missing fields, primitive-type errors, unknown fields and stale head/diff binding; 97 existing gate tests and the 2471-test repository suite passed."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T027",
+          "source_ref": "github-pr:heimgewebe/grabowski#341@3ffdf0e50741b533a2e97c6cd17723100e70e16d:e5ec3f699499efcfd36d4b320fb9339988e18368",
+          "content_sha256": "fb6a5cab701ae0484bfbfbda9ab6ea5edd31c37fb1716c2c439bf3da962adcfb"
+        },
+        {
+          "kind": "job_finalization_receipt",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T027",
+          "source_ref": "grabowski-job:grabowski-job-33beb1a89606@e5ec3f699499efcfd36d4b320fb9339988e18368",
+          "content_sha256": "30967ec6c8d73b650e2d8f18c49dd7d7cecfeb9dc8d87834920dc3790a01b51d"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "3ae59bb336f6a9a22afbbd6258baf5227066d5f0811a1bbfac5d616fcf0d8d06",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   },
   "priority": {
     "lane": "later",
@@ -58,6 +114,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Model review evidence schemas"
 }

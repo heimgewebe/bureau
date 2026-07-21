@@ -3,7 +3,7 @@
   "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T003",
   "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
   "title": "Prepare Chronik local service activation gate",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 40
@@ -61,7 +61,89 @@
       "runtime_healthy"
     ],
     "service_activation_policy": "manual explicit approval before any systemctl/deploy/secret action",
-    "depends_on_note": "Dispatcher-enforced dependency is the top-level depends_on field."
+    "depends_on_note": "Dispatcher-enforced dependency is the top-level depends_on field.",
+    "implemented_at": "2026-07-19T23:32:16+02:00",
+    "verified_at": "2026-07-19T23:43:15+02:00",
+    "resolution_summary": "Chronik PR #233 established the explicit activation gate. Review follow-up PR #235 corrected the remaining phase ambiguity by separating immutable pre-approval evidence from post-activation runtime smokes, binding execution fail-closed to the approved evidence, pre-authorizing only the exact reviewed rollback, and requiring SHA-256 identities for non-secret artifacts while excluding secret-derived hashes. Both changes were documentation-and-test only; chronik.service remained not installed and inactive, with no listener on port 8788.",
+    "implementation": {
+      "repository": "heimgewebe/chronik",
+      "pull_request": 233,
+      "base_commit": "73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+      "reviewed_head": "f7f085967ecf55656aecb1ba52a8ba065fecfe24",
+      "merge_commit": "8a954eab4667336adea362c730834aff5b3f89fe",
+      "changed_files": [
+        "docs/runbook.md",
+        "tests/test_service_artifacts.py"
+      ],
+      "diff_sha256": "9d4c38c4172be58435c8a4b7f393096cc19a3715f0d21188a9c848562e3ef931",
+      "github_ci": "all observed checks passed; Claude workflow skipped by policy",
+      "role_contract": "PASS",
+      "focused_tests": "7 passed",
+      "full_local_tests": "357 passed, 1 existing deprecation warning",
+      "self_review": "PASS, exact-head and diff-SHA-bound"
+    },
+    "live_evidence": {
+      "service": {
+        "unit": "chronik.service",
+        "load_state": "not-found",
+        "active_state": "inactive",
+        "sub_state": "dead",
+        "restarts": 0
+      },
+      "port_8788_listener": "absent",
+      "service_action_performed": false,
+      "deployment_performed": false,
+      "fleet_mutation_performed": false,
+      "secret_handling_performed": false
+    },
+    "validated_acceptance": {
+      "activation-boundary": "PASS: systemctl enable/start/restart, install/deploy, fleet mutation and secret handling each require explicit approval.",
+      "smoke-and-rollback-plan": "PASS: immutable source, target, permission, non-secret artifact-hash and rollback-plan evidence are reviewed before approval; health/version and append/read smokes are explicitly post-activation verification after separately approved execution.",
+      "no-service-action": "PASS: chronik.service remained not-found/inactive with zero restarts and port 8788 had no listener; no deploy, fleet or secret action occurred."
+    },
+    "finalized_at": "2026-07-19T23:43:15+02:00",
+    "verification": {
+      "task_sha256": "96de9e90aa058778923e5c68d17382aa4d8bac9bcf8de71f98b6b74a73645072",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "review_followups": [
+      {
+        "kind": "review_fix",
+        "repository": "heimgewebe/chronik",
+        "pull_request": 235,
+        "base_commit": "a13ae15148bffa7bb8758316d6e8bd4f43beb18a",
+        "reviewed_head": "256a88ac827fcdb94f31c20dcd207cd63fc80b79",
+        "merge_commit": "63154c36fcd806bd2ac140f1ef287ea0c5fc914e",
+        "merged_at": "2026-07-20T04:05:48+02:00",
+        "diff_sha256": "4740b509d3845951788beffd2418ed6883b7229e373141c8b45e7459e072c770",
+        "changed_files": [
+          "docs/runbook.md",
+          "tests/test_service_artifacts.py"
+        ],
+        "findings_closed": [
+          "pre-approval and post-activation evidence were separated",
+          "rollback planning and rollback execution were made temporally explicit",
+          "receipts now bind non-secret artifact hashes and forbid secret-derived hashes",
+          "tests now validate section placement, phase order and negative pre-approval smoke claims"
+        ],
+        "validation": {
+          "python_compile": "PASS",
+          "role_contract": "PASS",
+          "focused_tests": "18 passed",
+          "full_local_tests": "373 passed, 1 existing deprecation warning",
+          "github_ci": "all observed checks passed",
+          "self_review": "PASS, exact-head and diff-SHA-bound"
+        },
+        "live_evidence": {
+          "service_load_state": "not-found",
+          "service_active_state": "inactive",
+          "service_sub_state": "dead",
+          "service_restarts": 0,
+          "port_8788_listener": "absent",
+          "runtime_effect_performed": false
+        }
+      }
+    ]
   },
   "depends_on": [
     "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T001"

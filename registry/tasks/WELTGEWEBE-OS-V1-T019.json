@@ -1,0 +1,130 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Alle produktiven Webungsaktionen sind commit- und routengenau inventarisiert: Gesprächsbeiträge, Anträge, Veto, Abstimmung, Knoten, Fäden, Garnrollen, Verankerungen, Beziehungen, Bearbeiten, Entfernen, Moderation und administrative Übergänge; Backend, Datenbank, UI und Verträge nennen dieselben Fähigkeiten.",
+      "id": "complete-action-inventory"
+    },
+    {
+      "assertion": "Eine kanonische Aktionsmatrix unterscheidet öffentlich unangemeldet, angemeldeter Gast, Weber und Admin pro konkreter Handlung; grobe Rollenprüfungen wie ein pauschales `require_write` entscheiden keine fachlich verschiedenen Aktionen mehr verdeckt.",
+      "id": "canonical-capability-matrix"
+    },
+    {
+      "assertion": "Angemeldete Gäste dürfen die freigegebenen Webungsaktionen einschließlich öffentlicher Gesprächsbeiträge und Garnrollen-Verankerung ausführen; anonyme Besucher bleiben auf ausdrücklich öffentliche Lesewege begrenzt.",
+      "id": "guest-weaving-rights"
+    },
+    {
+      "assertion": "Gäste dürfen eigene, grundsätzlich bearbeitbare Inhalte ändern oder entfernen; Bearbeitung fremder Inhalte und Übernahme fremder Autorenschaft oder Identität werden auf API-, Persistenz- und UI-Ebene fail-closed verhindert.",
+      "id": "ownership-bound-mutations"
+    },
+    {
+      "assertion": "Objektspezifische Regeln bleiben ausdrücklich erhalten oder werden bewusst geändert: insbesondere nicht bearbeitbare oder nicht löschbare Garnrollen, Autoren-Snapshots, Tombstones, Konfliktschutz, Idempotenz, Ratenbegrenzung und Admin-Moderation.",
+      "id": "object-specific-invariants"
+    },
+    {
+      "assertion": "Antragstellung, Gespräch, Veto, Abstimmung und Statusübergänge besitzen je Antragsphase eine explizite Gast-, Weber- und Adminregel; keine Berechtigung wird allein durch Wiederverwendung eines allgemeinen Schreibhelfers erweitert.",
+      "id": "governance-lifecycle-rights"
+    },
+    {
+      "assertion": "Die Berechtigungsschicht ist mit WELTGEWEBE-OS-V1-T018 koordiniert: Node- und Governance-Gespräche verwenden dieselbe ausdrückliche Schreib-, Autoren- und Moderationslogik, ohne dass die Datenmigration weitere Webungsrechte stillschweigend einführt.",
+      "id": "conversation-coordination"
+    },
+    {
+      "assertion": "Gelöschte Accounts verlieren dauerhaft Autoren- und Änderungsrechte; eine später neu angelegte Identität mit gleichem sichtbaren Namen oder externer Kennung erbt keine Rechte an alten Inhalten.",
+      "id": "deleted-account-entitlement"
+    },
+    {
+      "assertion": "Die Oberfläche zeigt verfügbare und gesperrte Aktionen verständlich, konsistent und tastaturbedienbar; Gast-Hinweise behaupten weder zu wenige noch zu viele Rechte.",
+      "id": "accessible-ui"
+    },
+    {
+      "assertion": "Vor Merge liegen vollständiger Diff, exakte Head- und Diffbindung, API-, PostgreSQL-, Web- und Browsertests, kontrastierende Reviews und grüne Pflichtchecks vor; nach Merge werden exakter Produktionscommit sowie erlaubte und verweigerte repräsentative Gastaktionen live zurückgelesen.",
+      "id": "proof-and-release"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Nutzerentscheidung vom 20. Juli 2026 legt die Zielrichtung fest: angemeldete Gäste dürfen mitreden und weitere Webungsaktionen einschließlich Garnrollen-Verankerung ausführen; fremde Inhalte dürfen sie nicht bearbeiten. Die Registrierung startet keine Umsetzung und ersetzt keine Live-Inventur.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den Rollen-, Governance-, API- und UI-Vertrag des Weltgewebes so vereinheitlichen, dass angemeldete Gäste die ausdrücklich vorgesehenen Webungsaktionen ausführen und eigene Inhalte verwalten können, während Bearbeitung oder Identitätsübernahme fremder Inhalte konsequent ausgeschlossen bleibt.",
+  "id": "WELTGEWEBE-OS-V1-T019",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "coordination": {
+      "implementation_order": "T019-Vertrag und gemeinsame Capability-Helfer vor T018-Berechtigungs-Cutover; Datenmodellvorbereitung kann parallel erfolgen.",
+      "related_task": "WELTGEWEBE-OS-V1-T018",
+      "relationship": "normative authorization prerequisite for conversation authorization slices"
+    },
+    "does_not_establish": [
+      "anonymous writing",
+      "foreign content editing",
+      "foreign identity assumption",
+      "moderation bypass",
+      "automatic implementation",
+      "automatic queue placement",
+      "completion of T018"
+    ],
+    "operator_intake": {
+      "candidate_id": "candidate-f921c95ed8a8630e2ba67bfa",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_id": 837,
+      "request_sha256": "c6533200c7b3d9a2e2ef931bdbc8e22d9d7f3fe39b16867d454efdbd48e805a5",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator_followup",
+        "locator": "chatgpt-project:weltgewebe:2026-07-20:t018-plan",
+        "observed_at": "2026-07-20T15:02:00+02:00",
+        "sha256": null
+      }
+    },
+    "reason": "Die aktuelle normative und technische Rollenlogik beschränkt viele Schreibwege pauschal auf Weber und Admin, während die bestätigte Produktregel angemeldeten Gästen bereits Webungsaktionen erlaubt. Der Konflikt muss vor oder gemeinsam mit den Berechtigungsteilen von T018 ausdrücklich aufgelöst werden.",
+    "registered_at": "2026-07-20",
+    "source": "operator_followup_from_t018_plan"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 19
+  },
+  "required_capabilities": [
+    "repository",
+    "authorization",
+    "governance",
+    "rust",
+    "postgresql",
+    "svelte",
+    "typescript",
+    "playwright",
+    "security",
+    "grabowski"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "note": "Vor Planung und Umsetzung müssen aktuelle Middleware, Routen, Rollen, Eigentumsregeln, Datenbankconstraints, UI-Gates und produktive Versionen live inventarisiert werden; RepoGround ist nur ergänzender Kontext.",
+    "skip_reason": "live_first_primary",
+    "task_profile": "repo_change"
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Gast-Webungsrechte normativ und technisch vereinheitlichen"
+}

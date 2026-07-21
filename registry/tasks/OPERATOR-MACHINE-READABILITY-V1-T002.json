@@ -69,6 +69,15 @@
       "observed_behavioral_conformance",
       "transport_root_cause",
       "future_runtime_safety"
-    ]
+    ],
+    "t017_followup_evidence": {
+      "observed_at": "2026-07-20T21:09:11.060273Z",
+      "source_task": "OPERATOR-MACHINE-READABILITY-V1-T017",
+      "observation": "After deploying a new Grabowski typed tool, the already-open ChatGPT session did not expose the new tool in its frozen function schema, while a fresh independent MCP client discovered the complete 155-tool runtime contract and executed the new review tool successfully. The connector snapshot was subsequently rebound and reported fresh/matched.",
+      "fresh_session_receipt_sha256": "037ab5a64fe76d1144089f60b4bdffacc579ba6799ba65633683c630d530a42e",
+      "runtime_release_id": "29abfc87a9a4-srcset38a78c585776-locke6664d600b6c-contract2ada01660eb3",
+      "runtime_tool_names_sha256": "f80a4cbd82ec894b4fe0f6256fe634f998334f535903b4bc6c4f673b1e864670",
+      "interpretation": "This is additional evidence for T002 drift/reconnection scope, not a failure of T017 fresh-session adoption and not a reason to create a duplicate task."
+    }
   }
 }

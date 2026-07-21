@@ -24,6 +24,11 @@ Harden the in-progress Leitstand execution-axis slice (`/bureau`, `/checkouts`) 
 6. `LOO-V1-T006` — Static mirror and GitHub Pages boundary.
 7. `LOO-V1-T007` — Execution snapshot producer runbook.
 8. `LOO-V1-T008` — Local and CI test runner compatibility.
+9. `LOO-V1-T009` — Canonical operator snapshot wrapper binding.
+
+## Nachtrag 2026-07-21
+
+`LOO-V1-T009` records a recovered follow-up to the completed initiative after live operation exposed that the host-local snapshot launcher was not itself versioned. The follow-up was implemented, merged, deployed, installed and live-verified before canonical registration. It is therefore added directly as `verified`; this historical completion record does not reopen the completed initiative or introduce new pending work.
 
 ## Nicht-Ziele
 

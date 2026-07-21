@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T002",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Reconcile Grabowski worktrees and transient units",
-  "state": "planned",
+  "state": "blocked",
   "priority": {
     "lane": "next",
     "rank": 50
@@ -57,11 +57,72 @@
   "metadata": {
     "registered_at": "2026-07-10T07:25:00+02:00",
     "source_audit": "heimgewebe/cabinet#103",
+    "blocking_condition": "Sixteen newly archived clean terminal checkouts remain inside the mandatory 24-hour cleanup grace. The complete batch becomes cleanup-eligible no earlier than 2026-07-21T04:24:53Z (2026-07-21 06:24:53 Europe/Berlin), subject to a fresh dry run and unchanged live coordination evidence. Additional dirty, active, retained or manager-owned checkouts still require individual classification.",
+    "progress_20260720": {
+      "recorded_at": "2026-07-20T04:25:00Z",
+      "grabowski_origin_main": "3631e2f04ad045ed02c598eb55b2f4bf4db19f0a",
+      "classification_basis": [
+        "fresh origin/main ancestry",
+        "clean Git status",
+        "zero live task bindings",
+        "zero live process bindings",
+        "zero live resource leases at archive time",
+        "durable recovery refs created before any future removal"
+      ],
+      "effects": {
+        "previous_safe_cleanup_count": 14,
+        "new_archive_count": 16,
+        "branch_preserving_archive_count": 1,
+        "retention_until_unix": 1787113200,
+        "archive_ids": [
+          "20260720T042030Z-72b141796bc6",
+          "20260720T042038Z-eece4b72b0f2",
+          "20260720T042056Z-ea4e4f6b0ee5",
+          "20260720T042108Z-4057719245a8",
+          "20260720T042118Z-553f373f60ad",
+          "20260720T042128Z-71bdf6b6cdb8",
+          "20260720T042146Z-1be9f9c90463",
+          "20260720T042207Z-354def304163",
+          "20260720T042219Z-3b9a67365505",
+          "20260720T042233Z-8f7b97a29207",
+          "20260720T042242Z-b2dd12c3432b",
+          "20260720T042257Z-01f4fd33f1cf",
+          "20260720T042423Z-ce03a5b140f1",
+          "20260720T042434Z-98db15a9c4f0",
+          "20260720T042443Z-ff36546672df",
+          "20260720T042453Z-485b2e654277"
+        ]
+      },
+      "mandatory_cleanup_grace": {
+        "required_seconds": 86400,
+        "first_archive_created_at": "2026-07-20T04:20:30Z",
+        "last_archive_created_at": "2026-07-20T04:24:53Z",
+        "all_archives_eligible_after": "2026-07-21T04:24:53Z",
+        "dry_run_readback": "fail-closed: age=302 required=86400"
+      },
+      "verification": {
+        "archive_manifests_checked": 16,
+        "archive_manifest_errors": 0,
+        "clean_checkout_readbacks": 16,
+        "recovery_ref_mismatches": 0,
+        "operator_owner_live_leases_after_archive": 0,
+        "runtime_healthy": true,
+        "deployment_integrity_valid": true,
+        "audit_chain_valid_and_writable": true,
+        "kill_switch_engaged": false,
+        "recovery_gate_ready": true
+      },
+      "does_not_establish": [
+        "physical removal of the sixteen newly archived checkouts",
+        "classification completion for every remaining dirty, active, retained or manager-owned checkout",
+        "final task verification"
+      ]
+    },
     "does_not_establish": [
       "merge_permission",
-      "runtime_correctness",
-      "cleanup_permission",
-      "automatic_shutdown_permission"
+      "runtime_correctness beyond the recorded live readbacks",
+      "cleanup permission before mandatory grace elapses",
+      "automatic shutdown permission"
     ]
   },
   "depends_on": []

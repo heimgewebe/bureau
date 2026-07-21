@@ -17,7 +17,7 @@
   ],
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T063",
   "title": "Make artifact transfer redaction total and self-contained",
-  "state": "planned",
+  "state": "verified",
   "goal": "Make artifact push and pull error handling total, bounded and redacted even when the operator module does not expose a private redaction helper, while preserving create-only destination and exact SHA-256 verification contracts.",
   "priority": {
     "lane": "next",
@@ -73,6 +73,133 @@
       "permission to bypass host registration",
       "permission to expose raw stderr",
       "permission to treat an unverified copy as delivered"
-    ]
+    ],
+    "implementation_status": "verified",
+    "implemented_at": "2026-07-19T16:47:09Z",
+    "deployed_at": "2026-07-20T16:52:12Z",
+    "verified_at": "2026-07-20T16:57:05.823436+00:00",
+    "verification_note": "PR #311 introduced total self-contained artifact redaction. Live verification then found and fixed two deeper boundary defects: PR #328 removed an empty create-only remote argv element, and PR #330 condensed remote Python tracebacks to the controlled final diagnostic. The final reviewed merge was deployed and passed exact push, remote stat, pull, local stat and induced-collision proof against heimberry.",
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_requests": [
+        {
+          "number": 311,
+          "reviewed_head": "a5aea8aa0cfba46c3b013d1bcd0cce6c197d9d4a",
+          "merge_commit": "eb827560d258f323e83541f12953ffad7ca555ad",
+          "diff_sha256": "fd596d913d73bfc3501ad8d928008b26113ee8b4893722262d311e7adf773e53",
+          "diff_bytes": 20687
+        },
+        {
+          "number": 328,
+          "reviewed_head": "83bef4c3f1743cd7bf9cb0cb992aaff395805d0b",
+          "merge_commit": "ef88b2ab09ebab1814e3b2d3371e413b0f1c250f",
+          "diff_sha256": "48bbf8436f66f972fee54b769d223269f19089a29b4b1c3897a80448d69df3fa",
+          "self_review_sha256": "3bb3cdb4c2aeaf7015febcbf0b269ff168338d5c1091f6c4d71fbb4d138186b1"
+        },
+        {
+          "number": 330,
+          "reviewed_head": "720a92f788ace48c1477393aea1e9c5402ef82cb",
+          "merge_commit": "fbecef8e33c4d83ccd483fc8ee4cbf1084ed8398",
+          "diff_sha256": "a3748ee9b00e86d2441d9e3b87d1aeab15bf3b01f827f4630bde8693e352fdab",
+          "diff_bytes": 4042,
+          "self_review_sha256": "af9f95df1135767842a767784063e83b42c59b35871ae5a428472e6e2f544f75"
+        }
+      ],
+      "validation": {
+        "pr328_full_task_id": "fa4a6c5a7f31494b8e43da33",
+        "pr328_full_tests": 2423,
+        "pr330_focused_task_id": "31c82bbb362d464fb851cdf8",
+        "pr330_focused_tests": 18,
+        "pr330_full_task_id": "b6de18a6efda4e3da6dcdb2e",
+        "pr330_full_tests": 2425,
+        "expected_skips": 2,
+        "ci": "validate 3.10/3.12 and CodeQL passed on both final reviewed heads",
+        "access_policy": "pass",
+        "operator_context": "current",
+        "runtime_lock": "pass",
+        "secret_scan": "pass"
+      },
+      "deployment": {
+        "release_id": "fbecef8e33c4-srcsete0365b138622-locke6664d600b6c-contract1add9fdbb62b",
+        "job_unit": "grabowski-job-4209cb4deee5",
+        "source_identity_sha256": "30ccebaa4b4b68473548b98934287fd03e2dcc040dbe45753a00007d4ccf435d",
+        "finalization_receipt_sha256": "95b3bd60925ba3b910aff4f9e2054b134cd2a1f27559c724f0ee9a7cf41437f2",
+        "payload_sha256": "4c8e5caa240d96ccd09e337006e0df948ced55fb6eb80dfe7ae948316f6d0f37"
+      },
+      "live_health": {
+        "healthy": true,
+        "repo_head": "fbecef8e33c4d83ccd483fc8ee4cbf1084ed8398",
+        "deployment_integrity_valid": true,
+        "audit_valid": true,
+        "audit_writable": true,
+        "audit_state": "ready",
+        "kill_switch_engaged": false
+      },
+      "live_artifact_proof": {
+        "host": "heimberry",
+        "size": 55,
+        "sha256": "32c7801b6d00c42681b59b43a4bbfc4af14a4817c24d351a250e043d8673fe6d",
+        "push": "pass",
+        "remote_stat": "pass",
+        "pull": "pass",
+        "local_stat": "pass",
+        "induced_failure": "Remote artifact operation failed: destination already exists",
+        "traceback_exposed": false,
+        "command_output_exposed": false,
+        "evidence_sha256": "1c7c11c5132290b705b88bd6e43812f4fbaf7007cc9cb5a5d8f8322073fe0db4"
+      }
+    },
+    "validated_acceptance": {
+      "explicit-redactor": "PASS: Artifact errors use the self-contained bounded redactor with an optional injected callable and a generic fallback; no optional private operator attribute is dereferenced.",
+      "total-errors": "PASS: Local validation, SSH/SCP failures, source drift, collisions and hash mismatches are bounded and secret-redacted. The final live collision exposes only destination already exists, without traceback or command output.",
+      "integrity-unchanged": "PASS: The deployed path still requires a registered SSH host, create-only or exact replacement preconditions, expected source SHA-256 and independent destination SHA-256 verification.",
+      "tests": "PASS: The final repository passed 18 focused artifact tests and 2,425 full tests with two expected skips, including missing helpers, secret-bearing output, missing host, transfer failures, collision, mismatch, exact publish and traceback condensation.",
+      "live-proof": "PASS: Exact merge fbecef8e was deployed. A 55-byte artifact pushed to heimberry and pulled back with identical SHA-256 32c7801b..., while a repeated create-only push returned only the bounded redacted collision diagnostic."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T063",
+          "source_ref": "github-pr:heimgewebe/grabowski#311@a5aea8aa0cfba46c3b013d1bcd0cce6c197d9d4a:eb827560d258f323e83541f12953ffad7ca555ad",
+          "content_sha256": "fd596d913d73bfc3501ad8d928008b26113ee8b4893722262d311e7adf773e53"
+        },
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T063",
+          "source_ref": "github-pr:heimgewebe/grabowski#328@83bef4c3f1743cd7bf9cb0cb992aaff395805d0b:ef88b2ab09ebab1814e3b2d3371e413b0f1c250f",
+          "content_sha256": "48bbf8436f66f972fee54b769d223269f19089a29b4b1c3897a80448d69df3fa"
+        },
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T063",
+          "source_ref": "github-pr:heimgewebe/grabowski#330@720a92f788ace48c1477393aea1e9c5402ef82cb:fbecef8e33c4d83ccd483fc8ee4cbf1084ed8398",
+          "content_sha256": "a3748ee9b00e86d2441d9e3b87d1aeab15bf3b01f827f4630bde8693e352fdab"
+        },
+        {
+          "kind": "deployment_receipt",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T063",
+          "source_ref": "grabowski-job:grabowski-job-4209cb4deee5@fbecef8e33c4d83ccd483fc8ee4cbf1084ed8398",
+          "content_sha256": "95b3bd60925ba3b910aff4f9e2054b134cd2a1f27559c724f0ee9a7cf41437f2"
+        },
+        {
+          "kind": "live_artifact_readback",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T063",
+          "source_ref": "artifact-push-pull:heimberry@fbecef8e33c4d83ccd483fc8ee4cbf1084ed8398:32c7801b6d00c42681b59b43a4bbfc4af14a4817c24d351a250e043d8673fe6d",
+          "content_sha256": "1c7c11c5132290b705b88bd6e43812f4fbaf7007cc9cb5a5d8f8322073fe0db4"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "889737bd5c9a2f0624ab96191077d130b52906df47919720783b2b638289fbf9",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

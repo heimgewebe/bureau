@@ -1,0 +1,152 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der bestehende Governance-Gesprächspfad und der neue öffentliche Knotengesprächspfad sind vollständig inventarisiert: Tabellen, API-Routen, Berechtigungen, UI-Einstiege, Ereignisse, Datenmengen und aktive Schreiber sind commit- und schema-genau dokumentiert.",
+      "id": "current-path-inventory"
+    },
+    {
+      "assertion": "Ein einziges kanonisches Conversation- und Message-Modell deckt Knoten- und Governance-Gespräche über ausdrücklich typisierte Gesprächsarten ab; eine zweite dauerhafte Nachrichtenarchitektur oder implizite Bedeutungsvermischung bleibt ausgeschlossen.",
+      "id": "canonical-target-model"
+    },
+    {
+      "assertion": "Für historische Governance-Beiträge liegt ein reproduzierbarer, idempotenter und rückrollbarer Migrationsplan mit Dry-Run, Mengen- und Hashabgleich, Autoren- und Zeitstempelerhalt sowie belegter Behandlung von Löschungen und verwaisten Referenzen vor.",
+      "id": "lossless-migration-plan"
+    },
+    {
+      "assertion": "Der Cutover verhindert doppelte oder auseinanderlaufende Schreibpfade: Kompatibilitätslesen, Schreibsperre, Migration und Umschaltung besitzen eine klare Reihenfolge, und jeder Zwischenzustand ist fail-closed sowie wiederanlaufbar.",
+      "id": "single-write-cutover"
+    },
+    {
+      "assertion": "Lese-, Schreib-, Autoren- und Moderationsrechte werden für jede Gesprächsart ausdrücklich festgelegt und durch API-, PostgreSQL- und UI-Tests belegt; die Konvergenz erweitert keine Rechte stillschweigend.",
+      "id": "authorization-parity"
+    },
+    {
+      "assertion": "Outbox-Ereignisse, Projektionen, Cache-Invalidierung und Pagination bleiben datensparsam, idempotent und typgebunden; die Migration erzeugt keinen unbegrenzten Ereignisschub und invalidiert die Kartenprojektion nicht pro Beitrag.",
+      "id": "event-and-projection-parity"
+    },
+    {
+      "assertion": "Vor Merge liegen vollständiger Diff, exakte Head- und Diffbindung, Migrations- und Rückrolltests, unabhängiger Review und grüne Pflichtchecks vor; danach werden exakter Produktionscommit, Bestandszählungen, repräsentative Live-Lesewege und das Entfernen des alten Schreibpfads zurückgelesen.",
+      "id": "evidence-bound-release"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Registrierung dieser Folgeaufgabe autorisiert keine sofortige Migration. Eine Umsetzung bleibt an erneute Live-Inventur, isolierten Worktree, vollständigen Migrationsplan, Review, Tests, CI und Produktionsreadback gebunden.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den bestehenden Governance-Gesprächspfad kontrolliert in das kanonische Conversation- und Message-Modell der öffentlichen Knotengespräche überführen, ohne historische Beiträge, Autorenschaft, Zeitstempel oder Berechtigungsgrenzen zu verlieren und ohne zwei dauerhafte Schreibwahrheiten bestehen zu lassen.",
+  "id": "WELTGEWEBE-OS-V1-T018",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "private messaging",
+      "attachments",
+      "audio or video",
+      "federated conversation delivery",
+      "automatic migration approval",
+      "permission to delete historical governance data",
+      "permission to run an unbounded production backfill",
+      "completion of conversation-model convergence"
+    ],
+    "prerequisite_status": "WELTGEWEBE-OS-V1-T017 technisch erfüllt und als verifizierter Registry-Closeout separat veröffentlicht; daher kein blockierender depends_on-Eintrag erforderlich.",
+    "reason": "PR #1501 lässt den bestehenden Governance-Gesprächspfad bewusst kompatibel bestehen und schließt dessen ungeprüfte automatische Migration aus. Die Folgearbeit soll Konvergenz erst nach vollständiger Bestands- und Migrationsprüfung herstellen.",
+    "registered_at": "2026-07-20",
+    "source": "operator_followup_from_weltgewebe_os_v1_t017",
+    "source_diff_sha256": "2394ce1268ad4ae188591018876cffc154c81eb0a695343363bd307f0903f7cb",
+    "source_head": "06e8aab468eb3c1ae3fff079912389f5a4f01e84",
+    "source_merge_commit": "2b2feaf11a1a6da0dc573764e4fe7c14a358685b",
+    "source_pr": "heimgewebe/weltgewebe#1501",
+    "source_task": "WELTGEWEBE-OS-V1-T017",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-ccf23238fe60b936a0d5d04f",
+      "event_id": 835,
+      "event_created_at": "2026-07-20T11:48:49.133097Z",
+      "request_sha256": "bb2510ed42872a4a239aebf878a343d82d5060be4e7f26413ed59bf9651c6ebe",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator_followup",
+        "locator": "chatgpt-project:weltgewebe:2026-07-20:node-conversations-closeout",
+        "observed_at": "2026-07-20T10:12:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "implementation_plan": {
+      "status": "reviewed",
+      "repository": "heimgewebe/weltgewebe",
+      "path": "docs/reports/weltgewebe-os-v1-t018-conversation-convergence-plan.md",
+      "pull_request": 1510,
+      "source_head": "3af1cbe06c343a6a5a4a5d103f113e6e629819bd",
+      "merge_commit": "de8ec3da449d8fff2f0495e9c685eebb3c0dc061",
+      "plan_sha256": "680a44fa3507f4191fbe32b0068b3bf8a77e6979739ea7d88d5c4b07d43870a9",
+      "github_diff_sha256": "7c930ca4a55f07a3ae2f5dee05264f7a9417db4dea42d66b548fa77cf64c006b",
+      "review": {
+        "risk_class": "R1",
+        "reviewer": "GPT-5.6 Thinking / Grabowski Controller",
+        "axis": "architecture",
+        "verdict": "PASS",
+        "report_sha256": "a9616995f9bdfa7ec4e52f4ad14a32b5bb1184a4a9aa73fd41fa002215c712d9"
+      },
+      "production_inventory": {
+        "observed_at": "2026-07-20",
+        "runtime_commit": "3f4d16a3b695530cb4ffbd7184cbf5bf8e94d675",
+        "governance_proposals": 0,
+        "governance_messages": 0,
+        "domain_conversations": 3,
+        "domain_messages": 2,
+        "orphan_governance_authors": 0
+      },
+      "does_not_establish": [
+        "task readiness",
+        "queue placement",
+        "migration approval",
+        "production mutation"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 18
+  },
+  "required_capabilities": [
+    "repository",
+    "postgresql",
+    "database-migrations",
+    "rust",
+    "svelte",
+    "typescript",
+    "playwright",
+    "data-integrity",
+    "grabowski"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "note": "Vor Planung und Umsetzung müssen aktuelle Tabellen, Routen, Datenmengen, Schreiber, Migrationsstände und Produktionsversionen live geprüft werden; RepoGround liefert nur ergänzenden Kontext.",
+    "skip_reason": "live_first_primary",
+    "task_profile": "repo_change"
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Governance- und Knotengespräche kontrolliert konvergieren"
+}

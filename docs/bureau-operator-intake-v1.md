@@ -1,6 +1,6 @@
 # Bureau operator-native intake v1
 
-Stand: 2026-07-18
+Stand: 2026-07-20
 
 ## Rolle und Zweck
 
@@ -8,7 +8,7 @@ ChatGPT über Grabowski ist der ausführende Operator. Der Nutzer bleibt Beobach
 
 Der Domänenkern liegt ausschließlich in `bureau.operator_intake`. CLI und künftige typisierte Grabowski-Werkzeuge sind dünne Adapter. Es entsteht keine zweite Task-, Queue-, Claim-, PR- oder Approval-Wahrheit.
 
-## Vier Operationen
+## Fünf Operationen
 
 ### 1. `operator-candidate-record`
 
@@ -31,11 +31,14 @@ Die Aufnahme begründet keine Registry-, Queue-, Readiness-, Claim- oder Dispatc
 Die Bewertung ist read-only und liefert:
 
 - Source-Freshness und Katalogvalidierung;
-- exakte Duplikatbefunde über Kandidaten-ID, Source-Digest oder vorhandene Task-ID;
+- exakte Duplikatbefunde nur über dieselbe Kandidaten-ID oder eine explizit identische Task-ID;
+- höchstens 20 gemeinsame Source-Digests als separate, ausschließlich beratende `source_relationships` mit Gesamtzahl und Trunkierungsindikator;
 - höchstens fünf deterministische Ähnlichkeitshinweise;
 - Zielinitiative, vorgeschlagene Claims, Risiko- und Approval-Verträge;
 - fehlende Felder;
 - eine Entscheidung `promote`, `merge`, `refine`, `defer` oder `drop`.
+
+Ein gemeinsamer Source-Digest begründet allein keine Identitätsgleichheit. Kandidaten aus demselben Review-Artefakt bleiben unabhängig vorschlagsfähig, wenn Repository, gewünschtes Ergebnis oder explizite Task-Bindung abweichen. Idempotente Wiederholungen werden bereits bei der Aufnahme über Kandidaten-ID, Idempotenzschlüssel und Request-Hash abgefangen.
 
 Ähnlichkeit ist ausschließlich beratend. Sie darf nie automatisch mergen, schließen, unterdrücken oder Registry-Wahrheit verändern.
 
@@ -56,7 +59,13 @@ Die Zieldatei muss neu sein. Initiative, Abhängigkeiten, Claims, Capabilities u
 
 Ein Vorschlag verändert weder Registry noch Queue.
 
-### 4. `operator-task-publish`
+### 4. `operator-task-review`
+
+Das Review bindet einen expliziten Operatornamen an den exakten `proposal_sha256`. Es akzeptiert nur einen integren, noch ausstehenden Vorschlag ohne ungelöste Felder. Die Plan-Datei wird über einen atomaren Compare-and-Swap im selben Verzeichnis ersetzt; eine zwischenzeitliche Änderung wird erkannt und ohne Überschreiben fremder Bytes abgebrochen.
+
+Ein identischer Wiederholungsaufruf liefert den vorhandenen Reviewzustand ohne neuen Effekt. Ein anderer Reviewer, ein anderer Proposal-Hash, Symlinks oder unklare Readbacks scheitern mit stabilen Fehlercodes. Das Review erzeugt die hashgebundene `reviewed_plan`-Approval-Evidenz, verändert aber weder Registry noch Queue und veröffentlicht nichts.
+
+### 5. `operator-task-publish`
 
 Ohne `--apply` ist der Aufruf eine wirkungsfreie Vorschau. Sie prüft Planintegrität, Reviewbindung, Approval, Registry- und Kandidatendrift, Task-Schema und ungelöste Felder. Sie liefert genau zwei benötigte Ressourcen:
 
@@ -116,6 +125,15 @@ bureau --root /path/to/clean/bureau --json operator-task-propose \
   --task-json task.json \
   --publishing-task-id OPERATOR-MACHINE-READABILITY-V1-T017 \
   --write-plan proposal.json
+```
+
+Hashgebundenes Operator-Review:
+
+```bash
+bureau --json operator-task-review \
+  --plan proposal.json \
+  --reviewer "ChatGPT through Grabowski" \
+  --proposal-sha256 <proposal_sha256>
 ```
 
 Wirkungsfreie Veröffentlichungsvorschau:

@@ -8,7 +8,7 @@
     "lane": "later",
     "rank": 420
   },
-  "goal": "Run a bounded nightly cycle that observes repository and runtime health, quick validation, RepoBrief freshness, task supply and recurring friction, then produces a source-bound morning digest without mutating repositories or creating tasks automatically.",
+  "goal": "Run a bounded nightly cycle that observes repository and runtime health, quick validation, RepoGround freshness, task supply, recurring friction and the source-bound Grabowski audit projection, then produces a deduplicated morning digest without mutating repositories or creating tasks automatically.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -74,7 +74,11 @@
     },
     {
       "id": "observation-set",
-      "assertion": "The digest covers source commit and dirty state, quick validation receipt, open PR and CI state where available, RepoBrief freshness, failed services or tasks, recovery-gate state, ready-task supply and recurring friction classifications."
+      "assertion": "The digest covers source commit and dirty state, quick validation receipt, open PR and CI state where available, RepoGround freshness, failed services or tasks, recovery-gate state, ready-task supply, recurring friction classifications, execution-governor evidence and fixed-window audit-projection findings."
+    },
+    {
+      "id": "audit-projection-boundary",
+      "assertion": "The cycle consumes grabowski_audit_projection only as a derived read-only trend source and still reads current runtime health, task state, live leases, friction closeouts and execution-governor outcomes from their authoritative surfaces; projection candidates remain proposal-only."
     },
     {
       "id": "no-mutation",
@@ -82,11 +86,11 @@
     },
     {
       "id": "source-bound-digest",
-      "assertion": "Every finding carries source, timestamp, freshness and confidence; unknown or unavailable probes remain explicit instead of becoming green."
+      "assertion": "Every finding carries source identity, timestamp, freshness, confidence and the relevant source or findings SHA-256; unknown or unavailable probes remain explicit instead of becoming green."
     },
     {
       "id": "noise-control",
-      "assertion": "Unchanged findings are deduplicated, severity and recurrence thresholds are defined, and the morning digest remains bounded and operator-readable."
+      "assertion": "Unchanged audit and diagnostic findings are deduplicated by findings SHA-256; the snapshot SHA-256 remains the exact provenance identity, severity and recurrence thresholds are defined, and the morning digest remains bounded and operator-readable."
     },
     {
       "id": "failure-fallback",
@@ -124,12 +128,33 @@
         "verification authority",
         "safe mutation of terminal historical tasks"
       ]
+    },
+    "audit_projection_contract": {
+      "producer_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T077",
+      "tool": "grabowski_audit_projection",
+      "required_companion_reads": [
+        "grabowski_runtime_health",
+        "grabowski_task_list",
+        "grabowski_resource_list",
+        "grabowski_friction_summary",
+        "grabowski_execution_governor_summary"
+      ],
+      "authority": "derived_read_only_projection",
+      "does_not_establish": [
+        "current lease truth",
+        "current friction resolution",
+        "automatic task creation",
+        "live routing promotion"
+      ],
+      "dedupe_key": "findings_sha256",
+      "source_identity_key": "source_binding.snapshot_sha256"
     }
   },
   "depends_on": [
     "OPERATOR-INTEGRATION-LOOP-V1-T002",
     "OPERATOR-INTEGRATION-LOOP-V1-T003",
     "OPERATOR-INTEGRATION-LOOP-V1-T004",
-    "OPERATOR-INTEGRATION-LOOP-V1-T005"
+    "OPERATOR-INTEGRATION-LOOP-V1-T005",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T077"
   ]
 }

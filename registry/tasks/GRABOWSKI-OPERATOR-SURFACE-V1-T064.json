@@ -17,7 +17,7 @@
   ],
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T064",
   "title": "Preserve literal shell payloads across durable dispatch",
-  "state": "planned",
+  "state": "verified",
   "goal": "Preserve the exact argv and shell-script bytes supplied to durable task dispatch so shell variables, heredocs and foreign template syntax are evaluated only by the intended runtime, never prematurely by the connector or dispatch serialization layer.",
   "priority": {
     "lane": "next",
@@ -76,6 +76,109 @@
       "permission to accept arbitrary template substitution",
       "permission to weaken shell-composition routing",
       "that all earlier task receipts are affected"
-    ]
+    ],
+    "implementation_status": "verified",
+    "verified_at": "2026-07-20T11:33:25.479880Z",
+    "verification_note": "PR #323 fixed premature systemd environment expansion but its first mechanism was incompatible with productive systemd 249. PR #324 replaced it with reversible dollar escaping only in the systemd transport argv, preserving accepted/stored argv and digest. The exact merged hotfix was deployed and both persistent-task and durable-job probes preserved shell variables, command substitution, GitHub template syntax, heredoc syntax and dollar literals until the intended shell.",
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_requests": [
+        {
+          "number": 323,
+          "reviewed_head": "0e233a1ed85454308305b9c774fb9f21f754685f",
+          "merge_commit": "a1949716cdf06eedc448ff8ef085053f790685c5",
+          "diff_sha256": "1ce540bbefafb3c431dc24c65a85ce736417a7ca5e24bd0cf04efbf6c4a6040f"
+        },
+        {
+          "number": 324,
+          "reviewed_head": "cab19997ddfc5d925cee3fcf4e132ba4f10d2c07",
+          "merge_commit": "224e5b3c5e04c8172f550fd20c937f3a7692164b",
+          "diff_sha256": "0a211c71c49b4940261ed1343fea631d071f9dfb3763eed0e60e4caefd61da13",
+          "self_review_sha256": "fa64446826cc49a6adeefab1fe8067034c30e7f7b0333e226c8c1d32710d8b88"
+        }
+      ],
+      "validation": {
+        "affected_tests": 223,
+        "ci": "GitHub validate Python 3.10/3.12 and CodeQL passed on the final reviewed hotfix head",
+        "productive_systemd_major": 249,
+        "failed_pre_hotfix_live_task_id": "eeda0feffbfb40129f2730c6"
+      },
+      "deployment": {
+        "merge_commit": "224e5b3c5e04c8172f550fd20c937f3a7692164b",
+        "release_id": "224e5b3c5e04-srcset2a93a899bd5a-locke6664d600b6c-contract1add9fdbb62b"
+      },
+      "live_proof": {
+        "persistent_task_id": "7eec268929884a00960578be",
+        "persistent_task_argv_sha256": "c28fd4db0eae3aa41f7bd208eca7b6334966fcf8ee853e515e67413de08812e5",
+        "persistent_task_receipt_sha256": "c87279afebb97e9a603d0b94919dd2b48e3598f21f5e5d5f8cfd3a0836cfa80d",
+        "durable_job": "grabowski-job-8977795735f3",
+        "durable_job_argv_sha256": "c46bd5ca94b12dc35455062ade2e6e7d19d1aacb3ae32b9af0ffc2926bfd73d1",
+        "durable_job_finalization_sha256": "736a7a614a49cf2e2e67e82bf4971aa9135f1e005e310d29d849916a59e4a68f",
+        "durable_job_status": "succeeded",
+        "observed_output": [
+          "expanded=alpha|beta",
+          "literal=$HOME|$(uname)|${{ github.sha }}|<<EOF|$$"
+        ],
+        "output_preimage_sha256": "5abc52fb2f70e52cfd4bea2b8c6bc47a16570f323c9a0bd17668d2a7a35a4de2"
+      },
+      "operator_obligation": {
+        "id": "goo-grabowski-t064-literal-dispatch-20260720",
+        "outcome": "completed",
+        "record_sha256": "cb030a5f96bb668ce2754845db595ac71f4a49e09dc952105e031e0928ed40f5"
+      }
+    },
+    "validated_acceptance": {
+      "byte-preserving-path": "PASS: Persistent task lifecycle receipt preserves request argv SHA-256 c28fd4db...; durable job metadata/finalization preserve argv SHA-256 c46bd5ca... and final status succeeded.",
+      "no-implicit-expansion": "PASS: Live output retained $HOME, $(uname), ${{ github.sha }}, <<EOF and $$ literally while ${cluster}/${expected} expanded only inside the intended shell to alpha/beta.",
+      "typed-placeholders-only": "PASS: Head/diff-bound PR #324 self-review found no parser, allowlist or typed-placeholder authority broadening.",
+      "security-boundary": "PASS: The final fix only reversibly escapes dollar signs in systemd transport argv; canonical accepted/stored argv and digest remain unchanged and no shell/environment/privilege authority was broadened.",
+      "tests": "PASS: 223 affected tests plus focused systemd-249 compatibility checks passed; GitHub validate 3.10/3.12 and CodeQL passed on the final reviewed head.",
+      "live-proof": "PASS: Exact merge 224e5b3c was deployed. Persistent task 7eec268... completed successfully and durable job grabowski-job-8977795735f3 finalized succeeded with the expected literal roundtrip."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T064",
+          "source_ref": "github-pr:heimgewebe/grabowski#323@0e233a1ed85454308305b9c774fb9f21f754685f:a1949716cdf06eedc448ff8ef085053f790685c5",
+          "content_sha256": "1ce540bbefafb3c431dc24c65a85ce736417a7ca5e24bd0cf04efbf6c4a6040f"
+        },
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T064",
+          "source_ref": "github-pr:heimgewebe/grabowski#324@cab19997ddfc5d925cee3fcf4e132ba4f10d2c07:224e5b3c5e04c8172f550fd20c937f3a7692164b",
+          "content_sha256": "0a211c71c49b4940261ed1343fea631d071f9dfb3763eed0e60e4caefd61da13"
+        },
+        {
+          "kind": "task_lifecycle_receipt",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T064",
+          "source_ref": "grabowski-task:7eec268929884a00960578be@c28fd4db0eae3aa41f7bd208eca7b6334966fcf8ee853e515e67413de08812e5",
+          "content_sha256": "c87279afebb97e9a603d0b94919dd2b48e3598f21f5e5d5f8cfd3a0836cfa80d"
+        },
+        {
+          "kind": "job_finalization_receipt",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T064",
+          "source_ref": "grabowski-job:grabowski-job-8977795735f3@224e5b3c5e04c8172f550fd20c937f3a7692164b",
+          "content_sha256": "736a7a614a49cf2e2e67e82bf4971aa9135f1e005e310d29d849916a59e4a68f"
+        },
+        {
+          "kind": "operator_obligation",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T064",
+          "source_ref": "operator-obligation:goo-grabowski-t064-literal-dispatch-20260720",
+          "content_sha256": "cb030a5f96bb668ce2754845db595ac71f4a49e09dc952105e031e0928ed40f5"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "141a4719a8348414054414afb28b61f0cacc35a57f7157cf2b7d73c86f6ae739",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

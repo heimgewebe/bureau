@@ -3,9 +3,9 @@
   "id": "REPOGROUND-AGENT-UTILITY-V1-T002",
   "initiative": "REPOGROUND-AGENT-UTILITY-V1",
   "title": "Phase 1: Bestehende Kontextflächen dünn komponieren",
-  "state": "blocked",
+  "state": "verified",
   "priority": {
-    "lane": "later",
+    "lane": "now",
     "rank": 1
   },
   "goal": "Vorhandene Agent-Impact-, Query-Kontext-, PR-Delta-, Entry-, Symbol-, Call-Graph-, Citation- und Live-Evidenzflächen zu einem kompakten aufgabenbezogenen Grabowski-Kontext zusammenstellen, ohne neue Grundvertragsschicht.",
@@ -62,7 +62,61 @@
     "does_not_establish": [
       "measured worldgewebe utility",
       "default routing authority"
-    ]
+    ],
+    "verification": {
+      "verified_at": "2026-07-21T09:30:37+02:00",
+      "task_sha256": "acdff2990391c9435f5fc8e3e1ff548ad738d6881758989c0c9aa7258dc255bb",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+      "implementation": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 331,
+        "feature_commit": "cdc2c67802a707059c5587a3620ce834c8c72e47",
+        "merge_commit": "4365f66b97a3a64258bd0f83383c3a21da05fd85",
+        "hardening_pull_requests": [
+          334,
+          338
+        ],
+        "hardening_feature_commits": [
+          "5e86dfc0fba3b2ce5a83c60cb9b0a91ba3221e34",
+          "dec21a3e71d26276318c956aca5fdff4a39d0d48"
+        ],
+        "hardening_merge_commits": [
+          "8384406bf653b7c5a3ac7b850a045ba010885e00",
+          "9001d8a1ca6336b0175d3e26beaca32c25703148"
+        ]
+      },
+      "runtime": {
+        "grabowski_commit": "e5ec3f699499efcfd36d4b320fb9339988e18368",
+        "contains_final_hardening_merge": true,
+        "deployment_integrity": "valid",
+        "audit_chain": "valid"
+      },
+      "tests": {
+        "implementation_validate_workflow": "success",
+        "implementation_full_suite": "2440 passed; 2 skipped; 668 subtests passed",
+        "hardening_334_targeted": "87 passed; 8 subtests passed",
+        "hardening_334_full": "2444 passed; 2 skipped; 668 subtests passed",
+        "hardening_338_targeted": "71 passed; 8 subtests passed",
+        "hardening_338_full": "2464 passed; 2 skipped; 668 subtests passed",
+        "hardening_334_required_checks": "all observed required checks passed",
+        "hardening_338_required_checks": "all observed required checks passed"
+      },
+      "acceptance_proof": {
+        "reuse": "PR #331 adds read-only repoground_context_compose by composing existing RepoGround Agent Impact, query, symbol, call-graph, citation, live-range, entry-manifest and PR-delta surfaces rather than introducing a foundational data contract.",
+        "inputs": "PR #331 binds exact base/target revisions and git_tree_delta_v1 SHA-256, supports expected diff SHA fail-closed binding and separates dirty overlay from revision diff.",
+        "outputs": "PR #331 emits direct changes, affected evidence, tests/gates, rules, gaps, stop criteria and retrieval-lane accounting; PR #338 exposes lane order, priorities, minimums, policy-limited lanes and budget-exhausted lanes.",
+        "determinism": "PR #331 establishes exact revision/diff binding and dirty-overlay separation; PR #338 centralizes deterministic lane priority, caps, minimum semantic coverage and exact incremental byte accounting.",
+        "budget": "PR #334 enforces a deterministic compactness target of at most two thirds of the general context-pack size; its representative live hardening smoke reported composed/general ratio 0.655394 against target <= 0.666667. PR #338 prevents semantic lane starvation under tight budgets.",
+        "negative_semantics": "PR #331 explicitly denies truth, completeness, patch-correctness, test-sufficiency, merge-readiness and runtime-behavior claims; both hardening PRs preserve those semantics."
+      },
+      "non_claims": [
+        "a compact context does not prove semantic relevance",
+        "passing tests do not prove every future repository change is covered",
+        "runtime deployment identity does not prove every future request succeeds",
+        "T002 verification does not satisfy the T003 measured Weltgewebe utility gate",
+        "T002 verification does not authorize default RepoGround routing"
+      ]
+    }
   },
   "depends_on": [
     "REPOGROUND-AGENT-UTILITY-V1-T001"

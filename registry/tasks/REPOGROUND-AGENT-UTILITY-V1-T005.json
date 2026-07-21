@@ -1,0 +1,125 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein versionierter Receipt-Vertrag bindet jedes beobachtete Zugriffsereignis an genau eine Aufgabenidentität, einen Repository-Commit, eine Artefaktrolle und eine unveränderliche Artefaktidentität, ohne Artefaktinhalt zu speichern.",
+      "evidence_type": "object",
+      "id": "receipt-contract",
+      "verifier": "Vertrags-, Schema- und Determinismustests"
+    },
+    {
+      "assertion": "Nur Receipts aus ausdrücklich vertrauenswürdigen Agent-Wrappern oder Tool-Gateways können beobachteten Zugriff belegen; Antworttext und selbst verfasste Deklarationen können diese Evidenz nicht erzeugen.",
+      "evidence_type": "object",
+      "id": "trusted-source-boundary",
+      "verifier": "Negative Herkunfts- und Fälschungstests"
+    },
+    {
+      "assertion": "Die Vergleichsschicht unterscheidet deterministisch declared-only, observed-only, declared-and-observed und unavailable und erhält alle bestehenden does_not_establish-Grenzen.",
+      "evidence_type": "object",
+      "id": "comparison-states",
+      "verifier": "Deterministische Vergleichstests"
+    },
+    {
+      "assertion": "Receipts enthalten nur begrenzte Metadaten und Hashes, lehnen Geheimnisse und rohe Repository-Inhalte ab und dokumentieren Aufbewahrung, Redaktion und Löschung.",
+      "evidence_type": "object",
+      "id": "privacy-boundary",
+      "verifier": "Datenschutzvertrag und adversariale Testfälle"
+    },
+    {
+      "assertion": "Fehlende, veraltete, aufgabenfremde, commitfremde, wiederholte oder artefaktfremde Receipts erhöhen niemals die Evidenzstufe und werden eindeutig diagnostiziert.",
+      "evidence_type": "object",
+      "id": "freshness-and-replay",
+      "verifier": "Freshness-, Replay- und Mismatch-Tests"
+    },
+    {
+      "assertion": "Mindestens ein vertrauenswürdiger Wrapper erzeugt Receipts und ein isolierter End-to-End-Test verifiziert den Deklarationsvergleich, ohne Leseverständnis, Relevanz, Korrektheit oder Wahrheit zu behaupten.",
+      "evidence_type": "object",
+      "id": "end-to-end-adoption",
+      "verifier": "Isolierter Wrapper-Integrationstest"
+    },
+    {
+      "assertion": "T005 bleibt blockiert, bis T001 verifiziert abgeschlossen ist; die Initiative hat weiterhin höchstens einen aktiven Task.",
+      "evidence_type": "object",
+      "id": "sequence-gate",
+      "verifier": "Bureau-Abhängigkeits- und Status-Readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T001"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die spätere Umsetzung verändert RepoGround-Verträge, Wrapper und Tests. Sie autorisiert keine Runtime-Überwachung, Geheimniserfassung, Pflichtadoption, Veröffentlichung oder Bereitstellung.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/lenskit"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit"
+  },
+  "goal": "Eine datensparsame Evidenzschicht ergänzen, die deklarierte Agent-Consumption-Angaben mit vertrauenswürdig erzeugten Tool-Lese-Receipts für dieselbe Aufgabe, denselben Repository-Commit und dasselbe Artefakt vergleicht, ohne Quellinhalte zu speichern oder Verständnis, Relevanz und Wahrheit zu behaupten.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T005",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Toolzugriff beweist semantisches Lesen",
+      "beobachtete Dateien waren für die Antwort relevant",
+      "Aussagen sind wahr",
+      "alle Wrapper erzeugen vertrauenswürdige Receipts",
+      "Runtime-Interception oder Deployment ist autorisiert",
+      "Implementierungsreife vor Abschluss von T001"
+    ],
+    "registered_from_candidate": "candidate-repoground-agent-consumption-evidence-v1-t005",
+    "scope_reason": "Formale Selbstkonsistenz und beobachteter Zugriff sind getrennte Evidenzstufen; deshalb wurde dieser Ausbau aus dem Validator-Hardening ausgegliedert.",
+    "source_event_id": 832,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-repoground-agent-consumption-evidence-v1-t005",
+      "event_id": 832,
+      "event_created_at": "2026-07-20T08:03:17.814100Z",
+      "request_sha256": "afb62b4113cdb0863f8e1e1965f19ee7e1fe6617a10dabed38027efe7c1b50a4",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chatgpt:repoground-agent-consumption-hardening-v1-20260720",
+        "observed_at": "2026-07-20T10:02:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "contracts",
+    "agent-observability",
+    "privacy",
+    "testing"
+  ],
+  "rollback": {
+    "strategy": "Die optionale Receipt-Erzeugung und Vergleichsschicht deaktivieren oder entfernen; bestehende Agent-Consumption-Deklarationen und ihre negative Semantik bleiben unverändert nutzbar."
+  },
+  "schema_version": 1,
+  "state": "blocked",
+  "title": "Agent-Consumption-Angaben an beobachtete Tool-Lese-Receipts binden"
+}

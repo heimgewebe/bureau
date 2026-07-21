@@ -280,7 +280,9 @@ def _safe_extract(archive: Path, destination: Path) -> None:
                 raise CapsuleError("registry archive contains an unsupported link")
             if not member.isfile() and not member.isdir():
                 raise CapsuleError("registry archive contains an unsupported entry")
-        handle.extractall(destination)
+        # Members are validated above; keep the extraction policy explicit so Python's
+        # changing tarfile default cannot alter the status-capsule security contract.
+        handle.extractall(destination, filter="fully_trusted")
 
 
 def _archive_canonical_registry(repo: Path, destination: Path) -> dict[str, Any]:

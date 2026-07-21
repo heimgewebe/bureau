@@ -71,7 +71,49 @@
     "implementation_branch": "feat/repobrief-symbol-call-graph-v1",
     "implementation_worktree": "/home/alex/repos/.lenskit-worktrees/repobrief-symbol-call-graph-v1",
     "registered_at": "2026-07-15T14:25:00Z",
-    "source_pr": "heimgewebe/lenskit#1005"
+    "source_pr": "heimgewebe/repoground#1018",
+    "verified_at": "2026-07-20T00:09:00+02:00",
+    "superseded_planning_reference": "heimgewebe/lenskit#1005 was the earlier find_symbol precursor and did not implement the call graph.",
+    "implementation": {
+      "repository": "heimgewebe/repoground",
+      "primary_pull_request": 1018,
+      "primary_head": "9081ed81b6b48db8f4fbf91faea4eebcc4d9a4de",
+      "primary_merge_commit": "48d1797553ddb233a9b64b22e50436ca5c6ac291",
+      "scale_pull_request": 1022,
+      "scale_head": "8e0f7dabaf53d892414224e7dcc19bfbc857a9ae",
+      "scale_merge_commit": "f22bc5b119f0e61b6fa637d11d2c4e6959798637",
+      "fresh_main_head": "572e9d5dd818e57b5e4b8d3a43660eca525be3a6",
+      "proofs": [
+        "docs/proofs/python-call-graph-v1-proof.md",
+        "docs/proofs/repobrief-call-navigation-scale-index-v1-proof.md",
+        "docs/proofs/repobrief-call-navigation-scale-index-v1.measurement.json"
+      ]
+    },
+    "validation": {
+      "github_ci": "PASS on the exact heads of RepoGround PRs #1018 and #1022; all substantive repository, security and contract checks passed. The optional Claude check on #1022 was skipped.",
+      "fresh_targeted_command": "python3 -m pytest -q merger/repoground/tests/test_python_call_graph.py merger/repoground/tests/test_call_navigation.py merger/repoground/tests/test_mcp_stdio_e2e.py merger/repoground/tests/test_bundle_manifest_integration.py -k 'call_graph or find_references or get_callers or tools_list'",
+      "fresh_targeted_result": "37 passed, 90 deselected in 0.90s",
+      "fresh_targeted_commit": "572e9d5dd818e57b5e4b8d3a43660eca525be3a6",
+      "fresh_targeted_job": "grabowski-job-7eb5ab104eca",
+      "fresh_targeted_receipt_sha256": "d94a8002edcce0c047507ae44c8b0da47e0c453de80f3980957e01513a1ccd26",
+      "fresh_targeted_payload_sha256": "0ce7a1753b8865054989f29f8ce1a4e70e76ab0490cd5de9ae7f077d633e6d73",
+      "implementation_ancestry": "PASS; merge commits 48d1797553ddb233a9b64b22e50436ca5c6ac291 and f22bc5b119f0e61b6fa637d11d2c4e6959798637 are ancestors of the fresh main head."
+    },
+    "verified_acceptance": {
+      "rscg-v1-t001-artifact": "PASS; PR #1018 adds the versioned python-call-graph artifact, schema, producer, manifest binding, exact source ranges, caller symbols and explicit resolution states.",
+      "rscg-v1-t001-resolution": "PASS; tests and proof constrain target ids to uniquely resolved local definitions while ambiguous, dynamic, attribute and unresolved calls remain explicit rather than invented.",
+      "rscg-v1-t001-tools": "PASS; find_references and get_callers are exposed through MCP with validated bounded inputs, exact-first matching, stable ordering, truncation metadata and live bundle freshness checks.",
+      "rscg-v1-t001-compatibility": "PASS; find_symbol and existing bundle/profile consumers remain covered, while missing, stale, malformed or hash-mismatched call-graph evidence fails closed without hidden refresh.",
+      "rscg-v1-t001-validation": "PASS; PR #1018 and #1022 CI passed on their exact heads, and the fresh main-head rerun passed 37 focused producer, navigation, MCP and bundle tests.",
+      "rscg-v1-t001-utility": "PASS; the committed fixed acceptance tier exercises 20 reference, 20 caller and 20 target queries at 50,000 calls, with byte-equivalent linear/indexed/MCP answers and preserved find_symbol coverage.",
+      "rscg-v1-t001-nonclaims": "PASS; proofs and task metadata explicitly deny complete call-graph, runtime reachability, dynamic dispatch, dependency completeness, test sufficiency, review completeness, merge readiness and default-promotion authority."
+    },
+    "outcome": "RepoGround main contains a deterministic evidence-bound Python call graph plus bounded find_references and get_callers MCP navigation. The later in-memory index preserves byte-equivalent public results while avoiding repeated linear scans. Static ambiguity and all non-authoritative boundaries remain explicit.",
+    "self_review": "PASS: closeout is bound to two merged implementation commits, their exact heads and CI, the fresh RepoGround main head, committed proofs/measurement, and a fresh receipt-backed 37-test rerun. It does not infer runtime reachability, dynamic dispatch, complete dependency coverage, general performance, test sufficiency or default promotion.",
+    "verification": {
+      "task_sha256": "35fcc2bba8c67abc2eb645a1476411ffd5520596397cbff81ccb065b64ded31e",
+      "plan_sha256": "bb4ec70faac8d7b5bc94c002fc51d6f76f5728e8b70b5b62b0acba3b24c5badc"
+    }
   },
   "priority": {
     "lane": "now",
@@ -84,6 +126,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Add bounded find_references and get_callers navigation"
 }

@@ -1,0 +1,113 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Alle noch maßgeblichen Leitwerk-Inhalte sind datei- und claimgenau inventarisiert; für jede Norm sind Quellcommit, kanonische Zielautorität und die Entscheidung keep, migrate oder retire dokumentiert.",
+      "id": "normative-inventory"
+    },
+    {
+      "assertion": "Weiter gültige Normen sind vor Archivierung commitgebunden nach Metarepo oder Systemkatalog überführt; Leitwerk bleibt danach nur historische Herkunft und keine zweite aktive Wahrheit.",
+      "id": "canonical-transfer"
+    },
+    {
+      "assertion": "Repository-lokale Guards, CI-Prüfungen und Skripte sind einzeln als migriert, ersetzt, historisch oder weiterhin notwendig klassifiziert; kein aktiver Schutz verschwindet unbelegt.",
+      "id": "guard-classification"
+    },
+    {
+      "assertion": "Bureau, Grabowski und der Konvergenzregelkreis erben weder implizit noch ausdrücklich alte Leitwerk-Runtime-, Policy- oder Normativitätsautorität; diese Nichtübertragung ist in Contracts und Tests festgehalten.",
+      "id": "no-authority-inheritance"
+    },
+    {
+      "assertion": "GitHub-Archivierung erfolgt erst nach grünen Zielrepository-Checks, vollständigen Consumer-, Lease- und Remote-Readbacks; ein unklarer Ausgang wird nicht blind wiederholt.",
+      "id": "archive-after-gates"
+    },
+    {
+      "assertion": "Nach belegter Archivierung sind Organisationsinventar, Systemkatalog und Bureau auf archived_reference aktualisiert; offene Branches und Pull Requests sind terminal klassifiziert.",
+      "id": "projection-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.leitwerk"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.metarepo"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.systemkatalog"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T033"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Archivierung und normative Migration bleiben bis zu exakten Diff-, Test-, CI-, Consumer-, Lease- und Remote-Readbacks gesperrt.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitwerk",
+      "repo:/home/alex/repos/metarepo",
+      "repo:/home/alex/repos/systemkatalog"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitwerk"
+  },
+  "goal": "Leitwerk erst archivieren, wenn alle noch maßgeblichen normativen Inhalte kanonisch nach Metarepo oder Systemkatalog überführt und repository-lokale Guards terminal klassifiziert sind. Die Bereinigung darf keine alte Leitwerk-Runtime-, Policy- oder Normativitätsautorität stillschweigend auf Bureau, Grabowski, den Konvergenzregelkreis oder andere Systeme übertragen.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T037",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "repository_archive_authority_before_all_gates",
+      "automatic_authority_transfer",
+      "permission_to_remove_unmigrated_guards",
+      "completion_of_the_archival_work"
+    ],
+    "operator_intake_candidate_id": "candidate-operator-ecosystem-t037",
+    "operator_intake_event_id": 794,
+    "source": "systemkatalog_repository_lifecycle_audit",
+    "source_head": "59d082b078af63dbf6f9b65a318907d1b2e9fc09",
+    "source_merge_commit": "089e4ed6fe3de50cf9069293ec28f59b6c5d90ff",
+    "source_pull_request": "heimgewebe/systemkatalog#143",
+    "source_sha256": "6d691c891b47aecf1614af603db3b4fe6345d557510c67f7920e460aba2864ff",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-operator-ecosystem-t037",
+      "event_id": 794,
+      "event_created_at": "2026-07-19T20:18:54.597122Z",
+      "request_sha256": "0c9421404591938908a27c50796627fa951bd3bd9ea5d84ba671b18a5eb6cde9",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "systemkatalog_audit_followup",
+        "locator": "/home/alex/.local/state/bureau/intake/t037-leitwerk-freeze.json",
+        "observed_at": "2026-07-19T20:51:50+02:00",
+        "sha256": "6d691c891b47aecf1614af603db3b4fe6345d557510c67f7920e460aba2864ff"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 202
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Leitwerk-Normativitäts-Freeze und Archivierung"
+}

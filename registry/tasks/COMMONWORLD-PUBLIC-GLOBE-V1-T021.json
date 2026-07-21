@@ -1,0 +1,110 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A versioned contract permits aggregate-only public region context only when an explicit source, provenance, observed-at value, public-use basis and bounded region vocabulary are present; missing, stale, conflicting or unsourced context fails closed.",
+      "id": "source-and-provenance-contract"
+    },
+    {
+      "assertion": "Aggregate-only context remains outside the canonical CommonProject location model and cannot be serialized, queried or displayed as exact, approximate or extent project geometry.",
+      "id": "outside-commonproject"
+    },
+    {
+      "assertion": "The context exposes no member identities, hidden coordinates, project anchors or reverse-geocodable small-area clues and obeys k=5, coarsening and complement-differencing protections before release.",
+      "id": "privacy-boundary"
+    },
+    {
+      "assertion": "Context may contribute only to planet, macroregion and region aggregate impressions and dissolves before local or focus views, where only existing truthful public points, zones and extents remain.",
+      "id": "semantic-zoom-boundary"
+    },
+    {
+      "assertion": "Country or regional membership is never derived from names, domains, language, network endpoints or private metadata; source-backed context is visibly distinguished from geometry-derived buckets.",
+      "id": "no-inferred-membership"
+    },
+    {
+      "assertion": "Search, Commons-type and intent filters count each visible CommonProject identity at most once across geometry-derived and source-bound aggregate inputs, with deterministic conflict resolution and no double counting.",
+      "id": "filter-and-identity-parity"
+    },
+    {
+      "assertion": "Contract, privacy, stale-source, conflict, hidden-location, filter-parity, text-equivalent and keyboard/touch tests prove fail-closed behavior and expose source/coverage limits without relying on colour alone.",
+      "id": "failure-and-a11y-evidence"
+    },
+    {
+      "assertion": "Closeout binds the complete diff digest to the exact PR head, records green CI and review, identifies the merge and deployment commits and performs production readback without claiming regional completeness.",
+      "id": "evidence-bound-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T018"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Registration does not authorize unsourced regional placement. Implement only after a reviewed provenance, privacy, freshness and semantic-zoom contract proves that aggregate-only context cannot be interpreted as project geometry or exact country membership.",
+      "required_level": "reviewed_plan"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Define and implement a provenance-bound aggregate-only public region context for Commons that lack releasable public geometry, so planet-to-region impressions can become more representative without adding inferred locations, exposing member identities or changing the canonical CommonProject location model.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T021",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to infer country membership",
+      "permission to reconstruct hidden locations",
+      "a new CommonProject location mode",
+      "project-level public geometry",
+      "assessed geographic coverage",
+      "automatic task readiness"
+    ],
+    "queue_mutated": false,
+    "registered_at": "2026-07-20",
+    "source": "Commonworld geographic impressions T018 closeout follow-up",
+    "source_repository": "heimgewebe/commonworld",
+    "work_marker": "COMMONWORLD-SOURCE-BOUND-REGION-CONTEXT-V1",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-05abb5ad482b5da3a29c6f73",
+      "event_id": 810,
+      "event_created_at": "2026-07-19T23:00:34.690784Z",
+      "request_sha256": "6e13b3966f0d52a5cc491b7034d3415ddb3cf24da110080acbc7ba55454ff6e4",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "implementation-review-refresh",
+        "locator": "chatgpt:commonworld-geographic-impressions-self-review-refresh-r3-20260720",
+        "observed_at": "2026-07-20T01:00:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 980
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Add source-bound aggregate-only public region context"
+}

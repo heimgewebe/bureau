@@ -7,8 +7,8 @@ Bureau separates coordination ownership from operational observation. The core q
 | commitments, queue order, dependencies and coordination conflicts | Bureau Core |
 | execution envelopes, receipts, task overlays and lifecycle verification | Bureau Core |
 | closure, review stewardship, source bridges, Cabinet bridges, agent frontier and Codex bridge observations | Bureau Ops |
-| host/process execution, concrete leases, durable tasks and workers | Grabowski |
-| action readiness and specialised evidence | Steuerboard |
+| host/process execution, concrete leases, durable tasks and workers, plus live Git/network/branch/worktree effects | Grabowski |
+| read-only repository observation and source-bound readiness/evidence derivation; no approval or execution authority | Steuerboard |
 | readable research and decisions | Cabinet |
 | visual projection | Schauwerk |
 | append-only events | Chronik |

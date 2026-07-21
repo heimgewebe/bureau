@@ -1,0 +1,102 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die sichtbaren Bezeichnungen und die Reihenfolge der Entscheidungsaktionen folgen einer konsistenten, für Nicht-Fachleute verständlichen Produktsprache; interne Governance-Begriffe werden nur verwendet, wenn sie gegenüber handlungsorientierten deutschen Bezeichnungen einen belegten Verständlichkeitsvorteil haben.",
+      "evidence_type": "object",
+      "id": "decision-language",
+      "verifier": "UI copy review and browser assertions"
+    },
+    {
+      "assertion": "Der Entscheidungsfächer erzeugt bei 320-Pixel-Mobilbreite, typischen Tabletbreiten und schmaler verbleibender Desktopkarte mit geöffnetem Kontextpanel keine verwaiste einzelne Aktionszeile oder abgeschnittene Aktionsfläche; alle Aktionen bleiben mindestens 44 Pixel hoch und vollständig im nutzbaren Kartenbereich.",
+      "evidence_type": "object",
+      "id": "responsive-fan-layout",
+      "verifier": "Playwright viewport matrix with bounding-box assertions"
+    },
+    {
+      "assertion": "Mitentscheiden und Werkzeuge zeigen einen konsistenten sichtbaren und zugänglichen Offen-/Schließen-Zustand, bleiben gegenseitig exklusiv und stellen Fokus nach dem Schließen deterministisch wieder her.",
+      "evidence_type": "object",
+      "id": "consistent-open-state",
+      "verifier": "keyboard, aria-state and focus-management browser tests"
+    },
+    {
+      "assertion": "Geöffnete Root-Fächer verdecken die Karte außerhalb ihrer sichtbaren Aktionsknöpfe nicht und blockieren dort keine Pointer-Interaktion; erklärende Unterebenen dürfen eine lesbare Fläche behalten, wenn deren Inhalt sie benötigt.",
+      "evidence_type": "object",
+      "id": "map-remains-primary",
+      "verifier": "computed-style, pointer-event and map-interaction regression tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Direkt aus der Nutzeranweisung vom 21. Juli 2026 abgeleitete UI-/UX-Folgearbeit; Umsetzung ausschließlich im isolierten Weltgewebe-Worktree.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die verbleibenden UI- und UX-Reibungen der Kartenfächer beheben: Entscheidungsaktionen verständlich und konsistent ordnen und benennen, ungünstige Einzelumbrüche vermeiden und die sichtbaren Offen-/Schließen-Zustände von Mitentscheiden und Werkzeuge vereinheitlichen, ohne die Karte wieder mit Trägerflächen zu verdecken oder Governance und Weben semantisch zu vermischen.",
+  "id": "WELTGEWEBE-OS-V1-T020",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "queue_truth",
+      "task_readiness",
+      "claim_or_dispatch_authority",
+      "merge_or_deployment_authority"
+    ],
+    "registered_at": "2026-07-21T07:33:00+02:00",
+    "source_candidate_id": "candidate-ee8f5db5f447cf5fdd52059e",
+    "source_event_id": 864,
+    "source_pr": 1514,
+    "source_repository": "heimgewebe/weltgewebe",
+    "source_request": "Nutzer bat nach Entfernung der schwarzen Trägerflächen und Umbenennung von Gemeinsam ausdrücklich um weitere UI- und UX-Suboptimalitäten.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-ee8f5db5f447cf5fdd52059e",
+      "event_id": 864,
+      "event_created_at": "2026-07-21T05:58:18.403510Z",
+      "request_sha256": "6f0128cbc91d869bd8600ddca9378185f72b58236817acb4aacb39e349ce28b1",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-observation",
+        "locator": "chat:weltgewebe:2026-07-21T07:33+02:00",
+        "observed_at": "2026-07-21T05:58:18.395267Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 20
+  },
+  "required_capabilities": [
+    "repository",
+    "svelte",
+    "typescript",
+    "playwright",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Die Änderungen an Reihenfolge, Produktbezeichnungen und Offen-Zustandsdarstellung auf den vorherigen geprüften Fächerstand zurücknehmen; die bereits entfernten großflächigen Root-Träger bleiben unabhängig davon entfernt."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Kartenfächer semantisch und responsiv vereinheitlichen"
+}

@@ -29,8 +29,10 @@ Bureau is documented as a core plus operational organs.
   explicit evidence through Bureau Core contracts. Ops findings are evidence for Bureau Core to
   consider, not permission to replace the authority that produced the fact.
 - **External authorities** retain their domains: GitHub owns branches, pull requests, reviews and
-  CI facts; Grabowski owns processes, hosts, concrete runtime leases, durable tasks and workers;
-  Steuerboard owns action-specific readiness; Cabinet owns readable research and decisions;
+  CI facts; Grabowski owns processes, hosts, concrete runtime leases, durable tasks and workers,
+  plus live precondition revalidation and Git, network, branch and worktree effects; Steuerboard owns
+  read-only repository observation and source-bound readiness/evidence derivation, never approval or
+  execution authority; Cabinet owns readable research and decisions;
   Schauwerk owns visual projections; Chronik owns append-only events.
 - **AI and local model outputs** have no Bureau authority. Gemini, Ollama or other LLM output may
   be preserved only as advisory commentary or bounded proposal evidence after deterministic

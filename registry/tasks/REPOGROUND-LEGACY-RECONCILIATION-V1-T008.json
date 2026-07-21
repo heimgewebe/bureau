@@ -1,0 +1,117 @@
+{
+  "acceptance": [
+    {
+      "assertion": "At least 24 hours have elapsed since each checkout archive was created, and all four archive manifests and recovery refs still resolve to the recorded exact heads.",
+      "id": "grace-and-archives"
+    },
+    {
+      "assertion": "Each candidate checkout is clean, has its recorded head and branch, has no active process, task or foreign lease, and the current production runtime 572e9d5dd818e57b5e4b8d3a43660eca525be3a6 is excluded.",
+      "id": "fresh-safety-readback"
+    },
+    {
+      "assertion": "A Grabowski checkout-cleanup dry run is reviewed for each archive before apply; only the four exact archived paths are removed and no foreign worktree is touched.",
+      "id": "bounded-removal"
+    },
+    {
+      "assertion": "Local and remote T007 feature branches are removed only after GitHub confirms PRs #1055, #1056 and Bureau PR #736 remain merged at their recorded heads.",
+      "id": "branch-closeout"
+    },
+    {
+      "assertion": "Worktree inventory no longer contains the four paths, worktree prune --dry-run proposes no T007 cleanup, no process references a T007 path, and no active lease remains for owner chatgpt-repoground-t007-20260719.",
+      "id": "final-readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.bureau"
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-LEGACY-RECONCILIATION-V1-T007"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "path:/home/alex/repos/.lenskit-worktrees/bounded-historical-retention-symlink-v1",
+      "path:/home/alex/repos/.lenskit-worktrees/canonical-generation-root-v1",
+      "path:/home/alex/repos/.lenskit-worktrees/t007-deploy-8dbad67a",
+      "path:/home/alex/repos/.bureau-worktrees/verify-repoground-t007"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/lenskit"
+  },
+  "goal": "After Grabowski's mandatory 24-hour archive grace has elapsed, remove only the four archived T007 linked checkouts and their merged local and remote feature branches, while preserving recovery refs, production runtime, evidence files and every foreign checkout.",
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T008",
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "metadata": {
+    "archive_ids": [
+      "20260719T214813Z-7e36f2bb6a61",
+      "20260719T214931Z-1e40d04e7f2b",
+      "20260719T214942Z-3d7dd3103349",
+      "20260719T215007Z-05b738c59dc6"
+    ],
+    "does_not_establish": [
+      "permission to bypass archive grace",
+      "permission to remove foreign branches or worktrees",
+      "permission to delete the active production runtime"
+    ],
+    "not_in_scope": [
+      "/home/alex/.local/share/repoground-runtime/572e9d5dd818e57b5e4b8d3a43660eca525be3a6",
+      "foreign worktrees",
+      "historical retention evidence",
+      "publication bundles"
+    ],
+    "registered_at": "2026-07-19T23:50:30+02:00",
+    "source": "T007 closeout cleanup encountered the mandatory Grabowski 86400-second post-archive grace.",
+    "source_candidate_id": "repoground-t007-cleanup-grace-v1",
+    "source_event_id": 803,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "repoground-t007-cleanup-grace-v1",
+      "event_id": 803,
+      "event_created_at": "2026-07-19T21:59:32.393493Z",
+      "request_sha256": "ac5821e3deb8ab23925f058b4ca2da6e39c1cd9e9133f52988775a092318e1cd",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-live-readback",
+        "locator": "/home/alex/.local/state/grabowski/checkout-archives",
+        "observed_at": "2026-07-19T23:50:07+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registration_context": {
+      "candidate_id": "repoground-t007-cleanup-grace-v1",
+      "candidate_event_id": 803,
+      "reviewed_proposal_sha256": "f60efb712162c3a9ae433a5cdd683e2d44f1b6700853eacb73a1887612c17e0f",
+      "typed_publication_blocker": "installed Bureau runtime 8c4c448e is stale against current registry main 003cb2b6; manual isolated PR path used without changing the runtime"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 5
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "grabowski",
+    "filesystem-safety"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Retire archived T007 checkouts after cleanup grace"
+}

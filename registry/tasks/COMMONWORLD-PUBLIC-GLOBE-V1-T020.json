@@ -1,0 +1,98 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Existing full audit result files remain immutable or are migrated with explicit digest-bound provenance; no evidence is discarded to make the developer view smaller.",
+      "id": "full-audit-preserved"
+    },
+    {
+      "assertion": "A deterministic generator produces a concise developer-facing summary containing scope, counts, accepted and rejected identities, key caveats, validation status and links to the authoritative full evidence.",
+      "id": "compact-projection"
+    },
+    {
+      "assertion": "Schema, documentation and tests state that the compact summary is a projection and cannot override CommonProject records or full audit evidence.",
+      "id": "non-authoritative-boundary"
+    },
+    {
+      "assertion": "A reviewed privacy authoring guide or controlled vocabulary covers approximate, exact and hidden locations, uncertainty, partner-versus-identity boundaries and prohibited reconstruction of sensitive places.",
+      "id": "privacy-guidance"
+    },
+    {
+      "assertion": "Validators and examples preserve project-specific privacy_note and uncertainty_note content where it carries concrete facts; generic references cannot replace required record-level disclosures.",
+      "id": "record-specific-truth"
+    },
+    {
+      "assertion": "Closeout includes generator determinism tests, representative migration or example diffs, full validation, green CI and documentation readback.",
+      "id": "maintenance-evidence"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T013"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The compact summary must remain a deterministic projection, never audit authority. Shared privacy guidance may standardize wording but must not erase project-specific location, source or uncertainty facts.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Keep full Commonworld catalogue audit evidence immutable while generating a compact non-authoritative developer summary, and define shared privacy authoring guidance that reduces repeated boilerplate without replacing record-specific uncertainty, hidden-location or non-claim disclosures.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T020",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to delete or truncate full audit evidence",
+      "that all privacy notes can be centralized",
+      "that repeated language is itself incorrect",
+      "authority for a compact projection to override canonical records"
+    ],
+    "observed_limit": "The catalogue expansion result is deliberately audit-rich but cumbersome for routine review, and several privacy notes repeat policy vocabulary while also containing indispensable project-specific facts.",
+    "queue_mutated": false,
+    "registered_at": "2026-07-20",
+    "source": "Commonworld PR #112 review follow-up",
+    "source_pr": 112,
+    "source_repository": "heimgewebe/commonworld",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-9d5b886d44622a02d4eebd78",
+      "event_id": 799,
+      "event_created_at": "2026-07-19T21:03:55.499355Z",
+      "request_sha256": "42554d3b297d54f4f99fe52be09fdd3af49eb310fe8cecd21b976d8779cd294a",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "chatgpt:commonworld-pr111-review-follow-up:audit-summary-privacy-guidance",
+        "observed_at": "2026-07-19T22:45:00Z",
+        "sha256": "3027f2aa7a7afcb79b8fac7110dc8350006f4c3e3f7caf65769025c102d63e51"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 970
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Generate compact audit summaries and privacy authoring guidance"
+}

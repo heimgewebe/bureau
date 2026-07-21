@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "id": "RPU-V1-T034",
+  "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
+  "title": "Oversized optional call graph must not block core impact context",
+  "state": "ready",
+  "goal": "Keep coherent path, symbol, test, contract and entrypoint impact context usable when python_call_graph_json is missing, oversized or otherwise untrusted, while degrading only call-graph-derived relations with explicit provenance gaps and preserving fail-closed behavior for required core artifacts.",
+  "depends_on": [
+    "RPU-V1-T025"
+  ],
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "github",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "baseline_commit": "16210144097e3337ff8ff4102dba1aaa3d2cd75f",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground:branch:fix/rpu-v1-t034-optional-call-graph-degradation-v1",
+      "path:/home/alex/repos/.repoground-worktrees/rpu-v1-t034-optional-call-graph-degradation-v1"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "core-coherence",
+      "assertion": "python_call_graph_json is not part of required core coherence; missing, oversized, blocked, stale or mismatched call-graph evidence cannot block otherwise coherent architecture, symbol and entrypoint sources."
+    },
+    {
+      "id": "explicit-degradation",
+      "assertion": "Edit context reports unavailable or untrusted call-graph coverage explicitly and emits no trusted direct caller/callee relation from that source."
+    },
+    {
+      "id": "core-impact-survives",
+      "assertion": "Target symbols, related tests and other core impact evidence remain available when the optional call graph degrades, subject to their own source freshness and budgets."
+    },
+    {
+      "id": "fail-closed-required",
+      "assertion": "Tampering, mismatch or unavailability of required core artifacts remains blocking and is covered by negative tests."
+    },
+    {
+      "id": "pilot-regression",
+      "assertion": "The Weltgewebe vertical-pilot blocker artifact_too_large no longer collapses the full agent impact context; the pilot is rerun before any promotion decision."
+    },
+    {
+      "id": "delivery",
+      "assertion": "Focused tests and full RepoGround test suite are green; exact head and diff SHA-256 are reviewed before merge."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-21T13:00:00+02:00",
+    "source_task": "REPOGROUND-AGENT-UTILITY-V1-T003",
+    "source_finding": "Weltgewebe vertical pilot observed python_call_graph_json at 22127878 bytes above the 16777216-byte read-only adapter bound; the optional source currently blocks artifact coherence and removes related_tests and target_symbols from composed change context.",
+    "does_not_establish": [
+      "call-graph completeness",
+      "blast-radius completeness",
+      "test sufficiency",
+      "runtime correctness",
+      "merge readiness",
+      "default RepoGround routing authority"
+    ],
+    "scope_reason": "The pilot can only satisfy its delivery-chain acceptance after optional call-graph failure is isolated from required core impact sources; T003 itself has read-only RepoGround scope."
+  }
+}

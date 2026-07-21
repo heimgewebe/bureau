@@ -1,0 +1,177 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A reproducible benchmark records raw and compressed bytes, duplicate identity payload count, DOM node cost, JavaScript parse cost and representative low-power-device load behavior for the current catalogue.",
+      "id": "measured-baseline"
+    },
+    {
+      "assertion": "A documented and tested threshold states when the current bootstrap-plus-static-projection design must change, without treating catalogue count alone as a performance proxy.",
+      "id": "threshold-contract"
+    },
+    {
+      "assertion": "Generated bootstrap, HTML hydration, segmented static JSON and demand-loaded read-only static delivery are compared for accessibility, SEO, no-JavaScript behavior, privacy, caching, complexity and Pages compatibility.",
+      "id": "option-comparison"
+    },
+    {
+      "assertion": "Every public representation continues to derive from the canonical CommonProject files and no second mutable catalogue truth is introduced.",
+      "id": "single-truth-preserved"
+    },
+    {
+      "assertion": "The selected implementation measurably reduces avoidable transfer or parsing work and has regression tests that fail when the agreed delivery budget is exceeded.",
+      "id": "bounded-delivery"
+    },
+    {
+      "assertion": "Closeout includes the complete reviewed diff, exact-head tests, browser performance evidence, green CI, Pages deployment and public readback on representative mobile and desktop paths.",
+      "id": "evidence-bound-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T013"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Measure first. Do not introduce a backend, runtime API or HTML-as-source design without comparative evidence. Preserve the canonical catalog, text/no-JavaScript access, Pages deployment and privacy boundaries.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Measure the actual transfer, parse and DOM cost of Commonworld's generated JavaScript bootstrap and repeated static catalogue projections, define a repository-enforced scaling threshold, and implement the smallest static delivery design that preserves one canonical CommonProject truth, no-JavaScript access, SEO, privacy and GitHub Pages operation.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T019",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "that HTML hydration is the preferred design",
+      "that a backend or runtime API is justified",
+      "that 41 entries already violate a user-visible budget",
+      "permission to weaken no-JavaScript or privacy behavior"
+    ],
+    "observed_limit": "At 41 entries the same canonical records are delivered through a generated JavaScript bootstrap and repeated static card projections. This is functional, but the next design decision must be driven by measured transfer and parse cost rather than intuition.",
+    "queue_mutated": false,
+    "registered_at": "2026-07-20",
+    "source": "Commonworld PR #112 review follow-up",
+    "source_pr": 112,
+    "source_repository": "heimgewebe/commonworld",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-b4b60e2ce653d7f677a20b7e",
+      "event_id": 798,
+      "event_created_at": "2026-07-19T21:03:41.071531Z",
+      "request_sha256": "0e5e66ceac142920a345b868f0e7144d0876f790e2e09025d82ba6e5eb483b55",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "chatgpt:commonworld-pr111-review-follow-up:catalog-payload-duplication",
+        "observed_at": "2026-07-19T22:45:00Z",
+        "sha256": "938bb65f9fc201fe2f8c29503ef383a6e62259486413234da96f6cb429952583"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "completed_at": "2026-07-20",
+    "verification": {
+      "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T019",
+      "authority": "commonworld-project-operator",
+      "decision": "duplicate_catalogue_startup_delivery_measured_reduced_merged_deployed_and_live_verified",
+      "repository": "heimgewebe/commonworld",
+      "implementation_pr": 119,
+      "pr_head": "b0efb5560e51a5c207930a5129f30ca8ad813ab1",
+      "pr_base": "8ca8fb6d57108f18068a7a868a7f8addd1f46efc",
+      "merge_commit": "0471abc348b0d593758e87ec4272417844479cf3",
+      "diff_sha256": "f8f56922d2332a13a3fd754da5057a07d9987712eed57d199cd1883f6c2f2954",
+      "diff_bytes": 100462,
+      "github_premerge_validate_run_id": 29738921970,
+      "github_main_validate_run_id": 29739496820,
+      "github_main_codeql_run_id": 29739496632,
+      "github_pages_workflow_run_id": 29739496139,
+      "github_production_readback_run_id": 29739496870,
+      "github_checks": "PASS",
+      "premerge_validation": {
+        "javascript_tests": "64/64 PASS",
+        "python_tests": "453/453 PASS",
+        "reproducible_build": "PASS",
+        "failure_safe_browser_smoke": "PASS",
+        "codeql_actions": "PASS",
+        "codeql_python": "PASS",
+        "codeql_javascript_typescript": "PASS"
+      },
+      "delivery_measurement": {
+        "catalog_entries": 41,
+        "startup_project_json_requests_before": 41,
+        "startup_project_json_requests_after": 0,
+        "first_party_startup_requests_before": 51,
+        "first_party_startup_requests_after": 9,
+        "catalogue_gzip_bytes_before": 72315,
+        "catalogue_gzip_bytes_after": 20526,
+        "catalogue_gzip_reduction_bytes": 51789,
+        "catalogue_gzip_reduction_percent": 71.6,
+        "dom_nodes_before": 1687,
+        "dom_nodes_after": 1687,
+        "mobile_runtime_ready_ms_at_4x_cpu": 785,
+        "desktop_runtime_ready_ms_at_4x_cpu": 605,
+        "first_party_surface_sha256": "87945c873381e202f8ac349e742f7f08840dc37c91c1b65f37d7933ccd0a3610"
+      },
+      "production_verification": {
+        "public_url": "https://commonworld.net/",
+        "deployment_id": 5521089654,
+        "deployment_state": "success",
+        "deployment_sha": "0471abc348b0d593758e87ec4272417844479cf3",
+        "readback_verdict": "pass",
+        "readback_receipt_id": "commonworld.pages-production-readback.v1",
+        "readback_receipt_sha256": "a92c264ca4a65ec6457771bb59d872880f1393a7e3a11c9dac1d474f49273398",
+        "catalog_entry_count": 41,
+        "exact_public_files": "3/3 PASS",
+        "root_http_status": 200,
+        "proposal_http_status": 200,
+        "catalog_http_status": 200,
+        "catalog_access": "static_read_only",
+        "api_runtime": false,
+        "write_path": false
+      },
+      "acceptance": {
+        "measured-baseline": "PASS",
+        "threshold-contract": "PASS",
+        "option-comparison": "PASS",
+        "single-truth-preserved": "PASS",
+        "bounded-delivery": "PASS",
+        "evidence-bound-closeout": "PASS"
+      },
+      "explicit_nonclaims": [
+        "The measurements establish a universal performance ranking across all devices or networks.",
+        "The catalogue may grow without future remeasurement.",
+        "A backend or runtime API is justified.",
+        "No-JavaScript or privacy behavior may be weakened.",
+        "The public readback establishes GitHub Pages SLA or absence of all transient CDN failures."
+      ],
+      "task_sha256": "b10967b71541bc5905b6a7c705ca71af14b6aaec056741aa0121e8905055380d",
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 960
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Measure and reduce duplicate catalogue delivery"
+}

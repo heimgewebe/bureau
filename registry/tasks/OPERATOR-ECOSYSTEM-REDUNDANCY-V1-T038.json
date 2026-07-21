@@ -1,0 +1,234 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Altqueue ist mit exakt 15 PRs in HausKI und 7 PRs in HausKI-Audio inventarisiert; Nummer, Titel, Erstellung, Head, Base, Status und betroffene Abhängigkeit sind je PR dokumentiert.",
+      "id": "inventory-exact-22"
+    },
+    {
+      "assertion": "Jeder der 22 PRs ist einzeln mindestens einer begründeten Kategorie zugeordnet: rebasen und prüfen, durch neueren PR ersetzt, konfliktbehaftet, bündeln oder schließen.",
+      "id": "per-pr-classification"
+    },
+    {
+      "assertion": "Jede Entscheidung berücksichtigt aktuellen main, neuere Nachfolger, Konfliktstatus, CI, Sicherheitsrelevanz und Abhängigkeitsumfang; Alter allein ist weder Merge- noch Schließungsbeweis.",
+      "id": "evidence-not-age"
+    },
+    {
+      "assertion": "Rebase, Merge oder Schließung erfolgt nur gegen den erneut gelesenen exakten PR-Head und wird über GitHub zurückgelesen; unklare Ausgänge werden nicht blind wiederholt.",
+      "id": "effects-bound"
+    },
+    {
+      "assertion": "Für behaltene, gebündelte oder gemergte Änderungen sind die jeweils relevanten Repository-Tests und Pflichtchecks grün oder ein konkreter Blocker ist terminal dokumentiert.",
+      "id": "repository-validation"
+    },
+    {
+      "assertion": "Alle 22 PRs besitzen am Ende eine nachvollziehbare Entscheidung und einen aktuellen GitHub-Zustandsreadback; neuere Metarepo-PRs bleiben ausdrücklich außerhalb dieser Altqueue.",
+      "id": "terminal-readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.hauski"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.hauski-audio"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T033"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Jede PR-Aktion bleibt an den exakten aktuellen Head, aktuelle CI, Konfliktstatus und Remote-Readback gebunden; pauschale Schließungen aufgrund des Alters sind ausgeschlossen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/hausKI",
+      "repo:/home/alex/repos/hausKI-audio"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/hausKI"
+  },
+  "goal": "Die 22 alten Dependabot-Pull-Requests in HausKI und HausKI-Audio einzeln gegen den aktuellen Hauptstand, mögliche Nachfolger, Konflikte, Tests und Bündelbarkeit prüfen und mit begründeter Entscheidung bearbeiten. Alter allein darf weder Merge noch Schließung begründen.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T038",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "blanket_merge_authority",
+      "blanket_close_authority",
+      "repository_retirement",
+      "completion_of_current_dependency_alert_remediation"
+    ],
+    "operator_intake_candidate_id": "candidate-operator-ecosystem-t038",
+    "operator_intake_event_id": 795,
+    "queue_counts": {
+      "heimgewebe/hausKI": 15,
+      "heimgewebe/hausKI-audio": 7,
+      "total": 22
+    },
+    "source": "systemkatalog_repository_lifecycle_audit",
+    "source_head": "59d082b078af63dbf6f9b65a318907d1b2e9fc09",
+    "source_merge_commit": "089e4ed6fe3de50cf9069293ec28f59b6c5d90ff",
+    "source_pull_request": "heimgewebe/systemkatalog#143",
+    "source_sha256": "f7a99210418e336a587bc077567430ee3188c0d64e15c840dbbd5c88e4133c31",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-operator-ecosystem-t038",
+      "event_id": 795,
+      "event_created_at": "2026-07-19T20:19:07.254204Z",
+      "request_sha256": "b8130c3a52086d4c9b50bdc76a6b1f17d52242cafa47ec39c144797c2ce64f2b",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "systemkatalog_audit_followup",
+        "locator": "/home/alex/.local/state/bureau/intake/t038-dependabot-queue.json",
+        "observed_at": "2026-07-19T20:51:50+02:00",
+        "sha256": "f7a99210418e336a587bc077567430ee3188c0d64e15c840dbbd5c88e4133c31"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "verified_at": "2026-07-20T07:51:07+02:00",
+    "outcome": "verified",
+    "verification_note": "T038 ist erfüllt: Alle 22 historischen Dependabot-PRs wurden einzeln gegen ihren exakten Head geprüft, durch zwei aktuelle repository-spezifische Bündel ersetzt und nach grünem CI als nicht gemergte Alt-PRs geschlossen. Alter allein war bei keiner Entscheidung der Grund. Aktuelle aggregierte Abhängigkeitsmeldungen liegen außerhalb T038 und sind als T040/T041 getrennt geplant.",
+    "validated_acceptance": {
+      "inventory-exact-22": "PASS: 15 HausKI- und 7 HausKI-Audio-PRs wurden mit Nummer, Titel, Erstellungszeit, Head, Base, Konfliktstatus und betroffener Abhängigkeit live gelesen.",
+      "per-pr-classification": "PASS: Jeder Alt-PR wurde als durch das repository-spezifische, auf aktuellem main getestete Bündel ersetzt klassifiziert und einzeln geschlossen.",
+      "evidence-not-age": "PASS: Quell-Diff, Zielversion, aktueller main, Lockfile-Auflösung, Tests, Sicherheitsprüfungen und CI wurden berücksichtigt; kein PR wurde allein wegen seines Alters geschlossen.",
+      "effects-bound": "PASS: HausKI #758 und HausKI-Audio #152 wurden gegen exakte Heads gemergt; alle 22 Schließungen nennen den exakten Quell-Head und wurden über GitHub zurückgelesen.",
+      "repository-validation": "PASS: Beide Bündel bestanden lokale Repositoryprüfungen und sämtliche GitHub-Pflichtchecks; zusätzliche reproduzierte Sicherheits- und Testflaky-Befunde wurden vor Merge behoben.",
+      "terminal-readback": "PASS: GraphQL-Readback zeigt alle 22 Alt-PRs CLOSED und merged=false; beide Hauptzweige zeigen auf die belegten Mergecommits."
+    },
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_historical_dependency_queue_reconciled",
+      "total_source_pull_requests": 22,
+      "hauski": {
+        "source_pull_requests": [
+          753,
+          752,
+          751,
+          750,
+          749,
+          748,
+          746,
+          745,
+          744,
+          743,
+          742,
+          741,
+          740,
+          739,
+          737
+        ],
+        "consolidation_pull_request": 758,
+        "implementation_head": "0d81a9f3347075f9b12b0225704c604c20a5b920",
+        "merge_commit": "45b6df28feffb8971985899440f5eca10ec8752b",
+        "reviewed_diff_sha256": "feae2deec8cfaaa685fbc88c9b2826bde47ae14da6bf1b3e1355e30aa1b0e820",
+        "source_pr_terminal_state": "CLOSED",
+        "source_pr_merged": false
+      },
+      "hauski_audio": {
+        "source_pull_requests": [
+          150,
+          149,
+          147,
+          146,
+          145,
+          143,
+          142
+        ],
+        "consolidation_pull_request": 152,
+        "implementation_head": "d2b156da44aee6e4404b3beaca352411cdd687b1",
+        "merge_commit": "423afd848ffe2d78bd4ac3bba8a82ceb688f390d",
+        "reviewed_diff_sha256": "036e6c5bde74475ae794e09a757ace26a1565743a76fe3c5fac9c06787c626a6",
+        "source_pr_terminal_state": "CLOSED",
+        "source_pr_merged": false
+      },
+      "validation": {
+        "hauski_local_lint_receipt_sha256": "f594f4d13ec48bce83e0fb82b2332b48c651b79290cd5eb77b3eee69af8dffd3",
+        "hauski_local_test_receipt_sha256": "93f79dd32245d9dc02cdb8fc6ed45b5d1101102b46c054055c036df5550c872d",
+        "hauski_github_checks": "all completed checks successful or intentionally skipped",
+        "hauski_audio_github_checks": "all completed checks successful",
+        "terminal_graphql_readback": "PASS"
+      }
+    },
+    "registered_followups": [
+      {
+        "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T040",
+        "candidate_id": "candidate-operator-ecosystem-t040-hauski-v2",
+        "event_id": 826,
+        "repository": "repo.hauski",
+        "state": "planned",
+        "scope": "Live inventory and evidence-bound remediation of current HausKI dependency findings after T038"
+      },
+      {
+        "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T041",
+        "candidate_id": "candidate-operator-ecosystem-t041-hauski-audio-v2",
+        "event_id": 827,
+        "repository": "repo.hauski-audio",
+        "state": "planned",
+        "scope": "Live inventory and evidence-bound remediation of current HausKI-Audio dependency findings after T038"
+      }
+    ],
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T038",
+          "source_ref": "heimgewebe/hausKI#758",
+          "number": 758,
+          "head_sha": "0d81a9f3347075f9b12b0225704c604c20a5b920",
+          "merge_commit_sha": "45b6df28feffb8971985899440f5eca10ec8752b",
+          "diff_sha256": "feae2deec8cfaaa685fbc88c9b2826bde47ae14da6bf1b3e1355e30aa1b0e820"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T038",
+          "source_ref": "heimgewebe/hausKI-audio#152",
+          "number": 152,
+          "head_sha": "d2b156da44aee6e4404b3beaca352411cdd687b1",
+          "merge_commit_sha": "423afd848ffe2d78bd4ac3bba8a82ceb688f390d",
+          "diff_sha256": "036e6c5bde74475ae794e09a757ace26a1565743a76fe3c5fac9c06787c626a6"
+        },
+        {
+          "kind": "github_graphql_readback",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T038",
+          "source_ref": "hausKI:15 and hausKI-audio:7 historical PRs",
+          "terminal_state": "CLOSED",
+          "merged": false,
+          "total": 22
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "dc9ea8bbd8a0a2cbab0cc9287990956a4eb6b0e4660c5e96e4d085cc720d05eb",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 203
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Alte Dependabot-PR-Queue einzeln bereinigen"
+}

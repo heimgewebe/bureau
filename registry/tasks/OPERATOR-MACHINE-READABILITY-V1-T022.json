@@ -72,13 +72,39 @@
       "automatische Merge- oder Deployment-Autorität"
     ],
     "friction_event_id": "f1ba3495e2c94316ae344a6f004e1227",
+    "implementation": {
+      "closeout_evidence_path": "/home/alex/.local/state/bureau/evidence/t022-pre-effect-reconciliation-closeout.json",
+      "closeout_evidence_sha256": "8006b6b72088c248b2ae7862e67154ecfbb20296549a255480ded548d0f76290",
+      "diff_path": "/home/alex/iCloud/Drive/halde/bureau-t022-pre-effect-reconciliation-12bcf543.diff",
+      "diff_sha256": "ad80c712eb218828bef40d9fce81aa60390ea8e7869cb964925a601895069fd9",
+      "github_checks": "all-success",
+      "live_canary_closed_without_merge": true,
+      "live_canary_head": "035c8bc0653af18de89f91601a0465896bedd685",
+      "live_canary_pull_request": 748,
+      "live_canary_receipt_sha256": "116d95b278b4c1fb6d8f7ac066f79285c1d0da4b6aa79d27cf10db426e85e450",
+      "local_validation_receipt_sha256": "cc4828cb7d10609bc81ba981b98a7c3d410b3a2b8da39b25c46ec99546149698",
+      "merge_commit": "8c4c448e9b475412164be592b4648c3644dab655",
+      "pull_request": 741,
+      "repository": "heimgewebe/bureau",
+      "reviewed_head": "12bcf543559919bbb7c1719780eb14dd9e423d0d",
+      "runtime_job_receipt_sha256": "2553a2a4d46ab9da00373278b3331a19931983a2f63c89b6e079c21d77509aae",
+      "runtime_release_id": "ebbc425588c0-srcbbdb0e7bf84d",
+      "runtime_result_sha256": "1b3f71f73e988b7bfaa7799d3a8813810f715cd4726aaffe2bb1329f8116cce4",
+      "runtime_source_commit": "ebbc425588c0cfb671883e8e3cc14dd323f2c738"
+    },
+    "implemented_at": "2026-07-19T21:14:47Z",
     "incident_proposal_id": "00a30270eb4a31c2e2626c0d04e88f9a302f104582c13ef0ee3c79e140590863",
     "operator_intake": {
-      "schema_version": 1,
       "candidate_id": "candidate-6cf64fb232ec9970dd4e8603",
-      "event_id": 776,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
       "event_created_at": "2026-07-19T15:34:38.868206Z",
+      "event_id": 776,
       "request_sha256": "6426b15aa769ae7ebc4f6a8767d92b92559010dd505d97d3c4fd3d53310c71d4",
+      "schema_version": 1,
       "source": {
         "does_not_establish": [
           "source_content_identity"
@@ -88,19 +114,77 @@
         "locator": "grabowski-live-audit:operator-intake-t072-2026-07-19",
         "observed_at": "2026-07-19T15:28:00Z",
         "sha256": null
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
+      }
     },
     "registered_at": "2026-07-19T17:35:00+02:00",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "content_sha256": "ad80c712eb218828bef40d9fce81aa60390ea8e7869cb964925a601895069fd9",
+          "kind": "github_pull_request",
+          "source_ref": "github-pr:heimgewebe/bureau#741@12bcf543559919bbb7c1719780eb14dd9e423d0d:8c4c448e9b475412164be592b4648c3644dab655",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T022"
+        },
+        {
+          "authority": "grabowski-runtime",
+          "content_sha256": "cc4828cb7d10609bc81ba981b98a7c3d410b3a2b8da39b25c46ec99546149698",
+          "kind": "task_receipt",
+          "source_ref": "grabowski-job:grabowski-job-4e6e052cff7d@12bcf543559919bbb7c1719780eb14dd9e423d0d",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T022"
+        },
+        {
+          "authority": "bureau-runtime",
+          "content_sha256": "1b3f71f73e988b7bfaa7799d3a8813810f715cd4726aaffe2bb1329f8116cce4",
+          "kind": "task_receipt",
+          "source_ref": "bureau-runtime:ebbc425588c0cfb671883e8e3cc14dd323f2c738@ebbc425588c0-srcbbdb0e7bf84d",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T022"
+        },
+        {
+          "authority": "bureau-operator-intake",
+          "content_sha256": "116d95b278b4c1fb6d8f7ac066f79285c1d0da4b6aa79d27cf10db426e85e450",
+          "kind": "task_receipt",
+          "source_ref": "bureau-publication:1713ac854f0b0f134d536f50a06cf16ec2e1296d677c00ba0218a643118ab1af@035c8bc0653af18de89f91601a0465896bedd685",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T022"
+        },
+        {
+          "authority": "github",
+          "content_sha256": "2a1985b244c13735f62662ced3fbd1fae800768a72eedba0f035b00c5df477a3",
+          "kind": "github_pull_request",
+          "source_ref": "github-pr:heimgewebe/bureau#748@035c8bc0653af18de89f91601a0465896bedd685:closed-unmerged",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T022"
+        },
+        {
+          "authority": "bureau-closeout",
+          "content_sha256": "8006b6b72088c248b2ae7862e67154ecfbb20296549a255480ded548d0f76290",
+          "kind": "task_receipt",
+          "source_ref": "file:/home/alex/.local/state/bureau/evidence/t022-pre-effect-reconciliation-closeout.json",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T022"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
     "related_candidate_id": "candidate-d95ea8ee157c2b27483967be",
     "source": "bureau_operator_intake",
     "source_candidate_id": "candidate-6cf64fb232ec9970dd4e8603",
     "source_event_id": 776,
-    "source_observation": "Beim T072-Closeout blockierte ein exakter verwaister Vor-Effekt-Workspace als workspace-exists. Ein fehlender task_sha256/plan_sha256-Vertrag wurde danach als publication-unclear gemeldet und hielt Leases, obwohl autoritativer Readback keinen Remote-Branch, keinen PR und keine Remote-Datei zeigte. Der kanonische Abschluss erfolgte unabhängig über PR #722."
+    "source_observation": "Beim T072-Closeout blockierte ein exakter verwaister Vor-Effekt-Workspace als workspace-exists. Ein fehlender task_sha256/plan_sha256-Vertrag wurde danach als publication-unclear gemeldet und hielt Leases, obwohl autoritativer Readback keinen Remote-Branch, keinen PR und keine Remote-Datei zeigte. Der kanonische Abschluss erfolgte unabhängig über PR #722.",
+    "validated_acceptance": {
+      "effect-phase-classification": "PASS: local, commit, push, PR and contradictory-readback phases have distinct fail-closed outcomes; the live stale-identity attempt ended effect_started=false.",
+      "exact-workspace-reconciliation": "PASS: reservations, staging identity, marker recovery, no-follow paths and descriptor-bound cleanup are covered by fault-injection tests.",
+      "idempotent-retry": "PASS: replay of proposal 2f41388f returned receipt 116d95b2 without acquiring leases or creating another commit, branch or PR.",
+      "lease-release-contract": "PASS: the live pre-remote failure and successful publication both released the exact owner-bound leases; authoritative post-readback count was zero.",
+      "live-regression-proof": "PASS: disposable PR #748 published exact head 035c8bc and task hash 2a1985b2, was independently read back, then closed unmerged and its branch deleted; T023 is absent from main.",
+      "validate-before-remote-effect": "PASS: proposal, publishing-task identity, task bytes and Registry basis are checked before workspace or remote effects."
+    },
+    "verification": {
+      "evidence_sha256": "8006b6b72088c248b2ae7862e67154ecfbb20296549a255480ded548d0f76290",
+      "plan_sha256": "5bd32f4906cc9af27a3f99c7ab886eb9df7f8e5f4e9247c450bc492e64d28b06",
+      "task_sha256": "f987b683786964f96eb3098c63507394832441fd5d0e7c7f7a47237f694cec37",
+      "verified_at": "2026-07-20T01:45:40Z"
+    },
+    "verified_at": "2026-07-20T01:45:40Z"
   },
   "priority": {
     "lane": "next",
@@ -119,6 +203,6 @@
     "strategy": "Den bisherigen fail-closed Publisher wiederherstellen; vorhandene Recovery-Workspaces, Kandidaten-, Friktions- und Publikationsbelege bleiben unverändert erhalten. Bei unsicherer Phase weiterhin publication-unclear melden und keinen Retry starten."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Bureau-Publikation vor Remote-Effekt deterministisch reconciliieren"
 }

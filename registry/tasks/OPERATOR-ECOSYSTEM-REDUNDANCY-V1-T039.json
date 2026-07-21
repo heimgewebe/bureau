@@ -1,0 +1,199 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The native execution receipt separately records provider-created layout objects, board_list_items-visible objects and connector evidence; it no longer assumes that every connector appears in the general board inventory.",
+      "id": "inventory-visibility-contract"
+    },
+    {
+      "assertion": "A layout whose operation readback and layout_read prove all connectors completes successfully even when board_list_items omits those connectors; the receipt does not claim partial mutation.",
+      "id": "truthful-completion"
+    },
+    {
+      "assertion": "Negative tests prove that absent, malformed or fewer-than-declared connectors still fail closed and cannot be hidden by the visibility reconciliation.",
+      "id": "missing-connector-fail-closed"
+    },
+    {
+      "assertion": "The Miro quality path consumes layout-read connector evidence or reports connector observability as unavailable; it never silently converts an unobservable connector count into zero.",
+      "id": "quality-evidence-axis"
+    },
+    {
+      "assertion": "Unit, integration and full Schauwerk tests pass, and one isolated live Miro acceptance binds board inventory, layout_read and operation receipts without creating duplicate board content.",
+      "id": "regression-and-live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.schauwerk"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user has authorized cost-free Schauwerk optimization. Work must remain isolated, diff-reviewed, test-bound and must not repeat the already completed live board mutation.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk"
+  },
+  "goal": "Make Schauwerk native delivery and visual quality verification distinguish provider-created connectors from the inventory exposed by board_list_items, so a complete layout does not produce a false failed or partial-mutation receipt while genuinely missing connectors still fail closed.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T039",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to recreate or duplicate the live board",
+      "provider-wide atomicy",
+      "automatic aesthetic acceptance",
+      "that board_list_items will expose connectors in future provider versions"
+    ],
+    "id_collision_correction": {
+      "corrected_at": "2026-07-19T21:00:00+02:00",
+      "original_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T036",
+      "reason": "T036 is reserved by the merged Systemkatalog repository-lifecycle audit for the Heimlern compatibility-freeze task; this unrelated planned Schauwerk task had no queue, claim, dispatch or execution references when reassigned.",
+      "replacement_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T039",
+      "source_pull_request": "heimgewebe/bureau#728"
+    },
+    "live_evidence": {
+      "board_alias": "operator-ecosystem-heim-pc-20260719",
+      "board_inventory_visible_count": 34,
+      "layout_read_connector_count": 6,
+      "layout_read_summary_sha256": "0f282e6cbf3e180690018fb78fb754955f2db2a221143ed7c07bfe96394a183b",
+      "native_execution_sha256": "6bfeafbe57df80ab2965c61a96642ad735d3bf6181d2edd80a97e9b348c036a9",
+      "provider_created_count": 40,
+      "snapshot_content_sha256": "86d4fbd74e90da42c8a4130295cdc35a7d1758c6a9dfc31abc54db96252d0275"
+    },
+    "operator_intake": {
+      "candidate_id": "candidate-8dba069f8f79c28e5373cdc5",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-19T18:09:52.787857Z",
+      "event_id": 780,
+      "request_sha256": "98397620d8a4fa63660befcaadee416fe6bcff2d3c19633b77fe5d760ca7434d",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live_runtime_finding",
+        "locator": "operator-ecosystem-heim-pc-20260719@eaa087839f2fff2c",
+        "observed_at": "2026-07-19T19:59:10+02:00",
+        "sha256": "6bfeafbe57df80ab2965c61a96642ad735d3bf6181d2edd80a97e9b348c036a9"
+      }
+    },
+    "proposal_replaces_local_plan": "49bde60941aff42b5ae525c146da5b1621ff5c7b6fb7ffc36996477e828a15ee (review serialization changed nested key order; never published)",
+    "registered_from": "operator-ecosystem-heim-pc-20260719 live delivery finding",
+    "verified_at": "2026-07-19T21:14:52Z",
+    "resolution_summary": "Schauwerk now reconciles native Miro delivery across provider-created objects, board inventory visibility and independently verified connector evidence. Connectors omitted by board_list_items no longer cause a false failed or partial-mutation receipt, while absent, malformed, fewer-than-declared and inconsistent connector evidence still fails closed. The quality path reports unavailable observability instead of silently assuming zero.",
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_miro_connector_observability_truthful",
+      "implementation_pull_request": 107,
+      "implementation_head": "7235eca2c12aaafed1379c5690fb18f68051fb6e",
+      "merge_commit": "02478291c5dd382a30a9cbf6c27d352161f143f1",
+      "merged_at": "2026-07-19T21:12:37Z",
+      "reviewed_diff_sha256": "948af242bc5a884826c130e91c6ae381a5b8297275bdd20e7f3dd64077eb40a7",
+      "validation": {
+        "focused_miro_tests": "50 PASS",
+        "premerge_repository_tests": "739 PASS",
+        "postmerge_repository_tests": "739 PASS",
+        "ruff": "PASS",
+        "compileall": "PASS",
+        "registry_validation": "PASS",
+        "ci_python_3_11": "SUCCESS",
+        "ci_python_3_12": "SUCCESS",
+        "codeql": "SUCCESS"
+      }
+    },
+    "live_verification": {
+      "observed_at": "2026-07-19T21:14:52Z",
+      "board_alias": "operator-ecosystem-heim-pc-20260719",
+      "merge_commit": "02478291c5dd382a30a9cbf6c27d352161f143f1",
+      "snapshot_content_sha256": "86d4fbd74e90da42c8a4130295cdc35a7d1758c6a9dfc31abc54db96252d0275",
+      "snapshot_repeatability_verified": true,
+      "board_inventory_visible_count": 34,
+      "layout_read_connector_count": 6,
+      "provider_created_count": 40,
+      "connector_observability": "layout_read",
+      "quality_score": 100,
+      "quality_findings": 0,
+      "mutation_attempted": false,
+      "postmerge_acceptance_job": "grabowski-job-0ad56ba8a91a",
+      "postmerge_acceptance_receipt_sha256": "728348f122a7ea9ed8a5caec786be5164fcbb6778b5d166eda98cd95aa3f78f4",
+      "postmerge_validation_job": "grabowski-job-c86d28648a61",
+      "postmerge_validation_receipt_sha256": "e7f87ba0f1b2162b2ec39d7d7b6787e22a55832d483a8fab477edc0c6faff349"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T039",
+          "source_ref": "heimgewebe/schauwerk#107",
+          "number": 107,
+          "head_sha": "7235eca2c12aaafed1379c5690fb18f68051fb6e",
+          "merge_commit_sha": "02478291c5dd382a30a9cbf6c27d352161f143f1",
+          "diff_sha256": "948af242bc5a884826c130e91c6ae381a5b8297275bdd20e7f3dd64077eb40a7"
+        },
+        {
+          "kind": "repository_validation",
+          "authority": "grabowski-runtime",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T039",
+          "source_ref": "grabowski-job-c86d28648a61",
+          "implementation_sha": "02478291c5dd382a30a9cbf6c27d352161f143f1",
+          "receipt_sha256": "e7f87ba0f1b2162b2ec39d7d7b6787e22a55832d483a8fab477edc0c6faff349",
+          "tests_passed": 739
+        },
+        {
+          "kind": "live_probe",
+          "authority": "miro-provider-via-schauwerk",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T039",
+          "source_ref": "live:operator-ecosystem-heim-pc-20260719:2026-07-19T21:14:52Z",
+          "implementation_sha": "02478291c5dd382a30a9cbf6c27d352161f143f1",
+          "snapshot_sha256": "86d4fbd74e90da42c8a4130295cdc35a7d1758c6a9dfc31abc54db96252d0275",
+          "receipt_sha256": "728348f122a7ea9ed8a5caec786be5164fcbb6778b5d166eda98cd95aa3f78f4",
+          "board_inventory_visible_count": 34,
+          "connector_count": 6,
+          "provider_created_count": 40,
+          "mutation_attempted": false
+        }
+      ]
+    },
+    "verification": {
+      "source": "github_ci_exact_postmerge_validation_and_read_only_live_miro_acceptance",
+      "source_ref": "github-pr:heimgewebe/schauwerk#107",
+      "implementation_sha": "7235eca2c12aaafed1379c5690fb18f68051fb6e",
+      "merge_commit_sha": "02478291c5dd382a30a9cbf6c27d352161f143f1",
+      "final_diff_sha256": "948af242bc5a884826c130e91c6ae381a5b8297275bdd20e7f3dd64077eb40a7",
+      "postmerge_validation_receipt_sha256": "e7f87ba0f1b2162b2ec39d7d7b6787e22a55832d483a8fab477edc0c6faff349",
+      "postmerge_live_receipt_sha256": "728348f122a7ea9ed8a5caec786be5164fcbb6778b5d166eda98cd95aa3f78f4",
+      "snapshot_sha256": "86d4fbd74e90da42c8a4130295cdc35a7d1758c6a9dfc31abc54db96252d0275",
+      "task_sha256": "04f1cf4ee6b7b403eea5ca81a10e4e4cb2ca957543fd503862279c44124cafb7",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    },
+    "verification_note": "T039 is satisfied: provider-created, board-inventory-visible and connector-evidence counts are distinct; layout_read-proven connectors omitted by board_list_items complete truthfully; invalid connector evidence remains fail-closed; quality reports unavailable observability instead of zero; exact post-merge validation and a read-only live board probe passed without duplicate content."
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 39
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "github",
+    "miro",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Make Miro connector observability truthful in Schauwerk"
+}

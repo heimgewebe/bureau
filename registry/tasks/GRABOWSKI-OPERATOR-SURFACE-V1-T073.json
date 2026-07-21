@@ -1,0 +1,217 @@
+{
+  "acceptance": [
+    {
+      "assertion": "PR #309 wird vor weiterer Mutation gegen den dann aktuellen origin/main-, PR-Head-, Mergefähigkeits-, Dirty-State-, Task-, Prozess- und Lease-Zustand erneut geprüft; der bestehende Head 65461f5b22972d4cbb617a585b236c4831902564 wird nicht blind als aktuell angenommen.",
+      "id": "fresh-head-and-base"
+    },
+    {
+      "assertion": "Die deterministischen Operator-Kontextprojektionen werden erst nach belegter Freigabe oder rechtmäßiger eigener Lease regeneriert; fremde Leases, Worktrees, Prozesse und Dirty States werden weder überschrieben noch aufgehoben.",
+      "id": "lease-safe-projection"
+    },
+    {
+      "assertion": "Der finale exakte PR-Head besteht die fokussierten Task-Attention-Tests, git diff --check, die vollständige Repository-Validierung sowie alle GitHub-Prüfungen ohne ausgenommenen Projektionsfehler.",
+      "id": "green-validation"
+    },
+    {
+      "assertion": "Ein finaler sicherheitsorientierter Review ist an exakten Head, Basis und Diff-Digest gebunden und ergibt PASS; der vollständige nicht-triviale Diff liegt vor dem Merge als Downloadartefakt vor.",
+      "id": "diff-bound-review"
+    },
+    {
+      "assertion": "Nur bei vollständiger Belegkette wird PR #309 aus dem Draft genommen und gemergt; anschließend wird ausschließlich der exakte Mergecommit deployt und durch Runtime-, Audit-, Kill-Switch- und Funktions-Readbacks verifiziert.",
+      "id": "exact-merge-and-runtime"
+    },
+    {
+      "assertion": "Bureau-Status, PR-Belege und Runtime-Wahrheit stimmen überein; temporäre Worktrees und eigene Leases werden entfernt, fremde Zustände bleiben unberührt.",
+      "id": "clean-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_task_attention.py",
+      "component:tests/test_task_attention.py",
+      "component:docs/generated/operator-context.v1.json",
+      "component:docs/generated/operator-context.md",
+      "github-pr:heimgewebe/grabowski#309"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Grabowski PR #309 nach Freigabe der fremd geleasten deterministischen Operator-Kontextprojektion auf einem frischen Hauptbranchstand vollständig schließen: Projektion ohne Lease-Override regenerieren, exakten Head vollständig validieren und unabhängig diffgebunden reviewen, nur bei grüner Belegkette mergen, den exakten Merge in die Runtime deployen, live verifizieren und sauber aufräumen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T073",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "blocking_condition": "RESOLVED: mandatory 24-hour cleanup grace elapsed; both archived PR #309 checkouts were canonically removed after dry-run/apply verification on 2026-07-20T23:05Z.",
+    "current_evidence": {
+      "audit": "audit chain valid and writable; kill switch not engaged",
+      "codeql": "passed on remote head 30716dea6c8dceceff3f66e4f09ebbd430e0fa2d",
+      "deploy_check": "make deploy-check passed",
+      "focused_tests": "task-attention regression tests passed",
+      "full_validation": "make validate passed: 2356 tests passed, 2 skipped",
+      "git_diff_check": "passed",
+      "github_validation": "CodeQL, Python 3.10, Python 3.12, Analyze actions and Analyze python all passed",
+      "merge": "PR #309 squash-merged as c501dbb8189c0f7bc89473ab9b7c064581a32162",
+      "runtime": "exact merge commit deployed and runtime health/integrity readbacks passed",
+      "task_attention_readback": "read-only reconciliation scanned 20 outcomes: 20 valid, 0 invalid",
+      "final_cleanup": "Both archived PR #309 checkouts removed canonically after grace; recovery refs verified present; unrelated dirty/process-bound worktrees untouched.",
+      "current_runtime": "Current newer runtime 8384406bf653b7c5a3ac7b850a045ba010885e00 is healthy, deployment-integrity-valid, audit-valid/writable, kill switch not engaged; PR #309 merge commit remains an ancestor of origin/main."
+    },
+    "diff_sha256": "72a4045126899c9152e65f782c79805339a49d4205f27f78ceb979c59a3e1433",
+    "does_not_establish": [],
+    "implementation": {
+      "cleanup": {
+        "deployment_checkout_archive_id": "20260719T224540Z-f3d64e86199a",
+        "deployment_checkout_coordination": {
+          "processes": 0,
+          "resource_leases": 0,
+          "tasks": 0
+        },
+        "earliest_cleanup_at": "2026-07-20T22:45:40Z",
+        "retention_until_unix": 1787093116,
+        "rollback_refs_preserved": true,
+        "status": "completed",
+        "writer_checkout_archive_id": "20260719T224523Z-38dda6a1ca80",
+        "writer_checkout_coordination": {
+          "processes": 0,
+          "resource_leases": 0,
+          "tasks": 0
+        },
+        "completed_at": "2026-07-20T23:05:00Z",
+        "writer_checkout_removed": true,
+        "deployment_checkout_removed": true,
+        "writer_recovery_head_ref": "refs/grabowski/checkouts/1a2f3446f0b6468e/20260719T224523Z-38dda6a1ca80/head",
+        "writer_recovery_branch_ref": "refs/grabowski/checkouts/1a2f3446f0b6468e/20260719T224523Z-38dda6a1ca80/branch-head",
+        "deployment_recovery_head_ref": "refs/grabowski/checkouts/c2edd53deadbadbd/20260719T224540Z-f3d64e86199a/head",
+        "writer_recovery_head": "b07a5d2ce540ecd684d649fda83d782750d822ed",
+        "deployment_recovery_head": "c501dbb8189c0f7bc89473ab9b7c064581a32162",
+        "foreign_state_changed": false
+      },
+      "deployment": {
+        "audit_valid": true,
+        "audit_writable": true,
+        "deployed_commit": "c501dbb8189c0f7bc89473ab9b7c064581a32162",
+        "deployment_complete": true,
+        "deployment_integrity_valid": true,
+        "job_result": "success",
+        "job_unit": "grabowski-job-5c9bc0ef3a3d",
+        "kill_switch_engaged": false,
+        "release_id": "c501dbb8189c-srcset2b647a2c8932-locke6664d600b6c-contract1add9fdbb62b",
+        "runtime_healthy": true
+      },
+      "live_function": {
+        "grip": "task-attention-reconciliation",
+        "invalid_outcome": 0,
+        "mode": "read-only",
+        "receipt_sha256": "3e3725b3b17510b56845c18a818979c5e8fbf0e2843c51b9dcbd79ddb8587294",
+        "scanned": 20,
+        "valid_outcome": 20
+      },
+      "merge": {
+        "merge_commit": "c501dbb8189c0f7bc89473ab9b7c064581a32162",
+        "merged_at": "2026-07-19T22:30:05Z",
+        "remote_feature_branch_deleted": true,
+        "status": "merged"
+      },
+      "pull_request": 309,
+      "repository": "heimgewebe/grabowski",
+      "review": {
+        "base_sha": "c47ed4b12cc7856b46d5a0764e74777eab7d207a",
+        "diff_sha256": "72a4045126899c9152e65f782c79805339a49d4205f27f78ceb979c59a3e1433",
+        "finding": "No blocking findings; digest-bound lifecycle evidence remains authoritative and integrity failures propagate fail-closed.",
+        "remote_head_sha": "30716dea6c8dceceff3f66e4f09ebbd430e0fa2d",
+        "shared_tree_sha": "b86f9eba27215bc23ba49d6aa429d0f13ec2d4bc",
+        "status": "passed",
+        "validated_local_head_sha": "b07a5d2ce540ecd684d649fda83d782750d822ed"
+      },
+      "validation": {
+        "github_checks": "all-success",
+        "make_deploy_check": "passed",
+        "make_deploy_check_task_id": "8efdde1570884c02a8411de2",
+        "make_deploy_check_terminalization_sha256": "cf708182d4c9681b24e028370c21dcea3ac9ab893b744554806b934e3184f1dc",
+        "make_validate": "passed",
+        "make_validate_task_id": "c45b16f39ece4baf8c43a76a",
+        "make_validate_terminalization_sha256": "00dbde07e59db228d4ea01b20d7488f17514675630843cdef1e68f10de2b898c"
+      },
+      "current_runtime_verification": {
+        "observed_at": "2026-07-20T23:05:00Z",
+        "repo_head": "8384406bf653b7c5a3ac7b850a045ba010885e00",
+        "release_id": "8384406bf653-srcsetf969dc1823dd-locke6664d600b6c-contract2ada01660eb3",
+        "healthy": true,
+        "deployment_complete": true,
+        "deployment_integrity_valid": true,
+        "audit_valid": true,
+        "audit_writable": true,
+        "audit_chain_valid": true,
+        "audit_total_records": 25172,
+        "kill_switch_engaged": false,
+        "pr309_merge_commit_is_ancestor_of_origin_main": true
+      }
+    },
+    "observed_base": "c47ed4b12cc7856b46d5a0764e74777eab7d207a",
+    "operator_intake": {
+      "candidate_id": "candidate-43f9279b96b12935db58b3db",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-19T20:07:47.799964Z",
+      "event_id": 791,
+      "request_sha256": "ec9a6cbf2e26143a68c95f1f066d7679ae22a0fa117f14d669ea96222edee8f9",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github_pull_request",
+        "locator": "github:heimgewebe/grabowski#309@65461f5b22972d4cbb617a585b236c4831902564",
+        "observed_at": "2026-07-19T22:05:33+02:00",
+        "sha256": "45e7746deeaf8bcaca510dc6c49318527e8ffebee641e1d0386eb53567f7a28e"
+      }
+    },
+    "progress_updated_at": "2026-07-20T23:05:00Z",
+    "source": "pr_closeout_followup",
+    "source_head": "30716dea6c8dceceff3f66e4f09ebbd430e0fa2d",
+    "source_pr": 309,
+    "source_repository": "heimgewebe/grabowski",
+    "source_tree": "b86f9eba27215bc23ba49d6aa429d0f13ec2d4bc",
+    "validated_acceptance": {
+      "clean-closeout": "PASS: after mandatory grace, both clean archived checkouts were removed via canonical dry-run/apply cleanup; recovery refs remain present and unrelated dirty states, processes, tasks and leases were not mutated.",
+      "diff-bound-review": "PASS: review was bound to exact base, remote head, shared tree and diff digest and found no blocker.",
+      "exact-merge-and-runtime": "PASS: PR #309 was merged SHA-bound; exact merge c501dbb was deployed and verified through runtime, audit, kill-switch and functional readbacks.",
+      "fresh-head-and-base": "PASS: live PR, branch, CI, checkout, task, process and lease state were re-read before mutation and again before merge.",
+      "green-validation": "PASS: final tree passed focused tests, git diff --check, make validate, make deploy-check and all GitHub checks.",
+      "lease-safe-projection": "PASS: the projection was regenerated only after the foreign lease expired and under an own branch lease."
+    },
+    "verification": {
+      "task_sha256": "16d4b51eb273c713bd1fc4bcda9737ec22351ede0a485613e33655cb1b205aa5",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "source": "operator_live_closeout",
+      "source_ref": "grabowski:pr309-cleanup:20260720T2305Z",
+      "verified_at": "2026-07-20T23:05:00Z"
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 15
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "github",
+    "grabowski",
+    "runtime-deployment",
+    "audit"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "PR #309 lease-sicher validieren, reviewen und abschließen"
+}

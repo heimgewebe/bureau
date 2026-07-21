@@ -1,0 +1,75 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Coding-Memory-Integration löst die Chronik-CLI standardmäßig aus einer stabilen versionierten Release- oder Snapshot-Quelle oder einer explizit konfigurierten Quelle auf und hängt nicht vom aktuell ausgecheckten Branch in /home/alex/repos/chronik ab.",
+      "id": "stable-cli-binding",
+      "verifier": "Regressionstest mit abweichendem oder veraltetem Chronik-Entwickler-Checkout"
+    },
+    {
+      "assertion": "Eine fehlende oder inkompatible Chronik-CLI führt fail-soft zu einem expliziten unavailable- oder config-mismatch-Ergebnis statt zu einem Crash oder einer stillen Fehlbindung.",
+      "id": "fail-soft-diagnostics",
+      "verifier": "Automatisierte Tests für fehlende CLI sowie Versions- und Vertragsabweichung"
+    },
+    {
+      "assertion": "Eine explizit konfigurierte CLI-Quelle bleibt möglich und wird validiert, ohne die stabile Defaultbindung stillschweigend zu umgehen.",
+      "id": "operator-override",
+      "verifier": "Gezielte Tests für gültigen Override sowie ungültige oder nicht vertrauenswürdige Pfade"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "CCM-V1-T002"
+  ],
+  "execution": {
+    "cwd": "/home/alex/repos/grabowski",
+    "mode": "grabowski-operation",
+    "operation": "chronik-cli-discovery-stable-binding",
+    "policy": "autonomous",
+    "working_repository": "repo.grabowski"
+  },
+  "goal": "Die Coding-Memory-Integration von Grabowski von einem zufälligen Entwickler-Checkout der Chronik-CLI entkoppeln und an eine stabile versionierte oder explizit konfigurierte Quelle mit fail-soft Diagnose binden.",
+  "id": "CCM-V1-T007",
+  "initiative": "CHRONIK-CODING-MEMORY-V1",
+  "priority": {
+    "lane": "later",
+    "rank": 7
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Chronik-CLI-Auflösung an stabile Quelle binden",
+  "metadata": {
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-839e63d145f58464f6d5fef3",
+      "event_id": 861,
+      "event_created_at": "2026-07-21T05:25:44.122555Z",
+      "request_sha256": "c6fcca5d138e55ed2f5104c892ff6ec52b17d3610ef532b591a879d91ce830d5",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator_finding",
+        "locator": "github:heimgewebe/grabowski#306@d52c5f7933a5b3c02f2a083f90ffc82de37b41a5",
+        "observed_at": "2026-07-21T05:25:44.111199Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  }
+}

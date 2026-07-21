@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T011",
+  "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
+  "title": "Chronik-Identitätsindex kontrolliert deployen und kapazitiv begrenzen",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "goal": "Den in Chronik-Merge 75541b2b033d5a5d19b0d1de4c1cdff631536a71 enthaltenen persistenten Identitätsindex über einen getrennten, reversiblen Runtime-Gate ausrollen, den ersten Indexaufbau unter pausiertem Importtimer beweisen und ein belastbares Größen-, Wartungs- und Rollbackbudget festlegen, ohne den JSONL-Ledger zu verändern oder chronik.service zu aktivieren.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik",
+      "component:chronik-identity-index",
+      "runtime:chronik-outbox-import"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Die T010-Anweisung erlaubt nur eine getrennte Deploymentbewertung. T011 ist registriert, aber weder Deployment noch Timeränderung sind durch diese Registrierung freigegeben."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.chronik",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "capacity",
+      "amount": 1,
+      "isolation": "namespace"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "benchmark"
+  ],
+  "depends_on": [
+    "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T010"
+  ],
+  "acceptance": [
+    {
+      "id": "exact-release-identity",
+      "assertion": "Eine unveränderliche Chronik-Release wird exakt aus Merge-Commit 75541b2b033d5a5d19b0d1de4c1cdff631536a71 vorbereitet, vollständig gehasht und vor jeder Runtimewirkung gegen Git und den gemergten PR-Diff zurückgelesen."
+    },
+    {
+      "id": "controlled-timer-gate",
+      "assertion": "Der Zwei-Minuten-Timer wird nur unter exklusivem Runtime-Lease pausiert; ein laufender Importer darf nicht unterbrochen werden. Inaktivität, alter Releasepfad und nächster Trigger werden vor dem Umschalten autoritativ gelesen."
+    },
+    {
+      "id": "first-build-capacity-proof",
+      "assertion": "Vor dem ersten Produktionsaufbau werden Ledger-Geräteidentität, Inode, Bytes, vollständiger SHA-256, freier Speicher und ein explizites Indexbudget erfasst. Synthetische Benchmarkverhältnisse dürfen nicht als Produktionsgröße extrapoliert werden."
+    },
+    {
+      "id": "ledger-preserving-live-proof",
+      "assertion": "Ein kontrollierter One-shot-Import baut beziehungsweise aktualisiert den Index, erhält alle vorbestehenden Ledgerbytes, weist nur erwartete neue Append-Bytes aus und besteht einen vollständigen Index- und Ledger-Readback."
+    },
+    {
+      "id": "steady-state-and-idempotency",
+      "assertion": "Ein unmittelbar wiederholter Import belegt idempotentes Verhalten und den steady-state Pfad ohne historischen Vollscan; Modus, Scan-Zähler, Laufzeit und Indexgröße werden in einem unveränderlichen Receipt festgehalten."
+    },
+    {
+      "id": "rollback-without-ledger-loss",
+      "assertion": "Der Rollback auf Release 73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f wird vorab und bei Bedarf live bewiesen. Dabei wird nur der Releasezeiger zurückgesetzt und abgeleiteter Indexzustand quarantänisiert; kein gültiges Ledgerbyte wird entfernt oder umgeschrieben."
+    },
+    {
+      "id": "maintenance-and-growth-policy",
+      "assertion": "Für Indexwachstum, freie Kapazität, Integritätsprüfung, Quarantäne, Rebuild und optionale Wartung existieren dokumentierte Schwellen, Receipts und ein fail-closed Verfahren. Automatische VACUUM-, Lösch- oder Reparaturwirkung ist ohne eigenen Beweis ausgeschlossen."
+    },
+    {
+      "id": "service-boundary-and-restore",
+      "assertion": "chronik.service bleibt nicht installiert und wird nicht aktiviert. Nach erfolgreichem Live-Beweis wird ausschließlich der bestehende chronik-outbox-import.timer wieder aktiviert und als enabled/active/waiting zurückgelesen."
+    }
+  ],
+  "rollback": {
+    "trigger": "Releaseidentität, Vorher-/Nachher-Ledgerbindung, Indexintegrität, Kapazitätsbudget, One-shot-Import, idempotenter Wiederholungslauf oder Timer-Readback weichen ab.",
+    "procedure": "Timer pausiert lassen, laufende Prozesse nicht unterbrechen, current atomar auf 73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f zurücksetzen, den abgeleiteten Index hashgebunden quarantänisieren, Ledgeridentität und SHA-256 gegen den Vorzustand prüfen und den Timer erst nach erfolgreichem Alt-Release-Import wiederherstellen."
+  },
+  "stop": {
+    "conditions": [
+      "ein fremder Prozess, Worktree, Task oder Lease überschneidet sich mit Chronik-Release, Importtimer, Ledger oder Indexpfad",
+      "der Importer ist beim vorgesehenen Releasewechsel noch aktiv",
+      "Ledgeridentität oder Ledger-SHA-256 ändert sich außerhalb des kontrollierten Append-Fensters",
+      "der freie Speicher unterschreitet das vorab festgelegte Erstaufbau- und Rollbackbudget",
+      "der Index kann nach einem Fehler nicht eindeutig als abgeleiteter Zustand quarantänisiert werden",
+      "chronik.service müsste aktiviert oder ein nicht reversibler Runtimepfad eingeführt werden"
+    ]
+  },
+  "metadata": {
+    "registered_at": "2026-07-20T15:29:05.172979Z",
+    "observed_during": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T010",
+    "finding": {
+      "status": "separate_runtime_gate_required",
+      "merged_commit": "75541b2b033d5a5d19b0d1de4c1cdff631536a71",
+      "currently_deployed_commit": "73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+      "production_ledger_bytes_observed": 7754318,
+      "filesystem_free_bytes_observed": 1037667274752,
+      "production_index_present": false,
+      "import_timer": "enabled and active/waiting; two-minute cadence",
+      "latest_import_observation": "success at 2026-07-20T17:26:10+02:00",
+      "chronik_service": "not-found/inactive"
+    },
+    "priority_decision": "Next, but not auto-started: the old importer remains healthy and the feature is not needed to preserve current ledger correctness. The main risk lies in an uncontrolled first build under the active two-minute timer.",
+    "does_not_establish": [
+      "runtime deployment authorization",
+      "permission to stop or disable the import timer now",
+      "permission to activate chronik.service",
+      "a production index-size estimate derived from the synthetic benchmark",
+      "a need to modify or rewrite the production ledger"
+    ]
+  }
+}

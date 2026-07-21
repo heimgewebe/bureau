@@ -41,7 +41,7 @@
       "authorization to duplicate deployments or bypass review"
     ]
   },
-  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T018",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T024",
   "title": "Restore automatic exact-SHA post-merge evidence for Commonworld",
   "state": "planned",
   "goal": "Determine why an accepted Commonworld merge can update main without creating the declared push-triggered validation and production-readback runs, then establish one idempotent, observable and fail-closed path that automatically produces exact-merge-SHA CI, Pages deployment and public readback evidence.",

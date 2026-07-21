@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T006",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "title": "RepoGround-Composer: Call-Graph-Lane nur bei tatsächlicher Nutzung melden",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "goal": "Die Grabowski-Funktion repoground_context_compose darf retrieval_lanes.used=call_graph nur melden, wenn kohärente Python-Call-Graph-Evidenz tatsächlich in den komponierten Kontext eingeflossen ist; allgemeine Architektur- oder Importrelationen dürfen diese Lane nicht fälschlich aktivieren.",
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T002"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "baseline_commit": "10dba6e856e9f3132dac57abe5f383bd393bc7dc",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski:branch:fix/repoground-context-compose-call-graph-lane-truth-v1",
+      "path:/home/alex/repos/.grabowski-worktrees/repoground-context-compose-call-graph-lane-truth-v1"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.repoground",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "github",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "no-false-call-graph-lane",
+      "assertion": "Ein Impact-Ergebnis mit Architekturrelationen, aber blockiertem oder fehlendem python_call_graph_json, meldet call_graph nicht unter retrieval_lanes.used."
+    },
+    {
+      "id": "actual-consumption-only",
+      "assertion": "call_graph wird nur als verwendet gemeldet, wenn der komponierte Kontext tatsächlich Evidenz mit Provenienz python_call_graph_json enthält; bloße Quellenverfügbarkeit genügt nicht."
+    },
+    {
+      "id": "gap-preservation",
+      "assertion": "Ein blockierter oder fehlender Call-Graph bleibt über Gaps beziehungsweise Source-Status sichtbar und wird nicht als frische oder vollständige Call-Graph-Abdeckung dargestellt."
+    },
+    {
+      "id": "pilot-regression",
+      "assertion": "Der T003-Weltgewebe-Pilot wird gegen denselben revisionsgebundenen Deployment-Fall wiederholt; der vorherige Widerspruch call_graph used bei artifact_too_large ist beseitigt."
+    },
+    {
+      "id": "tests-and-review",
+      "assertion": "Gezielte Composer-Tests und die relevante Grabowski-Test-Suite sind grün; Head und Diff SHA-256 werden vor Merge geprüft."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-21T14:55:00+02:00",
+    "source_task": "REPOGROUND-AGENT-UTILITY-V1-T003",
+    "source_finding": "Candidate run against RepoGround PR #1070 showed python_call_graph_json blocked with artifact_too_large while repoground_context_compose reported retrieval_lanes.used containing call_graph because call_graph_available was derived from generic impact.relations (architecture import relations).",
+    "does_not_establish": [
+      "call-graph completeness",
+      "blast-radius completeness",
+      "test sufficiency",
+      "runtime correctness",
+      "merge readiness",
+      "default RepoGround promotion"
+    ],
+    "scope_reason": "This is a Grabowski composer truthfulness defect discovered by the T003 pilot and must be corrected separately from RepoGround PR #1070."
+  }
+}

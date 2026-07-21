@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "LEITSTAND-VISUAL-LAYER-V1",
   "title": "Leitstand ecosystem visualization layer expansion",
-  "state": "active",
+  "state": "completion-ready",
   "commitment": "later",
   "goal": "Expand Leitstand into a read-only visualization layer for ecosystem maps, source freshness, RepoBrief health, and cross-view navigation without making Leitstand a source of truth, orchestrator, or task dispatcher.",
   "current_plan": {

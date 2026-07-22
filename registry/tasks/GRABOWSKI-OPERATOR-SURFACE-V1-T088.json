@@ -1,0 +1,80 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Regressionstest reproduziert den beobachteten Fall: sicherer Bureau-Checkout-Dry-Run besteht, Apply scheitert heute vor Wirkung mit Bureau and non-Bureau resources must be acquired separately.",
+      "id": "reproduce"
+    },
+    {
+      "assertion": "Der Cleanup erwirbt oder sequenziert Bureau- und Nicht-Bureau-Ressourcen ausschließlich in vom autoritativen Lease-Vertrag erlaubten, getrennten Schritten.",
+      "id": "resource-purity"
+    },
+    {
+      "assertion": "Apply bleibt an plan_id, expected_plan_sha256, expected Head/Branch und die exakte Confirmation remove-linked-checkout gebunden.",
+      "id": "plan-binding"
+    },
+    {
+      "assertion": "Recovery-Refs, Archivmanifest, Grace, Fremd-Worktree-Schutz, Dirty-State- und Koordinationsprüfungen bleiben fail-closed erhalten.",
+      "id": "safety-preserved"
+    },
+    {
+      "assertion": "Tests decken erfolgreiche Bureau- und Nicht-Bureau-Cleanups sowie verbotene gemischte Acquire-Versuche ab.",
+      "id": "bureau-and-non-bureau-tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_checkouts.py",
+      "component:src/grabowski_resources.py",
+      "component:tests/test_checkouts.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "grabowski_checkout_cleanup so härten, dass ein sicherer archivierter Bureau-Worktree nach erfolgreichem plan- und headgebundenem Dry-Run angewendet werden kann, ohne Bureau- und Nicht-Bureau-Ressourcen in einem verbotenen gemeinsamen Lease-Acquire zu mischen oder bestehende Fail-closed-Grenzen abzuschwächen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T088",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "affected_components": [
+      "src/grabowski_checkouts.py",
+      "src/grabowski_resources.py",
+      "tests/test_checkouts.py"
+    ],
+    "does_not_establish": [
+      "permission to weaken Bureau lease isolation",
+      "permission to bypass cleanup dry-run or archive grace",
+      "exact root cause beyond the observed mixed resource-class acquire path"
+    ],
+    "dry_run_plan_id": "5fb698fbd4b4481781ba49ef",
+    "dry_run_plan_sha256": "2fa4fc0a55e208fb838bc66394422a54b5a5a8e8380a464eecb948467f3cface",
+    "manual_fallback": "Cleanup wurde sicher in getrennte, exakt ressourcengebundene Worktree- und Branch-Schritte zerlegt; dies behebt nicht den Werkzeugfehler.",
+    "observed_error": "Bureau and non-Bureau resources must be acquired separately",
+    "observed_tool": "grabowski_checkout_cleanup",
+    "origin_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T008",
+    "registered_at": "2026-07-22T19:01:55+02:00",
+    "source": "Live RepoGround T008 cleanup readback through Grabowski."
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 221
+  },
+  "required_capabilities": [
+    "python",
+    "grabowski",
+    "filesystem-safety",
+    "resource-leases",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bureau-Checkout-Cleanup ressourcenrein sequenzieren"
+}

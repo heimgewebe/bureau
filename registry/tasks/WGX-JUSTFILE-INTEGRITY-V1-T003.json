@@ -3,7 +3,7 @@
   "id": "WGX-JUSTFILE-INTEGRITY-V1-T003",
   "initiative": "WGX-JUSTFILE-INTEGRITY-V1",
   "title": "Repair remote schema handling for Justfile contracts validation",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 93
@@ -56,6 +56,56 @@
     "does_not_establish": [
       "failure of the Justfile parser gate",
       "permission to mix contract transport changes into WGX PR #644"
-    ]
+    ],
+    "verified_at": "2026-07-22T00:13:04Z",
+    "outcome": "WGX PR #646 repariert den Remote-Schema-Pfad, indem HTTP(S)-Schemas vor der AJV-Validierung in eine temporäre Datei geladen werden, pinnt den kanonischen Metrics-Snapshot-Vertrag auf einen unveränderlichen Metarepo-Commit und richtet AJV auf Draft 2020 mit strict=log aus. PR #646 wurde als Mergecommit a80a786d2a7f4bc839ad3fd2c3ad8469fea990f7 veröffentlicht. Ein frischer Checkout dieses Commits erzeugt metrics.json über `just wgx-metrics snapshot --json --output metrics.json`; `just contracts validate` endet danach mit Exit 0 und `metrics.json valid`.",
+    "validated_acceptance": {
+      "remote-schema": "PASS: Auf frischem Checkout von a80a786d2a7f4bc839ad3fd2c3ad8469fea990f7 wird das commitgepinnte HTTP(S)-Schema erfolgreich geladen und metrics.json dagegen validiert.",
+      "failure-mode": "PASS: PR #646 ergänzt Tests für Downloadfehler, ungültige Schemas, lokale Schemapfade und nicht unterstützte URL-Schemata; Fehlerpfade bleiben explizit und AJV wird bei Downloadfehlern nicht aufgerufen.",
+      "regression": "PASS: tests/contracts_validate.bats deckt explizit die frühere Cannot-find-schema-URL-Regression ab.",
+      "scope": "PASS: Der T003-Diff ist als eigener PR #646 getrennt vom T002-Formatter-Diff #645 umgesetzt."
+    },
+    "verification": {
+      "source": "github_pr_ci_and_postmerge_local_readback",
+      "source_ref": "github-pr:heimgewebe/wgx#646",
+      "repository": "heimgewebe/wgx",
+      "pull_request": 646,
+      "base_commit": "40d2c3ddc1bced1dd37ff4c3c2a7dd9940d72646",
+      "reviewed_head": "2ee9db1580c8335df764467a07f13e65509cd200",
+      "merge_commit": "a80a786d2a7f4bc839ad3fd2c3ad8469fea990f7",
+      "final_diff_sha256": "5ea626854fb6878d1023abeee1772821220705f9f58daf7e8babf5b2e46753fa",
+      "pre_closeout_task_sha256": "5fdd4e15f68d5ccf95605470bb403c9040028889f5fcb7bfaf656055e85fbfcd",
+      "initiative_sha256": "efe9db3174763c06488568b7a88b7d20072a36cc790b63ce8d1c7acf42c11335",
+      "local_validation": {
+        "commit_sha": "a80a786d2a7f4bc839ad3fd2c3ad8469fea990f7",
+        "just wgx-metrics snapshot --json --output metrics.json": "pass",
+        "just contracts validate": "pass: metrics.json valid"
+      },
+      "github_pr_checks": "all required observed checks success; Claude optional check skipped"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "WGX-JUSTFILE-INTEGRITY-V1-T003",
+          "source_ref": "heimgewebe/wgx#646",
+          "number": 646,
+          "head_sha": "2ee9db1580c8335df764467a07f13e65509cd200",
+          "merge_commit_sha": "a80a786d2a7f4bc839ad3fd2c3ad8469fea990f7",
+          "diff_sha256": "5ea626854fb6878d1023abeee1772821220705f9f58daf7e8babf5b2e46753fa"
+        },
+        {
+          "kind": "test_run",
+          "authority": "heim-pc",
+          "task_id": "WGX-JUSTFILE-INTEGRITY-V1-T003",
+          "source_ref": "local:wgx-t003-postmerge-verify",
+          "commit_sha": "a80a786d2a7f4bc839ad3fd2c3ad8469fea990f7",
+          "result": "metrics-snapshot-pass-and-contracts-validate-pass"
+        }
+      ]
+    }
   }
 }

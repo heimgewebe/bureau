@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "id": "WGX-JUSTFILE-INTEGRITY-V1-T005",
+  "initiative": "WGX-JUSTFILE-INTEGRITY-V1",
+  "title": "Reconcile fleet metrics schema URLs to immutable canonical snapshot contracts",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 95
+  },
+  "goal": "Die verbleibenden Heimgewebe-Repositories von nicht existierenden oder beweglichen Metrics-Schema-URLs auf einen überprüften, unveränderlichen kanonischen Snapshot-Schema-Vertrag migrieren, ohne repositoryspezifische Workflow-Semantik blind zu vereinheitlichen.",
+  "depends_on": [
+    "WGX-JUSTFILE-INTEGRITY-V1-T003"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "approval": {
+      "action_class": "multi_repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Repositoryweise Migration mit Live-Lease-, Default-Branch- und CI-Prüfung; kein ungeprüfter Fleet-Bulk-Patch."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.chronik",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.aussensensor",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.hausKI-audio",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.contracts-mirror",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.hausKI",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.semantAH",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.sichter",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.mitschreiber",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.vault-gewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.vault-privat",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "github",
+    "testing",
+    "yaml",
+    "contracts",
+    "bounded-io"
+  ],
+  "acceptance": [
+    {
+      "id": "inventory",
+      "assertion": "Alle aktiven Default-Branch-Referenzen auf `metarepo/contracts-v1/contracts/wgx/metrics.json` oder `metarepo/main/contracts/wgx/metrics.json` sind repositoryweise erfasst und entweder migriert oder mit überprüfter Begründung explizit ausgenommen."
+    },
+    {
+      "id": "immutable-contract",
+      "assertion": "Migrierte Workflows verwenden ein kanonisches, commitgepinntes Metrics-Snapshot-Schema; Downloadpfade prüfen nach Möglichkeit zusätzlich einen erwarteten SHA-256 statt beweglichen Branch- oder Tag-Referenzen zu vertrauen."
+    },
+    {
+      "id": "validation-semantics",
+      "assertion": "AJV-Validierung behandelt Remote-URLs nicht als lokale Schemapfade; Draft-2020-/Strict-Semantik ist mit dem kanonischen Vertrag kompatibel und Download-, Integritäts- sowie Schemafehler schlagen diagnostizierbar fehl."
+    },
+    {
+      "id": "repository-ci",
+      "assertion": "Jede produktive Repository-Änderung wird isoliert reviewt und besteht die für den jeweiligen Workflow relevanten Tests und CI-Checks."
+    },
+    {
+      "id": "bounded-rollout",
+      "assertion": "Die Migration erfolgt repositoryweise mit aktuellen Leases und ohne fremde Dirty-States oder laufende Arbeiten zu verändern."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-22T00:13:04Z",
+    "source_task": "WGX-JUSTFILE-INTEGRITY-V1-T003",
+    "source_repository": "heimgewebe/wgx",
+    "source_pr": "heimgewebe/wgx#646",
+    "source_finding": "GitHub-Code-Suche nach METRICS_SCHEMA_URL auf Heimgewebe-Default-Branches zeigt nach dem WGX-T003-Fix zehn weitere Repositories mit alten Metrics-Schema-Referenzen. Die URLs `https://raw.githubusercontent.com/heimgewebe/metarepo/contracts-v1/contracts/wgx/metrics.json` und `https://raw.githubusercontent.com/heimgewebe/metarepo/main/contracts/wgx/metrics.json` liefern beim Live-Readback jeweils HTTP 404. Mindestens hausKI reicht die alte URL direkt an `ajv-cli@5 validate -s` weiter; andere Workflows laden die 404-Quelle per curl.",
+    "observed_repositories": [
+      "heimgewebe/chronik",
+      "heimgewebe/aussensensor",
+      "heimgewebe/hausKI-audio",
+      "heimgewebe/contracts-mirror",
+      "heimgewebe/hausKI",
+      "heimgewebe/semantAH",
+      "heimgewebe/sichter",
+      "heimgewebe/mitschreiber",
+      "heimgewebe/vault-gewebe",
+      "heimgewebe/vault-privat"
+    ],
+    "already_reconciled_references": [
+      "heimgewebe/wgx",
+      "heimgewebe/repoground"
+    ],
+    "stale_urls": [
+      {
+        "url": "https://raw.githubusercontent.com/heimgewebe/metarepo/contracts-v1/contracts/wgx/metrics.json",
+        "live_http_status": 404
+      },
+      {
+        "url": "https://raw.githubusercontent.com/heimgewebe/metarepo/main/contracts/wgx/metrics.json",
+        "live_http_status": 404
+      }
+    ],
+    "does_not_establish": [
+      "dass jeder betroffene Workflow derzeit regelmäßig ausgeführt wird",
+      "dass alle Repositories denselben Migrationsdiff benötigen",
+      "Berechtigung zu ungeprüften Fleet-Bulk-Änderungen",
+      "dass ein 404 in jedem Repository bereits einen beobachteten Produktionsausfall verursacht hat"
+    ]
+  }
+}

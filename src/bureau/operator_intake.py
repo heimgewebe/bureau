@@ -755,6 +755,132 @@ def _task_text(task: Any) -> str:
     return " ".join(str(value) for value in (task.title, raw.get("goal")) if value)
 
 
+def _registry_task_semantic_hints(
+    registry: Registry, task_json: dict[str, Any]
+) -> list[dict[str, Any]]:
+    task_id = str(task_json.get("id", ""))
+    candidate_text = " ".join(
+        str(value)
+        for value in (task_json.get("title"), task_json.get("goal"))
+        if value
+    )
+    hints: list[dict[str, Any]] = []
+    for existing in registry.tasks.values():
+        if existing.id == task_id:
+            continue
+        score = _similarity(candidate_text, _task_text(existing))
+        if score >= 0.2:
+            hints.append(
+                {
+                    "task_id": existing.id,
+                    "title": existing.title,
+                    "score": round(score, 6),
+                }
+            )
+    hints.sort(key=lambda item: (-float(item["score"]), str(item["task_id"])))
+    return hints[:MAX_SIMILARITY_RESULTS]
+
+
+def _evaluate_registry_task_publication_guard(
+    *,
+    registry: Registry,
+    repository: str,
+    current_main_sha: str,
+    expected_base_sha: str,
+    task_json: dict[str, Any],
+    target_path: str,
+    head_sha: str | None,
+    pull_request_number: int | None,
+    open_pull_requests: Sequence[dict[str, Any]],
+    canonical_path_exists: bool,
+    scan_complete: bool,
+) -> dict[str, Any]:
+    task_id = str(task_json.get("id", ""))
+    expected_path = f"registry/tasks/{task_id}.json"
+    reason_codes: list[str] = []
+    collision_sources: list[dict[str, Any]] = []
+    blocking_sources: list[dict[str, Any]] = []
+    if current_main_sha != expected_base_sha:
+        reason_codes.append("stale-base")
+    if target_path != expected_path:
+        reason_codes.append("task-path-mismatch")
+    if canonical_path_exists:
+        reason_codes.append("canonical-path-exists")
+    if not scan_complete:
+        reason_codes.append("open-pr-scan-incomplete")
+
+    for pull_request in open_pull_requests:
+        if not isinstance(pull_request, dict):
+            reason_codes.append("open-pr-metadata-invalid")
+            continue
+        number = pull_request.get("number")
+        if not isinstance(number, int):
+            reason_codes.append("open-pr-metadata-invalid")
+            continue
+        if pull_request_number is not None and number == pull_request_number:
+            continue
+        if pull_request.get("state") != "OPEN" or pull_request.get("baseRefName") != "main":
+            continue
+        files = pull_request.get("files")
+        if not isinstance(files, list):
+            reason_codes.append("open-pr-files-unavailable")
+            continue
+        matching_change: str | None = None
+        for changed_file in files:
+            if not isinstance(changed_file, dict):
+                continue
+            if changed_file.get("path") == target_path:
+                raw_change = changed_file.get("changeType")
+                matching_change = raw_change if isinstance(raw_change, str) else "UNKNOWN"
+                break
+        if matching_change is None or matching_change not in {"ADDED", "RENAMED", "UNKNOWN"}:
+            continue
+        source_base = pull_request.get("baseRefOid")
+        base_fresh = source_base == current_main_sha
+        source = {
+            "pull_request_number": number,
+            "url": pull_request.get("url"),
+            "head_sha": pull_request.get("headRefOid"),
+            "base_sha": source_base,
+            "target_path": target_path,
+            "change_type": matching_change,
+            "base_fresh": base_fresh,
+        }
+        collision_sources.append(source)
+        blocks = base_fresh and (
+            pull_request_number is None or number < pull_request_number
+        )
+        if blocks:
+            blocking_sources.append(source)
+
+    if blocking_sources:
+        reason_codes.append("fresh-open-pr-reservation-collision")
+    collision_sources.sort(key=lambda item: int(item["pull_request_number"]))
+    blocking_sources.sort(key=lambda item: int(item["pull_request_number"]))
+    reason_codes = sorted(set(reason_codes))
+    decision = "allow" if not reason_codes else "block"
+    return {
+        "schema_version": 1,
+        "kind": "bureau_registry_task_publication_guard",
+        "repository": repository,
+        "checked_main_sha": current_main_sha,
+        "expected_base_sha": expected_base_sha,
+        "base_fresh": current_main_sha == expected_base_sha,
+        "task_id": task_id,
+        "target_path": target_path,
+        "head_sha": head_sha,
+        "pull_request_number": pull_request_number,
+        "canonical_path_exists": canonical_path_exists,
+        "scan_complete": scan_complete,
+        "scanned_open_pr_count": len(open_pull_requests),
+        "collision_sources": collision_sources,
+        "blocking_collision_sources": blocking_sources,
+        "semantic_duplicate_hints": _registry_task_semantic_hints(registry, task_json),
+        "decision": decision,
+        "reason_codes": reason_codes,
+    }
+
+
 def _candidate_assess(
     registry: Registry,
     store: StateStore,
@@ -2322,6 +2448,298 @@ class SubprocessTaskPublisher:
             )
         return process.stdout.strip()
 
+    def _remote_main_sha(self, remote: str, *, cwd: Path | None = None) -> str:
+        output = self._run(["git", "ls-remote", remote, "refs/heads/main"], cwd=cwd).split()
+        if len(output) < 2 or output[1] != "refs/heads/main":
+            raise OperatorIntakeError(
+                "remote-main-missing", "remote main ref is missing", retryable=True
+            )
+        return output[0]
+
+    def _pull_request_files(
+        self, *, repository: str, pull_request_number: int, cwd: Path
+    ) -> list[dict[str, Any]]:
+        raw = self._run(
+            [
+                "gh",
+                "api",
+                "--paginate",
+                "--slurp",
+                f"repos/{repository}/pulls/{pull_request_number}/files?per_page=100",
+            ],
+            cwd=cwd,
+        )
+        try:
+            pages = json.loads(raw)
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            raise OperatorIntakeError(
+                "pull-request-files-invalid",
+                "GitHub pull-request file pagination was not valid JSON",
+                retryable=True,
+            ) from exc
+        if not isinstance(pages, list) or any(not isinstance(page, list) for page in pages):
+            raise OperatorIntakeError(
+                "pull-request-files-invalid",
+                "GitHub pull-request file pagination did not return page lists",
+                retryable=True,
+            )
+        files: list[dict[str, Any]] = []
+        for page in pages:
+            for item in page:
+                if (
+                    not isinstance(item, dict)
+                    or not isinstance(item.get("filename"), str)
+                    or not isinstance(item.get("status"), str)
+                ):
+                    raise OperatorIntakeError(
+                        "pull-request-files-invalid",
+                        "GitHub pull-request file metadata is incomplete",
+                        retryable=True,
+                    )
+                files.append(
+                    {
+                        "path": item["filename"],
+                        "changeType": str(item["status"]).upper(),
+                        "previousPath": item.get("previous_filename"),
+                    }
+                )
+        return files
+
+    def _open_pull_requests(
+        self, *, repository: str, cwd: Path
+    ) -> tuple[list[dict[str, Any]], bool]:
+        raw = self._run(
+            [
+                "gh",
+                "pr",
+                "list",
+                "--repo",
+                repository,
+                "--state",
+                "open",
+                "--limit",
+                "1000",
+                "--json",
+                "number,url,state,headRefOid,headRefName,baseRefName,baseRefOid",
+            ],
+            cwd=cwd,
+        )
+        try:
+            values = json.loads(raw)
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            raise OperatorIntakeError(
+                "open-pr-scan-invalid",
+                "GitHub open pull-request scan was not valid JSON",
+                retryable=True,
+            ) from exc
+        if not isinstance(values, list):
+            raise OperatorIntakeError(
+                "open-pr-scan-invalid",
+                "GitHub open pull-request scan did not return a list",
+                retryable=True,
+            )
+        hydrated: list[dict[str, Any]] = []
+        for item in values:
+            if not isinstance(item, dict) or not isinstance(item.get("number"), int):
+                hydrated.append(item)
+                continue
+            pull_request = dict(item)
+            pull_request["files"] = self._pull_request_files(
+                repository=repository,
+                pull_request_number=int(item["number"]),
+                cwd=cwd,
+            )
+            hydrated.append(pull_request)
+        return hydrated, len(values) < 1000
+
+    def _canonical_path_exists(
+        self, *, root: Path, main_sha: str, target_path: str
+    ) -> bool:
+        observed = self._run(
+            ["git", "ls-tree", "--name-only", main_sha, "--", target_path], cwd=root
+        ).splitlines()
+        return target_path in observed
+
+    def _registry_publication_guard(
+        self,
+        *,
+        registry: Registry,
+        repository: str,
+        current_main_sha: str,
+        expected_base_sha: str,
+        task_json: dict[str, Any],
+        target_path: str,
+        head_sha: str | None,
+        pull_request_number: int | None,
+        cwd: Path,
+        canonical_path_exists: bool | None = None,
+    ) -> dict[str, Any]:
+        open_pull_requests, scan_complete = self._open_pull_requests(
+            repository=repository, cwd=cwd
+        )
+        if canonical_path_exists is None:
+            canonical_path_exists = self._canonical_path_exists(
+                root=registry.root, main_sha=current_main_sha, target_path=target_path
+            )
+        return _evaluate_registry_task_publication_guard(
+            registry=registry,
+            repository=repository,
+            current_main_sha=current_main_sha,
+            expected_base_sha=expected_base_sha,
+            task_json=task_json,
+            target_path=target_path,
+            head_sha=head_sha,
+            pull_request_number=pull_request_number,
+            open_pull_requests=open_pull_requests,
+            canonical_path_exists=canonical_path_exists,
+            scan_complete=scan_complete,
+        )
+
+    @staticmethod
+    def _require_registry_publication_guard(
+        receipt: dict[str, Any], *, effect_started: bool, phase: str
+    ) -> None:
+        if receipt.get("decision") == "allow":
+            return
+        raise OperatorIntakeError(
+            "registry-publication-collision",
+            "registry task publication guard blocked a stale or colliding reservation",
+            retryable=True,
+            effect_started=effect_started,
+            required_readback=(
+                ["current remote main", "open pull-request registry reservations"]
+                if effect_started
+                else []
+            ),
+            details={"guard_receipt": receipt},
+            publication_phase=phase,
+        )
+
+    def pull_request_guard(
+        self, *, registry: Registry, repository: str, pull_request_number: int
+    ) -> dict[str, Any]:
+        root = registry.root
+        remote = self._run(["git", "remote", "get-url", "origin"], cwd=root)
+        current_main_sha = self._remote_main_sha(remote, cwd=root)
+        raw = self._run(
+            [
+                "gh",
+                "pr",
+                "view",
+                str(pull_request_number),
+                "--repo",
+                repository,
+                "--json",
+                "number,url,state,headRefOid,headRefName,baseRefName,baseRefOid",
+            ],
+            cwd=root,
+        )
+        try:
+            pull_request = json.loads(raw)
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            raise OperatorIntakeError(
+                "pull-request-guard-readback-invalid",
+                "pull-request guard readback was not valid JSON",
+                retryable=True,
+            ) from exc
+        if (
+            not isinstance(pull_request, dict)
+            or pull_request.get("number") != pull_request_number
+            or pull_request.get("state") != "OPEN"
+            or pull_request.get("baseRefName") != "main"
+            or not isinstance(pull_request.get("baseRefOid"), str)
+            or not isinstance(pull_request.get("headRefOid"), str)
+        ):
+            raise OperatorIntakeError(
+                "pull-request-guard-readback-mismatch",
+                "pull-request guard readback is incomplete or not an open PR against main",
+                retryable=True,
+                details={"pull_request": pull_request},
+            )
+        pull_request["files"] = self._pull_request_files(
+            repository=repository,
+            pull_request_number=pull_request_number,
+            cwd=root,
+        )
+        added_task_paths = sorted(
+            {
+                str(item.get("path"))
+                for item in pull_request["files"]
+                if isinstance(item, dict)
+                and item.get("changeType") in {"ADDED", "RENAMED"}
+                and isinstance(item.get("path"), str)
+                and str(item.get("path")).startswith("registry/tasks/")
+                and str(item.get("path")).endswith(".json")
+            }
+        )
+        if not added_task_paths:
+            return {
+                "schema_version": 1,
+                "kind": "bureau_registry_task_pr_guard",
+                "repository": repository,
+                "pull_request_number": pull_request_number,
+                "head_sha": pull_request["headRefOid"],
+                "expected_base_sha": pull_request["baseRefOid"],
+                "checked_main_sha": current_main_sha,
+                "decision": "allow",
+                "reason_codes": ["no-added-registry-task"],
+                "task_guards": [],
+            }
+        task_guards: list[dict[str, Any]] = []
+        for target_path in added_task_paths:
+            task_id = Path(target_path).stem
+            task = registry.tasks.get(task_id)
+            if task is None:
+                raise OperatorIntakeError(
+                    "pull-request-task-missing",
+                    f"added registry task {task_id} is not loadable from the PR checkout",
+                    details={"target_path": target_path},
+                )
+            task_guards.append(
+                self._registry_publication_guard(
+                    registry=registry,
+                    repository=repository,
+                    current_main_sha=current_main_sha,
+                    expected_base_sha=str(pull_request["baseRefOid"]),
+                    task_json=task.raw,
+                    target_path=target_path,
+                    head_sha=str(pull_request["headRefOid"]),
+                    pull_request_number=pull_request_number,
+                    cwd=root,
+                )
+            )
+        decision = (
+            "allow"
+            if all(item.get("decision") == "allow" for item in task_guards)
+            else "block"
+        )
+        receipt = {
+            "schema_version": 1,
+            "kind": "bureau_registry_task_pr_guard",
+            "repository": repository,
+            "pull_request_number": pull_request_number,
+            "head_sha": pull_request["headRefOid"],
+            "expected_base_sha": pull_request["baseRefOid"],
+            "checked_main_sha": current_main_sha,
+            "decision": decision,
+            "reason_codes": sorted(
+                {
+                    code
+                    for item in task_guards
+                    for code in item.get("reason_codes", [])
+                }
+            ),
+            "task_guards": task_guards,
+        }
+        if decision != "allow":
+            raise OperatorIntakeError(
+                "registry-publication-collision",
+                "pull-request registry task guard blocked a stale or colliding reservation",
+                retryable=True,
+                details={"guard_receipt": receipt},
+            )
+        return receipt
+
     def _git_blob_sha256(self, workspace: Path, object_name: str) -> str:
         """Hash exact Git object bytes without consulting the worktree."""
         phase = getattr(self, "_publication_phase", "before_workspace")
@@ -3394,6 +3812,7 @@ class SubprocessTaskPublisher:
         repository: str,
         branch: str,
         head: str,
+        base_commit: str,
         cwd: Path,
     ) -> dict[str, Any] | None:
         raw = self._run(
@@ -3408,7 +3827,7 @@ class SubprocessTaskPublisher:
                 "--state",
                 "all",
                 "--json",
-                "number,url,state,headRefOid,headRefName,baseRefName",
+                "number,url,state,headRefOid,headRefName,baseRefName,baseRefOid",
             ],
             cwd=cwd,
         )
@@ -3441,6 +3860,7 @@ class SubprocessTaskPublisher:
             or readback.get("headRefOid") != head
             or readback.get("headRefName") != branch
             or readback.get("baseRefName") != "main"
+            or readback.get("baseRefOid") != base_commit
             or readback.get("state") != "OPEN"
         ):
             raise OperatorIntakeError(
@@ -3863,12 +4283,7 @@ class SubprocessTaskPublisher:
             self._set_phase(
                 "committed_locally", phase_changed, workspace=workspace, marker=marker
             )
-        remote_main_output = self._run(["git", "ls-remote", remote, "refs/heads/main"]).split()
-        if not remote_main_output:
-            raise OperatorIntakeError(
-                "remote-main-missing", "remote main ref is missing", retryable=True
-            )
-        remote_main = remote_main_output[0]
+        remote_main = self._remote_main_sha(remote, cwd=workspace)
         if remote_main != base_commit:
             raise OperatorIntakeError(
                 "remote-main-drift",
@@ -3876,6 +4291,34 @@ class SubprocessTaskPublisher:
                 retryable=True,
                 publication_phase=getattr(self, "_publication_phase", None),
             )
+        preexisting_readback = self._pull_request_readback(
+            repository=repository,
+            branch=branch,
+            head=head,
+            base_commit=base_commit,
+            cwd=workspace,
+        )
+        pre_publish_guard = self._registry_publication_guard(
+            registry=registry,
+            repository=repository,
+            current_main_sha=remote_main,
+            expected_base_sha=base_commit,
+            task_json=plan["task_json"],
+            target_path=target_path,
+            head_sha=head,
+            pull_request_number=(
+                int(preexisting_readback["number"])
+                if preexisting_readback is not None
+                else None
+            ),
+            cwd=workspace,
+            canonical_path_exists=False,
+        )
+        self._require_registry_publication_guard(
+            pre_publish_guard,
+            effect_started=False,
+            phase=str(marker["phase"]),
+        )
         assert_plan_unchanged()
         remote_branch_output = self._run(
             ["git", "ls-remote", remote, f"refs/heads/{branch}"]
@@ -3968,9 +4411,7 @@ class SubprocessTaskPublisher:
             f"- target: `{target_path}`\n\n"
             "This PR does not queue, claim, dispatch, merge, deploy or verify the task.\n"
         )
-        readback = self._pull_request_readback(
-            repository=repository, branch=branch, head=head, cwd=workspace
-        )
+        readback = preexisting_readback
         if readback is None:
             if marker["phase"] == "pr_confirmed":
                 raise OperatorIntakeError(
@@ -4011,7 +4452,7 @@ class SubprocessTaskPublisher:
                     "--repo",
                     repository,
                     "--json",
-                    "number,url,state,headRefOid,headRefName,baseRefName",
+                    "number,url,state,headRefOid,headRefName,baseRefName,baseRefOid",
                 ],
                 cwd=workspace,
             )
@@ -4031,6 +4472,7 @@ class SubprocessTaskPublisher:
                 or readback.get("headRefOid") != head
                 or readback.get("headRefName") != branch
                 or readback.get("baseRefName") != "main"
+                or readback.get("baseRefOid") != base_commit
                 or readback.get("state") != "OPEN"
             ):
                 raise OperatorIntakeError(
@@ -4043,6 +4485,22 @@ class SubprocessTaskPublisher:
                     publication_phase="pr_attempted",
                 )
         self._set_phase("pr_confirmed", phase_changed, workspace=workspace, marker=marker)
+        final_main = self._remote_main_sha(remote, cwd=workspace)
+        post_pr_guard = self._registry_publication_guard(
+            registry=registry,
+            repository=repository,
+            current_main_sha=final_main,
+            expected_base_sha=base_commit,
+            task_json=plan["task_json"],
+            target_path=target_path,
+            head_sha=head,
+            pull_request_number=int(readback["number"]),
+            cwd=workspace,
+            canonical_path_exists=False,
+        )
+        self._require_registry_publication_guard(
+            post_pr_guard, effect_started=True, phase="pr_confirmed"
+        )
         target_file_sha256 = self._workspace_file_sha256(
             workspace, Path(target_path), phase="pr_confirmed"
         )
@@ -4067,6 +4525,10 @@ class SubprocessTaskPublisher:
             "url": readback.get("url"),
             "git_diff_sha256": hashlib.sha256(diff.encode("utf-8")).hexdigest(),
             "target_file_sha256": target_file_sha256,
+            "registry_publication_guard": {
+                "pre_publish": pre_publish_guard,
+                "post_pr": post_pr_guard,
+            },
             "readback_complete": True,
             "publication_phase": "pr_confirmed",
             "workspace_reconciled": workspace_reconciled,

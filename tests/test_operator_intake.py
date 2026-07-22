@@ -1663,9 +1663,127 @@ def test_github_slug_rejects_noncanonical_or_ambiguous_remotes(remote):
     assert caught.value.code == "github-remote-invalid"
 
 
+def _registry_guard_fixture(registry_factory):
+    root = registry_factory(task_count=2)
+    registry = Registry.load(root)
+    existing = next(iter(registry.tasks.values()))
+    task_json = json.loads(json.dumps(existing.raw))
+    task_json["id"] = "OPERATOR-RACE-TEST-V1-T999"
+    task_json["title"] = existing.title
+    task_json["goal"] = existing.raw.get("goal")
+    return registry, task_json, f"registry/tasks/{task_json['id']}.json"
+
+
+def _open_registry_pr(number, *, base_sha, head_sha, target_path):
+    return {
+        "number": number,
+        "url": f"https://example.invalid/pull/{number}",
+        "state": "OPEN",
+        "headRefOid": head_sha,
+        "headRefName": f"task-{number}",
+        "baseRefName": "main",
+        "baseRefOid": base_sha,
+        "files": [{"path": target_path, "changeType": "ADDED"}],
+    }
+
+
+def test_registry_publication_guard_fails_closed_on_stale_base(registry_factory):
+    registry, task_json, target_path = _registry_guard_fixture(registry_factory)
+    receipt = operator_intake_module._evaluate_registry_task_publication_guard(
+        registry=registry,
+        repository="example/bureau",
+        current_main_sha="b" * 40,
+        expected_base_sha="a" * 40,
+        task_json=task_json,
+        target_path=target_path,
+        head_sha="c" * 40,
+        pull_request_number=10,
+        open_pull_requests=[],
+        canonical_path_exists=False,
+        scan_complete=True,
+    )
+    assert receipt["decision"] == "block"
+    assert receipt["reason_codes"] == ["stale-base"]
+
+
+def test_registry_publication_guard_makes_concurrent_same_path_prs_deterministic(
+    registry_factory,
+):
+    registry, task_json, target_path = _registry_guard_fixture(registry_factory)
+    main_sha = "a" * 40
+    first = _open_registry_pr(10, base_sha=main_sha, head_sha="b" * 40, target_path=target_path)
+    second = _open_registry_pr(11, base_sha=main_sha, head_sha="c" * 40, target_path=target_path)
+    common = {
+        "registry": registry,
+        "repository": "example/bureau",
+        "current_main_sha": main_sha,
+        "expected_base_sha": main_sha,
+        "task_json": task_json,
+        "target_path": target_path,
+        "open_pull_requests": [first, second],
+        "canonical_path_exists": False,
+        "scan_complete": True,
+    }
+    older = operator_intake_module._evaluate_registry_task_publication_guard(
+        **common, head_sha=first["headRefOid"], pull_request_number=10
+    )
+    newer = operator_intake_module._evaluate_registry_task_publication_guard(
+        **common, head_sha=second["headRefOid"], pull_request_number=11
+    )
+    assert older["decision"] == "allow"
+    assert newer["decision"] == "block"
+    assert newer["blocking_collision_sources"][0]["pull_request_number"] == 10
+    assert "fresh-open-pr-reservation-collision" in newer["reason_codes"]
+
+
+def test_registry_publication_guard_pre_push_respects_open_reservation(registry_factory):
+    registry, task_json, target_path = _registry_guard_fixture(registry_factory)
+    main_sha = "a" * 40
+    reserved = _open_registry_pr(10, base_sha=main_sha, head_sha="b" * 40, target_path=target_path)
+    receipt = operator_intake_module._evaluate_registry_task_publication_guard(
+        registry=registry,
+        repository="example/bureau",
+        current_main_sha=main_sha,
+        expected_base_sha=main_sha,
+        task_json=task_json,
+        target_path=target_path,
+        head_sha="c" * 40,
+        pull_request_number=None,
+        open_pull_requests=[reserved],
+        canonical_path_exists=False,
+        scan_complete=True,
+    )
+    assert receipt["decision"] == "block"
+    assert receipt["blocking_collision_sources"][0]["pull_request_number"] == 10
+
+
+def test_registry_publication_guard_stale_reservation_is_hint_not_block(registry_factory):
+    registry, task_json, target_path = _registry_guard_fixture(registry_factory)
+    main_sha = "a" * 40
+    stale = _open_registry_pr(9, base_sha="0" * 40, head_sha="b" * 40, target_path=target_path)
+    receipt = operator_intake_module._evaluate_registry_task_publication_guard(
+        registry=registry,
+        repository="example/bureau",
+        current_main_sha=main_sha,
+        expected_base_sha=main_sha,
+        task_json=task_json,
+        target_path=target_path,
+        head_sha="c" * 40,
+        pull_request_number=10,
+        open_pull_requests=[stale],
+        canonical_path_exists=False,
+        scan_complete=True,
+    )
+    assert receipt["decision"] == "allow"
+    assert receipt["collision_sources"][0]["base_fresh"] is False
+    assert receipt["blocking_collision_sources"] == []
+    assert receipt["semantic_duplicate_hints"]
+
+
 class LocalGitPublisher(SubprocessTaskPublisher):
     def __init__(self):
         self.pull_request = None
+        self.open_pull_requests = []
 
     @staticmethod
     def _github_slug(remote: str) -> str:
@@ -1675,7 +1793,12 @@ class LocalGitPublisher(SubprocessTaskPublisher):
         if list(arguments[:3]) == ["gh", "pr", "create"]:
             assert cwd is not None
             head = super()._run(["git", "rev-parse", "HEAD"], cwd=cwd)
+            base = super()._run(["git", "rev-parse", "HEAD^"], cwd=cwd)
             branch = super()._run(["git", "branch", "--show-current"], cwd=cwd)
+            changed = super()._run(
+                ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD"],
+                cwd=cwd,
+            ).splitlines()
             self.pull_request = {
                 "number": 7,
                 "url": "https://example.invalid/pull/7",
@@ -1683,12 +1806,39 @@ class LocalGitPublisher(SubprocessTaskPublisher):
                 "headRefOid": head,
                 "headRefName": branch,
                 "baseRefName": "main",
+                "baseRefOid": base,
+                "files": [
+                    {"path": path, "changeType": "ADDED"} for path in changed
+                ],
             }
             return "https://example.invalid/pull/7"
         if list(arguments[:3]) == ["gh", "pr", "list"]:
-            return json.dumps([] if self.pull_request is None else [self.pull_request])
+            if "--head" in arguments:
+                return json.dumps([] if self.pull_request is None else [self.pull_request])
+            values = list(self.open_pull_requests)
+            if self.pull_request is not None:
+                values.append(self.pull_request)
+            return json.dumps(values)
         if list(arguments[:3]) == ["gh", "pr", "view"]:
             return json.dumps(self.pull_request)
+        if list(arguments[:2]) == ["gh", "api"]:
+            endpoint = str(arguments[-1])
+            try:
+                number = int(endpoint.split("/pulls/", 1)[1].split("/", 1)[0])
+            except (IndexError, ValueError) as exc:
+                raise AssertionError(f"unexpected gh api endpoint: {endpoint}") from exc
+            candidates = list(self.open_pull_requests)
+            if self.pull_request is not None:
+                candidates.append(self.pull_request)
+            matched = next(item for item in candidates if item["number"] == number)
+            files = [
+                {
+                    "filename": item["path"],
+                    "status": str(item["changeType"]).lower(),
+                }
+                for item in matched.get("files", [])
+            ]
+            return json.dumps([files])
         return super()._run(arguments, cwd=cwd, timeout=timeout)
 
 
@@ -2550,6 +2700,9 @@ def test_t072_exact_pre_effect_workspace_is_reused_without_duplicate_effects(
     )
     assert result["publication_phase"] == "pr_confirmed"
     assert result["publication"]["workspace_reconciled"] is True
+    guard_receipt = result["publication"]["registry_publication_guard"]
+    assert guard_receipt["pre_publish"]["decision"] == "allow"
+    assert guard_receipt["post_pr"]["decision"] == "allow"
     assert sum(command[:2] == ("git", "clone") for command in publisher.commands) == 1
     assert _publication_commit_count(publisher.commands) == 1
     assert sum(command[:2] == ("git", "push") for command in publisher.commands) == 1

@@ -41,6 +41,7 @@ from .live_register import (
 from .operator_intake import (
     DEFAULT_GRABOWSKI_RESOURCE_DB,
     OperatorIntakeError,
+    SubprocessTaskPublisher,
     candidate_assess,
     candidate_record_request,
     publication_preview,
@@ -280,6 +281,9 @@ def parser() -> argparse.ArgumentParser:
     task_publish_parser.add_argument("--resource-db")
     task_publish_parser.add_argument("--workspace-root")
     task_publish_parser.add_argument("--receipt")
+    task_pr_guard_parser = sub.add_parser("operator-task-pr-guard")
+    task_pr_guard_parser.add_argument("--repository", required=True)
+    task_pr_guard_parser.add_argument("--pr-number", required=True, type=int)
     claim = sub.add_parser("claim-next")
     claim.add_argument("--worker", required=True)
     claim.add_argument("--kind", default="interactive-agent")
@@ -1030,6 +1034,12 @@ def main(argv: list[str] | None = None) -> int:
                 if args.lease_binding or args.resource_db or args.workspace_root or args.receipt:
                     raise StateError("publication effect arguments require --apply")
                 value = publication_preview(registry, store, plan_path=args.plan)
+        elif args.command == "operator-task-pr-guard":
+            value = SubprocessTaskPublisher().pull_request_guard(
+                registry=registry,
+                repository=args.repository,
+                pull_request_number=args.pr_number,
+            )
         elif args.command == "claim-next":
             try:
                 value = dispatcher.claim_next(

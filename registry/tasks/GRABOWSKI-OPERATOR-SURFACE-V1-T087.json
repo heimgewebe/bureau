@@ -1,0 +1,79 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der Closeout-Pfad projiziert und mutiert ausschließlich über bestehende autoritative Task-, Attention-, Lease-, Checkout- und Archivierungsverträge; keine zweite Lifecycle- oder Attention-Wahrheit wird eingeführt.",
+      "id": "single-truth"
+    },
+    {
+      "assertion": "Für einen terminalen Task kann ein bounded, evidence-bound Plan deterministisch feststellen, welche eigenen Closeout-Schritte noch fehlen; erfolgreiche Ausführung ist idempotent und hinterlässt entweder einen ruhenden Endzustand oder genau eine konkrete Operatorpflicht.",
+      "id": "terminal-convergence"
+    },
+    {
+      "assertion": "Fehlgeschlagene oder unterbrochene Tasks werden nur dann aus aktiver Attention ausgeschlossen, wenn bestehende Evidenz sie als superseded, obsolete oder absorbed-by-later-success belegt; needs-operator-action und needs-human-decision bleiben sichtbar und fail-closed.",
+      "id": "attention-compression"
+    },
+    {
+      "assertion": "Task-Archivierung erfolgt erst nach belegtem terminalem Zustand und abgeschlossenen beziehungsweise explizit deferred Closeout-Pflichten; Archivierung löscht keine unveränderliche Evidenz und behauptet keine physische Checkout-Bereinigung.",
+      "id": "archive-after-closeout"
+    },
+    {
+      "assertion": "Fremde Dirty-States, fremde Leases, laufende Prozesse und unklare Worktrees werden weder beendet noch verändert; physische Cleanup-Arbeit bleibt den bestehenden Worktree-Hygiene-Verträgen überlassen.",
+      "id": "foreign-state-safe"
+    },
+    {
+      "assertion": "Tests decken Idempotenz, Attention-Klassifikation, spätere erfolgreiche Ersatzläufe, offene Operatorpflichten, Archivierungs-Gates und Fremdzustandsschutz ab; ein bounded Live-Readback zeigt eine messbare Reduktion falscher Attention oder einen expliziten no-eligible-action Zustand.",
+      "id": "tests-and-live-readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_tasks.py",
+      "component:src/grabowski_task_attention.py",
+      "component:src/grabowski_lifecycle_archive.py",
+      "component:src/grabowski_lifecycle_projection.py",
+      "component:src/grabowski_lifecycle_effect_plan.py",
+      "component:tests"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die vorhandenen Grabowski-Authorities für Task-Terminalisierung, Attention Decisions, Lease-Freigabe, Checkout-Lifecycle und Task-Archivierung zu einem evidence-bound Closeout-Pfad verbinden, sodass terminale Arbeit ohne zweite Lifecycle-Wahrheit in einen ruhenden Zustand konvergiert und historische Fehlversuche nach belegter Klassifikation keine aktive Attention mehr beanspruchen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T087",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "design_rule": "Beweis behalten ist nicht gleich Task aktiv halten, Attention aktiv halten, Worktree behalten oder Prozess behalten.",
+    "does_not_establish": [
+      "safe bulk cleanup",
+      "permission to stop foreign processes",
+      "permission to modify foreign dirty worktrees",
+      "automatic human decision",
+      "physical archive pruning complete"
+    ],
+    "live_basis": "14619 terminale Grabowski-Tasks, 2849 Attention-Projektionen, 845 erfasste Worktrees, 49 ungebundene tmux-Sessions und ein Task-Archiv mit erst 1 Record; Runtime- und Tool-Vertrag selbst waren gesund.",
+    "registered_at": "2026-07-22T21:39:00+02:00",
+    "source": "Conversation-backed live system audit through Grabowski candidate candidate-54e795060f627c843e7a4606."
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 7
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Terminale Task-Konvergenz und Attention-Kompression schließen"
+}

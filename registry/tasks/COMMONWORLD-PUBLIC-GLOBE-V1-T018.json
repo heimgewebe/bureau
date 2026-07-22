@@ -181,8 +181,74 @@
     "outcome": "Commonworld now leaves truthful, privacy-preserving geographic Commons impressions from the full globe through progressively finer semantic zoom. Hue communicates the canonical Commons type, pattern and text communicate unassessed coverage, geometry communicates release precision, and released numbers count unique visible identities. The feature remains a read-only discovery layer and creates neither a completeness claim nor a second publication or administration path.",
     "self_review": "PASS; closeout is bound to the complete diff digest, exact PR head, merge ancestry, exact-commit CI, Pages deployment, runtime asset hashes and independent live browser assertions. The first Pages deploy failure is classified only from GitHub’s explicit HTTP 503 annotation and was resolved by rerunning the unchanged deployment. This evidence does not establish global coverage completeness, physical Mobile Safari rendering, subjective visual quality, hidden-location safety beyond the implemented contracts, or future source-backed regional context.",
     "verification": {
-      "task_sha256": "7461151fd88dba6479a4910b1044c8c5636e26b36dcc3146c7639ed40a054ac2",
+      "task_sha256": "4535f3403afea96a1ccf90ede21fa50fca50ee9c43905c4610d95d5422795837",
       "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4"
+    },
+    "post_closeout_hardening": {
+      "verified_at": "2026-07-22T04:52:09Z",
+      "repository": "heimgewebe/commonworld",
+      "purpose": "Post-closeout hardening of geographic-impression privacy differencing and deterministic map-layer ordering after later main evolution.",
+      "pull_request": 114,
+      "pr_head": "61665e9d4789606d462a660eb0021e8b40cc57d0",
+      "pr_base": "fb1d1dce5b0aadbfdf4558157a1288195bd5c4fb",
+      "merge_commit": "80a89b148cfeceac32a293832f87952d50dac790",
+      "reviewed_diff_path": "/home/alex/.local/state/grabowski/evidence/commonworld/pr114-61665e9.diff",
+      "diff_sha256": "e2c6e3eeef6ccae3ab9b7efbd4fa4516c5200d1e27d885bc9f3a3741146bc6a7",
+      "changes": [
+        "Complete-reference-cohort differencing protection remains fail-closed for privacy-sensitive approximate aggregates.",
+        "Country composition and asynchronous country layers retain deterministic ordering with public extents, approximate zones and exact anchors below the first base-map symbol layer.",
+        "Current mobile hit-target and country-composition behavior is preserved while the privacy and layer-order invariants are integrated."
+      ],
+      "premerge_evidence": {
+        "repository_acceptance": "PASS",
+        "python_tests": "471/471 PASS",
+        "npm_tests": "PASS",
+        "public_browser_smoke": "27/27 PASS",
+        "public_browser_result_sha256": "f81619d188400822b35d9fe5d130e0d5ad722af5cc5e99e511645136c826f240",
+        "proposal_browser_smoke": "PASS",
+        "proposal_browser_result_sha256": "61756048222b1df17dad74e05d7149f5f3df497d0ce6b6d2d2f03d47ae4184a6",
+        "official_browser_runner": "PASS",
+        "official_browser_runner_lifecycle_receipt_sha256": "da909da3967d0542067cbe902acc06aa30445cc6bc0d825061f864814e91dc0d"
+      },
+      "postmerge_evidence": {
+        "validate": {
+          "run_id": 29891806478,
+          "result": "PASS",
+          "head_sha": "80a89b148cfeceac32a293832f87952d50dac790"
+        },
+        "production_readback": {
+          "run_id": 29891806473,
+          "result": "PASS",
+          "head_sha": "80a89b148cfeceac32a293832f87952d50dac790"
+        },
+        "codeql": {
+          "run_id": 29891805858,
+          "result": "PASS",
+          "head_sha": "80a89b148cfeceac32a293832f87952d50dac790"
+        },
+        "pages_build_deployment": {
+          "run_id": 29891805706,
+          "result": "PASS",
+          "head_sha": "80a89b148cfeceac32a293832f87952d50dac790"
+        },
+        "pages_deployment_id": 5549943447,
+        "public_url": "https://commonworld.net/",
+        "exact_public_files": "PASS: index.html, propose.html and catalog/catalog.json match merge commit 80a89b148cfeceac32a293832f87952d50dac790",
+        "public_app_sha256": "3ea31b0f145e31e0311e610587cfc7af4c61b72307e61f7444e410049c10eb1f",
+        "catalog_entry_count": 41
+      },
+      "observer_note": {
+        "task_id": "c5eae3564f2247ddbb3bdcf4",
+        "recorded_state": "failed",
+        "classification": "observer_failure_not_product_failure",
+        "evidence": "The polling task logged all four watched GitHub runs as completed/success before exiting 1; direct GitHub readbacks independently confirm all four runs succeeded."
+      },
+      "does_not_establish": [
+        "assessed global Commons coverage",
+        "permission to reconstruct hidden or private locations",
+        "future browser, CDN or network behavior",
+        "that the failed polling observer represents failed CI or deployment"
+      ]
     }
   },
   "priority": {

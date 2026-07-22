@@ -1058,6 +1058,71 @@ def test_runtime_drift_check_reports_clean_checkout_without_mutation(
     }
 
 
+def _canonical_runtime_identity(root: Path, commit: str = "a" * 40) -> dict[str, object]:
+    return {
+        "registry_selection": "canonical-runtime-default",
+        "module": {"source_kind": "immutable-release"},
+        "compatibility": {
+            "status": "canonical-read-only",
+            "mutation_allowed": False,
+        },
+        "manifest": {
+            "valid": True,
+            "source_commit": commit,
+            "canonical_registry": {
+                "valid": True,
+                "root": str(root),
+                "source_commit": commit,
+            },
+        },
+        "registry": {
+            "role": "canonical-runtime-snapshot",
+            "root": str(root),
+            "dirty": False,
+            "head": commit,
+            "origin_main": commit,
+            "head_equals_origin_main": True,
+        },
+    }
+
+
+def test_runtime_drift_check_accepts_identity_bound_canonical_snapshot_without_git(
+    registry_factory, tmp_path
+):
+    root = registry_factory(1)
+    state = StateStore(tmp_path / "bureau.sqlite3")
+
+    report = runtime_drift_check(
+        root,
+        state_db=state.path,
+        runtime_identity=_canonical_runtime_identity(root),
+    )
+    codes = {item["code"] for item in report["findings"]}
+
+    assert report["status"] == "ok"
+    assert report["checkout"]["available"] is False
+    assert report["checkout"]["git_required"] is False
+    assert report["checkout"]["role"] == "canonical-runtime-snapshot"
+    assert "canonical-snapshot-no-git" in codes
+    assert "checkout-not-git" not in codes
+
+
+def test_runtime_drift_check_rejects_non_git_root_when_canonical_identity_is_malformed(
+    registry_factory, tmp_path
+):
+    root = registry_factory(1)
+    state = StateStore(tmp_path / "bureau.sqlite3")
+    identity = _canonical_runtime_identity(root)
+    identity["manifest"]["canonical_registry"]["source_commit"] = "b" * 40
+
+    report = runtime_drift_check(root, state_db=state.path, runtime_identity=identity)
+    codes = {item["code"] for item in report["findings"]}
+
+    assert report["status"] == "blocked"
+    assert "checkout-not-git" in codes
+    assert "canonical-snapshot-no-git" not in codes
+
+
 def test_runtime_drift_check_reports_dirty_checkout_and_receipt_drift(
     registry_factory, tmp_path, monkeypatch
 ):

@@ -644,7 +644,12 @@ def main(argv: list[str] | None = None) -> int:
             emit(value, args.json)
             return 0
         if args.command == "runtime-drift-check":
-            value = runtime_drift_check(root, state_db=state_path, state_root=state_root)
+            value = runtime_drift_check(
+                root,
+                state_db=state_path,
+                state_root=state_root,
+                runtime_identity=_CLI_RUNTIME_IDENTITY,
+            )
             emit(value, args.json)
             return 0
         if args.command == "state-root-artifacts":

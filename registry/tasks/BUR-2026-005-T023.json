@@ -1,0 +1,81 @@
+{
+  "acceptance": [
+    {
+      "assertion": "runtime-drift-check against a manifest-valid canonical-runtime-snapshot does not emit checkout-not-git as a blocker solely because the immutable snapshot intentionally has no .git metadata.",
+      "id": "canonical-snapshot-not-blocker"
+    },
+    {
+      "assertion": "Explicit writable or checkout-bound Registry roots continue to report unavailable Git identity, stale HEAD, origin/main drift and dirty paths fail-closed.",
+      "id": "explicit-worktree-strict"
+    },
+    {
+      "assertion": "The canonical exception is allowed only when runtime identity proves a valid immutable release, valid canonical Registry inventory/tree digest and matching source commit.",
+      "id": "identity-bound"
+    },
+    {
+      "assertion": "Tests cover canonical snapshot, malformed snapshot identity, explicit non-Git root and stale or dirty Git checkout cases.",
+      "id": "regression-tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/repos/bureau/registry/tasks/BUR-2026-005-T023.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Make runtime-drift-check understand the immutable canonical Registry snapshot contract so a valid non-Git canonical read-only snapshot is not reported as a checkout-not-git blocker, while explicit writable or checkout-bound drift checks remain strict.",
+  "id": "BUR-2026-005-T023",
+  "initiative": "BUR-2026-005",
+  "metadata": {
+    "does_not_establish": [
+      "mutation_authority_for_canonical_snapshot",
+      "permission_to_convert_snapshot_into_git_worktree",
+      "suppression_of_real_checkout_drift"
+    ],
+    "safety_boundary": "Do not weaken drift detection for explicit CLI worktrees, mutable registries, stale checkouts, dirty checkouts or mismatched release/Registry identities.",
+    "source": "Live post-refresh readback on 2026-07-22: immutable Bureau runtime and canonical Registry snapshot both matched commit 453a63326a3b69cc733da6f2454c5723001601f4, runtime-identity and check were valid, but runtime-drift-check returned status=blocked solely because the intentional canonical snapshot is not a Git worktree.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-58ee007993147ca50d5f5971",
+      "event_id": 956,
+      "event_created_at": "2026-07-22T10:11:40.176993Z",
+      "request_sha256": "b3ceac09e1ba0455f15eb95c47fbfc562ecf214c7e8592c875425625fa8bc899",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "runtime_observation",
+        "locator": null,
+        "observed_at": "2026-07-22T10:11:40.169890Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 230
+  },
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Harden runtime-drift-check for canonical read-only snapshots"
+}

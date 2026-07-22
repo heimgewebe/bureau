@@ -171,6 +171,8 @@ def parser() -> argparse.ArgumentParser:
     rlens_policy.add_argument("--strict", action="store_true")
     rlens_policy.add_argument("--task-id")
     sub.add_parser("lifecycle")
+    sub.add_parser("lifecycle-reconcile")
+    sub.add_parser("lifecycle-reconcile-apply")
     source_check = sub.add_parser("source-check")
     source_check.add_argument("source", choices=["weltgewebe"])
     source_check.add_argument("--repo", required=True)
@@ -462,6 +464,7 @@ _READ_ONLY_COMMANDS = frozenset(
         "runtime-drift-check",
         "lease-contract",
         "lifecycle",
+        "lifecycle-reconcile",
         "live-conflicts",
         "live-export",
         "live-list",
@@ -914,6 +917,15 @@ def main(argv: list[str] | None = None) -> int:
             value = dispatcher.conflict_matrix()
         elif args.command == "lifecycle":
             value = lifecycle_diagnostics(registry, store)
+        elif args.command in {"lifecycle-reconcile", "lifecycle-reconcile-apply"}:
+            from .v2 import reconcile_initiative_lifecycle
+
+            apply_lifecycle = args.command == "lifecycle-reconcile-apply"
+            if apply_lifecycle and registry_selection == "canonical-runtime-default":
+                raise StateError(
+                    "lifecycle-reconcile-apply requires an explicit writable Registry root"
+                )
+            value = reconcile_initiative_lifecycle(registry, store, apply=apply_lifecycle)
         elif args.command == "close-ready":
             value = close_ready_initiatives(registry, store)
         elif args.command == "frontier":

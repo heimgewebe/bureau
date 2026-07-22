@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "required_checks": [
+    "validate (3.10)",
+    "validate (3.12)",
+    "registry-registration-preflight/freshness"
+  ]
+}

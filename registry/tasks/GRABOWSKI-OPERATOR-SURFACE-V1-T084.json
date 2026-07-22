@@ -1,0 +1,88 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Deployment drain coordinates request admission and dispatcher workers so normal connector traffic cannot indefinitely replenish worker occupancy after drain begins.",
+      "id": "admission-drain"
+    },
+    {
+      "assertion": "Cutover occurs only after queued and in-flight work are observably quiescent for the required consecutive samples; no unsafe worker killing or occupancy spoofing is introduced.",
+      "id": "inflight-proof"
+    },
+    {
+      "assertion": "Failure to quiesce still aborts deployment and preserves the previous healthy runtime with a valid failure/finalization receipt.",
+      "id": "rollback-preserved"
+    },
+    {
+      "assertion": "Tests reproduce the observed queue=0 with nonzero dispatcher_worker_pool_occupancy scenario and prove a deploy can converge without requiring the operator to stop using the connector manually.",
+      "id": "reproduction-test"
+    },
+    {
+      "assertion": "An exact source-identity-bound deployment passes with normal connector conditions and independent runtime identity and health readback.",
+      "id": "live-deploy"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Harden deploy/drain coordination without weakening the existing fail-closed rollback boundary.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Remove the operational dependency on a manually quiet connector window during source-identity-bound runtime deployments while preserving fail-closed drain semantics and rollback when queued or in-flight work cannot be safely quiesced.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T084",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "rollback_failure",
+      "need_to_disable_drain",
+      "permission_to_drop_inflight_requests"
+    ],
+    "live_basis": "Exact deploy job grabowski-job-7cf2257513c1 failed safely with finalization receipt SHA-256 f977a20205bca51bd17b144b6701625f79faaa1f96c91b86ca581a00458be51c after queue reached zero but dispatcher_worker_pool_occupancy remained nonzero. An identical retry succeeded when connector traffic was kept quiet during drain.",
+    "source": "Grabowski deployment failure on 2026-07-22",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-6fe93e09fb833343d144d005",
+      "event_id": 935,
+      "event_created_at": "2026-07-22T05:27:45.549402Z",
+      "request_sha256": "36051e75a0a76d5c39df2638c5f1b3c53c06881cb04e3d50627ecbccffe690a9",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "runtime_failure_receipt",
+        "locator": "grabowski-job-finalization:grabowski-job-7cf2257513c1",
+        "observed_at": "2026-07-22T04:57:28Z",
+        "sha256": "f977a20205bca51bd17b144b6701625f79faaa1f96c91b86ca581a00458be51c"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 30
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Make runtime deploy drain coordinate with active connector workers"
+}

@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-OS-V1-T005",
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "Föderationskern und Zwei-Zellen-Nachbarschaft beweisen",
-  "state": "ready",
+  "state": "verified",
   "goal": "Zellidentität, globale Objektadressen, signierte Ereignisse, Reichweiten, Quarantäne, gemeinsame Räume und einen unabhängigen Zwei-Zellen-Pilot implementieren.",
   "depends_on": [
     "WELTGEWEBE-OS-V1-T002",
@@ -70,6 +70,50 @@
     "unblocked_at": "2026-07-18T20:26:18Z",
     "dependency_receipt": "WELTGEWEBE-OS-V1-T002, WELTGEWEBE-OS-V1-T003 und WELTGEWEBE-OS-V1-T004 sind verified; T004 ist durch Weltgewebe PR #1462, commitgebundene PR-/Main-HA-Receipts und den separaten Production-Live-Contract belegt.",
     "source_ref": "WELTGEWEBE-OS-V1-T004 closeout; heimgewebe/weltgewebe#1462; merge ee29974a02665a79bad7f18367542f1330b42b75; PR HA receipt 049381622f4429b476439a46b3604ab2275637881e5cf707c25e4d73898254ba; main HA receipt 35919e81d8258079c7e6c1b99a954418ca8e18672504745eea440ee0ae359446",
-    "task_id": "WELTGEWEBE-OS-V1-T005"
+    "task_id": "WELTGEWEBE-OS-V1-T005",
+    "verification": {
+      "verified_at": "2026-07-22T21:27:00+02:00",
+      "repository": "heimgewebe/weltgewebe",
+      "implementation_pull_request": 1509,
+      "implementation_merge_commit": "c18ef20b0e164d0b3750b1a1650f0c3297a80550",
+      "r4_hardening_pull_request": 1526,
+      "r4_hardening_merge_commit": "39d5a8f5fa637ba9f8a487074c86856e6a6b897c",
+      "post_merge_hardening_pull_request": 1536,
+      "post_merge_hardening_head": "f0189f1597ef4919d958cb9016f3a35cf8baf08e",
+      "post_merge_hardening_merge_commit": "4c4806844707e26090bfed79a768f09325a3aa01",
+      "post_merge_github_diff_sha256": "c1a7f3e558b5f7e16717ac5f607f470f4c4baf4ffbd1ef6796f3e1ba8e9c8947",
+      "review_evidence_gate": "PASS",
+      "review_evidence_workflow_run": 29941131690,
+      "required_checks": [
+        "Core Guard Tests",
+        "ci",
+        "Docs & Shell Hygiene",
+        "PostgreSQL integration proofs",
+        "Web E2E",
+        "Required merge gate",
+        "Review evidence gate"
+      ],
+      "production_live_proof_for_merge_commit": {
+        "workflow_run": 29944073045,
+        "verified_at": "2026-07-22T17:51:03Z",
+        "commit": "4c4806844707e26090bfed79a768f09325a3aa01",
+        "result": "success"
+      },
+      "current_live_commit_at_closeout": "b0ed65f6b4b0288dbe4bb3e1d750426236c5dbdb",
+      "current_live_verified_at": "2026-07-22T19:20:50Z",
+      "two_cell_proof": "docs/proofs/weltgewebe-os-v1-t005-two-cell-proof.md",
+      "acceptance_summary": {
+        "protocol_conformance": "API/unit/two-cell/PostgreSQL proofs passed; R4 post-merge hardening passed full API, clippy, fmt, diff-check and PostgreSQL restart proof.",
+        "infrastructure_separation": "Public federation wire contract is HTTP/JSON plus Ed25519 and does not require remote Kubernetes, database or NATS access.",
+        "two_cell_product": "Two independent cells exchange node, edge and shared-space objects in API integration proof; browser federation pilot proof passed.",
+        "partition_recovery": "Two-cell proof keeps independent local state during partition and converges signed versioned events after reconnection."
+      },
+      "activation_boundary": "Federation remains opt-in: all four identity variables are required together; absent identity returns an empty router; no automatic peer discovery exists. Peer bootstrap is only from explicit FEDERATION_PEERS_JSON. Per-IP rate limits require explicit AUTH_TRUSTED_PROXIES; none is a valid explicit decision.",
+      "does_not_establish": [
+        "a permanently enabled production federation transport",
+        "automatic peer discovery or trust",
+        "a real two-operator long-WAN pilot"
+      ]
+    }
   }
 }

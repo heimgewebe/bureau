@@ -22,12 +22,12 @@
       "note": "Vom Nutzer im Rahmen von WELTGEWEBE-OS-V1-T022 ausdrücklich zur autonomen Registrierung sinnvoller, nicht unmittelbar behobener Audit-Folgen autorisiert; Umsetzung isoliert und reviewgebunden."
     }
   },
-  "id": "WELTGEWEBE-OS-V1-T036",
+  "id": "WELTGEWEBE-OS-V1-T040",
   "title": "Dokumentationsdrift bereinigen und Lifecycle-Gates automatisieren",
   "goal": "Die auf Weltgewebe-Commit 39d5a8f5fa637ba9f8a487074c86856e6a6b897c belegten 52 Dokumentationsdrift-Befunde systematisch gegen den dann aktuellen Codezustand reconciliieren, aktive falsche Pfade, Kommandos, Status- und Commitbehauptungen korrigieren und wiederkehrende Drift durch automatisierte Pfad-/Link- sowie review_after-Lifecycle-Prüfungen verhindern, ohne historische Evidenz rückwirkend umzuschreiben.",
   "priority": {
     "lane": "next",
-    "rank": 36
+    "rank": 40
   },
   "required_capabilities": [
     "documentation",

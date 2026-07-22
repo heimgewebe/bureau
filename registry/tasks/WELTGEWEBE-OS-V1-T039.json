@@ -22,12 +22,12 @@
       "note": "Vom Nutzer im Rahmen von WELTGEWEBE-OS-V1-T022 ausdrücklich zur autonomen Registrierung sinnvoller, nicht unmittelbar behobener Audit-Folgen autorisiert; Umsetzung isoliert und reviewgebunden."
     }
   },
-  "id": "WELTGEWEBE-OS-V1-T035",
+  "id": "WELTGEWEBE-OS-V1-T039",
   "title": "Globale Accessibility- und Mobile-Randfälle aus dem Komplettaudit härten",
   "goal": "Die sechs auf Weltgewebe-Commit 39d5a8f5fa637ba9f8a487074c86856e6a6b897c belegten UX-/Mobile-/Accessibility-Befunde beheben oder begründet neu klassifizieren: Touch-Bedienbarkeit, Forced Colors, Hauptlandmarks, Live-Fehlerrückmeldung, textlose mobile Aktionen und nicht nur farbbasierte Kartenhervorhebung.",
   "priority": {
     "lane": "next",
-    "rank": 35
+    "rank": 39
   },
   "required_capabilities": [
     "accessibility",

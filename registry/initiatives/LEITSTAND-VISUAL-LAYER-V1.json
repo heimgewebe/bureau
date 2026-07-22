@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "LEITSTAND-VISUAL-LAYER-V1",
   "title": "Leitstand ecosystem visualization layer expansion",
-  "state": "completion-ready",
-  "commitment": "later",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Expand Leitstand into a read-only visualization layer for ecosystem maps, source freshness, RepoBrief health, and cross-view navigation without making Leitstand a source of truth, orchestrator, or task dispatcher.",
   "current_plan": {
     "repository": "bureau",
@@ -31,7 +31,6 @@
       "export_safety": "not_public_export_ready"
     },
     "initial_task_policy": "Do not put this initiative in the active queue until current Bureau runtime/hardening work is reconciled.",
-    "next_allowed_task": "LSV-V1-T002",
     "does_not_establish": [
       "leitstand_runtime_correctness",
       "ecosystem_map_truth",
@@ -50,6 +49,29 @@
       "status": "verified_existing_implementation",
       "implementation_pr": "heimgewebe/cabinet#69",
       "current_cabinet_head": "8ca544a8c00076aafd2d738fd6361ee6f6dbde3d"
+    },
+    "lifecycle": {
+      "completed_at": "2026-07-22T00:12:31Z",
+      "completion_basis": "All registered tasks LSV-V1-T001 through LSV-V1-T009 are canonical verified and no LSV task remains in the Bureau queue.",
+      "closeout_base_commit": "7924c343600ce83c3f9036184a27c13ffb7d6b52",
+      "final_task_reconciliation_pr": "heimgewebe/bureau#811",
+      "final_task_reconciliation_merge_commit": "d6a1e4b5596bb2e0e14a8cb3e5843db142b00d1e",
+      "verified_tasks": [
+        "LSV-V1-T001",
+        "LSV-V1-T002",
+        "LSV-V1-T003",
+        "LSV-V1-T004",
+        "LSV-V1-T005",
+        "LSV-V1-T006",
+        "LSV-V1-T007",
+        "LSV-V1-T008",
+        "LSV-V1-T009"
+      ],
+      "does_not_establish": [
+        "future_runtime_health",
+        "future_source_correctness",
+        "leitstand_write_authority"
+      ]
     }
   }
 }

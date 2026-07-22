@@ -70,6 +70,33 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "validated_acceptance": {
+      "supported-elevation": "Live grip_run used the existing first-class session_escalation parameter under profile=operator. Runtime validated target, reason, expiry and recovery metadata before dispatch; session_escalation_receipt_sha256=168cc842bef3d17380c4840c709fab24e24c0a11b4e41c385746bbc8bf012d8e.",
+      "bounded-canary": "Live worktree-hygiene-reconcile canary passed with receipt_sha256=9d7f03505d2ad6ed54e9ee980900ea7146139c900b6f6042f69563ae22db15dc, max_actions=1, apply_cleanup=false and actions=1.",
+      "no-deletion": "The canary produced cleaned=[] and only recovery-first archived one exact merge-proven terminal checkout, workspace-audit-specific-failures-v2, archive_id=20260722T070210Z-61c76f2bf567. No worktree or branch deletion was requested or performed.",
+      "readback": "Post-canary typed checkout inventory identified workspace-audit-specific-failures-v2 in archived_grace, dirty=false, coordination blocking=false and cleanup_candidate=false. Canary output reported foreign_owned_count=47, adopted_unowned_count=1 and no ownership conflicts."
+    },
+    "verification": {
+      "verified_at": "2026-07-22",
+      "canary_receipt_sha256": "9d7f03505d2ad6ed54e9ee980900ea7146139c900b6f6042f69563ae22db15dc",
+      "session_escalation_receipt_sha256": "168cc842bef3d17380c4840c709fab24e24c0a11b4e41c385746bbc8bf012d8e",
+      "affected_checkout": "/home/alex/repos/.grabowski-worktrees/workspace-audit-specific-failures-v2",
+      "affected_checkout_head": "2049419e4b30929d5972df5d56bdbc3e92d44d8d",
+      "affected_checkout_branch": "fix/workspace-audit-specific-failures-v2",
+      "merged_pr": 206,
+      "archive_id": "20260722T070210Z-61c76f2bf567",
+      "apply_cleanup": false,
+      "max_actions": 1,
+      "actions": 1,
+      "cleaned_count": 0,
+      "foreign_owned_count": 47,
+      "exploratory_no_code_worktree_archive_id": "20260722T070646Z-c695d1b4baaa",
+      "non_claims": [
+        "Does not establish permission to delete branches.",
+        "Does not establish cleanup completion.",
+        "Does not authorize touching foreign-owned, dirty, coordinated or ambiguous worktrees."
+      ]
     }
   },
   "priority": {
@@ -82,6 +109,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Run an explicitly elevated live worktree-hygiene canary"
 }

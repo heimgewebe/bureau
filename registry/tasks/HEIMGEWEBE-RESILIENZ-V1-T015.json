@@ -94,6 +94,71 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verified_at": "2026-07-22T05:02:45Z",
+    "source_repository": "heimgewebe/leitstand",
+    "implementation_prs": [
+      {
+        "pr": 175,
+        "head": "c517f12e70fb1e90d1dfb4945ce4440a72f4eb6b",
+        "merge_commit": "c9de5b077e431b3087920cea159ce19ba1319b7b",
+        "role": "transactional immutable user-systemd release runtime and failure-test matrix"
+      },
+      {
+        "pr": 178,
+        "head": "d8c26cee538b05765c50a7af227c987884499fda",
+        "merge_commit": "4218e10ab4ea9dc029c98009f4f142c7bbcc81eb",
+        "role": "secure system CA bundle fallback for canonical HTTPS verification"
+      },
+      {
+        "pr": 182,
+        "head": "9acc4af51f3472914d39f1cb11d4f9d112d53529",
+        "merge_commit": "550ee75ff365cdc0b82e82a10557817fb9d12130",
+        "role": "operator snapshot source-binding hardening"
+      }
+    ],
+    "outcome": "The first-class Leitstand release adapter is merged, failure-tested, deployed on the exact current reviewed main commit, independently verified through local and canonical HTTPS readbacks, and proven idempotent while preserving the prior release as rollback evidence.",
+    "verification": {
+      "bureau_base": "45d9509933cdea7ce655c73f5c942d85de1fb6b3",
+      "dependencies": {
+        "OPERATOR-PC-HYGIENE-V1-T004": "verified",
+        "STORAGE-LIFECYCLE-V1-T007": "verified"
+      },
+      "release_runtime_tests": "32/32 passed on exact deployed source checkout",
+      "implementation_ci": "Leitstand PR #175 build, repo-root/templates, security and CodeQL checks passed before merge",
+      "deployed_commit": "a4b2213d5781de486956bea629e1b6f15cbe9157",
+      "source_tree": "8f33b2172976d2e3024a5ce2d0b2e10d9003b96f",
+      "release_id": "a4b2213d5781de486956bea629e1b6f15cbe9157-runtime-v1",
+      "release_tree_sha256": "f018b9e856f6c90d912815c17f28ac69fb3b31e458aa98760b6349bd15a2769e",
+      "previous_release_id": "550ee75ff365cdc0b82e82a10557817fb9d12130-runtime-v1",
+      "deployment_receipt": {
+        "path": "/home/alex/.local/state/leitstand/releases/receipts/20260722T045544.963150Z-2138058-dc781b42-deploy.json",
+        "sha256": "9dfb0b8706a5ee5440b59c44d2910ff863fa0f884e77f96159e2bf326f5d8bc4"
+      },
+      "switch_receipt": {
+        "path": "/home/alex/.local/state/leitstand/releases/receipts/20260722T045544.961108Z-2138058-f17ba475-deploy-switch.json",
+        "sha256": "17e303f07e5c2d371a3f2419b0816620365f95bdcaa7145da897da486fd652e9"
+      },
+      "rollback_backup": {
+        "path": "/home/alex/.local/state/leitstand/releases/backups/20260722T045447803335Z-2138058-e54f34fc/manifest.json",
+        "sha256": "460904d528bc8f382aad50158d922e8c9f6a9c733430777ed0f7b8a4cce22abb"
+      },
+      "live_readback": {
+        "canonical_https": "ok",
+        "local_health": "ok",
+        "snapshots": "all fresh within source-specific thresholds",
+        "active_routes": "200",
+        "removed_routes": "404",
+        "repobriefs_redirect": "301 /repoground",
+        "post_events": "404",
+        "process_cwd_matches_release": true,
+        "unit_working_directories_match_release": true,
+        "listener_owned_by_web_pid": true,
+        "web_nrestarts": 0
+      },
+      "idempotent_replay": true,
+      "task_sha256": "b1655637b6c49fee8bae6f860db95c95ecf26f19806e8f199dde111716fa743c",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
     }
   },
   "priority": {
@@ -110,6 +175,6 @@
     "runtime-readback"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Leitstand versioned user-systemd deployment adapter"
 }

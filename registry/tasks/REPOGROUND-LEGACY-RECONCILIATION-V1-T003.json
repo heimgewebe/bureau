@@ -80,7 +80,9 @@
         "atlas": "keep as explicit optional observation subsystem",
         "omniwandler": "removed from active RepoGround tree",
         "standalone_repomerger": "removed from active RepoGround tree"
-      }
+      },
+      "task_sha256": "8cbf026f5857956f6e1f7607a3607680a443f56d34991b1ee02beb9d8487db6b",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
     }
   }
 }

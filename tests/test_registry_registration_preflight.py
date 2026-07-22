@@ -286,7 +286,7 @@ def test_workflow_uses_trusted_base_code_and_revalidates_on_main_push():
         "--checked-base-sha \"${CURRENT_MAIN_SHA}\"",
         "pulls?state=open&per_page=100",
         "pulls/${pr_number}/files?per_page=100",
-        "statuses/${pr_head_sha}",
+        "statuses/${sha}",
         "No new Registry task allocation on current main",
         "repos/${HEAD_REPOSITORY}/contents/${task_file}?ref=${PR_HEAD_SHA}",
         "repos/${pr_head_repository}/contents/${task_file}?ref=${pr_head_sha}",

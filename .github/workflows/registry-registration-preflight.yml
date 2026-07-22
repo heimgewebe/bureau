@@ -44,10 +44,19 @@ jobs:
             -f context="${STATUS_CONTEXT}" \
             -f description="Registry allocation preflight running" \
             -f target_url="${run_url}" >/dev/null
-          mapfile -t task_files < <(
-            gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}/files?per_page=100" --paginate \
-              --jq '.[] | select((.status == "added" or .status == "renamed") and (.filename | test("^registry/tasks/[A-Za-z0-9][A-Za-z0-9._:-]{0,239}\\.json$"))) | .filename'
-          )
+          task_files_file="$(mktemp)"
+          if ! gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}/files?per_page=100" --paginate \
+            --jq '.[] | select((.status == "added" or .status == "renamed") and (.filename | test("^registry/tasks/[A-Za-z0-9][A-Za-z0-9._:-]{0,239}\\.json$"))) | .filename' > "${task_files_file}"; then
+            rm -f "${task_files_file}"
+            gh api -X POST "repos/${REPOSITORY}/statuses/${PR_HEAD_SHA}" \
+              -f state=failure \
+              -f context="${STATUS_CONTEXT}" \
+              -f description="Registry allocation preflight errored" \
+              -f target_url="${run_url}" >/dev/null
+            exit 1
+          fi
+          mapfile -t task_files < "${task_files_file}"
+          rm -f "${task_files_file}"
           overall=success
           description="No new Registry task allocation"
           for task_file in "${task_files[@]}"; do
@@ -114,63 +123,138 @@ jobs:
           set -euo pipefail
           mkdir -p artifacts/registry-registration-preflight
           run_url="${GITHUB_SERVER_URL}/${REPOSITORY}/actions/runs/${GITHUB_RUN_ID}?base_sha=${CURRENT_MAIN_SHA}"
-          mapfile -t pr_rows < <(
-            gh api "repos/${REPOSITORY}/pulls?state=open&per_page=100" --paginate \
-              --jq '.[] | [.number, .head.sha, .head.repo.full_name] | @tsv'
-          )
+
+          post_status() {
+            local sha="$1"
+            local state="$2"
+            local description="$3"
+            local attempt
+            for attempt in 1 2 3; do
+              if gh api -X POST "repos/${REPOSITORY}/statuses/${sha}" \
+                -f state="${state}" \
+                -f context="${STATUS_CONTEXT}" \
+                -f description="${description}" \
+                -f target_url="${run_url}" >/dev/null; then
+                return 0
+              fi
+              sleep "${attempt}"
+            done
+            return 1
+          }
+
+          pr_rows_file="$(mktemp)"
+          if ! gh api "repos/${REPOSITORY}/pulls?state=open&per_page=100" --paginate \
+            --jq '.[] | [.number, .head.sha, (.head.repo.full_name // "")] | @tsv' > "${pr_rows_file}"; then
+            echo "::error::Cannot enumerate open pull requests for Registry freshness invalidation"
+            exit 1
+          fi
+          mapfile -t pr_rows < "${pr_rows_file}"
+          rm -f "${pr_rows_file}"
+
+          # Invalidate every known open PR before validating any individual PR.
+          # This prevents one broken PR from leaving later PRs with stale green freshness.
+          invalidate_failed=0
           for row in "${pr_rows[@]}"; do
             IFS=$'\t' read -r pr_number pr_head_sha pr_head_repository <<< "${row}"
-            mapfile -t task_files < <(
-              gh api "repos/${REPOSITORY}/pulls/${pr_number}/files?per_page=100" --paginate \
-                --jq '.[] | select((.status == "added" or .status == "renamed") and (.filename | test("^registry/tasks/[A-Za-z0-9][A-Za-z0-9._:-]{0,239}\\.json$"))) | .filename'
-            )
-            gh api -X POST "repos/${REPOSITORY}/statuses/${pr_head_sha}" \
-              -f state=pending \
-              -f context="${STATUS_CONTEXT}" \
-              -f description="Registry allocation revalidation running" \
-              -f target_url="${run_url}" >/dev/null
-            if [[ ${#task_files[@]} -eq 0 ]]; then
-              gh api -X POST "repos/${REPOSITORY}/statuses/${pr_head_sha}" \
-                -f state=success \
-                -f context="${STATUS_CONTEXT}" \
-                -f description="No new Registry task allocation on current main" \
-                -f target_url="${run_url}" >/dev/null
+            if [[ ! "${pr_number}" =~ ^[0-9]+$ || ! "${pr_head_sha}" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "::error::Malformed open PR row: ${row}"
+              invalidate_failed=1
               continue
             fi
+            if ! post_status \
+              "${pr_head_sha}" \
+              pending \
+              "Registry allocation revalidation running"; then
+              echo "::error::Cannot invalidate Registry freshness for PR #${pr_number}"
+              invalidate_failed=1
+            fi
+          done
+          if [[ ${invalidate_failed} -ne 0 ]]; then
+            exit 1
+          fi
+
+          infrastructure_failed=0
+          for row in "${pr_rows[@]}"; do
+            IFS=$'\t' read -r pr_number pr_head_sha pr_head_repository <<< "${row}"
+            task_files_file="$(mktemp)"
+            if ! gh api "repos/${REPOSITORY}/pulls/${pr_number}/files?per_page=100" --paginate \
+              --jq '.[] | select((.status == "added" or .status == "renamed") and (.filename | test("^registry/tasks/[A-Za-z0-9][A-Za-z0-9._:-]{0,239}\\.json$"))) | .filename' > "${task_files_file}"; then
+              rm -f "${task_files_file}"
+              post_status \
+                "${pr_head_sha}" \
+                failure \
+                "Registry allocation revalidation errored" || true
+              echo "::error::Cannot inspect changed files for PR #${pr_number}"
+              infrastructure_failed=1
+              continue
+            fi
+            mapfile -t task_files < "${task_files_file}"
+            rm -f "${task_files_file}"
+
+            if [[ ${#task_files[@]} -eq 0 ]]; then
+              if ! post_status \
+                "${pr_head_sha}" \
+                success \
+                "No new Registry task allocation on current main"; then
+                echo "::error::Cannot publish Registry freshness for PR #${pr_number}"
+                infrastructure_failed=1
+              fi
+              continue
+            fi
+
             overall=success
+            infrastructure_error=0
             receipt_dir="artifacts/registry-registration-preflight/pr-${pr_number}"
             mkdir -p "${receipt_dir}"
-            for task_file in "${task_files[@]}"; do
-              mkdir -p "$(dirname "${task_file}")"
-              gh api "repos/${pr_head_repository}/contents/${task_file}?ref=${pr_head_sha}" \
-                --jq .content | base64 --decode > "${task_file}"
-              receipt_key="${task_file#registry/tasks/}"
-              receipt_key="${receipt_key%.json}"
-              set +e
-              bureau --root . --json registry-registration-preflight \
-                --repo-slug "${REPOSITORY}" \
-                --task-json "${task_file}" \
-                --checked-base-sha "${CURRENT_MAIN_SHA}" \
-                --pr-number "${pr_number}" \
-                --head-sha "${pr_head_sha}" \
-                --receipt-out "${receipt_dir}/${receipt_key}.json"
-              rc=$?
-              set -e
-              if [[ ${rc} -ne 0 ]]; then
-                overall=failure
-              fi
-            done
-            if [[ "${overall}" == success ]]; then
+            if [[ -z "${pr_head_repository}" ]]; then
+              overall=failure
+              infrastructure_error=1
+            else
+              for task_file in "${task_files[@]}"; do
+                mkdir -p "$(dirname "${task_file}")"
+                task_tmp="$(mktemp)"
+                if ! gh api "repos/${pr_head_repository}/contents/${task_file}?ref=${pr_head_sha}" \
+                  --jq .content | base64 --decode > "${task_tmp}"; then
+                  rm -f "${task_tmp}"
+                  overall=failure
+                  infrastructure_error=1
+                  continue
+                fi
+                mv "${task_tmp}" "${task_file}"
+                receipt_key="${task_file#registry/tasks/}"
+                receipt_key="${receipt_key%.json}"
+                if ! bureau --root . --json registry-registration-preflight \
+                  --repo-slug "${REPOSITORY}" \
+                  --task-json "${task_file}" \
+                  --checked-base-sha "${CURRENT_MAIN_SHA}" \
+                  --pr-number "${pr_number}" \
+                  --head-sha "${pr_head_sha}" \
+                  --receipt-out "${receipt_dir}/${receipt_key}.json"; then
+                  overall=failure
+                fi
+              done
+            fi
+
+            if [[ ${infrastructure_error} -ne 0 ]]; then
+              description="Registry allocation revalidation errored"
+              infrastructure_failed=1
+            elif [[ "${overall}" == success ]]; then
               description="Registry allocation current on main"
             else
               description="Registry allocation blocked after main update"
             fi
-            gh api -X POST "repos/${REPOSITORY}/statuses/${pr_head_sha}" \
-              -f state="${overall}" \
-              -f context="${STATUS_CONTEXT}" \
-              -f description="${description}" \
-              -f target_url="${run_url}" >/dev/null
+            if ! post_status \
+              "${pr_head_sha}" \
+              "${overall}" \
+              "${description}"; then
+              echo "::error::Cannot publish Registry revalidation result for PR #${pr_number}"
+              infrastructure_failed=1
+            fi
           done
+
+          if [[ ${infrastructure_failed} -ne 0 ]]; then
+            exit 1
+          fi
       - name: Upload revalidation receipts
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,0 +1,85 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der unterstützte Observability-Startpfad lädt nachweislich die beabsichtigte Prometheus-Konfiguration; ein auskommentierter oder wirkungsloser Config-Mount kann nicht unbemerkt als grüner Vertrag gelten.",
+      "id": "prometheus-config-loaded"
+    },
+    {
+      "assertion": "Prometheus kann den Weltgewebe-Metrikendpunkt in der unterstützten Produktions-/Observability-Topologie intern erfolgreich scrapen, ohne den API-Port 8080 öffentlich am Host zu exponieren; Linux-spezifische Namensauflösung und Netzwerkzuordnung sind explizit abgedeckt.",
+      "id": "internal-scrape-reachable"
+    },
+    {
+      "assertion": "Ein reproduzierbarer Integrationsproof startet die relevante Compose-/Netzwerktopologie, prüft einen erfolgreichen Prometheus-Scrape beziehungsweise Target-Up-Zustand und schlägt bei fehlender Konfiguration oder unerreichbarem Target fail-closed fehl.",
+      "id": "hermetic-integration-proof"
+    },
+    {
+      "assertion": "Die öffentliche Grenze bleibt gehärtet: weltgewebe.net/api/metrics und api.weltgewebe.net/metrics liefern nach dem gemergten, commitgenau verifizierten Deploy weiterhin keinen Metrikinhalt.",
+      "id": "public-boundary-preserved"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer im Rahmen von WELTGEWEBE-OS-V1-T022 und mit der ausdrücklichen aktuellen Anweisung „@grabowski umsetzen“ zur autonomen Registrierung und Umsetzung sinnvoller Audit-Folgen autorisiert; Umsetzung isoliert und reviewgebunden.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den beim Komplettaudit belegten Observability-Vertragsbruch beheben: Der unterstützte Prometheus-Pfad muss eine tatsächlich geladene Konfiguration verwenden und den Weltgewebe-API-Metrikendpunkt über eine intern erreichbare, nicht öffentlich exponierte Verbindung scrapen können. Compose-, Netzwerk-, Linux-Namensauflösungs- und Konfigurationsannahmen werden reproduzierbar und fail-closed geprüft.",
+  "id": "WELTGEWEBE-OS-V1-T027",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-c8ec03b07223179631accb58",
+    "source_audit": "WELTGEWEBE-OS-V1-T022",
+    "source_commit": "a7f8c490095d907a26ba637f739ca423b8bba180",
+    "source_finding": "WG-AUD-OPS-PROMETHEUS-WIRING",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c8ec03b07223179631accb58",
+      "event_id": 947,
+      "event_created_at": "2026-07-22T06:42:49.278450Z",
+      "request_sha256": "4bd82612612f5ef4a4b531836c600e4169acf9083d5800423bc669ddddb42a38",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "audit_finding",
+        "locator": "WELTGEWEBE-OS-V1-T022:PR1532-operations-review:prometheus-compose-wiring:a7f8c490095d907a26ba637f739ca423b8bba180",
+        "observed_at": "2026-07-22T06:42:49.271401Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "operations",
+    "docker-compose",
+    "prometheus",
+    "networking",
+    "security",
+    "ci",
+    "deployment"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Prometheus-/Observability-Compose-Vertrag funktionsfähig und hermetisch machen"
+}

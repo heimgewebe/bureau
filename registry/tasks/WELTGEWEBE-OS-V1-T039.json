@@ -2,25 +2,11 @@
   "schema_version": 1,
   "id": "WELTGEWEBE-OS-V1-T039",
   "initiative": "WELTGEWEBE-OS-V1",
-  "title": "PostgreSQL-Pool-Multi-Instance-Budget und Lifecycle-Grenzen ergänzen",
-  "goal": "Den nach der Deduplizierung von PERF-FIND-001 verbleibenden Prüfumfang ergänzend zu WELTGEWEBE-OS-V1-T030 absichern: zuerst den tatsächlich umgesetzten T030-Endzustand prüfen und nur noch fehlende Multi-Instance-Kapazitätsbudgetierung sowie explizite Acquire-/Idle-/Lifetime-Grenzen und deren Sättigungsverhalten umsetzen, ohne bereits erfüllte T030-Arbeit zu duplizieren.",
+  "title": "Current-Head API-Upgrade-Verfügbarkeit der HA-Referenzzelle wiederherstellen",
+  "goal": "Den auf Weltgewebe-Commit 39d5a8f5fa637ba9f8a487074c86856e6a6b897c im realen HA-Reference-Proof reproduzierten Verfügbarkeitsregress beim API-Rolling-Upgrade beheben und anschließend den vollständigen HA-/PITR-Proof auf dem exakten Fix-Head wieder erfolgreich bis zum Ende durchführen.",
   "state": "planned",
-  "priority": {
-    "lane": "next",
-    "rank": 39
-  },
   "depends_on": [
-    "WELTGEWEBE-OS-V1-T030"
-  ],
-  "required_capabilities": [
-    "repository",
-    "github",
-    "postgresql",
-    "rust",
-    "performance",
-    "observability",
-    "bureau",
-    "grabowski"
+    "WELTGEWEBE-OS-V1-T004"
   ],
   "claims": [
     {
@@ -29,43 +15,75 @@
       "isolation": "worktree"
     }
   ],
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "kubernetes",
+    "gateway-api",
+    "cilium",
+    "rust",
+    "deployment",
+    "availability",
+    "observability",
+    "chaos-testing",
+    "postgresql",
+    "nats",
+    "backup",
+    "recovery",
+    "grabowski"
+  ],
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/weltgewebe",
     "approval": {
-      "required_level": "operator",
       "action_class": "repository_mutation",
-      "note": "Als Residualtask aus dem diffgebundenen Review von Bureau PR #869 registriert. T030 ist kanonisch und wird nicht parallel überschrieben; Umsetzung prüft zuerst dessen tatsächlichen Endzustand und arbeitet nur verbleibende Lücken ab."
+      "required_level": "operator",
+      "note": "Vom Nutzer am 2026-07-22 mit @grabowski umsetzen zur autonomen Abarbeitung offener T022-Befunde autorisiert. Umsetzung muss isoliert, current-head-gebunden, diffreviewt und CI-/HA-proof-gebunden erfolgen."
     }
-  },
-  "metadata": {
-    "source_audit": "WELTGEWEBE-OS-V1-T022",
-    "source_commit": "39d5a8f5fa637ba9f8a487074c86856e6a6b897c",
-    "source_finding": "PERF-FIND-001",
-    "source_artifact": "audit/complete-audit/performance-scalability-audit-current.json",
-    "deduplication_review": "T033 wurde durch PR #869 entfernt, weil T030 den Hauptumfang von PERF-FIND-001 bereits kanonisch abdeckt. Der anschließende diffgebundene Review zeigte jedoch zusätzliche T033-Anforderungen zu Multi-Instance-Budget sowie Acquire-/Idle-/Lifetime-Grenzen. Eine direkte T030-Korrektur wurde fail-closed nicht publiziert, weil der fremde offene PR #858 ebenfalls T030 verändert. T039 bewahrt deshalb nur diesen Restumfang mit Abhängigkeit von T030."
   },
   "acceptance": [
     {
-      "id": "t030-gap-reconciliation",
-      "assertion": "Vor jeder Codeänderung wird der dann aktuelle, tatsächlich umgesetzte T030-Endzustand gegen diesen Residualumfang geprüft. Bereits durch T030 erfüllte Punkte werden evidenzgebunden als erfüllt markiert statt erneut implementiert; ist der gesamte Residualumfang bereits erfüllt, wird T039 ohne redundanten Produktcode als superseded oder verified geschlossen."
+      "id": "root-cause",
+      "assertion": "Die Ursache der im T022-Proof gemessenen Upgrade-Nichterreichbarkeit wird reproduzierbar auf Deployment-, Readiness-, RollingUpdate-, Gateway-, Cilium-, Topologie- oder Probeebene isoliert; die Behebung basiert nicht auf bloßer Timeout-Erhöhung."
     },
     {
-      "id": "multi-instance-capacity-budget",
-      "assertion": "Soweit nach T030 noch fehlend, ist der zulässige Poolvertrag für mehrere API-Instanzen aus PostgreSQL max_connections, reserviertem Betriebs-Headroom, Instanzanzahl und erwarteter Parallelität nachvollziehbar hergeleitet und mit sicheren Bounds validiert."
+      "id": "zero-observed-outage-upgrade",
+      "assertion": "Ein API-Rolling-Upgrade auf der HA-Referenzzelle besteht den bestehenden Zero-Observed-Outage-Vertrag mit null fehlgeschlagenen Availability-Samples und ohne Verlust bestätigter Fachmutation oder JetStream-Nachrichten."
     },
     {
-      "id": "pool-lifecycle-bounds",
-      "assertion": "Soweit nach T030 noch fehlend, sind relevante Acquire-, Idle- und Lifetime-/Timeout-Grenzen typisiert konfigurierbar, dokumentiert und gegen ungültige oder betrieblich gefährliche Werte fail-closed validiert."
+      "id": "full-ha-rerun",
+      "assertion": "Der vollständige HA-Reference-Proof läuft auf dem exakten finalen Head erfolgreich bis zum Ende und belegt erneut PostgreSQL-Promotion, API-/NATS-Erholung, Upgrade, Rollback, WAL-Archivierung, PITR in einen leeren Cluster sowie gemessene RTO/RPO-Werte."
     },
     {
-      "id": "multi-instance-saturation-proof",
-      "assertion": "Reproduzierbare Tests oder Benchmarks belegen für mehrere API-Instanzen Sättigung, Acquire-Wartezeit beziehungsweise Timeout und begrenzten Gesamtverbindungsaufbau; reale Produktionskapazität wird ohne Produktionsmessung nicht als bewiesen behauptet."
+      "id": "cleanup",
+      "assertion": "Temporäre kind-Cluster, Object-Store-Container, Volumes und weitere Proof-Ressourcen werden sowohl bei Erfolg als auch bei Fehler vollständig und belegbar entfernt."
+    },
+    {
+      "id": "regression-tests",
+      "assertion": "Gezielte Contract-/Plattformtests schützen die konkrete Root Cause gegen Regression, ohne die historische T004-Evidenz umzudeuten."
     },
     {
       "id": "exact-review",
-      "assertion": "Der finale Head ist diffgebunden reviewt; relevante Rust-, PostgreSQL-, Performance- und CI-Prüfungen sind grün und die Abgrenzung zu T030 ist im Closeout nachvollziehbar."
+      "assertion": "Der finale PR-Diff ist headgebunden reviewt; relevante CI-Gates sind grün und der HA-Proof-Receipt ist an denselben finalen Head gebunden."
     }
-  ]
+  ],
+  "metadata": {
+    "source_audit": "WELTGEWEBE-OS-V1-T022",
+    "source_commit": "39d5a8f5fa637ba9f8a487074c86856e6a6b897c",
+    "candidate_id": "candidate-6d0eb02a8399a51ed9f19994",
+    "source_task": "47c7482abd8a475a9437a07d",
+    "source_lifecycle_receipt_sha256": "e98c96a6e30f35b6babc1d0e299b2279ef00b5df8db3e2d6f36901ac9c240182",
+    "failure_metrics": {
+      "upgrade_duration_seconds": 128.825,
+      "availability_samples": 81,
+      "failed_availability_samples": 21,
+      "observed_unavailable_seconds": 64.237,
+      "longest_unavailable_seconds": 21.41,
+      "replaced_replicas": 3
+    },
+    "does_not_invalidate": "WELTGEWEBE-OS-V1-T004 remains verified historical recovery evidence on its bound revision"
+  }
 }

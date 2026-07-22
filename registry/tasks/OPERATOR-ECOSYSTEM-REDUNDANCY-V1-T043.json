@@ -130,7 +130,37 @@
     },
     "registered_from": "authenticated visual acceptance and live repair of operator-ecosystem-heim-pc-20260719",
     "registration_phase": "planned_identity_before_bureau_native_verification_stamp",
-    "resolution_summary": "The existing board was repaired in place. Mermaid source, oversized DOC/TABLE artifacts and ambiguous Frame 05 routing were eliminated; one materialized native diagram remains with no AI preview object. Final provider truth is stable and authenticated desktop/iPad/high-resolution evidence passed four independent pixel reviews."
+    "resolution_summary": "The existing board was repaired in place. Mermaid source, oversized DOC/TABLE artifacts and ambiguous Frame 05 routing were eliminated; one materialized native diagram remains with no AI preview object. Final provider truth is stable and authenticated desktop/iPad/high-resolution evidence passed four independent pixel reviews.",
+    "verification": {
+      "state": "prepared",
+      "prepared_at": "2026-07-22T11:57:29.633555Z",
+      "task_sha256": "93089bbf5caf5ab9c761ade7664fc71535b204ae3e6274ec8ac1fde900d799f0",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "evidence": {
+        "bureau_registration": {
+          "pull_request": 836,
+          "merge_commit": "bcffd885548020eee12cd60e2dc5126bc29d274b",
+          "ci": "SUCCESS"
+        },
+        "schauwerk_delivery": {
+          "pull_request": 111,
+          "merge_commit": "0c27f3e31a0b56878cf8bfe54d3dedc8940cefea",
+          "postmerge_validation_receipt_sha256": "3357fc6cd6891bfde779462d53474b871f0c7076169cb41ea0f6e8562c251b0f"
+        },
+        "visual_acceptance": {
+          "stable_provider_digest": "b1168ba4e24be3517b179f10afc99324b423e7022b6f20219981ee60bcdd1527",
+          "board_capture_receipt_sha256": "db4322e1b46f529ff7217db99da8520c914668ebf1914a80590c89f3ebd88ea4",
+          "diagram_capture_receipt_sha256": "1f7a11d603e5b2dd5d73dac113a71540bff02654fbdc6c61d7bf516111fbf265",
+          "board_visual_review_result": "PASS x2",
+          "diagram_visual_review_result": "PASS x2"
+        },
+        "bureau_runtime": {
+          "source_commit": "721718c79cea7dc3795652f1a1c4d34c78efe721",
+          "manifest_sha256": "7285d1b875ac0dd8cd5c8da67870f9e4dad80e648f1c104b80c12394631a83cb",
+          "registry_tree_sha256": "0c4aa4bf888ce359d0e7233e092da010332ba0da4ec50ace9029c12ba68f0bcb"
+        }
+      }
+    }
   },
   "priority": {
     "lane": "next",

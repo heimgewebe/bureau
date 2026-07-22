@@ -1,0 +1,144 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Before each phase, current runtime, leases, repository state, existing tools and overlapping registered work are read back live; stale summaries and missing binaries are not treated as proof of safe mutation.",
+      "id": "truthful-baseline"
+    },
+    {
+      "assertion": "A cost-free sccache-based Rust compiler-cache pilot is installed and measured without forcing one shared Cargo target directory across concurrent worktrees. The pilot records cache behavior and a safe target-artifact lifecycle strategy, proves no foreign worktree mutation, and quantifies the storage/rebuild impact against the observed multi-gigabyte target/debug duplication.",
+      "id": "phase1-build-cache"
+    },
+    {
+      "assertion": "A narrow ntfy delivery adapter is piloted for Grabowski operator-outbox notifications. Grabowski receipts/outbox remain canonical, notification payloads exclude secrets, delivery failure cannot change task truth, and one end-to-end test proves bounded external push delivery or records a fail-closed no-go decision.",
+      "id": "phase2-notifications"
+    },
+    {
+      "assertion": "Ansible is piloted as a declarative, idempotent fleet executor beneath Grabowski rather than as a second control plane. Inventory is derived from the validated fleet registry, check-mode and idempotence are demonstrated, and any real host effect is bounded by Grabowski approval, leases and authoritative post-readback.",
+      "id": "phase3-fleet"
+    },
+    {
+      "assertion": "SOPS plus age is piloted for encrypted configuration with an explicit recovery-key model, no committed plaintext secret, and decryption only in an authorized effect path. The pilot documents rotation and disaster-recovery boundaries before any production secret migration.",
+      "id": "phase4-secrets"
+    },
+    {
+      "assertion": "Trivy is evaluated as the common vulnerability/misconfiguration/secret/SBOM scanner and Renovate is piloted only where it replaces, rather than duplicates, Dependabot coverage. Bot permissions, PR grouping and update cadence are bounded and existing repository-specific security gates remain authoritative.",
+      "id": "phase5-supply-chain"
+    },
+    {
+      "assertion": "mise and an OpenTelemetry Collector are introduced only if a measured bootstrap or telemetry-transport gap remains after the first five phases. OpenTofu remains conditional on a sufficiently large API-managed infrastructure surface. A no-go decision is an acceptable terminal outcome when added state exceeds measured benefit.",
+      "id": "phase6-second-wave"
+    },
+    {
+      "assertion": "Temporal does not replace Grabowski durable execution, Linear/Airtable/GitHub Projects do not replace Bureau, a second generic dashboard does not replace Leitstand, and LiteLLM/Langfuse are not introduced as competing routing or truth layers without a separately evidenced unmet need.",
+      "id": "no-control-plane-duplication"
+    },
+    {
+      "assertion": "Each phase ends with a recorded go/no-go result, exact changed resources, tests or probes, rollback path and live readback. Nontrivial repository changes are diff-reviewed and CI-green before merge; useful residual work not completed in this task is registered through Bureau rather than left as prose.",
+      "id": "phased-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly authorized on 2026-07-22 that all sensible findings from the external-tool audit be condensed into an implementation plan, registered and worked through in priority order. Effects remain cost-free, phase-bounded, lease-protected, review-before-effect and independently read back; cross-repository or cross-host effects require their own exact leases and may be split into follow-up tasks when needed.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "host:heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Reduce operator-ecosystem maintenance cost and state proliferation by introducing only narrowly scoped external tools that replace commodity plumbing while preserving Grabowski as execution authority, Bureau as task truth and Leitstand as the general observer surface. Work proceeds in evidence-gated phases: sccache/build-artifact lifecycle, ntfy delivery, Ansible fleet configuration, SOPS+age secrets, Trivy plus dependency-update consolidation, then conditional mise/OpenTelemetry/OpenTofu evaluation.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T044",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "task_readiness before canonical publication",
+      "permission to override foreign leases or dirty states",
+      "automatic installation of every evaluated tool",
+      "permission for paid services",
+      "permission to expose secrets or public operator state"
+    ],
+    "explicit_non_go": [
+      "Temporal as Grabowski replacement",
+      "Linear/Airtable/GitHub Projects as Bureau replacement",
+      "second generic dashboard as Leitstand replacement",
+      "LiteLLM as new routing authority",
+      "Langfuse before an evidenced tracing gap"
+    ],
+    "live_baseline": {
+      "active_lease_count": 112,
+      "attention_count": 2533,
+      "example_worktree_target_debug_human": "30G of 31G",
+      "external_push_delivery_established": false,
+      "failed_task_count": 2434,
+      "grabowski_runtime_observed_healthy": true,
+      "task_projection_count": 12769,
+      "weltgewebe_worktrees_bytes_human": "246G"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-335a8fcc78352456c7cfb3ae",
+      "event_id": 941,
+      "event_created_at": "2026-07-22T05:57:57.044386Z",
+      "request_sha256": "3e7f8f77b849339e4b6abb6b079ed68c402520835dcf1e7452b2ef4d80a03a6a",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-live-audit",
+        "locator": "heim-pc live audit via Grabowski 2026-07-22, repo.grabowski",
+        "observed_at": "2026-07-22T07:00:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "phase_order": [
+      "sccache/build-artifact lifecycle",
+      "ntfy operator-outbox delivery",
+      "Ansible fleet executor pilot",
+      "SOPS+age secret configuration pilot",
+      "Trivy plus Renovate consolidation pilot",
+      "conditional mise/OpenTelemetry/OpenTofu evaluation"
+    ],
+    "registered_from": "user request 2026-07-22 to condense, register and prioritize the external-tool audit"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau"
+  ],
+  "rollback": {
+    "strategy": "Each external tool is independently removable. Disable or uninstall the tool-specific adapter and restore the previously observed Grabowski/systemd/repository path without rewriting Bureau history or deleting retained evidence. No phase may require another phase to preserve existing task truth or execution authority."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Adopt narrow external tools without adding new control planes"
+}

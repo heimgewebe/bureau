@@ -1,0 +1,63 @@
+{
+  "acceptance": [
+    {
+      "assertion": "GET /proposals, GET /proposals/{id} und GET /proposals/{id}/messages lösen keine Datenbank- oder Account-Store-Mutation mehr aus.",
+      "id": "governance-get-mutation-free"
+    },
+    {
+      "assertion": "Fällige Governance-Übergänge werden über einen expliziten, idempotenten und multi-instance-sicheren Finalisierungspfad zuverlässig verarbeitet, ohne von einem Lesezugriff abhängig zu sein.",
+      "id": "explicit-finalization-path"
+    },
+    {
+      "assertion": "Tests beweisen sowohl mutationsfreie GET-Semantik als auch fristgerechte Finalisierung und Store-Projektion unter wiederholter und paralleler Ausführung.",
+      "id": "governance-finalization-regression-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer im Rahmen von WELTGEWEBE-OS-V1-T022 ausdrücklich als autonom zu registrierende sinnvolle Folgemaßnahme autorisiert; Umsetzung isoliert und reviewgebunden.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die im Komplettaudit belegten Seiteneffekte auf lesenden Governance-Routen beseitigen: finalize_due darf nicht bei öffentlichen GET-Anfragen Datenbankzustand und Account-Projektionen verändern. Fällige Governance-Übergänge sollen über einen expliziten, idempotenten und betrieblich verlässlichen Finalisierungspfad erfolgen.",
+  "id": "WELTGEWEBE-OS-V1-T031",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "source_audit": "WELTGEWEBE-OS-V1-T022",
+    "source_commit": "39d5a8f5fa637ba9f8a487074c86856e6a6b897c",
+    "source_finding": "WG-AUD-PROD-UTIL-GOVERNANCE-GET-SIDE-EFFECTS",
+    "evidence": [
+      "apps/api/src/routes/governance.rs:131-136",
+      "apps/api/src/routes/governance.rs:201-228",
+      "apps/api/src/routes/governance.rs:463-468"
+    ],
+    "classification": "belegt"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 31
+  },
+  "required_capabilities": [
+    "repository",
+    "rust",
+    "postgresql",
+    "distributed-systems",
+    "tests",
+    "ci"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Governance-GET-Routen von Zustandsmutationen entkoppeln"
+}

@@ -81,7 +81,9 @@
         "just wgx-metrics snapshot --json --output metrics.json": "pass",
         "just contracts validate": "pass: metrics.json valid"
       },
-      "github_pr_checks": "all required observed checks success; Claude optional check skipped"
+      "github_pr_checks": "all required observed checks success; Claude optional check skipped",
+      "task_sha256": "712f435211781b89c51d33ce1b410c287efe7836c0262adb3f71b537a1908a05",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
     },
     "registry_truth": {
       "schema_version": 1,

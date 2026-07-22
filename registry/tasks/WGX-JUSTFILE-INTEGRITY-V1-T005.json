@@ -16,7 +16,7 @@
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "approval": {
-      "action_class": "multi_repository_mutation",
+      "action_class": "repository_mutation",
       "required_level": "reviewed_plan",
       "note": "Repositoryweise Migration mit Live-Lease-, Default-Branch- und CI-Prüfung; kein ungeprüfter Fleet-Bulk-Patch."
     }
@@ -28,47 +28,22 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.aussensensor",
+      "resource": "repo.hauski-audio",
       "mode": "write",
       "isolation": "worktree"
     },
     {
-      "resource": "repo.hausKI-audio",
+      "resource": "repo.hauski",
       "mode": "write",
       "isolation": "worktree"
     },
     {
-      "resource": "repo.contracts-mirror",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
-      "resource": "repo.hausKI",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
-      "resource": "repo.semantAH",
+      "resource": "repo.semantah",
       "mode": "write",
       "isolation": "worktree"
     },
     {
       "resource": "repo.sichter",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
-      "resource": "repo.mitschreiber",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
-      "resource": "repo.vault-gewebe",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
-      "resource": "repo.vault-privat",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -101,6 +76,10 @@
     {
       "id": "bounded-rollout",
       "assertion": "Die Migration erfolgt repositoryweise mit aktuellen Leases und ohne fremde Dirty-States oder laufende Arbeiten zu verändern."
+    },
+    {
+      "id": "resource-registration",
+      "assertion": "Vor jeder Mutation eines beobachteten Repositories ohne bereits kanonisch registrierte Bureau-Resource wird diese Resource separat in Bureau registriert und erst danach mit einer aktuellen Lease bearbeitet."
     }
   ],
   "metadata": {
@@ -140,6 +119,20 @@
       "dass alle Repositories denselben Migrationsdiff benötigen",
       "Berechtigung zu ungeprüften Fleet-Bulk-Änderungen",
       "dass ein 404 in jedem Repository bereits einen beobachteten Produktionsausfall verursacht hat"
+    ],
+    "typed_resource_repositories": [
+      "heimgewebe/chronik",
+      "heimgewebe/hausKI-audio",
+      "heimgewebe/hausKI",
+      "heimgewebe/semantAH",
+      "heimgewebe/sichter"
+    ],
+    "unregistered_resource_repositories": [
+      "heimgewebe/aussensensor",
+      "heimgewebe/contracts-mirror",
+      "heimgewebe/mitschreiber",
+      "heimgewebe/vault-gewebe",
+      "heimgewebe/vault-privat"
     ]
   }
 }

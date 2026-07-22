@@ -1,0 +1,71 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Persistierte federation_outbox-Ereignisse werden durch einen expliziten Produktionsworker an zulässige Zielzellen ausgeliefert; pending_outbox ist nicht nur eine Prüf- oder Testoberfläche.",
+      "id": "federation-outbox-delivery-loop"
+    },
+    {
+      "assertion": "Auslieferung besitzt begrenzte Timeouts, Retry mit Backoff, Idempotenz und dauerhafte Zustandsübergänge, sodass Neustarts oder Mehrfachinstanzen weder Ereignisse verlieren noch unkontrolliert duplizieren.",
+      "id": "durable-delivery-semantics"
+    },
+    {
+      "assertion": "Peer-, Scope-, Signatur- und Zielrichtlinien bleiben fail-closed; ein blockierter oder ungültiger Peer wird nicht durch den Delivery-Worker umgangen.",
+      "id": "peer-policy-preserved"
+    },
+    {
+      "assertion": "Ein Zwei-Zellen-End-to-End-Test beweist automatische Outbox-Auslieferung, Wiederanlauf nach transientem Fehler und idempotente Wiederholung ohne manuellen pending_outbox-Transfer.",
+      "id": "automatic-federation-e2e-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer im Rahmen von WELTGEWEBE-OS-V1-T022 ausdrücklich als autonom zu registrierende sinnvolle Folgemaßnahme autorisiert; Umsetzung isoliert und reviewgebunden.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die im Komplettaudit belegte Lücke zwischen persistierter Federation-Outbox und tatsächlicher automatischer Auslieferung schließen: einen produktionsfähigen, dauerhaften Delivery-Worker mit begrenzten Netzwerkoperationen, Retry/Backoff, Idempotenz, Multi-Instance-Sicherheit und Ende-zu-Ende-Beweis zwischen zwei Zellen implementieren.",
+  "id": "WELTGEWEBE-OS-V1-T032",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "source_audit": "WELTGEWEBE-OS-V1-T022",
+    "source_commit": "39d5a8f5fa637ba9f8a487074c86856e6a6b897c",
+    "source_finding": "WG-AUD-PROD-UTIL-FEDERATION-OUTBOX-DELIVERY",
+    "evidence": [
+      "apps/api/src/federation.rs:295",
+      "apps/api/src/federation.rs:495-496",
+      "apps/api/src/federation.rs:1037-1074",
+      "apps/api/tests/api_federation_two_cell.rs:389-390"
+    ],
+    "verification_note": "Repositoryweite Suche am Audit-HEAD findet pending_outbox-Aufrufe außerhalb der Implementierung nur in Tests; ein automatischer Delivery-Loop ist nicht belegt.",
+    "classification": "belegt-mit-negativer-codesuche"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 32
+  },
+  "required_capabilities": [
+    "repository",
+    "rust",
+    "postgresql",
+    "http",
+    "distributed-systems",
+    "federation",
+    "tests",
+    "ci"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Federation-Outbox automatisch und dauerhaft ausliefern"
+}

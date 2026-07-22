@@ -1,0 +1,64 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die produktive Weboberfläche enthält keine leere, veraltet als Webrat gebrandete /archive-Route ohne realen Datenvertrag; Entfernung oder echte Implementierung ist durch Routing- und Browserbeleg abgesichert.",
+      "id": "archive-surface-resolved"
+    },
+    {
+      "assertion": "Der produktive /api/nodes-Pfad liefert keine statischen demoNodes als scheinbare Produktwahrheit; ein verbleibender Demo-Pfad ist eindeutig nichtproduktiv und aus dem Produktionsrouting ausgeschlossen.",
+      "id": "demo-nodes-not-production-truth"
+    },
+    {
+      "assertion": "Build, relevante Route- und Browserprüfungen bestehen am finalen Head ohne Regression der kanonischen Axum-Nodes-API.",
+      "id": "surface-regression-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer im Rahmen von WELTGEWEBE-OS-V1-T022 ausdrücklich als autonom zu registrierende sinnvolle Folgemaßnahme autorisiert; Umsetzung isoliert und reviewgebunden.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die im Komplettaudit belegten Produktoberflächen-Altlasten bereinigen: die leere, veraltet gebrandete /archive-Route entweder entfernen oder an einen echten Produktvertrag binden und den statisch prerendered /api/nodes-Demo-Datenpfad aus dem produktiven Surface entfernen oder explizit auf einen nichtproduktiven Entwicklungsvertrag begrenzen.",
+  "id": "WELTGEWEBE-OS-V1-T033",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "source_audit": "WELTGEWEBE-OS-V1-T022",
+    "source_commit": "39d5a8f5fa637ba9f8a487074c86856e6a6b897c",
+    "source_findings": [
+      "WG-AUD-PROD-UTIL-DEAD-ROUTE-ARCHIVE",
+      "WG-AUD-PROD-UTIL-DEMO-DATA-DUPLICATION"
+    ],
+    "evidence": [
+      "apps/web/src/routes/archive/+page.svelte:1-40",
+      "apps/web/src/routes/api/nodes/+server.ts:1-10"
+    ],
+    "classification": "belegt"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 33
+  },
+  "required_capabilities": [
+    "repository",
+    "typescript",
+    "svelte",
+    "browser",
+    "ci"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Tote Archiv- und Demo-Daten-Oberflächen aus dem Produktpfad entfernen"
+}

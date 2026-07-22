@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "initiative": "WELTGEWEBE-OS-V1",
+  "state": "planned",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T022"
+  ],
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer im Rahmen von WELTGEWEBE-OS-V1-T022 ausdrücklich zur autonomen Registrierung sinnvoller, nicht unmittelbar behobener Audit-Folgen autorisiert; Umsetzung isoliert und reviewgebunden."
+    }
+  },
+  "id": "WELTGEWEBE-OS-V1-T033",
+  "title": "PostgreSQL-Verbindungspool kapazitätsgebunden konfigurieren und belegen",
+  "goal": "Den auf Weltgewebe-Commit 39d5a8f5fa637ba9f8a487074c86856e6a6b897c belegten festen API-PostgreSQL-Pool von maximal fünf Verbindungen durch einen typisierten, begrenzten und kapazitätsbegründeten Vertrag ersetzen, der Multi-Instance-Betrieb, Datenbankbudget, Sättigung und Backpressure explizit berücksichtigt.",
+  "priority": {
+    "lane": "next",
+    "rank": 33
+  },
+  "required_capabilities": [
+    "rust",
+    "postgresql",
+    "performance",
+    "observability",
+    "ci"
+  ],
+  "metadata": {
+    "source_audit": "WELTGEWEBE-OS-V1-T022",
+    "source_commit": "39d5a8f5fa637ba9f8a487074c86856e6a6b897c",
+    "source_finding": "PERF-FIND-001",
+    "source_artifact": "audit/complete-audit/performance-scalability-audit-current.json"
+  },
+  "acceptance": [
+    {
+      "id": "typed-pool-config",
+      "assertion": "Poolgröße und relevante Acquire-/Idle-/Lifetime-Grenzen werden zentral typisiert validiert; ungültige Werte führen zu kontrolliertem Startup-Fehler statt stiller Fehlkonfiguration."
+    },
+    {
+      "id": "capacity-budget",
+      "assertion": "Der Default und zulässige Bereich sind aus einem expliziten Budget für API-Instanzen, PostgreSQL max_connections, reservierte Betriebsverbindungen und erwartete Parallelität hergeleitet."
+    },
+    {
+      "id": "saturation-proof",
+      "assertion": "Reproduzierbare Tests oder Benchmarks belegen Verhalten bei Poolsättigung, Acquire-Timeout und mehreren API-Instanzen; Backpressure und Fehlermodus sind sichtbar statt unbeschränkt zu warten."
+    },
+    {
+      "id": "observability",
+      "assertion": "Betrieblich relevante Poolauslastung oder Acquire-Wartezeit ist messbar oder eine begründete, getestete Minimalalternative ist dokumentiert."
+    },
+    {
+      "id": "exact-review",
+      "assertion": "Der finale Head besteht relevante Rust-/PostgreSQL-Tests, Performance-Gates und diffgebundenes Review."
+    }
+  ]
+}

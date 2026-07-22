@@ -1,0 +1,78 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Statusfelder unterscheiden eindeutig unique current nodes, total jobs und terminal jobs oder verwenden Namen, die ihre tatsächliche Zählsemantik korrekt wiedergeben.",
+      "id": "unambiguous-progress-model"
+    },
+    {
+      "assertion": "Aktivierungsbereitschaft bleibt als eigene Integritätsaussage von reinen Fortschrittszählern getrennt.",
+      "id": "activation-readiness-separate"
+    },
+    {
+      "assertion": "Ein PostgreSQL-Test mit mehreren Revisionen desselben Knotens beweist die definierte Zählsemantik.",
+      "id": "revision-regression-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer im Rahmen von WELTGEWEBE-OS-V1-T022 als sinnvolle Folgemaßnahme autorisiert; isolierte Umsetzung mit Review.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "WG-AUD-OBS-001 beheben: Knoten- und Jobfortschritt im Semantic-Search-Projektionsworker eindeutig trennen, Felder passend benennen und Aktivierungsbereitschaft separat ausweisen.",
+  "id": "WELTGEWEBE-OS-V1-T025",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-09d680b67b651183479d1017",
+    "source_audit": "WELTGEWEBE-OS-V1-T022",
+    "source_commit": "cd4b588fe9cbc47e7afe223acee0d03fc4c4e84b",
+    "source_finding": "WG-AUD-OBS-001",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-09d680b67b651183479d1017",
+      "event_id": 928,
+      "event_created_at": "2026-07-22T03:48:39.638523Z",
+      "request_sha256": "075f0f7dde919cbfb2e9c26d0a5b17a26102205855940eab2976d69dfd087cf8",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "audit_finding",
+        "locator": "WELTGEWEBE-OS-V1-T022:WG-AUD-OBS-001:cd4b588fe9cbc47e7afe223acee0d03fc4c4e84b",
+        "observed_at": "2026-07-22T03:48:39.623426Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 3
+  },
+  "required_capabilities": [
+    "rust",
+    "postgresql",
+    "observability",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Semantic-Search-Fortschrittsmetriken semantisch eindeutig machen"
+}

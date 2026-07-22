@@ -130,6 +130,10 @@
       "fresh-safety-readback": "PASS: Kandidaten waren weg oder sauber/exakt gebunden; keine T007-Prozesse oder aktiven alten Owner-Leases; Produktionsruntime explizit erhalten.",
       "grace-and-archives": "PASS: alle Archive sind älter als 86400 Sekunden; alle vier Manifest- und Recovery-Ref-Bindungen wurden nach dem Cleanup erneut exakt bestätigt."
     },
+    "verification": {
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "task_sha256": "6b82fc1f34ddc642b779c391b0913867b9de18c15ebed26eeaa812034ad0c10b"
+    },
     "verified_at": "2026-07-22T19:01:55+02:00"
   },
   "priority": {

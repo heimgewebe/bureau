@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "initiative": "WELTGEWEBE-OS-V1",
+  "state": "planned",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T022"
+  ],
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer im Rahmen von WELTGEWEBE-OS-V1-T022 ausdrücklich zur autonomen Registrierung sinnvoller, nicht unmittelbar behobener Audit-Folgen autorisiert; Umsetzung isoliert und reviewgebunden."
+    }
+  },
+  "id": "WELTGEWEBE-OS-V1-T036",
+  "title": "Dokumentationsdrift bereinigen und Lifecycle-Gates automatisieren",
+  "goal": "Die auf Weltgewebe-Commit 39d5a8f5fa637ba9f8a487074c86856e6a6b897c belegten 52 Dokumentationsdrift-Befunde systematisch gegen den dann aktuellen Codezustand reconciliieren, aktive falsche Pfade, Kommandos, Status- und Commitbehauptungen korrigieren und wiederkehrende Drift durch automatisierte Pfad-/Link- sowie review_after-Lifecycle-Prüfungen verhindern, ohne historische Evidenz rückwirkend umzuschreiben.",
+  "priority": {
+    "lane": "next",
+    "rank": 36
+  },
+  "required_capabilities": [
+    "documentation",
+    "python",
+    "ci",
+    "github",
+    "repository"
+  ],
+  "metadata": {
+    "source_audit": "WELTGEWEBE-OS-V1-T022",
+    "source_commit": "39d5a8f5fa637ba9f8a487074c86856e6a6b897c",
+    "source_finding": "WG-AUD-DOCUMENTATION-DRIFT-SET",
+    "source_artifact": "audit/complete-audit/documentation-drift-audit-current.json"
+  },
+  "acceptance": [
+    {
+      "id": "finding-reconciliation",
+      "assertion": "Alle 11 P1- und 41 P2-Befunde des commitgebundenen Drift-Inventars werden gegen den aktuellen Head einzeln als weiterhin gültig, bereits behoben, superseded oder falsch-positiv klassifiziert; keine Befundzahl wird blind übernommen."
+    },
+    {
+      "id": "active-contracts-corrected",
+      "assertion": "Aktive README-, docs-, Runbook-, ADR-, Proof- und Report-Verweise auf nicht existierende Pfade, Services, Flags, Kommandos oder veraltete Protokoll-/Deploymentidentitäten sind korrigiert oder explizit als historisch markiert."
+    },
+    {
+      "id": "path-link-gate",
+      "assertion": "Ein reproduzierbarer CI-Check erkennt kaputte repositoryinterne Dokumentationspfade und relevante relative Links, mit expliziten Ausnahmen für absichtlich historische oder generierte Ziele."
+    },
+    {
+      "id": "review-after-gate",
+      "assertion": "Aktive Dokumente mit review_after besitzen einen maschinenlesbaren Lifecycle-Check, der fällige Reviews sichtbar und fail-closed nach dokumentierter Policy behandelt, ohne superseded Dokumente künstlich aktiv zu halten."
+    },
+    {
+      "id": "exact-review",
+      "assertion": "Der finale Diff wird gegen den exakten Head reviewt; Dokumentationschecks und bestehende relevante CI-Gates sind grün."
+    }
+  ]
+}

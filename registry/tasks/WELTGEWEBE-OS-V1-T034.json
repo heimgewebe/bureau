@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "initiative": "WELTGEWEBE-OS-V1",
+  "state": "planned",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T022"
+  ],
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer im Rahmen von WELTGEWEBE-OS-V1-T022 ausdrücklich zur autonomen Registrierung sinnvoller, nicht unmittelbar behobener Audit-Folgen autorisiert; Umsetzung isoliert und reviewgebunden."
+    }
+  },
+  "id": "WELTGEWEBE-OS-V1-T034",
+  "title": "Tote und divergente Produktoberflächen kontrolliert konvergieren",
+  "goal": "Die beim T022-Nutzenaudit belegten toten oder divergenten Weboberflächen und HTTP-Semantik bereinigen: den veralteten /archive-Stub entscheiden, statische Demo-API und Live-Axum-Datenquelle klar trennen, interne /_dev-Flächen aus Produktionspfaden begrenzen und zustandsändernde Governance-GET-Nebenwirkungen in explizite Mutations- oder Hintergrundpfade überführen.",
+  "priority": {
+    "lane": "next",
+    "rank": 34
+  },
+  "required_capabilities": [
+    "svelte",
+    "typescript",
+    "rust",
+    "http",
+    "governance",
+    "browser",
+    "ci"
+  ],
+  "metadata": {
+    "source_audit": "WELTGEWEBE-OS-V1-T022",
+    "source_commit": "39d5a8f5fa637ba9f8a487074c86856e6a6b897c",
+    "source_findings": [
+      "WG-AUD-PROD-UTIL-DEAD-ROUTE-ARCHIVE",
+      "WG-AUD-PROD-UTIL-DEMO-DATA-DIVERGENCE",
+      "WG-AUD-HTTP-SAFE-GET-GOVERNANCE-FINALIZE",
+      "WG-AUD-PROD-UTIL-DEV-ROUTES-IN-PROD-BUNDLE"
+    ],
+    "source_artifact": "audit/complete-audit/product-utility-simplification-audit-current.json"
+  },
+  "acceptance": [
+    {
+      "id": "archive-decision",
+      "assertion": "Der /archive-Pfad besitzt einen belegten Produktzweck und reale Datenquelle oder wird mitsamt veraltetem Demo-/Branding-Code entfernt; tote Beispielzustände bleiben nicht als scheinbare Produktoberfläche bestehen."
+    },
+    {
+      "id": "data-source-convergence",
+      "assertion": "Statische Demo-/Prerender-Endpunkte können nicht mit Live-Axum-Endpunkten als gleichwertige Produktionswahrheit verwechselt werden; Fixture- oder Demo-Daten sind explizit isoliert."
+    },
+    {
+      "id": "dev-surface-boundary",
+      "assertion": "/_dev-Flächen sind aus Produktionsnavigation und Produktionsbundle entfernt oder durch einen expliziten, getesteten Build-/Runtime-Vertrag zuverlässig ausgeschlossen."
+    },
+    {
+      "id": "safe-get-semantics",
+      "assertion": "Governance-GET-Endpunkte ändern keinen dauerhaften Zustand; fällige Finalisierung läuft über einen expliziten Mutations- oder robusten Hintergrundpfad mit Idempotenz- und Race-Tests."
+    },
+    {
+      "id": "browser-api-regression",
+      "assertion": "Relevante Browser-, API- und Governance-Regressionsprüfungen sind auf dem exakten finalen Head grün."
+    }
+  ]
+}

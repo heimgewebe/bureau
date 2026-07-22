@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "initiative": "WELTGEWEBE-OS-V1",
+  "state": "planned",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T022"
+  ],
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer im Rahmen von WELTGEWEBE-OS-V1-T022 ausdrücklich zur autonomen Registrierung sinnvoller, nicht unmittelbar behobener Audit-Folgen autorisiert; Umsetzung isoliert und reviewgebunden."
+    }
+  },
+  "id": "WELTGEWEBE-OS-V1-T035",
+  "title": "Globale Accessibility- und Mobile-Randfälle aus dem Komplettaudit härten",
+  "goal": "Die sechs auf Weltgewebe-Commit 39d5a8f5fa637ba9f8a487074c86856e6a6b897c belegten UX-/Mobile-/Accessibility-Befunde beheben oder begründet neu klassifizieren: Touch-Bedienbarkeit, Forced Colors, Hauptlandmarks, Live-Fehlerrückmeldung, textlose mobile Aktionen und nicht nur farbbasierte Kartenhervorhebung.",
+  "priority": {
+    "lane": "next",
+    "rank": 35
+  },
+  "required_capabilities": [
+    "accessibility",
+    "svelte",
+    "typescript",
+    "css",
+    "playwright",
+    "browser",
+    "mobile",
+    "ci"
+  ],
+  "metadata": {
+    "source_audit": "WELTGEWEBE-OS-V1-T022",
+    "source_commit": "39d5a8f5fa637ba9f8a487074c86856e6a6b897c",
+    "source_finding": "WG-AUD-UX-MOBILE-ACCESSIBILITY-SET",
+    "source_artifact": "audit/complete-audit/ux-mobile-accessibility-audit-current.json"
+  },
+  "acceptance": [
+    {
+      "id": "finding-reverification",
+      "assertion": "Alle sechs Auditbefunde werden auf aktuellem Head und realen Desktop-/Mobilklassen reproduziert oder als behoben/falsch-positiv belegt."
+    },
+    {
+      "id": "touch-and-mobile-labels",
+      "assertion": "Interaktive Gesprächs- und mobile Sheet-Aktionen besitzen verlässlich bedienbare Touch-Ziele und verlieren auf schmalen Viewports keine verständliche zugängliche Bezeichnung zugunsten rein visueller Glyphen."
+    },
+    {
+      "id": "forced-colors-and-map-cues",
+      "assertion": "Forced-Colors-/High-Contrast-Modi bleiben bedienbar und Kartenhervorhebungen besitzen zusätzlich zur Farbe eine robuste visuelle oder semantische Unterscheidung."
+    },
+    {
+      "id": "landmarks-and-live-errors",
+      "assertion": "Seiten verwenden konsistente Hauptlandmarks und Login-/Step-up-Fehler werden für assistive Technologien über einen getesteten Live-/Alert-Vertrag angekündigt."
+    },
+    {
+      "id": "browser-matrix",
+      "assertion": "Gezielte Playwright- oder äquivalente Browserprüfungen decken Desktop, mobile Viewports, Tastatur und relevante Forced-Colors-/Kontrastpfade auf exaktem Head ab."
+    }
+  ]
+}

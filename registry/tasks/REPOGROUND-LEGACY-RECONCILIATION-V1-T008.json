@@ -57,27 +57,50 @@
       "20260719T214942Z-3d7dd3103349",
       "20260719T215007Z-05b738c59dc6"
     ],
+    "cleanup_evidence": {
+      "archive_ids": [
+        "20260719T214813Z-7e36f2bb6a61",
+        "20260719T214931Z-1e40d04e7f2b",
+        "20260719T214942Z-3d7dd3103349",
+        "20260719T215007Z-05b738c59dc6"
+      ],
+      "archive_manifests_preserved": true,
+      "bureau_branch_cleanup_task": "19a5765169824582aa7977a6",
+      "final_readback_task": "8cc4c8ffff8e49e1b40530c3",
+      "followup_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T088",
+      "foreign_worktrees_touched": false,
+      "merge_readback_task": "a7d16d112ceb4a468900b1ee",
+      "production_runtime": "/home/alex/.local/share/repoground-runtime/572e9d5dd818e57b5e4b8d3a43660eca525be3a6",
+      "recovery_refs_preserved": true,
+      "repoground_branch_cleanup_tasks": [
+        "f61435b9c326452d941d44ed",
+        "5dcc0781a59d49f8af40bacb"
+      ],
+      "worktree_cleanup_task": "5758efca923149ccb0fa8d42"
+    },
     "does_not_establish": [
       "permission to bypass archive grace",
       "permission to remove foreign branches or worktrees",
       "permission to delete the active production runtime"
     ],
+    "finalized_at": "2026-07-22T19:01:55+02:00",
     "not_in_scope": [
       "/home/alex/.local/share/repoground-runtime/572e9d5dd818e57b5e4b8d3a43660eca525be3a6",
       "foreign worktrees",
       "historical retention evidence",
       "publication bundles"
     ],
-    "registered_at": "2026-07-19T23:50:30+02:00",
-    "source": "T007 closeout cleanup encountered the mandatory Grabowski 86400-second post-archive grace.",
-    "source_candidate_id": "repoground-t007-cleanup-grace-v1",
-    "source_event_id": 803,
     "operator_intake": {
-      "schema_version": 1,
       "candidate_id": "repoground-t007-cleanup-grace-v1",
-      "event_id": 803,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
       "event_created_at": "2026-07-19T21:59:32.393493Z",
+      "event_id": 803,
       "request_sha256": "ac5821e3deb8ab23925f058b4ca2da6e39c1cd9e9133f52988775a092318e1cd",
+      "schema_version": 1,
       "source": {
         "does_not_establish": [
           "source_content_identity"
@@ -87,19 +110,31 @@
         "locator": "/home/alex/.local/state/grabowski/checkout-archives",
         "observed_at": "2026-07-19T23:50:07+02:00",
         "sha256": null
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
+      }
     },
+    "registered_at": "2026-07-19T23:50:30+02:00",
     "registration_context": {
-      "candidate_id": "repoground-t007-cleanup-grace-v1",
       "candidate_event_id": 803,
+      "candidate_id": "repoground-t007-cleanup-grace-v1",
       "reviewed_proposal_sha256": "f60efb712162c3a9ae433a5cdd683e2d44f1b6700853eacb73a1887612c17e0f",
       "typed_publication_blocker": "installed Bureau runtime 8c4c448e is stale against current registry main 003cb2b6; manual isolated PR path used without changing the runtime"
-    }
+    },
+    "resolution_summary": "Nach Ablauf der verpflichtenden 24-Stunden-Archiv-Grace wurden die vier exakt gebundenen T007-Checkouts vollständig aus Dateisystem und Git-Worktree-Inventar entfernt. Drei RepoGround-Worktrees waren beim frischen Readback bereits physisch und aus der Worktree-Registry verschwunden; deren zwei verbliebene lokale Feature-Branches wurden nach exakter Head-, Merge-, Remote- und Recovery-Ref-Prüfung atomar entfernt. Der vierte Bureau-Worktree und sein lokaler Branch wurden unter getrennten, eng gebundenen Grabowski-Ressourcenleasen entfernt. Alle vier Archivmanifeste und Recovery-Refs blieben auf den aufgezeichneten Heads erhalten; die produktive RepoGround-Runtime 572e9d5d blieb bestehen. Keine fremden Worktrees, Branches oder aktiven Leases wurden verändert.",
+    "source": "T007 closeout cleanup encountered the mandatory Grabowski 86400-second post-archive grace.",
+    "source_candidate_id": "repoground-t007-cleanup-grace-v1",
+    "source_event_id": 803,
+    "validated_acceptance": {
+      "bounded-removal": "PASS: nur die vier registrierten T007-Pfade bzw. ihre drei verbliebenen lokalen Branch-Refs wurden entfernt; fremde Worktrees blieben unberührt.",
+      "branch-closeout": "PASS: RepoGround PR #1055 Head 744f3341 und PR #1056 Head f7812af8 sowie Bureau PR #736 Head 5509114 bleiben MERGED; zugehörige Remote-Branches sind nicht vorhanden.",
+      "final-readback": "PASS: kein T007-Pfad im Worktree-Inventar, kein passender prune --dry-run Vorschlag, kein T007-Prozess und keine aktive Lease des alten T007-Owners.",
+      "fresh-safety-readback": "PASS: Kandidaten waren weg oder sauber/exakt gebunden; keine T007-Prozesse oder aktiven alten Owner-Leases; Produktionsruntime explizit erhalten.",
+      "grace-and-archives": "PASS: alle Archive sind älter als 86400 Sekunden; alle vier Manifest- und Recovery-Ref-Bindungen wurden nach dem Cleanup erneut exakt bestätigt."
+    },
+    "verification": {
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "task_sha256": "6b82fc1f34ddc642b779c391b0913867b9de18c15ebed26eeaa812034ad0c10b"
+    },
+    "verified_at": "2026-07-22T19:01:55+02:00"
   },
   "priority": {
     "lane": "later",
@@ -112,6 +147,6 @@
     "filesystem-safety"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Retire archived T007 checkouts after cleanup grace"
 }

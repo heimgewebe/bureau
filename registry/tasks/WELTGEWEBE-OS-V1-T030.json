@@ -1,0 +1,98 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der PostgreSQL-Verbindungspool der API ist nicht mehr ausschließlich auf einen hart codierten Wert von fünf Verbindungen festgelegt; Poolgröße und relevante Timeout-Grenzen sind über einen dokumentierten, validierten Konfigurationsvertrag mit sicheren Defaults und Bounds steuerbar.",
+      "id": "configuration-contract"
+    },
+    {
+      "assertion": "Lokale reproduzierbare Last- oder Nebenläufigkeitstests belegen Verhalten bei Pool-Sättigung, Wartezeit und Fehlerfällen mindestens unter einer Last oberhalb von fünf gleichzeitig datenbankgebundenen Requests; ein höherer Grenzwert darf keinen ungebremsten Verbindungsaufbau erzeugen.",
+      "id": "bounded-capacity-evidence"
+    },
+    {
+      "assertion": "Pool-Sättigung, Erwerbsfehler oder äquivalente Kapazitätssignale sind über vorhandene Observability-Pfade messbar oder die verbleibende Messlücke ist explizit dokumentiert; reale Produktionskapazität wird ohne Produktionsmessung nicht als bewiesen behauptet.",
+      "id": "observability"
+    },
+    {
+      "assertion": "Deployment- und Betriebsdokumentation beschreibt Konfiguration, Default, Rollback und die Abhängigkeit von PostgreSQL max_connections beziehungsweise reservierter Verbindungsheadroom.",
+      "id": "deployment-safety"
+    },
+    {
+      "assertion": "Änderung und Tests werden an einen exakten Commit gebunden, reviewt und durch die betroffenen Rust-, PostgreSQL-, Performance- und CI-Prüfungen verifiziert.",
+      "id": "verification"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Als P1-Folgebefund des autorisierten Weltgewebe-Komplettaudits T022 registriert; Umsetzung isoliert und review-before-effect, ohne fremde Dirty-States, Worktrees, Leases oder parallele Arbeiten zu verändern.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den im Performance-/Kapazitätsaudit belegten hart codierten PostgreSQL-Pool von maximal fünf API-Verbindungen durch einen sicher konfigurierbaren und messbaren Kapazitätsvertrag ersetzen, Pool-Sättigung und Backpressure reproduzierbar prüfen und Deployment-Grenzen gegenüber der Datenbank dokumentieren, ohne unbelegte Produktionskapazität zu behaupten.",
+  "id": "WELTGEWEBE-OS-V1-T030",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "deduplication": "Bureau registry search on 2026-07-22 found prior five-connection concurrency evidence in WELTGEWEBE-PR-MAINTENANCE-V2-T001 but no task that makes the API PostgreSQL pool configurable or establishes capacity under saturation.",
+    "discovered_by": "WELTGEWEBE-OS-V1-T022 performance-scalability audit",
+    "evidence_commit": "39d5a8f5fa637ba9f8a487074c86856e6a6b897c",
+    "evidence_paths": [
+      "apps/api/src/lib.rs:51",
+      "apps/api/src/lib.rs:684",
+      "audit/complete-audit/performance-scalability-audit-current.json"
+    ],
+    "finding_id": "PERF-FIND-001",
+    "finding_severity": "P1",
+    "finding_summary": "Hardcoded PostgreSQL connection pool limit of five API connections without environment override.",
+    "registered_from": "T022 PERF-FIND-001",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c12800444378de43dbea290d",
+      "event_id": 965,
+      "event_created_at": "2026-07-22T12:27:02.880863Z",
+      "request_sha256": "a7983df05b59c47962f360eedbd76877a0398fbb5ae1bda38b7c71bdada7a42f",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator_audit_finding",
+        "locator": "WELTGEWEBE-OS-V1-T022:PERF-FIND-001:commit-39d5a8f5fa637ba9f8a487074c86856e6a6b897c",
+        "observed_at": "2026-07-22T12:27:02.874046Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "postgresql",
+    "rust",
+    "performance",
+    "observability",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "PostgreSQL-Pool konfigurierbar machen und Kapazität belegen"
+}

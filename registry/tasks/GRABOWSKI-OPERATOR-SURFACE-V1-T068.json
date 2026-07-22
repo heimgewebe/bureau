@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T068",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Aktuelle Operatorarbeit über Tasks, Leases, Checkouts und Sessions verdichten",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 20
@@ -76,6 +76,49 @@
       "permission to collapse exact leases",
       "complete same-user process attribution",
       "future action safety from a projection alone"
-    ]
+    ],
+    "implementation_pr": "heimgewebe/grabowski#375",
+    "implementation_merge_commit": "af93344e1afa01211806d01404d4872e7ee45a06",
+    "hardening_pr": "heimgewebe/grabowski#377",
+    "hardening_merge_commit": "2eda5eaed5e09dbcb4af68a64e1f9b61df27a9e5",
+    "verified_at": "2026-07-22",
+    "verification_note": "T068 wurde über PR #375 implementiert und nach zwei diffgebundenen Review-Befunden durch PR #377 gehärtet. Beide PRs sind gemergt; der finale Merge-Commit 2eda5eaed5e09dbcb4af68a64e1f9b61df27a9e5 wurde exakt deployt. Runtime-Identität und Integrität sind vollständig gültig, 162/162 Tools stimmen mit dem Deployment-Vertrag überein und ein direkter Loopback-MCP-Aufruf von grabowski_current_work lieferte eine bounded current-Projektion ohne Source-Fehler.",
+    "postmerge_validation_receipt_sha256": "adee4e378c7d4c9a94025aeb309f82f5f904928c0d29d4e92e7b8b9acd460263",
+    "postmerge_validation_summary": "2839 tests passed, 2 expected skips; full make validate passed on the clean post-merge hardening head before PR #377.",
+    "hardening_diff_sha256": "2ce77ce99d1cbd3d05464d6161a378ecdda435a620e8c8fedac82bab8baf012d",
+    "deployment_finalization_receipt_sha256": "0d71adc84911779de39621294c155194eaf5958d656b8f19d1de40574ee46466",
+    "deployed_repo_head": "2eda5eaed5e09dbcb4af68a64e1f9b61df27a9e5",
+    "live_mcp_receipt_sha256": "fa1eb3f81ea1f006446fdb517dd3f6c1d0f8a3c167fc6cf45ff2737de0f3c031",
+    "live_mcp_proof": {
+      "tool_present": true,
+      "registered_tool_count": 162,
+      "tool_error": false,
+      "view": "current",
+      "page_count": 5,
+      "total_projected": 237,
+      "state_counts": {
+        "active": 11,
+        "blocking": 131,
+        "resumable": 77,
+        "terminal_archived": 0,
+        "unknown": 18
+      },
+      "source_errors": [],
+      "attention_truncated": true,
+      "next_cursor_present": true
+    },
+    "validated_acceptance": {
+      "source-bound-grouping": "Engine and live surface group authoritative task/lease/checkout/workspace bindings separately from heuristic physical observations; heuristics do not grant lifecycle authority.",
+      "bounded-current-view": "Default current view is bounded, paginated and reports active, blocking, resumable, terminal_archived and unknown states; source truncation remains explicit.",
+      "no-second-truth": "The implementation is a read-only derived projection with bounded_source_snapshot scope and stores no independent mutable lifecycle state.",
+      "lease-aggregation-without-loss": "Exact child leases remain enforceable while parent groups expose lease counts and resource-class aggregates; task-owned leases preserve exact task binding even across bounded task windows.",
+      "attention-relevance": "Terminal or closed task lifecycle with a live exact surface is projected blocking; lease-referenced task lifecycles are read exactly within a bound and unresolved lifecycle fails closed.",
+      "tests": "Final clean hardening head passed 2839 tests with 2 expected skips; focused current-work regressions cover lifecycle resolution, truncation and stable pagination identity.",
+      "live-proof": "Exact deployed runtime head 2eda5ea returned grabowski_current_work successfully through the live loopback MCP surface with 162 registered tools, no source errors and explicit attention truncation."
+    },
+    "verification": {
+      "task_sha256": "04efc9fb0e1da2316d918e7aa56eb08c3d92329bf2cab5d20b42ef6bd6b238b1",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

@@ -3781,9 +3781,71 @@ def _git_read(repo: Path, arguments: list[str]) -> dict[str, Any]:
     }
 
 
-def _checkout_drift(root: Path, findings: list[dict[str, Any]]) -> dict[str, Any]:
+def _canonical_snapshot_identity_valid(
+    root: Path, runtime_identity: dict[str, Any] | None
+) -> bool:
+    if not isinstance(runtime_identity, dict):
+        return False
+    compatibility = runtime_identity.get("compatibility")
+    registry = runtime_identity.get("registry")
+    manifest = runtime_identity.get("manifest")
+    module = runtime_identity.get("module")
+    if (
+        not isinstance(compatibility, dict)
+        or not isinstance(registry, dict)
+        or not isinstance(manifest, dict)
+        or not isinstance(module, dict)
+    ):
+        return False
+    canonical = manifest.get("canonical_registry")
+    if not isinstance(canonical, dict):
+        return False
+    source_commit = manifest.get("source_commit")
+    return (
+        runtime_identity.get("registry_selection") == "canonical-runtime-default"
+        and compatibility.get("status") == "canonical-read-only"
+        and compatibility.get("mutation_allowed") is False
+        and module.get("source_kind") == "immutable-release"
+        and manifest.get("valid") is True
+        and canonical.get("valid") is True
+        and registry.get("role") == "canonical-runtime-snapshot"
+        and registry.get("dirty") is False
+        and Path(str(registry.get("root", ""))).expanduser().resolve() == root
+        and Path(str(canonical.get("root", ""))).expanduser().resolve() == root
+        and isinstance(source_commit, str)
+        and bool(source_commit)
+        and canonical.get("source_commit") == source_commit
+        and registry.get("head") == source_commit
+        and registry.get("origin_main") == source_commit
+        and registry.get("head_equals_origin_main") is True
+    )
+
+
+def _checkout_drift(
+    root: Path,
+    findings: list[dict[str, Any]],
+    runtime_identity: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     inside = _git_read(root, ["rev-parse", "--is-inside-work-tree"])
     if inside["returncode"] != 0 or inside["stdout"] != "true":
+        if _canonical_snapshot_identity_valid(root, runtime_identity):
+            findings.append(
+                {
+                    "severity": "info",
+                    "code": "canonical-snapshot-no-git",
+                    "message": (
+                        "Canonical immutable Registry snapshot intentionally has no Git metadata; "
+                        "validated runtime identity supplies the bound source commit."
+                    ),
+                }
+            )
+            return {
+                "available": False,
+                "root": str(root),
+                "error": inside["stderr"],
+                "git_required": False,
+                "role": "canonical-runtime-snapshot",
+            }
         findings.append(
             {
                 "severity": "blocker",
@@ -4260,11 +4322,12 @@ def runtime_drift_check(
     *,
     state_db: Path | None = None,
     state_root: Path | None = None,
+    runtime_identity: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Read-only runtime drift report for Bureau's local registry and state."""
     resolved_root = root.expanduser().resolve()
     findings: list[dict[str, Any]] = []
-    checkout = _checkout_drift(resolved_root, findings)
+    checkout = _checkout_drift(resolved_root, findings, runtime_identity)
     state_path = _runtime_state_db_path(state_db, state_root)
     state = _read_only_state_rows(state_path)
     runtime = {
@@ -4306,6 +4369,79 @@ def runtime_drift_check(
         "receipts": receipt_report,
         "findings": findings,
     }
+
+SAFE_LIFECYCLE_RECONCILE_TRANSITIONS = frozenset({("active", "waiting"), ("waiting", "active")})
+
+
+def reconcile_initiative_lifecycle(
+    registry: Registry, store: StateStore, *, apply: bool = False
+) -> dict[str, Any]:
+    diagnostics = lifecycle_diagnostics(registry, store)
+    candidates: list[dict[str, Any]] = []
+    for item in diagnostics:
+        transition = (item["declared_state"], item["recommended_state"])
+        if item["consistent"] or transition not in SAFE_LIFECYCLE_RECONCILE_TRANSITIONS:
+            continue
+        candidates.append(
+            {
+                "initiative_id": item["initiative_id"],
+                "from_state": item["declared_state"],
+                "to_state": item["recommended_state"],
+                "task_states": item["task_states"],
+            }
+        )
+
+    changed: list[dict[str, Any]] = []
+    if apply:
+        by_id = {item["initiative_id"]: item for item in candidates}
+        for path in registry._files(registry.root / "registry/initiatives"):
+            raw = legacy.read_json(path)
+            candidate = by_id.get(raw.get("id"))
+            if candidate is None:
+                continue
+            if raw.get("state") != candidate["from_state"]:
+                raise legacy.StateError(
+                    f"initiative {candidate['initiative_id']} changed during lifecycle reconcile"
+                )
+            raw["state"] = candidate["to_state"]
+            metadata = raw.setdefault("metadata", {})
+            lifecycle = metadata.setdefault("lifecycle", {})
+            lifecycle["reconciled_at"] = legacy.utc_now()
+            lifecycle["reconciled_from"] = candidate["from_state"]
+            lifecycle["reconciled_to"] = candidate["to_state"]
+            legacy.atomic_write(path, json.dumps(raw, indent=2, ensure_ascii=False) + "\n")
+            changed.append(
+                {
+                    "initiative_id": candidate["initiative_id"],
+                    "path": str(path),
+                    "from_state": candidate["from_state"],
+                    "to_state": candidate["to_state"],
+                }
+            )
+
+    return {
+        "schema_version": 1,
+        "command": "lifecycle-reconcile",
+        "apply": apply,
+        "safe_transitions": [
+            {"from_state": source, "to_state": target}
+            for source, target in sorted(SAFE_LIFECYCLE_RECONCILE_TRANSITIONS)
+        ],
+        "candidate_count": len(candidates),
+        "candidates": candidates,
+        "changed_count": len(changed),
+        "changed": changed,
+        "excluded_recommendations": sorted(
+            {
+                item["recommended_state"]
+                for item in diagnostics
+                if not item["consistent"]
+                and (item["declared_state"], item["recommended_state"])
+                not in SAFE_LIFECYCLE_RECONCILE_TRANSITIONS
+            }
+        ),
+    }
+
 
 def close_ready_initiatives(registry: Registry, store: StateStore) -> list[dict[str, Any]]:
     diagnostics = {item["initiative_id"]: item for item in lifecycle_diagnostics(registry, store)}

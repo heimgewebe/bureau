@@ -3,7 +3,7 @@
   "id": "RPU-V1-T034",
   "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
   "title": "Oversized optional call graph must not block core impact context",
-  "state": "ready",
+  "state": "verified",
   "goal": "Keep coherent path, symbol, test, contract and entrypoint impact context usable when python_call_graph_json is missing, oversized or otherwise untrusted, while degrading only call-graph-derived relations with explicit provenance gaps and preserving fail-closed behavior for required core artifacts.",
   "depends_on": [
     "RPU-V1-T025"
@@ -79,6 +79,69 @@
       "merge readiness",
       "default RepoGround routing authority"
     ],
-    "scope_reason": "The pilot can only satisfy its delivery-chain acceptance after optional call-graph failure is isolated from required core impact sources; T003 itself has read-only RepoGround scope."
+    "scope_reason": "The pilot can only satisfy its delivery-chain acceptance after optional call-graph failure is isolated from required core impact sources; T003 itself has read-only RepoGround scope.",
+    "verified_at": "2026-07-22T15:31:16+02:00",
+    "outcome": "No additional RepoGround implementation was required at closeout. The later canonical REPOGROUND-AGENT-UTILITY-V1-T007 work already implemented and verified the same large optional-call-graph degradation boundary through RepoGround PRs #1071 and #1073. Current RepoGround main retains that behavior, focused regression tests pass, exact-head CI is green, and the fresh Weltgewebe four-case pilot no longer reports artifact_too_large or impact_context_blocked. RPU-V1-T034 is therefore verified as satisfied-by-existing-canonical-implementation rather than by a redundant new patch.",
+    "validated_acceptance": {
+      "core-coherence": "PASS: On RepoGround main dea8e61ace8bc45a32ec32bff3f79eccaa9c9f19, merger/repoground/core/agent_impact_context.py defines _CORE_SOURCES as architecture_graph_json, python_symbol_index_json and entrypoints_json only. python_call_graph_json is not a required coherence source and cannot block otherwise coherent core sources.",
+      "explicit-degradation": "PASS: _call_graph_context emits call_graph_source_unavailable for missing call-graph evidence and call_graph_source_untrusted for non-coherent evidence, with python_call_graph_json freshness provenance, while returning no trusted direct caller/callee relations from that source.",
+      "core-impact-survives": "PASS: RepoGroundAgentImpactAdapter first builds target-symbol/core impact context without call relations, then projects only relevant call records through the bounded call-graph index. T007's fresh four-case Weltgewebe pilot reports 4/4 quality_pass with no impact_context_blocked; the generic >16 MiB artifact limit no longer collapses core impact context.",
+      "fail-closed-required": "PASS: Required core artifacts remain governed by _CORE_SOURCES and blocking source statuses. Focused current-main tests cover missing, mismatched and tampered optional call graphs plus tamper, manifest, candidate-count and projection-byte fail-closed paths.",
+      "pilot-regression": "PASS: REPOGROUND-AGENT-UTILITY-V1-T007 records a fresh four-case Weltgewebe pilot on bundle heimgewebe__weltgewebe__main-max-260721-1911 with quality_pass 4/4, artifact_too_large 0 and impact_context_blocked 0. Its later T003 observation on bundle heimgewebe__weltgewebe__main-max-260721-2115 again reports artifact_too_large 0 and promotion gold cases 3/3; T003 remains blocked only by separate contract/runtime/recovery evidence gaps.",
+      "delivery": "PASS: The implementing canonical changes were reviewed and merged through RepoGround PR #1071 and #1073 with recorded exact base/head diff bindings in REPOGROUND-AGENT-UTILITY-V1-T007. On current RepoGround main dea8e61ace8bc45a32ec32bff3f79eccaa9c9f19, focused adapter/context/call-graph-index tests pass 51/51 and exact-head GitHub workflows test-suite, lint, CodeQL, contracts-validate, ai-context guard and task-index are successful."
+    },
+    "verification": {
+      "task_sha256": "9b985f44d247f768e06a65fd074fd20395936dab084d23a178dc26c95f25fe2e",
+      "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db",
+      "classification": "satisfied_by_existing_canonical_implementation",
+      "implementation_source_task": "REPOGROUND-AGENT-UTILITY-V1-T007",
+      "implementation_refs": [
+        "heimgewebe/repoground#1071",
+        "heimgewebe/repoground#1073"
+      ],
+      "implementation_merge_commits": [
+        "4474f46b44f1b6fcd3e974f7f74b5b52b4d61c2e",
+        "845aea6c12031a76c500f9080674798544f0e5fd"
+      ],
+      "current_repoground_main": "dea8e61ace8bc45a32ec32bff3f79eccaa9c9f19",
+      "current_main_relevant_commits": [
+        "ed54012d",
+        "d237493e"
+      ],
+      "focused_test_run": {
+        "grabowski_task_id": "7b94106c945043f0846cff6c",
+        "tests": [
+          "merger/repoground/tests/test_agent_impact_adapter.py",
+          "merger/repoground/tests/test_agent_impact_context.py",
+          "merger/repoground/tests/test_call_graph_impact_index.py"
+        ],
+        "result": "51/51 pass",
+        "completed_at": "2026-07-22T15:26:28+02:00"
+      },
+      "current_main_ci": {
+        "head_sha": "dea8e61ace8bc45a32ec32bff3f79eccaa9c9f19",
+        "successful_workflows": [
+          "test-suite",
+          "lint",
+          "CodeQL",
+          "contracts-validate",
+          "ai-context guard",
+          "task-index"
+        ]
+      },
+      "pilot_evidence_source": "REPOGROUND-AGENT-UTILITY-V1-T007",
+      "pilot_bundle": "heimgewebe__weltgewebe__main-max-260721-1911",
+      "pilot_case_count": 4,
+      "pilot_quality_pass_count": 4,
+      "pilot_artifact_too_large_count": 0,
+      "pilot_impact_context_blocked_count": 0,
+      "closeout_does_not_claim": [
+        "T003 promotion gate passed",
+        "call-graph completeness",
+        "test sufficiency",
+        "runtime correctness",
+        "default RepoGround routing authority"
+      ]
+    }
   }
 }

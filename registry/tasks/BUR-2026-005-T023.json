@@ -65,6 +65,17 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "task_sha256": "6015a4f7f0e1ae5740a16b346a7c2a73565c0930d4bd0a08cf1ba87a2b0b175f",
+      "plan_sha256": "653fa6a056506c94d5654ba5e3c16f9c31032767f0e1c844a8cb4714c50ce917",
+      "evidence_source": "github_pull_request_ci_and_live_immutable_runtime_readback",
+      "implementation_pr": 861,
+      "implementation_merge_commit": "721718c79cea7dc3795652f1a1c4d34c78efe721",
+      "validation_receipt_sha256": "0b8830c32e68b6d94c92f36e10bb7e5e39235c452881dd784b080cfb6546ce32",
+      "live_runtime_release_id": "721718c79cea-src65abc93cdd6e",
+      "live_runtime_drift_status": "warning",
+      "live_runtime_drift_expected_finding": "canonical-snapshot-no-git"
     }
   },
   "priority": {
@@ -76,6 +87,6 @@
     "shell"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Harden runtime-drift-check for canonical read-only snapshots"
 }

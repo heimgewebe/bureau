@@ -68,6 +68,34 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T044",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "metadata": {
+    "completion": {
+      "existing_authoritative_lifecycle": [
+        "STORAGE-LIFECYCLE-V1-T002",
+        "STORAGE-LIFECYCLE-V1-T003"
+      ],
+      "followup_tasks": [
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
+      ],
+      "go": [
+        "sccache compiler cache",
+        "ntfy delivery transport",
+        "Ansible beneath Grabowski",
+        "SOPS+age tooling with production migration blocked pending recovery key",
+        "Trivy calibrated scanner",
+        "targeted non-overlapping Renovate"
+      ],
+      "no_go": [
+        "global shared Cargo target directory",
+        "production secret migration before independent recovery-key proof",
+        "global Renovate rollout over Dependabot",
+        "mise now",
+        "OpenTelemetry Collector now",
+        "OpenTofu now"
+      ],
+      "outcome": "Adopted sccache, ntfy transport, Ansible-beneath-Grabowski, SOPS+age tooling and Trivy under narrow boundaries; retained targeted Renovate only where non-overlapping; rejected mise, OpenTelemetry Collector and OpenTofu for now. No competing control plane was added.",
+      "schema_version": 1,
+      "status": "verified_external_tool_program_evidence_gated"
+    },
     "does_not_establish": [
       "task_readiness before canonical publication",
       "permission to override foreign leases or dirty states",
@@ -114,6 +142,38 @@
         "claim_or_dispatch_authority"
       ]
     },
+    "phase_evidence": [
+      {
+        "path": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/sccache-phase1-v1.json",
+        "phase": "phase1-build-cache",
+        "sha256": "d5ff83c2d7f22ad3d01a438e57882129d7f68ea3d8155569be424eb1d1ecfc1c"
+      },
+      {
+        "path": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/ntfy-phase2-v1.json",
+        "phase": "phase2-notifications",
+        "sha256": "99f110458bb6da0e2ac8e54afec1358cdfb5186e75049b10a4754061d50ad45e"
+      },
+      {
+        "path": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/ansible-phase3-v1.json",
+        "phase": "phase3-fleet",
+        "sha256": "2ea5c02e866f66bd30d1fd2d1a062716c4124da4a8f4a40e87cb802159591bd9"
+      },
+      {
+        "path": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/sops-age-phase4-v1.json",
+        "phase": "phase4-secrets",
+        "sha256": "b1e383090772088da6b0fd16f8bf9a4ffffbc42ec8898868ec9fd84e5f683c3f"
+      },
+      {
+        "path": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/trivy-renovate-phase5-v1.json",
+        "phase": "phase5-supply-chain",
+        "sha256": "0ef983d1ad469fae4652576380358dd64fdf08d7d982d031385ba8927ca9cbe1"
+      },
+      {
+        "path": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/phase6-second-wave-v1.json",
+        "phase": "phase6-second-wave",
+        "sha256": "91bdc05ba0848ea92c1a33087b5904a36fb27586566bb226625e11b8c9306e6e"
+      }
+    ],
     "phase_order": [
       "sccache/build-artifact lifecycle",
       "ntfy operator-outbox delivery",
@@ -122,7 +182,81 @@
       "Trivy plus Renovate consolidation pilot",
       "conditional mise/OpenTelemetry/OpenTofu evaluation"
     ],
-    "registered_from": "user request 2026-07-22 to condense, register and prioritize the external-tool audit"
+    "registered_from": "user request 2026-07-22 to condense, register and prioritize the external-tool audit",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "head_sha": "820abf996c3f3ec2043f7252ac3e126ce7ecf3af",
+          "kind": "pull_request",
+          "merge_commit_sha": "a8b6bb47ad3fb4c68b7328d709e41046ccbae45a",
+          "source_ref": "heimgewebe/bureau#849",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T044"
+        },
+        {
+          "authority": "grabowski-host-evidence",
+          "evidence_sha256": [
+            "d5ff83c2d7f22ad3d01a438e57882129d7f68ea3d8155569be424eb1d1ecfc1c",
+            "99f110458bb6da0e2ac8e54afec1358cdfb5186e75049b10a4754061d50ad45e",
+            "2ea5c02e866f66bd30d1fd2d1a062716c4124da4a8f4a40e87cb802159591bd9",
+            "b1e383090772088da6b0fd16f8bf9a4ffffbc42ec8898868ec9fd84e5f683c3f",
+            "0ef983d1ad469fae4652576380358dd64fdf08d7d982d031385ba8927ca9cbe1",
+            "91bdc05ba0848ea92c1a33087b5904a36fb27586566bb226625e11b8c9306e6e"
+          ],
+          "kind": "live_probe",
+          "source_ref": "live:heim-pc:operator-external-tool-program:2026-07-22",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T044"
+        },
+        {
+          "authority": "bureau",
+          "kind": "task_reference",
+          "source_ref": "STORAGE-LIFECYCLE-V1-T002",
+          "state": "verified",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T044"
+        },
+        {
+          "authority": "bureau",
+          "kind": "task_reference",
+          "source_ref": "STORAGE-LIFECYCLE-V1-T003",
+          "state": "verified",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T044"
+        },
+        {
+          "authority": "bureau",
+          "kind": "task_reference",
+          "relation": "bounded-productionization-followup",
+          "source_ref": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045",
+          "state": "planned",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T044"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "verified_acceptance": {
+      "no-control-plane-duplication": "Temporal, project trackers, a second generic dashboard, LiteLLM and Langfuse were not introduced as replacement truth/control layers. Grabowski, Bureau and Leitstand retain their existing authorities.",
+      "phase1-build-cache": "sccache 0.16.0 was installed as rustc-wrapper without a shared CARGO_TARGET_DIR. Two independent Cargo target directories produced 322 additional hits from 398 cacheable requests (80.9045%); pilot target directories were 788M each and the shared compiler cache about 154-157M. Safe artifact handling remains bound to the already verified STORAGE-LIFECYCLE-V1-T002 managed-build externalization and STORAGE-LIFECYCLE-V1-T003 checkout closure/blocker contract; no foreign target was deleted.",
+      "phase2-notifications": "A narrow ntfy transport adapter delivered a synthetic Grabowski outbox notification through an external subscriber readback while Grabowski outbox/receipts remained canonical; payloads excluded secrets and a transport acknowledgement was not treated as user-seen truth.",
+      "phase3-fleet": "ansible-core 2.21.2 with isolated Python 3.12.12 derived inventory from the validated Grabowski fleet registry. Check mode produced no target effect, first apply changed=2, identical second apply changed=0, cleanup was read back, and no remote host was mutated.",
+      "phase4-secrets": "SOPS 3.13.2 plus age 1.3.1 encrypted/decrypted synthetic material through a Grabowski durable effect path. No production secret was migrated. Production migration remains fail-closed until a separately stored and tested off-host recovery recipient exists.",
+      "phase5-supply-chain": "Trivy 0.72.0 produced a positive multi-ecosystem Weltgewebe scan and CycloneDX proof (57 result sections, 421 SBOM components); 132 misconfiguration signals are explicitly not treated as 132 actionable defects. Existing security gates remain authoritative. Renovate remains targeted to non-overlapping surfaces such as mitschreiber and is not rolled out globally over Dependabot-managed repositories.",
+      "phase6-second-wave": "mise, OpenTelemetry Collector and OpenTofu were each evaluated and rejected for now because no measured benefit exceeded the added bootstrap, resident-runtime or declarative-state authority cost. No new daemon or state authority was introduced.",
+      "phased-closeout": "All six phases have hash-bound evidence with explicit go/no-go boundaries and live probes. Remaining bounded productionization and Trivy-triage work from candidate candidate-9c787a98c7f3c7768342723a is canonically registered as OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045, depends on T044, and is treated as a distinct follow-up rather than a duplicate of the T044 pilot program.",
+      "truthful-baseline": "Fresh Grabowski health/integrity/tool-contract, leases, dirty canonical checkouts, PR #849 and current main were read back before effects; dirty canonical Bureau and Grabowski checkouts were not used for mutation."
+    },
+    "verified_at": "2026-07-22T09:56:48+02:00",
+    "closeout_validation": {
+      "command": "make validate",
+      "job_unit": "grabowski-job-f9baebc81c5f",
+      "final_status": "succeeded",
+      "receipt_sha256": "b00c56c3693a56a329270e20f6b835be99fcec999141acd449870c571c3c2c54",
+      "validation_basis_commit_sha": "2d91d38416b56ad2e6c5079425da83ad4eeb2f20",
+      "publication_basis_commit_sha": "db8e389bd637b61d5c136722c8303a593fdb5e58"
+    },
+    "verification": {
+      "task_sha256": "7c457cd571f2bd8226e569c3e65ec4a992bcd8de66d64efee53e272aacf9da8c",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    }
   },
   "priority": {
     "lane": "now",
@@ -139,6 +273,6 @@
     "strategy": "Each external tool is independently removable. Disable or uninstall the tool-specific adapter and restore the previously observed Grabowski/systemd/repository path without rewriting Bureau history or deleting retained evidence. No phase may require another phase to preserve existing task truth or execution authority."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Adopt narrow external tools without adding new control planes"
 }

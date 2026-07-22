@@ -113,7 +113,9 @@
         "a permanently enabled production federation transport",
         "automatic peer discovery or trust",
         "a real two-operator long-WAN pilot"
-      ]
+      ],
+      "task_sha256": "6e88f9fb5f29d8a6f0ea3ffb32012c83563a5f8cd9c4907837307e7d1d28b96d",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65"
     }
   }
 }

@@ -1,0 +1,84 @@
+{
+  "acceptance": [
+    {
+      "assertion": "pytest -q tests/test_grips.py can collect and run without relying on tests/test_checkouts.py having executed first.",
+      "id": "standalone"
+    },
+    {
+      "assertion": "Grip test import behavior is deterministic across supported test collection orders.",
+      "id": "order-independent"
+    },
+    {
+      "assertion": "The fix is confined to test harness/setup or an equivalent non-production compatibility boundary and does not weaken production mcp import requirements.",
+      "id": "production-unchanged"
+    },
+    {
+      "assertion": "The full Grabowski test suite remains green.",
+      "id": "full-suite"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Fix test harness or test setup only; do not weaken production MCP import requirements.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Remove the pre-existing test-order dependency where tests/test_grips.py relies on tests/test_checkouts.py having already installed a fake mcp module, so grip tests can be collected and run independently without changing outcomes based on module order.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T085",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "production_import_failure",
+      "full_suite_failure"
+    ],
+    "live_basis": "Standalone tests/test_grips.py import failed because fake mcp registration was implicitly supplied by tests/test_checkouts.py in canonical combined order; full suite remained green.",
+    "source": "PR #370 validation follow-up",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-d0443a6944fb54e5f9e3fbeb",
+      "event_id": 936,
+      "event_created_at": "2026-07-22T05:27:59.011417Z",
+      "request_sha256": "b7bfb05fa1784d93458a470e067a86d661fa10e98cb3495452a70f4990c7a14e",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "test_failure",
+        "locator": "pytest:tests/test_grips.py::standalone-import@2026-07-22",
+        "observed_at": "2026-07-22T03:00:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "required_capabilities": [
+    "repository"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Make test_grips independently importable and order-independent"
+}

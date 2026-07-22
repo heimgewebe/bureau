@@ -84,6 +84,80 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "status": "verified",
+      "verified_at": "2026-07-22T18:05:33Z",
+      "source": "operator_closeout",
+      "pr_completion": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 380,
+        "reviewed_head": "3300641bc7ebaa9fedc8562187840d0ef504e582",
+        "diff_sha256": "1e29e23c63b720561fc4ee9b842cb771037a7257d9eaf0627981027706aa49cd",
+        "merge_commit": "f23038a348b521bac65b1707644626765c94310c",
+        "merged_at": "2026-07-22T17:47:49Z",
+        "self_review": "PASS",
+        "review_iterations": 6
+      },
+      "deployment": {
+        "repo_head": "f23038a348b521bac65b1707644626765c94310c",
+        "release_id": "f23038a348b5-srcsetff01aaa6e7ae-locke6664d600b6c-contract1a9a3a0ff0ad",
+        "deployment_receipt_sha256": "6edfc72535491e88fb46961d8557ebbdbd9ac47027b9f3882879fdab66844db4",
+        "provenance_valid": true,
+        "runtime_healthy": true,
+        "audit_read_policy_enabled": true,
+        "expected_tool_count": 162,
+        "registered_tool_count": 162,
+        "tool_names_sha256": "186f484c83e083b217f1fce1f4a30a4efd5073daa9291d9dceba5f3f79ea8ef3"
+      },
+      "live_proof": {
+        "task_id": "4ce549b875c54053a7e99903",
+        "projection_authority": "derived_correlation_only",
+        "verified_sources": [
+          {
+            "source": "task",
+            "authority": "authoritative_task_store",
+            "evidence_sha256": "103a89bda459bee3d7ccbb792bbc2f80088da8ab80510207cfbddfde4738062b"
+          },
+          {
+            "source": "receipt",
+            "authority": "authoritative_task_lifecycle_receipt",
+            "evidence_sha256": "d1beb7d82f5116cc642a55b8e7869299a4655b39bcbcb555a9ce770bad6d0d6a"
+          },
+          {
+            "source": "chronik",
+            "authority": "authoritative_chronik_outbox_source",
+            "evidence_sha256": "4b586780891421b403aaa2e732556b5176d8d3932c77b4f2c44c2bdc2837fb27"
+          }
+        ],
+        "gaps": [
+          {
+            "source": "lease",
+            "reason": "lease_not_present"
+          },
+          {
+            "source": "deployment",
+            "reason": "no_deployment_identity_in_audit_seed"
+          }
+        ],
+        "positive_current_deployment_seed_observed": false,
+        "positive_current_deployment_seed_note": "A full read-only scan found no verified audit seed exposing the current head, commit, or release_id; no production record was synthesized."
+      },
+      "acceptance": {
+        "authority-preserving-adapters": true,
+        "digest-bound-cross-store-links": true,
+        "no-causality-escalation": true,
+        "bounded-fail-closed-reads": true,
+        "tests-and-live-proof": true
+      },
+      "does_not_establish": [
+        "single_cross_store_truth",
+        "causality",
+        "root_cause",
+        "future_action_authority"
+      ],
+      "task_sha256": "1eac6239d7ca61b72be4302c42111a2acbb7d7e07e5386800a4f951a72599037",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
     }
   },
   "priority": {
@@ -97,6 +171,6 @@
     "audit"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Audit-Trace mit verifizierten Cross-Store-Evidenzadaptern erweitern"
 }

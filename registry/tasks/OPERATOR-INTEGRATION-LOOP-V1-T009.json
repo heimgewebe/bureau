@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T009",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "Bureau-Task-IDs bei parallelen Registry-PRs kollisionssicher vergeben",
+  "goal": "Die dauerhafte Bureau-Task-Registrierung gegen parallele ID-Races härten: neue Task-IDs und Registry-Pfade müssen gegen den aktuellen kanonischen main sowie bereits offene PR-Reservierungen geprüft werden, bei veralteter Basis fail-closed neu bewertet werden und eine nachvollziehbare Reservierungs-/Entscheidungsevidenz erzeugen. Dieser Vertrag ergänzt, aber ersetzt nicht T005s kollisionssicheren Live-Task-Pickup und dessen Runtime-Claims.",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 9
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "repository",
+    "github",
+    "python",
+    "ci",
+    "bureau",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Aus einem real beobachteten Registry-Race während WELTGEWEBE-OS-V1-T022 abgeleitet: parallele PRs #858, #866, #868 und #869 belegten beziehungsweise verschoben dieselben numerischen Task-IDs. Umsetzung isoliert und review-before-effect."
+    }
+  },
+  "metadata": {
+    "discovered_by": "WELTGEWEBE-OS-V1-T022 Bureau follow-up registration race",
+    "observed_on": "2026-07-22",
+    "evidence": "Parallele Bureau-PRs reservierten überlappende WELTGEWEBE-OS-V1-T030/T031/T033... IDs; #866 und #868 wurden in unterschiedlicher Reihenfolge gemergt, wodurch nachträgliche Deduplizierungs- und Korrektur-PRs nötig wurden.",
+    "scope_boundary": "T005 behandelt deterministische Ready-Auswahl, Live-Claims, Leases und kollisionssicheren Task-Pickup. T009 behandelt ausschließlich dauerhafte Registry-ID-/Pfadvergabe und Publikationsrennen zwischen parallelen GitHub-PRs."
+  },
+  "acceptance": [
+    {
+      "id": "canonical-and-open-pr-preflight",
+      "assertion": "Ein reproduzierbarer Registrierungs-Preflight prüft vorgeschlagene dauerhafte Task-ID und Registry-Pfad gegen den aktuellen kanonischen main sowie gegen die geänderten Registry-Pfade aller relevanten offenen PRs; ein lokaler möglicherweise veralteter Checkout allein gilt nicht als ausreichende Wahrheit."
+    },
+    {
+      "id": "stale-base-fail-closed",
+      "assertion": "Ändert sich main zwischen ID-Vergabe beziehungsweise Validierung und Publikation oder Mergeentscheidung, wird die Registrierung fail-closed erneut gegen die neue Basis und offene PR-Reservierungen bewertet; eine zuvor freie ID wird nicht blind weiterverwendet."
+    },
+    {
+      "id": "semantic-dedup-boundary",
+      "assertion": "Der Preflight liefert zusätzlich einen nachvollziehbaren Hinweis auf mögliche semantische Dubletten zu kanonischen und offenen Aufgaben, löscht oder überschreibt diese aber nicht automatisch. Dauerhafte Registry-Deduplizierung bleibt von T005s transienten Live-Claims und Leases getrennt."
+    },
+    {
+      "id": "concurrency-regression",
+      "assertion": "Ein automatisierter Regressionstest reproduziert zwei parallele Registrierungsversuche mit derselben Task-ID beziehungsweise demselben Registry-Pfad und belegt, dass nicht beide konfliktfrei publiziert oder gemergt werden können; mindestens ein Pfad muss vor Wirkung fail-closed neu allokieren oder abbrechen."
+    },
+    {
+      "id": "reservation-receipt",
+      "assertion": "Für erfolgreiche und abgewiesene Registrierungsentscheidungen ist maschinenlesbar nachvollziehbar: geprüfter main-Base-SHA, Task-ID, Registry-Pfad, Head-/PR-Identität soweit vorhanden, Kollisionsquellen und Entscheidung."
+    },
+    {
+      "id": "merge-integration",
+      "assertion": "Der Schutz ist in den normalen Bureau-Registrierungs-/CI-/Mergepfad integriert oder durch einen gleichwertig verbindlichen Gate-Vertrag erzwungen; manuelle Operatoren und Automationen verwenden denselben Wahrheitscheck."
+    },
+    {
+      "id": "exact-review",
+      "assertion": "Implementierung und Tests werden an einen exakten Head und Diff gebunden; Bureau-Validator, relevante Concurrency-/GitHub-Simulationen und CI sind grün."
+    }
+  ]
+}

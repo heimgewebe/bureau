@@ -1,0 +1,97 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Task intake or Registry validation reports a stable fail-closed finding when a newly proposed nonterminal Bureau task uses repo.bureau and one or more existing component.bureau.* resources can cover the declared implementation scope.",
+      "id": "broad-claim-ratchet"
+    },
+    {
+      "assertion": "A genuinely repository-wide Bureau change may retain repo.bureau only through explicit reviewable justification; the exception is never inferred from missing scope data and missing justification fails closed.",
+      "id": "reviewed-repository-wide-exception"
+    },
+    {
+      "assertion": "Regression coverage reproduces the post-T013 condition observed on OPERATOR-INTEGRATION-LOOP-V1-T009 and proves that equivalent future broad-claim regressions are rejected before publication or surfaced as a blocking Doctor finding.",
+      "id": "regression-proof"
+    },
+    {
+      "assertion": "Terminal historical tasks and previously verified migration receipts remain unchanged; the new ratchet applies prospectively or through separately reviewed migrations only.",
+      "id": "existing-history-preserved"
+    },
+    {
+      "assertion": "Targeted tests, full Bureau validation, git diff --check and a head/diff-bound self-review pass on the exact implementation head before merge.",
+      "id": "validation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.truth-model"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Follow-up from the live T009 closeout. Keep scope exact and do not rewrite terminal historical tasks.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T018.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Make Bureau task registration and validation fail closed when a new nonterminal task claims repo.bureau even though existing exact Bureau component resources can express its real conflict boundary, while preserving an explicit reviewed escape hatch for genuinely repository-wide work.",
+  "id": "BUREAU-TRUTH-MODEL-V2-T018",
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "metadata": {
+    "does_not_establish": [
+      "automatic migration of existing broad claims",
+      "permission to rewrite terminal task history",
+      "automatic queue readiness"
+    ],
+    "observed_task": "OPERATOR-INTEGRATION-LOOP-V1-T009",
+    "registered_from": "OPERATOR-INTEGRATION-LOOP-V1-T009 post-merge Doctor regression",
+    "regression_of": "BUREAU-TRUTH-MODEL-V2-T013",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-3f941a37e6db263f6470abbf",
+      "event_id": 984,
+      "event_created_at": "2026-07-22T20:47:04.501261Z",
+      "request_sha256": "50228b5be8bc493c969abc012a8c697f45645246594fd06de1cf342e8ab868af",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live_runtime_finding",
+        "locator": "bureau-doctor:OPERATOR-INTEGRATION-LOOP-V1-T009@2026-07-22",
+        "observed_at": "2026-07-22T22:40:00+02:00",
+        "sha256": "3fdc0c01ed2ace461a2242a9be91452f940454648117402b69e58359dbb859c1"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 18
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Prevent broad Bureau claim regressions after exact-scope migration"
+}

@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T031",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Offene High-Severity-Dependency-Alerts des Weltgewebes beheben",
+  "state": "planned",
+  "goal": "Die aktuell von GitHub für den Default-Branch gemeldeten sechs High-Severity-Dependency-Schwachstellen vollständig inventarisieren, nach tatsächlich betroffenem Laufzeit- und Buildpfad priorisieren und mit minimalen, kompatiblen Updates oder gezielten Mitigierungen schließen, ohne bestehende Lieferketten- und CI-Schutzregeln abzuschwächen.",
+  "depends_on": [],
+  "priority": {
+    "lane": "now",
+    "rank": 4
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "dependency-security",
+    "rust",
+    "typescript",
+    "github-actions",
+    "supply-chain-security"
+  ],
+  "acceptance": [
+    {
+      "id": "alert-inventory",
+      "assertion": "Alle zum Bearbeitungszeitpunkt offenen High-Severity-Dependabot-Alerts des Default-Branches sind mit Advisory, Paket, Manifest/Lockfile, betroffenen Versionen, erreichbarem Laufzeit- oder Buildpfad und verfügbarer Fixversion inventarisiert; bereits geschlossene oder falsch positive Befunde werden belegt getrennt.",
+      "evidence_type": "object",
+      "verifier": "GitHub security alert readback and dependency graph evidence"
+    },
+    {
+      "id": "minimal-remediation",
+      "assertion": "Jeder bestätigte Befund ist durch ein kompatibles minimales Update, eine belegte Entfernung des betroffenen Pfads oder eine ausdrücklich begründete temporäre Mitigation adressiert; keine Sicherheitsprüfung wird zur Erzielung eines grünen Status deaktiviert.",
+      "evidence_type": "object",
+      "verifier": "exact dependency diff, advisory mapping and CI"
+    },
+    {
+      "id": "post-merge-security-readback",
+      "assertion": "Nach Merge wird der Default-Branch erneut gegen GitHub Dependabot/Dependency-Graph und die relevanten Build-, Test- und Supply-Chain-Gates gelesen; verbleibende Alerts sind entweder null oder als eigene, begründete Folgetasks registriert.",
+      "evidence_type": "object",
+      "verifier": "post-merge GitHub security and CI readback"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-22",
+    "source_repository": "heimgewebe/weltgewebe",
+    "source_pr": 1517,
+    "source_observation": "Git push after PR #1517 review and follow-up reported 6 vulnerabilities on the default branch, all high severity.",
+    "reason": "Der Befund ist unabhängig von PR #1517 und wird nicht durch WELTGEWEBE-OS-V1-T015 abgedeckt; T015 betrifft das Reconciler-Buildimage und dessen Upgrade-/Rotationsvertrag.",
+    "does_not_establish": [
+      "dass alle sechs Alerts produktiv ausnutzbar sind",
+      "Berechtigung zu Major-Upgrades ohne Kompatibilitätsprüfung",
+      "Berechtigung zum Abschalten von Sicherheitsgates"
+    ]
+  }
+}

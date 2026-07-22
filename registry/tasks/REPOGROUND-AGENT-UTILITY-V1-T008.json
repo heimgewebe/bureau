@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T008",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "title": "Fleet-Publikationsfairness und Backlog-Konvergenz härten",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 60
+  },
+  "goal": "Den begrenzten RepoGround-Fleet-Publisher so härten, dass nach breiten Fingerprint-Invalidierungen alle geänderten Repositories innerhalb einer belegten endlichen Anzahl von Läufen konvergieren, ohne die mit RepoGround PR #1079 eingeführte Self-Publication-Priorität, das Publikationslimit, Retention oder Worktree-Sicherheitsgrenzen aufzuweichen.",
+  "depends_on": [],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "repoground",
+    "bounded-io"
+  ],
+  "acceptance": [
+    {
+      "id": "bounded_fairness",
+      "assertion": "Eine deterministische Alters-, Schulden- oder Round-Robin-Regel verhindert unbegrenztes Verhungern geänderter Repositories über wiederholte limitierte Fleet-Läufe."
+    },
+    {
+      "id": "self_priority_preserved",
+      "assertion": "Das Repository, das die aktive RepoGround-Generator-Runtime liefert, bleibt bei eigener Änderung vor der allgemeinen Warteschlange priorisiert, damit die mit PR #1079 belegte Self-Freshness erhalten bleibt."
+    },
+    {
+      "id": "limit_and_safety_preserved",
+      "assertion": "Das bestehende Publikationslimit, der globale Publisher-Lock, Retention, Managed-Worktree-Hygiene und fail-closed Fehlergrenzen bleiben erhalten."
+    },
+    {
+      "id": "backlog_evidence",
+      "assertion": "Fleet-Receipts enthalten maschinenlesbare Evidenz über Warteschlangenalter oder Rundenfortschritt, ohne eine zweite Queue-Autorität zu schaffen."
+    },
+    {
+      "id": "fleet_simulation",
+      "assertion": "Regressionstests simulieren mindestens eine breite 42-Repository-Invalidierung über wiederholte Läufe mit Limit 8 und belegen vollständige Konvergenz innerhalb einer deterministischen Schranke, einschließlich neuer Änderungen während des Backlog-Abbaus."
+    },
+    {
+      "id": "no_overclaim",
+      "assertion": "Der Task begründet nur Scheduling- und Publikationsfrische-Konvergenz, nicht semantische Bundle-Qualität, Retrieval-Überlegenheit, Repository-Verständnis oder Merge-Reife."
+    }
+  ],
+  "metadata": {
+    "registered_from_candidate": "candidate-032b5a8781075ac436b88dac",
+    "source_pr": "heimgewebe/repoground#1079",
+    "source_head": "09b3615a09c99c24372fa5fa11f57eaf7dd1bcea",
+    "source_merge_commit": "c7e05b4de0019d88d73925651756bc4c84751ca7",
+    "source_diff_sha256": "07f6c9f0fac5df9620048c7335d07a3436b188af5de2f81ca5bc4aa79cc607df",
+    "source_observation": {
+      "before_fix": "42 Repositories waren geändert; heimgewebe/repoground lag auf Discovery-Index 31 und blieb unter Limit 8 queued.",
+      "after_fix": "PR #1079 priorisiert das Generator-Repository auf Index 0; die gezielte Post-Merge-Publikation lief auf c7e05b4d mit failed=0 und queued=0; Freshness-Readback ist fresh_exact.",
+      "remaining_gap": "Allgemeine Fairness und eine begrenzte maximale Wartezeit für die übrigen geänderten Repositories bleiben bewusst offen."
+    },
+    "benchmark_boundary": {
+      "fresh_cases": 20,
+      "repoground_compaction_reduction_percent": 66.1,
+      "preference_recommendation": null,
+      "inconclusive_reason": "no_named_category_with_safe_reproducible_benefit"
+    },
+    "does_not_establish": [
+      "semantic bundle quality",
+      "retrieval superiority",
+      "repository understanding",
+      "merge readiness"
+    ]
+  }
+}

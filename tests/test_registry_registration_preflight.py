@@ -280,6 +280,8 @@ def test_workflow_uses_trusted_base_code_and_revalidates_on_main_push():
         "ref: ${{ github.event.pull_request.base.sha }}",
         "HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}",
         "registry-registration-preflight/freshness",
+        "?base_sha=${CHECKED_BASE_SHA}",
+        "?base_sha=${CURRENT_MAIN_SHA}",
         "CURRENT_MAIN_SHA",
         "--checked-base-sha \"${CURRENT_MAIN_SHA}\"",
         "pulls?state=open&per_page=100",

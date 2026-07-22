@@ -38,7 +38,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts/registry-registration-preflight
-          run_url="${GITHUB_SERVER_URL}/${REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          run_url="${GITHUB_SERVER_URL}/${REPOSITORY}/actions/runs/${GITHUB_RUN_ID}?base_sha=${CHECKED_BASE_SHA}"
           gh api -X POST "repos/${REPOSITORY}/statuses/${PR_HEAD_SHA}" \
             -f state=pending \
             -f context="${STATUS_CONTEXT}" \
@@ -113,7 +113,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts/registry-registration-preflight
-          run_url="${GITHUB_SERVER_URL}/${REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          run_url="${GITHUB_SERVER_URL}/${REPOSITORY}/actions/runs/${GITHUB_RUN_ID}?base_sha=${CURRENT_MAIN_SHA}"
           mapfile -t pr_rows < <(
             gh api "repos/${REPOSITORY}/pulls?state=open&per_page=100" --paginate \
               --jq '.[] | [.number, .head.sha, .head.repo.full_name] | @tsv'

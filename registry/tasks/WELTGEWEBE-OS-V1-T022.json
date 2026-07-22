@@ -1,0 +1,119 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor jeder Bewertung ist der Audit an einen exakten GitHub-main-Commit und, soweit Runtime betroffen ist, an die beobachtete Produktionsidentität gebunden; CI, offene PRs, Worktrees, Dirty-States, Prozesse, Leases, Bureau-Arbeit und RepoGround-Freshness werden read-only erfasst und fremde Zustände nicht verändert.",
+      "id": "phase-zero-truth-binding"
+    },
+    {
+      "assertion": "Hundert Prozent der Repository-Oberfläche werden inventarisiert und jeder Einstiegspunkt, Subsystemtyp, dauerhafte Datentyp, externe Abhängigkeit, Deploymentpfad, Test- und Dokumentationsbereich wird klassifiziert; Unklarheiten werden explizit als Lücke geführt.",
+      "id": "complete-inventory"
+    },
+    {
+      "assertion": "Kritische Schreib-, Berechtigungs-, Datenintegritäts-, Authentifizierungs-, Governance-, Federation-, Such-, Deployment- und Recoverypfade werden Ende-zu-Ende und mit Fehlerfällen geprüft; niedrigere Risiken werden mindestens vollständig inventarisiert und angemessen statisch oder dynamisch geprüft.",
+      "id": "risk-tiered-system-audit"
+    },
+    {
+      "assertion": "Für zentrale Weltgewebe-Regeln werden gewünschte Produktregel, Dokumentation, Frontend, API, Datenbank und Tests gegeneinander geprüft; Widersprüche werden gewichtet ausgewiesen und nicht stillschweigend geglättet.",
+      "id": "product-rule-convergence"
+    },
+    {
+      "assertion": "Sicherheits-, Datenschutz-, Datenintegritäts-, Nebenläufigkeits-, Ausfall-, Backup/Restore-, Supply-Chain- und Betriebsrisiken werden mit realistischen Negativfällen bewertet; grüne CI oder vorhandene Tests gelten nicht allein als Beweis der Fehlerfreiheit.",
+      "id": "security-data-reliability"
+    },
+    {
+      "assertion": "Kritische Nutzerreisen werden auf Desktop und mobilen Klassen sowie Touch, Tastatur und relevante Barrierefreiheitsmodi geprüft; Performance wird gemessen statt geschätzt und mit Backend-, Datenbank- und Kartenpfaden korreliert.",
+      "id": "ux-performance-accessibility"
+    },
+    {
+      "assertion": "Jedes größere Subsystem wird auf Zweck, Notwendigkeit, Redundanz, Einfachheit und Alternativarchitektur geprüft; technisch funktionierende, aber unnötig komplexe oder fachlich wenig nützliche Teile werden als Befund ausgewiesen.",
+      "id": "simplification-optimality"
+    },
+    {
+      "assertion": "Jeder relevante Befund besitzt eindeutige ID, exakte Commit- oder Runtime-Bindung, Evidenz, Schweregrad, Auswirkung, Ursache, minimale und optimale Reparatur, Trade-offs, Testanforderung und Verifikationskriterium.",
+      "id": "evidence-bound-findings"
+    },
+    {
+      "assertion": "P0/P1-Befunde bleiben nicht ohne explizite Entscheidung offen; konfliktfrei und sicher behebbare Befunde werden durch isolierte PRs umgesetzt, reviewt, CI-geprüft und commitgenau verifiziert. Alles Sinnvolle, das nicht unmittelbar behoben wird, wird dedupliziert als Bureau-Folgetask registriert.",
+      "id": "remediation-and-followups"
+    },
+    {
+      "assertion": "Der Abschluss enthält Steuermann-Zusammenfassung, Systemlandkarte, Audit-Coverage-Matrix, Befundregister, Risikolandkarte, Optimalitätsmatrix, Testlückenkarte, Produktionswahrheitsbericht, Performance-Baseline, Sicherheitsbericht und priorisierte Reparatur-Roadmap; offene Lücken und Unsicherheiten werden explizit ausgewiesen.",
+      "id": "audit-completeness-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Direkt durch die Nutzeranweisung vom 22. Juli 2026 nach vorgelegtem Komplettaudit-Plan autorisiert. Audit und Remediation nur isoliert; fremde Dirty-States, Worktrees, Branches, Leases, Prozesse und parallele PR-Arbeiten bleiben unverändert.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Das gesamte Weltgewebe als langfristige kollektive Infrastruktur vollständig inventarisieren und risikogestaffelt auf Korrektheit, Datenintegrität, Sicherheit, Berechtigungen, Architektur, Domänenlogik, Performance, Skalierbarkeit, UX, Barrierefreiheit, Zuverlässigkeit, Federation, Suche, Tests, CI/Deployment, Betrieb, Repository-Hygiene, Dokumentationsdrift, Produktnutzen und Vereinfachung prüfen; alle Befunde evidenzgebunden priorisieren, kritische Befunde beheben und nicht unmittelbar behobene sinnvolle Arbeiten als Bureau-Folgetasks registrieren.",
+  "id": "WELTGEWEBE-OS-V1-T022",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "audit_model": "100-percent inventory and classification with risk-tiered depth; correctness, integrity, security and recoverability precede UX, performance and elegance.",
+    "coordination_rule": "Never modify, reset, delete, take over or force-release foreign dirty states, worktrees, branches, leases, processes, tasks or concurrent work.",
+    "registered_at": "2026-07-22T04:50:00+02:00",
+    "scope_note": "Commonworld remains a separate project; only actual interfaces or duplicate responsibilities with Weltgewebe are in scope.",
+    "source_request": "User requested a complete audit of Weltgewebe, first approved the detailed Phase 0–19 plan, then explicitly requested registration and implementation through Grabowski.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-9ffc69c266fb02c61bfb178e",
+      "event_id": 924,
+      "event_created_at": "2026-07-22T02:50:36.232454Z",
+      "request_sha256": "9129e2ee3168388fa2f34a744205e8f4cbe690b40cf1169c2375e0125ef62448",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator_request",
+        "locator": "chatgpt-project:wider-project-weltgewebe:user-request:2026-07-22:komplettaudit-plan-and-implementation",
+        "observed_at": "2026-07-22T02:50:36.224716Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "repoground",
+    "postgresql",
+    "rust",
+    "typescript",
+    "svelte",
+    "playwright",
+    "security",
+    "performance",
+    "kubernetes",
+    "docker",
+    "recovery",
+    "observability",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Weltgewebe-Komplettaudit commit- und runtimegebunden durchführen"
+}

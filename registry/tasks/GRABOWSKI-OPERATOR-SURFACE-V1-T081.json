@@ -1,0 +1,102 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Jeder Cross-Store-Adapter liest seine Quelle über deren autoritative Read-Oberfläche und hält Audit-, Task-, Lease-, Receipt-, Chronik- und Deployment-Autorität getrennt; die abgeleitete Trace-Projektion erhält keine eigene Entscheidungs- oder Mutationsautorität.",
+      "id": "authority-preserving-adapters"
+    },
+    {
+      "assertion": "Jeder externe Trace-Treffer ist an eine konkrete stabile Identität oder einen Digest der jeweiligen Quelle gebunden und lässt sich von der abgeleiteten Korrelation zurück zur autoritativen Evidenz auflösen; ungebundene oder veraltete Quellen werden fail-closed nicht als belegte Verbindung ausgegeben.",
+      "id": "digest-bound-cross-store-links"
+    },
+    {
+      "assertion": "Cross-Store-Korrelationen unterscheiden direkte Identitätsbindung, gemeinsame Schlüssel und bloße zeitliche Nähe und behaupten weder Kausalität noch Root Cause, Task-Erfolg oder fachliche Korrektheit ohne separate Evidenz.",
+      "id": "no-causality-escalation"
+    },
+    {
+      "assertion": "Alle Adapter und kombinierten Traces besitzen harte Ergebnis- und Payload-Grenzen, validieren Eingaben vor Reads und liefern bei unvollständiger, widersprüchlicher oder nicht verifizierbarer Evidenz strukturierte Lücken statt erfundener Verknüpfungen.",
+      "id": "bounded-fail-closed-reads"
+    },
+    {
+      "assertion": "Regressionstests decken positive und negative Bindungen, Digest-/Identitätsdrift, fehlende Quellen, Trunkierung und Nicht-Kausalitätsgrenzen ab; der exakt reviewte Merge wird deployt und an einer realen, verifizierten Audit-Spur mit mindestens zwei getrennten externen Evidenzquellen read-only live belegt.",
+      "id": "tests-and-live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T066"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_audit_query.py",
+      "component:tests/test_audit_query.py",
+      "component:docs/audit-query-trace-v1.md",
+      "path:/home/alex/.local/state/grabowski/write-audit.jsonl"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die mit Grabowski PR #367 deployte read-only Audit-Query/Trace-Schicht um explizit verifizierte Cross-Store-Adapter zu Task-, Lease-, Receipt-, Chronik- und Deployment-Wahrheit erweitern, ohne die Audit-Kette oder ihre abgeleitete Projektion zur semantischen Gesamtwahrheit zu machen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T081",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to merge heterogeneous authority into one truth model",
+      "causality from correlation",
+      "root cause from temporal adjacency",
+      "permission to rewrite historical audit evidence"
+    ],
+    "publication_basis_bureau_registry_commit": "5a56e217f57f4a970c3d4cb04651d8ddf36d8806",
+    "publication_basis_bureau_runtime_release": "5a56e217f57f-srcb9f981421a99",
+    "source": "audit_query_trace_v1_followup",
+    "source_deployment_receipt_sha256": "e25258f57e9fea074f251182fbbe3e4f568a5c247d42e01b8ee208eb71a756d5",
+    "source_deployment_release": "6038c7d08cb2-srcseta25018479bda-locke6664d600b6c-contractc629dbef7cd2",
+    "source_diff_sha256": "580acedd1e1fd70b2b7d950778d367b2f8e09e9d4783f570c7ee67c7de19fe40",
+    "source_merge_commit": "6038c7d08cb2fbbd407dc94d4b6b925e331ac848",
+    "source_pull_request": 367,
+    "source_repository": "heimgewebe/grabowski",
+    "source_reviewed_head": "49d2ad82ca40ecd5d098c2d9e5d830c64d5fc554",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-cc0a47b24e2c2a0ec1a46ea3",
+      "event_id": 923,
+      "event_created_at": "2026-07-22T02:13:48.947364Z",
+      "request_sha256": "d9778959c61465e939f0b547abb8a7ecab82eb79d09f1b544abb5223688c5c62",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": null,
+        "observed_at": "2026-07-22T02:13:48.940213Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 218
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "audit"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Audit-Trace mit verifizierten Cross-Store-Evidenzadaptern erweitern"
+}

@@ -1,0 +1,136 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The exact Weltgewebe Trivy scan sha256 d1ba101322bed2e5926f4c4d19b2e232c5a19abcc159dc5bd2aa7625ebf44a9c is deduplicated by its 21 unique misconfiguration rule IDs and compared against existing Weltgewebe audit, Kubernetes and security tasks. The 23 HIGH, 24 MEDIUM and 85 LOW occurrences are not treated as 132 distinct defects. Confirmed HIGH findings are handled first; false positives, duplicate findings and consciously accepted configurations are documented with evidence.",
+      "id": "trivy-triage"
+    },
+    {
+      "assertion": "Trivy is integrated only where it adds coverage beyond existing CodeQL, tests and review. A bounded scan and CycloneDX SBOM path is reproducible on clean source, legacy findings are baselined or triaged instead of silently ignored, and CI enforcement is introduced only after current actionable findings are understood.",
+      "id": "trivy-production-path"
+    },
+    {
+      "assertion": "Before any production secret migration, an operational age recipient and an independent off-host recovery recipient exist in separate failure domains, recovery is tested on non-production material, key rotation and update procedure are documented, and repositories contain no private key material. Only then is one low-risk real secret migrated with plaintext-absence and rollback proof.",
+      "id": "sops-recovery-first"
+    },
+    {
+      "assertion": "The proven ntfy adapter is bound to the existing Grabowski origin/hash-bound operator outbox lifecycle without creating a second queue or changing task truth. Payloads remain secret-free and bounded; outbox acknowledgement occurs only after confirmed HTTP success; delivery never establishes user_seen. Prefer an existing completion/reconciliation lifecycle over adding another periodic timer, and perform an actual device-subscription acceptance when available.",
+      "id": "ntfy-production-binding"
+    },
+    {
+      "assertion": "Ansible inventory is generated from or validated directly against the canonical Grabowski fleet registry rather than maintained as a second fleet truth. Execution uses the proven durable-job route, not the incompatible synchronous terminal route.",
+      "id": "ansible-canonical-inventory"
+    },
+    {
+      "assertion": "Remote fleet compatibility is proven first with read-only/check-mode operations on explicitly leased hosts. At most one low-risk reversible configuration effect is then piloted idempotently, with first-run change, second-run changed=0 and authoritative host readback; no broad fleet migration is implied.",
+      "id": "ansible-remote-pilot"
+    },
+    {
+      "assertion": "Grabowski remains execution/approval/audit authority, Bureau remains task truth, Leitstand remains the general observer surface, existing repository security gates remain authoritative, and no Temporal, second task platform, generic dashboard, LiteLLM routing authority or unnecessary resident collector is introduced.",
+      "id": "no-new-authority"
+    },
+    {
+      "assertion": "Each productionization slice has exact evidence, rollback, diff review and required CI before merge. Useful work not completed is registered through Bureau rather than left as prose.",
+      "id": "closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T044"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly authorized on 2026-07-22 that all sensible external-tool findings be registered and worked through in priority order. Cross-repository, remote-host and secret effects remain separately lease-bound, review-before-effect, cost-free and independently read back.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/weltgewebe",
+      "host:heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Convert only the proven T044 pilots into bounded production paths while remediating newly discovered Trivy findings without creating new control planes or duplicate authorities. Work order is risk-based: first deduplicate and triage the digest-bound Weltgewebe Trivy findings, then establish an independent SOPS+age recovery path before any real secret migration, then bind ntfy delivery into the existing Grabowski outbox lifecycle, and finally generate Ansible inventory from canonical fleet truth and perform a bounded remote check-mode/idempotence rollout.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "all Trivy findings are actionable",
+      "production secret recovery already exists",
+      "actual iOS device receipt already occurred",
+      "remote Ansible compatibility already exists",
+      "permission to override foreign leases or dirty worktrees"
+    ],
+    "parent_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T044",
+    "phase_evidence": {
+      "ansible": "ansible-phase3-v1.json",
+      "ntfy": "ntfy-phase2-v1.json",
+      "sccache": "sccache-phase1-v1.json",
+      "second_wave": "phase6-second-wave-v1.json",
+      "sops_age": "sops-age-phase4-v1.json",
+      "trivy_renovate": "trivy-renovate-phase5-v1.json"
+    },
+    "registered_from": "T044 phased implementation closeout on 2026-07-22",
+    "trivy_followup": {
+      "candidate_id": "candidate-9c787a98c7f3c7768342723a",
+      "event_id": 951,
+      "sbom_sha256": "fda55fd94a02e36392558fd9d50e6e07fdbaeb0fa249c22277f028de99a1680a",
+      "scan_sha256": "d1ba101322bed2e5926f4c4d19b2e232c5a19abcc159dc5bd2aa7625ebf44a9c"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-9c787a98c7f3c7768342723a",
+      "event_id": 951,
+      "event_created_at": "2026-07-22T07:13:22.458348Z",
+      "request_sha256": "603ef59a58b43a12b51bac472c12f23bc8d6d691bf0ffbfc5933ee2fb6d7c1ad",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "trivy-live-scan",
+        "locator": "T044 Trivy pilot on heimgewebe/weltgewebe@a7f8c490095d907a26ba637f739ca423b8bba180",
+        "observed_at": "2026-07-22T09:11:00+02:00",
+        "sha256": "d1ba101322bed2e5926f4c4d19b2e232c5a19abcc159dc5bd2aa7625ebf44a9c"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau"
+  ],
+  "rollback": {
+    "strategy": "Each productionized external tool remains independently removable: revert its adapter/configuration and restore the previous observed execution path while preserving Bureau history and evidence. Secret migrations require a tested decrypt/restore path before effect; Trivy CI must be removable without deleting scan evidence; Ansible and ntfy must not become required for existing Grabowski task truth."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Productionize T044 external-tool pilots and triage Trivy findings"
+}

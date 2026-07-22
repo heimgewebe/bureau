@@ -3,7 +3,7 @@
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T003",
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
   "title": "Decide and enforce RepoGround product boundaries",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 1
@@ -58,6 +58,31 @@
     "does_not_establish": [
       "Dass Atlas nutzlos ist",
       "Dass externe unverfügbare Consumer nicht existieren"
-    ]
+    ],
+    "verification": {
+      "verified_at": "2026-07-22T10:37:00+02:00",
+      "repository": "heimgewebe/repoground",
+      "pull_request": 1081,
+      "tested_head": "bb16370fa4f355c48617491ad95e6c57d3badac3",
+      "merge_commit": "dea8e61ace8bc45a32ec32bff3f79eccaa9c9f19",
+      "tested_tree": "b89547d7cf43fdb6d85ea6236787a90147d039c2",
+      "merge_tree": "b89547d7cf43fdb6d85ea6236787a90147d039c2",
+      "diff_sha256": "1226f00b695eaf35a430e46f8cb4344e7d7235b53c912985a8b74a4004707a08",
+      "full_suite": "4563 passed, 2 skipped",
+      "full_suite_receipt_sha256": "20b0563b3d38191d0f0debf7cc3f9351e9b077c75291cdd819510137f8429435",
+      "ci": "all required checks passed",
+      "deployment_commit": "dea8e61ace8bc45a32ec32bff3f79eccaa9c9f19",
+      "live_health_http_status": 200,
+      "live_atlas_http_status": 200,
+      "live_atlas_primary_artifact_count": 5,
+      "previous_live_atlas_http_status": 500,
+      "boundary_decisions": {
+        "atlas": "keep as explicit optional observation subsystem",
+        "omniwandler": "removed from active RepoGround tree",
+        "standalone_repomerger": "removed from active RepoGround tree"
+      },
+      "task_sha256": "8cbf026f5857956f6e1f7607a3607680a443f56d34991b1ee02beb9d8487db6b",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   }
 }

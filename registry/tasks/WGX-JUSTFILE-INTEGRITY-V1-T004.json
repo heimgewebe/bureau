@@ -3,7 +3,7 @@
   "id": "WGX-JUSTFILE-INTEGRITY-V1-T004",
   "initiative": "WGX-JUSTFILE-INTEGRITY-V1",
   "title": "Isolate local WGX Bats fixtures from ambient Git hooks and repository identity",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 94
@@ -55,7 +55,66 @@
     "does_not_establish": [
       "Fehler des in T002 reparierten shfmt-Vertrags",
       "Berechtigung, produktive Pre-Push- oder Ownership-Schutzregeln abzuschwächen",
-      "CI-Regression auf PR #645"
-    ]
+      "CI-Regression auf PR #645",
+      "Berechtigung, produktive Main-Push-Hooks oder Contracts-Ownership-Regeln abzuschwächen",
+      "dass beliebige fremde Git-Hook-Konfigurationen außerhalb der isolierten Test-Fixtures ignoriert werden sollen"
+    ],
+    "verified_at": "2026-07-22T01:08:33Z",
+    "outcome": "WGX PR #647 isoliert die lokalen Git-Test-Fixtures von ambienter Repository-/CI-Identität und benutzerweiten Pre-Push-Hooks, ohne produktive Guards oder Hooks zu verändern. Der Vorzustand reproduzierte 13 T004-relevante Fehler. Der exakte Drei-Testdateien-Patch wurde als Head 23c649dc0508475ee9f7f0b5098c34ab303ebff1 vollständig lokal und in GitHub CI geprüft, als Mergecommit 5c14e53674193446b8832eca6e312bcf58190248 veröffentlicht und auf einem frischen Checkout dieses Mergecommits erneut mit der vollständigen Bats-Suite erfolgreich verifiziert.",
+    "validated_acceptance": {
+      "local-suite": "PASS: Frischer Checkout des Mergecommits 5c14e53674193446b8832eca6e312bcf58190248 besteht `bats -r tests` vollständig (202/202) im üblichen heim-pc-Umfeld.",
+      "identity-isolation": "PASS: Ownership-Fixtures löschen HG_REPO_NAME, GITHUB_REPOSITORY, CI, GITHUB_BASE_REF, GITHUB_EVENT_BEFORE, GIT_DIR und GIT_WORK_TREE im Test-Setup und modellieren lokale Änderungen explizit als staged changes; positive und negative Semantiktests bestehen.",
+      "hook-isolation": "PASS: Reload- und Routine-Fixtures verwenden `git -c core.hooksPath=/dev/null push` ausschließlich für initiale Pushes ihrer temporären Test-Repositories; produktive Hook- und Guard-Dateien wurden nicht geändert.",
+      "ci-parity": "PASS: Lokale vollständige Bats-Suite 202/202 und beide beobachteten GitHub-Bats-Gates auf dem exakten PR-Head sind grün; zusätzliche WGX-Guard-, Security-, CodeQL- und Shell/Docs-Gates sind erfolgreich."
+    },
+    "verification": {
+      "source": "github_pr_ci_and_postmerge_local_readback",
+      "source_ref": "github-pr:heimgewebe/wgx#647",
+      "repository": "heimgewebe/wgx",
+      "pull_request": 647,
+      "base_commit": "a80a786d2a7f4bc839ad3fd2c3ad8469fea990f7",
+      "reviewed_head": "23c649dc0508475ee9f7f0b5098c34ab303ebff1",
+      "merge_commit": "5c14e53674193446b8832eca6e312bcf58190248",
+      "final_diff_sha256": "ae07a805171c59392519a61f3b119d1f95531613fb622355fe32c29408182176",
+      "final_diff_bytes": 2802,
+      "pre_closeout_task_sha256": "37b54aea43cb6bde349775c6be36ee662de84367f8b2ae1bc464ceba19090cd0",
+      "initiative_sha256": "efe9db3174763c06488568b7a88b7d20072a36cc790b63ce8d1c7acf42c11335",
+      "local_validation": {
+        "pre_fix_reproduction": "13 T004-relevant failures: 3 ownership, 3 reload, 7 routine",
+        "targeted_post_fix": "17/17 pass",
+        "pre_merge_full_bats": "202/202 pass",
+        "just_lint": "pass",
+        "git_diff_check": "pass",
+        "post_merge_full_bats": "202/202 pass",
+        "post_merge_commit": "5c14e53674193446b8832eca6e312bcf58190248"
+      },
+      "github_pr_checks": "all observed required checks successful; smart-PR non-applicable jobs skipped by path detection",
+      "task_sha256": "91d6dd7a151b643db3fd63d3f5b8b639bd218d9d63129501b46ea1603174d054",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "WGX-JUSTFILE-INTEGRITY-V1-T004",
+          "source_ref": "heimgewebe/wgx#647",
+          "number": 647,
+          "head_sha": "23c649dc0508475ee9f7f0b5098c34ab303ebff1",
+          "merge_commit_sha": "5c14e53674193446b8832eca6e312bcf58190248",
+          "diff_sha256": "ae07a805171c59392519a61f3b119d1f95531613fb622355fe32c29408182176"
+        },
+        {
+          "kind": "test_run",
+          "authority": "heim-pc",
+          "task_id": "WGX-JUSTFILE-INTEGRITY-V1-T004",
+          "source_ref": "local:wgx-t004-postmerge-verify",
+          "commit_sha": "5c14e53674193446b8832eca6e312bcf58190248",
+          "result": "bats-full-202-of-202-pass"
+        }
+      ]
+    }
   }
 }

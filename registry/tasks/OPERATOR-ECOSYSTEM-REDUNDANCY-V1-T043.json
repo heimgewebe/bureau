@@ -1,0 +1,149 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The existing allowlisted board operator-ecosystem-heim-pc-20260719 is repaired in place; no replacement or duplicate board is created.",
+      "id": "same-board-repair"
+    },
+    {
+      "assertion": "No Mermaid/source-code widget remains; exactly one materialized native diagram remains and no ai_generation_result preview object remains.",
+      "id": "native-diagram-materialized"
+    },
+    {
+      "assertion": "The old provider-autosized TABLE and DOC are absent; Frame 04 uses bounded decision cards and Frame 06 uses a compact evidence card.",
+      "id": "bounded-frames"
+    },
+    {
+      "assertion": "Frame 05 uses neutral source cards and deterministic static direction symbols instead of provider-routed connectors that render with ambiguous arrowheads.",
+      "id": "unambiguous-frame05"
+    },
+    {
+      "assertion": "Two independent final provider readbacks agree on the exact stable digest and final object/type contract.",
+      "id": "stable-provider-readback"
+    },
+    {
+      "assertion": "Desktop and iPad board captures are authenticated, fully rendered, selection-free and pixel-stable; diagram evidence includes device completeness and high-resolution readability.",
+      "id": "authenticated-browser-acceptance"
+    },
+    {
+      "assertion": "Two independent board pixel reviews and two independent diagram pixel reviews all return PASS with no blocking visual findings.",
+      "id": "independent-visual-pass"
+    },
+    {
+      "assertion": "Schauwerk visual delivery/review hardening is merged, CI-green and post-merge validated, and canonical documentation binds this work to T043.",
+      "id": "repository-hardening"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.schauwerk"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T039"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Implementation and live repair are already complete and independently verified. This planned registration exists only so Bureau can canonically establish T043 before applying its native verification stamp.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk"
+  },
+  "goal": "Repair the existing Miro board operator-ecosystem-heim-pc-20260719 in place so Mermaid is represented as a materialized native diagram, compact frames no longer contain provider-autosized document/table artifacts, ambiguous connector rendering is eliminated, and release acceptance is bound to authenticated browser captures plus independent pixel reviews rather than structural quality alone.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T043",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "completion": {
+      "final_task_binding_merge_commit": "0c27f3e31a0b56878cf8bfe54d3dedc8940cefea",
+      "final_task_binding_pull_request": 111,
+      "implementation_merge_commit": "868c29b12500ad85e976fe6485c6e1006b478425",
+      "implementation_pull_request": 109,
+      "implementation_reviewed_diff_sha256": "308e59d6825683cee8e6c3593a4b0b1b65b39779f67dd21a5e189cca8cd7a1a4",
+      "schema_version": 1,
+      "status": "verified_authenticated_miro_visual_repair",
+      "validation": {
+        "final_binding_postmerge_tests": "750 PASS",
+        "final_binding_premerge_tests": "750 PASS",
+        "implementation_focused_tests": "105 PASS",
+        "implementation_full_tests": "750 PASS",
+        "postmerge_validation_receipt_sha256": "3357fc6cd6891bfde779462d53474b871f0c7076169cb41ea0f6e8562c251b0f",
+        "pr111_ci": "SUCCESS"
+      }
+    },
+    "id_collision_correction": {
+      "documentation_correction_diff_sha256": "b530ce5d65a82820d20eacb95b6f5dd98852567d2d84cd8014c3702a7cd4167b",
+      "documentation_correction_merge": "0c27f3e31a0b56878cf8bfe54d3dedc8940cefea",
+      "documentation_correction_pull_request": "heimgewebe/schauwerk#111",
+      "original_ids": [
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T040",
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T042"
+      ],
+      "reason": "T040 and T042 are canonically occupied by unrelated tasks and must not be overwritten.",
+      "replacement_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T043"
+    },
+    "live_verification": {
+      "ai_generation_result_count": 0,
+      "board_alias": "operator-ecosystem-heim-pc-20260719",
+      "board_capture_count": 14,
+      "board_capture_pixel_stable": true,
+      "board_capture_receipt_sha256": "db4322e1b46f529ff7217db99da8520c914668ebf1914a80590c89f3ebd88ea4",
+      "board_url": "https://miro.com/app/board/uXjVH6Xj4Ww=/",
+      "board_visual_review_result": "PASS x2",
+      "diagram_capture_receipt_sha256": "1f7a11d603e5b2dd5d73dac113a71540bff02654fbdc6c61d7bf516111fbf265",
+      "diagram_count": 1,
+      "diagram_visual_review_result": "PASS x2",
+      "frame05_connector_count": 0,
+      "frame05_dsl_sha256": "715d34a384fd2ef1bb1d107ca2b0f3c51b90c6d02f28259a059456f2bb656ce0",
+      "frame_count": 6,
+      "provider_object_count": 68,
+      "shape_count": 46,
+      "stable_provider_digest": "b1168ba4e24be3517b179f10afc99324b423e7022b6f20219981ee60bcdd1527",
+      "stable_provider_readbacks": 2,
+      "text_count": 15
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-58121cf8081b34b35f5401e5",
+      "event_id": 925,
+      "event_created_at": "2026-07-22T03:18:01.160376Z",
+      "request_sha256": "66510e3ab9d4c09f48a31b0892e1765fb4f3b295836f9ddc16996c7f3c2ee8cf",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live_runtime_finding",
+        "locator": "miro:operator-ecosystem-heim-pc-20260719@b1168ba4e24be3517b179f10afc99324b423e7022b6f20219981ee60bcdd1527",
+        "observed_at": "2026-07-22T03:10:29Z",
+        "sha256": "b1168ba4e24be3517b179f10afc99324b423e7022b6f20219981ee60bcdd1527"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_from": "authenticated visual acceptance and live repair of operator-ecosystem-heim-pc-20260719",
+    "registration_phase": "planned_identity_before_bureau_native_verification_stamp",
+    "resolution_summary": "The existing board was repaired in place. Mermaid source, oversized DOC/TABLE artifacts and ambiguous Frame 05 routing were eliminated; one materialized native diagram remains with no AI preview object. Final provider truth is stable and authenticated desktop/iPad/high-resolution evidence passed four independent pixel reviews."
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 43
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "github",
+    "miro",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Repair and visually verify the Operator-Ökosystem Miro board"
+}

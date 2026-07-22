@@ -1,0 +1,81 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Wrapper und alle DB-Tests verwenden denselben fail-closed Vertrag für disposable Testdatenbanken; jeder vom Wrapper akzeptierte Name wird auch von den Tests akzeptiert.",
+      "id": "single-disposable-db-contract"
+    },
+    {
+      "assertion": "Benötigte PostgreSQL- und JetStream-Dienste werden vor Suite-Start eindeutig geprüft oder hermetisch provisioniert; fehlende Voraussetzungen führen vor dem ersten Test zu klarer Diagnose.",
+      "id": "dependency-readiness"
+    },
+    {
+      "assertion": "Alle 17 gebündelten Proofziele laufen reproduzierbar grün und temporäre Testdienste werden auch bei Fehlern zuverlässig entfernt.",
+      "id": "full-suite-and-cleanup"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer im Rahmen von WELTGEWEBE-OS-V1-T022 als sinnvolle Folgemaßnahme autorisiert; isolierte Umsetzung mit Review.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "WG-AUD-TEST-001 beheben: Der gebündelte PostgreSQL-Integrationsproof soll seine disposable Datenbankkonvention einheitlich durchsetzen, PostgreSQL- und JetStream-Voraussetzungen vorab fail-fast prüfen oder selbst provisionieren und Testdienste zuverlässig aufräumen.",
+  "id": "WELTGEWEBE-OS-V1-T026",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-a9a670c9af1392dab3ac4f69",
+    "source_audit": "WELTGEWEBE-OS-V1-T022",
+    "source_commit": "cd4b588fe9cbc47e7afe223acee0d03fc4c4e84b",
+    "source_finding": "WG-AUD-TEST-001",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-a9a670c9af1392dab3ac4f69",
+      "event_id": 929,
+      "event_created_at": "2026-07-22T03:49:17.656628Z",
+      "request_sha256": "7e6ab9d0d500763e43893c0cd8d6f951981ef3feb91837a85794faa747c3eacd",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "audit_finding",
+        "locator": "WELTGEWEBE-OS-V1-T022:WG-AUD-TEST-001:cd4b588fe9cbc47e7afe223acee0d03fc4c4e84b",
+        "observed_at": "2026-07-22T03:49:17.647282Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 4
+  },
+  "required_capabilities": [
+    "shell",
+    "postgresql",
+    "nats",
+    "docker",
+    "ci",
+    "rust",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "PostgreSQL-Integrationsproofs hermetisch und selbstprüfend machen"
+}

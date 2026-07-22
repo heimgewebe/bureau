@@ -3,7 +3,7 @@
   "id": "REPOGROUND-AGENT-UTILITY-V1-T007",
   "initiative": "REPOGROUND-AGENT-UTILITY-V1",
   "title": "RepoGround-Impact-Kontext für große Call-Graph-Artefakte skalierbar machen",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 2
@@ -90,7 +90,125 @@
       "test sufficiency",
       "runtime correctness",
       "merge readiness",
-      "default RepoGround promotion"
-    ]
+      "default RepoGround promotion",
+      "T003 gate passed",
+      "runtime reachability",
+      "executed runtime proof",
+      "rollback/recovery completeness"
+    ],
+    "verified_at": "2026-07-22T01:44:25Z",
+    "outcome": "RepoGround PR #1071 beseitigt den T003/T007-Skalierungsblocker für python_call_graph_json oberhalb von 16 MiB durch einen spezialisierten, integritätsgebundenen und hart begrenzten Projektionsleser, ohne die globale 16-MiB-Grenze des generischen Artefaktzugriffs anzuheben. PR #1073 schließt die anschließend belegte Relations-Budget-Lücke, sodass kohärente Call-Graph-Evidenz bei einem Relationsbudget >=2 nicht mehr vollständig von Architekturrelationen verdrängt wird. Beide PRs sind gemergt; ein frischer Vier-Fälle-Weltgewebe-Pilot besteht ohne artifact_too_large oder impact_context_blocked. T003 bleibt wegen separater Contract-/Runtime-/Recovery-Evidenzlücken bewusst blockiert; das widerspricht dem T007-Abschluss nicht.",
+    "validated_acceptance": {
+      "bounded-large-artifact-access": "PASS: PR #1071 liest große python_call_graph_json-Artefakte zielgerichtet über inkrementellen SHA-256-Check, mmap-Scan und Offset-/Posting-Index. Der generische artifact_get-Pfad bleibt bei 16 MiB begrenzt; ohne Python-Zielsymbole wird der große Call-Graph nicht geöffnet.",
+      "fail-closed-integrity": "PASS: PR #1071 erhält Hash-, Größen-, Run-ID- und Manifestbindung; Manipulation, Drift, unlesbare Quellen und Grenzüberschreitungen degradieren explizit. PR #1073 ändert weder Evidenz- noch Freshness-Semantik.",
+      "weltgewebe-regression": "PASS: Der in PR #1073 dokumentierte frische Vier-Fälle-Pilot auf Bundle heimgewebe__weltgewebe__main-max-260721-1911 meldet 4/4 quality_pass=true und weder artifact_too_large noch impact_context_blocked. Deployment/Kubernetes enthält belegte kohärente Call-Graph-Evidenz; Fälle ohne solche Evidenz claimen die Lane nicht. Die spätere T003-Nachmessung in Weltgewebe PR #1527 bestätigt erneut 4/4 ohne artifact_too_large, bleibt aber für T003 wegen anderer Evidenzlücken blockiert.",
+      "resource-bound": "PASS: PR #1071 dokumentiert harte Grenzen von 256 MiB Quelle, 4 MiB Manifest, 100000 Calls, 500000 Indexschlüsseln, 20000 projizierten Calls, 8 MiB Projektionsbytes und maximal zwei Cache-Generationen; der reale kalte Weltgewebe-Lauf lag bei ca. 1,97 s unter 512-MiB-Tasklimit.",
+      "tests-review": "PASS: PR #1071 und #1073 wurden mit exakten Base-/Head-Bindungen, reproduzierbaren Diff-SHA-256 und grüner RepoGround-CI veröffentlicht. Am gemergten T007-Stand 845aea6c12031a76c500f9080674798544f0e5fd bestehen zusätzlich 41/41 fokussierte Impact-/Adapter-/Call-Graph-Index-Tests."
+    },
+    "verification": {
+      "source": "immutable_git_diff_pr_ci_postmerge_and_pilot_readback",
+      "source_refs": [
+        "heimgewebe/repoground#1071",
+        "heimgewebe/repoground#1073",
+        "heimgewebe/weltgewebe#1527"
+      ],
+      "repository": "heimgewebe/repoground",
+      "pr_1071": {
+        "number": 1071,
+        "base_commit": "fcff76128f87b7df6be245008edc88f63dd93036",
+        "reviewed_head": "852f2f4529023dbbf028a11033e8269170dac5bb",
+        "merge_commit": "4474f46b44f1b6fcd3e974f7f74b5b52b4d61c2e",
+        "immutable_base_head_diff_sha256": "fc2ea3efe33ec0d4a383ca26d2ed8f41a6e2800a9b87ce37f16c64aa027fdc97",
+        "immutable_base_head_diff_bytes": 48526,
+        "immutable_diff_reproduced_at_closeout": true,
+        "current_github_pr_diff_readback": {
+          "sha256": "c4f1a307faede9807579abb13fb6296c1e6a0c2760032fad56e244740d7e71f4",
+          "bytes": 48226,
+          "note": "Current gh pr diff projection differs from the historical pre-merge base-to-head diff; immutable commit diff reproduces the recorded review binding exactly."
+        }
+      },
+      "pr_1073": {
+        "number": 1073,
+        "base_commit": "4474f46b44f1b6fcd3e974f7f74b5b52b4d61c2e",
+        "reviewed_head": "5eed98ed360ce41c3970d73fa00e40399d134ee9",
+        "merge_commit": "845aea6c12031a76c500f9080674798544f0e5fd",
+        "diff_sha256": "fecbc964dc012ee19cd4dd2671571f04660339735c43b44ee92db2924c64afbe",
+        "diff_bytes": 3585
+      },
+      "fresh_pilot": {
+        "source_ref": "heimgewebe/repoground#1073",
+        "bundle_stem": "heimgewebe__weltgewebe__main-max-260721-1911",
+        "bundle_commit": "3113f5a48df3286d231563ebe589e2c5e836f103",
+        "manifest_sha256": "1287e5041e1523fed9e33056d33abca0e00fdcda9564015662e2db8d10963d86",
+        "case_count": 4,
+        "quality_pass_count": 4,
+        "artifact_too_large_count": 0,
+        "impact_context_blocked_count": 0
+      },
+      "followup_t003_observation": {
+        "source_ref": "heimgewebe/weltgewebe#1527",
+        "pr_state_at_closeout": "OPEN",
+        "head_sha": "b2f04b1fe05bf5142171934be8532d47155772bd",
+        "bundle_stem": "heimgewebe__weltgewebe__main-max-260721-2115",
+        "bundle_commit": "2959e2725c3b2e27e7d1b97f7040aac205d103f7",
+        "python_call_graph_bytes": 22411587,
+        "case_count": 4,
+        "artifact_too_large_count": 0,
+        "promotion_gold_cases_passed": "3/3",
+        "does_not_establish": [
+          "T003 gate passed",
+          "runtime reachability",
+          "executed runtime proof",
+          "rollback/recovery completeness"
+        ]
+      },
+      "postmerge_local_validation": {
+        "commit_sha": "845aea6c12031a76c500f9080674798544f0e5fd",
+        "tests": [
+          "merger/repoground/tests/test_agent_impact_context.py",
+          "merger/repoground/tests/test_agent_impact_adapter.py",
+          "merger/repoground/tests/test_call_graph_impact_index.py"
+        ],
+        "result": "41/41 pass"
+      },
+      "pre_closeout_task_sha256": "dab5dafa21fbee841053281ed9a57afb4e5bbbeb7e963c513092cc1c94e5cf2b",
+      "initiative_sha256": "50c995148e81dcb34abbb012399346105015ae05959f6bbb647fd61437916739",
+      "task_sha256": "baf24d7fbe89cc02238ae23f834f5028b82e98633f8a2fe27ac2d1be64ceea4d",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "REPOGROUND-AGENT-UTILITY-V1-T007",
+          "source_ref": "heimgewebe/repoground#1071",
+          "number": 1071,
+          "head_sha": "852f2f4529023dbbf028a11033e8269170dac5bb",
+          "merge_commit_sha": "4474f46b44f1b6fcd3e974f7f74b5b52b4d61c2e",
+          "diff_sha256": "fc2ea3efe33ec0d4a383ca26d2ed8f41a6e2800a9b87ce37f16c64aa027fdc97"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "REPOGROUND-AGENT-UTILITY-V1-T007",
+          "source_ref": "heimgewebe/repoground#1073",
+          "number": 1073,
+          "head_sha": "5eed98ed360ce41c3970d73fa00e40399d134ee9",
+          "merge_commit_sha": "845aea6c12031a76c500f9080674798544f0e5fd",
+          "diff_sha256": "fecbc964dc012ee19cd4dd2671571f04660339735c43b44ee92db2924c64afbe"
+        },
+        {
+          "kind": "test_run",
+          "authority": "heim-pc",
+          "task_id": "REPOGROUND-AGENT-UTILITY-V1-T007",
+          "source_ref": "local:repoground-t007-postmerge-verify",
+          "commit_sha": "845aea6c12031a76c500f9080674798544f0e5fd",
+          "result": "focused-impact-adapter-index-41-of-41-pass"
+        }
+      ]
+    }
   }
 }

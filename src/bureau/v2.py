@@ -4370,6 +4370,79 @@ def runtime_drift_check(
         "findings": findings,
     }
 
+SAFE_LIFECYCLE_RECONCILE_TRANSITIONS = frozenset({("active", "waiting"), ("waiting", "active")})
+
+
+def reconcile_initiative_lifecycle(
+    registry: Registry, store: StateStore, *, apply: bool = False
+) -> dict[str, Any]:
+    diagnostics = lifecycle_diagnostics(registry, store)
+    candidates: list[dict[str, Any]] = []
+    for item in diagnostics:
+        transition = (item["declared_state"], item["recommended_state"])
+        if item["consistent"] or transition not in SAFE_LIFECYCLE_RECONCILE_TRANSITIONS:
+            continue
+        candidates.append(
+            {
+                "initiative_id": item["initiative_id"],
+                "from_state": item["declared_state"],
+                "to_state": item["recommended_state"],
+                "task_states": item["task_states"],
+            }
+        )
+
+    changed: list[dict[str, Any]] = []
+    if apply:
+        by_id = {item["initiative_id"]: item for item in candidates}
+        for path in registry._files(registry.root / "registry/initiatives"):
+            raw = legacy.read_json(path)
+            candidate = by_id.get(raw.get("id"))
+            if candidate is None:
+                continue
+            if raw.get("state") != candidate["from_state"]:
+                raise legacy.StateError(
+                    f"initiative {candidate['initiative_id']} changed during lifecycle reconcile"
+                )
+            raw["state"] = candidate["to_state"]
+            metadata = raw.setdefault("metadata", {})
+            lifecycle = metadata.setdefault("lifecycle", {})
+            lifecycle["reconciled_at"] = legacy.utc_now()
+            lifecycle["reconciled_from"] = candidate["from_state"]
+            lifecycle["reconciled_to"] = candidate["to_state"]
+            legacy.atomic_write(path, json.dumps(raw, indent=2, ensure_ascii=False) + "\n")
+            changed.append(
+                {
+                    "initiative_id": candidate["initiative_id"],
+                    "path": str(path),
+                    "from_state": candidate["from_state"],
+                    "to_state": candidate["to_state"],
+                }
+            )
+
+    return {
+        "schema_version": 1,
+        "command": "lifecycle-reconcile",
+        "apply": apply,
+        "safe_transitions": [
+            {"from_state": source, "to_state": target}
+            for source, target in sorted(SAFE_LIFECYCLE_RECONCILE_TRANSITIONS)
+        ],
+        "candidate_count": len(candidates),
+        "candidates": candidates,
+        "changed_count": len(changed),
+        "changed": changed,
+        "excluded_recommendations": sorted(
+            {
+                item["recommended_state"]
+                for item in diagnostics
+                if not item["consistent"]
+                and (item["declared_state"], item["recommended_state"])
+                not in SAFE_LIFECYCLE_RECONCILE_TRANSITIONS
+            }
+        ),
+    }
+
+
 def close_ready_initiatives(registry: Registry, store: StateStore) -> list[dict[str, Any]]:
     diagnostics = {item["initiative_id"]: item for item in lifecycle_diagnostics(registry, store)}
     changed: list[dict[str, Any]] = []

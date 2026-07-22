@@ -401,6 +401,54 @@ def test_lifecycle_diagnoses_completion_ready(registry_factory, tmp_path, monkey
     assert lifecycle["recommended_state"] == "completion-ready"
 
 
+def test_lifecycle_reconcile_plans_and_applies_only_safe_active_waiting_transition(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["state"] = "blocked"
+    remove_from_queue(root, task["id"])
+    task_path.write_text(json.dumps(task))
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+
+    preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert preview["candidate_count"] == 1
+    assert preview["changed_count"] == 0
+    assert preview["candidates"][0]["from_state"] == "active"
+    assert preview["candidates"][0]["to_state"] == "waiting"
+
+    applied = bureau_v2.reconcile_initiative_lifecycle(registry, store, apply=True)
+    assert applied["changed_count"] == 1
+    initiative = json.loads((root / "registry/initiatives/main.json").read_text())
+    assert initiative["state"] == "waiting"
+    assert initiative["metadata"]["lifecycle"]["reconciled_from"] == "active"
+    assert initiative["metadata"]["lifecycle"]["reconciled_to"] == "waiting"
+
+
+def test_lifecycle_reconcile_excludes_completion_semantics(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    preliminary = Registry.load(root)
+    task = json.loads(task_path.read_text())
+    task["state"] = "verified"
+    task["metadata"] = {
+        "verification": {
+            "task_sha256": task_revision_sha256(task),
+            "plan_sha256": plan_sha256(preliminary, task["initiative"]),
+        }
+    }
+    remove_from_queue(root, task["id"])
+    task_path.write_text(json.dumps(task))
+    registry, store, _ = setup(root, tmp_path, monkeypatch)
+
+    preview = bureau_v2.reconcile_initiative_lifecycle(registry, store)
+    assert preview["candidate_count"] == 0
+    assert "completion-ready" in preview["excluded_recommendations"]
+
+
 def test_completed_lifecycle_accepts_mixed_terminal_task_states(
     registry_factory, tmp_path, monkeypatch
 ):

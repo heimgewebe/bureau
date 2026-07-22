@@ -1,5 +1,5 @@
 {
-  "commitment": "now",
+  "commitment": "completed",
   "completion": [
     "A versioned static Python call-reference artifact records call sites, enclosing caller symbols, callee expressions, source ranges and resolution state.",
     "Read-only MCP tools find_references and get_callers return bounded exact-first results with live freshness attached.",
@@ -26,12 +26,15 @@
     "predecessor": "REPOBRIEF-CODEGRAPH-ADOPTION-V1",
     "registered_at": "2026-07-15T14:25:00Z",
     "source_merge": "heimgewebe/lenskit#1005",
-    "source_request": "alles umsetzen"
+    "source_request": "alles umsetzen",
+    "lifecycle": {
+      "completed_at": "2026-07-22T01:32:15.505892Z"
+    }
   },
   "parallelism": {
     "max_active_tasks": 1
   },
   "schema_version": 1,
-  "state": "active",
+  "state": "completed",
   "title": "RepoBrief bounded Symbol-Call-Graph navigation"
 }

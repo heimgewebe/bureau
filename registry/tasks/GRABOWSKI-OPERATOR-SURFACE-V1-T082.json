@@ -96,7 +96,9 @@
         "Does not establish permission to delete branches.",
         "Does not establish cleanup completion.",
         "Does not authorize touching foreign-owned, dirty, coordinated or ambiguous worktrees."
-      ]
+      ],
+      "task_sha256": "2378c4cde43687f0359c7e8aab3ac151747d755987ad0a506c7f0d4aea942858",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
     }
   },
   "priority": {

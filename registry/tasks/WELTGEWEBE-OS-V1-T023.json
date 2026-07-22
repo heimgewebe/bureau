@@ -1,0 +1,81 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die produktive script-src-Direktive benötigt kein unsafe-inline mehr oder eine technisch unvermeidbare Restabweichung ist mit reproduzierbarer Build-Evidenz neu begründet und enger begrenzt.",
+      "id": "csp-no-script-unsafe-inline"
+    },
+    {
+      "assertion": "Kritische Svelte-Bootstrap-, Login-, Karten- und Schreibflüsse funktionieren unter der gehärteten CSP in Browserprüfungen ohne neue CSP-Verletzungen.",
+      "id": "browser-regression-proof"
+    },
+    {
+      "assertion": "Der live ausgelieferte CSP-Header ist commitgenau gegen den gemergten Stand verifiziert.",
+      "id": "production-header-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer im Rahmen von WELTGEWEBE-OS-V1-T022 ausdrücklich als autonom zu registrierende sinnvolle Folgemaßnahme autorisiert; Umsetzung isoliert und reviewgebunden.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Das belegte CSP-Residualrisiko WG-AUD-SEC-001 reduzieren: die produktive Content-Security-Policy nach Möglichkeit auf Nonce-/Hash-basierte Skriptfreigaben ohne script-src unsafe-inline migrieren, verbleibende Ausnahmen explizit minimieren und Build sowie Produktion artefaktgebunden fail-closed verifizieren.",
+  "id": "WELTGEWEBE-OS-V1-T023",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-9f10743b477e7f402ea8cb16",
+    "source_audit": "WELTGEWEBE-OS-V1-T022",
+    "source_commit": "cd4b588fe9cbc47e7afe223acee0d03fc4c4e84b",
+    "source_finding": "WG-AUD-SEC-001",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-9f10743b477e7f402ea8cb16",
+      "event_id": 926,
+      "event_created_at": "2026-07-22T03:47:51.149306Z",
+      "request_sha256": "91948c26355729ace481c08bfabbf25a9499c66e8eac3dcbe7fa338db676c39b",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "audit_finding",
+        "locator": "WELTGEWEBE-OS-V1-T022:WG-AUD-SEC-001:cd4b588fe9cbc47e7afe223acee0d03fc4c4e84b",
+        "observed_at": "2026-07-22T03:47:51.142690Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "security",
+    "svelte",
+    "typescript",
+    "caddy",
+    "browser",
+    "ci",
+    "deployment"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Produktive CSP ohne unsafe-inline weiter härten"
+}

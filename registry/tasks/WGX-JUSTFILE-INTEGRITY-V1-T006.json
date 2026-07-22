@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "id": "WGX-JUSTFILE-INTEGRITY-V1-T006",
+  "initiative": "WGX-JUSTFILE-INTEGRITY-V1",
+  "title": "Repair README metrics-schema validation example to match remote-schema handling",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 96
+  },
+  "goal": "Die README-Anleitung zur Metrics-Contract-Validierung so korrigieren, dass sie den funktionierenden Remote-Schema-Pfad verwendet und keine HTTP(S)-URL direkt als lokalen AJV-Schemapfad behandelt.",
+  "depends_on": [
+    "WGX-JUSTFILE-INTEGRITY-V1-T003"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/wgx",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Unabhängiger Dokumentations-/Regressionbefund nach T003; der produktive `just contracts validate`-Pfad bleibt bereits verifiziert und darf nicht zurückgebaut werden."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.wgx",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "readme-command",
+      "assertion": "Die in README dokumentierte Metrics-Snapshot-und-Validate-Sequenz läuft auf einem sauberen aktuellen main erfolgreich und endet mit gültiger Metrics-Contract-Validierung."
+    },
+    {
+      "id": "remote-schema",
+      "assertion": "Die README reicht keine HTTP(S)-Schema-URL direkt an `ajv-cli -s` weiter, sondern verwendet den repositorykanonischen Download-/Validate-Pfad oder eine äquivalent robuste lokale Schema-Datei."
+    },
+    {
+      "id": "regression",
+      "assertion": "Ein automatisierter Test bindet die README-Anleitung an den funktionierenden Contract-Validate-Pfad und verhindert die Regression `Cannot find schema ...https:/raw.githubusercontent.com/...`."
+    },
+    {
+      "id": "scope",
+      "assertion": "Die Änderung bleibt auf Dokumentation und unmittelbar erforderliche Regressionsevidenz begrenzt; der bereits gemergte T003-Produktionspfad wird nicht unnötig umgebaut."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-22T03:06:04+02:00",
+    "source_task": "WGX-JUSTFILE-INTEGRITY-V1-T003",
+    "source_repository": "heimgewebe/wgx",
+    "source_pr": "heimgewebe/wgx#646",
+    "source_candidate": "candidate-b8d5faf88fc4e3e413c6d2ad",
+    "source_finding": "Auf aktuellem WGX main a80a786d2a7f4bc839ad3fd2c3ad8469fea990f7 besteht `just contracts validate`, aber die README führt weiterhin `npx --yes ajv-cli@5 validate --spec=draft2020 --strict=log -s \"$SCHEMA\" -d metrics.json` mit einer HTTPS-URL aus. Der reale Readback endet mit Exit 2 und `Cannot find schema .../https:/raw.githubusercontent.com/...`.",
+    "source_readme_sha256": "b7103c3519a9470bfecf7c75b10ce837223ea6ce88b90289162063ae2e875357",
+    "does_not_establish": [
+      "Fehler des produktiven `just contracts validate`-Pfads",
+      "Rücknahme der T003-Verifikation",
+      "Berechtigung zu unverbundenen Contract-Änderungen"
+    ]
+  }
+}

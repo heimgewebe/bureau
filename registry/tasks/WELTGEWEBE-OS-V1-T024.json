@@ -1,0 +1,77 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ungültige AUTH_SESSION_TTL_SECONDS-Werte werden vor Dienststart typisiert erkannt und ohne panic als eindeutiger Konfigurationsfehler ausgegeben.",
+      "id": "typed-startup-validation"
+    },
+    {
+      "assertion": "Gültige TTL-Grenzwerte und ungültige Werte sind durch gezielte Tests abgedeckt.",
+      "id": "valid-boundary-tests"
+    },
+    {
+      "assertion": "In-Memory- und PostgreSQL-Session-Backends beziehen dieselbe bereits validierte TTL-Konfiguration.",
+      "id": "single-config-truth"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer im Rahmen von WELTGEWEBE-OS-V1-T022 als sinnvolle Folgemaßnahme autorisiert; isolierte Umsetzung mit Review.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "WG-AUD-OPS-001 beheben: AUTH_SESSION_TTL_SECONDS zentral typisiert beim Startup validieren und ungültige Werte als kontrollierten strukturierten Konfigurationsfehler statt panic behandeln.",
+  "id": "WELTGEWEBE-OS-V1-T024",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-943eb37d8caea42e27ce6e63",
+    "source_audit": "WELTGEWEBE-OS-V1-T022",
+    "source_commit": "cd4b588fe9cbc47e7afe223acee0d03fc4c4e84b",
+    "source_finding": "WG-AUD-OPS-001",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-943eb37d8caea42e27ce6e63",
+      "event_id": 927,
+      "event_created_at": "2026-07-22T03:48:05.897405Z",
+      "request_sha256": "a3e2358c1ad3d8a17aa4b1e1ba9536f45b5f8e5a769be48d55499a5c31a31cce",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "audit_finding",
+        "locator": "WELTGEWEBE-OS-V1-T022:WG-AUD-OPS-001:cd4b588fe9cbc47e7afe223acee0d03fc4c4e84b",
+        "observed_at": "2026-07-22T03:48:05.890442Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "rust",
+    "configuration",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Session-TTL kontrolliert statt per panic validieren"
+}

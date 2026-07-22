@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "SEMANTAH-INDEXD-SCALING-V1",
   "title": "SemantAH indexd scaling",
-  "state": "active",
-  "commitment": "later",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Reduce indexd search/write contention and define evidence-based exact-search and ANN boundaries without weakening deterministic ranking, snapshot consistency, persistence or bounded-memory contracts.",
   "completion": [
     "Search ranking and snippet materialization execute outside the shared mutable store lock while each request observes one consistent namespace snapshot.",
@@ -23,6 +23,9 @@
       "production capacity",
       "ANN readiness",
       "permission to replace exact search without recall evidence"
-    ]
+    ],
+    "lifecycle": {
+      "completed_at": "2026-07-22T01:32:15.507361Z"
+    }
   }
 }

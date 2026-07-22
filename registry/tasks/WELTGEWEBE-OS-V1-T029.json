@@ -1,0 +1,86 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor Änderung wird source- und runtimegebunden belegt, welche Pre-Auth-Arbeit beziehungsweise welches gemeinsame Budget vor erfolgreicher Signaturprüfung über viele Clients oder Instanzen belastet werden kann; bereits bestehende Limiter werden inventarisiert und nicht doppelt modelliert.",
+      "id": "cost-path-reverified"
+    },
+    {
+      "assertion": "Ungültiger oder noch nicht authentifizierter Federation-Verkehr ist auch über viele wechselnde Clients und mehrere API-Instanzen hinweg durch einen gemeinsamen, verteilten und fail-closed Schutz begrenzt; ein einzelner Prozessneustart setzt den Schutz nicht wirkungslos zurück.",
+      "id": "distributed-preauth-bound"
+    },
+    {
+      "assertion": "Gültige Federation bleibt unter dokumentierter Normal- und Burstlast verfügbar; die Schutzlogik enthält nachvollziehbare Kapazitäts-, Fairness- und Recovery-Prämissen.",
+      "id": "legitimate-federation-preserved"
+    },
+    {
+      "assertion": "Reproduzierbare Multi-Instance- und Angriffslast-Proofs zeigen sowohl die Begrenzung ungültiger Pre-Auth-Last als auch den Erhalt gültiger signierter Nachrichten und schlagen bei fehlendem verteiltem Schutz fail-closed fehl.",
+      "id": "multi-instance-attack-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer im Rahmen des laufenden WELTGEWEBE-OS-V1-T022-Komplettaudits und mit der ausdrücklichen aktuellen Anweisung „@grabowski umsetzen“ zur autonomen Registrierung und Umsetzung sinnvoller Audit-Folgen autorisiert; Umsetzung isoliert und reviewgebunden.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den nach PR #1526 verbleibenden gemeinsamen Pre-Auth-Blast-Radius der Federation-Empfangspfade schließen: ungültiger oder noch nicht signaturverifizierter Verkehr darf über viele Clients und API-Instanzen hinweg keine unbeschränkte gemeinsame Vorprüfungsarbeit beziehungsweise kein globales Empfangsbudget verbrauchen. Eine verteilte, fail-closed Begrenzung soll den bestehenden Pro-Client-Schutz ergänzen, ohne legitime Federation unnötig zu blockieren.",
+  "id": "WELTGEWEBE-OS-V1-T029",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-f01ccd38316a9da267d05f1a",
+    "source_audit": "WELTGEWEBE-OS-V1-T022",
+    "source_commit": "4829fa18a56e600af5a6fa712c6317a09f63916a",
+    "source_finding": "WG-AUD-FEDERATION-SHARED-PREAUTH-BLAST-RADIUS",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-f01ccd38316a9da267d05f1a",
+      "event_id": 950,
+      "event_created_at": "2026-07-22T06:59:22.227120Z",
+      "request_sha256": "858c36d86d53f15458d749db2c572ffcdcd36309c8a65053006045699b45bcfc",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "audit_finding",
+        "locator": "WELTGEWEBE-OS-V1-T022:PR1526:residual-distributed-preauth-blast-radius:4829fa18a56e600af5a6fa712c6317a09f63916a",
+        "observed_at": "2026-07-22T06:59:22.220688Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 3
+  },
+  "required_capabilities": [
+    "rust",
+    "federation",
+    "security",
+    "rate-limiting",
+    "distributed-systems",
+    "postgresql",
+    "nats",
+    "ci"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Federation-Pre-Auth-Last über verteilte Instanzen begrenzen"
+}

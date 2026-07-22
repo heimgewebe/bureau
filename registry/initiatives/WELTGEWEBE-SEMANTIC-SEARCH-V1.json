@@ -52,10 +52,11 @@
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T001",
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T002",
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T003",
-        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T004"
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T004",
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T005"
       ],
-      "current_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T005",
-      "updated_at": "2026-07-20",
+      "current_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T006",
+      "updated_at": "2026-07-22",
       "t001_merge_commit": "f00afacc7be4cc551c81c5511faf5f817b04f700",
       "t002_merge_commit": "adc060cfbb9d055a7b63c494fa042e7c57ca7bea",
       "t002_pull_request": 1495,
@@ -106,7 +107,20 @@
         "main_sha": "de8ec3da449d8fff2f0495e9c685eebb3c0dc061",
         "hardening_files_identical_to_head": true
       },
-      "t005_scope": "idempotent PostgreSQL projection, revision-bound worker, backfill, full rebuild and deletion/visibility propagation; no API, web or production rollout"
+      "t005_scope": "idempotent PostgreSQL projection, revision-bound worker, backfill, full rebuild and deletion/visibility propagation; no API, web or production rollout",
+      "t005_primary": {
+        "pull_request": 1529,
+        "head_sha": "dee387973973860c38b43a011f519d98b94a9a37",
+        "merge_commit": "cd4b588fe9cbc47e7afe223acee0d03fc4c4e84b",
+        "binary_diff_sha256": "98916aada86d778611b085bb0474bcda69a6a34375ee1e9a9d72ef5ed5f6fdf0",
+        "reviewed_tree_sha": "053140d11d254d2fadbcbdf124d61b95eb22a5b5",
+        "main_tree_sha": "053140d11d254d2fadbcbdf124d61b95eb22a5b5"
+      },
+      "t005_visibility_boundary": {
+        "projection_rule": "explicit search_visibility == public only; all other values fail-closed hidden",
+        "follow_up_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T006",
+        "candidate_id": "candidate-62346d44e3cc71876b5e7b94"
+      }
     }
   }
 }

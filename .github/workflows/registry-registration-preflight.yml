@@ -1,59 +1,180 @@
 name: Registry task registration preflight
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review]
-    paths:
-      - "registry/tasks/*.json"
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
   pull-requests: read
+  statuses: write
 
 jobs:
-  registry-registration-preflight:
+  pull-request-preflight:
+    if: github.event_name == 'pull_request_target'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.base.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install Bureau
+      - name: Install trusted Bureau base
         run: python -m pip install -e .
-      - name: Check new Registry task reservations
+      - name: Check Registry task reservations with base code
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           CHECKED_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          STATUS_CONTEXT: registry-registration-preflight/freshness
         run: |
           set -euo pipefail
           mkdir -p artifacts/registry-registration-preflight
+          run_url="${GITHUB_SERVER_URL}/${REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          gh api -X POST "repos/${REPOSITORY}/statuses/${PR_HEAD_SHA}" \
+            -f state=pending \
+            -f context="${STATUS_CONTEXT}" \
+            -f description="Registry allocation preflight running" \
+            -f target_url="${run_url}" >/dev/null
           mapfile -t task_files < <(
-            gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}/files" --paginate \
-              --jq '.[] | select((.status == "added" or .status == "renamed") and (.filename | startswith("registry/tasks/")) and (.filename | endswith(".json"))) | .filename'
+            gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}/files?per_page=100" --paginate \
+              --jq '.[] | select((.status == "added" or .status == "renamed") and (.filename | test("^registry/tasks/[A-Za-z0-9][A-Za-z0-9._:-]{0,239}\\.json$"))) | .filename'
           )
-          if [[ ${#task_files[@]} -eq 0 ]]; then
-            echo "No newly allocated Registry task paths in this pull request."
-            exit 0
-          fi
+          overall=success
+          description="No new Registry task allocation"
           for task_file in "${task_files[@]}"; do
-            task_id="$(python -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["id"])' "${task_file}")"
+            mkdir -p "$(dirname "${task_file}")"
+            gh api "repos/${HEAD_REPOSITORY}/contents/${task_file}?ref=${PR_HEAD_SHA}" \
+              --jq .content | base64 --decode > "${task_file}"
+            receipt_key="${task_file#registry/tasks/}"
+            receipt_key="${receipt_key%.json}"
+            set +e
             bureau --root . --json registry-registration-preflight \
               --repo-slug "${REPOSITORY}" \
               --task-json "${task_file}" \
               --checked-base-sha "${CHECKED_BASE_SHA}" \
               --pr-number "${PR_NUMBER}" \
               --head-sha "${PR_HEAD_SHA}" \
-              --receipt-out "artifacts/registry-registration-preflight/${task_id}.json"
+              --receipt-out "artifacts/registry-registration-preflight/${receipt_key}.json"
+            rc=$?
+            set -e
+            if [[ ${rc} -ne 0 ]]; then
+              overall=failure
+            fi
           done
+          if [[ ${#task_files[@]} -gt 0 && "${overall}" == success ]]; then
+            description="Registry allocation preflight passed"
+          elif [[ "${overall}" == failure ]]; then
+            description="Registry allocation preflight blocked"
+          fi
+          gh api -X POST "repos/${REPOSITORY}/statuses/${PR_HEAD_SHA}" \
+            -f state="${overall}" \
+            -f context="${STATUS_CONTEXT}" \
+            -f description="${description}" \
+            -f target_url="${run_url}" >/dev/null
+          if [[ "${overall}" != success ]]; then
+            exit 1
+          fi
       - name: Upload registration receipts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: registry-registration-preflight-${{ github.event.pull_request.number }}
+          path: artifacts/registry-registration-preflight
+          if-no-files-found: ignore
+
+  main-push-revalidation:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install trusted Bureau main
+        run: python -m pip install -e .
+      - name: Revalidate open Registry allocation pull requests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          CURRENT_MAIN_SHA: ${{ github.sha }}
+          STATUS_CONTEXT: registry-registration-preflight/freshness
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/registry-registration-preflight
+          run_url="${GITHUB_SERVER_URL}/${REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          mapfile -t pr_rows < <(
+            gh api "repos/${REPOSITORY}/pulls?state=open&per_page=100" --paginate \
+              --jq '.[] | [.number, .head.sha, .head.repo.full_name] | @tsv'
+          )
+          for row in "${pr_rows[@]}"; do
+            IFS=$'\t' read -r pr_number pr_head_sha pr_head_repository <<< "${row}"
+            mapfile -t task_files < <(
+              gh api "repos/${REPOSITORY}/pulls/${pr_number}/files?per_page=100" --paginate \
+                --jq '.[] | select((.status == "added" or .status == "renamed") and (.filename | test("^registry/tasks/[A-Za-z0-9][A-Za-z0-9._:-]{0,239}\\.json$"))) | .filename'
+            )
+            gh api -X POST "repos/${REPOSITORY}/statuses/${pr_head_sha}" \
+              -f state=pending \
+              -f context="${STATUS_CONTEXT}" \
+              -f description="Registry allocation revalidation running" \
+              -f target_url="${run_url}" >/dev/null
+            if [[ ${#task_files[@]} -eq 0 ]]; then
+              gh api -X POST "repos/${REPOSITORY}/statuses/${pr_head_sha}" \
+                -f state=success \
+                -f context="${STATUS_CONTEXT}" \
+                -f description="No new Registry task allocation on current main" \
+                -f target_url="${run_url}" >/dev/null
+              continue
+            fi
+            overall=success
+            receipt_dir="artifacts/registry-registration-preflight/pr-${pr_number}"
+            mkdir -p "${receipt_dir}"
+            for task_file in "${task_files[@]}"; do
+              mkdir -p "$(dirname "${task_file}")"
+              gh api "repos/${pr_head_repository}/contents/${task_file}?ref=${pr_head_sha}" \
+                --jq .content | base64 --decode > "${task_file}"
+              receipt_key="${task_file#registry/tasks/}"
+              receipt_key="${receipt_key%.json}"
+              set +e
+              bureau --root . --json registry-registration-preflight \
+                --repo-slug "${REPOSITORY}" \
+                --task-json "${task_file}" \
+                --checked-base-sha "${CURRENT_MAIN_SHA}" \
+                --pr-number "${pr_number}" \
+                --head-sha "${pr_head_sha}" \
+                --receipt-out "${receipt_dir}/${receipt_key}.json"
+              rc=$?
+              set -e
+              if [[ ${rc} -ne 0 ]]; then
+                overall=failure
+              fi
+            done
+            if [[ "${overall}" == success ]]; then
+              description="Registry allocation current on main"
+            else
+              description="Registry allocation blocked after main update"
+            fi
+            gh api -X POST "repos/${REPOSITORY}/statuses/${pr_head_sha}" \
+              -f state="${overall}" \
+              -f context="${STATUS_CONTEXT}" \
+              -f description="${description}" \
+              -f target_url="${run_url}" >/dev/null
+          done
+      - name: Upload revalidation receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: registry-registration-revalidation-${{ github.sha }}
           path: artifacts/registry-registration-preflight
           if-no-files-found: ignore

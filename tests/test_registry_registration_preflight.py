@@ -252,3 +252,48 @@ def test_cli_json_and_exit_codes(monkeypatch, tmp_path: Path, capsys):
         ]
     )
     assert exit_code == 2
+
+
+def test_required_check_catalog_makes_registry_freshness_part_of_readiness():
+    root = Path(__file__).resolve().parents[1]
+    catalog = json.loads((root / ".github/grabowski-required-checks.json").read_text())
+    assert catalog == {
+        "schema_version": 1,
+        "required_checks": [
+            "validate (3.10)",
+            "validate (3.12)",
+            "registry-registration-preflight/freshness",
+        ],
+    }
+
+
+def test_workflow_uses_trusted_base_code_and_revalidates_on_main_push():
+    root = Path(__file__).resolve().parents[1]
+    text = (root / ".github/workflows/registry-registration-preflight.yml").read_text()
+    lines = text.splitlines()
+    required = [
+        "  pull_request_target:",
+        "  push:",
+        "  statuses: write",
+        "github.event_name == 'pull_request_target'",
+        "github.event_name == 'push'",
+        "ref: ${{ github.event.pull_request.base.sha }}",
+        "HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}",
+        "registry-registration-preflight/freshness",
+        "CURRENT_MAIN_SHA",
+        "--checked-base-sha \"${CURRENT_MAIN_SHA}\"",
+        "pulls?state=open&per_page=100",
+        "pulls/${pr_number}/files?per_page=100",
+        "statuses/${pr_head_sha}",
+        "No new Registry task allocation on current main",
+        "repos/${HEAD_REPOSITORY}/contents/${task_file}?ref=${PR_HEAD_SHA}",
+        "repos/${pr_head_repository}/contents/${task_file}?ref=${pr_head_sha}",
+        "^registry/tasks/[A-Za-z0-9][A-Za-z0-9._:-]{0,239}",
+    ]
+    missing = [token for token in required if token not in text]
+    assert not missing
+    assert "  pull_request:" not in lines
+    assert "    paths:" not in lines
+    assert text.count("--paginate") >= 3
+    assert text.count("registry-registration-preflight/freshness") >= 2
+    assert "task_id=\"$(python" not in text

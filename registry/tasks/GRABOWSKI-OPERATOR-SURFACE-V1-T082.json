@@ -1,0 +1,87 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A first-class supported session escalation can authorize worktree-hygiene-reconcile without bypassing the trusted-owner profile gate, and the authorization is receipt-bound.",
+      "id": "supported-elevation"
+    },
+    {
+      "assertion": "A live canary runs worktree-hygiene-reconcile with max_actions=1 and apply_cleanup=false against /home/alex/repos/grabowski, producing a passed receipt or an explicit no-eligible-action result.",
+      "id": "bounded-canary"
+    },
+    {
+      "assertion": "The canary does not remove any worktree or branch; any mutation is limited to recovery-first archival of at most one exactly merge-proven terminal checkout.",
+      "id": "no-deletion"
+    },
+    {
+      "assertion": "Post-canary inventory and lifecycle readback identify the exact affected checkout, archive evidence if any, and prove dirty, coordinated, foreign-owned and ambiguous worktrees remained untouched.",
+      "id": "readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T006"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "worktree_cleanup",
+      "note": "High-risk live reconciliation must use an explicit supported session escalation; bypassing the profile gate is prohibited.",
+      "required_level": "reviewed_plan"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Provide a supported explicit session-escalation path for the high-risk worktree-hygiene-reconcile grip and execute one bounded live canary without deleting any worktree, proving the deployed reconciliation contract end to end.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T082",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "authorization_bypass",
+      "cleanup_completed",
+      "worktree_deleted"
+    ],
+    "live_basis": "Deployed runtime cb9b942 exposes worktree-hygiene-reconcile, but the current operator session received blocked preflight receipt 08a8e1134dc593c8d9fa959466b6432f972019b87c9e618609dcf5b1f80db5fe because grip_run cannot provide the required session_escalation.",
+    "source": "PR #370 worktree-hygiene live closeout on 2026-07-22",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-9f9ba2ab78bcd1636a4479e4",
+      "event_id": 933,
+      "event_created_at": "2026-07-22T05:25:00.606846Z",
+      "request_sha256": "83a7d3f5a9f9174bd020959579eecd8b0f68897bada355ef6b1052239d9bc9ed",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live_runtime_finding",
+        "locator": "grabowski-grip-receipt:08a8e1134dc593c8d9fa959466b6432f972019b87c9e618609dcf5b1f80db5fe",
+        "observed_at": "2026-07-22T05:05:29.461597Z",
+        "sha256": "08a8e1134dc593c8d9fa959466b6432f972019b87c9e618609dcf5b1f80db5fe"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Run an explicitly elevated live worktree-hygiene canary"
+}

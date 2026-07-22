@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T010",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Make Leitstand the single general operator display",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 360
@@ -70,7 +70,37 @@
       "automatic_shutdown_permission"
     ],
     "systemkatalog_rebound_at": "2026-07-11T20:31:00Z",
-    "systemkatalog_rebound_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021"
+    "systemkatalog_rebound_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021",
+    "verified_at": "2026-07-21T21:00:46Z",
+    "source_repository": "heimgewebe/leitstand",
+    "source_pr": 183,
+    "source_head": "b9885680b591e78924a8b581ec59b574b7114331",
+    "merge_commit": "a4b2213d5781de486956bea629e1b6f15cbe9157",
+    "outcome": "Leitstand is the single documented general operator display; Systemkatalog remains status-free and Schauwerk remains a specialized renderer, with direct-source fallbacks preserved.",
+    "verification": {
+      "diff_sha256": "22990ebe31a3ce60dfda79934db3601b6e48942072f7dfffd118f87c00859a4f",
+      "vitest": "249/249 passed",
+      "release_runtime": "32/32 passed",
+      "browser_shell": "mobile 21/21; desktop 13/13",
+      "local_gates": [
+        "lint",
+        "typecheck",
+        "build",
+        "vendor-contracts",
+        "observer-invariant",
+        "repo-structure",
+        "docs-relations",
+        "generated-files",
+        "drift-gates"
+      ],
+      "github_checks": "all passed before merge",
+      "task_sha256": "9792905e5f483ef77bdaab91df3c68f78b6fa237b6ac4dc0f9b95f6c0ea04ca2",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    },
+    "remote_role_evidence": {
+      "systemkatalog_main": "4d8549965240f50b784e27960d942dc6389f16b3",
+      "schauwerk_main": "013d6d2c28e6e7eb7109d660e7a133563992c405"
+    }
   },
   "depends_on": [
     "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T004",

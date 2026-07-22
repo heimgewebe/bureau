@@ -1,0 +1,84 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein reproduzierbarer Caddy-2.8.4-Adaptions- oder äquivalenter Routingproof belegt, dass die vorgesehenen Plaintext-Health-/API-Smoke-Matcher vor dem HTTPS-Fallback wirksam sind.",
+      "id": "adapted-route-order-proof"
+    },
+    {
+      "assertion": "Ein Laufzeitproof zeigt: die ausdrücklich erlaubten schmalen HTTP-Smoke-Pfade liefern das erwartete Health-/API-Verhalten, während nicht erlaubte Plaintext-Pfade weiterhin auf HTTPS umgeleitet werden.",
+      "id": "runtime-http-smoke-proof"
+    },
+    {
+      "assertion": "Die Änderung öffnet keinen Metrikpfad: öffentliche HTTP-/HTTPS-Anfragen auf /api/metrics beziehungsweise /metrics liefern keinen Prometheus-Inhalt.",
+      "id": "metrics-boundary-preserved"
+    },
+    {
+      "assertion": "Nach Merge und Deploy ist die produktive Caddy-Konfiguration commitgenau gebunden und das erwartete Routingverhalten extern beziehungsweise über den vorgesehenen Smoke-Pfad verifiziert.",
+      "id": "production-readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer im Rahmen von WELTGEWEBE-OS-V1-T022 und mit der ausdrücklichen aktuellen Anweisung „@grabowski umsetzen“ zur autonomen Registrierung und Umsetzung sinnvoller Audit-Folgen autorisiert; Umsetzung isoliert und reviewgebunden.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den beim Audit reproduzierten Caddy-Routingfehler beheben: Die absichtlich schmalen Plaintext-HTTP-Health-/API-Smoke-Routen müssen unter Caddy 2.8.4 tatsächlich vor dem HTTPS-Fallback ausgewertet werden. Die reale adaptierte Routingreihenfolge und das Laufzeitverhalten werden reproduzierbar geprüft, ohne HTTPS, öffentliche Metrikgrenze oder normale Produktionsrouten zu schwächen.",
+  "id": "WELTGEWEBE-OS-V1-T028",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-b5a4a76b4786181311457500",
+    "source_audit": "WELTGEWEBE-OS-V1-T022",
+    "source_commit": "a7f8c490095d907a26ba637f739ca423b8bba180",
+    "source_finding": "WG-AUD-OPS-CADDY-HTTP-ORDER",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-b5a4a76b4786181311457500",
+      "event_id": 948,
+      "event_created_at": "2026-07-22T06:43:03.442561Z",
+      "request_sha256": "672e30aa375cd23455c93d8fe2310129e23efca1ef008566a84dda586367ca0b",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "audit_finding",
+        "locator": "WELTGEWEBE-OS-V1-T022:PR1532-operations-review:caddy-http-directive-order:a7f8c490095d907a26ba637f739ca423b8bba180",
+        "observed_at": "2026-07-22T06:43:03.434486Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "caddy",
+    "operations",
+    "networking",
+    "security",
+    "ci",
+    "deployment"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "VPS-HTTP-Smoke-Routing gegen Caddy-Direktivenreihenfolge härten"
+}

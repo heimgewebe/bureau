@@ -1,0 +1,59 @@
+name: Registry task registration preflight
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - "registry/tasks/*.json"
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  registry-registration-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Bureau
+        run: python -m pip install -e .
+      - name: Check new Registry task reservations
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          CHECKED_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/registry-registration-preflight
+          mapfile -t task_files < <(
+            gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}/files" --paginate \
+              --jq '.[] | select((.status == "added" or .status == "renamed") and (.filename | startswith("registry/tasks/")) and (.filename | endswith(".json"))) | .filename'
+          )
+          if [[ ${#task_files[@]} -eq 0 ]]; then
+            echo "No newly allocated Registry task paths in this pull request."
+            exit 0
+          fi
+          for task_file in "${task_files[@]}"; do
+            task_id="$(python -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["id"])' "${task_file}")"
+            bureau --root . --json registry-registration-preflight \
+              --repo-slug "${REPOSITORY}" \
+              --task-json "${task_file}" \
+              --checked-base-sha "${CHECKED_BASE_SHA}" \
+              --pr-number "${PR_NUMBER}" \
+              --head-sha "${PR_HEAD_SHA}" \
+              --receipt-out "artifacts/registry-registration-preflight/${task_id}.json"
+          done
+      - name: Upload registration receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: registry-registration-preflight-${{ github.event.pull_request.number }}
+          path: artifacts/registry-registration-preflight
+          if-no-files-found: ignore

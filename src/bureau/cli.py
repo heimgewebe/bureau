@@ -158,6 +158,14 @@ def parser() -> argparse.ArgumentParser:
     registry_truth = sub.add_parser("registry-truth")
     registry_truth.add_argument("--strict", action="store_true")
     registry_truth.add_argument("--no-baseline-probe", action="store_true")
+    registration_preflight = sub.add_parser("registry-registration-preflight")
+    registration_preflight.add_argument("--repo-slug", required=True, metavar="OWNER/REPO")
+    registration_preflight.add_argument("--task-json", required=True)
+    registration_preflight.add_argument("--checked-base-sha", required=True)
+    registration_preflight.add_argument("--base-ref", default="main")
+    registration_preflight.add_argument("--pr-number", type=int)
+    registration_preflight.add_argument("--head-sha")
+    registration_preflight.add_argument("--receipt-out")
     sub.add_parser("conflicts")
     rlens_policy = sub.add_parser("rlens-policy")
     rlens_policy.add_argument("--strict", action="store_true")
@@ -462,6 +470,7 @@ _READ_ONLY_COMMANDS = frozenset(
         "repo-balls",
         "resource-lifecycle-contract",
         "registry-truth",
+        "registry-registration-preflight",
         "rlens-policy",
         "run",
         "runs",
@@ -732,6 +741,25 @@ def main(argv: list[str] | None = None) -> int:
             value = registry_truth_diagnostics(root, probe_baselines=not args.no_baseline_probe)
             emit(value, args.json)
             return 1 if args.strict and not value["healthy"] else 0
+        if args.command == "registry-registration-preflight":
+            from .registry_registration_preflight import (
+                repository_registration_preflight,
+                write_receipt,
+            )
+
+            value = repository_registration_preflight(
+                root,
+                repository=args.repo_slug,
+                task_json_path=args.task_json,
+                checked_base_sha=args.checked_base_sha,
+                base_ref=args.base_ref,
+                pr_number=args.pr_number,
+                head_sha=args.head_sha,
+            )
+            if args.receipt_out:
+                write_receipt(args.receipt_out, value)
+            emit(value, args.json)
+            return 0 if value["decision"] == "allow" else 2
         registry = Registry.load(root)
 
         if args.command == "doctor" and args.inventory == "broad-bureau-leases":

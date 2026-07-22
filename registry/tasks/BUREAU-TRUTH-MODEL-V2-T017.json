@@ -90,6 +90,44 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "does_not_establish": [
+        "safe_cleanup_or_ownership_of_the_conventional_dirty_checkout",
+        "resolution_of_preexisting_queue_findings",
+        "resolution_of_preexisting_state_root_hygiene_findings",
+        "completion_of_close_ready_scope_hardening_follow_up_event_921",
+        "future_runtime_freshness_after_later_unrelated_main_merges"
+      ],
+      "follow_up_candidate": "candidate-4a239492b3c7a2600b668572",
+      "follow_up_event_id": 921,
+      "implementation_diff_sha256": "64d86004203bcd71317c5b36f68e5e3751d4ce97f659ac048b60eed3c6eacbe8",
+      "implementation_head": "cb7e28be143934d7dfef62bc2d343a46222f8b71",
+      "implementation_pr": "heimgewebe/bureau#829",
+      "lifecycle_mismatch_count_after_merge": 0,
+      "merge_commit": "5a56e217f57f4a970c3d4cb04651d8ddf36d8806",
+      "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8",
+      "postmerge_verification_probe_sha256": "2808481ff37470ea12b26838315e625c3e0e296604e744e29496cff5f4994cf0",
+      "preserved_dirty_preimage_diff_sha256": "e2d03bdd78032e65ebe6ca3f7a395e50af4699b39ec5a4b63723b2fc45fd820a",
+      "runtime_canonical_registry_valid": true,
+      "runtime_manifest_valid": true,
+      "runtime_registry_head": "5a56e217f57f4a970c3d4cb04651d8ddf36d8806",
+      "runtime_source_commit": "5a56e217f57f4a970c3d4cb04651d8ddf36d8806",
+      "runtime_state_integrity": "ok",
+      "self_review_receipt_sha256": "ead190d9720c22c6fa54481f109a6e3059094039d3b28edec563ee5f9dd7c76d",
+      "source": "operator-reviewed-repair-closeout",
+      "source_snapshot_sha256": "c0eb44e90706709ef617f48e5b0f128608c5089b5c5681d7726db8512c7c1b88",
+      "task_sha256": "782c887c6c7d67abb201dbcb528a011e969383292f837ce9ba04dd9b0f994051",
+      "validation": [
+        "PR #829 required checks validate (3.10) and validate (3.12) passed on exact reviewed head",
+        "CodeQL and both CodeQL analyses passed on PR #829",
+        "Focused tests/test_v2.py passed 84/84 on exact final implementation head",
+        "Complete pytest suite passed to 100% with exit 0 on exact final implementation head",
+        "Post-merge clean main readback reported zero lifecycle mismatches, bureau check valid, DB integrity ok and strict Registry Truth healthy",
+        "Canonical runtime identity reported source_commit and registry head equal to implementation merge commit 5a56e217 with valid manifest and canonical registry",
+        "Canonical conventional-checkout four-file dirty preimage remained byte-identical at SHA-256 e2d03bdd78032e65ebe6ca3f7a395e50af4699b39ec5a4b63723b2fc45fd820a"
+      ],
+      "verified_at": "2026-07-22T02:57:26.929311Z"
     }
   },
   "priority": {
@@ -107,6 +145,6 @@
     "strategy": "Revert only the merged T017 closeout commit or PR. Preserve the original conventional dirty bytes and historical candidate/audit snapshots; do not rewrite task, candidate, receipt or dirty-state history."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Publish four preserved dirty lifecycle closeouts from isolated truth"
 }

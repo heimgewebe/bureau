@@ -1,0 +1,112 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Before implementation, the conventional Bureau checkout is reread. The four target dirty paths still match dirty diff SHA-256 e2d03bdd78032e65ebe6ca3f7a395e50af4699b39ec5a4b63723b2fc45fd820a from source snapshot c0eb44e90706709ef617f48e5b0f128608c5089b5c5681d7726db8512c7c1b88, or execution stops fail-closed. The conventional dirty checkout is never reset, cleaned, staged, committed, overwritten or force-released.",
+      "id": "dirty-preimage-preserved"
+    },
+    {
+      "assertion": "Current clean canonical Registry, Bureau lifecycle/Doctor, queue, GitHub PR bindings, live-register activity and Grabowski leases are reread immediately before effects. Only initiatives still reported completion-ready and represented by the preserved four-path scope may change; unrelated KONVERGENZREGELKREIS-V1 and all other dirty state remain untouched.",
+      "id": "fresh-four-scope"
+    },
+    {
+      "assertion": "Still-valid closeouts are reproduced from current main in a new isolated leased worktree and change only state to completed, commitment to completed and canonical lifecycle.completed_at metadata as appropriate. No bytes are copied by overwriting the conventional dirty checkout.",
+      "id": "isolated-semantic-reproduction"
+    },
+    {
+      "assertion": "bureau check, strict Registry truth, lifecycle/Doctor checks, git diff --check and the relevant full Bureau test suite pass on the exact final head. A complete head/diff-SHA-256-bound self-review reports PASS before PR publication or merge.",
+      "id": "validation-and-review"
+    },
+    {
+      "assertion": "The final PR is bound to exactly this task, has green required CI and unchanged reviewed head before merge. Post-merge readback confirms origin/main contains only the reviewed closeouts, the canonical runtime snapshot is refreshed through the standard runtime-refresh contract if needed, and the preserved original dirty bytes are not silently discarded.",
+      "id": "pr-ci-merge-readback"
+    },
+    {
+      "assertion": "Any target skipped because lifecycle truth changed, ownership remains ambiguous, a foreign lease/PR overlaps, or preimage bytes differ is left untouched and registered as explicit follow-up rather than being forced through this task.",
+      "id": "remaining-work-registered"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.bureau"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user ordered continued autonomous Bureau task completion. Implementation must preserve the conventional dirty checkout byte-for-byte, use an isolated leased worktree, and rederive lifecycle truth immediately before effects.",
+      "required_level": "reviewed_plan"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/.local/state/grabowski/operator-probes/20260722-bureau-four-dirty-lifecycle-closeouts.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Resolve the four remaining Bureau lifecycle mismatches without altering the pre-existing dirty conventional checkout: preserve and hash-bind its bytes, rederive current lifecycle truth, reproduce only still-valid semantic closeouts in an isolated leased worktree, validate and review the exact diff, then publish through normal PR/CI/merge/readback.",
+  "id": "BUREAU-TRUTH-MODEL-V2-T017",
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "metadata": {
+    "dirty_diff_bytes": 4791,
+    "dirty_diff_sha256": "e2d03bdd78032e65ebe6ca3f7a395e50af4699b39ec5a4b63723b2fc45fd820a",
+    "does_not_establish": [
+      "task_implementation",
+      "claim_or_dispatch_authority",
+      "dirty_state_ownership",
+      "automatic_merge",
+      "safe_cleanup_of_conventional_checkout",
+      "future_lifecycle_truth"
+    ],
+    "observed_registry_commit": "c7f49fa2b79be9c5e9f5dbd2dc0e9b9890abbafa",
+    "scope_paths": [
+      "registry/initiatives/REPOBRIEF-SYMBOL-CALL-GRAPH-V1.json",
+      "registry/initiatives/SEMANTAH-INDEXD-SCALING-V1.json",
+      "registry/initiatives/SEMANTAH-USEFULNESS-V1.json",
+      "registry/initiatives/WELTGEWEBE-FADEN-VERFALL-V1.json"
+    ],
+    "source_candidate": "candidate-19ddaac111657dbb90258983",
+    "source_event_id": 916,
+    "source_snapshot": "/home/alex/.local/state/grabowski/operator-probes/20260722-bureau-four-dirty-lifecycle-closeouts.json",
+    "source_snapshot_sha256": "c0eb44e90706709ef617f48e5b0f128608c5089b5c5681d7726db8512c7c1b88",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-19ddaac111657dbb90258983",
+      "event_id": 916,
+      "event_created_at": "2026-07-22T01:15:25.239827Z",
+      "request_sha256": "e88402eae807d0309fd94d220aec75908e833a1e18093550aa85b8218f015d35",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator-live-audit",
+        "locator": "/home/alex/.local/state/grabowski/operator-probes/20260722-bureau-four-dirty-lifecycle-closeouts.json",
+        "observed_at": "2026-07-22T01:00:00Z",
+        "sha256": "c0eb44e90706709ef617f48e5b0f128608c5089b5c5681d7726db8512c7c1b88"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "bureau",
+    "grabowski",
+    "github"
+  ],
+  "rollback": {
+    "strategy": "Revert only the merged T017 closeout commit or PR. Preserve the original conventional dirty bytes and historical candidate/audit snapshots; do not rewrite task, candidate, receipt or dirty-state history."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Publish four preserved dirty lifecycle closeouts from isolated truth"
+}

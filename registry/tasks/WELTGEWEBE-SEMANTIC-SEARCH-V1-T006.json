@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T006",
+  "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
+  "title": "Hybride serverseitige Such-API mit autoritativer Sichtbarkeit vor Retrieval",
+  "state": "ready",
+  "goal": "Eine serverseitige hybride Such-API auf der T005-Projektion implementieren, die exakte Treffer, PostgreSQL-Volltext, Trigramme und den internen semantischen Zusatzpfad kombiniert und Sichtbarkeit sowie Autorisierung ausschließlich aus dem bestehenden autoritativen Weltgewebe-PostgreSQL-Modell vor der Kandidatenauswahl durchsetzt.",
+  "priority": {
+    "lane": "now",
+    "rank": 60
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Durch den direkten Nutzerauftrag autorisiert. T006 ist der geplante API-Schritt und muss die in T005 bewusst fail-closed gelassene vollständige Sichtbarkeitsabbildung vor Retrieval schließen; Weboberfläche und Produktionsrollout bleiben nachgelagert."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "rust",
+    "postgresql",
+    "search-ranking",
+    "authorization",
+    "privacy",
+    "api-design",
+    "testing",
+    "grabowski"
+  ],
+  "depends_on": [
+    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T005"
+  ],
+  "acceptance": [
+    {
+      "id": "authoritative-visibility-before-retrieval",
+      "assertion": "Sichtbarkeit und Autorisierung werden vor Kandidatenauswahl und Ranking ausschließlich aus dem bestehenden autoritativen fachlichen PostgreSQL-Modell abgeleitet; es entsteht keine zweite vereinfachte Sichtbarkeitswahrheit."
+    },
+    {
+      "id": "fail-closed-visibility-mapping",
+      "assertion": "Öffentliche, private, verborgene, gelöschte, entzogene und relevante Legacy-Zustände sind explizit abgebildet; unbekannte oder nicht eindeutig autorisierte Zustände bleiben fail-closed und erscheinen in keinem lexikalischen oder semantischen Kandidatenset."
+    },
+    {
+      "id": "hybrid-retrieval-contract",
+      "assertion": "Exakte Titel- und Tagtreffer, bestehende Filter und die autoritative PostgreSQL-FTS-/Trigramm-Reihenfolge bleiben maßgeblich; Semantik ergänzt nur nach dem T004-Vertrag und fingiert keine kuratierten Beziehungen."
+    },
+    {
+      "id": "active-generation-only",
+      "assertion": "Die API liest ausschließlich eine vollständig aktive, identitätsgebundene T005-Generation und mischt keine building-, ready- oder retired-Generationen."
+    },
+    {
+      "id": "lexical-provider-fallback",
+      "assertion": "Nur belegte temporäre lokale Provider-Nichtverfügbarkeit darf den semantischen Zusatzpfad degradieren; Identitäts-, Dimensions-, Datenschutz-, Generations- und Formatfehler bleiben fail-closed."
+    },
+    {
+      "id": "stable-ranking-and-pagination",
+      "assertion": "Ranking, Tie-Breaks, Filter und Pagination sind deterministisch; identischer kanonischer Zustand und identische Anfrage erzeugen dieselbe Reihenfolge."
+    },
+    {
+      "id": "visibility-regression-suite",
+      "assertion": "Negative Integrationstests belegen, dass Sichtbarkeitsentzug, Autorisierungsänderung, Löschung und stale Projektionen weder über exakte, lexikalische noch semantische Pfade Treffer leaken."
+    },
+    {
+      "id": "privacy-and-observability",
+      "assertion": "API-Metriken und Fehlerpfade sind beobachtbar, ohne Rohvektoren, Dokumenttexte, Providerantworten oder unnötige Autorisierungsdetails in Logs oder Receipts auszugeben."
+    },
+    {
+      "id": "repository-gates",
+      "assertion": "Vor Merge liegen vollständiger Diff, exakte Head-/Diffbindung, unabhängige Correctness- und Data-Integrity-Reviews, grüne PostgreSQL-/API-Integration und erforderliche CI vor."
+    },
+    {
+      "id": "no-web-or-production-rollout",
+      "assertion": "T006 implementiert keine Weboberfläche, keinen direkten Produktionsrollout, keinen öffentlichen Live-Beweis, kein ANN/HNSW, keinen externen Vektorindex und keine SemantAH-Stilllegung."
+    }
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "task_profile": "repo_change",
+    "skip_reason": "live_first_primary",
+    "note": "PostgreSQL-Sichtbarkeitsmodell, API-Verhalten, Git, Tests und CI müssen live und commitgebunden geprüft werden; RepoGround ergänzt nur Repository-Kontext."
+  },
+  "metadata": {
+    "source": "initiative_plan_plus_t005_deferred_followup",
+    "registered_at": "2026-07-22",
+    "predecessor": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T005",
+    "stage": "hybrid-server-search-api",
+    "candidate_id": "candidate-62346d44e3cc71876b5e7b94",
+    "candidate_event_id": 922,
+    "candidate_source_diff_sha256": "98916aada86d778611b085bb0474bcda69a6a34375ee1e9a9d72ef5ed5f6fdf0",
+    "t005_visibility_boundary": "T005 projected only explicit search_visibility == public as visible and otherwise fail-closed hidden. T006 must bind retrieval to the full authoritative domain/PostgreSQL visibility and authorization model before any server-side search surface is introduced.",
+    "does_not_establish": [
+      "web search UI",
+      "similar nodes UI",
+      "production rollout",
+      "public live proof",
+      "ANN or HNSW",
+      "external vector index",
+      "SemantAH archive authority"
+    ]
+  }
+}

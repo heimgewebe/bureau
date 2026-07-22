@@ -3,11 +3,11 @@
   "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T005",
   "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
   "title": "Idempotente Suchprojektion, Worker, Backfill und Löschfortpflanzung",
-  "state": "ready",
+  "state": "verified",
   "goal": "Eine vollständig regenerierbare PostgreSQL-Suchprojektion mit revisionsgebundener, idempotenter und Multi-Instance-sicherer Worker-Verarbeitung implementieren, einschließlich Backfill, vollständigem Rebuild sowie korrekter Fortpflanzung von Lösch-, Sichtbarkeits- und Revisionsänderungen, ohne Search-API, Weboberfläche oder Produktionsrollout einzuführen.",
   "priority": {
-    "lane": "now",
-    "rank": 50
+    "lane": "later",
+    "rank": 900
   },
   "execution": {
     "mode": "interactive-agent",
@@ -141,6 +141,96 @@
       "public live proof",
       "SemantAH archive authority",
       "permission to mutate WELTGEWEBE-OS-V1-T005 or other foreign tasks"
-    ]
+    ],
+    "verified_at": "2026-07-22",
+    "outcome": "Weltgewebe-PR #1529 implementierte und härtete die regenerierbare PostgreSQL-Suchprojektion, revisions- und generationsgebundene Multi-Instance-Worker, begrenzte Provider-Retries, lokalen Ollama-Backfill, deterministische Rebuild-Digests sowie Lösch- und Sichtbarkeitsfortpflanzung. Der finale Race-Fix serialisiert Jobabschluss und Generation-Reconciliation atomar unter dem Generation-Advisory-Lock. T005 erzeugt weiterhin keine Search-API, keinen Produktionsrollout und keinen öffentlichen Live-Effekt.",
+    "implementation": {
+      "repository": "heimgewebe/weltgewebe",
+      "pull_request": 1529,
+      "base_sha": "a62bba98bc59bacd5210cdca3440461d15f1c9ce",
+      "final_head_sha": "dee387973973860c38b43a011f519d98b94a9a37",
+      "merge_commit": "cd4b588fe9cbc47e7afe223acee0d03fc4c4e84b",
+      "merged_at": "2026-07-22T02:10:07Z",
+      "final_diff_sha256": "98916aada86d778611b085bb0474bcda69a6a34375ee1e9a9d72ef5ed5f6fdf0",
+      "final_diff_bytes": 124557,
+      "reviewed_tree_sha": "053140d11d254d2fadbcbdf124d61b95eb22a5b5",
+      "main_readback_sha": "cd4b588fe9cbc47e7afe223acee0d03fc4c4e84b",
+      "main_tree_sha": "053140d11d254d2fadbcbdf124d61b95eb22a5b5"
+    },
+    "validation": {
+      "review_axes": [
+        "correctness",
+        "concurrency-data-integrity"
+      ],
+      "review_report_sha256": {
+        "correctness": "1b64f95f21f9e4548a823270ee2beb71b7edc89cc7313a539119286acee8ea03",
+        "concurrency-data-integrity": "519c7c154cf1b0ac679c39394c1243fc178ad493da2db720991032db9367afc2"
+      },
+      "review_evidence_comments": [
+        5040988383,
+        5040988480
+      ],
+      "required_review_evidence_gate": "pass",
+      "github_ci_run": 29884433217,
+      "review_evidence_run": 29884482607,
+      "review_evidence_run_attempt": 2,
+      "local_evidence": [
+        "cargo fmt --check",
+        "git diff --check",
+        "cargo check --locked -p weltgewebe-api",
+        "cargo test --locked -p weltgewebe-api",
+        "63 semantic-search Python tests",
+        "full PostgreSQL 16 + NATS JetStream integration proof",
+        "real Ollama 0.12.6 qwen3-embedding:4b provider proof",
+        "real search-backfill binary proof",
+        "real two-generation PostgreSQL concurrency proof"
+      ]
+    },
+    "visibility_boundary": {
+      "projection_rule": "Only explicit search_visibility == public is projected as visible; every other or unknown value is fail-closed hidden.",
+      "reason": "T005 does not invent a second authorization truth and exposes no Search API. The planned T006 binds pre-retrieval visibility to the authoritative domain/PostgreSQL authorization model before any server-side search surface is introduced.",
+      "follow_up_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T006",
+      "candidate_id": "candidate-62346d44e3cc71876b5e7b94",
+      "candidate_event_id": 922
+    },
+    "verified_acceptance": {
+      "canonical-postgresql-truth": "PostgreSQL remains canonical; projections are derived and rebuildable. Unknown visibility is fail-closed rather than inventing authorization state.",
+      "projection-schema-identity": "Projection rows are revision/content/visibility bound and relationally bound to a generation carrying provider, model, runtime, dimension, document, normalization and ranking identity.",
+      "idempotent-revision-bound-worker": "Final mutations require exact source version/revision, generation and current fenced claim; repeat delivery is effect-identical.",
+      "stale-results-fail-closed": "Stale source revisions, lost leases and superseded workers cannot overwrite or reactivate newer projections.",
+      "multi-instance-safety": "FOR UPDATE SKIP LOCKED, attempt_count fencing and advisory-locked generation transitions are covered by real PostgreSQL concurrency tests.",
+      "provider-outage-isolation": "Only temporary availability/transport errors retry, bounded to eight attempts; permanent provider contract failures terminate fail-closed and catch-up can be explicitly rearmed.",
+      "deletion-visibility-propagation": "Tombstones and explicit search_visibility withdrawal enqueue and fence removal across building/ready/active generations; unknown visibility stays hidden. Broader authoritative pre-retrieval authorization mapping is explicitly assigned to T006 before any Search API exists.",
+      "revision-propagation": "Index-relevant fields enqueue revisions while irrelevant location/address/unknown payload changes do not create embedding work.",
+      "backfill-and-full-rebuild": "The local Ollama backfill is bounded/resumable and real-executed; identical canonical state yields identical logical integrity digest, excluding timestamps.",
+      "generation-cutover": "Activation is advisory-lock serialized, requires complete current projections and no open jobs/tombstones; retired generations cannot be directly reactivated.",
+      "operational-evidence": "Queue/generation metrics expose counts and states without document text, raw vectors or provider responses.",
+      "backup-restore-regeneration": "Canonical PostgreSQL durability remains covered by the T003 PostgreSQL proof; T005 independently proves deterministic full regeneration of the derived projection.",
+      "ann-measured-only": "No ANN, HNSW, pgvector production dependency or external vector index was introduced.",
+      "repository-gates": "Final diff SHA, two R3 PASS reviews, full local proofs, green GitHub CI, merge commit and byte-identical reviewed/main tree are recorded.",
+      "no-product-or-production-surface": "No Search API, Web UI, similar-node surface, production activation, deployment or SemantAH shutdown was introduced."
+    },
+    "verification": {
+      "source": "GitHub PR #1529, exact Git objects, final R3 review evidence, complete CI, real PostgreSQL/Ollama/backfill proofs and post-merge main-tree readback",
+      "source_refs": [
+        "heimgewebe/weltgewebe#1529"
+      ],
+      "verified_at": "2026-07-22",
+      "final_head_sha": "dee387973973860c38b43a011f519d98b94a9a37",
+      "final_merge_commit": "cd4b588fe9cbc47e7afe223acee0d03fc4c4e84b",
+      "final_diff_sha256": "98916aada86d778611b085bb0474bcda69a6a34375ee1e9a9d72ef5ed5f6fdf0",
+      "main_readback_sha": "cd4b588fe9cbc47e7afe223acee0d03fc4c4e84b",
+      "reviewed_tree_sha": "053140d11d254d2fadbcbdf124d61b95eb22a5b5",
+      "main_tree_sha": "053140d11d254d2fadbcbdf124d61b95eb22a5b5",
+      "task_sha256": "1775ad94f97c8692a781dd649c445bee5fe037699c480a573d5630ff45ebd2be",
+      "plan_sha256": "18002b2b2def870ec6e5dd91cd15d19aaade6f053cac144ca85e2862234a709e",
+      "task_sha256_method": "bureau.v2.task_revision_sha256: canonical JSON of the task after removing top-level state and the entire metadata.verification object; therefore the recorded task_sha256 is non-self-referential.",
+      "plan_sha256_method": "bureau.v2.plan_sha256: legacy.sha256_json of the initiative current_plan object; the digest binds the plan reference independently of task verification metadata.",
+      "hash_semantics_source": [
+        "src/bureau/v2.py::task_revision_sha256",
+        "src/bureau/v2.py::plan_sha256"
+      ],
+      "hashes_recomputed_after_main_integration": "79d8d45415170e333030ca7090322dbce8932893"
+    }
   }
 }

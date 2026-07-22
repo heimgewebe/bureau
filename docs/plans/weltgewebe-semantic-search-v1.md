@@ -99,7 +99,7 @@ Das Goldset erhält pro Fall mindestens: stabile Fall-ID, Sprache, Anfrage, sich
 
 ## T005-Projektions- und Workergrenzen
 
-T005 ist die aktuelle Stufe. Sie implementiert ausschließlich:
+T005 ist die verifizierte Projektions- und Workerstufe. Sie implementiert ausschließlich:
 
 - eine regenerierbare PostgreSQL-Suchprojektion,
 - revisions- und generationsgebundene idempotente Worker-Verarbeitung,
@@ -136,8 +136,8 @@ Brauchbare SemantAH-Konzepte wie Providergrenzen, Dimensionsprüfung, Normalisie
 2. **T002 – Relevanz-Goldset und Embedding-Modellwahl – verifiziert:** Weltgewebe-PR #1495 veröffentlichte den synthetischen Harness, Integritätsbindungen und lokalen Modellvergleich; `qwen3-embedding:8b` blieb zunächst Referenzkandidat.
 3. **T003 – PostgreSQL-Suchgrundlage und pgvector-Fähigkeit – verifiziert:** PR #1500 belegt PostgreSQL 16.14, pg_trgm 1.6, Projektion, Regeneration, Backup/Restore und Konfliktgrenzen; pgvector bleibt mangels Verfügbarkeit gestoppt.
 4. **T004 – interner Embedding- und Ranking-Kern – verifiziert:** PR #1502 und Hardening-PR #1506 liefern Provider-, Normalisierungs-, Dimensions-, Generations- und Hybrid-Ranking-Beleg; 4B ist kleinster qualifizierter lokaler Kandidat, 8B Vergleichsobergrenze.
-5. **T005 – idempotente Projektion, Worker, Backfill und Löschfortpflanzung – aktuell:** revisionssichere Multi-Instance-Verarbeitung und reproduzierbaren Neuaufbau liefern.
-6. **T006 – hybride serverseitige Such-API:** Sichtbarkeit vor Retrieval, bestehende Filter und technischen lexikalischen Fallback liefern.
+5. **T005 – idempotente Projektion, Worker, Backfill und Löschfortpflanzung – verifiziert:** PR #1529 liefert revisionssichere Multi-Instance-Verarbeitung, lokalen Backfill und reproduzierbaren Neuaufbau.
+6. **T006 – hybride serverseitige Such-API – aktuell:** autoritative Sichtbarkeit und Autorisierung vor Retrieval binden, bestehende Filter wahren und den technischen lexikalischen Fallback liefern.
 7. **T007 – Websuche und „Ähnliche Knoten“:** Suchoberfläche integrieren und maschinelle Ähnlichkeit klar von Beziehungen trennen.
 8. **T008 – vollständige Abnahme, direkter Rollout und öffentlicher Live-Beweis:** grüne CI, direkter Rollout, öffentlicher Readback und Betriebsbelege.
 9. **T009 – SemantAH stilllegen und bereinigen:** erst nach T008 Runtime-Rollen entfernen, Repository archivieren und Bureau/Systemkatalog nachziehen.
@@ -150,7 +150,8 @@ Nach öffentlichem T008-Beweis supersedet oder schließt T009 `SEMANTAH-USEFULNE
 - **T002 ist verifiziert:** Weltgewebe-PR #1495 wurde mit attestiertem Head `31ca3c433dcaf3b941c5e1c95167a68e9f68ceb8` und Merge-Commit `adc060cfbb9d055a7b63c494fa042e7c57ca7bea` gemergt. Der kanonische GitHub-Diff ist an SHA-256 `b54ec09ce52fe7e109b18da8f4ed7e5fc5e33783ff75252dd354c605ec6988e7` gebunden; der lokale Binärdiff an `6ffdc08f17d68ecb72a0a4dfe8ade167ab47dabbe6b0cf7a1a35410e4e2e1375`.
 - **T003 ist verifiziert:** Weltgewebe-PR #1500 wurde mit Head `35dea9a90cf0bb84f167ed596e3cb5de1423ca6a` und Merge-Commit `bbeb7c63f6ce0a807d0203a7062198a545a2a6a5` gemergt. PostgreSQL 16.14 und pg_trgm 1.6 sind belegt; pgvector ist im gepinnten Image nicht verfügbar und wurde nicht fingiert.
 - **T004 ist verifiziert:** PR #1502 wurde mit Head `9fbc592d3301d3c156a931ed18112a76ff55e1da` als `9f44895337b2ecf97f83a125ca30f1247d98745f` gemergt. PR #1506 wurde mit Head `fc710aa4c0d0819d4acaef5b0034f8d88a9eb6b2` als `4c6ef9e8fec0a2b17cc5babb5b0e02798002b89b` gemergt. Die finalen erforderlichen Gates waren grün; frühere fehlgeschlagene oder abgebrochene Review-Evidence-Läufe wurden nicht als Mergebeleg verwendet.
-- **T005 ist aktuell:** Projektionsschema, idempotenten Worker, Backfill, Rebuild sowie Lösch-, Sichtbarkeits- und Revisionsfortpflanzung umsetzen; weiterhin ohne API, Web und Produktionseffekt.
+- **T005 ist verifiziert:** PR #1529 ist gemergt; der geprüfte PR-Head und der Merge-Commit besitzen denselben vollständigen Git-Tree. Die Projektion bleibt bei unbekannter Sichtbarkeit fail-closed.
+- **T006 ist aktuell:** Vor Einführung der serverseitigen Suche die vollständige autoritative Sichtbarkeits- und Autorisierungsabbildung vor Retrieval schließen und darauf den hybriden API-Vertrag aufbauen.
 - **SemantAH bleibt unverändert:** keine Archivierung, keine Runtime-Entfernung und keine Bereinigung vor T008/T009.
 
 ## T002-Test- und Reviewbindung

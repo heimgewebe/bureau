@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "initiative": "WELTGEWEBE-OS-V1",
+  "state": "planned",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T022"
+  ],
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer im Rahmen von WELTGEWEBE-OS-V1-T022 ausdrücklich zur autonomen Registrierung sinnvoller, nicht unmittelbar behobener Audit-Folgen autorisiert; Umsetzung isoliert und reviewgebunden."
+    }
+  },
+  "id": "WELTGEWEBE-OS-V1-T038",
+  "title": "Entwicklungsrouten aus dem Produktionsbundle sicher ausschließen",
+  "goal": "Den im T022-Nutzenaudit auf Weltgewebe-Commit 39d5a8f5fa637ba9f8a487074c86856e6a6b897c belegten /_dev-Routenpfad durch einen expliziten, getesteten Build- und Runtime-Vertrag aus produktiven Deployments ausschließen oder vollständig entfernen, ohne legitime lokale Entwicklungs- und Testpfade unbeabsichtigt zu blockieren.",
+  "priority": {
+    "lane": "next",
+    "rank": 38
+  },
+  "required_capabilities": [
+    "svelte",
+    "typescript",
+    "build",
+    "security",
+    "browser",
+    "ci"
+  ],
+  "metadata": {
+    "source_audit": "WELTGEWEBE-OS-V1-T022",
+    "source_commit": "39d5a8f5fa637ba9f8a487074c86856e6a6b897c",
+    "source_finding": "WG-AUD-PROD-UTIL-DEV-ROUTES-IN-PROD-BUNDLE",
+    "source_artifact": "audit/complete-audit/product-utility-simplification-audit-current.json",
+    "dedup_note": "Archiv/Demo, Governance-GET und Federation-Outbox werden in separaten parallelen T022-Folgetasks behandelt; dieser Task umfasst ausschließlich die /_dev-Produktionsgrenze."
+  },
+  "acceptance": [
+    {
+      "id": "production-route-boundary",
+      "assertion": "Produktive Builds und Deployments exponieren keine /_dev/*-Route als reguläre Produktoberfläche; der Vertrag ist durch Routing- oder Runtime-Tests fail-closed belegt."
+    },
+    {
+      "id": "development-path-explicit",
+      "assertion": "Falls Entwicklungsrouten erhalten bleiben, sind sie ausschließlich über einen expliziten nichtproduktiven Build-/Runtime-Modus erreichbar und können nicht versehentlich durch die Standard-Produktionskonfiguration aktiviert werden."
+    },
+    {
+      "id": "production-discovery-exclusion",
+      "assertion": "Produktionsnavigation, Sitemap und andere Discovery-Flächen verweisen nicht auf /_dev; relevante Bundle- oder Routengenerierungsartefakte werden geprüft."
+    },
+    {
+      "id": "browser-build-regression",
+      "assertion": "Ein reproduzierbarer Build-/Browser-Test beweist auf dem exakten finalen Head sowohl die Produktionssperre als auch den beabsichtigten Entwicklungsfall, sofern dieser bestehen bleibt."
+    },
+    {
+      "id": "exact-review",
+      "assertion": "Der finale Diff wird gegen den exakten Head reviewt und bestehende relevante Web-/CI-Gates sind grün."
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T039",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "PostgreSQL-Pool-Multi-Instance-Budget und Lifecycle-Grenzen ergänzen",
+  "goal": "Den nach der Deduplizierung von PERF-FIND-001 verbleibenden Prüfumfang ergänzend zu WELTGEWEBE-OS-V1-T030 absichern: zuerst den tatsächlich umgesetzten T030-Endzustand prüfen und nur noch fehlende Multi-Instance-Kapazitätsbudgetierung sowie explizite Acquire-/Idle-/Lifetime-Grenzen und deren Sättigungsverhalten umsetzen, ohne bereits erfüllte T030-Arbeit zu duplizieren.",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 39
+  },
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T030"
+  ],
+  "required_capabilities": [
+    "repository",
+    "github",
+    "postgresql",
+    "rust",
+    "performance",
+    "observability",
+    "bureau",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Als Residualtask aus dem diffgebundenen Review von Bureau PR #869 registriert. T030 ist kanonisch und wird nicht parallel überschrieben; Umsetzung prüft zuerst dessen tatsächlichen Endzustand und arbeitet nur verbleibende Lücken ab."
+    }
+  },
+  "metadata": {
+    "source_audit": "WELTGEWEBE-OS-V1-T022",
+    "source_commit": "39d5a8f5fa637ba9f8a487074c86856e6a6b897c",
+    "source_finding": "PERF-FIND-001",
+    "source_artifact": "audit/complete-audit/performance-scalability-audit-current.json",
+    "deduplication_review": "T033 wurde durch PR #869 entfernt, weil T030 den Hauptumfang von PERF-FIND-001 bereits kanonisch abdeckt. Der anschließende diffgebundene Review zeigte jedoch zusätzliche T033-Anforderungen zu Multi-Instance-Budget sowie Acquire-/Idle-/Lifetime-Grenzen. Eine direkte T030-Korrektur wurde fail-closed nicht publiziert, weil der fremde offene PR #858 ebenfalls T030 verändert. T039 bewahrt deshalb nur diesen Restumfang mit Abhängigkeit von T030."
+  },
+  "acceptance": [
+    {
+      "id": "t030-gap-reconciliation",
+      "assertion": "Vor jeder Codeänderung wird der dann aktuelle, tatsächlich umgesetzte T030-Endzustand gegen diesen Residualumfang geprüft. Bereits durch T030 erfüllte Punkte werden evidenzgebunden als erfüllt markiert statt erneut implementiert; ist der gesamte Residualumfang bereits erfüllt, wird T039 ohne redundanten Produktcode als superseded oder verified geschlossen."
+    },
+    {
+      "id": "multi-instance-capacity-budget",
+      "assertion": "Soweit nach T030 noch fehlend, ist der zulässige Poolvertrag für mehrere API-Instanzen aus PostgreSQL max_connections, reserviertem Betriebs-Headroom, Instanzanzahl und erwarteter Parallelität nachvollziehbar hergeleitet und mit sicheren Bounds validiert."
+    },
+    {
+      "id": "pool-lifecycle-bounds",
+      "assertion": "Soweit nach T030 noch fehlend, sind relevante Acquire-, Idle- und Lifetime-/Timeout-Grenzen typisiert konfigurierbar, dokumentiert und gegen ungültige oder betrieblich gefährliche Werte fail-closed validiert."
+    },
+    {
+      "id": "multi-instance-saturation-proof",
+      "assertion": "Reproduzierbare Tests oder Benchmarks belegen für mehrere API-Instanzen Sättigung, Acquire-Wartezeit beziehungsweise Timeout und begrenzten Gesamtverbindungsaufbau; reale Produktionskapazität wird ohne Produktionsmessung nicht als bewiesen behauptet."
+    },
+    {
+      "id": "exact-review",
+      "assertion": "Der finale Head ist diffgebunden reviewt; relevante Rust-, PostgreSQL-, Performance- und CI-Prüfungen sind grün und die Abgrenzung zu T030 ist im Closeout nachvollziehbar."
+    }
+  ]
+}

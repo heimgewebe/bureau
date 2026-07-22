@@ -1,0 +1,108 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Stabile Cursor/Pagination ist kryptographisch an die konkrete verifizierte Audit-Snapshot-Identität und deren Evidence-Bindings gebunden.",
+      "id": "evidence-bound-cursor"
+    },
+    {
+      "assertion": "Keine Seite behauptet vollständige Matches, Seeds, Korrelationen oder Statistiken außerhalb des tatsächlich gelesenen Fensters; Scan- und Ergebnisvollständigkeit bleiben explizit getrennt.",
+      "id": "no-false-completeness"
+    },
+    {
+      "assertion": "Chain- oder Segment-Drift zwischen Seiten invalidiert den Cursor explizit, sobald sich die gebundene Snapshot-Identität verändert.",
+      "id": "snapshot-drift"
+    },
+    {
+      "assertion": "Vorwärts- und Rückwärtsnavigation sind für einen unveränderten verifizierten Snapshot deterministisch.",
+      "id": "bidirectional-navigation"
+    },
+    {
+      "assertion": "Jeder Request hat unabhängig von der Gesamtlänge der Audit-Kette begrenzten Speicherverbrauch und begrenzte Arbeit.",
+      "id": "bounded-work"
+    },
+    {
+      "assertion": "Pagination unterstützt aktive und historische Archivsegmente und bewahrt Record- sowie Segment-SHA-256-Bindungen.",
+      "id": "archive-segments"
+    },
+    {
+      "assertion": "Tests decken Rotation, Snapshot-Drift, ungültige Cursor, Hash-Drift und Audit-Ketten mit mehr als 100000 Records ab.",
+      "id": "rotation-and-drift-tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T066"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_audit_query.py",
+      "component:tests/test_audit_query.py",
+      "component:docs/audit-query-trace-v1.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Audit Query, Trace und Analyze um stabile, evidence-bound Cursor/Pagination über verifizierte Audit-Snapshots erweitern, damit Ketten über dem 100000-Record-Scanlimit navigierbar bleiben, ohne Vollständigkeit außerhalb des tatsächlich gelesenen Fensters zu behaupten oder eine zweite Audit-Wahrheit zu erzeugen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T086",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "current live audit chain exceeds 100000 records",
+      "pagination belongs to T081",
+      "permission to create a second audit truth store"
+    ],
+    "live_observation": {
+      "archived_segment_count": 2,
+      "continuation_supported": false,
+      "scan_limit": 100000,
+      "segment_count": 3,
+      "total_records": 29542
+    },
+    "source": "audit_query_trace_v11_live_followup",
+    "source_merge_commit": "acf29382784c1541b930b8068c58aac4497da5e4",
+    "source_module_sha256": "e11cc0c90fbddc637becabedb9f2301fbf632e28806d4f4d285041d388f4a392",
+    "source_repository": "heimgewebe/grabowski",
+    "source_runtime_release": "acf29382784c-srcsetb3e40956935c-locke6664d600b6c-contract6d90e320a7a4",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-f1ce97345d6b18feb718495d",
+      "event_id": 953,
+      "event_created_at": "2026-07-22T07:29:25.031056Z",
+      "request_sha256": "f3ba53b12119de2ff81b8aceb203f52752d4021edc57dc33cf78f25641e0ad0d",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "deployed-runtime-source",
+        "locator": "runtime:acf29382784c1541b930b8068c58aac4497da5e4:src/grabowski_audit_query.py",
+        "observed_at": "2026-07-22T07:29:25.024544Z",
+        "sha256": "e11cc0c90fbddc637becabedb9f2301fbf632e28806d4f4d285041d388f4a392"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 219
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "audit"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Audit-Leseoberfläche über 100.000 Records evidence-bound paginieren"
+}

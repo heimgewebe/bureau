@@ -1,0 +1,90 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Periodic worktree hygiene is integrated into an existing runtime-retention or convergence producer; no duplicate cleanup daemon or second lifecycle truth model is introduced.",
+      "id": "single-convergence-path"
+    },
+    {
+      "assertion": "Automatic reconciliation is bounded per run and archives only clean terminal checkouts proven by exact merged PR head and default-branch evidence, while dirty, ambiguous, coordinated and foreign-owned worktrees remain fail-closed.",
+      "id": "bounded-archive"
+    },
+    {
+      "assertion": "Automatic cleanup never bypasses active retention, recovery refs, the 24-hour archive grace, or the persisted dry-run plan and plan_sha256 precondition.",
+      "id": "retention-grace"
+    },
+    {
+      "assertion": "T082 is completed successfully before periodic mutating effects are enabled.",
+      "id": "canary-before-enable"
+    },
+    {
+      "assertion": "Tests cover periodic idempotence and safety gates, and live readback demonstrates convergence without deleting protected or active worktrees.",
+      "id": "tests-live"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T082"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Implement scheduling in existing retention/convergence paths; do not introduce an independent competing cleanup daemon.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Run bounded worktree lifecycle reconciliation automatically through the existing retention/convergence machinery, avoiding a second cleanup daemon while preserving recovery-first archive, active-retention protection, the 24-hour grace period and typed dry-run/hash-gated cleanup.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T083",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "automatic_cleanup_enabled",
+      "safe_unbounded_cleanup",
+      "second_daemon_required"
+    ],
+    "live_basis": "The deployed grip exists and is live, but PR #370 intentionally added no periodic producer scheduling. Final reviewed PR diff SHA-256: 01cea5fbef3fc3d5c5ef4cc96b09f8f74dd2bce2b0ad95af7edba19f6064c4d0.",
+    "source": "PR #370 worktree-hygiene post-merge review",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-5bb0a6437635fb20de5c6d2b",
+      "event_id": 934,
+      "event_created_at": "2026-07-22T05:27:11.442879Z",
+      "request_sha256": "a0e7350cc099b99052e5440d82088b4c7688e4f6335a5b5e9a3e01b79913b5a6",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "code_review_finding",
+        "locator": "pr-diff:worktree-hygiene-owner-gc-pr370-7a08769.diff",
+        "observed_at": "2026-07-22T05:00:00Z",
+        "sha256": "01cea5fbef3fc3d5c5ef4cc96b09f8f74dd2bce2b0ad95af7edba19f6064c4d0"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Integrate worktree hygiene into runtime retention convergence"
+}

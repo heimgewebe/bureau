@@ -3,7 +3,7 @@
   "id": "CCM-V1-T003",
   "initiative": "CHRONIK-CODING-MEMORY-V1",
   "title": "Register Chronik history brief effect experiment",
-  "state": "ready",
+  "state": "verified",
   "depends_on": [
     "CCM-V1-T001",
     "CCM-V1-T002"
@@ -59,7 +59,53 @@
     "does_not_establish": [
       "beneficial_effect",
       "adoption_readiness",
-      "general_productivity_improvement"
-    ]
+      "general_productivity_improvement",
+      "automatic_policy_or_routing_authority"
+    ],
+    "implementation": {
+      "repository": "heimgewebe/vibe-lab",
+      "pull_request": 316,
+      "branch": "experiment/chronik-history-brief-effect-v1",
+      "reviewed_head": "1cfd8e9db452f798d28794c7237448dc2bfb84dd",
+      "merge_commit": "ae0af7396ed844b9d0b50a2dd18bfac11590694d",
+      "merged_at": "2026-07-14T13:20:08Z",
+      "current_main_at_verification": "09a88891c47c727e8f66460c0cbc08863fca58b4"
+    },
+    "validation": {
+      "pull_request_checks": [
+        "bundle-freshness-receipt: SUCCESS",
+        "validate-doc-freshness-registry: SUCCESS",
+        "validate: SUCCESS",
+        "non-blocking-diagnostics: SUCCESS",
+        "ephemeral-diagnostics: SUCCESS"
+      ],
+      "current_decision": "not_executed",
+      "current_observations": 0
+    },
+    "acceptance_evidence": {
+      "prospective-registration": "PR #316 freezes control, treatment, five-part binary scorecard, material-effect threshold, preflight-effort cost metric, comparability constraints, confounders, review date 2026-08-15 and expiry 2026-09-01 before observations.",
+      "natural-cases-only": "Method requires naturally occurring coding tasks and explicitly forbids repeated productive mutations solely for experiment generation or retrospective cases as prospective evidence.",
+      "no-effect-claim": "The registered decision remains not_executed with zero observations on current Vibe-Lab main; result.md explicitly disallows productivity, safe-retry, routing, generality or adoption-readiness claims.",
+      "boundary": "registration.v2.json sets experiment_only, no_auto_policy, no_auto_routing, no_queue_authority and no_runtime_authority; Bureau with operator review owns any later adoption decision."
+    },
+    "outcome": "Vibe-Lab PR #316 prospectively registered the natural-case Chronik history-brief effect experiment before any observations. The current main state still records not_executed and zero observations, so T003 establishes only the experiment contract and no effect claim.",
+    "verified_at": "2026-07-23T09:25:30+02:00",
+    "verification": {
+      "task_sha256": "e1aa1224cdce507af76eec752da2a29ef251ebefa685b83814719448a67deb74",
+      "plan_sha256": "7a4d09115c987f7199ff6b984bc87c08f8598c55d5dddfd7284c7d55d1b5bcd0",
+      "source": "github-and-current-vibe-lab-main",
+      "source_ref": "heimgewebe/vibe-lab#316; merge ae0af7396ed844b9d0b50a2dd18bfac11590694d; current main 09a88891c47c727e8f66460c0cbc08863fca58b4",
+      "artifacts": {
+        "registration": {
+          "path": "experiments/2026-07-13_chronik-history-brief-effect/registration.v2.json",
+          "sha256": "742b49ebc68b9bb388e08ba7625d4036251454f5132dadabf977f768fd67c209"
+        },
+        "decision": {
+          "path": "experiments/2026-07-13_chronik-history-brief-effect/results/decision.yml",
+          "sha256": "89d0161d8c596b6d1532f9e1549bb3785ab3eae1ce684f4d283e3601a99e1bda"
+        }
+      },
+      "verified_at": "2026-07-23T09:25:30+02:00"
+    }
   }
 }

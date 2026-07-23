@@ -1,0 +1,173 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Jede Lifecycle-Evidence-Quelle besitzt je Lifecycle-Kind eine kanonische, digestgebundene Applicability-Semantik für aktiv beobachtet, explizit abwesend oder formal nicht anwendbar; die drei Zustände werden nicht miteinander gleichgesetzt.",
+      "id": "typed-source-applicability"
+    },
+    {
+      "assertion": "Fehlende, unbekannte, widersprüchliche oder schemafremde Applicability blockiert Klassifikation und Effect-Revalidierung fail-closed, statt synthetisch eine Beobachtung oder Abwesenheit anzunehmen.",
+      "id": "fail-closed-unknown-applicability"
+    },
+    {
+      "assertion": "Collector, normalized evidence und Effect-Plan-Reklassifikation validieren dieselbe Applicability-Wahrheit; ein formal nicht anwendbarer Source-Digest kann keinen aktiven Readback vortäuschen und bleibt reproduzierbar gebunden.",
+      "id": "collector-and-effect-plan-binding"
+    },
+    {
+      "assertion": "Der T089-Task-Archivierungspfad kann für taskfremde Quellen wie Workspace, Checkout oder tmux formal nicht anwendbar ausdrücken, ohne den generischen Vertrag observed_sources semantisch zu überladen oder die realen Task-, Receipt-, Prozess- und Lease-Prüfungen abzuschwächen.",
+      "id": "task-archive-case"
+    },
+    {
+      "assertion": "Bestehende Task-, Workspace- und Checkout-Klassifikationen behalten ihre bisherigen Authorities und fail-closed Grenzen; es entsteht kein zweites Lifecycle-, Archiv- oder Retention-Modell.",
+      "id": "preserve-existing-lifecycle-semantics"
+    },
+    {
+      "assertion": "Tests decken observed, explicit-absence, not-applicable, unbekannte Applicability, Digest-Tampering und Effect-Plan-Reklassifikation ab; bestehende Lifecycle-, T089- und Tool-Surface-Verträge bleiben grün.",
+      "id": "regression-tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T089"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_lifecycle_evidence.py",
+      "component:src/grabowski_lifecycle_collectors.py",
+      "component:src/grabowski_lifecycle_effect_plan.py",
+      "component:src/grabowski_task_attention.py",
+      "component:tests"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den generischen Grabowski-Lifecycle-Evidence-Vertrag so härten, dass Quellen je Lifecycle-Kind explizit als aktiv beobachtet, explizit abwesend oder formal nicht anwendbar typisiert und digestgebunden werden; Effect-Plan-Reklassifikation muss formal nicht anwendbare Quellen akzeptieren können, ohne synthetisch eine aktive Beobachtung zu behaupten, während unbekannte oder untypisierte Applicability fail-closed bleibt und keine zweite Lifecycle-Wahrheit entsteht.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T093",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "design_rule": "Applicability beschreibt die Gültigkeit einer Quelle für einen Lifecycle-Kind; sie darf weder Source-Existenz noch aktiven Readback vortäuschen und bleibt Teil der bestehenden Lifecycle-Evidence-Authority.",
+    "does_not_establish": [
+      "permission to weaken required lifecycle evidence",
+      "permission to treat unknown sources as absent",
+      "second lifecycle truth",
+      "automatic archive authority"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-d83beb9a2c0fc3b4cb90fd8a",
+      "event_id": 1002,
+      "event_created_at": "2026-07-23T06:17:33.802876Z",
+      "request_sha256": "a666bbfe896b947bba934f13fe7c06683edd80ba17b7d610b7296e57c5a3d5c0",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chat:project-misc:2026-07-23:t089-lifecycle-source-applicability",
+        "observed_at": "2026-07-23T06:17:33.795455Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "origin_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T089",
+    "renumber_reason": "GRABOWSKI-OPERATOR-SURFACE-V1-T090 was already reserved by unrelated open PR #892; T091 and T092 already exist on main.",
+    "source": "T089 self-review follow-up: generic lifecycle observed_sources semantics versus explicit not-applicable task-archive sources.",
+    "supersedes_registration_attempt": "heimgewebe/bureau#897",
+    "verification": {
+      "status": "verified",
+      "verified_at": "2026-07-23T10:00:11Z",
+      "source": "operator_closeout",
+      "pr_completion": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 416,
+        "reviewed_head": "fa1c445e8b88cea487d413912aed45f82b5fdff7",
+        "diff_sha256": "b9ce97bfce814fa410b8aba820229638a73493ef99531cd7736dcb5936bb21d4",
+        "merge_commit": "8e2a6755a7ae1201630af071529a1a18f9d57741",
+        "merged_at": "2026-07-23T09:31:47Z",
+        "self_review": "PASS",
+        "required_check_count": 5,
+        "required_checks_green": true
+      },
+      "deployment": {
+        "repo_head": "8e2a6755a7ae1201630af071529a1a18f9d57741",
+        "release_id": "8e2a6755a7ae-srcset24e0d1e06ff1-locke6664d600b6c-contract6447c4f2f0cd",
+        "deployment_job": "grabowski-job-028fc621eb8b",
+        "deployment_receipt_sha256": "8a47fdaa114c372f58a92336eacfed09013319237842b6947ad383a7374d6296",
+        "validation_test_count": 3091,
+        "validation_skipped_count": 2,
+        "provenance_valid": true,
+        "runtime_healthy": true,
+        "deployment_integrity_valid": true
+      },
+      "live_proof": {
+        "job": "grabowski-job-e814914838d2",
+        "receipt_sha256": "1bcd66ee9be524c6475c8aa6240aeffb72a0cf370a9430dec793fb9c94e22f90",
+        "runtime_module": "/home/alex/.local/share/grabowski-mcp/.venv/lib/python3.10/site-packages/grabowski_lifecycle_evidence.py",
+        "source_applicability_schema_version": 1,
+        "states": [
+          "explicit_absence",
+          "not_applicable",
+          "observed"
+        ],
+        "observed_terminal_archivable": true,
+        "explicit_absence_terminal_archivable": true,
+        "not_applicable_terminal_archivable": true,
+        "not_applicable_not_observed_but_digest_bound": true,
+        "missing_applicability_ambiguous": true,
+        "unknown_applicability_ambiguous": true,
+        "effect_plan_blocks_applicability_drift": true
+      },
+      "cleanup": {
+        "job": "grabowski-job-40d83ada8b75",
+        "receipt_sha256": "efcc5999a84d00aa50c383baaa666c140f4477a4a10ace3d8c7d66ab768e5122",
+        "implementation_worktree_removed": true,
+        "deploy_worktree_removed": true,
+        "local_feature_branch_removed": true,
+        "remote_feature_branch_absent": true,
+        "implementation_owner_active_lease_count": 0,
+        "deploy_owner_active_lease_count": 0
+      },
+      "acceptance": {
+        "typed-source-applicability": true,
+        "fail-closed-unknown-applicability": true,
+        "collector-and-effect-plan-binding": true,
+        "task-archive-case": true,
+        "preserve-existing-lifecycle-semantics": true,
+        "regression-tests": true
+      },
+      "does_not_establish": [
+        "permission to weaken required lifecycle evidence",
+        "permission to treat unknown sources as absent",
+        "second lifecycle truth",
+        "automatic archive authority"
+      ],
+      "task_sha256": "687cf2c908b85cc1079c90eaf155a23956e2900534a1248eddf8d1b5a0220cfc",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 17
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Lifecycle-Evidence Source-Applicability typisieren"
+}

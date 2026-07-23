@@ -37,7 +37,7 @@
     "working_repository": "/home/alex/repos/grabowski"
   },
   "goal": "Close the remaining crash-durability gap in the SOPS-backed ntfy topic materializer by durably syncing directory metadata after create-only publication and atomic replacement without changing the dispatcher runtime contract or exposing secret material.",
-  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T047",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T050",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "metadata": {
     "does_not_establish": [

@@ -74,7 +74,7 @@
   "metadata": {
     "completion": {
       "followup_tasks": [
-        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T047",
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T050",
         "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048",
         "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T049"
       ],
@@ -132,8 +132,8 @@
     "production_evidence": [
       {
         "kind": "closeout_receipt",
-        "path": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/t045-closeout-v1.json",
-        "sha256": "d93a87c118dc85969f5ada1d1884f06c45f51e1d41eafb1c5cb6d6a886a73abd"
+        "path": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/t045-closeout-v2.json",
+        "sha256": "030803d52afd5daf433d666fa6542d830d95ce5fbddd6c5d31881e2ef4e6b093"
       },
       {
         "kind": "trivy_triage",
@@ -227,17 +227,17 @@
         {
           "authority": "grabowski-host-evidence",
           "evidence_sha256": [
-            "d93a87c118dc85969f5ada1d1884f06c45f51e1d41eafb1c5cb6d6a886a73abd"
+            "030803d52afd5daf433d666fa6542d830d95ce5fbddd6c5d31881e2ef4e6b093"
           ],
           "kind": "live_probe",
-          "source_ref": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/t045-closeout-v1.json",
+          "source_ref": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/t045-closeout-v2.json",
           "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
         },
         {
           "authority": "bureau",
           "kind": "task_reference",
           "relation": "residual-crash-durability",
-          "source_ref": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T047",
+          "source_ref": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T050",
           "state": "planned",
           "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
         },
@@ -269,7 +269,7 @@
     },
     "verification": {
       "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
-      "task_sha256": "4ef0935c8609b53aefa9605b3a2598d2621e800da0a27993650ba9f6cc1c18c9"
+      "task_sha256": "32acbebb3d93e3179a39770316fd8ed906373708375725142f5e132e4075e6aa"
     },
     "verified_acceptance": {
       "ansible-canonical-inventory": "The Ansible pilot derives an ephemeral heimberry inventory selection from /home/alex/.config/grabowski/fleet.json and does not persist a second Fleet truth. Durable task execution was used for the bounded remote lifecycle.",

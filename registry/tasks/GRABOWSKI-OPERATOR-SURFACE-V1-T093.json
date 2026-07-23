@@ -1,0 +1,102 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Jede Lifecycle-Evidence-Quelle besitzt je Lifecycle-Kind eine kanonische, digestgebundene Applicability-Semantik für aktiv beobachtet, explizit abwesend oder formal nicht anwendbar; die drei Zustände werden nicht miteinander gleichgesetzt.",
+      "id": "typed-source-applicability"
+    },
+    {
+      "assertion": "Fehlende, unbekannte, widersprüchliche oder schemafremde Applicability blockiert Klassifikation und Effect-Revalidierung fail-closed, statt synthetisch eine Beobachtung oder Abwesenheit anzunehmen.",
+      "id": "fail-closed-unknown-applicability"
+    },
+    {
+      "assertion": "Collector, normalized evidence und Effect-Plan-Reklassifikation validieren dieselbe Applicability-Wahrheit; ein formal nicht anwendbarer Source-Digest kann keinen aktiven Readback vortäuschen und bleibt reproduzierbar gebunden.",
+      "id": "collector-and-effect-plan-binding"
+    },
+    {
+      "assertion": "Der T089-Task-Archivierungspfad kann für taskfremde Quellen wie Workspace, Checkout oder tmux formal nicht anwendbar ausdrücken, ohne den generischen Vertrag observed_sources semantisch zu überladen oder die realen Task-, Receipt-, Prozess- und Lease-Prüfungen abzuschwächen.",
+      "id": "task-archive-case"
+    },
+    {
+      "assertion": "Bestehende Task-, Workspace- und Checkout-Klassifikationen behalten ihre bisherigen Authorities und fail-closed Grenzen; es entsteht kein zweites Lifecycle-, Archiv- oder Retention-Modell.",
+      "id": "preserve-existing-lifecycle-semantics"
+    },
+    {
+      "assertion": "Tests decken observed, explicit-absence, not-applicable, unbekannte Applicability, Digest-Tampering und Effect-Plan-Reklassifikation ab; bestehende Lifecycle-, T089- und Tool-Surface-Verträge bleiben grün.",
+      "id": "regression-tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T089"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_lifecycle_evidence.py",
+      "component:src/grabowski_lifecycle_collectors.py",
+      "component:src/grabowski_lifecycle_effect_plan.py",
+      "component:src/grabowski_task_attention.py",
+      "component:tests"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den generischen Grabowski-Lifecycle-Evidence-Vertrag so härten, dass Quellen je Lifecycle-Kind explizit als aktiv beobachtet, explizit abwesend oder formal nicht anwendbar typisiert und digestgebunden werden; Effect-Plan-Reklassifikation muss formal nicht anwendbare Quellen akzeptieren können, ohne synthetisch eine aktive Beobachtung zu behaupten, während unbekannte oder untypisierte Applicability fail-closed bleibt und keine zweite Lifecycle-Wahrheit entsteht.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T093",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "design_rule": "Applicability beschreibt die Gültigkeit einer Quelle für einen Lifecycle-Kind; sie darf weder Source-Existenz noch aktiven Readback vortäuschen und bleibt Teil der bestehenden Lifecycle-Evidence-Authority.",
+    "does_not_establish": [
+      "permission to weaken required lifecycle evidence",
+      "permission to treat unknown sources as absent",
+      "second lifecycle truth",
+      "automatic archive authority"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-d83beb9a2c0fc3b4cb90fd8a",
+      "event_id": 1002,
+      "event_created_at": "2026-07-23T06:17:33.802876Z",
+      "request_sha256": "a666bbfe896b947bba934f13fe7c06683edd80ba17b7d610b7296e57c5a3d5c0",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chat:project-misc:2026-07-23:t089-lifecycle-source-applicability",
+        "observed_at": "2026-07-23T06:17:33.795455Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "origin_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T089",
+    "renumber_reason": "GRABOWSKI-OPERATOR-SURFACE-V1-T090 was already reserved by unrelated open PR #892; T091 and T092 already exist on main.",
+    "source": "T089 self-review follow-up: generic lifecycle observed_sources semantics versus explicit not-applicable task-archive sources.",
+    "supersedes_registration_attempt": "heimgewebe/bureau#897"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 17
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Lifecycle-Evidence Source-Applicability typisieren"
+}

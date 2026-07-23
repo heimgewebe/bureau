@@ -40,6 +40,21 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T049",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "metadata": {
+    "bureau_closeout_validation": {
+      "doctor_receipt_sha256": "7f79dd49495322edca2069b6651578b8e9a27d862c54ecd40282a24355bb7371",
+      "make_validate": {
+        "lifecycle_receipt_sha256": "a7e1ca9acb257abcdf01521385f322856357299e348234b571e2142158fbbd38",
+        "task_id": "74345426c39e41cf96913df0",
+        "tests_passed": 806
+      },
+      "queue_reconcile_receipt_sha256": "c5e4c0f90436ea34270095aa3725798c31b946795d24cbde60b2cb8c8d3e58dc",
+      "registry_truth_strict_receipt_sha256": "5bd6ebf6fd5c9a756db7adce549d1169df9ac8e44572c1821a6f31c6f67729a4"
+    },
+    "completion": {
+      "outcome": "Grabowski PR #421 introduced exact versioned legacy/current effect-plan contracts and read-time compatibility, preserving six observed valid historical v1 plans without rewriting task history. The merged commit is deployed exactly; task_list, current_work and status task projection are live again with tasks.available=true.",
+      "schema_version": 1,
+      "status": "verified_task_projection_effect_plan_compatibility"
+    },
     "does_not_establish": [
       "that underlying task records are lost",
       "permission to delete incompatible persistent records",
@@ -50,7 +65,65 @@
       "grabowski_task_list",
       "grabowski_current_work"
     ],
-    "registered_from": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045 live closeout readback on 2026-07-23"
+    "operator_attention_closeout": {
+      "decision_grip_receipt_sha256": [
+        "bd563c5166f3ef96d2f45ea19997b6a4159a3318432394f6aa283c12b75ee988",
+        "ac8225ebe72b05d328b6fce15ed3e00973a0db1debf060ec3f971119f744a455",
+        "e807c30fb6e5b92ab202e113de95ba686e4a3feeb9cc6c7f388ccd1cc02fe975",
+        "01bd7d695c6fae2bcfb09aa734dda31c65f81e12bc654a3c58d5843ea918df68"
+      ],
+      "durable_operator_obligations_mutated": false,
+      "note": "Only four T045-era failed attempts with evidence-bound replacement paths were marked superseded. Unrelated durable obligations were left untouched.",
+      "superseded_count": 4
+    },
+    "production_evidence": [
+      {
+        "kind": "closeout_receipt",
+        "path": "/home/alex/.local/state/grabowski/evidence/operator-ecosystem-redundancy-v1/t049-closeout-v1.json",
+        "sha256": "90a8e0b5da9535cb24e491c98d6278e82435e8639e44b39932e413af2664bea6"
+      }
+    ],
+    "registered_from": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045 live closeout readback on 2026-07-23",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "head_sha": "4fca18e3cb4774aa1b7524b860cc4ac05300d9e3",
+          "kind": "pull_request",
+          "merge_commit_sha": "bb8fccd650b941c1ee71ec6a4de315f076893878",
+          "source_ref": "heimgewebe/grabowski#421",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T049"
+        },
+        {
+          "authority": "grabowski-runtime",
+          "kind": "live_probe",
+          "source_ref": "runtime:bb8fccd650b941c1ee71ec6a4de315f076893878",
+          "state": "healthy-integrity-pass-tasks-available",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T049"
+        },
+        {
+          "authority": "grabowski-host-evidence",
+          "evidence_sha256": [
+            "90a8e0b5da9535cb24e491c98d6278e82435e8639e44b39932e413af2664bea6"
+          ],
+          "kind": "live_probe",
+          "source_ref": "/home/alex/.local/state/grabowski/evidence/operator-ecosystem-redundancy-v1/t049-closeout-v1.json",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T049"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "verification": {
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "task_sha256": "9282c7d5752bc489eaaaed940f897b9f219a6daddaf58cd65d15eb989f80b811"
+    },
+    "verified_acceptance": {
+      "live-projection-restored": "Live readback on deployed Grabowski bb8fccd650b941c1ee71ec6a4de315f076893878 shows grabowski_task_list and grabowski_current_work succeed without LifecycleProjectionIntegrityError; grabowski_status reports tasks.available=true and the task projection is integrity-verified.",
+      "root-cause-and-data-safety": "Commit 8e2a6755a7ae1201630af071529a1a18f9d57741 expanded exact schema-v1 effect-plan entry fields in place. PR #421 replaced this with explicit exact legacy_v1, applicability_v1 and profiled_v2 contracts. Six observed persisted historical plans validate as legacy_v1 with zero errors and were not rewritten; unknown/malformed shapes remain fail-closed.",
+      "tests-and-live-readback": "On exact merge commit bb8fccd650b941c1ee71ec6a4de315f076893878, 331 focused lifecycle/task tests passed and full make validate passed 3208 tests with 3 skips. The deployed runtime identity matches the merge commit, archive readback is segment_verified, the canonical task store remains schema v5 at /home/alex/.local/state/grabowski/tasks.sqlite3, and no second task store was introduced."
+    },
+    "verified_at": "2026-07-23T16:30:31+02:00"
   },
   "priority": {
     "lane": "now",
@@ -67,6 +140,6 @@
     "strategy": "Revert the projection compatibility or migration change while preserving the original persistent task records and diagnostic evidence. No task history may be deleted as rollback."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Repair Grabowski task projection effect-plan contract"
 }

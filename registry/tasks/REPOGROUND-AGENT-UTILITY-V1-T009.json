@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T009",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "title": "Fleet-Publisher: fremde Build-Residuen sicher diagnostizieren und auflösen",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 61
+  },
+  "goal": "Den fail-closed Fleet-Publisher-Blocker für nicht leere managed build residue in RepoGround-Quellworktrees so klären, dass legitime fremde oder aktive Build-Zustände niemals blind gelöscht werden, veraltete verwaltete Residuen aber provenance-gebunden diagnostiziert und über einen sicheren Cleanup- oder Quarantänepfad aufgelöst werden können.",
+  "depends_on": [],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "repoground",
+    "bounded-io",
+    "worktree-hygiene"
+  ],
+  "acceptance": [
+    {
+      "id": "reproduce-and-classify",
+      "assertion": "Der Blocker managed build residue is not empty wird mit gebundener Pfad-, Repository-, Ref- und Prozess-/Lease-Evidenz reproduziert und als verwaltet-veraltet, aktiv-legitim oder unbekannt klassifiziert."
+    },
+    {
+      "id": "no-blind-delete",
+      "assertion": "Unbekannte, fremde, aktive oder lease-gebundene Build-Residuen werden niemals automatisch gelöscht, resettet oder übernommen."
+    },
+    {
+      "id": "safe-remediation",
+      "assertion": "Für eindeutig veraltete, vom Publisher selbst verwaltete Residuen existiert ein atomarer, nachvollziehbarer Cleanup- oder Quarantänepfad; unklare Fälle bleiben fail-closed."
+    },
+    {
+      "id": "publisher-recovery",
+      "assertion": "Ein kontrollierter Fleet-Lauf kann nach sicherer Remediation das betroffene Repository wieder verarbeiten oder liefert einen präzisen maschinenlesbaren Blocker ohne Nebenwirkungen."
+    },
+    {
+      "id": "tests-review",
+      "assertion": "Regressionstests decken aktive/fremde/veraltete Build-Residuen und Race-/Symlink-Grenzen ab; relevante Fleet-Suites und Review-Gates sind grün."
+    }
+  ],
+  "metadata": {
+    "registered_from_task": "REPOGROUND-AGENT-UTILITY-V1-T008",
+    "source_observation": {
+      "observed_at": "2026-07-23T02:10:35Z",
+      "fleet_status": "warn",
+      "failed_repository": "heimgewebe/grabowski",
+      "error": "managed build residue is not empty; refusing cleanup: /home/alex/repos/.repoground-sources/heimgewebe__grabowski__main/build",
+      "publisher_behavior": "fail-closed; no cleanup was performed"
+    },
+    "scope_reason": "T008 scheduling fairness is verified independently. This follow-up isolates the pre-existing source-worktree hygiene blocker and explicitly forbids treating it as permission to mutate foreign state.",
+    "does_not_establish": [
+      "residue is stale",
+      "cleanup is safe",
+      "grabowski repository is dirty",
+      "permission to delete build outputs",
+      "T008 failure"
+    ]
+  }
+}

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "REPOGROUND-AGENT-UTILITY-V1",
   "title": "RepoGround Agent Utility v1",
-  "state": "waiting",
+  "state": "active",
   "commitment": "now",
   "goal": "RepoGround als kleine, read-only und commit-gebundene Evidenz- und Kontextkomponente unter Grabowski nutzen: zuerst Publikationswahrheit reparieren, dann vorhandene Kontextflächen dünn komponieren, den Nutzen am Weltgewebe messen und nur bei bestandenem Gate generalisieren.",
   "current_plan": {
@@ -47,9 +47,9 @@
       "completeness"
     ],
     "lifecycle": {
-      "reconciled_at": "2026-07-22T16:56:22.449179Z",
-      "reconciled_from": "active",
-      "reconciled_to": "waiting"
+      "reconciled_at": "2026-07-23T20:35:39.240125Z",
+      "reconciled_from": "waiting",
+      "reconciled_to": "active"
     }
   }
 }

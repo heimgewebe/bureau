@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "OPERATOR-ML-READINESS-V1",
   "title": "Evidence-bound operator ML readiness",
-  "state": "active",
+  "state": "waiting",
   "commitment": "next",
   "goal": "Establish a trustworthy, proposal-only operator learning dataset and only then evaluate offline machine-learning baselines without reviving Heimlern or granting models routing authority.",
   "current_plan": {
@@ -28,6 +28,11 @@
       "production_model_readiness",
       "automatic_routing_permission",
       "sample_representativeness"
-    ]
+    ],
+    "lifecycle": {
+      "reconciled_at": "2026-07-23T20:35:39.238556Z",
+      "reconciled_from": "active",
+      "reconciled_to": "waiting"
+    }
   }
 }

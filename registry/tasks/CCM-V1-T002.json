@@ -115,9 +115,9 @@
       "history-read": "Read-only history is bounded and now independently verifies every event against source identity, event hash, target, filters and since bound before exposure; live-state and safe-retry non-claims remain explicit.",
       "fail-soft": "Missing Chronik coding-memory CLI or import failure reports unavailable/failure evidence without failing ordinary coding execution."
     },
-    "verification_note": "PR #402 was bound to final head 9fc9ebba167d81451f26616e9affe94a5b9b5b91 and raw GitHub diff SHA-256 16855d302980ec52b4aa8481d6caf6d380862700eed82908ee8d30f803b39821. The fully tested tree 2d29752646de9cf8bc5d6498d86d67a0d8db3b94 is byte-identical to squash merge 1ca93f0bb6c9817c0a1910b4a73ed1a3f45320e3. A separate follow-up T089 records the discovered Captain effect-model gap for GitHub auto branch deletion.",
+    "verification_note": "PR #402 was bound to final head 9fc9ebba167d81451f26616e9affe94a5b9b5b91 and raw GitHub diff SHA-256 16855d302980ec52b4aa8481d6caf6d380862700eed82908ee8d30f803b39821. The fully tested tree 2d29752646de9cf8bc5d6498d86d67a0d8db3b94 is byte-identical to squash merge 1ca93f0bb6c9817c0a1910b4a73ed1a3f45320e3. A separate follow-up T091 records the discovered Captain effect-model gap for GitHub auto branch deletion.",
     "verification": {
-      "task_sha256": "c50d5ee861a5f9d536d2ae15e3a7f08c3d34f13901134b1e9e5c349d449e07d6",
+      "task_sha256": "c0c03327bcd338d9741b689f88eb37ef597d1726c563ba7cf17f5ca293b48fbd",
       "plan_sha256": "7a4d09115c987f7199ff6b984bc87c08f8598c55d5dddfd7284c7d55d1b5bcd0"
     }
   }

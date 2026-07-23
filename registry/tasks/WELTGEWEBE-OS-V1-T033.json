@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T033",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Knoten-Urheberbindung nativ persistieren und Governance-Akteurprüfung verdichten",
+  "state": "planned",
+  "goal": "Die mit PR #1517 eingeführte Knoten-Urheberbindung langfristig aus der JSONB-Kompatibilitätsschicht in eine native, nullable und indizierte PostgreSQL-Spalte überführen, ohne Legacy- oder Austrittsanonymisierung zu verfälschen, und dabei die wiederholten Governance-Akteurprüfungen in einen gemeinsamen fail-closed Helfer verdichten.",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T019"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 30
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "rust",
+    "postgresql",
+    "migration",
+    "performance",
+    "authorization"
+  ],
+  "acceptance": [
+    {
+      "id": "native-node-creator-column",
+      "assertion": "domain_nodes besitzt eine nullable native created_by_account_id-Spalte mit geeignetem Index; neue Knoten binden sie serverseitig, Legacy- und anonymisierte Knoten bleiben NULL, und der JSONB-Kompatibilitätspfad wird kontrolliert migriert oder entfernt.",
+      "evidence_type": "object",
+      "verifier": "migration proof, loader/write-path tests and rollback analysis"
+    },
+    {
+      "id": "ownership-limit-query",
+      "assertion": "Gastknotenlimit und Gast-Austritt verwenden die native indizierte Urheberbindung ohne Multi-Instance- oder TOCTOU-Regression; parallele Create- und Exit-Proofs bleiben grün.",
+      "evidence_type": "object",
+      "verifier": "direct PostgreSQL concurrency tests and query-plan evidence"
+    },
+    {
+      "id": "governance-actor-helper",
+      "assertion": "Wiederholte Prüfungen für aktiven Weber/Admin, fehlenden Akteur und Selbstentscheidung werden in einem gemeinsamen fail-closed Vertrag verdichtet, ohne HTTP-Status oder Rollenrechte unabsichtlich zu verändern.",
+      "evidence_type": "object",
+      "verifier": "focused unit/integration tests and exact diff review"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-22",
+    "source_repository": "heimgewebe/weltgewebe",
+    "source_pr": 1517,
+    "source_merge_commit": "b2b60b9b89999cca5d208bff397ba165e34f9958",
+    "reason": "Nicht blockierende Langzeitoptimierung aus dem Review von PR #1517: Die aktuelle JSONB-Lösung ist korrekt und indiziert, aber eine native Ownership-Spalte vereinfacht Skalierung und Persistenzvertrag; kleine Actor-Check-Duplizierung wird im selben Autorisierungs-/Persistenzschnitt mitgeführt.",
+    "does_not_establish": [
+      "akuter Produktionsfehler",
+      "Berechtigung zur freien Eigentumsübertragung",
+      "Änderung der Gast-/Weber-Rechte"
+    ]
+  }
+}

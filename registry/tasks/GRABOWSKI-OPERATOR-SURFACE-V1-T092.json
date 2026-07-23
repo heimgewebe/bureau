@@ -1,0 +1,97 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der vor der Publikation validierte Elternordner bleibt über alle sicherheitsrelevanten Dateioperationen per Directory-FD oder gleichwertiger stabiler Identitätsbindung gebunden; ein Parent-Rename- oder Symlink-Swap führt fail-closed zum Abbruch.",
+      "id": "parent-identity-pinned"
+    },
+    {
+      "assertion": "Der Coding-Agent-Router-Installer verwendet die stabile Parent-Bindung für tempfile, Write, Readback, Replace und Rollback, ohne die bestehenden Eigentümer-, Modus-, Link- und Größenprüfungen abzuschwächen.",
+      "id": "installer-paths-hardened"
+    },
+    {
+      "assertion": "Der Router-State-Writer verwendet dieselbe oder eine äquivalent starke Parent-Bindung für atomare State-Publikation und Directory-Fsync.",
+      "id": "state-writer-hardened"
+    },
+    {
+      "assertion": "Regressionstests simulieren mindestens Parent-Rename und Parent-Symlink-Swap zwischen Validierung und Publikation und belegen fail-closed Verhalten ohne Schreiben außerhalb des gebundenen Zielverzeichnisses.",
+      "id": "swap-regressions"
+    },
+    {
+      "assertion": "Bestehende Router-, Installer-, Deployment- und Security-Tests bleiben grün; die Härtung erweitert nur Defense-in-Depth und ändert keine Routing- oder Autorisierungssemantik.",
+      "id": "preserve-contracts"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:tools/install_coding_agent_router_cli.py",
+      "component:src/grabowski_coding_agent_router_cli.py",
+      "component:tests/test_install_coding_agent_router_cli.py",
+      "component:tests/test_coding_agent_router_cli.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die path-basierten Publikationspfade des Coding-Agent-Router-Installers und Router-State-Writers so härten, dass der validierte user-owned Elternordner über tempfile, write, readback, replace und rollback per stabiler Directory-FD- oder gleichwertiger Identitätsbindung gehalten wird und ein gleichzeitiger same-UID Parent-Rename- oder Symlink-Swap fail-closed endet.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T092",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "assessment_id": "assessment-493e91057e09ee2af2f79b39",
+    "candidate_id": "candidate-d01d38ff9079b7e75503b0b0",
+    "does_not_establish": [
+      "proven exploitability",
+      "merge blocker for PR #337",
+      "permission to broaden routing or execution authority"
+    ],
+    "finding_class": "defense-in-depth",
+    "merge_blocker": false,
+    "proven_exploit": false,
+    "source": "PR #337 high-critical self-review follow-up",
+    "source_diff_sha256": "fdffa3d682e4eff2eea342ce1551847d0372631c77da4cebab4293a7c27b5096",
+    "source_head_sha": "bf51d592510515fbe5f2b6c8bb0191cb86587ee4",
+    "source_pr": "heimgewebe/grabowski#337",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-d01d38ff9079b7e75503b0b0",
+      "event_id": 1000,
+      "event_created_at": "2026-07-23T05:14:57.585534Z",
+      "request_sha256": "6f954e699cf602e3e489c1691bf388947f6cab759f17bf32669d9e0cf177d5df",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "pr-review-followup",
+        "locator": "heimgewebe/grabowski#337@bf51d592510515fbe5f2b6c8bb0191cb86587ee4",
+        "observed_at": "2026-07-23T05:14:57.578125Z",
+        "sha256": "fdffa3d682e4eff2eea342ce1551847d0372631c77da4cebab4293a7c27b5096"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 19
+  },
+  "required_capabilities": [
+    "python",
+    "github",
+    "grabowski",
+    "resource-leases",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Directory-FD-Pinning für Router-Installer und State-Publikation härten"
+}

@@ -3,7 +3,7 @@
   "id": "OPERATOR-ML-READINESS-V1-T004",
   "initiative": "OPERATOR-ML-READINESS-V1",
   "title": "Gate routing-shadow cohort readiness before any training",
-  "state": "planned",
+  "state": "blocked",
   "goal": "Audit the prospectively collected routing-shadow cohort for inclusion integrity, representativeness, sufficient preregistered coverage, semantic-label quality, abstention and missingness before any offline ML baseline training is authorized.",
   "depends_on": [
     "OPERATOR-ML-READINESS-V1-T003"
@@ -71,6 +71,7 @@
     "effect": "offline_readiness_audit_only",
     "source_task": "OPERATOR-ML-READINESS-V1-T003",
     "unlocks_on_pass": "OPERATOR-ML-READINESS-V1-T002",
+    "capture_observability_followup": "OPERATOR-ML-READINESS-V1-T005",
     "ml_training_authorized": false,
     "route_authority": false,
     "does_not_establish": [
@@ -81,6 +82,47 @@
       "routing policy authority",
       "online learning authority",
       "automatic policy promotion"
-    ]
+    ],
+    "gate_passed": false,
+    "dependency_unblock_allowed": false,
+    "latest_gate_result": {
+      "status": "CONTINUE-COLLECTING",
+      "reviewed": true,
+      "reason_codes": [
+        "semantic_reviewer_disagreement_unobservable",
+        "test_quarantine_provenance_unobservable",
+        "execution_failure_provenance_unobservable",
+        "minimum_treatment_cases_not_met"
+      ],
+      "eligible_treatment_cases": 0,
+      "prospective_cases": 0,
+      "bound_eligibility_receipts": 0,
+      "sealed_records": 0,
+      "capture_attempts": 0,
+      "integrity_error_count": 0,
+      "no_effect_violation_count": 0,
+      "reviewer_disagreement_observable": false,
+      "test_quarantine_provenance_observable": false,
+      "execution_failure_provenance_observable": false,
+      "test_or_quarantine_contamination_count": null,
+      "criteria_sha256": "2507258fe107441f150290cf7cd2158a652d1557e7c5af528aab5966654d1fa9",
+      "cohort_identity_sha256": "39af427085af8521eced3f1e6247fc700a402748e63a52ca38754a7be222c177",
+      "experiment_result_ref": "experiments/2026-07-23_operator-routing-ml-readiness-shadow/results/readiness-gate-2026-07-23.json",
+      "base_gate_pr": 319,
+      "base_gate_pr_head": "79b023e0f5bf4db6af97387133c4a32172921a53",
+      "base_gate_merge_commit": "6680c73af54a3e7ab81d43d6d91fc1295ec074da",
+      "hardening_pr": 320,
+      "hardening_pr_head": "402649fb97ab78b6b529ad97f70f4ca517f2a406",
+      "hardening_merge_commit": "1cc2519d885604fc582882bfeda7bb0f66f439ce",
+      "hardening_review_diff_sha256": "3fdb048b394cfe80dad62262a22db6368cc90cf4fa0c81f3495bc2804b0a2fd2",
+      "validation": {
+        "focused_gate_tests": "10/10 passed",
+        "git_diff_check": "passed",
+        "repository_validate": "passed"
+      },
+      "evidence_merged_at": "2026-07-23T17:37:13Z"
+    },
+    "blocking_reason": "The reviewed readiness gate returned CONTINUE-COLLECTING. The live prospective cohort contains zero eligible natural treatment task cases, and capture/record v2 cannot yet measure independent semantic-review disagreement, production versus test/quarantine provenance, or execution-abort versus infrastructure-failure provenance. Unknown signals are not treated as zero, so PASS criteria are not met.",
+    "reaudit_condition": "First complete OPERATOR-ML-READINESS-V1-T005 so the three structural observability gaps become measurable without rewriting historical cohort truth. Then re-run this same gate after at least 20 natural eligible treatment task cases have been prospectively captured, while preserving preregistered completeness, evidence, integrity, privacy, no-effect and coverage thresholds. Only a separately reviewed PASS may unblock OPERATOR-ML-READINESS-V1-T002."
   }
 }

@@ -80,6 +80,55 @@
       "retrieval superiority",
       "repository understanding",
       "merge readiness"
-    ]
+    ],
+    "verified_at": "2026-07-23T03:00:00Z",
+    "outcome": "RepoGround PR #1082 ersetzt die feste Fleet-Reihenfolge durch oldest-successful-publication-first.v1: RepoGround als aktives Generator-Repository bleibt Rang 1, alle übrigen Repositories werden aus bestehender erfolgreicher Publikationshistorie nach ältester Warteschuld sortiert. Die Lösung führt keine zweite Queue-Autorität ein, berechnet die Reihenfolge unter dem bestehenden globalen Publisher-Lock und schreibt Rang-, Alters- und Debt-Evidenz in Fleet-Receipts. Die 42-Repository-/Limit-8-Simulation konvergiert einschließlich einer während des Backlog-Abbaus neu eintreffenden Änderung; die installierte heim-pc-Runtime ist bytegleich mit Merge-Commit 5b887ceed78858774ac1dc4e517d18ea0e86c91e und projiziert live 42/42 Historien mit der neuen Policy.",
+    "validated_acceptance": {
+      "bounded_fairness": "PASS: Nach jeder erfolgreichen Publikation wandert das Repository aufgrund seines aktualisierten created_at hinter ältere Warteschuld; eine bereits bediente, erneut geänderte Repo kommt im Regressionstest erst wieder an die Reihe, nachdem alle zuvor unbedienten Repositories mindestens einmal bedient wurden.",
+      "self_priority_preserved": "PASS: heimgewebe/repoground bleibt unabhängig vom Altersrang explizit generator_priority=true auf Rang 1. Die Live-Projektion auf heim-pc bestätigt Rang 1 für heimgewebe/repoground.",
+      "limit_and_safety_preserved": "PASS: PR #1082 ändert weder --limit-Semantik, Retention, Managed-Worktree-Hygiene noch fail-closed Fehlergrenzen; die neue Sortierung wird erst nach acquire_lock() berechnet. Bestehende fremde Build-Residuen werden weiterhin verweigert statt blind gelöscht.",
+      "backlog_evidence": "PASS: Fleet-Summaries enthalten scheduling.policy, ordered_repositories sowie pro Repository rank, generator_priority, last_successful_publication_at, publication_debt_seconds und debt_basis. Die Daten werden ausschließlich aus bestehendem Fleet-State abgeleitet.",
+      "fleet_simulation": "PASS: merger/repoground/tests/test_fleet_runtime.py simuliert 42 Repositories bei Limit 8, vollständige Konvergenz innerhalb höchstens sechs Runden und eine neue Änderung während des Backlog-Abbaus. Gesamte Fleet-Runtime-Suite: 66/66 PASS.",
+      "no_overclaim": "PASS: Der Abschluss beansprucht nur Scheduling-/Publikationskonvergenz und explizit keine semantische Bundle-Qualität, Retrieval-Überlegenheit, Repository-Verständnis oder Merge-Reife."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "REPOGROUND-AGENT-UTILITY-V1-T008",
+          "source_ref": "heimgewebe/repoground#1082",
+          "number": 1082,
+          "head_sha": "3f498ae1cb7a996bef66115d0f36a712292933d4",
+          "merge_commit_sha": "5b887ceed78858774ac1dc4e517d18ea0e86c91e",
+          "diff_sha256": "36553775b5f4828e2ab9e536fc20a49f7db14105272a9ab7836bd25f964f16f5"
+        },
+        {
+          "kind": "test_run",
+          "authority": "heim-pc",
+          "task_id": "REPOGROUND-AGENT-UTILITY-V1-T008",
+          "source_ref": "local:repoground-t008-validation-final",
+          "commit_sha": "3f498ae1cb7a996bef66115d0f36a712292933d4",
+          "result": "fleet-runtime-66-of-66-pass"
+        },
+        {
+          "kind": "runtime_readback",
+          "authority": "heim-pc",
+          "task_id": "REPOGROUND-AGENT-UTILITY-V1-T008",
+          "source_ref": "local:installed-fleet-publisher",
+          "commit_sha": "5b887ceed78858774ac1dc4e517d18ea0e86c91e",
+          "result": "installed-source-byte-identical-and-live-policy-projection-42-of-42-history"
+        }
+      ]
+    },
+    "verification": {
+      "prepared_at": "2026-07-23T03:05:00Z",
+      "task_sha256": "a800d5723ea1b09cdee52d17f10a855d1ab2a2c5093aceeb26b40a685ec66e89",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+      "verification_note": "Prepared stable task and plan binding for the two-stage T008 closeout. Final verification-stamp and state=verified follow only after this evidence revision is merged and the clean canonical Bureau runtime is aligned to that merge.",
+      "final_stamp": null
+    }
   }
 }

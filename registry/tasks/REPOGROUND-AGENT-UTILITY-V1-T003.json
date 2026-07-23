@@ -3,7 +3,7 @@
   "id": "REPOGROUND-AGENT-UTILITY-V1-T003",
   "initiative": "REPOGROUND-AGENT-UTILITY-V1",
   "title": "Phase 2: Weltgewebe-Vertikalpilot für Änderungskontext",
-  "state": "blocked",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 3
@@ -104,7 +104,97 @@
       "semantic completeness",
       "automatic related-test completeness",
       "automatic symbol-impact completeness"
-    ]
+    ],
+    "verification": {
+      "task_sha256": "7b65051de2df5d235d3cf5213ad804bee89721464d5b3a6fd2ae29d8f011a8f3",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+      "source": "exact_pr_diff_reviews_ci_historical_validator_and_primary_delivery_readback",
+      "verified_at": "2026-07-23T04:28:07+02:00",
+      "pre_closeout_task_sha256": "450dd719215a54d21c7a8edd5adad47637a67265c7c67322eaafbb1031a08824",
+      "pilot_delivery": {
+        "repository": "heimgewebe/weltgewebe",
+        "pull_request": 1533,
+        "base_commit": "c5510b8b389bb4d2d429a5882747f48301083f19",
+        "reviewed_head": "8107ab923aa76f2ead786b2912b91200ed1a24ee",
+        "merge_commit": "fe0d6165e6a3abb47537553bbeef52dcbeb03c44",
+        "diff_sha256": "fc35c03edfb210cd26fd267763e90ae9a91c4086bab1c69e200002798d52a944",
+        "diff_bytes": 199024,
+        "promotion_scope": "bounded_change_impact_context_for_agent_handoff",
+        "validator_result": "promotion_ready=true",
+        "pilot_tests": {
+          "passed": 51,
+          "subtests_passed": 36
+        },
+        "gold_cases": {
+          "database_auth_reduction_pct": 75.287,
+          "web_map_reduction_pct": 72.883,
+          "deployment_kubernetes_reduction_pct": 65.091,
+          "all_revision_direct_changes_delivered": true,
+          "direct_diff_changed_test_evidence_present": true
+        },
+        "controlled_live": {
+          "reduction_pct": 76.892,
+          "source_bundle_commit": "e14944fb149c0b66b8a1ca4e1e1b26a8603c5067",
+          "manifest_sha256": "04e84e1af3bf9a52b30fe412549fcb0bf5663967a3c85fb890c01c16a67f1b92",
+          "freshness_checked_at": "2026-07-22T16:07:36Z",
+          "source_commit_equalled_observed_remote_commit": true,
+          "delivery_completeness_required": false,
+          "available_direct_changes": 95,
+          "included_direct_changes": 16,
+          "policy_omitted_direct_changes": 79
+        }
+      },
+      "reviews": {
+        "architecture": {
+          "verdict": "pass",
+          "reviewer": "gemini-cli-architecture",
+          "base_commit": "c5510b8b389bb4d2d429a5882747f48301083f19",
+          "head_commit": "8107ab923aa76f2ead786b2912b91200ed1a24ee",
+          "diff_sha256": "fc35c03edfb210cd26fd267763e90ae9a91c4086bab1c69e200002798d52a944",
+          "report_sha256": "72bcdd12e8507528cb0178c5b839826acf1fc840d97e3210f9f6dd6ea160419e"
+        },
+        "data_integrity": {
+          "verdict": "pass",
+          "reviewer": "claude-cli-data-integrity",
+          "base_commit": "c5510b8b389bb4d2d429a5882747f48301083f19",
+          "head_commit": "8107ab923aa76f2ead786b2912b91200ed1a24ee",
+          "diff_sha256": "fc35c03edfb210cd26fd267763e90ae9a91c4086bab1c69e200002798d52a944",
+          "report_sha256": "c8255287184b9a875eab5fa3955f5b33ab60591ba1c71be2219c417fb2e709c4"
+        }
+      },
+      "ci": {
+        "required_merge_gate": "pass",
+        "review_evidence_gate_final_status": "pass",
+        "older_failed_review_evaluator_superseded": true
+      },
+      "delivery_chain_primary_readback": {
+        "source_pull_request": 1499,
+        "source_pr_head": "c6d7bbc2dbec97ee0223a9c22cd1e331b7a21993",
+        "merge_commit": "7a1b5943524affd90b79cd8769f5e48b3f1d4b22",
+        "postmerge_workflow_run_id": 29806103267,
+        "contract_job_id": 88556854305,
+        "runtime_job_id": 88556905034,
+        "contract_job_conclusion": "success",
+        "runtime_job_conclusion": "success",
+        "public_identity_step_conclusion": "success",
+        "production_receipt_artifact_id": 8485749581,
+        "production_receipt_artifact_name": "production-live-7a1b5943524affd90b79cd8769f5e48b3f1d4b22",
+        "production_receipt_digest": "sha256:c253bacc2bcb0791edbbb820959b10a6f124b60587254c73d5baa64de2687996",
+        "production_receipt_expired": false,
+        "result": "pass"
+      },
+      "current_main_ancestry": {
+        "observed_main": "e35ebecb45873e0588cec6dd1feee5f19cece21e",
+        "t003_merge_commit": "fe0d6165e6a3abb47537553bbeef52dcbeb03c44",
+        "t003_merge_is_ancestor": true
+      },
+      "does_not_establish": [
+        "semantic completeness outside the bounded promotion scope",
+        "general runtime correctness",
+        "automatic rollback success",
+        "REPOGROUND-AGENT-UTILITY-V1-T004 readiness or promotion"
+      ]
+    }
   },
   "depends_on": [
     "REPOGROUND-AGENT-UTILITY-V1-T001",

@@ -3,7 +3,7 @@
   "id": "CCM-V1-T002",
   "initiative": "CHRONIK-CODING-MEMORY-V1",
   "title": "Bind Grabowski coding work context and Chronik retrieval",
-  "state": "ready",
+  "state": "verified",
   "depends_on": [
     "CCM-V1-T001"
   ],
@@ -60,6 +60,65 @@
       "runtime_deployment",
       "safe_retry",
       "automatic_history_use"
-    ]
+    ],
+    "verified_at": "2026-07-23T03:18:37Z",
+    "outcome": "Grabowski PR #402 implemented the optional Chronik coding-memory bridge, was repeatedly converged against concurrent main changes, hardened so every returned history event is independently bound to the requested target and filters, passed exact-tree validation, and merged by the receipt-bound Captain path as 1ca93f0bb6c9817c0a1910b4a73ed1a3f45320e3.",
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 402,
+      "branch": "fix/ccm-t002-pr306-current-main-v2",
+      "reviewed_head": "9fc9ebba167d81451f26616e9affe94a5b9b5b91",
+      "merge_commit": "1ca93f0bb6c9817c0a1910b4a73ed1a3f45320e3",
+      "merged_at": "2026-07-23T03:18:37Z",
+      "github_diff_sha256": "16855d302980ec52b4aa8481d6caf6d380862700eed82908ee8d30f803b39821",
+      "github_diff_bytes": 79622,
+      "tree_equal_after_squash": true,
+      "git_tree_oid": "2d29752646de9cf8bc5d6498d86d67a0d8db3b94"
+    },
+    "validation": {
+      "focused_chronik_coding_memory": "10 passed",
+      "conflict_integration": "90 tests and 8 subtests passed",
+      "full_pytest": "2994 passed, 3 skipped, 745 subtests passed on the byte-identical final tree",
+      "pull_request_checks": {
+        "validate_3_10": "SUCCESS",
+        "validate_3_12": "SUCCESS",
+        "codeql": "SUCCESS",
+        "analyze_python": "SUCCESS",
+        "analyze_actions": "SUCCESS"
+      },
+      "captain_merge_guard": {
+        "preflight_gates": 12,
+        "all_passed": true,
+        "post_execution_verification": true,
+        "cleanup_passed": true,
+        "captain_receipt_sha256": "f18e1449e30951e699535d33ed7ce6c85e64e48725304d9c584dfd0a964ec917"
+      }
+    },
+    "review": {
+      "result": "PASS",
+      "iterations": 5,
+      "uncertainty": 0.08,
+      "axes": [
+        "correctness",
+        "regression_risk",
+        "tests",
+        "security",
+        "integration"
+      ],
+      "findings_fixed_before_merge": [
+        "Chronik history trusted a matching query envelope without independently proving that every returned event matched the requested target and filters."
+      ]
+    },
+    "acceptance_evidence": {
+      "explicit-work-context": "Task opt-in validates and persists component, operation and optional Bureau/PR references; repository/host context is bound into emitted Chronik events.",
+      "direct-import": "Typed import reads a bounded regular outbox file, verifies hash/redaction and imports idempotently when the optional Chronik CLI is available.",
+      "history-read": "Read-only history is bounded and now independently verifies every event against source identity, event hash, target, filters and since bound before exposure; live-state and safe-retry non-claims remain explicit.",
+      "fail-soft": "Missing Chronik coding-memory CLI or import failure reports unavailable/failure evidence without failing ordinary coding execution."
+    },
+    "verification_note": "PR #402 was bound to final head 9fc9ebba167d81451f26616e9affe94a5b9b5b91 and raw GitHub diff SHA-256 16855d302980ec52b4aa8481d6caf6d380862700eed82908ee8d30f803b39821. The fully tested tree 2d29752646de9cf8bc5d6498d86d67a0d8db3b94 is byte-identical to squash merge 1ca93f0bb6c9817c0a1910b4a73ed1a3f45320e3. A separate follow-up T091 records the discovered Captain effect-model gap for GitHub auto branch deletion.",
+    "verification": {
+      "task_sha256": "5943b5eb385028d4859bd7847c2a49721fcf3a5979e881f278fd421f5fb4efc4",
+      "plan_sha256": "7a4d09115c987f7199ff6b984bc87c08f8598c55d5dddfd7284c7d55d1b5bcd0"
+    }
   }
 }

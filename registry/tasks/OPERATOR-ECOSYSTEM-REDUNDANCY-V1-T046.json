@@ -1,0 +1,124 @@
+{
+  "acceptance": [
+    {
+      "assertion": "fleet/repos.yml remains the only normative Fleet membership source. A versioned Renovate rollout policy and deterministic scope projection are validated against active projectable Fleet repositories; archived-reference and fleet:false repositories are rejected and no independent complete Fleet list becomes authoritative.",
+      "id": "fleet-scope"
+    },
+    {
+      "assertion": "Metarepo contains a versioned central Renovate V1 preset that disables automerge, bounds PR concurrency and cadence, groups compatible patch/minor updates, isolates major updates, and preserves existing GitHub/CI and Grabowski head/diff/review merge gates.",
+      "id": "central-policy"
+    },
+    {
+      "assertion": "Validation fails closed when one repository/dependency scope would be assigned overlapping Renovate and Dependabot version-update producers. V1 keeps Dependabot Security Updates conceptually separate from version-update ownership and does not disable security alerts.",
+      "id": "single-producer-guard"
+    },
+    {
+      "assertion": "The policy encodes bounded waves for Mitschreiber custom-manager pilot, HausKI/HausKI-Audio volume pilot, RepoGround signal-quality pilot, Weltgewebe multi-ecosystem pilot, Metarepo control-plane cutover and later eligible Fleet repositories. Consumer-repository mutations remain separate follow-up tasks with their own claims, leases and rollback.",
+      "id": "rollout-contract"
+    },
+    {
+      "assertion": "The rollout contract requires any Mend-hosted Renovate installation to be limited to explicitly selected repositories and requires drift comparison between expected Git-authored rollout scope and observed GitHub App repository scope. No all-repository installation is accepted in V1.",
+      "id": "hosted-scope-contract"
+    },
+    {
+      "assertion": "The 2026-06-23 through 2026-07-23 baseline of 51 Dependabot PRs, 40 merged and 11 closed-unmerged is stored as dated comparison evidence with per-repository counts where available, without asserting Renovate improvement before measurement.",
+      "id": "baseline"
+    },
+    {
+      "assertion": "The task records that repo.mitschreiber is currently absent from the Bureau repository-resource catalog and does not invent a claim. Required consumer-cutover and missing-resource follow-ups are registered through operator-native Bureau intake instead of being hidden in prose.",
+      "id": "followup-boundary"
+    },
+    {
+      "assertion": "The metarepo foundation is independently reversible by reverting the policy/preset/tooling commit; no consumer Dependabot configuration, Renovate App permission, Bureau queue, claim, deployment or security-update state is changed by this task.",
+      "id": "rollback-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.metarepo"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T044"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly instructed on 2026-07-23 to implement the newly reviewed system-wide Renovate plan. This task changes only metarepo policy/tooling and publishes no Renovate GitHub App installation or consumer-repository cutover.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/metarepo"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/metarepo"
+  },
+  "goal": "Supersede the T044 targeted-only Renovate boundary after the user's explicit 2026-07-23 decision by establishing the canonical Fleet-bound Renovate V1 policy, scope projection, duplicate-producer guard, baseline metrics and staged rollout contract in metarepo. This task does not yet activate Renovate in consumer repositories; it creates the reviewed foundation required for later repository-specific cutovers without introducing a second Fleet, lifecycle, merge, deployment or security truth.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T046",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "baseline": {
+      "closed_unmerged": 11,
+      "dependabot_prs": 51,
+      "merged": 40,
+      "window_end": "2026-07-23",
+      "window_start": "2026-06-23"
+    },
+    "does_not_establish": [
+      "Renovate GitHub App is already installed",
+      "consumer repositories are cut over",
+      "Renovate will necessarily reduce PR count",
+      "permission to bypass interactive GitHub App authorization",
+      "permission to override foreign leases or dirty worktrees"
+    ],
+    "known_catalog_gap": "repo.mitschreiber is not currently registered as a Bureau repository resource",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-6ca0cbb406ae6ce9f464eef1",
+      "event_id": 1007,
+      "event_created_at": "2026-07-23T06:23:53.251104Z",
+      "request_sha256": "72740ee5fd0b43e14f30b22362056d3d934f50cb969a67ed3bf541882e2b8fae",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chat:heim-pc:2026-07-23:renovate-system-integration-plan",
+        "observed_at": "2026-07-23T06:23:53.243154Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_from": "User directive 2026-07-23 after system-wide Renovate architecture review and live comparison against existing Fleet, Bureau and Grabowski contracts.",
+    "supersedes_prior_decision": {
+      "prior_boundary": "global Renovate rollout over Dependabot",
+      "scope": "This task supersedes the no-go only for designing and implementing a staged Fleet-bound replacement foundation; repository activation remains separately gated.",
+      "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T044"
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 3
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau"
+  ],
+  "rollback": {
+    "strategy": "Revert the metarepo Renovate V1 policy, preset and scope-validation changes. Because this task performs no consumer-repository cutover and grants no GitHub App permissions, rollback does not require restoring Dependabot configs or changing external bot state."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Establish Fleet-bound Renovate V1 policy and rollout contract"
+}

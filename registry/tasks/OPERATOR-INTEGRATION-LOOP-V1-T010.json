@@ -1,0 +1,97 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Immediately before any effect, PR #858 state, exact head SHA, base branch, body and changed-file scope are reread from GitHub; a changed head or closed PR invalidates prior assessment.",
+      "id": "exact-pr-readback"
+    },
+    {
+      "assertion": "The repair identifies a current Registry task whose scope authoritatively owns PR #858, or creates a separate reviewed task registration when no such task exists; title similarity or prose inference alone is insufficient.",
+      "id": "authoritative-binding-resolution"
+    },
+    {
+      "assertion": "When an authoritative existing task is found, only PR binding metadata is changed and the PR code head remains byte-identical; the exact before/after head SHA is recorded.",
+      "id": "metadata-only-when-existing-task"
+    },
+    {
+      "assertion": "Post-effect Bureau GitHub observation reports no missing-github-task-binding finding for PR #858 while the general missing-binding guard and repository-scoping behavior remain unchanged.",
+      "id": "binding-guard-remains-fail-closed"
+    },
+    {
+      "assertion": "If ownership remains ambiguous, PR #858 is left unchanged and an explicit blocker receipt records the competing candidates and evidence gap instead of forcing a binding.",
+      "id": "ambiguous-resolution-stops"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.registry"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Follow-up from T009 post-merge status projection. Preserve PR #858 head and do not weaken global fail-closed binding guards.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/registry",
+      "github-pr:heimgewebe/bureau#858"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Resolve the live missing-github-task-binding finding for heimgewebe/bureau PR #858 by binding its exact current head to the correct authoritative Bureau task or, if no such task exists, by creating a separately reviewed registration path; never guess a task identity and never weaken the fail-closed open-PR binding guard.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T010",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "does_not_establish": [
+      "ownership of PR #858 by any guessed task",
+      "permission to rewrite PR #858 code",
+      "automatic queue readiness"
+    ],
+    "observed_pr": {
+      "finding": "missing-github-task-binding",
+      "freshness_status": "SUCCESS",
+      "head_sha": "9d509f139c5301169289463822b3382dbc7bcc64",
+      "number": 858,
+      "repo": "heimgewebe/bureau"
+    },
+    "registered_from": "OPERATOR-INTEGRATION-LOOP-V1-T009 post-merge live observation",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-3ad83fa94330054beddc7b0d",
+      "event_id": 985,
+      "event_created_at": "2026-07-22T20:48:04.428060Z",
+      "request_sha256": "89e8645c072c581a3c6792af231fd8226811314aadb2fddd0d22578e125f3dcb",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live_runtime_finding",
+        "locator": "github-pr:heimgewebe/bureau#858@9d509f139c5301169289463822b3382dbc7bcc64",
+        "observed_at": "2026-07-22T22:45:00+02:00",
+        "sha256": "2ba6a8e2e333f7d4f1fe8cd04469cb4b691ab46fe7bb1a18b4a3d7e2dcfb7b0e"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 10
+  },
+  "required_capabilities": [
+    "github",
+    "bureau",
+    "repository",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Repair missing Bureau task binding on PR 858 without weakening fail-closed guards"
+}

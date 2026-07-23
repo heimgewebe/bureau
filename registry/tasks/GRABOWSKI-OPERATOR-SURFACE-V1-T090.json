@@ -1,0 +1,95 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Typed-Read liefert hashgebundene autoritative GitHub-PR- und Merge-Evidenz für den bestehenden PR-Closure-Builder, ohne aus Statusprosa Merge-Wahrheit abzuleiten.",
+      "id": "github-pr-merge-receipt"
+    },
+    {
+      "assertion": "Ein Typed-Read liefert exakte Deployment- und Live-Runtime-Identität als protokollkompatibles Receipt und bleibt read-only.",
+      "id": "deployment-live-receipt"
+    },
+    {
+      "assertion": "Ein Typed-Read bindet den autoritativen Zustand einer Operator-Obligation inklusive Integritätsdigest, ohne Completion zu inferieren.",
+      "id": "obligation-receipt"
+    },
+    {
+      "assertion": "Ein Typed-Read liefert Workspace-/Checkout-Lifecycle-Evidenz, ohne Cleanup oder sonstige Mutation auszulösen.",
+      "id": "workspace-checkout-receipt"
+    },
+    {
+      "assertion": "Die vier Typed-Reads können deterministisch als authoritative_receipts in den bestehenden PR-Closure-Builder eingehen; ungültige oder unvollständige Evidenz bleibt fail-closed.",
+      "id": "closure-builder-integration"
+    },
+    {
+      "assertion": "Es entsteht keine neue Lifecycle-Datenbank, keine parallele Wahrheitsquelle und keine neue Merge-, Deployment-, Closeout- oder Cleanup-Autorität.",
+      "id": "no-second-truth"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Autoritative Typed-Reads für GitHub PR/Merge, Deployment/Live-Identität, Bureau-/Operator-Obligation und Workspace-/Checkout-Lifecycle als protokollkompatible Receipts für den bestehenden PR-Closure-Builder liefern, ohne neue Wahrheitsschicht.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T090",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "neue Lifecycle-Wahrheit",
+      "automatische Merge-Autorität",
+      "automatische Deployment-Autorität",
+      "automatische Cleanup-Autorität"
+    ],
+    "source": "pr403-closeout-followup",
+    "source_diff_sha256": "bc91bcdc46dd12db1ef384a50da01099554c3ca68f9d4dd83fc8dc3a36e00e9e",
+    "source_merge_commit": "37ea28ead466dd50a42051fa51f83b100d8eff77",
+    "source_pr": 403,
+    "source_repository": "heimgewebe/grabowski",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-548f85a8bdf23070f6172795",
+      "event_id": 990,
+      "event_created_at": "2026-07-23T03:13:24.883497Z",
+      "request_sha256": "dac277d5622d4f2be84a7c1f8af81d957a46048559d7066c0fe6d6ef726ae989",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator_followup",
+        "locator": "github:heimgewebe/grabowski#403@37ea28ead466dd50a42051fa51f83b100d8eff77",
+        "observed_at": "2026-07-23T03:04:13Z",
+        "sha256": "bc91bcdc46dd12db1ef384a50da01099554c3ca68f9d4dd83fc8dc3a36e00e9e"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "github",
+    "grabowski",
+    "runtime-deployment",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Typed authoritative PR-Closure collectors integrieren"
+}

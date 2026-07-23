@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T007",
+  "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
+  "title": "Websuche und klar getrennte Oberfläche „Ähnliche Knoten“",
+  "state": "ready",
+  "goal": "Die verifizierte T006-Such-API in die Weltgewebe-Weboberfläche integrieren, die bestehende Suche serverseitig und sichtbarkeitsgebunden machen und eine klar als maschinell berechnet gekennzeichnete Oberfläche „Ähnliche Knoten“ einführen, ohne Ähnlichkeit als Faden, Beziehung oder gemeinsame Autorenschaft darzustellen.",
+  "priority": {
+    "lane": "now",
+    "rank": 60
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Durch den direkten Nutzerauftrag „nächste Weltgewebe-Aufgabe umsetzen“ autorisiert; T007 ist laut kanonischem Semantic-Search-Plan der nächste Produkt- und Webintegrationsschritt nach dem verifizierten T006."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "svelte",
+    "typescript",
+    "rust",
+    "api-design",
+    "search-ranking",
+    "authorization",
+    "privacy",
+    "accessibility",
+    "testing",
+    "grabowski"
+  ],
+  "depends_on": [
+    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T006"
+  ],
+  "acceptance": [
+    {
+      "id": "server-search-primary",
+      "assertion": "Die Websuche nutzt für Suchergebnisse die T006-Server-API als maßgeblichen Pfad und baut keine zweite clientseitige Suchwahrheit über einen vollständigen Knotendump auf."
+    },
+    {
+      "id": "existing-filter-parity",
+      "assertion": "Bestehende relevante Such- und Filtermöglichkeiten bleiben erhalten oder werden explizit auf die T006-Filter abgebildet; Filterzustand und Ergebnisdarstellung sind deterministisch und nachvollziehbar."
+    },
+    {
+      "id": "visibility-bound-ui",
+      "assertion": "Die Oberfläche zeigt ausschließlich Ergebnisse der autorisierten Serverantwort; verborgene, private, entzogene, gelöschte oder stale Inhalte werden weder vorab geladen noch clientseitig nachträglich herausgefiltert."
+    },
+    {
+      "id": "similar-nodes-separate",
+      "assertion": "„Ähnliche Knoten“ ist visuell und semantisch klar von Fäden, Beziehungen und gemeinsamer Autorenschaft getrennt und ausdrücklich als maschinell berechnete Ähnlichkeit gekennzeichnet."
+    },
+    {
+      "id": "no-fabricated-relations",
+      "assertion": "Ähnlichkeit erzeugt, löscht oder verändert keine Fäden, Beziehungen, Knoten oder Governance-Zustände und wird nicht als kuratierte Verbindung dargestellt."
+    },
+    {
+      "id": "loading-empty-error-fallback",
+      "assertion": "Laden, leere Treffer, API-Nichtverfügbarkeit und lexikalischer Fallback sind verständlich dargestellt; Provider- oder Suchausfälle führen nicht zu einem stillen Rückfall auf eine unsichere Client-Volltextsuche."
+    },
+    {
+      "id": "accessible-responsive",
+      "assertion": "Suche, Ergebnisliste und Ähnlichkeitsoberfläche sind per Tastatur bedienbar, mit sinnvollen Labels und Statusmeldungen versehen und auf mobilen sowie großen Viewports nutzbar."
+    },
+    {
+      "id": "api-contract-tests",
+      "assertion": "Web- und API-Vertragstests belegen Requestparameter, Filter, Fehlerfälle und Ergebnisnavigation; Sichtbarkeitsgrenzen bleiben durch T006/PostgreSQL-Tests abgesichert."
+    },
+    {
+      "id": "repository-gates",
+      "assertion": "Vor Merge liegen vollständiger Diff, exakte Head-/Diffbindung, Review auf Correctness sowie UI/Accessibility, grüne erforderliche CI und ein Post-Merge-Main-Readback vor."
+    },
+    {
+      "id": "no-production-rollout",
+      "assertion": "T007 implementiert die Webintegration, aber keinen direkten Produktionsrollout, keinen öffentlichen Live-Beweis und keine SemantAH-Stilllegung; diese Effekte bleiben T008/T009 vorbehalten."
+    }
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "task_profile": "repo_change",
+    "skip_reason": "live_first_primary",
+    "note": "Web-, API-, Git-, CI- und öffentlicher Zustandsbeleg müssen live und commitgebunden geprüft werden; RepoGround ergänzt nur Repository-Kontext."
+  },
+  "metadata": {
+    "source": "canonical_initiative_plan_after_t006_verification",
+    "registered_at": "2026-07-23",
+    "predecessor": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T006",
+    "stage": "web-search-and-similar-nodes",
+    "does_not_establish": [
+      "production rollout",
+      "public live proof",
+      "SemantAH archive authority",
+      "ANN or HNSW",
+      "automatic relation mutations"
+    ]
+  }
+}

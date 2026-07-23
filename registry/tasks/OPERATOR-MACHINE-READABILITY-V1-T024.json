@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T024",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Project canonical operator decision axis in Leitstand",
+  "state": "planned",
+  "priority": {
+    "lane": "now",
+    "rank": 24
+  },
+  "goal": "Add a read-only Leitstand decision-axis projection that compresses existing operator truth into Jetzt, Im Fokus, Blockiert, Konvergenz and Danach without inventing a new priority, task, runtime or convergence authority. Jetzt and Danach come from canonical Bureau ranking, Im Fokus from the Bureau Live Register, Blockiert from source-bound blocker evidence, and Konvergenz from existing convergence evidence. Leitstand must preserve its observer invariant and consume producer-side snapshots rather than calling Bureau or Grabowski in the request path.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User explicitly authorized implementation on 2026-07-23. Preserve Leitstand as a read-only derived display and the existing producer-side snapshot boundary."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "github",
+    "grabowski",
+    "typescript",
+    "node",
+    "testing",
+    "ui",
+    "observability"
+  ],
+  "acceptance": [
+    {
+      "id": "decision-axis-contract",
+      "assertion": "A machine-readable producer-side snapshot exposes Jetzt, Im Fokus, Blockiert, Konvergenz and Danach with explicit source and freshness metadata and without assigning new priority or lifecycle semantics."
+    },
+    {
+      "id": "canonical-sources",
+      "assertion": "Jetzt and Danach are derived from canonical Bureau ranking, Im Fokus from the Live Register, Blockiert from bounded source-bound blocker evidence, and Konvergenz from existing convergence evidence; missing or stale evidence remains visibly degraded instead of being inferred green."
+    },
+    {
+      "id": "observer-invariant",
+      "assertion": "Leitstand performs no request-time calls to Bureau or Grabowski and gains no claim, dispatch, merge, deployment, task mutation or runtime mutation authority."
+    },
+    {
+      "id": "ui",
+      "assertion": "The dashboard or a dedicated operator view renders the five decision-axis sections clearly and source-links or discloses provenance and freshness without duplicating the full Bureau board."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests cover fresh complete data, missing or stale sources, no current eligible ball, bounded blockers and convergence states, and prove that the view remains read-only and snapshot-backed."
+    },
+    {
+      "id": "integration",
+      "assertion": "Existing Bureau task snapshots and convergence or operator artifacts are reused or extended; no second queue, focus registry or global status model is introduced."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-23",
+    "source": "user-directed Alexander-system-learning selective adoption",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-36a22ae3caf6bb3fe02aa6a6",
+      "event_id": 1009,
+      "source": {
+        "kind": "user_instruction",
+        "locator": "chat:user-request:2026-07-23:alexander-selective-adoption",
+        "sha256": null,
+        "observed_at": "2026-07-23T00:00:00+02:00",
+        "freshness": "unknown",
+        "does_not_establish": [
+          "source_content_identity"
+        ]
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "does_not_establish": [
+      "new priority truth",
+      "new task truth",
+      "new convergence truth",
+      "request-time execution coupling",
+      "permission to mutate foreign dirty worktrees"
+    ]
+  }
+}

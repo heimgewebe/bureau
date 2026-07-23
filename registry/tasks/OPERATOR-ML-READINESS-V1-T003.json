@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ML-READINESS-V1-T003",
+  "initiative": "OPERATOR-ML-READINESS-V1",
+  "title": "Collect prospective no-effect routing-shadow cohort",
+  "state": "verified",
+  "goal": "Collect a controlled prospective cohort of eligible real operator workspace cases by freezing verified canonical route evidence before any task outcome can be observed and sealing only independently reviewed semantic outcomes or explicit abstentions, without affecting routing, policy, queue, merge, deploy or runtime decisions.",
+  "depends_on": [
+    "OPERATOR-ML-READINESS-V1-T001"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 2
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "prospective-freeze",
+      "assertion": "Eligibility is frozen from verified canonical Agent Workspace route evidence before any workspace task can produce an outcome; capture failure is isolated and never blocks operator execution."
+    },
+    {
+      "id": "no-effect",
+      "assertion": "Cohort capture cannot change route, agent selection, policy, queue, merge, deploy or runtime decision state and introduces no ML training or promotion authority."
+    },
+    {
+      "id": "canonical-route-evidence",
+      "assertion": "Only evidence-complete canonical Agent Workspace route evidence validated by deterministic replay is eligible, with route schema v1 and v2 kept explicitly distinguishable."
+    },
+    {
+      "id": "semantic-outcome",
+      "assertion": "Outcome sealing is separate from workspace execution and accepts only reviewed semantic outcomes with bound primary evidence or explicit abstention; lifecycle success alone cannot create a positive label."
+    },
+    {
+      "id": "privacy",
+      "assertion": "Records contain only allowlisted route features and bounded evidence references; prompts, transcripts, private notes, environment values and unbounded argv are excluded."
+    },
+    {
+      "id": "create-only-dedup",
+      "assertion": "Prospective receipts, bound eligibility and sealed records use create-only storage with identity-based deduplication, reject conflicting duplicates and preserve an auditable capture-attempt trail."
+    },
+    {
+      "id": "failure-and-concurrency",
+      "assertion": "Incomplete or manipulated route or eligibility evidence, missing primary outcome evidence, symlink/path attacks, parallel workspaces and restart/reconcile cannot create false or cross-bound duplicate captures."
+    },
+    {
+      "id": "validation",
+      "assertion": "Focused tests, relevant repository validation, formatting/lint, security checks and full CI pass on the exact final reviewed diff before merge."
+    }
+  ],
+  "metadata": {
+    "phase": "prospective-shadow-cohort",
+    "effect": "capture_only",
+    "source_pr": "heimgewebe/grabowski#410",
+    "source_task": "OPERATOR-ML-READINESS-V1-T001",
+    "source_candidate_id": "candidate-f29bf60b74b1f17dd18a32bb",
+    "source_candidate_event_id": 1049,
+    "route_authority": false,
+    "ml_training_authorized": false,
+    "explicitly_deferred": [
+      "ML training readiness",
+      "cohort representativeness",
+      "minimum sufficient sample size",
+      "automatic model selection",
+      "routing policy changes",
+      "online learning",
+      "automatic policy promotion"
+    ],
+    "does_not_establish": [
+      "ML training readiness",
+      "cohort representativeness",
+      "sufficient sample size",
+      "route superiority",
+      "automatic routing authority",
+      "online learning authority"
+    ],
+    "implementation_pr": "heimgewebe/grabowski#423",
+    "implementation_branch": "feat/operator-ml-readiness-t003-prospective-cohort-v1",
+    "implementation_base": "bb8fccd650b941c1ee71ec6a4de315f076893878",
+    "implementation_head": "c3023bfb5e0750f566a1a203f15280d292c4fbd5",
+    "implementation_diff_sha256": "018a51a21466c7e771096b04f945ec3280fb0843cb9319c663fcb2385d39def6",
+    "implementation_merge_commit": "a8e185e8ed7d4d2636dbca52a7eaa6a89481c9ec",
+    "corrective_pr": "heimgewebe/grabowski#424",
+    "corrective_head": "2e109e3d47bd21f3c9fcaa7f4c0cdeb4766f36aa",
+    "corrective_diff_sha256": "875debdc4ba44f7b5221795f20d9207d71efd9e4db5791c41e5a87c675bd74c4",
+    "corrective_merge_commit": "bf5e41df2bf8149d05d17ba32e3dfc43f3980aec",
+    "runtime_release": "bf5e41df2bf8-srcset56d0e4c94686-locke6664d600b6c-contracte154473b9681",
+    "runtime_repo_head": "bf5e41df2bf8149d05d17ba32e3dfc43f3980aec",
+    "runtime_deploy_finalization_sha256": "a47ab4d46f12cd7fd1af7bfdb3d8feefc2e9c3a84b04731883c345d96b8cf0d9",
+    "verified_at": "2026-07-23",
+    "validated_acceptance": {
+      "prospective-freeze": "PR #423 freezes a versioned prospective eligibility receipt from the persisted Agent Workspace manifest before lease/worktree/preflight/task_start effects; the hook is best-effort and cannot raise into workspace execution.",
+      "no-effect": "Schemas and implementation bind proposal_only=true with routing/policy/queue/merge/runtime=false; no model, route, queue, merge, deploy or policy decision consumes the cohort.",
+      "canonical-route-evidence": "Prospective identity binds the full hash of deterministically replayed evidence-complete canonical Agent Workspace route evidence; route schema v1 and v2 remain explicit.",
+      "semantic-outcome": "Sealing is a separate CLI/core operation that requires the exact stored create-only prospective freeze and accepts only reviewed semantic outcomes with bounded primary evidence or explicit abstention.",
+      "privacy": "The cohort stores allowlisted routing features, identities and bounded evidence references only; prompts, transcripts, private notes, environment values, unrestricted argv and full manifests are excluded.",
+      "create-only-dedup": "Prospective eligibility, bound eligibility and records use create-only hardened storage; deterministic case identity preserves the first freeze and conflicting duplicates fail closed; attempts are separately auditable.",
+      "failure-and-concurrency": "Focused tests cover incomplete/manipulated route and eligibility evidence, missing primary evidence, abstention, symlink/path attacks, parallel workspaces, restart/reconcile and cross-case identity. PR #424 additionally confines AgentWorkspaceTests cohort state to their TemporaryDirectory.",
+      "validation": "Final PR #423 local make validate passed 3229 tests with 4 skips and all policy/context/runtime/deploy/security gates; PR #424 make validate passed 3230 tests with 4 skips. GitHub validate Python 3.10/3.12 and CodeQL were green on both merged heads."
+    },
+    "validation": [
+      "Grabowski PR #423 merged as a8e185e8ed7d4d2636dbca52a7eaa6a89481c9ec from reviewed head c3023bfb5e0750f566a1a203f15280d292c4fbd5; reviewed full diff was 161406 bytes with SHA-256 018a51a21466c7e771096b04f945ec3280fb0843cb9319c663fcb2385d39def6.",
+      "Post-merge live-state inspection found 20 test-only cohort artifacts produced by pre-corrective local validation. They were moved losslessly to 20260723-pr423-test-contamination with manifest SHA-256 8044e42f084e10acec71ac8e56677b82da0730d5f2a7b1cd3a7989307e491552.",
+      "Corrective PR #424 merged as bf5e41df2bf8149d05d17ba32e3dfc43f3980aec and added test-local cohort-root isolation plus a regression test; full validation passed with 3230 tests and 4 skips and all GitHub checks green.",
+      "A second set of 13 test artifacts was traced to concurrent task d72197c1e3a7436fbb16d0bb in PR #409 worktree: that worktree merged #423 at 17:37:45, started unittest discovery at 17:38:04, and incorporated #424 only at 17:43:30. The artifacts were losslessly quarantined with manifest SHA-256 8c37bdb2e504e7b0e994e8b49b388438324eb4ba350baa746b514591ca53a33a.",
+      "Reproduction of the exact full discovery command after #424 produced no outer-root or live-root cohort artifacts, confirming the corrective test isolation on the updated branch.",
+      "Source-identity-bound runtime deployment completed on bf5e41df2bf8149d05d17ba32e3dfc43f3980aec with release bf5e41df2bf8-srcset56d0e4c94686-locke6664d600b6c-contracte154473b9681 and finalization receipt SHA-256 a47ab4d46f12cd7fd1af7bfdb3d8feefc2e9c3a84b04731883c345d96b8cf0d9; runtime health and deployment integrity read back healthy.",
+      "After removal of only hash-identified test contamination, the live cohort contains zero JSON records. This establishes clean prospective collection capability, not cohort sufficiency or training readiness."
+    ],
+    "verification": {
+      "implementation_pr_head": "c3023bfb5e0750f566a1a203f15280d292c4fbd5",
+      "implementation_merge_commit": "a8e185e8ed7d4d2636dbca52a7eaa6a89481c9ec",
+      "implementation_diff_sha256": "018a51a21466c7e771096b04f945ec3280fb0843cb9319c663fcb2385d39def6",
+      "corrective_pr_head": "2e109e3d47bd21f3c9fcaa7f4c0cdeb4766f36aa",
+      "corrective_merge_commit": "bf5e41df2bf8149d05d17ba32e3dfc43f3980aec",
+      "corrective_diff_sha256": "875debdc4ba44f7b5221795f20d9207d71efd9e4db5791c41e5a87c675bd74c4",
+      "runtime_repo_head": "bf5e41df2bf8149d05d17ba32e3dfc43f3980aec",
+      "task_sha256": "b7ce62cb1ff95306faca8a7417da88c9c5660dd548b6f5acf3ae615515e2701b",
+      "plan_sha256": "b809f02cc0f4f17c42a44ca00dd94ce08a335b6be1671893ffac01246a656c79"
+    }
+  }
+}

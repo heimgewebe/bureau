@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ML-READINESS-V1-T004",
+  "initiative": "OPERATOR-ML-READINESS-V1",
+  "title": "Gate routing-shadow cohort readiness before any training",
+  "state": "planned",
+  "goal": "Audit the prospectively collected routing-shadow cohort for inclusion integrity, representativeness, sufficient preregistered coverage, semantic-label quality, abstention and missingness before any offline ML baseline training is authorized.",
+  "depends_on": [
+    "OPERATOR-ML-READINESS-V1-T003"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 3
+  },
+  "claims": [
+    {
+      "resource": "repo.vibe-lab",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/vibe-lab",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/vibe-lab"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "prospective-inclusion-integrity",
+      "assertion": "Audit proves that cohort membership was frozen prospectively before outcomes and reports every eligible inclusion, rejection, duplicate and capture error so successful cases cannot be selectively retained."
+    },
+    {
+      "id": "coverage-and-representativeness",
+      "assertion": "Report coverage across preregistered task classes, risk/context strata, actual/recommended routes and route schema v1/v2 separately; no representativeness claim is made for unobserved or materially under-covered strata."
+    },
+    {
+      "id": "sample-thresholds-preregistered",
+      "assertion": "Minimum sample and per-stratum coverage thresholds are defined and reviewed before looking at comparative model performance; insufficient coverage yields a FAIL or CONTINUE-COLLECTING result, not relaxed post-hoc criteria."
+    },
+    {
+      "id": "label-quality",
+      "assertion": "Quantify reviewed semantic-label availability, primary-evidence completeness, abstention, disagreement and missingness; lifecycle success is never promoted into a semantic label."
+    },
+    {
+      "id": "failure-accounting",
+      "assertion": "Aborts, infrastructure failures, capture rejections and unsealed cases are explicitly counted and analyzed for selection bias rather than silently discarded."
+    },
+    {
+      "id": "privacy-no-effect-dedup",
+      "assertion": "Revalidate privacy allowlists, no-effect constants, create-only identity/dedup integrity and absence of test/quarantined contamination in the evaluation cohort."
+    },
+    {
+      "id": "explicit-gate-result",
+      "assertion": "Produce a reviewed PASS, FAIL or CONTINUE-COLLECTING gate result bound to an immutable cohort identity and preregistered criteria. Only PASS may unblock OPERATOR-ML-READINESS-V1-T002."
+    },
+    {
+      "id": "no-training-authority",
+      "assertion": "This task performs readiness auditing only and cannot train models, change routing policy, promote a model, enable online learning or influence live operator decisions."
+    }
+  ],
+  "metadata": {
+    "phase": "cohort-readiness-gate",
+    "effect": "offline_readiness_audit_only",
+    "source_task": "OPERATOR-ML-READINESS-V1-T003",
+    "unlocks_on_pass": "OPERATOR-ML-READINESS-V1-T002",
+    "ml_training_authorized": false,
+    "route_authority": false,
+    "does_not_establish": [
+      "ML training readiness until this task returns reviewed PASS",
+      "cohort representativeness before measurement",
+      "sufficient sample size before preregistered thresholds pass",
+      "model superiority",
+      "routing policy authority",
+      "online learning authority",
+      "automatic policy promotion"
+    ]
+  }
+}

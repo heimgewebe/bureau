@@ -3,11 +3,11 @@
   "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T006",
   "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
   "title": "Hybride serverseitige Such-API mit autoritativer Sichtbarkeit vor Retrieval",
-  "state": "ready",
+  "state": "verified",
   "goal": "Eine serverseitige hybride Such-API auf der T005-Projektion implementieren, die exakte Treffer, PostgreSQL-Volltext, Trigramme und den internen semantischen Zusatzpfad kombiniert und Sichtbarkeit sowie Autorisierung ausschließlich aus dem bestehenden autoritativen Weltgewebe-PostgreSQL-Modell vor der Kandidatenauswahl durchsetzt.",
   "priority": {
-    "lane": "now",
-    "rank": 60
+    "lane": "later",
+    "rank": 900
   },
   "execution": {
     "mode": "interactive-agent",
@@ -105,6 +105,71 @@
       "ANN or HNSW",
       "external vector index",
       "SemantAH archive authority"
-    ]
+    ],
+    "verified_at": "2026-07-23",
+    "outcome": "Weltgewebe-PR #1546 implementiert die serverseitige hybride Such-API auf der aktiven T005-Generation. Kanonische PostgreSQL-Sichtbarkeit und Autorisierung werden vor Kandidatenauswahl durchgesetzt; öffentliche, private, verborgene, stale, entzogene, gelöschte, Legacy- und Dimensionsfehlerpfade sind fail-closed geprüft. Lexikalisches PostgreSQL-Ranking bleibt maßgeblich, Semantik ergänzt höchstens einen Kandidaten nach T004-Vertrag, und nur lokale temporäre Provider-Nichtverfügbarkeit degradiert auf lexikalischen Fallback. T006 führt keine Weboberfläche, keinen Produktionsrollout und keinen ANN/HNSW-Index ein.",
+    "implementation": {
+      "repository": "heimgewebe/weltgewebe",
+      "pull_request": 1546,
+      "base_sha": "96a5861a5a51e70b4a5b6b05f40549b74bf1908a",
+      "final_head_sha": "035611b34a94abfd2f30803358e8b2a70913e0cb",
+      "merge_commit": "059882cd49ee31b0b09815626f374860149174bd",
+      "merged_at": "2026-07-23T14:18:42Z",
+      "final_diff_sha256": "0e55964ca9253cf24ba72f93595a54bf5a83af2e4b4ceecdc5282b68335f7cd3",
+      "final_diff_bytes": 73307,
+      "reviewed_tree_sha": "738d3ba4e871965167e8444cc014ee8701a81cca",
+      "main_readback_sha": "059882cd49ee31b0b09815626f374860149174bd",
+      "main_tree_sha": "738d3ba4e871965167e8444cc014ee8701a81cca"
+    },
+    "validation": {
+      "review_axes": [
+        "correctness",
+        "authorization-data-integrity"
+      ],
+      "required_review_evidence_gate": "pass",
+      "required_merge_gate": "pass",
+      "post_merge_ci": {
+        "postgresql_integration_proofs": "success",
+        "api_rust_test_and_lint": "success",
+        "web_e2e": "success",
+        "kind_gitops_proof": "success",
+        "kind_ha_recovery_proof": "success",
+        "codeql_rust": "success"
+      },
+      "operator_review_findings": {
+        "merge_blockers": 0,
+        "nonblocking_followups": [
+          "WELTGEWEBE-SEMANTIC-SEARCH-V1-T010",
+          "WELTGEWEBE-SEMANTIC-SEARCH-V1-T011"
+        ]
+      }
+    },
+    "verified_acceptance": {
+      "authoritative-visibility-before-retrieval": "The PostgreSQL candidate query joins canonical domain_nodes and version state and applies search_visibility/ownership authorization before lexical or semantic ranking.",
+      "fail-closed-visibility-mapping": "Public, owner-private, hidden, revoked, deleted, stale, legacy/unknown and wrong-dimension cases are negatively covered; unknown or invalid states do not enter ranked candidates.",
+      "hybrid-retrieval-contract": "Exact and PostgreSQL lexical classes remain authoritative; semantic ranking receives only the already-authorized candidate set and appends at most one qualifying candidate.",
+      "active-generation-only": "Repository selection requires the single active generation and service validation binds the full derived generation identity.",
+      "lexical-provider-fallback": "Only EmbeddingProviderError::Unavailable produces lexical_fallback; identity, dimension, format and provider contract failures return fail-closed errors.",
+      "stable-ranking-and-pagination": "Lexical ordering is rank class, score and node ID; semantic ties are deterministic; API limit is bounded to 10 and nonzero offsets are rejected.",
+      "visibility-regression-suite": "Real PostgreSQL integration tests mutate canonical ownership/visibility/deletion/staleness after projection and verify no lexical or semantic leakage.",
+      "privacy-and-observability": "Outcome metrics expose bounded state names without logging raw vectors, document text, provider responses or authorization payloads.",
+      "repository-gates": "Final 73,307-byte diff is SHA-256 bound to final head 035611b34a94abfd2f30803358e8b2a70913e0cb; required merge and review evidence gates passed, PostgreSQL/API CI passed, and merge/main tree is byte-identical to the reviewed head tree.",
+      "no-web-or-production-rollout": "The merged changes are limited to API migrations, routes, search implementation and tests; no Web UI, production rollout, ANN/HNSW, external vector index or SemantAH shutdown was introduced."
+    },
+    "verification": {
+      "source": "GitHub PR #1546, exact Git objects, final diff artifact, CI status rollup and post-merge main-tree readback",
+      "source_refs": [
+        "heimgewebe/weltgewebe#1546"
+      ],
+      "verified_at": "2026-07-23",
+      "final_head_sha": "035611b34a94abfd2f30803358e8b2a70913e0cb",
+      "final_merge_commit": "059882cd49ee31b0b09815626f374860149174bd",
+      "final_diff_sha256": "0e55964ca9253cf24ba72f93595a54bf5a83af2e4b4ceecdc5282b68335f7cd3",
+      "main_readback_sha": "059882cd49ee31b0b09815626f374860149174bd",
+      "reviewed_tree_sha": "738d3ba4e871965167e8444cc014ee8701a81cca",
+      "main_tree_sha": "738d3ba4e871965167e8444cc014ee8701a81cca",
+      "task_sha256": "603ee50876ca90f9c251d3d8da3c7e51e0f6092c8a95433891995dc93ba63390",
+      "plan_sha256": "18002b2b2def870ec6e5dd91cd15d19aaade6f053cac144ca85e2862234a709e"
+    }
   }
 }

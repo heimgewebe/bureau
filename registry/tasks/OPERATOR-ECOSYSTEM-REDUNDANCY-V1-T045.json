@@ -269,12 +269,12 @@
     },
     "verification": {
       "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
-      "task_sha256": "32acbebb3d93e3179a39770316fd8ed906373708375725142f5e132e4075e6aa"
+      "task_sha256": "efab26369572f08a3640d7c1e4587efca0c9ba406f9f0e8eac70a0abab2836e6"
     },
     "verified_acceptance": {
       "ansible-canonical-inventory": "The Ansible pilot derives an ephemeral heimberry inventory selection from /home/alex/.config/grabowski/fleet.json and does not persist a second Fleet truth. Durable task execution was used for the bounded remote lifecycle.",
       "ansible-remote-pilot": "A single leased reversible heimberry marker changed on first apply, converged to changed=false on the identical second apply, was removed through Ansible, and was independently read back as absent on the target host.",
-      "closeout": "Every completed productionization slice is bound to local receipts and/or merged GitHub PR evidence. The remaining useful non-blocking work is registered as T047 SOPS directory-fsync hardening, T048 hash-verified PyYAML bootstrap and T049 task-projection contract repair rather than left as prose.",
+      "closeout": "Every completed productionization slice is bound to local receipts and/or merged GitHub PR evidence. The remaining useful non-blocking work is registered as T050 SOPS directory-fsync hardening, T048 hash-verified PyYAML bootstrap and T049 task-projection contract repair rather than left as prose.",
       "no-new-authority": "T045 added no second task database, queue, Fleet authority, generic dashboard, Temporal control plane, LiteLLM routing authority or resident telemetry collector. Grabowski, Bureau, Leitstand and repository gates retain their existing roles.",
       "ntfy-production-binding": "Grabowski PRs #385, #396 and #397 merged the outbox-bound ntfy dispatcher, deployment inclusion and explicit spawn dependency. The current healthy integrity-checked runtime head 8e2a6755a7ae1201630af071529a1a18f9d57741 is 15 commits after the #397 merge. No second queue or user_seen truth was introduced. No actual end-device subscription receipt is asserted.",
       "sops-recovery-first": "Operational and recovery age recipients exist in separate heim-pc and heimberry failure domains. Synthetic recovery, documented rotation/update procedure, private-key-outside-Git policy and a real recovery-key decrypt of the migrated ntfy ciphertext were proven before/with the single low-risk real-secret migration. Grabowski PR #419 merged the reviewed materialization helper; the dispatcher contract remains unchanged.",

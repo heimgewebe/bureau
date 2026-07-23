@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ML-READINESS-V1-T005",
+  "initiative": "OPERATOR-ML-READINESS-V1",
+  "title": "Add routing-shadow provenance and review-disagreement observability",
+  "state": "planned",
+  "goal": "Extend the no-effect routing-shadow capture contract so the readiness gate can measure independent semantic-review disagreement, distinguish production cases from test/synthetic/quarantined data, and separate execution aborts from infrastructure failures without rewriting historical cohort truth or introducing any routing or training authority.",
+  "depends_on": [
+    "OPERATOR-ML-READINESS-V1-T003"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 4
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "versioned-backward-compatible-contract",
+      "assertion": "Introduce a reviewed versioned capture/record contract extension that preserves existing create-only v2 history unchanged and readable; legacy records with absent new fields remain explicitly unobservable and cannot be silently treated as PASS-quality evidence."
+    },
+    {
+      "id": "independent-review-disagreement",
+      "assertion": "The capture model can bind at least two independently attributable semantic assessments, or an equivalently reviewable privacy-preserving assessment identity contract, so disagreement rate and missing independent review can be computed without promoting lifecycle success into a semantic label."
+    },
+    {
+      "id": "test-quarantine-provenance",
+      "assertion": "Every new prospective case carries explicit bounded provenance sufficient to distinguish natural production operator cases from test, synthetic and quarantined data; non-production classes cannot enter the T004 eligible treatment denominator."
+    },
+    {
+      "id": "execution-failure-provenance",
+      "assertion": "Capture records execution provenance separately from semantic outcome so normal completion, execution abort and infrastructure failure remain distinguishable and selection-bias accounting can include unsealed or failed cases without fabricating semantic labels."
+    },
+    {
+      "id": "privacy-and-no-effect",
+      "assertion": "New provenance and review fields are bounded and privacy-minimized, exclude raw prompts/transcripts/private notes/unbounded argv, and preserve proposal_only=true with routing, policy, queue, merge, deploy and runtime effects false."
+    },
+    {
+      "id": "create-only-integrity",
+      "assertion": "Identity, deduplication, restart/reconcile and conflicting-duplicate behavior remain fail-closed under the extended schema; no migration rewrites or mutates historical cohort receipts in place."
+    },
+    {
+      "id": "reaudit-not-auto-unblock",
+      "assertion": "Completion only makes the missing T004 quality signals measurable. It does not authorize model training or unblock T002; T004 must be rerun against the preregistered criteria and return a separately reviewed PASS."
+    },
+    {
+      "id": "validation",
+      "assertion": "Focused compatibility, provenance, disagreement, privacy, no-effect and failure-accounting tests plus relevant repository validation and CI pass on the exact final reviewed diff before merge and runtime deployment."
+    }
+  ],
+  "metadata": {
+    "phase": "prospective-shadow-observability-hardening",
+    "effect": "capture_schema_only",
+    "source_task": "OPERATOR-ML-READINESS-V1-T004",
+    "extends_task": "OPERATOR-ML-READINESS-V1-T003",
+    "unblocks_reaudit_for": "OPERATOR-ML-READINESS-V1-T004",
+    "does_not_unblock_directly": "OPERATOR-ML-READINESS-V1-T002",
+    "ml_training_authorized": false,
+    "route_authority": false,
+    "required_observability_gaps": [
+      "semantic reviewer disagreement",
+      "production versus test/synthetic/quarantine provenance",
+      "execution abort versus infrastructure failure provenance"
+    ],
+    "historical_data_policy": "preserve_create_only_history_without_in_place_rewrite",
+    "does_not_establish": [
+      "cohort sufficiency",
+      "cohort representativeness",
+      "ML training readiness",
+      "model superiority",
+      "routing policy authority",
+      "online learning authority",
+      "automatic policy promotion"
+    ]
+  }
+}

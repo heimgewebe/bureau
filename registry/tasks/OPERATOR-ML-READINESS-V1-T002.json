@@ -83,8 +83,16 @@
       "deployment_authority",
       "need_for_gpu_training",
       "routing_policy_superiority_before_evaluation",
-      "training_authority_before_t004_verified"
+      "training_authority_before_t004_reviewed_pass"
     ],
-    "readiness_gate_task": "OPERATOR-ML-READINESS-V1-T004"
+    "readiness_gate_task": "OPERATOR-ML-READINESS-V1-T004",
+    "current_readiness_gate_status": "CONTINUE-COLLECTING",
+    "training_authorized": false,
+    "current_blockers": [
+      "OPERATOR-ML-READINESS-V1-T004 has no reviewed PASS",
+      "OPERATOR-ML-READINESS-V1-T005 must make reviewer-disagreement, test/quarantine provenance and execution-failure provenance measurable before T004 can be meaningfully re-audited",
+      "The live eligible treatment cohort currently contains zero cases"
+    ],
+    "capture_observability_followup": "OPERATOR-ML-READINESS-V1-T005"
   }
 }

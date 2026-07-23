@@ -61,6 +61,8 @@
     "verification": {
       "source": "verified_t003_gate_and_merged_grabowski_handoff_with_paired_baseline",
       "verified_at": "2026-07-23T20:35:09+02:00",
+      "task_sha256": "635a431d890d6f5f553508c795b2bc571a2a4e477f49e26b5618d04d67fd7066",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
       "promotion_gate": {
         "bureau_pull_request": 889,
         "t003_state": "verified",

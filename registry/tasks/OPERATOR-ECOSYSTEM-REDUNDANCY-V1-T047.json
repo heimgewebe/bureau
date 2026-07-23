@@ -1,0 +1,96 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The Bureau Resource Registry contains exactly one repository resource with id repo.mitschreiber and parent repo.root.",
+      "id": "resource-identity"
+    },
+    {
+      "assertion": "The resource binds repository_path /home/alex/repos/mitschreiber and the canonical Grabowski key repo:/home/alex/repos/mitschreiber without inventing a second repository identity.",
+      "id": "repository-binding"
+    },
+    {
+      "assertion": "Full Bureau Registry validation and relevant resource/claim tests pass on the exact change.",
+      "id": "schema-validation"
+    },
+    {
+      "assertion": "A fresh Bureau candidate/task assessment or equivalent Registry read can resolve repo.mitschreiber as a valid claim target after merge and runtime refresh.",
+      "id": "consumer-resolution"
+    },
+    {
+      "assertion": "The change does not modify Mitschreiber bytes, Renovate configuration, Dependabot configuration, GitHub App permissions, Bureau queue state or merge/deployment authority.",
+      "id": "no-activation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.registry"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly instructed implementation of Renovate Fleet V1. T046 live planning proved repo.mitschreiber is absent from the Bureau resource catalog; T047 adds only that missing catalog identity through reviewed Registry change.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.bureau-scopes/registry"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Add one canonical Bureau repository resource for heimgewebe/mitschreiber so later Renovate consumer work can use exact repository claims and worktree isolation. This task changes only Bureau Registry resource metadata; it does not activate Renovate, mutate Mitschreiber, install a GitHub App, or establish task readiness for the later pilot.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T047",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Renovate is active in Mitschreiber",
+      "Mitschreiber pilot is ready or complete",
+      "GitHub App permissions exist",
+      "permission to bypass later repository-specific review and lease gates"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-1768aa12dca23febb2849480",
+      "event_id": 1014,
+      "event_created_at": "2026-07-23T07:53:21.197561Z",
+      "request_sha256": "4dee9f22d612086b5711440a43734b4e46941971785380734493c2ac7f5f27b4",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator_followup",
+        "locator": "github:heimgewebe/bureau#901",
+        "observed_at": "2026-07-23T07:53:21.189202Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T046"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 4
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "bureau",
+    "grabowski",
+    "github"
+  ],
+  "rollback": {
+    "strategy": "Revert the single resource-registry entry. No consumer repository or external bot state is changed by this task."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Register Mitschreiber as a Bureau repository resource"
+}

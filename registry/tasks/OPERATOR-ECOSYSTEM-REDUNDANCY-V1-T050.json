@@ -1,0 +1,67 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The SOPS-backed ntfy topic materializer fsyncs the containing directory after create-only publication and after atomic replacement so a reported success is crash-durable at the filesystem metadata boundary.",
+      "id": "directory-fsync"
+    },
+    {
+      "assertion": "Private-file no-symlink reads, 0600 materialization, secret-free error output, create-only no-overwrite semantics and the existing dispatcher runtime interface remain unchanged.",
+      "id": "security-contract-preserved"
+    },
+    {
+      "assertion": "Focused tests cover directory-sync success and failure behavior; the exact diff is reviewed and required CI is green before merge.",
+      "id": "tests-review-ci"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Registered from the T045 closeout because the reviewed SOPS helper is correct for confidentiality and atomic replacement but does not yet fsync parent-directory metadata for crash-durable publication. The user explicitly authorized completing and registering useful residual work.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Close the remaining crash-durability gap in the SOPS-backed ntfy topic materializer by durably syncing directory metadata after create-only publication and atomic replacement without changing the dispatcher runtime contract or exposing secret material.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T050",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "a current secret-loss condition",
+      "permission to alter private age key storage",
+      "permission to change the ntfy dispatcher runtime contract"
+    ],
+    "registered_from": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045 closeout review on 2026-07-23"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 5
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau"
+  ],
+  "rollback": {
+    "strategy": "Revert only the directory-sync hardening commit. The existing SOPS ciphertext, runtime materialization and dispatcher contract remain valid and independently recoverable."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Harden SOPS ntfy materialization crash durability"
+}

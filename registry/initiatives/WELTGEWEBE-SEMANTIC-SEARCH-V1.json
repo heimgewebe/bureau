@@ -53,10 +53,11 @@
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T002",
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T003",
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T004",
-        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T005"
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T005",
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T006"
       ],
-      "current_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T006",
-      "updated_at": "2026-07-22",
+      "current_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T007",
+      "updated_at": "2026-07-23",
       "t001_merge_commit": "f00afacc7be4cc551c81c5511faf5f817b04f700",
       "t002_merge_commit": "adc060cfbb9d055a7b63c494fa042e7c57ca7bea",
       "t002_pull_request": 1495,
@@ -120,7 +121,19 @@
         "projection_rule": "explicit search_visibility == public only; all other values fail-closed hidden",
         "follow_up_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T006",
         "candidate_id": "candidate-62346d44e3cc71876b5e7b94"
-      }
+      },
+      "t006_primary": {
+        "pull_request": 1546,
+        "head_sha": "035611b34a94abfd2f30803358e8b2a70913e0cb",
+        "merge_commit": "059882cd49ee31b0b09815626f374860149174bd",
+        "binary_diff_sha256": "0e55964ca9253cf24ba72f93595a54bf5a83af2e4b4ceecdc5282b68335f7cd3",
+        "reviewed_tree_sha": "738d3ba4e871965167e8444cc014ee8701a81cca",
+        "main_tree_sha": "738d3ba4e871965167e8444cc014ee8701a81cca"
+      },
+      "t006_followups": [
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T010",
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T011"
+      ]
     }
   }
 }

@@ -137,8 +137,8 @@ Brauchbare SemantAH-Konzepte wie Providergrenzen, Dimensionsprüfung, Normalisie
 3. **T003 – PostgreSQL-Suchgrundlage und pgvector-Fähigkeit – verifiziert:** PR #1500 belegt PostgreSQL 16.14, pg_trgm 1.6, Projektion, Regeneration, Backup/Restore und Konfliktgrenzen; pgvector bleibt mangels Verfügbarkeit gestoppt.
 4. **T004 – interner Embedding- und Ranking-Kern – verifiziert:** PR #1502 und Hardening-PR #1506 liefern Provider-, Normalisierungs-, Dimensions-, Generations- und Hybrid-Ranking-Beleg; 4B ist kleinster qualifizierter lokaler Kandidat, 8B Vergleichsobergrenze.
 5. **T005 – idempotente Projektion, Worker, Backfill und Löschfortpflanzung – verifiziert:** PR #1529 liefert revisionssichere Multi-Instance-Verarbeitung, lokalen Backfill und reproduzierbaren Neuaufbau.
-6. **T006 – hybride serverseitige Such-API – aktuell:** autoritative Sichtbarkeit und Autorisierung vor Retrieval binden, bestehende Filter wahren und den technischen lexikalischen Fallback liefern.
-7. **T007 – Websuche und „Ähnliche Knoten“:** Suchoberfläche integrieren und maschinelle Ähnlichkeit klar von Beziehungen trennen.
+6. **T006 – hybride serverseitige Such-API – verifiziert:** PR #1546 bindet autoritative Sichtbarkeit und Autorisierung vor Retrieval, wahrt das lexikalische PostgreSQL-Ranking und ergänzt Semantik nur nach dem T004-Vertrag.
+7. **T007 – Websuche und „Ähnliche Knoten“ – aktuell:** Suchoberfläche integrieren und maschinelle Ähnlichkeit klar von Beziehungen trennen.
 8. **T008 – vollständige Abnahme, direkter Rollout und öffentlicher Live-Beweis:** grüne CI, direkter Rollout, öffentlicher Readback und Betriebsbelege.
 9. **T009 – SemantAH stilllegen und bereinigen:** erst nach T008 Runtime-Rollen entfernen, Repository archivieren und Bureau/Systemkatalog nachziehen.
 
@@ -151,7 +151,9 @@ Nach öffentlichem T008-Beweis supersedet oder schließt T009 `SEMANTAH-USEFULNE
 - **T003 ist verifiziert:** Weltgewebe-PR #1500 wurde mit Head `35dea9a90cf0bb84f167ed596e3cb5de1423ca6a` und Merge-Commit `bbeb7c63f6ce0a807d0203a7062198a545a2a6a5` gemergt. PostgreSQL 16.14 und pg_trgm 1.6 sind belegt; pgvector ist im gepinnten Image nicht verfügbar und wurde nicht fingiert.
 - **T004 ist verifiziert:** PR #1502 wurde mit Head `9fbc592d3301d3c156a931ed18112a76ff55e1da` als `9f44895337b2ecf97f83a125ca30f1247d98745f` gemergt. PR #1506 wurde mit Head `fc710aa4c0d0819d4acaef5b0034f8d88a9eb6b2` als `4c6ef9e8fec0a2b17cc5babb5b0e02798002b89b` gemergt. Die finalen erforderlichen Gates waren grün; frühere fehlgeschlagene oder abgebrochene Review-Evidence-Läufe wurden nicht als Mergebeleg verwendet.
 - **T005 ist verifiziert:** PR #1529 ist gemergt; der geprüfte PR-Head und der Merge-Commit besitzen denselben vollständigen Git-Tree. Die Projektion bleibt bei unbekannter Sichtbarkeit fail-closed.
-- **T006 ist aktuell:** Vor Einführung der serverseitigen Suche die vollständige autoritative Sichtbarkeits- und Autorisierungsabbildung vor Retrieval schließen und darauf den hybriden API-Vertrag aufbauen.
+- **T006 ist verifiziert:** PR #1546 wurde mit finalem Head `035611b34a94abfd2f30803358e8b2a70913e0cb` als `059882cd49ee31b0b09815626f374860149174bd` gemergt. Der 73.307-Byte-Binärdiff ist an SHA-256 `0e55964ca9253cf24ba72f93595a54bf5a83af2e4b4ceecdc5282b68335f7cd3` gebunden; geprüfter Head-Tree und Main-Tree sind identisch.
+- **T007 ist aktuell:** Die Websuche wird auf die T006-Server-API umgestellt und „Ähnliche Knoten“ wird als getrennte maschinelle Ähnlichkeitsoberfläche integriert.
+- **T010/T011 sind Review-Follow-ups:** T010 untersucht einen skalierbaren autorisierten Retrievalpfad jenseits der fail-closed 1000er-Grenze; T011 härtet literale Titelpräfixe gegen unbeabsichtigte `%`-/`_`-LIKE-Wildcards. Beide blockieren T007 nicht.
 - **SemantAH bleibt unverändert:** keine Archivierung, keine Runtime-Entfernung und keine Bereinigung vor T008/T009.
 
 ## T002-Test- und Reviewbindung

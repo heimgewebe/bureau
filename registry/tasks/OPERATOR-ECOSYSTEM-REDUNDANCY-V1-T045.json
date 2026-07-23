@@ -72,13 +72,54 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "metadata": {
+    "completion": {
+      "followup_tasks": [
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T050",
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048",
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T049"
+      ],
+      "merged_prs": [
+        "heimgewebe/weltgewebe#1541",
+        "heimgewebe/weltgewebe#1552",
+        "heimgewebe/grabowski#385",
+        "heimgewebe/grabowski#396",
+        "heimgewebe/grabowski#397",
+        "heimgewebe/grabowski#419"
+      ],
+      "outcome": "T045 converged the selected T044 pilots without adding a second control plane: ntfy is bound to the existing Grabowski outbox lifecycle and present in the healthy deployed runtime lineage; Ansible uses canonical Fleet truth and passed a bounded remote idempotence/cleanup/readback cycle; SOPS+age has separate operational and off-host recovery recipients, tested recovery and one real low-risk ntfy-topic migration; Trivy findings were deduplicated/triaged and a pinned rendered-manifest scan plus CycloneDX path was merged with required CI and review evidence.",
+      "schema_version": 1,
+      "status": "verified_bounded_external_tool_productionization"
+    },
     "does_not_establish": [
       "all Trivy findings are actionable",
-      "production secret recovery already exists",
-      "actual iOS device receipt already occurred",
-      "remote Ansible compatibility already exists",
+      "an actual iOS or other end-device ntfy subscription receipt occurred",
+      "permission for broad Ansible fleet migration",
+      "permission to migrate high-impact production credentials",
+      "that the SOPS helper already fsyncs parent-directory metadata after publication",
+      "that PyYAML bootstrap is already artifact-hash-pinned",
+      "that Grabowski task projection observability is currently healthy",
       "permission to override foreign leases or dirty worktrees"
     ],
+    "operator_intake": {
+      "candidate_id": "candidate-9c787a98c7f3c7768342723a",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-22T07:13:22.458348Z",
+      "event_id": 951,
+      "request_sha256": "603ef59a58b43a12b51bac472c12f23bc8d6d691bf0ffbfc5933ee2fb6d7c1ad",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "trivy-live-scan",
+        "locator": "T044 Trivy pilot on heimgewebe/weltgewebe@a7f8c490095d907a26ba637f739ca423b8bba180",
+        "observed_at": "2026-07-22T09:11:00+02:00",
+        "sha256": "d1ba101322bed2e5926f4c4d19b2e232c5a19abcc159dc5bd2aa7625ebf44a9c"
+      }
+    },
     "parent_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T044",
     "phase_evidence": {
       "ansible": "ansible-phase3-v1.json",
@@ -88,33 +129,159 @@
       "sops_age": "sops-age-phase4-v1.json",
       "trivy_renovate": "trivy-renovate-phase5-v1.json"
     },
+    "production_evidence": [
+      {
+        "kind": "closeout_receipt",
+        "path": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/t045-closeout-v2.json",
+        "sha256": "030803d52afd5daf433d666fa6542d830d95ce5fbddd6c5d31881e2ef4e6b093"
+      },
+      {
+        "kind": "trivy_triage",
+        "path": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/t045-trivy-full-triage-v1.json",
+        "sha256": "ad6739d4671671f9c468879fed4edc6697178181d8163b834beeaa92183fd1b6"
+      },
+      {
+        "kind": "trivy_production_local",
+        "path": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/t045-trivy-production-path-v1.json",
+        "sha256": "d990b874112707c85963966bb543ff15fed66109af24943998848dd5bfd027a3"
+      },
+      {
+        "kind": "sops_recovery",
+        "path": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/t045-sops-age-recovery-v1.json",
+        "sha256": "646fc6eadc2f87aacb9cdc776cbaf9fd717ff36edda6f0f576769875d181ac73"
+      },
+      {
+        "kind": "sops_real_secret_migration",
+        "path": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/t045-sops-age-real-secret-migration-v1.json",
+        "sha256": "49e422cd4256b6d29c42df2b676bc752170a883efeb28acc4bdf70dd8de669ff"
+      },
+      {
+        "kind": "ansible_remote_check",
+        "path": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/t045-ansible-remote-check-v1.json",
+        "sha256": "6f9f9eacaf1223de216db865e59c9e711c0285e85f4681b514c6758f5894f974"
+      },
+      {
+        "kind": "ansible_remote_idempotence",
+        "path": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/t045-ansible-remote-idempotence-v1.json",
+        "sha256": "a70c527fef62d2e05f9943d82abc0e21f4c7334ad9cd781392800d0687f9c01b"
+      }
+    ],
     "registered_from": "T044 phased implementation closeout on 2026-07-22",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "head_sha": "fed2ecb73da81477da2aa1f031d0439a52a2a0c2",
+          "kind": "pull_request",
+          "merge_commit_sha": "e14944fb149c0b66b8a1ca4e1e1b26a8603c5067",
+          "source_ref": "heimgewebe/weltgewebe#1541",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
+        },
+        {
+          "authority": "github",
+          "head_sha": "4f30f930f51f0450d5ea32737e5c8bbc82a6d915",
+          "kind": "pull_request",
+          "merge_commit_sha": "201edf2cfc79dbf42023e738ae7cb9201aba881f",
+          "source_ref": "heimgewebe/weltgewebe#1552",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
+        },
+        {
+          "authority": "github",
+          "head_sha": "1bb47ae1e8e34cfaab7441981101bc8897f273e7",
+          "kind": "pull_request",
+          "merge_commit_sha": "49287911fb8b279e4d25e3f162022541b739825a",
+          "source_ref": "heimgewebe/grabowski#385",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
+        },
+        {
+          "authority": "github",
+          "head_sha": "2f697f19e3092032a27961a23b448b3ae723b294",
+          "kind": "pull_request",
+          "merge_commit_sha": "afba5290c9219408fe4faff1b3f2ebd367aaf118",
+          "source_ref": "heimgewebe/grabowski#396",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
+        },
+        {
+          "authority": "github",
+          "head_sha": "270fbaf9cb34dbe042dda44ca2d5e5a75436c096",
+          "kind": "pull_request",
+          "merge_commit_sha": "22799f6544c59034384ce01356bbaa3527321c85",
+          "source_ref": "heimgewebe/grabowski#397",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
+        },
+        {
+          "authority": "github",
+          "head_sha": "52ffda56d33076ee8ac2fcae4c9c36a4b6b96a31",
+          "kind": "pull_request",
+          "merge_commit_sha": "0ef15f480f973fb96229b29de465983cf0f9012c",
+          "source_ref": "heimgewebe/grabowski#419",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
+        },
+        {
+          "authority": "grabowski-runtime",
+          "kind": "live_probe",
+          "source_ref": "runtime:8e2a6755a7ae1201630af071529a1a18f9d57741",
+          "state": "healthy-integrity-pass-pr397-plus-15",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
+        },
+        {
+          "authority": "grabowski-host-evidence",
+          "evidence_sha256": [
+            "030803d52afd5daf433d666fa6542d830d95ce5fbddd6c5d31881e2ef4e6b093"
+          ],
+          "kind": "live_probe",
+          "source_ref": "/home/alex/.local/state/grabowski/evidence/operator-external-tool-program/t045-closeout-v2.json",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
+        },
+        {
+          "authority": "bureau",
+          "kind": "task_reference",
+          "relation": "residual-crash-durability",
+          "source_ref": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T050",
+          "state": "planned",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
+        },
+        {
+          "authority": "bureau",
+          "kind": "task_reference",
+          "relation": "residual-python-supply-chain",
+          "source_ref": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048",
+          "state": "planned",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
+        },
+        {
+          "authority": "bureau",
+          "kind": "task_reference",
+          "relation": "residual-task-projection-observability",
+          "source_ref": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T049",
+          "state": "planned",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
     "trivy_followup": {
       "candidate_id": "candidate-9c787a98c7f3c7768342723a",
       "event_id": 951,
       "sbom_sha256": "fda55fd94a02e36392558fd9d50e6e07fdbaeb0fa249c22277f028de99a1680a",
       "scan_sha256": "d1ba101322bed2e5926f4c4d19b2e232c5a19abcc159dc5bd2aa7625ebf44a9c"
     },
-    "operator_intake": {
-      "schema_version": 1,
-      "candidate_id": "candidate-9c787a98c7f3c7768342723a",
-      "event_id": 951,
-      "event_created_at": "2026-07-22T07:13:22.458348Z",
-      "request_sha256": "603ef59a58b43a12b51bac472c12f23bc8d6d691bf0ffbfc5933ee2fb6d7c1ad",
-      "source": {
-        "does_not_establish": [],
-        "freshness": "digest-bound",
-        "kind": "trivy-live-scan",
-        "locator": "T044 Trivy pilot on heimgewebe/weltgewebe@a7f8c490095d907a26ba637f739ca423b8bba180",
-        "observed_at": "2026-07-22T09:11:00+02:00",
-        "sha256": "d1ba101322bed2e5926f4c4d19b2e232c5a19abcc159dc5bd2aa7625ebf44a9c"
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
-    }
+    "verification": {
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "task_sha256": "efab26369572f08a3640d7c1e4587efca0c9ba406f9f0e8eac70a0abab2836e6"
+    },
+    "verified_acceptance": {
+      "ansible-canonical-inventory": "The Ansible pilot derives an ephemeral heimberry inventory selection from /home/alex/.config/grabowski/fleet.json and does not persist a second Fleet truth. Durable task execution was used for the bounded remote lifecycle.",
+      "ansible-remote-pilot": "A single leased reversible heimberry marker changed on first apply, converged to changed=false on the identical second apply, was removed through Ansible, and was independently read back as absent on the target host.",
+      "closeout": "Every completed productionization slice is bound to local receipts and/or merged GitHub PR evidence. The remaining useful non-blocking work is registered as T050 SOPS directory-fsync hardening, T048 hash-verified PyYAML bootstrap and T049 task-projection contract repair rather than left as prose.",
+      "no-new-authority": "T045 added no second task database, queue, Fleet authority, generic dashboard, Temporal control plane, LiteLLM routing authority or resident telemetry collector. Grabowski, Bureau, Leitstand and repository gates retain their existing roles.",
+      "ntfy-production-binding": "Grabowski PRs #385, #396 and #397 merged the outbox-bound ntfy dispatcher, deployment inclusion and explicit spawn dependency. The current healthy integrity-checked runtime head 8e2a6755a7ae1201630af071529a1a18f9d57741 is 15 commits after the #397 merge. No second queue or user_seen truth was introduced. No actual end-device subscription receipt is asserted.",
+      "sops-recovery-first": "Operational and recovery age recipients exist in separate heim-pc and heimberry failure domains. Synthetic recovery, documented rotation/update procedure, private-key-outside-Git policy and a real recovery-key decrypt of the migrated ntfy ciphertext were proven before/with the single low-risk real-secret migration. Grabowski PR #419 merged the reviewed materialization helper; the dispatcher contract remains unchanged.",
+      "trivy-production-path": "Weltgewebe PR #1552 merged a SHA-256-pinned Trivy 0.72.0 path that derives scan targets from the canonical platform renderer, treats findings as advisory while failing closed on execution/report/SBOM errors, emits CycloneDX JSON, passed technical CI plus two-axis R3 review evidence, and was read back as identical to current main at merge commit 201edf2cfc79dbf42023e738ae7cb9201aba881f.",
+      "trivy-triage": "The digest-bound T044 scan was deduplicated by rule identity and reconciled against canonical rendered manifests. T045 evidence records the full triage; 15 of 21 original rendered rule IDs disappeared on canonical renders, KSV-0014 was remediated in merged Weltgewebe PR #1541, and the production scan now reports 22 findings across 5 rule IDs without treating occurrence count as defect count."
+    },
+    "verified_at": "2026-07-23T14:13:44+02:00"
   },
   "priority": {
     "lane": "now",
@@ -131,6 +298,6 @@
     "strategy": "Each productionized external tool remains independently removable: revert its adapter/configuration and restore the previous observed execution path while preserving Bureau history and evidence. Secret migrations require a tested decrypt/restore path before effect; Trivy CI must be removable without deleting scan evidence; Ansible and ntfy must not become required for existing Grabowski task truth."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Productionize T044 external-tool pilots and triage Trivy findings"
 }

@@ -3,7 +3,7 @@
   "id": "CCM-V1-T004",
   "initiative": "CHRONIK-CODING-MEMORY-V1",
   "title": "Align Systemkatalog learning roles",
-  "state": "ready",
+  "state": "verified",
   "depends_on": [
     "CCM-V1-T003"
   ],
@@ -54,6 +54,35 @@
       "runtime_integration",
       "effectiveness",
       "automatic_task_creation"
-    ]
+    ],
+    "implementation": {
+      "repository": "heimgewebe/systemkatalog",
+      "pull_request": 131,
+      "branch": "docs/chronik-vibe-role-alignment-v1",
+      "reviewed_head": "d080ca5e7bf0eb02231d4152ea0ad237b0860201",
+      "merge_commit": "fe69cec726a9026b15afa1abe66337c20eca4fdb",
+      "merged_at": "2026-07-14T13:27:51Z",
+      "current_main_at_verification": "7447da1f9b481d31fecd28a385ac1c3e27a22bbb"
+    },
+    "validation": {
+      "current_main_targeted_tests": "python3 -m unittest scripts.tests.test_system_catalog: 15 passed",
+      "system_catalog_validator": "valid; registrySystems=37, registryRelations=45, authorityDomains=17, catalogRepositories=33",
+      "ecosystem_map_validator": "valid; nodes=37, edges=45, authorityDomains=17",
+      "current_main_clean_after_validation": true
+    },
+    "acceptance_evidence": {
+      "heimlern-retired": "Current Systemkatalog main describes repo:heimlern as an archived historical reference, gives it an empty truthOwnership list, and explicitly excludes active learning proposals and runtime operation.",
+      "chronik-vibe-relation": "Current Systemkatalog main contains repo:chronik -> repo:vibe-lab learning_input_for with bounded semantics: frozen historical outcome cohorts are evidence for prospectively registered experiments and no policy or task is auto-applied.",
+      "vibe-bureau-relation": "Current Systemkatalog main contains repo:vibe-lab -> repo:bureau exports_candidate_to; reviewed proposal-ready candidates may be exported, while Bureau alone decides whether they become work."
+    },
+    "outcome": "Systemkatalog PR #131 implemented the Chronik/Vibe-Lab/Bureau learning-role boundary and was merged on 2026-07-14. Current main 7447da1f9b481d31fecd28a385ac1c3e27a22bbb still satisfies all three acceptance assertions; later catalog work additionally archives Heimlern explicitly. This closeout reconciles stale Bureau task state only and establishes no runtime integration, effectiveness or automatic task creation.",
+    "verified_at": "2026-07-23T16:07:19+02:00",
+    "verification": {
+      "task_sha256": "ed9eac93d9faf8e589bc0467642d8d53dd6f2a4e0f813f1176700f8fce05edf7",
+      "plan_sha256": "7a4d09115c987f7199ff6b984bc87c08f8598c55d5dddfd7284c7d55d1b5bcd0",
+      "source": "github-and-current-systemkatalog-main",
+      "source_ref": "heimgewebe/systemkatalog#131; merge fe69cec726a9026b15afa1abe66337c20eca4fdb; current main 7447da1f9b481d31fecd28a385ac1c3e27a22bbb",
+      "verified_at": "2026-07-23T16:07:19+02:00"
+    }
   }
 }

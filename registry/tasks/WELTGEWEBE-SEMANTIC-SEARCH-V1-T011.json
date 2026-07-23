@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T011",
+  "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
+  "title": "Literale Titelpräfix-Suche mit sicher escapten LIKE-Metazeichen",
+  "state": "planned",
+  "goal": "Die T006-Titelpräfix-Suche so härten, dass Nutzereingaben mit %, _ und dem Escape-Zeichen als literale Suchzeichen behandelt werden und nicht unbeabsichtigt SQL-LIKE-Wildcards aktivieren, ohne Ranking oder Autorisierungsreihenfolge zu verändern.",
+  "priority": {
+    "lane": "next",
+    "rank": 70
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Als nichtblockierender Correctness-Follow-up aus T006 registriert; Umsetzung nach dem aktuellen T007-Ball."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "rust",
+    "postgresql",
+    "sql",
+    "search-ranking",
+    "testing"
+  ],
+  "depends_on": [
+    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T006"
+  ],
+  "acceptance": [
+    {
+      "id": "literal-prefix-semantics",
+      "assertion": "%, _ und das gewählte Escape-Zeichen werden in der Titelpräfixklasse als literale Zeichen behandelt; nur der serverseitig angehängte Präfix-Wildcard bleibt aktiv."
+    },
+    {
+      "id": "parameterized-query",
+      "assertion": "Die Query bleibt vollständig parametrisiert; es wird keine SQL-Stringinterpolation eingeführt."
+    },
+    {
+      "id": "authorization-order-unchanged",
+      "assertion": "Die kanonische Autorisierung vor Kandidatenauswahl bleibt unverändert und wird nicht in einen nachgelagerten Filter verschoben."
+    },
+    {
+      "id": "ranking-parity",
+      "assertion": "Normale Präfixanfragen behalten ihre T003/T006-Rangklasse und deterministischen Tie-Breaks."
+    },
+    {
+      "id": "metachar-regressions",
+      "assertion": "PostgreSQL-Integrationstests decken literale %, _, Escape-Zeichen und Mischformen ab und belegen keine unbeabsichtigte Treffermengenerweiterung."
+    }
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "task_profile": "repo_change",
+    "skip_reason": "live_first_primary",
+    "note": "Web-, API-, Git-, CI- und öffentlicher Zustandsbeleg müssen live und commitgebunden geprüft werden; RepoGround ergänzt nur Repository-Kontext."
+  },
+  "metadata": {
+    "source": "t006_operator_review_followup",
+    "registered_at": "2026-07-23",
+    "nonblocking_for_t007": true,
+    "does_not_establish": [
+      "security vulnerability in T006",
+      "authorization leak",
+      "production rollout"
+    ]
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T010",
+  "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
+  "title": "Skalierbare autorisierte Kandidatenselektion jenseits der 1000er-Grenze",
+  "state": "planned",
+  "goal": "Den sicheren, aber hart auf 1000 autorisierte Kandidaten begrenzten T006-Retrievalpfad anhand realistisch gemessener Weltgewebe-Größen skalierbar machen, ohne Autorisierung vor Retrieval aufzugeben oder ungeprüft ANN/HNSW einzuführen.",
+  "priority": {
+    "lane": "later",
+    "rank": 910
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Als nichtblockierender Review-Follow-up aus T006 registriert; Umsetzung erst nach eigener Auswahl/Autorisierung."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "rust",
+    "postgresql",
+    "search-ranking",
+    "authorization",
+    "performance",
+    "privacy",
+    "benchmarking",
+    "testing"
+  ],
+  "depends_on": [
+    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T006"
+  ],
+  "acceptance": [
+    {
+      "id": "measure-before-change",
+      "assertion": "Reale oder repräsentativ synthetische Kandidatenmengen, Latenz, Speicher und Query-Pläne werden gemessen, bevor der 1000er-Grenzwert oder die Retrievalarchitektur geändert wird."
+    },
+    {
+      "id": "authorization-before-retrieval-preserved",
+      "assertion": "Auch der skalierte Pfad leitet Kandidaten ausschließlich aus autorisiertem kanonischem PostgreSQL-Zustand ab; kein Vektor- oder Volltextpfad darf zunächst global suchen und danach versteckte Treffer entfernen."
+    },
+    {
+      "id": "bounded-resource-use",
+      "assertion": "Speicher- und Laufzeitgrenzen sind explizit, getestet und bei Überlast fail-closed oder kontrolliert degradiert."
+    },
+    {
+      "id": "ann-measured-only",
+      "assertion": "ANN/HNSW wird nur bei belegtem Bedarf und mit Recall-, Datenschutz- und Betriebsbeleg eingeführt; andernfalls bleibt ein exakter PostgreSQL-Pfad maßgeblich."
+    },
+    {
+      "id": "regression-suite",
+      "assertion": "Tests decken >1000 autorisierte Kandidaten, Sichtbarkeitsänderungen, stabile Rangfolge und keine Leakage-Regressions ab."
+    }
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "task_profile": "repo_change",
+    "skip_reason": "live_first_primary",
+    "note": "Web-, API-, Git-, CI- und öffentlicher Zustandsbeleg müssen live und commitgebunden geprüft werden; RepoGround ergänzt nur Repository-Kontext."
+  },
+  "metadata": {
+    "source": "t006_operator_review_followup",
+    "registered_at": "2026-07-23",
+    "nonblocking_for_t007": true,
+    "does_not_establish": [
+      "measured production scale",
+      "permission for ANN/HNSW",
+      "production rollout"
+    ]
+  }
+}

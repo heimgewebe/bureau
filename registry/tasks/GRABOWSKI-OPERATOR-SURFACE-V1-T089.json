@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T089",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Captain-Merge automatische GitHub-Nebeneffekte scope-binden",
+  "state": "planned",
+  "depends_on": [],
+  "goal": "Den Captain-PR-Merge so härten, dass repositoryseitige automatische Merge-Nebeneffekte wie delete_branch_on_merge vor Dispatch als Teil des effektiven Wirkungsumfangs erkannt und gegen allowed_effects/forbidden_effects geprüft werden, statt nach erfolgreichem Merge unbemerkt einen ausdrücklich verbotenen Branch-Lösch-Effekt zuzulassen.",
+  "priority": {
+    "lane": "next",
+    "rank": 18
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_merge_guard.py",
+      "component:src/grabowski_grip_orchestration.py",
+      "component:tests/test_merge_guard.py"
+    ]
+  },
+  "required_capabilities": [
+    "python",
+    "github",
+    "grabowski",
+    "resource-leases",
+    "testing"
+  ],
+  "acceptance": [
+    {
+      "id": "effective-effect-preflight",
+      "assertion": "Der PR-Merge liest vor Dispatch relevante Repository-Merge-Einstellungen und projiziert automatische Plattform-Nebeneffekte in den effektiven Action-Scope."
+    },
+    {
+      "id": "forbidden-auto-effect-blocks",
+      "assertion": "Ist delete_branch_on_merge aktiv und branch-deletion in forbidden_effects enthalten, blockiert der Merge fail-closed vor GitHub-Mutation oder verlangt eine explizit passende Scope-Autorisierung."
+    },
+    {
+      "id": "no-hidden-policy-mutation",
+      "assertion": "Der Captain verändert Repository-Einstellungen nicht stillschweigend und stellt gelöschte Branches nicht automatisch wieder her."
+    },
+    {
+      "id": "receipt-evidence",
+      "assertion": "Merge-Guard- und Captain-Receipt zeichnen beobachtete automatische Plattform-Nebeneffekte und die daraus abgeleitete Scope-Entscheidung maschinenlesbar auf."
+    },
+    {
+      "id": "regression-tests",
+      "assertion": "Tests decken delete_branch_on_merge aktiv/inaktiv sowie erlaubte und verbotene Branch-Löschung ab, ohne bestehende Head/Base/Diff/Lease-Gates abzuschwächen."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-23T03:19:00Z",
+    "origin_task": "CCM-V1-T002",
+    "source": "Live closeout of Captain merge heimgewebe/grabowski#402.",
+    "observed_incident": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 402,
+      "captain_scope_forbidden_effect": "branch-deletion",
+      "repository_setting": "delete_branch_on_merge=true",
+      "observed_result": "The PR branch was absent immediately after verified squash merge although the Captain command did not pass --delete-branch."
+    },
+    "affected_components": [
+      "src/grabowski_merge_guard.py",
+      "src/grabowski_grip_orchestration.py",
+      "tests/test_merge_guard.py"
+    ],
+    "does_not_establish": [
+      "permission to disable delete_branch_on_merge globally",
+      "permission to restore merged branches automatically",
+      "root cause beyond the observed repository auto-delete policy"
+    ]
+  }
+}

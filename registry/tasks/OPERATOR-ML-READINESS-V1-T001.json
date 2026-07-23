@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ML-READINESS-V1-T001",
+  "initiative": "OPERATOR-ML-READINESS-V1",
+  "title": "Bind canonical route evidence to reviewed shadow outcomes",
+  "state": "planned",
+  "goal": "Implement the minimal proposal-only shadow capture required by the Vibe-Lab routing-readiness experiment by reusing Grabowski route_evidence and binding it to independently reviewed semantic outcomes with primary evidence references.",
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "reuse-canonical-route-evidence",
+      "assertion": "Shadow capture consumes existing validated hash-bound Grabowski route_evidence and does not infer canonical routing truth from argv or create a second route identity."
+    },
+    {
+      "id": "semantic-outcome-separate",
+      "assertion": "Captured outcome separates process lifecycle from independently reviewed semantic task correctness or decision quality and supports abstention when no semantic outcome is available."
+    },
+    {
+      "id": "primary-evidence-bound",
+      "assertion": "Every non-abstaining semantic outcome is bound to primary evidence references such as CI, diff-bound review, explicit operator decision or bounded Chronik evidence."
+    },
+    {
+      "id": "proposal-only-no-effect",
+      "assertion": "Capture has no automatic routing, policy, queue, merge or runtime authority and cannot alter the route of the observed task."
+    },
+    {
+      "id": "privacy-bounded",
+      "assertion": "Learning records exclude raw prompts, transcripts, private notes and unrestricted argv payloads; only bounded task-class, risk, context and evidence identities are allowed."
+    },
+    {
+      "id": "vibe-lab-consumer",
+      "assertion": "Output can populate Vibe-Lab experiment 2026-07-23_operator-routing-ml-readiness-shadow without granting Vibe-Lab execution authority."
+    },
+    {
+      "id": "tests-and-contracts",
+      "assertion": "Focused regression tests cover missing route evidence, abstaining outcomes, evidence binding, redaction and non-effect behavior."
+    }
+  ],
+  "metadata": {
+    "phase": "shadow-capture",
+    "effect": "proposal_only_learning_evidence",
+    "source": "User request 2026-07-23 plus live Grabowski/Vibe-Lab readiness audit",
+    "reason": "The live task store has substantial execution history but no direct canonical route columns or independently reviewed semantic-outcome columns; process state is not a valid supervised-routing quality label.",
+    "existing_route_surface": "Grabowski agent-workspace route_evidence v1/v2",
+    "vibe_lab_experiment": "2026-07-23_operator-routing-ml-readiness-shadow",
+    "does_not_establish": [
+      "machine_learning_improves_routing",
+      "automatic_routing_permission",
+      "production_model_readiness",
+      "semantic_outcome_available_for_every_task"
+    ]
+  }
+}

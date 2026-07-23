@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ML-READINESS-V1",
+  "title": "Evidence-bound operator ML readiness",
+  "state": "active",
+  "commitment": "next",
+  "goal": "Establish a trustworthy, proposal-only operator learning dataset and only then evaluate offline machine-learning baselines without reviving Heimlern or granting models routing authority.",
+  "current_plan": {
+    "repository": "bureau",
+    "path": "docs/plans/operator-ml-readiness-v1.md"
+  },
+  "completion": [
+    "Grabowski exposes an evidence-bound shadow capture that reuses canonical route_evidence and distinguishes process lifecycle from independently reviewed semantic outcome.",
+    "The Vibe-Lab routing-readiness experiment reaches an explicit reviewed readiness decision from a prospective cohort or closes as rejected/deferred.",
+    "Any ML baseline is evaluated offline against a deterministic heuristic baseline and remains advisory with no automatic routing, queue, merge, policy or runtime authority."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "primary_repo": "heimgewebe/grabowski",
+    "experiment_repo": "heimgewebe/vibe-lab",
+    "vibe_lab_experiment": "2026-07-23_operator-routing-ml-readiness-shadow",
+    "replaces_no_system": true,
+    "heimlern_role": "archived historical reference only",
+    "does_not_establish": [
+      "machine_learning_improves_routing",
+      "production_model_readiness",
+      "automatic_routing_permission",
+      "sample_representativeness"
+    ]
+  }
+}

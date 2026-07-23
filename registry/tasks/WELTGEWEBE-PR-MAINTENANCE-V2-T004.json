@@ -4,7 +4,7 @@
   "initiative": "WELTGEWEBE-PR-MAINTENANCE-V2",
   "title": "Review grouped action-bar work as an independent change",
   "goal": "Recover and review the grouped action-bar intent changes independently from node mutation PR #1440, publish them only through a separate branch and diff, and avoid mixing unrelated UI refactoring into the node integrity review.",
-  "state": "ready",
+  "state": "cancelled",
   "depends_on": [],
   "priority": {
     "lane": "next",
@@ -60,6 +60,40 @@
       "publication_authorization",
       "merge_readiness",
       "product_acceptance"
-    ]
+    ],
+    "cancellation": {
+      "authority": "operator-autonomous-queue-processing",
+      "bureau_base_main": "f019d8db89d40b1c3dc86f5114d4744176da20e7",
+      "cancelled_at": "2026-07-23T02:44:15Z",
+      "current_product_evidence": {
+        "component": "apps/web/src/lib/components/ToolFanMenu.svelte",
+        "spec": "docs/specs/ui-interaction.md",
+        "tests": [
+          "apps/web/tests/tool-fan-layout.spec.ts",
+          "apps/web/tests/ui-interaction-clarity.spec.ts",
+          "apps/web/tests/ui-search.spec.ts"
+        ],
+        "weltgewebe_main": "e35ebecb45873e0588cec6dd1feee5f19cece21e"
+      },
+      "decision": "reject-publication-as-superseded",
+      "does_not_establish": [
+        "that the historical patch was incorrect when authored",
+        "that grouped Weben/Finden intent design is rejected",
+        "that current ToolFanMenu has no remaining UX defects",
+        "merge readiness for unrelated Weltgewebe work"
+      ],
+      "duplicate_check": {
+        "matching_open_actionbar_prs": 0,
+        "remote_branch_feat_actionbar_intent_groups_v1_present": false
+      },
+      "reason": "The preserved grouped ActionBar patch is obsolete on current Weltgewebe main: the former ActionBar.svelte component no longer exists and the current ToolFanMenu implements the same Weben/Finden intent grouping in the newer fan architecture, additionally retaining Karteninhalt, with current Playwright coverage. Publishing the old bottom-bar implementation would reintroduce a second competing navigation architecture.",
+      "source_preserved": {
+        "backup_branch": "backup/feat-node-edit-delete-v2-with-actionbar-20260715",
+        "source_commits": [
+          "044fcdc40728dbb1ed81470eba36a149c7a77b66",
+          "0761bf492d0fc918057c72a022f2e695aaae62ba"
+        ]
+      }
+    }
   }
 }

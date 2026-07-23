@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T011",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "Open-PR-Mehrfachbindung zwischen Doku und Observer vereinheitlichen",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 11
+  },
+  "depends_on": [],
+  "goal": "Den Open-PR-Task-Bindungsvertrag so vereinheitlichen, dass Dokumentation, Marker-Parser und GitHub-Observer exakt dieselbe deterministische fail-closed Semantik für Bureau-Task und Bureau-Tasks verwenden. Insbesondere muss entschieden und getestet werden, ob echte Mehrfachbindung unterstützt wird; dokumentierte strukturierte Syntax darf nicht still anders geparst werden, und Repository-Scope-Validierung darf nicht abgeschwächt werden.",
+  "claims": [
+    {
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.docs",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Follow-up from OPERATOR-INTEGRATION-LOOP-V1-T010. Align existing documentation and observer behavior without weakening fail-closed PR/task binding guards."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "github",
+    "bureau",
+    "testing",
+    "documentation"
+  ],
+  "acceptance": [
+    {
+      "id": "single-contract-decision",
+      "assertion": "Der kanonische Vertrag entscheidet explizit und maschinenlesbar, ob Bureau-Tasks echte Mehrfachbindung unterstützt oder ob nur genau eine Task-Bindung zulässig ist; Dokumentation und Implementierung beschreiben danach denselben Zustand ohne widersprüchliche Syntax."
+    },
+    {
+      "id": "marker-parser-contract",
+      "assertion": "Die dokumentierte Marker-Syntax wird kanonisch und deterministisch geparst. Falls strukturierte Klammer-/Quote-Syntax unterstützt bleibt, werden Quotes, Klammern, Whitespace und Duplikate korrekt normalisiert; andernfalls wird diese Syntax aus dem öffentlichen Vertrag entfernt und fail-closed abgewiesen."
+    },
+    {
+      "id": "binding-scope-safety",
+      "assertion": "Für jede akzeptierte Task-Bindung bleibt die bestehende Repository-Scope-Prüfung wirksam. Unbekannte Task-IDs, nicht überlappende Repository-Claims, gemischte gültige/ungültige Mehrfachmarker und echte Mehrdeutigkeit erzeugen stabile fail-closed Findings statt Teilakzeptanz."
+    },
+    {
+      "id": "regression-coverage",
+      "assertion": "Regressionstests decken mindestens Bureau-Task-Einzelmarker, Bureau-Tasks-Strukturmarker, quoted/bracketed Syntax, doppelte identische IDs, mehrere unterschiedliche IDs, unbekannte IDs und falschen Repository-Scope ab und binden die erwarteten Findings exakt."
+    },
+    {
+      "id": "docs-source-alignment",
+      "assertion": "docs/contracts/open-pr-task-metadata-v1.md, src/bureau/github_observer.py und zugehörige Tests sind auf demselben Head konsistent; vollständige Bureau-Validierung und git diff --check sind grün."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-23",
+    "registered_from": "OPERATOR-INTEGRATION-LOOP-V1-T010 post-merge contract review",
+    "source_repository": "heimgewebe/bureau",
+    "source_commit": "0d9e6ab25a705005c0c138f229babb6b8d050b25",
+    "finding": "docs/contracts/open-pr-task-metadata-v1.md documents structured Bureau-Tasks multi-binding while src/bureau/github_observer.py treats multiple recognized task markers as ambiguous and does not canonically normalize the documented JSON-like bracket/quote syntax.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-923c0172cf7688b5969a6c07",
+      "event_id": 1054,
+      "request_sha256": "cc904c7b7b78cbbcd1f9262634540a1689e0caa5ecbe797fb8e01f8b51adead2",
+      "source": {
+        "kind": "operator_followup",
+        "locator": "github:heimgewebe/bureau@0d9e6ab25a705005c0c138f229babb6b8d050b25:docs/contracts/open-pr-task-metadata-v1.md+src/bureau/github_observer.py",
+        "sha256": null,
+        "observed_at": "2026-07-23T17:28:14Z",
+        "freshness": "unknown",
+        "does_not_establish": [
+          "source_content_identity"
+        ]
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "does_not_establish": [
+      "automatic multi-task binding",
+      "permission to weaken repository-scope validation",
+      "queue readiness",
+      "merge authority"
+    ]
+  }
+}

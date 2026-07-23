@@ -2,6 +2,20 @@
 
 Status: active
 
+## Aktueller Stand
+
+Der Live-Audit vom 23. Juli 2026 zeigt zwei getrennte Wahrheiten: Die Grabowski-Task-Tabelle besitzt keine direkte kanonische Route-Spalte und keine semantische Outcome-Spalte. Gleichzeitig existiert kanonische `route_evidence` in Agent-Workspace-Manifests; im geprüften Snapshot waren 27 von 46 Manifesten verifiziert. Diese Evidenz ist derzeit aber nicht über einen expliziten Fall-Schlüssel mit Task-Rows und unabhängig geprüften Outcomes verbunden. **Folge: vorhandene Daten sind noch kein Trainingsdatensatz.** T001 schließt genau diese Bindungslücke.
+
+### Was als kanonische Route-Evidenz zählt
+
+| Quelle | Zählt als kanonisch? | Bedingung |
+| --- | --- | --- |
+| Validierte Grabowski Agent-Workspace `route_evidence` v1/v2 | Ja | `status=verified`, `evidence_complete=true`, deterministisch validiert |
+| Späterer versionierter Nachfolger von `route_evidence` | Ja | Gleichwertige deterministische Validierung und explizite Versionsbindung |
+| `argv` mit `--model`, `--model=...` oder Harness-Name | Nein | Nur diagnostischer Hinweis, keine Routing-Wahrheit |
+| Task-Lifecycle `completed` / `failed` | Nein | Prozesszustand, keine semantische Qualitätsaussage |
+| LLM-Kommentar oder nachträgliche Vermutung | Nein | Keine Primär- oder Routing-Autorität |
+
 ## Ziel
 
 Die Operator-Lernachse wird nicht durch ein neues autonomes Lernsystem ersetzt. Stattdessen wird ein kleiner evidenzgebundener Pfad aufgebaut: bestehende Grabowski-Routing-Evidenz → unabhängig geprüfter semantischer Outcome → Vibe-Lab-Experiment → optionaler Offline-ML-Vergleich.
@@ -16,7 +30,7 @@ Die Operator-Lernachse wird nicht durch ein neues autonomes Lernsystem ersetzt. 
 
 ## Phase 1 — Shadow Capture
 
-T001 ergänzt einen eng begrenzten Capture-Vertrag. Prozesszustände wie `completed` oder `failed` dürfen nicht als semantische Qualitätslabels umgedeutet werden. Der Datensatz braucht kanonische Route-Evidenz, ein unabhängiges semantisches Outcome oder explizite Abstention sowie Primärbelege. Rohprompts, Transkripte und private Notizen bleiben ausgeschlossen.
+T001 ergänzt einen eng begrenzten, versionierten Capture-Vertrag. Er bindet eine bereits validierte kanonische Route-Evidenz an eine stabile Fallidentität und danach an ein unabhängiges semantisches Outcome oder eine explizite Abstention. Prozesszustände wie `completed` oder `failed` dürfen nicht als semantische Qualitätslabels umgedeutet werden. Jede nicht-abstainende Outcome-Bewertung braucht Primärbelege. Rohprompts, Transkripte und private Notizen bleiben ausgeschlossen.
 
 ## Phase 2 — Readiness-Entscheidung
 
@@ -28,7 +42,7 @@ T002 darf erst nach bestandenem Readiness-Gate starten. Erste Wahl ist eine klei
 
 ## Stop-Kriterien
 
-- kein kanonischer Route-Beleg;
+- kein verifizierter kanonischer Route-Beleg oder keine explizite Bindung zwischen Route, Fall und Outcome;
 - semantischer Outcome wird aus Prozessstatus abgeleitet;
 - Reviewer-/Zeit-/Repository-Leakage ist nicht beherrscht;
 - Rohdatenexport privater Prompts oder Transkripte wäre nötig;

@@ -36,6 +36,10 @@
       "assertion": "Shadow capture consumes existing validated hash-bound Grabowski route_evidence and does not infer canonical routing truth from argv or create a second route identity."
     },
     {
+      "id": "versioned-capture-schema",
+      "assertion": "A minimal versioned JSON Schema defines the shadow record, including stable eligible-case identity, canonical route-evidence reference, bounded pre-outcome features, semantic outcome or explicit abstention, primary evidence references, capture timestamps and a no-effect boundary; schema validation fails closed."
+    },
+    {
       "id": "semantic-outcome-separate",
       "assertion": "Captured outcome separates process lifecycle from independently reviewed semantic task correctness or decision quality and supports abstention when no semantic outcome is available."
     },
@@ -64,7 +68,7 @@
     "phase": "shadow-capture",
     "effect": "proposal_only_learning_evidence",
     "source": "User request 2026-07-23 plus live Grabowski/Vibe-Lab readiness audit",
-    "reason": "The live task store has substantial execution history but no direct canonical route columns or independently reviewed semantic-outcome columns; process state is not a valid supervised-routing quality label.",
+    "reason": "The live task table has substantial execution history but no direct canonical route or semantic-outcome columns. Verified route_evidence exists separately in Agent Workspace manifests, but the current sources expose no explicit task-store join binding to independently reviewed semantic outcomes; process state is not a valid supervised-routing quality label.",
     "existing_route_surface": "Grabowski agent-workspace route_evidence v1/v2",
     "vibe_lab_experiment": "2026-07-23_operator-routing-ml-readiness-shadow",
     "does_not_establish": [

@@ -4,7 +4,7 @@ Status: active
 
 ## Aktueller Stand
 
-Der Live-Audit vom 23. Juli 2026 zeigt zwei getrennte Wahrheiten: Die Grabowski-Task-Tabelle besitzt keine direkte kanonische Route-Spalte und keine semantische Outcome-Spalte. Gleichzeitig existiert kanonische `route_evidence` in Agent-Workspace-Manifests; im geprüften Snapshot waren 27 von 46 Manifesten verifiziert. Diese Evidenz ist derzeit aber nicht über einen expliziten Fall-Schlüssel mit Task-Rows und unabhängig geprüften Outcomes verbunden. **Folge: vorhandene Daten sind noch kein Trainingsdatensatz.** T001 schließt genau diese Bindungslücke.
+Der Live-Audit vom 23. Juli 2026 zeigt zwei getrennte Wahrheiten: Die Grabowski-Task-Tabelle besitzt keine direkte kanonische Route-Spalte und keine semantische Outcome-Spalte. Gleichzeitig existiert kanonische `route_evidence` in Agent-Workspace-Manifests; im eingefrorenen Snapshot waren 27 von 46 Manifesten verifiziert. 14 dieser 27 verifizierten Route-Manifeste enthalten mindestens eine Task-Referenz, die im Task-Store matcht. Die Joinbarkeit ist damit partiell vorhanden, aber weder vollständig noch mit unabhängig geprüften semantischen Outcomes verbunden. **Folge: vorhandene Daten sind noch kein Trainingsdatensatz.** T001 schließt genau diese verbleibende Bindungs- und Outcome-Lücke.
 
 ### Was als kanonische Route-Evidenz zählt
 

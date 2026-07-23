@@ -3,9 +3,9 @@
   "id": "REPOGROUND-AGENT-UTILITY-V1-T004",
   "initiative": "REPOGROUND-AGENT-UTILITY-V1",
   "title": "Phase 3: Generalisierung nur nach bestandenem Weltgewebe-Gate",
-  "state": "blocked",
+  "state": "ready",
   "priority": {
-    "lane": "later",
+    "lane": "now",
     "rank": 40
   },
   "goal": "Nur die im Weltgewebe-Pilot bewährten repo-unabhängigen Teile als kleine allgemeine Grabowski-Fläche extrahieren.",
@@ -55,7 +55,9 @@
     "github_issue": "heimgewebe/bureau#682",
     "note": "GitHub issue #682 is advisory and does not establish Bureau truth.",
     "conditional_on_promotion_gate": true,
-    "phase": 3
+    "phase": 3,
+    "unblocked_at": "2026-07-23T20:29:24+02:00",
+    "unblock_reason": "REPOGROUND-AGENT-UTILITY-V1-T003 is verified on canonical Bureau main via merged Bureau PR #889 after the documented Weltgewebe promotion gate passed."
   },
   "depends_on": [
     "REPOGROUND-AGENT-UTILITY-V1-T003"

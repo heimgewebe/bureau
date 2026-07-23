@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ML-READINESS-V1-T002",
+  "initiative": "OPERATOR-ML-READINESS-V1",
+  "title": "Evaluate offline routing ML baselines after readiness gate",
+  "state": "planned",
+  "goal": "Only after the registered readiness experiment passes, evaluate simple external ML baselines offline against the deterministic routing heuristic using frozen evidence-bound cohorts, with calibrated abstention and no production effect.",
+  "depends_on": [
+    "OPERATOR-ML-READINESS-V1-T001"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 40
+  },
+  "claims": [
+    {
+      "resource": "repo.vibe-lab",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/vibe-lab",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/vibe-lab"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "readiness-gate",
+      "assertion": "No model training starts unless the Vibe-Lab shadow-readiness experiment has a reviewed result meeting its preregistered completeness, privacy and no-effect gates."
+    },
+    {
+      "id": "external-tooling-thin-layer",
+      "assertion": "Use established offline ML tooling such as scikit-learn for the baseline rather than implementing a custom ML framework; any additional dependency has an explicit bounded purpose."
+    },
+    {
+      "id": "baseline-comparison",
+      "assertion": "At minimum compare an interpretable linear baseline and one tree/boosting-style baseline against the existing deterministic routing heuristic on frozen train/test cohorts."
+    },
+    {
+      "id": "leakage-controls",
+      "assertion": "Evaluation prevents future-evidence, repository and reviewer leakage with a documented split strategy and preserves abstentions and missing labels."
+    },
+    {
+      "id": "calibration-and-abstention",
+      "assertion": "Report calibration, uncertainty or abstention behavior in addition to aggregate accuracy so low-confidence recommendations can remain advisory."
+    },
+    {
+      "id": "proposal-only",
+      "assertion": "Model outputs remain offline advisory evidence; no automatic routing, task priority, queue, merge, policy or runtime effect is introduced."
+    },
+    {
+      "id": "reproducible-artifacts",
+      "assertion": "Dataset identity, feature contract, model parameters, metrics and artifact hashes are reproducible and reviewable without exporting raw private prompts or transcripts."
+    }
+  ],
+  "metadata": {
+    "phase": "offline-ml-baseline",
+    "effect": "experiment_only",
+    "blocked_by_experiment": "2026-07-23_operator-routing-ml-readiness-shadow",
+    "preferred_initial_tooling": [
+      "scikit-learn"
+    ],
+    "optional_later_tooling": [
+      "Optuna",
+      "MLflow"
+    ],
+    "explicitly_deferred": [
+      "PyTorch training",
+      "online learning",
+      "contextual bandit production routing",
+      "automatic policy application"
+    ],
+    "does_not_establish": [
+      "deployment_authority",
+      "routing_policy_superiority_before_evaluation",
+      "need_for_gpu_training"
+    ]
+  }
+}

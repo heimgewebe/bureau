@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T016",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "title": "Gate new durable components with source-bound admission evidence",
+  "state": "planned",
+  "priority": {
+    "lane": "now",
+    "rank": 95
+  },
+  "goal": "Add a lightweight system-wide admission contract for newly introduced durable repositories, services, background processes and public operator surfaces. Each new durable component must name its purpose, concrete consumer, truth authority, admission class (replace, reduce, enable or experimental), operating dependencies and maintenance burden, and a review or retirement path; experimental components additionally require a success criterion and expiry. Existing components remain grandfathered and the contract must reuse Systemkatalog and Bureau truth instead of creating a new control plane or global complexity score.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/systemkatalog",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User explicitly authorized implementation on 2026-07-23. Preserve Systemkatalog as stable semantic authority and Bureau as task, priority and closeout authority; do not retroactively block existing components."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "github",
+    "grabowski",
+    "python",
+    "json-schema",
+    "system-architecture"
+  ],
+  "acceptance": [
+    {
+      "id": "admission-contract",
+      "assertion": "A machine-readable contract covers newly introduced durable repositories, services, background processes and public operator surfaces and requires purpose, concrete consumer, truth authority, admission class, operating dependencies or maintenance burden and review or retirement path."
+    },
+    {
+      "id": "classes",
+      "assertion": "Admission class is exactly one of replace, reduce, enable or experimental; in experimental entries additionally require a measurable success criterion and expiry or review deadline."
+    },
+    {
+      "id": "grandfathering",
+      "assertion": "The current durable component set is explicitly baselined or otherwise deterministically grandfathered so existing components are not retroactively blocked; newly introduced in-scope components without valid admission evidence fail validation."
+    },
+    {
+      "id": "authority-boundary",
+      "assertion": "The mechanism creates no runtime status, task, queue, dispatch, merge or deployment authority. Stable component semantics remain in Systemkatalog and implementation, priority and closeout remain in Bureau."
+    },
+    {
+      "id": "integration",
+      "assertion": "Systemkatalog validation consumes the admission contract, and Bureau task evidence can reference the source-bound admission record without duplicating the component registry."
+    },
+    {
+      "id": "tests",
+      "assertion": "Tests prove accepted replace, reduce or enable evidence, one accepted experimental case, rejection of missing consumer or authority, rejection of incomplete experimental evidence, and grandfathering of the pre-existing catalog."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-23",
+    "source": "user-directed Alexander-system-learning selective adoption",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-d353c385b7626325adc22cbc",
+      "event_id": 1008,
+      "source": {
+        "kind": "user_instruction",
+        "locator": "chat:user-request:2026-07-23:alexander-selective-adoption",
+        "sha256": null,
+        "observed_at": "2026-07-23T00:00:00+02:00",
+        "freshness": "unknown",
+        "does_not_establish": [
+          "source_content_identity"
+        ]
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "does_not_establish": [
+      "global complexity score",
+      "automatic component shutdown",
+      "automatic task creation",
+      "permission to mutate foreign dirty worktrees",
+      "requirement that every new component replace an old component"
+    ]
+  }
+}

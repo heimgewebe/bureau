@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T060",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Classify historical convergence states with bound evidence",
-  "state": "planned",
+  "state": "verified",
   "goal": "Build a bounded, reproducible backfill over historical Grabowski and Bureau attention records using the deployed convergence-state classifier, without rewriting source history, inferring completion or flattening contradictory evidence.",
   "priority": {
     "lane": "next",
@@ -84,7 +84,46 @@
     ],
     "related_pull_requests": [
       "heimgewebe/grabowski#258",
-      "heimgewebe/grabowski#260"
-    ]
+      "heimgewebe/grabowski#260",
+      "heimgewebe/grabowski#374"
+    ],
+    "verified_at": "2026-07-23",
+    "post_merge_verification": {
+      "pull_request": "heimgewebe/grabowski#374",
+      "merged_at": "2026-07-23T04:36:39Z",
+      "reviewed_head": "9e7c73a76fa10838530eceb96f39436e935e3c43",
+      "merge_commit": "1358810546d7ee293dd1285e4fb7646a9145dfbb",
+      "merged_tree": "ac67a922db43aeb53c435746ecacc3ee758e6d68",
+      "deployment_release": "1358810546d7-srcset5349de7c48a9-locke6664d600b6c-contractb7e8a09228ad",
+      "deployment_receipt_sha256": "e496041a6cc159ad0dc6c41735ac39c9a0b9984909711e1e7a86c04955496f98",
+      "live_classifier_receipt_sha256": "8dbab5b5cffedcf06bdd83fc08c8686567db2363f2530e9e73f2743a4b2332be",
+      "live_deterministic_projection_sha256": "bc461fcda3dcbf6c3a4cbe8d1d119f5ea9ae75afcae454c9cde64af17a16010f",
+      "live_observation_unix": 1784782296,
+      "live_smoke": {
+        "max_records": 10,
+        "selected_count": 10,
+        "classification_counts": {
+          "blocked": 10,
+          "conflicted": 0,
+          "defect": 0,
+          "expected": 0,
+          "resolved": 0,
+          "superseded": 0,
+          "unknown": 0
+        },
+        "known_omitted_count_lower_bound": 3000,
+        "selection_truncated": true,
+        "source_completeness_unknown": true,
+        "deterministic_rerun_match": true
+      }
+    },
+    "verification": {
+      "source": "github_pull_request_grabowski_runtime_and_live_backfill_smoke",
+      "source_ref": "heimgewebe/grabowski#374;grabowski-runtime:1358810546d7ee293dd1285e4fb7646a9145dfbb",
+      "verified_at": "2026-07-23",
+      "evidence_sha256": "f99e11c24002b989a3d1d5dfefe851ef74170c6d50dc841701d5e944a47ff2f3",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "task_sha256": "d95b1edf3c5fea445f45eea0e19ea4601e95ca20d6c36d7a78436589b8450d43"
+    }
   }
 }

@@ -3,7 +3,7 @@
   "id": "OPERATOR-ML-READINESS-V1-T001",
   "initiative": "OPERATOR-ML-READINESS-V1",
   "title": "Bind canonical route evidence to reviewed shadow outcomes",
-  "state": "planned",
+  "state": "verified",
   "goal": "Implement the minimal proposal-only shadow capture required by the Vibe-Lab routing-readiness experiment by reusing Grabowski route_evidence and binding it to independently reviewed semantic outcomes with primary evidence references.",
   "priority": {
     "lane": "next",
@@ -75,7 +75,42 @@
       "machine_learning_improves_routing",
       "automatic_routing_permission",
       "production_model_readiness",
-      "semantic_outcome_available_for_every_task"
-    ]
+      "semantic_outcome_available_for_every_task",
+      "readiness_gate_passed",
+      "cohort_completeness",
+      "sample_representativeness",
+      "supervised_training_readiness",
+      "t002_execution_authority"
+    ],
+    "implementation_pr": "heimgewebe/grabowski#410",
+    "implementation_branch": "feat/operator-ml-readiness-t001-shadow-capture-v1",
+    "implementation_head": "133fefbe7c806b86951a9458edb4ec75c6b8d578",
+    "implementation_merge_commit": "76481e2bf544028d36570776b09495aa0a992248",
+    "verified_at": "2026-07-23",
+    "validated_acceptance": {
+      "reuse-canonical-route-evidence": "Merged Grabowski PR #410 reuses Agent Workspace route_evidence through grabowski_agent_workspace._normalize_route_evidence(), requires verified and evidence_complete route evidence, deterministically replays persisted normalized evidence, and never derives canonical route truth from argv.",
+      "versioned-capture-schema": "Merged contracts/operator-routing-shadow-eligibility.v1.schema.json and operator-routing-shadow-record.v1.schema.json are Draft 2020-12 fail-closed schemas with hash-bound eligible-case/eligibility identities, bounded features, timestamps, semantic outcome or abstention, primary evidence references and literal no-effect constants.",
+      "semantic-outcome-separate": "The sealed outcome contract accepts only independently reviewed task_correctness or decision_quality labels, or explicit abstention; lifecycle state is not used as semantic correctness.",
+      "primary-evidence-bound": "Every reviewed non-abstaining outcome requires at least one bounded primary evidence reference from github-ci, diff-review, operator-decision, chronik or artifact; abstentions remain unlabeled.",
+      "proposal-only-no-effect": "The schema and implementation hard-bind proposal_only=true and routing/policy/queue/merge/runtime=false; the local capture tool has no MCP/runtime exposure and cannot alter the observed route.",
+      "privacy-bounded": "The record allowlist excludes raw prompts, transcripts, unrestricted argv, private notes and unrestricted manifest payloads; tests assert private manifest content is absent.",
+      "vibe-lab-consumer": "The merged capture contract matches Vibe-Lab experiment 2026-07-23_operator-routing-ml-readiness-shadow Phase B: prospective freeze, authoritative route identity, independent semantic outcome evidence and explicit abstention, while both sides retain no execution authority.",
+      "tests-and-contracts": "Final focused suite passed 23/23; full Grabowski repository validation passed on the converged final head; final-head GitHub CodeQL and validate Python 3.10/3.12 checks passed before merge."
+    },
+    "validation": [
+      "Grabowski PR #410 merged on 2026-07-23 as squash commit 76481e2bf544028d36570776b09495aa0a992248 from reviewed head 133fefbe7c806b86951a9458edb4ec75c6b8d578.",
+      "The full reviewed PR diff was 68,287 bytes with SHA-256 7d6317848e6a574f404aa44847effb5ccffbfe53d0a8eabcf087d99b68c8610a; the final self-review was bound to head, base and this diff hash.",
+      "Final-head GitHub checks passed: Analyze actions, Analyze python, CodeQL, validate Python 3.10 and validate Python 3.12.",
+      "Full local Grabowski make validate on the final converged base passed with durable finalization receipt SHA-256 975ca0cf1ced20cc7c1b38d9d1e17d8b6aeb05409ff18cd664daaa329eb35d4b.",
+      "Post-merge readback proved main=76481e2bf544028d36570776b09495aa0a992248 and all five T001 files on main with no content difference from the reviewed PR head.",
+      "Vibe-Lab main method.md Phase B remains compatible with this capture contract and explicitly forbids route selection/modification and production authority.",
+      "OPERATOR-ML-READINESS-V1-T002 remains planned in lane later and is not started; its independent positive reviewed readiness gate is still unmet."
+    ],
+    "verification": {
+      "task_sha256": "a6f83e29eb57573c76d8878cacc78f7887a0c1e1ec498aadcac5ec5b772672fa",
+      "plan_sha256": "b809f02cc0f4f17c42a44ca00dd94ce08a335b6be1671893ffac01246a656c79",
+      "implementation_pr_head": "133fefbe7c806b86951a9458edb4ec75c6b8d578",
+      "implementation_merge_commit": "76481e2bf544028d36570776b09495aa0a992248"
+    }
   }
 }

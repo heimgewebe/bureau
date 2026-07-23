@@ -1,0 +1,92 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Mehrere frische Prozesse reproduzieren oder widerlegen die erste Cold-Read-Abweichung mit revisions- und bundlegebundener Evidenz.",
+      "id": "cold_reproduction"
+    },
+    {
+      "assertion": "Jede Abweichung wird bis auf konkrete Felder, Reihenfolge, Cache-, Zeit- oder Laufzeitzustände lokalisiert; bloße Hash-Differenz gilt nicht als Root Cause.",
+      "id": "field_isolation"
+    },
+    {
+      "assertion": "Für volatile Felder existiert ein expliziter Vertrag oder die Ausgabe wird deterministisch gemacht; semantisch relevante Evidenz darf nicht still herausnormalisiert werden.",
+      "id": "contract"
+    },
+    {
+      "assertion": "Tests decken Cold-Start, Warm-Start und mindestens zwei frische Repository-Bundles ab und schlagen bei unbegründeter semantischer Drift fehl.",
+      "id": "regression_tests"
+    },
+    {
+      "assertion": "Der Task behauptet weder Wahrheit noch Vollständigkeit aus Byte-Gleichheit und erweitert keine Default-Routing-Autorität.",
+      "id": "no_false_authority"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.repoground"
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T004"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die in T004 beobachtete transiente Byte-Abweichung bei zeitlich getrennten kalten repoground_context_pack-Lesevorgängen reproduzierbar erklären und einen expliziten Determinismus- oder Volatilitätsvertrag festlegen, ohne semantische Gleichheit zu erfinden.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T010",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "note": "Folgetask aus dem T004-Paired-Baseline-Proof; nicht merge-blockierend für den isolierten Handoff-Wrapper.",
+    "observation": "time_separated_double_read_variance",
+    "source_candidate": "candidate-1730a4fb3cccbf8939619358",
+    "source_pr": "heimgewebe/grabowski#412",
+    "source_proof_sha256": "395eedcc4b10600bd186eda45ad4a5b53c5404d870a23c5ec58a8638a9abb66f",
+    "source_task": "REPOGROUND-AGENT-UTILITY-V1-T004",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-1730a4fb3cccbf8939619358",
+      "event_id": 1028,
+      "event_created_at": "2026-07-23T08:24:34.755632Z",
+      "request_sha256": "627b64c06383cd0e60a3901f971b8f03a7afc90b9dc8996fd2d16025606487cd",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "proof-artifact",
+        "locator": "docs/proofs/repoground-agent-utility-v1-t004-paired-baseline-20260723.json",
+        "observed_at": "2026-07-23T07:23:40Z",
+        "sha256": "395eedcc4b10600bd186eda45ad4a5b53c5404d870a23c5ec58a8638a9abb66f"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 70
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "repoground",
+    "bounded-io"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Cold-Read-Determinismus von RepoGround-Kontext belegen"
+}

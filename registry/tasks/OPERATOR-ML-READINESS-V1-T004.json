@@ -3,7 +3,7 @@
   "id": "OPERATOR-ML-READINESS-V1-T004",
   "initiative": "OPERATOR-ML-READINESS-V1",
   "title": "Gate routing-shadow cohort readiness before any training",
-  "state": "planned",
+  "state": "blocked",
   "goal": "Audit the prospectively collected routing-shadow cohort for inclusion integrity, representativeness, sufficient preregistered coverage, semantic-label quality, abstention and missingness before any offline ML baseline training is authorized.",
   "depends_on": [
     "OPERATOR-ML-READINESS-V1-T003"
@@ -81,6 +81,37 @@
       "routing policy authority",
       "online learning authority",
       "automatic policy promotion"
-    ]
+    ],
+    "gate_passed": false,
+    "dependency_unblock_allowed": false,
+    "latest_gate_result": {
+      "status": "CONTINUE-COLLECTING",
+      "reviewed": true,
+      "observed_at": "2026-07-23T17:17:50Z",
+      "reason_codes": [
+        "minimum_treatment_cases_not_met"
+      ],
+      "eligible_treatment_cases": 0,
+      "prospective_cases": 0,
+      "bound_eligibility_receipts": 0,
+      "sealed_records": 0,
+      "capture_attempts": 0,
+      "integrity_error_count": 0,
+      "no_effect_violation_count": 0,
+      "criteria_sha256": "33aac46a4d85bd996e937eac9c78155c84280140aa7547abeb9e2d47fb6b03c7",
+      "cohort_identity_sha256": "e717db0f0fa5e8e92924fdb102f8295f123140723130a4960fdccb75e0825894",
+      "experiment_result_ref": "experiments/2026-07-23_operator-routing-ml-readiness-shadow/results/readiness-gate-2026-07-23.json",
+      "vibe_lab_pr": 319,
+      "vibe_lab_pr_head": "79b023e0f5bf4db6af97387133c4a32172921a53",
+      "vibe_lab_merge_commit": "6680c73af54a3e7ab81d43d6d91fc1295ec074da",
+      "review_diff_sha256": "db0bdd704bc61bbea361d3936d3d4f76d37b13e3f5ea2f391433f3ffbba7d07e",
+      "validation": {
+        "focused_gate_tests": "10/10 passed",
+        "git_diff_check": "passed",
+        "repository_validate": "passed"
+      }
+    },
+    "blocking_reason": "The reviewed readiness gate returned CONTINUE-COLLECTING because the prospective cohort contains zero eligible natural treatment task cases; PASS criteria are not met.",
+    "reaudit_condition": "Re-run this same gate after at least 20 natural eligible treatment task cases have been prospectively captured, while preserving preregistered completeness, evidence, integrity, privacy, no-effect and coverage thresholds."
   }
 }

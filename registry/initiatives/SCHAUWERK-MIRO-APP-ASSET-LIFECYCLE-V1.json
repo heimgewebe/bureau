@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "SCHAUWERK-MIRO-APP-ASSET-LIFECYCLE-V1",
   "title": "Schauwerk Miro app asset lifecycle v1",
-  "state": "active",
-  "commitment": "later",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Make the verified Schauwerk Companion Developer App icons deterministic, repository-controlled and reproducibly deployable without changing scopes, app identity or runtime behavior.",
   "completion": [
     "Outline and colored Miro app icons live in the Schauwerk repository with deterministic generation or canonical source files and digest tests.",
@@ -30,6 +30,20 @@
       "permission to recreate the Miro app",
       "permission to broaden Miro scopes",
       "permission to remove the app for the team"
-    ]
+    ],
+    "lifecycle": {
+      "completed_at": "2026-07-23T08:51:30+02:00",
+      "completion_task": "SCHAUWERK-MIRO-APP-ASSET-LIFECYCLE-V1-T001",
+      "completion_evidence": [
+        "heimgewebe/schauwerk#112",
+        "/home/alex/.local/state/schauwerk/evidence/miro-app-asset-receipt-20260723.json",
+        "/home/alex/.local/state/schauwerk/evidence/miro-app-catalogue-readback-20260723.json"
+      ],
+      "does_not_establish": [
+        "permission to broaden Miro scopes",
+        "permission to recreate the Miro app",
+        "paid provider feature activation"
+      ]
+    }
   }
 }

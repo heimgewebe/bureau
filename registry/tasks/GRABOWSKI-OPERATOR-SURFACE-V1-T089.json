@@ -1,0 +1,112 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Eine typisierte Operator-Oberfläche schreibt ausschließlich die bestehenden create-only Attention Decisions closed, deferred oder superseded und bindet jede Mutation an aktuelle Task-ID, Attempt, authoritative unit, argv/execution-envelope sowie das autoritative Lifecycle-Receipt.",
+      "id": "typed-decision-surface"
+    },
+    {
+      "assertion": "Stale Bindings, ungültige oder fehlende Terminal-Evidenz, bereits widersprechende Decisions und unklare Taskzustände blockieren ohne Mutation; ein Retry nach unklarem Ausgang erfordert autoritativen Readback statt Blindwiederholung.",
+      "id": "fail-closed-decision"
+    },
+    {
+      "assertion": "Die Archivierungswirkung wird nur für terminale, evidence-valid Tasks ausgeführt, deren Attention-Closeout ready_to_archive ist und deren Retention-Grenze unmittelbar vor Apply erneut erfüllt und revalidiert wurde.",
+      "id": "archive-after-retention"
+    },
+    {
+      "assertion": "Task-State, Lifecycle-Receipt, Attention Decision und bestehende Lifecycle-Archive-/Effect-Plan-Verträge bleiben die einzigen Authorities; es entsteht kein zweites Status-, Decision- oder Archivmodell.",
+      "id": "single-truth"
+    },
+    {
+      "assertion": "Es gibt keine heuristische Massen-Supersession historischer Fehler und keine automatische menschliche Entscheidung; nicht eindeutig auflösbare Attention bleibt sichtbar.",
+      "id": "no-bulk-heuristics"
+    },
+    {
+      "assertion": "Die Umsetzung beendet keine fremden Prozesse, verändert keine fremden Dirty-Worktrees und erhält bestehende Lease-, Recovery-, Checkout- und Cleanup-Grenzen fail-closed.",
+      "id": "foreign-state-safe"
+    },
+    {
+      "assertion": "Tests decken Decision-Binding, Idempotenz, Konflikte, Retention- und Revalidation-Gates, Archiv-Apply sowie unklare Mutationsergebnisse ab; nach Merge und Deploy belegt ein Live-Readback mindestens einen Decision-/Archive-Pfad oder einen expliziten no-eligible-action Zustand.",
+      "id": "tests-and-live-readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T087"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die Umsetzung im aktuellen Operator-Thread ausdrücklich mit @grabowski umsetzen autorisiert.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_task_attention.py",
+      "component:src/grabowski_tasks.py",
+      "component:src/grabowski_lifecycle_archive.py",
+      "component:src/grabowski_lifecycle_effect_plan.py",
+      "component:src/grabowski_mcp.py",
+      "component:tests"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die mit T087 eingeführte read-only Closeout-Projektion um einen typisierten, evidence-bound und fail-closed Operatorpfad ergänzen, der bestehende Attention Decisions kontrolliert schreibt und anschließend nur nach gültigem Lifecycle-Receipt, aufgelöster Attention-Pflicht, Retention-Prüfung und unmittelbarer Revalidierung die bestehende Task-Archivierungswirkung ausführt, ohne zweite Lifecycle-Wahrheit oder Fremd-Cleanup-Autorität.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T089",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "design_rule": "Closeout-Projektion bleibt read-only; Mutation erfolgt nur über bestehende evidence-bound Authorities und getrennte Apply-Verträge.",
+    "does_not_establish": [
+      "permission for heuristic bulk supersession",
+      "automatic human decision",
+      "permission to weaken archive retention",
+      "permission to clean foreign worktrees or processes",
+      "second lifecycle or attention truth"
+    ],
+    "origin_pr": "heimgewebe/grabowski#401",
+    "origin_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T087",
+    "source": "Conversation-backed T087 live closeout through Grabowski candidate candidate-bfed813243ba42d070dc8cb1.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-bfed813243ba42d070dc8cb1",
+      "event_id": 988,
+      "event_created_at": "2026-07-23T02:27:07.135942Z",
+      "request_sha256": "03fba6a6f4538d19c49eaaabca74e29e590177dc0285181f50662c569e114c42",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chat:project-misc:2026-07-23:t087-live-closeout",
+        "observed_at": "2026-07-23T02:27:07.127907Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 8
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Attention-Entscheidung und Task-Archivierung typisiert ausführen"
+}

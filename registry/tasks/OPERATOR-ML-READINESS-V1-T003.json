@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ML-READINESS-V1-T003",
+  "initiative": "OPERATOR-ML-READINESS-V1",
+  "title": "Collect prospective no-effect routing-shadow cohort",
+  "state": "planned",
+  "goal": "Collect a controlled prospective cohort of eligible real operator workspace cases by freezing verified canonical route evidence before any task outcome can be observed and sealing only independently reviewed semantic outcomes or explicit abstentions, without affecting routing, policy, queue, merge, deploy or runtime decisions.",
+  "depends_on": [
+    "OPERATOR-ML-READINESS-V1-T001"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 2
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "prospective-freeze",
+      "assertion": "Eligibility is frozen from verified canonical Agent Workspace route evidence before any workspace task can produce an outcome; capture failure is isolated and never blocks operator execution."
+    },
+    {
+      "id": "no-effect",
+      "assertion": "Cohort capture cannot change route, agent selection, policy, queue, merge, deploy or runtime decision state and introduces no ML training or promotion authority."
+    },
+    {
+      "id": "canonical-route-evidence",
+      "assertion": "Only evidence-complete canonical Agent Workspace route evidence validated by deterministic replay is eligible, with route schema v1 and v2 kept explicitly distinguishable."
+    },
+    {
+      "id": "semantic-outcome",
+      "assertion": "Outcome sealing is separate from workspace execution and accepts only reviewed semantic outcomes with bound primary evidence or explicit abstention; lifecycle success alone cannot create a positive label."
+    },
+    {
+      "id": "privacy",
+      "assertion": "Records contain only allowlisted route features and bounded evidence references; prompts, transcripts, private notes, environment values and unbounded argv are excluded."
+    },
+    {
+      "id": "create-only-dedup",
+      "assertion": "Prospective receipts, bound eligibility and sealed records use create-only storage with identity-based deduplication, reject conflicting duplicates and preserve an auditable capture-attempt trail."
+    },
+    {
+      "id": "failure-and-concurrency",
+      "assertion": "Incomplete or manipulated route or eligibility evidence, missing primary outcome evidence, symlink/path attacks, parallel workspaces and restart/reconcile cannot create false or cross-bound duplicate captures."
+    },
+    {
+      "id": "validation",
+      "assertion": "Focused tests, relevant repository validation, formatting/lint, security checks and full CI pass on the exact final reviewed diff before merge."
+    }
+  ],
+  "metadata": {
+    "phase": "prospective-shadow-cohort",
+    "effect": "capture_only",
+    "source_pr": "heimgewebe/grabowski#410",
+    "source_task": "OPERATOR-ML-READINESS-V1-T001",
+    "source_candidate_id": "candidate-f29bf60b74b1f17dd18a32bb",
+    "source_candidate_event_id": 1049,
+    "route_authority": false,
+    "ml_training_authorized": false,
+    "explicitly_deferred": [
+      "ML training readiness",
+      "cohort representativeness",
+      "minimum sufficient sample size",
+      "automatic model selection",
+      "routing policy changes",
+      "online learning",
+      "automatic policy promotion"
+    ],
+    "does_not_establish": [
+      "ML training readiness",
+      "cohort representativeness",
+      "sufficient sample size",
+      "route superiority",
+      "automatic routing authority",
+      "online learning authority"
+    ]
+  }
+}

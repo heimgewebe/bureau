@@ -6,7 +6,7 @@
   "state": "planned",
   "goal": "Only after the registered readiness experiment passes, evaluate simple external ML baselines offline against the deterministic routing heuristic using frozen evidence-bound cohorts, with calibrated abstention and no production effect.",
   "depends_on": [
-    "OPERATOR-ML-READINESS-V1-T001"
+    "OPERATOR-ML-READINESS-V1-T004"
   ],
   "priority": {
     "lane": "later",
@@ -81,8 +81,10 @@
     ],
     "does_not_establish": [
       "deployment_authority",
+      "need_for_gpu_training",
       "routing_policy_superiority_before_evaluation",
-      "need_for_gpu_training"
-    ]
+      "training_authority_before_t004_verified"
+    ],
+    "readiness_gate_task": "OPERATOR-ML-READINESS-V1-T004"
   }
 }

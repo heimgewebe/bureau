@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T012",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "Bureau-Publisher-Runtime und kanonische Registry-Identität wieder konvergent machen",
+  "state": "planned",
+  "priority": {
+    "lane": "next",
+    "rank": 12
+  },
+  "depends_on": [],
+  "goal": "Den fail-closed release-registry-identity-mismatch im typisierten Bureau-Task-Propose/Publish-Pfad beheben, indem Runtime-Release, kanonischer Registry-Snapshot und aktuelles origin/main über einen expliziten, überprüfbaren Refresh-/Deployment-Vertrag konvergieren. Ein sauberer aktueller Registry-Checkout darf nicht allein deshalb unpublizierbar sein, weil die installierte immutable Bureau-Runtime noch einen älteren Registry-Snapshot bindet; gleichzeitig darf der Schutz gegen echte Source-/Registry-Identitätsdrift nicht abgeschwächt werden.",
+  "claims": [
+    {
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.runtime",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Preserve fail-closed runtime/registry identity checks. Add an authoritative convergence path rather than bypassing the mismatch gate."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "bureau",
+    "grabowski",
+    "runtime-deployment",
+    "testing"
+  ],
+  "acceptance": [
+    {
+      "id": "authoritative-refresh-contract",
+      "assertion": "Es existiert ein expliziter, idempotenter und überprüfbarer Pfad, der Bureau-Runtime-Release und kanonischen Registry-Snapshot an einen exakten aktuellen origin/main-Commit bindet und die neue Identität per Readback belegt."
+    },
+    {
+      "id": "typed-publisher-recovers",
+      "assertion": "Nach erfolgreicher Konvergenz kann der typisierte Bureau-Task-Propose/Review/Publish-Pfad mit einem sauberen Checkout desselben aktuellen main arbeiten, ohne release-registry-identity-mismatch auszulösen."
+    },
+    {
+      "id": "real-drift-remains-fail-closed",
+      "assertion": "Bei echter Abweichung zwischen erwarteter Release-, Source- oder Registry-Identität bleibt Mutation blockiert; der Fix führt keinen Fallback ein, der Identitätsprüfungen überspringt oder stale Snapshots still akzeptiert."
+    },
+    {
+      "id": "actionable-stale-state",
+      "assertion": "Ein stale Runtime-/Registry-Zustand liefert maschinenlesbar die beteiligten Commit-/Snapshot-Identitäten und eine eindeutige Recovery-Aktion, statt nur einen nicht auflösbaren Mutationsblocker zu erzeugen."
+    },
+    {
+      "id": "regression-proof",
+      "assertion": "Regressionstests decken aktuelle Identität, stale Runtime, stale Registry-Snapshot, echten Source-Mismatch und erfolgreichen Refresh ab; vollständige Bureau-Validierung und git diff --check sind grün."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-23",
+    "registered_from": "OPERATOR-INTEGRATION-LOOP-V1-T010/T011 closeout runtime finding",
+    "source_repository": "heimgewebe/bureau",
+    "source_commit": "3a4ceebd0dbe51276d11a4ab0952929b95a6b16b",
+    "finding": "grabowski_bureau_task_propose blocked before effect with release-registry-identity-mismatch because the installed Bureau release bound registry source a40c4976b68b62415e8c7655a48e6cc5be3b2154 while the clean current registry checkout was at 0d9e6ab25a705005c0c138f229babb6b8d050b25.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-00ff1d356d9754f8b513d6a6",
+      "event_id": 1055,
+      "request_sha256": "3e24f393ee7c2b2971eaca1a8380cceb641762c8b3d170941896ebdc539b4ed3",
+      "related_candidate_id": "candidate-f472a6e43232c14f8063fe9b",
+      "related_candidate_event_id": 931,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "does_not_establish": [
+      "permission to bypass runtime identity checks",
+      "automatic runtime deployment",
+      "queue readiness",
+      "merge authority"
+    ]
+  }
+}

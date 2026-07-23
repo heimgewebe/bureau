@@ -95,6 +95,16 @@
       "plan_sha256": "7a4d09115c987f7199ff6b984bc87c08f8598c55d5dddfd7284c7d55d1b5bcd0",
       "source": "github-and-current-vibe-lab-main",
       "source_ref": "heimgewebe/vibe-lab#316; merge ae0af7396ed844b9d0b50a2dd18bfac11590694d; current main 09a88891c47c727e8f66460c0cbc08863fca58b4",
+      "artifacts": {
+        "registration": {
+          "path": "experiments/2026-07-13_chronik-history-brief-effect/registration.v2.json",
+          "sha256": "742b49ebc68b9bb388e08ba7625d4036251454f5132dadabf977f768fd67c209"
+        },
+        "decision": {
+          "path": "experiments/2026-07-13_chronik-history-brief-effect/results/decision.yml",
+          "sha256": "89d0161d8c596b6d1532f9e1549bb3785ab3eae1ce684f4d283e3601a99e1bda"
+        }
+      },
       "verified_at": "2026-07-23T09:25:30+02:00"
     }
   }

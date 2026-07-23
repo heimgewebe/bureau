@@ -1674,7 +1674,15 @@ def _registry_guard_fixture(registry_factory):
     return registry, task_json, f"registry/tasks/{task_json['id']}.json"
 
 
-def _open_registry_pr(number, *, base_sha, head_sha, target_path):
+def _open_registry_pr(
+    number,
+    *,
+    base_sha,
+    head_sha,
+    target_path,
+    base_fresh=True,
+    task_json=None,
+):
     return {
         "number": number,
         "url": f"https://example.invalid/pull/{number}",
@@ -1683,7 +1691,13 @@ def _open_registry_pr(number, *, base_sha, head_sha, target_path):
         "headRefName": f"task-{number}",
         "baseRefName": "main",
         "baseRefOid": base_sha,
+        "mergeBaseOid": base_sha,
+        "baseFresh": base_fresh,
+        "compareStatus": "ahead" if base_fresh else "diverged",
         "files": [{"path": target_path, "changeType": "ADDED"}],
+        "registryTasks": (
+            [{"path": target_path, "task": task_json}] if task_json is not None else []
+        ),
     }
 
 
@@ -1760,7 +1774,13 @@ def test_registry_publication_guard_pre_push_respects_open_reservation(registry_
 def test_registry_publication_guard_stale_reservation_is_hint_not_block(registry_factory):
     registry, task_json, target_path = _registry_guard_fixture(registry_factory)
     main_sha = "a" * 40
-    stale = _open_registry_pr(9, base_sha="0" * 40, head_sha="b" * 40, target_path=target_path)
+    stale = _open_registry_pr(
+        9,
+        base_sha="0" * 40,
+        head_sha="b" * 40,
+        target_path=target_path,
+        base_fresh=False,
+    )
     receipt = operator_intake_module._evaluate_registry_task_publication_guard(
         registry=registry,
         repository="example/bureau",
@@ -1778,6 +1798,42 @@ def test_registry_publication_guard_stale_reservation_is_hint_not_block(registry
     assert receipt["collision_sources"][0]["base_fresh"] is False
     assert receipt["blocking_collision_sources"] == []
     assert receipt["semantic_duplicate_hints"]
+
+
+def test_registry_publication_guard_reports_open_pr_semantic_duplicate(registry_factory):
+    registry, task_json, target_path = _registry_guard_fixture(registry_factory)
+    main_sha = "a" * 40
+    related_task = json.loads(json.dumps(task_json))
+    related_task["id"] = "OPERATOR-RACE-TEST-V1-T998"
+    related_path = f"registry/tasks/{related_task['id']}.json"
+    related_pr = _open_registry_pr(
+        9,
+        base_sha=main_sha,
+        head_sha="b" * 40,
+        target_path=related_path,
+        task_json=related_task,
+    )
+    receipt = operator_intake_module._evaluate_registry_task_publication_guard(
+        registry=registry,
+        repository="example/bureau",
+        current_main_sha=main_sha,
+        expected_base_sha=main_sha,
+        task_json=task_json,
+        target_path=target_path,
+        head_sha="c" * 40,
+        pull_request_number=10,
+        open_pull_requests=[related_pr],
+        canonical_path_exists=False,
+        scan_complete=True,
+    )
+    assert receipt["decision"] == "allow"
+    hint = next(
+        item
+        for item in receipt["semantic_duplicate_hints"]
+        if item.get("source") == "open-pull-request"
+    )
+    assert hint["pull_request_number"] == 9
+    assert hint["task_id"] == related_task["id"]
 
 
 class LocalGitPublisher(SubprocessTaskPublisher):
@@ -1799,6 +1855,15 @@ class LocalGitPublisher(SubprocessTaskPublisher):
                 ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD"],
                 cwd=cwd,
             ).splitlines()
+            registry_tasks = []
+            for path in changed:
+                if path.startswith("registry/tasks/") and path.endswith(".json"):
+                    registry_tasks.append(
+                        {
+                            "path": path,
+                            "task": json.loads((Path(cwd) / path).read_text()),
+                        }
+                    )
             self.pull_request = {
                 "number": 7,
                 "url": "https://example.invalid/pull/7",
@@ -1807,9 +1872,13 @@ class LocalGitPublisher(SubprocessTaskPublisher):
                 "headRefName": branch,
                 "baseRefName": "main",
                 "baseRefOid": base,
+                "mergeBaseOid": base,
+                "baseFresh": True,
+                "compareStatus": "ahead",
                 "files": [
                     {"path": path, "changeType": "ADDED"} for path in changed
                 ],
+                "registryTasks": registry_tasks,
             }
             return "https://example.invalid/pull/7"
         if list(arguments[:3]) == ["gh", "pr", "list"]:
@@ -1823,22 +1892,41 @@ class LocalGitPublisher(SubprocessTaskPublisher):
             return json.dumps(self.pull_request)
         if list(arguments[:2]) == ["gh", "api"]:
             endpoint = str(arguments[-1])
-            try:
-                number = int(endpoint.split("/pulls/", 1)[1].split("/", 1)[0])
-            except (IndexError, ValueError) as exc:
-                raise AssertionError(f"unexpected gh api endpoint: {endpoint}") from exc
             candidates = list(self.open_pull_requests)
             if self.pull_request is not None:
                 candidates.append(self.pull_request)
-            matched = next(item for item in candidates if item["number"] == number)
-            files = [
-                {
-                    "filename": item["path"],
-                    "status": str(item["changeType"]).lower(),
-                }
-                for item in matched.get("files", [])
-            ]
-            return json.dumps([files])
+            if "/pulls/" in endpoint and endpoint.endswith("files?per_page=100"):
+                number = int(endpoint.split("/pulls/", 1)[1].split("/", 1)[0])
+                matched = next(item for item in candidates if item["number"] == number)
+                files = [
+                    {
+                        "filename": item["path"],
+                        "status": str(item["changeType"]).lower(),
+                    }
+                    for item in matched.get("files", [])
+                ]
+                return json.dumps([files])
+            if "/compare/" in endpoint:
+                pair = endpoint.split("/compare/", 1)[1]
+                _, head_sha = pair.split("...", 1)
+                matched = next(item for item in candidates if item["headRefOid"] == head_sha)
+                return json.dumps(
+                    {
+                        "merge_base_commit": {"sha": matched["mergeBaseOid"]},
+                        "status": matched.get("compareStatus", "ahead"),
+                    }
+                )
+            if "/contents/" in endpoint and "?ref=" in endpoint:
+                path_and_ref = endpoint.split("/contents/", 1)[1]
+                target_path, head_sha = path_and_ref.rsplit("?ref=", 1)
+                matched = next(item for item in candidates if item["headRefOid"] == head_sha)
+                task_entry = next(
+                    item
+                    for item in matched.get("registryTasks", [])
+                    if item["path"] == target_path
+                )
+                return json.dumps(task_entry["task"])
+            raise AssertionError(f"unexpected gh api endpoint: {endpoint}")
         return super()._run(arguments, cwd=cwd, timeout=timeout)
 
 
@@ -1847,6 +1935,16 @@ def _publication_commit_count(commands: list[tuple[str, ...]]) -> int:
         "commit" in command or "commit-tree" in command
         for command in commands
     )
+
+
+class RecordingLocalPublisher(LocalGitPublisher):
+    def __init__(self):
+        super().__init__()
+        self.commands: list[tuple[str, ...]] = []
+
+    def _run(self, arguments, *, cwd=None, timeout=60):
+        self.commands.append(tuple(arguments))
+        return super()._run(arguments, cwd=cwd, timeout=timeout)
 
 
 class FaultInjectingLocalPublisher(LocalGitPublisher):
@@ -2048,6 +2146,48 @@ def _lease_count(path: Path) -> int:
         return int(connection.execute("SELECT count(*) FROM leases").fetchone()[0])
     finally:
         connection.close()
+
+
+def test_concurrent_same_task_publication_blocks_before_remote_effect(
+    registry_factory, tmp_path
+):
+    root, registry = _committed_registry(registry_factory)
+    _local_remote(root, tmp_path)
+    store = StateStore(tmp_path / "state.sqlite3")
+    plan_path = _proposal(registry, store, tmp_path)
+    plan = _review(plan_path)
+    preview = publication_preview(registry, store, plan_path=plan_path)
+    publisher = RecordingLocalPublisher()
+    publisher.open_pull_requests = [
+        _open_registry_pr(
+            6,
+            base_sha=plan["registry"]["commit"],
+            head_sha="b" * 40,
+            target_path=preview["target_path"],
+            task_json=plan["task_json"],
+        )
+    ]
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        publish_task_proposal(
+            registry,
+            store,
+            plan_path=plan_path,
+            lease_binding=_lease_binding(),
+            resource_db=_lease_db(preview, tmp_path),
+            workspace_root=tmp_path / "workspaces",
+            receipt_path=tmp_path / "receipt.json",
+            publisher=publisher,
+        )
+
+    assert caught.value.code == "registry-publication-collision"
+    assert caught.value.effect_started is False
+    assert caught.value.publication_phase == "committed_locally"
+    guard = caught.value.details["guard_receipt"]
+    assert guard["decision"] == "block"
+    assert guard["blocking_collision_sources"][0]["pull_request_number"] == 6
+    assert not any(command[:2] == ("git", "push") for command in publisher.commands)
+    assert not any(command[:3] == ("gh", "pr", "create") for command in publisher.commands)
 
 
 def test_subprocess_publisher_creates_only_target_branch_and_task_file(registry_factory, tmp_path):

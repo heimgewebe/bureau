@@ -755,15 +755,23 @@ def _task_text(task: Any) -> str:
     return " ".join(str(value) for value in (task.title, raw.get("goal")) if value)
 
 
-def _registry_task_semantic_hints(
-    registry: Registry, task_json: dict[str, Any]
-) -> list[dict[str, Any]]:
-    task_id = str(task_json.get("id", ""))
-    candidate_text = " ".join(
+def _task_json_text(task_json: dict[str, Any]) -> str:
+    return " ".join(
         str(value)
         for value in (task_json.get("title"), task_json.get("goal"))
         if value
     )
+
+
+def _registry_task_semantic_hints(
+    registry: Registry,
+    task_json: dict[str, Any],
+    *,
+    open_pull_requests: Sequence[dict[str, Any]] = (),
+    pull_request_number: int | None = None,
+) -> list[dict[str, Any]]:
+    task_id = str(task_json.get("id", ""))
+    candidate_text = _task_json_text(task_json)
     hints: list[dict[str, Any]] = []
     for existing in registry.tasks.values():
         if existing.id == task_id:
@@ -772,12 +780,48 @@ def _registry_task_semantic_hints(
         if score >= 0.2:
             hints.append(
                 {
+                    "source": "canonical",
                     "task_id": existing.id,
                     "title": existing.title,
                     "score": round(score, 6),
                 }
             )
-    hints.sort(key=lambda item: (-float(item["score"]), str(item["task_id"])))
+    for pull_request in open_pull_requests:
+        if not isinstance(pull_request, dict):
+            continue
+        number = pull_request.get("number")
+        if pull_request_number is not None and number == pull_request_number:
+            continue
+        registry_tasks = pull_request.get("registryTasks")
+        if not isinstance(registry_tasks, list):
+            continue
+        for entry in registry_tasks:
+            if not isinstance(entry, dict) or not isinstance(entry.get("task"), dict):
+                continue
+            candidate = entry["task"]
+            candidate_id = str(candidate.get("id", ""))
+            if not candidate_id or candidate_id == task_id:
+                continue
+            score = _similarity(candidate_text, _task_json_text(candidate))
+            if score >= 0.2:
+                hints.append(
+                    {
+                        "source": "open-pull-request",
+                        "pull_request_number": number,
+                        "url": pull_request.get("url"),
+                        "task_id": candidate_id,
+                        "title": candidate.get("title"),
+                        "score": round(score, 6),
+                    }
+                )
+    hints.sort(
+        key=lambda item: (
+            -float(item["score"]),
+            str(item.get("source", "")),
+            str(item["task_id"]),
+            int(item.get("pull_request_number") or 0),
+        )
+    )
     return hints[:MAX_SIMILARITY_RESULTS]
 
 
@@ -835,8 +879,13 @@ def _evaluate_registry_task_publication_guard(
                 break
         if matching_change is None or matching_change not in {"ADDED", "RENAMED", "UNKNOWN"}:
             continue
-        source_base = pull_request.get("baseRefOid")
-        base_fresh = source_base == current_main_sha
+        source_base = pull_request.get("mergeBaseOid")
+        base_fresh = pull_request.get("baseFresh") is True
+        if not isinstance(source_base, str) or not isinstance(
+            pull_request.get("baseFresh"), bool
+        ):
+            reason_codes.append("open-pr-base-unavailable")
+            continue
         source = {
             "pull_request_number": number,
             "url": pull_request.get("url"),
@@ -875,7 +924,12 @@ def _evaluate_registry_task_publication_guard(
         "scanned_open_pr_count": len(open_pull_requests),
         "collision_sources": collision_sources,
         "blocking_collision_sources": blocking_sources,
-        "semantic_duplicate_hints": _registry_task_semantic_hints(registry, task_json),
+        "semantic_duplicate_hints": _registry_task_semantic_hints(
+            registry,
+            task_json,
+            open_pull_requests=open_pull_requests,
+            pull_request_number=pull_request_number,
+        ),
         "decision": decision,
         "reason_codes": reason_codes,
     }
@@ -2505,8 +2559,102 @@ class SubprocessTaskPublisher:
                 )
         return files
 
+    def _pull_request_registry_tasks(
+        self,
+        *,
+        repository: str,
+        head_sha: str,
+        files: Sequence[dict[str, Any]],
+        cwd: Path,
+    ) -> list[dict[str, Any]]:
+        tasks: list[dict[str, Any]] = []
+        for item in files:
+            if not isinstance(item, dict):
+                continue
+            target_path = item.get("path")
+            if (
+                item.get("changeType") not in {"ADDED", "RENAMED"}
+                or not isinstance(target_path, str)
+                or not target_path.startswith("registry/tasks/")
+                or not target_path.endswith(".json")
+            ):
+                continue
+            raw = self._run(
+                [
+                    "gh",
+                    "api",
+                    "-H",
+                    "Accept: application/vnd.github.raw+json",
+                    f"repos/{repository}/contents/{target_path}?ref={head_sha}",
+                ],
+                cwd=cwd,
+            )
+            try:
+                task_json = json.loads(raw)
+            except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+                raise OperatorIntakeError(
+                    "pull-request-task-invalid",
+                    f"added registry task {target_path} is not valid JSON",
+                    retryable=True,
+                ) from exc
+            expected_task_id = Path(target_path).stem
+            if (
+                not isinstance(task_json, dict)
+                or task_json.get("id") != expected_task_id
+            ):
+                raise OperatorIntakeError(
+                    "pull-request-task-invalid",
+                    "added registry task content does not match its canonical path",
+                    retryable=True,
+                    details={
+                        "target_path": target_path,
+                        "expected_task_id": expected_task_id,
+                        "observed_task_id": (
+                            task_json.get("id") if isinstance(task_json, dict) else None
+                        ),
+                    },
+                )
+            tasks.append({"path": target_path, "task": task_json})
+        return tasks
+
+    def _pull_request_merge_base(
+        self,
+        *,
+        repository: str,
+        current_main_sha: str,
+        head_sha: str,
+        cwd: Path,
+    ) -> dict[str, str]:
+        raw = self._run(
+            [
+                "gh",
+                "api",
+                f"repos/{repository}/compare/{current_main_sha}...{head_sha}",
+            ],
+            cwd=cwd,
+        )
+        try:
+            value = json.loads(raw)
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            raise OperatorIntakeError(
+                "pull-request-merge-base-invalid",
+                "GitHub compare readback was not valid JSON",
+                retryable=True,
+            ) from exc
+        merge_base = value.get("merge_base_commit") if isinstance(value, dict) else None
+        merge_base_sha = merge_base.get("sha") if isinstance(merge_base, dict) else None
+        compare_status = value.get("status") if isinstance(value, dict) else None
+        if not isinstance(merge_base_sha, str) or not isinstance(compare_status, str):
+            raise OperatorIntakeError(
+                "pull-request-merge-base-invalid",
+                "GitHub compare readback did not expose merge-base identity",
+                retryable=True,
+                details={"compare": value},
+            )
+        return {"sha": merge_base_sha, "status": compare_status}
+
     def _open_pull_requests(
-        self, *, repository: str, cwd: Path
+        self, *, repository: str, current_main_sha: str, cwd: Path
     ) -> tuple[list[dict[str, Any]], bool]:
         raw = self._run(
             [
@@ -2540,13 +2688,38 @@ class SubprocessTaskPublisher:
             )
         hydrated: list[dict[str, Any]] = []
         for item in values:
-            if not isinstance(item, dict) or not isinstance(item.get("number"), int):
-                hydrated.append(item)
-                continue
+            if (
+                not isinstance(item, dict)
+                or not isinstance(item.get("number"), int)
+                or not isinstance(item.get("headRefOid"), str)
+                or item.get("state") != "OPEN"
+                or item.get("baseRefName") != "main"
+            ):
+                raise OperatorIntakeError(
+                    "open-pr-scan-invalid",
+                    "GitHub open pull-request metadata is incomplete",
+                    retryable=True,
+                    details={"pull_request": item},
+                )
             pull_request = dict(item)
             pull_request["files"] = self._pull_request_files(
                 repository=repository,
                 pull_request_number=int(item["number"]),
+                cwd=cwd,
+            )
+            merge_base = self._pull_request_merge_base(
+                repository=repository,
+                current_main_sha=current_main_sha,
+                head_sha=str(item["headRefOid"]),
+                cwd=cwd,
+            )
+            pull_request["mergeBaseOid"] = merge_base["sha"]
+            pull_request["compareStatus"] = merge_base["status"]
+            pull_request["baseFresh"] = merge_base["sha"] == current_main_sha
+            pull_request["registryTasks"] = self._pull_request_registry_tasks(
+                repository=repository,
+                head_sha=str(item["headRefOid"]),
+                files=pull_request["files"],
                 cwd=cwd,
             )
             hydrated.append(pull_request)
@@ -2575,7 +2748,7 @@ class SubprocessTaskPublisher:
         canonical_path_exists: bool | None = None,
     ) -> dict[str, Any]:
         open_pull_requests, scan_complete = self._open_pull_requests(
-            repository=repository, cwd=cwd
+            repository=repository, current_main_sha=current_main_sha, cwd=cwd
         )
         if canonical_path_exists is None:
             canonical_path_exists = self._canonical_path_exists(
@@ -2621,6 +2794,18 @@ class SubprocessTaskPublisher:
         root = registry.root
         remote = self._run(["git", "remote", "get-url", "origin"], cwd=root)
         current_main_sha = self._remote_main_sha(remote, cwd=root)
+        self._run(["git", "fetch", "--no-tags", "origin", "main"], cwd=root)
+        fetched_main_sha = self._run(["git", "rev-parse", "FETCH_HEAD"], cwd=root)
+        if fetched_main_sha != current_main_sha:
+            raise OperatorIntakeError(
+                "remote-main-readback-mismatch",
+                "fetched main does not match the authoritative remote main readback",
+                retryable=True,
+                details={
+                    "remote_main_sha": current_main_sha,
+                    "fetched_main_sha": fetched_main_sha,
+                },
+            )
         raw = self._run(
             [
                 "gh",
@@ -2661,47 +2846,47 @@ class SubprocessTaskPublisher:
             pull_request_number=pull_request_number,
             cwd=root,
         )
-        added_task_paths = sorted(
-            {
-                str(item.get("path"))
-                for item in pull_request["files"]
-                if isinstance(item, dict)
-                and item.get("changeType") in {"ADDED", "RENAMED"}
-                and isinstance(item.get("path"), str)
-                and str(item.get("path")).startswith("registry/tasks/")
-                and str(item.get("path")).endswith(".json")
-            }
+        merge_base = self._pull_request_merge_base(
+            repository=repository,
+            current_main_sha=current_main_sha,
+            head_sha=str(pull_request["headRefOid"]),
+            cwd=root,
         )
-        if not added_task_paths:
+        pull_request["mergeBaseOid"] = merge_base["sha"]
+        pull_request["compareStatus"] = merge_base["status"]
+        pull_request["baseFresh"] = merge_base["sha"] == current_main_sha
+        pull_request["registryTasks"] = self._pull_request_registry_tasks(
+            repository=repository,
+            head_sha=str(pull_request["headRefOid"]),
+            files=pull_request["files"],
+            cwd=root,
+        )
+        if not pull_request["registryTasks"]:
             return {
                 "schema_version": 1,
                 "kind": "bureau_registry_task_pr_guard",
                 "repository": repository,
                 "pull_request_number": pull_request_number,
                 "head_sha": pull_request["headRefOid"],
-                "expected_base_sha": pull_request["baseRefOid"],
+                "pr_base_ref_sha": pull_request["baseRefOid"],
+                "expected_base_sha": merge_base["sha"],
                 "checked_main_sha": current_main_sha,
+                "compare_status": merge_base["status"],
                 "decision": "allow",
                 "reason_codes": ["no-added-registry-task"],
                 "task_guards": [],
             }
         task_guards: list[dict[str, Any]] = []
-        for target_path in added_task_paths:
-            task_id = Path(target_path).stem
-            task = registry.tasks.get(task_id)
-            if task is None:
-                raise OperatorIntakeError(
-                    "pull-request-task-missing",
-                    f"added registry task {task_id} is not loadable from the PR checkout",
-                    details={"target_path": target_path},
-                )
+        for entry in pull_request["registryTasks"]:
+            target_path = str(entry["path"])
+            task_json = entry["task"]
             task_guards.append(
                 self._registry_publication_guard(
                     registry=registry,
                     repository=repository,
                     current_main_sha=current_main_sha,
-                    expected_base_sha=str(pull_request["baseRefOid"]),
-                    task_json=task.raw,
+                    expected_base_sha=merge_base["sha"],
+                    task_json=task_json,
                     target_path=target_path,
                     head_sha=str(pull_request["headRefOid"]),
                     pull_request_number=pull_request_number,
@@ -2719,8 +2904,10 @@ class SubprocessTaskPublisher:
             "repository": repository,
             "pull_request_number": pull_request_number,
             "head_sha": pull_request["headRefOid"],
-            "expected_base_sha": pull_request["baseRefOid"],
+            "pr_base_ref_sha": pull_request["baseRefOid"],
+            "expected_base_sha": merge_base["sha"],
             "checked_main_sha": current_main_sha,
+            "compare_status": merge_base["status"],
             "decision": decision,
             "reason_codes": sorted(
                 {

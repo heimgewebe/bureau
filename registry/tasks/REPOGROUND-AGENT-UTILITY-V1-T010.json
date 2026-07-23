@@ -74,10 +74,12 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
-    }
+    },
+    "unblocked_at": "2026-07-23T21:30:00+02:00",
+    "unblock_reason": "REPOGROUND-AGENT-UTILITY-V1-T004 is verified on canonical Bureau main; T010 is the explicit evidence-hardening follow-up from the T004 paired-baseline proof."
   },
   "priority": {
-    "lane": "later",
+    "lane": "now",
     "rank": 70
   },
   "required_capabilities": [
@@ -88,6 +90,6 @@
     "bounded-io"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Cold-Read-Determinismus von RepoGround-Kontext belegen"
 }

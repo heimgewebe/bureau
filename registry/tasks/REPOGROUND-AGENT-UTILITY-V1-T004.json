@@ -3,7 +3,7 @@
   "id": "REPOGROUND-AGENT-UTILITY-V1-T004",
   "initiative": "REPOGROUND-AGENT-UTILITY-V1",
   "title": "Phase 3: Generalisierung nur nach bestandenem Weltgewebe-Gate",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 40
@@ -57,7 +57,44 @@
     "conditional_on_promotion_gate": true,
     "phase": 3,
     "unblocked_at": "2026-07-23T20:29:24+02:00",
-    "unblock_reason": "REPOGROUND-AGENT-UTILITY-V1-T003 is verified on canonical Bureau main via merged Bureau PR #889 after the documented Weltgewebe promotion gate passed."
+    "unblock_reason": "REPOGROUND-AGENT-UTILITY-V1-T003 is verified on canonical Bureau main via merged Bureau PR #889 after the documented Weltgewebe promotion gate passed.",
+    "verification": {
+      "source": "verified_t003_gate_and_merged_grabowski_handoff_with_paired_baseline",
+      "verified_at": "2026-07-23T20:35:09+02:00",
+      "promotion_gate": {
+        "bureau_pull_request": 889,
+        "t003_state": "verified",
+        "weltgewebe_pull_request": 1533,
+        "validator_result": "promotion_ready=true"
+      },
+      "implementation": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 414,
+        "head_commit": "75b7fa9599169bcc0e5df08fd2cefe626c801028",
+        "merge_commit": "f83c7cf8dc287c9301b0a5bdd3303ab506ccf2df",
+        "merge_is_ancestor_of_observed_main": true,
+        "observed_main": "99134328f1d3629432ed126c76196b450eb241a4",
+        "full_repository_tests_passed": 3073,
+        "full_repository_tests_skipped": 2,
+        "repository_contract_checks": "pass"
+      },
+      "acceptance_evidence": {
+        "gate_bound": "T003 verified by Bureau PR #889 after the bounded Weltgewebe promotion gate passed.",
+        "minimal_surface": "repoground_agent_handoff exposes exactly change_impact, find_relevant_tests and ground_claim.",
+        "explicit_routing": "The caller explicitly selects native_live_tools, repoground_context, combined or no_additional_retrieval.",
+        "second_proof": "The paired baseline proof preserves exact evidence for fresh Lenskit and Bureau publications without critical regression.",
+        "no_platform_by_hope": "The routing contract keeps automatic_selection=false, default_route=null and global_repoground_promotion=false."
+      },
+      "proof": "docs/proofs/repoground-agent-utility-v1-t004-paired-baseline-20260723.json",
+      "follow_up": "REPOGROUND-AGENT-UTILITY-V1-T010",
+      "does_not_establish": [
+        "default RepoGround routing",
+        "global RepoGround promotion",
+        "write authority",
+        "semantic completeness",
+        "runtime deployment of every later Grabowski main commit"
+      ]
+    }
   },
   "depends_on": [
     "REPOGROUND-AGENT-UTILITY-V1-T003"

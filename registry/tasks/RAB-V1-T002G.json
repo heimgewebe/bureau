@@ -3,7 +3,7 @@
   "id": "RAB-V1-T002G",
   "initiative": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "Harden Claude executable identity for current packaged binaries",
-  "state": "ready",
+  "state": "verified",
   "goal": "Replace the obsolete 64 MiB in-memory Claude executable identity gate with bounded regular-file validation and streamed hashing that safely supports the current packaged Claude binary without starting a provider process.",
   "priority": {
     "lane": "next",
@@ -70,7 +70,6 @@
     "triggered_by": "RAB-V1-T002F",
     "trigger_job": "grabowski-job-f01e3dd5ef64",
     "trigger_failure_event_sha256": "a655b70ab8f015746dd874424305790d04ed29550d85fca8e1bc343c850ed74b",
-    "current_executable_bytes": 259820344,
     "obsolete_limit_bytes": 67108864,
     "provider_use_permitted": false,
     "provider_processes_started": 0,
@@ -81,6 +80,77 @@
       "provider availability",
       "full benchmark permission",
       "default promotion"
-    ]
+    ],
+    "verified_at": "2026-07-22",
+    "outcome": "Grabowski PR #259 replaced the obsolete 64 MiB in-memory Claude executable identity gate with regular-file validation, the runner-owned 512 MiB ceiling, 1 MiB streamed SHA-256 hashing and before/after file-identity checks. The originally triggering Claude 2.1.208 binary was proven provider-free at 259,820,344 bytes. Current-main revalidation on 2026-07-22 also passed against installed Claude 2.1.217 at 268,573,680 bytes. No provider process was started and no live-pair authorization is created.",
+    "trigger_executable_version": "2.1.208",
+    "trigger_executable_bytes": 259820344,
+    "trigger_executable_sha256": "125372839bc827ca24dd72382627b291fbca615408d732fe3291bc16723ce7f3",
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 259,
+      "url": "https://github.com/heimgewebe/grabowski/pull/259",
+      "reviewed_head": "663812e4ee0e2801e0f4066d6a31cb733ddc89ee",
+      "merge_commit": "cb028ec3af5031308334697799bb8fd1c5b0e1f1",
+      "merged_at": "2026-07-17T03:35:14Z",
+      "changed_files": 2,
+      "additions": 260,
+      "deletions": 9,
+      "diff_sha256": "67ccdc97db83b2682d5d793cb16b1437d2767995a6d05494b44e327f1c985667",
+      "diff_bytes": 13208
+    },
+    "validation": {
+      "pr_evidence": {
+        "focused_identity_tests": "9 passed, 1 opt-in skip",
+        "complete_preflight_test_file": "37 passed, 1 skip",
+        "full_repository_suite": "1970 passed, 2 skips",
+        "make_validate": "PASS",
+        "make_deploy_check": "PASS",
+        "provider_processes_started": 0
+      },
+      "github_ci": [
+        "validate (3.10): SUCCESS",
+        "validate (3.12): SUCCESS",
+        "CodeQL Analyze (actions): SUCCESS",
+        "CodeQL Analyze (python): SUCCESS"
+      ],
+      "current_main": {
+        "head": "22799f6544c59034384ce01356bbaa3527321c85",
+        "focused_preflight_tests": "39 passed, 1 opt-in skip",
+        "installed_binary_opt_in_test": "PASS",
+        "installed_version": "2.1.217",
+        "resolved_path": "/home/alex/.local/share/claude/versions/2.1.217",
+        "bytes": 268573680,
+        "sha256": "2630fc5dc6db61bc03f86b95daf47766e5ed5b61873f7bb7cfea764c5ac5a9ba",
+        "provider_processes_started": 0,
+        "observed_cost_usd": 0.0,
+        "full_make_validate": "2943 passed, 2 skipped"
+      }
+    },
+    "verified_acceptance": {
+      "rab-v1-t002g-regular-file-boundary": "PR #259 resolves one executable regular file, rejects empty, non-regular, non-executable and oversized inputs, and retains resolved path plus exact byte count.",
+      "rab-v1-t002g-streamed-hash": "PR #259 hashes in fixed 1 MiB chunks under the runner-owned 512 MiB ceiling and compares device, inode, mode, size, mtime and ctime before and after hashing; focused tests detect in-place mutation and path replacement.",
+      "rab-v1-t002g-current-binary": "The PR evidence records provider-free identity for Claude 2.1.208 at 259,820,344 bytes with SHA-256 125372839bc827ca24dd72382627b291fbca615408d732fe3291bc16723ce7f3. Current closeout independently revalidated the same contract against installed Claude 2.1.217 at 268,573,680 bytes.",
+      "rab-v1-t002g-regression": "PR evidence records 9 focused identity tests plus the complete preflight file, 1,970-test full repository suite, make validate and make deploy-check passing; required GitHub validate and CodeQL checks also passed. Current main additionally passes 39 focused preflight tests with only the opt-in installed-binary test skipped in the default run, then that opt-in test passes explicitly.",
+      "rab-v1-t002g-no-provider": "PR evidence and current verification are provider-free: provider_processes_started=0 and observed_cost_usd=0.0. T002H remains separately unauthorized."
+    },
+    "verification": {
+      "task_sha256": "475062fbcbf80b0d1a492019b447b04c8b49b1af6e95d199a576501e4b491189",
+      "plan_sha256": "80509abd14d63643ae73b9cf5ba0ef2255d73d1bd331a96b1752fe8ada04f308"
+    },
+    "self_review": {
+      "status": "PASS",
+      "reviewed_at": "2026-07-22",
+      "reviewed_head": "663812e4ee0e2801e0f4066d6a31cb733ddc89ee",
+      "diff_sha256": "67ccdc97db83b2682d5d793cb16b1437d2767995a6d05494b44e327f1c985667",
+      "scope": "Full GitHub diff of Grabowski PR #259 plus current-main execution-binding readback.",
+      "findings": [
+        "No blocking finding: regular-file, non-empty, executable and runner-owned 512 MiB bounds are fail-closed.",
+        "SHA-256 is streamed in fixed 1 MiB chunks and file identity is checked before and after hashing to detect mutation or replacement.",
+        "Live execution is separately bound to an absolute Claude executable path and expected SHA-256; the runner validates that binding before provider start and again after execution.",
+        "The opt-in installed-binary identity test is provider-free and independently recomputes the streamed digest."
+      ],
+      "external_review_status": "not_counted: the PR contains only a Codex usage-limit notice and no completed external code review."
+    }
   }
 }

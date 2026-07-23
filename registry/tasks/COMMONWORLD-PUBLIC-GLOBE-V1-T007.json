@@ -37,11 +37,41 @@
     ],
     "readied_at": "2026-07-15",
     "readied_by_verified_predecessor": "COMMONWORLD-PUBLIC-GLOBE-V1-T006",
-    "direct_execution_authority": "operator instruction: weiter an commonworld arbeiten"
+    "direct_execution_authority": "operator instruction: weiter an commonworld arbeiten",
+    "completed_at": "2026-07-16",
+    "verification": {
+      "verified_at": "2026-07-22T20:35:46Z",
+      "authority": "commonworld-project-operator",
+      "decision": "retrospective_registry_closeout_for_already_merged_work",
+      "retrospective_closeout": true,
+      "premerge_review_evidence_reconstructed": false,
+      "implementation_pull_request": 73,
+      "implementation_head": "4100dcda1dd3c8e70d269d98dc15c89726bea818",
+      "implementation_merge_commit": "63ede54a9ccbdf067baeaac13c9c316051d94b97",
+      "later_filter_hardening_pull_request": 128,
+      "current_commonworld_main": "4828457f88bb169755076aa9f29bc14b1a219b44",
+      "pages_deployment_run": 29949101606,
+      "pages_commit": "4828457f88bb169755076aa9f29bc14b1a219b44",
+      "public_url": "https://commonworld.net/",
+      "exact_live_static_readback": "PASS",
+      "current_tests": {
+        "python_intent_validator": "6/6 PASS",
+        "javascript_intent_search": "7/7 PASS"
+      },
+      "acceptance": {
+        "human-query": "PASS",
+        "result-surface": "PASS",
+        "spatial-navigation": "PASS",
+        "action-links": "PASS",
+        "filters": "PASS"
+      },
+      "task_sha256": "e7e7f2cf3b4528a6bb5327b4731411861d951c4972e9cf4b2ec296eb770106c2",
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4"
+    }
   },
   "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T007",
   "title": "Implement intent-oriented search and discovery",
-  "state": "ready",
+  "state": "verified",
   "goal": "Let people search by German concepts, actions and places and reach the matching spatial or digital context.",
   "priority": {
     "lane": "next",

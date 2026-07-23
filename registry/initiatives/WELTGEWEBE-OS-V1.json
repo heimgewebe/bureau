@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "WELTGEWEBE-OS-V1",
   "title": "Weltgewebe OS — föderierte gesellschaftliche Betriebsschicht",
-  "state": "active",
+  "state": "waiting",
   "commitment": "now",
   "goal": "Weltgewebe und das lokale Ökosystem auf eine föderierte, lokal souveräne, global verbundene und Kubernetes-native Zielarchitektur ausrichten, ohne heutige Runtimegrenzen oder fehlende Hochverfügbarkeits- und Föderationsbeweise zu überbehaupten.",
   "current_plan": {
@@ -30,6 +30,11 @@
       "public federation",
       "permission to remove the single-instance guard",
       "authority to mutate foreign active worktrees or deployments"
-    ]
+    ],
+    "lifecycle": {
+      "reconciled_at": "2026-07-22T21:56:38.574144Z",
+      "reconciled_from": "active",
+      "reconciled_to": "waiting"
+    }
   }
 }

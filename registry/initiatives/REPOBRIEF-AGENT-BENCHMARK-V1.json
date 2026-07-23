@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "REPOBRIEF-AGENT-BENCHMARK-V1",
   "title": "RepoBrief agent benchmark against grep/read",
-  "state": "active",
+  "state": "waiting",
   "commitment": "now",
   "goal": "Measure the incremental value of RepoBrief MCP for real coding-agent work against the ordinary grep, glob and targeted-read workflow without fabricating model runs or promoting RepoBrief by default.",
   "current_plan": {
@@ -22,7 +22,7 @@
   },
   "metadata": {
     "registered_at": "2026-07-13",
-    "updated_at": "2026-07-15",
+    "updated_at": "2026-07-22",
     "source_issue": "heimgewebe/bureau#481",
     "depends_on_merges": [
       "heimgewebe/lenskit@a3dcc4e954f3ea60842cb366b499659f40938e0b",
@@ -30,7 +30,8 @@
       "heimgewebe/lenskit@7b729b52b6bf0302029626878ee444e664a0dc08",
       "heimgewebe/grabowski@4465ed14b7064e97e75d2e11be31e1264593e1ad",
       "heimgewebe/grabowski@1975c3f5c63fcb0e50f3f3d1101a34583d5a9fbd",
-      "f267070763fe8142f49c6d93810df0f7e219b308"
+      "f267070763fe8142f49c6d93810df0f7e219b308",
+      "heimgewebe/grabowski@cb028ec3af5031308334697799bb8fd1c5b0e1f1"
     ],
     "comparison": "baseline grep/glob/read versus the same tools plus RepoBrief MCP",
     "fixed_case_count": 24,
@@ -60,7 +61,7 @@
       },
       "RAB-V1-T002": {
         "state": "blocked",
-        "condition": "Blocked until T002G is verified and T002H is separately authorized, executed once and verified."
+        "condition": "Blocked until T002H is separately authorized, executed once and verified. T002G is verified and does not itself authorize provider use."
       },
       "RAB-V1-T003": {
         "state": "planned",
@@ -105,8 +106,10 @@
         "failure_event_sha256": "a655b70ab8f015746dd874424305790d04ed29550d85fca8e1bc343c850ed74b"
       },
       "RAB-V1-T002G": {
-        "state": "ready",
-        "condition": "Repair executable identity handling without provider use and prove the installed packaged binary."
+        "state": "verified",
+        "outcome": "Claude executable identity hardening is merged in Grabowski PR #259. Historical provider-free proof covered Claude 2.1.208 at 259,820,344 bytes; current closeout revalidated installed Claude 2.1.217 at 268,573,680 bytes. No provider process or cost was produced.",
+        "pull_request": "heimgewebe/grabowski#259",
+        "merge_commit": "cb028ec3af5031308334697799bb8fd1c5b0e1f1"
       },
       "RAB-V1-T002H": {
         "state": "planned",
@@ -116,7 +119,7 @@
       }
     },
     "default_promoted": false,
-    "sequencing": "Keep failed T002B, consumed invalid T002D and consumed pre-dispatch T002F visible; harden packaged executable identity in T002G without provider use; wait out known provider unavailability; then prepare and separately authorize a completely fresh T002H pair. Only after a valid pair may the real paired benchmark proceed.",
+    "sequencing": "Keep failed T002B, consumed invalid T002D and consumed pre-dispatch T002F visible. T002G is verified provider-free. T002H remains planned and requires fresh state, separate review and a new explicit live authorization before exactly one new pair may be attempted. Only after a valid verified pair may the real paired benchmark proceed.",
     "does_not_establish": [
       "general agent quality improvement",
       "answer correctness outside the fixed taskset",
@@ -125,6 +128,7 @@
       "review completeness",
       "merge readiness",
       "default promotion"
-    ]
+    ],
+    "lifecycle_reason": "T002G is verified provider-free; remaining benchmark path is intentionally waiting on separately authorized T002H before T002 can proceed."
   }
 }

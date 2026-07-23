@@ -50,17 +50,17 @@
   "metadata": {
     "note": "Folgetask aus dem T004-Paired-Baseline-Proof; nicht merge-blockierend für den isolierten Handoff-Wrapper.",
     "observation": "time_separated_double_read_variance",
-    "source_candidate": "candidate-421ea762b4a45fd08142fed0",
-    "source_pr": "heimgewebe/grabowski#414",
-    "source_proof_sha256": "395eedcc4b10600bd186eda45ad4a5b53c5404d870a23c5ec58a8638a9abb66f",
-    "source_task": "REPOGROUND-AGENT-UTILITY-V1-T004",
-    "superseded_source_pr": "heimgewebe/grabowski#412",
     "operator_intake": {
-      "schema_version": 1,
       "candidate_id": "candidate-421ea762b4a45fd08142fed0",
-      "event_id": 1030,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
       "event_created_at": "2026-07-23T08:33:53.630919Z",
+      "event_id": 1030,
       "request_sha256": "fcfb06f29718b92a249cd364364e28952676e9232401750e935d1e43837e7d6f",
+      "schema_version": 1,
       "source": {
         "does_not_establish": [],
         "freshness": "digest-bound",
@@ -68,15 +68,91 @@
         "locator": "docs/proofs/repoground-agent-utility-v1-t004-paired-baseline-20260723.json",
         "observed_at": "2026-07-23T07:23:40Z",
         "sha256": "395eedcc4b10600bd186eda45ad4a5b53c5404d870a23c5ec58a8638a9abb66f"
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
+      }
     },
+    "pr_completion": {
+      "auto_verify": true,
+      "head_sha": "38747ae653f2e1b35acb97861ddd90307f31b4f1",
+      "number": 427,
+      "post_merge_required": false,
+      "repo": "heimgewebe/grabowski"
+    },
+    "source_candidate": "candidate-421ea762b4a45fd08142fed0",
+    "source_pr": "heimgewebe/grabowski#414",
+    "source_proof_sha256": "395eedcc4b10600bd186eda45ad4a5b53c5404d870a23c5ec58a8638a9abb66f",
+    "source_task": "REPOGROUND-AGENT-UTILITY-V1-T004",
+    "superseded_source_pr": "heimgewebe/grabowski#412",
+    "unblock_reason": "REPOGROUND-AGENT-UTILITY-V1-T004 is verified on canonical Bureau main; T010 is the explicit evidence-hardening follow-up from the T004 paired-baseline proof.",
     "unblocked_at": "2026-07-23T21:30:00+02:00",
-    "unblock_reason": "REPOGROUND-AGENT-UTILITY-V1-T004 is verified on canonical Bureau main; T010 is the explicit evidence-hardening follow-up from the T004 paired-baseline proof."
+    "verification": {
+      "evidence_sha256": "1b3214cc82406861fffe2662f13d4ffe025f1c3484203b2bc63a44481cb697f6",
+      "pr_completion": {
+        "evidence": {
+          "evidence_sha256": "1b3214cc82406861fffe2662f13d4ffe025f1c3484203b2bc63a44481cb697f6",
+          "head_sha": "38747ae653f2e1b35acb97861ddd90307f31b4f1",
+          "merge_commit": "96be5ba68e6a66b563dba4ef8fd96cca15c29bde",
+          "non_claims": [
+            "merged PR evidence does not prove deployment",
+            "merged PR evidence does not prove dependent tasks are complete",
+            "merged PR evidence does not prove runtime correctness"
+          ],
+          "pr_number": 427,
+          "repo": "heimgewebe/grabowski",
+          "source": "github_pull_request",
+          "source_ref": "github-pr:heimgewebe/grabowski#427@38747ae653f2e1b35acb97861ddd90307f31b4f1:96be5ba68e6a66b563dba4ef8fd96cca15c29bde"
+        },
+        "kind": "bureau.pr_completion_receipt",
+        "outcome": "completed-by-merged-pr",
+        "receipt_id": "pr-completion:heimgewebe/grabowski#427:38747ae653f2e1b35acb97861ddd90307f31b4f1",
+        "receipt_sha256": "6de50439d1f72c6a1646dda7d50f3a810ef71043d45ab2297a17f06e22560a5c",
+        "schema_version": 2,
+        "task_id": "REPOGROUND-AGENT-UTILITY-V1-T010"
+      },
+      "receipt_id": "pr-completion:heimgewebe/grabowski#427:38747ae653f2e1b35acb97861ddd90307f31b4f1",
+      "receipt_sha256": "6de50439d1f72c6a1646dda7d50f3a810ef71043d45ab2297a17f06e22560a5c",
+      "source": "merged_grabowski_pr_427_and_revision_bound_t010_determinism_proof",
+      "source_ref": "github-pr:heimgewebe/grabowski#427@38747ae653f2e1b35acb97861ddd90307f31b4f1:96be5ba68e6a66b563dba4ef8fd96cca15c29bde",
+      "verified_at": "2026-07-23T21:31:49Z",
+      "task_sha256": "a8907382f36927630cdb8d989f9e6a8d548c84540d436ae9fb93e0880f2e634b",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+      "implementation": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 427,
+        "head_commit": "38747ae653f2e1b35acb97861ddd90307f31b4f1",
+        "merge_commit": "96be5ba68e6a66b563dba4ef8fd96cca15c29bde",
+        "merge_is_ancestor_of_observed_main": true,
+        "observed_main": "96be5ba68e6a66b563dba4ef8fd96cca15c29bde",
+        "focused_tests_passed": 5,
+        "repoground_bundle_tests_passed": 65,
+        "full_repository_tests_passed": 3260,
+        "full_repository_tests_skipped": 4,
+        "repository_contract_checks": "pass"
+      },
+      "acceptance_evidence": {
+        "cold_reproduction": "Two real fresh Python interpreter processes per each of two materialized repository bundle fixtures, with distinct PYTHONHASHSEED values and timestamps separated past a UTC second, reproduce timestamp variance while preserving content_sha256.",
+        "field_isolation": "The observed cold-read byte variance is localized to context_ref.generated_at for the no-query context-pack lane; no other volatile field was found in the covered payload.",
+        "contract": "The payload declares stable_except_declared_volatile_fields, excludes only context_ref.generated_at plus the self-referential determinism envelope from content_sha256, and declares same_host_same_publication_paths comparability.",
+        "regression_tests": "Fresh-process, warm in-process, exact exclusion-width recomputation and nonvolatile semantic-drift tests pass; semantic freshness drift changes content_sha256.",
+        "no_false_authority": "The proof explicitly withholds truth, completeness, semantic equivalence, default routing, write authority, cross-host byte equality, retrieval-lane determinism and retrieval-quality claims."
+      },
+      "proof": {
+        "path": "docs/proofs/repoground-agent-utility-v1-t010-determinism-20260723.json",
+        "sha256": "f8cc68dc6eea1eeb47acae4125d783ecd6e3358c5e35759c2dadce40cfca188e"
+      },
+      "follow_up": "REPOGROUND-AGENT-UTILITY-V1-T011",
+      "does_not_establish": [
+        "live bundle freshness",
+        "semantic equivalence from hash equality",
+        "semantic completeness",
+        "truth",
+        "automatic default routing",
+        "RepoGround write authority",
+        "byte equality across hosts or paths",
+        "retrieval-lane determinism",
+        "retrieval quality improvement",
+        "test sufficiency"
+      ]
+    }
   },
   "priority": {
     "lane": "now",
@@ -90,6 +166,6 @@
     "bounded-io"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Cold-Read-Determinismus von RepoGround-Kontext belegen"
 }

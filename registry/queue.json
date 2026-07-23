@@ -81,8 +81,7 @@
       "GRABOWSKI-OPERATOR-SURFACE-V1-T091"
     ],
     "now": [
-      "WELTGEWEBE-SEMANTIC-SEARCH-V1-T007",
-      "REPOGROUND-AGENT-UTILITY-V1-T010"
+      "WELTGEWEBE-SEMANTIC-SEARCH-V1-T007"
     ]
   },
   "queue_policy": "skip-blocked",

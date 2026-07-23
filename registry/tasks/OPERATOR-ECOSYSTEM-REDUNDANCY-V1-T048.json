@@ -1,0 +1,67 @@
+{
+  "acceptance": [
+    {
+      "assertion": "PyYAML installation for the Kubernetes security and validation workflows is bound through a hash-verified dependency mechanism rather than version-only pip resolution, without adding a second dependency authority.",
+      "id": "hash-verified-python-bootstrap"
+    },
+    {
+      "assertion": "All relevant Kubernetes workflow jobs that install the same validator dependency use the canonical pinned mechanism so the Trivy job does not create a weaker parallel supply-chain path.",
+      "id": "single-bootstrap-contract"
+    },
+    {
+      "assertion": "Workflow permissions, immutable pull-request-head checkout binding, platform validation, Trivy scan behavior and required CI remain unchanged or stricter; exact diff review and required CI pass before merge.",
+      "id": "preserve-security-contract"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Registered from the T045 PR #1552 security review. PyYAML is version-pinned but not artifact-hash-pinned in the Kubernetes workflow. This is not a T045 merge blocker, but it is useful supply-chain hardening and must not remain only as prose.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/weltgewebe"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Replace version-only PyYAML bootstrap in Weltgewebe Kubernetes security and validation CI with one canonical hash-verified dependency path while preserving the existing platform and Trivy contracts.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T048",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "that the current PyYAML release is malicious or compromised",
+      "permission to broaden workflow permissions",
+      "permission to replace the repository dependency authority"
+    ],
+    "registered_from": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045 / Weltgewebe PR #1552 security review on 2026-07-23"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 6
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau"
+  ],
+  "rollback": {
+    "strategy": "Revert only the dependency-bootstrap hardening. The already merged Trivy production path and platform validation contracts remain independently reversible."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Hash-pin Kubernetes Python validator bootstrap"
+}

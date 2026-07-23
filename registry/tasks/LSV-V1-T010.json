@@ -1,0 +1,104 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Entscheidungsachse verwendet das kanonische gemeinsame Leitstand-Designsystem und vermeidet neue seitenlokale Stilduplikate, soweit dafür bereits geeignete gemeinsame Tokens oder Komponenten existieren.",
+      "evidence_type": "object",
+      "id": "shared-ui-admission",
+      "verifier": "diff and shared UI contract review"
+    },
+    {
+      "assertion": "Jetzt, Im Fokus, Blockiert, Konvergenz und Danach behalten exakt ihre durch OPERATOR-MACHINE-READABILITY-V1-T024 definierten Datenquellen, Provenienz- und Freshness-Verträge; die Änderung führt keine neue Zustands-, Prioritäts- oder Taskwahrheit ein.",
+      "evidence_type": "boolean",
+      "id": "semantic-invariance",
+      "verifier": "controller/view diff and observer-boundary review"
+    },
+    {
+      "assertion": "Die reale buildgebundene Browserregression prüft die Entscheidungsachse mindestens auf einem mobilen und einem Desktop-Viewport auf Überlauf, Lesbarkeit und Bedienbarkeit.",
+      "evidence_type": "object",
+      "id": "responsive-regression",
+      "verifier": "browser regression receipt"
+    },
+    {
+      "assertion": "Die Umsetzung beginnt erst gegen den tatsächlich gemergten T024-Stand und integriert keine vorläufigen oder fremd-dirty Änderungen aus dem früheren parallelen Worktree.",
+      "evidence_type": "boolean",
+      "id": "parallel-work-admission",
+      "verifier": "git base/head and worktree/lease readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.leitstand"
+    }
+  ],
+  "depends_on": [
+    "LSV-V1-T008",
+    "LSV-V1-T009",
+    "OPERATOR-MACHINE-READABILITY-V1-T024"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die spätere Umsetzung verändert ausschließlich die read-only Leitstand-Darstellung in einem isolierten Worktree; Datenquellen, Prioritätslogik und Laufzeitautorität bleiben unverändert.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand"
+  },
+  "goal": "Nach Abschluss von OPERATOR-MACHINE-READABILITY-V1-T024 die neue read-only Entscheidungsachse gestalterisch und strukturell in das bestehende gemeinsame Leitstand-UI-System übernehmen: seitenlokale Inline-Stile soweit sinnvoll entfernen, vorhandene Komponenten und Tokens wiederverwenden und die Entscheidungsachse in die buildgebundene Desktop-/Mobil-Browserregression aufnehmen, ohne ihre Semantik, Datenquellen oder Observer-Grenze zu verändern.",
+  "id": "LSV-V1-T010",
+  "initiative": "LEITSTAND-VISUAL-LAYER-V1",
+  "metadata": {
+    "alternative_axis": "Nicht vor T024 eingreifen: zuerst die semantische Entscheidungsachse stabil mergen, danach rein darstellerisch konsolidieren und regressionsbinden.",
+    "does_not_establish": [
+      "need_for_new_ui_framework",
+      "permission_to_change_decision_semantics",
+      "permission_to_mutate_source_systems",
+      "visual_perfection"
+    ],
+    "source_observation": "Bei der UI-Shell-Optimierung über Leitstand PR #185 wurde die parallel laufende Entscheidungsachsen-Arbeit in PR #184 bewusst nicht verändert. Der geprüfte T024-Diff fügt neue seitenlokale Entscheidungsachsen-Stile in src/views/index.ejs hinzu, obwohl seit LSV-V1-T008 ein gemeinsames UI-System und seit LSV-V1-T009 ein buildgebundener Browservertrag bestehen.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-aa51966dddd635b8a12c243e",
+      "event_id": 1072,
+      "event_created_at": "2026-07-23T21:06:04.925703Z",
+      "request_sha256": "efbadf45bac778b64aa9520c9ead43794a2326f161999c5a924dc1ab59f8b1d2",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "pull-request-diff",
+        "locator": "github:heimgewebe/leitstand#184",
+        "observed_at": "2026-07-23T23:00:13+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 85
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "rollback": {
+    "strategy": "Die UI-Konsolidierung und den zusätzlichen Browserfall auf den zuvor gemergten Entscheidungsachsen-Stand zurücksetzen; Datenprojektionen und read-only Semantik bleiben unberührt."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Entscheidungsachse in gemeinsames Leitstand-UI-System konsolidieren"
+}

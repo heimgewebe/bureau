@@ -3,7 +3,7 @@
   "id": "CCM-V1-T003",
   "initiative": "CHRONIK-CODING-MEMORY-V1",
   "title": "Register Chronik history brief effect experiment",
-  "state": "ready",
+  "state": "verified",
   "depends_on": [
     "CCM-V1-T001",
     "CCM-V1-T002"
@@ -60,6 +60,26 @@
       "beneficial_effect",
       "adoption_readiness",
       "general_productivity_improvement"
-    ]
+    ],
+    "verification": {
+      "task_sha256": "a26c86e1b4913a3c731377ef6726e217f9b6d98ec683d56ef45df6f51264fc6d",
+      "plan_sha256": "7a4d09115c987f7199ff6b984bc87c08f8598c55d5dddfd7284c7d55d1b5bcd0",
+      "verified_at": "2026-07-23T09:19:57+02:00",
+      "repository": "heimgewebe/vibe-lab",
+      "current_main_commit": "09a88891c47c727e8f66460c0cbc08863fca58b4",
+      "implementation_pull_request": 316,
+      "implementation_merge_commit": "ae0af7396ed844b9d0b50a2dd18bfac11590694d",
+      "registration_path": "experiments/2026-07-13_chronik-history-brief-effect/registration.v2.json",
+      "registration_sha256": "742b49ebc68b9bb388e08ba7625d4036251454f5132dadabf977f768fd67c209",
+      "decision_path": "experiments/2026-07-13_chronik-history-brief-effect/results/decision.yml",
+      "decision_sha256": "89d0161d8c596b6d1532f9e1549bb3785ab3eae1ce684f4d283e3601a99e1bda",
+      "acceptance_summary": {
+        "prospective-registration": "Control and treatment conditions, additive binary scorecard, one-point material threshold, preflight-effort cost metric, confounders, review date and expiry are frozen in registration.v2.json.",
+        "natural-cases-only": "The registration requires natural coding tasks in matched bands and independent observation; no retrospective cases are counted as prospective evidence.",
+        "no-effect-claim": "results/decision.yml remains not_executed with zero observations and explicitly forbids an adoption or productivity assessment.",
+        "boundary": "The experiment boundary explicitly denies automatic policy, routing, queue and runtime authority."
+      },
+      "outcome": "The prospective Chronik history-brief effect experiment was already merged through Vibe-Lab PR #316 and remains correctly unexecuted pending natural cases; this closeout records the existing implementation without making an effect claim."
+    }
   }
 }

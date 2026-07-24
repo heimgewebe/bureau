@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T094",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Weltgewebe-Deployidentität auf kanonische Live-Endpunkte binden",
+  "state": "planned",
+  "goal": "Den Grabowski-Readback für die Weltgewebe-Produktionsidentität so korrigieren, dass er die tatsächlich kanonischen und vom Produktionsreconciler verwendeten Version-Endpunkte sowie den aktuellen Produktionspfad prüft, veraltete oder nicht erreichbare Identitätsquellen nicht als Live-Wahrheit ausgibt und widersprüchliche Identitäten fail-closed meldet.",
+  "priority": {
+    "lane": "later",
+    "rank": 930
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Als T008-Operator-Follow-up registriert. Zuerst aktuelle Grabowski-Runtime, Weltgewebe-Reconciler-Konfiguration und öffentliche kanonische Versionsendpunkte erneut lesen; keine Produktionsmutation ist Teil dieser Aufgabe."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "runtime-observability",
+    "deployment",
+    "testing",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "canonical-version-surfaces",
+      "assertion": "Der Weltgewebe-Deployidentitäts-Readback verwendet die aktuell kanonischen öffentlichen Versionsflächen, die auch der Produktionsreconciler als Frontend-/API-Verifier nutzt, statt einen veralteten /version-Pfad als Produktionswahrheit zu behandeln."
+    },
+    {
+      "id": "cross-surface-consistency",
+      "assertion": "API- und Frontend-Version werden gemeinsam gelesen und müssen auf dieselbe vollständige Commitidentität auflösen; 404, Parsefehler oder Commitwiderspruch werden als unbekannt beziehungsweise blockierend gemeldet und nicht durch einen alten gespeicherten Commit ersetzt."
+    },
+    {
+      "id": "production-path-truth",
+      "assertion": "Ein ausgegebener Remote-Repository- oder Release-Pfad entspricht dem aktuell verwendeten Produktionsreconciler-Vertrag und dem registrierten Hostzugang oder wird nicht als autoritative Livequelle behauptet, wenn er aus der Operatorperspektive nicht verifiziert werden kann."
+    },
+    {
+      "id": "no-stale-success",
+      "assertion": "Ein früherer erfolgreicher Identity-Readback darf bei aktuell fehlgeschlagener oder widersprüchlicher Liveprobe nicht als aktuelle Produktionsidentität erscheinen."
+    },
+    {
+      "id": "weltgewebe-regression-proof",
+      "assertion": "Tests decken den aktuellen Weltgewebe-Vertrag mit /api/version und /_app/version.json, einen veralteten /version-404, Commitwiderspruch sowie nicht verifizierbare Remote-Pfade ab."
+    },
+    {
+      "id": "read-only-boundary",
+      "assertion": "Die Korrektur verändert weder Weltgewebe-Produktion noch Deployments; sie verbessert ausschließlich den autoritativen Readback und dessen fail-closed Semantik."
+    }
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "task_profile": "repo_change",
+    "skip_reason": "live_first_primary",
+    "note": "Der Fehler wurde durch direkten Vergleich von Grabowski-Identity-Ausgabe, produktivem Reconciler-Vertrag und öffentlichen Weltgewebe-Version-Endpunkten entdeckt; diese Liveflächen bleiben Primärautorität."
+  },
+  "metadata": {
+    "source": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T008 operator follow-up 2026-07-24",
+    "observed_behavior": "grabowski_deployment_identity reported commit 1b379fcab0d6a47d5186c5e0a52a38b3cfa13a28 using https://weltgewebe.net/version and remote_repo /home/ops/weltgewebe-live/repo, while /version returned 404 and canonical /api/version plus /_app/version.json both reported live commit 592954c3f91b466313b3013eca7284b62371a3fa; the production reconciler itself uses those two canonical version endpoints.",
+    "does_not_establish": [
+      "WELTGEWEBE-SEMANTIC-SEARCH-V1-T008 completion",
+      "permission to redeploy Weltgewebe",
+      "permission to alter production files",
+      "current Grabowski implementation root cause",
+      "permission for SemantAH retirement"
+    ]
+  }
+}

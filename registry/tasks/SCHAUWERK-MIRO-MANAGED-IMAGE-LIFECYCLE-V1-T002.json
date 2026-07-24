@@ -3,7 +3,7 @@
   "id": "SCHAUWERK-MIRO-MANAGED-IMAGE-LIFECYCLE-V1-T002",
   "initiative": "SCHAUWERK-MIRO-MANAGED-IMAGE-LIFECYCLE-V1",
   "title": "Diagnose local Python 3.12 thread bootstrap failure in Schauwerk runtime",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 531
@@ -62,6 +62,30 @@
       "a Miro REST authorization failure",
       "that Python 3.12 is generally unsupported",
       "permission to recreate credentials or weaken live authorization checks"
-    ]
+    ],
+    "verified_at": "2026-07-24",
+    "outcome": "Schauwerk PR #115 identified missing PT_GNU_STACK metadata in the uv-managed Python 3.12 runtime, repaired CPython 3.12.12 to an explicit non-executable RW stack without weakening W^X, added a fail-closed output-only inspector and repair path, and restored direct/project thread creation plus the normal live Miro REST doctor.",
+    "validated_acceptance": {
+      "reproduce": "PASS: Fresh direct uv CPython 3.12.12 and the existing Schauwerk virtualenv both reproduced RuntimeError: can't start new thread; system Python 3.10 passed; RLIMIT_NPROC, cgroup PID usage, stack limit and available memory did not indicate resource exhaustion.",
+      "root-cause": "PASS: strace showed the thread-stack mprotect requesting READ|WRITE|EXEC and failing with EPERM; readelf showed uv Python 3.12.11/3.12.12 lacked PT_GNU_STACK while the working 3.11 build declared GNU_STACK RW. After the digest-bound ELF repair, mprotect used READ|WRITE and clone3 succeeded.",
+      "normal-path": "PASS: Direct CPython 3.12.12 thread creation, the existing Schauwerk virtualenv thread creation and the normal project command uv run schauwerk miro rest doctor --require-write --json all pass on merged main.",
+      "no-security-regression": "PASS: Host W^X remained enforced; the repair declares PT_GNU_STACK RW only, requires no root, changes no credential or Miro scope, preserves the separate REST credential, and the live doctor still requires and proves boards:write with scopes boards:read and boards:write."
+    },
+    "verification": {
+      "source": "github_pr_ci_and_live_runtime_readback",
+      "source_ref": "github-pr:heimgewebe/schauwerk#115",
+      "repository": "heimgewebe/schauwerk",
+      "pull_request": 115,
+      "base_commit": "d14a62d899c8b4789700fd9d35ec6a5cd7c58999",
+      "reviewed_head": "ca8ab4607364932cb13777606968599b26245c83",
+      "merge_commit": "592fb2052955404dd59a192a331cfef19e4399e2",
+      "final_diff_sha256": "c2bb2f4b0bc2e664e8a47721599d7795e5922f36636e28f64aec3debb738127b",
+      "final_diff_bytes": 32319,
+      "local_validation": "make validate: 782 passed; lint, compile and registry validation pass",
+      "github_pr_checks": "validate 3.11/3.12 and all observed CodeQL checks pass",
+      "sanitized_live_evidence": "docs/operators/evidence/python312-thread-stack-repair-20260724.json",
+      "task_sha256": "d07eac8f37e77e0aec589c324032c6f045a568084ae864eb913d7b9e0c93eaa6",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   }
 }

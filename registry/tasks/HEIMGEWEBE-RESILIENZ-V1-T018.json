@@ -1,0 +1,122 @@
+{
+  "acceptance": [
+    {
+      "assertion": "HA- und GitOps-Proofs messen vor Clusteraufbau freien Plattenplatz, Inodes sowie relevante Docker-/containerd-Belegung und brechen unter einer begründeten Mindestreserve vor Seiteneffekten mit maschinenlesbarer Diagnose ab.",
+      "id": "capacity-preflight"
+    },
+    {
+      "assertion": "Automatische Bereinigung ist ausschließlich für exakt eigentumsgebundene, terminale Proof-Cluster, Container, Volumes und Images zulässig; globale Prune-Befehle und fremde Ressourcen bleiben ausgeschlossen.",
+      "id": "owned-cleanup-only"
+    },
+    {
+      "assertion": "Die für PostgreSQL und Barman erforderlichen Images werden vor dem eigentlichen HA-Proof kapazitätsgeprüft bereitgestellt oder ihr Abruf wird mit eindeutiger Registry-, Netzwerk- oder Speicherklassifikation fail-closed beendet.",
+      "id": "image-readiness"
+    },
+    {
+      "assertion": "Bei Speicher- oder Imagefehlern werden df-/Inode-, Docker-/containerd-, Knoten- und Pod-Ereignisse auch dann als Artefakt gesichert, wenn der Datenbankcluster nie bereit wurde.",
+      "id": "failure-diagnostics"
+    },
+    {
+      "assertion": "Vertragstests decken ausreichende Kapazität, zu wenig Bytes, zu wenig Inodes, ausschließlich eigene Cleanup-Kandidaten, verweigerte fremde Bereinigung und den Barman-ImagePullBackOff-Fall ab.",
+      "id": "regression-tests"
+    },
+    {
+      "assertion": "Ein revisionsgebundener HA- und GitOps-Lauf besteht auf dem selbstgehosteten Runner; die Evidenz belegt Preflight, Image-Bereitschaft, erfolgreiche Retention und unveränderte Eigentumsgrenzen.",
+      "id": "live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "service.github_actions"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Änderungen betreffen CI- und Runner-Lifecycle-Verträge. Keine globale Docker-/containerd-Bereinigung und keine Übernahme fremder Ressourcen ohne exakte Eigentumsbindung.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die selbstgehosteten Kubernetes-HA- und GitOps-Proofs vor speicherbedingten Scheinausfällen schützen: vor dem Aufbau müssen freier Plattenplatz, Inodes und Containerd-/Docker-Belegung source-gebunden geprüft werden; unzureichende Kapazität muss vor dem Clusterstart verständlich und diagnostisch fail-closed enden. Zulässige Bereinigung darf ausschließlich nachweislich eigene, terminale Proof-Ressourcen betreffen. Image-Bereitstellung, Diagnose und Retention sollen so gehärtet werden, dass ein Barman-Sidecar-Pull nicht erst während des PostgreSQL-Starts an `no space left on device` scheitert.",
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T018",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "metadata": {
+    "design_rule": "Kapazität vor Seiteneffekt prüfen; nur eigene terminale Ressourcen bereinigen; Diagnose vor Bequemlichkeit.",
+    "does_not_establish": [
+      "globale Docker- oder containerd-Prune-Autorität",
+      "Berechtigung zum Löschen fremder Workloads oder Images",
+      "automatische Runner-Erweiterung oder Kostenfreigabe",
+      "zweite CI- oder Runtime-Wahrheit",
+      "Merge- oder Deployment-Autorität"
+    ],
+    "evidence": {
+      "attempt": 2,
+      "diagnostics_path": "/home/alex/.local/state/grabowski/ha-artifacts/pr1568-run-30083745710-attempt2/wg-ha-30083745710-2/",
+      "observed_failures": [
+        "containerd image extraction: no space left on device",
+        "etcd snapshot write: no space left on device",
+        "PostgreSQL pod: ImagePullBackOff"
+      ],
+      "pull_request": 1568,
+      "repository": "heimgewebe/weltgewebe",
+      "workflow_run": 30083745710
+    },
+    "registered_at": "2026-07-24",
+    "source": "Weltgewebe PR #1568 Kubernetes-HA-Proof run 30083745710 attempt 2: Barman-Sidecar und etcd-Snapshot scheiterten mit `no space left on device`; PostgreSQL-Instanz blieb im ImagePullBackOff. Der spätere PR-Head war fachlich unverändert gegenüber diesem Plattformfehler.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-b09696fa3446c9353f6b0bdf",
+      "event_id": 1120,
+      "event_created_at": "2026-07-24T12:21:14.306207Z",
+      "request_sha256": "9bd7c314da78193c1fb89193facf8289ce2411049f0958f0af2026d292e44df1",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "live-system-audit",
+        "locator": "github://heimgewebe/weltgewebe/actions/runs/30083745710/attempts/2",
+        "observed_at": "2026-07-24T10:05:39Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 18
+  },
+  "required_capabilities": [
+    "repository",
+    "github-actions",
+    "kubernetes",
+    "containerd",
+    "docker",
+    "storage-lifecycle",
+    "testing",
+    "runbook"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Kubernetes-HA-Proofs gegen Runner-Speichererschöpfung härten"
+}

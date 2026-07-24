@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "id": "SCHAUWERK-MIRO-MANAGED-IMAGE-LIFECYCLE-V1",
+  "title": "Schauwerk Miro managed image lifecycle v1",
+  "state": "active",
+  "commitment": "later",
+  "goal": "Close the remaining managed-image lifecycle gap with a separately authorized Miro REST authority for bounded image read/delete operations, without reusing MCP OAuth, widening the existing Companion app scopes, enabling paid features or weakening fail-closed mutation rules.",
+  "completion": [
+    "A separately authorized Miro REST credential path is configured outside the repository and passes the Schauwerk write-authority doctor without reusing MCP OAuth.",
+    "One isolated create-verify-delete image saga is proven against a disposable test image with exact board/item binding and digest-bound receipts.",
+    "Managed image lifecycle availability becomes true only after live authorization is proven; missing or insufficient REST authority remains fail-closed.",
+    "The existing Schauwerk Companion app identity, URL and scopes remain unchanged, no credentials enter Git or receipts, and no paid provider feature is enabled."
+  ],
+  "parallelism": {
+    "max_active_tasks": 1
+  },
+  "metadata": {
+    "registered_at": "2026-07-24",
+    "source_request": "schauwerk optimieren @grabowski",
+    "source_repository": "heimgewebe/schauwerk",
+    "source_pull_request": "heimgewebe/schauwerk#113",
+    "source_merge_commit": "10b4743317e78c302ec86417c6bd70317b0ace83",
+    "source_observation": "The live Miro MCP exposes image create/read helpers but no image_delete. Schauwerk already implements a separate REST read/delete adapter and reports the cross-surface managed-image lane unavailable because no separate REST credential is installed and live write authorization is therefore unproven.",
+    "does_not_establish": [
+      "availability of Miro REST credentials",
+      "permission to reuse MCP OAuth for REST",
+      "permission to widen the existing Companion Developer App scopes",
+      "provider-global atomic image replacement",
+      "permission to enable paid provider features"
+    ]
+  }
+}

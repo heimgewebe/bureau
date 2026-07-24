@@ -142,6 +142,14 @@
           "commit_sha": "7447da1f9b481d31fecd28a385ac1c3e27a22bbb"
         }
       ]
+    },
+    "verification": {
+      "task_sha256": "ee5aa5f8ee63aad8484a5266104ba51d428821ab8928edfbbab0b87fe4e2cb0d",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "source": "github_pull_requests_deployed_runtime_and_live_probe",
+      "source_ref": "github-pr:heimgewebe/systemkatalog#146@7447da1f9b481d31fecd28a385ac1c3e27a22bbb",
+      "evidence_sha256": "301c71acd8cb5951fbe84da6b085d257f3a10a107012281981307d73921b0df6",
+      "verified_at": "2026-07-24"
     }
   }
 }

@@ -184,6 +184,14 @@
           "content_sha256": "c6cb19ca3845b0bffd75b6e4878ef7ffb99bf06eaaa2dd9f16c72e2584e91da0"
         }
       ]
+    },
+    "verification": {
+      "task_sha256": "3fedae12f4419d4af4d9901c77bdd0586927fa792d21507446eac0dd820a261e",
+      "plan_sha256": "5bd32f4906cc9af27a3f99c7ab886eb9df7f8e5f4e9247c450bc492e64d28b06",
+      "source": "github_pull_requests_deployed_runtime_and_live_probe",
+      "source_ref": "github-pr:heimgewebe/leitstand#184,#186@019db0d598888f33e5ee8aafd8655d69a58252f8",
+      "evidence_sha256": "d91ec37ec03d46eb3e400cb7654267c728844752f8acdf20d3486ba188998929",
+      "verified_at": "2026-07-24"
     }
   }
 }

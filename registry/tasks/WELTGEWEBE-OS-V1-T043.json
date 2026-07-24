@@ -1,0 +1,109 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein versioniertes persistiertes Ereignismodell definiert mindestens Ereignisart, Zeitpunkt, betroffene Entität, unveränderliche Akteurs-ID, damaligen öffentlichen Anzeigenamen als optionalen Snapshot und die Sichtbarkeitsentscheidung; aktuelle Profilfelder und historische Snapshotfelder sind semantisch und namentlich getrennt.",
+      "id": "durable-event-contract"
+    },
+    {
+      "assertion": "Beim Knüpfen eines Knotens wird das Erstellungsereignis atomar oder nachweislich konsistent mit dem Knoten gespeichert; spätere Umbenennung, Deaktivierung oder Löschung des Accounts verändert den historischen Snapshot nicht.",
+      "id": "creation-write-path"
+    },
+    {
+      "assertion": "Bestehende Knoten und Verlaufseinträge werden kontrolliert migriert oder explizit als historisch unbekannt markiert; der Backfill erfindet keinen damaligen Namen aus einem heutigen Profilwert und bleibt bei unklarer Herkunft fail-closed.",
+      "id": "legacy-migration"
+    },
+    {
+      "assertion": "Eine zentrale Sichtbarkeitsregel legt fest, wann historische Namen, heutige Profile oder neutrale Platzhalter öffentlich erscheinen; interne UUIDs werden nicht als benutzerlesbarer Namensersatz ausgegeben.",
+      "id": "privacy-policy"
+    },
+    {
+      "assertion": "Die API unterscheidet unveränderliche historische Felder wie actor_title_at_event von veränderlichen aktuellen Profilfeldern wie current_public_title; Serialisierung, Versionierung und Rückwärtskompatibilität sind dokumentiert und getestet.",
+      "id": "api-semantics"
+    },
+    {
+      "assertion": "Die Weboberfläche rendert typisierte Ereignisse ohne Textheuristik oder Dopplung, zeigt historische Attribution am zugehörigen Ereignis und bietet eine getrennte Navigation zum heutigen öffentlichen Profil, sofern dieses weiterhin sichtbar ist.",
+      "id": "timeline-ui"
+    },
+    {
+      "assertion": "Tests decken Umbenennung, Deaktivierung, Löschung, fehlenden und leeren Titel, unverortete Garnrollen, Legacy-Daten, Ereignisreihenfolge, keine Dopplung und das Ausbleiben von UUID-Leaks ab.",
+      "id": "regression-tests"
+    },
+    {
+      "assertion": "Migration, Rollback, Cache-/Invalidierungsverhalten und Produktionsabnahme sind commitgebunden belegt; kein historischer Snapshot wird ohne kontrollierten Datenpfad oder autorisierte Migration live geschrieben.",
+      "id": "operational-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer am 2026-07-24 im Rahmen von @grabowski umsetzen zur Registrierung der bewusst aus PR #1566 ausgeklammerten historischen Attributionsarbeit autorisiert. Eine spätere Umsetzung muss Livezustand, Datenschutzvertrag, Migration und Review-Gates neu prüfen.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die Urheberschaft und weitere Akteure von Knotenereignissen als unveränderliche, datenschutzkonforme Ereignissnapshots persistieren, sodass der Verlauf den damaligen öffentlichen Namen und die technische Akteursbindung korrekt wiedergibt, während der heutige öffentliche Profilname als getrennte navigierbare Relation behandelt wird.",
+  "id": "WELTGEWEBE-OS-V1-T043",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_event_id": 1110,
+    "candidate_id": "candidate-947147f1153f74f4270ec049",
+    "does_not_establish": [
+      "implementation readiness without current live-state inspection",
+      "permission to infer historical names from current profile data",
+      "permission to expose internal account identifiers",
+      "migration or production rollout authority",
+      "merge readiness of PR #1566"
+    ],
+    "source_context": "PR #1566 zeigt bewusst den aktuellen öffentlichen Garnrollennamen. Reviewbefund: Ein historischer Name zum Zeitpunkt des Knüpfens benötigt ein persistiertes Ereignis- und Snapshotmodell und darf nicht aus dem heutigen Profilwert rekonstruiert werden.",
+    "source_head": "7710589c28e78cd625c2a707998ea2b6c4596b37",
+    "source_pr": "heimgewebe/weltgewebe#1566",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-947147f1153f74f4270ec049",
+      "event_id": 1110,
+      "event_created_at": "2026-07-24T08:06:56.110303Z",
+      "request_sha256": "9f6c7fd4895624918e1f8097843f15fe8cc8dca1899f256f61bffd0af2444475",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "pull-request-review",
+        "locator": "github:heimgewebe/weltgewebe#1566@7710589c28e78cd625c2a707998ea2b6c4596b37",
+        "observed_at": "2026-07-24T08:05:00Z",
+        "sha256": "8af0fca1d5e7da84c234b2d0054f45ebeed48bcd252c211f58590d7af96307f6"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 43
+  },
+  "required_capabilities": [
+    "repository",
+    "api",
+    "web",
+    "persistence",
+    "migration",
+    "privacy",
+    "testing",
+    "github",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Historische Urheberschaft als persistiertes Ereignismodell verankern"
+}

@@ -103,6 +103,92 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "acceptance": {
+        "binding-aware-inventory": true,
+        "current-work-convergence": true,
+        "fail-closed-binding-drift": true,
+        "managed-active-retention-expiry": true,
+        "preserve-cleanup-contract": true,
+        "regression-proof": true,
+        "terminal-phase-projection": true
+      },
+      "cleanup": {
+        "automatic_cleanup_performed": false,
+        "implementation_checkout_retained": true,
+        "reason": "Both T095 source checkouts remain protected by explicit retention; verification does not grant cleanup authority.",
+        "runtime_deploy_checkout_retained": true
+      },
+      "deployment": {
+        "audit_valid": true,
+        "deployment_complete": true,
+        "deployment_integrity_valid": true,
+        "kill_switch_engaged": false,
+        "release_id": "de62d17e8c10-srcset092e7706ff7e-locke6664d600b6c-contracta0eff57104e5",
+        "repo_head": "de62d17e8c10e109d6f56de519c70f730127fc23",
+        "runtime_healthy": true
+      },
+      "does_not_establish": [
+        "permission to delete or archive retained T095 checkouts",
+        "automatic cleanup authority",
+        "terminal external task truth from checkout binding alone"
+      ],
+      "live_proof": {
+        "expired_active_binding": {
+          "binding_consistent": true,
+          "binding_phase": "active",
+          "path": "/home/alex/repos/.grabowski-worktrees/pr288-process-reference-observer-fix-v1",
+          "projected_state": "managed_active_attention",
+          "retention_active": false
+        },
+        "fail_closed_drift": {
+          "binding_consistent": false,
+          "binding_phase": "active",
+          "cleanup_candidate": false,
+          "drift_reasons": [
+            "binding-expected-branch-mismatch",
+            "retention-expected-branch-mismatch"
+          ],
+          "path": "/home/alex/repos/.grabowski-worktrees/grabowski-t095-runtime-deploy-de62-v1",
+          "projected_state": "managed_lifecycle_drift"
+        },
+        "implementation_checkout": {
+          "binding_consistent": true,
+          "binding_phase": "completed_retained",
+          "head": "e0dfd82837f9e7ab67fd44039b6e466a863d4570",
+          "path": "/home/alex/repos/.grabowski-worktrees/grabowski-t095-checkout-lifecycle-convergence-v1",
+          "projected_state": "completed_retained_blocked"
+        },
+        "inventory_sha256": "292bc2f3bd26fcb6e988474e2ae88679adc89b3d34a927020efadcc97e634f0b"
+      },
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "pr_completion": {
+        "base_head": "ba9c25e016be1679e5e05972e3eb420dd8d60b99",
+        "diff_sha256": "e4497af7529305cc107c4c78cbd9bac71ad4a265b92e2d2177d40eab80cb9ac9",
+        "merge_commit": "de62d17e8c10e109d6f56de519c70f730127fc23",
+        "merged_at": "2026-07-24T05:42:06Z",
+        "pull_request": 433,
+        "repository": "heimgewebe/grabowski",
+        "required_check_count": 5,
+        "required_checks_green": true,
+        "reviewed_head": "e0dfd82837f9e7ab67fd44039b6e466a863d4570",
+        "self_review": "PASS"
+      },
+      "source": "operator_closeout",
+      "status": "verified",
+      "task_sha256": "9e036dfbcfcf53e3923c441478527cff28d22aa2481063b093fd038be3edfd2c",
+      "validation": {
+        "argv_sha256": "9575550303b6181605085be404cd608717b8a79c591299b7d9088d1c7d25cbae",
+        "command": "make validate",
+        "lifecycle_receipt_sha256": "48a8f9382afe7cabfb680a66b21c4b767b8076c857b05f0fcb585da5f39d8c17",
+        "result": "PASS",
+        "skipped_count": 5,
+        "state": "completed",
+        "task_id": "bffac9225f4b4c4fa589a31b",
+        "test_count": 3297
+      },
+      "verified_at": "2026-07-24T07:55:20Z"
     }
   },
   "priority": {
@@ -116,6 +202,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Managed Checkout-Binding und Operatorprojektion konvergent machen"
 }

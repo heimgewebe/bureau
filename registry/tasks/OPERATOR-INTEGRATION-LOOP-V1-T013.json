@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T013",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "Systemkatalog-Drift-Watcher Kandidaten-Supersession idempotent machen",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 13
+  },
+  "goal": "Den proposal-only Systemkatalog-Drift-Watcher so härten, dass vorhandene Kandidatenzustände vor dem Append autoritativ gelesen und notwendige Supersessions exakt an das aktuelle Event gebunden werden; identische Wiederholungen konvergieren idempotent, echte Änderungen erzeugen ein neues gebundenes Event und unklare Konkurrenz bleibt fail-closed.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/systemkatalog",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Nur Watcher-, Integrations-, Test- und Betriebsvertragsänderungen; keine automatische Katalog-, Queue-, Merge- oder Deployment-Autorität."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.core",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "systemkatalog",
+    "bureau",
+    "testing",
+    "systemd"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "authoritative-current-event",
+      "assertion": "Vor jedem Append wird der aktuelle Kandidatenzustand autoritativ gelesen; eine Supersession bindet exakt candidate_id und aktuelles supersedes_event_id."
+    },
+    {
+      "id": "idempotent-repeat",
+      "assertion": "Eine identische wiederholte Driftbeobachtung konvergiert ohne zusätzliches Ereignis oder Fehler."
+    },
+    {
+      "id": "changed-observation",
+      "assertion": "Eine echte inhaltliche Änderung erzeugt genau ein neues, an das vorherige aktuelle Event gebundenes Ereignis."
+    },
+    {
+      "id": "concurrency-fail-closed",
+      "assertion": "Konkurrierende oder stale Supersession-Versuche werden vor Wirkung erkannt und liefern eine maschinenlesbare Recovery-Aktion."
+    },
+    {
+      "id": "proposal-only-boundary",
+      "assertion": "Der Watcher bleibt proposal-only und erhält keine Queue-, Task-, Merge-, Deployment- oder automatische Katalogänderungsautorität."
+    },
+    {
+      "id": "regression-proof",
+      "assertion": "Regressionstests decken Erstaufnahme, identische Wiederholung, echte Änderung, konkurrierende Supersession und stale Event-Bindung ab; relevante Systemkatalog- und Bureau-Verträge bleiben grün."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-24",
+    "source": "Karthago-Systemabgleich und live beobachteter systemkatalog-drift-watch Fehler",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-a30ffd195997be720c6a5c77",
+      "event_id": 1098,
+      "request_sha256": "346f9ea51bd544ddf339d8a3589bae59018bd3535643a092dd9c58732003bd11",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-24T04:43:04.954319Z",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "live-runtime-observation",
+        "locator": "systemd:user:systemkatalog-drift-watch.service@2026-07-24T06:32:35+02:00",
+        "observed_at": "2026-07-24T06:32:35+02:00",
+        "sha256": null
+      }
+    },
+    "observed_failures": [
+      "2026-07-24T04:25:56+02:00",
+      "2026-07-24T05:28:40+02:00",
+      "2026-07-24T06:32:35+02:00"
+    ],
+    "observed_error": "bureau live-register failed: an existing candidate_id requires supersedes_event_id pointing to its current event",
+    "does_not_establish": [
+      "permission to weaken candidate identity or supersession checks",
+      "automatic task creation",
+      "automatic catalog mutation",
+      "queue readiness",
+      "merge authority"
+    ]
+  }
+}

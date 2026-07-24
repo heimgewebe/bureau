@@ -3,10 +3,10 @@
   "id": "OPERATOR-INTEGRATION-LOOP-V1-T005",
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Unify Bureau ready selection and live claims",
-  "state": "planned",
+  "state": "ready",
   "priority": {
-    "lane": "later",
-    "rank": 410
+    "lane": "next",
+    "rank": 10
   },
   "goal": "Connect deterministic ready eligibility, live thread focus, atomic claims, Grabowski resource leases, repository and PR conflict checks, isolated worktrees and durable closeout receipts into one collision-safe task pickup path.",
   "execution": {
@@ -124,6 +124,17 @@
         "merge or deployment authority",
         "verification authority",
         "safe mutation of terminal historical tasks"
+      ]
+    },
+    "reprioritization": {
+      "reprioritized_at": "2026-07-24",
+      "source": "user-directed Karthago system alignment follow-up",
+      "reason": "Ready selection, live focus, atomic claims, Grabowski leases, conflict checks and durable closeout are already separate surfaces; their collision-safe pickup integration is now the highest-leverage next operator-convergence step.",
+      "does_not_establish": [
+        "automatic dispatch",
+        "automatic queue mutation beyond this reviewed registry change",
+        "implementation completion",
+        "merge or deployment authority"
       ]
     }
   },

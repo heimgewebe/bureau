@@ -3,7 +3,7 @@
   "id": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Close the operator integration loop",
   "state": "active",
-  "commitment": "later",
+  "commitment": "next",
   "goal": "Connect cost-aware fallback patch generation, shared verification, high-value event capture, fresh RepoBrief provenance, collision-safe Bureau claims, a read-only nightly diagnosis cycle and Vibe-Lab measurement without granting model backends independent mutation authority.",
   "current_plan": {
     "repository": "bureau",
@@ -52,6 +52,16 @@
       "nightly_mutation_permission",
       "runtime_correctness",
       "merge_readiness"
-    ]
+    ],
+    "reprioritization": {
+      "reprioritized_at": "2026-07-24",
+      "source": "user-directed Karthago system alignment follow-up",
+      "scope": "Enable OPERATOR-INTEGRATION-LOOP-V1-T005 as the first next-lane task; other initiative tasks retain their own queue placement and lifecycle state.",
+      "does_not_establish": [
+        "automatic promotion of other initiative tasks",
+        "parallelism increase",
+        "implementation or dispatch authority"
+      ]
+    }
   }
 }

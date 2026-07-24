@@ -57,6 +57,14 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T052",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "metadata": {
+    "bound_followups": [
+      "REPOGROUND-AGENT-UTILITY-V1-T009"
+    ],
+    "completion": {
+      "outcome": "A commit-bound Heim-PC maintenance outcome reconciler now derives bounded producer outcomes without owning repair, cleanup, task or lifecycle truth. The Systemkatalog candidate-supersession defect is repaired and live-green; the remaining RepoGround fleet-publisher failure stays fail-closed and is already bound to REPOGROUND-AGENT-UTILITY-V1-T009.",
+      "schema_version": 1,
+      "status": "verified_read_only_maintenance_outcome_convergence"
+    },
     "does_not_establish": [
       "automatic repair authority",
       "automatic cleanup authority",
@@ -64,15 +72,22 @@
       "task or queue authority",
       "a second lifecycle truth",
       "root cause from systemd failure alone",
-      "permission to mutate foreign dirty state"
+      "permission to mutate foreign dirty state",
+      "RepoGround T009 completion",
+      "absence of future maintenance failures",
+      "permission to mutate or release foreign leases"
     ],
-    "registered_from": "candidate-4a1be14534af58385a499779 event 1108",
     "operator_intake": {
-      "schema_version": 1,
       "candidate_id": "candidate-4a1be14534af58385a499779",
-      "event_id": 1108,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
       "event_created_at": "2026-07-24T08:05:28.309060Z",
+      "event_id": 1108,
       "request_sha256": "80b4a601fe1e468f42b112a9e04ba6b00deda514f356bcd845c91da12844d199",
+      "schema_version": 1,
       "source": {
         "does_not_establish": [
           "source_content_identity"
@@ -82,13 +97,92 @@
         "locator": "live:heim-pc:user-systemd-maintenance-audit:2026-07-24T10:00:00+02:00",
         "observed_at": "2026-07-24T10:00:00+02:00",
         "sha256": null
+      }
+    },
+    "production_evidence": [
+      {
+        "kind": "closeout_receipt",
+        "path": "/home/alex/.local/state/grabowski/evidence/operator-ecosystem-redundancy-v1/t052-closeout-v1.json",
+        "sha256": "c78f4ec3e5b6baeba4f321e2d19b81dc262c9550af51f2fe5490e8b6191cdb7c"
       },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
-    }
+      {
+        "kind": "install_receipt",
+        "path": "/home/alex/.local/state/heim-pc/maintenance-outcomes/install-receipts/3b1459084f6702ccd5b14f981bb5fb733733be67.json",
+        "sha256": "4d2060148747bf9bfd17b6a80a7c1a50963c232c063e243ade2bf512cd2107d0"
+      },
+      {
+        "kind": "live_projection",
+        "path": "/home/alex/.local/state/heim-pc/maintenance-outcomes/maintenance-outcomes.v1.json",
+        "sha256": "8fd03f46735d5abeabac6d82da3f2ea022d1d2e18223c197000e2b3879d36c2d"
+      },
+      {
+        "kind": "systemkatalog_watch_receipt",
+        "path": "/home/alex/.local/state/heim-pc/systemkatalog-drift-watch/last-run.json",
+        "sha256": "b9a231bd8c73d1d9b9c541918fe155b45df89c750305a1a3d27cf2f74bae880c"
+      }
+    ],
+    "registered_from": "candidate-4a1be14534af58385a499779 event 1108",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "head_sha": "ee50446759f64e0ba8236407a6584c326e013b88",
+          "kind": "pull_request",
+          "merge_commit_sha": "f4632392a2c9fbe0538091b1305c54d42ff79bd2",
+          "source_ref": "heimgewebe/heim-pc#60",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T052"
+        },
+        {
+          "authority": "github",
+          "head_sha": "78c0eecbefb2b620975d790dbf78f4c2e7a66bd2",
+          "kind": "pull_request",
+          "merge_commit_sha": "3b1459084f6702ccd5b14f981bb5fb733733be67",
+          "source_ref": "heimgewebe/heim-pc#61",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T052"
+        },
+        {
+          "authority": "heim-pc-runtime",
+          "kind": "live_probe",
+          "source_ref": "runtime:maintenance-outcomes:3b1459084f6702ccd5b14f981bb5fb733733be67",
+          "state": "timer-active-collector-success-systemkatalog-observed",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T052"
+        },
+        {
+          "authority": "grabowski-host-evidence",
+          "evidence_sha256": [
+            "c78f4ec3e5b6baeba4f321e2d19b81dc262c9550af51f2fe5490e8b6191cdb7c"
+          ],
+          "kind": "live_probe",
+          "source_ref": "/home/alex/.local/state/grabowski/evidence/operator-ecosystem-redundancy-v1/t052-closeout-v1.json",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T052"
+        },
+        {
+          "authority": "bureau",
+          "kind": "task_reference",
+          "relation": "remaining-producer-specific-remediation",
+          "source_ref": "REPOGROUND-AGENT-UTILITY-V1-T009",
+          "state": "planned",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T052"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "verification": {
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "task_sha256": "c42454f1b49cc836ac23fdfe2a86bc1399dc0fca8962b716e8fc4433cc57c207"
+    },
+    "verification_note": "T052 verifies the bounded read-only convergence and the Systemkatalog producer repair. It does not verify RepoGround T009, future maintenance success, or automatic remediation authority.",
+    "verified_acceptance": {
+      "bureau-boundary": "Exact operator-candidate-assess readback binds existing candidates and tasks. Systemkatalog remains candidate event 572; RepoGround is bound to candidate-0127daa2b9ee7044a4194f3f and REPOGROUND-AGENT-UTILITY-V1-T009. No duplicate task truth was created.",
+      "failure-deduplication": "Stable failure fingerprints and invocation identity keep unchanged runs at the same bounded consecutive-failure count; repeated collector probes confirmed no false increment for the same systemd invocation.",
+      "leitstand-artifact": "The active timer publishes maintenance-outcomes.v1 atomically with producer timestamps, unit results, failure fingerprints, evidence hashes, Bureau bindings, attention state and explicit non-claims. The live projection contains ten producers, nine observed and one intentionally failed/attention-required.",
+      "producer-contract": "config/maintenance-producers.v1.json declares exactly ten bounded producers with unit, cadence/SLO, evidence paths and optional Bureau bindings; undeclared units are outside the projection.",
+      "read-only-reconciliation": "The installed collector reads bounded systemd properties, journals, declared owner-controlled evidence and exact Bureau assessments, then atomically writes one artifact. Its contract exposes no restart, retry, cleanup, lease release, repository mutation or task mutation path.",
+      "systemkatalog-fix": "The watchdog replaced the truncated 500-record broad list with exact candidate assessment, immediate pre-effect revalidation and exact post-registration readback. A durable live probe succeeded; the candidate was deduplicated at active event 572 and the collector now reports observed with zero consecutive failures.",
+      "tests-review-deploy": "On hardening head 78c0eecbefb2b620975d790dbf78f4c2e7a66bd2, 192 tests plus ruff, compileall, syntax, operator-entry and repo-index gates passed; PR #61 required CI and CodeQL checks were all green. Exact merge commit 3b1459084f6702ccd5b14f981bb5fb733733be67 is installed, the timer is enabled/active and live runs succeed."
+    },
+    "verified_at": "2026-07-24T12:46:09+02:00"
   },
   "priority": {
     "lane": "now",
@@ -106,6 +200,6 @@
     "strategy": "Revert the Heim-PC implementation commit and restore the immediately previous commit-bound systemd units and scripts. Remove only the newly installed maintenance outcome timer and artifact projection; do not alter Bureau history, existing receipts or producer-owned state."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Converge maintenance outcomes without a second truth model"
 }

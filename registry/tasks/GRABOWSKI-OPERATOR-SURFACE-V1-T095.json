@@ -1,0 +1,121 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Das Checkout-Inventar validiert eine vorhandene lifecycle_bindings-Zeile gegen Checkout-Key, Repository/Common-Dir, Checkout-Pfad, Branch, Phase und die für terminale Phasen maßgebliche Head-Identität und gibt Binding-Phase, Konsistenz und begrenzte Driftgründe maschinenlesbar aus.",
+      "id": "binding-aware-inventory"
+    },
+    {
+      "assertion": "Ein sauberer managed Checkout mit phase=active und abgelaufener oder fehlender wirksamer Retention fällt nicht auf unclassified_clean zurück, sondern wird explizit als blockierende Lifecycle-Konvergenzpflicht ausgewiesen; unmanaged saubere Checkouts behalten den konservativen Zustand unclassified_clean.",
+      "id": "managed-active-retention-expiry"
+    },
+    {
+      "assertion": "Saubere managed Checkouts mit phase=completed_retained werden als terminal-retained und archivierungspflichtig sichtbar; phase=archived darf nur mit passendem offenem Recovery-Archiv in die bestehende archived_grace-, archived_blocked- oder cleanup_candidate-Projektion gelangen.",
+      "id": "terminal-phase-projection"
+    },
+    {
+      "assertion": "Unbekannte Phase, Binding-Pfad-/Repository-/Branch-Abweichung, terminaler Head-Widerspruch, Binding-/Retention-Owner-Widerspruch oder archived ohne passendes Archiv werden als blockierende managed Lifecycle-Drift projiziert und erzeugen niemals cleanup_candidate oder Löschautorität.",
+      "id": "fail-closed-binding-drift"
+    },
+    {
+      "assertion": "grabowski_current_work übernimmt Binding-Phase und Binding-Konsistenz als autoritative Checkout-Evidenz: konsistente aktive Bindungen bleiben aktiv, abgelaufene oder widersprüchliche managed Bindungen werden blockierend, und completed_retained beziehungsweise archived werden als closed-not-cleaned priorisiert, solange der Checkout noch existiert.",
+      "id": "current-work-convergence"
+    },
+    {
+      "assertion": "Der Patch verändert weder Archivierungs- noch Cleanup-Effekte: Recovery-Refs, mindestens 24 Stunden Grace, frischer hashgebundener Dry-Run, erneuter Blocker-Readback und expliziter Apply ohne Force bleiben unverändert; keine automatische Archivierung oder Löschung wird eingeführt.",
+      "id": "preserve-cleanup-contract"
+    },
+    {
+      "assertion": "Gezielte Tests decken unmanaged unclassified_clean, active mit aktiver und abgelaufener Retention, completed_retained, archived ohne beziehungsweise mit passendem Archiv, unbekannte Phase, Branch-/terminalen Head-/Owner-Drift sowie die entsprechenden Current-Work-Zustände ab; die vollständige Grabowski-Validierung bleibt grün.",
+      "id": "regression-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die Umsetzung nach Liveaudit und Planoptimierung ausdrücklich beauftragt. Änderungen bleiben auf read-only Lifecycle-Klassifikation, Operatorprojektion, Dokumentation und Tests begrenzt; keine automatische Archivierung, Löschung oder Produktionsmutation.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_checkouts.py",
+      "component:src/grabowski_current_work.py",
+      "component:tests/test_checkouts.py",
+      "component:tests/test_current_work.py",
+      "component:docs/checkout-lifecycle.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die bestehende Grabowski-Checkout-Inventarisierung und Current-Work-Projektion so härten, dass durable managed Lifecycle-Bindungen phase-spezifisch, identitätsgebunden und fail-closed ausgewertet werden: aktive Bindungen dürfen nach Retention-Ablauf nicht still als unclassified_clean erscheinen, completed_retained und archived müssen als terminale Lifecycle-Phasen sichtbar bleiben, und widersprüchliche Binding-, Retention-, Checkout- oder Archivdaten müssen blockierend statt löschautorisierend projiziert werden. Der bestehende konservative Archiv-, 24-Stunden-Grace-, Dry-Run- und explizite Cleanup-Apply-Vertrag bleibt unverändert.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T095",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "design_rule": "Eine durable managed Lifecycle-Bindung ist Autorität für Eigentum und Phase, aber niemals alleinige Cleanup-Autorität. Klassifikation konvergiert auf bestehende Binding-, Retention-, Archiv- und Checkout-Wahrheit; Effekte bleiben im vorhandenen konservativen Lifecycle-Vertrag.",
+    "does_not_establish": [
+      "permission to delete a checkout",
+      "permission to archive automatically",
+      "permission to reset or adopt foreign dirty work",
+      "a second lifecycle truth",
+      "terminal external task truth from checkout binding alone"
+    ],
+    "plan_optimization": {
+      "excluded": [
+        "automatic archive execution",
+        "automatic checkout deletion",
+        "producer hard cut",
+        "adoption or reset of foreign dirty worktrees",
+        "mutation of canonical dirty main"
+      ],
+      "included": [
+        "binding-aware checkout inventory",
+        "phase-specific consistency checks",
+        "current-work phase propagation",
+        "targeted and full regression tests"
+      ]
+    },
+    "source": "Live-Systemaudit 2026-07-24 und Bureau-Kandidat candidate-96a393ca371d73fbecd771cd",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-96a393ca371d73fbecd771cd",
+      "event_id": 1097,
+      "event_created_at": "2026-07-24T03:58:38.347810Z",
+      "request_sha256": "5809e2d7e0975f6466b26cbc0723b3ee69db06f3676f776329c6f4677d6b5627",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "live-system-audit",
+        "locator": "chatgpt://heim-pc/2026-07-24/checkout-lifecycle-system-alignment",
+        "observed_at": "2026-07-24",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Managed Checkout-Binding und Operatorprojektion konvergent machen"
+}

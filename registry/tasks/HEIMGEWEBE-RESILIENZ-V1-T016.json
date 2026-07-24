@@ -3,7 +3,7 @@
   "id": "HEIMGEWEBE-RESILIENZ-V1-T016",
   "initiative": "HEIMGEWEBE-RESILIENZ-V1",
   "title": "Gate new durable components with source-bound admission evidence",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 95
@@ -89,6 +89,67 @@
       "automatic task creation",
       "permission to mutate foreign dirty worktrees",
       "requirement that every new component replace an old component"
-    ]
+    ],
+    "implementation": {
+      "primary_pull_request": {
+        "repository": "heimgewebe/systemkatalog",
+        "number": 146,
+        "head": "e71c9c3b3bc027411b02dbc7ab51ad96cbde4179",
+        "merge_commit": "7447da1f9b481d31fecd28a385ac1c3e27a22bbb",
+        "github_diff_sha256": "79c87d9c11cf0f0ceb6a1fc65fd59a0fbdd63972045cc0d5de0cf613b1e0866d"
+      }
+    },
+    "validation": {
+      "focused_tests": "8/8 component-admission tests passed.",
+      "system_catalog_validator": "status valid; 35 in-scope durable components, all 35 grandfathered, 0 admitted additions at baseline.",
+      "repository_contract": "PASS; 139 tests with 1 expected skip; TARGET-PROOF SYSTEMKATALOG REPOSITORY CONTRACT VALID.",
+      "post_merge_readback": "The same full repository contract passed from a clean detached worktree at merge commit 7447da1f9b481d31fecd28a385ac1c3e27a22bbb."
+    },
+    "live_proof": {
+      "systemkatalog_release_commit": "7447da1f9b481d31fecd28a385ac1c3e27a22bbb",
+      "consumer": "Leitstand is currently bound to the immutable Systemkatalog release rooted at the exact merge commit; ecosystem consumer readback reports 6/6 declared artifacts without manifest_corrupt.",
+      "boundary": "Component Admission is a repository validation and stable-semantics contract; it creates no separate runtime service or mutable authority."
+    },
+    "verified_acceptance": {
+      "admission-contract": "Verified by policy/component-admission.v1.json, registry/ecosystem/component-admissions.v1.json and scripts/system_catalog_admissions.py merged in #146.",
+      "classes": "Verified: replace, reduce, enable and experimental are the only admission classes; experimental requires successCriterion and non-expired reviewBy.",
+      "grandfathering": "Verified: 35 existing durable components are SHA-256-bound as the grandfather baseline; silent baseline replacement or expansion fails closed.",
+      "authority-boundary": "Verified: the contract creates no runtime, task, queue, dispatch, merge or deployment authority; Systemkatalog remains stable semantic authority and Bureau remains task/priority/closeout authority.",
+      "integration": "Verified: validate_system_catalog.py consumes the admission validator and the source-bound registry remains in Systemkatalog without duplicating component truth in Bureau.",
+      "tests": "Verified by focused 8/8 tests plus the full repository contract and post-merge clean-worktree validation."
+    },
+    "verified_at": "2026-07-24",
+    "verification_note": "Systemkatalog PR #146 is merged at 7447da1f9b481d31fecd28a385ac1c3e27a22bbb; post-merge validators are green; the current immutable Systemkatalog consumer release is bound to that commit. Component Admission is therefore canonically implemented without introducing a second control plane.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "HEIMGEWEBE-RESILIENZ-V1-T016",
+          "source_ref": "heimgewebe/systemkatalog#146",
+          "number": 146,
+          "head_sha": "e71c9c3b3bc027411b02dbc7ab51ad96cbde4179",
+          "merge_commit_sha": "7447da1f9b481d31fecd28a385ac1c3e27a22bbb",
+          "diff_sha256": "79c87d9c11cf0f0ceb6a1fc65fd59a0fbdd63972045cc0d5de0cf613b1e0866d"
+        },
+        {
+          "kind": "consumer_release",
+          "authority": "systemkatalog-release",
+          "task_id": "HEIMGEWEBE-RESILIENZ-V1-T016",
+          "source_ref": "systemkatalog-release@7447da1f9b481d31fecd28a385ac1c3e27a22bbb",
+          "commit_sha": "7447da1f9b481d31fecd28a385ac1c3e27a22bbb"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "ee5aa5f8ee63aad8484a5266104ba51d428821ab8928edfbbab0b87fe4e2cb0d",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "source": "github_pull_requests_deployed_runtime_and_live_probe",
+      "source_ref": "github-pr:heimgewebe/systemkatalog#146@7447da1f9b481d31fecd28a385ac1c3e27a22bbb",
+      "evidence_sha256": "301c71acd8cb5951fbe84da6b085d257f3a10a107012281981307d73921b0df6",
+      "verified_at": "2026-07-24"
+    }
   }
 }

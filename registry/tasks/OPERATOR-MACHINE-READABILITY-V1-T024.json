@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T024",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Project canonical operator decision axis in Leitstand",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "now",
     "rank": 24
@@ -91,6 +91,107 @@
       "new convergence truth",
       "request-time execution coupling",
       "permission to mutate foreign dirty worktrees"
-    ]
+    ],
+    "implementation": {
+      "decision_axis_pull_request": {
+        "repository": "heimgewebe/leitstand",
+        "number": 184,
+        "head": "e9e8d08b5ac5f46bc7128d66817c816e3a436494",
+        "merge_commit": "778f5f5a63d915fb507918729658a26f113a7ad4",
+        "github_diff_sha256": "98d56bc3098a45bf34127fcd9a773c5ccfa57d4ae2a4fc2dffb0283ba1627682"
+      },
+      "runtime_binding_pull_request": {
+        "repository": "heimgewebe/leitstand",
+        "number": 186,
+        "head": "362f0aaabf2fbde6aeeacbeb79ed01c150a6722d",
+        "merge_commit": "019db0d598888f33e5ee8aafd8655d69a58252f8",
+        "github_diff_sha256": "a70fdc52dda68abfb65285b3b6b1c14fc23125f0b4457a186a488982b71ebaac"
+      }
+    },
+    "validation": {
+      "head_bound_full_ci": "Full Leitstand local CI, release-runtime tests, browser checks, repository/docs/generated/drift guards and observer-invariant guard passed on the reviewed implementation heads; GitHub CI and CodeQL were green on the exact PR heads before merge.",
+      "producer_proof": "Real producer proof against current Bureau and Grabowski sources generated all five bounded sections without inventing missing values.",
+      "release_verify": "leitstand-release.py verify succeeded for exact live merge commit 019db0d598888f33e5ee8aafd8655d69a58252f8."
+    },
+    "deployment": {
+      "source_commit": "019db0d598888f33e5ee8aafd8655d69a58252f8",
+      "release_id": "019db0d598888f33e5ee8aafd8655d69a58252f8-runtime-v1",
+      "service_state": "active/running, Result=success, NRestarts=0",
+      "decision_axis_snapshot_path": "/home/alex/repos/leitstand/artifacts/operator-decision-axis.json",
+      "installed_snapshot_launcher_sha256": "d86a08f26b6762699b56d24e79868a220e77149c4ce56fb9401aebd02b23812f",
+      "snapshot_generated_at": "2026-07-24T01:29:18.374Z"
+    },
+    "live_proof": {
+      "health": "Local /health returned status ok.",
+      "decision_axis": "Live dashboard contains Entscheidungsachse and all five sections Jetzt, Im Fokus, Blockiert, Konvergenz and Danach.",
+      "snapshot_contract": "Live artifact kind is leitstand_operator_decision_axis_snapshot; section statuses at proof time: now=available, focus=available, blocked=available, convergence=unknown, later=unknown. Unknown remains an explicit degraded projection rather than inferred truth.",
+      "authority_non_claims": [
+        "task_or_priority_authority",
+        "queue_truth",
+        "focus_authority",
+        "runtime_or_convergence_authority",
+        "dispatch_or_mutation_authority"
+      ],
+      "ecosystem_consumer": "Live ecosystem map reports 6/6 artifacts and no manifest_corrupt."
+    },
+    "verified_acceptance": {
+      "decision-axis-contract": "Verified by the producer-side leitstand_operator_decision_axis_snapshot with exactly now, focus, blocked, convergence and later sections plus source/freshness status.",
+      "canonical-sources": "Verified live: Bureau status-projection/registry queue feeds Jetzt and Danach, Bureau Live Register feeds Im Fokus, Bureau blocker evidence feeds Blockiert, and Grabowski current_work feeds Konvergenz; degraded convergence remains unknown.",
+      "observer-invariant": "Verified by controller design, observer-invariant guard and live release: Bureau/Grabowski collection stays producer-side; request-time controller only reads the snapshot.",
+      "ui": "Verified live over http://127.0.0.1:3000/: all five decision-axis labels render on the dashboard.",
+      "tests": "Verified by focused decision-axis/export tests, complete local CI, release-runtime tests, browser checks and green GitHub CI/CodeQL.",
+      "integration": "Verified: existing Bureau and Grabowski projections are reused; no second queue, focus registry, priority store or global status model was introduced."
+    },
+    "verified_at": "2026-07-24",
+    "verification_note": "Leitstand PR #184 and runtime-binding PR #186 are merged. Exact merge commit 019db0d598888f33e5ee8aafd8655d69a58252f8 is the selected sealed live release, the installed producer wrapper is byte-bound to that release, the live snapshot exists, and HTTP consumer readback shows all five read-only sections.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T024",
+          "source_ref": "heimgewebe/leitstand#184",
+          "number": 184,
+          "head_sha": "e9e8d08b5ac5f46bc7128d66817c816e3a436494",
+          "merge_commit_sha": "778f5f5a63d915fb507918729658a26f113a7ad4",
+          "diff_sha256": "98d56bc3098a45bf34127fcd9a773c5ccfa57d4ae2a4fc2dffb0283ba1627682"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T024",
+          "source_ref": "heimgewebe/leitstand#186",
+          "number": 186,
+          "head_sha": "362f0aaabf2fbde6aeeacbeb79ed01c150a6722d",
+          "merge_commit_sha": "019db0d598888f33e5ee8aafd8655d69a58252f8",
+          "diff_sha256": "a70fdc52dda68abfb65285b3b6b1c14fc23125f0b4457a186a488982b71ebaac"
+        },
+        {
+          "kind": "runtime_deployment",
+          "authority": "leitstand-release",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T024",
+          "source_ref": "leitstand-release@019db0d598888f33e5ee8aafd8655d69a58252f8-runtime-v1",
+          "commit_sha": "019db0d598888f33e5ee8aafd8655d69a58252f8",
+          "content_sha256": "d86a08f26b6762699b56d24e79868a220e77149c4ce56fb9401aebd02b23812f"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "leitstand-local-http-and-artifact",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T024",
+          "source_ref": "local-live-proof@019db0d598888f33e5ee8aafd8655d69a58252f8",
+          "content_sha256": "c6cb19ca3845b0bffd75b6e4878ef7ffb99bf06eaaa2dd9f16c72e2584e91da0"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "3fedae12f4419d4af4d9901c77bdd0586927fa792d21507446eac0dd820a261e",
+      "plan_sha256": "5bd32f4906cc9af27a3f99c7ab886eb9df7f8e5f4e9247c450bc492e64d28b06",
+      "source": "github_pull_requests_deployed_runtime_and_live_probe",
+      "source_ref": "github-pr:heimgewebe/leitstand#184,#186@019db0d598888f33e5ee8aafd8655d69a58252f8",
+      "evidence_sha256": "d91ec37ec03d46eb3e400cb7654267c728844752f8acdf20d3486ba188998929",
+      "verified_at": "2026-07-24"
+    }
   }
 }

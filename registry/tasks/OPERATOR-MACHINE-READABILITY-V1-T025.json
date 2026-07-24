@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T025",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "title": "Make deployment invariant guard linked-worktree-path safe",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 25
+  },
+  "goal": "Harden Leitstand's deprecated deployment-entry-point guard so validation ignores Git administrative metadata of linked worktrees and cannot fail solely because a linked-worktree path contains the deprecated token `leitstand-deploy`, while continuing to reject real deprecated references in repository-controlled content.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Follow-up discovered during OPERATOR-MACHINE-READABILITY-V1-T024 live deployment on 2026-07-24. Preserve fail-closed rejection of real deprecated deployment references; narrow only the linked-worktree .git metadata false-positive."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "testing",
+    "shell",
+    "ci"
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T024"
+  ],
+  "acceptance": [
+    {
+      "id": "linked-worktree-safe",
+      "assertion": "The runbook invariant guard does not inspect linked-worktree Git administrative metadata such as a root `.git` file when searching repository-controlled content for deprecated deployment entry points."
+    },
+    {
+      "id": "real-reference-still-fails",
+      "assertion": "A real `leitstand-deploy` reference in tracked repository-controlled content still fails the guard."
+    },
+    {
+      "id": "path-name-regression",
+      "assertion": "A regression test proves validation succeeds from a linked worktree whose filesystem path itself contains `leitstand-deploy` when repository content is otherwise clean."
+    },
+    {
+      "id": "no-authority-change",
+      "assertion": "The fix changes only validation scope and creates no deployment, runtime, merge or mutation authority."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-24",
+    "source": "bureau_operator_intake",
+    "source_candidate_id": "candidate-4db5cd886992f01242f5811d",
+    "source_event_id": 1080,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-4db5cd886992f01242f5811d",
+      "event_id": 1080,
+      "event_created_at": "2026-07-24T01:36:51.574107Z",
+      "request_sha256": "815b1b23524a3a3dc829a7654556d9eacc7c3e2c7e9bcef51086af8a541ee8bc",
+      "source": {
+        "kind": "operator_observation",
+        "locator": "grabowski:deploy-job:0c406eaa9e1d",
+        "sha256": null,
+        "observed_at": "2026-07-24T01:20:23Z",
+        "freshness": "unknown",
+        "does_not_establish": [
+          "source_content_identity"
+        ]
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "observation": "An exact merged T024 deployment from linked worktree path leitstand-deploy-t024-final-v1 failed before cutover because the guard grep inspected the linked-worktree root .git file and matched the path token itself. The same exact commit deployed successfully from neutral path ls-t024-final-v1.",
+    "does_not_establish": [
+      "permission to weaken deprecated-entry-point validation",
+      "deployment authority",
+      "task readiness",
+      "queue truth"
+    ]
+  }
+}

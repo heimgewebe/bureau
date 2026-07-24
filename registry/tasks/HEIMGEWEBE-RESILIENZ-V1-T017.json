@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T017",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "title": "Systemweiten Vorfall-Lernzyklus an bestehende Wahrheiten binden",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 17
+  },
+  "goal": "Einen schlanken systemweiten Closeout-Vertrag definieren, der bei relevanten wiederholbaren Vorfällen source-gebundene Chronik-Evidenz, einen betrieblichen Runbook-Pfad, einen automatisierbaren Regressionstest oder eine begründete Ausnahme sowie eine Architektur- oder Policy-Folge mit expliziter No-change-Begründung koppelt, ohne eine zweite Incident-, Task- oder Wissenswahrheit zu schaffen.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Der Vertrag koppelt bestehende Wahrheitsinhaber und Closeout-Evidenz; er darf weder Chronik-, Bureau-, Repository- noch Systemkatalog-Autorität duplizieren oder übertragen."
+    }
+  },
+  "claims": [
+    {
+      "resource": "component.bureau.registry",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.chronik",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "bureau",
+    "chronik",
+    "schemas",
+    "protocol-design",
+    "testing"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "bounded-trigger",
+      "assertion": "Der Vertrag definiert, welche wiederholbaren, sicherheits-, recovery- oder betriebsrelevanten Vorfälle den Lernzyklus auslösen und welche trivialen oder nicht reproduzierbaren Fälle begründet ausgenommen werden."
+    },
+    {
+      "id": "truth-owner-binding",
+      "assertion": "Bureau bleibt Task- und Abschlussautorität, Chronik historische Autorität, das jeweilige Repository Code- und Runbook-Autorität und Systemkatalog stabile Semantikautorität; keine Projektion wird zur zweiten Wahrheit."
+    },
+    {
+      "id": "chronik-evidence",
+      "assertion": "Ein auslösender Vorfall bindet einen source- und zeitgebundenen Chronik-Eintrag oder eine maschinenlesbare Begründung, weshalb kein Chronik-Eintrag zulässig oder erforderlich ist."
+    },
+    {
+      "id": "runbook-and-regression",
+      "assertion": "Der Closeout bindet den betrieblichen Runbook-Pfad und einen reproduzierbaren Regressionstest; fehlende Automatisierbarkeit muss explizit begründet und mit einer alternativen Prüfhandlung versehen werden."
+    },
+    {
+      "id": "architecture-consequence",
+      "assertion": "Der Closeout dokumentiert eine Architektur- oder Policy-Folge oder eine überprüfbare No-change-Entscheidung samt Prämissen und akzeptiertem Restrisiko."
+    },
+    {
+      "id": "integration-proof",
+      "assertion": "Tests und Fixtures belegen vollständigen Lernzyklus, zulässige Ausnahme, fehlende Evidenz und widersprüchliche Autoritätszuordnung; bestehende Bureau-, Chronik- und Systemkatalog-Verträge bleiben grün."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-24",
+    "source": "Karthago-Systemabgleich: lokale Incident-, Runbook- und Regressionsevidenz ist vorhanden, aber systemweit nicht verbindlich gekoppelt.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-92fd5e12274b120a35291255",
+      "event_id": 1099,
+      "request_sha256": "942429b3bb7a71057c8ce687686e265fa25f9007113b3a524d437ad697979687",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-24T04:43:22.181228Z",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "live-system-audit",
+        "locator": "chatgpt://heimgewebe/2026-07-24/karthago-system-alignment",
+        "observed_at": "2026-07-24T06:43:00+02:00",
+        "sha256": null
+      }
+    },
+    "design_rule": "Bestehende Wahrheiten koppeln, keine neue Incident-Control-Plane oder universelle Pflicht für triviale Ereignisse schaffen.",
+    "does_not_establish": [
+      "automatic incident classification",
+      "automatic task creation",
+      "Chronik task authority",
+      "Systemkatalog runtime authority",
+      "queue readiness",
+      "merge authority"
+    ]
+  }
+}

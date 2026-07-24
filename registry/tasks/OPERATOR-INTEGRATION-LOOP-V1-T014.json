@@ -1,0 +1,108 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A controlled pre-existing lease conflict makes pickup fail closed after any earlier acquisition groups are compensated; no Bureau run and no residual pilot-owned leases remain.",
+      "id": "conflict-compensation"
+    },
+    {
+      "assertion": "With the controlled blocker removed, the deployed pickup surface creates exactly one Bureau run and one isolated workspace bound to the exact task, branch, base head and Grabowski lease owner.",
+      "id": "successful-pickup"
+    },
+    {
+      "assertion": "Repeating the identical approved request recovers the same run and does not create a second run, workspace or lease set.",
+      "id": "idempotent-retry"
+    },
+    {
+      "assertion": "The deployed status surface reports the live run as coordinated and active-bound with exact intent, owner and resource bindings.",
+      "id": "active-bound-readback"
+    },
+    {
+      "assertion": "After controlled Bureau terminalization, the deployed release surface removes only the exact unchanged run-owned leases; an identical second release is idempotent.",
+      "id": "terminal-release"
+    },
+    {
+      "assertion": "Machine-readable run, workspace, status, compensation and release receipts are retained and referenced by the T005 closeout; prose alone is insufficient.",
+      "id": "evidence-bound-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.lease-contract"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.worktree-admin"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [
+    "BUREAU-LIVE-REGISTER-V1-T005"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.bureau-scopes/lease-contract",
+      "path:/home/alex/repos/bureau/.bureau-scopes/worktree-admin",
+      "path:/home/alex/.local/state/bureau"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Run one bounded live pilot of the deployed Bureau–Grabowski pickup path, proving fail-closed conflict compensation, successful exact claim and isolated workspace creation, idempotent retry, active-bound status, controlled terminalization and exact idempotent lease release without touching foreign work.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T014",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "does_not_establish": [
+      "automatic dispatch",
+      "production code mutation",
+      "foreign lease release",
+      "foreign worktree cleanup",
+      "merge authority",
+      "deployment authority",
+      "verification without machine receipts"
+    ],
+    "pilot_for": "OPERATOR-INTEGRATION-LOOP-V1-T005",
+    "registered_at": "2026-07-24",
+    "scope": "one-time bounded live validation",
+    "source": "user-directed T005 implementation continuation",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "T005-LIVE-PILOT-20260724",
+      "event_id": 1135,
+      "event_created_at": "2026-07-24T19:26:18.173839Z",
+      "request_sha256": "66822f3b3d795f95fa7254841659661bc168568f810cf56f147484f01f600f75",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "bureau-task-followup",
+        "locator": "registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T005.json@c591966942dd53e42f767718816d57c21f7ce918",
+        "observed_at": "2026-07-24T19:26:18.164712Z",
+        "sha256": "7eea20b4e8c22be71b9cb639509baa2a6da1cc9ac553e55e0b1d0c63860f4e7e"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 11
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Prove coordinated pickup, recovery and lease release live"
+}

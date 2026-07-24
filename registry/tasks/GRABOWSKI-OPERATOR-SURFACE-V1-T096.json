@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T096",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Verwaiste Checkout-Lifecycle-Bindungen read-only und fail-closed klassifizieren",
+  "state": "planned",
+  "goal": "Den bereits vorbereiteten read-only Reconciliation-Kern für durable managed Checkout-Lifecycle-Bindungen kanonisch aufnehmen: vorhandene Bindungen, fehlende Worktrees, unbeobachtbare Repositories und Identitätsdrift werden deterministisch unterschieden, Retention- und Archivdaten bleiben reine Evidenz und aus Abwesenheit entsteht keinerlei Reparatur-, Terminalisierungs-, Archivierungs-, Cleanup- oder Löschautorität. Die Live-MCP- und Current-Work-Integration bleibt ausdrücklich getrennte Folgearbeit.",
+  "priority": {
+    "lane": "later",
+    "rank": 940
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Der Nutzer hat die Umsetzung von OPERATOR-INTEGRATION-LOOP-V1-T005 ausdrücklich beauftragt. Dieser Task bindet den bereits grünen read-only Phase-1-PR #437; keine Runtime-, Archiv-, Cleanup- oder Terminalisierungsmutation ist enthalten."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "testing",
+    "checkout-lifecycle",
+    "recovery"
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T095"
+  ],
+  "acceptance": [
+    {
+      "id": "binding-present",
+      "assertion": "Exakt passende durable Bindungen mit vorhandenem beobachtbarem Checkout werden deterministisch als bound_present ausgewiesen."
+    },
+    {
+      "id": "orphaned-binding",
+      "assertion": "Eine gespeicherte Bindung, deren Checkout nicht mehr im aktuellen Git-Worktree-Inventar existiert, wird explizit als orphaned_binding sichtbar und nicht als erledigt oder löschbar interpretiert."
+    },
+    {
+      "id": "repository-unobservable",
+      "assertion": "Ein nicht autoritativ beobachtbares Repository wird von einem tatsächlich fehlenden Checkout unterschieden und als repository_unobservable fail-closed ausgewiesen."
+    },
+    {
+      "id": "identity-drift",
+      "assertion": "Checkout-, Repository-, Branch- oder maßgebliche Head-Abweichungen werden als binding_identity_drift mit begrenzten maschinenlesbaren Gründen projiziert."
+    },
+    {
+      "id": "evidence-only-boundary",
+      "assertion": "Retention- und Archivinformationen bleiben Evidenz; der Kern erteilt keine Reparatur-, Terminalisierungs-, Archivierungs-, Cleanup- oder Löschautorität."
+    },
+    {
+      "id": "deterministic-summary",
+      "assertion": "Die Projektion liefert eine deterministische Zusammenfassung der Zustände und Driftgründe für dieselbe Eingabe."
+    },
+    {
+      "id": "regression-proof",
+      "assertion": "Gezielte Tests decken vorhandene Bindung, verwaiste Bindung, unbeobachtbares Repository, Identitätsdrift und die No-authority-Grenze ab; die vollständige Grabowski-Validierung bleibt grün."
+    },
+    {
+      "id": "phase-boundary",
+      "assertion": "Die Live-MCP-, Current-Work- und mutierende Reconciliation-Integration ist nicht Teil dieses Tasks und bleibt als getrennte, erneut zu prüfende Folgearbeit offen."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-24",
+    "source": "T005-Blockerauflösung und Live-Kandidat candidate-d029ca839a3cb3f01e3e64d8",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-d029ca839a3cb3f01e3e64d8",
+      "event_id": 1102,
+      "event_created_at": "2026-07-24T06:02:31.890050Z",
+      "request_sha256": "24b3128a248f35352293a5cff12add33c0291b143209edaef42773b38d85604f",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-system-audit",
+        "locator": "/home/alex/.local/state/grabowski/t095-t065-transition-result.json",
+        "observed_at": "2026-07-24T06:02:31.881555Z",
+        "sha256": "b86a61fcab3010ce28e436f9b4691eed54578964f306614794d423d21287a236"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "prepared_pull_request": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 437,
+      "base_head": "ae05d951b1323dfc726caf061c471cd3bdf0f7e1",
+      "head": "e38373c421b067451fba1861a44f0b68bc51b22f",
+      "scope": "read-only reconciliation core only"
+    },
+    "does_not_establish": [
+      "automatic merge readiness",
+      "runtime deployment",
+      "issue #434 completion",
+      "live MCP integration",
+      "Current-Work integration",
+      "repair or cleanup authority"
+    ]
+  }
+}

@@ -87,11 +87,106 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification": {
+      "status": "verified",
+      "source": "operator_closeout",
+      "verified_at": "2026-07-24T15:31:55Z",
+      "task_sha256": "b8e55fc0f5ec1e83dc6d2af71b803b051c7d5ddaf19cc98b5106a2488f700938",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "pre_closeout_task_sha256": "6cf7478a0f3a5f1e702ba25cf93a8d31e2bb570626a2dccce66197563994061d",
+      "source_candidate": {
+        "candidate_id": "candidate-ec5292b5cf851e48488478d2",
+        "event_id": 1124,
+        "decision": "merge"
+      },
+      "acceptance": {
+        "commit-bound-plaintext": true,
+        "bounded-private-publication": true,
+        "safe-cross-filesystem-read": true,
+        "secret-and-helper-boundary": true,
+        "runtime-and-contract-integration": true,
+        "live-download-proof": true
+      },
+      "pr_completion": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 441,
+        "base_head": "758db976b9cf4b0e6a198a905f979554a368d5b3",
+        "reviewed_head": "0c095d14a09315e5305e4f94fb0b82a5d8ba2c9b",
+        "reviewed_tree": "c028112a80fd92e4f8e1690d0ff3ad8fc0449c0e",
+        "diff_sha256": "11cfb2ed92fbd97d4d4dd433f3f2e32bbc0720a72c3ee014bb56e60c10e5626e",
+        "merge_commit": "d29b9f8abd1859874a91bb5bbedb81de0aa6f02c",
+        "merge_tree": "c028112a80fd92e4f8e1690d0ff3ad8fc0449c0e",
+        "merged_at": "2026-07-24T15:18:37Z",
+        "merge_tree_equals_reviewed_tree": true,
+        "required_check_count": 3,
+        "required_checks_green": true,
+        "self_review": "PASS"
+      },
+      "validation": {
+        "command": "make validate",
+        "task_id": "22456a84306340d58346ab1a",
+        "state": "completed",
+        "result": "PASS",
+        "test_count": 3337,
+        "skipped_count": 5,
+        "focused_artifact_test_count": 28,
+        "access_policy": "PASS",
+        "tool_surface_budget": "PASS",
+        "generated_context": "PASS",
+        "publication_profiles": "PASS",
+        "runtime_lock": "PASS",
+        "deploy_tooling_lock": "PASS",
+        "secret_scan": "PASS"
+      },
+      "deployment": {
+        "required": true,
+        "performed": true,
+        "repo_head": "d29b9f8abd1859874a91bb5bbedb81de0aa6f02c",
+        "release_id": "d29b9f8abd18-srcset2536ae78f783-locke6664d600b6c-contract47832b4ac08d",
+        "source_identity_sha256": "970eb6272f8b2651cdd713230dac2186af2c7d1d691a9cb71b381086f5ca50c0",
+        "source_sha256": "a2015e8e945f7779b79fff3d9f8e8486afb6e172a96312d9a756d1132b054f68",
+        "finalization_receipt_sha256": "d30f4bf07fd1b3e0a9b70f564516c6468b170845f874aa9f1d6e9cddefdd441d",
+        "completed_at": "2026-07-24T15:22:48Z",
+        "deployment_complete": true,
+        "deployment_integrity_valid": true,
+        "audit_valid": true,
+        "kill_switch_engaged": false
+      },
+      "live_artifact": {
+        "profile": "git-diff.v1",
+        "artifact_id": "d0da39ff1bf7428aadab8349f845f64a",
+        "filename": "canonical-text-artifact-export-v1-pr-441-0c095d14a093-diff.txt",
+        "byte_size": 70124,
+        "sha256": "11cfb2ed92fbd97d4d4dd433f3f2e32bbc0720a72c3ee014bb56e60c10e5626e",
+        "receipt_sha256": "f3449e15a06443d773de1470aeb3be9d681de6b85440b31d7024f8fa98d53d64",
+        "chunk_transport_verified": true,
+        "utf8_reconstruction_verified": true
+      },
+      "runtime_contract": {
+        "publish_tool": "grabowski_text_artifact_publish",
+        "read_tool": "grabowski_text_artifact_read",
+        "capability_catalog_registered": true,
+        "publication_profiles_registered": true,
+        "mcp_registration_present": true,
+        "current_connector_schema_refresh_required_for_new_tool_discovery": true
+      },
+      "cleanup": {
+        "deploy_worktree_removed": true,
+        "implementation_checkout_retained_until_closeout": true,
+        "foreign_checkouts_modified": false
+      },
+      "does_not_establish": [
+        "absence of secrets outside the generated diff",
+        "automatic deletion or cleanup authority for unrelated artifacts",
+        "zero-cost chunk reads for arbitrarily large multi-chunk transfers",
+        "immediate discovery of newly deployed tool schemas in already-open connector sessions"
+      ]
     }
   },
   "priority": {
-    "lane": "next",
-    "rank": 17
+    "lane": "later",
+    "rank": 998
   },
   "required_capabilities": [
     "git",
@@ -103,6 +198,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Kanonischen commitgebundenen Textartefakt-Export bereitstellen"
 }

@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "metadata": {
+    "parent_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T004",
+    "registered_from_review": "heimgewebe/repoground#1096",
+    "registered_at": "2026-07-24T17:20:00+02:00",
+    "scope_rule": "Execute in a fresh isolated current-main worktree; do not reuse, reset or mutate historical T004 worktrees.",
+    "does_not_establish": [
+      "Canary-Erfolg beweist keine Produktionsbereitstellung",
+      "Routertrennung autorisiert keine API-Änderung"
+    ]
+  },
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T012",
+  "title": "Service-App in Router, Jobs und Atlas-Flächen trennen",
+  "priority": {
+    "lane": "later",
+    "rank": 9
+  },
+  "goal": "Die rund 2.757 Zeilen große service/app.py entlang HTTP-Routing, Authentisierung, Job-Lifecycle, Artefaktzugriff und optionalem Atlas trennen, ohne API-, Auth- oder Betriebssemantik zu verwischen.",
+  "required_capabilities": [
+    "python",
+    "fastapi",
+    "architecture-refactoring",
+    "runtime-testing",
+    "security"
+  ],
+  "acceptance": [
+    {
+      "id": "router-boundaries",
+      "assertion": "Health, Jobs, Artefakte, Abfragen und Atlas besitzen getrennte Router/Services mit expliziten Abhängigkeiten."
+    },
+    {
+      "id": "auth-boundary",
+      "assertion": "Authentisierung, Autorisierung, Traversal-Schutz und Fehlerprojektion bleiben zentral und fail-closed."
+    },
+    {
+      "id": "api-parity",
+      "assertion": "OpenAPI-relevante Pfade, Statuscodes und Responseverträge bleiben durch Snapshot-/Integrationstests gebunden."
+    },
+    {
+      "id": "runtime-proof",
+      "assertion": "Canary oder isolierter Service-Readback belegt Health, Auth, Job-Lifecycle und mindestens einen Read-only-Abfragepfad."
+    },
+    {
+      "id": "complexity-performance",
+      "assertion": "Dateigröße und C901-Schuld sinken; Startzeit, Requestlatenz und Speicher regressieren nicht materiell."
+    }
+  ],
+  "depends_on": []
+}

@@ -3,7 +3,7 @@
   "id": "OPERATOR-ML-READINESS-V1-T005",
   "initiative": "OPERATOR-ML-READINESS-V1",
   "title": "Add routing-shadow provenance and review-disagreement observability",
-  "state": "planned",
+  "state": "verified",
   "goal": "Extend the no-effect routing-shadow capture contract so the readiness gate can measure independent semantic-review disagreement, distinguish production cases from test/synthetic/quarantined data, and separate execution aborts from infrastructure failures without rewriting historical cohort truth or introducing any routing or training authority.",
   "depends_on": [
     "OPERATOR-ML-READINESS-V1-T003"
@@ -89,6 +89,87 @@
       "routing policy authority",
       "online learning authority",
       "automatic policy promotion"
-    ]
+    ],
+    "implementation_prs": [
+      "heimgewebe/grabowski#430",
+      "heimgewebe/grabowski#431"
+    ],
+    "implementation_heads": {
+      "430": "7cfb688818f55197c276aaae85f6330c4eef0e3a",
+      "431": "f4f8eb9ccdc2a7d0c295cbcdaeb829610581dde7"
+    },
+    "implementation_merge_commits": {
+      "430": "eb685dece418a126287a628f4cc1d14c74bde599",
+      "431": "ba9c25e016be1679e5e05972e3eb420dd8d60b99"
+    },
+    "verified_at": "2026-07-24",
+    "verification_note": "PR #430 implemented versioned v3 routing-shadow provenance and independent semantic assessment observability; PR #431 hardened lineage, provenance and validation boundaries. Both were merged with green validation and CodeQL. The current deployed Grabowski runtime head 4b4785b5e630f7127c321655c0784705702691d9 contains the corrective merge ba9c25e016be1679e5e05972e3eb420dd8d60b99. This closes observability hardening only; the live natural cohort remains empty and T004 must be rerun after sufficient capture.",
+    "validated_acceptance": {
+      "versioned-backward-compatible-contract": "Merged v3 eligibility/record contracts preserve prior create-only history and keep absent legacy observability explicit rather than treating it as pass-quality evidence.",
+      "independent-review-disagreement": "The v3 record contract binds independently attributable semantic assessments and makes disagreement or missing independent review measurable without using lifecycle success as a label.",
+      "test-quarantine-provenance": "Prospective v2/v3 capture records explicit bounded case provenance that separates natural production operator cases from test, synthetic and quarantined data.",
+      "execution-failure-provenance": "Execution provenance is recorded separately from semantic outcome so completion, abort and infrastructure failure remain distinguishable.",
+      "privacy-and-no-effect": "The reviewed schemas and implementation retain bounded allowlists and proposal-only no-effect constants; raw prompts, transcripts, private notes and unrestricted argv remain excluded.",
+      "create-only-integrity": "PR #431 hardened lineage reconstruction, create-only identity, duplicate conflict and provenance validation; historical cohort records are not rewritten in place.",
+      "reaudit-not-auto-unblock": "Completion only removes the structural observability blockers. It does not authorize training or unblock T002; T004 still requires a separately reviewed PASS.",
+      "validation": "PRs #430 and #431 passed validate on Python 3.10/3.12 and CodeQL; current runtime inclusion was proven by merge ancestry to deployed head 4b4785b5e630f7127c321655c0784705702691d9."
+    },
+    "runtime_snapshot": {
+      "release_id": "4b4785b5e630-srcset2536ae78f783-locke6664d600b6c-contract47832b4ac08d",
+      "runtime_head": "4b4785b5e630f7127c321655c0784705702691d9",
+      "corrective_merge_ancestor": true,
+      "live_cohort_records": 0,
+      "automatic_routing_authority": false,
+      "ml_training_authorized": false,
+      "probe": {
+        "schema_version": 1,
+        "kind": "grabowski_runtime_probe",
+        "release_id": "4b4785b5e630-srcset2536ae78f783-locke6664d600b6c-contract47832b4ac08d",
+        "repo_head": "4b4785b5e630f7127c321655c0784705702691d9",
+        "completion_status": "complete",
+        "expected_tool_count": 169,
+        "registered_tool_count": 169,
+        "runtime_matches_deployment_contract": true,
+        "corrective_merge_commit": "ba9c25e016be1679e5e05972e3eb420dd8d60b99",
+        "corrective_merge_ancestor": true
+      },
+      "probe_sha256": "99cf82fc414704dbb4af0b10f8977d2786b16664b614ee19beec7c9bc71467b9"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ML-READINESS-V1-T005",
+          "source_ref": "heimgewebe/grabowski#430",
+          "number": 430,
+          "head_sha": "7cfb688818f55197c276aaae85f6330c4eef0e3a",
+          "merge_commit_sha": "eb685dece418a126287a628f4cc1d14c74bde599"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ML-READINESS-V1-T005",
+          "source_ref": "heimgewebe/grabowski#431",
+          "number": 431,
+          "head_sha": "f4f8eb9ccdc2a7d0c295cbcdaeb829610581dde7",
+          "merge_commit_sha": "ba9c25e016be1679e5e05972e3eb420dd8d60b99"
+        },
+        {
+          "kind": "runtime_probe",
+          "authority": "grabowski-runtime",
+          "task_id": "OPERATOR-ML-READINESS-V1-T005",
+          "source_ref": "grabowski-runtime@4b4785b5e630f7127c321655c0784705702691d9",
+          "commit_sha": "4b4785b5e630f7127c321655c0784705702691d9",
+          "content_sha256": "99cf82fc414704dbb4af0b10f8977d2786b16664b614ee19beec7c9bc71467b9"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "c5bb7e977183ccfad5ac4759da4d1587e447575eb1b68c173151f29b90b35603",
+      "plan_sha256": "b809f02cc0f4f17c42a44ca00dd94ce08a335b6be1671893ffac01246a656c79"
+    }
   }
 }

@@ -93,7 +93,7 @@
       "post_merge_required": false
     },
     "verification": {
-      "verified_at": "2026-07-24T10:04:52Z",
+      "verified_at": "2026-07-24T10:29:42Z",
       "source": "merged_grabowski_pr_435_revision_bound_retrieval_determinism_proof_and_live_fresh_process_matrix",
       "source_ref": "github-pr:heimgewebe/grabowski#435@c4cf0641360682555147318c599db126e7e5c940:066a222b4a723e433182cc3001d68aadc40b8bb2",
       "task_sha256_before_closeout": "4bdbc1e58da03b07f4d3c07b0912cc22038b78ee84ae8667ba43239faa44d3fd",
@@ -126,8 +126,7 @@
         "pull_request": 435,
         "reviewed_head_commit": "c4cf0641360682555147318c599db126e7e5c940",
         "merge_commit": "066a222b4a723e433182cc3001d68aadc40b8bb2",
-        "reviewed_and_merged_tree": "01e8b75c64f2684e66293f768533f00b6081a1fb",
-        "squash_tree_matches_reviewed_head": true,
+        "reviewed_and_merged_tree": "01e8b75ccaba0dfd469923be791346dbee5075fd",
         "merge_is_ancestor_of_observed_main": true,
         "observed_main": "ae05d951b1323dfc726caf061c471cd3bdf0f7e1",
         "github_checks": {
@@ -145,7 +144,10 @@
         "full_repository_tests_passed": 3299,
         "full_repository_tests_skipped": 5,
         "live_fresh_process_query_cases_passed": 4,
-        "repository_contract_checks": "pass"
+        "repository_contract_checks": "pass",
+        "merge_strategy": "rebase",
+        "rebase_merge_tree_matches_reviewed_head": true,
+        "merge_commit_parent": "de62d17e8c10e109d6f56de519c70f730127fc23"
       },
       "acceptance_evidence": {
         "bound_reproduction": "PASS: Four live query cases span two fresh, commit-bound bundles (RepoGround and Weltgewebe), two queries per bundle and two separate Python processes with distinct PYTHONHASHSEED values and changed generated_at timestamps. Nonvolatile structures and content_sha256 remain equal.",
@@ -191,9 +193,9 @@
       "task_sha256": "0b116c3e37d6ed268a5ea988644003dc209a4848e722f2a961a2264b1221149c",
       "bureau_validation": {
         "command": "make validate",
-        "task_id": "fa702912e4824c559a52b654",
-        "lifecycle_receipt_sha256": "860b90d71c0a83b0263868e8e1334a1f1f0cf4e9c7bf20da2ccab233828e0ae5",
-        "result": "806 tests passed in 183.08s; ruff, systemkatalog boundary, canonical registry check, state integrity and adapters passed on the final closeout content"
+        "task_id": "c7a574e24cb94c0da2add9d4",
+        "lifecycle_receipt_sha256": "fb4ddee4dff5a723ceac3cc12bc7d74592f99c48f69f6a7125d76286009b1c6e",
+        "result": "806 tests passed; ruff, systemkatalog boundary, canonical registry check, state integrity and adapters passed after final review correction and rebase onto origin/main fc2461cdbaeb9f5caa27cad48698d672469e289c"
       },
       "registry_integrity_audit": {
         "task_id": "369f85baa68740d1a87bd35a",
@@ -207,6 +209,16 @@
         "corrected": true,
         "canonical_task_sha256": "0b116c3e37d6ed268a5ea988644003dc209a4848e722f2a961a2264b1221149c",
         "canonical_plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955"
+      },
+      "review_correction": {
+        "cause": "prepared closeout truncated the reviewed tree hash and mislabeled the permitted rebase merge as squash",
+        "corrected": true,
+        "reviewed_tree": "01e8b75ccaba0dfd469923be791346dbee5075fd",
+        "merged_tree": "01e8b75ccaba0dfd469923be791346dbee5075fd",
+        "merge_strategy": "rebase",
+        "reviewed_tree_equals_merged_tree": true,
+        "readback_task_id": "172f3cbd014a4873aa2e1663",
+        "readback_lifecycle_receipt_sha256": "2bb3fcd111c69a734bc977a9755d7fc90fa115a35c0b95c8ce9089f5327afb7c"
       }
     },
     "outcome": "RepoGround retrieval-lane determinism is proven within the declared comparison scope: four live fresh-process query cases across two commit-bound bundles reproduce identical retrieval identities, order, scores, snippets, ranges, metadata and content hashes while only context_ref.generated_at varies. Regression tests fail on semantic retrieval drift and the contract withholds quality, truth, completeness and authority claims."

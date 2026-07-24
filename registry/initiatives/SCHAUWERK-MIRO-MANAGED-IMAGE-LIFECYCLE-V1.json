@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "SCHAUWERK-MIRO-MANAGED-IMAGE-LIFECYCLE-V1",
   "title": "Schauwerk Miro managed image lifecycle v1",
-  "state": "active",
+  "state": "completion-ready",
   "commitment": "later",
   "goal": "Close the remaining managed-image lifecycle gap with a separately authorized Miro REST authority for bounded image read/delete operations, without reusing MCP OAuth, widening the existing Companion app scopes, enabling paid features or weakening fail-closed mutation rules.",
   "completion": [
@@ -27,6 +27,17 @@
       "permission to widen the existing Companion Developer App scopes",
       "provider-global atomic image replacement",
       "permission to enable paid provider features"
-    ]
+    ],
+    "lifecycle_reconcile": {
+      "reconciled_at": "2026-07-24",
+      "from_state": "active",
+      "to_state": "completion-ready",
+      "reason": "Both registered tasks are verified with revision-bound GitHub, CI and live-provider/runtime evidence; Bureau lifecycle diagnostics therefore recommend completion-ready.",
+      "does_not_establish": [
+        "automatic initiative completion",
+        "new Miro authority",
+        "permission to alter credentials or provider assets"
+      ]
+    }
   }
 }

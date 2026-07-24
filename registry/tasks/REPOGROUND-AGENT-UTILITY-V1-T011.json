@@ -84,7 +84,132 @@
     "scope_reason": "T011 isolates the retrieval lane that T010 explicitly withheld from its determinism claim. It is planned/later and does not preempt the canonical now queue.",
     "source_candidate": "candidate-cc98bbb08a6c6f12ba439561",
     "source_proof_sha256": "f8cc68dc6eea1eeb47acae4125d783ecd6e3358c5e35759c2dadce40cfca188e",
-    "source_task": "REPOGROUND-AGENT-UTILITY-V1-T010"
+    "source_task": "REPOGROUND-AGENT-UTILITY-V1-T010",
+    "pr_completion": {
+      "auto_verify": true,
+      "repo": "heimgewebe/grabowski",
+      "number": 435,
+      "head_sha": "c4cf0641360682555147318c599db126e7e5c940",
+      "post_merge_required": false
+    },
+    "verification": {
+      "verified_at": "2026-07-24T10:04:52Z",
+      "source": "merged_grabowski_pr_435_revision_bound_retrieval_determinism_proof_and_live_fresh_process_matrix",
+      "source_ref": "github-pr:heimgewebe/grabowski#435@c4cf0641360682555147318c599db126e7e5c940:066a222b4a723e433182cc3001d68aadc40b8bb2",
+      "task_sha256_before_closeout": "4bdbc1e58da03b07f4d3c07b0912cc22038b78ee84ae8667ba43239faa44d3fd",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+      "pr_completion": {
+        "kind": "bureau.pr_completion_receipt",
+        "outcome": "completed-by-merged-pr",
+        "receipt_id": "pr-completion:heimgewebe/grabowski#435:c4cf0641360682555147318c599db126e7e5c940",
+        "receipt_sha256": "ebae522d27c3cbb05c84e3808be260c74e277462fc72b5a00a531eecc8ce4642",
+        "schema_version": 2,
+        "task_id": "REPOGROUND-AGENT-UTILITY-V1-T011",
+        "evidence": {
+          "evidence_sha256": "f5320f8991fb0c21fc4d2af6036a56d9d7fd978eabec7bf7103224954fe1c5cf",
+          "head_sha": "c4cf0641360682555147318c599db126e7e5c940",
+          "merge_commit": "066a222b4a723e433182cc3001d68aadc40b8bb2",
+          "non_claims": [
+            "merged PR evidence does not prove retrieval quality",
+            "merged PR evidence does not prove truth or completeness",
+            "merged PR evidence does not prove cross-revision determinism",
+            "merged PR evidence does not grant RepoGround write authority"
+          ],
+          "pr_number": 435,
+          "repo": "heimgewebe/grabowski",
+          "source": "github_pull_request",
+          "source_ref": "github-pr:heimgewebe/grabowski#435@c4cf0641360682555147318c599db126e7e5c940:066a222b4a723e433182cc3001d68aadc40b8bb2"
+        }
+      },
+      "implementation": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 435,
+        "reviewed_head_commit": "c4cf0641360682555147318c599db126e7e5c940",
+        "merge_commit": "066a222b4a723e433182cc3001d68aadc40b8bb2",
+        "reviewed_and_merged_tree": "01e8b75c64f2684e66293f768533f00b6081a1fb",
+        "squash_tree_matches_reviewed_head": true,
+        "merge_is_ancestor_of_observed_main": true,
+        "observed_main": "ae05d951b1323dfc726caf061c471cd3bdf0f7e1",
+        "github_checks": {
+          "total": 5,
+          "successful": 5,
+          "names": [
+            "Analyze (actions)",
+            "Analyze (python)",
+            "CodeQL",
+            "validate (3.10)",
+            "validate (3.12)"
+          ]
+        },
+        "focused_tests_passed": 67,
+        "full_repository_tests_passed": 3299,
+        "full_repository_tests_skipped": 5,
+        "live_fresh_process_query_cases_passed": 4,
+        "repository_contract_checks": "pass"
+      },
+      "acceptance_evidence": {
+        "bound_reproduction": "PASS: Four live query cases span two fresh, commit-bound bundles (RepoGround and Weltgewebe), two queries per bundle and two separate Python processes with distinct PYTHONHASHSEED values and changed generated_at timestamps. Nonvolatile structures and content_sha256 remain equal.",
+        "retrieval_field_isolation": "PASS: Tests and proof compare hit identity/order, exact score JSON values, snippet text, resolved ranges, citation/source-address metadata, normalized query shape and result counts separately; drift mutations for order, score, snippet, range and metadata each change the deterministic result.",
+        "volatility_contract": "PASS: Only context_ref.generated_at is declared volatile for the complete context pack. Retrieval fields declare an empty volatility set, preserve upstream order and exact JSON score values, and use no silent normalization.",
+        "regression_tests": "PASS: Warm and cold calls cover two bundles and two queries each; every declared comparison path must exist; semantic drift is fail-sensitive. Focused suite 67/67 and full repository validation 3299 passed with 5 skipped.",
+        "no_false_authority": "PASS: Payload, proof and review explicitly withhold retrieval quality, ranking correctness, query completeness, truth, semantic equivalence, default-routing authority, RepoGround write authority, cross-host byte equality and cross-revision/dependency determinism."
+      },
+      "proof": {
+        "path": "docs/proofs/repoground-agent-utility-v1-t011-retrieval-determinism-20260724.json",
+        "repository": "heimgewebe/grabowski",
+        "sha256": "61f3a5498949fdcf52969a2cc5c3a51a3f73effeca584a308f534388878df730"
+      },
+      "review": {
+        "result": "PASS",
+        "base_commit": "de62d17e8c10e109d6f56de519c70f730127fc23",
+        "head_commit": "c4cf0641360682555147318c599db126e7e5c940",
+        "diff_sha256": "47803ccbf10a5457946422437cfde02b4028666fb2861d76d0374eb447d0bbdc",
+        "proof_sha256": "61f3a5498949fdcf52969a2cc5c3a51a3f73effeca584a308f534388878df730",
+        "remaining_high_findings": [],
+        "remaining_medium_findings": []
+      },
+      "pr_diff_artifact": {
+        "format": "utf-8-unified-diff-text",
+        "sha256": "8df8f27d10e08d8cda986fb90c5474f7589edc3f478c315f036afeb89df76f6b",
+        "size_bytes": 75901
+      },
+      "does_not_establish": [
+        "retrieval quality",
+        "ranking correctness",
+        "query completeness",
+        "semantic equivalence from hash equality",
+        "semantic completeness",
+        "truth",
+        "automatic default routing",
+        "RepoGround write authority",
+        "byte equality across hosts or paths",
+        "cross-Grabowski-revision determinism",
+        "cross-dependency-set determinism",
+        "future runtime stability",
+        "test sufficiency"
+      ],
+      "task_sha256": "0b116c3e37d6ed268a5ea988644003dc209a4848e722f2a961a2264b1221149c",
+      "bureau_validation": {
+        "command": "make validate",
+        "task_id": "fa702912e4824c559a52b654",
+        "lifecycle_receipt_sha256": "860b90d71c0a83b0263868e8e1334a1f1f0cf4e9c7bf20da2ccab233828e0ae5",
+        "result": "806 tests passed in 183.08s; ruff, systemkatalog boundary, canonical registry check, state integrity and adapters passed on the final closeout content"
+      },
+      "registry_integrity_audit": {
+        "task_id": "369f85baa68740d1a87bd35a",
+        "lifecycle_receipt_sha256": "d50f742052f56db357a8170c87de29e8042ce25a0cccdebd5dc30d3f763a561b",
+        "result": "canonical task and plan hashes current; task absent from all queue lanes; initiative remains waiting"
+      },
+      "validation_correction": {
+        "initial_failure_task_id": "82ba327f5e23446e94b5b2db",
+        "initial_failure_receipt_sha256": "460152f186b4e39f6cc1c7c6335309fef999f5c96f5e8bf9671d824bd0835418",
+        "cause": "initial closeout used raw file digests instead of Bureau canonical task_revision_sha256 and current_plan JSON digest",
+        "corrected": true,
+        "canonical_task_sha256": "0b116c3e37d6ed268a5ea988644003dc209a4848e722f2a961a2264b1221149c",
+        "canonical_plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955"
+      }
+    },
+    "outcome": "RepoGround retrieval-lane determinism is proven within the declared comparison scope: four live fresh-process query cases across two commit-bound bundles reproduce identical retrieval identities, order, scores, snippets, ranges, metadata and content hashes while only context_ref.generated_at varies. Regression tests fail on semantic retrieval drift and the contract withholds quality, truth, completeness and authority claims."
   },
   "priority": {
     "lane": "later",
@@ -99,6 +224,6 @@
     "search-ranking"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Retrieval-Lane-Determinismus von RepoGround-Kontext prüfen"
 }

@@ -64,6 +64,25 @@
       "automatic deletion authority",
       "future fleet success"
     ],
+    "evidence_durability_correction": {
+      "corrected_at": "2026-07-24T16:20:25+02:00",
+      "does_not_establish": [
+        "the historical heimgewebe/grabowski residue is stale",
+        "permission to mutate unknown residue",
+        "automatic deletion authority"
+      ],
+      "reason": "fleet-last.json is a mutable latest-run projection and was overwritten by the next hourly run; it is not suitable as durable registry evidence",
+      "removed_mutable_reference": {
+        "historic_sha256": "af77c870a35af62fb7958364ecf946b905fc92d063f61350c0516f2eafddcd5a",
+        "path": "/home/alex/logs/repoground-publish/fleet-last.json"
+      },
+      "replacement": {
+        "path": "/home/alex/.local/state/repoground/evidence/t009-post-deploy-hourly-fleet-v1.json",
+        "sha256": "8d67b8820d2797817921c4767b1d53165565ec4747f9aade8d57831de2f68354",
+        "source": "exact byte snapshot of the first automatic post-deploy hourly Fleet receipt"
+      },
+      "schema_version": 1
+    },
     "implementation": {
       "deployed_binary_sha256": "122269f3d0acbc3d56a0abc654361836dfe558feeb30654f78bb5a2f4673c6ce",
       "diff_sha256": "af8ace13304ba7226ed5b353bb8a7cb6cdd85ef3774ec8172f37e654295e8929",
@@ -79,9 +98,9 @@
         "sha256": "898120cd3cf5cccf7b92368ba1d5429896b08b648bd8ea200232c53bafd1ecaf"
       },
       {
-        "kind": "fleet_receipt",
-        "path": "/home/alex/logs/repoground-publish/fleet-last.json",
-        "sha256": "af77c870a35af62fb7958364ecf946b905fc92d063f61350c0516f2eafddcd5a"
+        "kind": "post_deploy_hourly_fleet_receipt",
+        "path": "/home/alex/.local/state/repoground/evidence/t009-post-deploy-hourly-fleet-v1.json",
+        "sha256": "8d67b8820d2797817921c4767b1d53165565ec4747f9aade8d57831de2f68354"
       },
       {
         "kind": "controlled_run_receipt",
@@ -123,11 +142,11 @@
         {
           "authority": "repoground-fleet",
           "evidence_sha256": [
-            "af77c870a35af62fb7958364ecf946b905fc92d063f61350c0516f2eafddcd5a"
+            "8d67b8820d2797817921c4767b1d53165565ec4747f9aade8d57831de2f68354"
           ],
           "kind": "live_probe",
-          "source_ref": "/home/alex/logs/repoground-publish/fleet-last.json",
-          "state": "precise-unknown-blocker-no-residue-mutation",
+          "source_ref": "/home/alex/.local/state/repoground/evidence/t009-post-deploy-hourly-fleet-v1.json",
+          "state": "post-deploy-hourly-precise-unknown-blocker-and-bounded-legacy-cache-recovery",
           "task_id": "REPOGROUND-AGENT-UTILITY-V1-T009"
         },
         {
@@ -153,17 +172,17 @@
     },
     "verification": {
       "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
-      "task_sha256": "91ee359acc809ae033e884c253e9ecb48297bec6018faf8adb435929d63d1f83"
+      "task_sha256": "f908b16dbe83438fb766c82f1071628fac6ef4b12235c41725c9642d014a95a6"
     },
-    "verification_note": "T009 verifies classification, fail-closed boundaries, safe quarantine capability, controlled runtime projection and deployment. It does not classify the historical build as stale, authorize deleting it, establish absence of non-exact leases or claim a successful heimgewebe/grabowski publication.",
+    "verification_note": "T009 verifies classification, fail-closed boundaries, safe quarantine capability, controlled runtime projection and deployment. Durable Fleet evidence now references an immutable post-deploy hourly receipt rather than mutable fleet-last.json. It does not classify the historical build as stale, authorize deleting it, establish absence of non-exact leases or claim a successful heimgewebe/grabowski publication.",
     "verified_acceptance": {
       "no-blind-delete": "Classification and exact lease/process checks complete before any cleanup effect. Unknown, active-legitimate, changed, foreign, symlinked-authority or exact lease-bound state raises a structured blocker with automatic_mutation_authorized=false. The historical build inode, 1508-entry count and tree SHA-256 76507937c693b95b4e7ba9462cdebfa727bf1151641e61b5745f445cc047d3ea were identical before and after the controlled run; caches also remained present.",
-      "publisher-recovery": "The controlled one-repository run used --repo heimgewebe/grabowski and produced published=0, failed=1 with details[0].managed_build_residue as a machine-readable unknown blocker. Exit 1 is the expected fail-closed outcome, not a successful publication claim. No provenance or quarantine path was created for the historical residue.",
+      "publisher-recovery": "The controlled one-repository run used --repo heimgewebe/grabowski and produced published=0, failed=1 with details[0].managed_build_residue as a machine-readable unknown blocker. Exit 1 is the expected fail-closed outcome, not a successful publication claim. No provenance or quarantine path was created for the historical residue. The first automatic post-deploy hourly Fleet run used the same deployed tool SHA, again emitted the precise unknown blocker for heimgewebe/grabowski without mutation, and successfully published heimgewebe/lenskit after bounded .ruff_cache and __pycache__ cleanup; the exact full receipt is preserved immutably at /home/alex/.local/state/repoground/evidence/t009-post-deploy-hourly-fleet-v1.json.",
       "reproduce-and-classify": "The deployed publisher reproduced the exact historical blocker for /home/alex/repos/.repoground-sources/heimgewebe__grabowski__main/build and emitted classification=unknown, repository heimgewebe/grabowski, tool commit dc67fdcf668942fdf4b5baef4989ce6e1e952c21, the exact managed source/build path keys, zero active exact leases and the reason that no publisher provenance record exists.",
       "safe-remediation": "A publisher-owned build is armed before generation and finalized with exact repo/ref identity plus an opaque no-follow tree snapshot. Only stale, unchanged, process-free and exact-path-lease-free residue may be moved atomically under the owner-controlled .repoground-residue-quarantine root. Planned, quarantined, rolled-back and interrupted states have durable receipts and deterministic next-run recovery; automatic deletion remains false.",
       "tests-review": "80 focused Fleet runtime tests and the final full local suite with 4697 passed, 2 skipped and 13 deselected were green. PR #1095 passed full pytest, browser, release-candidate, contracts, Ruff, CodeQL, context and task-index checks. Self-review PASS is bound to head ace9c25219188ce995697472a4a0a0b6e09bd678 and diff SHA-256 af8ace13304ba7226ed5b353bb8a7cb6cdd85ef3774ec8172f37e654295e8929. Bureau closeout validation also passed Ruff, 806 tests, the Systemkatalog boundary, registry validity and SQLite integrity; receipt SHA-256 9808c2adddc8a1572be74d55bf4e995c068beac306470e0ab59ddfbdcaa966e1."
     },
-    "verified_at": "2026-07-24T15:46:55+02:00"
+    "verified_at": "2026-07-24T16:20:25+02:00"
   },
   "priority": {
     "lane": "later",

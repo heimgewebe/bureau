@@ -2303,6 +2303,26 @@ def test_coordinated_claim_cli_contract_parses_exact_surfaces():
     )
     assert status_args.command == "claim-coordination-status"
 
+    with pytest.raises(SystemExit):
+        bureau_cli.parser().parse_args(
+            [
+                "claim-commit",
+                "--intent",
+                "intent.json",
+                "--resource-db",
+                "/tmp/forged-resources.sqlite3",
+            ]
+        )
+    with pytest.raises(SystemExit):
+        bureau_cli.parser().parse_args(
+            [
+                "claim-coordination-status",
+                "BUR-RUN-20260724T000000Z-0000000000",
+                "--resource-db",
+                "/tmp/forged-resources.sqlite3",
+            ]
+        )
+
 
 def test_coordinated_claim_rejects_workspace_source_head_drift(
     registry_factory, tmp_path, monkeypatch

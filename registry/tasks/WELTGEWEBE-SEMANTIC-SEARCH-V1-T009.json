@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T009",
+  "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
+  "title": "SemantAH stilllegen, archivieren und Ökosystemreferenzen bereinigen",
+  "state": "planned",
+  "goal": "Erst nach verifiziertem T008-Live-Beweis die durch Weltgewebe Semantic Search ersetzten aktiven SemantAH-Rollen kontrolliert entfernen, das Repository archivieren statt löschen und Bureau sowie Systemkatalog auf die neue Wahrheit nachziehen.",
+  "priority": {
+    "lane": "later",
+    "rank": 920
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Aus dem kanonischen Semantic-Search-Plan materialisiert. Keine SemantAH-Runtime-, Registry-, Systemkatalog- oder GitHub-Archivierungswirkung ist vor verified T008 zulässig; jeder Effekt benötigt frischen Consumer-/Runtime-/Lease-Readback."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.semantah",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "runtime-observability",
+    "dependency-audit",
+    "governance",
+    "system-catalog",
+    "cleanup",
+    "grabowski"
+  ],
+  "depends_on": [
+    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T008"
+  ],
+  "acceptance": [
+    {
+      "id": "t008-live-proof-required",
+      "assertion": "T009 beginnt erst, wenn T008 in Bureau verified ist und der öffentliche Live-Readback die Weltgewebe-Suche commitgebunden belegt; Plantext oder ein Merge allein genügen nicht."
+    },
+    {
+      "id": "fresh-consumer-and-runtime-audit",
+      "assertion": "Vor Entfernung werden aktuelle Repositories, Dienste, Jobs, systemd-/Container-Rollen, Deploykonfigurationen und bekannte Consumer auf aktive SemantAH-Abhängigkeiten geprüft; jede verbleibende notwendige Nutzung blockiert die Stilllegung."
+    },
+    {
+      "id": "bounded-runtime-removal",
+      "assertion": "Nur nachweislich abgelöste SemantAH-Runtime-Rollen und Integrationen werden entfernt oder deaktiviert; Weltgewebe-, Commonworld- und andere fremde Runtimes werden nicht beiläufig verändert."
+    },
+    {
+      "id": "archive-not-delete",
+      "assertion": "heimgewebe/semantAH wird nach exaktem Head-/PR-/Consumer-Readback archiviert, nicht gelöscht; Git-Historie und für Recovery relevante Evidenz bleiben erhalten."
+    },
+    {
+      "id": "bureau-initiative-closeout",
+      "assertion": "Die abgelösten SemantAH-Initiativen SEMANTAH-USEFULNESS-V1, SEMANTAH-INDEXD-SCALING-V1 und SEMANTAH-E2E-PORTABILITY-V1 werden evidenzgebunden geschlossen oder superseded markiert, ohne historische Wahrheit zu entfernen."
+    },
+    {
+      "id": "systemkatalog-single-truth",
+      "assertion": "Der Systemkatalog weist SemantAH danach nicht mehr als aktive Runtime oder aktive Zielarchitektur aus und verweist für die Suchfunktion auf Weltgewebe; es entsteht kein zweites Statusmodell."
+    },
+    {
+      "id": "final-ecosystem-readback",
+      "assertion": "GitHub-Archivstatus, Runtime-Inventar, Bureau-Registry, Queue, Systemkatalog und relevante öffentliche Weltgewebe-Endpunkte werden nach den Effekten erneut gelesen und sind widerspruchsfrei."
+    },
+    {
+      "id": "no-history-destruction",
+      "assertion": "Keine Repository-, Audit-, Chronik-, Backup- oder Beweishistorie wird als Teil des Cutovers gelöscht; weitergehendes Pruning benötigt eine separate Aufgabe und Autorität."
+    }
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "task_profile": "security_or_runtime_change",
+    "skip_reason": "live_first_primary",
+    "note": "Consumer, Runtime, GitHub-Archivstatus, Bureau und Systemkatalog müssen live gelesen werden; alte Architekturzusammenfassungen sind keine Stilllegungsautorität."
+  },
+  "metadata": {
+    "source": "canonical_semantic_search_plan_materialized_during_t007_closeout",
+    "registered_at": "2026-07-24",
+    "predecessor": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T008",
+    "stage": "semantah-retirement-and-ecosystem-closeout",
+    "does_not_establish": [
+      "T008 completion",
+      "permission for early SemantAH shutdown",
+      "permission to delete heimgewebe/semantAH",
+      "permission to remove still-used consumers",
+      "permission to delete historical evidence"
+    ]
+  }
+}

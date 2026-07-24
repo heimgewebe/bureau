@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T091",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Captain-Merge automatische GitHub-Nebeneffekte scope-binden",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [],
   "goal": "Den Captain-PR-Merge so härten, dass repositoryseitige automatische Merge-Nebeneffekte wie delete_branch_on_merge vor Dispatch als Teil des effektiven Wirkungsumfangs erkannt und gegen allowed_effects/forbidden_effects geprüft werden, statt nach erfolgreichem Merge unbemerkt einen ausdrücklich verbotenen Branch-Lösch-Effekt zuzulassen.",
   "priority": {
@@ -23,9 +23,10 @@
     "working_repository": "/home/alex/repos/grabowski",
     "grabowski_resources": [
       "repo:/home/alex/repos/grabowski",
-      "component:src/grabowski_merge_guard.py",
-      "component:src/grabowski_grip_orchestration.py",
-      "component:tests/test_merge_guard.py"
+      "component:src/grabowski_grips.py",
+      "component:tests/test_grips.py",
+      "component:docs/grip-mechanic-captain-boundary-v1.md",
+      "component:docs/generated/operator-context.v1.json"
     ]
   },
   "required_capabilities": [
@@ -69,14 +70,51 @@
       "observed_result": "The PR branch was absent immediately after verified squash merge although the Captain command did not pass --delete-branch."
     },
     "affected_components": [
-      "src/grabowski_merge_guard.py",
-      "src/grabowski_grip_orchestration.py",
-      "tests/test_merge_guard.py"
+      "src/grabowski_grips.py",
+      "tests/test_grips.py",
+      "docs/grip-mechanic-captain-boundary-v1.md",
+      "docs/generated/operator-context.v1.json"
     ],
     "does_not_establish": [
       "permission to disable delete_branch_on_merge globally",
       "permission to restore merged branches automatically",
       "root cause beyond the observed repository auto-delete policy"
-    ]
+    ],
+    "scope_correction": {
+      "previous_components": [
+        "src/grabowski_merge_guard.py",
+        "src/grabowski_grip_orchestration.py",
+        "tests/test_merge_guard.py"
+      ],
+      "reason": "Der Live-Readback auf Grabowski main belegte den Captain-Merge-Executor und die zugehörigen Regressionstests in src/grabowski_grips.py und tests/test_grips.py; die ursprünglichen Komponentenangaben waren semantisch veraltet."
+    },
+    "validated_acceptance": {
+      "effective-effect-preflight": "Grabowski PR #446 erweitert den bestehenden Repository-Merge-Policy-Read um delete_branch_on_merge und projiziert eine aktive automatische branch-deletion vor Dispatch samt Head-Branch-Ziel in den effektiven Scope.",
+      "forbidden-auto-effect-blocks": "Die fokussierten Regressionen belegen fail-closed vor gh pr merge sowohl für forbidden_effects=branch-deletion als auch für fehlende explizite Autorisierung; ein exakt erlaubtes branch-deletion-Token lässt den bestehenden Mergepfad passieren.",
+      "no-hidden-policy-mutation": "Der Diff enthält ausschließlich einen read-only gh api Policy-Read und Scope-/Receipt-Logik. Weder Repository-Einstellungen noch Branches werden durch Captain außerhalb der gebundenen Mergeaktion verändert oder wiederhergestellt.",
+      "receipt-evidence": "automatic_platform_effects und effect_scope_decision werden maschinenlesbar in execution_result und Captain-Receipt aufgenommen; der bestehende execution_result_sha256 bindet die vollständige Entscheidung revisionsfest.",
+      "regression-tests": "make validate auf dem finalen Head 6ab0f95ffdf11529f4d2c45c685386bfb46b073e bestand mit 3371 Tests und zwei erwarteten Skips; GitHub Actions validate Lauf 30114314372 endete erfolgreich."
+    },
+    "verification": {
+      "github_actions_run_id": 30114314372,
+      "github_actions_run_number": 1326,
+      "implementation_base": "95dbb865a6e9d266dc71d4cabeec9ec0101194ee",
+      "implementation_head": "6ab0f95ffdf11529f4d2c45c685386bfb46b073e",
+      "implementation_merge_commit": "884d92f361005d8bd2b2c8e5a69e19f4fd5bb24b",
+      "implementation_pull_request": "heimgewebe/grabowski#446",
+      "non_claims": [
+        "Die GitHub-Einstellung garantiert nicht, dass GitHub jeden Head-Branch tatsächlich löscht.",
+        "Keine Berechtigung zur globalen Änderung von delete_branch_on_merge.",
+        "Keine automatische Wiederherstellung oder eigenständige Löschung von Branches."
+      ],
+      "original_task_sha256": "a8b706b65969df7cd5761b5157290608dcaed26e1ea4f2d10c3aa50456067cbe",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "review_diff_bytes": 25088,
+      "review_diff_sha256": "79ee34fedd0f71ed6ffc0eb4c52f706c7eebfa8980e95cfba12b8fcddb2b504a",
+      "task_sha256": "374e19abf5739f7fd7e44d20739e84119b5393bb1832db9c6989a2a60737b7af",
+      "validation_skipped_count": 2,
+      "validation_test_count": 3371,
+      "verified_at": "2026-07-24"
+    }
   }
 }

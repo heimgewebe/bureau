@@ -1,0 +1,94 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A dated official or primary-near source is checked by 2026-08-24 and recorded with URL, retrieval date, source role and the exact operating-status claim it supports.",
+      "id": "timely-source-check"
+    },
+    {
+      "assertion": "The catalog record uses activity.status=active only when the timely source explicitly supports current operation; otherwise activity.status remains unknown with the required public disclosure and a refreshed next-review date.",
+      "id": "status-fail-closed"
+    },
+    {
+      "assertion": "No turbine, intake, cable, household, route, plot or other private infrastructure location is reconstructed; any geographic presentation remains a separately justified coarse public reference.",
+      "id": "privacy-preserved"
+    },
+    {
+      "assertion": "Canonical data, English presentation overlay, generated public shells, taxonomy projections and delivery evidence remain synchronized, and the full validation plus public browser smoke pass on the exact head.",
+      "id": "generated-surfaces-valid"
+    },
+    {
+      "assertion": "Closeout binds the complete diff and exact head to green required CI, review evidence, merge commit and public production readback without claiming operating continuity beyond the checked source date.",
+      "id": "closeout-bound"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Any status change must be bound to timely source evidence. Do not infer active operation from the 2019 project description, and do not add exact private infrastructure geometry.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Reverify the current operating status of Kobulu Community Micro Hydro using timely official or primary-near evidence, update Commonworld only when that evidence supports the change, and otherwise preserve the explicit unknown-status disclosure without implying operation or exact private infrastructure locations.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T026",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "that Kobulu is currently operating",
+      "permission to infer operation from a 2019 project page",
+      "an exact site or infrastructure location",
+      "automatic queue, claim, dispatch, merge or deployment authority"
+    ],
+    "queue_mutated": false,
+    "registered_at": "2026-07-24",
+    "source": "Commonworld 54-entry catalog expansion follow-up",
+    "source_candidate_id": "candidate-bf5ffd62a29a7676c6d7b410",
+    "target_review_date": "2026-08-24",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-bf5ffd62a29a7676c6d7b410",
+      "event_id": 1136,
+      "event_created_at": "2026-07-24T19:56:51.601473Z",
+      "request_sha256": "ded69eb3fb8de3e4c5e9fe778a7bd6605b678f33e3244e32a5328742a7693018",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chatgpt:commonworld-catalog-growth-balanced-v5",
+        "observed_at": "2026-07-24T21:55:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 915
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Reverify Kobulu Community Micro Hydro operating status"
+}

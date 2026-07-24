@@ -1,0 +1,126 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The current grabowski-coding-agent-probe.service failure is reproduced from exact unit, executable, configuration and bounded journal evidence, assigned to a concrete root cause, and repaired without concealing a real failure through reset-failed alone.",
+      "id": "probe-root-cause"
+    },
+    {
+      "assertion": "The repair performs no paid or quota-consuming model call, preserves fail-closed behavior for unavailable providers, and tests that scheduler or catalog refresh failures cannot cause an uncontrolled retry loop.",
+      "id": "no-cost-no-blind-retry"
+    },
+    {
+      "assertion": "The checkout /home/alex/repos/.repoground-sources/heimgewebe__grabowski__main receives an explicit manager- and provenance-bound classification of active-retain, durable-retain, quarantine-eligible or cleanup-eligible, with exact repository, ref, tree, process, lease and recovery evidence.",
+      "id": "managed-source-decision"
+    },
+    {
+      "assertion": "Unknown, foreign, active, changed, symlinked or lease-bound source state is never deleted, reset or adopted; any cleanup effect uses the existing typed lifecycle path and preserves recovery receipts.",
+      "id": "no-unknown-deletion"
+    },
+    {
+      "assertion": "Focused and full relevant tests, exact diff-bound review and required CI pass; merged revisions are deployed, the probe timer completes truthfully, RepoGround Fleet reports the source decision, failed-unit and checkout counts are read back, and Grabowski remains healthy.",
+      "id": "tests-deploy-readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T052",
+    "REPOGROUND-AGENT-UTILITY-V1-T009"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly instructed implementation. Repository changes and bounded deployment of reviewed user services are allowed; paid model calls, blind retries, deletion of unknown residue and mutation of foreign work remain excluded.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/repoground",
+      "host:heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Resolve the recurring fail-closed Grabowski coding-agent probe failure without paid model execution or blind retry, and establish an explicit provenance-bound lifecycle decision for the historical RepoGround-managed Grabowski source checkout so that it is either safely retained or cleaned only through typed manager authority and recovery evidence.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T053",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "automatic deletion authority",
+      "paid provider execution authority",
+      "permission to mutate foreign dirty state",
+      "permission to release foreign leases",
+      "task readiness before publication and claim",
+      "absence of future provider or Fleet failures"
+    ],
+    "live_findings": {
+      "existing_bound_task": "REPOGROUND-AGENT-UTILITY-V1-T009",
+      "failed_units": [
+        "grabowski-coding-agent-probe.service",
+        "repoground-publish-fleet-watch.service"
+      ],
+      "managed_source": "/home/alex/repos/.repoground-sources/heimgewebe__grabowski__main",
+      "managed_source_state": "cleanup_candidate_but_archive_explicitly_does_not_authorize_deletion",
+      "observed_at": "2026-07-24T20:44:10Z"
+    },
+    "registered_from": "candidate-355fc9aeaa56fa56a448bb51 event 1140",
+    "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T002",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-355fc9aeaa56fa56a448bb51",
+      "event_id": 1140,
+      "event_created_at": "2026-07-24T20:40:45.063810Z",
+      "request_sha256": "422b2df0d4468ac4ace282f5d6692a6c050b569f9931e0d818b41b243921deb3",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chatgpt://2026-07-24/operator-ecosystem-redundancy-v1-t002-readback",
+        "observed_at": "2026-07-24T20:39:42Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 4
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau",
+    "systemd",
+    "repoground"
+  ],
+  "rollback": {
+    "strategy": "Revert repository changes independently and reinstall the immediately previous commit-bound Grabowski and RepoGround user-service artifacts. Preserve Bureau history, source checkout bytes, recovery refs and all pre-existing receipts; do not delete the historical source during rollback."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Resolve probe failure and managed RepoGround source lifecycle"
+}

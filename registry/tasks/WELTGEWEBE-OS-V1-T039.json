@@ -137,6 +137,15 @@
           "verdict": "PASS"
         }
       ]
+    },
+    "verification": {
+      "task_sha256": "65527f2ccabfa278fce79eef042b47c6757823c06bc09b505d7004e925b9d2fb",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+      "task_source_ref": "registry/tasks/WELTGEWEBE-OS-V1-T039.json@closeout-revision",
+      "plan_source_ref": "registry/initiatives/WELTGEWEBE-OS-V1.json:current_plan",
+      "review_diff_sha256": "823969fefc3d69ce5fc25f3b75daec0446bf0449d39dba1097acfd423cd2e201",
+      "review_evidence_verdict": "PASS",
+      "main_kubernetes_platform": "success"
     }
   }
 }

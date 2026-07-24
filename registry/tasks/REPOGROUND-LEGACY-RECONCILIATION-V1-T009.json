@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
-  "state": "planned",
+  "state": "ready",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -25,13 +25,25 @@
     "does_not_establish": [
       "Die Zerlegung beweist keine Vollständigkeit des gesamten T004",
       "Bytegleichheit beweist keine inhaltliche Richtigkeit"
-    ]
+    ],
+    "activation": {
+      "activated_at": "2026-07-24T18:48:00+02:00",
+      "authority": "explicit_user_instruction",
+      "parent_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T004",
+      "selected_against_bureau_commit": "bb50651",
+      "selected_against_repoground_commit": "a87fcfbb579aad23016273ee59438025b536cd97",
+      "execution_rule": "Implement in a fresh isolated current-main worktree; preserve byte order, redaction, anchors, lazy generation and size bounds; do not reuse historical T004 worktrees.",
+      "does_not_establish": [
+        "umbrella T004 completion",
+        "permission to modify foreign checkouts"
+      ]
+    }
   },
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T009",
   "title": "Report-Renderer iter_report_blocks sicher zerlegen",
   "priority": {
-    "lane": "later",
-    "rank": 6
+    "lane": "now",
+    "rank": 81
   },
   "goal": "Die weiterhin 1.042 Zeilen lange und C901-148 schwere Funktion iter_report_blocks entlang stabiler Reportsektionen zerlegen, ohne Reihenfolge, Bytes, Anker, Redaction oder Navigationssemantik zu verändern.",
   "required_capabilities": [

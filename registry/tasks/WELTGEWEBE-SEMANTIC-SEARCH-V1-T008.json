@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T008",
   "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
   "title": "Vollständige Abnahme, direkter Rollout und öffentlicher Live-Beweis",
-  "state": "ready",
+  "state": "blocked",
   "goal": "Den bis T007 verifizierten Semantic-Search-Stand über den bestehenden commitgebundenen Weltgewebe-Deploypfad kontrolliert ausrollen und öffentlich belegen, dass API-Suche und Weboberflächen live, gesund und auf dem erwarteten Commitstand laufen, ohne SemantAH bereits stillzulegen.",
   "priority": {
     "lane": "now",
@@ -40,7 +40,8 @@
     "grabowski"
   ],
   "depends_on": [
-    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T007"
+    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T007",
+    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T012"
   ],
   "acceptance": [
     {
@@ -95,6 +96,9 @@
     "registered_at": "2026-07-24",
     "predecessor": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T007",
     "stage": "production-rollout-and-public-live-proof",
+    "blocked_by": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T012",
+    "blocked_observed_at": "2026-07-24",
+    "blocker": "Public /api/search returned 503 search_unavailable on live commit 592954c3f91b466313b3013eca7284b62371a3fa; production search_index_generations contained no rows and no Ollama process was observed on wg-prod-1. T005/T006 deliberately contained no production provider rollout, so inventing an ad-hoc provider path is outside T008 authority.",
     "does_not_establish": [
       "successful production rollout",
       "public live proof before execution",

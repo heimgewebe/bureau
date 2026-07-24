@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T012",
+  "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
+  "title": "Produktive lokale Embedding-Runtime und Suchgeneration kontrolliert aktivieren",
+  "state": "ready",
+  "goal": "Den in T008 live belegten Produktionsblocker schließen: einen kanonischen lokalen, identitätsgebundenen Ollama-Provider im bestehenden Weltgewebe-Produktionsbetrieb bereitstellen, die PostgreSQL-Suchgeneration begrenzt und resumierbar aufbauen, den Backfill vollständig prüfen und erst danach über den vorhandenen atomaren Aktivierungsgate aktivieren, sodass T008 seine öffentlichen Such-, Similar-Nodes- und Autorisierungsbeweise fortsetzen kann.",
+  "priority": {
+    "lane": "now",
+    "rank": 60
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Blocker aus T008-Liveabnahme. Vor jedem Effekt sind Produktionsautorität, Claims, Leases, Provideridentität, Deployidentität und Recovery erneut zu prüfen. Kein Cloudprovider und keine SemantAH-Stilllegung."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "runtime.wg-prod-1",
+      "mode": "exclusive",
+      "isolation": "namespace"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "runtime-observability",
+    "postgresql",
+    "rust",
+    "semantic-search",
+    "deployment",
+    "recovery",
+    "authorization",
+    "privacy",
+    "grabowski"
+  ],
+  "depends_on": [
+    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T007"
+  ],
+  "acceptance": [
+    {
+      "id": "fresh-production-preflight",
+      "assertion": "Vor Runtime-Effekten werden origin/main, Live-Commit, laufender Reconciler, aktive Claims und Leases, Worktrees, PostgreSQL, freie Ressourcen und Recoverypfad frisch geprüft; unbekannte oder widersprüchliche Zustände blockieren."
+    },
+    {
+      "id": "canonical-local-provider",
+      "assertion": "Der Produktionsprovider ist ausschließlich lokal, über Literal-Loopback erreichbar, revisions- und runtime-identitätsgebunden und Teil eines dokumentierten kanonischen Weltgewebe-Betriebsvertrags; es entsteht keine Cloud- oder externe Vektorindex-Abhängigkeit."
+    },
+    {
+      "id": "bounded-resumable-backfill",
+      "assertion": "Die exakte Generation wird mit gebundener Provider-, Modell-, Runtime-, Dimensions-, Dokument-, Normalisierungs- und Rankingidentität erzeugt; der Backfill ist begrenzt, resumierbar und seine Jobzustände werden vor Aktivierung vollständig gelesen."
+    },
+    {
+      "id": "activation-gate-pass",
+      "assertion": "Die Suchgeneration wird erst aktiviert, wenn der PostgreSQL-Aktivierungsgate vollständige aktuelle Projektionen, passende Embedding-Dimensionen, keine offenen oder fehlgeschlagenen Jobs und keine Tombstone-Projektionen bestätigt."
+    },
+    {
+      "id": "visibility-fail-closed",
+      "assertion": "Unbekannte oder nicht öffentliche Suchsichtbarkeit bleibt fail-closed; kanonische domain_nodes-Autorisierung wird vor Retrieval angewendet und Projection visibility_scopes werden nicht als Autorisierungsquelle vertraut."
+    },
+    {
+      "id": "public-search-recovery",
+      "assertion": "Nach Aktivierung antwortet der öffentliche /api/search-Pfad auf geeignete öffentliche Anfragen erfolgreich und fällt bei lokaler Provider-Nichtverfügbarkeit kontrolliert auf den autorisierten lexikalischen Serverpfad zurück, ohne clientseitigen Knotendump."
+    },
+    {
+      "id": "post-effect-operational-proof",
+      "assertion": "API, Web, PostgreSQL, NATS, Suchprojektion, Provider, Worker und Reconciler werden nach dem Effekt erneut geprüft; Fehlerzustände und Logs zeigen keine neue Betriebsstörung."
+    },
+    {
+      "id": "rollback-and-rebuild",
+      "assertion": "Ein commitgebundener Anwendungsrollback sowie ein regenerierbarer Suchprojektions-Rebuild bleiben möglich, ohne kanonische domain_nodes-Datenwahrheit zu verändern."
+    },
+    {
+      "id": "no-semantah-effect",
+      "assertion": "Die Aufgabe entfernt, archiviert oder deaktiviert weder SemantAH-Runtime noch SemantAH-Repository, Initiativen oder Ökosystemreferenzen."
+    }
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "task_profile": "security_or_runtime_change",
+    "skip_reason": "live_first_primary",
+    "note": "Produktionsruntime, PostgreSQL, Provideridentität und öffentlicher Suchzustand müssen live und commitgebunden geprüft werden."
+  },
+  "metadata": {
+    "source": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T008 live acceptance blocker 2026-07-24",
+    "blocks_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T008",
+    "observed_live_commit": "592954c3f91b466313b3013eca7284b62371a3fa",
+    "observed_failure": "GET /api/search returned 503 search_unavailable; production search_index_generations contained no rows; no Ollama process was observed on wg-prod-1",
+    "does_not_establish": [
+      "T008 completion",
+      "successful production search activation",
+      "permission for cloud embeddings",
+      "permission for SemantAH retirement",
+      "permission to expose private or hidden content"
+    ]
+  }
+}

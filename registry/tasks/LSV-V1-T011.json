@@ -1,0 +1,115 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor jedem Leitstand-Cutover wird der live Remote-`main`-SHA von `heimgewebe/systemkatalog` frisch gelesen und als erwartete Systemkatalog-Releaseidentität gebunden; lokaler Checkout- oder veralteter Runtime-Config-Stand darf diese Identität nicht ersetzen.",
+      "evidence_type": "object",
+      "id": "remote-identity-binding",
+      "verifier": "release-adapter tests and deployment receipt"
+    },
+    {
+      "assertion": "Der exakte Systemkatalog-Commit wird idempotent als unveränderlicher lokaler Release bereitgestellt oder als bereits vorhandener byte- und manifestgebundener Release verifiziert; fremde Dirty-States werden weder gelesen noch verändert.",
+      "evidence_type": "boolean",
+      "id": "immutable-release-materialization",
+      "verifier": "isolated release fixture and filesystem contract tests"
+    },
+    {
+      "assertion": "Vor dem Leitstand-Cutover bestehen die Systemkatalog-Prüfungen für veröffentlichtes `ecosystem-map-artifact-manifest.json`, Quellcommit, Artefakthashes und Dauerhaftigkeitsbindung; unbekannte oder inkonsistente Artefakte bleiben fail-closed.",
+      "evidence_type": "object",
+      "id": "manifest-contract-preserved",
+      "verifier": "Systemkatalog manifest check plus Leitstand release-runtime regression"
+    },
+    {
+      "assertion": "Die gerenderten Leitstand-Units binden weiterhin einen exakten commitgebundenen Systemkatalog-Releasepfad; es wird kein zur Laufzeit veränderlicher `current`-Symlink als Kartenquelle eingeführt.",
+      "evidence_type": "boolean",
+      "id": "exact-runtime-binding",
+      "verifier": "unit-content and postflight tests"
+    },
+    {
+      "assertion": "Scheitert Remote-Auflösung, Materialisierung oder Manifestprüfung, findet kein Leitstand-Cutover statt; ein bereits laufender gesunder Release bleibt unverändert und der Fehler ist im Receipt eindeutig sichtbar.",
+      "evidence_type": "object",
+      "id": "rollback-and-no-cutover-on-failure",
+      "verifier": "failure-path release-runtime tests"
+    },
+    {
+      "assertion": "Nach Merge wird ein echter Deploy gegen den gemergten Leitstand-Head durchgeführt und belegt, dass Unit-Umgebung, `/health` und `/ecosystem-map` auf denselben automatisch vorbereiteten Systemkatalog-Commit zeigen.",
+      "evidence_type": "object",
+      "id": "live-proof",
+      "verifier": "post-merge deployment and HTTP readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.leitstand"
+    }
+  ],
+  "depends_on": [
+    "LSV-V1-T009"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die Umsetzung explizit beauftragt. Änderungen erfolgen ausschließlich in einem isolierten Leitstand-Worktree; Systemkatalog und fremde Dirty-States bleiben read-only.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand"
+  },
+  "goal": "Den manuellen Vorbereitungsfehler zwischen Systemkatalog-Publikation und Leitstand-Deployment schließen: Der kanonische Leitstand-Releasepfad soll vor dem Cutover den aktuellen live-remote `main`-Commit von `heimgewebe/systemkatalog` exakt auflösen, dessen veröffentlichtes Map-Artefaktmanifest und Commitbindung fail-closed prüfen, einen unveränderlichen lokalen Release unter einem commitgebundenen Pfad idempotent bereitstellen oder wiederverwenden und erst danach die Leitstand-Units weiterhin an genau diesen unveränderlichen Releasepfad binden. Ein laufender Leitstand darf keinem veränderlichen `current`-Symlink oder ungeprüften Checkout folgen.",
+  "id": "LSV-V1-T011",
+  "initiative": "LEITSTAND-VISUAL-LAYER-V1",
+  "metadata": {
+    "alternative_axis": "Einen globalen veränderlichen `current`-Symlink automatisch nachführen wäre einfacher, würde aber die exakte Releaseidentität des laufenden Leitstands abschwächen. Deshalb wird nur der Deployzeitpunkt automatisiert; die laufende Unit bleibt an einen unveränderlichen Commitpfad gebunden.",
+    "does_not_establish": [
+      "permission_to_follow_mutable_systemkatalog_state_at_runtime",
+      "permission_to_modify_dirty_systemkatalog_checkout",
+      "systemkatalog_runtime_daemon",
+      "automatic_cleanup_of_old_systemkatalog_releases",
+      "map_semantic_correctness"
+    ],
+    "source_observation": "Beim Leitstand-Deploy am 2026-07-23 blockierte ein mehrere Tage alter lokal installierter Systemkatalog-Release zunächst den Cutover. Der Release wurde anschließend manuell auf `7447da1f9b481d31fecd28a385ac1c3e27a22bbb` aktualisiert. Der aktuelle Leitstand bindet diesen exakten Pfad erfolgreich, jedoch enthält der kanonische Runtime-Config-Vertrag weiterhin einen manuell vorab einzutragenden Systemkatalog-Releasepfad.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-ec9b73806f48eea11f8ed7f6",
+      "event_id": 1076,
+      "event_created_at": "2026-07-23T21:27:15.938087Z",
+      "request_sha256": "6b155ab73a3c19062e46264f7c99c4b876552994953d4bc76a1e634b2aea84a3",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "runtime-health-receipt",
+        "locator": "leitstand:/health@2026-07-23T21:15:59.576Z",
+        "observed_at": "2026-07-23T21:15:59.576Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 20
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "runtime"
+  ],
+  "rollback": {
+    "strategy": "Den Leitstand-Releaseadapter auf den vorherigen expliziten Runtime-Config-Vertrag zurücksetzen und den zuletzt verifizierten commitgebundenen Systemkatalog-Releasepfad weiterverwenden; keine Systemkatalog-Releaseverzeichnisse oder fremden Checkouts automatisch löschen."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Systemkatalog-Release im Leitstand-Deploy automatisch commitgenau bereitstellen"
+}

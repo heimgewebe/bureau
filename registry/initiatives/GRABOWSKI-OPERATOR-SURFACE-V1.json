@@ -49,12 +49,29 @@
     "t031_closeout_20260711": "T031 verified after PRs #158/#159, deployment at 733259556144a171914f339a4ea67bca32f08977 and direct live proof of all three shadow-governor tools.",
     "t035_verified_20260713": "Observer and optimizer verified through Grabowski PR #178 and deployed at 7731fa5b351b7975b802193c44e15ee19a66e6b5. Legacy no-event reports remain diagnostic only.",
     "t037_verified_20260713": "Evidence-bound Agent Workspace adoption verified through PR #178, runtime release 7731fa5b351b7975b802193c44e15ee19a66e6b5, and successful pilot gaw-grabowski-chat-grabowski-t037-po-1c5ac539c549; comparison sha256 381cb55e8d431e94356901538f9166000f3677d70dda9c662029677889321a6b.",
-    "waiting_reason_20260711": "Historical: waiting because T030 remained blocked and T032 exact work dedupe plus validation isolation remained a separate planned slice. Superseded for initiative lifecycle by lifecycle_reconciled_20260713; task-level blockers remain authoritative."
+    "waiting_reason_20260711": "Historical: waiting because T030 remained blocked and T032 exact work dedupe plus validation isolation remained a separate planned slice. Superseded for initiative lifecycle by lifecycle_reconciled_20260713; task-level blockers remain authoritative.",
+    "lifecycle_reconciled_20260724_waiting_after_t098": {
+      "from_state": "active",
+      "to_state": "waiting",
+      "reason": "Fresh canonical Bureau doctor and what-now readbacks recommend waiting after T098 became verified; no task in this initiative is currently ready, while remaining open work is planned or blocked.",
+      "evidence": {
+        "bureau_source_commit": "75ed4b025938c419791b4b714df749d4aa1f8219",
+        "doctor_recommended_state": "waiting",
+        "ready_task_count": 0,
+        "verified_transition_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T098"
+      },
+      "does_not_establish": [
+        "task completion",
+        "automatic dispatch",
+        "claim authority",
+        "merge or deployment authority"
+      ]
+    }
   },
   "parallelism": {
     "max_active_tasks": 1
   },
   "schema_version": 1,
-  "state": "active",
+  "state": "waiting",
   "title": "Grabowski operator surface"
 }

@@ -1,0 +1,102 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Checkout-Bindings werden ausschließlich über den kanonischen immutable/copied SQLite-plus-WAL-Snapshot gelesen; Quellbytes bleiben unverändert.",
+      "id": "canonical-sqlite-snapshot"
+    },
+    {
+      "assertion": "Git-Worktrees werden über den bestehenden kanonischen Checkout-Observer erfasst; unbeobachtbare Repositories bleiben explizit fail-closed.",
+      "id": "authoritative-git-observation"
+    },
+    {
+      "assertion": "Die read-only Reconciliation wird als discoverbares MCP-Werkzeug mit Capability-, Publication- und Tool-Budget-Vertrag registriert.",
+      "id": "mcp-registration"
+    },
+    {
+      "assertion": "Nur blockierende Reconciliation-Evidenz wird dedupliziert in Current Work und Attention projiziert; es entsteht kein zweites Lifecycle-Modell.",
+      "id": "current-work-projection"
+    },
+    {
+      "assertion": "Die Integration erteilt keine Reparatur-, Migration-, Cleanup-, Archiv-, Terminalisierungs-, Branch- oder Dateisystemmutationsautorität.",
+      "id": "no-mutation-authority"
+    },
+    {
+      "assertion": "Fokussierte SQLite-, Git-, MCP-, Current-Work-, Attention- und Negativtests sowie die vollständige Validierung sind grün.",
+      "id": "regression-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T096"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den verifizierten read-only Checkout-Binding-Reconciliation-Kern in die kanonische MCP-, Current-Work- und Attention-Oberfläche integrieren, ohne Reparatur-, Cleanup-, Archiv-, Terminalisierungs- oder Löschautorität einzuführen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T099",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "automatic merge readiness",
+      "runtime deployment",
+      "repair or cleanup authority",
+      "issue #434 closeout"
+    ],
+    "parent_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T096",
+    "prepared_pull_request": {
+      "base_head": "f44b768c76168dec6e2a5153d91834f4e4e1fab1",
+      "diff_sha256": "83ece057de70fb562df9dc693d6aedac696ad18b4294af062b650bfab207f4c8",
+      "head": "8ebfc4b299a20b9bc1e2d46c826d08366a7a0931",
+      "pull_request": 449,
+      "repository": "heimgewebe/grabowski"
+    },
+    "registered_at": "2026-07-24T21:16:00+02:00",
+    "source_review": "heimgewebe/grabowski#449",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-f7e758824136d35bf8290a85",
+      "event_id": 1134,
+      "event_created_at": "2026-07-24T19:16:50.255549Z",
+      "request_sha256": "56c816f6cbb489db107a736fb4b3052965d4458592213522db45ad89a622db64",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github_pr_review",
+        "locator": "github-pr:heimgewebe/grabowski#449@8ebfc4b299a20b9bc1e2d46c826d08366a7a0931",
+        "observed_at": "2026-07-24T19:15:00Z",
+        "sha256": "83ece057de70fb562df9dc693d6aedac696ad18b4294af062b650bfab207f4c8"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 941
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "testing",
+    "checkout-lifecycle",
+    "mcp"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Checkout-Binding-Reconciler live read-only integrieren"
+}

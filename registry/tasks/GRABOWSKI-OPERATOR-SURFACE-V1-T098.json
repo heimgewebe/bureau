@@ -1,0 +1,108 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der Export akzeptiert ausschließlich vollständige unveränderliche Base- und Head-Commit-SHAs und erzeugt einen vollständigen Unified Diff als echte UTF-8-Datei mit .txt-Endung.",
+      "id": "commit-bound-plaintext"
+    },
+    {
+      "assertion": "Artefakt und Receipt werden größenbegrenzt, privat, atomar, fsync- und SHA-256-geprüft veröffentlicht; fehlgeschlagene Auditierung hinterlässt kein unbestätigtes Artefakt.",
+      "id": "bounded-private-publication"
+    },
+    {
+      "assertion": "Der Reader ist tatsächlich read-only, verlangt Artefakt- und Receipt-Hash, folgt keinen Symlinks, weist Hardlinks und unprivate Modi ab und liefert nur begrenzte einzeln gehashte Chunks.",
+      "id": "safe-cross-filesystem-read"
+    },
+    {
+      "assertion": "Git läuft argv-only ohne externe Diff- oder Textconv-Helfer und Replace-Refs; Private-Key-Marker und hochkonfidente Zugangsdaten blockieren die Ausgabe.",
+      "id": "secret-and-helper-boundary"
+    },
+    {
+      "assertion": "MCP, Capability-Katalog, Publikationsprofile, Tool-Surface-Budget, Runtime-Vertrag, Dokumentation und Tests sind vollständig revisionsgebunden integriert.",
+      "id": "runtime-and-contract-integration"
+    },
+    {
+      "assertion": "Ein echter PR-Diff wird mit dem finalen Head veröffentlicht, chunkweise übertragen, als .txt rekonstruiert und gegen Größe und SHA-256 des Receipts geprüft.",
+      "id": "live-download-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Veröffentlichung und Runtime-Integration müssen an exakte Commits, Artefakt- und Receipt-Hashes sowie grüne Validierung gebunden bleiben.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_artifacts.py",
+      "component:src/grabowski_capabilities.py",
+      "component:src/grabowski_mcp.py",
+      "component:contracts/git-diff-artifact.v1.schema.json",
+      "component:tests/test_artifacts.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "PR- und Code-Diffs als echte, unveränderliche UTF-8-Plaintext-Dateien mit .txt-Endung, exakter Base-/Head-Bindung, privater atomarer Speicherung und hashgepinntem Chunk-Transport zwischen getrennten Laufzeit-Dateisystemen kanonisieren.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T098",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "merge permission",
+      "deployment permission",
+      "absence of secrets outside the generated diff",
+      "GitHub PR association beyond caller-provided metadata"
+    ],
+    "expected_base": "758db976b9cf4b0e6a198a905f979554a368d5b3",
+    "previous_pull_request": "heimgewebe/grabowski#440",
+    "pull_request": "heimgewebe/grabowski#441",
+    "registered_at": "2026-07-24",
+    "source": "Nutzerentscheidung zur Kanonisierung wiederkehrender Diff-Bereitstellung; umgesetzt in heimgewebe/grabowski#441.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-be7f9bddc23637f7eb8c3a44",
+      "event_id": 1122,
+      "event_created_at": "2026-07-24T14:39:58.377865Z",
+      "request_sha256": "c8557e83578fc22ddf8c61f712cab890e40064bc6a177bb95d738057cd1a9621",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation-and-github-pr",
+        "locator": "github:heimgewebe/grabowski#441@8978a2a3ec161319526f2e798a7ae6158d0e4ae4",
+        "observed_at": "2026-07-24T14:00:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 17
+  },
+  "required_capabilities": [
+    "git",
+    "github",
+    "grabowski",
+    "python",
+    "repository",
+    "resource-leases",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Kanonischen commitgebundenen Textartefakt-Export bereitstellen"
+}

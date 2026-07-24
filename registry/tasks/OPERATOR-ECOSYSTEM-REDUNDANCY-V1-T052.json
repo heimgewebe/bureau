@@ -1,0 +1,111 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A versioned policy declares the bounded maintenance producer set, owning unit or command, expected cadence, success evidence, optional receipt source and SLO; undeclared units are not silently treated as authoritative maintenance producers.",
+      "id": "producer-contract"
+    },
+    {
+      "assertion": "The reconciler reads current systemd state, bounded journals and declared receipts, emits explicit observed, stale, failed, unknown or not-applicable states, and performs no service restart, cleanup, retry, lease release, task mutation or repository mutation.",
+      "id": "read-only-reconciliation"
+    },
+    {
+      "assertion": "Repeated equal failures use a stable fingerprint and bounded consecutive count; unchanged failures do not create repeated Bureau candidates or attention noise.",
+      "id": "failure-deduplication"
+    },
+    {
+      "assertion": "Bureau remains the only candidate and task truth. The reconciler may record or refresh proposal-only evidence only through the canonical intake contract and must bind an existing candidate or task where present instead of creating duplicates.",
+      "id": "bureau-boundary"
+    },
+    {
+      "assertion": "The Systemkatalog drift watch resolves the current existing-candidate supersession failure with exact candidate-event readback, immediate pre-effect revalidation and tested deduplication or supersession behavior without automatic Systemkatalog mutation.",
+      "id": "systemkatalog-fix"
+    },
+    {
+      "assertion": "A bounded maintenance-outcomes.v1 artifact is written atomically with source timestamps, release or unit identity where observable, failure fingerprints, evidence refs, non-claims and a deterministic digest suitable for Leitstand consumption.",
+      "id": "leitstand-artifact"
+    },
+    {
+      "assertion": "Focused and full Heim-PC tests, schema validation, exact diff-bound self-review and required GitHub CI pass; the exact merged revision is installed, the timer is active, one live run succeeds, and the two previously failing maintenance producers are truthfully represented.",
+      "id": "tests-review-deploy"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "STORAGE-LIFECYCLE-V1-T007",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T083"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly instructed implementation on 2026-07-24 after a live system alignment. Runtime effects remain limited to installing and activating the reviewed read-only collector and repairing the existing proposal-only drift-watch path.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc"
+  },
+  "goal": "Implement a narrow read-only Heim-PC maintenance outcome reconciler that derives per-producer last valid run, last success, failure fingerprint, consecutive failures, SLO state, receipt binding and existing Bureau binding from current primary sources; publish one bounded artifact for Leitstand and deduplicated proposal-only escalation without creating a second lifecycle, task, queue or cleanup truth. Repair the existing Systemkatalog drift-watch candidate supersession path as an immediate producer-specific convergence defect.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T052",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "automatic repair authority",
+      "automatic cleanup authority",
+      "service restart authority",
+      "task or queue authority",
+      "a second lifecycle truth",
+      "root cause from systemd failure alone",
+      "permission to mutate foreign dirty state"
+    ],
+    "registered_from": "candidate-4a1be14534af58385a499779 event 1108",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-4a1be14534af58385a499779",
+      "event_id": 1108,
+      "event_created_at": "2026-07-24T08:05:28.309060Z",
+      "request_sha256": "80b4a601fe1e468f42b112a9e04ba6b00deda514f356bcd845c91da12844d199",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "live-system-audit",
+        "locator": "live:heim-pc:user-systemd-maintenance-audit:2026-07-24T10:00:00+02:00",
+        "observed_at": "2026-07-24T10:00:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 3
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau",
+    "systemd"
+  ],
+  "rollback": {
+    "strategy": "Revert the Heim-PC implementation commit and restore the immediately previous commit-bound systemd units and scripts. Remove only the newly installed maintenance outcome timer and artifact projection; do not alter Bureau history, existing receipts or producer-owned state."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Converge maintenance outcomes without a second truth model"
+}

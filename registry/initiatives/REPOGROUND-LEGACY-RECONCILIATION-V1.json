@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1",
   "title": "RepoGround Altlasten-Reconciliation",
-  "state": "waiting",
-  "commitment": "next",
+  "state": "active",
+  "commitment": "now",
   "goal": "RepoGround auf einen klaren, wartbaren und belegbar genutzten Produktkern reduzieren, ohne laufende Verbraucher, persistierte Verträge oder den kontrollierten Runtime-Cutover zu brechen.",
   "completion": [
     "Offensichtlich tote, doppelte oder irreführende Oberflächen sind entfernt oder in einen belegten Zweck überführt.",
@@ -24,6 +24,8 @@
       "Dass jeder statisch nicht referenzierte Python-Baustein ungenutzt ist",
       "Dass historische Evidenz gelöscht werden darf",
       "Dass rlens.service vor erfolgreichem RepoGround-Cutover beendet werden darf"
-    ]
+    ],
+    "activated_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T004",
+    "activated_at": "2026-07-24T17:00:00+02:00"
   }
 }

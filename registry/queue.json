@@ -81,7 +81,8 @@
       "GRABOWSKI-OPERATOR-SURFACE-V1-T091"
     ],
     "now": [
-      "WELTGEWEBE-SEMANTIC-SEARCH-V1-T012"
+      "WELTGEWEBE-SEMANTIC-SEARCH-V1-T012",
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T004"
     ]
   },
   "queue_policy": "skip-blocked",

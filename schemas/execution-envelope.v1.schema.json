@@ -309,6 +309,226 @@
           }
         }
       ]
+    },
+    "coordinated_claim_intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^BUR-RUN-[0-9]{8}T[0-9]{6}Z-[0-9a-f]{10}$"
+        },
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "worker_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "resource": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "task_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "plan_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "required_resource_keys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "lease_owner_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expires_at_unix": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "workspace": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "repository": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "workspace_path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "workspace_branch": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "baseline_commit": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{40}$"
+                },
+                "source_head_at_intent": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{40}$"
+                }
+              },
+              "required": [
+                "repository",
+                "workspace_path",
+                "workspace_branch",
+                "baseline_commit",
+                "source_head_at_intent"
+              ]
+            }
+          ]
+        },
+        "operator_approval": {
+          "type": "object"
+        },
+        "runtime_truth_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "does_not_establish": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "intent_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "schema_version",
+        "run_id",
+        "task_id",
+        "worker_id",
+        "kind",
+        "capabilities",
+        "resource",
+        "task_sha256",
+        "plan_sha256",
+        "required_resource_keys",
+        "lease_owner_id",
+        "created_at",
+        "expires_at_unix",
+        "workspace",
+        "operator_approval",
+        "runtime_truth_sha256",
+        "does_not_establish",
+        "intent_sha256"
+      ]
+    },
+    "coordinated_lease_binding": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "owner_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "task_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "resource_db": {
+              "type": "string",
+              "minLength": 1
+            },
+            "resource_db_schema_version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "resource_keys": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "min_expires_at_unix": {
+              "type": "integer"
+            },
+            "lease_snapshots": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "observed_at_unix": {
+              "type": "integer"
+            },
+            "minimum_remaining_seconds": {
+              "type": "integer",
+              "minimum": 30
+            },
+            "required_metadata_sha256": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "lease_binding_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "owner_id",
+            "task_id",
+            "resource_db",
+            "resource_db_schema_version",
+            "resource_keys",
+            "min_expires_at_unix",
+            "lease_snapshots",
+            "observed_at_unix",
+            "minimum_remaining_seconds",
+            "required_metadata_sha256",
+            "lease_binding_sha256"
+          ]
+        }
+      ]
     }
   },
   "$id": "https://heimgewebe.local/bureau/execution-envelope.v1.schema.json",
@@ -371,6 +591,15 @@
     },
     "coordination_scope": {
       "$ref": "#/$defs/coordination_scope"
+    },
+    "claim_intent": {
+      "$ref": "#/$defs/coordinated_claim_intent"
+    },
+    "lease_binding": {
+      "$ref": "#/$defs/coordinated_lease_binding"
+    },
+    "operator_approval": {
+      "type": "object"
     }
   },
   "required": [

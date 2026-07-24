@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T096",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Verwaiste Checkout-Lifecycle-Bindungen read-only und fail-closed klassifizieren",
-  "state": "planned",
+  "state": "verified",
   "goal": "Den bereits vorbereiteten read-only Reconciliation-Kern für durable managed Checkout-Lifecycle-Bindungen kanonisch aufnehmen: vorhandene Bindungen, fehlende Worktrees, unbeobachtbare Repositories und Identitätsdrift werden deterministisch unterschieden, Retention- und Archivdaten bleiben reine Evidenz und aus Abwesenheit entsteht keinerlei Reparatur-, Terminalisierungs-, Archivierungs-, Cleanup- oder Löschautorität. Die Live-MCP- und Current-Work-Integration bleibt ausdrücklich getrennte Folgearbeit.",
   "priority": {
     "lane": "later",
@@ -108,6 +108,91 @@
       "live MCP integration",
       "Current-Work integration",
       "repair or cleanup authority"
-    ]
+    ],
+    "verification": {
+      "status": "verified",
+      "source": "operator_closeout",
+      "verified_at": "2026-07-24T11:30:35Z",
+      "task_sha256": "ed18c3d40f7e6852c6d7ccf4e27911f85a159995b2727e38c93e9947aff6a223",
+      "acceptance": {
+        "binding-present": true,
+        "orphaned-binding": true,
+        "repository-unobservable": true,
+        "identity-drift": true,
+        "evidence-only-boundary": true,
+        "deterministic-summary": true,
+        "regression-proof": true,
+        "phase-boundary": true
+      },
+      "pr_completion": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 437,
+        "base_head": "64064201191bcdce0c957a7c9a0425b43521fe4e",
+        "reviewed_head": "299efa871b648f493a707977c933b0ff9ac029bd",
+        "reviewed_tree": "30f1cf90e568a8b46733bb541c8da43a2eb5e94f",
+        "diff_sha256": "38baa0633c0094b694c39348aa4d6f0c59f0f573229b1f8a46da8bcee4a3dce3",
+        "merge_commit": "3be8a2beb0c4fd1411f3aa25c47d92971499b0c3",
+        "merged_at": "2026-07-24T11:25:00Z",
+        "required_check_count": 5,
+        "required_checks_green": true,
+        "self_review": "PASS"
+      },
+      "validation": {
+        "command": "make validate",
+        "argv_sha256": "9575550303b6181605085be404cd608717b8a79c591299b7d9088d1c7d25cbae",
+        "task_id": "8a73b6cdb9384f23a785f202",
+        "state": "completed",
+        "result": "PASS",
+        "test_count": 3325,
+        "skipped_count": 5,
+        "lifecycle_receipt_sha256": "6e3159faa7d34493f991f4e1aa19c7aa5c94298631844b30adbd34c7e0fae3ea",
+        "focused": {
+          "test_count": 64,
+          "subtest_count": 5,
+          "result": "PASS"
+        }
+      },
+      "main_readback": {
+        "origin_main": "3be8a2beb0c4fd1411f3aa25c47d92971499b0c3",
+        "tree": "30f1cf90e568a8b46733bb541c8da43a2eb5e94f",
+        "tree_equals_reviewed_tree": true,
+        "module_present": true
+      },
+      "deployment": {
+        "required": false,
+        "performed": false,
+        "reason": "T096 liefert ausschließlich einen verpackten read-only Reconciliation-Kern; Live-MCP-, Current-Work- und Runtime-Integration sind laut Taskgrenze nicht enthalten."
+      },
+      "scope_boundary": {
+        "issue_434_state": "open",
+        "live_mcp_integration": false,
+        "current_work_integration": false,
+        "mutation_authority_added": false,
+        "cleanup_or_deletion_authority_added": false
+      },
+      "cleanup": {
+        "automatic_cleanup_performed": false,
+        "implementation_checkout_retained": true,
+        "reason": "Der saubere Implementierungscheckout bleibt bis nach dem Bureau-Closeout recovery-gebunden erhalten; T096 erteilt keine Cleanup-Autorität."
+      },
+      "does_not_establish": [
+        "issue #434 completion",
+        "live MCP or Current Work integration",
+        "runtime deployment",
+        "repair, terminalization, archive, cleanup or deletion authority"
+      ],
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "closeout_validation": {
+        "command": "make validate",
+        "argv_sha256": "9575550303b6181605085be404cd608717b8a79c591299b7d9088d1c7d25cbae",
+        "task_id": "f0338cf4890f4b2285f61272",
+        "state": "completed",
+        "result": "PASS",
+        "test_count": 806,
+        "lifecycle_receipt_sha256": "8babde5c15c854dc4223d3b7a9d09ea404498ab6ab208ed6ee3c21ea4b1afcb5",
+        "registry_valid": true,
+        "systemkatalog_boundary": "PASS"
+      }
+    }
   }
 }

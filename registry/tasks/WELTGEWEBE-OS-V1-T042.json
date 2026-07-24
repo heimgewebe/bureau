@@ -1,0 +1,108 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der aktuelle Ablauf aus bewegtem main, strict-up-to-date Anforderung, exact-head Review-Evidence und lang laufenden kind-/HA-Proofs ist reproduzierbar modelliert; gemessene Invalidierungs- und Wiederholungspfade unterscheiden echte Proof-Invalidierung von reinem Base-Fortschritt.",
+      "id": "starvation-baseline"
+    },
+    {
+      "assertion": "Eine Wiederverwendung oder Entkopplung teurer Proofs ist nur zulässig, wenn eine immutable Identität vollständig alle proof-relevanten Eingaben bindet; jede Änderung eines relevanten Inputs erzwingt einen neuen Proof und unklare Bindungen bleiben fail-closed.",
+      "id": "immutable-proof-identity"
+    },
+    {
+      "assertion": "Der finale Merge bleibt an den tatsächlich aktuellen PR-Head und die erforderliche Review-/Merge-Governance gebunden; stale Review-Evidence oder ein Proof für einen nicht äquivalenten Inputzustand können keinen Merge autorisieren.",
+      "id": "exact-head-final-gate"
+    },
+    {
+      "assertion": "Die Menge der Kubernetes-/HA-proof-relevanten Pfade und sonstigen Build-/Toolchain-Eingaben ist strukturell definiert und regressionsgetestet, sodass keine relevante Änderung versehentlich einen alten Proof weiterverwendet.",
+      "id": "complete-invalidation-set"
+    },
+    {
+      "assertion": "Tests decken Base-Fortschritt während laufender Proofs, parallele Updates, stale Evidence, Proof-Abbruch und erneute Synchronisation ab; der Algorithmus konvergiert oder blockiert sicher, statt endlos ungerechtfertigt neu zu starten oder unsicher zu mergen.",
+      "id": "moving-base-races"
+    },
+    {
+      "assertion": "Für jeden teuren Proof und jede Mergeentscheidung ist maschinenlesbar nachvollziehbar, welche immutable Inputidentität geprüft, warum ein Proof wiederverwendet oder neu ausgeführt und an welchen finalen Head/Base-Zustand der Merge gebunden wurde.",
+      "id": "observability"
+    },
+    {
+      "assertion": "Required merge gate, Review evidence gate, kind-gitops-proof und kind-ha-recovery-proof behalten mindestens ihre bestehende Sicherheitswirkung; Optimierung erfolgt durch sichere Orchestrierung oder beweisbare Ergebnisidentität, nicht durch Entfernen oder pauschales Überspringen von Prüfungen.",
+      "id": "no-gate-weakening"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T004"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer am 2026-07-24 mit @grabowski umsetzen zur Kanonisierung der nach PR #1556 beobachteten Merge-Starvation-Folgearbeit autorisiert. Jede spätere Umsetzung muss den aktuellen Branchschutz und die Live-Governance neu lesen und darf keine Required-Checks oder exact-head-Evidenz umgehen.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die Kombination aus strict-up-to-date Branchschutz, exact-head Review-Evidence und lang laufenden kind-/HA-Proofs so orchestrieren, dass häufig fortschreitendes main nicht zu wiederholter Invalidierung und Merge-Starvation führt, ohne Required-Merge-, Review-Evidence- oder Kubernetes-Proof-Gates abzuschwächen oder stale Proofs als aktuelle Evidenz zu akzeptieren.",
+  "id": "WELTGEWEBE-OS-V1-T042",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-4a94936bcf2c68350ee55c30",
+    "does_not_establish": [
+      "permission to weaken branch protection",
+      "permission to accept stale proof evidence",
+      "permission to bypass review evidence",
+      "automatic implementation readiness without current live workflow and protection readback"
+    ],
+    "registry_refresh_reason": "Reproposed after unrelated Bureau main advance from ae869acb18e0e0dfc220f6e33c3ef465c65fb3ab to c179c26066721386a7033f8c0eed3967839d1f73 before publication; source and task semantics otherwise unchanged.",
+    "source_context": "Observed merge starvation while exact-head evidence and long-running Kubernetes proofs were repeatedly invalidated by advancing main",
+    "source_event_id": 1071,
+    "source_head": "6cddbb5dea5c6b82fe1f133ae2086d0c1a62a923",
+    "source_merge_commit": "c9727a600fe7340978a93fe2b8b829c96417b058",
+    "source_pr": "heimgewebe/weltgewebe#1556",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-4a94936bcf2c68350ee55c30",
+      "event_id": 1071,
+      "event_created_at": "2026-07-23T20:56:21.260187Z",
+      "request_sha256": "fd9523eebe3afac975bd70f69dcb699cf2f468e61a6a13898633a78c0ad65833",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "review-reconciliation",
+        "locator": "github:heimgewebe/weltgewebe#1556@c9727a600fe7340978a93fe2b8b829c96417b058",
+        "observed_at": "2026-07-23T20:56:21.252169Z",
+        "sha256": "7b146a72d1c8f6ba5db2eed4b3b8c28f6ae7ecc39245d9d7866631880331e54f"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 42
+  },
+  "required_capabilities": [
+    "repository",
+    "kubernetes",
+    "ci",
+    "github",
+    "workflow",
+    "concurrency",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Kubernetes-Proofs gegen Merge-Starvation entkoppeln"
+}

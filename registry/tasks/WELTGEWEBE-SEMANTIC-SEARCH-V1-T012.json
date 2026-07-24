@@ -26,7 +26,7 @@
       "isolation": "worktree"
     },
     {
-      "resource": "wg-prod-1-runtime",
+      "resource": "runtime.wg-prod-1",
       "mode": "exclusive",
       "isolation": "namespace"
     }

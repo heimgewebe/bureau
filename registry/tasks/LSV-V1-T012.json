@@ -1,0 +1,108 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Das kanonische lokale Release-Runbook erklärt ausdrücklich, dass nicht nur der Git-Checkout sauber und commitgenau sein muss, sondern alle relevanten Pfadkomponenten des Deploy-Quellpfads die vom Releaseadapter verlangte sichere Eigentums- und Schreibbarkeitsgrenze erfüllen müssen.",
+      "evidence_type": "object",
+      "id": "ancestry-contract-documented",
+      "verifier": "runbook diff and release-adapter contract review"
+    },
+    {
+      "assertion": "Das Runbook dokumentiert den beobachteten Fehlerfall, dass ein sauberer Checkout unter einem gruppen- oder fremdschreibbaren Elternpfad vor dem Cutover abgewiesen wird, und nennt einen privaten hostlokalen Deploy-Source-Bereich als sicheres Betriebsbeispiel.",
+      "evidence_type": "boolean",
+      "id": "unsafe-parent-example",
+      "verifier": "documentation review"
+    },
+    {
+      "assertion": "Die Aufgabe lockert `assert_secure_ancestry` oder gleichwertige Releaseadapter-Prüfungen nicht und führt keinen Bypass für `/home/alex/repos` oder andere unsichere Elternpfade ein.",
+      "evidence_type": "boolean",
+      "id": "guard-preserved",
+      "verifier": "diff review and release-runtime tests"
+    },
+    {
+      "assertion": "Vorhandene Runbook-/Release-Invariantentests bleiben grün; falls die neue Dokumentationsaussage durch bestehende Guard-Tests nicht ausreichend gebunden ist, wird eine eng begrenzte Regression ergänzt.",
+      "evidence_type": "object",
+      "id": "runbook-invariant-covered",
+      "verifier": "CI and targeted release-runtime regression"
+    },
+    {
+      "assertion": "Die Umsetzung selbst verändert keine laufenden Leitstand-Units, Release-Selectoren oder Systemkatalog-Quellen; ein späterer Deploy bleibt eine getrennte, explizite Runtime-Wirkung.",
+      "evidence_type": "boolean",
+      "id": "no-runtime-effect",
+      "verifier": "diff scope and runtime readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.leitstand"
+    }
+  ],
+  "depends_on": [
+    "LSV-V1-T011"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die Umsetzung des bereits registrierten Follow-ups ausdrücklich beauftragt. Die spätere Änderung ist auf Leitstand-Dokumentation und zugehörige Runbook-Invarianten begrenzt; Sicherheitsguards werden nicht gelockert.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand"
+  },
+  "goal": "Den bereits technisch erzwungenen Sicherheitsvertrag des Leitstand-Releaseadapters im kanonischen Deploy-Runbook explizit machen: Ein Deploy muss aus einem exakten sauberen Checkout mit sicherer, nicht gruppen- oder fremdschreibbarer Pfad-Ahnenkette erfolgen; ein fachlich sauberer Git-Checkout unter einem unsicheren Elternpfad ist weiterhin abzulehnen. Das Runbook soll einen privaten hostlokalen Deploy-Source-Bereich als kanonisches Betriebsbeispiel beschreiben, ohne den bestehenden `assert_secure_ancestry`-Guard oder andere Fail-Closed-Gates zu lockern.",
+  "id": "LSV-V1-T012",
+  "initiative": "LEITSTAND-VISUAL-LAYER-V1",
+  "metadata": {
+    "alternative_axis": "Den Guard zu lockern oder `/home/alex/repos` pauschal als Ausnahme zuzulassen wäre operativ bequemer, würde aber die lokale Supply-Chain-Grenze des Releaseadapters schwächen. Deshalb wird der bestehende Guard beibehalten und nur der sichere Betriebsweg dokumentiert.",
+    "does_not_establish": [
+      "permission_to_weaken_secure_ancestry",
+      "permission_to_chmod_foreign_parent_paths",
+      "permission_to_move_foreign_worktrees",
+      "runtime_deployment_authority",
+      "need_for_additional_control_plane"
+    ],
+    "source_observation": "Beim Live-Deploy von LSV-V1-T011 am 2026-07-24 wurde ein exakter sauberer Leitstand-Checkout unter `/home/alex/repos/.leitstand-worktrees/...` vor jedem Cutover korrekt abgewiesen, weil die Pfadkomponente `/home/alex/repos` gruppen- oder fremdschreibbar war. Derselbe gemergte Commit ließ sich anschließend aus einem privaten hostlokalen Deploy-Source-Pfad unter `~/.local/state/leitstand/deploy-sources` erfolgreich über den unveränderten Releaseadapter ausrollen.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-3880a51c461dcd0239c9ee15",
+      "event_id": 1085,
+      "event_created_at": "2026-07-24T02:16:31.618794Z",
+      "request_sha256": "8702c82e01cc1fc9a326b422adbf830325b60ad388f4db05e4abb4794e00fdc8",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "runtime-health-receipt",
+        "locator": "grabowski-job-30d5ce2207fc",
+        "observed_at": "2026-07-24T02:05:56Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 21
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Die Runbook- und gegebenenfalls eng begrenzte Teständerung zurücksetzen; der bereits bestehende sichere Pfad-Ahnenketten-Guard im Releaseadapter bleibt unverändert aktiv."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Sichere Source-Pfad-Ahnenkette für Leitstand-Deploy dokumentieren"
+}

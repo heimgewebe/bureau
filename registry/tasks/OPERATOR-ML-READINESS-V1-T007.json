@@ -1,0 +1,91 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Versiegelung rekonstruiert die kanonische direct-task identity aus dem autoritativen Taskdatensatz und vergleicht sie exakt mit der create-only Binding-Datei.",
+      "id": "exact-task-readback"
+    },
+    {
+      "assertion": "Abweichungen bei Host, argv_sha256, cwd, Ressourcenmenge oder runtime_seconds blockieren vor Eligibility- und Record-Publikation.",
+      "id": "drift-fails-closed"
+    },
+    {
+      "assertion": "Terminalstatus und execution_provenance bleiben kompatibel gebunden; vom Aufrufer gelieferte Evidenz ersetzt keinen Task-Readback.",
+      "id": "terminal-provenance"
+    },
+    {
+      "assertion": "Tests decken manipulierte Binding-Dateien, abweichende Taskrecords, fehlende Bindings und den unveränderten Erfolgsfall ab.",
+      "id": "adversarial-tests"
+    },
+    {
+      "assertion": "Der Fix verändert weder Routing noch Taskstart, Queue, Merge, Deploy oder Runtime-Autorität.",
+      "id": "no-operational-effect"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ML-READINESS-V1-T006"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Vor der Versiegelung eines direct-task routing-shadow Falls die beim Prospektiv-Freeze gespeicherten Hashes von Host, argv, cwd, Ressourcen und Laufzeit gegen den autoritativen terminalen Grabowski-Taskdatensatz prüfen und bei jeder Abweichung fail-closed blockieren.",
+  "id": "OPERATOR-ML-READINESS-V1-T007",
+  "initiative": "OPERATOR-ML-READINESS-V1",
+  "metadata": {
+    "deployment_boundary": "PR #448 soll bis zur Umsetzung dieses Tasks nicht produktiv ausgerollt werden.",
+    "does_not_establish": [
+      "Fehler in Routing- oder Ausführungsautorität",
+      "Manipulation bestehender Records",
+      "Berechtigung zur Übernahme fremder Leases oder Worktrees"
+    ],
+    "finding": "grabowski_task_routing_shadow_seal prüft Terminalstatus und gespeicherte Binding-Integrität, vergleicht task_identity jedoch nicht erneut mit dem autoritativen Grabowski-Taskrecord.",
+    "parent_task": "OPERATOR-ML-READINESS-V1-T006",
+    "registered_at": "2026-07-24T20:45:00+02:00",
+    "risk": "Evidenzintegrität der proposal-only Schattenkohorte; keine unmittelbare operative Wirkung.",
+    "source_review": "heimgewebe/grabowski#448",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-b9a444aa99b2476075f9ad50",
+      "event_id": 1133,
+      "event_created_at": "2026-07-24T18:48:58.170188Z",
+      "request_sha256": "d87ce3a8eeabd6b892ea169b461f4f0e5db0520dc500f13ecbf85931a213f29e",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github_pr_review",
+        "locator": "github-pr:heimgewebe/grabowski#448@40b1319fc8f1c5e5adbb6e6da623d628516f7f69",
+        "observed_at": "2026-07-24T18:45:00Z",
+        "sha256": "9e60a7128fd8d027c671948e4c21a7b969bb1f477ca97410429f2b6d2c3eb282"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 7
+  },
+  "required_capabilities": [
+    "python",
+    "testing",
+    "grabowski",
+    "security-review"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Direct-task routing shadow an tatsächliche Taskidentität rückbinden"
+}

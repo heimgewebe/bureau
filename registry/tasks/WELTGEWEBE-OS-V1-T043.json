@@ -1,0 +1,92 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Alle proofkritischen OCI-Images besitzen einen kontrollierten Quell-, Cache- oder Mirrorpfad mit dokumentierter Eigentümerschaft, Retention und Ausfallgrenze.",
+      "evidence_type": "object",
+      "id": "controlled-source",
+      "verifier": "registry contract and inventory"
+    },
+    {
+      "assertion": "Proofs verwenden ausschließlich vollständig aufgelöste Digests; Mirror und kanonische Quelle müssen denselben Inhalt belegen, und Tagdrift bleibt ausgeschlossen.",
+      "evidence_type": "object",
+      "id": "digest-only",
+      "verifier": "digest parity and negative drift tests"
+    },
+    {
+      "assertion": "Mirror-Ausfall, öffentliche Rate-Limits und vollständige Quell-Nichterreichbarkeit werden getrennt klassifiziert; Fallback ist begrenzt, beobachtbar und kann keinen Integritätsfehler übergehen.",
+      "evidence_type": "object",
+      "id": "bounded-fallback",
+      "verifier": "outage and integrity failure injection"
+    },
+    {
+      "assertion": "Ein leerer Runner besteht kind- und HA-Proof bei absichtlich blockierter öffentlicher Registry allein aus dem kontrollierten Pfad; ein falscher Digest scheitert fail-closed.",
+      "evidence_type": "object",
+      "id": "cold-run-proof",
+      "verifier": "cold runner proof receipt"
+    },
+    {
+      "assertion": "Speicher-, Egress-, Cleanup- und Retentionbudgets sind gemessen und verhindern unbegrenztes Wachstum oder verdeckte laufende Kosten.",
+      "evidence_type": "object",
+      "id": "cost-retention",
+      "verifier": "capacity and lifecycle receipt"
+    },
+    {
+      "assertion": "Finaler Diff, CI, Supply-Chain-Prüfungen und reale Proofs sind an denselben Head gebunden.",
+      "evidence_type": "object",
+      "id": "exact-review",
+      "verifier": "review and proof evidence"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T041"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer am 2026-07-24 als nicht im Kubernetes-Proof-Lifecycle-PR gelöste Restarbeit zur kanonischen Registrierung autorisiert.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die kind- und HA-Proofs von unkontrollierter öffentlicher Registry-Verfügbarkeit entkoppeln, indem Node- und weitere proofkritische OCI-Images über einen kontrollierten, digestgebundenen Cache- oder Mirrorpfad bezogen werden, ohne Tags, Herkunft oder Fail-closed-Integrität aufzuweichen.",
+  "id": "WELTGEWEBE-OS-V1-T043",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to weaken digest pinning",
+      "permission to publish private images",
+      "a production registry cutover"
+    ],
+    "reason": "PR #1570 begrenzt transiente OCI-Registryfehler durch Retry, stellt aber bewusst keinen kontrollierten Node-Image-Mirror bereit.",
+    "registered_at": "2026-07-24T17:55:00Z",
+    "source_head": "211d0fd47d124cb239cf5548b294fa19a9007a4f",
+    "source_pr": "heimgewebe/weltgewebe#1570"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 43
+  },
+  "required_capabilities": [
+    "kubernetes",
+    "oci",
+    "registry",
+    "supply-chain",
+    "github-actions",
+    "security",
+    "testing",
+    "observability",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Digestgebundenen OCI-Mirror für Kubernetes-Proofs einführen"
+}

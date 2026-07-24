@@ -4,7 +4,7 @@
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "Current-Head API-Upgrade-Verfügbarkeit der HA-Referenzzelle wiederherstellen",
   "goal": "Den auf Weltgewebe-Commit 39d5a8f5fa637ba9f8a487074c86856e6a6b897c im realen HA-Reference-Proof reproduzierten Verfügbarkeitsregress beim API-Rolling-Upgrade beheben und anschließend den vollständigen HA-/PITR-Proof auf dem exakten Fix-Head wieder erfolgreich bis zum Ende durchführen.",
-  "state": "planned",
+  "state": "verified",
   "depends_on": [
     "WELTGEWEBE-OS-V1-T004"
   ],
@@ -84,6 +84,59 @@
       "longest_unavailable_seconds": 21.41,
       "replaced_replicas": 3
     },
-    "does_not_invalidate": "WELTGEWEBE-OS-V1-T004 remains verified historical recovery evidence on its bound revision"
+    "does_not_invalidate": "WELTGEWEBE-OS-V1-T004 remains verified historical recovery evidence on its bound revision",
+    "verified_at": "2026-07-24T17:55:00Z",
+    "implementation_pr": "heimgewebe/weltgewebe#1545",
+    "implementation_head": "96b16513a12609f266a8427f28d70ec155963e9f",
+    "implementation_merge_commit": "e35ebecb45873e0588cec6dd1feee5f19cece21e",
+    "implementation_diff_sha256": "823969fefc3d69ce5fc25f3b75daec0446bf0449d39dba1097acfd423cd2e201",
+    "kubernetes_platform_run": 29956996190,
+    "kind_gitops_job": 89048777378,
+    "kind_ha_recovery_job": 89048777425,
+    "required_merge_gate_run": 29956996172,
+    "review_evidence_gate_run": 29959054319,
+    "outcome": "Der topology-aware HA-Verfügbarkeitsvertrag beseitigt die falsch globale Upgrade-Outage, hält degradierte Einzelpfade sichtbar und bestand den vollständigen HA-/PITR-Proof auf dem exakten PR-Head mit null fehlgeschlagenen Upgrade- und Rollback-Samples.",
+    "validated_acceptance": {
+      "root-cause": "Die Regression wurde auf die falsche Gleichsetzung eines transient degradierten Cross-Node-Cilium-/Gateway-Pfads mit globaler Dienstnichtverfügbarkeit zurückgeführt; der Fix kombiniert maxSurge=1/maxUnavailable=0 mit owner-lokaler Listener-Messung statt Timeout-Erhöhung.",
+      "zero-observed-outage-upgrade": "Der vollständige PR-Proof meldete für Upgrade und Rollback jeweils null fehlgeschlagene Availability-Samples, 0,0 Sekunden beobachtete Nichtverfügbarkeit sowie null verlorene bestätigte Fachmutationen und JetStream-Nachrichten.",
+      "full-ha-rerun": "kind-ha-recovery-proof Job 89048777425 auf Head 96b16513a12609f266a8427f28d70ec155963e9f bestand PostgreSQL-Promotion, API-/NATS-Erholung, Upgrade, Rollback, WAL, PITR und RTO/RPO-Messung.",
+      "cleanup": "PR-Evidenz bestätigt die Entfernung von Proof- und Restore-Cluster, Object-Store-Container und Volume nach dem Lauf.",
+      "regression-tests": "59 HA-Contracttests, Plattformvalidator, CI, kind-gitops-proof und kind-ha-recovery-proof waren grün.",
+      "exact-review": "Der GitHub-Diff SHA-256 823969fefc3d69ce5fc25f3b75daec0446bf0449d39dba1097acfd423cd2e201 ist an Head 96b16513a12609f266a8427f28d70ec155963e9f gebunden; Required merge gate und finaler Review evidence gate bestanden."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "WELTGEWEBE-OS-V1-T039",
+          "source_ref": "heimgewebe/weltgewebe#1545",
+          "number": 1545,
+          "head_sha": "96b16513a12609f266a8427f28d70ec155963e9f",
+          "merge_commit_sha": "e35ebecb45873e0588cec6dd1feee5f19cece21e",
+          "diff_sha256": "823969fefc3d69ce5fc25f3b75daec0446bf0449d39dba1097acfd423cd2e201"
+        },
+        {
+          "kind": "test_run",
+          "authority": "github-actions",
+          "task_id": "WELTGEWEBE-OS-V1-T039",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/29956996190",
+          "workflow_run_id": 29956996190,
+          "job_id": 89048777425,
+          "commit_sha": "96b16513a12609f266a8427f28d70ec155963e9f"
+        },
+        {
+          "kind": "review_evidence",
+          "authority": "github-actions",
+          "task_id": "WELTGEWEBE-OS-V1-T039",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/29959054319",
+          "workflow_run_id": 29959054319,
+          "commit_sha": "96b16513a12609f266a8427f28d70ec155963e9f",
+          "verdict": "PASS"
+        }
+      ]
+    }
   }
 }

@@ -85,7 +85,12 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
-    }
+    },
+    "implementation_pr": "heimgewebe/weltgewebe#1570",
+    "implementation_head": "211d0fd47d124cb239cf5548b294fa19a9007a4f",
+    "implementation_state": "open_ci_running",
+    "implementation_bound_at": "2026-07-24T17:55:00Z",
+    "primary_task_binding": "WELTGEWEBE-OS-V1-T041"
   },
   "priority": {
     "lane": "next",

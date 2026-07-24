@@ -1,0 +1,107 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Produktiver Cluster, GitOps-Quelle, DNS, Load Balancer, TLS, Secretbereitstellung, Identitäten und Fehlerdomänen sind explizit inventarisiert und revisionsgebunden.",
+      "evidence_type": "object",
+      "id": "production-topology",
+      "verifier": "production topology and ownership receipt"
+    },
+    {
+      "assertion": "Datenbank-, JetStream-, Objekt- und Dateizustände werden mit Freeze-, Replikations- oder Dual-Run-Vertrag ohne verlorene bestätigte Fachmutation übertragen und vollständig verglichen.",
+      "evidence_type": "object",
+      "id": "data-transition",
+      "verifier": "migration and reconciliation receipt"
+    },
+    {
+      "assertion": "Verkehr wird gestuft mit SLO-, Fehlerbudget- und Fachmutationsbeobachtung umgeschaltet; jede Stufe besitzt automatische Stop- und überprüfte Rückfallkriterien.",
+      "evidence_type": "object",
+      "id": "progressive-traffic",
+      "verifier": "traffic shift and rollback receipts"
+    },
+    {
+      "assertion": "PITR, Blank-Cluster-Restore, Secret-/Schlüsselwiederherstellung und ein vollständiger Rückfall auf den alten Produktionspfad werden im produktionsnahen oder produktiven Kontext gemessen.",
+      "evidence_type": "object",
+      "id": "production-recovery",
+      "verifier": "disaster recovery exercise"
+    },
+    {
+      "assertion": "Grabowski-, Chronik- und Leitstandprojektionen zeigen commitgenau SLO, RTO/RPO, Deployments, offene Verpflichtungen und erlaubte Handlungen, ohne eine zweite Fachwahrheit zu erzeugen.",
+      "evidence_type": "object",
+      "id": "operator-readiness",
+      "verifier": "operator projection proof"
+    },
+    {
+      "assertion": "Der alte Produktionspfad wird erst nach definierter Beobachtungsfrist, bestätigtem Rollbackfenster und Eigentümerfreigabe deaktiviert; Doppelwahrheit und verwaiste Ressourcen bleiben ausgeschlossen.",
+      "evidence_type": "object",
+      "id": "legacy-retirement",
+      "verifier": "retirement and cleanup receipt"
+    },
+    {
+      "assertion": "Nach dem Cutover belegen öffentliche Frontend-/API-Endpunkte, GitOps-Revision, laufende Workloads und Datenkontinuität denselben finalen Commit.",
+      "evidence_type": "object",
+      "id": "live-readback",
+      "verifier": "merge-to-live and production cluster receipt"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T003",
+    "WELTGEWEBE-OS-V1-T004",
+    "WELTGEWEBE-OS-V1-T005",
+    "WELTGEWEBE-OS-V1-T006",
+    "WELTGEWEBE-OS-V1-T007",
+    "WELTGEWEBE-OS-V1-T008",
+    "WELTGEWEBE-OS-V1-T043"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Registrierung ist autorisiert; jede reale Produktionswirkung erfordert erneuten current-head-, Runtime-, Backup-, Rollback- und Freigabe-Readback.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die heute nur als Referenz- und Abnahmeplattform belegte Kubernetes-/GitOps-Architektur kontrolliert zur realen Produktionsplattform machen und den bisherigen Produktionspfad erst nach gemessener Daten-, Verkehrs-, Recovery- und Rollback-Evidenz ablösen.",
+  "id": "WELTGEWEBE-OS-V1-T044",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission for immediate production mutation",
+      "current production topology",
+      "a safe cutover without fresh backups and rollback proof"
+    ],
+    "reason": "Der bestehende Production-Live-Contract beweist erreichbare Endpunkte und Commitidentität, aber nicht, dass die reale Produktion bereits auf Kubernetes läuft.",
+    "registered_at": "2026-07-24T17:55:00Z",
+    "source_context": "Kubernetes-Restplan nach Referenzplattform-, HA- und Proof-Lifecycle-Ausbau"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 44
+  },
+  "required_capabilities": [
+    "kubernetes",
+    "gitops",
+    "dns",
+    "tls",
+    "load-balancing",
+    "postgresql",
+    "nats",
+    "backup",
+    "recovery",
+    "observability",
+    "security",
+    "deployment",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Weltgewebe revisionsgebunden auf die produktive Kubernetes-Plattform umschalten"
+}

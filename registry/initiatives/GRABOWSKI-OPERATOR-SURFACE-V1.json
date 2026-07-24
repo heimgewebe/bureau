@@ -27,6 +27,17 @@
       "session_capability_enforced"
     ],
     "lifecycle_reconciled_20260713": "Reactivated after the live what-now readback on Bureau main b45f274052ededdbdc86bdc7a91ad801652e8f0e proved a lifecycle mismatch: the initiative was still waiting on a historical 2026-07-11 reason while 28 tasks remained open, including independent ready task GRABOWSKI-OPERATOR-SURFACE-V1-T052. Active records that work exists; individual task dependencies, claims and leases still govern claimability.",
+    "lifecycle_reconciled_20260724": {
+      "from_state": "waiting",
+      "to_state": "active",
+      "reason": "Fresh Bureau doctor readback during T087 closeout recommends active because T098 is ready and multiple planned tasks remain open; the historical waiting state no longer matches current task truth.",
+      "does_not_establish": [
+        "task claimability",
+        "automatic dispatch",
+        "merge or deployment authority",
+        "completion of other initiative tasks"
+      ]
+    },
     "priority_decision": "situation spine before recall; grip surface before friction automation; shadow measurement before bounded adaptive routing; push and capability enforcement later",
     "relationship_to_existing": {
       "GRIP-ROADMAP-V1": "complements and narrows operator-facing work; does not replace queued grip roadmap tasks",
@@ -44,6 +55,6 @@
     "max_active_tasks": 1
   },
   "schema_version": 1,
-  "state": "waiting",
+  "state": "active",
   "title": "Grabowski operator surface"
 }

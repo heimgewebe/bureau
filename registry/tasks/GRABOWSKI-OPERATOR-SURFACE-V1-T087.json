@@ -61,7 +61,44 @@
     ],
     "live_basis": "14619 terminale Grabowski-Tasks, 2849 Attention-Projektionen, 845 erfasste Worktrees, 49 ungebundene tmux-Sessions und ein Task-Archiv mit erst 1 Record; Runtime- und Tool-Vertrag selbst waren gesund.",
     "registered_at": "2026-07-22T21:39:00+02:00",
-    "source": "Conversation-backed live system audit through Grabowski candidate candidate-54e795060f627c843e7a4606."
+    "source": "Conversation-backed live system audit through Grabowski candidate candidate-54e795060f627c843e7a4606.",
+    "validated_acceptance": {
+      "single-truth": "Grabowski PR #401 verbindet den vorhandenen Task-Store, create-only Attention Decisions und den bestehenden Archivplan; PR #411 ergänzt die Wirkung ausschließlich über die bestehende immutable Archive- und Current-Projection-Autorität. Beide PRs führen ausdrücklich keine zweite Lifecycle- oder Attention-Wahrheit ein.",
+      "terminal-convergence": "PR #401 implementiert terminal_closeout_plan mit exakter Attempt-, Unit-, argv-, Execution-Envelope- und Lifecycle-Receipt-Bindung. Der aktuelle Task-Status für ae1498d0cf2f43f7a33c97af projizierte nach erfolgreicher Validierung terminal=true, attention_required=false, closeout_state=ready_to_archive, archive_ready=true und keine Operatorpflicht.",
+      "attention-compression": "Die aktuelle verifizierte Taskprojektion mit projection_sha256=35c60e0db8c461f779fa05f9e6aaa368bd2cf809826296794d9823e291266d74 reduziert raw_attention_count=3466 auf current_attention_count=3453. Exakt 13 Fälle werden nur aufgrund gültiger create-only decision_superseded-Evidenz ausgeschlossen; ein deferred Fall und alle übrigen actionable Fälle bleiben sichtbar.",
+      "archive-after-closeout": "PR #411 bindet die Archivwirkung an archive_ready, Retention, exakte Taskidentität, aktuelle Lease- und Unit-Evidenz. Das live gelesene Segment segment-2cf6572f05c5a635483f2fec ist vollständig verifiziert und enthält den completed Task f8955a65a9f6462097d0886d mit Lifecycle-Receipt de7a15b2148b069841580c74c53974b1be3d0f1dea01639fd385c53c467ab62a; die unveränderliche Evidenz bleibt erhalten.",
+      "foreign-state-safe": "PR #401 und PR #411 schließen Prozess-, Workspace-, Worktree- und fremde Lease-Bereinigung ausdrücklich aus. Der Live-Readback hat nur Task-, Attention- und Archivprojektionen gelesen; keine fremden Dirty-States, Prozesse, Leases oder Worktrees wurden verändert.",
+      "tests-and-live-readback": "PR #401 validierte 177 fokussierte Tests plus 10 Subtests; PR #411 validierte 579 Tests plus 156 Subtests sowie vollständiges make validate. Der aktuelle Live-Readback belegt 13 evidenzgebundene Attention-Ausschlüsse und ein vollständig verifiziertes reales Archivsegment."
+    },
+    "verification": {
+      "verified_at": "2026-07-24",
+      "task_sha256": "d4858d284c81f104dc1aeb29dadfcd4094721f402d77213f95ed9b681c6ecc00",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "implementation_pull_request": "heimgewebe/grabowski#401",
+      "implementation_head": "54d7a7e26ed04ca6336d46955a51469a7b47ded2",
+      "implementation_merge_commit": "040cc6b02c08ea308553153620b575088b3cd8d2",
+      "archive_pull_request": "heimgewebe/grabowski#411",
+      "archive_head": "d838c23a81f4be75eae87e5c6f473630b1c116ef",
+      "archive_merge_commit": "d193e46caf7e148934d9c3ad99fd195b8040dafc",
+      "runtime_release_id": "758db976b9cf-srcset1156d8333ae7-locke6664d600b6c-contractce312d6cda3d",
+      "runtime_repo_head": "758db976b9cf4b0e6a198a905f979554a368d5b3",
+      "attention_projection_sha256": "35c60e0db8c461f779fa05f9e6aaa368bd2cf809826296794d9823e291266d74",
+      "raw_attention_count": 3466,
+      "current_attention_count": 3453,
+      "excluded_attention_count": 13,
+      "excluded_classification": "decision_superseded",
+      "archive_segment_id": "segment-2cf6572f05c5a635483f2fec",
+      "archive_segment_sha256": "7280b975353c22ceff86f216a2dfb396c12a5572e4217851e6537b6d5c1c9665",
+      "archive_manifest_sha256": "48853a3730f7f61080570d3eafb104a0f57babff00c464ad5646325803a88368",
+      "archived_task_id": "f8955a65a9f6462097d0886d",
+      "archived_task_lifecycle_receipt_sha256": "de7a15b2148b069841580c74c53974b1be3d0f1dea01639fd385c53c467ab62a",
+      "non_claims": [
+        "Keine Bulk-Supersession historischer Fehler.",
+        "Keine Berechtigung zur Beendigung fremder Prozesse oder Leases.",
+        "Keine Behauptung vollständiger physischer Archivbereinigung.",
+        "Actionable und deferred Attention bleibt sichtbar und fail-closed."
+      ]
+    }
   },
   "priority": {
     "lane": "now",
@@ -74,6 +111,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Terminale Task-Konvergenz und Attention-Kompression schließen"
 }

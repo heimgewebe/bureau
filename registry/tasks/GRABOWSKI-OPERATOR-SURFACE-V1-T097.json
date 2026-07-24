@@ -1,0 +1,110 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der ursprüngliche Python-3.12-Timeout wird durch wiederholte, messbare Läufe oder durch eine kontrollierte Verzögerungs-/Lifecycle-Fixture charakterisiert; der Nachweis trennt Start, Readiness, Ausgabe, Beendigung und Cleanup des Hilfsprozesses statt nur einen Gesamt-Wallclock-Wert zu betrachten.",
+      "id": "bounded-reproduction"
+    },
+    {
+      "assertion": "Der Test und gegebenenfalls der Hilfsprozess verwenden explizite, deterministische Readiness- und Completion-Signale oder eine begründete begrenzte Wartebedingung mit Zustandsprüfung; zufällige Sleeps und Reihenfolgeannahmen gelten nicht als Lösung.",
+      "id": "deterministic-synchronization"
+    },
+    {
+      "assertion": "Echte Hänger, fehlende Ausgabe und nicht beendete Kindprozesse bleiben innerhalb einer begründeten Obergrenze fehlschlagend sichtbar; es werden weder pauschale Retries noch unbeschränkte Wartezeiten noch eine bloße globale Timeout-Erhöhung eingeführt.",
+      "id": "preserve-hang-detection"
+    },
+    {
+      "assertion": "Ein verbleibender Timeout meldet begrenzte, verwertbare Evidenz zu Prozessstatus, erwarteter Phase und vorhandener Ausgabe, ohne Geheimnisse oder unbeschränkte Logs offenzulegen.",
+      "id": "diagnostic-timeout-evidence"
+    },
+    {
+      "assertion": "Gezielte Wiederholungs- und Stresstests bestehen unter den unterstützten Python-Versionen 3.10 und 3.12; die vollständige Grabowski-Validierung bleibt grün.",
+      "id": "cross-version-regression"
+    },
+    {
+      "assertion": "Der Task behauptet ohne neue Evidenz weder einen RepoGround-T011-Regressionsfehler noch ein Produktionsproblem oder allgemeine Python-3.12-Instabilität; der erfolgreiche Rerun und fünf schnelle lokale Durchläufe bleiben ausdrücklich Teil der Einordnung.",
+      "id": "no-false-causality"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat verlangt, sinnvolle nicht unmittelbar behobene Befunde als Bureau-Folgetask zu registrieren. Vor Umsetzung sind Livezustand, aktueller Testvertrag, Python-3.10-/3.12-Verhalten und mögliche Prozess-/I/O-Rennen erneut zu prüfen; diese Registrierung selbst behauptet keine Root Cause.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den sporadischen Python-3.12-Timeout von tests.test_workers.WorkerTests.test_stored_form_helper_does_not_claim_incomplete_transport_evidence reproduzierbar charakterisieren und den Test sowie die zugrunde liegende Hilfsprozess-Synchronisation deterministisch härten. Echte Hänger müssen weiterhin fail-fast sichtbar bleiben; pauschale Retries, unbeschränkte Wartezeiten und eine bloße globale Timeout-Erhöhung sind ausgeschlossen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T097",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "root cause",
+      "production runtime failure",
+      "REPOGROUND-AGENT-UTILITY-V1-T011 regression",
+      "general Python 3.12 instability",
+      "permission to raise global timeouts",
+      "automatic implementation readiness"
+    ],
+    "observed_evidence": {
+      "failed_job_id": 89444363424,
+      "failure": "TimeoutExpired after fixed 5-second subprocess timeout",
+      "local_repetitions": {
+        "count": 5,
+        "duration_each_seconds_approx": 0.08,
+        "outcome": "all_passed",
+        "task_id": "9ef2ef7021a44cbca2ea2567"
+      },
+      "python_version": "3.12",
+      "repository": "heimgewebe/grabowski",
+      "successful_rerun_job_id": 89447990581,
+      "test": "tests.test_workers.WorkerTests.test_stored_form_helper_does_not_claim_incomplete_transport_evidence",
+      "workflow_run_id": 30081647241
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-5ada4314b52987a39969ecbb",
+      "event_id": 1116,
+      "event_created_at": "2026-07-24T10:52:28.437154Z",
+      "request_sha256": "834b51765c7909ba197e6cdb8ccb9e4e5e907a36866f2c99457cbb11b0a6070b",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github-actions-job",
+        "locator": "github-actions:heimgewebe/grabowski/run/30081647241/job/89444363424",
+        "observed_at": "2026-07-24T09:34:00Z",
+        "sha256": "5909d62fd5b43c64f9d3d00e4ba396fd92b161a6903d68c37d17c3111b10e479"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "source": "GitHub-Actions-Flake beim Abschluss von REPOGROUND-AGENT-UTILITY-V1-T011"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 950
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "subprocess",
+    "concurrency",
+    "continuous-integration",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Python-3.12-Worker-Test-Timeout deterministisch härten"
+}

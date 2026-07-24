@@ -1,35 +1,174 @@
 {
-  "schema_version": 1,
+  "acceptance": [
+    {
+      "assertion": "Der Blocker managed build residue is not empty wird mit gebundener Pfad-, Repository-, Ref- und Prozess-/Lease-Evidenz reproduziert und als verwaltet-veraltet, aktiv-legitim oder unbekannt klassifiziert.",
+      "id": "reproduce-and-classify"
+    },
+    {
+      "assertion": "Unbekannte, fremde, aktive oder lease-gebundene Build-Residuen werden niemals automatisch gel\u00f6scht, resettet oder \u00fcbernommen.",
+      "id": "no-blind-delete"
+    },
+    {
+      "assertion": "F\u00fcr eindeutig veraltete, vom Publisher selbst verwaltete Residuen existiert ein atomarer, nachvollziehbarer Cleanup- oder Quarant\u00e4nepfad; unklare F\u00e4lle bleiben fail-closed.",
+      "id": "safe-remediation"
+    },
+    {
+      "assertion": "Ein kontrollierter Fleet-Lauf kann nach sicherer Remediation das betroffene Repository wieder verarbeiten oder liefert einen pr\u00e4zisen maschinenlesbaren Blocker ohne Nebenwirkungen.",
+      "id": "publisher-recovery"
+    },
+    {
+      "assertion": "Regressionstests decken aktive/fremde/veraltete Build-Residuen und Race-/Symlink-Grenzen ab; relevante Fleet-Suites und Review-Gates sind gr\u00fcn.",
+      "id": "tests-review"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Den fail-closed Fleet-Publisher-Blocker f\u00fcr nicht leere managed build residue in RepoGround-Quellworktrees so kl\u00e4ren, dass legitime fremde oder aktive Build-Zust\u00e4nde niemals blind gel\u00f6scht werden, veraltete verwaltete Residuen aber provenance-gebunden diagnostiziert und \u00fcber einen sicheren Cleanup- oder Quarant\u00e4nepfad aufgel\u00f6st werden k\u00f6nnen.",
   "id": "REPOGROUND-AGENT-UTILITY-V1-T009",
   "initiative": "REPOGROUND-AGENT-UTILITY-V1",
-  "title": "Fleet-Publisher: fremde Build-Residuen sicher diagnostizieren und auflösen",
-  "state": "planned",
+  "metadata": {
+    "completion": {
+      "outcome": "RepoGround Fleet now classifies managed build residue from exact repository/ref, publisher provenance, immutable tree snapshot, observable process references and exact Grabowski path leases. Unknown or active state blocks before any cache effect; only publisher-owned stale and unchanged residue can enter the journaled atomic quarantine path. The historical heimgewebe/grabowski residue remains unknown and untouched.",
+      "schema_version": 1,
+      "status": "verified_safe_managed_build_residue_classification_and_quarantine"
+    },
+    "does_not_establish": [
+      "residue is stale",
+      "cleanup is safe",
+      "grabowski repository is dirty",
+      "permission to delete build outputs",
+      "T008 failure",
+      "historical heimgewebe/grabowski build residue is stale",
+      "permission to mutate the historical unknown residue",
+      "absence of non-exact leases",
+      "successful publication of heimgewebe/grabowski",
+      "automatic deletion authority",
+      "future fleet success"
+    ],
+    "implementation": {
+      "deployed_binary_sha256": "122269f3d0acbc3d56a0abc654361836dfe558feeb30654f78bb5a2f4673c6ce",
+      "diff_sha256": "af8ace13304ba7226ed5b353bb8a7cb6cdd85ef3774ec8172f37e654295e8929",
+      "head_sha": "ace9c25219188ce995697472a4a0a0b6e09bd678",
+      "merge_commit_sha": "dc67fdcf668942fdf4b5baef4989ce6e1e952c21",
+      "pull_request": 1095,
+      "repository": "heimgewebe/repoground"
+    },
+    "production_evidence": [
+      {
+        "kind": "runtime_deploy_receipt",
+        "path": "/home/alex/.local/state/repoground/evidence/t009-runtime-deploy-v1.json",
+        "sha256": "898120cd3cf5cccf7b92368ba1d5429896b08b648bd8ea200232c53bafd1ecaf"
+      },
+      {
+        "kind": "fleet_receipt",
+        "path": "/home/alex/logs/repoground-publish/fleet-last.json",
+        "sha256": "af77c870a35af62fb7958364ecf946b905fc92d063f61350c0516f2eafddcd5a"
+      },
+      {
+        "kind": "controlled_run_receipt",
+        "path": "/home/alex/.local/state/grabowski/jobs/grabowski-job-7b74820a49ef/finalization.json",
+        "sha256": "eeff0d5db83c3b6a82ec89ad3a44965b5fe0a8726632a9c1f3e4c80f4329b2b2"
+      },
+      {
+        "kind": "full_test_receipt",
+        "path": "/home/alex/.local/state/grabowski/jobs/grabowski-job-249925be7ad5/finalization.json",
+        "sha256": "4f35a97a225f19e08c6c127ab5ea3f870727051fbe141528c299272f1f25fd21"
+      },
+      {
+        "kind": "bureau_validation_receipt",
+        "path": "/home/alex/.local/state/grabowski/jobs/grabowski-job-a740aef34b3d/finalization.json",
+        "sha256": "9808c2adddc8a1572be74d55bf4e995c068beac306470e0ab59ddfbdcaa966e1"
+      }
+    ],
+    "registered_from_task": "REPOGROUND-AGENT-UTILITY-V1-T008",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "head_sha": "ace9c25219188ce995697472a4a0a0b6e09bd678",
+          "kind": "pull_request",
+          "merge_commit_sha": "dc67fdcf668942fdf4b5baef4989ce6e1e952c21",
+          "source_ref": "heimgewebe/repoground#1095",
+          "task_id": "REPOGROUND-AGENT-UTILITY-V1-T009"
+        },
+        {
+          "authority": "repoground-runtime",
+          "evidence_sha256": [
+            "122269f3d0acbc3d56a0abc654361836dfe558feeb30654f78bb5a2f4673c6ce"
+          ],
+          "kind": "deployment",
+          "source_ref": "/home/alex/.local/bin/repoground-publish-fleet",
+          "state": "merge-commit-blob-installed",
+          "task_id": "REPOGROUND-AGENT-UTILITY-V1-T009"
+        },
+        {
+          "authority": "repoground-fleet",
+          "evidence_sha256": [
+            "af77c870a35af62fb7958364ecf946b905fc92d063f61350c0516f2eafddcd5a"
+          ],
+          "kind": "live_probe",
+          "source_ref": "/home/alex/logs/repoground-publish/fleet-last.json",
+          "state": "precise-unknown-blocker-no-residue-mutation",
+          "task_id": "REPOGROUND-AGENT-UTILITY-V1-T009"
+        },
+        {
+          "authority": "grabowski-host-evidence",
+          "evidence_sha256": [
+            "898120cd3cf5cccf7b92368ba1d5429896b08b648bd8ea200232c53bafd1ecaf"
+          ],
+          "kind": "live_probe",
+          "source_ref": "/home/alex/.local/state/repoground/evidence/t009-runtime-deploy-v1.json",
+          "task_id": "REPOGROUND-AGENT-UTILITY-V1-T009"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "scope_reason": "T008 scheduling fairness is verified independently. This follow-up isolates the pre-existing source-worktree hygiene blocker and explicitly forbids treating it as permission to mutate foreign state.",
+    "source_observation": {
+      "error": "managed build residue is not empty; refusing cleanup: /home/alex/repos/.repoground-sources/heimgewebe__grabowski__main/build",
+      "failed_repository": "heimgewebe/grabowski",
+      "fleet_status": "warn",
+      "observed_at": "2026-07-23T02:10:35Z",
+      "publisher_behavior": "fail-closed; no cleanup was performed"
+    },
+    "verification": {
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+      "task_sha256": "91ee359acc809ae033e884c253e9ecb48297bec6018faf8adb435929d63d1f83"
+    },
+    "verification_note": "T009 verifies classification, fail-closed boundaries, safe quarantine capability, controlled runtime projection and deployment. It does not classify the historical build as stale, authorize deleting it, establish absence of non-exact leases or claim a successful heimgewebe/grabowski publication.",
+    "verified_acceptance": {
+      "no-blind-delete": "Classification and exact lease/process checks complete before any cleanup effect. Unknown, active-legitimate, changed, foreign, symlinked-authority or exact lease-bound state raises a structured blocker with automatic_mutation_authorized=false. The historical build inode, 1508-entry count and tree SHA-256 76507937c693b95b4e7ba9462cdebfa727bf1151641e61b5745f445cc047d3ea were identical before and after the controlled run; caches also remained present.",
+      "publisher-recovery": "The controlled one-repository run used --repo heimgewebe/grabowski and produced published=0, failed=1 with details[0].managed_build_residue as a machine-readable unknown blocker. Exit 1 is the expected fail-closed outcome, not a successful publication claim. No provenance or quarantine path was created for the historical residue.",
+      "reproduce-and-classify": "The deployed publisher reproduced the exact historical blocker for /home/alex/repos/.repoground-sources/heimgewebe__grabowski__main/build and emitted classification=unknown, repository heimgewebe/grabowski, tool commit dc67fdcf668942fdf4b5baef4989ce6e1e952c21, the exact managed source/build path keys, zero active exact leases and the reason that no publisher provenance record exists.",
+      "safe-remediation": "A publisher-owned build is armed before generation and finalized with exact repo/ref identity plus an opaque no-follow tree snapshot. Only stale, unchanged, process-free and exact-path-lease-free residue may be moved atomically under the owner-controlled .repoground-residue-quarantine root. Planned, quarantined, rolled-back and interrupted states have durable receipts and deterministic next-run recovery; automatic deletion remains false.",
+      "tests-review": "80 focused Fleet runtime tests and the final full local suite with 4697 passed, 2 skipped and 13 deselected were green. PR #1095 passed full pytest, browser, release-candidate, contracts, Ruff, CodeQL, context and task-index checks. Self-review PASS is bound to head ace9c25219188ce995697472a4a0a0b6e09bd678 and diff SHA-256 af8ace13304ba7226ed5b353bb8a7cb6cdd85ef3774ec8172f37e654295e8929. Bureau closeout validation also passed Ruff, 806 tests, the Systemkatalog boundary, registry validity and SQLite integrity; receipt SHA-256 9808c2adddc8a1572be74d55bf4e995c068beac306470e0ab59ddfbdcaa966e1."
+    },
+    "verified_at": "2026-07-24T15:46:55+02:00"
+  },
   "priority": {
     "lane": "later",
     "rank": 61
   },
-  "goal": "Den fail-closed Fleet-Publisher-Blocker für nicht leere managed build residue in RepoGround-Quellworktrees so klären, dass legitime fremde oder aktive Build-Zustände niemals blind gelöscht werden, veraltete verwaltete Residuen aber provenance-gebunden diagnostiziert und über einen sicheren Cleanup- oder Quarantänepfad aufgelöst werden können.",
-  "depends_on": [],
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/repoground",
-    "grabowski_resources": [
-      "repo:/home/alex/repos/repoground"
-    ]
-  },
-  "claims": [
-    {
-      "resource": "repo.repoground",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
-      "resource": "repo.grabowski",
-      "mode": "read",
-      "isolation": "none"
-    }
-  ],
   "required_capabilities": [
     "repository",
     "python",
@@ -38,44 +177,7 @@
     "bounded-io",
     "worktree-hygiene"
   ],
-  "acceptance": [
-    {
-      "id": "reproduce-and-classify",
-      "assertion": "Der Blocker managed build residue is not empty wird mit gebundener Pfad-, Repository-, Ref- und Prozess-/Lease-Evidenz reproduziert und als verwaltet-veraltet, aktiv-legitim oder unbekannt klassifiziert."
-    },
-    {
-      "id": "no-blind-delete",
-      "assertion": "Unbekannte, fremde, aktive oder lease-gebundene Build-Residuen werden niemals automatisch gelöscht, resettet oder übernommen."
-    },
-    {
-      "id": "safe-remediation",
-      "assertion": "Für eindeutig veraltete, vom Publisher selbst verwaltete Residuen existiert ein atomarer, nachvollziehbarer Cleanup- oder Quarantänepfad; unklare Fälle bleiben fail-closed."
-    },
-    {
-      "id": "publisher-recovery",
-      "assertion": "Ein kontrollierter Fleet-Lauf kann nach sicherer Remediation das betroffene Repository wieder verarbeiten oder liefert einen präzisen maschinenlesbaren Blocker ohne Nebenwirkungen."
-    },
-    {
-      "id": "tests-review",
-      "assertion": "Regressionstests decken aktive/fremde/veraltete Build-Residuen und Race-/Symlink-Grenzen ab; relevante Fleet-Suites und Review-Gates sind grün."
-    }
-  ],
-  "metadata": {
-    "registered_from_task": "REPOGROUND-AGENT-UTILITY-V1-T008",
-    "source_observation": {
-      "observed_at": "2026-07-23T02:10:35Z",
-      "fleet_status": "warn",
-      "failed_repository": "heimgewebe/grabowski",
-      "error": "managed build residue is not empty; refusing cleanup: /home/alex/repos/.repoground-sources/heimgewebe__grabowski__main/build",
-      "publisher_behavior": "fail-closed; no cleanup was performed"
-    },
-    "scope_reason": "T008 scheduling fairness is verified independently. This follow-up isolates the pre-existing source-worktree hygiene blocker and explicitly forbids treating it as permission to mutate foreign state.",
-    "does_not_establish": [
-      "residue is stale",
-      "cleanup is safe",
-      "grabowski repository is dirty",
-      "permission to delete build outputs",
-      "T008 failure"
-    ]
-  }
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Fleet-Publisher: fremde Build-Residuen sicher diagnostizieren und aufl\u00f6sen"
 }

@@ -1,0 +1,102 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Alle lokalen Proof-Lifecycle-Artefakte der kind- und HA-Referenzpfade — Ownership-Marker, temporäre Markerdateien, Lockdateien, Kubeconfigs, Receipts und relevante Cacheeinträge — sind gegen ihren Erzeugungs-, Crash-, Cleanup- und Retention-Vertrag inventarisiert; bereits sichere oder absichtlich persistente Artefakte werden nicht unnötig umgebaut.",
+      "id": "artifact-inventory"
+    },
+    {
+      "assertion": "SIGKILL-, Prozessabbruch- und Publish-Fehler können keine unbegrenzt anwachsenden oder den sicheren Wiederanlauf dauerhaft blockierenden Temp-/Cacheartefakte hinterlassen; Recovery bleibt fail-closed und löscht niemals fremde oder nicht exakt zuordenbare Ressourcen.",
+      "id": "crash-recovery"
+    },
+    {
+      "assertion": "Proof-Receipts sind mindestens an Owner- oder eindeutige Lifecycle-Identität gebunden, sodass wiederholte Läufe mit gleichem Cluster und Commit, aber unterschiedlichem Owner keine lokale Evidenz überschreiben oder mehrdeutig machen.",
+      "id": "receipt-identity"
+    },
+    {
+      "assertion": "Persistente per-Cluster-Lockdateien oder ein Ersatzmechanismus besitzen einen dokumentierten und race-sicheren Lifecycle; eine Bereinigung führt insbesondere nicht durch Inode-Austausch zu flock-Split-Brain zwischen Wartenden.",
+      "id": "lock-retention"
+    },
+    {
+      "assertion": "Gezielte Crash-, Concurrency- und Wiederanlauf-Tests decken konkurrierende Reservationen, SIGKILL-/Tempmarker-Reste, Receipt-Kollisionen und den gewählten Lock-/Cache-Lifecycle reproduzierbar ab.",
+      "id": "regression-tests"
+    },
+    {
+      "assertion": "Der finale Head ist diffgebunden reviewt; relevante Python-, Contract-, Concurrency-, kind- und HA-Prüfungen sind grün, und PR #1556 bleibt als historisch gebundener Ownership-/Cleanup-Beleg unverändert gültig.",
+      "id": "exact-review"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T004"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer am 2026-07-24 mit @grabowski umsetzen zur Kanonisierung der nach PR #1556 verbliebenen Kubernetes-Proof-Lifecycle-Folgearbeiten autorisiert. Umsetzung muss isoliert, current-head-gebunden, diffreviewt und durch relevante Contract-/Concurrency-/Kubernetes-Gates belegt werden.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die nach PR #1556 verbleibenden lokalen Lifecycle-Risiken der Kubernetes- und HA-Proofs systematisch schließen: Proof-Cache- und Restartefakte inventarisieren, SIGKILL-/Crash-Reste sicher behandeln, Receipt-Kollisionen zwischen gleichen Cluster-/Commit-Bindungen verschiedener Owner verhindern und persistente Lock-/Temp-Artefakte begrenzen, ohne die fail-closed Exact-Ownership-Semantik abzuschwächen.",
+  "id": "WELTGEWEBE-OS-V1-T041",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-5cc85ed814b7ec8ab6a5857c",
+    "does_not_establish": [
+      "permission to delete foreign proof artifacts",
+      "permission to weaken exact ownership binding",
+      "automatic implementation readiness without current-head recheck"
+    ],
+    "registry_refresh_reason": "Reproposed after unrelated Bureau main advance from ae869acb18e0e0dfc220f6e33c3ef465c65fb3ab to c179c26066721386a7033f8c0eed3967839d1f73 before publication; source and task semantics otherwise unchanged.",
+    "source_context": "Residual review findings after Kubernetes proof lifecycle hardening",
+    "source_event_id": 1056,
+    "source_head": "6cddbb5dea5c6b82fe1f133ae2086d0c1a62a923",
+    "source_merge_commit": "c9727a600fe7340978a93fe2b8b829c96417b058",
+    "source_pr": "heimgewebe/weltgewebe#1556",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-5cc85ed814b7ec8ab6a5857c",
+      "event_id": 1056,
+      "event_created_at": "2026-07-23T18:07:36.762528Z",
+      "request_sha256": "0f84848912720c432ebe727829067b230f9dcd206326ec748b8a967ab41e6b7a",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "review-reconciliation",
+        "locator": "github:heimgewebe/weltgewebe#1556@05fd25c2c61eb5d17bb67d93e2e257b80840f4f9",
+        "observed_at": "2026-07-23T18:07:36.753760Z",
+        "sha256": "21ce88121f243f68a220ab2c677fa9b3e739de0d84395fd6ed9312fae680f05d"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 41
+  },
+  "required_capabilities": [
+    "repository",
+    "kubernetes",
+    "python",
+    "concurrency",
+    "filesystem",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Kubernetes-Proof-Cache- und Restartefakt-Lifecycle härten"
+}

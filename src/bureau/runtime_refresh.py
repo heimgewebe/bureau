@@ -378,6 +378,26 @@ def observe_runtime_refresh(
     else:
         status = "candidate"
 
+    if status in {"candidate", "alert"}:
+        recovery_action = {
+            "action": "prepare-intent",
+            "eligible": True,
+            "requires_authorization": True,
+        }
+    elif status == "blocked":
+        recovery_action = {
+            "action": "resolve-reason-codes",
+            "eligible": False,
+            "reason_codes": list(reasons),
+            "requires_authorization": False,
+        }
+    else:
+        recovery_action = {
+            "action": "none",
+            "eligible": False,
+            "requires_authorization": False,
+        }
+
     observation: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "kind": "bureau_runtime_refresh_observation",
@@ -394,6 +414,7 @@ def observe_runtime_refresh(
         "slo_seconds": slo_seconds,
         "status": status,
         "reason_codes": reasons,
+        "recovery_action": recovery_action,
         "observed_at": isoformat(observed_at),
         "does_not_establish": [
             "deployment_authority",

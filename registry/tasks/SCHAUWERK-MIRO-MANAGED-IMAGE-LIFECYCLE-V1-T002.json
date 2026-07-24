@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "SCHAUWERK-MIRO-MANAGED-IMAGE-LIFECYCLE-V1-T002",
+  "initiative": "SCHAUWERK-MIRO-MANAGED-IMAGE-LIFECYCLE-V1",
+  "title": "Diagnose local Python 3.12 thread bootstrap failure in Schauwerk runtime",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 531
+  },
+  "goal": "Diagnose and remove the heim-pc-local Python 3.12 runtime condition that makes a fresh thread fail with RuntimeError: can't start new thread and can therefore break the normal Schauwerk REST doctor path, without weakening REST authorization checks or changing provider credentials.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Observed during T001. System Python 3.10 and an isolated Python 3.11 runtime could create threads and complete the REST doctor; the project Python 3.12 environment could not create one thread. Diagnose host/interpreter/runtime state before changing anything. Do not rotate Miro credentials or weaken doctor checks."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "python",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "reproduce",
+      "assertion": "The Python 3.12 thread-start failure is reproduced or explicitly disproven on a fresh current Schauwerk main with process, cgroup, memory and interpreter evidence."
+    },
+    {
+      "id": "root-cause",
+      "assertion": "The root cause is identified at interpreter, virtualenv, libc, cgroup, process-resource or host-runtime level without guessing from the REST provider response."
+    },
+    {
+      "id": "normal-path",
+      "assertion": "The normal project runtime can start required worker threads and `schauwerk miro rest doctor --require-write --json` no longer fails locally before network I/O."
+    },
+    {
+      "id": "no-security-regression",
+      "assertion": "The fix does not bypass live REST authorization, reuse MCP OAuth or relax boards:write requirements."
+    }
+  ],
+  "depends_on": [
+    "SCHAUWERK-MIRO-MANAGED-IMAGE-LIFECYCLE-V1-T001"
+  ],
+  "metadata": {
+    "registered_at": "2026-07-24",
+    "source_task": "SCHAUWERK-MIRO-MANAGED-IMAGE-LIFECYCLE-V1-T001",
+    "source_repository": "heimgewebe/schauwerk",
+    "source_finding": "During T001, the project uv-managed Python 3.12.12 environment raised RuntimeError: can't start new thread before the REST doctor could perform a trustworthy live check. System Python 3.10 could start a thread; an isolated Python 3.11 environment completed the doctor successfully. Host readback did not indicate an obvious PID or memory ceiling.",
+    "does_not_establish": [
+      "a Miro REST authorization failure",
+      "that Python 3.12 is generally unsupported",
+      "permission to recreate credentials or weaken live authorization checks"
+    ]
+  }
+}

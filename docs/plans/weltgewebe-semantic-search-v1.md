@@ -138,8 +138,8 @@ Brauchbare SemantAH-Konzepte wie Providergrenzen, Dimensionsprüfung, Normalisie
 4. **T004 – interner Embedding- und Ranking-Kern – verifiziert:** PR #1502 und Hardening-PR #1506 liefern Provider-, Normalisierungs-, Dimensions-, Generations- und Hybrid-Ranking-Beleg; 4B ist kleinster qualifizierter lokaler Kandidat, 8B Vergleichsobergrenze.
 5. **T005 – idempotente Projektion, Worker, Backfill und Löschfortpflanzung – verifiziert:** PR #1529 liefert revisionssichere Multi-Instance-Verarbeitung, lokalen Backfill und reproduzierbaren Neuaufbau.
 6. **T006 – hybride serverseitige Such-API – verifiziert:** PR #1546 bindet autoritative Sichtbarkeit und Autorisierung vor Retrieval, wahrt das lexikalische PostgreSQL-Ranking und ergänzt Semantik nur nach dem T004-Vertrag.
-7. **T007 – Websuche und „Ähnliche Knoten“ – aktuell:** Suchoberfläche integrieren und maschinelle Ähnlichkeit klar von Beziehungen trennen.
-8. **T008 – vollständige Abnahme, direkter Rollout und öffentlicher Live-Beweis:** grüne CI, direkter Rollout, öffentlicher Readback und Betriebsbelege.
+7. **T007 – Websuche und „Ähnliche Knoten“ – verifiziert:** PR #1557 nutzt die autorisierte T006-Serversuche als primären Knotensuchpfad und trennt maschinelle Ähnlichkeit klar von Beziehungen.
+8. **T008 – vollständige Abnahme, direkter Rollout und öffentlicher Live-Beweis – aktuell:** grüne CI, direkter Rollout, öffentlicher Readback und Betriebsbelege.
 9. **T009 – SemantAH stilllegen und bereinigen:** erst nach T008 Runtime-Rollen entfernen, Repository archivieren und Bureau/Systemkatalog nachziehen.
 
 Nach öffentlichem T008-Beweis supersedet oder schließt T009 `SEMANTAH-USEFULNESS-V1`, `SEMANTAH-INDEXD-SCALING-V1` und `SEMANTAH-E2E-PORTABILITY-V1`. Vorher bleiben Repository, Initiativen und aktive SemantAH-Rollen unverändert.
@@ -152,7 +152,9 @@ Nach öffentlichem T008-Beweis supersedet oder schließt T009 `SEMANTAH-USEFULNE
 - **T004 ist verifiziert:** PR #1502 wurde mit Head `9fbc592d3301d3c156a931ed18112a76ff55e1da` als `9f44895337b2ecf97f83a125ca30f1247d98745f` gemergt. PR #1506 wurde mit Head `fc710aa4c0d0819d4acaef5b0034f8d88a9eb6b2` als `4c6ef9e8fec0a2b17cc5babb5b0e02798002b89b` gemergt. Die finalen erforderlichen Gates waren grün; frühere fehlgeschlagene oder abgebrochene Review-Evidence-Läufe wurden nicht als Mergebeleg verwendet.
 - **T005 ist verifiziert:** PR #1529 ist gemergt; der geprüfte PR-Head und der Merge-Commit besitzen denselben vollständigen Git-Tree. Die Projektion bleibt bei unbekannter Sichtbarkeit fail-closed.
 - **T006 ist verifiziert:** PR #1546 wurde mit finalem Head `035611b34a94abfd2f30803358e8b2a70913e0cb` als `059882cd49ee31b0b09815626f374860149174bd` gemergt. Der 73.307-Byte-Binärdiff ist an SHA-256 `0e55964ca9253cf24ba72f93595a54bf5a83af2e4b4ceecdc5282b68335f7cd3` gebunden; geprüfter Head-Tree und Main-Tree sind identisch.
-- **T007 ist aktuell:** Die Websuche wird auf die T006-Server-API umgestellt und „Ähnliche Knoten“ wird als getrennte maschinelle Ähnlichkeitsoberfläche integriert.
+- **T007 ist verifiziert:** PR #1557 wurde mit Head `508599ed5d84c7ca1c3560e77b39179c00aca058` als Merge-Commit `592954c3f91b466313b3013eca7284b62371a3fa` gemergt. Der GitHub-API-Diff ist an SHA-256 `4d549c19901f0f7add004adfe1137743cd8714cb5d1540d6ab13200d86aea5e9` gebunden; Correctness- und Accessibility-Review, Required Review Evidence Gate, Required Merge Gate, 193 Web-Unit-Tests und Svelte-Check 0/0 waren grün. Der Main-Tree ist identisch zum geprüften Head-Tree. T007 führte keinen direkten Produktionsrollout aus.
+- **T008 ist aktuell:** Der planmäßig nächste Schritt ist die vollständige Abnahme mit commitgebundenem direkten Rollout und öffentlichem Live-Beweis. Die Taskdatei wurde beim T007-Closeout materialisiert; ihre Registrierung allein autorisiert keinen blinden Runtime-Effekt.
+- **T009 ist materialisiert und bleibt nachgelagert:** SemantAH-Cutover und Archivierung bleiben strikt von verified T008 abhängig.
 - **T010/T011 sind Review-Follow-ups:** T010 untersucht einen skalierbaren autorisierten Retrievalpfad jenseits der fail-closed 1000er-Grenze; T011 härtet literale Titelpräfixe gegen unbeabsichtigte `%`-/`_`-LIKE-Wildcards. Beide blockieren T007 nicht.
 - **SemantAH bleibt unverändert:** keine Archivierung, keine Runtime-Entfernung und keine Bereinigung vor T008/T009.
 

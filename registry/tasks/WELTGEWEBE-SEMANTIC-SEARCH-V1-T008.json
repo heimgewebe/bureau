@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T008",
+  "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
+  "title": "Vollständige Abnahme, direkter Rollout und öffentlicher Live-Beweis",
+  "state": "ready",
+  "goal": "Den bis T007 verifizierten Semantic-Search-Stand über den bestehenden commitgebundenen Weltgewebe-Deploypfad kontrolliert ausrollen und öffentlich belegen, dass API-Suche und Weboberflächen live, gesund und auf dem erwarteten Commitstand laufen, ohne SemantAH bereits stillzulegen.",
+  "priority": {
+    "lane": "now",
+    "rank": 70
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Aus dem seit T001 kanonischen Semantic-Search-Plan materialisiert. Registrierung und T007-Closeout autorisieren keinen blinden Produktionsdeploy: vor jedem Runtime-Effekt sind frischer Livezustand, exakte Commitbindung, Deploy-/Recovery-Gates und aktuelle Operatorautorität erneut zu prüfen."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "deployment",
+    "runtime-observability",
+    "search-ranking",
+    "authorization",
+    "privacy",
+    "rollback",
+    "testing",
+    "grabowski"
+  ],
+  "depends_on": [
+    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T007"
+  ],
+  "acceptance": [
+    {
+      "id": "fresh-production-preflight",
+      "assertion": "Vor jedem Effekt werden Weltgewebe main, offene PRs, erforderliche CI, Deploy-/Reconciler-Zustand, laufende Tasks, Leases, Worktrees und Produktionsgesundheit frisch gelesen; unbekannte oder widersprüchliche Zustände blockieren den Rollout."
+    },
+    {
+      "id": "commit-bound-direct-rollout",
+      "assertion": "Der Rollout nutzt ausschließlich den bestehenden commitgebundenen Weltgewebe-Deploy-/Reconciler-Vertrag; das ausgerollte Artefakt ist auf einen main-Commit gebunden, der T007-Merge 592954c3f91b466313b3013eca7284b62371a3fa enthält."
+    },
+    {
+      "id": "search-projection-ready",
+      "assertion": "Vor dem öffentlichen Suchbeweis sind die für T005/T006 erforderliche PostgreSQL-Projektion, aktive Generation und Worker-/Backfill-Grenzen im Zielsystem gesund oder reproduzierbar hergestellt; fehlende Voraussetzungen werden nicht durch einen UI-only Erfolg kaschiert."
+    },
+    {
+      "id": "public-version-readback",
+      "assertion": "Öffentliche Version-/Health-Endpunkte belegen nach Rollout den tatsächlich ausgelieferten Commit und gesunde Root-, Map- und API-Pfade; der gelesene Live-Commit enthält den T007-Merge als Vorfahren."
+    },
+    {
+      "id": "public-search-live-proof",
+      "assertion": "Kontrollierte öffentliche Suchanfragen belegen, dass die Websuche den Serverpfad nutzt, sichtbare Knoten navigierbar sind und Fehler-/Leer-/Fallbackzustände nicht auf einen unsicheren Client-Knotendump zurückfallen."
+    },
+    {
+      "id": "similar-nodes-live-proof",
+      "assertion": "Für einen geeigneten öffentlichen Knoten ist die getrennte Oberfläche Ähnliche Knoten live erreichbar, als maschinell berechnet gekennzeichnet und erzeugt weder Fäden noch andere relationale Zustände."
+    },
+    {
+      "id": "authorization-boundary-preserved",
+      "assertion": "Kontrollierte negative Prüfungen bestätigen, dass verborgene, private, entzogene, gelöschte oder stale Inhalte nicht über den Live-Suchpfad erscheinen; unbekannte Zustände bleiben fail-closed."
+    },
+    {
+      "id": "operational-health-and-recovery",
+      "assertion": "Deploy-, API-, Web-, PostgreSQL- und relevante Reconciler-/Worker-Signale bleiben nach Rollout gesund; Recovery-/Rollbackpfad ist commitgebunden und ohne Datenwahrheitsbruch verfügbar."
+    },
+    {
+      "id": "no-semantah-retirement",
+      "assertion": "T008 archiviert oder entfernt SemantAH noch nicht und schließt keine SemantAH-Initiative; diese Effekte bleiben strikt T009 nach verifiziertem öffentlichen Live-Beweis vorbehalten."
+    },
+    {
+      "id": "evidence-bound-closeout",
+      "assertion": "T008 wird erst verified, wenn Deployidentität, öffentlicher Live-Readback, relevante Betriebsbelege und Post-Effect-Readback unveränderlich dokumentiert und in Bureau zurückgeschrieben sind."
+    }
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "task_profile": "security_or_runtime_change",
+    "skip_reason": "live_first_primary",
+    "note": "Produktionsruntime, Deployidentität, öffentliche Endpunkte, PostgreSQL-/Workerzustand und Recovery müssen direkt und zeitnah geprüft werden; Repository-Kontext allein genügt nicht."
+  },
+  "metadata": {
+    "source": "canonical_semantic_search_plan_materialized_during_t007_closeout",
+    "registered_at": "2026-07-24",
+    "predecessor": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T007",
+    "stage": "production-rollout-and-public-live-proof",
+    "does_not_establish": [
+      "successful production rollout",
+      "public live proof before execution",
+      "permission to bypass deployment gates",
+      "SemantAH archive authority",
+      "permission to expose private data in live tests"
+    ]
+  }
+}

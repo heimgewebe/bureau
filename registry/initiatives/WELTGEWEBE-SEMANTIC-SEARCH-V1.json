@@ -54,10 +54,11 @@
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T003",
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T004",
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T005",
-        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T006"
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T006",
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T007"
       ],
-      "current_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T007",
-      "updated_at": "2026-07-23",
+      "current_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T008",
+      "updated_at": "2026-07-24",
       "t001_merge_commit": "f00afacc7be4cc551c81c5511faf5f817b04f700",
       "t002_merge_commit": "adc060cfbb9d055a7b63c494fa042e7c57ca7bea",
       "t002_pull_request": 1495,
@@ -133,7 +134,23 @@
       "t006_followups": [
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T010",
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T011"
-      ]
+      ],
+      "t007_primary": {
+        "pull_request": 1557,
+        "head_sha": "508599ed5d84c7ca1c3560e77b39179c00aca058",
+        "merge_commit": "592954c3f91b466313b3013eca7284b62371a3fa",
+        "github_diff_sha256": "4d549c19901f0f7add004adfe1137743cd8714cb5d1540d6ab13200d86aea5e9",
+        "reviewed_tree_sha": "eff60f6942e7344d490a4baffb80f6bf3d48d488",
+        "main_tree_sha": "eff60f6942e7344d490a4baffb80f6bf3d48d488",
+        "review_axes": [
+          "correctness",
+          "accessibility"
+        ],
+        "required_review_evidence_gate": "pass",
+        "required_merge_gate": "pass"
+      },
+      "t007_scope": "authorized server search as primary node-search path plus clearly separated read-only similar-nodes UI; no production rollout or SemantAH retirement",
+      "t008_t009_materialized_at": "2026-07-24"
     }
   }
 }

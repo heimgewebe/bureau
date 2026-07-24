@@ -3,11 +3,11 @@
   "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T007",
   "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
   "title": "Websuche und klar getrennte Oberfläche „Ähnliche Knoten“",
-  "state": "ready",
+  "state": "verified",
   "goal": "Die verifizierte T006-Such-API in die Weltgewebe-Weboberfläche integrieren, die bestehende Suche serverseitig und sichtbarkeitsgebunden machen und eine klar als maschinell berechnet gekennzeichnete Oberfläche „Ähnliche Knoten“ einführen, ohne Ähnlichkeit als Faden, Beziehung oder gemeinsame Autorenschaft darzustellen.",
   "priority": {
-    "lane": "now",
-    "rank": 60
+    "lane": "later",
+    "rank": 900
   },
   "execution": {
     "mode": "interactive-agent",
@@ -101,6 +101,61 @@
       "SemantAH archive authority",
       "ANN or HNSW",
       "automatic relation mutations"
-    ]
+    ],
+    "verified_at": "2026-07-24",
+    "outcome": "Weltgewebe-PR #1557 integriert die autorisierte T006-Serversuche als maßgeblichen Knoten-Suchpfad in die Weboberfläche und ergänzt eine getrennte, ausdrücklich maschinell berechnete Oberfläche „Ähnliche Knoten“. Garnrollen bleiben als eigener lokaler öffentlicher Markertyp suchbar; bei API-Fehlern gibt es keinen unsicheren Rückfall auf einen clientseitigen Knotendump. T007 verändert keine Fäden oder Beziehungen und führt keinen Produktionsrollout aus.",
+    "implementation": {
+      "repository": "heimgewebe/weltgewebe",
+      "pull_request": 1557,
+      "base_sha": "51f21864b4d728a0dff810c19dd0efe705a69ccb",
+      "final_head_sha": "508599ed5d84c7ca1c3560e77b39179c00aca058",
+      "merge_commit": "592954c3f91b466313b3013eca7284b62371a3fa",
+      "merged_at": "2026-07-24T01:44:58Z",
+      "github_diff_sha256": "4d549c19901f0f7add004adfe1137743cd8714cb5d1540d6ab13200d86aea5e9",
+      "github_diff_bytes": 39552,
+      "local_review_diff_sha256": "0d988060a50e100fb87d32ae7cfba91aabb78ee989e73e23e41dd71196c91854",
+      "local_review_diff_bytes": 39530,
+      "reviewed_tree_sha": "eff60f6942e7344d490a4baffb80f6bf3d48d488",
+      "main_readback_sha": "592954c3f91b466313b3013eca7284b62371a3fa",
+      "main_tree_sha": "eff60f6942e7344d490a4baffb80f6bf3d48d488"
+    },
+    "validation": {
+      "review_axes": [
+        "correctness",
+        "accessibility"
+      ],
+      "required_review_evidence_gate": "pass",
+      "required_merge_gate": "pass",
+      "local_web_unit_tests": "193 passed",
+      "svelte_check": "0 errors, 0 warnings",
+      "git_diff_check": "pass",
+      "post_merge_head_is_ancestor_of_main": true,
+      "post_merge_ci": {
+        "web_e2e": "success",
+        "ci": "success",
+        "build_and_lint": "success",
+        "postgresql_integration_proofs": "success",
+        "core_guard_tests": "success",
+        "codeql": "success",
+        "kind_gitops_proof": "success",
+        "kind_ha_recovery_proof": "success"
+      }
+    },
+    "verified_acceptance": {
+      "server-search-primary": "PASS: Knotensuche läuft über /api/search mit credentials=include; clientseitige Suche bleibt auf öffentliche Garnrollenmarker begrenzt.",
+      "existing-filter-parity": "PASS: Knotenartfilter werden deterministisch als T006-kinds-CSV abgebildet; Garnrolle bleibt ein klar separater lokaler Filtertyp.",
+      "visibility-bound-ui": "PASS: Knotenresultate werden ausschließlich aus der autorisierten Serverantwort erzeugt; bei Serverfehler wird kein lokaler Knotendump durchsucht.",
+      "similar-nodes-separate": "PASS: Die Node-Panel-Oberfläche kennzeichnet Ähnliche Knoten ausdrücklich als maschinelle Vorschläge und trennt sie von Fäden, Beziehungen und Autorenschaft.",
+      "no-fabricated-relations": "PASS: Die Implementierung ist read-only und erzeugt oder verändert keine Fäden, Beziehungen, Knoten oder Governance-Zustände.",
+      "loading-empty-error-fallback": "PASS: Laden, Leerzustand, Fehler und lexical_fallback sind sichtbar; stale Responses werden per AbortController und Sequenzbindung verworfen.",
+      "accessible-responsive": "PASS: Tastatur-/ARIA-Statuspfade und Svelte-Checks sind grün; fokussiertes Accessibility-Review wurde vom exakten R2-Review-Gate akzeptiert.",
+      "api-contract-tests": "PASS: 193 Web-Unit-Tests, Svelte-Check 0/0 und grüne PostgreSQL-/Web-E2E-/CI-Gates belegen Request-, Fehler- und Navigationsvertrag.",
+      "repository-gates": "PASS: PR-Head 508599ed ist an GitHub-Diff 4d549c19 gebunden; zwei exakte R2-Reviews, Required Review Evidence Gate und Required Merge Gate sind grün; Main enthält den geprüften Head mit identischem Tree.",
+      "no-production-rollout": "PASS: T007 wurde nur in main gemergt; kein direkter Produktionsrollout oder SemantAH-Cutover wurde in diesem Closeout ausgeführt."
+    },
+    "verification": {
+      "task_sha256": "58bc6a84ef0b0f66cfff974395e4c2b307574a1272af0c637c5e0bc9857ba6f6",
+      "plan_sha256": "18002b2b2def870ec6e5dd91cd15d19aaade6f053cac144ca85e2862234a709e"
+    }
   }
 }

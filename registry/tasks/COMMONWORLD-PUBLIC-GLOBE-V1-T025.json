@@ -1,0 +1,99 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Only the verified pre-scenario Chromium/MapLibre fragment-shader compilation startup signature is classified as retryable; unrelated console errors, page errors, assertion failures and post-start failures remain terminal.",
+      "id": "exact-flake-classification"
+    },
+    {
+      "assertion": "The browser-smoke runner performs at most one fresh browser retry for the exact retryable startup signature and records both attempts; no unbounded or generic retry loop is introduced.",
+      "id": "bounded-retry"
+    },
+    {
+      "assertion": "A repeated shader startup failure and every non-classified failure still fail the smoke command and CI with explicit diagnostic evidence.",
+      "id": "fail-closed-semantics"
+    },
+    {
+      "assertion": "Focused automated tests cover retryable-signature detection, non-retryable failures, one-retry success and retry exhaustion without depending on a naturally occurring GPU flake.",
+      "id": "deterministic-tests"
+    },
+    {
+      "assertion": "The full Commonworld browser-smoke suite passes after the hardening and continues to exercise intent search, map and layer journeys, representative device viewports and accessibility paths.",
+      "id": "browser-validation"
+    },
+    {
+      "assertion": "Closeout binds the exact implementation diff and head, green required CI and the resulting merge commit; it explicitly does not claim that Chromium or GPU shader compilation can never fail.",
+      "id": "closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Follow-up from Commonworld PR #134 validation. Retry logic must be narrowly signature-bound and bounded; it must not mask product regressions or general browser failures.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Make Commonworld browser-smoke execution resilient to the specifically observed intermittent Chromium/MapLibre fragment-shader compilation failure at browser startup, while remaining fail-closed for genuine application, assertion, navigation and rendering failures.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T025",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "a generic right to retry browser failures",
+      "that every shader compilation error is transient",
+      "that application rendering failures may be ignored",
+      "a Chromium or MapLibre upstream root-cause fix"
+    ],
+    "observed_limit": "Repeated unchanged public browser-smoke runs intermittently failed before scenario start with a Chromium/MapLibre fragment-shader compile error, while later unchanged retries completed the entire smoke suite.",
+    "queue_mutated": false,
+    "registered_at": "2026-07-24",
+    "source": "Commonworld PR #134 validation follow-up",
+    "source_pr": 134,
+    "source_repository": "heimgewebe/commonworld",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-1c307633fc161bdc847f12d0",
+      "event_id": 1083,
+      "event_created_at": "2026-07-24T01:54:29.994236Z",
+      "request_sha256": "266f06c37fb89aa90ce3a0027749f82fe993aac2cd5555393e54f8ddacf4332f",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chatgpt:commonworld-optimize-20260724",
+        "observed_at": "2026-07-24T03:49:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 970
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Harden browser smoke against transient Chromium shader startup failures"
+}

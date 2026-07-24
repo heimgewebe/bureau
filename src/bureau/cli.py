@@ -293,11 +293,9 @@ def parser() -> argparse.ArgumentParser:
     claim_commit = sub.add_parser("claim-commit")
     claim_commit.add_argument("--intent", required=True)
     claim_commit.add_argument("--lease-binding")
-    claim_commit.add_argument("--resource-db")
     claim_commit.add_argument("--workspace", action="store_true")
     claim_status = sub.add_parser("claim-coordination-status")
     claim_status.add_argument("run_id")
-    claim_status.add_argument("--resource-db")
     claim = sub.add_parser("claim-next")
     claim.add_argument("--worker", required=True)
     claim.add_argument("--kind", default="interactive-agent")
@@ -1068,26 +1066,24 @@ def main(argv: list[str] | None = None) -> int:
                 if args.lease_binding
                 else None
             )
-            resource_db = (
-                Path(args.resource_db).expanduser()
-                if args.resource_db
-                else DEFAULT_GRABOWSKI_RESOURCE_DB
-            )
             if args.workspace:
                 value = dispatcher.checkout_claim_intent(
-                    intent, lease_binding, resource_db=resource_db
+                    intent,
+                    lease_binding,
+                    resource_db=DEFAULT_GRABOWSKI_RESOURCE_DB,
                 )
             else:
                 value = dispatcher.commit_claim_intent(
-                    intent, lease_binding, resource_db=resource_db
+                    intent,
+                    lease_binding,
+                    resource_db=DEFAULT_GRABOWSKI_RESOURCE_DB,
                 )
         elif args.command == "claim-coordination-status":
-            resource_db = (
-                Path(args.resource_db).expanduser()
-                if args.resource_db
-                else DEFAULT_GRABOWSKI_RESOURCE_DB
+            value = coordinated_claim_status(
+                store,
+                args.run_id,
+                resource_db=DEFAULT_GRABOWSKI_RESOURCE_DB,
             )
-            value = coordinated_claim_status(store, args.run_id, resource_db=resource_db)
         elif args.command == "claim-next":
             try:
                 value = dispatcher.claim_next(

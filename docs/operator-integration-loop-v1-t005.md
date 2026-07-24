@@ -26,8 +26,8 @@ Bureau bleibt die einzige Wahrheit für Taskauswahl, Run, Reservierungen und Abs
 ## CLI
 
 - `claim-intent`: read-only Planung; Review-before-effect wird nur mit explizitem `--approve` und run-/taskgebundener Evidenz zugelassen.
-- `claim-commit`: effectful Commit eines exakten Intent- und Lease-Bindings; optional mit `--workspace`.
-- `claim-coordination-status`: read-only Recovery- und Releaseprojektion.
+- `claim-commit`: effectful Commit eines exakten Intent- und Lease-Bindings; optional mit `--workspace`. Der Produktionspfad liest ausschließlich die kanonische Grabowski-Ressourcendatenbank; ein alternativer Datenbankpfad ist über die CLI nicht akzeptiert.
+- `claim-coordination-status`: read-only Recovery- und Releaseprojektion gegen dieselbe kanonische Grabowski-Ressourcendatenbank.
 
 ## Recovery
 

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 import subprocess
+import time
 from pathlib import Path
 
 import pytest
@@ -12,6 +14,7 @@ from bureau import v2 as bureau_v2
 from bureau.adapters import AdapterRegistry, Observation
 from bureau.core import (
     Dispatcher,
+    NoEligibleTask,
     Registry,
     StateError,
     StateStore,
@@ -24,7 +27,12 @@ from bureau.core import (
     verification_stamp,
     workspace_status,
 )
-from bureau.v2 import plan_sha256, runtime_drift_check, task_revision_sha256
+from bureau.v2 import (
+    coordinated_claim_status,
+    plan_sha256,
+    runtime_drift_check,
+    task_revision_sha256,
+)
 
 
 class FakeAdapter:
@@ -2054,3 +2062,330 @@ def test_doctor_warns_then_blocks_deprecated_global_bureau_lease(
     blocked = Dispatcher(registry, store).doctor()
     assert blocked["healthy"] is False
     assert blocked["lease_scope_blockers"][0]["task_id"] == task_id
+
+
+def prepare_coordinated_registry(root: Path) -> str:
+    task_path = next((root / "registry/tasks").glob("*.json"))
+    task = json.loads(task_path.read_text())
+    task["execution"]["policy"] = "review-before-effect"
+    task["execution"]["grabowski_resources"] = [f"path:{root / 'leased-component'}"]
+    task_path.write_text(json.dumps(task))
+    init_clean_origin_main(root)
+    return task["id"]
+
+
+def coordinated_lease_database(
+    root: Path,
+    intent: dict,
+    *,
+    omit: set[str] | None = None,
+    metadata: dict | None = None,
+) -> tuple[dict, Path]:
+    database = root / "resources.sqlite3"
+    database.parent.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(database)
+    connection.execute("CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+    connection.execute("INSERT INTO metadata VALUES ('schema_version', '1')")
+    connection.execute(
+        """
+        CREATE TABLE leases (
+            resource_key TEXT PRIMARY KEY,
+            owner_id TEXT NOT NULL,
+            purpose TEXT NOT NULL,
+            acquired_at_unix INTEGER NOT NULL,
+            updated_at_unix INTEGER NOT NULL,
+            expires_at_unix INTEGER NOT NULL,
+            metadata_sha256 TEXT NOT NULL,
+            metadata_json TEXT NOT NULL,
+            reclaimed_from_owner TEXT
+        )
+        """
+    )
+    now = int(time.time())
+    bound_metadata = metadata or {
+        "task_id": intent["task_id"],
+        "run_id": intent["run_id"],
+        "claim_intent_sha256": intent["intent_sha256"],
+    }
+    metadata_json = json.dumps(
+        bound_metadata,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    )
+    digest = hashlib.sha256(metadata_json.encode()).hexdigest()
+    for key in intent["required_resource_keys"]:
+        if key in (omit or set()):
+            continue
+        connection.execute(
+            "INSERT INTO leases VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)",
+            (
+                key,
+                intent["lease_owner_id"],
+                "coordinated test",
+                now - 30,
+                now - 30,
+                now + 3600,
+                digest,
+                metadata_json,
+            ),
+        )
+    connection.commit()
+    connection.close()
+    database.chmod(0o600)
+    return {
+        "owner_id": intent["lease_owner_id"],
+        "task_id": intent["task_id"],
+    }, database
+
+
+def test_coordinated_claim_intent_is_read_only_and_requires_approval(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    with pytest.raises(NoEligibleTask, match="review-before-effect"):
+        dispatcher.claim_intent(
+            "operator",
+            ("repository",),
+            task_id=task_id,
+            approved=False,
+        )
+    assert store.list_runs() == []
+    result = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        base_dir=tmp_path / "worktrees",
+        approved=True,
+        approval_source="test explicit approval",
+    )
+    assert result["status"] == "claim-intent"
+    assert result["ready_supply"]["lease_required"] is True
+    assert result["intent"]["operator_approval"]["task_id"] == task_id
+    assert store.list_runs() == []
+    with store.connect() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM workers").fetchone()[0] == 0
+
+
+def test_coordinated_claim_commit_binds_live_lease_and_terminal_release(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    intent = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        base_dir=tmp_path / "worktrees",
+        approved=True,
+    )["intent"]
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+    claimed = dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+    assert claimed["status"] == "claimed"
+    assert claimed["run"]["run_id"] == intent["run_id"]
+    assert claimed["envelope"]["claim_intent"]["intent_sha256"] == intent["intent_sha256"]
+    assert claimed["envelope"]["lease_binding"]["owner_id"] == intent["lease_owner_id"]
+    active = coordinated_claim_status(store, intent["run_id"], resource_db=database)
+    assert active["lease"]["status"] == "active-bound"
+    terminal = fail_run(store, intent["run_id"], "test close")
+    assert terminal["lease_release"]["required"] is True
+    after = coordinated_claim_status(store, intent["run_id"], resource_db=database)
+    assert after["lease"]["status"] == "terminal-release-pending"
+    assert store.run(intent["run_id"])["reservations"] == []
+    assert registry.tasks[task_id].state == "ready"
+
+
+def test_coordinated_claim_missing_lease_never_creates_run(registry_factory, tmp_path, monkeypatch):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    intent = dispatcher.claim_intent("operator", ("repository",), task_id=task_id, approved=True)[
+        "intent"
+    ]
+    missing = {intent["required_resource_keys"][0]}
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent, omit=missing)
+    with pytest.raises(StateError, match="lease-resources-missing"):
+        dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+    assert store.list_runs() == []
+    with store.connect() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM workers").fetchone()[0] == 0
+
+
+def test_coordinated_claim_rejects_task_drift_after_intent(registry_factory, tmp_path, monkeypatch):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    intent = dispatcher.claim_intent("operator", ("repository",), task_id=task_id, approved=True)[
+        "intent"
+    ]
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+    task_path = root / f"registry/tasks/{task_id}.json"
+    task = json.loads(task_path.read_text())
+    task["title"] = "drifted after intent"
+    task_path.write_text(json.dumps(task))
+    changed = Registry.load(root)
+    changed_dispatcher = Dispatcher(changed, store)
+    with pytest.raises(StateError, match=r"runtime truth changed|task changed"):
+        changed_dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+    assert store.list_runs() == []
+
+
+def test_coordinated_workspace_failure_terminalizes_claim(registry_factory, tmp_path, monkeypatch):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    intent = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        base_dir=tmp_path / "worktrees",
+        approved=True,
+    )["intent"]
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+    destination = Path(intent["workspace"]["workspace_path"])
+    destination.mkdir(parents=True)
+    with pytest.raises(StateError, match="not registered"):
+        dispatcher.checkout_claim_intent(intent, binding, resource_db=database)
+    run = store.run(intent["run_id"])
+    assert run["state"] == "failed"
+    assert run["reservations"] == []
+    status = coordinated_claim_status(store, intent["run_id"], resource_db=database)
+    assert status["release"]["required"] is True
+    assert status["lease"]["status"] == "terminal-release-pending"
+
+
+def test_coordinated_claim_intent_tamper_is_rejected(registry_factory, tmp_path, monkeypatch):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    intent = dispatcher.claim_intent("operator", ("repository",), task_id=task_id, approved=True)[
+        "intent"
+    ]
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+    intent["worker_id"] = "tampered"
+    with pytest.raises(StateError, match="intent digest mismatch"):
+        dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+    assert store.list_runs() == []
+
+
+def test_coordinated_claim_cli_contract_parses_exact_surfaces():
+    intent_args = bureau_cli.parser().parse_args(
+        [
+            "claim-intent",
+            "--worker",
+            "operator",
+            "--task-id",
+            "TASK-1",
+            "--capability",
+            "repository",
+            "--approve",
+        ]
+    )
+    assert intent_args.command == "claim-intent"
+    assert intent_args.approve is True
+    commit_args = bureau_cli.parser().parse_args(
+        [
+            "claim-commit",
+            "--intent",
+            "intent.json",
+            "--lease-binding",
+            "lease.json",
+            "--workspace",
+        ]
+    )
+    assert commit_args.command == "claim-commit"
+    assert commit_args.workspace is True
+    status_args = bureau_cli.parser().parse_args(
+        ["claim-coordination-status", "BUR-RUN-20260724T000000Z-0000000000"]
+    )
+    assert status_args.command == "claim-coordination-status"
+
+
+def test_coordinated_claim_rejects_workspace_source_head_drift(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    fixed_runtime_truth = {
+        "schema_version": 1,
+        "execution_blocked": False,
+        "status": "clear",
+    }
+    monkeypatch.setattr(dispatcher, "_runtime_execution_truth", lambda: fixed_runtime_truth)
+    intent = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        base_dir=tmp_path / "worktrees",
+        approved=True,
+    )["intent"]
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+    (root / "head-drift.txt").write_text("drift", encoding="utf-8")
+    git_output(root, "add", "head-drift.txt")
+    git_output(root, "commit", "-m", "head drift")
+    with pytest.raises(StateError, match="workspace changed after intent"):
+        dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+    assert store.list_runs() == []
+    with store.connect() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM workers").fetchone()[0] == 0
+
+
+def test_coordinated_active_run_surfaces_live_lease_drift(registry_factory, tmp_path, monkeypatch):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    intent = dispatcher.claim_intent("operator", ("repository",), task_id=task_id, approved=True)[
+        "intent"
+    ]
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+    dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+    connection = sqlite3.connect(database)
+    connection.execute("DELETE FROM leases")
+    connection.commit()
+    connection.close()
+    status = coordinated_claim_status(store, intent["run_id"], resource_db=database)
+    assert status["blocking"] is True
+    assert status["lease"]["status"] == "active-binding-drift"
+    assert status["lease"]["error"]["code"] == "lease-resources-missing"
+
+
+def test_coordinated_claim_retry_recovers_after_intent_expiry_and_reports_drift(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    intent = dispatcher.claim_intent("operator", ("repository",), task_id=task_id, approved=True)[
+        "intent"
+    ]
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+    first = dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+    assert first["status"] == "claimed"
+
+    real_datetime = bureau_v2.datetime
+
+    class FutureDateTime(real_datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return real_datetime.fromtimestamp(intent["expires_at_unix"] + 60, tz=tz)
+
+    monkeypatch.setattr(bureau_v2, "datetime", FutureDateTime)
+    retry = dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+    assert retry["status"] == "existing-assignment"
+    assert retry["blocking"] is False
+    assert retry["lease"]["status"] == "active-bound"
+    assert len(store.list_runs()) == 1
+
+    connection = sqlite3.connect(database)
+    connection.execute("DELETE FROM leases")
+    connection.commit()
+    connection.close()
+    drifted = dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+    assert drifted["status"] == "existing-assignment"
+    assert drifted["blocking"] is True
+    assert drifted["lease"]["status"] == "active-binding-drift"
+    assert len(store.list_runs()) == 1

@@ -59,6 +59,93 @@ AGENT_BRIEF_REQUIRED_FIELDS = (
     "expected_handoff_format",
 )
 EXTERNAL_AGENT_MARKERS = ("codex", "claude", "cline", "agy", "gemini", "jules")
+COORDINATED_CLAIM_INTENT_SCHEMA_VERSION = 1
+COORDINATED_CLAIM_INTENT_TTL_SECONDS = 300
+COORDINATED_CLAIM_MIN_LEASE_SECONDS = 60
+
+
+def coordinated_claim_intent_sha256(intent: dict[str, Any]) -> str:
+    payload = json.loads(json.dumps(intent))
+    payload.pop("intent_sha256", None)
+    return legacy.sha256_json(payload)
+
+
+def _validate_coordinated_claim_intent(intent: dict[str, Any]) -> None:
+    required = {
+        "schema_version",
+        "run_id",
+        "task_id",
+        "worker_id",
+        "kind",
+        "capabilities",
+        "resource",
+        "task_sha256",
+        "plan_sha256",
+        "required_resource_keys",
+        "lease_owner_id",
+        "created_at",
+        "expires_at_unix",
+        "workspace",
+        "operator_approval",
+        "runtime_truth_sha256",
+        "does_not_establish",
+        "intent_sha256",
+    }
+    if not isinstance(intent, dict) or set(intent) != required:
+        raise legacy.StateError("coordinated claim intent fields are not exact")
+    if intent.get("schema_version") != COORDINATED_CLAIM_INTENT_SCHEMA_VERSION:
+        raise legacy.StateError("unsupported coordinated claim intent schema")
+    digest = intent.get("intent_sha256")
+    if digest != coordinated_claim_intent_sha256(intent):
+        raise legacy.StateError("coordinated claim intent digest mismatch")
+    run_id = intent.get("run_id")
+    if (
+        not isinstance(run_id, str)
+        or re.fullmatch(r"BUR-RUN-[0-9]{8}T[0-9]{6}Z-[0-9a-f]{10}", run_id) is None
+    ):
+        raise legacy.StateError("coordinated claim intent run id is invalid")
+    keys = intent.get("required_resource_keys")
+    if not isinstance(keys, list) or keys != sorted(set(keys)):
+        raise legacy.StateError("coordinated claim resource keys are not canonical")
+    capabilities = intent.get("capabilities")
+    if not isinstance(capabilities, list) or capabilities != sorted(set(capabilities)):
+        raise legacy.StateError("coordinated claim capabilities are not canonical")
+    expires_at = intent.get("expires_at_unix")
+    if not isinstance(expires_at, int):
+        raise legacy.StateError("coordinated claim expiry is invalid")
+    if not isinstance(intent.get("operator_approval"), dict):
+        raise legacy.StateError("coordinated claim approval is invalid")
+    if not isinstance(intent.get("does_not_establish"), list):
+        raise legacy.StateError("coordinated claim nonclaims are invalid")
+
+
+def _planned_workspace(
+    registry: Registry,
+    task: legacy.Task,
+    run_id: str,
+    base_dir: Path | None,
+    baseline: str | None,
+) -> dict[str, Any] | None:
+    if not any(claim.isolation == "worktree" for claim in task.claims):
+        return None
+    repository = task.execution.get("working_repository")
+    if not isinstance(repository, str) or not repository.strip():
+        raise legacy.StateError(f"task {task.id} has no working_repository")
+    repo = Path(repository).expanduser().resolve()
+    source_head = _git(repo, "rev-parse", "HEAD").stdout.strip()
+    if baseline is None:
+        baseline = source_head
+    root = base_dir.resolve() if base_dir else repo.parent / ".bureau-worktrees"
+    destination = (root / run_id).resolve()
+    branch_task = re.sub(r"[^A-Za-z0-9._-]+", "-", task.id).lower()
+    branch = f"bureau/{branch_task}/{run_id.rsplit('-', 1)[-1].lower()}"
+    return {
+        "repository": str(repo),
+        "workspace_path": str(destination),
+        "workspace_branch": branch,
+        "baseline_commit": baseline,
+        "source_head_at_intent": source_head,
+    }
 
 
 class OpenPullRequestObservationError(RuntimeError):
@@ -2413,6 +2500,464 @@ class Dispatcher(legacy.Dispatcher):
                 overlays=overlays,
             )
 
+    def claim_intent(
+        self,
+        worker_id: str,
+        capabilities: tuple[str, ...],
+        kind: str = "interactive-agent",
+        *,
+        task_id: str | None = None,
+        resource: str | None = None,
+        base_dir: Path | None = None,
+        approved: bool = False,
+        approval_source: str = "coordinated claim intent",
+    ) -> dict[str, Any]:
+        """Return a source-bound claim plan without mutating Bureau state."""
+        self._validate_resource_filter(resource)
+        runtime_truth = self._runtime_execution_truth()
+        runtime_stop = self._runtime_execution_stop(
+            command="claim-intent", runtime_truth=runtime_truth
+        )
+        if runtime_stop is not None:
+            return runtime_stop
+        run_id = (
+            "BUR-RUN-"
+            + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ-")
+            + uuid.uuid4().hex[:10]
+        )
+        capabilities_set = set(capabilities)
+        open_pr_reservations = self._open_pr_reservations(strict=True)
+        with self.store.connect() as connection:
+            current_rows = connection.execute(
+                "SELECT * FROM runs WHERE worker_id=? "
+                "AND state IN ('assigned','running','verifying') "
+                "ORDER BY created_at",
+                (worker_id,),
+            ).fetchall()
+            if current_rows:
+                current = current_rows[0]
+                return {
+                    "status": "existing-assignment",
+                    "run": self.store.public_run(current),
+                    "envelope": json.loads(current["envelope_json"]),
+                }
+            runs = self.store.active_runs(connection)
+            reservations = self.store.reservations(connection) + open_pr_reservations
+            overlays = self.store.overlays(connection, self.registry)
+            rejected: list[dict[str, Any]] = []
+            selected: legacy.Task | None = None
+            approval_evidence: dict[str, Any] | None = None
+            for task in self.registry.ordered_tasks():
+                if task_id is not None and task.id != task_id:
+                    continue
+                if not self._task_matches_resource(task, resource):
+                    continue
+                reasons = self.reasons(task, capabilities_set, runs, reservations, overlays)
+                review_reason = f"execution is {task.mode}/{task.policy}"
+                if (
+                    review_reason in reasons
+                    and task.mode == "interactive-agent"
+                    and task.policy == "review-before-effect"
+                    and approved
+                ):
+                    approval = explicit_operator_approval(
+                        source=approval_source,
+                        approved=True,
+                        reviewer=worker_id,
+                        reference=run_id,
+                        task_id=task.id,
+                        scope="repository_mutation",
+                    )
+                    require_approval(
+                        "repository_mutation",
+                        approval,
+                        expected_reference=run_id,
+                        task_id=task.id,
+                    )
+                    reasons = [reason for reason in reasons if reason != review_reason]
+                    approval_evidence = approval.as_dict()
+                if not reasons:
+                    selected = task
+                    break
+                rejected.append({"task_id": task.id, "reasons": reasons})
+                if task_id is not None:
+                    break
+                if self.registry.queue_policy == "strict" and task.state == "ready":
+                    break
+            if selected is None:
+                raise legacy.NoEligibleTask(legacy.canonical_json({"rejected": rejected}))
+            attempt = (
+                connection.execute(
+                    "SELECT COUNT(*) AS n FROM runs WHERE task_id=?", (selected.id,)
+                ).fetchone()["n"]
+                + 1
+            )
+        if approval_evidence is None:
+            approval = explicit_operator_approval(
+                source=approval_source,
+                approved=approved,
+                reviewer=worker_id,
+                reference=run_id,
+                task_id=selected.id,
+                scope="repository_mutation",
+            )
+            require_approval(
+                "repository_mutation",
+                approval,
+                expected_reference=run_id,
+                task_id=selected.id,
+            )
+            approval_evidence = approval.as_dict()
+        initiative = self.registry.initiatives[selected.initiative]
+        current_plan_sha = plan_sha256(self.registry, selected.initiative)
+        baseline = selected.execution.get("baseline_commit")
+        if baseline is None and initiative.current_plan:
+            working = selected.execution.get("working_repository")
+            plan_repository = initiative.current_plan.get("repository")
+            if working and Path(working).name == plan_repository:
+                baseline = initiative.current_plan.get("commit")
+        workspace = _planned_workspace(self.registry, selected, run_id, base_dir, baseline)
+        required_keys = sorted(grabowski_resource_keys_for_task(self.registry.resources, selected))
+        now = datetime.now(timezone.utc)
+        intent: dict[str, Any] = {
+            "schema_version": COORDINATED_CLAIM_INTENT_SCHEMA_VERSION,
+            "run_id": run_id,
+            "task_id": selected.id,
+            "worker_id": worker_id,
+            "kind": kind,
+            "capabilities": sorted(capabilities_set),
+            "resource": resource,
+            "task_sha256": selected.sha256,
+            "plan_sha256": current_plan_sha,
+            "required_resource_keys": required_keys,
+            "lease_owner_id": f"bureau-run:{run_id}",
+            "created_at": now.isoformat().replace("+00:00", "Z"),
+            "expires_at_unix": int(now.timestamp()) + COORDINATED_CLAIM_INTENT_TTL_SECONDS,
+            "workspace": workspace,
+            "operator_approval": approval_evidence,
+            "runtime_truth_sha256": legacy.sha256_json(runtime_truth),
+            "does_not_establish": [
+                "Bureau claim",
+                "Grabowski lease acquisition",
+                "workspace creation",
+                "dispatch authority",
+                "merge readiness",
+            ],
+        }
+        intent["intent_sha256"] = coordinated_claim_intent_sha256(intent)
+        return {
+            "status": "claim-intent",
+            "intent": intent,
+            "ready_supply": {
+                "task_eligible": True,
+                "approval_bound": True,
+                "lease_required": bool(required_keys),
+                "required_resource_keys": required_keys,
+                "workspace_planned": workspace is not None,
+                "workspace": workspace,
+                "attempt": attempt,
+            },
+            "runtime_truth": runtime_truth,
+        }
+
+    def commit_claim_intent(
+        self,
+        intent: dict[str, Any],
+        lease_binding: dict[str, Any] | None,
+        *,
+        resource_db: Path = runtime_refresh.DEFAULT_GRABOWSKI_RESOURCE_DB,
+    ) -> dict[str, Any]:
+        """Commit one exact intent after live Grabowski lease validation."""
+        _validate_coordinated_claim_intent(intent)
+        with self.store.connect() as recovery_connection:
+            existing = recovery_connection.execute(
+                "SELECT * FROM runs WHERE run_id=?", (intent["run_id"],)
+            ).fetchone()
+        if existing is not None:
+            return _existing_coordinated_claim_result(existing, intent, resource_db=resource_db)
+        if intent["expires_at_unix"] <= int(datetime.now(timezone.utc).timestamp()):
+            raise legacy.StateError("coordinated claim intent expired")
+        runtime_truth = self._runtime_execution_truth()
+        runtime_stop = self._runtime_execution_stop(
+            command="claim-commit", runtime_truth=runtime_truth
+        )
+        if runtime_stop is not None:
+            return runtime_stop
+        if legacy.sha256_json(runtime_truth) != intent["runtime_truth_sha256"]:
+            raise legacy.StateError("runtime truth changed after claim intent")
+        task = self.registry.tasks.get(intent["task_id"])
+        if task is None:
+            raise legacy.StateError("coordinated claim task no longer exists")
+        approval_data = intent["operator_approval"]
+        approval = explicit_operator_approval(
+            source=approval_data.get("source", "coordinated claim intent"),
+            approved=approval_data.get("approved") is True,
+            reviewer=approval_data.get("reviewer"),
+            reference=approval_data.get("reference"),
+            task_id=approval_data.get("task_id"),
+            scope=approval_data.get("scope"),
+            note=approval_data.get("note"),
+        )
+        approval_decision = require_approval(
+            "repository_mutation",
+            approval,
+            expected_reference=intent["run_id"],
+            task_id=task.id,
+        )
+        required_keys = sorted(grabowski_resource_keys_for_task(self.registry.resources, task))
+        if required_keys != intent["required_resource_keys"]:
+            raise legacy.StateError("coordinated claim resources changed after intent")
+        if task.sha256 != intent["task_sha256"]:
+            raise legacy.StateError("coordinated claim task changed after intent")
+        current_plan_sha = plan_sha256(self.registry, task.initiative)
+        if current_plan_sha != intent["plan_sha256"]:
+            raise legacy.StateError("coordinated claim plan changed after intent")
+        expected_workspace = _planned_workspace(
+            self.registry,
+            task,
+            intent["run_id"],
+            (
+                Path(intent["workspace"]["workspace_path"]).parent
+                if isinstance(intent.get("workspace"), dict)
+                else None
+            ),
+            (
+                intent["workspace"]["baseline_commit"]
+                if isinstance(intent.get("workspace"), dict)
+                else None
+            ),
+        )
+        if expected_workspace != intent["workspace"]:
+            raise legacy.StateError("coordinated claim workspace changed after intent")
+        if isinstance(intent.get("workspace"), dict):
+            observed_source_head = _git(
+                Path(intent["workspace"]["repository"]), "rev-parse", "HEAD"
+            ).stdout.strip()
+            if observed_source_head != intent["workspace"]["source_head_at_intent"]:
+                raise legacy.StateError("workspace repository head changed after intent")
+        normalized_lease: dict[str, Any] | None = None
+        if required_keys:
+            if not isinstance(lease_binding, dict):
+                raise legacy.StateError("coordinated claim lease binding is required")
+            if lease_binding.get("owner_id") != intent["lease_owner_id"]:
+                raise legacy.StateError("coordinated claim lease owner differs from intent")
+            if lease_binding.get("task_id") != task.id:
+                raise legacy.StateError("coordinated claim lease task differs from intent")
+        elif lease_binding is not None:
+            raise legacy.StateError("coordinated claim has unexpected lease binding")
+        if not intent["worker_id"] or len(intent["worker_id"]) > 200:
+            raise legacy.StateError("worker_id must contain 1-200 characters")
+        envelope: dict[str, Any]
+        run: dict[str, Any]
+        with self.store.immediate() as connection:
+            duplicate = connection.execute(
+                "SELECT * FROM runs WHERE run_id=?", (intent["run_id"],)
+            ).fetchone()
+            if duplicate is not None:
+                return _existing_coordinated_claim_result(
+                    duplicate, intent, resource_db=resource_db
+                )
+            current_rows = connection.execute(
+                "SELECT * FROM runs WHERE worker_id=? "
+                "AND state IN ('assigned','running','verifying')",
+                (intent["worker_id"],),
+            ).fetchall()
+            if current_rows:
+                raise legacy.StateError("worker acquired another assignment after intent")
+            runs = self.store.active_runs(connection)
+            reservations = self.store.reservations(connection) + self._open_pr_reservations(
+                strict=True
+            )
+            overlays = self.store.overlays(connection, self.registry)
+            reasons = self.reasons(task, set(intent["capabilities"]), runs, reservations, overlays)
+            review_reason = f"execution is {task.mode}/{task.policy}"
+            reasons = [reason for reason in reasons if reason != review_reason]
+            if reasons:
+                raise legacy.StateError(
+                    "coordinated claim eligibility changed: "
+                    + legacy.canonical_json({"reasons": reasons})
+                )
+            if required_keys:
+                assert isinstance(lease_binding, dict)
+                try:
+                    normalized_lease = runtime_refresh.validate_live_lease_binding(
+                        intent,
+                        lease_binding,
+                        resource_db=resource_db,
+                        min_remaining_seconds=COORDINATED_CLAIM_MIN_LEASE_SECONDS,
+                        required_metadata={
+                            "task_id": task.id,
+                            "run_id": intent["run_id"],
+                            "claim_intent_sha256": intent["intent_sha256"],
+                        },
+                    )
+                except runtime_refresh.RuntimeRefreshError as exc:
+                    raise legacy.StateError(
+                        f"coordinated claim lease validation failed: {exc.code}"
+                    ) from exc
+            now = legacy.utc_now()
+            connection.execute(
+                """
+                INSERT INTO workers(worker_id,kind,capabilities_json,heartbeat_at)
+                VALUES(?,?,?,?)
+                ON CONFLICT(worker_id) DO UPDATE SET
+                    kind=excluded.kind,
+                    capabilities_json=excluded.capabilities_json,
+                    heartbeat_at=excluded.heartbeat_at
+                """,
+                (
+                    intent["worker_id"],
+                    intent["kind"],
+                    legacy.canonical_json(intent["capabilities"]),
+                    now,
+                ),
+            )
+            attempt = (
+                connection.execute(
+                    "SELECT COUNT(*) AS n FROM runs WHERE task_id=?", (task.id,)
+                ).fetchone()["n"]
+                + 1
+            )
+            initiative = self.registry.initiatives[task.initiative]
+            envelope = {
+                "schema_version": 1,
+                "run_id": intent["run_id"],
+                "task_id": task.id,
+                "worker_id": intent["worker_id"],
+                "task_sha256": task.sha256,
+                "plan_sha256": current_plan_sha,
+                "created_at": now,
+                "task": task.raw,
+                "claims": [claim.as_dict() for claim in task.claims],
+                "plan": initiative.current_plan,
+                "baseline_commit": (
+                    intent["workspace"]["baseline_commit"]
+                    if isinstance(intent.get("workspace"), dict)
+                    else task.execution.get("baseline_commit")
+                ),
+                "runtime_truth": runtime_truth,
+                "claim_intent": intent,
+                "lease_binding": normalized_lease,
+                "operator_approval": approval_decision,
+            }
+            coordination_scope = coordination_scope_for_task(task)
+            if coordination_scope is not None:
+                envelope["coordination_scope"] = coordination_scope
+            envelope["rlens_context_policy"] = evaluate_task_rlens_policy(task.raw)
+            rlens_context_ref = task_rlens_context_ref(task.raw)
+            if isinstance(rlens_context_ref, dict):
+                envelope["rlens_context_ref"] = rlens_context_ref
+            self.registry.schemas.validate(
+                "execution-envelope", envelope, f"run:{intent['run_id']}"
+            )
+            envelope_json = legacy.canonical_json(envelope)
+            envelope_sha = legacy.sha256_json(envelope)
+            request_id = f"{intent['run_id']}:dispatch-1"
+            connection.execute(
+                """
+                INSERT INTO runs(run_id,task_id,worker_id,attempt,state,task_sha256,
+                    plan_sha256,envelope_json,envelope_sha256,dispatch_request_id,
+                    created_at,updated_at,heartbeat_at)
+                VALUES(?,?,?,?,'assigned',?,?,?,?,?,?,?,?)
+                """,
+                (
+                    intent["run_id"],
+                    task.id,
+                    intent["worker_id"],
+                    attempt,
+                    task.sha256,
+                    current_plan_sha,
+                    envelope_json,
+                    envelope_sha,
+                    request_id,
+                    now,
+                    now,
+                    now,
+                ),
+            )
+            for claim in task.claims:
+                connection.execute(
+                    "INSERT INTO reservations(run_id,resource_id,mode,amount,created_at) "
+                    "VALUES(?,?,?,?,?)",
+                    (
+                        intent["run_id"],
+                        claim.resource,
+                        claim.mode,
+                        claim.amount,
+                        now,
+                    ),
+                )
+            self.store.event(
+                connection,
+                "run-claimed-coordinated",
+                {
+                    "task_id": task.id,
+                    "intent_sha256": intent["intent_sha256"],
+                    "lease_binding_sha256": (
+                        normalized_lease.get("lease_binding_sha256") if normalized_lease else None
+                    ),
+                },
+                intent["run_id"],
+            )
+            row = connection.execute(
+                "SELECT * FROM runs WHERE run_id=?", (intent["run_id"],)
+            ).fetchone()
+            run = self.store.public_run(row)
+        try:
+            legacy.atomic_write(
+                self.store.envelope_path(run["run_id"]),
+                json.dumps(envelope, indent=2, ensure_ascii=False) + "\n",
+            )
+        except Exception as exc:
+            fail_run(
+                self.store,
+                run["run_id"],
+                f"coordinated claim envelope materialization failed: {exc}",
+            )
+            raise
+        return {
+            "status": "claimed",
+            "run": run,
+            "envelope": envelope,
+            "envelope_path": str(self.store.envelope_path(run["run_id"])),
+            "lease_release": coordinated_lease_release_projection(envelope),
+        }
+
+    def checkout_claim_intent(
+        self,
+        intent: dict[str, Any],
+        lease_binding: dict[str, Any] | None,
+        *,
+        resource_db: Path = runtime_refresh.DEFAULT_GRABOWSKI_RESOURCE_DB,
+    ) -> dict[str, Any]:
+        claimed = self.commit_claim_intent(intent, lease_binding, resource_db=resource_db)
+        if claimed.get("status") != "claimed":
+            return claimed
+        run_id = claimed["run"]["run_id"]
+        expected = intent.get("workspace")
+        base_dir = Path(expected["workspace_path"]).parent if isinstance(expected, dict) else None
+        try:
+            run = create_workspace(self.registry, self.store, run_id, base_dir)
+        except Exception as exc:
+            with suppress(legacy.StateError):
+                fail_run(
+                    self.store,
+                    run_id,
+                    f"coordinated workspace creation failed: {exc}",
+                )
+            raise
+        if isinstance(expected, dict) and (
+            run.get("workspace_path") != expected.get("workspace_path")
+            or run.get("workspace_branch") != expected.get("workspace_branch")
+        ):
+            fail_run(self.store, run_id, "coordinated workspace identity mismatch")
+            raise legacy.StateError("coordinated workspace identity mismatch")
+        return {
+            **claimed,
+            "run": run,
+            "handoff": grabowski_handoff(self.registry, self.store, run_id),
+        }
+
     def claim_next(
         self,
         worker_id: str,
@@ -3306,6 +3851,117 @@ def _materialize_receipt(store: StateStore, receipt: dict[str, Any]) -> Path:
     return path
 
 
+def _coordinated_live_lease_status(
+    run_state: str,
+    intent: dict[str, Any],
+    *,
+    resource_db: Path,
+) -> dict[str, Any]:
+    if not intent["required_resource_keys"]:
+        return {"status": "not-required"}
+    try:
+        live = runtime_refresh.validate_live_lease_binding(
+            intent,
+            {
+                "owner_id": intent["lease_owner_id"],
+                "task_id": intent["task_id"],
+            },
+            resource_db=resource_db,
+            min_remaining_seconds=30,
+            required_metadata={
+                "task_id": intent["task_id"],
+                "run_id": intent["run_id"],
+                "claim_intent_sha256": intent["intent_sha256"],
+            },
+        )
+        return {
+            "status": (
+                "active-bound" if run_state in legacy.ACTIVE_STATES else "terminal-release-pending"
+            ),
+            "binding": live,
+        }
+    except runtime_refresh.RuntimeRefreshError as exc:
+        return {
+            "status": (
+                "active-binding-drift"
+                if run_state in legacy.ACTIVE_STATES
+                else "terminal-released-or-expired"
+            ),
+            "error": exc.as_dict(),
+        }
+
+
+def _existing_coordinated_claim_result(
+    row: sqlite3.Row,
+    intent: dict[str, Any],
+    *,
+    resource_db: Path,
+) -> dict[str, Any]:
+    envelope = json.loads(row["envelope_json"])
+    stored_intent = envelope.get("claim_intent")
+    if (
+        not isinstance(stored_intent, dict)
+        or stored_intent.get("intent_sha256") != intent["intent_sha256"]
+    ):
+        raise legacy.StateError("coordinated claim run id collision")
+    lease_status = _coordinated_live_lease_status(row["state"], intent, resource_db=resource_db)
+    return {
+        "status": (
+            "existing-assignment" if row["state"] in legacy.ACTIVE_STATES else "existing-terminal"
+        ),
+        "run": StateStore.public_run(row),
+        "envelope": envelope,
+        "lease": lease_status,
+        "lease_release": coordinated_lease_release_projection(envelope),
+        "blocking": lease_status["status"] == "active-binding-drift",
+    }
+
+
+def coordinated_lease_release_projection(
+    envelope: dict[str, Any],
+) -> dict[str, Any]:
+    intent = envelope.get("claim_intent")
+    if not isinstance(intent, dict):
+        return {"required": False, "reason": "run is not a coordinated claim"}
+    return {
+        "required": bool(intent.get("required_resource_keys")),
+        "owner_id": intent.get("lease_owner_id"),
+        "resource_keys": intent.get("required_resource_keys", []),
+        "claim_intent_sha256": intent.get("intent_sha256"),
+        "release_after": "authoritative Bureau terminal readback",
+        "does_not_establish": [
+            "automatic lease release",
+            "foreign lease release authority",
+            "workspace cleanup authority",
+        ],
+    }
+
+
+def coordinated_claim_status(
+    store: StateStore,
+    run_id: str,
+    *,
+    resource_db: Path = runtime_refresh.DEFAULT_GRABOWSKI_RESOURCE_DB,
+) -> dict[str, Any]:
+    run = store.run(run_id)
+    envelope = _claim_bound_envelope(store, run_id, run["envelope_sha256"])
+    intent = envelope.get("claim_intent")
+    binding = envelope.get("lease_binding")
+    if not isinstance(intent, dict):
+        return {"status": "uncoordinated", "run": run}
+    _validate_coordinated_claim_intent(intent)
+    lease_status = _coordinated_live_lease_status(run["state"], intent, resource_db=resource_db)
+    return {
+        "status": "coordinated",
+        "run": run,
+        "claim_intent_sha256": intent["intent_sha256"],
+        "stored_lease_binding": binding,
+        "lease": lease_status,
+        "release": coordinated_lease_release_projection(envelope),
+        "blocking": lease_status["status"] == "active-binding-drift",
+    }
+
+
 def complete_run(
     registry: Registry,
     store: StateStore,
@@ -3321,11 +3977,17 @@ def complete_run(
             and existing["task_sha256"] == task.sha256
             and existing["plan_sha256"] == plan_sha256(registry, task.initiative)
         )
+        with store.connect() as connection:
+            envelope_row = connection.execute(
+                "SELECT envelope_json FROM runs WHERE run_id=?", (run_id,)
+            ).fetchone()
+        envelope = json.loads(envelope_row["envelope_json"]) if envelope_row else {}
         return {
             "receipt": existing,
             "receipt_path": str(path),
             "idempotent": True,
             "current": current,
+            "lease_release": coordinated_lease_release_projection(envelope),
         }
     run = store.run(run_id)
     if run["state"] not in legacy.ACTIVE_STATES:
@@ -3414,6 +4076,7 @@ def complete_run(
         "receipt_path": str(path),
         "idempotent": False,
         "current": True,
+        "lease_release": coordinated_lease_release_projection(envelope),
     }
 
 
@@ -3430,7 +4093,15 @@ def fail_run(store: StateStore, run_id: str, error: str, state: str = "failed") 
         )
         connection.execute("DELETE FROM reservations WHERE run_id=?", (run_id,))
         store.event(connection, "run-failed", {"state": state, "error": error}, run_id)
-    return store.run(run_id)
+    result = store.run(run_id)
+    with store.connect() as connection:
+        envelope_row = connection.execute(
+            "SELECT envelope_json FROM runs WHERE run_id=?", (run_id,)
+        ).fetchone()
+    if envelope_row is not None:
+        envelope = json.loads(envelope_row["envelope_json"])
+        result["lease_release"] = coordinated_lease_release_projection(envelope)
+    return result
 
 
 def _claim_bound_envelope(

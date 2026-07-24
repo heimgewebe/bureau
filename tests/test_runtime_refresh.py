@@ -198,6 +198,11 @@ def test_observe_reports_already_current_without_pr_lookup(tmp_path: Path) -> No
 
     assert result["status"] == "already_current"
     assert result["lag_commits"] == 0
+    assert result["recovery_action"] == {
+        "action": "none",
+        "eligible": False,
+        "requires_authorization": False,
+    }
     assert calls == [["api", "repos/heimgewebe/bureau/commits/main"]]
     refresh.verify_digest(result, "observation_sha256")
 
@@ -219,6 +224,11 @@ def test_observe_binds_exact_merged_main_and_green_ci(tmp_path: Path) -> None:
     }
     assert all(item["state"] == "success" for item in result["check_summary"].values())
     assert result["lag_commits"] == 1
+    assert result["recovery_action"] == {
+        "action": "prepare-intent",
+        "eligible": True,
+        "requires_authorization": True,
+    }
     assert len(result["target_sha256"]) == 64
 
 
@@ -234,6 +244,8 @@ def test_observe_alerts_after_freshness_slo(tmp_path: Path) -> None:
     )
     assert result["status"] == "alert"
     assert result["age_seconds"] > result["slo_seconds"]
+    assert result["recovery_action"]["action"] == "prepare-intent"
+    assert result["recovery_action"]["eligible"] is True
 
 
 def test_observe_blocks_failed_or_missing_ci(tmp_path: Path) -> None:
@@ -243,6 +255,12 @@ def test_observe_blocks_failed_or_missing_ci(tmp_path: Path) -> None:
 
     assert result["status"] == "blocked"
     assert result["reason_codes"] == ["required-ci-not-green"]
+    assert result["recovery_action"] == {
+        "action": "resolve-reason-codes",
+        "eligible": False,
+        "reason_codes": ["required-ci-not-green"],
+        "requires_authorization": False,
+    }
     assert result["check_summary"]["validate (3.10)"]["state"] == "failure"
     assert result["check_summary"]["validate (3.12)"]["state"] == "missing"
 

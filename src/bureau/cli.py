@@ -53,6 +53,7 @@ from .read_only_state import ReadOnlyStateStore
 from .resource_lifecycle import resource_lifecycle_contract
 from .rlens_policy import evaluate_registry_rlens_policy
 from .runtime_identity import bureau_runtime_identity, require_mutation_compatible
+from .v2 import coordinated_claim_status
 
 _CLI_RUNTIME_IDENTITY: dict[str, Any] | None = None
 _CLI_JSON_ENVELOPE = False
@@ -280,6 +281,23 @@ def parser() -> argparse.ArgumentParser:
     task_publish_parser.add_argument("--resource-db")
     task_publish_parser.add_argument("--workspace-root")
     task_publish_parser.add_argument("--receipt")
+    claim_intent = sub.add_parser("claim-intent")
+    claim_intent.add_argument("--worker", required=True)
+    claim_intent.add_argument("--kind", default="interactive-agent")
+    claim_intent.add_argument("--capability", action="append", default=[])
+    claim_intent.add_argument("--resource")
+    claim_intent.add_argument("--task-id")
+    claim_intent.add_argument("--base-dir")
+    claim_intent.add_argument("--approve", action="store_true")
+    claim_intent.add_argument("--approval-source", default="cli claim-intent --approve")
+    claim_commit = sub.add_parser("claim-commit")
+    claim_commit.add_argument("--intent", required=True)
+    claim_commit.add_argument("--lease-binding")
+    claim_commit.add_argument("--resource-db")
+    claim_commit.add_argument("--workspace", action="store_true")
+    claim_status = sub.add_parser("claim-coordination-status")
+    claim_status.add_argument("run_id")
+    claim_status.add_argument("--resource-db")
     claim = sub.add_parser("claim-next")
     claim.add_argument("--worker", required=True)
     claim.add_argument("--kind", default="interactive-agent")
@@ -481,6 +499,8 @@ _READ_ONLY_COMMANDS = frozenset(
         "source-promote-plan",
         "status",
         "github-observe",
+        "claim-intent",
+        "claim-coordination-status",
         "status-projection",
         "what-now",
         "workspace-status",
@@ -1030,6 +1050,44 @@ def main(argv: list[str] | None = None) -> int:
                 if args.lease_binding or args.resource_db or args.workspace_root or args.receipt:
                     raise StateError("publication effect arguments require --apply")
                 value = publication_preview(registry, store, plan_path=args.plan)
+        elif args.command == "claim-intent":
+            value = dispatcher.claim_intent(
+                args.worker,
+                tuple(sorted(set(args.capability))),
+                args.kind,
+                task_id=args.task_id,
+                resource=args.resource,
+                base_dir=Path(args.base_dir).expanduser() if args.base_dir else None,
+                approved=args.approve,
+                approval_source=args.approval_source,
+            )
+        elif args.command == "claim-commit":
+            intent = read_json_object_file(args.intent, field="intent")
+            lease_binding = (
+                read_json_object_file(args.lease_binding, field="lease_binding")
+                if args.lease_binding
+                else None
+            )
+            resource_db = (
+                Path(args.resource_db).expanduser()
+                if args.resource_db
+                else DEFAULT_GRABOWSKI_RESOURCE_DB
+            )
+            if args.workspace:
+                value = dispatcher.checkout_claim_intent(
+                    intent, lease_binding, resource_db=resource_db
+                )
+            else:
+                value = dispatcher.commit_claim_intent(
+                    intent, lease_binding, resource_db=resource_db
+                )
+        elif args.command == "claim-coordination-status":
+            resource_db = (
+                Path(args.resource_db).expanduser()
+                if args.resource_db
+                else DEFAULT_GRABOWSKI_RESOURCE_DB
+            )
+            value = coordinated_claim_status(store, args.run_id, resource_db=resource_db)
         elif args.command == "claim-next":
             try:
                 value = dispatcher.claim_next(

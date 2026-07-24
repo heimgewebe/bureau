@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T100",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Captain-Merge-Nebeneffekt-Evidenz und finalen Policy-Read härten",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 942
+  },
+  "goal": "Die durch T091 eingeführte Projektion automatischer GitHub-Merge-Nebeneffekte so härten, dass Receipt-Felder deterministisch sind, das Branch-Ziel vollständig revisionsgebunden ist und die Repository-Policy unmittelbar vor dem Merge-Dispatch erneut fail-closed geprüft wird.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:docs/generated/operator-context.v1.json",
+      "component:docs/grip-mechanic-captain-boundary-v1.md",
+      "component:src/grabowski_grip_orchestration.py",
+      "component:src/grabowski_grips.py",
+      "component:src/grabowski_merge_guard.py",
+      "component:tests/test_grips.py"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "grabowski",
+    "python",
+    "repository",
+    "resource-leases",
+    "testing",
+    "continuous-integration"
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T091"
+  ],
+  "acceptance": [
+    {
+      "id": "deterministic-receipt-shape",
+      "assertion": "Jeder Captain-PR-Merge-Ausgang projiziert dieselben kanonischen Felder für konfigurierte und effektive automatische Plattformeffekte."
+    },
+    {
+      "id": "exact-branch-target",
+      "assertion": "Ein möglicher Branch-Löscheffekt ist an Basis-Repository, PR, Head-Repository, vollständige Ref, Branchname, Head-OID und Cross-Repository-Zustand gebunden."
+    },
+    {
+      "id": "final-policy-read",
+      "assertion": "Die Repository-Merge-Policy wird im atomaren Merge-Guard erfasst und unmittelbar vor Dispatch erneut exakt gelesen; fehlende, fehlerhafte oder veränderte Beobachtung blockiert ohne Mergewirkung."
+    },
+    {
+      "id": "no-hidden-effects",
+      "assertion": "Die Härtung ändert keine Repository-Einstellung, löscht keinen Branch separat und behauptet keine beobachtete GitHub-Nachwirkung ohne Readback."
+    },
+    {
+      "id": "regression",
+      "assertion": "Fokussierte Captain-Tests und die vollständige Grabowski-Validierung sind auf dem finalen Head grün."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-24",
+    "refreshed_at": "2026-07-25",
+    "source": "Post-verification hardening follow-up to T091; implementation prepared in heimgewebe/grabowski#451",
+    "prepared_pull_request": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 451,
+      "base_head": "6e73d2e9c897d7df587e974842a98016a7ca03d0",
+      "head": "08ded7f9c17786230a48f2ab831878048ce5b4dc",
+      "changed_files": 6,
+      "additions": 372,
+      "deletions": 24,
+      "checks": "all_green"
+    },
+    "does_not_establish": [
+      "automatic merge authority",
+      "repository setting mutation",
+      "branch restoration",
+      "task completion",
+      "deployment authority"
+    ]
+  }
+}

@@ -61,7 +61,79 @@
     "observed_tool": "grabowski_checkout_cleanup",
     "origin_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T008",
     "registered_at": "2026-07-22T19:01:55+02:00",
-    "source": "Live RepoGround T008 cleanup readback through Grabowski."
+    "source": "Live RepoGround T008 cleanup readback through Grabowski.",
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 432,
+      "reviewed_head_sha": "96355ebb1fbb245c3bbe53f6b572c761161780f9",
+      "merge_commit_sha": "14d17d7ffdff7aae4179d5aeb6728efe0f78f597",
+      "diff_sha256": "bb0ad98a3cbef5492283e59e784981e1390d6bf50669b1988b7193810e1b6ece"
+    },
+    "validation": {
+      "checkout_regression_tests": "32 passed",
+      "full_make_validate": "passed",
+      "github_checks": "passed",
+      "exact_head_job": "grabowski-job-880ab114b46f",
+      "exact_head_job_receipt_sha256": "2c61e9bad545eaf68aa2891bb445a82394211d670fb6ee11162b47968e561ac1"
+    },
+    "live_proof": {
+      "archive_id": "20260724T043017Z-e1c1e2e067d1",
+      "checkout_path": "/home/alex/.local/share/grabowski/worktrees/bureau-alexander-closeout-v1",
+      "archive_manifest_sha256": "e3fab0159ba99394a7a3ffeb3b0c750d44a4d22587f5697f2dc8299327d35c50",
+      "outcome": "Bureau checkout archived successfully after separated Bureau/non-Bureau acquisitions; physical removal remained blocked by the required 24-hour grace."
+    },
+    "verified_acceptance": {
+      "reproduce": "PASS: the original mixed-acquire failure was reproduced and covered before the fix.",
+      "resource-purity": "PASS: checkout operations partition Bureau and non-Bureau keys and acquire each pure group sequentially.",
+      "plan-binding": "PASS: cleanup continues to require dry-run plan_id, expected_plan_sha256, expected identity and exact confirmation.",
+      "safety-preserved": "PASS: central mixed-acquire rejection remains unchanged; partial acquisition rolls back; archive grace remained active in the live proof.",
+      "bureau-and-non-bureau-tests": "PASS: tests cover successful Bureau cleanup, direct mixed-acquire rejection and rollback after later-group failure."
+    },
+    "verified_at": "2026-07-24T05:03:16Z",
+    "verification_note": "Acceptance closed from exact merged implementation, exact-head validation and task-bound machine evidence; no inferred green state.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T088",
+          "source_ref": "heimgewebe/grabowski#432",
+          "repository": "heimgewebe/grabowski",
+          "number": 432,
+          "head_sha": "96355ebb1fbb245c3bbe53f6b572c761161780f9",
+          "merge_commit_sha": "14d17d7ffdff7aae4179d5aeb6728efe0f78f597",
+          "diff_sha256": "bb0ad98a3cbef5492283e59e784981e1390d6bf50669b1988b7193810e1b6ece"
+        },
+        {
+          "kind": "test_receipt",
+          "authority": "grabowski-job",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T088",
+          "source_ref": "grabowski-job-880ab114b46f",
+          "run_id": "grabowski-job-880ab114b46f",
+          "head_sha": "96355ebb1fbb245c3bbe53f6b572c761161780f9",
+          "receipt_sha256": "2c61e9bad545eaf68aa2891bb445a82394211d670fb6ee11162b47968e561ac1"
+        },
+        {
+          "kind": "checkout_archive",
+          "authority": "grabowski-checkout-lifecycle",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T088",
+          "source_ref": "checkout-archive:20260724T043017Z-e1c1e2e067d1",
+          "path": "/home/alex/.local/state/grabowski/checkout-archives/20260724T043017Z-e1c1e2e067d1/manifest.json",
+          "content_sha256": "e3fab0159ba99394a7a3ffeb3b0c750d44a4d22587f5697f2dc8299327d35c50",
+          "head_sha": "531d03d58fc305362a79a9c673f5c6d5eef92540"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "0ed140a650565694c0f0232b2c7b7a0ad46014663cb882d852b99b5725399ed7",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "source": "task_bound_pr_ci_runtime_and_live_evidence",
+      "source_ref": "bureau-closeout:GRABOWSKI-OPERATOR-SURFACE-V1-T088@2fca8bd396bb75f691702f8e72cb18a564799c69",
+      "evidence_sha256": "374444b21c05f919a24114bdc5dd1ab25ed49064f1e478dbab80b273a19520db",
+      "verified_at": "2026-07-24T05:03:16Z"
+    }
   },
   "priority": {
     "lane": "later",
@@ -75,6 +147,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Bureau-Checkout-Cleanup ressourcenrein sequenzieren"
 }

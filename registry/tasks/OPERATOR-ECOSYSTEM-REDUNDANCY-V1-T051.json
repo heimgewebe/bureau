@@ -1,0 +1,132 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A revision-bound architecture audit classifies every current module, schema, example, test, document and runtime surface as keep, remove, transform, migrate or add, with explicit authority and consumer reasoning.",
+      "id": "audit-boundary"
+    },
+    {
+      "assertion": "The product, Python package, CLI and documentation are renamed to Reposkop with a bounded read-only compatibility path for existing Steuerboard consumers and an explicit repository-rename migration plan.",
+      "id": "rename-contract"
+    },
+    {
+      "assertion": "Action execution, approval authority, network refresh, host service gates, generic runbooks, local preference/favorites, standalone UI ownership and other overlapping surfaces are removed or migrated; Reposkop retains no mutation path.",
+      "id": "scope-reduction"
+    },
+    {
+      "assertion": "Reposkop defaults to one explicit repository or checkout target, models canonical checkout, linked worktree, auxiliary clone, managed RepoGround source, deployment source, Grabowski workspace and legacy source roles, and separates path, Git common-dir, remote and purpose identity.",
+      "id": "target-bound-projection"
+    },
+    {
+      "assertion": "Versioned digest- and freshness-bound evidence from Grabowski, Bureau, GitHub and RepoGround can be validated and projected into non-authoritative states including managed_retain, protected_active, dirty_preserve, remove_candidate, archive_then_remove and inconclusive, with remove_candidate never implying deletion authorization.",
+      "id": "lifecycle-evidence"
+    },
+    {
+      "assertion": "Grabowski consumes Reposkop only as target-bound repository-state context, revalidates all live preconditions before effects and remains the sole owner of Git, worktree, process, service and host mutation.",
+      "id": "operator-integration"
+    },
+    {
+      "assertion": "Systemkatalog and Leitstand describe and display Reposkop as a source-bound read-only coherence projection without copying its truth or adding action controls.",
+      "id": "display-integration"
+    },
+    {
+      "assertion": "Automations are implemented only where they are event-bound, bounded and non-authoritative; global daemon, global mandatory gate and noisy unconditional scheduled scan designs are explicitly rejected or justified by measured evidence.",
+      "id": "automation-decision"
+    },
+    {
+      "assertion": "Focused and full tests, schema validation, compatibility checks, generated documentation, self-review, exact diff digest, CI and migration readbacks pass before merge, repository rename or consumer cutover.",
+      "id": "tests-review-migration"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.steuerboard"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.systemkatalog"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.leitstand"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T003"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly requested the complete audit, rename, rebuild, system integration and evaluation of automations on 2026-07-24.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/steuerboard",
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/systemkatalog",
+      "repo:/home/alex/repos/leitstand"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/steuerboard"
+  },
+  "goal": "Audit and rebuild Steuerboard under the new name Reposkop as the single deterministic, target-bound, read-only repository and checkout coherence projection for the Heimgewebe operator ecosystem; remove obsolete action, approval, runbook, UI and host-gate ownership; add explicit checkout roles and source-bound lifecycle evidence; integrate the resulting contract with Grabowski, Systemkatalog and Leitstand without creating a second truth or execution plane.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T051",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "automatic cleanup authorization",
+      "task or queue authority",
+      "GitHub or CI truth ownership",
+      "permission to rename the GitHub repository before compatibility and consumer readbacks pass",
+      "permission to install a global daemon or mandatory global gate"
+    ],
+    "proposed_new_name": "Reposkop",
+    "registered_from": "User-directed complete Steuerboard audit and rebuild request on 2026-07-24; promoted from candidate candidate-0f0ccd50cd3c70bf8fea8e4a.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-0f0ccd50cd3c70bf8fea8e4a",
+      "event_id": 1100,
+      "event_created_at": "2026-07-24T04:50:59.580074Z",
+      "request_sha256": "1be84050e68c97bfba13aad21e701dcb3153522cdc3b60b8bbe71009fb088ba3",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator-live-audit",
+        "locator": "/home/alex/.local/state/grabowski/worktree-cleanup-prioritized-20260724.json",
+        "observed_at": "2026-07-24T06:45:00+02:00",
+        "sha256": "2b92442dea19894209f616a4ef78b28fa8bed95dfa2c2e075c11c41e943dbd54"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "bureau"
+  ],
+  "rollback": {
+    "strategy": "Revert the Reposkop rebuild commits and consumer integrations independently. Keep the existing heimgewebe/steuerboard repository name and the fail-closed read-only release until the compatibility and consumer readbacks prove the staged cutover safe."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Rebuild Steuerboard as Reposkop coherence adapter"
+}

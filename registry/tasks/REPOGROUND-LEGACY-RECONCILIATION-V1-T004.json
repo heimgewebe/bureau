@@ -3,17 +3,17 @@
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T004",
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
   "title": "Reduce RepoGround core complexity and prove live module reachability",
-  "state": "planned",
+  "state": "ready",
   "priority": {
-    "lane": "later",
-    "rank": 2
+    "lane": "now",
+    "rank": 80
   },
   "goal": "Reduziere die größten Monolithen und die tolerierte Komplexitätsschuld, während dynamisch geladene Einstiegspunkte von tatsächlich toten API-Flächen unterschieden werden.",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/repoground",
-    "baseline_commit": "d54a3f3d53818f03405cab5e84e3a5086d4b81ad",
+    "baseline_commit": "dc67fdcf832655b948fe2bb725507fa0da6295bb",
     "grabowski_resources": [
       "repo:/home/alex/repos/repoground"
     ]
@@ -62,6 +62,20 @@
     "does_not_establish": [
       "Toter Code allein durch statische Importanalyse",
       "Dass große Dateien automatisch fehlerhaft sind"
-    ]
+    ],
+    "activation": {
+      "activated_at": "2026-07-24T17:00:00+02:00",
+      "selected_against_bureau_commit": "966ebbd",
+      "selected_against_repoground_commit": "dc67fdcf832655b948fe2bb725507fa0da6295bb",
+      "authority": "explicit_user_instruction",
+      "existing_slice_branch": "refactor/legacy-reconciliation-t004-core-complexity-v1",
+      "existing_slice_head": "f8dbf49f4ccbea3cce2886888f06ace96aa8dcd5",
+      "execution_rule": "port and revalidate existing clean slice on current main; do not modify or assume ownership of the historical worktree",
+      "does_not_establish": [
+        "existing slice completeness",
+        "historical branch merge readiness",
+        "permission to touch foreign worktrees"
+      ]
+    }
   }
 }

@@ -3,7 +3,7 @@
   "id": "OPERATOR-INTEGRATION-LOOP-V1-T012",
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Bureau-Publisher-Runtime und kanonische Registry-Identität wieder konvergent machen",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 12
@@ -86,6 +86,122 @@
       "automatic runtime deployment",
       "queue readiness",
       "merge authority"
-    ]
+    ],
+    "implementation": {
+      "repository": "heimgewebe/bureau",
+      "pull_request": 949,
+      "reviewed_head_sha": "e2e8fb995c295b2336fc7ec714f181ff506b07ac",
+      "merge_commit_sha": "2fca8bd396bb75f691702f8e72cb18a564799c69",
+      "diff_sha256": "83b5833682b55e79448245d0d10329fff4dc258b0ff1706e5692aae2c0394f52"
+    },
+    "validation": {
+      "focused_runtime_refresh_tests": "24 passed",
+      "full_bureau_tests": "806 passed",
+      "ruff": "passed",
+      "github_required_checks": [
+        "validate (3.10): success",
+        "validate (3.12): success",
+        "CodeQL: success"
+      ],
+      "exact_head_job": "grabowski-job-ad1af762ca4d",
+      "exact_head_job_receipt_sha256": "c5214244ffb4697b49a0d728e95ce5d14c293b26e4d2c237d5aea5d69cd18642"
+    },
+    "deployment": {
+      "source_commit": "2fca8bd396bb75f691702f8e72cb18a564799c69",
+      "release_id": "2fca8bd396bb-src3c6cdd6b378e",
+      "manifest_sha256": "da5c3f5173c5087590d74e5a7456b81f92ca78c985d4aeb4707caf855daf8f4c",
+      "package_tree_sha256": "3c6cdd6b378e5fa6dfef8a51055bc4714f595027f6b2f1ea9c5a9aea1b122444",
+      "registry_snapshot_tree_sha256": "f8577d08750c6fe4b8d3ba8196ee984c876b0d82730b4c322930021c87c3e165",
+      "runtime_result_sha256": "52c8e9f5b8520861d76ed2590aecdff54dbee0f8a848c192ddc411abc0adec0e",
+      "job_receipt_sha256": "567d591445ceef130875234a073d54202997e8037db1dadcb6865414d123817e"
+    },
+    "live_proof": {
+      "runtime_identity": "release, canonical Registry snapshot and origin/main all equal 2fca8bd396bb75f691702f8e72cb18a564799c69",
+      "refresh_status": "already_current",
+      "lag_commits": 0,
+      "recovery_action": {
+        "action": "none",
+        "eligible": false,
+        "requires_authorization": false
+      },
+      "observation_sha256": "59dde59dc795e619b0567b29e0d3dad4f27424369968939878a954da54fb7283",
+      "typed_publisher": {
+        "subject_task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T095",
+        "proposal_sha256": "2065311165666a23d94513bf3878eafe5f44e26c87048ae96fafd05ce6da6608",
+        "publication_receipt_sha256": "6bc307293dd10cd4b71e9a3c84f4ee8991a5d3273e8dfca8e99aee540b20f54f",
+        "pull_request": 947,
+        "status": "published",
+        "publication_phase": "pr_confirmed",
+        "readback_complete": true
+      }
+    },
+    "verified_acceptance": {
+      "authoritative-refresh-contract": "PASS: exact merged main commit was deployed through an intent-, lease-, CI- and manifest-bound immutable refresh with full readback and rollback evidence.",
+      "typed-publisher-recovers": "PASS: the typed propose/review/publish path published T095 as Bureau PR #947 with pr_confirmed readback and without release-registry-identity-mismatch.",
+      "real-drift-remains-fail-closed": "PASS: no identity or mutation gate changed; the implementation only projects a deterministic recovery action from the existing fail-closed status.",
+      "actionable-stale-state": "PASS: candidate/alert project prepare-intent, blocked projects resolve-reason-codes, and current projects none; all cases are regression-tested.",
+      "regression-proof": "PASS: 24 focused tests, 806 full tests, Ruff, exact-head local validation and required GitHub checks succeeded."
+    },
+    "verified_at": "2026-07-24T05:03:16Z",
+    "verification_note": "Acceptance closed from exact merged implementation, exact-head validation and task-bound machine evidence; no inferred green state.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T012",
+          "source_ref": "heimgewebe/bureau#949",
+          "repository": "heimgewebe/bureau",
+          "number": 949,
+          "head_sha": "e2e8fb995c295b2336fc7ec714f181ff506b07ac",
+          "merge_commit_sha": "2fca8bd396bb75f691702f8e72cb18a564799c69",
+          "diff_sha256": "83b5833682b55e79448245d0d10329fff4dc258b0ff1706e5692aae2c0394f52"
+        },
+        {
+          "kind": "test_receipt",
+          "authority": "grabowski-job",
+          "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T012",
+          "source_ref": "grabowski-job-ad1af762ca4d",
+          "run_id": "grabowski-job-ad1af762ca4d",
+          "head_sha": "e2e8fb995c295b2336fc7ec714f181ff506b07ac",
+          "receipt_sha256": "c5214244ffb4697b49a0d728e95ce5d14c293b26e4d2c237d5aea5d69cd18642"
+        },
+        {
+          "kind": "runtime_deployment",
+          "authority": "bureau-runtime-refresh",
+          "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T012",
+          "source_ref": "bureau-runtime-refresh@2fca8bd396bb-src3c6cdd6b378e",
+          "commit_sha": "2fca8bd396bb75f691702f8e72cb18a564799c69",
+          "receipt_sha256": "52c8e9f5b8520861d76ed2590aecdff54dbee0f8a848c192ddc411abc0adec0e",
+          "manifest_sha256": "da5c3f5173c5087590d74e5a7456b81f92ca78c985d4aeb4707caf855daf8f4c"
+        },
+        {
+          "kind": "live_probe",
+          "authority": "bureau-runtime-refresh",
+          "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T012",
+          "source_ref": "runtime-observation:59dde59dc795",
+          "commit_sha": "2fca8bd396bb75f691702f8e72cb18a564799c69",
+          "content_sha256": "59dde59dc795e619b0567b29e0d3dad4f27424369968939878a954da54fb7283"
+        },
+        {
+          "kind": "typed_publication_receipt",
+          "authority": "grabowski-bureau-intake",
+          "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T012",
+          "source_ref": "bureau-task-publication:GRABOWSKI-OPERATOR-SURFACE-V1-T095#947",
+          "receipt_sha256": "6bc307293dd10cd4b71e9a3c84f4ee8991a5d3273e8dfca8e99aee540b20f54f",
+          "head_sha": "b3d0234d8c494bd435e4c94a052d79a86087b3d5"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "2d32f7f4c22a34b178255ccf6c873c3eddbdb4061877e58a3e5c97bc79b02e31",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+      "source": "task_bound_pr_ci_runtime_and_live_evidence",
+      "source_ref": "bureau-closeout:OPERATOR-INTEGRATION-LOOP-V1-T012@2fca8bd396bb75f691702f8e72cb18a564799c69",
+      "evidence_sha256": "d4b62422e35aec6ad325739c46217dd0bff5f266ba3a3be9d33c4dcd18ccb06c",
+      "verified_at": "2026-07-24T05:03:16Z"
+    }
   }
 }

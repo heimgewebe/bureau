@@ -3,7 +3,7 @@
   "id": "OPERATOR-MACHINE-READABILITY-V1-T025",
   "initiative": "OPERATOR-MACHINE-READABILITY-V1",
   "title": "Make deployment invariant guard linked-worktree-path safe",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 25
@@ -87,6 +87,62 @@
       "deployment authority",
       "task readiness",
       "queue truth"
-    ]
+    ],
+    "implementation": {
+      "repository": "heimgewebe/leitstand",
+      "pull_request": 189,
+      "reviewed_head_sha": "1a22a4b17ec81cf0578e2e728eeb43276578f2a2",
+      "merge_commit_sha": "a85c14d0df83da61c68e43fe814a19d483f3f6f2",
+      "diff_sha256": "a8adcf76a662b170144071471a4e92e55a6c9b4d684d87a23954a3c1cb9483b1"
+    },
+    "validation": {
+      "focused_release_runtime_tests": "38 passed",
+      "full_leitstand_ci": "passed",
+      "github_checks": "passed",
+      "exact_head_job": "grabowski-job-3a2d08e72717",
+      "exact_head_job_receipt_sha256": "2abd6cb2db928720407b693bc7f792fea35735bf9d9773eb145cc6fda7dabfe4"
+    },
+    "verified_acceptance": {
+      "linked-worktree-safe": "PASS: the guard enumerates only git ls-files content and no longer scans linked-worktree administrative metadata.",
+      "real-reference-still-fails": "PASS: regression coverage creates a tracked deprecated reference and requires a non-zero guard result.",
+      "path-name-regression": "PASS: regression coverage runs successfully from a linked worktree whose path contains leitstand-deploy.",
+      "no-authority-change": "PASS: only validation scope and tests changed; no deployment or mutation authority was added."
+    },
+    "verified_at": "2026-07-24T05:03:16Z",
+    "verification_note": "Acceptance closed from exact merged implementation, exact-head validation and task-bound machine evidence; no inferred green state.",
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T025",
+          "source_ref": "heimgewebe/leitstand#189",
+          "repository": "heimgewebe/leitstand",
+          "number": 189,
+          "head_sha": "1a22a4b17ec81cf0578e2e728eeb43276578f2a2",
+          "merge_commit_sha": "a85c14d0df83da61c68e43fe814a19d483f3f6f2",
+          "diff_sha256": "a8adcf76a662b170144071471a4e92e55a6c9b4d684d87a23954a3c1cb9483b1"
+        },
+        {
+          "kind": "test_receipt",
+          "authority": "grabowski-job",
+          "task_id": "OPERATOR-MACHINE-READABILITY-V1-T025",
+          "source_ref": "grabowski-job-3a2d08e72717",
+          "run_id": "grabowski-job-3a2d08e72717",
+          "head_sha": "1a22a4b17ec81cf0578e2e728eeb43276578f2a2",
+          "receipt_sha256": "2abd6cb2db928720407b693bc7f792fea35735bf9d9773eb145cc6fda7dabfe4"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "5b55ced5c849338872d625abddb2c95841b85b6fd387aafa92edf99b8c635871",
+      "plan_sha256": "5bd32f4906cc9af27a3f99c7ab886eb9df7f8e5f4e9247c450bc492e64d28b06",
+      "source": "task_bound_pr_ci_runtime_and_live_evidence",
+      "source_ref": "bureau-closeout:OPERATOR-MACHINE-READABILITY-V1-T025@2fca8bd396bb75f691702f8e72cb18a564799c69",
+      "evidence_sha256": "9270f3bda261d8902e3a3e4de6ba6480aab415e632121d9b70efd52921018312",
+      "verified_at": "2026-07-24T05:03:16Z"
+    }
   }
 }

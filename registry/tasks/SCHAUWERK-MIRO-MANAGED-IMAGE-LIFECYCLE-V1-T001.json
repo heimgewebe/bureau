@@ -3,7 +3,7 @@
   "id": "SCHAUWERK-MIRO-MANAGED-IMAGE-LIFECYCLE-V1-T001",
   "initiative": "SCHAUWERK-MIRO-MANAGED-IMAGE-LIFECYCLE-V1",
   "title": "Authorize and prove the separate Miro REST managed-image lifecycle",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 530
@@ -77,6 +77,32 @@
       "that Miro offers image deletion through MCP",
       "that create-verify-delete is globally atomic",
       "permission to mutate unrelated boards or images"
-    ]
+    ],
+    "verified_at": "2026-07-24",
+    "outcome": "Schauwerk PR #114 activated the already implemented cross-surface managed-image lifecycle with a separately authorized private Miro REST app. Live doctor proved boards:write, an isolated private board proved exact create/readback/managed-identity/REST-delete with MCP inventory 1→0 and independent REST absence, the disposable board was removed, and the existing Companion remained boards:read-only.",
+    "validated_acceptance": {
+      "separate-rest-authority": "PASS: Separate owner-only REST credential installed outside Git; live proof records separate_from_mcp_oauth=true; no token is committed or present in receipts.",
+      "write-doctor": "PASS: Fresh isolated Python 3.11 doctor readback proves live_authorized=true and boards_write_authorized=true with scopes exactly boards:read and boards:write.",
+      "isolated-saga": "PASS: Private disposable board created; exact managed image identity bound; delete receipt proves before_count=1, REST preflight present, HTTP 204, REST postflight absent, MCP after_count=0 and independent REST absence.",
+      "fail-closed-delete": "PASS: Delete CLI accepts only allowlisted board alias plus exact owner-only managed identity; tests cover missing credential, missing write scope and unavailable live authority as unavailable/fail-closed.",
+      "availability-truth": "PASS: PR #114 live-checks separate REST authority only when configured and reports managed_image_lifecycle cross_surface/effective only with proven write authority; absent or unverifiable authority remains unavailable.",
+      "least-privilege-no-cost": "PASS: Post-change browser readback shows Companion boards:read=true and boards:write=false; separate REST app has only boards:read+boards:write; all other observed scopes false; disposable provider artifacts removed."
+    },
+    "verification": {
+      "source": "github_pr_ci_and_live_provider_readback",
+      "source_ref": "github-pr:heimgewebe/schauwerk#114",
+      "repository": "heimgewebe/schauwerk",
+      "pull_request": 114,
+      "base_commit": "10b4743317e78c302ec86417c6bd70317b0ace83",
+      "reviewed_head": "63079d58b1db9e36aaaf340823bcd3ebba0a31a3",
+      "merge_commit": "d14a62d899c8b4789700fd9d35ec6a5cd7c58999",
+      "final_diff_sha256": "1d904bb02ac02d285e3077361560d4a6c305ca2a959e227fed7366ab57cecdf8",
+      "final_diff_bytes": 23871,
+      "local_validation": "make validate: 774 passed; lint, compile and registry validation pass",
+      "github_pr_checks": "all observed validate 3.11/3.12 and CodeQL checks pass",
+      "sanitized_live_evidence": "docs/operators/evidence/miro-managed-image-lifecycle-proof-20260724.json",
+      "task_sha256": "9725bdfeba313ec963ea555834805698849390e11ba4a6c15f6fd3e8c252834c",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   }
 }

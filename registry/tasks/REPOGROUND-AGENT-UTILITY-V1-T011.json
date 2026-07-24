@@ -1,0 +1,104 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Mehrere echte frische Prozesse führen denselben gesetzten Query gegen exakt dieselbe gebundene RepoGround-Index-, Bundle- und Publikationsidentität aus und reproduzieren oder widerlegen Byte- und Strukturdeterminismus.",
+      "id": "bound_reproduction"
+    },
+    {
+      "assertion": "Abweichungen werden getrennt für Trefferidentität und -reihenfolge, Scores, Snippets, Ranges, Metadaten und Zeit-/Cache-/Laufzeitzustände lokalisiert; eine bloße Hash-Differenz gilt nicht als Root Cause.",
+      "id": "retrieval_field_isolation"
+    },
+    {
+      "assertion": "Für legitime volatile Retrieval-Felder existiert ein expliziter enger Vertrag; semantisch relevante Treffer-, Score-, Snippet- oder Range-Differenzen dürfen nicht still herausnormalisiert werden.",
+      "id": "volatility_contract"
+    },
+    {
+      "assertion": "Tests decken Cold-Start, Warm-Start, mindestens zwei Query-Fälle und mindestens zwei gebundene Repository-Bundles ab und schlagen bei unbegründeter semantisch relevanter Retrieval-Drift fehl.",
+      "id": "regression_tests"
+    },
+    {
+      "assertion": "Der Task behauptet aus deterministischen oder identischen Ergebnissen weder Retrieval-Qualität noch Wahrheit, Vollständigkeit, semantische Gleichheit, Default-Routing-Autorität oder RepoGround-Schreibautorität.",
+      "id": "no_false_authority"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.repoground"
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T010"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die von T010 ausdrücklich nicht abgedeckte repoground_context_pack-Retrieval-Lane mit gesetztem Query unter exakt gebundener RepoGround-Index- und Publikationsidentität auf Cold-Start-Determinismus, Trefferreihenfolge, Scores, Snippets, Ranges und deklarierte Volatilität prüfen, ohne aus Byte-Gleichheit Retrieval-Qualität, Wahrheit oder Vollständigkeit abzuleiten.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T011",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "live bundle freshness",
+      "retrieval quality improvement",
+      "semantic equivalence from byte equality",
+      "semantic completeness",
+      "truth",
+      "automatic default routing",
+      "RepoGround write authority",
+      "byte equality across hosts or paths",
+      "task readiness",
+      "claim or dispatch authority"
+    ],
+    "note": "Folgetask aus dem revisionsgebundenen T010-Determinismus-Proof. T010 deckt nur die no-query context-pack lane ab; die Retrieval-Lane mit gesetztem Query delegiert Snippet- und Range-Reihenfolge an den externen RepoGround-Index.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-cc98bbb08a6c6f12ba439561",
+      "event_id": 1078,
+      "event_created_at": "2026-07-23T21:55:55.077359Z",
+      "request_sha256": "7054d5f957f049f5070b3f68ba4494d5c0926c468b65cf0319c9c97ebf636db9",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "proof-artifact",
+        "locator": "docs/proofs/repoground-agent-utility-v1-t010-determinism-20260723.json",
+        "observed_at": "2026-07-23T21:55:55.069045Z",
+        "sha256": "f8cc68dc6eea1eeb47acae4125d783ecd6e3358c5e35759c2dadce40cfca188e"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "scope_reason": "T011 isolates the retrieval lane that T010 explicitly withheld from its determinism claim. It is planned/later and does not preempt the canonical now queue.",
+    "source_candidate": "candidate-cc98bbb08a6c6f12ba439561",
+    "source_proof_sha256": "f8cc68dc6eea1eeb47acae4125d783ecd6e3358c5e35759c2dadce40cfca188e",
+    "source_task": "REPOGROUND-AGENT-UTILITY-V1-T010"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 71
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "repoground",
+    "bounded-io",
+    "search-ranking"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Retrieval-Lane-Determinismus von RepoGround-Kontext prüfen"
+}

@@ -2334,6 +2334,27 @@ def test_coordinated_claim_rejects_workspace_source_head_drift(
         assert connection.execute("SELECT COUNT(*) FROM workers").fetchone()[0] == 0
 
 
+def test_coordinated_claim_rejects_rehashed_workspace_baseline_tamper(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    intent = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        base_dir=tmp_path / "worktrees",
+        approved=True,
+    )["intent"]
+    intent["workspace"]["baseline_commit"] = "0" * 40
+    intent["intent_sha256"] = bureau_v2.coordinated_claim_intent_sha256(intent)
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+    with pytest.raises(StateError, match="workspace changed after intent"):
+        dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+    assert store.list_runs() == []
+
+
 def test_coordinated_active_run_surfaces_live_lease_drift(registry_factory, tmp_path, monkeypatch):
     root = registry_factory(1, mode="write")
     task_id = prepare_coordinated_registry(root)

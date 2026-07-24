@@ -119,6 +119,17 @@ def _validate_coordinated_claim_intent(intent: dict[str, Any]) -> None:
         raise legacy.StateError("coordinated claim nonclaims are invalid")
 
 
+def _workspace_baseline_for_task(registry: Registry, task: legacy.Task) -> str | None:
+    baseline = task.execution.get("baseline_commit")
+    initiative = registry.initiatives[task.initiative]
+    if baseline is None and initiative.current_plan:
+        working = task.execution.get("working_repository")
+        plan_repository = initiative.current_plan.get("repository")
+        if working and Path(working).name == plan_repository:
+            baseline = initiative.current_plan.get("commit")
+    return baseline
+
+
 def _planned_workspace(
     registry: Registry,
     task: legacy.Task,
@@ -2608,14 +2619,8 @@ class Dispatcher(legacy.Dispatcher):
                 task_id=selected.id,
             )
             approval_evidence = approval.as_dict()
-        initiative = self.registry.initiatives[selected.initiative]
         current_plan_sha = plan_sha256(self.registry, selected.initiative)
-        baseline = selected.execution.get("baseline_commit")
-        if baseline is None and initiative.current_plan:
-            working = selected.execution.get("working_repository")
-            plan_repository = initiative.current_plan.get("repository")
-            if working and Path(working).name == plan_repository:
-                baseline = initiative.current_plan.get("commit")
+        baseline = _workspace_baseline_for_task(self.registry, selected)
         workspace = _planned_workspace(self.registry, selected, run_id, base_dir, baseline)
         required_keys = sorted(grabowski_resource_keys_for_task(self.registry.resources, selected))
         now = datetime.now(timezone.utc)
@@ -2721,11 +2726,7 @@ class Dispatcher(legacy.Dispatcher):
                 if isinstance(intent.get("workspace"), dict)
                 else None
             ),
-            (
-                intent["workspace"]["baseline_commit"]
-                if isinstance(intent.get("workspace"), dict)
-                else None
-            ),
+            _workspace_baseline_for_task(self.registry, task),
         )
         if expected_workspace != intent["workspace"]:
             raise legacy.StateError("coordinated claim workspace changed after intent")
@@ -2831,8 +2832,8 @@ class Dispatcher(legacy.Dispatcher):
                 "claims": [claim.as_dict() for claim in task.claims],
                 "plan": initiative.current_plan,
                 "baseline_commit": (
-                    intent["workspace"]["baseline_commit"]
-                    if isinstance(intent.get("workspace"), dict)
+                    expected_workspace["baseline_commit"]
+                    if isinstance(expected_workspace, dict)
                     else task.execution.get("baseline_commit")
                 ),
                 "runtime_truth": runtime_truth,

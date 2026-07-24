@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "metadata": {
+    "parent_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T004",
+    "registered_from_review": "heimgewebe/repoground#1096",
+    "registered_at": "2026-07-24T17:20:00+02:00",
+    "scope_rule": "Execute in a fresh isolated current-main worktree; do not reuse, reset or mutate historical T004 worktrees.",
+    "does_not_establish": [
+      "Die Zerlegung beweist keine Vollständigkeit des gesamten T004",
+      "Bytegleichheit beweist keine inhaltliche Richtigkeit"
+    ]
+  },
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T009",
+  "title": "Report-Renderer iter_report_blocks sicher zerlegen",
+  "priority": {
+    "lane": "later",
+    "rank": 6
+  },
+  "goal": "Die weiterhin 1.042 Zeilen lange und C901-148 schwere Funktion iter_report_blocks entlang stabiler Reportsektionen zerlegen, ohne Reihenfolge, Bytes, Anker, Redaction oder Navigationssemantik zu verändern.",
+  "required_capabilities": [
+    "python",
+    "architecture-refactoring",
+    "golden-testing",
+    "benchmarking"
+  ],
+  "acceptance": [
+    {
+      "id": "section-boundaries",
+      "assertion": "Jede extrahierte Sektion besitzt eine eindeutige Eingabe-/Ausgabegrenze; Generatorreihenfolge und Lazy-Verhalten bleiben erhalten."
+    },
+    {
+      "id": "byte-parity",
+      "assertion": "Gebundene Goldfälle für mehrere Profile und Extras erzeugen vor/nach der Zerlegung bytegleiche kanonische Reports oder dokumentieren eng begründete, vertraglich zulässige Abweichungen."
+    },
+    {
+      "id": "complexity",
+      "assertion": "iter_report_blocks fällt deutlich unter C901 148; Gesamt-Findingzahl und Excess-Mass steigen nicht."
+    },
+    {
+      "id": "safety",
+      "assertion": "Redaction, Pfadbehandlung, Größenlimits, stabile Anker und does_not_establish-Grenzen bleiben durch Negativtests erhalten."
+    },
+    {
+      "id": "performance",
+      "assertion": "Zeit und Peak-Speicher zentraler Reportfälle regressieren nicht materiell."
+    }
+  ],
+  "depends_on": []
+}

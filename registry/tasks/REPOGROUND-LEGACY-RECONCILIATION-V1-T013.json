@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "metadata": {
+    "parent_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T004",
+    "registered_from_review": "heimgewebe/repoground#1096",
+    "registered_at": "2026-07-24T17:20:00+02:00",
+    "scope_rule": "Execute in a fresh isolated current-main worktree; do not reuse, reset or mutate historical T004 worktrees.",
+    "does_not_establish": [
+      "Fehlender lokaler Import beweist keine globale Nichtnutzung",
+      "Testnutzung beweist keinen Produktionsconsumer"
+    ]
+  },
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T013",
+  "title": "Sechs test-only Produktionsmodule dispositionieren",
+  "priority": {
+    "lane": "later",
+    "rank": 10
+  },
+  "goal": "Für die sechs vom gehärteten Reachability-Gate nur testgebunden gefundenen Produktionsmodule reale Consumer-, Archivierungs-, Integrations- oder Entfernungsevidenz schaffen, ohne statische Nichtnutzung als Löschbeweis zu behandeln.",
+  "required_capabilities": [
+    "python",
+    "runtime-tracing",
+    "consumer-inventory",
+    "testing"
+  ],
+  "acceptance": [
+    {
+      "id": "exact-inventory",
+      "assertion": "Die sechs Module und ihre aktuelle Hash-/Pfadidentität werden revisionsgebunden inventarisiert."
+    },
+    {
+      "id": "consumer-evidence",
+      "assertion": "Für jedes Modul werden Produktimporte, CLI-/Runtime-Aufrufe, Packaging, externe Consumer und Tests getrennt geprüft."
+    },
+    {
+      "id": "bounded-disposition",
+      "assertion": "Jedes Modul erhält keep-and-integrate, isolate/archive oder remove mit konkreter Evidenz und Rückfallpfad."
+    },
+    {
+      "id": "no-static-delete",
+      "assertion": "Kein Modul wird allein wegen fehlender statischer Produktimporte entfernt."
+    },
+    {
+      "id": "policy-convergence",
+      "assertion": "allowed_test_only wird nur nach realer Disposition verkleinert; stale oder pauschale Ausnahmen bleiben verboten."
+    }
+  ],
+  "depends_on": []
+}

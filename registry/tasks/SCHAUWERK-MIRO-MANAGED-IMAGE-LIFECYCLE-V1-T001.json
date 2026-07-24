@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "id": "SCHAUWERK-MIRO-MANAGED-IMAGE-LIFECYCLE-V1-T001",
+  "initiative": "SCHAUWERK-MIRO-MANAGED-IMAGE-LIFECYCLE-V1",
+  "title": "Authorize and prove the separate Miro REST managed-image lifecycle",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 530
+  },
+  "goal": "Configure and verify the already implemented separate Miro REST authority needed for managed image GET/DELETE, then prove one bounded create-verify-delete saga without changing existing Companion scopes or persisting credentials.",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk",
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "operator",
+      "note": "The user authorized autonomous no-cost Schauwerk optimization. Use only a separate Miro REST authorization path. Do not reuse MCP OAuth, broaden the existing Companion app scopes, recreate or uninstall the app, delete unrelated images, or enable paid features. If suitable free authorization is unavailable, stop fail-closed and record the blocker."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.schauwerk",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "git",
+    "github",
+    "bureau",
+    "python",
+    "miro",
+    "browser"
+  ],
+  "acceptance": [
+    {
+      "id": "separate-rest-authority",
+      "assertion": "A separately configured Miro REST credential is stored outside Git and receipts; MCP OAuth is never reused for REST calls."
+    },
+    {
+      "id": "write-doctor",
+      "assertion": "A fresh `schauwerk miro rest doctor --require-write --json` readback proves the required REST write authority before any delete operation is attempted."
+    },
+    {
+      "id": "isolated-saga",
+      "assertion": "A disposable test image on an explicitly isolated test board completes create, exact readback verification and REST delete with board/item identity bound in the receipt."
+    },
+    {
+      "id": "fail-closed-delete",
+      "assertion": "Delete is refused when board identity, item identity, expected lifecycle state or live REST authorization is missing or inconsistent; unrelated images are never selected by search or heuristic matching."
+    },
+    {
+      "id": "availability-truth",
+      "assertion": "The capability audit reports managed_image_lifecycle available only after the separate REST credential is configured and live authorization is proven, and reverts to unavailable when that authority is absent."
+    },
+    {
+      "id": "least-privilege-no-cost",
+      "assertion": "The existing Schauwerk Companion app identity, URL and scopes remain unchanged, no paid provider feature is enabled, and no credential or session material is committed or emitted into receipts."
+    }
+  ],
+  "depends_on": [],
+  "metadata": {
+    "registered_at": "2026-07-24",
+    "source_pull_request": "heimgewebe/schauwerk#113",
+    "source_merge_commit": "10b4743317e78c302ec86417c6bd70317b0ace83",
+    "live_finding": "`schauwerk miro rest doctor --require-write --json` currently fails because a separate Miro REST credential is not installed; the MCP catalogue still lacks image_delete.",
+    "existing_implementation": "Schauwerk already contains a fail-closed separate REST image read/delete adapter and capability-audit lane; this task is authorization, live proof and lifecycle truth rather than a request to reuse MCP credentials.",
+    "does_not_establish": [
+      "that REST authorization can be completed without provider-side user consent",
+      "that Miro offers image deletion through MCP",
+      "that create-verify-delete is globally atomic",
+      "permission to mutate unrelated boards or images"
+    ]
+  }
+}

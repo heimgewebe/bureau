@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "LEITSTAND-VISUAL-LAYER-V1",
   "title": "Leitstand ecosystem visualization layer expansion",
-  "state": "completed",
-  "commitment": "completed",
+  "state": "active",
+  "commitment": "now",
   "goal": "Expand Leitstand into a read-only visualization layer for ecosystem maps, source freshness, RepoBrief health, and cross-view navigation without making Leitstand a source of truth, orchestrator, or task dispatcher.",
   "current_plan": {
     "repository": "bureau",
@@ -72,6 +72,18 @@
         "future_source_correctness",
         "leitstand_write_authority"
       ]
+    },
+    "reopened_at": "2026-07-24T01:45:27.705483Z",
+    "reopened_by_task": "LSV-V1-T011",
+    "reopened_reason": "LSV-V1-T010 and LSV-V1-T011 were registered after the prior T001-T009 completion; LSV-V1-T011 is ready/now and has live implementation resource claims, so the prior completed lifecycle is historical rather than current.",
+    "reopen_basis": {
+      "doctor_recommendation": "reopen-required",
+      "open_tasks": [
+        "LSV-V1-T010",
+        "LSV-V1-T011"
+      ],
+      "active_task": "LSV-V1-T011",
+      "prior_completion_preserved_in": "metadata.lifecycle"
     }
   }
 }

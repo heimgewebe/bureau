@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "metadata": {
+    "parent_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T004",
+    "registered_from_review": "heimgewebe/repoground#1096",
+    "registered_at": "2026-07-24T17:20:00+02:00",
+    "scope_rule": "Execute in a fresh isolated current-main worktree; do not reuse, reset or mutate historical T004 worktrees.",
+    "does_not_establish": [
+      "Desktop-Tests beweisen keine vollständige iPad-Runtime-Parität",
+      "Modularisierung autorisiert keine neue Abhängigkeit"
+    ]
+  },
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T010",
+  "title": "Pythonista-Build-Orchestrierung modularisieren und Importvertrag härten",
+  "priority": {
+    "lane": "later",
+    "rank": 7
+  },
+  "goal": "Die rund 3.156 Zeilen große Pythonista-build.py in portable, standardbibliothekskompatible Verantwortlichkeiten zerlegen und die direkten Sibling-Importe explizit und testbar machen.",
+  "required_capabilities": [
+    "python",
+    "pythonista",
+    "architecture-refactoring",
+    "portability-testing"
+  ],
+  "acceptance": [
+    {
+      "id": "portable-import-contract",
+      "assertion": "Direkte Script-Ausführung und Paketimport besitzen einen expliziten, getesteten Importvertrag ohne zufällige sys.path-Abhängigkeit."
+    },
+    {
+      "id": "orchestration-slices",
+      "assertion": "Argumente, Prescan-Pool, Pfadnormalisierung, Build-Orchestrierung und Ausgabe werden in kleine Module mit klaren Grenzen getrennt."
+    },
+    {
+      "id": "pythonista-compatibility",
+      "assertion": "Die unterstützte Pythonista-/iPad-Laufzeit bleibt ohne neue Pflichtabhängigkeit funktionsfähig."
+    },
+    {
+      "id": "parity",
+      "assertion": "CLI- und Build-Ausgaben bleiben in gebundenen Goldfällen gleichwertig; Parity-Guard und relevante Tests sind grün."
+    },
+    {
+      "id": "complexity-performance",
+      "assertion": "Dateigröße und C901-Schuld sinken; Startzeit und Speicher regressieren nicht materiell."
+    }
+  ],
+  "depends_on": []
+}

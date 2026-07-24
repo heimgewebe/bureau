@@ -26,6 +26,16 @@
       "Dass rlens.service vor erfolgreichem RepoGround-Cutover beendet werden darf"
     ],
     "activated_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T004",
-    "activated_at": "2026-07-24T17:00:00+02:00"
+    "activated_at": "2026-07-24T17:00:00+02:00",
+    "t004_followups": [
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T009",
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T010",
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T011",
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T012",
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T013",
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T014"
+    ],
+    "t004_followups_registered_at": "2026-07-24T17:20:00+02:00",
+    "t004_followups_source": "review:heimgewebe/repoground#1096"
   }
 }

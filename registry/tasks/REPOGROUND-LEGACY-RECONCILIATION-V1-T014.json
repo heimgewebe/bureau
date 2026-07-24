@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "metadata": {
+    "parent_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T004",
+    "registered_from_review": "heimgewebe/repoground#1096",
+    "registered_at": "2026-07-24T17:20:00+02:00",
+    "scope_rule": "Execute in a fresh isolated current-main worktree; do not reuse, reset or mutate historical T004 worktrees.",
+    "does_not_establish": [
+      "Teil-PR-Erfolg beweist keinen T004-Abschluss",
+      "Benchmarks beweisen keine allgemeine Systemqualität"
+    ]
+  },
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T014",
+  "title": "T004-Konvergenz, Benchmarks und Abschlussbeweis",
+  "priority": {
+    "lane": "later",
+    "rank": 11
+  },
+  "goal": "Nach den fünf begrenzten Refactor-/Disposition-Slices den gesamten T004-Vertrag gegen aktuellen main neu messen und nur bei vollständiger Evidenz schließen.",
+  "required_capabilities": [
+    "python",
+    "benchmarking",
+    "runtime-testing",
+    "github",
+    "bureau"
+  ],
+  "acceptance": [
+    {
+      "id": "complexity-budget",
+      "assertion": "Findingzahl, Maximalwert und Excess-Mass liegen unter den vor T004 gebundenen Referenzen; keine Baseline wurde nur hochgeschrieben."
+    },
+    {
+      "id": "monolith-closeout",
+      "assertion": "merge.py, Pythonista build.py, bundle_access.py und service/app.py erfüllen die festgelegten Größen-/Verantwortlichkeitsgrenzen oder besitzen eng begründete Restaufgaben."
+    },
+    {
+      "id": "reachability-closeout",
+      "assertion": "Alle Produktionsmodule besitzen klassifizierte Evidenz; keine undeclared unproven, documentation-only oder test-only Ausnahme bleibt."
+    },
+    {
+      "id": "performance-closeout",
+      "assertion": "Bundle-, Query-, Service-, Atlas- und Pythonista-Kernpfade besitzen reproduzierbare Vorher-/Nachher-Zeit- und Speicherbelege."
+    },
+    {
+      "id": "delivery",
+      "assertion": "Alle Teil-PRs, Reviews, CI-, Merge- und erforderlichen Runtime-Readbacks sind revisions- und diffgebunden; erst dann wird T004 verified."
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-LEGACY-RECONCILIATION-V1-T009",
+    "REPOGROUND-LEGACY-RECONCILIATION-V1-T010",
+    "REPOGROUND-LEGACY-RECONCILIATION-V1-T011",
+    "REPOGROUND-LEGACY-RECONCILIATION-V1-T012",
+    "REPOGROUND-LEGACY-RECONCILIATION-V1-T013"
+  ]
+}

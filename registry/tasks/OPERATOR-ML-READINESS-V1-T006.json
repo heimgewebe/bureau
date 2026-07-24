@@ -1,0 +1,114 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Only complete verified canonical route_evidence with route schema v2 and actual_route=direct_operator is eligible; unbound tasks, workspace routes, external candidates and reconstructed argv-based routing truth are rejected before task launch.",
+      "id": "canonical-direct-route-only"
+    },
+    {
+      "assertion": "The direct-task case is frozen after final bounded command identity is known but before resource lease acquisition, task-store insertion or process launch, so later completion or failure cannot influence inclusion.",
+      "id": "prospective-prelaunch-freeze"
+    },
+    {
+      "assertion": "Only the internal direct-task prestart path can emit production provenance with source direct-task-start; public or synthetic direct capture cannot self-assert production and remains quarantined.",
+      "id": "internal-production-provenance"
+    },
+    {
+      "assertion": "A versioned create-only direct-task binding stores only bounded route features and hashes of host, argv, cwd and resource scope; it excludes raw argv, prompts, transcripts, environment values, private notes and unrestricted paths.",
+      "id": "privacy-bounded-create-only-binding"
+    },
+    {
+      "assertion": "Capture failure is reported but never blocks the durable task, and every artifact remains proposal-only with routing, policy, queue, merge, deploy and runtime effects false.",
+      "id": "failure-isolated-no-effect"
+    },
+    {
+      "assertion": "A separate mutating seal operation requires authoritative terminal task readback, compatible execution-failure provenance and independent reviewed semantic evidence or explicit abstention; lifecycle success alone cannot create a positive label.",
+      "id": "explicit-terminal-seal"
+    },
+    {
+      "assertion": "Identical retries converge on the first create-only binding while changing attempt receipts cannot alter binding identity; conflicting duplicates, lineage drift, symlink traversal and invalid schemas fail closed.",
+      "id": "identity-and-retry-integrity"
+    },
+    {
+      "assertion": "Schemas, public tool contracts, generated context, focused regressions and full validation pass on the exact reviewed diff; the merged runtime is deployed and one genuine no-effect direct-task pilot is prospectively captured and conservatively sealed or left explicitly unsealed.",
+      "id": "contracts-tests-deploy-pilot"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ML-READINESS-V1-T005"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Extend the existing no-effect routing-shadow cohort to explicitly routed direct Grabowski durable tasks so natural operator work can be frozen prospectively before launch and sealed only after terminal evidence, without reconstructing routes, storing raw private execution inputs or granting routing or training authority.",
+  "id": "OPERATOR-ML-READINESS-V1-T006",
+  "initiative": "OPERATOR-ML-READINESS-V1",
+  "metadata": {
+    "does_not_establish": [
+      "cohort sufficiency",
+      "cohort representativeness",
+      "ML training readiness",
+      "model superiority",
+      "automatic routing authority",
+      "online learning authority",
+      "automatic policy promotion"
+    ],
+    "effect": "capture_only",
+    "extends_task": "OPERATOR-ML-READINESS-V1-T005",
+    "historical_data_policy": "preserve_create_only_history_without_in_place_rewrite",
+    "ml_training_authorized": false,
+    "phase": "direct-task-prospective-shadow-capture",
+    "reaudit_target": "OPERATOR-ML-READINESS-V1-T004",
+    "route_authority": false,
+    "source": "Live learning-layer audit and user implementation request on 2026-07-24",
+    "source_candidate_event_id": 1132,
+    "source_candidate_id": "candidate-a901f70066c9992de9d94069",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-a901f70066c9992de9d94069",
+      "event_id": 1132,
+      "event_created_at": "2026-07-24T17:57:00.463610Z",
+      "request_sha256": "59eed2f766b5af8c4a1ae24322a37c49a5604a6d93c2765820a5ddd2597f8734",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": null,
+        "observed_at": "2026-07-24T17:57:00.454766Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 5
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Capture evidence-bound direct-task routing-shadow cases"
+}

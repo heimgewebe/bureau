@@ -96,6 +96,132 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "implementation_prs": [
+      "heimgewebe/grabowski#448",
+      "heimgewebe/grabowski#452"
+    ],
+    "implementation_heads": {
+      "448": "40b1319fc8f1c5e5adbb6e6da623d628516f7f69",
+      "452": "5e048d69f3aad5116f4a7f49f5d68aa432661f75"
+    },
+    "implementation_merge_commits": {
+      "448": "f44b768c76168dec6e2a5153d91834f4e4e1fab1",
+      "452": "6e73d2e9c897d7df587e974842a98016a7ca03d0"
+    },
+    "verified_at": "2026-07-24",
+    "verification_note": "PR #448 introduced prospective direct-task routing-shadow capture and terminal sealing; post-merge review found retry-timestamp and reviewed-outcome evidence defects, corrected by PR #452. Both are merged, the exact corrective merge is deployed with a complete 174/174 runtime contract, and one genuine R0 no-effect direct task was frozen before launch, completed, conservatively sealed as abstained, and replayed later as a duplicate retaining the first binding identity. This verifies T006 only; one pilot does not establish cohort sufficiency, representativeness, T004 PASS or ML training readiness.",
+    "validated_acceptance": {
+      "canonical-direct-route-only": "The deployed start path accepts only normalized schema-v2 route evidence with actual_route=direct_operator, verified and evidence_complete; the live pilot used the canonical R0 direct route recommendation and no external candidates.",
+      "prospective-prelaunch-freeze": "The pilot prospective receipt was created at 2026-07-24T20:14:19.296977Z before terminal execution observation and before outcome sealing; task start returned the capture receipt alongside the launcher receipt.",
+      "internal-production-provenance": "The stored prospective receipt identifies source direct-task-start, capture_path direct_task_prestart and case_origin production; untrusted direct capture remains quarantined by the reviewed implementation and tests.",
+      "privacy-bounded-create-only-binding": "The stored binding contains only bounded route features and SHA-256 identities for host, argv, cwd and resource scope; raw execution values are absent. The binding artifact is create-only and hash-verified.",
+      "failure-isolated-no-effect": "Capture and seal artifacts carry proposal_only=true with routing, policy, queue, merge and runtime false. The initial invalid abstention reason failed before record creation and did not alter task state.",
+      "explicit-terminal-seal": "The pilot task was authoritatively observed completed with valid lifecycle evidence, then sealed as abstained with execution status completed and zero semantic assessments; reviewed outcomes now require at least two independent assessments.",
+      "identity-and-retry-integrity": "A later replay with the same task identity returned status=duplicate and binding_status=duplicate while retaining binding_id 6e9df8cc86280b137871f6303ebb1c82e8a56b99eb2ca66edda33c486df5b522 and the original frozen timestamp.",
+      "contracts-tests-deploy-pilot": "PR #452 passed CodeQL plus validation on Python 3.10 and 3.12. The corrective merge deployed successfully with a valid finalization receipt; runtime identity is complete, 174/174 tools match, and the real no-effect pilot is stored as a v3 abstained record."
+    },
+    "runtime_snapshot": {
+      "release_id": "6e73d2e9c897-srcset3a28ba0f95fb-locke6664d600b6c-contract22ef10c4985b",
+      "runtime_head": "6e73d2e9c897d7df587e974842a98016a7ca03d0",
+      "completion_status": "complete",
+      "expected_tool_count": 174,
+      "registered_tool_count": 174,
+      "runtime_matches_deployment_contract": true,
+      "deployment_job_unit": "grabowski-job-58097e6a24ad",
+      "deployment_receipt_sha256": "f04bb656ee8e7ae8a222103a32f508a9f1f0cf7649b092d6a783fdc85d612e20",
+      "deployment_payload_sha256": "3f6031ce1fe7b2bb89c5dae7f53a1a01342f4a25df393b454c890f57eb1fd7b9",
+      "automatic_routing_authority": false,
+      "ml_training_authorized": false,
+      "probe": {
+        "schema_version": 1,
+        "kind": "grabowski_runtime_probe",
+        "release_id": "6e73d2e9c897-srcset3a28ba0f95fb-locke6664d600b6c-contract22ef10c4985b",
+        "repo_head": "6e73d2e9c897d7df587e974842a98016a7ca03d0",
+        "completion_status": "complete",
+        "expected_tool_count": 174,
+        "registered_tool_count": 174,
+        "runtime_matches_deployment_contract": true,
+        "deployment_receipt_sha256": "f04bb656ee8e7ae8a222103a32f508a9f1f0cf7649b092d6a783fdc85d612e20"
+      },
+      "probe_sha256": "114e9aee144416fb765371594298b7c19255be1c0819427f6763b555f1c36cea"
+    },
+    "pilot_snapshot": {
+      "task_id": "3ab4665b9e05450ab3e8e352",
+      "task_state": "completed",
+      "terminalization_sha256": "5b223d0fd10f8335724bd74c93a36eacd37463817d6a236d725a36afaf281704",
+      "lifecycle_receipt_sha256": "e93c3811ead8cd94f2379e2747781a42904762416dda581f5b1d1f6f74800e4c",
+      "binding_id": "6e9df8cc86280b137871f6303ebb1c82e8a56b99eb2ca66edda33c486df5b522",
+      "binding_file_sha256": "f183bb4aec6020e864a6292231646813ac3732190ad10c0343f2c085cb7d4f17",
+      "plan_sha256": "3243977d366183e9cdbce16b01a9f280c61142e4f109666a7775b12e6905529e",
+      "prospective_eligibility_id": "4ae49134cc4dbe17432034693e4b105da3086dbca8425407e04da058875c39d3",
+      "prospective_file_sha256": "aa1fcd943be95b4baf1bed7ef757a9ab578cd9a1aacac4e75e1e6e4acbc1aabe",
+      "workspace_case_id": "6db85c7a56ad2659a6ad5f5cc73397c130ac978525bfb1da4540a231d4cecdbe",
+      "eligibility_id": "218f0edfdbe3b614c333da4730708b950ed88880431aaf5af58879d5b4991a3f",
+      "case_id": "568d568b2ddda91e192582f26c905bbf02a97be7bb24b1ad69f6abbc6c74bea9",
+      "record_id": "01688073dfa44b847c28f7a5f7992966f731a1637356011a3c9bd694d257bcb0",
+      "record_file_sha256": "b8ebb8f57fe999c7baab4da6faf6e205d07e2a6d345e3c45769f1cc327dfdc7d",
+      "route_recommendation_id": "61e3b2e6f7241de9edddd128b67260e2715660124ecdd491f4c9b4a10023e441",
+      "risk_tier": "R0",
+      "case_origin": "production",
+      "capture_path": "direct_task_prestart",
+      "outcome_status": "abstained",
+      "outcome_reason_code": "no_semantic_review",
+      "execution_status": "completed",
+      "semantic_assessment_count": 0,
+      "duplicate_replay_status": "duplicate",
+      "duplicate_binding_id": "6e9df8cc86280b137871f6303ebb1c82e8a56b99eb2ca66edda33c486df5b522",
+      "no_effect": {
+        "proposal_only": true,
+        "routing": false,
+        "policy": false,
+        "queue": false,
+        "merge": false,
+        "runtime": false
+      }
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ML-READINESS-V1-T006",
+          "source_ref": "heimgewebe/grabowski#448",
+          "number": 448,
+          "head_sha": "40b1319fc8f1c5e5adbb6e6da623d628516f7f69",
+          "merge_commit_sha": "f44b768c76168dec6e2a5153d91834f4e4e1fab1"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ML-READINESS-V1-T006",
+          "source_ref": "heimgewebe/grabowski#452",
+          "number": 452,
+          "head_sha": "5e048d69f3aad5116f4a7f49f5d68aa432661f75",
+          "merge_commit_sha": "6e73d2e9c897d7df587e974842a98016a7ca03d0"
+        },
+        {
+          "kind": "runtime_probe",
+          "authority": "grabowski-runtime",
+          "task_id": "OPERATOR-ML-READINESS-V1-T006",
+          "source_ref": "grabowski-runtime@6e73d2e9c897d7df587e974842a98016a7ca03d0",
+          "commit_sha": "6e73d2e9c897d7df587e974842a98016a7ca03d0",
+          "content_sha256": "114e9aee144416fb765371594298b7c19255be1c0819427f6763b555f1c36cea"
+        },
+        {
+          "kind": "pilot_record",
+          "authority": "grabowski-routing-shadow-cohort",
+          "task_id": "OPERATOR-ML-READINESS-V1-T006",
+          "source_ref": "operator-routing-shadow-record.v3:01688073dfa44b847c28f7a5f7992966f731a1637356011a3c9bd694d257bcb0",
+          "content_sha256": "b8ebb8f57fe999c7baab4da6faf6e205d07e2a6d345e3c45769f1cc327dfdc7d"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "9000181d907cfa700731e79de258d0dba73e8a14e3e7401b38fb8278e3f3d60c",
+      "plan_sha256": "b809f02cc0f4f17c42a44ca00dd94ce08a335b6be1671893ffac01246a656c79"
     }
   },
   "priority": {
@@ -109,6 +235,6 @@
     "github"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Capture evidence-bound direct-task routing-shadow cases"
 }

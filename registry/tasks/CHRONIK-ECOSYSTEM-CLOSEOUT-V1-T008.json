@@ -3,7 +3,7 @@
   "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T008",
   "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
   "title": "Rollback partial Chronik JSONL appends under the ledger lock",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 80
@@ -82,11 +82,57 @@
     },
     "priority_decision": "Keep later than T007 because current ledger integrity is valid, incomplete tails fail closed on read/import, and no live corruption is observed; implement before treating abrupt append failures as fully recoverable.",
     "does_not_establish": [
-      "current ledger corruption",
       "a reproduced production ENOSPC event",
-      "permission to repair or truncate the live ledger",
-      "that fsync alone rolls back a partial append",
-      "that Grabowski T058 fixes Chronik storage"
-    ]
+      "permission to truncate or repair historical live ledger data",
+      "that every future filesystem failure is recoverable",
+      "that a standalone chronik.service is required for the timer-driven importer"
+    ],
+    "verified_at": "2026-07-25T22:08:00+02:00",
+    "verification": {
+      "repository": "heimgewebe/chronik",
+      "reviewed_head": "f47bfa8fc04d400563407d31e68f2345d316b84d",
+      "pull_request": 224,
+      "merge_commit": "cba40ba08bef0a8ea42a61d30b04ffb97d63e14f",
+      "current_origin_main": "24d158b8f66ca947ff1bf41997fb2ed3d3b5ce7f",
+      "implementation_evidence": [
+        "pre-append size is captured from the opened descriptor under the existing FileLock before the first os.write",
+        "short writes and append errors roll back with ftruncate, file fsync, parent-directory fsync and byte-size readback before lock release",
+        "opened descriptor and current path are rebound through regular-file, device and inode checks",
+        "rollback or durability uncertainty raises StorageRecoveryError instead of success or duplicate accounting",
+        "write_payload and grouped unique writes share the same transactional append primitive"
+      ],
+      "test_evidence": {
+        "focused": "65 passed at reviewed_head",
+        "full": "318 passed at reviewed_head",
+        "role_contract": "OK chronik",
+        "compileall": "passed",
+        "diff_check": "passed",
+        "focused_receipt_sha256": "3c88b14c926ec35622fc0790508b17f65a1fd6ca075762218586b759d4fe20de",
+        "full_receipt_sha256": "fc547fffd889ad80ba869c495402655130333bd0488c383fec5d5ce399b03f07"
+      },
+      "ci_evidence": {
+        "status": "all reported checks passed",
+        "checked_pr": 224,
+        "checks": [
+          "CodeQL",
+          "ajv-validate",
+          "validate-jsonl",
+          "wgx-guard",
+          "ai-context guard",
+          "fixture presence",
+          "wgx-smoke"
+        ]
+      },
+      "runtime_evidence": {
+        "active_release": "24d158b8f66ca947ff1bf41997fb2ed3d3b5ce7f",
+        "contains_merge_commit": true,
+        "active_storage_sha256": "a6ed489d393f9b5d781d5983047a9d07b70d021d9399c3f6eec92ed44a7e5d67",
+        "timer": "chronik-outbox-import.timer active/waiting and enabled",
+        "import_service": "observed executions at 2026-07-25T22:03, 22:05 and 22:07+02:00 completed with status 0"
+      },
+      "acceptance_result": "all acceptance assertions satisfied",
+      "task_sha256": "b2ffbf5973872906323878de30cd9b55aa9a52afb135a75c233b6bd1a68f1b4d",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   }
 }

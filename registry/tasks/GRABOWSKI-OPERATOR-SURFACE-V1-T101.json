@@ -92,6 +92,124 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verification_candidate": {
+      "status": "awaiting-live-pilot",
+      "prepared_at": "2026-07-25T10:34:17Z",
+      "source": "operator_closeout_preparation",
+      "acceptance": {
+        "authenticated-owner-continuity": true,
+        "no-string-owner-adoption": true,
+        "terminal-owner-lifecycle": true,
+        "diagnostic-receipt": true,
+        "direct-operator-pilot": false,
+        "tests": true
+      },
+      "implementation": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 457,
+        "pull_request_url": "https://github.com/heimgewebe/grabowski/pull/457",
+        "branch": "fix/direct-operator-captain-delegation-v1",
+        "base_head": "f6b6f880ed8de51c9415833a10dfc9eb1cc66da4",
+        "reviewed_head": "1f1fd6768cfc402829b3c2096dffc70aefce1f5a",
+        "merge_commit": "7c4ae1a3761971d223146fb2452631e9412aedc4",
+        "merge_tree_sha": "4d309ba6b99faac3ce406dbfe498349c9a769a57",
+        "changed_files": 8,
+        "additions": 1772,
+        "deletions": 15,
+        "diff_sha256": "24582155f78a73077de78ce3bd1529e564bf1fa4719b90130128a6bba2bfc341"
+      },
+      "validation": {
+        "command": "make validate",
+        "result": "PASS",
+        "test_count": 3465,
+        "local_skipped_count": 2,
+        "github_python_312_skipped_count": 6,
+        "resource_and_mcp_regression_tests": 62,
+        "captain_authority_tests": 136,
+        "generated_operator_context_current": true,
+        "runtime_lock_valid": true,
+        "access_policy_valid": true,
+        "tool_surface_budget_valid": true,
+        "secret_check_valid": true
+      },
+      "review": {
+        "tier": "high_critical",
+        "iterations": 5,
+        "finding_count": 0,
+        "material_findings_remaining": 0,
+        "gate_verdict": "PASS",
+        "review_file_sha256": "82eefbc569ae6288025d7a237aaf62a197a0bc48e166d38f0173ad83449fc83b",
+        "review_evidence_sha256": "6fce9408d35a1e4a7e66105cc50ac9045eb777b3b72b0f2ef3e116ca5f1fd0a0"
+      },
+      "github_checks": {
+        "required_checks_green": true,
+        "check_count": 5,
+        "checks": [
+          "Analyze (actions)",
+          "Analyze (python)",
+          "CodeQL",
+          "validate (3.10)",
+          "validate (3.12)"
+        ],
+        "python_312_initial_result": "transient_timeout_in_unrelated_browser_worker_test",
+        "python_312_unchanged_rerun": "PASS"
+      },
+      "delivery": {
+        "artifact_profile": "git-diff.v1",
+        "artifact_id": "f036641d2fa44f95921aacb0d5ad4182",
+        "artifact_filename": "direct-operator-captain-delegation-v1-pr-457-1f1fd6768cfc-diff.txt",
+        "artifact_size_bytes": 96497,
+        "artifact_sha256": "24582155f78a73077de78ce3bd1529e564bf1fa4719b90130128a6bba2bfc341",
+        "artifact_receipt_sha256": "1fae7d513c829b268c469837c80cd2bce5675ec23e777880a4707087e06ac640",
+        "delivery_receipt_sha256": "30f88bf1332684d94d7c00c47479bf938a50c3aa30a62a6b7ecfb804b11e347d",
+        "delivery_binding_sha256": "d3cd77fbac3f00826efa028922098679773789f85431754196fe28dae875344e",
+        "delivery_channel": "chatgpt-user-visible-link",
+        "delivery_reference": "https://gist.githubusercontent.com/alexdermohr/940391c8ddae8b9166e8aa8f90ee9e6a/raw/df4a0ae8a44137896b7c274cb35080493cc53254/direct-operator-captain-delegation-v1-pr-457-1f1fd6768cfc-diff.txt",
+        "does_not_claim_user_opened_or_downloaded": true
+      },
+      "merge": {
+        "merged_at": "2026-07-25T08:01:47Z",
+        "merged_by": "alexdermohr",
+        "captain_receipt_sha256": "9a79235815b6f97bf4b0ea4941191accacb281eb2750de0f1d41d63a2657c968",
+        "captain_action_receipt_sha256": "96cbb8db9fceb5720c1a49aff0ed2fa9bd481802b92794ad0f0e00150bed3033",
+        "merge_guard_receipt_sha256": "67a83d96206125d5943f744b888681cba26a1d00dd2e5a1ceb376b9067d4885f",
+        "dispatch_count": 1,
+        "verification_passed": true,
+        "guard_cleanup_passed": true
+      },
+      "deployment": {
+        "required": true,
+        "performed": true,
+        "job_id": "b2674f0a3c9c",
+        "finalization_receipt_sha256": "737168c73af1c7a217bf077c3cbde4350a29bb456b9df94518162bf36a4e952b",
+        "repo_head": "7c4ae1a3761971d223146fb2452631e9412aedc4",
+        "release_id": "7c4ae1a37619-srcsetd1d5ad636e25-locke6664d600b6c-contract803614b8965e",
+        "deployed_at": "2026-07-25T08:53:24Z",
+        "source_sha256": "d190857aab6f3decc8bafb012f84063545c5cfb4523be63a6355ed2b56293ee6",
+        "runtime_input_sha256": "d7447ee9cd2491e28f1dddb80649db2787220df03132745f98a13f41b545b683",
+        "runtime_lock_sha256": "e6664d600b6cbaf0bf649b9f6ef3cc5e938e219e15c552a24fa47c5acdc77855",
+        "entrypoint_contract_sha256": "803614b8965e943b2602dba6712e0417a714bdcd8a645c9dcd9e65cd1811e495",
+        "runtime_healthy": true,
+        "deployment_complete": true,
+        "deployment_integrity_valid": true,
+        "audit_valid": true,
+        "audit_writable": true,
+        "kill_switch_engaged": false
+      },
+      "pilot_plan": {
+        "repository": "heimgewebe/bureau",
+        "branch": "closeout/grabowski-operator-surface-v1-t101",
+        "direct_owner": "operator:grabowski-t101-bureau-closeout-20260725",
+        "expected_effect": "merge exactly one preparation PR",
+        "required_terminal_result": "delegated direct leases converge without force",
+        "does_not_establish_before_merge": [
+          "pilot_success",
+          "merge_effect",
+          "lease_convergence"
+        ]
+      },
+      "completion_blocker": "The productive direct-Operator delegation pilot has not yet run; task state remains planned."
     }
   },
   "priority": {

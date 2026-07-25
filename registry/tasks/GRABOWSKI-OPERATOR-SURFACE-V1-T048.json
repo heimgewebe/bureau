@@ -3,10 +3,10 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T048",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Serialize user-visible diff handoff before merge",
-  "state": "planned",
+  "state": "verified",
   "goal": "Prevent parallel actors from merging a nontrivial pull request before the exact head- and diff-bound artifact has been exposed to the user, while preserving fail-closed head-drift handling and avoiding duplicate merge effects.",
   "priority": {
-    "lane": "next",
+    "lane": "later",
     "rank": 480
   },
   "execution": {
@@ -81,6 +81,117 @@
       "that_the_merge_was_unauthorized_by_other_gates",
       "that_all_external_github_actors_can_be_locked",
       "future_merge_safety_until_implemented"
-    ]
+    ],
+    "verification": {
+      "status": "verified",
+      "source": "operator_closeout",
+      "verified_at": "2026-07-25T05:17:25Z",
+      "acceptance": {
+        "delivery-before-merge": true,
+        "head-and-diff-binding": true,
+        "parallel-merge-serialization": true,
+        "external-merge-reconciliation": true,
+        "observable-timestamps": true,
+        "tests": true,
+        "non-authority": true
+      },
+      "implementation": {
+        "repository": "heimgewebe/grabowski",
+        "pull_request": 454,
+        "pull_request_url": "https://github.com/heimgewebe/grabowski/pull/454",
+        "branch": "feat/user-visible-diff-handoff-v1",
+        "base_head": "e957b940a40ff3f2d109e14d5cf72b709e5615fc",
+        "reviewed_head": "d7d2596861a7bae465a3b281d8d6a0a26eacdb13",
+        "changed_files": 24,
+        "additions": 2544,
+        "deletions": 117,
+        "diff_sha256": "a4288a085a3ef1de908bb88223d2fd4b78022737fc4121d77866fafd2dfb8069"
+      },
+      "validation": {
+        "command": "make validate",
+        "result": "PASS",
+        "test_count": 3439,
+        "skipped_count": 6,
+        "focused_test_count": 153,
+        "lifecycle_receipt_sha256": "c24ef8338a590d1f37b87a8e87ef0d19f1312f9f928f3ff418eb64ecf6aed81c",
+        "generated_operator_context_current": true,
+        "runtime_lock_valid": true,
+        "deploy_lock_valid": true,
+        "tool_surface_budget_valid": true
+      },
+      "github_checks": {
+        "required_checks_green": true,
+        "check_count": 5,
+        "checks": [
+          "Analyze (actions)",
+          "Analyze (python)",
+          "CodeQL",
+          "validate (3.10)",
+          "validate (3.12)"
+        ]
+      },
+      "user_visible_diff_delivery": {
+        "artifact_profile": "git-diff.v1",
+        "artifact_id": "025f8dc3389f4f1eba49aa4683d5bf5a",
+        "artifact_filename": "user-visible-diff-handoff-v1-pr-454-d7d2596861a7-diff.txt",
+        "artifact_size_bytes": 177219,
+        "artifact_sha256": "a4288a085a3ef1de908bb88223d2fd4b78022737fc4121d77866fafd2dfb8069",
+        "artifact_receipt_sha256": "b15046426e4b644285ee74f90b5d3b810deb5b5a38a68f419b9555938caf5739",
+        "delivery_receipt_sha256": "bebcf55f7e517c56c51fbd822adaa90c529f172388ad1778185dfe52b6e05ef8",
+        "delivery_binding_sha256": "b14a4c96f46aa2b14411b1a014b65d95699e28916ab4f473605306747d953e23",
+        "delivery_channel": "chatgpt-user-visible-link",
+        "delivery_reference": "https://gist.githubusercontent.com/alexdermohr/a2cc4802fe61e1efb21d4d3a86f6d072/raw/f3c81a31886ee69dfb168b97ced82495050ca270/user-visible-diff-handoff-v1-pr-454-d7d2596861a7-diff.txt",
+        "artifact_created_at_unix_ns": 1784954515000000000,
+        "delivery_confirmed_at_unix_ns": 1784954781301434920,
+        "expires_at_unix_ns": 1784958381301434920,
+        "does_not_claim_user_opened_or_downloaded": true
+      },
+      "merge_serialization": {
+        "captain_receipt_sha256": "775bdee387a7b99b4c0bc04bee2e4af270c8def0040b25a029e284c31f8ff5ce",
+        "merge_guard_receipt_sha256": "d61784e0d2950d49f7045889799b300fb58ece542853b5756acc63aea2b05510",
+        "initial_captain_execution_invoked": false,
+        "initial_block_reason": "blocked_by_live_lease",
+        "foreign_lease_changed_or_released": false,
+        "external_merge_detected": true,
+        "duplicate_merge_effect_attempted": false,
+        "delivery_merge_comparison": "delivery_before_merge",
+        "github_merge_relative_to_delivery": "after",
+        "delivery_requirement_satisfied": true
+      },
+      "merge": {
+        "merge_commit": "9b74347171bc9046af447374a61d8a0fcdc9cece",
+        "merged_at": "2026-07-25T05:00:56Z",
+        "merged_by": "alexdermohr",
+        "mode": "external_after_compliant_delivery"
+      },
+      "deployment": {
+        "required": true,
+        "performed": true,
+        "repo_head": "9b74347171bc9046af447374a61d8a0fcdc9cece",
+        "release_id": "9b74347171bc-srcset13eb0b5fdeb1-locke6664d600b6c-contract803614b8965e",
+        "deployed_at": "2026-07-25T05:10:35Z",
+        "source_sha256": "d190857aab6f3decc8bafb012f84063545c5cfb4523be63a6355ed2b56293ee6",
+        "runtime_input_sha256": "d7447ee9cd2491e28f1dddb80649db2787220df03132745f98a13f41b545b683",
+        "runtime_lock_sha256": "e6664d600b6cbaf0bf649b9f6ef3cc5e938e219e15c552a24fa47c5acdc77855",
+        "entrypoint_contract_sha256": "803614b8965e943b2602dba6712e0417a714bdcd8a645c9dcd9e65cd1811e495",
+        "runtime_healthy": true,
+        "deployment_complete": true,
+        "deployment_integrity_valid": true,
+        "kill_switch_engaged": false,
+        "loaded_modules": [
+          "grabowski_merge_delivery",
+          "grabowski_merge_delivery_surface"
+        ]
+      },
+      "scope_boundary": {
+        "delivery_receipt_grants_merge_authority": false,
+        "delivery_receipt_replaces_review_or_ci": false,
+        "delivery_receipt_grants_deployment_authority": false,
+        "external_github_actors_globally_locked": false
+      },
+      "completion_note": "PR #454 was validated and delivered as an exact downloadable git-diff.v1 artifact before merge. Captain fail-closed on a foreign live lease and dispatched no merge. GitHub later showed an external merge of the exact delivered head; readback confirmed delivery_before_merge and no duplicate effect. The exact merge commit was then deployed and verified healthy.",
+      "task_sha256": "8feba82f77bd6f7ddc90881288b8fc65511fabcbe35b3366b94499dde2b3399c",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

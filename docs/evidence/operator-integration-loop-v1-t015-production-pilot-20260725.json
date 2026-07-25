@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "kind": "operator_integration_loop_t015_production_pilot_final_evidence",
+  "observed_at": "2026-07-25T14:49:30Z",
+  "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T015",
+  "pilot_for": "OPERATOR-INTEGRATION-LOOP-V1-T005",
+  "run_id": "BUR-RUN-20260725T144351Z-aefb5e3471",
+  "attempt": 2,
+  "runtime": {
+    "source_commit": "d9c7e097e9fed34b58f701c4c1446601ab63a87e",
+    "release_id": "d9c7e097e9fe-src853637460d06",
+    "manifest_sha256": "02ecbeac73f2f661bab812a6a56068c3be241a4d23520e806245f5774dec14f1",
+    "registry_tree_sha256": "aecaea9c877b68fc093d05f8173d67e33f68c3a29054b6ab6fc572a43c29d7eb",
+    "check_valid": true
+  },
+  "binding": {
+    "claim_intent_sha256": "d86cd556931c28f9b612d4445371251e285f90030989c04a16045b646f5e6623",
+    "task_sha256": "fea9873a4ec419a59e20d1dd50699fe6cf22c8115f33e574a4bc4ee21968f9a7",
+    "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+    "envelope_sha256": "c8180363934d646d5557fa30a5e12a48cab3dfb270616e7dceb015e41025a65f",
+    "lease_metadata_sha256": "42e2e05ea57f520f78b1ecea16159caaf7fb862366a5f3b522c2d389b3274cef",
+    "receipt_sha256": "8a33c64793464fac27d7307500d63185de8e26184f53028bb4411982bd92a277"
+  },
+  "acceptance": {
+    "controlled-conflict-compensation": {
+      "result": "pass",
+      "conflict_owner": "operator:t015-self-conflict-BUR-RUN-20260725T144351Z-aefb5e3471",
+      "real_owner_acquire": "rejected-resource-is-leased",
+      "run_before_compensation": "absent",
+      "real_owner_partial_lease_count": 0,
+      "self_conflict_release_count": 1
+    },
+    "successful-production-claim": {
+      "result": "pass",
+      "run_state_after_claim": "assigned",
+      "active_current_run_count": 1,
+      "lease_status": "active-bound",
+      "resource_key": "path:/home/alex/.local/state/bureau"
+    },
+    "identical-retry": {
+      "result": "pass",
+      "retry_status": "existing-assignment",
+      "same_run_id": true,
+      "active_current_run_count_after_retry": 1,
+      "second_execution_created": false
+    },
+    "status-projection": {
+      "result": "pass",
+      "active": "active-bound",
+      "after_terminalization": "terminal-release-pending",
+      "after_release": "terminal-released-or-expired",
+      "blocking": false
+    },
+    "terminalization-and-release": {
+      "result": "pass",
+      "run_state": "succeeded",
+      "receipt_current": true,
+      "first_release_released_count": 1,
+      "second_identical_release_released_count": 0,
+      "second_release_semantics": "already-released-idempotent"
+    },
+    "foreign-work-preserved": {
+      "result": "pass-with-concurrent-foreign-additions",
+      "pull_requests": {
+        "heimgewebe/bureau#1004": {
+          "before_state": "MERGED",
+          "after_state": "MERGED",
+          "before_head_sha": "30fbe0bb3ef0e3b83e033bf6b113e80201926dad",
+          "after_head_sha": "30fbe0bb3ef0e3b83e033bf6b113e80201926dad",
+          "before_updated_at": "2026-07-25T07:05:34Z",
+          "after_updated_at": "2026-07-25T07:05:34Z"
+        },
+        "heimgewebe/grabowski#456": {
+          "before_state": "MERGED",
+          "after_state": "MERGED",
+          "before_head_sha": "df34824bb1bde53b3e52455b1bf3c4d425ab4f77",
+          "after_head_sha": "df34824bb1bde53b3e52455b1bf3c4d425ab4f77",
+          "before_updated_at": "2026-07-25T06:59:02Z",
+          "after_updated_at": "2026-07-25T06:59:02Z"
+        }
+      },
+      "preexisting_foreign_leases_preserved": [
+        "path:/home/alex/repos/.repoground-worktrees/t009-report-contract-hardening-v2",
+        "repo:/home/alex/repos/repoground:branch:fix/t009-report-contract-hardening-v2",
+        "path:/home/alex/repos/.weltgewebe-worktrees/mobile-node-panel-design-system-v1",
+        "repo:/home/alex/repos/weltgewebe:branch:feat/mobile-node-panel-design-system-v1"
+      ],
+      "concurrent_foreign_additions_observed": [
+        "path:/home/alex/repos/.repoground-worktrees/t009-benchmark-after-684",
+        "path:/home/alex/repos/.repoground-worktrees/t009-benchmark-before-c91",
+        "path:/home/alex/repos/.repoground-worktrees/t009-benchmark-results-684"
+      ],
+      "pilot_targeted_foreign_resources": false
+    }
+  },
+  "compensated_preflight": {
+    "discarded_run_id": "BUR-RUN-20260725T144020Z-d7cf923f8a",
+    "reason": "explicit-registry-root-required",
+    "run_created": false,
+    "own_lease_released": true
+  },
+  "final_state": {
+    "bureau_run": "succeeded",
+    "bureau_reservations": [],
+    "grabowski_run_lease_count": 0,
+    "coordination_status": "terminal-released-or-expired"
+  },
+  "does_not_establish": [
+    "automatic verification of OPERATOR-INTEGRATION-LOOP-V1-T005",
+    "permission to weaken coordinated claim guards",
+    "absence of independent concurrent foreign work",
+    "authority over foreign branches, worktrees, processes or leases"
+  ]
+}

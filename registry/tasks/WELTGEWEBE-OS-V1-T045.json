@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-OS-V1-T045",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "title": "Tar-Extraktion der Plattformwerkzeuge gegen Link- und Device-Member härten",
+  "state": "planned",
+  "goal": "Die digestgeprüfte Werkzeug-Bootstrapkette zusätzlich gegen Archive mit symbolischen Links, Hardlinks, Devices und FIFOs absichern, damit ein gültiger Archivhash allein keine unerlaubte Schreibwirkung außerhalb des Extraktionsvertrags ermöglicht.",
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T041"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 45
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Vom Nutzer am 2026-07-24 als im finalen Kubernetes-Proof-Review erkannte und nicht im PR #1570 behobene Restarbeit zur kanonischen Registrierung autorisiert."
+    }
+  },
+  "required_capabilities": [
+    "python",
+    "supply-chain",
+    "archive-security",
+    "testing",
+    "github-actions",
+    "grabowski"
+  ],
+  "acceptance": [
+    {
+      "id": "member-policy",
+      "assertion": "Die Extraktion erlaubt ausschließlich reguläre Dateien und Verzeichnisse; symbolische Links, Hardlinks, Character-/Block-Devices, FIFOs und unbekannte Tar-Membertypen werden vor jeder Schreibwirkung fail-closed abgewiesen.",
+      "evidence_type": "object",
+      "verifier": "archive member policy tests"
+    },
+    {
+      "id": "link-target-escape",
+      "assertion": "Negative Tests belegen, dass absolute und relative Linkziele, verschachtelte Linkketten und vorbestehende Symlinks keine Schreibwirkung außerhalb des Extraktionsroots erzeugen.",
+      "evidence_type": "object",
+      "verifier": "adversarial archive fixtures"
+    },
+    {
+      "id": "valid-archives",
+      "assertion": "Alle heute gepinnten gültigen Werkzeugarchive werden weiterhin digestgebunden extrahiert und bestehen Bootstrap sowie Plattformvalidator ohne Verhaltensregression.",
+      "evidence_type": "object",
+      "verifier": "pinned tool bootstrap proof"
+    },
+    {
+      "id": "atomic-cleanup",
+      "assertion": "Abgewiesene oder unterbrochene Extraktionen hinterlassen weder teilweise installierte Binärdateien noch vertrauenswürdig wirkende Receipts.",
+      "evidence_type": "object",
+      "verifier": "failure injection and filesystem receipt"
+    },
+    {
+      "id": "exact-review",
+      "assertion": "Finaler Diff, Negativtests, Bootstrap-Proof und CI sind an denselben Head und dieselben Archivfixtures gebunden.",
+      "evidence_type": "object",
+      "verifier": "review and test evidence"
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-24T21:17:00Z",
+    "source_pr": "heimgewebe/weltgewebe#1570",
+    "source_diff_sha256": "c68953853d8d234b8bf030e01d245ffb3f4783b4d67eb1b79aa57c8f38a3bfe6",
+    "reason": "Der Review von PR #1570 bestätigte Pfadtraversalsschutz, stellte aber fest, dass _safe_extract_tar Link-, Device- und FIFO-Member nicht explizit ausschließt. Die Schwäche bestand vor PR #1570 und liegt außerhalb seines Proof-Lifecycle-Scopes.",
+    "does_not_establish": [
+      "a vulnerability in the currently pinned archives",
+      "permission to weaken SHA-256 pinning",
+      "permission to use tarfile.extractall without a member policy"
+    ]
+  }
+}

@@ -80,6 +80,88 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "implementation_pr": "heimgewebe/weltgewebe#1570",
+    "implementation_head": "aa4b2817a6ec5987b189cc80f398faf82736b4fc",
+    "implementation_state": "merged_verified",
+    "implementation_bound_at": "2026-07-25T02:20:41Z",
+    "primary_task_binding": "WELTGEWEBE-OS-V1-T041",
+    "implementation_base": "48d6b00c58c4a7d0adf93b5b545168998e5ebcc2",
+    "implementation_merge_commit": "1717894e04961318d6db20dc5541bb989eaef6c0",
+    "implementation_diff_sha256": "ff7083dd1af639b7f89de76f65d6a4a236cea62b3e86596480daeb65c90f5596",
+    "merged_at": "2026-07-24T21:56:08Z",
+    "kubernetes_platform_run": 30128348618,
+    "kind_gitops_job": 89597091180,
+    "kind_ha_recovery_job": 89597091197,
+    "required_merge_gate_run": 30128348636,
+    "review_evidence_gate_run": 30128417329,
+    "verified_at": "2026-07-25T02:20:41Z",
+    "outcome": "Der lokale Kubernetes-Proof-Lifecycle ist crash-, owner-, receipt- und cachegebunden gehärtet; PR #1570 wurde nach vollständigen realen GitOps- und HA-Proofs gemergt.",
+    "validated_acceptance": {
+      "artifact-inventory": "PR #1570 führt Downloads, Download-Lock, atomare Tempdateien, kind-Ownership-Marker, Kubeconfigs sowie Proof-, Record- und Cleanup-Receipts als explizite Lifecycle-Artefakte; sichere persistente Locks werden bewusst nicht durch Inode-Austausch bereinigt.",
+      "crash-recovery": "Der SIGKILL-Regressionspfad lässt den exakt gebundenen Marker sichtbar und belegt die spätere fail-closed Reconciliation durch Cluster, Commit und Owner; fremde oder mehrdeutige Ressourcen werden nicht gelöscht.",
+      "receipt-identity": "Proof- und Cleanup-Evidenz bindet Suite, Source-Commit, Checkout-Commit, Tool-Lock, Inputmanifest und Owner-/Clusterkontext; manipulierte oder kollidierende Cachepaare werden bei record und validate abgewiesen.",
+      "lock-retention": "Der per-Zielpfad verwendete flock-Lock bleibt persistent; seine Datei wird nicht während wartender Prozesse ersetzt oder gelöscht. Ziel-Symlinks werden vor und nach Lockübernahme erneut geprüft.",
+      "regression-tests": "Die Plattform-Vertragssuite bestand lokal mit 134 Tests; auf dem finalen Head bestanden contract, kind-gitops-proof und kind-ha-recovery-proof einschließlich SIGKILL-, Retry-, Cache-, Tamper- und Cleanup-Pfaden.",
+      "exact-review": "Der finale GitHub-PR-Diff mit SHA-256 ff7083dd1af639b7f89de76f65d6a4a236cea62b3e86596480daeb65c90f5596 ist an Head aa4b2817a6ec5987b189cc80f398faf82736b4fc gebunden; zwei getrennte Reviews sowie Required merge gate und Review evidence gate bestanden."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "WELTGEWEBE-OS-V1-T041",
+          "source_ref": "heimgewebe/weltgewebe#1570",
+          "number": 1570,
+          "head_sha": "aa4b2817a6ec5987b189cc80f398faf82736b4fc",
+          "base_sha": "48d6b00c58c4a7d0adf93b5b545168998e5ebcc2",
+          "merge_commit_sha": "1717894e04961318d6db20dc5541bb989eaef6c0",
+          "diff_sha256": "ff7083dd1af639b7f89de76f65d6a4a236cea62b3e86596480daeb65c90f5596"
+        },
+        {
+          "kind": "test_run",
+          "authority": "github-actions",
+          "task_id": "WELTGEWEBE-OS-V1-T041",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/30128348618",
+          "workflow_run_id": 30128348618,
+          "job_ids": [
+            89597091180,
+            89597091197
+          ],
+          "commit_sha": "aa4b2817a6ec5987b189cc80f398faf82736b4fc",
+          "verdict": "PASS"
+        },
+        {
+          "kind": "review_evidence",
+          "authority": "github-actions",
+          "task_id": "WELTGEWEBE-OS-V1-T041",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/30128417329",
+          "workflow_run_id": 30128417329,
+          "commit_sha": "aa4b2817a6ec5987b189cc80f398faf82736b4fc",
+          "verdict": "PASS"
+        },
+        {
+          "kind": "merge_gate",
+          "authority": "github-actions",
+          "task_id": "WELTGEWEBE-OS-V1-T041",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/30128348636",
+          "workflow_run_id": 30128348636,
+          "job_id": 89598572367,
+          "commit_sha": "aa4b2817a6ec5987b189cc80f398faf82736b4fc",
+          "verdict": "PASS"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "37d04a635104cfa1b6b6bcb3f4893a3c293e7bdf672355dab77660e490e73731",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+      "task_source_ref": "registry/tasks/WELTGEWEBE-OS-V1-T041.json@closeout-revision",
+      "plan_source_ref": "registry/initiatives/WELTGEWEBE-OS-V1.json:current_plan",
+      "review_diff_sha256": "ff7083dd1af639b7f89de76f65d6a4a236cea62b3e86596480daeb65c90f5596",
+      "review_evidence_verdict": "PASS",
+      "main_kubernetes_platform": "success"
     }
   },
   "priority": {
@@ -97,6 +179,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Kubernetes-Proof-Cache- und Restartefakt-Lifecycle härten"
 }

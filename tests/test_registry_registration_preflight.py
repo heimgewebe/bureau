@@ -274,20 +274,21 @@ def test_workflow_uses_trusted_base_code_and_revalidates_on_main_push():
     required = [
         "  pull_request_target:",
         "  push:",
-        "  statuses: write",
+        "  checks: write",
         "github.event_name == 'pull_request_target'",
         "github.event_name == 'push'",
         "ref: ${{ github.event.pull_request.base.sha }}",
         "HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}",
         "registry-registration-preflight/freshness",
-        "?base_sha=${CHECKED_BASE_SHA}",
         "?base_sha=${CURRENT_MAIN_SHA}",
         "CURRENT_MAIN_SHA",
         "--checked-base-sha \"${CURRENT_MAIN_SHA}\"",
         "pulls?state=open&per_page=100",
         "pulls/${pr_number}/files?per_page=100",
-        "statuses/${sha}",
-        "No new Registry task allocation on current main",
+        "repos/${REPOSITORY}/check-runs",
+        "check-runs/${check_run_id}",
+        'status:"in_progress"',
+        "Registry allocation current on main",
         "repos/${HEAD_REPOSITORY}/contents/${task_file}?ref=${PR_HEAD_SHA}",
         "repos/${pr_head_repository}/contents/${task_file}?ref=${pr_head_sha}",
         "^registry/tasks/[A-Za-z0-9][A-Za-z0-9._:-]{0,239}",
@@ -299,3 +300,57 @@ def test_workflow_uses_trusted_base_code_and_revalidates_on_main_push():
     assert text.count("--paginate") >= 3
     assert text.count("registry-registration-preflight/freshness") >= 2
     assert "task_id=\"$(python" not in text
+    assert "statuses: write" not in text
+    assert "statuses/${sha}" not in text
+    assert text.count("name: registry-registration-preflight/freshness") == 1
+    assert "merge_group" not in text
+    assert "github.event.merge_group" not in text
+    assert "cancel-in-progress: false" in text
+
+
+def test_merge_group_registry_preflight_is_separate_and_unprivileged():
+    root = Path(__file__).resolve().parents[1]
+    text = (
+        root / ".github/workflows/registry-registration-merge-group.yml"
+    ).read_text()
+    required = [
+        "  merge_group:",
+        "types: [checks_requested]",
+        "  contents: read",
+        "name: registry-registration-preflight/freshness",
+        "ref: ${{ github.event.merge_group.head_sha }}",
+        "BASE_SHA: ${{ github.event.merge_group.base_sha }}",
+        "HEAD_SHA: ${{ github.event.merge_group.head_sha }}",
+        "git merge-base --is-ancestor",
+        "bureau --root . --json check",
+    ]
+    missing = [token for token in required if token not in text]
+    assert not missing
+    assert "pull_request_target" not in text
+    assert "checks: write" not in text
+    assert "statuses: write" not in text
+    assert "github.event.pull_request" not in text
+
+
+def test_validate_workflow_has_merge_group_and_registry_only_fast_path():
+    root = Path(__file__).resolve().parents[1]
+    text = (root / ".github/workflows/validate.yml").read_text()
+    required = [
+        "  merge_group:",
+        "types: [checks_requested]",
+        "fetch-depth: 0",
+        "Classify validation scope",
+        "github.event.merge_group.base_sha",
+        "github.event.merge_group.head_sha",
+        "git diff --name-status --diff-filter=ACMRTD",
+        "^registry/tasks/[A-Za-z0-9][A-Za-z0-9._:-]{0,239}",
+        "steps.scope.outputs.registry_only != 'true'",
+        "run: make validate",
+        "steps.scope.outputs.registry_only == 'true'",
+        "python -m bureau.cli --root . --json check",
+    ]
+    missing = [token for token in required if token not in text]
+    assert not missing
+    assert "registry_only=false" in text
+    assert "changed_entries[@]" in text
+    assert '"${change_status}" != A && "${change_status}" != M' in text

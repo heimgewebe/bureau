@@ -17,14 +17,18 @@ def test_pull_request_file_listing_fails_closed() -> None:
         'if ! gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}/files?per_page=100" --paginate'
         in text
     )
-    assert '"Registry allocation preflight errored"' in text
+    assert "name: registry-registration-preflight/freshness" in text
+    assert "statuses/${PR_HEAD_SHA}" not in text
     assert 'mapfile -t task_files < "${task_files_file}"' in text
 
 
 def test_main_push_invalidates_all_known_prs_before_per_pr_validation() -> None:
     text = _workflow_text()
 
-    invalidate_marker = "# Invalidate every known open PR before validating any individual PR."
+    invalidate_marker = (
+        "# Create an in-progress CheckRun for every known open PR before "
+        "validating any individual PR."
+    )
     validation_marker = "infrastructure_failed=0"
 
     assert invalidate_marker in text
@@ -32,8 +36,9 @@ def test_main_push_invalidates_all_known_prs_before_per_pr_validation() -> None:
     assert text.index(invalidate_marker) < text.index(validation_marker)
     assert "mapfile -t pr_rows < <(" not in text
     assert "for attempt in 1 2 3; do" in text
-    assert '"Registry allocation revalidation running"' in text
-    assert "pending" in text
+    assert 'status:"in_progress"' in text
+    assert "create_check_run" in text
+    assert "complete_check_run" in text
 
 
 def test_main_push_continues_after_one_pr_revalidation_error() -> None:
@@ -43,7 +48,8 @@ def test_main_push_continues_after_one_pr_revalidation_error() -> None:
         'if ! gh api "repos/${REPOSITORY}/pulls/${pr_number}/files?per_page=100" --paginate'
         in text
     )
-    assert '"Registry allocation revalidation errored" || true' in text
+    assert '"Registry allocation revalidation errored"' in text
+    assert 'against main ${CURRENT_MAIN_SHA}." || true' in text
     assert 'echo "::error::Cannot inspect changed files for PR #${pr_number}"' in text
     assert "infrastructure_failed=1" in text
     assert "continue" in text

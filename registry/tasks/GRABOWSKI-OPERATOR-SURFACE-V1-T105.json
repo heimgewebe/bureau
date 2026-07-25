@@ -1,0 +1,105 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein aktiver Merge-Guard für heimgewebe/grabowski blockiert keine vollständig disjunkten Bureau-Ressourcen; Metadatenintegrität wird fail-closed geprüft, nachdem die Repository-Relevanz aus autoritativ gebundenen Guard-Ressourcen bestimmt wurde, sofern keine globale Effektressource tatsächlich überlappt.",
+      "id": "repository-bound-guard"
+    },
+    {
+      "assertion": "grabowski_resource_nonconflict_assess liefert für gate-, path- und andere nicht unterstützte Blockertypen einen typisierten deny-Receipt ohne KeyError oder Zugriff auf ein nicht vorhandenes proof-Feld.",
+      "id": "typed-nonrepo-deny"
+    },
+    {
+      "assertion": "Gleiches Repository, überlappende Pfade, Branches, Effektressourcen oder unvollständige Scope-Attestierungen bleiben fail-closed; fremde Leases werden weder verändert noch freigegeben.",
+      "id": "atomic-safety"
+    },
+    {
+      "assertion": "Fokussierte Tests decken Grabowski-Merge-Guard gegen disjunkte Bureau-Akquisition, nicht-repository Blocker, malformed Guard-Metadaten im selben Repository sowie echte Pfad- und Effektüberschneidungen ab.",
+      "id": "regression-tests"
+    },
+    {
+      "assertion": "Der finale Head ist vollständig validiert, als PR revisionsgebunden gemergt und ausgerollt; ein Live-Readback belegt eine erfolgreiche Bureau-Lease-Akquisition parallel zu einem disjunkten Grabowski-Merge-Guard.",
+      "id": "live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T104"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "component:src/grabowski_resources.py",
+      "component:src/grabowski_nonconflict.py",
+      "component:tests/test_resources.py",
+      "component:tests/test_nonconflict.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die aktive GitHub-Merge-Guard-Prüfung so korrigieren, dass ein Guard nur Arbeit im gebundenen Repository oder an ausdrücklich überlappenden Effektressourcen blockiert, und den Nichtkonflikt-Endpunkt für nicht unterstützte Blockertypen crashfrei typisiert ablehnen lassen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T105",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to release the T015 Captain lease",
+      "permission to weaken same-repository merge exclusion",
+      "that every historic global block had the same cause"
+    ],
+    "observed_evidence": {
+      "blocking_guard": "gate:github-merge:repository-956bfa1033fffffbe4200c9245eb403623e795d63c2534d175e8a14d0fc35c32:branch-7be1749796ee78286d8cacbc64ef0c9fdbb455d90c6ae6996008c02a03173eff",
+      "blocking_owner": "operator:t015-captain-pr461-20260725",
+      "disjoint_target_repository": "heimgewebe/bureau",
+      "live_workaround": "exact-head GitHub merge only after independent Bureau PR, CI, path-disjointness and main readbacks; foreign Guard untouched",
+      "nonconflict_assess_result": "internal KeyError: 'proof'",
+      "resource_acquire_result": "ResourceConflict against unrelated Grabowski merge gate",
+      "source_artifact": "/home/alex/.local/state/bureau/intake/t105-merge-guard-cross-repo.json",
+      "source_files": [
+        "src/grabowski_resources.py",
+        "src/grabowski_nonconflict.py"
+      ],
+      "source_sha256": "7723b3d35ae5cfe5742f2d61469315dd37be59ce51a6a6b80e8ad765f1c8d889"
+    },
+    "source": "Live-Befund während des revisionsgebundenen T104-Bureau-Merges am 2026-07-25.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-7b423320b98c431153201761",
+      "event_id": 1178,
+      "event_created_at": "2026-07-25T18:30:30.600668Z",
+      "request_sha256": "3621576b22c2d6008c8173a158f3e3f18546280cdc09502b8f0f78ed9360e0a4",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator-runtime-evidence",
+        "locator": "file:/home/alex/.local/state/bureau/intake/t105-merge-guard-cross-repo.json",
+        "observed_at": "2026-07-25T18:22:00Z",
+        "sha256": "7723b3d35ae5cfe5742f2d61469315dd37be59ce51a6a6b80e8ad765f1c8d889"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "grabowski",
+    "github",
+    "python",
+    "repository",
+    "resource-leases",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Merge-Guard und Nichtkonfliktprüfung repositorygebunden korrigieren"
+}

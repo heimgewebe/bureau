@@ -17,13 +17,13 @@
       "single-registry-root": "PR #460 normalizes one existing absolute Registry root and uses it for operator authorization, claim intent and claim commit."
     }
   },
-  "bureau_base_commit": "e122ab3385925890aa5b0c0e382b984e076e6b76",
+  "bureau_base_commit": "38d3555c7f32750ebe91e9840d817131e1f015af",
   "classification": {
     "belegt": true,
     "plausibel_only": false,
     "spekulativ": false
   },
-  "generated_at": "2026-07-25T21:53:36+02:00",
+  "generated_at": "2026-07-25T22:21:39+02:00",
   "implementation": {
     "stable_grip_surface_pr": {
       "artifact_id": "c186f7d3128c4834baec0038f989ff12",

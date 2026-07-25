@@ -97,7 +97,7 @@
           "authority": "bureau-repository",
           "kind": "repository_evidence_copy",
           "path": "docs/evidence/operator-integration-loop-v1-t016-t005-closeout-20260725.json",
-          "evidence_sha256": "133c5386690e97517d9f946a4e618fab366439c01d2af53e715d8cfaf1578796",
+          "evidence_sha256": "556c0b444c20ccdccccbb5b78492a9cd85a22a6a980c50f28c06217aa70dbed6",
           "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T016"
         },
         {
@@ -132,9 +132,9 @@
       "regression-evidence": "33 focused tests, Ruff, 3468 full tests, five GitHub checks, four review iterations, exact diff delivery and the successful renewed T015 pilot are bound."
     },
     "verification_note": "T016 verifies the explicit Registry-root, compensation, ambiguity and retry contract. It does not claim distributed ACID semantics or foreign-lease authority.",
-    "verified_at": "2026-07-25T21:53:36+02:00",
+    "verified_at": "2026-07-25T22:21:39+02:00",
     "verification": {
-      "task_sha256": "3aeae4debbeed6068dc06a2fceaafa4ce2557879d0d7e7e098b227d9ccb8f5c8",
+      "task_sha256": "9c5692fadfe2a138701c1e0a6e15fb46bc4fbeea2504b6e1bf253beec43f8f48",
       "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2"
     }
   },

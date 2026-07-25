@@ -150,7 +150,7 @@
           "authority": "bureau-repository",
           "kind": "repository_evidence_copy",
           "path": "docs/evidence/operator-integration-loop-v1-t016-t005-closeout-20260725.json",
-          "evidence_sha256": "133c5386690e97517d9f946a4e618fab366439c01d2af53e715d8cfaf1578796",
+          "evidence_sha256": "556c0b444c20ccdccccbb5b78492a9cd85a22a6a980c50f28c06217aa70dbed6",
           "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T005"
         },
         {
@@ -187,9 +187,9 @@
       "ready-supply-visible": "The v2 status projection exposes ready_supply and differentiates eligible unclaimed, claimed, blocked and no-eligible-work states."
     },
     "verification_note": "T005 verifies the collision-safe pickup path and visible ready supply. It does not authorize automatic dispatch, foreign mutation or bypass of PR and lease guards.",
-    "verified_at": "2026-07-25T21:53:36+02:00",
+    "verified_at": "2026-07-25T22:21:39+02:00",
     "verification": {
-      "task_sha256": "c90374ce6727a90984fc635cc95e13f7d33db275a9b331fac8d79720332882fa",
+      "task_sha256": "7d0d65b419c4cda81dd9c418b6bd767b27a5b7763d9b3eccb3962ff78529a6f7",
       "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2"
     }
   },

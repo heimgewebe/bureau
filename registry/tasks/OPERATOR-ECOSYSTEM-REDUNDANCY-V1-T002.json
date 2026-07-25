@@ -57,7 +57,7 @@
   "metadata": {
     "registered_at": "2026-07-10T07:25:00+02:00",
     "source_audit": "heimgewebe/cabinet#103",
-    "blocking_condition": "At the 2026-07-25 classification-wave readback, the Grabowski inventory contained 92 linked checkouts and an active foreign T015 whole-repository lease still blocked every checkout archive effect. Six additional clean checkouts were classified against GitHub truth, but two closed-unmerged branches and one locally divergent branch still require content review. Two failed transient units belong to a parallel Weltgewebe review and retain unresolved actionable attention; they were not reset.",
+    "blocking_condition": "The final 2026-07-25 failed-unit projection is empty. T002 remains blocked because the Grabowski inventory contains 92 linked checkouts, an active foreign T015 whole-repository lease blocks every checkout archive effect, only six additional clean checkouts were classified in this wave, and dirty, closed-unmerged, locally divergent and managed-lifecycle-drift entries still require external-truth review.",
     "progress_20260720": {
       "recorded_at": "2026-07-20T04:25:00Z",
       "grabowski_origin_main": "3631e2f04ad045ed02c598eb55b2f4bf4db19f0a",
@@ -321,7 +321,23 @@
         "terminality of the locally divergent PR #459 checkout",
         "permission to reset foreign failed tasks",
         "permission to remove or delete any checkout or branch"
-      ]
+      ],
+      "post_readback": {
+        "recorded_at": "2026-07-25T17:21:22.321264+00:00",
+        "failed_unit_count": 0,
+        "systemd_failed_projection": "empty",
+        "previous_foreign_units": [
+          "grabowski-task-26022cd3d12d4f5e867480e4-a1.service",
+          "grabowski-task-4e7c666d4a1044af8feaa8f1-a1.service"
+        ],
+        "previous_unit_readback": "both exact units were unloaded and inactive with Result=success",
+        "t002_effect_on_foreign_units": "none",
+        "does_not_establish": [
+          "resolution of the persistent task attention records",
+          "completion of checkout classification",
+          "completion of T002"
+        ]
+      }
     }
   },
   "depends_on": []

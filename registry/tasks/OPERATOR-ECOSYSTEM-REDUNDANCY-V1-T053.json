@@ -163,7 +163,8 @@
           "source_ref": "heimgewebe/grabowski#455",
           "head_sha": "c937905b9f46813a65863c41bcbdd56a4ddfff4d",
           "merge_commit_sha": "e957b940a40ff3f2d109e14d5cf72b709e5615fc",
-          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T053"
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T053",
+          "number": 455
         },
         {
           "authority": "github",
@@ -171,7 +172,8 @@
           "source_ref": "heimgewebe/repoground#1102",
           "head_sha": "d7f33581c7db184d1db496b3e06199f43e187cbb",
           "merge_commit_sha": "2afc2836fa1a49a593c7b57eda43086844e8fb2b",
-          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T053"
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T053",
+          "number": 1102
         },
         {
           "authority": "heim-pc-systemd",
@@ -224,7 +226,7 @@
       "existing_bound_task": "REPOGROUND-AGENT-UTILITY-V1-T009"
     },
     "verification": {
-      "task_sha256": "606568f7b8043c819fa4b7b37d907d8d586cdcd01ce9e7917c47cb4082ad5425",
+      "task_sha256": "fb5c59b9a7d93c47574022099d15d9ddfe5364cf3e11bf8300fa00478d34d88d",
       "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   },

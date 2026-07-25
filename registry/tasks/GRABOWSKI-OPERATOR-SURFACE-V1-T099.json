@@ -1,0 +1,107 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Jede automatische Plattformwirkung wird als strukturierte Autorisierung aus Effekt, Base-Repository, Pull Request, Ziel-Repository, vollständiger Ref, Head-OID und Cross-Repository-Status exakt gegen den gebundenen Scope geprüft; ein bloßes Effekttoken genügt im neuen Vertrag nicht.",
+      "id": "structured-effect-authorization"
+    },
+    {
+      "assertion": "Der Preflight bestimmt nachvollziehbar, ob GitHub die konkrete Branch-Löschung für Same-Repository- und Fork-PRs anwenden kann; unbekannte oder unvollständige Identität führt zu unknown oder fail-closed statt zu einer Löschbehauptung.",
+      "id": "fork-eligibility"
+    },
+    {
+      "assertion": "Nach erfolgreichem Merge wird der exakt gebundene Head-Ref als present, absent oder unknown beobachtet und mit Abfragezeit, Rückgabecode und Zielbindung im Receipt gespeichert.",
+      "id": "post-merge-observation"
+    },
+    {
+      "assertion": "Initialer und finaler Repository-Policy-Snapshot bleiben hashgebunden; ein verbleibendes nicht atomar schließbares GitHub-TOCTOU-Fenster wird ausdrücklich als Systemgrenze ausgewiesen und niemals als atomare Garantie bezeichnet.",
+      "id": "policy-drift-boundary"
+    },
+    {
+      "assertion": "Bestehende Effekttoken bleiben nur über einen expliziten, messbaren Kompatibilitätspfad lesbar; neue Captain-Autorisierungen verwenden den strukturierten Vertrag.",
+      "id": "migration"
+    },
+    {
+      "assertion": "Regressionen decken Same-Repository, Fork, gelöschten, erhaltenen und nicht beobachtbaren Branch, Policy-Drift in beide Richtungen, Ziel-Drift und Legacy-Migration ab.",
+      "id": "tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T048",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T091"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_grips.py",
+      "component:src/grabowski_merge_guard.py",
+      "component:src/grabowski_grip_orchestration.py",
+      "component:tests/test_grips.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Automatische GitHub-Merge-Nebeneffekte nicht nur als Effekttoken, sondern als vollständig gebundene Zielwirkungen autorisieren, Fork-Eignung explizit bestimmen und den tatsächlichen Post-Merge-Zustand als present, absent oder unknown revisionsgebunden beobachten.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T099",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "availability of an atomic GitHub repository-setting lock",
+      "that delete_branch_on_merge applies identically to every fork topology",
+      "permission to restore or delete unrelated branches"
+    ],
+    "observed_evidence": {
+      "configured_effect": "branch-deletion",
+      "head_oid": "d7d2596861a7bae465a3b281d8d6a0a26eacdb13",
+      "head_ref": "refs/heads/feat/user-visible-diff-handoff-v1",
+      "post_merge_observation": "absent",
+      "pull_request": 454,
+      "repository": "heimgewebe/grabowski",
+      "repository_policy_revalidated": true
+    },
+    "registered_at": "2026-07-25T05:10:00Z",
+    "source": "Live-Abschluss von heimgewebe/grabowski#454 nach T048/T091-Härtung.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-9be657764146417476cd9779",
+      "event_id": 1153,
+      "event_created_at": "2026-07-25T05:16:44.234755Z",
+      "request_sha256": "2563d13d422dc825ca0609e525bc52c1300d0d0e9dab03ac1dfc034a4ab13a3f",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github-pr-and-live-readback",
+        "locator": "github:heimgewebe/grabowski#454@d7d2596861a7bae465a3b281d8d6a0a26eacdb13",
+        "observed_at": "2026-07-25T05:00:56Z",
+        "sha256": "a4288a085a3ef1de908bb88223d2fd4b78022737fc4121d77866fafd2dfb8069"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 19
+  },
+  "required_capabilities": [
+    "github",
+    "grabowski",
+    "python",
+    "repository",
+    "resource-leases",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Captain-Merge Plattformwirkungen zielstrukturiert autorisieren und beobachten"
+}

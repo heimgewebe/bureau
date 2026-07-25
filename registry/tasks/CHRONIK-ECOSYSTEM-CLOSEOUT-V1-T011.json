@@ -3,9 +3,9 @@
   "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T011",
   "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
   "title": "Chronik-Identitätsindex kontrolliert deployen und kapazitiv begrenzen",
-  "state": "planned",
+  "state": "verified",
   "priority": {
-    "lane": "next",
+    "lane": "now",
     "rank": 1
   },
   "goal": "Den in Chronik-Merge 75541b2b033d5a5d19b0d1de4c1cdff631536a71 enthaltenen persistenten Identitätsindex über einen getrennten, reversiblen Runtime-Gate ausrollen, den ersten Indexaufbau unter pausiertem Importtimer beweisen und ein belastbares Größen-, Wartungs- und Rollbackbudget festlegen, ohne den JSONL-Ledger zu verändern oder chronik.service zu aktivieren.",
@@ -21,7 +21,7 @@
     "approval": {
       "action_class": "runtime_mutation",
       "required_level": "reviewed_plan",
-      "note": "Die T010-Anweisung erlaubt nur eine getrennte Deploymentbewertung. T011 ist registriert, aber weder Deployment noch Timeränderung sind durch diese Registrierung freigegeben."
+      "note": "The direct user instruction on 2026-07-25 authorized the reviewed, reversible T011 runtime rollout and registry closeout. It did not authorize chronik.service activation, ledger deletion or evidence deletion."
     }
   },
   "claims": [
@@ -99,23 +99,307 @@
     "registered_at": "2026-07-20T15:29:05.172979Z",
     "observed_during": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T010",
     "finding": {
-      "status": "separate_runtime_gate_required",
+      "status": "runtime_verified_and_closed",
       "merged_commit": "75541b2b033d5a5d19b0d1de4c1cdff631536a71",
-      "currently_deployed_commit": "73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
-      "production_ledger_bytes_observed": 7754318,
-      "filesystem_free_bytes_observed": 1037667274752,
-      "production_index_present": false,
-      "import_timer": "enabled and active/waiting; two-minute cadence",
-      "latest_import_observation": "success at 2026-07-20T17:26:10+02:00",
-      "chronik_service": "not-found/inactive"
+      "currently_deployed_commit": "24d158b8f66ca947ff1bf41997fb2ed3d3b5ce7f",
+      "production_ledger_bytes_observed": 12213163,
+      "filesystem_free_bytes_observed": 1023829827584,
+      "production_index_present": true,
+      "import_timer": "enabled and active/waiting after controlled gate",
+      "latest_import_observation": "exact 75541b2 and restored 24d158b systemd importer invocations both succeeded at 2026-07-25T15:16Z",
+      "chronik_service": "not-found/inactive; not activated",
+      "production_ledger_sha256_observed": "4272e04803831fe5a0afe459927fc43d6e596ea66a9778b245081eda3fed46dd",
+      "production_index_bytes_observed": 3014656,
+      "production_index_sha256_observed": "baeccc9d0bd9334d69e1204da052abaefb0de3829a0e0c9dc6a405b0cdaec9c5"
     },
-    "priority_decision": "Next, but not auto-started: the old importer remains healthy and the feature is not needed to preserve current ledger correctness. The main risk lies in an uncontrolled first build under the active two-minute timer.",
+    "priority_decision": "Completed: the exact T010 merge was prepared and exercised under the real importer, then the already active tested descendant was restored to avoid a persistent downgrade.",
     "does_not_establish": [
-      "runtime deployment authorization",
-      "permission to stop or disable the import timer now",
-      "permission to activate chronik.service",
+      "a need to modify or rewrite the production ledger",
       "a production index-size estimate derived from the synthetic benchmark",
-      "a need to modify or rewrite the production ledger"
-    ]
+      "automatic VACUUM/deletion/repair authority",
+      "continuing authority for future Chronik runtime mutations",
+      "future ledger integrity after later writes",
+      "future timer success",
+      "initiative completion: CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T008 remains planned",
+      "permission to activate chronik.service",
+      "permission to retain commit 75541b2 as active over its tested descendant",
+      "permission to stop or disable the import timer now",
+      "safety of noncooperating same-user writers that bypass Chronik locks",
+      "that future Chronik growth stays within the measured ratio without renewed observation"
+    ],
+    "acceptance_evidence": {
+      "exact-release-identity": {
+        "status": "verified",
+        "commit": "75541b2b033d5a5d19b0d1de4c1cdff631536a71",
+        "git_tree": "b41a110d636300985cd228d4b3a1461edfdd6f19",
+        "entries": 152,
+        "manifest_sha256": "69c674b18fd573ad988492a5f4696bdfbdbe943a248fb350470b3e8b5e868d7d",
+        "receipt_sha256": "802f2e17887f2601455647513a8229da18d06a2f6f5a62b44be20748c9a42780",
+        "real_importer_invocation": "947ac5047adc47718fc46c4e47c58f6d"
+      },
+      "controlled-timer-gate": {
+        "status": "verified",
+        "timer_paused": {
+          "ActiveState": "inactive",
+          "LoadState": "loaded",
+          "SubState": "dead",
+          "UnitFileState": "enabled"
+        },
+        "importer_inactive": {
+          "ActiveState": "inactive",
+          "ExecMainStatus": "0",
+          "Result": "success",
+          "SubState": "dead"
+        },
+        "timer_after": {
+          "ActiveState": "active",
+          "LoadState": "loaded",
+          "SubState": "waiting",
+          "UnitFileState": "enabled"
+        }
+      },
+      "first-build-capacity-proof": {
+        "status": "verified",
+        "ledger_before": {
+          "ctime_ns": 1784990896502606481,
+          "dev": 66307,
+          "ino": 119016006,
+          "mode": 384,
+          "mtime_ns": 1784990896502606481,
+          "sha256": "bfb139296d13b13e72aca6a2babf55d52c81e0012ea2ca669cf6782f9858ca87",
+          "size": 12206821
+        },
+        "free_bytes": 1023839232000,
+        "budget_bytes": 536870912,
+        "synthetic_extrapolation_used": false
+      },
+      "ledger-preserving-live-proof": {
+        "status": "verified",
+        "first_build_seconds": 7.047436668071896,
+        "historical_records_scanned": 15429,
+        "events_imported": 2,
+        "preexisting_prefix_preserved": true,
+        "index_integrity": [
+          "ok"
+        ]
+      },
+      "steady-state-and-idempotency": {
+        "status": "verified",
+        "accepted_attempt": 1,
+        "duration_seconds": 7.003770326031372,
+        "target_scans": 0,
+        "target_records_scanned": 0,
+        "events_imported": 0,
+        "ledger_unchanged": true
+      },
+      "rollback-without-ledger-loss": {
+        "status": "verified",
+        "rollback_commit": "73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f",
+        "isolated_preproof": {
+          "isolated_events_imported": 0,
+          "isolated_import_returncode": 0,
+          "manifest_entries": 154,
+          "manifest_sha256": "fbf459badbf264fbdd825cad35d68c3a3cd379e4415c421800e48f8671d4dabe",
+          "production_ledger_unchanged": true,
+          "release_path": "/home/alex/.local/lib/chronik/releases/73a8df1ea5ac0a0b0cfa064d0d010dce2f3b6b6f"
+        },
+        "temporary_exact_commit": "75541b2b033d5a5d19b0d1de4c1cdff631536a71",
+        "restored_commit": "24d158b8f66ca947ff1bf41997fb2ed3d3b5ce7f",
+        "ledger_prefix_preserved": true
+      },
+      "maintenance-and-growth-policy": {
+        "status": "verified",
+        "policy": {
+          "basis": "measured production ledger and index; no synthetic extrapolation",
+          "deletion_policy": "no automatic index or quarantine deletion",
+          "filesystem_free_bytes": 1023829827584,
+          "hard_index_budget_bytes": 536870912,
+          "hard_stop_free_bytes": 1073741824,
+          "index_bytes": 3014656,
+          "index_to_ledger_ratio": 0.2469331943687565,
+          "integrity_gate": "PRAGMA integrity_check=ok plus exact ledger identity and offset binding",
+          "ledger_bytes": 12208387,
+          "rebuild_policy": "manual only under paused timer with hash-bound quarantine and ledger-prefix proof",
+          "repair_policy": "fail closed; quarantine derived index and rebuild from authoritative ledger",
+          "vacuum_policy": "no automatic VACUUM",
+          "warning_free_bytes": 2147483648,
+          "warning_index_bytes": 134217728,
+          "measurement_phase": "capacity and ratio measured during the corrected production rebuild; the later exact-pointer smoke is recorded separately as the latest ledger/index state"
+        }
+      },
+      "service-boundary-and-restore": {
+        "status": "verified",
+        "chronik_service_after": {
+          "ActiveState": "inactive",
+          "LoadState": "not-found",
+          "SubState": "dead",
+          "UnitFileState": ""
+        },
+        "timer_after": {
+          "ActiveState": "active",
+          "LoadState": "loaded",
+          "SubState": "waiting",
+          "UnitFileState": "enabled"
+        },
+        "current_after": "/home/alex/.local/lib/chronik/releases/24d158b8f66ca947ff1bf41997fb2ed3d3b5ce7f"
+      }
+    },
+    "deployment": {
+      "decision": "verified_descendant_retained_after_exact_target_smoke",
+      "exact_target_commit": "75541b2b033d5a5d19b0d1de4c1cdff631536a71",
+      "active_commit_before_and_after": "24d158b8f66ca947ff1bf41997fb2ed3d3b5ce7f",
+      "active_release_path": "/home/alex/.local/lib/chronik/releases/24d158b8f66ca947ff1bf41997fb2ed3d3b5ce7f",
+      "reason": "24d158b is a CI-green descendant of 75541b2. T011 exercised the exact target under the real service, then restored the descendant instead of leaving production downgraded.",
+      "descendant_diff_scope": [
+        "coding_memory.py",
+        "tools/coding_memory.py",
+        "tests/test_coding_memory.py"
+      ],
+      "descendant_semantics": "adds subject_component query filtering; importer path and identity-index schema remain compatible",
+      "production_rebuild_receipt": "/home/alex/.local/state/chronik/identity-index-rollout/20260725T145327Z/t011-live-proof.json",
+      "production_rebuild_receipt_sha256": "9cb854d40bfd3249abe6406a11b3ef3caa0240a4aff3c1c218880e0c303105a7",
+      "exact_release_receipt": "/home/alex/.local/state/chronik/identity-index-rollout/exact-release-75541b2/exact-release-receipt.json",
+      "exact_release_receipt_sha256": "802f2e17887f2601455647513a8229da18d06a2f6f5a62b44be20748c9a42780",
+      "exact_pointer_smoke_receipt": "/home/alex/.local/state/chronik/identity-index-rollout/exact-pointer-smoke-20260725T151631Z/exact-pointer-smoke-receipt.json",
+      "exact_pointer_smoke_receipt_sha256": "e8311e9c16b8f4c993d2646026ab7dec99658d93c3eec848ae393e6daa053efe",
+      "grabowski_task_id": "869e8d51392746a6a197ec86",
+      "grabowski_task_lifecycle_receipt_sha256": "43f7e4771410cec46d183e17b6e2cb0185e1653ae790b0b500f7ce25d67e3eaf",
+      "pointer_smoke_job_id": "6127e2bef490"
+    },
+    "superseded_failed_attempt": {
+      "status": "retained_as_negative_evidence",
+      "task_id": "6a08980c7be74b97b2fde701",
+      "receipt": "/home/alex/.local/state/chronik/identity-index-rollout/20260725T144732Z/t011-live-proof.json",
+      "receipt_sha256": "0f463a3e9b1be021b1efb85b7d7ee1fbab413668a8b9416aea83e2e8621049ce",
+      "cause": "The first proof harness classified runtime-generated __pycache__ files as tracked release drift and entered its rollback path before the index mutation gate.",
+      "observed_effect": "The unchanged derived index was moved; the restored timer rebuilt it. No ledger byte was removed or rewritten.",
+      "correction": "The corrected harness separates tracked Git content from enumerated Python bytecode ephemera and only moves index state after mutation_started is true.",
+      "recovery_evidence": [
+        "corrected production rebuild receipt",
+        "exact target pointer smoke receipt",
+        "independent timer, importer, index and ledger readbacks"
+      ]
+    },
+    "maintenance_policy": {
+      "basis": "measured production ledger and index; no synthetic extrapolation",
+      "deletion_policy": "no automatic index or quarantine deletion",
+      "filesystem_free_bytes": 1023829827584,
+      "hard_index_budget_bytes": 536870912,
+      "hard_stop_free_bytes": 1073741824,
+      "index_bytes": 3014656,
+      "index_to_ledger_ratio": 0.2469331943687565,
+      "integrity_gate": "PRAGMA integrity_check=ok plus exact ledger identity and offset binding",
+      "ledger_bytes": 12208387,
+      "rebuild_policy": "manual only under paused timer with hash-bound quarantine and ledger-prefix proof",
+      "repair_policy": "fail closed; quarantine derived index and rebuild from authoritative ledger",
+      "vacuum_policy": "no automatic VACUUM",
+      "warning_free_bytes": 2147483648,
+      "warning_index_bytes": 134217728,
+      "measurement_phase": "capacity and ratio measured during the corrected production rebuild; the later exact-pointer smoke is recorded separately as the latest ledger/index state"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "authority": "grabowski",
+          "kind": "production_rebuild",
+          "source_ref": "/home/alex/.local/state/chronik/identity-index-rollout/20260725T145327Z/t011-live-proof.json",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T011",
+          "status": "verified",
+          "receipt_sha256": "9cb854d40bfd3249abe6406a11b3ef3caa0240a4aff3c1c218880e0c303105a7"
+        },
+        {
+          "authority": "git",
+          "kind": "exact_release_manifest",
+          "source_ref": "/home/alex/.local/state/chronik/identity-index-rollout/exact-release-75541b2/exact-release-receipt.json",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T011",
+          "commit_sha": "75541b2b033d5a5d19b0d1de4c1cdff631536a71",
+          "tree_sha": "b41a110d636300985cd228d4b3a1461edfdd6f19",
+          "manifest_sha256": "69c674b18fd573ad988492a5f4696bdfbdbe943a248fb350470b3e8b5e868d7d"
+        },
+        {
+          "authority": "grabowski",
+          "kind": "exact_pointer_smoke",
+          "source_ref": "/home/alex/.local/state/chronik/identity-index-rollout/exact-pointer-smoke-20260725T151631Z/exact-pointer-smoke-receipt.json",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T011",
+          "status": "verified",
+          "receipt_sha256": "e8311e9c16b8f4c993d2646026ab7dec99658d93c3eec848ae393e6daa053efe",
+          "restored_commit_sha": "24d158b8f66ca947ff1bf41997fb2ed3d3b5ce7f"
+        },
+        {
+          "authority": "systemd",
+          "kind": "timer_readback",
+          "source_ref": "chronik-outbox-import.timer",
+          "task_id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T011",
+          "status": "enabled_active_waiting"
+        }
+      ]
+    },
+    "outcome": "The persistent Chronik identity index is production-proven, ledger-authoritative only as a derived structure, capacity-bounded, rebuildable and rollback-tested. Exact commit 75541b2 ran successfully under the real importer; production remains on its tested descendant 24d158b.",
+    "verified_at": "2026-07-25T15:24:19.058667Z",
+    "verification": {
+      "verified_at": "2026-07-25T15:24:19.058667Z",
+      "verified_by": "chatgpt-grabowski-chronik-t011-20260725",
+      "source": "hash-bound local receipts, real systemd importer invocations, immutable Git release manifests and independent runtime readbacks",
+      "receipt_sha256s": [
+        "9cb854d40bfd3249abe6406a11b3ef3caa0240a4aff3c1c218880e0c303105a7",
+        "802f2e17887f2601455647513a8229da18d06a2f6f5a62b44be20748c9a42780",
+        "e8311e9c16b8f4c993d2646026ab7dec99658d93c3eec848ae393e6daa053efe",
+        "0f463a3e9b1be021b1efb85b7d7ee1fbab413668a8b9416aea83e2e8621049ce"
+      ],
+      "uncertainty": 0.03,
+      "interpolation_degree": 0.01,
+      "uncertainty_causes": [
+        "future timer executions and future ledger growth are outside the observation window"
+      ],
+      "interpolation_causes": [
+        "growth thresholds are policy choices based on measured production size and free capacity rather than long-duration growth data"
+      ],
+      "bureau_validation": {
+        "status": "passed",
+        "task_id": "2175cb55b0ee4aa0bb6e7e97",
+        "lifecycle_receipt_sha256": "ec6b0476544b0f6e9660bc4fc20bfb18017c4d1def83c5a304c3ef57cf16f598",
+        "ruff": "passed",
+        "pytest": {
+          "passed": 821,
+          "failed": 0,
+          "duration_seconds": 191.98
+        },
+        "systemkatalog_boundary": "passed",
+        "registry_check": "passed",
+        "sqlite_integrity": "ok"
+      },
+      "task_sha256": "0bbc710934a247f18c2abf31b734c21395cc851bbcb06caadb85dde158e52143",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "truth_boundary": {
+      "establishes": [
+        "tracked live release bytes and modes exactly match Git commit 24d158b; only enumerated Python bytecode is runtime ephemera",
+        "24d158b is a descendant of T010 merge 75541b2",
+        "production index rebuilt under paused timer while prior ledger prefix remained byte-identical",
+        "immediate repeat used steady mode with zero historical target scans and zero imported events",
+        "installed systemd importer succeeded",
+        "timer restored enabled/active/waiting and chronik.service remains inactive",
+        "exact commit 75541b2 executed successfully under the real systemd importer before restoring active descendant 24d158b"
+      ],
+      "does_not_establish": [
+        "automatic VACUUM/deletion/repair authority",
+        "continuing authority for future Chronik runtime mutations",
+        "future ledger integrity after later writes",
+        "future timer success",
+        "initiative completion: CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T008 remains planned",
+        "permission to retain commit 75541b2 as active over its tested descendant",
+        "safety of noncooperating same-user writers that bypass Chronik locks",
+        "that future Chronik growth stays within the measured ratio without renewed observation"
+      ]
+    },
+    "execution_authorization": {
+      "fulfilled_at": "2026-07-25T15:24:19.058667Z",
+      "source": "direct user instruction on 2026-07-25: nächste chronik aufgabe abarbeiten @grabowski",
+      "scope": "reviewed reversible T011 runtime rollout and registry closeout; no chronik.service activation and no ledger or evidence deletion",
+      "required_level": "reviewed_plan",
+      "action_class": "runtime_mutation"
+    }
   }
 }

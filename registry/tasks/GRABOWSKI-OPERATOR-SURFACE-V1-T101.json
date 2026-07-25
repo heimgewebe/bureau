@@ -1,0 +1,111 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Captain-Run darf eine bestehende direkte Operator-Lease nur über eine kurzlebige serverauthentifizierte Delegation fortsetzen, die ursprünglichen Owner, aktuelle Lease-Snapshots, Captain-Request und Zielressourcen kryptografisch bindet.",
+      "id": "authenticated-owner-continuity"
+    },
+    {
+      "assertion": "Ein frei gesetzter execution_intent.context.lease_owner_id-Wert kann keine bestehende Operator-Lease als eigene Autorität übernehmen; fehlende oder ungültige Delegation blockiert vor Mutation.",
+      "id": "no-string-owner-adoption"
+    },
+    {
+      "assertion": "Nach terminalem Erfolg oder autoritativ belegtem Abbruch werden ausschließlich unveränderte Leasen des delegierten Owners freigegeben oder als bewusst retained ausgewiesen; fremde und driftende Claims bleiben unangetastet.",
+      "id": "terminal-owner-lifecycle"
+    },
+    {
+      "assertion": "Blockierende Leasen, Delegationsquelle, serverauthentifizierter Status, Owner-Kontinuität und Cleanup-Ergebnis werden in einem begrenzten Receipt sichtbar, ohne private Lease-Metadaten offenzulegen.",
+      "id": "diagnostic-receipt"
+    },
+    {
+      "assertion": "Ein realer Pilot startet mit einer direkten Operator-Lease, delegiert sie an einen Captain-Preflight und -Run und belegt genau einen Effekt sowie die abschließende Lease-Konvergenz.",
+      "id": "direct-operator-pilot"
+    },
+    {
+      "assertion": "Tests decken gültige Delegation, gefälschten Owner-String, abgelaufene Delegation, veränderte Lease, fremden Owner, fehlende Terminalevidenz und idempotente Wiederholung ab.",
+      "id": "tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T048"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_merge_guard.py",
+      "component:src/grabowski_resources.py",
+      "component:src/grabowski_grips.py",
+      "component:tests/test_grips.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Eine bestehende direkte Operator-Arbeit mit exakten Leasen sicher in einen Captain-Run fortsetzen, ohne Owner-Strings ungeprüft zu übernehmen, fremde Leasen freizugeben oder die serverauthentifizierte Identitätskette zu verlieren.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T101",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "that the textual owner continuation was forged in this incident",
+      "permission to release foreign or changed leases",
+      "identity of the original human or process that created a legacy direct Operator lease"
+    ],
+    "identity_resolution": {
+      "collision_pull_request": 984,
+      "duplicate_pull_request_closed": 999,
+      "rejected_task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T100",
+      "replacement_task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T101"
+    },
+    "observed_incident": {
+      "continued_owner_source": "execution-intent-context",
+      "initial_guard_result": "blocked_by_live_lease",
+      "lease_owner": "operator:t048-merge-delivery-review-fix-20260725",
+      "matching_process": false,
+      "matching_running_task": false,
+      "merge_succeeded_after_same-owner-continuation": true,
+      "server_authenticated": false
+    },
+    "registered_at": "2026-07-25T05:32:16Z",
+    "source": "Live-Blockade und anschließende Owner-Fortsetzung beim Merge von heimgewebe/grabowski#454.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-1a587a7353a8106714b62198",
+      "event_id": 1156,
+      "event_created_at": "2026-07-25T05:32:16.818872Z",
+      "request_sha256": "1948ff28a6abe02f0bf31cff26d8234c30c8793d6d96212875cac4623df4d3c2",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "captain-merge-receipt-and-live-lease-readback",
+        "locator": "grabowski:captain-receipt:pr454",
+        "observed_at": "2026-07-25T05:00:56Z",
+        "sha256": "ddc6f24b0fd1f76455ab5bf198ff0b967ed2667c9756603ecdbcde2839afca7a"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "required_capabilities": [
+    "grabowski",
+    "python",
+    "repository",
+    "resource-leases",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Direkte Operator-Leasen serverauthentifiziert an Captain delegieren"
+}

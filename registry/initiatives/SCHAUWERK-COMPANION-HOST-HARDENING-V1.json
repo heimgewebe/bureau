@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "SCHAUWERK-COMPANION-HOST-HARDENING-V1",
   "title": "Schauwerk Companion host security hardening",
-  "state": "completed",
-  "commitment": "completed",
+  "state": "active",
+  "commitment": "later",
   "goal": "Move or front the proven Miro Companion with a free durable HTTPS host that emits the complete required security-header contract while preserving deterministic bytes and successful Miro embedding.",
   "completion": [
     "A free durable host serves the exact deterministic companion build under repository-controlled deployment.",
@@ -44,6 +44,22 @@
     ],
     "canonical_public_url": "https://heimberry.tail6dbb90.ts.net/",
     "outcome": "The free persistent Tailscale Funnel serves the exact deterministic companion release with the full header contract, and authenticated Miro launcher, catalogue entry, panel and read-only SDK calls are verified.",
-    "successor_initiative": "SCHAUWERK-MIRO-APP-ASSET-LIFECYCLE-V1"
+    "successor_initiative": "SCHAUWERK-MIRO-APP-ASSET-LIFECYCLE-V1",
+    "lifecycle_reopen": {
+      "reopened_at": "2026-07-25T16:04:38+02:00",
+      "trigger_task": "SCHAUWERK-COMPANION-HOST-HARDENING-V1-T002",
+      "reason": "A newly registered nonterminal follow-up task remains intentionally bound to this initiative; completed lifecycle truth therefore requires explicit reopening.",
+      "decision": "active-later",
+      "preserves": [
+        "historical T001 completion evidence",
+        "completed_at milestone",
+        "existing successor initiative records"
+      ],
+      "does_not_establish": [
+        "readiness of T002",
+        "provider authorization",
+        "implementation completion"
+      ]
+    }
   }
 }

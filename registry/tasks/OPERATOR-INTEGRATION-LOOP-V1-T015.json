@@ -74,7 +74,56 @@
     },
     "pilot_for": "OPERATOR-INTEGRATION-LOOP-V1-T005",
     "registered_at": "2026-07-25",
-    "source": "OPERATOR-INTEGRATION-LOOP-V1-T005 produktiver Closeout-Pilot"
+    "source": "OPERATOR-INTEGRATION-LOOP-V1-T005 produktiver Closeout-Pilot",
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_production_coordinated_pickup_pilot",
+      "outcome": "The exact deployed Bureau runtime completed one coordinated production pickup with fail-closed conflict compensation, one bound run, idempotent retry, terminal status projection and idempotent own-lease release while preserving foreign work."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "authority": "bureau-runtime",
+          "kind": "bureau_run_receipt",
+          "path": "/home/alex/.local/state/bureau/receipts/BUR-RUN-20260725T144351Z-aefb5e3471.json",
+          "receipt_sha256": "8a33c64793464fac27d7307500d63185de8e26184f53028bb4411982bd92a277",
+          "run_id": "BUR-RUN-20260725T144351Z-aefb5e3471",
+          "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T015",
+          "content_sha256": "40670a41115c58a061db4419710a829739997c3781828e673499e8723099de22"
+        },
+        {
+          "authority": "grabowski-runtime",
+          "kind": "operator_runtime_evidence",
+          "path": "/home/alex/.local/state/grabowski/evidence/operator-integration-loop-v1-t015-production-pilot-final-BUR-RUN-20260725T144351Z-aefb5e3471.json",
+          "evidence_sha256": "d381bbf0416ed53c74ee61494eb649e41913d810ebcd22ef14f40f4cc9bec99b",
+          "run_id": "BUR-RUN-20260725T144351Z-aefb5e3471",
+          "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T015"
+        },
+        {
+          "authority": "bureau-repository",
+          "kind": "repository_evidence_copy",
+          "path": "docs/evidence/operator-integration-loop-v1-t015-production-pilot-20260725.json",
+          "evidence_sha256": "d381bbf0416ed53c74ee61494eb649e41913d810ebcd22ef14f40f4cc9bec99b",
+          "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T015"
+        }
+      ]
+    },
+    "verified_acceptance": {
+      "controlled-conflict-compensation": "The exact clean-checkout intent was blocked by a self-created lease conflict; no Bureau run and no partial real-owner lease existed before only that self conflict was released.",
+      "successful-production-claim": "Attempt 2 created exactly one current run and one metadata-bound state.bureau lease against clean Bureau main d9c7e097.",
+      "identical-retry": "The identical claim-commit returned existing-assignment for the same run; no second active run or execution was created.",
+      "status-projection": "The coordinated status progressed from active-bound to terminal-release-pending and finally terminal-released-or-expired.",
+      "terminalization-and-release": "The run succeeded with receipt 8a33c64793464fac27d7307500d63185de8e26184f53028bb4411982bd92a277; first release removed one own lease and the identical second release removed none.",
+      "foreign-work-preserved": "PR #1004 and PR #456 retained identical states, heads and updated_at values. All preexisting foreign leases remained owner-, timestamp- and digest-identical; independent RepoGround leases added concurrently were not touched."
+    },
+    "verification_note": "T015 verifies only the bounded production pickup pilot and its own run/lease lifecycle. It does not automatically verify T005, authorize foreign mutation, or weaken claim and PR guards.",
+    "verified_at": "2026-07-25T16:56:31+02:00",
+    "verification": {
+      "task_sha256": "6d9204cf4fb2da50cbd3088f0e4ff0514958398afdb1c5f56fe2edf923002afb",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2"
+    }
   },
   "priority": {
     "lane": "next",
@@ -84,6 +133,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Produktiven koordinierten Pickup-Pilot ausführen"
 }

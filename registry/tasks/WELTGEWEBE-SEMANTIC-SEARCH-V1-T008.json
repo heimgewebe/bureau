@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T008",
   "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
   "title": "Vollständige Abnahme, direkter Rollout und öffentlicher Live-Beweis",
-  "state": "blocked",
+  "state": "ready",
   "goal": "Den bis T007 verifizierten Semantic-Search-Stand über den bestehenden commitgebundenen Weltgewebe-Deploypfad kontrolliert ausrollen und öffentlich belegen, dass API-Suche und Weboberflächen live, gesund und auf dem erwarteten Commitstand laufen, ohne SemantAH bereits stillzulegen.",
   "priority": {
     "lane": "now",
@@ -96,15 +96,25 @@
     "registered_at": "2026-07-24",
     "predecessor": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T007",
     "stage": "production-rollout-and-public-live-proof",
-    "blocked_by": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T012",
-    "blocked_observed_at": "2026-07-24",
-    "blocker": "Public /api/search returned 503 search_unavailable on live commit 592954c3f91b466313b3013eca7284b62371a3fa; production search_index_generations contained no rows and no Ollama process was observed on wg-prod-1. T005/T006 deliberately contained no production provider rollout, so inventing an ad-hoc provider path is outside T008 authority.",
     "does_not_establish": [
       "successful production rollout",
       "public live proof before execution",
       "permission to bypass deployment gates",
       "SemantAH archive authority",
       "permission to expose private data in live tests"
-    ]
+    ],
+    "resolved_blocker": {
+      "blocked_by": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T012",
+      "blocked_observed_at": "2026-07-24",
+      "blocker": "Public /api/search returned 503 search_unavailable on live commit 592954c3f91b466313b3013eca7284b62371a3fa; production search_index_generations contained no rows and no Ollama process was observed on wg-prod-1. T005/T006 deliberately contained no production provider rollout, so inventing an ad-hoc provider path is outside T008 authority."
+    },
+    "unblocked_at": "2026-07-25",
+    "unblocked_by": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T012",
+    "unblock_evidence": {
+      "production_commit": "30501bd46fb0c7b8de0a1047682f1afc9dd3ba03",
+      "generation_id": "search-gen-2e8358273aa6d41e6a59025985a99738614aba725b8f369b3a54f390f8752e5c",
+      "activation_receipt_sha256": "630cad06a5b7073161c0296f2b8eff8632c12b12a50e5b3c44180b6f6dd81080",
+      "public_runtime_proof_sha256": "c3f822152aecf704b875dd112ce090ad7beff8181da68cbb9a2549053154ce98"
+    }
   }
 }

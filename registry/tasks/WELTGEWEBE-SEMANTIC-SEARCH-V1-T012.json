@@ -3,11 +3,11 @@
   "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T012",
   "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
   "title": "Produktive lokale Embedding-Runtime und Suchgeneration kontrolliert aktivieren",
-  "state": "ready",
+  "state": "verified",
   "goal": "Den in T008 live belegten Produktionsblocker schließen: einen kanonischen lokalen, identitätsgebundenen Ollama-Provider im bestehenden Weltgewebe-Produktionsbetrieb bereitstellen, die PostgreSQL-Suchgeneration begrenzt und resumierbar aufbauen, den Backfill vollständig prüfen und erst danach über den vorhandenen atomaren Aktivierungsgate aktivieren, sodass T008 seine öffentlichen Such-, Similar-Nodes- und Autorisierungsbeweise fortsetzen kann.",
   "priority": {
-    "lane": "now",
-    "rank": 60
+    "lane": "later",
+    "rank": 900
   },
   "execution": {
     "mode": "interactive-agent",
@@ -99,10 +99,122 @@
     "observed_failure": "GET /api/search returned 503 search_unavailable; production search_index_generations contained no rows; no Ollama process was observed on wg-prod-1",
     "does_not_establish": [
       "T008 completion",
-      "successful production search activation",
       "permission for cloud embeddings",
       "permission for SemantAH retirement",
-      "permission to expose private or hidden content"
-    ]
+      "permission to expose private or hidden content",
+      "WELTGEWEBE-SEMANTIC-SEARCH-V1-T008 completion",
+      "SemantAH retirement"
+    ],
+    "verified_at": "2026-07-25",
+    "outcome": "Die lokale, revisionsgebundene Ollama-Runtime und die kanonische Suchgeneration wurden über vier geprüfte Weltgewebe-PRs dauerhaft produktionsfähig gemacht. Der automatische Reconciler rollte Merge-Commit 30501bd46fb0c7b8de0a1047682f1afc9dd3ba03 aus; anschließend aktivierte ausschließlich der deployte commitgebundene Helfer die Generation search-gen-2e8358273aa6d41e6a59025985a99738614aba725b8f369b3a54f390f8752e5c. Unabhängige Datenbank- und öffentliche Readbacks belegen 3/3 fertige Projektionen, 0 offene oder fehlgeschlagene Jobs, hybriden Suchmodus, 0 nicht öffentliche Resultate und 0 nicht öffentliche Vektoren.",
+    "implementation": {
+      "repository": "heimgewebe/weltgewebe",
+      "pull_requests": [
+        {
+          "number": 1569,
+          "base_sha": "2a534423374fd0f3d7f841450f60941c824de3f2",
+          "head_sha": "d6ac2ad0a40d1a4e92e1c86cdf81df1b2d46b5bc",
+          "merge_commit": "5a5dfa862811b0f11c58baf939780d0761f51152",
+          "merged_at": "2026-07-24T18:27:39Z",
+          "diff_sha256": "42db6ec5dcc9eac0c5494fa48ec5cfe3ab6b44dbffd3392b9d27323819e00efe",
+          "role": "canonical local provider, activation and privacy contract"
+        },
+        {
+          "number": 1571,
+          "base_sha": "5a5dfa862811b0f11c58baf939780d0761f51152",
+          "head_sha": "480ceafa613278354109e817fac76b2291a0c0ea",
+          "merge_commit": "9aca42ca0427ffcc74f2c22581b9685b57cb7fb8",
+          "merged_at": "2026-07-24T20:48:31Z",
+          "diff_sha256": "5a27711f6534b96e09be4aa6be6425d947e1e16beb9f464f28005a1817a861ff",
+          "role": "compose identity and activation digest normalization"
+        },
+        {
+          "number": 1572,
+          "base_sha": "3a3d058aa719f828a1083d8b142de1f86444500d",
+          "head_sha": "56450dd80f65b6dcf62d7c0e406f5ca5d3bd83e3",
+          "merge_commit": "48d6b00c58c4a7d0adf93b5b545168998e5ebcc2",
+          "merged_at": "2026-07-24T21:31:32Z",
+          "diff_sha256": "83fcc270da1c7e12cb93e3aa0d87970a7fd1ae83c1ceb412fff4c42a651bef08",
+          "role": "strict Rust provider digest identity and resumable retry"
+        },
+        {
+          "number": 1573,
+          "base_sha": "1717894e04961318d6db20dc5541bb989eaef6c0",
+          "head_sha": "c915bdd5d1f3c267c1260d218ef91fd8f27d5d7d",
+          "merge_commit": "30501bd46fb0c7b8de0a1047682f1afc9dd3ba03",
+          "merged_at": "2026-07-25T02:30:55Z",
+          "diff_sha256": "69305de0512e3235eccf3eed8924d1f5553eb09ab99bc7160eec8f3a70c75fd9",
+          "role": "psql variable transport through stdin"
+        }
+      ],
+      "production_commit": "30501bd46fb0c7b8de0a1047682f1afc9dd3ba03",
+      "generation_id": "search-gen-2e8358273aa6d41e6a59025985a99738614aba725b8f369b3a54f390f8752e5c",
+      "provider": "local:ollama",
+      "model_id": "qwen3-embedding:4b",
+      "model_revision": "sha256:df5bd2e3c74cd8d069d21dc038f1b359fcdc9458fce1c99bd43c9eb1518ff907",
+      "runtime_identity": "ollama:0.12.6@http://127.0.0.1:11434",
+      "dimension": 2560,
+      "activated_at": "2026-07-25T02:49:15.358338+00:00"
+    },
+    "validation": {
+      "required_review_evidence_gate": "pass on PRs #1569, #1571, #1572 and #1573",
+      "required_merge_gate": "pass on PRs #1569, #1571, #1572 and #1573",
+      "final_review_axes": [
+        "operations-data-integrity",
+        "security-privacy"
+      ],
+      "automatic_deploy": {
+        "reconciler_result": "success",
+        "api_commit": "30501bd46fb0c7b8de0a1047682f1afc9dd3ba03",
+        "frontend_commit": "30501bd46fb0c7b8de0a1047682f1afc9dd3ba03",
+        "github_exact_main_live_check": "success"
+      },
+      "activation_receipt": {
+        "result": "verified",
+        "sha256": "630cad06a5b7073161c0296f2b8eff8632c12b12a50e5b3c44180b6f6dd81080",
+        "semantic_probe_status": "verified",
+        "rollback_status": "not_attempted"
+      },
+      "database_proof": {
+        "sha256": "f5a7043efca05256dd4cc9a049883075727951a44c41d7dca1f69ca7aa1dad91",
+        "state": "active",
+        "expected_nodes": 3,
+        "completed_nodes": 3,
+        "jobs_done": 3,
+        "jobs_failed": 0,
+        "non_public_vectors": 0,
+        "public_ready_vectors": 3
+      },
+      "public_runtime_proof": {
+        "sha256": "c3f822152aecf704b875dd112ce090ad7beff8181da68cbb9a2549053154ce98",
+        "search_mode": "hybrid",
+        "probe_found": true,
+        "non_public_result_count": 0,
+        "sensitive_fields_present": false,
+        "worker_image_matches_api_image": true
+      },
+      "fallback_contract": "PostgreSQL integration and ranking tests prove that only temporary local provider unavailability produces authorized lexical_fallback; identity, dimension and format failures remain fail-closed.",
+      "semantah_readback": {
+        "repository": "heimgewebe/semantAH",
+        "archived": false,
+        "default_branch": "main",
+        "local_checkout": "clean"
+      }
+    },
+    "verified_acceptance": {
+      "fresh-production-preflight": "PASS: origin/main, public API and frontend commit, Reconciler, active tasks and leases, release helper identity, PostgreSQL, containers, disk, memory and recovery were freshly read before activation; unknown or conflicting states stopped earlier attempts.",
+      "canonical-local-provider": "PASS: active generation binds local:ollama, qwen3-embedding:4b, exact SHA-256 model revision, Ollama 0.12.6 literal loopback runtime and dimension 2560; no cloud or external vector index exists.",
+      "bounded-resumable-backfill": "PASS: the exact generation resumed after two fail-closed provider identity attempts and converged to expected_nodes=3, completed_nodes=3, jobs done=3, failed=0.",
+      "activation-gate-pass": "PASS: weltgewebe_search_generation_activation_ready returned true before activation; the independent DB readback reports state=active, expected_nodes=3, completed_nodes=3, jobs_done=3 and jobs_failed=0.",
+      "visibility-fail-closed": "PASS: the independent DB proof reports non_public_vectors=0; the public live search returned no non-public IDs and exposed no payload, searchable_text or embedding fields.",
+      "public-search-recovery": "PASS: the public /api/search live probe returned mode=hybrid on the active generation and found the bound public probe; repository PostgreSQL tests prove controlled lexical fallback on local provider unavailability without a client node dump.",
+      "post-effect-operational-proof": "PASS: API, frontend, PostgreSQL, Ollama, search worker and Reconciler were read back healthy; API and worker use the same image, and public version endpoints report production commit 30501bd4.",
+      "rollback-and-rebuild": "PASS: the deployed helper retains commit-bound rollback to the prior active generation or ready/no-active state, and start_generation remains exact-identity, idempotent and resumable without mutating domain_nodes truth.",
+      "no-semantah-effect": "PASS: the implementation diffs are limited to Weltgewebe; heimgewebe/semantAH remains present, unarchived on main, and its local checkout is clean."
+    },
+    "verification": {
+      "task_sha256": "f0685195c076d93313618fb7337002c28355e9d5b96c0b854c07c2c3c2fc7b53",
+      "plan_sha256": "18002b2b2def870ec6e5dd91cd15d19aaade6f053cac144ca85e2862234a709e"
+    }
   }
 }

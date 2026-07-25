@@ -1,0 +1,110 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Das äußere Publikationsergebnis projiziert einen kanonischen Lease-Konvergenzzustand, der mindestens zwischen Freigabe durch den inneren Publisher, Freigabe durch den Adapter, bereits belegbar abwesenden exakten Leasen und wegen Ambiguität bewusst behaltenen Leasen unterscheidet.",
+      "id": "canonical-convergence-state"
+    },
+    {
+      "assertion": "Wenn der gebundene innere Receipt für denselben Owner, dieselben Ressourcenschlüssel und dieselbe Lease-Bindung release=true belegt und ein autoritativer Readback diese Leasen als abwesend zeigt, widerspricht die äußere Hülle dem nicht mit leases_released=false oder cleanup_incomplete.",
+      "id": "nested-outer-consistency"
+    },
+    {
+      "assertion": "Eine bloß leere zweite Release-Antwort gilt nicht allein als Erfolgsbeleg. Erfolg erfordert entweder den gebundenen inneren Freigabereceipt, eine eigene exakte Freigabe oder einen owner- und ressourcengebundenen Abwesenheitsreadback; Drift oder fremde Leasen bleiben fail-closed.",
+      "id": "no-blind-success"
+    },
+    {
+      "assertion": "Bei unklarem Publikationseffekt oder fehlendem Freigabebeleg werden die Leasen nicht blind freigegeben oder als konvergiert behauptet; required_readback, Retention-Grund und beobachteter Zustand bleiben maschinenlesbar.",
+      "id": "ambiguity-boundary"
+    },
+    {
+      "assertion": "Erstpublikation, Receipt-Replay und wiederholte Adapteraufrufe liefern für denselben gebundenen Endzustand eine konsistente Konvergenzprojektion, ohne Doppelrelease als Voraussetzung oder Wirkung zu behaupten.",
+      "id": "idempotent-replay"
+    },
+    {
+      "assertion": "Mindestens ein Integrationstest führt den realen Bureau-Publisherpfad aus, in dem der innere Publisher die Adapter-Leasen selbst freigibt, und prüft anschließend verschachtelten Receipt, äußere Projektion und tatsächliche Ressourcendatenbank gemeinsam.",
+      "id": "real-integration-test"
+    },
+    {
+      "assertion": "Bestehende Felder bleiben nur mit klar dokumentierter Semantik kompatibel; neue Konvergenzfelder sind begrenzt, enthalten keine privaten Lease-Metadaten und ändern weder Registry-, Queue-, Merge- noch Ausführungsautorität.",
+      "id": "compatibility"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T017"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_bureau_intake.py",
+      "component:tests/test_bureau_intake_adapter.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die Grabowski-Hülle des Bureau-Publishers so korrigieren, dass sie den tatsächlichen owner- und ressourcengebundenen Lease-Endzustand wahrheitsgemäß projiziert, auch wenn der innere Bureau-Publisher die exakten Leasen bereits freigegeben hat und ein zweiter idempotenter Release daher keine neuen Zeilen mehr entfernt.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T102",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "that any publication lease remained active in the observed incidents",
+      "permission to release foreign or drifted leases",
+      "a defect in the Registry task content or created pull requests",
+      "implementation, merge or deployment authority"
+    ],
+    "observed_evidence": {
+      "coverage_gap": "Existing adapter unit tests mock an inner publisher that does not release the leases.",
+      "independent_resource_readback": "all_exact_keys_absent",
+      "inner_lease_release": true,
+      "inner_publication_receipt_file_sha256": "bdfaddb255ae27038263d74cd7ce3890814cac86c457d744cfc9890341b1bc81",
+      "inner_publication_receipt_sha256": "e66dcbb1749539f675df6389e635c5b64dad226a728676dd2f67a5685a4482f5",
+      "outer_adapter_receipt_sha256": "15377fc138eb292b72ce0b82f0bf58f7d7066aaae9ea6f1342f17d3865034ec9",
+      "outer_leases_released": false,
+      "root_cause": "The inner Bureau publisher releases the exact leases; the Grabowski adapter performs a second release and derives false from zero newly released rows."
+    },
+    "registered_at": "2026-07-25T05:57:45Z",
+    "source": "Reproduzierter Widerspruch während der typisierten Bureau-Publikation von GRABOWSKI-OPERATOR-SURFACE-V1-T099 und T101.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-9ba92301893bda4cf334cdad",
+      "event_id": 1158,
+      "event_created_at": "2026-07-25T05:57:45.352469Z",
+      "request_sha256": "096ccd8721673f2deae108a76d13d25a8cf40ed8c12a35a5c5078922eca11e2c",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "publication-receipt-and-resource-readback",
+        "locator": "grabowski:bureau-publication-receipt:b109ebd29823fdac7d512c008aae6885a086ba2c91df30459b988eeab4ca62bd",
+        "observed_at": "2026-07-25T05:33:32Z",
+        "sha256": "bdfaddb255ae27038263d74cd7ce3890814cac86c457d744cfc9890341b1bc81"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 21
+  },
+  "required_capabilities": [
+    "bureau",
+    "grabowski",
+    "python",
+    "repository",
+    "resource-leases",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bureau-Publikationsreceipt idempotent auf Lease-Konvergenz projizieren"
+}

@@ -1,0 +1,89 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein kontrollierter, ausschließlich selbst erzeugter Konflikt führt fail-closed zu keinem Bureau-Run und lässt nach Kompensation keine teilweise erworbene Pilot-Lease zurück.",
+      "id": "controlled-conflict-compensation"
+    },
+    {
+      "assertion": "Nach Entfernung ausschließlich des selbst erzeugten Konflikts erzeugt die produktiv deployte Kette genau einen gebundenen Bureau-Run und einen aktiven state.bureau-Lease.",
+      "id": "successful-production-claim"
+    },
+    {
+      "assertion": "Die identische Wiederholung desselben Requests konvergiert auf denselben Run und erzeugt weder einen zweiten Run noch eine zweite Ausführung.",
+      "id": "identical-retry"
+    },
+    {
+      "assertion": "Die produktive Statusabfrage weist den aktiven Lease-Zustand und nach Terminalisierung den Zustand terminal-release-pending revisionsgebunden aus.",
+      "id": "status-projection"
+    },
+    {
+      "assertion": "Der Pilot terminalisiert mit eigenem Ergebnisbeleg; die erste Freigabe löst alle eigenen Run-Leases, die zweite identische Freigabe liefert already-released.",
+      "id": "terminalization-and-release"
+    },
+    {
+      "assertion": "PR #1004, PR #456 sowie alle fremden Branches, Worktrees, Prozesse und Leases bleiben unverändert.",
+      "id": "foreign-work-preserved"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "none",
+      "mode": "exclusive",
+      "resource": "state.bureau"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Nur eigener Pilot-Run, eigener state.bureau-Lease und eigene Terminalisierung; keine Repository-, PR-, Queue- oder Fremdlease-Mutation.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Die produktiv deployte koordinierte Pickup-Kette mit einem eng begrenzten dauerhaften Bureau-Task real ausführen und Konfliktkompensation, erfolgreichen Claim, identischen Retry, Statusprojektion, Terminalisierung sowie idempotente Freigabe belegen, ohne fremde Repository-Arbeit oder Leases zu berühren.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T015",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to weaken T005 claims",
+      "permission to bypass PR guards",
+      "permission to mutate foreign work",
+      "automatic T005 verification before successful pilot"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-6a6b131d5b50b43ae975b569",
+      "event_id": 1162,
+      "event_created_at": "2026-07-25T06:53:28.703100Z",
+      "request_sha256": "ba79eb16636dc914671432063a40cd7467184c6317a612d0cc110afe634be3ad",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator-runtime-evidence",
+        "locator": "/home/alex/.local/state/grabowski/evidence/operator-integration-loop-t005-production-pilot-task-v1.json",
+        "observed_at": "2026-07-25T06:53:00Z",
+        "sha256": "bbf2232d690766548a7a55d2530e690b18c07daaae509b40bc76f6a0663a01c2"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "pilot_for": "OPERATOR-INTEGRATION-LOOP-V1-T005",
+    "registered_at": "2026-07-25",
+    "source": "OPERATOR-INTEGRATION-LOOP-V1-T005 produktiver Closeout-Pilot"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 9
+  },
+  "required_capabilities": [
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Produktiven koordinierten Pickup-Pilot ausführen"
+}

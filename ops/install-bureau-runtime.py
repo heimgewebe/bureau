@@ -64,16 +64,26 @@ def git(source: Path, *arguments: str) -> str:
     return completed.stdout.rstrip("\n")
 
 
-def package_tree_sha256(root: Path) -> str:
+def package_source_paths(root: Path) -> list[Path]:
     pyproject = root / "pyproject.toml"
     package = root / "src/bureau"
-    if pyproject.is_symlink() or not pyproject.is_file() or not package.is_dir():
+    if (
+        pyproject.is_symlink()
+        or not pyproject.is_file()
+        or package.is_symlink()
+        or not package.is_dir()
+    ):
         raise SystemExit(f"invalid Bureau package tree: {root}")
     paths = [pyproject, *sorted(package.rglob("*.py"))]
-    digest = hashlib.sha256()
     for path in paths:
         if path.is_symlink() or not path.is_file():
             raise SystemExit(f"package tree contains non-regular input: {path}")
+    return paths
+
+
+def package_tree_sha256(root: Path) -> str:
+    digest = hashlib.sha256()
+    for path in package_source_paths(root):
         relative = path.relative_to(root).as_posix().encode()
         content = path.read_bytes()
         digest.update(len(relative).to_bytes(4, "big"))
@@ -81,6 +91,33 @@ def package_tree_sha256(root: Path) -> str:
         digest.update(len(content).to_bytes(8, "big"))
         digest.update(content)
     return digest.hexdigest()
+
+
+def copy_managed_package(source: Path, destination: Path) -> None:
+    for source_path in package_source_paths(source):
+        relative = source_path.relative_to(source)
+        destination_path = destination / relative
+        destination_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_path, destination_path, follow_symlinks=False)
+
+
+def validate_managed_release_tree(root: Path) -> None:
+    package = root / "src/bureau"
+    expected = {path.resolve() for path in package_source_paths(root)}
+    for entry in sorted(package.rglob("*")):
+        try:
+            linked = entry.lstat()
+            resolved = entry.resolve(strict=True)
+        except OSError as exc:
+            raise SystemExit(
+                f"immutable release contains unavailable entry: {entry}: {type(exc).__name__}"
+            ) from None
+        if entry.is_symlink() or resolved != entry or not resolved.is_relative_to(root):
+            raise SystemExit(f"immutable release contains unsafe entry: {entry}")
+        if stat.S_ISDIR(linked.st_mode):
+            continue
+        if not stat.S_ISREG(linked.st_mode) or resolved not in expected:
+            raise SystemExit(f"immutable release contains unmanaged entry: {entry}")
 
 
 def tracked_paths(source: Path) -> list[Path]:
@@ -385,8 +422,8 @@ def main(argv: list[str] | None = None) -> int:
         if temporary.exists():
             shutil.rmtree(temporary)
         (temporary / "src").mkdir(parents=True)
-        shutil.copytree(source / "src/bureau", temporary / "src/bureau", symlinks=True)
-        shutil.copy2(source / "pyproject.toml", temporary / "pyproject.toml", follow_symlinks=False)
+        copy_managed_package(source, temporary)
+        validate_managed_release_tree(temporary)
         if package_tree_sha256(temporary) != source_digest:
             shutil.rmtree(temporary)
             raise SystemExit("copied Bureau package tree digest mismatch")
@@ -397,6 +434,7 @@ def main(argv: list[str] | None = None) -> int:
                 path.chmod(0o555)
         temporary.chmod(0o555)
         os.replace(temporary, release)
+    validate_managed_release_tree(release)
     if package_tree_sha256(release) != source_digest:
         raise SystemExit("existing immutable release digest mismatch")
     if not module.is_file() or module.is_symlink():

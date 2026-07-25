@@ -57,7 +57,7 @@
   "metadata": {
     "registered_at": "2026-07-10T07:25:00+02:00",
     "source_audit": "heimgewebe/cabinet#103",
-    "blocking_condition": "The final 2026-07-25 failed-unit projection is empty. T002 remains blocked because the Grabowski inventory contains 92 linked checkouts, an active foreign T015 whole-repository lease blocks every checkout archive effect, only six additional clean checkouts were classified in this wave, and dirty, closed-unmerged, locally divergent and managed-lifecycle-drift entries still require external-truth review.",
+    "blocking_condition": "The final 2026-07-25 failed-unit projection is empty and the former T015 whole-repository lease ended normally. T002 remains blocked because 92 linked Grabowski checkouts are not yet fully classified, and both exact T053 archive attempts were blocked before effect by the active foreign Captain merge gate for Grabowski PR #461. Dirty, closed-unmerged, locally divergent and managed-lifecycle-drift entries still require external-truth review.",
     "progress_20260720": {
       "recorded_at": "2026-07-20T04:25:00Z",
       "grabowski_origin_main": "3631e2f04ad045ed02c598eb55b2f4bf4db19f0a",
@@ -235,7 +235,7 @@
         "resource_key": "repo:/home/alex/repos/grabowski",
         "owner_id": "operator:t015-pickup-grips-20260725",
         "expires_at_unix": 1785002204,
-        "status": "active at classification readback",
+        "status": "active at initial classification readback; subsequently ended normally before the T053 archive retry",
         "bypass_used": false
       },
       "classified_checkouts": [
@@ -307,12 +307,12 @@
         "dirty_states_mutated": 0
       },
       "remaining_blockers": [
-        "the active T015 whole-repository lease blocks all Grabowski checkout archive effects",
+        "the active foreign Captain merge gate for Grabowski PR #461 blocks both exact T053 archive effects",
         "closed-unmerged and locally divergent clean checkouts require content and ownership review before terminal classification",
         "the remaining Grabowski checkouts still require external PR, task and receipt classification",
         "managed lifecycle drift and dirty checkouts remain unresolved",
-        "two foreign actionable failed tasks remain pending their owning workflow attention decisions",
-        "final aggregate checkout and failed-unit post-proof remains absent"
+        "persistent task attention records remain distinct from the now-empty failed-unit projection",
+        "final aggregate all-checkout classification and post-proof remains absent"
       ],
       "does_not_establish": [
         "completion of T002",
@@ -335,6 +335,78 @@
         "does_not_establish": [
           "resolution of the persistent task attention records",
           "completion of checkout classification",
+          "completion of T002"
+        ]
+      },
+      "t053_archive_retry": {
+        "recorded_at": "2026-07-25T17:45:11.174167+00:00",
+        "inventory": {
+          "repository": "/home/alex/repos/grabowski",
+          "worktree_count": 92,
+          "generated_at_unix": 1785001337,
+          "inventory_sha256": "d49c3298dbe57bf90bc03bf1b1d53f9549f5c3fb76ad0f5408c3396ac6d0f7b3"
+        },
+        "whole_repository_lease": {
+          "resource_key": "repo:/home/alex/repos/grabowski",
+          "status": "absent at retry readback",
+          "foreign_release_or_bypass_by_t002": false
+        },
+        "exact_external_truth": {
+          "pull_request": "heimgewebe/grabowski#455",
+          "state": "MERGED",
+          "head": "c937905b9f46813a65863c41bcbdd56a4ddfff4d",
+          "merge_product": "e957b940a40ff3f2d109e14d5cf72b709e5615fc",
+          "merged_at": "2026-07-25T03:52:18Z"
+        },
+        "checkout_preconditions": [
+          {
+            "path": "/home/alex/repos/.grabowski-worktrees/t053-probe-scheduler-cutover-v1",
+            "head": "c937905b9f46813a65863c41bcbdd56a4ddfff4d",
+            "branch": "fix/grabowski-t053-probe-scheduler-cutover-v1",
+            "clean": true,
+            "resource_bindings": 0,
+            "task_bindings": 0,
+            "process_bindings": 0
+          },
+          {
+            "path": "/home/alex/repos/.grabowski-deploy-sources/t053-probe-scheduler-e957b940-v1",
+            "head": "e957b940a40ff3f2d109e14d5cf72b709e5615fc",
+            "branch": null,
+            "clean": true,
+            "resource_bindings": 0,
+            "task_bindings": 0,
+            "process_bindings": 0
+          }
+        ],
+        "foreign_archive_blocker": {
+          "resource_key": "gate:github-merge:repository-956bfa1033fffffbe4200c9245eb403623e795d63c2534d175e8a14d0fc35c32:branch-7be1749796ee78286d8cacbc64ef0c9fdbb455d90c6ae6996008c02a03173eff",
+          "owner_id": "operator:t015-captain-pr461-20260725",
+          "purpose": "exact Captain preflight and merge for heimgewebe/grabowski PR #461",
+          "expires_at_unix": 1785003835,
+          "bypass_used": false,
+          "release_attempted": false
+        },
+        "archive_attempts": [
+          {
+            "path": "/home/alex/repos/.grabowski-worktrees/t053-probe-scheduler-cutover-v1",
+            "result": "blocked before effect by the foreign Captain merge gate"
+          },
+          {
+            "path": "/home/alex/repos/.grabowski-deploy-sources/t053-probe-scheduler-e957b940-v1",
+            "result": "blocked before effect by the foreign Captain merge gate"
+          }
+        ],
+        "effects": {
+          "checkouts_archived": 0,
+          "checkouts_removed": 0,
+          "branches_deleted": 0,
+          "foreign_gates_released": 0,
+          "dirty_states_mutated": 0
+        },
+        "does_not_establish": [
+          "permission to bypass or release the PR #461 Captain merge gate",
+          "successful archival of either T053 checkout",
+          "permission to physically remove either checkout",
           "completion of T002"
         ]
       }

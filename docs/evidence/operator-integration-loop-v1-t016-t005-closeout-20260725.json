@@ -1,0 +1,117 @@
+{
+  "acceptance": {
+    "OPERATOR-INTEGRATION-LOOP-V1-T005": {
+      "atomic-claim-and-lease": "The T015 production pilot proved no partial real-owner lease after conflict and exactly one run plus one owner-bound lease after success.",
+      "eligibility-chain": "Commit e61251c implements deterministic ready eligibility, dependency/queue/terminal checks and fail-closed task, PR, repository and resource conflict checks.",
+      "gitless-transient-state": "Claims, heartbeats, envelopes and release state remain in the external Bureau SQLite/state root; reviewed task definitions and closeout evidence remain in Git.",
+      "ready-supply-visible": "The v2 status projection exposes ready_supply and differentiates eligible unclaimed, claimed, blocked and no-eligible-work states.",
+      "recovery-and-closeout": "T016 closes root/compensation ambiguity, T015 proves terminalization and idempotent own-lease release, and the old orphaned run was reconciled through the typed release grip.",
+      "worktree-and-pr-binding": "The implementation binds task, plan, runtime, source head, workspace and working PR identity; conflicting or ambiguous states are covered by fail-closed tests."
+    },
+    "OPERATOR-INTEGRATION-LOOP-V1-T016": {
+      "ambiguous-failure-retention": "Unknown commit/readback outcomes retain owner-bound leases and require explicit recovery instead of claiming non-application.",
+      "definite-failure-compensation": "Pre-effect or definitively unapplied commits return structured non-success and compensate only acquisitions made by that attempt.",
+      "identical-retry": "Request, Registry root, intent and acquisition are journal-bound; the renewed production pilot converged an identical retry to the same assignment.",
+      "recovery-root-binding": "The private run journal binds the Registry root for commit readback, status and release; legacy journals use the canonical default.",
+      "regression-evidence": "33 focused tests, Ruff, 3468 full tests, five GitHub checks, four review iterations, exact diff delivery and the successful renewed T015 pilot are bound.",
+      "single-registry-root": "PR #460 normalizes one existing absolute Registry root and uses it for operator authorization, claim intent and claim commit."
+    }
+  },
+  "bureau_base_commit": "38d3555c7f32750ebe91e9840d817131e1f015af",
+  "classification": {
+    "belegt": true,
+    "plausibel_only": false,
+    "spekulativ": false
+  },
+  "generated_at": "2026-07-25T22:21:39+02:00",
+  "implementation": {
+    "stable_grip_surface_pr": {
+      "artifact_id": "c186f7d3128c4834baec0038f989ff12",
+      "artifact_receipt_sha256": "f4e019d0d5993c4176dac3aa412b31d0ea1577223730b7b4bd328fcbf488487e",
+      "base": "4f94a7bf3512ded4798644f2347b9e27e52e16e0",
+      "diff_sha256": "431eade45dbf621ab6debd22a43e74729bb37ac94b29f5739a10324755f34acc",
+      "full_tests_passed": 3479,
+      "head": "397a4429db349c213735317b7e9781da7a3379e1",
+      "merge_commit": "ae2379378ce4b650e754de207360c5e00fe15de6",
+      "merge_delivery_receipt_sha256": "b8c45601204aad88565090f3a9bd24aef5b91edf9844ce64992de7aed33cea7e",
+      "pull_request": 461,
+      "review_audit_sha256": "b4c9f8305d10a6adc40ec2bc60e39ae02aa78b58560a69871ede3d3632b3efea",
+      "tests_skipped": 2,
+      "validation_receipt_sha256": "d3cb042ee510a80f5c3544821369bff0c1088fd1d14f2fac0131c56f91051b43"
+    },
+    "t005_bureau_commit": {
+      "commit": "e61251c7758f7d96c6d5000154cdaf0d2726fcf0",
+      "summary": "feat(claims): coordinate Bureau claims with Grabowski leases"
+    },
+    "t016_grabowski_pr": {
+      "artifact_id": "ed453ef94c9c4c729dc9f6749b9e1886",
+      "artifact_receipt_sha256": "95fd6df2fe225f63db7898830210e6f4b41cabc00d4beaa88317f1e526624810",
+      "base": "7c4ae1a3761971d223146fb2452631e9412aedc4",
+      "diff_sha256": "6c36d923c11bb554fe0ebd63f98821b9dff26aa53b36f7ada8fb68f8850b816f",
+      "focused_pickup_tests_passed": 33,
+      "full_tests_passed": 3468,
+      "github_checks_green": 5,
+      "head": "27b90a2adb7cc1db10cfdec92d74a044e4776708",
+      "local_validation_receipt_sha256": "e8df6a785870960b0186eb62959271f48768390c511750232c7d1bd072b576e8",
+      "merge_commit": "e44a8b262312a9b8ad84b4cad52ca77cc79bb1c2",
+      "pull_request": 460,
+      "review_iterations": 4,
+      "review_verdict": "PASS",
+      "ruff": "passed"
+    }
+  },
+  "kind": "operator_integration_loop_t016_t005_closeout_evidence",
+  "nonclaims": [
+    "distributed ACID semantics",
+    "automatic dispatch authority",
+    "permission to release foreign leases",
+    "proof that PR #461 has a Captain effect receipt",
+    "permission to bypass Bureau review or merge guards"
+  ],
+  "orphaned_run_reconciliation": {
+    "blocking": false,
+    "foreign_release": false,
+    "post_status_receipt_sha256": "c0773fd25b571cdb667567df729a8d815ce1101169ca91fa69e23854b5678c9a",
+    "release_status": "already-released",
+    "run_id": "BUR-RUN-20260725T081705Z-0dd626f9ac",
+    "status_receipt_sha256": "f5e989dcf2ae765a74468dd5a25223111bc3ac6d6d1d80ab6e7836c753f93bbc",
+    "terminal_state": "orphaned",
+    "typed_release_receipt_sha256": "b11ee829419e89a471e617b431c5b7e0f06bfbf4239e2d8e6aa7d5c6328eaec3"
+  },
+  "production_pilot": {
+    "bureau_receipt_sha256": "8a33c64793464fac27d7307500d63185de8e26184f53028bb4411982bd92a277",
+    "evidence_path": "docs/evidence/operator-integration-loop-v1-t015-production-pilot-20260725.json",
+    "evidence_sha256": "d381bbf0416ed53c74ee61494eb649e41913d810ebcd22ef14f40f4cc9bec99b",
+    "run_id": "BUR-RUN-20260725T144351Z-aefb5e3471",
+    "state": "verified",
+    "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T015",
+    "verified_behaviour": [
+      "fail-closed conflict compensation",
+      "one bound production run",
+      "one live owner-bound lease",
+      "identical retry converged to existing assignment",
+      "terminal status projection",
+      "idempotent own-lease release",
+      "foreign work preserved"
+    ]
+  },
+  "production_runtime": {
+    "deployment_complete": true,
+    "expected_tools": 175,
+    "healthy": true,
+    "integrity_axes_green": true,
+    "pickup_grips": [
+      "bureau-pickup-execute",
+      "bureau-pickup-status",
+      "bureau-pickup-release"
+    ],
+    "registered_tools": 175,
+    "release_id": "ae2379378ce4-srcset68afe3d4ebd8-locke6664d600b6c-contract803614b8965e",
+    "repo_head": "ae2379378ce4b650e754de207360c5e00fe15de6"
+  },
+  "schema_version": 1,
+  "tasks": [
+    "OPERATOR-INTEGRATION-LOOP-V1-T016",
+    "OPERATOR-INTEGRATION-LOOP-V1-T005"
+  ]
+}

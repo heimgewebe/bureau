@@ -3,7 +3,7 @@
   "id": "OPERATOR-INTEGRATION-LOOP-V1-T005",
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Unify Bureau ready selection and live claims",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 10
@@ -136,6 +136,61 @@
         "implementation completion",
         "merge or deployment authority"
       ]
+    },
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_collision_safe_pickup_integration",
+      "outcome": "The reviewed Bureau implementation, exact Grabowski hardening, successful production pilot, typed orphan reconciliation and deployed stable grip surface satisfy all T005 acceptance criteria."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "authority": "bureau-repository",
+          "kind": "repository_evidence_copy",
+          "path": "docs/evidence/operator-integration-loop-v1-t016-t005-closeout-20260725.json",
+          "evidence_sha256": "556c0b444c20ccdccccbb5b78492a9cd85a22a6a980c50f28c06217aa70dbed6",
+          "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T005"
+        },
+        {
+          "authority": "bureau-repository",
+          "kind": "implementation_commit",
+          "commit": "e61251c7758f7d96c6d5000154cdaf0d2726fcf0"
+        },
+        {
+          "authority": "bureau-runtime",
+          "kind": "production_pilot",
+          "run_id": "BUR-RUN-20260725T144351Z-aefb5e3471",
+          "receipt_sha256": "8a33c64793464fac27d7307500d63185de8e26184f53028bb4411982bd92a277"
+        },
+        {
+          "authority": "grabowski-runtime",
+          "kind": "typed_release_receipt",
+          "run_id": "BUR-RUN-20260725T081705Z-0dd626f9ac",
+          "receipt_sha256": "b11ee829419e89a471e617b431c5b7e0f06bfbf4239e2d8e6aa7d5c6328eaec3"
+        },
+        {
+          "authority": "grabowski-runtime",
+          "kind": "deployment_identity",
+          "repo_head": "ae2379378ce4b650e754de207360c5e00fe15de6",
+          "release_id": "ae2379378ce4-srcset68afe3d4ebd8-locke6664d600b6c-contract803614b8965e"
+        }
+      ]
+    },
+    "verified_acceptance": {
+      "eligibility-chain": "Commit e61251c implements deterministic ready eligibility, dependency/queue/terminal checks and fail-closed task, PR, repository and resource conflict checks.",
+      "atomic-claim-and-lease": "The T015 production pilot proved no partial real-owner lease after conflict and exactly one run plus one owner-bound lease after success.",
+      "gitless-transient-state": "Claims, heartbeats, envelopes and release state remain in the external Bureau SQLite/state root; reviewed task definitions and closeout evidence remain in Git.",
+      "worktree-and-pr-binding": "The implementation binds task, plan, runtime, source head, workspace and working PR identity; conflicting or ambiguous states are covered by fail-closed tests.",
+      "recovery-and-closeout": "T016 closes root/compensation ambiguity, T015 proves terminalization and idempotent own-lease release, and the old orphaned run was reconciled through the typed release grip.",
+      "ready-supply-visible": "The v2 status projection exposes ready_supply and differentiates eligible unclaimed, claimed, blocked and no-eligible-work states."
+    },
+    "verification_note": "T005 verifies the collision-safe pickup path and visible ready supply. It does not authorize automatic dispatch, foreign mutation or bypass of PR and lease guards.",
+    "verified_at": "2026-07-25T22:21:39+02:00",
+    "verification": {
+      "task_sha256": "7d0d65b419c4cda81dd9c418b6bd767b27a5b7763d9b3eccb3962ff78529a6f7",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2"
     }
   },
   "depends_on": [

@@ -62,22 +62,22 @@
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "metadata": {
     "does_not_establish": [
-      "automatic deletion authority",
+      "absence of future Fleet or provider failures",
+      "automatic cleanup or deletion authority",
+      "classification of every remaining Grabowski checkout or transient unit",
+      "completion of OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T002",
       "paid provider execution authority",
       "permission to mutate foreign dirty state",
       "permission to release foreign leases",
-      "task readiness before publication and claim",
-      "absence of future provider or Fleet failures"
+      "task readiness before publication and claim"
     ],
     "live_findings": {
-      "existing_bound_task": "REPOGROUND-AGENT-UTILITY-V1-T009",
-      "failed_units": [
-        "grabowski-coding-agent-probe.service",
-        "repoground-publish-fleet-watch.service"
-      ],
       "managed_source": "/home/alex/repos/.repoground-sources/heimgewebe__grabowski__main",
-      "managed_source_state": "cleanup_candidate_but_archive_explicitly_does_not_authorize_deletion",
-      "observed_at": "2026-07-24T20:44:10Z"
+      "managed_source_state": "durable-retain-active",
+      "resolved_at": "2026-07-25T12:50:28+02:00",
+      "probe_result": "success",
+      "fleet_watch_result": "success",
+      "current_failed_units": []
     },
     "registered_from": "candidate-355fc9aeaa56fa56a448bb51 event 1140",
     "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T002",
@@ -102,6 +102,130 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_probe_repair_and_durable_retain_activation",
+      "outcome": "The metadata-only Grabowski coding-agent probe is live-green without model or paid API execution. The historical RepoGround-managed Grabowski source is protected by an exact create-only durable-retain decision, and both targeted and scheduled Fleet runs project retained=1 with failed=0."
+    },
+    "production_evidence": [
+      {
+        "kind": "pull_request",
+        "source_ref": "heimgewebe/grabowski#455",
+        "head_sha": "c937905b9f46813a65863c41bcbdd56a4ddfff4d",
+        "merge_commit_sha": "e957b940a40ff3f2d109e14d5cf72b709e5615fc"
+      },
+      {
+        "kind": "pull_request",
+        "source_ref": "heimgewebe/repoground#1102",
+        "head_sha": "d7f33581c7db184d1db496b3e06199f43e187cbb",
+        "merge_commit_sha": "2afc2836fa1a49a593c7b57eda43086844e8fb2b"
+      },
+      {
+        "kind": "retain_decision",
+        "path": "/home/alex/.local/state/repoground-publish/fleet/managed-build-retain-decisions/4125d91b5db044c3eb2dbd8719a976dd1c0524f20d14bdd218901c0cca8ea49d.json",
+        "file_sha256": "2dbd8342b5a019cf97f854d135bfd8afffde7d909c56e98875911750cd0d716c",
+        "decision_sha256": "a36ca47caf1a862ee4cb58fe8a6c84bae389e31a86007686dff7dd5f3c640518"
+      },
+      {
+        "kind": "retain_receipt",
+        "path": "/home/alex/logs/repoground-publish/fleet-managed-build-retain-last.json",
+        "sha256": "b495a4697aa8bf6d316f84adc2a309b3c78152b404a8765e7c4ec9500bcf9f65"
+      },
+      {
+        "kind": "targeted_fleet_job",
+        "path": "/home/alex/.local/state/grabowski/jobs/grabowski-job-e939ca6f0d78/finalization.json",
+        "sha256": "0982bfef62a881ac89b7c9136d8cd3b5dcb0f4a3d7ca8302c24745ea1a681772"
+      },
+      {
+        "kind": "scheduled_fleet_restart_job",
+        "path": "/home/alex/.local/state/grabowski/jobs/grabowski-job-9104a68b85c5/finalization.json",
+        "sha256": "e64a38418b66dacd078b9e67723368533010b0f2bc7b7df15cd0e73ff94a002c"
+      },
+      {
+        "kind": "scheduled_fleet_projection",
+        "path": "/home/alex/logs/repoground-publish/fleet-last.json",
+        "sha256": "d66743778ff3c0b02e7e17e6e0cc30607a2cd70f334ca5a241029d2d0364b997"
+      },
+      {
+        "kind": "checkout_archive_manifest",
+        "path": "/home/alex/.local/state/grabowski/checkout-archives/20260723T032909Z-a428cc9cd7b5/manifest.json",
+        "sha256": "e31ba7e409be0860021181f3cc8f98d2ea9f5b6f371e11e63e02d1fff2ff1d86"
+      }
+    ],
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "authority": "github",
+          "kind": "pull_request",
+          "source_ref": "heimgewebe/grabowski#455",
+          "head_sha": "c937905b9f46813a65863c41bcbdd56a4ddfff4d",
+          "merge_commit_sha": "e957b940a40ff3f2d109e14d5cf72b709e5615fc",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T053"
+        },
+        {
+          "authority": "github",
+          "kind": "pull_request",
+          "source_ref": "heimgewebe/repoground#1102",
+          "head_sha": "d7f33581c7db184d1db496b3e06199f43e187cbb",
+          "merge_commit_sha": "2afc2836fa1a49a593c7b57eda43086844e8fb2b",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T053"
+        },
+        {
+          "authority": "heim-pc-systemd",
+          "kind": "live_probe",
+          "source_ref": "grabowski-coding-agent-probe.service",
+          "state": "success-exit-0-metadata-only-model-invocations-0-paid-api-requests-authorized-0",
+          "observed_at": "2026-07-25T12:12:13+02:00",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T053"
+        },
+        {
+          "authority": "repoground-fleet",
+          "kind": "live_probe",
+          "source_ref": "/home/alex/logs/repoground-publish/fleet-last.json",
+          "state": "systemd-success-exit-0-retained-1-failed-0-prune-failed-0",
+          "observed_at": "2026-07-25T12:37:47+02:00",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T053"
+        },
+        {
+          "authority": "grabowski-runtime",
+          "kind": "live_probe",
+          "source_ref": "runtime:grabowski-mcp:7c4ae1a37619-srcsetd1d5ad636e25-locke6664d600b6c-contract803614b8965e",
+          "state": "healthy-integrity-valid-audit-ready-kill-switch-off",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T053"
+        },
+        {
+          "authority": "bureau",
+          "kind": "task_reference",
+          "source_ref": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T002",
+          "relation": "broader-worktree-and-transient-unit-reconciliation-remains-blocked",
+          "state": "blocked",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T053"
+        }
+      ]
+    },
+    "verified_acceptance": {
+      "probe-root-cause": "Deployment drift was reproduced: router and digest pin were current while the installed scheduler was stale. Grabowski PR #455 deploys wrapper, pin and scheduler atomically with rollback and exact readback; repeated systemd runs are successful.",
+      "no-cost-no-blind-retry": "The live scheduler receipts report invocation_policy=metadata-only, model_invocations=0, paid_api_requests_authorized=0 and automatic_execution_authorized=false. No blind retry or provider execution path was enabled.",
+      "managed-source-decision": "The clean detached manager checkout at exact HEAD 300278d55b8602f58f7866e5cb4951fd6d853578 is bound to a create-only durable-retain decision, exact build snapshot, empty exact lease set, Bureau task, review time 2026-08-24T12:00:00+02:00 and an intact recovery ref.",
+      "no-unknown-deletion": "The decision explicitly sets automatic_mutation_authorized=false and automatic_cleanup_authorized=false. The checkout remained clean and unchanged; cleanup still requires the typed Grabowski dry-run path.",
+      "tests-deploy-readback": "Grabowski PR #455 and RepoGround PR #1102 are merged with green required CI. The installed Fleet executable matches the merged contract. Targeted Fleet returned retained=1/failed=0; the regular systemd watch returned success/exit 0 with retained=1, failed=0 and prune_failed=0. Grabowski runtime health is green."
+    },
+    "verification_note": "T053 verifies the bounded probe repair and the exact durable-retain decision for one historical RepoGround-managed checkout. It does not verify completion of the broader T002 inventory, authorize deletion, or guarantee future provider and Fleet availability.",
+    "verified_at": "2026-07-25T12:50:28+02:00",
+    "initial_live_findings": {
+      "observed_at": "2026-07-24T20:44:10Z",
+      "failed_units": [
+        "grabowski-coding-agent-probe.service",
+        "repoground-publish-fleet-watch.service"
+      ],
+      "existing_bound_task": "REPOGROUND-AGENT-UTILITY-V1-T009"
+    },
+    "verification": {
+      "task_sha256": "606568f7b8043c819fa4b7b37d907d8d586cdcd01ce9e7917c47cb4082ad5425",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   },
   "priority": {
@@ -121,6 +245,6 @@
     "strategy": "Revert repository changes independently and reinstall the immediately previous commit-bound Grabowski and RepoGround user-service artifacts. Preserve Bureau history, source checkout bytes, recovery refs and all pre-existing receipts; do not delete the historical source during rollback."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Resolve probe failure and managed RepoGround source lifecycle"
 }

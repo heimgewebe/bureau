@@ -1,0 +1,114 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor dem Start der teuren Vollvalidierung prüft ein begrenzter read-only Preflight, ob der kanonische Deployment-Lock aktuell exklusiv verfügbar ist; ein belegter Lock führt zu einem strukturierten defer- oder blocked-Receipt und startet den Validator nicht.",
+      "id": "early-lock-probe"
+    },
+    {
+      "assertion": "Der frühe Preflight beobachtet Queue-Länge, Worker-Belegung und hinreichend aktuelle Dispatcher-Zähler ohne Stop, Signal, Drain-Zwang oder Übernahme fremder Arbeit; belegte Aktivität führt vor dem Validator zu einer strukturierten Defer-Entscheidung.",
+      "id": "early-dispatcher-probe"
+    },
+    {
+      "assertion": "Fehlende, veraltete, inkonsistente oder nicht eindeutig einer laufenden Dispatcher-Generation zuordenbare Beobachtung wird als unknown ausgewiesen und darf weder Leerlauf behaupten noch eine spätere Mutation autorisieren.",
+      "id": "unknown-fail-closed"
+    },
+    {
+      "assertion": "Nach erfolgreicher Vollvalidierung werden kanonischer Deployment-Lock, stabiler Dispatcher-Drain und die finalen Mutationsvorbedingungen unmittelbar vor dem Runtimewechsel vollständig neu geprüft; der frühe Preflight ersetzt oder cached keines dieser Gates.",
+      "id": "final-gates-preserved"
+    },
+    {
+      "assertion": "Die Optimierung beendet, signalisiert, löscht, überschreibt oder übernimmt keine fremden Prozesse, Jobs, Locks, Leases oder Dispatcher-Arbeit und enthält ausdrücklich keine Bypass- oder Force-Option.",
+      "id": "no-foreign-effects"
+    },
+    {
+      "assertion": "Receipts binden erwarteten Head, Source-Identität, Beobachtungszeit, Lock-Ergebnis, Dispatcher-Generation, Zähler, Entscheidung und den Nachweis, ob die Vollvalidierung gestartet wurde; gesparte Validierungsarbeit wird messbar, ohne Erfolg zu behaupten.",
+      "id": "evidence-and-timing"
+    },
+    {
+      "assertion": "Regressionen decken freien und belegten Lock, aktiven, leeren, driftenden und nicht beobachtbaren Dispatcher, blockierten Validatorstart, erneute finale Prüfung nach zwischenzeitlicher Zustandsänderung sowie unveränderte Rückroll- und Sicherheitssemantik ab.",
+      "id": "tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T048",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T053"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:tools/run_scheduled_deploy.py",
+      "component:tools/deploy_runtime.py",
+      "component:src/grabowski_self_deploy.py",
+      "component:tests/test_self_deploy.py",
+      "component:tests/test_deploy_runtime.py",
+      "component:tests/test_dual_service_deploy.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Vor dem vollständigen Grabowski-Validator eine schnelle, strikt read-only und revisionsgebundene Konkurrenzprüfung für kanonischen Deploy-Lock und Tunnel-Dispatcher ausführen, damit eindeutig belegte Fremd- oder Parallelaktivität früh und nachvollziehbar deferiert wird, ohne die finalen Lock-, Drain- und Mutationsgates abzuschwächen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T103",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to interrupt foreign work",
+      "that an early idle observation remains true until mutation",
+      "permission to weaken or remove final deployment gates",
+      "queue truth or dispatch authority"
+    ],
+    "observed_evidence": {
+      "first_terminal_blocker": "deployment-lock-busy-after-validation",
+      "merge_commit": "6c9bbeff02ab487771b5e0d6834b7c527a74a279",
+      "pull_request": 453,
+      "repository": "heimgewebe/grabowski",
+      "second_terminal_blocker": "tunnel-drain-pre-stop-after-validation",
+      "successful_release": "6c9bbeff02ab-srcset2cbdd7a4db3e-locke6664d600b6c-contract22ef10c4985b-attempt1",
+      "validation_tests": 3404
+    },
+    "registered_at": "2026-07-25T08:20:00+02:00",
+    "source": "Produktiver Rollout von heimgewebe/grabowski#453: ein Versuch blockierte nach vollständiger Validierung am Deploy-Lock, ein weiterer nach vollständiger Validierung am Dispatcher-Drain; der dritte Versuch lief nach belegtem stillen Drain-Fenster erfolgreich durch.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-aa557160d97ab4161866d0cd",
+      "event_id": 1149,
+      "event_created_at": "2026-07-25T02:47:40.306487Z",
+      "request_sha256": "b777c368b2f87ecd7c987658d59ae85c6945d84d079ed5041c9b9b55cba2fae2",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator-runtime-evidence",
+        "locator": "/home/alex/.local/state/grabowski/evidence/pr453-runtime-deploy-contention-preflight-v1.json",
+        "observed_at": "2026-07-25T02:39:42Z",
+        "sha256": "6ef21f99371d51d44d079d45dc4a14f7994ace09088ea5f574316bfe219aad6f"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 21
+  },
+  "required_capabilities": [
+    "grabowski",
+    "python",
+    "repository",
+    "resource-leases",
+    "systemd",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Deployment-Konkurrenz vor teurer Vollvalidierung read-only erkennen"
+}

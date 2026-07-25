@@ -1,0 +1,98 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Schauwerk produces schema-validated Developer App and authenticated in-board readback artifacts through a documented first-class command rather than retained ad-hoc browser scripts.",
+      "id": "first-class-capture"
+    },
+    {
+      "assertion": "Every refreshed artifact is bound to the exact app URL, Developer App identity, team, required scopes, build digest and release digest, carries a bounded expiry and cannot close gates after expiry or provider drift.",
+      "id": "exact-binding"
+    },
+    {
+      "assertion": "No token, cookie, client secret, browser profile secret, board URL or raw provider identifier is emitted into public receipts or logs; interactive authorization remains an explicit provider gate.",
+      "id": "credential-boundary"
+    },
+    {
+      "assertion": "A durable free local schedule checks freshness, refreshes only read-only evidence while current authorization permits it, and emits a clear attention signal instead of attempting hidden reauthorization or board mutation.",
+      "id": "bounded-refresh-loop"
+    },
+    {
+      "assertion": "Owner-only evidence has deterministic retention, supersession and recovery semantics; historical artifacts remain auditable without being treated as current truth.",
+      "id": "retention-and-recovery"
+    },
+    {
+      "assertion": "Adversarial tests cover expiry, tamper, identity drift, disabled scopes, unavailable browser/provider, interactive reauthorization requirement and scheduler idempotency; repository CI and a real no-mutation refresh pilot pass.",
+      "id": "verification"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.schauwerk"
+    }
+  ],
+  "depends_on": [
+    "SCHAUWERK-COMPANION-HOST-HARDENING-V1-T001"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Implement a first-class evidence capture and refresh surface. Keep provider mutations explicit, never reveal OAuth tokens or browser secrets, use only the already authorized free hosting path, and fail closed when interactive reauthorization is required.",
+      "required_level": "reviewed_plan"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/schauwerk"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/schauwerk"
+  },
+  "goal": "Replace retained ad-hoc browser scripts with a first-class, owner-only and expiry-aware Schauwerk workflow that refreshes Developer App and authenticated in-board Web SDK evidence for an exact companion release without exposing credentials or claiming durable provider truth beyond the evidence window.",
+  "id": "SCHAUWERK-COMPANION-HOST-HARDENING-V1-T002",
+  "initiative": "SCHAUWERK-COMPANION-HOST-HARDENING-V1",
+  "metadata": {
+    "reason": "The current provider readbacks are intentionally bounded and expire on 2026-07-26. Manual evidence capture is correct for truth but not yet a durable product workflow.",
+    "registered_at": "2026-07-25T07:30:52+02:00",
+    "source": "Schauwerk PR #116 post-merge live gate closeout",
+    "source_candidate": "candidate-be722e5b6813fb22ff7d9f31",
+    "source_gate_digest": "20b90ce3287be917c4b7d787801a5955472518c735f105d2943b4acbb07d126b",
+    "source_merge_commit": "c45676a4a3f2f14157299149d34833586866dc28",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-be722e5b6813fb22ff7d9f31",
+      "event_id": 1155,
+      "event_created_at": "2026-07-25T05:30:52.857727Z",
+      "request_sha256": "f31b871ccbe7b1bfe218018ef7d0a993c802027da8c0865828ec80dc800699c0",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator-closeout",
+        "locator": "https://github.com/heimgewebe/schauwerk/pull/116",
+        "observed_at": "2026-07-25T07:22:37+02:00",
+        "sha256": "9e795e76d0a2e382a487bdcc5d08c4f8a2d20b4a8a7a94b1af412eec469cab55"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 720
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "miro",
+    "web-sdk",
+    "browser",
+    "scheduler"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Automate bounded companion gate evidence refresh"
+}

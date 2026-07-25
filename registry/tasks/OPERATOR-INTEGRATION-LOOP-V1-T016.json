@@ -83,7 +83,60 @@
     },
     "pilot_run": "BUR-RUN-20260725T072238Z-ef72b02379",
     "registered_at": "2026-07-25",
-    "source": "Produktiver OPERATOR-INTEGRATION-LOOP-V1-T015-Pilot"
+    "source": "Produktiver OPERATOR-INTEGRATION-LOOP-V1-T015-Pilot",
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_registry_root_and_recovery_hardening",
+      "outcome": "The exact Grabowski pickup implementation, regression evidence, deployed stable grip surface and renewed production pilot satisfy all T016 acceptance criteria."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "authority": "bureau-repository",
+          "kind": "repository_evidence_copy",
+          "path": "docs/evidence/operator-integration-loop-v1-t016-t005-closeout-20260725.json",
+          "evidence_sha256": "556c0b444c20ccdccccbb5b78492a9cd85a22a6a980c50f28c06217aa70dbed6",
+          "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T016"
+        },
+        {
+          "authority": "grabowski-repository",
+          "kind": "pull_request_revision",
+          "repository": "heimgewebe/grabowski",
+          "pull_request": 460,
+          "head_sha": "27b90a2adb7cc1db10cfdec92d74a044e4776708",
+          "merge_commit": "e44a8b262312a9b8ad84b4cad52ca77cc79bb1c2",
+          "diff_sha256": "6c36d923c11bb554fe0ebd63f98821b9dff26aa53b36f7ada8fb68f8850b816f"
+        },
+        {
+          "authority": "bureau-runtime",
+          "kind": "production_pilot",
+          "run_id": "BUR-RUN-20260725T144351Z-aefb5e3471",
+          "receipt_sha256": "8a33c64793464fac27d7307500d63185de8e26184f53028bb4411982bd92a277"
+        },
+        {
+          "authority": "grabowski-runtime",
+          "kind": "deployment_identity",
+          "repo_head": "ae2379378ce4b650e754de207360c5e00fe15de6",
+          "release_id": "ae2379378ce4-srcset68afe3d4ebd8-locke6664d600b6c-contract803614b8965e"
+        }
+      ]
+    },
+    "verified_acceptance": {
+      "single-registry-root": "PR #460 normalizes one existing absolute Registry root and uses it for operator authorization, claim intent and claim commit.",
+      "recovery-root-binding": "The private run journal binds the Registry root for commit readback, status and release; legacy journals use the canonical default.",
+      "definite-failure-compensation": "Pre-effect or definitively unapplied commits return structured non-success and compensate only acquisitions made by that attempt.",
+      "ambiguous-failure-retention": "Unknown commit/readback outcomes retain owner-bound leases and require explicit recovery instead of claiming non-application.",
+      "identical-retry": "Request, Registry root, intent and acquisition are journal-bound; the renewed production pilot converged an identical retry to the same assignment.",
+      "regression-evidence": "33 focused tests, Ruff, 3468 full tests, five GitHub checks, four review iterations, exact diff delivery and the successful renewed T015 pilot are bound."
+    },
+    "verification_note": "T016 verifies the explicit Registry-root, compensation, ambiguity and retry contract. It does not claim distributed ACID semantics or foreign-lease authority.",
+    "verified_at": "2026-07-25T22:21:39+02:00",
+    "verification": {
+      "task_sha256": "9c5692fadfe2a138701c1e0a6e15fb46bc4fbeea2504b6e1bf253beec43f8f48",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2"
+    }
   },
   "priority": {
     "lane": "next",
@@ -98,6 +151,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Koordinierten Pickup an mutierbaren Registry-Root binden"
 }

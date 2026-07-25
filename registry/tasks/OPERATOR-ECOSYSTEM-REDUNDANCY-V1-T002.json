@@ -57,7 +57,7 @@
   "metadata": {
     "registered_at": "2026-07-10T07:25:00+02:00",
     "source_audit": "heimgewebe/cabinet#103",
-    "blocking_condition": "The failed transient-unit projection was empty in the 2026-07-25T17:50:08+02:00 readback after exact terminal-worker reconciliation. T002 remains blocked because the bound Grabowski inventory snapshot contains 90 linked checkouts, including dirty state, clean unarchived state, active retention, archived grace, managed lifecycle drift and active coordination. At that observation point, a foreign T015 whole-repository lease blocked all checkout archive and retention effects; it was not bypassed.",
+    "blocking_condition": "At the 2026-07-25 classification-wave readback, the Grabowski inventory contained 92 linked checkouts and an active foreign T015 whole-repository lease still blocked every checkout archive effect. Six additional clean checkouts were classified against GitHub truth, but two closed-unmerged branches and one locally divergent branch still require content review. Two failed transient units belong to a parallel Weltgewebe review and retain unresolved actionable attention; they were not reset.",
     "progress_20260720": {
       "recorded_at": "2026-07-20T04:25:00Z",
       "grabowski_origin_main": "3631e2f04ad045ed02c598eb55b2f4bf4db19f0a",
@@ -221,6 +221,106 @@
         "permission to bypass the T015 repository lease",
         "safety of clean unarchived checkouts without external truth",
         "absence of future transient-unit failures"
+      ]
+    },
+    "progress_20260725_classification_wave_v1": {
+      "recorded_at": "2026-07-25T17:09:16.567137+00:00",
+      "inventory": {
+        "repository": "/home/alex/repos/grabowski",
+        "worktree_count": 92,
+        "generated_at_unix": 1784998727,
+        "inventory_sha256": "89ddbb21c7dc2278ba345012ff09e818823badfe7208661d63cf0e713813bb80"
+      },
+      "coordination_blocker": {
+        "resource_key": "repo:/home/alex/repos/grabowski",
+        "owner_id": "operator:t015-pickup-grips-20260725",
+        "expires_at_unix": 1785002204,
+        "status": "active at classification readback",
+        "bypass_used": false
+      },
+      "classified_checkouts": [
+        {
+          "path": "/home/alex/repos/.grabowski-worktrees/bureau-pickup-mutable-root-compensation-v1",
+          "head": "27b90a2adb7cc1db10cfdec92d74a044e4776708",
+          "branch": "fix/bureau-pickup-mutable-root-compensation-v1",
+          "git_status": "clean",
+          "classification": "terminal-retain-pending-archive",
+          "external_truth": "heimgewebe/grabowski#460 merged 2026-07-25T10:40:20Z; merge product e44a8b262312a9b8ad84b4cad52ca77cc79bb1c2"
+        },
+        {
+          "path": "/home/alex/repos/.grabowski-worktrees/captain-merge-auto-effects-scope-v1",
+          "head": "6ab0f95ffdf11529f4d2c45c685386bfb46b073e",
+          "branch": "feat/captain-merge-auto-effects-scope-v1",
+          "git_status": "clean",
+          "classification": "terminal-retain-pending-archive",
+          "external_truth": "heimgewebe/grabowski#446 merged 2026-07-24T17:51:16Z; merge product 884d92f361005d8bd2b2c8e5a69e19f4fd5bb24b"
+        },
+        {
+          "path": "/home/alex/repos/.grabowski-worktrees/direct-operator-captain-delegation-v1",
+          "head": "1f1fd6768cfc402829b3c2096dffc70aefce1f5a",
+          "branch": "fix/direct-operator-captain-delegation-v1",
+          "git_status": "clean",
+          "classification": "terminal-retain-pending-archive",
+          "external_truth": "heimgewebe/grabowski#457 merged 2026-07-25T08:01:47Z; merge product 7c4ae1a3761971d223146fb2452631e9412aedc4"
+        },
+        {
+          "path": "/home/alex/repos/.grabowski-worktrees/bureau-pickup-explicit-root-v1",
+          "head": "df71398001f7cd5885be03aba488f62e2b45750c",
+          "branch": "fix/bureau-pickup-explicit-root-v1",
+          "git_status": "clean",
+          "classification": "closed-unmerged-review-required",
+          "external_truth": "heimgewebe/grabowski#458 closed without merge at the exact local head"
+        },
+        {
+          "path": "/home/alex/repos/.grabowski-worktrees/captain-merge-effects-hardening-v2",
+          "head": "08ded7f9c17786230a48f2ab831878048ce5b4dc",
+          "branch": "fix/captain-merge-effects-hardening-v2",
+          "git_status": "clean",
+          "classification": "closed-unmerged-review-required",
+          "external_truth": "heimgewebe/grabowski#451 closed without merge at the exact local head"
+        },
+        {
+          "path": "/home/alex/repos/.grabowski-worktrees/direct-task-shadow-task-identity-binding-v1",
+          "head": "ef563cb52f783a9a1ea951dc60dac67f90549b30",
+          "branch": "fix/direct-task-shadow-task-identity-binding-v1",
+          "git_status": "clean",
+          "classification": "local-head-diverges-from-merged-pr-review-required",
+          "external_truth": "heimgewebe/grabowski#459 merged from head 82478e5719ef8eb2d9f713a476919e3d58798ade to product 4f94a7bf3512ded4798644f2347b9e27e52e16e0; local head is not present in the GitHub commit API"
+        }
+      ],
+      "failed_units": {
+        "count": 2,
+        "units": [
+          "grabowski-task-26022cd3d12d4f5e867480e4-a1.service",
+          "grabowski-task-4e7c666d4a1044af8feaa8f1-a1.service"
+        ],
+        "classification": "foreign-actionable-review-tasks",
+        "effect": "none; attention decisions remain unresolved and markers were not reset"
+      },
+      "effects": {
+        "checkouts_classified": 6,
+        "checkouts_archived": 0,
+        "checkouts_removed": 0,
+        "branches_deleted": 0,
+        "failed_markers_cleared": 0,
+        "foreign_leases_released": 0,
+        "dirty_states_mutated": 0
+      },
+      "remaining_blockers": [
+        "the active T015 whole-repository lease blocks all Grabowski checkout archive effects",
+        "closed-unmerged and locally divergent clean checkouts require content and ownership review before terminal classification",
+        "the remaining Grabowski checkouts still require external PR, task and receipt classification",
+        "managed lifecycle drift and dirty checkouts remain unresolved",
+        "two foreign actionable failed tasks remain pending their owning workflow attention decisions",
+        "final aggregate checkout and failed-unit post-proof remains absent"
+      ],
+      "does_not_establish": [
+        "completion of T002",
+        "permission to archive any checkout while the T015 repository lease is active",
+        "terminality of closed-unmerged checkouts",
+        "terminality of the locally divergent PR #459 checkout",
+        "permission to reset foreign failed tasks",
+        "permission to remove or delete any checkout or branch"
       ]
     }
   },

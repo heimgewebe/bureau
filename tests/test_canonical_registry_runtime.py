@@ -200,6 +200,65 @@ def test_deployed_launcher_uses_hash_bound_canonical_registry(tmp_path: Path) ->
     assert "tree-digest-mismatch" in tampered_result["result"]["reason_codes"]
 
 
+def test_runtime_release_excludes_unmanaged_package_artifacts(tmp_path: Path) -> None:
+    source = make_installable_source(tmp_path)
+    exclude = source / ".git/info/exclude"
+    exclude.parent.mkdir(parents=True, exist_ok=True)
+    exclude.write_text(
+        "__pycache__/\n*.pyc\noperator-note.txt\n", encoding="utf-8"
+    )
+    cache = source / "src/bureau/__pycache__"
+    cache.mkdir(exist_ok=True)
+    (cache / "operator-generated.pyc").write_bytes(b"not-bytecode")
+    (source / "src/bureau/operator-note.txt").write_text(
+        "untracked operator residue\n", encoding="utf-8"
+    )
+    assert git(source, "status", "--short") == ""
+
+    _launcher, prefix, _receipt = install_runtime(tmp_path, source)
+    manifest = json.loads((prefix / "deployment-manifest.json").read_text(encoding="utf-8"))
+    release = Path(manifest["immutable_release_path"])
+    package = release / "src/bureau"
+
+    assert not (package / "__pycache__").exists()
+    assert not (package / "operator-note.txt").exists()
+    files = [path for path in package.rglob("*") if path.is_file()]
+    assert files
+    assert all(path.suffix == ".py" for path in files)
+
+
+def test_installer_rejects_existing_release_with_unmanaged_entry(tmp_path: Path) -> None:
+    source = make_installable_source(tmp_path)
+    _launcher, prefix, _receipt = install_runtime(tmp_path, source)
+    manifest_path = prefix / "deployment-manifest.json"
+    manifest_before = manifest_path.read_bytes()
+    manifest = json.loads(manifest_before)
+    package = Path(manifest["immutable_release_path"]) / "src/bureau"
+    package.chmod(0o755)
+    unmanaged = package / "runtime-residue.pyc"
+    unmanaged.write_bytes(b"unexpected")
+
+    project_root = Path(__file__).resolve().parents[1]
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(project_root / "ops/install-bureau-runtime.py"),
+            "--source",
+            str(source),
+            "--prefix",
+            str(prefix),
+            "--bin-dir",
+            str(tmp_path / "bin"),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode != 0
+    assert "immutable release contains unmanaged entry" in completed.stderr
+    assert manifest_path.read_bytes() == manifest_before
+
 def test_missing_state_uses_ephemeral_read_only_schema(tmp_path: Path) -> None:
     state_root = tmp_path / "missing-state"
     state = state_root / "bureau.sqlite3"

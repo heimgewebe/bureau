@@ -79,14 +79,17 @@
       "nonconflict_merge_assessment": "denied: branch, paths, generated_artifacts, path_generated_cross",
       "repository": "heimgewebe/grabowski"
     },
-    "registered_at": "2026-07-25T18:45:00+02:00",
-    "source": "Live-Umsetzung der kanonischen audit-signal.v1-Projektion; Abschluss derzeit ausschließlich durch aktive T015-Repo-Lease und offenen Dependency-PR #461 blockiert.",
     "operator_intake": {
-      "schema_version": 1,
       "candidate_id": "candidate-64091d9c1f22ada8bcddd565",
-      "event_id": 1175,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
       "event_created_at": "2026-07-25T16:51:47.852701Z",
+      "event_id": 1175,
       "request_sha256": "12d99869b40545fefdbaf0f3f599a82640c11de8ffa59480bc72a715b6abad5d",
+      "schema_version": 1,
       "source": {
         "does_not_establish": [],
         "freshness": "digest-bound",
@@ -94,12 +97,132 @@
         "locator": "github:heimgewebe/grabowski@feat/audit-signal-v1#681192b706d655b2df21ffc6636b3c1dae9f5dbf",
         "observed_at": "2026-07-25T18:46:00+02:00",
         "sha256": "a1972cf1745f28527a5cfdba53ba230967560d5c8cb5e2448a521fcec9d3abe0"
+      }
+    },
+    "registered_at": "2026-07-25T18:45:00+02:00",
+    "source": "Operator-Closeout nach revisionsgebundenem Merge, vollständigem Runtime-Deployment und live lesbarer audit-signal.v1-Projektion.",
+    "verification": {
+      "acceptance": {
+        "closeout": true,
+        "contract": true,
+        "dependency-boundary": true,
+        "main-rebind": true,
+        "merge-deploy-live": true,
+        "review-and-diff": true,
+        "validation": true
+      },
+      "cleanup": {
+        "deploy_checkout_retained_until_unix": 1785094016,
+        "foreign_state_modified": false,
+        "implementation_checkout_retained_until_unix": 1785094016,
+        "implementation_owner_active_resource_leases": 0,
+        "physical_cleanup_authorized": false,
+        "physical_cleanup_performed": false
+      },
+      "closeout_validation": {
+        "command": "make validate",
+        "lifecycle_receipt_sha256": "bf75d73e5f1057f3bcadeefe4ef57e4b6a730d05ea7bb31b916195cc7e2049b3",
+        "registry_valid": true,
+        "result": "PASS",
+        "ruff": "PASS",
+        "state": "completed",
+        "systemkatalog_boundary": "PASS",
+        "task_id": "5f9288d3f68f4ed78bab7654",
+        "test_count": 821
+      },
+      "dependency": {
+        "foreign_leases_modified": false,
+        "merge_commit": "ae2379378ce4b650e754de207360c5e00fe15de6",
+        "merged": true,
+        "pull_request": 461,
+        "reviewed_head": "397a4429db349c213735317b7e9781da7a3379e1"
+      },
+      "deployment": {
+        "deployment_complete": true,
+        "deployment_integrity_valid": true,
+        "final_status": "completed",
+        "finalization_receipt_sha256": "3b302e50a08d1f37fb75e45007ee016666b28983f115130673879100c86349c5",
+        "job_unit": "grabowski-job-e2d2a6e1ea44",
+        "performed": true,
+        "release_id": "9a0a2acb00ac-srcsetba44f496d34a-locke6664d600b6c-contractabd9c5d99e08-attempt4",
+        "repo_head": "9a0a2acb00ac092b83fbbd4f9cf3dc3d2b43d242",
+        "required": true,
+        "runtime_healthy": true,
+        "source_identity_sha256": "4a956687b9c9c53bfb33beec8744c1dccbd3b1ed538a6a367bf23434958271ec",
+        "tool_contract_matches": true
+      },
+      "diff_delivery": {
+        "artifact_id": "2b8f850005cf4bd39d917e823d3cd7b1",
+        "artifact_receipt_sha256": "32f5aa7a48280c84a146eecb17acb45f62aee24f8273d00aebc8b28043be117a",
+        "byte_size": 65124,
+        "delivery_receipt_sha256": "3fbb3ee2b16e23b5e8191ec30ff23cc5fb2cb99b0e4ae93aa60c0b3822bb15a7",
+        "profile": "git-diff.v1",
+        "sha256": "6ca3786e56acbbcf6ba18959aeb4f5625f7ca169526cd4a28fd75f9bfa5fc073"
       },
       "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
+        "causality or root cause for emitted audit signals",
+        "automatic task creation, closeout, policy bypass or safe retry authority",
+        "absence of future runtime or connector drift",
+        "cleanup or deletion authority for retained or foreign checkouts"
+      ],
+      "implementation": {
+        "base_head": "ae2379378ce4b650e754de207360c5e00fe15de6",
+        "material_findings_found": 3,
+        "material_findings_remaining": 0,
+        "merge_commit": "9a0a2acb00ac092b83fbbd4f9cf3dc3d2b43d242",
+        "merged_at": "2026-07-25T18:52:45Z",
+        "pull_request": 463,
+        "repository": "heimgewebe/grabowski",
+        "required_check_count": 5,
+        "required_checks_green": true,
+        "reviewed_head": "ac4de66c2bb57181075cac0464839225d829cffe",
+        "self_review": "PASS"
+      },
+      "live_projection": {
+        "findings_sha256": "e259133ca4a6aa22f23ddc3e961e120d383603556dc578b3d6512661fbd153b9",
+        "lifecycle_receipt_sha256": "2a4b94b96d2e3b2eae02ea944ce09b1dedd719b896af99a12a463f29ec0ff200",
+        "projection_kind": "audit-signal.v1",
+        "projection_sha256": "823523778f4d114c4fc933c95a1358488aa6a92eae3dc7eb0dc57f508c27df86",
+        "schema_version": 1,
+        "signal_order": [
+          "uncertain_outcome",
+          "contract_contradiction",
+          "transition_gap",
+          "repeated_blockade",
+          "stale_attention"
+        ],
+        "source_health_all_true": true,
+        "task_id": "99030caaf9924a9696638db5",
+        "tool": "grabowski_audit_projection"
+      },
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "source": "operator_closeout",
+      "status": "verified",
+      "superseded_validation": {
+        "attention_decision": "superseded",
+        "attention_decision_receipt_sha256": "4b22f0c75b1748a25c65916d9837175032ccaab0356dccb9aed37cb68b0fd47d",
+        "failure": "missing task_sha256 and plan_sha256 verification bindings",
+        "outcome_receipt_sha256": "c248dbba3ec714b430edc6e80cc7f6ebe0489a365eaf4253e59eec5acebdfb60",
+        "task_id": "4927b99dda944a94b6a829af"
+      },
+      "task_sha256": "bab83d802cb02ca34915d0717a11861c058d0a2b8668bf21fef69fb0385627ba",
+      "validation": {
+        "changed_file_format": "PASS",
+        "command": "make validate",
+        "focused_test_count": 44,
+        "generated_context": "PASS",
+        "json_schema": "PASS",
+        "new_complexity_gate": "PASS",
+        "result": "PASS",
+        "ruff": "PASS",
+        "skipped_count": 6,
+        "state": "completed",
+        "task_id": "4f73190355b24603b8b097d5",
+        "test_count": 3490,
+        "tool_count_expected": 175,
+        "tool_count_registered": 175
+      },
+      "verified_at": "2026-07-25T19:47:51Z"
     }
   },
   "priority": {
@@ -115,6 +238,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Kanonische Audit-Signalprojektion nach T015 revisionsgebunden finalisieren"
 }

@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T054",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Define canonical ntfy alert classes",
+  "state": "ready",
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "goal": "Define and verify five canonical, secret-safe ntfy event classes with deterministic class-specific rendering, priorities, tags and correlation headers while preserving Grabowski outbox truth and fail-closed acknowledgement semantics.",
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
+  ],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "The user ordered implementation of the next tasks. Repairing and completing the existing PR is allowed; producer wiring, secret exposure, foreign-work override and unproven user_seen claims remain excluded."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "python",
+    "testing"
+  ],
+  "acceptance": [
+    {
+      "id": "canonical-event-classes",
+      "assertion": "Exactly five canonical ntfy event classes are declared and each has deterministic class-specific title/body rendering, priority, tags and correlation headers."
+    },
+    {
+      "id": "secret-safe-payloads",
+      "assertion": "Rendered payloads remain bounded and redact or reject secret-bearing and unsupported fields; no task truth, credentials or private evidence bytes are leaked."
+    },
+    {
+      "id": "fail-closed-acknowledgement",
+      "assertion": "Outbox acknowledgement occurs only after confirmed HTTP 2xx delivery; transport failure, malformed configuration or unsupported classes preserve pending truth and produce structured evidence."
+    },
+    {
+      "id": "tests-review-ci",
+      "assertion": "Focused and full relevant tests, exact diff-bound review and required GitHub CI pass on one exact PR revision bound only to this task."
+    },
+    {
+      "id": "boundary-truth",
+      "assertion": "The closeout states explicitly that dispatcher-format parity does not establish producer bindings, owner-device reception, user_seen truth or universal end-to-end delivery."
+    }
+  ],
+  "rollback": {
+    "strategy": "Revert the exact Grabowski PR and redeploy the immediately previous commit-bound dispatcher. Preserve outbox truth, receipts and pending notifications; do not acknowledge or discard messages during rollback."
+  },
+  "metadata": {
+    "registered_at": "2026-07-25T19:10:57+02:00",
+    "source_pull_request": {
+      "repository": "heimgewebe/grabowski",
+      "number": 462,
+      "head_sha": "00ed0807c82138a16228797de77f6d811a428ae3",
+      "branch": "feat/ntfy-e2e-attestation-v1",
+      "initial_ci_state": "validate-failed"
+    },
+    "relation_to_prior_tasks": {
+      "transport_pilot": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T044",
+      "production_binding": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
+    },
+    "does_not_establish": [
+      "producer bindings",
+      "owner-device reception",
+      "user_seen truth",
+      "implementation completion",
+      "merge readiness",
+      "authority to modify foreign active work"
+    ]
+  }
+}

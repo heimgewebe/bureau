@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Reduce operator ecosystem redundancy",
-  "state": "waiting",
+  "state": "active",
   "commitment": "next",
   "goal": "Reduce duplicated scheduling, execution residue, status projections, maps, event capture and proposal-only work while preserving the distinct authority of Bureau, Grabowski, RepoBrief/Lenskit, GitHub, CI and runtime.",
   "current_plan": {
@@ -323,6 +323,18 @@
       "rollback_release": "91ecd3991b16ff59b802a3309ecad63b255fdc16"
     },
     "next_bureau_cleanup_task": null,
-    "next_bureau_cleanup_scope": "No remaining active Cabinet execution surface is registered in Bureau."
+    "next_bureau_cleanup_scope": "No remaining active Cabinet execution surface is registered in Bureau.",
+    "ntfy_alert_class_reactivation": {
+      "reactivated_at": "2026-07-25T19:10:57+02:00",
+      "trigger_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T054",
+      "source_pull_request": "heimgewebe/grabowski#462",
+      "reason": "The existing ntfy production transport gained a concrete dispatcher-format follow-up that is already under review and must be tracked as open Registry truth.",
+      "does_not_establish": [
+        "producer bindings",
+        "owner-device reception",
+        "implementation completion",
+        "merge readiness"
+      ]
+    }
   }
 }

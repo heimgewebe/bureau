@@ -1,0 +1,103 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Execute normalisiert einen existierenden absoluten Bureau-Registry-Root, bindet das Operator-Gate daran und verwendet exakt denselben Root für Claim-Intent und Claim-Commit.",
+      "id": "single-registry-root"
+    },
+    {
+      "assertion": "Commit-Readback, Status und Release verwenden den im privaten Run-Journal gebundenen Registry-Root; historische Journale ohne Feld bleiben auf den kanonischen Default gebunden.",
+      "id": "recovery-root-binding"
+    },
+    {
+      "assertion": "Ein autoritativ sicher nicht angewandter Claim-Commit kompensiert alle ausschließlich von diesem Versuch erworbenen Leases und liefert einen strukturierten Nicht-Erfolg statt eines scheinbar normalen Resultats.",
+      "id": "definite-failure-compensation"
+    },
+    {
+      "assertion": "Ein unklarer Commit- oder Readback-Ausgang behält die eigenen Leases fail-closed und verlangt explizite Recovery, ohne fehlende Wirkung zu behaupten.",
+      "id": "ambiguous-failure-retention"
+    },
+    {
+      "assertion": "Ein identischer Retry kann nur bei identischer Request-, Registry-Root-, Intent- und Acquisition-Bindung auf denselben vorhandenen Run konvergieren; fremde oder unjournalisierte Zustände blockieren.",
+      "id": "identical-retry"
+    },
+    {
+      "assertion": "Fokussierte Regressionen, Ruff, vollständige Repository-Validierung, GitHub-CI, revisionsgebundener Review-Diff und ein erneuter produktiver T015-Pilot sind grün.",
+      "id": "regression-evidence"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die Umsetzung am 25.07.2026 ausdrücklich angeordnet. Änderungen bleiben auf Pickup-Implementierung, Tests, Dokumentation und deterministisch abgeleitete Operator-Kontexte begrenzt; Live-Pilot und Abschluss bleiben getrennte Evidenz.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/docs/bureau-pickup.md",
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den im produktiven T015-Pilot belegten Fehler beheben: Claim-Intent, Claim-Commit, Recovery, Status und Release müssen denselben expliziten mutierbaren Bureau-Registry-Root verwenden; sicher nicht angewandte Commits müssen eigene Leases kompensieren und Nicht-Erfolg strukturiert sichtbar machen, damit identische Retries konvergieren statt an geleakten Eigenleasen zu scheitern.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T016",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "does_not_establish": [
+      "T015 pilot success before redeployment and rerun",
+      "T005 verification",
+      "permission to release foreign leases",
+      "distributed ACID semantics"
+    ],
+    "observed_failure": "Claim-Commit wurde ohne expliziten mutierbaren Registry-Root abgewiesen; bereits erworbene Eigenlease blieb erhalten und blockierte den identischen Retry.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-7b895e9ff53c9bb63b60aa02",
+      "event_id": 1163,
+      "event_created_at": "2026-07-25T07:25:54.842503Z",
+      "request_sha256": "ae4befde2d48fad29d467aa8ae8b3260e6650e3cf1f8daf1d7c49426b343c01b",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator-runtime-evidence",
+        "locator": "/home/alex/.local/state/grabowski/evidence/t005-pickup-canonical-root-leak-v1.json",
+        "observed_at": "2026-07-25T07:23:00Z",
+        "sha256": "55f7c6fde7d9f2ab90408d79cf76e56c61d9627b96c13f8ad7f55f4bad788346"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "pilot_run": "BUR-RUN-20260725T072238Z-ef72b02379",
+    "registered_at": "2026-07-25",
+    "source": "Produktiver OPERATOR-INTEGRATION-LOOP-V1-T015-Pilot"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 8
+  },
+  "required_capabilities": [
+    "grabowski",
+    "bureau",
+    "python",
+    "repository",
+    "github",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Koordinierten Pickup an mutierbaren Registry-Root binden"
+}

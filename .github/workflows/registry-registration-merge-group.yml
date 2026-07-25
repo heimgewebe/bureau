@@ -1,0 +1,31 @@
+name: Registry task registration merge-group preflight
+
+on:
+  merge_group:
+    types: [checks_requested]
+
+permissions:
+  contents: read
+
+jobs:
+  registry-registration-preflight:
+    name: registry-registration-preflight/freshness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.merge_group.head_sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install merge-group Bureau tree
+        run: python -m pip install -e .
+      - name: Validate Registry on the queued merge tree
+        env:
+          BASE_SHA: ${{ github.event.merge_group.base_sha }}
+          HEAD_SHA: ${{ github.event.merge_group.head_sha }}
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "${BASE_SHA}" "${HEAD_SHA}"
+          bureau --root . --json check

@@ -10,10 +10,11 @@ on:
 permissions:
   contents: read
   pull-requests: read
-  statuses: write
+  checks: write
 
 jobs:
   pull-request-preflight:
+    name: registry-registration-preflight/freshness
     if: github.event_name == 'pull_request_target'
     runs-on: ubuntu-latest
     steps:
@@ -34,31 +35,18 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           CHECKED_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          STATUS_CONTEXT: registry-registration-preflight/freshness
         run: |
           set -euo pipefail
           mkdir -p artifacts/registry-registration-preflight
-          run_url="${GITHUB_SERVER_URL}/${REPOSITORY}/actions/runs/${GITHUB_RUN_ID}?base_sha=${CHECKED_BASE_SHA}"
-          gh api -X POST "repos/${REPOSITORY}/statuses/${PR_HEAD_SHA}" \
-            -f state=pending \
-            -f context="${STATUS_CONTEXT}" \
-            -f description="Registry allocation preflight running" \
-            -f target_url="${run_url}" >/dev/null
           task_files_file="$(mktemp)"
           if ! gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}/files?per_page=100" --paginate \
             --jq '.[] | select((.status == "added" or .status == "renamed") and (.filename | test("^registry/tasks/[A-Za-z0-9][A-Za-z0-9._:-]{0,239}\\.json$"))) | .filename' > "${task_files_file}"; then
             rm -f "${task_files_file}"
-            gh api -X POST "repos/${REPOSITORY}/statuses/${PR_HEAD_SHA}" \
-              -f state=failure \
-              -f context="${STATUS_CONTEXT}" \
-              -f description="Registry allocation preflight errored" \
-              -f target_url="${run_url}" >/dev/null
             exit 1
           fi
           mapfile -t task_files < "${task_files_file}"
           rm -f "${task_files_file}"
           overall=success
-          description="No new Registry task allocation"
           for task_file in "${task_files[@]}"; do
             mkdir -p "$(dirname "${task_file}")"
             gh api "repos/${HEAD_REPOSITORY}/contents/${task_file}?ref=${PR_HEAD_SHA}" \
@@ -79,16 +67,6 @@ jobs:
               overall=failure
             fi
           done
-          if [[ ${#task_files[@]} -gt 0 && "${overall}" == success ]]; then
-            description="Registry allocation preflight passed"
-          elif [[ "${overall}" == failure ]]; then
-            description="Registry allocation preflight blocked"
-          fi
-          gh api -X POST "repos/${REPOSITORY}/statuses/${PR_HEAD_SHA}" \
-            -f state="${overall}" \
-            -f context="${STATUS_CONTEXT}" \
-            -f description="${description}" \
-            -f target_url="${run_url}" >/dev/null
           if [[ "${overall}" != success ]]; then
             exit 1
           fi
@@ -103,6 +81,9 @@ jobs:
   main-push-revalidation:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    concurrency:
+      group: registry-registration-preflight-main-push
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
         with:
@@ -118,23 +99,57 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
           CURRENT_MAIN_SHA: ${{ github.sha }}
-          STATUS_CONTEXT: registry-registration-preflight/freshness
+          CHECK_NAME: registry-registration-preflight/freshness
         run: |
           set -euo pipefail
           mkdir -p artifacts/registry-registration-preflight
           run_url="${GITHUB_SERVER_URL}/${REPOSITORY}/actions/runs/${GITHUB_RUN_ID}?base_sha=${CURRENT_MAIN_SHA}"
 
-          post_status() {
+          create_check_run() {
             local sha="$1"
-            local state="$2"
-            local description="$3"
+            local pr_number="$2"
+            local payload
+            payload="$(jq -n \
+              --arg name "${CHECK_NAME}" \
+              --arg head_sha "${sha}" \
+              --arg details_url "${run_url}" \
+              --arg external_id "registry-freshness:${pr_number}:${sha}:${CURRENT_MAIN_SHA}" \
+              --arg title "Registry allocation revalidation" \
+              --arg summary "Checking PR #${pr_number} against main ${CURRENT_MAIN_SHA}." \
+              '{name:$name,head_sha:$head_sha,status:"in_progress",details_url:$details_url,external_id:$external_id,output:{title:$title,summary:$summary}}')"
+            local attempt check_run_id
+            for attempt in 1 2 3; do
+              if check_run_id="$(gh api -X POST "repos/${REPOSITORY}/check-runs" \
+                -H "Accept: application/vnd.github+json" \
+                --input - --jq .id <<< "${payload}")"; then
+                printf '%s\n' "${check_run_id}"
+                return 0
+              fi
+              sleep "${attempt}"
+            done
+            return 1
+          }
+
+          complete_check_run() {
+            local check_run_id="$1"
+            local conclusion="$2"
+            local title="$3"
+            local summary="$4"
+            local completed_at payload
+            completed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            payload="$(jq -n \
+              --arg status completed \
+              --arg conclusion "${conclusion}" \
+              --arg completed_at "${completed_at}" \
+              --arg details_url "${run_url}" \
+              --arg title "${title}" \
+              --arg summary "${summary}" \
+              '{status:$status,conclusion:$conclusion,completed_at:$completed_at,details_url:$details_url,output:{title:$title,summary:$summary}}')"
             local attempt
             for attempt in 1 2 3; do
-              if gh api -X POST "repos/${REPOSITORY}/statuses/${sha}" \
-                -f state="${state}" \
-                -f context="${STATUS_CONTEXT}" \
-                -f description="${description}" \
-                -f target_url="${run_url}" >/dev/null; then
+              if gh api -X PATCH "repos/${REPOSITORY}/check-runs/${check_run_id}" \
+                -H "Accept: application/vnd.github+json" \
+                --input - >/dev/null <<< "${payload}"; then
                 return 0
               fi
               sleep "${attempt}"
@@ -151,39 +166,45 @@ jobs:
           mapfile -t pr_rows < "${pr_rows_file}"
           rm -f "${pr_rows_file}"
 
-          # Invalidate every known open PR before validating any individual PR.
-          # This prevents one broken PR from leaving later PRs with stale green freshness.
-          invalidate_failed=0
+          # Create an in-progress CheckRun for every known open PR before validating any individual PR.
+          # A partial or failed publication leaves the affected PR fail-closed.
+          declare -A check_run_ids=()
+          create_failed=0
           for row in "${pr_rows[@]}"; do
             IFS=$'\t' read -r pr_number pr_head_sha pr_head_repository <<< "${row}"
             if [[ ! "${pr_number}" =~ ^[0-9]+$ || ! "${pr_head_sha}" =~ ^[0-9a-f]{40}$ ]]; then
               echo "::error::Malformed open PR row: ${row}"
-              invalidate_failed=1
+              create_failed=1
               continue
             fi
-            if ! post_status \
-              "${pr_head_sha}" \
-              pending \
-              "Registry allocation revalidation running"; then
-              echo "::error::Cannot invalidate Registry freshness for PR #${pr_number}"
-              invalidate_failed=1
+            if ! check_run_id="$(create_check_run "${pr_head_sha}" "${pr_number}")"; then
+              echo "::error::Cannot create Registry freshness CheckRun for PR #${pr_number}"
+              create_failed=1
+              continue
             fi
+            if [[ ! "${check_run_id}" =~ ^[0-9]+$ ]]; then
+              echo "::error::Malformed Registry freshness CheckRun id for PR #${pr_number}"
+              create_failed=1
+              continue
+            fi
+            check_run_ids["${pr_number}"]="${check_run_id}"
           done
-          if [[ ${invalidate_failed} -ne 0 ]]; then
+          if [[ ${create_failed} -ne 0 ]]; then
             exit 1
           fi
 
           infrastructure_failed=0
           for row in "${pr_rows[@]}"; do
             IFS=$'\t' read -r pr_number pr_head_sha pr_head_repository <<< "${row}"
+            check_run_id="${check_run_ids[${pr_number}]}"
             task_files_file="$(mktemp)"
             if ! gh api "repos/${REPOSITORY}/pulls/${pr_number}/files?per_page=100" --paginate \
               --jq '.[] | select((.status == "added" or .status == "renamed") and (.filename | test("^registry/tasks/[A-Za-z0-9][A-Za-z0-9._:-]{0,239}\\.json$"))) | .filename' > "${task_files_file}"; then
               rm -f "${task_files_file}"
-              post_status \
-                "${pr_head_sha}" \
-                failure \
-                "Registry allocation revalidation errored" || true
+              complete_check_run \
+                "${check_run_id}" failure \
+                "Registry allocation revalidation errored" \
+                "Could not inspect changed files for PR #${pr_number} against main ${CURRENT_MAIN_SHA}." || true
               echo "::error::Cannot inspect changed files for PR #${pr_number}"
               infrastructure_failed=1
               continue
@@ -192,11 +213,11 @@ jobs:
             rm -f "${task_files_file}"
 
             if [[ ${#task_files[@]} -eq 0 ]]; then
-              if ! post_status \
-                "${pr_head_sha}" \
-                success \
-                "No new Registry task allocation on current main"; then
-                echo "::error::Cannot publish Registry freshness for PR #${pr_number}"
+              if ! complete_check_run \
+                "${check_run_id}" success \
+                "Registry allocation current on main" \
+                "PR #${pr_number} has no new Registry task allocation and was checked against main ${CURRENT_MAIN_SHA}."; then
+                echo "::error::Cannot publish Registry freshness CheckRun for PR #${pr_number}"
                 infrastructure_failed=1
               fi
               continue
@@ -236,18 +257,19 @@ jobs:
             fi
 
             if [[ ${infrastructure_error} -ne 0 ]]; then
-              description="Registry allocation revalidation errored"
+              title="Registry allocation revalidation errored"
+              summary="Infrastructure failed while checking PR #${pr_number} against main ${CURRENT_MAIN_SHA}."
               infrastructure_failed=1
             elif [[ "${overall}" == success ]]; then
-              description="Registry allocation current on main"
+              title="Registry allocation current on main"
+              summary="Registry allocations in PR #${pr_number} remain valid against main ${CURRENT_MAIN_SHA}."
             else
-              description="Registry allocation blocked after main update"
+              title="Registry allocation blocked after main update"
+              summary="Registry allocations in PR #${pr_number} conflict with main ${CURRENT_MAIN_SHA}."
             fi
-            if ! post_status \
-              "${pr_head_sha}" \
-              "${overall}" \
-              "${description}"; then
-              echo "::error::Cannot publish Registry revalidation result for PR #${pr_number}"
+            if ! complete_check_run \
+              "${check_run_id}" "${overall}" "${title}" "${summary}"; then
+              echo "::error::Cannot complete Registry freshness CheckRun for PR #${pr_number}"
               infrastructure_failed=1
             fi
           done

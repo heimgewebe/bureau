@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  merge_group:
+    types: [checks_requested]
 permissions:
   contents: read
 jobs:
@@ -14,8 +16,55 @@ jobs:
         python-version: ["3.10", "3.12"]
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Classify validation scope
+        id: scope
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+          MERGE_GROUP_HEAD_SHA: ${{ github.event.merge_group.head_sha }}
+        run: |
+          set -euo pipefail
+          registry_only=false
+          base_sha=""
+          head_sha=""
+          if [[ "${EVENT_NAME}" == pull_request ]]; then
+            base_sha="${PR_BASE_SHA}"
+            head_sha="${PR_HEAD_SHA}"
+          elif [[ "${EVENT_NAME}" == merge_group ]]; then
+            base_sha="${MERGE_GROUP_BASE_SHA}"
+            head_sha="${MERGE_GROUP_HEAD_SHA}"
+          fi
+          if [[ -n "${base_sha}" && -n "${head_sha}" ]]; then
+            mapfile -t changed_entries < <(git diff --name-status --diff-filter=ACMRTD "${base_sha}...${head_sha}")
+            if [[ ${#changed_entries[@]} -gt 0 ]]; then
+              registry_only=true
+              for changed_entry in "${changed_entries[@]}"; do
+                change_status="${changed_entry%%$'\t'*}"
+                changed_path="${changed_entry#*$'\t'}"
+                if [[ "${change_status}" != A && "${change_status}" != M ]]; then
+                  registry_only=false
+                  break
+                fi
+                if [[ ! "${changed_path}" =~ ^registry/tasks/[A-Za-z0-9][A-Za-z0-9._:-]{0,239}\.json$ ]]; then
+                  registry_only=false
+                  break
+                fi
+              done
+            fi
+          fi
+          echo "registry_only=${registry_only}" >> "${GITHUB_OUTPUT}"
       - run: python -m pip install -e '.[dev]'
-      - run: make validate
+      - name: Validate code and repository contracts
+        if: steps.scope.outputs.registry_only != 'true'
+        run: make validate
+      - name: Validate Registry-only change
+        if: steps.scope.outputs.registry_only == 'true'
+        run: PYTHONPATH=src python -m bureau.cli --root . --json check

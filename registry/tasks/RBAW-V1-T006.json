@@ -1,0 +1,137 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Produktionsstufe vergleicht systemd-run/cgroup v2, rootless Container mit Delegation und MicroVM anhand belegter Sicherheits-, Betriebs- und Komplexitätsgrenzen; die gewählte erste Stufe bleibt ein ausführender Adapter des bestehenden RBAW-/Grabowski-Vertrags und erzeugt keine zweite Orchestrierungswahrheit.",
+      "id": "architecture-boundary"
+    },
+    {
+      "assertion": "Ein kompletter Evaluationslauf erhält harte, receiptgebundene Gesamtbudgets für Checkout-/Scratch-Größe, RAM, Swap, CPU-Zeit und -Anteil, Prozesse/Threads, IO-Bytes beziehungsweise IO-Rate und Laufzeit; fehlende Controller, Delegation oder nicht belegbare Limits blockieren fail-closed.",
+      "id": "aggregate-resource-budgets"
+    },
+    {
+      "assertion": "Request, Patch und Quell-Snapshot sind unveränderlich gebunden; nur deklarierte Checkout-, Scratch- und persistente Outputpfade sind schreibbar, und Netz bleibt standardmäßig deny. Jede Freigabe ist ziel-, policy- und artefaktgebunden.",
+      "id": "immutable-input-minimal-output"
+    },
+    {
+      "assertion": "Quota-, Controller-, Unit-, Mount-, Netzwerk-, Timeout- und Cleanup-Verletzungen werden als Infrastruktur-error und nicht als Patch- oder Testfehler klassifiziert; Terminalstatus, cgroup-/Invocation-Identität und Accounting werden im Runner-Receipt festgehalten.",
+      "id": "infrastructure-error-semantics"
+    },
+    {
+      "assertion": "Cleanup prüft Owner, Unit, Invocation, Pfade, Revisionen und erwartete Identitäten erneut und entfernt ausschließlich eigene Ressourcen. Fremde, aktive, driftende oder unklare Prozesse, Units, Worktrees und Artefakte bleiben unangetastet und blockieren.",
+      "id": "owner-bound-cleanup"
+    },
+    {
+      "assertion": "Reproduzierbare Tests decken mindestens Disk-Fill, Fork-/Thread-Explosion, RAM- und Swap-Druck, IO-Flood, Dekompressionsausdehnung, Kill, Timeout, Controller-/Delegationsausfall und Cleanup nach Abbruch ab, ohne den Host oder fremde Arbeit zu gefährden.",
+      "id": "adversarial-regression"
+    },
+    {
+      "assertion": "Runner-Receipt, Logs und deklarierte Artefakte werden atomar oder durch create-only/hashgebundenen Readback publiziert und binden Policy, Runner- und cgroup-Identität, Limits, Quell- und Patch-Digest, Ausführungsergebnis, Accounting und Cleanupstatus.",
+      "id": "artifact-integrity"
+    },
+    {
+      "assertion": "Ein revisionsgebundener Livebeweis auf heim-pc zeigt Enforcement und Recovery mit harmlosen kontrollierten Fixtures; der Runner kann deaktiviert und der externe T004-Sidecar ohne Veränderung kanonischer Quellwahrheit weiter genutzt werden.",
+      "id": "live-proof-and-recovery"
+    },
+    {
+      "assertion": "Testergebnisse und Sandbox-Receipts begründen weder Codekorrektheit noch Review-, Merge-, Deployment- oder Produktionsfreigabe. RepoGround-Kern bleibt read-only gegenüber Patch-/Testausführung; MicroVM bleibt separater Eskalationspfad für stärkere Untrusted-Code-Stufen.",
+      "id": "authority-boundary"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    },
+    {
+      "amount": 1,
+      "isolation": "namespace",
+      "mode": "capacity",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "RBAW-V1-T004"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Aufgabe verändert RepoGround-Code und führt ressourcenintensive Sandbox- und Ausfalltests auf heim-pc aus. Vor jedem Livebeweis sind aktuelle Hostkapazität, cgroup-v2-/systemd-user-Fähigkeiten, fremde Prozesse, Leases, Cleanup-Grenzen und Recovery erneut zu prüfen. Sie gewährt keine Merge-, Deployment- oder Ausführungserlaubnis für fremden Code außerhalb der festgelegten Sandbox.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground",
+      "host:heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Den externen RepoGround Patch-Evaluation-Sidecar nach dem T004-Prototyp als kanonische Produktionsstufe auf systemd/cgroup v2 härten: aggregierte Ressourcenbudgets, unveränderliche Eingaben, minimale Schreibflächen, standardmäßig gesperrtes Netz, revisionsgebundene Receipts und eigentumssicheren Cleanup bereitstellen, ohne Patch-, Review- oder Mergeautorität in RepoGround-Kern zu verlagern.",
+  "id": "RBAW-V1-T006",
+  "initiative": "REPOBRIEF-AGENT-WORKBENCH-V1",
+  "metadata": {
+    "does_not_establish": [
+      "RBAW-V1-T004 completion",
+      "PR #1101 correctness or merge readiness",
+      "safe execution of arbitrary hostile code",
+      "kernel isolation from same-UID out-of-band activity",
+      "permission for network access",
+      "permission to alter foreign processes, units, worktrees or leases"
+    ],
+    "observed_implementation": {
+      "base": "24eee84dd845fcf5f3a4a82c9e42e64428e76d6d",
+      "head": "bc61f87b98170d20a2e098e031e588248a6087f8",
+      "pull_request": 1101,
+      "repository": "heimgewebe/repoground",
+      "state": "draft"
+    },
+    "registered_from": "github:heimgewebe/bureau#979",
+    "sequencing_note": "Der bereits offene Draft-PR ist Vorarbeit. Task-Registrierung begründet weder Dependency-Erfüllung noch Merge- oder Ausführungsautorität; T006 bleibt bis zum verifizierten T004-Abschluss geplant.",
+    "source_issue_sha256": "6c971838349eca4d922bd0b02ce1c4a2f5b15d412d1d56cc1d51ad5055382e19",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-355116f499c58e5d996eb2a9",
+      "event_id": 1148,
+      "event_created_at": "2026-07-25T02:41:13.482796Z",
+      "request_sha256": "ba375b40c7cccce40c099cd182f4d4fa47b2926f6117f49d420fb60324e5103f",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github_issue",
+        "locator": "github:heimgewebe/bureau#979",
+        "observed_at": "2026-07-25T02:41:13.473783Z",
+        "sha256": "6c971838349eca4d922bd0b02ce1c4a2f5b15d412d1d56cc1d51ad5055382e19"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 193
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "python",
+    "linux",
+    "systemd",
+    "cgroup-v2",
+    "sandboxing",
+    "security",
+    "runtime-observability",
+    "recovery",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Den cgroup-v2-Produktionsrunner deaktivieren, seine eigene Unit-/State- und Artefaktgeneration ownergebunden entfernen und auf den externen, nicht produktionsfreigegebenen T004-Sidecar zurückfallen; Registry-, Quell- und Evaluationshistorie bleiben erhalten."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Patch-Evaluation-Produktionssandbox mit aggregierten cgroup-v2-Budgets"
+}

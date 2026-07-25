@@ -3,7 +3,7 @@
   "id": "HEIMGEWEBE-RESILIENZ-V1-T012",
   "initiative": "HEIMGEWEBE-RESILIENZ-V1",
   "title": "Collect slow resilience variables",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 100
@@ -77,8 +77,68 @@
     "registered_at": "2026-07-18T01:28:00+02:00",
     "operator_obligation": "goo-heimgewebe-resilienz-v1-20260718",
     "does_not_establish": [
-      "implementation success before owner-repository evidence",
+      "hostile same-user parent-directory substitution resistance before the promoted follow-up",
+      "a global health score or automatic task authority",
+      "future snapshot usefulness without accumulated longitudinal source data",
       "authority outside the listed source systems"
+    ],
+    "verified_at": "2026-07-25T02:33:10Z",
+    "source_repository": "heimgewebe/infra",
+    "implementation_pr": {
+      "number": 135,
+      "head": "382402e604e0da02492be648e9df6e91119f186f",
+      "merge_commit": "e1245b502393edcdb42d0f20317c8a5a2c2defbe"
+    },
+    "outcome": "Ein source-bound Collector für sechs langsame Resilienzvariablen ist in Infra gemergt. Er bewahrt Quellenautorität, Beobachtungszeit, Abdeckung und Unsicherheit, rendert ohne Wahrheitsmutation und kann Chronik lokal idempotent über eine begrenzte JSONL-Outbox beliefern, ohne globalen Score oder automatische Task-Autorität.",
+    "validated_acceptance": {
+      "bounded-metrics": "PASS: Attention-Alter, Terminalprojektions-Lag, wiederkehrende Fehlersignaturen, Recovery-Proof-Alter, Wachstum temporärer Ressourcen und Abschlussdauer sind fest begrenzt implementiert und getestet.",
+      "source-binding": "PASS: Jeder Metrikdatensatz enthält authority, observed_at, coverage und uncertainty; fehlende oder ungültige Evidenz bleibt partial oder unverified statt interpoliert zu werden.",
+      "historical-axis": "PASS: Deterministische Snapshot-/Event-IDs, reine Darstellung und eine lokale, gesperrte, kollisionsprüfende und idempotente Chronik-JSONL-Outbox sind implementiert.",
+      "no-score": "PASS: Schema, Renderer und Tests schließen einen globalen Gesundheitswert sowie automatische Task-Erzeugung ausdrücklich aus."
+    },
+    "verification": {
+      "infra_base": "97785f2e5a9f8faced5f7a96fd92d947d867465d",
+      "implementation_head": "382402e604e0da02492be648e9df6e91119f186f",
+      "merge_commit": "e1245b502393edcdb42d0f20317c8a5a2c2defbe",
+      "github_validate_run": 30130766637,
+      "github_validate": "success",
+      "focused_tests": "19/19 passed",
+      "full_validation_receipt_sha256": "0381496ee1405122b9a3ba710e27cc9d6cd25cfebc85ee13ba08baa8d684ad73",
+      "review_verdict": "PASS",
+      "review_payload_sha256": "3ea183af2d51b3625564a47325abb282e0599309b1b417aec1b471e926911e3d",
+      "review_diff_sha256": "4606ef7e506ab015e092602e84d6032331889ffeb983bc3a39a78369a331676c",
+      "schema_snapshot_id": "sha256:10684306aaf86f620d39d56912db58a4d295e7aea1c870fac395dac2150f3294",
+      "post_merge_tree_matches_reviewed_head": true,
+      "bureau_runtime_identity": {
+        "source_commit": "2a534cf0017ddb0d48b2809ad7834cfa69bfc2ec",
+        "manifest_sha256": "fde807e754fc9ab0c0ba922c2644a3ddc3d74a5c368459ccccd535551083fa9c",
+        "registry_tree_sha256": "be0aac76fc84b7b974dc52b33a8e25cf9fe4a70b2fd9206f7f034cdcc81058f8",
+        "mutation_allowed": true,
+        "status": "compatible",
+        "observed_at": "2026-07-25T02:21:00Z",
+        "purpose": "historical diagnosis readback establishing that the immutable runtime and then-current canonical registry had converged at source commit 2a534cf",
+        "does_not_establish": [
+          "current registry identity for this later rebased closeout commit",
+          "runtime compatibility after subsequent Bureau main commits"
+        ]
+      },
+      "task_sha256": "0e8881a3dcd84f34316a1cb5563018e2cb3008387a5233b8f808fc1e73851525",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "remaining_followups": [
+      {
+        "candidate_id": "candidate-4f318d9a6fbc2a77e8c01453",
+        "event_id": 1146,
+        "scope": "directory-FD-bound path hardening for hostile same-user parent-directory substitution",
+        "bureau_assessment": "promote"
+      },
+      {
+        "candidate_id": "candidate-9c2fb3f7a49e1d068acb2574",
+        "event_id": 1147,
+        "scope": "The observed closeout blocker resolved to a stale clean local checkout after runtime and origin/main had already converged; no runtime-identity guard was bypassed.",
+        "bureau_assessment": "promote",
+        "closeout_disposition": "reassess-after-current-runtime-and-checkout-diagnosis"
+      }
     ]
   },
   "depends_on": [

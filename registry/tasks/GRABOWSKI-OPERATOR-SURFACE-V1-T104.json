@@ -1,0 +1,120 @@
+{
+  "acceptance": [
+    {
+      "assertion": "PR #461 ist gegen seinen exakten Head autoritativ gemergt und der fremde T015-Owner hat seine Repo-, Branch-, Checkout- und Review-Artefakt-Leases selbst freigegeben; weder Task noch Operator übernimmt, beendet, löscht oder forciert fremde Arbeit.",
+      "id": "dependency-boundary"
+    },
+    {
+      "assertion": "Der Remote-Branch feat/audit-signal-v1 wird vom belegten Head 681192b706d655b2df21ffc6636b3c1dae9f5dbf auf den nach PR #461 aktuellen Main revisionsgebunden umbasiert; die drei vorläufigen Generatoränderungen werden verworfen und aus dem kombinierten Stand frisch erzeugt.",
+      "id": "main-rebind"
+    },
+    {
+      "assertion": "audit-signal.v1 liefert exakt und in fester Reihenfolge uncertain_outcome, contract_contradiction, transition_gap, repeated_blockade und stale_attention mit Status, Schwere, Zählsemantik, begrenzten Evidenzreferenzen, Quellenbindung und ausdrücklichen Nichtaussagen; fehlende oder unvollständige Zusatzwahrheit ergibt indeterminate statt false clear.",
+      "id": "contract"
+    },
+    {
+      "assertion": "Fokussierte Tests, JSON-Schema-Validierung gegen eine reale Projektion, Ruff, Komplexitätsprüfung und make validate sind auf dem finalen Head grün; die MCP-Werkzeugzahl bleibt unverändert und der generierte Operator-Kontext ist aktuell.",
+      "id": "validation"
+    },
+    {
+      "assertion": "Der finale Diff ist gegen den aktuellen Main SHA-256-gebunden selbstreviewt; vor dem Merge erhält der Nutzer eine echte UTF-8-Unified-Diff-Datei zum Download.",
+      "id": "review-and-diff"
+    },
+    {
+      "assertion": "Der eigene PR ist gegen den geprüften Head CI-grün gemergt, die resultierende Main-Revision aus einem sauberen kanonischen Deploypfad ausgerollt und Grabowski meldet vollständige Integrität, übereinstimmenden Toolvertrag sowie eine live lesbare audit-signal.v1-Projektion.",
+      "id": "merge-deploy-live"
+    },
+    {
+      "assertion": "Eigene Branch-, Worktree-, Task- und Ressourcenleases werden erst nach Merge-, Deployment- und Live-Readback freigegeben; fremde Zustände bleiben unverändert.",
+      "id": "closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-INTEGRATION-LOOP-V1-T015"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "repo:/home/alex/repos/grabowski:branch:feat/audit-signal-v1",
+      "component:src/grabowski_audit_signal.py",
+      "component:src/grabowski_read_surface.py",
+      "component:contracts/audit-signal.v1.schema.json",
+      "component:docs/generated/operator-context.v1.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den auf origin/feat/audit-signal-v1 revisionsgebunden gesicherten audit-signal.v1-Kern nach autoritativem Merge und Lease-Closeout von heimgewebe/grabowski PR #461 auf den neuen Main umbasieren, die gemeinsam erzeugten Vertragsartefakte neu generieren, vollständig validieren, als eigenen PR mit Benutzer-Diff bereitstellen, mergen, deployen und live verifizieren, ohne den fremden T015-Branch, Checkout, Prozess oder Lease zu übernehmen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T104",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to merge PR #461",
+      "permission to release or modify the T015 owner's leases or checkout",
+      "merge readiness after Main changes",
+      "deployment authority before fresh final gates"
+    ],
+    "observed_evidence": {
+      "audit_signal_branch": "feat/audit-signal-v1",
+      "audit_signal_diff_sha256": "a1972cf1745f28527a5cfdba53ba230967560d5c8cb5e2448a521fcec9d3abe0",
+      "audit_signal_head": "681192b706d655b2df21ffc6636b3c1dae9f5dbf",
+      "audit_signal_remote_branch": "origin/feat/audit-signal-v1",
+      "base_main": "4f94a7bf3512ded4798644f2347b9e27e52e16e0",
+      "dependency_ci": "all checks green",
+      "dependency_head": "397a4429db349c213735317b7e9781da7a3379e1",
+      "dependency_pr": 461,
+      "dependency_self_review_receipt_sha256": "b4c9f8305d10a6adc40ec2bc60e39ae02aa78b58560a69871ede3d3632b3efea",
+      "dependency_self_review_verdict": "PASS",
+      "focused_tests": 40,
+      "full_validation_task_id": "acba448010dc46fb8c578982",
+      "full_validation_tests": 3476,
+      "nonconflict_merge_assessment": "denied: branch, paths, generated_artifacts, path_generated_cross",
+      "repository": "heimgewebe/grabowski"
+    },
+    "registered_at": "2026-07-25T18:45:00+02:00",
+    "source": "Live-Umsetzung der kanonischen audit-signal.v1-Projektion; Abschluss derzeit ausschließlich durch aktive T015-Repo-Lease und offenen Dependency-PR #461 blockiert.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-64091d9c1f22ada8bcddd565",
+      "event_id": 1175,
+      "event_created_at": "2026-07-25T16:51:47.852701Z",
+      "request_sha256": "12d99869b40545fefdbaf0f3f599a82640c11de8ffa59480bc72a715b6abad5d",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator-runtime-evidence",
+        "locator": "github:heimgewebe/grabowski@feat/audit-signal-v1#681192b706d655b2df21ffc6636b3c1dae9f5dbf",
+        "observed_at": "2026-07-25T18:46:00+02:00",
+        "sha256": "a1972cf1745f28527a5cfdba53ba230967560d5c8cb5e2448a521fcec9d3abe0"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "grabowski",
+    "github",
+    "python",
+    "repository",
+    "resource-leases",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Kanonische Audit-Signalprojektion nach T015 revisionsgebunden finalisieren"
+}

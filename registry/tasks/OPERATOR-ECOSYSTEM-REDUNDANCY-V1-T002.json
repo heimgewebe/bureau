@@ -57,7 +57,7 @@
   "metadata": {
     "registered_at": "2026-07-10T07:25:00+02:00",
     "source_audit": "heimgewebe/cabinet#103",
-    "blocking_condition": "T053 resolved the coding-agent probe failure and placed the single historical RepoGround-managed Grabowski source checkout under exact durable-retain protection. T002 remains blocked because its acceptance requires classification of every remaining candidate worktree and transient unit; live inventory still contains dirty, unclassified-clean, retained, active-attention and managed-lifecycle-drift entries that require individual external-truth reconciliation.",
+    "blocking_condition": "The failed transient-unit projection was empty in the 2026-07-25T17:50:08+02:00 readback after exact terminal-worker reconciliation. T002 remains blocked because the bound Grabowski inventory snapshot contains 90 linked checkouts, including dirty state, clean unarchived state, active retention, archived grace, managed lifecycle drift and active coordination. At that observation point, a foreign T015 whole-repository lease blocked all checkout archive and retention effects; it was not bypassed.",
     "progress_20260720": {
       "recorded_at": "2026-07-20T04:25:00Z",
       "grabowski_origin_main": "3631e2f04ad045ed02c598eb55b2f4bf4db19f0a",
@@ -144,6 +144,83 @@
         "permission to clean any other checkout",
         "classification of every remaining candidate",
         "absence of foreign active work"
+      ]
+    },
+    "progress_20260725_transient_hygiene": {
+      "recorded_at": "2026-07-25T17:50:08+02:00",
+      "inventory": {
+        "repository": "/home/alex/repos/grabowski",
+        "worktree_count": 90,
+        "generated_at_unix": 1784994514,
+        "inventory_sha256": "53f2250ebb91f6a769d14e1eb355a010823d9cf6b13d0442f7512eb36b802bf5"
+      },
+      "transient_unit_effect": {
+        "unit": "grabowski-browser-worker-0931139479d34d2da7bb.service",
+        "classification": "terminal-worker-residue",
+        "pre_effect": "failed result=timeout exec_main_status=15 transient unit",
+        "terminal_evidence": {
+          "worker_id": "0931139479d34d2da7bb",
+          "recorded_terminal_state": "stopped",
+          "profile_and_port_leases_remaining": [],
+          "preserved_instance_evidence": "/home/alex/.local/state/grabowski/workers/instances/0931139479d34d2da7bb"
+        },
+        "effect": "systemctl --user reset-failed for the exact unit only",
+        "post_effect": "systemctl --user --failed returned no units",
+        "failed_unit_count_before": 1,
+        "failed_unit_count_after": 0
+      },
+      "terminal_checkout_classification": [
+        {
+          "path": "/home/alex/repos/.grabowski-worktrees/t053-probe-scheduler-cutover-v1",
+          "head": "c937905b9f46813a65863c41bcbdd56a4ddfff4d",
+          "branch": "fix/grabowski-t053-probe-scheduler-cutover-v1",
+          "classification": "terminal-retain-pending-archive",
+          "external_truth": "heimgewebe/grabowski#455 squash product e957b940a40ff3f2d109e14d5cf72b709e5615fc; Bureau T053 verified"
+        },
+        {
+          "path": "/home/alex/repos/.grabowski-deploy-sources/t053-probe-scheduler-e957b940-v1",
+          "head": "e957b940a40ff3f2d109e14d5cf72b709e5615fc",
+          "branch": null,
+          "classification": "terminal-retain-pending-archive",
+          "external_truth": "exact deployed T053 product source; Bureau T053 verified"
+        },
+        {
+          "path": "/home/alex/repos/.repoground-sources/heimgewebe__grabowski__main",
+          "head": "300278d55b8602f58f7866e5cb4951fd6d853578",
+          "branch": null,
+          "classification": "external-durable-retain",
+          "external_truth": "RepoGround durable-retain decision from T053 overrides local age-based cleanup projection"
+        }
+      ],
+      "coordination_blocker": {
+        "resource_key": "repo:/home/alex/repos/grabowski",
+        "owner_id": "operator:t015-pickup-grips-20260725",
+        "expires_at_unix": 1784995842,
+        "archive_attempt": "blocked before effect: resources=1 tasks=0 processes=0",
+        "retain_attempt": "blocked before effect by the same foreign lease",
+        "bypass_used": false
+      },
+      "effects": {
+        "failed_markers_cleared": 1,
+        "checkouts_archived": 0,
+        "checkouts_removed": 0,
+        "branches_deleted": 0,
+        "foreign_leases_released": 0,
+        "dirty_states_mutated": 0
+      },
+      "remaining_blockers": [
+        "classify every one of the 90 live checkouts against external PR, task and receipt truth",
+        "review all dirty checkouts without reset or adoption",
+        "reconcile managed lifecycle drift before archive or cleanup",
+        "archive the two terminal T053 checkouts after the foreign whole-repository lease ends and fresh coordination remains empty",
+        "perform final aggregate checkout and transient-unit post-proof"
+      ],
+      "does_not_establish": [
+        "completion of T002",
+        "permission to remove any checkout",
+        "permission to bypass the T015 repository lease",
+        "safety of clean unarchived checkouts without external truth",
+        "absence of future transient-unit failures"
       ]
     }
   },

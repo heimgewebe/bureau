@@ -33,9 +33,12 @@
       "REPOGROUND-LEGACY-RECONCILIATION-V1-T011",
       "REPOGROUND-LEGACY-RECONCILIATION-V1-T012",
       "REPOGROUND-LEGACY-RECONCILIATION-V1-T013",
-      "REPOGROUND-LEGACY-RECONCILIATION-V1-T014"
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T014",
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T015"
     ],
     "t004_followups_registered_at": "2026-07-24T17:20:00+02:00",
-    "t004_followups_source": "review:heimgewebe/repoground#1096"
+    "t004_followups_source": "review:heimgewebe/repoground#1096",
+    "t009_verified_at": "2026-07-25T09:23:59+02:00",
+    "t009_merge_commit": "c91d640bce2b14c4a78a64e83169d56c818fa662"
   }
 }

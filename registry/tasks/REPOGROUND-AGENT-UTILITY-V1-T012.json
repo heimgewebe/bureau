@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "metadata": {
+    "parent_task": "REPOGROUND-AGENT-UTILITY-V1-T009",
+    "registered_from_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T009",
+    "registered_at": "2026-07-25T09:23:59+02:00",
+    "residue_path": "/home/alex/repos/.repoground-sources/heimgewebe__grabowski__main/build",
+    "current_classification": "unknown",
+    "current_policy": "fail-closed; untouched",
+    "does_not_establish": [
+      "the residue is stale",
+      "publisher ownership",
+      "permission to delete, reset, quarantine or adopt the residue",
+      "absence of future process or lease references"
+    ]
+  },
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T012",
+  "title": "Unbekannten Grabowski-Buildrest eigentümergebunden entscheiden",
+  "priority": {
+    "lane": "later",
+    "rank": 63
+  },
+  "goal": "Für den historischen unbekannten Buildrest im verwalteten Grabowski-Quellcheckout eine belastbare Eigentums- und Provenienzentscheidung herstellen und daraus entweder einen sicheren Quarantänepfad oder eine ausdrücklich begründete Retention ableiten.",
+  "required_capabilities": [
+    "repoground",
+    "grabowski",
+    "filesystem-forensics",
+    "resource-leases"
+  ],
+  "acceptance": [
+    {
+      "id": "immutable-snapshot",
+      "assertion": "Pfad, Inode, Tree-Hash, Eintragszahl, Repository, Ref und beobachteter Zustand werden erneut no-follow und revisionsgebunden aufgenommen."
+    },
+    {
+      "id": "owner-provenance",
+      "assertion": "Publisher-Receipts, Worktree-Historie und mögliche Erzeuger liefern einen belegten Owner oder die Unauflösbarkeit wird ausdrücklich dokumentiert."
+    },
+    {
+      "id": "live-safety",
+      "assertion": "Prozesse, Tasks, exakte und übergeordnete Leases sowie fremde Claims werden unmittelbar vor jeder Entscheidung geprüft."
+    },
+    {
+      "id": "bounded-disposition",
+      "assertion": "Nur bei belegter veralteter Publisher-Eigentümerschaft darf atomar quarantänisiert werden; andernfalls bleibt der Rest unverändert und erhält einen klaren Retention-Owner."
+    },
+    {
+      "id": "publisher-readback",
+      "assertion": "Ein kontrollierter Grabowski-Publisher-Lauf bestätigt erfolgreiche Verarbeitung oder denselben präzisen fail-closed Blocker ohne Nebenwirkung."
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T009"
+  ]
+}

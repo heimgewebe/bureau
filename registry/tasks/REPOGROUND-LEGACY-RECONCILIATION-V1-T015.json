@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "metadata": {
+    "parent_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T009",
+    "registered_at": "2026-07-25T09:23:59+02:00",
+    "source": "T009 closeout live readback",
+    "checkout_path": "/home/alex/repos/.repoground-worktrees/legacy-reconciliation-t009-report-renderer-v1",
+    "observed_local_head": "2353537c922385606c60a98b1d68ab6bf6ce7a53",
+    "merged_remote_head": "da1cda9976147dfc019423a600b1a87ba532ce3f",
+    "merge_commit": "c91d640bce2b14c4a78a64e83169d56c818fa662",
+    "divergence_reason": "local history merged 108c8e4 while the remote PR merged the later current-main lineage 2afc2836; the checkout was intentionally not reset or deleted",
+    "does_not_establish": [
+      "the checkout is disposable",
+      "permission to reset, delete or force-release the checkout",
+      "absence of processes, tasks, leases or unique unpushed commits at future cleanup time"
+    ]
+  },
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T015",
+  "title": "Historischen divergenten T009-Checkout sicher reconciliieren",
+  "priority": {
+    "lane": "later",
+    "rank": 12
+  },
+  "goal": "Den nach dem T009-Merge bewusst erhaltenen divergenten Checkout revisionsgebunden archivieren, auf einzigartige Inhalte und aktive Eigentümer prüfen und nur über den kanonischen Cleanup-Vertrag entfernen oder begründet behalten.",
+  "required_capabilities": [
+    "git",
+    "github",
+    "grabowski",
+    "filesystem-safety"
+  ],
+  "acceptance": [
+    {
+      "id": "divergence-inventory",
+      "assertion": "Lokaler Head, Remote-Head, Merge-Commit, Tree-Differenz und alle nur lokal erreichbaren Commits werden erneut vollständig gebunden."
+    },
+    {
+      "id": "ownership-safety",
+      "assertion": "Keine aktiven Prozesse, Tasks, Leases, Retention-Owner oder fremden Ressourcenclaims referenzieren den Checkout."
+    },
+    {
+      "id": "archive-and-grace",
+      "assertion": "Vor Entfernung existieren Manifest, Recovery-Ref und die vorgeschriebene Archiv-Grace; der aktive Runtime- und Publisher-Toolstand sind ausgeschlossen."
+    },
+    {
+      "id": "bounded-cleanup",
+      "assertion": "Ein Grabowski-Cleanup-Dry-Run wird geprüft und nur der exakte historische Pfad wird gegebenenfalls entfernt; kein Branch oder Worktree wird force-resettet."
+    },
+    {
+      "id": "final-readback",
+      "assertion": "Worktree-Inventar, Pfad, Recovery-Ref, Prozesse, Tasks und Leases werden nach dem Ergebnis erneut autoritativ gelesen."
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-LEGACY-RECONCILIATION-V1-T009"
+  ]
+}

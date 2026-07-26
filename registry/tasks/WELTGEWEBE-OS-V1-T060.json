@@ -36,6 +36,11 @@
       "isolation": "worktree",
       "mode": "write",
       "resource": "repo.weltgewebe"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "host.heim-pc"
     }
   ],
   "depends_on": [

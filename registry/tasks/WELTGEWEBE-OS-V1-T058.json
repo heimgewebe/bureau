@@ -2,23 +2,28 @@
   "acceptance": [
     {
       "assertion": "Alle Testdateien über 1.000 Zeilen sind mit enthaltenen Fachszenarien, Fixtures, Laufzeit, Parallelisierbarkeit und Produktionsbezug inventarisiert.",
-      "id": "scenario-inventory"
+      "id": "scenario-inventory",
+      "evidence_type": "object"
     },
     {
       "assertion": "api_auth.rs und weitere Testmonolithen sind nach fachlichen Szenariofamilien zerlegt; jede Familie kann separat ausgeführt und einem Produktionsmodul zugeordnet werden.",
-      "id": "domain-split"
+      "id": "domain-split",
+      "evidence_type": "object"
     },
     {
       "assertion": "Gemeinsame Fixtures enthalten nur wirklich gemeinsame Einrichtung; versteckte globale Zustände und überbreite Allzweck-Builder werden entfernt oder explizit begründet.",
-      "id": "fixture-boundaries"
+      "id": "fixture-boundaries",
+      "evidence_type": "object"
     },
     {
       "assertion": "Vorher/Nachher-Vergleich belegt mindestens gleiche positive, negative und Fehlerfallabdeckung; Testreihenfolge beeinflusst das Ergebnis nicht.",
-      "id": "coverage-parity"
+      "id": "coverage-parity",
+      "evidence_type": "object"
     },
     {
       "assertion": "Zeit bis zum relevanten Teiltest und Fehlerlokalisierung verbessern sich messbar; Gesamt-CI-Zeit und Flakiness regressieren nicht.",
-      "id": "diagnostic-speed"
+      "id": "diagnostic-speed",
+      "evidence_type": "object"
     }
   ],
   "claims": [

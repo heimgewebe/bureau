@@ -1,0 +1,127 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Auf einem exakten aktuellen Weltgewebe- und Hoststand wird zunächst neu belegt, ob WebKit an libavif13, einem veralteten Playwright-Browserpaket, einer Systembibliothek oder einer anderen Ursache scheitert; das Self-Review-Artefakt von PR #1582 gilt nicht allein als aktuelle Ursache.",
+      "id": "fresh-blocker-reproduction",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Der gewählte Prüfpfad bindet Playwright-Version, WebKit-Browserrevision und erforderliche Laufzeitbibliotheken reproduzierbar. Installation auf dem Host, Container oder CI-Image werden nach Wartbarkeit, Supply-Chain-Risiko, Speicherbedarf, Ausführungszeit und Rückbau bewertet.",
+      "id": "hermetic-runtime-contract",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Die Prüfung erkennt fehlende oder inkompatible Bibliotheken vor dem Testlauf mit verständlichem Fehler; sie lädt keine ungebundenen Fremdartefakte nach und hängt nicht von zufälligem Hostzustand ab.",
+      "id": "no-hidden-host-drift",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Mindestens die Kontextpanel- und Seitensystemfälle aus PR #1582 laufen unter WebKit erfolgreich, einschließlich Telefonhochformat, Telefonquerformat, primärem und fremdem Pointer, Tastatur, Fokus, Kompakt- und Vollansicht sowie Entwurfserhalt.",
+      "id": "representative-webkit-proof",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Lokaler Operatorpfad und GitHub-Prüfpfad verwenden denselben Browser- und Abhängigkeitsvertrag oder weisen begründet aus, welche Unterschiede verbleiben; ein künstlich fehlendes Laufzeitmerkmal lässt den Preflight deterministisch scheitern.",
+      "id": "ci-and-local-parity",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Vor Merge liegen vollständiger Diff, exakte Head- und Diffbindung, Installations- oder Imagebelege, WebKit- und Chromium-Gegenprobe, unabhängiger Review, grüne Pflichtchecks und ein dokumentierter Rückbaupfad vor.",
+      "id": "proof-and-release",
+      "evidence_type": "object"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T022"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die dauerhafte Nutzerregel verlangt, alle sinnvollen nicht unmittelbar behobenen PR-Befunde als Bureau-Folgetask zu registrieren. Die Registrierung autorisiert keine unmittelbare Paket-, Host-, CI- oder Produktionsmutation; jede Lösung bleibt an erneute Reproduktion, Kostenfreiheit, Recovery, Review und grüne Prüfungen gebunden.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die für Weltgewebe derzeit nicht verlässlich ausführbare WebKit-Playwright-Spur reproduzierbar und wartbar wiederherstellen, sodass browserabhängige Layout-, Pointer-, Tastatur- und Accessibility-Regressionspfade nicht allein durch Chromium abgedeckt werden.",
+  "id": "WELTGEWEBE-OS-V1-T060",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-7939227fd221702df68461c7",
+    "deduplication": "Bureau-Assessment: promote; keine exakte Dublette oder relevante Ähnlichkeit. Der Chromium-Lauf von PR #1582 war mit 18/18 Fällen grün, die WebKit-Spur bleibt eine separate Umgebungs- und Abdeckungslücke.",
+    "does_not_establish": [
+      "automatic package installation",
+      "automatic implementation",
+      "task readiness",
+      "queue truth",
+      "claim or dispatch authority",
+      "current libavif13 root cause",
+      "cross-browser equivalence"
+    ],
+    "event_id": 1215,
+    "registered_at": "2026-07-26",
+    "renumber_reason": "T050 war früher durch den revisionsgebundenen Audit-PR #1040 reserviert. Der spätere, inhaltlich andere PR #1045 kollidierte fail-closed und wird durch T060 verlustfrei ersetzt.",
+    "renumbered_from": "WELTGEWEBE-OS-V1-T050",
+    "source": "operator_followup_from_weltgewebe_pr_1582",
+    "source_diff_sha256": "1d39b66eb6b2e4c48424194a5648f1dc23e9c526329142ffede2d7125a09b8bd",
+    "source_head": "352b410fc151521957ac389f750674d5631dc97b",
+    "source_pr": "heimgewebe/weltgewebe#1582",
+    "supersedes_conflicting_pr": "heimgewebe/bureau#1045",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-7939227fd221702df68461c7",
+      "event_id": 1215,
+      "event_created_at": "2026-07-26T08:40:18.332822Z",
+      "request_sha256": "088ff29c2995eadd4f05c50d8f593637e910f58367af83a6ce02457cf0dedc30",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "pull-request-review",
+        "locator": "github:heimgewebe/weltgewebe#1582@352b410fc151521957ac389f750674d5631dc97b",
+        "observed_at": "2026-07-26T08:30:00Z",
+        "sha256": "1d39b66eb6b2e4c48424194a5648f1dc23e9c526329142ffede2d7125a09b8bd"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 50
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "playwright",
+    "webkit",
+    "javascript",
+    "browser-e2e",
+    "linux",
+    "containers",
+    "ci",
+    "supply-chain",
+    "recovery",
+    "bureau",
+    "grabowski"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "note": "Vor Lösungswahl müssen Hostdistribution, Playwright-Konfiguration, Browsercache, CI-Images, Paketquellen, Speicher- und Sicherheitsgrenzen live geprüft werden. RepoGround ist nur für Repositorypfade ergänzend.",
+    "skip_reason": "live_first_primary",
+    "task_profile": "repo_change"
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Hermetische WebKit-Browserprüfung wiederherstellen"
+}

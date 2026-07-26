@@ -1,88 +1,122 @@
 {
   "acceptance": [
     {
-      "assertion": "With otherwise healthy local checks, repeatedly stale control-plane poll evidence yields an unhealthy probe whose reason is control-plane-poll-stale; unavailable, missing or timestamp-invalid poll evidence alone remains indeterminate.",
+      "assertion": "PR #482 base, reviewed head, squash merge commit, merge tree, changed-file set and full diff digest are exact and mutually consistent.",
+      "id": "exact-merge-identity"
+    },
+    {
+      "assertion": "Repeatedly stale control-plane poll evidence is classified unhealthy, while unavailable, missing or timestamp-invalid poll evidence alone remains indeterminate.",
       "id": "classification-contract"
     },
     {
-      "assertion": "Concrete local health or readiness failures remain unhealthy and are never masked by control-plane metric uncertainty or stale-poll classification.",
+      "assertion": "Concrete local health or readiness failures remain unhealthy and are not masked by control-plane metric uncertainty.",
       "id": "local-failure-precedence"
     },
     {
-      "assertion": "The stale classification feeds exactly the existing failure threshold, restart budget, backoff, jitter and recovery-probe decision path; no new restart subsystem, timer, mutation authority or unbounded retry loop is added.",
+      "assertion": "Stale-poll failure uses the existing threshold, restart budget, backoff, jitter and recovery-probe path; no second restart subsystem or authority was added.",
       "id": "bounded-existing-restart-path"
     },
     {
-      "assertion": "Focused tests cover stale, unavailable, missing, invalid-timestamp and concrete local-failure combinations, including threshold behavior and preservation of the existing restart budget.",
-      "id": "focused-regressions"
+      "assertion": "Focused tests, the full 3,530-test validation, access-policy checks, tool-surface checks, runtime-lock checks and required GitHub CI pass.",
+      "id": "tests-and-ci"
     },
     {
-      "assertion": "The exact implementation revision passes full validation on supported Python versions, required focused tests, exact diff-bound self-review, required GitHub CI and all review findings are resolved or explicitly superseded before merge.",
-      "id": "repository-gates"
+      "assertion": "An exact diff- and tree-bound independent operator review reports PASS with no findings and records the process deviation explicitly.",
+      "id": "independent-review"
     },
     {
-      "assertion": "Publish an exact Grabowski pull-request handoff containing repository, pull request, base and head SHAs, full diff SHA-256, immutable user-visible diff artifact, exact-head self-review, required independent review, required CI and unresolved-thread readback. The handoff is evidence for T058 and is not merge authority.",
-      "id": "reviewed-handoff"
+      "assertion": "The merge commit is an ancestor of the observed main revision and the two relevant source files remain unchanged through that revision.",
+      "id": "main-containment"
     },
     {
-      "assertion": "T057 performs no merge, rebase, deployment, service restart, timer replacement, host mutation, controlled stale-poll injection, connector snapshot refresh or live Grabowski runtime claim. Merge requires dependent exclusive task T058; runtime effects require T059 with runtime_mutation and break_glass authority.",
-      "id": "no-merge-rebase-runtime-effects"
+      "assertion": "This verification does not claim deployment, live stale-poll proof, pre-merge review compliance, exclusive merge-task compliance or future connector availability.",
+      "id": "no-runtime-claim"
     }
   ],
   "claims": [
     {
-      "isolation": "worktree",
-      "mode": "write",
+      "isolation": "none",
+      "mode": "read",
       "resource": "repo.grabowski"
     }
   ],
   "depends_on": [],
   "execution": {
-    "approval": {
-      "action_class": "repository_mutation",
-      "note": "GitHub issue #477 authorizes the bounded repository correction. Codex P1 on superseded Bureau PR #1058 requires all deployment, service restart and live host verification to remain outside this task and under dependent runtime task T059.",
-      "required_level": "operator"
-    },
     "grabowski_resources": [
       "repo:/home/alex/repos/grabowski"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/grabowski"
+    "working_repository": "/home/alex/.local/state/grabowski/audits/pr482-stale-poll-d77/repo"
   },
-  "goal": "Treat repeatedly stale control-plane poll evidence as an unhealthy tunnel condition that enters Grabowski's existing bounded restart decision path, while unavailable, missing or timestamp-invalid poll evidence remains indeterminate and concrete local health or readiness failures retain precedence. Implement, test and publish an exact reviewed pull-request handoff only; guarded merge belongs to T058 and runtime deployment and live proof belong to T059.",
+  "goal": "Reconcile and independently verify the already merged Grabowski stale-control-plane-poll hardening from PR #482, including exact source identity, classification semantics, existing restart-path preservation, tests, CI, main containment and the visible process deviation, without claiming deployment or retroactive merge-process compliance.",
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T057",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "metadata": {
+    "completion": {
+      "outcome": "The stale-poll classification patch is correct, bounded, tested and present in main. Its earlier merge-process deviation remains visible and is not retroactively normalized.",
+      "schema_version": 1,
+      "status": "verified_existing_merge_with_process_deviation"
+    },
     "does_not_establish": [
-      "implementation completion",
-      "reviewed handoff completion",
-      "merge readiness",
-      "merge authority",
-      "rebase authority",
       "deployment completion",
-      "runtime head update",
-      "service restart authority",
-      "live stale-poll exercise authority",
+      "live stale-poll proof",
+      "pre-merge review compliance",
+      "exclusive merge-task compliance",
+      "break-glass approval",
       "future connector availability",
       "authority to interrupt foreign work or release foreign leases"
     ],
-    "followup_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T058",
+    "followup_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T059",
     "github_issue": {
+      "closed_by_pull_request": 482,
       "number": 477,
-      "observed_at": "2026-07-26T16:06:40Z",
+      "originally_observed_at": "2026-07-26T16:06:40Z",
       "repository": "heimgewebe/grabowski",
       "source_sha256": "79cb5ba2a7a430515ce5d5a1193c81458f43b482ecf4969414a58b001cd8cbf6",
-      "state": "OPEN",
+      "state": "CLOSED",
       "url": "https://github.com/heimgewebe/grabowski/issues/477"
     },
-    "merge_deploy_review_correction": {
-      "candidate_id": "candidate-a5371750dcd416da91b2fab9",
-      "event_id": 1238,
-      "finding": "Implementation, merge and deployment require three separate authority phases; deployment must pin the exact merge revision rather than a later containing main head.",
-      "reviewed_head_sha": "39ab6ad5359b7305823d353c3187b7f5f2251041",
-      "reviewed_pull_request": 1060,
-      "source_sha256": "8b095691bd9d93067434b0d5c16b4233c21df7957e52045e9c29dea6fa05dd14"
+    "implementation": {
+      "base_sha": "d9f4efec53787af16fa5bf0d2a4f1db600895572",
+      "changed_files": [
+        "tests/test_component_watchdog.py",
+        "tools/component_watchdog.py"
+      ],
+      "ci": {
+        "checks": [
+          "validate (3.10)",
+          "validate (3.12)",
+          "CodeQL",
+          "Analyze (actions)",
+          "Analyze (python)"
+        ],
+        "state": "green"
+      },
+      "full_diff_sha256": "e7bf434787cf78774864676d9402a93969fd8728648ef746774311c0faa0bd6c",
+      "merge_commit_sha": "d77ccc7fc9b5ae9e21644eb8f5f1faf962bcf441",
+      "merge_method": "squash",
+      "merge_tree_sha": "c02dd03ab3a7757b67ba395a17d956553332e494",
+      "merged_at": "2026-07-26T17:39:41Z",
+      "pull_request": 482,
+      "repository": "heimgewebe/grabowski",
+      "reviewed_head_sha": "2f3f6f94e235e7cfadac386cd3708be80d005815"
+    },
+    "independent_review": {
+      "focused_tests": "PASS",
+      "full_test_count": 3530,
+      "full_validate": "PASS",
+      "kind": "post-merge-independent-operator-review",
+      "lifecycle_receipt_sha256": "682772ef013c404dc7d9577c1d7262c440ecf6a6dd7d38e73c892f09cbdececc",
+      "observed_main_sha": "991a545e4c3c8f09bad09a4c6389dff85dfdf903",
+      "receipt_path": "/home/alex/.local/state/grabowski/audits/pr482-stale-poll-d77/review-receipt.json",
+      "receipt_sha256": "d2ae5d4436803e1c9de106c4457ee681ecfaacdbc4b3fbe484bba22147a2942b",
+      "relevant_files_unchanged_through_observed_main": true,
+      "review_conclusion": "PASS",
+      "review_findings": [],
+      "skipped_test_count": 7,
+      "squash_tree_matches_reviewed_head": true,
+      "task_id": "a9dfbb0268c5472a870af8c3"
     },
     "operator_intake": {
       "candidate_id": "candidate-c497d377398039d80fe81818",
@@ -104,24 +138,96 @@
         "sha256": "79cb5ba2a7a430515ce5d5a1193c81458f43b482ecf4969414a58b001cd8cbf6"
       }
     },
-    "registered_from": "candidate-c497d377398039d80fe81818 event 1229",
-    "relation_to_timer_fix": {
-      "merge_sha": "689b830b712b723d6e05271a77aa360eae925744",
-      "pull_request": 478,
-      "scope": "Independent calendar scheduling fix already installed and verified on the host; not modified or redeployed by T057."
+    "process_deviation": {
+      "description": "Grabowski PR #482 was squash-merged before Bureau T057/T058 became canonical and without a pull-request review submission. The independent post-merge operator review proves code and test correctness but does not retroactively establish pre-merge review or exclusive merge-task compliance.",
+      "present": true
     },
-    "review_correction": {
+    "production_evidence": [
+      {
+        "head_sha": "2f3f6f94e235e7cfadac386cd3708be80d005815",
+        "kind": "pull_request",
+        "merge_commit_sha": "d77ccc7fc9b5ae9e21644eb8f5f1faf962bcf441",
+        "source_ref": "heimgewebe/grabowski#482"
+      },
+      {
+        "kind": "post_merge_review_receipt",
+        "path": "/home/alex/.local/state/grabowski/audits/pr482-stale-poll-d77/review-receipt.json",
+        "sha256": "d2ae5d4436803e1c9de106c4457ee681ecfaacdbc4b3fbe484bba22147a2942b"
+      },
+      {
+        "kind": "grabowski_task_lifecycle_receipt",
+        "sha256": "682772ef013c404dc7d9577c1d7262c440ecf6a6dd7d38e73c892f09cbdececc",
+        "task_id": "a9dfbb0268c5472a870af8c3"
+      }
+    ],
+    "registered_from": "candidate-c497d377398039d80fe81818 event 1229; corrected by candidate-31c71f5c5df6e9d2a14c73eb event 1237",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "github",
+          "head_sha": "2f3f6f94e235e7cfadac386cd3708be80d005815",
+          "kind": "pull_request",
+          "merge_commit_sha": "d77ccc7fc9b5ae9e21644eb8f5f1faf962bcf441",
+          "source_ref": "heimgewebe/grabowski#482",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T057"
+        },
+        {
+          "authority": "grabowski-host-evidence",
+          "evidence_sha256": [
+            "d2ae5d4436803e1c9de106c4457ee681ecfaacdbc4b3fbe484bba22147a2942b",
+            "682772ef013c404dc7d9577c1d7262c440ecf6a6dd7d38e73c892f09cbdececc"
+          ],
+          "kind": "post_merge_review",
+          "source_ref": "/home/alex/.local/state/grabowski/audits/pr482-stale-poll-d77/review-receipt.json",
+          "state": "pass_with_process_deviation",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T057"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "review_correction_intake": {
       "candidate_id": "candidate-31c71f5c5df6e9d2a14c73eb",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-26T16:43:46.657106Z",
       "event_id": 1237,
-      "finding": "Repository implementation and live runtime deployment require separate tasks and approval classes.",
-      "source_sha256": "55c497535ffd44d374d9fe27984be30f1fcce550805974e16728c72b261529f8",
-      "superseded_head_sha": "5d4b785be9aada6a2f70eaa8ec920932fa3eb8ea",
-      "superseded_pull_request": 1058
+      "request_sha256": "5388c489b17d0499601c5cfa3784c5d1d50483bb9bb4932bfc1c831be6cb48de",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github-pr-review",
+        "locator": "https://github.com/heimgewebe/bureau/pull/1058#discussion_r3652915153",
+        "observed_at": "2026-07-26T16:43:07Z",
+        "sha256": "55c497535ffd44d374d9fe27984be30f1fcce550805974e16728c72b261529f8"
+      }
     },
-    "runtime_followup_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T059"
+    "verification": {
+      "lifecycle_receipt_sha256": "682772ef013c404dc7d9577c1d7262c440ecf6a6dd7d38e73c892f09cbdececc",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "review_receipt_sha256": "d2ae5d4436803e1c9de106c4457ee681ecfaacdbc4b3fbe484bba22147a2942b",
+      "review_task_id": "a9dfbb0268c5472a870af8c3",
+      "task_file_generated_at": "2026-07-26T18:28:51.676918Z",
+      "task_sha256": "f2ac26b594c707bbc3af263687ce70f86f3beced8a1355e45590f74d4bec08ed"
+    },
+    "verified_acceptance": {
+      "bounded-existing-restart-path": "The implementation changes only classification membership. The focused threshold test proves observe, observe, restart at the unchanged threshold of three.",
+      "classification-contract": "Source inspection and focused tests prove stale is outside the indeterminate-only set; missing, unavailable and invalid timestamp evidence remain inside it.",
+      "exact-merge-identity": "Squash merge d77ccc7 has tree c02dd03, identical to reviewed head 2f3f6f94; base-to-head binary diff SHA-256 is e7bf4347 and contains exactly two files.",
+      "independent-review": "Review receipt d2ae5d44 is bound to base, head, merge tree and full diff; verdict PASS, zero findings, with the process deviation preserved.",
+      "local-failure-precedence": "The existing reasons list is evaluated before the indeterminate return; concrete local failure reasons therefore remain unhealthy.",
+      "main-containment": "Merge d77ccc7 is an ancestor of observed main 991a545e; tools/component_watchdog.py and tests/test_component_watchdog.py are byte-equivalent across that interval.",
+      "no-runtime-claim": "The review receipt explicitly excludes deployment, runtime update, pre-merge review compliance, exclusive merge-task compliance and break-glass authority.",
+      "tests-and-ci": "Independent audit ran make validate: 3,530 tests PASS, 7 optional skips, all repository validation gates PASS; PR #482 CI was green on its exact head."
+    },
+    "verified_at": "2026-07-26T18:28:51.676918Z"
   },
   "priority": {
-    "lane": "now",
+    "lane": "later",
     "rank": 23
   },
   "required_capabilities": [
@@ -129,15 +235,13 @@
     "git",
     "github",
     "python",
-    "shell",
-    "systemd",
     "testing",
     "grabowski"
   ],
   "rollback": {
-    "strategy": "Discard or revert only the exact T057 implementation branch and pull-request head while keeping Grabowski main and the deployed runtime unchanged. Any rollback after T058 has merged requires a separate exclusive repository rollback task bound to the T058-recorded merge commit; deployment rollback belongs to T059."
+    "strategy": "No runtime or repository mutation was performed by this verification task. If its evidence is disproved, revert only this Bureau verification record and reopen review; any code revert requires a separate exclusive repository rollback task."
   },
   "schema_version": 1,
-  "state": "ready",
-  "title": "Harden stale control-plane poll classification"
+  "state": "verified",
+  "title": "Verify merged stale control-plane poll hardening"
 }

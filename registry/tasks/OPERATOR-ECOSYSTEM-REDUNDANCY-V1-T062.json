@@ -4,7 +4,7 @@
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Leitstand-Lifecycle-Consumer deployen und live verifizieren",
   "state": "blocked",
-  "goal": "Deploye nach verifiziertem T061-Merge den exakten Leitstand-main-Commit über den kanonischen Releaseadapter und belege per Runtime-, HTTP- und Browser-Readback, dass Lifecycle, technische Freshness und Runtime-Gesundheit getrennt dargestellt werden.",
+  "goal": "Deploye nach verifiziertem T063-Merge den exakten Leitstand-main-Commit über den kanonischen Releaseadapter und belege per Runtime-, HTTP- und Browser-Readback, dass Lifecycle, technische Freshness und Runtime-Gesundheit getrennt dargestellt werden.",
   "priority": {
     "lane": "next",
     "rank": 85
@@ -36,12 +36,12 @@
     "grabowski"
   ],
   "depends_on": [
-    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061"
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T063"
   ],
   "acceptance": [
     {
       "id": "exact-merge-input",
-      "assertion": "The deployment input is the exact verified T061 merge commit on current main."
+      "assertion": "The deployment input is the exact verified T063 merge commit on current main."
     },
     {
       "id": "canonical-release-path",
@@ -62,7 +62,7 @@
   ],
   "metadata": {
     "does_not_establish": [
-      "T061_verification",
+      "T061_or_T063_verification",
       "deployment_readiness",
       "future_runtime_health",
       "permission_to_mutate_unrelated_services"

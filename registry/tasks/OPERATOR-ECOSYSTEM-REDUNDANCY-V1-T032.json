@@ -4,7 +4,7 @@
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Heimserver-Retirement terminal abschließen",
   "state": "blocked",
-  "goal": "Verifiziere nach den getrennten Ausführungstasks T060, T061 und T062 den terminalen Heimserver-Retirement-Zustand: kein aktiver Fleet-, Host-, Rollen-, Expositions- oder Ausführungspfad; Heimserver-Repository und Systemkatalog historisch korrekt gebunden; Leitstand-Lifecycle-Consumer produktiv, ohne Retirement als aktuellen Gesundheitsfehler darzustellen.",
+  "goal": "Verifiziere nach den getrennten Ausführungstasks T060, T061, T063 und T062 den terminalen Heimserver-Retirement-Zustand: kein aktiver Fleet-, Host-, Rollen-, Expositions- oder Ausführungspfad; Heimserver-Repository und Systemkatalog historisch korrekt gebunden; Leitstand-Lifecycle-Consumer produktiv, ohne Retirement als aktuellen Gesundheitsfehler darzustellen.",
   "priority": {
     "lane": "next",
     "rank": 82
@@ -57,6 +57,7 @@
     "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020",
     "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T060",
     "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T063",
     "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T062"
   ],
   "acceptance": [
@@ -66,7 +67,7 @@
     },
     {
       "id": "separate-effects-verified",
-      "assertion": "T060, T061 and T062 are each verified with their own exclusive resources, frozen revisions, review evidence and receipts before T032 performs closeout."
+      "assertion": "T060, T061, T063 und T062 sind jeweils mit eigenen exklusiven oder lesenden Ressourcen, eingefrorenen Revisionen, Review-Evidenz und Receipts verifiziert, bevor T032 den Closeout ausführt."
     },
     {
       "id": "infra-and-fleet-converged",
@@ -125,6 +126,7 @@
     "split_execution_tasks": [
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T060",
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
+      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T063",
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T062"
     ]
   }

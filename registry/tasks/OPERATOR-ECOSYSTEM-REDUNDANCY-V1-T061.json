@@ -2,9 +2,9 @@
   "schema_version": 1,
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
-  "title": "Leitstand-Lifecycle-Consumer implementieren und mergen",
+  "title": "Leitstand-Lifecycle-Consumer implementieren und als PR veröffentlichen",
   "state": "ready",
-  "goal": "Implementiere und merge einen read-only Leitstand-Consumer für die stabilen Systemkatalog-Lifecycle-Zustände. Trenne deklarierte Semantik, Artefakt-Freshness und Runtime-Gesundheit sichtbar und fail-closed; Retirement darf nicht als aktueller Dienstfehler erscheinen. Diese Aufgabe deployt nicht.",
+  "goal": "Implementiere in einem eigenen sauberen Worktree einen read-only Leitstand-Consumer für die stabilen Systemkatalog-Lifecycle-Zustände, prüfe ihn vollständig und veröffentliche einen revisionsgebundenen PR. Trenne deklarierte Semantik, Artefakt-Freshness und Runtime-Gesundheit sichtbar und fail-closed; Retirement darf nicht als aktueller Dienstfehler erscheinen. Diese Aufgabe mergt und deployt nicht.",
   "priority": {
     "lane": "next",
     "rank": 84
@@ -54,18 +54,20 @@
       "assertion": "Users can inspect and filter lifecycle states while all routes remain read-only and source links remain commit-bound."
     },
     {
-      "id": "review-ci-diff-merge",
-      "assertion": "Focused and full checks, independent review, canonical diff delivery and exact-head merge each pass with separate receipts."
+      "id": "review-ci-pr-published",
+      "assertion": "Focused and full local checks pass; an exact-head PR with independent review and complete canonical diff evidence is published for T063."
     },
     {
-      "id": "no-deployment",
-      "assertion": "T061 performs no runtime deployment or production cutover."
+      "id": "no-merge-or-deployment",
+      "assertion": "T061 performs neither PR merge nor runtime deployment or production cutover."
     }
   ],
   "metadata": {
     "implementation_owner": "operator:leitstand-lifecycle-consumer-v2-20260726",
     "base_sha": "a85c14d0df83da61c68e43fe814a19d483f3f6f2",
     "does_not_establish": [
+      "merge_readiness",
+      "merge_authority",
       "deployment_readiness",
       "deployment_authority",
       "runtime_health",

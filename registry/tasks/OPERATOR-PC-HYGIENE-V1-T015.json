@@ -1,0 +1,168 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor jeder Welle werden `main`, PR-/CI-Zustand, Home-Inventar, Backup-/Recovery-Gate, laufende Tasks, Prozesse, Worktrees und Leases frisch gelesen. Ausgangspunkt ist nur der belegte Zustand nach PR #62, nicht eine historische Zusammenfassung.",
+      "id": "fresh-baseline"
+    },
+    {
+      "assertion": "`~/diffs` und `~/logs` werden erst nach vollständiger Baum- und Prozessbeobachtung behandelt. Nichtleere Ziele werden ohne Überschreiben kollisionssicher zusammengeführt; der `logs/restic-backup/latest.log`-Symlink wird explizit erhalten, ersetzt oder ausgeschlossen. Quellen verschwinden nur nach Zielidentitäts-Readback und einem reversiblen Receipt.",
+      "id": "legacy-root-consolidation"
+    },
+    {
+      "assertion": "Alle 105 ungeklärten sichtbaren Home-Einstiege werden metadatengebunden als behalten, kanonisch migrieren, reversibel quarantänisieren, secret-geschützt oder Eigentümerentscheidung klassifiziert. Secret-nahe Verzeichnisse und Dateien werden nicht inhaltlich offengelegt. Neue automatische Regeln entstehen ausschließlich als getestete Policy-/Codeänderung in einem reviewten PR.",
+      "id": "unknown-home-classification"
+    },
+    {
+      "assertion": "Kein unbekannter Eintrag, Symlink, aktiver Arbeitsbaum, Repository, Mount, Secret-Pfad oder nicht belegtes Nutzerartefakt wird aufgrund von Name, Alter oder vermuteter Nutzlosigkeit verschoben oder gelöscht.",
+      "id": "no-unknown-loss"
+    },
+    {
+      "assertion": "Managed-Cargo-Bereinigung verwendet ausschließlich vollständige Grabowski-Task-Evidenz, aktuelle Nutzungsreceipts, mindestens 604800 Sekunden Unbenutztheit, vollständige Prozessbeobachtung und den kanonischen GC-Plan. Pro Welle gelten unverändert höchstens acht Kandidaten und 21474836480 Bytes. Die zwei nicht kanonisch benannten Cachepfade werden vor jeder Wirkung entweder in einen exakten Identitätsvertrag überführt oder ausdrücklich behalten.",
+      "id": "cargo-retention-waves"
+    },
+    {
+      "assertion": "Sobald Kandidaten zulässig sind, konvergiert der verwaltete Cargo-Bestand in receiptgebundenen Wellen zunächst unter 53687091200 Bytes und anschließend, soweit ohne Schutzabsenkung möglich, zum Ziel von 32212254720 Bytes. Eine Verkürzung der Sieben-Tage-Retention oder globale Cache-Prune-Befehle sind ausgeschlossen.",
+      "id": "cargo-convergence"
+    },
+    {
+      "assertion": "Der archivierte Worktree `/home/alex/repos/.heim-pc-worktrees/home-hygiene-v1` wird erst nach Ablauf der Archivschutzfrist über `grabowski_checkout_cleanup` mit Dry-run, exaktem Archive-ID-/Head-/Branch-Readback und erhaltenen Recovery-Refs entfernt; der Branch wird nicht implizit gelöscht.",
+      "id": "worktree-cleanup"
+    },
+    {
+      "assertion": "Der Abschluss belegt sauberes `heim-pc/main`, aktive Home-Hygiene- und Core-Retention-Timer, weiterhin korrekte Kernel-Core-Werte, aktuelle Restic-/Restore-Evidenz, neue Home- und Cargo-Inventare sowie alle Migrations-, Quarantäne-, GC- und Worktree-Receipts.",
+      "id": "final-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.heim-pc"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die reviewte Repositoryänderung autorisiert keine Hostwirkung. Jede Datei- oder Cachewirkung benötigt zusätzlich frische Backup-/Recovery-Evidenz, einen exakten hashgebundenen Plan, aktuelle Prozess-/Task-/Lease-Prüfung und einen Receipt-Readback. Unbekannte oder secret-nahe Pfade bleiben ohne eigenen Vertrag unangetastet.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "host:heim-pc",
+      "repo:/home/alex/repos/heim-pc",
+      "path:/home/alex/diffs",
+      "path:/home/alex/logs",
+      "path:/home/alex/artifacts/diffs",
+      "path:/home/alex/artifacts/logs",
+      "path:/home/alex/.cache/heim-pc/managed-builds/cargo",
+      "path:/home/alex/repos/.heim-pc-worktrees/home-hygiene-v1"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc"
+  },
+  "goal": "Die nach PR #62 verbleibenden Home-Hygiene-Restpunkte ohne Schutzabsenkung abschließen: die blockierten Legacy-Wurzeln `diffs` und `logs` kollisions- und symlinksicher konsolidieren, 105 ungeklärte Home-Einstiege klassifizieren und nur über reviewte Policy-Erweiterungen behandeln, den Managed-Cargo-Speicher nach Ablauf der bestehenden Sieben-Tage-Retention in begrenzten Wellen konvergieren sowie den archivierten PR-Worktree nach der kanonischen Schutzfrist entfernen.",
+  "id": "OPERATOR-PC-HYGIENE-V1-T015",
+  "initiative": "OPERATOR-PC-HYGIENE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to move or delete an unknown Home entry",
+      "permission to expose secret-file contents",
+      "permission to shorten Cargo retention",
+      "permission to delete non-identity Cargo paths",
+      "permission to bypass archive grace",
+      "permission to delete the feature branch",
+      "automatic merge or deployment authority"
+    ],
+    "evidence": {
+      "alias_receipt": {
+        "file_sha256": "ce5264f04086588b4818f24c66d07c25eebe07d5fb12de73b7a6799f21a550d5",
+        "path": "/home/alex/.local/state/heim-pc/home-hygiene/alias-receipts/1785070568880309666-b721a242bf992895.json"
+      },
+      "cargo": {
+        "evidence_file_sha256": "97bce51c066c3ee766f8f1a5297ac436aeb4712a298467b249460ed53da7ed86",
+        "evidence_path": "/home/alex/.local/state/heim-pc/managed-builds/evidence/1785071000-task-store.json",
+        "managed_bytes": 71681433600,
+        "plan_path": "/home/alex/.local/state/heim-pc/managed-builds/gc-plans/1785071400.json",
+        "plan_sha256": "8a1d8ba07dc8f2593dbf8eaed695b242cc37963c971b1a69e23a242d81938f2d",
+        "reason": "all present identities are younger than minimum_unused_seconds=604800",
+        "required_reclaim_bytes": 39469178880,
+        "safe_to_apply": false
+      },
+      "merge_commit": "446dcef499147970ca3bc7abc1d95f551be8d279",
+      "post_inventory": {
+        "inventory_sha256": "32feccd3aade30638248be01fad784f894c736923b8d221448205950d5430388",
+        "legacy_alias_count": 2,
+        "loose_candidate_count": 0,
+        "path": "/home/alex/.local/state/heim-pc/home-hygiene/latest-inventory.json",
+        "unknown_count": 105,
+        "visible_top_level_count": 122
+      },
+      "pre_mutation_backup": {
+        "restore_sentinel": "PASS",
+        "snapshot_id": "3c590f155efc085c56bc7bfd8f5b0a605b57da05126672dd0eb3c2456447b68d",
+        "success_marker_sha256": "e9aa491d07592677d636e30895123dfaecbb583b70c5831328ef8db796b9d5cb"
+      },
+      "quarantine_receipt": {
+        "file_sha256": "8dbf35061e37b637cd59a48cabe99f56a8ee1d6e44c64f4e0ec4ff20be368e1f",
+        "moved_bytes": 2894463129,
+        "moved_count": 79,
+        "path": "/home/alex/.local/state/heim-pc/home-hygiene/quarantine-receipts/1785070721907663258-87062829b7fe49ad.json"
+      },
+      "root_plan_receipt": {
+        "path": "/home/alex/.local/state/heim-pc/home-hygiene/root-plan-receipts/1785070065-446dcef499147970.json",
+        "sha256": "134b07751e20bf2e2d824e8a62f81d7b183f83a5f75025c0c858dce3740ca370"
+      },
+      "worktree_archive": {
+        "archive_id": "20260726T131358Z-906db835e6d1",
+        "branch": "feat/home-hygiene-v1",
+        "created_at_unix": 1785071638,
+        "head": "1292d1f7c147353394a4c6e2c7a37d45a45bf1ef"
+      }
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-5648325a8a7ebf1f5f3e2c15",
+      "event_id": 1223,
+      "event_created_at": "2026-07-26T13:23:50.506151Z",
+      "request_sha256": "a3332b5be04691e60de50920db078320328c3baac4f83508efa8f1fd76debf8a",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "diagnostic-evidence",
+        "locator": "/home/alex/.local/state/heim-pc/home-hygiene/latest-inventory.json",
+        "observed_at": "2026-07-26T13:23:50.495387Z",
+        "sha256": "b679899ac4a611583576c08049a475d78cd7b7b3f9bcdc33103ac03f8888f861"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-07-26T15:15:00+02:00",
+    "source": "Live-Abschluss von heimgewebe/heim-pc PR #62 und anschließende receiptgebundene Hostumsetzung"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 15
+  },
+  "required_capabilities": [
+    "linux",
+    "filesystem",
+    "systemd",
+    "restic",
+    "grabowski",
+    "repository",
+    "testing",
+    "storage-lifecycle"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Home-Hygiene-Restkonvergenz receiptgebunden abschließen"
+}

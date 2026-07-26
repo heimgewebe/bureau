@@ -1,0 +1,98 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Remote and privileged effects are exposed only through named versioned action schemas with exact host, target, scope, timeout, recovery and evidence bindings.",
+      "id": "typed-remote-actions"
+    },
+    {
+      "assertion": "An operator-bound PTY session supports bounded input, redacted output, liveness, cancellation, expiry and immutable closeout receipts without treating pane state as authority.",
+      "id": "interactive-session"
+    },
+    {
+      "assertion": "A rootless execution cell provides explicit filesystem, network, process, resource and secret boundaries and fails closed when the requested isolation cannot be established.",
+      "id": "rootless-cell"
+    },
+    {
+      "assertion": "Every executor reuses Captain authority gates, typed leases, blast-radius policy, kill switch and recovery contracts rather than creating a parallel authorization path.",
+      "id": "authority-and-kill-switch"
+    },
+    {
+      "assertion": "The public action surface cannot dispatch caller-composed shell strings or silently widen a declared target into general host access.",
+      "id": "no-arbitrary-shell"
+    },
+    {
+      "assertion": "Adversarial tests and live no-cost pilots cover transport loss, privilege denial, PTY disconnect, sandbox escape attempts, timeout, cancellation, replay and unclear outcomes.",
+      "id": "verification"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T016",
+    "GRIP-ROADMAP-V1-T023"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Implement only typed bounded executors. Preserve explicit authority, privacy, cost, recovery and kill-switch gates.",
+      "required_level": "reviewed_plan"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Extend the Captain executor registry with typed remote and privileged operations, an operator-bound interactive session broker, and a rootless execution cell while keeping arbitrary shell, hidden privilege escalation and unbounded host access outside the contract.",
+  "id": "GRIP-ROADMAP-V1-T024",
+  "initiative": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "reason": "These three capabilities share one executor, authority, lease, recovery and audit boundary and should be delivered as one vertical slice rather than separate subsystems.",
+    "source_candidate": "candidate-768825407c8cc6d2c0a82817",
+    "source_event_id": 1168,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-f8e4ec6e28747b94feb9d57b",
+      "event_id": 1185,
+      "event_created_at": "2026-07-26T05:36:57.938507Z",
+      "request_sha256": "870c0cda9ba92ae6314d465a1d226cdfc599919f8539278e5986819db8c6dd69",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-analysis",
+        "locator": "chatgpt-project-thread:grabowski:2026-07-26-typed-execution-followup",
+        "observed_at": "2026-07-26T07:36:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 24
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "systemd",
+    "ssh",
+    "pty",
+    "sandbox"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Add typed remote interactive execution cells"
+}

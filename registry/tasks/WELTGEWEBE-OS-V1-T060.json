@@ -2,27 +2,33 @@
   "acceptance": [
     {
       "assertion": "Auf einem exakten aktuellen Weltgewebe- und Hoststand wird zunächst neu belegt, ob WebKit an libavif13, einem veralteten Playwright-Browserpaket, einer Systembibliothek oder einer anderen Ursache scheitert; das Self-Review-Artefakt von PR #1582 gilt nicht allein als aktuelle Ursache.",
-      "id": "fresh-blocker-reproduction"
+      "id": "fresh-blocker-reproduction",
+      "evidence_type": "object"
     },
     {
       "assertion": "Der gewählte Prüfpfad bindet Playwright-Version, WebKit-Browserrevision und erforderliche Laufzeitbibliotheken reproduzierbar. Installation auf dem Host, Container oder CI-Image werden nach Wartbarkeit, Supply-Chain-Risiko, Speicherbedarf, Ausführungszeit und Rückbau bewertet.",
-      "id": "hermetic-runtime-contract"
+      "id": "hermetic-runtime-contract",
+      "evidence_type": "object"
     },
     {
       "assertion": "Die Prüfung erkennt fehlende oder inkompatible Bibliotheken vor dem Testlauf mit verständlichem Fehler; sie lädt keine ungebundenen Fremdartefakte nach und hängt nicht von zufälligem Hostzustand ab.",
-      "id": "no-hidden-host-drift"
+      "id": "no-hidden-host-drift",
+      "evidence_type": "object"
     },
     {
       "assertion": "Mindestens die Kontextpanel- und Seitensystemfälle aus PR #1582 laufen unter WebKit erfolgreich, einschließlich Telefonhochformat, Telefonquerformat, primärem und fremdem Pointer, Tastatur, Fokus, Kompakt- und Vollansicht sowie Entwurfserhalt.",
-      "id": "representative-webkit-proof"
+      "id": "representative-webkit-proof",
+      "evidence_type": "object"
     },
     {
       "assertion": "Lokaler Operatorpfad und GitHub-Prüfpfad verwenden denselben Browser- und Abhängigkeitsvertrag oder weisen begründet aus, welche Unterschiede verbleiben; ein künstlich fehlendes Laufzeitmerkmal lässt den Preflight deterministisch scheitern.",
-      "id": "ci-and-local-parity"
+      "id": "ci-and-local-parity",
+      "evidence_type": "object"
     },
     {
       "assertion": "Vor Merge liegen vollständiger Diff, exakte Head- und Diffbindung, Installations- oder Imagebelege, WebKit- und Chromium-Gegenprobe, unabhängiger Review, grüne Pflichtchecks und ein dokumentierter Rückbaupfad vor.",
-      "id": "proof-and-release"
+      "id": "proof-and-release",
+      "evidence_type": "object"
     }
   ],
   "claims": [

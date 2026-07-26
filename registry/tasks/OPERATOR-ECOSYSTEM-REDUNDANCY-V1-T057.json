@@ -135,7 +135,7 @@
     "grabowski"
   ],
   "rollback": {
-    "strategy": "Discard or revert only the exact T057 implementation branch and pull-request head while keeping Grabowski main and the deployed runtime unchanged. Merge rollback belongs to T058; deployment rollback belongs to T059."
+    "strategy": "Discard or revert only the exact T057 implementation branch and pull-request head while keeping Grabowski main and the deployed runtime unchanged. Any rollback after T058 has merged requires a separate exclusive repository rollback task bound to the T058-recorded merge commit; deployment rollback belongs to T059."
   },
   "schema_version": 1,
   "state": "ready",

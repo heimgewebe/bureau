@@ -503,6 +503,79 @@ def test_candidate_request_refines_current_event_and_inherits_identity(
     )
 
 
+def test_candidate_request_rejects_refinement_task_rebinding(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    task_ids = sorted(registry.tasks)
+    assert len(task_ids) >= 2
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:task-bound-candidate",
+        title="Task-bound candidate",
+        source_kind="conversation",
+        desired_outcome="Preserve one exact task binding",
+        repo="repo.alpha",
+        task_id=task_ids[0],
+    )
+
+    with pytest.raises(OperatorIntakeError, match="task cannot change") as caught:
+        candidate_record_request(
+            registry,
+            store,
+            {
+                "schema_version": 1,
+                "idempotency_key": "source:task-rebinding-attempt",
+                "title": "Invalid task rebinding",
+                "source_kind": "conversation",
+                "desired_outcome": "Attempt to replace the predecessor task",
+                "task_id": task_ids[1],
+                "supersedes_event_id": first["event_id"],
+            },
+        )
+
+    assert caught.value.code == "candidate-record-invalid"
+    assert caught.value.effect_started is False
+    assert len(operator_intake_module.candidate_records(store)) == 1
+
+
+def test_candidate_request_strictly_revalidates_inherited_deferred_bindings(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:deferred-missing-repo",
+        title="Deferred candidate",
+        source_kind="conversation",
+        desired_outcome="Record before the repository is catalogued",
+        repo="repo.missing",
+        catalog_validation="deferred",
+    )
+
+    with pytest.raises(OperatorIntakeError, match="unknown live register repo") as caught:
+        candidate_record_request(
+            registry,
+            store,
+            {
+                "schema_version": 1,
+                "idempotency_key": "source:strict-refinement",
+                "title": "Strict refinement",
+                "source_kind": "conversation",
+                "desired_outcome": "Revalidate inherited bindings",
+                "supersedes_event_id": first["event_id"],
+            },
+        )
+
+    assert caught.value.code == "candidate-record-invalid"
+    assert caught.value.effect_started is False
+    assert len(operator_intake_module.candidate_records(store)) == 1
+
+
 @pytest.mark.parametrize("value", [True, False, 0, -1, "1", 1.0])
 def test_candidate_request_rejects_invalid_supersedes_event_id(
     registry_factory, tmp_path, value

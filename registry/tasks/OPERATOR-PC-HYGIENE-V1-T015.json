@@ -25,7 +25,7 @@
       "id": "cargo-convergence"
     },
     {
-      "assertion": "Der archivierte Worktree `/home/alex/repos/.heim-pc-worktrees/home-hygiene-v1` wird erst nach Ablauf der Archivschutzfrist über `grabowski_checkout_cleanup` mit Dry-run, exaktem Archive-ID-/Head-/Branch-Readback und erhaltenen Recovery-Refs entfernt; der Branch wird nicht implizit gelöscht.",
+      "assertion": "Der archivierte Worktree `/home/alex/repos/.heim-pc-worktrees/home-hygiene-v1` wird erst nach Ablauf der Archivschutzfrist über `grabowski_checkout_cleanup` entfernt. Unmittelbar vor Dry-run und Wirkung müssen der aktuelle Lifecycle als terminal, der Checkout als sauber, der archivierte Head als Vorfahr des aktuellen `main` sowie die Abwesenheit laufender Tasks, Prozesse und Leases für Checkout und Branch frisch belegt sein. Archive-ID, Head, Branch und Recovery-Refs werden exakt zurückgelesen; der Branch wird nicht implizit gelöscht.",
       "id": "worktree-cleanup"
     },
     {
@@ -126,11 +126,16 @@
       }
     },
     "operator_intake": {
-      "schema_version": 1,
       "candidate_id": "candidate-5648325a8a7ebf1f5f3e2c15",
-      "event_id": 1223,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
       "event_created_at": "2026-07-26T13:23:50.506151Z",
+      "event_id": 1223,
       "request_sha256": "a3332b5be04691e60de50920db078320328c3baac4f83508efa8f1fd76debf8a",
+      "schema_version": 1,
       "source": {
         "does_not_establish": [],
         "freshness": "digest-bound",
@@ -138,12 +143,7 @@
         "locator": "/home/alex/.local/state/heim-pc/home-hygiene/latest-inventory.json",
         "observed_at": "2026-07-26T13:23:50.495387Z",
         "sha256": "b679899ac4a611583576c08049a475d78cd7b7b3f9bcdc33103ac03f8888f861"
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
+      }
     },
     "registered_at": "2026-07-26T15:15:00+02:00",
     "source": "Live-Abschluss von heimgewebe/heim-pc PR #62 und anschließende receiptgebundene Hostumsetzung"

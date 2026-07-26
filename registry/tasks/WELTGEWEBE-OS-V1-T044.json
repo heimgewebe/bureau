@@ -110,16 +110,6 @@
       "request_sha256": "6fe7332bcf7a4f05de280833c4ba5d8c37a617d20dbd044e41b0d55303245fcc",
       "supersedes_event_id": 1206,
       "source": {
-        "does_not_establish": [
-          "source_content_identity"
-        ],
-        "freshness": "unknown",
-        "kind": "operator_audit_finding",
-        "locator": null,
-        "observed_at": "2026-07-26T16:31:13.859485Z",
-        "sha256": null
-      },
-      "audit_source": {
         "does_not_establish": [],
         "freshness": "digest-bound",
         "kind": "operator_audit_finding",

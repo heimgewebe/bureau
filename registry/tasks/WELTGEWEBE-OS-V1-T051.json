@@ -1,0 +1,97 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Alle relevanten Zustände und Übergänge für Auswahl, URL, Panel, Suche, Laden, Fehler und Wiederherstellung sind explizit typisiert; unmögliche Kombinationen sind nicht darstellbar oder fail-closed.",
+      "id": "state-model"
+    },
+    {
+      "assertion": "Die Svelte-Route setzt überwiegend Komponenten zusammen; Controller, URL-Synchronisierung und MapLibre-Adapter sind getrennt und einzeln testbar.",
+      "id": "separated-adapters"
+    },
+    {
+      "assertion": "Mobile und Desktop verwenden dieselbe fachliche Zustandsmaschine; Unterschiede bleiben auf Darstellung und Interaktion beschränkt.",
+      "id": "one-mobile-desktop-truth"
+    },
+    {
+      "assertion": "Browser-E2E deckt Direktlinks, Zurück/Vor, Knotenwechsel, Suchwechsel, Fehler/Retry, Pointer, Touch und Tastatur sowie Panelzustände ab.",
+      "id": "interaction-proof"
+    },
+    {
+      "assertion": "Der Umbau erhöht weder Startgröße noch Zeit bis zur benutzbaren Karte oder Interaktionslatenz außerhalb des kanonischen T048-Budgets.",
+      "id": "performance-bound"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T048"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer am 26. Juli 2026 autorisierte Auditremediation. Der Umbau muss inkrementell erfolgen und Desktop, Mobil, Tastatur, Pointer sowie URL-Navigation gleichrangig prüfen.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Auswahl, URL, Panel, Suche, Laden und Fehler der Kartenansicht in einem expliziten fachlichen Zustandsmodell bündeln. Route, Controller und MapLibre-Adapter werden getrennt; mobile und Desktop verwenden dieselbe Zustandswahrheit statt paralleler Sonderlogik.",
+  "id": "WELTGEWEBE-OS-V1-T051",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-4b8a2fd71fb5663115625a98",
+    "event_id": 1208,
+    "recommended_sequence": "Nach T048; mit T050 koordinieren, aber als eigener fachlicher PR-Pfad.",
+    "source_artifact": "weltgewebe-audit-findings-2026-07-26.json",
+    "source_audit": "Weltgewebe-Komplettaudit 2026-07-26",
+    "source_commit": "b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+    "source_finding": "F-009",
+    "source_sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-4b8a2fd71fb5663115625a98",
+      "event_id": 1208,
+      "event_created_at": "2026-07-26T08:09:42.603977Z",
+      "request_sha256": "1f45323ffdf72a4b03a62ecd1e63a3fac5caf5505fe775d566468f20633c253b",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator_audit_finding",
+        "locator": "chatgpt-audit:weltgewebe-komplettaudit-2026-07-26#F-009@b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+        "observed_at": "2026-07-26T08:09:42.594066Z",
+        "sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "typescript",
+    "svelte",
+    "maplibre",
+    "accessibility",
+    "browser-e2e",
+    "state-machine",
+    "performance",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Kartenorchestrierung in einen expliziten Zustandsautomaten überführen"
+}

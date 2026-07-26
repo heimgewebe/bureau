@@ -15,12 +15,23 @@
     "working_repository": "/home/alex/repos/leitstand",
     "grabowski_resources": [
       "repo:/home/alex/repos/leitstand",
+      "repo:/home/alex/repos/systemkatalog",
       "host:heim-pc"
-    ]
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Authorizes only the exact T063 merge commit to be deployed through scripts/leitstand-release.py after fresh conflict, rollback and source-identity checks. Systemkatalog remains read-only and foreign work must not be interrupted or overridden."
+    }
   },
   "claims": [
     {
       "resource": "repo.leitstand",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.systemkatalog",
       "mode": "read",
       "isolation": "none"
     },
@@ -33,7 +44,8 @@
   "required_capabilities": [
     "repository",
     "shell",
-    "grabowski"
+    "grabowski",
+    "runtime"
   ],
   "depends_on": [
     "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T063"

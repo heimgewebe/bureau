@@ -1,0 +1,93 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein versioniertes Schema verlangt mindestens status, coverage, source_revision, generated_at, sources, limitations und does_not_establish; unbekannte oder fehlende Pflichtfelder scheitern fail-closed.",
+      "id": "report-contract"
+    },
+    {
+      "assertion": "Ein Bericht mit unvollständiger, heuristischer, veralteter oder fehlgeschlagener Prüfung kann nicht den Gesamtstatus pass, healthy oder keine wesentliche Drift ausgeben.",
+      "id": "no-false-pass"
+    },
+    {
+      "assertion": "Jeder neu erzeugte Bericht ist an einen exakten Git-Head und reproduzierbare Eingabequellen oder deren Digests gebunden.",
+      "id": "revision-binding"
+    },
+    {
+      "assertion": "Alle aktiven generierten Prüfberichte sind inventarisiert und entweder auf den Vertrag migriert, ausdrücklich deprecated oder als nicht entscheidungsrelevant markiert.",
+      "id": "migration"
+    },
+    {
+      "assertion": "Gezielte Tests zeigen, dass fehlende Abdeckung, falsche Revision, beschädigte Quellen und heuristische Teilprüfungen positive Ergebnisse zuverlässig verhindern.",
+      "id": "negative-tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer am 26. Juli 2026 autorisierte Auditremediation. Der Vertrag muss fail-closed sein und bestehende Reportgeneratoren schrittweise migrieren, ohne historische Belege umzuschreiben.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Für alle generierten Prüfberichte einen einheitlichen maschinenlesbaren Wahrheitsvertrag einführen. Jeder Bericht nennt exakte Revision, Quellen, Abdeckung, Begrenzungen und Nicht-Aussagen; unvollständige oder heuristische Prüfungen dürfen kein positives Gesamtergebnis erzeugen.",
+  "id": "WELTGEWEBE-OS-V1-T052",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-526792c471af8e84edc8537f",
+    "event_id": 1210,
+    "recommended_sequence": "Vor der breiten Konsolidierung der Dokumentations- und Nachweisflächen aus F-004.",
+    "source_artifact": "weltgewebe-audit-findings-2026-07-26.json",
+    "source_audit": "Weltgewebe-Komplettaudit 2026-07-26",
+    "source_commit": "b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+    "source_finding": "F-011",
+    "source_sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-526792c471af8e84edc8537f",
+      "event_id": 1210,
+      "event_created_at": "2026-07-26T08:11:47.247525Z",
+      "request_sha256": "422fb8c94f5a9492f71d67dc506393cc3628b589dba3429a98daefdf6b727383",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator_audit_finding",
+        "locator": "chatgpt-audit:weltgewebe-komplettaudit-2026-07-26#F-011@b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+        "observed_at": "2026-07-26T08:11:47.237146Z",
+        "sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "python",
+    "json-schema",
+    "documentation",
+    "audit",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Abdeckung, Revision und Unsicherheit für Prüfberichte verpflichtend machen"
+}

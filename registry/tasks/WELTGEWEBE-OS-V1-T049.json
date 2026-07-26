@@ -1,0 +1,95 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Kartenzugriffe laden nur den sichtbaren Bounding-Box-/Zoom-Ausschnitt mit hartem Ergebnislimit und deterministischer Pagination oder Kachelung.",
+      "id": "bounded-map-query"
+    },
+    {
+      "assertion": "Listen verwenden Cursor; Nachbarschaftsabfragen besitzen dokumentierte Tiefen- und Mengenlimits. Kein normaler Request setzt eine vollständige Graphkopie voraus.",
+      "id": "bounded-list-neighborhood"
+    },
+    {
+      "assertion": "Projektionswechsel lösen keinen vollständigen Accounts-/Knoten-/Kantenreload in jeder API-Replik aus; Invalidierung und Konsistenz sind explizit und fail-closed.",
+      "id": "no-global-reload"
+    },
+    {
+      "assertion": "Revisionsgebundene Tests messen Speicher, CPU, p95/p99 und Fehlerrate mindestens für 20.000, 100.000 und 1.000.000 Knoten; Kosten wachsen mit dem angeforderten Ausschnitt statt mit dem Gesamtbestand.",
+      "id": "scale-proof"
+    },
+    {
+      "assertion": "Ein stufenweiser Aktivierungs- und Rollbackvertrag erhält API-Semantik, Sichtbarkeit und Recovery; relevante Rust-, PostgreSQL- und E2E-Prüfungen sind grün.",
+      "id": "migration-rollback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T048"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer am 26. Juli 2026 als Teil der vollständigen Auditremediation ausdrücklich autorisiert. Erst nach T048-Messgrundlage umsetzen; fremde Dirty-States und parallele PRs bleiben unverändert.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die vollständigen Accounts-, Knoten- und Kantenkopien aus normalen API-Prozessen entfernen. Karten-, Listen- und Nachbarschaftszugriffe werden datenbankseitig begrenzt; Projektionsversionen invalidieren gezielt, statt globale O(N)-Reloads auszulösen.",
+  "id": "WELTGEWEBE-OS-V1-T049",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-ad8c3f801080de252cce1f11",
+    "deduplication": "Bureau-Live-Assessment: promote, keine exakte Dublette.",
+    "event_id": 1200,
+    "source_artifact": "weltgewebe-audit-findings-2026-07-26.json",
+    "source_audit": "Weltgewebe-Komplettaudit 2026-07-26",
+    "source_commit": "b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+    "source_finding": "F-001",
+    "source_sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-ad8c3f801080de252cce1f11",
+      "event_id": 1200,
+      "event_created_at": "2026-07-26T08:04:57.536186Z",
+      "request_sha256": "645bcf2ea706e219023b39dcafc8769cb62b79f37d24e4bf13b57926eb7d6962",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator_audit_finding",
+        "locator": "chatgpt-audit:weltgewebe-komplettaudit-2026-07-26#F-001@b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+        "observed_at": "2026-07-26T08:04:57.525142Z",
+        "sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "rust",
+    "postgresql",
+    "performance",
+    "observability",
+    "architecture-review",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Vollständige API-Prozessprojektion durch begrenzte Abfragen ersetzen"
+}

@@ -2,22 +2,27 @@
   "acceptance": [
     {
       "assertion": "Alle aktiven Workflows sind nach Triggern, Rechten, Laufzeit, Cache, Artefakten, Prüfziel und überlappenden Schritten revisionsgebunden inventarisiert.",
+      "evidence_type": "object",
       "id": "workflow-inventory"
     },
     {
       "assertion": "Gemeinsame Setup-, Build-, Test-, Beweis- und Publikationslogik liegt in wiederverwendbaren Workflows oder geprüften Skripten; Aufrufworkflows bleiben dünn.",
+      "evidence_type": "object",
       "id": "reusable-families"
     },
     {
       "assertion": "Für jede entfernte oder zusammengeführte Prüfung ist automatisiert nachgewiesen, dass positive und negative Fälle weiterhin mindestens gleich streng erkannt werden.",
+      "evidence_type": "object",
       "id": "evidence-parity"
     },
     {
       "assertion": "Aktive Workflowzahl, duplizierte Zeilen und mittlere CI-Laufzeit sinken deutlich; verbleibende Abweichungen sind mit Verbraucher- oder Sicherheitsgrund begründet.",
+      "evidence_type": "object",
       "id": "reduction-and-speed"
     },
     {
       "assertion": "Ein maschinenlesbarer Vertrag verhindert neue eigenständige Workflowduplikate ohne dokumentierte Ausnahme und Eigentümer.",
+      "evidence_type": "object",
       "id": "governance"
     }
   ],

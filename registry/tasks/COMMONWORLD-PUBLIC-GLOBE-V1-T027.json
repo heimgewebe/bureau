@@ -1,0 +1,112 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The catalog manifest declares immutable generation-specific detail descriptors, and each selected identity resolves only through the currently accepted manifest generation rather than an ambient or mutable path.",
+      "id": "generation-bound-detail-contract"
+    },
+    {
+      "assertion": "Every detail load is same-origin, document-root-contained and verified against manifest-declared byte length and SHA-256 before parsing; schema, identity, generation and path mismatches fail closed without replacing visible bootstrap data.",
+      "id": "detail-integrity-boundary"
+    },
+    {
+      "assertion": "Selection generations prevent stale responses from updating a newer identity, failed promises are evicted for retry, and shard and detail caches have explicit bounded capacity with deterministic eviction behavior covered by tests.",
+      "id": "async-isolation-and-cache-bounds"
+    },
+    {
+      "assertion": "Loading, ready, degraded, mismatch and retry states are visible and accessible without focus loss or duplicate announcements; network, integrity and schema failures preserve a usable compatible bootstrap view.",
+      "id": "explicit-product-states"
+    },
+    {
+      "assertion": "German and English presentation, direct links, browser history navigation and no-JavaScript output preserve the same canonical identity semantics and do not expose stale detail from a previous selection.",
+      "id": "surface-parity"
+    },
+    {
+      "assertion": "Contracts define measurable gates for bootstrap removal, including catalog and detail parity, supported-browser behavior, offline and failure fallback, performance budget, rollback artifact and production readback; passing the shadow path alone does not satisfy cutover.",
+      "id": "cutover-gates"
+    },
+    {
+      "assertion": "Unit, contract, generated-surface and public browser tests pass on the exact reviewed head, including representative desktop, mobile and iPad emulation, 4x CPU evidence, retry and stale-response fault injection, and a separately identified physical-device proof requirement.",
+      "id": "exact-head-validation"
+    },
+    {
+      "assertion": "Closeout binds the complete diff and exact head to review evidence, green required CI, merge commit, deployed generation and public production readback, and explicitly distinguishes browser emulation from physical-device evidence.",
+      "id": "closeout-bound"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T019"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The implementation changes Commonworld runtime, generated shells, contracts and browser evidence. Keep the build-bound bootstrap as the visible fallback until every cutover gate is independently proven; do not infer permission to remove it from successful shadow reads.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Extend the verified selected-shard shadow path into a generation-bound, integrity-checked detail loader with stale-response isolation, bounded caching, explicit degraded and retry states, multilingual and deep-link parity, and evidence-based cutover gates before any build-bound bootstrap data may be removed.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T027",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to remove build-bound bootstrap data",
+      "physical-device usability",
+      "automatic queue, claim, dispatch, merge or deployment authority",
+      "that every catalog detail is already available or generation-bound"
+    ],
+    "queue_mutated": false,
+    "registered_at": "2026-07-26",
+    "source": "Commonworld PR #142 selected-shard shadow follow-up",
+    "source_merge_commit": "932028d66adb1703c11e1739b59cfa84309744da",
+    "source_pr": 142,
+    "source_repository": "heimgewebe/commonworld",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-8d3411ff6b3366d2c05fba9b",
+      "event_id": 1188,
+      "event_created_at": "2026-07-26T06:12:36.937905Z",
+      "request_sha256": "2936c645dd56bdb114f13d86a95e68f6bc3ce8f99ef1a10dacce3374af45ee6d",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-follow-up",
+        "locator": "commonworld:feat/catalog-shard-shadow-v1",
+        "observed_at": "2026-07-26T08:00:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 10
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "rollback": {
+    "strategy": "Disable detail shadow loading and continue serving the existing build-bound bootstrap and selected-shard shadow path; retain generation artifacts and receipts for diagnosis without rewriting catalog history."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Deliver generation-bound catalog detail loading and cutover gates"
+}

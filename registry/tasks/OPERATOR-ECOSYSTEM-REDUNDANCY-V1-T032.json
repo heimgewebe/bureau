@@ -82,8 +82,8 @@
       "assertion": "The deployed Leitstand consumer displays stable lifecycle separately from technical freshness and runtime health, and a live readback shows Heimserver as retired rather than unhealthy."
     },
     {
-      "id": "terminal-registry-closeout",
-      "assertion": "Only after all dependency and runtime evidence is current may T032 be changed from blocked to verified in an independent Bureau closeout change."
+      "id": "terminal-receipt-closeout",
+      "assertion": "After all dependency and runtime evidence is current, T032 completes against its frozen task revision and the receipt-backed task-status overlay projects verified without T032 editing its own registry file during or after the claimed run."
     }
   ],
   "metadata": {

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
-  "state": "planned",
+  "state": "blocked",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -24,8 +24,48 @@
     "scope_rule": "Execute in a fresh isolated current-main worktree; do not reuse, reset or mutate historical T004 worktrees.",
     "does_not_establish": [
       "Desktop-Tests beweisen keine vollständige iPad-Runtime-Parität",
-      "Modularisierung autorisiert keine neue Abhängigkeit"
-    ]
+      "Modularisierung autorisiert keine neue Abhängigkeit",
+      "CPython-Direktskriptausführung beweist keinen nativen Pythonista-Loader-Start",
+      "der gemergte Refactor allein erfüllt nicht die Pythonista-/iPad-Acceptance"
+    ],
+    "blocked_at": "2026-07-26T07:29:14+02:00",
+    "block_reason": "Die Implementierung ist gemergt und vollständig CI-grün, aber der RepoGround-Proof schließt natives Pythonista-Loader-Verhalten ausdrücklich aus. Acceptance pythonista-compatibility ist daher noch nicht vollständig belegt.",
+    "next_action": "REPOGROUND-LEGACY-RECONCILIATION-V1-T017 auf einer echten unterstützten Pythonista-/iPad-Runtime ausführen und nur bei revisionsgebundenem PASS T010 verified setzen.",
+    "implementation_status": "merged_awaiting_native_runtime_verification",
+    "implementation": {
+      "repository": "heimgewebe/repoground",
+      "pull_request": 1103,
+      "reviewed_implementation_head": "ceac34b51566e264b3ba7794a0fdb4d60101e7f2",
+      "evidence_head": "79c914f3988df63e13785d8c6ba8ef70274d4073",
+      "final_integrated_head": "299d95699f0994960d89552c4be2b5df8fec2ed3",
+      "merge_commit_sha": "40dd1088a642370c5a7cc0dfd19dbd59e6395a35",
+      "download_reference": "https://github.com/heimgewebe/repoground/pull/1103.diff",
+      "proof_path": "docs/proofs/repoground-legacy-t010-pythonista-build-v1-proof.md",
+      "measurement_path": "docs/proofs/repoground-legacy-t010-pythonista-build-v1.measurement.json"
+    },
+    "validation": {
+      "required_workflows": {
+        "successful": 12,
+        "failed": 0
+      },
+      "full_pytest": "PASS",
+      "browser_tests": "PASS",
+      "webui_js_tests": "PASS",
+      "release_candidate": "PASS",
+      "frontend_parity_guard": "PASS",
+      "lint_and_maintainability": "PASS",
+      "codeql": "PASS",
+      "contracts_validate": "PASS",
+      "review_threads_open": 0,
+      "main_readback": "merge commit identical to main"
+    },
+    "acceptance_status": {
+      "portable-import-contract": "pass",
+      "orchestration-slices": "pass",
+      "pythonista-compatibility": "blocked_missing_native_runtime_smoke",
+      "parity": "pass",
+      "complexity-performance": "pass_with_current_head_performance_nonclaim"
+    }
   },
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T010",
   "title": "Pythonista-Build-Orchestrierung modularisieren und Importvertrag härten",
@@ -62,5 +102,7 @@
       "assertion": "Dateigröße und C901-Schuld sinken; Startzeit und Speicher regressieren nicht materiell."
     }
   ],
-  "depends_on": []
+  "depends_on": [
+    "REPOGROUND-LEGACY-RECONCILIATION-V1-T017"
+  ]
 }

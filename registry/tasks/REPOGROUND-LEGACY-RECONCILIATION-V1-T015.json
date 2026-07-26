@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
-  "state": "planned",
+  "state": "blocked",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -26,10 +26,99 @@
     "merged_remote_head": "da1cda9976147dfc019423a600b1a87ba532ce3f",
     "merge_commit": "c91d640bce2b14c4a78a64e83169d56c818fa662",
     "divergence_reason": "local history merged 108c8e4 while the remote PR merged the later current-main lineage 2afc2836; the checkout was intentionally not reset or deleted",
+    "progress": {
+      "observed_at": "2026-07-26T08:53:49+02:00",
+      "state": "archived_grace",
+      "resolution": "Der exakte historische Checkout ist sauber, besitzt keine aktive Koordination und enthält im T009-Umfang keine einzigartigen Bauminhalte. Er wurde mit Recovery-Refs archiviert und bleibt absichtlich bestehen, weil die verpflichtende 24-Stunden-Cleanup-Grace noch nicht abgelaufen ist.",
+      "blocker": {
+        "code": "checkout-cleanup-grace-not-elapsed",
+        "archive_created_at": "2026-07-26T08:49:03.791501+02:00",
+        "cleanup_grace_seconds": 86400,
+        "earliest_cleanup_at": "2026-07-27T08:49:03.791501+02:00",
+        "retention_until": "2026-07-28T08:45:53+02:00",
+        "dry_run_error": "Checkout cleanup grace has not elapsed: age=27 required=86400"
+      },
+      "divergence_evidence": {
+        "local_head": "2353537c922385606c60a98b1d68ab6bf6ce7a53",
+        "remote_head": "da1cda9976147dfc019423a600b1a87ba532ce3f",
+        "merge_commit": "c91d640bce2b14c4a78a64e83169d56c818fa662",
+        "left_only_count": 1,
+        "right_only_count": 4,
+        "local_only_commits": [
+          "2353537c922385606c60a98b1d68ab6bf6ce7a53"
+        ],
+        "remote_only_commits": [
+          "da1cda9976147dfc019423a600b1a87ba532ce3f",
+          "2afc2836fa1a49a593c7b57eda43086844e8fb2b",
+          "d7f33581c7db184d1db496b3e06199f43e187cbb",
+          "87ef45e4dd9200dd42b304ea3e43b666ebe6f2c6"
+        ],
+        "whole_tree_difference": {
+          "files": [
+            "merger/repoground/tests/test_fleet_runtime.py",
+            "scripts/ops/repoground-publish-fleet"
+          ],
+          "insertions": 753,
+          "deletions": 4
+        },
+        "t009_scope_tree_difference": [],
+        "github_pull_request": 1098,
+        "github_state": "MERGED"
+      },
+      "ownership_evidence": {
+        "pre_archive": {
+          "checkout_clean": true,
+          "resource_leases": 0,
+          "tasks": 0,
+          "processes": 0,
+          "retention_owner": null,
+          "coordination_blocking": false,
+          "runtime_or_publisher_process_matches": 0
+        },
+        "post_archive": {
+          "resource_leases": 0,
+          "tasks": 0,
+          "processes": 0,
+          "coordination_blocking": false,
+          "retention_owner": "operator:repoground-t015-20260726",
+          "retention_source": "matching archive safety contract"
+        }
+      },
+      "archive_evidence": {
+        "archive_id": "20260726T064903Z-8711f819ec91",
+        "manifest_path": "/home/alex/.local/state/grabowski/checkout-archives/20260726T064903Z-8711f819ec91/manifest.json",
+        "manifest_sha256": "87638a8984e4b5e2937db5010ddfc40cfc0f1bd2b207461ccf8c90374ccf68bd",
+        "recovery_refs": [
+          "refs/grabowski/checkouts/33d8ef785a401c9d/20260726T064903Z-8711f819ec91/head",
+          "refs/grabowski/checkouts/33d8ef785a401c9d/20260726T064903Z-8711f819ec91/branch-head"
+        ],
+        "recovery_target": "2353537c922385606c60a98b1d68ab6bf6ce7a53",
+        "rollback_available": true,
+        "branch_preserved": true
+      },
+      "final_readback": {
+        "inventory_sha256": "622aa2167a79c6a82c8666d73b9b37872c0c3c40040b516929ca4137c61fb1b9",
+        "lifecycle_state": "archived_grace",
+        "hygiene_mark": "archived",
+        "archive_matches_checkout": true,
+        "archive_grace_elapsed": false,
+        "cleanup_candidate": false,
+        "recommended_next_step": "wait_for_checkout_cleanup_grace"
+      },
+      "validated_acceptance": {
+        "divergence-inventory": "PASS",
+        "ownership-safety": "PASS_PRE_ARCHIVE; EXPECTED_ARCHIVE_RETENTION_ACTIVE_AFTER_EFFECT",
+        "archive-and-grace": "PASS",
+        "bounded-cleanup": "BLOCKED_BY_REQUIRED_GRACE",
+        "final-readback": "PASS"
+      }
+    },
     "does_not_establish": [
-      "the checkout is disposable",
+      "the checkout is disposable before a fresh post-grace readback",
       "permission to reset, delete or force-release the checkout",
-      "absence of processes, tasks, leases or unique unpushed commits at future cleanup time"
+      "physical checkout removal",
+      "branch deletion",
+      "absence of future processes, tasks, leases or ownership changes"
     ]
   },
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T015",

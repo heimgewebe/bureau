@@ -29,7 +29,8 @@
     }
   ],
   "depends_on": [
-    "WELTGEWEBE-OS-V1-T048"
+    "WELTGEWEBE-OS-V1-T048",
+    "WELTGEWEBE-OS-V1-T049"
   ],
   "execution": {
     "approval": {

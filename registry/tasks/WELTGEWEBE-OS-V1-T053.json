@@ -1,0 +1,93 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Jede aktive Nachweis- und Dokumentationsfläche ist mit Erzeuger, Verbraucher, Geltung, Quelle, Aktualisierungspfad und Nicht-Aussagen inventarisiert.",
+      "id": "consumer-inventory"
+    },
+    {
+      "assertion": "Für jede fachliche Aussage existiert genau eine kanonische maschinenlesbare Quelle; weitere Darstellungen werden daraus abgeleitet oder entfernt.",
+      "id": "single-authority"
+    },
+    {
+      "assertion": "Die Zahl inhaltlich überlappender Berichte und Generatoren sinkt revisionsgebunden um mindestens 50 Prozent oder jede verbleibende Überschneidung erhält eine konkrete Verbraucherbegründung.",
+      "id": "reduction"
+    },
+    {
+      "assertion": "Sicherheits-, Datenschutz-, Governance-, Revisions- und Recovery-Belege bleiben reproduzierbar und werden durch negative Vergleichstests geschützt.",
+      "id": "no-evidence-loss"
+    },
+    {
+      "assertion": "CI-Laufzeit, Wartungsfläche, Dateizahl und Änderungsfächer werden vor und nach der Konsolidierung gemessen und verbessert oder ausdrücklich begründet.",
+      "id": "cost-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer am 26. Juli 2026 autorisierte Auditremediation. Erst inventarisieren und Verbraucher belegen; Entfernen nur nach Reproduktions- und Rückfallnachweis.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Register, Systemkarten, Implementierungsindizes, Evidenzkarten, Driftberichte, Frischeberichte, Generatoren und Validatoren nach Verbraucher und Geltung ordnen. Überlappende Wahrheitsflächen werden zusammengeführt oder entfernt, ohne Datenschutz-, Sicherheits- oder Revisionsbelege zu schwächen.",
+  "id": "WELTGEWEBE-OS-V1-T053",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-aee78037c04ad0467d94d692",
+    "event_id": 1203,
+    "recommended_sequence": "T052-Vertrag zuerst anwenden; keine neue Metaschicht zur Verwaltung der bestehenden Metaschichten bauen.",
+    "source_artifact": "weltgewebe-audit-findings-2026-07-26.json",
+    "source_audit": "Weltgewebe-Komplettaudit 2026-07-26",
+    "source_commit": "b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+    "source_finding": "F-004",
+    "source_sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-aee78037c04ad0467d94d692",
+      "event_id": 1203,
+      "event_created_at": "2026-07-26T08:06:39.946419Z",
+      "request_sha256": "d15446235851c882f631b4107d019ac5261f7c175920927ecb2a665114764cfe",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator_audit_finding",
+        "locator": "chatgpt-audit:weltgewebe-komplettaudit-2026-07-26#F-004@b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+        "observed_at": "2026-07-26T08:06:39.935417Z",
+        "sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 3
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "python",
+    "documentation-architecture",
+    "audit",
+    "dependency-analysis",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Dokumentations- und Nachweissystem konsolidieren"
+}

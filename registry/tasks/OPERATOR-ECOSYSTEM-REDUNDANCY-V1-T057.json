@@ -67,7 +67,7 @@
       "future connector availability",
       "authority to interrupt foreign work or release foreign leases"
     ],
-    "followup_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T059",
+    "follow_up_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T059",
     "github_issue": {
       "closed_by_pull_request": 482,
       "number": 477,
@@ -212,7 +212,7 @@
       "review_receipt_sha256": "d2ae5d4436803e1c9de106c4457ee681ecfaacdbc4b3fbe484bba22147a2942b",
       "review_task_id": "a9dfbb0268c5472a870af8c3",
       "task_file_generated_at": "2026-07-26T18:28:51.676918Z",
-      "task_sha256": "f2ac26b594c707bbc3af263687ce70f86f3beced8a1355e45590f74d4bec08ed"
+      "task_sha256": "18a954c135ab72e75f4d43c44c963337a4ea4c4be37d14d353b6f00f480fed16"
     },
     "verified_acceptance": {
       "bounded-existing-restart-path": "The implementation changes only classification membership. The focused threshold test proves observe, observe, restart at the unchanged threshold of three.",

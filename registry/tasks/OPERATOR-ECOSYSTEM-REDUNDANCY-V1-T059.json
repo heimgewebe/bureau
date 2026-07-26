@@ -33,7 +33,7 @@
       "id": "rollback-proof"
     },
     {
-      "assertion": "Deployment identity, preflight, controlled proof, restart decision, timer and service readback, connector freshness, tool readback and rollback sufficiency are recorded as immutable receipts before T058 can become verified.",
+      "assertion": "Deployment identity, preflight, controlled proof, restart decision, timer and service readback, connector freshness, tool readback and rollback sufficiency are recorded as immutable receipts before T059 can become verified.",
       "id": "evidence-bound-closeout"
     }
   ],

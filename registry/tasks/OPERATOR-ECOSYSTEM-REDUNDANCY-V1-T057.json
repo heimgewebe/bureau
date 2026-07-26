@@ -40,7 +40,7 @@
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "note": "GitHub issue #477 authorizes the bounded repository correction. Codex P1 on superseded Bureau PR #1058 requires all deployment, service restart and live host verification to remain outside this task and under dependent runtime task T058.",
+      "note": "GitHub issue #477 authorizes the bounded repository correction. Codex P1 on superseded Bureau PR #1058 requires all deployment, service restart and live host verification to remain outside this task and under dependent runtime task T059.",
       "required_level": "operator"
     },
     "grabowski_resources": [

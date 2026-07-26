@@ -1,0 +1,116 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein revisionsgebundenes Inventar aller Runtime-, MCP-, Dokumentations-, Test- und extern versionierten Verbraucher belegt, dass CHECKOUT_CLEANUP_GRACE_SECONDS, archive_grace_seconds, archive_grace_elapsed sowie archived_grace und waiting_grace entweder nicht mehr aktiv konsumiert oder durch eine ausdrücklich versionierte Migration abgedeckt werden.",
+      "id": "consumer-inventory"
+    },
+    {
+      "assertion": "Die veralteten Grace-Konstanten, Projektionsfelder und historischen Zustandsnamen werden aus aktueller Produktion, Schemas, Dokumentation und Tests entfernt oder auf eine klar begrenzte historische Migrationsschicht reduziert; unveränderliche alte Receipts bleiben lesbar, ohne erneut aktuelle Cleanup-Autorität zu erzeugen.",
+      "id": "versioned-retirement"
+    },
+    {
+      "assertion": "Ein frisches Recovery-Archiv macht einen sauberen, exakt gebundenen Checkout weiterhin ohne Zeitwartefenster cleanup-fähig; Archivierung und Entfernung bleiben zwei getrennte Top-Level-Aufrufe, und Recovery-Refs, exakte Head-/Branch-Bindung, Eigentümer-, Retention-, Prozess-, Task-, Lease-, Dry-Run-, erneute Blocker- und Plan-Hash-Prüfungen bleiben fail-closed.",
+      "id": "safety-invariants"
+    },
+    {
+      "assertion": "Gezielte Migrations-, Checkout-, Workspace- und Hygiene-Tests sowie die vollständige Grabowski-Validierung bestehen; negative Tests belegen, dass fremde, dirty, live koordinierte oder revisionsabweichende Checkouts niemals löschautorisierend projiziert werden.",
+      "id": "regression-proof"
+    },
+    {
+      "assertion": "Der finale Head ist als PR revisionsgebunden gemergt und gesund ausgerollt; ein Live-Readback belegt unmittelbar cleanup-fähige Recovery-Archivierung ohne Grace-Feldabhängigkeit und mit gültigem Cleanup-Receipt.",
+      "id": "live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T095"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Aufgabe darf ausschließlich nach belegtem Consumer-Inventar und versionierter Migration umgesetzt werden; sie darf keine Zeitverzögerung wiedereinführen und keine Cleanup-Sicherungsgrenze schwächen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_checkouts.py",
+      "component:src/grabowski_agent_workspace.py",
+      "component:src/grabowski_grips.py",
+      "component:tests/test_checkouts.py",
+      "component:tests/test_agent_workspace.py",
+      "component:tests/test_grips.py",
+      "component:docs/checkout-lifecycle.md",
+      "component:docs/operations/checkout-lifecycle-policy.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Nach einer revisions- und verbrauchergebundenen Migrationsprüfung die seit PR #479 nur noch als Kompatibilitätsoberfläche erhaltenen Checkout-Grace-Konstanten, Felder und historischen Zustandsleser versioniert entfernen. Die sofortige Cleanup-Fähigkeit nach Recovery-Archivierung, die getrennten Top-Level-Aufrufe für Archivierung und Entfernung sowie alle fail-closed Recovery-, Revisions-, Eigentümer-, Retention-, Prozess-, Task-, Lease-, Dry-Run- und Plan-Hash-Prüfungen bleiben unverändert.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T106",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "permission to reintroduce a time-based cleanup delay",
+      "permission to remove or weaken Recovery-Refs, exact revision binding, live coordination checks or the two-attempt mutation boundary",
+      "permission to rewrite immutable historical receipts",
+      "permission to delete foreign worktrees, branches, leases, processes or dirty states"
+    ],
+    "observed_evidence": {
+      "cleanup_receipt_sha256": "a62c4a42bc254d83f264c4520ee5017a68197723178ea912d7fae43a6c6897d7",
+      "diff_sha256": "e106fda2cf9e21b8e02808f9eff641ee628f9fccce5afa1cde8cd50a8c496ae1",
+      "merge_commit": "d9f4efec53787af16fa5bf0d2a4f1db600895572",
+      "pull_request": 479,
+      "removed_worktree": "/home/alex/repos/.grabowski-probes/t071-postdeploy-stale-live-proof-v3-writer",
+      "repository": "heimgewebe/grabowski",
+      "reviewed_head": "b5e7fa5a3a104f92759aa410f0cee2854a5a7334",
+      "runtime_release": "d9f4efec5378-srcset7607dd8b5ab9-locke6664d600b6c-contract5fab0c129560"
+    },
+    "source": "Grabowski PR #479 und Live-Closeout vom 2026-07-26",
+    "supersedes_contract_fragment": {
+      "fragment": "Die dort ausdrücklich bewahrte 24-Stunden-Grace wurde durch Nutzerentscheidung und PR #479 entfernt; T106 betrifft nur den späteren Abbau der vorläufig erhaltenen Kompatibilitätsoberfläche.",
+      "task": "GRABOWSKI-OPERATOR-SURFACE-V1-T095"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-965f0660a340762f0ed6b7b8",
+      "event_id": 1236,
+      "event_created_at": "2026-07-26T16:32:38.097670Z",
+      "request_sha256": "994916f9495691b532c64292a119036bcf558dc0caa6c9f9bf989f5ac6f66215",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "pull_request",
+        "locator": "https://github.com/heimgewebe/grabowski/pull/479",
+        "observed_at": "2026-07-26T16:26:14Z",
+        "sha256": "e106fda2cf9e21b8e02808f9eff641ee628f9fccce5afa1cde8cd50a8c496ae1"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 106
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "testing",
+    "github",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Checkout-Grace-Kompatibilitätsfelder nach Migration entfernen"
+}

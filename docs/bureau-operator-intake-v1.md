@@ -1,6 +1,6 @@
 # Bureau operator-native intake v1
 
-Stand: 2026-07-20
+Stand: 2026-07-26
 
 ## Rolle und Zweck
 
@@ -22,7 +22,9 @@ Pflichtfelder:
 - `source_kind`
 - `desired_outcome`
 
-Optionale Bindungen sind Repository, Task, Kandidaten-ID, Source-Locator, Source-SHA-256, Beobachtungszeit und Notiz. Unbekannte Felder werden abgelehnt. Derselbe Idempotenzschlüssel mit denselben Eingaben liefert die vorhandene Identität; abweichende Eingaben erzeugen `idempotency-conflict`.
+Optionale Bindungen sind Repository, Task, Kandidaten-ID, `supersedes_event_id`, Source-Locator, Source-SHA-256, Beobachtungszeit und Notiz. Unbekannte Felder werden abgelehnt. Derselbe Idempotenzschlüssel mit denselben Eingaben liefert die vorhandene Identität; abweichende Eingaben erzeugen `idempotency-conflict`.
+
+Eine append-only Korrektur oder Zustandsfortschreibung verwendet einen neuen Idempotenzschlüssel und bindet `supersedes_event_id` an das aktuelle Event des bestehenden Kandidaten. Das Feld ist Bestandteil des Request-Hashs. Kandidaten-ID, Repository, Task, Status und `promotion_required` werden vom Vorgänger geerbt, sofern die optionale Kandidaten-ID nicht ausdrücklich mit derselben Identität angegeben wird. Typfalsche, boolesche oder nichtpositive Event-IDs scheitern vor jeder Mutation; bereits supersedierte oder fremde Events werden durch den Live-Register-Vertrag abgelehnt.
 
 Die Aufnahme begründet keine Registry-, Queue-, Readiness-, Claim- oder Dispatch-Wahrheit. Sie ist wie `live-register` ein Always-on-State-Store-Append und darf den kanonischen read-only Registry-Snapshot zur strikten Katalogvalidierung lesen.
 
@@ -109,6 +111,19 @@ Beispiel für die Aufnahme:
 
 ```bash
 bureau --json operator-candidate-record --request candidate-request.json
+```
+
+Beispiel für eine Korrektur im selben Kandidaten-Lebenszyklus:
+
+```json
+{
+  "schema_version": 1,
+  "idempotency_key": "conversation:refinement:2",
+  "title": "Korrigierte Kandidatenbeschreibung",
+  "source_kind": "conversation",
+  "desired_outcome": "Den vorhandenen Kandidaten präzisieren",
+  "supersedes_event_id": 31
+}
 ```
 
 Bewertung:

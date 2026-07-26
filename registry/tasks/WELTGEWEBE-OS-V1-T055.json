@@ -1,0 +1,92 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Alle aktiven Workflows sind nach Triggern, Rechten, Laufzeit, Cache, Artefakten, Prüfziel und überlappenden Schritten revisionsgebunden inventarisiert.",
+      "id": "workflow-inventory"
+    },
+    {
+      "assertion": "Gemeinsame Setup-, Build-, Test-, Beweis- und Publikationslogik liegt in wiederverwendbaren Workflows oder geprüften Skripten; Aufrufworkflows bleiben dünn.",
+      "id": "reusable-families"
+    },
+    {
+      "assertion": "Für jede entfernte oder zusammengeführte Prüfung ist automatisiert nachgewiesen, dass positive und negative Fälle weiterhin mindestens gleich streng erkannt werden.",
+      "id": "evidence-parity"
+    },
+    {
+      "assertion": "Aktive Workflowzahl, duplizierte Zeilen und mittlere CI-Laufzeit sinken deutlich; verbleibende Abweichungen sind mit Verbraucher- oder Sicherheitsgrund begründet.",
+      "id": "reduction-and-speed"
+    },
+    {
+      "assertion": "Ein maschinenlesbarer Vertrag verhindert neue eigenständige Workflowduplikate ohne dokumentierte Ausnahme und Eigentümer.",
+      "id": "governance"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer am 26. Juli 2026 autorisierte Auditremediation. Keine Prüfung darf ohne belegte Ersatzabdeckung entfernt werden; Berechtigungen bleiben minimal.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die aktiven GitHub-Workflows nach Trigger, Berechtigung, Cache, Prüfziel und gemeinsamem Code ordnen. Doppelte Einzelworkflows werden in wiederverwendbare Prüffamilien überführt, sodass neue Prüfungen bestehende ersetzen oder nur dünne Aufrufschalen hinzufügen.",
+  "id": "WELTGEWEBE-OS-V1-T055",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-3627eba12c361b46c451d0f6",
+    "event_id": 1205,
+    "source_artifact": "weltgewebe-audit-findings-2026-07-26.json",
+    "source_audit": "Weltgewebe-Komplettaudit 2026-07-26",
+    "source_commit": "b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+    "source_finding": "F-006",
+    "source_sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-3627eba12c361b46c451d0f6",
+      "event_id": 1205,
+      "event_created_at": "2026-07-26T08:08:06.344312Z",
+      "request_sha256": "f3251d557419caa259cc71013f8146b13083c9368bca67a2126d0668ec7499a3",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator_audit_finding",
+        "locator": "chatgpt-audit:weltgewebe-komplettaudit-2026-07-26#F-006@b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+        "observed_at": "2026-07-26T08:08:06.333481Z",
+        "sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 5
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "github-actions",
+    "ci",
+    "security",
+    "performance-analysis",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "GitHub-Workflowbestand in wiederverwendbare Prüffamilien konsolidieren"
+}

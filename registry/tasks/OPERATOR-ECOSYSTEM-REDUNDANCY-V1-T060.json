@@ -20,7 +20,7 @@
   "claims": [
     {
       "resource": "repo.heimserver",
-      "mode": "write",
+      "mode": "exclusive",
       "isolation": "worktree"
     }
   ],

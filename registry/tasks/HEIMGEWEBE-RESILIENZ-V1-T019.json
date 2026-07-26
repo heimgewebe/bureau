@@ -1,0 +1,126 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Jede relevante semantische Abschlussmutation verlangt explizit entweder `convergence_required=true` mit gebundenem Assessment-Receipt oder eine kanonische, testbare Nichtanwendbarkeitsklasse; bei high-risk Arbeit blockiert eine fehlende Klassifikation.",
+      "id": "central-closeout-classification"
+    },
+    {
+      "assertion": "`operator-obligation-close` mit `outcome=completed` blockiert für R2-/R3-, Deployment-, Runtime-, Security-, Daten- und irreversible Arbeit ohne einen unveränderten `terminally_closed`-Receipt.",
+      "id": "obligation-close-gate"
+    },
+    {
+      "assertion": "`task-closeout-archive` und `grabowski_agent_workspace_close` können Prozess-, Writer-, Test- oder Review-Abschluss nicht als systemischen Abschluss hochstufen; erforderliche Konvergenzevidenz ist an Task beziehungsweise Workspace und die konkrete Abschlussmutation gebunden.",
+      "id": "task-and-workspace-boundary"
+    },
+    {
+      "assertion": "Workspace- und Checkout-Cleanup bleiben mechanische Recovery-/Hygieneoperationen, verlangen bei high-risk Artefakten jedoch einen belegten Upstream-Closeout oder eine explizite Nichtanwendbarkeitsklasse und synthetisieren keine Wirkungsevidenz.",
+      "id": "cleanup-upstream-binding"
+    },
+    {
+      "assertion": "Receipt-, Request-, Protokollcommit-, Ziel- oder Mutationsdrift blockiert; ein nichtterminales Assessment blockiert jede als semantisch klassifizierte Abschlussmutation.",
+      "id": "receipt-integrity"
+    },
+    {
+      "assertion": "Negativtests beweisen das Blockieren ohne Receipt, mit nichtterminalem Receipt, bei Identitätsdrift und bei versuchter Hochstufung eines Prozessabschlusses; mechanische Lease-Releases und read-only Oberflächen bleiben funktionsfähig.",
+      "id": "negative-regression-tests"
+    },
+    {
+      "assertion": "Der maschinenlesbare Closeout-Surface-Audit wird zur verbindlichen Driftkontrolle ausgebaut, sodass neue benannte Closeout-, Archive-, Release-, Deploy-, Cleanup- oder Merge-Flächen nicht unklassifiziert bleiben.",
+      "id": "coverage-contract"
+    },
+    {
+      "assertion": "Ein revisionsgebundener Live-Smoke belegt einen erlaubten terminalen und einen blockierten widersprüchlichen Abschlussweg durch die deployte Grabowski-Runtime; Runtime-Identität und Audit-Receipt sind gebunden.",
+      "id": "live-integration-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.konvergenzregelkreis"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.bureau"
+    }
+  ],
+  "depends_on": [
+    "HEIMGEWEBE-RESILIENZ-V1-T008"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Änderung betrifft Abschluss-Gates und muss fail-closed, rückwärtskompatibel und ohne Übernahme fremder Lifecycle-Autorität umgesetzt werden.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die im revisionsgebundenen Grabowski-Abdeckungsaudit ausgewiesenen semantischen Abschlusslücken fail-closed schließen. High-risk Abschlussmutationen müssen einen unveränderten, ziel- und requestgebundenen `terminally_closed`-Receipt des Konvergenzregelkreises validieren; rein mechanische Prozess-, Lease-, Effekt- und Cleanup-Pfade müssen explizit klassifiziert bleiben und dürfen weder Wirkungsevidenz erfinden noch unnötig doppelt bewerten.",
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T019",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "metadata": {
+    "audit_paths": [
+      "docs/convergence-closure-surface-coverage.md",
+      "docs/proofs/convergence-closure-surface-coverage-v1.json"
+    ],
+    "design_rule": "Prozessende, Merge und Deployment sind Effekte, kein systemischer Abschluss; nur gebundene Verifikation darf semantische Closure erlauben.",
+    "does_not_establish": [
+      "Task-, Merge-, Deployment- oder Runtime-Autorität des Konvergenzregelkreises",
+      "Pflicht zur Doppelbewertung rein mechanischer Cleanup- oder Lease-Operationen",
+      "Korrektheit historischer Abschlüsse",
+      "Berechtigung zur Änderung fremder Dirty-States oder Leases"
+    ],
+    "known_semantic_gaps": [
+      "operator-obligation-close",
+      "task-closeout-archive",
+      "grabowski_agent_workspace_close"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-04d12039808941c269fb034e",
+      "event_id": 1222,
+      "event_created_at": "2026-07-26T12:04:32.073891Z",
+      "request_sha256": "c325fe6d33d2e9c4edf2e2c4f221f58746905a66fe602b043884af65a87574b4",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-system-audit",
+        "locator": "audit://grabowski/convergence-closeout-coverage/d2097c909bd60be7f947b5c50cc9fa6d56ba907c",
+        "observed_at": "2026-07-26T11:43:06Z",
+        "sha256": "ba9e93c9871d7ea90c711043021683e1a5232ac70548a968e5f2bad98193e616"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-07-26",
+    "source": "Revisionsgebundener Audit auf Grabowski `d2097c909bd60be7f947b5c50cc9fa6d56ba907c` und Konvergenzregelkreis `fae4c26faa22d62d148d39e1995fe5492211cb43`. Der Consumer `convergence-assess` funktioniert, wird aber von `operator-obligation-close`, `task-closeout-archive` und `grabowski_agent_workspace_close` nicht durchgängig technisch erzwungen."
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 19
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski",
+    "konvergenzregelkreis",
+    "bureau",
+    "testing",
+    "runtime-verification",
+    "audit",
+    "recovery"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Semantische Operator-Abschlüsse an Konvergenz-Receipts binden"
+}

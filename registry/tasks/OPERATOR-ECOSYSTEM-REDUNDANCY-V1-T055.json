@@ -1,0 +1,112 @@
+{
+  "acceptance": [
+    {
+      "assertion": "General alerts use private mode-0700/0600 create-only receipts with deterministic correlation and alert identities, bounded secret-safe fields, self-hashes and explicit non-claims; terminal job notifications retain their existing receipt and acknowledgement semantics.",
+      "id": "separate-evidence-bound-outbox"
+    },
+    {
+      "assertion": "Owner decisions, blocked/completed operator obligations and recovery success/failure emit only after or around their exact authoritative transition as documented, and any alert-path failure cannot change the primary result or hide the primary exception.",
+      "id": "authoritative-producer-bindings"
+    },
+    {
+      "assertion": "The existing ntfy dispatcher processes terminal notifications and general alerts as independent queues under one lock, preserves current canonical class rendering, blocks malformed alert receipts, and writes alert acknowledgement only after HTTP 2xx.",
+      "id": "shared-fail-closed-dispatch"
+    },
+    {
+      "assertion": "Focused and full repository tests, exact diff-bound review and required GitHub CI pass on one exact revision; the merged revision is deployed and runtime integrity, audit and kill-switch health are read back.",
+      "id": "tests-review-ci-deploy"
+    },
+    {
+      "assertion": "A synthetic secret-safe general alert is delivered through the deployed ntfy transport and receives an append-only HTTP-success acknowledgement. The evidence explicitly does not establish owner-device reception, user_seen truth or future delivery availability.",
+      "id": "live-transport-attestation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T054"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly ordered autonomous implementation of the next useful task. Reviewed repository changes, bounded deployment and a secret-safe synthetic ntfy delivery probe are allowed; user_seen claims, secret disclosure, paid services and foreign-work override remain excluded.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "host:heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Add a private append-only general ntfy alert outbox for blocked operations, recovery, service failures, completed long runs and owner decisions; bind exact authoritative producer transitions; deploy the shared dispatcher; and attest external HTTP delivery without claiming owner-device visibility or user_seen truth.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T055",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation completion",
+      "merge readiness",
+      "owner-device reception",
+      "user_seen truth",
+      "universal end-to-end delivery",
+      "authority to mutate foreign work or release foreign leases"
+    ],
+    "registered_from": "candidate-17b063b9a2962da32ca7628c event 1191",
+    "relation_to_prior_tasks": {
+      "format_contract": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T054",
+      "production_transport": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T045"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-17b063b9a2962da32ca7628c",
+      "event_id": 1191,
+      "event_created_at": "2026-07-26T06:32:13.836305Z",
+      "request_sha256": "f2e813508e7dba2391407786b1828d4df767a6421608009a536bcb7d0c9ac4be",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": null,
+        "observed_at": "2026-07-26T06:32:13.825560Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 21
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "python",
+    "testing",
+    "systemd"
+  ],
+  "rollback": {
+    "strategy": "Revert the exact Grabowski implementation PR and redeploy the immediately previous commit-bound runtime. Preserve terminal notification receipts, general alert receipts and acknowledgements as inert append-only evidence; do not relabel, delete or acknowledge queued records during rollback."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Bind general ntfy alert producers and attest delivery"
+}

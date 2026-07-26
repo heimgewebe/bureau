@@ -1,0 +1,131 @@
+{
+  "acceptance": [
+    {
+      "assertion": "With otherwise healthy local checks, repeatedly stale control-plane poll evidence yields an unhealthy probe whose reason is control-plane-poll-stale; unavailable, missing or timestamp-invalid poll evidence alone remains indeterminate.",
+      "id": "classification-contract"
+    },
+    {
+      "assertion": "Concrete local health or readiness failures remain unhealthy and are never masked by control-plane metric uncertainty or stale-poll classification.",
+      "id": "local-failure-precedence"
+    },
+    {
+      "assertion": "The stale classification feeds exactly the existing failure threshold, restart budget, backoff, jitter and recovery-probe decision path; no new restart subsystem, timer, mutation authority or unbounded retry loop is added.",
+      "id": "bounded-existing-restart-path"
+    },
+    {
+      "assertion": "Focused tests cover stale, unavailable, missing, invalid-timestamp and concrete local-failure combinations, including threshold behavior and preservation of the existing restart budget.",
+      "id": "focused-regressions"
+    },
+    {
+      "assertion": "The exact implementation revision passes full validation on supported Python versions, required focused tests, exact diff-bound self-review, required GitHub CI and all review findings are resolved or explicitly superseded before merge.",
+      "id": "repository-gates"
+    },
+    {
+      "assertion": "The reviewed pull-request head is merged through the canonical guarded path; post-merge main contains the reviewed head or an equivalent merge tree, and the final diff, merge commit, CI and review evidence are recorded.",
+      "id": "merge-readback"
+    },
+    {
+      "assertion": "T057 performs no deployment, service restart, timer replacement, host mutation, controlled stale-poll injection, connector snapshot refresh or live Grabowski runtime claim; those effects require dependent task T058 with runtime_mutation and break_glass authority.",
+      "id": "no-runtime-effects"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "GitHub issue #477 authorizes the bounded repository correction. Codex P1 on superseded Bureau PR #1058 requires all deployment, service restart and live host verification to remain outside this task and under dependent runtime task T058.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Treat repeatedly stale control-plane poll evidence as an unhealthy tunnel condition that enters Grabowski's existing bounded restart decision path, while unavailable, missing or timestamp-invalid poll evidence remains indeterminate and concrete local health or readiness failures retain precedence. This task changes and verifies repository state only; deployment and live restart-path proof are deferred to T058.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T057",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation completion",
+      "merge readiness",
+      "deployment completion",
+      "runtime head update",
+      "service restart authority",
+      "live stale-poll exercise authority",
+      "future connector availability",
+      "authority to interrupt foreign work or release foreign leases"
+    ],
+    "followup_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T058",
+    "github_issue": {
+      "number": 477,
+      "observed_at": "2026-07-26T16:06:40Z",
+      "repository": "heimgewebe/grabowski",
+      "source_sha256": "79cb5ba2a7a430515ce5d5a1193c81458f43b482ecf4969414a58b001cd8cbf6",
+      "state": "OPEN",
+      "url": "https://github.com/heimgewebe/grabowski/issues/477"
+    },
+    "operator_intake": {
+      "candidate_id": "candidate-c497d377398039d80fe81818",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-26T16:09:07.744551Z",
+      "event_id": 1229,
+      "request_sha256": "1aa4ec186104fd097afada6b56cb09596fc54617c4683b668f79f23adec8b8c3",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github-issue",
+        "locator": "https://github.com/heimgewebe/grabowski/issues/477",
+        "observed_at": "2026-07-26T16:06:40Z",
+        "sha256": "79cb5ba2a7a430515ce5d5a1193c81458f43b482ecf4969414a58b001cd8cbf6"
+      }
+    },
+    "registered_from": "candidate-c497d377398039d80fe81818 event 1229",
+    "relation_to_timer_fix": {
+      "merge_sha": "689b830b712b723d6e05271a77aa360eae925744",
+      "pull_request": 478,
+      "scope": "Independent calendar scheduling fix already installed and verified on the host; not modified or redeployed by T057."
+    },
+    "review_correction": {
+      "candidate_id": "candidate-31c71f5c5df6e9d2a14c73eb",
+      "event_id": 1237,
+      "finding": "Repository implementation and live runtime deployment require separate tasks and approval classes.",
+      "source_sha256": "55c497535ffd44d374d9fe27984be30f1fcce550805974e16728c72b261529f8",
+      "superseded_head_sha": "5d4b785be9aada6a2f70eaa8ec920932fa3eb8ea",
+      "superseded_pull_request": 1058
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 23
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "python",
+    "shell",
+    "systemd",
+    "testing",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Revert the exact T057 implementation pull request and keep the currently deployed Grabowski runtime unchanged. Any later deployment rollback belongs to T058 and must restore the immediately previous commit-bound runtime."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Harden stale control-plane poll classification"
+}

@@ -1,0 +1,143 @@
+{
+  "acceptance": [
+    {
+      "assertion": "T058 starts only after T057 is verified in Bureau and its exact reviewed implementation revision is merged into Grabowski main; a task file, open pull request or unmerged head is insufficient.",
+      "id": "t057-verified-dependency"
+    },
+    {
+      "assertion": "Before every effect, read Grabowski main and CI, deployed runtime identity, active tasks, leases, worktrees, deployment contention, watchdog services and timers, connector snapshot and control-plane poll evidence; unknown or conflicting state blocks execution.",
+      "id": "fresh-runtime-preflight"
+    },
+    {
+      "assertion": "Deploy only the exact main revision containing the verified T057 merge through the canonical commit-bound path; do not edit source, replace unrelated host files, stop foreign work or bypass deployment gates.",
+      "id": "commit-bound-deployment"
+    },
+    {
+      "assertion": "A controlled, reversible and non-secret stale-poll proof shows that repeated stale evidence reaches the existing failure threshold and bounded restart path without changing restart budget, backoff, jitter or recovery-probe semantics.",
+      "id": "bounded-stale-poll-proof"
+    },
+    {
+      "assertion": "Controlled unavailable, missing and timestamp-invalid metric cases remain indeterminate and do not by themselves authorize a restart; concrete local health or readiness failures continue to produce their existing unhealthy reasons.",
+      "id": "indeterminate-metrics-no-restart"
+    },
+    {
+      "assertion": "After deployment and the controlled proof, both watchdog timers are active and waiting with future elapses, service results are read back, any restart count is bounded, and no persistent failure or restart loop remains.",
+      "id": "timer-and-service-readback"
+    },
+    {
+      "assertion": "The connector snapshot and control-plane poll freshness renew after recovery, tool inventory remains matched, and at least one live Grabowski tool call succeeds against the deployed revision.",
+      "id": "connector-freshness-and-tool-readback"
+    },
+    {
+      "assertion": "A commit-bound rollback to the immediately previous runtime is available and validated before the first effect; if deployment or proof fails, restore the prior runtime without reverting the independently verified PR #478 timer scheduling unless separately shown faulty.",
+      "id": "rollback-proof"
+    },
+    {
+      "assertion": "Deployment identity, preflight, controlled proof, restart decision, timer and service readback, connector freshness, tool readback and rollback sufficiency are recorded as immutable receipts before T058 can become verified.",
+      "id": "evidence-bound-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T057"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Registration and T057 completion do not authorize deployment or restart. Every live effect requires fresh break-glass approval bound to the exact T057 merge revision, current host state, quiet-window evidence and rollback plan.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "host:heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "After T057 is verified, deploy its exact reviewed merge revision through the canonical commit-bound Grabowski path and prove on the live host that repeatedly stale control-plane polls enter the existing bounded restart loop, while unavailable, missing or invalid metrics remain indeterminate and concrete local failures retain precedence.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T058",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "T057 completion",
+      "break-glass approval",
+      "deployment authority",
+      "quiet-window availability",
+      "successful live proof",
+      "future connector availability",
+      "authority to interrupt foreign work or release foreign leases"
+    ],
+    "github_issue": {
+      "number": 477,
+      "observed_at": "2026-07-26T16:06:40Z",
+      "repository": "heimgewebe/grabowski",
+      "source_sha256": "79cb5ba2a7a430515ce5d5a1193c81458f43b482ecf4969414a58b001cd8cbf6",
+      "state": "OPEN",
+      "url": "https://github.com/heimgewebe/grabowski/issues/477"
+    },
+    "operator_intake": {
+      "candidate_id": "candidate-31c71f5c5df6e9d2a14c73eb",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-26T16:43:46.657106Z",
+      "event_id": 1237,
+      "request_sha256": "5388c489b17d0499601c5cfa3784c5d1d50483bb9bb4932bfc1c831be6cb48de",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github-pr-review",
+        "locator": "https://github.com/heimgewebe/bureau/pull/1058#discussion_r3652915153",
+        "observed_at": "2026-07-26T16:43:07Z",
+        "sha256": "55c497535ffd44d374d9fe27984be30f1fcce550805974e16728c72b261529f8"
+      }
+    },
+    "predecessor": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T057",
+    "registered_from": "candidate-31c71f5c5df6e9d2a14c73eb event 1237",
+    "review_correction": {
+      "candidate_id": "candidate-31c71f5c5df6e9d2a14c73eb",
+      "event_id": 1237,
+      "finding": "Repository implementation and live runtime deployment require separate tasks and approval classes.",
+      "source_sha256": "55c497535ffd44d374d9fe27984be30f1fcce550805974e16728c72b261529f8",
+      "superseded_head_sha": "5d4b785be9aada6a2f70eaa8ec920932fa3eb8ea",
+      "superseded_pull_request": 1058
+    },
+    "stage": "commit-bound-runtime-deployment-and-live-proof"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 24
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "deployment",
+    "systemd",
+    "runtime-observability",
+    "testing",
+    "rollback",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Redeploy the immediately previous commit-bound Grabowski runtime, restore only T058-owned runtime artifacts, restart only affected Grabowski units through the canonical path, and verify timers, connector snapshot and live tool readback. Preserve PR #478 calendar timer scheduling unless independently disproved."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Deploy and prove stale-poll tunnel recovery"
+}

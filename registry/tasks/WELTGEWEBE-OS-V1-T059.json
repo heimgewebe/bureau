@@ -2,27 +2,33 @@
   "acceptance": [
     {
       "assertion": "Auf einem exakten aktuellen Weltgewebe-Head werden Chunk-Zusammensetzung, Importgraph, minifizierte und gzip-komprimierte Größe, Routenanteile, Cachegrenzen und reale Ladepfade reproduzierbar inventarisiert; der PR-#1582-Wert von 803,48 kB beziehungsweise 218,12 kB dient nur als historischer Ausgangshinweis.",
-      "id": "revision-bound-baseline"
+      "id": "revision-bound-baseline",
+      "evidence_type": "object"
     },
     {
       "assertion": "Jede vorgeschlagene Trennlinie benennt konkrete Module, Aufrufzeitpunkt, Nutzerreise und erwartete Wirkung; pauschale manualChunks-Regeln oder kosmetische Warnungsunterdrückung ohne reale Nutzenaussage sind ausgeschlossen.",
-      "id": "cause-before-split"
+      "id": "cause-before-split",
+      "evidence_type": "object"
     },
     {
       "assertion": "Vorher-Nachher-Läufe belegen für dokumentierte Mobil- und Desktopprofile mindestens Chunkgrößen, übertragene Bytes, Zeit bis zur benutzbaren Karte, relevante Navigation und Cache-Wiederverwendung; eine Änderung wird nur übernommen, wenn der gewichtete Nutzen die zusätzliche Request-, Komplexitäts- und Wartungslast übersteigt.",
-      "id": "measured-improvement"
+      "id": "measured-improvement",
+      "evidence_type": "object"
     },
     {
       "assertion": "Karte, Kontextpanel, Navigation, Authentifizierung, dynamische Importe, Fehlerzustände, Service-Worker- oder Offlinepfade und Wiederanlauf funktionieren nach der Aufteilung unverändert oder nachweislich besser; Ladefehler degradieren kontrolliert.",
-      "id": "behavior-and-offline-integrity"
+      "id": "behavior-and-offline-integrity",
+      "evidence_type": "object"
     },
     {
       "assertion": "Die kanonischen Performanceverträge aus WELTGEWEBE-OS-V1-T048 werden genutzt oder zuerst abgeschlossen; neue Grenzwerte sind metrisch begründet, revisionsgebunden und enthalten einen künstlichen Negativfall.",
-      "id": "budget-and-regression-gates"
+      "id": "budget-and-regression-gates",
+      "evidence_type": "object"
     },
     {
       "assertion": "Vor Merge liegen vollständiger Diff, exakte Head- und Diffbindung, Build-, Unit-, Browser-, Größen- und Cachebelege, unabhängiger Review und grüne Pflichtchecks vor; unbelegte Produktionswirkung wird nicht behauptet.",
-      "id": "proof-and-release"
+      "id": "proof-and-release",
+      "evidence_type": "object"
     }
   ],
   "claims": [

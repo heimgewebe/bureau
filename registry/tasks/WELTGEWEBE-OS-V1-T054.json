@@ -1,0 +1,93 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Aktive Produkt-, API-, Datenbank- und Kartenrealität wird an allen Einstiegspunkten korrekt beschrieben; die veraltete Docs-only-Aussage ist entfernt oder historisch klar begrenzt.",
+      "id": "phase-truth"
+    },
+    {
+      "assertion": "Heuristische oder unvollständige Architekturprüfungen geben keinen positiven Gesamtstatus aus und entsprechen dem T052-Berichtsvertrag.",
+      "id": "no-heuristic-pass"
+    },
+    {
+      "assertion": "Alle 51 im Audit als unklar gemeldeten impliziten Abhängigkeiten sind einzeln als explizit zu machen, akzeptierte Kopplung, zu entfernen oder nicht relevant entschieden und begründet.",
+      "id": "dependency-decisions"
+    },
+    {
+      "assertion": "Jede Entscheidung verweist auf Livezustand, Primärquelle oder reproduzierbaren Test; generierte Zusammenfassungen gelten nicht als alleinige Autorität.",
+      "id": "source-priority"
+    },
+    {
+      "assertion": "Gezielte Tests oder Generatorprüfungen verhindern die Wiederkehr der bereinigten Widersprüche.",
+      "id": "drift-guard"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer am 26. Juli 2026 autorisierte Auditremediation. Widersprüche werden nach Livezustand und Primärquellen entschieden, nicht durch sprachliches Glätten.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Dokumentation, generierte Berichte und Architekturprojektionen auf eine konsistente aktuelle Systemwahrheit bringen. Veraltete Phasenbehauptungen werden entfernt, unvollständige Prüfungen kennzeichnen ihre Grenzen und alle bislang unklaren impliziten Abhängigkeiten erhalten eine explizite Entscheidung.",
+  "id": "WELTGEWEBE-OS-V1-T054",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-123de92375de92a517a81c46",
+    "event_id": 1204,
+    "source_artifact": "weltgewebe-audit-findings-2026-07-26.json",
+    "source_audit": "Weltgewebe-Komplettaudit 2026-07-26",
+    "source_commit": "b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+    "source_finding": "F-005",
+    "source_sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad",
+    "supersedes_failed_proposal": "c93692b521c95a8b5e4cda810016794731848c06291300f44820e4ea648c6061",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-123de92375de92a517a81c46",
+      "event_id": 1204,
+      "event_created_at": "2026-07-26T08:07:39.268772Z",
+      "request_sha256": "a366ec28cdc63dde1bb30ecd7f5f49cf05922b406d93d7161fd7121159a67103",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator_audit_finding",
+        "locator": "chatgpt-audit:weltgewebe-komplettaudit-2026-07-26#F-005@b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+        "observed_at": "2026-07-26T08:07:39.257962Z",
+        "sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 4
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "documentation",
+    "architecture-review",
+    "dependency-analysis",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Widersprüchliche Systemwahrheiten und ungeklärte Abhängigkeiten bereinigen"
+}

@@ -7,6 +7,18 @@
       "verifier": "production topology and ownership receipt"
     },
     {
+      "assertion": "Ein versionierter Cutover-Vertrag definiert Eintrittskriterien, Verantwortlichkeiten, Daten- und Traffic-Sequenz, Beobachtungsfenster, automatische Stopbedingungen, Rollback und Abschlusskriterien.",
+      "evidence_type": "object",
+      "id": "cutover-contract",
+      "verifier": "versioned cutover contract receipt"
+    },
+    {
+      "assertion": "Funktion, Sicherheit, Datenpersistenz, Backups, Recovery, Latenz und Ressourcenverbrauch werden für Compose/Caddy und Kubernetes unter denselben kanonischen T048-Szenarien gemessen und revisionsgebunden verglichen.",
+      "evidence_type": "object",
+      "id": "t048-platform-parity",
+      "verifier": "cross-platform T048 parity evidence"
+    },
+    {
       "assertion": "Datenbank-, JetStream-, Objekt- und Dateizustände werden mit Freeze-, Replikations- oder Dual-Run-Vertrag ohne verlorene bestätigte Fachmutation übertragen und vollständig verglichen.",
       "evidence_type": "object",
       "id": "data-transition",
@@ -57,7 +69,8 @@
     "WELTGEWEBE-OS-V1-T006",
     "WELTGEWEBE-OS-V1-T007",
     "WELTGEWEBE-OS-V1-T008",
-    "WELTGEWEBE-OS-V1-T043"
+    "WELTGEWEBE-OS-V1-T043",
+    "WELTGEWEBE-OS-V1-T048"
   ],
   "execution": {
     "approval": {
@@ -80,7 +93,35 @@
     ],
     "reason": "Der bestehende Production-Live-Contract beweist erreichbare Endpunkte und Commitidentität, aber nicht, dass die reale Produktion bereits auf Kubernetes läuft.",
     "registered_at": "2026-07-24T17:55:00Z",
-    "source_context": "Kubernetes-Restplan nach Referenzplattform-, HA- und Proof-Lifecycle-Ausbau"
+    "source_context": "Kubernetes-Restplan nach Referenzplattform-, HA- und Proof-Lifecycle-Ausbau",
+    "candidate_id": "candidate-a4507faeb5bfd927c15a6f48",
+    "deduplication": "Bureau-PR #1048 wurde nach Codex-P1 geschlossen: Der vorgeschlagene T056 duplizierte T044 und hätte dessen runtime_mutation-Grenze unterlaufen. F-007 wird deshalb in T044 absorbiert.",
+    "event_id": 1240,
+    "source_artifact": "weltgewebe-audit-findings-2026-07-26.json",
+    "source_audit": "Weltgewebe-Komplettaudit 2026-07-26",
+    "source_commit": "b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+    "source_finding": "F-007",
+    "source_sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-a4507faeb5bfd927c15a6f48",
+      "event_id": 1240,
+      "event_created_at": "2026-07-26T18:03:14.121240Z",
+      "request_sha256": "be80410bc538eb28cd06d7d439d29c81cc69b9f0fa45532862cdbfb0aa5cce14",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator_audit_finding",
+        "locator": "chatgpt-audit:weltgewebe-komplettaudit-2026-07-26#F-007@b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+        "observed_at": "2026-07-26T18:03:14.110862Z",
+        "sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
   },
   "priority": {
     "lane": "later",

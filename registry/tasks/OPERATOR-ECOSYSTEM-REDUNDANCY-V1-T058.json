@@ -1,52 +1,39 @@
 {
   "acceptance": [
     {
-      "assertion": "T058 starts only after T057 is verified in Bureau and its exact reviewed implementation revision is merged into Grabowski main; a task file, open pull request or unmerged head is insufficient.",
-      "id": "t057-verified-dependency"
+      "assertion": "T058 starts only after T057 is verified and exposes an immutable exact-head handoff containing repository, pull request, base and head SHAs, full diff SHA-256, user-visible diff receipt, exact-head reviews, required CI and unresolved-thread readback.",
+      "id": "t057-verified-handoff"
     },
     {
-      "assertion": "Before every effect, read Grabowski main and CI, deployed runtime identity, active tasks, leases, worktrees, deployment contention, watchdog services and timers, connector snapshot and control-plane poll evidence; unknown or conflicting state blocks execution.",
-      "id": "fresh-runtime-preflight"
+      "assertion": "Acquire and continuously retain an exclusive repo.grabowski claim for the merge attempt; any foreign repository mutation, merge, rebase, conflicting lease or unknown ownership blocks the task.",
+      "id": "exclusive-repository-claim"
     },
     {
-      "assertion": "Deploy only the exact main revision containing the verified T057 merge through the canonical commit-bound path; do not edit source, replace unrelated host files, stop foreign work or bypass deployment gates.",
-      "id": "commit-bound-deployment"
+      "assertion": "Immediately before merge, reread pull-request state, current base, exact head, mergeability, required checks, reviews, review threads, branch policy, automatic platform effects and delivery receipt. Any changed head, stale evidence, unresolved finding, failed or pending required check, conflict or unknown state blocks the merge.",
+      "id": "fresh-exact-head-preflight"
     },
     {
-      "assertion": "A controlled, reversible and non-secret stale-poll proof shows that repeated stale evidence reaches the existing failure threshold and bounded restart path without changing restart budget, backoff, jitter or recovery-probe semantics.",
-      "id": "bounded-stale-poll-proof"
+      "assertion": "T058 does not edit, amend, force-push, rebase or otherwise mutate the T057 pull-request head. If the head needs modification or rebase, stop and register or execute a separate appropriately claimed task.",
+      "id": "no-head-mutation-or-rebase"
     },
     {
-      "assertion": "Controlled unavailable, missing and timestamp-invalid metric cases remain indeterminate and do not by themselves authorize a restart; concrete local health or readiness failures continue to produce their existing unhealthy reasons.",
-      "id": "indeterminate-metrics-no-restart"
+      "assertion": "Merge exactly the verified T057 pull-request head through the canonical guarded path with explicit effect scope. Do not bypass review, CI, delivery, policy, human-authorization or exact-head gates.",
+      "id": "guarded-exact-merge"
     },
     {
-      "assertion": "After deployment and the controlled proof, both watchdog timers are active and waiting with future elapses, service results are read back, any restart count is bounded, and no persistent failure or restart loop remains.",
-      "id": "timer-and-service-readback"
+      "assertion": "After merge, read back pull-request state and Grabowski main and record the exact merge commit SHA, resulting tree SHA, reviewed head SHA, pre-merge base SHA, merge method and automatic platform effects. This exact merge commit, not a later containing main head, is T059 deployment input.",
+      "id": "merge-revision-record"
     },
     {
-      "assertion": "The connector snapshot and control-plane poll freshness renew after recovery, tool inventory remains matched, and at least one live Grabowski tool call succeeds against the deployed revision.",
-      "id": "connector-freshness-and-tool-readback"
-    },
-    {
-      "assertion": "A commit-bound rollback to the immediately previous runtime is available and validated before the first effect; if deployment or proof fails, restore the prior runtime without reverting the independently verified PR #478 timer scheduling unless separately shown faulty.",
-      "id": "rollback-proof"
-    },
-    {
-      "assertion": "Deployment identity, preflight, controlled proof, restart decision, timer and service readback, connector freshness, tool readback and rollback sufficiency are recorded as immutable receipts before T058 can become verified.",
-      "id": "evidence-bound-closeout"
+      "assertion": "T058 performs no deployment, service restart, timer replacement, host mutation, connector refresh or live stale-poll proof and grants no break-glass authority to T059.",
+      "id": "no-runtime-effects"
     }
   ],
   "claims": [
     {
       "isolation": "none",
-      "mode": "read",
+      "mode": "exclusive",
       "resource": "repo.grabowski"
-    },
-    {
-      "isolation": "none",
-      "mode": "write",
-      "resource": "host.heim-pc"
     }
   ],
   "depends_on": [
@@ -54,28 +41,28 @@
   ],
   "execution": {
     "approval": {
-      "action_class": "runtime_mutation",
-      "note": "Registration and T057 completion do not authorize deployment or restart. Every live effect requires fresh break-glass approval bound to the exact T057 merge revision, current host state, quiet-window evidence and rollback plan.",
-      "required_level": "break_glass"
+      "action_class": "repository_mutation",
+      "note": "T058 is a separate exclusive merge phase required by Bureau AGENTS.md and Codex review on PR #1060. It may merge only the exact verified T057 handoff; it may not modify or rebase the head and has no runtime authority.",
+      "required_level": "operator"
     },
     "grabowski_resources": [
-      "repo:/home/alex/repos/grabowski",
-      "host:heim-pc"
+      "repo:/home/alex/repos/grabowski"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski"
   },
-  "goal": "After T057 is verified, deploy its exact reviewed merge revision through the canonical commit-bound Grabowski path and prove on the live host that repeatedly stale control-plane polls enter the existing bounded restart loop, while unavailable, missing or invalid metrics remain indeterminate and concrete local failures retain precedence.",
+  "goal": "After T057 is verified, acquire an exclusive Grabowski repository claim and merge exactly its reviewed pull-request head through the canonical guarded merge path without changing, rebasing or redeploying that head. Record the exact resulting merge revision and tree as the sole deployment input for T059.",
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T058",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "metadata": {
     "does_not_establish": [
       "T057 completion",
-      "break-glass approval",
+      "merge readiness",
+      "exclusive claim availability",
+      "successful merge",
       "deployment authority",
-      "quiet-window availability",
-      "successful live proof",
+      "runtime correctness",
       "future connector availability",
       "authority to interrupt foreign work or release foreign leases"
     ],
@@ -88,36 +75,37 @@
       "url": "https://github.com/heimgewebe/grabowski/issues/477"
     },
     "operator_intake": {
-      "candidate_id": "candidate-31c71f5c5df6e9d2a14c73eb",
+      "candidate_id": "candidate-a5371750dcd416da91b2fab9",
       "does_not_establish": [
         "queue_truth",
         "task_readiness",
         "claim_or_dispatch_authority"
       ],
-      "event_created_at": "2026-07-26T16:43:46.657106Z",
-      "event_id": 1237,
-      "request_sha256": "5388c489b17d0499601c5cfa3784c5d1d50483bb9bb4932bfc1c831be6cb48de",
+      "event_created_at": "2026-07-26T17:08:27.419193Z",
+      "event_id": 1238,
+      "request_sha256": "0bddbd528f9a81e45654613c3c5aaf1de71d6a2e5ff4a485127bc0b27407eaf2",
       "schema_version": 1,
       "source": {
         "does_not_establish": [],
         "freshness": "digest-bound",
         "kind": "github-pr-review",
-        "locator": "https://github.com/heimgewebe/bureau/pull/1058#discussion_r3652915153",
-        "observed_at": "2026-07-26T16:43:07Z",
-        "sha256": "55c497535ffd44d374d9fe27984be30f1fcce550805974e16728c72b261529f8"
+        "locator": "https://github.com/heimgewebe/bureau/pull/1060",
+        "observed_at": "2026-07-26T17:07:49Z",
+        "sha256": "8b095691bd9d93067434b0d5c16b4233c21df7957e52045e9c29dea6fa05dd14"
       }
     },
     "predecessor": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T057",
-    "registered_from": "candidate-31c71f5c5df6e9d2a14c73eb event 1237",
+    "registered_from": "candidate-a5371750dcd416da91b2fab9 event 1238",
     "review_correction": {
-      "candidate_id": "candidate-31c71f5c5df6e9d2a14c73eb",
-      "event_id": 1237,
-      "finding": "Repository implementation and live runtime deployment require separate tasks and approval classes.",
-      "source_sha256": "55c497535ffd44d374d9fe27984be30f1fcce550805974e16728c72b261529f8",
-      "superseded_head_sha": "5d4b785be9aada6a2f70eaa8ec920932fa3eb8ea",
-      "superseded_pull_request": 1058
+      "candidate_id": "candidate-a5371750dcd416da91b2fab9",
+      "event_id": 1238,
+      "finding": "Implementation, merge and deployment require three separate authority phases; deployment must pin the exact merge revision rather than a later containing main head.",
+      "reviewed_head_sha": "39ab6ad5359b7305823d353c3187b7f5f2251041",
+      "reviewed_pull_request": 1060,
+      "source_sha256": "8b095691bd9d93067434b0d5c16b4233c21df7957e52045e9c29dea6fa05dd14"
     },
-    "stage": "commit-bound-runtime-deployment-and-live-proof"
+    "stage": "exclusive-guarded-repository-merge",
+    "successor": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T059"
   },
   "priority": {
     "lane": "next",
@@ -127,17 +115,16 @@
     "repository",
     "git",
     "github",
-    "deployment",
-    "systemd",
-    "runtime-observability",
-    "testing",
-    "rollback",
+    "review-evidence",
+    "ci",
+    "merge-guard",
+    "artifact-delivery",
     "grabowski"
   ],
   "rollback": {
-    "strategy": "Redeploy the immediately previous commit-bound Grabowski runtime, restore only T058-owned runtime artifacts, restart only affected Grabowski units through the canonical path, and verify timers, connector snapshot and live tool readback. Preserve PR #478 calendar timer scheduling unless independently disproved."
+    "strategy": "If the merge is later proven wrong, create a separate exclusive repository rollback task bound to the recorded merge commit and revert it through review and guarded merge. T058 itself performs no deployment rollback and never rewrites shared history."
   },
   "schema_version": 1,
   "state": "planned",
-  "title": "Deploy and prove stale-poll tunnel recovery"
+  "title": "Merge reviewed stale-poll hardening exclusively"
 }

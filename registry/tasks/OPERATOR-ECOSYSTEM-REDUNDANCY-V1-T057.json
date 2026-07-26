@@ -21,12 +21,12 @@
       "id": "repository-gates"
     },
     {
-      "assertion": "The reviewed pull-request head is merged through the canonical guarded path; post-merge main contains the reviewed head or an equivalent merge tree, and the final diff, merge commit, CI and review evidence are recorded.",
-      "id": "merge-readback"
+      "assertion": "Publish an exact Grabowski pull-request handoff containing repository, pull request, base and head SHAs, full diff SHA-256, immutable user-visible diff artifact, exact-head self-review, required independent review, required CI and unresolved-thread readback. The handoff is evidence for T058 and is not merge authority.",
+      "id": "reviewed-handoff"
     },
     {
-      "assertion": "T057 performs no deployment, service restart, timer replacement, host mutation, controlled stale-poll injection, connector snapshot refresh or live Grabowski runtime claim; those effects require dependent task T058 with runtime_mutation and break_glass authority.",
-      "id": "no-runtime-effects"
+      "assertion": "T057 performs no merge, rebase, deployment, service restart, timer replacement, host mutation, controlled stale-poll injection, connector snapshot refresh or live Grabowski runtime claim. Merge requires dependent exclusive task T058; runtime effects require T059 with runtime_mutation and break_glass authority.",
+      "id": "no-merge-rebase-runtime-effects"
     }
   ],
   "claims": [
@@ -50,13 +50,16 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski"
   },
-  "goal": "Treat repeatedly stale control-plane poll evidence as an unhealthy tunnel condition that enters Grabowski's existing bounded restart decision path, while unavailable, missing or timestamp-invalid poll evidence remains indeterminate and concrete local health or readiness failures retain precedence. This task changes and verifies repository state only; deployment and live restart-path proof are deferred to T058.",
+  "goal": "Treat repeatedly stale control-plane poll evidence as an unhealthy tunnel condition that enters Grabowski's existing bounded restart decision path, while unavailable, missing or timestamp-invalid poll evidence remains indeterminate and concrete local health or readiness failures retain precedence. Implement, test and publish an exact reviewed pull-request handoff only; guarded merge belongs to T058 and runtime deployment and live proof belong to T059.",
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T057",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "metadata": {
     "does_not_establish": [
       "implementation completion",
+      "reviewed handoff completion",
       "merge readiness",
+      "merge authority",
+      "rebase authority",
       "deployment completion",
       "runtime head update",
       "service restart authority",
@@ -72,6 +75,14 @@
       "source_sha256": "79cb5ba2a7a430515ce5d5a1193c81458f43b482ecf4969414a58b001cd8cbf6",
       "state": "OPEN",
       "url": "https://github.com/heimgewebe/grabowski/issues/477"
+    },
+    "merge_deploy_review_correction": {
+      "candidate_id": "candidate-a5371750dcd416da91b2fab9",
+      "event_id": 1238,
+      "finding": "Implementation, merge and deployment require three separate authority phases; deployment must pin the exact merge revision rather than a later containing main head.",
+      "reviewed_head_sha": "39ab6ad5359b7305823d353c3187b7f5f2251041",
+      "reviewed_pull_request": 1060,
+      "source_sha256": "8b095691bd9d93067434b0d5c16b4233c21df7957e52045e9c29dea6fa05dd14"
     },
     "operator_intake": {
       "candidate_id": "candidate-c497d377398039d80fe81818",
@@ -106,7 +117,8 @@
       "source_sha256": "55c497535ffd44d374d9fe27984be30f1fcce550805974e16728c72b261529f8",
       "superseded_head_sha": "5d4b785be9aada6a2f70eaa8ec920932fa3eb8ea",
       "superseded_pull_request": 1058
-    }
+    },
+    "runtime_followup_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T059"
   },
   "priority": {
     "lane": "now",
@@ -123,7 +135,7 @@
     "grabowski"
   ],
   "rollback": {
-    "strategy": "Revert the exact T057 implementation pull request and keep the currently deployed Grabowski runtime unchanged. Any later deployment rollback belongs to T058 and must restore the immediately previous commit-bound runtime."
+    "strategy": "Discard or revert only the exact T057 implementation branch and pull-request head while keeping Grabowski main and the deployed runtime unchanged. Merge rollback belongs to T058; deployment rollback belongs to T059."
   },
   "schema_version": 1,
   "state": "ready",

@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "state": "planned",
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/bureau",
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.bureau",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.repoground",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "metadata": {
+    "parent_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T010",
+    "registered_at": "2026-07-26T07:29:14+02:00",
+    "source": "RepoGround PR #1103 closeout review",
+    "implementation_merge_commit": "40dd1088a642370c5a7cc0dfd19dbd59e6395a35",
+    "blocked_acceptance": [
+      "pythonista-compatibility",
+      "complexity-performance"
+    ],
+    "scope_rule": "Use an actual supported Pythonista/iPad runtime for native checks and a revision-bound comparable desktop environment for current-head timing and memory. Do not substitute CPython, a desktop simulator or static import analysis for native runtime evidence.",
+    "does_not_establish": [
+      "desktop and GitHub CI parity is native Pythonista parity",
+      "a successful import alone proves report generation",
+      "permission to enable git-backed modes on iOS",
+      "initial-head performance numbers apply unchanged to the final merged implementation",
+      "completion of T010 before all typed native, performance and closeout evidence passes"
+    ]
+  },
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T017",
+  "title": "RepoGround Pythonista-Build nativ und final revisionsgebunden verifizieren",
+  "priority": {
+    "lane": "later",
+    "rank": 13
+  },
+  "goal": "Den in PR #1103 modularisierten Pythonista-Build auf einer echten unterstützten Pythonista-/iPad-Laufzeit revisionsgebunden starten, einen lokalen Report erzeugen, die iOS-Fähigkeitsgrenzen bestätigen, die final gemergte Revision vergleichbar auf Zeit und Speicher messen und T010 über einen reservierten Bureau-Worktree abschließen.",
+  "required_capabilities": [
+    "pythonista",
+    "ios",
+    "runtime-testing",
+    "benchmarking",
+    "repoground",
+    "github",
+    "bureau"
+  ],
+  "acceptance": [
+    {
+      "id": "runtime-identity",
+      "assertion": "Gerät, iOS-Version, Pythonista-Version, bereitgestellter RepoGround-Commit und SHA-256 der ausgeführten Pythonista-Dateien werden vollständig gebunden.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "native-entrypoint",
+      "assertion": "build.py startet nativ aus Pythonista ohne PYTHONPATH, ohne manuelle sys.path-Vorbereitung und ohne ImportError; alle neuen Sibling-Module sind aus dem bereitgestellten Satz ladbar.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "local-report-smoke",
+      "assertion": "Ein lokaler local-current-Scan erzeugt mindestens einen lesbaren Report; Ausgabeweg, Artefaktgröße, SHA-256 und relevante Logzeilen werden festgehalten.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "ios-capability-gates",
+      "assertion": "Explizites pre-pull, local-ff und remote-snapshot erreichen keinen Git-Subprozess; Headless-Anfragen werden früh abgelehnt und die UI degradiert den impliziten Pre-pull mit klarer Meldung.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "dependency-boundary",
+      "assertion": "Der native Lauf benötigt keine neue Drittanbieter-Pflichtabhängigkeit und verwendet ausschließlich den dokumentierten ausgelieferten Pythonista-Dateisatz.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "current-head-performance",
+      "assertion": "Paketimport und direkte Hilfe werden für Basis c91d640bce2b14c4a78a64e83169d56c818fa662 und finalen Merge-Commit 40dd1088a642370c5a7cc0dfd19dbd59e6395a35 unter demselben Environment mehrfach gemessen; Medianzeit und Peak-RSS regressieren nicht materiell oder die Abweichung bleibt als Blocker offen.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "t010-closeout",
+      "assertion": "Ein revisionsgebundener Bureau-Änderungssatz setzt T010 nur nach PASS aller vorigen Kriterien von blocked auf verified, bindet Task-/Plan-Hashes und lässt T004/T014 ausdrücklich offen.",
+      "evidence_type": "object"
+    }
+  ],
+  "depends_on": []
+}

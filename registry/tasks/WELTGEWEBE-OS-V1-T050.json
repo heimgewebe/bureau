@@ -1,0 +1,96 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Für auth.rs, nodes.rs, config.rs, domain_db.rs, accounts.rs, edges.rs, search/worker.rs und map/+page.svelte ist vor Änderungen eine Verantwortungs- und Kopplungskarte mit Tests und Verbrauchern revisionsgebunden vorhanden.",
+      "id": "responsibility-map"
+    },
+    {
+      "assertion": "Der Umbau erfolgt in unabhängigen fachlichen Scheiben; HTTP, Domäne, Abfragen, Mutationen, Persistenz und Legacy-Adapter besitzen klare Modulgrenzen und keine zyklischen Rückkopplungen.",
+      "id": "bounded-slices"
+    },
+    {
+      "assertion": "Neue Produktionsdateien bleiben grundsätzlich unter 500 Zeilen; bestehende fachliche Einheiten werden schrittweise unter 800 Zeilen gebracht oder erhalten eine ausdrücklich begründete Ausnahme.",
+      "id": "size-policy"
+    },
+    {
+      "assertion": "API-Verträge, Sichtbarkeit, Fehlersemantik und UI-Verhalten bleiben durch fokussierte Unit-, Integrations- und E2E-Tests sowie Vergleichsbelege erhalten.",
+      "id": "behavior-preserved"
+    },
+    {
+      "assertion": "Kompilierungs-/Testdauer, Änderungsumfang, Modulkopplung und relevante Laufzeitwerte werden vor und nach jeder Scheibe gemessen; Regressionen blockieren den Merge.",
+      "id": "measured-effect"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T048"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer autorisierte am 26. Juli 2026 die vollständige Auditremediation. Änderungen müssen in kleinen, verhaltenshaltenden PRs mit einem einzigen Writer, messbarer Wirkung und Rückfallpfad erfolgen.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die schnell gewachsenen Kernmodule so zerlegen, dass HTTP, Fachregeln, Queries, Commands, Persistenz, Legacy-Kompatibilität und UI-Orchestrierung unabhängig verständlich, testbar und änderbar werden. Der Umbau darf keine generische Helper-Schicht erzeugen und muss Verhalten revisionsgebunden erhalten.",
+  "id": "WELTGEWEBE-OS-V1-T050",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-510fc05ad7702139f0ba0fd3",
+    "event_id": 1202,
+    "recommended_sequence": "Nach T048; datenpfadkritische Zerlegung mit T049 koordinieren, ohne beide als einen unprüfbaren Groß-PR zu koppeln.",
+    "source_artifact": "weltgewebe-audit-findings-2026-07-26.json",
+    "source_audit": "Weltgewebe-Komplettaudit 2026-07-26",
+    "source_commit": "b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+    "source_finding": "F-003",
+    "source_sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-510fc05ad7702139f0ba0fd3",
+      "event_id": 1202,
+      "event_created_at": "2026-07-26T08:06:03.018265Z",
+      "request_sha256": "f50a966815d527c33e378af139d2029b7f4a2cc7d8fd316e82208933cafc92e0",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator_audit_finding",
+        "locator": "chatgpt-audit:weltgewebe-komplettaudit-2026-07-26#F-003@b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+        "observed_at": "2026-07-26T08:06:03.008738Z",
+        "sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 3
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "rust",
+    "typescript",
+    "svelte",
+    "refactor",
+    "testing",
+    "architecture-review",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "API- und Web-Großmodule entlang fachlicher Grenzen zerlegen"
+}

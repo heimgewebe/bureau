@@ -500,6 +500,17 @@ def _checked_source_sha(value: Any) -> str | None:
     return normalized
 
 
+def _checked_supersedes_event_id(value: Any) -> int | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise OperatorIntakeError(
+            "supersedes-event-id-invalid",
+            "supersedes_event_id must be a positive integer",
+        )
+    return value
+
+
 def _request_sha256(value: dict[str, Any]) -> str:
     return legacy.sha256_json(value)
 
@@ -580,6 +591,7 @@ def candidate_record_request(
         "observed_at",
         "task_id",
         "candidate_id",
+        "supersedes_event_id",
         "note",
         "catalog_validation",
     }
@@ -613,6 +625,7 @@ def candidate_record(
     observed_at: str | None = None,
     task_id: str | None = None,
     candidate_id: str | None = None,
+    supersedes_event_id: int | None = None,
     note: str | None = None,
     catalog_validation: str = "strict",
 ) -> dict[str, Any]:
@@ -632,6 +645,7 @@ def candidate_record(
     )
     checked_sha = _checked_source_sha(source_sha256)
     checked_observed = _checked_text(observed_at, field="observed_at", maximum=80, required=False)
+    checked_supersedes_event_id = _checked_supersedes_event_id(supersedes_event_id)
     checked_note = _checked_text(note, field="note", maximum=2000, required=False)
     request = {
         "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
@@ -648,6 +662,8 @@ def candidate_record(
         "note": checked_note,
         "catalog_validation": catalog_validation,
     }
+    if checked_supersedes_event_id is not None:
+        request["supersedes_event_id"] = checked_supersedes_event_id
     request_sha = _request_sha256(request)
     replayed = _candidate_idempotency_result(store, key=key, request_sha256=request_sha)
     if replayed is not None:
@@ -658,7 +674,11 @@ def candidate_record(
         bound_registry, _ = _canonical_read_registry_snapshot(registry)
 
     generated_observed_at = checked_observed or legacy.utc_now()
-    selected_candidate_id = candidate_id or _candidate_id_for_key(key)
+    selected_candidate_id = (
+        candidate_id
+        if checked_supersedes_event_id is not None
+        else candidate_id or _candidate_id_for_key(key)
+    )
     context = {
         "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
         "idempotency_key": key,
@@ -689,8 +709,11 @@ def candidate_record(
             repo=repo,
             task_id=task_id,
             candidate_id=selected_candidate_id,
-            status="observed",
-            promotion_required=True,
+            supersedes_event_id=checked_supersedes_event_id,
+            status=None if checked_supersedes_event_id is not None else "observed",
+            promotion_required=(
+                None if checked_supersedes_event_id is not None else True
+            ),
             note=checked_note or str(checked_outcome),
             catalog_validation=catalog_validation,
             operator_context=context,
@@ -706,6 +729,7 @@ def candidate_record(
             str(exc),
             details={"catalog_validation": catalog_validation},
         ) from exc
+    recorded_candidate_id = _candidate_identity(recorded)
     return {
         "schema_version": OPERATOR_INTAKE_SCHEMA_VERSION,
         "kind": "bureau_candidate_record_result",
@@ -715,7 +739,7 @@ def candidate_record(
         "ambiguity": False,
         "required_readback": [],
         "idempotent_replay": False,
-        "candidate_id": selected_candidate_id,
+        "candidate_id": recorded_candidate_id,
         "event_id": recorded["event_id"],
         "created_at": recorded["created_at"],
         "request_sha256": request_sha,

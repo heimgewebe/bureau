@@ -1,0 +1,98 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein versionierter Vertrag definiert Eintrittskriterien, Verantwortlichkeiten, Daten-/Traffic-Sequenz, Beobachtungsfenster, Stopbedingungen, Rollback und Abschlusskriterien.",
+      "id": "cutover-contract"
+    },
+    {
+      "assertion": "Funktion, Sicherheit, Datenpersistenz, Backups, Recovery, Latenz und Ressourcenverbrauch sind für beide Pfade unter denselben T048-Szenarien gemessen.",
+      "id": "parity-proof"
+    },
+    {
+      "assertion": "Deployment und Aktivierung sind an exakte Image-/Quell-Digests gebunden; eine fehlgeschlagene oder mehrdeutige Wirkung gilt bis zum Readback als nicht erfolgt.",
+      "id": "revision-bound-activation"
+    },
+    {
+      "assertion": "Nach erfolgreichem Beobachtungsfenster werden überholte Compose-, Caddy-, Workflow- und Dokumentationspfade entfernt oder als zeitlich begrenzter Recovery-Artefakt archiviert.",
+      "id": "retirement"
+    },
+    {
+      "assertion": "Ein revisionsgebundener Recovery-Test beweist die Rückkehr zum letzten guten Zustand ohne Datenverlust und ohne dauerhafte doppelte Pflege.",
+      "id": "rollback-drill"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T048"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Vom Nutzer am 26. Juli 2026 autorisierte Auditremediation. Produktionswirkungen benötigen exakte Quellrevision, grüne Gates, Recovery-Beleg und getrennte Aktivierungsentscheidung.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Für den aktuellen Compose/Caddy-Betrieb und das Kubernetes-Ziel einen revisionsgebundenen Cutover mit Eintrittskriterien, Rollbackvertrag und Stilllegung überholter Parallelpfade definieren und umsetzen. Recovery bleibt möglich, ohne dauerhaft zwei gleichrangige Betriebswahrheiten zu pflegen.",
+  "id": "WELTGEWEBE-OS-V1-T056",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-a4507faeb5bfd927c15a6f48",
+    "coordination": "Offene Kubernetes-PRs und aktive OCI-Proof-Arbeit vor jeder Änderung live prüfen; keine Überschneidung oder Force-Übernahme.",
+    "event_id": 1206,
+    "source_artifact": "weltgewebe-audit-findings-2026-07-26.json",
+    "source_audit": "Weltgewebe-Komplettaudit 2026-07-26",
+    "source_commit": "b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+    "source_finding": "F-007",
+    "source_sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-a4507faeb5bfd927c15a6f48",
+      "event_id": 1206,
+      "event_created_at": "2026-07-26T08:08:44.242362Z",
+      "request_sha256": "a792bad6dbe44b6f7a1f98af2c5bf236388d0d340fca9702a0751f1e01f27c06",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator_audit_finding",
+        "locator": "chatgpt-audit:weltgewebe-komplettaudit-2026-07-26#F-007@b043a86dbf4e0e0868feb5177745a0f32a3264c0",
+        "observed_at": "2026-07-26T08:08:44.232467Z",
+        "sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 6
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "docker-compose",
+    "kubernetes",
+    "caddy",
+    "deployment",
+    "observability",
+    "recovery",
+    "security",
+    "performance",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Compose-Kubernetes-Doppelpfad mit messbarem Cutover beenden"
+}

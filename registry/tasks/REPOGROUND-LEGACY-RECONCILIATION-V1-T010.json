@@ -30,7 +30,7 @@
     ],
     "blocked_at": "2026-07-26T07:29:14+02:00",
     "block_reason": "Die Implementierung ist gemergt und vollständig CI-grün, aber der RepoGround-Proof schließt natives Pythonista-Loader-Verhalten ausdrücklich aus. Acceptance pythonista-compatibility ist daher noch nicht vollständig belegt.",
-    "next_action": "REPOGROUND-LEGACY-RECONCILIATION-V1-T016 auf einer echten unterstützten Pythonista-/iPad-Runtime ausführen und nur bei revisionsgebundenem PASS T010 verified setzen.",
+    "next_action": "REPOGROUND-LEGACY-RECONCILIATION-V1-T017 auf einer echten unterstützten Pythonista-/iPad-Runtime ausführen und nur bei revisionsgebundenem PASS T010 verified setzen.",
     "implementation_status": "merged_awaiting_native_runtime_verification",
     "implementation": {
       "repository": "heimgewebe/repoground",
@@ -103,6 +103,6 @@
     }
   ],
   "depends_on": [
-    "REPOGROUND-LEGACY-RECONCILIATION-V1-T016"
+    "REPOGROUND-LEGACY-RECONCILIATION-V1-T017"
   ]
 }

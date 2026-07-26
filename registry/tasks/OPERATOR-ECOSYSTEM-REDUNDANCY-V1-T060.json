@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T060",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Heimserver PR #44 revisionsgebunden mergen",
+  "state": "blocked",
+  "goal": "Merge Heimserver PR #44 ausschließlich nach tatsächlich ausgeführter grüner GitHub-CI auf dem exakten bereits geprüften Head 7e7d01ec610fbe872917b1ac65916103fed9fbc9 und belege anschließend den neuen main-Stand; ein Job ohne Schritte oder ein Billing-Fehler ist keine grüne CI.",
+  "priority": {
+    "lane": "next",
+    "rank": 83
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heimserver",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heimserver"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.heimserver",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020"
+  ],
+  "acceptance": [
+    {
+      "id": "exact-pr-identity",
+      "assertion": "PR #44 base, head, changed paths and full diff are freshly read and match the reviewed revision."
+    },
+    {
+      "id": "ci-actually-executed",
+      "assertion": "Every required GitHub check completes successfully on the exact head and required jobs contain executed steps; billing or spending-limit launch failures block."
+    },
+    {
+      "id": "review-and-diff-bound",
+      "assertion": "All review findings are resolved and the complete canonical GitHub diff is delivered as a hash-bound UTF-8 text artifact before merge."
+    },
+    {
+      "id": "atomic-merge",
+      "assertion": "The merge is dispatched with exact head matching and independent merge leases; no branch deletion or unrelated effect is implied."
+    },
+    {
+      "id": "post-merge-readback",
+      "assertion": "GitHub reports the PR merged from the expected head and main contains the verified merge commit."
+    }
+  ],
+  "metadata": {
+    "blocker": {
+      "kind": "github_billing",
+      "run_id": 30210822388,
+      "attempt": 2,
+      "job_id": 89836948598,
+      "observed_at": "2026-07-26T20:15:50Z",
+      "message": "The job was not started because recent account payments have failed or your spending limit needs to be increased."
+    },
+    "does_not_establish": [
+      "billing_resolution",
+      "green_ci",
+      "merge_readiness",
+      "merge_authority"
+    ]
+  }
+}

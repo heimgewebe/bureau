@@ -4,7 +4,7 @@
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Heimserver-Retirement terminal abschließen",
   "state": "blocked",
-  "goal": "Aktueller Livebefund: Infra PR #131 ist gemergt, Grabowskis aktive Fleet enthält keinen Heimserver mehr und Systemkatalog PR #149 veröffentlicht den retired-Lifecycle sowie aktuelle Primärquellenbindungen. Offen bleiben der revisionsgebundene Abschluss von Heimserver PR #44 auf Head 7e7d01ec610fbe872917b1ac65916103fed9fbc9 nach tatsächlich ausgeführter grüner GitHub-CI, die eigentumsgebundene Übernahme und Veröffentlichung des Leitstand-Lifecycle-Consumers sowie der abschließende Runtime-Readback. Historische Runtimebelege bleiben sichtbar, aber nicht autoritativ; Lifecycle und technische Gesundheit dürfen im Leitstand nicht vermischt werden.",
+  "goal": "Verifiziere nach den getrennten Ausführungstasks T060, T061 und T062 den terminalen Heimserver-Retirement-Zustand: kein aktiver Fleet-, Host-, Rollen-, Expositions- oder Ausführungspfad; Heimserver-Repository und Systemkatalog historisch korrekt gebunden; Leitstand-Lifecycle-Consumer produktiv, ohne Retirement als aktuellen Gesundheitsfehler darzustellen.",
   "priority": {
     "lane": "next",
     "rank": 82
@@ -12,29 +12,39 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/heimserver",
+    "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
+      "repo:/home/alex/repos/bureau",
       "repo:/home/alex/repos/heimserver",
       "repo:/home/alex/repos/leitstand",
       "repo:/home/alex/repos/systemkatalog",
-      "path:/home/alex/.config/grabowski/fleet.json",
       "host:heim-pc"
     ]
   },
   "claims": [
     {
-      "resource": "repo.heimserver",
+      "resource": "repo.bureau",
       "mode": "write",
       "isolation": "worktree"
+    },
+    {
+      "resource": "repo.heimserver",
+      "mode": "read",
+      "isolation": "none"
     },
     {
       "resource": "repo.leitstand",
-      "mode": "write",
-      "isolation": "worktree"
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "read",
+      "isolation": "none"
     },
     {
       "resource": "host.heim-pc",
-      "mode": "write",
+      "mode": "read",
       "isolation": "none"
     }
   ],
@@ -44,7 +54,10 @@
     "grabowski"
   ],
   "depends_on": [
-    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020"
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020",
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T060",
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T062"
   ],
   "acceptance": [
     {
@@ -52,28 +65,24 @@
       "assertion": "Task metadata preserves the originating live-register event id and source."
     },
     {
-      "id": "reviewed-before-effect",
-      "assertion": "Any repository, merge or deployment effect remains review-before-effect and does not follow from the live event alone."
+      "id": "separate-effects-verified",
+      "assertion": "T060, T061 and T062 are each verified with their own exclusive resources, frozen revisions, review evidence and receipts before T032 performs closeout."
     },
     {
       "id": "infra-and-fleet-converged",
       "assertion": "Infra PR #131 is merged and the current Grabowski Fleet contains no active Heimserver target."
     },
     {
-      "id": "heimserver-pr-terminal",
-      "assertion": "Heimserver PR #44 is merged only after green GitHub-CI executed on the exact reviewed head and the post-merge main identity is read back."
+      "id": "repository-and-catalog-converged",
+      "assertion": "The merged Heimserver repository contract and Systemkatalog retired lifecycle agree while historical evidence remains explicitly non-authoritative."
     },
     {
-      "id": "catalog-lifecycle-published",
-      "assertion": "Systemkatalog publishes Heimserver as retired with current source bindings while historical evidence remains explicitly non-authoritative."
+      "id": "consumer-runtime-converged",
+      "assertion": "The deployed Leitstand consumer displays stable lifecycle separately from technical freshness and runtime health, and a live readback shows Heimserver as retired rather than unhealthy."
     },
     {
-      "id": "leitstand-consumer-owned",
-      "assertion": "The Leitstand lifecycle consumer is taken over only with explicit ownership evidence, reviewed on an exact diff, merged, deployed and verified without presenting retirement as a current health failure."
-    },
-    {
-      "id": "runtime-closeout",
-      "assertion": "Fleet, SSH targets, runbooks, catalog and the deployed Leitstand agree that Heimserver has no active role, exposure or execution authority."
+      "id": "terminal-registry-closeout",
+      "assertion": "Only after all dependency and runtime evidence is current may T032 be changed from blocked to verified in an independent Bureau closeout change."
     }
   ],
   "metadata": {
@@ -108,9 +117,15 @@
       "queue_truth",
       "claim_authority",
       "dispatch_authority",
+      "dependency_verification",
       "merge_readiness",
       "deployment_readiness",
-      "leitstand_checkout_ownership"
+      "terminal_closeout"
+    ],
+    "split_execution_tasks": [
+      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T060",
+      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
+      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T062"
     ]
   }
 }

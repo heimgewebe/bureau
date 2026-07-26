@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Leitstand-Lifecycle-Consumer implementieren und mergen",
+  "state": "ready",
+  "goal": "Implementiere und merge einen read-only Leitstand-Consumer für die stabilen Systemkatalog-Lifecycle-Zustände. Trenne deklarierte Semantik, Artefakt-Freshness und Runtime-Gesundheit sichtbar und fail-closed; Retirement darf nicht als aktueller Dienstfehler erscheinen. Diese Aufgabe deployt nicht.",
+  "priority": {
+    "lane": "next",
+    "rank": 84
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand",
+      "repo:/home/alex/repos/systemkatalog"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "clean-isolated-implementation",
+      "assertion": "Implementation occurs in an independently owned clean worktree; the unowned dirty predecessor checkout is not mutated."
+    },
+    {
+      "id": "strict-source-contract",
+      "assertion": "Lifecycle states, exact valid YYYY-MM-DD dates, unique node identities and non-empty unique evidence references are validated fail-closed from the hash-bound registry_nodes artifact."
+    },
+    {
+      "id": "truth-axes-separated",
+      "assertion": "UI and API distinguish technical artifact alignment, declared stable lifecycle semantics and runtime health; no axis establishes another."
+    },
+    {
+      "id": "read-only-exploration",
+      "assertion": "Users can inspect and filter lifecycle states while all routes remain read-only and source links remain commit-bound."
+    },
+    {
+      "id": "review-ci-diff-merge",
+      "assertion": "Focused and full checks, independent review, canonical diff delivery and exact-head merge each pass with separate receipts."
+    },
+    {
+      "id": "no-deployment",
+      "assertion": "T061 performs no runtime deployment or production cutover."
+    }
+  ],
+  "metadata": {
+    "implementation_owner": "operator:leitstand-lifecycle-consumer-v2-20260726",
+    "base_sha": "a85c14d0df83da61c68e43fe814a19d483f3f6f2",
+    "does_not_establish": [
+      "deployment_readiness",
+      "deployment_authority",
+      "runtime_health",
+      "semantic_source_authority"
+    ]
+  }
+}

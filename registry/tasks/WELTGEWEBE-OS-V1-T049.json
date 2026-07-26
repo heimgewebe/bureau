@@ -1,0 +1,118 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Auf einem exakten aktuellen Weltgewebe-Head werden Chunk-Zusammensetzung, Importgraph, minifizierte und gzip-komprimierte Größe, Routenanteile, Cachegrenzen und reale Ladepfade reproduzierbar inventarisiert; der PR-#1582-Wert von 803,48 kB beziehungsweise 218,12 kB dient nur als historischer Ausgangshinweis.",
+      "id": "revision-bound-baseline"
+    },
+    {
+      "assertion": "Jede vorgeschlagene Trennlinie benennt konkrete Module, Aufrufzeitpunkt, Nutzerreise und erwartete Wirkung; pauschale manualChunks-Regeln oder kosmetische Warnungsunterdrückung ohne reale Nutzenaussage sind ausgeschlossen.",
+      "id": "cause-before-split"
+    },
+    {
+      "assertion": "Vorher-Nachher-Läufe belegen für dokumentierte Mobil- und Desktopprofile mindestens Chunkgrößen, übertragene Bytes, Zeit bis zur benutzbaren Karte, relevante Navigation und Cache-Wiederverwendung; eine Änderung wird nur übernommen, wenn der gewichtete Nutzen die zusätzliche Request-, Komplexitäts- und Wartungslast übersteigt.",
+      "id": "measured-improvement"
+    },
+    {
+      "assertion": "Karte, Kontextpanel, Navigation, Authentifizierung, dynamische Importe, Fehlerzustände, Service-Worker- oder Offlinepfade und Wiederanlauf funktionieren nach der Aufteilung unverändert oder nachweislich besser; Ladefehler degradieren kontrolliert.",
+      "id": "behavior-and-offline-integrity"
+    },
+    {
+      "assertion": "Die kanonischen Performanceverträge aus WELTGEWEBE-OS-V1-T048 werden genutzt oder zuerst abgeschlossen; neue Grenzwerte sind metrisch begründet, revisionsgebunden und enthalten einen künstlichen Negativfall.",
+      "id": "budget-and-regression-gates"
+    },
+    {
+      "assertion": "Vor Merge liegen vollständiger Diff, exakte Head- und Diffbindung, Build-, Unit-, Browser-, Größen- und Cachebelege, unabhängiger Review und grüne Pflichtchecks vor; unbelegte Produktionswirkung wird nicht behauptet.",
+      "id": "proof-and-release"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T048"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die dauerhafte Nutzerregel verlangt, alle sinnvollen nicht unmittelbar behobenen PR-Befunde als Bureau-Folgetask zu registrieren. Die Registrierung autorisiert keine unmittelbare Implementierung; diese bleibt an Live-Baseline, isolierten Worktree, Review, Tests und CI gebunden.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den auf Weltgewebe-PR #1582 reproduzierten großen Client-Chunk ursachenbezogen zerlegen und nur solche Code-Splitting-, Import- oder Abhängigkeitsänderungen übernehmen, die den realen Start-, Karten- und Navigationspfad messbar verbessern, ohne Cacheeffizienz, Offlineverhalten, Interaktion oder Wartbarkeit zu verschlechtern.",
+  "id": "WELTGEWEBE-OS-V1-T049",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-43a6f8c0c340153e851509c6",
+    "deduplication": "Bureau-Assessment: promote; keine exakte Dublette. Ähnliche ältere Kandidaten waren ungebunden oder beleglos. T048 liefert den Messvertrag, T049 besitzt die davon abhängige konkrete Optimierungsentscheidung.",
+    "does_not_establish": [
+      "automatic implementation",
+      "task readiness",
+      "queue truth",
+      "claim or dispatch authority",
+      "guaranteed bundle-size reduction",
+      "production performance improvement"
+    ],
+    "event_id": 1214,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-43a6f8c0c340153e851509c6",
+      "event_id": 1214,
+      "event_created_at": "2026-07-26T08:39:54.646121Z",
+      "request_sha256": "57ff4e1e1ea796db08fc620969483e796425531dbd7ec606156e13e4cccfc037",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "pull-request-diff",
+        "locator": "github:heimgewebe/weltgewebe#1582@352b410fc151521957ac389f750674d5631dc97b",
+        "observed_at": "2026-07-26T08:30:00Z",
+        "sha256": "1d39b66eb6b2e4c48424194a5648f1dc23e9c526329142ffede2d7125a09b8bd"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "proposal_rebased_from": "9c69db6b190eb604a230ce7256070a70b3f4ff7ffc6a7d1ec082ba8b880d56be",
+    "registered_at": "2026-07-26",
+    "registry_refresh_reason": "Der erste geprüfte Vorschlag wurde vor jedem Publikationseffekt durch Registry-Drift fail-closed gestoppt und auf dem danach autoritativ gelesenen Bureau-main neu erzeugt.",
+    "source": "operator_followup_from_weltgewebe_pr_1582",
+    "source_diff_sha256": "1d39b66eb6b2e4c48424194a5648f1dc23e9c526329142ffede2d7125a09b8bd",
+    "source_head": "352b410fc151521957ac389f750674d5631dc97b",
+    "source_pr": "heimgewebe/weltgewebe#1582"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 49
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "svelte",
+    "typescript",
+    "javascript",
+    "vite",
+    "performance",
+    "browser-e2e",
+    "ci",
+    "observability",
+    "bureau",
+    "grabowski"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "note": "Vor jeder Änderung müssen der aktuelle Buildgraph, Routenbudgets, Browser-Messwerte, Service-Worker-Grenzen und die Umsetzung von T048 live geprüft werden; RepoGround ergänzt nur die Navigations- und Aufrufbeziehungen.",
+    "skip_reason": "live_first_primary",
+    "task_profile": "repo_change"
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Großen Web-Client-Chunk messungsgebunden entlasten"
+}

@@ -2,9 +2,9 @@
   "schema_version": 1,
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T032",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
-  "title": "Heimserver aus aktiver Fleet- und Infrastrukturwahrheit schließen",
+  "title": "Heimserver-Retirement terminal abschließen",
   "state": "blocked",
-  "goal": "Livebefund: Heimserver ist in Grabowskis Fleet weiterhin aktiviert, der SSH-Readback endet jedoch mit No route to host. Infra PR #131 enthält bereits die lokal validierte Entfernung aus aktiver Geräte-, Rollen- und Expositionswahrheit, ist aber durch externe CI-Voraussetzungen blockiert. Aufgabe: PR und Blocker evidenzgebunden abschließen, danach Fleet, SSH-Ziele, Cockpit-Einstiege und Runbooks konsistent migrieren; historische Runtimebelege bleiben nichtautoritativ erhalten.",
+  "goal": "Aktueller Livebefund: Infra PR #131 ist gemergt, Grabowskis aktive Fleet enthält keinen Heimserver mehr und Systemkatalog PR #149 veröffentlicht den retired-Lifecycle sowie aktuelle Primärquellenbindungen. Offen bleiben der revisionsgebundene Abschluss von Heimserver PR #44 auf Head 7e7d01ec610fbe872917b1ac65916103fed9fbc9 nach tatsächlich ausgeführter grüner GitHub-CI, die eigentumsgebundene Übernahme und Veröffentlichung des Leitstand-Lifecycle-Consumers sowie der abschließende Runtime-Readback. Historische Runtimebelege bleiben sichtbar, aber nicht autoritativ; Lifecycle und technische Gesundheit dürfen im Leitstand nicht vermischt werden.",
   "priority": {
     "lane": "next",
     "rank": 82
@@ -12,17 +12,23 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/infra",
+    "working_repository": "/home/alex/repos/heimserver",
     "grabowski_resources": [
-      "repo:/home/alex/repos/infra",
+      "repo:/home/alex/repos/heimserver",
+      "repo:/home/alex/repos/leitstand",
+      "repo:/home/alex/repos/systemkatalog",
       "path:/home/alex/.config/grabowski/fleet.json",
-      "host:heim-pc",
-      "host:heimserver"
+      "host:heim-pc"
     ]
   },
   "claims": [
     {
-      "resource": "repo.infra",
+      "resource": "repo.heimserver",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.leitstand",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -47,15 +53,27 @@
     },
     {
       "id": "reviewed-before-effect",
-      "assertion": "Any repository effect remains review-before-effect and does not follow from the live event alone."
+      "assertion": "Any repository, merge or deployment effect remains review-before-effect and does not follow from the live event alone."
     },
     {
-      "id": "infra-pr-bound",
-      "assertion": "Infra PR #131 and its external CI blocker are re-read before mutation."
+      "id": "infra-and-fleet-converged",
+      "assertion": "Infra PR #131 is merged and the current Grabowski Fleet contains no active Heimserver target."
     },
     {
-      "id": "fleet-convergence",
-      "assertion": "Fleet, SSH targets, runbooks and catalog agree after retirement."
+      "id": "heimserver-pr-terminal",
+      "assertion": "Heimserver PR #44 is merged only after green GitHub-CI executed on the exact reviewed head and the post-merge main identity is read back."
+    },
+    {
+      "id": "catalog-lifecycle-published",
+      "assertion": "Systemkatalog publishes Heimserver as retired with current source bindings while historical evidence remains explicitly non-authoritative."
+    },
+    {
+      "id": "leitstand-consumer-owned",
+      "assertion": "The Leitstand lifecycle consumer is taken over only with explicit ownership evidence, reviewed on an exact diff, merged, deployed and verified without presenting retirement as a current health failure."
+    },
+    {
+      "id": "runtime-closeout",
+      "assertion": "Fleet, SSH targets, runbooks, catalog and the deployed Leitstand agree that Heimserver has no active role, exposure or execution authority."
     }
   ],
   "metadata": {
@@ -65,12 +83,34 @@
     "live_register_created_at": "2026-07-19T03:47:26.267079Z",
     "live_register_source": "chatgpt-operator-redundancy-20260719",
     "promotion_required_from_event": true,
+    "last_reconciled_at": "2026-07-26T19:40:00Z",
+    "live_evidence": {
+      "infra_pr": 131,
+      "infra_merge_commit": "97785f2e5a9f8faced5f7a96fd92d947d867465d",
+      "systemkatalog_pr": 149,
+      "systemkatalog_merge_commit": "d7c71cc1f51a3c319597748cd33392fab9305950",
+      "heimserver_pr": 44,
+      "heimserver_expected_head": "7e7d01ec610fbe872917b1ac65916103fed9fbc9"
+    },
+    "blockers": [
+      {
+        "id": "heimserver-github-ci-not-executed",
+        "kind": "external_ci",
+        "detail": "The repository-contracts job for the exact Heimserver head failed before creating any steps; merge remains blocked until an actual green run exists."
+      },
+      {
+        "id": "leitstand-consumer-ownership-missing",
+        "kind": "ownership",
+        "detail": "The dirty ecosystem-lifecycle-freshness-v1 checkout has no current lease, task, process, retention or binding; read-only inspection does not authorize takeover."
+      }
+    ],
     "does_not_establish": [
-      "registry_task_truth",
       "queue_truth",
       "claim_authority",
       "dispatch_authority",
-      "merge_readiness"
+      "merge_readiness",
+      "deployment_readiness",
+      "leitstand_checkout_ownership"
     ]
   }
 }

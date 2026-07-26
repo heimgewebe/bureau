@@ -96,7 +96,7 @@
     "source_context": "Kubernetes-Restplan nach Referenzplattform-, HA- und Proof-Lifecycle-Ausbau",
     "candidate_id": "candidate-a4507faeb5bfd927c15a6f48",
     "deduplication": "Bureau-PR #1048 wurde nach Codex-P1 geschlossen: Der vorgeschlagene T056 duplizierte T044 und hätte dessen runtime_mutation-Grenze unterlaufen. F-007 wird deshalb in T044 absorbiert.",
-    "event_id": 1235,
+    "event_id": 1240,
     "source_artifact": "weltgewebe-audit-findings-2026-07-26.json",
     "source_audit": "Weltgewebe-Komplettaudit 2026-07-26",
     "source_commit": "b043a86dbf4e0e0868feb5177745a0f32a3264c0",
@@ -105,23 +105,21 @@
     "operator_intake": {
       "schema_version": 1,
       "candidate_id": "candidate-a4507faeb5bfd927c15a6f48",
-      "event_id": 1235,
-      "event_created_at": "2026-07-26T16:31:13.869575Z",
-      "request_sha256": "6fe7332bcf7a4f05de280833c4ba5d8c37a617d20dbd044e41b0d55303245fcc",
-      "supersedes_event_id": 1206,
+      "event_id": 1240,
+      "event_created_at": "2026-07-26T18:03:14.121240Z",
+      "request_sha256": "be80410bc538eb28cd06d7d439d29c81cc69b9f0fa45532862cdbfb0aa5cce14",
       "source": {
         "does_not_establish": [],
         "freshness": "digest-bound",
         "kind": "operator_audit_finding",
         "locator": "chatgpt-audit:weltgewebe-komplettaudit-2026-07-26#F-007@b043a86dbf4e0e0868feb5177745a0f32a3264c0",
-        "observed_at": "2026-07-26T08:08:44.232467Z",
+        "observed_at": "2026-07-26T18:03:14.110862Z",
         "sha256": "4c6c4a93df7be5d62d8a28ed7b8a43d9c7c62e2eb8150c001b81ee59f9d58bad"
       },
       "does_not_establish": [
         "queue_truth",
         "task_readiness",
-        "claim_or_dispatch_authority",
-        "permission for immediate production mutation"
+        "claim_or_dispatch_authority"
       ]
     }
   },

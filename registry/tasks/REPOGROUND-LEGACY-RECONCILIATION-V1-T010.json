@@ -26,12 +26,13 @@
       "Desktop-Tests beweisen keine vollständige iPad-Runtime-Parität",
       "Modularisierung autorisiert keine neue Abhängigkeit",
       "CPython-Direktskriptausführung beweist keinen nativen Pythonista-Loader-Start",
-      "der gemergte Refactor allein erfüllt nicht die Pythonista-/iPad-Acceptance"
+      "Performancewerte des initialen Extraktions-Heads beweisen keine Performance des finalen Merge-Commits",
+      "der gemergte Refactor allein erfüllt nicht alle T010-Acceptance-Kriterien"
     ],
     "blocked_at": "2026-07-26T07:29:14+02:00",
-    "block_reason": "Die Implementierung ist gemergt und vollständig CI-grün, aber der RepoGround-Proof schließt natives Pythonista-Loader-Verhalten ausdrücklich aus. Acceptance pythonista-compatibility ist daher noch nicht vollständig belegt.",
-    "next_action": "REPOGROUND-LEGACY-RECONCILIATION-V1-T017 auf einer echten unterstützten Pythonista-/iPad-Runtime ausführen und nur bei revisionsgebundenem PASS T010 verified setzen.",
-    "implementation_status": "merged_awaiting_native_runtime_verification",
+    "block_reason": "Die Implementierung ist gemergt und vollständig CI-grün. Es fehlen jedoch zwei Acceptance-Belege: natives Pythonista-/iPad-Loader- und Reportverhalten sowie eine vergleichbare aktuelle Zeit-/Speichermessung des finalen Merge-Commits.",
+    "next_action": "REPOGROUND-LEGACY-RECONCILIATION-V1-T017 vollständig ausführen. T010 darf erst nach typed PASS für native Runtime, aktuelle Performance und den revisionsgebundenen Bureau-Closeout verified werden.",
+    "implementation_status": "merged_awaiting_native_runtime_and_current_head_performance_verification",
     "implementation": {
       "repository": "heimgewebe/repoground",
       "pull_request": 1103,
@@ -56,7 +57,7 @@
       "lint_and_maintainability": "PASS",
       "codeql": "PASS",
       "contracts_validate": "PASS",
-      "review_threads_open": 0,
+      "review_threads_open_at_repoground_merge": 0,
       "main_readback": "merge commit identical to main"
     },
     "acceptance_status": {
@@ -64,7 +65,7 @@
       "orchestration-slices": "pass",
       "pythonista-compatibility": "blocked_missing_native_runtime_smoke",
       "parity": "pass",
-      "complexity-performance": "pass_with_current_head_performance_nonclaim"
+      "complexity-performance": "blocked_missing_final_merge_performance_measurement"
     }
   },
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T010",

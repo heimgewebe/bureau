@@ -1,0 +1,131 @@
+{
+  "acceptance": [
+    {
+      "assertion": "With otherwise healthy local checks, control-plane-poll-stale yields an unhealthy probe whose reason is control-plane-poll-stale; unavailable, missing or timestamp-invalid poll evidence alone remains indeterminate.",
+      "id": "classification-contract"
+    },
+    {
+      "assertion": "Concrete local health or readiness failures remain unhealthy and are never masked by control-plane metric uncertainty.",
+      "id": "local-failure-precedence"
+    },
+    {
+      "assertion": "Repeated stale polls enter exactly the existing failure-threshold, restart-budget, backoff, jitter and recovery-probe path; no new restart subsystem or mutation authority is added.",
+      "id": "bounded-existing-restart-loop"
+    },
+    {
+      "assertion": "Focused classification and restart-loop tests, full validation on supported Python versions, exact diff-bound self-review and required GitHub CI pass on one exact revision.",
+      "id": "tests-review-ci"
+    },
+    {
+      "assertion": "The reviewed merge revision is deployed through the canonical commit-bound path after live lease and deployment-contention checks; the tunnel timer is active and waiting with a future elapse, controlled stale-poll evidence reaches the existing restart path, connector snapshot and poll freshness renew, and a live Grabowski readback succeeds.",
+      "id": "exact-deployment-host-proof"
+    },
+    {
+      "assertion": "Evidence does not treat unavailable, missing or invalid metrics as restart authority and does not claim future transport availability, client compliance or permission to interrupt foreign work.",
+      "id": "bounded-nonclaims"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "GitHub issue #477 and the live host audit of 2026-07-26 define a bounded core correction. Reviewed implementation, tests, merge and exact-revision deployment are allowed; restart budgets, backoff and foreign work remain protected.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "host:heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Treat repeatedly stale control-plane poll evidence as an unhealthy tunnel condition that enters Grabowski's existing bounded restart loop, while unavailable, missing or timestamp-invalid poll evidence remains indeterminate and concrete local health or readiness failures retain precedence.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T057",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation completion",
+      "merge readiness",
+      "deployment completion",
+      "runtime head updated from 24b127d2d44d8b5d283aa0dcf5e6a934b873888e",
+      "future connector availability",
+      "authority to interrupt foreign work or release foreign leases"
+    ],
+    "github_issue": {
+      "number": 477,
+      "observed_at": "2026-07-26T16:06:40Z",
+      "repository": "heimgewebe/grabowski",
+      "source_sha256": "79cb5ba2a7a430515ce5d5a1193c81458f43b482ecf4969414a58b001cd8cbf6",
+      "state": "OPEN",
+      "url": "https://github.com/heimgewebe/grabowski/issues/477"
+    },
+    "host_recovery_evidence": {
+      "backup_dir": "/home/alex/.local/state/grabowski/recovery/watchdog-timers-20260726T155808Z",
+      "connector_snapshot_receipt_sha256": "8f756c4bd94b396934616a14d5d130572fe3b20a06f8c54c7fee06a972399206",
+      "operator_timer_sha256": "873c7c3a64fd628980e9b1ba4beffad761f97b8b5d9808c10bf5bfb763cc6fcf",
+      "recovery_receipt_sha256": "4338b8ecec9134927b55a4dae6c686be1e168403e52c61be884cc1ab1735b4cd",
+      "recovery_task_id": "8cd6508772da4df4b0e838b3",
+      "tunnel_timer_sha256": "d418d4afd96e53f05c999be1d47e8f6a5d2955d52f853a6a399863b2b913a5f5",
+      "verification_receipt_sha256": "de86f70ae8a22c6b096e268c01c4dbb6143a940e1561e2804cdc439503b0cdd4",
+      "verification_task_id": "2a3a251bcb48434fa689119c"
+    },
+    "registered_from": "candidate-c497d377398039d80fe81818 event 1229",
+    "relation_to_timer_fix": {
+      "merge_sha": "689b830b712b723d6e05271a77aa360eae925744",
+      "pull_request": 478,
+      "scope": "Independent scheduling fix already installed and verified on the host."
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c497d377398039d80fe81818",
+      "event_id": 1229,
+      "event_created_at": "2026-07-26T16:09:07.744551Z",
+      "request_sha256": "1aa4ec186104fd097afada6b56cb09596fc54617c4683b668f79f23adec8b8c3",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github-issue",
+        "locator": "https://github.com/heimgewebe/grabowski/issues/477",
+        "observed_at": "2026-07-26T16:06:40Z",
+        "sha256": "79cb5ba2a7a430515ce5d5a1193c81458f43b482ecf4969414a58b001cd8cbf6"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 23
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "python",
+    "testing",
+    "systemd"
+  ],
+  "rollback": {
+    "strategy": "Revert the exact core-classification pull request and redeploy the immediately previous commit-bound Grabowski runtime. Keep the independently verified PR #478 calendar-timer scheduling unless it is separately shown faulty, and preserve audit, watchdog and connector receipts as append-only evidence."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Harden stale control-plane poll recovery"
+}

@@ -28,7 +28,9 @@
       "resource": "repo.weltgewebe"
     }
   ],
-  "depends_on": [],
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T052"
+  ],
   "execution": {
     "approval": {
       "action_class": "repository_mutation",

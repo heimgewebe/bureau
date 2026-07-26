@@ -1,0 +1,90 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Terminal failures are classified into stable bounded reason classes with explicit retryability and owner-decision semantics.",
+      "id": "failure-taxonomy"
+    },
+    {
+      "assertion": "Only retry-safe cases with authoritative terminal and lease evidence may be resumed automatically; ambiguous outcomes remain fail-closed.",
+      "id": "safe-recovery"
+    },
+    {
+      "assertion": "Duplicate, superseded and already-satisfied attention records converge idempotently without deleting historical evidence.",
+      "id": "attention-convergence"
+    },
+    {
+      "assertion": "Obligations close only when exact task, outcome receipt and current lifecycle truth agree.",
+      "id": "closeout-binding"
+    },
+    {
+      "assertion": "Adversarial tests cover stale processes, unknown outcomes, retry exhaustion, duplicate obligations, evidence drift and idempotent replay.",
+      "id": "tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRIP-ROADMAP-V1-T018",
+    "GRIP-ROADMAP-V1-T021"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Implement bounded convergence logic without silently closing unresolved operator decisions or weakening task evidence.",
+      "required_level": "reviewed_plan"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Introduce a deterministic convergence layer that classifies terminal task outcomes, retries only verified retry-safe failures, supersedes duplicate or obsolete attention records, and closes obligations only from authoritative evidence.",
+  "id": "GRIP-ROADMAP-V1-T023",
+  "initiative": "GRIP-ROADMAP-V1",
+  "metadata": {
+    "reason": "Capability growth is currently limited by incomplete recovery and attention convergence rather than missing read surfaces.",
+    "source_candidate": "candidate-768825407c8cc6d2c0a82817",
+    "source_event_id": 1168,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-768825407c8cc6d2c0a82817",
+      "event_id": 1168,
+      "event_created_at": "2026-07-25T11:09:32.262590Z",
+      "request_sha256": "4cc6853d3a07db135e5c11572527c8481f74bda397b024e94d2f1081e8022687",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator-analysis",
+        "locator": "chatgpt-project-thread:grabowski:2026-07-25-action-execution-analysis",
+        "observed_at": "2026-07-25T12:45:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 23
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Converge terminal tasks and operator attention"
+}

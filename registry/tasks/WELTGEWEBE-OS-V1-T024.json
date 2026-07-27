@@ -70,29 +70,30 @@
       "pr_diff_sha256": "25a4ac55bc45235310f0f02a503f13faddab75ddf8039bc78c6dbc4e2e3943ae",
       "pr_diff_bytes": 135327,
       "current_main": "d3534a716ddb051b80f439f39a79a67efe313e0e",
-      "current_main_descends_from_merge": true,
-      "production_commit": "d3534a716ddb051b80f439f39a79a67efe313e0e",
-      "production_build_timestamp": "2026-07-28T00:14:13+02:00"
+      "current_main_descends_from_merge": true
+    },
+    "test_evidence": {
+      "path": "docs/evidence/WELTGEWEBE-OS-V1-T024-session-tests.json",
+      "sha256": "cc653ddacda07b17b2a254ed9fd5f7d8ccef446231836edf3c8dc3e28b81bf0b"
     },
     "validation": [
-      "PR #1548 merged after green Rust, PostgreSQL session persistence, browser session persistence, required merge gate and final Review evidence gate checks.",
-      "Fresh exact-main validation on d3534a716ddb051b80f439f39a79a67efe313e0e: cargo test --manifest-path apps/api/Cargo.toml --lib session -- --nocapture passed 19 tests with 0 failures.",
-      "The fresh test receipt is d029337e2534ef26973d62acad0b568b4799b3f5083833d1edf2dcd9948fa735.",
-      "Production /api/version reports d3534a716ddb051b80f439f39a79a67efe313e0e and /api/health/ready returns HTTP 200."
+      "PR #1548 merged after successful final Rust, PostgreSQL session persistence, browser session persistence, required merge gate and Review evidence gate checks.",
+      "The commit-bound test evidence records 19 passed tests, 0 failures, the exact command, Grabowski task and unit identities, lifecycle receipt, journal digest and the acceptance-relevant test names."
     ],
     "verified_acceptance": {
       "typed-startup-validation": "SessionLifetime::from_env returns typed Empty, Invalid, OutOfRange and NonUnicode errors; run() converts them into a controlled startup configuration error before constructing either session backend.",
       "valid-boundary-tests": "Current-main unit tests accept the documented minimum and maximum, reject values outside both bounds and verify that a non-integer environment value produces a controlled startup error.",
       "single-config-truth": "run() parses SessionLifetime exactly once and injects the same value into SessionBackend::new_in_memory_with_lifetime or DbSessionStore::with_lifetime."
     },
-    "outcome": "Implemented and deployed through Weltgewebe PR #1548. Current main and production retain the typed startup validation, bounded TTL tests and single validated lifetime shared by both session backends.",
+    "outcome": "Implemented through Weltgewebe PR #1548. Current main retains the typed startup validation, bounded TTL tests and single validated lifetime shared by both session backends.",
     "does_not_establish": [
+      "production deployment identity",
       "that every unrelated authentication configuration value is centrally typed",
       "that a future commit cannot regress the contract without the existing tests failing",
       "that production currently uses a non-default session TTL"
     ],
     "verification": {
-      "task_sha256": "06dfd903622bff235ed90a43fbb46fd8fc9c0dee1a6704a2533ab6d8048fe168",
+      "task_sha256": "3a7c87a9a1c63e909a365240843156d310213adc0f7950fc3b78350d1e17cc3e",
       "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65"
     }
   },

@@ -133,6 +133,8 @@
         "final_review_comment_id": 5085560083
       },
       "does_not_establish": [
+        "green_ci",
+        "review_completeness",
         "pre_merge_open_pr_state",
         "pre_merge_identity_revalidation",
         "captain_dispatch",

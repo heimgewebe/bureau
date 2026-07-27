@@ -60,7 +60,7 @@
     "approval": {
       "action_class": "runtime_mutation",
       "note": "Dieser Task ist ausschließlich für source-identitätsgebundenes Deployment und den begrenzten reversiblen Live-Nachweis zuständig; frische Konflikt- und Recovery-Prüfung ist vor jedem Effekt Pflicht.",
-      "required_level": "operator"
+      "required_level": "break_glass"
     },
     "grabowski_resources": [
       "repo:/home/alex/repos/grabowski",

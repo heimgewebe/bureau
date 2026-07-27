@@ -111,7 +111,6 @@ def test_semantic_duplicate_is_hint_only():
     assert result["semantic_hints"][0]["task_id"] == "EXAMPLE-V1-T002"
 
 
-
 def test_broad_bureau_scope_blocks_registration_preflight() -> None:
     proposed = {
         **task("EXAMPLE-V1-T001"),
@@ -127,7 +126,7 @@ def test_broad_bureau_scope_blocks_registration_preflight() -> None:
     assert result["broad_bureau_scope"]["exception_status"] == "missing"
 
 
-def test_reviewed_repository_wide_exception_allows_preflight() -> None:
+def test_review_gated_repository_wide_exception_allows_preflight() -> None:
     proposed = {
         **task("EXAMPLE-V1-T001"),
         "state": "planned",
@@ -136,11 +135,15 @@ def test_reviewed_repository_wide_exception_allows_preflight() -> None:
             "policy": "review-before-effect",
             "approval": {
                 "action_class": "repository_mutation",
-                "required_level": "reviewed_plan",
+                "required_level": "operator",
             },
             "broad_bureau_scope_exception": {
                 "justification": "One atomic format migration covers the complete repository.",
                 "effect_boundaries": ["all tracked Bureau files"],
+                "approval": {
+                    "action_class": "registry_mutation",
+                    "required_level": "reviewed_plan",
+                },
             },
         },
         "claims": [
@@ -150,8 +153,10 @@ def test_reviewed_repository_wide_exception_allows_preflight() -> None:
     result = evaluate(proposed_task=proposed)
     assert result["decision"] == "allow"
     assert result["broad_bureau_scope"]["exception_status"] == (
-        "reviewed-repository-wide-exception"
+        "review-gated-repository-wide-exception"
     )
+    assert result["broad_bureau_scope"]["exception_approval"]["contract_match"] is True
+
 
 def test_invalid_task_path_and_traversal_are_rejected():
     with pytest.raises(RegistrationPreflightError):

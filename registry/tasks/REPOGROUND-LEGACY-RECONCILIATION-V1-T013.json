@@ -87,7 +87,11 @@
     },
     "followups": [
       "OPERATOR-PC-HYGIENE-V1-T014"
-    ]
+    ],
+    "verification": {
+      "task_sha256": "f127f60597e2f8ad241874f5ac7f006a4c9b7e4a834ff3ee537d09d61073147a",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   },
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T013",
   "title": "Sechs test-only Produktionsmodule dispositionieren",

@@ -12,8 +12,8 @@ from typing import Any
 from . import legacy, runtime_refresh
 from .approval import require_approval, reviewed_plan_approval
 from .lease_contract import assess_task_broad_bureau_scope
+from .v2 import Dispatcher as _BaseDispatcher
 from .v2 import (
-    Dispatcher as _BaseDispatcher,
     _validate_coordinated_claim_intent,
     coordinated_claim_intent_sha256,
 )

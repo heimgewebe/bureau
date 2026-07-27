@@ -39,27 +39,33 @@
   "acceptance": [
     {
       "id": "clean-isolated-implementation",
-      "assertion": "Implementation occurs in an independently owned clean worktree; the unowned dirty predecessor checkout is not mutated."
+      "assertion": "Implementation occurs in an independently owned clean worktree; the unowned dirty predecessor checkout is not mutated.",
+      "evidence_type": "object"
     },
     {
       "id": "strict-source-contract",
-      "assertion": "Lifecycle states, exact valid YYYY-MM-DD dates, unique node identities and non-empty unique evidence references are validated fail-closed from the hash-bound registry_nodes artifact."
+      "assertion": "Lifecycle states, exact valid YYYY-MM-DD dates, unique node identities and non-empty unique evidence references are validated fail-closed from the hash-bound registry_nodes artifact.",
+      "evidence_type": "object"
     },
     {
       "id": "truth-axes-separated",
-      "assertion": "UI and API distinguish technical artifact alignment, declared stable lifecycle semantics and runtime health; no axis establishes another."
+      "assertion": "UI and API distinguish technical artifact alignment, declared stable lifecycle semantics and runtime health; no axis establishes another.",
+      "evidence_type": "object"
     },
     {
       "id": "read-only-exploration",
-      "assertion": "Users can inspect and filter lifecycle states while all routes remain read-only and source links remain commit-bound."
+      "assertion": "Users can inspect and filter lifecycle states while all routes remain read-only and source links remain commit-bound.",
+      "evidence_type": "object"
     },
     {
       "id": "review-ci-pr-published",
-      "assertion": "Focused and full local checks pass; an exact-head PR with independent review and complete canonical diff evidence is published for T063."
+      "assertion": "Focused and full local checks pass; an exact-head PR with independent review and complete canonical diff evidence is published for T063.",
+      "evidence_type": "object"
     },
     {
       "id": "no-merge-or-deployment",
-      "assertion": "T061 performs neither PR merge nor runtime deployment or production cutover."
+      "assertion": "T061 performs neither PR merge nor runtime deployment or production cutover.",
+      "evidence_type": "object"
     }
   ],
   "metadata": {

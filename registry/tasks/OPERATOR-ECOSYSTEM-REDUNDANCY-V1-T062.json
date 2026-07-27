@@ -53,23 +53,28 @@
   "acceptance": [
     {
       "id": "exact-merge-input",
-      "assertion": "The deployment input is the exact verified T063 merge commit on current main."
+      "assertion": "The deployment input is the exact verified T063 merge commit on current main.",
+      "evidence_type": "object"
     },
     {
       "id": "canonical-release-path",
-      "assertion": "Deployment uses scripts/leitstand-release.py and preserves the transactional web and storage-health runtime contract."
+      "assertion": "Deployment uses scripts/leitstand-release.py and preserves the transactional web and storage-health runtime contract.",
+      "evidence_type": "object"
     },
     {
       "id": "rollback-bound",
-      "assertion": "The exact prior release and rollback path are recorded before cutover."
+      "assertion": "The exact prior release and rollback path are recorded before cutover.",
+      "evidence_type": "object"
     },
     {
       "id": "runtime-health",
-      "assertion": "Units, release identity, HTTP routes and required health checks are green after cutover."
+      "assertion": "Units, release identity, HTTP routes and required health checks are green after cutover.",
+      "evidence_type": "object"
     },
     {
       "id": "browser-truth-readback",
-      "assertion": "The production ecosystem map shows Heimserver as retired or außer Betrieb without presenting that lifecycle as a current runtime failure; filters and source links work."
+      "assertion": "The production ecosystem map shows Heimserver as retired or außer Betrieb without presenting that lifecycle as a current runtime failure; filters and source links work.",
+      "evidence_type": "object"
     }
   ],
   "metadata": {

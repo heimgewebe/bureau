@@ -70,27 +70,33 @@
   "acceptance": [
     {
       "id": "source-event-bound",
-      "assertion": "Task metadata preserves the originating live-register event id and source."
+      "assertion": "Task metadata preserves the originating live-register event id and source.",
+      "evidence_type": "object"
     },
     {
       "id": "separate-effects-verified",
-      "assertion": "T060, T061, T063 und T062 sind jeweils mit eigenen exklusiven oder lesenden Ressourcen, eingefrorenen Revisionen, Review-Evidenz und Receipts verifiziert, bevor T032 den Closeout ausführt."
+      "assertion": "T060, T061, T063 und T062 sind jeweils mit eigenen exklusiven oder lesenden Ressourcen, eingefrorenen Revisionen, Review-Evidenz und Receipts verifiziert, bevor T032 den Closeout ausführt.",
+      "evidence_type": "object"
     },
     {
       "id": "infra-and-fleet-converged",
-      "assertion": "Infra PR #131 is merged and the current Grabowski Fleet contains no active Heimserver target."
+      "assertion": "Infra PR #131 is merged and the current Grabowski Fleet contains no active Heimserver target.",
+      "evidence_type": "object"
     },
     {
       "id": "repository-and-catalog-converged",
-      "assertion": "The merged Heimserver repository contract and Systemkatalog retired lifecycle agree while historical evidence remains explicitly non-authoritative."
+      "assertion": "The merged Heimserver repository contract and Systemkatalog retired lifecycle agree while historical evidence remains explicitly non-authoritative.",
+      "evidence_type": "object"
     },
     {
       "id": "consumer-runtime-converged",
-      "assertion": "The deployed Leitstand consumer displays stable lifecycle separately from technical freshness and runtime health, and a live readback shows Heimserver as retired rather than unhealthy."
+      "assertion": "The deployed Leitstand consumer displays stable lifecycle separately from technical freshness and runtime health, and a live readback shows Heimserver as retired rather than unhealthy.",
+      "evidence_type": "object"
     },
     {
       "id": "terminal-receipt-closeout",
-      "assertion": "After all dependency and runtime evidence is current, T032 completes against its frozen task revision and the receipt-backed task-status overlay projects verified without T032 editing its own registry file during or after the claimed run."
+      "assertion": "After all dependency and runtime evidence is current, T032 completes against its frozen task revision and the receipt-backed task-status overlay projects verified without T032 editing its own registry file during or after the claimed run.",
+      "evidence_type": "object"
     }
   ],
   "metadata": {

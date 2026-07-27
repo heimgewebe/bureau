@@ -76,8 +76,16 @@
         "receipt_sha256": "6b12aa33295ab5fa0651c2667760020c1f12224e04c11c6eb08f8054d1e97cfd"
       },
       "focused_race_and_allocation_tests": {
+        "status": "PASS",
         "passed": 24,
-        "skipped": 0
+        "skipped": 0,
+        "source_revision": "0bbb34c9f882d7f78dac17a9801b55ca2e31e6ae",
+        "final_main_merge": "8ec3c7d2a5d04b3df63d52c5cf5eb16b725e418c",
+        "command": "python3 -m pytest -q merger/repoground/tests/test_bundle_access_decomposition.py merger/repoground/tests/test_call_navigation.py::test_descriptor_pinned_read_rejects_atomic_path_replacement merger/repoground/tests/test_call_navigation.py::test_weak_file_identity_automatically_uses_content_hash merger/repoground/tests/test_call_navigation.py::test_atomic_pathname_exchange_during_stable_read_is_rejected",
+        "argv_sha256": "4dd03a58614ce5c164084cb08b1dd7823fc26fde99e7facee5a53c99b6bf5010",
+        "job_unit": "grabowski-job-742daa05dfd1",
+        "receipt_sha256": "00863de86e64822762ef72e2d05f84ca5c7382bdc99fb46c8c4dff200e202e28",
+        "payload_sha256": "40c908834f199c2bb843a52730ff100b36a8c2ef87b01d27182fb16d9d197f64"
       },
       "github_required_checks": {
         "pull_request_1108": {
@@ -116,7 +124,9 @@
       },
       "bureau_make_validate": {
         "status": "PASS",
-        "receipt_sha256": "e00c484f9b0eec66306c83b307e899ded736ae40fd5bf9aed3ea303b2f324c36"
+        "receipt_sha256": "63435654de84ae3c15f5cf618f0eb31d7d9fcd6f29031f38bebbbd2ee6d514a8",
+        "payload_sha256": "26a6e2c01126ab7f1eb74870f116909972d24ae7dfb809f9da86245c2ee56a31",
+        "job_unit": "grabowski-job-eb2ae1d6657e"
       }
     },
     "performance": {
@@ -154,7 +164,7 @@
       "OPERATOR-PC-HYGIENE-V1-T014"
     ],
     "verification": {
-      "task_sha256": "3247ced816775a4a28409f8409299028a760166e91bd0b5d7178f37655d32ad3",
+      "task_sha256": "4f719b5c5b1d8e69ee0ec4c084477327f6ac67686a91a6cd526144c096d5ae0e",
       "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
     }
   },

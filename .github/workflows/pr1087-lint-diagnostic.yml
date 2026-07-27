@@ -1,4 +1,4 @@
-name: pr1087-lint-diagnostic
+name: pr1087-diagnostic
 on:
   pull_request:
 permissions:
@@ -22,3 +22,24 @@ jobs:
       - name: Report Ruff findings
         working-directory: source
         run: python -m ruff check src tests
+  focused-pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone exact pull-request head quietly
+        env:
+          REPOSITORY: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          git init --quiet source
+          git -C source remote add origin "https://github.com/${REPOSITORY}.git"
+          git -C source fetch --quiet --depth=1 origin "${HEAD_SHA}"
+          git -C source checkout --quiet --detach FETCH_HEAD
+      - name: Install project development tools quietly
+        run: python -m pip install --quiet -e 'source[dev]'
+      - name: Run broad-scope regression tests
+        working-directory: source
+        run: |
+          python -m pytest -q \
+            tests/test_broad_scope_approval_binding.py \
+            tests/test_broad_scope_claim_evidence.py

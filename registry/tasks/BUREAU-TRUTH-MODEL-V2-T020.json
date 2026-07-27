@@ -1,0 +1,143 @@
+{
+  "acceptance": [
+    {
+      "assertion": "BUREAU-TRUTH-MODEL-V2-T013 and verification receipt b709fc9d7acf130fb10ad4ad578e9a856e7d67e4be84b53563adadc33346047a are used only as historical predecessor evidence for the verified zero state and are not rewritten.",
+      "id": "attested-baseline"
+    },
+    {
+      "assertion": "The migration record binds all ten affected task paths to their introducing commits: HEIMGEWEBE-RESILIENZ-V1-T011 and T014 to 6b7dbe434c671761c0b56f455a135caf1500826b; HEIMGEWEBE-RESILIENZ-V1-T019 to 6b11f1a62eb469951ef83a6bef7b994f3be6d33c; KONVERGENZREGELKREIS-PACKAGE-RESOURCES-V1-T001 to 10fe2fdc4dd7623045ae6079e65e243c9ef7bf80; OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026 to cfbe5af04807599ecaa1f1e8feb26abb7682a61f; OPERATOR-INTEGRATION-LOOP-V1-T009 to 40fd910bc159980500f5a0af82902c45a29e7c16; REPOGROUND-AGENT-UTILITY-V1-T016 to 93818c0099e87358b22aa78d36085175794ba5a8; REPOGROUND-LEGACY-RECONCILIATION-V1-T005 to 11b9cf38001dff8fea3856b55bf63869f1e40978; REPOGROUND-LEGACY-RECONCILIATION-V1-T017 to 5fdc46ac2d4f0e8d5bbc4a7469f6fac3b42e1be6; and WELTGEWEBE-SEMANTIC-SEARCH-V1-T009 to a416e01669f7f0d93a76fc1047993ea3e24914f7.",
+      "id": "introducing-commit-attribution"
+    },
+    {
+      "assertion": "Each affected task is reviewed independently and either receives exact component, state, path or service resources justified by its real effects or remains explicitly blocked with a concrete unresolved scope reason; no mechanical search-and-replace is accepted.",
+      "id": "individual-semantic-migration"
+    },
+    {
+      "assertion": "The review explicitly evaluates component.bureau.registry read scope plus the exact task-file Grabowski resource for HEIMGEWEBE-RESILIENZ-V1-T011, HEIMGEWEBE-RESILIENZ-V1-T014, HEIMGEWEBE-RESILIENZ-V1-T019, OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026, REPOGROUND-AGENT-UTILITY-V1-T016 and REPOGROUND-LEGACY-RECONCILIATION-V1-T005.",
+      "id": "registry-read-scope"
+    },
+    {
+      "assertion": "REPOGROUND-LEGACY-RECONCILIATION-V1-T017 and WELTGEWEBE-SEMANTIC-SEARCH-V1-T009 receive only the exact Registry write and task-file resources needed for their reviewed closeout effects; they do not retain repository-wide Bureau scope.",
+      "id": "registry-write-scope"
+    },
+    {
+      "assertion": "KONVERGENZREGELKREIS-PACKAGE-RESOURCES-V1-T001 is checked for whether any Bureau write claim is needed at all, and OPERATOR-INTEGRATION-LOOP-V1-T009 is mapped only to the exact Bureau components or state surfaces its implementation and publication-race receipt actually modify.",
+      "id": "two-ambiguous-scopes"
+    },
+    {
+      "assertion": "BUREAU-TRUTH-MODEL-V2-T018 remains the sole owner of prospective registration and validation prevention; this task does not duplicate its implementation or the separately registered Doctor exit-semantics finding.",
+      "id": "prospective-ratchet-boundary"
+    },
+    {
+      "assertion": "After the ten migrations, canonical Bureau Doctor reports zero task-uses-broad-bureau-repo-lease findings for nonterminal tasks.",
+      "id": "doctor-zero"
+    },
+    {
+      "assertion": "Full Bureau Registry validation, Doctor, queue and Registry Truth readback, git diff --check and an exact head/diff-bound review pass before merge; foreign dirty states, leases, worktrees, branches, processes and pull requests remain unchanged.",
+      "id": "validation-and-readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.registry"
+    }
+  ],
+  "depends_on": [
+    "BUREAU-TRUTH-MODEL-V2-T018"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly authorized this candidate-bound migration plan on 2026-07-27 by replying 'umsetzen'. Publication remains separately bound to the operator-intake reviewed_plan artifact.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T020.json",
+      "path:/home/alex/repos/bureau/registry/tasks/HEIMGEWEBE-RESILIENZ-V1-T011.json",
+      "path:/home/alex/repos/bureau/registry/tasks/HEIMGEWEBE-RESILIENZ-V1-T014.json",
+      "path:/home/alex/repos/bureau/registry/tasks/HEIMGEWEBE-RESILIENZ-V1-T019.json",
+      "path:/home/alex/repos/bureau/registry/tasks/KONVERGENZREGELKREIS-PACKAGE-RESOURCES-V1-T001.json",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026.json",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T009.json",
+      "path:/home/alex/repos/bureau/registry/tasks/REPOGROUND-AGENT-UTILITY-V1-T016.json",
+      "path:/home/alex/repos/bureau/registry/tasks/REPOGROUND-LEGACY-RECONCILIATION-V1-T005.json",
+      "path:/home/alex/repos/bureau/registry/tasks/REPOGROUND-LEGACY-RECONCILIATION-V1-T017.json",
+      "path:/home/alex/repos/bureau/registry/tasks/WELTGEWEBE-SEMANTIC-SEARCH-V1-T009.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Remove the ten known nonterminal broad repo.bureau claims reintroduced after the attested T013 zero state, bind every regression to its introducing commit, and replace each broad scope with semantically exact resources or an explicit reviewed blocker while BUREAU-TRUTH-MODEL-V2-T018 remains the sole owner of prospective prevention.",
+  "id": "BUREAU-TRUTH-MODEL-V2-T020",
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "metadata": {
+    "affected_tasks": [
+      "HEIMGEWEBE-RESILIENZ-V1-T011",
+      "HEIMGEWEBE-RESILIENZ-V1-T014",
+      "HEIMGEWEBE-RESILIENZ-V1-T019",
+      "KONVERGENZREGELKREIS-PACKAGE-RESOURCES-V1-T001",
+      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026",
+      "OPERATOR-INTEGRATION-LOOP-V1-T009",
+      "REPOGROUND-AGENT-UTILITY-V1-T016",
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T005",
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T017",
+      "WELTGEWEBE-SEMANTIC-SEARCH-V1-T009"
+    ],
+    "candidate_assessment": "promote",
+    "candidate_observed_at": "2026-07-27T11:56:40.709352Z",
+    "doctor_finding_count": 10,
+    "does_not_establish": [
+      "automatic correctness of replacement scopes without per-task review",
+      "permission to rewrite terminal task history",
+      "permission to bypass foreign leases or dirty states",
+      "automatic merge, deployment or task verification authority",
+      "ownership of prospective preflight implementation already assigned to T018",
+      "ownership of strict Doctor process exit semantics"
+    ],
+    "historical_verification_receipt_sha256": "b709fc9d7acf130fb10ad4ad578e9a856e7d67e4be84b53563adadc33346047a",
+    "proposal_registry_commit": "f1dd24e4fc949d8d1eb9cec22d9d69b38df41856",
+    "prospective_prevention_task": "BUREAU-TRUTH-MODEL-V2-T018",
+    "regression_of": "BUREAU-TRUTH-MODEL-V2-T013",
+    "source_candidate_id": "candidate-b4d6802c1a76b38d3c1b8e2e",
+    "source_digest": "a670f877779cba66726e70378bb12f1a30d5c5b26d586d8b9a38e2bed981b89a",
+    "source_event_id": 1360,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-b4d6802c1a76b38d3c1b8e2e",
+      "event_id": 1360,
+      "event_created_at": "2026-07-27T11:57:30.021638Z",
+      "request_sha256": "db660d81d05f6936167adef5e55318d46bc9daf58be9c2a486501e467d5dde22",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "runtime-evidence",
+        "locator": "/home/alex/.local/state/grabowski/evidence/bureau-broad-lease-regression-doctor-20260727T1153Z.txt",
+        "observed_at": "2026-07-27T11:56:40.709352Z",
+        "sha256": "a670f877779cba66726e70378bb12f1a30d5c5b26d586d8b9a38e2bed981b89a"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "required_capabilities": [
+    "repository",
+    "bureau",
+    "grabowski",
+    "git",
+    "schema-validation",
+    "regression-analysis"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Migrate ten post-T013 broad Bureau claims"
+}

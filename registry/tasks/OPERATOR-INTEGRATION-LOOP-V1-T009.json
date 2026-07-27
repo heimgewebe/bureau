@@ -28,11 +28,6 @@
       "resource": "component.bureau.registry",
       "mode": "read",
       "isolation": "none"
-    },
-    {
-      "resource": "component.bureau.merge-gate",
-      "mode": "write",
-      "isolation": "worktree"
     }
   ],
   "execution": {
@@ -72,11 +67,6 @@
             "resource": "component.bureau.registry",
             "mode": "read",
             "isolation": "none"
-          },
-          {
-            "resource": "component.bureau.merge-gate",
-            "mode": "write",
-            "isolation": "worktree"
           }
         ],
         "grabowski_resources": [
@@ -86,7 +76,7 @@
           "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T009.json"
         ]
       },
-      "rationale": "The task changes the registration preflight implementation and its workflow, reads canonical Registry truth, and integrates with the short merge gate without owning the repository.",
+      "rationale": "The task changes the registration preflight implementation and workflow and reads canonical Registry truth. Merge-time freshness is enforced by the required status check, not by reserving the merge gate for the full task lifetime.",
       "historical_verification_receipt_sha256": "b709fc9d7acf130fb10ad4ad578e9a856e7d67e4be84b53563adadc33346047a",
       "does_not_establish": [
         "implementation completion",

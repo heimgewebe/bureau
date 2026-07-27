@@ -16,6 +16,7 @@ from .v2 import Dispatcher as _BaseDispatcher
 from .v2 import (
     _validate_coordinated_claim_intent,
     coordinated_claim_intent_sha256,
+    task_revision_sha256,
 )
 
 _MAX_REVIEWED_PLAN_BYTES = 4 * 1024 * 1024
@@ -196,7 +197,7 @@ def _reviewed_plan_evidence(task: legacy.Task) -> dict[str, Any]:
         raise legacy.StateError(
             "broad-scope reviewed plan task digest mismatch"
         )
-    if legacy.sha256_json(task_json) != task.sha256:
+    if task_revision_sha256(task_json) != task.sha256:
         raise legacy.StateError(
             "broad-scope reviewed plan current task digest mismatch"
         )

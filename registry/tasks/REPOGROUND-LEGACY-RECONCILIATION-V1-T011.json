@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
-  "state": "planned",
+  "state": "verified",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -24,8 +24,149 @@
     "scope_rule": "Execute in a fresh isolated current-main worktree; do not reuse, reset or mutate historical T004 worktrees.",
     "does_not_establish": [
       "Erfolgreicher Read beweist keine semantische Relevanz",
-      "Refactoring gewährt keine Schreibautorität"
-    ]
+      "Refactoring gewährt keine Schreibautorität",
+      "completion of parent task REPOGROUND-LEGACY-RECONCILIATION-V1-T004",
+      "completion of service split REPOGROUND-LEGACY-RECONCILIATION-V1-T012",
+      "absence of regressions outside measured and tested read paths",
+      "cross-host performance comparability"
+    ],
+    "verified_at": "2026-07-27T15:29:53+02:00",
+    "finalized_at": "2026-07-27T15:29:53+02:00",
+    "resolution_summary": "Der Bundle-Read-Zugriff wurde in fünf klar begrenzte Produktmodule zerlegt und in zwei revisionsgebundenen RepoGround-PRs abgeschlossen. PR #1108 lieferte die Vertragszerlegung, fail-closed Pfad-/Hash-/SQLite-Grenzen und Kompatibilitätstests. Die verpflichtende gleiche-Host-Leistungsprüfung deckte anschließend eine reale 4-MiB-Peak-Allokationsregression auf; PR #1109 behob sie durch dateigrößengebundene Descriptor-Reads. Beide PRs wurden head- und diffgebunden reviewed, CI-grün gemergt und in origin/main zurückgelesen. Parent T004 bleibt wegen T012 und T014 offen.",
+    "implementation": {
+      "repository": "heimgewebe/repoground",
+      "initial_pull_request": {
+        "number": 1108,
+        "base_sha": "a029bbcd2779e7bed1ac41e936bdf720249f0538",
+        "head_sha": "d11f3e04c26738252755bc7332808f03589001be",
+        "merge_commit_sha": "6d43e4a160ac74b505600e17b1bff034310681b3",
+        "diff_sha256": "ef4f50f25c88c872e76d02af27e941305595609ee841b962a1373fc4ea6a77b8",
+        "diff_bytes": 176365,
+        "artifact_id": "e2e2d22bbe4c4ced86850c7adf37cf8f",
+        "artifact_receipt_sha256": "a31b439eb8bc4fb548356518a0654e1f8c3a82512ecf789bf4bef99fdea01975",
+        "merge_delivery_receipt_sha256": "ec287d6190540b2eb60a7757448fa8c7275e2c15c0636f9172e60c37ea137bb8",
+        "download_reference": "https://github.com/heimgewebe/repoground/raw/refs/heads/artifacts/pr1108-diff/repoground-pr-1108-full.diff.txt"
+      },
+      "corrective_pull_request": {
+        "number": 1109,
+        "base_sha": "6d43e4a160ac74b505600e17b1bff034310681b3",
+        "head_sha": "0bbb34c9f882d7f78dac17a9801b55ca2e31e6ae",
+        "merge_commit_sha": "8ec3c7d2a5d04b3df63d52c5cf5eb16b725e418c",
+        "diff_sha256": "a3a4a481eb3fbc255a3ba2782395a4dc7535161e8735123bf9322c66cad25420",
+        "diff_bytes": 9794,
+        "artifact_id": "ea1b5be6c53c4e19a94af954e88b94dd",
+        "artifact_receipt_sha256": "25dd87803dbb5d980fbcedd0ee849fded1a00fcfddc5c2d84e43e7b3fd739c4f",
+        "merge_delivery_receipt_sha256": "92303ceb9b195c2232e21c2448dc5ec24c8a905582b4972512298787ceda9d8f",
+        "download_reference": "https://github.com/heimgewebe/repoground/raw/refs/heads/artifacts/pr1108-diff/repoground-pr-1109-full.diff.txt"
+      },
+      "proof_path": "docs/proofs/repoground-legacy-t011-bundle-access-v1-proof.md",
+      "measurement_path": "docs/proofs/repoground-legacy-t011-bundle-access.measurement.json"
+    },
+    "validation": {
+      "initial_final_suite": {
+        "passed": 5072,
+        "skipped": 12,
+        "ignored_host_blocked_files": 2,
+        "receipt_sha256": "a3601d63ff286d864280df268ae5994139113cc3a15e353b49ea0dc00fc19035"
+      },
+      "corrective_final_suite": {
+        "passed": 5073,
+        "skipped": 12,
+        "ignored_host_blocked_files": 2,
+        "receipt_sha256": "6b12aa33295ab5fa0651c2667760020c1f12224e04c11c6eb08f8054d1e97cfd"
+      },
+      "focused_race_and_allocation_tests": {
+        "status": "PASS",
+        "passed": 24,
+        "skipped": 0,
+        "source_revision": "0bbb34c9f882d7f78dac17a9801b55ca2e31e6ae",
+        "final_main_merge": "8ec3c7d2a5d04b3df63d52c5cf5eb16b725e418c",
+        "command": "python3 -m pytest -q merger/repoground/tests/test_bundle_access_decomposition.py merger/repoground/tests/test_call_navigation.py::test_descriptor_pinned_read_rejects_atomic_path_replacement merger/repoground/tests/test_call_navigation.py::test_weak_file_identity_automatically_uses_content_hash merger/repoground/tests/test_call_navigation.py::test_atomic_pathname_exchange_during_stable_read_is_rejected",
+        "argv_sha256": "4dd03a58614ce5c164084cb08b1dd7823fc26fde99e7facee5a53c99b6bf5010",
+        "job_unit": "grabowski-job-742daa05dfd1",
+        "receipt_sha256": "00863de86e64822762ef72e2d05f84ca5c7382bdc99fb46c8c4dff200e202e28",
+        "payload_sha256": "40c908834f199c2bb843a52730ff100b36a8c2ef87b01d27182fb16d9d197f64"
+      },
+      "github_required_checks": {
+        "pull_request_1108": {
+          "successful": 8,
+          "failed": 0
+        },
+        "pull_request_1109": {
+          "successful": 8,
+          "failed": 0
+        }
+      },
+      "independent_review": {
+        "status": "PASS",
+        "receipt_sha256": "5065360b266b2054d66d1ad7b236625cdd6bb502f20ae3d94e994e2422e60a2a",
+        "output_sha256": "74a50492dd65630e594a127a886ad85ee1969ac31f95bc59ac0c0fde8dbfc08a"
+      },
+      "review_threads_open_at_merge": 0,
+      "ruff": "PASS",
+      "diff_check": "PASS",
+      "graph_maintainability": {
+        "status": "PASS",
+        "finding_count": 193,
+        "max_complexity": 138,
+        "excess_total": 2348
+      },
+      "module_reachability": {
+        "status": "PASS",
+        "module_count": 214,
+        "findings": 0
+      },
+      "frontend_parity_guard": "PASS",
+      "main_readback": {
+        "initial_head_in_origin_main": true,
+        "corrective_head_in_origin_main": true,
+        "final_origin_main": "8ec3c7d2a5d04b3df63d52c5cf5eb16b725e418c"
+      },
+      "bureau_make_validate": {
+        "status": "PASS",
+        "receipt_sha256": "63435654de84ae3c15f5cf618f0eb31d7d9fcd6f29031f38bebbbd2ee6d514a8",
+        "payload_sha256": "26a6e2c01126ab7f1eb74870f116909972d24ae7dfb809f9da86245c2ee56a31",
+        "job_unit": "grabowski-job-eb2ae1d6657e"
+      }
+    },
+    "performance": {
+      "benchmark_script_sha256": "7157a27fcb3203f5921fbe9558b36c7ccf1369968d9a81553fba2b1009c1a51e",
+      "host": "heim-pc",
+      "python": "3.10.12",
+      "samples": 9,
+      "loops": 150,
+      "threshold_percent": 10.0,
+      "initial_regression": {
+        "peak_bytes_base": 33920,
+        "peak_bytes_initial": 4206990,
+        "status": "FAIL",
+        "cause": "buffered reader requested hard maximum instead of observed file size"
+      },
+      "corrected_delta_percent_vs_base": {
+        "available_roles": -26.38,
+        "list_artifacts": 5.421,
+        "get_artifact": 7.358,
+        "combined": -4.727,
+        "peak_memory": -0.032
+      },
+      "status": "PASS"
+    },
+    "validated_acceptance": {
+      "contract-slices": "PASS: Rollen/Manifestzugriff, bounded descriptor reads, SQLite-Integrität, Citation-Projektion und Call-Graph-Validierung liegen in fünf getrennten Modulen; bundle_access bleibt kompatible Fassade.",
+      "fail-closed": "PASS: Hash-, Größen-, Pfad-, Symlink-, Run-ID-, Manifest-, Freshness-, Drift- und TOCTOU-Fehler bleiben präzise blockierend; O_NOFOLLOW und Vor-/Nachidentität sind regressionstestgebunden.",
+      "api-parity": "PASS: Öffentliche Read-only-Funktionen, MCP-Wrapper, Snapshot-Preflight sowie compact/verbose Projektionen sind in gezielten und vollständigen Suites grün.",
+      "adversarial-tests": "PASS: 24 fokussierte Race-/Allocation-Tests plus vollständige Suites decken Traversal, Symlink, manipulierte Metadaten, Oversize, Weak-Identity, atomischen Austausch und SQLite-Copy-Verifikation ab.",
+      "complexity-performance": "PASS: bundle_access fiel von 3676 auf 2618 Zeilen und von einem C901-Finding auf null; globale Findings 194 auf 193 und Excess-Mass 2351 auf 2348. Nach Korrektur liegen alle gemessenen Zeit-/Peak-Speicherregressionen unter 10 Prozent."
+    },
+    "followups": [
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T012",
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T014",
+      "OPERATOR-PC-HYGIENE-V1-T014"
+    ],
+    "verification": {
+      "task_sha256": "4f719b5c5b1d8e69ee0ec4c084477327f6ac67686a91a6cd526144c096d5ae0e",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   },
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T011",
   "title": "Bundle-Read-Zugriff entlang Verträgen zerlegen",

@@ -1,0 +1,126 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Alle Verweise auf repobrief-release-candidate.v1.schema.json, repobrief-semantic-platforms.v1.schema.json und ihre alten kind-/schema-Identitäten sind revisionsgebunden inventarisiert und als aktive Verbraucher, historische Evidenz oder Negativtest klassifiziert.",
+      "id": "consumer-inventory"
+    },
+    {
+      "assertion": "Wenn kein aktiver Verbraucher belegt ist, fehlen beide alten Release-Schemata im aktuellen Quellbaum; Wiedereinführung blockiert Release-Build oder Repository-Hygiene fail-closed. Andere weiterhin unterstützte RepoBrief-Kompatibilitätsverträge bleiben unverändert.",
+      "id": "retired-contract-removal"
+    },
+    {
+      "assertion": "Der maschinenlesbare Compatibility-Exit nennt für beide ehemaligen Pfade, Schema-IDs und Kinds den Status unsupported, ihre RepoGround-Nachfolger sowie das Verbot aktueller Tree- und Release-Präsenz.",
+      "id": "machine-readable-exit"
+    },
+    {
+      "assertion": "Aktiver Vertragskatalog, Vertragsmatrix, Release-Builder und Verifier widersprechen sich nicht: nur RepoGround-Release-Identitäten werden erzeugt und akzeptiert; alte RepoBrief-Release-Identitäten werden zurückgewiesen und nicht ausgeliefert.",
+      "id": "support-truth-parity"
+    },
+    {
+      "assertion": "Historische Proof-, Measurement- und Task-Index-Artefakte werden nicht umgeschrieben; die Nachvollziehbarkeit bleibt über Git-Historie und terminale Compatibility-Exit-Metadaten erhalten.",
+      "id": "historical-integrity"
+    },
+    {
+      "assertion": "Gezielte adversariale Tests, Ruff beziehungsweise relevante Format-/Syntaxprüfungen und git diff --check bestehen; Self-Review und Mergeentscheidung sind an exakten Head und Diff-SHA-256 gebunden.",
+      "id": "regression-and-review"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Delete only the two source-bound retired release schemas after proving that no active code consumes them. Preserve historical evidence files and existing supported RepoBrief compatibility contracts outside this exact release scope.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Die bewusst zurückgelassenen RepoBrief-Release-Schemata anhand ihrer tatsächlichen Verbraucher prüfen und die Support-Wahrheit revisionsgebunden vereinheitlichen: ohne belegten aktuellen Verbraucher werden die veralteten Schemata aus dem aktiven Vertragsbaum und aus aktuellen Release-Kandidaten entfernt; ihr terminaler Status und ihre RepoGround-Nachfolger bleiben maschinenlesbar dokumentiert. Verifier, Release-Builder, Vertragsmatrix und Tests müssen dieselbe Wahrheit ausdrücken.",
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T018",
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "metadata": {
+    "activation": {
+      "activated_at": "2026-07-27T10:57:00Z",
+      "authority": "explicit_user_instruction",
+      "does_not_establish": [
+        "implementation completion",
+        "merge readiness",
+        "verification"
+      ],
+      "instruction": "umsetzen",
+      "registry_task_merge_commit": "db329e3881ed6bcd71844f6da644fdb38269ce79",
+      "registry_task_pr": 1075
+    },
+    "audit_summary": "Current repository search found no active code loading either retired release schema. References are limited to the schema files themselves, a verifier rejection test, a repository-hygiene assertion, and historical proof/measurement/task-index records. The release builder archives the full tracked tree, so keeping the schemas in the active contracts directory also distributes them.",
+    "candidate_event_id": 1324,
+    "does_not_establish": [
+      "that every contract whose filename contains repobrief is obsolete",
+      "permission to rewrite historical proof or measurement artifacts",
+      "external consumer absence beyond repository evidence",
+      "automatic merge or deployment authority"
+    ],
+    "operator_intake": {
+      "candidate_id": "candidate-1696513020f86c092c296a98",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-27T09:54:57.722655Z",
+      "event_id": 1324,
+      "request_sha256": "a565f468fdb44c5922c9163354d97f417b3ffcc78f0470a3c29afac34fb2c21d",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "repository-audit",
+        "locator": "/home/alex/repos/repoground/merger/repoground/contracts/repobrief-release-candidate.v1.schema.json",
+        "observed_at": "2026-07-27T09:54:57.711756Z",
+        "sha256": "8c9d10a951461e83d9aa573d9963389d3a4958f23f5a0d8b384cdcd4dd371fc8"
+      }
+    },
+    "registered_from_candidate": "candidate-1696513020f86c092c296a98",
+    "scope_boundary": [
+      "merger/repoground/contracts/repobrief-release-candidate.v1.schema.json",
+      "merger/repoground/contracts/repobrief-semantic-platforms.v1.schema.json",
+      "scripts/release/build_release_candidate.py",
+      "merger/repoground/tests/test_release_packaging.py",
+      "tests/test_repository_hygiene.py",
+      "tests/test_naming_hard_cut.py",
+      "docs/contracts/repoground-compatibility-exit.v1.json",
+      "docs/contracts/contracts-matrix.md",
+      "docs/proofs/repoground-retired-release-contracts-v1-proof.md"
+    ],
+    "source_commit": "a029bbcd2779e7bed1ac41e936bdf720249f0538",
+    "source_path": "merger/repoground/contracts/repobrief-release-candidate.v1.schema.json",
+    "source_repository": "heimgewebe/repoground",
+    "source_sha256": "8c9d10a951461e83d9aa573d9963389d3a4958f23f5a0d8b384cdcd4dd371fc8"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 18
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "release-packaging",
+    "contract-governance",
+    "github",
+    "testing",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Veraltete RepoBrief-Release-Verträge aus aktiven RepoGround-Surfaces entfernen"
+}

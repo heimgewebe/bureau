@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
-  "state": "blocked",
+  "state": "verified",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -18,6 +18,10 @@
     }
   ],
   "metadata": {
+    "verification": {
+      "task_sha256": "8427d8f47ed2f241d8f229aec197b55364f10c0b4250c63bf85f5c25f87f55e5",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
     "parent_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T009",
     "registered_at": "2026-07-25T09:23:59+02:00",
     "source": "T009 closeout live readback",
@@ -27,10 +31,14 @@
     "merge_commit": "c91d640bce2b14c4a78a64e83169d56c818fa662",
     "divergence_reason": "local history merged 108c8e4 while the remote PR merged the later current-main lineage 2afc2836; the checkout was intentionally not reset or deleted",
     "progress": {
-      "observed_at": "2026-07-26T08:53:49+02:00",
-      "state": "archived_grace",
-      "resolution": "Der exakte historische Checkout ist sauber, besitzt keine aktive Koordination und enthält im T009-Umfang keine einzigartigen Bauminhalte. Er wurde mit Recovery-Refs archiviert und bleibt absichtlich bestehen, weil die verpflichtende 24-Stunden-Cleanup-Grace noch nicht abgelaufen ist.",
-      "blocker": {
+      "observed_at": "2026-07-27T15:37:39+02:00",
+      "state": "verified",
+      "resolution": "Der exakt gebundene historische T009-Checkout wurde nach abgelaufener Grace, sauberem Dry-Run und frischer Null-Koordination über Grabowskis kanonischen Cleanup-Vertrag entfernt. Branch, Archivmanifest und beide Recovery-Refs bleiben erhalten.",
+      "resolved_blocker": {
+        "resolved_at_unix": 1785159140,
+        "cleanup_plan_id": "d0b8b7fe1d1e49f88fccf0a2",
+        "cleanup_plan_sha256": "8830ccbd7afe848f7ab6935003d1719e003456447073e40c78f5222feece076f",
+        "cleanup_archive_id": "20260726T064903Z-8711f819ec91",
         "code": "checkout-cleanup-grace-not-elapsed",
         "archive_created_at": "2026-07-26T08:49:03.791501+02:00",
         "cleanup_grace_seconds": 86400,
@@ -97,26 +105,41 @@
         "branch_preserved": true
       },
       "final_readback": {
-        "inventory_sha256": "622aa2167a79c6a82c8666d73b9b37872c0c3c40040b516929ca4137c61fb1b9",
-        "lifecycle_state": "archived_grace",
-        "hygiene_mark": "archived",
-        "archive_matches_checkout": true,
-        "archive_grace_elapsed": false,
+        "pre_cleanup_inventory_sha256": "622aa2167a79c6a82c8666d73b9b37872c0c3c40040b516929ca4137c61fb1b9",
+        "lifecycle_state": "removed",
+        "hygiene_mark": "cleaned",
+        "archive_matches_checkout": false,
+        "archive_grace_elapsed": true,
         "cleanup_candidate": false,
-        "recommended_next_step": "wait_for_checkout_cleanup_grace"
+        "checkout_path_exists": false,
+        "branch_preserved": true,
+        "recovery_refs_present": true,
+        "post_cleanup_coordination": {
+          "observed_at_unix": 1785162411,
+          "inventory_sha256": "49685affdcec85481f1986dfb91d69e7362bad2a51c9ef69b68934022cd625a6",
+          "checkout_present_in_inventory": false,
+          "matching_processes": 0,
+          "running_tasks": 0,
+          "target_path_resource_leases": 0,
+          "resource_key": "path:/home/alex/repos/.repoground-worktrees/legacy-reconciliation-t009-report-renderer-v1"
+        },
+        "cleanup_applied_at_unix": 1785159140,
+        "cleanup_plan_id": "d0b8b7fe1d1e49f88fccf0a2",
+        "cleanup_plan_sha256": "8830ccbd7afe848f7ab6935003d1719e003456447073e40c78f5222feece076f",
+        "recommended_next_step": "task_complete"
       },
       "validated_acceptance": {
         "divergence-inventory": "PASS",
-        "ownership-safety": "PASS_PRE_ARCHIVE; EXPECTED_ARCHIVE_RETENTION_ACTIVE_AFTER_EFFECT",
+        "ownership-safety": "PASS",
         "archive-and-grace": "PASS",
-        "bounded-cleanup": "BLOCKED_BY_REQUIRED_GRACE",
+        "bounded-cleanup": "PASS",
         "final-readback": "PASS"
       }
     },
     "does_not_establish": [
-      "the checkout is disposable before a fresh post-grace readback",
-      "permission to reset, delete or force-release the checkout",
-      "physical checkout removal",
+      "the preserved branch or recovery refs are obsolete",
+      "permission to delete the preserved branch or recovery refs",
+      "absence of future claims on other RepoGround checkouts",
       "branch deletion",
       "absence of future processes, tasks, leases or ownership changes"
     ]

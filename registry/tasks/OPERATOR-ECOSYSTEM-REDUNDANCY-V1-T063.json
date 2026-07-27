@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T063",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Leitstand-Lifecycle-Consumer revisionsgebunden mergen",
-  "state": "verified",
+  "state": "blocked",
   "goal": "Merge den von T061 veröffentlichten Leitstand-Lifecycle-Consumer ausschließlich nach frischer Revalidierung des exakten PR-Heads, vollständiger grüner GitHub-CI, unabhängiger Review-Triage und vorab ausgeliefertem kanonischem UTF-8-GitHub-Diff. Diese Aufgabe ändert keinen Code und deployt nicht.",
   "priority": {
     "lane": "next",
@@ -76,14 +76,16 @@
       "deployment_readiness",
       "deployment_authority"
     ],
-    "verified_at": "2026-07-27T17:52:09Z",
-    "outcome": "Leitstand PR #190 wurde nach finalem exact-head Codex-Review ohne wesentliche Befunde, vollständig grüner GitHub-CI und vorab veröffentlichtem hashgebundenem UTF-8-Diff aus dem erwarteten Head gemergt. Der Merge erzeugte keinen T063-eigenen Code- oder Deploymenteffekt.",
-    "merge": {
+    "observed_merge": {
+      "observed_at": "2026-07-27T17:52:09Z",
       "repository": "heimgewebe/leitstand",
       "pull_request": 190,
       "base_sha": "a85c14d0df83da61c68e43fe814a19d483f3f6f2",
       "reviewed_head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
       "merge_commit_sha": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+      "merged_at": "2026-07-27T01:55:41Z",
+      "current_main_sha": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+      "main_comparison": "identical",
       "changed_files": 8,
       "additions": 418,
       "deletions": 21,
@@ -92,42 +94,43 @@
         "sha256": "8c5a35096f64f9fdcf77235eb5eddd85a9a1d3886a6ecb7e9b553b04b243c98f",
         "artifact": "https://gist.github.com/alexdermohr/656683eee49fc59838e1090eb4e2d37c"
       },
-      "validation": {
-        "lint": "PASS",
-        "typecheck": "PASS",
-        "focused_tests": "25/25 PASS",
-        "full_tests": "261/261 PASS",
-        "release_runtime": "PASS",
-        "browser_shell": "mobile 23/23 and desktop 13/13 PASS",
-        "browser_view_matrix": "197 checks PASS",
-        "build_and_static_build": "PASS",
-        "github_checks": [
-          "CI",
-          "ai-context guard",
-          "security-hygiene"
-        ]
-      },
+      "github_checks": [
+        "CI",
+        "ai-context guard",
+        "security-hygiene"
+      ],
       "review": {
         "initial_finding": "P2 whitespace-colliding node identities",
         "resolution_head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
         "final_codex_result": "no major issues",
         "open_threads": 0
-      }
+      },
+      "does_not_establish": [
+        "captain_dispatch",
+        "match_head_merge_receipt",
+        "independent_merge_lease_acquisition",
+        "merge_lease_release",
+        "T063_verification",
+        "deployment_readiness"
+      ]
     },
-    "post_merge_readback": {
-      "pr_state": "MERGED",
-      "merged_at": "2026-07-27T01:55:41Z",
-      "current_main_sha": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
-      "main_comparison": "identical",
-      "branch_deleted": false
+    "process_deviation": {
+      "status": "unreconciled",
+      "description": "Leitstand PR #190 ist bereits gemergt. GitHub belegt exakten Head, Review, CI, Diff und resultierenden Main-Stand; die für T063 verpflichtenden Captain- und Merge-Lease-Receipts sind im aktuell verfügbaren Belegsatz jedoch nicht vorhanden. Der bereits eingetretene Merge wird deshalb nicht rückwirkend als vertragskonforme T063-Ausführung umgedeutet.",
+      "required_next_evidence": [
+        "exact Captain merge dispatch receipt for heimgewebe/leitstand#190",
+        "owner-bound independent merge lease acquisition receipt",
+        "post-merge unchanged lease release receipt"
+      ],
+      "consequence": "T063 bleibt blocked und T062 bleibt abhängig blockiert, bis die vorhandenen Receipts revisionsgebunden gelesen oder die Abweichung durch einen ausdrücklich autorisierten Reconciliation-Vertrag bewertet wurde."
     },
-    "verified_acceptance": {
-      "exact-pr-identity": "PR #190 bindet Basis a85c14d..., finalen Head 35569da..., acht geänderte Dateien und den kanonischen GitHub-Diff.",
-      "ci-and-review-current": "CI, ai-context guard und security-hygiene waren auf 35569da grün; der nach dem P2-Fix erneut angeforderte Codex-Review meldete keine wesentlichen Befunde, offene Threads 0.",
-      "user-visible-diff-delivered": "Der vollständige 41.400-Byte-UTF-8-Diff mit SHA-256 8c5a3509... wurde vor Merge öffentlich und byteidentisch zum GitHub-PR-Diff bereitgestellt.",
-      "atomic-exact-head-merge": "GitHub meldet den Merge des erwarteten Heads 35569da... in Mergecommit 9b276fda....",
-      "post-merge-readback": "Leitstand main ist aktuell byte- und revisionsidentisch zu Mergecommit 9b276fda....",
-      "no-code-or-deployment": "T063 registriert ausschließlich die Mergewirkung; die Codeänderung gehört T061, das Host-Deployment bleibt T062."
+    "observed_acceptance": {
+      "exact-pr-identity": "PASS",
+      "ci-and-review-current": "PASS",
+      "user-visible-diff-delivered": "PASS",
+      "atomic-exact-head-merge": "PARTIAL: GitHub-Merge belegt; Captain-Dispatch und unabhängige Merge-Leases fehlen.",
+      "post-merge-readback": "PARTIAL: PR und Main-Commit belegt; Merge-Lease-Release fehlt.",
+      "no-code-or-deployment": "PASS für den beobachteten Registry-Scope; keine T063-eigene Deploymentwirkung wird behauptet."
     }
   }
 }

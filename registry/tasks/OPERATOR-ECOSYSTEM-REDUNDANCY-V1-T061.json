@@ -33,7 +33,8 @@
   "required_capabilities": [
     "repository",
     "shell",
-    "grabowski"
+    "grabowski",
+    "github"
   ],
   "depends_on": [],
   "acceptance": [

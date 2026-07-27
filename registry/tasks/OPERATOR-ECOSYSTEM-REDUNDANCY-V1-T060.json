@@ -27,7 +27,8 @@
   "required_capabilities": [
     "repository",
     "shell",
-    "grabowski"
+    "grabowski",
+    "github"
   ],
   "depends_on": [
     "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020"

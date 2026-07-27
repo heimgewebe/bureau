@@ -2,34 +2,42 @@
   "acceptance": [
     {
       "assertion": "GRABOWSKI-OPERATOR-SURFACE-V1-T116 ist verifiziert und liefert ein typisiertes Receipt für den exakten Mergecommit, Mergebaum, geprüften Head und vollständigen Diff.",
+      "evidence_type": "object",
       "id": "verified-merge-input"
     },
     {
       "assertion": "Vor dem ersten Hosteffekt werden Runtime-Identität und Integrität, Connectorbindung, Recovery- und Kill-Switch-Status, Tasks, Leases, Worktrees, Prozesse, betroffene Services und Watchdogs frisch gelesen; unbekannter, veralteter oder kollidierender Zustand blockiert.",
+      "evidence_type": "object",
       "id": "fresh-runtime-preflight"
     },
     {
       "assertion": "Ausschließlich der im Merge-Receipt gebundene Commit wird source-identitätsgebunden deployt; ein gültiges Finalisierungsreceipt, unveränderte Quellen und ein expliziter Rollbackpfad werden belegt.",
+      "evidence_type": "object",
       "id": "exact-source-deployment"
     },
     {
       "assertion": "Ein vorab festgelegtes begrenztes Live-Profil bindet Clientzahl, Parallelität, Dauer, Store-Fixture, Latenzgrenzen, Restart-Budget und Abbruchbedingungen; Produktivdaten werden nicht als Testfixture verwendet und ungebremste Last ist ausgeschlossen.",
+      "evidence_type": "object",
       "id": "bounded-live-load-profile"
     },
     {
       "assertion": "Das Live-Profil erzeugt ein unveränderliches commit-, Konfigurations- und Messwert-gebundenes Proof-Artefakt für MCP-Liveness, serialisierte Store-Mutationen, Queue-/Threadnutzung, SQLite-Busy-Verhalten, vermeidbare 502 und watchdogverstärkte Neustarts.",
+      "evidence_type": "object",
       "id": "live-measurement-proof"
     },
     {
       "assertion": "Unterschiede zwischen hermetischem Test, begrenztem Canary und allgemeiner Produktionsaussage werden ausdrücklich ausgewiesen; ein Grenzwertverstoß stoppt weitere Last, erhält Belege und löst keinen stillen Retry aus.",
+      "evidence_type": "object",
       "id": "bounded-claim-and-fail-closed-stop"
     },
     {
       "assertion": "Nach dem Nachweis sind betroffene Services und Watchdogs im vorgesehenen Zustand, Connector-Snapshot und Toolvertrag frisch und passend, und ein kleiner typisierter Live-Read gelingt; alle temporären Proof-Effekte sind entfernt oder revisionsgebunden erhalten.",
+      "evidence_type": "object",
       "id": "postflight-runtime-readback"
     },
     {
       "assertion": "Der Task führt keinen Code-Merge, Rebase oder Force-Push aus und übernimmt keine fremden Deployment-, Task-, Lease- oder Checkout-Effekte als eigene Autorität.",
+      "evidence_type": "object",
       "id": "runtime-only-boundary"
     }
   ],

@@ -2,26 +2,32 @@
   "acceptance": [
     {
       "assertion": "GRABOWSKI-OPERATOR-SURFACE-V1-T109 ist mit exaktem Pull Request, Base-SHA, geprüftem Head-SHA, vollständigem Diff-SHA-256, grüner CI und head-/diffgebundenem Review als reine Implementierung verifiziert.",
+      "evidence_type": "object",
       "id": "verified-implementation-input"
     },
     {
       "assertion": "Vor dem Merge wird der vollständige aktuelle GitHub-Diff mit Base-SHA, Head-SHA und SHA-256 als separates herunterladbares Artefakt an den Nutzer ausgeliefert; ein revisionsgebundenes Delivery-Receipt liegt vor.",
+      "evidence_type": "object",
       "id": "diff-delivery-before-merge"
     },
     {
       "assertion": "Unmittelbar vor dem Effekt bestätigen frische GitHub- und Grabowski-Readbacks: PR offen und nicht Draft, erwarteter Head unverändert, mergebar, Pflichtchecks grün, keine ungelösten handlungsrelevanten Review-Threads und keine kollidierenden fremden Leases, Tasks, Worktrees oder Prozesse.",
+      "evidence_type": "object",
       "id": "fresh-exclusive-merge-preflight"
     },
     {
       "assertion": "Genau der erwartete Head wird mit der repositorykonformen Merge-Methode gemergt; Rebase, Force-Push, Branch-Umschreibung, Deployment und Runtime-Mutation sind ausgeschlossen.",
+      "evidence_type": "object",
       "id": "exact-head-merge-only"
     },
     {
       "assertion": "Ein typisiertes Merge-Receipt bindet Repository, PR, Base, Head, vollständigen Diff, Mergecommit, Mergebaum und Post-Merge-Readback auf main. Es ist Voraussetzung für GRABOWSKI-OPERATOR-SURFACE-V1-T115 und behauptet kein Deployment.",
+      "evidence_type": "object",
       "id": "typed-merge-receipt"
     },
     {
       "assertion": "Head-, Review-, CI-, Lease- oder Mergebarkeitsdrift führt vor jedem Effekt zu einem belegten Block; es erfolgt kein Ersatzmerge und kein stiller Retry.",
+      "evidence_type": "object",
       "id": "drift-blocks-effect"
     }
   ],

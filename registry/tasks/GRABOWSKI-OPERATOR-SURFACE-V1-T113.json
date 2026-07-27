@@ -2,30 +2,37 @@
   "acceptance": [
     {
       "assertion": "GRABOWSKI-OPERATOR-SURFACE-V1-T112 ist verifiziert und liefert ein typisiertes Receipt für den exakten Mergecommit, Mergebaum, geprüften Head und vollständigen Diff.",
+      "evidence_type": "object",
       "id": "verified-merge-input"
     },
     {
       "assertion": "Vor dem ersten Hosteffekt werden Runtime-Identität und Integrität, Connectorbindung, Recovery- und Kill-Switch-Status, Tasks, Leases, Worktrees, Prozesse, betroffene Services und Watchdogs frisch gelesen; unbekannter, veralteter oder kollidierender Zustand blockiert.",
+      "evidence_type": "object",
       "id": "fresh-runtime-preflight"
     },
     {
       "assertion": "Ausschließlich der im Merge-Receipt gebundene Commit wird source-identitätsgebunden deployt; ein gültiges Finalisierungsreceipt, unveränderte Quellen und ein expliziter Rollbackpfad werden belegt.",
+      "evidence_type": "object",
       "id": "exact-source-deployment"
     },
     {
       "assertion": "Ein begrenzter reversibler Canary erzeugt eine kurze, exakt dem lokalen Upstream 127.0.0.1:18181 zuordenbare Nichtverfügbarkeit und belegt eine retrybare Operator-Unavailable-Antwort statt vermeidbarer roher 502 oder Tunnel-Fehlklassifikation.",
+      "evidence_type": "object",
       "id": "bounded-upstream-unavailable-canary"
     },
     {
       "assertion": "Der Canary belegt null stille Mutationsretries, null zusätzliche Tunnelneustarts und null watchdogverstärkte Operator-Neustarts; dauerhafte Ausfälle bleiben weiterhin durch Liveness, Backoff und Restart-Budget begrenzt.",
+      "evidence_type": "object",
       "id": "no-retry-or-restart-amplification"
     },
     {
       "assertion": "Nach dem Nachweis sind betroffene Services und Watchdogs im vorgesehenen Zustand, Connector-Snapshot und Toolvertrag frisch und passend, und ein kleiner typisierter Live-Read gelingt; alle temporären Proof-Effekte sind entfernt oder revisionsgebunden erhalten.",
+      "evidence_type": "object",
       "id": "postflight-runtime-readback"
     },
     {
       "assertion": "Der Task führt keinen Code-Merge, Rebase oder Force-Push aus und übernimmt keine fremden Deployment-, Task-, Lease- oder Checkout-Effekte als eigene Autorität.",
+      "evidence_type": "object",
       "id": "runtime-only-boundary"
     }
   ],

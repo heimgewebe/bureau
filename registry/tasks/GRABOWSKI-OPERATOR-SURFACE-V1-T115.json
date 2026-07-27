@@ -2,30 +2,37 @@
   "acceptance": [
     {
       "assertion": "GRABOWSKI-OPERATOR-SURFACE-V1-T114 ist verifiziert und liefert ein typisiertes Receipt für den exakten Mergecommit, Mergebaum, geprüften Head und vollständigen Diff.",
+      "evidence_type": "object",
       "id": "verified-merge-input"
     },
     {
       "assertion": "Vor dem ersten Hosteffekt werden Runtime-Identität und Integrität, Connectorbindung, Recovery- und Kill-Switch-Status, Tasks, Leases, Worktrees, Prozesse, betroffene Services und Watchdogs frisch gelesen; unbekannter, veralteter oder kollidierender Zustand blockiert.",
+      "evidence_type": "object",
       "id": "fresh-runtime-preflight"
     },
     {
       "assertion": "Ausschließlich der im Merge-Receipt gebundene Commit wird source-identitätsgebunden deployt; ein gültiges Finalisierungsreceipt, unveränderte Quellen und ein expliziter Rollbackpfad werden belegt.",
+      "evidence_type": "object",
       "id": "exact-source-deployment"
     },
     {
       "assertion": "Ein begrenzter Live-Nachweis erzeugt Reconcile-Records für mindestens zwei kontrollierte Clientquellen und einen unbekannten Legacy-Aufrufer; die Records bleiben typisiert, längenbegrenzt, source-gebunden und werden nicht heuristisch zu persönlicher Identität aufgewertet.",
+      "evidence_type": "object",
       "id": "multi-client-live-attribution"
     },
     {
       "assertion": "Readback und Redaktionsprüfung belegen, dass keine freien Gesprächstexte, Tokens, Secrets, E-Mail-Adressen oder rohen Sessiondaten gespeichert wurden und bestehende Auditketten sowie historische Records unverändert lesbar bleiben.",
+      "evidence_type": "object",
       "id": "live-redaction-and-compatibility"
     },
     {
       "assertion": "Nach dem Nachweis sind betroffene Services und Watchdogs im vorgesehenen Zustand, Connector-Snapshot und Toolvertrag frisch und passend, und ein kleiner typisierter Live-Read gelingt; alle temporären Proof-Effekte sind entfernt oder revisionsgebunden erhalten.",
+      "evidence_type": "object",
       "id": "postflight-runtime-readback"
     },
     {
       "assertion": "Der Task führt keinen Code-Merge, Rebase oder Force-Push aus und übernimmt keine fremden Deployment-, Task-, Lease- oder Checkout-Effekte als eigene Autorität.",
+      "evidence_type": "object",
       "id": "runtime-only-boundary"
     }
   ],

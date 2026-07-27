@@ -2,18 +2,22 @@
   "acceptance": [
     {
       "assertion": "Ein exakt an 127.0.0.1:18181 gebundener Connection-refused-Zustand wird als Operator-Upstream-Unverfügbarkeit mit begrenzter retrybarer Antwort projiziert; er begründet weder einen Tunneldefekt noch eine Mutationserholung.",
+      "evidence_type": "object",
       "id": "upstream-unavailable-contract"
     },
     {
       "assertion": "Kurzzeitige Operator-Neustarts lösen keinen zusätzlichen Tunnel- oder Operator-Neustart aus; anhaltende Ausfälle bleiben durch Liveness, Backoff und Restart-Budget fail-closed erkennbar.",
+      "evidence_type": "object",
       "id": "no-restart-amplification"
     },
     {
       "assertion": "Tests decken unbekannten Mutationsausgang, abweichende Upstream-Ziele, dauerhafte Verbindungsverweigerung, Readiness-Drift und wiederholte Requests ab; kein Pfad wiederholt eine mögliche Mutation ohne exakten Ziel-Readback.",
+      "evidence_type": "object",
       "id": "negative-recovery-proof"
     },
     {
       "assertion": "Vollständige Validierung und ein exakt an Head und vollständigen Diff gebundener PR-Review belegen die Implementierung; diese Aufgabe führt weder Merge noch Deployment noch Live-Readback aus. Diese Wirkungen gehören ausschließlich den abhängigen Tasks GRABOWSKI-OPERATOR-SURFACE-V1-T112 und GRABOWSKI-OPERATOR-SURFACE-V1-T113.",
+      "evidence_type": "object",
       "id": "implementation-review-proof"
     }
   ],

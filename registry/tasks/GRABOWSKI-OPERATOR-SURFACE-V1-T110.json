@@ -2,18 +2,22 @@
   "acceptance": [
     {
       "assertion": "Ein hermetischer Harness erzeugt deterministisch parallele Reconcile-Reads und -Mutationen, SQLite-Busy-/Lock-Situationen, Operator-Unterbrechung und Tunnel-Anfragen, ohne standardmäßig Produktivdaten zu verändern.",
+      "evidence_type": "object",
       "id": "reproducible-load-harness"
     },
     {
       "assertion": "Der Nachweis definiert und prüft maximale MCP-Liveness-Latenz, serialisierte Store-Mutationen, begrenzte Queue-/Threadnutzung, null vermeidbare 502 und null watchdogverstärkte Neustarts im freigegebenen Lastprofil.",
+      "evidence_type": "object",
       "id": "explicit-slo-thresholds"
     },
     {
       "assertion": "Negativtests decken Guard-Entzug während Lock-Wartezeit, dauerhaften Hänger, Busy-Store, Auditfehler, Tunnel-Upstream-Ausfall und unbekannten Mutationsausgang ab; alle Effekte bleiben fail-closed und readbackgebunden.",
+      "evidence_type": "object",
       "id": "failure-injection-boundaries"
     },
     {
       "assertion": "CI erzeugt ein commit-, Konfigurations- und Messwert-gebundenes hermetisches Proof-Artefakt und ein exakt an Head und vollständigen Diff gebundener PR-Review besteht; diese Aufgabe führt keinen Produktiv-Canary aus. Merge, Deployment und begrenzter Live-Canary gehören ausschließlich den abhängigen Tasks GRABOWSKI-OPERATOR-SURFACE-V1-T116 und GRABOWSKI-OPERATOR-SURFACE-V1-T117.",
+      "evidence_type": "object",
       "id": "immutable-hermetic-proof"
     }
   ],

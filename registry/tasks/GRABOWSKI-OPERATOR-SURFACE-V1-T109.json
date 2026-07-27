@@ -2,18 +2,22 @@
   "acceptance": [
     {
       "assertion": "Jeder neue Reconcile-Auditrecord kann eine typisierte, längenbegrenzte und redigierte Aufruferreferenz tragen; freie Gesprächstexte, Tokens, Secrets, E-Mail-Adressen und rohe Sessiondaten werden abgewiesen oder nicht gespeichert.",
+      "evidence_type": "object",
       "id": "bounded-provenance-schema"
     },
     {
       "assertion": "Die Provenienz erklärt ausschließlich den Aufrufursprung und erzeugt weder Task-, Lease-, Session-, Lifecycle- noch Erfolgswahrheit; bestehende Auditketten und historische Records bleiben lesbar.",
+      "evidence_type": "object",
       "id": "single-truth-boundary"
     },
     {
       "assertion": "Deterministische Tests unterscheiden mindestens zwei gleichzeitige Clients und einen unbekannten Legacy-Aufrufer, ohne sie fälschlich zusammenzuführen oder Identität aus Heuristiken abzuleiten.",
+      "evidence_type": "object",
       "id": "multi-client-attribution"
     },
     {
       "assertion": "Schema-, Redaktions-, Tamper-, Replikations- und vollständige Validierungstests sowie ein exakt an Head und vollständigen Diff gebundener PR-Review bestehen; diese Aufgabe erzeugt keinen Live-Readback. Merge und source-gebundener Live-Nachweis gehören ausschließlich den abhängigen Tasks GRABOWSKI-OPERATOR-SURFACE-V1-T114 und GRABOWSKI-OPERATOR-SURFACE-V1-T115.",
+      "evidence_type": "object",
       "id": "implementation-integrity-proof"
     }
   ],

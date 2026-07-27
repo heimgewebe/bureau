@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Leitstand-Lifecycle-Consumer implementieren und als PR veröffentlichen",
+  "state": "ready",
+  "goal": "Implementiere in einem eigenen sauberen Worktree einen read-only Leitstand-Consumer für die stabilen Systemkatalog-Lifecycle-Zustände, prüfe ihn vollständig und veröffentliche einen revisionsgebundenen PR. Trenne deklarierte Semantik, Artefakt-Freshness und Runtime-Gesundheit sichtbar und fail-closed; Retirement darf nicht als aktueller Dienstfehler erscheinen. Diese Aufgabe mergt und deployt nicht.",
+  "priority": {
+    "lane": "next",
+    "rank": 84
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand",
+      "repo:/home/alex/repos/systemkatalog"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "clean-isolated-implementation",
+      "assertion": "Implementation occurs in an independently owned clean worktree; the unowned dirty predecessor checkout is not mutated.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "strict-source-contract",
+      "assertion": "Lifecycle states, exact valid YYYY-MM-DD dates, unique node identities and non-empty unique evidence references are validated fail-closed from the hash-bound registry_nodes artifact.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "truth-axes-separated",
+      "assertion": "UI and API distinguish technical artifact alignment, declared stable lifecycle semantics and runtime health; no axis establishes another.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "read-only-exploration",
+      "assertion": "Users can inspect and filter lifecycle states while all routes remain read-only and source links remain commit-bound.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "review-ci-pr-published",
+      "assertion": "Focused and full local checks pass; an exact-head PR with independent review and complete canonical diff evidence is published for T063.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-merge-or-deployment",
+      "assertion": "T061 performs neither PR merge nor runtime deployment or production cutover.",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "implementation_owner": "operator:leitstand-lifecycle-consumer-v2-20260726",
+    "base_sha": "a85c14d0df83da61c68e43fe814a19d483f3f6f2",
+    "does_not_establish": [
+      "merge_readiness",
+      "merge_authority",
+      "deployment_readiness",
+      "deployment_authority",
+      "runtime_health",
+      "semantic_source_authority"
+    ]
+  }
+}

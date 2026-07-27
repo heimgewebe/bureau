@@ -143,7 +143,13 @@
       "no-paid-fallback": "PASS: unbekannte Kosten blockieren, bezahlte Routen brauchen explizite Autorisierung und der Claude-Pool erlaubt keinen PAYG-Fallback.",
       "regression-suite": "PASS: 26 fokussierte Routertests, 2401 vollständige Tests, grüne CI und unabhängiger diffgebundener Review auf PR #315."
     },
-    "verified_at": "2026-07-27T09:02:48Z"
+    "verified_at": "2026-07-27T09:02:48Z",
+    "verification": {
+      "source": "merged_grabowski_pr_315_and_integrity_valid_live_runtime_readback",
+      "verified_at": "2026-07-27T09:02:48Z",
+      "task_sha256": "d833fc351a2436f665f3d97e8acdca062a6a95f82801d939d2b95d82a87c697a",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   },
   "priority": {
     "lane": "next",

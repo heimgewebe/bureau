@@ -94,8 +94,8 @@
       "evidence_type": "object"
     },
     {
-      "id": "terminal-receipt-closeout",
-      "assertion": "After all dependency and runtime evidence is current, T032 completes against its frozen task revision and the receipt-backed task-status overlay projects verified without T032 editing its own registry file during or after the claimed run.",
+      "id": "terminal-closeout-preconditions",
+      "assertion": "Before complete_run, current dependency and runtime evidence is bound to T032's frozen task revision and proves that T032 did not edit its own registry file; this acceptance evidence contains only pre-completion inputs.",
       "evidence_type": "object"
     }
   ],
@@ -141,6 +141,15 @@
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T063",
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T062"
-    ]
+    ],
+    "post_completion_readback": {
+      "phase": "after_complete_run",
+      "authority": "bureau_state_store",
+      "assertion": "Authoritatively read back the newly inserted receipt and the task-status overlay projected as verified after complete_run commits its transaction.",
+      "expected_task_status": "verified",
+      "requires_receipt_sha256": true,
+      "acceptance_evidence": false,
+      "registry_self_mutation_authorized": false
+    }
   }
 }

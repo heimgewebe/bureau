@@ -133,6 +133,8 @@
         "final_review_comment_id": 5085560083
       },
       "does_not_establish": [
+        "pre_merge_open_pr_state",
+        "pre_merge_identity_revalidation",
         "captain_dispatch",
         "match_head_merge_receipt",
         "independent_merge_lease_acquisition",
@@ -144,8 +146,9 @@
     },
     "process_deviation": {
       "status": "unreconciled",
-      "description": "Leitstand PR #190 ist bereits gemergt. GitHub belegt exakten Head, Review, CI, Diff und resultierenden Main-Stand; die für T063 verpflichtenden Captain- und Merge-Lease-Receipts sind im aktuell verfügbaren Belegsatz jedoch nicht vorhanden. Der bereits eingetretene Merge wird deshalb nicht rückwirkend als vertragskonforme T063-Ausführung umgedeutet.",
+      "description": "Leitstand PR #190 ist bereits gemergt. Der erst mehr als fünfzehn Stunden später erhobene GitHub-Readback belegt erhaltene Basis-, Head-, Pfad-, Diff- und Main-Identität, aber weder den offenen PR-Zustand beim geforderten Identitätscheck noch die verpflichtenden Captain- und Merge-Lease-Receipts. Der bereits eingetretene Merge wird deshalb nicht rückwirkend als vertragskonforme T063-Ausführung umgedeutet.",
       "required_next_evidence": [
+        "timestamped pre-merge receipt proving PR #190 was open and binding base, head, changed paths and canonical diff",
         "exact Captain merge dispatch receipt for heimgewebe/leitstand#190",
         "owner-bound independent merge lease acquisition receipt",
         "post-merge unchanged lease release receipt",
@@ -155,11 +158,12 @@
     },
     "observed_acceptance": {
       "exact-pr-identity": {
-        "status": "SUPPORTED_NOT_TERMINAL",
+        "status": "PARTIAL",
+        "post_merge_observed_at": "2026-07-27T17:52:09Z",
         "pull_request": 190,
-        "base_sha": "a85c14d0df83da61c68e43fe814a19d483f3f6f2",
-        "head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
-        "changed_paths": [
+        "retained_base_sha": "a85c14d0df83da61c68e43fe814a19d483f3f6f2",
+        "retained_head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+        "retained_changed_paths": [
           "src/controllers/ecosystemMap.ts",
           "src/controllers/ecosystemMapNavigation.ts",
           "src/public/ecosystem-map.mjs",
@@ -169,8 +173,13 @@
           "tests/controllers/ecosystemMapNavigation.test.ts",
           "tests/views/ecosystemMap.test.ts"
         ],
-        "diff_sha256": "8c5a35096f64f9fdcf77235eb5eddd85a9a1d3886a6ecb7e9b553b04b243c98f",
+        "retained_diff_sha256": "8c5a35096f64f9fdcf77235eb5eddd85a9a1d3886a6ecb7e9b553b04b243c98f",
+        "missing": [
+          "timestamped pre-merge receipt proving the PR was open",
+          "pre-merge revalidation binding open state, base, head, changed paths and canonical diff"
+        ],
         "does_not_establish": [
+          "the acceptance criterion's required open-PR identity gate",
           "T063 verification"
         ]
       },

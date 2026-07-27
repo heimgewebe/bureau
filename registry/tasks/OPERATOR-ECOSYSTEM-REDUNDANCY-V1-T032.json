@@ -14,19 +14,14 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau",
       "repo:/home/alex/repos/heimserver",
       "repo:/home/alex/repos/leitstand",
       "repo:/home/alex/repos/systemkatalog",
+      "path:/home/alex/.config/grabowski/fleet.json",
       "host:heim-pc"
     ]
   },
   "claims": [
-    {
-      "resource": "repo.bureau",
-      "mode": "write",
-      "isolation": "worktree"
-    },
     {
       "resource": "repo.heimserver",
       "mode": "read",

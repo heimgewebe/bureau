@@ -184,16 +184,22 @@
         ]
       },
       "ci-and-review-current": {
-        "status": "SUPPORTED_NOT_TERMINAL",
+        "status": "PARTIAL",
         "head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
-        "workflow_run_ids": [
+        "observed_workflow_run_ids": [
           30221789231,
           30221789246,
           30221789233
         ],
-        "final_review_comment_id": 5085560083,
-        "open_threads": 0,
+        "observed_review_comment_id": 5085560083,
+        "observed_open_threads": 0,
+        "missing": [
+          "typed immutable check-run receipts binding the complete required-check set, exact head, completion timestamps and conclusions",
+          "exact-head review submission receipt or equivalent signed review evidence establishing independent review completeness"
+        ],
         "does_not_establish": [
+          "green CI as terminal acceptance evidence",
+          "complete independent review",
           "Captain merge authorization",
           "T063 verification"
         ]

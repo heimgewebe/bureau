@@ -68,7 +68,10 @@
       "that every contract whose filename contains repobrief is obsolete",
       "permission to rewrite historical proof or measurement artifacts",
       "external consumer absence beyond repository evidence",
-      "automatic merge or deployment authority"
+      "automatic merge or deployment authority",
+      "resolution of the general target-controlled deletion-guard governance candidate",
+      "absence of unknown external consumers",
+      "deployment or release publication"
     ],
     "operator_intake": {
       "candidate_id": "candidate-1696513020f86c092c296a98",
@@ -105,7 +108,56 @@
     "source_commit": "a029bbcd2779e7bed1ac41e936bdf720249f0538",
     "source_path": "merger/repoground/contracts/repobrief-release-candidate.v1.schema.json",
     "source_repository": "heimgewebe/repoground",
-    "source_sha256": "8c9d10a951461e83d9aa573d9963389d3a4958f23f5a0d8b384cdcd4dd371fc8"
+    "source_sha256": "8c9d10a951461e83d9aa573d9963389d3a4958f23f5a0d8b384cdcd4dd371fc8",
+    "implementation": {
+      "repository": "heimgewebe/repoground",
+      "pull_request": 1110,
+      "base_sha": "8ec3c7d2a5d04b3df63d52c5cf5eb16b725e418c",
+      "head_sha": "ae87121e5d02d70831f3687cc55c444d14d1c1bf",
+      "merge_commit_sha": "6046b6d5f42d9e796ff659f0393e9515b2d7fd61",
+      "merge_tree_sha": "f29fb7bf7f8bf0466e2e4deaef8ecb7ba0c57010",
+      "diff_sha256": "be3264e736bfacb922e21cbcb02a09e85141d42e611fbb54004aa9025aee7830",
+      "diff_bytes": 52764,
+      "download_reference": "https://github.com/heimgewebe/repoground/compare/8ec3c7d2a5d04b3df63d52c5cf5eb16b725e418c...ae87121e5d02d70831f3687cc55c444d14d1c1bf.diff"
+    },
+    "validation": {
+      "focused_tests": "45 passed",
+      "ruff": "PASS",
+      "git_diff_check": "PASS",
+      "pull_request_checks": "PASS",
+      "post_merge_checks": "PASS",
+      "post_merge_test_suite_run": 30297708507,
+      "post_merge_full_suite": "PASS",
+      "review_threads_open": 0,
+      "deletion_guard_pull_request": "PASS",
+      "deletion_guard_push": "PASS",
+      "bureau_registry_check": "PASS",
+      "bureau_ruff": "PASS",
+      "bureau_full_suite": "PASS",
+      "bureau_full_suite_task_id": "c4fd5c0160214cd7a2f91f0b",
+      "bureau_full_suite_receipt_sha256": "6e06ef433b2c2c9df01a4ef750ec484ee4524818046fd29cd465834a2f3f1027",
+      "bureau_full_suite_terminalization_sha256": "0180faf2109402dd3ec4e27c77d5e227af8366059602fbdbce1483dc77324b7d",
+      "bureau_systemkatalog_boundary": "PASS"
+    },
+    "review": {
+      "self_review_head_sha": "ae87121e5d02d70831f3687cc55c444d14d1c1bf",
+      "self_review_diff_sha256": "be3264e736bfacb922e21cbcb02a09e85141d42e611fbb54004aa9025aee7830",
+      "independent_review_task_id": "988ad29732004518b697c8fc",
+      "independent_review_intermediate_head": "c1ecad0a4109f44fd11c5fe738fe26cf11a2024a",
+      "independent_review_finding": "trailing-slash archive alias remained accepted",
+      "finding_resolved_by_head": "ae87121e5d02d70831f3687cc55c444d14d1c1bf",
+      "merge_tree_matches_reviewed_head": true
+    },
+    "verification": {
+      "bureau_run_id": "BUR-RUN-20260727T133925Z-280eab9a01",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "task_sha256": "316555590ed9316329ffa8307d1f80d936cdff9fa1dd342aa376ea9ac89ee039"
+    },
+    "followups": [
+      "candidate-7df7665cc0b5359a01fa9b0f"
+    ],
+    "resolution_summary": "PR #1110 entfernte genau die zwei ausgemusterten RepoBrief-Release-Schemata, vereinheitlichte Compatibility-Exit, Matrix, Builder und Verifier und härtete Archivpfade gegen exakte, Dot-Segment- und Trailing-Slash-Aliase. Der Merge-Commit enthält exakt den geprüften Head-Baum; alle PR- und Nachlaufprüfungen einschließlich Volltest, CodeQL und Vertragslöschungs-Guard sind grün.",
+    "verified_at": "2026-07-27T19:42:41Z"
   },
   "priority": {
     "lane": "next",
@@ -121,6 +173,6 @@
     "bureau"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Veraltete RepoBrief-Release-Verträge aus aktiven RepoGround-Surfaces entfernen"
 }

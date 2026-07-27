@@ -1,6 +1,5 @@
 {
   "active_task_ids": [
-    "AUTH-PG-001",
     "AUTH-PG-002",
     "AUTH-PG-003",
     "DB-PROOF-001",
@@ -14,7 +13,7 @@
     "WELTGEWEBE-OS-009",
     "WELTGEWEBE-OS-010"
   ],
-  "commit_sha": "513a4a3ca4cdc37afc2d4d18fb64b402baa6c9b4",
+  "commit_sha": "d68ebc52d89419177474b88befa2b7f2cd6d69c1",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -516,14 +515,14 @@
       "acceptance_count": 4,
       "area": "auth",
       "effort": "M",
-      "evidence_count": 5,
+      "evidence_count": 6,
       "id": "AUTH-PG-001",
       "link_counts": {
         "docs": 3,
         "issues": 0,
-        "prs": 0
+        "prs": 2
       },
-      "missing_evidence_count": 2,
+      "missing_evidence_count": 0,
       "owner": "unknown",
       "priority": "high",
       "risk": "high",
@@ -541,6 +540,7 @@
           "apps/api/src/domain_db.rs",
           "apps/api/src/routes/domain_write_guard.rs",
           "apps/api/tests/db_domain_account_write_path.rs",
+          "scripts/ci/run-postgres-integration-proofs.sh",
           "docs/tasks/board.md"
         ],
         "id": "AUTH-PG-001",
@@ -551,23 +551,23 @@
             "docs/reports/domain-account-write-path-proof.md"
           ],
           "issues": [],
-          "prs": []
+          "prs": [
+            "1298",
+            "1398"
+          ]
         },
-        "missing_evidence": [
-          "Fresh Rust-Compile-, PostgreSQL-Proof- und PR-CI-Evidence stehen aus",
-          "Produktions-Cutover bleibt ausstehend; JSONL bleibt Default-Lesequelle und Write-Truth"
-        ],
+        "missing_evidence": [],
         "owner": "unknown",
         "priority": "high",
         "risk": "high",
-        "status": "partial",
+        "status": "done",
         "title": "Step-up-E-Mail-Persistenz nach PostgreSQL",
-        "updated_at": "2026-06-29"
+        "updated_at": "2026-07-27"
       },
-      "source_task_sha256": "45af4756694f941505d0a57c8f48633f8095676f91b6692e961a7ab64effa106",
-      "status": "partial",
+      "source_task_sha256": "8d6777491a65e5165c2559ae84125f7a40d62b01d69511a39308c50d5a8d0973",
+      "status": "done",
       "title": "Step-up-E-Mail-Persistenz nach PostgreSQL",
-      "updated_at": "2026-06-29"
+      "updated_at": "2026-07-27"
     },
     {
       "acceptance_count": 4,
@@ -1642,6 +1642,163 @@
     },
     {
       "acceptance_count": 3,
+      "area": "auth",
+      "effort": "M",
+      "evidence_count": 5,
+      "id": "OPT-API-002",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "DbSessionStore persistiert Sessions direkt in PostgreSQL",
+          "Die Backend-Auswahl über DATABASE_URL scheitert bei Fehlkonfiguration hart statt still zurückzufallen",
+          "Ein verpflichtender PostgreSQL-CI-Beweis deckt Persistenz und Reload ab"
+        ],
+        "area": "auth",
+        "effort": "M",
+        "evidence": [
+          "apps/api/src/auth/session_db.rs",
+          "apps/api/src/lib.rs",
+          "apps/api/src/auth/session.rs",
+          "apps/api/tests/db_session_store_persistence.rs",
+          "docs/adr/ADR-0007__auth-persistence-production-db-path.md"
+        ],
+        "id": "OPT-API-002",
+        "links": {
+          "docs": [
+            "docs/adr/ADR-0007__auth-persistence-production-db-path.md",
+            "docs/reports/optimierungsstatus.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "high",
+        "status": "done",
+        "title": "Session-Persistenz PostgreSQL",
+        "updated_at": "2026-07-27"
+      },
+      "source_task_sha256": "804a49d1392bf366cb6f845cd994790e7fed5ba641447af5d593338024eafa0f",
+      "status": "done",
+      "title": "Session-Persistenz PostgreSQL",
+      "updated_at": "2026-07-27"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "api",
+      "effort": "S",
+      "evidence_count": 6,
+      "id": "OPT-API-003",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "Vorwärts- und Rückwärtsmigration für Sessions sind versioniert",
+          "Der API-Start führt eingebettete SQLx-Migrationen gegen PostgreSQL aus",
+          "Der PostgreSQL-Integrationstest belegt Migration und anschließende Session-Persistenz"
+        ],
+        "area": "api",
+        "effort": "S",
+        "evidence": [
+          "apps/api/migrations/20260428000000_create_sessions.up.sql",
+          "apps/api/migrations/20260428000000_create_sessions.down.sql",
+          "apps/api/src/lib.rs",
+          "apps/api/tests/db_session_store_persistence.rs",
+          "apps/api/README.md",
+          "Justfile"
+        ],
+        "id": "OPT-API-003",
+        "links": {
+          "docs": [
+            "apps/api/README.md",
+            "docs/reports/optimierungsstatus.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "high",
+        "status": "done",
+        "title": "DB-Migrationen für Sessions",
+        "updated_at": "2026-07-27"
+      },
+      "source_task_sha256": "5d008e7f71ce38cabb3b83e5b3467f8ba3f7692aea92bb28b68dee40d46dfd0f",
+      "status": "done",
+      "title": "DB-Migrationen für Sessions",
+      "updated_at": "2026-07-27"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "api",
+      "effort": "S",
+      "evidence_count": 6,
+      "id": "OPT-API-004",
+      "link_counts": {
+        "docs": 1,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "medium",
+      "source_task": {
+        "acceptance": [
+          "Nodes-, Accounts- und Edges-Listen verwenden dieselbe MAX_PAGE_SIZE-Obergrenze",
+          "Überhöhte Limit-Werte werden deterministisch gekappt",
+          "API-Tests belegen die Kappung für Nodes und Accounts"
+        ],
+        "area": "api",
+        "effort": "S",
+        "evidence": [
+          "apps/api/src/routes/query.rs",
+          "apps/api/src/routes/nodes.rs",
+          "apps/api/src/routes/accounts.rs",
+          "apps/api/src/routes/edges.rs",
+          "apps/api/tests/api_nodes.rs",
+          "apps/api/tests/api_accounts.rs"
+        ],
+        "id": "OPT-API-004",
+        "links": {
+          "docs": [
+            "docs/reports/optimierungsstatus.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "medium",
+        "status": "done",
+        "title": "Limit-Obergrenze für Listen-Endpunkte",
+        "updated_at": "2026-07-27"
+      },
+      "source_task_sha256": "3609f456743d80fc4d8a3232e9ec219dee3d8a4b26f19601627620cfa8bf618b",
+      "status": "done",
+      "title": "Limit-Obergrenze für Listen-Endpunkte",
+      "updated_at": "2026-07-27"
+    },
+    {
+      "acceptance_count": 3,
       "area": "api",
       "effort": "XL",
       "evidence_count": 39,
@@ -1996,6 +2153,56 @@
       "updated_at": "2026-05-30"
     },
     {
+      "acceptance_count": 3,
+      "area": "web",
+      "effort": "M",
+      "evidence_count": 4,
+      "id": "OPT-FE-003",
+      "link_counts": {
+        "docs": 1,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "low",
+      "risk": "low",
+      "source_task": {
+        "acceptance": [
+          "Node-, Account- und Edge-Panel nutzen die gemeinsame Detail-Ladelogik",
+          "Endpunktbildung und Datumsformatierung sind separat testbar",
+          "Unit-Tests decken Loader und Datumsformatierung ab"
+        ],
+        "area": "web",
+        "effort": "M",
+        "evidence": [
+          "apps/web/src/lib/panels/panelDetails.ts",
+          "apps/web/src/lib/panels/panelDetails.test.ts",
+          "apps/web/src/lib/utils/formatDate.ts",
+          "apps/web/src/lib/utils/formatDate.test.ts"
+        ],
+        "id": "OPT-FE-003",
+        "links": {
+          "docs": [
+            "docs/reports/optimierungsstatus.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "low",
+        "risk": "low",
+        "status": "done",
+        "title": "Panel-Detail-Fetch-Logik extrahieren",
+        "updated_at": "2026-07-27"
+      },
+      "source_task_sha256": "369b06c9e4bd81b696a8bca989ac59339b9d207d57b0c22a0f78d22778cfa358",
+      "status": "done",
+      "title": "Panel-Detail-Fetch-Logik extrahieren",
+      "updated_at": "2026-07-27"
+    },
+    {
       "acceptance_count": 2,
       "area": "infra",
       "effort": "S",
@@ -2046,6 +2253,58 @@
       "status": "done",
       "title": "Third-Party-Actions per Commit-SHA pinnen",
       "updated_at": "2026-07-12"
+    },
+    {
+      "acceptance_count": 3,
+      "area": "map",
+      "effort": "M",
+      "evidence_count": 5,
+      "id": "OPT-MAP-001",
+      "link_counts": {
+        "docs": 2,
+        "issues": 0,
+        "prs": 0
+      },
+      "missing_evidence_count": 0,
+      "owner": "unknown",
+      "priority": "high",
+      "risk": "high",
+      "source_task": {
+        "acceptance": [
+          "HTTP-206-Range-Auslieferung ist gegen einen laufenden Caddy in CI belegt",
+          "PMTiles-Magic und SHA-256 sind gegen das reale Basemap-Artefakt verifiziert",
+          "Die Browser-Integration des Basemap-Artefakts ist automatisiert getestet"
+        ],
+        "area": "map",
+        "effort": "M",
+        "evidence": [
+          "scripts/guard/basemap-runtime-proof.sh",
+          ".github/workflows/basemap-runtime-proof.yml",
+          "infra/caddy/Caddyfile.proof",
+          "scripts/basemap/build-hamburg-pmtiles.sh",
+          "apps/web/tests/basemap-client-integration.spec.ts"
+        ],
+        "id": "OPT-MAP-001",
+        "links": {
+          "docs": [
+            "docs/reports/optimierungsstatus.md",
+            "docs/reports/map-status-matrix.md"
+          ],
+          "issues": [],
+          "prs": []
+        },
+        "missing_evidence": [],
+        "owner": "unknown",
+        "priority": "high",
+        "risk": "high",
+        "status": "done",
+        "title": "Basemap Runtime Proof",
+        "updated_at": "2026-07-27"
+      },
+      "source_task_sha256": "b2b36f086f8f36a52005f6835c03bf8dc81219beb52d2b494f93707193ec410e",
+      "status": "done",
+      "title": "Basemap Runtime Proof",
+      "updated_at": "2026-07-27"
     },
     {
       "acceptance_count": 0,
@@ -2908,7 +3167,7 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "54223547c4589f594ee0d776980f8f35afcfa48efca8ac41ed4dea61705fb84b",
+  "index_sha256": "fcc43787086ec5b6c21c408abe8308db9f3a59a523bc637ede242c6880652fc4",
   "ref": "HEAD",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",
@@ -2926,10 +3185,10 @@
   "status_counts": {
     "blocked": 6,
     "contradicted": 0,
-    "done": 37,
+    "done": 43,
     "obsolete": 0,
     "open": 1,
-    "partial": 6
+    "partial": 5
   },
-  "task_count": 50
+  "task_count": 55
 }

@@ -69,8 +69,10 @@ Every newly recorded candidate receives a stable opaque `candidate_id`. To corre
 promote an existing candidate, append a new candidate event that names the current event through
 `--supersedes-event-id`. The successor inherits the candidate identity, repository, task binding,
 status and `promotion_required` value unless the latter is explicitly changed with
-`--promotion-required` or `--no-promotion-required`. Repository changes are rejected because they
-would make per-repository projections ambiguous. A predecessor can be superseded only once.
+`--promotion-required` or `--no-promotion-required`. Repository and task changes are rejected because
+they would make the candidate lifecycle ambiguous. For `catalog_validation=strict`, the effective
+inherited repository and task bindings are validated against the current Registry snapshot before the
+successor is appended. A predecessor can be superseded only once.
 
 Example correction and closeout:
 

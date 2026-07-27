@@ -282,6 +282,8 @@ def test_candidate_close_event_removes_candidate_from_open_projection(
 
 def test_candidate_supersession_validation_fails_closed(registry_factory, tmp_path):
     _root, registry, store = setup_live(registry_factory, tmp_path)
+    task_ids = sorted(registry.tasks)
+    assert len(task_ids) >= 2
     focus = live_register_record(
         registry,
         store,
@@ -296,6 +298,7 @@ def test_candidate_supersession_validation_fails_closed(registry_factory, tmp_pa
         kind="candidate_task",
         candidate_id="candidate.alpha",
         repo="repo.alpha",
+        task_id=task_ids[0],
         title="Candidate alpha",
     )
 
@@ -346,6 +349,16 @@ def test_candidate_supersession_validation_fails_closed(registry_factory, tmp_pa
             title="Cross-repository correction",
             supersedes_event_id=first["event_id"],
         )
+    with pytest.raises(StateError, match="task cannot change"):
+        live_register_record(
+            registry,
+            store,
+            kind="candidate_task",
+            repo="repo.alpha",
+            task_id=task_ids[1],
+            title="Cross-task correction",
+            supersedes_event_id=first["event_id"],
+        )
 
     corrected = live_register_record(
         registry,
@@ -357,6 +370,7 @@ def test_candidate_supersession_validation_fails_closed(registry_factory, tmp_pa
         supersedes_event_id=first["event_id"],
     )
     assert corrected["record"]["candidate_id"] == "candidate.alpha"
+    assert corrected["record"]["task_id"] == task_ids[0]
 
     with pytest.raises(StateError, match="already superseded"):
         live_register_record(
@@ -367,6 +381,52 @@ def test_candidate_supersession_validation_fails_closed(registry_factory, tmp_pa
             title="Competing correction",
             supersedes_event_id=first["event_id"],
         )
+
+
+def test_strict_candidate_supersession_revalidates_inherited_deferred_bindings(
+    registry_factory,
+    tmp_path,
+):
+    _root, registry, store = setup_live(registry_factory, tmp_path)
+    unknown_repo = live_register_record(
+        None,
+        store,
+        kind="candidate_task",
+        repo="repo.missing",
+        title="Deferred candidate with missing repository",
+        catalog_validation="deferred",
+    )
+
+    with pytest.raises(StateError, match="unknown live register repo resource"):
+        live_register_record(
+            registry,
+            store,
+            kind="candidate_task",
+            title="Strict repository revalidation",
+            supersedes_event_id=unknown_repo["event_id"],
+        )
+
+    unknown_task = live_register_record(
+        None,
+        store,
+        kind="candidate_task",
+        repo="repo.alpha",
+        task_id="BUR-TEST-001-T9999",
+        title="Deferred candidate with missing task",
+        catalog_validation="deferred",
+    )
+    with pytest.raises(StateError, match="unknown live register task"):
+        live_register_record(
+            registry,
+            store,
+            kind="candidate_task",
+            title="Strict task revalidation",
+            supersedes_event_id=unknown_task["event_id"],
+        )
+
+    listed = live_register_list(store, kind="candidate_task")
+    assert listed["summary"]["candidate_history_count"] == 2
+    assert listed["summary"]["superseded_candidate_event_count"] == 0
 
 
 def test_candidate_supersession_supports_legacy_event_identity(registry_factory, tmp_path):

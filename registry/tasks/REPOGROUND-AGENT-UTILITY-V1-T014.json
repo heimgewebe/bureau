@@ -1,0 +1,108 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Agentenflächen unterscheiden mindestens Operator-/Systemanweisung, maintainer-authored repository rule, raw repository content, generiertes Artefakt und abgeleitete/inferred Regel.",
+      "id": "trust-classes"
+    },
+    {
+      "assertion": "Projektregeln tragen exakte Citation, Anwendbarkeitsgrund, Ableitungsart und Nichtaussagen; inference wird niemals zu kanonischer Repositorywahrheit aufgewertet.",
+      "id": "citation-and-applicability"
+    },
+    {
+      "assertion": "Kein Repositoryinhalt kann Ausführungs-, Schreib-, Netzwerk-, Secret-, Merge- oder Deploymentautorität erteilen; Grabowski-Autorisierung bleibt separat.",
+      "id": "authority-separation"
+    },
+    {
+      "assertion": "Tests enthalten Prompt-Injection- und Social-Engineering-Texte in README, Kommentaren, Dokumentation und Fixtures und belegen, dass sie als Inhalt sichtbar bleiben, aber keine Kontrollautorität erhalten.",
+      "id": "adversarial-fixtures"
+    },
+    {
+      "assertion": "repoground_context_compose beziehungsweise repoground_agent_handoff transportieren die Vertrauensklasse, ohne bestehende Authority- und Freshnessgrenzen zu schwächen.",
+      "id": "handoff-consumption"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T004"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Agentenwirksame Repositorytexte mit Herkunft, Autorität und Vertrauensklasse versehen, damit AGENTS-, CONTRIBUTING-, ADR- und Vertragsregeln zitierbar nutzbar werden, ohne dass README-, Kommentar- oder Fixturetext Werkzeug-, Netzwerk-, Geheimnis- oder Schreibautorität erlangen kann.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T014",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "audit_live_basis": {
+      "bundle_manifest_sha256": "15db8ef43a85d1174fa73c6eaafe65ee51aed6ad2364158acfbce098555f9a85",
+      "bundle_stem": "heimgewebe__repoground__main-max-260727-0706",
+      "freshness": "fresh_exact",
+      "repoground_commit": "a029bbcd2779e7bed1ac41e936bdf720249f0538"
+    },
+    "deduplication": {
+      "does_not_duplicate": "Kein Runner- oder Grabowski-Sandbox-Hardening; Fokus ist die agentenseitige Herkunfts- und Autoritätsklassifikation.",
+      "reuses": [
+        "RPU-V1-T015",
+        "RPU-V1-T020",
+        "RepoGround export-safety and agent-consumption contracts"
+      ]
+    },
+    "does_not_establish": [
+      "implementation",
+      "merge readiness",
+      "prompt-injection absence",
+      "global answer safety",
+      "runtime correctness"
+    ],
+    "registered_from_audit": "RepoGround complete audit review, 2026-07-27",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-39c0fbf064bd569b86cd18a9",
+      "event_id": 1315,
+      "event_created_at": "2026-07-27T09:24:56.639783Z",
+      "request_sha256": "3acf4f9883cdf15892774379a1c7d0738d73ce777083ccd074f9dda021d54cd1",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "conversation:repoground-complete-audit-2026-07-27",
+        "observed_at": "2026-07-27T09:24:56.627295Z",
+        "sha256": "443b271301a8d0b141a13fe12ba28d009b79edb03bbf15ba7b57b6c01695bee8"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 46
+  },
+  "required_capabilities": [
+    "repoground",
+    "security",
+    "prompt-injection-testing",
+    "contracts",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Repository-Anweisungen und Regeln als untrusted Evidence klassifizieren"
+}

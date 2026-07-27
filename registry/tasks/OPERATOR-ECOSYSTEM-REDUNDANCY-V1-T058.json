@@ -1,0 +1,134 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The already completed PR #482 squash merge is recorded with exact base, reviewed head, merge commit, tree and diff identity.",
+      "id": "existing-merge-truth"
+    },
+    {
+      "assertion": "No second merge, rebase, force push, synthetic replay or branch mutation is attempted under T058.",
+      "id": "no-duplicate-merge"
+    },
+    {
+      "assertion": "Bureau preserves that the merge occurred before task registration and without the intended exclusive merge-task gate.",
+      "id": "deviation-visible"
+    },
+    {
+      "assertion": "Code verification belongs to T057; remaining controlled host proof belongs to T059.",
+      "id": "successor-boundary"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Would have provided an exclusive, exact-head-bound merge phase for the T057 implementation. The phase is permanently non-executable because Grabowski PR #482 was already squash-merged before this task became canonical.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T058",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "exclusive merge-task compliance",
+      "pre-merge review compliance",
+      "deployment completion",
+      "runtime correctness",
+      "authority to revert the existing merge"
+    ],
+    "implementation": {
+      "base_sha": "d9f4efec53787af16fa5bf0d2a4f1db600895572",
+      "changed_files": [
+        "tests/test_component_watchdog.py",
+        "tools/component_watchdog.py"
+      ],
+      "ci": {
+        "checks": [
+          "validate (3.10)",
+          "validate (3.12)",
+          "CodeQL",
+          "Analyze (actions)",
+          "Analyze (python)"
+        ],
+        "state": "green"
+      },
+      "full_diff_sha256": "e7bf434787cf78774864676d9402a93969fd8728648ef746774311c0faa0bd6c",
+      "merge_commit_sha": "d77ccc7fc9b5ae9e21644eb8f5f1faf962bcf441",
+      "merge_method": "squash",
+      "merge_tree_sha": "c02dd03ab3a7757b67ba395a17d956553332e494",
+      "merged_at": "2026-07-26T17:39:41Z",
+      "pull_request": 482,
+      "repository": "heimgewebe/grabowski",
+      "reviewed_head_sha": "2f3f6f94e235e7cfadac386cd3708be80d005815"
+    },
+    "independent_review": {
+      "focused_tests": "PASS",
+      "full_test_count": 3530,
+      "full_validate": "PASS",
+      "kind": "post-merge-independent-operator-review",
+      "lifecycle_receipt_sha256": "682772ef013c404dc7d9577c1d7262c440ecf6a6dd7d38e73c892f09cbdececc",
+      "observed_main_sha": "991a545e4c3c8f09bad09a4c6389dff85dfdf903",
+      "receipt_path": "/home/alex/.local/state/grabowski/audits/pr482-stale-poll-d77/review-receipt.json",
+      "receipt_sha256": "d2ae5d4436803e1c9de106c4457ee681ecfaacdbc4b3fbe484bba22147a2942b",
+      "relevant_files_unchanged_through_observed_main": true,
+      "review_conclusion": "PASS",
+      "review_findings": [],
+      "skipped_test_count": 7,
+      "squash_tree_matches_reviewed_head": true,
+      "task_id": "a9dfbb0268c5472a870af8c3"
+    },
+    "operator_intake": {
+      "candidate_id": "candidate-31c71f5c5df6e9d2a14c73eb",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-26T16:43:46.657106Z",
+      "event_id": 1237,
+      "request_sha256": "5388c489b17d0499601c5cfa3784c5d1d50483bb9bb4932bfc1c831be6cb48de",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github-pr-review",
+        "locator": "https://github.com/heimgewebe/bureau/pull/1058#discussion_r3652915153",
+        "observed_at": "2026-07-26T16:43:07Z",
+        "sha256": "55c497535ffd44d374d9fe27984be30f1fcce550805974e16728c72b261529f8"
+      }
+    },
+    "process_deviation": {
+      "description": "Grabowski PR #482 was squash-merged before Bureau T057/T058 became canonical and without a pull-request review submission. The independent post-merge operator review proves code and test correctness but does not retroactively establish pre-merge review or exclusive merge-task compliance.",
+      "present": true
+    },
+    "registered_from": "candidate-31c71f5c5df6e9d2a14c73eb event 1237",
+    "successor_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T059",
+    "superseded_at": "2026-07-26T17:39:41Z",
+    "superseded_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T057",
+    "supersession_reason": "The exact code was already squash-merged as Grabowski PR #482 before this exclusive merge task became canonical. Replaying a merge would duplicate effects and falsify authority lineage."
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 24
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "T058 has no effects to roll back. A future code revert requires a separately registered exclusive repository rollback task bound to merge commit d77ccc7fc9b5ae9e21644eb8f5f1faf962bcf441."
+  },
+  "schema_version": 1,
+  "state": "superseded",
+  "title": "Superseded exclusive merge phase for stale-poll hardening"
+}

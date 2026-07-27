@@ -1,0 +1,124 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Aktuelle Pollingfrequenz, sichtbare Tabdauer, Gesprächsaktivität, Requestvolumen, Antwortgrößen, Server- und Datenbanklast sowie wahrgenommene Aktualitätslatenz werden auf exaktem Produktionscommit reproduzierbar gemessen.",
+      "id": "polling-baseline"
+    },
+    {
+      "assertion": "Ein vorab definierter Schwellen- und Bewertungsvertrag entscheidet nachvollziehbar zwischen Polling beibehalten, Polling optimieren und SSE einführen; ohne klaren gemessenen Vorteil wird kein Streaming-Cutover umgesetzt.",
+      "id": "go-no-go-decision"
+    },
+    {
+      "assertion": "Bei positiver Entscheidung bindet der SSE-Vertrag Rechteprüfung, Ereignis- und Wiederanlauf-ID, datensparsame typisierte Payloads, Keepalive, Verbindungs- und Nutzerbudgets, Timeouts, Backpressure und begrenzte Historienwiederholung.",
+      "id": "bounded-sse-contract"
+    },
+    {
+      "assertion": "Der Ereignisstrom funktioniert über den produktiven Proxy und mehrere API-Instanzen ohne lokale Prozesswahrheit, verlorene bestätigte Ereignisse oder unkontrollierte Sticky-Session-Abhängigkeit.",
+      "id": "multi-instance-and-proxy"
+    },
+    {
+      "assertion": "Der Client öffnet Verbindungen nur im sichtbaren aktiven Gesprächstab, beendet sie bei Kontextwechsel, nutzt begrenzten Backoff und fällt bei Nichtverfügbarkeit oder Inkompatibilität kontrolliert auf Polling zurück.",
+      "id": "client-lifecycle-and-fallback"
+    },
+    {
+      "assertion": "Streams leaken keine nicht öffentlichen Inhalte, Identitäten oder fremden Gesprächsereignisse; CSRF-/Origin-, Cache-, CORS-, Auth- und Ressourcenerschöpfungsgrenzen sind ausdrücklich geprüft.",
+      "id": "privacy-and-security"
+    },
+    {
+      "assertion": "Vor Merge liegen vollständiger Diff, exakte Head-/Diffbindung, API-, Browser-, Last-, Proxy-, Mehrinstanz- und Recoverybelege, unabhängiger Review und grüne Pflichtchecks vor; nach Merge werden exakter Produktionscommit, Streamingfunktion und Polling-Fallback live zurückgelesen.",
+      "id": "proof-and-release"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T017"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Nutzeranweisung vom 26. Juli 2026 autorisiert die Registrierung als separate, messungsgebundene Folgeaufgabe. Sie legt keinen SSE-Cutover fest und autorisiert keine unmittelbare Implementierung oder Produktionsmutation.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den Fünf-Sekunden-Pollingpfad der öffentlichen Knotengespräche nur dann durch einen begrenzten Server-Sent-Events-Vertrag ersetzen, wenn commitgebundene Messungen einen klaren Nutzen bei Aktualität, Last oder Netzverbrauch belegen; andernfalls das einfache Polling bewusst beibehalten und dokumentieren.",
+  "id": "WELTGEWEBE-OS-V1-T047",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-2af3437a1e0fcea406caf3df",
+    "does_not_establish": [
+      "automatic implementation",
+      "queue truth",
+      "task readiness",
+      "mandatory SSE adoption",
+      "WebSocket adoption",
+      "removal of polling fallback",
+      "unbounded long-lived connections",
+      "federated event delivery"
+    ],
+    "event_id": 1194,
+    "reason": "T017 verwendet bewusst sichtbarkeits- und tabgebundenes Fünf-Sekunden-Polling. Eine komplexere Streamingarchitektur ist nur bei messbarem Nutzen gerechtfertigt.",
+    "registered_at": "2026-07-26",
+    "source": "operator_followup_from_weltgewebe_os_v1_t017",
+    "source_task": "WELTGEWEBE-OS-V1-T017",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-2af3437a1e0fcea406caf3df",
+      "event_id": 1194,
+      "event_created_at": "2026-07-26T06:42:58.949386Z",
+      "request_sha256": "3c4a2dbdd3ccad930db073b521d031dfa7c99282e2bed441bb57ce8144ec52d7",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator_followup",
+        "locator": "chatgpt-project:weltgewebe:2026-07-26:t017-closeout",
+        "observed_at": "2026-07-26T06:40:47Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 47
+  },
+  "required_capabilities": [
+    "repository",
+    "rust",
+    "postgresql",
+    "svelte",
+    "typescript",
+    "playwright",
+    "http",
+    "sse",
+    "distributed-systems",
+    "performance",
+    "observability",
+    "load-testing",
+    "recovery",
+    "grabowski"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "note": "Vor Architekturentscheidung und Umsetzung müssen aktuelles Pollingverhalten, aktive Nutzer- und Gesprächszahlen, Requestlast, Aktualitätsbedarf, Proxyverhalten, Mehrinstanzbetrieb und Produktionsressourcen live gemessen werden; RepoGround ist nur ergänzender Kontext.",
+    "skip_reason": "live_first_primary",
+    "task_profile": "repo_change"
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Polling durch begründeten SSE-Ereignisstrom ablösen"
+}

@@ -1,0 +1,122 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Alle meldefähigen öffentlichen Inhaltsarten, Autoren- und Eigentumsmodelle, vorhandenen Lösch-/Tombstonepfade, UI-Einstiege und aktiven Moderationsrollen sind commit- und runtimegenau inventarisiert.",
+      "id": "reportable-surface-inventory"
+    },
+    {
+      "assertion": "Ein kanonischer Meldevertrag begrenzt Kategorien, Freitext, Wiederholungen und Raten; er ist idempotent, datensparsam, CSRF-geschützt und verhindert Selbstverstärkung oder unkontrollierte Massenmeldungen.",
+      "id": "bounded-report-contract"
+    },
+    {
+      "assertion": "Meldung, Prüfung, Entscheidung, Begründung, Abweisung, Maßnahme und optionaler Einspruch besitzen eine explizite, nachvollziehbare Zustandsmaschine; eine Meldung entfernt Inhalte niemals automatisch.",
+      "id": "moderation-state-machine"
+    },
+    {
+      "assertion": "Meldende, Autoren, Moderatoren und Admins erhalten ausschließlich ausdrücklich definierte Lese- und Handlungsrechte; fremde Autorenschaft, Moderationsumgehung und Rechtevererbung nach Accountlöschung bleiben fail-closed ausgeschlossen.",
+      "id": "authorization-and-ownership"
+    },
+    {
+      "assertion": "Moderationsentscheidungen sind revisions- und akteursgebunden auditierbar; notwendige Benachrichtigungen enthalten keine unnötigen Inhalts- oder Identitätsdaten und besitzen klare Zustell- und Fehlergrenzen.",
+      "id": "audit-and-notification"
+    },
+    {
+      "assertion": "Melden, Statusanzeige und Moderationsoberfläche sind verständlich, tastaturbedienbar und mobil nutzbar; gesperrte oder nicht verfügbare Aktionen werden korrekt erklärt.",
+      "id": "accessible-product-flow"
+    },
+    {
+      "assertion": "Vor Merge liegen vollständiger Diff, exakte Head-/Diffbindung, PostgreSQL-, API-, Sicherheits-, Web- und Browsertests, unabhängiger Review und grüne Pflichtchecks vor; nach Merge werden exakter Produktionscommit sowie repräsentative erlaubte und verweigerte Livepfade zurückgelesen.",
+      "id": "proof-and-release"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T017"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Nutzeranweisung vom 26. Juli 2026 autorisiert die Registrierung als separate Folgeaufgabe. Sie autorisiert keine unmittelbare Implementierung oder Produktionsmutation; diese bleibt an erneute Live-Inventur, isolierten Worktree, Review, Tests, CI und Produktionsreadback gebunden.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Einen einheitlichen, zugänglichen und revisionsgebundenen Melde- und Moderationsweg für öffentliche Gesprächsbeiträge und weitere ausdrücklich meldefähige Weltgewebe-Inhalte einführen, ohne Admin-Tombstones, Autorenrechte und allgemeine Meldungen semantisch zu vermischen oder eine unprüfbare Schattenmoderation aufzubauen.",
+  "id": "WELTGEWEBE-OS-V1-T046",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "candidate_id": "candidate-04989716eac27ad76a24b3c0",
+    "does_not_establish": [
+      "automatic implementation",
+      "queue truth",
+      "task readiness",
+      "anonymous mass reporting",
+      "automatic content removal",
+      "moderation without audit evidence",
+      "private messaging",
+      "federated moderation"
+    ],
+    "event_id": 1193,
+    "reason": "T017 implementiert Autor- und Admin-Tombstones, aber keinen allgemeinen Melde-, Prüf-, Benachrichtigungs- oder Einspruchsprozess für Nutzer.",
+    "registered_at": "2026-07-26",
+    "source": "operator_followup_from_weltgewebe_os_v1_t017",
+    "source_task": "WELTGEWEBE-OS-V1-T017",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-04989716eac27ad76a24b3c0",
+      "event_id": 1193,
+      "event_created_at": "2026-07-26T06:42:21.820527Z",
+      "request_sha256": "3ba4d1a2e49fbd78ac23a690a69e8b59d6c783effe25d1aa97953cae8c00a4fb",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator_followup",
+        "locator": "chatgpt-project:weltgewebe:2026-07-26:t017-closeout",
+        "observed_at": "2026-07-26T06:40:47Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 46
+  },
+  "required_capabilities": [
+    "repository",
+    "rust",
+    "postgresql",
+    "svelte",
+    "typescript",
+    "playwright",
+    "authorization",
+    "moderation",
+    "security",
+    "privacy",
+    "observability",
+    "grabowski"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "note": "Vor Planung und Umsetzung müssen aktuelle Inhaltsarten, Rollen, Eigentumsregeln, Tombstones, Outbox-Ereignisse, UI-Einstiege, Datenmengen und produktive Moderationswege live inventarisiert werden; RepoGround ist nur ergänzender Kontext.",
+    "skip_reason": "live_first_primary",
+    "task_profile": "repo_change"
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Allgemeinen Melde- und Moderationsweg für öffentliche Inhalte einführen"
+}

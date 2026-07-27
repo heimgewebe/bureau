@@ -52,18 +52,39 @@
   "id": "SCHAUWERK-COMPANION-HOST-HARDENING-V1-T002",
   "initiative": "SCHAUWERK-COMPANION-HOST-HARDENING-V1",
   "metadata": {
-    "reason": "The current provider readbacks are intentionally bounded and expire on 2026-07-26. Manual evidence capture is correct for truth but not yet a durable product workflow.",
-    "registered_at": "2026-07-25T07:30:52+02:00",
-    "source": "Schauwerk PR #116 post-merge live gate closeout",
-    "source_candidate": "candidate-be722e5b6813fb22ff7d9f31",
-    "source_gate_digest": "20b90ce3287be917c4b7d787801a5955472518c735f105d2943b4acbb07d126b",
-    "source_merge_commit": "c45676a4a3f2f14157299149d34833586866dc28",
-    "operator_intake": {
+    "completion": {
+      "outcome": "The merged capture implementation, immutable evidence generation, recovered public Funnel path and enabled systemd timer satisfy all T002 acceptance criteria.",
       "schema_version": 1,
+      "status": "verified_durable_companion_evidence_refresh"
+    },
+    "does_not_establish": [
+      "future provider availability after the evidence expiry",
+      "automatic interactive login or OAuth reauthorization",
+      "permission for an unreviewed Miro board mutation",
+      "subjective visual quality beyond the authenticated readback",
+      "absence of future Tailscale Funnel incidents"
+    ],
+    "implementation": {
+      "base_sha": "c45676a4a3f2f14157299149d34833586866dc28",
+      "changed_files": 8,
+      "diff_sha256": "e37df9b6c25333736cf4d7b9721b729d979bdd388f3af7ab6c932c52177d9d4a",
+      "head_sha": "ead3c32ce7c75bc212f1cab9df384057243e5366",
+      "insertions": 2260,
+      "merge_commit": "98480f32f219acf517a6b5e8ffb39b1b3600374f",
+      "pull_request": 117,
+      "repository": "heimgewebe/schauwerk"
+    },
+    "operator_intake": {
       "candidate_id": "candidate-be722e5b6813fb22ff7d9f31",
-      "event_id": 1155,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
       "event_created_at": "2026-07-25T05:30:52.857727Z",
+      "event_id": 1155,
       "request_sha256": "f31b871ccbe7b1bfe218018ef7d0a993c802027da8c0865828ec80dc800699c0",
+      "schema_version": 1,
       "source": {
         "does_not_establish": [],
         "freshness": "digest-bound",
@@ -71,13 +92,68 @@
         "locator": "https://github.com/heimgewebe/schauwerk/pull/116",
         "observed_at": "2026-07-25T07:22:37+02:00",
         "sha256": "9e795e76d0a2e382a487bdcc5d08c4f8a2d20b4a8a7a94b1af412eec469cab55"
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
-    }
+      }
+    },
+    "reason": "The current provider readbacks are intentionally bounded and expire on 2026-07-26. Manual evidence capture is correct for truth but not yet a durable product workflow.",
+    "registered_at": "2026-07-25T07:30:52+02:00",
+    "registry_truth": {
+      "evidence": [
+        {
+          "authority": "bureau-repository",
+          "evidence_sha256": "b340f5d46edff2c662dc25bdd050b0214e007c38b92a67a76294f287fd8f4bf9",
+          "kind": "repository_evidence_copy",
+          "path": "docs/evidence/schauwerk-companion-host-hardening-v1-t002-closeout-20260726.json",
+          "task_id": "SCHAUWERK-COMPANION-HOST-HARDENING-V1-T002"
+        },
+        {
+          "authority": "schauwerk-repository",
+          "diff_sha256": "e37df9b6c25333736cf4d7b9721b729d979bdd388f3af7ab6c932c52177d9d4a",
+          "head_sha": "ead3c32ce7c75bc212f1cab9df384057243e5366",
+          "kind": "pull_request_revision",
+          "merge_commit": "98480f32f219acf517a6b5e8ffb39b1b3600374f",
+          "pull_request": 117,
+          "repository": "heimgewebe/schauwerk"
+        },
+        {
+          "authority": "schauwerk-runtime",
+          "gate_digest": "1163349bf8931d293952c4225b50b6c1018bd8a54a786db25959dc6f6e4c4f27",
+          "generation_id": "20260725T184735Z-7be6bc12608b",
+          "generation_receipt_digest": "2a31a385ebd034cb813a3b0b9a2d613a3dc2864156bc426a4c64ac10b1aff90a",
+          "kind": "immutable_evidence_generation"
+        },
+        {
+          "authority": "systemd-user",
+          "install_receipt_digest": "e827ba81372e614bd6d318b5b16de050f3b499ea9f1df9fef060cbf9ce4d5f2f",
+          "kind": "durable_timer_pilot",
+          "service_sha256": "6adadeed72147fc55f6b6253c95852007ac7262f09b9a099131b0e7623a146d1",
+          "timer_sha256": "9a0ddd8b5dea7d3993248143896c56777ad34242ca29a20757d933a8c9b7db59"
+        }
+      ],
+      "schema_version": 1,
+      "status": "satisfied"
+    },
+    "source": "Schauwerk PR #116 post-merge live gate closeout",
+    "source_candidate": "candidate-be722e5b6813fb22ff7d9f31",
+    "source_gate_digest": "20b90ce3287be917c4b7d787801a5955472518c735f105d2943b4acbb07d126b",
+    "source_merge_commit": "c45676a4a3f2f14157299149d34833586866dc28",
+    "verification": {
+      "evidence_sha256": "b340f5d46edff2c662dc25bdd050b0214e007c38b92a67a76294f287fd8f4bf9",
+      "original_task_sha256": "59bb56399d41ce132f815f6648d5320a1de9885a64318f0d3b5bc639674ab0a2",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "post_merge_validation_lifecycle_receipt_sha256": "377dfa11174443d5533a75926c3ff8c5e552719a3e131ad87b09e6b1a357de21",
+      "release_doctor_lifecycle_receipt_sha256": "770492bf0a1c822041a3f3aebe7734895f750ab1e70b321e33f4ce57a1eec745",
+      "task_sha256": "0723862865dff724366aaace66158851087221c9da5515fd7c48510c9045cca5",
+      "timer_install_receipt_digest": "e827ba81372e614bd6d318b5b16de050f3b499ea9f1df9fef060cbf9ce4d5f2f"
+    },
+    "verification_note": "T002 verifies bounded automatic evidence refresh, retention, public release truth and credential separation. It does not authorize hidden login, consent, token reuse or board mutation.",
+    "verified_acceptance": {
+      "credential-boundary": "The repository and public closeout contain no OAuth, REST, browser credential, board URL or raw provider identifier; capture remains non-interactive.",
+      "durable-schedule": "A persistent enabled user timer runs every six hours with up to fifteen minutes randomized delay and survived an immediate real trigger.",
+      "exact-provider-binding": "Config, release, app label, hashed app identity, required scope set, build digest and in-board SDK readback are bound in one immutable generation.",
+      "retention-and-recovery": "Generations are immutable and retained; failed refreshes cannot replace current.json; attention receipts remain active until a later successful generation supersedes them.",
+      "tests-and-live-pilot": "797 post-merge tests and repository checks passed; release doctor checked ten assets; timer and manual pilots returned closed/not_due without changing the generation."
+    },
+    "verified_at": "2026-07-26T07:44:13+02:00"
   },
   "priority": {
     "lane": "later",
@@ -93,6 +169,6 @@
     "scheduler"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Automate bounded companion gate evidence refresh"
 }

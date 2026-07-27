@@ -1,0 +1,118 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Bureau derives a bounded explicit parent-child projection from validated task metadata and rejects malformed, missing or cyclic relations without inferring delegation from title similarity.",
+      "id": "parent-child-contract"
+    },
+    {
+      "assertion": "A ready parent task with one or more explicit nonterminal child tasks is non-claimable unless a reviewed task contract marks the parent as independently executable; what-now, explain-next, claim-intent and coordinated pickup report the same stable blocker and exact child IDs.",
+      "id": "selection-blocker"
+    },
+    {
+      "assertion": "Verified or otherwise terminal child tasks do not block their parent; blocked or planned children remain visible with their own blocker or capability requirements and are not silently promoted.",
+      "id": "terminal-child-semantics"
+    },
+    {
+      "assertion": "Regression coverage reproduces REPOGROUND-LEGACY-RECONCILIATION-V1-T004 with T009-T012, T014 and T017 and proves that the umbrella is not handed to an operator while unresolved child work remains.",
+      "id": "t004-regression"
+    },
+    {
+      "assertion": "The projection changes selection and explanation only; it never closes, verifies, queues, reprioritizes or dispatches a child task automatically.",
+      "id": "authority-boundary"
+    },
+    {
+      "assertion": "Targeted tests, full Bureau validation, git diff --check and a head/diff-bound self-review pass on the exact implementation head before merge.",
+      "id": "validation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.queue"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.truth-model"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Follow-up from a live coordinated pickup that safely refused to broaden an umbrella task into already registered child scopes.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau",
+      "path:/home/alex/repos/bureau/tests",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T019.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Prevent what-now, explain-next and coordinated claim paths from selecting a broad parent task when explicit nonterminal child tasks already carry its unresolved work; instead expose the exact child set and the reason the parent is not directly executable.",
+  "id": "BUREAU-TRUTH-MODEL-V2-T019",
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "metadata": {
+    "does_not_establish": [
+      "that every metadata.parent_task relation delegates all parent acceptance",
+      "automatic closure or verification of a parent task",
+      "queue mutation from metadata alone",
+      "permission to alter terminal task history"
+    ],
+    "observed_child_tasks": [
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T009",
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T010",
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T011",
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T012",
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T014",
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T017"
+    ],
+    "observed_parent_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T004",
+    "pickup_receipt_sha256": "6cf05f863c624f0dae23676442815b3c438b8696c346c84feec4a0ae54405092",
+    "registered_from": "hourly Bureau pickup BUR-RUN-20260726T061522Z-a2fb1dc7ca",
+    "source_evidence_sha256": "daf5f2066c03e88ab3633d7e290c247dc94360f86d4bb9c6536fb07a053cf9b2",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-653aa3cbfc19ecbc93910b5f",
+      "event_id": 1195,
+      "event_created_at": "2026-07-26T06:45:16.059195Z",
+      "request_sha256": "c740f661bdebeb1affa5b61b899cc9b4c6292923f3c53c8814a9177c1dc69aa3",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live_runtime_finding",
+        "locator": "bureau-run:BUR-RUN-20260726T061522Z-a2fb1dc7ca",
+        "observed_at": "2026-07-26T08:34:33+02:00",
+        "sha256": "daf5f2066c03e88ab3633d7e290c247dc94360f86d4bb9c6536fb07a053cf9b2"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 19
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "bureau",
+    "grabowski",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Block umbrella pickup while explicit child work remains"
+}

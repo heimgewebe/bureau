@@ -96,6 +96,8 @@ def _validate_worker_id(worker_id: str | None) -> str | None:
 def _validate_repo(registry: Registry | None, repo: str | None) -> str | None:
     if repo is None:
         return None
+    if not isinstance(repo, str):
+        raise StateError("live register repo must be a string")
     normalized = repo.strip()
     if len(normalized) > 200:
         raise StateError("live register repo must be at most 200 characters")
@@ -109,6 +111,8 @@ def _validate_repo(registry: Registry | None, repo: str | None) -> str | None:
 def _validate_task(registry: Registry | None, task_id: str | None) -> str | None:
     if task_id is None:
         return None
+    if not isinstance(task_id, str):
+        raise StateError("live register task must be a string")
     normalized = task_id.strip()
     if not normalized:
         raise StateError("live register task must not be empty")
@@ -216,8 +220,8 @@ def live_register_record(
     checked_source = _optional_text(source, field="source", max_length=80) or "operator"
     checked_thread_id = _validate_thread_id(thread_id, required=(checked_kind == "thread_focus"))
     checked_worker_id = _validate_worker_id(worker_id)
-    checked_repo = _validate_repo(validation_registry, repo)
-    checked_task_id = _validate_task(validation_registry, task_id)
+    checked_repo = _validate_repo(None, repo)
+    checked_task_id = _validate_task(None, task_id)
     checked_candidate_id = _validate_candidate_id(candidate_id)
     checked_note = _optional_text(note, field="note", max_length=2000)
     if checked_kind in {"thread_focus", "focus_override"} and checked_repo is None:
@@ -273,8 +277,10 @@ def live_register_record(
                 if checked_repo is not None and checked_repo != previous_repo:
                     raise StateError("candidate repo cannot change across supersession")
                 checked_repo = checked_repo or previous_repo
-                if checked_task_id is None:
-                    checked_task_id = previous["record"].get("task_id")
+                previous_task_id = previous["record"].get("task_id")
+                if checked_task_id is not None and checked_task_id != previous_task_id:
+                    raise StateError("candidate task cannot change across supersession")
+                checked_task_id = previous_task_id
                 if promotion_required is None:
                     promotion_required = bool(previous["record"].get("promotion_required", False))
                 if checked_status is None:
@@ -294,6 +300,8 @@ def live_register_record(
                 )
             checked_candidate_id = checked_candidate_id or _generated_candidate_id()
 
+        checked_repo = _validate_repo(validation_registry, checked_repo)
+        checked_task_id = _validate_task(validation_registry, checked_task_id)
         checked_status = checked_status or _validate_status(checked_kind, None)
         payload: dict[str, Any] = {
             "schema_version": LIVE_REGISTER_SCHEMA_VERSION,

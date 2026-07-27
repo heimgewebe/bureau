@@ -1,0 +1,211 @@
+{
+  "acceptance": [
+    {
+      "assertion": "T057 is verified and binds PR #482 base, reviewed head, squash merge tree, diff, tests and post-merge review receipt.",
+      "id": "verified-code-dependency"
+    },
+    {
+      "assertion": "Fresh status proves the current integrity-valid runtime contains merge d77ccc7, and the two reviewed files are unchanged between that merge and the deployed runtime head.",
+      "id": "deployed-runtime-containment"
+    },
+    {
+      "assertion": "The existing deployment is observed as foreign independently authorized work; T059 performs no deployment and does not relabel, supersede or claim its authority or receipts.",
+      "id": "foreign-deployment-boundary"
+    },
+    {
+      "assertion": "Immediately before the first live effect, a fresh break-glass approval is bound to the exact runtime release, tunnel unit, controlled proof method, bounded expected restart and rollback plan.",
+      "id": "fresh-break-glass"
+    },
+    {
+      "assertion": "Before every effect, read runtime identity, tasks, leases, worktrees, watchdog timers and services, connector snapshot, poll evidence and foreign work; unknown, drifted or conflicting state blocks execution.",
+      "id": "fresh-runtime-preflight"
+    },
+    {
+      "assertion": "A reversible non-secret proof produces repeated stale-poll evidence, observes the unchanged threshold and at most the existing bounded restart path, then restores the proof input without leaving a loop.",
+      "id": "bounded-stale-poll-proof"
+    },
+    {
+      "assertion": "Unavailable, missing and timestamp-invalid metric evidence alone remains indeterminate and does not by itself authorize restart; concrete local failures retain their original unhealthy reasons.",
+      "id": "indeterminate-no-restart"
+    },
+    {
+      "assertion": "After proof and restoration, both watchdog timers are active and waiting with future elapses, target services are healthy, restart counts remain bounded and no persistent failure loop exists.",
+      "id": "timer-service-readback"
+    },
+    {
+      "assertion": "Connector snapshot and poll freshness are current and matched, tool inventory remains exact, and at least one live Grabowski tool call succeeds after the proof.",
+      "id": "connector-and-tool-readback"
+    },
+    {
+      "assertion": "Before the first effect, a tested rollback restores only the controlled proof input and affected service state; it does not redeploy, revert PR #482 or alter foreign work.",
+      "id": "proof-rollback"
+    },
+    {
+      "assertion": "Preflight, break-glass evidence, controlled inputs, threshold observations, restart decision, restoration, timers, services, connector freshness and tool readback are immutable and exact-runtime-bound before T059 can become verified.",
+      "id": "evidence-bound-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T057"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "The code is already present in runtime d4af241 through an independently authorized foreign deployment. T059 may not redeploy or claim that deployment. A fresh break-glass approval must bind the exact observed runtime release, controlled proof method, affected tunnel unit, expected bounded restart and rollback plan.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "host:heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "On the already deployed, integrity-valid Grabowski runtime that contains the independently reviewed PR #482 merge, perform a fresh, controlled and reversible live proof that repeatedly stale control-plane poll evidence enters the existing bounded tunnel restart path, while uncertain metric evidence alone remains non-mutating; read back timers, services, connector freshness and a live tool call without claiming the foreign deployment as a T059 effect.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T059",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "fresh break-glass approval",
+      "T059 task readiness",
+      "live stale-poll proof",
+      "deployment authority",
+      "foreign deployment ownership",
+      "permission to interrupt foreign work or release foreign leases",
+      "future connector availability"
+    ],
+    "foreign_deployment_context": {
+      "audit_evidence": [
+        "audit-record-sha256:725401e5c9ec5fa0ea2678cd12ea688ea02befc793d8a1cd4447aa362b5aba1f",
+        "audit-record-sha256:e6fbb41556f49d912e7fcdee9b8f75b6ad6dcfa5772ad93cac130b3f666f5cc6"
+      ],
+      "deployed_head": "d4af2410cca9ea6ce05734f0a5555dc045fcabb9",
+      "does_not_establish": [
+        "deployment approval for T059",
+        "T059 effect ownership",
+        "live stale-poll proof"
+      ],
+      "owner_id": "operator:reposkop-grabowski-consumer-cutover-20260726"
+    },
+    "github_issue": {
+      "closed_by_pull_request": 482,
+      "number": 477,
+      "originally_observed_at": "2026-07-26T16:06:40Z",
+      "repository": "heimgewebe/grabowski",
+      "source_sha256": "79cb5ba2a7a430515ce5d5a1193c81458f43b482ecf4969414a58b001cd8cbf6",
+      "state": "CLOSED",
+      "url": "https://github.com/heimgewebe/grabowski/issues/477"
+    },
+    "independent_review": {
+      "focused_tests": "PASS",
+      "full_test_count": 3530,
+      "full_validate": "PASS",
+      "kind": "post-merge-independent-operator-review",
+      "lifecycle_receipt_sha256": "682772ef013c404dc7d9577c1d7262c440ecf6a6dd7d38e73c892f09cbdececc",
+      "observed_main_sha": "991a545e4c3c8f09bad09a4c6389dff85dfdf903",
+      "receipt_path": "/home/alex/.local/state/grabowski/audits/pr482-stale-poll-d77/review-receipt.json",
+      "receipt_sha256": "d2ae5d4436803e1c9de106c4457ee681ecfaacdbc4b3fbe484bba22147a2942b",
+      "relevant_files_unchanged_through_observed_main": true,
+      "review_conclusion": "PASS",
+      "review_findings": [],
+      "skipped_test_count": 7,
+      "squash_tree_matches_reviewed_head": true,
+      "task_id": "a9dfbb0268c5472a870af8c3"
+    },
+    "observed_runtime": {
+      "commits_ahead_of_reviewed_merge": 2,
+      "connector_snapshot_receipt_sha256": "7b6e4124752aa00b1e564d57cd40e16db11df02894c3c44897bb6019e48da8b6",
+      "connector_snapshot_state": "matched-and-fresh",
+      "contains_reviewed_merge": true,
+      "observed_at": "2026-07-26T18:28:51.676918Z",
+      "release_id": "d4af2410cca9-srcset383fa31c283d-locke6664d600b6c-contract5fab0c129560",
+      "relevant_files_changed_after_reviewed_merge": false,
+      "repo_head": "d4af2410cca9ea6ce05734f0a5555dc045fcabb9",
+      "runtime_integrity": "complete-and-valid"
+    },
+    "operator_intake": {
+      "candidate_id": "candidate-31c71f5c5df6e9d2a14c73eb",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-26T16:43:46.657106Z",
+      "event_id": 1237,
+      "request_sha256": "5388c489b17d0499601c5cfa3784c5d1d50483bb9bb4932bfc1c831be6cb48de",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github-pr-review",
+        "locator": "https://github.com/heimgewebe/bureau/pull/1058#discussion_r3652915153",
+        "observed_at": "2026-07-26T16:43:07Z",
+        "sha256": "55c497535ffd44d374d9fe27984be30f1fcce550805974e16728c72b261529f8"
+      }
+    },
+    "process_deviation": {
+      "description": "Grabowski PR #482 was squash-merged before Bureau T057/T058 became canonical and without a pull-request review submission. The independent post-merge operator review proves code and test correctness but does not retroactively establish pre-merge review or exclusive merge-task compliance.",
+      "present": true
+    },
+    "registered_from": "candidate-31c71f5c5df6e9d2a14c73eb event 1237, reconciled after live discovery of PR #482 and runtime d4af241",
+    "superseded_merge_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T058",
+    "verified_code_input": {
+      "base_sha": "d9f4efec53787af16fa5bf0d2a4f1db600895572",
+      "changed_files": [
+        "tests/test_component_watchdog.py",
+        "tools/component_watchdog.py"
+      ],
+      "ci": {
+        "checks": [
+          "validate (3.10)",
+          "validate (3.12)",
+          "CodeQL",
+          "Analyze (actions)",
+          "Analyze (python)"
+        ],
+        "state": "green"
+      },
+      "full_diff_sha256": "e7bf434787cf78774864676d9402a93969fd8728648ef746774311c0faa0bd6c",
+      "merge_commit_sha": "d77ccc7fc9b5ae9e21644eb8f5f1faf962bcf441",
+      "merge_method": "squash",
+      "merge_tree_sha": "c02dd03ab3a7757b67ba395a17d956553332e494",
+      "merged_at": "2026-07-26T17:39:41Z",
+      "pull_request": 482,
+      "repository": "heimgewebe/grabowski",
+      "reviewed_head_sha": "2f3f6f94e235e7cfadac386cd3708be80d005815"
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 24
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "systemd",
+    "runtime-observability",
+    "testing",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "Restore only the T059-owned controlled proof input, remove any temporary private evidence fixture, and return the affected watchdog and tunnel units to their exact pre-proof active state. Do not redeploy or revert the existing runtime; code rollback requires a separate repository task."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Prove stale-poll recovery on the deployed runtime"
+}

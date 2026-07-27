@@ -1,0 +1,131 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Grabowski merge commit 8760ebc068e2cdfe2efed38941f8acde6ee6f04d is deployed through the canonical source-identity-bound self-deploy path only after deployment lock and stable dispatcher-drain gates pass; no foreign work is interrupted.",
+      "id": "exact-merged-deployment"
+    },
+    {
+      "assertion": "Deployment identity reports repo_head 8760ebc068e2cdfe2efed38941f8acde6ee6f04d and runtime health confirms deployment integrity, audit-chain validity, writable audit state, recovery readiness and inactive kill switch.",
+      "id": "runtime-readback"
+    },
+    {
+      "assertion": "One synthetic secret-safe general alert is enqueued by the deployed implementation, delivered through the configured ntfy HTTP transport, and has a valid append-only acknowledgement bound to its alert receipt and HTTP 2xx status.",
+      "id": "live-transport-attestation"
+    },
+    {
+      "assertion": "Evidence explicitly does not establish owner-device reception, user_seen truth, universal end-to-end delivery or future transport availability.",
+      "id": "bounded-claims"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "read",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T054"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Implementation and CI are already merged. Only exact-head deployment during a proven quiet window and a secret-safe synthetic ntfy transport probe are allowed. Foreign work must not be stopped, signalled or overridden.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "host:heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Deploy the already merged Grabowski general-alert outbox revision during a proven dispatcher quiet window, read back exact runtime identity and health, then send one secret-safe synthetic general alert through the deployed ntfy transport and verify its append-only HTTP-success acknowledgement without claiming owner-device reception or user_seen truth.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T056",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "candidate_event_id": 1213,
+    "ci": {
+      "checks": [
+        "CodeQL",
+        "Analyze (actions)",
+        "Analyze (python)",
+        "validate (3.10)",
+        "validate (3.12)"
+      ],
+      "state": "green"
+    },
+    "deployment_attempts": [
+      {
+        "failure_type": "DeploymentContentionDeferred",
+        "finalization_receipt_sha256": "6280ac7fcf54418b2e20129680627d108c2365164363ca024615cf72a44e58eb",
+        "unit": "grabowski-job-06d0076bc075",
+        "validation_started": false
+      },
+      {
+        "failure_type": "DeploymentContentionDeferred",
+        "finalization_receipt_sha256": "a097a00055539edf24d6b7705d587bfec1ae9f433f3d839c47ab5971c8d42bd4",
+        "unit": "grabowski-job-524a71469d95",
+        "validation_started": false
+      }
+    ],
+    "does_not_establish": [
+      "deployment completed",
+      "runtime head updated",
+      "synthetic alert delivered",
+      "owner-device reception",
+      "user_seen truth",
+      "authority to interrupt foreign dispatcher work"
+    ],
+    "implementation_diff_sha256": "b82a7d94b98f34b40f753398714a88a903bec696474b6e651ea6a5b0b0284673",
+    "implementation_head": "67c6b057e6639bbe7f9356c8d9f1f6af49da8d80",
+    "implementation_pull_request": "https://github.com/heimgewebe/grabowski/pull/469",
+    "merged_revision": "8760ebc068e2cdfe2efed38941f8acde6ee6f04d",
+    "parent_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T055",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-7be9a8f20ccfdfa4e7a18240",
+      "event_id": 1213,
+      "event_created_at": "2026-07-26T08:19:01.330279Z",
+      "request_sha256": "a439daac585c84dd3f32442aad596ff3f96251e78218def4556196dd70b6d704",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "runtime_receipt",
+        "locator": "grabowski:runtime-deploy:8760ebc068e2:contention-deferred",
+        "observed_at": "2026-07-26T08:05:22Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 22
+  },
+  "required_capabilities": [
+    "grabowski",
+    "systemd",
+    "repository",
+    "shell",
+    "python"
+  ],
+  "rollback": {
+    "strategy": "If the deployed revision fails runtime integrity or the synthetic transport probe reveals a regression, redeploy the immediately previous commit-bound runtime using the canonical rollback path. Preserve alert and acknowledgement receipts as append-only evidence; do not delete, relabel or fabricate acknowledgements."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Deploy merged general ntfy outbox and attest live delivery"
+}

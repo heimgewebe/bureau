@@ -1,0 +1,137 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Plan-only, Filter, Anker, Marker, Redaction und aufruferseitige Nichtmutation besitzen fail-closed Tests und eine zentrale Emissionswahrheit.",
+      "id": "semantic-contracts"
+    },
+    {
+      "assertion": "Goldens behaupten keine historische Parität; ein echter Zwei-Revisions-Vergleich, Complexity-Ratchet, Performance-Smoke und exakte Evidence-Hashes sind gebunden.",
+      "id": "revision-evidence"
+    },
+    {
+      "assertion": "Der korrektive PR ist auf dem geprüften Head mit allen GitHub-Gates grün revisionsgebunden gemergt.",
+      "id": "github-integration"
+    },
+    {
+      "assertion": "Der Merge-Commit ist als git-freie commitadressierte Runtime mit Canary, Rollback, Health, Auth-Negativtest und autorisiertem Lesezugriff produktiv.",
+      "id": "immutable-deployment"
+    },
+    {
+      "assertion": "Der historische T009-Task und seine ursprünglichen Evidence-Dateien bleiben unverändert.",
+      "id": "historical-integrity"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-LEGACY-RECONCILIATION-V1-T009"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground",
+      "service:repoground.service"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Die nach Merge von PR #1098 bestätigten Report-, Evidence- und Benchmark-Vertragsfehler in einem getrennten Folgefix beheben, revisionsgebunden prüfen, mergen und als immutable RepoGround-Runtime ausrollen, ohne historische T009-Wahrheit umzuschreiben.",
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T016",
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "metadata": {
+    "deployment": {
+      "deployment_receipt_path": "/home/alex/.local/state/repoground-deploy/03c6070bb7bb65cb8b308f17ec2a28d5b34910c9/deployment-receipt.json",
+      "deployment_receipt_sha256": "59cca107adea9a05fa7ea44b99f9a2259f8a09fd1bf9b5ce1519059332d59f49",
+      "health_build_commit": "03c6070bb7bb65cb8b308f17ec2a28d5b34910c9",
+      "health_status": "ok",
+      "previous_runtime_retained": "/home/alex/.local/share/repoground-runtime/c91d640bce2b14c4a78a64e83169d56c818fa662",
+      "runtime_path": "/home/alex/.local/share/repoground-runtime/03c6070bb7bb65cb8b308f17ec2a28d5b34910c9"
+    },
+    "does_not_establish": [
+      "resolution of the host Bubblewrap namespace failure",
+      "absence of future service failure",
+      "completion of umbrella task REPOGROUND-LEGACY-RECONCILIATION-V1-T004"
+    ],
+    "followups": [
+      "OPERATOR-PC-HYGIENE-V1-T014"
+    ],
+    "historical_integrity": {
+      "historical_evidence_modified": false,
+      "task_sha256": "2bf9c35c3bb7f721b046e9dce52aadf0d99219e1b5bd6411f6ee10c5839d8352"
+    },
+    "implementation": {
+      "base_sha": "c91d640bce2b14c4a78a64e83169d56c818fa662",
+      "diff_sha256": "cb48dad91acf73f6feb7118a3f57d0b54b46d36f23ab08a409b85f3223865ed1",
+      "download_reference": "https://github.com/heimgewebe/repoground/pull/1104.patch",
+      "head_sha": "b4bdbd03efaa4126a39a387e4603e6ab988df95e",
+      "merge_commit_sha": "03c6070bb7bb65cb8b308f17ec2a28d5b34910c9",
+      "merge_tree_sha": "f16cbc4c23034578ced79ba844ee9b3da7efaff5",
+      "pull_request": 1104,
+      "repository": "heimgewebe/repoground"
+    },
+    "parent_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T009",
+    "registered_at": "2026-07-25T17:22:00Z",
+    "resolution_summary": "PR #1104 korrigierte die bestätigten Vertragsfehler. Alle GitHub-Gates passierten auf Head b4bdbd03efaa4126a39a387e4603e6ab988df95e; Merge-Commit 03c6070bb7bb65cb8b308f17ec2a28d5b34910c9 wurde als immutable Runtime ausgerollt und über Health sowie Authpfade bestätigt.",
+    "validation": {
+      "complexity_receipt_sha256": "b611251b197898d5fc7f2d1bc6b1c3fbb459f5ee63877604371e0cb8b262ff2b",
+      "differential_receipt_sha256": "33b4c8b86fd149ee40771d4ad6d15d47eca6e811e3e7b10b135c8890f67966c8",
+      "focused_passed": 120,
+      "full_suite_passed": 4853,
+      "full_suite_receipt_sha256": "d17158ecee867be7b9955eaacf412e75ddae1c5b5f01f54369e19b1727cf7396",
+      "full_suite_skipped": 2,
+      "github_checks": "PASS",
+      "performance_receipt_sha256": "979eb7526bc2f5811ea2a54e432541078f0869287edb3b440493ef3a986d4ecd",
+      "shallow_ci_receipt_sha256": "49648db1e9f9461fb75cdfa80f066637f108c1bbf2125a53066bb35239fea7f0"
+    },
+    "verification": {
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "task_sha256": "0fb54a7f8b8e40a9667a082b6e27aaca0c606fec14976a8d5d04c69073e92af1"
+    },
+    "verified_at": "2026-07-25T17:22:00Z",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "repoground-t009-corrective-v2-20260725",
+      "event_id": 1179,
+      "event_created_at": "2026-07-25T18:39:19.831592Z",
+      "request_sha256": "109275ac67b2298bd07ee078ae6c7b791bd4c770beb684a45ed5765cc61223ae",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "deployment-evidence",
+        "locator": "/home/alex/.local/state/repoground-deploy/03c6070bb7bb65cb8b308f17ec2a28d5b34910c9/bureau-closeout-proposal.pending.json",
+        "observed_at": "2026-07-25T17:22:00Z",
+        "sha256": "666d5aa722eae29b3d347d98b7ae1499ce968356ded60c8ada484013e206f785"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "python",
+    "repository",
+    "github",
+    "systemd",
+    "benchmarking",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "T009-Reportverträge korrektiv härten und ausrollen"
+}

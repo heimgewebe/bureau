@@ -332,6 +332,34 @@ def test_candidate_record_is_idempotent_and_source_bound(registry_factory, tmp_p
     assert context["source"]["freshness"] == "digest-bound"
 
 
+def test_candidate_record_preserves_v1_request_hash_without_refinement(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    recorded = _record(registry, store)
+    expected_request = {
+        "schema_version": 1,
+        "idempotency_key": "source:alpha",
+        "title": "Create exact operator intake task",
+        "source_kind": "conversation",
+        "desired_outcome": "Create a typed and reviewed Bureau task publication path",
+        "repo": "repo.alpha",
+        "source_locator": "chat:alpha",
+        "source_sha256": "a" * 64,
+        "observed_at": None,
+        "task_id": None,
+        "candidate_id": None,
+        "note": None,
+        "catalog_validation": "strict",
+    }
+
+    assert recorded["request_sha256"] == operator_intake_module.legacy.sha256_json(
+        expected_request
+    )
+    assert "supersedes_event_id" not in expected_request
+
+
 def test_candidate_record_is_idempotent_under_parallel_first_write(
     registry_factory, tmp_path, monkeypatch
 ):
@@ -435,6 +463,170 @@ def test_candidate_replay_returns_current_superseding_event_without_self_duplica
     assert not any(
         item.get("id") == first["candidate_id"] for item in result["similarity_suggestions"]
     )
+
+
+def test_candidate_request_refines_current_event_and_inherits_identity(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = _record(registry, store)
+    request = {
+        "schema_version": 1,
+        "idempotency_key": "source:alpha-refinement",
+        "title": "Refined exact operator intake task",
+        "source_kind": "conversation",
+        "source_locator": "chat:alpha-refinement",
+        "source_sha256": "b" * 64,
+        "desired_outcome": "Refine the existing source-bound candidate",
+        "supersedes_event_id": first["event_id"],
+    }
+
+    refined = candidate_record_request(registry, store, request)
+    replayed = candidate_record_request(registry, store, request)
+
+    assert refined["status"] == "recorded"
+    assert replayed["status"] == "existing"
+    assert refined["candidate_id"] == first["candidate_id"]
+    assert refined["event_id"] > first["event_id"]
+    assert replayed["event_id"] == refined["event_id"]
+    assert refined["record"]["supersedes_event_id"] == first["event_id"]
+    assert refined["record"]["repo"] == "repo.alpha"
+    assert refined["record"]["status"] == first["record"]["status"]
+    assert (
+        refined["record"]["promotion_required"]
+        == first["record"]["promotion_required"]
+    )
+    assert (
+        refined["record"]["operator_intake"]["request_sha256"]
+        == refined["request_sha256"]
+    )
+
+
+def test_candidate_request_rejects_refinement_task_rebinding(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    task_ids = sorted(registry.tasks)
+    assert len(task_ids) >= 2
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:task-bound-candidate",
+        title="Task-bound candidate",
+        source_kind="conversation",
+        desired_outcome="Preserve one exact task binding",
+        repo="repo.alpha",
+        task_id=task_ids[0],
+    )
+
+    with pytest.raises(OperatorIntakeError, match="task cannot change") as caught:
+        candidate_record_request(
+            registry,
+            store,
+            {
+                "schema_version": 1,
+                "idempotency_key": "source:task-rebinding-attempt",
+                "title": "Invalid task rebinding",
+                "source_kind": "conversation",
+                "desired_outcome": "Attempt to replace the predecessor task",
+                "task_id": task_ids[1],
+                "supersedes_event_id": first["event_id"],
+            },
+        )
+
+    assert caught.value.code == "candidate-record-invalid"
+    assert caught.value.effect_started is False
+    assert len(operator_intake_module.candidate_records(store)) == 1
+
+
+def test_candidate_request_strictly_revalidates_inherited_deferred_bindings(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:deferred-missing-repo",
+        title="Deferred candidate",
+        source_kind="conversation",
+        desired_outcome="Record before the repository is catalogued",
+        repo="repo.missing",
+        catalog_validation="deferred",
+    )
+
+    with pytest.raises(OperatorIntakeError, match="unknown live register repo") as caught:
+        candidate_record_request(
+            registry,
+            store,
+            {
+                "schema_version": 1,
+                "idempotency_key": "source:strict-refinement",
+                "title": "Strict refinement",
+                "source_kind": "conversation",
+                "desired_outcome": "Revalidate inherited bindings",
+                "supersedes_event_id": first["event_id"],
+            },
+        )
+
+    assert caught.value.code == "candidate-record-invalid"
+    assert caught.value.effect_started is False
+    assert len(operator_intake_module.candidate_records(store)) == 1
+
+
+@pytest.mark.parametrize("value", [True, False, 0, -1, "1", 1.0])
+def test_candidate_request_rejects_invalid_supersedes_event_id(
+    registry_factory, tmp_path, value
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    with pytest.raises(OperatorIntakeError) as caught:
+        candidate_record_request(
+            registry,
+            store,
+            {
+                "schema_version": 1,
+                "idempotency_key": "source:invalid-refinement",
+                "title": "Invalid refinement",
+                "source_kind": "conversation",
+                "desired_outcome": "Reject an invalid predecessor binding",
+                "repo": "repo.alpha",
+                "supersedes_event_id": value,
+            },
+        )
+
+    assert caught.value.code == "supersedes-event-id-invalid"
+    assert caught.value.effect_started is False
+    assert operator_intake_module.candidate_records(store) == []
+
+
+def test_candidate_refinement_idempotency_binds_superseded_event(
+    registry_factory, tmp_path
+):
+    _, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = _record(registry, store)
+    request = {
+        "schema_version": 1,
+        "idempotency_key": "source:refinement-binding",
+        "title": "Bound candidate refinement",
+        "source_kind": "conversation",
+        "desired_outcome": "Bind refinement to one predecessor event",
+        "supersedes_event_id": first["event_id"],
+    }
+    candidate_record_request(registry, store, request)
+
+    with pytest.raises(OperatorIntakeError) as caught:
+        candidate_record_request(
+            registry,
+            store,
+            {**request, "supersedes_event_id": first["event_id"] + 1000},
+        )
+
+    assert caught.value.code == "idempotency-conflict"
+    assert caught.value.effect_started is False
 
 
 def test_candidate_request_rejects_unknown_fields(registry_factory, tmp_path):
@@ -2994,6 +3186,37 @@ def test_cli_adapters_preserve_domain_results_without_extra_authority(
     recorded = _cli_result(capsys)
     assert recorded["kind"] == "bureau_candidate_record_result"
     assert recorded["status"] == "recorded"
+
+    refinement_path = tmp_path / "candidate-refinement.json"
+    refinement_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "idempotency_key": "cli:operator-intake-refinement",
+                "title": "Refined CLI candidate adapter",
+                "source_kind": "test-fixture",
+                "source_locator": "fixture:cli-refinement",
+                "source_sha256": "d" * 64,
+                "desired_outcome": "Prove source-bound candidate refinement",
+                "supersedes_event_id": recorded["event_id"],
+            }
+        )
+    )
+    assert (
+        bureau_cli.main(
+            [
+                *common,
+                "operator-candidate-record",
+                "--request",
+                str(refinement_path),
+            ]
+        )
+        == 0
+    )
+    refined = _cli_result(capsys)
+    assert refined["candidate_id"] == recorded["candidate_id"]
+    assert refined["record"]["supersedes_event_id"] == recorded["event_id"]
+    recorded = refined
 
     assert (
         bureau_cli.main(

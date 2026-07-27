@@ -5,6 +5,8 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
+from .approval import approval_decision
+
 LEASE_CONTRACT_SCHEMA_VERSION = 2
 BUREAU_REPOSITORY_ROOT = Path("/home/alex/repos/bureau")
 BROAD_BUREAU_REPOSITORY_KEY = f"repo:{BUREAU_REPOSITORY_ROOT}"
@@ -19,6 +21,7 @@ _SUBJECT_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,239}$")
 _GIT_HEAD_RE = re.compile(r"^(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})$")
 _TERMINAL_TASK_STATES = {"verified", "cancelled", "superseded"}
 _BROAD_SCOPE_EXCEPTION_FIELD = "broad_bureau_scope_exception"
+_BROAD_SCOPE_EXCEPTION_ACTION = "registry_mutation"
 
 
 def _task_field(task: Any, field: str, default: Any = None) -> Any:
@@ -64,10 +67,21 @@ def assess_task_broad_bureau_scope(
     requested = bool(sources)
     terminal = state in _TERMINAL_TASK_STATES
     exception = execution.get(_BROAD_SCOPE_EXCEPTION_FIELD)
-    approval = execution.get("approval")
-    approval = approval if isinstance(approval, dict) else {}
     justification = exception.get("justification") if isinstance(exception, dict) else None
     boundaries = exception.get("effect_boundaries") if isinstance(exception, dict) else None
+    exception_approval = exception.get("approval") if isinstance(exception, dict) else None
+    exception_approval = exception_approval if isinstance(exception_approval, dict) else {}
+    exception_action_class = exception_approval.get("action_class")
+    if isinstance(exception_action_class, str) and exception_action_class:
+        canonical_approval = approval_decision(exception_action_class, None)
+    else:
+        canonical_approval = {"required_level": "unknown"}
+    declared_required_level = exception_approval.get("required_level")
+    approval_contract_match = bool(
+        exception_action_class == _BROAD_SCOPE_EXCEPTION_ACTION
+        and canonical_approval.get("required_level") == "reviewed_plan"
+        and declared_required_level == canonical_approval.get("required_level")
+    )
     valid_boundaries = (
         isinstance(boundaries, list)
         and bool(boundaries)
@@ -78,15 +92,14 @@ def assess_task_broad_bureau_scope(
         and isinstance(justification, str)
         and bool(justification.strip())
         and valid_boundaries
-        and approval.get("action_class") == "repository_mutation"
-        and approval.get("required_level") == "reviewed_plan"
+        and approval_contract_match
     )
     if not requested:
         exception_status = "not-required"
     elif terminal:
         exception_status = "historical-terminal"
     elif exception_valid:
-        exception_status = "reviewed-repository-wide-exception"
+        exception_status = "review-gated-repository-wide-exception"
     elif exception is None:
         exception_status = "missing"
     else:
@@ -104,14 +117,22 @@ def assess_task_broad_bureau_scope(
         "explicit_resource_keys": explicit_keys,
         "exception_field": _BROAD_SCOPE_EXCEPTION_FIELD,
         "exception_status": exception_status,
+        "exception_approval": {
+            "action_class": exception_action_class,
+            "declared_required_level": declared_required_level,
+            "canonical_required_level": canonical_approval.get("required_level"),
+            "contract_match": approval_contract_match,
+        },
         "required_exception": {
             "justification": "non-empty string",
             "effect_boundaries": "non-empty string list",
-            "approval_action_class": "repository_mutation",
+            "approval_path": f"execution.{_BROAD_SCOPE_EXCEPTION_FIELD}.approval",
+            "approval_action_class": _BROAD_SCOPE_EXCEPTION_ACTION,
             "approval_required_level": "reviewed_plan",
         },
         "does_not_establish": [
-            "semantic correctness of a reviewed repository-wide exception",
+            "completion of the required digest-bound reviewed-plan approval",
+            "semantic correctness of a repository-wide exception",
             "merge or execution authority",
         ],
     }
@@ -580,7 +601,7 @@ def registry_bureau_lease_findings(registry: Any) -> list[dict[str, Any]]:
                 ),
                 "message": (
                     "replace the global Bureau repository lease before this task becomes ready "
-                    "or provide the explicit reviewed repository-wide exception"
+                    "or provide the explicit review-gated repository-wide exception contract"
                 ),
             }
         )

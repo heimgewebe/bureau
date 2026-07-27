@@ -75,6 +75,179 @@
       "merge_readiness",
       "deployment_readiness",
       "deployment_authority"
-    ]
+    ],
+    "observed_merge": {
+      "observed_at": "2026-07-27T17:52:09Z",
+      "repository": "heimgewebe/leitstand",
+      "pull_request": 190,
+      "base_sha": "a85c14d0df83da61c68e43fe814a19d483f3f6f2",
+      "reviewed_head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+      "merge_commit_sha": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+      "merged_at": "2026-07-27T01:55:41Z",
+      "current_main_sha": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+      "main_comparison": "identical",
+      "changed_files": 8,
+      "additions": 418,
+      "deletions": 21,
+      "changed_paths": [
+        "src/controllers/ecosystemMap.ts",
+        "src/controllers/ecosystemMapNavigation.ts",
+        "src/public/ecosystem-map.mjs",
+        "src/server.ts",
+        "src/views/ecosystem-map.ejs",
+        "tests/controllers/ecosystemMap.test.ts",
+        "tests/controllers/ecosystemMapNavigation.test.ts",
+        "tests/views/ecosystemMap.test.ts"
+      ],
+      "canonical_diff": {
+        "bytes": 41400,
+        "sha256": "8c5a35096f64f9fdcf77235eb5eddd85a9a1d3886a6ecb7e9b553b04b243c98f",
+        "artifact": "https://gist.github.com/alexdermohr/656683eee49fc59838e1090eb4e2d37c",
+        "delivery_comment_id": 5086524961
+      },
+      "github_workflow_runs": [
+        {
+          "name": "CI",
+          "run_id": 30221789231,
+          "head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+          "conclusion": "success"
+        },
+        {
+          "name": "ai-context guard",
+          "run_id": 30221789246,
+          "head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+          "conclusion": "success"
+        },
+        {
+          "name": "security-hygiene",
+          "run_id": 30221789233,
+          "head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+          "conclusion": "success"
+        }
+      ],
+      "review": {
+        "initial_finding": "P2 whitespace-colliding node identities",
+        "resolution_head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+        "final_codex_result": "no major issues",
+        "open_threads": 0,
+        "final_review_comment_id": 5085560083
+      },
+      "does_not_establish": [
+        "pre_merge_open_pr_state",
+        "pre_merge_identity_revalidation",
+        "captain_dispatch",
+        "match_head_merge_receipt",
+        "independent_merge_lease_acquisition",
+        "merge_lease_release",
+        "timestamped_pre_merge_diff_delivery",
+        "T063_verification",
+        "deployment_readiness"
+      ]
+    },
+    "process_deviation": {
+      "status": "unreconciled",
+      "description": "Leitstand PR #190 ist bereits gemergt. Der erst mehr als fünfzehn Stunden später erhobene GitHub-Readback belegt erhaltene Basis-, Head-, Pfad-, Diff- und Main-Identität, aber weder den offenen PR-Zustand beim geforderten Identitätscheck noch die verpflichtenden Captain- und Merge-Lease-Receipts. Der bereits eingetretene Merge wird deshalb nicht rückwirkend als vertragskonforme T063-Ausführung umgedeutet.",
+      "required_next_evidence": [
+        "timestamped pre-merge receipt proving PR #190 was open and binding base, head, changed paths and canonical diff",
+        "exact Captain merge dispatch receipt for heimgewebe/leitstand#190",
+        "owner-bound independent merge lease acquisition receipt",
+        "post-merge unchanged lease release receipt",
+        "timestamped evidence that the canonical diff was delivered before merged_at"
+      ],
+      "consequence": "T063 bleibt blocked und T062 bleibt abhängig blockiert, bis die vorhandenen Receipts revisionsgebunden gelesen oder die Abweichung durch einen ausdrücklich autorisierten Reconciliation-Vertrag bewertet wurde."
+    },
+    "observed_acceptance": {
+      "exact-pr-identity": {
+        "status": "PARTIAL",
+        "post_merge_observed_at": "2026-07-27T17:52:09Z",
+        "pull_request": 190,
+        "retained_base_sha": "a85c14d0df83da61c68e43fe814a19d483f3f6f2",
+        "retained_head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+        "retained_changed_paths": [
+          "src/controllers/ecosystemMap.ts",
+          "src/controllers/ecosystemMapNavigation.ts",
+          "src/public/ecosystem-map.mjs",
+          "src/server.ts",
+          "src/views/ecosystem-map.ejs",
+          "tests/controllers/ecosystemMap.test.ts",
+          "tests/controllers/ecosystemMapNavigation.test.ts",
+          "tests/views/ecosystemMap.test.ts"
+        ],
+        "retained_diff_sha256": "8c5a35096f64f9fdcf77235eb5eddd85a9a1d3886a6ecb7e9b553b04b243c98f",
+        "missing": [
+          "timestamped pre-merge receipt proving the PR was open",
+          "pre-merge revalidation binding open state, base, head, changed paths and canonical diff"
+        ],
+        "does_not_establish": [
+          "the acceptance criterion's required open-PR identity gate",
+          "T063 verification"
+        ]
+      },
+      "ci-and-review-current": {
+        "status": "SUPPORTED_NOT_TERMINAL",
+        "head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+        "workflow_run_ids": [
+          30221789231,
+          30221789246,
+          30221789233
+        ],
+        "final_review_comment_id": 5085560083,
+        "open_threads": 0,
+        "does_not_establish": [
+          "Captain merge authorization",
+          "T063 verification"
+        ]
+      },
+      "user-visible-diff-delivered": {
+        "status": "PARTIAL",
+        "artifact": "https://gist.github.com/alexdermohr/656683eee49fc59838e1090eb4e2d37c",
+        "bytes": 41400,
+        "sha256": "8c5a35096f64f9fdcf77235eb5eddd85a9a1d3886a6ecb7e9b553b04b243c98f",
+        "delivery_comment_id": 5086524961,
+        "missing": [
+          "reliable timestamp binding the delivery comment before merged_at"
+        ],
+        "does_not_establish": [
+          "pre-merge delivery timing",
+          "T063 verification"
+        ]
+      },
+      "atomic-exact-head-merge": {
+        "status": "PARTIAL",
+        "head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+        "merge_commit_sha": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+        "missing": [
+          "Captain dispatch receipt",
+          "match-head guard receipt",
+          "independent merge lease acquisition receipts"
+        ],
+        "does_not_establish": [
+          "contract-compliant T063 merge"
+        ]
+      },
+      "post-merge-readback": {
+        "status": "PARTIAL",
+        "pull_request_state": "merged",
+        "merge_commit_sha": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+        "current_main_sha": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+        "main_comparison": "identical",
+        "missing": [
+          "unchanged merge lease release receipts"
+        ],
+        "does_not_establish": [
+          "complete post-merge closeout"
+        ]
+      },
+      "no-code-or-deployment": {
+        "status": "PARTIAL",
+        "observed_effect": "GitHub merge of the reviewed head into leitstand main",
+        "missing": [
+          "T063 run receipt proving no separately owned code edit or runtime deployment"
+        ],
+        "does_not_establish": [
+          "absence of all non-GitHub runtime effects"
+        ]
+      }
+    }
   }
 }

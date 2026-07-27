@@ -87,7 +87,6 @@
       "pull_request": 190,
       "base_sha": "a85c14d0df83da61c68e43fe814a19d483f3f6f2",
       "reviewed_head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
-      "merge_commit_sha": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
       "changed_files": 8,
       "additions": 418,
       "deletions": 21,
@@ -125,6 +124,14 @@
       "read-only-exploration": "Lifecycle-Filter, Suche, Detailansicht und commitgebundene Quellenlinks bleiben ausschließlich lesend.",
       "review-ci-pr-published": "Lokale Vollprüfung, exakter Final-Head-Review, drei grüne GitHub-Workflows und der byteidentische vollständige UTF-8-Diff sind gebunden.",
       "no-merge-or-deployment": "Die T061-Implementierungsarbeit endete mit der PR-Publikation; der spätere Merge wird ausschließlich T063 zugeordnet und T061 beansprucht kein Deployment."
+    },
+    "verification": {
+      "task_sha256": "66591dc9e1a3ee2203dd5e0d3248eb207620a4617414d3f83b01472bcaa85f5c",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "verified_at": "2026-07-27T17:52:09Z",
+      "source": "operator-github-closeout",
+      "source_ref": "heimgewebe/leitstand#190",
+      "implementation_diff_sha256": "8c5a35096f64f9fdcf77235eb5eddd85a9a1d3886a6ecb7e9b553b04b243c98f"
     }
   }
 }

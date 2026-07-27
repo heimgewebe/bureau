@@ -1,0 +1,88 @@
+{
+  "acceptance": [
+    {
+      "assertion": "repoground doctor liefert menschen- und maschinenlesbare Checks für Python, Git, SQLite/FTS, jsonschema, Bundlekatalog, Manifestintegrität, MCP-Konfiguration, Freshness und optionale Sprach-/Graphadapter.",
+      "id": "doctor-surface"
+    },
+    {
+      "assertion": "Jeder Check meldet available, degraded oder blocked mit Ursache, Auswirkung und zulässigem nächsten Schritt; fehlende Optionals werden nicht als falsche Kernstörung ausgegeben.",
+      "id": "status-semantics"
+    },
+    {
+      "assertion": "Doctor verändert standardmäßig keine Dateien, Services, Repositories, Kataloge oder Konfigurationen und gibt keine Secrets aus.",
+      "id": "no-repair-default"
+    },
+    {
+      "assertion": "GETTING_STARTED beschreibt einen eindeutigen Installations-, Upgrade-, MCP- und ersten Bundle-Readback-Pfad sowie unterstützte und CI-geprüfte Python-Versionen.",
+      "id": "bootstrap-doc"
+    },
+    {
+      "assertion": "Tests decken fehlendes jsonschema, defektes FTS, stale Bundle, mehrdeutigen Katalog, fehlenden Starter und optionale Adapter ab.",
+      "id": "negative-tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Eine read-only Diagnoseoberfläche bereitstellen, die vor Agentennutzung Installation, CLI/MCP, Bundlekatalog, Freshness, optionale Analyseadapter, Sandbox- und Laufzeitvoraussetzungen maschinenlesbar prüft, ohne selbst zu reparieren.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T017",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation",
+      "merge readiness",
+      "automatic repair authority",
+      "future runtime health"
+    ],
+    "observed_live_gap": "Kein doctor/bootstrap command in merger/repoground/cli; GETTING_STARTED dokumentiert derzeit nur Paketinstallation.",
+    "registered_from_audit": "RepoGround complete audit review, 2026-07-27",
+    "sequencing_preference": "Nach T015 umsetzen; kein harter Dependency-Verweis auf einen noch ungemergten PR.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-0563fde570825a43d6007765",
+      "event_id": 1320,
+      "event_created_at": "2026-07-27T09:32:54.058859Z",
+      "request_sha256": "733a6af54e7c5b9e1785b04336d26fdb390d3fae98ce7a4f26ee52b60dd22d88",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "conversation:repoground-complete-audit-2026-07-27",
+        "observed_at": "2026-07-27T09:32:54.046974Z",
+        "sha256": "443b271301a8d0b141a13fe12ba28d009b79edb03bbf15ba7b57b6c01695bee8"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 65
+  },
+  "required_capabilities": [
+    "repoground",
+    "cli",
+    "mcp",
+    "diagnostics",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "RepoGround Doctor und capabilitygebundener Bootstrap"
+}

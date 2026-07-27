@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Leitstand-Lifecycle-Consumer implementieren und als PR veröffentlichen",
-  "state": "verified",
+  "state": "blocked",
   "goal": "Implementiere in einem eigenen sauberen Worktree einen read-only Leitstand-Consumer für die stabilen Systemkatalog-Lifecycle-Zustände, prüfe ihn vollständig und veröffentliche einen revisionsgebundenen PR. Trenne deklarierte Semantik, Artefakt-Freshness und Runtime-Gesundheit sichtbar und fail-closed; Retirement darf nicht als aktueller Dienstfehler erscheinen. Diese Aufgabe mergt und deployt nicht.",
   "priority": {
     "lane": "next",
@@ -80,9 +80,8 @@
       "runtime_health",
       "semantic_source_authority"
     ],
-    "verified_at": "2026-07-27T17:52:09Z",
-    "outcome": "Der read-only Leitstand-Lifecycle-Consumer wurde isoliert implementiert, vollständig geprüft und als PR #190 auf dem exakten finalen Head veröffentlicht. Technische Artefaktkonsistenz, deklarierte Lifecycle-Semantik und Runtime-Gesundheit bleiben getrennte Achsen; T061 beansprucht weder Merge noch Deployment.",
-    "publication": {
+    "observed_at": "2026-07-27T17:52:09Z",
+    "observed_publication": {
       "repository": "heimgewebe/leitstand",
       "pull_request": 190,
       "base_sha": "a85c14d0df83da61c68e43fe814a19d483f3f6f2",
@@ -93,7 +92,8 @@
       "canonical_diff": {
         "bytes": 41400,
         "sha256": "8c5a35096f64f9fdcf77235eb5eddd85a9a1d3886a6ecb7e9b553b04b243c98f",
-        "artifact": "https://gist.github.com/alexdermohr/656683eee49fc59838e1090eb4e2d37c"
+        "artifact": "https://gist.github.com/alexdermohr/656683eee49fc59838e1090eb4e2d37c",
+        "delivery_comment_id": 5086524961
       },
       "validation": {
         "lint": "PASS",
@@ -108,30 +108,152 @@
           "CI",
           "ai-context guard",
           "security-hygiene"
+        ],
+        "github_workflow_runs": [
+          {
+            "name": "CI",
+            "run_id": 30221789231,
+            "head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+            "conclusion": "success"
+          },
+          {
+            "name": "ai-context guard",
+            "run_id": 30221789246,
+            "head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+            "conclusion": "success"
+          },
+          {
+            "name": "security-hygiene",
+            "run_id": 30221789233,
+            "head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+            "conclusion": "success"
+          }
         ]
       },
       "review": {
         "initial_finding": "P2 whitespace-colliding node identities",
         "resolution_head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
         "final_codex_result": "no major issues",
-        "open_threads": 0
+        "open_threads": 0,
+        "final_review_comment_id": 5085560083
+      },
+      "current_pr_state": "merged",
+      "merge_commit_sha": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+      "changed_paths": [
+        "src/controllers/ecosystemMap.ts",
+        "src/controllers/ecosystemMapNavigation.ts",
+        "src/public/ecosystem-map.mjs",
+        "src/server.ts",
+        "src/views/ecosystem-map.ejs",
+        "tests/controllers/ecosystemMap.test.ts",
+        "tests/controllers/ecosystemMapNavigation.test.ts",
+        "tests/views/ecosystemMap.test.ts"
+      ],
+      "source_refs": [
+        "heimgewebe/leitstand#190",
+        "heimgewebe/leitstand#190:issuecomment-5085560083",
+        "heimgewebe/leitstand#190:issuecomment-5086524961"
+      ],
+      "does_not_establish": [
+        "clean_worktree_receipt",
+        "run_identity",
+        "acceptance_receipt",
+        "absence_of_runtime_effect",
+        "T061_verification",
+        "T063_verification"
+      ]
+    },
+    "process_deviation": {
+      "status": "acceptance_evidence_incomplete",
+      "description": "Die Implementierung und PR-Publikation sind revisionsgebunden beobachtet, der spätere Merge ist ebenfalls sichtbar. Für T061 fehlen jedoch ein run- beziehungsweise receiptgebundener Nachweis des sauberen isolierten Worktrees sowie ein vollständiges typisiertes Acceptance-Receipt. Die beobachtete PR-Evidenz wird deshalb nicht in eine terminale T061-Verifikation umgedeutet.",
+      "required_next_evidence": [
+        "run- or workspace-bound clean-isolation receipt for the implementation head",
+        "typed acceptance evidence object for every T061 criterion",
+        "task- and plan-bound verification stamp generated only after the evidence set is complete"
+      ],
+      "consequence": "T061 bleibt blocked, damit die bereits veröffentlichte Implementierung nicht doppelt ausgeführt und zugleich nicht ohne vollständige Evidenz terminalisiert wird."
+    },
+    "observed_acceptance": {
+      "clean-isolated-implementation": {
+        "status": "PARTIAL",
+        "source_ref": "heimgewebe/leitstand#190",
+        "observed_claim": "Der PR-Text benennt einen eigenen sauberen Worktree und einen unberührten fremden Dirty-Worktree.",
+        "missing": [
+          "run identity",
+          "workspace receipt",
+          "before/after dirty-state readback"
+        ],
+        "does_not_establish": [
+          "clean isolation as typed acceptance evidence"
+        ]
+      },
+      "strict-source-contract": {
+        "status": "SUPPORTED_NOT_TERMINAL",
+        "head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+        "changed_paths": [
+          "src/controllers/ecosystemMap.ts",
+          "tests/controllers/ecosystemMap.test.ts"
+        ],
+        "test_evidence": [
+          "25/25 focused tests PASS",
+          "261/261 full tests PASS"
+        ],
+        "review_ref": "heimgewebe/leitstand#190:issuecomment-5085560083",
+        "does_not_establish": [
+          "complete T061 acceptance receipt"
+        ]
+      },
+      "truth-axes-separated": {
+        "status": "SUPPORTED_NOT_TERMINAL",
+        "head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+        "changed_paths": [
+          "src/controllers/ecosystemMap.ts",
+          "src/views/ecosystem-map.ejs"
+        ],
+        "does_not_establish": [
+          "runtime health",
+          "complete T061 acceptance receipt"
+        ]
+      },
+      "read-only-exploration": {
+        "status": "SUPPORTED_NOT_TERMINAL",
+        "head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+        "changed_paths": [
+          "src/public/ecosystem-map.mjs",
+          "src/controllers/ecosystemMapNavigation.ts",
+          "tests/views/ecosystemMap.test.ts"
+        ],
+        "does_not_establish": [
+          "production browser behavior",
+          "complete T061 acceptance receipt"
+        ]
+      },
+      "review-ci-pr-published": {
+        "status": "SUPPORTED_NOT_TERMINAL",
+        "pull_request": 190,
+        "head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+        "workflow_run_ids": [
+          30221789231,
+          30221789246,
+          30221789233
+        ],
+        "final_review_comment_id": 5085560083,
+        "diff_delivery_comment_id": 5086524961,
+        "diff_sha256": "8c5a35096f64f9fdcf77235eb5eddd85a9a1d3886a6ecb7e9b553b04b243c98f",
+        "does_not_establish": [
+          "complete T061 acceptance receipt"
+        ]
+      },
+      "no-merge-or-deployment": {
+        "status": "PARTIAL",
+        "repository_diff_scope": "Leitstand source and tests only",
+        "missing": [
+          "T061 run receipt proving no separately owned merge or runtime effect"
+        ],
+        "does_not_establish": [
+          "absence of all runtime effects outside GitHub evidence"
+        ]
       }
-    },
-    "verified_acceptance": {
-      "clean-isolated-implementation": "PR #190 dokumentiert den eigenen sauberen Worktree; der fremde Dirty-Worktree wurde nicht verändert.",
-      "strict-source-contract": "Lifecycle-Zustände, reale YYYY-MM-DD-Daten, eindeutige getrimmte Knoten-IDs sowie nichtleere eindeutige Evidenzreferenzen werden fail-closed validiert; der Codex-P2 wurde auf dem finalen Head behoben.",
-      "truth-axes-separated": "Controller und Ansicht weisen technische Freshness, Artefaktabgleich, deklarierte Semantik und Runtime-Grenze getrennt aus.",
-      "read-only-exploration": "Lifecycle-Filter, Suche, Detailansicht und commitgebundene Quellenlinks bleiben ausschließlich lesend.",
-      "review-ci-pr-published": "Lokale Vollprüfung, exakter Final-Head-Review, drei grüne GitHub-Workflows und der byteidentische vollständige UTF-8-Diff sind gebunden.",
-      "no-merge-or-deployment": "Die T061-Implementierungsarbeit endete mit der PR-Publikation; der spätere Merge wird ausschließlich T063 zugeordnet und T061 beansprucht kein Deployment."
-    },
-    "verification": {
-      "task_sha256": "66591dc9e1a3ee2203dd5e0d3248eb207620a4617414d3f83b01472bcaa85f5c",
-      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
-      "verified_at": "2026-07-27T17:52:09Z",
-      "source": "operator-github-closeout",
-      "source_ref": "heimgewebe/leitstand#190",
-      "implementation_diff_sha256": "8c5a35096f64f9fdcf77235eb5eddd85a9a1d3886a6ecb7e9b553b04b243c98f"
     }
   }
 }

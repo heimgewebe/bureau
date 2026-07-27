@@ -1,0 +1,105 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A deterministic live audit records HTTPS redirect behavior, cache policy and the presence or absence of HSTS, nosniff, Permissions-Policy, response CSP, COOP, CORP and Referrer-Policy for representative HTML, JSON, JavaScript and CSS responses with exact URL, status and observation time.",
+      "id": "live-header-baseline"
+    },
+    {
+      "assertion": "A reviewed decision compares retaining GitHub Pages, adding a response-header-capable edge and migrating static hosting across monetary cost, privacy, operational burden, DNS, caching, deployment integrity and rollback, and selects the current no-cost retain path without overstating security.",
+      "id": "three-path-decision"
+    },
+    {
+      "assertion": "The production delivery contract declares required mitigations, provider-unavailable headers, accepted residual risk, explicit nonclaims and re-evaluation triggers for accounts, backend writes, sensitive transactions, provider changes or new threat evidence.",
+      "id": "machine-readable-boundary"
+    },
+    {
+      "assertion": "Validation fails on loss of HTTPS redirect, meta CSP or declared referrer mitigation and on malformed or dishonest header evidence, while provider-unavailable response headers remain explicit measured residual-risk values rather than false failures or false positives.",
+      "id": "fail-closed-validator"
+    },
+    {
+      "assertion": "Focused tests cover missing required mitigations, falsely claimed response headers, unsafe redirect targets, malformed cache or header values and unauthorized provider or DNS migration declarations.",
+      "id": "negative-tests"
+    },
+    {
+      "assertion": "The exact merged commit receives green required CI and a production readback whose live header matrix matches the reviewed contract; deviations fail closed and do not silently rewrite the accepted boundary.",
+      "id": "production-readback"
+    },
+    {
+      "assertion": "No DNS, hosting-provider, edge-routing, credential or paid-service mutation occurs; rollback is deletion of the new contract and readback enforcement while preserving the existing GitHub Pages deployment.",
+      "id": "reversible-no-cost-scope"
+    },
+    {
+      "assertion": "Closeout binds base, head, full UTF-8 diff, self-review, any external review, green CI, merge commit and live readback, and registers any unimplemented edge or migration work as a separate future task.",
+      "id": "closeout-bound"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T003"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Implement only the reviewed no-cost retain-GitHub-Pages decision and its machine-readable header contract, validator, tests and production readback. Do not change DNS, provider, edge routing or incur costs without a separate reviewed authorization.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Re-evaluate and implement Commonworld's HTTP response security-header boundary by retaining the current cost-free GitHub Pages delivery for the static account-free product, recording the accepted provider-bound residual risk, and adding exact machine-readable contracts, tests and live readback without changing DNS or hosting.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T029",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "an active exploit or compromise",
+      "permission to migrate hosting",
+      "permission to change DNS",
+      "permission to add a paid edge provider",
+      "provider SLA",
+      "that meta CSP is equivalent to response-level CSP"
+    ],
+    "operator_intake": {
+      "candidate_id": "candidate-74f4bc927ead680c0fc72d6d",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_id": 1414,
+      "source": {
+        "kind": "operator-runtime-audit",
+        "observed_at": "2026-07-27T19:05:00+02:00",
+        "sha256": "29992c80a0bcf51331d53abb7e5d9c5cc3f8e3d26f381709a9f56bb5b078c008"
+      }
+    },
+    "queue_mutated": false,
+    "registered_at": "2026-07-27",
+    "source": "Commonworld live HTTP response-header audit"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 30
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "testing",
+    "browser",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Revert the contract, validator, tests and workflow integration while leaving the existing GitHub Pages deployment, DNS and static artifacts unchanged."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Make the HTTP response security-header boundary explicit"
+}

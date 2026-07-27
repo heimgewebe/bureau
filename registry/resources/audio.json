@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "repo.audio",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/audio",
+  "github_slug": "heimgewebe/audio",
+  "grabowski_key": "repo:/home/alex/repos/audio",
+  "metadata": {
+    "role": "canonical Heim-PC audio configuration, recording, playback and generative music repository",
+    "canonical_since": "2026-07-27",
+    "supersedes_as_canonical": "repo.hauski-audio"
+  }
+}

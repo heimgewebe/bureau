@@ -37,9 +37,8 @@ jobs:
           git -C source checkout --quiet --detach FETCH_HEAD
       - name: Install project development tools quietly
         run: python -m pip install --quiet -e 'source[dev]'
-      - name: Run broad-scope regression tests
+      - name: Isolate first broad-scope regression failure
         working-directory: source
         run: |
-          python -m pytest -q \
-            tests/test_broad_scope_approval_binding.py \
-            tests/test_broad_scope_claim_evidence.py
+          python -m pytest -q --tb=line -x \
+            tests/test_broad_scope_claim_evidence.py::test_coordinated_claim_binds_reviewed_plan_before_lease_validation

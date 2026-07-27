@@ -1,0 +1,112 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Alle verglichenen Messwerte sind an Dataset, Taskprofil, Route, Index, Bundlemanifest, Repositorycommit und Evaluatorversion gebunden; die Ursache der 5-Prozent- gegenüber der 95-Prozent-Aussage wird konkret erklärt.",
+      "id": "metric-lineage"
+    },
+    {
+      "assertion": "basic_repo_question, review, change_impact, find_relevant_tests und ground_claim erhalten explizite verfügbare Routen, Defaultzustände, Fallbacks und Nichtaussagen.",
+      "id": "profile-matrix"
+    },
+    {
+      "assertion": "Ein mehrrepo- und mehrprofiliges Goldset misst Recall@k, MRR, Expected-Target-Recall, Citation-/Range-Gesundheit, Miss-Taxonomie, Kontextbytes und Toolaufrufe.",
+      "id": "representative-goldset"
+    },
+    {
+      "assertion": "Promotion, Beibehaltung opt-in oder Blockade werden je Taskprofil entschieden; ein guter Spezialpfad darf keinen schlechten allgemeinen Pfad verdecken und umgekehrt.",
+      "id": "profile-gates"
+    },
+    {
+      "assertion": "Kein globales Default-Routing wird aus gemittelten oder nicht vergleichbaren Messungen abgeleitet; bestehende explizite Routingautorität bleibt erhalten.",
+      "id": "no-global-by-aggregation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T004",
+    "REPOGROUND-AGENT-UTILITY-V1-T011"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Die derzeit auseinanderfallenden Retrievalaussagen revisions-, bundle- und taskprofilgebunden zusammenführen: den kanonischen 5-Prozent-Recall-Befund, den opt-in Review-Intent-Erfolg und die gemessenen Change-Impact-Piloten in einer gemeinsamen, nicht aggregierend irreführenden Entscheidungsfläche abbilden.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T013",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "audit_live_basis": {
+      "bundle_manifest_sha256": "15db8ef43a85d1174fa73c6eaafe65ee51aed6ad2364158acfbce098555f9a85",
+      "bundle_stem": "heimgewebe__repoground__main-max-260727-0706",
+      "freshness": "fresh_exact",
+      "github_ci": "all observed main workflows passed",
+      "open_pull_requests": 0,
+      "repo_lease": null,
+      "repoground_commit": "a029bbcd2779e7bed1ac41e936bdf720249f0538"
+    },
+    "deduplication": {
+      "does_not_duplicate": "Kein neuer Retriever ohne vorherige Mess- und Routingwahrheit.",
+      "reuses": [
+        "RPU-V1-T011",
+        "RPU-V1-T021",
+        "RCGA-V1-T002"
+      ]
+    },
+    "does_not_establish": [
+      "implementation",
+      "merge readiness",
+      "default RepoGround routing",
+      "global retrieval completeness",
+      "runtime correctness"
+    ],
+    "registered_from_audit": "RepoGround complete audit review, 2026-07-27",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-898c16890193edc9766ba611",
+      "event_id": 1309,
+      "event_created_at": "2026-07-27T09:16:28.220626Z",
+      "request_sha256": "99ab2aeb58a8d438340e7065ac1a2fbd4ad25faa375c3977a36dd28d4686f7ed",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "conversation:repoground-complete-audit-2026-07-27",
+        "observed_at": "2026-07-27T09:16:28.209030Z",
+        "sha256": "443b271301a8d0b141a13fe12ba28d009b79edb03bbf15ba7b57b6c01695bee8"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 45
+  },
+  "required_capabilities": [
+    "repoground",
+    "retrieval-evaluation",
+    "benchmarking",
+    "testing",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Retrieval-Benchmarkwahrheit und taskprofilgebundene Routing-Gates"
+}

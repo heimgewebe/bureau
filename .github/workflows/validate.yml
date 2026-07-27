@@ -62,9 +62,18 @@ jobs:
           fi
           echo "registry_only=${registry_only}" >> "${GITHUB_OUTPUT}"
       - run: python -m pip install -e '.[dev]'
-      - name: Validate code and repository contracts
+      - name: Lint Python sources
         if: steps.scope.outputs.registry_only != 'true'
-        run: make validate
+        run: python -m ruff check src tests
+      - name: Run Python tests
+        if: steps.scope.outputs.registry_only != 'true'
+        run: python -m pytest
+      - name: Validate systemkatalog boundary
+        if: steps.scope.outputs.registry_only != 'true'
+        run: make systemkatalog-boundary
+      - name: Validate Bureau Registry
+        if: steps.scope.outputs.registry_only != 'true'
+        run: PYTHONPATH=src python -m bureau.cli --root . --json check
       - name: Validate Registry-only change
         if: steps.scope.outputs.registry_only == 'true'
         run: PYTHONPATH=src python -m bureau.cli --root . --json check

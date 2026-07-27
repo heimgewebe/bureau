@@ -20,7 +20,17 @@
   ],
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "component.bureau.merge-gate",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -33,13 +43,57 @@
       "required_level": "operator",
       "action_class": "repository_mutation",
       "note": "Aus einem real beobachteten Registry-Race während WELTGEWEBE-OS-V1-T022 abgeleitet: parallele PRs #858, #866, #868 und #869 belegten beziehungsweise verschoben dieselben numerischen Task-IDs. Umsetzung isoliert und review-before-effect."
-    }
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/registry_registration_preflight.py",
+      "path:/home/alex/repos/bureau/tests/test_registry_registration_preflight.py",
+      "path:/home/alex/repos/bureau/.github/workflows/registry-registration-preflight.yml",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T009.json"
+    ]
   },
   "metadata": {
     "discovered_by": "WELTGEWEBE-OS-V1-T022 Bureau follow-up registration race",
     "observed_on": "2026-07-22",
     "evidence": "Parallele Bureau-PRs reservierten überlappende WELTGEWEBE-OS-V1-T030/T031/T033... IDs; #866 und #868 wurden in unterschiedlicher Reihenfolge gemergt, wodurch nachträgliche Deduplizierungs- und Korrektur-PRs nötig wurden.",
-    "scope_boundary": "T005 behandelt deterministische Ready-Auswahl, Live-Claims, Leases und kollisionssicheren Task-Pickup. T009 behandelt ausschließlich dauerhafte Registry-ID-/Pfadvergabe und Publikationsrennen zwischen parallelen GitHub-PRs."
+    "scope_boundary": "T005 behandelt deterministische Ready-Auswahl, Live-Claims, Leases und kollisionssicheren Task-Pickup. T009 behandelt ausschließlich dauerhafte Registry-ID-/Pfadvergabe und Publikationsrennen zwischen parallelen GitHub-PRs.",
+    "broad_bureau_scope_migration": {
+      "schema_version": 1,
+      "migration_task": "BUREAU-TRUTH-MODEL-V2-T020",
+      "regression_of": "BUREAU-TRUTH-MODEL-V2-T013",
+      "introducing_commit": "40fd910bc159980500f5a0af82902c45a29e7c16",
+      "replacement": {
+        "claims": [
+          {
+            "resource": "component.bureau.core",
+            "mode": "write",
+            "isolation": "worktree"
+          },
+          {
+            "resource": "component.bureau.registry",
+            "mode": "read",
+            "isolation": "none"
+          },
+          {
+            "resource": "component.bureau.merge-gate",
+            "mode": "write",
+            "isolation": "worktree"
+          }
+        ],
+        "grabowski_resources": [
+          "path:/home/alex/repos/bureau/src/bureau/registry_registration_preflight.py",
+          "path:/home/alex/repos/bureau/tests/test_registry_registration_preflight.py",
+          "path:/home/alex/repos/bureau/.github/workflows/registry-registration-preflight.yml",
+          "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T009.json"
+        ]
+      },
+      "rationale": "The task changes the registration preflight implementation and its workflow, reads canonical Registry truth, and integrates with the short merge gate without owning the repository.",
+      "historical_verification_receipt_sha256": "b709fc9d7acf130fb10ad4ad578e9a856e7d67e4be84b53563adadc33346047a",
+      "does_not_establish": [
+        "implementation completion",
+        "task readiness",
+        "permission to alter terminal history"
+      ]
+    }
   },
   "acceptance": [
     {

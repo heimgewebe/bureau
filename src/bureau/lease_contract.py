@@ -18,6 +18,103 @@ MAX_EMERGENCY_REPO_LEASE_TTL_SECONDS = 300
 _SUBJECT_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,239}$")
 _GIT_HEAD_RE = re.compile(r"^(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})$")
 _TERMINAL_TASK_STATES = {"verified", "cancelled", "superseded"}
+_BROAD_SCOPE_EXCEPTION_FIELD = "broad_bureau_scope_exception"
+
+
+def _task_field(task: Any, field: str, default: Any = None) -> Any:
+    if isinstance(task, dict):
+        return task.get(field, default)
+    return getattr(task, field, default)
+
+
+def assess_task_broad_bureau_scope(
+    task: Any, resources: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Assess one task's broad Bureau scope through one stable fail-closed contract."""
+    task_id = str(_task_field(task, "id", ""))
+    state = str(_task_field(task, "state", ""))
+    execution = _task_field(task, "execution", {})
+    if not isinstance(execution, dict):
+        execution = {}
+    raw_claims = _task_field(task, "claims", ())
+    claim_resources: list[str] = []
+    for claim in raw_claims if isinstance(raw_claims, (list, tuple)) else ():
+        resource_id = (
+            claim.get("resource") if isinstance(claim, dict) else getattr(claim, "resource", None)
+        )
+        if not isinstance(resource_id, str):
+            continue
+        resource = resources.get(resource_id) if resources is not None else None
+        if resource_id == "repo.bureau" or (
+            resource is not None
+            and getattr(resource, "grabowski_key", None) == BROAD_BUREAU_REPOSITORY_KEY
+        ):
+            claim_resources.append(resource_id)
+    explicit = execution.get("grabowski_resources", [])
+    explicit_keys = (
+        sorted({value for value in explicit if isinstance(value, str)})
+        if isinstance(explicit, list)
+        else []
+    )
+    sources: list[str] = []
+    if BROAD_BUREAU_REPOSITORY_KEY in explicit_keys:
+        sources.append("execution.grabowski_resources")
+    if claim_resources:
+        sources.append("claims")
+    requested = bool(sources)
+    terminal = state in _TERMINAL_TASK_STATES
+    exception = execution.get(_BROAD_SCOPE_EXCEPTION_FIELD)
+    approval = execution.get("approval")
+    approval = approval if isinstance(approval, dict) else {}
+    justification = exception.get("justification") if isinstance(exception, dict) else None
+    boundaries = exception.get("effect_boundaries") if isinstance(exception, dict) else None
+    valid_boundaries = (
+        isinstance(boundaries, list)
+        and bool(boundaries)
+        and all(isinstance(value, str) and bool(value.strip()) for value in boundaries)
+    )
+    exception_valid = bool(
+        isinstance(exception, dict)
+        and isinstance(justification, str)
+        and bool(justification.strip())
+        and valid_boundaries
+        and approval.get("action_class") == "repository_mutation"
+        and approval.get("required_level") == "reviewed_plan"
+    )
+    if not requested:
+        exception_status = "not-required"
+    elif terminal:
+        exception_status = "historical-terminal"
+    elif exception_valid:
+        exception_status = "reviewed-repository-wide-exception"
+    elif exception is None:
+        exception_status = "missing"
+    else:
+        exception_status = "invalid"
+    allowed = not requested or terminal or exception_valid
+    return {
+        "schema_version": 1,
+        "kind": "bureau_task_broad_scope_assessment",
+        "task_id": task_id,
+        "task_state": state,
+        "broad_scope_requested": requested,
+        "allowed": allowed,
+        "sources": sources,
+        "claim_resources": sorted(set(claim_resources)),
+        "explicit_resource_keys": explicit_keys,
+        "exception_field": _BROAD_SCOPE_EXCEPTION_FIELD,
+        "exception_status": exception_status,
+        "required_exception": {
+            "justification": "non-empty string",
+            "effect_boundaries": "non-empty string list",
+            "approval_action_class": "repository_mutation",
+            "approval_required_level": "reviewed_plan",
+        },
+        "does_not_establish": [
+            "semantic correctness of a reviewed repository-wide exception",
+            "merge or execution authority",
+        ],
+    }
 
 _REPO_LEASE_SCOPE = {
     "deprecated_key": BROAD_BUREAU_REPOSITORY_KEY,
@@ -458,24 +555,12 @@ def diagnose_bureau_resource_keys(
 
 
 def registry_bureau_lease_findings(registry: Any) -> list[dict[str, Any]]:
-    """Report nonterminal tasks that still request the deprecated global Bureau repo lease."""
+    """Report nonterminal tasks that violate the broad Bureau scope ratchet."""
     lanes = {task_id: lane for lane, task_ids in registry.queue.items() for task_id in task_ids}
     findings: list[dict[str, Any]] = []
     for task in registry.tasks.values():
-        if task.state in _TERMINAL_TASK_STATES:
-            continue
-        explicit_keys = set(task.execution.get("grabowski_resources", []))
-        claim_resources = []
-        for claim in task.claims:
-            resource = registry.resources.get(claim.resource)
-            if resource is not None and resource.grabowski_key == BROAD_BUREAU_REPOSITORY_KEY:
-                claim_resources.append(claim.resource)
-        sources = []
-        if BROAD_BUREAU_REPOSITORY_KEY in explicit_keys:
-            sources.append("execution.grabowski_resources")
-        if claim_resources:
-            sources.append("claims")
-        if not sources:
+        assessment = assess_task_broad_bureau_scope(task, registry.resources)
+        if not assessment["broad_scope_requested"] or assessment["allowed"]:
             continue
         lane = lanes.get(task.id)
         severity = "blocker" if task.state == "ready" or lane == "now" else "warning"
@@ -487,13 +572,15 @@ def registry_bureau_lease_findings(registry: Any) -> list[dict[str, Any]]:
                 "task_state": task.state,
                 "lane": lane,
                 "resource_key": BROAD_BUREAU_REPOSITORY_KEY,
-                "sources": sources,
-                "claim_resources": sorted(claim_resources),
+                "sources": assessment["sources"],
+                "claim_resources": assessment["claim_resources"],
+                "exception_status": assessment["exception_status"],
                 "replacement_task_resource_key": (
                     f"path:{BUREAU_REPOSITORY_ROOT}/registry/tasks/{task.id}.json"
                 ),
                 "message": (
-                    "replace the global Bureau repository lease before this task becomes ready"
+                    "replace the global Bureau repository lease before this task becomes ready "
+                    "or provide the explicit reviewed repository-wide exception"
                 ),
             }
         )

@@ -30,13 +30,14 @@
     {
       "isolation": "none",
       "mode": "read",
-      "resource": "repo.bureau"
+      "resource": "component.bureau.registry"
     }
   ],
   "depends_on": [],
   "execution": {
     "grabowski_resources": [
-      "repo:/home/alex/repos/repoground"
+      "repo:/home/alex/repos/repoground",
+      "path:/home/alex/repos/bureau/registry/tasks/REPOGROUND-AGENT-UTILITY-V1-T016.json"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -79,6 +80,30 @@
         "queue_truth",
         "task_readiness",
         "claim_or_dispatch_authority"
+      ]
+    },
+    "broad_bureau_scope_migration": {
+      "schema_version": 1,
+      "migration_task": "BUREAU-TRUTH-MODEL-V2-T020",
+      "regression_of": "BUREAU-TRUTH-MODEL-V2-T013",
+      "introducing_commit": "93818c0099e87358b22aa78d36085175794ba5a8",
+      "replacement": {
+        "claims": [
+          {
+            "resource": "component.bureau.registry",
+            "mode": "read"
+          }
+        ],
+        "grabowski_resources": [
+          "path:/home/alex/repos/bureau/registry/tasks/REPOGROUND-AGENT-UTILITY-V1-T016.json"
+        ]
+      },
+      "rationale": "The implementation lives outside Bureau; Bureau is consumed only as canonical task and Registry truth.",
+      "historical_verification_receipt_sha256": "b709fc9d7acf130fb10ad4ad578e9a856e7d67e4be84b53563adadc33346047a",
+      "does_not_establish": [
+        "implementation completion",
+        "task readiness",
+        "permission to alter terminal history"
       ]
     }
   },

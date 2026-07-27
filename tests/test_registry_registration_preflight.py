@@ -111,6 +111,48 @@ def test_semantic_duplicate_is_hint_only():
     assert result["semantic_hints"][0]["task_id"] == "EXAMPLE-V1-T002"
 
 
+
+def test_broad_bureau_scope_blocks_registration_preflight() -> None:
+    proposed = {
+        **task("EXAMPLE-V1-T001"),
+        "state": "planned",
+        "execution": {"mode": "interactive-agent", "policy": "review-before-effect"},
+        "claims": [
+            {"resource": "repo.bureau", "mode": "write", "isolation": "worktree"}
+        ],
+    }
+    result = evaluate(proposed_task=proposed)
+    assert result["decision"] == "block"
+    assert "broad_bureau_scope" in result["reasons"]
+    assert result["broad_bureau_scope"]["exception_status"] == "missing"
+
+
+def test_reviewed_repository_wide_exception_allows_preflight() -> None:
+    proposed = {
+        **task("EXAMPLE-V1-T001"),
+        "state": "planned",
+        "execution": {
+            "mode": "interactive-agent",
+            "policy": "review-before-effect",
+            "approval": {
+                "action_class": "repository_mutation",
+                "required_level": "reviewed_plan",
+            },
+            "broad_bureau_scope_exception": {
+                "justification": "One atomic format migration covers the complete repository.",
+                "effect_boundaries": ["all tracked Bureau files"],
+            },
+        },
+        "claims": [
+            {"resource": "repo.bureau", "mode": "write", "isolation": "worktree"}
+        ],
+    }
+    result = evaluate(proposed_task=proposed)
+    assert result["decision"] == "allow"
+    assert result["broad_bureau_scope"]["exception_status"] == (
+        "reviewed-repository-wide-exception"
+    )
+
 def test_invalid_task_path_and_traversal_are_rejected():
     with pytest.raises(RegistrationPreflightError):
         validate_task_path("EXAMPLE-V1-T001", "registry/tasks/../EXAMPLE-V1-T001.json")

@@ -3378,3 +3378,30 @@ def test_cli_non_object_task_json_is_typed_failure(registry_factory, tmp_path, c
     assert failure["kind"] == "bureau_operator_intake_failure"
     assert failure["code"] == "task-object-required"
     assert failure["effect_started"] is False
+
+
+def test_task_propose_rejects_broad_bureau_scope_before_plan_write(
+    registry_factory, tmp_path
+):
+    _root, registry = _committed_registry(registry_factory)
+    store = StateStore(tmp_path / "state.sqlite3")
+    recorded = _record(registry, store, key="source:broad-bureau-scope")
+    task = _task(registry.root, "BUR-TEST-001-T099")
+    task["execution"]["grabowski_resources"] = [
+        "repo:/home/alex/repos/bureau"
+    ]
+    plan_path = tmp_path / "broad-proposal.json"
+
+    with pytest.raises(OperatorIntakeError) as error:
+        task_propose(
+            registry,
+            store,
+            task_json=task,
+            publishing_task_id="BUR-TEST-001-T001",
+            path=plan_path,
+            candidate_id=recorded["candidate_id"],
+        )
+
+    assert error.value.code == "broad-bureau-task-scope-forbidden"
+    assert error.value.details["scope_assessment"]["exception_status"] == "missing"
+    assert not plan_path.exists()

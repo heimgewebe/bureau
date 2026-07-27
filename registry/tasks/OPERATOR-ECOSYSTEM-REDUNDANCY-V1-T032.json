@@ -80,7 +80,7 @@
     },
     {
       "id": "infra-and-fleet-converged",
-      "assertion": "Infra PR #131 is merged and the current Grabowski Fleet contains no active Heimserver target.",
+      "assertion": "Evidence identifies the current exact Infra default-branch revision and proves that its active configuration contains no Heimserver host, role, exposure, SSH target, or execution/deployment path; historical or superseded evidence is explicitly non-authoritative. Infra PR #131 is only an ancestry reference, and the current Grabowski Fleet contains no active Heimserver target.",
       "evidence_type": "object"
     },
     {
@@ -150,6 +150,19 @@
       "requires_receipt_sha256": true,
       "acceptance_evidence": false,
       "registry_self_mutation_authorized": false
+    },
+    "infra_retirement_readback_contract": {
+      "exact_default_branch_revision_required": true,
+      "required_absence_domains": [
+        "active_host_inventory",
+        "active_role_assignments",
+        "active_exposure_inventory",
+        "active_ssh_targets",
+        "active_execution_or_deployment_paths"
+      ],
+      "historical_or_superseded_evidence_authoritative": false,
+      "merged_pr_ancestry_sufficient": false,
+      "observed_infra_head_reference": "b4f3638752200c5db69d77344bfc594ec6bd4f57"
     }
   }
 }

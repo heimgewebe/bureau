@@ -94,6 +94,64 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verified_at": "2026-07-27T11:54:14Z",
+    "outcome": "Der bereits gemergte Leitstand PR #188 schließt den Systemkatalog-Deployregelkreis: live Remote-main wird vor Cutover frisch und erneut gelesen, der exakte commitgebundene Release fail-closed verifiziert oder idempotent wiederverwendet und die Leitstand-Units bleiben an denselben unveränderlichen Releasepfad gebunden.",
+    "implementation_pr": "heimgewebe/leitstand#188",
+    "implementation_base": "019db0d598888f33e5ee8aafd8655d69a58252f8",
+    "implementation_head": "d233f4625e8f5ea88328f015a51f44cac3075930",
+    "implementation_merge_commit": "a7ba8ae0038d3c0c5537b6f19036448732bbef23",
+    "implementation_diff_sha256": "84ba7e55aec010234b14332c38e46c13d05d6128cc18d913de5855e8f9d79467",
+    "implementation_patch_bytes": 33843,
+    "validation": {
+      "current_leitstand_main": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+      "focused_release_runtime_tests": "38 tests PASS on current main at 2026-07-27T11:43Z",
+      "github_checks": "PR #188: CI build, CodeQL, ai-context guards, security hygiene and Cloudflare Pages all passed before merge.",
+      "pr_state": "MERGED",
+      "pr_merged_at": "2026-07-24T02:02:57Z"
+    },
+    "deployment": {
+      "source_commit": "a7ba8ae0038d3c0c5537b6f19036448732bbef23",
+      "release_path": "/home/alex/.local/lib/leitstand/releases/a7ba8ae0038d3c0c5537b6f19036448732bbef23-runtime-v1",
+      "release_tree_sha256": "9611cae39069571b19dc098124e5d96424423656cde7c1c268d332961fe88f98",
+      "deployment_receipt_path": "/home/alex/.local/state/leitstand/releases/receipts/20260724T021102.608679Z-1555858-65f0a071-deploy.json",
+      "deployment_receipt_sha256": "b668753fdd3d74ff819800ecb1055de72d4c7d10ad313e4347348854af88dee0",
+      "deploy_switch_receipt_sha256": "13c634a7f89ea6bc2f9a6f1dabfd494c238303441d860b2499a7305c1e0eb016",
+      "systemkatalog_release_commit": "7447da1f9b481d31fecd28a385ac1c3e27a22bbb",
+      "systemkatalog_observed_remote_main": "7447da1f9b481d31fecd28a385ac1c3e27a22bbb",
+      "systemkatalog_confirmed_remote_main": "7447da1f9b481d31fecd28a385ac1c3e27a22bbb",
+      "systemkatalog_manifest_sha256": "7486e03b4daa96f920af499b6da75bd4ff8b3c81e49f857785bb4da60e7ec2e1",
+      "systemkatalog_manifest_source_commit": "27924b7cd1b2506dae121052efb4a195804d1554",
+      "systemkatalog_artifact_count": 6,
+      "runtime_config_sha256": "a31d38fd1a3f13b7213a007a45bb1c37434c846cb95f1cd17ca7b585d3e70e5d",
+      "web_service": "active/running, Result=success, NRestarts=0",
+      "storage_producer": "inactive/dead after successful oneshot, Result=success, ExecMainStatus=0",
+      "live_health_sha256": "a40a0f56aa553a46d82d9d23a4c5e65215048f88b3116930dc36af92ca94a2fb",
+      "live_ecosystem_map_sha256": "39489382bb9f8424938d27ddb3fce37b3fdf86288b8afe1086caaa8578cfd369",
+      "live_readback": "/health and /ecosystem-map returned 200 and both exposed the bound Systemkatalog commit on 2026-07-27."
+    },
+    "verified_acceptance": {
+      "remote-identity-binding": "Deploy receipt binds observed_remote_main and confirmed_remote_main to the same exact Systemkatalog commit before cutover.",
+      "immutable-release-materialization": "The exact release directory was reused only after tracked worktree/index, origin/main ref, origin URL and manifest verification; current live revalidation passed.",
+      "manifest-contract-preserved": "Published manifest checker passed with six artifacts, exact manifest hash and durable source-ref binding.",
+      "exact-runtime-binding": "Installed unit and runtime config both reference the exact commit directory; no mutable current link is used.",
+      "rollback-and-no-cutover-on-failure": "Tests cover remote/materialization/manifest failure and remote drift before cutover; failure receipts declare cutover_started=false.",
+      "live-proof": "PR #188 merge commit is the active immutable Leitstand release; unit, local health and ecosystem-map readbacks agree on the prepared Systemkatalog release."
+    },
+    "current_remote_context": {
+      "observed_at": "2026-07-27T11:35Z",
+      "leitstand_remote_main": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+      "systemkatalog_remote_main": "d7c71cc1f51a3c319597748cd33392fab9305950",
+      "interpretation": "Later remote progress does not alter the immutable deployed release; the next Leitstand cutover will resolve and confirm the then-current Systemkatalog main again."
+    },
+    "verification": {
+      "task_sha256": "dd44edd3dbd60bd9b183914f8dde60769db9b3f10680dab9d5f036d4d35db85d",
+      "plan_sha256": "217a91b5a66a143e0440d2a7d656a5d0fada62b52778cf3285349e7667bd8621",
+      "verified_at": "2026-07-27T11:54:14Z",
+      "source": "operator-live-closeout",
+      "source_ref": "heimgewebe/leitstand#188",
+      "implementation_diff_sha256": "84ba7e55aec010234b14332c38e46c13d05d6128cc18d913de5855e8f9d79467",
+      "deployment_receipt_sha256": "b668753fdd3d74ff819800ecb1055de72d4c7d10ad313e4347348854af88dee0"
     }
   },
   "priority": {
@@ -110,6 +168,6 @@
     "strategy": "Den Leitstand-Releaseadapter auf den vorherigen expliziten Runtime-Config-Vertrag zurücksetzen und den zuletzt verifizierten commitgebundenen Systemkatalog-Releasepfad weiterverwenden; keine Systemkatalog-Releaseverzeichnisse oder fremden Checkouts automatisch löschen."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Systemkatalog-Release im Leitstand-Deploy automatisch commitgenau bereitstellen"
 }

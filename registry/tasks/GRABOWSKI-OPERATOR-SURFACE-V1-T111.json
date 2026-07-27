@@ -1,0 +1,136 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Direkte Pfadfelder und die belegten häufigen schreibenden Befehlsformen für /mnt/data werden bei Heim-PC- und Fleet-Tasks vor dem Launcher deterministisch erkannt; der Fehler ist strukturiert, stabil, effect_started=false und nennt die betroffene begrenzte Argumentposition.",
+      "evidence_type": "object",
+      "id": "narrow-prelaunch-guard",
+      "verifier": "Fokussierte Unit- und Adaptertests für cwd, Shell-Umleitung, cp/install, Python-Path/open und Git-Diff-/Format-Patch-Ziele"
+    },
+    {
+      "assertion": "Die Lösung führt keinen allgemeinen Shell-Parser und keine heuristische Ausführungssimulation ein; nicht sicher klassifizierbare oder lediglich erklärende Vorkommen sind durch einen dokumentierten, getesteten False-Positive-Vertrag begrenzt.",
+      "evidence_type": "object",
+      "id": "no-general-shell-parser",
+      "verifier": "Negativkorpus mit lesenden Probes, Quelltextzitaten, Metadaten und nichtpfadlichen Erwähnungen"
+    },
+    {
+      "assertion": "Für Text- und Diff-Artefakte verweist der strukturierte Fehler auf die bestehenden, revisionsgebundenen Publish-/Read-Flächen aus T098; es entsteht weder ein zweiter Speicher noch eine stille Übersetzung in einen unbelegten Hostpfad.",
+      "evidence_type": "object",
+      "id": "canonical-artifact-recovery",
+      "verifier": "Vertrags- und Integrationstest gegen die registrierten T098-Artefaktprofile"
+    },
+    {
+      "assertion": "Binäre oder anderweitig nicht vom vorhandenen Transport abgedeckte Übergaben bleiben ausdrücklich ungelöst oder verwenden eine bereits kanonische vorhandene Fläche; die Aufgabe behauptet keine allgemeine Dateiübertragung.",
+      "evidence_type": "object",
+      "id": "unsupported-binary-boundary",
+      "verifier": "Schema- und Dokumentationsprüfung der Nichtbehauptungen"
+    },
+    {
+      "assertion": "Die belegten Fehlerformen der Tasks cc5c9ec450c34af6a2520b56, 089a59728fff40b68fe547c7 und 7099ba9c82794705be5cd6da werden als Regressionstests vor Prozessstart abgefangen, ohne historische Taskdaten umzuschreiben.",
+      "evidence_type": "object",
+      "id": "historical-failure-regression",
+      "verifier": "Digestgebundene Regression-Fixtures und autoritativer Task-Start-Readback"
+    },
+    {
+      "assertion": "Fokussierte Tests, vollständige Grabowski-Validierung, Review, Merge, Deployment und ein begrenzter Live-Canary belegen die Vorstartablehnung und einen erfolgreichen kanonischen Textartefakt-Handoff.",
+      "evidence_type": "object",
+      "id": "full-validation-and-live-canary",
+      "verifier": "Commit-, Test-, Deployment- und Live-Receipt"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T098"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Änderung muss auf eine schmale Vorstartvalidierung und die Wiederverwendung bestehender Artefaktflächen begrenzt bleiben.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Grabowski soll typische schreibende Artefaktziele unter dem nur in der ChatGPT-Sitzung gültigen Pfad /mnt/data vor dem Start eines Heim-PC- oder Fleet-Tasks eng, deterministisch und fail-closed erkennen, eine strukturierte Korrektur auf einen hostgültigen Pfad beziehungsweise den bestehenden kanonischen Textartefakt-Transport aus T098 liefern und dabei weder einen allgemeinen Shell-Parser noch eine zweite Artefaktwahrheit einführen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T111",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass alle 39 heuristisch erkannten Fehlschläge ausschließlich durch /mnt/data verursacht wurden",
+      "eine allgemeine binäre Dateiübertragung",
+      "Erlaubnis zum Umschreiben historischer Tasks",
+      "Queue-, Claim-, Merge- oder Deployment-Autorität"
+    ],
+    "evidence_summary": {
+      "classification": "heuristic except for directly read primary failures",
+      "explicit_path_probes": 8,
+      "failed_probable_write_attempts": 39,
+      "probable_write_attempts": 56,
+      "total_argv_mentions": 82
+    },
+    "primary_failures": [
+      {
+        "finding": "FileNotFoundError while writing /mnt/data/grabowski-systemd-sandbox-proof.txt",
+        "receipt_sha256": "167bce98a511bdb6e7abcfbff70c51dca1531aa5048783ad35e311cdb999ff63",
+        "task_id": "cc5c9ec450c34af6a2520b56"
+      },
+      {
+        "finding": "explicit host probe and write target under /mnt/data failed",
+        "receipt_sha256": "71826ec9b313914ec97903b8e2717693cbef69e49ab164e6469a58f6b0e28086",
+        "task_id": "089a59728fff40b68fe547c7"
+      },
+      {
+        "finding": "PR diff redirection to /mnt/data failed",
+        "receipt_sha256": "78c16ecfcb9dd211cb0bfdff8e00718d37c641e9a05767ecdcc0eee175467cfb",
+        "task_id": "7099ba9c82794705be5cd6da"
+      }
+    ],
+    "relationship_to_existing": {
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T098": "reuse canonical text and diff artifact publication; do not duplicate it"
+    },
+    "source": "Live-Audit des vollständigen Grabowski-Task-Stores am 2026-07-27 nach einem FileNotFoundError unter /mnt/data.",
+    "source_locator": "grabowski-runtime-audit:task=4a087882350b46f78139b6c1;receipt=5d3175fd09fa7547761313151b2bb900167c70b96848bc76c26f041841d3566e",
+    "source_sha256": "7a2b1e38ab2ed819dd2f8c0e411543d3ba90e35eb811f75f4f0a96941dd82fd4",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-1b65fd6fd677430f1c0ded43",
+      "event_id": 1344,
+      "event_created_at": "2026-07-27T11:04:30.662050Z",
+      "request_sha256": "882c804e2d9b26defa7a71c8e33fc7c8cf47e1acbe0aaf90ec17940c7a453d1b",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "runtime_audit",
+        "locator": "grabowski-runtime-audit:task=4a087882350b46f78139b6c1;receipt=5d3175fd09fa7547761313151b2bb900167c70b96848bc76c26f041841d3566e;primary-failure=cc5c9ec450c34af6a2520b56;failure-receipt=167bce98a511bdb6e7abcfbff70c51dca1531aa5048783ad35e311cdb999ff63;bureau-origin-main=be96228a06fcb0cf5673850f7104b0628f565635",
+        "observed_at": "2026-07-27T11:04:30.647761Z",
+        "sha256": "7a2b1e38ab2ed819dd2f8c0e411543d3ba90e35eb811f75f4f0a96941dd82fd4"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 111
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "testing",
+    "artifacts",
+    "bounded-io"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Host-Artefaktpfade vor sessionlokalem /mnt/data schützen"
+}

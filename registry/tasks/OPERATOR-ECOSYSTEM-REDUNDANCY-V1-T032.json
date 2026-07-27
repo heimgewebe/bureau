@@ -15,6 +15,7 @@
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
       "path:/home/alex/repos/bureau/.bureau-scopes/registry",
+      "repo:/home/alex/repos/infra",
       "repo:/home/alex/repos/heimserver",
       "repo:/home/alex/repos/leitstand",
       "repo:/home/alex/repos/systemkatalog",
@@ -25,6 +26,11 @@
   "claims": [
     {
       "resource": "component.bureau.registry",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.infra",
       "mode": "read",
       "isolation": "none"
     },

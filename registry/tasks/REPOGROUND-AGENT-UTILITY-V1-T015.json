@@ -1,0 +1,91 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Jeder verpflichtende AGENTS.md-Verweis existiert am geprüften Commit; der CLI-Launcher wird nicht als geplanter Client umgedeutet.",
+      "id": "frontdoor-link"
+    },
+    {
+      "assertion": "AGENTS.md erklärt den tatsächlichen Ablauf Zustand binden → Taskprofil wählen → RepoGround lesen → Agent planen → Grabowski isoliert ausführen → Git/CI/Runtime erneut lesen, einschließlich Stop- und Nichtaussagen.",
+      "id": "operating-flow"
+    },
+    {
+      "assertion": ".wgx/profile.yml verwendet für aktive Identität, Klasse, Tags und Taskausgaben RepoGround; Lenskit/RepoLens bleibt nur gekennzeichnete Kompatibilitäts- oder Historienreferenz.",
+      "id": "wgx-identity"
+    },
+    {
+      "assertion": ".ai-context.yml erklärt die Bedeutung von visibility und trennt unterstützte Python-Mindestversion von CI-zertifizierten Versionen.",
+      "id": "ai-context-semantics"
+    },
+    {
+      "assertion": "Ein CI- oder Testguard erkennt fehlende Agentenlinks und aktive Produktidentitätsdrift, ohne historische Belege zu verbieten.",
+      "id": "drift-guard"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Den aktiven Einstieg für Coding Agents und Fleet-Werkzeuge auf den realen RepoGround-Zustand bringen: gebrochenen Blueprint-Verweis reparieren, den RepoGround–Agent–Grabowski-Ablauf dokumentieren und aktive Lenskit-/RepoLens-Metadatendrift ohne Umschreiben historischer Evidenz beseitigen.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T015",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation",
+      "merge readiness",
+      "historical naming cleanup",
+      "runtime correctness"
+    ],
+    "observed_live_gaps": [
+      "AGENTS.md references missing docs/blueprints/repoground-cli-client-blueprint.md",
+      ".wgx/profile.yml still declares profile lenskit, RepoLens description and bash-tooling class",
+      ".ai-context.yml uses visibility internal without explaining whether this means repository or operational visibility"
+    ],
+    "registered_from_audit": "RepoGround complete audit review, 2026-07-27",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-03dcb1e97a81fbae010ffa85",
+      "event_id": 1316,
+      "event_created_at": "2026-07-27T09:26:52.494326Z",
+      "request_sha256": "8d905092573a82e2e7db7ac2ccf7aca2a32296c33da8de64a2f449ad0e77c931",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "conversation:repoground-complete-audit-2026-07-27",
+        "observed_at": "2026-07-27T09:26:52.477880Z",
+        "sha256": "443b271301a8d0b141a13fe12ba28d009b79edb03bbf15ba7b57b6c01695bee8"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 47
+  },
+  "required_capabilities": [
+    "repoground",
+    "documentation",
+    "metadata",
+    "testing",
+    "github-actions"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Agenten-Frontdoor und aktive RepoGround-Metadaten konsistent machen"
+}

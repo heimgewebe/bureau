@@ -80,10 +80,22 @@
       "doctor_recommendation": "reopen-required",
       "open_tasks": [
         "LSV-V1-T010",
-        "LSV-V1-T011"
+        "LSV-V1-T012"
       ],
-      "active_task": "LSV-V1-T011",
+      "active_task": "LSV-V1-T012",
       "prior_completion_preserved_in": "metadata.lifecycle"
+    },
+    "t011_closeout_20260727": {
+      "task": "LSV-V1-T011",
+      "state": "verified",
+      "implementation_pr": "heimgewebe/leitstand#188",
+      "implementation_merge_commit": "a7ba8ae0038d3c0c5537b6f19036448732bbef23",
+      "deployment_receipt_sha256": "b668753fdd3d74ff819800ecb1055de72d4c7d10ad313e4347348854af88dee0",
+      "live_readback_at": "2026-07-27T11:54:14Z",
+      "remaining_open_tasks": [
+        "LSV-V1-T010",
+        "LSV-V1-T012"
+      ]
     }
   }
 }

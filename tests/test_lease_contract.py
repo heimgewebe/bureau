@@ -253,7 +253,7 @@ def test_registry_publication_contract_uses_short_dedicated_gate() -> None:
     assert operation["forbidden_resource_keys"] == ["repo:/home/alex/repos/bureau"]
 
 
-def test_task_scope_ratchet_requires_reviewed_exception() -> None:
+def test_task_scope_ratchet_requires_canonical_review_gate() -> None:
     from bureau.lease_contract import assess_task_broad_bureau_scope
 
     task = {
@@ -273,14 +273,55 @@ def test_task_scope_ratchet_requires_reviewed_exception() -> None:
     assert denied["allowed"] is False
     assert denied["exception_status"] == "missing"
 
-    task["execution"]["approval"]["required_level"] = "reviewed_plan"
     task["execution"]["broad_bureau_scope_exception"] = {
         "justification": "Atomic repository-format migration touches every tracked Bureau surface.",
         "effect_boundaries": ["all tracked Registry and source files"],
+        "approval": {
+            "action_class": "registry_mutation",
+            "required_level": "operator",
+        },
     }
+    mismatched = assess_task_broad_bureau_scope(task)
+    assert mismatched["allowed"] is False
+    assert mismatched["exception_status"] == "invalid"
+    assert mismatched["exception_approval"]["canonical_required_level"] == "reviewed_plan"
+    assert mismatched["exception_approval"]["contract_match"] is False
+
+    task["execution"]["broad_bureau_scope_exception"]["approval"][
+        "required_level"
+    ] = "reviewed_plan"
     allowed = assess_task_broad_bureau_scope(task)
     assert allowed["allowed"] is True
-    assert allowed["exception_status"] == "reviewed-repository-wide-exception"
+    assert allowed["exception_status"] == "review-gated-repository-wide-exception"
+    assert allowed["exception_approval"]["contract_match"] is True
+    assert task["execution"]["approval"]["required_level"] == "operator"
+
+
+def test_execution_approval_cannot_impersonate_exception_review_gate() -> None:
+    from bureau.lease_contract import assess_task_broad_bureau_scope
+
+    task = {
+        "id": "BUREAU-TEST-V1-T002",
+        "state": "planned",
+        "execution": {
+            "grabowski_resources": ["repo:/home/alex/repos/bureau"],
+            "approval": {
+                "action_class": "repository_mutation",
+                "required_level": "reviewed_plan",
+            },
+            "broad_bureau_scope_exception": {
+                "justification": "Atomic repository-format migration.",
+                "effect_boundaries": ["all tracked files"],
+            },
+        },
+        "claims": [],
+    }
+
+    result = assess_task_broad_bureau_scope(task)
+
+    assert result["allowed"] is False
+    assert result["exception_status"] == "invalid"
+    assert result["exception_approval"]["contract_match"] is False
 
 
 def test_registry_check_rejects_nonterminal_broad_scope(
@@ -315,7 +356,7 @@ def test_registry_check_rejects_nonterminal_broad_scope(
     )
 
 
-def test_terminal_history_and_reviewed_exception_are_not_doctor_findings() -> None:
+def test_terminal_history_and_review_gated_exception_are_not_doctor_findings() -> None:
     from types import SimpleNamespace
 
     from bureau.lease_contract import registry_bureau_lease_findings
@@ -333,11 +374,15 @@ def test_terminal_history_and_reviewed_exception_are_not_doctor_findings() -> No
         execution={
             "approval": {
                 "action_class": "repository_mutation",
-                "required_level": "reviewed_plan",
+                "required_level": "operator",
             },
             "broad_bureau_scope_exception": {
                 "justification": "Versioned repository-wide storage rewrite.",
                 "effect_boundaries": ["all repository objects"],
+                "approval": {
+                    "action_class": "registry_mutation",
+                    "required_level": "reviewed_plan",
+                },
             },
         },
         claims=[SimpleNamespace(resource="repo.bureau")],

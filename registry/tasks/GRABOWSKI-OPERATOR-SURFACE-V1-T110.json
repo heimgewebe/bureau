@@ -13,8 +13,8 @@
       "id": "failure-injection-boundaries"
     },
     {
-      "assertion": "CI und ein begrenzter Live-Canary erzeugen ein commit-, Konfigurations- und Messwert-gebundenes Proof-Artefakt; Unterschiede zwischen Test-, Canary- und Produktionsaussage werden ausdrücklich ausgewiesen.",
-      "id": "immutable-proof-artifact"
+      "assertion": "CI erzeugt ein commit-, Konfigurations- und Messwert-gebundenes hermetisches Proof-Artefakt und ein exakt an Head und vollständigen Diff gebundener PR-Review besteht; diese Aufgabe führt keinen Produktiv-Canary aus. Merge, Deployment und begrenzter Live-Canary gehören ausschließlich den abhängigen Tasks GRABOWSKI-OPERATOR-SURFACE-V1-T116 und GRABOWSKI-OPERATOR-SURFACE-V1-T117.",
+      "id": "immutable-hermetic-proof"
     }
   ],
   "claims": [
@@ -25,13 +25,13 @@
     }
   ],
   "depends_on": [
-    "GRABOWSKI-OPERATOR-SURFACE-V1-T108",
-    "GRABOWSKI-OPERATOR-SURFACE-V1-T109"
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T113",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T115"
   ],
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "note": "Die Aufgabe darf erst nach erneutem Livezustands-, Nichtkonflikt-, Diff-, Review- und CI-Nachweis umgesetzt werden.",
+      "note": "Die Aufgabe darf erst nach erneutem Livezustands-, Nichtkonflikt-, Diff-, Review- und CI-Nachweis umgesetzt werden. T113 und T115 müssen die beiden vorausgesetzten Implementierungen bereits deployment- und livegebunden verifiziert haben.",
       "required_level": "operator"
     },
     "grabowski_resources": [
@@ -46,7 +46,7 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski"
   },
-  "goal": "Einen reproduzierbaren Mehrclient-Last- und Failure-Injection-Nachweis für Task-Reconcile, SQLite-Busy-Verhalten, MCP-Ansprechbarkeit, Tunnel-Upstream-Readiness und Watchdog-Neustarts etablieren, mit expliziten Latenz-, Serialisierungs- und No-502-Akzeptanzgrenzen.",
+  "goal": "Auf dem durch T113 und T115 deployment- und liveverifizierten Stand einen reproduzierbaren Mehrclient-Last- und Failure-Injection-Nachweis für Task-Reconcile, SQLite-Busy-Verhalten, MCP-Ansprechbarkeit, Tunnel-Upstream-Readiness und Watchdog-Neustarts etablieren, mit expliziten Latenz-, Serialisierungs- und No-502-Akzeptanzgrenzen.",
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T110",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
@@ -54,7 +54,8 @@
       "Belastbarkeit außerhalb des geprüften Profils",
       "Erlaubnis zu ungebremster Produktionslast",
       "Abwesenheit aller zukünftigen Transportfehler",
-      "Merge- oder Deployment-Autorität"
+      "Merge- oder Deployment-Autorität",
+      "einen Produktiv-Canary vor GRABOWSKI-OPERATOR-SURFACE-V1-T117"
     ],
     "operator_intake": {
       "candidate_id": "candidate-aff2b9e9eb01e9e3e84501c4",
@@ -75,6 +76,12 @@
         "observed_at": "2026-07-27T10:44:43.424059Z",
         "sha256": "97accce8a8f2c07d57e416ad2f82856ef2db708a52ff8b36543afc103e408aba"
       }
+    },
+    "release_chain": {
+      "implementation_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T110",
+      "merge_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T116",
+      "deployment_and_canary_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T117",
+      "verified_semantics": "reviewed hermetic harness only; no merge, deployment or live-canary claim"
     },
     "replacement_for_repo_less_candidate": "candidate-745be788226660dcb4f633c7",
     "source": "Restlücke aus Ursachenanalyse und P1-Härtung von heimgewebe/grabowski PR #495",

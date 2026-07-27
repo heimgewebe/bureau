@@ -13,8 +13,8 @@
       "id": "negative-recovery-proof"
     },
     {
-      "assertion": "Vollständige Validierung, PR-Review, Merge, Deployment und Live-Readback belegen eine kurze Operator-Unterbrechung ohne vermeidbare 502- oder Watchdog-Neustartschleife.",
-      "id": "live-rollout-proof"
+      "assertion": "Vollständige Validierung und ein exakt an Head und vollständigen Diff gebundener PR-Review belegen die Implementierung; diese Aufgabe führt weder Merge noch Deployment noch Live-Readback aus. Diese Wirkungen gehören ausschließlich den abhängigen Tasks GRABOWSKI-OPERATOR-SURFACE-V1-T112 und GRABOWSKI-OPERATOR-SURFACE-V1-T113.",
+      "id": "implementation-review-proof"
     }
   ],
   "claims": [
@@ -49,7 +49,8 @@
     "does_not_establish": [
       "Tunnelanbieterfehler",
       "Erlaubnis zu stillen Mutationsretries",
-      "Merge- oder Deployment-Autorität"
+      "Merge- oder Deployment-Autorität",
+      "Live-Runtime-Verhalten vor GRABOWSKI-OPERATOR-SURFACE-V1-T113"
     ],
     "operator_intake": {
       "candidate_id": "candidate-33419a1fbf0babf0948b5d5d",
@@ -70,6 +71,12 @@
         "observed_at": "2026-07-27T10:43:04.447517Z",
         "sha256": "97accce8a8f2c07d57e416ad2f82856ef2db708a52ff8b36543afc103e408aba"
       }
+    },
+    "release_chain": {
+      "implementation_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T108",
+      "merge_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T112",
+      "deployment_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T113",
+      "verified_semantics": "reviewed implementation only; no merge, deployment or live claim"
     },
     "replacement_for_repo_less_candidate": "candidate-b0fb9928efe7a7f1019bf295",
     "source": "Ursachenanalyse und Korrektur von heimgewebe/grabowski PR #495",

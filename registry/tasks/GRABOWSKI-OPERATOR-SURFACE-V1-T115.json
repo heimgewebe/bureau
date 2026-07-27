@@ -1,0 +1,101 @@
+{
+  "acceptance": [
+    {
+      "assertion": "GRABOWSKI-OPERATOR-SURFACE-V1-T114 ist verifiziert und liefert ein typisiertes Receipt für den exakten Mergecommit, Mergebaum, geprüften Head und vollständigen Diff.",
+      "id": "verified-merge-input"
+    },
+    {
+      "assertion": "Vor dem ersten Hosteffekt werden Runtime-Identität und Integrität, Connectorbindung, Recovery- und Kill-Switch-Status, Tasks, Leases, Worktrees, Prozesse, betroffene Services und Watchdogs frisch gelesen; unbekannter, veralteter oder kollidierender Zustand blockiert.",
+      "id": "fresh-runtime-preflight"
+    },
+    {
+      "assertion": "Ausschließlich der im Merge-Receipt gebundene Commit wird source-identitätsgebunden deployt; ein gültiges Finalisierungsreceipt, unveränderte Quellen und ein expliziter Rollbackpfad werden belegt.",
+      "id": "exact-source-deployment"
+    },
+    {
+      "assertion": "Ein begrenzter Live-Nachweis erzeugt Reconcile-Records für mindestens zwei kontrollierte Clientquellen und einen unbekannten Legacy-Aufrufer; die Records bleiben typisiert, längenbegrenzt, source-gebunden und werden nicht heuristisch zu persönlicher Identität aufgewertet.",
+      "id": "multi-client-live-attribution"
+    },
+    {
+      "assertion": "Readback und Redaktionsprüfung belegen, dass keine freien Gesprächstexte, Tokens, Secrets, E-Mail-Adressen oder rohen Sessiondaten gespeichert wurden und bestehende Auditketten sowie historische Records unverändert lesbar bleiben.",
+      "id": "live-redaction-and-compatibility"
+    },
+    {
+      "assertion": "Nach dem Nachweis sind betroffene Services und Watchdogs im vorgesehenen Zustand, Connector-Snapshot und Toolvertrag frisch und passend, und ein kleiner typisierter Live-Read gelingt; alle temporären Proof-Effekte sind entfernt oder revisionsgebunden erhalten.",
+      "id": "postflight-runtime-readback"
+    },
+    {
+      "assertion": "Der Task führt keinen Code-Merge, Rebase oder Force-Push aus und übernimmt keine fremden Deployment-, Task-, Lease- oder Checkout-Effekte als eigene Autorität.",
+      "id": "runtime-only-boundary"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T114"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Dieser Task ist ausschließlich für source-identitätsgebundenes Deployment und den begrenzten reversiblen Live-Nachweis zuständig; frische Konflikt- und Recovery-Prüfung ist vor jedem Effekt Pflicht.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "host:heim-pc",
+      "component:src/grabowski_tasks.py",
+      "component:src/grabowski_audit_query.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die durch T114 exakt gemergte redigierte Reconcile-Aufruferprovenienz source-identitätsgebunden deployen und live belegen, dass mehrere Clients und Legacy-Aufrufer begrenzt unterscheidbar sind, ohne sensible Inhalte oder eine zweite Lifecycle-Wahrheit zu erzeugen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T115",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Code-Merge-Autorität",
+      "Belastbarkeit außerhalb des geprüften Live-Profils",
+      "Erlaubnis zur Übernahme fremder Effekte",
+      "zukünftige Runtime-Verfügbarkeit"
+    ],
+    "review_origin": {
+      "repository": "heimgewebe/bureau",
+      "pull_request": 1076,
+      "finding": "Live-Readback benötigt eine eigene deployment- und receiptgebundene Wirkungsphase.",
+      "thread_id": "PRRT_kwDOTG2jCs6UB4mJ"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 115
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "systemd",
+    "runtime-observability",
+    "testing",
+    "rollback",
+    "bureau"
+  ],
+  "rollback": {
+    "strategy": "Den im Preflight protokollierten vorherigen gesunden Runtime-Stand source-identitätsgebunden wiederherstellen, nur taskeigene Canary-Eingaben entfernen und anschließend Services, Watchdogs, Connectorbindung und einen typisierten Live-Read erneut prüfen. Fremde Arbeit bleibt unverändert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Reconcile-Provenienz deployen und live beweisen"
+}

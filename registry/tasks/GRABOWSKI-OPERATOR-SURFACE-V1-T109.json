@@ -13,8 +13,8 @@
       "id": "multi-client-attribution"
     },
     {
-      "assertion": "Schema-, Redaktions-, Tamper-, Replikations- und vollständige Validierungstests bestehen; ein Live-Readback zeigt source-gebundene Reconcile-Records ohne sensible Inhalte.",
-      "id": "audit-integrity-proof"
+      "assertion": "Schema-, Redaktions-, Tamper-, Replikations- und vollständige Validierungstests sowie ein exakt an Head und vollständigen Diff gebundener PR-Review bestehen; diese Aufgabe erzeugt keinen Live-Readback. Merge und source-gebundener Live-Nachweis gehören ausschließlich den abhängigen Tasks GRABOWSKI-OPERATOR-SURFACE-V1-T114 und GRABOWSKI-OPERATOR-SURFACE-V1-T115.",
+      "id": "implementation-integrity-proof"
     }
   ],
   "claims": [
@@ -51,7 +51,8 @@
       "vollständige externe Chat-Identität",
       "Berechtigung aus Provenienzdaten",
       "zweite Lifecycle-Wahrheit",
-      "Merge- oder Deployment-Autorität"
+      "Merge- oder Deployment-Autorität",
+      "Live-Runtime-Verhalten vor GRABOWSKI-OPERATOR-SURFACE-V1-T115"
     ],
     "operator_intake": {
       "candidate_id": "candidate-99a5ce4a2d1e81d800a4e93f",
@@ -72,6 +73,12 @@
         "observed_at": "2026-07-27T10:43:40.662388Z",
         "sha256": "97accce8a8f2c07d57e416ad2f82856ef2db708a52ff8b36543afc103e408aba"
       }
+    },
+    "release_chain": {
+      "implementation_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T109",
+      "merge_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T114",
+      "deployment_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T115",
+      "verified_semantics": "reviewed implementation only; no merge, deployment or live claim"
     },
     "replacement_for_repo_less_candidate": "candidate-7a90ae628a9ac02304ad93ad",
     "source": "Ursachenanalyse und Auditlücke aus heimgewebe/grabowski PR #495",

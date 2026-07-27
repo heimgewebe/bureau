@@ -2,43 +2,53 @@
   "acceptance": [
     {
       "assertion": "Jede relevante semantische Abschlussmutation verlangt explizit entweder convergence_required=true mit gebundener Transition-Assessment-Ausgabe und Consumer-Receipt oder eine kanonische, testbare Nichtanwendbarkeitsklasse; bei high-risk Arbeit blockiert eine fehlende Klassifikation.",
-      "id": "central-closeout-classification"
+      "id": "central-closeout-classification",
+      "evidence_type": "object"
     },
     {
       "assertion": "operator-obligation-close mit outcome=completed blockiert für R2-/R3-, Deployment-, Runtime-, Security-, Daten- und irreversible Arbeit ohne ein unverändertes Consumer-Receipt, das eine Transition-Assessment-Ausgabe mit status=terminally_closed an Request, Protokollcommit, Ziel und konkrete Abschlussmutation bindet.",
-      "id": "obligation-close-gate"
+      "id": "obligation-close-gate",
+      "evidence_type": "object"
     },
     {
       "assertion": "task-closeout-archive und grabowski_agent_workspace_close können Prozess-, Writer-, Test- oder Review-Abschluss nicht als systemischen Abschluss hochstufen; erforderliche Konvergenzevidenz ist an Task beziehungsweise Workspace und die konkrete Abschlussmutation gebunden.",
-      "id": "task-and-workspace-boundary"
+      "id": "task-and-workspace-boundary",
+      "evidence_type": "object"
     },
     {
       "assertion": "Workspace- und Checkout-Cleanup bleiben mechanische Recovery- und Hygieneoperationen, verlangen bei high-risk Artefakten jedoch einen belegten Upstream-Closeout oder eine explizite Nichtanwendbarkeitsklasse und synthetisieren keine Wirkungsevidenz.",
-      "id": "cleanup-upstream-binding"
+      "id": "cleanup-upstream-binding",
+      "evidence_type": "object"
     },
     {
       "assertion": "Consumer-Receipt-, Transition-Assessment-, Request-, Protokollcommit-, Ziel- oder Mutationsdrift blockiert; ein nichtterminaler Assessmentstatus blockiert jede als semantisch klassifizierte Abschlussmutation.",
-      "id": "receipt-integrity"
+      "id": "receipt-integrity",
+      "evidence_type": "object"
     },
     {
       "assertion": "Negativtests beweisen das Blockieren ohne Consumer-Receipt, mit nichtterminaler Transition-Assessment-Ausgabe, bei Identitätsdrift und bei versuchter Hochstufung eines Prozessabschlusses; mechanische Lease-Releases und read-only Oberflächen bleiben funktionsfähig.",
-      "id": "negative-regression-tests"
+      "id": "negative-regression-tests",
+      "evidence_type": "object"
     },
     {
       "assertion": "Der maschinenlesbare Closeout-Surface-Audit wird als verbindliche Driftkontrolle konsumiert, sodass neue benannte Closeout-, Archive-, Release-, Deploy-, Cleanup-, Merge-, Publish- oder PR-Flächen sowie explizit bekannte generische Publikationswerkzeuge nicht unklassifiziert bleiben.",
-      "id": "coverage-contract"
+      "id": "coverage-contract",
+      "evidence_type": "object"
     },
     {
-      "assertion": "Der finale Repository-Patch ist vollständig getestet, auf exakten Head und Diff SHA-256 selbstreviewt, als UTF-8-Unified-Diff bereitgestellt, CI-grün und autoritativ in main gemergt.",
-      "id": "repository-delivery"
+      "assertion": "Der finale Repository-Patch ist vollständig getestet, auf exakten Head und vollständigen Diff SHA-256 selbstreviewt, als UTF-8-Unified-Diff bereitgestellt, in einem Pull Request veröffentlicht und auf diesem Head CI-grün. T019 führt keinen Merge aus.",
+      "id": "repository-publication",
+      "evidence_type": "object"
     },
     {
-      "assertion": "Bevor T019 als verified oder abgeschlossen projiziert werden darf, wird aus dem bereits digestgebundenen Runtime-Kandidaten candidate-6e923c2ad11801456b042058 nach kanonischer T019-Registry-Publikation eine separate abhängige Runtime-Blattaufgabe registriert. Diese Registrierung ist keine Runtime-Ausführung und leitet keine fremde Lifecycle-Autorität ab.",
-      "id": "runtime-leaf-registration"
+      "assertion": "Die Übergabe an die exklusive Merge-Aufgabe T020 bindet Repository, Pull Request, Basis, Head, vollständigen Diff SHA-256, Reviewstatus, CI und den ausgelieferten UTF-8-Diff; T020 muss jede Drift erneut fail-closed prüfen.",
+      "id": "merge-handoff",
+      "evidence_type": "object"
     },
     {
-      "assertion": "Die Aufgabe verändert, reviewt und merged ausschließlich das Repository heimgewebe/grabowski und zugehörige Tests beziehungsweise Verträge. Sie deployt keine Runtime, führt keinen Live-Smoke aus und verändert keine fremden Dirty-States, Leases, Prozesse oder Checkouts.",
-      "id": "repository-only-boundary"
+      "assertion": "Die Aufgabe verändert und reviewt ausschließlich das Repository heimgewebe/grabowski und veröffentlicht den zugehörigen Pull Request. Sie merged nicht, verändert nicht die Bureau-Registry, deployt keine Runtime, führt keinen Live-Smoke aus und verändert keine fremden Dirty-States, Leases, Prozesse oder Checkouts.",
+      "id": "repository-only-boundary",
+      "evidence_type": "object"
     }
   ],
   "claims": [
@@ -64,14 +74,17 @@
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "note": "Der Nutzer hat die Umsetzung ausdrücklich fortgesetzt. Autorisiert sind reviewte Repository-Änderungen, Tests, PR, Diff-Bereitstellung und Merge. Runtime-Deployment und Live-Verifikation benötigen eine nach T019-Registrierung separat veröffentlichte abhängige Runtime-Blattaufgabe.",
+      "note": "Autorisiert sind ausschließlich die reviewte Implementierung im Repository heimgewebe/grabowski, Tests, vollständige Diff-Bereitstellung und Pull-Request-Publikation. Merge, Bureau-Registry-Mutation, Runtime-Deployment und Live-Verifikation sind getrennten Aufgaben beziehungsweise einem separat genehmigten Kandidaten vorbehalten.",
       "required_level": "operator"
     },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski"
   },
-  "goal": "Die im revisionsgebundenen Grabowski-Abdeckungsaudit belegten semantischen Abschlusslücken im Repository heimgewebe/grabowski fail-closed schließen. High-risk Abschlussmutationen müssen eine explizite Konvergenzklassifikation verwenden und bei erforderlicher Konvergenz ein unverändertes Consumer-Receipt validieren, das eine request-, protokoll-, ziel- und mutationsgebundene Transition-Assessment-Ausgabe mit status=terminally_closed belegt. Rein mechanische Prozess-, Lease-, Effekt- und Cleanup-Pfade bleiben explizit klassifiziert und dürfen weder Wirkungsevidenz erfinden noch unnötig doppelt bewerten. Repository-Implementierung, Review, PR und Merge gehören zu dieser Blattaufgabe; Runtime-Deployment und Live-Smoke ausdrücklich nicht.",
+  "goal": "Die im revisionsgebundenen Grabowski-Abdeckungsaudit belegten semantischen Abschlusslücken ausschließlich im Repository heimgewebe/grabowski fail-closed schließen. High-risk Abschlussmutationen müssen eine explizite Konvergenzklassifikation verwenden und bei erforderlicher Konvergenz ein unverändertes Consumer-Receipt validieren, das eine request-, protokoll-, ziel- und mutationsgebundene Transition-Assessment-Ausgabe mit status=terminally_closed belegt. Rein mechanische Prozess-, Lease-, Effekt- und Cleanup-Pfade bleiben explizit klassifiziert und dürfen weder Wirkungsevidenz erfinden noch unnötig doppelt bewerten. T019 endet nach Implementierung, Tests, revisionsgebundenem Review, Diff-Bereitstellung und Pull-Request-Publikation; Merge, Deployment und Live-Smoke sind nicht Bestandteil dieser Blattaufgabe.",
   "id": "HEIMGEWEBE-RESILIENZ-V1-T019",
   "initiative": "HEIMGEWEBE-RESILIENZ-V1",
   "metadata": {
@@ -81,7 +94,9 @@
     ],
     "design_rule": "Prozessende, Merge und Deployment sind Effekte, kein systemischer Abschluss; nur gebundene Verifikation darf semantische Closure erlauben.",
     "does_not_establish": [
-      "Task-, Deployment- oder Runtime-Autorität des Konvergenzregelkreises",
+      "Task-, Merge-, Deployment- oder Runtime-Autorität des Konvergenzregelkreises",
+      "Mergebereitschaft oder Mergeabschluss",
+      "Runtime-Task-Registry-Wahrheit für den Folge-Kandidaten",
       "Pflicht zur Doppelbewertung rein mechanischer Cleanup- oder Lease-Operationen",
       "Korrektheit historischer Abschlüsse",
       "Berechtigung zur Änderung fremder Dirty-States, Leases, Prozesse oder Checkouts"
@@ -114,17 +129,22 @@
     "registered_at": "2026-07-26",
     "runtime_follow_up": {
       "candidate_id": "candidate-6e923c2ad11801456b042058",
+      "decision": "promote",
       "does_not_establish": [
         "runtime_task_registry_truth",
         "runtime_execution_authority",
         "deployment_completion"
       ],
       "event_id": 1226,
-      "registration_order": "after_t019_registry_publication_before_t019_verification",
+      "publication_approval": "missing",
       "request_sha256": "583a8304a5545c6d5adb3ffaa811c72bd97fab6233b813dc3371f2158ca6bd1d",
-      "status": "candidate_recorded_not_registry_truth"
+      "status": "assessed_advisory_not_registry_truth"
     },
-    "source": "Revisionsgebundener Audit auf Grabowski d2097c909bd60be7f947b5c50cc9fa6d56ba907c und Konvergenzregelkreis fae4c26faa22d62d148d39e1995fe5492211cb43; kanonischer Vertragssplit nach begründeter Schließung von Bureau-PR #1053 und Codex-Review von PR #1056."
+    "source": "Revisionsgebundener Audit auf Grabowski d2097c909bd60be7f947b5c50cc9fa6d56ba907c und Konvergenzregelkreis fae4c26faa22d62d148d39e1995fe5492211cb43; kanonischer Vertragssplit nach Bureau-PRs #1053 und #1056 sowie den P1-Befunden auf PR #1057.",
+    "successor_tasks": {
+      "exclusive_merge": "HEIMGEWEBE-RESILIENZ-V1-T020",
+      "runtime_candidate": "candidate-6e923c2ad11801456b042058"
+    }
   },
   "priority": {
     "lane": "next",

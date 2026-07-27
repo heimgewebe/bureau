@@ -1,0 +1,99 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Statusflächen unterscheiden Implementierungsslice done/verified von Outcome ready/blocked/not_established und erklären die Beziehung.",
+      "id": "two-level-status"
+    },
+    {
+      "assertion": "Jeder aktuelle blocker, missing_evidence oder not_established-Eintrag hat einen gültigen Bureau-Task-/Kandidatenverweis oder eine überprüfbare Begründung, warum keine Aufgabe entsteht.",
+      "id": "followup-binding"
+    },
+    {
+      "assertion": "open_followups darf bei ungebundenen aktuellen Outcome-Blockern nicht leer sein; historische und bewusst abgeschlossene Nichtziele werden nicht künstlich wiedereröffnet.",
+      "id": "no-empty-unbound-followups"
+    },
+    {
+      "assertion": "Bureau bleibt Task-, Queue- und Claim-Autorität; RepoGround hält nur read-only Referenzen und Driftstatus.",
+      "id": "single-authority"
+    },
+    {
+      "assertion": "Tests decken fehlende, umbenannte, verifizierte und supersedierte Bureau-Referenzen sowie Offline-/Unverfügbarkeitsfälle fail-closed ab.",
+      "id": "drift-tests"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.bureau"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "RepoGrounds interne abgeschlossene Implementierungsslices von weiterhin blockierten Produkt-Outcomes trennen und jeden aktuellen Blocker auf einen bestehenden Bureau-Task, einen geprüften Kandidaten oder eine explizite Nichtregistrierungsbegründung abbilden, ohne RepoGround zu einer zweiten Queue zu machen.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T016",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "deduplication": {
+      "does_not_duplicate": "Keine neue Queue, kein automatisches Bureau-Schreiben.",
+      "reuses": [
+        "RepoGround task-index and planning-registration ratchet"
+      ]
+    },
+    "does_not_establish": [
+      "implementation",
+      "merge readiness",
+      "automatic task generation",
+      "queue authority",
+      "runtime correctness"
+    ],
+    "registered_from_audit": "RepoGround complete audit review, 2026-07-27",
+    "sequencing_preference": "Nach T013 umsetzen, sobald T013 kanonische Bureau-Wahrheit ist; kein harter Dependency-Verweis auf einen noch ungemergten PR.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-49c90daca3b2d24f7183b19e",
+      "event_id": 1317,
+      "event_created_at": "2026-07-27T09:28:40.141996Z",
+      "request_sha256": "59af9fbd8d70d70485baa47595eda613467cbf2d6e04cb28a9bd7d00ca2b6590",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "conversation:repoground-complete-audit-2026-07-27",
+        "observed_at": "2026-07-27T09:28:40.124524Z",
+        "sha256": "443b271301a8d0b141a13fe12ba28d009b79edb03bbf15ba7b57b6c01695bee8"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 64
+  },
+  "required_capabilities": [
+    "repoground",
+    "bureau",
+    "governance",
+    "contracts",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Slice-Abschluss und Produkt-Outcome ohne zweite Taskwahrheit verbinden"
+}

@@ -1,0 +1,105 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der offene Pull Request stammt aus T019 und bindet das erwartete Repository, die erwartete Basis, den exakten Head, die geänderten Pfade und den vollständigen kanonischen GitHub-Diff.",
+      "id": "exact-pr-identity",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Alle erforderlichen GitHub-Checks sind auf dem exakten Head grün; alle unabhängigen Reviewbefunde sind behoben oder mit revisionsgebundener Begründung verworfen, und es bestehen keine offenen Reviewthreads.",
+      "id": "ci-and-review-current",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Der vollständige kanonische GitHub-Diff wurde vor dem Merge als unveränderliches, hashgebundenes UTF-8-Textartefakt sichtbar ausgeliefert.",
+      "id": "user-visible-diff-delivered",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Unmittelbar vor dem Effekt werden Basis, Head, Diff SHA-256, Mergebarkeit, Branch-Protection, Review- und CI-Status erneut gelesen; jede Drift oder unklare Wirkung blockiert.",
+      "id": "pre-merge-revalidation",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Captain führt genau einen match-head-geschützten Merge mit gebundenem Mergeverfahren und begrenzten automatischen Plattformeffekten aus; T020 nimmt keine Codeänderung, keinen Rebase und keinen Force-Push vor.",
+      "id": "atomic-exact-head-merge",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "GitHub meldet den Pull Request vom erwarteten Head als gemergt, main enthält den Merge-Commit beziehungsweise Squash-Tree, und sämtliche Merge-Leases sind terminal freigegeben.",
+      "id": "post-merge-readback",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "T020 führt weder Deployment noch Live-Smoke noch Bureau-Registry-Publikation aus und erhebt keine Runtime- oder Verifikationsaussage für den separat erfassten Runtime-Kandidaten.",
+      "id": "no-code-registry-or-deployment",
+      "evidence_type": "object"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "exclusive",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "HEIMGEWEBE-RESILIENZ-V1-T019"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Autorisiert ist ausschließlich der exakt head- und diffgebundene Merge des von T019 veröffentlichten Pull Requests nach frischer CI-, Review- und Mergebarkeitsprüfung. Codeänderung, Rebase, Force-Push, Deployment, Live-Smoke und Bureau-Registry-Mutation sind ausgeschlossen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den von T019 veröffentlichten Grabowski-Pull-Request als separate exklusive Aufgabe nach exakter Revalidierung von Repository, Basis, Head, vollständigem Diff, CI, Reviews und ausgeliefertem UTF-8-Diff match-head-geschützt mergen und den Merge auf main autoritativ zurücklesen. T020 ändert keinen Code, veröffentlicht keine Bureau-Aufgabe und deployt keine Runtime.",
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T020",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "metadata": {
+    "does_not_establish": [
+      "T019-Verifikation",
+      "grüne CI oder Reviewvollständigkeit vor frischem Readback",
+      "Deploymentbereitschaft oder Deploymentautorität",
+      "Runtime-Task-Registry-Wahrheit",
+      "Runtimekorrektheit oder Live-Smoke-Erfolg",
+      "Berechtigung zur Änderung fremder Dirty-States, Leases, Prozesse oder Checkouts"
+    ],
+    "expected_repository": "heimgewebe/grabowski",
+    "runtime_follow_up": {
+      "candidate_id": "candidate-6e923c2ad11801456b042058",
+      "does_not_establish": [
+        "runtime_task_registry_truth",
+        "runtime_execution_authority",
+        "deployment_completion"
+      ],
+      "event_id": 1226,
+      "publication_approval": "missing",
+      "status": "assessed_advisory_not_registry_truth"
+    },
+    "source_task": "HEIMGEWEBE-RESILIENZ-V1-T019"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "audit"
+  ],
+  "rollback": {
+    "strategy": "T020 nimmt vor dem Merge keine Quellcodeänderung vor. Nach erfolgreichem Merge ist ein Revert ausschließlich über eine separat registrierte exklusive Repository-Rollback-Aufgabe zulässig; T020 selbst führt keinen automatischen Revert aus."
+  },
+  "schema_version": 1,
+  "state": "blocked",
+  "title": "Semantische Abschluss-Härtung revisionsgebunden mergen"
+}

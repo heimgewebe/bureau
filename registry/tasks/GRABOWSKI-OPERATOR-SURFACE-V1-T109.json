@@ -1,0 +1,96 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Jeder neue Reconcile-Auditrecord kann eine typisierte, längenbegrenzte und redigierte Aufruferreferenz tragen; freie Gesprächstexte, Tokens, Secrets, E-Mail-Adressen und rohe Sessiondaten werden abgewiesen oder nicht gespeichert.",
+      "id": "bounded-provenance-schema"
+    },
+    {
+      "assertion": "Die Provenienz erklärt ausschließlich den Aufrufursprung und erzeugt weder Task-, Lease-, Session-, Lifecycle- noch Erfolgswahrheit; bestehende Auditketten und historische Records bleiben lesbar.",
+      "id": "single-truth-boundary"
+    },
+    {
+      "assertion": "Deterministische Tests unterscheiden mindestens zwei gleichzeitige Clients und einen unbekannten Legacy-Aufrufer, ohne sie fälschlich zusammenzuführen oder Identität aus Heuristiken abzuleiten.",
+      "id": "multi-client-attribution"
+    },
+    {
+      "assertion": "Schema-, Redaktions-, Tamper-, Replikations- und vollständige Validierungstests bestehen; ein Live-Readback zeigt source-gebundene Reconcile-Records ohne sensible Inhalte.",
+      "id": "audit-integrity-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Aufgabe darf erst nach erneutem Livezustands-, Nichtkonflikt-, Diff-, Review- und CI-Nachweis umgesetzt werden.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_tasks.py",
+      "component:src/grabowski_operator_core.py",
+      "component:src/grabowski_audit_query.py",
+      "component:tests/test_tasks.py",
+      "component:tests/test_audit_query.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Task-Reconcile-Auditrecords um eine begrenzte, redigierte und revisionsgebundene Request-, Sitzungs- oder Clientprovenienz erweitern, damit Lastbursts verursachergerecht zugeordnet werden können, ohne Gesprächsinhalte, Secrets, persönliche Identität oder eine zweite Lifecycle-Wahrheit zu speichern.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T109",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "vollständige externe Chat-Identität",
+      "Berechtigung aus Provenienzdaten",
+      "zweite Lifecycle-Wahrheit",
+      "Merge- oder Deployment-Autorität"
+    ],
+    "operator_intake": {
+      "candidate_id": "candidate-99a5ce4a2d1e81d800a4e93f",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-27T10:43:40.673914Z",
+      "event_id": 1335,
+      "request_sha256": "cc1b42e2b67f03f78b92b8f1339e5cd7b09cdefcc709e9b6e18e42680cab7829",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "pull-request-diff",
+        "locator": "github:heimgewebe/grabowski#495@84fe2bfad28ae0a9db64be7abb0fbcd72d56e442",
+        "observed_at": "2026-07-27T10:43:40.662388Z",
+        "sha256": "97accce8a8f2c07d57e416ad2f82856ef2db708a52ff8b36543afc103e408aba"
+      }
+    },
+    "replacement_for_repo_less_candidate": "candidate-7a90ae628a9ac02304ad93ad",
+    "source": "Ursachenanalyse und Auditlücke aus heimgewebe/grabowski PR #495",
+    "source_diff_sha256": "97accce8a8f2c07d57e416ad2f82856ef2db708a52ff8b36543afc103e408aba",
+    "source_locator": "github:heimgewebe/grabowski#495@84fe2bfad28ae0a9db64be7abb0fbcd72d56e442"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 109
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "testing",
+    "github",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Reconcile-Aufrufer revisionsgebunden und redigiert auditieren"
+}

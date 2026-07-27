@@ -1,0 +1,75 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Permission-, Approval- und Rollenfelder der Agentenrouten besitzen genau eine typisierte autoritative Quelle; argv_prefix bleibt entweder reine Ausführungsprojektion oder wird ausdrücklich als alleinige Quelle beibehalten, ohne zweite Wahrheit.",
+      "evidence_type": "object",
+      "id": "single-authority",
+      "verifier": "Schema-, Generator- und Negativtests"
+    },
+    {
+      "assertion": "Katalogquelle, generierte Runtime-Projektion und öffentliche Operator-Ausgabe sind digestgebunden identisch; veraltete oder teilweise migrierte Projektionen werden fail-closed abgewiesen.",
+      "evidence_type": "object",
+      "id": "projection-integrity",
+      "verifier": "Runtime-Identity- und Projektions-Readback"
+    },
+    {
+      "assertion": "Writer-, Review-, Plan-, Merge-, Deployment- und Kostenautorität bleiben getrennt typisiert; insbesondere kann eine Reviewroute weder durch argv-Reihenfolge noch durch fehlende Felder Writerautorität erhalten.",
+      "evidence_type": "object",
+      "id": "authority-separation",
+      "verifier": "Policy- und Fuzz-Negativtests"
+    },
+    {
+      "assertion": "Ein realer Fable-Writer-Modellaufruf ist nicht Teil dieser Aufgabe und darf nur nach separater ausdrücklicher Kostenautorisierung erfolgen; fehlende Autorisierung bleibt ein belegter Blocker statt eines stillen Fallbacks.",
+      "evidence_type": "object",
+      "id": "paid-probe-boundary",
+      "verifier": "Budget- und Autorisierungstest"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T076"
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die aus argv_prefix abgeleiteten Permission- und Rollenregeln in einen eindeutig typisierten, projektionssicheren Autoritätsvertrag überführen, ohne eine zweite Konfigurationswahrheit oder eine stillschweigende Kostenfreigabe einzuführen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T107",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Berechtigung für einen kostenpflichtigen Fable-Aufruf",
+      "Notwendigkeit eines realen Writer-Smokes",
+      "Merge- oder Deployment-Autorität"
+    ],
+    "source": "Bewusst getrennte Nacharbeit aus Grabowski PR #315",
+    "source_locator": "github:heimgewebe/grabowski#315@a5b8e92617ab17c377725615403421c12bfc913a",
+    "source_merge_commit": "1a0da803be342b02e5ea3cc070fb8f0da2972c68",
+    "source_observation": "PR #315 behielt argv_prefix absichtlich als kanonische Befehlsquelle bei und verschob eine autoritative Permission-, Rollen- und Capability-Schemamigration in eine getrennte Aufgabe.",
+    "deferred_paid_probe": {
+      "candidate": "FABLE-ROUTING-SECURITY-FOLLOWUP-20260719",
+      "required_authorization": "explicit-paid-execution",
+      "status": "not-authorized"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 107
+  },
+  "required_capabilities": [
+    "python",
+    "json-schema",
+    "routing-policy",
+    "repository"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Routenautorität typisiert und projektionssicher machen"
+}

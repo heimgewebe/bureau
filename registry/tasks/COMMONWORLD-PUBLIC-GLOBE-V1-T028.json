@@ -77,6 +77,42 @@
       "current_delivery": "compact-build-bound-bootstrap-with-generation-bound-selected-detail-shadow",
       "current_cutover_authorized": false,
       "synthetic_evidence_only": true
+    },
+    "foundation_implementation": {
+      "status": "merged_pre_cutover_gate_only",
+      "repository": "heimgewebe/commonworld",
+      "pull_request": 151,
+      "base_sha": "d6ae7588b2912c9f7ccf25b160a642184b50b27c",
+      "head_sha": "9f9f3b00c558bee0873bcf9ecf8d76c8e8893263",
+      "merge_commit": "d417d186c7163e2c8dc330b943730b2d468c0781",
+      "diff_sha256": "6c03f9e3a5a9f79cf501f6a050186dd94dd6cf98d382baa5f36d7c0993b41ac7",
+      "validate_run_id": 30296547160,
+      "validate_result": "PASS",
+      "review_findings_resolved": 3,
+      "delivered": [
+        "deterministic 1,000-entry and 10,000-entry compact payload gates",
+        "100,000-entry fixed-prefix stress warning",
+        "fresh deterministic evidence reconstruction in CI",
+        "canonical plan and file-inventory binding",
+        "cutover and backend non-authorization"
+      ],
+      "acceptance_progress": {
+        "shard-growth-policy": "PARTIAL_CONTRACT_AND_SYNTHETIC_GATE",
+        "cutover-authority": "PARTIAL_PRE_CUTOVER_FAIL_CLOSED",
+        "editorial-boundary-preserved": "PASS_FOR_FOUNDATION_PATCH",
+        "realistic-scale-fixtures": "OPEN",
+        "measured-demand-loaded-runtime": "OPEN",
+        "bounded-recovery-surface": "OPEN",
+        "search-and-map-scale-budgets": "OPEN",
+        "failure-and-device-parity": "OPEN"
+      },
+      "does_not_establish": [
+        "task claim or execution lifecycle",
+        "completion of any acceptance criterion marked partial or open",
+        "visible runtime cutover",
+        "production deployment or public readback",
+        "permission to bypass COMMONWORLD-PUBLIC-GLOBE-V1-T027"
+      ]
     }
   },
   "priority": {

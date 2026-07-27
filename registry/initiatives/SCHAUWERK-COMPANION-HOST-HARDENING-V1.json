@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "SCHAUWERK-COMPANION-HOST-HARDENING-V1",
   "title": "Schauwerk Companion host security hardening",
-  "state": "active",
-  "commitment": "later",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Move or front the proven Miro Companion with a free durable HTTPS host that emits the complete required security-header contract while preserving deterministic bytes and successful Miro embedding.",
   "completion": [
     "A free durable host serves the exact deterministic companion build under repository-controlled deployment.",
@@ -60,6 +60,9 @@
         "provider authorization",
         "implementation completion"
       ]
+    },
+    "lifecycle": {
+      "completed_at": "2026-07-27T02:31:34.871454Z"
     }
   }
 }

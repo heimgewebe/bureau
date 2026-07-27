@@ -19,7 +19,7 @@
   ],
   "metadata": {
     "verification": {
-      "task_sha256": "f058607f1d8f8069640972ee07c2b0d6994e03b3c4948c0492d029f0e8e49210",
+      "task_sha256": "8427d8f47ed2f241d8f229aec197b55364f10c0b4250c63bf85f5c25f87f55e5",
       "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
     },
     "parent_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T009",
@@ -114,6 +114,15 @@
         "checkout_path_exists": false,
         "branch_preserved": true,
         "recovery_refs_present": true,
+        "post_cleanup_coordination": {
+          "observed_at_unix": 1785162411,
+          "inventory_sha256": "49685affdcec85481f1986dfb91d69e7362bad2a51c9ef69b68934022cd625a6",
+          "checkout_present_in_inventory": false,
+          "matching_processes": 0,
+          "running_tasks": 0,
+          "target_path_resource_leases": 0,
+          "resource_key": "path:/home/alex/repos/.repoground-worktrees/legacy-reconciliation-t009-report-renderer-v1"
+        },
         "cleanup_applied_at_unix": 1785159140,
         "cleanup_plan_id": "d0b8b7fe1d1e49f88fccf0a2",
         "cleanup_plan_sha256": "8830ccbd7afe848f7ab6935003d1719e003456447073e40c78f5222feece076f",

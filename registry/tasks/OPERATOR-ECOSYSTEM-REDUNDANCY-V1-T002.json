@@ -57,7 +57,7 @@
   "metadata": {
     "registered_at": "2026-07-10T07:25:00+02:00",
     "source_audit": "heimgewebe/cabinet#103",
-    "blocking_condition": "The failed transient-unit projection was empty in the 2026-07-25T17:50:08+02:00 readback after exact terminal-worker reconciliation. T002 remains blocked because the bound Grabowski inventory snapshot contains 90 linked checkouts, including dirty state, clean unarchived state, active retention, archived grace, managed lifecycle drift and active coordination. At that observation point, a foreign T015 whole-repository lease blocked all checkout archive and retention effects; it was not bypassed.",
+    "blocking_condition": "The two exact T053 checkouts are now recovery-bound in archived_grace without physical removal, while the linked checkout count remains 92. T002 remains blocked because the inventory is not fully classified, dirty and managed-lifecycle-drift entries remain, closed-unmerged and locally divergent checkouts require content review, and the latest failed-unit projection contains two terminal Schauwerk evidence-capture jobs plus one fail-closed runtime-retention unit.",
     "progress_20260720": {
       "recorded_at": "2026-07-20T04:25:00Z",
       "grabowski_origin_main": "3631e2f04ad045ed02c598eb55b2f4bf4db19f0a",
@@ -222,6 +222,307 @@
         "safety of clean unarchived checkouts without external truth",
         "absence of future transient-unit failures"
       ]
+    },
+    "progress_20260725_classification_wave_v1": {
+      "recorded_at": "2026-07-25T17:09:16.567137+00:00",
+      "inventory": {
+        "repository": "/home/alex/repos/grabowski",
+        "worktree_count": 92,
+        "generated_at_unix": 1784998727,
+        "inventory_sha256": "89ddbb21c7dc2278ba345012ff09e818823badfe7208661d63cf0e713813bb80"
+      },
+      "coordination_blocker": {
+        "resource_key": "repo:/home/alex/repos/grabowski",
+        "owner_id": "operator:t015-pickup-grips-20260725",
+        "expires_at_unix": 1785002204,
+        "status": "active at initial classification readback; subsequently ended normally before the T053 archive retry",
+        "bypass_used": false
+      },
+      "classified_checkouts": [
+        {
+          "path": "/home/alex/repos/.grabowski-worktrees/bureau-pickup-mutable-root-compensation-v1",
+          "head": "27b90a2adb7cc1db10cfdec92d74a044e4776708",
+          "branch": "fix/bureau-pickup-mutable-root-compensation-v1",
+          "git_status": "clean",
+          "classification": "terminal-retain-pending-archive",
+          "external_truth": "heimgewebe/grabowski#460 merged 2026-07-25T10:40:20Z; merge product e44a8b262312a9b8ad84b4cad52ca77cc79bb1c2"
+        },
+        {
+          "path": "/home/alex/repos/.grabowski-worktrees/captain-merge-auto-effects-scope-v1",
+          "head": "6ab0f95ffdf11529f4d2c45c685386bfb46b073e",
+          "branch": "feat/captain-merge-auto-effects-scope-v1",
+          "git_status": "clean",
+          "classification": "terminal-retain-pending-archive",
+          "external_truth": "heimgewebe/grabowski#446 merged 2026-07-24T17:51:16Z; merge product 884d92f361005d8bd2b2c8e5a69e19f4fd5bb24b"
+        },
+        {
+          "path": "/home/alex/repos/.grabowski-worktrees/direct-operator-captain-delegation-v1",
+          "head": "1f1fd6768cfc402829b3c2096dffc70aefce1f5a",
+          "branch": "fix/direct-operator-captain-delegation-v1",
+          "git_status": "clean",
+          "classification": "terminal-retain-pending-archive",
+          "external_truth": "heimgewebe/grabowski#457 merged 2026-07-25T08:01:47Z; merge product 7c4ae1a3761971d223146fb2452631e9412aedc4"
+        },
+        {
+          "path": "/home/alex/repos/.grabowski-worktrees/bureau-pickup-explicit-root-v1",
+          "head": "df71398001f7cd5885be03aba488f62e2b45750c",
+          "branch": "fix/bureau-pickup-explicit-root-v1",
+          "git_status": "clean",
+          "classification": "closed-unmerged-review-required",
+          "external_truth": "heimgewebe/grabowski#458 closed without merge at the exact local head"
+        },
+        {
+          "path": "/home/alex/repos/.grabowski-worktrees/captain-merge-effects-hardening-v2",
+          "head": "08ded7f9c17786230a48f2ab831878048ce5b4dc",
+          "branch": "fix/captain-merge-effects-hardening-v2",
+          "git_status": "clean",
+          "classification": "closed-unmerged-review-required",
+          "external_truth": "heimgewebe/grabowski#451 closed without merge at the exact local head"
+        },
+        {
+          "path": "/home/alex/repos/.grabowski-worktrees/direct-task-shadow-task-identity-binding-v1",
+          "head": "ef563cb52f783a9a1ea951dc60dac67f90549b30",
+          "branch": "fix/direct-task-shadow-task-identity-binding-v1",
+          "git_status": "clean",
+          "classification": "local-head-diverges-from-merged-pr-review-required",
+          "external_truth": "heimgewebe/grabowski#459 merged from head 82478e5719ef8eb2d9f713a476919e3d58798ade to product 4f94a7bf3512ded4798644f2347b9e27e52e16e0; local head is not present in the GitHub commit API"
+        }
+      ],
+      "failed_units": {
+        "count": 2,
+        "units": [
+          "grabowski-task-26022cd3d12d4f5e867480e4-a1.service",
+          "grabowski-task-4e7c666d4a1044af8feaa8f1-a1.service"
+        ],
+        "classification": "foreign-actionable-review-tasks",
+        "effect": "none; attention decisions remain unresolved and markers were not reset"
+      },
+      "effects": {
+        "checkouts_classified": 6,
+        "checkouts_archived": 2,
+        "checkouts_removed": 0,
+        "branches_deleted": 0,
+        "failed_markers_cleared": 0,
+        "foreign_leases_released": 0,
+        "dirty_states_mutated": 0
+      },
+      "remaining_blockers": [
+        "classify the remaining Grabowski checkouts against exact PR, task and receipt truth",
+        "review dirty checkout ownership and content without reset or adoption",
+        "review closed-unmerged and locally divergent clean checkouts before terminal classification",
+        "reconcile managed lifecycle drift and active managed attention",
+        "preserve the external Durable-Retain override for the RepoGround-managed checkout despite local cleanup-candidate projection",
+        "resolve or owner-classify the two failed Schauwerk evidence-capture units and the fail-closed runtime-retention unit",
+        "perform the final aggregate all-checkout and failed-unit post-proof"
+      ],
+      "does_not_establish": [
+        "completion of T002",
+        "permission to physically remove archived checkouts before grace and dry-run",
+        "terminality of closed-unmerged checkouts",
+        "terminality of the locally divergent PR #459 checkout",
+        "permission to reset foreign failed units",
+        "permission to archive or clean the RepoGround Durable-Retain checkout"
+      ],
+      "post_readback": {
+        "recorded_at": "2026-07-25T17:21:22.321264+00:00",
+        "failed_unit_count": 0,
+        "systemd_failed_projection": "empty",
+        "previous_foreign_units": [
+          "grabowski-task-26022cd3d12d4f5e867480e4-a1.service",
+          "grabowski-task-4e7c666d4a1044af8feaa8f1-a1.service"
+        ],
+        "previous_unit_readback": "both exact units were unloaded and inactive with Result=success",
+        "t002_effect_on_foreign_units": "none",
+        "does_not_establish": [
+          "resolution of the persistent task attention records",
+          "completion of checkout classification",
+          "completion of T002"
+        ]
+      },
+      "t053_archive_retry": {
+        "recorded_at": "2026-07-25T17:45:11.174167+00:00",
+        "inventory": {
+          "repository": "/home/alex/repos/grabowski",
+          "worktree_count": 92,
+          "generated_at_unix": 1785001337,
+          "inventory_sha256": "d49c3298dbe57bf90bc03bf1b1d53f9549f5c3fb76ad0f5408c3396ac6d0f7b3"
+        },
+        "whole_repository_lease": {
+          "resource_key": "repo:/home/alex/repos/grabowski",
+          "status": "absent at retry readback",
+          "foreign_release_or_bypass_by_t002": false
+        },
+        "exact_external_truth": {
+          "pull_request": "heimgewebe/grabowski#455",
+          "state": "MERGED",
+          "head": "c937905b9f46813a65863c41bcbdd56a4ddfff4d",
+          "merge_product": "e957b940a40ff3f2d109e14d5cf72b709e5615fc",
+          "merged_at": "2026-07-25T03:52:18Z"
+        },
+        "checkout_preconditions": [
+          {
+            "path": "/home/alex/repos/.grabowski-worktrees/t053-probe-scheduler-cutover-v1",
+            "head": "c937905b9f46813a65863c41bcbdd56a4ddfff4d",
+            "branch": "fix/grabowski-t053-probe-scheduler-cutover-v1",
+            "clean": true,
+            "resource_bindings": 0,
+            "task_bindings": 0,
+            "process_bindings": 0
+          },
+          {
+            "path": "/home/alex/repos/.grabowski-deploy-sources/t053-probe-scheduler-e957b940-v1",
+            "head": "e957b940a40ff3f2d109e14d5cf72b709e5615fc",
+            "branch": null,
+            "clean": true,
+            "resource_bindings": 0,
+            "task_bindings": 0,
+            "process_bindings": 0
+          }
+        ],
+        "foreign_archive_blocker": {
+          "resource_key": "gate:github-merge:repository-956bfa1033fffffbe4200c9245eb403623e795d63c2534d175e8a14d0fc35c32:branch-7be1749796ee78286d8cacbc64ef0c9fdbb455d90c6ae6996008c02a03173eff",
+          "owner_id": "operator:t015-captain-pr461-20260725",
+          "purpose": "exact Captain preflight and merge for heimgewebe/grabowski PR #461",
+          "expires_at_unix": 1785003835,
+          "bypass_used": false,
+          "release_attempted": false
+        },
+        "archive_attempts": [
+          {
+            "path": "/home/alex/repos/.grabowski-worktrees/t053-probe-scheduler-cutover-v1",
+            "result": "blocked before effect by the foreign Captain merge gate"
+          },
+          {
+            "path": "/home/alex/repos/.grabowski-deploy-sources/t053-probe-scheduler-e957b940-v1",
+            "result": "blocked before effect by the foreign Captain merge gate"
+          }
+        ],
+        "effects": {
+          "checkouts_archived": 0,
+          "checkouts_removed": 0,
+          "branches_deleted": 0,
+          "foreign_gates_released": 0,
+          "dirty_states_mutated": 0
+        },
+        "does_not_establish": [
+          "permission to bypass or release the PR #461 Captain merge gate",
+          "successful archival of either T053 checkout",
+          "permission to physically remove either checkout",
+          "completion of T002"
+        ]
+      },
+      "t053_archive_success": {
+        "recorded_at": "2026-07-25T18:01:16.143821+00:00",
+        "final_inventory": {
+          "repository": "/home/alex/repos/grabowski",
+          "worktree_count": 92,
+          "generated_at_unix": 1785002060,
+          "inventory_sha256": "50877cda1ed5f4b8cdd39938f00e931f7caea797909b9a8acc44a522111f0925"
+        },
+        "coordination": {
+          "former_t015_repository_lease": "ended normally before archive",
+          "former_pr461_captain_gate": "ended normally before successful retry",
+          "foreign_release_or_bypass_by_t002": false
+        },
+        "archives": [
+          {
+            "path": "/home/alex/repos/.grabowski-worktrees/t053-probe-scheduler-cutover-v1",
+            "head": "c937905b9f46813a65863c41bcbdd56a4ddfff4d",
+            "branch": "fix/grabowski-t053-probe-scheduler-cutover-v1",
+            "archive_id": "20260725T175352Z-b66fb3b4f4a2",
+            "manifest_path": "/home/alex/.local/state/grabowski/checkout-archives/20260725T175352Z-b66fb3b4f4a2/manifest.json",
+            "recovery_refs": [
+              "refs/grabowski/checkouts/f35d2632f4c668d1/20260725T175352Z-b66fb3b4f4a2/head",
+              "refs/grabowski/checkouts/f35d2632f4c668d1/20260725T175352Z-b66fb3b4f4a2/branch-head"
+            ],
+            "retention_until_unix": 1785088000,
+            "post_lifecycle_state": "archived_grace",
+            "branch_preserved": true,
+            "coordination_after": {
+              "resource_leases": 0,
+              "tasks": 0,
+              "processes": 0
+            }
+          },
+          {
+            "path": "/home/alex/repos/.grabowski-deploy-sources/t053-probe-scheduler-e957b940-v1",
+            "head": "e957b940a40ff3f2d109e14d5cf72b709e5615fc",
+            "branch": null,
+            "archive_id": "20260725T175404Z-5f33f002fca2",
+            "manifest_path": "/home/alex/.local/state/grabowski/checkout-archives/20260725T175404Z-5f33f002fca2/manifest.json",
+            "recovery_refs": [
+              "refs/grabowski/checkouts/a24e1fdd8cff9ee5/20260725T175404Z-5f33f002fca2/head"
+            ],
+            "retention_until_unix": 1785088000,
+            "post_lifecycle_state": "archived_grace",
+            "branch_preserved": false,
+            "coordination_after": {
+              "resource_leases": 0,
+              "tasks": 0,
+              "processes": 0
+            }
+          }
+        ],
+        "effects": {
+          "checkouts_archived": 2,
+          "checkouts_removed": 0,
+          "branches_deleted": 0,
+          "dirty_states_mutated": 0,
+          "repo_ground_durable_retain_checkout_mutated": false
+        },
+        "does_not_establish": [
+          "permission to physically remove either archived T053 checkout before grace and a hash-bound cleanup dry-run",
+          "permission to delete the preserved writer branch",
+          "permission to archive or clean the externally durable-retained RepoGround checkout",
+          "completion of T002"
+        ]
+      },
+      "latest_failed_unit_readback": {
+        "recorded_at": "2026-07-25T18:01:16.143821+00:00",
+        "failed_unit_count": 3,
+        "units": [
+          {
+            "unit": "grabowski-job-19bab0548125.service",
+            "classification": "terminal-failed-external-evidence-capture-metadata-missing",
+            "result": "exit-code",
+            "exec_main_status": 2,
+            "source": "Schauwerk Miro companion evidence-capture command",
+            "effect": "none; no durable Grabowski job metadata exists and no reset is authorized"
+          },
+          {
+            "unit": "grabowski-job-34668c9bcc10.service",
+            "classification": "terminal-failed-external-evidence-capture-metadata-missing",
+            "result": "exit-code",
+            "exec_main_status": 2,
+            "source": "Schauwerk Miro companion evidence-capture command",
+            "effect": "none; no durable Grabowski job metadata exists and no reset is authorized"
+          },
+          {
+            "unit": "grabowski-runtime-retention.service",
+            "classification": "fail-closed-retention-attention",
+            "result": "exit-code",
+            "exec_main_status": 1,
+            "receipt_path": "/home/alex/.local/state/grabowski/retention-receipts/b5b86ebcf04c16eba7959cc11ed97579885fac15408f2719a7f4a8c17b843707.json",
+            "receipt_file_sha256": "6c365656ce58b110ad5524abcc4109c651c1946fb6993e7e6c7d1b6d4b952bfb",
+            "receipt_declared_sha256": "89360530ff4bf876f18739f0c6cfe966aafccc86381121d337de6ada8002e087",
+            "protected_nonterminal_job_count": 15,
+            "archived_job_count": 4,
+            "reset_failed_count": 0,
+            "existing_bureau_coverage": "GRABOWSKI-OPERATOR-SURFACE-V1-T083",
+            "effect": "none; unit and protected jobs remain fail-closed"
+          }
+        ],
+        "t002_effects": {
+          "reset_failed_units": 0,
+          "foreign_units_mutated": 0
+        },
+        "does_not_establish": [
+          "resolution of the Schauwerk evidence-capture failures",
+          "resolution of runtime-retention terminality gaps",
+          "completion of transient-unit classification",
+          "completion of T002"
+        ]
+      }
     }
   },
   "depends_on": []

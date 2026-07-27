@@ -61,7 +61,7 @@
     },
     {
       "id": "no-code-or-deployment",
-      "assertion": "T063 performs no source-code modification und no runtime deployment.",
+      "assertion": "T063 performs no source-code modification and no runtime deployment.",
       "evidence_type": "object"
     }
   ],

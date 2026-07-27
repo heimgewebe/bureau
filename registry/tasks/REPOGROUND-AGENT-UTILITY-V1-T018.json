@@ -1,0 +1,93 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Zeit-, Größen- und Anzahlbudgets sind pro Artefaktklasse explizit; Default bleibt konservativ und eine automatische Löschung ist ohne bewusste Aktivierung ausgeschlossen.",
+      "id": "policy-profiles"
+    },
+    {
+      "assertion": "Ein deterministischer Dry-run listet Kandidaten, Gründe, Referenzen, Pins und erwartete Freigabe; Apply ist an den exakten Planhash gebunden.",
+      "id": "plan-before-effect"
+    },
+    {
+      "assertion": "Aktive Sessions, Bureau-/PR-Belege, gepinnte Artefakte und nichtterminal referenzierte Objekte sind geschützt; unbekannte Referenzlage blockiert.",
+      "id": "reference-protection"
+    },
+    {
+      "assertion": "GC ist race-sicher, no-follow, eigentumsgebunden und erzeugt pro Wirkung einen Receipt; Unterbrechung und Wiederholung sind idempotent.",
+      "id": "safe-gc"
+    },
+    {
+      "assertion": "Nach Apply werden Storeintegrität, geschützte Referenzen, freigegebene Bytes/Objekte und weiterhin lesbare aktive Artefakte erneut geprüft.",
+      "id": "retention-readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Die bereits dokumentierte, derzeit unbeschränkte Retention für query_trace, context_bundle und agent_query_session in einen konservativen, referenzsicheren und auditierbaren Plan-/GC-Pfad überführen, ohne aktive oder beweisrelevante Artefakte automatisch zu löschen.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T018",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "deduplication": {
+      "does_not_duplicate": "RPU-V1-T008 definierte die Policy und dokumentierte unbounded_currently; T018 implementiert erst die praktische, sichere Wirkung.",
+      "reuses": [
+        "RPU-V1-T008"
+      ]
+    },
+    "does_not_establish": [
+      "implementation",
+      "merge readiness",
+      "automatic deletion enablement",
+      "absence of retained artifacts",
+      "runtime correctness"
+    ],
+    "registered_from_audit": "RepoGround complete audit review, 2026-07-27",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-9f4b2a1e511641b05f2d13be",
+      "event_id": 1321,
+      "event_created_at": "2026-07-27T09:34:34.192261Z",
+      "request_sha256": "faccedb77058de1af3ac02c3baba4ff544dcf2755c868b35da7e080b679476e1",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "conversation:repoground-complete-audit-2026-07-27",
+        "observed_at": "2026-07-27T09:34:34.180341Z",
+        "sha256": "443b271301a8d0b141a13fe12ba28d009b79edb03bbf15ba7b57b6c01695bee8"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 66
+  },
+  "required_capabilities": [
+    "repoground",
+    "retention",
+    "filesystem-safety",
+    "concurrency",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Runtime-Artefakt-Retention mit sicheren Budgets praktisch umsetzen"
+}

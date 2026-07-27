@@ -1,13 +1,13 @@
 {
   "acceptance": [
     {
-      "assertion": "Die Route claude-fable-5-high besteht die kanonische Worker-Routing-Validierung und wird für eine passende Reviewaufgabe ohne den Fehler „plan-mode route must be review_only“ ausgewählt oder als gültiger Kandidat bewertet.",
+      "assertion": "Die veraltete Route claude-fable-5-high wird fail-closed deaktiviert; die aktive Route claude-fable-5-review-high besteht die kanonische Worker-Routing-Validierung und wird für passende Reviewaufgaben ohne den Fehler „plan-mode route must be review_only“ als gültiger Kandidat bewertet.",
       "evidence_type": "object",
       "id": "valid-review-route",
       "verifier": "Routing-Katalogtest und Live-Routing-Readback"
     },
     {
-      "assertion": "Der kanonische Vertrag weist der Route ausschließlich Reviewautorität zu; Writer-, Planungs-, Merge-, Deployment- und Kostenautorität bleiben ausgeschlossen und werden maschinenlesbar geprüft.",
+      "assertion": "Der kanonische Vertrag weist claude-fable-5-review-high ausschließlich Reviewautorität zu; eine getrennte Writer-Route erteilt der Reviewroute keine Schreib-, Merge-, Deployment- oder Kostenautorität und wird maschinenlesbar getrennt geprüft.",
       "evidence_type": "object",
       "id": "review-only-authority",
       "verifier": "Policy- und Negativtests"
@@ -42,16 +42,21 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/grabowski"
+    "working_repository": "/home/alex/repos/grabowski",
+    "approval": {
+      "action_class": "registry_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Diese Registry-Publikation dokumentiert einen bereits gemergten und in der laufenden Runtime enthaltenen Zustand. Sie erteilt keine neue Writer-, Merge-, Deployment- oder Kostenautorität."
+    }
   },
   "goal": "Die ungültige zentrale Route claude-fable-5-high so korrigieren und absichern, dass Fable für unabhängige, nur lesende Reviews routbar ist, ohne Writer-, Planungs- oder zusätzliche Kostenautorität zu erhalten.",
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T076",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
     "does_not_establish": [
-      "Fehler im Fable-Modell",
+      "einen realen Fable-Modellaufruf",
       "Berechtigung für kostenpflichtige Provider",
-      "Mergebereitschaft"
+      "automatische Writer-, Merge- oder Deployment-Autorität"
     ],
     "observed_error": "claude-fable-5-high: plan-mode route must be review_only",
     "source": "Live-Routingfehler während Weltgewebe PR #1507 Review",
@@ -76,7 +81,69 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
-    }
+    },
+    "acceptance_refinement": {
+      "reason": "PR #315 löste den Fehler sicherer durch eine explizite Trennung statt durch eine aktive Umdeutung der alten Routen-ID.",
+      "legacy_route": "claude-fable-5-high",
+      "legacy_route_state": "disabled-plan-only-compatibility-alias",
+      "canonical_review_route": "claude-fable-5-review-high",
+      "canonical_writer_route": "claude-fable-5-writer-high"
+    },
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": {
+        "number": 315,
+        "status": "merged",
+        "base_sha": "c501dbb8189c0f7bc89473ab9b7c064581a32162",
+        "reviewed_head": "a5b8e92617ab17c377725615403421c12bfc913a",
+        "merge_commit": "1a0da803be342b02e5ea3cc070fb8f0da2972c68"
+      },
+      "runtime": {
+        "release_id": "476c06bad629-srcset22f933340c42-locke6664d600b6c-contract5fab0c129560",
+        "repo_head": "476c06bad629722b03768b0684d25897405b7cfd",
+        "fix_is_ancestor": true,
+        "commits_ahead_of_fix": 151,
+        "completion_status": "complete",
+        "integrity_valid": true,
+        "registered_tool_count": 175,
+        "expected_tool_count": 175,
+        "catalog_ready": true,
+        "catalog_sha256": "678da7b84932b2ba02473ff3f96236a354ca3c5017e2d555780c36b38f0c836c"
+      },
+      "review_route": {
+        "id": "claude-fable-5-review-high",
+        "enabled": true,
+        "permission_mode": "plan",
+        "review_only": true,
+        "paid_only": true,
+        "task_classes": [
+          "independent-review",
+          "critical-review",
+          "security-review"
+        ]
+      },
+      "policy": {
+        "single_mutating_writer": true,
+        "unknown_cost_action": "block",
+        "paid_routes_require_explicit_authorization": true,
+        "payg_fallback_allowed": false
+      },
+      "validation": {
+        "focused_router_tests": "26/26 passed on PR #315",
+        "full_validate": "2401 passed, 2 skipped on PR #315",
+        "github_ci": "passed before merge",
+        "independent_diff_review": "PASS"
+      }
+    },
+    "source_observation": "Der technische Zielzustand wurde bereits durch Grabowski PR #315 gemergt. Der aktuelle integre Runtime-Head enthält den Merge als Vorfahren und projiziert die getrennte review_only-Route sowie die kostenbezogenen Fail-closed-Grenzen.",
+    "validated_acceptance": {
+      "valid-review-route": "PASS nach expliziter Acceptance-Verfeinerung: der Legacy-Alias ist deaktiviert; claude-fable-5-review-high ist aktiv, plangebunden und review_only.",
+      "review-only-authority": "PASS: Review- und Writer-Route sind getrennt; die Reviewroute enthält nur unabhängige, kritische und Security-Reviews.",
+      "configuration-projection": "PASS: der aktuelle Runtime-Head 476c06b enthält Mergecommit 1a0da80 als Vorfahren; Runtime- und Katalogintegrität sind gültig.",
+      "no-paid-fallback": "PASS: unbekannte Kosten blockieren, bezahlte Routen brauchen explizite Autorisierung und der Claude-Pool erlaubt keinen PAYG-Fallback.",
+      "regression-suite": "PASS: 26 fokussierte Routertests, 2401 vollständige Tests, grüne CI und unabhängiger diffgebundener Review auf PR #315."
+    },
+    "verified_at": "2026-07-27T09:02:48Z"
   },
   "priority": {
     "lane": "next",
@@ -90,6 +157,6 @@
     "repository"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Fable-Reviewroute auf review_only kanonisieren"
 }

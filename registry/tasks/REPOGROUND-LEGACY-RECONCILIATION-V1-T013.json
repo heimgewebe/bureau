@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
-  "state": "planned",
+  "state": "verified",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -24,8 +24,74 @@
     "scope_rule": "Execute in a fresh isolated current-main worktree; do not reuse, reset or mutate historical T004 worktrees.",
     "does_not_establish": [
       "Fehlender lokaler Import beweist keine globale Nichtnutzung",
-      "Testnutzung beweist keinen Produktionsconsumer"
-    ]
+      "Testnutzung beweist keinen Produktionsconsumer",
+      "Abschluss des Parent-Tasks REPOGROUND-LEGACY-RECONCILIATION-V1-T004",
+      "Vollständige Erfassung dynamischer, lokaler oder nicht zugänglicher privater Consumer",
+      "Reale Nutzungshäufigkeit der neuen opt-in Diagnostik",
+      "Behebung der getrennt registrierten Bubblewrap-/Sidecar-Hostgrenze"
+    ],
+    "verified_at": "2026-07-27T11:42:55+02:00",
+    "finalized_at": "2026-07-27T11:42:55+02:00",
+    "resolution_summary": "Die sechs zuvor nur testgebundenen Produktionsmodule wurden revisionsgebunden inventarisiert, gegen Produktimporte, CLI-/Runtime-Einstiege, Packaging, Organisation-Consumer und Tests geprüft und ohne statische Löschvermutung als keep-and-integrate dispositioniert. PR #1106 integriert sie über eine explizite, lazy geladene und bounded opt-in Diagnostik-CLI, entfernt die sechs allowed_test_only-Ausnahmen und erhält die bestehenden Autoritätsgrenzen. Der gemergte Head ist vollständig CI-grün; der aktuelle main-Readback bestätigt 209 Produktionsmodule ohne unbewiesene, documentation-only oder test-only Module.",
+    "implementation": {
+      "repository": "heimgewebe/repoground",
+      "pull_request": 1106,
+      "base_sha": "0229516146d50023918e9f4ee904e68479a72e9e",
+      "head_sha": "043985abc321130b63a928c90ababc700c62f957",
+      "merge_commit_sha": "a029bbcd2779e7bed1ac41e936bdf720249f0538",
+      "diff_sha256": "c536493db4e5100863562907044e751a5c385cf5c6acba9110c6d76f3524a9ab",
+      "diff_bytes": 158935,
+      "download_reference": "https://github.com/heimgewebe/repoground/pull/1106.diff",
+      "text_artifact_id": "80c78bbdbd334d06a1c110a46d095826",
+      "text_artifact_receipt_sha256": "962655c8550b0e794f5012c2bbbf793a7e2a084cfd3a5e239c95b9fa6c7ee9ce",
+      "proof_path": "docs/proofs/test-only-module-disposition-v1-proof.md",
+      "proof_sha256": "bf2644e873d126f7d0e997b14cfa1fac0001ed931feebb0219328e24fe30b511"
+    },
+    "validation": {
+      "github_pr_checks": {
+        "successful": 23,
+        "failed": 0,
+        "observed_at": "2026-07-27T11:39:00+02:00"
+      },
+      "focused_and_conflict_near_suite": {
+        "passed": 447,
+        "skipped": 10
+      },
+      "broad_suite": {
+        "passed": 5052,
+        "skipped": 12
+      },
+      "ruff": "PASS",
+      "git_diff_check": "PASS",
+      "review_threads_open": 0,
+      "main_readback": {
+        "head": "a029bbcd2779e7bed1ac41e936bdf720249f0538",
+        "origin_main": "a029bbcd2779e7bed1ac41e936bdf720249f0538",
+        "worktree": "clean"
+      },
+      "module_reachability": {
+        "production_modules": 209,
+        "unproven": 0,
+        "documentation_only": 0,
+        "test_only": 0,
+        "status": "PASS"
+      },
+      "graph_maintainability": "PASS"
+    },
+    "validated_acceptance": {
+      "exact-inventory": "PASS: Proof inventarisiert alle sechs Module mit Pfad, SHA-256, Vorzustand und Disposition.",
+      "consumer-evidence": "PASS: Produktimporte, CLI-/Runtime-Einstieg, Packaging, Organisationssuche und Tests wurden getrennt bewertet.",
+      "bounded-disposition": "PASS: Alle sechs Module sind keep-and-integrate über sieben explizite Diagnostikoperationen; der Rollback ist revisionsgebunden dokumentiert.",
+      "no-static-delete": "PASS: Kein Produktionsmodul wurde entfernt; statische Nichtnutzung wurde ausdrücklich nicht als Löschautorität verwendet.",
+      "policy-convergence": "PASS: Die sechs allowed_test_only-Ausnahmen wurden erst nach produktiver opt-in Integration entfernt; der aktuelle Reachability-Readback meldet 0 test-only Module."
+    },
+    "followups": [
+      "OPERATOR-PC-HYGIENE-V1-T014"
+    ],
+    "verification": {
+      "task_sha256": "f127f60597e2f8ad241874f5ac7f006a4c9b7e4a834ff3ee537d09d61073147a",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   },
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T013",
   "title": "Sechs test-only Produktionsmodule dispositionieren",

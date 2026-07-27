@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T063",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Leitstand-Lifecycle-Consumer revisionsgebunden mergen",
+  "state": "blocked",
+  "goal": "Merge den von T061 veröffentlichten Leitstand-Lifecycle-Consumer ausschließlich nach frischer Revalidierung des exakten PR-Heads, vollständiger grüner GitHub-CI, unabhängiger Review-Triage und vorab ausgeliefertem kanonischem UTF-8-GitHub-Diff. Diese Aufgabe ändert keinen Code und deployt nicht.",
+  "priority": {
+    "lane": "next",
+    "rank": 85
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "exclusive",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github"
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061"
+  ],
+  "acceptance": [
+    {
+      "id": "exact-pr-identity",
+      "assertion": "The open PR base, head, changed paths and canonical GitHub diff match the exact T061 publication evidence.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "ci-and-review-current",
+      "assertion": "All required GitHub checks are green on the exact head and all independent review findings are resolved or explicitly rejected with evidence.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "user-visible-diff-delivered",
+      "assertion": "The complete canonical GitHub diff is published as an immutable hash-bound UTF-8 text artifact and visibly delivered before merge.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "atomic-exact-head-merge",
+      "assertion": "Captain dispatches exactly one merge with match-head protection, bounded effects and independent merge leases.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "post-merge-readback",
+      "assertion": "GitHub reports the PR merged from the expected head, current main contains the merge commit and all merge leases are released.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-code-or-deployment",
+      "assertion": "T063 performs no source-code modification and no runtime deployment.",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
+    "expected_repository": "heimgewebe/leitstand",
+    "does_not_establish": [
+      "T061_verification",
+      "green_ci",
+      "review_completeness",
+      "merge_readiness",
+      "deployment_readiness",
+      "deployment_authority"
+    ]
+  }
+}

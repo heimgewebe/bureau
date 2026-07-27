@@ -61,7 +61,7 @@
       "permission to remove build-bound bootstrap data",
       "physical-device usability",
       "automatic queue, claim, dispatch, merge or deployment authority",
-      "that every catalog detail is already available or generation-bound"
+      "that the production surface no longer depends on the compact build-bound bootstrap"
     ],
     "queue_mutated": false,
     "registered_at": "2026-07-26",
@@ -89,6 +89,43 @@
         "queue_truth",
         "task_readiness",
         "claim_or_dispatch_authority"
+      ]
+    },
+    "implementation_evidence": {
+      "acceptance": {
+        "generation-bound-detail-contract": "PASS",
+        "detail-integrity-boundary": "PASS",
+        "async-isolation-and-cache-bounds": "PASS",
+        "explicit-product-states": "PASS",
+        "surface-parity": "PASS",
+        "cutover-gates": "PASS",
+        "exact-head-validation": "PASS",
+        "closeout-bound": "PENDING_PRODUCTION_EVIDENCE"
+      },
+      "authority": "commonworld-project-operator",
+      "decision": "implementation_merged_exact_head_validated_closeout_pending_production_generation_readback_and_revision_stamps",
+      "implementation_pr": 144,
+      "pr_head": "d16d47f8966072b0b66aee5c1edecd3fcb3e020e",
+      "merge_commit": "da0d5adff6d5a07c2923560e353eb9504e0d1888",
+      "premerge_ci": {
+        "validate_run_id": 30254818397,
+        "head_sha": "d16d47f8966072b0b66aee5c1edecd3fcb3e020e",
+        "result": "PASS"
+      },
+      "postmerge_ci": {
+        "validate_run_id": 30254974872,
+        "head_sha": "da0d5adff6d5a07c2923560e353eb9504e0d1888",
+        "result": "PASS"
+      },
+      "explicit_nonclaims": [
+        "The visible production catalogue has cut over from the compact build-bound bootstrap.",
+        "The physical-device cutover gate has passed.",
+        "The synthetic scaling evidence establishes real mobile-network behavior.",
+        "A backend, PostGIS or PMTiles runtime is already deployed."
+      ],
+      "remaining_gates": [
+        "bind deployed generation and public production readback",
+        "generate matching task_sha256 and plan_sha256 revision stamps before verified transition"
       ]
     }
   },

@@ -49,7 +49,7 @@
     },
     {
       "isolation": "none",
-      "mode": "write",
+      "mode": "exclusive",
       "resource": "host.heim-pc"
     }
   ],

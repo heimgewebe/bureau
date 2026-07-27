@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T062",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Leitstand-Lifecycle-Consumer deployen und live verifizieren",
-  "state": "blocked",
+  "state": "ready",
   "goal": "Deploye nach verifiziertem T063-Merge den exakten Leitstand-main-Commit über den kanonischen Releaseadapter und belege per Runtime-, HTTP- und Browser-Readback, dass Lifecycle, technische Freshness und Runtime-Gesundheit getrennt dargestellt werden.",
   "priority": {
     "lane": "next",
@@ -83,6 +83,26 @@
       "deployment_readiness",
       "future_runtime_health",
       "permission_to_mutate_unrelated_services"
-    ]
+    ],
+    "activated_at": "2026-07-27T17:52:09Z",
+    "activation_basis": {
+      "dependency": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T063",
+      "dependency_state_in_same_closeout": "verified",
+      "repository": "heimgewebe/leitstand",
+      "pull_request": 190,
+      "expected_source_commit": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+      "current_remote_main_comparison": "identical"
+    },
+    "current_blocker": {
+      "kind": "grabowski_connector_unavailable_in_current_chat",
+      "effect": "Kein Host-Deploy, Service-Cutover oder Browser-Live-Readback wurde ausgeführt.",
+      "fail_closed": true,
+      "does_not_establish": [
+        "runtime_health",
+        "deployment_completion",
+        "break_glass_preflight",
+        "host_lease_acquisition"
+      ]
+    }
   }
 }

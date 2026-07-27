@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Leitstand-Lifecycle-Consumer implementieren und als PR veröffentlichen",
-  "state": "ready",
+  "state": "verified",
   "goal": "Implementiere in einem eigenen sauberen Worktree einen read-only Leitstand-Consumer für die stabilen Systemkatalog-Lifecycle-Zustände, prüfe ihn vollständig und veröffentliche einen revisionsgebundenen PR. Trenne deklarierte Semantik, Artefakt-Freshness und Runtime-Gesundheit sichtbar und fail-closed; Retirement darf nicht als aktueller Dienstfehler erscheinen. Diese Aufgabe mergt und deployt nicht.",
   "priority": {
     "lane": "next",
@@ -79,6 +79,52 @@
       "deployment_authority",
       "runtime_health",
       "semantic_source_authority"
-    ]
+    ],
+    "verified_at": "2026-07-27T17:52:09Z",
+    "outcome": "Der read-only Leitstand-Lifecycle-Consumer wurde isoliert implementiert, vollständig geprüft und als PR #190 auf dem exakten finalen Head veröffentlicht. Technische Artefaktkonsistenz, deklarierte Lifecycle-Semantik und Runtime-Gesundheit bleiben getrennte Achsen; T061 beansprucht weder Merge noch Deployment.",
+    "publication": {
+      "repository": "heimgewebe/leitstand",
+      "pull_request": 190,
+      "base_sha": "a85c14d0df83da61c68e43fe814a19d483f3f6f2",
+      "reviewed_head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+      "merge_commit_sha": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+      "changed_files": 8,
+      "additions": 418,
+      "deletions": 21,
+      "canonical_diff": {
+        "bytes": 41400,
+        "sha256": "8c5a35096f64f9fdcf77235eb5eddd85a9a1d3886a6ecb7e9b553b04b243c98f",
+        "artifact": "https://gist.github.com/alexdermohr/656683eee49fc59838e1090eb4e2d37c"
+      },
+      "validation": {
+        "lint": "PASS",
+        "typecheck": "PASS",
+        "focused_tests": "25/25 PASS",
+        "full_tests": "261/261 PASS",
+        "release_runtime": "PASS",
+        "browser_shell": "mobile 23/23 and desktop 13/13 PASS",
+        "browser_view_matrix": "197 checks PASS",
+        "build_and_static_build": "PASS",
+        "github_checks": [
+          "CI",
+          "ai-context guard",
+          "security-hygiene"
+        ]
+      },
+      "review": {
+        "initial_finding": "P2 whitespace-colliding node identities",
+        "resolution_head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+        "final_codex_result": "no major issues",
+        "open_threads": 0
+      }
+    },
+    "verified_acceptance": {
+      "clean-isolated-implementation": "PR #190 dokumentiert den eigenen sauberen Worktree; der fremde Dirty-Worktree wurde nicht verändert.",
+      "strict-source-contract": "Lifecycle-Zustände, reale YYYY-MM-DD-Daten, eindeutige getrimmte Knoten-IDs sowie nichtleere eindeutige Evidenzreferenzen werden fail-closed validiert; der Codex-P2 wurde auf dem finalen Head behoben.",
+      "truth-axes-separated": "Controller und Ansicht weisen technische Freshness, Artefaktabgleich, deklarierte Semantik und Runtime-Grenze getrennt aus.",
+      "read-only-exploration": "Lifecycle-Filter, Suche, Detailansicht und commitgebundene Quellenlinks bleiben ausschließlich lesend.",
+      "review-ci-pr-published": "Lokale Vollprüfung, exakter Final-Head-Review, drei grüne GitHub-Workflows und der byteidentische vollständige UTF-8-Diff sind gebunden.",
+      "no-merge-or-deployment": "Die T061-Implementierungsarbeit endete mit der PR-Publikation; der spätere Merge wird ausschließlich T063 zugeordnet und T061 beansprucht kein Deployment."
+    }
   }
 }

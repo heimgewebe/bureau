@@ -8,7 +8,7 @@ import pytest
 
 from bureau import legacy
 from bureau.core import Dispatcher, NoEligibleTask, Registry, StateError, StateStore
-from bureau.v2 import coordinated_claim_intent_sha256
+from bureau.v2 import coordinated_claim_intent_sha256, task_revision_sha256
 
 
 def _git(root: Path, *arguments: str) -> str:
@@ -39,7 +39,7 @@ def _write_reviewed_plan(path: Path, task: dict) -> None:
         "task_id": task["id"],
         "target_path": f"registry/tasks/{task['id']}.json",
         "task_json": task,
-        "task_json_sha256": legacy.sha256_json(task),
+        "task_json_sha256": task_revision_sha256(task),
         "unresolved_fields": [],
         "publication": {
             "action_class": "registry_mutation",

@@ -50,6 +50,18 @@
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T018",
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
   "metadata": {
+    "activation": {
+      "activated_at": "2026-07-27T10:57:00Z",
+      "authority": "explicit_user_instruction",
+      "does_not_establish": [
+        "implementation completion",
+        "merge readiness",
+        "verification"
+      ],
+      "instruction": "umsetzen",
+      "registry_task_merge_commit": "db329e3881ed6bcd71844f6da644fdb38269ce79",
+      "registry_task_pr": 1075
+    },
     "audit_summary": "Current repository search found no active code loading either retired release schema. References are limited to the schema files themselves, a verifier rejection test, a repository-hygiene assertion, and historical proof/measurement/task-index records. The release builder archives the full tracked tree, so keeping the schemas in the active contracts directory also distributes them.",
     "candidate_event_id": 1324,
     "does_not_establish": [
@@ -58,6 +70,26 @@
       "external consumer absence beyond repository evidence",
       "automatic merge or deployment authority"
     ],
+    "operator_intake": {
+      "candidate_id": "candidate-1696513020f86c092c296a98",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-27T09:54:57.722655Z",
+      "event_id": 1324,
+      "request_sha256": "a565f468fdb44c5922c9163354d97f417b3ffcc78f0470a3c29afac34fb2c21d",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "repository-audit",
+        "locator": "/home/alex/repos/repoground/merger/repoground/contracts/repobrief-release-candidate.v1.schema.json",
+        "observed_at": "2026-07-27T09:54:57.711756Z",
+        "sha256": "8c9d10a951461e83d9aa573d9963389d3a4958f23f5a0d8b384cdcd4dd371fc8"
+      }
+    },
     "registered_from_candidate": "candidate-1696513020f86c092c296a98",
     "scope_boundary": [
       "merger/repoground/contracts/repobrief-release-candidate.v1.schema.json",
@@ -73,27 +105,7 @@
     "source_commit": "a029bbcd2779e7bed1ac41e936bdf720249f0538",
     "source_path": "merger/repoground/contracts/repobrief-release-candidate.v1.schema.json",
     "source_repository": "heimgewebe/repoground",
-    "source_sha256": "8c9d10a951461e83d9aa573d9963389d3a4958f23f5a0d8b384cdcd4dd371fc8",
-    "operator_intake": {
-      "schema_version": 1,
-      "candidate_id": "candidate-1696513020f86c092c296a98",
-      "event_id": 1324,
-      "event_created_at": "2026-07-27T09:54:57.722655Z",
-      "request_sha256": "a565f468fdb44c5922c9163354d97f417b3ffcc78f0470a3c29afac34fb2c21d",
-      "source": {
-        "does_not_establish": [],
-        "freshness": "digest-bound",
-        "kind": "repository-audit",
-        "locator": "/home/alex/repos/repoground/merger/repoground/contracts/repobrief-release-candidate.v1.schema.json",
-        "observed_at": "2026-07-27T09:54:57.711756Z",
-        "sha256": "8c9d10a951461e83d9aa573d9963389d3a4958f23f5a0d8b384cdcd4dd371fc8"
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
-    }
+    "source_sha256": "8c9d10a951461e83d9aa573d9963389d3a4958f23f5a0d8b384cdcd4dd371fc8"
   },
   "priority": {
     "lane": "next",
@@ -109,6 +121,6 @@
     "bureau"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Veraltete RepoBrief-Release-Verträge aus aktiven RepoGround-Surfaces entfernen"
 }

@@ -1,0 +1,138 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Aktivierungshelfer, Rust-Providerprüfung und Dauer-Worker akzeptieren ausschließlich gültige SHA-256-Digests und vergleichen dieselbe normalisierte Identität; Präfixvarianten wie sha256:<hex> und <hex> werden nur bei identischem 64-stelligem Hexwert gleichgesetzt.",
+      "id": "digest-contract-single-source"
+    },
+    {
+      "assertion": "Automatisierte Tests reproduzieren den produktiven Präfixunterschied, verhindern dauerhaftes waiting_for_pinned_model bei identischem normalisiertem Digest und bleiben fail-closed bei abweichenden, fehlenden oder malformed Digests.",
+      "id": "worker-regression-tests"
+    },
+    {
+      "assertion": "Ein nach Aktivierung erzeugter oder suchrelevant aktualisierter öffentlicher Knoten erzeugt einen Job, der durch den persistenten Worker in der aktiven Generation terminal verarbeitet wird; expected_nodes und completed_nodes werden kohärent nachgeführt.",
+      "id": "incremental-job-processing"
+    },
+    {
+      "assertion": "Private, hidden, revoked, ownerlose private und gelöschte Knoten werden nach dem Fix weiterhin nicht öffentlich auffindbar und erhalten keine unzulässigen öffentlichen Vektoren.",
+      "id": "privacy-negative-proof"
+    },
+    {
+      "assertion": "Nach geprüftem Merge und automatischem commitgebundenem Rollout melden API und Web exakt den erwarteten main-Commit; API, Datenbank, NATS, Ollama, Worker und Reconciler sind gesund und API- sowie Worker-Image stimmen überein.",
+      "id": "production-commit-readback"
+    },
+    {
+      "assertion": "Der seit 2026-07-25 wartende Job für Knoten a031b7bf-f38e-42b8-aa8b-ca304ecd492f wird ohne direkte Tabellenmanipulation durch den reparierten Worker verarbeitet; /api/search?q=abendessen liefert danach den öffentlichen Knoten im hybriden Modus der aktiven Generation.",
+      "id": "pending-job-recovery"
+    },
+    {
+      "assertion": "Die öffentliche Kartenoberfläche findet den reparierten Knoten serverseitig, zeigt maschinell berechnete ähnliche Knoten ausdrücklich nicht als Fäden oder kuratierte Beziehungen und erzeugt beim Navigieren keine Mutation.",
+      "id": "similar-nodes-live-proof"
+    },
+    {
+      "assertion": "Commitrollback, Worker-Neustart und regenerierbarer Suchprojektions-Rebuild bleiben möglich; bei fehlgeschlagenem Post-Deploy-Beweis wird nicht manuell an domain_nodes oder Suchtabellen vorbeikorrigiert.",
+      "id": "rollback-and-rebuild"
+    },
+    {
+      "assertion": "SemantAH wird weder deaktiviert, archiviert noch aus Initiativen oder Betriebsreferenzen entfernt.",
+      "id": "no-semantah-effect"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    },
+    {
+      "isolation": "namespace",
+      "mode": "exclusive",
+      "resource": "runtime.wg-prod-1"
+    }
+  ],
+  "depends_on": [
+    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T012"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "T008-Liveabnahme am 26. Juli 2026. Vor Code-, Deploy- oder Produktionswirkung Claims, fremde Worktrees, PRs, CI, Recovery und exakte Liveidentität frisch prüfen. Keine direkte Datenbankkorrektur als Ersatz für den Worker-Fix.",
+      "required_level": "reviewed_plan"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Den produktiven inkrementellen Such-Worker reparieren, indem Modell-Digests im Dauer-Worker nach demselben fail-closed Vertrag wie im Aktivierungspfad normalisiert werden. Anschließend müssen bereits wartende und neu erzeugte öffentliche Knoten commitgebunden verarbeitet werden, ohne die kanonischen domain_nodes-Daten oder Sichtbarkeitsgrenzen zu umgehen.",
+  "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T013",
+  "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
+  "metadata": {
+    "blocks_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T008",
+    "does_not_establish": [
+      "permission to mutate production",
+      "absence of additional worker defects",
+      "T008 completion",
+      "permission for SemantAH retirement"
+    ],
+    "evidence": {
+      "browser_failure_receipt_sha256": "3a4f4ca64e8fe4fae0ac536f95a5649ec67cd45423ab8ebfd57825c9be9610fe",
+      "model_identity_diagnostic_sha256": "aec81d2e76408f9cebc829194f074826edfe981a8e1b97f7b39380eb5938be8d",
+      "runtime_diagnostic_sha256": "dc7096eb9acbd53f15206a8d2e0c63c00bcaf3eca03035379ca25d66d068f6e3"
+    },
+    "observed_generation": "search-gen-2e8358273aa6d41e6a59025985a99738614aba725b8f369b3a54f390f8752e5c",
+    "observed_live_commit": "9fda211859e0cdca9decf8e159ea6a630c4ea086",
+    "observed_node_id": "a031b7bf-f38e-42b8-aa8b-ca304ecd492f",
+    "observed_symptom": "Public node abendessen exists in /api/nodes but /api/search?q=abendessen returns no item; its active-generation job remains pending with attempt_count=0 and no projection.",
+    "observed_worker_state": "Container is running on the same image as API, but its recent log contains only search_worker=waiting_for_pinned_model.",
+    "root_cause": "Ollama reports digest without sha256: prefix while WELTGEWEBE_SEARCH_MODEL_REVISION includes the prefix. Activation normalizes both values; search-worker-loop.sh compares them literally, so provider_ready never succeeds.",
+    "source": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T008 live acceptance 2026-07-26",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-107d2a8f4e36b78f70b4eb02",
+      "event_id": 1265,
+      "event_created_at": "2026-07-26T21:35:55.897035Z",
+      "request_sha256": "7e5172811d3ec4071eda94c839bf6bdb89a7ebb2081cc349d8a8922c8bbab106",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "production-runtime-diagnostic",
+        "locator": "wg-prod-1:weltgewebe-search-worker-1; active generation search-gen-2e8358273aa6d41e6a59025985a99738614aba725b8f369b3a54f390f8752e5c; live commit 9fda211859e0cdca9decf8e159ea6a630c4ea086",
+        "observed_at": "2026-07-26T21:30:00Z",
+        "sha256": "aec81d2e76408f9cebc829194f074826edfe981a8e1b97f7b39380eb5938be8d"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 69
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "rust",
+    "shell",
+    "semantic-search",
+    "runtime-observability",
+    "postgresql",
+    "deployment",
+    "recovery",
+    "authorization",
+    "privacy",
+    "testing",
+    "grabowski"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "note": "Der Befund stammt aus aktueller Produktionsruntime, Datenbankzustand und öffentlichen Suchantworten; Repoanalyse dient der Ursachenbindung.",
+    "skip_reason": "live_first_primary",
+    "task_profile": "security_or_runtime_change"
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Such-Worker-Digestvergleich normalisieren und wartende Projektionen nachziehen"
+}

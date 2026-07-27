@@ -67,11 +67,71 @@
     ],
     "observed_annotation": "The job was not started because recent account payments have failed or your spending limit needs to be increased.",
     "does_not_establish": [
-      "current payment state",
-      "permission to change billing",
-      "workflow correctness",
-      "test success",
-      "need to alter repository visibility"
-    ]
+      "which historical operator or GitHub-side event cleared the temporary account restriction",
+      "that future account, quota or runner-capacity failures are impossible",
+      "authorization for future paid GitHub Actions usage"
+    ],
+    "operator_intake": {
+      "candidate_id": "candidate-dd9cfd8ce12412ba1c53e70a",
+      "event_id": 1445,
+      "source_locator": "/home/alex/.local/state/grabowski/evidence/operator-ecosystem-redundancy-t020-billing-proof-20260727T195300Z.json",
+      "source_sha256": "62f00577f8c70b1af26c26bd4d4f88cbce8dd01025a1117fc214039a3a7bac8b",
+      "source_freshness": "digest-bound"
+    },
+    "current_evidence_assessment": {
+      "observed_at": "2026-07-27T20:40:00Z",
+      "status": "partially_satisfied",
+      "evidence_path": "/home/alex/.local/state/grabowski/evidence/operator-ecosystem-redundancy-t020-billing-proof-20260727T195300Z.json",
+      "evidence_sha256": "62f00577f8c70b1af26c26bd4d4f88cbce8dd01025a1117fc214039a3a7bac8b",
+      "prior_runner_evidence_sha256": "505f93f063bd9d4def5b6e35debd57fe7b75a996962d59d311ccbd2e6ae59fca",
+      "historical_failure": {
+        "workflow_run_id": 29144599089,
+        "job_id": 86523860200,
+        "created_at": "2026-07-11T07:30:23Z",
+        "executed_steps": 0,
+        "logs_available": false,
+        "classification": "account-level pre-run billing or spending-control failure"
+      },
+      "current_runner_proof": {
+        "repository": "heimgewebe/infra",
+        "pull_request": 139,
+        "workflow_run_id": 30224069380,
+        "job_id": 89851328480,
+        "created_at": "2026-07-26T22:54:03Z",
+        "runner": "heim-pc-infra-ci-isolated",
+        "runner_version": "2.336.0",
+        "executed_real_steps": true,
+        "logs_available": true,
+        "conclusion": "success"
+      },
+      "current_billing_proof": {
+        "account": "alexdermohr",
+        "plan": "GitHub Free",
+        "next_payment_due": "none shown",
+        "actions_budget_usd": 0,
+        "stop_usage_when_budget_reached": true,
+        "july_2026_gross_actions_usage_usd": 2.44,
+        "july_2026_included_usage_discount_usd": 2.44,
+        "july_2026_actions_billed_usd": 0
+      },
+      "security_log_check": {
+        "range": "2026-07-01..2026-07-27",
+        "actions_checked": [
+          "payment_method",
+          "billing.change_email"
+        ],
+        "matching_events": 0,
+        "interpretation": "No operator-bound payment-method or billing-email event was available to prove the historical clearing action."
+      },
+      "acceptance_status": {
+        "root-cause": "partially_satisfied: the account-level failure class is proven, but the exact underlying account event is not reconstructed",
+        "minimal-account-effect": "not_satisfied: the exact necessary historical operator correction is not evidenced",
+        "runner-proof": "satisfied",
+        "ci-result": "satisfied",
+        "affected-pr-recheck": "satisfied"
+      },
+      "remaining_gap": "Operator-bound evidence of the exact historical billing or spending-limit correction, or a separately reviewed contract decision that current null-effect evidence is sufficient.",
+      "recommended_next_action": "Keep T020 nonterminal. Obtain the missing account-effect evidence; otherwise revise the acceptance contract explicitly rather than interpreting it away."
+    }
   }
 }

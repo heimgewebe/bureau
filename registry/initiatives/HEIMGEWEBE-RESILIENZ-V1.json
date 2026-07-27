@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "HEIMGEWEBE-RESILIENZ-V1",
   "title": "Heimgewebe resilience architecture",
-  "state": "active",
+  "state": "waiting",
   "commitment": "now",
   "goal": "Implement the ten validated ecosystem-derived resilience mechanisms across the existing Heimgewebe truth owners without creating a new control plane, status truth or autonomous authority.",
   "completion": [

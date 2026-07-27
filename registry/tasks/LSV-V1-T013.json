@@ -1,0 +1,141 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Das kanonische Knotenmodell besitzt eine streng validierte Lebenszyklusklassifikation mit mindestens active, transition, reference, archived und retired sowie expliziten Evidenz- und Prüfzeitbindungen; diese Felder begründen ausdrücklich keine Runtime- oder GitHub-Wahrheit.",
+      "evidence_type": "object",
+      "id": "lifecycle-contract",
+      "verifier": "Systemkatalog schema, validator and negative tests"
+    },
+    {
+      "assertion": "Die projektierten Klassifikationen stimmen mit den benannten Primärquellen überein: Heimlern ist archived_reference; Leitwerk ist eine normative Referenz mit laufender Archivmigration; Heimgeist und Agent Control Surface sind migrationsgebundene Kompatibilitätsflächen; Heimserver besitzt nach der Infra-Verfassung keine aktive Autorität. Noch nicht konvergierte Live-Reste werden als Drift sichtbar und nicht als aktive Semantik übernommen.",
+      "evidence_type": "object",
+      "id": "current-classifications",
+      "verifier": "GitHub, Infra constitution, Bureau T032/T036/T037 and Systemkatalog diff readback"
+    },
+    {
+      "assertion": "Leitstand weist technische Artefaktintegrität, semantische Prüffrische und einen gegebenenfalls vorhandenen Live-Abgleich als getrennte Zustände aus. Ein hash- und alterskonformes Artefakt darf nicht mehr pauschal als inhaltlich aktuell bezeichnet werden.",
+      "evidence_type": "object",
+      "id": "freshness-separation",
+      "verifier": "controller/view tests and live HTML readback"
+    },
+    {
+      "assertion": "Mermaid-Projektion und Leitstand unterscheiden Lebenszyklen semantisch und zugänglich; aktive Komponenten bleiben die Standardorientierung, Referenz-, Archiv- und Retirement-Knoten sind erkennbar, filterbar und nicht gleichgewichtet. Tastatur-, Mobil- und Desktopbedienung bleiben regressionsgebunden.",
+      "evidence_type": "object",
+      "id": "lifecycle-visualization",
+      "verifier": "deterministic render goldens and build-bound browser receipts"
+    },
+    {
+      "assertion": "Beziehungsstabilität wie stable, bounded oder related bleibt von der Lebenszyklus- beziehungsweise Betriebsaktivität der beteiligten Knoten getrennt; Tests verhindern, dass eine stabile historische Beziehung einen aktiven Betriebszustand suggeriert.",
+      "evidence_type": "boolean",
+      "id": "edge-semantics-separated",
+      "verifier": "registry and renderer negative tests"
+    },
+    {
+      "assertion": "updatedAt-, observedAt- und Organisationsscope-Metadaten werden gegen die tatsächlich geänderten Quellen erneuert und durch CI gegen widersprüchliche Archiv- oder Lebenszyklusinformationen geprüft.",
+      "evidence_type": "object",
+      "id": "source-metadata-current",
+      "verifier": "organization-scope and semantic drift checks"
+    },
+    {
+      "assertion": "Systemkatalog bleibt Autorität für Zweck, Zuständigkeit und stabile Beziehungen; GitHub, Infra, Grabowski, systemd und Bureau bleiben Primärquellen ihrer Zustände. Es entsteht weder eine zweite Runtime-Wahrheit noch ein mutierender Leitstand-Pfad.",
+      "evidence_type": "boolean",
+      "id": "observer-boundary",
+      "verifier": "architecture review and explicit non-claims"
+    },
+    {
+      "assertion": "Nach Merge und nach Abschluss von LSV-V1-T011 wird der exakte Systemkatalog- und Leitstand-Head ausgerollt; /ecosystem-map zeigt die getrennten Freshness- und Lebenszykluszustände und bleibt bei fehlender oder widersprüchlicher Evidenz fail-closed beziehungsweise sichtbar degradiert.",
+      "evidence_type": "object",
+      "id": "live-release-proof",
+      "verifier": "post-merge deployment receipt and HTTP/browser readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.systemkatalog"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.leitstand"
+    }
+  ],
+  "depends_on": [
+    "LSV-V1-T011"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die spätere Umsetzung ändert ausschließlich versionierte Systemkatalog- und read-only Leitstand-Quellen in isolierten Worktrees. Live-Runtime, GitHub-Archivierung, Fleet, Units und Bureau-Taskzustände bleiben getrennte Wirkungen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/systemkatalog",
+      "repo:/home/alex/repos/leitstand"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/systemkatalog"
+  },
+  "goal": "Die Systemkatalog-Ökosystemkarte soll stabile Systemsemantik weiterhin kanonisch abbilden, aber Lebenszyklus, Beziehungsstabilität, technische Artefaktintegrität, semantische Prüffrische und optionalen Live-Abgleich nicht länger vermischen. Dafür wird das Systemkatalog-Knotenmodell um eine explizite, evidenzgebundene Lebenszyklusklassifikation erweitert; Mermaid-Projektion und Leitstand stellen aktive, in Migration befindliche, referenzierte, archivierte und außer Betrieb befindliche Komponenten sichtbar und filterbar dar. Der Leitstand bezeichnet unveränderte Hashes nicht mehr pauschal als inhaltliche Aktualität. Primärquellen für GitHub-, Runtime-, Infrastruktur- und Taskzustand bleiben unangetastet.",
+  "id": "LSV-V1-T013",
+  "initiative": "LEITSTAND-VISUAL-LAYER-V1",
+  "metadata": {
+    "alternative_axis": "Die Karte kann entweder als zeitlose Semantikkarte mit separatem Live-Overlay oder als gemischte Statuskarte ausgebaut werden. Bevorzugt wird die erste Variante, weil sie Autoritätsgrenzen erhält und nur die Darstellungsachsen trennt.",
+    "does_not_establish": [
+      "current_runtime_health",
+      "repository_archive_authority",
+      "fleet_or_unit_mutation_authority",
+      "bureau_task_completion",
+      "semantic_correctness_from_hash_alignment"
+    ],
+    "existing_coverage": {
+      "heimlern": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T036 verified",
+      "heimserver": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T032 blocked; Infra PR #131 already merged, Fleet and ACS still drifted",
+      "leitwerk": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T037 planned"
+    },
+    "observed_at": "2026-07-26T08:46:02+02:00",
+    "source": "operator_live_audit",
+    "source_candidate": "candidate-d0406f4620ddc68ead5f430c",
+    "source_event": 1196,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-d0406f4620ddc68ead5f430c",
+      "event_id": 1196,
+      "event_created_at": "2026-07-26T06:47:56.000195Z",
+      "request_sha256": "5423fcfc0b8c3d7b0f44196524dd6550be524f37896f7d724f196b6f3de559b0",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "operator_live_audit",
+        "locator": "live-audit:systemkatalog@7447da1f9b481d31fecd28a385ac1c3e27a22bbb+leitstand@a85c14d0df83da61c68e43fe814a19d483f3f6f2+map@27924b7cd1b2506dae121052efb4a195804d1554+infra-constitution@sha256:9ddacbc7d8cb4529e6f682702373b694a81ae34363e077b0cda25defdd2f58bf+github-observed:2026-07-26T08:46:02+02:00",
+        "observed_at": "2026-07-26T08:46:02+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 86
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "rollback": {
+    "strategy": "Knotenvertrag, Renderer und Leitstand-Darstellung gemeinsam auf den vorherigen commitgebundenen Artefaktvertrag zurücksetzen. Primärquellen, bestehende Archivierungen, Fleet, Units und Bureau-Aufgaben werden durch den Rollback nicht verändert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Ökosystemkarte um Lebenszyklus- und Semantik-Freshness erweitern"
+}

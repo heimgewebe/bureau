@@ -57,23 +57,24 @@
   "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T023",
   "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
   "metadata": {
+    "completed_at": "2026-07-27",
     "does_not_establish": [
       "permission to change the visible Commonworld product",
       "permission to remove public project JSON files or no-JS output",
       "permission to weaken smoke ordering or fresh-result binding",
       "permission to reuse T019 review evidence after any diff change"
     ],
-    "queue_mutated": false,
-    "registered_at": "2026-07-20",
-    "source": "ChatGPT operator request: Commonworld catalog delivery hardening after T019 review",
-    "source_pr": 119,
-    "source_repository": "heimgewebe/commonworld",
     "operator_intake": {
-      "schema_version": 1,
       "candidate_id": "candidate-97f35c41a2f9eb8d947652c7",
-      "event_id": 840,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
       "event_created_at": "2026-07-20T14:23:04.661778Z",
+      "event_id": 840,
       "request_sha256": "b957cae459539fda295cfbb0df3c88ba9dc1ff939b5a7c1885fec61da02bb4ef",
+      "schema_version": 1,
       "source": {
         "does_not_establish": [
           "source_content_identity"
@@ -83,13 +84,143 @@
         "locator": "chatgpt:commonworld-catalog-delivery-hardening-after-t019:2026-07-20",
         "observed_at": "2026-07-20T15:00:00+02:00",
         "sha256": null
+      }
+    },
+    "queue_mutated": false,
+    "registered_at": "2026-07-20",
+    "source": "ChatGPT operator request: Commonworld catalog delivery hardening after T019 review",
+    "source_pr": 119,
+    "source_repository": "heimgewebe/commonworld",
+    "verification": {
+      "acceptance": {
+        "canonical-smoke-plan": "PASS",
+        "evidence-bounded": "PASS",
+        "fresh-bootstrap-budget": "PASS",
+        "full-validation": "PASS",
+        "live-readback": "PASS",
+        "migration-thresholds-documented": "PASS",
+        "missing-scenario-diagnostics": "PASS",
+        "robust-compile-measurement": "PASS"
       },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
-    }
+      "authority": "commonworld-project-operator",
+      "bureau_closeout_validation": {
+        "command": "make validate",
+        "finalization_receipt_sha256": "5963d771e6bcce9a04df2f522da4e3fbe81d614b2358afcac7ceef3fd6c67460",
+        "job_id": "3d0eb1356a61",
+        "payload_sha256": "1ee461575a6428f4a152bbb169df99867db32b1b964cd0c0a607543ace349933",
+        "registry_check": "valid: True",
+        "result": "PASS",
+        "systemkatalog_boundary": "PASS",
+        "tests": "833/833 PASS"
+      },
+      "current_main_revalidation": {
+        "checked_at": "2026-07-27T11:35:28.318960Z",
+        "current_bootstrap_gzip_bytes": 20239,
+        "current_main": "a0d27f5bbc12a69917e369d4013d31b371f36bda",
+        "current_main_codeql_run_id": 30260640826,
+        "current_main_pages_run_id": 30260640438,
+        "current_main_production_readback_run_id": 30260641047,
+        "current_main_validate_run_id": 30260641307,
+        "current_public_catalog_project_json_available": true,
+        "current_startup_project_json_requests": 0,
+        "focused_catalog_delivery_budget_tests": "20/20 PASS",
+        "full_validation": "PASS",
+        "implementation_merge_is_ancestor": true,
+        "javascript_tests": "109/109 PASS",
+        "python_tests": "517/517 PASS"
+      },
+      "decision": "catalog_delivery_budget_and_smoke_orchestration_hardened_merged_deployed_live_verified_and_current_main_revalidated",
+      "diff_bytes": 58024,
+      "diff_sha256": "6053fcd6ce94588e8e7d6f81d8f1ddd55552c824c91dae11d5d7d4f04193c3dc",
+      "explicit_nonclaims": [
+        "The original implementation measurements establish a universal performance ranking across all devices or networks.",
+        "Current catalogue growth may continue without future remeasurement.",
+        "The static product has a backend or runtime write API.",
+        "A later source or browser failure is impossible.",
+        "The prior Codex review on ccbb1682 is exact-head evidence for b5431f1."
+      ],
+      "implementation_measurement": {
+        "bootstrap_gzip_bytes": 20526,
+        "catalog_entries": 41,
+        "desktop_runtime_ready_ms_4x_cpu": 905,
+        "dom_nodes": 1687,
+        "first_party_startup_requests": 9,
+        "first_party_surface_sha256": "3101b598fb7035170a477df3c06a840fbc557f0a0a6900c67479a1098e37ab3e",
+        "max_bootstrap_gzip_bytes": 32768,
+        "mobile_runtime_ready_ms_4x_cpu": 899,
+        "startup_project_json_requests": 0,
+        "warn_bootstrap_gzip_bytes": 28672
+      },
+      "implementation_pr": 120,
+      "merge_commit": "3c11f78aa659148d74abd67b10e0882752287fc5",
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4",
+      "postmerge_ci": {
+        "codeql_run_id": 29756581496,
+        "head_sha": "3c11f78aa659148d74abd67b10e0882752287fc5",
+        "pages_build_deployment_run_id": 29756580379,
+        "production_readback_run_id": 29756582271,
+        "result": "PASS",
+        "validate_run_id": 29756581981
+      },
+      "pr_base": "554f39f4a835e3a807a5f3e52c9d54709a31b900",
+      "pr_head": "b5431f1ae8e4be3b086e7e4a4ffcd5263e7e7163",
+      "pre_closeout_task_sha256": "b4b2291cdb30989ed43bef692dff23ec3e1aa295c51cd65a9f3bbbd5c63ab4c6",
+      "premerge_ci": {
+        "blocked_catalog_requests": 0,
+        "canonical_browser_smoke": "PASS",
+        "codeql_head_matches_pr_head": true,
+        "codeql_head_sha": "b5431f1ae8e4be3b086e7e4a4ffcd5263e7e7163",
+        "codeql_run_id": 29755832600,
+        "codeql_run_url": "https://github.com/heimgewebe/commonworld/actions/runs/29755832600",
+        "head_matches_pr_head": true,
+        "head_sha": "b5431f1ae8e4be3b086e7e4a4ffcd5263e7e7163",
+        "javascript_tests": "69/69 PASS",
+        "public_browser_scenarios": "26/26 PASS",
+        "python_tests": "468/468 PASS",
+        "result": "PASS",
+        "validate_run_id": 29755837695,
+        "validate_run_url": "https://github.com/heimgewebe/commonworld/actions/runs/29755837695"
+      },
+      "production_verification": {
+        "api_runtime": false,
+        "build_bound_marker": {
+          "deployed_asset_sha256": "564806f979f89840cf8ab07343d8202d0bfaecbe502ca9c16b1413e2624c4464",
+          "deployed_asset_url": "https://commonworld.net/assets/commonworld-app.js",
+          "deployment_readback_run_id": 29756582271,
+          "marker_name": "catalogDelivery",
+          "marker_value": "build-bound-bootstrap",
+          "observation": "The post-merge production readback recorded the deployed asset digest; it exactly matches the merge-commit file containing elements.stage.dataset.catalogDelivery = build-bound-bootstrap.",
+          "source_and_deployed_asset_match": true,
+          "source_commit": "3c11f78aa659148d74abd67b10e0882752287fc5",
+          "source_file_sha256": "564806f979f89840cf8ab07343d8202d0bfaecbe502ca9c16b1413e2624c4464",
+          "source_line": 370,
+          "source_path": "assets/commonworld-app.js"
+        },
+        "catalog_access": "static_read_only",
+        "catalog_entry_count": 41,
+        "catalog_http_status": 200,
+        "deployment_id": 5524564492,
+        "deployment_sha": "3c11f78aa659148d74abd67b10e0882752287fc5",
+        "deployment_state": "success",
+        "exact_public_files": "3/3 PASS",
+        "proposal_http_status": 200,
+        "public_url": "https://commonworld.net/",
+        "readback_receipt_id": "commonworld.pages-production-readback.v1",
+        "readback_verdict": "pass",
+        "root_http_status": 200,
+        "write_path": false
+      },
+      "repository": "heimgewebe/commonworld",
+      "review_evidence": {
+        "exact_head_self_review": "PASS on b5431f1ae8e4be3b086e7e4a4ffcd5263e7e7163",
+        "final_binding_comment": "https://github.com/heimgewebe/commonworld/pull/120#issuecomment-5024080805",
+        "prior_codex_review": "Reviewed ccbb1682b7a135d357e3f5f3ec7bad4aeb19fae9 before the final ordered rebase; explicitly obsolete and not used as exact-head merge evidence.",
+        "self_review_sha256": "236ace2b2f5c3dac48f0560b22445069eaa271f9a5b9fdfc0a5fa49f15823303"
+      },
+      "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T023",
+      "task_sha256": "e2b23ea48f92ea149f3b5bef464d6053107a84d6130be37e8e185e757a43f0d1"
+    },
+    "verified_at": "2026-07-27T11:35:28.318960Z"
   },
   "priority": {
     "lane": "now",
@@ -103,6 +234,6 @@
     "browser"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Harden catalog delivery budget and smoke orchestration"
 }

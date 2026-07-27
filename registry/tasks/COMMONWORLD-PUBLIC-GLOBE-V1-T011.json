@@ -1,22 +1,217 @@
 {
-  "schema_version": 1,
-  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
-  "claims": [
+  "acceptance": [
     {
-      "resource": "repo.commonworld",
-      "mode": "write",
-      "isolation": "worktree"
+      "assertion": "Checkout, Python and Node setup use current official releases whose bundled runtime is Node.js 24-native.",
+      "id": "official-actions"
+    },
+    {
+      "assertion": "Pull-request and main validation complete without the Node.js 20 deprecation annotation.",
+      "id": "warning-removed"
+    },
+    {
+      "assertion": "Deterministic build, full validation, real browser smoke and Pages deployment remain green with no public artifact drift.",
+      "id": "behavior-preserved"
     }
   ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [],
   "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/commonworld",
     "approval": {
       "action_class": "repository_mutation",
-      "required_level": "operator",
-      "note": "Use official Node-24-native GitHub Action releases. Do not interrupt the strict T006-T010 product chain unless the warning becomes a failing required check."
-    }
+      "note": "Use official Node-24-native GitHub Action releases. Do not interrupt the strict T006-T010 product chain unless the warning becomes a failing required check.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Remove the Node.js 20 deprecation annotation using current official action releases without changing Commonworld build or deployment behavior.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T011",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "completed_at": "2026-07-27",
+    "does_not_establish": [
+      "current CI failure",
+      "runtime defect",
+      "permission to interrupt T006-T010",
+      "future action-version compatibility"
+    ],
+    "observed_warning": "Node.js 20 is deprecated; checkout@v4, setup-node@v4 and setup-python@v5 were forced to run on Node.js 24.",
+    "queue_mutated": false,
+    "registered_at": "2026-07-13",
+    "scheduling_boundary": "planned_later_nonblocking_outside_t005_t010_chain",
+    "source": "Commonworld main validate run 29265256794 annotation after T005 merge",
+    "source_merge_commit": "face76805c1e7f4c424efc5f1b6ec337831de7ae",
+    "verification": {
+      "acceptance": {
+        "behavior-preserved": "PASS",
+        "official-actions": "PASS",
+        "warning-removed": "PASS"
+      },
+      "authority": "commonworld-project-operator",
+      "behavior_preservation": {
+        "exact_sha_checkout": true,
+        "node_version": "22",
+        "npm_cache": true,
+        "product_files_changed": 0,
+        "production_receipt_upload": "archived_default",
+        "public_artifact_drift_observed": false,
+        "python_version": "3.12"
+      },
+      "bureau_closeout_validation": {
+        "command": "make validate",
+        "finalization_receipt_sha256": "cacba6157197cd58757e7677a2dd8208c10c8fd533b00c459777d0a4fe886acf",
+        "job_id": "9b4f5daa90ad",
+        "payload_sha256": "a85c997851c6b99625d2b9e4c244aa4f6bbec68f90c71364452b40a3626e1e3c",
+        "registry_check": "valid: True",
+        "result": "PASS",
+        "ruff": "PASS",
+        "sqlite_integrity": "ok",
+        "systemkatalog_boundary": "PASS",
+        "tests": "833/833 PASS"
+      },
+      "candidate_reconciliation": {
+        "canonical_closeout_candidate": "candidate-344d34061b4c85ae7b111316",
+        "canonical_event_id": 1399,
+        "ignored_control_marker_events": [
+          1400,
+          1401,
+          1402,
+          1403,
+          1404
+        ],
+        "older_candidate_role": "historical_partial_evidence_not_used_for_final_closeout",
+        "older_pr148_candidate": "candidate-035c5029493083dbf3a92113",
+        "older_pr148_event_id": 1372
+      },
+      "decision": "current_official_node24_action_majors_merged_deployed_and_live_verified",
+      "diff_artifact": {
+        "artifact_id": "e755e6de962a4a9fbe4dbc0f831a1dff",
+        "artifact_receipt_sha256": "d45bfaa44288e295f932b508311d73eb6aa744bfcd876adfd83b4bc23b4fe4cd",
+        "merge_delivery_receipt_sha256": "557344b3bf96f757aac42ed044022d20591fddc6bc7f16fcaa008e0389411a8f",
+        "public_download": "https://gist.githubusercontent.com/alexdermohr/c234ed854a440d2129d3109790580048/raw/da03a330833c25a89c1e73ebf902bc06372b8723/commonworld-pr149-grabowski-exact-diff.txt"
+      },
+      "diff_bytes": 3558,
+      "diff_sha256": "cda20d66d576ca2ea2130df1182653db5575c136c42d9951a8f70faf0f13fac4",
+      "explicit_nonclaims": [
+        "Moving v7 major tags are not immutable third-party supply-chain identities.",
+        "This closeout does not establish compatibility with arbitrary future action releases.",
+        "This closeout does not establish absence of all future GitHub-hosted runner or provider failures.",
+        "The cancelled local Codex process is not used as review evidence."
+      ],
+      "follow_up": {
+        "candidate_id": "candidate-e88ef10c36801f40c28a4ce1",
+        "event_id": 1397,
+        "subject": "immutable full-SHA pinning for third-party Actions"
+      },
+      "implementation_pr": 149,
+      "local_validation": {
+        "browser_smoke": {
+          "bootstrap_gzip_bytes": 20239,
+          "catalog_entries": 65,
+          "finalization_receipt_sha256": "dd4ac34dc18eec84896e446fb9e4349730f512c267d8207accf51a8ab9aa1b94",
+          "job_id": "c9dec79ff373",
+          "payload_sha256": "82f8867ee6a72ec1c3fb4ad2642ff1beea010c9df6e5377060d11bf0d549febf",
+          "result": "PASS",
+          "startup_project_json_requests": 0
+        },
+        "git_diff_check": "PASS",
+        "make_validate": {
+          "finalization_receipt_sha256": "c13e07edf09e5571c2a12f52dd700adcf6a47d88852492fc26b59068d2686b49",
+          "javascript_tests": "109/109 PASS",
+          "job_id": "0aad47f06777",
+          "payload_sha256": "274574bb714c60b25e95bac22ec95a7830c7d276c0c17f7c0764f5ba0665e6e",
+          "python_tests": "517/517 PASS",
+          "result": "PASS"
+        },
+        "targeted_tests": "18/18 PASS",
+        "yaml_parse": "PASS"
+      },
+      "merge_commit": "22cbeec39197fdfd8aa13a554aaab57bbc01e27c",
+      "official_actions": [
+        {
+          "bundled_runtime": "node24",
+          "published_at": "2026-07-20T15:10:05Z",
+          "release": "v7.0.1",
+          "repository": "actions/checkout",
+          "workflow_ref": "actions/checkout@v7"
+        },
+        {
+          "bundled_runtime": "node24",
+          "published_at": "2026-07-20T03:15:01Z",
+          "release": "v7.0.0",
+          "repository": "actions/setup-python",
+          "workflow_ref": "actions/setup-python@v7"
+        },
+        {
+          "bundled_runtime": "node24",
+          "published_at": "2026-07-14T02:46:05Z",
+          "release": "v7.0.0",
+          "repository": "actions/setup-node",
+          "workflow_ref": "actions/setup-node@v7"
+        },
+        {
+          "bundled_runtime": "node24",
+          "published_at": "2026-04-10T17:31:14Z",
+          "release": "v7.0.1",
+          "repository": "actions/upload-artifact",
+          "workflow_ref": "actions/upload-artifact@v7"
+        }
+      ],
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4",
+      "postmerge_ci": {
+        "browser_smoke": "PASS",
+        "catalog_delivery_budget": "PASS",
+        "codeql_run_id": 30278618616,
+        "head_sha": "22cbeec39197fdfd8aa13a554aaab57bbc01e27c",
+        "javascript_tests": "109/109 PASS",
+        "node20_deprecation_mentions": 0,
+        "pages_build_deployment_run_id": 30278618412,
+        "production_readback_run_id": 30278620295,
+        "python_tests": "517/517 PASS",
+        "result": "PASS",
+        "validate_run_id": 30278619875
+      },
+      "pr_base": "399a269fb356ad1991aa86d33d6f4aadbc20d1e3",
+      "pr_head": "015952bef6fb2caa78d5ff94f469b3b5a7bd10fc",
+      "pre_closeout_task_sha256": "5016f79426368e66c09fb2397f01614c63bade22c22507cff10be13619e09987",
+      "premerge_ci": {
+        "codeql_run_id": 30276414491,
+        "head_sha": "015952bef6fb2caa78d5ff94f469b3b5a7bd10fc",
+        "node20_deprecation_mentions": 0,
+        "result": "PASS",
+        "validate_run_id": 30276418449
+      },
+      "production_verification": {
+        "catalog_http_status": 200,
+        "deployment_sha": "22cbeec39197fdfd8aa13a554aaab57bbc01e27c",
+        "deployment_state": "success",
+        "exact_public_files": "3/3 PASS",
+        "proposal_http_status": 200,
+        "readback_verdict": "pass",
+        "root_http_status": 200
+      },
+      "repository": "heimgewebe/commonworld",
+      "review_evidence": {
+        "codex_review_comment": "https://github.com/heimgewebe/commonworld/pull/149#issuecomment-5093047059",
+        "exact_head_self_review": "PASS on 015952bef6fb2caa78d5ff94f469b3b5a7bd10fc",
+        "github_codex_review": "No major issues on reviewed commit 015952bef6",
+        "self_review_comment": "https://github.com/heimgewebe/commonworld/pull/149#issuecomment-5093000723"
+      },
+      "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T011",
+      "task_sha256": "f735ac21260c7aca9f5c10e5a2d22a6ec0ce34a33dc9b527e4af435fa0f19de9"
+    },
+    "verified_at": "2026-07-27T15:19:12Z"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 20
   },
   "required_capabilities": [
     "repository",
@@ -24,41 +219,7 @@
     "shell",
     "grabowski"
   ],
-  "metadata": {
-    "registered_at": "2026-07-13",
-    "source": "Commonworld main validate run 29265256794 annotation after T005 merge",
-    "source_merge_commit": "face76805c1e7f4c424efc5f1b6ec337831de7ae",
-    "queue_mutated": false,
-    "scheduling_boundary": "planned_later_nonblocking_outside_t005_t010_chain",
-    "observed_warning": "Node.js 20 is deprecated; checkout@v4, setup-node@v4 and setup-python@v5 were forced to run on Node.js 24.",
-    "does_not_establish": [
-      "current CI failure",
-      "runtime defect",
-      "permission to interrupt T006-T010",
-      "future action-version compatibility"
-    ]
-  },
-  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T011",
-  "title": "Move Commonworld GitHub Actions to Node-24-native releases",
-  "state": "planned",
-  "goal": "Remove the Node.js 20 deprecation annotation using current official action releases without changing Commonworld build or deployment behavior.",
-  "priority": {
-    "lane": "later",
-    "rank": 20
-  },
-  "depends_on": [],
-  "acceptance": [
-    {
-      "id": "official-actions",
-      "assertion": "Checkout, Python and Node setup use current official releases whose bundled runtime is Node.js 24-native."
-    },
-    {
-      "id": "warning-removed",
-      "assertion": "Pull-request and main validation complete without the Node.js 20 deprecation annotation."
-    },
-    {
-      "id": "behavior-preserved",
-      "assertion": "Deterministic build, full validation, real browser smoke and Pages deployment remain green with no public artifact drift."
-    }
-  ]
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Move Commonworld GitHub Actions to Node-24-native releases"
 }

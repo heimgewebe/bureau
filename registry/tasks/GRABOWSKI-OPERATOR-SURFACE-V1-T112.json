@@ -34,7 +34,7 @@
   "claims": [
     {
       "isolation": "none",
-      "mode": "write",
+      "mode": "exclusive",
       "resource": "repo.grabowski"
     }
   ],

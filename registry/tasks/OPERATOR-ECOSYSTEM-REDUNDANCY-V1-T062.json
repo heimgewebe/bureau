@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T062",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "title": "Leitstand-Lifecycle-Consumer deployen und live verifizieren",
+  "state": "blocked",
+  "goal": "Deploye nach verifiziertem T063-Merge den exakten Leitstand-main-Commit über den kanonischen Releaseadapter und belege per Runtime-, HTTP- und Browser-Readback, dass Lifecycle, technische Freshness und Runtime-Gesundheit getrennt dargestellt werden.",
+  "priority": {
+    "lane": "next",
+    "rank": 85
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand",
+      "repo:/home/alex/repos/systemkatalog",
+      "host:heim-pc"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Authorizes only the exact T063 merge commit to be deployed through scripts/leitstand-release.py after fresh conflict, rollback and source-identity checks. Systemkatalog remains read-only and foreign work must not be interrupted or overridden."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.leitstand",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "repo.systemkatalog",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "exclusive",
+      "isolation": "none"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "runtime"
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T063"
+  ],
+  "acceptance": [
+    {
+      "id": "exact-merge-input",
+      "assertion": "The deployment input is the exact verified T063 merge commit on current main.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "canonical-release-path",
+      "assertion": "Deployment uses scripts/leitstand-release.py and preserves the transactional web and storage-health runtime contract.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "rollback-bound",
+      "assertion": "The exact prior release and rollback path are recorded before cutover.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "runtime-health",
+      "assertion": "Units, release identity, HTTP routes and required health checks are green after cutover.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "browser-truth-readback",
+      "assertion": "The production ecosystem map shows Heimserver as retired or außer Betrieb without presenting that lifecycle as a current runtime failure; filters and source links work.",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "does_not_establish": [
+      "T061_or_T063_verification",
+      "deployment_readiness",
+      "future_runtime_health",
+      "permission_to_mutate_unrelated_services"
+    ]
+  }
+}

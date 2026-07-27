@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "id": "repo.heimserver",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/heimserver",
+  "github_slug": "heimgewebe/heimserver",
+  "grabowski_key": "repo:/home/alex/repos/heimserver",
+  "metadata": {
+    "lifecycle": "retired",
+    "coordination_only": true,
+    "purpose": "Coordinate review, merge, archival and terminal closeout work for the retired Heimserver repository.",
+    "does_not_establish": [
+      "active_host",
+      "active_runtime_role",
+      "fleet_membership",
+      "service_exposure",
+      "execution_authority"
+    ]
+  }
+}

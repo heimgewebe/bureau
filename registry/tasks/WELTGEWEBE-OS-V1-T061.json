@@ -1,0 +1,127 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Auf einem exakten aktuellen Weltgewebe-Head werden für alle blocking Routen der vollständige Initial-Assetgraph, Roh- und gzip-Größe, gemeinsame Assets, routenspezifische Assets, Grenzwert, Restbudget und Messumgebung reproduzierbar erfasst; die PR-#1611-Werte dienen nur als revisionsgebundener Ausgangsbeleg.",
+      "evidence_type": "object",
+      "id": "revision-bound-route-baseline"
+    },
+    {
+      "assertion": "Der kanonische Performancevertrag weist den gemeinsam geladenen JavaScript-Sockel und den zusätzlichen Beitrag jeder Route getrennt aus, ohne doppelt referenzierte Assets mehrfach zu zählen oder gemeinsam genutzte Bytes einer beliebigen Route zuzuschlagen.",
+      "evidence_type": "object",
+      "id": "shared-shell-and-route-delta"
+    },
+    {
+      "assertion": "Die absoluten blocking Grenzen bleiben unverändert, insbesondere 57.000 Byte gzip für /settings. Zusätzlich warnt die Prüfung deterministisch, sobald weniger als 1 KiB oder weniger als 2 Prozent Restbudget verbleiben; künstliche Positiv- und Negativfälle belegen Warnung und harten Fehler getrennt.",
+      "evidence_type": "object",
+      "id": "hard-cap-and-early-warning"
+    },
+    {
+      "assertion": "Die Route /settings besitzt nach der Änderung in mindestens zwei sauberen reproduzierbaren Builds mindestens 1.024 Byte Abstand zur unveränderten Grenze. Die Einsparung entsteht durch begründete Code-Aufteilung, Lazy Loading, Shared-Sockel-Entlastung oder Entfernung tatsächlich unnötiger Bytes, nicht durch Budgeterhöhung, Warnungsunterdrückung, Verhaltenseinbußen oder schwer wartbare Mikroverkürzungen.",
+      "evidence_type": "object",
+      "id": "settings-reserve-without-byte-golf"
+    },
+    {
+      "assertion": "Die Entlastung verschiebt keine initial erforderlichen Bytes ungemessen auf /login, /antraege, /map oder einen nachgelagerten Nutzerpfad. Vorher-Nachher-Belege zeigen absolute und routenspezifische Größen, Requestzahl, Cache-Wiederverwendung und die betroffenen Nutzerreisen.",
+      "evidence_type": "object",
+      "id": "no-budget-displacement"
+    },
+    {
+      "assertion": "Desktop- und Mobilmessungen belegen mindestens Buildgröße, übertragene Initialbytes, LCP, INP beziehungsweise relevante Interaktionslatenz und Zeit bis zur benutzbaren Oberfläche; Einstellungen, Authentifizierung, Garnrollenbearbeitung, Navigation, Fehlerzustände und Wiederanlauf bleiben funktional unverändert oder messbar besser.",
+      "evidence_type": "object",
+      "id": "runtime-and-behavior-proof"
+    },
+    {
+      "assertion": "Vor Merge liegen vollständiger Diff, exakte Base-, Head- und Diffbindung, kanonische Budgetartefakte, zwei saubere Reproduktionsläufe, fokussierte Unit- und Browserprüfungen, unabhängiger Review und grüne Pflichtchecks vor; unbelegte Produktionswirkung wird nicht behauptet.",
+      "evidence_type": "object",
+      "id": "proof-and-release"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T048",
+    "WELTGEWEBE-OS-V1-T059"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 28. Juli 2026 die Registrierung dieses Folgetasks ausdrücklich verlangt. Die Registrierung autorisiert keine unmittelbare Implementierung; diese bleibt an aktuellen Livezustand, isolierten Worktree, exakten Diff, Review, Tests, CI und kostenfreie Ausführung gebunden.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Das blocking Web-Routenbudget so härten, dass gemeinsamer JavaScript-Sockel und routenspezifischer Zusatz getrennt und revisionsgebunden sichtbar werden, knappe Reserven früh warnen und die Einstellungsroute mindestens 1 KiB echte Reserve unter der unveränderten absoluten 57.000-Byte-Grenze besitzt, ohne Nutzerfunktionalität abzubauen oder Lesbarkeit durch Byte-Golf zu verschlechtern.",
+  "id": "WELTGEWEBE-OS-V1-T061",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "deduplication": "Bureau-Assessment: promote, keine exakte Dublette. Manuelle Systemprüfung: T048 besitzt die kanonische Performancewahrheit und T059 die ursachenbezogene Client-Chunk-Optimierung; T061 ist der davon abhängige, engere Vertrag für Entwicklungsreserve, Warnschwellen und Shared-Sockel/Route-Delta. Gemeinsame Codeänderungen sind zusammenzuführen statt parallel zu duplizieren.",
+    "does_not_establish": [
+      "automatic implementation",
+      "task readiness",
+      "queue truth",
+      "claim or dispatch authority",
+      "permission to raise route budgets",
+      "guaranteed production performance improvement"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c74394c50801bd207d6c9342",
+      "event_id": 1544,
+      "event_created_at": "2026-07-28T12:43:03.678309Z",
+      "request_sha256": "1a5435b4fec9f9131c56e681bec41f3d164907c571cfd9d3e6cecdaed8bad7ae",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "pull-request-review",
+        "locator": "github:heimgewebe/weltgewebe#1611@8a34312ded04692f38841d7e56e4e74af084d54e",
+        "observed_at": "2026-07-28T12:38:47Z",
+        "sha256": "343f1092f1b7c6bda31ef5e1ee2a2b65f70efd1615965c37e11d32ef3fa81e74"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-07-28",
+    "source": "operator_followup_from_weltgewebe_pr_1611",
+    "source_base": "277a4cf4b51f05bad8e921ebf7134b13f8e142f8",
+    "source_diff_sha256": "343f1092f1b7c6bda31ef5e1ee2a2b65f70efd1615965c37e11d32ef3fa81e74",
+    "source_head": "8a34312ded04692f38841d7e56e4e74af084d54e",
+    "source_pr": "heimgewebe/weltgewebe#1611"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 51
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "svelte",
+    "typescript",
+    "javascript",
+    "vite",
+    "performance",
+    "browser-e2e",
+    "ci",
+    "observability",
+    "bureau",
+    "grabowski"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "note": "Vor jeder Änderung müssen der aktuelle Assetgraph, die Umsetzung von T048 und T059, alle Routenbudgets, Buildwerkzeuge, Browsermessungen und parallelen Weltgewebe-Arbeiten live geprüft werden; RepoGround ergänzt Navigations- und Aufrufbeziehungen.",
+    "skip_reason": "live_first_primary",
+    "task_profile": "repo_change"
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Routenbudgets mit belastbarer Entwicklungsreserve härten"
+}

@@ -1,0 +1,136 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Candidate Assessment, Publication Preview oder ein gemeinsamer Pre-Effect-Guard liest unmittelbar vor Effekten offene Pull Requests mit PR-Nummer, Base, Head, Registry-Zielpfad und expliziter Task-ID-Bindung; das Ergebnis ist timestamped und revisionsgebunden.",
+      "evidence_type": "object",
+      "id": "open-pr-identity-read"
+    },
+    {
+      "assertion": "Ein offener Pull Request mit derselben Registry-Zieldatei oder Task-ID blockiert vor Workspace-, Lease-, Branch-, Commit-, Push- und PR-Erzeugung und liefert eine typisierte registry_pr_collision mit der kollidierenden PR-Identität.",
+      "evidence_type": "object",
+      "id": "collision-before-effect"
+    },
+    {
+      "assertion": "Semantische Ähnlichkeit, Candidate-Duplikation und exakte Registry-Task-ID-/Zielpfadkollision bleiben getrennte Achsen; eine fachfremde Aufgabe mit derselben Task-ID blockiert dennoch als Identitätskollision, ohne als semantisches Duplikat umgedeutet zu werden.",
+      "evidence_type": "object",
+      "id": "semantic-axis-separated"
+    },
+    {
+      "assertion": "Timeout, 502, unvollständige Pagination oder widersprüchlicher GitHub-Readback erzeugen einen klaren pre_effect_unknown-Zustand und keinen Publikationseffekt; unveränderte eigene Leases werden nur nach belegter Effektfreiheit freigegeben.",
+      "evidence_type": "object",
+      "id": "github-unavailable-fail-closed"
+    },
+    {
+      "assertion": "Die Open-PR-Beobachtung wird unmittelbar vor dem ersten Remote-Effekt erneut gebunden; ein zwischen Preview und Publish entstandener Konflikt stoppt denselben Aufruf ohne Doppelworkspace, Doppelbranch oder Doppel-PR.",
+      "evidence_type": "object",
+      "id": "toctou-revalidation"
+    },
+    {
+      "assertion": "Ein isolierter Regressionstest reproduziert PR #1112/#1118: Candidate Assessment allein sieht keine Registry-Datei in main, ein offener fremder PR beansprucht aber dieselbe Task-ID; der gehärtete Pfad blockiert vor PR-Erzeugung und verändert den fremden PR nicht.",
+      "evidence_type": "object",
+      "id": "live-regression"
+    },
+    {
+      "assertion": "GitHub bleibt nur eine frische Konfliktoberfläche; Bureau Registry und Candidate Store bleiben die einzigen Task- und Candidate-Wahrheiten. Der Guard erzeugt keine neue Queue-, Claim-, Merge- oder Deployment-Autorität.",
+      "evidence_type": "object",
+      "id": "no-second-truth"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T017",
+    "OPERATOR-MACHINE-READABILITY-V1-T022"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Änderung darf nur den Intake-/Publication-Guard und seine Tests härten. Fremde PRs, Branches, Worktrees und Kandidaten werden weder geschlossen noch verändert; unklare GitHub-Readbacks blockieren vor Remote-Effekten.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/operator_intake.py",
+      "path:/home/alex/repos/bureau/tests/test_operator_intake.py",
+      "path:/home/alex/repos/bureau/src/bureau/registry_registration_preflight.py",
+      "path:/home/alex/repos/bureau/tests/test_registry_registration_preflight.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Erweitere den kanonischen Bureau-Operator-Intake-Pfad um eine frische, typisierte Open-PR-Revalidierung, damit dieselbe Registry-Zieldatei oder Task-ID bereits vor Workspace-, Lease-, Branch-, Commit-, Push- oder PR-Erzeugung blockiert. Trenne exakte Task-ID-/Zielpfadkollisionen von semantischer Ähnlichkeit und bleibe bei GitHub-Unverfügbarkeit oder widersprüchlichem Readback fail-closed.",
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T026",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "metadata": {
+    "collision_evidence": {
+      "ci_run": 30339407672,
+      "decision_sha256": "ca6b4ef335aab2777041d8af023bff901837cc584640011eaa2afc262c56c296",
+      "foreign_head": "caeee42a485fb0d83effd2dafdabfbb6cf0e351a",
+      "foreign_pull_request": 1112,
+      "target_path": "registry/tasks/OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T065.json",
+      "withdrawn_head": "76946347979dd235452363e01aed7276047879b7",
+      "withdrawn_pull_request": 1118
+    },
+    "does_not_establish": [
+      "implementation",
+      "merge_readiness",
+      "automatic PR closure",
+      "permission to mutate foreign work",
+      "task readiness",
+      "queue or dispatch authority"
+    ],
+    "existing_contracts": {
+      "candidate_intake": "OPERATOR-MACHINE-READABILITY-V1-T017",
+      "gap": "Neither contract binds fresh open-PR target-path/task-ID truth before first publication effect.",
+      "pre_effect_reconciliation": "OPERATOR-MACHINE-READABILITY-V1-T022"
+    },
+    "friction_event_id": "01f02017654343d6a30d4879441b224b",
+    "registered_at": "2026-07-28T08:00:00Z",
+    "source": "live-operator-intake-collision-pr1112-pr1118",
+    "source_candidate_id": "candidate-58619a8d2b61f2401775664c",
+    "source_event_id": 1518,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-58619a8d2b61f2401775664c",
+      "event_id": 1518,
+      "event_created_at": "2026-07-28T08:07:49.459698Z",
+      "request_sha256": "60a93a41085e4de1ce163dff6cde2822267dd8c87a56ba0e2b0860bc116c1c20",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github-registry-preflight-collision",
+        "locator": "github-run:heimgewebe/bureau#30339407672:pr-1118",
+        "observed_at": "2026-07-28T07:43:00Z",
+        "sha256": "ca6b4ef335aab2777041d8af023bff901837cc584640011eaa2afc262c56c296"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 27
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "bureau",
+    "grabowski",
+    "git",
+    "github"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich den Intake-/Publication-Guard und die zugehörigen Tests. Bestehende Candidates, Proposals, Publication Receipts, PRs und Friktionsbelege bleiben unverändert; bei unklarer GitHub-Phase weiterhin fail-closed stoppen."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Offene Registry-PR-Kollisionen vor Publikation sperren"
+}

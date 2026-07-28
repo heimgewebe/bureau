@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T013",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "hausKI-audio Repository recovery-first archivieren",
+  "state": "planned",
+  "goal": "Nach geschlossenem Alt-Runtimepfad das hausKI-audio-Repository und seine GitHub-/CI-Oberflächen archivieren, aber noch keine lokalen Worktrees entfernen.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T012"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 13
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/hausKI-audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/hausKI-audio",
+      "repo:/home/alex/repos/audio"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Exklusive repositoryseitige Archivierung mit aktuellen Remote-, PR-, Branch-, CI- und Recoverybelegen. Lokale Checkoutentfernung ist T014 vorbehalten."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.hauski-audio",
+      "mode": "exclusive",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.audio",
+      "mode": "read",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "exclusive-repository-authority",
+      "assertion": "Der Lauf besitzt operator-Approval, exklusiven repo.hauski-audio-Claim und frische GitHub-, Git-, PR-, CI-, Task-, Prozess- und Lease-Readbacks.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "terminal-predecessors",
+      "assertion": "T011 und T012 sind terminal erfolgreich und ihre exakten Deltas, Coverage- und Runtime-Closeout-Belege sind unverändert gebunden.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "recovery-refs-first",
+      "assertion": "Vor Remote-Archivierung entstehen dauerhafte Commit-, Branch-, Tag- und Manifestreferenzen mit vollständigem Tree- und Pack-Digest sowie ein geprüfter isolierter Clone-/Restore-Test.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "remote-closeout",
+      "assertion": "Offene PRs, Branchschutz-, CI-, Renovate-/Dependabot- und Dokumentationsoberflächen sind abgeschlossen oder eindeutig historisch; das GitHub-Repository wird nur nach Readback archiviert.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-worktree-removal",
+      "assertion": "Kein lokaler Checkout oder Worktree wird in diesem Task entfernt; T014 besitzt die einzige Cleanup-Autorität.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-media-effect",
+      "assertion": "Aufnahmen, Samples, Masters, Logs und externe Assets bleiben unverändert.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "testing",
+    "rollback",
+    "bureau",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Remote-Archivstatus und repositoryseitige Konfiguration werden aus dem exakten Preimage zurückgestellt; Wiederherstellungsrefs bleiben erhalten."
+  },
+  "metadata": {
+    "candidate_id": "candidate-37653256daef5c13a1563290",
+    "candidate_event_id": 1497,
+    "source_artifact": "/home/alex/.local/state/audio/bureau/2026-07-28-audio-program-reconciliation.v1.json",
+    "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
+    "plan_commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
+    "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc",
+    "does_not_establish": [
+      "Worktree-Cleanup",
+      "Medienlöschung",
+      "zukünftige Remote-Unveränderlichkeit"
+    ]
+  }
+}

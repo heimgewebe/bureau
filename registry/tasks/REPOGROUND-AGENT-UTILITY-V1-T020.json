@@ -1,0 +1,112 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Importe, Aliasbindungen und statisch eindeutige modulqualifizierte Aufrufe wie mcp_tools.find_symbol werden mit quellgebundener Aufrufstelle aufgelöst; dynamische Attribute, Laufzeitdispatch und nicht eindeutige Ziele bleiben sichtbar unaufgelöst oder mehrdeutig.",
+      "id": "qualified-call-resolution"
+    },
+    {
+      "assertion": "Call-Graph-Antworten und Composer-Lanes weisen resolved, ambiguous und unresolved samt Quote, Ursache und taskprofilgebundener Konfidenz aus; unterhalb eines belegten Schwellenwerts erscheint ein deutlicher Vollständigkeitsvorbehalt.",
+      "id": "coverage-confidence-contract"
+    },
+    {
+      "assertion": "Config-, Schema-, Manifest- und Workflow-Änderungen erhalten eigene typisierte Relationsarten und Provenienz. Diese Kanten werden nicht als Python-Aufrufe ausgegeben und ihr Evidenzniveau bleibt getrennt sichtbar.",
+      "id": "config-schema-relations"
+    },
+    {
+      "assertion": "Ein reproduzierbares Goldset misst vor und nach der Änderung Präzision, Recall, Abdeckung und Fehlertypen für direkte, importierte, aliasgebundene, modulqualifizierte, dynamische und mehrdeutige Aufrufe sowie ausgewählte Config-/Schema-Beziehungen.",
+      "id": "graph-goldset"
+    },
+    {
+      "assertion": "Indexgröße, Erstellungszeit, Querylatenz und Falschpositivquote besitzen feste Regressionsgrenzen; Verbesserungen werden gegen das live beobachtete Verhältnis 17.765 von 67.836 aufgelösten Aufrufstellen gebunden berichtet.",
+      "id": "bounded-regressions"
+    },
+    {
+      "assertion": "S0-Aufrufstellen, S1-Ziele und unaufgelöste Referenzen bleiben getrennt. Graphdeckung begründet weder Vollständigkeit noch Laufzeitverhalten, Testgenüge, Änderungswirkung außerhalb der modellierten Relationen oder Merge-Reife.",
+      "id": "truth-boundary"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T013"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Statisch eindeutige modulqualifizierte und aliasgebundene Python-Aufrufe auflösen, verbleibende Graphlücken als explizite Konfidenz- und Abdeckungsgrenzen ausweisen und Config-, Schema- sowie Workflow-Änderungen über eigene typisierte Strukturrelationen in die Wirkungsanalyse einbeziehen.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T020",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "deduplication": {
+      "does_not_duplicate": "Bestehende Aufgaben härten Graphwahrheit, Skalierung und Messung, enthalten aber keinen belegten Vertrag zur Auflösung modulqualifizierter Aufrufe, zu graphweiter Konfidenz oder zu getrennten Config-/Schema-Relationsarten.",
+      "reuses": [
+        "REPOGROUND-AGENT-UTILITY-V1-T006",
+        "REPOGROUND-AGENT-UTILITY-V1-T007",
+        "REPOGROUND-AGENT-UTILITY-V1-T013"
+      ]
+    },
+    "does_not_establish": [
+      "implementation",
+      "higher graph coverage on all repositories",
+      "runtime call truth",
+      "config semantic correctness",
+      "merge readiness"
+    ],
+    "live_evidence": {
+      "ambiguous_call_count": 10,
+      "bundle_manifest_sha256": "8593018b47917ff5a9f4576c87eae68388211b5db65aa9ecac73580aa9242730",
+      "bundle_stem": "heimgewebe__repoground__main-max-260728-1203",
+      "call_count": 67836,
+      "qualified_example": "mcp_tools.find_symbol -> dynamic_attribute_call, unresolved",
+      "repo_commit": "42f1c11afcd105ccb125c90544cdb5842b820485",
+      "resolved_call_count": 17765,
+      "resolved_ratio": 0.2619,
+      "unresolved_call_count": 50061
+    },
+    "registered_from_audit": "Empirische Claude-Code-Auswertung und revisionsgebundener Grabowski-Readback, 2026-07-28",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-e56ab7181be38003e6f3295c",
+      "event_id": 1563,
+      "event_created_at": "2026-07-28T14:46:09.388051Z",
+      "request_sha256": "14dcc0be061b9a136220be5ad3e05cdeb4480958a3de5807c4d734e24fa24c45",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "conversation:repoground-claude-evaluation-2026-07-28",
+        "observed_at": "2026-07-28T13:47:00Z",
+        "sha256": "526d0b90f56d677983fb02453992bebc10608fbd4098ee3d4d04df7833395056"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 68
+  },
+  "required_capabilities": [
+    "repoground",
+    "retrieval-evaluation",
+    "benchmarking",
+    "testing",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Call-Graph-Auflösung, Konfidenz und Config-/Schema-Wirkung härten"
+}

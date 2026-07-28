@@ -9,6 +9,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from .approval import validate_declared_task_approval
 from .core import StateError
 from .github_repository import validate_github_repository_slug
 from .lease_contract import assess_task_broad_bureau_scope
@@ -220,6 +221,8 @@ def evaluate_registration_preflight(
         ),
     )
 
+    approval_contract_errors = validate_declared_task_approval(proposed_task)
+
     reasons: list[str] = []
     if checked_base_sha != current_base_sha_before:
         reasons.append("stale_base")
@@ -233,6 +236,8 @@ def evaluate_registration_preflight(
         and not broad_scope_assessment["allowed"]
     ):
         reasons.append("broad_bureau_scope")
+    if approval_contract_errors:
+        reasons.append("approval_contract_invalid")
     decision = "allow" if not reasons else "block"
     receipt: dict[str, Any] = {
         "schema_version": REGISTRATION_PREFLIGHT_SCHEMA_VERSION,
@@ -249,6 +254,7 @@ def evaluate_registration_preflight(
         },
         "pr_identity": {"number": pr_number, "head_sha": head_sha},
         "collisions": collisions,
+        "approval_contract_errors": approval_contract_errors,
         "semantic_hints": _semantic_hints(proposed_task, canonical_tasks, open_prs),
         "broad_bureau_scope": broad_scope_assessment,
         "decision": decision,

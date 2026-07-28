@@ -1,0 +1,146 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Alle aktuellen, nicht unter docs/archive oder einer ausdrücklich historischen Baseline liegenden hausKI-audio-Verweise im Metarepo werden mit Pfad, Verbraucherklasse, Quellrevision und Entscheidung inventarisiert; bloße Texttreffer begründen keine Migration.",
+      "evidence_type": "object",
+      "id": "current-reference-inventory"
+    },
+    {
+      "assertion": "contracts/audio.events.schema.json und jeder weitere aktive Producer-/Consumervertrag werden nur dann auf audio umgebunden, wenn aktuelle Implementierung oder revisionsgebundene Consumer-Evidenz den neuen Producer tatsächlich belegt; andernfalls bleibt der Vertrag unverändert und wird ausdrücklich als offene oder historische Grenze dokumentiert.",
+      "evidence_type": "object",
+      "id": "producer-consumer-proof"
+    },
+    {
+      "assertion": "Aktuelle AI-Kontexte, Integritätsquellen, Fleet-Leseansichten, Repository-Matrix und weitere operative Verbraucher verweisen entweder auf heimgewebe/audio oder tragen eine explizite, maschinenprüfbare historische Spenderklassifikation.",
+      "evidence_type": "object",
+      "id": "active-consumers-converged"
+    },
+    {
+      "assertion": "Alle betroffenen generierten Leseansichten und semantischen Pins werden ausschließlich aus ihren kanonischen Quellen neu erzeugt; Fleet-, Renovate-, Contract-, Org-Asset- und vollständige Repositorytests sind grün.",
+      "evidence_type": "object",
+      "id": "generated-projections-valid"
+    },
+    {
+      "assertion": "Archive, historische Sync-Logs, zeitgebundene Renovate-Baselines und belegte frühere Producerangaben werden nicht umgeschrieben oder als aktuelle Wahrheit ausgegeben.",
+      "evidence_type": "object",
+      "id": "history-preserved"
+    },
+    {
+      "assertion": "Die Änderung erzeugt weder eine zweite Fleet-, Produkt-, Contract- noch Runtime-Wahrheit und erteilt keine Audio-, Hardware-, Service-, Queue-, Merge- oder Deploymentautorität.",
+      "evidence_type": "object",
+      "id": "no-second-truth"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.metarepo"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.audio"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.hauski-audio"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.chronik"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.hauski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die Umsetzung des livevalidierten Operator-Masterplans beauftragt. Der Task darf ausschließlich aktuelle, nicht archivierte Metarepo-Verweise und eng zugehörige deterministische Projektionen oder Vertragstests ändern. Audio-, Chronik-, HausKI- und hausKI-audio-Repositories werden nur gelesen; Runtime, Hardware, historische Archive und GitHub-Repositoryzustände bleiben unverändert.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/metarepo",
+      "repo:/home/alex/repos/audio",
+      "repo:/home/alex/repos/hausKI-audio",
+      "repo:/home/alex/repos/chronik",
+      "repo:/home/alex/repos/hausKI"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/metarepo"
+  },
+  "goal": "Inventarisiere nach dem Wechsel der kanonischen Produkt- und Fleetwahrheit auf heimgewebe/audio alle aktuellen, nicht archivierten Metarepo-Verweise auf hausKI-audio. Klassifiziere jeden Verweis revisionsgebunden als historische Spenderreferenz, zu audio zu migrierende aktuelle Produktreferenz oder eigenständigen noch belegten Producer-/Consumervertrag. Migriere nur nachgewiesene aktuelle Verbraucher, erhalte echte historische Evidenz und verhindere insbesondere eine unbelegte Umdeutung des audio.events-Vertrags.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T070",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "producer migration readiness",
+      "absence of further text references",
+      "permission to rewrite archives",
+      "runtime correctness",
+      "task readiness",
+      "queue or claim authority"
+    ],
+    "evidence_summary": {
+      "audio_merge": "9ddefba90679adaf20be2e7e152f4d4aea068e77",
+      "metarepo_merge": "64d9193621af6e43ac2260023e7c8429c96e95b2",
+      "sample_current_nonarchive_paths": [
+        "contracts/audio.events.schema.json",
+        "ai-contexts/hausKI-audio.ai-context.yml",
+        "reports/integrity/sources.v1.json",
+        "docs/repo-matrix.md",
+        "fleet/repos.txt",
+        "docs/_generated/fleet.md"
+      ],
+      "systemkatalog_pr": 150
+    },
+    "observed_at": "2026-07-28T22:12:00+02:00",
+    "source": "canonical-audio-transition-consumer-audit",
+    "source_sha256": "440b26317abdac3e2d266c48012a46c053a37e9d5f5ac19b89baf9bbc8331d4f",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-9c1476f79d790f0e2601019a",
+      "event_id": 1588,
+      "event_created_at": "2026-07-28T20:15:59.296878Z",
+      "request_sha256": "c3904ad28a7b068d38be22231786b18f06380144f203c53e0ac47c7dd7e7949a",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-repository-audit",
+        "locator": "github:heimgewebe/metarepo@64d9193621af6e43ac2260023e7c8429c96e95b2#current-hauski-audio-consumer-audit",
+        "observed_at": "2026-07-28T22:12:00+02:00",
+        "sha256": "440b26317abdac3e2d266c48012a46c053a37e9d5f5ac19b89baf9bbc8331d4f"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 70
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "git",
+    "github",
+    "grabowski",
+    "contracts"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich den exakten Metarepo-Implementierungscommit und regeneriere die vorherigen Projektionen. Ändere keine Archive, Audio- oder Consumer-Repositories und stelle keine historisch falschen Producerangaben her."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Aktuelle HausKI-Audio-Verweise nach kanonischem Audio-Wechsel klassifizieren"
+}

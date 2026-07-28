@@ -1,0 +1,122 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der Doctor gibt physisch beobachtete Geräte, gespeicherte Defaults und gewünschte Sollgeräte als getrennte Felder aus; kein gespeicherter Default begründet physische Anwesenheit oder Readiness.",
+      "evidence_type": "object",
+      "id": "truth-axes-separated"
+    },
+    {
+      "assertion": "Bei fehlendem Roland in ALSA und MIDI melden Audio-Doctor und Whale-Doctor konsistent absent beziehungsweise blocked; Regressionstests decken gespeicherte Roland-Defaults ohne physisches Gerät ab.",
+      "evidence_type": "object",
+      "id": "roland-false-positive-regression"
+    },
+    {
+      "assertion": "Jeder als aktuell dokumentierte Profilname ist im kanonischen Profilkatalog ausführbar; production wird entweder vollständig implementiert oder eindeutig als geplant und nicht ausführbar klassifiziert.",
+      "evidence_type": "object",
+      "id": "profile-contract-consistent"
+    },
+    {
+      "assertion": "Ein frischer read-only Lauf bei aktuell abwesendem MOTU M2 und Roland FP-30X meldet keine Aufnahme-, Piano- oder Whale-Readiness und startet keinen Audio-Prozess.",
+      "evidence_type": "object",
+      "id": "fail-closed-live-readback"
+    },
+    {
+      "assertion": "Die vollständigen Audio-Tests, Shell- und Konfigurationsprüfungen sowie ein revisionsgebundenes Self-Review bestehen; vorhandene 102 Tests bleiben mindestens erhalten und werden durch zielgerichtete Regressionen ergänzt.",
+      "evidence_type": "object",
+      "id": "validation-and-review"
+    },
+    {
+      "assertion": "Die Implementierung verändert weder PipeWire-Routing noch Lautstärke, Phantomspannung, Dienste oder angeschlossene Hardware; solche Effekte gehören in einen getrennten live-gebundenen Lauf.",
+      "evidence_type": "object",
+      "id": "no-runtime-effect"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.audio"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die Livevalidierung und einen umsetzbaren Masterplan beauftragt. T066 verändert nur das Audio-Repository; host.heim-pc wird ausschließlich read-only für eine frische ALSA-, PipeWire- und MIDI-Beobachtung reserviert. Routing-, Lautstärke-, Dienst- oder Hardwareeffekte benötigen eine getrennte Freigabe.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio",
+      "host:heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "Trenne im kanonischen Repository heimgewebe/audio physisch beobachtete Geräte, konfigurierte Defaults und gewünschte Sollgeräte, beseitige den Roland-False-Positive im read-only Audio-Doctor und entscheide das dokumentierte, aber nicht ausführbare Profil production durch Implementierung oder eine ausdrücklich nicht-operative Plan-Klassifikation.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T066",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "hardware defect",
+      "future device absence",
+      "low-latency readiness",
+      "production workflow completion",
+      "host mutation authority"
+    ],
+    "evidence_summary": {
+      "audio_doctor_roland": true,
+      "audio_head": "3a8dc7f75c30c700c015ae2e09857790e54d457c",
+      "audio_tests": "102 passed",
+      "motu_live_present": false,
+      "production_plan_result": "unknown profile",
+      "roland_live_present": false,
+      "whale_blocker": "roland-midi-not-found",
+      "whale_doctor_ready": false
+    },
+    "observed_at": "2026-07-28T06:55:00+02:00",
+    "source": "operator-platform-masterplan-v2-live-audit",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-8f0985e98db980b8178602fd",
+      "event_id": 1482,
+      "event_created_at": "2026-07-28T04:58:42.113247Z",
+      "request_sha256": "bc4a4a6d6376e663e4491e81b4779cea5fa524a11e7414dbfea3fc9f2b2a1647",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-system-audit",
+        "locator": "https://github.com/heimgewebe/bureau/blob/702fd606235494c2bd3a151555b2a2b9169f745c/docs/plans/operator-platform-masterplan-v2.md",
+        "observed_at": "2026-07-28T06:55:00+02:00",
+        "sha256": "eec9579e4b82dcc883068b08760244f91747cc4ba530c3ce81545374046a80ab"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 13
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "audio"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich den Audio-Repository-Commit; ändere keine Hardware-, PipeWire-, Dienst- oder Sessionzustände."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Audio-Livewahrheit und Produktionsprofil vertragskonsistent machen"
+}

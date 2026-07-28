@@ -126,7 +126,7 @@ def test_broad_bureau_scope_blocks_registration_preflight() -> None:
     assert result["broad_bureau_scope"]["exception_status"] == "missing"
 
 
-def test_review_gated_repository_wide_exception_allows_preflight() -> None:
+def test_unattested_repository_wide_exception_blocks_preflight() -> None:
     proposed = {
         **task("EXAMPLE-V1-T001"),
         "state": "planned",
@@ -151,11 +151,18 @@ def test_review_gated_repository_wide_exception_allows_preflight() -> None:
         ],
     }
     result = evaluate(proposed_task=proposed)
-    assert result["decision"] == "allow"
+    assert result["decision"] == "block"
+    assert "broad_bureau_scope" in result["reasons"]
     assert result["broad_bureau_scope"]["exception_status"] == (
-        "review-gated-repository-wide-exception"
+        "review-authority-unavailable"
     )
     assert result["broad_bureau_scope"]["exception_approval"]["contract_match"] is True
+    assert (
+        result["broad_bureau_scope"]["exception_approval"][
+            "review_receipt_verifier_available"
+        ]
+        is False
+    )
 
 
 def test_invalid_task_path_and_traversal_are_rejected():

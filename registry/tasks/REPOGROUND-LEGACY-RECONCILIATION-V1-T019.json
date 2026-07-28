@@ -3,8 +3,8 @@
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T019",
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
   "title": "Release-Verifier vollständig ressourcengebunden abschließen",
-  "state": "planned",
-  "goal": "Schließe die Ressourcenhärtung des RepoGround-Release-Verifiers auf Basis des gemergten PR #1113 ab. Begrenze Manifest und SHA256SUMS vor dem Lesen und lehne Symlinks geschlossen ab. Begrenze im source-bound Modus zusätzlich die Gesamtsumme aller Git-Blob-Inhalte vor dem Content-Batch und vergleiche weiterhin höchstens einen Blob gleichzeitig, ohne fremde schmutzige Checkouts zu verändern.",
+  "state": "ready",
+  "goal": "Schließe die Ressourcenhärtung des RepoGround-Release-Verifiers auf Basis des gemergten PR #1113 ab. Bewahre die inzwischen gemergten Grenzen für Manifest, SHA256SUMS, Symlinks, Archive und Git-Blob-Gesamtgröße, halte weiterhin höchstens einen Blob gleichzeitig im Speicher und verwende beim source-bound Vergleich genau einen geöffneten Leser für den bereits materialisierten Tar-Inhalt, ohne fremde schmutzige Checkouts zu verändern.",
   "priority": {
     "lane": "now",
     "rank": 96
@@ -15,7 +15,12 @@
     "working_repository": "/home/alex/repos/repoground",
     "grabowski_resources": [
       "repo:/home/alex/repos/repoground"
-    ]
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "The user request in the active ChatGPT conversation authorizes exactly this isolated RepoGround T019 implementation. The claim must remain task-bound; a complete diff, revision-bound review, green tests and green CI are required before merge."
+    }
   },
   "claims": [
     {
@@ -52,8 +57,13 @@
       "evidence_type": "object"
     },
     {
+      "id": "single-tar-reader",
+      "assertion": "The source-bound repository comparison opens the already materialized Tar content exactly once, reuses validated TarInfo.offset_data positions for all regular entries and preserves all existing size, type, mode, symlink and content checks.",
+      "evidence_type": "object"
+    },
+    {
       "id": "adversarial-regressions",
-      "assertion": "Regression tests cover oversized and symlinked manifest input, oversized SHA256SUMS, aggregate repository-blob overflow before content reads, one-at-a-time blob handling, and the existing archive/PAX/GNU resource-limit cases.",
+      "assertion": "Regression tests cover oversized and symlinked manifest input, oversized SHA256SUMS, aggregate repository-blob overflow before content reads, one-at-a-time blob handling, one Tar reader for source-bound comparison and the existing archive/PAX/GNU resource-limit cases.",
       "evidence_type": "object"
     },
     {
@@ -81,7 +91,27 @@
       "reviewed_at": "2026-07-28",
       "scope": "task-definition-and-live-post-merge-findings",
       "decision": "approved",
-      "basis": "PR #1113 and merge commit 37a83704695532f8c8d17a532709e3de92cafb38 were read back with green post-merge CI. The two remaining limits were reproduced from the merged source while overlapping foreign dirty checkouts and unbound Codex processes prevented a collision-free follow-up patch in the same work unit."
+      "basis": "PR #1113 and merge commit 37a83704695532f8c8d17a532709e3de92cafb38 were read back with green post-merge CI. The original two remaining limits are present on the current RepoGround descendant. A later digest-bound read additionally showed that the source-bound comparison reopens the already materialized Tar file for each regular entry."
+    },
+    "closeout_candidate": {
+      "candidate_id": "candidate-9248b3c145824dd946f1614a",
+      "event_id": 1583,
+      "assessment": "merge",
+      "source_commit": "5318daaad4eceed60cd752eacd057ec74bbd9e49",
+      "source_path": "scripts/release/verify_release_candidate.py",
+      "source_sha256": "3aacae92f6372ed11d86edf8aff23aba995b557865d335651867676b6ad94552",
+      "observed_at": "2026-07-28T19:43:37.661560Z",
+      "does_not_establish": [
+        "task_completion",
+        "claim_authority",
+        "merge_readiness"
+      ]
+    },
+    "activation": {
+      "activated_at": "2026-07-28",
+      "basis": "User requested autonomous selection and implementation of one RepoGround task through Grabowski.",
+      "queue_policy": "skip-blocked",
+      "fallback_after": "REPOGROUND-LEGACY-RECONCILIATION-V1-T004"
     },
     "does_not_establish": [
       "permission_to_modify_foreign_dirty_checkouts",

@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T003",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Deklarativen Profilmanager repositoryseitig implementieren",
+  "state": "planned",
+  "goal": "Den kanonischen Profilkatalog und Doctor/Plan/Diff/Apply/Readback/Rollback-Verträge ohne produktive Anwendung implementieren.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T002"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 3
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Nur Repositoryimplementierung und simulierte Tests. Kein Profil wird auf dem Heim-PC angewendet; Live-Apply ist ausschließlich T007 zugeordnet."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "canonical-catalog",
+      "assertion": "Die bestehenden Profilnamen bleiben kanonisch; production wird im selben Katalog ergänzt und Aliasnamen erzeugen keine zweite Profilwahrheit.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "typed-transition-model",
+      "assertion": "Jedes Profil beschreibt Geräte, Quelle, Senke, MIDI, Monitoring, Rate, Quantum, Resampling, DSP, Kanäle, Limits, Start/Stop, Readback und Rollback.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "plan-diff-purity",
+      "assertion": "Doctor, Plan und Diff sind read-only; Apply benötigt einen exakten, frischen und reviewgebundenen Plan.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "atomic-idempotent-engine",
+      "assertion": "Dateieffekte sind atomar, ein zweiter Apply wäre ohne Zusatzwirkung und Preimage-/Post-State-Receipts sind vollständig spezifiziert.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "recording-protection",
+      "assertion": "Der Vertrag blockiert risikobehaftete Übergänge bei laufender oder unklarer Aufnahme und schützt fremde Prozesse und Routen.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-global-shutdown",
+      "assertion": "Kein Profil stoppt PipeWire global, wenn profilgebundene Eigenschaften oder Routen genügen.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "offline-transition-tests",
+      "assertion": "Alle Profilpaare besitzen deterministische Offline- und Mocktests für Übergang, Abbruch, Idempotenz und Rollback; reale Anwendung bleibt T007.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "testing",
+    "rollback",
+    "bureau",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Der Implementierungsdiff wird repositoryseitig zurückgenommen; produktiver Audiozustand ist unberührt."
+  },
+  "metadata": {
+    "candidate_id": "candidate-7f1bf72946d9225b76d14321",
+    "candidate_event_id": 1492,
+    "source_artifact": "/home/alex/.local/state/audio/bureau/2026-07-28-audio-program-reconciliation.v1.json",
+    "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
+    "plan_commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
+    "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc",
+    "supersedes_candidate_event_id": 1485,
+    "does_not_establish": [
+      "Live-Apply-Autorität",
+      "Profilqualität ohne T007-Laborbeleg"
+    ]
+  }
+}

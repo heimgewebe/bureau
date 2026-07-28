@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "task_id": "SEMANTAH-E2E-PORTABILITY-V1-T001",
+  "source": {
+    "repository": "heimgewebe/semantAH",
+    "pull_request": 258,
+    "pull_request_state": "MERGED",
+    "title": "fix(indexd): make E2E bind address portable",
+    "url": "https://github.com/heimgewebe/semantAH/pull/258",
+    "base_head": "b50bd2813b3f146f5cc51bee2ad6887bfb28ce69",
+    "implementation_head": "b937491bf9a820ac48ca9aa24a1e4db992fdff98",
+    "merge_commit": "9ad2d8e0ad2776bed43802cbd8bf11698292696a",
+    "merged_at": "2026-07-16T06:34:38Z",
+    "pr_diff_sha256": "71c60cd26b1d0d775752c8d2fb2a615a670f6f3f844e1cd203414f25c20c2a5a",
+    "pr_diff_bytes": 11885,
+    "current_main": "d53000a909946a0381a8b365c4af7abd2456e8f6",
+    "current_main_descends_from_merge": true
+  },
+  "github_checks": [
+    {
+      "bucket": "pass",
+      "link": "https://github.com/heimgewebe/semantAH/runs/87551599552",
+      "name": "CodeQL",
+      "state": "SUCCESS",
+      "workflow": ""
+    },
+    {
+      "bucket": "pass",
+      "link": "https://github.com/heimgewebe/semantAH/actions/runs/29476826814/job/87551513708",
+      "name": "repo-root",
+      "state": "SUCCESS",
+      "workflow": "ai-context guard"
+    },
+    {
+      "bucket": "pass",
+      "link": "https://github.com/heimgewebe/semantAH/actions/runs/29476826814/job/87551513745",
+      "name": "templates",
+      "state": "SUCCESS",
+      "workflow": "ai-context guard"
+    },
+    {
+      "bucket": "pass",
+      "link": "https://github.com/heimgewebe/semantAH/actions/runs/29476825768/job/87551513077",
+      "name": "Analyze (actions)",
+      "state": "SUCCESS",
+      "workflow": "CodeQL"
+    },
+    {
+      "bucket": "pass",
+      "link": "https://github.com/heimgewebe/semantAH/actions/runs/29476826876/job/87551513924",
+      "name": "insights-daily-drift",
+      "state": "SUCCESS",
+      "workflow": "Insights Daily Drift"
+    },
+    {
+      "bucket": "pass",
+      "link": "https://github.com/heimgewebe/semantAH/actions/runs/29476826815/job/87551513709",
+      "name": "structure-check",
+      "state": "SUCCESS",
+      "workflow": "Repo structure guard"
+    },
+    {
+      "bucket": "pass",
+      "link": "https://github.com/heimgewebe/semantAH/actions/runs/29476825768/job/87551513066",
+      "name": "Analyze (python)",
+      "state": "SUCCESS",
+      "workflow": "CodeQL"
+    },
+    {
+      "bucket": "pass",
+      "link": "https://github.com/heimgewebe/semantAH/actions/runs/29476825768/job/87551513102",
+      "name": "Analyze (rust)",
+      "state": "SUCCESS",
+      "workflow": "CodeQL"
+    }
+  ],
+  "focused_validation": {
+    "command": [
+      "/usr/bin/env",
+      "PATH=/home/alex/.cargo/bin:/home/alex/.local/bin:/usr/local/bin:/usr/bin:/bin",
+      "/home/alex/.local/bin/pytest",
+      "tests/test_push_index_e2e.py",
+      "-q"
+    ],
+    "result": "passed",
+    "tests_passed": 1,
+    "tests_failed": 0,
+    "duration_seconds": 13.35,
+    "grabowski_task_id": "a88e24e0828a49c9a31c35b2",
+    "unit": "grabowski-task-a88e24e0828a49c9a31c35b2-a1.service",
+    "argv_sha256": "4df9711b7121978397a34cf9cd582b1c9bdfb97da22c3d5129a7d28225ecbed7",
+    "lifecycle_receipt_sha256": "373d9ae78838b7fab33c95bda49f7dc39f11ba91851abbad0fe7a8561aa1bbb8",
+    "observation": "The test passed while port 8080 was already occupied; the helper preserved the foreign owner and indexd used an explicit free loopback port."
+  },
+  "acceptance": {
+    "dynamic-port": {
+      "result": "passed",
+      "evidence": [
+        "tests/test_push_index_e2e.py:99-105 selects a free TCP port",
+        "tests/test_push_index_e2e.py:123-129 propagates that port through base URL and INDEXD_BIND_ADDR",
+        "tests/test_push_index_e2e.py:158 asserts the selected base is not port 8080"
+      ]
+    },
+    "occupied-8080": {
+      "result": "passed",
+      "evidence": [
+        "tests/test_push_index_e2e.py:81-97 occupies port 8080 or preserves an existing foreign owner",
+        "tests/test_push_index_e2e.py:153-158 keeps port 8080 occupied during the E2E flow",
+        "focused validation passed with port 8080 already occupied"
+      ]
+    },
+    "cleanup": {
+      "result": "passed",
+      "evidence": [
+        "tests/test_push_index_e2e.py:108-117 terminates and escalates to kill only for the test-owned process",
+        "the context manager cleanup path executes after the deliberate cleanup sentinel"
+      ]
+    },
+    "readiness": {
+      "result": "passed",
+      "evidence": [
+        "tests/test_push_index_e2e.py:65-77 polls /healthz to a bounded deadline",
+        "tests/test_push_index_e2e.py:138-141 waits for health before yielding the client base URL"
+      ]
+    },
+    "ci-regression": {
+      "result": "blocked",
+      "evidence": [
+        "GitHub code search returned no reference to tests/test_push_index_e2e.py outside the test file.",
+        "The eight checks reported for SemantAH PR #258 are CodeQL, context, drift and structure checks; none executes the focused E2E regression."
+      ]
+    }
+  },
+  "does_not_establish": [
+    "production deployment identity",
+    "that every SemantAH E2E test is port-independent",
+    "that future commits cannot regress the contract without checks failing",
+    "initiative completion",
+    "a required CI guard against reintroducing 127.0.0.1:8080"
+  ],
+  "observed_at": "2026-07-28T05:49:34.373867Z",
+  "closeout_decision": {
+    "result": "blocked",
+    "reason": "Kein verpflichtender SemantAH-Repository- oder GitHub-Check führt tests/test_push_index_e2e.py aus; damit ist das vierte Initiativen-Abschlusskriterium gegen Wiedereinführung der festen Portbindung nicht belegt.",
+    "open_acceptance_id": "ci-regression",
+    "review_thread": "https://github.com/heimgewebe/bureau/pull/1115#discussion_r3663043226",
+    "required_next_action": "Den portablen Push-index-Regressionslauf in einen verpflichtenden SemantAH-CI-Pfad integrieren und einen erfolgreichen, revisionsgebundenen GitHub-Check nachweisen."
+  },
+  "ci_guard": {
+    "result": "not_established",
+    "repository_code_search": {
+      "query": "test_push_index_e2e.py repo:heimgewebe/SemantAH",
+      "matching_paths": [],
+      "observed_at": "2026-07-28T05:49:34.373867Z"
+    },
+    "reported_pull_request_checks_execute_regression": false,
+    "reason": "Kein verpflichtender SemantAH-Repository- oder GitHub-Check führt tests/test_push_index_e2e.py aus; damit ist das vierte Initiativen-Abschlusskriterium gegen Wiedereinführung der festen Portbindung nicht belegt."
+  }
+}

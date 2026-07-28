@@ -11,7 +11,7 @@
       "id": "historical-donor-boundary"
     },
     {
-      "assertion": "Systemkatalog, Leitstand, Bureau-Ressourcen und -Tasks, RepoGround-Publikationen und weitere aktuelle Verbraucher werden auf beide Identitäten geprüft; jeder veraltete Verbraucher wird korrigiert oder an einen bestehenden Folgetask gebunden.",
+      "assertion": "Systemkatalog, Metarepo-Fleet, Leitstand, Bureau-Registry, RepoGround-Publikationen, audio, hausKI-audio und weitere auffindbare aktuelle Verbraucher werden read-only auf beide Identitäten geprüft; T065 korrigiert nur Systemkatalog und bindet jeden sonstigen veralteten Verbraucher an einen bestehenden oder getrennt registrierten repository-spezifischen Folgetask.",
       "evidence_type": "object",
       "id": "consumer-inventory"
     },
@@ -24,6 +24,11 @@
       "assertion": "Die Änderung fügt keinen neuen Dienst, Alias-Daemon, Katalog oder unabhängig mutierbaren Produktstatus hinzu.",
       "evidence_type": "object",
       "id": "no-second-truth"
+    },
+    {
+      "id": "consumer-scope-boundary",
+      "assertion": "Außerhalb von repo.systemkatalog erfolgt keine Repository-Mutation; die vorab deklarierten Read-Claims decken alle im Ziel und in der Acceptance ausdrücklich benannten Verbraucher ab.",
+      "evidence_type": "object"
     }
   ],
   "claims": [
@@ -31,17 +36,53 @@
       "isolation": "worktree",
       "mode": "write",
       "resource": "repo.systemkatalog"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.leitstand"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "component.bureau.registry"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.repoground"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.audio"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.hauski-audio"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.metarepo"
     }
   ],
   "depends_on": [],
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "note": "Der Nutzer hat am 2026-07-28 ausdrücklich klargestellt, dass heimgewebe/audio das aktuelle Repository und hausKI-audio veraltet ist. Änderungen bleiben isoliert, diff- und testgebunden.",
+      "note": "Der Nutzer hat am 2026-07-28 ausdrücklich klargestellt, dass heimgewebe/audio das aktuelle Repository und hausKI-audio veraltet ist. T065 darf nur Systemkatalog schreiben; alle weiteren Verbraucher werden read-only inventarisiert und nötige Korrekturen an bestehende oder getrennt registrierte, repository-spezifisch geclaimte Aufgaben gebunden.",
       "required_level": "operator"
     },
     "grabowski_resources": [
-      "repo:/home/alex/repos/systemkatalog"
+      "repo:/home/alex/repos/systemkatalog",
+      "repo:/home/alex/repos/leitstand",
+      "path:/home/alex/repos/bureau/registry",
+      "repo:/home/alex/repos/repoground",
+      "repo:/home/alex/repos/audio",
+      "repo:/home/alex/repos/hausKI-audio",
+      "repo:/home/alex/repos/metarepo"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -55,13 +96,15 @@
       "queue placement",
       "task readiness",
       "permission to rewrite historical Bureau evidence",
-      "absence of future product renames"
+      "absence of future product renames",
+      "permission to mutate consumer repositories other than systemkatalog"
     ],
     "evidence_summary": {
       "canonical_identity": "audio",
       "stale_current_identity": "hausKI-audio",
       "system_catalog_bindings": 37,
-      "systemkatalog_head": "d7c71c70f104e6cbe3a9340059a1a62f5107a479"
+      "systemkatalog_head": "d7c71c70f104e6cbe3a9340059a1a62f5107a479",
+      "metarepo_fleet_current": "hausKI-audio only; audio absent"
     },
     "observed_at": "2026-07-28T06:55:00+02:00",
     "source": "operator-platform-masterplan-v2-live-audit",
@@ -75,9 +118,9 @@
         "does_not_establish": [],
         "freshness": "digest-bound",
         "kind": "live-system-audit",
-        "locator": "bureau:docs/plans/operator-platform-masterplan-v2.md",
+        "locator": "https://github.com/heimgewebe/bureau/blob/702fd606235494c2bd3a151555b2a2b9169f745c/docs/plans/operator-platform-masterplan-v2.md",
         "observed_at": "2026-07-28T06:55:00+02:00",
-        "sha256": "db2932febca3f4e6f1e52b392ea71283180f945162dcd512f828aa2f34ed465a"
+        "sha256": "eec9579e4b82dcc883068b08760244f91747cc4ba530c3ce81545374046a80ab"
       },
       "does_not_establish": [
         "queue_truth",

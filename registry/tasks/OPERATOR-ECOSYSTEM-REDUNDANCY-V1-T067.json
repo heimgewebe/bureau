@@ -1,0 +1,189 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The immutable T061 and T063 receipt inventory is read revisionsgebunden; missing historical implementation, Captain and independent merge-lease evidence remains explicit and is not synthetically reconstructed or retroactively declared compliant.",
+      "evidence_type": "object",
+      "id": "historical-deviation-bounded"
+    },
+    {
+      "assertion": "The deployment source is exactly 4736c6f0a9aacadc398e0c2752b2697fefb4108c on current origin/main, descending from the T063 merge 9b276fdab1bc6806dbe034e46a6b5115f3aba931 through PR #191 merge 6d7f07fcc1406f40231b07e51e03b7670faead54 and PR #192 merge 4736c6f0a9aacadc398e0c2752b2697fefb4108c.",
+      "evidence_type": "object",
+      "id": "exact-source-chain"
+    },
+    {
+      "assertion": "The already observed 4736c6f0a9aacadc398e0c2752b2697fefb4108c-runtime-v1 release and Grabowski job c76d74d938da are classified as external historical effects and do not establish T062 or T067 execution, verification or authorization.",
+      "evidence_type": "object",
+      "id": "existing-release-classified"
+    },
+    {
+      "assertion": "Before any runtime effect, an exclusive unchanged host:heim-pc lease, fresh Break-Glass authority, conflict and foreign-work checks, and exact source identity are recorded; any ambiguous readback stops fail-closed.",
+      "evidence_type": "object",
+      "id": "fresh-effect-authority"
+    },
+    {
+      "assertion": "Any required cutover uses only scripts/leitstand-release.py with expected-head 4736c6f0a9aacadc398e0c2752b2697fefb4108c and required-ref origin/main; an exact already-running release is never blindly redeployed.",
+      "evidence_type": "object",
+      "id": "canonical-release-path"
+    },
+    {
+      "assertion": "The receipt-bound rollback baseline a7ba8ae0038d3c0c5537b6f19036448732bbef23-runtime-v1, deployment receipt a52f46cc7576584dc142265525d37d493b5c562dde6efbd6486547f2b5fbd20e, prior-state backup manifest 70dc2852e2f599615adcaac0519655648f877ddd8eb4e42544ae85f190fa384f and the non-authoritative stale previous symlink 019db0d598888f33e5ee8aafd8655d69a58252f8-runtime-v1 are explicitly distinguished before effect.",
+      "evidence_type": "object",
+      "id": "rollback-bound"
+    },
+    {
+      "assertion": "Release identity, systemd units, timers, listeners and all health axes are green after the authorized action; the current ecosystem_map_head snapshot_contract_mismatch and HTTP 503 must be resolved by authoritative readback rather than ignored.",
+      "evidence_type": "object",
+      "id": "runtime-health"
+    },
+    {
+      "assertion": "Local and canonical HTTP routes plus a browser readback prove that lifecycle, technical freshness and runtime health remain separate, filters and source links work, and Heimserver lifecycle is not presented as a current runtime failure.",
+      "evidence_type": "object",
+      "id": "http-and-browser-truth"
+    },
+    {
+      "assertion": "Terminal verification is bound to this task revision, plan revision, exact source commit, release identity, deployment or no-op decision, rollback baseline and all acceptance evidence.",
+      "evidence_type": "object",
+      "id": "verification-stamp"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.leitstand"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.systemkatalog"
+    },
+    {
+      "isolation": "none",
+      "mode": "exclusive",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T063"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Authorizes only commit 4736c6f0a9aacadc398e0c2752b2697fefb4108c through scripts/leitstand-release.py after T061 and T063 are verified or their dependency states are revised by a separately authorized reconciliation contract. The already observed release does not count as T062/T067 execution. Foreign work must not be interrupted or overridden.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/leitstand",
+      "repo:/home/alex/repos/systemkatalog",
+      "host:heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand"
+  },
+  "goal": "Ersetze den veralteten T062-Source-Vertrag durch einen revisionsgebundenen Deployment-Vertrag für den frisch geprüften Leitstand-main-Commit 4736c6f0a9aacadc398e0c2752b2697fefb4108c. Bewahre die ungelöste T061/T063-Prozessabweichung ausdrücklich, beziehe die Integrationen aus PR #191 und #192 ein und deploye oder verifiziere das bereits vorhandene Release ausschließlich nach vollständiger Autorisierung, frischer Break-Glass-Evidenz, exklusiver Host-Lease und grünen Runtime-, HTTP- und Browser-Readbacks.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T067",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "current_health": {
+      "canonical_health_http_status": 503,
+      "direct_systemkatalog_main": "d7c71cc1f51a3c319597748cd33392fab9305950",
+      "ecosystem_map_canonical_http_status": 200,
+      "ecosystem_map_local_http_status": 200,
+      "failure_axis": "ecosystem_map_head_snapshot",
+      "failure_reason": "snapshot_contract_mismatch",
+      "local_health_http_status": 503
+    },
+    "deduplication": {
+      "colliding_task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T065",
+      "collision_decision_sha256": "ca6b4ef335aab2777041d8af023bff901837cc584640011eaa2afc262c56c296",
+      "foreign_contract": "audio-product-identity",
+      "foreign_head": "caeee42a485fb0d83effd2dafdabfbb6cf0e351a",
+      "foreign_pull_request": 1112,
+      "withdrawn_own_head": "76946347979dd235452363e01aed7276047879b7",
+      "withdrawn_own_pull_request": 1118
+    },
+    "does_not_establish": [
+      "T061_verification",
+      "T063_verification",
+      "T062_completion",
+      "authorization_of_the_existing_release",
+      "permission_to_mutate_foreign_work",
+      "future_runtime_health"
+    ],
+    "expected_deployment_commit": "4736c6f0a9aacadc398e0c2752b2697fefb4108c",
+    "expected_repository": "heimgewebe/leitstand",
+    "observed_at": "2026-07-28T07:27:56Z",
+    "observed_existing_release": {
+      "deployment_receipt_sha256": "a52f46cc7576584dc142265525d37d493b5c562dde6efbd6486547f2b5fbd20e",
+      "job": "grabowski-job-c76d74d938da",
+      "job_finalization_receipt_sha256": "6b205b12a9e6f7b2392b110ecd213c45ef475e3add00ac94b76023ff1070e554",
+      "release": "4736c6f0a9aacadc398e0c2752b2697fefb4108c-runtime-v1",
+      "status": "observed_external_effect_not_task_execution"
+    },
+    "post_t063_integrations": [
+      {
+        "base_sha": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+        "merge_commit": "6d7f07fcc1406f40231b07e51e03b7670faead54",
+        "merged_at": "2026-07-28T02:55:04Z",
+        "pull_request": 191
+      },
+      {
+        "base_sha": "6d7f07fcc1406f40231b07e51e03b7670faead54",
+        "merge_commit": "4736c6f0a9aacadc398e0c2752b2697fefb4108c",
+        "merged_at": "2026-07-28T04:58:20Z",
+        "pull_request": 192
+      }
+    ],
+    "rollback": {
+      "current_previous_symlink": "019db0d598888f33e5ee8aafd8655d69a58252f8-runtime-v1",
+      "previous_symlink_authority": "not_authoritative_for_this_cutover",
+      "prior_state_backup_manifest_sha256": "70dc2852e2f599615adcaac0519655648f877ddd8eb4e42544ae85f190fa384f",
+      "receipt_bound_prior_release": "a7ba8ae0038d3c0c5537b6f19036448732bbef23-runtime-v1"
+    },
+    "source_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T062",
+    "supersedes_source_contract_after_verification": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T062",
+    "t063_relationship": {
+      "merge_commit": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+      "pull_request": 190,
+      "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T063",
+      "verification_state": "blocked_unreconciled"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-876881bcf3aca55b2727c7e6",
+      "event_id": 1507,
+      "event_created_at": "2026-07-28T07:33:50.620673Z",
+      "request_sha256": "60fecf221d15e958ccddf06ce0f03b2417602a31b3ed3b50fcc8a01df2d0cb6e",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "grabowski-deployment-bureau-and-github-live-readback",
+        "locator": "/home/alex/.local/state/leitstand/releases/receipts/20260728T050257.012682Z-2695642-ac365892-deploy-switch.json",
+        "observed_at": "2026-07-28T07:27:56Z",
+        "sha256": "a52f46cc7576584dc142265525d37d493b5c562dde6efbd6486547f2b5fbd20e"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 86
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "grabowski",
+    "github",
+    "runtime",
+    "browser"
+  ],
+  "schema_version": 1,
+  "state": "blocked",
+  "title": "Leitstand-Source-Drift auf 4736c6f revisionsgebunden deployen"
+}

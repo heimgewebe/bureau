@@ -1,0 +1,87 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The complete failure-safe browser smoke runs and reports independently of transient private-vulnerability-reporting network or service failures in pull-request validation.",
+      "evidence_type": "object",
+      "id": "browser-smoke-independent"
+    },
+    {
+      "assertion": "The standard-library Pages deployment readback runs and writes its receipt before any fallible package-index dependency installation needed only by the security-policy validator.",
+      "evidence_type": "object",
+      "id": "pages-readback-independent"
+    },
+    {
+      "assertion": "Pages and private-reporting production receipts are checked and uploaded independently so loss of either file is explicit and cannot be hidden by a successful multi-path artifact upload.",
+      "evidence_type": "object",
+      "id": "receipt-loss-visible"
+    },
+    {
+      "assertion": "Workflow byte digests and structural validation are updated on the exact reviewed head, and negative tests prove trigger, predecessor, job-skip, inherited-shell and partial-receipt mutations fail closed.",
+      "evidence_type": "object",
+      "id": "workflow-contract-bound"
+    },
+    {
+      "assertion": "Full validation and browser smoke pass on the exact head, followed by green required CI, merge, Pages deployment and public production readback without weakening the disclosure policy or its live Private Vulnerability Reporting gate.",
+      "evidence_type": "object",
+      "id": "closeout-bound"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Improve proof independence only. Preserve the published RFC 9116 surface, tokenless live Private Vulnerability Reporting verification, exact production URL and fail-closed enforcement.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Decouple Commonworld browser, Pages and private-reporting evidence production so one external dependency cannot suppress unrelated diagnostics or silently omit one production receipt.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T030",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "a defect in the published security.txt content",
+      "that Private Vulnerability Reporting is disabled",
+      "permission to weaken any security readback gate",
+      "permission to change hosting, DNS or incur costs",
+      "automatic queue, claim, dispatch, merge or deployment authority"
+    ],
+    "queue_mutated": false,
+    "registered_at": "2026-07-28",
+    "source": "Commonworld PR #152 exact-head review residuals",
+    "source_repository": "heimgewebe/commonworld",
+    "source_pr": 152,
+    "source_review_findings": [
+      "run browser smoke before fallible live checks",
+      "run Pages readback before security dependency installation",
+      "fail visibly when either production receipt is missing"
+    ]
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 120
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "testing",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Revert only the workflow ordering, receipt-upload split and corresponding validators while retaining the already published disclosure policy and its existing fail-closed readbacks."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Make Commonworld security readbacks diagnostically independent"
+}

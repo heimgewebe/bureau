@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T054",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Define canonical ntfy alert classes",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 20
@@ -85,6 +85,75 @@
       "implementation completion",
       "merge readiness",
       "authority to modify foreign active work"
-    ]
+    ],
+    "verification": {
+      "acceptance": {
+        "boundary-truth": true,
+        "canonical-event-classes": true,
+        "fail-closed-acknowledgement": true,
+        "secret-safe-payloads": true,
+        "tests-review-ci": true
+      },
+      "does_not_establish": [
+        "producer bindings",
+        "owner-device reception",
+        "user_seen truth",
+        "universal end-to-end delivery",
+        "future transport availability"
+      ],
+      "main_readback": {
+        "event_class_count": 5,
+        "merge_commit_is_ancestor": true,
+        "origin_main": "55b67feaf8d24a5665c20313122172704b7533ee",
+        "proof_document_present": true
+      },
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "pr_completion": {
+        "base_head": "24b127d2d44d8b5d283aa0dcf5e6a934b873888e",
+        "diff_bytes": 13726,
+        "diff_sha256": "2417875719173c5daeea278ddcf2401e786ac9c3283dae0b66fa82c2759f2093",
+        "merge_commit": "a62742967ef008f089a53987b5f684254c80a37c",
+        "merged_at": "2026-07-26T05:55:09Z",
+        "pull_request": 462,
+        "repository": "heimgewebe/grabowski",
+        "required_check_count": 5,
+        "required_checks_green": true,
+        "reviewed_head": "d7e5c49bbe6712308c31aa54a0e27ed289dc292c",
+        "self_review": "PASS"
+      },
+      "runtime_readback": {
+        "dispatcher_sha256": "982bc06d4e4be7823fcc7613df01d39294ebb2b76d2ed378f412e762191dfbc5",
+        "merge_commit_is_ancestor": true,
+        "runtime_head": "476c06bad629722b03768b0684d25897405b7cfd",
+        "runtime_source_equals_commit_source": true
+      },
+      "scope_boundary": {
+        "owner_device_reception_proven": false,
+        "producer_bindings_proven": false,
+        "universal_end_to_end_delivery_proven": false,
+        "user_seen_truth_proven": false
+      },
+      "source": "operator_closeout",
+      "status": "verified",
+      "task_sha256": "2e1f560b1bed02ac1b1cf271e6b3b6405210e74e11816fa879d285b949c32b13",
+      "validation": {
+        "argv_sha256": "e43d03f5ac8a0b26c469e1f11128ab90fba86463a22ff52953486f7829c8688b",
+        "command": "python3 -m unittest tests.test_ntfy_dispatch",
+        "current_main": "55b67feaf8d24a5665c20313122172704b7533ee",
+        "result": "PASS",
+        "test_count": 15
+      },
+      "verified_at": "2026-07-28T01:30:43Z",
+      "closeout_validation": {
+        "result": "PASS",
+        "test_count": 833,
+        "task_id": "ea1c67b0973d4f73af6b2f4c",
+        "argv_sha256": "529d4d8df6877c63ebd723561d554b8c7c369bacd42ed561162aa374aa63cc21",
+        "lifecycle_receipt_sha256": "131b69a315e1d6c38fb892fed20280d97deb87eaea53a9b151f48123d76a83a9",
+        "registry_valid": true,
+        "ruff": "PASS",
+        "systemkatalog_boundary": "PASS"
+      }
+    }
   }
 }

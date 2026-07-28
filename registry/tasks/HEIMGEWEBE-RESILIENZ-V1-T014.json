@@ -17,7 +17,10 @@
       "action_class": "repository_mutation",
       "required_level": "operator",
       "note": "User explicitly authorized full registration and implementation on 2026-07-18; live-state, claims, diff review, CI, merge and runtime evidence remain mandatory."
-    }
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/registry/tasks/HEIMGEWEBE-RESILIENZ-V1-T014.json"
+    ]
   },
   "claims": [
     {
@@ -26,7 +29,7 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
       "mode": "read",
       "isolation": "none"
     },
@@ -79,7 +82,31 @@
     "does_not_establish": [
       "implementation success before owner-repository evidence",
       "authority outside the listed source systems"
-    ]
+    ],
+    "broad_bureau_scope_migration": {
+      "schema_version": 1,
+      "migration_task": "BUREAU-TRUTH-MODEL-V2-T020",
+      "regression_of": "BUREAU-TRUTH-MODEL-V2-T013",
+      "introducing_commit": "6b7dbe434c671761c0b56f455a135caf1500826b",
+      "replacement": {
+        "claims": [
+          {
+            "resource": "component.bureau.registry",
+            "mode": "read"
+          }
+        ],
+        "grabowski_resources": [
+          "path:/home/alex/repos/bureau/registry/tasks/HEIMGEWEBE-RESILIENZ-V1-T014.json"
+        ]
+      },
+      "rationale": "The implementation lives outside Bureau; Bureau is consumed only as canonical task and Registry truth.",
+      "historical_verification_receipt_sha256": "b709fc9d7acf130fb10ad4ad578e9a856e7d67e4be84b53563adadc33346047a",
+      "does_not_establish": [
+        "implementation completion",
+        "task readiness",
+        "permission to alter terminal history"
+      ]
+    }
   },
   "depends_on": [
     "HEIMGEWEBE-RESILIENZ-V1-T002",

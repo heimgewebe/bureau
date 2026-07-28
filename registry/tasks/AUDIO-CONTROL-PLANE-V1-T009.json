@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T009",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Audio-Wartungs- und Recoverywerkzeuge implementieren",
+  "state": "planned",
+  "goal": "Doctor-Planung, Drift, Backup, Restore, Lifecycle und sichere Rückfallprofile repositoryseitig implementieren.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T008"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 9
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Nur Repositoryimplementierung. Reale Wartungs-, Restore- und Gerätewirkungen sind T010 vorbehalten."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "scheduled-doctor",
+      "assertion": "Monatlicher read-only Doctor und updatebezogene Driftprüfung erzeugen begrenzte vergleichbare Berichte ohne selbständige Audioeffekte.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "backup-restore-contract",
+      "assertion": "Versionierte Konfiguration, private Zustandsverträge und Assetmanifeste besitzen exakte Backup-/Restorepläne und Negativtests.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "lifecycle-policy",
+      "assertion": "Aufnahmen, Assets, Caches, Logs, Buildartefakte und Worktrees haben getrennte Aufbewahrungs-, Größen-, Archiv- und Löschregeln; Medien gelten nie als Cache.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "fallback-profiles",
+      "assertion": "Hören, Aufnahme und Experimente besitzen dokumentierte sichere Rückfallprofile mit Doctor- und Readback-Vertrag.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-live-drill",
+      "assertion": "Dieser Task implementiert nur Werkzeuge; reale Neustart-, Geräte-, Speicher- und Restore-Drills erfolgen in T010.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "testing",
+    "rollback",
+    "bureau",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Der Repositorydiff wird zurückgenommen; keine produktiven Daten oder Laufzeitzustände wurden verändert."
+  },
+  "metadata": {
+    "candidate_id": "candidate-37653256daef5c13a1563290",
+    "candidate_event_id": 1497,
+    "source_artifact": "/home/alex/.local/state/audio/bureau/2026-07-28-audio-program-reconciliation.v1.json",
+    "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
+    "plan_commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
+    "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc"
+  }
+}

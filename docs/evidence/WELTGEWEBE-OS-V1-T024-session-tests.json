@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "kind": "weltgewebe_session_ttl_test_evidence",
+  "task_id": "WELTGEWEBE-OS-V1-T024",
+  "source_repository": "heimgewebe/weltgewebe",
+  "source_commit": "d3534a716ddb051b80f439f39a79a67efe313e0e",
+  "checkout_mode": "detached_exact_commit",
+  "test": {
+    "command": "cargo test --manifest-path apps/api/Cargo.toml --lib session -- --nocapture",
+    "grabowski_task_id": "c6f09cd339ba48fbada74b11",
+    "systemd_unit": "grabowski-task-c6f09cd339ba48fbada74b11-a1.service",
+    "argv_sha256": "1e890766a1e54b83a1dd55e0fc804e59d973cd742a6d65ea8a1f06544364fd70",
+    "execution_backend": "systemd-user",
+    "state": "completed",
+    "observed_at_unix": 1785192119,
+    "lifecycle_receipt_sha256": "d029337e2534ef26973d62acad0b568b4799b3f5083833d1edf2dcd9948fa735",
+    "lifecycle_receipt_file_sha256": "5d4c57c9801b4012482af4dfad26cc0f35b0e8748bb19a35d2d0a62161b89e90",
+    "journal_bytes": 11475,
+    "journal_sha256": "17a339b8b35ea3d36bbd5646087e8097d0e94228d78dd502f10a073b59acb4a3",
+    "result": {
+      "passed": 19,
+      "failed": 0,
+      "ignored": 0,
+      "filtered_out": 419
+    },
+    "acceptance_tests": [
+      "auth::session::tests::configured_session_lifetime_is_used",
+      "auth::session::tests::session_lifetime_accepts_documented_bounds",
+      "auth::session::tests::session_lifetime_rejects_values_outside_bounds",
+      "tests::invalid_session_ttl_is_a_controlled_startup_configuration_error"
+    ]
+  },
+  "does_not_establish": [
+    "production deployment identity",
+    "production use of a non-default session TTL",
+    "correctness of unrelated authentication configuration"
+  ]
+}

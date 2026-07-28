@@ -1,0 +1,114 @@
+{
+  "acceptance": [
+    {
+      "assertion": "GRABOWSKI-OPERATOR-SURFACE-V1-T116 ist verifiziert und liefert ein typisiertes Receipt für den exakten Mergecommit, Mergebaum, geprüften Head und vollständigen Diff.",
+      "evidence_type": "object",
+      "id": "verified-merge-input"
+    },
+    {
+      "assertion": "Vor dem ersten Hosteffekt werden Runtime-Identität und Integrität, Connectorbindung, Recovery- und Kill-Switch-Status, Tasks, Leases, Worktrees, Prozesse, betroffene Services und Watchdogs frisch gelesen; unbekannter, veralteter oder kollidierender Zustand blockiert.",
+      "evidence_type": "object",
+      "id": "fresh-runtime-preflight"
+    },
+    {
+      "assertion": "Ausschließlich der im Merge-Receipt gebundene Commit wird source-identitätsgebunden deployt; ein gültiges Finalisierungsreceipt, unveränderte Quellen und ein expliziter Rollbackpfad werden belegt.",
+      "evidence_type": "object",
+      "id": "exact-source-deployment"
+    },
+    {
+      "assertion": "Ein vorab festgelegtes begrenztes Live-Profil bindet Clientzahl, Parallelität, Dauer, Store-Fixture, Latenzgrenzen, Restart-Budget und Abbruchbedingungen; Produktivdaten werden nicht als Testfixture verwendet und ungebremste Last ist ausgeschlossen.",
+      "evidence_type": "object",
+      "id": "bounded-live-load-profile"
+    },
+    {
+      "assertion": "Das Live-Profil erzeugt ein unveränderliches commit-, Konfigurations- und Messwert-gebundenes Proof-Artefakt für MCP-Liveness, serialisierte Store-Mutationen, Queue-/Threadnutzung, SQLite-Busy-Verhalten, vermeidbare 502 und watchdogverstärkte Neustarts.",
+      "evidence_type": "object",
+      "id": "live-measurement-proof"
+    },
+    {
+      "assertion": "Unterschiede zwischen hermetischem Test, begrenztem Canary und allgemeiner Produktionsaussage werden ausdrücklich ausgewiesen; ein Grenzwertverstoß stoppt weitere Last, erhält Belege und löst keinen stillen Retry aus.",
+      "evidence_type": "object",
+      "id": "bounded-claim-and-fail-closed-stop"
+    },
+    {
+      "assertion": "Nach dem Nachweis sind betroffene Services und Watchdogs im vorgesehenen Zustand, Connector-Snapshot und Toolvertrag frisch und passend, und ein kleiner typisierter Live-Read gelingt; alle temporären Proof-Effekte sind entfernt oder revisionsgebunden erhalten.",
+      "evidence_type": "object",
+      "id": "postflight-runtime-readback"
+    },
+    {
+      "assertion": "Der Task führt keinen Code-Merge, Rebase oder Force-Push aus und übernimmt keine fremden Deployment-, Task-, Lease- oder Checkout-Effekte als eigene Autorität.",
+      "evidence_type": "object",
+      "id": "runtime-only-boundary"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "exclusive",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T116"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Dieser Task ist ausschließlich für source-identitätsgebundenes Deployment und den begrenzten reversiblen Live-Nachweis zuständig; frische Konflikt- und Recovery-Prüfung ist vor jedem Effekt Pflicht.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "host:heim-pc",
+      "component:src/grabowski_tasks.py",
+      "component:tools/component_watchdog.py",
+      "component:tools/connector_probe.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den durch T116 exakt gemergten Last- und Failure-Injection-Nachweis source-identitätsgebunden deployen und in einem begrenzten freigegebenen Live-Profil messen, ohne standardmäßig Produktivdaten zu verändern oder ungebremste Last zu erzeugen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T117",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Code-Merge-Autorität",
+      "Belastbarkeit außerhalb des geprüften Live-Profils",
+      "Erlaubnis zur Übernahme fremder Effekte",
+      "zukünftige Runtime-Verfügbarkeit"
+    ],
+    "review_origin": {
+      "repository": "heimgewebe/bureau",
+      "pull_request": 1076,
+      "finding": "Live-Readback benötigt eine eigene deployment- und receiptgebundene Wirkungsphase.",
+      "thread_id": "PRRT_kwDOTG2jCs6UB4mJ"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 117
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "systemd",
+    "runtime-observability",
+    "testing",
+    "rollback",
+    "bureau"
+  ],
+  "rollback": {
+    "strategy": "Den im Preflight protokollierten vorherigen gesunden Runtime-Stand source-identitätsgebunden wiederherstellen, nur taskeigene Canary-Eingaben entfernen und anschließend Services, Watchdogs, Connectorbindung und einen typisierten Live-Read erneut prüfen. Fremde Arbeit bleibt unverändert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Reconcile-Lastnachweis deployen und begrenzt live fahren"
+}

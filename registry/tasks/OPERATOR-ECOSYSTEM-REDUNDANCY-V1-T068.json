@@ -1,0 +1,158 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Open-PR-Beobachtung bindet Repository, PR-Nummer, Base- und Head-Commit sowie eine vollständige normalisierte Liste aller geänderten Pfade einschließlich alter und neuer Namen bei Umbenennungen an einen deterministischen Digest. Pagination, Cap-Erreichen, fehlende Commitidentität, API-Fehler oder unvollständige Dateidaten erzeugen keinen engen Scope, sondern den bisherigen repositoryweiten Fail-closed-Blocker.",
+      "evidence_type": "object",
+      "id": "immutable-pr-diff-scope"
+    },
+    {
+      "assertion": "Eine mögliche Nonkonfliktfreigabe akzeptiert nur einen expliziten, normalisierten, revisions- und taskgebundenen vollständigen Schreibpfad des anfordernden Laufs. Absolute Pfade, Traversal, leere oder ungebundene Scopes, implizite Ableitung aus Titel oder Beschreibung und broad-repository Claims ohne vollständigen engeren Scope werden abgewiesen.",
+      "evidence_type": "object",
+      "id": "explicit-complete-request-scope"
+    },
+    {
+      "assertion": "Dateien, Verzeichnisse, Umbenennungsquellen und -ziele sowie Eltern-Kind-Pfade werden konservativ verglichen. Nur bei vollständiger Evidenz auf beiden Seiten und bewiesener Disjunktheit darf ein Open-PR-Blocker für genau diesen Claim entfallen; jede Überlappung bleibt blockiert.",
+      "evidence_type": "object",
+      "id": "path-overlap-semantics"
+    },
+    {
+      "assertion": "Fehlende, mehrdeutige oder terminale PR-Task-Bindungen bleiben als materielle Governance-Befunde sichtbar und verhindern automatische Merge- oder Closeout-Aussagen. Sie sperren einen bewiesen disjunkten Blattclaim jedoch nicht zusätzlich repositoryweit; ohne Nonkonfliktbeleg bleibt das bisherige Verhalten unverändert.",
+      "evidence_type": "object",
+      "id": "binding-violation-separate-axis"
+    },
+    {
+      "assertion": "Der koordinierte Grabowski-Bureau-Pickup kann den vollständigen Scope und den revisionsgebundenen Nonkonfliktbeleg typisiert durchreichen, bindet ihn an Owner, Task, Repository, Basisrevision und kurze Gültigkeit und erzwingt anschließend genau die entsprechenden Pfad- und Branchressourcen. Es entsteht keine zweite Queue-, Task-, Lease- oder Claimwahrheit.",
+      "evidence_type": "object",
+      "id": "grabowski-proof-handoff"
+    },
+    {
+      "assertion": "frontier, what-now, repo-balls, live-conflicts, claim-intent, Claim-Commit und Recovery unterscheiden konsistent zwischen repositoryweit blockiert, scope-required, scope-conflict und scope-proven-disjoint. Eine Projektion allein autorisiert keinen Effekt.",
+      "evidence_type": "object",
+      "id": "projection-and-claim-consistency"
+    },
+    {
+      "assertion": "Ein reproduzierbarer Regressionstest modelliert die fünf offenen Weltgewebe-PRs #1618, #1617, #1614, #1611 und #1596 mit ihren aktuellen Pfaden. Ein disjunkter, vollständig deklarierter Blattclaim wird auswähl- und claimbar; ein überlappender, breit oder unklar deklarierter Claim wie der heutige T008-Vertrag bleibt fail-closed, bis sein echter Wirkungsscope explizit gebunden ist.",
+      "evidence_type": "object",
+      "id": "weltgewebe-regression"
+    },
+    {
+      "assertion": "Die Umsetzung verändert, schließt, übernimmt oder relabelt keine fremden PRs, Branches, Worktrees, Leases, Prozesse oder Tasks. Sie inferiert keine Bureau-Task-ID aus PR-Titeln oder Diffs und lockert keine Beobachtungsfehler.",
+      "evidence_type": "boolean",
+      "id": "no-foreign-mutation"
+    },
+    {
+      "assertion": "Fokussierte Claim-Guard-, Pickup-, Recovery- und Adaptertests, vollständige Bureau- und Grabowski-Validierung, git diff --check sowie exakte head- und diffgebundene Self-Reviews bestehen. Nichttriviale PR-Diffs werden vor Merge als UTF-8-Textartefakt ausgeliefert.",
+      "evidence_type": "object",
+      "id": "validation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.docs"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T019",
+    "OPERATOR-MACHINE-READABILITY-V1-T017"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 2026-07-28 die Umsetzung und Behebung des zugrundeliegenden Weltgewebe-Blockers ausdrücklich autorisiert. Änderungen müssen fail-closed bleiben, dürfen keine fremden PRs, Branches, Leases, Worktrees oder Tasks verändern und benötigen revisionsgebundene Tests und Readbacks.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/v2.py",
+      "path:/home/alex/repos/bureau/tests/test_claim_guard.py",
+      "path:/home/alex/repos/bureau/docs/concurrency.md",
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Ermögliche sichere parallele Blattarbeit in einem Repository mit offenen Pull Requests, indem Bureau den vollständigen unveränderlich gebundenen PR-Dateiumfang mit einem expliziten vollständigen Arbeitspfad des neuen Claims vergleicht und nur belegte Nichtüberlappung freigibt. Unbekannte, unvollständige oder widersprüchliche Diff- und Scope-Evidenz bleibt repositoryweit fail-closed. Der Grabowski-Pickup-Pfad muss den Beleg ohne zweite Claimwahrheit durchreichen.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T068",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation",
+      "task_readiness",
+      "queue_truth",
+      "automatic PR binding repair",
+      "automatic merge authority",
+      "permission to bypass unknown diffs",
+      "permission to mutate foreign work"
+    ],
+    "observed_blocker": {
+      "open_pull_requests": [
+        1618,
+        1617,
+        1614,
+        1611,
+        1596
+      ],
+      "reported_claimable_tasks": 0,
+      "reported_world_tasks": 93,
+      "repository": "repo.weltgewebe"
+    },
+    "source": "live-operator-audit-weltgewebe-open-pr-guard-2026-07-28",
+    "source_candidate_id": "candidate-194fe5f5051365a51bf3708a",
+    "source_event_id": 1555,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-194fe5f5051365a51bf3708a",
+      "event_id": 1555,
+      "event_created_at": "2026-07-28T13:30:56.464157Z",
+      "request_sha256": "ebae84eb597419744975a50876b212ed729b57f85e5fa93d5c0e0857bea86716",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "live-operator-audit",
+        "locator": "conversation:2026-07-28:weltgewebe-open-pr-binding-blocker",
+        "observed_at": "2026-07-28T13:30:56.449155Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 8
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "bureau",
+    "grabowski",
+    "git",
+    "github",
+    "testing",
+    "schema-validation",
+    "concurrency-analysis"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich den neuen Scope- und Nonkonfliktvertrag und seine Adapter. Ohne ihn fällt jeder Open-PR-Konflikt auf die bisherige repositoryweite Fail-closed-Semantik zurück; vorhandene Registry-, PR-, Lease-, Task- und Auditwahrheit bleibt unverändert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Open-PR-Guard um revisionsgebundene Blatt-Nonkonfliktclaims erweitern"
+}

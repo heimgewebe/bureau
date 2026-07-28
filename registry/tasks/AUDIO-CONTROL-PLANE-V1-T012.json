@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T012",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "hausKI-audio Altaktivierungen kontrolliert schließen",
+  "state": "planned",
+  "goal": "Nach vollständiger Reconciliation nur veraltete hausKI-audio-Laufzeit- und Aktivierungspfade schließen, ohne Repository oder Worktrees zu entfernen.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T010",
+    "AUDIO-CONTROL-PLANE-V1-T011"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 12
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio",
+      "repo:/home/alex/repos/hausKI-audio",
+      "host:heim-pc"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Ausschließlich veraltete Dienste, Timer, Desktop-/Autostart- und sonstige Aktivierungspfade schließen. Repository-Archivierung und Worktree-Cleanup sind T013/T014 vorbehalten."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "read",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.hauski-audio",
+      "mode": "read",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "exclusive-runtime-authority",
+      "assertion": "Der Lauf besitzt break_glass-Runtime-Approval, host.heim-pc-Write-Claim und frische Nichtkonfliktbelege; fremde Prozesse, Tasks oder Leases blockieren.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "frozen-activation-set",
+      "assertion": "Die zu schließende Menge aus Diensten, Timern, Desktopdateien, Autostarts, Launchern und Zustandswurzeln ist aus T011 vollständig und digestgebunden eingefroren.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "preimage-and-stop",
+      "assertion": "Jeder Aktivierungspfad besitzt Preimage, aktuellen Laufzeitreadback, kontrollierten Stop und Wiederherstellungsplan; unklare Wirkung wird nicht blind wiederholt.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-repository-effect",
+      "assertion": "Repository, Remote-Archivstatus, Branches und Worktrees bleiben unverändert; diese Effekte sind T013 und T014 vorbehalten.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-media-deletion",
+      "assertion": "Aufnahmen, Samples, Masters, Manifeste und unklassifizierte Assets werden nicht gelöscht oder verschoben.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "canonical-runtime-readback",
+      "assertion": "Nach Closeout belegen Prozesse, Dienste, Aktivierungspfade und audio-Doctor, dass keine zweite operative hausKI-audio-Wahrheit läuft und der kanonische Audio-Pfad weiter funktioniert.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "testing",
+    "rollback",
+    "bureau",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Jeder geschlossene Aktivierungspfad wird ausschließlich aus seinem exakten Preimage wiederhergestellt. Repository und Medien bleiben unberührt."
+  },
+  "metadata": {
+    "candidate_id": "candidate-37653256daef5c13a1563290",
+    "candidate_event_id": 1497,
+    "source_artifact": "/home/alex/.local/state/audio/bureau/2026-07-28-audio-program-reconciliation.v1.json",
+    "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
+    "plan_commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
+    "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc",
+    "does_not_establish": [
+      "Repository-Archivierung",
+      "Worktree-Cleanup",
+      "Löschfreigabe für Medien oder Assets"
+    ]
+  }
+}

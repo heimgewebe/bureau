@@ -6,6 +6,7 @@ contract compatibility. New callers receive the revision-safe v0.2 types.
 
 from __future__ import annotations
 
+from .broad_scope_dispatcher import Dispatcher
 from .legacy import (
     ACTIVE_STATES,
     BureauError,
@@ -31,7 +32,6 @@ from .legacy import (
     utc_now,
 )
 from .v2 import (
-    Dispatcher,
     Registry,
     StateStore,
     cleanup_workspace,

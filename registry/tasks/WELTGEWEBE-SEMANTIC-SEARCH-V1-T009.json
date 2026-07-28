@@ -17,7 +17,13 @@
       "action_class": "runtime_mutation",
       "required_level": "reviewed_plan",
       "note": "Aus dem kanonischen Semantic-Search-Plan materialisiert. Keine SemantAH-Runtime-, Registry-, Systemkatalog- oder GitHub-Archivierungswirkung ist vor verified T008 zulässig; jeder Effekt benötigt frischen Consumer-/Runtime-/Lease-Readback."
-    }
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/registry/tasks/WELTGEWEBE-SEMANTIC-SEARCH-V1-T009.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/SEMANTAH-USEFULNESS-V1.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/SEMANTAH-INDEXD-SCALING-V1.json",
+      "path:/home/alex/repos/bureau/registry/initiatives/SEMANTAH-E2E-PORTABILITY-V1.json"
+    ]
   },
   "claims": [
     {
@@ -26,7 +32,7 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -101,6 +107,33 @@
       "permission to delete heimgewebe/semantAH",
       "permission to remove still-used consumers",
       "permission to delete historical evidence"
-    ]
+    ],
+    "broad_bureau_scope_migration": {
+      "schema_version": 1,
+      "migration_task": "BUREAU-TRUTH-MODEL-V2-T020",
+      "regression_of": "BUREAU-TRUTH-MODEL-V2-T013",
+      "introducing_commit": "a416e01669f7f0d93a76fc1047993ea3e24914f7",
+      "replacement": {
+        "claims": [
+          {
+            "resource": "component.bureau.registry",
+            "mode": "write"
+          }
+        ],
+        "grabowski_resources": [
+          "path:/home/alex/repos/bureau/registry/tasks/WELTGEWEBE-SEMANTIC-SEARCH-V1-T009.json",
+          "path:/home/alex/repos/bureau/registry/initiatives/SEMANTAH-USEFULNESS-V1.json",
+          "path:/home/alex/repos/bureau/registry/initiatives/SEMANTAH-INDEXD-SCALING-V1.json",
+          "path:/home/alex/repos/bureau/registry/initiatives/SEMANTAH-E2E-PORTABILITY-V1.json"
+        ]
+      },
+      "rationale": "The Bureau portion is limited to the exact retirement task and the three named SemantAH initiative records.",
+      "historical_verification_receipt_sha256": "b709fc9d7acf130fb10ad4ad578e9a856e7d67e4be84b53563adadc33346047a",
+      "does_not_establish": [
+        "implementation completion",
+        "task readiness",
+        "permission to alter terminal history"
+      ]
+    }
   }
 }

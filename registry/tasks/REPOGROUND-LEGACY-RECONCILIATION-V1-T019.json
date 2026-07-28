@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T019",
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "title": "Release-Verifier vollständig ressourcengebunden abschließen",
+  "state": "planned",
+  "goal": "Schließe die Ressourcenhärtung des RepoGround-Release-Verifiers auf Basis des gemergten PR #1113 ab. Begrenze Manifest und SHA256SUMS vor dem Lesen und lehne Symlinks geschlossen ab. Begrenze im source-bound Modus zusätzlich die Gesamtsumme aller Git-Blob-Inhalte vor dem Content-Batch und vergleiche weiterhin höchstens einen Blob gleichzeitig, ohne fremde schmutzige Checkouts zu verändern.",
+  "priority": {
+    "lane": "now",
+    "rank": 96
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "exclusive",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "python"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "merged-baseline-bound",
+      "assertion": "Implementation starts from RepoGround merge commit 37a83704695532f8c8d17a532709e3de92cafb38 or a proven descendant and preserves the archive, member, decompressed-stream, compression-ratio and member-count limits delivered by PR #1113.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "bounded-candidate-metadata",
+      "assertion": "The release manifest and SHA256SUMS have explicit byte ceilings, are required to be regular non-symlink files, and are rejected before full parsing or line processing when those contracts are violated.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "bounded-repository-total",
+      "assertion": "Source-bound verification rejects the aggregate size of all immutable Git blobs before starting the content batch when it exceeds the explicit repository-content ceiling.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "single-blob-memory",
+      "assertion": "The persistent git cat-file content batch holds, verifies and discards at most one bounded blob at a time and does not accumulate the full repository content in memory.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "adversarial-regressions",
+      "assertion": "Regression tests cover oversized and symlinked manifest input, oversized SHA256SUMS, aggregate repository-blob overflow before content reads, one-at-a-time blob handling, and the existing archive/PAX/GNU resource-limit cases.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "final-ci-and-proof",
+      "assertion": "Targeted release tests, repository hygiene, Ruff, maintainability ratchets, full pytest, CodeQL and post-merge CI are green on the final reviewed head; the proof distinguishes PR #1113 baseline evidence from the closeout patch.",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "source_candidate": "candidate-f25824e798612dae155979be",
+    "source_event": 1513,
+    "source_sha256": "f67933f70fdeed54079ffaf42fe7d1f4dc7cf2471f77f0c92ca3af229092806a",
+    "partial_implementation": {
+      "pull_request": 1113,
+      "final_head": "90f148a5063c7fb9933cc2c84ed8857d2cceee4d",
+      "merge_commit": "37a83704695532f8c8d17a532709e3de92cafb38",
+      "post_merge_ci": "green",
+      "remaining_findings": [
+        "candidate manifest and SHA256SUMS are read without explicit pre-read byte ceilings",
+        "source-bound Git blob sizes are individually bounded but not aggregate-bounded before content streaming"
+      ]
+    },
+    "reviewed_plan": {
+      "reviewer": "chatgpt",
+      "reviewed_at": "2026-07-28",
+      "scope": "task-definition-and-live-post-merge-findings",
+      "decision": "approved",
+      "basis": "PR #1113 and merge commit 37a83704695532f8c8d17a532709e3de92cafb38 were read back with green post-merge CI. The two remaining limits were reproduced from the merged source while overlapping foreign dirty checkouts and unbound Codex processes prevented a collision-free follow-up patch in the same work unit."
+    },
+    "does_not_establish": [
+      "permission_to_modify_foreign_dirty_checkouts",
+      "automatic_merge",
+      "deployment_authorization",
+      "public_verifier_exposure",
+      "complete_cpu_dos_absence",
+      "task_completion"
+    ]
+  }
+}

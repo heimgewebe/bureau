@@ -1,0 +1,135 @@
+{
+  "acceptance": [
+    {
+      "id": "realistic-scale-fixtures",
+      "assertion": "Deterministic representative 1,000-entry and 10,000-entry catalog fixtures exercise the current CommonProject schema, public location modes, digital taxonomy, translations, relations, provenance and content-addressed details without weakening validation."
+    },
+    {
+      "id": "measured-demand-loaded-runtime",
+      "assertion": "The visible Commonworld runtime starts from a bounded manifest and aggregate and loads only required compact shards and selected details; global search, map and digital navigation no longer require the complete build-bound catalog in memory or in the startup payload."
+    },
+    {
+      "id": "bounded-recovery-surface",
+      "assertion": "The no-JavaScript and bootstrap-failure recovery path remains complete through bounded paginated indexes and canonical per-project pages rather than embedding every project card in the landing document."
+    },
+    {
+      "id": "search-and-map-scale-budgets",
+      "assertion": "Search, filtering, country and nearby discovery, globe rendering and digital navigation pass explicit transfer, parse, DOM, interaction and memory budgets at 1,000 and 10,000 entries; server-side search, PostGIS or PMTiles are introduced only when the measurements require them."
+    },
+    {
+      "id": "shard-growth-policy",
+      "assertion": "Every demand-loaded shard remains within the declared compressed budget at both scale tiers, and the contract defines a deterministic compatible prefix-depth migration before any generated shard can exceed that budget."
+    },
+    {
+      "id": "failure-and-device-parity",
+      "assertion": "German and English surfaces, deep links, browser history, offline and blocked-network behavior, integrity and schema failures, retry, stale-response isolation and rollback pass on supported desktop, mobile and iPad profiles under fourfold CPU throttling, with physical-device evidence identified separately."
+    },
+    {
+      "id": "cutover-authority",
+      "assertion": "runtime_catalogue_cutover_authorized remains false until exact-head review, complete diff, green required CI, realistic scale evidence, rollback artifact, deployed generation and public production readback all pass; the cutover is reversible without rewriting catalog history."
+    },
+    {
+      "id": "editorial-boundary-preserved",
+      "assertion": "Commonworld remains a public read-only discovery surface; mutable ingestion, moderation, visibility and publication truth stay assigned to the Weltgewebe handoff and are not duplicated in the static client."
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T027"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Do not remove the full bootstrap, no-JavaScript catalogue or public project routes until every acceptance gate is proven on the same exact head. Prefer measured static partitioning before adding backend infrastructure."
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Prove Commonworld with realistic 1,000-entry and 10,000-entry catalogues, then cut the visible product over from the complete build-bound bootstrap to bounded manifest, aggregate, shard and detail delivery while preserving discovery, map, digital navigation, recovery, privacy and rollback semantics.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T028",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "registered_at": "2026-07-27",
+    "source": "Operator request following live Commonworld scalability audit",
+    "source_repository": "heimgewebe/commonworld",
+    "source_main": "d6ae7588b2912c9f7ccf25b160a642184b50b27c",
+    "queue_mutated": false,
+    "does_not_establish": [
+      "that the current 65-entry production surface is already cut over",
+      "100,000-entry production readiness",
+      "a requirement to deploy a backend, PostGIS, PMTiles or a separate search service without measured need",
+      "permission to remove recovery or public machine-readable surfaces",
+      "automatic queue, claim, dispatch, merge or deployment authority"
+    ],
+    "scale_baseline": {
+      "current_entry_count": 65,
+      "current_bootstrap_gzip_bytes": 20237,
+      "warn_bootstrap_gzip_bytes": 28672,
+      "max_bootstrap_gzip_bytes": 32768,
+      "current_delivery": "compact-build-bound-bootstrap-with-generation-bound-selected-detail-shadow",
+      "current_cutover_authorized": false,
+      "synthetic_evidence_only": true
+    },
+    "foundation_implementation": {
+      "status": "merged_pre_cutover_gate_only",
+      "repository": "heimgewebe/commonworld",
+      "pull_request": 151,
+      "base_sha": "d6ae7588b2912c9f7ccf25b160a642184b50b27c",
+      "head_sha": "9f9f3b00c558bee0873bcf9ecf8d76c8e8893263",
+      "merge_commit": "d417d186c7163e2c8dc330b943730b2d468c0781",
+      "diff_sha256": "6c03f9e3a5a9f79cf501f6a050186dd94dd6cf98d382baa5f36d7c0993b41ac7",
+      "validate_run_id": 30296547160,
+      "validate_result": "PASS",
+      "review_findings_resolved": 3,
+      "delivered": [
+        "deterministic 1,000-entry and 10,000-entry compact payload gates",
+        "100,000-entry fixed-prefix stress warning",
+        "fresh deterministic evidence reconstruction in CI",
+        "canonical plan and file-inventory binding",
+        "cutover and backend non-authorization"
+      ],
+      "acceptance_progress": {
+        "shard-growth-policy": "PARTIAL_CONTRACT_AND_SYNTHETIC_GATE",
+        "cutover-authority": "PARTIAL_PRE_CUTOVER_FAIL_CLOSED",
+        "editorial-boundary-preserved": "PASS_FOR_FOUNDATION_PATCH",
+        "realistic-scale-fixtures": "OPEN",
+        "measured-demand-loaded-runtime": "OPEN",
+        "bounded-recovery-surface": "OPEN",
+        "search-and-map-scale-budgets": "OPEN",
+        "failure-and-device-parity": "OPEN"
+      },
+      "does_not_establish": [
+        "task claim or execution lifecycle",
+        "completion of any acceptance criterion marked partial or open",
+        "visible runtime cutover",
+        "production deployment or public readback",
+        "permission to bypass COMMONWORLD-PUBLIC-GLOBE-V1-T027"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 10
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "rollback": {
+    "strategy": "Restore the compact build-bound bootstrap and complete generated recovery catalogue, disable visible shard-native delivery, retain immutable generation artifacts for diagnosis, and verify the restored public surface before any subsequent cutover attempt."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Prove 1k and 10k catalog cutover"
+}

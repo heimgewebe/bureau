@@ -1,0 +1,110 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein hermetischer Harness erzeugt deterministisch parallele Reconcile-Reads und -Mutationen, SQLite-Busy-/Lock-Situationen, Operator-Unterbrechung und Tunnel-Anfragen, ohne standardmäßig Produktivdaten zu verändern.",
+      "evidence_type": "object",
+      "id": "reproducible-load-harness"
+    },
+    {
+      "assertion": "Der Nachweis definiert und prüft maximale MCP-Liveness-Latenz, serialisierte Store-Mutationen, begrenzte Queue-/Threadnutzung, null vermeidbare 502 und null watchdogverstärkte Neustarts im freigegebenen Lastprofil.",
+      "evidence_type": "object",
+      "id": "explicit-slo-thresholds"
+    },
+    {
+      "assertion": "Negativtests decken Guard-Entzug während Lock-Wartezeit, dauerhaften Hänger, Busy-Store, Auditfehler, Tunnel-Upstream-Ausfall und unbekannten Mutationsausgang ab; alle Effekte bleiben fail-closed und readbackgebunden.",
+      "evidence_type": "object",
+      "id": "failure-injection-boundaries"
+    },
+    {
+      "assertion": "CI erzeugt ein commit-, Konfigurations- und Messwert-gebundenes hermetisches Proof-Artefakt und ein exakt an Head und vollständigen Diff gebundener PR-Review besteht; diese Aufgabe führt keinen Produktiv-Canary aus. Merge, Deployment und begrenzter Live-Canary gehören ausschließlich den abhängigen Tasks GRABOWSKI-OPERATOR-SURFACE-V1-T116 und GRABOWSKI-OPERATOR-SURFACE-V1-T117.",
+      "evidence_type": "object",
+      "id": "immutable-hermetic-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T113",
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T115"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Aufgabe darf erst nach erneutem Livezustands-, Nichtkonflikt-, Diff-, Review- und CI-Nachweis umgesetzt werden. T113 und T115 müssen die beiden vorausgesetzten Implementierungen bereits deployment- und livegebunden verifiziert haben.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:src/grabowski_tasks.py",
+      "component:tools/component_watchdog.py",
+      "component:tools/connector_probe.py",
+      "component:tests/test_tasks.py",
+      "component:tests/test_component_watchdog.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Auf dem durch T113 und T115 deployment- und liveverifizierten Stand einen reproduzierbaren Mehrclient-Last- und Failure-Injection-Nachweis für Task-Reconcile, SQLite-Busy-Verhalten, MCP-Ansprechbarkeit, Tunnel-Upstream-Readiness und Watchdog-Neustarts etablieren, mit expliziten Latenz-, Serialisierungs- und No-502-Akzeptanzgrenzen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T110",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Belastbarkeit außerhalb des geprüften Profils",
+      "Erlaubnis zu ungebremster Produktionslast",
+      "Abwesenheit aller zukünftigen Transportfehler",
+      "Merge- oder Deployment-Autorität",
+      "einen Produktiv-Canary vor GRABOWSKI-OPERATOR-SURFACE-V1-T117"
+    ],
+    "operator_intake": {
+      "candidate_id": "candidate-aff2b9e9eb01e9e3e84501c4",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-27T10:44:43.437699Z",
+      "event_id": 1336,
+      "request_sha256": "dc5e69cc672284f4622ef28a8a18866e6ac5e60a6b4be28920d0123944708e70",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "pull-request-diff",
+        "locator": "github:heimgewebe/grabowski#495@84fe2bfad28ae0a9db64be7abb0fbcd72d56e442",
+        "observed_at": "2026-07-27T10:44:43.424059Z",
+        "sha256": "97accce8a8f2c07d57e416ad2f82856ef2db708a52ff8b36543afc103e408aba"
+      }
+    },
+    "release_chain": {
+      "implementation_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T110",
+      "merge_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T116",
+      "deployment_and_canary_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T117",
+      "verified_semantics": "reviewed hermetic harness only; no merge, deployment or live-canary claim"
+    },
+    "replacement_for_repo_less_candidate": "candidate-745be788226660dcb4f633c7",
+    "source": "Restlücke aus Ursachenanalyse und P1-Härtung von heimgewebe/grabowski PR #495",
+    "source_diff_sha256": "97accce8a8f2c07d57e416ad2f82856ef2db708a52ff8b36543afc103e408aba",
+    "source_locator": "github:heimgewebe/grabowski#495@84fe2bfad28ae0a9db64be7abb0fbcd72d56e442"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 110
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "testing",
+    "github",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Reconcile- und Watchdog-Lastpfad reproduzierbar beweisen"
+}

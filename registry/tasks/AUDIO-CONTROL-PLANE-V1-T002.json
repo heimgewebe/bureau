@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T002",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Audio-Architekturentscheidungen der Phase 2 schließen",
+  "state": "planned",
+  "goal": "PipeWire/ALSA, Ratenpolitik, Quantums, Qobuz/Mopidy, Ardour, Pluginruntime und EasyEffects vor jeder mutierenden Implementierung objektiv entscheiden.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T001"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 2
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio",
+      "host:heim-pc"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Dieser Task schreibt ausschließlich Architektur- und Vertragsartefakte. Produktive Audioeffekte sind verboten und T007 vorbehalten."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "pipewire-alsa-decision",
+      "assertion": "Eine messungsgebundene ADR entscheidet gemeinsamen PipeWire-Kern und einen möglichen exklusiven ALSA-Pfad einschließlich Rückkehr- und Fehlervertrag.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "rate-policy-decision",
+      "assertion": "44,1-/48-kHz-Familien, dynamische Rate oder feste Rate werden pro Profil anhand Resampling-, Geräte- und Recoverybelegen entschieden.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "quantum-policy",
+      "assertion": "Hören, Aufnahme und Livespiel erhalten nur gemessene Quantumkandidaten mit Latenz-, CPU- und XRun-Grenzen.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "qobuz-mopidy-decision",
+      "assertion": "Die Ursache der deaktivierten Qobuz-Erweiterung und ein Vergleich realer lokaler Pfade entscheiden, ob Mopidy Kern, Komfortadapter oder entbehrlich ist.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "ardour-plugin-decision",
+      "assertion": "Kanonische Ardour-Variante, Pluginruntime, Hostisolation und Assetpfad sind entschieden; doppelte native/Flatpak-Runtimes bleiben nicht unbegründet parallel.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "easyeffects-reconciliation",
+      "assertion": "Das verifizierte EasyEffects-Konzept aus UTIL-BASE-V1-T011 und ~/.local/share/heim-utilities/easyeffects/profile-plan.md wird explizit importiert, verworfen oder stillgelegt; Aktivierungspfade werden dem Audio-Profilkatalog untergeordnet.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "decision-gate",
+      "assertion": "Jede ADR trennt belegt, plausibel und spekulativ und nennt die Belege, die vor einer späteren Änderung erneut frisch gelesen werden müssen.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "testing",
+    "rollback",
+    "bureau",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Architekturartefakte werden versioniert zurückgenommen; Messbelege bleiben bestehen und keine produktive Konfiguration wird verändert."
+  },
+  "metadata": {
+    "candidate_id": "candidate-37f80ad22eddd78eeaff71fa",
+    "candidate_event_id": 1490,
+    "source_artifact": "/home/alex/.local/state/audio/bureau/2026-07-28-audio-program-reconciliation.v1.json",
+    "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
+    "plan_commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
+    "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc",
+    "known_predecessor": "UTIL-BASE-V1-T011",
+    "does_not_establish": [
+      "Laufzeitfreigabe",
+      "Bit-Perfect-Wiedergabe für ungemessene Titel"
+    ]
+  }
+}

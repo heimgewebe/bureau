@@ -1,0 +1,106 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die aktuelle Systemkatalog-Quellbindung verweist revisionsgebunden auf heimgewebe/audio und präsentiert hausKI-audio nicht mehr als aktives Audio-Produkt.",
+      "evidence_type": "object",
+      "id": "canonical-audio-binding"
+    },
+    {
+      "assertion": "hausKI-audio bleibt nur dort sichtbar, wo historischer Spenderkontext nötig ist, und ist explizit als retired oder donor klassifiziert.",
+      "evidence_type": "object",
+      "id": "historical-donor-boundary"
+    },
+    {
+      "assertion": "Systemkatalog, Leitstand, Bureau-Ressourcen und -Tasks, RepoGround-Publikationen und weitere aktuelle Verbraucher werden auf beide Identitäten geprüft; jeder veraltete Verbraucher wird korrigiert oder an einen bestehenden Folgetask gebunden.",
+      "evidence_type": "object",
+      "id": "consumer-inventory"
+    },
+    {
+      "assertion": "Quellkatalog, generierte Artefakte, Resilienzprojektion und Repository-Validierung sind grün; ein frischer Readback zeigt genau eine aktuelle Audio-Produktidentität.",
+      "evidence_type": "object",
+      "id": "rendered-readback"
+    },
+    {
+      "assertion": "Die Änderung fügt keinen neuen Dienst, Alias-Daemon, Katalog oder unabhängig mutierbaren Produktstatus hinzu.",
+      "evidence_type": "object",
+      "id": "no-second-truth"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.systemkatalog"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 2026-07-28 ausdrücklich klargestellt, dass heimgewebe/audio das aktuelle Repository und hausKI-audio veraltet ist. Änderungen bleiben isoliert, diff- und testgebunden.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/systemkatalog"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/systemkatalog"
+  },
+  "goal": "Ersetze die veraltete aktive Systemkatalog-Bindung zu hausKI-audio durch das aktuelle Produkt heimgewebe/audio, bewahre hausKI-audio nur als ausdrücklich historischen Spenderkontext und inventarisiere alle aktuellen Verbraucher der alten Identität, ohne eine zweite Produkt-, Katalog- oder Taskwahrheit zu erzeugen.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T065",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "queue placement",
+      "task readiness",
+      "permission to rewrite historical Bureau evidence",
+      "absence of future product renames"
+    ],
+    "evidence_summary": {
+      "canonical_identity": "audio",
+      "stale_current_identity": "hausKI-audio",
+      "system_catalog_bindings": 37,
+      "systemkatalog_head": "d7c71c70f104e6cbe3a9340059a1a62f5107a479"
+    },
+    "observed_at": "2026-07-28T06:55:00+02:00",
+    "source": "operator-platform-masterplan-v2-live-audit",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-dd50c28e4ecbfe2b444b0cdf",
+      "event_id": 1478,
+      "event_created_at": "2026-07-28T04:56:04.837336Z",
+      "request_sha256": "1dbde8ff86db98226d00c2322403852629df54e817e6ce6d0b0c77925925c311",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-system-audit",
+        "locator": "bureau:docs/plans/operator-platform-masterplan-v2.md",
+        "observed_at": "2026-07-28T06:55:00+02:00",
+        "sha256": "db2932febca3f4e6f1e52b392ea71283180f945162dcd512f828aa2f34ed465a"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 12
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "systemkatalog"
+  ],
+  "rollback": {
+    "strategy": "Revertiere nur die Systemkatalog-Bindungsänderung und regeneriere den vorherigen Artefaktstand; lösche weder das historische Repository noch Bureau-Historie."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Aktuelle Audio-Produktwahrheit auf heimgewebe/audio binden"
+}

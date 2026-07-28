@@ -43,7 +43,12 @@
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/repoground"
+    "working_repository": "/home/alex/repos/repoground",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "The user explicitly requested implementation of the registered RepoGround findings through Grabowski. The claim remains T013-bound and requires an isolated worktree, a complete downloadable diff, revision-bound review, green tests and green CI before merge."
+    }
   },
   "goal": "Die derzeit auseinanderfallenden Retrievalaussagen revisions-, bundle- und taskprofilgebunden zusammenführen: den kanonischen 5-Prozent-Recall-Befund, den opt-in Review-Intent-Erfolg und die gemessenen Change-Impact-Piloten in einer gemeinsamen, nicht aggregierend irreführenden Entscheidungsfläche abbilden.",
   "id": "REPOGROUND-AGENT-UTILITY-V1-T013",
@@ -93,6 +98,17 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "activation": {
+      "activated_at": "2026-07-28",
+      "basis": "The user requested implementation after registration. T013 is the common measurement and routing prerequisite for the registered T019 and T020 work.",
+      "queue_policy": "skip-blocked",
+      "repoground_main_at_activation": "5318daaad4eceed60cd752eacd057ec74bbd9e49",
+      "does_not_establish": [
+        "task completion",
+        "claim authority",
+        "merge readiness"
+      ]
     }
   },
   "priority": {
@@ -107,6 +123,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Retrieval-Benchmarkwahrheit und taskprofilgebundene Routing-Gates"
 }

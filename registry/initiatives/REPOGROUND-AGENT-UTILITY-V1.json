@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "REPOGROUND-AGENT-UTILITY-V1",
   "title": "RepoGround Agent Utility v1",
-  "state": "waiting",
+  "state": "active",
   "commitment": "now",
   "goal": "RepoGround als kleine, read-only und commit-gebundene Evidenz- und Kontextkomponente unter Grabowski nutzen: zuerst Publikationswahrheit reparieren, dann vorhandene Kontextflächen dünn komponieren, den Nutzen am Weltgewebe messen und nur bei bestandenem Gate generalisieren.",
   "current_plan": {
@@ -50,6 +50,16 @@
       "reconciled_at": "2026-07-24T01:45:27.608273Z",
       "reconciled_from": "active",
       "reconciled_to": "waiting"
+    },
+    "reactivation": {
+      "reactivated_at": "2026-07-28",
+      "basis": "The user explicitly requested implementation of the newly registered RepoGround findings. T013 is the measurement and routing prerequisite for T019 and T020.",
+      "first_task": "REPOGROUND-AGENT-UTILITY-V1-T013",
+      "does_not_establish": [
+        "task completion",
+        "claim authority",
+        "merge readiness"
+      ]
     }
   }
 }

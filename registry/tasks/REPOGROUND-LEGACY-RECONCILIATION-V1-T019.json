@@ -3,7 +3,7 @@
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T019",
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
   "title": "Release-Verifier vollständig ressourcengebunden abschließen",
-  "state": "ready",
+  "state": "verified",
   "goal": "Schließe die Ressourcenhärtung des RepoGround-Release-Verifiers auf Basis des gemergten PR #1113 ab. Bewahre die inzwischen gemergten Grenzen für Manifest, SHA256SUMS, Symlinks, Archive und Git-Blob-Gesamtgröße, halte weiterhin höchstens einen Blob gleichzeitig im Speicher und verwende beim source-bound Vergleich genau einen geöffneten Leser für den bereits materialisierten Tar-Inhalt, ohne fremde schmutzige Checkouts zu verändern.",
   "priority": {
     "lane": "now",
@@ -19,7 +19,7 @@
     "approval": {
       "action_class": "repository_mutation",
       "required_level": "operator",
-      "note": "The user request in the active ChatGPT conversation authorizes exactly this isolated RepoGround T019 implementation. The claim must remain task-bound; a complete diff, revision-bound review, green tests and green CI are required before merge."
+      "note": "The user request in the active ChatGPT conversation authorized exactly this isolated RepoGround T019 implementation. The implementation was claim-bound, reviewed, tested and merged before this verified transition."
     }
   },
   "claims": [
@@ -87,19 +87,20 @@
       ]
     },
     "current_descendant_status": {
-      "source_commit": "5318daaad4eceed60cd752eacd057ec74bbd9e49",
-      "resolved_historical_findings": [
-        "candidate manifest and SHA256SUMS now have pre-read byte ceilings and regular non-symlink file checks",
-        "source-bound Git blob sizes now have an aggregate ceiling before content streaming"
+      "source_commit": "c0bd029f0be3f370cf946fb311380ea3ea9df4ea",
+      "resolved_findings": [
+        "candidate manifest and SHA256SUMS have pre-read byte ceilings and regular non-symlink file checks",
+        "source-bound Git blob sizes have an aggregate ceiling before content streaming",
+        "the source-bound repository comparison opens and reuses one materialized Tar reader"
       ],
-      "remaining_finding": "the source-bound repository comparison reopens the already materialized Tar file for each regular entry"
+      "remaining_findings": []
     },
     "reviewed_plan": {
       "reviewer": "chatgpt",
       "reviewed_at": "2026-07-28",
       "scope": "task-definition-and-live-post-merge-findings",
       "decision": "approved",
-      "basis": "PR #1113 and merge commit 37a83704695532f8c8d17a532709e3de92cafb38 were read back with green post-merge CI. The two historically remaining security findings are resolved on current RepoGround commit 5318daaad4eceed60cd752eacd057ec74bbd9e49. A digest-bound read additionally showed that the source-bound comparison still reopens the already materialized Tar file for each regular entry."
+      "basis": "PR #1113 and merge commit 37a83704695532f8c8d17a532709e3de92cafb38 were read back with green post-merge CI. The two historically remaining security findings were resolved on RepoGround commit 5318daaad4eceed60cd752eacd057ec74bbd9e49. The remaining repeated Tar-open finding was then implemented and verified through RepoGround PR #1117."
     },
     "closeout_candidate": {
       "candidate_id": "candidate-9248b3c145824dd946f1614a",
@@ -121,13 +122,84 @@
       "queue_policy": "skip-blocked",
       "fallback_after": "REPOGROUND-LEGACY-RECONCILIATION-V1-T004"
     },
+    "implementation": {
+      "bureau_run_id": "BUR-RUN-20260728T200808Z-b714d1aa05",
+      "pull_request": "heimgewebe/repoground#1117",
+      "base_commit": "5318daaad4eceed60cd752eacd057ec74bbd9e49",
+      "reviewed_head": "555ba94de69aec5a9af332b9402357dd0a7e90b5",
+      "merge_commit": "c0bd029f0be3f370cf946fb311380ea3ea9df4ea",
+      "pr_diff_sha256": "c3e8d28e38bcaf899134f7adfc10316a7668cf455fb6e199ac4055a866cf0fa9",
+      "commit_diff_sha256": "983ef84cdd9d5b2acfc47b4d986dcb5eafbc565af8b8f90c8736abba71f5cd23",
+      "release_archive_sha256": "d046677876c4395698706218f094a3c58552bce7b06c2a98b3d18a5a355c760a",
+      "release_manifest_sha256": "b8298954d01c351d2ab07939c6f9ed340db62db17f39a9a752a7e597e888045e",
+      "proof_path": "docs/proofs/repoground-release-verifier-closeout-v1-proof.md"
+    },
+    "verified_at": "2026-07-28",
+    "verified_acceptance": {
+      "merged-baseline-bound": "PR #1117 starts from RepoGround main 5318daaad4eceed60cd752eacd057ec74bbd9e49, a proven descendant of PR #1113 merge 37a83704695532f8c8d17a532709e3de92cafb38; all existing release-resource regressions remained green.",
+      "bounded-candidate-metadata": "The existing manifest and SHA256SUMS ceiling and regular-file tests passed in the 54-test release-packaging suite and in GitHub pytest-full.",
+      "bounded-repository-total": "The aggregate immutable Git-blob ceiling remained unchanged and its pre-content-batch regression passed.",
+      "single-blob-memory": "The persistent git cat-file batch still reads, validates and discards one bounded blob at a time; the existing one-at-a-time tests passed.",
+      "single-tar-reader": "Head 555ba94de69aec5a9af332b9402357dd0a7e90b5 opens the materialized Tar once, reuses validated TarInfo.offset_data positions, rejects short reads and closes the handle after the comparison; the new regression passed.",
+      "adversarial-regressions": "All 54 release-packaging tests passed locally and the full GitHub pytest suite passed on the exact reviewed head, including archive, PAX/GNU, size, symlink and sandbox cases.",
+      "final-ci-and-proof": "All RepoGround PR workflows were green on head 555ba94de69aec5a9af332b9402357dd0a7e90b5 and all eight push workflows were green on merge commit c0bd029f0be3f370cf946fb311380ea3ea9df4ea; the proof was updated in the merged PR."
+    },
+    "validation": [
+      "Local release-packaging suite: 54 passed.",
+      "Local Ruff, graph-maintainability, module-reachability, no-test-stubs and git diff --check succeeded.",
+      "Two independent release builds were byte-identical and both source-bound verifications succeeded.",
+      "RepoGround PR #1117 CI succeeded on reviewed head 555ba94de69aec5a9af332b9402357dd0a7e90b5, including pytest-full and CodeQL.",
+      "RepoGround post-merge CI succeeded in all eight push workflows on c0bd029f0be3f370cf946fb311380ea3ea9df4ea.",
+      "The loaded-host RLIMIT_NPROC coupling observed during local full pytest was not reproduced on the fresh GitHub runner and is registered separately as REPOGROUND-LEGACY-RECONCILIATION-V1-T020."
+    ],
+    "verification": {
+      "task_sha256": "3837d8e15422d9affa237f3737bed26dff3983b949a92f7b4f46eab3f719a773",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "claim_intent_sha256": "4ffe500856d1ecac39922029007ed7f5974d1a6fb594dfe83d963362fd41e499",
+      "run_envelope_sha256": "f6abc507b028ccc15abd97800dfac95fab08628b1e7bcc02b4a59d67acf4db7d",
+      "source_ref": "github-pr:heimgewebe/repoground#1117@555ba94de69aec5a9af332b9402357dd0a7e90b5:c0bd029f0be3f370cf946fb311380ea3ea9df4ea",
+      "evidence_sha256": "c3e8d28e38bcaf899134f7adfc10316a7668cf455fb6e199ac4055a866cf0fa9"
+    },
+    "registry_truth": {
+      "status": "verified",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "task_id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T019",
+          "repository": "heimgewebe/repoground",
+          "number": 1117,
+          "source_ref": "github-pr:heimgewebe/repoground#1117@555ba94de69aec5a9af332b9402357dd0a7e90b5:c0bd029f0be3f370cf946fb311380ea3ea9df4ea",
+          "head_sha": "555ba94de69aec5a9af332b9402357dd0a7e90b5",
+          "merge_commit_sha": "c0bd029f0be3f370cf946fb311380ea3ea9df4ea",
+          "diff_sha256": "c3e8d28e38bcaf899134f7adfc10316a7668cf455fb6e199ac4055a866cf0fa9"
+        },
+        {
+          "kind": "bureau_task_run",
+          "task_id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T019",
+          "run_id": "BUR-RUN-20260728T200808Z-b714d1aa05",
+          "source_ref": "bureau-run:BUR-RUN-20260728T200808Z-b714d1aa05",
+          "task_sha256": "3837d8e15422d9affa237f3737bed26dff3983b949a92f7b4f46eab3f719a773",
+          "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "claim_intent_sha256": "4ffe500856d1ecac39922029007ed7f5974d1a6fb594dfe83d963362fd41e499",
+          "envelope_sha256": "f6abc507b028ccc15abd97800dfac95fab08628b1e7bcc02b4a59d67acf4db7d"
+        }
+      ]
+    },
+    "follow_up": {
+      "task_id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T020",
+      "candidate_id": "candidate-42d6e66788f4de185c119598",
+      "bureau_pull_request": "heimgewebe/bureau#1142",
+      "bureau_merge_commit": "1315b20312d9ae90042e61cd1a57263a309b714b",
+      "state": "planned"
+    },
     "does_not_establish": [
       "permission_to_modify_foreign_dirty_checkouts",
-      "automatic_merge",
+      "automatic_merge_for_future_changes",
       "deployment_authorization",
       "public_verifier_exposure",
       "complete_cpu_dos_absence",
-      "task_completion"
+      "gnu_sparse_tar_compatibility",
+      "future_release_verifier_correctness"
     ]
   }
 }

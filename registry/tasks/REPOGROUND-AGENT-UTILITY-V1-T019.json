@@ -1,0 +1,109 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Lexikalische Kennzeichnersuche bleibt als deterministischer Fallback erhalten; eine semantische oder hybride Lane bindet Modell, Index, Konfiguration, Repositorycommit und Bundlemanifest und wird nur pro Taskprofil nach den T013-Gates aktiviert.",
+      "id": "hybrid-retrieval-contract"
+    },
+    {
+      "assertion": "Ein mehrsprachiges Goldset enthält exakte Kennzeichner, natürliche Paraphrasen, Synonyme, zusammengesetzte Fragen und echte Nulltreffer; Recall@k, MRR, Fehlertypen, Latenz, Kontextbytes und Toolaufrufe werden gegen den heutigen FTS-Pfad gebunden verglichen.",
+      "id": "natural-language-goldset"
+    },
+    {
+      "assertion": "context_compose verteilt sein hartes Bytebudget anhand nachvollziehbarer Relevanz, Änderungsnähe, Evidenzautorität und Abdeckungsdiversität; feste Lane-Caps dürfen hochrelevante geänderte Pfade nicht still verdrängen und jede Auslassung erhält Grund und Budgetbeleg.",
+      "id": "relevance-budgeting"
+    },
+    {
+      "assertion": "Die Standardprojektion enthält Entscheidung, Treffer, Ranges, Gaps und veränderliche Statusdaten kompakt; unveränderte Freshness-, Mutation-boundary- und does-not-establish-Verträge werden referenziert statt vollständig wiederholt. Eine verbose Projektion bleibt explizit verfügbar.",
+      "id": "compact-projection"
+    },
+    {
+      "assertion": "Auf repräsentativen Query-, Call-Graph- und Composer-Antworten sinken die Standardantwortbytes deutlich, ohne Fehler, Trunkierung, Autorität, Freshness oder Nichtaussagen zu verlieren; Semantik, Laufzeit und Speicher besitzen feste Regressionsgrenzen.",
+      "id": "size-and-regression-gates"
+    },
+    {
+      "assertion": "Semantische Ähnlichkeit, ein hoher Score oder kompaktere Ausgabe begründen weder Wahrheit, Vollständigkeit, Repositoryverständnis, Testgenüge noch Merge-Reife.",
+      "id": "no-overclaim"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T013"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Natürlich formulierte Repositoryfragen über eine taskprofil- und benchmarkgebundene hybride Retrieval-Lane beantworten, context_compose innerhalb harter Bytebudgets nach belegter Relevanz statt starrer Lane-Stückzahlen zusammensetzen und Agentenantworten standardmäßig ohne wiederholtes Metadatenboilerplate kompakt projizieren.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T019",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "deduplication": {
+      "does_not_duplicate": "T002 ist verified und schließt die aktuellen Cutoff- und Antwortgrößenbefunde nicht. T013 misst und gate-t Retrievalrouten, implementiert laut eigener Nichtaussage weder Retriever noch kompakte Projektion.",
+      "reuses": [
+        "REPOGROUND-AGENT-UTILITY-V1-T002",
+        "REPOGROUND-AGENT-UTILITY-V1-T013"
+      ]
+    },
+    "does_not_establish": [
+      "implementation",
+      "merge readiness",
+      "semantic retrieval superiority",
+      "default-route promotion",
+      "runtime correctness"
+    ],
+    "live_evidence": {
+      "bundle_manifest_sha256": "8593018b47917ff5a9f4576c87eae68388211b5db65aa9ecac73580aa9242730",
+      "bundle_stem": "heimgewebe__repoground__main-max-260728-1203",
+      "exact_query": "context_budget_bytes -> 1 Treffer",
+      "external_observation": "30-Dateien-Diff: 14 Dateien laut Auswertung allein durch feste Cutoffs ausgelassen",
+      "freshness": "fresh_exact",
+      "natural_language_query": "Wo wird das Kontextbudget für Agentenantworten festgelegt und verarbeitet? -> 0 Treffer",
+      "repo_commit": "42f1c11afcd105ccb125c90544cdb5842b820485"
+    },
+    "registered_from_audit": "Empirische Claude-Code-Auswertung und revisionsgebundener Grabowski-Readback, 2026-07-28",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-480c2bdc8179b0adc9e55d1d",
+      "event_id": 1562,
+      "event_created_at": "2026-07-28T14:25:45.964218Z",
+      "request_sha256": "b2a72b8de7fb5918f3f729956c4bcea97a8a97e90c658c87765a60463a41096c",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "conversation:repoground-claude-evaluation-2026-07-28",
+        "observed_at": "2026-07-28T13:47:00Z",
+        "sha256": "526d0b90f56d677983fb02453992bebc10608fbd4098ee3d4d04df7833395056"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 67
+  },
+  "required_capabilities": [
+    "repoground",
+    "retrieval-evaluation",
+    "benchmarking",
+    "testing",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Semantische Retrievalqualität, relevanzbasierte Kontextbudgets und kompakte Agentenantworten"
+}

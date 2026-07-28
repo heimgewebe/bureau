@@ -198,7 +198,7 @@ Der Standardpfad darf höchstens diese fünf logischen Rollen benötigen:
 | Schicht | Zuschalten, wenn | Nicht zuschalten, wenn |
 |---|---|---|
 | RepoGround | großes oder unbekanntes Repo; Quellbelege; Übergabe | bekannte Datei; Nulltrefferprobe; kleine lokale Änderung |
-| Bureau | echte Parallelität; langlebige Aufgabe; Abhängigkeiten; Queue | einzelne interaktive Änderung ohne Konflikt |
+| Bureau | jeder mutierende Lauf: Reconciliation, Task/Claim und run-spezifischer Worktree; zusätzlich Queue und Abhängigkeiten bei Parallelität | reine Read-only-Analyse ohne Mutation |
 | Konvergenzbeleg | Deployment, externer Effekt oder R2/R3-Behauptung | reine lokale Planung oder Quelländerung |
 | Chronik/Plexer | historisch wertvolles Ereignis oder Relay | Routinekommandos und jede Statusabfrage |
 | Leitstand | menschliche Gesamtübersicht | autoritative Mutation oder Taskentscheidung |
@@ -212,10 +212,10 @@ Der Standardpfad darf höchstens diese fünf logischen Rollen benötigen:
 Für kleine, begrenzte Änderungen:
 
 ```text
-live lesen -> ändern -> testen -> diff/readback -> Ergebnis
+reconcile -> Bureau Task/Claim -> run-spezifischer Worktree -> live lesen -> ändern -> testen -> diff/readback -> Ergebnis
 ```
 
-Kein Bureau-Claim und kein RepoGround, sofern keine Kollision oder Kontextlücke vorliegt.
+Der normale Bureau-Claim und der aufgezeichnete run-spezifische Worktree bleiben auch hier Pflicht. RepoGround entfällt, sofern keine Kontextlücke vorliegt; zusätzliche Queue- und Abhängigkeitszeremonie entfällt, sofern keine Parallelität besteht.
 
 #### Grounded
 

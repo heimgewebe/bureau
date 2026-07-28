@@ -78,7 +78,7 @@
     "grabowski_resources": [
       "repo:/home/alex/repos/systemkatalog",
       "repo:/home/alex/repos/leitstand",
-      "path:/home/alex/repos/bureau/registry",
+      "path:/home/alex/repos/bureau/.bureau-scopes/registry",
       "repo:/home/alex/repos/repoground",
       "repo:/home/alex/repos/audio",
       "repo:/home/alex/repos/hausKI-audio",

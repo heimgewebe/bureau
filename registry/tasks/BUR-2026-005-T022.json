@@ -97,7 +97,7 @@
       "permission to mutate canonical dirty checkouts"
     ],
     "activation": {
-      "activated_at": "2026-07-28T16:31:00Z",
+      "activated_at": "2026-07-28T16:49:47Z",
       "reason": "Live Bureau runtime refresh is blocked by Grabowski resources.sqlite3 aggregate schema 3 while the deployed Bureau consumer accepts only schemas 1/2. T022 is the existing canonical bootstrap and decoupling task.",
       "source_runtime": "6506e9c1ce6c9cc0d3aa84ee7c6947c41083b1d5",
       "target_main": "f9b3721fd775c8f3e96531ace50d2b26d4c20661",

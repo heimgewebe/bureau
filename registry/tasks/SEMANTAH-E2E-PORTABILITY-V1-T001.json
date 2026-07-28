@@ -3,7 +3,7 @@
   "id": "SEMANTAH-E2E-PORTABILITY-V1-T001",
   "initiative": "SEMANTAH-E2E-PORTABILITY-V1",
   "title": "Push-index E2E test from fixed port 8080 decouple",
-  "state": "verified",
+  "state": "planned",
   "priority": {
     "lane": "later",
     "rank": 90
@@ -42,6 +42,10 @@
     {
       "id": "readiness",
       "assertion": "Health-Readiness wird vor dem Push-Index-Zugriff nachweislich abgewartet."
+    },
+    {
+      "id": "ci-regression",
+      "assertion": "Ein verpflichtender Repository- oder GitHub-Check führt den portablen Push-index-Regressionslauf aus und würde eine feste Bindung an 127.0.0.1:8080 erkennen."
     }
   ],
   "metadata": {
@@ -56,7 +60,6 @@
       "that every SemantAH E2E test is port-independent",
       "that future commits cannot regress the contract without checks failing"
     ],
-    "verified_at": "2026-07-28T04:57:03.367381Z",
     "implementation_evidence": {
       "pull_request": "heimgewebe/semantAH#258",
       "implementation_head": "b937491bf9a820ac48ca9aa24a1e4db992fdff98",
@@ -69,14 +72,15 @@
     },
     "test_evidence": {
       "path": "docs/evidence/SEMANTAH-E2E-PORTABILITY-V1-T001-verification.json",
-      "sha256": "3bea1a27e429f03d977146f2ce98f9e3e09a51b81834f0a56e3ccd8967aa6b7d"
+      "sha256": "da089b90a92b4f009932799696c5e4aaf7e1c8ed53b5eec76d770a9cf5616474"
     },
     "validation": [
-      "SemantAH PR #258 is merged and all eight currently reported GitHub checks pass.",
-      "The merge commit is an ancestor of current SemantAH origin/main.",
-      "The focused push-index E2E test passed with port 8080 already occupied."
+      "SemantAH PR #258 is merged and its merge commit is an ancestor of current SemantAH main.",
+      "The focused push-index E2E test passed with port 8080 already occupied.",
+      "No required SemantAH repository or GitHub check was found that executes tests/test_push_index_e2e.py."
     ],
-    "verified_acceptance": {
+    "observed_at": "2026-07-28T05:49:34.373867Z",
+    "acceptance_evidence": {
       "dynamic-port": [
         "tests/test_push_index_e2e.py:99-105 selects a free TCP port",
         "tests/test_push_index_e2e.py:123-129 propagates that port through base URL and INDEXD_BIND_ADDR",
@@ -94,16 +98,14 @@
       "readiness": [
         "tests/test_push_index_e2e.py:65-77 polls /healthz to a bounded deadline",
         "tests/test_push_index_e2e.py:138-141 waits for health before yielding the client base URL"
-      ]
+      ],
+      "ci-regression": []
     },
-    "outcome": "Implemented through SemantAH PR #258. Current main retains dynamic loopback port selection, occupied-8080 regression coverage, bounded /healthz readiness and test-owned process cleanup.",
-    "verification": {
-      "evidence_sha256": "3bea1a27e429f03d977146f2ce98f9e3e09a51b81834f0a56e3ccd8967aa6b7d",
-      "source_merge_commit": "9ad2d8e0ad2776bed43802cbd8bf11698292696a",
-      "current_main": "d53000a909946a0381a8b365c4af7abd2456e8f6",
-      "focused_test_task_id": "a88e24e0828a49c9a31c35b2",
-      "task_sha256": "74397a916e4791853f0067af3b6b72baa1c21b7b707749aea7ae945543f4fd2f",
-      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    "implementation_outcome": "SemantAH PR #258 implements the portable-port behavior, but the Bureau task remains planned until a required CI check guards the regression.",
+    "completion_blocker": {
+      "reason": "Kein verpflichtender SemantAH-Repository- oder GitHub-Check führt tests/test_push_index_e2e.py aus; damit ist das vierte Initiativen-Abschlusskriterium gegen Wiedereinführung der festen Portbindung nicht belegt.",
+      "review_thread": "https://github.com/heimgewebe/bureau/pull/1115#discussion_r3663043226",
+      "required_next_action": "Den portablen Push-index-Regressionslauf in einen verpflichtenden SemantAH-CI-Pfad integrieren und einen erfolgreichen, revisionsgebundenen GitHub-Check nachweisen."
     }
   }
 }

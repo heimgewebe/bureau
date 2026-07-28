@@ -22,7 +22,7 @@ jobs:
       - name: Report Ruff findings
         working-directory: source
         run: python -m ruff check src tests
-  focused-pytest:
+  full-pytest-first-failure:
     runs-on: ubuntu-latest
     steps:
       - name: Clone exact pull-request head quietly
@@ -37,8 +37,6 @@ jobs:
           git -C source checkout --quiet --detach FETCH_HEAD
       - name: Install project development tools quietly
         run: python -m pip install --quiet -e 'source[dev]'
-      - name: Isolate first broad-scope regression failure
+      - name: Isolate first full-suite failure
         working-directory: source
-        run: |
-          python -m pytest -q --tb=line -x \
-            tests/test_broad_scope_claim_evidence.py::test_coordinated_claim_binds_reviewed_plan_before_lease_validation
+        run: python -m pytest -q --tb=line -x

@@ -1,0 +1,110 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Für Rust und Bash ist festgelegt, welche Dateien, Symbole, Deklarationen, Aufruf- oder Abhängigkeitsbeziehungen und Ranges unterstützt werden; Makros, dynamische Shellauswertung, generierter Code und weitere nicht sicher auflösbare Fälle sind ausdrücklich begrenzt.",
+      "id": "language-contract-inventory"
+    },
+    {
+      "assertion": "Je Sprache existiert ein reproduzierbares Goldset aus realistischen kleinen und mittleren Repositories mit positiven, mehrdeutigen, dynamischen und echten Nullfällen; Symboltreffer, Rangegenauigkeit, Relationspräzision, Recall, Latenz, Speicher und Indexgröße werden getrennt gemessen.",
+      "id": "language-goldsets"
+    },
+    {
+      "assertion": "Jeder Treffer trägt Sprache, Adapter, Version, Repositorycommit, Bundlemanifest, Evidenzstufe und Konfidenz. Rust- oder Bash-Ergebnisse werden weder als Python-AST-Wahrheit noch als Laufzeitverhalten ausgegeben.",
+      "id": "language-specific-evidence"
+    },
+    {
+      "assertion": "context_pack und context_compose können belegte mehrsprachige Evidenz innerhalb eines gemeinsamen harten Bytebudgets zusammenstellen, ohne sprachspezifische Unsicherheiten, Ranges oder Auslassungsgründe zu verlieren.",
+      "id": "mixed-language-composition"
+    },
+    {
+      "assertion": "Der in T017 vorgesehene Doctor meldet pro Adapter available, degraded oder blocked samt Version und Auswirkung; fehlende optionale Adapter beeinträchtigen die Python-Kernfunktion nicht und lösen keine automatische Installation oder Reparatur aus.",
+      "id": "doctor-integration"
+    },
+    {
+      "assertion": "Adapter arbeiten standardmäßig lokal, deterministisch und begrenzt; sie laden keine Werkzeuge, Modelle oder Repositoryinhalte aus dem Netz und lesen keine Secrets oder ungebundenen Arbeitszustände.",
+      "id": "bounded-and-offline"
+    },
+    {
+      "assertion": "Eine Default- oder breite Taskprofilaktivierung erfolgt nur, wenn ein revisionsgebundener Vergleich einen klaren Agentennutzen gegenüber Text-/FTS-Fallback bei akzeptablen Laufzeit-, Speicher- und Wartungskosten zeigt. Andernfalls bleiben die Adapter explizit optional.",
+      "id": "promotion-gate"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-AGENT-UTILITY-V1-T017"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Optionale Rust- und Bash-Strukturadapter mit sprachspezifischen Symbol-, Range- und Relationsverträgen entwickeln und ihren Agentennutzen, ihre Kosten und ihre Fehlergrenzen reproduzierbar messen, bevor eine Aktivierung außerhalb explizit geeigneter Taskprofile erfolgt.",
+  "id": "REPOGROUND-AGENT-UTILITY-V1-T021",
+  "initiative": "REPOGROUND-AGENT-UTILITY-V1",
+  "metadata": {
+    "deduplication": {
+      "does_not_duplicate": "T017 stellt Diagnose- und Bootstrapoberflächen bereit, definiert oder implementiert aber keine sprachspezifischen Rust-/Bash-Analyseverträge.",
+      "reuses": [
+        "REPOGROUND-AGENT-UTILITY-V1-T017"
+      ]
+    },
+    "does_not_establish": [
+      "implementation",
+      "positive cost-benefit",
+      "default activation",
+      "complete Rust or Bash semantics",
+      "runtime behavior",
+      "merge readiness"
+    ],
+    "registered_from_audit": "Empirische Claude-Code-Auswertung und Registry-Abgleich, 2026-07-28",
+    "sequencing_preference": "Nach dem Call-Graph- und Konfidenzvertrag aus dem veröffentlichten Vorschlag REPOGROUND-AGENT-UTILITY-V1-T020 umsetzen; kein harter Dependency-Verweis, solange T020 noch nicht Registry-Wahrheit ist.",
+    "source_evidence": {
+      "external_finding": "Strukturabdeckung ist derzeit im Wesentlichen Python-zentriert; Rust und Bash wurden als relevante Lücke genannt.",
+      "live_registry_result": "Kein RepoGround-Task implementiert Rust- oder Bash-Strukturadapter. T017 diagnostiziert nur optionale Adapter.",
+      "source_sha256": "526d0b90f56d677983fb02453992bebc10608fbd4098ee3d4d04df7833395056"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-7bd37840606ad308c61c38e0",
+      "event_id": 1565,
+      "event_created_at": "2026-07-28T14:49:26.107573Z",
+      "request_sha256": "2e829669daafa1ddff31b98c32dd1e48c2fce89a08d030959297c9ab9c4c5697",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "conversation:repoground-claude-evaluation-2026-07-28",
+        "observed_at": "2026-07-28T13:47:00Z",
+        "sha256": "526d0b90f56d677983fb02453992bebc10608fbd4098ee3d4d04df7833395056"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 69
+  },
+  "required_capabilities": [
+    "repoground",
+    "retrieval-evaluation",
+    "benchmarking",
+    "testing",
+    "diagnostics"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Rust- und Bash-Strukturadapter capabilitygebunden ergänzen"
+}

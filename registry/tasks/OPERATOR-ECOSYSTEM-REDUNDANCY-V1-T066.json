@@ -36,17 +36,23 @@
       "isolation": "worktree",
       "mode": "write",
       "resource": "repo.audio"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "host.heim-pc"
     }
   ],
   "depends_on": [],
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "note": "Der Nutzer hat die Livevalidierung und einen umsetzbaren Masterplan beauftragt. Diese Aufgabe verändert nur das Audio-Repository; aktive Audio-Routing- oder Hardwareeffekte benötigen weiterhin eine eigene frische Freigabe und Readiness-Prüfung.",
+      "note": "Der Nutzer hat die Livevalidierung und einen umsetzbaren Masterplan beauftragt. T066 verändert nur das Audio-Repository; host.heim-pc wird ausschließlich read-only für eine frische ALSA-, PipeWire- und MIDI-Beobachtung reserviert. Routing-, Lautstärke-, Dienst- oder Hardwareeffekte benötigen eine getrennte Freigabe.",
       "required_level": "operator"
     },
     "grabowski_resources": [
-      "repo:/home/alex/repos/audio"
+      "repo:/home/alex/repos/audio",
+      "host:heim-pc"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -60,7 +66,8 @@
       "hardware defect",
       "future device absence",
       "low-latency readiness",
-      "production workflow completion"
+      "production workflow completion",
+      "host mutation authority"
     ],
     "evidence_summary": {
       "audio_doctor_roland": true,
@@ -84,9 +91,9 @@
         "does_not_establish": [],
         "freshness": "digest-bound",
         "kind": "live-system-audit",
-        "locator": "bureau:docs/plans/operator-platform-masterplan-v2.md",
+        "locator": "https://github.com/heimgewebe/bureau/blob/702fd606235494c2bd3a151555b2a2b9169f745c/docs/plans/operator-platform-masterplan-v2.md",
         "observed_at": "2026-07-28T06:55:00+02:00",
-        "sha256": "db2932febca3f4e6f1e52b392ea71283180f945162dcd512f828aa2f34ed465a"
+        "sha256": "eec9579e4b82dcc883068b08760244f91747cc4ba530c3ce81545374046a80ab"
       },
       "does_not_establish": [
         "queue_truth",

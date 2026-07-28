@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T004",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Aufnahme-Sitzungsmanager repositoryseitig implementieren",
+  "state": "planned",
+  "goal": "Stimme, Roland-Audio und Produktion mit eindeutiger Prozess- und Dateisemantik implementieren, ohne reale Aufnahme zu starten.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T003"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 4
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Nur Repositoryimplementierung und simulierte Tests. Reale Aufnahme und Geräteeffekt sind T007 vorbehalten."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "process-identity",
+      "assertion": "Jede Sitzung bindet PID, Startzeit, Executable, Sitzungs-ID und Ausgabeidentität; PID allein autorisiert weder Status noch Stop.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "atomic-state",
+      "assertion": "Privater atomarer Zustand enthält Quelle, Zielnode, Kanäle, Rate, Format, Monitoring, Ausgabe, Limits und Startzeit.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "channel-and-format-contract",
+      "assertion": "Node- und Kanalbeleg, technischer 24-Bit-Vertrag, Containerformat und direkte versus softwareseitige Abhörung sind explizit und maschinenlesbar.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "bounded-recording",
+      "assertion": "Speicher, Zieldateikollision, Maximaldauer, Dateigröße und Lograte werden vor und während einer späteren Sitzung begrenzt.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "wav-recovery",
+      "assertion": "Regulärer Stop, SIGINT, Abbruch und Wiederanlauf liefern validierte WAV-Datei oder explizites Fehler-/Recovery-Receipt.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "negative-tests",
+      "assertion": "Mocks decken PID-Wiederverwendung, falsche Executable, Geräteverlust, Kanaldrift, vollen Datenträger, unvollständigen Header und Sitzungsabbruch ab.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-live-capture",
+      "assertion": "Dieser Task startet keine reale Aufnahme; physische und Liveabnahme erfolgt ausschließlich in T007.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "testing",
+    "rollback",
+    "bureau",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Nur der Repositorydiff wird zurückgenommen; bestehende Aufnahmen oder Laufzeitprozesse werden nicht berührt."
+  },
+  "metadata": {
+    "candidate_id": "candidate-540cd462ccc91af6adfa99bd",
+    "candidate_event_id": 1493,
+    "source_artifact": "/home/alex/.local/state/audio/bureau/2026-07-28-audio-program-reconciliation.v1.json",
+    "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
+    "plan_commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
+    "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc",
+    "supersedes_candidate_event_id": 1483,
+    "legacy_reuse_boundary": "Only CLI intent, dry-run behaviour and rewritten negative tests may inform the new code."
+  }
+}

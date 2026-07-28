@@ -401,3 +401,20 @@ def test_validate_workflow_has_merge_group_and_registry_only_fast_path():
     assert "registry_only=false" in text
     assert "changed_entries[@]" in text
     assert '"${change_status}" != A && "${change_status}" != M' in text
+
+
+def test_invalid_declared_approval_contract_blocks_registration() -> None:
+    proposed = task("EXAMPLE-V1-T001")
+    proposed["execution"] = {
+        "approval": {
+            "action_class": "runtime_mutation",
+            "required_level": "reviewed_plan",
+        }
+    }
+    result = evaluate(proposed_task=proposed)
+    assert result["decision"] == "block"
+    assert "approval_contract_invalid" in result["reasons"]
+    assert result["approval_contract_errors"] == [
+        "approval action_class runtime_mutation requires required_level break_glass, "
+        "got reviewed_plan"
+    ]

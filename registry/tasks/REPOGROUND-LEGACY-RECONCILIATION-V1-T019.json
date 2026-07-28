@@ -81,17 +81,25 @@
       "final_head": "90f148a5063c7fb9933cc2c84ed8857d2cceee4d",
       "merge_commit": "37a83704695532f8c8d17a532709e3de92cafb38",
       "post_merge_ci": "green",
-      "remaining_findings": [
+      "historical_remaining_findings": [
         "candidate manifest and SHA256SUMS are read without explicit pre-read byte ceilings",
         "source-bound Git blob sizes are individually bounded but not aggregate-bounded before content streaming"
       ]
+    },
+    "current_descendant_status": {
+      "source_commit": "5318daaad4eceed60cd752eacd057ec74bbd9e49",
+      "resolved_historical_findings": [
+        "candidate manifest and SHA256SUMS now have pre-read byte ceilings and regular non-symlink file checks",
+        "source-bound Git blob sizes now have an aggregate ceiling before content streaming"
+      ],
+      "remaining_finding": "the source-bound repository comparison reopens the already materialized Tar file for each regular entry"
     },
     "reviewed_plan": {
       "reviewer": "chatgpt",
       "reviewed_at": "2026-07-28",
       "scope": "task-definition-and-live-post-merge-findings",
       "decision": "approved",
-      "basis": "PR #1113 and merge commit 37a83704695532f8c8d17a532709e3de92cafb38 were read back with green post-merge CI. The original two remaining limits are present on the current RepoGround descendant. A later digest-bound read additionally showed that the source-bound comparison reopens the already materialized Tar file for each regular entry."
+      "basis": "PR #1113 and merge commit 37a83704695532f8c8d17a532709e3de92cafb38 were read back with green post-merge CI. The two historically remaining security findings are resolved on current RepoGround commit 5318daaad4eceed60cd752eacd057ec74bbd9e49. A digest-bound read additionally showed that the source-bound comparison still reopens the already materialized Tar file for each regular entry."
     },
     "closeout_candidate": {
       "candidate_id": "candidate-9248b3c145824dd946f1614a",

@@ -141,6 +141,6 @@
     "strategy": "Revertiere ausschließlich den exakten Metarepo-Implementierungscommit und regeneriere die vorherigen Projektionen. Ändere keine Archive, Audio- oder Consumer-Repositories und stelle keine historisch falschen Producerangaben her."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Aktuelle HausKI-Audio-Verweise nach kanonischem Audio-Wechsel klassifizieren"
 }

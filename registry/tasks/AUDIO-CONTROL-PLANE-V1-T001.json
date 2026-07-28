@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T001",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Audio-Systemwahrheit und sichere Referenzmessungen schließen",
+  "state": "ready",
+  "goal": "Die Phasen 0 und 1 als gemeinsame read-only Wahrheits- und Messgrundlage einschließlich sicherer Hör-, Aufnahme- und Gerätebelege abschließen.",
+  "depends_on": [],
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio",
+      "host:heim-pc"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Nur Repositorycode und read-only Beobachter dürfen entstehen. Hostzugriff ist ausschließlich lesend; jede spätere Laufzeitwirkung bleibt T007 vorbehalten."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "single-truth-model",
+      "assertion": "Doctor, physische Fakten, Profilkatalog und Labor-Gates bilden eine einzige hashgebundene Wahrheitskette; unbekannte Zustände bleiben ausdrücklich unbekannt.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "host-read-boundary",
+      "assertion": "Livebeobachtung erfolgt unter einem expliziten read-Claim auf host.heim-pc und verändert weder Routing, Dienste, Geräte noch Aufnahmezustand.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "safe-listening-calibration",
+      "assertion": "MOTU M2, Lake People G111, Focal Clear MG und Pioneer erhalten profilgebundene Referenz- und Maximalpegelbelege; physische Reglerstellungen bleiben menschlich bestätigt.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "voice-reference",
+      "assertion": "Rode-NT1-A-Gain, 48-V-Sicherheitsablauf, Rauschabstand und Zielspitzen werden mit realer lautester Darbietung belegt, ohne 48 V softwareseitig zu erfinden.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "latency-xrun-baseline",
+      "assertion": "Round-Trip-Latenz und XRun-Stabilität werden mit Graph-Fingerprint, Samplerate und Quantum gebunden; Pufferdauer gilt nicht als Round-Trip-Latenz.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "device-loss-baseline",
+      "assertion": "MOTU- und Roland-Verlust, Wiederkehr und Identitätswechsel werden read-only erkannt und ohne erfundene Bereitschaft berichtet.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "runtime-storage-observation",
+      "assertion": "Plugin-Hosts, EasyEffects, offene Aufnahmeprozesse, unbegrenzte Logs, freier Speicher und Ressourcenlimits werden read-only mit Schweregrad beobachtet.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "drift-contract",
+      "assertion": "Ein reproduzierbarer Driftbericht bindet Vorher-/Nachherzustand nach Kernel-, PipeWire-, Plugin- oder Paketupdates und nennt notwendige Nachmessungen.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "testing",
+    "rollback",
+    "bureau",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Nur neu erzeugte Beobachter- und Berichtskomponenten werden zurückgenommen; private Messbelege bleiben als historische Evidenz erhalten."
+  },
+  "metadata": {
+    "candidate_id": "candidate-461156091acb1f052a90dd4f",
+    "candidate_event_id": 1491,
+    "source_artifact": "/home/alex/.local/state/audio/bureau/2026-07-28-audio-program-reconciliation.v1.json",
+    "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
+    "plan_commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
+    "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc",
+    "does_not_establish": [
+      "physische Wahrheit ohne menschlichen Readback",
+      "Apply-Autorität für Audio-Profile"
+    ]
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T006",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Gemeinsame Kreativlaufzeit repositoryseitig implementieren",
+  "state": "planned",
+  "goal": "Roland, Buckelwal, Tierstimmen und Dauersong hinter einem gemeinsamen begrenzten Laufzeitvertrag implementieren, ohne eine Instanz zu starten.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T003",
+    "AUDIO-CONTROL-PLANE-V1-T004",
+    "AUDIO-CONTROL-PLANE-V1-T005"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 6
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Nur Repositoryimplementierung und Offline-/Mocktests. Instrument-, MIDI- und Audio-Laufzeiteffekte sind T007 vorbehalten."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "shared-runtime-contract",
+      "assertion": "Jede Instanz besitzt ID, Doctor, READY, Status, Stop, Panic, Heartbeat, Laufzeitgrenze und Lifecycle-Receipt.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "bounded-resources",
+      "assertion": "CPU, Speicher, Tasks, Dateideskriptoren, Journalrate, Loggröße und Assets sind begrenzt; sfizz_jack und unbeschränkte Logdateien bleiben verboten.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "explicit-routing",
+      "assertion": "MIDIquelle, Audioziel, Rate, Quantum und Kanäle sind eindeutig und Gerätewechsel besitzen Stop-/Degraded-Semantik.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "buckelwal-final-head-review-gate",
+      "assertion": "PR 6 ist nur als gemergtes Teilprodukt katalogisiert; vor Übernahme in den gemeinsamen Vertrag wird der finale Head e67f614e99ac8039d4c71e54a20f0e5c9c4ed32b samt vollständigem Diff frisch unabhängig reviewed.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "asset-manifests",
+      "assertion": "Samples und spektrale Modelle liegen außerhalb Git und binden Herkunft, Nutzungsrecht, Größe, Format und SHA-256.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "dauersong-readonly-audit",
+      "assertion": "Kritiker, Liebhaber, Dramaturg und Komponist nutzen versionierte begrenzte Ereignisse; Audit schreibt keinen Zyklus oder Performer fort.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "recorder-boundary",
+      "assertion": "Audioaufnahme wird ausschließlich über T004s Sitzungsmanagervertrag integriert.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-live-instance",
+      "assertion": "Dieser Task startet keine Kreativinstanz; reale Roland-/MOTU-Abnahme und Rückkehr zum Referenzprofil erfolgen in T007.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "testing",
+    "rollback",
+    "bureau",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Der Repositorydiff wird zurückgenommen; Assets, Ereignisse und produktive Audiozustände sind unberührt."
+  },
+  "metadata": {
+    "candidate_id": "candidate-806d48a725dd73abf218f186",
+    "candidate_event_id": 1495,
+    "source_artifact": "/home/alex/.local/state/audio/bureau/2026-07-28-audio-program-reconciliation.v1.json",
+    "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
+    "plan_commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
+    "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc",
+    "existing_component": {
+      "repository": "heimgewebe/audio",
+      "pull_request": 6,
+      "state": "merged",
+      "base": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
+      "reviewed_head": "4a1e9230dd6921dc3287e390155334387d658f56",
+      "merged_head": "e67f614e99ac8039d4c71e54a20f0e5c9c4ed32b",
+      "merge_commit": "504159886b44e1ba59ec39312ed5a91e6ec9abf4",
+      "final_head_ci": "pass",
+      "review_boundary": "Earlier PASS review does not establish review of merged_head.",
+      "relationship": "merged part-product pending exact-final-head acceptance review"
+    },
+    "does_not_establish": [
+      "biologische Realitätsnähe",
+      "independent review of final PR6 head",
+      "Live-End-to-End-Funktion"
+    ]
+  }
+}

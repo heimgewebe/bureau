@@ -83,6 +83,33 @@ APPROVAL_RULES: dict[str, dict[str, Any]] = {
 }
 
 
+
+def validate_declared_task_approval(task: dict[str, Any]) -> list[str]:
+    """Validate one task's declared action class against executable approval rules.
+
+    This is suitable for registration preflight. It intentionally does not
+    retroactively invalidate historical Registry tasks until they are rewritten.
+    """
+    execution = task.get("execution") if isinstance(task.get("execution"), dict) else {}
+    declared = execution.get("approval") if isinstance(execution.get("approval"), dict) else {}
+    action_class = declared.get("action_class")
+    if not action_class:
+        return []
+    if action_class in READ_ONLY_ACTIONS:
+        expected = "none"
+    else:
+        rule = APPROVAL_RULES.get(str(action_class))
+        if rule is None:
+            return [f"unknown approval action_class {action_class}"]
+        expected = str(rule["required_level"])
+    actual = declared.get("required_level")
+    if actual != expected:
+        return [
+            f"approval action_class {action_class} requires required_level {expected}, "
+            f"got {actual or 'missing'}"
+        ]
+    return []
+
 def _scope_tuple(scope: str | Iterable[str] | None) -> tuple[str, ...]:
     if scope is None:
         return ()

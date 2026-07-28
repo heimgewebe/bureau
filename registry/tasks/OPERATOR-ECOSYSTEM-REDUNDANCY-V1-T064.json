@@ -4,7 +4,7 @@
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Bureau-Claim-Pfad revisionsgebunden und checkout-unabhängig machen",
   "state": "planned",
-  "goal": "Repariere den Grabowski–Bureau-Claim-Pfad so, dass eine bereite Augabe aus einem sauberen, aktuellen und schreibbaren Registry-Ausgangspunkt mit vollständigen Fähigkeiten und explizit aktuellem Repository-Basiscommit atomar geclaimt werden kann, ohne fremde schmutzige Checkouts zu verändern. Gib konkrete, strukturierte Ablehnungsgründe statt des pauschalen claim-intent-not-ready zurück.",
+  "goal": "Repariere den Grabowski–Bureau-Claim-Pfad so, dass eine bereite Aufgabe aus einem sauberen, aktuellen und schreibbaren Registry-Ausgangspunkt mit vollständigen Fähigkeiten und explizit aktuellem Repository-Basiscommit atomar geclaimt werden kann, ohne fremde schmutzige Checkouts zu verändern. Gib konkrete, strukturierte Ablehnungsgründe statt des pauschalen claim-intent-not-ready zurück.",
   "priority": {
     "lane": "now",
     "rank": 95

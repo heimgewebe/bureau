@@ -172,6 +172,52 @@ def test_deployed_launcher_uses_hash_bound_canonical_registry(tmp_path: Path) ->
     blocked = json.loads(blocked_write.stdout)
     assert blocked["result"]["status"] == "explicit-registry-root-required"
 
+    intent = tmp_path / "claim-intent.json"
+    intent.write_text("{}\n", encoding="utf-8")
+    missing_state_root = subprocess.run(
+        [
+            str(launcher),
+            "--json",
+            "claim-commit",
+            "--intent",
+            str(intent),
+        ],
+        cwd=unrelated,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert missing_state_root.returncode == 2
+    missing_state = json.loads(missing_state_root.stdout)
+    assert (
+        missing_state["result"]["status"]
+        == "explicit-coordination-state-root-required"
+    )
+    assert not (unrelated / "bureau.sqlite3").exists()
+
+    overlapping_state_root = subprocess.run(
+        [
+            str(launcher),
+            "--state-root",
+            str(snapshot / "state"),
+            "--json",
+            "claim-commit",
+            "--intent",
+            str(intent),
+        ],
+        cwd=unrelated,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert overlapping_state_root.returncode == 2
+    overlap = json.loads(overlapping_state_root.stdout)
+    assert overlap["result"]["status"] == "coordination-state-path-invalid"
+    assert (
+        "coordination-state-root-overlaps-registry"
+        in overlap["result"]["reason_codes"]
+    )
+
     explicit = subprocess.run(
         [str(launcher), "--root", str(source), "--json", "runtime-identity"],
         cwd=unrelated,

@@ -43,6 +43,18 @@ The adapter contract is deliberately small: `dispatch(request)` and `observe(ext
 unavailable adapter creates a visible reconcile finding; it never causes a bound run to be silently
 forgotten.
 
+### Immutable Registry and mutable coordination state
+
+A deployed runtime may read Registry truth from its hash-bound, read-only canonical snapshot while
+writing operational claim state to a separate SQLite root. This is not general mutation authority.
+The CLI classifies commands as `read_only`, `coordination_state_mutation` or
+`registry_mutation`; unknown commands fail closed as Registry mutations. Initially only
+`claim-commit` is allowed as a coordination-state mutation against the canonical snapshot. It
+requires an explicit absolute `--state-root` or `--state-db` outside and non-overlapping with the
+Registry snapshot, without symlink components, and bound to the exact runtime release, Registry
+commit and snapshot digest. Registry and Git mutations remain blocked until an explicit clean,
+mutation-compatible Registry worktree is supplied.
+
 ## Owner matrix
 
 | Concern | Primary owner | Bureau Core role | Bureau Ops role |

@@ -29,6 +29,16 @@ Bureau bleibt die einzige Wahrheit für Taskauswahl, Run, Reservierungen und Abs
 - `claim-commit`: effectful Commit eines exakten Intent- und Lease-Bindings; optional mit `--workspace`. Der Produktionspfad liest ausschließlich die kanonische Grabowski-Ressourcendatenbank; ein alternativer Datenbankpfad ist über die CLI nicht akzeptiert.
 - `claim-coordination-status`: read-only Recovery- und Releaseprojektion gegen dieselbe kanonische Grabowski-Ressourcendatenbank.
 
+## Registry- und Koordinationsroot
+
+Der produktive Adapter übergibt zwei getrennte Autoritäten: einen unveränderlichen, exakt an die
+Bureau-Release gebundenen Registry-Snapshot für Queue- und Revisionswahrheit sowie einen expliziten
+beschreibbaren `--state-root` beziehungsweise `--state-db` für Run, Reservierungen, Envelope und
+Receipts. Der State-Pfad muss absolut, eigentümerkontrolliert, symlinkfrei und vollständig außerhalb
+des Registry-Snapshots liegen. Fehlt diese Bindung oder ändert sie sich vor dem Öffnen des Stores,
+stoppt `claim-commit` vor jeder Wirkung. Andere mutierende Befehle erhalten dadurch keine neue
+Autorität; sie benötigen weiterhin einen sauberen mutationsfähigen Registry-Worktree.
+
 ## Recovery
 
 Ein Intent ohne Run ist wirkungslos und darf nach Ablauf verworfen werden. Ein Run ohne Workspace wird bei Workspacefehler terminalisiert. Ein aktiver Run ohne gültige Lease ist blockierend und darf nicht still fortgesetzt werden. Ein terminaler Run mit lebender Lease erzeugt eine konkrete Releasepflicht; erst ein autoritativer Bureau-Terminalreadback erlaubt Grabowski, genau die gebundenen Schlüssel zu lösen.

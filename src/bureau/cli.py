@@ -29,6 +29,19 @@ from .core import (
     verification_stamp,
     workspace_status,
 )
+from .effect_scope import (
+    COORDINATION_STATE_MUTATION as _COMMAND_EFFECT_COORDINATION_STATE_MUTATION,
+)
+from .effect_scope import (
+    READ_ONLY as _COMMAND_EFFECT_READ_ONLY,
+)
+from .effect_scope import (
+    canonical_coordination_state_binding,
+    classify_command_effect_scope,
+)
+from .effect_scope import (
+    coordination_state_block as _coordination_state_block,
+)
 from .lease_contract import bureau_lease_contract, diagnose_bureau_resource_keys
 from .live_register import (
     apply_live_promote_plan,
@@ -533,6 +546,25 @@ def _command_mutates(args: argparse.Namespace) -> bool:
     return command not in _READ_ONLY_COMMANDS
 
 
+def _command_effect_scope(args: argparse.Namespace) -> str:
+    return classify_command_effect_scope(
+        args.command, mutates=_command_mutates(args)
+    )
+
+
+def _canonical_coordination_state_binding(
+    args: argparse.Namespace,
+    registry_root: Path,
+    runtime_identity: dict[str, Any],
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    return canonical_coordination_state_binding(
+        state_root_value=getattr(args, "state_root", None),
+        state_db_value=getattr(args, "state_db", None),
+        registry_root=registry_root,
+        runtime_identity=runtime_identity,
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     global _CLI_JSON_ENVELOPE, _CLI_RUNTIME_IDENTITY
     args = parser().parse_args(argv)
@@ -603,20 +635,45 @@ def main(argv: list[str] | None = None) -> int:
                 value = candidate_record_request(append_registry, store, request)
             emit(value, args.json)
             return 0
-        if _command_mutates(args) and registry_selection == "canonical-runtime-default":
-            emit(
-                {
-                    "schema_version": 1,
-                    "status": "explicit-registry-root-required",
-                    "reason_codes": ["canonical-registry-read-only"],
-                    "required_action": "rerun with --root bound to a clean task worktree",
-                    "runtime_identity": _CLI_RUNTIME_IDENTITY,
-                    "does_not_establish": ["mutation_authority", "task_worktree_identity"],
-                },
-                args.json,
+        effect_scope = _command_effect_scope(args)
+        _CLI_RUNTIME_IDENTITY["command_effect_scope"] = effect_scope
+        canonical_snapshot_selected = (
+            registry_selection == "canonical-runtime-default"
+            or _CLI_RUNTIME_IDENTITY.get("registry", {}).get("role")
+            == "canonical-runtime-snapshot"
+        )
+        coordination_binding: dict[str, Any] | None = None
+        if (
+            effect_scope == _COMMAND_EFFECT_COORDINATION_STATE_MUTATION
+            and canonical_snapshot_selected
+        ):
+            blocked, coordination_binding = _canonical_coordination_state_binding(
+                args, root, _CLI_RUNTIME_IDENTITY
             )
-            return 2
-        if _command_mutates(args):
+            if blocked is not None:
+                emit(blocked, args.json)
+                return 2
+            assert coordination_binding is not None
+            state_root = Path(coordination_binding["state_root"])
+            state_path = Path(coordination_binding["state_db"])
+            _CLI_RUNTIME_IDENTITY["coordination_state_binding"] = coordination_binding
+        elif effect_scope != _COMMAND_EFFECT_READ_ONLY:
+            if registry_selection == "canonical-runtime-default":
+                emit(
+                    {
+                        "schema_version": 1,
+                        "status": "explicit-registry-root-required",
+                        "reason_codes": ["canonical-registry-read-only"],
+                        "required_action": "rerun with --root bound to a clean task worktree",
+                        "runtime_identity": _CLI_RUNTIME_IDENTITY,
+                        "does_not_establish": [
+                            "mutation_authority",
+                            "task_worktree_identity",
+                        ],
+                    },
+                    args.json,
+                )
+                return 2
             blocked = require_mutation_compatible(_CLI_RUNTIME_IDENTITY)
             if blocked is not None:
                 emit(blocked, args.json)
@@ -919,9 +976,36 @@ def main(argv: list[str] | None = None) -> int:
             )
             emit(value, args.json)
             return 0
+        if coordination_binding is not None:
+            rechecked_identity = bureau_runtime_identity(root, state_path=state_path)
+            rechecked_identity["registry_selection"] = registry_selection
+            rechecked_identity["command_effect_scope"] = effect_scope
+            blocked, rechecked_binding = _canonical_coordination_state_binding(
+                args, root, rechecked_identity
+            )
+            if blocked is not None:
+                emit(blocked, args.json)
+                return 2
+            if rechecked_binding != coordination_binding:
+                emit(
+                    _coordination_state_block(
+                        status="coordination-state-binding-changed",
+                        reason_codes=["coordination-state-binding-changed-before-open"],
+                        required_action="inspect the state path and retry from a stable root",
+                        runtime_identity=rechecked_identity,
+                        state_root=state_root,
+                        state_db=state_path,
+                    ),
+                    args.json,
+                )
+                return 2
+            assert rechecked_binding is not None
+            rechecked_identity["coordination_state_binding"] = rechecked_binding
+            _CLI_RUNTIME_IDENTITY = rechecked_identity
         store = (
             ReadOnlyStateStore(state_path, state_root)
-            if not _command_mutates(args) and registry_selection == "canonical-runtime-default"
+            if effect_scope == _COMMAND_EFFECT_READ_ONLY
+            and registry_selection == "canonical-runtime-default"
             else StateStore(state_path, state_root)
         )
         adapter_registry = adapters(args)

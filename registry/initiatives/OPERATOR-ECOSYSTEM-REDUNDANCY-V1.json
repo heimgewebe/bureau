@@ -137,14 +137,51 @@
     "github_actions_runner_block_followup_20260711": {
       "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020",
       "status": "planned",
-      "observed_run_id": 29144599089,
-      "observed_check_run_id": 86523860200,
-      "classification": "account billing or spending-limit prevented runner start; zero executed steps and no logs",
+      "classification": "historical account-level billing or spending-control block prevented runner start; current unchanged workflow obtains a runner and executes real steps, but the exact historical operator correction remains unproven",
       "does_not_establish": [
-        "code failure",
-        "test failure",
-        "permission to alter billing"
-      ]
+        "which historical operator or GitHub-side event cleared the temporary account restriction",
+        "that future account, quota or runner-capacity failures are impossible",
+        "authorization for future paid GitHub Actions usage"
+      ],
+      "historical_run_id": 29144599089,
+      "historical_check_run_id": 86523860200,
+      "current_runner_proof": {
+        "repository": "heimgewebe/infra",
+        "pull_request": 139,
+        "workflow_run_id": 30224069380,
+        "job_id": 89851328480,
+        "runner": "heim-pc-infra-ci-isolated",
+        "runner_version": "2.336.0",
+        "conclusion": "success",
+        "real_steps_executed": true,
+        "logs_available": true
+      },
+      "current_billing_proof": {
+        "account": "alexdermohr",
+        "plan": "GitHub Free",
+        "actions_budget_usd": 0,
+        "stop_usage_when_budget_reached": true,
+        "july_2026_gross_actions_usage_usd": 2.44,
+        "july_2026_included_usage_discount_usd": 2.44,
+        "july_2026_actions_billed_usd": 0
+      },
+      "evidence_sha256": "62f00577f8c70b1af26c26bd4d4f88cbce8dd01025a1117fc214039a3a7bac8b",
+      "remaining_gap": "Operator-bound evidence of the exact historical billing or spending-limit correction, or an explicit reviewed acceptance-contract revision.",
+      "acceptance_status": {
+        "root-cause": "partial",
+        "minimal-account-effect": "missing",
+        "runner-proof": "satisfied",
+        "ci-result": "satisfied",
+        "affected-pr-recheck": "satisfied"
+      },
+      "security_log_check": {
+        "range": "2026-07-01..2026-07-27",
+        "actions_checked": [
+          "payment_method",
+          "billing.change_email"
+        ],
+        "matching_events": 0
+      }
     },
     "cabinet_runtime_retirement_preflight": {
       "task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T013",

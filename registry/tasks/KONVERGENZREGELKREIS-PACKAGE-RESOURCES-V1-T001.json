@@ -24,11 +24,6 @@
       "resource": "repo.konvergenzregelkreis",
       "mode": "write",
       "isolation": "worktree"
-    },
-    {
-      "resource": "repo.bureau",
-      "mode": "write",
-      "isolation": "worktree"
     }
   ],
   "required_capabilities": [
@@ -77,6 +72,23 @@
       "dass importlib.resources ohne Layoutmigration drop-in-kompatibel ist",
       "dass PR #4 diese Packaging-Migration umgesetzt hat",
       "Deployment einer Runtime"
-    ]
+    ],
+    "broad_bureau_scope_migration": {
+      "schema_version": 1,
+      "migration_task": "BUREAU-TRUTH-MODEL-V2-T020",
+      "regression_of": "BUREAU-TRUTH-MODEL-V2-T013",
+      "introducing_commit": "10fe2fdc4dd7623045ae6079e65e243c9ef7bf80",
+      "replacement": {
+        "claims": [],
+        "grabowski_resources": []
+      },
+      "rationale": "The package migration changes only the Konvergenzregelkreis repository; Bureau closeout is a separate exact task-file operation.",
+      "historical_verification_receipt_sha256": "b709fc9d7acf130fb10ad4ad578e9a856e7d67e4be84b53563adadc33346047a",
+      "does_not_establish": [
+        "implementation completion",
+        "task readiness",
+        "permission to alter terminal history"
+      ]
+    }
   }
 }

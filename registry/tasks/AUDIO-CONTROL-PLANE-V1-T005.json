@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T005",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Qobuz- und Playlistkomponenten repositoryseitig implementieren",
+  "state": "planned",
+  "goal": "Nach T002 nur die entschiedenen providerneutralen Wiedergabe- und Playlistverträge implementieren, ohne Livekonto oder Playlist zu verändern.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T002"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 5
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Nur Repositoryimplementierung und simulierte Provider. Konto-, Playlist- und Wiedergabeeffekte sind T007 vorbehalten."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "decision-conformance",
+      "assertion": "Implementierte Adapter entsprechen exakt der T002-ADR; der übrige Audio-Kern kennt keine Mopidy- oder Providerdetails.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "track-format-proof-contract",
+      "assertion": "Qualitätsbelege binden Titelidentität, Container/Codec, Trackrate, Graphrate, Endpunktrate, Resampling und unbeabsichtigten parallelen Mischpfad.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "neutral-import",
+      "assertion": "Import normalisiert Text, JSON und Providerreferenzen und unterstützt Dry-Run, Add/Replace, Duplikate und Fehlerliste.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "playlist-identity",
+      "assertion": "Schreibpläne binden Provider, Konto, Playlist-ID, Revision und vollständiges Preimage-Exportmanifest.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "idempotent-write-readback",
+      "assertion": "Ein späterer Write ist idempotent, liest den Inhalt vollständig zurück und erzeugt einen Inhaltsdigest.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "content-rollback",
+      "assertion": "Add/Replace besitzt getesteten vollständigen Inhaltsrollback zum Preimage, nicht nur Adapter- oder Routingrollback.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-raw-rpc",
+      "assertion": "Keine unauthentisierte Raw-RPC- oder frei parametrisierbare Skriptfassade entsteht.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-live-provider-effect",
+      "assertion": "Dieser Task verändert weder Qobuzkonto, Playlist noch Wiedergaberoute; reale Abnahme erfolgt in T007.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "testing",
+    "rollback",
+    "bureau",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Repositoryadapter werden entfernt; neutrale Testmanifeste bleiben. Kein Livekonto oder Playlistinhalt wurde verändert."
+  },
+  "metadata": {
+    "candidate_id": "candidate-3f94d5fc882ff84e5d7595f4",
+    "candidate_event_id": 1494,
+    "source_artifact": "/home/alex/.local/state/audio/bureau/2026-07-28-audio-program-reconciliation.v1.json",
+    "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
+    "plan_commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
+    "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc",
+    "supersedes_candidate_event_id": 1484,
+    "does_not_establish": [
+      "Qobuz-Verfügbarkeit außerhalb der Prüfung",
+      "Live-Playlist-Wirkung"
+    ]
+  }
+}

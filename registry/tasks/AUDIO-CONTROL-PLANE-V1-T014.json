@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T014",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "hausKI-audio Altworktrees kontrolliert bereinigen",
+  "state": "planned",
+  "goal": "Nach belegter Repositoryarchivierung ausschließlich entbehrliche lokale verknüpfte hausKI-audio-Worktrees über den typisierten Cleanupvertrag entfernen.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T013"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 14
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/hausKI-audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/hausKI-audio",
+      "host:heim-pc"
+    ],
+    "approval": {
+      "action_class": "worktree_cleanup",
+      "required_level": "reviewed_plan",
+      "note": "Nur typisierte Checkout-Archivierung und -Bereinigung nach terminalem, sauberem und gemergtem Readback. Force benötigt eine separate break_glass-Freigabe und ist nicht Teil des Normalpfads."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.hauski-audio",
+      "mode": "exclusive",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "reviewed-cleanup-plan",
+      "assertion": "Ein digestgebundener reviewed_plan listet jeden exakten Checkoutpfad, Head, Branch, Git-Common-Dir, Eigentümer, Archivref und erwarteten Post-State einzeln.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "terminal-clean-merged-gate",
+      "assertion": "Jeder entfernte Worktree besitzt einen terminalen Lauf, keine fremden Leases/Prozesse, einen sauberen Status und einen belegten gemergten oder anderweitig dauerhaft archivierten Head. Eine Abweichung blockiert.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "force-boundary",
+      "assertion": "Force-Cleanup ist kein Normalpfad; er erfordert ein separates break_glass-Receipt mit explizitem Pfad, verlorenen Bytes, Wiederherstellungsref und Nutzerautorität.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "typed-checkout-tools",
+      "assertion": "Inventar, Archivierung, Cleanup-Dry-Run und Entfernung verwenden ausschließlich Grabowskis typisierte Checkout-Werkzeuge und exakte Pfadleasing; das Bureau-worktree-admin-Gate wird nicht missbraucht.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "main-worktree-protection",
+      "assertion": "Der primäre hausKI-audio-Checkout wird nicht als temporärer Worktree behandelt oder automatisch entfernt; seine spätere Dateisystemarchivierung braucht einen eigenen expliziten Plan.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "post-cleanup-readback",
+      "assertion": "Git worktree list, Checkout-Inventar, Prozesse, Leases, Dateisystem und Restore-Referenzen belegen jeden entfernten und jeden bewusst erhaltenen Checkout.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "grabowski",
+    "testing",
+    "rollback",
+    "bureau",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Vor Entfernung existiert für jeden Checkout eine geprüfte Wiederherstellungsref. Bei unklarem Effekt wird nicht wiederholt; der Checkout wird nur in isoliertem Zielpfad rekonstruiert."
+  },
+  "metadata": {
+    "candidate_id": "candidate-37653256daef5c13a1563290",
+    "candidate_event_id": 1497,
+    "source_artifact": "/home/alex/.local/state/audio/bureau/2026-07-28-audio-program-reconciliation.v1.json",
+    "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
+    "plan_commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
+    "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc",
+    "does_not_establish": [
+      "Erlaubnis zur Entfernung des Main-Worktrees",
+      "Force-Autorität",
+      "Medien- oder Assetlöschung"
+    ]
+  }
+}

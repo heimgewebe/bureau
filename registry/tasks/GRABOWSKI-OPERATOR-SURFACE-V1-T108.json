@@ -1,0 +1,105 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein exakt an 127.0.0.1:18181 gebundener Connection-refused-Zustand wird als Operator-Upstream-Unverfügbarkeit mit begrenzter retrybarer Antwort projiziert; er begründet weder einen Tunneldefekt noch eine Mutationserholung.",
+      "evidence_type": "object",
+      "id": "upstream-unavailable-contract"
+    },
+    {
+      "assertion": "Kurzzeitige Operator-Neustarts lösen keinen zusätzlichen Tunnel- oder Operator-Neustart aus; anhaltende Ausfälle bleiben durch Liveness, Backoff und Restart-Budget fail-closed erkennbar.",
+      "evidence_type": "object",
+      "id": "no-restart-amplification"
+    },
+    {
+      "assertion": "Tests decken unbekannten Mutationsausgang, abweichende Upstream-Ziele, dauerhafte Verbindungsverweigerung, Readiness-Drift und wiederholte Requests ab; kein Pfad wiederholt eine mögliche Mutation ohne exakten Ziel-Readback.",
+      "evidence_type": "object",
+      "id": "negative-recovery-proof"
+    },
+    {
+      "assertion": "Vollständige Validierung und ein exakt an Head und vollständigen Diff gebundener PR-Review belegen die Implementierung; diese Aufgabe führt weder Merge noch Deployment noch Live-Readback aus. Diese Wirkungen gehören ausschließlich den abhängigen Tasks GRABOWSKI-OPERATOR-SURFACE-V1-T112 und GRABOWSKI-OPERATOR-SURFACE-V1-T113.",
+      "evidence_type": "object",
+      "id": "implementation-review-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Aufgabe darf erst nach erneutem Livezustands-, Nichtkonflikt-, Diff-, Review- und CI-Nachweis umgesetzt werden.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "component:systemd/tunnel-client-grabowski.service.example",
+      "component:tools/component_watchdog.py",
+      "component:docs/operator-friction.md",
+      "component:tests/test_component_watchdog.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den Grabowski-Tunnel so härten, dass ein vorübergehend nicht lauschender lokaler Operator-Upstream auf 127.0.0.1:18181 als begrenzter, retrybarer Operator-Unavailable-Zustand behandelt wird, ohne rohe vermeidbare HTTP-502-Antwort, Tunnel-Fehlklassifikation, Mutationsretry oder Neustartverstärkung.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T108",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Tunnelanbieterfehler",
+      "Erlaubnis zu stillen Mutationsretries",
+      "Merge- oder Deployment-Autorität",
+      "Live-Runtime-Verhalten vor GRABOWSKI-OPERATOR-SURFACE-V1-T113"
+    ],
+    "operator_intake": {
+      "candidate_id": "candidate-33419a1fbf0babf0948b5d5d",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-27T10:43:04.459130Z",
+      "event_id": 1333,
+      "request_sha256": "552c1546a24388f0984c5c5c8c8ae73123f5e2071465f64e1bb7b54b71f38237",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "pull-request-diff",
+        "locator": "github:heimgewebe/grabowski#495@84fe2bfad28ae0a9db64be7abb0fbcd72d56e442",
+        "observed_at": "2026-07-27T10:43:04.447517Z",
+        "sha256": "97accce8a8f2c07d57e416ad2f82856ef2db708a52ff8b36543afc103e408aba"
+      }
+    },
+    "release_chain": {
+      "implementation_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T108",
+      "merge_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T112",
+      "deployment_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T113",
+      "verified_semantics": "reviewed implementation only; no merge, deployment or live claim"
+    },
+    "replacement_for_repo_less_candidate": "candidate-b0fb9928efe7a7f1019bf295",
+    "source": "Ursachenanalyse und Korrektur von heimgewebe/grabowski PR #495",
+    "source_diff_sha256": "97accce8a8f2c07d57e416ad2f82856ef2db708a52ff8b36543afc103e408aba",
+    "source_locator": "github:heimgewebe/grabowski#495@84fe2bfad28ae0a9db64be7abb0fbcd72d56e442"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 108
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "testing",
+    "github",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Tunnel-Upstream-Readiness ohne vermeidbare 502 härten"
+}

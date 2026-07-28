@@ -60,6 +60,41 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verified_at": "2026-07-28",
+    "implementation_evidence": {
+      "pull_request": "heimgewebe/weltgewebe#1548",
+      "implementation_head": "a765ec19ebdf05e82aef3faf05b3cf4cacd73470",
+      "merge_commit": "51231ffd00450e4b05f09068c1e55958be1bdd32",
+      "merged_at": "2026-07-23T08:28:30Z",
+      "pr_diff_sha256": "25a4ac55bc45235310f0f02a503f13faddab75ddf8039bc78c6dbc4e2e3943ae",
+      "pr_diff_bytes": 135327,
+      "current_main": "d3534a716ddb051b80f439f39a79a67efe313e0e",
+      "current_main_descends_from_merge": true
+    },
+    "test_evidence": {
+      "path": "docs/evidence/WELTGEWEBE-OS-V1-T024-session-tests.json",
+      "sha256": "cc653ddacda07b17b2a254ed9fd5f7d8ccef446231836edf3c8dc3e28b81bf0b"
+    },
+    "validation": [
+      "PR #1548 merged after successful final Rust, PostgreSQL session persistence, browser session persistence, required merge gate and Review evidence gate checks.",
+      "The commit-bound test evidence records 19 passed tests, 0 failures, the exact command, Grabowski task and unit identities, lifecycle receipt, journal digest and the acceptance-relevant test names."
+    ],
+    "verified_acceptance": {
+      "typed-startup-validation": "SessionLifetime::from_env returns typed Empty, Invalid, OutOfRange and NonUnicode errors; run() converts them into a controlled startup configuration error before constructing either session backend.",
+      "valid-boundary-tests": "Current-main unit tests accept the documented minimum and maximum, reject values outside both bounds and verify that a non-integer environment value produces a controlled startup error.",
+      "single-config-truth": "run() parses SessionLifetime exactly once and injects the same value into SessionBackend::new_in_memory_with_lifetime or DbSessionStore::with_lifetime."
+    },
+    "outcome": "Implemented through Weltgewebe PR #1548. Current main retains the typed startup validation, bounded TTL tests and single validated lifetime shared by both session backends.",
+    "does_not_establish": [
+      "production deployment identity",
+      "that every unrelated authentication configuration value is centrally typed",
+      "that a future commit cannot regress the contract without the existing tests failing",
+      "that production currently uses a non-default session TTL"
+    ],
+    "verification": {
+      "task_sha256": "3a7c87a9a1c63e909a365240843156d310213adc0f7950fc3b78350d1e17cc3e",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65"
     }
   },
   "priority": {
@@ -72,6 +107,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Session-TTL kontrolliert statt per panic validieren"
 }

@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T007",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Audio-Laborprüfung und gestuften Live-Rollout durchführen",
+  "state": "planned",
+  "goal": "Die repositoryseitig implementierten Komponenten in der exakten Phasen-6/7-Reihenfolge auf dem Heim-PC prüfen und nur profilweise freigeben.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T003",
+    "AUDIO-CONTROL-PLANE-V1-T004",
+    "AUDIO-CONTROL-PLANE-V1-T005",
+    "AUDIO-CONTROL-PLANE-V1-T006"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 7
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio",
+      "host:heim-pc",
+      "service:pipewire",
+      "service:wireplumber",
+      "service:mopidy"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Live-Audioeffekte sind ausschließlich in diesem Task erlaubt, profil- und hostgebunden, nach Merge und exact-head Review. Jeder Schritt benötigt frische Messgates und vollständigen Rollback."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "read",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "runtime-authority",
+      "assertion": "Jeder Lauf besitzt runtime_mutation-Approval, exklusiven host.heim-pc-Claim, exakte Profile/Services und frischen Preflight; Repositorymerge allein autorisiert keine Wirkung.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "profile-hash-binding",
+      "assertion": "Jeder Beleg bindet Profilkatalog-, Profil-, Graph-, Geräte- und Implementierungscommit-Hash.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "per-profile-lab-matrix",
+      "assertion": "Jedes Profil besteht Kaltstart, 30-Minuten-Lauf, Geräteverlust/-wiederkehr, Wechsel weg/zurück, Start-/Aufnahmeabbruch, Platten-/Logfluttest sowie Rate-, Format-, Latenz-, XRun- und Routingmessung.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "staged-order",
+      "assertion": "Rollout folgt desktop-mixed, reference-listening, voice-recording, piano-digital-recording, piano-software-live, qobuz-exclusive, receiver/bluetooth, production und experimental; kein nächster Schritt bei offener Regression.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "recording-live-proof",
+      "assertion": "Rode und Roland belegen Quelle, Kanäle, 24 Bit, direkte/softwareseitige Abhörung, Pegel, Finalisierung, Limits und Recovery.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "qobuz-live-proof",
+      "assertion": "Exakter Track belegt Format und Raten; qobuz-exclusive weist Resampling und unbeabsichtigten parallelen Mischpfad aus oder blockiert.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "creative-live-proof",
+      "assertion": "Reale Roland-/MOTU-Abnahme deckt Tasten, Pedale, Panic, Latenz, XRuns, Geräteverlust, Aufnahme und vollständige Rückkehr zum Referenzprofil ab.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "observation-window",
+      "assertion": "Nach jeder Stufe folgt ein definierter Beobachtungszeitraum mit Doctor-, Fehler- und Driftreadback.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "full-runtime-rollback",
+      "assertion": "Jeder Effekt besitzt Preimage, Stop-/Panic-Pfad und getesteten Post-Rollback-Readback; unklare Wirkung wird nicht blind wiederholt.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "playlist-live-proof",
+      "assertion": "Eine eindeutig benannte reversible Testplaylist bindet Provider, Konto, Playlist-ID und Revision; Add und Replace bestehen vollständigen Preimage-Export, Inhaltsreadback, Idempotenz und Wiederherstellung zum exakten Preimage. Produktive Playlists bleiben unberührt.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "testing",
+    "rollback",
+    "bureau",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Vor jeder Stufe werden Profile, Dateien, Dienste, Defaults und Graphzustand gesichert. Fehler stoppen nur taskeigene Prozesse, stellen den Preimage-Zustand wieder her und führen einen vollständigen Doctor-Readback aus."
+  },
+  "metadata": {
+    "candidate_id": "candidate-37f80ad22eddd78eeaff71fa",
+    "candidate_event_id": 1490,
+    "source_artifact": "/home/alex/.local/state/audio/bureau/2026-07-28-audio-program-reconciliation.v1.json",
+    "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
+    "plan_commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
+    "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc",
+    "does_not_establish": [
+      "dauerhafte Driftfreiheit",
+      "physische Zustände außerhalb des jeweiligen Readbacks"
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Messbare und sichere Audio-Steuerung für den Heim-PC",
+  "state": "active",
+  "commitment": "now",
+  "goal": "Eine einzige nachvollziehbare Audio-Steuerung für Referenzhören, Qobuz, Aufnahme, Roland-Livespiel, Produktion, Receiver, Bluetooth, Dauersong und begrenzte Klangexperimente aufbauen, ohne veraltete hausKI-audio-Verträge oder parallele Zustandswahrheiten zu übernehmen.",
+  "current_plan": {
+    "repository": "heimgewebe/audio",
+    "path": "docs/plans/audio-configuration-redesign-v1.md",
+    "commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
+    "document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc"
+  },
+  "completion": [
+    "Systemwahrheit, sichere Referenzpegel und alle Architekturentscheidungen der Phasen 0 bis 2 sind objektiv geschlossen.",
+    "Profil-, Aufnahme-, Wiedergabe- und Kreativkomponenten sind repositoryseitig implementiert, ohne produktive Laufzeitwirkung vor dem gemeinsamen Labor- und Rollouttask.",
+    "Alle Profile einschließlich production bestehen die phasen- und profilhashgebundene Laborprüfung sowie die gestufte Live-Anwendung mit vollständigem Rollback.",
+    "Eine typisierte Bedienoberfläche projiziert nur frische autoritative Zustände und kann Sicherheits- oder Messgates nicht umgehen.",
+    "Wartungs- und Recoverywerkzeuge bestehen reale Drills; Altquellen sind deterministisch erfasst, Altaktivierungen geschlossen, das Repository recovery-first archiviert und entbehrliche Worktrees separat bereinigt."
+  ],
+  "parallelism": {
+    "max_active_tasks": 2
+  },
+  "metadata": {
+    "registered_at": "2026-07-28T05:32:54Z",
+    "repository_resource": "repo.audio",
+    "program_candidate_id": "candidate-37f80ad22eddd78eeaff71fa",
+    "program_candidate_event_id": 1490,
+    "source_artifact": "/home/alex/.local/state/audio/bureau/2026-07-28-audio-program-reconciliation.v1.json",
+    "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
+    "implementation_policy": "new-code-in-audio-by-default",
+    "legacy_policy": "hausKI-audio supplies ideas and rewritten behavioural requirements only; source and history are not imported by default",
+    "sequencing_authority": "docs/plans/audio-configuration-redesign-v1.md phases 0 through 8",
+    "review_reconciliation": "Repository implementation, live runtime mutation, maintenance validation, deterministic legacy reconciliation, runtime closeout, repository archival and worktree cleanup are separate tasks.",
+    "does_not_establish": [
+      "Bit-Perfect-Wiedergabe ohne Track- und Endpunktmessung",
+      "physische Regler-, Kabel- oder Phantomspannungszustände ohne menschlichen Beleg",
+      "Erlaubnis zum Überschreiben fremder Audio-, Bureau- oder Laufzeitarbeit",
+      "Archivierungsfreigabe für hausKI-audio vor vollständiger Coverage-Matrix und exklusivem Cleanup-Task"
+    ]
+  }
+}

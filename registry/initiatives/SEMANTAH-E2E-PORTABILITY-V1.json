@@ -18,6 +18,26 @@
     "registered_at": "2026-07-15T21:51:28+02:00",
     "source_task": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
     "source_finding": "tests/test_push_index_e2e.py hardcodes 127.0.0.1:8080; foreign service was not terminated",
-    "non_blocking_for_source_task": true
+    "non_blocking_for_source_task": true,
+    "closeout_observed_at": "2026-07-28T05:49:34.373867Z",
+    "partial_completion_evidence": {
+      "task_id": "SEMANTAH-E2E-PORTABILITY-V1-T001",
+      "pull_request": "heimgewebe/semantAH#258",
+      "merge_commit": "9ad2d8e0ad2776bed43802cbd8bf11698292696a",
+      "evidence_path": "docs/evidence/SEMANTAH-E2E-PORTABILITY-V1-T001-verification.json",
+      "establishes": [
+        "dynamic free loopback port selection",
+        "occupied-port-8080 regression behavior in a focused run",
+        "test-owned process cleanup",
+        "bounded health readiness before client access"
+      ]
+    },
+    "completion_status": {
+      "state": "blocked",
+      "unmet_criterion": "Repository- und GitHub-Checks verhindern die Wiedereinführung einer festen Portbindung.",
+      "reason": "Kein verpflichtender SemantAH-Repository- oder GitHub-Check führt tests/test_push_index_e2e.py aus; damit ist das vierte Initiativen-Abschlusskriterium gegen Wiedereinführung der festen Portbindung nicht belegt.",
+      "review_thread": "https://github.com/heimgewebe/bureau/pull/1115#discussion_r3663043226",
+      "required_next_action": "Den portablen Push-index-Regressionslauf in einen verpflichtenden SemantAH-CI-Pfad integrieren und einen erfolgreichen, revisionsgebundenen GitHub-Check nachweisen."
+    }
   }
 }

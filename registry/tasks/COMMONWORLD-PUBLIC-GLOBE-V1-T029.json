@@ -2,34 +2,42 @@
   "acceptance": [
     {
       "assertion": "A deterministic live audit records HTTPS redirect behavior, cache policy and the presence or absence of HSTS, nosniff, Permissions-Policy, response CSP, COOP, CORP and Referrer-Policy for representative HTML, JSON, JavaScript and CSS responses with exact URL, status and observation time.",
+      "evidence_type": "object",
       "id": "live-header-baseline"
     },
     {
       "assertion": "A reviewed decision compares retaining GitHub Pages, adding a response-header-capable edge and migrating static hosting across monetary cost, privacy, operational burden, DNS, caching, deployment integrity and rollback, and selects the current no-cost retain path without overstating security.",
+      "evidence_type": "object",
       "id": "three-path-decision"
     },
     {
       "assertion": "The production delivery contract declares required mitigations, provider-unavailable headers, accepted residual risk, explicit nonclaims and re-evaluation triggers for accounts, backend writes, sensitive transactions, provider changes or new threat evidence.",
+      "evidence_type": "object",
       "id": "machine-readable-boundary"
     },
     {
       "assertion": "Validation fails on loss of HTTPS redirect, meta CSP or declared referrer mitigation and on malformed or dishonest header evidence, while provider-unavailable response headers remain explicit measured residual-risk values rather than false failures or false positives.",
+      "evidence_type": "object",
       "id": "fail-closed-validator"
     },
     {
       "assertion": "Focused tests cover missing required mitigations, falsely claimed response headers, unsafe redirect targets, malformed cache or header values and unauthorized provider or DNS migration declarations.",
+      "evidence_type": "object",
       "id": "negative-tests"
     },
     {
       "assertion": "The exact merged commit receives green required CI and a production readback whose live header matrix matches the reviewed contract; deviations fail closed and do not silently rewrite the accepted boundary.",
+      "evidence_type": "object",
       "id": "production-readback"
     },
     {
       "assertion": "No DNS, hosting-provider, edge-routing, credential or paid-service mutation occurs; rollback is deletion of the new contract and readback enforcement while preserving the existing GitHub Pages deployment.",
+      "evidence_type": "object",
       "id": "reversible-no-cost-scope"
     },
     {
       "assertion": "Closeout binds base, head, full UTF-8 diff, self-review, any external review, green CI, merge commit and live readback, and registers any unimplemented edge or migration work as a separate future task.",
+      "evidence_type": "object",
       "id": "closeout-bound"
     }
   ],

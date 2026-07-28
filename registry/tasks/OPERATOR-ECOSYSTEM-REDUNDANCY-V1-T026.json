@@ -17,7 +17,7 @@
       "repo:/home/alex/repos/metarepo",
       "repo:/home/alex/repos/systemkatalog",
       "repo:/home/alex/repos/repoground",
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026.json"
     ]
   },
   "claims": [
@@ -37,7 +37,7 @@
       "isolation": "none"
     },
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
       "mode": "read",
       "isolation": "none"
     }
@@ -81,6 +81,30 @@
       "permission to rewrite historical evidence",
       "permission to break versioned schemas",
       "runtime correctness"
-    ]
+    ],
+    "broad_bureau_scope_migration": {
+      "schema_version": 1,
+      "migration_task": "BUREAU-TRUTH-MODEL-V2-T020",
+      "regression_of": "BUREAU-TRUTH-MODEL-V2-T013",
+      "introducing_commit": "cfbe5af04807599ecaa1f1e8feb26abb7682a61f",
+      "replacement": {
+        "claims": [
+          {
+            "resource": "component.bureau.registry",
+            "mode": "read"
+          }
+        ],
+        "grabowski_resources": [
+          "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026.json"
+        ]
+      },
+      "rationale": "The implementation lives outside Bureau; Bureau is consumed only as canonical task and Registry truth.",
+      "historical_verification_receipt_sha256": "b709fc9d7acf130fb10ad4ad578e9a856e7d67e4be84b53563adadc33346047a",
+      "does_not_establish": [
+        "implementation completion",
+        "task readiness",
+        "permission to alter terminal history"
+      ]
+    }
   }
 }

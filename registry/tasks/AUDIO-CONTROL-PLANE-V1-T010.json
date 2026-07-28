@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T010",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Audio-Wartung und Recovery live validieren",
+  "state": "planned",
+  "goal": "Die in T009 implementierten Wartungs- und Recoverypfade kontrolliert am Heim-PC prüfen, ohne produktive Medien zu löschen.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T009"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 10
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio",
+      "host:heim-pc",
+      "service:pipewire",
+      "service:wireplumber",
+      "service:mopidy"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Kontrollierte Heim-PC-Wirkung nur auf isolierte Testdaten und exakt gebundene Dienste. Keine Löschung produktiver Medien oder Cache-Prune ohne separate Autorität."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "read",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "runtime-authority",
+      "assertion": "Jeder Drill besitzt runtime_mutation-Approval, host.heim-pc-Claim, exakte betroffene Dienste/Pfade und frischen Backup-/Preflightbeleg.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "backup-restore-proof",
+      "assertion": "Konfiguration und private Zustandsverträge werden in isolierter Zielumgebung vollständig wiederhergestellt und hashverglichen.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "restart-device-drills",
+      "assertion": "Neustart, Geräteverlust, USB-Neunummerierung, volles Testdateisystem und unterbrochene Testaufnahme werden begrenzt geprüft.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "media-protection",
+      "assertion": "Produktive Aufnahmen, Masters und Assets werden weder überschrieben noch gelöscht; Destruktivtests verwenden isolierte Testdaten.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "fallback-readback",
+      "assertion": "Sichere Rückfallprofile werden angewendet und mit Doctor, Routing, Rate, Quantum, Prozess- und Dienstreadback belegt.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-blind-retry",
+      "assertion": "Unklare Wirkung erzeugt ein Recovery-Obligation-Receipt und wird nicht unverändert wiederholt.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "testing",
+    "rollback",
+    "bureau",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Jeder Drill nutzt Preimage, isolierte Daten und einen vorab getesteten Stop-/Restorepfad; bei Fehler bleibt das produktive Medium unverändert."
+  },
+  "metadata": {
+    "candidate_id": "candidate-37653256daef5c13a1563290",
+    "candidate_event_id": 1497,
+    "source_artifact": "/home/alex/.local/state/audio/bureau/2026-07-28-audio-program-reconciliation.v1.json",
+    "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
+    "plan_commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
+    "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc"
+  }
+}

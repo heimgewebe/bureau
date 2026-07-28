@@ -11,6 +11,7 @@ from typing import Any
 
 from .core import StateError
 from .github_repository import validate_github_repository_slug
+from .lease_contract import assess_task_broad_bureau_scope
 
 REGISTRATION_PREFLIGHT_SCHEMA_VERSION = 1
 REGISTRATION_PREFLIGHT_KIND = "bureau_registry_registration_preflight"
@@ -226,6 +227,12 @@ def evaluate_registration_preflight(
         reasons.append("base_changed_during_preflight")
     if collisions:
         reasons.append("registry_collision")
+    broad_scope_assessment = assess_task_broad_bureau_scope(proposed_task)
+    if (
+        broad_scope_assessment["broad_scope_requested"]
+        and not broad_scope_assessment["allowed"]
+    ):
+        reasons.append("broad_bureau_scope")
     decision = "allow" if not reasons else "block"
     receipt: dict[str, Any] = {
         "schema_version": REGISTRATION_PREFLIGHT_SCHEMA_VERSION,
@@ -243,6 +250,7 @@ def evaluate_registration_preflight(
         "pr_identity": {"number": pr_number, "head_sha": head_sha},
         "collisions": collisions,
         "semantic_hints": _semantic_hints(proposed_task, canonical_tasks, open_prs),
+        "broad_bureau_scope": broad_scope_assessment,
         "decision": decision,
         "reasons": reasons or ["registration_slot_available"],
     }

@@ -7,13 +7,14 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau",
     "grabowski_resources": [
-      "repo:/home/alex/repos/bureau",
-      "repo:/home/alex/repos/repoground"
+      "repo:/home/alex/repos/repoground",
+      "path:/home/alex/repos/bureau/registry/tasks/REPOGROUND-LEGACY-RECONCILIATION-V1-T017.json",
+      "path:/home/alex/repos/bureau/registry/tasks/REPOGROUND-LEGACY-RECONCILIATION-V1-T010.json"
     ]
   },
   "claims": [
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
       "mode": "write",
       "isolation": "worktree"
     },
@@ -39,7 +40,33 @@
       "permission to enable git-backed modes on iOS",
       "initial-head performance numbers apply unchanged to the final merged implementation",
       "completion of T010 before all typed native, performance and closeout evidence passes"
-    ]
+    ],
+    "broad_bureau_scope_migration": {
+      "schema_version": 1,
+      "migration_task": "BUREAU-TRUTH-MODEL-V2-T020",
+      "regression_of": "BUREAU-TRUTH-MODEL-V2-T013",
+      "introducing_commit": "5fdc46ac2d4f0e8d5bbc4a7469f6fac3b42e1be6",
+      "replacement": {
+        "claims": [
+          {
+            "resource": "component.bureau.registry",
+            "mode": "write"
+          }
+        ],
+        "grabowski_resources": [
+          "repo:/home/alex/repos/repoground",
+          "path:/home/alex/repos/bureau/registry/tasks/REPOGROUND-LEGACY-RECONCILIATION-V1-T017.json",
+          "path:/home/alex/repos/bureau/registry/tasks/REPOGROUND-LEGACY-RECONCILIATION-V1-T010.json"
+        ]
+      },
+      "rationale": "The native verification runs against RepoGround; Bureau effects are limited to the exact T017 and T010 task records.",
+      "historical_verification_receipt_sha256": "b709fc9d7acf130fb10ad4ad578e9a856e7d67e4be84b53563adadc33346047a",
+      "does_not_establish": [
+        "implementation completion",
+        "task readiness",
+        "permission to alter terminal history"
+      ]
+    }
   },
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T017",
   "title": "RepoGround Pythonista-Build nativ und final revisionsgebunden verifizieren",

@@ -1,0 +1,69 @@
+name: pr1087-hang-diagnostic
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  cumulative-suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        percent: [60, 70, 80, 90, 100]
+    steps:
+      - name: Clone exact pull-request merge quietly
+        env:
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          git init --quiet source
+          git -C source remote add origin "https://github.com/${REPOSITORY}.git"
+          git -C source fetch --quiet --depth=1 origin "refs/pull/${PR_NUMBER}/merge"
+          git -C source checkout --quiet --detach FETCH_HEAD
+          echo "MERGE_HEAD=$(git -C source rev-parse HEAD)"
+      - name: Install project development tools quietly
+        run: python -m pip install --quiet -e 'source[dev]'
+      - name: Run cumulative merge-suite segment
+        working-directory: source
+        env:
+          PERCENT: ${{ matrix.percent }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          set -u -o pipefail
+          mapfile -d '' -t files < <(find tests -maxdepth 1 -type f -name 'test_*.py' -print0 | sort -z)
+          count=${#files[@]}
+          end=$(( (count * PERCENT + 99) / 100 ))
+          selected=("${files[@]:0:end}")
+          echo "PERCENT=${PERCENT};COUNT=${count};END=${end};FIRST=${selected[0]};LAST=${selected[$((end-1))]}"
+          timeout --signal=TERM --kill-after=15s 720s python -m pytest -q --tb=line -x "${selected[@]}"
+  contract-stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        stage: [systemkatalog, registry]
+    steps:
+      - name: Clone exact pull-request merge quietly
+        env:
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          git init --quiet source
+          git -C source remote add origin "https://github.com/${REPOSITORY}.git"
+          git -C source fetch --quiet --depth=1 origin "refs/pull/${PR_NUMBER}/merge"
+          git -C source checkout --quiet --detach FETCH_HEAD
+          echo "MERGE_HEAD=$(git -C source rev-parse HEAD)"
+      - name: Install project development tools quietly
+        run: python -m pip install --quiet -e 'source[dev]'
+      - name: Validate systemkatalog boundary
+        if: matrix.stage == 'systemkatalog'
+        working-directory: source
+        run: timeout --signal=TERM --kill-after=15s 600s make systemkatalog-boundary
+      - name: Validate Bureau Registry
+        if: matrix.stage == 'registry'
+        working-directory: source
+        run: timeout --signal=TERM --kill-after=15s 600s env PYTHONPATH=src python -m bureau.cli --root . --json check

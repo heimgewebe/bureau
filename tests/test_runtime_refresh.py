@@ -435,30 +435,37 @@ def test_lease_binding_verifies_metadata_digest_and_required_binding(tmp_path: P
     }
 
 
-def test_lease_binding_accepts_schema_2_and_rejects_unknown_schema(tmp_path: Path) -> None:
+def test_lease_binding_accepts_supported_schemas_and_rejects_unknown_schema(
+    tmp_path: Path,
+) -> None:
     _, _, intent, _ = prepare_candidate_intent(tmp_path)
 
-    binding, schema_2_db = lease_for(tmp_path / "schema-2", intent, schema_version="2")
-    observed = refresh.validate_live_lease_binding(
-        intent,
-        binding,
-        resource_db=schema_2_db,
-        now=NOW,
-    )
-    assert observed["resource_db_schema_version"] == "2"
+    for schema_version in ("1", "2", "3"):
+        binding, resource_db = lease_for(
+            tmp_path / f"schema-{schema_version}",
+            intent,
+            schema_version=schema_version,
+        )
+        observed = refresh.validate_live_lease_binding(
+            intent,
+            binding,
+            resource_db=resource_db,
+            now=NOW,
+        )
+        assert observed["resource_db_schema_version"] == schema_version
 
-    binding, schema_3_db = lease_for(tmp_path / "schema-3", intent, schema_version="3")
+    binding, schema_4_db = lease_for(tmp_path / "schema-4", intent, schema_version="4")
     with pytest.raises(refresh.RuntimeRefreshError) as unsupported:
         refresh.validate_live_lease_binding(
             intent,
             binding,
-            resource_db=schema_3_db,
+            resource_db=schema_4_db,
             now=NOW,
         )
     assert unsupported.value.code == "lease-database-schema-unsupported"
     assert unsupported.value.details == {
-        "observed": "3",
-        "supported": ["1", "2"],
+        "observed": "4",
+        "supported": ["1", "2", "3"],
     }
 
 

@@ -15,7 +15,8 @@
     "working_repository": "/home/alex/repos/grabowski",
     "grabowski_resources": [
       "repo:/home/alex/repos/grabowski",
-      "repo:/home/alex/repos/bureau"
+      "path:/home/alex/repos/bureau/registry",
+      "path:/home/alex/repos/bureau/schemas"
     ]
   },
   "claims": [
@@ -25,7 +26,7 @@
       "isolation": "worktree"
     },
     {
-      "resource": "repo.bureau",
+      "resource": "component.bureau.registry",
       "mode": "read",
       "isolation": "none"
     }
@@ -91,6 +92,38 @@
       "permission_to_weaken_global_receipt_integrity",
       "deployment_authorization",
       "merge_readiness"
-    ]
+    ],
+    "broad_bureau_scope_migration": {
+      "schema_version": 1,
+      "migration_task": "BUREAU-TRUTH-MODEL-V2-T020",
+      "regression_of": "BUREAU-TRUTH-MODEL-V2-T013",
+      "introducing_commit": "8fcb6f28f4e1974cdce6f56ba1c5a2b24c8b09ab",
+      "replacement": {
+        "claims": [
+          {
+            "resource": "repo.grabowski",
+            "mode": "exclusive",
+            "isolation": "worktree"
+          },
+          {
+            "resource": "component.bureau.registry",
+            "mode": "read",
+            "isolation": "none"
+          }
+        ],
+        "grabowski_resources": [
+          "repo:/home/alex/repos/grabowski",
+          "path:/home/alex/repos/bureau/registry",
+          "path:/home/alex/repos/bureau/schemas"
+        ]
+      },
+      "rationale": "The implementation belongs to Grabowski. Bureau is consumed only as a revision-bound read-only Registry and schema source, so a repository-wide Bureau lease is unnecessary.",
+      "does_not_establish": [
+        "implementation completion",
+        "task readiness",
+        "permission to mutate Bureau Registry sources",
+        "permission to alter terminal history"
+      ]
+    }
   }
 }

@@ -849,14 +849,18 @@ def main(argv: list[str] | None = None) -> int:
             emit(value, args.json)
             return 0
         if args.command == "check":
+            from .lease_contract import registry_bureau_lease_findings
+
+            broad_scope_findings = registry_bureau_lease_findings(registry)
             value = {
-                "valid": True,
+                "valid": not broad_scope_findings,
                 **registry.summary(),
                 "state": read_only_state_integrity(args),
                 "adapters": adapters(args).status(),
+                "broad_bureau_scope_findings": broad_scope_findings,
             }
             emit(value, args.json)
-            return 0
+            return 1 if broad_scope_findings else 0
         if args.command == "github-observe":
             from .github_observer import filter_observation_by_task, observe_pull_requests
             from .github_repository import (

@@ -881,7 +881,17 @@ def _suggested_task_json(
         },
     }
     if not claims:
-        task["claims"] = [{"resource": "repo.bureau", "mode": "read", "isolation": "none"}]
+        if "component.bureau.registry" not in registry.resources:
+            raise StateError(
+                "candidate_task without a repository requires component.bureau.registry"
+            )
+        task["claims"] = [
+            {
+                "resource": "component.bureau.registry",
+                "mode": "read",
+                "isolation": "none",
+            }
+        ]
     repo_resource = registry.resources.get(str(repo)) if repo else None
     if repo_resource is not None and repo_resource.path:
         task["execution"]["working_repository"] = repo_resource.path

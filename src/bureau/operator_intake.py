@@ -1216,6 +1216,16 @@ def _validate_task_semantics(registry: Registry, task_json: dict[str, Any]) -> N
         raise OperatorIntakeError(
             "task-schema-invalid", f"task JSON does not satisfy the task schema: {exc}"
         ) from exc
+    from .lease_contract import assess_task_broad_bureau_scope
+
+    scope_assessment = assess_task_broad_bureau_scope(task_json, registry.resources)
+    if scope_assessment["broad_scope_requested"] and not scope_assessment["allowed"]:
+        raise OperatorIntakeError(
+            "broad-bureau-task-scope-forbidden",
+            "nonterminal task proposals must use exact Bureau resources or an explicit "
+            "reviewed repository-wide exception",
+            details={"scope_assessment": scope_assessment},
+        )
     task_id = str(task_json.get("id", ""))
     initiative = str(task_json.get("initiative", ""))
     if task_id in registry.tasks:

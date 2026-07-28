@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T011",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Audio-Altquellen deterministisch reconciliieren",
+  "state": "planned",
+  "goal": "hausKI-audio und frühere EasyEffects-/Audio-Pläne vollständig inventarisieren und jeden Eintrag deterministisch übernehmen, verwerfen oder offen binden.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T009",
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T041",
+    "WGX-JUSTFILE-INTEGRITY-V1-T005"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 11
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio",
+      "repo:/home/alex/repos/hausKI-audio",
+      "host:heim-pc"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Repositoryseitige Coverage-Matrix und Validator. hausKI-audio wird nur gelesen; physische Archivierung und Runtime-Stilllegung sind T012 vorbehalten."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "repo.hauski-audio",
+      "mode": "read",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "frozen-legacy-inventory",
+      "assertion": "Die Ausgangsmenge ist an hausKI-audio Commit 37aefdab1efc4b7a939b25d49afdc582fa52969f, vollständigen git-ls-tree-Digest, relevante Laufzeitzustände und den Auditdigest 95662041123959fb7d13afb1977ba5a88db09907acf98cb24c4b4eeab3047fd4 gebunden.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "predecessor-terminal",
+      "assertion": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T041 und WGX-JUSTFILE-INTEGRITY-V1-T005 sind terminal abgeschlossen; T041 besitzt einen expliziten later-Queuepfad und beide Läufe werden unter dem repo.hauski-audio-Claim seriell koordiniert.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "one-to-one-validator",
+      "assertion": "Ein deterministischer Validator ordnet jede eingefrorene Datei, Idee, Verhaltensanforderung, Testabsicht, Dienst- und Aktivierungsspur exakt einem neuen Artefakt, einer begründeten Verwerfung oder einer offenen Entscheidung zu.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "easyeffects-inventory",
+      "assertion": "UTIL-BASE-V1-T011 und ~/.local/share/heim-utilities/easyeffects/profile-plan.md samt Aktivierungspfaden sind in derselben Matrix importiert, verworfen oder zur Stilllegung markiert.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-source-mutation",
+      "assertion": "Reconciliation liest hausKI-audio und Altzustände; sie archiviert, löscht oder deaktiviert noch nichts.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "coverage-complete",
+      "assertion": "Coverage ist nur vollständig, wenn Inventarmenge und Ergebnismenge bijektiv prüfbar sind und keine Restkategorie „möglicherweise nützlich“ bleibt.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "terminal-delta-binding",
+      "assertion": "Für jeden Vorgänger werden terminaler Taskdigest, exakter hausKI-audio-Head, Basishead, vollständiger Git-Diff-Digest, PR-/Mergezustand und alle Laufzeit- oder Aktivierungsbelege erfasst; die Reconciliation deckt den eingefrorenen Basisbaum plus die geordneten vollständigen terminalen Deltas ab.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "testing",
+    "rollback",
+    "bureau",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Nur die neue Coverage-Matrix und der Validator werden zurückgenommen; Alt-Repository und Laufzeitzustände bleiben unverändert."
+  },
+  "metadata": {
+    "candidate_id": "candidate-37653256daef5c13a1563290",
+    "candidate_event_id": 1497,
+    "source_artifact": "/home/alex/.local/state/audio/bureau/2026-07-28-audio-program-reconciliation.v1.json",
+    "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
+    "plan_commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
+    "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc",
+    "legacy_commit": "37aefdab1efc4b7a939b25d49afdc582fa52969f",
+    "legacy_audit_sha256": "95662041123959fb7d13afb1977ba5a88db09907acf98cb24c4b4eeab3047fd4",
+    "predecessor_queue_path": {
+      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T041": "later",
+      "WGX-JUSTFILE-INTEGRITY-V1-T005": "later",
+      "coordination": "repo.hauski-audio write claims serialize execution; T011 starts only after both terminal heads and complete deltas are bound"
+    }
+  }
+}

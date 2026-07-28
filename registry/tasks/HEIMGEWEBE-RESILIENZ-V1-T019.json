@@ -65,7 +65,7 @@
     {
       "isolation": "none",
       "mode": "read",
-      "resource": "repo.bureau"
+      "resource": "component.bureau.registry"
     }
   ],
   "depends_on": [
@@ -78,7 +78,8 @@
       "required_level": "operator"
     },
     "grabowski_resources": [
-      "repo:/home/alex/repos/grabowski"
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/repos/bureau/registry/tasks/HEIMGEWEBE-RESILIENZ-V1-T019.json"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -144,6 +145,30 @@
     "successor_tasks": {
       "exclusive_merge": "HEIMGEWEBE-RESILIENZ-V1-T020",
       "runtime_candidate": "candidate-6e923c2ad11801456b042058"
+    },
+    "broad_bureau_scope_migration": {
+      "schema_version": 1,
+      "migration_task": "BUREAU-TRUTH-MODEL-V2-T020",
+      "regression_of": "BUREAU-TRUTH-MODEL-V2-T013",
+      "introducing_commit": "6b11f1a62eb469951ef83a6bef7b994f3be6d33c",
+      "replacement": {
+        "claims": [
+          {
+            "resource": "component.bureau.registry",
+            "mode": "read"
+          }
+        ],
+        "grabowski_resources": [
+          "path:/home/alex/repos/bureau/registry/tasks/HEIMGEWEBE-RESILIENZ-V1-T019.json"
+        ]
+      },
+      "rationale": "The implementation lives outside Bureau; Bureau is consumed only as canonical task and Registry truth.",
+      "historical_verification_receipt_sha256": "b709fc9d7acf130fb10ad4ad578e9a856e7d67e4be84b53563adadc33346047a",
+      "does_not_establish": [
+        "implementation completion",
+        "task readiness",
+        "permission to alter terminal history"
+      ]
     }
   },
   "priority": {

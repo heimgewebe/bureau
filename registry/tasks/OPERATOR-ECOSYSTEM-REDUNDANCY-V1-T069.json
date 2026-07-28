@@ -1,0 +1,155 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der Task bindet die aktuelle Main-Revision, die drei exakten Workflowdateien sowie die gemessene Laufverteilung und unterscheidet tatsächliche Ausführung, Fehlschlag und vollständig übersprungenen Job.",
+      "evidence_type": "object",
+      "id": "baseline-bound"
+    },
+    {
+      "assertion": "Der Bureau-Claude-Code-Workflow erzeugt bei gewöhnlichen Issues, Reviews und Reviewkommentaren keine GitHub-Actions-Läufe mehr; eine spätere Claude-Nutzung bleibt eine getrennte explizite Reaktivierungsentscheidung.",
+      "evidence_type": "object",
+      "id": "claude-idle-retired"
+    },
+    {
+      "assertion": "Pull-Request-Validierung und Pull-Request-Registry-Preflight besitzen stabile PR-gebundene Concurrency-Gruppen und brechen nur supersedierte Läufe derselben PR- und Workflowklasse ab; Main- und Merge-Group-Gates werden nicht gegenseitig storniert.",
+      "evidence_type": "object",
+      "id": "superseded-pr-runs-converge"
+    },
+    {
+      "assertion": "Ein Push auf main erzeugt neue Registry-Freshness-Check-Runs nur für offene Pull Requests mit mindestens einer hinzugefügten oder umbenannten Datei unter registry/tasks/*.json; unvollständige GitHub-Pagination, fehlerhafte Dateiabfrage oder nicht prüfbare Kandidaten bleiben fail-closed.",
+      "evidence_type": "object",
+      "id": "registration-prs-only-revalidated"
+    },
+    {
+      "assertion": "Die bestehenden erforderlichen Checknamen validate (3.10), validate (3.12) und registry-registration-preflight/freshness bleiben für ihre bisherigen PR-Klassen erhalten; Registry-only- und vollständige Codeänderungen werden durch Tests getrennt geprüft.",
+      "evidence_type": "object",
+      "id": "required-check-contract-preserved"
+    },
+    {
+      "assertion": "Ein reproduzierbarer Vorher-Nachher-Nachweis berechnet für den beobachteten Open-PR- und Eventbestand die vermiedenen übersprungenen Claude-Läufe, stornierten supersedierten Läufe und nicht mehr pauschal revalidierten PRs, ohne daraus zukünftige GitHub-Kosten zu erfinden.",
+      "evidence_type": "object",
+      "id": "measured-effect"
+    },
+    {
+      "assertion": "Die Änderung erzeugt keine automatische Review-, Merge-, Queue-, Claim-, Dispatch-, Deployment- oder Cleanup-Autorität und ändert weder Codex-Cloud-Einstellungen noch Branchschutz oder Merge Queue.",
+      "evidence_type": "object",
+      "id": "no-new-authority"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.ops"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Ausführung darf ausschließlich die drei benannten GitHub-Workflows, eng zugehörige Workflow-Vertragstests und eine revisionsgebundene Messdokumentation ändern. Branchschutz, GitHub-Codex-Cloud-Einstellungen, Merge Queue, Auto-Merge, Queue, Taskzustände und Runtime sind nicht Teil dieses Tasks.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.github/workflows/claude.yml",
+      "path:/home/alex/repos/bureau/.github/workflows/validate.yml",
+      "path:/home/alex/repos/bureau/.github/workflows/registry-registration-preflight.yml",
+      "path:/home/alex/repos/bureau/tests/test_github_workflows.py",
+      "path:/home/alex/repos/bureau/docs/reports/bureau-lean-actions-t069.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Reduziere den unmittelbar belegten Bureau-CI- und Operatorverwaltungsaufwand ohne Schutzabsenkung: entferne den derzeit ausschließlich übersprungene Läufe erzeugenden Claude-Code-Workflow, lasse supersedierte Pull-Request-Workflowläufe revisionsgebunden konvergieren und beschränke die Main-Push-Registry-Revalidierung auf offene Pull Requests, die tatsächlich neue oder umbenannte Registry-Taskdateien enthalten. Erhalte alle bestehenden fail-closed Registry-, CI-, Review-, Queue-, Claim-, Merge- und Deploymentgrenzen und liefere einen messbaren Vorher-Nachher-Nachweis.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T069",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation",
+      "task_readiness",
+      "queue_or_claim_authority",
+      "safe_merge",
+      "safe_branch_protection_change",
+      "codex_quota_savings",
+      "github_billing_amount",
+      "merge_queue_readiness",
+      "automatic_cleanup_authority"
+    ],
+    "id_reallocation": {
+      "closed_duplicate_registration_pr": 1127,
+      "occupied_by_pr": 1126,
+      "previous_task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T068",
+      "reason": "T068 wurde parallel für einen fachlich anderen Open-PR-Nonkonfliktvertrag veröffentlicht; der Lean-Operations-Auftrag wurde deshalb vor Merge kollisionsfrei auf T069 verschoben."
+    },
+    "observed_baseline": {
+      "actions_runs": 100,
+      "open_prs": 7,
+      "recent_prs": 100,
+      "registry_only_prs": 90,
+      "registry_preflight_runs": 25,
+      "skipped_claude_runs": 18,
+      "validate_runs": 24,
+      "window_end": "2026-07-28T12:45:59Z",
+      "window_start": "2026-07-28T06:35:31Z"
+    },
+    "publication_rebases": [
+      {
+        "from": "8e77e4c13441f563e48b8c7e6cf9234e487ec9be",
+        "reason": "PR #1114 wurde vor Veröffentlichung gemergt.",
+        "to": "702fd606235494c2bd3a151555b2a2b9169f745c"
+      },
+      {
+        "from": "702fd606235494c2bd3a151555b2a2b9169f745c",
+        "reason": "PR #1126 belegte T068 und wurde vor dem Runtime-Refresh gemergt.",
+        "to": "6c227bc7f8e171bdb3ab22ab2debb373ad64bcc4"
+      }
+    ],
+    "registered_at": "2026-07-28T14:42:00Z",
+    "source": "live-bureau-ci-review-overhead-audit",
+    "source_main_head": "6c227bc7f8e171bdb3ab22ab2debb373ad64bcc4",
+    "source_sha256": "7099bab602e7e5f971212725a644bd70314c97c24013f655a64106004f68acbe",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-05377d0c4b7678076363c375",
+      "event_id": 1556,
+      "event_created_at": "2026-07-28T13:52:02.710704Z",
+      "request_sha256": "e2f3e06ce22ea12720ca7a98af8a9ec783ee7ec5ef82cc17e7d5e08ad4c694c5",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-operator-audit",
+        "locator": "github:heimgewebe/bureau@8e77e4c13441f563e48b8c7e6cf9234e487ec9be#lean-ops-live-audit-2026-07-28",
+        "observed_at": "2026-07-28T15:47:20+02:00",
+        "sha256": "7099bab602e7e5f971212725a644bd70314c97c24013f655a64106004f68acbe"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 69
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "git",
+    "github",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich den exakten T069-Implementierungscommit beziehungsweise stelle die drei vorher gebundenen Workflowbytes wieder her. Registry, Queue, Branchschutz, Codex-Einstellungen und fremde Pull Requests bleiben unangetastet; bei unklarem GitHub-Checkzustand stoppt der Rollback vor weiteren Effekten."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bureau GitHub-Actions-Leerlauf und Vollrevalidierung begrenzen"
+}

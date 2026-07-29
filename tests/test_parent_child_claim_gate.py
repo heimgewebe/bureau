@@ -204,6 +204,37 @@ def test_combined_parent_dependency_wait_cycle_is_rejected_unless_parent_is_inde
     assert v2_registry.parent_child_projection(PARENT_ID).blocking_child_task_ids == ()
 
 
+def test_satisfied_dependency_edges_do_not_create_mixed_wait_cycles(registry_factory):
+    root = registry_factory(3)
+    _set_metadata(root, PLANNED_CHILD_ID, "parent_task", PARENT_ID)
+    _path, child = _read_task(root, PLANNED_CHILD_ID)
+    child["depends_on"] = [BLOCKED_CHILD_ID]
+    _write_task(root, PLANNED_CHILD_ID, child)
+
+    _path, completed_dependency = _read_task(root, BLOCKED_CHILD_ID)
+    completed_dependency["state"] = "verified"
+    completed_dependency["depends_on"] = [PARENT_ID]
+    completed_dependency["priority"]["lane"] = "next"
+    completed_dependency.setdefault("metadata", {})["verification"] = {
+        "task_sha256": task_revision_sha256(completed_dependency),
+        "plan_sha256": legacy.sha256_json({}),
+    }
+    _write_task(root, BLOCKED_CHILD_ID, completed_dependency)
+    queue_path = root / "registry/queue.json"
+    queue = json.loads(queue_path.read_text())
+    queue["lanes"]["now"].remove(BLOCKED_CHILD_ID)
+    queue_path.write_text(json.dumps(queue))
+
+    legacy_registry = legacy.Registry.load(root)
+    v2_registry = Registry.load(root)
+    assert legacy_registry.parent_child_projection(
+        PARENT_ID
+    ).blocking_child_task_ids == (PLANNED_CHILD_ID,)
+    assert v2_registry.parent_child_projection(
+        PARENT_ID
+    ).blocking_child_task_ids == (PLANNED_CHILD_ID,)
+
+
 def test_independently_executable_must_be_boolean(registry_factory):
     root = registry_factory(1)
     _set_metadata(root, PARENT_ID, "independently_executable", "true")

@@ -549,14 +549,19 @@ class Registry:
 
     def _task_wait_cycles(self, parent_by_child: Mapping[str, str]) -> list[str]:
         """Return bounded canonical diagnostics for mixed task wait cycles."""
-        adjacency: dict[str, list[tuple[str, str]]] = {
-            task_id: [
+        adjacency: dict[str, list[tuple[str, str]]] = {}
+        for task_id, task in self.tasks.items():
+            if task.state in TERMINAL_TASK_STATES:
+                adjacency[task_id] = []
+                continue
+            adjacency[task_id] = [
                 (dependency, "dependency")
-                for dependency in self.tasks[task_id].depends_on
-                if dependency in self.tasks
+                for dependency in task.depends_on
+                if (
+                    dependency in self.tasks
+                    and self.tasks[dependency].state not in TERMINAL_TASK_STATES
+                )
             ]
-            for task_id in self.tasks
-        }
         for child_task_id, parent_task_id in parent_by_child.items():
             # The claim gate has no live wait edge once either endpoint is terminal.
             if (

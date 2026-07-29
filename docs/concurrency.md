@@ -83,5 +83,10 @@ A successful coordinated claim stores the complete nonconflict assessment inside
 operator-approval object of the exact claim intent. It is therefore covered by the intent digest.
 `claim-commit` observes all open PRs again and requires byte-equivalent assessment data. Any change
 to the PR set, base or head object ID, changed paths, completeness state or task path scope blocks
-before Bureau writes a run. A projection or a disjointness proof does not authorize PR mutation,
-merge, deployment, work outside the declared paths or automatic repair of task bindings.
+before Bureau writes a run. For an already exact, proven-disjoint task scope, the coordinated intent
+removes the broad `repo:` Grabowski resource and retains only the digest-bound `path:` resources.
+`claim-commit` reads those live leases from Grabowski and verifies the exact resource set, owner, task,
+run, intent digest and remaining lifetime before writing a Bureau run. A task that still declares a
+broad repository resource remains `scope-required`; extra path declarations never narrow that broad
+authority implicitly. A projection or a disjointness proof does not authorize PR mutation, merge,
+deployment, work outside the declared paths or automatic repair of task bindings.

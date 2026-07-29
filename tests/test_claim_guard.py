@@ -1403,47 +1403,6 @@ def test_claim_intent_replaces_broad_repository_lease_with_exact_scope_paths(
     assert f"repo:{root.resolve()}" not in result["intent"]["required_resource_keys"]
 
 
-def test_claim_intent_removes_task_configured_broad_repository_key(
-    registry_factory, tmp_path
-):
-    root = registry_factory(1, mode="write")
-    task_id = "BUR-TEST-001-T001"
-    exact_path = root / "src/feature.py"
-    _t068_bind_task_scope(
-        root,
-        [f"repo:{root.resolve()}", f"path:{exact_path}"],
-        task_id=task_id,
-        isolation="none",
-    )
-    resource_path = next(
-        path
-        for path in (root / "registry/resources").glob("*.json")
-        if json.loads(path.read_text()).get("id") == "repo"
-    )
-    resource = json.loads(resource_path.read_text())
-    resource.pop("grabowski_key", None)
-    resource_path.write_text(json.dumps(resource))
-    registry = Registry.load(root)
-    dispatcher = Dispatcher(
-        registry,
-        StateStore(tmp_path / "state" / "bureau.sqlite3"),
-        open_pr_reservations_provider=lambda _registry: [
-            _t068_reservation(paths=("docs/other.md",))
-        ],
-    )
-
-    result = dispatcher.claim_intent(
-        "worker-task-configured-broad-key",
-        ("repository",),
-        task_id=task_id,
-        approved=True,
-        approval_source="test-t068-task-configured-broad-key",
-    )
-
-    assert result["intent"]["required_resource_keys"] == [f"path:{exact_path}"]
-    assert f"repo:{root.resolve()}" not in result["intent"]["required_resource_keys"]
-
-
 def test_claim_intent_binds_nonconflict_and_commit_rejects_pr_head_drift(
     registry_factory, tmp_path
 ):

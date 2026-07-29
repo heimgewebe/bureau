@@ -1,11 +1,11 @@
 # Bureau Lean GitHub Actions — T069
 
-Stand: 29. Juli 2026, 19:23 UTC
-Gebundene Basis: `f46ff846fa9f0e37be22c7f2e7ef4ce701fb1adc`
+Stand: 29. Juli 2026, 19:27 UTC
+Gebundene Basis: `ecf96c136161e8183afb0b722bc3cc8d365ca878`
 
 ## Revisionsgebundene Ausgangslage
 
-| Fläche | Ausgang auf `f46ff846fa9f` | Ergebnis |
+| Fläche | Ausgang auf `ecf96c136161` | Ergebnis |
 | --- | --- | --- |
 | `.github/workflows/claude.yml` | nicht vorhanden; Entfernung bereits durch Commit `94b79ef` belegt | unverändert abwesend |
 | `.github/workflows/validate.yml` | SHA-256 `2e53a6682ee8427407bb93d47520897dfdf6ee6b6acea5a2a7c8fae4e5fe2ae9`; PR-gebundene Concurrency seit PR #1179 vorhanden | unverändert |

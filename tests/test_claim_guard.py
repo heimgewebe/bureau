@@ -937,3 +937,484 @@ def test_valid_bound_pr_scope_includes_source_and_explicit_repository_claims(
         item for item in alpha if item["task_id"] == "BUR-TEST-001-T002"
     )
     assert label in " ".join(second_alpha["reasons"])
+
+
+def _t068_bind_task_scope(root, paths, *, task_id="BUR-TEST-001-T001", isolation=None):
+    task_path = root / f"registry/tasks/{task_id}.json"
+    task = json.loads(task_path.read_text())
+    task["execution"]["grabowski_resources"] = list(paths)
+    if isolation is not None:
+        for claim in task["claims"]:
+            if claim["mode"] in {"read", "write"}:
+                claim["isolation"] = isolation
+    task_path.write_text(json.dumps(task))
+
+
+def _t068_file_scope(
+    repository="heimgewebe/example",
+    number=99,
+    *,
+    paths=("src/other.py",),
+    base_oid="a" * 40,
+    head_oid="b" * 40,
+    files=None,
+):
+    normalized_files = (
+        [{"path": item, "status": "modified"} for item in paths] if files is None else files
+    )
+    changed_paths = sorted(
+        {
+            value
+            for item in normalized_files
+            for value in (item["path"], item.get("previous_path"))
+            if value is not None
+        }
+    )
+    changed_paths_sha256 = bureau_v2.legacy.sha256_json(
+        {
+            "schema_version": bureau_v2.OPEN_PR_SCOPE_SCHEMA_VERSION,
+            "changed_paths": changed_paths,
+        }
+    )
+    material = {
+        "schema_version": bureau_v2.OPEN_PR_SCOPE_SCHEMA_VERSION,
+        "repository": repository,
+        "number": number,
+        "base_oid": base_oid,
+        "head_oid": head_oid,
+        "changed_files": len(normalized_files),
+        "files": normalized_files,
+        "changed_paths": changed_paths,
+        "changed_paths_sha256": changed_paths_sha256,
+    }
+    return {**material, "file_scope_sha256": bureau_v2.legacy.sha256_json(material)}
+
+
+def _t068_reservation(
+    *,
+    paths=("src/other.py",),
+    number=99,
+    base_oid="a" * 40,
+    head_oid="b" * 40,
+    binding_status="missing",
+    scope_resources=("repo",),
+):
+    scope = _t068_file_scope(number=number, paths=paths, base_oid=base_oid, head_oid=head_oid)
+    return bureau_v2.OpenPullRequestReservation(
+        f"open-pr:heimgewebe/example#{number}",
+        "repo",
+        "write-blocker",
+        1,
+        repository="heimgewebe/example",
+        number=number,
+        branch="fix/example",
+        title="example",
+        url=f"https://github.example/pull/{number}",
+        task_binding_status=binding_status,
+        task_binding_reason="fixture binding state",
+        scope_resources=scope_resources,
+        base_oid=base_oid,
+        head_oid=head_oid,
+        changed_paths=tuple(scope["changed_paths"]),
+        changed_paths_sha256=scope["changed_paths_sha256"],
+        changed_file_count=scope["changed_files"],
+        file_scope_sha256=scope["file_scope_sha256"],
+        file_scope_complete=True,
+        file_scope_diagnostic="complete",
+    )
+
+
+def test_github_open_pull_requests_bind_complete_paginated_rename_scope(monkeypatch):
+    calls = []
+
+    class Completed:
+        returncode = 0
+        stderr = ""
+
+        def __init__(self, stdout):
+            self.stdout = stdout
+
+    def fake_run(argv, **_kwargs):
+        calls.append(argv)
+        if argv[1] == "pr":
+            return Completed(
+                json.dumps(
+                    [
+                        {
+                            "number": 17,
+                            "title": "rename",
+                            "headRefName": "fix/rename",
+                            "headRefOid": "b" * 40,
+                            "baseRefName": "main",
+                            "baseRefOid": "a" * 40,
+                            "changedFiles": 2,
+                            "url": "https://github.example/pull/17",
+                            "body": "",
+                            "labels": [],
+                        }
+                    ]
+                )
+            )
+        return Completed(
+            json.dumps(
+                [
+                    [
+                        {
+                            "filename": "src/new.py",
+                            "previous_filename": "src/old.py",
+                            "status": "renamed",
+                        },
+                        {"filename": "tests/test_new.py", "status": "modified"},
+                    ]
+                ]
+            )
+        )
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+
+    observed = bureau_v2._github_open_pull_requests("heimgewebe/example")
+
+    assert len(calls) == 2
+    assert "headRefOid" in calls[0][calls[0].index("--json") + 1]
+    assert calls[1][1:4] == ["api", "--paginate", "--slurp"]
+    scope = observed[0]["fileScope"]
+    assert scope["base_oid"] == "a" * 40
+    assert scope["head_oid"] == "b" * 40
+    assert scope["changed_paths"] == ["src/new.py", "src/old.py", "tests/test_new.py"]
+    complete, normalized, diagnostic = bureau_v2._file_scope_from_pull_request(
+        observed[0], "heimgewebe/example", 17
+    )
+    assert complete is True
+    assert normalized == scope
+    assert diagnostic == "complete"
+
+
+def test_github_open_pull_requests_reject_invalid_oid_before_file_read(monkeypatch):
+    calls = []
+
+    class Completed:
+        returncode = 0
+        stderr = ""
+        stdout = json.dumps(
+            [
+                {
+                    "number": 17,
+                    "title": "bad oid",
+                    "headRefName": "fix/bad",
+                    "headRefOid": "not-an-oid",
+                    "baseRefName": "main",
+                    "baseRefOid": "a" * 40,
+                    "url": "https://github.example/pull/17",
+                    "body": "",
+                    "labels": [],
+                }
+            ]
+        )
+
+    def fake_run(argv, **_kwargs):
+        calls.append(argv)
+        return Completed()
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", fake_run)
+
+    with pytest.raises(bureau_v2.OpenPullRequestObservationError, match="invalid head OID"):
+        bureau_v2._github_open_pull_requests("heimgewebe/example")
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("payload", ["{}", "[{}]", "not-json"])
+def test_github_pull_request_file_pagination_fails_closed(monkeypatch, payload):
+    class Completed:
+        returncode = 0
+        stderr = ""
+        stdout = payload
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", lambda *_args, **_kwargs: Completed())
+
+    with pytest.raises(bureau_v2.OpenPullRequestObservationError):
+        bureau_v2._github_pull_request_file_scope(
+            "heimgewebe/example",
+            17,
+            base_oid="a" * 40,
+            head_oid="b" * 40,
+            expected_changed_files=1,
+        )
+
+
+def test_github_pull_request_file_cap_reached_fails_closed(monkeypatch):
+    class Completed:
+        returncode = 0
+        stderr = ""
+        stdout = json.dumps([[{"filename": "src/file.py", "status": "modified"}]])
+
+    monkeypatch.setenv("BUREAU_OPEN_PR_CLAIM_GUARD_FILE_LIMIT", "1")
+    monkeypatch.setattr(bureau_v2.subprocess, "run", lambda *_args, **_kwargs: Completed())
+
+    with pytest.raises(bureau_v2.OpenPullRequestObservationError, match="FILE_LIMIT"):
+        bureau_v2._github_pull_request_file_scope(
+            "heimgewebe/example",
+            17,
+            base_oid="a" * 40,
+            head_oid="b" * 40,
+            expected_changed_files=1,
+        )
+
+
+def test_file_scope_reader_rejects_files_changed_path_disagreement():
+    scope = _t068_file_scope(paths=("src/one.py",))
+    scope["files"] = [{"path": "src/two.py", "status": "modified"}]
+    material = {key: value for key, value in scope.items() if key != "file_scope_sha256"}
+    scope["file_scope_sha256"] = bureau_v2.legacy.sha256_json(material)
+
+    complete, _normalized, diagnostic = bureau_v2._file_scope_from_pull_request(
+        {"fileScope": scope}, "heimgewebe/example", 99
+    )
+
+    assert complete is False
+    assert diagnostic == "open PR files and changed paths disagree"
+
+
+@pytest.mark.parametrize(
+    ("task_path", "pr_path", "eligible", "classification"),
+    [
+        ("src/feature.py", "src/other.py", True, "scope-proven-disjoint"),
+        ("src/feature.py", "src/feature.py", False, "scope-conflict"),
+        ("src/package", "src/package/module.py", False, "scope-conflict"),
+        ("src/package/module.py", "src/package", False, "scope-conflict"),
+        ("src/foo", "src/foobar", True, "scope-proven-disjoint"),
+    ],
+)
+def test_open_pr_scope_uses_path_segments(
+    registry_factory, tmp_path, task_path, pr_path, eligible, classification
+):
+    root = registry_factory(1, mode="write")
+    _t068_bind_task_scope(root, [f"path:{root / task_path}"])
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _registry: [_t068_reservation(paths=(pr_path,))],
+    )
+
+    item = dispatcher.frontier({"repository"})[0]
+
+    assert item["eligible"] is eligible
+    assert item["open_pr_scope"]["reservations"][0]["classification"] == classification
+    if eligible:
+        assert "repo write blocked by open PR" not in " ".join(item["reasons"])
+    else:
+        assert "repo write blocked by open PR" in " ".join(item["reasons"])
+
+
+@pytest.mark.parametrize(
+    "scope_kind", ["missing", "broad", "broad-alias", "outside"]
+)
+def test_open_pr_scope_requires_exact_in_repository_paths(registry_factory, tmp_path, scope_kind):
+    root = registry_factory(1, mode="write")
+    if scope_kind == "broad":
+        _t068_bind_task_scope(root, [f"repo:{root.resolve()}"])
+    elif scope_kind == "broad-alias":
+        _t068_bind_task_scope(root, [f"repo:{root.resolve()}/."])
+    elif scope_kind == "outside":
+        _t068_bind_task_scope(root, ["path:/tmp/t068-outside.py"])
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _registry: [_t068_reservation()],
+    )
+
+    item = dispatcher.frontier({"repository"})[0]
+
+    assert item["eligible"] is False
+    reservation = item["open_pr_scope"]["reservations"][0]
+    assert reservation["classification"] == "scope-required"
+    assert "classification=scope-required" in " ".join(item["reasons"])
+
+
+def test_binding_violation_remains_visible_but_disjoint_scope_is_claimable(
+    registry_factory, tmp_path
+):
+    root = registry_factory(1, mode="write")
+    _t068_bind_task_scope(root, [f"path:{root / 'src/feature.py'}"])
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _registry: [
+            _t068_reservation(paths=("docs/other.md",), binding_status="missing")
+        ],
+    )
+
+    item = dispatcher.frontier({"repository"})[0]
+    reservation = item["open_pr_scope"]["reservations"][0]
+
+    assert item["eligible"] is True
+    assert reservation["classification"] == "scope-proven-disjoint"
+    assert reservation["task_binding_status"] == "missing"
+
+
+def test_claim_intent_binds_nonconflict_and_commit_rejects_pr_head_drift(
+    registry_factory, tmp_path
+):
+    root = registry_factory(1, mode="write")
+    task_id = "BUR-TEST-001-T001"
+    _t068_bind_task_scope(
+        root,
+        [f"path:{root / 'src/feature.py'}"],
+        task_id=task_id,
+        isolation="none",
+    )
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    current = [_t068_reservation(paths=("docs/other.md",), head_oid="b" * 40)]
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _registry: list(current),
+    )
+
+    result = dispatcher.claim_intent(
+        "worker-t068",
+        ("repository",),
+        task_id=task_id,
+        approved=True,
+        approval_source="test-t068",
+    )
+    intent = result["intent"]
+    proof = intent["operator_approval"]["open_pr_nonconflict"]
+
+    assert proof["requires_evidence"] is True
+    assert proof["reservations"][0]["classification"] == "scope-proven-disjoint"
+    assert proof["reservations"][0]["head_oid"] == "b" * 40
+    current[:] = [_t068_reservation(paths=("docs/other.md",), head_oid="c" * 40)]
+
+    with pytest.raises(
+        bureau_v2.legacy.StateError,
+        match="open PR nonconflict evidence changed after intent",
+    ):
+        dispatcher.commit_claim_intent(
+            intent,
+            {"owner_id": intent["lease_owner_id"], "task_id": task_id},
+        )
+
+    with store.connect() as connection:
+        assert store.active_runs(connection) == []
+
+
+def test_github_pull_request_file_count_mismatch_fails_closed(monkeypatch):
+    class Completed:
+        returncode = 0
+        stderr = ""
+        stdout = json.dumps([[{"filename": "src/file.py", "status": "modified"}]])
+
+    monkeypatch.setattr(bureau_v2.subprocess, "run", lambda *_args, **_kwargs: Completed())
+
+    with pytest.raises(bureau_v2.OpenPullRequestObservationError, match="changedFiles mismatch"):
+        bureau_v2._github_pull_request_file_scope(
+            "heimgewebe/example",
+            17,
+            base_oid="a" * 40,
+            head_oid="b" * 40,
+            expected_changed_files=0,
+        )
+
+
+def test_open_pr_file_scope_overrides_disjoint_declared_components(
+    registry_factory, tmp_path
+):
+    root = registry_factory(1, mode="write")
+    resources = root / "registry/resources"
+    (resources / "component-a.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "id": "component.a",
+                "type": "component",
+                "parent": "repo",
+                "path": str(root / "src/a"),
+                "grabowski_key": str(root / ".scope-a"),
+            }
+        )
+    )
+    (resources / "component-b.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "id": "component.b",
+                "type": "component",
+                "parent": "repo",
+                "path": str(root / "src/b"),
+                "grabowski_key": str(root / ".scope-b"),
+            }
+        )
+    )
+    task_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    task = json.loads(task_path.read_text())
+    task["claims"][0]["resource"] = "component.a"
+    task["execution"]["grabowski_resources"] = [
+        f"path:{root / 'src/feature.py'}"
+    ]
+    task_path.write_text(json.dumps(task))
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _registry: [
+            _t068_reservation(
+                paths=("src/feature.py",), scope_resources=("component.b",)
+            )
+        ],
+    )
+
+    item = dispatcher.frontier({"repository"})[0]
+
+    assert item["eligible"] is False
+    reservation = item["open_pr_scope"]["reservations"][0]
+    assert reservation["classification"] == "scope-conflict"
+    assert "classification=scope-conflict" in " ".join(item["reasons"])
+
+
+def test_commit_rejects_unexpected_nonconflict_evidence(registry_factory, tmp_path):
+    root = registry_factory(1, mode="write")
+    task_id = "BUR-TEST-001-T001"
+    _t068_bind_task_scope(
+        root,
+        [f"path:{root / 'src/feature.py'}"],
+        task_id=task_id,
+        isolation="none",
+    )
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _registry: [],
+    )
+    result = dispatcher.claim_intent(
+        "worker-unexpected-proof",
+        ("repository",),
+        task_id=task_id,
+        approved=True,
+        approval_source="test-t068",
+    )
+    intent = result["intent"]
+    task = registry.tasks[task_id]
+    proof = bureau_v2._task_open_pr_scope_assessment(task, [], registry)
+    assert proof["requires_evidence"] is False
+    intent["operator_approval"]["open_pr_nonconflict"] = proof
+    intent["intent_sha256"] = bureau_v2.coordinated_claim_intent_sha256(intent)
+
+    with pytest.raises(
+        bureau_v2.legacy.StateError,
+        match="unexpected open PR nonconflict evidence",
+    ):
+        dispatcher.commit_claim_intent(intent, None)
+
+    with store.connect() as connection:
+        assert store.active_runs(connection) == []
+

@@ -92,7 +92,13 @@
         "main_validation_conclusion": "PASS",
         "main_validation_log_sha256": "1cbb712e829234649462963eff30297648a58a2e846d92ab2fabae951dc21ac9",
         "main_validation_log_bytes": 162884,
-        "main_validation_node20_deprecation_annotation_absent": true
+        "main_validation_node20_deprecation_annotation_absent": true,
+        "pull_request_validation_event": "pull_request",
+        "pull_request_validation_head_sha": "015952bef6fb2caa78d5ff94f469b3b5a7bd10fc",
+        "pull_request_validation_conclusion": "PASS",
+        "pull_request_validation_log_sha256": "11b274a5d749b2d03b5a94db1dd7a48f7fc82c7c77533785251750a54b5f380f",
+        "pull_request_validation_log_bytes": 164080,
+        "pull_request_validation_node20_deprecation_annotation_absent": true
       },
       "acceptance": {
         "official-actions": "PASS; both tracked workflows use the current official v7 Node-24-native action majors.",
@@ -104,7 +110,7 @@
         "Future CI or deployment health.",
         "Product behavior outside the recorded validation and browser-smoke evidence."
       ],
-      "task_sha256": "8eb9d9775296ac1a0e485f90bfa476de2dc155984f0f5a3a5ae6d25629b509d4",
+      "task_sha256": "69cfb2295b339785c2954823f04e447e429b782cd3daf361d310e4b6f5e3a73b",
       "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4"
     },
     "registry_truth": {
@@ -136,7 +142,12 @@
           "repository": "heimgewebe/commonworld",
           "workflow_run_id": 30276418449,
           "head_sha": "015952bef6fb2caa78d5ff94f469b3b5a7bd10fc",
-          "verdict": "pass"
+          "verdict": "pass",
+          "workflow": "validate",
+          "event": "pull_request",
+          "log_sha256": "11b274a5d749b2d03b5a94db1dd7a48f7fc82c7c77533785251750a54b5f380f",
+          "log_bytes": 164080,
+          "node20_deprecation_annotation_absent": true
         },
         {
           "kind": "merge_commit_checks",

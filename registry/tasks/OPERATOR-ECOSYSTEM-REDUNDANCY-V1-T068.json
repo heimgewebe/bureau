@@ -88,13 +88,11 @@
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "metadata": {
     "does_not_establish": [
-      "implementation",
-      "task_readiness",
-      "queue_truth",
       "automatic PR binding repair",
       "automatic merge authority",
       "permission to bypass unknown diffs",
-      "permission to mutate foreign work"
+      "permission to mutate foreign work",
+      "future regression absence"
     ],
     "observed_blocker": {
       "open_pull_requests": [
@@ -132,6 +130,72 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "implementation": {
+      "repository": "heimgewebe/bureau",
+      "pull_request": 1143,
+      "url": "https://github.com/heimgewebe/bureau/pull/1143",
+      "base_sha": "e1c8b8fa0530a10fdd3720bab40dad1cf0a75b91",
+      "head_sha": "6959f37f776de7e457f9368f53fad3bddf727100",
+      "merge_commit_sha": "0fd31246137e6f328328553d2f5ec560b882150e",
+      "merged_at": "2026-07-29T08:05:52Z",
+      "diff_sha256": "72cf84704417e666106ceb36af120007624c22dda7d046bd0daf17a407027dad",
+      "changed_files": [
+        "docs/concurrency.md",
+        "src/bureau/v2.py",
+        "tests/test_claim_guard.py"
+      ]
+    },
+    "review": {
+      "kind": "revision-bound-operator-self-review",
+      "reviewer": "chatgpt",
+      "base_sha": "e1c8b8fa0530a10fdd3720bab40dad1cf0a75b91",
+      "head_sha": "6959f37f776de7e457f9368f53fad3bddf727100",
+      "diff_sha256": "72cf84704417e666106ceb36af120007624c22dda7d046bd0daf17a407027dad",
+      "verdict": "PASS",
+      "all_findings_triaged": true,
+      "material_findings_remaining": 0,
+      "external_review_status": "unavailable",
+      "external_review_reason": "Codex quota was exhausted and no external provider returned an exact-head PASS; no independent review is claimed."
+    },
+    "validation": {
+      "pull_request_checks": "PASS",
+      "required_pr_contexts": [
+        "validate (3.10)",
+        "validate (3.12)",
+        "registry-registration-preflight/freshness",
+        "Analyze (python)",
+        "Analyze (actions)",
+        "CodeQL"
+      ],
+      "local_full_validation": "PASS",
+      "final_diff_artifact": {
+        "artifact_id": "62a0df442d934792ba4cbc9d785a45a4",
+        "artifact_sha256": "72cf84704417e666106ceb36af120007624c22dda7d046bd0daf17a407027dad",
+        "receipt_sha256": "8a868192e85b1d1c6bca963e74ff3629a617c5d6ad33891f07bfc352209450f2",
+        "filename": "t068-closeout-t069-activate-v1-pr-1143-6959f37f776d-diff.txt",
+        "byte_size": 78244
+      },
+      "runtime_source_commit": "d5a5805a19e5f536fa5a7ba4b30456c010d89ea2",
+      "runtime_includes_merge_commit": true
+    },
+    "followups": [
+      "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T069",
+      "BUR-2026-005-T022"
+    ],
+    "resolution_summary": "Bureau PR #1143 implements revision-bound complete pull-request file scopes, conservative path-overlap semantics, claim-intent and claim-commit TOCTOU protection, and exact Grabowski lease narrowing for proven-disjoint work. The exact reviewed head passed all required checks, was merged, and is contained in the deployed Bureau runtime.",
+    "verified_at": "2026-07-29T13:44:39Z",
+    "verification": {
+      "source": "merged_bureau_pr_1143_and_deployed_runtime",
+      "source_ref": "github-pr:heimgewebe/bureau#1143@6959f37f776de7e457f9368f53fad3bddf727100:0fd31246137e6f328328553d2f5ec560b882150e",
+      "verified_at": "2026-07-29T13:44:39Z",
+      "pull_request": 1143,
+      "merge_commit_sha": "0fd31246137e6f328328553d2f5ec560b882150e",
+      "runtime_source_commit": "d5a5805a19e5f536fa5a7ba4b30456c010d89ea2",
+      "runtime_includes_merge_commit": true,
+      "diff_sha256": "72cf84704417e666106ceb36af120007624c22dda7d046bd0daf17a407027dad",
+      "task_sha256": "b5768480494ecc1e4e88448b4031ce8d6e7d8c6a0c2485953e68290801f1f492",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   },
   "priority": {
@@ -153,6 +217,6 @@
     "strategy": "Revertiere ausschließlich den neuen Scope- und Nonkonfliktvertrag und seine Adapter. Ohne ihn fällt jeder Open-PR-Konflikt auf die bisherige repositoryweite Fail-closed-Semantik zurück; vorhandene Registry-, PR-, Lease-, Task- und Auditwahrheit bleibt unverändert."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Open-PR-Guard um revisionsgebundene Blatt-Nonkonfliktclaims erweitern"
 }

@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T077",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Audit-Kette in eine verifizierte Betriebsprojektion verdichten",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "next",
     "rank": 20
@@ -94,13 +94,95 @@
       "Merge- oder Deployment-Bereitschaft vor finalen Gates"
     ],
     "implementation_pr": "heimgewebe/grabowski#321",
-    "implementation_head": "3f288e7644d7482dc172ad9e577548b4cc4e695a",
-    "implementation_base": "fb3ebbde3f054178ef4f5ea1259bc6a687baea7f",
-    "implementation_diff_sha256": "6cc0fce4ec75ac5c706c9e8875a187c7ba2cc3f6d6ced4e974ab092bf98ad68c",
-    "local_validation_receipt_sha256": "0e239a9bda17a11a836cae08201cdb28530216358b98f8078fed8e9e382445cb",
-    "local_validation_summary": "2420 tests passed, 2 expected skips; all remaining validation gates passed",
-    "github_ci": "all required PR #321 checks passed for exact head",
-    "merge_status": "blocked_before_dispatch_by_foreign_live_repository_operation_lease",
-    "merge_non_effect": "PR remained OPEN and CLEAN; no GitHub mutation was dispatched"
+    "historical_premerge_evidence": {
+      "implementation_head": "3f288e7644d7482dc172ad9e577548b4cc4e695a",
+      "implementation_base": "fb3ebbde3f054178ef4f5ea1259bc6a687baea7f",
+      "implementation_diff_sha256": "6cc0fce4ec75ac5c706c9e8875a187c7ba2cc3f6d6ced4e974ab092bf98ad68c",
+      "local_validation_receipt_sha256": "0e239a9bda17a11a836cae08201cdb28530216358b98f8078fed8e9e382445cb",
+      "local_validation_summary": "2420 tests passed, 2 expected skips; all remaining validation gates passed",
+      "github_ci": "all required PR #321 checks passed for exact head",
+      "merge_status": "blocked_before_dispatch_by_foreign_live_repository_operation_lease",
+      "merge_non_effect": "PR remained OPEN and CLEAN; no GitHub mutation was dispatched"
+    },
+    "implementation_head": "069f55ba28d04f72d14356f1ecb251d381e732a6",
+    "implementation_base": "37ea28ead466dd50a42051fa51f83b100d8eff77",
+    "implementation_diff_sha256": "6b8e9702175579cc77aff707bcc6b28d21840a01df5b1af4a3cabf4839dabb04",
+    "merge_status": "merged",
+    "outcome": "Bereits vollständig durch Grabowski PR #321 implementiert, mit grüner Pflicht-CI gemergt, im aktuellen Grabowski-Main enthalten und auf der exakt deployten Runtime durch die verifizierte mehrsegmentige Audit-Projektion live bestätigt.",
+    "verified_at": "2026-07-29T10:49:11Z",
+    "verification_note": "Alle acht Akzeptanzkriterien sind auf dem gemergten PR-Head, dem aktuellen Grabowski-Main und der exakt deployten Runtime belegt. Diese Registry-Änderung mutiert weder Grabowski-Code noch Audit-Rohdaten, Routing, Policies oder Bureau-Ausführungswahrheit.",
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 321,
+      "reviewed_head": "069f55ba28d04f72d14356f1ecb251d381e732a6",
+      "base_sha": "37ea28ead466dd50a42051fa51f83b100d8eff77",
+      "merge_commit": "2341f88f25025766f579d7610f9cad0943315d01",
+      "merged_at": "2026-07-23T02:38:24Z",
+      "diff_sha256": "6b8e9702175579cc77aff707bcc6b28d21840a01df5b1af4a3cabf4839dabb04",
+      "diff_bytes": 69163,
+      "github_ci": {
+        "validate_3_10": "success",
+        "validate_3_12": "success",
+        "codeql_actions": "success",
+        "codeql_python": "success",
+        "codeql_gate": "success"
+      },
+      "current_main_head": "84411199dd8a5bb516e8e62fcb56245784f0f31a",
+      "merge_commit_is_ancestor_of_current_main": true,
+      "live_runtime": {
+        "release_id": "84411199dd8a-srcset34c081e5f338-locke6664d600b6c-contractb0d032e607e5",
+        "repo_head": "84411199dd8a5bb516e8e62fcb56245784f0f31a",
+        "healthy": true,
+        "deployment_complete": true,
+        "deployment_integrity_valid": true,
+        "audit_valid": true,
+        "audit_writable": true,
+        "audit_archived_segment_count": 3,
+        "audit_total_records": 53851,
+        "audit_snapshot_sha256": "9d3d94ff8e8054668f94e95d95801cffc4cf55c3fe4908712cd3ec53b0099951",
+        "audit_last_record_sha256": "4f4b09a74dce080f86da409098c653b648948401924cf7aa824f95f2cd2b9589",
+        "audit_projection_sha256": "179efdcc12cada4ee3b4c6393481107637b9c84bb8b31fe7acdbb05b9aabc24d",
+        "audit_findings_sha256": "c5d89e4dddbbd2fd823dec05995ef66df5010c060d5f3c77f69d86bde29f9e96",
+        "kill_switch_engaged": false
+      }
+    },
+    "validated_acceptance": {
+      "verified-source-only": "PASS: die Live-Projektion liest 53.851 Records aus drei Archivsegmenten plus aktiver Kette; Snapshot- und Nachleseprüfung sind gültig und an Recordzahl, letzten Record-Hash und Snapshot-Hash gebunden.",
+      "fixed-bounded-windows": "PASS: das typisierte read-only Werkzeug liefert 24h, 7d, 30d und Gesamtbestand mit begrenzten Operation-, Fehler-, Bureau-, Ressourcen-, Task-, Lease-, Mutations-, Rollback- und Recovery-Aggregaten.",
+      "privacy-and-authority-boundary": "PASS: die Ausgabe ist aggregiert und redigiert und erklärt ausdrücklich, dass sie weder Kausalität, Produktivität, aktuelle Lease-Wahrheit, sicheren Retry noch Task- oder Routing-Autorität belegt.",
+      "concurrent-growth-truthful": "PASS: source_binding enthält Snapshot- und Post-read-Kettenkopf sowie advanced_during_projection; der aktuelle Live-Read meldet einen stabilen unveränderten Kopf.",
+      "dedupe-and-receipt-identities": "PASS: die Live-Ausgabe enthält getrennte findings_sha256- und projection_sha256-Identitäten sowie den exakten audit_snapshot_sha256 für die Quellenbindung.",
+      "proposal-only-patterns": "PASS: wiederkehrende Vertragsfehler und Ressourcenrückgewinnungen erscheinen ausschließlich als authority=proposal_only mit ausdrücklichem Ausschluss automatischer Task-Erzeugung.",
+      "consumer-boundary": "PASS: Dokumentation und Live-Ausgabe kennzeichnen die Projektion als derived_read_only_projection und verweisen aktuelle Zustandsentscheidungen weiterhin auf Runtime-, Task-, Lease-, Friction- und Governor-Wahrheit.",
+      "review-test-live-deploy": "PASS: PR #321 wurde auf Head 069f55ba mit vollständiger grüner Validate-/CodeQL-CI gemergt; Merge 2341f88f ist Vorfahr des aktuellen und exakt deployten Grabowski-Main 84411199, dessen Live-Projektion erfolgreich gelesen wurde."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T077",
+          "source_ref": "github-pr:heimgewebe/grabowski#321@069f55ba28d04f72d14356f1ecb251d381e732a6:2341f88f25025766f579d7610f9cad0943315d01",
+          "content_sha256": "6b8e9702175579cc77aff707bcc6b28d21840a01df5b1af4a3cabf4839dabb04"
+        },
+        {
+          "kind": "live_audit_projection",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T077",
+          "source_ref": "grabowski-audit-projection:84411199@records-53851:segments-3",
+          "content_sha256": "9d3d94ff8e8054668f94e95d95801cffc4cf55c3fe4908712cd3ec53b0099951"
+        }
+      ]
+    },
+    "verification": {
+      "source_task_sha256": "2769f7703c0b0f8518a9d3fe77374fe3d6fa4682f4ff2d9eb0eaa87bad32d830",
+      "bureau_base_sha": "43096f35c3e19c0f9f47f4507e6561a17cd2fa69",
+      "source": "merged_pull_request_ci_current_main_and_deployed_runtime_readback",
+      "source_ref": "github-pr:heimgewebe/grabowski#321",
+      "task_sha256": "64e86dfb26740f6342cd372e5c795ca86e0c9fa6963b3ad21963907ef97042e4",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

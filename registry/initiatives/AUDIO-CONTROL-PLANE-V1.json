@@ -32,11 +32,30 @@
     "legacy_policy": "hausKI-audio supplies ideas and rewritten behavioural requirements only; source and history are not imported by default",
     "sequencing_authority": "docs/plans/audio-configuration-redesign-v1.md phases 0 through 8",
     "review_reconciliation": "Repository implementation, live runtime mutation, maintenance validation, deterministic legacy reconciliation, runtime closeout, repository archival and worktree cleanup are separate tasks.",
+    "supplemental_plans": [
+      {
+        "id": "buckelwal-continuous-voice-v1",
+        "repository": "heimgewebe/audio",
+        "path": "docs/plans/buckelwal-continuous-voice-v1.md",
+        "commit": "2475eae1929c222469e78f8f4055e3a759fcf295",
+        "document_sha256": "579d1c0fc964753fbf5bc7e52c6d625b5d2500a99ee6e89d73d76ce309f031d3",
+        "scope": "Fokussiertes Buckelwal-Teilprodukt mit repositoryseitiger Umsetzung T015 und physischer Abnahme T016; ersetzt weder den Audio-Gesamtplan noch T006/T007."
+      }
+    ],
+    "focused_part_products": [
+      {
+        "id": "buckelwal-continuous-voice-v1",
+        "implementation_task": "AUDIO-CONTROL-PLANE-V1-T015",
+        "physical_acceptance_task": "AUDIO-CONTROL-PLANE-V1-T016",
+        "state": "repository-verified-physical-acceptance-open"
+      }
+    ],
     "does_not_establish": [
       "Bit-Perfect-Wiedergabe ohne Track- und Endpunktmessung",
       "physische Regler-, Kabel- oder Phantomspannungszustände ohne menschlichen Beleg",
       "Erlaubnis zum Überschreiben fremder Audio-, Bureau- oder Laufzeitarbeit",
-      "Archivierungsfreigabe für hausKI-audio vor vollständiger Coverage-Matrix und exklusivem Cleanup-Task"
+      "Archivierungsfreigabe für hausKI-audio vor vollständiger Coverage-Matrix und exklusivem Cleanup-Task",
+      "subjektive Klangabnahme der durchgehend spielbaren Buckelwalstimme vor AUDIO-CONTROL-PLANE-V1-T016"
     ]
   }
 }

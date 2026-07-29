@@ -72,6 +72,140 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "implementation_evidence": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 499,
+      "base_sha": "e68f36169922fbc2725534598fcb00ce5514696f",
+      "implementation_head": "ecef302f729946db1a776edf6cb831ecc92873c8",
+      "merge_commit": "2ce670ac80b05234a74c4356d1c66d8673a05c37",
+      "merged_at": "2026-07-28T16:11:01Z",
+      "changed_paths": [
+        "docs/generated/operator-context.v1.json",
+        "docs/runtime-deployment-admission-drain-v1.md",
+        "src/grabowski_operator.py",
+        "tests/test_dual_service_deploy.py",
+        "tests/test_operator_contract.py",
+        "tests/test_self_deploy.py",
+        "tools/deploy_runtime_dual.py",
+        "tools/run_scheduled_deploy.py"
+      ],
+      "unified_diff_sha256": "e35987808353f8bb572206b9799502136f6d77dce2ab8f3b884ee04df20ecbaa",
+      "current_main_sha": "259ac63d5836a849a5e4fb61b967b2f2b126868a",
+      "deployed_runtime_sha": "45f9c26064dd929f89be5aa74f9fa4e0fbe07e28",
+      "validation": [
+        "53 focused admission/deployment/scheduler tests passed",
+        "make validate: PASS",
+        "GitHub validate (3.10): success",
+        "GitHub validate (3.12): success",
+        "GitHub CodeQL actions/python: success"
+      ],
+      "review": {
+        "kind": "transparent_self_review",
+        "head_sha": "ecef302f729946db1a776edf6cb831ecc92873c8",
+        "diff_sha256": "e35987808353f8bb572206b9799502136f6d77dce2ab8f3b884ee04df20ecbaa",
+        "result": "PASS",
+        "source_ref": "github-comment:heimgewebe/grabowski#499-5106672387"
+      }
+    },
+    "outcome": "Bereits vollständig in Grabowski PR #499 implementiert und auf einem nachfolgenden gesunden Runtime-Stand deployt: neue Connector-Wirkungen werden vor dem Drain revisionsgebunden gesperrt, bestehende Aufrufe dürfen auslaufen, Dispatcher-Occupancy bleibt diagnostisch, und fehlende Quieszenz erhält den fail-closed Abbruch- und Rückrollpfad.",
+    "verification": {
+      "verified_at": "2026-07-29T14:07:31Z",
+      "source_task_file_sha256": "bdb4fc8f7a6bf4b17a97fb15d96eae70d6583afbd0981c5fa2584cbdb95d9164",
+      "task_sha256": "ab0d89b7538f889175df316b73e03305a444a2c11ce21864b4129a6d82851093",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    },
+    "verified_acceptance": {
+      "admission-drain": "A private expiring deployment-admission marker rejects newly admitted FastMCP tool effects before drain while already admitted calls finish and remain counted.",
+      "inflight-proof": "Queue and conserved poll/enqueue/final-response counters establish stable quiescence across consecutive samples; warm dispatcher worker occupancy is diagnostic and is not spoofed or killed.",
+      "rollback-preserved": "The marker remains active through rollback and containment waits; missing or drifted marker state fails closed, and an unavailable predecessor admission route keeps both operator and tunnel stopped.",
+      "reproduction-test": "Final-head tests include queue zero with dispatcher_worker_pool_occupancy 9, existing-call drain, unfinished-work rejection, final guard failure and rollback admission sequencing.",
+      "live-deploy": "The healthy runtime at 45f9c26064dd929f89be5aa74f9fa4e0fbe07e28 contains merge commit 2ce670ac80b05234a74c4356d1c66d8673a05c37; deployment and audit integrity read back valid."
+    },
+    "verified_at": "2026-07-29T14:07:31Z",
+    "implementation_status": "verified",
+    "verification_note": "Grabowski PR #499 implemented the admission-drain contract, PR #501 hardened the predecessor-runtime bootstrap, and a later source-identity-bound deployment on runtime head 45f9c260 completed while dispatcher work was initially active and then reached three stable admitted drain samples without manual connector quieting.",
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_requests": [
+        {
+          "number": 499,
+          "base_sha": "e68f36169922fbc2725534598fcb00ce5514696f",
+          "reviewed_head_sha": "ecef302f729946db1a776edf6cb831ecc92873c8",
+          "merge_commit_sha": "2ce670ac80b05234a74c4356d1c66d8673a05c37",
+          "merged_at": "2026-07-28T16:11:01Z",
+          "full_diff_bytes": 79432,
+          "full_diff_sha256": "e35987808353f8bb572206b9799502136f6d77dce2ab8f3b884ee04df20ecbaa"
+        },
+        {
+          "number": 501,
+          "base_sha": "2ce670ac80b05234a74c4356d1c66d8673a05c37",
+          "reviewed_head_sha": "f0090643073c90521fa36adf8211ef8a79a0f783",
+          "merge_commit_sha": "febf9e29372a993fc8b7a48ec458deaeb7d97af5",
+          "merged_at": "2026-07-28T16:53:48Z",
+          "full_diff_bytes": 8822,
+          "full_diff_sha256": "82a074bab11db265483a8a460c978889a891910893f87ca9576f7ac6c2b4a896"
+        }
+      ],
+      "ci": {
+        "state": "green",
+        "checks": [
+          "Analyze (actions)",
+          "Analyze (python)",
+          "CodeQL",
+          "validate (3.10)",
+          "validate (3.12)"
+        ]
+      },
+      "current_runtime": {
+        "repo_head": "45f9c26064dd929f89be5aa74f9fa4e0fbe07e28",
+        "release_id": "45f9c26064dd-srcset0825fcfa34aa-locke6664d600b6c-contractb0d032e607e5-attempt2",
+        "pr_499_merge_is_ancestor": true,
+        "pr_501_merge_is_ancestor": true,
+        "health": "healthy; deployment complete; deployment and audit integrity valid; audit writable; kill switch false"
+      },
+      "live_deployment": {
+        "job": "grabowski-job-214bc2365aa3",
+        "final_status": "completed",
+        "finalization_sha256": "187d03df52ee7c593466507fdb75683f22f0f1f568e02d8dd628321c7e60d889",
+        "stdout_sha256": "315deee3260a32345ec03f6790b79f42ccc231e8acee13dfb9aaa8ab54302833",
+        "initial_dispatcher_state": "busy with queue_length=0, worker occupancy 8 then 9, and unmatched final responses",
+        "final_drain": "attempts=23; stable=3; admission=true; final_queue=0; final_responses=1397; workers_observed=10"
+      }
+    },
+    "validated_acceptance": {
+      "admission-drain": "PASS: PR #499 seals new tool admission before drain while allowing admitted calls to finish.",
+      "inflight-proof": "PASS: queue and conserved poll/enqueue/final-response counters establish quiescence; warm worker occupancy is diagnostic only.",
+      "rollback-preserved": "PASS: PR #499 preserves fail-closed rollback and PR #501 keeps transport exhaustion and all non-transport failures fail-closed.",
+      "reproduction-test": "PASS: PR #499 adds the queue=0 with nonzero worker occupancy reproduction and full validation passed on Python 3.10 and 3.12.",
+      "live-deploy": "PASS: job grabowski-job-214bc2365aa3 began with active dispatcher work and completed after 23 drain attempts and three stable admitted samples; the deployed runtime is healthy on the exact descendant head."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T084",
+          "source_ref": "github-pr:heimgewebe/grabowski#499@ecef302f729946db1a776edf6cb831ecc92873c8:2ce670ac80b05234a74c4356d1c66d8673a05c37",
+          "content_sha256": "e35987808353f8bb572206b9799502136f6d77dce2ab8f3b884ee04df20ecbaa"
+        },
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T084",
+          "source_ref": "github-pr:heimgewebe/grabowski#501@f0090643073c90521fa36adf8211ef8a79a0f783:febf9e29372a993fc8b7a48ec458deaeb7d97af5",
+          "content_sha256": "82a074bab11db265483a8a460c978889a891910893f87ca9576f7ac6c2b4a896"
+        },
+        {
+          "kind": "runtime_deployment_receipt",
+          "authority": "grabowski",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T084",
+          "source_ref": "grabowski-job-finalization:grabowski-job-214bc2365aa3@45f9c26064dd929f89be5aa74f9fa4e0fbe07e28",
+          "content_sha256": "187d03df52ee7c593466507fdb75683f22f0f1f568e02d8dd628321c7e60d889"
+        }
+      ]
     }
   },
   "priority": {
@@ -83,6 +217,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Make runtime deploy drain coordinate with active connector workers"
 }

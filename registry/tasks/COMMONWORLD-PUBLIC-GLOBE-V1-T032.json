@@ -65,9 +65,7 @@
   "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T032",
   "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
   "metadata": {
-    "blocker": "COMMONWORLD-PUBLIC-GLOBE-V1-T031 currently owns the generated pages, complete assets subtree, release artifacts and merge/browser shared gates.",
     "does_not_establish": [
-      "completion of the generated or deployed UI",
       "perfect worldwide place search",
       "permission to weaken proposal privacy validation",
       "permission to mutate or release the T031 worktree or lease",
@@ -111,6 +109,171 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verified_at": "2026-07-29T17:53:02Z",
+    "outcome": "Commonworld PR #163 erfüllt die kompakte Filteroberfläche und die registrierten Zustandssemantiken vollständig. Der exakte Head 3325decddfae5cf1921f467cca5a777bef555fe9 wurde nach Behebung des materiellen Geolocation-Befunds mit grüner Pflicht-CI gemergt; Commonworld main entspricht dem Merge ca43b6eaec626d3d8b10fcbbc07fcccd6dea07a7 und bestand Validate, Pages-Deployment, CodeQL und Production-Readback.",
+    "validated_acceptance": {
+      "compact-responsive-layout": {
+        "result": "PASS",
+        "summary": "PR #163 begrenzt das Discovery-Panel auf 56rem, strukturiert Zweck und Ort als Karten, hält Ort vollbreit und belegt responsive Tablet-/Mobil-Layouts mit 44-Pixel-Touchzielen.",
+        "evidence_refs": [
+          "github-pr:heimgewebe/commonworld#163",
+          "github-actions:heimgewebe/commonworld#163:contracts"
+        ]
+      },
+      "advanced-filters-on-demand": {
+        "result": "PASS",
+        "summary": "Sekundäre Filter liegen in einem standardmäßig geschlossenen nativen details-Element; aktive Chips halten verborgene Auswahl sichtbar und entfernbar.",
+        "evidence_refs": [
+          "github-pr:heimgewebe/commonworld#163",
+          "github-actions:heimgewebe/commonworld#163:contracts"
+        ]
+      },
+      "presence-and-semantics": {
+        "result": "PASS",
+        "summary": "Deutsche und englische Oberfläche sowie Runtime verwenden strikte AND-Semantik für mehrere Präsenzanforderungen.",
+        "evidence_refs": [
+          "github-pr:heimgewebe/commonworld#163",
+          "github-actions:heimgewebe/commonworld#163:contracts"
+        ]
+      },
+      "exclusive-location-scope": {
+        "result": "PASS",
+        "summary": "Land und Umkreis sind gegenseitig exklusiv; der berechtigte Reviewbefund zum Geolocation-Pfad wurde durch setNearbyFilter und einen öffentlichen Browserregressionstest behoben.",
+        "evidence_refs": [
+          "github-pr:heimgewebe/commonworld#163:review-thread:3675510341",
+          "github-actions:heimgewebe/commonworld#163:contracts"
+        ]
+      },
+      "contextual-recommendation": {
+        "result": "PASS",
+        "summary": "Empfohlen/Recommended erklärt abhängig vom Zustand Suchrelevanz, Nähe oder stabile Katalogreihenfolge.",
+        "evidence_refs": [
+          "github-pr:heimgewebe/commonworld#163",
+          "github-actions:heimgewebe/commonworld#163:contracts"
+        ]
+      },
+      "generated-surface-parity": {
+        "result": "PASS",
+        "summary": "Renderer, deutsche und englische Seiten, gemeinsame und iPad-spezifische Styles, Runtime, Release und Evidence wurden gemeinsam regeneriert und vollständig validiert.",
+        "evidence_refs": [
+          "github-actions:heimgewebe/commonworld:validate:30466350117",
+          "github-actions:heimgewebe/commonworld:pages:30466331880",
+          "github-actions:heimgewebe/commonworld:production-readback:30466341096"
+        ]
+      },
+      "checkpoint-integrated": {
+        "result": "PASS",
+        "summary": "Der veröffentlichte PR basiert nach T031 auf Merge-Base 5342352142c98192aeb71ee0079ad864ce720367, enthält die Filterumsetzung ohne WIP-Commit und bewahrt die Renderer-/CSS-Verträge.",
+        "evidence_refs": [
+          "github-pr:heimgewebe/commonworld#163",
+          "git:heimgewebe/commonworld@3325decddfae5cf1921f467cca5a777bef555fe9"
+        ]
+      },
+      "exact-head-closeout": {
+        "result": "PASS",
+        "summary": "Head 3325decddfae5cf1921f467cca5a777bef555fe9, PR-Diffbindung 533e56244173bcba601282b38cd57316472629b6d82b10935597d7bc762a99cf bei 259801 UTF-8-Bytes, PR-Pflichtchecks grün, Reviewthread gelöst, Merge ca43b6eaec626d3d8b10fcbbc07fcccd6dea07a7; post-merge Validate, Pages, CodeQL und Production-Readback erfolgreich.",
+        "evidence_refs": [
+          "github-pr:heimgewebe/commonworld#163",
+          "github-actions:heimgewebe/commonworld#163:contracts",
+          "github-actions:heimgewebe/commonworld:production-readback:30466341096"
+        ]
+      }
+    },
+    "verification": {
+      "source": "github_pr_and_postmerge_validation",
+      "source_ref": "github-pr:heimgewebe/commonworld#163",
+      "repository": "heimgewebe/commonworld",
+      "pull_request": 163,
+      "base_commit": "5342352142c98192aeb71ee0079ad864ce720367",
+      "reviewed_head": "3325decddfae5cf1921f467cca5a777bef555fe9",
+      "merge_commit": "ca43b6eaec626d3d8b10fcbbc07fcccd6dea07a7",
+      "merged_at": "2026-07-29T15:32:17Z",
+      "final_diff_sha256": "533e56244173bcba601282b38cd57316472629b6d82b10935597d7bc762a99cf",
+      "final_diff_bytes": 259801,
+      "task_source_sha256": "3d64cdd0fccf09361d0d4b69bdf14714bf7c5ac91fda94d3ff5638779508fcd0",
+      "github_required_checks": {
+        "contracts": "success",
+        "CodeQL actions": "success",
+        "CodeQL javascript-typescript": "success",
+        "CodeQL python": "success"
+      },
+      "review": {
+        "external_review_commit": "192039d29fcafed4e541aab6483f4f0c4211f1ae",
+        "material_findings_resolved": [
+          "geolocation activation must clear an active country filter"
+        ],
+        "self_review": "PASS on exact head 3325decddfae5cf1921f467cca5a777bef555fe9 and PR-bound full diff; no remaining material finding; independence not claimed"
+      },
+      "local_validation": {
+        "make_validate": "PASS; 130 JavaScript and 567 Python tests",
+        "public_browser_smoke": "PASS including country-to-geolocation mutual exclusion",
+        "fourfold_cpu_browser_measurement": "PASS for mobile and desktop low-power profiles",
+        "git_diff_check": "PASS"
+      },
+      "postmerge": {
+        "observed_main": "ca43b6eaec626d3d8b10fcbbc07fcccd6dea07a7",
+        "implementation_head_is_ancestor": true,
+        "validate_run": {
+          "id": 30466350117,
+          "result": "success"
+        },
+        "production_readback_run": {
+          "id": 30466341096,
+          "result": "success"
+        },
+        "pages_deployment_run": {
+          "id": 30466331880,
+          "result": "success"
+        },
+        "codeql_run": {
+          "id": 30466332197,
+          "result": "success"
+        }
+      },
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4",
+      "task_sha256": "0aef0830b3e05c202241441ad7f4ddd99831f65dd29c4b705a042e13a023b142"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T032",
+          "source_ref": "heimgewebe/commonworld#163",
+          "number": 163,
+          "base_sha": "5342352142c98192aeb71ee0079ad864ce720367",
+          "head_sha": "3325decddfae5cf1921f467cca5a777bef555fe9",
+          "merge_commit_sha": "ca43b6eaec626d3d8b10fcbbc07fcccd6dea07a7",
+          "diff_sha256": "533e56244173bcba601282b38cd57316472629b6d82b10935597d7bc762a99cf"
+        },
+        {
+          "kind": "test_run",
+          "authority": "github_actions",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T032",
+          "source_ref": "github-actions:heimgewebe/commonworld#163:contracts",
+          "commit_sha": "3325decddfae5cf1921f467cca5a777bef555fe9",
+          "result": "success"
+        },
+        {
+          "kind": "deployment",
+          "authority": "github_actions",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T032",
+          "source_ref": "github-actions:heimgewebe/commonworld:pages:30466331880",
+          "commit_sha": "ca43b6eaec626d3d8b10fcbbc07fcccd6dea07a7",
+          "result": "success"
+        },
+        {
+          "kind": "production_readback",
+          "authority": "github_actions",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T032",
+          "source_ref": "github-actions:heimgewebe/commonworld:production-readback:30466341096",
+          "commit_sha": "ca43b6eaec626d3d8b10fcbbc07fcccd6dea07a7",
+          "result": "success"
+        }
+      ]
     }
   },
   "priority": {
@@ -129,6 +292,6 @@
     "strategy": "Revert the renderer markup, shared and iPad layout rules, runtime location-state transitions, generated pages and focused tests together; then regenerate content-version bindings and rerun the public-shell validator and browser smoke."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Complete compact filter layout and location semantics"
 }

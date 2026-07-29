@@ -111,7 +111,7 @@
     "outcome": "Bereits vollständig in Grabowski PR #499 implementiert und auf einem nachfolgenden gesunden Runtime-Stand deployt: neue Connector-Wirkungen werden vor dem Drain revisionsgebunden gesperrt, bestehende Aufrufe dürfen auslaufen, Dispatcher-Occupancy bleibt diagnostisch, und fehlende Quieszenz erhält den fail-closed Abbruch- und Rückrollpfad.",
     "verification": {
       "verified_at": "2026-07-29T14:07:31Z",
-      "source_task_file_sha256": "bdb4fc8f7a6bf4b17a97fb15d96eae70d6583afbd0981c5fa2584cbdb95d9164",
+      "source_task_file_sha256": "633e14d30389550d697b3092747db807177cde6811d988431199e39b9c839ca8",
       "task_sha256": "ab0d89b7538f889175df316b73e03305a444a2c11ce21864b4129a6d82851093",
       "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
     },

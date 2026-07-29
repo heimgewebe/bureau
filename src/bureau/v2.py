@@ -1545,7 +1545,7 @@ def closure_bridge_task_ids(plan_path: Path | None = None) -> set[str]:
     return result
 
 
-TERMINAL_TASK_STATES = frozenset({"verified", "cancelled", "superseded"})
+TERMINAL_TASK_STATES = legacy.TERMINAL_TASK_STATES
 OPEN_TASK_STATES = frozenset({"inbox", "planned", "ready", "blocked", "stale"})
 
 
@@ -2751,6 +2751,7 @@ def _compact_what_now_task_card(
         "execution",
         "missing_capabilities",
         "claim_resources",
+        "blocking_child_task_ids",
         "eligible",
         "claim_eligible",
         "resource_eligible",
@@ -2949,6 +2950,7 @@ class Dispatcher(legacy.Dispatcher):
         eligible: bool,
         closure_bridge: bool,
         reasons: list[str],
+        blocking_child_task_ids: tuple[str, ...],
     ) -> dict[str, Any]:
         return {
             "task_id": task.id,
@@ -2958,6 +2960,7 @@ class Dispatcher(legacy.Dispatcher):
             "closure_bridge": closure_bridge,
             "queue_lane": self._queue_lane(task.id),
             "claim_resources": [claim.resource for claim in task.claims],
+            "blocking_child_task_ids": list(blocking_child_task_ids),
             "approval_contract": task_approval_contract(task.raw),
             "reasons": reasons,
         }
@@ -2997,6 +3000,9 @@ class Dispatcher(legacy.Dispatcher):
         closure_bridge = self._closure_bridge_applies(task, state, initiative)
         if state != "ready" and not closure_bridge:
             result.append(f"state is {state}")
+        parent_child = self.registry.parent_child_projection(task, overlays)
+        if parent_child.blocker_reason is not None:
+            result.append(parent_child.blocker_reason)
         if initiative.state != "active" and not closure_bridge:
             result.append(f"initiative state is {initiative.state}")
         if initiative.commitment not in {"now", "next"} and not closure_bridge:
@@ -3126,6 +3132,7 @@ class Dispatcher(legacy.Dispatcher):
             )
             if claim_reasons is None:
                 claim_reasons = self.reasons(task, capabilities, runs, reservations, overlays)
+            parent_child = self.registry.parent_child_projection(task, overlays)
             reasons = (
                 claim_reasons
                 if resource is None
@@ -3144,6 +3151,7 @@ class Dispatcher(legacy.Dispatcher):
                 eligible=not claim_reasons,
                 closure_bridge=closure_bridge,
                 reasons=reasons,
+                blocking_child_task_ids=parent_child.blocking_child_task_ids,
             )
             item["claim_reasons"] = claim_reasons
             item["open_pr_scope"] = _task_open_pr_scope_assessment(
@@ -4172,6 +4180,7 @@ class Dispatcher(legacy.Dispatcher):
             "missing_capabilities": missing_capabilities,
             "claims": [claim.as_dict() for claim in task.claims],
             "claim_resources": item["claim_resources"],
+            "blocking_child_task_ids": item["blocking_child_task_ids"],
             "eligible": what_now_eligible,
             "claim_eligible": item["eligible"],
             "resource_eligible": item.get("resource_eligible", what_now_eligible),
@@ -4242,6 +4251,7 @@ class Dispatcher(legacy.Dispatcher):
                     ),
                     "required capabilities",
                     "dependency states",
+                    "explicit parent-child claim gate and effective child states",
                     "active runs and reservations",
                     "resource claim conflicts",
                     "open PR claim guard",
@@ -4316,6 +4326,9 @@ class Dispatcher(legacy.Dispatcher):
                         "eligible": item["eligible"],
                         "resource_eligible": item["resource_eligible"],
                         "effective_state": item["effective_state"],
+                        "blocking_child_task_ids": item[
+                            "blocking_child_task_ids"
+                        ],
                         "reasons": item["reasons"],
                         "claim_reasons": item["claim_reasons"],
                         "cross_repository_reasons": item[

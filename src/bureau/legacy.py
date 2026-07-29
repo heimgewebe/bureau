@@ -8,7 +8,7 @@ import sqlite3
 import subprocess
 import tempfile
 import uuid
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -17,6 +17,7 @@ from typing import Any
 
 ACTIVE_STATES = ("assigned", "running", "verifying")
 LANE_ORDER = {"now": 0, "next": 1, "later": 2}
+TERMINAL_TASK_STATES = frozenset({"verified", "cancelled", "superseded"})
 ID_RE = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$")
 RESOURCE_RE = re.compile(r"^[a-z0-9][a-z0-9._:-]{0,254}$")
 GITHUB_REPOSITORY_SLUG_RE = re.compile(
@@ -173,6 +174,16 @@ class Task:
 
 
 @dataclass(frozen=True)
+class ParentChildProjection:
+    parent_task_id: str | None
+    child_task_ids: tuple[str, ...]
+    nonterminal_child_task_ids: tuple[str, ...]
+    independently_executable: bool
+    blocking_child_task_ids: tuple[str, ...]
+    blocker_reason: str | None
+
+
+@dataclass(frozen=True)
 class Reservation:
     run_id: str
     resource: str
@@ -256,6 +267,7 @@ class Registry:
         self.queue: dict[str, list[str]] = {"now": [], "next": [], "later": []}
         self.queue_policy = "skip-blocked"
         self.positions: dict[str, tuple[int, int]] = {}
+        self._children_by_parent: dict[str, tuple[str, ...]] = {}
 
     @classmethod
     def load(cls, root: str | Path) -> Registry:
@@ -342,6 +354,8 @@ class Registry:
 
     def validate(self) -> None:
         errors: list[str] = []
+        parent_by_child: dict[str, str] = {}
+        children_by_parent: dict[str, list[str]] = {}
         initiative_states = {
             "inbox",
             "candidate",
@@ -440,6 +454,31 @@ class Registry:
                 errors.append(f"task {task.id} has invalid execution mode")
             if task.mode == "manual" and task.policy == "autonomous":
                 errors.append(f"manual task {task.id} cannot be autonomous")
+            metadata = task.raw.get("metadata")
+            if "metadata" in task.raw and not isinstance(metadata, dict):
+                errors.append(f"task {task.id} metadata must be an object")
+                metadata = None
+            if isinstance(metadata, dict):
+                if "parent_task" in metadata:
+                    parent_task = metadata["parent_task"]
+                    if not isinstance(parent_task, str) or not ID_RE.fullmatch(parent_task):
+                        errors.append(f"task {task.id} has invalid metadata.parent_task")
+                    elif parent_task == task.id:
+                        errors.append(f"task {task.id} cannot parent itself")
+                    elif parent_task not in self.tasks:
+                        errors.append(
+                            f"task {task.id} has unknown parent task {parent_task}"
+                        )
+                    else:
+                        parent_by_child[task.id] = parent_task
+                        children_by_parent.setdefault(parent_task, []).append(task.id)
+                if (
+                    "independently_executable" in metadata
+                    and type(metadata["independently_executable"]) is not bool
+                ):
+                    errors.append(
+                        f"task {task.id} metadata.independently_executable must be boolean"
+                    )
             for dependency in task.depends_on:
                 if dependency not in self.tasks:
                     errors.append(f"task {task.id} has unknown dependency {dependency}")
@@ -455,6 +494,11 @@ class Registry:
                     if limit is None or claim.amount > limit:
                         errors.append(f"task {task.id} exceeds capacity {claim.resource}")
         errors.extend(self._task_cycles())
+        errors.extend(self._task_parent_cycles(parent_by_child))
+        self._children_by_parent = {
+            parent_task: tuple(sorted(child_tasks))
+            for parent_task, child_tasks in children_by_parent.items()
+        }
         for lane, task_ids in self.queue.items():
             for task_id in task_ids:
                 task = self.tasks.get(task_id)
@@ -472,6 +516,86 @@ class Registry:
                     )
         if errors:
             raise ValidationError("\n".join(sorted(set(errors))))
+
+    @staticmethod
+    def _task_parent_cycles(parent_by_child: Mapping[str, str]) -> list[str]:
+        """Return canonical diagnostics for bounded, explicit parent chains."""
+        cycles: set[tuple[str, ...]] = set()
+        bound = len(parent_by_child) + 1
+        for start in sorted(parent_by_child):
+            path: list[str] = []
+            positions: dict[str, int] = {}
+            current = start
+            for _ in range(bound):
+                if current in positions:
+                    cycle = path[positions[current] :]
+                    rotations = [
+                        tuple(cycle[index:] + cycle[:index])
+                        for index in range(len(cycle))
+                    ]
+                    cycles.add(min(rotations))
+                    break
+                positions[current] = len(path)
+                path.append(current)
+                parent = parent_by_child.get(current)
+                if parent is None:
+                    break
+                current = parent
+        return [
+            "task parent cycle: " + " -> ".join((*cycle, cycle[0]))
+            for cycle in sorted(cycles)
+        ]
+
+    def parent_child_projection(
+        self,
+        task: Task | str,
+        overlays: Mapping[str, str] | None = None,
+    ) -> ParentChildProjection:
+        """Project one task's explicit direct parent/children and claim gate."""
+        selected = self.tasks[task] if isinstance(task, str) else task
+        metadata = selected.raw.get("metadata")
+        parent_task_id = (
+            metadata.get("parent_task")
+            if isinstance(metadata, dict) and isinstance(metadata.get("parent_task"), str)
+            else None
+        )
+        independently_executable = (
+            isinstance(metadata, dict)
+            and metadata.get("independently_executable") is True
+        )
+        effective_states = overlays or {}
+        child_task_ids = self._children_by_parent.get(selected.id, ())
+
+        def child_is_terminal(child_task_id: str) -> bool:
+            registry_state = self.tasks[child_task_id].state
+            overlay_state = effective_states.get(child_task_id)
+            return (
+                registry_state in TERMINAL_TASK_STATES
+                or overlay_state in TERMINAL_TASK_STATES
+            )
+
+        nonterminal_child_task_ids = tuple(
+            child_task_id
+            for child_task_id in child_task_ids
+            if not child_is_terminal(child_task_id)
+        )
+        blocking_child_task_ids = (
+            () if independently_executable else nonterminal_child_task_ids
+        )
+        blocker_reason = (
+            "parent task blocked by nonterminal child tasks: "
+            + ", ".join(blocking_child_task_ids)
+            if blocking_child_task_ids
+            else None
+        )
+        return ParentChildProjection(
+            parent_task_id=parent_task_id,
+            child_task_ids=child_task_ids,
+            nonterminal_child_task_ids=nonterminal_child_task_ids,
+            independently_executable=independently_executable,
+            blocking_child_task_ids=blocking_child_task_ids,
+            blocker_reason=blocker_reason,
+        )
 
     def _resource_cycles(self) -> list[str]:
         errors: list[str] = []
@@ -733,6 +857,9 @@ class Dispatcher:
         state = overlays.get(task.id, task.state)
         if state != "ready":
             result.append(f"state is {state}")
+        parent_child = self.registry.parent_child_projection(task, overlays)
+        if parent_child.blocker_reason is not None:
+            result.append(parent_child.blocker_reason)
         if initiative.state != "active":
             result.append(f"initiative state is {initiative.state}")
         if initiative.commitment not in {"now", "next"}:
@@ -765,17 +892,22 @@ class Dispatcher:
             runs = self.store.active_runs(connection)
             reservations = self.store.reservations(connection)
             overlays = self.store.overlays(connection)
-            return [
-                {
-                    "task_id": task.id,
-                    "title": task.title,
-                    "eligible": not (
-                        reasons := self.reasons(task, capabilities, runs, reservations, overlays)
-                    ),
-                    "reasons": reasons,
-                }
-                for task in self.registry.ordered_tasks()
-            ]
+            result: list[dict[str, Any]] = []
+            for task in self.registry.ordered_tasks():
+                reasons = self.reasons(task, capabilities, runs, reservations, overlays)
+                parent_child = self.registry.parent_child_projection(task, overlays)
+                result.append(
+                    {
+                        "task_id": task.id,
+                        "title": task.title,
+                        "eligible": not reasons,
+                        "blocking_child_task_ids": list(
+                            parent_child.blocking_child_task_ids
+                        ),
+                        "reasons": reasons,
+                    }
+                )
+            return result
 
     def claim_next(
         self,

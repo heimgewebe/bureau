@@ -36,16 +36,79 @@
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
     "does_not_establish": [
-      "implementation_complete",
-      "runtime_deployed",
-      "merge_readiness",
-      "review_gate_policy_change"
+      "reviewer correctness or independence",
+      "automatic trust in every signer",
+      "required-check rollout readiness before publisher identity, supersession and recovery gates are closed",
+      "permission to weaken head, base, diff or audit-digest binding",
+      "task, queue, claim, merge or deployment authority"
     ],
     "effect": "evidence_provenance_design",
     "phase": "review-gate-followup",
     "reason": "Cryptographic evidence signing is potentially useful but too large and policy-heavy for the current gate hardening patch.",
     "related_pr": "heimgewebe/grabowski#111",
-    "source": "Grabowski PR #111 review follow-up"
+    "source": "Grabowski PR #111 review follow-up",
+    "implementation_status": "verified",
+    "verified_at": "2026-07-29T12:16:46.629154Z",
+    "verification_note": "Grabowski PR #391 completed the requested evaluation and adopted the recommended signed-v2 provenance path: the merged design documents the threat model, compares local OpenSSH signing, Sigstore-style identity and repository-bound hash manifests, records rollout and recovery burdens, and preserves the existing head/base/diff/audit bindings while keeping unsigned v1 evidence advisory.",
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 391,
+      "base_sha": "da618f07009f4333b34cddbcf855225436b8a199",
+      "reviewed_head_sha": "d3f3bfd106f65dff8b704fbd38980690f8a78c8b",
+      "merge_commit_sha": "445a010df3022872e3844d3ef38db9a61de501fa",
+      "merged_at": "2026-07-23T04:11:20Z",
+      "full_diff_bytes": 79645,
+      "full_diff_sha256": "ab284df0c0dce702b034940d6f4cb8aab154ac770845ef629cb7ae953be993f4",
+      "current_main_sha": "84411199dd8a5bb516e8e62fcb56245784f0f31a",
+      "merge_is_ancestor_of_current_main": true,
+      "evidence_paths": [
+        "docs/review-evidence-provenance.md",
+        "docs/review-evidence-ci-status.md",
+        "config/review-evidence-allowed-signers",
+        "tools/pr_review_gate_ci.py",
+        "tests/test_pr_review_gate_ci_provenance.py",
+        "tests/test_pr_review_gate_ci_provenance_edges.py"
+      ],
+      "ci": {
+        "state": "green",
+        "checks": [
+          "Analyze (actions)",
+          "Analyze (python)",
+          "CodeQL",
+          "validate (3.10)",
+          "validate (3.12)"
+        ]
+      },
+      "deployment": {
+        "repo_head": "84411199dd8a5bb516e8e62fcb56245784f0f31a",
+        "health": "healthy; deployment complete; deployment and audit integrity valid; audit writable; kill switch false"
+      }
+    },
+    "validated_acceptance": {
+      "threat-model": "PASS: docs/review-evidence-provenance.md identifies forged, replayed, stale and wrong-context evidence risks and explicitly states that signing does not prove reviewer quality, independence or repository policy correctness.",
+      "options": "PASS: the merged decision compares a dedicated local OpenSSH/Ed25519 key, Sigstore-style identity and repository-bound hash manifests, including identity, online-service and recovery trade-offs.",
+      "recommendation": "PASS: the implemented recommendation uses a dedicated local OpenSSH signing key and allowed-signers policy for schema v2, while documenting publisher identity, supersession and signer-recovery work before required-check rollout.",
+      "non-goal": "PASS: v2 retains base/head/full-diff/audit-digest binding; unsigned schema v1 remains advisory and cannot satisfy the future attested required context."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T016",
+          "source_ref": "github-pr:heimgewebe/grabowski#391@d3f3bfd106f65dff8b704fbd38980690f8a78c8b:445a010df3022872e3844d3ef38db9a61de501fa",
+          "content_sha256": "ab284df0c0dce702b034940d6f4cb8aab154ac770845ef629cb7ae953be993f4"
+        }
+      ]
+    },
+    "verification": {
+      "verified_at": "2026-07-29T12:16:46.629154Z",
+      "source_task_file_sha256": "73bde16e152480d1c566806900ac1d7f6dab5f4661acf7fde6b6f1d97a8f13bd",
+      "task_sha256": "b87348569521b7bf5f15764107b5370979698c849443346ac4ff52aa41874579",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   },
   "priority": {
     "lane": "later",
@@ -57,6 +120,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Evaluate signed review evidence"
 }

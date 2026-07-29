@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T014",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "Guarantee claimable task supply with bounded maintenance fallbacks",
+  "state": "ready",
+  "goal": "Keep a configurable floor of authoritatively claimable Bureau work available. Prefer real product and infrastructure work; when the normal claimable frontier drops below the floor, replenish it with deterministic, bounded, canonically registered maintenance, care, audit, diagnosis, Registry-reconciliation, queue-reconciliation and error-investigation tasks without bypassing leases, capabilities, review or Registry truth.",
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "python",
+    "ci",
+    "bureau",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.registry",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "state.bureau",
+      "mode": "read",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Explicit user instruction on 2026-07-29: ensure more ready tasks and always provide maintenance, care, audit and diagnosis fallbacks when normal work is exhausted."
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/agent_frontier.py",
+      "path:/home/alex/repos/bureau/src/bureau/task_supply.py",
+      "path:/home/alex/repos/bureau/tests/test_task_supply.py",
+      "path:/home/alex/repos/bureau/docs/bureau-ready-supply-fallback-v1.md",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T014.json"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "claimable-floor-not-raw-ready",
+      "assertion": "A versioned policy distinguishes raw ready state from authoritative current claimability and maintains a configurable default floor of at least eight claimable tasks, with a higher refill target to avoid one-task churn."
+    },
+    {
+      "id": "real-work-first",
+      "assertion": "Normal ready product, reliability and closeout work always ranks ahead of generated fallback work; fallback supply cannot crowd out or lower the priority of genuine registered tasks."
+    },
+    {
+      "id": "bounded-fallback-catalog",
+      "assertion": "When the normal claimable frontier is below the floor, the replenisher selects deterministic bounded work from maintenance, care, audit, diagnosis, Registry reconciliation, queue reconciliation and error investigation, each with explicit scope, acceptance, capability and resource claims."
+    },
+    {
+      "id": "canonical-before-claim",
+      "assertion": "A fallback becomes claimable only after canonical Registry publication and current eligibility checks; the implementation never creates hidden ephemeral work authority and fails closed when Registry mutation authority is unavailable."
+    },
+    {
+      "id": "lease-capability-safety",
+      "assertion": "Fallback selection excludes conflicting leases, dirty or foreign workspaces, missing capabilities, unhealthy required runtimes and overlapping active work, and emits exact blockers instead of falsely reporting eligible work."
+    },
+    {
+      "id": "dedupe-hysteresis",
+      "assertion": "Stable fingerprints, bounded time buckets, supply-floor hysteresis and open-task reuse prevent duplicate fallback floods, repeated no-op tasks and refill oscillation."
+    },
+    {
+      "id": "empty-supply-convergence",
+      "assertion": "Tests prove that an empty normal frontier yields at least one safe fallback proposal and refills toward the configured target when authority exists, while authority failure remains an explicit blocked result rather than no_safe_work caused solely by missing supply."
+    },
+    {
+      "id": "live-integration",
+      "assertion": "The existing agent frontier and pickup path consume the supply report, preserve existing collision-safe claim gates, expose normal/fallback counts and reasons, and retain a read-only preview mode."
+    },
+    {
+      "id": "exact-review-and-ci",
+      "assertion": "Focused unit tests, Bureau validation, exact-head diff-bound self-review, GitHub CI and post-merge runtime readback are green before verification."
+    }
+  ],
+  "metadata": {
+    "source_request": "User instruction in ChatGPT project Bureau on 2026-07-29 at 21:42 Europe/Berlin.",
+    "complements": "BUREAU-TRUTH-MODEL-V2-T019 parent-child claim gate repair",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-e7b8cf06a172314571e84147",
+      "event_id": 1671,
+      "event_created_at": "2026-07-29T20:07:05.607010Z",
+      "request_sha256": "fdb091efc550e0aa4ce99588be0633b392428a309aa41249e5894e399160a56f",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator-instruction",
+        "locator": "chatgpt:project-bureau:conversation:2026-07-29T21:42+02:00#ready-supply-t014",
+        "observed_at": "2026-07-29T21:42:00+02:00",
+        "sha256": "ce4d17f4a3611e61107b0a3c8c00d8bdcc02cc9ced481028950c063da2fe322a"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "scope_exclusions": [
+      "bypassing canonical Registry mutation authority",
+      "claiming tasks without leases or capabilities",
+      "automatic repository mutation from audit findings",
+      "unbounded recurring task generation",
+      "touching foreign worktrees, leases or dirty states"
+    ],
+    "does_not_establish": [
+      "immediate claimability before merge and deployment",
+      "permission to weaken fail-closed ownership checks",
+      "safe mutation while canonical Registry remains read-only"
+    ]
+  }
+}

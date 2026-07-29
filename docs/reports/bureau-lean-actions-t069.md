@@ -1,11 +1,11 @@
 # Bureau Lean GitHub Actions — T069
 
 Stand: 29. Juli 2026, 16:56 UTC  
-Gebundene Basis: `ba92ea7405e4a80ee703cdd67c0158b9e9143c79`
+Gebundene Basis: `bee9a27947fee3c58da7cfd5956028718f798642`
 
 ## Revisionsgebundene Ausgangslage
 
-| Fläche | Ausgang auf `ba92ea7405e4` |
+| Fläche | Ausgang auf `bee9a27947fe` |
 | --- | --- |
 | `.github/workflows/claude.yml` | nicht vorhanden; Entfernung bereits durch Commit `94b79ef` belegt |
 | `.github/workflows/validate.yml` | Basis-SHA-256 `96ce6d1cedda48a7ed3636fc8d6e7e387b706ed0bac64ab3a87e62690aa48dc3`; Ergebnis-SHA-256 `2e53a6682ee8427407bb93d47520897dfdf6ee6b6acea5a2a7c8fae4e5fe2ae9`; Checkmatrix bleibt 3.10/3.12 |

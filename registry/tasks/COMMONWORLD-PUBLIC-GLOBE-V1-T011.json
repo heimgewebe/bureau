@@ -36,11 +36,114 @@
       "runtime defect",
       "permission to interrupt T006-T010",
       "future action-version compatibility"
-    ]
+    ],
+    "completed_at": "2026-07-29",
+    "verification": {
+      "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T011",
+      "authority": "bureau-portfolio-cleanup",
+      "decision": "node24_native_current_actions_merged_reviewed_ci_green_deployed_and_exactly_read_back",
+      "repository": "heimgewebe/commonworld",
+      "implementation_pull_requests": [
+        {
+          "number": 148,
+          "head_sha": "7b153ecfe076db8a45ff70f6858da6c751d8df01",
+          "merge_commit": "399a269fb356ad1991aa86d33d6f4aadbc20d1e3",
+          "merged_at": "2026-07-27T12:55:26Z",
+          "purpose": "Move used GitHub Actions from Node.js 20-backed majors to Node-24-native official majors."
+        },
+        {
+          "number": 149,
+          "head_sha": "015952bef6fb2caa78d5ff94f469b3b5a7bd10fc",
+          "merge_commit": "22cbeec39197fdfd8aa13a554aaab57bbc01e27c",
+          "merged_at": "2026-07-27T15:09:23Z",
+          "purpose": "Move all four actions to the then-current official v7 Node-24-native majors."
+        }
+      ],
+      "current_action_refs": {
+        "checkout": "actions/checkout@v7",
+        "setup_python": "actions/setup-python@v7",
+        "setup_node": "actions/setup-node@v7"
+      },
+      "review": {
+        "reviewed_head": "015952bef6fb2caa78d5ff94f469b3b5a7bd10fc",
+        "self_review": "PASS",
+        "external_review": "Codex found no major issues on the exact reviewed head.",
+        "full_diff_sha256": "cda20d66d576ca2ea2130df1182653db5575c136c42d9951a8f70faf0f13fac4"
+      },
+      "github_evidence": {
+        "pull_request_validate_run_id": 30276418449,
+        "pull_request_contracts_job_id": 90011532607,
+        "pull_request_checks": "PASS",
+        "merge_commit": "22cbeec39197fdfd8aa13a554aaab57bbc01e27c",
+        "merge_checks": [
+          "build",
+          "deploy",
+          "report-build-status",
+          "verify-exact-pages-deployment",
+          "contracts",
+          "Analyze (actions)",
+          "Analyze (python)",
+          "Analyze (javascript-typescript)"
+        ],
+        "merge_checks_result": "PASS"
+      },
+      "acceptance": {
+        "official-actions": "PASS; both tracked workflows use the current official v7 Node-24-native action majors.",
+        "warning-removed": "PASS; the exact PR-head validation log contains no Node.js 20 deprecation annotation.",
+        "behavior-preserved": "PASS; deterministic validation and full browser smoke passed on the PR head, and build, deploy and exact Pages deployment verification passed on the merge commit."
+      },
+      "explicit_nonclaims": [
+        "Future GitHub Action major compatibility.",
+        "Future CI or deployment health.",
+        "Product behavior outside the recorded validation and browser-smoke evidence."
+      ],
+      "task_sha256": "35006e8000349c5bac95c8903f0e3a3838d69f3dec52c22fd56e495494bc3262",
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T011",
+          "repository": "heimgewebe/commonworld",
+          "number": 148,
+          "state": "merged",
+          "head_sha": "7b153ecfe076db8a45ff70f6858da6c751d8df01",
+          "merge_commit": "399a269fb356ad1991aa86d33d6f4aadbc20d1e3"
+        },
+        {
+          "kind": "pull_request",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T011",
+          "repository": "heimgewebe/commonworld",
+          "number": 149,
+          "state": "merged",
+          "head_sha": "015952bef6fb2caa78d5ff94f469b3b5a7bd10fc",
+          "merge_commit": "22cbeec39197fdfd8aa13a554aaab57bbc01e27c",
+          "diff_sha256": "cda20d66d576ca2ea2130df1182653db5575c136c42d9951a8f70faf0f13fac4"
+        },
+        {
+          "kind": "github_actions_run",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T011",
+          "repository": "heimgewebe/commonworld",
+          "workflow_run_id": 30276418449,
+          "head_sha": "015952bef6fb2caa78d5ff94f469b3b5a7bd10fc",
+          "verdict": "pass"
+        },
+        {
+          "kind": "merge_commit_checks",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T011",
+          "repository": "heimgewebe/commonworld",
+          "merge_commit": "22cbeec39197fdfd8aa13a554aaab57bbc01e27c",
+          "verdict": "pass"
+        }
+      ]
+    }
   },
   "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T011",
   "title": "Move Commonworld GitHub Actions to Node-24-native releases",
-  "state": "planned",
+  "state": "verified",
   "goal": "Remove the Node.js 20 deprecation annotation using current official action releases without changing Commonworld build or deployment behavior.",
   "priority": {
     "lane": "later",

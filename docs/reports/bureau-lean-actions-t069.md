@@ -1,6 +1,6 @@
 # Bureau Lean GitHub Actions — T069
 
-Stand: 29. Juli 2026, 18:35 UTC  
+Stand: 29. Juli 2026  
 Gebundene Basis: `6f3b7c59f30b94d7262a1a418fb0ef444c026048`
 
 ## Revisionsgebundene Ausgangslage
@@ -27,7 +27,7 @@ Der registrierte Messzeitraum vom 28. Juli 2026, 06:35:31–12:45:59 UTC umfasst
 | Messachse | Vorher | Nachher / gebundene Aussage |
 | --- | ---: | --- |
 | übersprungene Claude-Läufe im registrierten Fenster | 18 | 0 aus diesem entfernten Workflow; 18 beobachtete Leerlaufläufe werden für dasselbe Fenster vermieden |
-| offene PRs bei Live-Readback am 29. Juli 2026, 17:12 UTC | 2 | 2 vollständig paginiert und sicher invalidiert |
+| offene PRs bei Live-Readback am 29. Juli 2026, 17:12 UTC | 2 | 2 vollständig paginiert; beide werden beim nächsten Main-Push vor der Dateiermittlung sicher invalidiert |
 | davon Added/Renamed-Registry-Task-Kandidaten | 0 | 0 eigentliche Registry-Allokationsprüfungen beim nächsten Main-Push |
 | pauschale eigentliche Registry-Revalidierungen bei diesem Livebestand | 2 | 0; genau 2 unnötige Registry-Prüfungen pro Main-Push des gebundenen Bestands entfallen |
 | leichte Freshness-Check-Publikationen | 2 | 2 bleiben als notwendige Fail-closed-Grenze erhalten |

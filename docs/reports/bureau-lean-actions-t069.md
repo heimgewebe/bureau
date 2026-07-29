@@ -16,25 +16,24 @@ Der registrierte Messzeitraum vom 28. Juli 2026, 06:35:31–12:45:59 UTC umfasst
 
 ## Änderung
 
-1. Der bereits entfernte Claude-Workflow bleibt abwesend; normale Issues, Reviews und Reviewkommentare erzeugen dadurch keine Claude-Actions-Läufe.
-2. `validate` verwendet eine Workflow- und Event-gebundene Concurrency-Gruppe. Nur Pull-Request-Läufe derselben PR werden supersediert; Push- und Merge-Group-Läufe besitzen getrennte Schlüssel und werden nicht storniert.
+1. Der bereits entfernte Claude-Workflow bleibt abwesend. Ein Regressionstest verhindert, dass diese wirkungslose Workflowfläche unbemerkt zurückkehrt; die Entfernung selbst ist keine neue Einsparung dieses PR.
+2. `validate` verwendet eine Workflow- und Event-gebundene Concurrency-Gruppe. Nur ältere Pull-Request-Läufe derselben PR werden supersediert; Push- und Merge-Group-Läufe besitzen getrennte Schlüssel und werden nicht storniert.
 3. Der Pull-Request-Registry-Preflight verwendet eine eigene PR-gebundene Concurrency-Gruppe mit `cancel-in-progress: true`.
-4. Die Main-Push-Revalidierung veröffentlicht vor jeder Dateiermittlung einen neuen, blockierenden `registry-registration-preflight/freshness`-Check auf jedem bekannten offenen PR-Head. Erst danach werden die paginierten Dateilisten geprüft. Nur PRs mit hinzugefügten oder umbenannten `registry/tasks/*.json`-Dateien führen die eigentliche Registry-Allokationsprüfung aus; Nichtkandidaten werden nach der sicheren Invalidierung unmittelbar wieder erfolgreich abgeschlossen.
-5. Fehler bei Pagination, Dateiabfrage oder Kandidatenmetadaten können dadurch keinen älteren grünen Check weiterverwenden: Der betroffene PR bleibt mit einem fehlgeschlagenen oder nicht abgeschlossenen neuen Check gesperrt.
+4. Die im ersten Entwurf vorgesehene Beschränkung neuer Main-Push-Freshness-Checks auf vorab erkannte Registry-Kandidaten wurde nach Review verworfen. Sie hätte bei unvollständiger Dateiermittlung einen älteren grünen PR-Check weitergelten lassen können.
+5. Die bestehende Fail-closed-Grenze bleibt deshalb unverändert: Vor jeder per-PR-Dateiermittlung wird auf jedem bekannten offenen PR-Head ein neuer blockierender Freshness-Check veröffentlicht. Nichtkandidaten werden anschließend ohne Registry-Allokationsprüfung erfolgreich abgeschlossen. Gezielte Regressionstests binden diese Reihenfolge und den Fehlerpfad.
 
 ## Gemessener Effekt
 
-| Messachse | Vorher | Nachher / gebundene Aussage |
+| Messachse | Ausgang | Ergebnis / gebundene Aussage |
 | --- | ---: | --- |
-| übersprungene Claude-Läufe im registrierten Fenster | 18 | 0 aus diesem entfernten Workflow; 18 beobachtete Leerlaufläufe werden für dasselbe Fenster vermieden |
-| offene PRs bei Live-Readback am 29. Juli 2026, 17:12 UTC | 2 | 2 vollständig paginiert; beide werden beim nächsten Main-Push vor der Dateiermittlung sicher invalidiert |
-| davon Added/Renamed-Registry-Task-Kandidaten | 0 | 0 eigentliche Registry-Allokationsprüfungen beim nächsten Main-Push |
-| pauschale eigentliche Registry-Revalidierungen bei diesem Livebestand | 2 | 0; genau 2 unnötige Registry-Prüfungen pro Main-Push des gebundenen Bestands entfallen |
-| leichte Freshness-Check-Publikationen | 2 | 2 bleiben als notwendige Fail-closed-Grenze erhalten |
-| aktuell parallel laufende supersedierbare Validate-/Preflight-Läufe | 0 | 0 unmittelbar stornierbar; künftige Einsparungen werden nicht hochgerechnet |
+| übersprungene Claude-Läufe im registrierten Fenster | 18 | historische Leerlaufläufe; die bereits bestehende Abwesenheit wird nun regressionsgeschützt, ohne neue Einsparung zu beanspruchen |
+| supersedierbare Validate-/Preflight-Läufe beim Live-Readback | 0 | 0 unmittelbar stornierbar; künftige Einsparungen werden nicht hochgerechnet |
+| offene PRs beim Live-Readback am 29. Juli 2026, 17:12 UTC | 2 | weiterhin 2 leichte Freshness-Check-Publikationen pro Main-Push als notwendige Fail-closed-Grenze |
+| Added/Renamed-Registry-Task-Kandidaten im Livebestand | 0 | sowohl vorher als auch nachher 0 eigentliche Registry-Allokationsprüfungen |
+| Required-Check-Namen und Python-Matrix | 3 Checks; 3.10/3.12 | unverändert |
 
-Die beiden offenen PRs waren #1176 und #1178. Ihre Registry-Taskdateien waren jeweils **modifiziert**, nicht hinzugefügt oder umbenannt; #1178 änderte zusätzlich `registry/queue.json`. Beide sind daher keine Registrierungsallokationskandidaten.
+Die beiden offenen PRs waren #1176 und #1178. Ihre Registry-Taskdateien waren jeweils **modifiziert**, nicht hinzugefügt oder umbenannt; #1178 änderte zusätzlich `registry/queue.json`. Beide waren daher keine Registrierungsallokationskandidaten. Dieser Bestand belegt keine konkrete Laufzeitersparnis durch die neue Concurrency, sondern nur deren korrekte Begrenzung.
 
 ## Sicherheitsgrenzen
 
-Die Änderung verleiht keine Review-, Merge-, Queue-, Claim-, Dispatch-, Deployment- oder Cleanup-Autorität. Branchschutz, Merge Queue, Codex-Cloud-Einstellungen und Checknamen bleiben unverändert. Die Laufzeitoptimierung gilt nur für die eigentliche Registry-Allokationsprüfung; die vorgelagerte Check-Invalidierung aller offenen PR-Heads bleibt bewusst erhalten. Konflikte oder Infrastrukturfehler werden als fehlgeschlagener beziehungsweise blockierender `registry-registration-preflight/freshness`-Check auf dem exakten PR-Head sichtbar.
+Die Änderung verleiht keine Review-, Merge-, Queue-, Claim-, Dispatch-, Deployment- oder Cleanup-Autorität. Branchschutz, Merge Queue, Codex-Cloud-Einstellungen und Checknamen bleiben unverändert. Die Main-Push-Invalidierung aller offenen PR-Heads bleibt bewusst erhalten. Konflikte oder Infrastrukturfehler werden weiterhin als fehlgeschlagener beziehungsweise blockierender `registry-registration-preflight/freshness`-Check auf dem exakten PR-Head sichtbar.

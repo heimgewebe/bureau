@@ -495,6 +495,7 @@ class Registry:
                         errors.append(f"task {task.id} exceeds capacity {claim.resource}")
         errors.extend(self._task_cycles())
         errors.extend(self._task_parent_cycles(parent_by_child))
+        errors.extend(self._task_wait_cycles(parent_by_child))
         self._children_by_parent = {
             parent_task: tuple(sorted(child_tasks))
             for parent_task, child_tasks in children_by_parent.items()
@@ -543,6 +544,80 @@ class Registry:
                 current = parent
         return [
             "task parent cycle: " + " -> ".join((*cycle, cycle[0]))
+            for cycle in sorted(cycles)
+        ]
+
+    def _task_wait_cycles(self, parent_by_child: Mapping[str, str]) -> list[str]:
+        """Return bounded canonical diagnostics for mixed task wait cycles."""
+        adjacency: dict[str, list[tuple[str, str]]] = {
+            task_id: [
+                (dependency, "dependency")
+                for dependency in self.tasks[task_id].depends_on
+                if dependency in self.tasks
+            ]
+            for task_id in self.tasks
+        }
+        for child_task_id, parent_task_id in parent_by_child.items():
+            # The claim gate has no live wait edge once either endpoint is terminal.
+            if (
+                self.tasks[parent_task_id].state in TERMINAL_TASK_STATES
+                or self.tasks[child_task_id].state in TERMINAL_TASK_STATES
+            ):
+                continue
+            parent_metadata = self.tasks[parent_task_id].raw.get("metadata")
+            if (
+                isinstance(parent_metadata, dict)
+                and parent_metadata.get("independently_executable") is True
+            ):
+                continue
+            adjacency[parent_task_id].append((child_task_id, "parent"))
+        for edges in adjacency.values():
+            edges.sort()
+
+        cycles: set[tuple[str, ...]] = set()
+        for start in sorted(self.tasks):
+            initial = (start, False, False)
+            queue = [initial]
+            predecessors: dict[
+                tuple[str, bool, bool],
+                tuple[str, bool, bool] | None,
+            ] = {initial: None}
+            cursor = 0
+            found: tuple[str, bool, bool] | None = None
+            while cursor < len(queue):
+                state = queue[cursor]
+                cursor += 1
+                node, used_dependency, used_parent = state
+                for neighbour, edge_kind in adjacency[node]:
+                    next_state = (
+                        neighbour,
+                        used_dependency or edge_kind == "dependency",
+                        used_parent or edge_kind == "parent",
+                    )
+                    if next_state in predecessors:
+                        continue
+                    predecessors[next_state] = state
+                    if neighbour == start and next_state[1] and next_state[2]:
+                        found = next_state
+                        break
+                    queue.append(next_state)
+                if found is not None:
+                    break
+            if found is None:
+                continue
+            path: list[str] = []
+            current: tuple[str, bool, bool] | None = found
+            while current is not None:
+                path.append(current[0])
+                current = predecessors[current]
+            cycle = list(reversed(path))[:-1]
+            rotations = [
+                tuple(cycle[index:] + cycle[:index])
+                for index in range(len(cycle))
+            ]
+            cycles.add(min(rotations))
+        return [
+            "task wait cycle: " + " -> ".join((*cycle, cycle[0]))
             for cycle in sorted(cycles)
         ]
 
@@ -722,6 +797,8 @@ class StateStore:
                 );
                 CREATE TABLE IF NOT EXISTS task_status(
                     task_id TEXT PRIMARY KEY,
+                    task_sha256 TEXT NOT NULL DEFAULT '',
+                    plan_sha256 TEXT NOT NULL DEFAULT '',
                     state TEXT NOT NULL,
                     receipt_sha256 TEXT,
                     updated_at TEXT NOT NULL
@@ -788,11 +865,45 @@ class StateStore:
             for row in connection.execute(sql, params)
         ]
 
-    def overlays(self, connection: sqlite3.Connection) -> dict[str, str]:
-        return {
-            row["task_id"]: row["state"]
-            for row in connection.execute("SELECT task_id,state FROM task_status")
+    @staticmethod
+    def _columns(connection: sqlite3.Connection, table: str) -> set[str]:
+        return {row["name"] for row in connection.execute(f"PRAGMA table_info({table})")}
+
+    def overlays(
+        self,
+        connection: sqlite3.Connection,
+        registry: Registry,
+    ) -> dict[str, str]:
+        result: dict[str, str] = {}
+        columns = self._columns(connection, "task_status")
+        has_revision_bindings = {"task_sha256", "plan_sha256"} <= columns
+        rows = {
+            row["task_id"]: row
+            for row in connection.execute("SELECT * FROM task_status")
         }
+        for task in registry.tasks.values():
+            if task.state in TERMINAL_TASK_STATES:
+                result[task.id] = task.state
+                continue
+            row = rows.get(task.id)
+            if row is None:
+                continue
+            state = row["state"]
+            if state not in TERMINAL_TASK_STATES:
+                result[task.id] = state
+                continue
+            current_plan_sha256 = sha256_json(
+                registry.initiatives[task.initiative].current_plan or {}
+            )
+            if (
+                has_revision_bindings
+                and row["task_sha256"] == task.sha256
+                and row["plan_sha256"] == current_plan_sha256
+            ):
+                result[task.id] = state
+            else:
+                result[task.id] = "stale"
+        return result
 
     def public_run(self, row: sqlite3.Row) -> dict[str, Any]:
         return {key: row[key] for key in row.keys() if key != "envelope_json"}
@@ -891,7 +1002,7 @@ class Dispatcher:
         with self.store.connect() as connection:
             runs = self.store.active_runs(connection)
             reservations = self.store.reservations(connection)
-            overlays = self.store.overlays(connection)
+            overlays = self.store.overlays(connection, self.registry)
             result: list[dict[str, Any]] = []
             for task in self.registry.ordered_tasks():
                 reasons = self.reasons(task, capabilities, runs, reservations, overlays)
@@ -935,7 +1046,7 @@ class Dispatcher:
             worker_capabilities = set(json.loads(worker["capabilities_json"]))
             runs = self.store.active_runs(connection)
             reservations = self.store.reservations(connection)
-            overlays = self.store.overlays(connection)
+            overlays = self.store.overlays(connection, self.registry)
             rejected: list[dict[str, Any]] = []
             selected: Task | None = None
             for task in self.registry.ordered_tasks():
@@ -1118,14 +1229,42 @@ def complete_run(
             "INSERT INTO receipts(run_id,receipt_json,receipt_sha256,created_at) VALUES(?,?,?,?)",
             (run_id, canonical_json(receipt), receipt_sha, now),
         )
-        connection.execute(
-            """
-            INSERT INTO task_status(task_id,state,receipt_sha256,updated_at)
-            VALUES(?,'verified',?,?)
-            ON CONFLICT(task_id) DO UPDATE SET state='verified',receipt_sha256=excluded.receipt_sha256,updated_at=excluded.updated_at
-            """,
-            (run["task_id"], receipt_sha, now),
-        )
+        if {"task_sha256", "plan_sha256"} <= store._columns(
+            connection, "task_status"
+        ):
+            connection.execute(
+                """
+                INSERT INTO task_status(
+                    task_id,task_sha256,plan_sha256,state,receipt_sha256,updated_at
+                )
+                VALUES(?,?,?,'verified',?,?)
+                ON CONFLICT(task_id) DO UPDATE SET
+                    task_sha256=excluded.task_sha256,
+                    plan_sha256=excluded.plan_sha256,
+                    state='verified',
+                    receipt_sha256=excluded.receipt_sha256,
+                    updated_at=excluded.updated_at
+                """,
+                (
+                    run["task_id"],
+                    run["task_sha256"],
+                    sha256_json(envelope.get("plan") or {}),
+                    receipt_sha,
+                    now,
+                ),
+            )
+        else:
+            connection.execute(
+                """
+                INSERT INTO task_status(task_id,state,receipt_sha256,updated_at)
+                VALUES(?,'verified',?,?)
+                ON CONFLICT(task_id) DO UPDATE SET
+                    state='verified',
+                    receipt_sha256=excluded.receipt_sha256,
+                    updated_at=excluded.updated_at
+                """,
+                (run["task_id"], receipt_sha, now),
+            )
         connection.execute(
             "UPDATE runs SET state='succeeded',updated_at=? WHERE run_id=?", (now, run_id)
         )

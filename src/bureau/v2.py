@@ -2583,28 +2583,29 @@ class StateStore:
 
     def overlays(self, connection: sqlite3.Connection, registry: Registry) -> dict[str, str]:
         result: dict[str, str] = {}
+        columns = self._columns(connection, "task_status")
+        has_revision_bindings = {"task_sha256", "plan_sha256"} <= columns
         rows = {row["task_id"]: row for row in connection.execute("SELECT * FROM task_status")}
         for task in registry.tasks.values():
-            current_plan = plan_sha256(registry, task.initiative)
-            verification = task.raw.get("metadata", {}).get("verification", {})
-            if task.state == "verified":
-                if (
-                    verification.get("task_sha256") == task.sha256
-                    and verification.get("plan_sha256") == current_plan
-                ):
-                    result[task.id] = "verified"
-                else:
-                    result[task.id] = "stale"
+            if task.state in TERMINAL_TASK_STATES:
+                result[task.id] = task.state
                 continue
+            current_plan = plan_sha256(registry, task.initiative)
             row = rows.get(task.id)
             if row is None:
                 continue
-            if row["state"] == "verified" and (
-                row["task_sha256"] != task.sha256 or row["plan_sha256"] != current_plan
+            state = row["state"]
+            if state not in TERMINAL_TASK_STATES:
+                result[task.id] = state
+                continue
+            if (
+                has_revision_bindings
+                and row["task_sha256"] == task.sha256
+                and row["plan_sha256"] == current_plan
             ):
-                result[task.id] = "stale"
+                result[task.id] = state
             else:
-                result[task.id] = row["state"]
+                result[task.id] = "stale"
         return result
 
     @staticmethod
@@ -5393,28 +5394,26 @@ def _read_only_overlays(
     result: dict[str, str] = {}
     rows = {row["task_id"]: row for row in task_status_rows if "task_id" in row}
     for task in registry.tasks.values():
-        current_plan = plan_sha256(registry, task.initiative)
-        verification = task.raw.get("metadata", {}).get("verification", {})
-        if task.state == "verified":
-            if (
-                verification.get("task_sha256") == task.sha256
-                and verification.get("plan_sha256") == current_plan
-            ):
-                result[task.id] = "verified"
-            else:
-                result[task.id] = "stale"
+        if task.state in TERMINAL_TASK_STATES:
+            result[task.id] = task.state
             continue
         row = rows.get(task.id)
         if row is None:
             continue
-        if row.get("state") == "verified" and (
-            row.get("task_sha256") != task.sha256 or row.get("plan_sha256") != current_plan
+        state = row.get("state")
+        if not isinstance(state, str):
+            continue
+        if state not in TERMINAL_TASK_STATES:
+            result[task.id] = state
+            continue
+        current_plan = plan_sha256(registry, task.initiative)
+        if (
+            row.get("task_sha256") == task.sha256
+            and row.get("plan_sha256") == current_plan
         ):
-            result[task.id] = "stale"
+            result[task.id] = state
         else:
-            state = row.get("state")
-            if isinstance(state, str):
-                result[task.id] = state
+            result[task.id] = "stale"
     return result
 
 

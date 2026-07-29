@@ -14,7 +14,7 @@ from contextlib import contextmanager, suppress
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from functools import lru_cache
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from . import legacy, runtime_refresh
@@ -226,6 +226,214 @@ def _open_pr_claim_guard_limit() -> int:
 DEFAULT_OPEN_PR_CLAIM_GUARD_WORKERS = 8
 MAX_OPEN_PR_CLAIM_GUARD_WORKERS = 32
 
+DEFAULT_OPEN_PR_FILE_LIMIT = 3000
+MAX_OPEN_PR_FILE_LIMIT = 3000
+OPEN_PR_SCOPE_SCHEMA_VERSION = 1
+_GIT_OID_RE = re.compile(r"^[0-9a-f]{40}$")
+_OPEN_PR_FILE_STATUSES = frozenset(
+    {"added", "removed", "modified", "renamed", "copied", "changed", "unchanged"}
+)
+
+
+def _open_pr_file_limit() -> int:
+    configured = os.environ.get("BUREAU_OPEN_PR_CLAIM_GUARD_FILE_LIMIT")
+    if configured is None:
+        return DEFAULT_OPEN_PR_FILE_LIMIT
+    try:
+        value = int(configured)
+    except ValueError:
+        return DEFAULT_OPEN_PR_FILE_LIMIT
+    if value < 1:
+        return DEFAULT_OPEN_PR_FILE_LIMIT
+    return min(value, MAX_OPEN_PR_FILE_LIMIT)
+
+
+def _canonical_repo_relative_path(value: Any, *, label: str) -> str:
+    if not isinstance(value, str) or not value or "\x00" in value or "\\" in value:
+        raise OpenPullRequestObservationError(f"{label} is not canonical repository-relative text")
+    path = PurePosixPath(value)
+    if (
+        path.is_absolute()
+        or value in {".", ".."}
+        or any(part in {"", ".", ".."} for part in path.parts)
+    ):
+        raise OpenPullRequestObservationError(f"{label} is not a safe repository-relative path")
+    canonical = path.as_posix()
+    if canonical != value:
+        raise OpenPullRequestObservationError(f"{label} is not canonically normalized")
+    return canonical
+
+
+def _github_pull_request_file_scope(
+    repository: str,
+    number: int,
+    *,
+    base_oid: str,
+    head_oid: str,
+    expected_changed_files: int,
+) -> dict[str, Any]:
+    binary = os.environ.get("BUREAU_GH_BIN", "gh")
+    try:
+        result = subprocess.run(
+            [
+                binary,
+                "api",
+                "--paginate",
+                "--slurp",
+                f"repos/{repository}/pulls/{number}/files?per_page=100",
+            ],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise OpenPullRequestObservationError(
+            f"cannot observe pull request files for {repository}#{number}: {exc}"
+        ) from exc
+    if result.returncode != 0:
+        detail = "\n".join(part for part in (result.stdout.strip(), result.stderr.strip()) if part)
+        raise OpenPullRequestObservationError(
+            f"gh api pull request files failed for {repository}#{number}: "
+            f"{detail or 'no diagnostic'}"
+        )
+    try:
+        pages = json.loads(result.stdout or "[]")
+    except json.JSONDecodeError as exc:
+        raise OpenPullRequestObservationError(
+            f"gh api pull request files returned invalid JSON for {repository}#{number}: {exc}"
+        ) from exc
+    if not isinstance(pages, list) or any(not isinstance(page, list) for page in pages):
+        raise OpenPullRequestObservationError(
+            f"gh api pull request files returned invalid pagination for {repository}#{number}"
+        )
+    raw_files = [item for page in pages for item in page]
+    if (
+        not isinstance(expected_changed_files, int)
+        or isinstance(expected_changed_files, bool)
+        or expected_changed_files < 0
+    ):
+        raise OpenPullRequestObservationError(
+            f"open PR {repository}#{number} has invalid changedFiles count"
+        )
+    if len(raw_files) != expected_changed_files:
+        raise OpenPullRequestObservationError(
+            f"open PR {repository}#{number} changedFiles mismatch: "
+            f"expected {expected_changed_files}, observed {len(raw_files)}"
+        )
+    if len(raw_files) >= _open_pr_file_limit():
+        raise OpenPullRequestObservationError(
+            "open PR file observation reached BUREAU_OPEN_PR_CLAIM_GUARD_FILE_LIMIT "
+            f"({_open_pr_file_limit()}) for {repository}#{number}; "
+            "coverage is bounded and fails closed"
+        )
+    files: list[dict[str, str]] = []
+    changed_paths: set[str] = set()
+    for index, item in enumerate(raw_files):
+        if not isinstance(item, dict):
+            raise OpenPullRequestObservationError(
+                f"pull request file {index} for {repository}#{number} is not an object"
+            )
+        status = item.get("status")
+        if status not in _OPEN_PR_FILE_STATUSES:
+            raise OpenPullRequestObservationError(
+                f"pull request file {index} for {repository}#{number} has unsupported status"
+            )
+        filename = _canonical_repo_relative_path(
+            item.get("filename"), label=f"pull request file {index} filename"
+        )
+        record = {"path": filename, "status": status}
+        changed_paths.add(filename)
+        previous = item.get("previous_filename")
+        if status == "renamed":
+            previous_path = _canonical_repo_relative_path(
+                previous, label=f"pull request file {index} previous_filename"
+            )
+            record["previous_path"] = previous_path
+            changed_paths.add(previous_path)
+        elif previous is not None:
+            raise OpenPullRequestObservationError(
+                f"pull request file {index} for {repository}#{number} has unexpected "
+                "previous_filename"
+            )
+        files.append(record)
+    normalized_files = sorted(
+        files, key=lambda item: (item["path"], item["status"], item.get("previous_path", ""))
+    )
+    normalized_paths = sorted(changed_paths)
+    paths_sha256 = legacy.sha256_json(
+        {"schema_version": OPEN_PR_SCOPE_SCHEMA_VERSION, "changed_paths": normalized_paths}
+    )
+    material = {
+        "schema_version": OPEN_PR_SCOPE_SCHEMA_VERSION,
+        "repository": repository,
+        "number": number,
+        "base_oid": base_oid,
+        "head_oid": head_oid,
+        "changed_files": expected_changed_files,
+        "files": normalized_files,
+        "changed_paths": normalized_paths,
+        "changed_paths_sha256": paths_sha256,
+    }
+    return {**material, "file_scope_sha256": legacy.sha256_json(material)}
+
+
+def _github_pull_request_identity(repository: str, number: int) -> dict[str, Any]:
+    binary = os.environ.get("BUREAU_GH_BIN", "gh")
+    try:
+        result = subprocess.run(
+            [binary, "api", f"repos/{repository}/pulls/{number}"],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise OpenPullRequestObservationError(
+            f"cannot revalidate pull request identity for {repository}#{number}: {exc}"
+        ) from exc
+    if result.returncode != 0:
+        detail = "\n".join(
+            part for part in (result.stdout.strip(), result.stderr.strip()) if part
+        )
+        raise OpenPullRequestObservationError(
+            f"gh api pull request identity failed for {repository}#{number}: "
+            f"{detail or 'no diagnostic'}"
+        )
+    try:
+        value = json.loads(result.stdout or "{}")
+    except json.JSONDecodeError as exc:
+        raise OpenPullRequestObservationError(
+            f"gh api pull request identity returned invalid JSON for "
+            f"{repository}#{number}: {exc}"
+        ) from exc
+    if not isinstance(value, dict) or value.get("state") != "open":
+        raise OpenPullRequestObservationError(
+            f"open PR {repository}#{number} is no longer open during file observation"
+        )
+    base = value.get("base")
+    head = value.get("head")
+    base_oid = base.get("sha") if isinstance(base, dict) else None
+    head_oid = head.get("sha") if isinstance(head, dict) else None
+    changed_files = value.get("changed_files")
+    if (
+        not isinstance(base_oid, str)
+        or _GIT_OID_RE.fullmatch(base_oid) is None
+        or not isinstance(head_oid, str)
+        or _GIT_OID_RE.fullmatch(head_oid) is None
+        or not isinstance(changed_files, int)
+        or isinstance(changed_files, bool)
+        or changed_files < 0
+    ):
+        raise OpenPullRequestObservationError(
+            f"open PR {repository}#{number} identity readback is invalid"
+        )
+    return {
+        "base_oid": base_oid,
+        "head_oid": head_oid,
+        "changed_files": changed_files,
+    }
+
 
 def _open_pr_claim_guard_workers(repository_count: int) -> int:
     if repository_count <= 1:
@@ -259,7 +467,7 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
                 "--limit",
                 limit,
                 "--json",
-                "number,title,headRefName,url,body,labels",
+                "number,title,headRefName,headRefOid,baseRefName,baseRefOid,changedFiles,url,body,labels",
             ],
             text=True,
             capture_output=True,
@@ -271,9 +479,7 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
             f"cannot observe open pull requests for {repository}: {exc}"
         ) from exc
     if result.returncode != 0:
-        detail = "\n".join(
-            part for part in (result.stdout.strip(), result.stderr.strip()) if part
-        )
+        detail = "\n".join(part for part in (result.stdout.strip(), result.stderr.strip()) if part)
         raise OpenPullRequestObservationError(
             f"gh pr list failed for {repository}: {detail or 'no diagnostic'}"
         )
@@ -284,15 +490,61 @@ def _github_open_pull_requests(repository: str) -> list[dict[str, Any]]:
             f"gh pr list returned invalid JSON for {repository}: {exc}"
         ) from exc
     if not isinstance(value, list):
-        raise OpenPullRequestObservationError(
-            f"gh pr list returned non-list JSON for {repository}"
-        )
+        raise OpenPullRequestObservationError(f"gh pr list returned non-list JSON for {repository}")
     if len(value) >= _open_pr_claim_guard_limit():
         raise OpenPullRequestObservationError(
             "open PR observation reached BUREAU_OPEN_PR_CLAIM_GUARD_LIMIT "
             f"({_open_pr_claim_guard_limit()}); coverage is bounded and fails closed"
         )
-    return [item for item in value if isinstance(item, dict)]
+    observed: list[dict[str, Any]] = []
+    for index, item in enumerate(value):
+        if not isinstance(item, dict):
+            raise OpenPullRequestObservationError(
+                f"open PR observation item {index} for {repository} is not an object"
+            )
+        number = item.get("number")
+        base_oid = item.get("baseRefOid")
+        head_oid = item.get("headRefOid")
+        changed_files = item.get("changedFiles")
+        if not isinstance(number, int) or isinstance(number, bool) or number < 1:
+            raise OpenPullRequestObservationError(
+                f"open PR observation item {index} for {repository} has invalid number"
+            )
+        if not isinstance(base_oid, str) or _GIT_OID_RE.fullmatch(base_oid) is None:
+            raise OpenPullRequestObservationError(
+                f"open PR {repository}#{number} has invalid base OID"
+            )
+        if not isinstance(head_oid, str) or _GIT_OID_RE.fullmatch(head_oid) is None:
+            raise OpenPullRequestObservationError(
+                f"open PR {repository}#{number} has invalid head OID"
+            )
+        if (
+            not isinstance(changed_files, int)
+            or isinstance(changed_files, bool)
+            or changed_files < 0
+        ):
+            raise OpenPullRequestObservationError(
+                f"open PR {repository}#{number} has invalid changedFiles count"
+            )
+        file_scope = _github_pull_request_file_scope(
+            repository,
+            number,
+            base_oid=base_oid,
+            head_oid=head_oid,
+            expected_changed_files=changed_files,
+        )
+        identity = _github_pull_request_identity(repository, number)
+        expected_identity = {
+            "base_oid": base_oid,
+            "head_oid": head_oid,
+            "changed_files": changed_files,
+        }
+        if identity != expected_identity:
+            raise OpenPullRequestObservationError(
+                f"open PR {repository}#{number} identity changed during file observation"
+            )
+        observed.append({**item, "fileScope": file_scope})
+    return observed
 
 
 def _observe_open_pull_requests(
@@ -342,6 +594,14 @@ class OpenPullRequestReservation(legacy.Reservation):
     task_binding_status: str = "unknown"
     task_binding_reason: str = ""
     scope_resources: tuple[str, ...] = ()
+    base_oid: str = ""
+    head_oid: str = ""
+    changed_paths: tuple[str, ...] = ()
+    changed_paths_sha256: str = ""
+    changed_file_count: int = 0
+    file_scope_sha256: str = ""
+    file_scope_complete: bool = False
+    file_scope_diagnostic: str = "file scope unavailable"
 
 
 def _task_id_search_values(value: Any) -> list[str]:
@@ -597,7 +857,351 @@ def _open_pr_scope_resources_for_binding(
 def _open_pr_reservation_scopes(
     reservation: OpenPullRequestReservation,
 ) -> tuple[str, ...]:
-    return reservation.scope_resources or (reservation.resource,)
+    scopes = [reservation.resource]
+    for scope in reservation.scope_resources:
+        if scope not in scopes:
+            scopes.append(scope)
+    return tuple(scopes)
+
+def _file_scope_from_pull_request(
+    pull_request: dict[str, Any], repository: str, number: int
+) -> tuple[bool, dict[str, Any], str]:
+    scope = pull_request.get("fileScope")
+    if not isinstance(scope, dict):
+        return False, {}, "open PR file scope is unavailable"
+    required = {
+        "schema_version",
+        "repository",
+        "number",
+        "base_oid",
+        "head_oid",
+        "changed_files",
+        "files",
+        "changed_paths",
+        "changed_paths_sha256",
+        "file_scope_sha256",
+    }
+    if set(scope) != required:
+        return False, {}, "open PR file scope fields are not exact"
+    if scope.get("schema_version") != OPEN_PR_SCOPE_SCHEMA_VERSION:
+        return False, {}, "open PR file scope schema is unsupported"
+    if scope.get("repository") != repository or scope.get("number") != number:
+        return False, {}, "open PR file scope identity is mismatched"
+    base_oid = scope.get("base_oid")
+    head_oid = scope.get("head_oid")
+    if (
+        not isinstance(base_oid, str)
+        or _GIT_OID_RE.fullmatch(base_oid) is None
+        or not isinstance(head_oid, str)
+        or _GIT_OID_RE.fullmatch(head_oid) is None
+    ):
+        return False, {}, "open PR file scope commit identity is invalid"
+    changed_files = scope.get("changed_files")
+    if not isinstance(changed_files, int) or isinstance(changed_files, bool) or changed_files < 0:
+        return False, {}, "open PR changed file count is invalid"
+    files = scope.get("files")
+    if not isinstance(files, list):
+        return False, {}, "open PR files are not a list"
+    normalized_files: list[dict[str, str]] = []
+    derived_paths: set[str] = set()
+    try:
+        for index, item in enumerate(files):
+            if not isinstance(item, dict):
+                return False, {}, f"open PR file {index} is not an object"
+            status = item.get("status")
+            expected_keys = (
+                {"path", "status", "previous_path"} if status == "renamed" else {"path", "status"}
+            )
+            if status not in _OPEN_PR_FILE_STATUSES or set(item) != expected_keys:
+                return False, {}, f"open PR file {index} fields are invalid"
+            current = _canonical_repo_relative_path(
+                item.get("path"), label=f"open PR file {index} path"
+            )
+            normalized = {"path": current, "status": status}
+            derived_paths.add(current)
+            if status == "renamed":
+                previous = _canonical_repo_relative_path(
+                    item.get("previous_path"),
+                    label=f"open PR file {index} previous path",
+                )
+                normalized["previous_path"] = previous
+                derived_paths.add(previous)
+            normalized_files.append(normalized)
+    except OpenPullRequestObservationError as exc:
+        return False, {}, str(exc)
+    normalized_files.sort(
+        key=lambda item: (item["path"], item["status"], item.get("previous_path", ""))
+    )
+    if files != normalized_files:
+        return False, {}, "open PR files are not canonically ordered"
+    if len(files) != changed_files:
+        return False, {}, "open PR changed file count disagrees with files"
+    changed_paths = scope.get("changed_paths")
+    if not isinstance(changed_paths, list) or changed_paths != sorted(set(changed_paths)):
+        return False, {}, "open PR changed paths are not canonical"
+    try:
+        normalized_paths = [
+            _canonical_repo_relative_path(path, label="open PR changed path")
+            for path in changed_paths
+        ]
+    except OpenPullRequestObservationError as exc:
+        return False, {}, str(exc)
+    if normalized_paths != sorted(derived_paths):
+        return False, {}, "open PR files and changed paths disagree"
+    expected_paths_sha = legacy.sha256_json(
+        {
+            "schema_version": OPEN_PR_SCOPE_SCHEMA_VERSION,
+            "changed_paths": normalized_paths,
+        }
+    )
+    if scope.get("changed_paths_sha256") != expected_paths_sha:
+        return False, {}, "open PR changed path digest mismatch"
+    material = {key: scope[key] for key in required if key != "file_scope_sha256"}
+    if scope.get("file_scope_sha256") != legacy.sha256_json(material):
+        return False, {}, "open PR file scope digest mismatch"
+    return True, scope, "complete"
+
+def _task_write_scope_for_repository(
+    task: legacy.Task, resource: legacy.Resource | None
+) -> dict[str, Any]:
+    base = {
+        "schema_version": OPEN_PR_SCOPE_SCHEMA_VERSION,
+        "task_id": task.id,
+        "task_sha256": task.sha256,
+        "classification": "scope-required",
+        "repository_resource": resource.id if resource is not None else None,
+        "repository": resource.path if resource is not None else None,
+        "paths": [],
+        "scope_sha256": None,
+    }
+    if resource is None or resource.type != "git-repository" or not resource.path:
+        return {**base, "diagnostic": "repository resource is unavailable"}
+    execution = task.execution if isinstance(task.execution, dict) else {}
+    working = execution.get("working_repository")
+    if not isinstance(working, str) or not working.strip():
+        return {**base, "diagnostic": "working_repository is missing"}
+    repository_root = Path(resource.path).expanduser().resolve()
+    working_root = Path(working).expanduser().resolve()
+    if working_root != repository_root:
+        return {**base, "diagnostic": "working_repository does not match repository resource"}
+    resources = execution.get("grabowski_resources")
+    if not isinstance(resources, list) or not resources:
+        return {**base, "diagnostic": "execution.grabowski_resources is missing"}
+    paths: set[str] = set()
+    for index, value in enumerate(resources):
+        if not isinstance(value, str) or not value.strip():
+            return {**base, "diagnostic": f"grabowski resource {index} is invalid"}
+        if value.startswith("repo:"):
+            raw_repository = value.removeprefix("repo:")
+            repository_candidate = Path(raw_repository).expanduser()
+            if not repository_candidate.is_absolute():
+                return {**base, "diagnostic": f"grabowski repository {index} is not absolute"}
+            if repository_candidate.resolve() == repository_root:
+                return {
+                    **base,
+                    "diagnostic": "broad repository resource forbids narrow scope proof",
+                }
+            continue
+        if not value.startswith("path:"):
+            continue
+        raw = value.removeprefix("path:")
+        candidate = Path(raw)
+        if not candidate.is_absolute():
+            return {**base, "diagnostic": f"grabowski path {index} is not absolute"}
+        if os.path.normpath(raw) != raw or any(part in {".", ".."} for part in candidate.parts):
+            return {**base, "diagnostic": f"grabowski path {index} is not lexically canonical"}
+        try:
+            relative = candidate.relative_to(repository_root)
+        except ValueError:
+            return {
+                **base,
+                "diagnostic": f"grabowski path {index} is outside working repository",
+            }
+        relative_text = relative.as_posix()
+        if relative_text in {"", "."}:
+            return {**base, "diagnostic": "repository-root write scope is forbidden"}
+        try:
+            canonical_relative = _canonical_repo_relative_path(
+                relative_text, label=f"grabowski path {index}"
+            )
+        except OpenPullRequestObservationError as exc:
+            return {**base, "diagnostic": str(exc)}
+        cursor = repository_root
+        leaf_stat: os.stat_result | None = None
+        for part in relative.parts:
+            cursor = cursor / part
+            try:
+                leaf_stat = cursor.lstat()
+            except FileNotFoundError:
+                leaf_stat = None
+                break
+            except OSError as exc:
+                return {
+                    **base,
+                    "diagnostic": f"grabowski path {index} cannot be inspected: {exc}",
+                }
+            if stat.S_ISLNK(leaf_stat.st_mode):
+                return {
+                    **base,
+                    "diagnostic": f"grabowski path {index} contains a symlink component",
+                }
+        if (
+            leaf_stat is not None
+            and stat.S_ISREG(leaf_stat.st_mode)
+            and leaf_stat.st_nlink > 1
+        ):
+            return {
+                **base,
+                "diagnostic": f"grabowski path {index} has hardlink ambiguity",
+            }
+        paths.add(canonical_relative)
+    normalized_paths = sorted(paths)
+    if not normalized_paths:
+        return {**base, "diagnostic": "no exact path resources bind the working repository"}
+    material = {
+        "schema_version": OPEN_PR_SCOPE_SCHEMA_VERSION,
+        "task_id": task.id,
+        "task_sha256": task.sha256,
+        "repository_resource": resource.id,
+        "repository": str(repository_root),
+        "paths": normalized_paths,
+    }
+    return {
+        **material,
+        "classification": "scope-ready",
+        "scope_sha256": legacy.sha256_json(material),
+        "diagnostic": "complete exact task write scope",
+    }
+
+def _repo_paths_overlap(left: str, right: str) -> bool:
+    left_parts = PurePosixPath(left).parts
+    right_parts = PurePosixPath(right).parts
+    shared = min(len(left_parts), len(right_parts))
+    return left_parts[:shared] == right_parts[:shared]
+
+def _task_open_pr_scope_assessment(
+    task: legacy.Task,
+    reservations: list[legacy.Reservation],
+    registry: legacy.Registry,
+) -> dict[str, Any]:
+    scope_cache: dict[str, dict[str, Any]] = {}
+    items: list[dict[str, Any]] = []
+    for reservation in reservations:
+        if not isinstance(reservation, OpenPullRequestReservation):
+            continue
+        reservation_scopes = _open_pr_reservation_scopes(reservation)
+        conflicting_scopes = sorted(
+            scope
+            for scope in reservation_scopes
+            if any(
+                legacy.overlaps(claim.resource, scope, registry.resources)
+                and legacy.modes_conflict(claim.mode, reservation.mode)
+                for claim in task.claims
+            )
+        )
+        if not conflicting_scopes:
+            continue
+        source_conflicts = reservation.resource in conflicting_scopes
+        additional_conflicts = [
+            scope for scope in conflicting_scopes if scope != reservation.resource
+        ]
+        task_scope = (
+            scope_cache.setdefault(
+                reservation.resource,
+                _task_write_scope_for_repository(
+                    task, registry.resources.get(reservation.resource)
+                ),
+            )
+            if source_conflicts
+            else None
+        )
+        classification = "repository-blocked"
+        diagnostic = "open PR remains a repository-wide blocker"
+        overlaps: list[dict[str, str]] = []
+        if reservation.task_binding_status == "valid" and task.id in reservation.task_ids:
+            diagnostic = "task is already represented by this open PR"
+        elif additional_conflicts:
+            diagnostic = (
+                "open PR bound task claims additional repository resources "
+                "without revision-bound file scope"
+            )
+        elif reservation.observation_failed or not reservation.file_scope_complete:
+            diagnostic = reservation.file_scope_diagnostic or reservation.diagnostic
+        elif task_scope is None or task_scope["classification"] != "scope-ready":
+            classification = "scope-required"
+            diagnostic = (
+                "source repository does not conflict"
+                if task_scope is None
+                else str(task_scope["diagnostic"])
+            )
+        else:
+            for task_path in task_scope["paths"]:
+                for pr_path in reservation.changed_paths:
+                    if _repo_paths_overlap(task_path, pr_path):
+                        overlaps.append({"task_path": task_path, "pr_path": pr_path})
+            if overlaps:
+                classification = "scope-conflict"
+                diagnostic = "task and open PR path scopes overlap"
+            else:
+                classification = "scope-proven-disjoint"
+                diagnostic = "complete task and PR path scopes are disjoint"
+        items.append(
+            {
+                "reservation_id": reservation.run_id,
+                "resource": reservation.resource,
+                "repository": reservation.repository,
+                "number": reservation.number,
+                "base_oid": reservation.base_oid or None,
+                "head_oid": reservation.head_oid or None,
+                "changed_paths_sha256": reservation.changed_paths_sha256 or None,
+                "changed_file_count": reservation.changed_file_count,
+                "file_scope_sha256": reservation.file_scope_sha256 or None,
+                "task_binding_status": reservation.task_binding_status,
+                "task_ids": list(reservation.task_ids),
+                "task_binding_reason": reservation.task_binding_reason,
+                "scope_resources": list(reservation_scopes),
+                "conflicting_scope_resources": conflicting_scopes,
+                "classification": classification,
+                "diagnostic": diagnostic,
+                "overlap_count": len(overlaps),
+                "overlaps": overlaps[:20],
+            }
+        )
+    ordered = sorted(
+        items,
+        key=lambda item: (
+            str(item.get("repository") or ""),
+            int(item.get("number") or 0),
+            str(item["reservation_id"]),
+        ),
+    )
+    counts = {
+        name: sum(1 for item in ordered if item["classification"] == name)
+        for name in (
+            "repository-blocked",
+            "scope-required",
+            "scope-conflict",
+            "scope-proven-disjoint",
+        )
+    }
+    scopes = {key: scope_cache[key] for key in sorted(scope_cache)}
+    material = {
+        "schema_version": OPEN_PR_SCOPE_SCHEMA_VERSION,
+        "task_id": task.id,
+        "task_sha256": task.sha256,
+        "requested_scopes": scopes,
+        "reservations": ordered,
+        "classification_counts": counts,
+        "requires_evidence": counts["scope-proven-disjoint"] > 0,
+        "does_not_establish": [
+            "merge readiness",
+            "valid PR task binding",
+            "permission to write outside declared paths",
+            "future PR scope stability",
+        ],
+    }
+    return {**material, "assessment_sha256": legacy.sha256_json(material)}
+
 
 
 def _repo_write_guard_failure_reservation(
@@ -635,9 +1239,7 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
 
     result: list[legacy.Reservation] = []
     resources = [
-        resource
-        for resource in registry.resources.values()
-        if resource.type == "git-repository"
+        resource for resource in registry.resources.values() if resource.type == "git-repository"
     ]
     repositories_by_resource: dict[str, str] = {}
     resource_errors: dict[str, str] = {}
@@ -656,9 +1258,7 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
         if repository is not None:
             repositories_by_resource[resource.id] = repository
 
-    observed, observation_errors = _observe_open_pull_requests(
-        repositories_by_resource.values()
-    )
+    observed, observation_errors = _observe_open_pull_requests(repositories_by_resource.values())
     for resource in resources:
         resource_error = resource_errors.get(resource.id)
         if resource_error is not None:
@@ -669,9 +1269,7 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
             continue
         observation_error = observation_errors.get(repository)
         if observation_error is not None:
-            result.append(
-                _repo_write_guard_failure_reservation(resource, observation_error)
-            )
+            result.append(_repo_write_guard_failure_reservation(resource, observation_error))
             continue
         for pull_request in observed.get(repository, []):
             number = pull_request.get("number")
@@ -685,6 +1283,9 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
             )
             scope_resources = _open_pr_scope_resources_for_binding(
                 registry, resource.id, task_ids, binding_status
+            )
+            file_scope_complete, file_scope, file_scope_diagnostic = _file_scope_from_pull_request(
+                pull_request, repository, number
             )
             result.append(
                 OpenPullRequestReservation(
@@ -701,6 +1302,14 @@ def open_pull_request_reservations(registry: legacy.Registry) -> list[legacy.Res
                     task_binding_status=binding_status,
                     task_binding_reason=binding_reason,
                     scope_resources=scope_resources,
+                    base_oid=str(file_scope.get("base_oid") or ""),
+                    head_oid=str(file_scope.get("head_oid") or ""),
+                    changed_paths=tuple(file_scope.get("changed_paths") or ()),
+                    changed_paths_sha256=str(file_scope.get("changed_paths_sha256") or ""),
+                    changed_file_count=int(file_scope.get("changed_files") or 0),
+                    file_scope_sha256=str(file_scope.get("file_scope_sha256") or ""),
+                    file_scope_complete=file_scope_complete,
+                    file_scope_diagnostic=file_scope_diagnostic,
                 )
             )
     return result
@@ -815,6 +1424,53 @@ def grabowski_resource_keys_for_task(
         resource = resources.get(claim.resource)
         if resource is not None and resource.grabowski_key:
             keys.add(resource.grabowski_key)
+    return keys
+
+
+def _coordinated_grabowski_resource_keys(
+    resources: dict[str, legacy.Resource],
+    task: legacy.Task,
+    open_pr_scope: dict[str, Any],
+) -> set[str]:
+    keys = grabowski_resource_keys_for_task(resources, task)
+    if open_pr_scope.get("requires_evidence") is not True:
+        return keys
+    requested_scopes = open_pr_scope.get("requested_scopes")
+    if not isinstance(requested_scopes, dict) or not requested_scopes:
+        raise legacy.StateError("open PR nonconflict evidence has no requested scopes")
+    for resource_id in sorted(requested_scopes):
+        scope = requested_scopes[resource_id]
+        resource = resources.get(resource_id)
+        if resource is None or resource.type != "git-repository":
+            raise legacy.StateError(
+                f"open PR nonconflict scope references invalid repository {resource_id}"
+            )
+        if not isinstance(scope, dict) or scope.get("classification") != "scope-ready":
+            raise legacy.StateError(
+                f"open PR nonconflict scope is not ready for {resource_id}"
+            )
+        repository = scope.get("repository")
+        paths = scope.get("paths")
+        if not isinstance(repository, str) or not isinstance(paths, list) or not paths:
+            raise legacy.StateError(
+                f"open PR nonconflict scope is incomplete for {resource_id}"
+            )
+        expected_paths = {
+            f"path:{Path(repository) / PurePosixPath(relative)}"
+            for relative in paths
+            if isinstance(relative, str)
+        }
+        if len(expected_paths) != len(paths) or not expected_paths.issubset(keys):
+            raise legacy.StateError(
+                f"open PR nonconflict scope differs from exact Grabowski paths for {resource_id}"
+            )
+        expected_broad_key = f"repo:{repository}"
+        broad_key = resource.grabowski_key
+        if broad_key is not None and broad_key != expected_broad_key:
+            raise legacy.StateError(
+                f"open PR nonconflict repository lease differs for {resource_id}"
+            )
+        keys.discard(expected_broad_key)
     return keys
 
 
@@ -2372,38 +3028,42 @@ class Dispatcher(legacy.Dispatcher):
         regular_reservations = [
             item for item in reservations if not isinstance(item, OpenPullRequestReservation)
         ]
+        open_pr_scope = _task_open_pr_scope_assessment(task, open_pr_reservations, self.registry)
+        assessment_by_reservation = {
+            item["reservation_id"]: item for item in open_pr_scope["reservations"]
+        }
         for reservation in open_pr_reservations:
-            scopes = _open_pr_reservation_scopes(reservation)
-            projected_scopes = (
-                scopes
-                if projection_resource is None
-                else tuple(
-                    scope
-                    for scope in scopes
-                    if legacy.overlaps(
-                        scope, projection_resource, self.registry.resources
-                    )
-                )
-            )
-            if not projected_scopes:
-                continue
-            label = _open_pr_label(reservation)
-            conflicts = any(
+            reservation_scopes = _open_pr_reservation_scopes(reservation)
+            repository_conflicts = any(
                 legacy.overlaps(claim.resource, scope, self.registry.resources)
                 and legacy.modes_conflict(claim.mode, reservation.mode)
                 for claim in task.claims
-                for scope in projected_scopes
+                for scope in reservation_scopes
             )
-            if reservation.observation_failed:
-                if conflicts:
-                    result.append(f"repo write blocked by open PR guard failure: {label}")
+            if not repository_conflicts:
                 continue
+            if projection_resource is not None and not any(
+                legacy.overlaps(scope, projection_resource, self.registry.resources)
+                for scope in reservation_scopes
+            ):
+                continue
+            label = _open_pr_label(reservation)
             binding_status = reservation.task_binding_status or "unknown"
             if binding_status == "valid" and task.id in reservation.task_ids:
                 result.append(f"task already implemented by open PR: {label}")
                 continue
-            if not conflicts:
+            assessment = assessment_by_reservation.get(reservation.run_id, {})
+            classification = str(assessment.get("classification") or "repository-blocked")
+            diagnostic = str(assessment.get("diagnostic") or reservation.diagnostic)
+            if classification == "scope-proven-disjoint":
                 continue
+            if reservation.observation_failed:
+                result.append(
+                    "repo write blocked by open PR guard failure: "
+                    f"{label} classification=repository-blocked reason={diagnostic}"
+                )
+                continue
+            classification_note = f" classification={classification} scope_reason={diagnostic}"
             if binding_status == "exception":
                 task_note = (
                     f" task_ids={','.join(reservation.task_ids)}"
@@ -2413,7 +3073,7 @@ class Dispatcher(legacy.Dispatcher):
                 result.append(
                     "repo write blocked by open PR: "
                     f"{label} binding=exception{task_note} "
-                    f"reason={reservation.task_binding_reason}"
+                    f"reason={reservation.task_binding_reason}{classification_note}"
                 )
             elif binding_status != "valid":
                 task_note = (
@@ -2424,12 +3084,16 @@ class Dispatcher(legacy.Dispatcher):
                 result.append(
                     "repo write blocked by open PR task binding violation: "
                     f"{label} binding={binding_status}{task_note} "
-                    f"reason={reservation.task_binding_reason}"
+                    f"reason={reservation.task_binding_reason}{classification_note}"
                 )
             else:
+                overlap_note = ""
+                if assessment.get("overlap_count"):
+                    overlap_note = f" overlap_count={assessment['overlap_count']}"
                 result.append(
                     "repo write blocked by open PR: "
                     f"{label} task_ids={','.join(reservation.task_ids)}"
+                    f"{classification_note}{overlap_note}"
                 )
         rlens_block = rlens_policy_block_reason(task.raw)
         if rlens_block:
@@ -2458,14 +3122,10 @@ class Dispatcher(legacy.Dispatcher):
             initiative = self.registry.initiatives[task.initiative]
             closure_bridge = self._closure_bridge_applies(task, state, initiative)
             claim_reasons = (
-                claim_reasons_by_task.get(task.id)
-                if claim_reasons_by_task is not None
-                else None
+                claim_reasons_by_task.get(task.id) if claim_reasons_by_task is not None else None
             )
             if claim_reasons is None:
-                claim_reasons = self.reasons(
-                    task, capabilities, runs, reservations, overlays
-                )
+                claim_reasons = self.reasons(task, capabilities, runs, reservations, overlays)
             reasons = (
                 claim_reasons
                 if resource is None
@@ -2486,6 +3146,15 @@ class Dispatcher(legacy.Dispatcher):
                 reasons=reasons,
             )
             item["claim_reasons"] = claim_reasons
+            item["open_pr_scope"] = _task_open_pr_scope_assessment(
+                task,
+                [
+                    reservation
+                    for reservation in reservations
+                    if isinstance(reservation, OpenPullRequestReservation)
+                ],
+                self.registry,
+            )
             projected_reasons = set(reasons)
             item["cross_repository_reasons"] = [
                 reason for reason in claim_reasons if reason not in projected_reasons
@@ -2619,10 +3288,22 @@ class Dispatcher(legacy.Dispatcher):
                 task_id=selected.id,
             )
             approval_evidence = approval.as_dict()
+        open_pr_scope = _task_open_pr_scope_assessment(
+            selected, open_pr_reservations, self.registry
+        )
+        if open_pr_scope["requires_evidence"]:
+            approval_evidence = {
+                **approval_evidence,
+                "open_pr_nonconflict": open_pr_scope,
+            }
         current_plan_sha = plan_sha256(self.registry, selected.initiative)
         baseline = _workspace_baseline_for_task(self.registry, selected)
         workspace = _planned_workspace(self.registry, selected, run_id, base_dir, baseline)
-        required_keys = sorted(grabowski_resource_keys_for_task(self.registry.resources, selected))
+        required_keys = sorted(
+            _coordinated_grabowski_resource_keys(
+                self.registry.resources, selected, open_pr_scope
+            )
+        )
         now = datetime.now(timezone.utc)
         intent: dict[str, Any] = {
             "schema_version": COORDINATED_CLAIM_INTENT_SCHEMA_VERSION,
@@ -2661,6 +3342,12 @@ class Dispatcher(legacy.Dispatcher):
                 "workspace_planned": workspace is not None,
                 "workspace": workspace,
                 "attempt": attempt,
+                "open_pr_scope": open_pr_scope,
+                "open_pr_scope_resource_mode": (
+                    "exact-paths"
+                    if open_pr_scope["requires_evidence"]
+                    else "task-default"
+                ),
             },
             "runtime_truth": runtime_truth,
         }
@@ -2709,9 +3396,29 @@ class Dispatcher(legacy.Dispatcher):
             expected_reference=intent["run_id"],
             task_id=task.id,
         )
-        required_keys = sorted(grabowski_resource_keys_for_task(self.registry.resources, task))
+        fresh_open_pr_reservations = self._open_pr_reservations(strict=True)
+        fresh_open_pr_scope = _task_open_pr_scope_assessment(
+            task, fresh_open_pr_reservations, self.registry
+        )
+        required_keys = sorted(
+            _coordinated_grabowski_resource_keys(
+                self.registry.resources, task, fresh_open_pr_scope
+            )
+        )
         if required_keys != intent["required_resource_keys"]:
             raise legacy.StateError("coordinated claim resources changed after intent")
+        supplied_open_pr_scope = approval_data.get("open_pr_nonconflict")
+        if supplied_open_pr_scope is not None:
+            if not fresh_open_pr_scope["requires_evidence"]:
+                raise legacy.StateError(
+                    "coordinated claim has unexpected open PR nonconflict evidence"
+                )
+            if supplied_open_pr_scope != fresh_open_pr_scope:
+                raise legacy.StateError(
+                    "coordinated claim open PR nonconflict evidence changed after intent"
+                )
+        elif fresh_open_pr_scope["requires_evidence"]:
+            raise legacy.StateError("coordinated claim open PR nonconflict evidence is missing")
         if task.sha256 != intent["task_sha256"]:
             raise legacy.StateError("coordinated claim task changed after intent")
         current_plan_sha = plan_sha256(self.registry, task.initiative)
@@ -2766,9 +3473,7 @@ class Dispatcher(legacy.Dispatcher):
             if current_rows:
                 raise legacy.StateError("worker acquired another assignment after intent")
             runs = self.store.active_runs(connection)
-            reservations = self.store.reservations(connection) + self._open_pr_reservations(
-                strict=True
-            )
+            reservations = self.store.reservations(connection) + fresh_open_pr_reservations
             overlays = self.store.overlays(connection, self.registry)
             reasons = self.reasons(task, set(intent["capabilities"]), runs, reservations, overlays)
             review_reason = f"execution is {task.mode}/{task.policy}"

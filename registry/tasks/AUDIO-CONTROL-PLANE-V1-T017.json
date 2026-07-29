@@ -1,0 +1,132 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein versionierter Installer und Uninstaller erzeugt beziehungsweise entfernt ausschließlich eindeutig als Audiozentrale-eigen markierte Dateien unter den vorgesehenen Benutzerpfaden; wiederholte Installation ist idempotent und überschreibt keine fremden oder unerwartet veränderten Bytes.",
+      "evidence_type": "object",
+      "id": "repository-owned-installer"
+    },
+    {
+      "assertion": "Installationsmanifest und Tests binden Quellcommit, Dirty-State, gerenderte Dateihashes, Pfade und Modi. Ein ambiguer oder driftender Ausgang wird nicht als erfolgreiche Installation ausgegeben; unversionierte Hostdateien gelten nicht als Produktwahrheit.",
+      "evidence_type": "object",
+      "id": "revision-and-byte-binding"
+    },
+    {
+      "assertion": "Der Starter akzeptiert und verwendet ausschließlich audio-control-ui-v1.service mit managed_by audio-control-ui-v1, Host 127.0.0.1 und Port 8765, nutzt einen bereits passenden laufenden Dienst wieder und startet andernfalls genau den begrenzten vorhandenen Audio-Control-Pfad.",
+      "evidence_type": "object",
+      "id": "exact-managed-service"
+    },
+    {
+      "assertion": "Die erzeugte Desktopdatei ist mit desktop-file-validate ohne eigenen Hinweis gültig, besitzt die vorgesehenen Modi und Kategorien, erscheint unter dem Namen Audiozentrale und öffnet keinen Terminalprozess.",
+      "evidence_type": "object",
+      "id": "desktop-contract"
+    },
+    {
+      "assertion": "Exakt am reviewten Head bestehen Control-Contract, HTTP-200-Prüfungen für Startseite, JavaScript, Stylesheet und Snapshot-API sowie ein isolierter Browser-Smoke mit dem Titel Start · Audiozentrale.",
+      "evidence_type": "object",
+      "id": "http-api-browser-smoke"
+    },
+    {
+      "assertion": "Dokumentation und Tests erklären die absichtlich transiente höchstens sechs-stündige Dienstlaufzeit, den bedarfsgesteuerten Neustart beim Öffnen und die Abgrenzung zu dauerhaftem Autostart oder Netzwerkfreigabe.",
+      "evidence_type": "object",
+      "id": "bounded-lifecycle"
+    },
+    {
+      "assertion": "Deinstallation und Rollback entfernen nur Dateien, deren Ownership- und Hashbindung zum Installer passt, lassen fremde Desktopdateien einschließlich steam.desktop unangetastet und liefern einen eindeutigen Post-State.",
+      "evidence_type": "object",
+      "id": "safe-uninstall-and-rollback"
+    },
+    {
+      "assertion": "Tests, Self-Review, vollständiger Diff, erforderliche CI und Mergeentscheidung sind an denselben exakten Head gebunden; eine manuelle lokale Installation allein erfüllt den Task nicht.",
+      "evidence_type": "object",
+      "id": "exact-head-review-and-ci"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.audio"
+    }
+  ],
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T008"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Dieser Task implementiert und testet ausschließlich Repositorycode, Installationsartefakte und dokumentierte Prüfverträge. Eine reale Neuinstallation, Dienstaktivierung oder Änderung fremder Desktopdateien auf dem Heim-PC benötigt einen separaten revisionsgebundenen Runtime-Readback.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "Den heute auf dem Heim-PC lokal angelegten Audiozentrale-Starter als repositoryeigenen, idempotenten und rückrollbaren Installationsvertrag neu implementieren, sodass Dienstidentität, Quellrevision, Desktopdateien, HTTP-/API-Erreichbarkeit und Browserdarstellung ohne Abhängigkeit von unversionierten Hostdateien reproduzierbar geprüft werden können.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T017",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass die lokalen Hostdateien bereits repositoryseitig versioniert sind",
+      "dauerhafte Dienstverfügbarkeit nach dem RuntimeMaxSec-Limit",
+      "Netzwerk- oder iPad-Freigabe",
+      "Recht zum Ändern fremder Desktopdateien",
+      "Abschluss von AUDIO-CONTROL-PLANE-V1-T008"
+    ],
+    "observed_local_installation": {
+      "audio_repository_head": "8eb1c59aacca451c3d9a509f14f7490770d866d1",
+      "desktop_path": "/home/alex/.local/share/applications/audiozentrale.desktop",
+      "desktop_sha256": "086edec22028e65dfc3ce89e75e6d5005b07517cf19e079ece980688bc81b24e",
+      "launcher_path": "/home/alex/.local/bin/audiozentrale-open",
+      "launcher_sha256": "722079570cd3b35832ce7960835301326c9072e1d8b58fe9c0fd574f52064b31",
+      "repository_dirty": true,
+      "service": "audio-control-ui-v1.service",
+      "url": "http://127.0.0.1:8765/"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-b2ce3ab522f0fcf9bf1a0a69",
+      "event_id": 1673,
+      "event_created_at": "2026-07-29T21:22:43.870071Z",
+      "request_sha256": "45a857e45006105f0acbcdf6eaa4b3a682e0bb8678d05448fb2ae61481f43ff5",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "operator-follow-up",
+        "locator": "heim-pc:audiozentrale-local-install-2026-07-29",
+        "observed_at": "2026-07-29T21:22:43.854431Z",
+        "sha256": "1970c0130f678d77a9121a6d89072fa9bf2c225014dbe07719318a610f34865c"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-07-29",
+    "source": "Liveinbetriebnahme der lokalen Audiozentrale auf dem Heim-PC"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 17
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "testing",
+    "rollback",
+    "bureau",
+    "runtime-observability",
+    "browser"
+  ],
+  "rollback": {
+    "strategy": "Den Repositorydiff zurücknehmen. Eine spätere Hostinstallation muss über den installer-eigenen Uninstall- und Readbackpfad nur exakt gebundene Audiozentrale-Dateien entfernen; fremde oder driftende Dateien bleiben erhalten."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Audiozentrale-Desktopinstallation revisionsgebunden liefern"
+}

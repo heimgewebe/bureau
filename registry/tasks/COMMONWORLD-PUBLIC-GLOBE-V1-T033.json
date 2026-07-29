@@ -57,6 +57,9 @@
       "note": "The user explicitly requested implementation through Grabowski. Work must start only after T032 is terminal and its overlapping i18n, generated-page, assets, browser and publication surfaces are released.",
       "required_level": "operator"
     },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/commonworld"

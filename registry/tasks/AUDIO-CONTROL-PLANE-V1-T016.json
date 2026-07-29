@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T016",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Durchgehende Buckelwalstimme physisch am Roland abnehmen",
+  "state": "planned",
+  "goal": "Den in T015 gemergten Morphmodus am real verbundenen Roland FP-30X über MOTU M2 technisch und subjektiv prüfen, unvertretbare Orgel-, Buzz-, UFO-, Alias- oder Rauschcharakteristik belegen und den Ausgangszustand vollständig wiederherstellen.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T015"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 16
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio",
+      "host:heim-pc",
+      "service:pipewire"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "operator",
+      "note": "Nur die taskeigene begrenzte Buckelwal-Instanz darf gestartet werden. Roland und MOTU müssen frisch erkannt sein; Lautstärke wird vor Tonbeginn manuell sicher gesetzt. Keine globale PipeWire- oder Profiländerung ohne separaten Plan."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "read",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "fresh-device-and-graph-readback",
+      "assertion": "Roland FP-30X, MOTU M2, PipeWire-Ziel, Rate, Quantum, Kanäle, Dienstzustand und sichere manuelle Pegelstellung sind unmittelbar vor Tonbeginn belegt.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "bounded-runtime-authority",
+      "assertion": "Der Lauf bindet Mergecommit 2475eae1929c222469e78f8f4055e3a759fcf295, Modus morph, exakten MIDI-Port, Audioziel, Gain, 48 kHz, 128 Frames, Laufzeitlimit und Stop-/Panic-Pfad.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "full-keyboard-sweep",
+      "assertion": "Alle 88 Tasten von A0 bis C8 werden einzeln und chromatisch geprüft; keine Taste schaltet Modus, Preset oder Steuerfunktion und keine Note bleibt hängen.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "articulation-matrix",
+      "assertion": "Kurze und lange Töne, abgesetzte Wiederholung, gleiche Taste erneut, große und kleine Legato-Intervalle, Rückkehr zur zuvor gehaltenen Note, Sustain, CC1, CC11, CC67, Pitch Bend, CC120 und CC123 werden am realen Instrument geprüft.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "comparative-listening",
+      "assertion": "Dieselben festgelegten MIDI-Gesten werden in morph, realistic und ufo verglichen; der Nutzer bewertet morph ausdrücklich auf Walähnlichkeit, Spielbarkeit und unerwünschten Orgel-, Buzz-, UFO-, Alias- oder Dauerrauschcharakter.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "extreme-register-truth",
+      "assertion": "A0, C8 und mehrere Übergangstöne werden separat bewertet; musikalische Extrapolation wird nicht als biologischer Stimmumfang ausgegeben.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "thirty-minute-stability",
+      "assertion": "Ein 30-Minuten-Lauf mit repräsentativen Gesten weist null neue XRuns, null Dienstneustarts, begrenzte CPU-, Speicher-, Task- und Journalwerte sowie keine Event- oder Dateilogflut auf.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "device-loss-and-recovery",
+      "assertion": "Ein kontrollierter Geräteverlust führt zu Stop oder eindeutigem Degraded-Zustand; nach Wiederkehr wird der Port frisch aufgelöst und kein verwaister Prozess oder hängender Ton bleibt zurück.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "subjective-product-gate",
+      "assertion": "Der Nutzer bestätigt den Morphmodus als brauchbare durchgehend spielbare Walstimme oder lehnt ihn mit konkreten Gesten und hörbaren Fehlerklassen ab; technische Sauberkeit allein gilt nicht als Klangabnahme.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "stop-and-reference-return",
+      "assertion": "Nach Testende ist die Buckelwal-Einheit inaktiv, alle Kindprozesse sind beendet, der vorherige PipeWire-Zustand ist wiederhergestellt und der Referenzpfad besitzt einen frischen Doctor-Readback.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "testing",
+    "rollback",
+    "bureau",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Vor Start werden Dienst-, Port-, Ziel- und Graphzustand erfasst. Bei Fehler oder Ablehnung werden CC120, Dienst-Stop und Prozessreadback ausgeführt; nur taskeigene Prozesse werden beendet. Danach wird der vorherige Audiozustand geprüft."
+  },
+  "metadata": {
+    "registered_at": "2026-07-29T09:57:43Z",
+    "plan": {
+      "repository": "heimgewebe/audio",
+      "path": "docs/plans/buckelwal-continuous-voice-v1.md",
+      "commit": "2475eae1929c222469e78f8f4055e3a759fcf295",
+      "document_sha256": "579d1c0fc964753fbf5bc7e52c6d625b5d2500a99ee6e89d73d76ce309f031d3",
+      "phase": "Phase 6 – Physische Klangabnahme"
+    },
+    "implementation_source": {
+      "task_id": "AUDIO-CONTROL-PLANE-V1-T015",
+      "repository": "heimgewebe/audio",
+      "pull_request": 13,
+      "reviewed_head": "2c04d84ad01b3c17e042113a632b38f1c6fcdb89",
+      "merge_commit": "2475eae1929c222469e78f8f4055e3a759fcf295"
+    },
+    "current_blocker": {
+      "observed_at": "2026-07-29T09:01:00Z",
+      "reason": "roland-midi-not-found",
+      "doctor_truth": "Morphbank, Samplebank, PipeWire und erforderliche Software waren bereit; sichtbare MIDI-Ports waren System, Midi Through und MOTU M2, nicht Roland."
+    },
+    "relationship_to_program": {
+      "T007": "T016 ist die fokussierte physische Buckelwal-Abnahme und kann Evidenz für T007s creative-live-proof liefern, schließt aber weder den vollständigen Profilrollout noch T007 insgesamt.",
+      "T006": "Erfolgreiche T016-Abnahme ersetzt nicht die noch ausstehende gemeinsame Kreativlaufzeit für weitere Tierstimmen und Dauersong."
+    },
+    "does_not_establish": [
+      "automatische Klangabnahme ohne Nutzerurteil",
+      "dauerhafte Driftfreiheit nach späteren Paket-, Kernel- oder Geräteänderungen",
+      "biologische Stimmrekonstruktion",
+      "Freigabe globaler Audioänderungen",
+      "Abschluss von AUDIO-CONTROL-PLANE-V1-T006 oder T007"
+    ]
+  }
+}

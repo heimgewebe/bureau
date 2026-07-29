@@ -1,0 +1,172 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T015",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Durchgehend spielbare Buckelwalstimme repositoryseitig liefern",
+  "state": "verified",
+  "goal": "Eine einzelne monophone, quellengestützte Buckelwalstimme über alle 88 chromatischen Tasten repositoryseitig liefern, ohne Samplezonen, Presets, Steuertasten, fertige Aufnahmephrasen, Dauerrauschen oder Live-Audioeffekt.",
+  "depends_on": [],
+  "priority": {
+    "lane": "later",
+    "rank": 15
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Nur Repositoryimplementierung, deterministischer Modellbau und Offlineprüfung. Physische MIDI-/Audio-Wirkung und subjektive Klangabnahme sind T016 vorbehalten."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "chromatic-88-key-contract",
+      "assertion": "MIDI 21 bis 108 bilden genau 88 gleichstufig chromatische Töne mit A4 = 440 Hz; außerhalb liegende MIDI-Noten werden ignoriert statt auf A0 oder C8 geklemmt.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "single-continuous-voice",
+      "assertion": "Eine monophone Last-Note-Priority-Stimme bleibt bei Legato phasenkontinuierlich; abgesetzte und wiederholte Töne besitzen getrennte, kausale Artikulation.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-zone-preset-noise-contract",
+      "assertion": "Der Standardmodus besitzt keine Samplezonen, Presets, reservierten Steuertasten, lange Aufnahmephrasen oder permanente Rauschschicht.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "source-bound-morph-model",
+      "assertion": "Sieben periodische Buckelwal-Quellanker, Quellmanifest und jede eingebettete PCM16-Tabelle sind SHA-256-gebunden; Symlinks, Traversal, doppelte Clip-IDs und abweichende Provenienz blockieren.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "safe-bandlimit",
+      "assertion": "Frequenzabhängige harmonische Tabellenstufen überblenden nur zwischen bereits sicheren Stufen und führen keine oberhalb des 0,45-Samplerate-Grenzwerts liegenden Harmonischen wieder ein.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "gesture-contract",
+      "assertion": "Anschlagstärke, kurze und lange Haltedauer, Legato, Wiederholung, Sustain, CC1, CC11, CC67, Pitch Bend, CC120 und CC123 sind begrenzt, deterministisch und getestet.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "deterministic-offline-proof",
+      "assertion": "Der Morphbank-Neubau ist byteidentisch; Leerlauf ist exakt still; Ausgabe und Endzustand sind unabhängig von Render-Chunkgrößen; die vollständige Repositoryprüfung ist grün.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "runtime-integration-without-effect",
+      "assertion": "Doctor, Dienststart, Moduswechsel, Desktopsteuerung, Profil und Dokumentation kennen morph als Standard; während dieses Tasks wurde keine Live-Instanz gestartet.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "testing",
+    "rollback",
+    "bureau",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Der Mergecommit kann repositoryseitig revertiert werden. T015 hat keine produktive Audioinstanz, keinen PipeWire-Graph und keine physische Gerätekonfiguration verändert."
+  },
+  "metadata": {
+    "registered_at": "2026-07-29T09:57:43Z",
+    "verified_at": "2026-07-29T09:57:43Z",
+    "outcome": "Audio PR #13 liefert den neuen Standardmodus morph als quellengestützte, bandbegrenzte und über alle 88 chromatischen Tasten kontinuierlich spielbare monophone Walstimme. Der exakte finale Head bestand die vollständige lokale Prüfung und den GitHub-Pflichtcheck und wurde als Mergecommit 2475eae1929c222469e78f8f4055e3a759fcf295 veröffentlicht.",
+    "plan": {
+      "repository": "heimgewebe/audio",
+      "path": "docs/plans/buckelwal-continuous-voice-v1.md",
+      "commit": "2475eae1929c222469e78f8f4055e3a759fcf295",
+      "document_sha256": "579d1c0fc964753fbf5bc7e52c6d625b5d2500a99ee6e89d73d76ce309f031d3"
+    },
+    "validated_acceptance": {
+      "chromatic-88-key-contract": "PASS: Tests prüfen alle MIDI-Noten 21 bis 108, A0 = 27,5 Hz, A4 = 440 Hz, C8 ungefähr 4.186,01 Hz und das konstante Verhältnis 2^(1/12); 0, 20, 109 und 127 bleiben wirkungslos.",
+      "single-continuous-voice": "PASS: Tests belegen Last-Note-Priority, phasenkontinuierliches Legato, abgesetzten Neustart, Wiederholungsimpuls und Rückkehr zur zuvor gehaltenen Note.",
+      "no-zone-preset-noise-contract": "PASS: Profil und Morphmanifest deklarieren null Samplezonen, null Presets, null Steuertasten, eine Stimme, keine lange Phrasenwiedergabe und keine permanente Rauschschicht.",
+      "source-bound-morph-model": "PASS: Morphmanifest bindet sieben Anker, Quellmanifest, Quellclips und Tabellenhashes; Negativtests decken Symlinks, Traversal, doppelte IDs, Output-Symlinks und Provenienzabweichung ab.",
+      "safe-bandlimit": "PASS: Negativtest belegt, dass Übergänge keine unsichere obertonreichere Stufe beimischen.",
+      "gesture-contract": "PASS: Fokussierte Engine-, Laufzeit- und Desktoptests bestehen vollständig.",
+      "deterministic-offline-proof": "PASS: 234/234 Repositorytests, beide Audio-Safety-Gates, Compileall und git diff --check; Modellneubau byteidentisch mit 151.049 Byte und SHA-256 70fb0f19dddf812ac9a83160cd55c751340c18b7522101b6f42110c594717600.",
+      "runtime-integration-without-effect": "PASS: Doctor meldete Morphbank und PipeWire bereit, blockierte aber korrekt mit roland-midi-not-found; keine Live-Instanz wurde gestartet."
+    },
+    "verification": {
+      "source": "github_pr_ci_and_local_offline_validation",
+      "source_ref": "github-pr:heimgewebe/audio#13",
+      "repository": "heimgewebe/audio",
+      "pull_request": 13,
+      "base_commit": "288ebba9578950400acf50f40a81e85fe7afbed2",
+      "reviewed_head": "2c04d84ad01b3c17e042113a632b38f1c6fcdb89",
+      "merge_commit": "2475eae1929c222469e78f8f4055e3a759fcf295",
+      "final_diff_sha256": "d013ceb1b25edb51a01f94aa8ab0df80e91a11c8c2005c450b56956d1baea1bf",
+      "final_diff_bytes": 252424,
+      "diff_artifact_id": "8a9dc57197e146ccb3624b5380b75756",
+      "diff_receipt_sha256": "81749876f6d37348f97fef71927949ff323c5d68686372d2caf068eeadef1f6f",
+      "github_required_check": "safety: success on exact reviewed head",
+      "local_validation": {
+        "repository_tests": "234/234 pass",
+        "audio_safety_gates": "pass",
+        "compileall": "pass",
+        "git_diff_check": "pass",
+        "morph_manifest_sha256": "70fb0f19dddf812ac9a83160cd55c751340c18b7522101b6f42110c594717600",
+        "morph_manifest_bytes": 151049,
+        "deterministic_rebuild": "byte-identical",
+        "offline_demo_peak_dbfs": -21.41458310363333,
+        "offline_realtime_factor": 4.781787822979419
+      },
+      "task_sha256": "08023dd4b716d8a083c44be86256bcd1e2ade0206cf88943227bc84abad919e7",
+      "plan_sha256": "63240b44ae09e6b29b0db54ebd25c179cb0fe3f3b52df193bfba7041b1b45c4d"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T015",
+          "source_ref": "heimgewebe/audio#13",
+          "number": 13,
+          "head_sha": "2c04d84ad01b3c17e042113a632b38f1c6fcdb89",
+          "merge_commit_sha": "2475eae1929c222469e78f8f4055e3a759fcf295",
+          "diff_sha256": "d013ceb1b25edb51a01f94aa8ab0df80e91a11c8c2005c450b56956d1baea1bf"
+        },
+        {
+          "kind": "test_run",
+          "authority": "heim-pc",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T015",
+          "source_ref": "local:audio-buckelwal-continuous-voice-v1-final",
+          "commit_sha": "2c04d84ad01b3c17e042113a632b38f1c6fcdb89",
+          "result": "repository-234-of-234-and-safety-pass"
+        }
+      ]
+    },
+    "relationship_to_program": {
+      "T006": "T015 ist ein verifiziertes fokussiertes Buckelwal-Teilprodukt, schließt aber nicht die gemeinsame Kreativlaufzeit für Roland, Tierstimmen und Dauersong.",
+      "T007": "T015 beweist keine physische Roland-/MOTU-Abnahme und keinen gestuften Gesamtrollout."
+    },
+    "does_not_establish": [
+      "biologische Modelltreue",
+      "subjektiv überzeugende Walähnlichkeit",
+      "reale Roland- oder MOTU-End-to-End-Funktion",
+      "null XRuns im Livebetrieb",
+      "gemessene Round-Trip-Latenz",
+      "Abschluss von AUDIO-CONTROL-PLANE-V1-T006 oder T007"
+    ]
+  }
+}

@@ -88,6 +88,121 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "implementation_evidence": {
+      "repository": "heimgewebe/leitstand",
+      "pull_request": 194,
+      "base_commit": "9595effaf3eeeeca08222b798271bfd03784831f",
+      "source_head": "fd3c5e4c2b02b96a1bc4898d1f1fdf262296ddad",
+      "merge_commit": "2f504ab7660bb1538162cfa68263e1f0b62b255c",
+      "merged_at": "2026-07-29T16:39:48Z",
+      "diff_sha256": "b7c9f2ca097dc606138bdf79e2190f01dc3ce08477e8b7f74863269ec4a74b09",
+      "changed_paths": [
+        "docs/runbooks/local-release-runtime.md",
+        "package.json",
+        "tests/test_runbook_contracts.py"
+      ],
+      "review_evidence": {
+        "foreign_review": "Codex review on c57f99736369619dc5a7b877ec93e59d331841a4",
+        "material_findings": 2,
+        "resolved_threads": 2,
+        "unresolved_threads": 0,
+        "final_self_review": "methodically separated, not independent, PASS on fd3c5e4c2b02b96a1bc4898d1f1fdf262296ddad"
+      },
+      "validation": [
+        "git diff --check passed",
+        "pnpm run test:release-runtime passed",
+        "python3 -B -m unittest tests.test_runbook_contracts tests.test_release_runtime: 41 tests passed"
+      ],
+      "github_checks": [
+        "CodeQL: success",
+        "Cloudflare Pages: success",
+        "repo-root: success",
+        "templates: success",
+        "security-hygiene: success",
+        "build: success",
+        "Analyze (actions): success",
+        "Analyze (javascript-typescript): success",
+        "Analyze (python): success"
+      ],
+      "runtime_effects": "none; documentation and contract-test scope only",
+      "readback_main": "2f504ab7660bb1538162cfa68263e1f0b62b255c"
+    },
+    "verified_at": "2026-07-29T17:03:02.166603Z",
+    "outcome": "Leitstand PR #194 dokumentiert den bestehenden sicheren Source-Pfad-Ahnenkettenvertrag im kanonischen lokalen Release-Runbook, bindet ihn an einen CI-ausgeführten Regressionstest und bewahrt den unveränderten fail-closed Releaseadapter ohne Runtime-Wirkung.",
+    "implementation_pr": "heimgewebe/leitstand#194",
+    "implementation_base": "9595effaf3eeeeca08222b798271bfd03784831f",
+    "implementation_head": "fd3c5e4c2b02b96a1bc4898d1f1fdf262296ddad",
+    "implementation_merge_commit": "2f504ab7660bb1538162cfa68263e1f0b62b255c",
+    "implementation_diff_sha256": "b7c9f2ca097dc606138bdf79e2190f01dc3ce08477e8b7f74863269ec4a74b09",
+    "implementation_patch_bytes": 4512,
+    "validation": {
+      "current_leitstand_main": "2f504ab7660bb1538162cfa68263e1f0b62b255c",
+      "focused_release_runtime_tests": "python3 -B -m unittest tests.test_runbook_contracts tests.test_release_runtime: 41 tests PASS on exact implementation head.",
+      "github_checks": "PR #194: CI build, CodeQL for actions/javascript-typescript/python, ai-context guards, security hygiene, Cloudflare Pages and aggregate CodeQL all SUCCESS.",
+      "pr_state": "MERGED",
+      "pr_merged_at": "2026-07-29T16:39:48Z",
+      "diff_check": "git diff --check PASS on exact implementation head."
+    },
+    "review": {
+      "external_review": "Codex reviewed c57f99736369619dc5a7b877ec93e59d331841a4 and raised two P2 findings.",
+      "findings_addressed": [
+        "The runbook now locates ancestry validation at source_identity before the Leitstand build and distinguishes earlier immutable Systemkatalog preparation from runtime cutover effects.",
+        "The required test:release-runtime script now executes tests/test_runbook_contracts.py as well as tests/test_release_runtime.py."
+      ],
+      "material_threads_resolved": 2,
+      "self_review": "Methodically separate, explicitly non-independent self-review PASS on fd3c5e4c2b02b96a1bc4898d1f1fdf262296ddad and diff b7c9f2ca097dc606138bdf79e2190f01dc3ce08477e8b7f74863269ec4a74b09."
+    },
+    "verified_acceptance": {
+      "ancestry-contract-documented": "The merged runbook names the complete secure ownership and writability ancestry contract enforced by source_identity and assert_secure_ancestry.",
+      "unsafe-parent-example": "The merged runbook records rejection below /home/alex/repos/.leitstand-worktrees and names ~/.local/state/leitstand/deploy-sources/<commit> as the private host-local example.",
+      "guard-preserved": "The PR changes documentation, package test selection and a contract test only; scripts/leitstand-release.py and assert_secure_ancestry are unchanged.",
+      "runbook-invariant-covered": "The runbook contract is included in test:release-runtime; the merged revision passed 41 focused release-runtime and runbook tests plus green GitHub checks.",
+      "no-runtime-effect": "The changed paths contain no unit, selector, service, deployment or Systemkatalog source mutation."
+    },
+    "verification": {
+      "task_sha256": "9cc9a1215bf396b5a196b14782161906047a4a30fae906ad42b9a251e091af5e",
+      "plan_sha256": "217a91b5a66a143e0440d2a7d656a5d0fada62b52778cf3285349e7667bd8621"
+    },
+    "closeout_plan": {
+      "schema_version": 1,
+      "task_id": "LSV-V1-T012",
+      "action": "verify_existing_merged_implementation",
+      "source_ref": "heimgewebe/leitstand#194",
+      "source_head": "fd3c5e4c2b02b96a1bc4898d1f1fdf262296ddad",
+      "merge_commit": "2f504ab7660bb1538162cfa68263e1f0b62b255c",
+      "acceptance_ids": [
+        "ancestry-contract-documented",
+        "unsafe-parent-example",
+        "guard-preserved",
+        "runbook-invariant-covered",
+        "no-runtime-effect"
+      ]
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "LSV-V1-T012",
+          "source_ref": "heimgewebe/leitstand#194",
+          "number": 194,
+          "base_sha": "9595effaf3eeeeca08222b798271bfd03784831f",
+          "head_sha": "fd3c5e4c2b02b96a1bc4898d1f1fdf262296ddad",
+          "merge_commit_sha": "2f504ab7660bb1538162cfa68263e1f0b62b255c",
+          "diff_sha256": "b7c9f2ca097dc606138bdf79e2190f01dc3ce08477e8b7f74863269ec4a74b09"
+        },
+        {
+          "kind": "test_receipt",
+          "authority": "leitstand-repository",
+          "task_id": "LSV-V1-T012",
+          "source_ref": "heimgewebe/leitstand@2f504ab7660bb1538162cfa68263e1f0b62b255c",
+          "result": "41 tests passed",
+          "diff_sha256": "b7c9f2ca097dc606138bdf79e2190f01dc3ce08477e8b7f74863269ec4a74b09"
+        }
+      ]
     }
   },
   "priority": {
@@ -103,6 +218,6 @@
     "strategy": "Die Runbook- und gegebenenfalls eng begrenzte Teständerung zurücksetzen; der bereits bestehende sichere Pfad-Ahnenketten-Guard im Releaseadapter bleibt unverändert aktiv."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Sichere Source-Pfad-Ahnenkette für Leitstand-Deploy dokumentieren"
 }

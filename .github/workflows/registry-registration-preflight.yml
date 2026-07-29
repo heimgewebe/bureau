@@ -17,6 +17,9 @@ jobs:
     name: registry-registration-preflight/freshness
     if: github.event_name == 'pull_request_target'
     runs-on: ubuntu-latest
+    concurrency:
+      group: registry-registration-preflight-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
         with:

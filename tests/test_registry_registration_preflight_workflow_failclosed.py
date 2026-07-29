@@ -22,38 +22,70 @@ def test_pull_request_file_listing_fails_closed() -> None:
     assert 'mapfile -t task_files < "${task_files_file}"' in text
 
 
-def test_main_push_invalidates_all_known_prs_before_per_pr_validation() -> None:
+def test_main_push_invalidates_all_known_prs_before_file_discovery() -> None:
     text = _workflow_text()
 
     invalidate_marker = (
         "# Create an in-progress CheckRun for every known open PR before "
         "validating any individual PR."
     )
-    validation_marker = "infrastructure_failed=0"
+    publication_marker = 'check_run_ids["${pr_number}"]="${check_run_id}"'
+    discovery_marker = (
+        'if ! gh api "repos/${REPOSITORY}/pulls/${pr_number}/files?per_page=100" '
+        "--paginate"
+    )
 
     assert invalidate_marker in text
-    assert validation_marker in text
-    assert text.index(invalidate_marker) < text.index(validation_marker)
+    assert publication_marker in text
+    assert discovery_marker in text
+    assert text.index(invalidate_marker) < text.index(publication_marker)
+    assert text.index(publication_marker) < text.index(discovery_marker)
     assert "mapfile -t pr_rows < <(" not in text
     assert "for attempt in 1 2 3; do" in text
     assert 'status:"in_progress"' in text
-    assert "create_check_run" in text
-    assert "complete_check_run" in text
 
 
-def test_main_push_continues_after_one_pr_revalidation_error() -> None:
+def test_main_push_file_discovery_failure_blocks_the_exact_pr() -> None:
     text = _workflow_text()
 
-    assert (
-        'if ! gh api "repos/${REPOSITORY}/pulls/${pr_number}/files?per_page=100" --paginate'
-        in text
+    discovery_marker = (
+        'if ! gh api "repos/${REPOSITORY}/pulls/${pr_number}/files?per_page=100" '
+        "--paginate"
     )
-    assert '"Registry allocation revalidation errored"' in text
+    failure_marker = (
+        'complete_check_run \\\n'
+        '                "${check_run_id}" failure \\\n'
+        '                "Registry allocation revalidation errored"'
+    )
+    continue_marker = (
+        'echo "::error::Cannot inspect changed files for PR #${pr_number}"\n'
+        "              infrastructure_failed=1\n"
+        "              continue"
+    )
+
+    assert discovery_marker in text
+    assert failure_marker in text
+    assert continue_marker in text
+    assert text.index(discovery_marker) < text.index(failure_marker)
+    assert text.index(failure_marker) < text.index(continue_marker)
     assert 'against main ${CURRENT_MAIN_SHA}." || true' in text
-    assert 'echo "::error::Cannot inspect changed files for PR #${pr_number}"' in text
-    assert "infrastructure_failed=1" in text
-    assert "continue" in text
     assert "if [[ ${infrastructure_failed} -ne 0 ]]; then" in text
+
+
+def test_main_push_skips_expensive_validation_for_non_candidates() -> None:
+    text = _workflow_text()
+
+    no_candidate_marker = 'if [[ ${#task_files[@]} -eq 0 ]]; then'
+    success_marker = '"PR #${pr_number} has no new Registry task allocation'
+    validation_marker = "bureau --root . --json registry-registration-preflight"
+
+    start = text.index(no_candidate_marker)
+    end = text.index("            overall=success", start)
+    no_candidate_block = text[start:end]
+
+    assert success_marker in no_candidate_block
+    assert "              continue" in no_candidate_block
+    assert text.index(validation_marker, end) > end
 
 
 def test_main_push_never_reuses_partial_task_content_after_fetch_failure() -> None:

@@ -79,10 +79,9 @@
     "reopen_basis": {
       "doctor_recommendation": "reopen-required",
       "open_tasks": [
-        "LSV-V1-T010",
-        "LSV-V1-T012"
+        "LSV-V1-T010"
       ],
-      "active_task": "LSV-V1-T012",
+      "active_task": "LSV-V1-T010",
       "prior_completion_preserved_in": "metadata.lifecycle"
     },
     "t011_closeout_20260727": {
@@ -95,6 +94,19 @@
       "remaining_open_tasks": [
         "LSV-V1-T010",
         "LSV-V1-T012"
+      ]
+    },
+    "t012_closeout_20260729": {
+      "task": "LSV-V1-T012",
+      "state": "verified",
+      "implementation_pr": "heimgewebe/leitstand#194",
+      "implementation_merge_commit": "2f504ab7660bb1538162cfa68263e1f0b62b255c",
+      "implementation_diff_sha256": "b7c9f2ca097dc606138bdf79e2190f01dc3ce08477e8b7f74863269ec4a74b09",
+      "review_threads_resolved": 2,
+      "focused_tests": "41 tests PASS",
+      "runtime_effect": "none; documentation and contract-test change only",
+      "remaining_open_tasks": [
+        "LSV-V1-T010"
       ]
     }
   }

@@ -76,8 +76,7 @@
       }
     ],
     "does_not_establish": [
-      "deployment completed",
-      "runtime head updated",
+      "historical revision 8760ebc068e2cdfe2efed38941f8acde6ee6f04d deployed as the exact runtime head",
       "synthetic alert delivered",
       "owner-device reception",
       "user_seen truth",

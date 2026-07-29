@@ -88,7 +88,7 @@
   "metadata": {
     "registered_at": "2026-07-29T09:57:43Z",
     "verified_at": "2026-07-29T09:57:43Z",
-    "outcome": "Audio PR #13 liefert den neuen Standardmodus morph als quellengestützte, bandbegrenzte und über alle 88 chromatischen Tasten kontinuierlich spielbare monophone Walstimme. Der exakte finale Head bestand die vollständige lokale Prüfung und den GitHub-Pflichtcheck und wurde als Mergecommit 2475eae1929c222469e78f8f4055e3a759fcf295 veröffentlicht.",
+    "outcome": "Audio PR #13 liefert den spielbaren Morphkern; Audio PR #14 schließt danach die Eingabe-Race-Grenze, indem Quellmanifest und Clipdaten jeweils aus unveränderlichen, hashgebundenen Snapshots geparst, geprüft und dekodiert werden. Der aktuell zu prüfende Repositorystand ist Mergecommit 0fb490acd39b4dfb50e7d33109c346536f873446.",
     "plan": {
       "repository": "heimgewebe/audio",
       "path": "docs/plans/buckelwal-continuous-voice-v1.md",
@@ -99,15 +99,15 @@
       "chromatic-88-key-contract": "PASS: Tests prüfen alle MIDI-Noten 21 bis 108, A0 = 27,5 Hz, A4 = 440 Hz, C8 ungefähr 4.186,01 Hz und das konstante Verhältnis 2^(1/12); 0, 20, 109 und 127 bleiben wirkungslos.",
       "single-continuous-voice": "PASS: Tests belegen Last-Note-Priority, phasenkontinuierliches Legato, abgesetzten Neustart, Wiederholungsimpuls und Rückkehr zur zuvor gehaltenen Note.",
       "no-zone-preset-noise-contract": "PASS: Profil und Morphmanifest deklarieren null Samplezonen, null Presets, null Steuertasten, eine Stimme, keine lange Phrasenwiedergabe und keine permanente Rauschschicht.",
-      "source-bound-morph-model": "PASS: Morphmanifest bindet sieben Anker, Quellmanifest, Quellclips und Tabellenhashes; Negativtests decken Symlinks, Traversal, doppelte IDs, Output-Symlinks und Provenienzabweichung ab.",
+      "source-bound-morph-model": "PASS: PR #13 bindet Anker, Manifest, Clips und Tabellenhashes. PR #14 bindet zusätzlich Manifest-Parsing sowie Clip-Hash und Dekodierung jeweils an denselben unveränderlichen Snapshot; Negativtests decken Austausch-Races, Symlinks, Traversal, doppelte IDs, Output-Symlinks und Provenienzabweichung ab.",
       "safe-bandlimit": "PASS: Negativtest belegt, dass Übergänge keine unsichere obertonreichere Stufe beimischen.",
       "gesture-contract": "PASS: Fokussierte Engine-, Laufzeit- und Desktoptests bestehen vollständig.",
-      "deterministic-offline-proof": "PASS: 234/234 Repositorytests, beide Audio-Safety-Gates, Compileall und git diff --check; Modellneubau byteidentisch mit 151.049 Byte und SHA-256 70fb0f19dddf812ac9a83160cd55c751340c18b7522101b6f42110c594717600.",
+      "deterministic-offline-proof": "PASS: PR #13 bestand lokal 234/234 Tests, beide Audio-Safety-Gates, Compileall und git diff --check; Modellneubau byteidentisch mit 151.049 Byte und SHA-256 70fb0f19dddf812ac9a83160cd55c751340c18b7522101b6f42110c594717600. PR #14 bestand im GitHub-Safety-Lauf 236/236 Tests, beide Safety-Gates und Compileall.",
       "runtime-integration-without-effect": "PASS: Doctor meldete Morphbank und PipeWire bereit, blockierte aber korrekt mit roland-midi-not-found; keine Live-Instanz wurde gestartet."
     },
     "verification": {
-      "source": "github_pr_ci_and_local_offline_validation",
-      "source_ref": "github-pr:heimgewebe/audio#13",
+      "source": "github_pr_chain_and_local_offline_validation",
+      "source_ref": "github-pr:heimgewebe/audio#13+#14",
       "repository": "heimgewebe/audio",
       "pull_request": 13,
       "base_commit": "288ebba9578950400acf50f40a81e85fe7afbed2",
@@ -117,7 +117,10 @@
       "final_diff_bytes": 252424,
       "diff_artifact_id": "8a9dc57197e146ccb3624b5380b75756",
       "diff_receipt_sha256": "81749876f6d37348f97fef71927949ff323c5d68686372d2caf068eeadef1f6f",
-      "github_required_check": "safety: success on exact reviewed head",
+      "github_required_check": {
+        "pull_request_13": "safety: success",
+        "pull_request_14": "safety: success"
+      },
       "local_validation": {
         "repository_tests": "234/234 pass",
         "audio_safety_gates": "pass",
@@ -129,8 +132,27 @@
         "offline_demo_peak_dbfs": -21.41458310363333,
         "offline_realtime_factor": 4.781787822979419
       },
-      "task_sha256": "08023dd4b716d8a083c44be86256bcd1e2ade0206cf88943227bc84abad919e7",
-      "plan_sha256": "63240b44ae09e6b29b0db54ebd25c179cb0fe3f3b52df193bfba7041b1b45c4d"
+      "task_sha256": "2e9db7cceda69faad018aaf51bb424a3995e76d1917b683f397269d7ef4a3198",
+      "plan_sha256": "63240b44ae09e6b29b0db54ebd25c179cb0fe3f3b52df193bfba7041b1b45c4d",
+      "current_implementation_commit": "0fb490acd39b4dfb50e7d33109c346536f873446",
+      "source_snapshot_followup": {
+        "pull_request": 14,
+        "base_commit": "2475eae1929c222469e78f8f4055e3a759fcf295",
+        "reviewed_head": "231286cd531e75794c7e670b0f7094101a783f78",
+        "merge_commit": "0fb490acd39b4dfb50e7d33109c346536f873446",
+        "changed_files": [
+          "scripts/build_whale_morph_bank.py",
+          "tests/test_whale_morph_builder.py"
+        ],
+        "diff_sha256": "b0ffaddce3faef9018a5dd5cb7cd27d3dfc9fdfe9abbdce662c2cf320d562643",
+        "diff_bytes": 11188,
+        "diff_artifact_id": "76f4fab74f7b404a8a5db7e1a23044d5",
+        "diff_receipt_sha256": "5d628349c50393e5ee0868255ebbbc5290b60f915877e61309d29378697e6df6",
+        "github_safety_check": "success",
+        "repository_tests": "236/236 pass",
+        "audio_safety_gates": "pass",
+        "compileall": "pass"
+      }
     },
     "registry_truth": {
       "schema_version": 1,
@@ -153,6 +175,25 @@
           "source_ref": "local:audio-buckelwal-continuous-voice-v1-final",
           "commit_sha": "2c04d84ad01b3c17e042113a632b38f1c6fcdb89",
           "result": "repository-234-of-234-and-safety-pass"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T015",
+          "source_ref": "heimgewebe/audio#14",
+          "number": 14,
+          "base_sha": "2475eae1929c222469e78f8f4055e3a759fcf295",
+          "head_sha": "231286cd531e75794c7e670b0f7094101a783f78",
+          "merge_commit_sha": "0fb490acd39b4dfb50e7d33109c346536f873446",
+          "diff_sha256": "b0ffaddce3faef9018a5dd5cb7cd27d3dfc9fdfe9abbdce662c2cf320d562643"
+        },
+        {
+          "kind": "test_run",
+          "authority": "github_actions",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T015",
+          "source_ref": "github-actions:heimgewebe/audio#14:safety",
+          "commit_sha": "231286cd531e75794c7e670b0f7094101a783f78",
+          "result": "repository-236-of-236-and-safety-pass"
         }
       ]
     },
@@ -167,6 +208,7 @@
       "null XRuns im Livebetrieb",
       "gemessene Round-Trip-Latenz",
       "Abschluss von AUDIO-CONTROL-PLANE-V1-T006 oder T007"
-    ]
+    ],
+    "evidence_reconciled_at": "2026-07-29T10:36:35Z"
   }
 }

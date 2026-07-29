@@ -133,30 +133,11 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
-    },
-    "activation": {
-      "activated_at": "2026-07-29T13:44:39Z",
-      "basis": "The user explicitly authorized bundled implementation and requested continuation after T068 merged and deployed.",
-      "source_main_head": "d5a5805a19e5f536fa5a7ba4b30456c010d89ea2",
-      "prerequisite": {
-        "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T068",
-        "pull_request": 1143,
-        "merge_commit_sha": "0fd31246137e6f328328553d2f5ec560b882150e",
-        "runtime_source_commit": "d5a5805a19e5f536fa5a7ba4b30456c010d89ea2"
-      },
-      "exact_scope": [
-        "path:/home/alex/repos/bureau/.github/workflows/claude.yml",
-        "path:/home/alex/repos/bureau/.github/workflows/validate.yml",
-        "path:/home/alex/repos/bureau/.github/workflows/registry-registration-preflight.yml",
-        "path:/home/alex/repos/bureau/tests/test_github_workflows.py",
-        "path:/home/alex/repos/bureau/docs/reports/bureau-lean-actions-t069.md"
-      ],
-      "queue_policy": "skip-blocked"
     }
   },
   "priority": {
-    "lane": "now",
-    "rank": 0
+    "lane": "next",
+    "rank": 69
   },
   "required_capabilities": [
     "repository",
@@ -169,6 +150,6 @@
     "strategy": "Revertiere ausschließlich den exakten T069-Implementierungscommit beziehungsweise stelle die drei vorher gebundenen Workflowbytes wieder her. Registry, Queue, Branchschutz, Codex-Einstellungen und fremde Pull Requests bleiben unangetastet; bei unklarem GitHub-Checkzustand stoppt der Rollback vor weiteren Effekten."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "planned",
   "title": "Bureau GitHub-Actions-Leerlauf und Vollrevalidierung begrenzen"
 }

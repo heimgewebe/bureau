@@ -47,7 +47,7 @@
     },
     {
       "id": "bounded-runtime-authority",
-      "assertion": "Der Lauf bindet Mergecommit 2475eae1929c222469e78f8f4055e3a759fcf295, Modus morph, exakten MIDI-Port, Audioziel, Gain, 48 kHz, 128 Frames, Laufzeitlimit und Stop-/Panic-Pfad.",
+      "assertion": "Der Lauf bindet den aktuellen gehärteten Mergecommit 0fb490acd39b4dfb50e7d33109c346536f873446, Modus morph, exakten MIDI-Port, Audioziel, Gain, 48 kHz, 128 Frames, Laufzeitlimit und Stop-/Panic-Pfad.",
       "evidence_type": "object"
     },
     {
@@ -116,9 +116,17 @@
     "implementation_source": {
       "task_id": "AUDIO-CONTROL-PLANE-V1-T015",
       "repository": "heimgewebe/audio",
-      "pull_request": 13,
-      "reviewed_head": "2c04d84ad01b3c17e042113a632b38f1c6fcdb89",
-      "merge_commit": "2475eae1929c222469e78f8f4055e3a759fcf295"
+      "current_merge_commit": "0fb490acd39b4dfb50e7d33109c346536f873446",
+      "core_delivery": {
+        "pull_request": 13,
+        "reviewed_head": "2c04d84ad01b3c17e042113a632b38f1c6fcdb89",
+        "merge_commit": "2475eae1929c222469e78f8f4055e3a759fcf295"
+      },
+      "source_snapshot_hardening": {
+        "pull_request": 14,
+        "reviewed_head": "231286cd531e75794c7e670b0f7094101a783f78",
+        "merge_commit": "0fb490acd39b4dfb50e7d33109c346536f873446"
+      }
     },
     "current_blocker": {
       "observed_at": "2026-07-29T09:01:00Z",

@@ -41,7 +41,7 @@
   "depends_on": [],
   "execution": {
     "approval": {
-      "action_class": "runtime_and_repository_mutation",
+      "action_class": "runtime_mutation",
       "note": "Der Nutzer verlangt dauerhaft, alle sinnvollen nicht behobenen Funde im Bureau zu registrieren. Die spätere Umsetzung darf ausschließlich Merge-Delivery-Initialisierung, eng zugehörige Tests, Doctor- und Recovery-Prüfung sowie den revisionsgebundenen Grabowski-Deploypfad ändern; GitHub-Branchschutz und der bereits gemergte Pull Request #1179 bleiben unverändert.",
       "required_level": "operator"
     },

@@ -37,27 +37,39 @@
   "acceptance": [
     {
       "id": "cwd-independent-resolution",
-      "assertion": "Ein installiertes Wheel findet Protokolle und Profile unabhängig vom aktuellen Arbeitsverzeichnis des Aufrufers über einen paketgebundenen Ressourcenvertrag."
+      "assertion": "Ein installiertes Wheel findet Protokolle und Profile unabhängig vom aktuellen Arbeitsverzeichnis des Aufrufers über einen paketgebundenen Ressourcenvertrag.",
+      "evidence_type": "object",
+      "verifier": "wheel-isolation test receipt and fresh external-venv validate-contracts execution"
     },
     {
       "id": "resource-layout-compatibility",
-      "assertion": "Die Migration dokumentiert und testet einen expliziten Kompatibilitäts- oder Cutover-Pfad für die bisherige share/konvergenzregelkreis-Ablage; bestehende Installationen werden nicht stillschweigend gebrochen."
+      "assertion": "Die Migration dokumentiert und testet einen expliziten Kompatibilitäts- oder Cutover-Pfad für die bisherige share/konvergenzregelkreis-Ablage; bestehende Installationen werden nicht stillschweigend gebrochen.",
+      "evidence_type": "object",
+      "verifier": "packaged wheel inventory and legacy-share fallback regression"
     },
     {
       "id": "semantic-parity",
-      "assertion": "v1- und v2-Auswertung, Statuspräzedenz, Profilhashbindung und öffentliche CLI-Semantik bleiben vertragsgleich, soweit die Ressourcenidentität unverändert ist."
+      "assertion": "v1- und v2-Auswertung, Statuspräzedenz, Profilhashbindung und öffentliche CLI-Semantik bleiben vertragsgleich, soweit die Ressourcenidentität unverändert ist.",
+      "evidence_type": "object",
+      "verifier": "reference parity tests for v1/v2 evaluation, status precedence, profile hashes and CLI output"
     },
     {
       "id": "wheel-isolation",
-      "assertion": "Wheel-Build, Installation in einer frischen virtuellen Umgebung und validate-contracts außerhalb des Repository-Checkouts sind grün."
+      "assertion": "Wheel-Build, Installation in einer frischen virtuellen Umgebung und validate-contracts außerhalb des Repository-Checkouts sind grün.",
+      "evidence_type": "object",
+      "verifier": "fresh virtual-environment installation outside the checkout and validate-contracts receipt"
     },
     {
       "id": "resource-api",
-      "assertion": "Der Ressourcenladepfad verwendet importlib.resources oder eine gleichwertige paketinterne Standardbibliothekslösung statt einer Abhängigkeit vom Caller-CWD."
+      "assertion": "Der Ressourcenladepfad verwendet importlib.resources oder eine gleichwertige paketinterne Standardbibliothekslösung statt einer Abhängigkeit vom Caller-CWD.",
+      "evidence_type": "object",
+      "verifier": "source diff review plus CWD-shadowing and explicit-override regressions"
     },
     {
       "id": "migration-docs",
-      "assertion": "README beziehungsweise Migrationsdokumentation und SemVer-Einordnung beschreiben den Ressourcen-Cutover eindeutig."
+      "assertion": "README beziehungsweise Migrationsdokumentation und SemVer-Einordnung beschreiben den Ressourcen-Cutover eindeutig.",
+      "evidence_type": "object",
+      "verifier": "README and migration-documentation diff review bound to package version 1.2.0"
     }
   ],
   "depends_on": [],
@@ -182,9 +194,41 @@
       "implementation_sha": "bad67d0ee0db040ff5d9be92323470dd27f06c43",
       "merge_commit_sha": "b60d5db1fa24235eb52cdaa570a912399052120e",
       "final_diff_sha256": "61c253b04cf65fd77222d991299483389b5d7cbbb449b3b2ebdac6b471eb4fde",
-      "task_sha256": "8465b972deb25ccec5f51077e075b1a0ea69c80573dbcf1c52123a9656c62829",
+      "task_sha256": "d08b2f61e07a5a19e6043ff109014bc373f8b8a561e968041742de1b33e03e0e",
       "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
     },
-    "verification_note": "Alle sechs Akzeptanzkriterien sind erfüllt: paketinterne CWD-unabhängige Auflösung, explizite Überschreibung, getesteter Legacy-Share-Fallback, semantische Parität, isolierter Wheel-/Venv-Nachweis sowie dokumentierte SemVer-Einordnung als 1.2.0."
+    "verification_note": "Alle sechs Akzeptanzkriterien sind erfüllt: paketinterne CWD-unabhängige Auflösung, explizite Überschreibung, getesteter Legacy-Share-Fallback, semantische Parität, isolierter Wheel-/Venv-Nachweis sowie dokumentierte SemVer-Einordnung als 1.2.0.",
+    "verified_acceptance": {
+      "cwd-independent-resolution": {
+        "verdict": "pass",
+        "head_sha": "bad67d0ee0db040ff5d9be92323470dd27f06c43",
+        "evidence": "A built wheel was installed into a fresh virtual environment and validate-contracts plus the reference evaluation succeeded from outside the repository checkout."
+      },
+      "resource-layout-compatibility": {
+        "verdict": "pass",
+        "head_sha": "bad67d0ee0db040ff5d9be92323470dd27f06c43",
+        "evidence": "Wheel inspection contains package-internal resources and the explicit legacy share/konvergenzregelkreis fallback; regression tests cover fallback and precedence."
+      },
+      "semantic-parity": {
+        "verdict": "pass",
+        "head_sha": "bad67d0ee0db040ff5d9be92323470dd27f06c43",
+        "evidence": "Reference parity tests preserve v1/v2 evaluation, status precedence, profile-hash binding and public CLI semantics for identical resources."
+      },
+      "wheel-isolation": {
+        "verdict": "pass",
+        "head_sha": "bad67d0ee0db040ff5d9be92323470dd27f06c43",
+        "evidence": "Wheel build, isolated installation, package inventory, validate-contracts and reference evaluation all passed outside the checkout."
+      },
+      "resource-api": {
+        "verdict": "pass",
+        "head_sha": "bad67d0ee0db040ff5d9be92323470dd27f06c43",
+        "evidence": "The primary resolver uses importlib.resources; an explicit --contract-root remains authoritative and caller-CWD shadowing is rejected by regression tests."
+      },
+      "migration-docs": {
+        "verdict": "pass",
+        "head_sha": "bad67d0ee0db040ff5d9be92323470dd27f06c43",
+        "evidence": "README and migration documentation describe the package-resource cutover, compatibility fallback and the SemVer minor release 1.2.0."
+      }
+    }
   }
 }

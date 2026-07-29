@@ -41,8 +41,8 @@
   "depends_on": [],
   "execution": {
     "approval": {
-      "action_class": "runtime_mutation",
-      "note": "Der Nutzer verlangt dauerhaft, alle sinnvollen nicht behobenen Funde im Bureau zu registrieren. Die spätere Umsetzung darf ausschließlich Merge-Delivery-Initialisierung, eng zugehörige Tests, Doctor- und Recovery-Prüfung sowie den revisionsgebundenen Grabowski-Deploypfad ändern; GitHub-Branchschutz und der bereits gemergte Pull Request #1179 bleiben unverändert.",
+      "action_class": "task_creation_from_external_evidence",
+      "note": "Dieser Registry-Eintrag plant eine spätere revisionsgebundene Reparatur aus live beobachteter externer Fehlerevidenz. Die Task-Erstellung selbst ändert keine Grabowski-Runtime. Eine spätere Runtime-Mutation benötigt ihre eigene Break-Glass-Autorisierung; GitHub-Branchschutz und der bereits gemergte Pull Request #1179 bleiben unverändert.",
       "required_level": "operator"
     },
     "grabowski_resources": [
@@ -62,7 +62,7 @@
       "safe implementation path",
       "task completion",
       "deployment readiness",
-      "merge authority",
+      "runtime mutation authority",
       "absence of parallel work"
     ],
     "observations": [

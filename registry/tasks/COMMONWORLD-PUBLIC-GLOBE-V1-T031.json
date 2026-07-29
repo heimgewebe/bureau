@@ -48,7 +48,7 @@
     "approval": {
       "action_class": "repository_mutation",
       "note": "The user explicitly authorized publication of this reviewed task and implementation in an isolated Commonworld worktree. Keep the change privacy-focused; do not add external services, costs or collection of submitted text.",
-      "required_level": "reviewed_plan"
+      "required_level": "operator"
     },
     "mode": "interactive-agent",
     "policy": "review-before-effect",

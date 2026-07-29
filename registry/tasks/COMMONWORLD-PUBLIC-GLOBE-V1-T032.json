@@ -1,0 +1,134 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The discovery panel is bounded to approximately 56rem on wide screens, presents purpose and location as clear cards, keeps location full-width, collapses to one column on narrow screens and is not widened again by the iPad-specific stylesheet.",
+      "evidence_type": "object",
+      "id": "compact-responsive-layout"
+    },
+    {
+      "assertion": "Advanced access, language, freshness and curation filters are placed in a keyboard-accessible native disclosure that is closed by default; active-filter chips keep hidden selections visible and removable.",
+      "evidence_type": "object",
+      "id": "advanced-filters-on-demand"
+    },
+    {
+      "assertion": "German and English copy states that multiple required-presence selections use AND semantics, and the runtime filter behavior exactly matches that statement.",
+      "evidence_type": "object",
+      "id": "presence-and-semantics"
+    },
+    {
+      "assertion": "Country and proximity scopes cannot remain active simultaneously: choosing a country clears nearby origin and radius, while choosing a place or current location clears country; radius remains disabled until a proximity origin exists.",
+      "evidence_type": "object",
+      "id": "exclusive-location-scope"
+    },
+    {
+      "assertion": "The automatic sort is labeled Empfohlen or Recommended and its explanation reflects the actual active context: text relevance, spatial proximity or stable catalogue order.",
+      "evidence_type": "object",
+      "id": "contextual-recommendation"
+    },
+    {
+      "assertion": "Canonical renderer output, index.html, de.html, shared CSS, iPad CSS and runtime assets agree exactly in German and English with content-version references refreshed.",
+      "evidence_type": "object",
+      "id": "generated-surface-parity"
+    },
+    {
+      "assertion": "The clean checkpoint commit 3c2f38d on feat/filter-layout-semantics-v1 is rebased or replayed onto the post-T031 Commonworld main without losing its source-level renderer and CSS tests; no WIP commit remains in the published PR history.",
+      "evidence_type": "object",
+      "id": "checkpoint-integrated"
+    },
+    {
+      "assertion": "The exact published head passes source and validator tests, JavaScript tests, responsive browser smoke including iPad landscape, diff-bound self-review and all required GitHub checks; a full diff download is produced before merge.",
+      "evidence_type": "object",
+      "id": "exact-head-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T031"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly requested the Commonworld filter layout and invited compatible filter-logic and semantic improvements. Continue from the isolated checkpoint; do not touch foreign dirty checkouts or active T031 work.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Complete and publish the Commonworld discovery-filter overhaul begun on the isolated feat/filter-layout-semantics-v1 branch: replace the overwide flat filter sheet with a compact responsive card hierarchy, clarify presence and location semantics, and bind the generated German and English surfaces, runtime behavior and browser evidence to one exact head.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T032",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "blocker": "COMMONWORLD-PUBLIC-GLOBE-V1-T031 currently owns the generated pages, complete assets subtree, release artifacts and merge/browser shared gates.",
+    "does_not_establish": [
+      "completion of the generated or deployed UI",
+      "perfect worldwide place search",
+      "permission to weaken proposal privacy validation",
+      "permission to mutate or release the T031 worktree or lease",
+      "automatic merge, deployment or production-verification authority"
+    ],
+    "operator_intake_publication_recovery": {
+      "authoritative_readback": "The publication branch was absent and no open pull request existed.",
+      "first_attempt": "HTTPS push authentication failed before confirmed remote effect.",
+      "first_reviewed_proposal_sha256": "e5f437b8a67d30e438cc772b498bf821b0106da34eae7787cac04962a33b8bfd",
+      "recovery": "Publish this newly reviewed digest through an isolated clean Registry root whose origin uses the already authenticated SSH transport.",
+      "second_attempt": "Reusing the same proposal identity preserved the original lease acquisition age and was rejected before workspace mutation by the 300-second publication-gate lifetime contract; the exact leases were released."
+    },
+    "partial_branch": "feat/filter-layout-semantics-v1",
+    "partial_checkout": "/home/alex/repos/.commonworld-standalone/filter-layout-semantics-v1",
+    "partial_commit": "3c2f38d",
+    "partial_evidence": [
+      "Two focused renderer/CSS tests PASS",
+      "git diff --check PASS before checkpoint",
+      "Canonical German and English renderer smoke PASS"
+    ],
+    "registered_at": "2026-07-29",
+    "source": "User-provided iPad landscape screenshot and explicit Commonworld filter-layout request",
+    "source_main": "c1b0d07c7a0f38370df2a0432a8f938e7e012a1f",
+    "source_repository": "heimgewebe/commonworld",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-338fc33d6a4fc1c8078abfa1",
+      "event_id": 1627,
+      "event_created_at": "2026-07-29T06:08:02.877832Z",
+      "request_sha256": "39c5d2a075c1da160699453b8fc2622eec7c2b06da8ccc01c214b0fcf2f46fb0",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation-screenshot",
+        "locator": "chatgpt:commonworld-filter-layout:2026-07-29:screenshot",
+        "observed_at": "2026-07-29T06:56:00+02:00",
+        "sha256": "b1fba33e1a8a21f8b8b40a5294e2b14652839e204a967539fdf851442051b91f"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 12
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "testing",
+    "browser"
+  ],
+  "rollback": {
+    "strategy": "Revert the renderer markup, shared and iPad layout rules, runtime location-state transitions, generated pages and focused tests together; then regenerate content-version bindings and rerun the public-shell validator and browser smoke."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Complete compact filter layout and location semantics"
+}

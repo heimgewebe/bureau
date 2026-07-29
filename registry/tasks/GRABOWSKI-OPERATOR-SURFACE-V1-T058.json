@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T058",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Serialize the tamper-evident audit chain across processes",
-  "state": "planned",
+  "state": "verified",
   "goal": "Replace the process-local audit append lock with a descriptor-bound cross-process critical section so concurrent Grabowski processes cannot fork, interleave or partially corrupt the audit chain, while preserving strict file identity and fail-closed recovery semantics.",
   "priority": {
     "lane": "next",
@@ -108,6 +108,68 @@
       "permission to bypass the active exact path lease",
       "permission to mutate or remove another worktree",
       "permission to rewrite the live audit chain"
-    ]
+    ],
+    "implemented_at": "2026-07-15T09:50:20Z",
+    "verified_at": "2026-07-29T08:46:48Z",
+    "verification_note": "PR #225 implemented descriptor-bound cross-process audit serialization. The merge commit is contained in the current Grabowski main and deployed runtime head; current live audit verification remains valid and writable across three archived segments and 53,542 records.",
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 225,
+      "reviewed_head": "b917178b9f4fa6b4708df97bd46a71c285f6cc5c",
+      "merge_commit": "9a485637e0b164e131aef068efc5423dcbb25f3e",
+      "diff_sha256": "9851f2f2e39eda37fd170e05a530a387b7800d53835d54a43a0c5b170939609e",
+      "diff_bytes": 36892,
+      "github_ci": {
+        "validate_3_10": "success",
+        "validate_3_12": "success"
+      },
+      "current_main_head": "84411199dd8a5bb516e8e62fcb56245784f0f31a",
+      "merge_commit_is_ancestor_of_current_main": true,
+      "live_runtime": {
+        "release_id": "84411199dd8a-srcset34c081e5f338-locke6664d600b6c-contractb0d032e607e5",
+        "repo_head": "84411199dd8a5bb516e8e62fcb56245784f0f31a",
+        "audit_valid": true,
+        "audit_writable": true,
+        "audit_archived_segment_count": 3,
+        "audit_total_records": 53542,
+        "audit_snapshot_sha256": "1fd6c67f1f8c6b3e88f5320de94b6499ad2a151632589533c42aa8c057228b6e",
+        "audit_last_record_sha256": "d8126d0c7ef48ce28cece236b87006de89bf35aa2771cfef7cfd33e938f89cce",
+        "kill_switch_engaged": false
+      }
+    },
+    "validated_acceptance": {
+      "cross-process-lock": "PASS: current main uses OS-visible flock coordination for audit verification and append; PR #225 merged with both Python validation jobs green.",
+      "descriptor-bound-identity": "PASS: current source uses descriptor-bound locking and the retained regression suite rejects symlink, hardlink, broad-mode and path-rebind cases.",
+      "complete-write": "PASS: the retained regression suite covers short writes and verifies exact append completion.",
+      "bounded-rollback": "PASS: the retained regression suite restores pre-append bytes after partial-write failure and fails closed for unsafe first-append outcomes.",
+      "reader-consistency": "PASS: readers use the shared audit coordination lock; the live projection verified one stable snapshot and separately confirmed no post-read chain drift.",
+      "tests": "PASS: PR #225 validate jobs for Python 3.10 and 3.12 succeeded; current main retains tests for lock timeout, file identity, short writes, partial rollback and path rebinding.",
+      "current-main-integration": "PASS: merge commit 9a485637 is an ancestor of current remote main 84411199; no generated-contract drift is required for this closeout.",
+      "deployment-proof": "PASS: the deployed runtime is exact current main 84411199 and live health reports a valid, writable linear chain with 53,542 records across three archived segments."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T058",
+          "source_ref": "github-pr:heimgewebe/grabowski#225@b917178b9f4fa6b4708df97bd46a71c285f6cc5c:9a485637e0b164e131aef068efc5423dcbb25f3e",
+          "content_sha256": "9851f2f2e39eda37fd170e05a530a387b7800d53835d54a43a0c5b170939609e"
+        },
+        {
+          "kind": "live_audit_readback",
+          "authority": "grabowski-runtime",
+          "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T058",
+          "source_ref": "grabowski-audit-projection:84411199@records-53542:segments-3",
+          "content_sha256": "1fd6c67f1f8c6b3e88f5320de94b6499ad2a151632589533c42aa8c057228b6e"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "6c6bc1bed6603947c4c31cf8ba9ac535790af9742e1a77c7228a1daf18871c36",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
+    }
   }
 }

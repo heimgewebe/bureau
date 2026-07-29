@@ -1,0 +1,101 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Grabowski-Runtime stellt das kanonische Merge-Delivery-Verzeichnis vor dem ersten Record-Aufruf idempotent bereit oder liefert eine typisierte, direkt reparierbare Initialisierungsdiagnose; ein fehlendes Verzeichnis darf keinen gültigen Record-Auftrag pauschal verwerfen.",
+      "evidence_type": "object",
+      "id": "runtime-directory-initialized"
+    },
+    {
+      "assertion": "Ein revisionsgebundener Integrationstest erzeugt für einen künstlichen Pull-Request-Kontext einen Merge-Delivery-Record mit exaktem Repository, Pull Request, Base-SHA, Head-SHA, Full-Index-Diff-SHA-256, Artefakt-ID, Artefakt-SHA-256, Receipt-SHA-256 und Zustellreferenz und liest denselben unverändert wieder aus.",
+      "evidence_type": "object",
+      "id": "record-roundtrip-verified"
+    },
+    {
+      "assertion": "Frischer Runtime-Start, bestehendes Verzeichnis, fehlendes Verzeichnis und nicht beschreibbarer Pfad sind deterministisch getestet; Wiederholung ist idempotent und verändert keine fremden Delivery-Records.",
+      "evidence_type": "object",
+      "id": "startup-and-recovery-covered"
+    },
+    {
+      "assertion": "Die Reparatur erzeugt keine Merge-, Review-, Queue-, Claim- oder Deploymentautorität; ein Delivery-Record bleibt ausschließlich Zustell- und Revisionsbeleg und kann fehlende Branchschutz- oder CI-Freigaben nicht ersetzen.",
+      "evidence_type": "object",
+      "id": "authority-boundary-preserved"
+    },
+    {
+      "assertion": "Der bei heimgewebe/bureau#1179 reproduzierte Fehler `MergeDeliveryError: merge-delivery directory is missing` ist auf der deployten Grabowski-Runtime nicht mehr reproduzierbar; Doctor-, Auditketten- und Recovery-Readback bleiben grün.",
+      "evidence_type": "object",
+      "id": "live-regression-closed"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "component.bureau.ops"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "task_creation_from_external_evidence",
+      "note": "Dieser Registry-Eintrag plant eine spätere revisionsgebundene Reparatur aus live beobachteter externer Fehlerevidenz. Die Task-Erstellung selbst ändert keine Grabowski-Runtime. Eine spätere Runtime-Mutation benötigt ihre eigene Break-Glass-Autorisierung; GitHub-Branchschutz und der bereits gemergte Pull Request #1179 bleiben unverändert.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski",
+      "path:/home/alex/.local/state/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Repariere den Grabowski-Merge-Delivery-Recorder so, dass seine kanonische Runtime-Ablage bei frischem oder unvollständigem Zustand sicher und idempotent initialisiert wird. Binde Record, Artefakt und Receipt vollständig an Base, Head und Full-Index-Diff, erhalte die reine Zustellbeleg-Semantik und belege die Reparatur durch Integrationstest, Doctor, Auditkette, Recovery-Readback und deployte Live-Reproduktion.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T071",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "current Grabowski source root cause",
+      "safe implementation path",
+      "task completion",
+      "deployment readiness",
+      "runtime mutation authority",
+      "absence of parallel work"
+    ],
+    "observations": [
+      {
+        "base_sha": "812afca6784a9be801e4f87a43af4397dd93e0a3",
+        "diff_sha256": "fc382f671a511461e9abccf86fa4edf12e48bf8cc73312f890fdce72a5e3e296",
+        "head_sha": "cd19db378a10b57866781f55d7af90f933a38c71",
+        "merge_commit_sha": "f46ff846fa9f0e37be22c7f2e7ef4ce701fb1adc",
+        "pull_request": 1179,
+        "repository": "heimgewebe/bureau",
+        "result": "MergeDeliveryError: merge-delivery directory is missing"
+      },
+      {
+        "result": "Ein vorheriger Aufruf mit nicht konformer Artefakt-ID scheiterte korrekt; nach Übergabe einer gültigen 32-stelligen kleingeschriebenen Hex-ID blieb der Verzeichnisfehler reproduzierbar."
+      }
+    ],
+    "observed_at": "2026-07-29T21:10:00+02:00",
+    "source": "live-merge-delivery-recorder-failure"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 20
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "github"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich den revisionsgebundenen Initialisierungs- und Testcommit sowie gegebenenfalls den zugehörigen Grabowski-Deploy. Bestehende Merge-Delivery-Records werden niemals gelöscht oder umgeschrieben; bei unklarer Ablage- oder Auditintegrität stoppt der Rollback fail-closed."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Grabowski Merge-Delivery-Ablage sicher initialisieren"
+}

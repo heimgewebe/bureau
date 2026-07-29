@@ -3,7 +3,7 @@
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T019",
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
   "title": "Release-Verifier vollständig ressourcengebunden abschließen",
-  "state": "ready",
+  "state": "verified",
   "goal": "Schließe die Ressourcenhärtung des RepoGround-Release-Verifiers auf Basis des gemergten PR #1113 ab. Bewahre die inzwischen gemergten Grenzen für Manifest, SHA256SUMS, Symlinks, Archive und Git-Blob-Gesamtgröße, halte weiterhin höchstens einen Blob gleichzeitig im Speicher und verwende beim source-bound Vergleich genau einen geöffneten Leser für den bereits materialisierten Tar-Inhalt, ohne fremde schmutzige Checkouts zu verändern.",
   "priority": {
     "lane": "now",
@@ -87,12 +87,17 @@
       ]
     },
     "current_descendant_status": {
-      "source_commit": "5318daaad4eceed60cd752eacd057ec74bbd9e49",
-      "resolved_historical_findings": [
-        "candidate manifest and SHA256SUMS now have pre-read byte ceilings and regular non-symlink file checks",
-        "source-bound Git blob sizes now have an aggregate ceiling before content streaming"
+      "status": "resolved",
+      "source_commit": "c0bd029f0be3f370cf946fb311380ea3ea9df4ea",
+      "resolved_findings": [
+        "candidate manifest and SHA256SUMS have pre-read byte ceilings and regular non-symlink file checks",
+        "source-bound Git blob sizes have an aggregate ceiling before content streaming",
+        "the source-bound repository comparison reuses one open reader for the materialized Tar content"
       ],
-      "remaining_finding": "the source-bound repository comparison reopens the already materialized Tar file for each regular entry"
+      "does_not_establish": [
+        "future regression absence",
+        "GNU sparse archive compatibility"
+      ]
     },
     "reviewed_plan": {
       "reviewer": "chatgpt",
@@ -123,11 +128,131 @@
     },
     "does_not_establish": [
       "permission_to_modify_foreign_dirty_checkouts",
-      "automatic_merge",
       "deployment_authorization",
       "public_verifier_exposure",
       "complete_cpu_dos_absence",
-      "task_completion"
-    ]
+      "future_regression_absence",
+      "GNU_sparse_archive_compatibility"
+    ],
+    "implementation": {
+      "repository": "heimgewebe/repoground",
+      "pull_request": 1117,
+      "url": "https://github.com/heimgewebe/repoground/pull/1117",
+      "base_sha": "5318daaad4eceed60cd752eacd057ec74bbd9e49",
+      "head_sha": "555ba94de69aec5a9af332b9402357dd0a7e90b5",
+      "merge_commit_sha": "c0bd029f0be3f370cf946fb311380ea3ea9df4ea",
+      "merged_at": "2026-07-28T20:47:59Z",
+      "diff_sha256": "c3e8d28e38bcaf899134f7adfc10316a7668cf455fb6e199ac4055a866cf0fa9",
+      "changed_files": [
+        {
+          "path": "docs/proofs/repoground-release-verifier-closeout-v1-proof.md",
+          "additions": 15,
+          "deletions": 2
+        },
+        {
+          "path": "merger/repoground/tests/test_release_packaging.py",
+          "additions": 21,
+          "deletions": 0
+        },
+        {
+          "path": "scripts/release/verify_release_candidate.py",
+          "additions": 11,
+          "deletions": 11
+        }
+      ]
+    },
+    "review": {
+      "kind": "revision-bound-operator-self-review",
+      "review_id": "PRR_kwDOP0INTM8AAAABHjOtgQ",
+      "reviewer": "alexdermohr",
+      "head_sha": "555ba94de69aec5a9af332b9402357dd0a7e90b5",
+      "diff_sha256": "c3e8d28e38bcaf899134f7adfc10316a7668cf455fb6e199ac4055a866cf0fa9",
+      "submitted_at": "2026-07-28T20:46:32Z",
+      "verdict": "PASS",
+      "external_review_status": "unavailable",
+      "external_review_reason": "Claude session budget and Gemini runner availability did not yield an external result; no independent PASS is claimed."
+    },
+    "validation": {
+      "pull_request_checks": "PASS",
+      "required_pr_contexts": [
+        "pytest-full",
+        "release-candidate",
+        "browser-tests",
+        "webui-js-tests",
+        "ruff",
+        "RepoGround CodeQL policy (python)",
+        "CodeQL",
+        "contracts-validate",
+        "semantic-lock",
+        "task-index",
+        "ai-context guard",
+        "Doc-Freshness (diagnostic v0)"
+      ],
+      "post_merge_commit": "c0bd029f0be3f370cf946fb311380ea3ea9df4ea",
+      "post_merge_workflows": [
+        {
+          "run_id": 30397920981,
+          "name": "contracts-validate",
+          "conclusion": "success"
+        },
+        {
+          "run_id": 30397920521,
+          "name": "ai-context guard",
+          "conclusion": "success"
+        },
+        {
+          "run_id": 30397920191,
+          "name": "test-suite",
+          "conclusion": "success"
+        },
+        {
+          "run_id": 30397918515,
+          "name": "task-index",
+          "conclusion": "success"
+        },
+        {
+          "run_id": 30397918194,
+          "name": "Doc-Freshness (diagnostic v0)",
+          "conclusion": "success"
+        },
+        {
+          "run_id": 30397918412,
+          "name": "lint",
+          "conclusion": "success"
+        },
+        {
+          "run_id": 30397918309,
+          "name": "semantic-lock",
+          "conclusion": "success"
+        },
+        {
+          "run_id": 30397918189,
+          "name": "CodeQL",
+          "conclusion": "success"
+        }
+      ],
+      "post_merge_result": "PASS"
+    },
+    "verification": {
+      "source": "merged_repoground_pr_1117_and_coordinated_bureau_run",
+      "source_ref": "github-pr:heimgewebe/repoground#1117@555ba94de69aec5a9af332b9402357dd0a7e90b5:c0bd029f0be3f370cf946fb311380ea3ea9df4ea",
+      "verified_at": "2026-07-29T06:33:24Z",
+      "bureau_run": {
+        "run_id": "BUR-RUN-20260728T200808Z-b714d1aa05",
+        "state": "succeeded",
+        "updated_at": "2026-07-29T04:52:19.322886Z",
+        "run_task_sha256": "3837d8e15422d9affa237f3737bed26dff3983b949a92f7b4f46eab3f719a773",
+        "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "workspace_head": "555ba94de69aec5a9af332b9402357dd0a7e90b5",
+        "lease_status": "terminal-released-or-expired"
+      },
+      "task_sha256": "057a05105b7c1c8f3b451360d8dd0c9484482cb4e3604f804d4b47f22df3f9b1",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "followups": [
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T020"
+    ],
+    "resolution_summary": "RepoGround PR #1117 reuses one open reader for all source-bound reads from the already materialized Tar content while preserving path, type, mode, size, symlink, blob and archive limits. The exact reviewed head was merged, all observed PR checks and eight post-merge workflows passed, and the coordinated Bureau run succeeded. The loaded-host RLIMIT_NPROC finding is separated into T020.",
+    "verified_at": "2026-07-29T06:33:24Z"
   }
 }

@@ -1,14 +1,15 @@
 {
   "schema_version": 1,
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
-  "state": "planned",
+  "state": "ready",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/repoground",
     "grabowski_resources": [
       "repo:/home/alex/repos/repoground"
-    ]
+    ],
+    "baseline_commit": "c0bd029f0be3f370cf946fb311380ea3ea9df4ea"
   },
   "claims": [
     {
@@ -24,14 +25,26 @@
     "scope_rule": "Execute in a fresh isolated current-main worktree; do not reuse, reset or mutate historical T004 worktrees.",
     "does_not_establish": [
       "Canary-Erfolg beweist keine Produktionsbereitstellung",
-      "Routertrennung autorisiert keine API-Änderung"
-    ]
+      "Routertrennung autorisiert keine API-Änderung",
+      "T004 umbrella completion",
+      "merge readiness"
+    ],
+    "activation": {
+      "activated_at": "2026-07-29T08:13:00+02:00",
+      "authority": "explicit_user_instruction",
+      "source": "active_chatgpt_request_umsetzen",
+      "selected_against_bureau_commit": "ba2825ca4a529b19c478598b109853122727658f",
+      "selected_against_repoground_commit": "c0bd029f0be3f370cf946fb311380ea3ea9df4ea",
+      "continuation_worktree": "/home/alex/repos/repoground-t004-chatgpt-20260729",
+      "continuation_branch": "bureau/repoground-legacy-reconciliation-v1-t004/chatgpt-20260729",
+      "continuation_rule": "Rebind the fresh isolated current-main service split worktree to T012 after verifying no open RepoGround PR and no live conflicting broad RepoGround lease; do not reuse historical T004 worktrees."
+    }
   },
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T012",
   "title": "Service-App in Router, Jobs und Atlas-Flächen trennen",
   "priority": {
-    "lane": "later",
-    "rank": 9
+    "lane": "now",
+    "rank": 79
   },
   "goal": "Die rund 2.757 Zeilen große service/app.py entlang HTTP-Routing, Authentisierung, Job-Lifecycle, Artefaktzugriff und optionalem Atlas trennen, ohne API-, Auth- oder Betriebssemantik zu verwischen.",
   "required_capabilities": [

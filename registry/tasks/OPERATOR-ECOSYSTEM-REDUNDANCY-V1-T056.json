@@ -109,6 +109,43 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "superseded_at": "2026-07-29T17:48:47.457035Z",
+    "superseded_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T055",
+    "supersession_reason": "The deployment-only continuation is obsolete as an independently executable task. Its acceptance hard-codes historical revision 8760ebc068e2cdfe2efed38941f8acde6ee6f04d as the exact runtime head, while the authoritative healthy runtime is the newer descendant b302437b1056e0bf23246d3af73a2be674f76202. That descendant was deployed successfully through the canonical source-identity-bound path; reverting to the historical commit solely to satisfy the old exact-head wording would be a downgrade. The broader parent task T055 remains canonical for the still-unproven synthetic ntfy HTTP-success attestation.",
+    "supersession_evidence": {
+      "observed_at": "2026-07-29T17:48:47.457035Z",
+      "observed_runtime_head": "b302437b1056e0bf23246d3af73a2be674f76202",
+      "observed_release_id": "b302437b1056-srcsetce02ec0ef237-locke6664d600b6c-contractb0d032e607e5",
+      "observed_runtime_healthy": true,
+      "observed_runtime_integrity_valid": true,
+      "observed_audit_valid": true,
+      "observed_audit_writable": true,
+      "observed_kill_switch_engaged": false,
+      "historical_revision": "8760ebc068e2cdfe2efed38941f8acde6ee6f04d",
+      "historical_revision_is_observed_runtime_ancestor": true,
+      "descendant_deployment": {
+        "unit": "grabowski-job-59993d6fa129",
+        "final_status": "completed",
+        "completion_status": "complete",
+        "finalization_sha256": "4d5320a92c9ae461783636f72d658c761ead9a6d8b90b46e89788c085e255d8d",
+        "payload_sha256": "57d00b97b3e3072e6b2208dd87625252111d1fca465b9c4d6a4d4feec56aa2de",
+        "timestamp_unix": 1785345492
+      },
+      "historical_exact_head_attempts_terminal_without_validation": 2,
+      "historical_deployment_finalization_receipt_sha256s": [
+        "6280ac7fcf54418b2e20129680627d108c2365164363ca024615cf72a44e58eb",
+        "a097a00055539edf24d6b7705d587bfec1ae9f433f3d839c47ab5971c8d42bd4"
+      ],
+      "independent_exact_head_acceptance_now_requires_downgrade": true,
+      "live_transport_attestation": "not established",
+      "remaining_attestation_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T055",
+      "does_not_establish": [
+        "synthetic alert delivery",
+        "owner-device reception",
+        "user_seen truth",
+        "future transport availability"
+      ]
     }
   },
   "priority": {
@@ -126,6 +163,6 @@
     "strategy": "If the deployed revision fails runtime integrity or the synthetic transport probe reveals a regression, redeploy the immediately previous commit-bound runtime using the canonical rollback path. Preserve alert and acknowledgement receipts as append-only evidence; do not delete, relabel or fabricate acknowledgements."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "superseded",
   "title": "Deploy merged general ntfy outbox and attest live delivery"
 }

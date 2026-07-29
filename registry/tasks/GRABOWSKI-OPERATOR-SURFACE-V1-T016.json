@@ -99,14 +99,15 @@
           "authority": "github",
           "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T016",
           "source_ref": "github-pr:heimgewebe/grabowski#391@d3f3bfd106f65dff8b704fbd38980690f8a78c8b:445a010df3022872e3844d3ef38db9a61de501fa",
-          "content_sha256": "ab284df0c0dce702b034940d6f4cb8aab154ac770845ef629cb7ae953be993f4"
+          "content_sha256": "ab284df0c0dce702b034940d6f4cb8aab154ac770845ef629cb7ae953be993f4",
+          "number": 391
         }
       ]
     },
     "verification": {
       "verified_at": "2026-07-29T12:16:46.629154Z",
       "source_task_file_sha256": "73bde16e152480d1c566806900ac1d7f6dab5f4661acf7fde6b6f1d97a8f13bd",
-      "task_sha256": "b87348569521b7bf5f15764107b5370979698c849443346ac4ff52aa41874579",
+      "task_sha256": "2c59a96eca33ae7707b253996d7007211adef8de76e1e1b4e70e6e86bc58816c",
       "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
     }
   },

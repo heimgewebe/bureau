@@ -1,0 +1,93 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Vor jeder Bewertung werden der aktuelle Audio-main-Commit, offene Pull Requests, CI, Worktrees, Dirty-States, Leases, Prozesse und Doctor-Ausgaben frisch gelesen; ältere Reviewzusammenfassungen gelten nicht als Laufzeitwahrheit.",
+      "id": "live-baseline",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Für morph, realistic und ufo ist reproduzierbar belegt, welche Bank die Betriebsbereitschaft des jeweiligen Modus blockieren darf; ein Defekt wird nur bei nachgewiesener Fehlklassifikation eröffnet.",
+      "id": "doctor-mode-contract",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Wavetable-Wrap-Around und Bandlimit-Übergänge werden numerisch sowie spektral über den vollständigen MIDI-Bereich geprüft; Kontinuitäts- oder Aliasprobleme benötigen messbare Grenzwerte und dürfen nicht allein aus Höreindruck abgeleitet werden.",
+      "id": "wavetable-boundaries",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Render-, Status- und Bank-Ladepfade werden auf dem Heim-PC unter dokumentierter realistischer Hintergrundlast gemessen; eine Optimierung benötigt einen reproduzierbaren Engpass und weist Wirkung, Trade-offs und Nebenwirkungen aus.",
+      "id": "runtime-benchmark",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Jeder aus dem Review von Audio-PR #13 übernommene Nicht-P1-Kandidat endet revisionsgebunden als bestätigt, widerlegt, bereits erfüllt oder bewusst zurückgestellt; Spekulation wird nicht als Defekt fortgeschrieben.",
+      "id": "evidence-classification",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Bestätigte Korrekturen erhalten gezielte Regressionstests und den vollständigen Projektcheck; Stimmung, exakte Leerlaufstille, Bandlimit-Sicherheit, deterministischer Bankbau und die bestehende physische Hörabnahmegrenze dürfen nicht regressieren.",
+      "id": "safe-remediation",
+      "evidence_type": "object"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.audio"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Zuerst read-only messen und klassifizieren. Repositoryänderungen sind nur für reproduzierbar bestätigte Fehler oder relevante Leistungsengpässe zulässig. Fremde Audio-Worktrees, Leases und laufende Prozesse bleiben unberührt.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio",
+      "path:/home/alex/repos/bureau/registry/tasks/HEIMGEWEBE-RESILIENZ-V1-T021.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "Die nach PR #13 verbliebenen, bislang nur plausiblen Hinweise zur Wal-Morph-Stimme am aktuellen Audio-main getrennt verifizieren: modusabhängige Doctor-Bereitschaft, Wavetable-Wrap-Kontinuität, Bandlimit-Übergänge, Status-Ladekosten und Echtzeitreserve unter realistischer Systemlast. Nur reproduzierbar bestätigte Probleme werden anschließend eng behoben; reine Stil- oder Mikrooptimierungen ohne gemessenen Nutzen werden verworfen.",
+  "id": "HEIMGEWEBE-RESILIENZ-V1-T021",
+  "initiative": "HEIMGEWEBE-RESILIENZ-V1",
+  "metadata": {
+    "design_rule": "Messen vor Optimieren; Sicherheits- und Klangbehauptungen an den exakten Quellstand binden.",
+    "does_not_establish": [
+      "dass die verbleibenden Reviewhinweise tatsächliche Fehler sind",
+      "dass Mikrooptimierungen ohne Benchmark umgesetzt werden sollen",
+      "dass subjektive Walähnlichkeit automatisiert bewiesen werden kann",
+      "Berechtigung zum Eingriff in fremde Worktrees, Leases oder laufende Audio-Prozesse",
+      "Merge- oder Deployment-Autorität"
+    ],
+    "evidence": {
+      "main_commit_after_remediation": "0fb490acd39b4dfb50e7d33109c346536f873446",
+      "morph_bank_sha256": "70fb0f19dddf812ac9a83160cd55c751340c18b7522101b6f42110c594717600",
+      "remediation_head": "231286cd531e75794c7e670b0f7094101a783f78",
+      "remediation_pull_request": 14,
+      "repository": "heimgewebe/audio",
+      "source_pull_request": 13
+    },
+    "registered_at": "2026-07-29",
+    "source": "Nachprüfung der nicht-P1 Hinweise aus dem Review von heimgewebe/audio PR #13 nach Merge der beiden bestätigten Source-Binding-Fixes über PR #14."
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 21
+  },
+  "required_capabilities": [
+    "repository",
+    "audio-dsp",
+    "python",
+    "benchmarking",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Wal-Morph-Runtime und Klangkanten revisionsgebunden prüfen"
+}

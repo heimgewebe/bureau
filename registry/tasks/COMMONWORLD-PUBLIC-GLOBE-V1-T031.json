@@ -79,7 +79,113 @@
     "source": "Commonworld privacy candidate candidate-ba2dedff38edffaff68fc019 event 1609",
     "source_evidence_sha256": "65c657c4b87d7be292b062bd0dbd11a61a37e6970fc1f52a070cbcb7e9e99400",
     "source_main": "c1b0d07c7a0f38370df2a0432a8f938e7e012a1f",
-    "source_repository": "heimgewebe/commonworld"
+    "source_repository": "heimgewebe/commonworld",
+    "verified_at": "2026-07-29T16:37:11.229454Z",
+    "outcome": "Commonworld PR #162 erfüllt die registrierte Datenschutzgrenze vollständig. Der exakte Head f324b49428f942abaabe6f69fb321e1e37a79f27 wurde nach zwei materiellen Reviewkorrekturen mit grüner Pflicht-CI gemergt; aktuelles Commonworld main enthält den Head und bestand Validate, Pages-Deployment und Production-Readback.",
+    "validated_acceptance": {
+      "ordinary-addresses-blocked": "PASS: Die gemeinsame Fallmatrix und Repositorytests blockieren zusammengesetzte deutsche und internationale Straßenadressen mit Hausnummer, darunter Musterstraße 12 und Am Feldweg 7.",
+      "coordinate-formats-blocked": "PASS: Dezimalpunkt-, Dezimalkomma- und DMS-Koordinaten werden nach Unicode-Normalisierung erkannt; DMS-Paare mit Komma oder Semikolon wurden als Reviewkorrektur ergänzt.",
+      "all-public-fields-covered": "PASS: name, description, region und editorial_note verwenden dieselbe Schutzgrenze mit feldbezogener Rückmeldung.",
+      "legitimate-regions-preserved": "PASS: Negative Fixtures lassen Länder, Städte, breite Regionen, harmlose Zahlen und Begriffe wie household, apartment, router und roof zu.",
+      "validator-parity": "PASS: Browser- und Offline-Validator verwenden dieselbe kanonische Fallmatrix; make validate bestand auf dem exakten Head.",
+      "handoff-fail-closed": "PASS: Vor buildIssueBody und buildIssueUrl wird erneut validiert; fehlerhafte Inhalte erzeugen weder Issue-Body noch Handoff-URL.",
+      "exact-head-closeout": "PASS: Head f324b49428f942abaabe6f69fb321e1e37a79f27, Diff 1fd5933c8eb5ea470f43296c551b936635e70c6936356ac6d592d4181cacd5ee, PR-CI grün, Merge 5342352142c98192aeb71ee0079ad864ce720367; aktuelles main ca43b6eaec626d3d8b10fcbbc07fcccd6dea07a7 enthält den Head und bestand Validate, Pages und Production-Readback."
+    },
+    "verification": {
+      "source": "github_pr_and_postmerge_validation",
+      "source_ref": "github-pr:heimgewebe/commonworld#162",
+      "repository": "heimgewebe/commonworld",
+      "pull_request": 162,
+      "base_commit": "c1b0d07c7a0f38370df2a0432a8f938e7e012a1f",
+      "reviewed_head": "f324b49428f942abaabe6f69fb321e1e37a79f27",
+      "merge_commit": "5342352142c98192aeb71ee0079ad864ce720367",
+      "merged_at": "2026-07-29T12:42:55Z",
+      "final_diff_sha256": "1fd5933c8eb5ea470f43296c551b936635e70c6936356ac6d592d4181cacd5ee",
+      "final_diff_bytes": 159656,
+      "task_source_sha256": "84220643322e9deebb54f1bf848f7be9a6f90e14ea5966dbc0fe9542c84f57da",
+      "github_required_checks": {
+        "contracts": "success",
+        "CodeQL actions": "success",
+        "CodeQL javascript-typescript": "success",
+        "CodeQL python": "success"
+      },
+      "review": {
+        "external_review_commit": "f33a7cdde137a304f55776e1dcf519cad0b899c0",
+        "material_findings_resolved": [
+          "DMS pairs separated by comma or semicolon",
+          "false positives for household, apartment, router and roof"
+        ],
+        "self_review": "PASS on exact head and final diff; no remaining material findings"
+      },
+      "local_validation": {
+        "make_validate": "PASS; 565 Python tests plus JavaScript and contract checks",
+        "make_browser_smoke": "PASS",
+        "git_diff_check": "PASS"
+      },
+      "postmerge": {
+        "observed_main": "ca43b6eaec626d3d8b10fcbbc07fcccd6dea07a7",
+        "implementation_head_is_ancestor": true,
+        "validate_run": {
+          "id": 30466350117,
+          "result": "success"
+        },
+        "production_readback_run": {
+          "id": 30466341096,
+          "result": "success"
+        },
+        "pages_deployment_run": {
+          "id": 30466331880,
+          "result": "success"
+        },
+        "codeql_run": {
+          "id": 30466332197,
+          "result": "success"
+        }
+      },
+      "task_sha256": "1732363158b282521cfdca787fdb5bf5308a2f7df0d0237af9c9763305772f10",
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T031",
+          "source_ref": "heimgewebe/commonworld#162",
+          "number": 162,
+          "base_sha": "c1b0d07c7a0f38370df2a0432a8f938e7e012a1f",
+          "head_sha": "f324b49428f942abaabe6f69fb321e1e37a79f27",
+          "merge_commit_sha": "5342352142c98192aeb71ee0079ad864ce720367",
+          "diff_sha256": "1fd5933c8eb5ea470f43296c551b936635e70c6936356ac6d592d4181cacd5ee"
+        },
+        {
+          "kind": "test_run",
+          "authority": "github_actions",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T031",
+          "source_ref": "github-actions:heimgewebe/commonworld#162:contracts",
+          "commit_sha": "f324b49428f942abaabe6f69fb321e1e37a79f27",
+          "result": "success"
+        },
+        {
+          "kind": "deployment",
+          "authority": "github_actions",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T031",
+          "source_ref": "github-actions:heimgewebe/commonworld:pages:30466331880",
+          "commit_sha": "ca43b6eaec626d3d8b10fcbbc07fcccd6dea07a7",
+          "result": "success"
+        },
+        {
+          "kind": "production_readback",
+          "authority": "github_actions",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T031",
+          "source_ref": "github-actions:heimgewebe/commonworld:production-readback:30466341096",
+          "commit_sha": "ca43b6eaec626d3d8b10fcbbc07fcccd6dea07a7",
+          "result": "success"
+        }
+      ]
+    }
   },
   "priority": {
     "lane": "now",
@@ -97,6 +203,6 @@
     "strategy": "Revert the canonical sensitive-location detector, its shared fixtures and handoff gate together; retain the previous validation path only after exact regression tests confirm the public issue handoff no longer depends on partially reverted logic."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Harden public proposal privacy validation"
 }

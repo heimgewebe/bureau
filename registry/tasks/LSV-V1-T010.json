@@ -83,6 +83,165 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "completed_at": "2026-07-29",
+    "verified_at": "2026-07-29T17:24:25Z",
+    "current_leitstand_head": "bcbe25bea6b612d7d6af7eb1cc9fc2c67bab471b",
+    "outcome": "Die Entscheidungsachse verwendet nach Leitstand PR #195 gemeinsame Karten-, Raster-, Listen- und Typografieverträge. Die semantische Reihenfolge und Observer-Grenze bleiben unverändert; mobile und Desktop-Browserregressionen binden Überlauf, Lesbarkeit, Spaltenlayout und berechnete Statuskanten.",
+    "implementation_pr": "heimgewebe/leitstand#195",
+    "implementation_head": "d5a2cbc425237e9823bc4b082578dd4f40bd7bb0",
+    "implementation_merge_commit": "bcbe25bea6b612d7d6af7eb1cc9fc2c67bab471b",
+    "implementation_diff_sha256": "9a8c8adddcb358c5010bcde96f34e9cc9f14c276d2e5851b3a20738337aadc2f",
+    "validation": {
+      "final_base": "2f504ab7660bb1538162cfa68263e1f0b62b255c",
+      "final_head": "d5a2cbc425237e9823bc4b082578dd4f40bd7bb0",
+      "self_review": "PASS; transparent, methodisch getrennt und an final_base, final_head sowie implementation_diff_sha256 gebunden. Unabhängigkeit wurde nicht behauptet.",
+      "self_review_url": "https://github.com/heimgewebe/leitstand/pull/195#issuecomment-5120986605",
+      "external_review": "Codex-Befund zur durch die spätere .card-Regel überschriebenen Statuskante war berechtigt, wurde auf dem finalen Head behoben, beantwortet und aufgelöst.",
+      "external_review_comment_id": 3676391894,
+      "local_checks": {
+        "typecheck": "PASS",
+        "lint": "PASS",
+        "unit": "PASS; 42 Testdateien, 267 Tests",
+        "build": "PASS",
+        "browser_views": "PASS; Entscheidungsachse auf 390x844 und 1440x900 geprüft",
+        "browser_shell": "PASS; mobil 23/23, Desktop 13/13",
+        "release_runtime": "PASS; 40 Tests",
+        "diff_check": "PASS"
+      },
+      "github_checks": [
+        "CI / build",
+        "CodeQL / Analyze (actions)",
+        "CodeQL / Analyze (javascript-typescript)",
+        "CodeQL / Analyze (python)",
+        "CodeQL",
+        "ai-context guard / repo-root",
+        "ai-context guard / templates",
+        "security-hygiene / scan (2)",
+        "Cloudflare Pages"
+      ],
+      "github_checks_result": "PASS on final head before merge",
+      "merge_readback": "PR state MERGED; remote main equals bcbe25bea6b612d7d6af7eb1cc9fc2c67bab471b"
+    },
+    "verified_acceptance": {
+      "shared-ui-admission": {
+        "verdict": "pass",
+        "implementation_head": "d5a2cbc425237e9823bc4b082578dd4f40bd7bb0",
+        "diff_sha256": "9a8c8adddcb358c5010bcde96f34e9cc9f14c276d2e5851b3a20738337aadc2f",
+        "removed_local_contracts": [
+          "decision-axis",
+          "decision-axis-grid",
+          "decision-card",
+          "decision-list",
+          "decision-title",
+          "decision-detail",
+          "decision-meta",
+          "decision-empty",
+          "decision-status-*"
+        ],
+        "shared_contracts": [
+          "ui-section",
+          "ui-card-grid",
+          "card ui-card",
+          "ui-card--status-*",
+          "ui-list ui-list--divided",
+          "ui-item-title",
+          "ui-item-detail",
+          "ui-item-meta",
+          "ui-empty"
+        ],
+        "review": "full diff and shared UI contract review passed"
+      },
+      "semantic-invariance": true,
+      "responsive-regression": {
+        "verdict": "pass",
+        "implementation_head": "d5a2cbc425237e9823bc4b082578dd4f40bd7bb0",
+        "viewports": [
+          {
+            "id": "mobile",
+            "width": 390,
+            "height": 844
+          },
+          {
+            "id": "desktop",
+            "width": 1440,
+            "height": 900
+          }
+        ],
+        "labels": [
+          "Jetzt",
+          "Im Fokus",
+          "Blockiert",
+          "Konvergenz",
+          "Danach"
+        ],
+        "assertions": [
+          "all five cards visible",
+          "semantic label order unchanged",
+          "no horizontal overflow",
+          "mobile single-column",
+          "desktop multi-column",
+          "all visible copy at least 11px",
+          "computed status border 3px"
+        ],
+        "local_receipts": {
+          "browser_views": "pass",
+          "browser_shell_mobile": "23/23",
+          "browser_shell_desktop": "13/13",
+          "release_runtime_tests": "40/40"
+        }
+      },
+      "parallel-work-admission": true
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "task_id": "LSV-V1-T010",
+          "repository": "heimgewebe/leitstand",
+          "number": 195,
+          "state": "merged",
+          "head_sha": "d5a2cbc425237e9823bc4b082578dd4f40bd7bb0",
+          "merge_commit": "bcbe25bea6b612d7d6af7eb1cc9fc2c67bab471b",
+          "diff_sha256": "9a8c8adddcb358c5010bcde96f34e9cc9f14c276d2e5851b3a20738337aadc2f"
+        },
+        {
+          "kind": "github_checks",
+          "task_id": "LSV-V1-T010",
+          "repository": "heimgewebe/leitstand",
+          "head_sha": "d5a2cbc425237e9823bc4b082578dd4f40bd7bb0",
+          "verdict": "pass"
+        },
+        {
+          "kind": "review",
+          "task_id": "LSV-V1-T010",
+          "repository": "heimgewebe/leitstand",
+          "head_sha": "d5a2cbc425237e9823bc4b082578dd4f40bd7bb0",
+          "self_review": "pass",
+          "external_finding_applied": true,
+          "material_threads_resolved": true
+        },
+        {
+          "kind": "merge_readback",
+          "task_id": "LSV-V1-T010",
+          "repository": "heimgewebe/leitstand",
+          "merge_commit": "bcbe25bea6b612d7d6af7eb1cc9fc2c67bab471b",
+          "remote_main_equal": true,
+          "verdict": "pass"
+        }
+      ]
+    },
+    "explicit_nonclaims": [
+      "Visuelle Perfektion außerhalb der geprüften Viewports.",
+      "Zukünftige Browser- oder CSS-Kompatibilität.",
+      "Neue Prioritäts-, Queue-, Dispatch- oder Mutationsautorität.",
+      "Laufzeitgesundheit zukünftiger Leitstand-Releases."
+    ],
+    "verification": {
+      "task_sha256": "275f0bef24cfef893821006d1d1de24f5f51df03c52b72ad21a1b5c015ccc4e6",
+      "plan_sha256": "217a91b5a66a143e0440d2a7d656a5d0fada62b52778cf3285349e7667bd8621"
     }
   },
   "priority": {
@@ -99,6 +258,6 @@
     "strategy": "Die UI-Konsolidierung und den zusätzlichen Browserfall auf den zuvor gemergten Entscheidungsachsen-Stand zurücksetzen; Datenprojektionen und read-only Semantik bleiben unberührt."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Entscheidungsachse in gemeinsames Leitstand-UI-System konsolidieren"
 }

@@ -79,11 +79,13 @@ def test_main_push_skips_expensive_validation_for_non_candidates() -> None:
     success_marker = '"PR #${pr_number} has no new Registry task allocation'
     validation_marker = "bureau --root . --json registry-registration-preflight"
 
-    assert no_candidate_marker in text
-    assert success_marker in text
-    assert text.index(
-        validation_marker, text.index(no_candidate_marker)
-    ) > text.index(no_candidate_marker)
+    start = text.index(no_candidate_marker)
+    end = text.index("            overall=success", start)
+    no_candidate_block = text[start:end]
+
+    assert success_marker in no_candidate_block
+    assert "              continue" in no_candidate_block
+    assert text.index(validation_marker, end) > end
 
 
 def test_main_push_never_reuses_partial_task_content_after_fetch_failure() -> None:

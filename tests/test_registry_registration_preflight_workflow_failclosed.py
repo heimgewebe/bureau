@@ -22,38 +22,38 @@ def test_pull_request_file_listing_fails_closed() -> None:
     assert 'mapfile -t task_files < "${task_files_file}"' in text
 
 
-def test_main_push_invalidates_all_known_prs_before_per_pr_validation() -> None:
+def test_main_push_discovers_all_candidates_before_creating_checks() -> None:
     text = _workflow_text()
 
-    invalidate_marker = (
-        "# Create an in-progress CheckRun for every known open PR before "
-        "validating any individual PR."
-    )
-    validation_marker = "infrastructure_failed=0"
+    discovery_marker = "# Discover the complete candidate set before publishing any CheckRun."
+    publication_marker = "declare -A check_run_ids=()"
 
-    assert invalidate_marker in text
-    assert validation_marker in text
-    assert text.index(invalidate_marker) < text.index(validation_marker)
-    assert "mapfile -t pr_rows < <(" not in text
-    assert "for attempt in 1 2 3; do" in text
-    assert 'status:"in_progress"' in text
-    assert "create_check_run" in text
-    assert "complete_check_run" in text
+    assert discovery_marker in text
+    assert publication_marker in text
+    assert text.index(discovery_marker) < text.index(publication_marker)
+    assert 'candidate_rows_file="$(mktemp)"' in text
+    assert 'candidate_dir="$(mktemp -d)"' in text
+    assert 'if [[ -s "${task_files_file}" ]]; then' in text
+    assert 'mapfile -t candidate_rows < "${candidate_rows_file}"' in text
+    assert 'for row in "${candidate_rows[@]}"; do' in text
+    assert "for every known open PR" not in text
 
 
-def test_main_push_continues_after_one_pr_revalidation_error() -> None:
+def test_main_push_discovery_errors_fail_before_check_publication() -> None:
     text = _workflow_text()
+
+    discovery_failure = "if [[ ${candidate_discovery_failed} -ne 0 ]]; then"
+    publication_marker = "declare -A check_run_ids=()"
 
     assert (
         'if ! gh api "repos/${REPOSITORY}/pulls/${pr_number}/files?per_page=100" --paginate'
         in text
     )
-    assert '"Registry allocation revalidation errored"' in text
-    assert 'against main ${CURRENT_MAIN_SHA}." || true' in text
-    assert 'echo "::error::Cannot inspect changed files for PR #${pr_number}"' in text
-    assert "infrastructure_failed=1" in text
-    assert "continue" in text
-    assert "if [[ ${infrastructure_failed} -ne 0 ]]; then" in text
+    assert 'echo "::error::Cannot inspect all changed files for PR #${pr_number}"' in text
+    assert "candidate_discovery_failed=1" in text
+    assert discovery_failure in text
+    assert text.index(discovery_failure) < text.index(publication_marker)
+    assert 'if ! gh api "repos/${REPOSITORY}/pulls?state=open&per_page=100" --paginate' in text
 
 
 def test_main_push_never_reuses_partial_task_content_after_fetch_failure() -> None:

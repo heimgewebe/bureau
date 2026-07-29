@@ -48,7 +48,9 @@
       "resource": "component.bureau.core"
     }
   ],
-  "depends_on": [],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T068"
+  ],
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
@@ -59,6 +61,7 @@
       "path:/home/alex/repos/bureau/.github/workflows/claude.yml",
       "path:/home/alex/repos/bureau/.github/workflows/validate.yml",
       "path:/home/alex/repos/bureau/.github/workflows/registry-registration-preflight.yml",
+      "path:/home/alex/repos/bureau/tests/test_registry_registration_preflight_workflow_failclosed.py",
       "path:/home/alex/repos/bureau/tests/test_github_workflows.py",
       "path:/home/alex/repos/bureau/docs/reports/bureau-lean-actions-t069.md"
     ],
@@ -72,7 +75,6 @@
   "metadata": {
     "does_not_establish": [
       "implementation",
-      "task_readiness",
       "queue_or_claim_authority",
       "safe_merge",
       "safe_branch_protection_change",
@@ -130,14 +132,94 @@
       },
       "does_not_establish": [
         "queue_truth",
-        "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "readiness": {
+      "schema_version": 1,
+      "kind": "operator-authorized-task-readiness",
+      "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T069",
+      "ready_at": "2026-07-29T15:56:38Z",
+      "authorized_by": "alex",
+      "authorization_reference": "chat:2026-07-29 @grabowski umsetzen; continuation of bundled Bureau lean-operations work",
+      "source_main_head": "a261d60b207bc70b8757d236b36e1cdc92e09091",
+      "functional_prerequisite": {
+        "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T068",
+        "pull_request": 1143,
+        "head_sha": "6959f37f776de7e457f9368f53fad3bddf727100",
+        "merge_commit_sha": "0fd31246137e6f328328553d2f5ec560b882150e",
+        "runtime_source_commit": "94cdae6522450bf18524c3dc5c1380c0fa9a9ab1",
+        "runtime_contains_merge": true,
+        "registry_state_at_activation": "verified",
+        "registry_verified_at": "2026-07-29T13:44:39Z"
+      },
+      "registry_closeout": {
+        "pull_request": 1168,
+        "state_at_activation": "merged",
+        "scope": [
+          "registry/tasks/OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T068.json"
+        ],
+        "classification": "administrative-closeout-only",
+        "does_not_block_functional_readiness": true,
+        "expected_terminal_state": "verified",
+        "dependency_enforced_by": "depends_on",
+        "merge_commit_sha": "a261d60b207bc70b8757d236b36e1cdc92e09091",
+        "merged_at": "2026-07-29T15:47:21Z",
+        "observed_terminal_state": "verified"
+      },
+      "exact_scope": [
+        "path:/home/alex/repos/bureau/.github/workflows/claude.yml",
+        "path:/home/alex/repos/bureau/.github/workflows/validate.yml",
+        "path:/home/alex/repos/bureau/.github/workflows/registry-registration-preflight.yml",
+        "path:/home/alex/repos/bureau/tests/test_registry_registration_preflight_workflow_failclosed.py",
+        "path:/home/alex/repos/bureau/tests/test_github_workflows.py",
+        "path:/home/alex/repos/bureau/docs/reports/bureau-lean-actions-t069.md"
+      ],
+      "checks": {
+        "functional_prerequisite_merged": true,
+        "functional_prerequisite_deployed": true,
+        "task_dependencies_satisfied": true,
+        "exact_scope_complete": true,
+        "open_pr_scope_conflicts_observed": 0,
+        "operator_authorization_present": true,
+        "review_before_effect_preserved": true,
+        "dependency_gate_present": true,
+        "registry_closeout_verified": true
+      },
+      "does_not_establish": [
+        "implementation",
+        "claim_or_dispatch_authority",
+        "safe_merge",
+        "permission_to_mutate_foreign_work",
+        "future_regression_absence"
+      ],
+      "readiness_sha256": "c10041f2da2003d20637d437da9678739c5098646c9eedf245cc83fe3c86ab44"
+    },
+    "activation": {
+      "activated_at": "2026-07-29T15:56:38Z",
+      "basis": "Explicit user authorization plus merged, deployed and registry-verified T068 prerequisite.",
+      "source_main_head": "a261d60b207bc70b8757d236b36e1cdc92e09091",
+      "queue_policy": "skip-blocked",
+      "exact_scope": [
+        "path:/home/alex/repos/bureau/.github/workflows/claude.yml",
+        "path:/home/alex/repos/bureau/.github/workflows/validate.yml",
+        "path:/home/alex/repos/bureau/.github/workflows/registry-registration-preflight.yml",
+        "path:/home/alex/repos/bureau/tests/test_registry_registration_preflight_workflow_failclosed.py",
+        "path:/home/alex/repos/bureau/tests/test_github_workflows.py",
+        "path:/home/alex/repos/bureau/docs/reports/bureau-lean-actions-t069.md"
+      ],
+      "dependency_gate": {
+        "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T068",
+        "required_state": "verified",
+        "state_at_activation": "verified",
+        "closeout_pull_request": 1168,
+        "closeout_merge_commit": "a261d60b207bc70b8757d236b36e1cdc92e09091"
+      }
     }
   },
   "priority": {
-    "lane": "next",
-    "rank": 69
+    "lane": "now",
+    "rank": 0
   },
   "required_capabilities": [
     "repository",
@@ -150,6 +232,6 @@
     "strategy": "Revertiere ausschließlich den exakten T069-Implementierungscommit beziehungsweise stelle die drei vorher gebundenen Workflowbytes wieder her. Registry, Queue, Branchschutz, Codex-Einstellungen und fremde Pull Requests bleiben unangetastet; bei unklarem GitHub-Checkzustand stoppt der Rollback vor weiteren Effekten."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Bureau GitHub-Actions-Leerlauf und Vollrevalidierung begrenzen"
 }

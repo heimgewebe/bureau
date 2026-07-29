@@ -290,10 +290,17 @@ def test_task_scope_ratchet_requires_canonical_review_gate() -> None:
     task["execution"]["broad_bureau_scope_exception"]["approval"][
         "required_level"
     ] = "reviewed_plan"
-    allowed = assess_task_broad_bureau_scope(task)
-    assert allowed["allowed"] is True
-    assert allowed["exception_status"] == "review-gated-repository-wide-exception"
-    assert allowed["exception_approval"]["contract_match"] is True
+    unavailable = assess_task_broad_bureau_scope(task)
+    assert unavailable["allowed"] is False
+    assert unavailable["exception_status"] == "review-authority-unavailable"
+    assert unavailable["exception_approval"]["contract_match"] is True
+    assert unavailable["exception_approval"]["structurally_valid"] is True
+    assert (
+        unavailable["exception_approval"][
+            "review_receipt_verifier_available"
+        ]
+        is False
+    )
     assert task["execution"]["approval"]["required_level"] == "operator"
 
 
@@ -356,7 +363,7 @@ def test_registry_check_rejects_nonterminal_broad_scope(
     )
 
 
-def test_terminal_history_and_review_gated_exception_are_not_doctor_findings() -> None:
+def test_terminal_history_is_ignored_but_unattested_exception_is_a_finding() -> None:
     from types import SimpleNamespace
 
     from bureau.lease_contract import registry_bureau_lease_findings
@@ -392,7 +399,9 @@ def test_terminal_history_and_review_gated_exception_are_not_doctor_findings() -
         resources={"repo.bureau": broad},
         tasks={"TERMINAL": terminal, "EXCEPTED": excepted},
     )
-    assert registry_bureau_lease_findings(registry) == []
+    findings = registry_bureau_lease_findings(registry)
+    assert [finding["task_id"] for finding in findings] == ["EXCEPTED"]
+    assert findings[0]["exception_status"] == "review-authority-unavailable"
 
 
 def test_canonical_registry_has_zero_nonterminal_broad_bureau_scopes() -> None:

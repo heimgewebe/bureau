@@ -11,7 +11,10 @@ from typing import Any
 
 from . import legacy, runtime_refresh
 from .approval import require_approval, reviewed_plan_approval
-from .lease_contract import assess_task_broad_bureau_scope
+from .lease_contract import (
+    BROAD_SCOPE_REVIEW_RECEIPT_VERIFIER_AVAILABLE,
+    assess_task_broad_bureau_scope,
+)
 from .v2 import Dispatcher as _BaseDispatcher
 from .v2 import (
     _validate_coordinated_claim_intent,
@@ -21,7 +24,7 @@ from .v2 import (
 
 _MAX_REVIEWED_PLAN_BYTES = 4 * 1024 * 1024
 _BROAD_SCOPE_REVIEW_REASON = (
-    "broad Bureau scope requires digest-bound reviewed plan evidence"
+    "broad Bureau scope requires authority-bound reviewed plan evidence"
 )
 _BROAD_SCOPE_REVIEWED_TASK: ContextVar[str | None] = ContextVar(
     "bureau_broad_scope_reviewed_task",
@@ -119,6 +122,11 @@ def _required_text(value: Any, *, field: str, maximum: int) -> str:
 
 
 def _reviewed_plan_evidence(task: legacy.Task) -> dict[str, Any]:
+    if not BROAD_SCOPE_REVIEW_RECEIPT_VERIFIER_AVAILABLE:
+        raise legacy.StateError(
+            "broad Bureau scope review authority is unavailable; "
+            "self-declared reviewed-plan evidence is forbidden"
+        )
     execution = task.execution if isinstance(task.execution, dict) else {}
     exception = execution.get("broad_bureau_scope_exception")
     if not isinstance(exception, dict):
@@ -322,6 +330,11 @@ class Dispatcher(_BaseDispatcher):
                 assessment["broad_scope_requested"]
                 and not assessment["allowed"]
             ):
+                if assessment["exception_status"] == "review-authority-unavailable":
+                    raise legacy.StateError(
+                        "broad Bureau scope review authority is unavailable; "
+                        "self-declared reviewed-plan evidence is forbidden"
+                    )
                 raise legacy.StateError(
                     "broad Bureau scope exception contract is invalid"
                 )
@@ -401,6 +414,11 @@ class Dispatcher(_BaseDispatcher):
             assessment["broad_scope_requested"]
             and not assessment["allowed"]
         ):
+            if assessment["exception_status"] == "review-authority-unavailable":
+                raise legacy.StateError(
+                    "broad Bureau scope review authority is unavailable; "
+                    "self-declared reviewed-plan evidence is forbidden"
+                )
             raise legacy.StateError(
                 "broad Bureau scope exception contract is invalid"
             )

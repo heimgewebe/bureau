@@ -1,0 +1,116 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The locale resolver has a tested, documented context-sensitive priority contract: an explicit locale URL or deep link determines the current navigation and is never automatically overridden; on a neutral entry surface a locally stored manual UI-language choice wins; in Automatic mode the first supported entry from navigator.languages is used; unsupported or unavailable preferences fall back to English; and a user-activated language switch updates the stored choice.",
+      "evidence_type": "object",
+      "id": "priority-contract"
+    },
+    {
+      "assertion": "The language control exposes an accessible Automatic – device language option alongside English and German, supports keyboard and assistive technology, clearly indicates the effective language and does not require location permission.",
+      "evidence_type": "object",
+      "id": "accessible-automatic-mode"
+    },
+    {
+      "assertion": "Manual and Automatic choices persist locally without cookies, accounts or network transmission; unavailable, blocked or corrupt storage fails safely without breaking the page or causing redirect loops.",
+      "evidence_type": "object",
+      "id": "safe-local-persistence"
+    },
+    {
+      "assertion": "Locale switches preserve applicable query parameters and URL fragments, do not overwrite an explicit shared locale URL merely because a different preference is stored, and never loop between English and German surfaces.",
+      "evidence_type": "object",
+      "id": "url-state-preserved"
+    },
+    {
+      "assertion": "Changing UI language does not silently alter the catalogue content-language filter, country selection, proximity origin, radius, map position or other discovery state; UI language, content language and regional relevance remain separate axes.",
+      "evidence_type": "object",
+      "id": "language-axes-separated"
+    },
+    {
+      "assertion": "Browser language matching handles ordered, case-insensitive BCP 47 tags including region and script subtags, chooses only supported UI locales and has regression coverage for de-DE, en-GB, mixed preference lists and unsupported languages.",
+      "evidence_type": "object",
+      "id": "locale-tag-robustness"
+    },
+    {
+      "assertion": "Canonical generators, source assets, German and English public pages and the immutable release tree contain the same locale-selection contract with content-version references regenerated deterministically.",
+      "evidence_type": "object",
+      "id": "generated-release-parity"
+    },
+    {
+      "assertion": "The exact implementation head passes focused JavaScript and Python i18n tests, full repository validation, responsive browser smoke, diff-bound self-review and all required GitHub checks; the complete UTF-8 plaintext diff is delivered before merge, followed by exact-SHA Pages and production readback.",
+      "evidence_type": "object",
+      "id": "exact-head-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T032"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly requested implementation through Grabowski. Work must start only after T032 is terminal and its overlapping i18n, generated-page, assets, browser and publication surfaces are released.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Make Commonworld choose its user-interface language predictably and privately: preserve an explicit local user choice, honor an explicitly selected locale surface, otherwise use the ordered browser/device language preferences and fall back to English, without deriving UI language from geolocation or coupling it to content-language and regional discovery filters.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T033",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "blocked_by_active_scope": "COMMONWORLD-PUBLIC-GLOBE-V1-T032 owns the overlapping i18n, generated page, assets, browser smoke and publication surfaces until terminal release.",
+    "does_not_establish": [
+      "permission to modify the active T032 worktree or lease",
+      "permission to use geolocation for UI-language inference",
+      "account-wide synchronization without a future account contract",
+      "automatic claim, merge, deployment or production-verification authority"
+    ],
+    "operator_intake": {
+      "candidate_id": "candidate-7c84b18965de54f7d1e31c4e",
+      "event_id": 1651,
+      "request_sha256": "70c37de7d4c1384f038c14738407d3d2fe057374333446c96e24ef96a824cab5",
+      "source": {
+        "kind": "conversation-decision",
+        "locator": "chatgpt:commonworld:locale-selection:2026-07-29",
+        "observed_at": "2026-07-29T14:49:00+02:00",
+        "sha256": "742161987db48914802c4c4e9b1df4efe7557ce2d8c776ac75f28c2ceeb5b07c"
+      }
+    },
+    "operator_intake_publication": {
+      "fallback_reason": "The typed Bureau publisher failed closed because the deployed Bureau runtime was bound to registry commit f3c29af3358a5948b6ebc9f6479966de18b33776 while remote main was 583a88dcbd37054b77e22eee8778a39d38170cbc; its canonical snapshot was read-only. Publish this exact one-file reviewed task from an isolated clean current-main checkout without touching the foreign dirty canonical checkout.",
+      "status": "runtime-identity-blocked-manual-reviewed-publication"
+    },
+    "registered_at": "2026-07-29",
+    "source": "User decision in Commonworld language-selection conversation",
+    "source_candidate_id": "candidate-7c84b18965de54f7d1e31c4e",
+    "source_event_id": 1651,
+    "source_main": "5342352142c98192aeb71ee0079ad864ce720367",
+    "source_repository": "heimgewebe/commonworld",
+    "source_sha256": "742161987db48914802c4c4e9b1df4efe7557ce2d8c776ac75f28c2ceeb5b07c"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 13
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "testing",
+    "browser"
+  ],
+  "rollback": {
+    "strategy": "Revert the locale resolver, persistence hook, generated language controls, generated pages, release artifacts and their tests together; regenerate content-version bindings and verify that the previous static English/German links work without redirect or storage side effects."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Choose UI language from explicit preference and browser locale"
+}

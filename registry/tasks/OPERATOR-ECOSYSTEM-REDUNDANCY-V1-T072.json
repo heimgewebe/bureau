@@ -42,6 +42,11 @@
       "isolation": "worktree",
       "mode": "write",
       "resource": "component.bureau.ops"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
     }
   ],
   "depends_on": [
@@ -54,6 +59,7 @@
       "required_level": "operator"
     },
     "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
       "path:/home/alex/repos/bureau/.github/workflows/registry-registration-preflight.yml",
       "path:/home/alex/repos/bureau/tests/test_registry_registration_preflight_workflow_failclosed.py"
     ],

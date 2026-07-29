@@ -3,7 +3,7 @@
   "id": "KONVERGENZREGELKREIS-PACKAGE-RESOURCES-V1-T001",
   "initiative": "KONVERGENZREGELKREIS-PACKAGE-RESOURCES-V1",
   "title": "Vertragsressourcen paketintern und CWD-unabhängig laden",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 70
@@ -89,6 +89,102 @@
         "task readiness",
         "permission to alter terminal history"
       ]
-    }
+    },
+    "verified_at": "2026-07-29T19:26:06+02:00",
+    "resolution_summary": "Konvergenzregelkreis 1.2.0 lädt Protokoll- und Profilverträge paketintern über importlib.resources, priorisiert eine explizite --contract-root-Überschreibung und erhält die bisherige share/konvergenzregelkreis-Ablage als nachrangigen 1.x-Kompatibilitätsfallback. Der Caller-CWD kann installierte Paketressourcen nicht mehr überschatten.",
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_package_resource_cutover",
+      "implementation_pull_request": 7,
+      "implementation_head": "bad67d0ee0db040ff5d9be92323470dd27f06c43",
+      "implementation_merge_commit": "b60d5db1fa24235eb52cdaa570a912399052120e",
+      "implementation_tree": "ef25da8fe710e28bb3e1dd234edac95f59ab2537",
+      "package_version": "1.2.0",
+      "validation": {
+        "unit_tests": "47 PASS",
+        "compileall": "PASS",
+        "diff_check": "PASS",
+        "wheel_contents": "PASS: paketinterne und Legacy-Share-Ressourcen enthalten",
+        "fresh_venv_outside_checkout": "PASS: validate-contracts und Referenzauswertung",
+        "semantic_reference_parity": "PASS",
+        "ci_python_3_10": "SUCCESS",
+        "ci_python_3_12": "SUCCESS",
+        "ci_python_3_14": "SUCCESS",
+        "ci_wheel_isolation": "SUCCESS",
+        "codeql_actions": "SUCCESS",
+        "codeql_python": "SUCCESS",
+        "codeql_aggregate": "SUCCESS"
+      },
+      "deployment_required": false
+    },
+    "diff_evidence": {
+      "source_base_sha": "7a8dfd944fce4d2f45fb21fcec2fae3fd3ff0f96",
+      "source_head_sha": "bad67d0ee0db040ff5d9be92323470dd27f06c43",
+      "source_diff_sha256": "61c253b04cf65fd77222d991299483389b5d7cbbb449b3b2ebdac6b471eb4fde",
+      "source_diff_bytes": 59116,
+      "source_file_count": 26,
+      "source_merge_commit": "b60d5db1fa24235eb52cdaa570a912399052120e",
+      "source_merge_tree": "ef25da8fe710e28bb3e1dd234edac95f59ab2537"
+    },
+    "review_evidence": {
+      "self_review": {
+        "kind": "self_review",
+        "independent": false,
+        "methodically_separated": true,
+        "head_sha": "bad67d0ee0db040ff5d9be92323470dd27f06c43",
+        "diff_sha256": "61c253b04cf65fd77222d991299483389b5d7cbbb449b3b2ebdac6b471eb4fde",
+        "result": "PASS",
+        "material_findings_open": 0
+      },
+      "external_review": {
+        "provider": "chatgpt-codex-connector",
+        "reviewed_commit": "bad67d0ee0db040ff5d9be92323470dd27f06c43",
+        "result": "no_major_issues",
+        "material_findings_open": 0
+      },
+      "review_threads_total": 0,
+      "review_threads_open": 0
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "KONVERGENZREGELKREIS-PACKAGE-RESOURCES-V1-T001",
+          "source_ref": "heimgewebe/konvergenzregelkreis#7",
+          "number": 7,
+          "base_sha": "7a8dfd944fce4d2f45fb21fcec2fae3fd3ff0f96",
+          "head_sha": "bad67d0ee0db040ff5d9be92323470dd27f06c43",
+          "merge_commit_sha": "b60d5db1fa24235eb52cdaa570a912399052120e",
+          "diff_sha256": "61c253b04cf65fd77222d991299483389b5d7cbbb449b3b2ebdac6b471eb4fde"
+        },
+        {
+          "kind": "continuous_integration",
+          "authority": "github-actions",
+          "task_id": "KONVERGENZREGELKREIS-PACKAGE-RESOURCES-V1-T001",
+          "source_ref": "heimgewebe/konvergenzregelkreis#7@bad67d0ee0db040ff5d9be92323470dd27f06c43",
+          "required_checks": "all_success"
+        },
+        {
+          "kind": "local_validation",
+          "authority": "grabowski-runtime",
+          "task_id": "KONVERGENZREGELKREIS-PACKAGE-RESOURCES-V1-T001",
+          "source_ref": "konvergenzregelkreis:bad67d0ee0db040ff5d9be92323470dd27f06c43",
+          "tests": "47 PASS; compileall, diff-check, wheel isolation, fresh external venv and semantic parity PASS"
+        }
+      ]
+    },
+    "verification": {
+      "source": "github_merge_ci_reviews_and_local_wheel_isolation",
+      "source_ref": "github-pr:heimgewebe/konvergenzregelkreis#7",
+      "implementation_sha": "bad67d0ee0db040ff5d9be92323470dd27f06c43",
+      "merge_commit_sha": "b60d5db1fa24235eb52cdaa570a912399052120e",
+      "final_diff_sha256": "61c253b04cf65fd77222d991299483389b5d7cbbb449b3b2ebdac6b471eb4fde",
+      "task_sha256": "8465b972deb25ccec5f51077e075b1a0ea69c80573dbcf1c52123a9656c62829",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "verification_note": "Alle sechs Akzeptanzkriterien sind erfüllt: paketinterne CWD-unabhängige Auflösung, explizite Überschreibung, getesteter Legacy-Share-Fallback, semantische Parität, isolierter Wheel-/Venv-Nachweis sowie dokumentierte SemVer-Einordnung als 1.2.0."
   }
 }

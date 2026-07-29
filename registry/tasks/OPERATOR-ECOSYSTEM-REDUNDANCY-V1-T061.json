@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Leitstand-Lifecycle-Consumer implementieren und als PR veröffentlichen",
-  "state": "ready",
+  "state": "verified",
   "goal": "Implementiere in einem eigenen sauberen Worktree einen read-only Leitstand-Consumer für die stabilen Systemkatalog-Lifecycle-Zustände, prüfe ihn vollständig und veröffentliche einen revisionsgebundenen PR. Trenne deklarierte Semantik, Artefakt-Freshness und Runtime-Gesundheit sichtbar und fail-closed; Retirement darf nicht als aktueller Dienstfehler erscheinen. Diese Aufgabe mergt und deployt nicht.",
   "priority": {
     "lane": "next",
@@ -73,12 +73,102 @@
     "implementation_owner": "operator:leitstand-lifecycle-consumer-v2-20260726",
     "base_sha": "a85c14d0df83da61c68e43fe814a19d483f3f6f2",
     "does_not_establish": [
-      "merge_readiness",
-      "merge_authority",
-      "deployment_readiness",
+      "T063_completion",
       "deployment_authority",
+      "deployment_completion",
+      "deployment_readiness",
+      "merge_authority",
+      "merge_process_conformance",
+      "merge_readiness",
       "runtime_health",
       "semantic_source_authority"
-    ]
+    ],
+    "outcome": "Der read-only Leitstand-Lifecycle-Consumer wurde durch Leitstand-PR #190 auf dem exakten Head 35569da58554af922fe2d13e564f035f2d06db4b implementiert, vollständig geprüft, nach Behebung des einzigen materiellen Reviewbefunds erneut unabhängig reviewed und mit vollständigem UTF-8-Diff veröffentlicht. Der spätere Merge ist als zusätzliche Primärevidenz enthalten, aber nicht als Wirkung von T061 verbucht.",
+    "implementation": {
+      "repository": "heimgewebe/leitstand",
+      "pull_request": 190,
+      "base_sha": "a85c14d0df83da61c68e43fe814a19d483f3f6f2",
+      "reviewed_head": "35569da58554af922fe2d13e564f035f2d06db4b",
+      "merge_commit": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+      "merged_at": "2026-07-27T01:55:41Z",
+      "diff_sha256": "8c5a35096f64f9fdcf77235eb5eddd85a9a1d3886a6ecb7e9b553b04b243c98f",
+      "diff_bytes": 41400,
+      "evidence_snapshot_sha256": "a16b52c89c3c66ad24c800803566403ac29ce98cccf8c5480aff75a1f216589a",
+      "evidence_snapshot_bytes": 10689,
+      "changed_paths": [
+        "src/controllers/ecosystemMap.ts",
+        "src/controllers/ecosystemMapNavigation.ts",
+        "src/public/ecosystem-map.mjs",
+        "src/server.ts",
+        "src/views/ecosystem-map.ejs",
+        "tests/controllers/ecosystemMap.test.ts",
+        "tests/controllers/ecosystemMapNavigation.test.ts",
+        "tests/views/ecosystemMap.test.ts"
+      ],
+      "github_ci": {
+        "ci_build": "success",
+        "codeql_actions": "success",
+        "codeql_javascript_typescript": "success",
+        "codeql_python": "success",
+        "ai_context_repo_root": "success",
+        "ai_context_templates": "success",
+        "security_hygiene": "success",
+        "cloudflare_preview": "success"
+      },
+      "current_main_head": "9595effaf3eeeeca08222b798271bfd03784831f",
+      "merge_commit_is_ancestor_of_current_main": true,
+      "merge_tree_matches_reviewed_head_tree": true
+    },
+    "verification": {
+      "source_task_sha256": "a809f22c93390eacc331a6c81f4546672121e1019dbacfef0d7baa7833942b5e",
+      "bureau_base_sha": "583a88dcbd37054b77e22eee8778a39d38170cbc",
+      "source": "merged_pull_request_exact_head_ci_review_diff_and_current_main_readback",
+      "source_ref": "github-pr:heimgewebe/leitstand#190",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "task_sha256": "d9b7f1525e5353b981dca3638ec068cba435ada6dd8163e9e08324009297cab6"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
+          "source_ref": "github-pr:heimgewebe/leitstand#190@35569da58554af922fe2d13e564f035f2d06db4b:9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+          "content_sha256": "8c5a35096f64f9fdcf77235eb5eddd85a9a1d3886a6ecb7e9b553b04b243c98f"
+        },
+        {
+          "kind": "test_run",
+          "authority": "github-actions",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
+          "source_ref": "github-commit:heimgewebe/leitstand@35569da58554af922fe2d13e564f035f2d06db4b#status-check-rollup",
+          "content_sha256": "1b22524bf41d076354f5a72c58e41a3f2c5b7d964ee8bdd60b31c0b4efe9728a"
+        },
+        {
+          "kind": "review_evidence",
+          "authority": "chatgpt-codex-connector",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
+          "source_ref": "github-pr:heimgewebe/leitstand#190#reviewed-commit-35569da58554af922fe2d13e564f035f2d06db4b",
+          "content_sha256": "c168109a56553d03264b9e494442b8584bcea301258806db26f5bc4428c0637a"
+        },
+        {
+          "kind": "git_ancestry",
+          "authority": "git",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T061",
+          "source_ref": "git:heimgewebe/leitstand@9595effaf3eeeeca08222b798271bfd03784831f",
+          "content_sha256": "f50045319e3d55bf9a303ac6360608716d97c1cf94991dfc9e1b9a8e37a93bf0"
+        }
+      ]
+    },
+    "validated_acceptance": {
+      "clean-isolated-implementation": "PASS: PR #190 dokumentiert den sauberen eigenen Worktree auf Base a85c14d0; der fremde schmutzige Vorgängercheckout blieb unberührt.",
+      "strict-source-contract": "PASS: Der finale Diff validiert Lifecycle-Zustände, exakte YYYY-MM-DD-Daten, getrimmte eindeutige Knoten-IDs und nichtleere eindeutige Evidenzreferenzen fail-closed; der P2-Whitespace-Befund wurde auf Head 35569da behoben.",
+      "truth-axes-separated": "PASS: API und UI trennen Artefaktabgleich, deklarierte Lifecycle-Semantik und Runtime-Gesundheit; Retirement wird nicht als aktueller Dienstfehler gewertet.",
+      "read-only-exploration": "PASS: Filter, Detailansicht und commitgebundene Quellen sind reine Leseoberflächen; der PR enthält keine Schreibroute.",
+      "review-ci-pr-published": "PASS: Fokussierte und vollständige lokale Prüfungen sind im PR belegt; sämtliche finalen GitHub-Gates waren grün, Codex fand auf exakt 35569da keine wesentlichen Probleme, und der vollständige 41.400-Byte-Diff wurde mit SHA-256 8c5a3509 veröffentlicht.",
+      "no-merge-or-deployment": "PASS: T061 endete mit Implementierung, Prüfung und PR-Veröffentlichung. Der spätere Merge 9b276fda ist ein separater Lifecycle-Beleg; ein Runtime-Deployment oder Produktionscutover wird nicht behauptet."
+    },
+    "verified_at": "2026-07-29T12:32:35Z"
   }
 }

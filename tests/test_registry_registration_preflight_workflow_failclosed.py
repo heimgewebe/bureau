@@ -22,70 +22,85 @@ def test_pull_request_file_listing_fails_closed() -> None:
     assert 'mapfile -t task_files < "${task_files_file}"' in text
 
 
-def test_main_push_invalidates_all_known_prs_before_file_discovery() -> None:
+def test_main_push_discovers_all_candidates_before_creating_checks() -> None:
     text = _workflow_text()
 
-    invalidate_marker = (
-        "# Create an in-progress CheckRun for every known open PR before "
-        "validating any individual PR."
-    )
-    publication_marker = 'check_run_ids["${pr_number}"]="${check_run_id}"'
-    discovery_marker = (
-        'if ! gh api "repos/${REPOSITORY}/pulls/${pr_number}/files?per_page=100" '
-        "--paginate"
-    )
+    discovery_marker = "# Discover the complete candidate set before normal CheckRun publication."
+    publication_marker = "declare -A check_run_ids=()"
 
-    assert invalidate_marker in text
+    assert discovery_marker in text
     assert publication_marker in text
-    assert discovery_marker in text
-    assert text.index(invalidate_marker) < text.index(publication_marker)
-    assert text.index(publication_marker) < text.index(discovery_marker)
-    assert "mapfile -t pr_rows < <(" not in text
-    assert "for attempt in 1 2 3; do" in text
-    assert 'status:"in_progress"' in text
+    assert text.index(discovery_marker) < text.index(publication_marker)
+    assert 'candidate_rows_file="$(mktemp)"' in text
+    assert 'candidate_dir="$(mktemp -d)"' in text
+    assert 'if [[ -s "${task_files_file}" ]]; then' in text
+    assert 'mapfile -t candidate_rows < "${candidate_rows_file}"' in text
+    assert 'for row in "${candidate_rows[@]}"; do' in text
+    assert "for every known open PR" not in text
 
 
-def test_main_push_file_discovery_failure_blocks_the_exact_pr() -> None:
+def test_main_push_discovery_errors_publish_blocking_checks_before_exit() -> None:
     text = _workflow_text()
 
-    discovery_marker = (
-        'if ! gh api "repos/${REPOSITORY}/pulls/${pr_number}/files?per_page=100" '
-        "--paginate"
+    helper = "publish_discovery_failure()"
+    discovery_failure = (
+        "if [[ ${candidate_discovery_failed} -ne 0 || "
+        "${blocking_publication_failed} -ne 0 ]]; then"
     )
-    failure_marker = (
-        'complete_check_run \\\n'
-        '                "${check_run_id}" failure \\\n'
-        '                "Registry allocation revalidation errored"'
+    normal_publication = "declare -A check_run_ids=()"
+
+    assert text.count(helper) == 1
+    assert (
+        'if ! gh api "repos/${REPOSITORY}/pulls/${pr_number}/files?per_page=100" --paginate'
+        in text
     )
-    continue_marker = (
-        'echo "::error::Cannot inspect changed files for PR #${pr_number}"\n'
-        "              infrastructure_failed=1\n"
-        "              continue"
+    assert '"Registry freshness discovery errored"' in text
+    assert 'echo "::error::Cannot inspect all changed files for PR #${pr_number}"' in text
+    assert (
+        'echo "::error::Registry candidate PR #${pr_number} has no readable head '
+        'repository"'
+        in text
     )
+    candidate_map = 'mapfile -t candidate_rows < "${candidate_rows_file}"'
+    assert text.count("if ! publish_discovery_failure \\") == 3
+    assert text.count("blocking_publication_failed=1") == 4
+    assert discovery_failure in text
+    assert (
+        "Registry candidate discovery was incomplete while checking PR #${pr_number}"
+        in text
+    )
+    assert text.count('for row in "${candidate_rows[@]}"; do') == 3
+    assert (
+        text.index(helper)
+        < text.index(candidate_map)
+        < text.index(discovery_failure)
+        < text.index(normal_publication)
+    )
+    assert 'if ! gh api "repos/${REPOSITORY}/pulls?state=open&per_page=100" --paginate' in text
 
-    assert discovery_marker in text
-    assert failure_marker in text
-    assert continue_marker in text
-    assert text.index(discovery_marker) < text.index(failure_marker)
-    assert text.index(failure_marker) < text.index(continue_marker)
-    assert 'against main ${CURRENT_MAIN_SHA}." || true' in text
-    assert "if [[ ${infrastructure_failed} -ne 0 ]]; then" in text
 
-
-def test_main_push_skips_expensive_validation_for_non_candidates() -> None:
+def test_main_push_clears_latest_transient_failure_for_recovered_noncandidate() -> None:
     text = _workflow_text()
 
-    no_candidate_marker = 'if [[ ${#task_files[@]} -eq 0 ]]; then'
-    success_marker = '"PR #${pr_number} has no new Registry task allocation'
-    validation_marker = "bureau --root . --json registry-registration-preflight"
+    helper = "clear_discovery_failure()"
+    query = 'gh api -X GET "repos/${REPOSITORY}/commits/${sha}/check-runs"'
+    prefix = 'prefix="registry-freshness:${pr_number}:${sha}:"'
+    latest_only = "[.check_runs[] | select(.name == $name)] | max_by(.id)"
+    recovery_id = '"${latest_failure_id}" success'
+    recovery_title = '"Registry discovery recovered"'
+    noncandidate_call = (
+        'elif ! clear_discovery_failure "${pr_head_sha}" "${pr_number}"; then'
+    )
 
-    start = text.index(no_candidate_marker)
-    end = text.index("            overall=success", start)
-    no_candidate_block = text[start:end]
-
-    assert success_marker in no_candidate_block
-    assert "              continue" in no_candidate_block
-    assert text.index(validation_marker, end) > end
+    assert text.count(helper) == 1
+    assert query in text
+    assert prefix in text
+    assert latest_only in text
+    assert '.conclusion == "failure"' in text
+    assert recovery_id in text
+    assert recovery_title in text
+    assert noncandidate_call in text
+    assert text.index(helper) < text.index(noncandidate_call)
 
 
 def test_main_push_never_reuses_partial_task_content_after_fetch_failure() -> None:

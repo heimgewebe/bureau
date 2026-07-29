@@ -20,7 +20,14 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/weltgewebe"
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/docs/reports/post-jsonl-graph-mutation-architecture.md",
+      "path:/home/alex/repos/weltgewebe/docs/reports/post-jsonl-graph-mutation-measurements.json",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/measure_graph_mutation_architecture.py",
+      "path:/home/alex/repos/weltgewebe/scripts/docmeta/tests/test_measure_graph_mutation_architecture.py",
+      "path:/home/alex/repos/weltgewebe/apps/api/tests/ordered_cache_scaling.rs"
+    ]
   },
   "required_capabilities": [
     "architecture-review",
@@ -63,6 +70,33 @@
       "event_sourcing_decision",
       "graph_service_decision",
       "merge_readiness"
-    ]
+    ],
+    "scope_repair": {
+      "schema_version": 1,
+      "observed_at": "2026-07-29T19:00:43Z",
+      "reason": "The ready task had no execution.grabowski_resources, so open Weltgewebe PRs forced repository-wide uncertainty despite a report-and-measurement-only delivery boundary.",
+      "write_paths": [
+        "docs/reports/post-jsonl-graph-mutation-architecture.md",
+        "docs/reports/post-jsonl-graph-mutation-measurements.json",
+        "scripts/docmeta/measure_graph_mutation_architecture.py",
+        "scripts/docmeta/tests/test_measure_graph_mutation_architecture.py",
+        "apps/api/tests/ordered_cache_scaling.rs"
+      ],
+      "nonconflict_observation": {
+        "open_pr_1637_head": "a4ef11d05b8b7d4f0ea75f7ef5816cda5c4765ad",
+        "open_pr_1637_overlap": [],
+        "pr_1638_state": "merged",
+        "pr_1638_head": "a965ac40e8cdd41c321d26a383829a063e56fce2",
+        "open_pr_1637_base": "1d548fb95837eb11d8be7bd2bb9eb701d2b78a87",
+        "open_pr_1637_changed_path_count": 12,
+        "open_pr_1637_scope_assessment_sha256": "f5bc55f9dbb0e27b2b384cc5fabd027840eeaee04bfb21288ee7c2e20a652db3"
+      },
+      "does_not_establish": [
+        "claim_authority",
+        "future_pr_scope_stability",
+        "production_data_availability",
+        "acceptance_completion"
+      ]
+    }
   }
 }

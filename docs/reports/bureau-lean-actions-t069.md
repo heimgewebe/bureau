@@ -1,6 +1,6 @@
 # Bureau Lean GitHub Actions — T069
 
-Stand: 29. Juli 2026  
+Stand: 29. Juli 2026
 Gebundene Basis: `6f3b7c59f30b94d7262a1a418fb0ef444c026048`
 
 ## Revisionsgebundene Ausgangslage

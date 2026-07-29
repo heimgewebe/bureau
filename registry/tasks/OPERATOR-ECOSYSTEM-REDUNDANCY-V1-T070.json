@@ -83,10 +83,12 @@
     "does_not_establish": [
       "producer migration readiness",
       "absence of further text references",
-      "permission to rewrite archives",
-      "runtime correctness",
+      "permission to rewrite archives or historical baselines",
+      "Audio runtime correctness or readiness",
+      "hardware presence",
+      "future event producer or consumer availability",
       "task readiness",
-      "queue or claim authority"
+      "deployment, queue, claim or merge authority"
     ],
     "evidence_summary": {
       "audio_merge": "9ddefba90679adaf20be2e7e152f4d4aea068e77",
@@ -123,7 +125,140 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
-    }
+    },
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_existing_merge",
+      "outcome": "Metarepo PR #666 completed the canonical Audio consumer transition: current operational projections now bind heimgewebe/audio, hausKI-audio is an explicit historical donor, and the historical audio.events schema remains producerless instead of being relabelled without evidence."
+    },
+    "coordinated_run": {
+      "run_id": "BUR-RUN-20260728T210134Z-f5684f8748",
+      "state": "succeeded",
+      "worker_id": "operator:masterplan-t070-implementation-20260728",
+      "workspace_branch": "bureau/operator-ecosystem-redundancy-v1-t070/f5684f8748",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "run_task_sha256": "c21eee3869b1f44e95408bcda8549a72044a2b57b92e429fedf6dda9d3483287",
+      "terminal_readback_at": "2026-07-29T06:13:18.334123Z",
+      "lease_state": "terminal-released-or-expired",
+      "reservations": []
+    },
+    "implementation": {
+      "repository": "heimgewebe/metarepo",
+      "pull_request": 666,
+      "base_sha": "64d9193621af6e43ac2260023e7c8429c96e95b2",
+      "reviewed_head_sha": "0ce26c52ed9e03e176393b7a012cb661bdf1a102",
+      "merge_commit_sha": "0f2c6b9982ed254b1d926ed79ea4a27b207dd265",
+      "merge_tree_sha": "9d53a07e56222c69cda55d512c855fcfd3cd7a1e",
+      "head_tree_sha": "9d53a07e56222c69cda55d512c855fcfd3cd7a1e",
+      "merged_at": "2026-07-29T06:02:10Z",
+      "changed_file_count": 36,
+      "additions": 960,
+      "deletions": 468,
+      "full_diff_bytes": 76015,
+      "full_diff_sha256": "e3d2fe58e8ebb84f6432949819d843a936a6b913074e4d8265094505b8ace187",
+      "current_main_sha": "74ce9202952d00b0d2fef0587255c92a9cd05dee",
+      "merge_is_ancestor_of_current_main": true,
+      "acceptance_paths_unchanged_through_current_main": true,
+      "audit_report_path": "reports/audio-transition/hauski-audio-consumer-audit.v1.json",
+      "ci": {
+        "state": "green",
+        "workflow_checks": [
+          "wgx-guard",
+          "wgx-smoke",
+          "fleet-generated-check",
+          "fleet-doctor",
+          "fleet-drift-check",
+          "contracts-index-guard",
+          "fleet-readiness",
+          "agent-mode-guard",
+          "ai-context guard",
+          "validate-templates",
+          "linkcheck",
+          "Org assets",
+          "impact-guard",
+          "contracts-validate",
+          "ci"
+        ]
+      },
+      "review": {
+        "material_threads": 1,
+        "resolved_threads": 1,
+        "unresolved_threads": 0,
+        "resolved_finding": "Preserve the Makefile fleet CLI contract"
+      },
+      "validation_reported_on_reviewed_head": {
+        "final_fix_focused_tests": 11,
+        "final_full_pytest_tests": 178,
+        "final_just_validate_tests": 168,
+        "contracts_validate": "PASS",
+        "lint": "PASS",
+        "git_diff_check": "PASS"
+      }
+    },
+    "production_evidence": [
+      {
+        "kind": "pull_request",
+        "authority": "github",
+        "source_ref": "heimgewebe/metarepo#666",
+        "base_sha": "64d9193621af6e43ac2260023e7c8429c96e95b2",
+        "head_sha": "0ce26c52ed9e03e176393b7a012cb661bdf1a102",
+        "merge_commit_sha": "0f2c6b9982ed254b1d926ed79ea4a27b207dd265",
+        "full_diff_sha256": "e3d2fe58e8ebb84f6432949819d843a936a6b913074e4d8265094505b8ace187"
+      },
+      {
+        "kind": "coordinated_run",
+        "authority": "bureau-runtime",
+        "source_ref": "BUR-RUN-20260728T210134Z-f5684f8748",
+        "state": "succeeded",
+        "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+      },
+      {
+        "kind": "revision_bound_consumer_audit",
+        "authority": "metarepo",
+        "source_ref": "reports/audio-transition/hauski-audio-consumer-audit.v1.json",
+        "source_commit": "0f2c6b9982ed254b1d926ed79ea4a27b207dd265"
+      }
+    ],
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T070",
+          "source_ref": "heimgewebe/metarepo#666",
+          "head_sha": "0ce26c52ed9e03e176393b7a012cb661bdf1a102",
+          "merge_commit_sha": "0f2c6b9982ed254b1d926ed79ea4a27b207dd265"
+        },
+        {
+          "kind": "coordinated_run",
+          "authority": "bureau-runtime",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T070",
+          "source_ref": "BUR-RUN-20260728T210134Z-f5684f8748",
+          "state": "succeeded"
+        }
+      ]
+    },
+    "verified_acceptance": {
+      "current-reference-inventory": "The merge-bound audit report classifies each current non-archive reference by path, class, source revisions and decision; the PR changes the report plus the exact operational projections it names.",
+      "producer-consumer-proof": "The audit records zero current producers and consumers for contracts/audio.events.schema.json and preserves it as a historical payload contract; the implementation does not relabel it as an audio producer contract.",
+      "active-consumers-converged": "Fleet truth, generated Fleet views, repository matrix, integrity source data and AI contexts bind heimgewebe/audio as current and hausKI-audio as historical_donor with fleet disabled.",
+      "generated-projections-valid": "All 15 observed GitHub workflow runs on reviewed head 0ce26c52 completed successfully, including Fleet, contracts, org assets, WGX and full CI; local validation reported focused, full and generated-projection checks PASS.",
+      "history-preserved": "The revision-bound audit preserves the Renovate baseline pin and historical vision text, adding explicit non-normative classification instead of rewriting historical evidence.",
+      "no-second-truth": "The change derives Fleet and readable projections from fleet/repos.yml, adds no runtime or task authority, and explicitly excludes Audio hardware, service, Chronik and HausKI effects."
+    },
+    "verification": {
+      "verified_at": "2026-07-29T11:13:14.404305Z",
+      "source_task_file_sha256": "604cdcd6edf02fbbe4610e34b429c568159dfc8415d6b772da89a37bc89fd204",
+      "implementation_diff_sha256": "e3d2fe58e8ebb84f6432949819d843a936a6b913074e4d8265094505b8ace187",
+      "implementation_merge_tree_sha256": "9d53a07e56222c69cda55d512c855fcfd3cd7a1e",
+      "current_main_readback_sha": "74ce9202952d00b0d2fef0587255c92a9cd05dee",
+      "acceptance_path_drift": [],
+      "task_sha256": "2ec63ce340cda997da0df68d597f46e56f3a606b8886124746f2c1c91d92dc34",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    },
+    "verified_at": "2026-07-29T11:13:14.404305Z"
   },
   "priority": {
     "lane": "next",
@@ -141,6 +276,6 @@
     "strategy": "Revertiere ausschließlich den exakten Metarepo-Implementierungscommit und regeneriere die vorherigen Projektionen. Ändere keine Archive, Audio- oder Consumer-Repositories und stelle keine historisch falschen Producerangaben her."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Aktuelle HausKI-Audio-Verweise nach kanonischem Audio-Wechsel klassifizieren"
 }

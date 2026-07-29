@@ -23,8 +23,8 @@
     ],
     "approval": {
       "action_class": "runtime_mutation",
-      "required_level": "operator",
-      "note": "Nur die taskeigene begrenzte Buckelwal-Instanz darf gestartet werden. Roland und MOTU müssen frisch erkannt sein; Lautstärke wird vor Tonbeginn manuell sicher gesetzt. Keine globale PipeWire- oder Profiländerung ohne separaten Plan."
+      "required_level": "break_glass",
+      "note": "Nur die taskeigene begrenzte Buckelwal-Instanz darf nach ausdrücklicher Break-Glass-Freigabe gestartet werden. Roland und MOTU müssen frisch erkannt sein; Lautstärke wird vor Tonbeginn manuell sicher gesetzt. Keine globale PipeWire- oder Profiländerung ohne separaten Plan."
     }
   },
   "claims": [

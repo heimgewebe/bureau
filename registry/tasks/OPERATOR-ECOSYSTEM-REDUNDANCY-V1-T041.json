@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T041",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Aktuelle HausKI-Audio-Abhängigkeitsbefunde einzeln prüfen",
-  "state": "planned",
+  "state": "ready",
   "goal": "Die nach Abschluss der historischen T038-Queue noch live gemeldeten Abhängigkeitsbefunde in HausKI-Audio werden einzeln inventarisiert, gegen den aktuellen Hauptzweig dedupliziert und evidenzgebunden behoben oder terminal eingeordnet.",
   "priority": {
     "lane": "later",
@@ -94,6 +94,40 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
-    }
+    },
+    "readiness_verified_at": "2026-07-29T20:45:00+02:00",
+    "readiness_evidence": {
+      "bureau_base": "ecf96c136161e8183afb0b722bc3cc8d365ca878",
+      "dependency": {
+        "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T038",
+        "state": "verified",
+        "verified_at": "2026-07-20T07:51:07+02:00"
+      },
+      "repository": {
+        "name": "heimgewebe/hausKI-audio",
+        "main": "4f2b4bdbfaa6419725aba02acd71347ac1e9da02",
+        "working_tree": "clean",
+        "open_pull_requests": 0,
+        "live_repository_lease": false
+      },
+      "terminal_existing_worktrees": [
+        {
+          "branch": "chore/dependabot-queue-consolidation-v1",
+          "pull_request": 152,
+          "state": "merged"
+        },
+        {
+          "branch": "fix/gitleaks-yamllint-v1",
+          "pull_request": 164,
+          "state": "merged"
+        }
+      ]
+    },
+    "readiness_does_not_establish": [
+      "that the reported aggregate counts still represent live individual findings",
+      "fix availability",
+      "runtime reachability",
+      "completion of remediation"
+    ]
   }
 }

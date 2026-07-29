@@ -25,7 +25,7 @@
     "approval": {
       "action_class": "repository_mutation",
       "required_level": "operator",
-      "note": "Mutate repository ruleset settings only with operator authority after an exact inventory and per-repository effect plan. Do not weaken existing checks, add bypass actors, change visibility, modify code, or assume that one repository policy safely generalizes to another."
+      "note": "Mutate repository ruleset settings only with operator authority after an exact inventory and per-repository effect plan. Organization-level discovery may run under service.github_actions, but before any repository-scoped rules read or mutation the run must atomically expand its claim to the exact repo.* resource in write mode and prove live ownership. Do not weaken existing checks, add bypass actors, change visibility, modify code, or assume that one repository policy safely generalizes to another."
     }
   },
   "required_capabilities": [
@@ -38,6 +38,10 @@
     {
       "id": "complete-inventory",
       "assertion": "A bounded inventory identifies every repository and exact default or merge-target branch that may be dispatched through Captain, plus its active rules, required checks, enforcement state, current-user bypass state and bypass actors; omissions and inaccessible repositories are explicit."
+    },
+    {
+      "id": "repository-reservations",
+      "assertion": "Organization-level repository discovery is the only operation allowed under the service claim alone. Before reading branch-protection or ruleset state for a concrete repository, and before every mutation, the run atomically expands its claim to that exact repo.* resource in write mode, proves the lease is live and retains it through repository readback; missing resource mappings or conflicting claims fail closed without settings effects."
     },
     {
       "id": "strict-policy",
@@ -72,12 +76,20 @@
     "candidate_assessment": "promote",
     "source_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T057",
     "trigger": "T057 intentionally blocks repositories without a strict non-bypassable stale-base barrier; live smoke confirmed heimgewebe/audio currently lacks such a rule.",
-    "risk": "Cross-repository settings changes can block merges or weaken protection if applied generically; execution must be per-repository and fail closed.",
+    "risk": "Cross-repository settings changes can block merges or weaken protection if applied generically or concurrently with repository work; execution must be per-repository, exact-claim-bound and fail closed.",
     "does_not_establish": [
       "authorization to weaken required checks",
       "authorization to add bypass actors",
       "that every repository needs identical checks",
       "that GitHub exposes exact base-ref compare-and-swap"
-    ]
+    ],
+    "claim_expansion_contract": {
+      "discovery_scope": "Organization-level repository enumeration only; no repository-specific protection or ruleset endpoint may be read under the service claim alone.",
+      "required_before_repository_read": "Atomically claim-expand the active Bureau run with a write claim for the exact mapped repo.* resource before the first repository-scoped branch-protection or ruleset read.",
+      "required_before_mutation": "Revalidate ownership of the exact repo.* write claim immediately before any GitHub settings mutation and retain it through post-effect readback.",
+      "missing_mapping": "Do not read or mutate settings; register or repair the canonical repository resource first.",
+      "conflict": "Fail closed and leave settings unchanged; never override, expire or release a foreign claim.",
+      "release": "Release only through normal terminal lifecycle after the repository-specific post-effect readback or an unambiguous no-effect outcome."
+    }
   }
 }

@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T120",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Roll out strict non-bypassable base-update guards",
+  "state": "planned",
+  "goal": "Inventory every repository and base branch eligible for direct Captain merge and establish an active GitHub ruleset with nonempty strict required status checks that the current merge actor cannot bypass; preserve stronger existing protections and keep Captain fail-closed where the contract cannot be met.",
+  "priority": {
+    "lane": "next",
+    "rank": 1200
+  },
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T057"
+  ],
+  "claims": [
+    {
+      "resource": "service.github_actions",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Mutate repository ruleset settings only with operator authority after an exact inventory and per-repository effect plan. Do not weaken existing checks, add bypass actors, change visibility, modify code, or assume that one repository policy safely generalizes to another."
+    }
+  },
+  "required_capabilities": [
+    "github",
+    "shell",
+    "grabowski",
+    "bureau"
+  ],
+  "acceptance": [
+    {
+      "id": "complete-inventory",
+      "assertion": "A bounded inventory identifies every repository and exact default or merge-target branch that may be dispatched through Captain, plus its active rules, required checks, enforcement state, current-user bypass state and bypass actors; omissions and inaccessible repositories are explicit."
+    },
+    {
+      "id": "strict-policy",
+      "assertion": "Each enabled direct-Captain target has at least one active applying ruleset with a nonempty required-status-check rule and strict_required_status_checks_policy=true."
+    },
+    {
+      "id": "non-bypassable",
+      "assertion": "For the current Captain GitHub actor, current_user_can_bypass is never and no bypass actor can authorize the direct merge path; stronger existing review, signed-commit, deployment or branch restrictions remain intact."
+    },
+    {
+      "id": "safe-settings-effects",
+      "assertion": "Every ruleset mutation is repository-, branch-, old-state- and new-state-bound with preflight and readback; no repository visibility, code, branch, workflow or unrelated setting changes."
+    },
+    {
+      "id": "alternative-path",
+      "assertion": "Repositories that cannot or should not satisfy the strict ruleset contract remain fail-closed for direct Captain dispatch and receive a reviewed alternative merge procedure instead of a bypass or weakened check."
+    },
+    {
+      "id": "live-guard-proof",
+      "assertion": "The deployed T057 guard accepts each protected target from fresh paginated rules and detail reads and rejects intentionally unprotected or bypassable fixtures; policy drift between reads fails closed."
+    },
+    {
+      "id": "reconciliation",
+      "assertion": "The final receipt records changed, already-compliant, blocked and excluded repositories separately and does not reinterpret historical merges as compliant."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-29T08:13:31Z",
+    "source_candidate": "candidate-5099b0cbd51fdc3d9d540d6c",
+    "source_event": 1614,
+    "source_sha256": "99789661842a527181c939603d42e0e07b7e313336ec0aca823ef63a4299e47f",
+    "candidate_assessment": "promote",
+    "source_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T057",
+    "trigger": "T057 intentionally blocks repositories without a strict non-bypassable stale-base barrier; live smoke confirmed heimgewebe/audio currently lacks such a rule.",
+    "risk": "Cross-repository settings changes can block merges or weaken protection if applied generically; execution must be per-repository and fail closed.",
+    "does_not_establish": [
+      "authorization to weaken required checks",
+      "authorization to add bypass actors",
+      "that every repository needs identical checks",
+      "that GitHub exposes exact base-ref compare-and-swap"
+    ]
+  }
+}

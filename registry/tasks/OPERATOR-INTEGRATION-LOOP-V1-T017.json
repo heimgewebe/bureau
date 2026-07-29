@@ -6,7 +6,7 @@
       "id": "host-resource-contract"
     },
     {
-      "assertion": "Zwei aktive Leases auf demselben normalisierten Host kollidieren deterministisch; unterschiedliche Hostbezeichner bleiben getrennt. Akquise, Inspektion, Erneuerung, Freigabe, Ablauf und Reclaim besitzen dieselben Host-Semantiken wie andere exklusive Ressourcen und sind durch Tests gebunden.",
+      "assertion": "Jede normalisierte Host-Lease bewahrt den Bureau-Claim-Modus und bei Kapazitätsclaims den angeforderten Betrag. Konflikte auf demselben Host folgen deterministisch den kanonischen Bureau-Semantiken: read/read bleibt kompatibel, capacity wird gegen die deklarierte Hostkapazität bilanziert und exklusive beziehungsweise schreibende Claims kollidieren entsprechend legacy.modes_conflict; unterschiedliche Hostbezeichner bleiben getrennt. Akquise, Inspektion, Erneuerung, Freigabe, Ablauf und Reclaim erhalten Modus und Betrag unverändert und sind durch Tests gebunden.",
       "evidence_type": "object",
       "id": "host-conflict-semantics"
     },

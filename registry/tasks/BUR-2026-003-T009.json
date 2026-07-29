@@ -3,7 +3,7 @@
   "id": "BUR-2026-003-T009",
   "initiative": "BUR-2026-003",
   "title": "Wire runtime mutation approval enforcement",
-  "state": "planned",
+  "state": "ready",
   "priority": {
     "lane": "later",
     "rank": 90

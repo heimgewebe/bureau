@@ -1464,14 +1464,13 @@ def _coordinated_grabowski_resource_keys(
             raise legacy.StateError(
                 f"open PR nonconflict scope differs from exact Grabowski paths for {resource_id}"
             )
+        expected_broad_key = f"repo:{repository}"
         broad_key = resource.grabowski_key
-        if broad_key:
-            expected_broad_key = f"repo:{repository}"
-            if broad_key != expected_broad_key:
-                raise legacy.StateError(
-                    f"open PR nonconflict repository lease differs for {resource_id}"
-                )
-            keys.discard(broad_key)
+        if broad_key is not None and broad_key != expected_broad_key:
+            raise legacy.StateError(
+                f"open PR nonconflict repository lease differs for {resource_id}"
+            )
+        keys.discard(expected_broad_key)
     return keys
 
 

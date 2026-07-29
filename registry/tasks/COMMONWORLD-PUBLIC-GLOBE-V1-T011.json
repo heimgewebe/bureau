@@ -85,11 +85,18 @@
           "Analyze (python)",
           "Analyze (javascript-typescript)"
         ],
-        "merge_checks_result": "PASS"
+        "merge_checks_result": "PASS",
+        "main_validation_run_id": 30278619875,
+        "main_validation_event": "push",
+        "main_validation_head_sha": "22cbeec39197fdfd8aa13a554aaab57bbc01e27c",
+        "main_validation_conclusion": "PASS",
+        "main_validation_log_sha256": "1cbb712e829234649462963eff30297648a58a2e846d92ab2fabae951dc21ac9",
+        "main_validation_log_bytes": 162884,
+        "main_validation_node20_deprecation_annotation_absent": true
       },
       "acceptance": {
         "official-actions": "PASS; both tracked workflows use the current official v7 Node-24-native action majors.",
-        "warning-removed": "PASS; the exact PR-head validation log contains no Node.js 20 deprecation annotation.",
+        "warning-removed": "PASS; exact pull-request and main validation logs contain no Node.js 20 deprecation annotation.",
         "behavior-preserved": "PASS; deterministic validation and full browser smoke passed on the PR head, and build, deploy and exact Pages deployment verification passed on the merge commit."
       },
       "explicit_nonclaims": [
@@ -97,7 +104,7 @@
         "Future CI or deployment health.",
         "Product behavior outside the recorded validation and browser-smoke evidence."
       ],
-      "task_sha256": "35006e8000349c5bac95c8903f0e3a3838d69f3dec52c22fd56e495494bc3262",
+      "task_sha256": "8eb9d9775296ac1a0e485f90bfa476de2dc155984f0f5a3a5ae6d25629b509d4",
       "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4"
     },
     "registry_truth": {
@@ -136,6 +143,19 @@
           "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T011",
           "repository": "heimgewebe/commonworld",
           "merge_commit": "22cbeec39197fdfd8aa13a554aaab57bbc01e27c",
+          "verdict": "pass"
+        },
+        {
+          "kind": "github_actions_run",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T011",
+          "repository": "heimgewebe/commonworld",
+          "workflow": "validate",
+          "event": "push",
+          "workflow_run_id": 30278619875,
+          "head_sha": "22cbeec39197fdfd8aa13a554aaab57bbc01e27c",
+          "log_sha256": "1cbb712e829234649462963eff30297648a58a2e846d92ab2fabae951dc21ac9",
+          "log_bytes": 162884,
+          "node20_deprecation_annotation_absent": true,
           "verdict": "pass"
         }
       ]

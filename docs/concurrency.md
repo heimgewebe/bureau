@@ -54,3 +54,34 @@ The reviewed plan is still not a substitute for live coordination. Apply require
 worktree-admin effect gate and a separate current check that no foreign exact path lease covers a
 candidate. This preserves Bureau's always-open object/file lease model while serializing only the
 actual linked-worktree administration effect.
+
+## Open-PR path nonconflict
+
+An open pull request remains a repository-wide write blocker unless both sides of a narrower
+comparison are complete and immutable. Bureau observes the pull-request repository, number, base
+and head object IDs, every paginated changed-file record and both the old and new path of a rename.
+It binds the canonical path set and full file inventory to deterministic SHA-256 digests. API
+errors, invalid object IDs, malformed pagination, the configured file cap, unsafe paths or any
+inconsistent digest keep the repository blocked.
+
+A task can request a narrower comparison only through its explicit
+`execution.grabowski_resources`. Every contributing `path:` resource must be absolute, canonical
+and beneath the exact `execution.working_repository`; Bureau projects it to a repository-relative
+POSIX path. A broad repository resource, a missing path set, the repository root, traversal, an
+outside path or an ambiguous repository binding is classified as `scope-required` and does not
+weaken the existing blocker. Titles, descriptions, claim names and diff heuristics never create
+write authority.
+
+Path comparison is segment-based. Equal paths and parent/child relationships conflict; similar
+strings in different segments, such as `foo` and `foobar`, are disjoint. The shared projection uses
+four stable classifications: `repository-blocked`, `scope-required`, `scope-conflict` and
+`scope-proven-disjoint`. Missing, multiple, terminal or excepted PR task bindings remain visible as
+separate governance findings. They do not by themselves turn a complete disjoint path proof into a
+repository conflict, but they still establish neither merge readiness nor task correctness.
+
+A successful coordinated claim stores the complete nonconflict assessment inside the existing
+operator-approval object of the exact claim intent. It is therefore covered by the intent digest.
+`claim-commit` observes all open PRs again and requires byte-equivalent assessment data. Any change
+to the PR set, base or head object ID, changed paths, completeness state or task path scope blocks
+before Bureau writes a run. A projection or a disjointness proof does not authorize PR mutation,
+merge, deployment, work outside the declared paths or automatic repair of task bindings.

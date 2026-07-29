@@ -7,13 +7,12 @@
     "DOCMETA-FRESHNESS-001",
     "DOMAIN-PG-001",
     "WELTGEWEBE-OS-001",
-    "WELTGEWEBE-OS-006",
     "WELTGEWEBE-OS-007",
     "WELTGEWEBE-OS-008",
     "WELTGEWEBE-OS-009",
     "WELTGEWEBE-OS-010"
   ],
-  "commit_sha": "d68ebc52d89419177474b88befa2b7f2cd6d69c1",
+  "commit_sha": "e7192b6c01d49a6fdaa5f3c8a7601f1c49f4f77e",
   "curation": "manual_phase2_seed",
   "does_not_establish": [
     "bureau_task_materialization",
@@ -2911,14 +2910,14 @@
       "acceptance_count": 4,
       "area": "infra",
       "effort": "XL",
-      "evidence_count": 2,
+      "evidence_count": 6,
       "id": "WELTGEWEBE-OS-006",
       "link_counts": {
-        "docs": 2,
+        "docs": 4,
         "issues": 0,
         "prs": 0
       },
-      "missing_evidence_count": 1,
+      "missing_evidence_count": 0,
       "owner": "infra",
       "priority": "medium",
       "risk": "high",
@@ -2933,31 +2932,35 @@
         "effort": "XL",
         "evidence": [
           "docs/adr/ADR-0010__kubernetes-kanonische-plattform.md",
-          "architecture/weltgewebe-os.md"
+          "platform/README.md",
+          "docs/reports/kubernetes-platform-foundation-status.md",
+          "scripts/platform/validate_platform.py",
+          "scripts/platform/kind_reference.py",
+          ".github/workflows/kubernetes-platform-proof.yml"
         ],
         "id": "WELTGEWEBE-OS-006",
         "links": {
           "docs": [
             "docs/adr/ADR-0010__kubernetes-kanonische-plattform.md",
+            "docs/reports/kubernetes-platform-foundation-status.md",
+            "platform/README.md",
             "docs/blueprints/weltgewebe-os-masterplan.md"
           ],
           "issues": [],
           "prs": []
         },
-        "missing_evidence": [
-          "Kanonische platform-Struktur, lokale Clusterreferenz, Flux-, Gateway-, Netzwerk-, Secret-, Policy- und Telemetriebeweise"
-        ],
+        "missing_evidence": [],
         "owner": "infra",
         "priority": "medium",
         "risk": "high",
-        "status": "open",
+        "status": "done",
         "title": "Kubernetes- und GitOps-Grundlage reproduzierbar aufbauen",
-        "updated_at": "2026-07-16"
+        "updated_at": "2026-07-29"
       },
-      "source_task_sha256": "5278bef9eac3d87b092396d51d28622458415a97954fdd93962a2d992a0439b6",
-      "status": "open",
+      "source_task_sha256": "0b4d534918d3594c9b73bb0f0260c0ef4d901bc01de0a09703ca6a255d499f6c",
+      "status": "done",
       "title": "Kubernetes- und GitOps-Grundlage reproduzierbar aufbauen",
-      "updated_at": "2026-07-16"
+      "updated_at": "2026-07-29"
     },
     {
       "acceptance_count": 3,
@@ -3015,10 +3018,10 @@
       "acceptance_count": 4,
       "area": "infra",
       "effort": "XL",
-      "evidence_count": 1,
+      "evidence_count": 5,
       "id": "WELTGEWEBE-OS-008",
       "link_counts": {
-        "docs": 2,
+        "docs": 4,
         "issues": 0,
         "prs": 0
       },
@@ -3036,31 +3039,37 @@
         "area": "infra",
         "effort": "XL",
         "evidence": [
-          "docs/blueprints/weltgewebe-os-masterplan.md"
+          "docs/adr/ADR-0013__ha-referenzzelle-und-wiederherstellung.md",
+          "docs/runbooks/kubernetes-ha-recovery-proof.md",
+          "docs/reports/kubernetes-platform-foundation-status.md",
+          "scripts/platform/ha_reference.py",
+          ".github/workflows/kubernetes-platform-proof.yml"
         ],
         "id": "WELTGEWEBE-OS-008",
         "links": {
           "docs": [
-            "docs/blueprints/weltgewebe-os-masterplan.md",
+            "docs/adr/ADR-0013__ha-referenzzelle-und-wiederherstellung.md",
+            "docs/runbooks/kubernetes-ha-recovery-proof.md",
+            "docs/reports/kubernetes-platform-foundation-status.md",
             "docs/reports/weltgewebe-os-foundation-status.md"
           ],
           "issues": [],
           "prs": []
         },
         "missing_evidence": [
-          "Fehlerdomänen, repliziertes PostgreSQL und JetStream, PITR, Blank-Cluster-Restore, gemessene RTO/RPO"
+          "HA-Proof über mindestens zwei physische Hosts oder vergleichbar unabhängige Fehlerdomänen; der aktuelle kind-Proof läuft vollständig auf einem einzelnen CI-Host"
         ],
         "owner": "infra",
         "priority": "medium",
         "risk": "high",
-        "status": "blocked",
+        "status": "partial",
         "title": "Hochverfügbare Referenzzelle mit Restore und Failover beweisen",
-        "updated_at": "2026-07-15"
+        "updated_at": "2026-07-29"
       },
-      "source_task_sha256": "8b2e9a16cbe1c0974d75e2ee61602e9d403aa2c689f42a8cab456811938cc21d",
-      "status": "blocked",
+      "source_task_sha256": "8bf8e599a346e215f1eeff05f89cbbd65081260fd3ea7f20a05bd72f8a3be080",
+      "status": "partial",
       "title": "Hochverfügbare Referenzzelle mit Restore und Failover beweisen",
-      "updated_at": "2026-07-15"
+      "updated_at": "2026-07-29"
     },
     {
       "acceptance_count": 3,
@@ -3167,7 +3176,7 @@
     }
   ],
   "index_path": "docs/tasks/index.json",
-  "index_sha256": "fcc43787086ec5b6c21c408abe8308db9f3a59a523bc637ede242c6880652fc4",
+  "index_sha256": "d30bc4a47ab211d2f810da0359b9cbd3e7a5864b44aa6b889fc8224ec4fc5e2f",
   "ref": "HEAD",
   "repository": "heimgewebe/weltgewebe",
   "schema_path": "docs/tasks/schema.json",
@@ -3183,12 +3192,12 @@
   "source_schema_version": "1.0.0",
   "source_system": "weltgewebe-task-control",
   "status_counts": {
-    "blocked": 6,
+    "blocked": 5,
     "contradicted": 0,
-    "done": 43,
+    "done": 44,
     "obsolete": 0,
-    "open": 1,
-    "partial": 5
+    "open": 0,
+    "partial": 6
   },
   "task_count": 55
 }

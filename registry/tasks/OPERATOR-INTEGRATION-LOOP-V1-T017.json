@@ -1,0 +1,153 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der Grabowski-Ressourcenvertrag akzeptiert nur kanonisch normalisierte host-Schlüssel mit nichtleerem, begrenztem Hostbezeichner. Unbekannte Ressourcentypen, leere Werte, NUL, übergroße oder mehrdeutige Hostbezeichner bleiben fail-closed.",
+      "evidence_type": "object",
+      "id": "host-resource-contract"
+    },
+    {
+      "assertion": "Zwei aktive Leases auf demselben normalisierten Host kollidieren deterministisch; unterschiedliche Hostbezeichner bleiben getrennt. Akquise, Inspektion, Erneuerung, Freigabe, Ablauf und Reclaim besitzen dieselben Host-Semantiken wie andere exklusive Ressourcen und sind durch Tests gebunden.",
+      "evidence_type": "object",
+      "id": "host-conflict-semantics"
+    },
+    {
+      "assertion": "Der koordinierte Bureau-Pickup kann gemischte Repo- und Host-Ressourcen atomar akquirieren. Scheitert eine spätere Gruppe oder der Claim-Commit sicher vor Wirkung, werden ausschließlich die zuvor selbst erworbenen Leases kompensiert; fremde oder driftende Leases bleiben unberührt.",
+      "evidence_type": "object",
+      "id": "pickup-compensation"
+    },
+    {
+      "assertion": "AUDIO-CONTROL-PLANE-V1-T001 wird gegen einen frischen kanonischen Registry-Snapshot erfolgreich claimbar. Ein identischer Retry konvergiert, Status und Terminal-Readback sind owner- und taskgebunden, und die Lease-Freigabe ist idempotent. Der Beleg behauptet weder Hostmutation noch Audio-Laufzeitwirkung.",
+      "evidence_type": "object",
+      "id": "audio-t001-live-proof"
+    },
+    {
+      "assertion": "Bestehende repo-, path-, port-, service-, browser-profile-, display-, component-, process-, deployment-, migration- und gate-Ressourcen behalten Normalisierung, Konfliktverhalten und persistierte Lesbarkeit. Eine Migration bestehender Lease-Datensätze ist entweder nachweislich unnötig oder explizit getestet und rückrollbar.",
+      "evidence_type": "object",
+      "id": "backward-compatibility"
+    },
+    {
+      "assertion": "Die Umsetzung verändert keine offenen Grabowski-PRs #505, #506, #507 oder #509 und keine zugehörigen Branches, Worktrees, Leases oder Prozesse. Die exakten Schreibpfade bleiben auf src/grabowski_resources.py, tests/test_resources.py und tests/test_bureau_pickup.py begrenzt, solange eine Erweiterung nicht separat revisionsgebunden begründet und konfliktgeprüft wird.",
+      "evidence_type": "boolean",
+      "id": "foreign-work-boundary"
+    },
+    {
+      "assertion": "Fokussierte Ressourcen- und Pickup-Tests, vollständiges make validate, git diff --check und ein head- sowie diffgebundener Self-Review bestehen. Vor einem Merge wird der vollständige nichttriviale PR-Diff als UTF-8-Textartefakt ausgeliefert und die CI auf dem exakten Head grün nachgewiesen.",
+      "evidence_type": "object",
+      "id": "revision-bound-validation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-INTEGRATION-LOOP-V1-T016"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 29. Juli 2026 die autonome Umsetzung konfliktfreier Bureau-Aufgaben über Grabowski ausdrücklich beauftragt. Diese Reparatur bleibt auf Repositorycode und Tests begrenzt; sie autorisiert weder Host-, Service- noch Deploymentwirkungen und darf keine fremden PRs, Branches, Worktrees, Leases, Prozesse oder Tasks verändern.",
+      "required_level": "operator"
+    },
+    "baseline_commit": "45f9c26064dd929f89be5aa74f9fa4e0fbe07e28",
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_resources.py",
+      "path:/home/alex/repos/grabowski/tests/test_resources.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_pickup.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Repariere den Vertrag zwischen Bureau-Claim-Intent und Grabowski-Lease-Store so, dass kanonische Host-Ressourcen wie host:heim-pc vollständig, konfliktfest und fail-closed koordiniert werden können, ohne aus einem Claim irgendeine Hostwirkung abzuleiten oder eine zweite Task-, Queue- oder Lease-Wahrheit einzuführen.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T017",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation",
+      "task_readiness",
+      "queue_truth",
+      "claim_authority",
+      "host_effect_authority",
+      "merge_readiness",
+      "future PR scope stability"
+    ],
+    "observed_failure": {
+      "audio_task_file_sha256_at_proposal": "e2e374252266fb3394b2239ba429a50b41b86618bb0b1d4c83cea8e7c9c176c5",
+      "audio_task_id": "AUDIO-CONTROL-PLANE-V1-T001",
+      "audio_task_sha256": "6b494690b638106e453df44d137d394d3e513ce560e55afd883193ce68b59b34",
+      "cause": "Claim-Intent enthält host:heim-pc; src/grabowski_resources.py RESOURCE_KINDS enthält host nicht.",
+      "grabowski_source_commit": "45f9c26064dd929f89be5aa74f9fa4e0fbe07e28",
+      "observed_bureau_runtime_commit": "d5a5805a19e5f536fa5a7ba4b30456c010d89ea2",
+      "pickup_error": "lease-acquisition-failed",
+      "proposal_registry_commit": "94cdae6522450bf18524c3dc5c1380c0fa9a9ab1",
+      "publishing_task_file_sha256": "9446bae8e9894c494155f7fa05b7576c9e1fe92e8a83b5be43e37df8d8e60d0d",
+      "registry_deltas_since_observation": [
+        "registry/queue.json",
+        "registry/tasks/COMMONWORLD-PUBLIC-GLOBE-V1-T033.json",
+        "registry/tasks/GRABOWSKI-OPERATOR-SURFACE-V1-T016.json"
+      ]
+    },
+    "open_pr_scope_check": {
+      "checked_paths": [
+        "src/grabowski_resources.py",
+        "tests/test_resources.py",
+        "tests/test_bureau_pickup.py"
+      ],
+      "overlap_paths": [],
+      "pull_requests": [
+        505,
+        506,
+        507,
+        509
+      ],
+      "repository": "heimgewebe/grabowski"
+    },
+    "source": "live-operator-audit-2026-07-29-audio-t001-host-lease-gap",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-21336c703cffc71abb0ddbe8",
+      "event_id": 1656,
+      "event_created_at": "2026-07-29T13:49:40.680076Z",
+      "request_sha256": "df960128719ef2482eddb3ce811925578b5cf3bc81c485d71ba7f7a7bbe43cd6",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-operator-audit",
+        "locator": "AUDIO-CONTROL-PLANE-V1-T001@bureau:d5a5805a19e5; grabowski:45f9c26064dd; src/grabowski_bureau_pickup.py:_acquire_groups; src/grabowski_resources.py:RESOURCE_KINDS",
+        "observed_at": "2026-07-29T13:49:40.663901Z",
+        "sha256": "6b494690b638106e453df44d137d394d3e513ce560e55afd883193ce68b59b34"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 17
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "bureau",
+    "grabowski",
+    "git",
+    "github",
+    "testing",
+    "schema-validation",
+    "concurrency-analysis",
+    "security"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich die host-Ressourcennormalisierung und ihre Tests. Ohne die Änderung bleiben host-Schlüssel wie bisher fail-closed unclaimbar; vorhandene Repo-, Pfad-, Service-, Task-, Queue-, Audit- und Lease-Wahrheit wird weder umgeschrieben noch gelöscht."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Host-Ressourcen im koordinierten Bureau-Pickup leasbar machen"
+}

@@ -64,6 +64,33 @@
       "permission to weaken or remove final deployment gates",
       "queue truth or dispatch authority"
     ],
+    "implementation_evidence": {
+      "base_sha": "9b74347171bc9046af447374a61d8a0fcdc9cece",
+      "changed_paths": [
+        "tools/deploy_runtime.py",
+        "tools/run_scheduled_deploy.py",
+        "tests/test_deploy_runtime.py",
+        "tests/test_self_deploy.py"
+      ],
+      "current_main_sha": "84411199dd8a5bb516e8e62fcb56245784f0f31a",
+      "deployed_runtime_sha": "84411199dd8a5bb516e8e62fcb56245784f0f31a",
+      "implementation_head": "df34824bb1bde53b3e52455b1bf3c4d425ab4f77",
+      "merge_commit": "f6b6f880ed8de51c9415833a10dfc9eb1cc66da4",
+      "merged_at": "2026-07-25T06:59:00Z",
+      "post_merge_hardening_commits": [
+        "da73665041ae8c8bac0c00b4d93c55d3a8250394",
+        "2ce670ac80b05234a74c4356d1c66d8673a05c37"
+      ],
+      "pull_request": 456,
+      "repository": "heimgewebe/grabowski",
+      "validation": [
+        "243 focused deployment tests passed",
+        "make validate: 3451 tests passed with 6 expected skips",
+        "GitHub validate (3.10): success",
+        "GitHub validate (3.12): success",
+        "GitHub CodeQL actions/python: success"
+      ]
+    },
     "observed_evidence": {
       "first_terminal_blocker": "deployment-lock-busy-after-validation",
       "merge_commit": "6c9bbeff02ab487771b5e0d6834b7c527a74a279",
@@ -73,14 +100,17 @@
       "successful_release": "6c9bbeff02ab-srcset2cbdd7a4db3e-locke6664d600b6c-contract22ef10c4985b-attempt1",
       "validation_tests": 3404
     },
-    "registered_at": "2026-07-25T08:20:00+02:00",
-    "source": "Produktiver Rollout von heimgewebe/grabowski#453: ein Versuch blockierte nach vollständiger Validierung am Deploy-Lock, ein weiterer nach vollständiger Validierung am Dispatcher-Drain; der dritte Versuch lief nach belegtem stillen Drain-Fenster erfolgreich durch.",
     "operator_intake": {
-      "schema_version": 1,
       "candidate_id": "candidate-aa557160d97ab4161866d0cd",
-      "event_id": 1149,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
       "event_created_at": "2026-07-25T02:47:40.306487Z",
+      "event_id": 1149,
       "request_sha256": "b777c368b2f87ecd7c987658d59ae85c6945d84d079ed5041c9b9b55cba2fae2",
+      "schema_version": 1,
       "source": {
         "does_not_establish": [],
         "freshness": "digest-bound",
@@ -88,13 +118,32 @@
         "locator": "/home/alex/.local/state/grabowski/evidence/pr453-runtime-deploy-contention-preflight-v1.json",
         "observed_at": "2026-07-25T02:39:42Z",
         "sha256": "6ef21f99371d51d44d079d45dc4a14f7994ace09088ea5f574316bfe219aad6f"
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
-    }
+      }
+    },
+    "outcome": "Bereits vollständig in Grabowski PR #456 implementiert und auf aktuellem Main revisionsgebunden bestätigt: der read-only Deployment-Konkurrenz-Preflight prüft Lock und Dispatcher vor der Vollvalidierung, deferiert strukturiert, behandelt Drift und fehlende Evidenz fail-closed und ersetzt keine finalen Deployment-Gates.",
+    "registered_at": "2026-07-25T08:20:00+02:00",
+    "source": "Produktiver Rollout von heimgewebe/grabowski#453: ein Versuch blockierte nach vollständiger Validierung am Deploy-Lock, ein weiterer nach vollständiger Validierung am Dispatcher-Drain; der dritte Versuch lief nach belegtem stillen Drain-Fenster erfolgreich durch.",
+    "verification": {
+      "current_main_sha": "84411199dd8a5bb516e8e62fcb56245784f0f31a",
+      "deployed_runtime_sha": "84411199dd8a5bb516e8e62fcb56245784f0f31a",
+      "implementation_sha": "df34824bb1bde53b3e52455b1bf3c4d425ab4f77",
+      "merge_commit_sha": "f6b6f880ed8de51c9415833a10dfc9eb1cc66da4",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "source": "merged_pull_request_ci_current_main_and_deployed_runtime_readback",
+      "source_ref": "github-pr:heimgewebe/grabowski#456",
+      "task_sha256": "198f01619e1d551c646171594e1d989b82905cd7e9678645009d950fa0a90f7f",
+      "verification_note": "All seven acceptance criteria are present in the merged implementation and remain observable on the exact current deployed Main. This registry change performs no Grabowski code or runtime mutation."
+    },
+    "verified_acceptance": {
+      "early-dispatcher-probe": "observe_tunnel_dispatcher_contention reads bounded stable metrics samples and classifies queue, workers and counters before validation.",
+      "early-lock-probe": "observe_deployment_lock_availability reads the canonical lock without creating or rewriting it; deployment_contention_preflight returns defer and validation_started=false when unavailable.",
+      "evidence-and-timing": "The preflight binds expected head, source identity, observation time, lock and dispatcher evidence, decision and validation_started in a SHA-256 evidence object.",
+      "final-gates-preserved": "The early receipt explicitly does not establish future freedom from contention; deploy-apply retains final lock, drain and mutation gates.",
+      "no-foreign-effects": "The implementation contains no stop, signal, force, bypass, deletion or foreign-work takeover path.",
+      "tests": "Current tests cover available and held locks, idle, busy, drifted and unobservable dispatchers, blocked validation start, bounded retries and preserved final gates.",
+      "unknown-fail-closed": "Missing metrics, generation drift and counter regression are explicit unknown states and cannot establish idle."
+    },
+    "verified_at": "2026-07-29T09:24:38Z"
   },
   "priority": {
     "lane": "next",
@@ -109,6 +158,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Deployment-Konkurrenz vor teurer Vollvalidierung read-only erkennen"
 }

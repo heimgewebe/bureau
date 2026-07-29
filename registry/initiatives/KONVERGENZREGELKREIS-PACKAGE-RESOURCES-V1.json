@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "KONVERGENZREGELKREIS-PACKAGE-RESOURCES-V1",
   "title": "Konvergenzregelkreis-Vertragsressourcen paketintern binden",
-  "state": "active",
-  "commitment": "later",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Den Installations- und Ressourcenvertrag des Python-Pakets regelkreis so migrieren, dass Protokolle und Profile CWD-unabhängig paketintern aufgelöst werden, ohne die bestehende v1/v2-Auswertungssemantik oder installierte Consumer stillschweigend zu brechen.",
   "completion": [
     "Ein installiertes Wheel findet Protokolle und Profile unabhängig vom Arbeitsverzeichnis über einen paketgebundenen Ressourcenvertrag.",
@@ -25,6 +25,15 @@
       "dass importlib.resources ohne Layoutmigration drop-in-kompatibel ist",
       "dass PR #4 diese Packaging-Migration umgesetzt hat",
       "eine Runtime-Deploymentpflicht"
-    ]
+    ],
+    "completed_at": "2026-07-29T19:00:36.125049Z",
+    "completion_reason": "The initiative has exactly one task; KONVERGENZREGELKREIS-PACKAGE-RESOURCES-V1-T001 is implementation-complete and revisionsgebunden verified.",
+    "completion_evidence": {
+      "task_id": "KONVERGENZREGELKREIS-PACKAGE-RESOURCES-V1-T001",
+      "implementation_pr": "heimgewebe/konvergenzregelkreis#7",
+      "implementation_head": "bad67d0ee0db040ff5d9be92323470dd27f06c43",
+      "implementation_merge_commit": "b60d5db1fa24235eb52cdaa570a912399052120e",
+      "source_diff_sha256": "61c253b04cf65fd77222d991299483389b5d7cbbb449b3b2ebdac6b471eb4fde"
+    }
   }
 }

@@ -30,7 +30,7 @@
     {
       "isolation": "worktree",
       "mode": "write",
-      "resource": "component.grabowski.core"
+      "resource": "repo.grabowski"
     },
     {
       "isolation": "none",

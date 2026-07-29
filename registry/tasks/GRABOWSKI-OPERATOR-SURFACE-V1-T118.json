@@ -1,0 +1,118 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Outcome darf nur aus einem terminalen, integren und quellgebundenen Operator-Abschlussreceipt entstehen; laufende, unklare oder nur lokal behauptete Arbeit wird fail-closed abgewiesen.",
+      "evidence_type": "object",
+      "id": "terminal-closeout-binding",
+      "verifier": "Receipt-, Lifecycle- und Negativtests"
+    },
+    {
+      "assertion": "Test-Fixtures, reine Read-Probes, interne Subjobs und Wiederholungen ohne eigenständige Nutzerwirkung werden nicht als produktive Outcomes gezählt; der Filter ist explizit, deterministisch und im Ergebnis sichtbar.",
+      "evidence_type": "object",
+      "id": "meaningful-operation-filter",
+      "verifier": "Klassifikationsmatrix und Replay-Tests"
+    },
+    {
+      "assertion": "Der Adapter erfasst nur Empfehlung, Operationklasse, Risikostufe, empfohlenen und tatsächlichen Weg, First-Pass-Erfolg, unveränderte Retries, ambige Mutationsausgänge, Toolzahl, Laufzeit und konkrete Evidenz- oder Friction-Referenzen; freie Prompts, Secrets und Rohlogs bleiben ausgeschlossen.",
+      "evidence_type": "object",
+      "id": "bounded-outcome-shape",
+      "verifier": "Schema-, Datenschutz- und Größenlimit-Tests"
+    },
+    {
+      "assertion": "Derselbe Abschluss erzeugt höchstens ein hashgebundenes Outcome; Wiederholung liefert denselben Datensatz, während abweichende Evidenz einen Konflikt statt einer stillen Überschreibung erzeugt.",
+      "evidence_type": "object",
+      "id": "idempotent-closeout-recording",
+      "verifier": "Idempotenz-, Drift- und Parallelitätstests"
+    },
+    {
+      "assertion": "automatic_live_routing_enabled bleibt false; frische Outcomes dürfen nur Schattenauswertung und zeitverfallene Kandidaten speisen und niemals Review-, Merge-, Deployment-, Recovery-, Secret- oder Privilegiengates verändern.",
+      "evidence_type": "object",
+      "id": "shadow-only-boundary",
+      "verifier": "Policy- und Circuit-Breaker-Negativtests"
+    },
+    {
+      "assertion": "Ein begrenzter Live-Pilot zeichnet mehrere unterschiedliche echte Operator-Abschlüsse auf, weist active_after_decay größer null nach und zeigt zugleich, dass keine automatische Promotion oder Taskerzeugung erfolgt.",
+      "evidence_type": "object",
+      "id": "bounded-live-pilot",
+      "verifier": "Live-Receipt, Governor-Readback und Audit-Trace"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T031"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Add bounded closeout outcome capture while keeping all routing promotion disabled and all safety gates immutable.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den bestehenden proposal-only Execution Governor mit einer kleinen opt-in Abschlussbrücke versorgen, die nur an terminalen, evidenzgebundenen Operator-Abschlusspunkten frische predicted-versus-actual Outcomes erfasst, ohne Test- und Subjob-Rauschen zu lernen oder automatische Live-Routing-Autorität einzuführen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T118",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "operator productivity",
+      "automatic task creation authority",
+      "automatic policy mutation authority",
+      "route superiority",
+      "merge or deployment permission",
+      "permission to weaken immutable safety boundaries"
+    ],
+    "live_basis": {
+      "active_after_decay": 0,
+      "automatic_live_routing_enabled": false,
+      "decay_seconds": 604800,
+      "expired_by_decay": 16,
+      "minimum_evidence": 5,
+      "summary_sha256": "5da484a0d326c30b13d8b79dc7afe36d6ea79f0252c8eb269feb293f696de209",
+      "valid_records_total": 16
+    },
+    "source": "Live operator optimization report and execution governor summary on 2026-07-28",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-fcfc1d25a3c76e6cf99b08ef",
+      "event_id": 1533,
+      "event_created_at": "2026-07-28T10:30:25.524880Z",
+      "request_sha256": "978c1997aa2194e57d3a4950f107feaf98f6f1fe876d32b08973009388d45dc6",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "execution_governor_summary",
+        "locator": "grabowski-execution-governor-summary:limit=200+registry-main:5e3454b2cf1a2d8485fc4484296a867842f1c0a8",
+        "observed_at": "2026-07-28T10:27:00Z",
+        "sha256": "5da484a0d326c30b13d8b79dc7afe36d6ea79f0252c8eb269feb293f696de209"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 35
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Frische Execution-Outcomes an Operator-Abschlüssen erfassen"
+}

@@ -247,3 +247,28 @@ def test_task_schema_action_classes_match_approval_runtime() -> None:
     )
     runtime = set(approval.READ_ONLY_ACTIONS) | set(approval.APPROVAL_RULES)
     assert declared == runtime
+
+
+def test_declared_task_approval_validation_matches_runtime_rules() -> None:
+    valid = {
+        "execution": {
+            "approval": {
+                "action_class": "runtime_mutation",
+                "required_level": "break_glass",
+            }
+        }
+    }
+    assert approval.validate_declared_task_approval(valid) == []
+
+    invalid = {
+        "execution": {
+            "approval": {
+                "action_class": "repository_mutation",
+                "required_level": "reviewed_plan",
+            }
+        }
+    }
+    assert approval.validate_declared_task_approval(invalid) == [
+        "approval action_class repository_mutation requires required_level operator, "
+        "got reviewed_plan"
+    ]

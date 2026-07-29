@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T020",
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "title": "Patch-Sandbox-Prozessbudget vom bestehenden Hostbestand entkoppeln",
+  "state": "planned",
+  "goal": "Härte den RepoGround Patch-Evaluation-Sidecar so, dass sein begrenztes Prozessbudget weiterhin fail-closed wirkt, aber nicht als absoluter RLIMIT_NPROC-Wert unterhalb des bereits bestehenden Prozessbestands des realen Operator-Nutzers gesetzt wird. Ein belasteter Host mit mehr als 256 bestehenden Nutzerprozessen darf die isolierte Bubblewrap-Ausführung nicht allein deshalb mit EAGAIN blockieren.",
+  "priority": {
+    "lane": "later",
+    "rank": 95
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "exclusive",
+      "isolation": "worktree"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "python"
+  ],
+  "depends_on": [],
+  "acceptance": [
+    {
+      "id": "live-failure-reproduced",
+      "assertion": "A revisions-bound test or proof reproduces the current failure mode where the real user's existing process count is greater than the absolute `_MAX_COMMAND_PROCESSES` limit and Bubblewrap exits before the payload with `Resource temporarily unavailable`.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "incremental-process-budget",
+      "assertion": "The sandbox retains an explicit bounded incremental process budget for the evaluated payload without setting an absolute real-UID RLIMIT_NPROC below the already existing host process count.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "fail-closed-isolation-preserved",
+      "assertion": "Bubblewrap PID, IPC, UTS and network isolation, filesystem restrictions, command timeout, output bounds and the remaining prlimit controls stay fail-closed; the fix does not broaden payload capabilities or silently disable process limiting.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "host-load-regression",
+      "assertion": "Regression coverage models a host process baseline above the payload budget and proves that a bounded sandbox command can start while a process-fork storm is still rejected within the intended incremental budget.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "fresh-runner-and-loaded-host",
+      "assertion": "Targeted Sidecar tests, the full RepoGround test suite, CodeQL and CI are green, and a real loaded operator-host canary succeeds with before/after process-count and limit evidence.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "proof-and-boundaries",
+      "assertion": "A proof records the selected Linux RLIMIT/user-namespace semantics, residual risks and why the change fixes host coupling without claiming a global per-command kernel quota that Linux does not provide.",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "source_candidate": "candidate-42d6e66788f4de185c119598",
+    "source_event": 1589,
+    "source_commit": "5318daaad4eceed60cd752eacd057ec74bbd9e49",
+    "source_path": "tools/patch_evaluation_sidecar_hardening.py",
+    "source_sha256": "e4123294626f177401765980b1c441d2ebcfba2160ef992a4a643c479cc34d44",
+    "observed_failure": {
+      "observed_at": "2026-07-28",
+      "host": "heim-pc",
+      "real_user_process_count": 270,
+      "configured_absolute_nproc_limit": 256,
+      "failing_tests": 33,
+      "passing_tests": 5131,
+      "error": "bwrap: Creating new namespace failed: Resource temporarily unavailable",
+      "fresh_runner_counterevidence": "GitHub pytest-full on RepoGround PR #1117 passed after installing the same sandbox runtime, isolating the failure to the loaded host contract rather than T019."
+    },
+    "operator_intake": {
+      "candidate_id": "candidate-42d6e66788f4de185c119598",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-28T20:26:09.613525Z",
+      "event_id": 1589,
+      "request_sha256": "28eeaf55eccb72012edb5e5d0c0cf2680429e73359bf9ca7224740a377e5580a",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation",
+        "locator": "github:heimgewebe/repoground@5318daaad4eceed60cd752eacd057ec74bbd9e49:tools/patch_evaluation_sidecar_hardening.py#_limited_sandbox_argv",
+        "observed_at": "2026-07-28T20:26:09.597564Z",
+        "sha256": "e4123294626f177401765980b1c441d2ebcfba2160ef992a4a643c479cc34d44"
+      }
+    },
+    "reviewed_plan": {
+      "reviewer": "chatgpt",
+      "reviewed_at": "2026-07-28",
+      "scope": "task-definition-only",
+      "decision": "approved",
+      "basis": "The failure was reproduced twice on the loaded host, a direct Bubblewrap probe without the absolute nproc limit succeeded, the real-user process count exceeded the configured limit, and the same RepoGround head passed the full sandbox suite on a fresh GitHub runner. The task is separated from T019 and does not prescribe an unverified kernel-level solution."
+    },
+    "does_not_establish": [
+      "implementation_authorization",
+      "chosen_kernel_mechanism",
+      "task_completion",
+      "merge_readiness",
+      "permission_to_modify_foreign_dirty_checkouts"
+    ]
+  }
+}

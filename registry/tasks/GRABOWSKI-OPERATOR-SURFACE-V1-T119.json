@@ -1,0 +1,114 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Publisher und Reader akzeptieren im kanonischen Artefaktverzeichnis ausschließlich die schema- und receiptgebundenen verwalteten Dateien; Transportchunks, komprimierte Base64-Zwischenprodukte und Materialisierungsdateien werden außerhalb dieses Stores erzeugt.",
+      "id": "managed-store-contract"
+    },
+    {
+      "assertion": "Ein read-only Inventar klassifiziert vorhandene Zusatzdateien anhand Pfad, Dateityp, Eigentümer, Modus, Größe und SHA-256 und verwechselt gültiges Receipt sowie kanonischen Diff nicht mit Transportresten.",
+      "id": "safe-legacy-classification"
+    },
+    {
+      "assertion": "Altbestand wird nur über einen create-only, digestgebundenen Quarantäne- oder Cleanup-Plan verschoben; unbekannte, veränderte, verlinkte oder fremde Dateien blockieren geschlossen und es gibt keine alters- oder musterbasierte Blindlöschung.",
+      "id": "quarantine-plan"
+    },
+    {
+      "assertion": "Nach kontrollierter Reconciliation erzeugt grabowski_text_artifact_publish einen neuen echten git-diff.v1-Canary, der vollständig gelesen, materialisiert und gegen Größe sowie SHA-256 verifiziert wird.",
+      "id": "publisher-recovery-canary"
+    },
+    {
+      "assertion": "Store-Lock, Artefaktanzahl- und Gesamtgrößenbudgets bleiben erhalten; Quarantäne- und Publishpfad konkurrieren nicht ungeschützt und vorhandene gültige Evidenz wird nicht still verdrängt.",
+      "id": "bounded-concurrency-and-capacity"
+    },
+    {
+      "assertion": "Tests decken unmanaged Einträge, private Modi, Symlinks/Hardlinks, Hashdrift, konkurrierende Publikation und sichere Altbestandsbehandlung ab; erfolgreiche Wiederherstellung begründet weder Reviewkorrektheit noch Mergeautorität oder unbegrenzte Retention.",
+      "id": "regression-and-nonclaims"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T098"
+  ],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den kanonischen Textartefakt-Store so härten, dass Transport- und Materialisierungsnebenprodukte niemals im verwalteten Artefaktverzeichnis landen, vorhandene digestgebundene Altdateien ohne Verlust von Receipt oder Diff sicher quarantänisiert werden können und ein echter commitgebundener Diff-Export anschließend wieder funktioniert.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T119",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "deduplication": {
+      "does_not_duplicate": "T098 führte den kanonischen Export ein und T048 bindet ihn an Merge-Lieferung; keiner behandelt unmanaged Transportreste oder eine digestgebundene Altbestandsquarantäne.",
+      "reuses": [
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T098",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T048"
+      ]
+    },
+    "does_not_establish": [
+      "implementation",
+      "safe deletion authority",
+      "artifact corruption",
+      "merge readiness",
+      "future store health"
+    ],
+    "live_finding": {
+      "inventory_sha256": "5a5f5d89326eb42dee31242775c1c2a01cf49be7d576391bc7a9c21bfc066bd8",
+      "mutation_performed": false,
+      "observed_at": "2026-07-28T19:58:00Z",
+      "observed_transport_files": [
+        "artifact.chunk.00..12",
+        "artifact.txt.br.b64",
+        "artifact.txt.gz.b64",
+        "artifact.txt.xz.b64",
+        "artifact.xz.chunk.00..08"
+      ],
+      "publisher_error": "Text artifact directory contains unmanaged entries",
+      "source_path": "/home/alex/.local/state/grabowski/text-artifacts/48b3cdb033ae490f889fb3b090771a8a"
+    },
+    "registered_from_audit": "Live failure of grabowski_text_artifact_publish during Bureau PR #1137 delivery, 2026-07-28",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-8a1bb50d02f198e170cf4143",
+      "event_id": 1585,
+      "event_created_at": "2026-07-28T20:04:58.174679Z",
+      "request_sha256": "950d0c45411ea73ee36ba29178ae957f1fd704adf95bd72a6ffe43cd4c3018b3",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "local-runtime-observation",
+        "locator": "path:/home/alex/.local/state/grabowski/text-artifacts/48b3cdb033ae490f889fb3b090771a8a",
+        "observed_at": "2026-07-28T19:58:00Z",
+        "sha256": "5a5f5d89326eb42dee31242775c1c2a01cf49be7d576391bc7a9c21bfc066bd8"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 70
+  },
+  "required_capabilities": [
+    "grabowski",
+    "artifact-transfer",
+    "security",
+    "testing",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Textartefakt-Store gegen unmanaged Transportreste härten"
+}

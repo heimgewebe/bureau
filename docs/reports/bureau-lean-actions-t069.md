@@ -9,7 +9,7 @@ Gebundene Basis: `5e52293c5e70d03cf91a6f1b496b0c3f6e8794c8`
 | --- | --- | --- |
 | `.github/workflows/claude.yml` | nicht vorhanden; Entfernung bereits durch Commit `94b79ef` belegt | unverändert abwesend |
 | `.github/workflows/validate.yml` | SHA-256 `2e53a6682ee8427407bb93d47520897dfdf6ee6b6acea5a2a7c8fae4e5fe2ae9`; PR-gebundene Concurrency seit PR #1179 vorhanden | unverändert |
-| `.github/workflows/registry-registration-preflight.yml` | SHA-256 `8d954c04c66cdd114f2459a0a111833bff57402334ba9b3c5cf06ff8f3a11850` | SHA-256 `88f9e7a378b826a609f47235f9d6083515a1ff73aba255a2a68c79ecab563fac` |
+| `.github/workflows/registry-registration-preflight.yml` | SHA-256 `8d954c04c66cdd114f2459a0a111833bff57402334ba9b3c5cf06ff8f3a11850` | SHA-256 `2c45b27ff40accf810f8d2b1f612de2bc9f865ae17bf19ccca3e8fbfc0e32029` |
 | Required Checks | `validate (3.10)`, `validate (3.12)`, `registry-registration-preflight/freshness` | unverändert |
 
 Der registrierte Messzeitraum vom 28. Juli 2026, 06:35:31–12:45:59 UTC umfasste 100 Actions-Läufe, 18 vollständig übersprungene Claude-Läufe, 24 Validate-Läufe, 25 Registry-Preflight-Läufe, sieben offene PRs und 90 Registry-only-PRs im betrachteten Bestand. Diese Werte bleiben historische Beobachtungen und sind keine Kostenprognose.
@@ -21,6 +21,7 @@ Der registrierte Messzeitraum vom 28. Juli 2026, 06:35:31–12:45:59 UTC umfasst
 3. Die Main-Push-Revalidierung ermittelt vollständig und paginiert die offenen PRs sowie deren hinzugefügte oder umbenannte `registry/tasks/*.json`-Dateien.
 4. Im erfolgreichen Pfad wird `registry-registration-preflight/freshness` nur für tatsächliche Registrierungsallokationskandidaten neu erzeugt. Nichtkandidaten erhalten keinen neuen CheckRun und keine Registry-Allokationsprüfung.
 5. Fehlerhafte Dateiabfragen und Kandidaten ohne lesbare Head-Repository-Bindung erzeugen vor dem Abbruch einen fehlgeschlagenen Freshness-Check auf dem exakt bekannten PR-Head. Eine unvollständige Kandidatenermittlung markiert zusätzlich alle bereits eindeutig erkannten Kandidaten als fehlgeschlagen.
+6. Wird derselbe Head später erfolgreich als Nichtkandidat erkannt, wird nur der jüngste noch fehlgeschlagene CheckRun dieses Main-Discovery-Pfads auf Erfolg aktualisiert. Dadurch bleibt kein transienter Discovery-Fehler dauerhaft blockierend; für den Nichtkandidaten wird kein neuer CheckRun erzeugt.
 
 ## Fail-closed-Bindung
 

@@ -63,7 +63,7 @@ def test_main_push_discovery_errors_publish_blocking_checks_before_exit() -> Non
     )
     candidate_map = 'mapfile -t candidate_rows < "${candidate_rows_file}"'
     assert text.count("if ! publish_discovery_failure \\") == 3
-    assert text.count("blocking_publication_failed=1") == 3
+    assert text.count("blocking_publication_failed=1") == 4
     assert discovery_failure in text
     assert (
         "Registry candidate discovery was incomplete while checking PR #${pr_number}"
@@ -77,6 +77,30 @@ def test_main_push_discovery_errors_publish_blocking_checks_before_exit() -> Non
         < text.index(normal_publication)
     )
     assert 'if ! gh api "repos/${REPOSITORY}/pulls?state=open&per_page=100" --paginate' in text
+
+
+def test_main_push_clears_latest_transient_failure_for_recovered_noncandidate() -> None:
+    text = _workflow_text()
+
+    helper = "clear_discovery_failure()"
+    query = 'gh api -X GET "repos/${REPOSITORY}/commits/${sha}/check-runs"'
+    prefix = 'prefix="registry-freshness:${pr_number}:${sha}:"'
+    latest_only = "[.check_runs[] | select(.name == $name)] | max_by(.id)"
+    recovery_id = '"${latest_failure_id}" success'
+    recovery_title = '"Registry discovery recovered"'
+    noncandidate_call = (
+        'elif ! clear_discovery_failure "${pr_head_sha}" "${pr_number}"; then'
+    )
+
+    assert text.count(helper) == 1
+    assert query in text
+    assert prefix in text
+    assert latest_only in text
+    assert '.conclusion == "failure"' in text
+    assert recovery_id in text
+    assert recovery_title in text
+    assert noncandidate_call in text
+    assert text.index(helper) < text.index(noncandidate_call)
 
 
 def test_main_push_never_reuses_partial_task_content_after_fetch_failure() -> None:

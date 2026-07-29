@@ -182,6 +182,41 @@ jobs:
             fi
           }
 
+          clear_discovery_failure() {
+            local sha="$1"
+            local pr_number="$2"
+            local response latest_failure_id prefix
+            prefix="registry-freshness:${pr_number}:${sha}:"
+            if ! response="$(gh api -X GET "repos/${REPOSITORY}/commits/${sha}/check-runs" \
+              -H "Accept: application/vnd.github+json" \
+              -f check_name="${CHECK_NAME}" \
+              -f filter=latest \
+              -F per_page=100)"; then
+              echo "::error::Cannot inspect prior Registry freshness checks for PR #${pr_number}"
+              return 1
+            fi
+            latest_failure_id="$(jq -r \
+              --arg name "${CHECK_NAME}" \
+              --arg prefix "${prefix}" \
+              '[.check_runs[] | select(.name == $name)] | max_by(.id) |
+               select(((.external_id // "") | startswith($prefix)) and .conclusion == "failure") |
+               .id // empty' <<< "${response}")"
+            if [[ -z "${latest_failure_id}" ]]; then
+              return 0
+            fi
+            if [[ ! "${latest_failure_id}" =~ ^[0-9]+$ ]]; then
+              echo "::error::Malformed prior Registry freshness CheckRun id for PR #${pr_number}"
+              return 1
+            fi
+            if ! complete_check_run \
+              "${latest_failure_id}" success \
+              "Registry discovery recovered" \
+              "PR #${pr_number} is not a Registry allocation candidate on main ${CURRENT_MAIN_SHA}; a prior transient discovery failure was cleared."; then
+              echo "::error::Cannot clear prior Registry discovery failure for PR #${pr_number}"
+              return 1
+            fi
+          }
+
           pr_rows_file="$(mktemp)"
           candidate_rows_file="$(mktemp)"
           candidate_dir="$(mktemp -d)"
@@ -235,6 +270,9 @@ jobs:
                 continue
               fi
               printf '%s\n' "${row}" >> "${candidate_rows_file}"
+            elif ! clear_discovery_failure "${pr_head_sha}" "${pr_number}"; then
+              candidate_discovery_failed=1
+              blocking_publication_failed=1
             fi
           done
           mapfile -t candidate_rows < "${candidate_rows_file}"

@@ -16,7 +16,7 @@
     "working_repository": "/home/alex/repos/audio",
     "grabowski_resources": [
       "repo:/home/alex/repos/audio",
-      "host:heim-pc"
+      "component:audio-host-observation"
     ],
     "approval": {
       "action_class": "repository_mutation",

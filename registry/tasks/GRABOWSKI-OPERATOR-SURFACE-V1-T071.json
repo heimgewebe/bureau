@@ -139,7 +139,7 @@
         "regression-tests": "PASS",
         "deployment-live-proof": "PASS"
       },
-      "live_proof_sha256": "76723f87da8794205810f335c0d5eca03bf0c900d39560fa00d04c0ef56437aa",
+      "live_proof_sha256": "c94cb8ad9e6c2e92bd7dcd4d941eea58bb588ade4ff547665a70dea3241fe9ae",
       "remaining_gates": [],
       "explicit_nonclaims": [
         "Does not establish permission to physically delete archived task, workspace or recovery evidence.",
@@ -148,7 +148,7 @@
         "Does not establish future runtime health beyond the point-in-time live proof.",
         "Does not establish automatic queue, claim, merge or deployment authority."
       ],
-      "verified_at": "2026-07-29T21:25:00Z"
+      "verified_at": "2026-07-29T22:10:49Z"
     },
     "verification": {
       "schema_version": 1,
@@ -201,9 +201,10 @@
           "valid": true,
           "chain_valid": true,
           "audit_writable": true,
-          "total_records": 57217,
-          "active_last_record_sha256": "ef2400449a4bd38e592dba80d5167a737d6a318b15b6bfe48137fd960196068f",
-          "active_segment_sha256": "005ff9573f411bbb8db2e1d9db3cda8f2f6a99c5ba7ad8ba4d52e07328b59e72"
+          "total_records": 57352,
+          "active_last_record_sha256": "5888106ace80ada7f4ac278fde1dd59470d6e2e1fccb4db419c75b238fef6959",
+          "active_segment_sha256": "5e22ac935a3834212dc1208294fedea6c4c43ebb17791578bddbb3e845204a28",
+          "verified_after_active_and_protected_proof": true
         },
         "prior_closeout": {
           "operator_obligation_id": "goo-grabowski-t071-20260721",
@@ -216,6 +217,75 @@
           "recovery_reference_preserved": true,
           "subsequent_normal_mutations_verified": true,
           "only_missing_gate_at_receipt_time": "postdeploy_stale_workspace_minimum_age"
+        },
+        "active_and_protected_unchanged": {
+          "schema_version": 1,
+          "finding": "PRRT_kwDOTG2jCs6U61ID",
+          "decision": "active_and_protected_states_unchanged_across_disjoint_normal_mutation",
+          "proof_window": {
+            "active_job_started_at": "2026-07-29T22:07:49Z",
+            "mutation_acquired_at": "2026-07-29T22:08:17Z",
+            "active_job_terminal_at": "2026-07-29T22:10:49Z"
+          },
+          "controlled_mutation": {
+            "kind": "temporary_exact_resource_lease_roundtrip",
+            "owner_id": "operator:t071-active-protected-proof-20260729",
+            "resource_key": "path:/home/alex/.local/state/grabowski/live-proof/t071-active-protected-20260729",
+            "metadata_sha256": "1600d2ea9356fbd7d2d92311d66bcdc9628a9d65ffa463e5b8c9a465ed858c18",
+            "acquired_at_unix": 1785362897,
+            "released": true,
+            "target_overlap": false
+          },
+          "active_state": {
+            "kind": "grabowski_job",
+            "unit": "grabowski-job-cb460929c37a",
+            "job_id": "cb460929c37a",
+            "owner": "uid:1000",
+            "argv_sha256": "e983907d4714b5eb15deec450e588896f505dbd96123e8f7f0be0791751d1151",
+            "cwd": "/home/alex/repos/.bureau-standalone/t071-closeout-20260729",
+            "runtime_seconds": 240,
+            "origin_sha256": "797e6b21dd49ae8e20d2b25c7b794cab2cc462d62975a99db3f830a0aee78ac6",
+            "before": {
+              "final_status": "running",
+              "active_state": "active",
+              "sub_state": "running",
+              "systemd_visible": true
+            },
+            "after": {
+              "final_status": "running",
+              "active_state": "active",
+              "sub_state": "running",
+              "systemd_visible": true
+            },
+            "identity_and_readback_sha256": "e9b831d86f83132ebd4435b825241797f2db1ffdde7c636a65832a07ab40ca57",
+            "unchanged_during_mutation": true,
+            "post_proof_terminal_receipt_sha256": "171b239ae2732cfd8e72c0ff4603e8c254ac166328ed3e3246faebba2a449546",
+            "post_proof_terminal_status": "succeeded"
+          },
+          "protected_state": {
+            "kind": "foreign_exact_resource_leases",
+            "owner_id": "automation:bureau-pr-closeout-b-pr506-20260729",
+            "lease_count_before": 7,
+            "lease_count_after": 7,
+            "canonical_snapshot_sha256_before": "8843979973192ebaa0507870fbee7c037abc848e12595760881784c828b15766",
+            "canonical_snapshot_sha256_after": "8843979973192ebaa0507870fbee7c037abc848e12595760881784c828b15766",
+            "resource_keys": [
+              "path:/home/alex/repos/.grabowski-standalone/task-retry-convergence-v1",
+              "path:/home/alex/repos/.grabowski-standalone/task-retry-convergence-v1/docs/generated/operator-context.md",
+              "path:/home/alex/repos/.grabowski-standalone/task-retry-convergence-v1/docs/generated/operator-context.v1.json",
+              "path:/home/alex/repos/.grabowski-standalone/task-retry-convergence-v1/src/grabowski_tasks.py",
+              "path:/home/alex/repos/.grabowski-standalone/task-retry-convergence-v1/tests/test_tasks.py",
+              "repo:/home/alex/repos/grabowski:branch:fix/task-retry-convergence-v1",
+              "repo:/home/alex/repos/grabowski:operation:pr506-closeout-b-20260729"
+            ],
+            "all_observed_fields_unchanged": true,
+            "touched": false
+          },
+          "does_not_establish": [
+            "Future active or protected state remains unchanged after the proof window.",
+            "The protected owner work is complete or mergeable.",
+            "Authority to release, reclaim or modify foreign leases."
+          ]
         }
       },
       "acceptance": {
@@ -237,11 +307,19 @@
         "Does not establish future runtime health beyond the point-in-time live proof.",
         "Does not establish automatic queue, claim, merge or deployment authority."
       ],
-      "verified_at": "2026-07-29T21:25:00Z",
+      "verified_at": "2026-07-29T22:10:49Z",
       "primary_evidence_sha256_scope": "verification_object_without_primary_evidence_sha256",
-      "task_sha256": "8288c5cd11f8bfbc794c78ec7ef120d3c492e9ae119f5d7261320aed0b448497",
+      "task_sha256": "dd52e16913968ec75496ce3e8d20d7182c9efbf46b13a057220a0eae9250f524",
       "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
-      "primary_evidence_sha256": "33d7ca70a7c8e986fc813e3fd829ef83a165614f6c8e176b37a131894ac680df"
+      "review_findings": {
+        "PRRT_kwDOTG2jCs6U61ID": {
+          "severity": "P1",
+          "status": "resolved_by_new_live_proof",
+          "head_before_fix": "c69ef0d018f8dd24ae2c07f00633ad56fda7f3de",
+          "summary": "Record typed before/after active-job identity and foreign protected-lease snapshots."
+        }
+      },
+      "primary_evidence_sha256": "7ad8b27534762e7cd442b111adc94ad4e422f47fba5aa87fe2fe87a2e5c46f73"
     },
     "queue_mutated": false
   },

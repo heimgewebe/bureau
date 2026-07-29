@@ -8,7 +8,7 @@ import pytest
 
 from bureau import legacy
 from bureau.core import Dispatcher, NoEligibleTask, Registry, StateError, StateStore
-from bureau.v2 import coordinated_claim_intent_sha256, task_revision_sha256
+from bureau.v2 import task_revision_sha256
 
 
 def _git(root: Path, *arguments: str) -> str:
@@ -124,7 +124,7 @@ def test_legacy_claim_surface_cannot_bypass_broad_scope_review(
 
     with pytest.raises(
         NoEligibleTask,
-        match="digest-bound reviewed plan evidence",
+        match="authority-bound reviewed plan evidence",
     ):
         dispatcher.claim_next("legacy-worker", ("repository",))
 
@@ -132,7 +132,7 @@ def test_legacy_claim_surface_cannot_bypass_broad_scope_review(
     assert dispatcher.registry.tasks[task_id].state == "ready"
 
 
-def test_coordinated_claim_binds_reviewed_plan_before_lease_validation(
+def test_coordinated_claim_rejects_self_declared_review_before_lease_validation(
     registry_factory,
     tmp_path,
     monkeypatch,
@@ -146,25 +146,19 @@ def test_coordinated_claim_binds_reviewed_plan_before_lease_validation(
         tmp_path / "state.sqlite3",
     )
 
-    result = dispatcher.claim_intent(
-        "operator",
-        ("repository",),
-        task_id=task_id,
-        approved=True,
-        approval_source="test operator approval",
-    )
-    intent = result["intent"]
-    evidence = intent["operator_approval"]["broad_scope_review"]
+    with pytest.raises(
+        StateError,
+        match="review authority is unavailable",
+    ):
+        dispatcher.claim_intent(
+            "operator",
+            ("repository",),
+            task_id=task_id,
+            approved=True,
+            approval_source="test operator approval",
+        )
 
-    assert result["ready_supply"]["broad_scope_review_bound"] is True
-    assert evidence["task_id"] == task_id
-    assert evidence["task_sha256"] == dispatcher.registry.tasks[task_id].sha256
-    plan = json.loads(plan_path.read_text(encoding="utf-8"))
-    assert evidence["proposal_sha256"] == plan["proposal_sha256"]
-    assert evidence["approval"]["allowed"] is True
-
-    with pytest.raises(StateError, match="lease binding is required"):
-        dispatcher.commit_claim_intent(intent, None)
+    assert plan_path.is_file()
     assert store.list_runs() == []
 
 
@@ -183,25 +177,21 @@ def test_operator_only_intent_cannot_impersonate_broad_scope_review(
         root,
         tmp_path / "state.sqlite3",
     )
-    intent = dispatcher.claim_intent(
-        "operator",
-        ("repository",),
-        task_id=task_id,
-        approved=True,
-    )["intent"]
-    del intent["operator_approval"]["broad_scope_review"]
-    intent["intent_sha256"] = coordinated_claim_intent_sha256(intent)
-
     with pytest.raises(
         StateError,
-        match="matching digest-bound reviewed plan evidence",
+        match="review authority is unavailable",
     ):
-        dispatcher.commit_claim_intent(intent, None)
+        dispatcher.claim_intent(
+            "operator",
+            ("repository",),
+            task_id=task_id,
+            approved=True,
+        )
 
     assert store.list_runs() == []
 
 
-def test_reviewed_plan_drift_blocks_claim_before_lease_validation(
+def test_tampered_self_declared_plan_remains_blocked_without_review_authority(
     registry_factory,
     tmp_path,
     monkeypatch,
@@ -214,12 +204,6 @@ def test_reviewed_plan_drift_blocks_claim_before_lease_validation(
         root,
         tmp_path / "state.sqlite3",
     )
-    intent = dispatcher.claim_intent(
-        "operator",
-        ("repository",),
-        task_id=task_id,
-        approved=True,
-    )["intent"]
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
     plan["review"]["reviewer"] = "tampered-reviewer"
     plan_path.write_text(
@@ -229,8 +213,13 @@ def test_reviewed_plan_drift_blocks_claim_before_lease_validation(
 
     with pytest.raises(
         StateError,
-        match="matching digest-bound reviewed plan evidence",
+        match="review authority is unavailable",
     ):
-        dispatcher.commit_claim_intent(intent, None)
+        dispatcher.claim_intent(
+            "operator",
+            ("repository",),
+            task_id=task_id,
+            approved=True,
+        )
 
     assert store.list_runs() == []

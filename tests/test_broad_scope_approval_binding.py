@@ -8,7 +8,7 @@ from bureau.approval import (
 from bureau.lease_contract import assess_task_broad_bureau_scope
 
 
-def test_broad_scope_gate_and_effect_approval_share_one_canonical_contract() -> None:
+def test_broad_scope_gate_rejects_self_declared_review_evidence() -> None:
     task_id = "BUREAU-TEST-V1-T003"
     proposal_sha256 = "a" * 64
     task = {
@@ -34,7 +34,16 @@ def test_broad_scope_gate_and_effect_approval_share_one_canonical_contract() -> 
 
     assessment = assess_task_broad_bureau_scope(task)
 
-    assert assessment["allowed"] is True
+    assert assessment["allowed"] is False
+    assert assessment["exception_status"] == "review-authority-unavailable"
+    assert assessment["exception_approval"]["contract_match"] is True
+    assert assessment["exception_approval"]["structurally_valid"] is True
+    assert (
+        assessment["exception_approval"][
+            "review_receipt_verifier_available"
+        ]
+        is False
+    )
     action_class = assessment["exception_approval"]["action_class"]
     assert action_class == "registry_mutation"
     reviewed = approval_decision(

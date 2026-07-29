@@ -22,6 +22,8 @@ _GIT_HEAD_RE = re.compile(r"^(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})$")
 _TERMINAL_TASK_STATES = {"verified", "cancelled", "superseded"}
 _BROAD_SCOPE_EXCEPTION_FIELD = "broad_bureau_scope_exception"
 _BROAD_SCOPE_EXCEPTION_ACTION = "registry_mutation"
+# Reviewed-plan JSON is self-declared until an attested receipt verifier lands.
+BROAD_SCOPE_REVIEW_RECEIPT_VERIFIER_AVAILABLE = False
 
 
 def _task_field(task: Any, field: str, default: Any = None) -> Any:
@@ -87,12 +89,16 @@ def assess_task_broad_bureau_scope(
         and bool(boundaries)
         and all(isinstance(value, str) and bool(value.strip()) for value in boundaries)
     )
-    exception_valid = bool(
+    exception_structurally_valid = bool(
         isinstance(exception, dict)
         and isinstance(justification, str)
         and bool(justification.strip())
         and valid_boundaries
         and approval_contract_match
+    )
+    exception_valid = bool(
+        exception_structurally_valid
+        and BROAD_SCOPE_REVIEW_RECEIPT_VERIFIER_AVAILABLE
     )
     if not requested:
         exception_status = "not-required"
@@ -100,6 +106,8 @@ def assess_task_broad_bureau_scope(
         exception_status = "historical-terminal"
     elif exception_valid:
         exception_status = "review-gated-repository-wide-exception"
+    elif exception_structurally_valid:
+        exception_status = "review-authority-unavailable"
     elif exception is None:
         exception_status = "missing"
     else:
@@ -122,6 +130,10 @@ def assess_task_broad_bureau_scope(
             "declared_required_level": declared_required_level,
             "canonical_required_level": canonical_approval.get("required_level"),
             "contract_match": approval_contract_match,
+            "structurally_valid": exception_structurally_valid,
+            "review_receipt_verifier_available": (
+                BROAD_SCOPE_REVIEW_RECEIPT_VERIFIER_AVAILABLE
+            ),
         },
         "required_exception": {
             "justification": "non-empty string",
@@ -129,9 +141,10 @@ def assess_task_broad_bureau_scope(
             "approval_path": f"execution.{_BROAD_SCOPE_EXCEPTION_FIELD}.approval",
             "approval_action_class": _BROAD_SCOPE_EXCEPTION_ACTION,
             "approval_required_level": "reviewed_plan",
+            "review_authority": "attested external review receipt",
         },
         "does_not_establish": [
-            "completion of the required digest-bound reviewed-plan approval",
+            "completion of the required authority-bound reviewed-plan approval",
             "semantic correctness of a repository-wide exception",
             "merge or execution authority",
         ],
@@ -600,8 +613,9 @@ def registry_bureau_lease_findings(registry: Any) -> list[dict[str, Any]]:
                     f"path:{BUREAU_REPOSITORY_ROOT}/registry/tasks/{task.id}.json"
                 ),
                 "message": (
-                    "replace the global Bureau repository lease before this task becomes ready "
-                    "or provide the explicit review-gated repository-wide exception contract"
+                    "replace the global Bureau repository lease before this task becomes ready; "
+                    "repository-wide exceptions remain blocked until an attested review-receipt "
+                    "verifier is available"
                 ),
             }
         )

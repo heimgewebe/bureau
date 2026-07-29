@@ -9,7 +9,9 @@
     "lane": "next",
     "rank": 1
   },
-  "depends_on": [],
+  "depends_on": [
+    "BUREAU-TRUTH-MODEL-V2-T019"
+  ],
   "required_capabilities": [
     "repository",
     "shell",
@@ -93,6 +95,7 @@
   "metadata": {
     "source_request": "User instruction in ChatGPT project Bureau on 2026-07-29 at 21:42 Europe/Berlin.",
     "complements": "BUREAU-TRUTH-MODEL-V2-T019 parent-child claim gate repair",
+    "ordering_rationale": "The claimable-supply floor depends on the parent-child eligibility repair so broad parents with nonterminal children cannot be counted as claimable supply.",
     "operator_intake": {
       "schema_version": 1,
       "candidate_id": "candidate-e7b8cf06a172314571e84147",

@@ -3,7 +3,7 @@
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T057",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "title": "Bind merge dispatch to a fresh atomic lease snapshot",
-  "state": "planned",
+  "state": "verified",
   "goal": "Close the race between an earlier repository review and the irreversible GitHub merge effect by atomically re-reading overlapping leases immediately before merge dispatch and binding that fresh snapshot to the exact pull request head, base and complete diff.",
   "priority": {
     "lane": "next",
@@ -84,10 +84,10 @@
     },
     "risk": "A cooperating actor can pass an early lease check and later merge after another owner has acquired an overlapping resource, producing valid code but invalid operator ordering evidence.",
     "does_not_establish": [
-      "that PR 195 code was incorrect",
-      "that T002E provider controls failed",
-      "that every external GitHub actor can be locked",
-      "future merge safety until T057 is implemented"
+      "exact base-ref compare-and-swap in the GitHub merge API",
+      "protection of repositories that do not yet have a strict non-bypassable ruleset",
+      "absence of non-cooperating external GitHub actors",
+      "permission to modify or delete the preserved foreign dirty T057 worktrees"
     ],
     "live_reassessment_20260714": {
       "observed_at": "2026-07-14",
@@ -128,6 +128,106 @@
         "permission to merge PR #201",
         "that the evolved local successor is correct before current-main validation and review"
       ]
+    },
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 503,
+      "base_sha": "46bfcc03bbfe9cf6b410e5af3a72b4297e2f5810",
+      "head_sha": "d4d17e2f3eb5cdeb14fdac4c561e4ffa22818347",
+      "merge_commit_sha": "84411199dd8a5bb516e8e62fcb56245784f0f31a",
+      "merged_at": "2026-07-29T06:29:03Z",
+      "merged_by": "alexdermohr",
+      "diff_sha256": "b9c3064e8bf63886b11974e1b5e80ff801d73b0405da698024a29fa17cb3ebd0",
+      "merge_tree_sha": "a4277a6c269e5aaf592afca60c9718a6e6464ebf",
+      "merge_method": "squash",
+      "changed_files": [
+        "CHANGELOG.md",
+        "docs/generated/operator-context.v1.json",
+        "docs/grip-mechanic-captain-boundary-v1.md",
+        "docs/merge-delivery-v1.md",
+        "src/grabowski_grips.py",
+        "src/grabowski_merge_guard.py",
+        "tests/test_grips.py"
+      ]
+    },
+    "review": {
+      "external_reviewer": "chatgpt-codex-connector",
+      "reviewed_head": "d4d17e2f3eb5cdeb14fdac4c561e4ffa22818347",
+      "verdict": "PASS",
+      "reviewed_at": "2026-07-29T05:45:03Z",
+      "resolved_findings": [
+        "P1 re-read and exactly compare accepted ruleset details after active-rule revalidation",
+        "P2 paginate active branch rules with per_page=100 and preserve the hard 100-rule bound"
+      ],
+      "review_threads_resolved": true,
+      "independence": "external automated review; no human independence claim"
+    },
+    "validation": {
+      "pull_request_checks": {
+        "validate_3_10": "PASS",
+        "validate_3_12": "PASS",
+        "codeql_python": "PASS",
+        "codeql_actions": "PASS",
+        "codeql_aggregate": "PASS"
+      },
+      "exact_merge_commit_validation": {
+        "commit": "84411199dd8a5bb516e8e62fcb56245784f0f31a",
+        "tests_passed": 3758,
+        "tests_skipped": 3,
+        "result": "PASS",
+        "job_unit": "grabowski-job-94a97fedf7a0",
+        "job_receipt_sha256": "ffe8c42effa7c41f44fc8a9c57c9fbf3ff3610e1103e22ab43699381ae2842fc"
+      },
+      "tree_identity": {
+        "pr_head_tree": "a4277a6c269e5aaf592afca60c9718a6e6464ebf",
+        "merge_commit_tree": "a4277a6c269e5aaf592afca60c9718a6e6464ebf",
+        "remote_main_tree": "a4277a6c269e5aaf592afca60c9718a6e6464ebf"
+      }
+    },
+    "delivery": {
+      "artifact_id": "b435eefbbf944481b1d49be2c6a8a491",
+      "artifact_sha256": "b9c3064e8bf63886b11974e1b5e80ff801d73b0405da698024a29fa17cb3ebd0",
+      "artifact_receipt_sha256": "d305942be20f7297bf49eac93af204bdb0929cc0bd4efa3469df25e125781367",
+      "delivery_receipt_sha256": "c3a9f580257c064f0674732f4f75ee0cf9d5e980a4efc26c2569b9158e0f0e17"
+    },
+    "deployment": {
+      "runtime_head": "84411199dd8a5bb516e8e62fcb56245784f0f31a",
+      "release_id": "84411199dd8a-srcset34c081e5f338-locke6664d600b6c-contractb0d032e607e5",
+      "deployment_job": "grabowski-job-4c75fcade3ca",
+      "deployment_receipt_sha256": "a6b2c9a4aed524bf5fb0aa768f906f98ea85d5dd6e9b076171dd7baefa6b0fca",
+      "status": "complete_and_healthy",
+      "tool_contract": "176/176",
+      "audit": "valid_and_writable",
+      "kill_switch": "off"
+    },
+    "external_merge_reconciliation": {
+      "classification": "external_merge_observed_no_duplicate_effect",
+      "observed_merge_actor": "alexdermohr",
+      "own_merge_dispatch_performed": false,
+      "historical_pre_merge_contract_retroactively_manufactured": false,
+      "branch_deleted_by_platform": true
+    },
+    "acceptance_status": {
+      "fresh-lease-read": "satisfied",
+      "atomic-critical-section": "satisfied",
+      "exact-binding": "satisfied",
+      "late-lease-blocks": "satisfied",
+      "no-foreign-override": "satisfied",
+      "external-merge-reconciliation": "satisfied",
+      "tests": "satisfied",
+      "non-authority": "satisfied"
+    },
+    "followups": [
+      "GRABOWSKI-OPERATOR-SURFACE-V1-T120"
+    ],
+    "resolution_summary": "PR #503 adds the already existing atomic lease and evidence gate to a server-enforced stale-base barrier: Captain now requires a strict, non-bypassable GitHub ruleset, paginates and revalidates active rules and accepted details, and repeats the complete proof after lease acquisition immediately before dispatch. The exact squash-merge tree passed 3,758 tests and is deployed as the healthy runtime. Exact base-ref compare-and-swap remains unavailable in GitHub and is not claimed.",
+    "verified_at": "2026-07-29T08:13:31Z",
+    "verification": {
+      "source": "github_pr_grabowski_503_exact_merge_validation_and_deployed_runtime",
+      "source_ref": "github-pr:heimgewebe/grabowski#503@d4d17e2f3eb5cdeb14fdac4c561e4ffa22818347:84411199dd8a5bb516e8e62fcb56245784f0f31a",
+      "verified_at": "2026-07-29T08:13:31Z",
+      "task_sha256": "1674e5f6dc1d7f3b964e78b7460ce14f90d0ce7560dd189227389ea76304d68b",
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b"
     }
   }
 }

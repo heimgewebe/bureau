@@ -1,0 +1,102 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The canonical proposal validator rejects ordinary compound street addresses and representative international street-number forms, including Musterstraße 12 in Berlin and Am Feldweg 7 in Hamburg, without relying on a single standalone street keyword.",
+      "evidence_type": "object",
+      "id": "ordinary-addresses-blocked"
+    },
+    {
+      "assertion": "The validator rejects latitude/longitude pairs written with decimal points, decimal commas or degrees-minutes-seconds notation, including 52,5200; 13,4050 and 52°31′12″N 13°24′36″E, while avoiding a blanket ban on unrelated numbers.",
+      "evidence_type": "object",
+      "id": "coordinate-formats-blocked"
+    },
+    {
+      "assertion": "The same sensitive-location policy is applied to every free-text proposal field copied into the public GitHub issue body, including name, description, region and editorial note, and field-specific validation feedback remains understandable.",
+      "evidence_type": "object",
+      "id": "all-public-fields-covered"
+    },
+    {
+      "assertion": "Negative tests prove that country names, city names and broad regional descriptions without a street address or coordinate pair remain valid in representative German and English cases.",
+      "evidence_type": "object",
+      "id": "legitimate-regions-preserved"
+    },
+    {
+      "assertion": "Browser, schema and offline proposal validators use one canonical sensitive-location contract or prove exact parity through shared fixtures; no validation surface silently accepts content another rejects.",
+      "evidence_type": "object",
+      "id": "validator-parity"
+    },
+    {
+      "assertion": "Rejected sensitive content cannot reach buildIssueBody or any public issue-handoff path, and tests prove that no issue body or handoff URL is produced after validation failure.",
+      "evidence_type": "object",
+      "id": "handoff-fail-closed"
+    },
+    {
+      "assertion": "The exact implementation head passes focused privacy tests, complete repository validation, applicable browser smoke, diff-bound self-review and all required GitHub checks before merge; post-merge Pages and production readback remain exact-SHA bound.",
+      "evidence_type": "object",
+      "id": "exact-head-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly authorized publication of this reviewed task and implementation in an isolated Commonworld worktree. Keep the change privacy-focused; do not add external services, costs or collection of submitted text.",
+      "required_level": "reviewed_plan"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Prevent private street addresses and coordinates in every Commonworld proposal field that can reach a public GitHub issue, while preserving legitimate country, city and broad-region descriptions and keeping browser, schema and offline validation behavior consistent.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T031",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "adapter_request_sha256": "9ca4cfcd87003af4b8d23b423d309ea4791aa6c84defd7dd9d137101d0b678a8",
+    "candidate_event_id": 1609,
+    "candidate_id": "candidate-ba2dedff38edffaff68fc019",
+    "does_not_establish": [
+      "perfect international address recognition",
+      "that a real private address has already been published",
+      "permission to transmit proposal text to an external detection service",
+      "permission to block all precise public locations regardless of context",
+      "automatic claim, merge, deployment or production-verification authority"
+    ],
+    "intake_request_sha256": "58de3c288ddd53836d93ddedf0cef0ec47387ca8da6740385d20527d1401c67e",
+    "operator_intake_publication": {
+      "adapter_proposal_id": "604cb31d06d684dd59e9e4deccb336c0d224dde0faf9b0d572246561fdce9de6",
+      "fallback_reason": "The typed publisher was fail-closed because the deployed Bureau release identity did not match the current canonical registry. This task is therefore registered through an isolated one-file branch and exact-diff review without touching the foreign dirty canonical checkout.",
+      "status": "runtime-identity-blocked-manual-reviewed-publication"
+    },
+    "queue_mutated": false,
+    "registered_at": "2026-07-29",
+    "source": "Commonworld privacy candidate candidate-ba2dedff38edffaff68fc019 event 1609",
+    "source_evidence_sha256": "65c657c4b87d7be292b062bd0dbd11a61a37e6970fc1f52a070cbcb7e9e99400",
+    "source_main": "c1b0d07c7a0f38370df2a0432a8f938e7e012a1f",
+    "source_repository": "heimgewebe/commonworld"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 5
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "testing",
+    "browser"
+  ],
+  "rollback": {
+    "strategy": "Revert the canonical sensitive-location detector, its shared fixtures and handoff gate together; retain the previous validation path only after exact regression tests confirm the public issue handoff no longer depends on partially reverted logic."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Harden public proposal privacy validation"
+}

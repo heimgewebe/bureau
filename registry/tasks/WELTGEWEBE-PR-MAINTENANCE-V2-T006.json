@@ -31,10 +31,10 @@
       "verifier": "Komponenten- oder Browser-Regressionsprüfung"
     },
     {
-      "assertion": "Der finale Head besteht Svelte-/TypeScript-Prüfung, den vollständigen Web-Testlauf und einen diffgebundenen Review; vor dem Merge liegt ein herunterladbarer vollständiger Patch vor.",
+      "assertion": "Der finale Head besteht Svelte-/TypeScript-Prüfung, den vollständigen Web-Testlauf und einen intern vollständig diffgebundenen Review; ein benutzerseitiger Patch ist optional.",
       "evidence_type": "object",
       "id": "exact-review-and-ci",
-      "verifier": "CI, Reviewbeleg und Patchdigest"
+      "verifier": "CI und intern diffgebundener Reviewbeleg"
     }
   ],
   "claims": [

@@ -9,7 +9,7 @@ Unverzwirnte Fäden lösen sich ab ihrer kanonischen Entstehung über 168 Stunde
 1. Den bestehenden PR #1461 gegen den aktuellen Weltgewebe-Main-Stand und seine roten Gates prüfen.
 2. Entstehungszeit, Ablaufgrenze und Projektionssemantik für JSONL und PostgreSQL vereinheitlichen.
 3. Migration, Replay, API und Webdarstellung mit festen Uhren und exakten Grenzfällen testen.
-4. Den exakten PR-Head vollständig validieren, den Diff extern bereitstellen und erst danach mergen.
+4. Den exakten PR-Head und vollständigen Diff intern hashgebunden validieren und erst danach mergen; externe Diff-Bereitstellung ist optional.
 5. Nach Merge Main-CI und, falls autorisiert, die betroffene Laufzeitprojektion verifizieren.
 
 ## Beweisgrenzen

@@ -13,7 +13,7 @@
     "Unbraided threads decay deterministically from their canonical creation time over exactly 168 hours and disappear from active projections after expiry without erasing historical events.",
     "Braided durable yarn remains exempt until a separately registered domain model defines and proves its lifecycle.",
     "JSONL and PostgreSQL paths agree at clock boundaries, migration and replay are deterministic, and API and web projections preserve authorization and visibility contracts.",
-    "The implementation is merged only after exact-head CI, review evidence and a full downloadable diff establish the changed behavior.",
+    "The implementation is merged only after exact-head CI and full-diff-bound review evidence establish the changed behavior. A user-visible diff artifact is optional.",
     "Configuration cleanup, cache compaction and the complete yarn domain remain independently tracked rather than being hidden in the decay patch."
   ],
   "parallelism": {

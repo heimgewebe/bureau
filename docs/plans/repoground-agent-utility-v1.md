@@ -38,7 +38,7 @@ Nur nach bestandenem T003-Gate werden bewährte repo-unabhängige Teile extrahie
 2. Deterministische Auswahl und Ausgabe.
 3. Sichtbare Authority und negative Semantik.
 4. Keine Read-seitige Mutation von Registry oder Bundles.
-5. Externes vollständiges Diff-Artefakt, Head-/Diff-SHA-256-Review und grüne CI vor jedem nichttrivialen Merge.
+5. Vollständiger intern hashgebundener Diff, Head-/Diff-SHA-256-Review und grüne CI vor jedem nichttrivialen Merge; ein externes Diff-Artefakt ist optional.
 6. Maximal ein aktiver Task dieser Initiative.
 7. Keine Default-Promotion ohne gepaarten Nutzennachweis.
 

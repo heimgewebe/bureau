@@ -6,9 +6,9 @@
       "id": "verified-implementation-input"
     },
     {
-      "assertion": "Vor dem Merge wird der vollständige aktuelle GitHub-Diff mit Base-SHA, Head-SHA und SHA-256 als separates herunterladbares Artefakt an den Nutzer ausgeliefert; ein revisionsgebundenes Delivery-Receipt liegt vor.",
+      "assertion": "Vor dem Merge werden Base-SHA, Head-SHA und der vollständige aktuelle GitHub-Diff intern revisionsgebunden geprüft; Self-Review, Pflichtchecks und Merge-Readback beziehen sich auf denselben Head. Ein benutzerseitiges Diff-Artefakt ist optional.",
       "evidence_type": "object",
-      "id": "diff-delivery-before-merge"
+      "id": "exact-diff-bound"
     },
     {
       "assertion": "Unmittelbar vor dem Effekt bestätigen frische GitHub- und Grabowski-Readbacks: PR offen und nicht Draft, erwarteter Head unverändert, mergebar, Pflichtchecks grün, keine ungelösten handlungsrelevanten Review-Threads und keine kollidierenden fremden Leases, Tasks, Worktrees oder Prozesse.",

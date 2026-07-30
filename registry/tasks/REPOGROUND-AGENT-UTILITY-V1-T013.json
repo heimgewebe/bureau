@@ -47,7 +47,7 @@
     "approval": {
       "action_class": "repository_mutation",
       "required_level": "operator",
-      "note": "The user explicitly requested implementation of the registered RepoGround findings through Grabowski. The claim remains T013-bound and requires an isolated worktree, a complete downloadable diff, revision-bound review, green tests and green CI before merge."
+      "note": "The user explicitly requested implementation of the registered RepoGround findings through Grabowski. The claim remains T013-bound and requires an isolated worktree, a complete internally verified diff, revision-bound review, green tests and green CI before merge. A user-visible diff artifact is optional."
     }
   },
   "goal": "Die derzeit auseinanderfallenden Retrievalaussagen revisions-, bundle- und taskprofilgebunden zusammenführen: den kanonischen 5-Prozent-Recall-Befund, den opt-in Review-Intent-Erfolg und die gemessenen Change-Impact-Piloten in einer gemeinsamen, nicht aggregierend irreführenden Entscheidungsfläche abbilden.",

@@ -36,12 +36,12 @@
       "evidence_type": "object"
     },
     {
-      "assertion": "Der finale Repository-Patch ist vollständig getestet, auf exakten Head und vollständigen Diff SHA-256 selbstreviewt, als UTF-8-Unified-Diff bereitgestellt, in einem Pull Request veröffentlicht und auf diesem Head CI-grün. T019 führt keinen Merge aus.",
+      "assertion": "Der finale Repository-Patch ist vollständig getestet, auf exakten Head und vollständigen Diff SHA-256 selbstreviewt, in einem Pull Request veröffentlicht und auf diesem Head CI-grün. Ein benutzerseitiges Diff-Artefakt ist optional. T019 führt keinen Merge aus.",
       "id": "repository-publication",
       "evidence_type": "object"
     },
     {
-      "assertion": "Die Übergabe an die exklusive Merge-Aufgabe T020 bindet Repository, Pull Request, Basis, Head, vollständigen Diff SHA-256, Reviewstatus, CI und den ausgelieferten UTF-8-Diff; T020 muss jede Drift erneut fail-closed prüfen.",
+      "assertion": "Die Übergabe an die exklusive Merge-Aufgabe T020 bindet Repository, Pull Request, Basis, Head, vollständigen Diff SHA-256, Reviewstatus und CI; T020 muss jede Drift erneut fail-closed prüfen. Ein benutzerseitiges Diff-Artefakt ist keine Übergabevoraussetzung.",
       "id": "merge-handoff",
       "evidence_type": "object"
     },
@@ -74,7 +74,7 @@
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "note": "Autorisiert sind ausschließlich die reviewte Implementierung im Repository heimgewebe/grabowski, Tests, vollständige Diff-Bereitstellung und Pull-Request-Publikation. Merge, Bureau-Registry-Mutation, Runtime-Deployment und Live-Verifikation sind getrennten Aufgaben beziehungsweise einem separat genehmigten Kandidaten vorbehalten.",
+      "note": "Autorisiert sind ausschließlich die reviewte Implementierung im Repository heimgewebe/grabowski, Tests, interne vollständige Diffprüfung und Pull-Request-Publikation. Eine benutzerseitige Diff-Bereitstellung ist optional. Merge, Bureau-Registry-Mutation, Runtime-Deployment und Live-Verifikation sind getrennten Aufgaben beziehungsweise einem separat genehmigten Kandidaten vorbehalten.",
       "required_level": "operator"
     },
     "grabowski_resources": [
@@ -85,7 +85,7 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski"
   },
-  "goal": "Die im revisionsgebundenen Grabowski-Abdeckungsaudit belegten semantischen Abschlusslücken ausschließlich im Repository heimgewebe/grabowski fail-closed schließen. High-risk Abschlussmutationen müssen eine explizite Konvergenzklassifikation verwenden und bei erforderlicher Konvergenz ein unverändertes Consumer-Receipt validieren, das eine request-, protokoll-, ziel- und mutationsgebundene Transition-Assessment-Ausgabe mit status=terminally_closed belegt. Rein mechanische Prozess-, Lease-, Effekt- und Cleanup-Pfade bleiben explizit klassifiziert und dürfen weder Wirkungsevidenz erfinden noch unnötig doppelt bewerten. T019 endet nach Implementierung, Tests, revisionsgebundenem Review, Diff-Bereitstellung und Pull-Request-Publikation; Merge, Deployment und Live-Smoke sind nicht Bestandteil dieser Blattaufgabe.",
+  "goal": "Die im revisionsgebundenen Grabowski-Abdeckungsaudit belegten semantischen Abschlusslücken ausschließlich im Repository heimgewebe/grabowski fail-closed schließen. High-risk Abschlussmutationen müssen eine explizite Konvergenzklassifikation verwenden und bei erforderlicher Konvergenz ein unverändertes Consumer-Receipt validieren, das eine request-, protokoll-, ziel- und mutationsgebundene Transition-Assessment-Ausgabe mit status=terminally_closed belegt. Rein mechanische Prozess-, Lease-, Effekt- und Cleanup-Pfade bleiben explizit klassifiziert und dürfen weder Wirkungsevidenz erfinden noch unnötig doppelt bewerten. T019 endet nach Implementierung, Tests, revisionsgebundenem vollständigem Diff-Review und Pull-Request-Publikation; eine benutzerseitige Diff-Bereitstellung ist optional. Merge, Deployment und Live-Smoke sind nicht Bestandteil dieser Blattaufgabe.",
   "id": "HEIMGEWEBE-RESILIENZ-V1-T019",
   "initiative": "HEIMGEWEBE-RESILIENZ-V1",
   "metadata": {

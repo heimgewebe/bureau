@@ -1,0 +1,106 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Aktuelle Friction-, Chronik- und Operationsbelege bestimmen mindestens zwei tatsächlich wiederkehrende Sequenzen; Implementierung erfolgt nur für gemessene Hochfrequenzpfade, während ein fehlender Nutzen als explizites no-change Ergebnis zulässig bleibt.",
+      "id": "frequency-bound-selection"
+    },
+    {
+      "assertion": "Jede neue Operation besitzt die expliziten Phasen Prepare, Plan, Apply, Readback und Settle, bindet Ziel, Scope, erwartete Identitäten und Idempotenz und behauptet keine gemeinsame Transaktion über getrennte Wahrheitssysteme.",
+      "id": "saga-contract"
+    },
+    {
+      "assertion": "Die Umsetzung komponiert vorhandene typisierte Tools und Grips einschließlich mechanic-loop, Bureau-Pickup, PR-Lifecycle und Captain-Grenze; freie Shell-Ketten, rekursive Makros und versteckte Privilegienausweitung bleiben verboten.",
+      "id": "typed-composition"
+    },
+    {
+      "assertion": "Jeder Teilfehler erzeugt einen maschinenlesbaren bekannten, unbekannten oder recovery-pflichtigen Ausgang mit Teilreceipts und begrenztem Kompensations- oder Fortsetzungspfad; bereits mögliche Effekte werden nie still wiederholt.",
+      "id": "partial-failure-truth"
+    },
+    {
+      "assertion": "Normale Schritte bleiben Mechanic-Aktionen und High-Impact-Schritte bleiben Captain-Aktionen mit ihren bestehenden Review-, CI-, Merge-, Deployment-, Recovery- und Kill-Switch-Gates.",
+      "id": "authority-preservation"
+    },
+    {
+      "assertion": "Mindestens zwei end-to-end Pilotabläufe werden fokussiert getestet und live read-only beziehungsweise reversibel belegt; ein Pilot umfasst einen Arbeitslane-Aufbau und ein weiterer einen Publikations- oder Delivery-Ablauf.",
+      "id": "pilots-and-readback"
+    },
+    {
+      "assertion": "Vorher-/Nachher-Messung erfasst Werkzeugaufrufe, Operatorentscheidungen, Blockaden, Teilfehler und Laufzeit, ohne aus kleinen Stichproben allgemeine automatische Routing- oder Merge-Autorität abzuleiten.",
+      "id": "measured-effect"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T083"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 30. Juli 2026 die priorisierte Registrierung und Umsetzung aller sinnvollen Reibungshebel beauftragt. T121 folgt erst nach T083 und darf bestehende Authority-, Lease-, Review-, Merge- oder Deployment-Grenzen nicht lockern.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die häufigsten domänenübergreifenden Grabowski-Sequenzen als benannte, typisierte und receipt-gebundene Sagas aus Prepare, Plan, Apply, Readback und Settle bündeln, sodass der Operator weniger fehleranfällige Einzelaufrufe benötigt, ohne systemübergreifende Atomizität vorzutäuschen, Teilfehler zu verdecken oder bestehende Authority-, Lease-, Review-, Merge- und Deployment-Grenzen zu umgehen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T121",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "design_rule": "Komposition reduziert Aufrufsoverhead; sie darf getrennte Wahrheiten nicht als atomare Gesamttransaktion darstellen.",
+    "does_not_establish": [
+      "automatic_cross_system_transaction",
+      "generic_shell_authority",
+      "policy_bypass",
+      "merge_or_deployment_permission",
+      "task_readiness_before_dependencies"
+    ],
+    "priority_basis": {
+      "rank": "P1",
+      "reason": "Viele typisierte Einzelgriffe existieren, aber die benannte Operationsliste enthält nur zwei einfache Abläufe; Makros adressieren dadurch einen belegten Bedienungsengpass."
+    },
+    "source": "Live-Reibungsevaluation und Nutzerauftrag vom 30. Juli 2026",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-22a20c7ee7ff921e1d161a87",
+      "event_id": 1692,
+      "event_created_at": "2026-07-30T08:55:21.709902Z",
+      "request_sha256": "36649acca7fa932f475d3317f0a95e830280c39bc00df700e9d61db004885b95",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chatgpt:grabowski-friction-evaluation:2026-07-30:intent-sagas",
+        "observed_at": "2026-07-30T10:46:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Domänenspezifische Operator-Abläufe als fehlersichtbare Sagas bündeln"
+}

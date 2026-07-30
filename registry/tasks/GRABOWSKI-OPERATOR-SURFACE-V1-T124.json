@@ -28,7 +28,7 @@
     ],
     "approval": {
       "action_class": "repository_mutation",
-      "required_level": "reviewed_plan",
+      "required_level": "operator",
       "note": "Nur den typisierten Branch-Update- und Readback-Vertrag härten. Keine GitHub-Regel umgehen, keine fremde Lease lösen und keinen Merge aus einer verzögerten Beobachtung ableiten."
     }
   },

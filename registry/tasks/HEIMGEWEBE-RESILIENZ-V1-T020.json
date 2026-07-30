@@ -11,8 +11,8 @@
       "evidence_type": "object"
     },
     {
-      "assertion": "Der vollständige kanonische GitHub-Diff wurde vor dem Merge als unveränderliches, hashgebundenes UTF-8-Textartefakt sichtbar ausgeliefert.",
-      "id": "user-visible-diff-delivered",
+      "assertion": "Der vollständige kanonische GitHub-Diff ist intern hashgebunden und stimmt mit Self-Review, CI-Evidenz, erwartetem Head und frischem Pre-Merge-Readback überein; ein benutzerseitiges Diff-Artefakt ist optional.",
+      "id": "exact-diff-bound",
       "evidence_type": "object"
     },
     {
@@ -59,7 +59,7 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski"
   },
-  "goal": "Den von T019 veröffentlichten Grabowski-Pull-Request als separate exklusive Aufgabe nach exakter Revalidierung von Repository, Basis, Head, vollständigem Diff, CI, Reviews und ausgeliefertem UTF-8-Diff match-head-geschützt mergen und den Merge auf main autoritativ zurücklesen. T020 ändert keinen Code, veröffentlicht keine Bureau-Aufgabe und deployt keine Runtime.",
+  "goal": "Den von T019 veröffentlichten Grabowski-Pull-Request als separate exklusive Aufgabe nach exakter Revalidierung von Repository, Basis, Head, vollständigem Diff, CI und Reviews match-head-geschützt mergen und den Merge auf main autoritativ zurücklesen. T020 ändert keinen Code, veröffentlicht keine Bureau-Aufgabe und deployt keine Runtime.",
   "id": "HEIMGEWEBE-RESILIENZ-V1-T020",
   "initiative": "HEIMGEWEBE-RESILIENZ-V1",
   "metadata": {

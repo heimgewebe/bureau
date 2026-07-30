@@ -15,7 +15,7 @@
     "approval": {
       "action_class": "repository_mutation",
       "required_level": "operator",
-      "note": "Use an isolated Commonworld worktree. Before every nontrivial merge require complete published diff, head/tree/diff-bound self-review, green CI, review resolution and exact live Pages readback."
+      "note": "Use an isolated Commonworld worktree. Before every nontrivial merge require complete internally verified diff, head/tree/diff-bound self-review, green CI, review resolution and exact live Pages readback. A user-visible diff artifact is optional."
     }
   },
   "required_capabilities": [

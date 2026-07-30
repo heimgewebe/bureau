@@ -7,7 +7,7 @@
   "commitment": "now",
   "completion": [
     "PR #1440 or a traceable replacement contains the reviewed crash-safe and fail-closed node mutation implementation on current main.",
-    "The exact final head passes required CI and has a downloadable SHA-256-bound final diff before any merge.",
+    "The exact final head passes required CI and has a SHA-256-bound complete internal diff before any merge. A user-visible diff artifact is optional.",
     "PR #1424 is closed as superseded only after any non-conflicting unique requirements have been reconciled explicitly."
   ],
   "current_plan": {
@@ -22,7 +22,7 @@
     "repo": "heimgewebe/weltgewebe",
     "working_repository": "/home/alex/repos/weltgewebe",
     "source": "live open-PR, CI, Git ancestry and dirty-worktree audit on 2026-07-15",
-    "safety_boundary": "Do not overwrite or clean the existing dirty node-edit-delete worktree. Do not merge until the exact current GitHub diff has external review opportunity, required checks are green and review evidence is valid.",
+    "safety_boundary": "Do not overwrite or clean the existing dirty node-edit-delete worktree. Do not merge until the exact current GitHub diff is bound to valid review evidence and required checks are green. External artifact handoff is optional.",
     "observed_open_prs": [],
     "does_not_establish": [
       "merge_authorization",

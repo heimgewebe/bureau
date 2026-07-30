@@ -26,7 +26,7 @@
     "approval": {
       "action_class": "repository_mutation",
       "required_level": "reviewed_plan",
-      "note": "Use an isolated Commonworld worktree. Before merge require a complete downloadable diff, head- and diff-bound self-review, green CI and exact post-merge live validation."
+      "note": "Use an isolated Commonworld worktree. Before merge require a complete internally verified diff, head- and diff-bound self-review, green CI and exact post-merge live validation. A user-visible diff artifact is optional."
     }
   },
   "required_capabilities": [

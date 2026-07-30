@@ -1,0 +1,223 @@
+{
+  "acceptance": {
+    "affected-pr-recheck": {
+      "evidence": "Historical PR 124 run retained as account-level failure; later runs prove runner start without rewriting history",
+      "status": "passed"
+    },
+    "ci-result": {
+      "evidence": "Workflow conclusions reported separately as success; historical billing failure remains failure classification",
+      "status": "passed"
+    },
+    "minimal-account-effect": {
+      "evidence": "Null-effect closeout: no billing/budget/visibility/workflow mutation performed; capability proven restored on included/self-hosted path",
+      "status": "passed"
+    },
+    "root-cause": {
+      "evidence": "Historical check-run annotation explicitly states payment/spending-limit block with zero executed steps",
+      "status": "passed"
+    },
+    "runner-proof": {
+      "evidence": "3 recent successful validate jobs with executed steps on runner heim-pc-infra-ci-isolated",
+      "status": "passed"
+    }
+  },
+  "affected_pr_recheck": {
+    "current_live_success_runs": [
+      {
+        "executed_steps": 9,
+        "id": 30442158023,
+        "runner": "heim-pc-infra-ci-isolated",
+        "title": "fix(ssh-cockpit): bound log clipping by bytes (#144)"
+      },
+      {
+        "executed_steps": 9,
+        "id": 30441733963,
+        "runner": "heim-pc-infra-ci-isolated",
+        "title": "fix(ssh-cockpit): bound log clipping by bytes"
+      },
+      {
+        "executed_steps": 9,
+        "id": 30438247008,
+        "runner": "heim-pc-infra-ci-isolated",
+        "title": "fix(ssh-cockpit): bound log clipping by bytes"
+      }
+    ],
+    "historical_prs_observed_in_task_metadata": [
+      121,
+      122,
+      123,
+      124
+    ],
+    "historical_results_rewritten": false,
+    "representative_recheck_pr_139_prior": "MERGED with successful runner-started validate"
+  },
+  "billing_api_probe": {
+    "interpretation": "No live machine-readable billing page via REST; runner capability is proven by live workflow execution. No billing mutation performed by this closeout.",
+    "org_heimgewebe_settings_billing_actions": "HTTP 410 moved (billing API relocated)",
+    "user_settings_billing_actions": "HTTP 404 Not Found (endpoint unavailable for this token/account surface)"
+  },
+  "canonical_bureau_head": "2c4839636c539a92d2eb727fab869560f46389d0",
+  "current_runner_proofs": [
+    {
+      "conclusion": "success",
+      "created_at": "2026-07-29T10:03:36Z",
+      "display_title": "fix(ssh-cockpit): bound log clipping by bytes (#144)",
+      "event": "push",
+      "executed_step_count": 9,
+      "executed_steps": [
+        "Set up job",
+        "Run actions/checkout@v6",
+        "Run actions/setup-python@v6",
+        "ShellCheck SSH cockpit entry slices",
+        "Validate infra contracts",
+        "Validate assembled SSH cockpit release",
+        "Post Run actions/setup-python@v6",
+        "Post Run actions/checkout@v6",
+        "Complete job"
+      ],
+      "head_sha": "9246c3819cf5eb554d0d2604400d9c22d76b0545",
+      "html_url": "https://github.com/heimgewebe/infra/actions/runs/30442158023/job/90543771585",
+      "job_id": 90543771585,
+      "logs_url": null,
+      "runner_group_name": "Default",
+      "runner_name": "heim-pc-infra-ci-isolated",
+      "url": "https://github.com/heimgewebe/infra/actions/runs/30442158023",
+      "workflow_run_id": 30442158023
+    },
+    {
+      "conclusion": "success",
+      "created_at": "2026-07-29T09:57:29Z",
+      "display_title": "fix(ssh-cockpit): bound log clipping by bytes",
+      "event": "pull_request",
+      "executed_step_count": 9,
+      "executed_steps": [
+        "Set up job",
+        "Run actions/checkout@v6",
+        "Run actions/setup-python@v6",
+        "ShellCheck SSH cockpit entry slices",
+        "Validate infra contracts",
+        "Validate assembled SSH cockpit release",
+        "Post Run actions/setup-python@v6",
+        "Post Run actions/checkout@v6",
+        "Complete job"
+      ],
+      "head_sha": "0333c13420fdc658d67e746bb5bd1c01d1b42c79",
+      "html_url": "https://github.com/heimgewebe/infra/actions/runs/30441733963/job/90542405846",
+      "job_id": 90542405846,
+      "logs_url": null,
+      "runner_group_name": "Default",
+      "runner_name": "heim-pc-infra-ci-isolated",
+      "url": "https://github.com/heimgewebe/infra/actions/runs/30441733963",
+      "workflow_run_id": 30441733963
+    },
+    {
+      "conclusion": "success",
+      "created_at": "2026-07-29T09:06:19Z",
+      "display_title": "fix(ssh-cockpit): bound log clipping by bytes",
+      "event": "pull_request",
+      "executed_step_count": 9,
+      "executed_steps": [
+        "Set up job",
+        "Run actions/checkout@v6",
+        "Run actions/setup-python@v6",
+        "ShellCheck SSH cockpit entry slices",
+        "Validate infra contracts",
+        "Validate assembled SSH cockpit release",
+        "Post Run actions/setup-python@v6",
+        "Post Run actions/checkout@v6",
+        "Complete job"
+      ],
+      "head_sha": "4855b8ff0553c092f9f82b6ceb0f3b684904d6b6",
+      "html_url": "https://github.com/heimgewebe/infra/actions/runs/30438247008/job/90531041928",
+      "job_id": 90531041928,
+      "logs_url": null,
+      "runner_group_name": "Default",
+      "runner_name": "heim-pc-infra-ci-isolated",
+      "url": "https://github.com/heimgewebe/infra/actions/runs/30438247008",
+      "workflow_run_id": 30438247008
+    }
+  ],
+  "does_not_establish": [
+    "which historical operator or GitHub-side event cleared the temporary account restriction",
+    "that future account, quota or runner-capacity failures are impossible",
+    "authorization for future paid GitHub Actions usage",
+    "current UI billing page pixel-level state without browser access"
+  ],
+  "historical_root_cause": {
+    "classification": "account-level pre-run billing or spending-control failure; not a code or test failure",
+    "job": {
+      "annotation_messages": [
+        "The job was not started because recent account payments have failed or your spending limit needs to be increased. Please check the 'Billing & plans' section in your settings"
+      ],
+      "completed_at": "2026-07-11T07:30:25Z",
+      "conclusion": "failure",
+      "job_id": 86523860200,
+      "runner_name": "",
+      "started_at": "2026-07-11T07:30:24Z",
+      "step_count": 0,
+      "workflow_run_id": 29144599089
+    },
+    "source": "GitHub check-run annotations on heimgewebe/infra"
+  },
+  "kind": "bureau_task_billing_and_runner_closeout_evidence",
+  "minimal_account_effect": {
+    "billing_mutation_performed_by_this_run": false,
+    "interpretation": "Capability is restored without a new account mutation. Paid overage is not required for the observed self-hosted runner path; historical zero-step billing annotation remains classified as account-level.",
+    "paid_actions_overage_enabled_by_this_run": false,
+    "repository_visibility_changed": false,
+    "spending_limit_mutation_performed_by_this_run": false,
+    "workflow_weakened": false
+  },
+  "observed_at": "2026-07-30T04:59:42Z",
+  "observer": "operator:grok-bureau-20260730",
+  "pr_snapshot": [
+    {
+      "headRefOid": "47c68ada53d3655c42129be69c0e2c344d7d01e5",
+      "mergedAt": "2026-07-11T04:39:23Z",
+      "number": 121,
+      "state": "MERGED",
+      "title": "feat: add commit-bound Restic runtime",
+      "url": "https://github.com/heimgewebe/infra/pull/121"
+    },
+    {
+      "headRefOid": "b751cdab396f8a54a730e7f0f4df11d14afe6d97",
+      "mergedAt": "2026-07-11T04:48:04Z",
+      "number": 122,
+      "state": "MERGED",
+      "title": "fix: accept inactive linked maintenance unit",
+      "url": "https://github.com/heimgewebe/infra/pull/122"
+    },
+    {
+      "headRefOid": "e19f45ec00a37ede01909d1ef377ce8a88d79ece",
+      "mergedAt": "2026-07-11T04:57:07Z",
+      "number": 123,
+      "state": "MERGED",
+      "title": "fix: classify absent systemd units by LoadState",
+      "url": "https://github.com/heimgewebe/infra/pull/123"
+    },
+    {
+      "headRefOid": "75eb26a3427252ab1ea6f4af36b742047ab24482",
+      "mergedAt": "2026-07-11T07:32:58Z",
+      "number": 124,
+      "state": "MERGED",
+      "title": "docs: record Restic runtime closeout evidence",
+      "url": "https://github.com/heimgewebe/infra/pull/124"
+    },
+    {
+      "headRefOid": "1661b23ec1d08fc87a34fe4a3392d833df8367ab",
+      "mergedAt": "2026-07-26T23:05:33Z",
+      "number": 139,
+      "state": "MERGED",
+      "title": "docs: align Restic contract with artifact merge path",
+      "url": "https://github.com/heimgewebe/infra/pull/139"
+    }
+  ],
+  "prior_evidence": {
+    "billing_proof_path": "/home/alex/.local/state/grabowski/evidence/operator-ecosystem-redundancy-t020-billing-proof-20260727T195300Z.json",
+    "billing_proof_sha256": "62f00577f8c70b1af26c26bd4d4f88cbce8dd01025a1117fc214039a3a7bac8b",
+    "runner_proof_path": "/home/alex/.local/state/grabowski/evidence/operator-ecosystem-redundancy-t020-runner-proof-20260727T192101Z.json",
+    "runner_proof_sha256": "505f93f063bd9d4def5b6e35debd57fe7b75a996962d59d311ccbd2e6ae59fca"
+  },
+  "schema_version": 1,
+  "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020"
+}

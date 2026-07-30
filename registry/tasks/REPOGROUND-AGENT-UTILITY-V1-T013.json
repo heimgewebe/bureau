@@ -38,22 +38,33 @@
     "REPOGROUND-AGENT-UTILITY-V1-T011"
   ],
   "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly requested implementation of the registered RepoGround findings through Grabowski. The claim remains T013-bound and requires an isolated worktree, a complete internally verified diff, revision-bound review, green tests and green CI before merge. A user-visible diff artifact is optional.",
+      "required_level": "operator"
+    },
     "grabowski_resources": [
       "repo:/home/alex/repos/repoground"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/repoground",
-    "approval": {
-      "action_class": "repository_mutation",
-      "required_level": "operator",
-      "note": "The user explicitly requested implementation of the registered RepoGround findings through Grabowski. The claim remains T013-bound and requires an isolated worktree, a complete internally verified diff, revision-bound review, green tests and green CI before merge. A user-visible diff artifact is optional."
-    }
+    "working_repository": "/home/alex/repos/repoground"
   },
   "goal": "Die derzeit auseinanderfallenden Retrievalaussagen revisions-, bundle- und taskprofilgebunden zusammenführen: den kanonischen 5-Prozent-Recall-Befund, den opt-in Review-Intent-Erfolg und die gemessenen Change-Impact-Piloten in einer gemeinsamen, nicht aggregierend irreführenden Entscheidungsfläche abbilden.",
   "id": "REPOGROUND-AGENT-UTILITY-V1-T013",
   "initiative": "REPOGROUND-AGENT-UTILITY-V1",
   "metadata": {
+    "activation": {
+      "activated_at": "2026-07-28",
+      "basis": "The user requested implementation after registration. T013 is the common measurement and routing prerequisite for the registered T019 and T020 work.",
+      "does_not_establish": [
+        "task completion",
+        "claim authority",
+        "merge readiness"
+      ],
+      "queue_policy": "skip-blocked",
+      "repoground_main_at_activation": "5318daaad4eceed60cd752eacd057ec74bbd9e49"
+    },
     "audit_live_basis": {
       "bundle_manifest_sha256": "15db8ef43a85d1174fa73c6eaafe65ee51aed6ad2364158acfbce098555f9a85",
       "bundle_stem": "heimgewebe__repoground__main-max-260727-0706",
@@ -78,13 +89,17 @@
       "global retrieval completeness",
       "runtime correctness"
     ],
-    "registered_from_audit": "RepoGround complete audit review, 2026-07-27",
     "operator_intake": {
-      "schema_version": 1,
       "candidate_id": "candidate-898c16890193edc9766ba611",
-      "event_id": 1309,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
       "event_created_at": "2026-07-27T09:16:28.220626Z",
+      "event_id": 1309,
       "request_sha256": "99ab2aeb58a8d438340e7065ac1a2fbd4ad25faa375c3977a36dd28d4686f7ed",
+      "schema_version": 1,
       "source": {
         "does_not_establish": [],
         "freshness": "digest-bound",
@@ -92,23 +107,25 @@
         "locator": "conversation:repoground-complete-audit-2026-07-27",
         "observed_at": "2026-07-27T09:16:28.209030Z",
         "sha256": "443b271301a8d0b141a13fe12ba28d009b79edb03bbf15ba7b57b6c01695bee8"
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
+      }
     },
-    "activation": {
-      "activated_at": "2026-07-28",
-      "basis": "The user requested implementation after registration. T013 is the common measurement and routing prerequisite for the registered T019 and T020 work.",
-      "queue_policy": "skip-blocked",
-      "repoground_main_at_activation": "5318daaad4eceed60cd752eacd057ec74bbd9e49",
+    "receipt_reconciliation": {
+      "basis": "Authoritative Bureau state receipt proves all acceptance criteria; later activation revision incorrectly reopened the completed task.",
       "does_not_establish": [
-        "task completion",
-        "claim authority",
-        "merge readiness"
-      ]
+        "completion of dependent tasks",
+        "initiative completion"
+      ],
+      "merge_commit": "ede8465246051896955441c7f959379a5926a09d",
+      "merged_pull_request": "heimgewebe/repoground#1121",
+      "receipt_sha256": "de39bbdd377ddaf02dc3f4cb53a1bacb6bae248024a7d623e85818e20991fcd5",
+      "reconciled_at": "2026-07-30T10:41:20.506797+00:00",
+      "run_id": "BUR-RUN-20260729T133457Z-13304541c1",
+      "schema_version": 1
+    },
+    "registered_from_audit": "RepoGround complete audit review, 2026-07-27",
+    "verification": {
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955",
+      "task_sha256": "91589f87d7c1fc1bf828bde78c26f79d8d194c580b6145171071423b7ee7930c"
     }
   },
   "priority": {
@@ -123,6 +140,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Retrieval-Benchmarkwahrheit und taskprofilgebundene Routing-Gates"
 }

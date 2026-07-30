@@ -185,7 +185,8 @@
           "authority": "github",
           "task_id": "SEMANTAH-E2E-PORTABILITY-V1-T001",
           "source_ref": "heimgewebe/semantAH#258",
-          "merge_commit_sha": "9ad2d8e0ad2776bed43802cbd8bf11698292696a"
+          "merge_commit_sha": "9ad2d8e0ad2776bed43802cbd8bf11698292696a",
+          "number": 258
         },
         {
           "kind": "pull_request",
@@ -193,7 +194,8 @@
           "task_id": "SEMANTAH-E2E-PORTABILITY-V1-T001",
           "source_ref": "heimgewebe/semantAH#265",
           "head_sha": "b766ccdf67e9dca37e08b79980f12120a480473e",
-          "merge_commit_sha": "21106106ee8a193869f94e4b54c332006ba8f4a5"
+          "merge_commit_sha": "21106106ee8a193869f94e4b54c332006ba8f4a5",
+          "number": 265
         },
         {
           "kind": "github_actions_job",
@@ -203,7 +205,8 @@
           "job_id": 90662034845,
           "name": "push-index-e2e",
           "status": "completed",
-          "conclusion": "success"
+          "conclusion": "success",
+          "commit_sha": "21106106ee8a193869f94e4b54c332006ba8f4a5"
         },
         {
           "kind": "grabowski_task_receipt",
@@ -219,7 +222,7 @@
       ]
     },
     "verification": {
-      "task_sha256": "569fb868129f02abce6b585918edb811d4e2801f949c486c0d3592351f89484b",
+      "task_sha256": "c2b739b612ff313ee19955a79debce5c459d0ba6738724f7b9dc95c58f8e31f1",
       "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
     }
   }

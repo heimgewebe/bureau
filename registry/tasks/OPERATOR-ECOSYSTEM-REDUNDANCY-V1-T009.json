@@ -1,68 +1,90 @@
 {
-  "schema_version": 1,
+  "acceptance": [
+    {
+      "assertion": "Each WGX capability names repositories that consume it and the repository-native alternative.",
+      "id": "capability-map"
+    },
+    {
+      "assertion": "WGX does not own task coordination, deploy authority or generic host mutation already owned by Bureau or Grabowski.",
+      "id": "no-operator-duplication"
+    },
+    {
+      "assertion": "Retained checks have multiple real consumers or a documented fleet-wide invariance benefit.",
+      "id": "shared-check-threshold"
+    },
+    {
+      "assertion": "Retired or migrated checks preserve CI coverage and provide source-linked replacement paths.",
+      "id": "migration-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.wgx"
+    },
+    {
+      "isolation": "none",
+      "mode": "read",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/wgx",
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/wgx"
+  },
+  "goal": "Inventory WGX guards, smoke tests, metrics and templates against repository-native CI and Grabowski, then retain only cross-repository functions with demonstrated shared consumers.",
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T009",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
-  "title": "Narrow WGX to shared fleet checks",
-  "state": "planned",
+  "metadata": {
+    "does_not_establish": [
+      "merge_permission",
+      "runtime_correctness",
+      "cleanup_permission",
+      "automatic_shutdown_permission"
+    ],
+    "pr_completion": {
+      "auto_verify": false,
+      "closed_at": "2026-07-30T04:31:36Z",
+      "closed_by": "operator:grok-bureau-20260730",
+      "closeout_evidence": "docs/evidence/operator-ecosystem-redundancy-v1-t009-closeout-20260730.json",
+      "closeout_evidence_sha256": "7e796fc2c4002b9e7aac9c93863f1e6e1bb1702416261c0431ac08f925472387",
+      "followup_pr": 649,
+      "head_sha": "943851e6038d816256c28c36a4b247d2dc0da3f2",
+      "merge_commit": "c1b336ee0a82a3b1fd0c5f09158dcdb5f3c1d9ef",
+      "merged_at": "2026-07-27T20:57:32Z",
+      "number": 648,
+      "repo": "heimgewebe/wgx"
+    },
+    "registered_at": "2026-07-10T07:32:00+02:00",
+    "source_audit": "heimgewebe/cabinet#103",
+    "verification": {
+      "current_main_head": "4d91933ce74b78b4f8db9ea2358e86d195289e13",
+      "evidence_path": "docs/evidence/operator-ecosystem-redundancy-v1-t009-closeout-20260730.json",
+      "evidence_sha256": "7e796fc2c4002b9e7aac9c93863f1e6e1bb1702416261c0431ac08f925472387",
+      "implementation_merge_commit": "c1b336ee0a82a3b1fd0c5f09158dcdb5f3c1d9ef",
+      "status": "passed",
+      "verified_at": "2026-07-30T04:31:36Z",
+      "verified_by": "operator:grok-bureau-20260730"
+    }
+  },
   "priority": {
     "lane": "later",
     "rank": 350
   },
-  "goal": "Inventory WGX guards, smoke tests, metrics and templates against repository-native CI and Grabowski, then retain only cross-repository functions with demonstrated shared consumers.",
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/wgx",
-    "grabowski_resources": [
-      "repo:/home/alex/repos/wgx",
-      "repo:/home/alex/repos/grabowski"
-    ]
-  },
-  "claims": [
-    {
-      "resource": "repo.wgx",
-      "mode": "write",
-      "isolation": "worktree"
-    },
-    {
-      "resource": "repo.grabowski",
-      "mode": "read",
-      "isolation": "none"
-    }
-  ],
   "required_capabilities": [
     "repository",
     "shell",
     "github",
     "grabowski"
   ],
-  "acceptance": [
-    {
-      "id": "capability-map",
-      "assertion": "Each WGX capability names repositories that consume it and the repository-native alternative."
-    },
-    {
-      "id": "no-operator-duplication",
-      "assertion": "WGX does not own task coordination, deploy authority or generic host mutation already owned by Bureau or Grabowski."
-    },
-    {
-      "id": "shared-check-threshold",
-      "assertion": "Retained checks have multiple real consumers or a documented fleet-wide invariance benefit."
-    },
-    {
-      "id": "migration-proof",
-      "assertion": "Retired or migrated checks preserve CI coverage and provide source-linked replacement paths."
-    }
-  ],
-  "metadata": {
-    "registered_at": "2026-07-10T07:32:00+02:00",
-    "source_audit": "heimgewebe/cabinet#103",
-    "does_not_establish": [
-      "merge_permission",
-      "runtime_correctness",
-      "cleanup_permission",
-      "automatic_shutdown_permission"
-    ]
-  },
-  "depends_on": []
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Narrow WGX to shared fleet checks"
 }

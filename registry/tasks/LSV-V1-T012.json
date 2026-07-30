@@ -161,7 +161,7 @@
       "no-runtime-effect": "The changed paths contain no unit, selector, service, deployment or Systemkatalog source mutation."
     },
     "verification": {
-      "task_sha256": "9cc9a1215bf396b5a196b14782161906047a4a30fae906ad42b9a251e091af5e",
+      "task_sha256": "3eaf1e0c03ca966fee866ce18d562563ffbe8282e41a85cb12361bc3a79e1ee6",
       "plan_sha256": "217a91b5a66a143e0440d2a7d656a5d0fada62b52778cf3285349e7667bd8621"
     },
     "closeout_plan": {
@@ -198,7 +198,7 @@
           "kind": "test_receipt",
           "authority": "leitstand-repository",
           "task_id": "LSV-V1-T012",
-          "source_ref": "heimgewebe/leitstand@2f504ab7660bb1538162cfa68263e1f0b62b255c",
+          "source_ref": "heimgewebe/leitstand@fd3c5e4c2b02b96a1bc4898d1f1fdf262296ddad",
           "result": "41 tests passed",
           "diff_sha256": "b7c9f2ca097dc606138bdf79e2190f01dc3ce08477e8b7f74863269ec4a74b09"
         }

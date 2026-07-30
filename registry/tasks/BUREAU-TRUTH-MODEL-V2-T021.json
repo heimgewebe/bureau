@@ -2,35 +2,43 @@
   "acceptance": [
     {
       "assertion": "Claim-Intent, Live Register, koordinierter Pickup, Task-Lifecycle und die aktuelle Grabowski-Readback-Arbeit einschließlich PR #513 werden gegen ein explizites CAS-Anforderungsmodell geprüft; bereits erfüllte Anforderungen werden nicht dupliziert.",
-      "id": "existing-contract-audit"
+      "id": "existing-contract-audit",
+      "evidence_type": "object"
     },
     {
       "assertion": "Mindestens ein realer Hochfrequenzpfad belegt, dass der neue oder angepasste Befehl eine vollständige Zustandslesung oder mehrere synchrone Rundreisen reduziert; ohne messbaren Nutzen endet die Aufgabe mit no-change.",
-      "id": "measured-read-reduction"
+      "id": "measured-read-reduction",
+      "evidence_type": "object"
     },
     {
       "assertion": "Jeder mutierende Befehl bindet mindestens Task-Identität, erwartete Lifecycle-Version oder Versuch, erwarteten Owner beziehungsweise Lease-Token soweit relevant, Idempotenzschlüssel und das zugehörige Outcome- oder Effekt-Receipt.",
-      "id": "exact-preconditions"
+      "id": "exact-preconditions",
+      "evidence_type": "object"
     },
     {
       "assertion": "Version-, Versuch-, Owner-, Lease- und Idempotenzkonflikte werden vor Wirkung deterministisch mit maschinenlesbarem Grund abgelehnt und verändern weder Task-, Queue- noch Lease-Wahrheit.",
-      "id": "deterministic-rejection"
+      "id": "deterministic-rejection",
+      "evidence_type": "object"
     },
     {
       "assertion": "Transportabbruch oder Timeout nach möglichem Effekt erzeugt einen unbekannten Ausgang mit exakt benanntem Readback und verbietet unveränderte Wiederholung; ein asynchrones Pending-Receipt ist nur mit dauerhafter Identität zulässig.",
-      "id": "unknown-outcome-contract"
+      "id": "unknown-outcome-contract",
+      "evidence_type": "object"
     },
     {
       "assertion": "Jeder erfolgreiche Effekt wird aus der autoritativen Quelle auf dieselbe Task-, Versuch- und Owner-Identität zurückgelesen; ein Event-Append allein gilt nicht als erfolgreicher Claim oder Abschluss.",
-      "id": "authoritative-readback"
+      "id": "authoritative-readback",
+      "evidence_type": "object"
     },
     {
       "assertion": "Hermetische Parallelitäts-, Idempotenz-, Drift-, Crash- und Replaytests belegen genau einen zulässigen Effekt, explizite Verlierer und keine stillen Doppelmutationen.",
-      "id": "concurrency-tests"
+      "id": "concurrency-tests",
+      "evidence_type": "object"
     },
     {
       "assertion": "Die Optimierung führt keine zweite Lifecycle-Wahrheit, keine Queue- oder Dispatch-Autorität aus Events und keinen Policy-, Review-, Merge- oder Deployment-Bypass ein.",
-      "id": "truth-boundary"
+      "id": "truth-boundary",
+      "evidence_type": "object"
     }
   ],
   "claims": [

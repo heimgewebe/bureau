@@ -31,7 +31,7 @@
       "id": "foreign-work-boundary"
     },
     {
-      "assertion": "Fokussierte Ressourcen- und Pickup-Tests, vollständiges make validate, git diff --check und ein head- sowie diffgebundener Self-Review bestehen. Vor einem Merge wird der vollständige nichttriviale PR-Diff als UTF-8-Textartefakt ausgeliefert und die CI auf dem exakten Head grün nachgewiesen.",
+      "assertion": "Fokussierte Ressourcen- und Pickup-Tests, vollständiges make validate, git diff --check und ein head- sowie diffgebundener Self-Review bestehen. Vor einem Merge werden der vollständige nichttriviale PR-Diff intern hashgebunden geprüft und die CI auf dem exakten Head grün nachgewiesen; ein benutzerseitiges Diff-Artefakt ist optional.",
       "evidence_type": "object",
       "id": "revision-bound-validation"
     }

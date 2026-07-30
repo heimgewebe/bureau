@@ -55,10 +55,12 @@
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T004",
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T005",
         "WELTGEWEBE-SEMANTIC-SEARCH-V1-T006",
-        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T007"
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T007",
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T013",
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T008"
       ],
-      "current_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T008",
-      "updated_at": "2026-07-24",
+      "current_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T009",
+      "updated_at": "2026-07-30",
       "t001_merge_commit": "f00afacc7be4cc551c81c5511faf5f817b04f700",
       "t002_merge_commit": "adc060cfbb9d055a7b63c494fa042e7c57ca7bea",
       "t002_pull_request": 1495,
@@ -150,7 +152,42 @@
         "required_merge_gate": "pass"
       },
       "t007_scope": "authorized server search as primary node-search path plus clearly separated read-only similar-nodes UI; no production rollout or SemantAH retirement",
-      "t008_t009_materialized_at": "2026-07-24"
+      "t008_t009_materialized_at": "2026-07-24",
+      "t008_primary": {
+        "verified_at": "2026-07-29T22:22:36+02:00",
+        "live_commit": "1d548fb95837eb11d8be7bd2bb9eb701d2b78a87",
+        "live_tree": "039a9b361409e7758ebed05dfaefe1f805200961",
+        "required_ancestor_merge": "592954c3f91b466313b3013eca7284b62371a3fa",
+        "search_generation_id": "search-gen-2e8358273aa6d41e6a59025985a99738614aba725b8f369b3a54f390f8752e5c",
+        "public_search_result_id": "075175a0-796a-4c4e-a5e7-c007b317830c",
+        "health": "ok",
+        "next_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T009",
+        "required_verified_blocker": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T013",
+        "authorization_negative_live": {
+          "non_public_vectors": 0,
+          "public_active_ready_vectors": 4,
+          "observed_at": "2026-07-29T20:15:38Z"
+        },
+        "similar_nodes_live": {
+          "source_node_id": "a031b7bf-f38e-42b8-aa8b-ca304ecd492f",
+          "ui_heading": "Ähnliche Knoten",
+          "mutation_request_count": 0,
+          "observed_at": "2026-07-29T22:27:16Z"
+        }
+      },
+      "t013_primary": {
+        "task_id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T013",
+        "state": "verified",
+        "bureau_pull_request": 1194,
+        "bureau_merge_commit": "d12a22dd058297785abd798a6965206c3f85df99",
+        "product_pull_request": 1590,
+        "product_merge_commit": "d08f51a95a40f8a953aa1a83c5aba8b463909d42",
+        "verified_task_sha256": "b4f832b9f9a5a29721d3953eafa4d223c9dbf1b65fd1307372fdfa5141a6a263",
+        "expected_nodes": 8,
+        "completed_nodes": 8,
+        "non_public_vectors": 0,
+        "similar_nodes_mutation_requests": 0
+      }
     }
   }
 }

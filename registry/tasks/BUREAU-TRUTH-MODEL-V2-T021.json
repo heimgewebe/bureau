@@ -6,37 +6,42 @@
       "evidence_type": "object"
     },
     {
-      "assertion": "Mindestens ein realer Hochfrequenzpfad belegt, dass der neue oder angepasste Befehl eine vollständige Zustandslesung oder mehrere synchrone Rundreisen reduziert; ohne messbaren Nutzen endet die Aufgabe mit no-change.",
+      "assertion": "Ein revisionsgebundener Entscheidungsbeleg setzt decision auf implement oder no-change. Bei implement weist mindestens ein realer Hochfrequenzpfad eine messbare Reduktion vollständiger Zustandslesungen oder synchroner Rundreisen nach; bei no-change weist er fehlenden Zusatznutzen oder bereits ausreichende bestehende Verträge nach.",
       "id": "measured-read-reduction",
       "evidence_type": "object"
     },
     {
-      "assertion": "Jeder mutierende Befehl bindet mindestens Task-Identität, erwartete Lifecycle-Version oder Versuch, erwarteten Owner beziehungsweise Lease-Token soweit relevant, Idempotenzschlüssel und das zugehörige Outcome- oder Effekt-Receipt.",
+      "assertion": "Ein an decision gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement bindet jeder mutierende Befehl mindestens Task-Identität, erwartete Lifecycle-Version oder Versuch, erwarteten Owner beziehungsweise Lease-Token soweit relevant, Idempotenzschlüssel und Outcome- oder Effekt-Receipt; bei no-change ist applicability not_applicable und bestätigt keinen neuen Befehl.",
       "id": "exact-preconditions",
       "evidence_type": "object"
     },
     {
-      "assertion": "Version-, Versuch-, Owner-, Lease- und Idempotenzkonflikte werden vor Wirkung deterministisch mit maschinenlesbarem Grund abgelehnt und verändern weder Task-, Queue- noch Lease-Wahrheit.",
+      "assertion": "Ein an decision gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement werden Version-, Versuch-, Owner-, Lease- und Idempotenzkonflikte vor Wirkung deterministisch mit maschinenlesbarem Grund abgelehnt und verändern keine Wahrheit; bei no-change ist applicability not_applicable und bestätigt keinen neuen Effektpfad.",
       "id": "deterministic-rejection",
       "evidence_type": "object"
     },
     {
-      "assertion": "Transportabbruch oder Timeout nach möglichem Effekt erzeugt einen unbekannten Ausgang mit exakt benanntem Readback und verbietet unveränderte Wiederholung; ein asynchrones Pending-Receipt ist nur mit dauerhafter Identität zulässig.",
+      "assertion": "Ein an decision gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement erzeugt Transportabbruch oder Timeout nach möglichem Effekt einen unbekannten Ausgang mit exakt benanntem Readback und verbietet unveränderte Wiederholung; bei no-change ist applicability not_applicable und bestätigt keinen neuen asynchronen oder mutierenden Pfad.",
       "id": "unknown-outcome-contract",
       "evidence_type": "object"
     },
     {
-      "assertion": "Jeder erfolgreiche Effekt wird aus der autoritativen Quelle auf dieselbe Task-, Versuch- und Owner-Identität zurückgelesen; ein Event-Append allein gilt nicht als erfolgreicher Claim oder Abschluss.",
+      "assertion": "Ein an decision gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement wird jeder erfolgreiche Effekt aus der autoritativen Quelle auf dieselbe Task-, Versuch- und Owner-Identität zurückgelesen und ein Event-Append gilt nie allein als Erfolg; bei no-change ist applicability not_applicable und bestätigt keinen neuen Effekt.",
       "id": "authoritative-readback",
       "evidence_type": "object"
     },
     {
-      "assertion": "Hermetische Parallelitäts-, Idempotenz-, Drift-, Crash- und Replaytests belegen genau einen zulässigen Effekt, explizite Verlierer und keine stillen Doppelmutationen.",
+      "assertion": "Ein an decision gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement belegen hermetische Parallelitäts-, Idempotenz-, Drift-, Crash- und Replaytests genau einen zulässigen Effekt, explizite Verlierer und keine stillen Doppelmutationen; bei no-change ist applicability not_applicable und bestätigt, dass keine neue Mutationslogik entstand.",
       "id": "concurrency-tests",
       "evidence_type": "object"
     },
     {
-      "assertion": "Die Optimierung führt keine zweite Lifecycle-Wahrheit, keine Queue- oder Dispatch-Autorität aus Events und keinen Policy-, Review-, Merge- oder Deployment-Bypass ein.",
+      "assertion": "Ein separater No-change-Abschlussbeleg dokumentiert bei decision no-change Auditgrundlage, bereits erfüllte Verträge oder fehlenden Zusatznutzen sowie das Ausbleiben neuer Befehle, Effekte, Tests und Autoritätsänderungen. Bei decision implement setzt er applicability auf not_applicable und bindet sich an die Implementierungsentscheidung.",
+      "id": "no-change-closeout",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein an decision gebundener Grenzbeleg weist bei implement nach, dass keine zweite Lifecycle-Wahrheit, Queue- oder Dispatch-Autorität aus Events und kein Policy-, Review-, Merge- oder Deployment-Bypass entsteht. Bei no-change bestätigt er das Ausbleiben jeder Wahrheits-, Autoritäts- und Policyänderung.",
       "id": "truth-boundary",
       "evidence_type": "object"
     }
@@ -80,7 +85,7 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/bureau"
   },
-  "goal": "Für Claim-, Close- und vergleichbare Bureau-Zustandsänderungen revisionsgebunden prüfen, wo ein enger Compare-and-Swap-Befehl mit erwarteter Version, Versuch, Owner- oder Lease-Bindung, Idempotenzschlüssel und Outcome-Receipt vollständige Vorablesungen sicher ersetzen kann. Nur belegte Lücken werden umgesetzt; Ablehnung, Konkurrenz und unbekannte Ausgänge bleiben explizit und erfolgreicher Effekt erfordert autoritativen Readback.",
+  "goal": "Für Claim-, Close- und vergleichbare Bureau-Zustandsänderungen revisionsgebunden prüfen, wo ein enger Compare-and-Swap-Befehl mit erwarteter Version, Versuch, Owner- oder Lease-Bindung, Idempotenzschlüssel und Outcome-Receipt vollständige Vorablesungen sicher ersetzen kann. Nur belegte Lücken mit messbarem Nutzen werden umgesetzt; andernfalls endet die Aufgabe belegt als no-change. Ablehnung, Konkurrenz und unbekannte Ausgänge bleiben in jedem Implementierungspfad explizit und erfolgreicher Effekt erfordert autoritativen Readback.",
   "id": "BUREAU-TRUTH-MODEL-V2-T021",
   "initiative": "BUREAU-TRUTH-MODEL-V2",
   "metadata": {

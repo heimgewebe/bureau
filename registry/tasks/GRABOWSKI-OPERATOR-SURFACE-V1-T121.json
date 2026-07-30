@@ -6,22 +6,22 @@
       "evidence_type": "object"
     },
     {
-      "assertion": "Jede neue Operation besitzt die expliziten Phasen Prepare, Plan, Apply, Readback und Settle, bindet Ziel, Scope, erwartete Identitäten und Idempotenz und behauptet keine gemeinsame Transaktion über getrennte Wahrheitssysteme.",
+      "assertion": "Ein an decision gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement besitzt jede neue Operation die Phasen Prepare, Plan, Apply, Readback und Settle und bindet Ziel, Scope, erwartete Identitäten und Idempotenz; bei no-change ist applicability not_applicable und der Beleg bestätigt, dass kein Saga-Vertrag eingeführt wurde.",
       "id": "saga-contract",
       "evidence_type": "object"
     },
     {
-      "assertion": "Die Umsetzung komponiert vorhandene typisierte Tools und Grips einschließlich mechanic-loop, Bureau-Pickup, PR-Lifecycle und Captain-Grenze; freie Shell-Ketten, rekursive Makros und versteckte Privilegienausweitung bleiben verboten.",
+      "assertion": "Ein an decision gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement komponiert die Umsetzung vorhandene typisierte Tools und Grips einschließlich mechanic-loop, Bureau-Pickup, PR-Lifecycle und Captain-Grenze und enthält keine freie Shell-Kette, Rekursion oder Privilegienausweitung; bei no-change ist applicability not_applicable und bestätigt keine neue Komposition.",
       "id": "typed-composition",
       "evidence_type": "object"
     },
     {
-      "assertion": "Jeder Teilfehler erzeugt einen maschinenlesbaren bekannten, unbekannten oder recovery-pflichtigen Ausgang mit Teilreceipts und begrenztem Kompensations- oder Fortsetzungspfad; bereits mögliche Effekte werden nie still wiederholt.",
+      "assertion": "Ein an decision gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement erzeugt jeder Teilfehler einen maschinenlesbaren bekannten, unbekannten oder recovery-pflichtigen Ausgang mit Teilreceipts und begrenztem Kompensations- oder Fortsetzungspfad; bei no-change ist applicability not_applicable und bestätigt, dass kein neuer Effektpfad entstand.",
       "id": "partial-failure-truth",
       "evidence_type": "object"
     },
     {
-      "assertion": "Normale Schritte bleiben Mechanic-Aktionen und High-Impact-Schritte bleiben Captain-Aktionen mit ihren bestehenden Review-, CI-, Merge-, Deployment-, Recovery- und Kill-Switch-Gates.",
+      "assertion": "Ein an decision gebundener Grenzbeleg weist bei implement nach, dass normale Schritte Mechanic-Aktionen und High-Impact-Schritte Captain-Aktionen mit bestehenden Review-, CI-, Merge-, Deployment-, Recovery- und Kill-Switch-Gates bleiben. Bei no-change bestätigt er das Ausbleiben jeder Autoritäts- oder Policyänderung.",
       "id": "authority-preservation",
       "evidence_type": "object"
     },
@@ -36,7 +36,7 @@
       "evidence_type": "object"
     },
     {
-      "assertion": "Vorher-/Nachher-Messung erfasst Werkzeugaufrufe, Operatorentscheidungen, Blockaden, Teilfehler und Laufzeit, ohne aus kleinen Stichproben allgemeine automatische Routing- oder Merge-Autorität abzuleiten.",
+      "assertion": "Ein an decision gebundener Messbeleg erfasst bei implement Vorher-/Nachher-Werte für Werkzeugaufrufe, Operatorentscheidungen, Blockaden, Teilfehler und Laufzeit. Bei no-change dokumentiert er Messbasis, erwartbaren Nutzen und vermiedene Zusatzkomplexität ohne Nachher-Wirkungsbehauptung; kein Pfad leitet automatische Routing- oder Merge-Autorität aus kleinen Stichproben ab.",
       "id": "measured-effect",
       "evidence_type": "object"
     }
@@ -64,7 +64,7 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski"
   },
-  "goal": "Die häufigsten domänenübergreifenden Grabowski-Sequenzen als benannte, typisierte und receipt-gebundene Sagas aus Prepare, Plan, Apply, Readback und Settle bündeln, sodass der Operator weniger fehleranfällige Einzelaufrufe benötigt, ohne systemübergreifende Atomizität vorzutäuschen, Teilfehler zu verdecken oder bestehende Authority-, Lease-, Review-, Merge- und Deployment-Grenzen zu umgehen.",
+  "goal": "Die häufigsten domänenübergreifenden Grabowski-Sequenzen revisionsgebunden bestimmen und bei ausreichender Häufigkeit und Nutzen als benannte, typisierte und receipt-gebundene Sagas aus Prepare, Plan, Apply, Readback und Settle bündeln. Reicht die Evidenz nicht, endet die Aufgabe belegt als no-change; in keinem Pfad werden systemübergreifende Atomizität vorgetäuscht, Teilfehler verdeckt oder bestehende Authority-, Lease-, Review-, Merge- und Deployment-Grenzen umgangen.",
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T121",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {

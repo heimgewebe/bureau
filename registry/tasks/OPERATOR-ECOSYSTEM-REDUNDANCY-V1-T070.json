@@ -229,7 +229,8 @@
           "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T070",
           "source_ref": "heimgewebe/metarepo#666",
           "head_sha": "0ce26c52ed9e03e176393b7a012cb661bdf1a102",
-          "merge_commit_sha": "0f2c6b9982ed254b1d926ed79ea4a27b207dd265"
+          "merge_commit_sha": "0f2c6b9982ed254b1d926ed79ea4a27b207dd265",
+          "pull_request": 666
         },
         {
           "kind": "coordinated_run",
@@ -255,7 +256,7 @@
       "implementation_merge_tree_sha256": "9d53a07e56222c69cda55d512c855fcfd3cd7a1e",
       "current_main_readback_sha": "74ce9202952d00b0d2fef0587255c92a9cd05dee",
       "acceptance_path_drift": [],
-      "task_sha256": "2ec63ce340cda997da0df68d597f46e56f3a606b8886124746f2c1c91d92dc34",
+      "task_sha256": "d8b31f3b77c840642ccb6ce9e9edfd01cc86240a7828bf7f255a50b4b7135ff7",
       "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     },
     "verified_at": "2026-07-29T11:13:14.404305Z"

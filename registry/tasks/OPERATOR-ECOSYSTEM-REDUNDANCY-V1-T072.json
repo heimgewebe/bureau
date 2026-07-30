@@ -1,0 +1,147 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Kandidatenauswahl filtert CheckRuns zuerst nach exaktem Namen und dem erwarteten External-ID-Prefix und bestimmt erst danach den neuesten passenden Lauf; gleichnamige Läufe anderer Pull Requests oder Heads sind keine Auswahlkandidaten.",
+      "evidence_type": "object",
+      "id": "exact-prefix-before-latest",
+      "verifier": "ausführbarer Verhaltenstest und Workflow-Review"
+    },
+    {
+      "assertion": "Ein ausführbarer Regressionstest belegt: Ein neuerer gleichnamiger Lauf mit fremdem Prefix verdeckt weder einen älteren passenden in-progress-Lauf mit null conclusion noch einen älteren passenden failure-Lauf.",
+      "evidence_type": "object",
+      "id": "mixed-prefix-regression",
+      "verifier": "jq- oder äquivalenter Verhaltenstest mit gemischten Prefixen"
+    },
+    {
+      "assertion": "Ein ausführbarer Regressionstest belegt: Innerhalb desselben exakten Prefixes maskiert der neueste erfolgreiche Lauf absichtlich ältere failure- oder in-progress-Läufe, sodass kein bereits konvergierter Check erneut überschrieben wird.",
+      "evidence_type": "object",
+      "id": "latest-exact-success-preserved",
+      "verifier": "Verhaltenstest mit mehreren exakten Läufen"
+    },
+    {
+      "assertion": "Fehlende, unvollständige oder nicht eindeutig auswertbare GitHub-CheckRun-Evidenz bleibt wirkungslos; die Reparatur erweitert weder den Checknamen noch den zulässigen PR-/Head-Scope.",
+      "evidence_type": "object",
+      "id": "fail-closed-boundary-preserved",
+      "verifier": "negative Regressionstests und Workflow-Vertragsprüfung"
+    },
+    {
+      "assertion": "Die Regression wird mindestens einmal gegen die tatsächlich verwendete jq-Auswahl oder eine daraus isolierte funktionale Einheit ausgeführt; reine statische String-Prüfungen genügen für den Mischprefix-Fehler nicht.",
+      "evidence_type": "boolean",
+      "id": "functional-not-string-only",
+      "verifier": "Testausführung auf exakter Head-Revision"
+    },
+    {
+      "assertion": "Die Änderung erzeugt keine Review-, Merge-, Queue-, Claim-, Dispatch-, Deployment-, Branchschutz- oder Cleanup-Autorität und verändert keine fremden CheckRuns.",
+      "evidence_type": "boolean",
+      "id": "no-new-authority",
+      "verifier": "Diff- und Grenzreview"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.ops"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T069"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Eine spätere Umsetzung darf ausschließlich die Registry-Freshness-Recovery im benannten Workflow und eng zugehörige ausführbare Regressionstests ändern. Branchschutz, Checknamen, Queue, Claim, Merge, Deployment und fremde CheckRuns bleiben außerhalb des Auftrags. Die jetzige Veröffentlichung dieses Taskvertrags besitzt eine getrennte reviewed-plan-Prüfung.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/repos/bureau/.github/workflows/registry-registration-preflight.yml",
+      "path:/home/alex/repos/bureau/tests/test_registry_registration_preflight_workflow_failclosed.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Härte die Wiederherstellung des GitHub-CheckRuns registry-registration-preflight/freshness so, dass zuerst nach exaktem Checknamen und PR-/Head-gebundenem External-ID-Prefix gefiltert und erst innerhalb dieser Menge der neueste Lauf ausgewählt wird. Ein neuerer gleichnamiger Lauf mit fremdem Prefix darf einen passenden älteren in-progress- oder failure-Lauf nicht verdecken; der neueste erfolgreiche Lauf desselben exakten Prefixes soll ältere Fehler weiterhin absichtlich maskieren.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T072",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Häufigkeit des Mischprefix-Falls in Produktion",
+      "Implementierung",
+      "Taskbereitschaft",
+      "sicheren Merge",
+      "Queue- oder Claimautorität",
+      "Deploymentbereitschaft",
+      "Änderung von PR #1197 oder dessen bereits gemergtem Zustand"
+    ],
+    "evidence": {
+      "base_sha": "6838bb855a28b4b255d4647cc2b48191624695c6",
+      "current_full_index_diff_bytes": 5254,
+      "current_full_index_diff_sha256": "726bfe52dac03b67b3c6ac6eb901501a056d722093cee095ca29e7e2914fd006",
+      "merge_commit_sha": "01842bcbd05bc6406600423c1b3ff354b7a435fe",
+      "pull_request": 1197,
+      "read_only_validation_task": "a7d2c19fb40149d88f2b36f2",
+      "repository": "heimgewebe/bureau",
+      "reproducer": {
+        "case": "newer_other_prefix_masks_exact",
+        "expected_matching_check_id": 16,
+        "interpretation": "max_by(id) vor Prefixfilterung lässt den fremden neueren Lauf den passenden wiederherstellbaren Lauf verdecken",
+        "newer_foreign_prefix_check_id": 17,
+        "observed_selection": ""
+      },
+      "reviewed_head_sha": "39bdb25daeacfab28fe84327fc88c6a564a67bc9",
+      "validation": {
+        "checkout_clean_after": true,
+        "focused_tests": "5 passed",
+        "full_validate": "891 passed",
+        "yaml_parse": "PASS"
+      },
+      "validation_lifecycle_receipt_sha256": "c19296a6ae849391c93a9c44e6edd9e7f25f746fe396f36891ba8666c16e7399"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-a51cd33a4756b47d8856cff3",
+      "event_id": 1679,
+      "event_created_at": "2026-07-29T21:57:56.420850Z",
+      "request_sha256": "cef4e99d8747eec3460e38536ee24c1476e6f5c9096febf0c63c26c1959d14ee",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-repository-audit",
+        "locator": "github:heimgewebe/bureau@01842bcbd05bc6406600423c1b3ff354b7a435fe#pr1197-mixed-prefix-checkrun-recovery",
+        "observed_at": "2026-07-29T21:57:56.405818Z",
+        "sha256": "726bfe52dac03b67b3c6ac6eb901501a056d722093cee095ca29e7e2914fd006"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-07-29T23:57:56+02:00",
+    "source": "post-merge-read-only-audit-of-bureau-pr-1197",
+    "source_sha256": "726bfe52dac03b67b3c6ac6eb901501a056d722093cee095ca29e7e2914fd006"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 21
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "github",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich die revisionsgebundene Auswahl- und Teständerung. Bei unklarer CheckRun-Zuordnung bleibt die Recovery wirkungslos; bestehende CheckRuns, Branchschutz- und Queuewahrheit werden weder gelöscht noch umgedeutet."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Registry-Check-Recovery prefixgenau auswählen"
+}

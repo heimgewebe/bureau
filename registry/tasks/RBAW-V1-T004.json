@@ -3,7 +3,7 @@
   "id": "RBAW-V1-T004",
   "initiative": "REPOBRIEF-AGENT-WORKBENCH-V1",
   "title": "Prototype external Patch Evaluation Sidecar harness",
-  "state": "planned",
+  "state": "ready",
   "priority": {
     "lane": "later",
     "rank": 192
@@ -12,6 +12,11 @@
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User explicitly ordered the next RepoGround task through Grabowski on 2026-07-30. Implementation must remain external to RepoBrief core, use an isolated worktree and preserve all non-claims from the patch-evaluation contract."
+    },
     "working_repository": "/home/alex/repos/repoground",
     "grabowski_resources": [
       "repo:/home/alex/repos/repoground"
@@ -47,6 +52,30 @@
     "registered_at": "2026-07-06T05:39:49Z",
     "created_from_plan": "RepoBrief Agent Workbench Boundary v1",
     "plan_path": "docs/plans/repobrief-agent-workbench-boundary-v1.md",
+    "readiness_review": {
+      "reviewed_at": "2026-07-30T19:34:00+02:00",
+      "reviewer": "chatgpt-self-review",
+      "decision": "ready",
+      "basis": [
+        "RBAW-V1-T002 is verified and binds the strict patch-evaluation.v1 artifact contract.",
+        "RBAW-V1-T003 is verified and binds consumption to read-only external evidence.",
+        "The boundary plan keeps mutation, patch application and command execution outside RepoBrief core.",
+        "The user supplied explicit operator approval for the next RepoGround task."
+      ],
+      "evidence": {
+        "dependency_t002_sha256": "7ca75a2f8eafcf97357c2297059f0ae1eeb90f9e791cfb4fb38e2acb7e82d67b",
+        "dependency_t003_sha256": "45ae136c01ef3c36d1a4f29c0fe0282cff0634d6d4e8e181842f2c13f128f319",
+        "boundary_plan_sha256": "7548fc24b9e1ae183c93078eb208216a229bddd6b1215ae8c507117d110690ad",
+        "contract_merge_commit": "40792e56671404f6a08664eeef4e02fb37614349"
+      },
+      "does_not_establish": [
+        "implementation_correctness",
+        "test_sufficiency",
+        "security_correctness",
+        "merge_readiness",
+        "runtime_behavior_outside_evaluated_commands"
+      ]
+    },
     "does_not_establish": [
       "runtime_correctness",
       "test_sufficiency",

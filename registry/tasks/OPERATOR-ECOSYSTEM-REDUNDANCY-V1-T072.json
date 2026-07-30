@@ -126,7 +126,33 @@
     },
     "registered_at": "2026-07-29T23:57:56+02:00",
     "source": "post-merge-read-only-audit-of-bureau-pr-1197",
-    "source_sha256": "726bfe52dac03b67b3c6ac6eb901501a056d722093cee095ca29e7e2914fd006"
+    "source_sha256": "726bfe52dac03b67b3c6ac6eb901501a056d722093cee095ca29e7e2914fd006",
+    "readiness": {
+      "schema_version": 1,
+      "kind": "operator-authorized-task-readiness",
+      "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T072",
+      "ready_at": "2026-07-30T03:25:00Z",
+      "authorized_by": "alex",
+      "authorization_reference": "chat:2026-07-30T05:15+02:00 @grabowski umsetzen",
+      "source_main_head": "6f6b6900baf69b237d9a3ff417851cab788a8882",
+      "exact_scope": [
+        "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+        "path:/home/alex/repos/bureau/.github/workflows/registry-registration-preflight.yml",
+        "path:/home/alex/repos/bureau/tests/test_registry_registration_preflight_workflow_failclosed.py"
+      ],
+      "checks": {
+        "dependency_t069_verified": true,
+        "operator_authorization_present": true,
+        "exact_scope_complete": true,
+        "review_before_effect_preserved": true
+      },
+      "does_not_establish": [
+        "implementation",
+        "claim_or_dispatch_authority",
+        "safe_merge",
+        "future_nonconflict"
+      ]
+    }
   },
   "priority": {
     "lane": "next",
@@ -142,6 +168,6 @@
     "strategy": "Revertiere ausschließlich die revisionsgebundene Auswahl- und Teständerung. Bei unklarer CheckRun-Zuordnung bleibt die Recovery wirkungslos; bestehende CheckRuns, Branchschutz- und Queuewahrheit werden weder gelöscht noch umgedeutet."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Registry-Check-Recovery prefixgenau auswählen"
 }

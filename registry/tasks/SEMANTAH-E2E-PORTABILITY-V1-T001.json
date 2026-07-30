@@ -79,9 +79,10 @@
       "SemantAH PR #265 is merged, and its merge commit 21106106ee8a193869f94e4b54c332006ba8f4a5 is the exact current local and remote main revision observed during closeout.",
       "GitHub Actions run 30477278629 job 90662034845 completed successfully, including the step Verify push-index portability with port 8080 occupied.",
       "The required workflow runs on pull requests and pushes to main and executes uv run --frozen --extra test pytest -q tests/test_push_index_e2e.py.",
-      "No open SemantAH pull request existed during closeout; the local main checkout was clean and matched remote main."
+      "No open SemantAH pull request existed during closeout; the local main checkout was clean and matched remote main.",
+      "A fresh local focused rerun on exact SemantAH main 21106106ee8a193869f94e4b54c332006ba8f4a5 passed 1 test in 15.42s; Grabowski lifecycle receipt c4b5ea8e26dc324e75ab92192379ec1a5eb5354d12ceaa3b9f1ad113ee594c3c."
     ],
-    "observed_at": "2026-07-30T20:06:39Z",
+    "observed_at": "2026-07-30T20:14:30Z",
     "acceptance_evidence": {
       "dynamic-port": [
         "tests/test_push_index_e2e.py:99-105 selects a free TCP port",
@@ -130,9 +131,9 @@
       "command": "uv run --frozen --extra test pytest -q tests/test_push_index_e2e.py",
       "port_8080_contract": "workflow step is named Verify push-index portability with port 8080 occupied; the test itself owns or preserves the independent port-8080 listener and asserts the selected server port is not 8080."
     },
-    "verified_at": "2026-07-30T20:06:39Z",
+    "verified_at": "2026-07-30T20:14:30Z",
     "outcome": "verified",
-    "verification_note": "T001 ist erfüllt: SemantAH main entspricht exakt dem Mergecommit von PR #265; der verpflichtende Push-index-E2E-Workflow läuft auf Pull Requests und main-Pushes, und GitHub-Run 30477278629 hat den fokussierten Test mit belegtem Port-8080-Vertrag erfolgreich abgeschlossen. Der Testcode wählt einen freien Loopback-Port, wartet auf /healthz und beendet ausschließlich den test-eigenen Prozess auch über den Fehlerpfad.",
+    "verification_note": "T001 ist erfüllt: SemantAH main entspricht exakt dem Mergecommit von PR #265; der verpflichtende Push-index-E2E-Workflow läuft auf Pull Requests und main-Pushes, GitHub-Run 30477278629 hat den fokussierten Test mit belegtem Port-8080-Vertrag erfolgreich abgeschlossen, und ein frischer lokaler Wiederholungslauf auf demselben Hauptstand bestand 1 Test in 15,42 Sekunden. Der Testcode wählt einen freien Loopback-Port, wartet auf /healthz und beendet ausschließlich den test-eigenen Prozess auch über den Fehlerpfad.",
     "validated_acceptance": {
       "dynamic-port": "PASS: tests/test_push_index_e2e.py binds a temporary socket to 127.0.0.1:0, propagates the selected port through base URL and INDEXD_BIND_ADDR, and asserts the base does not end in :8080.",
       "occupied-8080": "PASS: the test holds port 8080 or preserves a foreign owner while indexd uses the selected free port; exact-main GitHub job 90662034845 completed the named occupied-port verification step.",
@@ -158,6 +159,21 @@
         "open_pull_requests": 0,
         "workflow_job_status": "completed",
         "workflow_job_conclusion": "success"
+      },
+      "local_focused_rerun": {
+        "grabowski_task_id": "e4400f59ee5a4b928b3326bc",
+        "argv_sha256": "9edf423b284092e01f7a26cb84989e17498cd8aa2b3db0ca52ca3e9febeb881e",
+        "terminalization_sha256": "3688d35f7a470bdae07339d657d2a3ddc5b392eaff2ead527c712cb7992f46ee",
+        "lifecycle_receipt_sha256": "c4b5ea8e26dc324e75ab92192379ec1a5eb5354d12ceaa3b9f1ad113ee594c3c",
+        "log_path": "/home/alex/.local/state/grabowski/semantah-t001-e2e-rerun-with-cargo.log",
+        "log_sha256": "6f57d499036b63a5db069b3996ea28232392f44850bf31da63e6878040da7683",
+        "repository_head": "21106106ee8a193869f94e4b54c332006ba8f4a5",
+        "repository_status": "clean_main_matches_origin_main",
+        "result": "passed",
+        "tests_collected": 1,
+        "tests_passed": 1,
+        "duration_seconds": 15.42,
+        "completed_at": "2026-07-30T20:14:30Z"
       }
     },
     "registry_truth": {
@@ -188,8 +204,23 @@
           "name": "push-index-e2e",
           "status": "completed",
           "conclusion": "success"
+        },
+        {
+          "kind": "grabowski_task_receipt",
+          "authority": "grabowski",
+          "task_id": "SEMANTAH-E2E-PORTABILITY-V1-T001",
+          "source_ref": "e4400f59ee5a4b928b3326bc",
+          "repository_head": "21106106ee8a193869f94e4b54c332006ba8f4a5",
+          "state": "completed",
+          "lifecycle_receipt_sha256": "c4b5ea8e26dc324e75ab92192379ec1a5eb5354d12ceaa3b9f1ad113ee594c3c",
+          "log_sha256": "6f57d499036b63a5db069b3996ea28232392f44850bf31da63e6878040da7683",
+          "result": "1 passed in 15.42s"
         }
       ]
+    },
+    "verification": {
+      "task_sha256": "569fb868129f02abce6b585918edb811d4e2801f949c486c0d3592351f89484b",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
     }
   }
 }

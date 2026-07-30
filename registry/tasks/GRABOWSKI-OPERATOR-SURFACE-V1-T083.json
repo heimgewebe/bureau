@@ -13,11 +13,23 @@
       "id": "retention-grace"
     },
     {
+      "assertion": "Before a new mutating worktree, broad repository lease or implementation lane is opened, one bounded read-only admission preflight checks the exact repository and requested scope for unresolved lifecycle drift, foreign dirty state, live overlapping work and sufficiently similar active task or pull-request bindings; unclear overlap blocks before state creation.",
+      "id": "wip-admission-preflight"
+    },
+    {
+      "assertion": "When terminal, orphaned or identity-drifted state exists in the requested scope, the operator receives a convergence-first decision and bounded next action before creating another lane. The projection alone never authorizes cleanup, lease release, process termination or task closure.",
+      "id": "convergence-before-expansion"
+    },
+    {
+      "assertion": "Proven disjoint parallel work remains allowed through exact path, component, process, deployment and shared-gate evidence; the implementation does not impose a global one-lane policy and does not weaken existing non-conflict, lease or merge gates.",
+      "id": "preserve-disjoint-parallelism"
+    },
+    {
       "assertion": "T082 is completed successfully before periodic mutating effects are enabled.",
       "id": "canary-before-enable"
     },
     {
-      "assertion": "Tests cover periodic idempotence and safety gates, and live readback demonstrates convergence without deleting protected or active worktrees.",
+      "assertion": "Tests cover periodic idempotence, admission decisions, exact disjointness, stale and foreign state, gate preservation and safety boundaries; live readback demonstrates fewer avoidable new states and bounded convergence without deleting protected or active worktrees.",
       "id": "tests-live"
     }
   ],
@@ -34,7 +46,7 @@
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "note": "Implement scheduling in existing retention/convergence paths; do not introduce an independent competing cleanup daemon.",
+      "note": "User explicitly ordered prioritized implementation on 2026-07-30. Integrate scheduling and admission into existing retention, current-work and resource-coordination paths; do not introduce an independent cleanup daemon, a second lifecycle truth or a broad policy bypass.",
       "required_level": "operator"
     },
     "grabowski_resources": [
@@ -44,17 +56,19 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski"
   },
-  "goal": "Run bounded worktree lifecycle reconciliation automatically through the existing retention/convergence machinery, avoiding a second cleanup daemon while preserving recovery-first archive, active-retention protection, the 24-hour grace period and typed dry-run/hash-gated cleanup.",
+  "goal": "Reduce the dominant operator friction by integrating bounded worktree lifecycle reconciliation and a convergence-first WIP admission preflight into existing Grabowski retention, current-work and resource-coordination paths. New mutating lanes remain fail-closed on unresolved or overlapping state, while exact disjoint parallel work stays available and all existing recovery, retention, review, CI and merge gates remain intact.",
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T083",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
     "does_not_establish": [
       "automatic_cleanup_enabled",
       "safe_unbounded_cleanup",
-      "second_daemon_required"
+      "second_daemon_required",
+      "global_single_lane_required",
+      "permission_to_bypass_existing_gates"
     ],
-    "live_basis": "The deployed grip exists and is live, but PR #370 intentionally added no periodic producer scheduling. Final reviewed PR diff SHA-256: 01cea5fbef3fc3d5c5ef4cc96b09f8f74dd2bce2b0ad95af7edba19f6064c4d0.",
-    "source": "PR #370 worktree-hygiene post-merge review",
+    "live_basis": "The deployed hygiene grip exists, but current evidence on 2026-07-30 showed 219 projected Grabowski work states with 160 blocking and 101 worktrees, while the wider five-repository projection showed 324 states with 258 blocking and 520 worktrees. Seven-day audit evidence showed 616 Bureau failure statuses, 654 effects not started and 34 repeated repo.worktree.ensure blockades. The task therefore combines downstream reconciliation with upstream admission control.",
+    "source": "PR #370 worktree-hygiene post-merge review plus live Grabowski friction evaluation on 2026-07-30",
     "operator_intake": {
       "schema_version": 1,
       "candidate_id": "candidate-5bb0a6437635fb20de5c6d2b",
@@ -74,17 +88,43 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "operator_intake_merges": [
+      {
+        "schema_version": 1,
+        "candidate_id": "candidate-b082c9fc37a782faa7cd1e37",
+        "event_id": 1680,
+        "request_sha256": "e5a2558161bb19c7bfac61e1a35fa97500a8f5b87dbc0d803864c0d725b684a6",
+        "assessment": "merge",
+        "observed_at": "2026-07-30T03:31:05.758510Z",
+        "source": {
+          "kind": "conversation",
+          "locator": "chatgpt:grabowski-friction-evaluation:2026-07-30",
+          "freshness": "unknown",
+          "sha256": null
+        },
+        "does_not_establish": [
+          "automatic_merge",
+          "task_readiness",
+          "claim_or_dispatch_authority"
+        ]
+      }
+    ],
+    "priority_basis": {
+      "user_directive": "priorisiert umsetzen",
+      "directed_at": "2026-07-30T06:03:00+02:00",
+      "decision": "Move T083 to ready/now and place it first in the now queue because its dependency T082 is verified and candidate event 1680 assessed merge with no missing fields."
     }
   },
   "priority": {
-    "lane": "next",
-    "rank": 20
+    "lane": "now",
+    "rank": 1
   },
   "required_capabilities": [
     "repository",
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
-  "title": "Integrate worktree hygiene into runtime retention convergence"
+  "state": "ready",
+  "title": "Converge worktree state before opening new lanes"
 }

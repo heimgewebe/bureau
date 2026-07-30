@@ -38,6 +38,28 @@
         "completion of other initiative tasks"
       ]
     },
+    "lifecycle_reconciled_20260730_t083_priority": {
+      "from_state": "waiting",
+      "to_state": "active",
+      "reason": "T083 is ready and ranked first in the now queue. Leaving the initiative waiting would make Dispatcher.reasons reject every normal claim and dispatch despite the task-level prioritization.",
+      "evidence": {
+        "pull_request": 1207,
+        "review_finding": "Codex P1: Reactivate the initiative before queueing this task",
+        "review_comment_id": 3680000032,
+        "source_pr_head_before_fix": "61f9acbf3fc360ec2c77afd5491ed37c2ffbcd46",
+        "dispatcher_guard": "src/bureau/v2.py:3007-3008",
+        "task": "GRABOWSKI-OPERATOR-SURFACE-V1-T083",
+        "task_state": "ready",
+        "queue_lane": "now",
+        "queue_rank": 1
+      },
+      "does_not_establish": [
+        "task claimability without all remaining dispatcher gates",
+        "automatic claim or dispatch",
+        "merge or deployment authority",
+        "completion of other initiative tasks"
+      ]
+    },
     "priority_decision": "situation spine before recall; grip surface before friction automation; shadow measurement before bounded adaptive routing; push and capability enforcement later",
     "relationship_to_existing": {
       "GRIP-ROADMAP-V1": "complements and narrows operator-facing work; does not replace queued grip roadmap tasks",
@@ -72,6 +94,6 @@
     "max_active_tasks": 1
   },
   "schema_version": 1,
-  "state": "waiting",
+  "state": "active",
   "title": "Grabowski operator surface"
 }

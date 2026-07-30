@@ -1,0 +1,146 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The existing chronik_events_ingested_total metric name remains available for compatibility, but its HELP text and documentation unambiguously define it as validated events presented for ingestion rather than proof of durable persistence; signal-strength metrics receive the same attempt-level boundary.",
+      "id": "attempt-metric-semantics"
+    },
+    {
+      "assertion": "A bounded chronik_events_persisted_total counter records only events that were successfully appended to authoritative storage. For agent.ledger it increments by the storage result's written count, so identical replays and conflicts add zero durable events; for other domains it increments only after a successful write.",
+      "id": "durable-write-counter"
+    },
+    {
+      "assertion": "A bounded agent.ledger request-outcome counter distinguishes accepted, replayed, mixed, conflict and invalid-identity outcomes without using event_id, payload content, repository names or other unbounded labels.",
+      "id": "agent-ledger-outcome-counter"
+    },
+    {
+      "assertion": "Storage failures, identity conflicts and missing identities cannot increment durable-write metrics, and error responses expose no raw event or ledger content.",
+      "id": "failure-boundary"
+    },
+    {
+      "assertion": "The change does not alter HTTP success bodies, idempotency, ledger bytes, index state, retry semantics or non-agent.ledger ingestion behavior; only metric accounting and HELP text change.",
+      "id": "domain-compatibility"
+    },
+    {
+      "assertion": "Focused Prometheus regression tests prove first delivery, identical replay, mixed batch, conflicting replay, invalid identity, generic-domain success and storage failure accounting; the complete Chronik validation suite, role contract, CI and exact-head smoke remain green.",
+      "id": "regression-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.chronik"
+    }
+  ],
+  "depends_on": [
+    "CHRONIK-CODING-MEMORY-V1-T001"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The direct user instruction on 2026-07-30 authorized implementing the next conflict-free Chronik follow-up after T001. Registry publication, merge and any runtime effect remain independently revision-bound.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik"
+  },
+  "goal": "Make Chronik metrics distinguish validated delivery attempts, newly durable ledger writes, identical agent.ledger replays and identity conflicts without breaking existing metric names, increasing label cardinality or changing storage semantics.",
+  "id": "CHRONIK-CODING-MEMORY-V1-T002",
+  "initiative": "CHRONIK-CODING-MEMORY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "exactly-once network transport",
+      "automatic consumer migration",
+      "metric retention policy",
+      "deployment or chronik.service activation",
+      "idempotency outside agent.ledger",
+      "task or queue authority before publication"
+    ],
+    "finding": "T001 fixed ledger convergence, but attempt-level counters are incremented before the storage result and can be misread as newly durable events.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-0fadd8a4c7176fef8f0b8d6d",
+      "event_id": 1714,
+      "event_created_at": "2026-07-30T13:58:42.586194Z",
+      "request_sha256": "ffebc3b0a38e989ef24d79a891487413556b9649a824c549c9e922f625fcc156",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "pull-request-self-review",
+        "locator": "heimgewebe/chronik#241@917a07626026a7c1d1db5418268843c38523c2d4",
+        "observed_at": "2026-07-30T13:44:41Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "source_candidate": "candidate-0fadd8a4c7176fef8f0b8d6d",
+    "source_event_id": 1714,
+    "source_merge_commit": "8a5ffe7d03625360c7a4f196bd59a2f6b431da86",
+    "source_pull_request": 241,
+    "source_request": "Direct user instruction on 2026-07-30 to finish the outstanding work and implement the next task.",
+    "source_reviewed_head": "917a07626026a7c1d1db5418268843c38523c2d4",
+    "verification": {
+      "acceptance_result": "all six acceptance assertions satisfied",
+      "does_not_establish": [
+        "exactly-once network transport",
+        "metric retention policy",
+        "deployment or chronik.service activation",
+        "idempotency outside agent.ledger",
+        "that chronik_events_ingested_total represents durable persistence"
+      ],
+      "implementation_source": "direct user-authorized operator execution while canonical task publication was blocked by a valid foreign Registry publication lease",
+      "interpolation_degree": 0.01,
+      "merge_commit": "2c4468ad480f35400c265cf8c239fcecd2ba3acb",
+      "plan_sha256": "7a4d09115c987f7199ff6b984bc87c08f8598c55d5dddfd7284c7d55d1b5bcd0",
+      "pull_request": 243,
+      "rate_limit_test_leakage": "one intermediate full validation exposed shared testclient limiter leakage; an isolated limiter fixture fixed it and the subsequent full validation passed 428 tests",
+      "repository": "heimgewebe/chronik",
+      "reviewed_head": "9327a40ec51ca0dbb8725c243cb9cbb7e35ce96d",
+      "reviewed_proposal_id": "46b7277574fb478b007be7853df5a699fe440556319974d82bccf9a24c0d05cb",
+      "reviewed_proposal_sha256": "f51f833badcc73733176faab348632acc46d8bdc1013ecf662bd8f830415d987",
+      "status": "verified",
+      "task_sha256": "ed8c225a4dfaf51ff8bd947ea652b6822562a8e74bb9553d20c84cfabe77fb0e",
+      "uncertainty": 0.03,
+      "validation": {
+        "focused_metric_and_idempotency_tests": "11 passed on exact merge commit",
+        "full_chronik_validation": "428 passed",
+        "local_api_smoke": "health, version, agent.ledger ingest and readback passed",
+        "post_merge_checks": "all fixture, guard, smoke and CodeQL checks passed",
+        "pr_checks": "all fixture, guard, smoke and CodeQL checks passed",
+        "role_contract": "passed"
+      },
+      "verified_by": "chatgpt-grabowski-chronik-metrics-t002-20260730"
+    },
+    "verified_at": "2026-07-30T16:31:21Z"
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 11
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "python",
+    "testing",
+    "metrics"
+  ],
+  "rollback": {
+    "procedure": "Revert the metric-accounting patch while preserving all ledger bytes and task evidence; no metric rollback may rewrite or delete Chronik ledger state.",
+    "trigger": "Metrics count replays or conflicts as durable writes, labels become unbounded, existing metric names disappear, or ingestion/storage behavior changes."
+  },
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Separate Chronik delivery-attempt and durable-write metrics"
+}

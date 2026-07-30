@@ -1,0 +1,140 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Planerzeugung akzeptiert eine explizite, versionierte Auswahl zulässiger Aktionsklassen oder Befundcodes; ein reiner terminal-task-in-queue-Plan enthält ausschließlich remove_from_queue und keine add_to_queue-Aktion.",
+      "evidence_type": "object",
+      "id": "explicit-action-filter",
+      "verifier": "CLI- und Unit-Regressionstests"
+    },
+    {
+      "assertion": "Die normalisierte Filterauswahl ist Bestandteil des Planartefakts, seines Integritätsnachweises und der erwarteten Aktionsmenge; fehlende, unbekannte oder manipulierte Filterwerte stoppen fail-closed.",
+      "evidence_type": "object",
+      "id": "filter-bound-in-artifact",
+      "verifier": "Planintegritäts- und Manipulationstests"
+    },
+    {
+      "assertion": "Apply leitet den aktuellen Dry-run erneut mit exakt derselben im reviewed Plan gebundenen Filterauswahl ab und lehnt Head-, Queue-, Findings-, Filter- oder Aktionsdrift vor jeder Wirkung ab.",
+      "evidence_type": "object",
+      "id": "apply-rederives-same-scope",
+      "verifier": "ausführbare Apply-Regressionstests"
+    },
+    {
+      "assertion": "Ohne Filter bleibt die bisherige vollständige sichere Aktionsableitung kompatibel; bestehende add_to_queue- und remove_from_queue-Sicherheitsgrenzen werden nicht erweitert.",
+      "evidence_type": "boolean",
+      "id": "default-behavior-preserved",
+      "verifier": "vollständige bestehende Queue-Reconcile-Testsuite"
+    },
+    {
+      "assertion": "Ein post-merge Dry-run gegen die dann aktuelle kanonische Registry erzeugt für die terminalen Queue-Befunde einen Removal-only-Plan mit null Add-Aktionen; eine Anwendung bleibt bis zu separatem Review wirkungslos.",
+      "evidence_type": "object",
+      "id": "removal-only-live-proof",
+      "verifier": "revisionsgebundener Live-Plan mit SHA-256"
+    },
+    {
+      "assertion": "Rollback, Byte-Stabilität und Bureau-/Doctor-/Registry-Post-Gates gelten für gefilterte Pläne unverändert; fehlgeschlagene Gates hinterlassen keinen partiellen Queue-Effekt.",
+      "evidence_type": "object",
+      "id": "rollback-and-post-gates",
+      "verifier": "Rollback- und Post-Gate-Regressionstests"
+    },
+    {
+      "assertion": "Ruff, vollständige Bureau-Testsuite, Git-Diff-Prüfung, CI und exakter Head-Readback sind grün.",
+      "evidence_type": "object",
+      "id": "full-validation",
+      "verifier": "revisionsgebundene lokale und GitHub-CI-Belege"
+    },
+    {
+      "assertion": "Die Änderung erzeugt keine ungereviewte Queue-, Claim-, Dispatch-, Merge- oder Deployment-Autorität und verändert keine fremden Worktrees, Leases oder aktiven Läufe.",
+      "evidence_type": "boolean",
+      "id": "no-new-authority",
+      "verifier": "Grenzreview und Live-Readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-INTEGRATION-LOOP-V1-T018"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die spätere Implementierung darf ausschließlich den reviewed Queue-Reconcile-Plan-/Apply-Vertrag, die CLI-Oberfläche und eng zugehörige Tests erweitern. Die kanonische Queue darf erst durch einen separat reviewten, digest- und Head-gebundenen Plan verändert werden.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/repos/bureau/src/bureau/queue_reconcile.py",
+      "path:/home/alex/repos/bureau/src/bureau/cli.py",
+      "path:/home/alex/repos/bureau/tests/test_queue_reconcile.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Ergänze den revisionsgebundenen reviewed Queue-Reconcile-Vertrag um explizite, fail-closed gebundene Aktionsfilter, damit ein Plan ausschließlich terminale Queue-Einträge entfernen kann, ohne gleichzeitig alle erkannten add_to_queue-Aktionen anwenden zu müssen.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T019",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Taskbereitschaft",
+      "Claim- oder Dispatchautorität",
+      "Anwendung auf die kanonische Queue",
+      "Abwesenheit zukünftiger Queue-Drift",
+      "sicheren Merge",
+      "Deployment"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-17e2c565fe2b416323e0c315",
+      "event_id": 1749,
+      "event_created_at": "2026-07-30T18:16:56.755946Z",
+      "request_sha256": "33d7d50eb33ef819368801a91756cfdec25db118fd2ce0d7344500164fde591a",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-repository-audit",
+        "locator": "file:/home/alex/.local/state/bureau/recovery/queue-reconcile-20260730T2008.json",
+        "observed_at": "2026-07-30T18:08:08.563191Z",
+        "sha256": "659fbd5fe3eceac329c6188cd624329b76aa1565fba5018d0c8a6b6159f2be3f"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "planning_reason": "Der bestehende Plan ist sicher, aber zu breit für die gewünschte reine Terminalbereinigung. T014 hält aktive fremde Kernarbeit; T019 bleibt daher planned und darf erst nach aktueller Nichtüberschidungs- und Autoritätsprüfung umgesetzt werden.",
+    "registered_at": "2026-07-30T20:18:00+02:00",
+    "source": "post-merge-live-audit-of-operator-integration-loop-v1-t018",
+    "source_facts": {
+      "active_foreign_task_preserved": "OPERATOR-INTEGRATION-LOOP-V1-T014",
+      "add_actions": 62,
+      "canonical_queue_mutated": false,
+      "plan_path": "/home/alex/.local/state/bureau/recovery/queue-reconcile-20260730T2008.json",
+      "plan_sha256": "659fbd5fe3eceac329c6188cd624329b76aa1565fba5018d0c8a6b6159f2be3f",
+      "registry_head": "23b193a4ed16c792f4a924a770df6600b901bb63",
+      "remove_actions": 6,
+      "t018_actions": []
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 25
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich die Filterparameter, Planartefaktfelder, Apply-Reableitung und zugehörigen Tests. Der bisherige vollständige reviewed Queue-Reconcile-Vertrag bleibt erhalten; kanonische Queue-Dateien und Runtime-Overlays werden nicht rückwirkend umgeschrieben."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Queue-Reconcile-Pläne auf Aktionsklassen begrenzen"
+}

@@ -6,13 +6,14 @@ import pytest
 
 from bureau import cli as bureau_cli
 from bureau import queue_reconcile as queue_reconcile_module
-from bureau.core import Registry, StateError, StateStore
+from bureau.core import Dispatcher, Registry, StateError, StateStore
 from bureau.legacy import ValidationError
 from bureau.queue_reconcile import (
     apply_queue_reconcile_plan,
     queue_reconcile_report,
     write_queue_reconcile_plan,
 )
+from bureau.v2 import complete_run
 
 
 def _task_path(root, task_id):
@@ -203,6 +204,107 @@ def test_queue_reconcile_write_plan_requires_review_before_apply(
     ]
     with pytest.raises(Exception, match="not reviewed"):
         apply_queue_reconcile_plan(registry, store, plan_path)
+
+
+def test_queue_reconcile_plan_removes_terminal_task_from_queue(
+    registry_factory, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(queue_reconcile_module, "_git_head", lambda _root: "a" * 40)
+    root = registry_factory(2)
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(registry, store)
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+    complete_run(
+        registry,
+        store,
+        run["run_id"],
+        {"proof": {"result": "passed"}},
+    )
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+
+    plan = write_queue_reconcile_plan(registry, store, plan_path)
+
+    assert plan["actions"] == [
+        {
+            "operation": "remove_from_queue",
+            "target_lane": None,
+            "task_id": "BUR-TEST-001-T001",
+            "source_finding_code": "terminal-task-in-queue",
+            "effective_state": "verified",
+            "priority_lane": "now",
+        }
+    ]
+    assert plan["expected_queue_after"]["lanes"] == {
+        "now": ["BUR-TEST-001-T002"],
+        "next": [],
+        "later": [],
+    }
+
+
+def test_queue_reconcile_apply_reviewed_plan_removes_terminal_task_and_runs_gates(
+    registry_factory, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(queue_reconcile_module, "_git_head", lambda _root: "a" * 40)
+    root = registry_factory(2)
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(registry, store)
+    run = dispatcher.claim_next("worker", ("repository",))["run"]
+    complete_run(
+        registry,
+        store,
+        run["run_id"],
+        {"proof": {"result": "passed"}},
+    )
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+    write_queue_reconcile_plan(registry, store, plan_path)
+    _review_plan(plan_path)
+
+    result = apply_queue_reconcile_plan(registry, store, plan_path)
+    queue = json.loads(_queue_path(root).read_text())
+
+    assert result["applied"] is True
+    assert result["no_op"] is False
+    assert result["post_gates"] == {
+        "bureau_check": True,
+        "doctor_healthy": True,
+        "registry_truth_healthy": True,
+    }
+    assert queue["lanes"] == {
+        "now": ["BUR-TEST-001-T002"],
+        "next": [],
+        "later": [],
+    }
+
+
+@pytest.mark.parametrize(
+    ("code", "effective_state", "target_lane"),
+    [
+        ("some-other-finding", "verified", None),
+        ("terminal-task-in-queue", "planned", None),
+        ("terminal-task-in-queue", "verified", "next"),
+    ],
+)
+def test_queue_reconcile_plan_rejects_unbound_remove_action(
+    code, effective_state, target_lane
+):
+    report = {
+        "findings": [
+            {
+                "code": code,
+                "effective_state": effective_state,
+                "priority_lane": "now",
+                "task_id": "TASK-1",
+                "proposed_action": {
+                    "operation": "remove_from_queue",
+                    "target_lane": target_lane,
+                },
+            }
+        ]
+    }
+
+    assert queue_reconcile_module._plan_actions(report) == []
 
 
 def test_queue_reconcile_apply_no_actions_is_byte_stable_no_op(

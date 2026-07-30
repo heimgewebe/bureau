@@ -63,18 +63,93 @@
       "automatic queue, claim, dispatch, merge or deployment authority",
       "that the production surface no longer depends on the compact build-bound bootstrap"
     ],
-    "queue_mutated": false,
-    "registered_at": "2026-07-26",
-    "source": "Commonworld PR #142 selected-shard shadow follow-up",
-    "source_merge_commit": "932028d66adb1703c11e1739b59cfa84309744da",
-    "source_pr": 142,
-    "source_repository": "heimgewebe/commonworld",
+    "implementation_evidence": {
+      "acceptance": {
+        "async-isolation-and-cache-bounds": "PASS",
+        "closeout-bound": "PASS",
+        "cutover-gates": "PASS",
+        "detail-integrity-boundary": "PASS",
+        "exact-head-validation": "PASS",
+        "explicit-product-states": "PASS",
+        "generation-bound-detail-contract": "PASS",
+        "surface-parity": "PASS"
+      },
+      "authority": "bureau-portfolio-cleanup",
+      "decision": "generation_bound_catalog_detail_loader_merged_reviewed_ci_green_deployed_and_publicly_integrity_read_back",
+      "explicit_nonclaims": [
+        "The visible production catalogue has cut over from the compact build-bound bootstrap.",
+        "Bootstrap removal or visible catalogue cutover is authorized by this closeout.",
+        "The physical-device usability gate has passed.",
+        "Future availability, CDN behavior or a provider SLA is established.",
+        "Automatic queue, claim, dispatch, merge or deployment authority is established."
+      ],
+      "implementation_pr": 144,
+      "merge_commit": "da0d5adff6d5a07c2923560e353eb9504e0d1888",
+      "postmerge_ci": {
+        "head_sha": "da0d5adff6d5a07c2923560e353eb9504e0d1888",
+        "result": "PASS",
+        "validate_run_id": 30254974872
+      },
+      "pr_head": "d16d47f8966072b0b66aee5c1edecd3fcb3e020e",
+      "premerge_ci": {
+        "head_sha": "d16d47f8966072b0b66aee5c1edecd3fcb3e020e",
+        "result": "PASS",
+        "validate_run_id": 30254818397
+      },
+      "production_closeout": {
+        "aggregate_sha256": "72b3c90221cc85557159fbfffee45178840b852aab7e993f9b4130bd7334dba4",
+        "current_commonworld_main": "bff413c7b390dfe0657f13238ca0959231c06ade",
+        "deployment_id": 5664107642,
+        "deployment_sha": "bff413c7b390dfe0657f13238ca0959231c06ade",
+        "deployment_state": "success",
+        "detail_set_sha256": "88529923022540ec1a8052f9cf3663cfe88045ff09bbfc3f16420ef4cad03ccc",
+        "implementation_head_is_ancestor": true,
+        "implementation_merge_is_ancestor": true,
+        "integrity_readback": "PASS",
+        "manifest_bytes": 11071,
+        "manifest_entry_count": 73,
+        "manifest_generation": "6e4c014590102e9093e0520b5899e2be8c085fa51b78a6a1eea4e769049d5d52",
+        "manifest_sha256": "d243304b6533f015b0047595a60f421f7913aa2bf7eab0c09cd06bf0df6209a1",
+        "observed_at": "2026-07-29T20:06:12.669034Z",
+        "pages_job_id": 90692782808,
+        "pages_workflow_run_id": 30486278864,
+        "public_manifest_byte_equal_to_current_main": true,
+        "public_url": "https://commonworld.net/",
+        "release": "f08b1db195874a2a130c",
+        "sample_detail_identity": "velondriake-lmma",
+        "sample_detail_sha256": "618483ccf6d14971ffa84352c47873b61c5d404b3c590ec488a588df59de2eeb",
+        "sample_shard_sha256": "9d3a4cf42d8c39f13f8fac671177e0dd5d250b5b672350e86d6cb5a622afaadf"
+      },
+      "remaining_gates": [],
+      "review_closeout": {
+        "material_threads_resolved": 2,
+        "material_threads_total": 2,
+        "material_threads_unresolved": 0,
+        "p1_module_versioning_finding": "fixed_on_exact_reviewed_head_and_thread_resolved_2026-07-29",
+        "p2_retry_finding": "fixed_on_exact_reviewed_head"
+      },
+      "validation_closeout": {
+        "evidence_path": "docs/evidence/catalog-delivery-benchmark-v1.json",
+        "evidence_sha256": "df446eae988aa37687a852171b5688bcabb717d186623e277e78ac21e60d396d",
+        "javascript_tests": "138/138 PASS",
+        "postmerge_validate_run_id": 30254974872,
+        "premerge_validate_run_id": 30254818397,
+        "public_browser_evidence_sha256": "bae7973d4ca693ab1b013505b99df9d50bc0a59f71a48f13dc67e1552e6c1f07",
+        "public_browser_scenarios": "36/36 PASS",
+        "python_tests": "567/567 PASS"
+      }
+    },
     "operator_intake": {
-      "schema_version": 1,
       "candidate_id": "candidate-8d3411ff6b3366d2c05fba9b",
-      "event_id": 1188,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
       "event_created_at": "2026-07-26T06:12:36.937905Z",
+      "event_id": 1188,
       "request_sha256": "2936c645dd56bdb114f13d86a95e68f6bc3ce8f99ef1a10dacce3374af45ee6d",
+      "schema_version": 1,
       "source": {
         "does_not_establish": [
           "source_content_identity"
@@ -84,49 +159,59 @@
         "locator": "commonworld:feat/catalog-shard-shadow-v1",
         "observed_at": "2026-07-26T08:00:00+02:00",
         "sha256": null
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
+      }
     },
-    "implementation_evidence": {
+    "queue_mutated": false,
+    "registered_at": "2026-07-26",
+    "source": "Commonworld PR #142 selected-shard shadow follow-up",
+    "source_merge_commit": "932028d66adb1703c11e1739b59cfa84309744da",
+    "source_pr": 142,
+    "source_repository": "heimgewebe/commonworld",
+    "verification": {
       "acceptance": {
-        "generation-bound-detail-contract": "PASS",
-        "detail-integrity-boundary": "PASS",
         "async-isolation-and-cache-bounds": "PASS",
-        "explicit-product-states": "PASS",
-        "surface-parity": "PASS",
+        "closeout-bound": "PASS",
         "cutover-gates": "PASS",
+        "detail-integrity-boundary": "PASS",
         "exact-head-validation": "PASS",
-        "closeout-bound": "PENDING_PRODUCTION_EVIDENCE"
+        "explicit-product-states": "PASS",
+        "generation-bound-detail-contract": "PASS",
+        "surface-parity": "PASS"
       },
-      "authority": "commonworld-project-operator",
-      "decision": "implementation_merged_exact_head_validated_closeout_pending_production_generation_readback_and_revision_stamps",
-      "implementation_pr": 144,
-      "pr_head": "d16d47f8966072b0b66aee5c1edecd3fcb3e020e",
-      "merge_commit": "da0d5adff6d5a07c2923560e353eb9504e0d1888",
-      "premerge_ci": {
-        "validate_run_id": 30254818397,
-        "head_sha": "d16d47f8966072b0b66aee5c1edecd3fcb3e020e",
-        "result": "PASS"
-      },
-      "postmerge_ci": {
-        "validate_run_id": 30254974872,
-        "head_sha": "da0d5adff6d5a07c2923560e353eb9504e0d1888",
-        "result": "PASS"
-      },
+      "authority": "bureau-portfolio-cleanup",
+      "decision": "generation_bound_catalog_detail_loader_merged_reviewed_ci_green_deployed_and_publicly_integrity_read_back",
+      "deployment_id": 5664107642,
+      "deployment_sha": "bff413c7b390dfe0657f13238ca0959231c06ade",
+      "deployment_state": "success",
       "explicit_nonclaims": [
         "The visible production catalogue has cut over from the compact build-bound bootstrap.",
-        "The physical-device cutover gate has passed.",
-        "The synthetic scaling evidence establishes real mobile-network behavior.",
-        "A backend, PostGIS or PMTiles runtime is already deployed."
+        "Bootstrap removal or visible catalogue cutover is authorized by this closeout.",
+        "The physical-device usability gate has passed.",
+        "Future availability, CDN behavior or a provider SLA is established.",
+        "Automatic queue, claim, dispatch, merge or deployment authority is established."
       ],
-      "remaining_gates": [
-        "bind deployed generation and public production readback",
-        "generate matching task_sha256 and plan_sha256 revision stamps before verified transition"
-      ]
+      "implementation_merge_commit": "da0d5adff6d5a07c2923560e353eb9504e0d1888",
+      "implementation_pr_head": "d16d47f8966072b0b66aee5c1edecd3fcb3e020e",
+      "implementation_pull_request": 144,
+      "manifest_generation": "6e4c014590102e9093e0520b5899e2be8c085fa51b78a6a1eea4e769049d5d52",
+      "manifest_sha256": "d243304b6533f015b0047595a60f421f7913aa2bf7eab0c09cd06bf0df6209a1",
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4",
+      "postmerge_validate_run_id": 30254974872,
+      "premerge_validate_run_id": 30254818397,
+      "primary_evidence_sha256": "51ed94f09360e3d83db5f865eec2eec499b98ebb4f8e18768a2792d847ea915e",
+      "production_integrity_readback": "PASS",
+      "public_url": "https://commonworld.net/",
+      "release": "f08b1db195874a2a130c",
+      "repository": "heimgewebe/commonworld",
+      "review_threads": {
+        "resolved": 2,
+        "total": 2,
+        "unresolved": 0
+      },
+      "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T027",
+      "task_sha256": "0475a9e87cc416da22dd65015a8bed1c44f6e058e508e4b109b659bc2417fb7f",
+      "validation_evidence_sha256": "df446eae988aa37687a852171b5688bcabb717d186623e277e78ac21e60d396d",
+      "verified_at": "2026-07-29T20:06:12.669034Z"
     }
   },
   "priority": {
@@ -144,6 +229,6 @@
     "strategy": "Disable detail shadow loading and continue serving the existing build-bound bootstrap and selected-shard shadow path; retain generation artifacts and receipts for diagnosis without rewriting catalog history."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Deliver generation-bound catalog detail loading and cutover gates"
 }

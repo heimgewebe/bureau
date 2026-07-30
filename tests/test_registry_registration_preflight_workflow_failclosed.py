@@ -79,24 +79,26 @@ def test_main_push_discovery_errors_publish_blocking_checks_before_exit() -> Non
     assert 'if ! gh api "repos/${REPOSITORY}/pulls?state=open&per_page=100" --paginate' in text
 
 
-def test_main_push_clears_latest_transient_failure_for_recovered_noncandidate() -> None:
+def test_main_push_clears_latest_recoverable_discovery_check_for_noncandidate() -> None:
     text = _workflow_text()
-
-    helper = "clear_discovery_failure()"
+    helper = "clear_recoverable_discovery_check()"
     query = 'gh api -X GET "repos/${REPOSITORY}/commits/${sha}/check-runs"'
     prefix = 'prefix="registry-freshness:${pr_number}:${sha}:"'
     latest_only = "[.check_runs[] | select(.name == $name)] | max_by(.id)"
-    recovery_id = '"${latest_failure_id}" success'
+    failed_state = '.conclusion == "failure"'
+    in_progress_state = '(.status == "in_progress" and .conclusion == null)'
+    recovery_id = '"${latest_recoverable_id}" success'
     recovery_title = '"Registry discovery recovered"'
     noncandidate_call = (
-        'elif ! clear_discovery_failure "${pr_head_sha}" "${pr_number}"; then'
+        'elif ! clear_recoverable_discovery_check '
+        '"${pr_head_sha}" "${pr_number}"; then'
     )
-
     assert text.count(helper) == 1
     assert query in text
     assert prefix in text
     assert latest_only in text
-    assert '.conclusion == "failure"' in text
+    assert failed_state in text
+    assert in_progress_state in text
     assert recovery_id in text
     assert recovery_title in text
     assert noncandidate_call in text

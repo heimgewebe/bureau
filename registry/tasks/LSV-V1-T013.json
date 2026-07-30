@@ -101,6 +101,179 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "completed_at": "2026-07-30",
+    "verified_at": "2026-07-30T21:07:01Z",
+    "current_leitstand_head": "186baf56d354f60b7bb3a616d904eaf17ba8fbfb",
+    "outcome": "Leitstand projiziert unter Jetzt den globalen Spitzenkandidaten plus konfliktfreie aktive oder advisory Repository-Bälle in einem auf sechs Karten begrenzten Korridor. Unbekannte Domänen schließen Parallelität, Mehrrepo-Aufgaben reservieren alle Domänen und kanonische Now-Aufgaben werden nicht mehr unter Danach umgedeutet.",
+    "implementation_pr": "heimgewebe/leitstand#197",
+    "implementation_head": "0404a27fd6de0094ebf6f519f33d1d951b55f002",
+    "implementation_merge_commit": "186baf56d354f60b7bb3a616d904eaf17ba8fbfb",
+    "implementation_diff_sha256": "e2ef4ca18d35506161e1bf603769889667b7ace5d1a3966508457f8ca8a3b7c3",
+    "deployment": {
+      "status": "verified",
+      "release_id": "186baf56d354f60b7bb3a616d904eaf17ba8fbfb-runtime-v1",
+      "release_tree_sha256": "579ffbc2f064a9427deb17a39755a7675d8b6a7079e4a60b8b87903753d8237f",
+      "deploy_receipt_path": "/home/alex/.local/state/leitstand/releases/receipts/20260730T205527.549967Z-4074718-877307b6-deploy-switch.json",
+      "deploy_receipt_sha256": "87cf8238a7a28342af7e8b328d657d65274ec7eca50f8bc531716ab4a0cab1c8",
+      "grabowski_job_finalization_sha256": "c8a165f37cc04c44b5b38920e41082e827b2f3dffac53cd09b52ff03f6118e63",
+      "runtime_head": "186baf56d354f60b7bb3a616d904eaf17ba8fbfb",
+      "health_status": "ok",
+      "decision_axis_snapshot_sha256": "f871ff08f7c4dfa64b9b6b12f24a2983174cea4e4431367086e768977d274566",
+      "decision_axis_generated_at": "2026-07-30T20:55:00.045Z",
+      "decision_axis_now_item_count": 5
+    },
+    "validation": {
+      "final_base": "931cdde74340ac0663af819e8233a04a0b2bd6b5",
+      "final_head": "0404a27fd6de0094ebf6f519f33d1d951b55f002",
+      "self_review": "PASS; methodisch getrennt und revisionsgebunden. Zwei Vorpublikationsbefunde wurden behoben: unbekannte globale Domäne schloss Parallelität zunächst nicht, und der Browser-Matrix-Vertrag erwartete minimumNowItems noch nicht. Keine unabhängige Review behauptet.",
+      "local_checks": {
+        "selector": "PASS; 7/7",
+        "unit": "PASS; 269/269",
+        "typecheck": "PASS",
+        "lint": "PASS",
+        "release_runtime": "PASS; 48/48",
+        "build": "PASS",
+        "browser_views": "PASS; 213 mobile/desktop checks",
+        "diff_check": "PASS",
+        "drift_gates": "PASS"
+      },
+      "github_checks_result": "PASS auf finalem PR-Head vor Merge",
+      "github_checks": [
+        "CI / build",
+        "CodeQL / actions",
+        "CodeQL / javascript-typescript",
+        "CodeQL / python",
+        "ai-context guard / repo-root",
+        "ai-context guard / templates",
+        "security-hygiene / scan",
+        "Cloudflare Pages"
+      ],
+      "merge_readback": "PR #197 MERGED; origin/main und Release binden 186baf56d354f60b7bb3a616d904eaf17ba8fbfb",
+      "deployment_readback": "Immutable Release verifiziert; Webdienst aktiv/running, Timer aktiv/waiting, Producer Result=success, /health status=ok."
+    },
+    "verified_acceptance": {
+      "global-and-parallel-now": {
+        "verdict": "pass",
+        "live_snapshot_sha256": "f871ff08f7c4dfa64b9b6b12f24a2983174cea4e4431367086e768977d274566",
+        "now_item_count": 5,
+        "domains": [
+          "repo.audio",
+          "repo.bureau",
+          "repo.grabowski",
+          "repo.semantah",
+          "repo.repoground"
+        ]
+      },
+      "canonical-domain-source": {
+        "verdict": "pass",
+        "source": "Bureau status-projection / repository_balls / registry queue",
+        "observer_only": true,
+        "claimability_asserted": false
+      },
+      "now-not-later": {
+        "verdict": "pass",
+        "now_item_in_later": false,
+        "later_items": [
+          "BUREAU-TRUTH-MODEL-V2-T021",
+          "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T072"
+        ]
+      },
+      "bounded-and-deduplicated": {
+        "verdict": "pass",
+        "maximum_cards": 6,
+        "live_cards": 5,
+        "unknown_domains_fail_closed": true,
+        "multi_repository_tasks_reserve_all_domains": true,
+        "active_precedes_advisory_per_domain": true
+      },
+      "observer-and-browser-regression": {
+        "verdict": "pass",
+        "snapshot_only": true,
+        "browser_checks": 213,
+        "viewports": [
+          "mobile",
+          "desktop"
+        ],
+        "live_health": "ok"
+      },
+      "current-main-and-review": {
+        "verdict": "pass",
+        "final_base": "931cdde74340ac0663af819e8233a04a0b2bd6b5",
+        "final_head": "0404a27fd6de0094ebf6f519f33d1d951b55f002",
+        "merge_commit": "186baf56d354f60b7bb3a616d904eaf17ba8fbfb",
+        "ci": "pass",
+        "self_review": "pass; explicitly non-independent",
+        "deployment": "pass"
+      }
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "task_id": "LSV-V1-T013",
+          "repository": "heimgewebe/leitstand",
+          "number": 197,
+          "state": "merged",
+          "head_sha": "0404a27fd6de0094ebf6f519f33d1d951b55f002",
+          "merge_commit": "186baf56d354f60b7bb3a616d904eaf17ba8fbfb",
+          "diff_sha256": "e2ef4ca18d35506161e1bf603769889667b7ace5d1a3966508457f8ca8a3b7c3"
+        },
+        {
+          "kind": "github_checks",
+          "task_id": "LSV-V1-T013",
+          "repository": "heimgewebe/leitstand",
+          "head_sha": "0404a27fd6de0094ebf6f519f33d1d951b55f002",
+          "verdict": "pass"
+        },
+        {
+          "kind": "review",
+          "task_id": "LSV-V1-T013",
+          "repository": "heimgewebe/leitstand",
+          "head_sha": "0404a27fd6de0094ebf6f519f33d1d951b55f002",
+          "self_review": "pass",
+          "external_review_claimed": false,
+          "material_findings_resolved": 2
+        },
+        {
+          "kind": "merge_readback",
+          "task_id": "LSV-V1-T013",
+          "repository": "heimgewebe/leitstand",
+          "merge_commit": "186baf56d354f60b7bb3a616d904eaf17ba8fbfb",
+          "remote_main_equal": true,
+          "verdict": "pass"
+        },
+        {
+          "kind": "deployment",
+          "task_id": "LSV-V1-T013",
+          "repository": "heimgewebe/leitstand",
+          "source_commit": "186baf56d354f60b7bb3a616d904eaf17ba8fbfb",
+          "receipt_sha256": "87cf8238a7a28342af7e8b328d657d65274ec7eca50f8bc531716ab4a0cab1c8",
+          "release_tree_sha256": "579ffbc2f064a9427deb17a39755a7675d8b6a7079e4a60b8b87903753d8237f",
+          "verdict": "pass"
+        },
+        {
+          "kind": "runtime_readback",
+          "task_id": "LSV-V1-T013",
+          "source_commit": "186baf56d354f60b7bb3a616d904eaf17ba8fbfb",
+          "health_status": "ok",
+          "snapshot_sha256": "f871ff08f7c4dfa64b9b6b12f24a2983174cea4e4431367086e768977d274566",
+          "now_item_count": 5,
+          "verdict": "pass"
+        }
+      ]
+    },
+    "explicit_nonclaims": [
+      "Die Projektion erteilt keine Claim- oder Dispatch-Autorität.",
+      "Advisory Karten beweisen keine aktuelle Ausführbarkeit.",
+      "Die beobachtete Runtime-Gesundheit beweist keine zukünftige Verfügbarkeit.",
+      "Die Browserprüfung beweist keine visuelle Perfektion auf allen Viewports."
+    ],
+    "verification": {
+      "task_sha256": "905a242b270f31bf730016a60aabd16426f5cc033e158c5a8ea549d4786fba7a",
+      "plan_sha256": "217a91b5a66a143e0440d2a7d656a5d0fada62b52778cf3285349e7667bd8621"
     }
   },
   "priority": {
@@ -117,6 +290,6 @@
     "strategy": "Producer-, Test-, Blueprint- und gegebenenfalls eng begrenzte Darstellungstextänderungen zurücksetzen; der bestehende fünfteilige Snapshot-Vertrag und die Observer-Grenze bleiben erhalten."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Parallelen advisory Jetzt-Korridor in der Entscheidungsachse projizieren"
 }

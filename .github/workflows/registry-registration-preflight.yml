@@ -185,7 +185,7 @@ jobs:
           clear_recoverable_discovery_check() {
             local sha="$1"
             local pr_number="$2"
-            local response latest_recoverable_id prefix
+            local response latest_recoverable_id prefix recoverable_check_filter
             prefix="registry-freshness:${pr_number}:${sha}:"
             if ! response="$(gh api -X GET "repos/${REPOSITORY}/commits/${sha}/check-runs" \
               -H "Accept: application/vnd.github+json" \
@@ -195,18 +195,23 @@ jobs:
               echo "::error::Cannot inspect prior Registry freshness checks for PR #${pr_number}"
               return 1
             fi
+            recoverable_check_filter='
+              [.check_runs[]
+               | select(
+                   .name == $name and
+                   ((.external_id // "") | startswith($prefix))
+                 )
+              ]
+              | max_by(.id)
+              | select(
+                  .conclusion == "failure" or
+                  (.status == "in_progress" and .conclusion == null)
+                )
+              | .id // empty'
             latest_recoverable_id="$(jq -r \
               --arg name "${CHECK_NAME}" \
               --arg prefix "${prefix}" \
-              '[.check_runs[] | select(.name == $name)] | max_by(.id) |
-               select(
-                 ((.external_id // "") | startswith($prefix)) and
-                 (
-                   .conclusion == "failure" or
-                   (.status == "in_progress" and .conclusion == null)
-                 )
-               ) |
-               .id // empty' <<< "${response}")"
+              "${recoverable_check_filter}" <<< "${response}")"
             if [[ -z "${latest_recoverable_id}" ]]; then
               return 0
             fi

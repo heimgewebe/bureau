@@ -1,3 +1,5 @@
+import json
+import subprocess
 from pathlib import Path
 
 
@@ -79,12 +81,59 @@ def test_main_push_discovery_errors_publish_blocking_checks_before_exit() -> Non
     assert 'if ! gh api "repos/${REPOSITORY}/pulls?state=open&per_page=100" --paginate' in text
 
 
-def test_main_push_clears_latest_recoverable_discovery_check_for_noncandidate() -> None:
+def _recoverable_check_filter() -> str:
+    text = _workflow_text()
+    marker = "recoverable_check_filter='"
+    start = text.index(marker) + len(marker)
+    end = text.index("'\n            latest_recoverable_id=", start)
+    return text[start:end]
+
+
+def _run_recoverable_check_filter(
+    check_runs: list[dict[str, object]],
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [
+            "jq",
+            "-r",
+            "--arg",
+            "name",
+            "registry-registration-preflight/freshness",
+            "--arg",
+            "prefix",
+            "registry-freshness:1197:exact-head:",
+            _recoverable_check_filter(),
+        ],
+        input=json.dumps({"check_runs": check_runs}),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+def _check_run(
+    check_id: int,
+    *,
+    external_id: str,
+    status: str,
+    conclusion: str | None,
+    name: str = "registry-registration-preflight/freshness",
+) -> dict[str, object]:
+    return {
+        "id": check_id,
+        "name": name,
+        "external_id": external_id,
+        "status": status,
+        "conclusion": conclusion,
+    }
+
+
+def test_main_push_clears_latest_exact_recoverable_discovery_check_for_noncandidate() -> None:
     text = _workflow_text()
     helper = "clear_recoverable_discovery_check()"
     query = 'gh api -X GET "repos/${REPOSITORY}/commits/${sha}/check-runs"'
     prefix = 'prefix="registry-freshness:${pr_number}:${sha}:"'
-    latest_only = "[.check_runs[] | select(.name == $name)] | max_by(.id)"
+    filter_expression = _recoverable_check_filter()
     failed_state = '.conclusion == "failure"'
     in_progress_state = '(.status == "in_progress" and .conclusion == null)'
     recovery_id = '"${latest_recoverable_id}" success'
@@ -96,13 +145,101 @@ def test_main_push_clears_latest_recoverable_discovery_check_for_noncandidate() 
     assert text.count(helper) == 1
     assert query in text
     assert prefix in text
-    assert latest_only in text
-    assert failed_state in text
-    assert in_progress_state in text
+    assert filter_expression.index("startswith($prefix)") < filter_expression.index("max_by(.id)")
+    assert failed_state in filter_expression
+    assert in_progress_state in filter_expression
     assert recovery_id in text
     assert recovery_title in text
     assert noncandidate_call in text
     assert text.index(helper) < text.index(noncandidate_call)
+
+
+def test_recoverable_filter_ignores_newer_same_name_foreign_prefix_checks() -> None:
+    exact_prefix = "registry-freshness:1197:exact-head:"
+    foreign_prefix = "registry-freshness:9999:exact-head:"
+    cases = [
+        _check_run(16, external_id=exact_prefix + "main", status="in_progress", conclusion=None),
+        _check_run(
+            17, external_id=foreign_prefix + "main", status="completed", conclusion="failure"
+        ),
+    ]
+    result = _run_recoverable_check_filter(cases)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "16"
+
+    cases[0] = _check_run(
+        16, external_id=exact_prefix + "main", status="completed", conclusion="failure"
+    )
+    result = _run_recoverable_check_filter(cases)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "16"
+
+
+def test_recoverable_filter_latest_exact_success_masks_older_exact_recoverable() -> None:
+    exact_prefix = "registry-freshness:1197:exact-head:"
+    for older_status, older_conclusion in [
+        ("completed", "failure"),
+        ("in_progress", None),
+    ]:
+        result = _run_recoverable_check_filter(
+            [
+                _check_run(
+                    16,
+                    external_id=exact_prefix + "old-main",
+                    status=older_status,
+                    conclusion=older_conclusion,
+                ),
+                _check_run(
+                    18,
+                    external_id=exact_prefix + "new-main",
+                    status="completed",
+                    conclusion="success",
+                ),
+            ]
+        )
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip() == ""
+
+
+def test_recoverable_filter_ignores_newer_different_check_name() -> None:
+    exact_prefix = "registry-freshness:1197:exact-head:"
+    result = _run_recoverable_check_filter(
+        [
+            _check_run(
+                16, external_id=exact_prefix + "main", status="completed", conclusion="failure"
+            ),
+            _check_run(
+                19,
+                external_id=exact_prefix + "main",
+                status="completed",
+                conclusion="failure",
+                name="different-check",
+            ),
+        ]
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "16"
+
+
+def test_recoverable_filter_fails_closed_for_missing_check_run_collection() -> None:
+    process = subprocess.run(
+        [
+            "jq",
+            "-r",
+            "--arg",
+            "name",
+            "registry-registration-preflight/freshness",
+            "--arg",
+            "prefix",
+            "registry-freshness:1197:exact-head:",
+            _recoverable_check_filter(),
+        ],
+        input="{}",
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert process.returncode != 0
 
 
 def test_main_push_never_reuses_partial_task_content_after_fetch_failure() -> None:

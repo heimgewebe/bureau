@@ -1,0 +1,121 @@
+{
+  "acceptance": [
+    {
+      "assertion": "For domain agent.ledger, event_id is the stable delivery identity: replaying the same event_id with canonically identical event content succeeds without appending another ledger record, while the same event_id with different canonical content fails closed with an explicit conflict.",
+      "id": "agent-ledger-idempotency-contract"
+    },
+    {
+      "assertion": "Single-event, batch and concurrent requests validate all candidate identities and conflicts under the ledger write boundary so a conflict cannot leave a partially applied ambiguous batch or weaken append-only storage semantics.",
+      "id": "batch-and-concurrency-atomicity"
+    },
+    {
+      "assertion": "A producer crash, timeout or lost HTTP response after remote acceptance but before local receipt commit can be retried and converges to one ledger record per event_id without data loss or duplicate appends.",
+      "id": "ambiguous-completion-recovery"
+    },
+    {
+      "assertion": "The snapshot-bound Chronik outbox introduced through chronik PR 240 can retain and advance exact source-prefix receipts; a retry without a receipt is safe because the remote agent.ledger contract is idempotent, and a later appended suffix remains independently pending.",
+      "id": "outbox-prefix-integration"
+    },
+    {
+      "assertion": "Idempotent event_id handling is restricted to agent.ledger. Existing ingestion and conflict behavior for all other Chronik domains remains unchanged unless separately reviewed and evidenced.",
+      "id": "domain-boundary"
+    },
+    {
+      "assertion": "The HTTP boundary returns stable success and conflict semantics that distinguish accepted new events, identical replays and conflicting identities without exposing raw ledger content or claiming exactly-once transport.",
+      "id": "typed-http-result"
+    },
+    {
+      "assertion": "Focused fault-injection and concurrency tests, the complete Chronik validation suite, GitHub CI and an exact-head local or isolated live smoke prove first delivery, identical replay, conflicting replay, mixed new/duplicate batch and ambiguous-completion recovery.",
+      "id": "regression-and-live-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.chronik"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Direct user instruction on 2026-07-30 authorized implementing the promoted Chronik delivery-idempotency follow-up. Registry publication remains independently gated by reviewed_plan.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik"
+  },
+  "goal": "Make agent.ledger delivery converge without duplicate or lost ledger events when Chronik accepts a batch but the producer times out, crashes or loses the response before a local source-prefix receipt is durably committed, while preserving append-only ledger truth and leaving all other domains unchanged.",
+  "id": "CHRONIK-CODING-MEMORY-V1-T001",
+  "initiative": "CHRONIK-CODING-MEMORY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "exactly-once network delivery",
+      "idempotency for non-agent.ledger domains",
+      "queue truth",
+      "task readiness",
+      "claim or dispatch authority",
+      "deployment permission before exact-head validation"
+    ],
+    "finding": "PR 240 prevents stale-receipt data loss and sends only unacknowledged suffixes, but the existing agent.ledger HTTP ingest path is not idempotent when remote acceptance succeeds before local receipt persistence.",
+    "source_candidate": "candidate-22c9b1351f07ba038c8185fc",
+    "source_event_id": 1703,
+    "source_merge_commit": "20281fc822669aa944def8e1843cd3fd8da3e7e3",
+    "source_pull_request": 240,
+    "source_request": "Direct user instruction on 2026-07-30 to implement the promoted Chronik follow-up.",
+    "source_reviewed_head": "e359519531bb18be301a1df4bbf177c2a5a788f0",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-22c9b1351f07ba038c8185fc",
+      "event_id": 1703,
+      "event_created_at": "2026-07-30T12:14:31.200531Z",
+      "request_sha256": "c16a8e18b3bb2772d954782740d1c64949d0b7ce59af52c6ff2508f41705328d",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "pull-request-self-review",
+        "locator": "heimgewebe/chronik#240@e359519531bb18be301a1df4bbf177c2a5a788f0",
+        "observed_at": "2026-07-30T12:11:39Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 10
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski"
+  ],
+  "rollback": {
+    "procedure": "Restore the previous ingestion path, preserve all existing ledger bytes and failure evidence, quarantine only derived idempotency state if introduced, and require a fresh integrity readback before retrying delivery.",
+    "trigger": "The implementation duplicates events, suppresses a conflicting payload, partially commits a conflicting batch, changes non-agent.ledger behavior or requires rewriting existing ledger history."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "stop": {
+    "conditions": [
+      "a foreign Chronik task, lease, process or worktree overlaps the selected implementation paths",
+      "the design requires rewriting, deleting or normalizing previously valid ledger records",
+      "identical replay and conflicting replay cannot be distinguished from canonical event content",
+      "batch conflict handling cannot remain fail-closed under concurrent writers",
+      "the change would silently alter ingestion semantics for domains other than agent.ledger"
+    ]
+  },
+  "title": "Make Chronik agent-ledger delivery idempotent across ambiguous completion"
+}

@@ -3,11 +3,11 @@
   "id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T008",
   "initiative": "WELTGEWEBE-SEMANTIC-SEARCH-V1",
   "title": "Vollständige Abnahme, direkter Rollout und öffentlicher Live-Beweis",
-  "state": "ready",
+  "state": "verified",
   "goal": "Den bis T007 verifizierten Semantic-Search-Stand über den bestehenden commitgebundenen Weltgewebe-Deploypfad kontrolliert ausrollen und öffentlich belegen, dass API-Suche und Weboberflächen live, gesund und auf dem erwarteten Commitstand laufen, ohne SemantAH bereits stillzulegen.",
   "priority": {
-    "lane": "now",
-    "rank": 70
+    "lane": "later",
+    "rank": 900
   },
   "execution": {
     "mode": "interactive-agent",
@@ -41,7 +41,8 @@
   ],
   "depends_on": [
     "WELTGEWEBE-SEMANTIC-SEARCH-V1-T007",
-    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T012"
+    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T012",
+    "WELTGEWEBE-SEMANTIC-SEARCH-V1-T013"
   ],
   "acceptance": [
     {
@@ -115,6 +116,120 @@
       "generation_id": "search-gen-2e8358273aa6d41e6a59025985a99738614aba725b8f369b3a54f390f8752e5c",
       "activation_receipt_sha256": "630cad06a5b7073161c0296f2b8eff8632c12b12a50e5b3c44180b6f6dd81080",
       "public_runtime_proof_sha256": "c3f822152aecf704b875dd112ce090ad7beff8181da68cbb9a2549053154ce98"
+    },
+    "verified_at": "2026-07-29T22:22:36+02:00",
+    "outcome": "Der commitgebundene Weltgewebe-Produktionsstand ist vollständig live: GitHub-main, Webversion und API-Version stimmen auf 1d548fb95837eb11d8be7bd2bb9eb701d2b78a87 überein; Root, Map, API, PostgreSQL, NATS und Policy sind gesund. Der nachträglich materialisierte Blocker T013 ist über Bureau-PR #1194 verifiziert und gemergt: der Such-Worker konvergiert, die aktive Generation enthält keine nicht öffentlichen Vektoren, und die getrennte Oberfläche Ähnliche Knoten wurde auf einem öffentlichen Knoten live ohne mutierende Anfrage ausgeübt. SemantAH wurde nicht verändert.",
+    "implementation": {
+      "repository": "heimgewebe/weltgewebe",
+      "rollout_commit": "1d548fb95837eb11d8be7bd2bb9eb701d2b78a87",
+      "rollout_tree": "039a9b361409e7758ebed05dfaefe1f805200961",
+      "required_ancestor_merge": "592954c3f91b466313b3013eca7284b62371a3fa",
+      "web_build_id": "1d548fb9-1785347932000",
+      "web_built_at": "2026-07-29T17:58:52.000Z",
+      "api_build_timestamp": "2026-07-29T19:58:52+02:00",
+      "artifact_tree_sha256": "20536d574ffcb5b84d935871d6f939c6a695d957ccb359668e9565b340c0a38e",
+      "search_generation_id": "search-gen-2e8358273aa6d41e6a59025985a99738614aba725b8f369b3a54f390f8752e5c",
+      "resolved_blocker": {
+        "task_id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T013",
+        "bureau_pull_request": 1194,
+        "bureau_merge_commit": "d12a22dd058297785abd798a6965206c3f85df99",
+        "product_pull_request": 1590,
+        "product_merge_commit": "d08f51a95a40f8a953aa1a83c5aba8b463909d42",
+        "verified_task_sha256": "b4f832b9f9a5a29721d3953eafa4d223c9dbf1b65fd1307372fdfa5141a6a263"
+      }
+    },
+    "validation": {
+      "observed_at": "2026-07-29T21:55:31+02:00",
+      "github_main_sha": "1d548fb95837eb11d8be7bd2bb9eb701d2b78a87",
+      "t007_is_ancestor_of_live_main": true,
+      "web_version_commit": "1d548fb95837eb11d8be7bd2bb9eb701d2b78a87",
+      "api_version_commit": "1d548fb95837eb11d8be7bd2bb9eb701d2b78a87",
+      "root_http_status": 200,
+      "map_http_status": 200,
+      "health_ready": {
+        "status": "ok",
+        "database": true,
+        "nats": true,
+        "policy": true
+      },
+      "public_search_query": "fairschenkbox",
+      "public_search_result_id": "075175a0-796a-4c4e-a5e7-c007b317830c",
+      "public_search_mode": "hybrid",
+      "public_search_generation_id": "search-gen-2e8358273aa6d41e6a59025985a99738614aba725b8f369b3a54f390f8752e5c",
+      "similar_nodes_live_asset": "/_app/immutable/assets/SimilarNodes.Cn7dMTIP.css",
+      "exact_live_commit_ci": "required gates successful, including ci, Web E2E, PostgreSQL integration proofs, production reconciler contract tests, Exact main commit is live, Required merge gate and security checks",
+      "foreign_worktrees_and_processes_preserved": true,
+      "bureau_runtime_mutation_used": false,
+      "resolved_blocker_task": {
+        "task_id": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T013",
+        "state": "verified",
+        "bureau_pull_request": 1194,
+        "bureau_merge_commit": "d12a22dd058297785abd798a6965206c3f85df99",
+        "worker_expected_nodes": 8,
+        "worker_completed_nodes": 8,
+        "worker_non_done_jobs": 0,
+        "worker_recent_waiting_for_pinned_model": 0,
+        "worker_recent_terminal_signal": "search_worker=batch_complete"
+      },
+      "authorization_negative_live": {
+        "observed_at": "2026-07-29T20:15:38Z",
+        "proof_source": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T013 verified production database readback",
+        "generation_id": "search-gen-2e8358273aa6d41e6a59025985a99738614aba725b8f369b3a54f390f8752e5c",
+        "non_public_vectors": 0,
+        "public_active_ready_vectors": 4,
+        "non_done_jobs": 0,
+        "scope": "Private, hidden, revoked, ownerlose private, gelöschte und sonst nicht öffentliche Projektionen fehlen in der aktiven öffentlichen Generation."
+      },
+      "similar_nodes_live_ui": {
+        "observed_at": "2026-07-29T22:27:16Z",
+        "web_commit": "1d548fb95837eb11d8be7bd2bb9eb701d2b78a87",
+        "source_node_id": "a031b7bf-f38e-42b8-aa8b-ca304ecd492f",
+        "source_query": "abendessen",
+        "request_method": "GET",
+        "response_mode": "hybrid",
+        "generation_id": "search-gen-2e8358273aa6d41e6a59025985a99738614aba725b8f369b3a54f390f8752e5c",
+        "context_panel_present": true,
+        "ui_heading": "Ähnliche Knoten",
+        "ui_result": "Keine ähnlichen Knoten gefunden.",
+        "explainer_distinguishes_threads_and_curated_relations": true,
+        "mutation_request_count": 0
+      }
+    },
+    "verified_acceptance": {
+      "fresh-production-preflight": "PASS: Automationen, Grabowski-Health, kanonische Bureau-Runtime, Taskzahlen, Frontier, Claims, Leases, Ziel-PRs, Reviews, CI, Worktrees, Dirty-States, Prozesse und Produktion wurden frisch gelesen; unbekannte oder fremde Zustände blieben unangetastet.",
+      "commit-bound-direct-rollout": "PASS: Web und API laufen auf dem GitHub-main-Commit 1d548fb95837eb11d8be7bd2bb9eb701d2b78a87; T007-Merge 592954c3f91b466313b3013eca7284b62371a3fa ist nachweislich Vorfahr.",
+      "search-projection-ready": "PASS: Die aktive Suchgeneration ist ready und vollständig konvergiert: expected_nodes=8, completed_nodes=8, 0 nichtterminale Jobs und kein aktuelles waiting_for_pinned_model. Die öffentliche Suche antwortet hybrid aus genau dieser Generation.",
+      "public-version-readback": "PASS: /_app/version.json und /api/version nennen denselben aktuellen main-Commit; Root und Map antworten HTTP 200, /api/health/ready ist grün.",
+      "public-search-live-proof": "PASS: /api/search?q=fairschenkbox liefert den nach /api/nodes öffentlich ausgewiesenen Knoten 075175a0-796a-4c4e-a5e7-c007b317830c über den hybriden Serverpfad.",
+      "similar-nodes-live-proof": "PASS: Ein Browser-Readback auf dem öffentlichen Knoten a031b7bf-f38e-42b8-aa8b-ca304ecd492f öffnete die Sektion „Ähnliche Knoten“, zeigte die Trennung maschineller Vorschläge von Fäden und kuratierten Beziehungen und setzte ausschließlich einen GET-Suchaufruf ab; die aufgezeichnete Zahl mutierender Anfragen blieb 0.",
+      "authorization-boundary-preserved": "PASS: Ein Produktions-Datenbankreadback der aktiven Generation belegt 0 nicht öffentliche Vektoren, 4 public/active/ready-Projektionen und 0 nichtterminale Jobs. Damit stützt sich die Negativprüfung auf den ausgelieferten Produktionszustand und nicht nur auf Repositorytests; private, hidden, revoked, ownerlose private, gelöschte und sonst nicht öffentliche Inhalte bleiben aus der öffentlichen Generation ausgeschlossen.",
+      "operational-health-and-recovery": "PASS: API, Web, PostgreSQL, NATS und Policy sind gesund; die exakte Live-Commitprüfung, Production-Reconciler-Vertragstests sowie GitOps- und HA-Recovery-Gates sind erfolgreich.",
+      "no-semantah-retirement": "PASS: Dieser Closeout verändert nur Bureau-Registrydaten für T008; SemantAH, Laufzeitrollen und fremde Zustände bleiben unverändert.",
+      "evidence-bound-closeout": "PASS: Commit, Tree, Build, Artefaktbaum, Suchgeneration, Health, öffentliche Suche, T013-Blockerabschluss, negativer Produktions-Datenbankbeweis und Similar-Nodes-Browserreadback sind revisionsgebunden dokumentiert."
+    },
+    "verification": {
+      "pre_closeout_task_sha256": "026c2489e48c13d58b23b2e1e2f847d33ed6207dfceba3b5d9d3f0d792a2b358",
+      "evidence_observed_at": "2026-07-29T22:27:16Z",
+      "lease_owner": "automation:bureau-umsetzung-h-t008-closeout-20260729-2135",
+      "lease_resources": [
+        "path:/home/alex/repos/bureau/registry/tasks/WELTGEWEBE-SEMANTIC-SEARCH-V1-T008.json",
+        "path:/home/alex/repos/bureau/registry/initiatives/WELTGEWEBE-SEMANTIC-SEARCH-V1.json",
+        "path:/home/alex/repos/bureau/registry/queue.json"
+      ],
+      "closeout_scope": [
+        "registry/tasks/WELTGEWEBE-SEMANTIC-SEARCH-V1-T008.json",
+        "registry/initiatives/WELTGEWEBE-SEMANTIC-SEARCH-V1.json",
+        "registry/queue.json"
+      ],
+      "closeout_at": "2026-07-29T22:22:36+02:00",
+      "task_sha256": "82228585e8e05e3f8f7c29a8f3a13701667487ee376e5f9b297e723c749333c0",
+      "plan_sha256": "18002b2b2def870ec6e5dd91cd15d19aaade6f053cac144ca85e2862234a709e",
+      "review_amended_at": "2026-07-30T05:42:21+02:00",
+      "review_findings_addressed": [
+        "PRRT_kwDOTG2jCs6U5rBc",
+        "PRRT_kwDOTG2jCs6U5rBh",
+        "PRRT_kwDOTG2jCs6U5rBm"
+      ]
     }
   }
 }

@@ -89,7 +89,7 @@
     "does_not_establish": [
       "a need to change production schemas",
       "a need to support native Windows",
-      "permission to merge without a current downloadable full diff and exact-head self-review"
+      "permission to merge without a current full-diff and exact-head self-review"
     ]
   }
 }

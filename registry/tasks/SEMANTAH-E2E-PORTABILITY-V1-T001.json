@@ -3,7 +3,7 @@
   "id": "SEMANTAH-E2E-PORTABILITY-V1-T001",
   "initiative": "SEMANTAH-E2E-PORTABILITY-V1",
   "title": "Push-index E2E test from fixed port 8080 decouple",
-  "state": "planned",
+  "state": "ready",
   "priority": {
     "lane": "later",
     "rank": 90
@@ -101,11 +101,28 @@
       ],
       "ci-regression": []
     },
-    "implementation_outcome": "SemantAH PR #258 implements the portable-port behavior, but the Bureau task remains planned until a required CI check guards the regression.",
+    "implementation_outcome": "SemantAH PR #258 implements the portable-port behavior, and PR #265 plus successful main run 30477278629 now provide the required CI regression guard; the task is ready for an exact verification run and Bureau closeout.",
     "completion_blocker": {
-      "reason": "Kein verpflichtender SemantAH-Repository- oder GitHub-Check führt tests/test_push_index_e2e.py aus; damit ist das vierte Initiativen-Abschlusskriterium gegen Wiedereinführung der festen Portbindung nicht belegt.",
-      "review_thread": "https://github.com/heimgewebe/bureau/pull/1115#discussion_r3663043226",
-      "required_next_action": "Den portablen Push-index-Regressionslauf in einen verpflichtenden SemantAH-CI-Pfad integrieren und einen erfolgreichen, revisionsgebundenen GitHub-Check nachweisen."
+      "status": "resolved",
+      "resolved_at": "2026-07-30T18:32:32Z",
+      "resolution": "Required SemantAH CI workflow and exact-main successful check are now present.",
+      "previous_reason": "No required SemantAH repository or GitHub check executed tests/test_push_index_e2e.py."
+    },
+    "ready_at": "2026-07-30T18:32:32Z",
+    "readiness_basis": "The previously explicit CI blocker is satisfied on SemantAH main: .github/workflows/push-index-e2e.yml is a pull_request and main-push workflow, executes tests/test_push_index_e2e.py, and GitHub run 30477278629 succeeded on exact main head 21106106ee8a193869f94e4b54c332006ba8f4a5.",
+    "ci_regression_evidence": {
+      "repository": "heimgewebe/semantAH",
+      "workflow_path": ".github/workflows/push-index-e2e.yml",
+      "workflow_introducing_commit": "b766ccdf67e9dca37e08b79980f12120a480473e",
+      "main_head": "21106106ee8a193869f94e4b54c332006ba8f4a5",
+      "github_run_id": 30477278629,
+      "github_run_url": "https://github.com/heimgewebe/semantAH/actions/runs/30477278629",
+      "event": "push",
+      "conclusion": "success",
+      "completed_at": "2026-07-29T17:53:12Z",
+      "check_name": "push-index-e2e",
+      "command": "uv run --frozen --extra test pytest -q tests/test_push_index_e2e.py",
+      "port_8080_contract": "workflow step is named Verify push-index portability with port 8080 occupied; the test itself owns or preserves the independent port-8080 listener and asserts the selected server port is not 8080."
     }
   }
 }

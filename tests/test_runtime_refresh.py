@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from runtime_approval import write_runtime_approval_intent
 
 from bureau import runtime_refresh as refresh
 
@@ -117,6 +118,9 @@ def prepare_candidate_intent(
         remote_url="file:///tmp/bureau.git",
         authorized_by="chatgpt",
         authorization="User explicitly authorized T016 implementation.",
+        break_glass=True,
+        approval_reference=observed["target_sha256"],
+        approval_task_id="BUR-2026-003-T009",
         now=NOW,
     )
     return observed, manifest_path, intent, intent_path
@@ -144,8 +148,7 @@ def lease_for(
     )
     if lease_contract_version is not None:
         connection.execute(
-            "INSERT INTO metadata(key, value) "
-            "VALUES('resource_lease_contract_version', ?)",
+            "INSERT INTO metadata(key, value) VALUES('resource_lease_contract_version', ?)",
             (lease_contract_version,),
         )
     connection.execute(
@@ -305,7 +308,26 @@ def test_prepare_intent_is_hash_bound_and_requires_authorization(tmp_path: Path)
     assert intent["expected_deployed_source_commit"] == DEPLOYED
     assert intent["required_resource_keys"] == sorted(intent["required_resource_keys"])
     assert f"path:{tmp_path.resolve() / 'bin/bureau'}" in intent["required_resource_keys"]
+    assert intent["runtime_approval"]["allowed"] is True
+    assert intent["runtime_approval"]["required_level"] == "break_glass"
+    assert intent["runtime_approval"]["expected_reference"] == observed["target_sha256"]
     refresh.verify_digest(intent, "intent_sha256")
+
+    with pytest.raises(refresh.RuntimeRefreshError) as denied:
+        refresh.prepare_intent(
+            candidate=observed,
+            state_root=(tmp_path / "denied-state").resolve(),
+            prefix=(tmp_path / "denied-prefix").resolve(),
+            bin_dir=(tmp_path / "denied-bin").resolve(),
+            remote_url="file:///tmp/bureau.git",
+            authorized_by="chatgpt",
+            authorization="ordinary operator authorization",
+            break_glass=False,
+            approval_reference=observed["target_sha256"],
+            approval_task_id="BUR-2026-003-T009",
+            now=NOW,
+        )
+    assert denied.value.code == "runtime-approval-required"
 
     with pytest.raises(refresh.RuntimeRefreshError, match="authorization"):
         refresh.prepare_intent(
@@ -485,9 +507,7 @@ def test_lease_binding_fails_closed_on_missing_future_or_malformed_contract(
         lease_contract_version=None,
     )
     with pytest.raises(refresh.RuntimeRefreshError) as missing:
-        refresh.validate_live_lease_binding(
-            intent, binding, resource_db=missing_db, now=NOW
-        )
+        refresh.validate_live_lease_binding(intent, binding, resource_db=missing_db, now=NOW)
     assert missing.value.code == "lease-contract-metadata-missing"
     assert missing.value.details["aggregate_schema"] == "4"
     assert missing.value.details["observed_rows"] == 0
@@ -499,9 +519,7 @@ def test_lease_binding_fails_closed_on_missing_future_or_malformed_contract(
         lease_contract_version="2",
     )
     with pytest.raises(refresh.RuntimeRefreshError) as future:
-        refresh.validate_live_lease_binding(
-            intent, binding, resource_db=future_db, now=NOW
-        )
+        refresh.validate_live_lease_binding(intent, binding, resource_db=future_db, now=NOW)
     assert future.value.code == "lease-contract-version-unsupported"
     assert future.value.details["observed"] == "2"
     assert future.value.details["supported"] == ["1"]
@@ -513,9 +531,7 @@ def test_lease_binding_fails_closed_on_missing_future_or_malformed_contract(
         lease_contract_version="not-a-version",
     )
     with pytest.raises(refresh.RuntimeRefreshError) as malformed:
-        refresh.validate_live_lease_binding(
-            intent, binding, resource_db=malformed_db, now=NOW
-        )
+        refresh.validate_live_lease_binding(intent, binding, resource_db=malformed_db, now=NOW)
     assert malformed.value.code == "lease-contract-version-malformed"
 
 
@@ -524,20 +540,14 @@ def test_lease_contract_is_validated_before_lease_rows_are_read(tmp_path: Path) 
     database = tmp_path / "metadata-only/resources.sqlite3"
     database.parent.mkdir(parents=True)
     with sqlite3.connect(database) as connection:
-        connection.execute(
-            "CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)"
-        )
-        connection.execute(
-            "INSERT INTO metadata VALUES('schema_version', '4')"
-        )
+        connection.execute("CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+        connection.execute("INSERT INTO metadata VALUES('schema_version', '4')")
         connection.commit()
     database.chmod(0o600)
     binding = {"owner_id": "chatgpt-t016", "task_id": "grabowski-task-t016"}
 
     with pytest.raises(refresh.RuntimeRefreshError) as missing:
-        refresh.validate_live_lease_binding(
-            intent, binding, resource_db=database, now=NOW
-        )
+        refresh.validate_live_lease_binding(intent, binding, resource_db=database, now=NOW)
 
     assert missing.value.code == "lease-contract-metadata-missing"
 
@@ -707,6 +717,9 @@ def test_distinct_intents_for_same_target_share_one_effect_attempt(tmp_path: Pat
         remote_url=first_intent["remote_url"],
         authorized_by="chatgpt",
         authorization="Second explicit authorization for the same exact target.",
+        break_glass=True,
+        approval_reference=observed["target_sha256"],
+        approval_task_id="BUR-2026-003-T009",
         now=NOW + timedelta(seconds=1),
     )
     assert first_intent["intent_sha256"] != second_intent["intent_sha256"]
@@ -1024,22 +1037,57 @@ def test_real_installer_publishes_working_refresh_launcher(tmp_path: Path) -> No
 
     prefix = tmp_path / "prefix"
     bin_dir = tmp_path / "bin"
-    install = subprocess.run(
-        [
-            sys.executable,
-            str(clean / "ops/install-bureau-runtime.py"),
-            "--source",
-            str(clean),
-            "--prefix",
-            str(prefix),
-            "--bin-dir",
-            str(bin_dir),
-        ],
+    command = [
+        sys.executable,
+        str(clean / "ops/install-bureau-runtime.py"),
+        "--source",
+        str(clean),
+        "--prefix",
+        str(prefix),
+        "--bin-dir",
+        str(bin_dir),
+    ]
+    denied = subprocess.run(
+        command,
         cwd=clean,
-        check=True,
+        check=False,
         text=True,
         capture_output=True,
     )
+    assert denied.returncode == 2
+    assert not prefix.exists()
+
+    expired_approval = write_runtime_approval_intent(
+        clean,
+        tmp_path,
+        label="expired-installer",
+        expires_at=datetime.now(timezone.utc) - timedelta(seconds=1),
+    )
+    expired = subprocess.run(
+        [*command, "--approval-intent", str(expired_approval)],
+        cwd=clean,
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert expired.returncode != 0
+    assert "intent-expired" in expired.stderr
+    assert not prefix.exists()
+
+    approval_path = write_runtime_approval_intent(
+        clean,
+        tmp_path,
+        label="real-installer",
+    )
+
+    install = subprocess.run(
+        [*command, "--approval-intent", str(approval_path)],
+        cwd=clean,
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert install.returncode == 0, install.stderr
     receipt = json.loads(install.stdout.strip().splitlines()[-1])
     bureau = bin_dir / "bureau"
     runner = bin_dir / "bureau-runtime-refresh"

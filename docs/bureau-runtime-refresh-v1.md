@@ -23,6 +23,7 @@ das im Manifest gebundene immutable Release.
 | aktueller `main`-Commit, zugehöriger Merge-PR, Pflicht-CI | GitHub |
 | aktuell installierter Commit, Paket- und Snapshot-Hashes | Bureau-Deployment-Manifest und Runtime-Identity |
 | expliziter Ziel- und Zeitrahmen | create-only Runtime-Refresh-Intent |
+| Wirkungserlaubnis für Runtime-Mutationen | typisierte `break_glass`-Freigabe, exakt an Zielhash und Bureau-Task gebunden |
 | Konfliktfreiheit der Effektpfade | live gelesene Grabowski-Leases |
 | eigentliche Installation | bestehender immutable Bureau-Installer |
 | Erfolg | Receipt plus Manifest-, Launcher-, Paket-, Snapshot- und CLI-Readback |
@@ -82,7 +83,8 @@ Nur `candidate` und `alert` können einen Intent erzeugen. Der Intent bindet:
 - Pflichtchecks und Zielhash;
 - derzeit installierten Commit und Manifest-Hash;
 - Prefix, Bin-Verzeichnis, isolierten Workspace und State-Root;
-- explizite Autorisierung, Autorbezeichnung, Nonce, Erzeugungs- und Ablaufzeit;
+- typisierte `break_glass`-Freigabe mit exaktem Zielhash, Bureau-Task, Autor, Quelle und Scope `runtime_mutation`;
+- Nonce, Erzeugungs- und Ablaufzeit;
 - alle erforderlichen Grabowski-Ressourcen.
 
 Standardgültigkeit: 900 Sekunden; maximal 3.600 Sekunden.
@@ -91,11 +93,16 @@ Standardgültigkeit: 900 Sekunden; maximal 3.600 Sekunden.
 bureau-runtime-refresh prepare-intent \
   --candidate ~/.local/state/bureau/runtime-refresh/latest-observation.json \
   --authorized-by chatgpt \
-  --authorization 'Exact target authorized by the Bureau runtime-refresh watch.'
+  --authorization 'Exact target authorized by the Bureau runtime-refresh watch.' \
+  --break-glass \
+  --approval-reference '<candidate.target_sha256>' \
+  --approval-task-id '<exact Bureau task id>'
 ```
 
-Ein Intent erteilt allein keine Wirkungserlaubnis. Er beschreibt nur ein unveränderliches
-Ziel und den autorisierten Zeitraum.
+`prepare-intent` verweigert bereits die Erzeugung, wenn `break_glass`, Zielhash oder
+Taskbindung fehlen oder nicht exakt zusammenpassen. Der Intent ist trotzdem keine alleinige
+Wirkungserlaubnis: `apply` revalidiert die typisierte Freigabe und verlangt zusätzlich die
+live Grabowski-Leases.
 
 ### 3. Grabowski-Leases
 
@@ -138,7 +145,9 @@ Ergebnisreceipt aufgenommen.
 
 ### 4. `apply`
 
-`apply` prüft Intent, Ablaufzeit und Live-Leases. Danach wird GitHub erneut beobachtet.
+`apply` prüft zuerst den Intent-Digest und revalidiert die gespeicherte
+`runtime_mutation`-Entscheidung gegen die aktuelle Approval-Policy. Erst danach werden
+Ablaufzeit und Live-Leases geprüft. Anschließend wird GitHub erneut beobachtet.
 Zielhash, `main`, Pflicht-CI sowie installierter Ausgangscommit und Manifest-Hash müssen
 unverändert sein.
 
@@ -155,7 +164,7 @@ Der Runner:
 2. klont ausschließlich `main` in den intentgebundenen Workspace;
 3. verlangt `origin/main == intent.main_commit`;
 4. checkt exakt diesen Commit detached aus und verlangt einen sauberen Status;
-5. startet den bestehenden immutable Installer mit exakt gebundenem Prefix und Bin-Pfad;
+5. startet den bestehenden immutable Installer mit exakt gebundenem Prefix, Bin-Pfad und Approval-Intent;
 6. liest Manifest, beide Launcher, Paketbaum, Registry-Snapshot,
    `bureau --json check` und `bureau --json runtime-identity` zurück;
 7. schreibt ein create-only Ergebnisreceipt;
@@ -193,8 +202,10 @@ Die regelmäßige Automation gehört zur Operator-Ebene, nicht zu einem Bureau-s
 8. bei `unclear` benachrichtigen und nicht wiederholen.
 
 Damit bleibt die eigentliche Mutationsautorität bei Grabowski. Ein Timer oder fremder
-lokaler Prozess kann keine Wirkung allein durch Aufruf des Bureau-Runners erlangen, solange
-die erforderlichen Live-Leases fehlen.
+lokaler Prozess kann keine Wirkung allein durch Aufruf des Bureau-Runners erlangen: Sowohl
+die exakte `break_glass`-Freigabe als auch die erforderlichen Live-Leases müssen vorliegen.
+Auch der Installer selbst ist fail-closed: Direkte Aufrufe ohne Approval-Intent oder mit
+einem Intent für einen anderen Source-Commit enden vor der ersten Dateiwirkung.
 
 ## Inspektion
 
@@ -213,14 +224,15 @@ Die fokussierten Tests decken unter anderem ab:
 - aktueller Stand und exakter Merge-PR;
 - fehlgeschlagene, fehlende und übersprungene Pflicht-CI;
 - Drift von `main` während der Beobachtung;
-- manipulierte Kandidaten und abgelaufene Intents;
+- manipulierte Kandidaten, abgelaufene Intents und unzureichende Runtime-Freigaben;
 - fehlende, fremde, zu kurze oder öffentlich lesbare Lease-Datenbanken;
 - sauberer detached Clone und Origin-Drift;
 - intentübergreifende Deduplizierung desselben Zielhashes;
 - unklarer Installer-Ausgang ohne Retry;
 - Erhaltung eines fremden Dirty-Checkouts;
 - beide Launcher, Rollbackkopien und vollständiger Runtime-Readback;
-- echten synthetischen Installerlauf in temporären Git-Repositories.
+- direkten Installeraufruf ohne Approval-Intent ohne Dateiwirkung;
+- echten synthetischen Installerlauf mit exakt source-gebundener `break_glass`-Freigabe in temporären Git-Repositories.
 
 Der Livebeweis muss nach Merge auf einem exakten neuen Bureau-`main`-Commit erfolgen: ein
 Kandidat wird beobachtet, ein Intent erzeugt, reale Grabowski-Leases werden erworben und

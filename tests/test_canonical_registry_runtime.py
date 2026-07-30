@@ -10,6 +10,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from runtime_approval import write_runtime_approval_intent
 
 from bureau import cli as bureau_cli
 from bureau.read_only_state import ReadOnlyStateStore
@@ -47,6 +48,7 @@ def install_runtime(tmp_path: Path, source: Path) -> tuple[Path, Path, dict]:
     project_root = Path(__file__).resolve().parents[1]
     prefix = tmp_path / "runtime"
     bin_dir = tmp_path / "bin"
+    approval = write_runtime_approval_intent(source, tmp_path, label="canonical")
     completed = subprocess.run(
         [
             sys.executable,
@@ -57,6 +59,8 @@ def install_runtime(tmp_path: Path, source: Path) -> tuple[Path, Path, dict]:
             str(prefix),
             "--bin-dir",
             str(bin_dir),
+            "--approval-intent",
+            str(approval),
         ],
         check=True,
         capture_output=True,
@@ -90,15 +94,14 @@ def test_registry_root_resolution_precedence(tmp_path: Path, monkeypatch) -> Non
 def test_statement_and_mutation_classification() -> None:
     assert bureau_cli._command_mutates(SimpleNamespace(command="status")) is False
     assert bureau_cli._command_mutates(SimpleNamespace(command="what-now")) is False
-    assert bureau_cli._command_mutates(
-        SimpleNamespace(command="doctor", repair=False)
-    ) is False
-    assert bureau_cli._command_mutates(
-        SimpleNamespace(command="doctor", repair=True)
-    ) is True
-    assert bureau_cli._command_mutates(
-        SimpleNamespace(command="queue-reconcile", write_plan=None, apply_plan=None)
-    ) is False
+    assert bureau_cli._command_mutates(SimpleNamespace(command="doctor", repair=False)) is False
+    assert bureau_cli._command_mutates(SimpleNamespace(command="doctor", repair=True)) is True
+    assert (
+        bureau_cli._command_mutates(
+            SimpleNamespace(command="queue-reconcile", write_plan=None, apply_plan=None)
+        )
+        is False
+    )
 
 
 def test_read_only_state_store_has_no_initialization_side_effect(tmp_path: Path) -> None:
@@ -189,10 +192,7 @@ def test_deployed_launcher_uses_hash_bound_canonical_registry(tmp_path: Path) ->
     )
     assert missing_state_root.returncode == 2
     missing_state = json.loads(missing_state_root.stdout)
-    assert (
-        missing_state["result"]["status"]
-        == "explicit-coordination-state-root-required"
-    )
+    assert missing_state["result"]["status"] == "explicit-coordination-state-root-required"
     assert not (unrelated / "bureau.sqlite3").exists()
 
     overlapping_state_root = subprocess.run(
@@ -213,10 +213,7 @@ def test_deployed_launcher_uses_hash_bound_canonical_registry(tmp_path: Path) ->
     assert overlapping_state_root.returncode == 2
     overlap = json.loads(overlapping_state_root.stdout)
     assert overlap["result"]["status"] == "coordination-state-path-invalid"
-    assert (
-        "coordination-state-root-overlaps-registry"
-        in overlap["result"]["reason_codes"]
-    )
+    assert "coordination-state-root-overlaps-registry" in overlap["result"]["reason_codes"]
 
     explicit = subprocess.run(
         [str(launcher), "--root", str(source), "--json", "runtime-identity"],
@@ -250,9 +247,7 @@ def test_runtime_release_excludes_unmanaged_package_artifacts(tmp_path: Path) ->
     source = make_installable_source(tmp_path)
     exclude = source / ".git/info/exclude"
     exclude.parent.mkdir(parents=True, exist_ok=True)
-    exclude.write_text(
-        "__pycache__/\n*.pyc\noperator-note.txt\n", encoding="utf-8"
-    )
+    exclude.write_text("__pycache__/\n*.pyc\noperator-note.txt\n", encoding="utf-8")
     cache = source / "src/bureau/__pycache__"
     cache.mkdir(exist_ok=True)
     (cache / "operator-generated.pyc").write_bytes(b"not-bytecode")
@@ -285,6 +280,7 @@ def test_installer_rejects_existing_release_with_unmanaged_entry(tmp_path: Path)
     unmanaged.write_bytes(b"unexpected")
 
     project_root = Path(__file__).resolve().parents[1]
+    approval = write_runtime_approval_intent(source, tmp_path, label="unmanaged")
     completed = subprocess.run(
         [
             sys.executable,
@@ -295,6 +291,8 @@ def test_installer_rejects_existing_release_with_unmanaged_entry(tmp_path: Path)
             str(prefix),
             "--bin-dir",
             str(tmp_path / "bin"),
+            "--approval-intent",
+            str(approval),
         ],
         check=False,
         capture_output=True,
@@ -304,6 +302,7 @@ def test_installer_rejects_existing_release_with_unmanaged_entry(tmp_path: Path)
     assert completed.returncode != 0
     assert "immutable release contains unmanaged entry" in completed.stderr
     assert manifest_path.read_bytes() == manifest_before
+
 
 def test_missing_state_uses_ephemeral_read_only_schema(tmp_path: Path) -> None:
     state_root = tmp_path / "missing-state"

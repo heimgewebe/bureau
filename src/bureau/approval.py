@@ -22,8 +22,7 @@ APPROVAL_RULES: dict[str, dict[str, Any]] = {
         "required_level": "operator",
         "allowed_levels": frozenset({"operator", "break_glass"}),
         "reason": (
-            "repository writes, branch operations, commits, pushes or merges "
-            "change source state"
+            "repository writes, branch operations, commits, pushes or merges change source state"
         ),
     },
     "source_import": {
@@ -35,8 +34,7 @@ APPROVAL_RULES: dict[str, dict[str, Any]] = {
         "required_level": "operator",
         "allowed_levels": frozenset({"operator", "break_glass"}),
         "reason": (
-            "agent dispatch creates external work that may mutate repositories "
-            "or runtime state"
+            "agent dispatch creates external work that may mutate repositories or runtime state"
         ),
     },
     "task_creation_from_external_evidence": {
@@ -55,9 +53,7 @@ APPROVAL_RULES: dict[str, dict[str, Any]] = {
     "registry_mutation": {
         "required_level": "reviewed_plan",
         "allowed_levels": frozenset({"reviewed_plan", "break_glass"}),
-        "reason": (
-            "reviewed Registry task-file rewrites require a digest-bound reviewed plan"
-        ),
+        "reason": ("reviewed Registry task-file rewrites require a digest-bound reviewed plan"),
     },
     "worktree_cleanup": {
         "required_level": "reviewed_plan",
@@ -81,7 +77,6 @@ APPROVAL_RULES: dict[str, dict[str, Any]] = {
         "reason": "runtime mutation may restart, deploy or alter live services",
     },
 }
-
 
 
 def validate_declared_task_approval(task: dict[str, Any]) -> list[str]:
@@ -109,6 +104,7 @@ def validate_declared_task_approval(task: dict[str, Any]) -> list[str]:
             f"got {actual or 'missing'}"
         ]
     return []
+
 
 def _scope_tuple(scope: str | Iterable[str] | None) -> tuple[str, ...]:
     if scope is None:
@@ -166,6 +162,29 @@ def explicit_operator_approval(
     return ApprovalEvidence(
         source=source,
         level="operator",
+        approved=bool(approved),
+        reviewer=reviewer,
+        reference=reference,
+        task_id=task_id,
+        scope=_scope_tuple(scope),
+        note=note,
+    )
+
+
+def break_glass_approval(
+    *,
+    source: str,
+    approved: bool,
+    reviewer: str,
+    reference: str,
+    task_id: str,
+    scope: str | Iterable[str] | None = None,
+    note: str | None = None,
+) -> ApprovalEvidence:
+    """Return explicit, target-bound emergency authority for live runtime effects."""
+    return ApprovalEvidence(
+        source=source,
+        level="break_glass",
         approved=bool(approved),
         reviewer=reviewer,
         reference=reference,
@@ -290,9 +309,7 @@ def approval_decision_for_effects(
             "evidence": evidence,
         }
 
-    effectful_actions = [
-        action for action in actions if action not in READ_ONLY_ACTIONS
-    ]
+    effectful_actions = [action for action in actions if action not in READ_ONLY_ACTIONS]
     rules = {action: APPROVAL_RULES.get(action) for action in effectful_actions}
     unknown = [action for action, rule in rules.items() if rule is None]
     if unknown:
@@ -399,9 +416,7 @@ def require_approval(
         task_id=task_id,
     )
     if not decision["allowed"]:
-        raise legacy.StateError(
-            f"approval required for {action_class}: {decision['reason']}"
-        )
+        raise legacy.StateError(f"approval required for {action_class}: {decision['reason']}")
     return decision
 
 
@@ -421,9 +436,7 @@ def require_approval_for_effects(
         task_id=task_id,
     )
     if not decision["allowed"]:
-        raise legacy.StateError(
-            f"approval required for {', '.join(actions)}: {decision['reason']}"
-        )
+        raise legacy.StateError(f"approval required for {', '.join(actions)}: {decision['reason']}")
     return decision
 
 

@@ -41,27 +41,33 @@
   "acceptance": [
     {
       "id": "bounded-settle-readback",
-      "assertion": "Nach einem akzeptierten GitHub-Branchupdate wird der Head über ein begrenztes Settle-Fenster mit Backoff erneut gelesen; ein zunächst unveränderter Head allein terminalisiert den Lauf nicht als Fehler."
+      "assertion": "Nach einem akzeptierten GitHub-Branchupdate wird der Head über ein begrenztes Settle-Fenster mit Backoff erneut gelesen; ein zunächst unveränderter Head allein terminalisiert den Lauf nicht als Fehler.",
+      "evidence_type": "object"
     },
     {
       "id": "explicit-outcomes",
-      "assertion": "Das Ergebnis unterscheidet maschinenlesbar no-effect, effect-confirmed, effect-pending und outcome-unknown; nur effect-confirmed darf einen aktualisierten Head als neue Wahrheit ausgeben."
+      "assertion": "Das Ergebnis unterscheidet maschinenlesbar no-effect, effect-confirmed, effect-pending und outcome-unknown; nur effect-confirmed darf einen aktualisierten Head als neue Wahrheit ausgeben.",
+      "evidence_type": "object"
     },
     {
       "id": "exact-identity-binding",
-      "assertion": "Request, Ausgangs-Head, beobachteter Base-Head, finaler Head, Pull-Request-Nummer, Repository und Beobachtungszeiten sind im Receipt gebunden."
+      "assertion": "Request, Ausgangs-Head, beobachteter Base-Head, finaler Head, Pull-Request-Nummer, Repository und Beobachtungszeiten sind im Receipt gebunden.",
+      "evidence_type": "object"
     },
     {
       "id": "safe-retry",
-      "assertion": "Ein Wiederholungsversuch prüft zuerst den Livezustand und löst keinen zweiten Effekt aus, wenn der erwartete Branchupdate bereits sichtbar ist."
+      "assertion": "Ein Wiederholungsversuch prüft zuerst den Livezustand und löst keinen zweiten Effekt aus, wenn der erwartete Branchupdate bereits sichtbar ist.",
+      "evidence_type": "object"
     },
     {
       "id": "lease-and-review-preservation",
-      "assertion": "Die Aktualisierung hält die exakte Branch-Lease bis zum terminalen Readback und erzwingt anschließend neue Head-gebundene CI- und Review-Evidenz; fremde Leases werden weder gelöst noch übergangen."
+      "assertion": "Die Aktualisierung hält die exakte Branch-Lease bis zum terminalen Readback und erzwingt anschließend neue Head-gebundene CI- und Review-Evidenz; fremde Leases werden weder gelöst noch übergangen.",
+      "evidence_type": "object"
     },
     {
       "id": "regression-test",
-      "assertion": "Tests simulieren verzögerte GitHub-Sichtbarkeit, echten No-op, bereits erfolgte externe Aktualisierung, API-Fehler nach angenommener Anfrage und Head-Drift durch einen fremden Akteur."
+      "assertion": "Tests simulieren verzögerte GitHub-Sichtbarkeit, echten No-op, bereits erfolgte externe Aktualisierung, API-Fehler nach angenommener Anfrage und Head-Drift durch einen fremden Akteur.",
+      "evidence_type": "object"
     }
   ],
   "metadata": {

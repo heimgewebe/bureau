@@ -66,10 +66,33 @@
     "source_audit": "heimgewebe/cabinet#103",
     "verification": {
       "current_main_head": "4d91933ce74b78b4f8db9ea2358e86d195289e13",
+      "does_not_establish": [
+        "merge_permission",
+        "runtime_correctness",
+        "cleanup_permission",
+        "automatic_shutdown_permission"
+      ],
       "evidence_path": "docs/evidence/operator-ecosystem-redundancy-v1-t009-closeout-20260730.json",
       "evidence_sha256": "7e796fc2c4002b9e7aac9c93863f1e6e1bb1702416261c0431ac08f925472387",
+      "followup_merge_commit": "7c66e3fd8c2a505df21bc53770bdeea14ab9f94f",
+      "followup_pull_request": 649,
+      "hash_semantics": {
+        "evidence_sha256": "Byte hash of evidence_path closeout receipt.",
+        "plan_sha256": "Canonical hash of the initiative current_plan object required by Bureau verification validation.",
+        "task_sha256": "Canonical Bureau task revision hash excluding mutable state and verification metadata."
+      },
       "implementation_merge_commit": "c1b336ee0a82a3b1fd0c5f09158dcdb5f3c1d9ef",
-      "status": "passed",
+      "local_validation": {
+        "pytest_operator_capabilities": "48 passed",
+        "validate_operator_capabilities": "PASS"
+      },
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "pull_request": 648,
+      "repository": "heimgewebe/wgx",
+      "schema_version": 1,
+      "source": "merged_implementation_pr_and_local_validation",
+      "source_ref": "github-pr:heimgewebe/wgx#648+#649",
+      "task_sha256": "86b778b54301c9584534470a80d4477ec10cc22e9f6627a7b41646a1c64ccc3d",
       "verified_at": "2026-07-30T04:31:36Z",
       "verified_by": "operator:grok-bureau-20260730"
     }

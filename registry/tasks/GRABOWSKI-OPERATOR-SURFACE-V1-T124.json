@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T124",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "GitHub-Branchaktualisierung mit eventual-consistentem Readback absichern",
+  "state": "planned",
+  "goal": "Den GitHub-Update-Branch-Pfad so ausführen und auswerten, dass ein erfolgreich angestoßener, aber verzögert sichtbarer Head-Wechsel nicht als fehlgeschlagene Wirkung terminalisiert wird. Der Ablauf soll die Wirkung begrenzt nachlesen, Head- und Base-Identitäten binden und zwischen no-effect, effect-confirmed, effect-pending und outcome-unknown unterscheiden, ohne fremde Branches, Leases oder Checks zu umgehen.",
+  "priority": {
+    "lane": "later",
+    "rank": 4
+  },
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T120"
+  ],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "reviewed_plan",
+      "note": "Nur den typisierten Branch-Update- und Readback-Vertrag härten. Keine GitHub-Regel umgehen, keine fremde Lease lösen und keinen Merge aus einer verzögerten Beobachtung ableiten."
+    }
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "grabowski",
+    "bureau"
+  ],
+  "acceptance": [
+    {
+      "id": "bounded-settle-readback",
+      "assertion": "Nach einem akzeptierten GitHub-Branchupdate wird der Head über ein begrenztes Settle-Fenster mit Backoff erneut gelesen; ein zunächst unveränderter Head allein terminalisiert den Lauf nicht als Fehler."
+    },
+    {
+      "id": "explicit-outcomes",
+      "assertion": "Das Ergebnis unterscheidet maschinenlesbar no-effect, effect-confirmed, effect-pending und outcome-unknown; nur effect-confirmed darf einen aktualisierten Head als neue Wahrheit ausgeben."
+    },
+    {
+      "id": "exact-identity-binding",
+      "assertion": "Request, Ausgangs-Head, beobachteter Base-Head, finaler Head, Pull-Request-Nummer, Repository und Beobachtungszeiten sind im Receipt gebunden."
+    },
+    {
+      "id": "safe-retry",
+      "assertion": "Ein Wiederholungsversuch prüft zuerst den Livezustand und löst keinen zweiten Effekt aus, wenn der erwartete Branchupdate bereits sichtbar ist."
+    },
+    {
+      "id": "lease-and-review-preservation",
+      "assertion": "Die Aktualisierung hält die exakte Branch-Lease bis zum terminalen Readback und erzwingt anschließend neue Head-gebundene CI- und Review-Evidenz; fremde Leases werden weder gelöst noch übergangen."
+    },
+    {
+      "id": "regression-test",
+      "assertion": "Tests simulieren verzögerte GitHub-Sichtbarkeit, echten No-op, bereits erfolgte externe Aktualisierung, API-Fehler nach angenommener Anfrage und Head-Drift durch einen fremden Akteur."
+    }
+  ],
+  "metadata": {
+    "registered_at": "2026-07-30T21:16:00Z",
+    "source_task": "SEMANTAH-E2E-PORTABILITY-V1-T001",
+    "source_pull_request": "heimgewebe/bureau#1237",
+    "trigger": "Beim Aktualisieren von PR #1237 auf den aktuellen Bureau-main führte gh pr update-branch den Effekt aus; der unmittelbar folgende Head-Readback sah jedoch noch den alten Head und terminalisierte den Grabowski-Lauf fd9a57a4af224a1382f409a9 fälschlich als fehlgeschlagen. Wenige Sekunden später war der neue Head 41fbce2caf22b32679594f62c2649b7960d29483 autoritativ sichtbar.",
+    "evidence": {
+      "failed_task_id": "fd9a57a4af224a1382f409a9",
+      "failed_task_receipt_sha256": "2fd3e46489465a468fbe10958e6d3fdd38139170698dcf933981aadf5112ac08",
+      "old_head": "38aadc6379858ab44dd37aac3c4ddcd00cd4da2f",
+      "new_head": "41fbce2caf22b32679594f62c2649b7960d29483",
+      "base_head": "3ceedceb0f2ff3df1500c9898bfd22e899e7448b",
+      "subsequent_clean_status_receipt_sha256": "07a94615d017593e40e3e63e4ae66273f89f2436af320070afa0baeca10924f2",
+      "merged_commit": "255b5e0d4d94e8f4dccc49e763904ce3537144b1"
+    },
+    "risk": "Ohne Härtung entstehen falsche Attention-Einträge, unnötige Retries oder im ungünstigen Fall doppelte Effektversuche. Ein zu großzügiges Settle-Fenster darf umgekehrt echte Unklarheit oder fremde Head-Drift nicht als Erfolg glätten.",
+    "does_not_establish": [
+      "permission to bypass required checks",
+      "permission to merge without current-head review",
+      "permission to release foreign leases",
+      "that every unchanged immediate readback implies eventual success",
+      "automatic retry authority"
+    ]
+  }
+}

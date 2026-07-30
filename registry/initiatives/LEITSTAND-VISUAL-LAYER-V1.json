@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "LEITSTAND-VISUAL-LAYER-V1",
   "title": "Leitstand ecosystem visualization layer expansion",
-  "state": "active",
-  "commitment": "now",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Expand Leitstand into a read-only visualization layer for ecosystem maps, source freshness, RepoBrief health, and cross-view navigation without making Leitstand a source of truth, orchestrator, or task dispatcher.",
   "current_plan": {
     "repository": "bureau",
@@ -51,11 +51,10 @@
       "current_cabinet_head": "8ca544a8c00076aafd2d738fd6361ee6f6dbde3d"
     },
     "lifecycle": {
-      "completed_at": "2026-07-22T00:12:31Z",
-      "completion_basis": "All registered tasks LSV-V1-T001 through LSV-V1-T009 are canonical verified and no LSV task remains in the Bureau queue.",
-      "closeout_base_commit": "7924c343600ce83c3f9036184a27c13ffb7d6b52",
-      "final_task_reconciliation_pr": "heimgewebe/bureau#811",
-      "final_task_reconciliation_merge_commit": "d6a1e4b5596bb2e0e14a8cb3e5843db142b00d1e",
+      "completed_at": "2026-07-30T13:58:49.604942Z",
+      "completion_basis": "All registered tasks LSV-V1-T001 through LSV-V1-T012 are canonical verified and no LSV task remains open; bureau lifecycle recommended completion-ready for the initiative.",
+      "closeout_base_commit": "82eb66c50e156044d6ef3b435a12d3c222c653b8",
+      "closeout_command": "bureau close-ready",
       "verified_tasks": [
         "LSV-V1-T001",
         "LSV-V1-T002",
@@ -65,8 +64,19 @@
         "LSV-V1-T006",
         "LSV-V1-T007",
         "LSV-V1-T008",
-        "LSV-V1-T009"
+        "LSV-V1-T009",
+        "LSV-V1-T010",
+        "LSV-V1-T011",
+        "LSV-V1-T012"
       ],
+      "prior_completion": {
+        "completed_at": "2026-07-22T00:12:31Z",
+        "completion_basis": "All registered tasks LSV-V1-T001 through LSV-V1-T009 are canonical verified and no LSV task remains in the Bureau queue.",
+        "closeout_base_commit": "7924c343600ce83c3f9036184a27c13ffb7d6b52",
+        "final_task_reconciliation_pr": "heimgewebe/bureau#811",
+        "final_task_reconciliation_merge_commit": "d6a1e4b5596bb2e0e14a8cb3e5843db142b00d1e",
+        "superseded_by": "reopened_at 2026-07-24T01:45:27.705483Z for LSV-V1-T010 through LSV-V1-T012"
+      },
       "does_not_establish": [
         "future_runtime_health",
         "future_source_correctness",
@@ -82,7 +92,7 @@
         "LSV-V1-T010"
       ],
       "active_task": "LSV-V1-T010",
-      "prior_completion_preserved_in": "metadata.lifecycle"
+      "prior_completion_preserved_in": "metadata.lifecycle.prior_completion"
     },
     "t011_closeout_20260727": {
       "task": "LSV-V1-T011",

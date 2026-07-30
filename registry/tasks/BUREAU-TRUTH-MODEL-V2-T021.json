@@ -1,0 +1,145 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Claim-Intent, Live Register, koordinierter Pickup, Task-Lifecycle und die aktuelle Grabowski-Readback-Arbeit einschließlich PR #513 werden gegen ein explizites CAS-Anforderungsmodell geprüft; bereits erfüllte Anforderungen werden nicht dupliziert.",
+      "id": "existing-contract-audit",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein revisionsgebundener Entscheidungsbeleg setzt decision auf implement oder no-change. Bei implement weist mindestens ein realer Hochfrequenzpfad eine messbare Reduktion vollständiger Zustandslesungen oder synchroner Rundreisen nach; bei no-change weist er fehlenden Zusatznutzen oder bereits ausreichende bestehende Verträge nach.",
+      "id": "measured-read-reduction",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein an decision gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement bindet jeder mutierende Befehl mindestens Task-Identität, erwartete Lifecycle-Version oder Versuch, erwarteten Owner beziehungsweise Lease-Token soweit relevant, Idempotenzschlüssel und Outcome- oder Effekt-Receipt; bei no-change ist applicability not_applicable und bestätigt keinen neuen Befehl.",
+      "id": "exact-preconditions",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein an decision gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement werden Version-, Versuch-, Owner-, Lease- und Idempotenzkonflikte vor Wirkung deterministisch mit maschinenlesbarem Grund abgelehnt und verändern keine Wahrheit; bei no-change ist applicability not_applicable und bestätigt keinen neuen Effektpfad.",
+      "id": "deterministic-rejection",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein an decision gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement erzeugt Transportabbruch oder Timeout nach möglichem Effekt einen unbekannten Ausgang mit exakt benanntem Readback und verbietet unveränderte Wiederholung; bei no-change ist applicability not_applicable und bestätigt keinen neuen asynchronen oder mutierenden Pfad.",
+      "id": "unknown-outcome-contract",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein an decision gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement wird jeder erfolgreiche Effekt aus der autoritativen Quelle auf dieselbe Task-, Versuch- und Owner-Identität zurückgelesen und ein Event-Append gilt nie allein als Erfolg; bei no-change ist applicability not_applicable und bestätigt keinen neuen Effekt.",
+      "id": "authoritative-readback",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein an decision gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement belegen hermetische Parallelitäts-, Idempotenz-, Drift-, Crash- und Replaytests genau einen zulässigen Effekt, explizite Verlierer und keine stillen Doppelmutationen; bei no-change ist applicability not_applicable und bestätigt, dass keine neue Mutationslogik entstand.",
+      "id": "concurrency-tests",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein separater No-change-Abschlussbeleg dokumentiert bei decision no-change Auditgrundlage, bereits erfüllte Verträge oder fehlenden Zusatznutzen sowie das Ausbleiben neuer Befehle, Effekte, Tests und Autoritätsänderungen. Bei decision implement setzt er applicability auf not_applicable und bindet sich an die Implementierungsentscheidung.",
+      "id": "no-change-closeout",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein an decision gebundener Grenzbeleg weist bei implement nach, dass keine zweite Lifecycle-Wahrheit, Queue- oder Dispatch-Autorität aus Events und kein Policy-, Review-, Merge- oder Deployment-Bypass entsteht. Bei no-change bestätigt er das Ausbleiben jeder Wahrheits-, Autoritäts- und Policyänderung.",
+      "id": "truth-boundary",
+      "evidence_type": "object"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.truth-model"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
+    },
+    {
+      "resource": "component.bureau.docs",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 30. Juli 2026 die priorisierte Registrierung und Umsetzung sinnvoller Reibungshebel beauftragt. T021 implementiert nur nachgewiesene CAS-Lücken und darf die bestehende fail-closed Wahrheitshierarchie nicht lockern.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau",
+      "path:/home/alex/repos/bureau/tests",
+      "path:/home/alex/repos/bureau/docs/bureau-operator-intake-v1.md",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T021.json",
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Für Claim-, Close- und vergleichbare Bureau-Zustandsänderungen revisionsgebunden prüfen, wo ein enger Compare-and-Swap-Befehl mit erwarteter Version, Versuch, Owner- oder Lease-Bindung, Idempotenzschlüssel und Outcome-Receipt vollständige Vorablesungen sicher ersetzen kann. Nur belegte Lücken mit messbarem Nutzen werden umgesetzt; andernfalls endet die Aufgabe belegt als no-change. Ablehnung, Konkurrenz und unbekannte Ausgänge bleiben in jedem Implementierungspfad explizit und erfolgreicher Effekt erfordert autoritativen Readback.",
+  "id": "BUREAU-TRUTH-MODEL-V2-T021",
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "metadata": {
+    "audit_before_implementation": [
+      "Bureau claim intent and lifecycle store",
+      "Live Register append-only intake",
+      "Grabowski coordinated pickup",
+      "Grabowski PR #513 current-head contract"
+    ],
+    "does_not_establish": [
+      "generic_asynchronous_mutation",
+      "event_as_claim_truth",
+      "safe_retry_after_unknown_effect",
+      "queue_or_dispatch_authority",
+      "merge_or_deployment_permission"
+    ],
+    "priority_basis": {
+      "rank": "P2",
+      "reason": "Optimistische Nebenläufigkeit ist sinnvoll, wenn sie als erwartungsgebundener Befehl statt als blindes asynchrones Ereignis ausgeführt wird."
+    },
+    "source": "Live-Reibungsevaluation und Nutzerauftrag vom 30. Juli 2026",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-7a0d11b69c151a15e0c8ffe1",
+      "event_id": 1693,
+      "event_created_at": "2026-07-30T08:55:54.287696Z",
+      "request_sha256": "d60be49c94de6915dc0b2483aedcabf112e5a37fb28ab1748a2d026d15760a0d",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chatgpt:grabowski-friction-evaluation:2026-07-30:cas-commands",
+        "observed_at": "2026-07-30T10:46:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 21
+  },
+  "required_capabilities": [
+    "repository",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bureau-Zustandsbefehle auf enge CAS-Verträge prüfen und härten"
+}

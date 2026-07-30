@@ -752,6 +752,14 @@
         },
         "generation_transition": {
           "$ref": "#/$defs/generation_transition"
+        },
+        "independently_executable": {
+          "type": "boolean"
+        },
+        "parent_task": {
+          "minLength": 1,
+          "pattern": "^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$",
+          "type": "string"
         }
       },
       "type": "object"

@@ -1,0 +1,141 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Bureau bindet jede beobachtete GitHub-Repository- und Open-PR-Reservation an die vom Provider gelieferte kanonische nameWithOwner-Identität; ein Redirect-Slug erzeugt keine zweite Reservation.",
+      "evidence_type": "object",
+      "id": "provider-canonical-identity",
+      "verifier": "ausführbarer Observer-/Claim-Guard-Test mit zwei Slugs und einer kanonischen Provider-Identität"
+    },
+    {
+      "assertion": "Der Livefall ist revisions- und zeitgebunden dokumentiert: gh repo view heimgewebe/lenskit liefert nameWithOwner heimgewebe/repoground; PR #1130 löst über beide Slugs auf denselben Head und dieselbe URL auf.",
+      "evidence_type": "object",
+      "id": "live-lenskit-repoground-classification",
+      "verifier": "frischer strukturierter GitHub-Readback"
+    },
+    {
+      "assertion": "repo.lenskit wird als historischer Redirect/Alias klassifiziert oder konfliktfrei aus der aktiven GitHub-Beobachtung entfernt, während repo.repoground die einzige kanonische aktive GitHub-Identität bleibt. Historische Task- und Evidenzfelder werden nicht umgeschrieben.",
+      "evidence_type": "object",
+      "id": "resource-migration",
+      "verifier": "Registry-Validierung und Diff-Review"
+    },
+    {
+      "assertion": "Der fremde schmutzige Checkout /home/alex/repos/lenskit, sein Branch und seine uncommitteten Änderungen bleiben unverändert; eine spätere lokale Migration benötigt eine eigene belegte Nichtkonfliktentscheidung.",
+      "evidence_type": "boolean",
+      "id": "dirty-checkout-preserved",
+      "verifier": "Git- und Current-Work-Readback vor und nach der Änderung"
+    },
+    {
+      "assertion": "Provider-Fehler, fehlende kanonische Identität, Schleifen oder widersprüchliche Aliasauflösungen führen zu einer wirkungslosen, maschinenlesbaren Blockade statt zu erratener Deduplizierung.",
+      "evidence_type": "object",
+      "id": "redirect-fail-closed",
+      "verifier": "negative Regressionstests"
+    },
+    {
+      "assertion": "Ein RepoGround-Task mit einem exakt gebundenen offenen PR wird durch genau eine Reservation als bereits implementiert erkannt; die Diagnose nennt nicht zusätzlich heimgewebe/lenskit#<gleiche Nummer>.",
+      "evidence_type": "object",
+      "id": "claim-guard-regression",
+      "verifier": "Claim-Guard-Integrationstest"
+    },
+    {
+      "assertion": "Die Änderung erzeugt keine Merge-, Claim-, Queue-, Checkout-Migrations-, Branchlösch- oder Dirty-State-Autorität.",
+      "evidence_type": "boolean",
+      "id": "no-new-authority",
+      "verifier": "Grenzreview"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.registry"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Keine Änderung am fremden schmutzigen Checkout /home/alex/repos/lenskit und keine Löschung historischer Lenskit-Belege. Änderungen bleiben auf kanonische Provider-Identität, Registry-Ressourcenvertrag und ausführbare Regressionstests begrenzt.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/repos/bureau/src/bureau/v2.py",
+      "path:/home/alex/repos/bureau/src/bureau/github_repository.py",
+      "path:/home/alex/repos/bureau/tests/test_claim_guard.py",
+      "path:/home/alex/repos/bureau/tests/test_github_repository_identifiers.py",
+      "path:/home/alex/repos/bureau/registry/resources/lenskit.json",
+      "path:/home/alex/repos/bureau/registry/resources/repoground.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Verhindere, dass ein historischer GitHub-Repository-Slug, der serverseitig auf ein bereits separat registriertes kanonisches Repository weiterleitet, als zweite Repository- und Open-PR-Identität in Bureau erscheint. Der Livefall heimgewebe/lenskit wird von GitHub als heimgewebe/repoground aufgelöst und erzeugte für PR #1130 zwei Reservationen. Die Umsetzung muss die Provider-identität kanonisch binden, repo.lenskit und den fremden schmutzigen lokalen Checkout nur klassifizieren und historische Belege unverändert lassen.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T073",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "sichere Mutation des lokalen Lenskit-Checkouts",
+      "Abwesenheit weiterer GitHub-Redirect-Aliasse",
+      "Implementierung",
+      "Taskbereitschaft",
+      "Mergebereitschaft"
+    ],
+    "registered_at": "2026-07-30T18:50:00+02:00",
+    "source": "scheduled-t012-closeout-live-readback",
+    "source_facts": {
+      "github_alias_query": "heimgewebe/lenskit",
+      "local_lenskit_checkout": "/home/alex/repos/lenskit",
+      "local_lenskit_status": "dirty: feat/find-symbol-mcp-tool; modified .gitignore",
+      "observed_duplicate_reservations": [
+        "open-pr:heimgewebe/lenskit#1130",
+        "open-pr:heimgewebe/repoground#1130"
+      ],
+      "provider_name_with_owner": "heimgewebe/repoground",
+      "provider_url": "https://github.com/heimgewebe/repoground",
+      "pull_request": 1130,
+      "pull_request_head": "b4ea19555a626055d110a7932759ab50116bbb30"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-9405d8adfc4e1603b7219b0f",
+      "event_id": 1730,
+      "event_created_at": "2026-07-30T16:56:01.221648Z",
+      "request_sha256": "a639c3461935fc7df9a2ebf01293ae413a433a4ca5fa48c0dda76ce4cbd4c7e9",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-repository-audit",
+        "locator": "file:/home/alex/.local/state/grabowski/bureau-followup-github-redirect-alias-20260730.json",
+        "observed_at": "2026-07-30T16:49:00Z",
+        "sha256": "3fc90e606ddf080804e5ee69317b1b0b17e9745c44379e556ec24614c34dd661"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 22
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "github",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich die kanonische Aliasauflösung, Registry-Ressourcenklassifikation und zugehörigen Tests. Historische Belege und der lokale Lenskit-Checkout bleiben unangetastet; bei unklarer Provideridentität wird wieder fail-closed blockiert."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "GitHub-Repository-Redirects kanonisch deduplizieren"
+}

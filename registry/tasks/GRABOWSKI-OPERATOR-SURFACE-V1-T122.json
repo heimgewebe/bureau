@@ -1,0 +1,112 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Eine revisionsgebundene Stichprobe realer Änderungen klassifiziert mindestens Häufigkeit, Durchlaufzeit, Reviewaufwand, Rückläufer und Fehlerrisiko; fehlende ausreichende Evidenz führt zu keiner neuen Lane.",
+      "id": "measured-population",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Die Risikoklassifikation wird serverseitig aus exakten Pfaden, Dateitypen, Diffstatistik und verbotenen Effekten bestimmt und kann nicht allein durch eine Agentenbehauptung oder ein Label autorisiert werden.",
+      "id": "server-side-classifier",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Policy-, Workflow-, Registry-Schema-, Berechtigungs-, Sicherheits-, Secret-, Deployment-, Routing- und Eigentumsänderungen sowie neue ausführbare Dateien und Generatoränderungen sind ausgeschlossen.",
+      "id": "explicit-exclusions",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Der Vertrag läuft zunächst wirkungsfrei im Shadow-Modus und vergleicht seine Einstufung mit tatsächlichen Reviews, CI-Ausgängen und späteren Korrekturen; keine Beobachtung erzeugt Merge-Autorität.",
+      "id": "shadow-first",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein späterer Pilot ist auf Pfad-Allowlist, Änderungstyp, maximale Datei- und Diffgröße, exakten Head, fremde Lease-Prüfung, vollständiges Receipt und einen belegten Revert-Pfad begrenzt.",
+      "id": "bounded-effect-contract",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Grüne CI ist notwendige Evidenz, aber niemals alleinige Freigabe; fehlende Tests, Identitätsänderungen und semantische Seiteneffekte bleiben separat geprüft.",
+      "id": "ci-not-sufficient",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein messbarer Nutzen-, Risiko- und Komplexitätsvergleich endet explizit mit implementieren, enger nachmessen oder verwerfen; eine wirkungslose zusätzliche Kontrollschicht wird nicht dauerhaft eingeführt.",
+      "id": "go-no-go",
+      "evidence_type": "object"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T118"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die priorisierte Registrierung und Umsetzung sinnvoller Reibungshebel beauftragt. T122 ist ausschließlich Mess- und Shadow-Arbeit; eine spätere Merge-Delegation erfordert einen neuen exakten Autoritätsentscheid.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Häufigkeit, Bearbeitungszeit und Fehlerrisiko tatsächlich nicht-semantischer Änderungen messen und daraus einen engen serverseitigen Maintenance-Vertrag ableiten, bevor irgendeine automatische Merge-Autorität erwogen wird. Harmlose Routinearbeit soll beschleunigt werden, ohne semantisch relevante Konfiguration, Policy, Sicherheit oder Eigentumswahrheit als trivial zu behandeln.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T122",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "automatic_merge_authority",
+      "triviality_of_any_existing_change",
+      "policy_exception",
+      "task_readiness_before_dependencies"
+    ],
+    "priority_basis": {
+      "rank": "P3",
+      "reason": "Potentiell nützlich, aber der aktuelle Hauptengpass sind Lifecycle- und Gate-Evidenzprobleme; Nutzen und echte Trivialität müssen zuerst gemessen werden."
+    },
+    "safety_boundary": "CI-grün oder eine Agenteneinstufung allein begründen weder Trivialität noch Merge-Autorität.",
+    "source": "Live-Reibungsevaluation und Nutzerauftrag vom 30. Juli 2026",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-475d785583b687b7754d44ac",
+      "event_id": 1694,
+      "event_created_at": "2026-07-30T08:56:26.931220Z",
+      "request_sha256": "7c8e6fdad58f89b10fbf82dee1c4be6628b21403e2dc5169c383bf1352535cea",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chatgpt:grabowski-friction-evaluation:2026-07-30:maintenance-lane",
+        "observed_at": "2026-07-30T10:46:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Maintenance-Lane anhand realer Driftkosten im Shadow-Modus evaluieren"
+}

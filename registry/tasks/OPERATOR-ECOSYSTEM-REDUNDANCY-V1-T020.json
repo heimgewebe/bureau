@@ -1,137 +1,134 @@
 {
-  "schema_version": 1,
-  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020",
-  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
-  "title": "Restore GitHub Actions runner start capability",
-  "state": "planned",
-  "priority": {
-    "lane": "later",
-    "rank": 400
-  },
-  "goal": "Resolve the GitHub account payment or spending-limit condition that prevents Actions jobs from starting, then prove that an unchanged representative workflow obtains a runner and executes real steps.",
-  "execution": {
-    "mode": "interactive-agent",
-    "policy": "review-before-effect",
-    "approval": {
-      "action_class": "runtime_mutation",
-      "required_level": "operator",
-      "note": "Account billing or spending-limit changes require direct operator action. Repository workflow changes are not an acceptable substitute unless independently justified."
-    }
-  },
-  "claims": [
-    {
-      "resource": "service.github_actions",
-      "mode": "write",
-      "isolation": "none"
-    }
-  ],
-  "required_capabilities": [
-    "github",
-    "shell"
-  ],
-  "depends_on": [],
   "acceptance": [
     {
-      "id": "root-cause",
-      "assertion": "The account-level payment, budget or spending-limit cause is identified from GitHub billing and Actions evidence without misclassifying it as a code or test failure."
+      "assertion": "The account-level payment, budget or spending-limit cause is identified from GitHub billing and Actions evidence without misclassifying it as a code or test failure.",
+      "id": "root-cause"
     },
     {
-      "id": "minimal-account-effect",
-      "assertion": "Only the necessary billing or spending-limit setting is corrected by the operator; no repository is made public/private and no workflow is weakened merely to bypass the block."
+      "assertion": "Only the necessary billing or spending-limit setting is corrected by the operator; no repository is made public/private and no workflow is weakened merely to bypass the block.",
+      "id": "minimal-account-effect"
     },
     {
-      "id": "runner-proof",
-      "assertion": "A representative unchanged workflow starts a runner, records at least one executed step and produces logs."
+      "assertion": "A representative unchanged workflow starts a runner, records at least one executed step and produces logs.",
+      "id": "runner-proof"
     },
     {
-      "id": "ci-result",
-      "assertion": "The workflow result is reported separately from runner-start capability; a genuine test failure remains a test failure."
+      "assertion": "The workflow result is reported separately from runner-start capability; a genuine test failure remains a test failure.",
+      "id": "ci-result"
     },
     {
-      "id": "affected-pr-recheck",
-      "assertion": "Previously locally validated but runner-blocked Infra PR evidence is reclassified with the new runner proof; no historical result is rewritten."
+      "assertion": "Previously locally validated but runner-blocked Infra PR evidence is reclassified with the new runner proof; no historical result is rewritten.",
+      "id": "affected-pr-recheck"
     }
   ],
+  "claims": [
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "service.github_actions"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Account billing or spending-limit changes require direct operator action. Repository workflow changes are not an acceptable substitute unless independently justified.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect"
+  },
+  "goal": "Resolve the GitHub account payment or spending-limit condition that prevents Actions jobs from starting, then prove that an unchanged representative workflow obtains a runner and executes real steps.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T020",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "metadata": {
-    "registered_at": "2026-07-11T07:38:46Z",
-    "source": "Infra PRs #121-#124 GitHub check observations",
-    "observed_runs": [
-      {
-        "repository": "heimgewebe/infra",
-        "pull_request": 124,
-        "workflow_run_id": 29144599089,
-        "check_run_id": 86523860200,
-        "steps": 0,
-        "logs_available": false
-      }
-    ],
-    "observed_annotation": "The job was not started because recent account payments have failed or your spending limit needs to be increased.",
+    "current_evidence_assessment": {
+      "acceptance_status": {
+        "affected-pr-recheck": "passed",
+        "ci-result": "passed",
+        "minimal-account-effect": "passed",
+        "root-cause": "passed",
+        "runner-proof": "passed"
+      },
+      "evidence_path": "docs/evidence/operator-ecosystem-redundancy-v1-t020-closeout-20260730.json",
+      "evidence_sha256": "cbcd686c7669e5115a88396c437d441635fe77b1c85b1e2470ea57ad429203cf",
+      "note": "Operational runner-start capability restored; historical account-level failure retained; null-effect billing closeout.",
+      "observed_at": "2026-07-30T04:59:42Z",
+      "remaining_gap": null,
+      "status": "satisfied"
+    },
     "does_not_establish": [
       "which historical operator or GitHub-side event cleared the temporary account restriction",
       "that future account, quota or runner-capacity failures are impossible",
       "authorization for future paid GitHub Actions usage"
     ],
+    "observed_annotation": "The job was not started because recent account payments have failed or your spending limit needs to be increased.",
+    "observed_runs": [
+      {
+        "check_run_id": 86523860200,
+        "logs_available": false,
+        "pull_request": 124,
+        "repository": "heimgewebe/infra",
+        "steps": 0,
+        "workflow_run_id": 29144599089
+      }
+    ],
     "operator_intake": {
       "candidate_id": "candidate-dd9cfd8ce12412ba1c53e70a",
       "event_id": 1445,
+      "source_freshness": "digest-bound",
       "source_locator": "/home/alex/.local/state/grabowski/evidence/operator-ecosystem-redundancy-t020-billing-proof-20260727T195300Z.json",
-      "source_sha256": "62f00577f8c70b1af26c26bd4d4f88cbce8dd01025a1117fc214039a3a7bac8b",
-      "source_freshness": "digest-bound"
+      "source_sha256": "62f00577f8c70b1af26c26bd4d4f88cbce8dd01025a1117fc214039a3a7bac8b"
     },
-    "current_evidence_assessment": {
-      "observed_at": "2026-07-27T20:40:00Z",
-      "status": "partially_satisfied",
-      "evidence_path": "/home/alex/.local/state/grabowski/evidence/operator-ecosystem-redundancy-t020-billing-proof-20260727T195300Z.json",
-      "evidence_sha256": "62f00577f8c70b1af26c26bd4d4f88cbce8dd01025a1117fc214039a3a7bac8b",
-      "prior_runner_evidence_sha256": "505f93f063bd9d4def5b6e35debd57fe7b75a996962d59d311ccbd2e6ae59fca",
-      "historical_failure": {
-        "workflow_run_id": 29144599089,
-        "job_id": 86523860200,
-        "created_at": "2026-07-11T07:30:23Z",
-        "executed_steps": 0,
-        "logs_available": false,
-        "classification": "account-level pre-run billing or spending-control failure"
+    "pr_completion": {
+      "closed_at": "2026-07-30T04:59:42Z",
+      "closed_by": "operator:grok-bureau-20260730",
+      "closeout_evidence": "docs/evidence/operator-ecosystem-redundancy-v1-t020-closeout-20260730.json",
+      "closeout_evidence_sha256": "cbcd686c7669e5115a88396c437d441635fe77b1c85b1e2470ea57ad429203cf",
+      "note": "Representative earlier restored-runner PR; live recheck uses later main runs",
+      "number": 139,
+      "repo": "heimgewebe/infra"
+    },
+    "registered_at": "2026-07-11T07:38:46Z",
+    "source": "Infra PRs #121-#124 GitHub check observations",
+    "verification": {
+      "does_not_establish": [
+        "which historical operator or GitHub-side event cleared the temporary account restriction",
+        "that future account, quota or runner-capacity failures are impossible",
+        "authorization for future paid GitHub Actions usage"
+      ],
+      "evidence_path": "docs/evidence/operator-ecosystem-redundancy-v1-t020-closeout-20260730.json",
+      "evidence_sha256": "cbcd686c7669e5115a88396c437d441635fe77b1c85b1e2470ea57ad429203cf",
+      "hash_semantics": {
+        "evidence_sha256": "Byte hash of evidence_path closeout receipt.",
+        "plan_sha256": "Canonical hash of the initiative current_plan object required by Bureau verification validation.",
+        "task_sha256": "Canonical Bureau task revision hash excluding mutable state and verification metadata."
       },
-      "current_runner_proof": {
-        "repository": "heimgewebe/infra",
-        "pull_request": 139,
-        "workflow_run_id": 30224069380,
-        "job_id": 89851328480,
-        "created_at": "2026-07-26T22:54:03Z",
-        "runner": "heim-pc-infra-ci-isolated",
-        "runner_version": "2.336.0",
-        "executed_real_steps": true,
-        "logs_available": true,
-        "conclusion": "success"
+      "historical_blocked_workflow_run_id": 29144599089,
+      "local_validation": {
+        "billing_mutation_performed": false,
+        "recent_success_runs_with_executed_steps": 3
       },
-      "current_billing_proof": {
-        "account": "alexdermohr",
-        "plan": "GitHub Free",
-        "next_payment_due": "none shown",
-        "actions_budget_usd": 0,
-        "stop_usage_when_budget_reached": true,
-        "july_2026_gross_actions_usage_usd": 2.44,
-        "july_2026_included_usage_discount_usd": 2.44,
-        "july_2026_actions_billed_usd": 0
-      },
-      "security_log_check": {
-        "range": "2026-07-01..2026-07-27",
-        "actions_checked": [
-          "payment_method",
-          "billing.change_email"
-        ],
-        "matching_events": 0,
-        "interpretation": "No operator-bound payment-method or billing-email event was available to prove the historical clearing action."
-      },
-      "acceptance_status": {
-        "root-cause": "partially_satisfied: the account-level failure class is proven, but the exact underlying account event is not reconstructed",
-        "minimal-account-effect": "not_satisfied: the exact necessary historical operator correction is not evidenced",
-        "runner-proof": "satisfied",
-        "ci-result": "satisfied",
-        "affected-pr-recheck": "satisfied"
-      },
-      "remaining_gap": "Operator-bound evidence of the exact historical billing or spending-limit correction, or a separately reviewed contract decision that current null-effect evidence is sufficient.",
-      "recommended_next_action": "Keep T020 nonterminal. Obtain the missing account-effect evidence; otherwise revise the acceptance contract explicitly rather than interpreting it away."
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "primary_live_workflow_run_id": 30442158023,
+      "repository": "heimgewebe/infra",
+      "schema_version": 1,
+      "source": "live_runner_and_historical_billing_annotation",
+      "source_ref": "github-check:heimgewebe/infra@86523860200+runs/30442158023",
+      "task_sha256": "8a9d3e9cf3ffaf077bb6c52be5e9bb934dcb946a8975053695775200879447b4",
+      "verified_at": "2026-07-30T04:59:42Z",
+      "verified_by": "operator:grok-bureau-20260730"
     }
-  }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 400
+  },
+  "required_capabilities": [
+    "github",
+    "shell"
+  ],
+  "schema_version": 1,
+  "state": "verified",
+  "title": "Restore GitHub Actions runner start capability"
 }

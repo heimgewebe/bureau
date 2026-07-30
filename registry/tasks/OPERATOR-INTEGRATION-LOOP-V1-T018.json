@@ -75,10 +75,40 @@
     "does_not_establish": [
       "Anwendung eines Queue-Reconcile-Plans auf die kanonische Queue",
       "Abwesenheit weiterer Queue-Drift",
-      "Taskabschluss",
-      "Mergebereitschaft",
       "Deployment"
     ],
+    "implementation": {
+      "changed_paths": [
+        "src/bureau/queue_reconcile.py",
+        "tests/test_queue_reconcile.py"
+      ],
+      "head_sha": "3d951fc4b58442534215e1fd1227b4d37a6f2fd7",
+      "merge_commit": "9b2e2596acb2c523a12b45d86d3efd68e29838a3",
+      "merged_at": "2026-07-30T17:50:44Z",
+      "pull_request": 1227,
+      "repository": "heimgewebe/bureau"
+    },
+    "operator_intake": {
+      "candidate_id": "candidate-cb0500c2247d4e605674bc41",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_created_at": "2026-07-30T17:31:04.447541Z",
+      "event_id": 1740,
+      "request_sha256": "46cbc39822f20f65eaf1c19d87890c474af7eaf2f8872ac7cc2b28b3549988cb",
+      "schema_version": 1,
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-repository-audit",
+        "locator": "file:/home/alex/.local/state/bureau/recovery/queue-reconcile-20260730T1904.json",
+        "observed_at": "2026-07-30T17:14:30.462742Z",
+        "sha256": "9e0cab843ae9df771932f33392fb9a35e441eba4f2082507c4949e8efbd851e6"
+      }
+    },
+    "outcome": "Die reviewed Queue-Reconcile-Planung bildet terminale Queue-Befunde nun eng, deterministisch und fail-closed als remove_from_queue ab; Implementierung und CI sind gemergt und post-merge auf main reproduziert.",
     "readiness": {
       "authorization_reference": "scheduled instruction: claim or implement a conflict-free Bureau fallback task and register validated findings",
       "authorized_by": "alex",
@@ -117,26 +147,58 @@
       "observed_plan_remove_actions": 0,
       "observed_terminal_findings": 5
     },
-    "operator_intake": {
-      "schema_version": 1,
-      "candidate_id": "candidate-cb0500c2247d4e605674bc41",
-      "event_id": 1740,
-      "event_created_at": "2026-07-30T17:31:04.447541Z",
-      "request_sha256": "46cbc39822f20f65eaf1c19d87890c474af7eaf2f8872ac7cc2b28b3549988cb",
-      "source": {
-        "does_not_establish": [],
-        "freshness": "digest-bound",
-        "kind": "live-repository-audit",
-        "locator": "file:/home/alex/.local/state/bureau/recovery/queue-reconcile-20260730T1904.json",
-        "observed_at": "2026-07-30T17:14:30.462742Z",
-        "sha256": "9e0cab843ae9df771932f33392fb9a35e441eba4f2082507c4949e8efbd851e6"
+    "validated_acceptance": {
+      "add-behavior-preserved": "All existing queue-reconcile tests remained green; add_to_queue stays restricted to now and next while unrelated diagnostic actions remain inert.",
+      "full-validation": "Exact head passed 24 focused tests, the complete test suite, Ruff, Systemkatalog boundary, Bureau check, diff check and all PR CI checks.",
+      "no-new-authority": "Diff is limited to queue_reconcile.py and its tests; canonical queue was not mutated and no claim, dispatch, deployment or foreign workspace authority was added.",
+      "remove-boundary-fail-closed": "Parameterized negative tests reject foreign finding codes, nonterminal effective state and non-null target_lane; only terminal-task-in-queue removals are admitted.",
+      "reviewed-apply-removal": "Integration test with a real StateStore overlay removes the terminal task from all lanes, preserves the unrelated task and passes all post-gates.",
+      "rollback-preserved": "Existing stale-head, queue-drift, findings-drift, plan-integrity and post-gate rollback tests remained green in the complete suite.",
+      "terminal-finding-plan-parity": "Post-merge dry-run on main generated five deterministic remove_from_queue actions for the five terminal-task-in-queue findings; targeted plan regression passed."
+    },
+    "validation": {
+      "bureau_registry_state": "valid",
+      "focused_tests": {
+        "head_sha": "3d951fc4b58442534215e1fd1227b4d37a6f2fd7",
+        "result": "24 passed"
       },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
-    }
+      "full_suite": {
+        "grabowski_receipt_sha256": "577bd0071f7c79791f63ac7b768805cc219d18f893c14c021691bd636e7ea319",
+        "head_sha": "3d951fc4b58442534215e1fd1227b4d37a6f2fd7",
+        "result": "passed"
+      },
+      "git_diff_check": "PASS",
+      "github_checks": {
+        "codeql_actions": "PASS",
+        "codeql_python": "PASS",
+        "registry_registration_preflight_freshness": "PASS",
+        "validate_3_10": "PASS",
+        "validate_3_12": "PASS"
+      },
+      "post_merge_plan": {
+        "canonical_queue_mutated": false,
+        "path": "/home/alex/.local/state/bureau/recovery/queue-reconcile-20260730T1951.json",
+        "registry_head": "9b2e2596acb2c523a12b45d86d3efd68e29838a3",
+        "remove_actions": 5,
+        "sha256": "cbfcde0eea19986ad2d1ddab2ce17c9595490a795e3efcc0395289b131a8b9c7",
+        "terminal_findings": 5
+      },
+      "ruff": "PASS",
+      "systemkatalog_boundary": "PASS"
+    },
+    "verification": {
+      "evidence_sha256": "31206eab7b580d909863e16e70cffe6d502ab2e3559dced4b151680c04bb41ea",
+      "kind": "bureau.task_verification_receipt",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+      "receipt_sha256": "8ee73544910238767636c7bbb3b0a6634924c7e5dc5b987b9095fa01ccf7b37a",
+      "schema_version": 1,
+      "source": "github_pull_request",
+      "source_ref": "github-pr:heimgewebe/bureau#1227@3d951fc4b58442534215e1fd1227b4d37a6f2fd7:9b2e2596acb2c523a12b45d86d3efd68e29838a3",
+      "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T018",
+      "task_sha256": "7516444461cbe780a8d9f911931abe569b0127ccf8cde7b17cd51d9bc4fe04a8",
+      "verified_at": "2026-07-30T17:57:27Z"
+    },
+    "verified_at": "2026-07-30T17:57:27Z"
   },
   "priority": {
     "lane": "next",
@@ -152,6 +214,6 @@
     "strategy": "Revertiere ausschließlich die remove_from_queue-Aufnahme in queue_reconcile.py und die zugehörigen Regressionstests. Die bisherige add-only-Plansemantik wird dadurch wiederhergestellt; Queue-Dateien, Runtime-Overlays und fremde Arbeit werden nicht umgeschrieben."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Terminale Queue-Einträge im reviewed Reconcile entfernen"
 }

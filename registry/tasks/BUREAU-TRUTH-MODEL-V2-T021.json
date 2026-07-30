@@ -51,6 +51,11 @@
       "isolation": "worktree",
       "mode": "write",
       "resource": "component.bureau.truth-model"
+    },
+    {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "isolation": "none"
     }
   ],
   "execution": {
@@ -63,7 +68,8 @@
       "path:/home/alex/repos/bureau/src/bureau",
       "path:/home/alex/repos/bureau/tests",
       "path:/home/alex/repos/bureau/docs/bureau-operator-intake-v1.md",
-      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T021.json"
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T021.json",
+      "repo:/home/alex/repos/grabowski"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",

@@ -1,0 +1,123 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der Pilot ist an genau ein ausdrücklich gewähltes Repository, dessen Standardbranch, erlaubte Manifest- und Lockfilepfade sowie einen kurzen Zeitraum gebunden; Scope-Ausweitung oder Übertragung an andere Agenten ist ausgeschlossen.",
+      "id": "one-repository-scope",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Major-Sprünge, neue direkte Abhängigkeiten, Workflow-, Installskript-, Berechtigungs-, Build-Toolchain- und Sicherheitskonfigurationsänderungen sind nicht pilotfähig.",
+      "id": "dependency-exclusions",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Jeder Kandidat bindet Ausgangs- und Ziel-Head, Paketquelle und Provenienz, vollständigen Diff, Lockfilekonsistenz, Tests, CI, bekannte Advisories, Kostenlimit und Revert-Pfad.",
+      "id": "exact-evidence",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Der Pilot berechnet nur eine hypothetische Autoritätsentscheidung und führt weder Merge noch Deployment aus; tatsächliche Entscheidungen bleiben beim bestehenden Captain- und Reviewvertrag.",
+      "id": "shadow-only",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Der modellierte Vertrag besitzt explizite Gültigkeit, Widerruf, Kill-Switch, maximale Zielzahl und verbotene Effekte; abgelaufene oder driftende Evidenz blockiert.",
+      "id": "revocation-and-expiry",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Gemessen werden vermiedene menschliche Entscheidungen, falsche Freigaben, unnötige Blockaden, Reviewrückläufer und spätere Regressionen; kleine Stichproben begründen keine Live-Promotion.",
+      "id": "measured-relief",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Eine delegierte Merge-Autorität wird nur durch einen neuen, exakten, revisionsgebundenen Nutzer- und Policyentscheid aktiviert; der Shadow-Pilot selbst kann sie weder erzeugen noch implizieren.",
+      "id": "separate-authority-decision",
+      "evidence_type": "object"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T118"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die Evaluation und priorisierte Umsetzung sinnvoller Reibungshebel beauftragt. T123 darf nur Shadow-Evidenz und Vertragsmechanik implementieren; Merge und Deployment bleiben unverändert Captain-gebunden.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den bestehenden Trusted-Owner- und Captain-Autoritätsvertrag an einem streng begrenzten, wirkungsfreien Dependency-Pilot auf messbare menschliche Entlastung und Sicherheitsrisiken prüfen. Erst nach ausreichender positiver Evidenz darf eine separate Aufgabe eine widerrufbare delegierte Merge-Autorität erwägen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T123",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "delegated_merge_authority",
+      "automatic_dependency_safety",
+      "live_governor_promotion",
+      "task_readiness_before_dependencies"
+    ],
+    "immutable_boundaries": [
+      "user_intent",
+      "authorization",
+      "secret_handling",
+      "resource_leases",
+      "recovery",
+      "kill_switch",
+      "review",
+      "merge",
+      "deployment",
+      "privileged_execution"
+    ],
+    "priority_basis": {
+      "rank": "P3/P4",
+      "reason": "Menschliche Entlastung ist plausibel, adressiert aber nicht den aktuellen Hauptengpass und besitzt höhere Supply-Chain- und Autoritätsrisiken."
+    },
+    "source": "Live-Reibungsevaluation und Nutzerauftrag vom 30. Juli 2026",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-0fdd160f98c6f4303223b632",
+      "event_id": 1695,
+      "event_created_at": "2026-07-30T08:56:55.100546Z",
+      "request_sha256": "c6481609f2452b97ed1b50aee20f062bad6dbbb31f217811893ecd3e2f67bfa1",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chatgpt:grabowski-friction-evaluation:2026-07-30:bounded-autonomy-pilot",
+        "observed_at": "2026-07-30T10:46:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 3
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bounded Autonomy in einem engen Dependency-Shadow-Pilot messen"
+}

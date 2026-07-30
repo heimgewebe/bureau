@@ -523,7 +523,6 @@
             "task_id",
             "resource_db",
             "resource_db_schema_version",
-            "resource_lease_contract_version",
             "resource_keys",
             "min_expires_at_unix",
             "lease_snapshots",

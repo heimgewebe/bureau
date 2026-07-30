@@ -2191,6 +2191,13 @@ def test_coordinated_claim_commit_binds_live_lease_and_terminal_release(
     assert claimed["run"]["run_id"] == intent["run_id"]
     assert claimed["envelope"]["claim_intent"]["intent_sha256"] == intent["intent_sha256"]
     assert claimed["envelope"]["lease_binding"]["owner_id"] == intent["lease_owner_id"]
+    assert claimed["envelope"]["lease_binding"]["resource_lease_contract_version"] == "1"
+    historical_envelope = json.loads(json.dumps(claimed["envelope"]))
+    historical_envelope["lease_binding"].pop("resource_lease_contract_version")
+    historical_envelope["lease_binding"]["lease_binding_sha256"] = "0" * 64
+    registry.schemas.validate(
+        "execution-envelope", historical_envelope, "historical-v1-envelope"
+    )
     active = coordinated_claim_status(store, intent["run_id"], resource_db=database)
     assert active["lease"]["status"] == "active-bound"
     terminal = fail_run(store, intent["run_id"], "test close")

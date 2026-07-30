@@ -2087,6 +2087,9 @@ def coordinated_lease_database(
     connection.execute("CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
     connection.execute("INSERT INTO metadata VALUES ('schema_version', '1')")
     connection.execute(
+        "INSERT INTO metadata VALUES ('resource_lease_contract_version', '1')"
+    )
+    connection.execute(
         """
         CREATE TABLE leases (
             resource_key TEXT PRIMARY KEY,

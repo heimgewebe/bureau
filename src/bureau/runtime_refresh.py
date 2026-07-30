@@ -30,7 +30,10 @@ DEFAULT_REQUIRED_CHECKS = ("validate (3.10)", "validate (3.12)")
 DEFAULT_SLO_SECONDS = 5400
 DEFAULT_INTENT_TTL_SECONDS = 900
 DEFAULT_MIN_LEASE_REMAINING_SECONDS = 600
-SUPPORTED_GRABOWSKI_RESOURCE_DB_SCHEMAS = frozenset({"1", "2", "3"})
+GRABOWSKI_RESOURCE_LEASE_CONTRACT_METADATA_KEY = (
+    "resource_lease_contract_version"
+)
+SUPPORTED_GRABOWSKI_RESOURCE_LEASE_CONTRACTS = frozenset({"1"})
 DEFAULT_GRABOWSKI_RESOURCE_DB = Path("~/.local/state/grabowski/resources.sqlite3").expanduser()
 MAX_JSON_BYTES = 256 * 1024
 
@@ -628,17 +631,104 @@ def validate_live_lease_binding(
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA query_only=ON")
         connection.execute("BEGIN")
-        schema = connection.execute(
-            "SELECT value FROM metadata WHERE key='schema_version'"
-        ).fetchone()
-        observed_schema = schema["value"] if schema is not None else None
-        if observed_schema not in SUPPORTED_GRABOWSKI_RESOURCE_DB_SCHEMAS:
+        metadata_rows = connection.execute(
+            "SELECT key, value FROM metadata "
+            "WHERE key IN ('schema_version', ?) ORDER BY key",
+            (GRABOWSKI_RESOURCE_LEASE_CONTRACT_METADATA_KEY,),
+        ).fetchall()
+        aggregate_rows = [
+            row for row in metadata_rows if row["key"] == "schema_version"
+        ]
+        contract_rows = [
+            row
+            for row in metadata_rows
+            if row["key"] == GRABOWSKI_RESOURCE_LEASE_CONTRACT_METADATA_KEY
+        ]
+        if len(aggregate_rows) != 1:
             raise RuntimeRefreshError(
-                "lease-database-schema-unsupported",
-                "Grabowski resource database schema is unsupported",
+                (
+                    "lease-database-schema-metadata-missing"
+                    if not aggregate_rows
+                    else "lease-database-schema-metadata-ambiguous"
+                ),
+                "Grabowski aggregate resource schema metadata is missing or ambiguous",
                 details={
-                    "observed": observed_schema,
-                    "supported": sorted(SUPPORTED_GRABOWSKI_RESOURCE_DB_SCHEMAS),
+                    "observed_rows": len(aggregate_rows),
+                    "recovery": (
+                        "Keep the resource store unchanged and restore one valid "
+                        "aggregate schema metadata row before retrying."
+                    ),
+                },
+            )
+        observed_schema = aggregate_rows[0]["value"]
+        if (
+            not isinstance(observed_schema, str)
+            or not observed_schema
+            or len(observed_schema.encode("utf-8")) > 32
+            or not observed_schema.isdecimal()
+        ):
+            raise RuntimeRefreshError(
+                "lease-database-schema-version-malformed",
+                "Grabowski aggregate resource schema version is malformed",
+                details={
+                    "recovery": (
+                        "Keep the resource store unchanged and restore valid aggregate "
+                        "schema metadata before retrying."
+                    ),
+                },
+            )
+        if len(contract_rows) != 1:
+            raise RuntimeRefreshError(
+                (
+                    "lease-contract-metadata-missing"
+                    if not contract_rows
+                    else "lease-contract-metadata-ambiguous"
+                ),
+                "Grabowski resource lease contract metadata is missing or ambiguous",
+                details={
+                    "metadata_key": GRABOWSKI_RESOURCE_LEASE_CONTRACT_METADATA_KEY,
+                    "observed_rows": len(contract_rows),
+                    "aggregate_schema": observed_schema,
+                    "recovery": (
+                        "Open the resource store once with a Grabowski runtime that "
+                        "publishes the supported lease contract, then retry with new "
+                        "exact leases."
+                    ),
+                },
+            )
+        observed_contract = contract_rows[0]["value"]
+        if (
+            not isinstance(observed_contract, str)
+            or not observed_contract
+            or len(observed_contract.encode("utf-8")) > 32
+            or not observed_contract.isdecimal()
+        ):
+            raise RuntimeRefreshError(
+                "lease-contract-version-malformed",
+                "Grabowski resource lease contract version is malformed",
+                details={
+                    "metadata_key": GRABOWSKI_RESOURCE_LEASE_CONTRACT_METADATA_KEY,
+                    "aggregate_schema": observed_schema,
+                    "recovery": (
+                        "Keep the resource store unchanged and restore verified "
+                        "contract metadata or deploy a compatible Grabowski runtime."
+                    ),
+                },
+            )
+        if observed_contract not in SUPPORTED_GRABOWSKI_RESOURCE_LEASE_CONTRACTS:
+            raise RuntimeRefreshError(
+                "lease-contract-version-unsupported",
+                "Grabowski resource lease contract version is unsupported",
+                details={
+                    "observed": observed_contract,
+                    "supported": sorted(
+                        SUPPORTED_GRABOWSKI_RESOURCE_LEASE_CONTRACTS
+                    ),
+                    "aggregate_schema": observed_schema,
+                    "recovery": (
+                        "Keep the resource store and runtime unchanged; deploy a "
+                        "Bureau runtime that explicitly supports this lease contract."
+                    ),
                 },
             )
         placeholders = ",".join("?" for _ in keys)
@@ -754,6 +844,7 @@ def validate_live_lease_binding(
         "task_id": task_id,
         "resource_db": str(path),
         "resource_db_schema_version": observed_schema,
+        "resource_lease_contract_version": observed_contract,
         "resource_keys": keys,
         "min_expires_at_unix": min(item["expires_at_unix"] for item in snapshots),
         "lease_snapshots": snapshots,

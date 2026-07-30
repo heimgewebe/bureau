@@ -1,0 +1,100 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Eine Open-PR-Reservierung wird für einen Claim nur dann als zulässige Merge-Adoption klassifiziert, wenn der aktuelle Task eine exklusive Claim-Reservation auf genau das betroffene Repository besitzt, sein action_class repository_mutation ist und ein versionierter Adoptionsvertrag Repository, PR-Nummer, Base-SHA, Head-SHA, Implementierungstask und eigenen Merge-Task exakt bindet.",
+      "id": "exact-adoption-contract"
+    },
+    {
+      "assertion": "Der gebundene Implementierungstask existiert, ist verified, ist Dependency des Merge-Tasks, und die offene PR ist gültig an genau diesen Implementierungstask gebunden; fehlende, mehrdeutige, terminal falsche oder driftende Bindungen blockieren unverändert.",
+      "id": "verified-predecessor-binding"
+    },
+    {
+      "assertion": "Nur die exakt gebundene PR-Reservierung wird für den Merge-Task nicht als Konflikt ausgegeben. Jede weitere offene PR, Scope-Überlappung, Beobachtungsstörung, Head-/Base-/Nummern- oder Repository-Drift bleibt fail-closed blockierend.",
+      "id": "single-reservation-exception"
+    },
+    {
+      "assertion": "frontier, explain-next, claim-intent und Claim-Commit verwenden dieselbe Adoptionsentscheidung; frischer Readback vor Commit erkennt jede Änderung des Open-PR-Zustands und verweigert den Effekt.",
+      "id": "projection-consistency"
+    },
+    {
+      "assertion": "Gezielte Claim-Guard-Regressionen decken erlaubte exakte Adoption sowie falschen Task, fehlende Exklusivität, unverifizierten Vorgänger, falsche PR-Nummer, Base-/Head-Drift, Zusatz-PR und Observation-Failure ab; die vollständige Bureau-Validierung besteht auf dem exakten PR-Head.",
+      "id": "regression-proof"
+    },
+    {
+      "assertion": "Die Änderung autorisiert weder automatisches Merge noch Rebase, Force-Push, Deployment oder Review-Umgehung und verändert keine allgemeine Open-PR-, Capability-, Approval-, Lease-, Queue- oder Registry-Regel.",
+      "id": "no-policy-bypass"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 31. Juli 2026 die dauerhafte Beseitigung der blockierten Frontier beauftragt. Zulässig sind ausschließlich die eng gebundene Open-PR-Adoptionslogik, Regressionstests und Vertragsdokumentation; allgemeine Konflikt- oder Sicherheitsgates dürfen nicht gelockert werden.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/v2.py",
+      "path:/home/alex/repos/bureau/tests/test_claim_guard.py",
+      "path:/home/alex/repos/bureau/docs/bureau-open-pr-adoption-v1.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Den Open-PR-Claim-Guard um einen engen, fail-closed Adoptionsvertrag erweitern: Ein separater exklusiver Merge-Task darf genau die eine offene Pull Request reservieren, die gültig an seinen verifizierten Implementierungstask gebunden ist und deren Repository, PR-Nummer, Base- und Head-SHA explizit im Taskvertrag stehen. Alle anderen Open-PR-, Scope-, Approval-, Dependency-, Review-, CI-, Lease- und Konfliktregeln bleiben unverändert.",
+  "id": "BUREAU-TRUTH-MODEL-V2-T022",
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "metadata": {
+    "does_not_establish": [
+      "automatische Merge-Autorität",
+      "Merge-Bereitschaft einer konkreten Pull Request",
+      "Erlaubnis zum Lockern allgemeiner Konfliktregeln",
+      "Runtime- oder Deployment-Korrektheit"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c8d4465bf2d52e5df9c4a1dd",
+      "event_id": 1797,
+      "event_created_at": "2026-07-30T23:12:20.696047Z",
+      "request_sha256": "e9e57b8310007c01fa00bbdcf6be3c927b877734e47199d33347e0c3bb6d22c3",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github-pull-request-review",
+        "locator": "github:heimgewebe/bureau#1239@e3b0c2e43bd6bfe07fad8db92bf50c72ac3bdf5d",
+        "observed_at": "2026-07-30T23:07:12Z",
+        "sha256": "374e51017adf680fb2743492b5f8a358fbb7a0515a1538ab3cf07f31ac06af2f"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski",
+    "github"
+  ],
+  "rollback": {
+    "strategy": "Die Adoptionsklassifikation und ihre Tests vollständig entfernen; der bisherige fail-closed Open-PR-Guard bleibt dann unverändert aktiv. Keine Registry-, Queue- oder Runtime-Migration ist erforderlich."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Offene Implementierungs-PRs revisionsgebunden in exklusive Merge-Tasks überführen"
+}

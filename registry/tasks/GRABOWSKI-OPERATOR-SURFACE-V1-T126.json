@@ -1,0 +1,133 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein automatisierter, revisionsgebundener Reproducer zeigt mit dem tatsächlichen Workflow-Authentisierungspfad, ob kanonischer @codex-review-Antrag, trusted Clean-Kommentar beziehungsweise Review und Reaktionen sichtbar sind; Nutzer-Token-Ergebnisse allein gelten nicht als Workflow-Beweis.",
+      "evidence_type": "object",
+      "id": "workflow-token-reproducer",
+      "verifier": "Workflow- oder API-Kontrasttest mit gebundenem Repo, PR, Head und Diff"
+    },
+    {
+      "assertion": "Nichtbeobachtbarkeit durch Berechtigungen, API-/GraphQL-Fehler, Trunkierung, Pagination, Eventual Consistency oder unvollständige Antwort wird von einer vollständig beobachteten echten Abwesenheit unterschieden und mit stabilen Fehlercodes ausgegeben.",
+      "evidence_type": "object",
+      "id": "visibility-failure-taxonomy",
+      "verifier": "Negativtests je Fehlerklasse"
+    },
+    {
+      "assertion": "Der Status pending wird nur veröffentlicht, wenn die vollständige erlaubte Beobachtung den aktuellen Antrag oder Abschluss tatsächlich noch nicht enthält; unvollständige Sichtbarkeit führt fail-closed zu einem präzisen blockierten Diagnosezustand und niemals zu einem sachlich falschen Pending.",
+      "evidence_type": "object",
+      "id": "no-false-pending",
+      "verifier": "Workflow-Status- und Evaluator-Tests"
+    },
+    {
+      "assertion": "Die minimal nötigen GitHub-Berechtigungen und API-Flächen werden durch Primärdokumentation plus Live- oder Fixture-Proof begründet; pauschale Berechtigungsausweitung, write-Rechte über statuses hinaus oder Zugriff auf den PR-Head sind ausgeschlossen.",
+      "evidence_type": "object",
+      "id": "least-privilege-proof",
+      "verifier": "Permission-Diff, dokumentierter Proof und Policy-Negativtests"
+    },
+    {
+      "assertion": "Kanonischer frühester Antrag, vertrauenswürdiger Actor, exakter Head- und Diff-Hash, begrenzte Seitenzahl, vollständige aktuelle Review-Threads und unresolved-Thread-Blockade bleiben unverändert fail-closed gebunden.",
+      "evidence_type": "object",
+      "id": "current-head-contract-preserved",
+      "verifier": "Bestehende Settlement- und Captain-Guard-Regressionstests"
+    },
+    {
+      "assertion": "Falls GitHub-Antworten zeitversetzt erscheinen, existiert nur ein begrenzter, beobachtbarer Retry- oder Refresh-Pfad mit festem Budget; er erzeugt weder unendliche Pending-Zustände noch doppelte Review-Anträge.",
+      "evidence_type": "object",
+      "id": "eventual-consistency-bounded",
+      "verifier": "Zeit- und Idempotenztests"
+    },
+    {
+      "assertion": "Ein Test-PR oder sicherer bestehender PR belegt, dass der Workflow mit seinem eigenen Token einen revisionsgebundenen Antrag und einen trusted Abschluss korrekt als settled/pass projiziert; CI, Dokumentation und vollständige relevante Tests sind grün.",
+      "evidence_type": "object",
+      "id": "live-workflow-readback",
+      "verifier": "GitHub-Actions-Run, Commit-Status-Readback und Testreceipt"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Reproduce and fix the Codex settlement workflow-token visibility failure without weakening the current-head, diff, actor, pagination, review-thread or Captain merge gates.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den GitHub-Actions-basierten Codex-Settlement-Workflow so reproduzierbar härten, dass er den kanonischen aktuellen Review-Antrag und die vertrauenswürdige Codex-Abschlussantwort mit seinem tatsächlichen Workflow-Token vollständig beobachtet oder einen präzisen Sichtbarkeitsfehler meldet. Ein unvollständiger Beobachtungshorizont darf nie als sachlich bestätigte Abwesenheit und damit als irreführendes Pending projiziert werden.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T126",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass issues:read allein die Ursache ist",
+      "dass ein Nutzer-Token den Workflow-Token repräsentiert",
+      "Review- oder Merge-Autorität",
+      "Erlaubnis zur Abschwächung des Codex- oder Captain-Gates",
+      "Task-Readiness vor Veröffentlichung"
+    ],
+    "live_evidence": {
+      "candidate_id": "candidate-26e2c93afd4e89341815db8d",
+      "connected_user_observation": {
+        "completion_comment_id": 5136265134,
+        "request_comment_id": 5136232961,
+        "status": "pass"
+      },
+      "diff_sha256": "5790d321bb9bdc947bc3d8f79d2129a7523c2a931a4b33ece0c81ab9b2938a94",
+      "event_id": 1799,
+      "head_sha": "d33b85cd72bf352e9b7eb32ddb6f3166b03d7b59",
+      "pr": 524,
+      "workflow_observation": {
+        "completion": null,
+        "request": null,
+        "status": "pending"
+      },
+      "workflow_run": 30582186515
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-26e2c93afd4e89341815db8d",
+      "event_id": 1799,
+      "event_created_at": "2026-07-30T23:13:42.323009Z",
+      "request_sha256": "ef02542559781e25cc1ce6b96b6f137a6c7d3c89a33afd7b8bfe2158b38c7407",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chatgpt:grabowski-current-work-deploy-closeout:2026-07-31",
+        "observed_at": "2026-07-30T23:13:42.308354Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "source": "Live-Befund während Abschluss und Deployment von Grabowski PR #524 am 31. Juli 2026"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 22
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "github"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Codex-Settlement gegen Workflow-Token-Sichtbarkeitslücken härten"
+}

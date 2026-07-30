@@ -1,0 +1,68 @@
+{
+  "acceptance": {
+    "capability-map": {
+      "evidence": "docs/operator-ecosystem-capabilities.v1.json lists 9 capabilities with consumers/alternatives",
+      "status": "passed"
+    },
+    "migration-proof": {
+      "evidence": "PR #648/#649 docs + validator scripts preserve CI coverage; retirement_reversed for templates; metrics narrowed to contract compatibility",
+      "status": "passed"
+    },
+    "no-operator-duplication": {
+      "evidence": "authority_boundary.does_not_own includes bureau_task_coordination, grabowski_deployment_or_process_authority, generic_cross_repository_host_authority",
+      "status": "passed"
+    },
+    "shared-check-threshold": {
+      "evidence": "retained_multi_consumer for guard/smoke routers; retained_fleet_invariance for fleet checks; preserved_unproven for unproven templates",
+      "status": "passed"
+    }
+  },
+  "closed_at": "2026-07-30T04:31:36Z",
+  "closed_by": "operator:grok-bureau-20260730",
+  "does_not_establish": [
+    "merge_permission",
+    "runtime_correctness",
+    "cleanup_permission",
+    "automatic_shutdown_permission"
+  ],
+  "implementation": {
+    "current_main_head": "4d91933ce74b78b4f8db9ea2358e86d195289e13",
+    "followup_pr": {
+      "base_oid": "c1b336ee0a82a3b1fd0c5f09158dcdb5f3c1d9ef",
+      "head_oid": "96608b1be2738711621f0c91ac095d5711e9b958",
+      "merge_commit": "7c66e3fd8c2a505df21bc53770bdeea14ab9f94f",
+      "merged_at": "2026-07-28T01:29:22Z",
+      "number": 649,
+      "title": "Bind WGX capability evidence to Git object proofs",
+      "url": "https://github.com/heimgewebe/wgx/pull/649"
+    },
+    "primary_pr": {
+      "base_oid": "5c14e53674193446b8832eca6e312bcf58190248",
+      "head_oid": "943851e6038d816256c28c36a4b247d2dc0da3f2",
+      "merge_commit": "c1b336ee0a82a3b1fd0c5f09158dcdb5f3c1d9ef",
+      "merged_at": "2026-07-27T20:57:32Z",
+      "number": 648,
+      "title": "Narrow WGX to shared verification checks",
+      "url": "https://github.com/heimgewebe/wgx/pull/648"
+    },
+    "repository": "heimgewebe/wgx"
+  },
+  "schema_version": 1,
+  "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T009",
+  "validation": {
+    "pytest_operator_capabilities": {
+      "returncode": 0,
+      "stdout_tail": [
+        "................................................      [100%]",
+        "48 passed, 19 subtests passed in 1.10s"
+      ]
+    },
+    "validate_operator_capabilities": {
+      "returncode": 0,
+      "stderr_tail": [],
+      "stdout_tail": [
+        "PASS: docs/operator-ecosystem-capabilities.v1.json capability boundaries and consumer evidence are valid"
+      ]
+    }
+  }
+}

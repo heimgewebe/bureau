@@ -2,31 +2,38 @@
   "acceptance": [
     {
       "assertion": "Der Pilot ist an genau ein ausdrücklich gewähltes Repository, dessen Standardbranch, erlaubte Manifest- und Lockfilepfade sowie einen kurzen Zeitraum gebunden; Scope-Ausweitung oder Übertragung an andere Agenten ist ausgeschlossen.",
-      "id": "one-repository-scope"
+      "id": "one-repository-scope",
+      "evidence_type": "object"
     },
     {
       "assertion": "Major-Sprünge, neue direkte Abhängigkeiten, Workflow-, Installskript-, Berechtigungs-, Build-Toolchain- und Sicherheitskonfigurationsänderungen sind nicht pilotfähig.",
-      "id": "dependency-exclusions"
+      "id": "dependency-exclusions",
+      "evidence_type": "object"
     },
     {
       "assertion": "Jeder Kandidat bindet Ausgangs- und Ziel-Head, Paketquelle und Provenienz, vollständigen Diff, Lockfilekonsistenz, Tests, CI, bekannte Advisories, Kostenlimit und Revert-Pfad.",
-      "id": "exact-evidence"
+      "id": "exact-evidence",
+      "evidence_type": "object"
     },
     {
       "assertion": "Der Pilot berechnet nur eine hypothetische Autoritätsentscheidung und führt weder Merge noch Deployment aus; tatsächliche Entscheidungen bleiben beim bestehenden Captain- und Reviewvertrag.",
-      "id": "shadow-only"
+      "id": "shadow-only",
+      "evidence_type": "object"
     },
     {
       "assertion": "Der modellierte Vertrag besitzt explizite Gültigkeit, Widerruf, Kill-Switch, maximale Zielzahl und verbotene Effekte; abgelaufene oder driftende Evidenz blockiert.",
-      "id": "revocation-and-expiry"
+      "id": "revocation-and-expiry",
+      "evidence_type": "object"
     },
     {
       "assertion": "Gemessen werden vermiedene menschliche Entscheidungen, falsche Freigaben, unnötige Blockaden, Reviewrückläufer und spätere Regressionen; kleine Stichproben begründen keine Live-Promotion.",
-      "id": "measured-relief"
+      "id": "measured-relief",
+      "evidence_type": "object"
     },
     {
       "assertion": "Eine delegierte Merge-Autorität wird nur durch einen neuen, exakten, revisionsgebundenen Nutzer- und Policyentscheid aktiviert; der Shadow-Pilot selbst kann sie weder erzeugen noch implizieren.",
-      "id": "separate-authority-decision"
+      "id": "separate-authority-decision",
+      "evidence_type": "object"
     }
   ],
   "claims": [

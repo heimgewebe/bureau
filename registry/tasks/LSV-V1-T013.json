@@ -109,7 +109,8 @@
   "required_capabilities": [
     "repository",
     "shell",
-    "grabowski"
+    "grabowski",
+    "browser"
   ],
   "rollback": {
     "strategy": "Producer-, Test-, Blueprint- und gegebenenfalls eng begrenzte Darstellungstextänderungen zurücksetzen; der bestehende fünfteilige Snapshot-Vertrag und die Observer-Grenze bleiben erhalten."

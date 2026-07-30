@@ -36,7 +36,7 @@
       "id": "generated-release-parity"
     },
     {
-      "assertion": "The exact implementation head passes focused JavaScript and Python i18n tests, full repository validation, responsive browser smoke, diff-bound self-review and all required GitHub checks; the complete UTF-8 plaintext diff is delivered before merge, followed by exact-SHA Pages and production readback.",
+      "assertion": "The exact implementation heads pass focused JavaScript and Python i18n tests, full repository validation, responsive browser smoke, diff-bound self-review and all required GitHub checks; the complete diff is internally reviewed while external diff artifacts are optional under the later user-approved Commonworld contract, followed by exact-SHA Pages and production readback.",
       "evidence_type": "object",
       "id": "exact-head-closeout"
     }
@@ -68,7 +68,6 @@
   "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T033",
   "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
   "metadata": {
-    "blocked_by_active_scope": "COMMONWORLD-PUBLIC-GLOBE-V1-T032 owns the overlapping i18n, generated page, assets, browser smoke and publication surfaces until terminal release.",
     "does_not_establish": [
       "permission to modify the active T032 worktree or lease",
       "permission to use geolocation for UI-language inference",
@@ -96,7 +95,226 @@
     "source_event_id": 1651,
     "source_main": "5342352142c98192aeb71ee0079ad864ce720367",
     "source_repository": "heimgewebe/commonworld",
-    "source_sha256": "742161987db48914802c4c4e9b1df4efe7557ce2d8c776ac75f28c2ceeb5b07c"
+    "source_sha256": "742161987db48914802c4c4e9b1df4efe7557ce2d8c776ac75f28c2ceeb5b07c",
+    "verified_at": "2026-07-30T12:14:34Z",
+    "outcome": "Commonworld PR #164 implemented the private persistent locale resolver and generated English/German surfaces; PR #165 hardened URL-state preservation and locale-state separation. Both exact PR heads passed required validation and CodeQL, both were merged, and current main 16b4abf471dff7c67205add7a6587e8a824c5661 contains the final implementation merge bff413c7b390dfe0657f13238ca0959231c06ade. Fresh isolated validation on current main passed 138 JavaScript and 567 Python tests plus the complete public browser smoke including locale preference and iPad landscape. No additional Commonworld code change or no-op PR is required.",
+    "acceptance_contract_revision": {
+      "source": "github-pr:heimgewebe/commonworld#166",
+      "merge_commit": "16b4abf471dff7c67205add7a6587e8a824c5661",
+      "effect": "The later user-approved repository contract removed mandatory external pre-merge diff artifacts while retaining complete internal diff review and exact-head validation.",
+      "superseded_clause": "mandatory external UTF-8 plaintext diff delivery before merge"
+    },
+    "validated_acceptance": {
+      "priority-contract": {
+        "result": "PASS",
+        "summary": "The resolver gives explicit ui_lang and explicit locale surfaces authority, uses stored choice only on neutral entry, resolves Automatic from ordered navigator.languages and falls back to English.",
+        "evidence_refs": [
+          "github-pr:heimgewebe/commonworld#164",
+          "github-pr:heimgewebe/commonworld#165",
+          "git:heimgewebe/commonworld@bff413c7b390dfe0657f13238ca0959231c06ade"
+        ]
+      },
+      "accessible-automatic-mode": {
+        "result": "PASS",
+        "summary": "English and German controls expose Automatic – device language, reflect the effective language through an aria-live status and retain keyboard-native link behavior without requesting geolocation.",
+        "evidence_refs": [
+          "github-pr:heimgewebe/commonworld#164",
+          "grabowski-job:4f087931d304"
+        ]
+      },
+      "safe-local-persistence": {
+        "result": "PASS",
+        "summary": "Only commonworld.ui-locale is stored locally; blocked, absent and corrupt storage are caught and covered by regression tests without rendering failure or redirect loops.",
+        "evidence_refs": [
+          "git:heimgewebe/commonworld@bff413c7b390dfe0657f13238ca0959231c06ade:assets/commonworld-locale.mjs",
+          "github-actions:heimgewebe/commonworld:validate:30485110354"
+        ]
+      },
+      "url-state-preserved": {
+        "result": "PASS",
+        "summary": "Locale navigation copies the full query and fragment, overwrites only ui_lang, respects an explicitly shared locale and avoids same-URL replacement loops.",
+        "evidence_refs": [
+          "github-pr:heimgewebe/commonworld#165",
+          "grabowski-job:4f087931d304:locale-preference"
+        ]
+      },
+      "language-axes-separated": {
+        "result": "PASS",
+        "summary": "The public browser regression proves that switching interface language preserves the independent catalogue language filter and the remaining discovery URL state.",
+        "evidence_refs": [
+          "github-pr:heimgewebe/commonworld#165",
+          "grabowski-job:4f087931d304:locale-preference"
+        ]
+      },
+      "locale-tag-robustness": {
+        "result": "PASS",
+        "summary": "Case-insensitive BCP 47 primary-tag matching covers de-DE, en-GB, script/region forms, ordered mixed preferences and unsupported-language fallback.",
+        "evidence_refs": [
+          "git:heimgewebe/commonworld@bff413c7b390dfe0657f13238ca0959231c06ade:tests/js/locale-preference.test.mjs",
+          "grabowski-job:e299c5b8a8a2"
+        ]
+      },
+      "generated-release-parity": {
+        "result": "PASS",
+        "summary": "Canonical generators, source assets, English/German index, method and proposal pages and immutable release f08b1db195874a2a130c share the version-bound locale contract.",
+        "evidence_refs": [
+          "github-pr:heimgewebe/commonworld#165",
+          "github-actions:heimgewebe/commonworld:validate:30514409856",
+          "github-actions:heimgewebe/commonworld:pages:30514409311"
+        ]
+      },
+      "exact-head-closeout": {
+        "result": "PASS",
+        "summary": "PR heads 6968cf59d5a44b15f59bff4a2d11c299018bd6e8 and 52a4516ae6d7b4cc3038e52de41650ba92daeba5 passed required validation and CodeQL; combined implementation range ca43b6eaec626d3d8b10fcbbc07fcccd6dea07a7..bff413c7b390dfe0657f13238ca0959231c06ade passed diff check and self-review. Current main 16b4abf471dff7c67205add7a6587e8a824c5661 freshly passed make validate and browser smoke, and its Validate, Pages, CodeQL and Production-Readback runs are successful. External diff publication is optional under PR #166.",
+        "evidence_refs": [
+          "github-actions:heimgewebe/commonworld:validate:30474916293",
+          "github-actions:heimgewebe/commonworld:validate:30485110354",
+          "grabowski-job:e299c5b8a8a2",
+          "grabowski-job:4f087931d304",
+          "github-actions:heimgewebe/commonworld:production-readback:30514409832"
+        ]
+      }
+    },
+    "verification": {
+      "source": "github_prs_and_fresh_exact_main_validation",
+      "source_refs": [
+        "github-pr:heimgewebe/commonworld#164",
+        "github-pr:heimgewebe/commonworld#165"
+      ],
+      "repository": "heimgewebe/commonworld",
+      "implementation_base": "ca43b6eaec626d3d8b10fcbbc07fcccd6dea07a7",
+      "pull_requests": [
+        {
+          "number": 164,
+          "base_commit": "ca43b6eaec626d3d8b10fcbbc07fcccd6dea07a7",
+          "reviewed_head": "6968cf59d5a44b15f59bff4a2d11c299018bd6e8",
+          "merge_commit": "8b216b24f0253f465949bf65c9e43a08e8ac4ac7",
+          "merged_at": "2026-07-29T19:24:45Z"
+        },
+        {
+          "number": 165,
+          "base_commit": "8b216b24f0253f465949bf65c9e43a08e8ac4ac7",
+          "reviewed_head": "52a4516ae6d7b4cc3038e52de41650ba92daeba5",
+          "merge_commit": "bff413c7b390dfe0657f13238ca0959231c06ade",
+          "merged_at": "2026-07-29T19:52:22Z"
+        }
+      ],
+      "github_required_checks": {
+        "pr164_validate": {
+          "run_id": 30474916293,
+          "result": "success"
+        },
+        "pr164_codeql": {
+          "run_id": 30474913190,
+          "result": "success"
+        },
+        "pr165_validate": {
+          "run_id": 30485110354,
+          "result": "success"
+        },
+        "pr165_codeql": {
+          "run_id": 30485108350,
+          "result": "success"
+        }
+      },
+      "review": {
+        "range_base": "ca43b6eaec626d3d8b10fcbbc07fcccd6dea07a7",
+        "range_head": "bff413c7b390dfe0657f13238ca0959231c06ade",
+        "git_diff_check": "PASS",
+        "self_review": "PASS after direct inspection of resolver, canonical generators, generated pages, release assets and regression tests; no remaining material finding; independence not claimed"
+      },
+      "local_validation": {
+        "observed_head": "16b4abf471dff7c67205add7a6587e8a824c5661",
+        "make_validate": "PASS; 138 JavaScript and 567 Python tests",
+        "public_browser_smoke": "PASS; locale preference, explicit URL authority, discovery-state preservation, iPad portrait and iPad landscape included",
+        "git_status": "clean",
+        "jobs": {
+          "validate": "grabowski-job-e299c5b8a8a2",
+          "browser_smoke": "grabowski-job-4f087931d304"
+        }
+      },
+      "postmerge": {
+        "observed_main": "16b4abf471dff7c67205add7a6587e8a824c5661",
+        "implementation_merge_is_ancestor": true,
+        "validate_run": {
+          "id": 30514409856,
+          "result": "success"
+        },
+        "production_readback_run": {
+          "id": 30514409832,
+          "result": "success"
+        },
+        "pages_deployment_run": {
+          "id": 30514409311,
+          "result": "success"
+        },
+        "codeql_run": {
+          "id": 30514409716,
+          "result": "success"
+        }
+      },
+      "task_source_sha256": "04598241a5ec9b3be230010690e95d59bcd966fbf139e2a8cd1909172a965b09",
+      "task_sha256": "29b17a2b5e3c456bc33bda82ded3edf1516d8654c60a622eca5ca7e3c037bd78",
+      "plan_sha256": "bd3f5c95e4117f3935f893ce45bfcfc7e52e54e3a761181e7e383f24b44400b4"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T033",
+          "source_ref": "heimgewebe/commonworld#164",
+          "number": 164,
+          "base_sha": "ca43b6eaec626d3d8b10fcbbc07fcccd6dea07a7",
+          "head_sha": "6968cf59d5a44b15f59bff4a2d11c299018bd6e8",
+          "merge_commit_sha": "8b216b24f0253f465949bf65c9e43a08e8ac4ac7"
+        },
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T033",
+          "source_ref": "heimgewebe/commonworld#165",
+          "number": 165,
+          "base_sha": "8b216b24f0253f465949bf65c9e43a08e8ac4ac7",
+          "head_sha": "52a4516ae6d7b4cc3038e52de41650ba92daeba5",
+          "merge_commit_sha": "bff413c7b390dfe0657f13238ca0959231c06ade"
+        },
+        {
+          "kind": "test_run",
+          "authority": "github_actions",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T033",
+          "source_ref": "github-actions:heimgewebe/commonworld:validate:30485110354",
+          "commit_sha": "52a4516ae6d7b4cc3038e52de41650ba92daeba5",
+          "result": "success"
+        },
+        {
+          "kind": "test_run",
+          "authority": "grabowski",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T033",
+          "source_ref": "grabowski-job:e299c5b8a8a2",
+          "commit_sha": "16b4abf471dff7c67205add7a6587e8a824c5661",
+          "result": "success"
+        },
+        {
+          "kind": "deployment",
+          "authority": "github_actions",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T033",
+          "source_ref": "github-actions:heimgewebe/commonworld:pages:30514409311",
+          "commit_sha": "16b4abf471dff7c67205add7a6587e8a824c5661",
+          "result": "success"
+        },
+        {
+          "kind": "production_readback",
+          "authority": "github_actions",
+          "task_id": "COMMONWORLD-PUBLIC-GLOBE-V1-T033",
+          "source_ref": "github-actions:heimgewebe/commonworld:production-readback:30514409832",
+          "commit_sha": "16b4abf471dff7c67205add7a6587e8a824c5661",
+          "result": "success"
+        }
+      ]
+    }
   },
   "priority": {
     "lane": "now",
@@ -114,6 +332,6 @@
     "strategy": "Revert the locale resolver, persistence hook, generated language controls, generated pages, release artifacts and their tests together; regenerate content-version bindings and verify that the previous static English/German links work without redirect or storage side effects."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Choose UI language from explicit preference and browser locale"
 }

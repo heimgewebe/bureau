@@ -1,13 +1,13 @@
 {
   "acceptance": [
     {
-      "assertion": "Jetzt enthält den globalen Spitzenkandidaten und zusätzlich höchstens einen aktiven oder claimbaren Kandidaten je deduplizierter Ausführungsdomäne; jeder Eintrag kennzeichnet global zuerst, bereits aktiv oder parallel claimbar.",
+      "assertion": "Jetzt enthält den globalen Spitzenkandidaten und zusätzlich höchstens einen aktiven oder aus der kanonischen Statusprojektion abgeleiteten advisory Kandidaten je deduplizierter Ausführungsdomäne; jeder Eintrag kennzeichnet global zuerst, bereits aktiv oder parallel prüfbar, wobei nicht aktive Kandidaten ausdrücklich keine aktuelle Claimfähigkeit behaupten.",
       "evidence_type": "object",
       "id": "global-and-parallel-now",
       "verifier": "snapshot-producer tests and exact output review"
     },
     {
-      "assertion": "Die Domänenauswahl wird aus Bureaus kanonischer status-projection und repository_balls abgeleitet; Leitstand führt keine eigene Repository-, Ressourcen-, Prioritäts- oder Claim-Wahrheit ein.",
+      "assertion": "Die Domänenauswahl wird aus Bureaus kanonischer status-projection und repository_balls abgeleitet; Leitstand führt keine eigene Repository-, Ressourcen-, Prioritäts- oder Claim-Wahrheit ein und kennzeichnet nicht aktive Karten als advisory bis ein claim-aware Bureau-Pfad ihre Ausführbarkeit bestätigt.",
       "evidence_type": "boolean",
       "id": "canonical-domain-source",
       "verifier": "producer diff and authority-boundary review"
@@ -19,13 +19,13 @@
       "verifier": "fixture tests for mixed now/next/later actions"
     },
     {
-      "assertion": "Der parallele Korridor ist auf höchstens sechs Karten begrenzt, dedupliziert Task-IDs sowie Ausführungsdomänen deterministisch und bevorzugt aktive Runs vor claimbaren Kandidaten derselben Domäne.",
+      "assertion": "Der parallele Korridor ist auf höchstens sechs Karten begrenzt, dedupliziert Task-IDs sowie Ausführungsdomänen deterministisch und bevorzugt aktive Runs vor advisory Kandidaten derselben Domäne; Reservationen, Initiative-Limits, Worker-Capabilities und Execution-Policy bleiben außerhalb der Leitstand-Projektion und werden nicht als erfüllt dargestellt.",
       "evidence_type": "object",
       "id": "bounded-and-deduplicated",
       "verifier": "deterministic unit tests"
     },
     {
-      "assertion": "Request-Pfad und Controller bleiben snapshot-only; mobile und Desktop-Browserregression belegen lesbare, überlauffreie Darstellung mehrerer Jetzt-Karten.",
+      "assertion": "Request-Pfad und Controller bleiben snapshot-only; mobile und Desktop-Browserregression belegen lesbare, überlauffreie Darstellung mehrerer Jetzt-Karten einschließlich der sichtbaren advisory Kennzeichnung nicht aktiver Kandidaten.",
       "evidence_type": "object",
       "id": "observer-and-browser-regression",
       "verifier": "controller tests and build-bound browser regression"
@@ -65,20 +65,21 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/leitstand"
   },
-  "goal": "Die read-only Leitstand-Entscheidungsachse so erweitern, dass Jetzt neben dem globalen Spitzenkandidaten höchstens einen aktiven oder claimbaren Kandidaten je konfliktfreier Ausführungsdomäne zeigt und Danach keine weiteren kanonischen Now-Aufgaben irreführend als spätere Arbeit darstellt. Die Projektion verwendet ausschließlich Bureaus bestehende status-projection einschließlich repository_balls und bewahrt die Observer-, Queue-, Prioritäts-, Claim- und Dispatch-Grenzen.",
+  "goal": "Die read-only Leitstand-Entscheidungsachse so erweitern, dass Jetzt neben dem globalen Spitzenkandidaten höchstens einen aktiven oder advisory Kandidaten je konfliktfreier Ausführungsdomäne zeigt und Danach keine weiteren kanonischen Now-Aufgaben irreführend als spätere Arbeit darstellt. Nicht aktive Karten werden nur als parallel zu prüfende Kandidaten dargestellt; aktuelle Claimfähigkeit wird erst durch Bureaus claim-aware Dispatcher- und Lease-Prüfung etabliert. Die Projektion verwendet ausschließlich Bureaus bestehende status-projection einschließlich repository_balls und bewahrt die Observer-, Queue-, Prioritäts-, Claim- und Dispatch-Grenzen.",
   "id": "LSV-V1-T013",
   "initiative": "LEITSTAND-VISUAL-LAYER-V1",
   "metadata": {
-    "alternative_axis": "Ein starrer Pflichtplatz für jedes Kernrepo würde schwache, blockierte oder nur geplante Aufgaben künstlich hochstufen. Deshalb wird ein globaler Spitzenkandidat mit einem begrenzten konfliktfreien parallelen Korridor projiziert und leere Domänen werden nicht aufgefüllt.",
+    "alternative_axis": "Ein starrer Pflichtplatz für jedes Kernrepo würde schwache, blockierte oder nur geplante Aufgaben künstlich hochstufen. Deshalb wird ein globaler Spitzenkandidat mit einem begrenzten advisory Parallelkorridor projiziert; leere Domänen werden nicht aufgefüllt und tatsächliche Claimfähigkeit bleibt der späteren Bureau-Prüfung vorbehalten.",
     "does_not_establish": [
       "new_queue_truth",
       "new_priority_authority",
+      "current_claimability",
       "claim_or_dispatch_authority",
       "automatic_parallel_execution",
       "repository_fairness_guarantee",
       "permission_to_mutate_bureau_or_grabowski"
     ],
-    "source_observation": "Bureaus aktuelle kanonische Queue enthält sechs Now-Tasks über Audio, Bureau, Grabowski und RepoGround; status-projection liefert acht nächste Aktionen und repository_balls. Leitstands Producer reduziert diese Wahrheit derzeit hart auf ranked_actions[0] unter Jetzt und verschiebt ranked_actions[1:6] unabhängig von queue_lane nach Danach.",
+    "source_observation": "Bureaus aktuelle kanonische Queue enthält sechs Now-Tasks über Audio, Bureau, Grabowski und RepoGround; status-projection liefert acht nächste Aktionen und repository_balls. Leitstands Producer reduziert diese Wahrheit derzeit hart auf ranked_actions[0] unter Jetzt und verschiebt ranked_actions[1:6] unabhängig von queue_lane nach Danach. Die Projektion enthält jedoch keine vollständige Dispatcher.reasons()- oder Lease-Wahrheit und kann deshalb für nicht aktive Aufgaben nur advisory Kandidatur, nicht aktuelle Claimfähigkeit, darstellen.",
     "operator_intake": {
       "schema_version": 1,
       "candidate_id": "candidate-ffe228b05cf32d682b1d680e",
@@ -117,5 +118,5 @@
   },
   "schema_version": 1,
   "state": "ready",
-  "title": "Parallelen Jetzt-Korridor in der Entscheidungsachse projizieren"
+  "title": "Parallelen advisory Jetzt-Korridor in der Entscheidungsachse projizieren"
 }

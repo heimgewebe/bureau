@@ -231,6 +231,10 @@ def _lease_db(
         "reclaimed_from_owner TEXT)"
     )
     connection.execute("INSERT INTO metadata(key, value) VALUES('schema_version', '2')")
+    connection.execute(
+        "INSERT INTO metadata(key, value) "
+        "VALUES('resource_lease_contract_version', '1')"
+    )
     lease_metadata: dict[str, object] = {
         "task_id": "BUR-TEST-001-T001",
         "operation": "registry-publication",

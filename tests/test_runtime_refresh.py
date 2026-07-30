@@ -127,6 +127,7 @@ def lease_for(
     intent: dict[str, Any],
     *,
     schema_version: str = "1",
+    lease_contract_version: str | None = "1",
     owner_id: str = "chatgpt-t016",
     expires_at: datetime | None = None,
     omit: set[str] | None = None,
@@ -141,6 +142,12 @@ def lease_for(
         "INSERT INTO metadata(key, value) VALUES('schema_version', ?)",
         (schema_version,),
     )
+    if lease_contract_version is not None:
+        connection.execute(
+            "INSERT INTO metadata(key, value) "
+            "VALUES('resource_lease_contract_version', ?)",
+            (lease_contract_version,),
+        )
     connection.execute(
         """
         CREATE TABLE leases (
@@ -435,17 +442,27 @@ def test_lease_binding_verifies_metadata_digest_and_required_binding(tmp_path: P
     }
 
 
-def test_lease_binding_accepts_supported_schemas_and_rejects_unknown_schema(
+def test_lease_binding_uses_lease_contract_not_aggregate_schema(
     tmp_path: Path,
 ) -> None:
     _, _, intent, _ = prepare_candidate_intent(tmp_path)
 
-    for schema_version in ("1", "2", "3"):
+    for schema_version in ("1", "2", "3", "4", "99"):
         binding, resource_db = lease_for(
             tmp_path / f"schema-{schema_version}",
             intent,
             schema_version=schema_version,
         )
+        if schema_version == "4":
+            with sqlite3.connect(resource_db) as connection:
+                connection.execute(
+                    "CREATE TABLE unrelated_additive_state("
+                    "key TEXT PRIMARY KEY, value TEXT NOT NULL)"
+                )
+                connection.execute(
+                    "INSERT INTO unrelated_additive_state VALUES('proof', 'preserved')"
+                )
+                connection.commit()
         observed = refresh.validate_live_lease_binding(
             intent,
             binding,
@@ -453,20 +470,76 @@ def test_lease_binding_accepts_supported_schemas_and_rejects_unknown_schema(
             now=NOW,
         )
         assert observed["resource_db_schema_version"] == schema_version
+        assert observed["resource_lease_contract_version"] == "1"
 
-    binding, schema_4_db = lease_for(tmp_path / "schema-4", intent, schema_version="4")
-    with pytest.raises(refresh.RuntimeRefreshError) as unsupported:
+
+def test_lease_binding_fails_closed_on_missing_future_or_malformed_contract(
+    tmp_path: Path,
+) -> None:
+    _, _, intent, _ = prepare_candidate_intent(tmp_path)
+
+    binding, missing_db = lease_for(
+        tmp_path / "contract-missing",
+        intent,
+        schema_version="4",
+        lease_contract_version=None,
+    )
+    with pytest.raises(refresh.RuntimeRefreshError) as missing:
         refresh.validate_live_lease_binding(
-            intent,
-            binding,
-            resource_db=schema_4_db,
-            now=NOW,
+            intent, binding, resource_db=missing_db, now=NOW
         )
-    assert unsupported.value.code == "lease-database-schema-unsupported"
-    assert unsupported.value.details == {
-        "observed": "4",
-        "supported": ["1", "2", "3"],
-    }
+    assert missing.value.code == "lease-contract-metadata-missing"
+    assert missing.value.details["aggregate_schema"] == "4"
+    assert missing.value.details["observed_rows"] == 0
+
+    binding, future_db = lease_for(
+        tmp_path / "contract-future",
+        intent,
+        schema_version="4",
+        lease_contract_version="2",
+    )
+    with pytest.raises(refresh.RuntimeRefreshError) as future:
+        refresh.validate_live_lease_binding(
+            intent, binding, resource_db=future_db, now=NOW
+        )
+    assert future.value.code == "lease-contract-version-unsupported"
+    assert future.value.details["observed"] == "2"
+    assert future.value.details["supported"] == ["1"]
+    assert future.value.details["aggregate_schema"] == "4"
+
+    binding, malformed_db = lease_for(
+        tmp_path / "contract-malformed",
+        intent,
+        lease_contract_version="not-a-version",
+    )
+    with pytest.raises(refresh.RuntimeRefreshError) as malformed:
+        refresh.validate_live_lease_binding(
+            intent, binding, resource_db=malformed_db, now=NOW
+        )
+    assert malformed.value.code == "lease-contract-version-malformed"
+
+
+def test_lease_contract_is_validated_before_lease_rows_are_read(tmp_path: Path) -> None:
+    _, _, intent, _ = prepare_candidate_intent(tmp_path)
+    database = tmp_path / "metadata-only/resources.sqlite3"
+    database.parent.mkdir(parents=True)
+    with sqlite3.connect(database) as connection:
+        connection.execute(
+            "CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)"
+        )
+        connection.execute(
+            "INSERT INTO metadata VALUES('schema_version', '4')"
+        )
+        connection.commit()
+    database.chmod(0o600)
+    binding = {"owner_id": "chatgpt-t016", "task_id": "grabowski-task-t016"}
+
+    with pytest.raises(refresh.RuntimeRefreshError) as missing:
+        refresh.validate_live_lease_binding(
+            intent, binding, resource_db=database, now=NOW
+        )
+
+    assert missing.value.code == "lease-contract-metadata-missing"
 
 
 def git(cwd: Path, *arguments: str) -> str:

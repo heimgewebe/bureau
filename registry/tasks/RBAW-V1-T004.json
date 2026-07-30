@@ -3,7 +3,7 @@
   "id": "RBAW-V1-T004",
   "initiative": "REPOBRIEF-AGENT-WORKBENCH-V1",
   "title": "Prototype external Patch Evaluation Sidecar harness",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 192
@@ -83,6 +83,85 @@
       "merge_readiness",
       "security_correctness"
     ],
+    "outcome": "RepoGround PR #1094 implemented the external Patch Evaluation Sidecar prototype; PRs #1097, #1101 and #1123 subsequently hardened integrity, host readback, the systemd cgroup runner and the loaded-host process budget. Current RepoGround main was revalidated instead of creating a duplicate implementation.",
+    "verification": {
+      "verified_at": "2026-07-30T19:50:00+02:00",
+      "reviewer": "chatgpt-repoground-self-review",
+      "repoground_repository": "heimgewebe/repoground",
+      "repoground_main_commit": "a1846da73901f1da5a17b6bed51be74de1e1869a",
+      "implementation_prs": [
+        {
+          "pr": "heimgewebe/repoground#1094",
+          "merge_commit": "2c7f75176038891978b0cc50c92e6b403510f4d2",
+          "role": "external sidecar prototype"
+        },
+        {
+          "pr": "heimgewebe/repoground#1097",
+          "merge_commit": "24eee84dd845fcf5f3a4a82c9e42e64428e76d6d",
+          "role": "integrity and host Git readback hardening"
+        },
+        {
+          "pr": "heimgewebe/repoground#1101",
+          "merge_commit": "108c8e4af0278c1c7e86712965cff22ba802e50f",
+          "role": "systemd cgroup production runner and receipt contract"
+        },
+        {
+          "pr": "heimgewebe/repoground#1123",
+          "merge_commit": "b7a807dbe22cff864b5407c8b4ba42f6ae97f1e2",
+          "role": "loaded-host task and thread process-budget hardening"
+        }
+      ],
+      "verified_surfaces": [
+        "tools/patch_evaluation_sidecar.py",
+        "tools/patch_evaluation_sidecar_legacy.py",
+        "tools/patch_evaluation_sidecar_hardening.py",
+        "tools/patch_evaluation_sidecar_host_readback.py",
+        "tools/patch_evaluation_sidecar_process_budget.py",
+        "tools/patch_evaluation_systemd_runner.py",
+        "merger/repoground/contracts/patch-evaluation.v1.schema.json",
+        "merger/repoground/contracts/patch-evaluation-runner-receipt.v1.schema.json",
+        "docs/architecture/repobrief-agent-workbench-boundary.md",
+        "docs/architecture/rbaw-production-sandbox-v1.md"
+      ],
+      "surface_sha256": {
+        "tools/patch_evaluation_sidecar.py": "9fcf99812ed70869a8b3e41af0550cda8fc7955cdf5c83f6b3780a4c1b5bf2d8",
+        "tools/patch_evaluation_sidecar_legacy.py": "c97c2d46f1d5b5d8a0f5ddfa56d8c6664450f56e90ec2e5b44a3205af92fea29",
+        "tools/patch_evaluation_sidecar_hardening.py": "e4123294626f177401765980b1c441d2ebcfba2160ef992a4a643c479cc34d44",
+        "tools/patch_evaluation_sidecar_host_readback.py": "ee697bab47db8da8ac0ea9aa7c060fc4d7a78d9e4299bbf863a6cf4bb2ac9fb6",
+        "tools/patch_evaluation_sidecar_process_budget.py": "80cac1d241e1c5f10dec4fb50aa7c5e394e90303c774e445bfeb38769ef2beba",
+        "tools/patch_evaluation_systemd_runner.py": "4fd8fb20624c6bf85c11685bced0e5545f03203c9a19a97982c7fda3598f322c",
+        "merger/repoground/contracts/patch-evaluation.v1.schema.json": "04d5ab4936d6c990d737b9689c2516875882bc9cba8cc38fbcaf19e0dafdbc00"
+      },
+      "checks": [
+        "RepoGround main is clean and equals origin/main at a1846da73901f1da5a17b6bed51be74de1e1869a.",
+        "pytest -q -p no:cacheprovider tests/test_patch_evaluation_sidecar.py tests/test_patch_evaluation_sidecar_host_readback.py tests/test_patch_evaluation_sidecar_process_budget.py tests/test_patch_evaluation_systemd_runner.py tests/test_patch_evaluation_systemd_runner_output.py tests/test_patch_evaluation_systemd_runner_cleanup.py merger/repoground/tests/test_patch_evaluation.py -> 84 passed in 15.92s.",
+        "Grabowski job grabowski-job-8b0b7510e1dd finalized succeeded with receipt sha256 97493be148ec0f6565c4f4d0f8a819a9e38bce4879e3bf0bfe733423733db4f0.",
+        "PR #1094 full CI passed before merge.",
+        "PR #1097 full CI and current-head self-review passed before merge.",
+        "PR #1101 full CI and current-head self-review passed before merge.",
+        "PR #1123 full CI, resolved review finding and current-head self-review passed before merge."
+      ],
+      "acceptance_summary": [
+        "The producer remains under tools/ and outside merger/repoground/core; RepoBrief core remains a read-only consumer.",
+        "Patch application and commands run in separately materialized and bounded workspaces rather than mutating the source checkout.",
+        "Artifacts pin authority to external evaluation evidence and preserve explicit non-claims; passing tests are not merge authorization or correctness proof.",
+        "No duplicate RepoGround patch was created because the requested implementation and subsequent hardening were already merged."
+      ],
+      "does_not_establish": [
+        "correctness",
+        "test_sufficiency",
+        "security_correctness",
+        "runtime_behavior_outside_evaluated_commands",
+        "merge_authorization",
+        "merge_readiness",
+        "regression_absence",
+        "repo_understood",
+        "claims_true",
+        "target_host_canary_completion_for_other_tasks"
+      ],
+      "task_sha256": "9dca78235e935b9240c4f27a803bae5afb527991462509f869fa0c4044853087",
+      "plan_sha256": "44feb70a77fc185a7a36e565d7a7ae3b703a3f01350a931602ee348f9b4e7e6a"
+    },
     "removed_dead_baseline_commit": {
       "value": "4d31a206dc2ec9bf90e71cbaa6ba102377815beb",
       "reason": "commit_not_found during registry-truth baseline probe",

@@ -3,7 +3,7 @@
   "id": "SEMANTAH-E2E-PORTABILITY-V1",
   "title": "SemantAH E2E port portability",
   "state": "active",
-  "commitment": "later",
+  "commitment": "next",
   "goal": "Den Push-Index-E2E-Test von der festen Bindung an 127.0.0.1:8080 entkoppeln, ohne Prozessbereinigung oder Readiness-Nachweis abzuschwächen.",
   "completion": [
     "Der E2E-Test verwendet einen dynamisch freien Port oder einen expliziten Port-Override.",
@@ -19,7 +19,7 @@
     "source_task": "METAREPO-LEGACY-RECONCILIATION-V1-T006",
     "source_finding": "tests/test_push_index_e2e.py hardcodes 127.0.0.1:8080; foreign service was not terminated",
     "non_blocking_for_source_task": true,
-    "closeout_observed_at": "2026-07-28T05:49:34.373867Z",
+    "closeout_observed_at": "2026-07-30T18:55:00Z",
     "partial_completion_evidence": {
       "task_id": "SEMANTAH-E2E-PORTABILITY-V1-T001",
       "pull_request": "heimgewebe/semantAH#258",
@@ -33,11 +33,21 @@
       ]
     },
     "completion_status": {
-      "state": "blocked",
-      "unmet_criterion": "Repository- und GitHub-Checks verhindern die Wiedereinführung einer festen Portbindung.",
-      "reason": "Kein verpflichtender SemantAH-Repository- oder GitHub-Check führt tests/test_push_index_e2e.py aus; damit ist das vierte Initiativen-Abschlusskriterium gegen Wiedereinführung der festen Portbindung nicht belegt.",
-      "review_thread": "https://github.com/heimgewebe/bureau/pull/1115#discussion_r3663043226",
-      "required_next_action": "Den portablen Push-index-Regressionslauf in einen verpflichtenden SemantAH-CI-Pfad integrieren und einen erfolgreichen, revisionsgebundenen GitHub-Check nachweisen."
-    }
+      "state": "ready_for_verification",
+      "criterion": "Repository- und GitHub-Checks verhindern die Wiedereinführung einer festen Portbindung.",
+      "resolution": "SemantAH .github/workflows/push-index-e2e.yml runs tests/test_push_index_e2e.py on pull requests and main pushes; GitHub run 30477278629 succeeded on exact main head 21106106ee8a193869f94e4b54c332006ba8f4a5.",
+      "evidence": {
+        "workflow_path": ".github/workflows/push-index-e2e.yml",
+        "workflow_commit": "b766ccdf67e9dca37e08b79980f12120a480473e",
+        "github_run_id": 30477278629,
+        "github_run_conclusion": "success",
+        "github_run_completed_at": "2026-07-29T17:53:12Z",
+        "semantah_main_head": "21106106ee8a193869f94e4b54c332006ba8f4a5",
+        "bureau_readiness_merge_commit": "d89ed91b01911b2a21dadec8907b2055fe7e0c74"
+      },
+      "required_next_action": "Atomically claim SEMANTAH-E2E-PORTABILITY-V1-T001, rerun the focused E2E test on the exact SemantAH main revision, and close the Bureau run with bound evidence."
+    },
+    "commitment_advanced_at": "2026-07-30T18:55:00Z",
+    "commitment_advance_reason": "The initiative remains active but its only documented completion blocker is resolved; commitment next permits the already queued ready task to enter the authoritative claim frontier without changing queue order."
   }
 }

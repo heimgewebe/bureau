@@ -107,7 +107,7 @@
     "trigger": "The implementation duplicates events, suppresses a conflicting payload, partially commits a conflicting batch, changes non-agent.ledger behavior or requires rewriting existing ledger history."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "stop": {
     "conditions": [
       "a foreign Chronik task, lease, process or worktree overlaps the selected implementation paths",

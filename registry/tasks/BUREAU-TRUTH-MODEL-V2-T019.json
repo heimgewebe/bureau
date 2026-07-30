@@ -99,6 +99,81 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "implementation": {
+      "repository": "heimgewebe/bureau",
+      "pull_request": 1200,
+      "base_sha": "d12a22dd058297785abd798a6965206c3f85df99",
+      "head_sha": "85bb1115bd2240ec4725afa4f7b2fda617174df5",
+      "merge_commit_sha": "6f6b6900baf69b237d9a3ff417851cab788a8882",
+      "full_diff_sha256": "9cdd765d89c2aa81512cf7365282f1254699595700ac9667c86d87cd99ac280a"
+    },
+    "validation": {
+      "local_exact_head": {
+        "head_sha": "85bb1115bd2240ec4725afa4f7b2fda617174df5",
+        "ruff": "PASS",
+        "pytest": "918 passed",
+        "systemkatalog_boundary": "PASS",
+        "registry_check": "PASS",
+        "git_diff_check": "PASS"
+      },
+      "github_actions": {
+        "run_id": 30510437652,
+        "head_sha": "85bb1115bd2240ec4725afa4f7b2fda617174df5",
+        "conclusion": "success",
+        "python_versions": [
+          "3.10",
+          "3.12"
+        ]
+      },
+      "review": {
+        "kind": "revision-bound self-review plus resolved Codex review",
+        "material_threads_open": 0
+      }
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "BUREAU-TRUTH-MODEL-V2-T019",
+          "source_ref": "heimgewebe/bureau#1200",
+          "pull_request": 1200,
+          "base_sha": "d12a22dd058297785abd798a6965206c3f85df99",
+          "head_sha": "85bb1115bd2240ec4725afa4f7b2fda617174df5",
+          "merge_commit_sha": "6f6b6900baf69b237d9a3ff417851cab788a8882",
+          "full_diff_sha256": "9cdd765d89c2aa81512cf7365282f1254699595700ac9667c86d87cd99ac280a"
+        },
+        {
+          "kind": "github_actions_run",
+          "authority": "github",
+          "task_id": "BUREAU-TRUTH-MODEL-V2-T019",
+          "source_ref": "heimgewebe/bureau/actions/runs/30510437652",
+          "run_id": 30510437652,
+          "head_sha": "85bb1115bd2240ec4725afa4f7b2fda617174df5",
+          "conclusion": "success"
+        }
+      ]
+    },
+    "validated_acceptance": {
+      "parent-child-contract": "Explicit validated parent_task metadata, cycle rejection and no title-based inference are implemented in both Registry paths.",
+      "selection-blocker": "Frontier, what-now, explain-next, claim-intent and coordinated pickup share the same nonterminal-child blocker and exact child IDs.",
+      "terminal-child-semantics": "Revision-bound terminal overlays release parents; planned, blocked, stale or unknown children remain blocking.",
+      "t004-regression": "The real RepoGround T004/T009-T014/T017 relationship is covered by exact regression tests.",
+      "authority-boundary": "The projection changes selection and explanation only and performs no child closure, promotion or dispatch mutation.",
+      "validation": "Exact implementation head passed Ruff, 918 tests, Registry and Systemkatalog checks, diff check, resolved review and GitHub CI."
+    },
+    "verified_at": "2026-07-30T03:28:59Z",
+    "verification": {
+      "task_sha256": "3c8dc16003dff5cbb86b058f563109c9489a9da0abfea7254803607d4d691ff9",
+      "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8",
+      "implementation_diff_sha256": "9cdd765d89c2aa81512cf7365282f1254699595700ac9667c86d87cd99ac280a",
+      "implementation_head": "85bb1115bd2240ec4725afa4f7b2fda617174df5",
+      "implementation_merge_commit": "6f6b6900baf69b237d9a3ff417851cab788a8882",
+      "github_actions_run_id": 30510437652,
+      "verified_at": "2026-07-30T03:28:59Z"
     }
   },
   "priority": {
@@ -113,6 +188,6 @@
     "testing"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Block umbrella pickup while explicit child work remains"
 }

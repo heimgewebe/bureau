@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T063",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Leitstand-Lifecycle-Consumer revisionsgebunden mergen",
-  "state": "blocked",
+  "state": "cancelled",
   "goal": "Merge den von T061 veröffentlichten Leitstand-Lifecycle-Consumer ausschließlich nach frischer Revalidierung des exakten PR-Heads, vollständiger grüner GitHub-CI, unabhängiger Review-Triage und vorab ausgeliefertem kanonischem UTF-8-GitHub-Diff. Diese Aufgabe ändert keinen Code und deployt nicht.",
   "priority": {
     "lane": "next",
@@ -147,16 +147,10 @@
       ]
     },
     "process_deviation": {
-      "status": "unreconciled",
-      "description": "Leitstand PR #190 ist bereits gemergt. Der erst mehr als fünfzehn Stunden später erhobene GitHub-Readback belegt erhaltene Basis-, Head-, Pfad-, Diff- und Main-Identität, aber weder den offenen PR-Zustand beim geforderten Identitätscheck noch die verpflichtenden Captain- und Merge-Lease-Receipts. Der bereits eingetretene Merge wird deshalb nicht rückwirkend als vertragskonforme T063-Ausführung umgedeutet.",
-      "required_next_evidence": [
-        "timestamped pre-merge receipt proving PR #190 was open and binding base, head, changed paths and canonical diff",
-        "exact Captain merge dispatch receipt for heimgewebe/leitstand#190",
-        "owner-bound independent merge lease acquisition receipt",
-        "post-merge unchanged lease release receipt",
-        "timestamped evidence that the canonical diff was delivered before merged_at"
-      ],
-      "consequence": "T063 bleibt blocked und T062 bleibt abhängig blockiert, bis die vorhandenen Receipts revisionsgebunden gelesen oder die Abweichung durch einen ausdrücklich autorisierten Reconciliation-Vertrag bewertet wurde."
+      "status": "reconciled-by-cancellation",
+      "description": "Leitstand PR #190 ist bereits gemergt. Der nachträgliche Readback belegt die entstandene Implementierung, kann aber die fehlenden Pre-Merge-, Captain-, Merge-Lease- und Diff-Delivery-Receipts nicht rückwirkend herstellen. Die Abweichung wird deshalb nicht als vertragskonforme T063-Ausführung umgedeutet, sondern durch die revisionsgebundene Cancellation terminal aufgelöst.",
+      "required_next_evidence": [],
+      "consequence": "T063 ist terminal cancelled. Die fehlenden historischen Receipts bleiben ausdrücklich nicht etabliert; der frühere blocked-Hinweis ist durch die Cancellation superseded und darf nicht mehr als aktueller Taskzustand projiziert werden."
     },
     "observed_acceptance": {
       "exact-pr-identity": {
@@ -256,6 +250,42 @@
           "absence of all non-GitHub runtime effects"
         ]
       }
+    },
+    "cancellation": {
+      "authority": "user-scheduled-bureau-stau-reconciliation",
+      "cancelled_at": "2026-07-29T18:59:29Z",
+      "classification": "irreversible_precondition_loss_after_external_merge",
+      "reason": "The only target PR was already merged before T063 could execute. T063 requires pre-merge open-PR identity revalidation, pre-merge diff delivery, Captain match-head dispatch, independent merge-lease acquisition and later lease-release receipts. Those historical preconditions cannot be recreated, and the already merged PR cannot be merged a second time. Keeping the task blocked would preserve no executable path.",
+      "source_task_sha256": "497eca9e8cb7c47748eb069db5ad23da89fefa63a4b043854b2ce7f9663dcfd0",
+      "source_bureau_base_sha": "812afca6784a9be801e4f87a43af4397dd93e0a3",
+      "primary_evidence": {
+        "repository": "heimgewebe/leitstand",
+        "pull_request": 190,
+        "reviewed_head_sha": "35569da58554af922fe2d13e564f035f2d06db4b",
+        "merge_commit_sha": "9b276fdab1bc6806dbe034e46a6b5115f3aba931",
+        "merged_at": "2026-07-27T01:55:41Z",
+        "post_merge_observed_at": "2026-07-27T17:52:09Z",
+        "canonical_diff_sha256": "8c5a35096f64f9fdcf77235eb5eddd85a9a1d3886a6ecb7e9b553b04b243c98f",
+        "current_main_comparison": "identical"
+      },
+      "irrecoverable_missing_preconditions": [
+        "timestamped pre-merge receipt proving PR #190 was open and binding base, head, changed paths and canonical diff",
+        "exact Captain merge dispatch receipt for heimgewebe/leitstand#190",
+        "owner-bound independent merge lease acquisition receipt",
+        "post-merge unchanged lease release receipt",
+        "timestamped evidence that the canonical diff was delivered before merged_at"
+      ],
+      "acceptance_disposition": "not_verified_and_not_retroactively_satisfied",
+      "net_nonterminal_delta": -1,
+      "does_not_establish": [
+        "contract-compliant T063 execution",
+        "T063 verification",
+        "retroactive Captain dispatch",
+        "retroactive merge-lease evidence",
+        "retroactive pre-merge diff delivery",
+        "deployment completion",
+        "runtime health"
+      ]
     }
   }
 }

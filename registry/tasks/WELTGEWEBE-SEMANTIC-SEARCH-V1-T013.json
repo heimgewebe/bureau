@@ -69,9 +69,10 @@
     "blocks_task": "WELTGEWEBE-SEMANTIC-SEARCH-V1-T008",
     "does_not_establish": [
       "permission to mutate production",
-      "absence of additional worker defects",
+      "future absence of additional worker defects",
       "T008 completion",
-      "permission for SemantAH retirement"
+      "permission for SemantAH retirement",
+      "direct database mutation authority"
     ],
     "evidence": {
       "browser_failure_receipt_sha256": "3a4f4ca64e8fe4fae0ac536f95a5649ec67cd45423ab8ebfd57825c9be9610fe",
@@ -104,6 +105,181 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verified_at": "2026-07-29T22:27:16Z",
+    "outcome": "Weltgewebe-PR #1590 vereinheitlichte den Digestvertrag des persistenten Such-Workers fail-closed mit Aktivierungshelfer und Rust-Providergrenze. Der bereits wartende öffentliche Knoten „abendessen“ wurde danach durch den Worker ohne direkte Tabellenkorrektur terminal verarbeitet und ist in der aktiven Generation hybrid auffindbar. Ein frischer Readback am 29. Juli 2026 belegt, dass der Fix im aktuellen Produktions-main enthalten ist, API und Worker dasselbe Image verwenden, die aktive Generation vollständig konvergiert ist und keine nicht öffentlichen Vektoren enthält. Diese Registry-Änderung schließt ausschließlich den stale Bureau-Zustand; sie führt keinen neuen Produktions- oder Datenbankeffekt aus.",
+    "implementation": {
+      "repository": "heimgewebe/weltgewebe",
+      "pull_request": 1590,
+      "base_sha": "73c3a772a56da34b184104bae8343f8da66c337e",
+      "final_head_sha": "f42221103314caf0e87dddeae39c8a1386f021ef",
+      "reviewed_tree_sha": "91aa514966b2ad77cbed93b4dceb97a872ff3bef",
+      "github_diff_sha256": "c95995d8e2cfdab85a08f952a70699175acd8b871186682a02fd6d1fc1243de9",
+      "merge_commit": "d08f51a95a40f8a953aa1a83c5aba8b463909d42",
+      "merged_at": "2026-07-27T06:35:12Z",
+      "current_main_readback_sha": "1d548fb95837eb11d8be7bd2bb9eb701d2b78a87",
+      "current_main_tree_sha": "039a9b361409e7758ebed05dfaefe1f805200961",
+      "deployment": {
+        "provider": "github/vercel",
+        "deployment_id": 5662512303,
+        "commit": "1d548fb95837eb11d8be7bd2bb9eb701d2b78a87",
+        "state": "success",
+        "created_at": "2026-07-29T17:59:30Z"
+      },
+      "generation_id": "search-gen-2e8358273aa6d41e6a59025985a99738614aba725b8f369b3a54f390f8752e5c",
+      "provider": "local:ollama",
+      "model_id": "qwen3-embedding:4b",
+      "model_revision": "sha256:df5bd2e3c74cd8d069d21dc038f1b359fcdc9458fce1c99bd43c9eb1518ff907",
+      "dimension": 2560
+    },
+    "validation": {
+      "product_pull_request": {
+        "state": "merged",
+        "required_merge_gate": "success",
+        "required_review_evidence_gate": "success",
+        "post_merge_ancestor_readback": true,
+        "head_tree_equals_merge_second_parent_tree": true
+      },
+      "reviews": {
+        "self_review": {
+          "reviewer": "grabowski-gpt-5.6-thinking",
+          "axis": "correctness",
+          "head_sha": "f42221103314caf0e87dddeae39c8a1386f021ef",
+          "diff_sha256": "c95995d8e2cfdab85a08f952a70699175acd8b871186682a02fd6d1fc1243de9",
+          "verdict": "PASS",
+          "findings_resolved": true
+        },
+        "external_review": {
+          "reviewer": "opencode-deepseek-v4-flash-free",
+          "axis": "operations",
+          "head_sha": "f42221103314caf0e87dddeae39c8a1386f021ef",
+          "diff_sha256": "c95995d8e2cfdab85a08f952a70699175acd8b871186682a02fd6d1fc1243de9",
+          "verdict": "PASS",
+          "findings_resolved": true
+        },
+        "unresolved_material_findings": 0
+      },
+      "fresh_repository_checks": {
+        "observed_at": "2026-07-29T19:32:00Z",
+        "focused_tests": "15 passed",
+        "bash_syntax": "PASS",
+        "shellcheck": "PASS",
+        "git_diff_check": "PASS"
+      },
+      "fresh_public_runtime": {
+        "observed_at": "2026-07-29T19:37:00Z",
+        "web_commit": "1d548fb95837eb11d8be7bd2bb9eb701d2b78a87",
+        "api_commit": "1d548fb95837eb11d8be7bd2bb9eb701d2b78a87",
+        "readiness": {
+          "database": true,
+          "nats": true,
+          "policy": true,
+          "status": "ok"
+        },
+        "search_query": "abendessen",
+        "search_mode": "hybrid",
+        "generation_id": "search-gen-2e8358273aa6d41e6a59025985a99738614aba725b8f369b3a54f390f8752e5c",
+        "result_node_id": "a031b7bf-f38e-42b8-aa8b-ca304ecd492f"
+      },
+      "fresh_production_runtime": {
+        "observed_at": "2026-07-29T19:48:43Z",
+        "api_image_id": "sha256:e7af58132d02d4ad2499341ec1b0e6086947b8ca350a3b2852f23f473ccc5d41",
+        "worker_image_id": "sha256:e7af58132d02d4ad2499341ec1b0e6086947b8ca350a3b2852f23f473ccc5d41",
+        "api_health": "healthy",
+        "ollama_health": "healthy",
+        "database_health": "healthy",
+        "nats_health": "healthy",
+        "worker_recent_waiting_for_pinned_model": 0,
+        "worker_recent_terminal_signal": "search_worker=batch_complete"
+      },
+      "fresh_reconciler_runtime": {
+        "observed_at": "2026-07-29T22:25:40Z",
+        "host": "wg-prod-1",
+        "service": "weltgewebe-production-reconcile.service",
+        "service_type": "oneshot",
+        "service_result": "success",
+        "exec_main_code": "exited",
+        "exec_main_status": 0,
+        "last_start_at": "2026-07-30T00:25:39+02:00",
+        "last_exit_at": "2026-07-30T00:25:40+02:00",
+        "timer": "weltgewebe-production-reconcile.timer",
+        "timer_active": true,
+        "timer_enabled": true,
+        "timer_substate": "waiting",
+        "last_trigger_at": "2026-07-30T00:25:39+02:00"
+      },
+      "fresh_database_proof": {
+        "observed_at": "2026-07-29T20:15:38Z",
+        "generation_state": "active",
+        "activation_ready": true,
+        "expected_nodes": 8,
+        "completed_nodes": 8,
+        "jobs_done": 8,
+        "non_done_jobs": 0,
+        "non_public_vectors": 0,
+        "public_active_ready_vectors": 4,
+        "target_job": {
+          "node_id": "a031b7bf-f38e-42b8-aa8b-ca304ecd492f",
+          "state": "done",
+          "attempt_count": 2,
+          "last_error_code": null,
+          "completed_at": "2026-07-27T06:43:04.918807Z"
+        },
+        "target_projection": {
+          "status": "active",
+          "semantic_state": "ready",
+          "embedding_dimension": 2560,
+          "indexed_at": "2026-07-27T06:43:04.912195Z"
+        }
+      },
+      "similar_nodes_contract": {
+        "server_result_live": true,
+        "t007_web_contract_in_current_main": true,
+        "pr_1590_adds_write_or_relation_path": false
+      },
+      "fresh_similar_nodes_ui": {
+        "observed_at": "2026-07-29T22:27:16Z",
+        "web_commit": "1d548fb95837eb11d8be7bd2bb9eb701d2b78a87",
+        "source_node_id": "a031b7bf-f38e-42b8-aa8b-ca304ecd492f",
+        "source_query": "abendessen",
+        "similar_query": "abendessen \u00b7 event \u00b7 happa happa",
+        "request_method": "GET",
+        "response_mode": "hybrid",
+        "generation_id": "search-gen-2e8358273aa6d41e6a59025985a99738614aba725b8f369b3a54f390f8752e5c",
+        "context_panel_present": true,
+        "ui_heading": "\u00c4hnliche Knoten",
+        "ui_result": "Keine \u00e4hnlichen Knoten gefunden.",
+        "ui_explainer_visible": true,
+        "ui_explainer_distinguishes_threads_and_curated_relations": true,
+        "mutation_request_count": 0
+      },
+      "recovery_contract": {
+        "commit_rollback": "preserved",
+        "worker_restart": "preserved",
+        "projection_rebuild": "preserved",
+        "direct_domain_or_projection_table_repair_used": false
+      },
+      "semantah_readback": {
+        "repository": "heimgewebe/semantAH",
+        "archived": false,
+        "default_branch": "main",
+        "observed_at": "2026-07-29T20:05:00Z"
+      }
+    },
+    "verified_acceptance": {
+      "digest-contract-single-source": "PASS: PR #1590 normalisiert auf beiden Seiten ausschließlich den optionalen Literalpräfix sha256: und verlangt danach exakt 64 kleingeschriebene Hexzeichen; Aktivierungshelfer, Rust-Grenze und Dauer-Worker vergleichen damit dieselbe Identität.",
+      "worker-regression-tests": "PASS: Der Head-Test reproduziert den produktiven Präfixunterschied und lehnt abweichende, fehlende, malformed sowie großgeschriebene Digests fail-closed ab; 15 fokussierte Tests, Shellcheck und Bash-Syntaxprüfung sind frisch grün.",
+      "incremental-job-processing": "PASS: Die aktive Generation meldet expected_nodes=8 und completed_nodes=8; alle acht Jobs sind done. Der nach Aktivierung erzeugte Zieljob für a031b7bf-f38e-42b8-aa8b-ca304ecd492f wurde vom Worker terminal verarbeitet.",
+      "privacy-negative-proof": "PASS: Der frische Produktions-Datenbankbeweis meldet 0 nicht öffentliche Vektoren, ausschließlich vier public/active/ready-Projektionen und 0 nicht terminale Jobs. PR #1590 verändert keine Autorisierungs- oder Sichtbarkeitsgrenze.",
+      "production-commit-readback": "PASS: Web, Edge-API, direkte API und interner API-Readback melden 1d548fb95837eb11d8be7bd2bb9eb701d2b78a87. API, PostgreSQL, NATS und Ollama sind gesund; Worker und API verwenden exakt dasselbe Image. Der Reconciler-Oneshot auf wg-prod-1 endete am 30. Juli 2026 um 00:25:40 CEST mit Result=success und Exitstatus 0; sein aktivierter Timer ist active/waiting.",
+      "pending-job-recovery": "PASS: Job 19 für a031b7bf-f38e-42b8-aa8b-ca304ecd492f ist ohne direkte Tabellenkorrektur done, besitzt eine aktive ready-Projektion mit Dimension 2560 und /api/search?q=abendessen liefert ihn im hybriden Modus der aktiven Generation.",
+      "similar-nodes-live-proof": "PASS: Ein frischer Browser-Readback auf der öffentlichen Karte öffnete den Kontext des reparierten Knotens und die Sektion „Ähnliche Knoten“. Die UI setzte ausschließlich einen GET auf /api/search?q=abendessen+%C2%B7+event+%C2%B7+happa+happa&limit=6 ab, zeigte die Trennung von maschinellen Vorschlägen, Fäden und kuratierten Beziehungen sowie „Keine ähnlichen Knoten gefunden.“; es trat keine mutierende Anfrage auf.",
+      "rollback-and-rebuild": "PASS: Der Fix ist ein begrenzter Shell-/Test-Commit; commitgebundener Rollback, Worker-Neustart und der bestehende regenerierbare Projektions-Rebuild bleiben unverändert. In diesem Closeout erfolgte keine direkte Datenbankmutation.",
+      "no-semantah-effect": "PASS: heimgewebe/semantAH ist am 29. Juli 2026 weiterhin nicht archiviert und besitzt main als Default-Branch; PR #1590 und dieser Closeout verändern SemantAH nicht."
+    },
+    "verification": {
+      "task_sha256": "b4f832b9f9a5a29721d3953eafa4d223c9dbf1b65fd1307372fdfa5141a6a263",
+      "plan_sha256": "18002b2b2def870ec6e5dd91cd15d19aaade6f053cac144ca85e2862234a709e"
     }
   },
   "priority": {
@@ -133,6 +309,6 @@
     "task_profile": "security_or_runtime_change"
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Such-Worker-Digestvergleich normalisieren und wartende Projektionen nachziehen"
 }

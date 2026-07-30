@@ -8,7 +8,7 @@ import sqlite3
 import subprocess
 import tempfile
 import uuid
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -17,6 +17,7 @@ from typing import Any
 
 ACTIVE_STATES = ("assigned", "running", "verifying")
 LANE_ORDER = {"now": 0, "next": 1, "later": 2}
+TERMINAL_TASK_STATES = frozenset({"verified", "cancelled", "superseded"})
 ID_RE = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$")
 RESOURCE_RE = re.compile(r"^[a-z0-9][a-z0-9._:-]{0,254}$")
 GITHUB_REPOSITORY_SLUG_RE = re.compile(
@@ -173,6 +174,16 @@ class Task:
 
 
 @dataclass(frozen=True)
+class ParentChildProjection:
+    parent_task_id: str | None
+    child_task_ids: tuple[str, ...]
+    nonterminal_child_task_ids: tuple[str, ...]
+    independently_executable: bool
+    blocking_child_task_ids: tuple[str, ...]
+    blocker_reason: str | None
+
+
+@dataclass(frozen=True)
 class Reservation:
     run_id: str
     resource: str
@@ -256,6 +267,7 @@ class Registry:
         self.queue: dict[str, list[str]] = {"now": [], "next": [], "later": []}
         self.queue_policy = "skip-blocked"
         self.positions: dict[str, tuple[int, int]] = {}
+        self._children_by_parent: dict[str, tuple[str, ...]] = {}
 
     @classmethod
     def load(cls, root: str | Path) -> Registry:
@@ -342,6 +354,8 @@ class Registry:
 
     def validate(self) -> None:
         errors: list[str] = []
+        parent_by_child: dict[str, str] = {}
+        children_by_parent: dict[str, list[str]] = {}
         initiative_states = {
             "inbox",
             "candidate",
@@ -440,6 +454,31 @@ class Registry:
                 errors.append(f"task {task.id} has invalid execution mode")
             if task.mode == "manual" and task.policy == "autonomous":
                 errors.append(f"manual task {task.id} cannot be autonomous")
+            metadata = task.raw.get("metadata")
+            if "metadata" in task.raw and not isinstance(metadata, dict):
+                errors.append(f"task {task.id} metadata must be an object")
+                metadata = None
+            if isinstance(metadata, dict):
+                if "parent_task" in metadata:
+                    parent_task = metadata["parent_task"]
+                    if not isinstance(parent_task, str) or not ID_RE.fullmatch(parent_task):
+                        errors.append(f"task {task.id} has invalid metadata.parent_task")
+                    elif parent_task == task.id:
+                        errors.append(f"task {task.id} cannot parent itself")
+                    elif parent_task not in self.tasks:
+                        errors.append(
+                            f"task {task.id} has unknown parent task {parent_task}"
+                        )
+                    else:
+                        parent_by_child[task.id] = parent_task
+                        children_by_parent.setdefault(parent_task, []).append(task.id)
+                if (
+                    "independently_executable" in metadata
+                    and type(metadata["independently_executable"]) is not bool
+                ):
+                    errors.append(
+                        f"task {task.id} metadata.independently_executable must be boolean"
+                    )
             for dependency in task.depends_on:
                 if dependency not in self.tasks:
                     errors.append(f"task {task.id} has unknown dependency {dependency}")
@@ -455,6 +494,12 @@ class Registry:
                     if limit is None or claim.amount > limit:
                         errors.append(f"task {task.id} exceeds capacity {claim.resource}")
         errors.extend(self._task_cycles())
+        errors.extend(self._task_parent_cycles(parent_by_child))
+        errors.extend(self._task_wait_cycles(parent_by_child))
+        self._children_by_parent = {
+            parent_task: tuple(sorted(child_tasks))
+            for parent_task, child_tasks in children_by_parent.items()
+        }
         for lane, task_ids in self.queue.items():
             for task_id in task_ids:
                 task = self.tasks.get(task_id)
@@ -472,6 +517,165 @@ class Registry:
                     )
         if errors:
             raise ValidationError("\n".join(sorted(set(errors))))
+
+    @staticmethod
+    def _task_parent_cycles(parent_by_child: Mapping[str, str]) -> list[str]:
+        """Return canonical diagnostics for bounded, explicit parent chains."""
+        cycles: set[tuple[str, ...]] = set()
+        bound = len(parent_by_child) + 1
+        for start in sorted(parent_by_child):
+            path: list[str] = []
+            positions: dict[str, int] = {}
+            current = start
+            for _ in range(bound):
+                if current in positions:
+                    cycle = path[positions[current] :]
+                    rotations = [
+                        tuple(cycle[index:] + cycle[:index])
+                        for index in range(len(cycle))
+                    ]
+                    cycles.add(min(rotations))
+                    break
+                positions[current] = len(path)
+                path.append(current)
+                parent = parent_by_child.get(current)
+                if parent is None:
+                    break
+                current = parent
+        return [
+            "task parent cycle: " + " -> ".join((*cycle, cycle[0]))
+            for cycle in sorted(cycles)
+        ]
+
+    def _task_wait_cycles(self, parent_by_child: Mapping[str, str]) -> list[str]:
+        """Return bounded canonical diagnostics for mixed task wait cycles."""
+        adjacency: dict[str, list[tuple[str, str]]] = {}
+        for task_id, task in self.tasks.items():
+            if task.state in TERMINAL_TASK_STATES:
+                adjacency[task_id] = []
+                continue
+            adjacency[task_id] = [
+                (dependency, "dependency")
+                for dependency in task.depends_on
+                if (
+                    dependency in self.tasks
+                    and self.tasks[dependency].state not in TERMINAL_TASK_STATES
+                )
+            ]
+        for child_task_id, parent_task_id in parent_by_child.items():
+            # The claim gate has no live wait edge once either endpoint is terminal.
+            if (
+                self.tasks[parent_task_id].state in TERMINAL_TASK_STATES
+                or self.tasks[child_task_id].state in TERMINAL_TASK_STATES
+            ):
+                continue
+            parent_metadata = self.tasks[parent_task_id].raw.get("metadata")
+            if (
+                isinstance(parent_metadata, dict)
+                and parent_metadata.get("independently_executable") is True
+            ):
+                continue
+            adjacency[parent_task_id].append((child_task_id, "parent"))
+        for edges in adjacency.values():
+            edges.sort()
+
+        cycles: set[tuple[str, ...]] = set()
+        for start in sorted(self.tasks):
+            initial = (start, False, False)
+            queue = [initial]
+            predecessors: dict[
+                tuple[str, bool, bool],
+                tuple[str, bool, bool] | None,
+            ] = {initial: None}
+            cursor = 0
+            found: tuple[str, bool, bool] | None = None
+            while cursor < len(queue):
+                state = queue[cursor]
+                cursor += 1
+                node, used_dependency, used_parent = state
+                for neighbour, edge_kind in adjacency[node]:
+                    next_state = (
+                        neighbour,
+                        used_dependency or edge_kind == "dependency",
+                        used_parent or edge_kind == "parent",
+                    )
+                    if next_state in predecessors:
+                        continue
+                    predecessors[next_state] = state
+                    if neighbour == start and next_state[1] and next_state[2]:
+                        found = next_state
+                        break
+                    queue.append(next_state)
+                if found is not None:
+                    break
+            if found is None:
+                continue
+            path: list[str] = []
+            current: tuple[str, bool, bool] | None = found
+            while current is not None:
+                path.append(current[0])
+                current = predecessors[current]
+            cycle = list(reversed(path))[:-1]
+            rotations = [
+                tuple(cycle[index:] + cycle[:index])
+                for index in range(len(cycle))
+            ]
+            cycles.add(min(rotations))
+        return [
+            "task wait cycle: " + " -> ".join((*cycle, cycle[0]))
+            for cycle in sorted(cycles)
+        ]
+
+    def parent_child_projection(
+        self,
+        task: Task | str,
+        overlays: Mapping[str, str] | None = None,
+    ) -> ParentChildProjection:
+        """Project one task's explicit direct parent/children and claim gate."""
+        selected = self.tasks[task] if isinstance(task, str) else task
+        metadata = selected.raw.get("metadata")
+        parent_task_id = (
+            metadata.get("parent_task")
+            if isinstance(metadata, dict) and isinstance(metadata.get("parent_task"), str)
+            else None
+        )
+        independently_executable = (
+            isinstance(metadata, dict)
+            and metadata.get("independently_executable") is True
+        )
+        effective_states = overlays or {}
+        child_task_ids = self._children_by_parent.get(selected.id, ())
+
+        def child_is_terminal(child_task_id: str) -> bool:
+            registry_state = self.tasks[child_task_id].state
+            overlay_state = effective_states.get(child_task_id)
+            return (
+                registry_state in TERMINAL_TASK_STATES
+                or overlay_state in TERMINAL_TASK_STATES
+            )
+
+        nonterminal_child_task_ids = tuple(
+            child_task_id
+            for child_task_id in child_task_ids
+            if not child_is_terminal(child_task_id)
+        )
+        blocking_child_task_ids = (
+            () if independently_executable else nonterminal_child_task_ids
+        )
+        blocker_reason = (
+            "parent task blocked by nonterminal child tasks: "
+            + ", ".join(blocking_child_task_ids)
+            if blocking_child_task_ids
+            else None
+        )
+        return ParentChildProjection(
+            parent_task_id=parent_task_id,
+            child_task_ids=child_task_ids,
+            nonterminal_child_task_ids=nonterminal_child_task_ids,
+            independently_executable=independently_executable,
+            blocking_child_task_ids=blocking_child_task_ids,
+            blocker_reason=blocker_reason,
+        )
 
     def _resource_cycles(self) -> list[str]:
         errors: list[str] = []
@@ -598,6 +802,8 @@ class StateStore:
                 );
                 CREATE TABLE IF NOT EXISTS task_status(
                     task_id TEXT PRIMARY KEY,
+                    task_sha256 TEXT NOT NULL DEFAULT '',
+                    plan_sha256 TEXT NOT NULL DEFAULT '',
                     state TEXT NOT NULL,
                     receipt_sha256 TEXT,
                     updated_at TEXT NOT NULL
@@ -664,11 +870,45 @@ class StateStore:
             for row in connection.execute(sql, params)
         ]
 
-    def overlays(self, connection: sqlite3.Connection) -> dict[str, str]:
-        return {
-            row["task_id"]: row["state"]
-            for row in connection.execute("SELECT task_id,state FROM task_status")
+    @staticmethod
+    def _columns(connection: sqlite3.Connection, table: str) -> set[str]:
+        return {row["name"] for row in connection.execute(f"PRAGMA table_info({table})")}
+
+    def overlays(
+        self,
+        connection: sqlite3.Connection,
+        registry: Registry,
+    ) -> dict[str, str]:
+        result: dict[str, str] = {}
+        columns = self._columns(connection, "task_status")
+        has_revision_bindings = {"task_sha256", "plan_sha256"} <= columns
+        rows = {
+            row["task_id"]: row
+            for row in connection.execute("SELECT * FROM task_status")
         }
+        for task in registry.tasks.values():
+            if task.state in TERMINAL_TASK_STATES:
+                result[task.id] = task.state
+                continue
+            row = rows.get(task.id)
+            if row is None:
+                continue
+            state = row["state"]
+            if state not in TERMINAL_TASK_STATES:
+                result[task.id] = state
+                continue
+            current_plan_sha256 = sha256_json(
+                registry.initiatives[task.initiative].current_plan or {}
+            )
+            if (
+                has_revision_bindings
+                and row["task_sha256"] == task.sha256
+                and row["plan_sha256"] == current_plan_sha256
+            ):
+                result[task.id] = state
+            else:
+                result[task.id] = "stale"
+        return result
 
     def public_run(self, row: sqlite3.Row) -> dict[str, Any]:
         return {key: row[key] for key in row.keys() if key != "envelope_json"}
@@ -733,6 +973,9 @@ class Dispatcher:
         state = overlays.get(task.id, task.state)
         if state != "ready":
             result.append(f"state is {state}")
+        parent_child = self.registry.parent_child_projection(task, overlays)
+        if parent_child.blocker_reason is not None:
+            result.append(parent_child.blocker_reason)
         if initiative.state != "active":
             result.append(f"initiative state is {initiative.state}")
         if initiative.commitment not in {"now", "next"}:
@@ -764,18 +1007,23 @@ class Dispatcher:
         with self.store.connect() as connection:
             runs = self.store.active_runs(connection)
             reservations = self.store.reservations(connection)
-            overlays = self.store.overlays(connection)
-            return [
-                {
-                    "task_id": task.id,
-                    "title": task.title,
-                    "eligible": not (
-                        reasons := self.reasons(task, capabilities, runs, reservations, overlays)
-                    ),
-                    "reasons": reasons,
-                }
-                for task in self.registry.ordered_tasks()
-            ]
+            overlays = self.store.overlays(connection, self.registry)
+            result: list[dict[str, Any]] = []
+            for task in self.registry.ordered_tasks():
+                reasons = self.reasons(task, capabilities, runs, reservations, overlays)
+                parent_child = self.registry.parent_child_projection(task, overlays)
+                result.append(
+                    {
+                        "task_id": task.id,
+                        "title": task.title,
+                        "eligible": not reasons,
+                        "blocking_child_task_ids": list(
+                            parent_child.blocking_child_task_ids
+                        ),
+                        "reasons": reasons,
+                    }
+                )
+            return result
 
     def claim_next(
         self,
@@ -803,7 +1051,7 @@ class Dispatcher:
             worker_capabilities = set(json.loads(worker["capabilities_json"]))
             runs = self.store.active_runs(connection)
             reservations = self.store.reservations(connection)
-            overlays = self.store.overlays(connection)
+            overlays = self.store.overlays(connection, self.registry)
             rejected: list[dict[str, Any]] = []
             selected: Task | None = None
             for task in self.registry.ordered_tasks():
@@ -986,14 +1234,42 @@ def complete_run(
             "INSERT INTO receipts(run_id,receipt_json,receipt_sha256,created_at) VALUES(?,?,?,?)",
             (run_id, canonical_json(receipt), receipt_sha, now),
         )
-        connection.execute(
-            """
-            INSERT INTO task_status(task_id,state,receipt_sha256,updated_at)
-            VALUES(?,'verified',?,?)
-            ON CONFLICT(task_id) DO UPDATE SET state='verified',receipt_sha256=excluded.receipt_sha256,updated_at=excluded.updated_at
-            """,
-            (run["task_id"], receipt_sha, now),
-        )
+        if {"task_sha256", "plan_sha256"} <= store._columns(
+            connection, "task_status"
+        ):
+            connection.execute(
+                """
+                INSERT INTO task_status(
+                    task_id,task_sha256,plan_sha256,state,receipt_sha256,updated_at
+                )
+                VALUES(?,?,?,'verified',?,?)
+                ON CONFLICT(task_id) DO UPDATE SET
+                    task_sha256=excluded.task_sha256,
+                    plan_sha256=excluded.plan_sha256,
+                    state='verified',
+                    receipt_sha256=excluded.receipt_sha256,
+                    updated_at=excluded.updated_at
+                """,
+                (
+                    run["task_id"],
+                    run["task_sha256"],
+                    sha256_json(envelope.get("plan") or {}),
+                    receipt_sha,
+                    now,
+                ),
+            )
+        else:
+            connection.execute(
+                """
+                INSERT INTO task_status(task_id,state,receipt_sha256,updated_at)
+                VALUES(?,'verified',?,?)
+                ON CONFLICT(task_id) DO UPDATE SET
+                    state='verified',
+                    receipt_sha256=excluded.receipt_sha256,
+                    updated_at=excluded.updated_at
+                """,
+                (run["task_id"], receipt_sha, now),
+            )
         connection.execute(
             "UPDATE runs SET state='succeeded',updated_at=? WHERE run_id=?", (now, run_id)
         )

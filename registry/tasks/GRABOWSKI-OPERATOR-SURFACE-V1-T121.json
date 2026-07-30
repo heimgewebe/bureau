@@ -1,0 +1,118 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein revisionsgebundener Entscheidungsbeleg setzt decision auf implement oder no-change. Bei implement weist er mindestens zwei tatsächlich wiederkehrende und hinreichend nützliche Sequenzen nach; bei no-change weist er unzureichende Häufigkeit oder Nutzen nach und wählt keine Sequenz zur Implementierung aus.",
+      "id": "frequency-bound-selection",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein an decision gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement besitzt jede neue Operation die Phasen Prepare, Plan, Apply, Readback und Settle und bindet Ziel, Scope, erwartete Identitäten und Idempotenz; bei no-change ist applicability not_applicable und der Beleg bestätigt, dass kein Saga-Vertrag eingeführt wurde.",
+      "id": "saga-contract",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein an decision gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement komponiert die Umsetzung vorhandene typisierte Tools und Grips einschließlich mechanic-loop, Bureau-Pickup, PR-Lifecycle und Captain-Grenze und enthält keine freie Shell-Kette, Rekursion oder Privilegienausweitung; bei no-change ist applicability not_applicable und bestätigt keine neue Komposition.",
+      "id": "typed-composition",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein an decision gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement erzeugt jeder Teilfehler einen maschinenlesbaren bekannten, unbekannten oder recovery-pflichtigen Ausgang mit Teilreceipts und begrenztem Kompensations- oder Fortsetzungspfad; bei no-change ist applicability not_applicable und bestätigt, dass kein neuer Effektpfad entstand.",
+      "id": "partial-failure-truth",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein an decision gebundener Grenzbeleg weist bei implement nach, dass normale Schritte Mechanic-Aktionen und High-Impact-Schritte Captain-Aktionen mit bestehenden Review-, CI-, Merge-, Deployment-, Recovery- und Kill-Switch-Gates bleiben. Bei no-change bestätigt er das Ausbleiben jeder Autoritäts- oder Policyänderung.",
+      "id": "authority-preservation",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein an denselben Entscheidungsbeleg gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement sind mindestens zwei fokussiert getestete end-to-end Pilotabläufe mit Live-Readback erforderlich; bei no-change ist applicability not_applicable und der Beleg bestätigt, dass keine neue Operation oder Wirkung umgesetzt wurde.",
+      "id": "pilots-and-readback",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein separater No-change-Abschlussbeleg dokumentiert bei decision no-change die Messgrundlage, den unzureichenden Nutzen und das Ausbleiben neuer Operationen, Pilotwirkungen und Autoritätsänderungen. Bei decision implement setzt derselbe Beleg applicability auf not_applicable und bindet sich an die Implementierungsentscheidung.",
+      "id": "no-change-closeout",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein an decision gebundener Messbeleg erfasst bei implement Vorher-/Nachher-Werte für Werkzeugaufrufe, Operatorentscheidungen, Blockaden, Teilfehler und Laufzeit. Bei no-change dokumentiert er Messbasis, erwartbaren Nutzen und vermiedene Zusatzkomplexität ohne Nachher-Wirkungsbehauptung; kein Pfad leitet automatische Routing- oder Merge-Autorität aus kleinen Stichproben ab.",
+      "id": "measured-effect",
+      "evidence_type": "object"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T083"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 30. Juli 2026 die priorisierte Registrierung und Umsetzung aller sinnvollen Reibungshebel beauftragt. T121 folgt erst nach T083 und darf bestehende Authority-, Lease-, Review-, Merge- oder Deployment-Grenzen nicht lockern.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die häufigsten domänenübergreifenden Grabowski-Sequenzen revisionsgebunden bestimmen und bei ausreichender Häufigkeit und Nutzen als benannte, typisierte und receipt-gebundene Sagas aus Prepare, Plan, Apply, Readback und Settle bündeln. Reicht die Evidenz nicht, endet die Aufgabe belegt als no-change; in keinem Pfad werden systemübergreifende Atomizität vorgetäuscht, Teilfehler verdeckt oder bestehende Authority-, Lease-, Review-, Merge- und Deployment-Grenzen umgangen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T121",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "design_rule": "Komposition reduziert Aufrufsoverhead; sie darf getrennte Wahrheiten nicht als atomare Gesamttransaktion darstellen.",
+    "does_not_establish": [
+      "automatic_cross_system_transaction",
+      "generic_shell_authority",
+      "policy_bypass",
+      "merge_or_deployment_permission",
+      "task_readiness_before_dependencies"
+    ],
+    "priority_basis": {
+      "rank": "P1",
+      "reason": "Viele typisierte Einzelgriffe existieren, aber die benannte Operationsliste enthält nur zwei einfache Abläufe; Makros adressieren dadurch einen belegten Bedienungsengpass."
+    },
+    "source": "Live-Reibungsevaluation und Nutzerauftrag vom 30. Juli 2026",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-22a20c7ee7ff921e1d161a87",
+      "event_id": 1692,
+      "event_created_at": "2026-07-30T08:55:21.709902Z",
+      "request_sha256": "36649acca7fa932f475d3317f0a95e830280c39bc00df700e9d61db004885b95",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chatgpt:grabowski-friction-evaluation:2026-07-30:intent-sagas",
+        "observed_at": "2026-07-30T10:46:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Domänenspezifische Operator-Abläufe als fehlersichtbare Sagas bündeln"
+}

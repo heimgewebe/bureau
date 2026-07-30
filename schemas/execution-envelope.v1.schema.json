@@ -478,6 +478,10 @@
               "type": "string",
               "minLength": 1
             },
+            "resource_lease_contract_version": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            },
             "resource_keys": {
               "type": "array",
               "items": {

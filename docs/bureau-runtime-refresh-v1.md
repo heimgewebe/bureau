@@ -117,18 +117,24 @@ Die tatsächlichen Werte sind die kanonischen absoluten Pfade aus
 Wirkung die private Grabowski-Datenbank
 `~/.local/state/grabowski/resources.sqlite3` read-only und verlangt:
 
-- Schema 1, 2 oder 3; unbekannte Versionen bleiben fail-closed blockiert;
+- genau eine Metadatenzeile `resource_lease_contract_version=1`;
 - jede exakte Ressourcenzeile vorhanden;
 - identischer Owner;
 - gültige Zeitordnung und mindestens zehn Minuten Restlaufzeit;
 - gültiger Metadaten-SHA-256;
 - private, reguläre, nicht verlinkte Datenbank im Besitz des aktuellen Nutzers.
 
+Der Lease-Vertrag ist absichtlich vom aggregierten Grabowski-Datenbankschema getrennt.
+Neue Tabellen oder Indizes dürfen dessen `schema_version` erhöhen, ohne den Refresh zu
+blockieren, solange die von Bureau gelesene `metadata`-/`leases`-Projektion weiterhin
+explizit als Vertrag 1 publiziert wird. Fehlende, mehrdeutige, beschädigte oder unbekannte
+Vertragsversionen blockieren vor dem ersten Zugriff auf Lease-Zeilen und liefern eine
+begrenzte Recovery-Diagnose; Tabellenform allein begründet keine Kompatibilität.
+
 Der Datenbankpfad ist im installierten CLI nicht überschreibbar. Testcode kann die
-Prüffunktion mit einer synthetischen Datenbank aufrufen. Schema 2 und 3 ergänzen die
-Grabowski-Datenbank um Terminalisierungs- und Authority-Tabellen, lassen aber die von
-Bureau gelesene Lease-Projektion unverändert. Die beobachtete Schema-Version wird in
-die Lease-Bindung und damit in das Ergebnisreceipt aufgenommen.
+Prüffunktion mit einer synthetischen Datenbank aufrufen. Die beobachteten Aggregat- und
+Lease-Vertragsversionen werden beide in die Lease-Bindung und damit in das
+Ergebnisreceipt aufgenommen.
 
 ### 4. `apply`
 

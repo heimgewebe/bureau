@@ -2,31 +2,38 @@
   "acceptance": [
     {
       "assertion": "Aktuelle Friction-, Chronik- und Operationsbelege bestimmen mindestens zwei tatsächlich wiederkehrende Sequenzen; Implementierung erfolgt nur für gemessene Hochfrequenzpfade, während ein fehlender Nutzen als explizites no-change Ergebnis zulässig bleibt.",
-      "id": "frequency-bound-selection"
+      "id": "frequency-bound-selection",
+      "evidence_type": "object"
     },
     {
       "assertion": "Jede neue Operation besitzt die expliziten Phasen Prepare, Plan, Apply, Readback und Settle, bindet Ziel, Scope, erwartete Identitäten und Idempotenz und behauptet keine gemeinsame Transaktion über getrennte Wahrheitssysteme.",
-      "id": "saga-contract"
+      "id": "saga-contract",
+      "evidence_type": "object"
     },
     {
       "assertion": "Die Umsetzung komponiert vorhandene typisierte Tools und Grips einschließlich mechanic-loop, Bureau-Pickup, PR-Lifecycle und Captain-Grenze; freie Shell-Ketten, rekursive Makros und versteckte Privilegienausweitung bleiben verboten.",
-      "id": "typed-composition"
+      "id": "typed-composition",
+      "evidence_type": "object"
     },
     {
       "assertion": "Jeder Teilfehler erzeugt einen maschinenlesbaren bekannten, unbekannten oder recovery-pflichtigen Ausgang mit Teilreceipts und begrenztem Kompensations- oder Fortsetzungspfad; bereits mögliche Effekte werden nie still wiederholt.",
-      "id": "partial-failure-truth"
+      "id": "partial-failure-truth",
+      "evidence_type": "object"
     },
     {
       "assertion": "Normale Schritte bleiben Mechanic-Aktionen und High-Impact-Schritte bleiben Captain-Aktionen mit ihren bestehenden Review-, CI-, Merge-, Deployment-, Recovery- und Kill-Switch-Gates.",
-      "id": "authority-preservation"
+      "id": "authority-preservation",
+      "evidence_type": "object"
     },
     {
       "assertion": "Mindestens zwei end-to-end Pilotabläufe werden fokussiert getestet und live read-only beziehungsweise reversibel belegt; ein Pilot umfasst einen Arbeitslane-Aufbau und ein weiterer einen Publikations- oder Delivery-Ablauf.",
-      "id": "pilots-and-readback"
+      "id": "pilots-and-readback",
+      "evidence_type": "object"
     },
     {
       "assertion": "Vorher-/Nachher-Messung erfasst Werkzeugaufrufe, Operatorentscheidungen, Blockaden, Teilfehler und Laufzeit, ohne aus kleinen Stichproben allgemeine automatische Routing- oder Merge-Autorität abzuleiten.",
-      "id": "measured-effect"
+      "id": "measured-effect",
+      "evidence_type": "object"
     }
   ],
   "claims": [

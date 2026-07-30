@@ -90,6 +90,44 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verified_at": "2026-07-30T13:57:45.034465Z",
+    "verification": {
+      "status": "verified",
+      "verified_by": "chatgpt-grabowski-chronik-t001-20260730",
+      "bureau_run_id": "BUR-RUN-20260730T132223Z-0a40837bba",
+      "bureau_receipt_path": "/home/alex/.local/state/bureau/receipts/BUR-RUN-20260730T132223Z-0a40837bba.json",
+      "bureau_receipt_sha256": "60d14441b9383053102814da644c73af60a82f57ad0e71c3579418e042185df8",
+      "task_sha256_at_claim": "6b7054d236d5b34c9877b63381b4dae0b2d24afbb4782a9cf92d4f47653dbd93",
+      "plan_sha256_at_claim": "7a4d09115c987f7199ff6b984bc87c08f8598c55d5dddfd7284c7d55d1b5bcd0",
+      "repository": "heimgewebe/chronik",
+      "pull_request": 241,
+      "reviewed_head": "917a07626026a7c1d1db5418268843c38523c2d4",
+      "merge_commit": "8a5ffe7d03625360c7a4f196bd59a2f6b431da86",
+      "validation": {
+        "focused_agent_ledger_tests": "7 passed on exact merge commit",
+        "full_chronik_validation": "425 passed",
+        "role_contract": "passed",
+        "local_api_smoke": "health, version, agent.ledger ingest and readback passed",
+        "pr_checks": "all reported guards, fixtures and CodeQL checks passed",
+        "post_merge_checks": "all reported guards, smoke and CodeQL checks passed"
+      },
+      "acceptance_result": "all seven acceptance assertions satisfied",
+      "follow_up_candidate": {
+        "candidate_id": "candidate-0fadd8a4c7176fef8f0b8d6d",
+        "event_id": 1714,
+        "scope": "separate delivery-attempt metrics from newly durable agent.ledger writes"
+      },
+      "uncertainty": 0.03,
+      "interpolation_degree": 0.01,
+      "does_not_establish": [
+        "exactly-once network transport",
+        "idempotency for domains other than agent.ledger",
+        "activation or deployment of chronik.service",
+        "that existing ingested metrics count only newly durable ledger rows"
+      ],
+      "task_sha256": "f778408ada7f496c923b4dd9b875484ebbf088a411f8b23b0db775b184b5c3bc",
+      "plan_sha256": "7a4d09115c987f7199ff6b984bc87c08f8598c55d5dddfd7284c7d55d1b5bcd0"
     }
   },
   "priority": {
@@ -107,7 +145,7 @@
     "trigger": "The implementation duplicates events, suppresses a conflicting payload, partially commits a conflicting batch, changes non-agent.ledger behavior or requires rewriting existing ledger history."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "stop": {
     "conditions": [
       "a foreign Chronik task, lease, process or worktree overlaps the selected implementation paths",

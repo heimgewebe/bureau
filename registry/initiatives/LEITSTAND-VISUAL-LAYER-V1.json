@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "LEITSTAND-VISUAL-LAYER-V1",
   "title": "Leitstand ecosystem visualization layer expansion",
-  "state": "active",
-  "commitment": "now",
+  "state": "completed",
+  "commitment": "completed",
   "goal": "Expand Leitstand into a read-only visualization layer for ecosystem maps, source freshness, RepoBrief health, and cross-view navigation without making Leitstand a source of truth, orchestrator, or task dispatcher.",
   "current_plan": {
     "repository": "bureau",
@@ -51,9 +51,9 @@
       "current_cabinet_head": "8ca544a8c00076aafd2d738fd6361ee6f6dbde3d"
     },
     "lifecycle": {
-      "completed_at": "2026-07-30T13:58:49.604942Z",
-      "completion_basis": "All registered tasks LSV-V1-T001 through LSV-V1-T012 are canonical verified and no LSV task remains open; bureau lifecycle recommended completion-ready for the initiative.",
-      "closeout_base_commit": "82eb66c50e156044d6ef3b435a12d3c222c653b8",
+      "completed_at": "2026-07-30T21:07:01Z",
+      "completion_basis": "All registered tasks LSV-V1-T001 through LSV-V1-T013 are canonical verified; T013 is merged, fully green, deployed and live-read back, and no LSV task remains in the Bureau queue.",
+      "closeout_base_commit": "255b5e0d4d94e8f4dccc49e763904ce3537144b1",
       "closeout_command": "bureau close-ready",
       "verified_tasks": [
         "LSV-V1-T001",
@@ -67,7 +67,8 @@
         "LSV-V1-T009",
         "LSV-V1-T010",
         "LSV-V1-T011",
-        "LSV-V1-T012"
+        "LSV-V1-T012",
+        "LSV-V1-T013"
       ],
       "prior_completion": {
         "completed_at": "2026-07-22T00:12:31Z",
@@ -80,8 +81,35 @@
       "does_not_establish": [
         "future_runtime_health",
         "future_source_correctness",
-        "leitstand_write_authority"
-      ]
+        "leitstand_write_authority",
+        "automatic_claim_or_dispatch_authority"
+      ],
+      "prior_completion_after_t012": {
+        "completed_at": "2026-07-30T13:58:49.604942Z",
+        "completion_basis": "All registered tasks LSV-V1-T001 through LSV-V1-T012 are canonical verified and no LSV task remains open; bureau lifecycle recommended completion-ready for the initiative.",
+        "closeout_base_commit": "82eb66c50e156044d6ef3b435a12d3c222c653b8",
+        "closeout_command": "bureau close-ready",
+        "verified_tasks": [
+          "LSV-V1-T001",
+          "LSV-V1-T002",
+          "LSV-V1-T003",
+          "LSV-V1-T004",
+          "LSV-V1-T005",
+          "LSV-V1-T006",
+          "LSV-V1-T007",
+          "LSV-V1-T008",
+          "LSV-V1-T009",
+          "LSV-V1-T010",
+          "LSV-V1-T011",
+          "LSV-V1-T012"
+        ],
+        "does_not_establish": [
+          "future_runtime_health",
+          "future_source_correctness",
+          "leitstand_write_authority"
+        ],
+        "superseded_by": "reopened_at 2026-07-30T19:15:18Z for LSV-V1-T013"
+      }
     },
     "reopen_history": [
       {
@@ -96,19 +124,21 @@
           "active_task": "LSV-V1-T010",
           "prior_completion_preserved_in": "metadata.lifecycle.prior_completion"
         }
+      },
+      {
+        "reopened_at": "2026-07-30T19:15:18Z",
+        "reopened_by_task": "LSV-V1-T013",
+        "reopened_reason": "LSV-V1-T013 was registered after the T001-T012 completion; T013 is ready/now with exact Leitstand repository claims, so the 2026-07-30 completion is historical rather than current.",
+        "reopen_basis": {
+          "doctor_recommendation": "reopen-required",
+          "open_tasks": [
+            "LSV-V1-T013"
+          ],
+          "ready_task": "LSV-V1-T013",
+          "prior_completion_preserved_in": "metadata.lifecycle"
+        }
       }
     ],
-    "reopened_at": "2026-07-30T19:15:18Z",
-    "reopened_by_task": "LSV-V1-T013",
-    "reopened_reason": "LSV-V1-T013 was registered after the T001-T012 completion; T013 is ready/now with exact Leitstand repository claims, so the 2026-07-30 completion is historical rather than current.",
-    "reopen_basis": {
-      "doctor_recommendation": "reopen-required",
-      "open_tasks": [
-        "LSV-V1-T013"
-      ],
-      "ready_task": "LSV-V1-T013",
-      "prior_completion_preserved_in": "metadata.lifecycle"
-    },
     "t011_closeout_20260727": {
       "task": "LSV-V1-T011",
       "state": "verified",
@@ -133,6 +163,18 @@
       "remaining_open_tasks": [
         "LSV-V1-T010"
       ]
+    },
+    "t013_closeout_20260730": {
+      "task": "LSV-V1-T013",
+      "state": "verified",
+      "implementation_pr": "heimgewebe/leitstand#197",
+      "implementation_head": "0404a27fd6de0094ebf6f519f33d1d951b55f002",
+      "implementation_merge_commit": "186baf56d354f60b7bb3a616d904eaf17ba8fbfb",
+      "implementation_diff_sha256": "e2ef4ca18d35506161e1bf603769889667b7ace5d1a3966508457f8ca8a3b7c3",
+      "deployment_receipt_sha256": "87cf8238a7a28342af7e8b328d657d65274ec7eca50f8bc531716ab4a0cab1c8",
+      "live_snapshot_sha256": "f871ff08f7c4dfa64b9b6b12f24a2983174cea4e4431367086e768977d274566",
+      "live_now_item_count": 5,
+      "remaining_open_tasks": []
     }
   }
 }

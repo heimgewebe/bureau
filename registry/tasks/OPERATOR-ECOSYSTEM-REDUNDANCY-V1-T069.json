@@ -74,7 +74,6 @@
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "metadata": {
     "does_not_establish": [
-      "implementation",
       "queue_or_claim_authority",
       "safe_merge",
       "safe_branch_protection_change",
@@ -215,6 +214,130 @@
         "closeout_pull_request": 1168,
         "closeout_merge_commit": "a261d60b207bc70b8757d236b36e1cdc92e09091"
       }
+    },
+    "implementation": {
+      "repository": "heimgewebe/bureau",
+      "pull_requests": [
+        {
+          "number": 1179,
+          "title": "ci: cancel superseded PR validation safely",
+          "base_sha": "812afca6784a9be801e4f87a43af4397dd93e0a3",
+          "head_sha": "cd19db378a10b57866781f55d7af90f933a38c71",
+          "merge_commit_sha": "f46ff846fa9f0e37be22c7f2e7ef4ce701fb1adc",
+          "merged_at": "2026-07-29T19:01:33Z",
+          "diff_sha256": "fc382f671a511461e9abccf86fa4edf12e48bf8cc73312f890fdce72a5e3e296",
+          "workflow_run_id": 30482108375,
+          "workflow_conclusion": "success"
+        },
+        {
+          "number": 1192,
+          "title": "ci: restrict Registry main revalidation to task-allocation PRs",
+          "base_sha": "fe898ba822cacda4aa454ada750d7a6ee9347e49",
+          "head_sha": "ae7fd5443c632eefb1a9bf90fd3c2d21d8e7d934",
+          "merge_commit_sha": "640c6eb347a9a211ccff8ef06f02a65f88c4452e",
+          "merged_at": "2026-07-29T20:18:49Z",
+          "diff_sha256": "3ce78efba1088c4b25600d7efd16193fdf8dec3943b8eaf30e6954b8431954b3",
+          "workflow_run_id": 30487496951,
+          "workflow_conclusion": "success"
+        },
+        {
+          "number": 1197,
+          "title": "fix: recover in-progress Registry discovery checks",
+          "base_sha": "6838bb855a28b4b255d4647cc2b48191624695c6",
+          "head_sha": "39bdb25daeacfab28fe84327fc88c6a564a67bc9",
+          "merge_commit_sha": "01842bcbd05bc6406600423c1b3ff354b7a435fe",
+          "merged_at": "2026-07-29T21:24:05Z",
+          "diff_sha256": "726bfe52dac03b67b3c6ac6eb901501a056d722093cee095ca29e7e2914fd006",
+          "workflow_run_id": 30491660545,
+          "workflow_conclusion": "success"
+        }
+      ],
+      "final_hardening_pull_request": 1197,
+      "final_merge_commit_sha": "01842bcbd05bc6406600423c1b3ff354b7a435fe",
+      "main_head_at_verification": "c30dc1434a822bc1a7f2bcc38da9908ddb5c3be3",
+      "main_contains_final_merge": true
+    },
+    "validation": {
+      "verified_at": "2026-07-30T21:49:27Z",
+      "source_main_head": "c30dc1434a822bc1a7f2bcc38da9908ddb5c3be3",
+      "focused_tests": {
+        "command": "/home/alex/repos/bureau/.venv/bin/python -m pytest tests/test_github_workflows.py tests/test_registry_registration_preflight_workflow_failclosed.py -q",
+        "result": "13 passed"
+      },
+      "branch_protection": {
+        "strict": true,
+        "required_contexts": [
+          "validate (3.10)",
+          "validate (3.12)",
+          "registry-registration-preflight/freshness"
+        ]
+      },
+      "surface_sha256": {
+        ".github/workflows/validate.yml": "2e53a6682ee8427407bb93d47520897dfdf6ee6b6acea5a2a7c8fae4e5fe2ae9",
+        ".github/workflows/registry-registration-preflight.yml": "ca83102b2508befd48c7c7699dfb900fca602d506211d573dcb2fa02fb4bd98c",
+        "tests/test_github_workflows.py": "7191d7328f11d5a4026c580eaedc2da2ece4c14756114dd7d7d60ce76ce0c9ff",
+        "tests/test_registry_registration_preflight_workflow_failclosed.py": "2e30fe9079075123c945bd4ddc98cf987847c1a32d9ea54a81526281cc99930b",
+        "docs/reports/bureau-lean-actions-t069.md": "5cc18c53aebfda3a1c59422c7d1bd7d7df5baf7b0bdcb3d2da4783039cb60a27"
+      },
+      "claude_workflow_present": false,
+      "final_merge_ancestor_of_main": true
+    },
+    "acceptance_evidence": {
+      "baseline-bound": "docs/reports/bureau-lean-actions-t069.md plus exact surface hashes",
+      "claude-idle-retired": ".github/workflows/claude.yml is absent from the tracked tree",
+      "superseded-pr-runs-converge": "PR #1179 and event-specific concurrency groups in validate and Registry preflight",
+      "registration-prs-only-revalidated": "PRs #1192 and #1197 plus fail-closed paginated discovery tests",
+      "required-check-contract-preserved": "live main branch protection readback at verification time",
+      "measured-effect": "revision-bound before/after table in docs/reports/bureau-lean-actions-t069.md",
+      "no-new-authority": "final-state review found no review, merge, queue, claim, dispatch, deployment or cleanup authority in the implementation surfaces"
+    },
+    "review": {
+      "kind": "revision-bound-final-state-operator-self-review",
+      "reviewer": "chatgpt",
+      "source_main_head": "c30dc1434a822bc1a7f2bcc38da9908ddb5c3be3",
+      "verdict": "PASS",
+      "all_findings_triaged": true,
+      "material_findings_remaining": 0,
+      "independent_review_status": "not_asserted",
+      "reviewed_paths": [
+        ".github/workflows/validate.yml",
+        ".github/workflows/registry-registration-preflight.yml",
+        "tests/test_github_workflows.py",
+        "tests/test_registry_registration_preflight_workflow_failclosed.py",
+        "docs/reports/bureau-lean-actions-t069.md"
+      ]
+    },
+    "resolution_summary": "Bureau PRs #1179, #1192 and #1197 retire the idle Claude workflow, bind superseded PR-run cancellation to the exact PR and workflow class, and restrict main-push Registry revalidation to added or renamed task-allocation files while preserving paginated fail-closed discovery. Exact-head CI succeeded for all three implementation revisions; the final hardening merge is contained in main and the current strict required-check contract remains intact.",
+    "verified_at": "2026-07-30T21:49:27Z",
+    "verification": {
+      "source": "merged_bureau_prs_1179_1192_1197_and_live_main_readback",
+      "source_ref": "github-prs:heimgewebe/bureau#1179,#1192,#1197@c30dc1434a822bc1a7f2bcc38da9908ddb5c3be3",
+      "verified_at": "2026-07-30T21:49:27Z",
+      "final_merge_commit_sha": "01842bcbd05bc6406600423c1b3ff354b7a435fe",
+      "main_head": "c30dc1434a822bc1a7f2bcc38da9908ddb5c3be3",
+      "task_state_before": "ready",
+      "queue_lane_before": "now",
+      "task_sha256": "eb3dafdf7eef5b62fa390bb0fc392d315ab2930baecba81cb432d97621c31642",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396",
+      "closeout_validation": {
+        "full_pytest": {
+          "task_id": "91053855ad52496caf6a4921",
+          "argv_sha256": "cdf7f28aba13fbe8fbfb961bd1e0cb3d0c08f3823c90d94c2a405e7179d910e1",
+          "result": "PASS",
+          "exit_status": 0,
+          "progress": "100%",
+          "terminalization_sha256": "6cf1c7e1954836df21483578c6cd5bc182bb2cb393c20225918161f82e7b0fee",
+          "lifecycle_receipt_sha256": "d26c8ca1a388f466789de21da052ea3474a8dd58d1aefdfc66f48bba17d7e5f3"
+        },
+        "ruff": "PASS",
+        "systemkatalog_boundary": "PASS",
+        "bureau_check": {
+          "valid": true,
+          "state_integrity": "ok",
+          "schema_version": 3
+        },
+        "git_diff_check": "PASS"
+      }
     }
   },
   "priority": {
@@ -232,6 +355,6 @@
     "strategy": "Revertiere ausschließlich den exakten T069-Implementierungscommit beziehungsweise stelle die drei vorher gebundenen Workflowbytes wieder her. Registry, Queue, Branchschutz, Codex-Einstellungen und fremde Pull Requests bleiben unangetastet; bei unklarem GitHub-Checkzustand stoppt der Rollback vor weiteren Effekten."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Bureau GitHub-Actions-Leerlauf und Vollrevalidierung begrenzen"
 }

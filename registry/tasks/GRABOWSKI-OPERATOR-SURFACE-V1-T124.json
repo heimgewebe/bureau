@@ -1,0 +1,132 @@
+{
+  "acceptance": [
+    {
+      "assertion": "MCP-Schema und Laufzeit akzeptieren für Current-Work-Repositorys nur absolute kanonische Pfade und lehnen Kurzaliase, relative Pfade, kanonische Dubletten und doppelt verwurzelte Pfade vor Repository-Lesezugriffen mit stabilem Fehlervertrag ab.",
+      "id": "canonical-absolute-input"
+    },
+    {
+      "assertion": "Ein Fehler beim Checkout-Inventar eines einzelnen gültigen Repositorys wird begrenzt und maschinenlesbar projiziert, ohne Checkout- oder Arbeitsnachweise anderer gültiger Repositorys zu verwerfen.",
+      "id": "per-repository-isolation"
+    },
+    {
+      "assertion": "Capability-Katalog, Publication-Profile, generierter Operator-Kontext und Laufzeit-Schema beschreiben denselben absoluten Repository-Pfadvertrag und bestehen die vorgesehenen Generierungs- und Oberflächenprüfungen.",
+      "id": "contract-surface-consistency"
+    },
+    {
+      "assertion": "Gezielte Current-Work-Regressionstests und die vollständige Grabowski-Validierung bestehen auf dem exakt geprüften PR-Head; behauptete Testzahlen werden vor Closeout autoritativ nachgelesen oder neu erzeugt.",
+      "id": "regression-proof"
+    },
+    {
+      "assertion": "Es wird keine hostabhängige Aliasauflösung, kein stilles Repository-Raten und keine zweite Repository-Identitätswahrheit eingeführt.",
+      "id": "no-hidden-alias-resolution"
+    },
+    {
+      "assertion": "Der offene PR trägt nach kanonischer Task-Veröffentlichung die strukturierte Markierung Bureau-Task: GRABOWSKI-OPERATOR-SURFACE-V1-T124; Merge und Verifikation erfolgen nur bei exaktem Head, grünem CI, revisionsgebundenem Self-Review und anschließendem Registry-/Runtime-Readback.",
+      "id": "bound-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die autonome Koordination und Beseitigung ungebundener, die Frontier blockierender Arbeit ausdrücklich beauftragt. Die Implementierung existiert bereits auf PR #524; dieser Task autorisiert nur revisionsgebundene Prüfung, strukturierte Bureau-Bindung, notwendige Reviewkorrekturen innerhalb des benannten Pfadsatzes und Closeout. Keine neue Featureausweitung.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/contracts/capability-catalog.v1.json",
+      "path:/home/alex/repos/grabowski/contracts/publication-profiles.v1.json",
+      "path:/home/alex/repos/grabowski/docs/generated/operator-context.v1.json",
+      "path:/home/alex/repos/grabowski/src/grabowski_current_work_surface.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_runtime.py",
+      "path:/home/alex/repos/grabowski/tests/test_current_work_surface.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den bereits auf Grabowski-PR #524 implementierten Current-Work-Eingabevertrag revisionsgebunden in Bureau abbilden: Repository-Eingaben müssen absolute kanonische Pfade sein, ungültige Aliase werden vor Quellzugriffen verständlich abgelehnt, und der Ausfall eines einzelnen Checkout-Inventars darf die Evidenz anderer gültiger Repositories nicht verwerfen. Der Task dient ausschließlich der Prüfung, strukturierten PR-Bindung und Terminalisierung der vorhandenen Implementierung auf Head d33b85cd72bf352e9b7eb32ddb6f3166b03d7b59.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T124",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "coordination_rebase": {
+      "reason": "remote-main-drift-before-workspace; no publication effect started",
+      "rebased_registry_commit": "255b5e0d4d94e8f4dccc49e763904ce3537144b1",
+      "stale_registry_commit": "3ceedceb0f2ff3df1500c9898bfd22e899e7448b",
+      "supersedes_stale_proposal_sha256": "5f379f9b3f727ef82c22589db7fda856d383d54142f272b63a59bcee458885e1"
+    },
+    "does_not_establish": [
+      "merge readiness",
+      "task verification",
+      "runtime deployment",
+      "permission to modify files outside the declared path set",
+      "absence of review findings"
+    ],
+    "observed_claims_from_pr_body": {
+      "focused_tests": "58 targeted current-work tests reported PASS",
+      "full_suite": "3962 tests reported PASS with 4 skipped",
+      "status": "unverified_until_closeout_readback"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-9eaf451a111ba89b4c5c2561",
+      "event_id": 1767,
+      "event_created_at": "2026-07-30T21:08:56.854661Z",
+      "request_sha256": "7d5d52d28f4680293687f8c8c1d29c1d14882b7f0827e81d551aa1775f26bbbb",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github-pull-request",
+        "locator": "github:heimgewebe/grabowski#524@d33b85cd72bf352e9b7eb32ddb6f3166b03d7b59",
+        "observed_at": "2026-07-30T21:05:54Z",
+        "sha256": "820787345771bcbb03b9277a0130c5c7ae5f96093b1d190e44fada6f84e9386c"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "runtime_refresh_readback": {
+      "manifest_sha256": "e89caf39a9dcf91b2139df08d32a78dafc655a624d7993086303870ee3368ab6",
+      "observed_at": "2026-07-30T21:22:16.715398Z",
+      "registry_snapshot_tree_sha256": "080640b65557b3f91aac525095c0302f655b0665a77e253e9125f7425a2b0477",
+      "release_id": "255b5e0d4d94-src8add81ed75ea",
+      "runtime_identity_valid": true,
+      "source_commit": "255b5e0d4d94e8f4dccc49e763904ce3537144b1"
+    },
+    "source_pull_request": {
+      "base_head": "4b5af4afacb1ed2caf4d8b81b1b63a0e87307115",
+      "changed_paths": [
+        "contracts/capability-catalog.v1.json",
+        "contracts/publication-profiles.v1.json",
+        "docs/generated/operator-context.v1.json",
+        "src/grabowski_current_work_surface.py",
+        "src/grabowski_runtime.py",
+        "tests/test_current_work_surface.py"
+      ],
+      "implementation_head": "d33b85cd72bf352e9b7eb32ddb6f3166b03d7b59",
+      "number": 524,
+      "observed_at": "2026-07-30T21:05:54Z",
+      "repository": "heimgewebe/grabowski"
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "grabowski",
+    "testing"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Current-Work-Repositorypfade kanonisch und fehlertolerant validieren"
+}

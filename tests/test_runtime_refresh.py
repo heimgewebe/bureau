@@ -137,6 +137,7 @@ def lease_for(
     omit: set[str] | None = None,
     metadata: dict[str, Any] | None = None,
     metadata_digest: str | None = None,
+    current: datetime = NOW,
 ) -> tuple[dict[str, Any], Path]:
     database = root / "resources.sqlite3"
     database.parent.mkdir(parents=True, exist_ok=True)
@@ -166,8 +167,8 @@ def lease_for(
         )
         """
     )
-    acquired = int((NOW - timedelta(minutes=1)).timestamp())
-    expiry = int((expires_at or NOW + timedelta(hours=1)).timestamp())
+    acquired = int((current - timedelta(minutes=1)).timestamp())
+    expiry = int((expires_at or current + timedelta(hours=1)).timestamp())
     omitted = omit or set()
     lease_metadata = metadata or {}
     metadata_json = json.dumps(
@@ -188,6 +189,52 @@ def lease_for(
     connection.close()
     database.chmod(0o600)
     return {"owner_id": owner_id, "task_id": "grabowski-task-t016"}, database
+
+
+def prepare_legacy_cutover(
+    tmp_path: Path,
+    *,
+    current: datetime = NOW,
+) -> tuple[dict[str, Any], Path, Path, Path, dict[str, Any]]:
+    _, manifest_path, typed_intent, _ = prepare_candidate_intent(tmp_path)
+    legacy = dict(typed_intent)
+    legacy.pop("runtime_approval")
+    legacy.pop("approval_task_id")
+    legacy["created_at"] = refresh.isoformat(current)
+    legacy["expires_at"] = refresh.isoformat(current + timedelta(minutes=15))
+    legacy["nonce"] = "legacy-cutover-test"
+    legacy = refresh.bind_digest(legacy, "intent_sha256")
+    intent_path = (
+        Path(legacy["state_root"]) / "intents" / f"{legacy['intent_sha256']}.json"
+    )
+    refresh.create_only(intent_path, refresh.canonical_bytes(legacy))
+    binding, resource_db = lease_for(
+        tmp_path / "legacy-leases", legacy, current=current
+    )
+    normalized = refresh.validate_live_lease_binding(
+        legacy, binding, resource_db=resource_db, now=current
+    )
+    started = refresh.bind_digest(
+        {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_attempt_start",
+            "intent_sha256": legacy["intent_sha256"],
+            "target_sha256": legacy["target_sha256"],
+            "main_commit": legacy["main_commit"],
+            "lease_binding": normalized,
+            "started_at": refresh.isoformat(current),
+            "effect_started": False,
+        },
+        "start_sha256",
+    )
+    refresh.create_only(
+        Path(legacy["state_root"])
+        / "attempts"
+        / legacy["target_sha256"]
+        / "started.json",
+        refresh.canonical_bytes(started),
+    )
+    return legacy, intent_path, manifest_path, resource_db, started
 
 
 def test_observe_reports_already_current_without_pr_lookup(tmp_path: Path) -> None:
@@ -342,6 +389,40 @@ def test_prepare_intent_is_hash_bound_and_requires_authorization(tmp_path: Path)
         )
 
 
+def test_runtime_approval_requires_minimum_remaining_lifetime(tmp_path: Path) -> None:
+    observed, _ = candidate(tmp_path)
+    intent, intent_path = refresh.prepare_intent(
+        candidate=observed,
+        state_root=(tmp_path / "short-state").resolve(),
+        prefix=(tmp_path / "short-prefix").resolve(),
+        bin_dir=(tmp_path / "short-bin").resolve(),
+        remote_url="file:///tmp/bureau.git",
+        authorized_by="chatgpt",
+        authorization="Explicit short-lived break-glass approval.",
+        break_glass=True,
+        approval_reference=observed["target_sha256"],
+        approval_task_id="BUR-2026-003-T009",
+        ttl_seconds=599,
+        now=NOW,
+    )
+
+    with pytest.raises(refresh.RuntimeRefreshError) as error:
+        refresh.validate_runtime_approval_intent(
+            intent_path,
+            now=NOW,
+            minimum_remaining_seconds=600,
+        )
+
+    assert error.value.code == "runtime-approval-validity-too-short"
+    assert error.value.details == {
+        "remaining_seconds": 599,
+        "minimum_remaining_seconds": 600,
+    }
+    assert not (
+        Path(intent["state_root"]) / "attempts" / intent["target_sha256"]
+    ).exists()
+
+
 def test_prepare_intent_rejects_tampered_or_blocked_candidate(tmp_path: Path) -> None:
     observed, _ = candidate(tmp_path)
     observed["main_commit"] = "9" * 40
@@ -373,6 +454,78 @@ def test_prepare_intent_rejects_tampered_or_blocked_candidate(tmp_path: Path) ->
             now=NOW,
         )
     assert blocked_error.value.code == "candidate-not-deployable"
+
+
+def test_legacy_cutover_requires_started_attempt_manifest_and_live_leases(
+    tmp_path: Path,
+) -> None:
+    legacy, _, manifest_path, resource_db, started = prepare_legacy_cutover(tmp_path)
+
+    decision = refresh.validate_legacy_runtime_refresh_bootstrap(
+        state_root=Path(legacy["state_root"]),
+        resource_db=resource_db,
+        expected_source_commit=legacy["main_commit"],
+        prefix=Path(legacy["prefix"]),
+        bin_dir=Path(legacy["bin_dir"]),
+        manifest_path=manifest_path,
+        now=NOW,
+    )
+
+    assert decision["allowed"] is True
+    assert decision["required_level"] == "legacy_runtime_operator_gate"
+    assert decision["expected_reference"] == legacy["target_sha256"]
+    assert decision["legacy_cutover"]["intent_sha256"] == legacy["intent_sha256"]
+    assert decision["legacy_cutover"]["start_sha256"] == started["start_sha256"]
+
+    result_path = (
+        Path(legacy["state_root"])
+        / "attempts"
+        / legacy["target_sha256"]
+        / "result.json"
+    )
+    refresh.create_only(
+        result_path,
+        refresh.canonical_bytes({"status": "failed-before-cutover"}),
+    )
+    with pytest.raises(refresh.RuntimeRefreshError) as completed:
+        refresh.validate_legacy_runtime_refresh_bootstrap(
+            state_root=Path(legacy["state_root"]),
+            resource_db=resource_db,
+            expected_source_commit=legacy["main_commit"],
+            prefix=Path(legacy["prefix"]),
+            bin_dir=Path(legacy["bin_dir"]),
+            manifest_path=manifest_path,
+            now=NOW,
+        )
+    assert completed.value.code == "runtime-approval-missing"
+
+
+def test_legacy_cutover_rejects_reacquired_leases(tmp_path: Path) -> None:
+    legacy, _, manifest_path, resource_db, _ = prepare_legacy_cutover(tmp_path)
+    connection = sqlite3.connect(resource_db)
+    connection.execute(
+        """
+        UPDATE leases
+        SET acquired_at_unix = acquired_at_unix + 1,
+            updated_at_unix = updated_at_unix + 1,
+            expires_at_unix = expires_at_unix + 1
+        """
+    )
+    connection.commit()
+    connection.close()
+
+    with pytest.raises(refresh.RuntimeRefreshError) as error:
+        refresh.validate_legacy_runtime_refresh_bootstrap(
+            state_root=Path(legacy["state_root"]),
+            resource_db=resource_db,
+            expected_source_commit=legacy["main_commit"],
+            prefix=Path(legacy["prefix"]),
+            bin_dir=Path(legacy["bin_dir"]),
+            manifest_path=manifest_path,
+            now=NOW,
+        )
+
+    assert error.value.code == "runtime-approval-missing"
 
 
 def test_lease_binding_requires_live_complete_private_database(tmp_path: Path) -> None:
@@ -1054,7 +1207,8 @@ def test_real_installer_publishes_working_refresh_launcher(tmp_path: Path) -> No
         text=True,
         capture_output=True,
     )
-    assert denied.returncode == 2
+    assert denied.returncode != 0
+    assert "runtime approval denied" in denied.stderr
     assert not prefix.exists()
 
     expired_approval = write_runtime_approval_intent(
@@ -1117,4 +1271,136 @@ def test_real_installer_publishes_working_refresh_launcher(tmp_path: Path) -> No
     )
     payload = json.loads(status.stdout)
     assert payload["kind"] == "bureau_runtime_refresh_status"
-    assert payload["deployed_source_commit"] == git(clean, "rev-parse", "HEAD")
+    deployed_head = git(clean, "rev-parse", "HEAD")
+    assert payload["deployed_source_commit"] == deployed_head
+
+    readme = clean / "README.md"
+    readme.write_text(
+        readme.read_text(encoding="utf-8") + "\nLegacy refresh cutover fixture.\n",
+        encoding="utf-8",
+    )
+    git(clean, "add", "README.md")
+    git(clean, "commit", "-m", "synthetic legacy cutover target")
+    target_head = git(clean, "rev-parse", "HEAD")
+    git(clean, "update-ref", "refs/remotes/origin/main", target_head)
+    assert target_head != deployed_head
+    deployed_manifest, deployed_manifest_sha = refresh.load_manifest(
+        prefix / "deployment-manifest.json"
+    )
+    current = datetime.now(timezone.utc)
+    legacy_state = (tmp_path / "legacy-refresh-state").resolve()
+    workspace = legacy_state / "workspaces" / target_head
+    target_sha = refresh.sha256_bytes(
+        refresh.canonical_bytes(
+            {
+                "kind": "legacy-cutover-test-target",
+                "source_commit": target_head,
+                "deployed_manifest_sha256": deployed_manifest_sha,
+            }
+        )
+    )
+    legacy_intent = refresh.bind_digest(
+        {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_intent",
+            "repository": "heimgewebe/bureau",
+            "remote_url": str(bare),
+            "main_commit": target_head,
+            "pull_request": 1236,
+            "merged_at": refresh.isoformat(current),
+            "required_checks": list(refresh.DEFAULT_REQUIRED_CHECKS),
+            "target_sha256": target_sha,
+            "observation_sha256": "b" * 64,
+            "expected_deployed_source_commit": deployed_manifest["source_commit"],
+            "expected_manifest_sha256": deployed_manifest_sha,
+            "state_root": str(legacy_state),
+            "prefix": str(prefix.resolve()),
+            "bin_dir": str(bin_dir.resolve()),
+            "workspace": str(workspace),
+            "required_resource_keys": refresh.required_resource_keys(
+                state_root=legacy_state,
+                prefix=prefix.resolve(),
+                bin_dir=bin_dir.resolve(),
+                workspace=workspace,
+            ),
+            "authorized_by": "legacy-runner-test",
+            "authorization": "Explicit operator authorization from the old runner.",
+            "created_at": refresh.isoformat(current),
+            "expires_at": refresh.isoformat(current + timedelta(minutes=15)),
+            "nonce": "legacy-installer-cutover",
+            "does_not_establish": [
+                "external_lease_liveness",
+                "merge_authority",
+                "automatic_retry_authority",
+            ],
+        },
+        "intent_sha256",
+    )
+    legacy_intent_path = (
+        legacy_state / "intents" / f"{legacy_intent['intent_sha256']}.json"
+    )
+    refresh.create_only(
+        legacy_intent_path, refresh.canonical_bytes(legacy_intent)
+    )
+    legacy_binding, legacy_resource_db = lease_for(
+        tmp_path / "legacy-installer-leases",
+        legacy_intent,
+        current=current,
+    )
+    normalized_binding = refresh.validate_live_lease_binding(
+        legacy_intent,
+        legacy_binding,
+        resource_db=legacy_resource_db,
+        now=current,
+    )
+    legacy_started = refresh.bind_digest(
+        {
+            "schema_version": refresh.SCHEMA_VERSION,
+            "kind": "bureau_runtime_refresh_attempt_start",
+            "intent_sha256": legacy_intent["intent_sha256"],
+            "target_sha256": legacy_intent["target_sha256"],
+            "main_commit": target_head,
+            "lease_binding": normalized_binding,
+            "started_at": refresh.isoformat(current),
+            "effect_started": False,
+        },
+        "start_sha256",
+    )
+    refresh.create_only(
+        legacy_state / "attempts" / target_sha / "started.json",
+        refresh.canonical_bytes(legacy_started),
+    )
+
+    legacy_install = subprocess.run(
+        [
+            *command,
+            "--runtime-refresh-state-root",
+            str(legacy_state),
+            "--resource-db",
+            str(legacy_resource_db),
+            "--replace-existing",
+        ],
+        cwd=clean,
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert legacy_install.returncode == 0, legacy_install.stderr
+    legacy_receipt = json.loads(legacy_install.stdout.strip().splitlines()[-1])
+    assert (
+        legacy_receipt["runtime_approval"]["required_level"]
+        == "legacy_runtime_operator_gate"
+    )
+    assert legacy_receipt["runtime_approval"]["legacy_cutover"] == {
+        "intent_sha256": legacy_intent["intent_sha256"],
+        "start_sha256": legacy_started["start_sha256"],
+        "lease_binding_sha256": normalized_binding["lease_binding_sha256"],
+        "expected_source_commit": target_head,
+    }
+    upgraded_status = subprocess.run(
+        [str(runner), "--state-root", str(legacy_state), "status"],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    assert json.loads(upgraded_status.stdout)["deployed_source_commit"] == target_head

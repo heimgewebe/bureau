@@ -295,7 +295,21 @@ def parser() -> argparse.ArgumentParser:
     value.add_argument("--source", default=".")
     value.add_argument("--prefix", default="~/.local/share/bureau")
     value.add_argument("--bin-dir", default="~/.local/bin")
-    value.add_argument("--approval-intent", required=True)
+    value.add_argument("--approval-intent")
+    value.add_argument(
+        "--runtime-refresh-state-root",
+        default=os.environ.get(
+            "BUREAU_RUNTIME_REFRESH_STATE_ROOT",
+            "~/.local/state/bureau/runtime-refresh",
+        ),
+    )
+    value.add_argument(
+        "--resource-db",
+        default=os.environ.get(
+            "GRABOWSKI_RESOURCE_DB",
+            "~/.local/state/grabowski/resources.sqlite3",
+        ),
+    )
     value.add_argument("--replace-existing", action="store_true")
     return value
 
@@ -415,13 +429,28 @@ def main(argv: list[str] | None = None) -> int:
     package_root = source / "src"
     if str(package_root) not in sys.path:
         sys.path.insert(0, str(package_root))
-    from bureau.runtime_refresh import RuntimeRefreshError, validate_runtime_approval_intent
+    from bureau.runtime_refresh import (
+        RuntimeRefreshError,
+        validate_legacy_runtime_refresh_bootstrap,
+        validate_runtime_approval_intent,
+    )
 
+    manifest_path = prefix / "deployment-manifest.json"
     try:
-        runtime_approval = validate_runtime_approval_intent(
-            Path(args.approval_intent).expanduser().resolve(),
-            expected_source_commit=head,
-        )
+        if args.approval_intent:
+            runtime_approval = validate_runtime_approval_intent(
+                Path(args.approval_intent).expanduser().resolve(),
+                expected_source_commit=head,
+            )
+        else:
+            runtime_approval = validate_legacy_runtime_refresh_bootstrap(
+                state_root=Path(args.runtime_refresh_state_root).expanduser().resolve(),
+                resource_db=Path(args.resource_db).expanduser().resolve(),
+                expected_source_commit=head,
+                prefix=prefix,
+                bin_dir=bin_dir,
+                manifest_path=manifest_path,
+            )
     except RuntimeRefreshError as exc:
         raise SystemExit(f"runtime approval denied: {exc.code}: {exc.message}") from exc
 
@@ -454,7 +483,6 @@ def main(argv: list[str] | None = None) -> int:
     if not module.is_file() or module.is_symlink():
         raise SystemExit("immutable release is missing runtime_identity.py")
 
-    manifest_path = prefix / "deployment-manifest.json"
     launcher = bin_dir / "bureau"
     runtime_refresh_launcher = bin_dir / "bureau-runtime-refresh"
     if manifest_path.exists() and (manifest_path.is_symlink() or not manifest_path.is_file()):

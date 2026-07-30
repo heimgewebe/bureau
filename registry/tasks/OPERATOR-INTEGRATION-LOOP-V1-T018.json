@@ -1,0 +1,157 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Jeder aktuelle Befund mit code terminal-task-in-queue, effective_state in verified/cancelled/superseded und proposed_action remove_from_queue erzeugt genau eine deterministische Planaktion mit target_lane null; der erwartete Queuezustand enthält die Task-ID danach in keiner Lane.",
+      "evidence_type": "object",
+      "id": "terminal-finding-plan-parity",
+      "verifier": "ausführbarer Plan-Regressionstest mit verifiziertem Runtime-Overlay"
+    },
+    {
+      "assertion": "remove_from_queue wird ausschließlich für code terminal-task-in-queue, einen terminalen effektiven Zustand, eine String-Task-ID und target_lane null akzeptiert. Gleichnamige oder fremde vorgeschlagene Entfernaktionen bleiben wirkungslos.",
+      "evidence_type": "object",
+      "id": "remove-boundary-fail-closed",
+      "verifier": "negative Unit- und Integrationstests"
+    },
+    {
+      "assertion": "Ein reviewed Plan entfernt den terminalen Eintrag aus allen Lanes, behält andere Queue-Einträge unverändert und durchläuft dieselben Registry-Head-, Queue-Hash-, Dry-run-Paritäts-, Approval- und Post-Gate-Prüfungen wie bestehende add_to_queue-Aktionen.",
+      "evidence_type": "object",
+      "id": "reviewed-apply-removal",
+      "verifier": "ausführbarer Apply-Regressionstest mit echter StateStore-Verifikation"
+    },
+    {
+      "assertion": "Bei Head-Drift, Queue-Drift, Findings-Drift, manipuliertem Plan oder fehlgeschlagenem Post-Gate bleibt beziehungsweise wird der ursprüngliche Queue-Text wiederhergestellt; es entsteht kein partieller Entferneffekt.",
+      "evidence_type": "boolean",
+      "id": "rollback-preserved",
+      "verifier": "bestehende und ergänzte Rollback-Regressionstests"
+    },
+    {
+      "assertion": "Bestehende add_to_queue-Semantik für now und next bleibt unverändert; lane-review-, move-from-now- und sonstige Diagnoseaktionen werden weiterhin nicht automatisch angewandt.",
+      "evidence_type": "boolean",
+      "id": "add-behavior-preserved",
+      "verifier": "vollständige queue-reconcile-Testsuite und Diff-Review"
+    },
+    {
+      "assertion": "Ruff, die vollständige Bureau-Testsuite und Git-Diff-Prüfung bestehen auf der exakten Head-Revision.",
+      "evidence_type": "object",
+      "id": "full-validation",
+      "verifier": "revisionsgebundene Test- und CI-Belege"
+    },
+    {
+      "assertion": "Die Änderung erzeugt keine Claim-, Dispatch-, Taskabschluss-, Merge-, Deployment- oder ungereviewte Queue-Autorität und verändert keine fremden Worktrees oder aktiven Läufe.",
+      "evidence_type": "boolean",
+      "id": "no-new-authority",
+      "verifier": "Grenzreview und Live-Readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [
+    "OPERATOR-MACHINE-READABILITY-V1-T017"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Änderung ist auf den bestehenden reviewed queue-reconcile-Vertrag und zwei benannte Dateien begrenzt. Queue-Inhalte werden in der Implementierungs-PR nicht direkt verändert; jede spätere Anwendung bleibt plan-, review-, Head-, Hash- und Post-Gate-gebunden.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/.bureau-scopes/core-code",
+      "path:/home/alex/repos/bureau/src/bureau/queue_reconcile.py",
+      "path:/home/alex/repos/bureau/tests/test_queue_reconcile.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Schließe die belegte Paritätslücke zwischen queue-reconcile-Diagnose und reviewed Apply-Plan: Ein Befund terminal-task-in-queue muss als eng gebundene remove_from_queue-Aktion in den Plan eingehen und nach Review atomar angewandt werden können, ohne andere Entfernaktionen oder neue Queue-Autorität zu erlauben.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T018",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Anwendung eines Queue-Reconcile-Plans auf die kanonische Queue",
+      "Abwesenheit weiterer Queue-Drift",
+      "Taskabschluss",
+      "Mergebereitschaft",
+      "Deployment"
+    ],
+    "readiness": {
+      "authorization_reference": "scheduled instruction: claim or implement a conflict-free Bureau fallback task and register validated findings",
+      "authorized_by": "alex",
+      "checks": {
+        "candidate_promoted": true,
+        "foreign_work_nonoverlap_checked": true,
+        "live_gap_reproduced": true,
+        "review_before_effect_preserved": true
+      },
+      "does_not_establish": [
+        "claim_or_dispatch_authority",
+        "safe_merge",
+        "future_nonconflict"
+      ],
+      "exact_scope": [
+        "path:/home/alex/repos/bureau/src/bureau/queue_reconcile.py",
+        "path:/home/alex/repos/bureau/tests/test_queue_reconcile.py"
+      ],
+      "kind": "operator-authorized-task-readiness",
+      "ready_at": "2026-07-30T17:34:00Z",
+      "schema_version": 1,
+      "source_main_head": "08c912286df4515a5ecdadfd0bb4faa57f174d4d",
+      "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T018"
+    },
+    "registered_at": "2026-07-30T19:34:00+02:00",
+    "source": "scheduled-bureau-pickup-fallback-live-audit",
+    "source_facts": {
+      "active_foreign_work_preserved": [
+        "OPERATOR-INTEGRATION-LOOP-V1-T014",
+        "GRABOWSKI-OPERATOR-SURFACE-V1-T083",
+        "heimgewebe/weltgewebe#1641"
+      ],
+      "dry_run_plan": "/home/alex/.local/state/bureau/recovery/queue-reconcile-20260730T1904.json",
+      "dry_run_plan_sha256": "9e0cab843ae9df771932f33392fb9a35e441eba4f2082507c4949e8efbd851e6",
+      "observed_plan_add_actions": 61,
+      "observed_plan_remove_actions": 0,
+      "observed_terminal_findings": 5
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-cb0500c2247d4e605674bc41",
+      "event_id": 1740,
+      "event_created_at": "2026-07-30T17:31:04.447541Z",
+      "request_sha256": "46cbc39822f20f65eaf1c19d87890c474af7eaf2f8872ac7cc2b28b3549988cb",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-repository-audit",
+        "locator": "file:/home/alex/.local/state/bureau/recovery/queue-reconcile-20260730T1904.json",
+        "observed_at": "2026-07-30T17:14:30.462742Z",
+        "sha256": "9e0cab843ae9df771932f33392fb9a35e441eba4f2082507c4949e8efbd851e6"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 24
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich die remove_from_queue-Aufnahme in queue_reconcile.py und die zugehörigen Regressionstests. Die bisherige add-only-Plansemantik wird dadurch wiederhergestellt; Queue-Dateien, Runtime-Overlays und fremde Arbeit werden nicht umgeschrieben."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Terminale Queue-Einträge im reviewed Reconcile entfernen"
+}

@@ -1,0 +1,121 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Claim-Intent, Live Register, koordinierter Pickup, Task-Lifecycle und die aktuelle Grabowski-Readback-Arbeit einschließlich PR #513 werden gegen ein explizites CAS-Anforderungsmodell geprüft; bereits erfüllte Anforderungen werden nicht dupliziert.",
+      "id": "existing-contract-audit"
+    },
+    {
+      "assertion": "Mindestens ein realer Hochfrequenzpfad belegt, dass der neue oder angepasste Befehl eine vollständige Zustandslesung oder mehrere synchrone Rundreisen reduziert; ohne messbaren Nutzen endet die Aufgabe mit no-change.",
+      "id": "measured-read-reduction"
+    },
+    {
+      "assertion": "Jeder mutierende Befehl bindet mindestens Task-Identität, erwartete Lifecycle-Version oder Versuch, erwarteten Owner beziehungsweise Lease-Token soweit relevant, Idempotenzschlüssel und das zugehörige Outcome- oder Effekt-Receipt.",
+      "id": "exact-preconditions"
+    },
+    {
+      "assertion": "Version-, Versuch-, Owner-, Lease- und Idempotenzkonflikte werden vor Wirkung deterministisch mit maschinenlesbarem Grund abgelehnt und verändern weder Task-, Queue- noch Lease-Wahrheit.",
+      "id": "deterministic-rejection"
+    },
+    {
+      "assertion": "Transportabbruch oder Timeout nach möglichem Effekt erzeugt einen unbekannten Ausgang mit exakt benanntem Readback und verbietet unveränderte Wiederholung; ein asynchrones Pending-Receipt ist nur mit dauerhafter Identität zulässig.",
+      "id": "unknown-outcome-contract"
+    },
+    {
+      "assertion": "Jeder erfolgreiche Effekt wird aus der autoritativen Quelle auf dieselbe Task-, Versuch- und Owner-Identität zurückgelesen; ein Event-Append allein gilt nicht als erfolgreicher Claim oder Abschluss.",
+      "id": "authoritative-readback"
+    },
+    {
+      "assertion": "Hermetische Parallelitäts-, Idempotenz-, Drift-, Crash- und Replaytests belegen genau einen zulässigen Effekt, explizite Verlierer und keine stillen Doppelmutationen.",
+      "id": "concurrency-tests"
+    },
+    {
+      "assertion": "Die Optimierung führt keine zweite Lifecycle-Wahrheit, keine Queue- oder Dispatch-Autorität aus Events und keinen Policy-, Review-, Merge- oder Deployment-Bypass ein.",
+      "id": "truth-boundary"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.truth-model"
+    }
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 30. Juli 2026 die priorisierte Registrierung und Umsetzung sinnvoller Reibungshebel beauftragt. T021 implementiert nur nachgewiesene CAS-Lücken und darf die bestehende fail-closed Wahrheitshierarchie nicht lockern.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau",
+      "path:/home/alex/repos/bureau/tests",
+      "path:/home/alex/repos/bureau/docs/bureau-operator-intake-v1.md",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T021.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Für Claim-, Close- und vergleichbare Bureau-Zustandsänderungen revisionsgebunden prüfen, wo ein enger Compare-and-Swap-Befehl mit erwarteter Version, Versuch, Owner- oder Lease-Bindung, Idempotenzschlüssel und Outcome-Receipt vollständige Vorablesungen sicher ersetzen kann. Nur belegte Lücken werden umgesetzt; Ablehnung, Konkurrenz und unbekannte Ausgänge bleiben explizit und erfolgreicher Effekt erfordert autoritativen Readback.",
+  "id": "BUREAU-TRUTH-MODEL-V2-T021",
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "metadata": {
+    "audit_before_implementation": [
+      "Bureau claim intent and lifecycle store",
+      "Live Register append-only intake",
+      "Grabowski coordinated pickup",
+      "Grabowski PR #513 current-head contract"
+    ],
+    "does_not_establish": [
+      "generic_asynchronous_mutation",
+      "event_as_claim_truth",
+      "safe_retry_after_unknown_effect",
+      "queue_or_dispatch_authority",
+      "merge_or_deployment_permission"
+    ],
+    "priority_basis": {
+      "rank": "P2",
+      "reason": "Optimistische Nebenläufigkeit ist sinnvoll, wenn sie als erwartungsgebundener Befehl statt als blindes asynchrones Ereignis ausgeführt wird."
+    },
+    "source": "Live-Reibungsevaluation und Nutzerauftrag vom 30. Juli 2026",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-7a0d11b69c151a15e0c8ffe1",
+      "event_id": 1693,
+      "event_created_at": "2026-07-30T08:55:54.287696Z",
+      "request_sha256": "d60be49c94de6915dc0b2483aedcabf112e5a37fb28ab1748a2d026d15760a0d",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chatgpt:grabowski-friction-evaluation:2026-07-30:cas-commands",
+        "observed_at": "2026-07-30T10:46:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 21
+  },
+  "required_capabilities": [
+    "repository",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bureau-Zustandsbefehle auf enge CAS-Verträge prüfen und härten"
+}

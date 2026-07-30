@@ -1,7 +1,7 @@
 {
   "acceptance": [
     {
-      "assertion": "Aktuelle Friction-, Chronik- und Operationsbelege bestimmen mindestens zwei tatsächlich wiederkehrende Sequenzen; Implementierung erfolgt nur für gemessene Hochfrequenzpfade, während ein fehlender Nutzen als explizites no-change Ergebnis zulässig bleibt.",
+      "assertion": "Ein revisionsgebundener Entscheidungsbeleg setzt decision auf implement oder no-change. Bei implement weist er mindestens zwei tatsächlich wiederkehrende und hinreichend nützliche Sequenzen nach; bei no-change weist er unzureichende Häufigkeit oder Nutzen nach und wählt keine Sequenz zur Implementierung aus.",
       "id": "frequency-bound-selection",
       "evidence_type": "object"
     },
@@ -26,8 +26,13 @@
       "evidence_type": "object"
     },
     {
-      "assertion": "Mindestens zwei end-to-end Pilotabläufe werden fokussiert getestet und live read-only beziehungsweise reversibel belegt; ein Pilot umfasst einen Arbeitslane-Aufbau und ein weiterer einen Publikations- oder Delivery-Ablauf.",
+      "assertion": "Ein an denselben Entscheidungsbeleg gebundener Applicability-Beleg setzt applicability auf required oder not_applicable. Bei implement sind mindestens zwei fokussiert getestete end-to-end Pilotabläufe mit Live-Readback erforderlich; bei no-change ist applicability not_applicable und der Beleg bestätigt, dass keine neue Operation oder Wirkung umgesetzt wurde.",
       "id": "pilots-and-readback",
+      "evidence_type": "object"
+    },
+    {
+      "assertion": "Ein separater No-change-Abschlussbeleg dokumentiert bei decision no-change die Messgrundlage, den unzureichenden Nutzen und das Ausbleiben neuer Operationen, Pilotwirkungen und Autoritätsänderungen. Bei decision implement setzt derselbe Beleg applicability auf not_applicable und bindet sich an die Implementierungsentscheidung.",
+      "id": "no-change-closeout",
       "evidence_type": "object"
     },
     {

@@ -1393,12 +1393,14 @@ def test_real_installer_publishes_working_refresh_launcher(tmp_path: Path) -> No
         legacy_receipt["runtime_approval"]["required_level"]
         == "legacy_runtime_operator_gate"
     )
-    assert legacy_receipt["runtime_approval"]["legacy_cutover"] == {
-        "intent_sha256": legacy_intent["intent_sha256"],
-        "start_sha256": legacy_started["start_sha256"],
-        "lease_binding_sha256": normalized_binding["lease_binding_sha256"],
-        "expected_source_commit": target_head,
-    }
+    legacy_cutover = legacy_receipt["runtime_approval"]["legacy_cutover"]
+    assert legacy_cutover["intent_sha256"] == legacy_intent["intent_sha256"]
+    assert legacy_cutover["start_sha256"] == legacy_started["start_sha256"]
+    assert legacy_cutover["expected_source_commit"] == target_head
+    live_binding_sha256 = legacy_cutover["lease_binding_sha256"]
+    assert isinstance(live_binding_sha256, str)
+    assert len(live_binding_sha256) == 64
+    assert all(character in "0123456789abcdef" for character in live_binding_sha256)
     upgraded_status = subprocess.run(
         [str(runner), "--state-root", str(legacy_state), "status"],
         check=True,

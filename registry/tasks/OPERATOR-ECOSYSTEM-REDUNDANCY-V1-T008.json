@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T008",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Consolidate RepoBrief daily artifact surface",
-  "state": "planned",
+  "state": "ready",
   "priority": {
     "lane": "later",
     "rank": 340
@@ -14,26 +14,19 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/repoground",
     "grabowski_resources": [
-      "repo:/home/alex/repos/repoground",
-      "repo:/home/alex/repos/systemkatalog",
-      "repo:/home/alex/repos/grabowski"
-    ]
+      "repo:/home/alex/repos/repoground"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User explicitly ordered the next RepoGround task on 2026-07-31. Implementation must remain bound to an isolated RepoGround worktree, exact consumer evidence and review-before-effect."
+    }
   },
   "claims": [
     {
       "resource": "repo.repoground",
       "mode": "write",
       "isolation": "worktree"
-    },
-    {
-      "resource": "repo.systemkatalog",
-      "mode": "read",
-      "isolation": "none"
-    },
-    {
-      "resource": "repo.grabowski",
-      "mode": "read",
-      "isolation": "none"
     }
   ],
   "required_capabilities": [
@@ -70,7 +63,70 @@
       "automatic_shutdown_permission"
     ],
     "systemkatalog_rebound_at": "2026-07-11T20:31:00Z",
-    "systemkatalog_rebound_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021"
+    "systemkatalog_rebound_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021",
+    "readiness_review": {
+      "reviewed_at": "2026-07-31T13:56:00+02:00",
+      "reviewer": "chatgpt-self-review",
+      "decision": "ready",
+      "basis": [
+        "Canonical Bureau what-now selected this task as the next RepoGround-affecting operator task after the higher-ranked RepoGround task remained blocked by nonterminal children.",
+        "The task has no declared dependencies and its exact write scope is isolated to repo.repoground; Systemkatalog and Grabowski are read-only consumers.",
+        "GitHub showed no open RepoGround pull request and Grabowski showed no active RepoGround lease at selection time.",
+        "The user supplied explicit operator approval to implement the next RepoGround task."
+      ],
+      "evidence": {
+        "bureau_base": "face8f8b80bcb98e75fcc6c72120a7fcc2e61c46",
+        "selection_command": "bureau what-now --resource repo.repoground",
+        "selection_result": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T008",
+        "repo_open_pull_requests": 0,
+        "repo_active_leases": 0,
+        "approval_source": "chatgpt:user-message:2026-07-31T13:35+02:00:nächste-repoground-aufgabe-umsetzen"
+      },
+      "does_not_establish": [
+        "implementation correctness",
+        "acceptance criteria satisfaction",
+        "test sufficiency",
+        "merge readiness",
+        "storage reduction before measurement"
+      ]
+    },
+    "consumer_read_evidence": {
+      "recorded_at": "2026-07-31T14:40:00+02:00",
+      "method": "exact immutable Git revisions; no consumer checkout mutation",
+      "repositories": {
+        "heimgewebe/systemkatalog": {
+          "commit": "f7c6ecd0ada80194a57e2bf84d46823ab20559b7",
+          "access": "read-only",
+          "finding": "No active direct reader of individual RepoBrief bundle sidecars was found."
+        },
+        "heimgewebe/grabowski": {
+          "commit": "fdc9266016a07c27c86925976a4b56c17b0483c6",
+          "access": "read-only",
+          "finding": "The standard context-pack path binds manifest, freshness, health, cited query results and bounded ranges; it does not embed the raw canonical dump or full diagnostic graph."
+        }
+      },
+      "claim_scope_decision": "Only repo.repoground remains a lease-bearing claim because it is the sole mutation target.",
+      "reason": "Bureau currently projects read-only repository claims as exclusive repo leases, which caused an unrelated Grabowski writer to block the RepoGround task.",
+      "does_not_establish": [
+        "consumer runtime correctness beyond the cited revisions",
+        "future consumer compatibility without tests"
+      ]
+    },
+    "execution_resource_scope_review": {
+      "reviewed_at": "2026-07-31T14:49:05+02:00",
+      "decision": "repo.repoground-only",
+      "basis": [
+        "RepoGround is the sole working repository and mutation target.",
+        "Systemkatalog and Grabowski consumer reads are already bound to immutable revisions in consumer_read_evidence.",
+        "Bureau claim intent derives real Grabowski lease keys from execution.grabowski_resources in addition to declarative claims."
+      ],
+      "effect": "The formal claim acquires only repo:/home/alex/repos/repoground.",
+      "does_not_authorize": [
+        "Systemkatalog mutation",
+        "Grabowski mutation",
+        "consumer compatibility claims beyond recorded revisions"
+      ]
+    }
   },
   "depends_on": []
 }

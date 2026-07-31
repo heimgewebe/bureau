@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "component.weltgewebe.node-panel-mutation-tests",
+  "type": "component",
+  "parent": "repo.weltgewebe",
+  "metadata": {
+    "purpose": "Exact coordination scope for hardening the NodePanel edit-tab edge cases in WELTGEWEBE-PR-MAINTENANCE-V2-T006.",
+    "canonical_paths": [
+      "apps/web/src/lib/components/panels/NodePanel.svelte",
+      "apps/web/tests/node-mutations.spec.ts",
+      "apps/web/tests/map-interaction.spec.ts"
+    ],
+    "source_task": "WELTGEWEBE-PR-MAINTENANCE-V2-T006",
+    "does_not_establish": [
+      "repository-wide mutation authority",
+      "ownership of foreign Weltgewebe worktrees",
+      "scope outside the listed paths"
+    ]
+  }
+}

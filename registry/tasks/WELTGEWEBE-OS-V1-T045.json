@@ -3,7 +3,7 @@
   "id": "WELTGEWEBE-OS-V1-T045",
   "initiative": "WELTGEWEBE-OS-V1",
   "title": "Tar-Extraktion der Plattformwerkzeuge gegen Link- und Device-Member härten",
-  "state": "planned",
+  "state": "verified",
   "goal": "Die digestgeprüfte Werkzeug-Bootstrapkette zusätzlich gegen Archive mit symbolischen Links, Hardlinks, Devices und FIFOs absichern, damit ein gültiger Archivhash allein keine unerlaubte Schreibwirkung außerhalb des Extraktionsvertrags ermöglicht.",
   "depends_on": [
     "WELTGEWEBE-OS-V1-T041"
@@ -77,7 +77,163 @@
     "does_not_establish": [
       "a vulnerability in the currently pinned archives",
       "permission to weaken SHA-256 pinning",
-      "permission to use tarfile.extractall without a member policy"
-    ]
+      "permission to use tarfile.extractall without a member policy",
+      "production runtime or cluster mutation",
+      "independent human review",
+      "future compatibility with arbitrary unpinned third-party archives"
+    ],
+    "implementation_pr": "heimgewebe/weltgewebe#1635",
+    "implementation_pr_number": 1635,
+    "implementation_base": "121bb8be874213dc02933966e91ddda2d35326d8",
+    "implementation_head": "74c909101953ada66e92e42653327f10b429917c",
+    "implementation_merge_commit": "81b9a4027d6cd16aed3fef722b18837c98785884",
+    "implementation_diff_sha256": "7a9c45b3ab84ff69d0c781585f2c82827cd12db7fea6df228bf485fd8e56335e",
+    "implementation_state": "merged_verified",
+    "merged_at": "2026-07-29T10:07:08Z",
+    "implementation_bound_at": "2026-07-31T04:30:04Z",
+    "verified_at": "2026-07-31T04:30:04Z",
+    "review_evidence_gate_run": 30441764472,
+    "review_evidence_gate_job": 90542520133,
+    "required_merge_gate_run": 30440635517,
+    "required_merge_gate_job": 90541251030,
+    "kubernetes_platform_run": 30440629184,
+    "kubernetes_contract_job": 90538827508,
+    "trivy_rendered_security_job": 90538879250,
+    "outcome": "Die Werkzeug-Bootstrapkette validiert Tar-Mitglieder vollständig vor der ersten Schreibwirkung, erlaubt nur reguläre Dateien und Verzeichnisse, installiert erst nach erfolgreicher Extraktion atomisch und veröffentlicht erst danach das Receipt.",
+    "current_revalidation": {
+      "authority": "grabowski_terminal_run",
+      "observed_at": "2026-07-31T04:30:04Z",
+      "repository": "heimgewebe/weltgewebe",
+      "commit_sha": "3a0e62f238990ccd7abe04fd8571afb131273678",
+      "command": "python3 -m unittest scripts.ci.tests.test_kubernetes_platform_contract",
+      "command_sha256": "13cbd389801855708c26d086a47a4a75e614458d24a1b4180420791a88eea275",
+      "test_count": 109,
+      "verdict": "PASS",
+      "source_ref": "heimgewebe/weltgewebe@3a0e62f238990ccd7abe04fd8571afb131273678"
+    },
+    "validated_acceptance": {
+      "member-policy": {
+        "status": "PASS",
+        "implementation": [
+          "scripts/platform/bootstrap_tools.py:_validated_tar_members",
+          "scripts/platform/bootstrap_tools.py:_safe_extract_tar"
+        ],
+        "tests": [
+          "test_tool_archive_extracts_regular_files_into_new_root",
+          "test_tool_archive_rejects_links_devices_and_fifo"
+        ],
+        "evidence": "Alle Mitglieder werden vor Zielerzeugung klassifiziert; nur Tar-Verzeichnisse und reguläre Dateien werden zugelassen. Links, Devices, FIFOs und unbekannte Typen brechen fail-closed ab."
+      },
+      "link-target-escape": {
+        "status": "PASS",
+        "tests": [
+          "test_tool_archive_rejects_symlink_escape_before_any_write",
+          "test_tool_archive_rejects_parent_traversal_before_any_write",
+          "test_tool_archive_refuses_preexisting_destination"
+        ],
+        "evidence": "Jedes Link-Mitglied wird bereits in der vollständigen Vorabvalidierung verworfen. Absolute Pfade und Elterntraversal sind unzulässig; ein bestehendes oder verlinktes Extraktionsziel wird nicht verwendet. Die Negativtests belegen weder Außenwrite noch verbliebenes Extraktionsziel."
+      },
+      "valid-archives": {
+        "status": "PASS",
+        "tests": [
+          "test_tool_archive_extracts_regular_files_into_new_root",
+          "KubernetesPlatformContractTests:109 PASS"
+        ],
+        "historical_positive_proof": "PR #1635 dokumentiert einen erfolgreichen Lauf mit dem real gepinnten und digestgeprüften Kustomize-Archiv.",
+        "current_revalidation": "109 Plattform-Vertragstests bestanden auf Weltgewebe-main 3a0e62f238990ccd7abe04fd8571afb131273678."
+      },
+      "atomic-cleanup": {
+        "status": "PASS",
+        "implementation": [
+          "scripts/platform/bootstrap_tools.py:_safe_extract_tar",
+          "scripts/platform/bootstrap_tools.py:_install_executable",
+          "scripts/platform/bootstrap_tools.py:install"
+        ],
+        "evidence": "Die Extraktion arbeitet in einem neuen privaten TemporaryDirectory-Unterverzeichnis und löscht es bei jeder Ausnahme. Die Binärdatei wird erst nach erfolgreicher Extraktion atomisch ersetzt; receipt.json entsteht erst nach erfolgreicher Installation aller ausgewählten Werkzeuge und Artefakte."
+      },
+      "exact-review": {
+        "status": "PASS",
+        "binding": {
+          "base_sha": "121bb8be874213dc02933966e91ddda2d35326d8",
+          "head_sha": "74c909101953ada66e92e42653327f10b429917c",
+          "diff_sha256": "7a9c45b3ab84ff69d0c781585f2c82827cd12db7fea6df228bf485fd8e56335e"
+        },
+        "review_evidence_run": 30441764472,
+        "required_merge_gate_run": 30440635517,
+        "current_revalidation_command_sha256": "13cbd389801855708c26d086a47a4a75e614458d24a1b4180420791a88eea275"
+      }
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "WELTGEWEBE-OS-V1-T045",
+          "source_ref": "heimgewebe/weltgewebe#1635",
+          "number": 1635,
+          "base_sha": "121bb8be874213dc02933966e91ddda2d35326d8",
+          "head_sha": "74c909101953ada66e92e42653327f10b429917c",
+          "merge_commit_sha": "81b9a4027d6cd16aed3fef722b18837c98785884",
+          "diff_sha256": "7a9c45b3ab84ff69d0c781585f2c82827cd12db7fea6df228bf485fd8e56335e"
+        },
+        {
+          "kind": "test_run",
+          "authority": "github-actions",
+          "task_id": "WELTGEWEBE-OS-V1-T045",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/30440629184",
+          "workflow_run_id": 30440629184,
+          "job_ids": [
+            90538827508,
+            90538879250
+          ],
+          "commit_sha": "74c909101953ada66e92e42653327f10b429917c",
+          "verdict": "PASS"
+        },
+        {
+          "kind": "review_evidence",
+          "authority": "github-actions",
+          "task_id": "WELTGEWEBE-OS-V1-T045",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/30441764472",
+          "workflow_run_id": 30441764472,
+          "job_id": 90542520133,
+          "commit_sha": "74c909101953ada66e92e42653327f10b429917c",
+          "diff_sha256": "7a9c45b3ab84ff69d0c781585f2c82827cd12db7fea6df228bf485fd8e56335e",
+          "verdict": "PASS"
+        },
+        {
+          "kind": "merge_gate",
+          "authority": "github-actions",
+          "task_id": "WELTGEWEBE-OS-V1-T045",
+          "source_ref": "heimgewebe/weltgewebe/actions/runs/30440635517",
+          "workflow_run_id": 30440635517,
+          "job_id": 90541251030,
+          "commit_sha": "74c909101953ada66e92e42653327f10b429917c",
+          "verdict": "PASS"
+        },
+        {
+          "kind": "current_test_run",
+          "authority": "grabowski_terminal_run",
+          "task_id": "WELTGEWEBE-OS-V1-T045",
+          "source_ref": "heimgewebe/weltgewebe@3a0e62f238990ccd7abe04fd8571afb131273678",
+          "commit_sha": "3a0e62f238990ccd7abe04fd8571afb131273678",
+          "command_sha256": "13cbd389801855708c26d086a47a4a75e614458d24a1b4180420791a88eea275",
+          "test_count": 109,
+          "observed_at": "2026-07-31T04:30:04Z",
+          "verdict": "PASS"
+        }
+      ]
+    },
+    "verification": {
+      "task_sha256": "efd982e2f2323324a731ed6c11a7027642a3c9d8f1732de354024d8f3e6e53b9",
+      "plan_sha256": "b19770d9ce3fdd5bc5098a77d122e0af0be1a23d34e4360d04505654d5983e65",
+      "task_source_ref": "registry/tasks/WELTGEWEBE-OS-V1-T045.json@closeout-revision",
+      "plan_source_ref": "registry/initiatives/WELTGEWEBE-OS-V1.json:current_plan",
+      "review_diff_sha256": "7a9c45b3ab84ff69d0c781585f2c82827cd12db7fea6df228bf485fd8e56335e",
+      "review_evidence_verdict": "PASS",
+      "current_revalidation_verdict": "PASS"
+    },
+    "closeout_reason": "Die Umsetzung wurde bereits über Weltgewebe-PR #1635 gemergt, während der kanonische Bureau-Eintrag auf planned und in der later-Queue verblieb. Dieser Closeout beseitigt ausschließlich diese belegte Statusdrift."
   }
 }

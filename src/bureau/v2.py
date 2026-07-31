@@ -604,6 +604,171 @@ class OpenPullRequestReservation(legacy.Reservation):
     file_scope_diagnostic: str = "file scope unavailable"
 
 
+OPEN_PR_ADOPTION_SCHEMA_VERSION = 1
+OPEN_PR_ADOPTION_FIELDS = frozenset(
+    {
+        "schema_version",
+        "repository",
+        "pull_request",
+        "base_sha",
+        "head_sha",
+        "implementation_task",
+        "merge_task",
+    }
+)
+
+OPEN_PR_IMPLEMENTATION_SCHEMA_VERSION = 1
+OPEN_PR_IMPLEMENTATION_FIELDS = frozenset(
+    {
+        "schema_version",
+        "repository",
+        "pull_request",
+        "base_sha",
+        "head_sha",
+    }
+)
+
+
+def _verified_open_pr_implementation_matches(
+    predecessor: legacy.Task,
+    reservation: OpenPullRequestReservation,
+    registry: Registry,
+) -> bool:
+    """Return whether a verified predecessor binds the observed PR revision.
+
+    The revision contract deliberately lives outside ``metadata.verification`` so
+    ``task_revision_sha256`` covers it. Updating the PR identity therefore changes
+    the task revision and invalidates an older verification instead of allowing the
+    verification block to be rewritten alongside a drifting PR.
+    """
+    metadata = predecessor.raw.get("metadata")
+    if not isinstance(metadata, dict):
+        return False
+    revision = metadata.get("open_pr_implementation")
+    if not isinstance(revision, dict) or set(revision) != OPEN_PR_IMPLEMENTATION_FIELDS:
+        return False
+    if revision.get("schema_version") != OPEN_PR_IMPLEMENTATION_SCHEMA_VERSION:
+        return False
+
+    repository = revision.get("repository")
+    pull_request = revision.get("pull_request")
+    base_sha = revision.get("base_sha")
+    head_sha = revision.get("head_sha")
+    if not all(
+        isinstance(value, str) and value
+        for value in (repository, base_sha, head_sha)
+    ):
+        return False
+    if type(pull_request) is not int or pull_request <= 0:
+        return False
+    if _GIT_OID_RE.fullmatch(base_sha) is None:
+        return False
+    if _GIT_OID_RE.fullmatch(head_sha) is None:
+        return False
+    if (
+        repository != reservation.repository
+        or pull_request != reservation.number
+        or base_sha != reservation.base_oid
+        or head_sha != reservation.head_oid
+    ):
+        return False
+
+    verification = metadata.get("verification")
+    if not isinstance(verification, dict):
+        return False
+    return (
+        verification.get("task_sha256") == task_revision_sha256(predecessor.raw)
+        and verification.get("plan_sha256")
+        == plan_sha256(registry, predecessor.initiative)
+    )
+
+
+def _open_pr_merge_adoption_allows(
+    task: legacy.Task,
+    reservation: OpenPullRequestReservation,
+    registry: Registry,
+    overlays: dict[str, str],
+) -> bool:
+    """Return whether one exact open PR may be adopted by a merge task.
+
+    This is deliberately a narrow classification exception. It does not establish
+    review, CI, merge, deployment, or lease authority and fails closed on every
+    malformed, incomplete, or drifting field.
+    """
+    if reservation.observation_failed or not reservation.file_scope_complete:
+        return False
+    if _open_pr_reservation_scopes(reservation) != (reservation.resource,):
+        return False
+    metadata = task.raw.get("metadata")
+    if not isinstance(metadata, dict):
+        return False
+    contract = metadata.get("open_pr_adoption")
+    if not isinstance(contract, dict) or set(contract) != OPEN_PR_ADOPTION_FIELDS:
+        return False
+    if contract.get("schema_version") != OPEN_PR_ADOPTION_SCHEMA_VERSION:
+        return False
+
+    repository = contract.get("repository")
+    pull_request = contract.get("pull_request")
+    base_sha = contract.get("base_sha")
+    head_sha = contract.get("head_sha")
+    implementation_task = contract.get("implementation_task")
+    merge_task = contract.get("merge_task")
+    if not all(
+        isinstance(value, str) and value
+        for value in (
+            repository,
+            base_sha,
+            head_sha,
+            implementation_task,
+            merge_task,
+        )
+    ):
+        return False
+    if type(pull_request) is not int or pull_request <= 0:
+        return False
+    if _GIT_OID_RE.fullmatch(base_sha) is None:
+        return False
+    if _GIT_OID_RE.fullmatch(head_sha) is None:
+        return False
+    if merge_task != task.id or implementation_task == task.id:
+        return False
+    if repository != reservation.repository or pull_request != reservation.number:
+        return False
+    if base_sha != reservation.base_oid or head_sha != reservation.head_oid:
+        return False
+    if reservation.task_binding_status != "valid":
+        return False
+    if reservation.task_ids != (implementation_task,):
+        return False
+
+    predecessor = registry.tasks.get(implementation_task)
+    if predecessor is None:
+        return False
+    predecessor_state = overlays.get(implementation_task, predecessor.state)
+    if predecessor_state != "verified":
+        return False
+    if not _verified_open_pr_implementation_matches(predecessor, reservation, registry):
+        return False
+    if implementation_task not in task.depends_on:
+        return False
+    if task_approval_contract(task.raw).get("action_class") != "repository_mutation":
+        return False
+
+    conflict_claims = [
+        claim for claim in task.claims if claim.mode in {"write", "exclusive"}
+    ]
+    if len(conflict_claims) != 1:
+        return False
+    claim = conflict_claims[0]
+    return (
+        claim.mode == "exclusive"
+        and claim.amount == 1
+        and claim.isolation == "worktree"
+        and claim.resource == reservation.resource
+    )
+
+
 def _task_id_search_values(value: Any) -> list[str]:
     if isinstance(value, str):
         return [value]
@@ -1083,7 +1248,9 @@ def _task_open_pr_scope_assessment(
     task: legacy.Task,
     reservations: list[legacy.Reservation],
     registry: legacy.Registry,
+    overlays: dict[str, str] | None = None,
 ) -> dict[str, Any]:
+    effective_overlays = overlays or {}
     scope_cache: dict[str, dict[str, Any]] = {}
     items: list[dict[str, Any]] = []
     for reservation in reservations:
@@ -1118,7 +1285,12 @@ def _task_open_pr_scope_assessment(
         classification = "repository-blocked"
         diagnostic = "open PR remains a repository-wide blocker"
         overlaps: list[dict[str, str]] = []
-        if reservation.task_binding_status == "valid" and task.id in reservation.task_ids:
+        if _open_pr_merge_adoption_allows(
+            task, reservation, registry, effective_overlays
+        ):
+            classification = "merge-adopted"
+            diagnostic = "exact open PR merge adoption contract satisfied"
+        elif reservation.task_binding_status == "valid" and task.id in reservation.task_ids:
             diagnostic = "task is already represented by this open PR"
         elif additional_conflicts:
             diagnostic = (
@@ -1182,6 +1354,7 @@ def _task_open_pr_scope_assessment(
             "scope-required",
             "scope-conflict",
             "scope-proven-disjoint",
+            "merge-adopted",
         )
     }
     scopes = {key: scope_cache[key] for key in sorted(scope_cache)}
@@ -1198,6 +1371,7 @@ def _task_open_pr_scope_assessment(
             "valid PR task binding",
             "permission to write outside declared paths",
             "future PR scope stability",
+            "merge authority",
         ],
     }
     return {**material, "assessment_sha256": legacy.sha256_json(material)}
@@ -3035,7 +3209,9 @@ class Dispatcher(legacy.Dispatcher):
         regular_reservations = [
             item for item in reservations if not isinstance(item, OpenPullRequestReservation)
         ]
-        open_pr_scope = _task_open_pr_scope_assessment(task, open_pr_reservations, self.registry)
+        open_pr_scope = _task_open_pr_scope_assessment(
+            task, open_pr_reservations, self.registry, overlays
+        )
         assessment_by_reservation = {
             item["reservation_id"]: item for item in open_pr_scope["reservations"]
         }
@@ -3056,12 +3232,14 @@ class Dispatcher(legacy.Dispatcher):
                 continue
             label = _open_pr_label(reservation)
             binding_status = reservation.task_binding_status or "unknown"
-            if binding_status == "valid" and task.id in reservation.task_ids:
-                result.append(f"task already implemented by open PR: {label}")
-                continue
             assessment = assessment_by_reservation.get(reservation.run_id, {})
             classification = str(assessment.get("classification") or "repository-blocked")
             diagnostic = str(assessment.get("diagnostic") or reservation.diagnostic)
+            if classification == "merge-adopted":
+                continue
+            if binding_status == "valid" and task.id in reservation.task_ids:
+                result.append(f"task already implemented by open PR: {label}")
+                continue
             if classification == "scope-proven-disjoint":
                 continue
             if reservation.observation_failed:
@@ -3163,6 +3341,7 @@ class Dispatcher(legacy.Dispatcher):
                     if isinstance(reservation, OpenPullRequestReservation)
                 ],
                 self.registry,
+                overlays,
             )
             projected_reasons = set(reasons)
             item["cross_repository_reasons"] = [
@@ -3298,7 +3477,7 @@ class Dispatcher(legacy.Dispatcher):
             )
             approval_evidence = approval.as_dict()
         open_pr_scope = _task_open_pr_scope_assessment(
-            selected, open_pr_reservations, self.registry
+            selected, open_pr_reservations, self.registry, overlays
         )
         if open_pr_scope["requires_evidence"]:
             approval_evidence = {
@@ -3406,8 +3585,10 @@ class Dispatcher(legacy.Dispatcher):
             task_id=task.id,
         )
         fresh_open_pr_reservations = self._open_pr_reservations(strict=True)
+        with self.store.connect() as state_connection:
+            fresh_overlays = self.store.overlays(state_connection, self.registry)
         fresh_open_pr_scope = _task_open_pr_scope_assessment(
-            task, fresh_open_pr_reservations, self.registry
+            task, fresh_open_pr_reservations, self.registry, fresh_overlays
         )
         required_keys = sorted(
             _coordinated_grabowski_resource_keys(

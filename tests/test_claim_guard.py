@@ -1804,13 +1804,26 @@ def _configure_open_pr_adoption_registry(root, *, variant="exact"):
     implementation_path = root / f"registry/tasks/{implementation_id}.json"
     implementation = json.loads(implementation_path.read_text())
     implementation["state"] = "ready" if variant == "unverified-predecessor" else "verified"
+    implementation_revision = {
+        "schema_version": 1,
+        "repository": _ADOPTION_REPOSITORY,
+        "pull_request": _ADOPTION_PR,
+        "base_sha": _ADOPTION_BASE,
+        "head_sha": (
+            "c" * 40 if variant == "predecessor-head-drift" else _ADOPTION_HEAD
+        ),
+    }
+    implementation_metadata = {}
+    if variant != "missing-implementation-revision":
+        implementation_metadata["open_pr_implementation"] = implementation_revision
     if implementation["state"] == "verified":
-        implementation["metadata"] = {
-            "verification": {
-                "task_sha256": bureau_v2.task_revision_sha256(implementation),
-                "plan_sha256": bureau_v2.legacy.sha256_json({}),
-            }
+        implementation["metadata"] = implementation_metadata
+        implementation_metadata["verification"] = {
+            "task_sha256": bureau_v2.task_revision_sha256(implementation),
+            "plan_sha256": bureau_v2.legacy.sha256_json({}),
         }
+    if implementation_metadata:
+        implementation["metadata"] = implementation_metadata
     implementation_path.write_text(json.dumps(implementation))
     queue_path = root / "registry/queue.json"
     queue = json.loads(queue_path.read_text())
@@ -1896,6 +1909,7 @@ def test_exact_open_pr_merge_adoption_is_claimable(registry_factory, tmp_path):
         "unverified-predecessor",
         "missing-dependency",
         "wrong-pr",
+        "missing-implementation-revision",
         "base-drift",
         "head-drift",
         "extra-contract-field",
@@ -1920,6 +1934,37 @@ def test_open_pr_merge_adoption_contract_failures_remain_blocking(
         if item["task_id"] == "BUR-TEST-001-T002"
     )
 
+    assert merge["eligible"] is False
+    assert merge["open_pr_scope"]["classification_counts"]["merge-adopted"] == 0
+    assert "open-pr:heimgewebe/example#77" in " ".join(merge["reasons"])
+
+
+def test_open_pr_merge_adoption_rejects_predecessor_verified_for_old_head(
+    registry_factory, tmp_path
+):
+    root = registry_factory(2, mode="write")
+    registry = _configure_open_pr_adoption_registry(
+        root, variant="predecessor-head-drift"
+    )
+    reservation = _open_pr_adoption_reservation()
+    predecessor = registry.tasks["BUR-TEST-001-T001"]
+    verification = predecessor.raw["metadata"]["verification"]
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _registry: [reservation],
+    )
+
+    merge = next(
+        item
+        for item in dispatcher.frontier({"repository"})
+        if item["task_id"] == "BUR-TEST-001-T002"
+    )
+
+    assert predecessor.raw["metadata"]["open_pr_implementation"]["head_sha"] == "c" * 40
+    assert verification["task_sha256"] == predecessor.sha256
+    assert reservation.head_oid == _ADOPTION_HEAD
     assert merge["eligible"] is False
     assert merge["open_pr_scope"]["classification_counts"]["merge-adopted"] == 0
     assert "open-pr:heimgewebe/example#77" in " ".join(merge["reasons"])

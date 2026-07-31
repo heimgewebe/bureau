@@ -617,6 +617,71 @@ OPEN_PR_ADOPTION_FIELDS = frozenset(
     }
 )
 
+OPEN_PR_IMPLEMENTATION_SCHEMA_VERSION = 1
+OPEN_PR_IMPLEMENTATION_FIELDS = frozenset(
+    {
+        "schema_version",
+        "repository",
+        "pull_request",
+        "base_sha",
+        "head_sha",
+    }
+)
+
+
+def _verified_open_pr_implementation_matches(
+    predecessor: legacy.Task,
+    reservation: OpenPullRequestReservation,
+    registry: Registry,
+) -> bool:
+    """Return whether a verified predecessor binds the observed PR revision.
+
+    The revision contract deliberately lives outside ``metadata.verification`` so
+    ``task_revision_sha256`` covers it. Updating the PR identity therefore changes
+    the task revision and invalidates an older verification instead of allowing the
+    verification block to be rewritten alongside a drifting PR.
+    """
+    metadata = predecessor.raw.get("metadata")
+    if not isinstance(metadata, dict):
+        return False
+    revision = metadata.get("open_pr_implementation")
+    if not isinstance(revision, dict) or set(revision) != OPEN_PR_IMPLEMENTATION_FIELDS:
+        return False
+    if revision.get("schema_version") != OPEN_PR_IMPLEMENTATION_SCHEMA_VERSION:
+        return False
+
+    repository = revision.get("repository")
+    pull_request = revision.get("pull_request")
+    base_sha = revision.get("base_sha")
+    head_sha = revision.get("head_sha")
+    if not all(
+        isinstance(value, str) and value
+        for value in (repository, base_sha, head_sha)
+    ):
+        return False
+    if type(pull_request) is not int or pull_request <= 0:
+        return False
+    if _GIT_OID_RE.fullmatch(base_sha) is None:
+        return False
+    if _GIT_OID_RE.fullmatch(head_sha) is None:
+        return False
+    if (
+        repository != reservation.repository
+        or pull_request != reservation.number
+        or base_sha != reservation.base_oid
+        or head_sha != reservation.head_oid
+    ):
+        return False
+
+    verification = metadata.get("verification")
+    if not isinstance(verification, dict):
+        return False
+    return (
+        verification.get("task_sha256") == task_revision_sha256(predecessor.raw)
+        and verification.get("plan_sha256")
+        == plan_sha256(registry, predecessor.initiative)
+    )
+
 
 def _open_pr_merge_adoption_allows(
     task: legacy.Task,
@@ -682,6 +747,8 @@ def _open_pr_merge_adoption_allows(
         return False
     predecessor_state = overlays.get(implementation_task, predecessor.state)
     if predecessor_state != "verified":
+        return False
+    if not _verified_open_pr_implementation_matches(predecessor, reservation, registry):
         return False
     if implementation_task not in task.depends_on:
         return False

@@ -82,6 +82,54 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "readiness": {
+      "schema_version": 1,
+      "kind": "operator-authorized-task-readiness",
+      "task_id": "WELTGEWEBE-PR-MAINTENANCE-V2-T006",
+      "ready_at": "2026-07-31T17:45:45.368727Z",
+      "authorized_by": "alex",
+      "authorization_reference": "chat:2026-07-31 \"nächste weltgewebe aufgabe umsetzen\"",
+      "source_main_head": "a66c5b4717f77e2bbd2210fbe27d7ff16473a9e7",
+      "queue_evidence": {
+        "pull_request": 1279,
+        "merge_commit": "a66c5b4717f77e2bbd2210fbe27d7ff16473a9e7",
+        "task_queue_lane": "next",
+        "queue_sha256": "e2676161a034441b891ba0bfe2ca78d45d76b740b7a824fdb8e2628710b1d623",
+        "scoped_reconcile_actions_remaining": 0
+      },
+      "exact_scope": [
+        "path:/home/alex/repos/weltgewebe/apps/web/src/lib/components/panels/NodePanel.svelte",
+        "path:/home/alex/repos/weltgewebe/apps/web/tests/node-mutations.spec.ts",
+        "path:/home/alex/repos/weltgewebe/apps/web/tests/map-interaction.spec.ts"
+      ],
+      "checks": {
+        "initiative_active": true,
+        "initiative_commitment_now": true,
+        "task_queued_next": true,
+        "required_capabilities_available": true,
+        "open_weltgewebe_prs_observed": 0,
+        "live_weltgewebe_repo_conflicts_observed": 0,
+        "acceptance_scope_resolved": true,
+        "operator_authorization_present": true,
+        "review_before_effect_preserved": true
+      },
+      "does_not_establish": [
+        "implementation",
+        "claim_or_dispatch_authority",
+        "safe_merge",
+        "production_deployment",
+        "future_nonconflict"
+      ],
+      "readiness_sha256": "7da093e0d6bc84ad97d99e453a2b51bf5fecc68ac61a2c6bccd1519f6b5f32c1"
+    },
+    "activation": {
+      "activated_at": "2026-07-31T17:45:45.368727Z",
+      "basis": "Explicit user authorization, active now-committed initiative, canonical next-queue placement and fresh absence of open Weltgewebe PR or live repository lease conflict.",
+      "source_main_head": "a66c5b4717f77e2bbd2210fbe27d7ff16473a9e7",
+      "queue_pull_request": 1279,
+      "queue_merge_commit": "a66c5b4717f77e2bbd2210fbe27d7ff16473a9e7",
+      "review_policy": "review-before-effect"
     }
   },
   "priority": {
@@ -96,6 +144,6 @@
     "repository"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Knoten-Reiter Bearbeiten durch Randfalltests härten"
 }

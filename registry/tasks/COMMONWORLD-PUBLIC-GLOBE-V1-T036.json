@@ -1,0 +1,149 @@
+{
+  "acceptance": [
+    {
+      "assertion": "One canonical source registry defines every released and planned UI locale with canonical tag, native and English display name, direction, status and public page paths; runtime, generators and language controls derive from it rather than duplicating English/German conditionals.",
+      "id": "single-registry-authority"
+    },
+    {
+      "assertion": "Locale parsing accepts case-insensitive BCP 47 input, emits canonical tags, preserves meaningful script and region subtags and tests exact, language-plus-script, primary-language and default fallbacks with at least pt-BR, zh-Hans, mixed ordered browser preferences and unsupported tags.",
+      "id": "script-region-aware-matching"
+    },
+    {
+      "assertion": "Explicit URL or explicit locale surface remains authoritative; otherwise stored manual preference wins, Automatic uses ordered browser languages and English is the neutral default. Query, fragment and discovery state remain preserved and geolocation never influences UI language.",
+      "id": "precedence-contract-preserved"
+    },
+    {
+      "assertion": "Planned locales are absent from selectable controls, generated alternate links and public locale routing until their complete release gate passes; adding a planned registry entry alone cannot expose a partial interface.",
+      "id": "planned-locales-hidden"
+    },
+    {
+      "assertion": "Generated surfaces set canonical html lang, document direction and locale navigation metadata from the registry, including automated and browser coverage proving Arabic-ready right-to-left direction before Arabic can be activated.",
+      "id": "document-language-direction"
+    },
+    {
+      "assertion": "Catalogue content-language tags and filters remain independent of the interface locale, preserve valid script and region subtags and are never rewritten merely because the UI language changes.",
+      "id": "content-axis-independent"
+    },
+    {
+      "assertion": "Spanish, French, Brazilian Portuguese and Arabic are promoted individually, not as an all-or-nothing batch, and each promotion has complete globe, text, method, proposal, runtime-label, catalogue-localization, metadata and navigation coverage; zero missing keys or untranslated markers; independent language review; keyboard and screen-reader-path review; browser and state-preservation smoke; and exact-head release evidence. Arabic additionally passes right-to-left, focus-order, icon-direction, punctuation and mixed-script review.",
+      "id": "wave-one-complete"
+    },
+    {
+      "assertion": "Simplified Chinese, Hindi, Indonesian and Japanese remain planned until the first wave and registry architecture are verified. Their internal order is supported by privacy-preserving aggregate visitor, search or contribution-language evidence and available editorial review capacity, without per-user profiling, IP-language inference or location coupling; each locale independently passes the same full release gate.",
+      "id": "wave-two-demand-bound"
+    },
+    {
+      "assertion": "Machine translation may produce a draft but never counts as final evidence. Safety-relevant proposal guidance, accessibility labels, runtime errors, method text and catalogue presentation receive independent language review before release.",
+      "id": "machine-translation-not-final"
+    },
+    {
+      "assertion": "Canonical sources, generated pages, runtime assets, immutable release tree and content-version bindings contain one deterministic locale contract and pass cache-coherence and canonical-inventory checks after every individual promotion.",
+      "id": "generated-release-parity"
+    },
+    {
+      "assertion": "Every implementation and locale-promotion head passes focused locale tests, full Python and JavaScript validation, desktop/mobile/iPad browser smoke, keyboard and screen-reader-path review, diff-bound self-review, all required GitHub checks and exact-SHA Pages plus production readback before that stage is closed.",
+      "id": "exact-head-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [
+    "COMMONWORLD-PUBLIC-GLOBE-V1-T033"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly requested the ideal Commonworld language handling and its implementation. Start only after Commonworld PR #169 is merged or its exact contract is otherwise present on main, and after the active catalog-growth operation and all overlapping leases are terminal. Never mutate foreign worktrees, publish partial translations or infer interface language from geolocation.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Replace Commonworld's English/German-specific locale branching with one canonical registry and then release the planned interface languages one locale at a time: first Spanish, French, Brazilian Portuguese and Arabic; afterwards Simplified Chinese, Hindi, Indonesian and Japanese in an order justified by aggregate demand and editorial capacity. Preserve the private T033 precedence contract, support script- and region-aware BCP 47 matching, keep content languages independent and expose no locale before its complete translation, review, accessibility, browser, release and production evidence passes.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T036",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "blocking_preconditions": [
+      "Commonworld PR #169 merged or equivalent contract present on main",
+      "operator:chatgpt-commonworld-catalog-growth-v8-20260731 terminal with overlapping resources released"
+    ],
+    "does_not_establish": [
+      "that any planned language is translated or releasable",
+      "permission to expose partial locale surfaces",
+      "permission to use IP address, device location or country as a UI-language signal",
+      "availability of independent reviewers for every planned language",
+      "automatic claim, merge, deployment or production-verification authority"
+    ],
+    "registered_at": "2026-07-31",
+    "rollout": {
+      "promotion_unit": "one locale at a time",
+      "released": [
+        "en",
+        "de"
+      ],
+      "wave_1": [
+        "es",
+        "fr",
+        "pt-BR",
+        "ar"
+      ],
+      "wave_2": [
+        "zh-Hans",
+        "hi",
+        "id",
+        "ja"
+      ]
+    },
+    "source": "Commonworld language rollout decision and implementation PR #169",
+    "source_commit": "d11cc2c35cefa54bb48ae29483c038a672d9136e",
+    "source_contract": "docs/architecture/locale-release.contract.json",
+    "source_main": "f319d078087d1dffd1e0e08198802f1edd897d72",
+    "source_pull_request": 169,
+    "source_repository": "heimgewebe/commonworld",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-aee8503d30f25fbfae7718dc",
+      "event_id": 1837,
+      "event_created_at": "2026-07-31T10:03:20.021224Z",
+      "request_sha256": "48c7554728abc02e435e40879854c094f8d44009430f0385921527c25ff2dc29",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "conversation-and-repository-evidence",
+        "locator": "chatgpt:commonworld-locale-rollout:2026-07-31;github-pr:heimgewebe/commonworld#169",
+        "observed_at": "2026-07-31T11:33:00+02:00",
+        "sha256": "365dc470681bd8169d9a102c92dee7f263427ef1c3b3a65137f4bb2d26b86022"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 14
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "testing",
+    "browser",
+    "research"
+  ],
+  "rollback": {
+    "strategy": "Promote locales through separable commits and releases. Revert a failed locale promotion with its generated pages, registry status, runtime labels, catalogue localization and tests together while preserving the verified registry architecture and previously released locales; regenerate and verify the restored exact release."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Generalize and release Commonworld interface locales in evidence-bound waves"
+}

@@ -1,0 +1,173 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Eine revisionsgebundene Inventur hält alle neun geschlossenen PRs, deren exakte Head-SHAs und die konkreten Blocker fest: semantAH#267, repoground#1136, plexer#83, mitschreiber#85/#86, heim-pc#71, contracts-mirror#54/#55 und aussensensor#158.",
+      "evidence_type": "object",
+      "id": "source-inventory",
+      "verifier": "GitHub-API-Readback und Registry-Metadaten"
+    },
+    {
+      "assertion": "Für semantAH, RepoGround, Plexer, Mitschreiber, Heim-PC, Contracts-Mirror und Aussensensor existieren kanonische git-repository-Ressourcen mit korrektem Pfad, GitHub-Slug und Grabowski-Key; bereits vorhandene Ressourcen werden nicht dupliziert.",
+      "evidence_type": "object",
+      "id": "repository-resources",
+      "verifier": "vollständige Registry-Validierung und Ressourcen-Deduplikation"
+    },
+    {
+      "assertion": "Für jedes der sieben betroffenen Repositories ist genau ein repo-spezifischer Reparaturtask registriert. Jeder Task besitzt nur seinen exakten Repository-Claim, nennt die betroffenen Alt-PRs und fordert einen frischen Renovate- oder äquivalenten Ersatz-PR statt eines ungeprüften Reopens.",
+      "evidence_type": "object",
+      "id": "atomic-repair-tasks",
+      "verifier": "Registry-Schema, Claim- und Duplikatprüfung"
+    },
+    {
+      "assertion": "Der Mitschreiber-Task priorisiert pyo3 0.29.0 als Sicherheitsupdate vor dem Metarepo-Digest und verlangt einen grünen validate-jsonl-Nachweis sowie Rust-, Python- und Security-CI auf dem exakten Ersatz-Head.",
+      "evidence_type": "object",
+      "id": "security-first",
+      "verifier": "Taskpriorität und revisionsgebundener späterer PR-Readback"
+    },
+    {
+      "assertion": "Jeder Reparaturtask bindet seine ursprünglichen Blocker als Akzeptanz: push-index-e2e und Renovate-Artefakte; Ruff und statischer Pin-Guard; reproduzierbare pnpm-Artefakte; Mitschreiber-Vertragsvalidierung; konfliktfreier Heim-PC-Head; Mirror-Synchronität; AJV-Validierung und Artefakte.",
+      "evidence_type": "object",
+      "id": "blocker-specific-acceptance",
+      "verifier": "Taskdateien und spätere CI-Checklisten"
+    },
+    {
+      "assertion": "Kein Ersatz-PR darf bei fehlgeschlagenem Required Check, Konflikt, unbekannter Mergefähigkeit, veraltetem Head oder unvollständigem Artefaktbeleg gemergt werden. Administrative Bypässe und die Wiederverwendung alter grüner Checks sind ausgeschlossen.",
+      "evidence_type": "boolean",
+      "id": "no-red-bypass",
+      "verifier": "Mergevertrag und GitHub-Readback je Ersatz-PR"
+    },
+    {
+      "assertion": "Der Abschlussbeleg zeigt organisationsweit keine offenen blockierten Renovate-Ersatz-PRs; jedes der neun Updateziele ist entweder auf frischem grünen Head gemergt oder mit belastbarem Obsoleszenz- beziehungsweise Supersessionbeleg terminalisiert.",
+      "evidence_type": "object",
+      "id": "organization-closeout",
+      "verifier": "organisationsweite GitHub-API-Suche und Task-Closeout-Receipts"
+    },
+    {
+      "assertion": "Ruff, vollständige Bureau-Tests, Registry- und Queue-Validierung, Git-Diff-Prüfung und GitHub-CI sind auf dem exakten Registrierungs-PR-Head grün; die Veröffentlichung selbst verändert die Queue nicht.",
+      "evidence_type": "object",
+      "id": "registry-quality",
+      "verifier": "lokale Validierung, CI und Publikationsreceipt"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.registry"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Task darf nur fehlende Repository-Ressourcen und repo-spezifische Reparaturtasks in der Bureau-Registry ergänzen. Er darf keine geschlossenen PRs wieder öffnen, keine fehlerhaften Checks umgehen und keine Queue-, Claim-, Merge- oder Deploymentautorität aus der Registrierung ableiten.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/registry/resources",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T020.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Überführe die neun am 31. Juli 2026 revisionsgebunden geschlossenen, fachlich weiterhin sinnvollen Renovate-Updates in einen vollständig katalogisierten und atomar claimbaren Reparaturpfad. Ergänze fehlende Repository-Ressourcen, registriere getrennte repo-spezifische Tasks, priorisiere das pyo3-0.29.0-Sicherheitsupdate und binde jeden späteren Ersatz-PR an frische CI-, Diff- und Mergebelege.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T020",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "closed_prs": [
+      {
+        "head": "c5a4d940454dac1ece21e75fae7a08cc6b52c363",
+        "pr": 267,
+        "repo": "heimgewebe/semantAH"
+      },
+      {
+        "head": "2fd07272c730c63aceb00b9b4a35256a37d9fe6a",
+        "pr": 1136,
+        "repo": "heimgewebe/repoground"
+      },
+      {
+        "head": "b17c6907b03aa7d0889258c4dbb00a39996b500f",
+        "pr": 83,
+        "repo": "heimgewebe/plexer"
+      },
+      {
+        "head": "5fd5ddfff5ff523ebdb4a08f187b8fd1b604cfc7",
+        "pr": 85,
+        "repo": "heimgewebe/mitschreiber"
+      },
+      {
+        "head": "5267ef5c058f4f821788d2d8b58f201670aeb083",
+        "pr": 86,
+        "repo": "heimgewebe/mitschreiber"
+      },
+      {
+        "head": "835816a284ab76119411f378aa4aba7cd9f7e8c4",
+        "pr": 71,
+        "repo": "heimgewebe/heim-pc"
+      },
+      {
+        "head": "e70debdc658d21d388a7604694a948a41f3d8c31",
+        "pr": 54,
+        "repo": "heimgewebe/contracts-mirror"
+      },
+      {
+        "head": "5d94051cdb5c68e797d26676dfae1fc2fce7e195",
+        "pr": 55,
+        "repo": "heimgewebe/contracts-mirror"
+      },
+      {
+        "head": "7781867fa3d4a0dccaa2447a9012881be3791acb",
+        "pr": 158,
+        "repo": "heimgewebe/aussensensor"
+      }
+    ],
+    "does_not_establish": [
+      "Mergebereitschaft künftiger Ersatz-PRs",
+      "automatische Queueaufnahme",
+      "Claim- oder Dispatchautorität",
+      "Abwesenheit neuer Renovate-Updates"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-d76ceeeffd837f5e81d4fff6",
+      "event_id": 1836,
+      "event_created_at": "2026-07-31T09:54:21.448806Z",
+      "request_sha256": "fcaeacddae3229babb99b51f987902fdb10eed39e63cebe8a6413d64ed42c3a5",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "github-org:heimgewebe:renovate-sweep:2026-07-31",
+        "observed_at": "2026-07-31T09:31:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-07-31T11:56:00+02:00",
+    "source": "organization-wide-renovate-sweep",
+    "source_request": "Alle Renovate-PRs schließen oder mergen; sinnvolle nicht behobene Arbeit im Bureau registrieren."
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 4
+  },
+  "required_capabilities": [
+    "repository",
+    "bureau",
+    "grabowski",
+    "github"
+  ],
+  "rollback": {
+    "strategy": "Vor Claim eines erzeugten Reparaturtasks kann der Registrierungs-PR vollständig revertiert werden. Nach einem Claim werden bereits veröffentlichte Tasks nicht gelöscht oder umgeschrieben, sondern bei fachlicher Obsoleszenz mit revisionsgebundenem Closeout terminalisiert; fremde PRs, Worktrees und Leases bleiben unangetastet."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Geschlossene Renovate-Updates in atomare Reparaturtasks überführen"
+}

@@ -13,10 +13,10 @@
       "verifier": "gezielte Rollenwechsel- und Abbruchtests"
     },
     {
-      "assertion": "Für Gäste wird die Zwei-Reiter-Navigation mit Pfeiltasten, Home und End getrennt geprüft; Fokus, aria-selected und sichtbares Tabpanel bleiben konsistent.",
+      "assertion": "Für Gäste wird die Navigation der verfügbaren Nicht-Bearbeiten-Reiter – aktuell Übersicht, Gespräch und Verlauf – mit Pfeiltasten, Home und End getrennt geprüft; Fokus, aria-selected und sichtbares Tabpanel bleiben konsistent.",
       "evidence_type": "object",
       "id": "guest-keyboard-contract",
-      "verifier": "Playwright-Tastaturtest für Gastrolle"
+      "verifier": "Playwright-Tastaturtest für Gastrolle über alle verfügbaren Nicht-Bearbeiten-Reiter"
     },
     {
       "assertion": "Die Beziehung zwischen aria-controls und nur aktiv gerenderten Tabpanels wird gegen den ARIA-Tabvertrag geprüft und entweder dokumentiert beibehalten oder so angepasst, dass keine Referenz auf ein dauerhaft fehlendes Panel entsteht.",
@@ -41,14 +41,19 @@
     {
       "isolation": "worktree",
       "mode": "write",
-      "resource": "repo.weltgewebe"
+      "resource": "component.weltgewebe.node-panel-mutation-tests"
     }
   ],
   "depends_on": [],
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
-    "working_repository": "/home/alex/repos/weltgewebe"
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/apps/web/src/lib/components/panels/NodePanel.svelte",
+      "path:/home/alex/repos/weltgewebe/apps/web/tests/node-mutations.spec.ts",
+      "path:/home/alex/repos/weltgewebe/apps/web/tests/map-interaction.spec.ts"
+    ]
   },
   "goal": "Die mit Weltgewebe PR #1507 eingeführte Trennung von Übersicht und Bearbeitungsaktionen gegen Berechtigungswechsel, Konfliktfehler, Abbruchpfade und ARIA-/Tastaturrandfälle vollständig absichern, ohne die Produktregel gemeinschaftlicher Knotenbearbeitung zu verändern.",
   "id": "WELTGEWEBE-PR-MAINTENANCE-V2-T006",
@@ -130,6 +135,42 @@
       "queue_pull_request": 1279,
       "queue_merge_commit": "a66c5b4717f77e2bbd2210fbe27d7ff16473a9e7",
       "review_policy": "review-before-effect"
+    },
+    "scope_refinement": {
+      "schema_version": 1,
+      "kind": "exact-path-work-admission",
+      "refined_at": "2026-07-31T18:11:56.945674Z",
+      "component_resource": "component.weltgewebe.node-panel-mutation-tests",
+      "grabowski_resources": [
+        "path:/home/alex/repos/weltgewebe/apps/web/src/lib/components/panels/NodePanel.svelte",
+        "path:/home/alex/repos/weltgewebe/apps/web/tests/node-mutations.spec.ts",
+        "path:/home/alex/repos/weltgewebe/apps/web/tests/map-interaction.spec.ts"
+      ],
+      "basis": "The task acceptance and readiness evidence already limit implementation to three files. Broad repository admission is blocked by unrelated foreign retained worktrees, which remain untouched.",
+      "preserves": [
+        "repo.weltgewebe ancestry through the component parent",
+        "worktree isolation",
+        "review-before-effect",
+        "all acceptance criteria and required capabilities"
+      ],
+      "does_not_establish": [
+        "permission to modify or clean foreign worktrees",
+        "permission to write outside the three exact paths",
+        "claim or dispatch success",
+        "merge readiness"
+      ],
+      "acceptance_alignment": {
+        "reason": "The task was registered before the conversation tab existed. The current guest contract has three non-edit tabs; testing all of them is stronger than preserving the obsolete two-tab wording.",
+        "current_guest_tabs": [
+          "übersicht",
+          "gespräch",
+          "verlauf"
+        ],
+        "does_not_establish": [
+          "permission to expose the edit tab to guests",
+          "change to guest authorization"
+        ]
+      }
     }
   },
   "priority": {

@@ -270,6 +270,15 @@ def test_queue_reconcile_apply_reviewed_plan_removes_terminal_task_and_runs_gate
         "bureau_check": True,
         "doctor_healthy": True,
         "registry_truth_healthy": True,
+        "queue_reconcile_actions_drained": True,
+    }
+    assert result["post_gate_policy"] == {
+        "required": [
+            "bureau_check",
+            "registry_truth_healthy",
+            "queue_reconcile_actions_drained",
+        ],
+        "observed_only": ["doctor_healthy"],
     }
     assert queue["lanes"] == {
         "now": ["BUR-TEST-001-T002"],
@@ -351,9 +360,89 @@ def test_queue_reconcile_apply_reviewed_plan_promotes_next_and_runs_gates(
         "bureau_check": True,
         "doctor_healthy": True,
         "registry_truth_healthy": True,
+        "queue_reconcile_actions_drained": True,
+    }
+    assert result["post_gate_policy"] == {
+        "required": [
+            "bureau_check",
+            "registry_truth_healthy",
+            "queue_reconcile_actions_drained",
+        ],
+        "observed_only": ["doctor_healthy"],
     }
     assert queue["lanes"]["next"] == ["BUR-TEST-001-T001"]
     assert queue["lanes"]["now"] == []
+
+
+def test_queue_reconcile_apply_allows_unrelated_global_doctor_findings(
+    registry_factory, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(queue_reconcile_module, "_git_head", lambda _root: "a" * 40)
+    root = registry_factory(1)
+    _remove_from_queue(root, "BUR-TEST-001-T001")
+    _set_task(root, "BUR-TEST-001-T001", state="ready", priority_lane="next")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+    write_queue_reconcile_plan(registry, store, plan_path)
+    _review_plan(plan_path)
+    monkeypatch.setattr(Dispatcher, "doctor", lambda self, fix=False: {"healthy": False})
+
+    result = apply_queue_reconcile_plan(registry, store, plan_path)
+
+    assert result["applied"] is True
+    assert result["post_gates"] == {
+        "bureau_check": True,
+        "doctor_healthy": False,
+        "registry_truth_healthy": True,
+        "queue_reconcile_actions_drained": True,
+    }
+    assert json.loads(_queue_path(root).read_text())["lanes"]["next"] == [
+        "BUR-TEST-001-T001"
+    ]
+
+
+def test_queue_reconcile_apply_rolls_back_when_scoped_actions_remain(
+    registry_factory, tmp_path, monkeypatch
+):
+    monkeypatch.setattr(queue_reconcile_module, "_git_head", lambda _root: "a" * 40)
+    root = registry_factory(1)
+    _remove_from_queue(root, "BUR-TEST-001-T001")
+    _set_task(root, "BUR-TEST-001-T001", state="ready", priority_lane="next")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    plan_path = tmp_path / "plans" / "queue-plan.json"
+    write_queue_reconcile_plan(registry, store, plan_path)
+    _review_plan(plan_path)
+    before = _queue_path(root).read_text()
+    real_report = queue_reconcile_module.queue_reconcile_report
+
+    def undrained_report(registry, store, *, resource=None):
+        report = real_report(registry, store, resource=resource)
+        queue = json.loads(_queue_path(registry.root).read_text())
+        if "BUR-TEST-001-T001" in queue["lanes"]["next"]:
+            report["findings"].append(
+                {
+                    "code": "unqueued-open-priority-next",
+                    "effective_state": "ready",
+                    "priority_lane": "next",
+                    "task_id": "BUR-TEST-001-T001",
+                    "proposed_action": {
+                        "operation": "add_to_queue",
+                        "target_lane": "next",
+                    },
+                }
+            )
+        return report
+
+    monkeypatch.setattr(
+        queue_reconcile_module, "queue_reconcile_report", undrained_report
+    )
+
+    with pytest.raises(StateError, match="queue_reconcile_actions_drained"):
+        apply_queue_reconcile_plan(registry, store, plan_path)
+
+    assert _queue_path(root).read_text() == before
 
 
 def test_queue_reconcile_apply_refuses_stale_plan_without_mutation(

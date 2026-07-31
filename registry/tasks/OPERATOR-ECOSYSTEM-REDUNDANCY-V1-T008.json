@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T008",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Consolidate RepoBrief daily artifact surface",
-  "state": "planned",
+  "state": "ready",
   "priority": {
     "lane": "later",
     "rank": 340
@@ -17,7 +17,12 @@
       "repo:/home/alex/repos/repoground",
       "repo:/home/alex/repos/systemkatalog",
       "repo:/home/alex/repos/grabowski"
-    ]
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "User explicitly ordered the next RepoGround task on 2026-07-31. Implementation must remain bound to an isolated RepoGround worktree, exact consumer evidence and review-before-effect."
+    }
   },
   "claims": [
     {
@@ -70,7 +75,33 @@
       "automatic_shutdown_permission"
     ],
     "systemkatalog_rebound_at": "2026-07-11T20:31:00Z",
-    "systemkatalog_rebound_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021"
+    "systemkatalog_rebound_by": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T021",
+    "readiness_review": {
+      "reviewed_at": "2026-07-31T13:56:00+02:00",
+      "reviewer": "chatgpt-self-review",
+      "decision": "ready",
+      "basis": [
+        "Canonical Bureau what-now selected this task as the next RepoGround-affecting operator task after the higher-ranked RepoGround task remained blocked by nonterminal children.",
+        "The task has no declared dependencies and its exact write scope is isolated to repo.repoground; Systemkatalog and Grabowski are read-only consumers.",
+        "GitHub showed no open RepoGround pull request and Grabowski showed no active RepoGround lease at selection time.",
+        "The user supplied explicit operator approval to implement the next RepoGround task."
+      ],
+      "evidence": {
+        "bureau_base": "face8f8b80bcb98e75fcc6c72120a7fcc2e61c46",
+        "selection_command": "bureau what-now --resource repo.repoground",
+        "selection_result": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T008",
+        "repo_open_pull_requests": 0,
+        "repo_active_leases": 0,
+        "approval_source": "chatgpt:user-message:2026-07-31T13:35+02:00:nächste-repoground-aufgabe-umsetzen"
+      },
+      "does_not_establish": [
+        "implementation correctness",
+        "acceptance criteria satisfaction",
+        "test sufficiency",
+        "merge readiness",
+        "storage reduction before measurement"
+      ]
+    }
   },
   "depends_on": []
 }

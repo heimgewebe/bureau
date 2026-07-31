@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "SEMANTAH-E2E-PORTABILITY-V1",
   "title": "SemantAH E2E port portability",
-  "state": "active",
+  "state": "completion-ready",
   "commitment": "next",
   "goal": "Den Push-Index-E2E-Test von der festen Bindung an 127.0.0.1:8080 entkoppeln, ohne Prozessbereinigung oder Readiness-Nachweis abzuschwächen.",
   "completion": [
@@ -33,9 +33,9 @@
       ]
     },
     "completion_status": {
-      "state": "ready_for_verification",
+      "state": "verified",
       "criterion": "Repository- und GitHub-Checks verhindern die Wiedereinführung einer festen Portbindung.",
-      "resolution": "SemantAH .github/workflows/push-index-e2e.yml runs tests/test_push_index_e2e.py on pull requests and main pushes; GitHub run 30477278629 succeeded on exact main head 21106106ee8a193869f94e4b54c332006ba8f4a5.",
+      "resolution": "The only registered task SEMANTAH-E2E-PORTABILITY-V1-T001 is verified with bound implementation, test, GitHub and runtime evidence; Bureau Doctor independently recommends completion-ready.",
       "evidence": {
         "workflow_path": ".github/workflows/push-index-e2e.yml",
         "workflow_commit": "b766ccdf67e9dca37e08b79980f12120a480473e",
@@ -45,9 +45,29 @@
         "semantah_main_head": "21106106ee8a193869f94e4b54c332006ba8f4a5",
         "bureau_readiness_merge_commit": "d89ed91b01911b2a21dadec8907b2055fe7e0c74"
       },
-      "required_next_action": "Atomically claim SEMANTAH-E2E-PORTABILITY-V1-T001, rerun the focused E2E test on the exact SemantAH main revision, and close the Bureau run with bound evidence."
+      "required_next_action": "Review the broader SemantAH retirement separately under WELTGEWEBE-SEMANTIC-SEARCH-V1-T009; this lifecycle repair does not authorize runtime shutdown or repository archival."
     },
     "commitment_advanced_at": "2026-07-30T18:55:00Z",
-    "commitment_advance_reason": "The initiative remains active but its only documented completion blocker is resolved; commitment next permits the already queued ready task to enter the authoritative claim frontier without changing queue order."
+    "commitment_advance_reason": "The initiative remains active but its only documented completion blocker is resolved; commitment next permits the already queued ready task to enter the authoritative claim frontier without changing queue order.",
+    "lifecycle_reconcile": {
+      "reconciled_at": "2026-07-31T04:16:45Z",
+      "from_state": "active",
+      "to_state": "completion-ready",
+      "source_head": "29b7bddec91d3c5b73b75f89a8f5813377dc13a5",
+      "reason": "The sole registered task is verified and the canonical Bureau Doctor reports completion-ready; keeping the initiative active contradicts derived lifecycle truth.",
+      "task_evidence": {
+        "task_id": "SEMANTAH-E2E-PORTABILITY-V1-T001",
+        "state": "verified",
+        "pull_request": "heimgewebe/semantAH#258",
+        "merge_commit": "9ad2d8e0ad2776bed43802cbd8bf11698292696a",
+        "evidence_path": "docs/evidence/SEMANTAH-E2E-PORTABILITY-V1-T001-verification.json"
+      },
+      "does_not_establish": [
+        "SemantAH runtime retirement",
+        "GitHub repository archival",
+        "WELTGEWEBE-SEMANTIC-SEARCH-V1-T009 completion",
+        "permission to alter SemantAH, Weltgewebe or Systemkatalog runtime state"
+      ]
+    }
   }
 }

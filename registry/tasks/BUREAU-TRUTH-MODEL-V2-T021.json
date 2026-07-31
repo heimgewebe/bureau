@@ -58,11 +58,6 @@
       "resource": "component.bureau.truth-model"
     },
     {
-      "resource": "repo.grabowski",
-      "mode": "read",
-      "isolation": "none"
-    },
-    {
       "resource": "component.bureau.docs",
       "mode": "write",
       "isolation": "worktree"
@@ -78,8 +73,7 @@
       "path:/home/alex/repos/bureau/src/bureau",
       "path:/home/alex/repos/bureau/tests",
       "path:/home/alex/repos/bureau/docs/bureau-operator-intake-v1.md",
-      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T021.json",
-      "repo:/home/alex/repos/grabowski"
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T021.json"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -127,6 +121,52 @@
         "queue_truth",
         "task_readiness",
         "claim_or_dispatch_authority"
+      ]
+    },
+    "grabowski_read_evidence": {
+      "recorded_at": "2026-07-31T22:49:00+02:00",
+      "method": "immutable GitHub pull-request and commit readback; no Grabowski checkout mutation or repository lease",
+      "repository": "heimgewebe/grabowski",
+      "pull_request": {
+        "number": 513,
+        "state": "merged",
+        "head_commit": "676623ea39767079f83b0df90a5f5ff0ebd0bb50",
+        "merge_commit": "83ddd58d4f10bc25b55d30e4fbe8302174e533dd",
+        "merged_at": "2026-07-30T08:59:55Z",
+        "required_checks": [
+          "validate (3.10)",
+          "validate (3.12)",
+          "CodeQL",
+          "Codex review settled"
+        ],
+        "required_checks_result": "success"
+      },
+      "current_operator_runtime_source_commit": "d22a86c9ed949522deb480cfe75cb67c3a66e1c8",
+      "claim_scope_decision": "Only Bureau mutation components and exact Bureau paths remain lease-bearing; Grabowski is immutable read evidence.",
+      "reason": "A declarative read-only repo.grabowski claim is projected as an exclusive broad repository lease and is rejected by unrelated foreign checkout lifecycle state. Revision-bound readback supplies the required audit input without weakening Grabowski write admission.",
+      "does_not_establish": [
+        "Grabowski mutation authority",
+        "future Grabowski main stability",
+        "runtime correctness beyond the observed deployed source commit",
+        "merge or deployment permission"
+      ]
+    },
+    "execution_resource_scope_review": {
+      "reviewed_at": "2026-07-31T22:49:00+02:00",
+      "decision": "bureau-only-leases-with-immutable-grabowski-read-evidence",
+      "basis": [
+        "T021 mutates Bureau core, truth-model and documentation surfaces only.",
+        "Grabowski PR #513 is merged and bound to immutable head and merge commits with successful required checks.",
+        "The live coordinated pickup acquired all seven Bureau path leases but failed only on the broad read-only Grabowski repository admission; compensation released every partial lease.",
+        "The same repo-only mutation pattern is already used by OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T008 for immutable cross-repository consumer evidence."
+      ],
+      "failed_pickup_run_id": "BUR-RUN-20260731T204112Z-bff9bf3a19",
+      "compensation_receipt_sha256": "f12c649215bd681ca9d95fc9e24c2658b0b752c4685fe19154192110ffdd89c6",
+      "does_not_authorize": [
+        "Grabowski checkout takeover",
+        "Grabowski mutation",
+        "foreign lease bypass",
+        "Bureau mutation outside declared components and exact paths"
       ]
     }
   },

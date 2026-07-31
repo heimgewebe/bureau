@@ -29,16 +29,6 @@
       "resource": "repo.repoground",
       "mode": "write",
       "isolation": "worktree"
-    },
-    {
-      "resource": "repo.systemkatalog",
-      "mode": "read",
-      "isolation": "none"
-    },
-    {
-      "resource": "repo.grabowski",
-      "mode": "read",
-      "isolation": "none"
     }
   ],
   "required_capabilities": [
@@ -100,6 +90,28 @@
         "test sufficiency",
         "merge readiness",
         "storage reduction before measurement"
+      ]
+    },
+    "consumer_read_evidence": {
+      "recorded_at": "2026-07-31T14:40:00+02:00",
+      "method": "exact immutable Git revisions; no consumer checkout mutation",
+      "repositories": {
+        "heimgewebe/systemkatalog": {
+          "commit": "f7c6ecd0ada80194a57e2bf84d46823ab20559b7",
+          "access": "read-only",
+          "finding": "No active direct reader of individual RepoBrief bundle sidecars was found."
+        },
+        "heimgewebe/grabowski": {
+          "commit": "fdc9266016a07c27c86925976a4b56c17b0483c6",
+          "access": "read-only",
+          "finding": "The standard context-pack path binds manifest, freshness, health, cited query results and bounded ranges; it does not embed the raw canonical dump or full diagnostic graph."
+        }
+      },
+      "claim_scope_decision": "Only repo.repoground remains a lease-bearing claim because it is the sole mutation target.",
+      "reason": "Bureau currently projects read-only repository claims as exclusive repo leases, which caused an unrelated Grabowski writer to block the RepoGround task.",
+      "does_not_establish": [
+        "consumer runtime correctness beyond the cited revisions",
+        "future consumer compatibility without tests"
       ]
     }
   },

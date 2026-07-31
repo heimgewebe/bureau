@@ -1,0 +1,121 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ohne explizites registry_root wird der kanonische Registry-Snapshot ausschließlich aus dem validen, manifestgebundenen installierten Bureau-Release abgeleitet; Repository-Head, Snapshot-Tree und Manifest-Digests werden vor und nach dem Bureau-Aufruf gebunden.",
+      "evidence_type": "object",
+      "id": "canonical-default-root"
+    },
+    {
+      "assertion": "Ein vorhandener konventioneller Bureau-Checkout kann sauber, dirty, veraltet oder auf einem Feature-Branch stehen, ohne die Standard-Claim-Wahrheit des Pickups zu beeinflussen.",
+      "evidence_type": "object",
+      "id": "dirty-checkout-excluded"
+    },
+    {
+      "assertion": "Ein explizit übergebener absoluter Registry-Root bleibt zulässig, wird unverändert normalisiert, gejournalt und bei Retry sowie Status-Readback wiederverwendet.",
+      "evidence_type": "object",
+      "id": "explicit-root-preserved"
+    },
+    {
+      "assertion": "Fehlendes, ungültiges, driftendes oder nicht zum kanonischen Snapshot passendes Deployment-Manifest blockiert vor Claim- oder Leasewirkung mit stabilem Diagnosecode; es gibt keinen Fallback auf einen beliebigen Checkout.",
+      "evidence_type": "object",
+      "id": "manifest-fail-closed"
+    },
+    {
+      "assertion": "Existing-assignment-, Status- und Releasepfade bleiben an den im Journal gespeicherten Registry- und Coordination-Root gebunden und migrieren alte Journale nur über den bestehenden expliziten Legacy-Vertrag.",
+      "evidence_type": "object",
+      "id": "replay-binding"
+    },
+    {
+      "assertion": "Gezielte Tests decken gültigen kanonischen Snapshot, Dirty-Checkout-Kontrast, expliziten Override, fehlendes oder manipuliertes Manifest, Snapshot-Drift und journalgebundenen Retry ab; vollständige Grabowski-Validierung und GitHub-CI sind auf dem exakten PR-Head grün.",
+      "evidence_type": "object",
+      "id": "regression-proof"
+    },
+    {
+      "assertion": "Der Task endet mit einem revisionsgebundenen, reviewten und CI-grünen Implementierungs-PR, führt aber selbst keinen Merge oder Deployment aus. Der Merge wird von einem getrennten T128-Adoptionstask übernommen.",
+      "evidence_type": "object",
+      "id": "implementation-pr-only"
+    },
+    {
+      "assertion": "Die Änderung verleiht keine zusätzliche Claim-, Lease-, Queue-, Registry-, Review-, Merge- oder Deploymentautorität und schwächt keine Runtime-, Digest- oder Koordinationsprüfung ab.",
+      "evidence_type": "object",
+      "id": "no-authority-expansion"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 31. Juli 2026 die vollständige Beseitigung aller verbliebenen Frontier-Blocker beauftragt. Der Task darf nur die kanonische Registry-Root-Auswahl, eng zugehörige Regressionstests und notwendige Vertragsdokumentation ändern; keine Claim-, Lease-, Review-, Merge- oder Deployment-Gates werden gelockert.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_pickup.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den Standardpfad von grabowski_bureau_pickup_execute so härten, dass ein Request ohne explizites registry_root den gültigen, manifest- und digestgebundenen kanonischen Bureau-Registry-Snapshot verwendet. Ein konventioneller, fremd-dirty oder veralteter Checkout darf nicht mehr stillschweigend zur Claim-Wahrheit werden. Explizite Root-Bindungen, Journal-Replay, Koordinationszustand, Laufzeitidentität und fail-closed Verhalten bleiben erhalten.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T127",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Merge-Bereitschaft des späteren Implementierungs-PRs",
+      "automatische Runtime-Aktivierung",
+      "Erlaubnis zur Verwendung eines dirty Checkouts als Registry-Wahrheit"
+    ],
+    "live_reproducer": {
+      "default_root_result": "claim-intent-not-ready against conventional Bureau checkout",
+      "explicit_canonical_root_result": "claimed",
+      "merged_related_pr": 525,
+      "related_pr_scope": "structured rejection diagnostics only"
+    },
+    "merge_successor": "GRABOWSKI-OPERATOR-SURFACE-V1-T128",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-1112a03742bc4a9c5a6c60eb",
+      "event_id": 1826,
+      "event_created_at": "2026-07-31T05:05:22.524597Z",
+      "request_sha256": "21a45228ba7453c427e72484180cd64ebac761d2c8817dbb10db3a4ab156cae1",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live_runtime_and_source_audit",
+        "locator": "git:heimgewebe/grabowski@1ce26c2324fcdb26c741805ef0820dc8615b0189:src/grabowski_bureau_pickup.py#_normalize_request",
+        "observed_at": "2026-07-31T06:13:00+02:00",
+        "sha256": "a06e77e8a20e9f598c0f7a7be1b428cb3dbfeb1e1b4ed9654cf16e3f04ba5703"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski",
+    "github"
+  ],
+  "rollback": {
+    "strategy": "Die kanonische Default-Root-Auflösung und ihre Tests vollständig revertieren. Explizite registry_root-Requests und die bestehende fail-closed Pickup-Koordination bleiben erhalten; bei unklarem Runtime-Manifest wird kein alter Checkout-Fallback reaktiviert."
+  },
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Bureau-Pickup an den kanonischen Registry-Snapshot binden"
+}

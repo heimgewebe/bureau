@@ -1,0 +1,143 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der PR-Text bindet exakt `Bureau-Task: GRABOWSKI-OPERATOR-SURFACE-V1-T129`; ein frischer Bureau-Frontier-Readback klassifiziert PR #536 danach als genau einmal gültig gebunden und nennt keine zweite Task-ID.",
+      "evidence_type": "object",
+      "id": "canonical-pr-binding"
+    },
+    {
+      "assertion": "Basis 0d8ae76d20b58ac17226df22f44a5527e5f96c62, Head 1b35d0ab6fb80828f7da5b95e30a7a4daa05aa5c und der ausschließlich aus tools/connector_probe.py sowie tests/test_control_plane.py bestehende Diff einschließlich der dauerhaften 4/4-Einzelmutationsmatrix für force_new_reason, operation_identity, supersedes_receipt_sha256 und supersedes_task_id werden vor jeder Review-, Merge- oder Deploymentwirkung direkt gelesen; jede Head- oder Scopeabweichung bricht ab und verlangt eine neue revisionsgebundene Entscheidung.",
+      "evidence_type": "object",
+      "id": "exact-source-identity"
+    },
+    {
+      "assertion": "T126 ist verifiziert und der Commit-Status `Codex review settled` auf dem exakten PR-Head terminal erfolgreich; Nutzungslimit, pending, unbekannte Sichtbarkeit oder kostenpflichtige Kapazität gelten nicht als erfülltes Gate.",
+      "evidence_type": "object",
+      "id": "settlement-dependency"
+    },
+    {
+      "assertion": "Der vorhandene Self-Review bleibt am exakten Head gültig, offene Reviewthreads sind null, `tests.test_control_plane`, py_compile, git diff --check und der Pflichtworkflow validate sind terminal grün; bei veralteter Evidence werden die kostenfreien Prüfungen neu ausgeführt.",
+      "evidence_type": "object",
+      "id": "tests-and-review"
+    },
+    {
+      "assertion": "PR #536 wird nur bei unverändertem Head, aufgelösten Befunden, vollständigen grünen Pflichtgates und bestätigter Mergebarkeit mit Expected-Head-Bindung gemergt; fremde Repository-, Branch-, Task- oder Leasebindungen werden nicht übernommen oder freigegeben.",
+      "evidence_type": "object",
+      "id": "exact-head-merge"
+    },
+    {
+      "assertion": "Die produktive Grabowski-Runtime wird aus dem autoritativ gelesenen Merge-Commit deployt. Deployment-Manifest, Runtime-Head und Connector-Probe belegen anschließend `operation_identity`, `supersedes_task_id`, `supersedes_receipt_sha256` und `force_new_reason` in Runtime- und verbundener Connector-Sicht.",
+      "evidence_type": "object",
+      "id": "runtime-and-connector-readback"
+    },
+    {
+      "assertion": "Ein revisionsgebundener Closeout bindet Task, PR, finalen Head, Merge-Commit, CI, Review, Runtime-Release und Connector-Readback; eigene Leases werden erst danach regulär freigegeben, Queue und fremde Zustände bleiben unverändert.",
+      "evidence_type": "object",
+      "id": "closeout-receipt"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T126"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die konfliktfreie Frontier-Koordination und den Abschluss fast fertiger Heimgewebe-PRs beauftragt. Der Task ist auf PR #536, den exakten Head, zwei Dateien und die anschließende Runtime-/Connector-Verifikation begrenzt; fremde Lanes, kostenpflichtige Provider und Gate-Bypässe bleiben ausgeschlossen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/tools/connector_probe.py",
+      "path:/home/alex/repos/grabowski/tests/test_control_plane.py",
+      "component:github-pr-536-binding-merge-closeout",
+      "component:grabowski-runtime-deployment"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Den bereits implementierten Grabowski-PR #536 exakt an einen kanonischen Bureau-Task binden und nach Abschluss von T126 ausschließlich auf dem unveränderten Head 1b35d0ab6fb80828f7da5b95e30a7a4daa05aa5c terminalisieren: Current-Head-Review-Settlement bestätigen, alle Pflichtgates erneut lesen, kontrolliert mergen, die Runtime aus dem Merge-Commit deployen und die vier Retry-/Operationsidentitätsfelder in der verbundenen Connector-Sicht nachweisen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T129",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "current_blockers": [
+      "missing canonical Bureau task binding",
+      "Codex review settled pending until T126 resolves the workflow-token visibility contract"
+    ],
+    "does_not_establish": [
+      "immediate queue admission",
+      "claim or dispatch authority before dependency completion",
+      "permission to change a moved PR head",
+      "permission to bypass review settlement",
+      "permission to use paid review capacity",
+      "permission to overlap foreign Grabowski work"
+    ],
+    "source_pull_request": {
+      "base_sha": "0d8ae76d20b58ac17226df22f44a5527e5f96c62",
+      "branch": "fix/task-start-schema-sentinel-v1",
+      "changed_paths": [
+        "tools/connector_probe.py",
+        "tests/test_control_plane.py"
+      ],
+      "head_sha": "1b35d0ab6fb80828f7da5b95e30a7a4daa05aa5c",
+      "mergeable_at_observation": true,
+      "number": 536,
+      "open_review_threads": 0,
+      "repository": "heimgewebe/grabowski",
+      "validate_conclusion": "success",
+      "validate_run": 30643297017,
+      "self_review_marker": "self-review:v2",
+      "retry_schema_sentinel_fields": [
+        "force_new_reason",
+        "operation_identity",
+        "supersedes_receipt_sha256",
+        "supersedes_task_id"
+      ]
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-152368530021c11fadf89d31",
+      "event_id": 1871,
+      "event_created_at": "2026-07-31T16:13:06.411612Z",
+      "request_sha256": "2c534c8aa67139647ec81eaa5815c24ac260b1468981e8be357218cb2734d1fa",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "github-pull-request",
+        "locator": "github-pr:heimgewebe/grabowski#536@1b35d0ab6fb80828f7da5b95e30a7a4daa05aa5c",
+        "observed_at": "2026-07-31T16:13:06.395545Z",
+        "sha256": "75a9598f8a9dc651349f9a4310142818b84d9d68d56d0cca0562c4d3c8147151"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 24
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski",
+    "github",
+    "runtime-deployment"
+  ],
+  "rollback": {
+    "strategy": "Vor dem Merge kann die Taskbindung aus dem PR-Text entfernt und der Registrierungs-PR revertiert werden. Nach dem Merge wird keine Historie umgeschrieben; bei fehlerhaftem Deployment wird auf die zuvor manifestgebundene Runtime zurückgeschaltet und der Task mit exaktem Fehler- und Recovery-Receipt offen gehalten."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "PR #536 revisionsgebunden binden und abschließen"
+}

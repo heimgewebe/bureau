@@ -209,7 +209,7 @@
         "contract_correction_pr": 1285,
         "contract_correction_head": "6f42a4904e80818d4488f20388e96a37984bbbab",
         "contract_correction_merge_commit": "3763ec3b4c23cce27cdb0ec548c300508f40c6d0",
-        "final_main_observed": "e184359eb4127bdfd92fafaec4980907a51eeb60",
+        "final_main_observed": "e18435952a1e9335c4ec54b042490e1a449b74f3",
         "historical_run_id": "BUR-RUN-20260731T191530Z-4b13ad865a",
         "historical_receipt_sha256": "7e0333d0c4a46fe58ed39784212e4d973a044d48a4a999aec7267871c3fc5a1f",
         "validation": {
@@ -230,19 +230,26 @@
           "organization-wide Renovate completion"
         ],
         "current_closeout_validation": {
-          "base_commit": "e184359eb4127bdfd92fafaec4980907a51eeb60",
-          "preserved_queue_entries": {
-            "now": "REPOGROUND-LEGACY-RECONCILIATION-V1-T021",
-            "next": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026"
+          "base_commit": "e18435952a1e9335c4ec54b042490e1a449b74f3",
+          "focused_pytest": {
+            "count": 133,
+            "files": [
+              "tests/test_v2.py",
+              "tests/test_registry_queue.py",
+              "tests/test_queue_reconcile.py"
+            ],
+            "result": "passed",
+            "job_unit": "grabowski-job-e559b66e2e0c",
+            "job_receipt_sha256": "f1934208e805e1c204e4610b6930aaab05e9c7a5df85958e46b6b0bed776dcc7"
           },
-          "required_before_merge": [
-            "bureau check",
-            "runtime drift readback",
-            "29 focused queue/registry tests",
-            "ruff",
-            "git diff --check",
-            "terminal green GitHub checks"
-          ]
+          "queue_regression_after_pr_1286": {
+            "tests_passed": 29,
+            "preserved_now_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T021",
+            "preserved_next_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026"
+          },
+          "ruff": "passed",
+          "registry_check": "valid",
+          "runtime_drift": "receipt-drift-superseded-by-registry-verification"
         }
       }
     },
@@ -272,15 +279,15 @@
     "source": "organization-wide-renovate-sweep",
     "source_request": "Alle Renovate-PRs schließen oder mergen; sinnvolle nicht behobene Arbeit im Bureau registrieren.",
     "verification": {
-      "task_sha256": "36ee1cc8430aaa1d24addff6397f9fe2c26874dea8fedc483b4236900bd3a41c",
+      "task_sha256": "d2d54871f133f2f868c169f51e0912d7344c60521f9366ec592dd3eccfb44b37",
       "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
       "historical_receipt_sha256": "7e0333d0c4a46fe58ed39784212e4d973a044d48a4a999aec7267871c3fc5a1f",
-      "verified_at": "2026-07-31T20:55:00Z",
+      "verified_at": "2026-07-31T20:39:00Z",
       "basis": [
         "Bureau run BUR-RUN-20260731T191530Z-4b13ad865a succeeded with all eight acceptance evidence objects",
         "PR #1284 merged the four resources and seven child tasks with terminal green checks",
         "PR #1285 merged the scope-correct closeout contract with terminal green checks",
-        "PR #1286 queue entries remain explicitly preserved by the closeout diff"
+        "Current-main closeout preserves PR #1286 queue changes and passes 133 focused tests"
       ]
     }
   },

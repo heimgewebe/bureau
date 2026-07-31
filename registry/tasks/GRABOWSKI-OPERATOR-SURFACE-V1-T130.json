@@ -1,0 +1,118 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein reproduzierbarer Benchmark misst Zahl und Bytes der Registry-Dateilesungen für Execute, Existing, Status, Release und Recovery auf dem exakten Ausgangsstand von PR #534.",
+      "evidence_type": "object",
+      "id": "baseline-measured"
+    },
+    {
+      "assertion": "Die Optimierung behält die vollständige kryptographische Registry-Bindung vor und nach jedem Bureau-Effekt bei oder ersetzt sie durch einen revisions- und generationengebundenen Unveränderlichkeitsbeweis mit mindestens gleicher TOCTOU-Abdeckung.",
+      "evidence_type": "object",
+      "id": "equivalent-authority"
+    },
+    {
+      "assertion": "mtime, Dateigröße, ein ungeprüfter Prozess-Cache oder ein abgeschwächter Statuspfad dürfen allein niemals einen vollständigen Inhaltsnachweis überspringen.",
+      "evidence_type": "object",
+      "id": "unsafe-shortcuts-rejected"
+    },
+    {
+      "assertion": "Fehlender, widersprüchlicher oder driftender Generationen-/Snapshot-Nachweis fällt auf die vollständige Tree-Prüfung zurück oder blockiert vor Wirkung mit stabilem Diagnosecode.",
+      "evidence_type": "object",
+      "id": "fallback-fail-closed"
+    },
+    {
+      "assertion": "Gezielte Tests beweisen Drift vor dem Aufruf, Drift während des Aufrufs, Status- und Release-Blockade vor Nebenwirkungen sowie korrekte Journal-Replays über Deployment-Rotationen; vollständige Grabowski-Validierung und CI sind grün.",
+      "evidence_type": "object",
+      "id": "regression-proof"
+    },
+    {
+      "assertion": "Die gemessene Dateileselast sinkt auf typischen Readback-Pfaden substanziell, ohne zusätzliche Autorität, versteckte Persistenz oder semantische Ausnahmen einzuführen.",
+      "evidence_type": "object",
+      "id": "performance-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [
+    "GRABOWSKI-OPERATOR-SURFACE-V1-T127"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Folgeaufgabe aus dem revisionsgebundenen Review von Grabowski PR #534. Optimierung ist nur zulässig, wenn Fail-closed-, Journal-, Drift- und Vor-/Nach-Effekt-Semantik nachweislich gleich stark bleiben.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_bureau_pickup.py",
+      "path:/home/alex/repos/grabowski/tests/test_bureau_pickup.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Für grabowski_bureau_pickup einen messbar günstigeren Registry-Binding-Prüfpfad entwickeln, der die vollständige Vor-/Nachbindung um Bureau-Effekte beibehält oder durch einen gleichwertigen unveränderlichen Snapshot- beziehungsweise Generationenbeweis ersetzt. Reine mtime-/Größen-Caches, statusabhängige Sicherheitsabsenkungen und ungeprüfte Prozess-Caches sind ausgeschlossen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T130",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass ein sicherer Fast-Path bereits existiert",
+      "dass mtime oder Dateigröße Inhaltsintegrität beweisen",
+      "Merge- oder Deploymentautorität",
+      "Task-Claimfähigkeit"
+    ],
+    "review_decision": "Die doppelte vollständige Tree-Prüfung wurde in PR #534 bewusst beibehalten, weil ein einfacher Cache oder Status-Skip das TOCTOU-Fenster wieder öffnen würde. Optimierung bleibt sinnvoll, benötigt aber einen gleichwertigen kryptographischen Snapshot- oder Generationenvertrag.",
+    "source": {
+      "kind": "review_followup",
+      "merge_commit": "4e79a983192433657e70c7f73f9925de21e4f1c8",
+      "observed_at": "2026-07-31T18:26:36+02:00",
+      "pull_request": 534,
+      "repository": "heimgewebe/grabowski",
+      "reviewed_head": "65d8f9b9c595604e928d4a75ab8f997b68595c94"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-add46569ff2180fa24c1f5a6",
+      "event_id": 1873,
+      "event_created_at": "2026-07-31T16:32:48.902125Z",
+      "request_sha256": "c5967ffc41fa50a76c94c0ddbd7badc882d845f878bc3e73f3912193700cf782",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "review_followup",
+        "locator": null,
+        "observed_at": "2026-07-31T16:32:48.886321Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 70
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "performance",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Den optimierten Nachweispfad vollständig revertieren und auf die in PR #534 gemergte doppelte vollständige Tree-Prüfung zurückfallen. Keine Fallback-Option darf auf mtime-, Größen- oder ungebundene Cache-Wahrheit wechseln."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Registry-Binding ohne TOCTOU-Verlust beschleunigen"
+}

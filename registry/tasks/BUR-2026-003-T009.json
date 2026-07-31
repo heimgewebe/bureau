@@ -3,7 +3,7 @@
   "id": "BUR-2026-003-T009",
   "initiative": "BUR-2026-003",
   "title": "Wire runtime mutation approval enforcement",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 90
@@ -84,6 +84,46 @@
         "verification authority",
         "safe mutation of terminal historical tasks"
       ]
+    },
+    "verification": {
+      "source": "merged_pull_request",
+      "repo": "heimgewebe/bureau",
+      "pr_number": 1236,
+      "branch": "bureau/bur-2026-003-t009/4bd262a49a",
+      "implementation_head": "5f0f5033c9806395100ed954077d62f01cae2b02",
+      "merge_commit": "6a9fd7db5ae65335812cc88ee6f9c8897f5e2e61",
+      "implementation_diff_sha256": "8544341f669ea1e23891581cf01bda2c47db64fed38b261c206a3b35b538d464",
+      "scope": [
+        "typed break_glass approval bound to runtime mutation target and Bureau task",
+        "apply-path revalidation of approval, expiry, source commit and live exact leases",
+        "fail-closed direct installer and bounded legacy cutover",
+        "manifest and receipt projection of the runtime approval decision"
+      ],
+      "acceptance_evidence": {
+        "runtime-gates-enforced": "PR #1236 routes routine installation through bureau-runtime-refresh, requires an exact persisted approval intent for direct installation and revalidates approval before runtime effects.",
+        "unsafe-default-closed": "Regression coverage rejects missing, mismatched, expired, ambiguous or insufficiently-lived approval evidence before installation effects."
+      },
+      "validation": [
+        "focused Python 3.10 registry and queue tests: PASS",
+        "local Python 3.10 make validate: 932 tests PASS",
+        "GitHub validate on implementation head for Python 3.10 and 3.12: PASS",
+        "GitHub CodeQL and registry freshness on implementation head: PASS",
+        "three implementation review threads resolved; unresolved review threads: 0",
+        "closeout self-review PASS, bound to exact closeout head and canonical task/plan hashes"
+      ],
+      "review_findings_resolved": [
+        "preserve compatibility with the pre-upgrade refresh runner",
+        "keep pre-install expiry failures safely retryable",
+        "update the canonical installation command"
+      ],
+      "verified_at": "2026-07-31T03:31:00Z",
+      "does_not_establish": [
+        "the merged code has already been deployed into the active Bureau runtime",
+        "every future runtime mutation path is automatically covered",
+        "unrelated Registry lifecycle mismatches are repaired"
+      ],
+      "task_sha256": "5aaeedc0c247eccaca8c3792b092a654aab244c9058c2e272259c7d876294827",
+      "plan_sha256": "bcc1fd0ae4a05f70066a0b1f1d573cc21add0a824489ab0a23ba76d48904f1bf"
     }
   },
   "depends_on": [

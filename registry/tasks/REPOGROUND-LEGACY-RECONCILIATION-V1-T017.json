@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
-  "state": "ready",
+  "state": "blocked",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -30,8 +30,12 @@
     "source": "RepoGround PR #1103 closeout review",
     "implementation_merge_commit": "40dd1088a642370c5a7cc0dfd19dbd59e6395a35",
     "blocked_acceptance": [
-      "pythonista-compatibility",
-      "complexity-performance"
+      "runtime-identity",
+      "native-entrypoint",
+      "local-report-smoke",
+      "ios-capability-gates",
+      "dependency-boundary",
+      "t010-closeout"
     ],
     "scope_rule": "Use an actual supported Pythonista/iPad runtime for native checks and a revision-bound comparable desktop environment for current-head timing and memory. Do not substitute CPython, a desktop simulator or static import analysis for native runtime evidence.",
     "does_not_establish": [
@@ -65,6 +69,91 @@
         "implementation completion",
         "task readiness",
         "permission to alter terminal history"
+      ]
+    },
+    "blocked_at": "2026-07-31T06:47:30+02:00",
+    "block_reason": "Der revisionsgebundene Desktopteil ist bestanden, aber die einzig erreichbare echte iPad-Laufzeit ist Juno (com.rationalmatter.junoapp), nicht Pythonista. iPadOS trennt App-Container; Juno besitzt keine externe Ordnerfreigabe und kann den vorgeschriebenen nativen Pythonista-Start, Reportlauf und die Pythonista-spezifischen iOS-Gates daher nicht belegen.",
+    "next_action": "Den gebundenen Dateisatz aus RepoGround-Merge 40dd1088a642370c5a7cc0dfd19dbd59e6395a35 in einer tatsächlich unterstützten Pythonista-App ausführen und runtime-identity, native-entrypoint, local-report-smoke, ios-capability-gates sowie dependency-boundary typed erfassen. Danach T017 erneut claimen; T010 nur bei vollständigem PASS verifizieren.",
+    "attempt_status": "partial_pass_blocked_native_pythonista_runtime",
+    "attempt": {
+      "observed_at": "2026-07-31T06:47:30+02:00",
+      "run_id": "BUR-RUN-20260731T043209Z-46e5e966f2",
+      "acceptance_status": {
+        "runtime-identity": "blocked_pythonista_app_and_version_unavailable",
+        "native-entrypoint": "blocked_no_pythonista_execution_channel",
+        "local-report-smoke": "blocked_no_pythonista_execution_channel",
+        "ios-capability-gates": "blocked_juno_contrast_is_not_pythonista_evidence",
+        "dependency-boundary": "blocked_native_execution_not_observed",
+        "current-head-performance": "pass_revision_bound_same_environment",
+        "t010-closeout": "blocked_prior_native_criteria_nonterminal"
+      },
+      "native_runtime_observation": {
+        "status": "blocked_wrong_app_identity",
+        "device": "iPad 10th generation Wi-Fi (iPad13,18)",
+        "agent_id": "ipad-10th-gen-wifi",
+        "platform": "iPadOS-26.5.2-iPad13,18-arm64-64bit",
+        "python_version": "3.13.7",
+        "observed_application": "Juno",
+        "application_identity_evidence": "com.rationalmatter.junoapp",
+        "pythonista_version": null,
+        "external_folder_grants": [],
+        "juno_status": "paired, persistent and healthy",
+        "manifest_job_id": "job-mcp-c09e8fa6-4896-4422-9977-009b761537ce",
+        "manifest_receipt_sha256": "95feb43a6e969947d15a74a05c53375f9fdc5c041d0f2a35baa63ca794b47eb0",
+        "boundary": "The Juno process cannot read another application container; this evidence must not be relabelled as Pythonista evidence."
+      },
+      "current_head_performance": {
+        "status": "pass",
+        "base_commit": "c91d640bce2b14c4a78a64e83169d56c818fa662",
+        "final_commit": "40dd1088a642370c5a7cc0dfd19dbd59e6395a35",
+        "method": "nine measured runs plus one warmup per revision and mode; alternating order; identical host, interpreter and sanitized Python environment; GNU time peak RSS",
+        "artifact_path": "/home/alex/.local/state/grabowski/repoground-t017-measurements/20260731/repoground-t017-final-performance.measurement.json",
+        "artifact_sha256": "8bcf9040f9393e07019e88139083e0cdc06079cee3816640c4111f11a00b2805",
+        "job": "grabowski-job-ec4e5549a64d",
+        "job_finalization_receipt_sha256": "7127cc21b094c990f73ac2445414aff437239788e8eecb6f1404df9299e89b7b",
+        "package_import": {
+          "base_median_seconds": 0.128806123,
+          "final_median_seconds": 0.134008562,
+          "elapsed_change_percent": 4.038968706479906,
+          "base_median_peak_rss_kib": 30748,
+          "final_median_peak_rss_kib": 30496,
+          "peak_rss_change_percent": -0.8195655001951296
+        },
+        "direct_help": {
+          "base_median_seconds": 0.13543708,
+          "final_median_seconds": 0.13706723,
+          "elapsed_change_percent": 1.203621637442298,
+          "base_median_peak_rss_kib": 40140,
+          "final_median_peak_rss_kib": 40624,
+          "peak_rss_change_percent": 1.2057797708021845,
+          "base_output_sha256": "636f6c4912842ec27e1a911a6194cc33eb094fd1b60a59d6474b523a8136e156",
+          "final_output_sha256": "636f6c4912842ec27e1a911a6194cc33eb094fd1b60a59d6474b523a8136e156",
+          "output_equal": true
+        },
+        "interpretation": "No material regression is observed. The neighbouring repository precedent of 10 percent is reported as context only; T010 did not predeclare a numeric threshold."
+      },
+      "pythonista_file_manifest": {
+        "commit": "40dd1088a642370c5a7cc0dfd19dbd59e6395a35",
+        "scope": "all Python files in merger/repoground/frontends/pythonista at the bound merge commit",
+        "files": {
+          "__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "build.py": "62aa9e0bb28f6b21489a3d49cb4caaf5d08902c930eee36af710afe8df4dbfe6",
+          "build_helpers.py": "a3191bc1f5e72bef1e6868b2d696934562052bb0ca06980f6d51f41da948e133",
+          "build_utils.py": "8bbca39c929d4030dc2f57bd22d40463e8ed280537ace12623a93c1f9a3dcbd9",
+          "cli_args.py": "c08ad5800316a0a403b91cd9996b1380f353b0617fa0a093115eef9e32de3f1e",
+          "cli_output.py": "719cb11f9a9a004daaea12d68405ede956711a7c15da9375e68a0b47760faa82",
+          "cli_runner.py": "f904731469fdb6c1a6066ce744a92e7bd29017b9f642853c27b1643ad748ee44",
+          "import_contract.py": "d9228183bfd015efea1a7bde9694151c0394288b6f692c6d5c051fdc794553c6",
+          "ipad_fs_scan.py": "4c9cea9155e8c01f589c33adff5e48f5992b0a415eafd714ced5b382909e5dd2",
+          "pathfinder.py": "7c604070d6905a499a9307eaf7eebc0da4931131741a96592a085579c4386a72",
+          "source_mode.py": "5acb574de5dea320c54a05fd86dcc32cbfb9b5545479216c582465c375f64f54"
+        }
+      },
+      "does_not_establish": [
+        "Juno is Pythonista",
+        "native Pythonista import or report generation",
+        "Pythonista-specific iOS capability gate behaviour",
+        "T010 or T004 completion"
       ]
     }
   },

@@ -37,10 +37,10 @@
       "verifier": "Mergevertrag und GitHub-Readback je Ersatz-PR"
     },
     {
-      "assertion": "Der Abschlussbeleg zeigt organisationsweit keine offenen blockierten Renovate-Ersatz-PRs; jedes der neun Updateziele ist entweder auf frischem grünen Head gemergt oder mit belastbarem Obsoleszenz- beziehungsweise Supersessionbeleg terminalisiert.",
+      "assertion": "Jeder der sieben Reparaturtasks enthält einen repo-spezifischen Abschlussvertrag: Die gebundenen Updateziele müssen später entweder auf einem frischen grünen Head gemergt oder revisionsgebunden als obsolet beziehungsweise superseded terminalisiert werden. T020 behauptet keinen vorgezogenen organisationsweiten Vollzug dieser Folgearbeiten.",
       "evidence_type": "object",
       "id": "organization-closeout",
-      "verifier": "organisationsweite GitHub-API-Suche und Task-Closeout-Receipts"
+      "verifier": "Taskdateien und spätere Child-Task-Closeout-Receipts"
     },
     {
       "assertion": "Ruff, vollständige Bureau-Tests, Registry- und Queue-Validierung, Git-Diff-Prüfung und GitHub-CI sind auf dem exakten Registrierungs-PR-Head grün; die Veröffentlichung selbst verändert die Queue nicht.",
@@ -136,14 +136,20 @@
       "Abwesenheit neuer Renovate-Updates"
     ],
     "implementation": {
+      "contract_correction": {
+        "old_problem": "Das ursprüngliche organization-closeout-Kriterium verlangte den späteren Vollzug aller sieben Repo-Reparaturen, obwohl Ziel, Approval und Schreibscope von T020 ausschließlich deren Registrierung erlauben.",
+        "resolution": "T020 belegt die Veröffentlichung verbindlicher Child-Task-Closeout-Verträge; der tatsächliche Vollzug bleibt revisionsgebundene Pflicht der sieben Folgeaufgaben.",
+        "requires_fresh_claim_after_merge": true
+      },
       "does_not_establish": [
         "Erfolg der sieben Reparaturtasks",
         "Queueaufnahme der erzeugten Tasks",
         "Mergebereitschaft künftiger Ersatz-PRs",
         "organisationsweiten Renovate-Abschluss"
       ],
-      "observed_at": "2026-07-31T19:30:46Z",
-      "registry_base": "fc56cec1d6f876a1d772a9f82ef588d0ed1e63c2",
+      "initial_registry_base": "fc56cec1d6f876a1d772a9f82ef588d0ed1e63c2",
+      "observed_at": "2026-07-31T19:45:00Z",
+      "registry_base": "022f9762af375daf46fcffadce9165d06d91c845",
       "repair_tasks": [
         "OPERATOR-INTEGRATION-LOOP-V1-T021",
         "OPERATOR-INTEGRATION-LOOP-V1-T022",

@@ -3,7 +3,7 @@
   "id": "RPU-V1-T026",
   "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
   "title": "Observed runtime call overlay S2",
-  "state": "planned",
+  "state": "verified",
   "goal": "Add run-bound observed call evidence from tests or traces as a separate overlay that never upgrades static completeness claims.",
   "depends_on": [
     "RPU-V1-T024"
@@ -86,6 +86,62 @@
         "verification authority",
         "safe mutation of terminal historical tasks"
       ]
+    },
+    "pr_completion": {
+      "auto_verify": true,
+      "head_sha": "fa8ee5ce63ddd32b981f3678f76eff524c7b90e7",
+      "number": 1134,
+      "post_merge_required": false,
+      "repo": "heimgewebe/repoground"
+    },
+    "implementation_base": "26f570c3c8895a356af0ca4c5a94a6c007fbfdc6",
+    "implementation_pr": "heimgewebe/repoground#1134",
+    "implementation_head": "fa8ee5ce63ddd32b981f3678f76eff524c7b90e7",
+    "implementation_merge_commit": "15c8ed913ae8d02cb72ae93f4d5c2bf618f29a76",
+    "implementation_merged_at": "2026-07-31T06:07:46Z",
+    "implementation_diff_sha256": "8bba1849282d7ae7eebacd64f31f78145bd334cea6e7688a44b9bbbb62793cbb",
+    "implementation_patch_url": "https://github.com/heimgewebe/repoground/pull/1134.diff",
+    "outcome": "RepoGround records command-bound observed runtime calls as an explicit S2 overlay, keeps them separate from S1/S0 static relations, and encodes that missing trace observations establish neither dead code nor unreachability.",
+    "validation": [
+      "GitHub PR #1134 merged exact head fa8ee5ce63ddd32b981f3678f76eff524c7b90e7 into merge commit 15c8ed913ae8d02cb72ae93f4d5c2bf618f29a76; the merge commit is an ancestor of RepoGround main.",
+      "GitHub reported every status check successful, including pytest-full, browser-tests, release-candidate, Ruff, CodeQL, contracts validation, parity, task-index and AI-context guards; the PR has zero review threads.",
+      "Current RepoGround main f49a978e161797fb6a1740f5c9b723bb2ae054af passed merger/repoground/tests/test_observed_call_overlay.py with 46 tests and targeted Ruff checks for all changed Python modules.",
+      "The implementation diff served by GitHub is bound to SHA-256 8bba1849282d7ae7eebacd64f31f78145bd334cea6e7688a44b9bbbb62793cbb."
+    ],
+    "verified_acceptance": {
+      "rpu-v1-t026-run-binding": "PASS: each S2 relation is tied to one observation_run_id, command, environment, run fingerprint and Git source revision; unresolved source identity is rejected.",
+      "rpu-v1-t026-separation": "PASS: S2 remains a separate overlay; validators reject static S0/S1 fields in the overlay and reject S2 evidence in the static graph. Correspondence annotation never upgrades static evidence.",
+      "rpu-v1-t026-nonclaims": "PASS: absence_semantics and required does_not_establish values explicitly forbid dead-code, unreachability, coverage-sufficiency and static-upgrade conclusions from an unobserved edge."
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "RPU-V1-T026",
+          "number": 1134,
+          "repo": "heimgewebe/repoground",
+          "source_ref": "heimgewebe/repoground#1134",
+          "base_commit_sha": "26f570c3c8895a356af0ca4c5a94a6c007fbfdc6",
+          "head_commit_sha": "fa8ee5ce63ddd32b981f3678f76eff524c7b90e7",
+          "merge_commit_sha": "15c8ed913ae8d02cb72ae93f4d5c2bf618f29a76",
+          "diff_sha256": "8bba1849282d7ae7eebacd64f31f78145bd334cea6e7688a44b9bbbb62793cbb"
+        },
+        {
+          "kind": "test_result",
+          "authority": "grabowski-local",
+          "task_id": "RPU-V1-T026",
+          "source_ref": "RepoGround main f49a978e161797fb6a1740f5c9b723bb2ae054af",
+          "result": "46 passed; targeted Ruff clean"
+        }
+      ]
+    },
+    "verified_at": "2026-07-31T13:27:23Z",
+    "verification": {
+      "task_sha256": "76f29fc48a872cd851a1c31bb5d9a02d83e492ca7706cbbf34e61ad29c7229cf",
+      "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db"
     }
   }
 }

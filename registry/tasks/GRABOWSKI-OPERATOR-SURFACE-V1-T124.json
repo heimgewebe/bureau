@@ -1,0 +1,125 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein Grant entsteht ausschließlich nach sichtbarer Auswahl genau eines Ordners im iPadOS-Systempicker in Juno im Vordergrund; Chat- oder Fernfreigaben, direkte Systempfade und private App-Container erzeugen keinen Grant.",
+      "evidence_type": "object",
+      "id": "local-consent-only"
+    },
+    {
+      "assertion": "Das lokale Skript in Junos Documents-Verzeichnis ist create-only, besitzt Modus 0600 und SHA-256 7d91c3664edd3c38ed57fb96e946f98c44391b7cab26e971141c3314ed308ba5; kein vorhandener Inhalt wurde ersetzt.",
+      "evidence_type": "object",
+      "id": "deployed-picker-bound"
+    },
+    {
+      "assertion": "Grant-Status und Storage-Inventar liefern eine gültige Grant-ID, Evidence-SHA-256 und einen Provider-Hinweis, ohne Bookmark-Bytes offenzulegen.",
+      "evidence_type": "object",
+      "id": "grant-readback"
+    },
+    {
+      "assertion": "Die exakte Grant-ID wird mit erwarteter Evidence-SHA-256 und erwartetem Provider gebunden; die Permission-Probe belegt aktuellen Lese- und Schreibzugriff oder meldet providerseitige Einschränkungen fail-closed.",
+      "evidence_type": "object",
+      "id": "permission-probe"
+    },
+    {
+      "assertion": "Eine klar benannte Sentinel-Datei wird nur bei Vorzustand absent create-only geschrieben, mit Payload-SHA-256 gelesen, nur bei passendem Vorinhalt-SHA-256 ersetzt und erneut mit SHA-256 zurückgelesen. Delete, Move, Rename und rekursiver Zugriff bleiben ausgeschlossen.",
+      "evidence_type": "object",
+      "id": "hash-roundtrip"
+    },
+    {
+      "assertion": "Nach einem sichtbaren Juno-Agent-Neustart wird derselbe Grant erneut aufgelöst und Permission- sowie Readback-Evidenz an die neue started_at-Instanz gebunden.",
+      "evidence_type": "object",
+      "id": "juno-restart-persistence"
+    },
+    {
+      "assertion": "Alle Job-, Grant-, Read-, Create-, Replace- und Neustart-Receipts werden mit Kandidat candidate-07cedcc740ecd972f1de66d7, Event 1789 und Obligation goo-juno-ipad-storage-grant-roundtrip-20260730 korreliert; die Aufgabe wird erst bei vollständigem Readback verifiziert.",
+      "evidence_type": "object",
+      "id": "receipts-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 31. Juli 2026 ausdrücklich pauschale operative Freigabe für Grabowski/Juno erteilt. Diese Freigabe autorisiert vorbereitende, hashgebundene Laufzeitaktionen und bei belegtem Bedarf eng begrenzte Grabowski-Repository-Korrekturen, ersetzt aber nicht die lokale iPadOS-Ordnerauswahl und erlaubt keine Sandboxumgehung.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Die bereits create-only bereitgestellte und hashgebundene Juno-Ordnerauswahl durch genau eine sichtbare iPadOS-Auswahl abschließen und den resultierenden Security-Scope-Grant mit Permission-Probe, Create/Read/Replace-Hashkette und Juno-Neustart-Readback belegen, ohne Sandbox- oder Einwilligungsgrenzen zu umgehen.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T124",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "blocking_condition": "local_iPadOS_folder_picker_selection",
+    "candidate_id": "candidate-07cedcc740ecd972f1de66d7",
+    "does_not_establish": [
+      "remote_iPadOS_consent",
+      "access_to_unselected_folders",
+      "grant_persistence_before_restart_readback",
+      "device_reboot_persistence",
+      "permission_to_bypass_sandbox_or_private_app_containers",
+      "task_completion_before_hash_roundtrip"
+    ],
+    "event_id": 1789,
+    "live_evidence": {
+      "agent_id": "ipad-10th-gen-wifi",
+      "agent_started_at": "2026-07-29T06:33:22.796658+00:00",
+      "foreground_scene_present": false,
+      "grants": [],
+      "manifest_job_id": "job-mcp-863e6f73-b391-4381-8051-8a279c31afd5",
+      "manifest_receipt_sha256": "4ae497411c06d5a0ca90f7763bb4fc73f759e2ccf6f2af7872e6ab0c3308bcad",
+      "picker_arm_expires_at": "2026-07-31T04:46:35.876048+00:00",
+      "picker_arm_id": "juno-picker-arm-e1d9e64a29144b0695ef63e6b8a8a0d9",
+      "picker_arm_receipt_sha256": "3e3ea6e39aa5aea21756ce770160fd2c09feae9156aee490241786a358c49242",
+      "picker_deploy_job_id": "job-mcp-61709a20-7535-4b40-8382-400aa1636ff2",
+      "picker_deploy_receipt_sha256": "30c22e154c6e29cab7f0f3b970265007ca62b801b6693f615e1f1ee136b22243",
+      "picker_script_path": "/private/var/mobile/Containers/Data/Application/AB330EB4-4871-42A4-93BC-B547134C728C/Documents/juno_storage_grant.py",
+      "picker_script_sha256": "7d91c3664edd3c38ed57fb96e946f98c44391b7cab26e971141c3314ed308ba5",
+      "scene_activation_state": 2
+    },
+    "obligation": "goo-juno-ipad-storage-grant-roundtrip-20260730",
+    "unblock_condition": "Ein sichtbarer Juno-Foreground-Picker-Callback hat genau einen gültigen Security-Scoped-Bookmark-Grant persistent gespeichert.",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-07cedcc740ecd972f1de66d7",
+      "event_id": 1789,
+      "event_created_at": "2026-07-30T22:36:29.176494Z",
+      "request_sha256": "6a31620364b44422e09feae43eb8eacb0e1e43126cc873123440180e7cdb3462",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live_runtime_audit",
+        "locator": "juno-ipad:ipad-10th-gen-wifi:capability-manifest:2026-07-30T22:33:53Z",
+        "observed_at": "2026-07-30T22:33:53Z",
+        "sha256": "2251d3fac4f311822f7f1249961e3ebed35a233bf4f5c2eadcb6ee1fa16adb78"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 2
+  },
+  "required_capabilities": [
+    "repository",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "blocked",
+  "title": "Juno-Ordnerfreigabe lokal bestätigen und Roundtrip belegen"
+}

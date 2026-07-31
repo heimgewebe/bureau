@@ -47,7 +47,7 @@
     {
       "isolation": "worktree",
       "mode": "write",
-      "resource": "repo.repoground"
+      "resource": "component.repoground.publication"
     }
   ],
   "depends_on": [],

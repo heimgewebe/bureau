@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "repo.mitschreiber",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/mitschreiber",
+  "github_slug": "heimgewebe/mitschreiber",
+  "grabowski_key": "repo:/home/alex/repos/mitschreiber",
+  "metadata": {
+    "role": "Repository for structured transcription contracts and Rust/Python integrations",
+    "boundaries": [
+      "security_updates_precede_non_security_digest_refreshes",
+      "no_merge_without_contract_validation",
+      "no_reuse_of_closed_pr_checks"
+    ]
+  }
+}

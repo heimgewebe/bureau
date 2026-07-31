@@ -14,9 +14,7 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/repoground",
     "grabowski_resources": [
-      "repo:/home/alex/repos/repoground",
-      "repo:/home/alex/repos/systemkatalog",
-      "repo:/home/alex/repos/grabowski"
+      "repo:/home/alex/repos/repoground"
     ],
     "approval": {
       "action_class": "repository_mutation",
@@ -112,6 +110,21 @@
       "does_not_establish": [
         "consumer runtime correctness beyond the cited revisions",
         "future consumer compatibility without tests"
+      ]
+    },
+    "execution_resource_scope_review": {
+      "reviewed_at": "2026-07-31T14:49:05+02:00",
+      "decision": "repo.repoground-only",
+      "basis": [
+        "RepoGround is the sole working repository and mutation target.",
+        "Systemkatalog and Grabowski consumer reads are already bound to immutable revisions in consumer_read_evidence.",
+        "Bureau claim intent derives real Grabowski lease keys from execution.grabowski_resources in addition to declarative claims."
+      ],
+      "effect": "The formal claim acquires only repo:/home/alex/repos/repoground.",
+      "does_not_authorize": [
+        "Systemkatalog mutation",
+        "Grabowski mutation",
+        "consumer compatibility claims beyond recorded revisions"
       ]
     }
   },

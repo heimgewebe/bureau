@@ -1,0 +1,145 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die aktuelle Betriebsdokumentation liegt ausschließlich unter docs/operations/repoground-publication-policy.md; aktive Beispiele verwenden repoground-publication-policy, REPOGROUND_PUBLICATION_* und --repoground-version. Der frühere Dokumentpfad und rb-publication-policy werden durch Regressionstests als aktive Oberfläche abgewiesen.",
+      "evidence_type": "object",
+      "id": "canonical-current-surface",
+      "verifier": "naming and documentation tests"
+    },
+    {
+      "assertion": "Neue Evidenz verwendet standardmäßig ~/.local/state/repoground-publication-policy. Der Installer migriert einen ausschließlich vorhandenen regulären historischen Verzeichnisbaum aus ~/.local/state/repobrief-publication-policy ohne Inhaltsumschreibung, verweigert Symlinks, Nichtverzeichnisse und gleichzeitige Alt-/Neuwurzel und löscht keine Evidenz.",
+      "evidence_type": "object",
+      "id": "fail-closed-state-root-migration",
+      "verifier": "publication-policy and installer regression tests"
+    },
+    {
+      "assertion": "Der Installer installiert zuerst den kanonischen Befehl und entfernt danach den verwaisten ~/.local/bin/rb-publication-policy-Wrapper. Eine revisionsgebundene Inventur belegt keine aktive Systemd-, Prozess- oder kanonische Quellreferenz auf den Wrapper; historische Worktrees, Belege und alte Publikationen werden nicht verändert.",
+      "evidence_type": "object",
+      "id": "stale-wrapper-retired",
+      "verifier": "consumer inventory, runtime readback and naming guard"
+    },
+    {
+      "assertion": "Bestehende repobrief.*-Schema-IDs und das persistierte lenskit_version-Feld bleiben byte- und bedeutungsstabil lesbar; die Namensmigration schreibt keine vorhandenen Records, Manifeste oder Proofs um und führt keine falsche RepoGround-v2-Datenidentität ein.",
+      "evidence_type": "object",
+      "id": "persisted-v1-identity-preserved",
+      "verifier": "publication identity and compatibility tests"
+    },
+    {
+      "assertion": "Gezielte Publication-Policy-, Naming-, Installer- und Hygieneprüfungen, die vollständige RepoGround-Pytest-Suite, Ruff, CodeQL und alle Pflichtchecks sind auf dem exakten PR-Head erfolgreich.",
+      "evidence_type": "object",
+      "id": "tests-and-ci",
+      "verifier": "local receipts and GitHub checks"
+    },
+    {
+      "assertion": "Nach Merge wird der kanonische Installer mit dem zuvor beobachteten Timerzustand ausgeführt. Readback belegt den installierten kanonischen Befehl, die Abwesenheit des alten Wrappers, genau eine zulässige Zustandswurzel und einen gesunden unveränderten Fleet-Timervertrag.",
+      "evidence_type": "object",
+      "id": "live-install-readback",
+      "verifier": "hash-bound host receipt"
+    },
+    {
+      "assertion": "Ein revisionsgebundener Proof dokumentiert Inventar, Migrationsentscheidung, Rollbackgrenzen und Restkompatibilität, ohne globale Nullnutzung, Löschrecht für historische Evidenz, automatische Schemaumbenennung oder zukünftige Verbraucherkompatibilität zu behaupten.",
+      "evidence_type": "object",
+      "id": "proof-and-nonclaims",
+      "verifier": "proof review"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer autorisierte die kandidatgebundene Umsetzung am 31. Juli 2026 mit '@grabowski umsetzen'. Die Registry-Veröffentlichung bleibt unabhängig an den hashgebundenen reviewed_plan gebunden.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/repoground/docs/operations/repobrief-publication-policy.md",
+      "path:/home/alex/repos/repoground/docs/operations/repoground-publication-policy.md",
+      "path:/home/alex/repos/repoground/scripts/ops/repoground-publication-policy",
+      "path:/home/alex/repos/repoground/scripts/ops/install_repoground_publish_fleet_runtime.sh",
+      "path:/home/alex/repos/repoground/merger/repoground/core/naming_audit.py",
+      "path:/home/alex/repos/repoground/merger/repoground/tests/test_publication_policy.py",
+      "path:/home/alex/repos/repoground/merger/repoground/tests/test_fleet_runtime.py",
+      "path:/home/alex/repos/repoground/merger/repoground/tests/test_naming_doc.py",
+      "path:/home/alex/repos/repoground/merger/repoground/tests/test_naming_audit.py",
+      "path:/home/alex/repos/repoground/tests/test_naming_hard_cut.py",
+      "path:/home/alex/repos/repoground/docs/proofs/repoground-publication-policy-naming-v1-proof.md",
+      "path:/home/alex/.local/bin/rb-publication-policy",
+      "path:/home/alex/.local/bin/repoground-publication-policy",
+      "path:/home/alex/.local/state/repobrief-publication-policy",
+      "path:/home/alex/.local/state/repoground-publication-policy",
+      "service:repoground-publish-fleet-watch.timer"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Schließe die verbliebene aktive RepoBrief-Namenslücke der RepoGround-Publikationsrichtlinie: benenne die aktuelle Betriebsdokumentation kanonisch, stelle neue Evidenzzustände standardmäßig unter RepoGround-Namen bereit, migriere einen vorhandenen historischen Zustandsbaum fail-closed ohne Datenumschreibung, entferne den verwaisten rb-publication-policy-Wrapper erst nach belegter Nullnutzung und bewahre persistierte v1-Schema- und Feldidentitäten exakt.",
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T021",
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "metadata": {
+    "bureau_runtime_commit": "fc56cec1d6f876a1d772a9f82ef588d0ed1e63c2",
+    "does_not_establish": [
+      "global_absence_of_unknown_consumers",
+      "permission_to_rewrite_historical_proofs",
+      "permission_to_rename_persisted_v1_schema_ids",
+      "task_completion",
+      "merge_readiness",
+      "permission_to_modify_foreign_dirty_checkouts"
+    ],
+    "live_inventory": {
+      "active_matching_processes": 0,
+      "canonical_command_source": "scripts/ops/repoground-publication-policy",
+      "canonical_default_state_root_exists": false,
+      "historical_default_state_root_exists": false,
+      "open_repoground_pull_requests": 0,
+      "stale_installed_wrapper": "/home/alex/.local/bin/rb-publication-policy",
+      "systemd_references": 0
+    },
+    "live_inventory_observed_at": "2026-07-31T20:33:00+02:00",
+    "source_candidate": "candidate-f537a897f7df1a0e89cd35ec",
+    "source_commit": "c11446cb7bdf0c166f804fd71f89786bf8ea5396",
+    "source_event": 1884,
+    "source_path": "docs/operations/repobrief-publication-policy.md",
+    "source_repository": "heimgewebe/repoground",
+    "source_sha256": "0791bf34d8a9ca074cb3b92051261d1fa879d3030be62c0f7292ebe17fd457d2",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-f537a897f7df1a0e89cd35ec",
+      "event_id": 1884,
+      "event_created_at": "2026-07-31T18:26:55.746090Z",
+      "request_sha256": "c79a38e9f79184ab812f3b77e90926e949900a87c7af9235c0af6c0e42f30f2f",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "repository-file",
+        "locator": "github:heimgewebe/repoground@c11446cb7bdf0c166f804fd71f89786bf8ea5396:docs/operations/repobrief-publication-policy.md",
+        "observed_at": "2026-07-31T18:26:55.726732Z",
+        "sha256": "0791bf34d8a9ca074cb3b92051261d1fa879d3030be62c0f7292ebe17fd457d2"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 25
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "python",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "RepoGround Publication-Policy-Namensfläche terminalisieren"
+}

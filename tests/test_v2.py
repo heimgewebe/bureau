@@ -4,7 +4,9 @@ import hashlib
 import json
 import sqlite3
 import subprocess
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -97,6 +99,17 @@ def setup(root: Path, tmp_path: Path, monkeypatch, adapters: AdapterRegistry | N
     registry = Registry.load(root)
     store = StateStore(state / "bureau.sqlite3")
     return registry, store, Dispatcher(registry, store, adapters)
+
+
+class TracingStateStore(StateStore):
+    def __init__(self, path: Path):
+        self.statements: list[str] = []
+        super().__init__(path)
+
+    def connect(self) -> sqlite3.Connection:
+        connection = super().connect()
+        connection.set_trace_callback(self.statements.append)
+        return connection
 
 
 def claim_and_complete(root: Path, tmp_path: Path, monkeypatch):
@@ -604,6 +617,155 @@ def test_heartbeat_refreshes_owned_active_run(registry_factory, tmp_path, monkey
     assert refreshed["heartbeat_at"] != "2000-01-01T00:00:00Z"
     with pytest.raises(StateError, match="does not own"):
         store.heartbeat(run["run_id"], "worker-b")
+
+
+def test_heartbeat_reduces_successful_full_run_reads_by_half(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    state = tmp_path / "state"
+    monkeypatch.setenv("BUREAU_STATE_DIR", str(state))
+    registry = Registry.load(root)
+    store = TracingStateStore(state / "bureau.sqlite3")
+    dispatcher = Dispatcher(registry, store)
+    run = dispatcher.claim_next("worker-a", ("repository",))["run"]
+
+    def legacy_heartbeat() -> dict:
+        now = bureau_v2.legacy.utc_now()
+        with store.immediate() as connection:
+            row = connection.execute(
+                "SELECT * FROM runs WHERE run_id=?", (run["run_id"],)
+            ).fetchone()
+            assert row is not None
+            connection.execute(
+                "UPDATE runs SET heartbeat_at=?,updated_at=? WHERE run_id=?",
+                (now, now, run["run_id"]),
+            )
+            connection.execute(
+                "UPDATE workers SET heartbeat_at=? WHERE worker_id=?",
+                (now, row["worker_id"]),
+            )
+            store.event(connection, "run-heartbeat", {}, run["run_id"])
+        return store.run(run["run_id"])
+
+    store.statements.clear()
+    legacy_heartbeat()
+    legacy_full_reads = sum(
+        statement.lstrip().upper().startswith("SELECT * FROM RUNS")
+        for statement in store.statements
+    )
+
+    store.statements.clear()
+    refreshed = store.heartbeat(run["run_id"], "worker-a")
+    cas_full_reads = sum(
+        statement.lstrip().upper().startswith("SELECT * FROM RUNS")
+        for statement in store.statements
+    )
+
+    assert refreshed["worker_id"] == "worker-a"
+    assert legacy_full_reads == 2
+    assert cas_full_reads == 1
+    assert not any(
+        "SELECT STATE,WORKER_ID FROM RUNS" in statement.upper()
+        for statement in store.statements
+    )
+
+
+def test_heartbeat_without_expected_worker_preserves_existing_owner_semantics(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    _, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    run = dispatcher.claim_next("worker-a", ("repository",))["run"]
+    with store.immediate() as connection:
+        connection.execute(
+            "UPDATE workers SET heartbeat_at='2000-01-01T00:00:00Z' "
+            "WHERE worker_id='worker-a'"
+        )
+
+    refreshed = store.heartbeat(run["run_id"])
+
+    with store.connect() as connection:
+        worker = connection.execute(
+            "SELECT heartbeat_at FROM workers WHERE worker_id='worker-a'"
+        ).fetchone()
+    assert refreshed["worker_id"] == "worker-a"
+    assert worker["heartbeat_at"] != "2000-01-01T00:00:00Z"
+
+
+def test_heartbeat_rejections_have_zero_effects(registry_factory, tmp_path, monkeypatch):
+    root = registry_factory(1)
+    _, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    run = dispatcher.claim_next("worker-a", ("repository",))["run"]
+
+    def effects() -> tuple[str, str, int]:
+        with store.connect() as connection:
+            run_row = connection.execute(
+                "SELECT heartbeat_at FROM runs WHERE run_id=?", (run["run_id"],)
+            ).fetchone()
+            worker_row = connection.execute(
+                "SELECT heartbeat_at FROM workers WHERE worker_id='worker-a'"
+            ).fetchone()
+            event_count = connection.execute(
+                "SELECT COUNT(*) FROM events "
+                "WHERE run_id=? AND event_type='run-heartbeat'",
+                (run["run_id"],),
+            ).fetchone()[0]
+        return run_row["heartbeat_at"], worker_row["heartbeat_at"], event_count
+
+    before_wrong_owner = effects()
+    with pytest.raises(StateError, match="does not own"):
+        store.heartbeat(run["run_id"], "worker-b")
+    assert effects() == before_wrong_owner
+
+    with store.immediate() as connection:
+        connection.execute(
+            "UPDATE runs SET state='completed' WHERE run_id=?", (run["run_id"],)
+        )
+    before_terminal = effects()
+    with pytest.raises(StateError, match="not active"):
+        store.heartbeat(run["run_id"], "worker-a")
+    assert effects() == before_terminal
+
+    before_unknown = effects()
+    with pytest.raises(StateError, match="not active"):
+        store.heartbeat("BUR-RUN-UNKNOWN", "worker-a")
+    assert effects() == before_unknown
+
+
+def test_competing_heartbeat_owners_produce_one_winner(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1)
+    _, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    run = dispatcher.claim_next("worker-a", ("repository",))["run"]
+    barrier = threading.Barrier(2)
+
+    def heartbeat(worker_id: str) -> str:
+        barrier.wait()
+        try:
+            store.heartbeat(run["run_id"], worker_id)
+        except StateError as exc:
+            return str(exc)
+        return "success"
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        outcomes = sorted(
+            future.result()
+            for future in (
+                executor.submit(heartbeat, "worker-a"),
+                executor.submit(heartbeat, "worker-b"),
+            )
+        )
+
+    with store.connect() as connection:
+        event_count = connection.execute(
+            "SELECT COUNT(*) FROM events "
+            "WHERE run_id=? AND event_type='run-heartbeat'",
+            (run["run_id"],),
+        ).fetchone()[0]
+    assert outcomes == ["success", "worker does not own this run"]
+    assert event_count == 1
 
 
 class RecoveringAdapter(FakeAdapter):

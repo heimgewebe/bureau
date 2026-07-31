@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
-  "state": "planned",
+  "state": "ready",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",

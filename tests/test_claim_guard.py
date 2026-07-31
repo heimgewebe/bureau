@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
@@ -1753,3 +1754,331 @@ def test_open_pr_scope_rejects_mixed_inside_and_outside_paths(
     reservation = item["open_pr_scope"]["reservations"][0]
     assert reservation["classification"] == "scope-required"
     assert "outside working repository" in reservation["diagnostic"]
+
+
+_ADOPTION_REPOSITORY = "heimgewebe/example"
+_ADOPTION_PR = 77
+_ADOPTION_BASE = "a" * 40
+_ADOPTION_HEAD = "b" * 40
+
+
+def _open_pr_adoption_reservation(
+    *,
+    number=_ADOPTION_PR,
+    base_oid=_ADOPTION_BASE,
+    head_oid=_ADOPTION_HEAD,
+    task_ids=("BUR-TEST-001-T001",),
+    observation_failed=False,
+    scope_resources=("repo",),
+):
+    return bureau_v2.OpenPullRequestReservation(
+        f"open-pr:{_ADOPTION_REPOSITORY}#{number}",
+        "repo",
+        "write-blocker",
+        1,
+        repository=_ADOPTION_REPOSITORY,
+        number=number,
+        task_ids=task_ids,
+        task_binding_status="valid" if not observation_failed else "unknown",
+        task_binding_reason=(
+            "open PR binds exactly one open Bureau task"
+            if not observation_failed
+            else "open PR observation failed"
+        ),
+        scope_resources=scope_resources,
+        base_oid=base_oid,
+        head_oid=head_oid,
+        changed_paths=("src/existing.py",),
+        changed_paths_sha256="c" * 64,
+        changed_file_count=1,
+        file_scope_sha256="d" * 64,
+        file_scope_complete=not observation_failed,
+        file_scope_diagnostic=("complete" if not observation_failed else "GitHub unavailable"),
+        observation_failed=observation_failed,
+    )
+
+
+def _configure_open_pr_adoption_registry(root, *, variant="exact"):
+    implementation_id = "BUR-TEST-001-T001"
+    merge_id = "BUR-TEST-001-T002"
+    implementation_path = root / f"registry/tasks/{implementation_id}.json"
+    implementation = json.loads(implementation_path.read_text())
+    implementation["state"] = "ready" if variant == "unverified-predecessor" else "verified"
+    implementation_revision = {
+        "schema_version": 1,
+        "repository": _ADOPTION_REPOSITORY,
+        "pull_request": _ADOPTION_PR,
+        "base_sha": _ADOPTION_BASE,
+        "head_sha": (
+            "c" * 40 if variant == "predecessor-head-drift" else _ADOPTION_HEAD
+        ),
+    }
+    implementation_metadata = {}
+    if variant != "missing-implementation-revision":
+        implementation_metadata["open_pr_implementation"] = implementation_revision
+    if implementation["state"] == "verified":
+        implementation["metadata"] = implementation_metadata
+        implementation_metadata["verification"] = {
+            "task_sha256": bureau_v2.task_revision_sha256(implementation),
+            "plan_sha256": bureau_v2.legacy.sha256_json({}),
+        }
+    if implementation_metadata:
+        implementation["metadata"] = implementation_metadata
+    implementation_path.write_text(json.dumps(implementation))
+    queue_path = root / "registry/queue.json"
+    queue = json.loads(queue_path.read_text())
+    for lane in queue["lanes"].values():
+        while implementation_id in lane:
+            lane.remove(implementation_id)
+    queue_path.write_text(json.dumps(queue))
+
+    merge_path = root / f"registry/tasks/{merge_id}.json"
+    merge = json.loads(merge_path.read_text())
+    merge["depends_on"] = [] if variant == "missing-dependency" else [implementation_id]
+    merge["claims"] = [
+        {
+            "resource": "repo",
+            "mode": "write" if variant == "nonexclusive" else "exclusive",
+            "amount": 1,
+            "isolation": "worktree",
+        }
+    ]
+    merge["execution"]["approval"] = {
+        "required_level": "operator",
+        "action_class": "repository_mutation",
+        "note": "test exact open PR adoption",
+    }
+    contract = {
+        "schema_version": 1,
+        "repository": _ADOPTION_REPOSITORY,
+        "pull_request": _ADOPTION_PR,
+        "base_sha": _ADOPTION_BASE,
+        "head_sha": _ADOPTION_HEAD,
+        "implementation_task": implementation_id,
+        "merge_task": merge_id,
+    }
+    if variant == "wrong-implementation-task":
+        contract["implementation_task"] = "BUR-TEST-001-T999"
+    elif variant == "wrong-pr":
+        contract["pull_request"] = _ADOPTION_PR + 1
+    elif variant == "base-drift":
+        contract["base_sha"] = "e" * 40
+    elif variant == "head-drift":
+        contract["head_sha"] = "f" * 40
+    elif variant == "extra-contract-field":
+        contract["unexpected"] = True
+    merge["metadata"] = {"open_pr_adoption": contract}
+    merge_path.write_text(json.dumps(merge))
+    subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.invalid"], cwd=root, check=True)
+    subprocess.run(["git", "config", "user.name", "Bureau Test"], cwd=root, check=True)
+    subprocess.run(["git", "add", "."], cwd=root, check=True)
+    subprocess.run(["git", "commit", "-qm", "test baseline"], cwd=root, check=True)
+    return Registry.load(root)
+
+
+def test_exact_open_pr_merge_adoption_is_claimable(registry_factory, tmp_path):
+    root = registry_factory(2, mode="write")
+    registry = _configure_open_pr_adoption_registry(root)
+    reservation = _open_pr_adoption_reservation()
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _registry: [reservation],
+    )
+
+    frontier = {item["task_id"]: item for item in dispatcher.frontier({"repository"})}
+    merge = frontier["BUR-TEST-001-T002"]
+
+    assert merge["eligible"] is True
+    assert merge["reasons"] == []
+    assessment = merge["open_pr_scope"]
+    assert assessment["classification_counts"]["merge-adopted"] == 1
+    assert assessment["requires_evidence"] is False
+    assert assessment["reservations"][0]["classification"] == "merge-adopted"
+    claimed = dispatcher.claim_next("worker-adoption", ("repository",))["run"]
+    assert claimed["task_id"] == "BUR-TEST-001-T002"
+
+
+@pytest.mark.parametrize(
+    "variant",
+    [
+        "wrong-implementation-task",
+        "nonexclusive",
+        "unverified-predecessor",
+        "missing-dependency",
+        "wrong-pr",
+        "missing-implementation-revision",
+        "base-drift",
+        "head-drift",
+        "extra-contract-field",
+    ],
+)
+def test_open_pr_merge_adoption_contract_failures_remain_blocking(
+    registry_factory, tmp_path, variant
+):
+    root = registry_factory(2, mode="write")
+    registry = _configure_open_pr_adoption_registry(root, variant=variant)
+    reservation = _open_pr_adoption_reservation()
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _registry: [reservation],
+    )
+
+    merge = next(
+        item
+        for item in dispatcher.frontier({"repository"})
+        if item["task_id"] == "BUR-TEST-001-T002"
+    )
+
+    assert merge["eligible"] is False
+    assert merge["open_pr_scope"]["classification_counts"]["merge-adopted"] == 0
+    assert "open-pr:heimgewebe/example#77" in " ".join(merge["reasons"])
+
+
+def test_open_pr_merge_adoption_rejects_predecessor_verified_for_old_head(
+    registry_factory, tmp_path
+):
+    root = registry_factory(2, mode="write")
+    registry = _configure_open_pr_adoption_registry(
+        root, variant="predecessor-head-drift"
+    )
+    reservation = _open_pr_adoption_reservation()
+    predecessor = registry.tasks["BUR-TEST-001-T001"]
+    verification = predecessor.raw["metadata"]["verification"]
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _registry: [reservation],
+    )
+
+    merge = next(
+        item
+        for item in dispatcher.frontier({"repository"})
+        if item["task_id"] == "BUR-TEST-001-T002"
+    )
+
+    assert predecessor.raw["metadata"]["open_pr_implementation"]["head_sha"] == "c" * 40
+    assert verification["task_sha256"] == predecessor.sha256
+    assert reservation.head_oid == _ADOPTION_HEAD
+    assert merge["eligible"] is False
+    assert merge["open_pr_scope"]["classification_counts"]["merge-adopted"] == 0
+    assert "open-pr:heimgewebe/example#77" in " ".join(merge["reasons"])
+
+
+def test_open_pr_merge_adoption_rejects_additional_repository_scope(
+    registry_factory, tmp_path
+):
+    root = registry_factory(2, mode="write")
+    registry = _configure_open_pr_adoption_registry(root)
+    reservation = _open_pr_adoption_reservation(scope_resources=("repo", "repo.beta"))
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _registry: [reservation],
+    )
+
+    merge = next(
+        item
+        for item in dispatcher.frontier({"repository"})
+        if item["task_id"] == "BUR-TEST-001-T002"
+    )
+
+    assert merge["eligible"] is False
+    assert merge["open_pr_scope"]["classification_counts"]["merge-adopted"] == 0
+
+
+def test_open_pr_merge_adoption_does_not_hide_additional_pr(
+    registry_factory, tmp_path
+):
+    root = registry_factory(3, mode="write")
+    registry = _configure_open_pr_adoption_registry(root)
+    adopted = _open_pr_adoption_reservation()
+    additional = _open_pr_adoption_reservation(
+        number=78,
+        task_ids=("BUR-TEST-001-T003",),
+    )
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _registry: [adopted, additional],
+    )
+
+    merge = next(
+        item
+        for item in dispatcher.frontier({"repository"})
+        if item["task_id"] == "BUR-TEST-001-T002"
+    )
+    by_number = {
+        item["number"]: item for item in merge["open_pr_scope"]["reservations"]
+    }
+
+    assert merge["eligible"] is False
+    assert by_number[77]["classification"] == "merge-adopted"
+    assert by_number[78]["classification"] != "merge-adopted"
+    assert "open-pr:heimgewebe/example#78" in " ".join(merge["reasons"])
+    assert "open-pr:heimgewebe/example#77" not in " ".join(merge["reasons"])
+
+
+def test_open_pr_merge_adoption_observation_failure_blocks(registry_factory, tmp_path):
+    root = registry_factory(2, mode="write")
+    registry = _configure_open_pr_adoption_registry(root)
+    reservation = _open_pr_adoption_reservation(observation_failed=True)
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _registry: [reservation],
+    )
+
+    merge = next(
+        item
+        for item in dispatcher.frontier({"repository"})
+        if item["task_id"] == "BUR-TEST-001-T002"
+    )
+
+    assert merge["eligible"] is False
+    assert "open PR guard failure" in " ".join(merge["reasons"])
+
+
+def test_open_pr_merge_adoption_claim_commit_rejects_head_drift(
+    registry_factory, tmp_path
+):
+    root = registry_factory(2, mode="write")
+    registry = _configure_open_pr_adoption_registry(root)
+    current = [_open_pr_adoption_reservation()]
+    store = StateStore(tmp_path / "state" / "bureau.sqlite3")
+    dispatcher = Dispatcher(
+        registry,
+        store,
+        open_pr_reservations_provider=lambda _registry: list(current),
+    )
+
+    result = dispatcher.claim_intent(
+        "worker-adoption-drift",
+        ("repository",),
+        task_id="BUR-TEST-001-T002",
+        approved=True,
+        approval_source="test-open-pr-adoption",
+    )
+    intent = result["intent"]
+    assessment = result["ready_supply"]["open_pr_scope"]
+    assert assessment["reservations"][0]["classification"] == "merge-adopted"
+    assert "open_pr_nonconflict" not in intent["operator_approval"]
+
+    current[:] = [_open_pr_adoption_reservation(head_oid="c" * 40)]
+
+    with pytest.raises(
+        bureau_v2.legacy.StateError,
+        match="coordinated claim eligibility changed",
+    ):
+        dispatcher.commit_claim_intent(intent, None)
+
+    with store.connect() as connection:
+        assert store.active_runs(connection) == []

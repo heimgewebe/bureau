@@ -4,9 +4,13 @@
 
 `implement-pass` für den engen `StateStore.heartbeat`-Piloten.
 
+`task-terminalization: blocked` für den vollständigen Vertrag von `BUREAU-TRUTH-MODEL-V2-T021`.
+
 Der erfolgreiche Heartbeat prüft Run-Identität, aktiven Zustand und – falls übergeben – den erwarteten Worker nun im Prädikat eines bedingten SQLite-Updates. Erst genau ein Treffer erlaubt Worker-Heartbeat, ein `run-heartbeat`-Event und den unveränderten autoritativen Readback einschließlich Reservierungen.
 
 Ein Nulltreffer führt ausschließlich zu einem schmalen Diagnoseread auf `state, worker_id`. Unbekannter Run, terminaler Run und falscher Worker erzeugen keine Run-, Worker- oder Eventmutation.
+
+Der Pilot erfüllt jedoch nicht den gesamten kanonischen T021-Akzeptanzvertrag: Es wurden weder ein expliziter Idempotenzschlüssel noch ein Unknown-Outcome-/Retry-Verbot eingeführt; außerdem fehlen Drift-, Crash- und Replaytests. Der Bureau-Run darf deshalb nicht als vollständige T021-Erledigung abgeschlossen werden.
 
 ## Revisionsbindung
 
@@ -63,11 +67,27 @@ Die Messung belegt die SQL-Pfad-Hypothese, nicht automatisch einen produktiven E
 
 ## Akzeptanzzuordnung
 
-- `existing-contract-audit`: bestehender Vorlese-, Mutations-, Event- und Readbackpfad wurde gegen aktuellen Main geprüft; `complete_run` und `fail_run` blieben bewusst unverändert.
-- `measured-read-reduction`: 2 → 1 vollständige Run-Zeilenlesungen je erfolgreichem Heartbeat, exakt 50 %.
-- `exact-preconditions`: Run-ID, aktiver Lifecycle-Zustand und optional erwarteter Worker liegen im atomaren Update-Prädikat; Nulltreffer mutieren nichts.
-- `no-change-closeout`: nicht anwendbar, da die festgelegte Nutzen- und p95-Grenze erreicht wurde.
+| T021-Akzeptanz | Stand dieses Piloten | Urteil |
+|---|---|---|
+| `existing-contract-audit` | Heartbeat-Quellpfad, Pickup-Gates, Run-/Lease-Bindung und aktuelle Main-Basis geprüft; `complete_run` und `fail_run` bewusst ausgeschlossen | teilweise erfüllt |
+| `measured-read-reduction` | 2 → 1 vollständige Run-Zeilenlesungen je Erfolg; exakt 50 % | erfüllt |
+| `exact-preconditions` | Run-ID, aktiver Zustand und optional erwarteter Worker im Update-Prädikat; kein expliziter Idempotenzschlüssel oder Lease-/Versuchstoken | teilweise erfüllt |
+| `deterministic-rejection` | Unknown/terminal/Owner-Mismatch deterministisch und ohne Wirkung; keine Version-, Lease- oder Idempotenzkonflikte modelliert | teilweise erfüllt |
+| `unknown-outcome-contract` | kein explizites Unknown-Outcome-Readback- und Retry-Verbot | offen |
+| `authoritative-readback` | vollständiger Run einschließlich Reservierungen wird nach Commit autoritativ zurückgelesen; Event allein gilt nicht als Erfolg | erfüllt |
+| `concurrency-tests` | konkurrierende Owner und Nullwirkung getestet; Drift-, Crash-, Replay- und Idempotenzfälle fehlen | teilweise erfüllt |
+| `no-change-closeout` | bei Entscheidung `implement` nicht anwendbar | `not_applicable` |
+| `truth-boundary` | kein zweiter Store, keine Event-Autorität und kein Review-/Merge-/Deployment-Bypass | erfüllt |
+
+## Offene Restarbeit innerhalb T021
+
+1. Entscheiden, ob Heartbeat als erneuerbare Liveness-Mutation überhaupt einen Idempotenzschlüssel benötigt oder ob der kanonische T021-Vertrag für diesen Pfad revisionsgebunden `not_applicable` zulassen soll.
+2. Falls `required`: Request-/Versuchsbindung, Effect-Receipt und Unknown-Outcome-Readback definieren, ohne den günstigen Erfolgsweg wieder durch eine Vorablesung zu belasten.
+3. Drift-, Crash-, Replay- und unveränderte Wiederholung hermetisch prüfen.
+4. Erst danach T021 terminalisieren.
+
+Kein neuer Bureau-Task ist nötig: Diese Restarbeit ist bereits durch T021 kanonisch gebunden.
 
 ## Begrenzung
 
-Dieser Pilot erweitert nicht die öffentlichen Verträge von `complete_run` oder `fail_run` und führt weder einen zweiten Wahrheitsstore noch einen neuen Idempotenzkanal ein. Aus dem Ergebnis darf keine allgemeine CAS-Härtung aller Bureau-Zustandsbefehle abgeleitet werden.
+Dieser Pilot erweitert nicht die öffentlichen Verträge von `complete_run` oder `fail_run` und führt weder einen zweiten Wahrheitsstore noch einen neuen Idempotenzkanal ein. Aus dem Ergebnis darf keine allgemeine CAS-Härtung aller Bureau-Zustandsbefehle und keine vollständige T021-Erfüllung abgeleitet werden.

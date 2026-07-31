@@ -1,0 +1,97 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A dated official or primary-near source is checked by 2026-08-30 and recorded with URL, retrieval date, source role and the exact Arvari River Parliament operating-status claim it supports.",
+      "id": "timely-object-source"
+    },
+    {
+      "assertion": "The record uses activity.status=active only when timely object-specific evidence explicitly supports current operation; otherwise activity.status remains unknown with a clear public disclosure and a refreshed next-review date.",
+      "id": "status-fail-closed"
+    },
+    {
+      "assertion": "The Commons identity remains the village-community river institution rather than Tarun Bharat Sangh, and evidence about the supporting organization is not silently treated as evidence of a current Arvari Parliament meeting or mandate.",
+      "id": "identity-separated"
+    },
+    {
+      "assertion": "No village, well, johad, household, parcel, water structure or local use boundary is reconstructed; any geographic presentation remains a separately justified coarse district or catchment reference.",
+      "id": "privacy-preserved"
+    },
+    {
+      "assertion": "Any data change keeps canonical data, English presentation overlay, generated public shells, taxonomy projections, immutable release and delivery evidence synchronized, with full validation and public browser smoke passing on the exact head.",
+      "id": "generated-surfaces-valid"
+    },
+    {
+      "assertion": "Closeout binds the complete diff and exact head to review evidence, required CI, merge commit and production readback without claiming continuity beyond the checked source date.",
+      "id": "closeout-bound"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly approved continuing the Commonworld integration through Grabowski. Any activity-status change must remain bound to timely object-specific evidence; do not infer current operation from general river-restoration pages.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Reverify the current operating status of the Arvari River Parliament using dated official or primary-near evidence by 2026-08-30, update Commonworld only when that evidence supports a status change, and otherwise preserve the explicit unknown-status disclosure without implying current meetings, operation or exact village and water-infrastructure locations.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T034",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "that the Arvari River Parliament is currently operating",
+      "permission to infer object status from general Tarun Bharat Sangh activity",
+      "an exact village, water-structure or use-boundary location",
+      "automatic queue, claim, dispatch, merge or deployment authority"
+    ],
+    "operator_intake": {
+      "candidate_id": "candidate-4aed29e3be2005af74f264be",
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
+      "event_id": 1760,
+      "schema_version": 1,
+      "source": {
+        "kind": "conversation-and-repository-evidence",
+        "locator": "commonworld:catalog-expansion-balanced-v4",
+        "observed_at": "2026-07-30T21:27:00+02:00",
+        "sha256": "22d5e33b28325a34475f38eea9eb8d867763a5a693d178cc0d78533875ed4de7"
+      }
+    },
+    "queue_mutated": false,
+    "registered_at": "2026-07-31",
+    "source": "Commonworld balanced catalog expansion v4 follow-up",
+    "source_candidate_id": "candidate-4aed29e3be2005af74f264be",
+    "source_event_id": 1760,
+    "source_main": "f319d078087d1dffd1e0e08198802f1edd897d72",
+    "source_pull_request": 168,
+    "source_release": "e8f1f7987bf7fd5d8430",
+    "source_repository": "heimgewebe/commonworld",
+    "target_review_date": "2026-08-30"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 916
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "browser"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Reverify Arvari River Parliament operating status"
+}

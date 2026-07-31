@@ -119,6 +119,40 @@ def _validate_coordinated_claim_intent(intent: dict[str, Any]) -> None:
         raise legacy.StateError("coordinated claim nonclaims are invalid")
 
 
+def coordinated_claim_commit_handoff(intent: dict[str, Any]) -> dict[str, Any]:
+    """Project the exact lease-bound input required by claim-commit."""
+    required_keys = list(intent["required_resource_keys"])
+    lease_required = bool(required_keys)
+    return {
+        "schema_version": 1,
+        "claim_intent_sha256": intent["intent_sha256"],
+        "run_id": intent["run_id"],
+        "task_id": intent["task_id"],
+        "commit_operation": "claim-commit",
+        "lease_binding_required": lease_required,
+        "lease_owner_id": intent["lease_owner_id"],
+        "required_resource_keys": required_keys,
+        "required_lease_metadata": (
+            {
+                "task_id": intent["task_id"],
+                "run_id": intent["run_id"],
+                "claim_intent_sha256": intent["intent_sha256"],
+            }
+            if lease_required
+            else None
+        ),
+        "minimum_remaining_seconds": (
+            COORDINATED_CLAIM_MIN_LEASE_SECONDS if lease_required else None
+        ),
+        "does_not_establish": [
+            "Grabowski lease acquisition",
+            "Bureau claim",
+            "workspace creation",
+            "dispatch authority",
+        ],
+    }
+
+
 def _workspace_baseline_for_task(registry: Registry, task: legacy.Task) -> str | None:
     baseline = task.execution.get("baseline_commit")
     initiative = registry.initiatives[task.initiative]
@@ -3552,6 +3586,7 @@ class Dispatcher(legacy.Dispatcher):
                     else "task-default"
                 ),
             },
+            "claim_commit_handoff": coordinated_claim_commit_handoff(intent),
             "runtime_truth": runtime_truth,
         }
 

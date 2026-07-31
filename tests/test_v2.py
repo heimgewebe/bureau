@@ -2329,9 +2329,52 @@ def test_coordinated_claim_intent_is_read_only_and_requires_approval(
     assert result["status"] == "claim-intent"
     assert result["ready_supply"]["lease_required"] is True
     assert result["intent"]["operator_approval"]["task_id"] == task_id
+    handoff = result["claim_commit_handoff"]
+    assert handoff["claim_intent_sha256"] == result["intent"]["intent_sha256"]
+    assert handoff["run_id"] == result["intent"]["run_id"]
+    assert handoff["task_id"] == task_id
+    assert handoff["commit_operation"] == "claim-commit"
+    assert handoff["lease_binding_required"] is True
+    assert handoff["lease_owner_id"] == result["intent"]["lease_owner_id"]
+    assert handoff["required_resource_keys"] == result["intent"]["required_resource_keys"]
+    assert handoff["required_lease_metadata"] == {
+        "task_id": task_id,
+        "run_id": result["intent"]["run_id"],
+        "claim_intent_sha256": result["intent"]["intent_sha256"],
+    }
+    assert handoff["minimum_remaining_seconds"] == 60
     assert store.list_runs() == []
     with store.connect() as connection:
         assert connection.execute("SELECT COUNT(*) FROM workers").fetchone()[0] == 0
+
+
+def test_coordinated_claim_handoff_does_not_require_absent_lease(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        bureau_v2,
+        "_coordinated_grabowski_resource_keys",
+        lambda _resources, _task, _open_pr_scope: set(),
+    )
+
+    result = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        approved=True,
+    )
+
+    assert result["ready_supply"]["lease_required"] is False
+    assert result["intent"]["required_resource_keys"] == []
+    handoff = result["claim_commit_handoff"]
+    assert handoff["lease_binding_required"] is False
+    assert handoff["required_resource_keys"] == []
+    assert handoff["required_lease_metadata"] is None
+    assert handoff["minimum_remaining_seconds"] is None
+    assert store.list_runs() == []
 
 
 def test_coordinated_claim_commit_binds_live_lease_and_terminal_release(

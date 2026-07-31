@@ -14,7 +14,12 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/repoground",
     "grabowski_resources": [
-      "repo:/home/alex/repos/repoground"
+      "path:/home/alex/repos/repoground/merger/repoground/core/snapshot_profiles.py",
+      "path:/home/alex/repos/repoground/merger/repoground/tests/test_fleet_runtime.py",
+      "path:/home/alex/repos/repoground/merger/repoground/tests/test_snapshot_profiles.py",
+      "path:/home/alex/repos/repoground/scripts/ops/repoground-publish-fleet",
+      "path:/home/alex/repos/repoground/docs/operations/repobrief-publication-policy.md",
+      "path:/home/alex/repos/repoground/docs/proofs/repobrief-fleet-context-profile-v1-proof.md"
     ],
     "approval": {
       "action_class": "repository_mutation",
@@ -24,7 +29,7 @@
   },
   "claims": [
     {
-      "resource": "repo.repoground",
+      "resource": "component.repoground.publication",
       "mode": "write",
       "isolation": "worktree"
     }
@@ -125,6 +130,30 @@
         "Systemkatalog mutation",
         "Grabowski mutation",
         "consumer compatibility claims beyond recorded revisions"
+      ]
+    },
+    "fine_grained_repoground_scope_review": {
+      "reviewed_at": "2026-07-31T16:55:00+02:00",
+      "decision": "component-and-exact-paths",
+      "component_resource": "component.repoground.publication",
+      "basis": [
+        "T008 mutates a bounded RepoBrief publication policy surface rather than the entire RepoGround repository.",
+        "The live RepoGround repository contains historical foreign dirty and retained worktrees without active T008 overlap; a broad repo lease would make unrelated lifecycle debt a permanent admission blocker.",
+        "Bureau plans the isolated workspace from execution.working_repository independently from the claim resource granularity.",
+        "Exact Grabowski path leases preserve conflict detection for every planned source, test, policy, and proof file."
+      ],
+      "live_evidence": {
+        "repoground_head": "f49a978e161797fb6a1740f5c9b723bb2ae054af",
+        "worktree_count": 73,
+        "active_processes_on_historical_worktrees": 0,
+        "active_resource_leases_on_historical_worktrees": 0,
+        "binding_reconciliation_snapshot_sha256": "4dd8c821f7035829f5f84871b7645661b7808460e9da401b096d9cae5f31d289",
+        "blocking_binding_checkout_key": "bff729986b095e23f2415c3ddca05033d774c7b4d415fc5ff1c980c25afd50ec"
+      },
+      "does_not_authorize": [
+        "mutation outside the six exact RepoGround paths",
+        "cleanup or takeover of foreign RepoGround worktrees",
+        "merge or deployment"
       ]
     }
   },

@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T026",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "Contracts-Mirror-Updates aus PR #54 und #55 synchron reparieren",
+  "goal": "Erzeuge für die weiterhin sinnvollen geschlossenen Contracts-Mirror-Updates aus PR #54 und #55 einen frischen Ersatzpfad vom aktuellen origin/main und belege Mirror-Synchronität, Vertragskonsistenz sowie frische CI für Python 3.14 und actions/cache v6.",
+  "state": "ready",
+  "priority": {
+    "lane": "next",
+    "rank": 25
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "repository",
+    "github",
+    "grabowski",
+    "python",
+    "testing"
+  ],
+  "claims": [
+    {
+      "resource": "repo.contracts-mirror",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/contracts-mirror",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Nur das exakt gebundene Repository bearbeiten. Alt-PRs bleiben geschlossen; Merge ausschließlich nach frischem revisionsgebundenem Review- und CI-Readback."
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/contracts-mirror"
+    ]
+  },
+  "metadata": {
+    "repair_contract": {
+      "source_prs": [
+        {
+          "number": 54,
+          "head": "e70debdc658d21d388a7604694a948a41f3d8c31",
+          "state": "closed",
+          "merged": false,
+          "update": "python 3.14"
+        },
+        {
+          "number": 55,
+          "head": "5d94051cdb5c68e797d26676dfae1fc2fce7e195",
+          "state": "closed",
+          "merged": false,
+          "update": "actions/cache v6"
+        }
+      ],
+      "observed_at": "2026-07-31T19:23:00Z",
+      "replacement_policy": "fresh_pr_only",
+      "registered_by_task": "OPERATOR-INTEGRATION-LOOP-V1-T020",
+      "registered_by_run": "BUR-RUN-20260731T191530Z-4b13ad865a",
+      "does_not_establish": [
+        "Mergebereitschaft eines künftigen Ersatz-PRs",
+        "Wiederverwendbarkeit alter CI-Ergebnisse",
+        "automatische Queueaufnahme",
+        "Berechtigung zu administrativen Merge-Bypässen"
+      ]
+    }
+  },
+  "acceptance": [
+    {
+      "id": "source-readback",
+      "assertion": "Vor jeder Umsetzung werden Zustand, Merge-Status und exakte Head-SHAs der gebundenen geschlossenen Alt-PRs erneut über die GitHub-API gelesen. Abweichungen, Supersession oder bereits anderweitig gelöste Updates werden vor Wirkung neu bewertet."
+    },
+    {
+      "id": "fresh-replacement",
+      "assertion": "Die Reparatur entsteht auf einem frischen Branch vom aktuellen origin/main als neuer Renovate- oder gleichwertiger Ersatz-PR. Geschlossene Alt-PRs werden nicht wieder geöffnet, und deren grüne Checks gelten nicht für den Ersatz-Head."
+    },
+    {
+      "id": "blocker-specific-proof",
+      "assertion": "Der exakte Ersatz-Head bleibt mit den kanonischen Vertragsquellen synchron, erzeugt keinen unerwarteten Contract-Diff und besteht die vollständige Mirror- und CI-Validierung mit Python 3.14 sowie actions/cache v6."
+    },
+    {
+      "id": "fail-closed-merge",
+      "assertion": "Merge nur bei exaktem frischem Head, vollständig grünen Required Checks, bekannter konfliktfreier Mergefähigkeit und vollständigen Synchronitätsbelegen. Rote, fehlende, unbekannte oder veraltete Checks sowie administrative Bypässe blockieren."
+    },
+    {
+      "id": "repository-closeout",
+      "assertion": "Der Abschlussbeleg bindet Ersatz-PR, finalen Head und Merge-Commit oder dokumentiert revisionsgebunden, warum ein Updateziel obsolet beziehungsweise superseded ist. Im Repository bleibt danach kein offener blockierter Ersatz-PR für die beiden gebundenen Updateziele."
+    }
+  ],
+  "rollback": {
+    "strategy": "Vor Merge kann der Ersatz-PR geschlossen und der isolierte Branch verworfen werden. Nach Merge erfolgt eine normale Revert- oder Folge-PR-Strategie; fremde Leases, Worktrees und Alt-PRs bleiben unangetastet."
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "repo.plexer",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/plexer",
+  "github_slug": "heimgewebe/plexer",
+  "grabowski_key": "repo:/home/alex/repos/plexer",
+  "metadata": {
+    "role": "Repository for deterministic multiplexing and pnpm-based operator tooling",
+    "boundaries": [
+      "no_merge_without_reproducible_pnpm_artifacts",
+      "no_reuse_of_closed_pr_checks",
+      "no_cross_repository_write_scope"
+    ]
+  }
+}

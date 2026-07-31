@@ -65,7 +65,14 @@
     },
     "grabowski_resources": [
       "path:/home/alex/repos/bureau/registry/resources",
-      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T020.json"
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T020.json",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T021.json",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T022.json",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T023.json",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T024.json",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T025.json",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T026.json",
+      "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T027.json"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -128,12 +135,76 @@
       "Claim- oder Dispatchautorität",
       "Abwesenheit neuer Renovate-Updates"
     ],
-    "operator_intake": {
+    "implementation": {
+      "does_not_establish": [
+        "Erfolg der sieben Reparaturtasks",
+        "Queueaufnahme der erzeugten Tasks",
+        "Mergebereitschaft künftiger Ersatz-PRs",
+        "organisationsweiten Renovate-Abschluss"
+      ],
+      "observed_at": "2026-07-31T19:30:46Z",
+      "registry_base": "fc56cec1d6f876a1d772a9f82ef588d0ed1e63c2",
+      "repair_tasks": [
+        "OPERATOR-INTEGRATION-LOOP-V1-T021",
+        "OPERATOR-INTEGRATION-LOOP-V1-T022",
+        "OPERATOR-INTEGRATION-LOOP-V1-T023",
+        "OPERATOR-INTEGRATION-LOOP-V1-T024",
+        "OPERATOR-INTEGRATION-LOOP-V1-T025",
+        "OPERATOR-INTEGRATION-LOOP-V1-T026",
+        "OPERATOR-INTEGRATION-LOOP-V1-T027"
+      ],
+      "repository_resources": {
+        "created": [
+          "repo.plexer",
+          "repo.mitschreiber",
+          "repo.contracts-mirror",
+          "repo.aussensensor"
+        ],
+        "reused": [
+          "repo.semantah",
+          "repo.repoground",
+          "repo.heim-pc"
+        ]
+      },
+      "run_id": "BUR-RUN-20260731T191530Z-4b13ad865a",
+      "runtime_prerequisite": {
+        "manifest_sha256": "32b1a985e19ee9ef9bea9f99f7122aea3fa18ca9b305a91fd71ea64d63dd615b",
+        "queue_merge_commit": "fc56cec1d6f876a1d772a9f82ef588d0ed1e63c2",
+        "queue_pr": 1282,
+        "runtime_release": "fc56cec1d6f8-srcf8d5056ab099"
+      },
       "schema_version": 1,
+      "scope_expansion": {
+        "kind": "exact_path_leases",
+        "open_pr_nonconflict": {
+          "changed_path": "registry/tasks/GRABOWSKI-OPERATOR-SURFACE-V1-T032.json",
+          "classification": "scope-proven-disjoint",
+          "head": "31c3e58504bdcc8df91c0f39bb385619e3fb1e7d",
+          "pr": 1278,
+          "repository": "heimgewebe/bureau"
+        },
+        "paths": [
+          "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T021.json",
+          "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T022.json",
+          "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T023.json",
+          "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T024.json",
+          "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T025.json",
+          "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T026.json",
+          "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T027.json"
+        ]
+      }
+    },
+    "operator_intake": {
       "candidate_id": "candidate-d76ceeeffd837f5e81d4fff6",
-      "event_id": 1836,
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ],
       "event_created_at": "2026-07-31T09:54:21.448806Z",
+      "event_id": 1836,
       "request_sha256": "fcaeacddae3229babb99b51f987902fdb10eed39e63cebe8a6413d64ed42c3a5",
+      "schema_version": 1,
       "source": {
         "does_not_establish": [
           "source_content_identity"
@@ -143,12 +214,7 @@
         "locator": "github-org:heimgewebe:renovate-sweep:2026-07-31",
         "observed_at": "2026-07-31T09:31:00Z",
         "sha256": null
-      },
-      "does_not_establish": [
-        "queue_truth",
-        "task_readiness",
-        "claim_or_dispatch_authority"
-      ]
+      }
     },
     "registered_at": "2026-07-31T11:56:00+02:00",
     "source": "organization-wide-renovate-sweep",

@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T023",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "RepoGround-Renovate-Update aus PR #1136 frisch reparieren",
+  "goal": "Erzeuge für das weiterhin sinnvolle geschlossene RepoGround-Update aus PR #1136 einen frischen Ersatz-PR vom aktuellen origin/main und behebe Ruff- sowie statische Pin-Guard-Befunde auf dem exakten Ersatz-Head.",
+  "state": "ready",
+  "priority": {
+    "lane": "next",
+    "rank": 22
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "repository",
+    "github",
+    "grabowski",
+    "python",
+    "testing"
+  ],
+  "claims": [
+    {
+      "resource": "repo.repoground",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Nur das exakt gebundene Repository bearbeiten. Alt-PRs bleiben geschlossen; Merge ausschließlich nach frischem revisionsgebundenem Review- und CI-Readback."
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ]
+  },
+  "metadata": {
+    "repair_contract": {
+      "source_prs": [
+        {
+          "number": 1136,
+          "head": "2fd07272c730c63aceb00b9b4a35256a37d9fe6a",
+          "state": "closed",
+          "merged": false
+        }
+      ],
+      "observed_at": "2026-07-31T19:23:00Z",
+      "replacement_policy": "fresh_pr_only",
+      "registered_by_task": "OPERATOR-INTEGRATION-LOOP-V1-T020",
+      "registered_by_run": "BUR-RUN-20260731T191530Z-4b13ad865a",
+      "does_not_establish": [
+        "Mergebereitschaft eines künftigen Ersatz-PRs",
+        "Wiederverwendbarkeit alter CI-Ergebnisse",
+        "automatische Queueaufnahme",
+        "Berechtigung zu administrativen Merge-Bypässen"
+      ]
+    }
+  },
+  "acceptance": [
+    {
+      "id": "source-readback",
+      "assertion": "Vor jeder Umsetzung werden Zustand, Merge-Status und exakte Head-SHA des gebundenen geschlossenen Alt-PRs erneut über die GitHub-API gelesen. Abweichungen, Supersession oder bereits anderweitig gelöste Updates werden vor Wirkung neu bewertet."
+    },
+    {
+      "id": "fresh-replacement",
+      "assertion": "Die Reparatur entsteht auf einem frischen Branch vom aktuellen origin/main als neuer Renovate- oder gleichwertiger Ersatz-PR. Der geschlossene Alt-PR wird nicht wieder geöffnet, und dessen grüne Checks gelten nicht für den Ersatz-Head."
+    },
+    {
+      "id": "blocker-specific-proof",
+      "assertion": "Der exakte Ersatz-Head besteht Ruff, den statischen Pin-Guard und die vollständige RepoGround-Validierung. Eine bloße Lockfile- oder Bot-Neuerzeugung ohne diese Nachweise genügt nicht."
+    },
+    {
+      "id": "fail-closed-merge",
+      "assertion": "Merge nur bei exaktem frischem Head, vollständig grünen Required Checks, bekannter konfliktfreier Mergefähigkeit und vollständigen Artefaktbelegen. Rote, fehlende, unbekannte oder veraltete Checks sowie administrative Bypässe blockieren."
+    },
+    {
+      "id": "repository-closeout",
+      "assertion": "Der Abschlussbeleg bindet Ersatz-PR, finalen Head und Merge-Commit oder dokumentiert revisionsgebunden, warum das Update obsolet beziehungsweise superseded ist. Im Repository bleibt danach kein offener blockierter Ersatz-PR für das gebundene Updateziel."
+    }
+  ],
+  "rollback": {
+    "strategy": "Vor Merge kann der Ersatz-PR geschlossen und der isolierte Branch verworfen werden. Nach Merge erfolgt eine normale Revert- oder Folge-PR-Strategie; fremde Leases, Worktrees und Alt-PRs bleiben unangetastet."
+  }
+}

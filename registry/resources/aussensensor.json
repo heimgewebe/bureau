@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "repo.aussensensor",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/aussensensor",
+  "github_slug": "heimgewebe/aussensensor",
+  "grabowski_key": "repo:/home/alex/repos/aussensensor",
+  "metadata": {
+    "role": "Outdoor sensor repository with JSON-schema and generated-artifact validation",
+    "boundaries": [
+      "no_ajv_update_without_schema_validation",
+      "no_merge_without_reproducible_artifacts",
+      "no_reuse_of_closed_pr_checks"
+    ]
+  }
+}

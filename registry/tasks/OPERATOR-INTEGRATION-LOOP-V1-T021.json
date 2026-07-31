@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T021",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "Mitschreiber-pyo3-Sicherheitsupdate und Metarepo-Digest frisch reparieren",
+  "goal": "Erzeuge einen frischen Mitschreiber-Ersatzpfad für pyo3 0.29.0 aus PR #85 und den Metarepo-Digest aus PR #86. Das Sicherheitsupdate wird zuerst umgesetzt und validiert; der Digest folgt erst auf dessen grünem Vertragsstand.",
+  "state": "ready",
+  "priority": {
+    "lane": "now",
+    "rank": 5
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "repository",
+    "github",
+    "grabowski",
+    "ci",
+    "rust",
+    "python",
+    "security-review"
+  ],
+  "claims": [
+    {
+      "resource": "repo.mitschreiber",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/mitschreiber",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Nur das exakt gebundene Repository bearbeiten. Alt-PRs bleiben geschlossen; Merge ausschließlich nach frischem revisionsgebundenem Review- und CI-Readback."
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/mitschreiber"
+    ]
+  },
+  "metadata": {
+    "repair_contract": {
+      "source_prs": [
+        {
+          "number": 85,
+          "head": "5fd5ddfff5ff523ebdb4a08f187b8fd1b604cfc7",
+          "state": "closed",
+          "merged": false,
+          "update": "pyo3 0.29.0",
+          "security_priority": true
+        },
+        {
+          "number": 86,
+          "head": "5267ef5c058f4f821788d2d8b58f201670aeb083",
+          "state": "closed",
+          "merged": false,
+          "update": "metarepo digest",
+          "security_priority": false
+        }
+      ],
+      "observed_at": "2026-07-31T19:23:00Z",
+      "replacement_policy": "fresh_pr_only",
+      "registered_by_task": "OPERATOR-INTEGRATION-LOOP-V1-T020",
+      "registered_by_run": "BUR-RUN-20260731T191530Z-4b13ad865a",
+      "does_not_establish": [
+        "Mergebereitschaft eines künftigen Ersatz-PRs",
+        "Wiederverwendbarkeit alter CI-Ergebnisse",
+        "automatische Queueaufnahme",
+        "Berechtigung zu administrativen Merge-Bypässen"
+      ],
+      "execution_order": [
+        "pyo3-0.29.0",
+        "metarepo-digest"
+      ]
+    }
+  },
+  "acceptance": [
+    {
+      "id": "source-readback",
+      "assertion": "Vor jeder Umsetzung werden Zustand, Merge-Status und exakte Head-SHAs der gebundenen geschlossenen Alt-PRs erneut über die GitHub-API gelesen. Abweichungen, Supersession oder bereits anderweitig gelöste Updates werden vor Wirkung neu bewertet."
+    },
+    {
+      "id": "fresh-replacement",
+      "assertion": "Die Reparatur entsteht auf einem frischen Branch vom aktuellen origin/main als neuer Renovate- oder gleichwertiger Ersatz-PR. Geschlossene Alt-PRs werden nicht wieder geöffnet, und deren grüne Checks gelten nicht für den Ersatz-Head."
+    },
+    {
+      "id": "blocker-specific-proof",
+      "assertion": "Der exakte Ersatz-Head besteht validate-jsonl sowie die repositoryüblichen Rust-, Python- und Security-CI-Gates. Vertragsdateien und erzeugte JSONL-Artefakte sind konsistent; der Metarepo-Digest wird erst nach grünem pyo3-Stand aktualisiert."
+    },
+    {
+      "id": "security-first-sequence",
+      "assertion": "pyo3 0.29.0 wird als Sicherheitsupdate vor dem Metarepo-Digest umgesetzt. Ein kombinierter PR muss die Reihenfolge im Commit- oder Belegverlauf nachweisen; andernfalls werden zwei aufeinander aufbauende frische PRs innerhalb desselben Tasks verwendet."
+    },
+    {
+      "id": "fail-closed-merge",
+      "assertion": "Merge nur bei exaktem frischem Head, vollständig grünen Required Checks, bekannter konfliktfreier Mergefähigkeit und vollständigen Artefaktbelegen. Rote, fehlende, unbekannte oder veraltete Checks sowie administrative Bypässe blockieren."
+    },
+    {
+      "id": "repository-closeout",
+      "assertion": "Der Abschlussbeleg bindet Ersatz-PR, finalen Head und Merge-Commit oder dokumentiert revisionsgebunden, warum das Update obsolet beziehungsweise superseded ist. Im Repository bleibt danach kein offener blockierter Ersatz-PR für die gebundenen Updateziele."
+    }
+  ],
+  "rollback": {
+    "strategy": "Vor Merge kann der Ersatz-PR geschlossen und der isolierte Branch verworfen werden. Nach Merge erfolgt eine normale Revert- oder Folge-PR-Strategie; fremde Leases, Worktrees und Alt-PRs bleiben unangetastet."
+  }
+}

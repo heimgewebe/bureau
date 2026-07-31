@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "repo.contracts-mirror",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/contracts-mirror",
+  "github_slug": "heimgewebe/contracts-mirror",
+  "grabowski_key": "repo:/home/alex/repos/contracts-mirror",
+  "metadata": {
+    "role": "Repository for synchronized shared contracts and CI compatibility",
+    "boundaries": [
+      "require_canonical_source_alignment",
+      "require_sync_evidence_before_merge",
+      "require_fresh_checks_for_replacement_prs"
+    ]
+  }
+}

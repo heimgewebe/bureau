@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-T025",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "title": "Heim-PC-Renovate-Update aus PR #71 konfliktfrei neu aufsetzen",
+  "goal": "Erzeuge für das weiterhin sinnvolle geschlossene Heim-PC-Update aus PR #71 einen frischen Ersatz-PR vom aktuellen origin/main, löse den beobachteten Mergekonflikt ohne fremde Änderungen zu verwerfen und validiere den exakten Ersatz-Head vollständig.",
+  "state": "ready",
+  "priority": {
+    "lane": "next",
+    "rank": 24
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "repository",
+    "github",
+    "grabowski",
+    "shell",
+    "testing"
+  ],
+  "claims": [
+    {
+      "resource": "repo.heim-pc",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Nur das exakt gebundene Repository bearbeiten. Fremde Änderungen bleiben erhalten; Merge ausschließlich nach frischem revisionsgebundenem Review- und CI-Readback."
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heim-pc"
+    ]
+  },
+  "metadata": {
+    "repair_contract": {
+      "source_prs": [
+        {
+          "number": 71,
+          "head": "835816a284ab76119411f378aa4aba7cd9f7e8c4",
+          "state": "closed",
+          "merged": false,
+          "observed_mergeable": false
+        }
+      ],
+      "observed_at": "2026-07-31T19:23:00Z",
+      "replacement_policy": "fresh_pr_only",
+      "registered_by_task": "OPERATOR-INTEGRATION-LOOP-V1-T020",
+      "registered_by_run": "BUR-RUN-20260731T191530Z-4b13ad865a",
+      "does_not_establish": [
+        "Mergebereitschaft eines künftigen Ersatz-PRs",
+        "Wiederverwendbarkeit alter CI-Ergebnisse",
+        "automatische Queueaufnahme",
+        "Berechtigung zu administrativen Merge-Bypässen"
+      ]
+    }
+  },
+  "acceptance": [
+    {
+      "id": "source-readback",
+      "assertion": "Vor jeder Umsetzung werden Zustand, Merge-Status, Mergefähigkeit und exakte Head-SHA des gebundenen geschlossenen Alt-PRs erneut über die GitHub-API gelesen. Abweichungen, Supersession oder bereits anderweitig gelöste Updates werden vor Wirkung neu bewertet."
+    },
+    {
+      "id": "fresh-replacement",
+      "assertion": "Die Reparatur entsteht auf einem frischen Branch vom aktuellen origin/main als neuer Renovate- oder gleichwertiger Ersatz-PR. Der geschlossene Alt-PR wird nicht wieder geöffnet, und dessen grüne Checks gelten nicht für den Ersatz-Head."
+    },
+    {
+      "id": "blocker-specific-proof",
+      "assertion": "Der Ersatz-Head ist konfliktfrei, GitHub meldet eine bekannte positive Mergefähigkeit und die vollständige Heim-PC-Validierung ist grün. Die Konfliktauflösung übernimmt keine fremden Dirty-States oder Leases und verwirft keine zwischenzeitlich gemergten Änderungen."
+    },
+    {
+      "id": "fail-closed-merge",
+      "assertion": "Merge nur bei exaktem frischem Head, vollständig grünen Required Checks, bekannter konfliktfreier Mergefähigkeit und vollständigen Artefaktbelegen. Rote, fehlende, unbekannte oder veraltete Checks sowie administrative Bypässe blockieren."
+    },
+    {
+      "id": "repository-closeout",
+      "assertion": "Der Abschlussbeleg bindet Ersatz-PR, finalen Head und Merge-Commit oder dokumentiert revisionsgebunden, warum das Update obsolet beziehungsweise superseded ist. Im Repository bleibt danach kein offener blockierter Ersatz-PR für das gebundene Updateziel."
+    }
+  ],
+  "rollback": {
+    "strategy": "Vor Merge kann der Ersatz-PR geschlossen und der isolierte Branch verworfen werden. Nach Merge erfolgt eine normale Revert- oder Folge-PR-Strategie; fremde Leases, Worktrees und Alt-PRs bleiben unangetastet."
+  }
+}

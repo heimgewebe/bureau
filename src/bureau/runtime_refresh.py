@@ -23,6 +23,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from . import approval, legacy
+
 SCHEMA_VERSION = 1
 DEFAULT_REPOSITORY = "heimgewebe/bureau"
 DEFAULT_REMOTE_URL = "git@github.com:heimgewebe/bureau.git"
@@ -30,9 +32,15 @@ DEFAULT_REQUIRED_CHECKS = ("validate (3.10)", "validate (3.12)")
 DEFAULT_SLO_SECONDS = 5400
 DEFAULT_INTENT_TTL_SECONDS = 900
 DEFAULT_MIN_LEASE_REMAINING_SECONDS = 600
-GRABOWSKI_RESOURCE_LEASE_CONTRACT_METADATA_KEY = (
-    "resource_lease_contract_version"
-)
+DEFAULT_MIN_RUNTIME_APPROVAL_REMAINING_SECONDS = DEFAULT_MIN_LEASE_REMAINING_SECONDS
+DEFAULT_MIN_LEGACY_CUTOVER_REMAINING_SECONDS = 30
+DEFAULT_RUNTIME_REFRESH_STATE_ROOT = Path(
+    os.environ.get(
+        "BUREAU_RUNTIME_REFRESH_STATE_ROOT",
+        "~/.local/state/bureau/runtime-refresh",
+    )
+).expanduser()
+GRABOWSKI_RESOURCE_LEASE_CONTRACT_METADATA_KEY = "resource_lease_contract_version"
 SUPPORTED_GRABOWSKI_RESOURCE_LEASE_CONTRACTS = frozenset({"1"})
 DEFAULT_GRABOWSKI_RESOURCE_DB = Path("~/.local/state/grabowski/resources.sqlite3").expanduser()
 MAX_JSON_BYTES = 256 * 1024
@@ -466,6 +474,9 @@ def prepare_intent(
     remote_url: str,
     authorized_by: str,
     authorization: str,
+    break_glass: bool = False,
+    approval_reference: str = "",
+    approval_task_id: str = "",
     ttl_seconds: int = DEFAULT_INTENT_TTL_SECONDS,
     now: datetime | None = None,
 ) -> tuple[dict[str, Any], Path]:
@@ -476,6 +487,32 @@ def prepare_intent(
         )
     if not authorized_by.strip() or len(authorization.strip()) < 8:
         raise RuntimeRefreshError("authorization-missing", "explicit authorization is required")
+    if not approval_reference.strip() or not approval_task_id.strip():
+        raise RuntimeRefreshError(
+            "runtime-approval-binding-missing",
+            "runtime approval requires exact reference and task bindings",
+        )
+    evidence = approval.break_glass_approval(
+        source=authorization.strip(),
+        approved=break_glass,
+        reviewer=authorized_by.strip(),
+        reference=approval_reference.strip(),
+        task_id=approval_task_id.strip(),
+        scope=("runtime_mutation",),
+        note="Bureau immutable runtime refresh",
+    )
+    try:
+        runtime_approval = approval.require_approval(
+            "runtime_mutation",
+            evidence,
+            expected_reference=candidate["target_sha256"],
+            task_id=approval_task_id.strip(),
+        )
+    except legacy.StateError as exc:
+        raise RuntimeRefreshError(
+            "runtime-approval-required",
+            str(exc),
+        ) from exc
     if ttl_seconds <= 0 or ttl_seconds > 3600:
         raise RuntimeRefreshError(
             "intent-ttl-invalid", "intent TTL must be between 1 and 3600 seconds"
@@ -504,6 +541,8 @@ def prepare_intent(
         ),
         "authorized_by": authorized_by.strip(),
         "authorization": authorization.strip(),
+        "approval_task_id": approval_task_id.strip(),
+        "runtime_approval": runtime_approval,
         "created_at": isoformat(current),
         "expires_at": isoformat(current + timedelta(seconds=ttl_seconds)),
         "nonce": uuid.uuid4().hex,
@@ -524,6 +563,98 @@ def prepare_intent(
                 "intent-collision", "intent digest path contains other content"
             ) from exc
     return intent, path
+
+
+def validate_runtime_approval_intent(
+    intent_path: Path,
+    *,
+    expected_source_commit: str | None = None,
+    now: datetime | None = None,
+    minimum_remaining_seconds: int = 0,
+) -> dict[str, Any]:
+    """Re-evaluate persisted, time-bounded break-glass evidence before effects."""
+    current = now or utc_now()
+    intent = read_json(intent_path)
+    verify_digest(intent, "intent_sha256")
+    if intent.get("kind") != "bureau_runtime_refresh_intent":
+        raise RuntimeRefreshError("intent-kind-invalid", "runtime-refresh intent kind is invalid")
+    expires_at = intent.get("expires_at")
+    if not isinstance(expires_at, str):
+        raise RuntimeRefreshError(
+            "intent-expiry-missing",
+            "runtime-refresh intent has no expiry binding",
+        )
+    try:
+        expires = parse_time(expires_at)
+    except (TypeError, ValueError) as exc:
+        raise RuntimeRefreshError(
+            "intent-expiry-invalid",
+            "runtime-refresh intent expiry is invalid",
+        ) from exc
+    if expires <= current:
+        raise RuntimeRefreshError("intent-expired", "runtime-refresh intent has expired")
+    if (
+        not isinstance(minimum_remaining_seconds, int)
+        or isinstance(minimum_remaining_seconds, bool)
+        or minimum_remaining_seconds < 0
+    ):
+        raise RuntimeRefreshError(
+            "runtime-approval-minimum-invalid",
+            "minimum runtime approval lifetime must be a non-negative integer",
+        )
+    remaining_seconds = int((expires - current).total_seconds())
+    if remaining_seconds < minimum_remaining_seconds:
+        raise RuntimeRefreshError(
+            "runtime-approval-validity-too-short",
+            "runtime approval expires too soon to start a deployment attempt",
+            details={
+                "remaining_seconds": remaining_seconds,
+                "minimum_remaining_seconds": minimum_remaining_seconds,
+            },
+        )
+    if expected_source_commit is not None and intent.get("main_commit") != expected_source_commit:
+        raise RuntimeRefreshError(
+            "approval-source-commit-mismatch",
+            "runtime approval intent is bound to another source commit",
+        )
+    stored = intent.get("runtime_approval")
+    raw = stored.get("evidence") if isinstance(stored, dict) else None
+    if not isinstance(raw, dict):
+        raise RuntimeRefreshError(
+            "runtime-approval-missing",
+            "runtime-refresh intent has no typed approval evidence",
+        )
+    scope = raw.get("scope", ())
+    if not isinstance(scope, list) or not all(isinstance(item, str) for item in scope):
+        raise RuntimeRefreshError("runtime-approval-invalid", "approval scope is invalid")
+    required = {"source", "level", "approved", "reviewer", "reference", "task_id"}
+    if not required <= raw.keys():
+        raise RuntimeRefreshError("runtime-approval-invalid", "approval evidence is incomplete")
+    evidence = approval.ApprovalEvidence(
+        source=str(raw["source"]),
+        level=str(raw["level"]),
+        approved=raw["approved"] is True,
+        reviewer=str(raw["reviewer"]),
+        reference=str(raw["reference"]),
+        task_id=str(raw["task_id"]),
+        scope=tuple(scope),
+        note=str(raw["note"]) if isinstance(raw.get("note"), str) else None,
+    )
+    try:
+        decision = approval.require_approval(
+            "runtime_mutation",
+            evidence,
+            expected_reference=str(intent.get("target_sha256", "")),
+            task_id=str(intent.get("approval_task_id", "")),
+        )
+    except legacy.StateError as exc:
+        raise RuntimeRefreshError("runtime-approval-required", str(exc)) from exc
+    if decision != stored:
+        raise RuntimeRefreshError(
+            "runtime-approval-drift",
+            "stored runtime approval decision differs from current policy",
+        )
+    return decision
 
 
 def _validate_binding_identity(binding: dict[str, Any]) -> tuple[str, str]:
@@ -632,13 +763,10 @@ def validate_live_lease_binding(
         connection.execute("PRAGMA query_only=ON")
         connection.execute("BEGIN")
         metadata_rows = connection.execute(
-            "SELECT key, value FROM metadata "
-            "WHERE key IN ('schema_version', ?) ORDER BY key",
+            "SELECT key, value FROM metadata WHERE key IN ('schema_version', ?) ORDER BY key",
             (GRABOWSKI_RESOURCE_LEASE_CONTRACT_METADATA_KEY,),
         ).fetchall()
-        aggregate_rows = [
-            row for row in metadata_rows if row["key"] == "schema_version"
-        ]
+        aggregate_rows = [row for row in metadata_rows if row["key"] == "schema_version"]
         contract_rows = [
             row
             for row in metadata_rows
@@ -721,9 +849,7 @@ def validate_live_lease_binding(
                 "Grabowski resource lease contract version is unsupported",
                 details={
                     "observed": observed_contract,
-                    "supported": sorted(
-                        SUPPORTED_GRABOWSKI_RESOURCE_LEASE_CONTRACTS
-                    ),
+                    "supported": sorted(SUPPORTED_GRABOWSKI_RESOURCE_LEASE_CONTRACTS),
                     "aggregate_schema": observed_schema,
                     "recovery": (
                         "Keep the resource store and runtime unchanged; deploy a "
@@ -860,6 +986,230 @@ def validate_live_lease_binding(
     return normalized
 
 
+def validate_legacy_runtime_refresh_bootstrap(
+    *,
+    state_root: Path,
+    resource_db: Path,
+    expected_source_commit: str,
+    prefix: Path,
+    bin_dir: Path,
+    manifest_path: Path,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Authorize only the one-time cutover from the pre-approval refresh runner.
+
+    The previous immutable runner cannot pass the new approval-intent argument.
+    Compatibility is therefore limited to one still-live legacy intent whose
+    durable attempt start, installed preimage and exact Grabowski leases all agree.
+    Typed intents are never accepted through this path.
+    """
+    current = now or utc_now()
+    raw_root = state_root.expanduser()
+    if raw_root.is_symlink():
+        raise RuntimeRefreshError(
+            "legacy-cutover-state-symlink",
+            "legacy runtime-refresh state root may not be a symlink",
+        )
+    root = raw_root.resolve()
+    resolved_prefix = prefix.expanduser().resolve()
+    resolved_bin_dir = bin_dir.expanduser().resolve()
+    intents_root = root / "intents"
+    if root.is_symlink() or not intents_root.is_dir() or intents_root.is_symlink():
+        raise RuntimeRefreshError(
+            "legacy-cutover-state-unavailable",
+            "legacy runtime-refresh state is unavailable",
+        )
+    entries = sorted(intents_root.iterdir())
+    if len(entries) > 1024:
+        raise RuntimeRefreshError(
+            "legacy-cutover-intent-set-too-large",
+            "legacy runtime-refresh intent set exceeds the bounded cutover scan",
+        )
+    deployed_manifest, deployed_manifest_sha = load_manifest(manifest_path)
+    matches: list[dict[str, Any]] = []
+    for intent_path in entries:
+        if intent_path.is_symlink() or not intent_path.is_file():
+            continue
+        try:
+            intent = read_json(intent_path)
+            verify_digest(intent, "intent_sha256")
+        except RuntimeRefreshError:
+            continue
+        expires_at = intent.get("expires_at")
+        if not isinstance(expires_at, str):
+            continue
+        try:
+            expires = parse_time(expires_at)
+        except RuntimeRefreshError:
+            continue
+        if intent_path.stem != intent.get("intent_sha256"):
+            continue
+        if "runtime_approval" in intent or "approval_task_id" in intent:
+            continue
+        if intent.get("kind") != "bureau_runtime_refresh_intent":
+            continue
+        if intent.get("main_commit") != expected_source_commit:
+            continue
+        if expires <= current + timedelta(
+            seconds=DEFAULT_MIN_LEGACY_CUTOVER_REMAINING_SECONDS
+        ):
+            continue
+        if (
+            not isinstance(intent.get("authorized_by"), str)
+            or not intent["authorized_by"].strip()
+            or not isinstance(intent.get("authorization"), str)
+            or len(intent["authorization"].strip()) < 8
+        ):
+            continue
+        raw_state_root = intent.get("state_root")
+        raw_prefix = intent.get("prefix")
+        raw_bin_dir = intent.get("bin_dir")
+        raw_paths = (raw_state_root, raw_prefix, raw_bin_dir)
+        if not all(isinstance(item, str) and item for item in raw_paths):
+            continue
+        if Path(raw_state_root).expanduser().resolve() != root:
+            continue
+        if Path(raw_prefix).expanduser().resolve() != resolved_prefix:
+            continue
+        if Path(raw_bin_dir).expanduser().resolve() != resolved_bin_dir:
+            continue
+        if (
+            intent.get("expected_deployed_source_commit")
+            != deployed_manifest.get("source_commit")
+            or intent.get("expected_manifest_sha256") != deployed_manifest_sha
+        ):
+            continue
+        target_sha = intent.get("target_sha256")
+        if (
+            not isinstance(target_sha, str)
+            or len(target_sha) != 64
+            or any(char not in "0123456789abcdef" for char in target_sha)
+        ):
+            continue
+        attempt_root = root / "attempts" / target_sha
+        started_path = attempt_root / "started.json"
+        result_path = attempt_root / "result.json"
+        if result_path.exists() or not started_path.is_file() or started_path.is_symlink():
+            continue
+        try:
+            started = read_json(started_path)
+            verify_digest(started, "start_sha256")
+        except RuntimeRefreshError:
+            continue
+        if (
+            started.get("intent_sha256") != intent.get("intent_sha256")
+            or started.get("target_sha256") != target_sha
+            or started.get("main_commit") != expected_source_commit
+            or started.get("effect_started") is not False
+        ):
+            continue
+        stored_binding = started.get("lease_binding")
+        if not isinstance(stored_binding, dict):
+            continue
+        owner_id = stored_binding.get("owner_id")
+        task_id = stored_binding.get("task_id")
+        if (
+            not isinstance(owner_id, str)
+            or not owner_id.strip()
+            or not isinstance(task_id, str)
+            or not task_id.strip()
+        ):
+            continue
+        try:
+            live_binding = validate_live_lease_binding(
+                intent,
+                {"owner_id": owner_id, "task_id": task_id},
+                resource_db=resource_db,
+                now=current,
+            )
+        except RuntimeRefreshError:
+            continue
+        if (
+            stored_binding.get("owner_id") != live_binding["owner_id"]
+            or stored_binding.get("task_id") != live_binding["task_id"]
+            or stored_binding.get("resource_keys") != live_binding["resource_keys"]
+            or stored_binding.get("required_metadata_sha256")
+            != live_binding["required_metadata_sha256"]
+        ):
+            continue
+        stored_snapshots = stored_binding.get("lease_snapshots")
+        live_snapshots = live_binding.get("lease_snapshots")
+        if (
+            not isinstance(stored_snapshots, list)
+            or not isinstance(live_snapshots, list)
+            or not all(isinstance(item, dict) for item in stored_snapshots)
+            or not all(isinstance(item, dict) for item in live_snapshots)
+        ):
+            continue
+        stored_by_key = {item.get("resource_key"): item for item in stored_snapshots}
+        live_by_key = {item.get("resource_key"): item for item in live_snapshots}
+        if set(stored_by_key) != set(live_by_key):
+            continue
+        same_lease_lineage = all(
+            stored_by_key[key].get("owner_id") == live_by_key[key].get("owner_id")
+            and stored_by_key[key].get("acquired_at_unix")
+            == live_by_key[key].get("acquired_at_unix")
+            and stored_by_key[key].get("metadata_sha256")
+            == live_by_key[key].get("metadata_sha256")
+            and isinstance(stored_by_key[key].get("expires_at_unix"), int)
+            and isinstance(live_by_key[key].get("expires_at_unix"), int)
+            and live_by_key[key]["expires_at_unix"]
+            >= stored_by_key[key]["expires_at_unix"]
+            for key in stored_by_key
+        )
+        if not same_lease_lineage:
+            continue
+        matches.append(
+            {
+                "intent": intent,
+                "started": started,
+                "live_binding": live_binding,
+            }
+        )
+    if not matches:
+        raise RuntimeRefreshError(
+            "runtime-approval-missing",
+            "no active legacy runtime-refresh cutover satisfies the operator gate",
+        )
+    if len(matches) != 1:
+        raise RuntimeRefreshError(
+            "legacy-cutover-ambiguous",
+            "more than one active legacy runtime-refresh cutover matches the target",
+            details={"match_count": len(matches)},
+        )
+    match = matches[0]
+    intent = match["intent"]
+    started = match["started"]
+    live_binding = match["live_binding"]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "action_class": "runtime_mutation",
+        "action_classes": ["runtime_mutation"],
+        "required": True,
+        "required_level": "legacy_runtime_operator_gate",
+        "allowed": True,
+        "reason": "approved by an active legacy refresh attempt and exact live leases",
+        "expected_reference": intent["target_sha256"],
+        "expected_task_id": live_binding["task_id"],
+        "evidence": {
+            "source": "legacy-runtime-refresh-cutover",
+            "level": "legacy_runtime_operator_gate",
+            "approved": True,
+            "reviewer": intent["authorized_by"],
+            "reference": intent["target_sha256"],
+            "task_id": live_binding["task_id"],
+            "scope": ["runtime_mutation"],
+            "note": "one-time compatibility path for the pre-approval immutable runner",
+        },
+        "legacy_cutover": {
+            "intent_sha256": intent["intent_sha256"],
+            "start_sha256": started["start_sha256"],
+            "lease_binding_sha256": live_binding["lease_binding_sha256"],
+            "expected_source_commit": expected_source_commit,
+        },
+    }
+
+
 def _git(source: Path, *arguments: str) -> str:
     argv = ["git", "-C", str(source), *arguments]
     return _require_command(_run(argv, timeout=120), argv)
@@ -938,7 +1288,12 @@ def prepare_source_checkout(
 
 
 def run_installer(
-    *, source: Path, prefix: Path, bin_dir: Path, timeout: float = 300
+    *,
+    source: Path,
+    prefix: Path,
+    bin_dir: Path,
+    approval_intent: Path,
+    timeout: float = 300,
 ) -> dict[str, Any]:
     argv = [
         sys.executable,
@@ -949,6 +1304,8 @@ def run_installer(
         str(prefix),
         "--bin-dir",
         str(bin_dir),
+        "--approval-intent",
+        str(approval_intent),
         "--replace-existing",
     ]
     result = _run(argv, cwd=source, timeout=timeout)
@@ -1096,8 +1453,11 @@ def apply_runtime_refresh(
     verify_digest(intent, "intent_sha256")
     if intent.get("kind") != "bureau_runtime_refresh_intent":
         raise RuntimeRefreshError("intent-kind-invalid", "runtime-refresh intent kind is invalid")
-    if parse_time(intent["expires_at"]) <= current:
-        raise RuntimeRefreshError("intent-expired", "runtime-refresh intent has expired")
+    validate_runtime_approval_intent(
+        intent_path,
+        now=current,
+        minimum_remaining_seconds=DEFAULT_MIN_RUNTIME_APPROVAL_REMAINING_SECONDS,
+    )
     resolved_state_root = state_root.expanduser().resolve()
     if Path(intent["state_root"]).expanduser().resolve() != resolved_state_root:
         raise RuntimeRefreshError("intent-state-root-mismatch", "intent state root differs")
@@ -1207,7 +1567,12 @@ def apply_runtime_refresh(
             workspaces_root=resolved_state_root / "workspaces",
         )
         effect_started = True
-        install_receipt = installer(source=workspace, prefix=prefix, bin_dir=bin_dir)
+        install_receipt = installer(
+            source=workspace,
+            prefix=prefix,
+            bin_dir=bin_dir,
+            approval_intent=intent_path,
+        )
         evidence = readback(
             expected_commit=intent["main_commit"],
             prefix=prefix,
@@ -1309,10 +1674,7 @@ def parser() -> argparse.ArgumentParser:
     value = argparse.ArgumentParser(prog="bureau-runtime-refresh")
     value.add_argument(
         "--state-root",
-        default=os.environ.get(
-            "BUREAU_RUNTIME_REFRESH_STATE_ROOT",
-            "~/.local/state/bureau/runtime-refresh",
-        ),
+        default=DEFAULT_RUNTIME_REFRESH_STATE_ROOT,
         type=Path,
     )
     value.add_argument(
@@ -1337,6 +1699,9 @@ def parser() -> argparse.ArgumentParser:
     intent.add_argument("--remote-url", default=DEFAULT_REMOTE_URL)
     intent.add_argument("--authorized-by", required=True)
     intent.add_argument("--authorization", required=True)
+    intent.add_argument("--break-glass", action="store_true")
+    intent.add_argument("--approval-reference", required=True)
+    intent.add_argument("--approval-task-id", required=True)
     intent.add_argument("--ttl-seconds", type=int, default=DEFAULT_INTENT_TTL_SECONDS)
 
     apply = sub.add_parser("apply")
@@ -1379,6 +1744,9 @@ def main(argv: list[str] | None = None) -> int:
                 remote_url=args.remote_url,
                 authorized_by=args.authorized_by,
                 authorization=args.authorization,
+                break_glass=args.break_glass,
+                approval_reference=args.approval_reference,
+                approval_task_id=args.approval_task_id,
                 ttl_seconds=args.ttl_seconds,
             )
             print(json.dumps({**intent, "intent_path": str(path)}, sort_keys=True))

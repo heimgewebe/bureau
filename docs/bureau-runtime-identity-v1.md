@@ -59,11 +59,18 @@ An ambient, dirty, stale or unbound explicit checkout returns `stale-runtime-blo
 
 ## Canonical installation
 
-From a clean checkout whose `HEAD` equals `origin/main`:
+Routine installation is performed through the deployed `bureau-runtime-refresh` launcher. The operator first prepares a short-lived, target-bound `runtime_mutation` break-glass intent, acquires the exact listed Grabowski leases and then applies that reviewed intent. The installer is not a standalone mutation shortcut.
+
+A direct invocation from a clean checkout whose `HEAD` equals `origin/main` must carry the exact persisted approval intent:
 
 ```bash
-python3 ops/install-bureau-runtime.py --source . --replace-existing
+python3 ops/install-bureau-runtime.py \
+  --source . \
+  --approval-intent ~/.local/state/bureau/runtime-refresh/intents/<intent-sha256>.json \
+  --replace-existing
 ```
+
+During the single cutover from the older immutable runner, which cannot pass `--approval-intent`, the installer accepts no ambient authorization. It discovers exactly one unexpired legacy refresh intent only when its durable `started.json`, installed-manifest preimage and current exact Grabowski lease binding agree. Missing, ambiguous, expired, already-finished or typed intents fail before any release, snapshot, manifest or launcher write. After the cutover, typed intents are never routed through this compatibility gate.
 
 The installer creates:
 

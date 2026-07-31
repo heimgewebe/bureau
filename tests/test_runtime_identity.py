@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 
+from runtime_approval import write_runtime_approval_intent
+
 from bureau import cli as bureau_cli
 from bureau.runtime_identity import (
     _package_tree_sha256,
@@ -155,19 +157,16 @@ def test_json_envelope_preserves_list_result(monkeypatch, capsys) -> None:
 def test_command_classification_fails_closed_for_unknown_commands() -> None:
     assert bureau_cli._command_mutates(SimpleNamespace(command="future-command")) is True
     assert bureau_cli._command_mutates(SimpleNamespace(command="source-check")) is False
-    assert bureau_cli._command_mutates(
-        SimpleNamespace(command="source-sync", apply=False)
-    ) is False
-    assert bureau_cli._command_mutates(
-        SimpleNamespace(command="source-sync", apply=True)
-    ) is True
-    assert bureau_cli._command_mutates(
-        SimpleNamespace(command="worktree-hygiene", write_plan=None, apply_plan=None)
-    ) is False
-    assert bureau_cli._command_mutates(SimpleNamespace(command="doctor")) is True
+    assert bureau_cli._command_mutates(SimpleNamespace(command="source-sync", apply=False)) is False
+    assert bureau_cli._command_mutates(SimpleNamespace(command="source-sync", apply=True)) is True
     assert (
-        bureau_cli._command_mutates(SimpleNamespace(command="migrate-leases")) is True
+        bureau_cli._command_mutates(
+            SimpleNamespace(command="worktree-hygiene", write_plan=None, apply_plan=None)
+        )
+        is False
     )
+    assert bureau_cli._command_mutates(SimpleNamespace(command="doctor")) is True
+    assert bureau_cli._command_mutates(SimpleNamespace(command="migrate-leases")) is True
     assert (
         bureau_cli._command_mutates(
             SimpleNamespace(
@@ -223,6 +222,8 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
         "--bin-dir",
         str(bin_dir),
     ]
+    approval = write_runtime_approval_intent(source, tmp_path, label="identity")
+    command.extend(["--approval-intent", str(approval)])
     first = subprocess.run(command, check=True, capture_output=True, text=True)
     first_receipt = json.loads(first.stdout)
     assert Path(first_receipt["receipt_path"]).is_file()
@@ -272,7 +273,6 @@ def test_immutable_installer_launcher_and_rollback(tmp_path: Path) -> None:
     assert "package tree digest mismatch" in drifted_package.stderr
 
 
-
 def test_installer_migrates_existing_launcher_symlink_only_with_explicit_replace(
     tmp_path: Path,
 ) -> None:
@@ -312,6 +312,8 @@ def test_installer_migrates_existing_launcher_symlink_only_with_explicit_replace
         "--bin-dir",
         str(bin_dir),
     ]
+    approval = write_runtime_approval_intent(source, tmp_path, label="symlink")
+    command.extend(["--approval-intent", str(approval)])
     blocked = subprocess.run(command, check=False, capture_output=True, text=True)
     assert blocked.returncode != 0
     assert "launcher is a symlink" in blocked.stderr

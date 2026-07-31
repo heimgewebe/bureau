@@ -6,7 +6,7 @@
       "id": "canonical-pr-binding"
     },
     {
-      "assertion": "Basis 0d8ae76d20b58ac17226df22f44a5527e5f96c62, Head d2312a0c5c2f4c30bef6a2b7d8de6f7ebad335e7 und der ausschließlich aus tools/connector_probe.py sowie tests/test_control_plane.py bestehende Diff werden vor jeder Review-, Merge- oder Deploymentwirkung direkt gelesen; jede Head- oder Scopeabweichung bricht ab und verlangt eine neue revisionsgebundene Entscheidung.",
+      "assertion": "Basis 0d8ae76d20b58ac17226df22f44a5527e5f96c62, Head 1b35d0ab6fb80828f7da5b95e30a7a4daa05aa5c und der ausschließlich aus tools/connector_probe.py sowie tests/test_control_plane.py bestehende Diff einschließlich der dauerhaften 4/4-Einzelmutationsmatrix für force_new_reason, operation_identity, supersedes_receipt_sha256 und supersedes_task_id werden vor jeder Review-, Merge- oder Deploymentwirkung direkt gelesen; jede Head- oder Scopeabweichung bricht ab und verlangt eine neue revisionsgebundene Entscheidung.",
       "evidence_type": "object",
       "id": "exact-source-identity"
     },
@@ -62,7 +62,7 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski"
   },
-  "goal": "Den bereits implementierten Grabowski-PR #536 exakt an einen kanonischen Bureau-Task binden und nach Abschluss von T126 ausschließlich auf dem unveränderten Head d2312a0c5c2f4c30bef6a2b7d8de6f7ebad335e7 terminalisieren: Current-Head-Review-Settlement bestätigen, alle Pflichtgates erneut lesen, kontrolliert mergen, die Runtime aus dem Merge-Commit deployen und die vier Retry-/Operationsidentitätsfelder in der verbundenen Connector-Sicht nachweisen.",
+  "goal": "Den bereits implementierten Grabowski-PR #536 exakt an einen kanonischen Bureau-Task binden und nach Abschluss von T126 ausschließlich auf dem unveränderten Head 1b35d0ab6fb80828f7da5b95e30a7a4daa05aa5c terminalisieren: Current-Head-Review-Settlement bestätigen, alle Pflichtgates erneut lesen, kontrolliert mergen, die Runtime aus dem Merge-Commit deployen und die vier Retry-/Operationsidentitätsfelder in der verbundenen Connector-Sicht nachweisen.",
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T129",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
@@ -85,27 +85,34 @@
         "tools/connector_probe.py",
         "tests/test_control_plane.py"
       ],
-      "head_sha": "d2312a0c5c2f4c30bef6a2b7d8de6f7ebad335e7",
+      "head_sha": "1b35d0ab6fb80828f7da5b95e30a7a4daa05aa5c",
       "mergeable_at_observation": true,
       "number": 536,
       "open_review_threads": 0,
       "repository": "heimgewebe/grabowski",
       "validate_conclusion": "success",
-      "validate_run": 30639635698
+      "validate_run": 30643297017,
+      "self_review_marker": "self-review:v2",
+      "retry_schema_sentinel_fields": [
+        "force_new_reason",
+        "operation_identity",
+        "supersedes_receipt_sha256",
+        "supersedes_task_id"
+      ]
     },
     "operator_intake": {
       "schema_version": 1,
       "candidate_id": "candidate-152368530021c11fadf89d31",
-      "event_id": 1867,
-      "event_created_at": "2026-07-31T15:35:39.947028Z",
-      "request_sha256": "caad89038e208e236f6635e8774720b93e7ed28f73f1b1c98df5acfa5f51869d",
+      "event_id": 1871,
+      "event_created_at": "2026-07-31T16:13:06.411612Z",
+      "request_sha256": "2c534c8aa67139647ec81eaa5815c24ac260b1468981e8be357218cb2734d1fa",
       "source": {
         "does_not_establish": [],
         "freshness": "digest-bound",
         "kind": "github-pull-request",
-        "locator": "github-pr:heimgewebe/grabowski#536@d2312a0c5c2f4c30bef6a2b7d8de6f7ebad335e7",
-        "observed_at": "2026-07-31T15:35:39.931782Z",
-        "sha256": "3e6001d8687849d6451aeae16420d79d43d84d7a92a806454c60e63df8544d7c"
+        "locator": "github-pr:heimgewebe/grabowski#536@1b35d0ab6fb80828f7da5b95e30a7a4daa05aa5c",
+        "observed_at": "2026-07-31T16:13:06.395545Z",
+        "sha256": "75a9598f8a9dc651349f9a4310142818b84d9d68d56d0cca0562c4d3c8147151"
       },
       "does_not_establish": [
         "queue_truth",

@@ -1185,6 +1185,8 @@ def test_real_installer_publishes_working_refresh_launcher(tmp_path: Path) -> No
     git(tmp_path, "clone", "--bare", str(staged), str(bare))
     clean = tmp_path / "clean"
     git(tmp_path, "clone", str(bare), str(clean))
+    git(clean, "config", "user.name", "Test")
+    git(clean, "config", "user.email", "test@example.invalid")
     git(clean, "remote", "set-url", "origin", str(bare))
     git(clean, "fetch", "origin", "main")
 

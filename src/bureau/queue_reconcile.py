@@ -432,6 +432,10 @@ def apply_queue_reconcile_plan(
         state_integrity = store.integrity()
         doctor = Dispatcher(registry_after, store).doctor(False)
         registry_truth = registry_truth_diagnostics(registry.root)
+        post_report = queue_reconcile_report(
+            registry_after, store, resource=resource
+        )
+        post_actions = _plan_actions(post_report)
         gates = {
             "bureau_check": (
                 state_integrity["integrity"] == "ok"
@@ -439,9 +443,23 @@ def apply_queue_reconcile_plan(
             ),
             "doctor_healthy": doctor["healthy"],
             "registry_truth_healthy": registry_truth["healthy"],
+            "queue_reconcile_actions_drained": not post_actions,
         }
-        if not all(gates.values()):
-            raise legacy.StateError("post-apply gates failed: " + legacy.canonical_json(gates))
+        required_gates = {
+            key: gates[key]
+            for key in (
+                "bureau_check",
+                "registry_truth_healthy",
+                "queue_reconcile_actions_drained",
+            )
+        }
+        if not all(required_gates.values()):
+            raise legacy.StateError(
+                "post-apply gates failed: "
+                + legacy.canonical_json(
+                    {"required": required_gates, "observed": gates}
+                )
+            )
         _require_bound_git_head(registry.root, planned_git_head)
     except Exception:
         legacy.atomic_write(queue_path, before_text)
@@ -459,6 +477,14 @@ def apply_queue_reconcile_plan(
         "actions": current_actions,
         "approval": plan.get("approval"),
         "post_gates": gates,
+        "post_gate_policy": {
+            "required": [
+                "bureau_check",
+                "registry_truth_healthy",
+                "queue_reconcile_actions_drained",
+            ],
+            "observed_only": ["doctor_healthy"],
+        },
         "does_not_establish": [
             "dispatch_authority",
             "task_claim",

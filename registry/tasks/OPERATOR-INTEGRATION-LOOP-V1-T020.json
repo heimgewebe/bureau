@@ -139,7 +139,9 @@
       "contract_correction": {
         "old_problem": "Das ursprüngliche organization-closeout-Kriterium verlangte den späteren Vollzug aller sieben Repo-Reparaturen, obwohl Ziel, Approval und Schreibscope von T020 ausschließlich deren Registrierung erlauben.",
         "resolution": "T020 belegt die Veröffentlichung verbindlicher Child-Task-Closeout-Verträge; der tatsächliche Vollzug bleibt revisionsgebundene Pflicht der sieben Folgeaufgaben.",
-        "requires_fresh_claim_after_merge": true
+        "closeout_mode": "embedded-current-verification",
+        "fresh_claim_result": "blocked-by-receipt-drift-as-designed",
+        "closeout_reason": "The merged correction changed the task hash after a successful historical receipt. Bureau correctly blocks a new claim until the current registry revision explicitly supersedes that stale receipt."
       },
       "does_not_establish": [
         "Erfolg der sieben Reparaturtasks",
@@ -198,6 +200,57 @@
           "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T026.json",
           "path:/home/alex/repos/bureau/registry/tasks/OPERATOR-INTEGRATION-LOOP-V1-T027.json"
         ]
+      },
+      "closeout": {
+        "schema_version": 1,
+        "registration_pr": 1284,
+        "registration_head": "456472a536f821229bb9a3926ab3c5c678b0436e",
+        "registration_merge_commit": "2709f4dc35ce94715aaa2c07126e9638fbcad3b8",
+        "contract_correction_pr": 1285,
+        "contract_correction_head": "6f42a4904e80818d4488f20388e96a37984bbbab",
+        "contract_correction_merge_commit": "3763ec3b4c23cce27cdb0ec548c300508f40c6d0",
+        "final_main_observed": "e18435952a1e9335c4ec54b042490e1a449b74f3",
+        "historical_run_id": "BUR-RUN-20260731T191530Z-4b13ad865a",
+        "historical_receipt_sha256": "7e0333d0c4a46fe58ed39784212e4d973a044d48a4a999aec7267871c3fc5a1f",
+        "validation": {
+          "pytest_passed": 954,
+          "ruff": true,
+          "registry_valid": true,
+          "queue_changed_by_registration": false,
+          "github_checks": [
+            "validate (3.10)",
+            "validate (3.12)",
+            "CodeQL",
+            "registry-registration-preflight/freshness"
+          ]
+        },
+        "does_not_establish": [
+          "execution of T021 through T027",
+          "merge readiness of future replacement PRs",
+          "organization-wide Renovate completion"
+        ],
+        "current_closeout_validation": {
+          "base_commit": "e18435952a1e9335c4ec54b042490e1a449b74f3",
+          "focused_pytest": {
+            "count": 133,
+            "files": [
+              "tests/test_v2.py",
+              "tests/test_registry_queue.py",
+              "tests/test_queue_reconcile.py"
+            ],
+            "result": "passed",
+            "job_unit": "grabowski-job-e559b66e2e0c",
+            "job_receipt_sha256": "f1934208e805e1c204e4610b6930aaab05e9c7a5df85958e46b6b0bed776dcc7"
+          },
+          "queue_regression_after_pr_1286": {
+            "tests_passed": 29,
+            "preserved_now_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T021",
+            "preserved_next_task": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T026"
+          },
+          "ruff": "passed",
+          "registry_check": "valid",
+          "runtime_drift": "receipt-drift-superseded-by-registry-verification"
+        }
       }
     },
     "operator_intake": {
@@ -224,7 +277,19 @@
     },
     "registered_at": "2026-07-31T11:56:00+02:00",
     "source": "organization-wide-renovate-sweep",
-    "source_request": "Alle Renovate-PRs schließen oder mergen; sinnvolle nicht behobene Arbeit im Bureau registrieren."
+    "source_request": "Alle Renovate-PRs schließen oder mergen; sinnvolle nicht behobene Arbeit im Bureau registrieren.",
+    "verification": {
+      "task_sha256": "d2d54871f133f2f868c169f51e0912d7344c60521f9366ec592dd3eccfb44b37",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+      "historical_receipt_sha256": "7e0333d0c4a46fe58ed39784212e4d973a044d48a4a999aec7267871c3fc5a1f",
+      "verified_at": "2026-07-31T20:39:00Z",
+      "basis": [
+        "Bureau run BUR-RUN-20260731T191530Z-4b13ad865a succeeded with all eight acceptance evidence objects",
+        "PR #1284 merged the four resources and seven child tasks with terminal green checks",
+        "PR #1285 merged the scope-correct closeout contract with terminal green checks",
+        "Current-main closeout preserves PR #1286 queue changes and passes 133 focused tests"
+      ]
+    }
   },
   "priority": {
     "lane": "now",
@@ -240,6 +305,6 @@
     "strategy": "Vor Claim eines erzeugten Reparaturtasks kann der Registrierungs-PR vollständig revertiert werden. Nach einem Claim werden bereits veröffentlichte Tasks nicht gelöscht oder umgeschrieben, sondern bei fachlicher Obsoleszenz mit revisionsgebundenem Closeout terminalisiert; fremde PRs, Worktrees und Leases bleiben unangetastet."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Geschlossene Renovate-Updates in atomare Reparaturtasks überführen"
 }

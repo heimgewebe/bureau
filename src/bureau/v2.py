@@ -2878,19 +2878,34 @@ class StateStore:
 
     def heartbeat(self, run_id: str, worker_id: str | None = None) -> dict[str, Any]:
         now = legacy.utc_now()
+        active_placeholders = ",".join("?" for _ in legacy.ACTIVE_STATES)
+        owner_clause = " AND worker_id=?" if worker_id is not None else ""
+        parameters: list[Any] = [now, now, run_id, *legacy.ACTIVE_STATES]
+        if worker_id is not None:
+            parameters.append(worker_id)
         with self.immediate() as connection:
-            row = connection.execute("SELECT * FROM runs WHERE run_id=?", (run_id,)).fetchone()
-            if row is None or row["state"] not in legacy.ACTIVE_STATES:
-                raise legacy.StateError(f"run {run_id} is not active")
-            if worker_id is not None and row["worker_id"] != worker_id:
-                raise legacy.StateError("worker does not own this run")
-            connection.execute(
-                "UPDATE runs SET heartbeat_at=?,updated_at=? WHERE run_id=?",
-                (now, now, run_id),
+            updated = connection.execute(
+                f"""
+                UPDATE runs SET heartbeat_at=?,updated_at=?
+                WHERE run_id=? AND state IN ({active_placeholders}){owner_clause}
+                """,
+                parameters,
             )
+            if updated.rowcount != 1:
+                row = connection.execute(
+                    "SELECT state,worker_id FROM runs WHERE run_id=?", (run_id,)
+                ).fetchone()
+                if row is None or row["state"] not in legacy.ACTIVE_STATES:
+                    raise legacy.StateError(f"run {run_id} is not active")
+                if worker_id is not None and row["worker_id"] != worker_id:
+                    raise legacy.StateError("worker does not own this run")
+                raise legacy.StateError(f"run {run_id} heartbeat precondition failed")
             connection.execute(
-                "UPDATE workers SET heartbeat_at=? WHERE worker_id=?",
-                (now, row["worker_id"]),
+                """
+                UPDATE workers SET heartbeat_at=?
+                WHERE worker_id=(SELECT worker_id FROM runs WHERE run_id=?)
+                """,
+                (now, run_id),
             )
             self.event(connection, "run-heartbeat", {}, run_id)
         return self.run(run_id)

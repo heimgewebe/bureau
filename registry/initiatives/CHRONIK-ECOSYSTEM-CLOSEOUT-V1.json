@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
   "title": "Chronik operator ecosystem closeout",
-  "state": "completed",
-  "commitment": "completed",
+  "state": "active",
+  "commitment": "now",
   "goal": "Close the remaining Chronik operator-ecosystem integration gaps without turning Chronik into an orchestrator or runtime control surface.",
   "completion": [
     "Chronik service bootstrap PR is resolved with CI/local evidence and no runtime activation claim.",
@@ -44,6 +44,22 @@
         "permission to bypass repository or deployment gates",
         "runtime authority for Chronik",
         "automatic completion of later follow-up initiatives"
+      ]
+    },
+    "lifecycle_reopen": {
+      "reopened_at": "2026-07-31T05:39:55.533959Z",
+      "reopened_by_task": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T012",
+      "reopened_reason": "T012 was registered as a nonterminal now-priority follow-up after the prior T001-T011 completion; the historical completion remains preserved while the bounded outbox-journal remediation is open.",
+      "doctor_recommendation": "reopen-required",
+      "prior_completion_preserved_in": "metadata.lifecycle",
+      "open_tasks": [
+        "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T012"
+      ],
+      "does_not_establish": [
+        "task readiness",
+        "claim or dispatch authority",
+        "implementation completion",
+        "merge or deployment authority"
       ]
     }
   }

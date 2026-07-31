@@ -46,6 +46,14 @@
       "assertion": "Starting equivalent work while a matching task is active returns the existing task identity and evidence instead of launching a second process; non-equivalent work remains independently claimable."
     },
     {
+      "id": "atomic-concurrent-start",
+      "assertion": "Two concurrent starts with the same canonical cwd, normalized argv, exact source identity and scope are linearized atomically: exactly one process is launched and every contender receives the same task identity or a receipt-bound joined-active decision. A check-then-start race that creates two task records is a failing negative case."
+    },
+    {
+      "id": "source-snapshot-binding",
+      "assertion": "Read-only tasks that consume mutable files bind the source fingerprint used for the operation identity before launch. Reuse or join is rejected when the source changes; two equivalent starts may not silently observe different snapshots under one claimed identity."
+    },
+    {
       "id": "safe-result-reuse",
       "assertion": "A completed result is reusable only for the exact head and equivalent inputs within an explicit freshness window; changed source, dependencies, environment, policy or risk profile invalidates reuse and requires fresh validation."
     },
@@ -63,7 +71,7 @@
     },
     {
       "id": "tests",
-      "assertion": "Tests cover active duplicate joins, changed-head invalidation, environment drift, expired results, secret-free fingerprints, concurrent validation isolation, focused-to-full escalation and required fresh runs for high-risk actions."
+      "assertion": "Tests cover an atomic two-contender start barrier, active duplicate joins, changed-head and changed-source invalidation, environment drift, expired results, secret-free fingerprints, concurrent validation isolation, focused-to-full escalation and required fresh runs for high-risk actions."
     }
   ],
   "depends_on": [
@@ -75,6 +83,38 @@
       "Multiple near-identical full validation tasks were launched for the same repository slice.",
       "Concurrent scheduled validations shared a fixed test-home directory and one run failed after another removed generated files; serialization later passed the full suite."
     ],
+    "live_contrast_20260731": {
+      "observed_at": "2026-07-31T16:55:00Z",
+      "standard_approach": "Independent check-then-start execution of equivalent read-only work.",
+      "contrast_approach": "Atomic operation-identity reservation with joined-active or fresh-result reuse.",
+      "task_ids": [
+        "b74fa8207be745289b3c739a",
+        "4ad1e8797a254877abd3933f"
+      ],
+      "canonical_cwd": "/home/alex",
+      "argv_sha256": "fb3a0a82767d766772c683d6f1bf8da88a6c85322a0bf159c434926317ded398",
+      "start_delta_seconds": 2,
+      "terminal_states": [
+        "completed",
+        "completed"
+      ],
+      "observed_result": "Two process records were launched for the same cwd and argv identity. Their bounded outputs diverged while reading the same mutable candidate/resource inputs, demonstrating both redundant work and snapshot ambiguity.",
+      "measurable_success": [
+        "exactly one launched process for two simultaneous equivalent starts",
+        "all contenders return one canonical task id or receipt-bound joined-active decision",
+        "changed source fingerprint forces a new identity rather than reusing ambiguous output"
+      ],
+      "abort_boundary": [
+        "any false join across changed source, head, environment, policy or scope",
+        "more than one process launch for one exact concurrent identity",
+        "missing receipt for launched, joined-active, reused-valid or invalidated outcome"
+      ],
+      "does_not_establish": [
+        "semantic correctness of either historical task output",
+        "safe cross-source result reuse",
+        "implementation or deployment completion"
+      ]
+    },
     "does_not_establish": [
       "permission to skip required tests",
       "cross-head test equivalence",

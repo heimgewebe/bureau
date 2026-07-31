@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "component.repoground.publication",
+  "type": "component",
+  "parent": "repo.repoground",
+  "path": "/home/alex/repos/repoground/.repoground-scopes/publication",
+  "grabowski_key": "component:repoground-publication"
+}

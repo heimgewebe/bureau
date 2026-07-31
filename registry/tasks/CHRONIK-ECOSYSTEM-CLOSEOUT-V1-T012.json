@@ -1,0 +1,106 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The systemd importer invokes import-outbox in a compact summary mode that emits exactly one bounded JSON line per run and excludes bundle inventories and per-source result lists.",
+      "id": "bounded-systemd-output"
+    },
+    {
+      "assertion": "The summary preserves aggregate error count and at most three length-bounded error samples, remains below 4096 bytes in the tested worst case and retains nonzero exit status when errors exist.",
+      "id": "bounded-error-signal"
+    },
+    {
+      "assertion": "The import-outbox CLI default remains the existing full output mode so callers that do not opt into summary output keep their current result schema and detail.",
+      "id": "cli-compatibility"
+    },
+    {
+      "assertion": "The user unit adds an independent LogRateLimitIntervalSec and LogRateLimitBurst guard without changing the two-minute timer or Chronik read/write sandbox.",
+      "id": "unit-rate-limit"
+    },
+    {
+      "assertion": "The Chronik role contract, focused tests, complete test suite, API smoke, GitHub CI and exact-head review pass.",
+      "id": "validation-proof"
+    },
+    {
+      "assertion": "A versioned exact-head deployment runs at least one scheduled import while journald records no new global user@1000.service suppression attributable to the importer, and rollback remains possible without ledger mutation.",
+      "id": "live-journal-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.chronik"
+    }
+  ],
+  "depends_on": [
+    "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T011"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user explicitly authorized implementing all sensible remediations and continued execution on 2026-07-31. Registry publication, merge and runtime rollout remain separately evidence-bound.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/chronik"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/chronik"
+  },
+  "goal": "Stoppe den durch vollständige Batch-JSON-Ausgabe verursachten globalen User-Journalverlust, ohne Chronik-Import-, Ledger-, Receipt- oder CLI-Kompatibilitätssemantik zu schwächen.",
+  "id": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1-T012",
+  "initiative": "CHRONIK-ECOSYSTEM-CLOSEOUT-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Chronik task or runtime authority",
+      "permission to rewrite ledger or receipt history",
+      "general safety of arbitrary user-service output",
+      "automatic merge or deployment authority"
+    ],
+    "finding": "chronik-outbox-import.service produced 9,998 of 10,000 stored user-journal messages in the first 30 seconds before journald suppression, followed by roughly 42,000 suppressed messages per two-minute run.",
+    "source_candidate": "candidate-f994db92fe605952e45d4e42",
+    "source_event_id": 1825,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-f994db92fe605952e45d4e42",
+      "event_id": 1825,
+      "event_created_at": "2026-07-31T05:04:28.859795Z",
+      "request_sha256": "186ceff12e730a4c0d68542764c3204ac78ae96cfb989aefc4f3dec0f8bd5888",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-journal-audit",
+        "locator": "heim-pc journal boot 2026-07-31 05:54:59..05:55:29 CEST; chronik-outbox-import.service PID 1673710",
+        "observed_at": "2026-07-31T05:55:29+02:00",
+        "sha256": "c88b41f5778327966379e0f9736887c0f530c19044eef7285806592eef477086"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 1
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "github",
+    "grabowski",
+    "python",
+    "testing",
+    "systemd",
+    "observability"
+  ],
+  "rollback": {
+    "procedure": "Atomically restore the previous immutable Chronik release and previous user unit, reload the user manager, rerun the importer, and preserve all ledger, receipt, outbox and diagnostic evidence unchanged.",
+    "trigger": "The summary hides importer failure, exceeds its bound, changes full-mode output, breaks import semantics, or live suppression continues after deployment."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Begrenze Chronik-Outbox-Journalausgabe"
+}

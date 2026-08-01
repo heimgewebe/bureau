@@ -80,6 +80,100 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "closeout": {
+      "schema_version": 1,
+      "verified_at": "2026-08-01T03:53:18+02:00",
+      "bureau_base_revision": "512b0a40baa3cc12f4f16519e2b6105712f3e812",
+      "finding": "The requested bounded importer path is merged, byte-hardened, deployed and live-verified; the stale planned state was registry drift rather than missing Chronik implementation.",
+      "implementation": {
+        "initial_pr": "heimgewebe/chronik#246",
+        "initial_head": "6af8887f852e61ea25dae814b467de6feff3fc4f",
+        "initial_merge_commit": "0cb660696826bef10ace837effe8303cec39425d",
+        "byte_bound_hardening_pr": "heimgewebe/chronik#250",
+        "byte_bound_hardening_head": "ecc394461063c5e143bbd90e7ec6bb5ea719738d",
+        "current_merge_commit": "92d3c14449371249d2defee7a3a338dd526122d7",
+        "current_is_descendant_of_initial_merge": true
+      },
+      "validation": {
+        "exact_revision": "92d3c14449371249d2defee7a3a338dd526122d7",
+        "focused_tests": "52 passed in 0.90s: tests/test_grabowski_outbox_import.py tests/test_service_artifacts.py",
+        "complete_suite": "444 passed, 1 dependency deprecation warning, in 7.88s",
+        "role_contract": "role-contract: OK chronik",
+        "api_smoke": "health, version, agent-ledger ingest and readback passed",
+        "github_ci": [
+          "wgx-guard success",
+          "validate (aussen fixtures) success",
+          "validate-chronik-fixtures success",
+          "Validate fixtures against contracts success",
+          "ai-context guard success"
+        ],
+        "review": "Exact-head implementation review is represented by merged PR #250 plus independent local exact-revision verification in this closeout."
+      },
+      "runtime": {
+        "release_path": "/home/alex/.local/lib/chronik/releases/92d3c14449371249d2defee7a3a338dd526122d7",
+        "current_symlink_matches_release": true,
+        "unit_sha256": "01998d3069e5bc2d5cbd8a3b31a224b5af4ba5e25d84ebff0ee08a02191c3e92",
+        "unit_contract": {
+          "summary_mode": true,
+          "log_rate_limit_interval": "30s",
+          "log_rate_limit_burst": 200,
+          "protect_system": "strict",
+          "protect_home": "read-only"
+        },
+        "timer": {
+          "state": "active/waiting",
+          "last_trigger": "2026-08-01T03:54:06+02:00",
+          "cadence": "2 minutes"
+        },
+        "journal_observation": {
+          "sample_count": 30,
+          "latest_sample_count": 10,
+          "latest_sample_bytes_each": 791,
+          "latest_samples_single_line": true,
+          "latest_samples_error_count": 0,
+          "per_source_results_absent": true,
+          "bundle_inventories_absent": true,
+          "last_global_user_manager_suppression": "2026-07-31T19:25:40+02:00: 84593 messages",
+          "new_global_suppression_after_2026_07_31_19_25_41": false,
+          "attribution": "Post-initial-deployment global suppression was system-wide and not attributable to an importer emitting one bounded line per two-minute cycle; the broader logstorm is tracked separately.",
+          "suppression_observed_through": "2026-08-01T04:05:55+02:00"
+        }
+      },
+      "rollback": {
+        "possible": true,
+        "method": "Atomically repoint current to a preserved immutable earlier release, restore its unit, daemon-reload, and rerun the importer without changing ledger, receipt or outbox history.",
+        "preserved_prior_release": "/home/alex/.local/lib/chronik/releases/0cb660696826bef10ace837effe8303cec39425d"
+      },
+      "acceptance_evidence": {
+        "bounded-systemd-output": "Live unit invokes --output-mode summary; 30 observed outputs were one-line JSON without result lists or bundle inventory, latest ten 791 bytes.",
+        "bounded-error-signal": "Adversarial Unicode and control-character tests enforce emitted bytes including newline below 4096, max three samples, aggregate error_count and nonzero failure exit.",
+        "cli-compatibility": "Default full-mode schema regression test passes and PR #250 records byte-identical full output against its base fixture.",
+        "unit-rate-limit": "Installed unit has LogRateLimitIntervalSec=30s and LogRateLimitBurst=200; service-artifact tests preserve timer and sandbox.",
+        "validation-proof": "52 focused and 444 total tests, role contract, API smoke and five pull-request workflow runs pass on exact head.",
+        "live-journal-proof": "Current exact release executed scheduled imports successfully; no new exact global user@1000.service suppression after 2026-07-31 19:25:40, and rollback releases remain present."
+      },
+      "truth_boundary": {
+        "establishes": [
+          "T012 acceptance on the observed Chronik revision and runtime",
+          "registry eligibility for verified terminal state"
+        ],
+        "does_not_establish": [
+          "absence of logstorms from unrelated user services",
+          "future Chronik revision correctness",
+          "permission to rewrite ledger or receipt history",
+          "automatic correctness of later deployments"
+        ]
+      },
+      "uncertainty": 0.03,
+      "interpolation": 0.02,
+      "uncertainty_causes": [
+        "GitHub Actions evidence is workflow-run state plus independent local exact-head verification; no external Codex review was available because its quota gate returned a limit notice."
+      ]
+    },
+    "verification": {
+      "task_sha256": "02a02ca125864ba6a34a05d7895fa8c7e1a0e1e115b528aa14bd499486000946",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
     }
   },
   "priority": {
@@ -101,6 +195,6 @@
     "trigger": "The summary hides importer failure, exceeds its bound, changes full-mode output, breaks import semantics, or live suppression continues after deployment."
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Begrenze Chronik-Outbox-Journalausgabe"
 }

@@ -3700,6 +3700,14 @@ class Dispatcher(legacy.Dispatcher):
         approval_data = intent["operator_approval"]
         approval = _coordinated_approval_from_dict(approval_data)
         approval_action_class = _coordinated_task_action_class(task)
+        if approval.reviewer != intent["worker_id"]:
+            raise legacy.StateError(
+                "coordinated claim approval reviewer differs from worker"
+            )
+        if tuple(approval.scope) != (approval_action_class,):
+            raise legacy.StateError(
+                "coordinated claim approval scope differs from task action class"
+            )
         approval_decision = require_approval(
             approval_action_class,
             approval,

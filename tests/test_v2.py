@@ -2439,6 +2439,54 @@ def test_coordinated_runtime_claim_rejects_rehashed_approval_downgrade(
 
     assert store.list_runs() == []
 
+def test_coordinated_runtime_claim_rejects_rehashed_scope_widening(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    declare_runtime_mutation(root, task_id)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    intent = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        break_glass=True,
+    )["intent"]
+    intent["operator_approval"]["scope"] = []
+    intent["intent_sha256"] = bureau_v2.coordinated_claim_intent_sha256(intent)
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+
+    with pytest.raises(StateError, match="approval scope differs from task action class"):
+        dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+
+    assert store.list_runs() == []
+
+
+def test_coordinated_runtime_claim_rejects_rehashed_reviewer_drift(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    declare_runtime_mutation(root, task_id)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    intent = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        break_glass=True,
+    )["intent"]
+    intent["operator_approval"]["reviewer"] = "other-worker"
+    intent["intent_sha256"] = bureau_v2.coordinated_claim_intent_sha256(intent)
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+
+    with pytest.raises(StateError, match="approval reviewer differs from worker"):
+        dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+
+    assert store.list_runs() == []
+
+
 def test_coordinated_claim_handoff_does_not_require_absent_lease(
     registry_factory, tmp_path, monkeypatch
 ):

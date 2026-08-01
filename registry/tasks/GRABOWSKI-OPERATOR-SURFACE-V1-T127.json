@@ -98,7 +98,47 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
-    }
+    },
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_existing_implementation",
+      "queue_state": "absent_from_all_lanes",
+      "basis": "The implementation PR is merged, its merge commit is an ancestor of the healthy deployed Grabowski runtime, and the canonical Bureau task and plan hashes are bound below.",
+      "does_not_establish": [
+        "new claim, lease, queue, review, merge or deployment authority",
+        "permission to use a dirty checkout as Registry truth",
+        "completion of the separate successor task beyond the observed merge and deployment evidence"
+      ]
+    },
+    "implementation": {
+      "repository": "heimgewebe/grabowski",
+      "pull_request": 534,
+      "url": "https://github.com/heimgewebe/grabowski/pull/534",
+      "reviewed_head_commit": "65d8f9b9c595604e928d4a75ab8f997b68595c94",
+      "merge_commit": "4e79a983192433657e70c7f73f9925de21e4f1c8",
+      "merged": true,
+      "merge_is_ancestor_of_deployed_runtime": true,
+      "validation": {
+        "focused_bureau_pickup_tests_passed": 76,
+        "repository_tests_passed": 4057,
+        "repository_tests_skipped": 4,
+        "exact_head_ci": "passed",
+        "self_review": "no_open_findings"
+      }
+    },
+    "runtime_readback": {
+      "service": "grabowski-mcp",
+      "repo_head": "2d19f9c31c9f333a507e7a75e11a0e8c417b0e35",
+      "healthy": true,
+      "deployment_complete": true,
+      "deployment_integrity_valid": true,
+      "observed_at": "2026-08-01T07:03:09.207415Z"
+    },
+    "verification": {
+      "plan_sha256": "c867c77d1608db974e679be15a885302e7c155d9f1f523e8853d2b3c4b1d665b",
+      "task_sha256": "c8db16d9d30df7b992d84ce1bc7d153bdc3d2063bbaf9c92c3cc326cea680c5f"
+    },
+    "verified_at": "2026-08-01T07:03:09.207415Z"
   },
   "priority": {
     "lane": "now",
@@ -116,6 +156,6 @@
     "strategy": "Die kanonische Default-Root-Auflösung und ihre Tests vollständig revertieren. Explizite registry_root-Requests und die bestehende fail-closed Pickup-Koordination bleiben erhalten; bei unklarem Runtime-Manifest wird kein alter Checkout-Fallback reaktiviert."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Bureau-Pickup an den kanonischen Registry-Snapshot binden"
 }

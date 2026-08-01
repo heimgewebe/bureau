@@ -45,22 +45,7 @@
     {
       "isolation": "none",
       "mode": "read",
-      "resource": "repo.reposkop"
-    },
-    {
-      "isolation": "none",
-      "mode": "read",
       "resource": "repo.grabowski"
-    },
-    {
-      "isolation": "none",
-      "mode": "write",
-      "resource": "component.grabowski.runtime"
-    },
-    {
-      "isolation": "none",
-      "mode": "write",
-      "resource": "host.heim-pc.reposkop-binary"
     }
   ],
   "depends_on": [],
@@ -98,6 +83,25 @@
         "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T076"
       ],
       "source": "user"
+    },
+    "logical_claim_scope": {
+      "resource": "repo.grabowski",
+      "mode": "read",
+      "reason": "Der Bureau-Katalog kennt den kanonischen Grabowski-Repositoryclaim. Die zwei Quellrepositories werden ausschließlich revisionsgebunden gelesen; sämtliche Hosteffekte und Konfliktflächen werden enger durch execution.grabowski_resources als exakte Grabowski-Leases gebunden.",
+      "exact_effect_resources": [
+        "repo:/home/alex/repos/reposkop",
+        "repo:/home/alex/repos/grabowski",
+        "path:/home/alex/.local/bin/reposkop",
+        "path:/home/alex/.local/share/grabowski-mcp",
+        "path:/home/alex/.local/share/grabowski-mcp-releases",
+        "path:/home/alex/.local/state/grabowski/reposkop-context",
+        "service:grabowski-mcp"
+      ],
+      "does_not_authorize": [
+        "breite Mutation des Grabowski-Repositories",
+        "Mutation eines nicht explizit geleasten Hostpfads",
+        "Übernahme oder Bereinigung fremder Worktrees, Prozesse oder Leases"
+      ]
     },
     "producer": {
       "repository": "heimgewebe/reposkop",

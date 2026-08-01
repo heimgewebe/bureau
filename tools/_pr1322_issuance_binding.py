@@ -197,11 +197,13 @@ replace_once(
 
 replace_once(
     tests,
-    '''    assert store.list_runs() == []
+    '''    assert handoff["minimum_remaining_seconds"] == 60
+    assert store.list_runs() == []
     with store.connect() as connection:
         assert connection.execute("SELECT COUNT(*) FROM workers").fetchone()[0] == 0
 ''',
-    '''    assert store.list_runs() == []
+    '''    assert handoff["minimum_remaining_seconds"] == 60
+    assert store.list_runs() == []
     issuance = store.claim_intent_issuance(result["intent"]["run_id"])
     assert issuance["intent_sha256"] == result["intent"]["intent_sha256"]
     assert issuance["worker_id"] == "operator"
@@ -217,42 +219,56 @@ replace_once(
 ''',
 )
 
-for old_message in (
-    'match="approval required for runtime_mutation"',
-    'match="approval scope differs from task action class"',
-    'match="approval reviewer differs from worker"',
-):
-    text = tests.read_text(encoding="utf-8")
-    if old_message not in text:
-        raise SystemExit(f"tests: missing expected tamper message {old_message}")
-    # Only the post-issuance tamper cases are replaced below by anchored blocks.
-
 replace_once(
     tests,
-    '''    with pytest.raises(StateError, match="approval required for runtime_mutation"):
+    '''    intent["operator_approval"]["level"] = "operator"
+    intent["intent_sha256"] = bureau_v2.coordinated_claim_intent_sha256(intent)
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+
+    with pytest.raises(StateError, match="approval required for runtime_mutation"):
         dispatcher.commit_claim_intent(intent, binding, resource_db=database)
 ''',
-    '''    with pytest.raises(StateError, match="intent differs from issued identity"):
+    '''    intent["operator_approval"]["level"] = "operator"
+    intent["intent_sha256"] = bureau_v2.coordinated_claim_intent_sha256(intent)
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+
+    with pytest.raises(StateError, match="intent differs from issued identity"):
         dispatcher.commit_claim_intent(intent, binding, resource_db=database)
 ''',
 )
 
 replace_once(
     tests,
-    '''    with pytest.raises(StateError, match="approval scope differs from task action class"):
+    '''    intent["operator_approval"]["scope"] = []
+    intent["intent_sha256"] = bureau_v2.coordinated_claim_intent_sha256(intent)
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+
+    with pytest.raises(StateError, match="approval scope differs from task action class"):
         dispatcher.commit_claim_intent(intent, binding, resource_db=database)
 ''',
-    '''    with pytest.raises(StateError, match="intent differs from issued identity"):
+    '''    intent["operator_approval"]["scope"] = []
+    intent["intent_sha256"] = bureau_v2.coordinated_claim_intent_sha256(intent)
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+
+    with pytest.raises(StateError, match="intent differs from issued identity"):
         dispatcher.commit_claim_intent(intent, binding, resource_db=database)
 ''',
 )
 
 replace_once(
     tests,
-    '''    with pytest.raises(StateError, match="approval reviewer differs from worker"):
+    '''    intent["operator_approval"]["reviewer"] = "other-worker"
+    intent["intent_sha256"] = bureau_v2.coordinated_claim_intent_sha256(intent)
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+
+    with pytest.raises(StateError, match="approval reviewer differs from worker"):
         dispatcher.commit_claim_intent(intent, binding, resource_db=database)
 ''',
-    '''    with pytest.raises(StateError, match="intent differs from issued identity"):
+    '''    intent["operator_approval"]["reviewer"] = "other-worker"
+    intent["intent_sha256"] = bureau_v2.coordinated_claim_intent_sha256(intent)
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+
+    with pytest.raises(StateError, match="intent differs from issued identity"):
         dispatcher.commit_claim_intent(intent, binding, resource_db=database)
 ''',
 )

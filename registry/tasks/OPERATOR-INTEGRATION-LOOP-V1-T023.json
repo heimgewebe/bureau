@@ -34,7 +34,8 @@
       "note": "Nur das exakt gebundene Repository bearbeiten. Alt-PRs bleiben geschlossen; Merge ausschließlich nach frischem revisionsgebundenem Review- und CI-Readback."
     },
     "grabowski_resources": [
-      "path:/home/alex/repos/repoground/.github/workflows/contracts-validate.yml"
+      "path:/home/alex/repos/repoground/.github/workflows/contracts-validate.yml",
+      "path:/home/alex/repos/repoground/config/workflow-control-plane.v1.json"
     ]
   },
   "metadata": {
@@ -62,14 +63,16 @@
       "decision": "component-and-exact-path",
       "component_resource": "component.repoground.test-tooling",
       "exact_paths": [
-        "/home/alex/repos/repoground/.github/workflows/contracts-validate.yml"
+        "/home/alex/repos/repoground/.github/workflows/contracts-validate.yml",
+        "/home/alex/repos/repoground/config/workflow-control-plane.v1.json"
       ],
       "basis": [
         "Der gebundene Alt-PR #1136 änderte ausschließlich .github/workflows/contracts-validate.yml.",
         "Der Ziel-Digest 91fdff21d083eaf95fd42659ec9a4dc691d227a5 ist weiterhin der aktuelle main von heimgewebe/contracts-mirror.",
         "RepoGround main ist a60d0dd93ad8b18bbbce94ccc1267c27ab0a34b9 und besitzt keinen offenen Pull Request.",
         "Der breite Repo-Claim scheiterte ausschließlich an einem historischen archivierten Checkout-Binding mit widersprüchlicher Head-Evidenz; es existiert keine aktive RepoGround-Ressourcenlease.",
-        "Bureau erzeugt den frischen isolierten Workspace weiterhin aus execution.working_repository; die Komponente begrenzt nur die Konflikt- und Leasefläche."
+        "Bureau erzeugt den frischen isolierten Workspace weiterhin aus execution.working_repository; die Komponente begrenzt nur die Konflikt- und Leasefläche.",
+        "RepoGround PR #1142 belegt im Ruff-Job 91386201102 des Workflow-Runs 30706411620, dass jede absichtliche Workflow-Änderung den zugehörigen SHA-256-Eintrag in config/workflow-control-plane.v1.json aktualisieren muss."
       ],
       "live_evidence": {
         "repoground_main": "a60d0dd93ad8b18bbbce94ccc1267c27ab0a34b9",
@@ -86,15 +89,24 @@
         "blocking_codes": [
           "binding-archive-head-mismatch",
           "binding-retention-head-mismatch"
-        ]
+        ],
+        "failed_replacement_pr": 1142,
+        "failed_replacement_head": "66690faaff4c2b3f84a2cf49190f7d8dba5df826",
+        "failed_replacement_run": "BUR-RUN-20260801T153440Z-24942d1ef4",
+        "workflow_inventory_ci": {
+          "workflow_run": 30706411620,
+          "job": 91386201102,
+          "finding": "contracts-validate.yml sha256 drift; refresh config/workflow-control-plane.v1.json after intentional workflow edits",
+          "inventory_path": "config/workflow-control-plane.v1.json"
+        }
       },
       "does_not_authorize": [
-        "Mutation außerhalb des exakten Workflow-Pfads",
+        "Mutation außerhalb der zwei exakten RepoGround-Pfade",
         "Bereinigung oder Übernahme fremder RepoGround-Worktrees",
         "weitere Dependency- oder Workflow-Updates",
         "Merge ohne frische vollständige Tests, Review und GitHub-CI"
       ],
-      "reviewed_at": "2026-08-01T17:15:00+02:00"
+      "reviewed_at": "2026-08-01T17:48:00+02:00"
     }
   },
   "acceptance": [

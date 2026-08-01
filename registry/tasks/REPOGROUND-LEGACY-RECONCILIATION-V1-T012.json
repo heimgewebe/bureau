@@ -162,6 +162,46 @@
           "REPOGROUND-LEGACY-RECONCILIATION-V1-T012",
           "REPOGROUND-LEGACY-RECONCILIATION-V1-T014"
         ]
+      },
+      "successful_terminal_lifecycle_closeout": {
+        "schema_version": 1,
+        "observed_at": "2026-08-01T19:32:51Z",
+        "recorded_at": "2026-08-01T19:43:03Z",
+        "command": "make validate",
+        "result": "pass",
+        "passed": 974,
+        "failed": 0,
+        "ruff": "PASS",
+        "systemkatalog_boundary": "PASS",
+        "registry_check": "valid: True",
+        "sqlite_integrity": "ok",
+        "source_commit": "8da8e2528f97f4b7d8602aacaa49df65dc4aebef",
+        "grabowski_task_id": "6898abf9a292493197acbe29",
+        "terminalization_sha256": "f3c15e03121b26c93e37417db31a1a00585d310fcc648f75d5bcdcbd5877d744",
+        "lifecycle_receipt_sha256": "c1c3a71634ad53d9d2a75198aecc76c54180047ad7cc6519e0e55910910e3b50",
+        "outcome_receipt_sha256": "c1c3a71634ad53d9d2a75198aecc76c54180047ad7cc6519e0e55910910e3b50",
+        "blocking_children_after_closeout": [
+          "REPOGROUND-LEGACY-RECONCILIATION-V1-T010",
+          "REPOGROUND-LEGACY-RECONCILIATION-V1-T014"
+        ],
+        "does_not_establish": [
+          "production deployment of RepoGround",
+          "completion of T004, T010 or T014",
+          "future test success"
+        ]
+      },
+      "pull_request_closeout": {
+        "pull_request": 1330,
+        "head_commit": "8da8e2528f97f4b7d8602aacaa49df65dc4aebef",
+        "merge_commit": "0b24284dd0d701715fdcabb44b248cef1d2b65fe",
+        "merged_at": "2026-08-01T19:40:00Z",
+        "checks": {
+          "validate_3_10": "PASS",
+          "validate_3_12": "PASS",
+          "codeql_actions": "PASS",
+          "codeql_python": "PASS",
+          "registry_registration_preflight_freshness": "PASS"
+        }
       }
     },
     "acceptance_evidence": {
@@ -185,20 +225,62 @@
       "independent review completeness",
       "completion of REPOGROUND-LEGACY-RECONCILIATION-V1-T004 or T014"
     ],
-    "finalized_at": "2026-08-01T19:14:41Z",
+    "finalized_at": "2026-08-01T19:32:51Z",
     "resolution_summary": "Die bereits vollständig belegte RepoGround-Produktscheibe bleibt unverändert. Der einzige offene Bureau-Lifecycle-Blocker wurde durch die eng begrenzte Fortschreibung der realen T004-Parent-/Child-Testfixture auf den terminalen T012-Zustand geschlossen; T004 projiziert danach nur noch T010 und T014 als nichtterminale Kinder.",
     "lifecycle_closeout": {
       "status": "verified",
-      "resolved_at": "2026-08-01T19:14:41Z",
+      "resolved_at": "2026-08-01T19:32:51Z",
       "changed_product_code": false,
       "fixture": "tests/test_parent_child_claim_gate.py::test_real_t004_registry_contract_has_explicit_bounded_relationships",
       "expected_blocking_children": [
         "REPOGROUND-LEGACY-RECONCILIATION-V1-T010",
         "REPOGROUND-LEGACY-RECONCILIATION-V1-T014"
+      ],
+      "successful_validation": {
+        "grabowski_task_id": "6898abf9a292493197acbe29",
+        "terminalization_sha256": "f3c15e03121b26c93e37417db31a1a00585d310fcc648f75d5bcdcbd5877d744",
+        "lifecycle_receipt_sha256": "c1c3a71634ad53d9d2a75198aecc76c54180047ad7cc6519e0e55910910e3b50"
+      }
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "grabowski_task_receipt",
+          "task_id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T012",
+          "authority": "grabowski.task",
+          "source_ref": "grabowski-task:6898abf9a292493197acbe29@8da8e2528f97f4b7d8602aacaa49df65dc4aebef",
+          "run_id": "6898abf9a292493197acbe29",
+          "command": "make validate",
+          "tested_commit": "8da8e2528f97f4b7d8602aacaa49df65dc4aebef",
+          "result": "pass",
+          "passed": 974,
+          "failed": 0,
+          "terminalization_sha256": "f3c15e03121b26c93e37417db31a1a00585d310fcc648f75d5bcdcbd5877d744",
+          "receipt_sha256": "c1c3a71634ad53d9d2a75198aecc76c54180047ad7cc6519e0e55910910e3b50",
+          "outcome_receipt_sha256": "c1c3a71634ad53d9d2a75198aecc76c54180047ad7cc6519e0e55910910e3b50",
+          "observed_at": "2026-08-01T19:32:51Z",
+          "does_not_establish": [
+            "production deployment of RepoGround",
+            "completion of T004, T010 or T014",
+            "future test success"
+          ]
+        },
+        {
+          "kind": "github_checks",
+          "task_id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T012",
+          "repository": "heimgewebe/bureau",
+          "source_ref": "github-pr:heimgewebe/bureau#1330",
+          "pull_request": 1330,
+          "head_sha": "8da8e2528f97f4b7d8602aacaa49df65dc4aebef",
+          "merge_commit": "0b24284dd0d701715fdcabb44b248cef1d2b65fe",
+          "verdict": "pass"
+        }
       ]
     },
     "verification": {
-      "task_sha256": "ec303cbea71c766977f5a58e5a9995e76db6ee3eec0cf61277c4b6f6dc0f0f42",
+      "task_sha256": "d2b9cb391c636fa3327126e366afc32c8c2e9b6a2e4faafe9a89ca2131ad1dee",
       "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
     }
   },

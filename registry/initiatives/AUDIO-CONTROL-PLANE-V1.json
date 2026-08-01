@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "AUDIO-CONTROL-PLANE-V1",
   "title": "Messbare und sichere Audio-Steuerung für den Heim-PC",
-  "state": "active",
+  "state": "waiting",
   "commitment": "now",
   "goal": "Eine einzige nachvollziehbare Audio-Steuerung für Referenzhören, Qobuz, Aufnahme, Roland-Livespiel, Produktion, Receiver, Bluetooth, Dauersong und begrenzte Klangexperimente aufbauen, ohne veraltete hausKI-audio-Verträge oder parallele Zustandswahrheiten zu übernehmen.",
   "current_plan": {
@@ -32,6 +32,17 @@
     "legacy_policy": "hausKI-audio supplies ideas and rewritten behavioural requirements only; source and history are not imported by default",
     "sequencing_authority": "docs/plans/audio-configuration-redesign-v1.md phases 0 through 8",
     "review_reconciliation": "Repository implementation, live runtime mutation, maintenance validation, deterministic legacy reconciliation, runtime closeout, repository archival and worktree cleanup are separate tasks.",
+    "waiting_on": {
+      "schema_version": 1,
+      "task_id": "AUDIO-CONTROL-PLANE-V1-T001",
+      "code": "physical-audio-hardware-and-human-readback-required",
+      "observed_at": "2026-08-01T20:32:45.371232+00:00",
+      "resume_condition": "MOTU M2 und Roland FP-30X sind physisch sichtbar; die erforderlichen Gain-, Routing-, Phantomspannungs- und Hörreglerzustände wurden menschlich bestätigt; reale Stimm- und Loopbackmessungen können sicher durchgeführt werden.",
+      "does_not_establish": [
+        "automatische Wiederaufnahme ohne frischen Live-Readback",
+        "Hardwareanwesenheit zu einem späteren Zeitpunkt"
+      ]
+    },
     "supplemental_plans": [
       {
         "id": "buckelwal-continuous-voice-v1",

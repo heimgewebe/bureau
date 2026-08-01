@@ -128,12 +128,49 @@
           "completion of AUDIO-CONTROL-PLANE-V1-T004",
           "completion of AUDIO-CONTROL-PLANE-V1-T007"
         ]
+      },
+      {
+        "scope": "roland-and-production-recording-session-contracts",
+        "status": "merged",
+        "repository": "heimgewebe/audio",
+        "pull_request": 33,
+        "base_commit": "49710c62c017019ba3778d0599e511e6b8bc61a7",
+        "reviewed_head": "5f661ba498741653a7f216b5ba25910e805d660c",
+        "merge_commit": "cd50529157ec4874c4c95dd570bedf24f0584d99",
+        "merged_at": "2026-08-01T06:56:17Z",
+        "verification": [
+          "focused recording-session tests 36/36 PASS",
+          "repository tests 425/425 PASS",
+          "audio safety tests PASS",
+          "audio control contract status ok",
+          "ruff check PASS",
+          "compileall PASS",
+          "git diff origin/main...HEAD --check PASS",
+          "GitHub safety check SUCCESS (run 30688645617, job 91339294159)",
+          "exact-head methodically separated self-review with no unresolved finding"
+        ],
+        "implemented": [
+          "explicit voice-recording, roland-audio-recording and production-mix-recording session types selected by CLI and exact plan digest",
+          "Roland FP-30X source binding by USB vendor/product, serial, bus path, PipeWire node, format, rate, channel count, mute and unity volume",
+          "44.1 kHz Roland source contract with required resampling-decision gate and bounded 48 kHz s32le stereo WAV output",
+          "single exact audio-production-mix PipeWire source contract with object identity and declared voice, Roland and software-instrument upstream roles",
+          "profile-catalog, monitoring, process-name, source and persisted-receipt binding for every session type",
+          "fail-closed mocks for Roland device loss, channel drift, unknown profiles, missing production object identity and missing or ambiguous production source",
+          "typed documentation and Justfile/CLI entry points without creating or mutating a live audio graph"
+        ],
+        "does_not_establish": [
+          "creation, routing or current upstream topology of the audio-production-mix PipeWire source",
+          "actual Roland resampling quality or absence of additional resampling outside the declared source contract",
+          "physical MOTU, RØDE or Roland recording quality",
+          "live PipeWire, device, service or profile rollout",
+          "completion of AUDIO-CONTROL-PLANE-V1-T004",
+          "completion of AUDIO-CONTROL-PLANE-V1-T007"
+        ]
       }
     ],
     "remaining_scope": [
-      "Roland-Audio-Sitzungsmanager repositoryseitig implementieren",
-      "Produktions-Sitzungsmanager und Mehrquellenvertrag repositoryseitig implementieren",
-      "fehlende negative Abdeckung für Geräteverlust und Kanaldrift über die zusätzlichen Sitzungstypen schließen",
+      "audio-production-mix als kanonischen PipeWire-Quellknoten mit Erzeugung, Routing, Überwachung und beobachtbarer Upstream-Topologie repositoryseitig festlegen",
+      "Produktionspfad gegen den endgültigen Graphen auf Zielnode-, Kanal- und technischen 24-Bit-/Containervertrag prüfen",
       "physische und Liveabnahme ausschließlich in AUDIO-CONTROL-PLANE-V1-T007"
     ]
   }

@@ -120,7 +120,7 @@
           "check",
           "runtime-identity"
         ],
-        "focused_preflight": "PYTHONPATH=src python -m bureau.cli --root . check",
+        "focused_preflight": "PYTHONPATH=src python -m bureau.cli --root . --json check",
         "full_gate": "make validate",
         "required_cases": [
           "saubere aktuelle Ausgabe je Zielbefehl",
@@ -132,7 +132,7 @@
         "abort_when": [
           "Source-Head oder Task-Fingerprint driftet",
           "Befehlshilfe oder deklarierter Entry-Point widerspricht dem geplanten Aufruf",
-          "keine reproduzierbare Vertragslücke nach Positiv- und Negativfällen"
+          "eine Produktänderung wird versucht, obwohl nach Positiv- und Negativfällen keine reproduzierbare Vertragslücke vorliegt"
         ]
       },
       "evidence_scope": {

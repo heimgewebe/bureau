@@ -812,7 +812,6 @@ def test_real_t004_registry_contract_has_explicit_bounded_relationships():
     )
     assert t004.blocking_child_task_ids == (
         "REPOGROUND-LEGACY-RECONCILIATION-V1-T010",
-        "REPOGROUND-LEGACY-RECONCILIATION-V1-T012",
         "REPOGROUND-LEGACY-RECONCILIATION-V1-T014",
     )
 

@@ -302,8 +302,13 @@ def parser() -> argparse.ArgumentParser:
     claim_intent.add_argument("--resource")
     claim_intent.add_argument("--task-id")
     claim_intent.add_argument("--base-dir")
-    claim_intent.add_argument("--approve", action="store_true")
-    claim_intent.add_argument("--approval-source", default="cli claim-intent --approve")
+    claim_approval = claim_intent.add_mutually_exclusive_group()
+    claim_approval.add_argument("--approve", action="store_true")
+    claim_approval.add_argument("--break-glass", action="store_true")
+    claim_intent.add_argument(
+        "--approval-source",
+        default="cli claim-intent explicit approval",
+    )
     claim_commit = sub.add_parser("claim-commit")
     claim_commit.add_argument("--intent", required=True)
     claim_commit.add_argument("--lease-binding")
@@ -1146,6 +1151,7 @@ def main(argv: list[str] | None = None) -> int:
                 resource=args.resource,
                 base_dir=Path(args.base_dir).expanduser() if args.base_dir else None,
                 approved=args.approve,
+                break_glass=args.break_glass,
                 approval_source=args.approval_source,
             )
         elif args.command == "claim-commit":

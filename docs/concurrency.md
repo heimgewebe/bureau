@@ -90,3 +90,49 @@ run, intent digest and remaining lifetime before writing a Bureau run. A task th
 broad repository resource remains `scope-required`; extra path declarations never narrow that broad
 authority implicitly. A projection or a disjointness proof does not authorize PR mutation, merge,
 deployment, work outside the declared paths or automatic repair of task bindings.
+
+## Close-path compare-and-swap
+
+`complete` is a compare-and-swap against the authoritative run row, not an event append. Every
+expectation the close depends on — receipt absence, run state and the claim baseline of task and
+plan digest — is read inside the same immediate transaction that writes the receipt, the
+`verified` task status, the run transition and the reservation release. The close path therefore
+holds no unsynchronised pre-reads: a run that was failed, cancelled or drifted between the caller's
+decision and the write loses instead of overwriting the newer truth.
+
+`BEGIN IMMEDIATE` orders SQLite writers and cannot order writes to the Git-backed registry, so the
+baseline half of that expectation is bound to the documents rather than to the `Registry` snapshot
+the caller loaded earlier. On a first close, and still inside the transaction, the last pre-effect
+check resolves exactly one readable, schema-valid task document and initiative document and derives
+their task and plan digests. A close proceeds only when those fresh digests equal the run's claim
+baseline. The in-memory snapshot is not another gate: once the fresh documents match the frozen run
+baseline, an older snapshot adds no safety and could only reject a valid close.
+
+After all SQLite writes and the authoritative run-row readback, the same two documents are resolved
+and read again as the final guard before commit. A stale revision already present before close is
+therefore detected by the first read; a semantic revision change between the two in-transaction reads
+is detected by the second and rolls the complete SQLite effect back. Byte-only rewrites with the same
+semantic revision remain valid. `state` and `metadata.verification` stay outside the frozen task
+revision, so a closure stamp does not invalidate its own binding.
+
+This is not cross-domain atomicity. There is no cooperative registry writer lock, and a
+non-cooperating writer that lands after the second document read but before the SQLite commit is not
+detected by this path. The two in-transaction reads narrow the remaining unordered interval to
+exactly that residual window; they do not eliminate it or exclude registry writers.
+
+A lost close raises a typed `RunStateConflict` with a stable machine-readable `code`
+(`unknown-run`, `run-not-active`, `stale-baseline`, `registry-revision-unavailable`,
+`close-revision-drift`, `close-readback-mismatch`), the observed and expected state, and
+`effect_applied: false`. Missing, unreadable, schema-invalid or ambiguous authoritative documents
+use `registry-revision-unavailable` instead of falling back to the snapshot. The transaction rolls
+back, so a rejection changes no SQLite truth and establishes neither safe retry without readback nor
+task verification. The CLI emits the same object and exits 2.
+
+The run identifier is the idempotency key. A repeated close of an already-closed run returns the
+stored receipt with `idempotent: true`. Its single `BEGIN IMMEDIATE` transaction performs only the
+database readback; after that transaction has ended, Bureau rewrites the receipt file and derives the
+registry-backed `current` flag. A crash between the committed effect and the materialised receipt
+therefore replays to the identical digest rather than producing a second effect without holding the
+SQLite writer reservation across filesystem work. A revision that disagrees with the stored receipt,
+or that cannot be read at all, reports `current: false`. Concurrent closes of one run produce exactly
+one receipt, one `run-completed` event and explicit idempotent losers.

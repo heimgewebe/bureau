@@ -15,6 +15,7 @@ from .core import (
     Dispatcher,
     NoEligibleTask,
     Registry,
+    RunStateConflict,
     StateError,
     StateStore,
     cleanup_workspace,
@@ -1259,6 +1260,9 @@ def main(argv: list[str] | None = None) -> int:
         emit({"status": "no-eligible-task", "detail": str(exc)}, args.json)
         return 3
     except OperatorIntakeError as exc:
+        emit(exc.payload(), args.json)
+        return 2
+    except RunStateConflict as exc:
         emit(exc.payload(), args.json)
         return 2
     except StateError as exc:

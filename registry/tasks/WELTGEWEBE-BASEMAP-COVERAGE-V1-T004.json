@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "id": "WELTGEWEBE-BASEMAP-COVERAGE-V1-T004",
+  "initiative": "WELTGEWEBE-BASEMAP-COVERAGE-V1",
+  "title": "Deutschland-PMTiles real bauen und revisionsgebunden freigeben",
+  "state": "planned",
+  "goal": "Einen aktuellen und messbaren Deutschland-PMTiles-Build auf dem Heim-PC in isoliertem Staging herstellen, tief validieren und über den echten Caddy-Pfad sowie Desktop und iPad beweisen. Eine spätere öffentliche Freigabe bleibt ein getrennter Operatorentscheid und ist nicht Teil dieses Tasks.",
+  "depends_on": [
+    "WELTGEWEBE-BASEMAP-COVERAGE-V1-T001",
+    "WELTGEWEBE-BASEMAP-COVERAGE-V1-T002",
+    "WELTGEWEBE-BASEMAP-COVERAGE-V1-T003"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 92
+  },
+  "claims": [
+    {
+      "resource": "repo.weltgewebe",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "preferred_host": "heim-pc",
+    "working_repository": "/home/alex/repos/weltgewebe",
+    "grabowski_resources": [
+      "path:/home/alex/repos/weltgewebe/scripts/basemap/build-germany-pmtiles.sh",
+      "path:/home/alex/repos/weltgewebe/scripts/basemap/prepare-germany-rollout.sh",
+      "path:/home/alex/repos/weltgewebe/apps/web/scripts/validate-pmtiles.mjs",
+      "path:/home/alex/repos/weltgewebe/map-style/style-germany.json"
+    ]
+  },
+  "required_capabilities": [
+    "git",
+    "docker",
+    "pmtiles",
+    "maplibre",
+    "playwright",
+    "ipad",
+    "http-range",
+    "observability"
+  ],
+  "acceptance": [
+    {
+      "id": "source-bound",
+      "assertion": "PR #1655 ist auf einem exakt benannten Merge-Commit integriert und der verwendete Checkout ist sauber und aktuell.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "fresh-provenance",
+      "assertion": "Ein höchstens 45 Tage alter Deutschland-Snapshot ist durch nicht leeren Dateinamen, HTTPS-URL, Datum und SHA256 vollständig gebunden.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "isolated-immutable-build",
+      "assertion": "Der Realbuild läuft außerhalb des veröffentlichten Basemap-Verzeichnisses unter einer neuen unveränderlichen Version; stabile Aliase ändern sich vor erfolgreicher Validierung nicht.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "resource-measurement",
+      "assertion": "Dauer, Planetiler-Digest, Quell- und Artefakthash, Größe sowie Spitzenwerte für CPU, RAM und Plattenspeicher sind maschinenlesbar dokumentiert.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "deep-validation",
+      "assertion": "Die Tiefenvalidierung endet für genau das aktuelle Artefakt mit PROVEN und deckt benannte Kacheln in Nord, Süd, Ost, West und Mitte ab.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "caddy-proof",
+      "assertion": "Ein nichtöffentlicher beziehungsweise staginggebundener Caddy-Readback belegt HTTP 200/206, application/octet-stream, Accept-Ranges, Content-Range, PMTiles-Signatur, Größe und Hash.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "device-proof",
+      "assertion": "Desktop und iPad zeigen die Germany-Basemap samt Weltgewebe-Overlays in fünf repräsentativen Regionen ohne externe Kartenrequests oder leere sichtbare Layer.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "closeout",
+      "assertion": "Der Abschluss trennt Repository-, Build-, Staging- und Gerätewahrheit. Eine öffentliche Aktivierung wird nur als separater Folgetask registriert, sofern alle Belege bestehen.",
+      "evidence_type": "object"
+    }
+  ],
+  "metadata": {
+    "source": {
+      "kind": "implementation_followup",
+      "repository": "heimgewebe/weltgewebe",
+      "pull_request": 1655,
+      "reviewed_head": "51d77968b686a2c75dd7fec93293fc1e84f52ed8",
+      "observed_at": "2026-08-01T14:02:00+02:00"
+    },
+    "does_not_establish": [
+      "dass PR #1655 bereits gemergt ist",
+      "dass statische CI einen Realbuild ersetzt",
+      "dass Strukturprüfung kartografische Vollständigkeit beweist",
+      "öffentliche Produktionsfreigabe"
+    ]
+  },
+  "rollback": {
+    "strategy": "Keine öffentlichen Aliase oder Frontendvarianten ändern. Fehlgeschlagene Staging-Artefakte nicht veröffentlichen und nur nach revisionsgebundener Diagnose entfernen."
+  }
+}

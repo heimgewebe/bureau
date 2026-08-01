@@ -3,7 +3,7 @@
   "id": "OPERATOR-INTEGRATION-LOOP-V1-T002",
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Add WGX quick and full validation receipts",
-  "state": "ready",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 380
@@ -14,8 +14,7 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/wgx",
     "grabowski_resources": [
-      "repo:/home/alex/repos/wgx",
-      "repo:/home/alex/repos/grabowski"
+      "repo:/home/alex/repos/wgx"
     ]
   },
   "claims": [
@@ -23,11 +22,6 @@
       "resource": "repo.wgx",
       "mode": "write",
       "isolation": "worktree"
-    },
-    {
-      "resource": "repo.grabowski",
-      "mode": "read",
-      "isolation": "none"
     }
   ],
   "required_capabilities": [
@@ -128,6 +122,248 @@
         "approval_contract_required": true,
         "approval_contract_observed_reason": "explicit approval missing before reviewed readiness merge"
       }
+    },
+    "claim_scope_correction": {
+      "schema_version": 1,
+      "corrected_at": "2026-08-01T20:19:44Z",
+      "failed_claim_run": "BUR-RUN-20260801T201330Z-12d573f49c",
+      "observed_failure": "lease-acquisition-failed before claim commit",
+      "removed_claim": {
+        "resource": "repo.grabowski",
+        "mode": "read",
+        "isolation": "none"
+      },
+      "removed_grabowski_resource": "repo:/home/alex/repos/grabowski",
+      "reason": "The task implementation and acceptance surface are entirely in WGX. The broad read claim on the Grabowski repository was an unnecessary coordination dependency and collided with unrelated active Grabowski branch leases. Broad repository leases are intentionally not bypassable by a non-conflict proof.",
+      "remaining_effect_scope": {
+        "repository": "/home/alex/repos/wgx",
+        "mode": "write",
+        "isolation": "worktree"
+      },
+      "does_not_establish": [
+        "permission to alter or clean existing Grabowski worktrees",
+        "absence of future WGX conflicts",
+        "automatic task verification",
+        "successful claim until current-main readback"
+      ]
+    },
+    "verified_at": "2026-08-01T21:08:04Z",
+    "outcome": {
+      "status": "implemented_and_verified",
+      "summary": "WGX PR #654 merged the quick/full validation profiles and stable JSON receipt contract. The current WGX main is the exact merge commit and passed fresh full Bats, shell lint and three-repository fleet-proof validation without product-code changes during closeout.",
+      "changed_product_code_during_closeout": false
+    },
+    "implementation": {
+      "repository": "heimgewebe/wgx",
+      "pull_request": 654,
+      "base_sha": "45611f094cd7c4019c7eda4bd36b6fa862503132",
+      "head_sha": "f924660f86c5d5e3162197692e8cc985e6301e54",
+      "merge_commit": "88304251454a93ee9590e1971457540472681b77",
+      "merged_at": "2026-08-01T15:45:31Z",
+      "changed_files": 20,
+      "additions": 1980,
+      "deletions": 22,
+      "current_main_commit": "88304251454a93ee9590e1971457540472681b77",
+      "feature_and_main_trees_equal": true,
+      "current_main_has_no_later_commit": true
+    },
+    "validation": {
+      "github_pull_request": {
+        "observed_at": "2026-08-01T21:09:38Z",
+        "state": "MERGED",
+        "visible_check_runs": 24,
+        "successful_check_runs": 23,
+        "skipped_check_runs": 1,
+        "failed_or_cancelled_check_runs": 0,
+        "required_workflows": {
+          "CI (smart PR)": "PASS",
+          "Tests (bats on-demand)": "PASS",
+          "shell-docs": "PASS",
+          "security": "PASS",
+          "wgx-guard": "PASS",
+          "wgx-smoke": "PASS",
+          "CLI Docs (consistency)": "PASS",
+          "Operator capability boundaries": "PASS",
+          "ai-context guard": "PASS",
+          "Compat (on-demand matrix)": "PASS"
+        },
+        "observation_job": "grabowski-job-113fd8c695fd",
+        "observation_receipt_sha256": "c3a1d47e9cfdbfad51fab7f275922c8a09a781bde28589249830e098696d2beb"
+      },
+      "fresh_current_main_bats": {
+        "command": "bats -r tests",
+        "tested_commit": "88304251454a93ee9590e1971457540472681b77",
+        "passed": 220,
+        "failed": 0,
+        "grabowski_task_id": "492c8f043d864e3084405992",
+        "terminalization_sha256": "7b27f0483d10b06e243f91313079188e5a2c84e454f2a9b679babebc54ca37de",
+        "outcome_receipt_sha256": "9024220027b994bcb3fe789cf24920785cbb610be9726c4e81c5351ba877e17e"
+      },
+      "fresh_current_main_shell_lint": {
+        "command": "just lint",
+        "tested_commit": "88304251454a93ee9590e1971457540472681b77",
+        "result": "pass",
+        "grabowski_task_id": "8405174375d44288b19bd3dd",
+        "terminalization_sha256": "1f4041a44e9800b842615cf2e61be58d2198c45792fbb11b8a317678a56d901b",
+        "outcome_receipt_sha256": "14307bcf233ba22c4e68f0944c81d459b6fd6316c1a56d156085d9dd1b6c0e12"
+      },
+      "fresh_fleet_proof": {
+        "command": "scripts/validate_fleet_proof.sh /tmp/wgx-t002-fleet-proof-20260801",
+        "tested_wgx_commit": "88304251454a93ee9590e1971457540472681b77",
+        "repositories": [
+          "hausKI",
+          "chronik",
+          "weltgewebe"
+        ],
+        "assertions_per_repository": [
+          "deterministic_discovery",
+          "green_receipt",
+          "red_receipt",
+          "failing_check_reported",
+          "timeout_reported",
+          "ci_only_skipped",
+          "secret_absent_from_receipt"
+        ],
+        "all_assertions_passed": true,
+        "summary_sha256": "621ded42b23c2412d3fc78136487a909f767d3c9acd3fe17a1f89b2c7bfd275f",
+        "grabowski_task_id": "d8894bbe66fa46c28d6652ea",
+        "terminalization_sha256": "3a3aabef6300529a7081db8a8a9d1fc53edebcfcceb1fc76c773a01ef5ccad21",
+        "outcome_receipt_sha256": "e7a1c64eb98666d3046191dab58bd58acc93359cfe6b6e59153448b75104a49c"
+      },
+      "bureau_runtime_identity": {
+        "source_commit": "d76ec55a420eec34f2b5166d4ead090b64d99d3a",
+        "release_id": "d76ec55a420e-src1e78fe9867ad",
+        "manifest_sha256": "0cd00f62b84c9c1b4d2968d47f7604c3d81c23224f5defebe6020e8a94cb5240",
+        "registry_snapshot_tree_sha256": "667a6f25d58b6a1093bcf8903390b8694447d84a573d49c543811a01d12c6324",
+        "registry_valid": true,
+        "sqlite_integrity": "ok",
+        "broad_bureau_scope_findings": []
+      }
+    },
+    "validated_acceptance": {
+      "existing-command-preserved": "PASS: The implementation extends cmd/validate.bash and keeps the existing wgx validate front door; the fresh 220-test suite includes the manifest-only no-profile behavior.",
+      "profiles": "PASS: quick and full profiles, unsupported declarations and CI-only skips are covered by current-main Bats tests and the three-repository fleet proof.",
+      "native-frontdoors": "PASS: profile resolution delegates to declared WGX tasks and repository-native commands; the fleet proof executes real lint, guard, smoke and test front doors in archive snapshots.",
+      "receipt-contract": "PASS: current-main tests cover repository identity, commit, dirty state, invoked checks, durations, result, skipped checks, environment identity, redaction and receipt SHA-256.",
+      "fleet-proof": "PASS: hausKI, chronik and weltgewebe each proved deterministic discovery, green and red receipts, explicit failure, timeout, CI-only skip and secret absence."
+    },
+    "lifecycle_closeout": {
+      "status": "verified",
+      "method": "evidence_bound_direct_closeout_after_fail_closed_pickup",
+      "resolved_at": "2026-08-01T21:08:04Z",
+      "coordinated_claim_committed": false,
+      "pickup_attempts": [
+        {
+          "run_id": "BUR-RUN-20260801T204412Z-6df1ef1ff3",
+          "result": "stopped_before_claim_commit",
+          "reason": "repository scope manifest was incomplete",
+          "effects": "none"
+        },
+        {
+          "run_id": "BUR-RUN-20260801T204640Z-ecf26857ac",
+          "result": "stopped_before_claim_commit",
+          "reason": "broad WGX repository admission blocked on unknown dirty historical worktrees",
+          "blocker_codes": [
+            "dirty-worktree",
+            "worktree-convergence-required"
+          ],
+          "effects": "none"
+        }
+      ],
+      "closeout_basis": "The implementation was already merged before selection. Fresh verification ran in a new detached current-main worktree with narrow path and operation leases, leaving the two unknown dirty historical WGX worktrees untouched.",
+      "changed_product_code": false,
+      "foreign_worktrees_reset_cleaned_or_removed": false,
+      "queue_transition": {
+        "lane": "later",
+        "previous_index": 36,
+        "action": "removed_terminal_task_from_queue",
+        "reason": "verified tasks are terminal and must not remain dispatchable"
+      }
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "github_pull_request_merge",
+          "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T002",
+          "authority": "github",
+          "source_ref": "github-pr:heimgewebe/wgx#654",
+          "repository": "heimgewebe/wgx",
+          "pull_request": 654,
+          "head_sha": "f924660f86c5d5e3162197692e8cc985e6301e54",
+          "merge_commit": "88304251454a93ee9590e1971457540472681b77",
+          "merged_at": "2026-08-01T15:45:31Z",
+          "verdict": "pass"
+        },
+        {
+          "kind": "github_checks",
+          "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T002",
+          "authority": "github.actions",
+          "source_ref": "github-pr:heimgewebe/wgx#654@f924660f86c5d5e3162197692e8cc985e6301e54",
+          "successful": 23,
+          "skipped": 1,
+          "failed_or_cancelled": 0,
+          "verdict": "pass"
+        },
+        {
+          "kind": "grabowski_task_receipt",
+          "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T002",
+          "authority": "grabowski.task",
+          "source_ref": "grabowski-task:492c8f043d864e3084405992@88304251454a93ee9590e1971457540472681b77",
+          "run_id": "492c8f043d864e3084405992",
+          "command": "bats -r tests",
+          "tested_commit": "88304251454a93ee9590e1971457540472681b77",
+          "result": "pass",
+          "passed": 220,
+          "failed": 0,
+          "terminalization_sha256": "7b27f0483d10b06e243f91313079188e5a2c84e454f2a9b679babebc54ca37de",
+          "receipt_sha256": "9024220027b994bcb3fe789cf24920785cbb610be9726c4e81c5351ba877e17e"
+        },
+        {
+          "kind": "fleet_proof_receipt",
+          "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T002",
+          "authority": "grabowski.task",
+          "source_ref": "grabowski-task:d8894bbe66fa46c28d6652ea@88304251454a93ee9590e1971457540472681b77",
+          "run_id": "d8894bbe66fa46c28d6652ea",
+          "summary_sha256": "621ded42b23c2412d3fc78136487a909f767d3c9acd3fe17a1f89b2c7bfd275f",
+          "receipt_sha256": "e7a1c64eb98666d3046191dab58bd58acc93359cfe6b6e59153448b75104a49c",
+          "verdict": "pass"
+        },
+        {
+          "kind": "grabowski_task_receipt",
+          "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T002",
+          "authority": "grabowski.task",
+          "source_ref": "grabowski-task:8405174375d44288b19bd3dd@88304251454a93ee9590e1971457540472681b77",
+          "run_id": "8405174375d44288b19bd3dd",
+          "command": "just lint",
+          "tested_commit": "88304251454a93ee9590e1971457540472681b77",
+          "result": "pass",
+          "terminalization_sha256": "1f4041a44e9800b842615cf2e61be58d2198c45792fbb11b8a317678a56d901b",
+          "receipt_sha256": "14307bcf233ba22c4e68f0944c81d459b6fd6316c1a56d156085d9dd1b6c0e12"
+        },
+        {
+          "kind": "runtime_identity",
+          "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T002",
+          "authority": "bureau.runtime",
+          "source_ref": "bureau-runtime:d76ec55a420eec34f2b5166d4ead090b64d99d3a",
+          "source_commit": "d76ec55a420eec34f2b5166d4ead090b64d99d3a",
+          "manifest_sha256": "0cd00f62b84c9c1b4d2968d47f7604c3d81c23224f5defebe6020e8a94cb5240",
+          "registry_snapshot_tree_sha256": "667a6f25d58b6a1093bcf8903390b8694447d84a573d49c543811a01d12c6324",
+          "verdict": "pass"
+        }
+      ]
+    },
+    "closeout_does_not_establish": [
+      "successful coordinated Bureau claim for T002",
+      "permission to reset, clean or remove historical WGX worktrees",
+      "production deployment of WGX to unrelated consumers",
+      "that a quick profile alone establishes merge readiness",
+      "future CI or runtime correctness"
+    ],
+    "verification": {
+      "task_sha256": "33dbcd11df88a37102c5d65a7dd701ed6924479f3552dcb1834b4c92f246aa59",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2"
     }
   },
   "depends_on": [

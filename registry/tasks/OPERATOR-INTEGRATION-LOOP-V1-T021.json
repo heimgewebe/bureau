@@ -33,7 +33,7 @@
     "approval": {
       "required_level": "operator",
       "action_class": "repository_mutation",
-      "note": "Nur die elf exakt gebundenen Mitschreiber-Dateien bearbeiten. Das fehlerhafte Embed-Fixture muss an das aktuelle Schema angepasst werden; der fremde Review-Audit-Worktree bleibt unangetastet; Alt-PRs bleiben geschlossen; Merge ausschließlich nach frischem revisionsgebundenem Review- und CI-Readback."
+      "note": "Nur die 17 exakt gebundenen Mitschreiber-Pfade bearbeiten. Neben PyO3 und Workflow-Pins müssen Fixture, drei reale Embed-Producer, ein Regressionstest und zwei direkt widersprechende Vertragsdokumente an das aktuelle Schema angepasst werden. Der fremde Review-Audit-Worktree bleibt unangetastet; Alt-PRs bleiben geschlossen; Merge ausschließlich nach frischem revisionsgebundenem Review- und CI-Readback."
     },
     "grabowski_resources": [
       "path:/home/alex/repos/mitschreiber/Cargo.toml",
@@ -41,6 +41,12 @@
       "path:/home/alex/repos/mitschreiber/.github/workflows/ci.yml",
       "path:/home/alex/repos/mitschreiber/.github/workflows/validate.yml",
       "path:/home/alex/repos/mitschreiber/fixtures/mitschreiber/embed.demo.jsonl",
+      "path:/home/alex/repos/mitschreiber/mitschreiber/embedding.py",
+      "path:/home/alex/repos/mitschreiber/mitschreiber/embed.py",
+      "path:/home/alex/repos/mitschreiber/mitschreiber/session.py",
+      "path:/home/alex/repos/mitschreiber/tests/test_embed_contract.py",
+      "path:/home/alex/repos/mitschreiber/docs/contracts.md",
+      "path:/home/alex/repos/mitschreiber/docs/privacy.md",
       "path:/home/alex/repos/mitschreiber/crates/core/Cargo.toml",
       "path:/home/alex/repos/mitschreiber/crates/core/src/lib.rs",
       "path:/home/alex/repos/mitschreiber/crates/mitschreiber-sampler/Cargo.toml",

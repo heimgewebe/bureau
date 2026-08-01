@@ -66,7 +66,7 @@
   "depends_on": [],
   "execution": {
     "approval": {
-      "action_class": "host_runtime_mutation",
+      "action_class": "runtime_mutation",
       "note": "Der Nutzer hat den atomaren Reposkop-2.0-/Grabowski-v2-Cutover am 2026-08-01 um 17:31 Europe/Berlin ausdrücklich mit @grabowski umsetzen beauftragt. Die Freigabe gilt nur für die exakt gemergten Produzenten- und Verbraucherrevisionen, deren gebundene Runtimeinstallation und die beschriebenen Positiv-, Negativ-, Gesundheits- und Rollbackprüfungen; fremde offene Pull Requests, Dirty-States, Prozesse und Leases bleiben ausgeschlossen.",
       "required_level": "operator"
     },

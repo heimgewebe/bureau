@@ -1,0 +1,136 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Repositorytests und ein begrenzter isolierter Prozessversuch belegen, welches Signal beziehungsweise welcher explizite Stopmechanismus die eingesetzte FluidSynth-Version kontrolliert beendet; die Lösung wird nicht allein aus Dokumentation, Vermutung oder einem verkürzten Timeout abgeleitet.",
+      "evidence_type": "object",
+      "id": "reproduced-signal-contract"
+    },
+    {
+      "assertion": "Ein bloßes Absenken von TimeoutStopSec ohne nachgewiesenen geordneten Beendigungspfad wird abgelehnt. Der Normalpfad beendet den Prozess innerhalb von höchstens 15 Sekunden ohne SIGKILL; ein absichtlich nicht reagierender Fixture-Prozess bleibt dennoch hart begrenzt und wird als Fehler ausgewiesen.",
+      "evidence_type": "object",
+      "id": "no-timeout-only-fix"
+    },
+    {
+      "assertion": "Type=notify, NotifyAccess=main, der shell-freie gebundene ExecStart, ConditionUser=alex, Journalrate-Limits, Paket-Main-Unit-Prüfung und bestehende Autostartgrenzen bleiben erhalten; MOTU-, PipeWire-, MIDI- und Standard-Sink-/Source-Konfiguration werden nicht verändert.",
+      "evidence_type": "object",
+      "id": "preserve-existing-audio-contract"
+    },
+    {
+      "assertion": "Der bestehende heim-pc-Installer plant, installiert, liest exakt zurück und rollt den neuen Stopvertrag transaktional zurück. Fremde Drop-ins, unerwartete Preimages, fehlende Main-Unit oder unklare Mutation scheitern vor einem Erfolgsreceipt geschlossen.",
+      "evidence_type": "object",
+      "id": "transactional-installer-and-rollback"
+    },
+    {
+      "assertion": "Tests decken normalen Stop, Restart, wiederholte Anwendung, fehlende oder falsche FluidSynth-Main-Unit, konkurrierende Drop-ins, Signalfehler, Timeout-/Kill-Fallback, Prozessreste und unveränderte Audio-Routing-Metadaten ab.",
+      "evidence_type": "object",
+      "id": "shutdown-regression-matrix"
+    },
+    {
+      "assertion": "Implementierung, vollständiger Diff, Self-Review, relevante Fremdreviews, lokale Volltests und sämtliche Pflichtchecks sind an denselben veröffentlichten Head gebunden; offene materielle Reviewthreads oder rote Checks verhindern den Merge.",
+      "evidence_type": "object",
+      "id": "exact-head-review-and-ci"
+    },
+    {
+      "assertion": "Nach Merge erfolgt ein frischer recovery-gebundener Plan und Apply auf heim-pc. Ein kontrollierter Restart belegt binnen höchstens 15 Sekunden active/running, NRestarts=0, keinen SIGKILL, keine verbleibenden Altprozesse, begrenzte Journalausgabe sowie identische PipeWire-Defaults und Routing-Metadaten vor und nach dem Vorgang.",
+      "evidence_type": "object",
+      "id": "staged-live-readback"
+    },
+    {
+      "assertion": "Ein anschließendes Beobachtungsfenster bestätigt, dass weder Restart-Schleife noch Journalsturm, neue Audiofehler oder unerwartete Dienstdeaktivierung auftreten. Ein unbekannter Ausgang wird nicht blind wiederholt.",
+      "evidence_type": "object",
+      "id": "post-observation-window"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.heim-pc"
+    },
+    {
+      "isolation": "none",
+      "mode": "write",
+      "resource": "host.heim-pc"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "runtime_mutation",
+      "note": "Repositoryanalyse, Tests und PR-Arbeit gehen jeder Hostwirkung voraus. Eine reale Installation oder ein FluidSynth-Neustart ist erst am gemergten exakten Commit mit frischem Recovery-, Prozess-, Lease-, Audio-Routing- und Rollback-Preflight zulässig.",
+      "required_level": "break_glass"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/heim-pc",
+      "host:heim-pc"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/heim-pc"
+  },
+  "goal": "Die am 1. August 2026 live gemessene 90-Sekunden-Stopblockade von fluidsynth.service ursächlich klären, im heim-pc-Repository mit einem minimalen fail-closed systemd-Vertrag beheben und anschließend revisionsgebunden so validieren, dass normale Stop- und Restart-Vorgänge begrenzt, ohne SIGKILL, ohne Prozessreste, ohne Journalsturm und ohne Veränderung des Audio-Routings enden.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T018",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "dass SIGINT, SIGTERM, ExecStop oder ein anderer Mechanismus bereits als richtig bewiesen ist",
+      "dass ein Repositorymerge die Hostwirkung autorisiert",
+      "dass ein einzelner erfolgreicher Restart dauerhafte Driftfreiheit beweist",
+      "dass Audio-Routing ohne Vorher-Nachher-Readback unverändert blieb"
+    ],
+    "measured_failure": {
+      "new_start": "2026-08-01T15:00:50+02:00",
+      "post_nrestarts": 0,
+      "post_state": "active/running",
+      "source_sha256": "f7c0f143d55526a52d4b5a2ac3341b26a422cdc3d83c65a94b47f275df49f955",
+      "stop_started": "2026-08-01T14:59:20+02:00",
+      "terminal_signal": "SIGKILL",
+      "timeout_seconds": 90,
+      "unit": "fluidsynth.service"
+    },
+    "registered_at": "2026-08-01",
+    "source": "Live-Restart nach heim-pc PR #79",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-5513527983fd6b9f31d224c7",
+      "event_id": 1967,
+      "event_created_at": "2026-08-01T15:17:33.863413Z",
+      "request_sha256": "8ae7f10ed22b6ae825fb1343684d9e788019470525eed69e0c826f96e32809d0",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-runtime-receipt",
+        "locator": "heim-pc:journalctl:user-unit=fluidsynth.service:2026-08-01T14:59:20+02:00..2026-08-01T15:00:50+02:00",
+        "observed_at": "2026-08-01T15:00:50+02:00",
+        "sha256": "f7c0f143d55526a52d4b5a2ac3341b26a422cdc3d83c65a94b47f275df49f955"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 18
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing",
+    "systemd",
+    "runtime-observability",
+    "rollback",
+    "audio"
+  ],
+  "rollback": {
+    "strategy": "Repositorydiff und PR zurücknehmen. Für eine bereits ausgerollte Änderung den installergebundenen Preimage- und Receipt-Pfad verwenden, user-systemd neu laden, nur fluidsynth.service kontrolliert neu starten und anschließend Unit-, Prozess-, Journal- und PipeWire-Readback gegen das exakte Vorabbild prüfen."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "FluidSynth-Stop-Semantik begrenzen und live belegen"
+}

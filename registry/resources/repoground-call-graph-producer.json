@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "component.repoground.call-graph-producer",
+  "type": "component",
+  "parent": "repo.repoground",
+  "path": "/home/alex/repos/repoground/.repoground-scopes/call-graph-producer",
+  "grabowski_key": "component:repoground-call-graph-producer"
+}

@@ -1,0 +1,103 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The three controller test suites use an explicit temporary source root and no longer depend on repository-local artifacts while still asserting the canonical artifacts/<name>.json default path shape.",
+      "evidence_type": "object",
+      "id": "isolated-default-path-tests"
+    },
+    {
+      "assertion": "Calling each controller without options continues to resolve artifacts and fixtures relative to process.cwd(), with unchanged environment override, strict-mode and fixture-fallback behavior.",
+      "evidence_type": "object",
+      "id": "production-defaults-unchanged"
+    },
+    {
+      "assertion": "Focused and full tests pass both in the normal checkout containing runtime artifacts and in an isolated worktree/root without those artifacts.",
+      "evidence_type": "object",
+      "id": "dual-environment-regression"
+    },
+    {
+      "assertion": "The change adds no network dependency, mutation authority, artifact creation or controller state; it only selects read roots before existing read-only loading and validation.",
+      "evidence_type": "object",
+      "id": "read-only-scope"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.leitstand"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "path:/home/alex/repos/leitstand/src/controllers/bureau.ts",
+      "path:/home/alex/repos/leitstand/src/controllers/checkouts.ts",
+      "path:/home/alex/repos/leitstand/src/controllers/storageHealth.ts",
+      "path:/home/alex/repos/leitstand/tests/controllers/bureau.test.ts",
+      "path:/home/alex/repos/leitstand/tests/controllers/checkouts.test.ts",
+      "path:/home/alex/repos/leitstand/tests/controllers/storageHealth.test.ts"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/leitstand"
+  },
+  "goal": "Make Bureau, checkout and storage-health controller tests deterministic when repository-local runtime artifacts exist by introducing an explicit test-only source root boundary while preserving all production default paths, fallback rules and read-only semantics.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T074",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "runtime artifact freshness",
+      "production deployment",
+      "absence of unrelated future test pollution"
+    ],
+    "implementation_approval": {
+      "approved": true,
+      "instruction": "@grabowski umsetzen",
+      "reference": "conversation:2026-08-01T08:08+02:00",
+      "schema_version": 1,
+      "scope": [
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T074"
+      ],
+      "source": "user"
+    },
+    "source_candidate": "candidate-dd384310e6f990c6e38d2f39",
+    "source_event_id": 1910,
+    "source_evidence_sha256": "694f629c27b1c54f8abf577e5c5418cefa5471347c301e8886af273eb0ce5072",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-dd384310e6f990c6e38d2f39",
+      "event_id": 1910,
+      "event_created_at": "2026-08-01T01:46:08.731633Z",
+      "request_sha256": "6b85f406fa56c06543f517f3356dabd118751334bb051fdee59c1c26b4b71edd",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "deterministic-test-failure",
+        "locator": "heimgewebe/leitstand@362dda6ac161bf275a38682d18998fc284eebe52:pnpm-test:2026-08-01T01:38:15Z",
+        "observed_at": "2026-08-01T01:38:15Z",
+        "sha256": "694f629c27b1c54f8abf577e5c5418cefa5471347c301e8886af273eb0ce5072"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 14
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "typescript",
+    "testing",
+    "github",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Leitstand-Controller-Tests von Runtime-Artefakten isolieren"
+}

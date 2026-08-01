@@ -1,0 +1,107 @@
+{
+  "acceptance": [
+    {
+      "assertion": "A candidate_task supersession without operator_context inherits an exact canonical copy of the predecessor operator_intake object, so desired_outcome and digest-bound source identity remain present in the current projection.",
+      "evidence_type": "object",
+      "id": "status-supersession-inherits-context"
+    },
+    {
+      "assertion": "A supersession that supplies a new operator_context keeps that new context unchanged rather than merging or replacing it with predecessor evidence; candidate_record refinement behavior remains intact.",
+      "evidence_type": "object",
+      "id": "explicit-refinement-remains-authoritative"
+    },
+    {
+      "assertion": "After a status-only observed-to-promoted transition, operator-candidate-assess reports the promoted current event with no missing desired_outcome or source fields and preserves the prior source freshness, observed_at and SHA-256.",
+      "evidence_type": "object",
+      "id": "assessment-remains-complete"
+    },
+    {
+      "assertion": "Candidates whose predecessor has no valid operator_intake object remain without one; the repair does not fabricate source evidence or desired outcomes for legacy records.",
+      "evidence_type": "object",
+      "id": "legacy-absence-not-fabricated"
+    },
+    {
+      "assertion": "Focused Live Register and operator-intake tests plus the complete Bureau test and validation suite pass on the exact reviewed revision.",
+      "evidence_type": "object",
+      "id": "regression-validation"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/live_register.py",
+      "path:/home/alex/repos/bureau/tests/test_live_register.py",
+      "path:/home/alex/repos/bureau/tests/test_operator_intake.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Prevent status-only candidate_task supersessions from degrading the current candidate projection by deterministically inheriting the predecessor's operator_intake context when no replacement context is supplied, while preserving explicit refinement contexts and all existing identity, catalog and append-only semantics.",
+  "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T075",
+  "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "candidate source correctness beyond inherited evidence",
+      "registry task readiness",
+      "queue mutation",
+      "automatic repair of historical malformed events"
+    ],
+    "implementation_approval": {
+      "approved": true,
+      "instruction": "@grabowski umsetzen",
+      "reference": "conversation:2026-08-01T09:36+02:00",
+      "schema_version": 1,
+      "scope": [
+        "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T075"
+      ],
+      "source": "user"
+    },
+    "source_candidate": "candidate-c27b8fe006ea71ee48e0deda",
+    "source_event_id": 1936,
+    "source_evidence_sha256": "dd950a404fdcb151fa7d8268d3107ca0efa3202420b33e97a25fbfcd0aa19035",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c27b8fe006ea71ee48e0deda",
+      "event_id": 1936,
+      "event_created_at": "2026-08-01T06:58:07.487268Z",
+      "request_sha256": "c7a75c0ed2c96e25eb1d01db00e9e9b009053d6ff9fe1794637d9995dc025c67",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "runtime-readback",
+        "locator": "bureau-live-register:candidate-dd384310e6f990c6e38d2f39:event-1910-to-1935",
+        "observed_at": "2026-08-01T06:57:00Z",
+        "sha256": "dd950a404fdcb151fa7d8268d3107ca0efa3202420b33e97a25fbfcd0aa19035"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 13
+  },
+  "required_capabilities": [
+    "repository",
+    "shell",
+    "python",
+    "testing",
+    "github",
+    "grabowski",
+    "bureau"
+  ],
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Live-Register-Supersession bewahrt Candidate-Evidenz"
+}

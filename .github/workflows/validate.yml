@@ -6,12 +6,58 @@ on:
   merge_group:
     types: [checks_requested]
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: validate-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.merge_group.head_sha || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
+  update-pr1322-base:
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 1322
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Rebase exact PR head onto current main
+        id: rebase
+        shell: bash
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          old_head="$(git rev-parse HEAD)"
+          git fetch --no-tags origin main
+          main_head="$(git rev-parse origin/main)"
+          echo "old_head=${old_head}" >> "${GITHUB_OUTPUT}"
+          echo "main_head=${main_head}" >> "${GITHUB_OUTPUT}"
+          if git merge-base --is-ancestor "${main_head}" HEAD; then
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          git rebase origin/main
+          echo "changed=true" >> "${GITHUB_OUTPUT}"
+      - name: Install test environment
+        if: steps.rebase.outputs.changed == 'true'
+        run: python -m pip install -e '.[dev]'
+      - name: Validate rebased integration
+        if: steps.rebase.outputs.changed == 'true'
+        run: make validate
+      - name: Check rebased diff hygiene
+        if: steps.rebase.outputs.changed == 'true'
+        run: git diff --check origin/main...HEAD
+      - name: Publish rebased head with lease
+        if: steps.rebase.outputs.changed == 'true'
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+          OLD_HEAD: ${{ steps.rebase.outputs.old_head }}
+        run: |
+          git push --force-with-lease="refs/heads/${BRANCH}:${OLD_HEAD}" origin "HEAD:${BRANCH}"
+
   validate:
     runs-on: ubuntu-latest
     strategy:

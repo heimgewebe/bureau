@@ -1,0 +1,124 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der beobachtete Fehler wird revisionsgebunden reproduziert oder durch Primärquellen eindeutig erklärt: pip-tools 7.6.0 mit einer implizit aufgelösten pip-26.x-Version scheitert vor der Dependency-Auflösung an einer internen pip-API. Die Gegenprobe mit einer kompatiblen Umgebung wird getrennt belegt.",
+      "evidence_type": "object",
+      "id": "failure-reproduction",
+      "verifier": "isolierter Python-3.12-Generatorlauf und Regressionstest"
+    },
+    {
+      "assertion": "RepoGround besitzt genau einen dokumentierten unterstützten Lockgeneratorvertrag, der Python, pip und pip-tools beziehungsweise einen kompatiblen Ersatz explizit bindet. Ein implizites latest-pip ist weder in CI noch in der Entwickleranleitung zulässig.",
+      "evidence_type": "object",
+      "id": "supported-generator-contract",
+      "verifier": "Toolchain-Entscheid und dokumentierter kanonischer Aufruf"
+    },
+    {
+      "assertion": "Ein automatisierter Check erkennt eine nicht unterstützte Generatorumgebung vor dem Umschreiben der Lockdateien, meldet die beobachteten und erwarteten Toolversionen verständlich und hinterlässt bei Fehlern keinen Teil-Diff.",
+      "evidence_type": "object",
+      "id": "fail-fast-environment-check",
+      "verifier": "positive und negative Vertragstests"
+    },
+    {
+      "assertion": "Die Dev- und Browser-Hash-Lockdateien werden aus den kanonischen Inputs zweimal erzeugt und sind byte- oder diffgleich. Ohne separat genehmigtes Dependency-Update ändern sich weder Paketmenge noch Paketversionen.",
+      "evidence_type": "object",
+      "id": "lock-reproducibility",
+      "verifier": "zweifache Erzeugung und Paketvergleich"
+    },
+    {
+      "assertion": "CI prüft den Generatorvertrag und die diff-freie Neuerzeugung; Release- und Einstiegshilfe nennen denselben kanonischen Befehl und dieselben Versionsgrenzen.",
+      "evidence_type": "object",
+      "id": "ci-and-documentation",
+      "verifier": "CI-Readback und Dokumentlinkprüfung"
+    },
+    {
+      "assertion": "Ruff, relevante vollständige RepoGround-Tests, Lock-Installation mit --require-hashes, git diff --check, revisionsgebundenes Review und alle GitHub-Pflichtchecks sind auf dem exakten PR-Head grün; erst der gemergte Readback gilt als Abschluss.",
+      "evidence_type": "object",
+      "id": "quality-and-delivery",
+      "verifier": "Ruff, vollständige Tests, Review, GitHub-CI und Merge-Readback"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.repoground.test-tooling"
+    }
+  ],
+  "depends_on": [
+    "REPOGROUND-LEGACY-RECONCILIATION-V1-T022"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Aufgabe betrifft ausschließlich die Test- und Release-Toolchain. Vor Änderungen sind die aktuelle pip-/pip-tools-Kompatibilität und die vorhandenen Lockgeneratorpfade erneut zu prüfen. Weitere Dependency-Updates, Produktcodeänderungen und eine bloße manuelle Lockdateiänderung sind ausgeschlossen.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Einen expliziten, reproduzierbaren und fail-fast geprüften Lockgeneratorvertrag für RepoGround herstellen, sodass die Hash-Lockdateien unter der unterstützten Python-, pip- und pip-tools-Kombination deterministisch erzeugt werden und ein implizites Upgrade einer inkompatiblen pip-Version nicht bereits vor der Dependency-Auflösung zum Absturz führt. Produktabhängigkeiten und Produktcode bleiben unberührt.",
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T023",
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "metadata": {
+    "design_rule": "Generatorumgebung als Teil des reproduzierbaren Artefaktvertrags behandeln; Versionen vor Seiteneffekt prüfen; keine Produktabhängigkeiten als Nebenwirkung aktualisieren.",
+    "does_not_establish": [
+      "abschließende Root Cause jenseits der beobachteten pip-API-Inkompatibilität",
+      "Berechtigung zu Dependency-Updates",
+      "sofortige Queueaufnahme oder Readiness",
+      "Merge- oder Deployment-Autorität",
+      "dass pip 25.3 dauerhaft die beste Endlösung ist"
+    ],
+    "observed_evidence": {
+      "implicit_pip": "26.2",
+      "implicit_result": "pip-compile import/API failure before dependency resolution",
+      "pip_tools": "7.6.0",
+      "python": "3.12",
+      "working_pip": "25.3",
+      "working_result": "both hash lockfiles generated reproducibly; second generation produced no git diff"
+    },
+    "source_pull_request": "heimgewebe/repoground#1141",
+    "source_run": "BUR-RUN-20260801T112412Z-52e9d6773e",
+    "source_task": "REPOGROUND-LEGACY-RECONCILIATION-V1-T022",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-65e601b0ef82fbd88412a4a9",
+      "event_id": 1956,
+      "event_created_at": "2026-08-01T12:22:56.836734Z",
+      "request_sha256": "e316e878591d89135b2129ae7692f3d42ef9ad631d35abb23d90a28141da71f8",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "test_run",
+        "locator": "bureau:REPOGROUND-LEGACY-RECONCILIATION-V1-T022; run:BUR-RUN-20260801T112412Z-52e9d6773e; command:uvx --python 3.12 --from pip-tools==7.6.0 pip-compile; observed:pip 26.2 incompatible; working:pip 25.3",
+        "observed_at": "2026-08-01T11:37:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 260
+  },
+  "required_capabilities": [
+    "python",
+    "dependency-management",
+    "testing",
+    "continuous-integration",
+    "documentation",
+    "github"
+  ],
+  "rollback": {
+    "strategy": "Den Generatorvertrag, den Umgebungscheck und zugehörige Dokumentations- oder CI-Änderungen vollständig revertieren. Die bestehenden, mit T022 verifizierten Lockdateien und pytest-9.1.1-Pins bleiben unverändert; bis zu einem korrigierten Ersatz muss die dokumentierte kompatible Generatorumgebung weiter explizit verwendet werden."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "RepoGround-Lockgenerator gegen pip-API-Drift härten"
+}

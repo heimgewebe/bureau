@@ -9,6 +9,10 @@
       "id": "runtime-boundary"
     },
     {
+      "id": "browser-version-contract",
+      "assertion": "scripts/ci/check_browser_gate_environment.py erwartet pytest exakt in Version 9.1.1; Playwright-, pytest-asyncio-, pytest-base-url- und pytest-playwright-Pins bleiben unverändert."
+    },
+    {
       "assertion": "Der vollständige RepoGround-Pytest-Lauf unter pytest 9.1.1 sowie relevante Browser- und Contract-Tests sind grün, oder ein externer Blocker wird revisionsgebunden ausgewiesen.",
       "id": "test-compatibility"
     },
@@ -36,10 +40,11 @@
       "required_level": "operator"
     },
     "grabowski_resources": [
-      "path:/home/alex/repos/repoground/requirements-dev.txt",
       "path:/home/alex/repos/repoground/requirements-browser.txt",
+      "path:/home/alex/repos/repoground/requirements-dev.txt",
+      "path:/home/alex/repos/repoground/requirements/repoground-browser.lock.txt",
       "path:/home/alex/repos/repoground/requirements/repoground-dev.lock.txt",
-      "path:/home/alex/repos/repoground/requirements/repoground-browser.lock.txt"
+      "path:/home/alex/repos/repoground/scripts/ci/check_browser_gate_environment.py"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -56,7 +61,7 @@
       "Berechtigung zu weiteren Dependency-Updates"
     ],
     "fallback_reason": "Keine bestehende RepoGround-Aufgabe ist aktuell claimbar: T012 und T021 sind verifiziert, T004 ist durch Unteraufgaben blockiert, T010/T017 benötigen einen nativen Pythonista-Beleg und T014 hängt von T010 ab.",
-    "scope_rule": "In einem frischen isolierten Worktree auf aktuellem main arbeiten; ausschließlich die beiden pytest-Quelldateien und ihre zwei generierten Lockdateien verändern; keine historischen oder fremden RepoGround-Worktrees übernehmen, zurücksetzen oder verändern.",
+    "scope_rule": "In einem frischen isolierten Worktree auf aktuellem main arbeiten; ausschließlich die beiden pytest-Quelldateien, ihre zwei generierten Lockdateien und den Browser-Gate-Versionsvertrag verändern; keine historischen oder fremden RepoGround-Worktrees übernehmen, zurücksetzen oder verändern.",
     "source_issue": "heimgewebe/repoground#1137",
     "source_release": "pypi:pytest:9.1.1",
     "operator_intake": {
@@ -82,15 +87,16 @@
       ]
     },
     "fine_grained_execution_scope": {
-      "reviewed_at": "2026-08-01T13:11:00+02:00",
-      "decision": "component-and-exact-paths",
+      "reviewed_at": "2026-08-01T13:42:00+02:00",
+      "decision": "component-and-five-exact-paths",
       "component_resource": "component.repoground.test-tooling",
       "basis": [
-        "T022 verändert eine begrenzte Testwerkzeugfläche und keine allgemeine RepoGround-Komponente.",
-        "Der kanonische RepoGround-main ist sauber und ohne offenen Pull Request; die breite Repo-Lease wird ausschließlich durch historische fremde, retained und dirty Worktrees blockiert.",
-        "Bureau erzeugt den isolierten Workspace unabhängig von der Lease-Granularität aus execution.working_repository.",
-        "Der erfolgreiche Präzedenzlauf BUR-RUN-20260731T152008Z-287eff15d0 hat denselben Mechanismus mit einer Komponenten-Lease und exakten Pfadleasing belegt.",
-        "Die vier exakten Pfadleasing-Schlüssel decken beide direkten pytest-Pins und die daraus generierten Lockdateien vollständig ab."
+        "T022 verändert eine begrenzte Testwerkzeugfläche und keine Produktlaufzeitkomponente.",
+        "Die vier Dependency-Dateien wurden unter pytest 9.1.1 reproduzierbar erzeugt und ändern als Paketversion ausschließlich pytest 9.0.3 auf 9.1.1.",
+        "Der Volltest des ersten Claims bestand 5265 Tests und deckte als einzigen echten Kompatibilitätsbefund auf, dass scripts/ci/check_browser_gate_environment.py pytest weiterhin exakt als 9.0.3 erwartete.",
+        "Vierzehn weitere lokale Patch-Evaluation-Fehler wurden auf die Grabowski-Ausführungsumgebung eingegrenzt: Bubblewrap konnte NETLINK_ROUTE für Loopback nicht öffnen; der einfache Bubblewrap-Probeprozess ohne Netzinitialisierung war erfolgreich.",
+        "Bureau erzeugt den isolierten Workspace weiterhin aus execution.working_repository; die Komponenten- und fünf Pfadleasing-Schlüssel begrenzen ausschließlich die Mutation und Konflikterkennung.",
+        "Der erfolgreiche Präzedenzlauf BUR-RUN-20260731T152008Z-287eff15d0 belegt Komponenten-Claim plus exakte RepoGround-Pfade bei normaler Worktree-Erzeugung."
       ],
       "live_evidence": {
         "repoground_head": "7d03b713482b8d227e624b5cbba10f935c6f76d5",
@@ -105,12 +111,21 @@
         ],
         "failed_broad_claim_run": "BUR-RUN-20260801T074610Z-2c77c11f0f",
         "successful_precedent_run": "BUR-RUN-20260731T152008Z-287eff15d0",
-        "bureau_base": "8d06a617f7922427a1b28f283513552a9db10c7f"
+        "bureau_base": "b8ba3c4b3daf036ee3cdcde54dede8c13690dff0",
+        "failed_scope_run": "BUR-RUN-20260801T112412Z-52e9d6773e",
+        "preserved_dependency_commit": "0b4c264e",
+        "full_test_passed": 5265,
+        "full_test_real_contract_failures": 1,
+        "full_test_environment_failures": 14,
+        "required_extra_path": "scripts/ci/check_browser_gate_environment.py",
+        "browser_contract_observed_expected_pytest": "9.0.3",
+        "browser_contract_required_pytest": "9.1.1"
       },
       "does_not_authorize": [
-        "Mutation außerhalb der vier exakten RepoGround-Pfade",
+        "Mutation außerhalb der fünf exakten RepoGround-Pfade",
         "Bereinigung, Übernahme oder Rücksetzung fremder RepoGround-Worktrees",
         "weitere Dependency-Updates",
+        "Produktcode- oder Produktionsabhängigkeitsänderungen",
         "Merge ohne Tests, Review und grüne GitHub-CI"
       ]
     }

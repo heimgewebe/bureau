@@ -14,8 +14,7 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/wgx",
     "grabowski_resources": [
-      "repo:/home/alex/repos/wgx",
-      "repo:/home/alex/repos/grabowski"
+      "repo:/home/alex/repos/wgx"
     ]
   },
   "claims": [
@@ -23,11 +22,6 @@
       "resource": "repo.wgx",
       "mode": "write",
       "isolation": "worktree"
-    },
-    {
-      "resource": "repo.grabowski",
-      "mode": "read",
-      "isolation": "none"
     }
   ],
   "required_capabilities": [
@@ -128,6 +122,30 @@
         "approval_contract_required": true,
         "approval_contract_observed_reason": "explicit approval missing before reviewed readiness merge"
       }
+    },
+    "claim_scope_correction": {
+      "schema_version": 1,
+      "corrected_at": "2026-08-01T20:19:44Z",
+      "failed_claim_run": "BUR-RUN-20260801T201330Z-12d573f49c",
+      "observed_failure": "lease-acquisition-failed before claim commit",
+      "removed_claim": {
+        "resource": "repo.grabowski",
+        "mode": "read",
+        "isolation": "none"
+      },
+      "removed_grabowski_resource": "repo:/home/alex/repos/grabowski",
+      "reason": "The task implementation and acceptance surface are entirely in WGX. The broad read claim on the Grabowski repository was an unnecessary coordination dependency and collided with unrelated active Grabowski branch leases. Broad repository leases are intentionally not bypassable by a non-conflict proof.",
+      "remaining_effect_scope": {
+        "repository": "/home/alex/repos/wgx",
+        "mode": "write",
+        "isolation": "worktree"
+      },
+      "does_not_establish": [
+        "permission to alter or clean existing Grabowski worktrees",
+        "absence of future WGX conflicts",
+        "automatic task verification",
+        "successful claim until current-main readback"
+      ]
     }
   },
   "depends_on": [

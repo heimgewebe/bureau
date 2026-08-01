@@ -30,6 +30,7 @@ jobs:
           set -euo pipefail
           if grep -Fq 'from .approval import explicit_operator_approval, require_approval, task_approval_contract' src/bureau/v2.py; then
             python tools/_pr1322_apply.py
+            python tools/_pr1322_fix_signature.py
             echo "changed=true" >> "${GITHUB_OUTPUT}"
           else
             echo "changed=false" >> "${GITHUB_OUTPUT}"

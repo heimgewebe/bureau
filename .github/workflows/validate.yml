@@ -32,6 +32,7 @@ jobs:
             echo "changed=false" >> "${GITHUB_OUTPUT}"
           else
             python tools/_pr1322_issuance_binding.py
+            python tools/_pr1322_issuance_expectations.py
             echo "changed=true" >> "${GITHUB_OUTPUT}"
           fi
       - name: Install test environment

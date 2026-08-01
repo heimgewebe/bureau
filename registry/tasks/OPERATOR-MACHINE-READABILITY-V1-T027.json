@@ -1,0 +1,109 @@
+{
+  "acceptance": [
+    {
+      "assertion": "`just --list` und `just ci` lassen sich mit der repositoryseitig unterstützten just-Version ohne Parserfehler starten.",
+      "evidence_type": "object",
+      "id": "supported-just-parses"
+    },
+    {
+      "assertion": "Der Default für KIND bleibt semantisch `debug.test`; der Default für PAYLOAD bleibt semantisch `{\"ok\":true}` und wird durch einen fokussierten Test belegt.",
+      "evidence_type": "object",
+      "id": "defaults-preserved"
+    },
+    {
+      "assertion": "Ein fokussierter Regressionstest oder CI-Gate lehnt eine absichtlich nicht parsebare Justfile-Variante ab und erfasst die unterstützte just-Version revisionsgebunden.",
+      "evidence_type": "object",
+      "id": "negative-parser-regression"
+    },
+    {
+      "assertion": "`make validate` sowie die GitHub-Pflichtchecks für Python 3.10 und 3.12 bestehen auf dem exakten PR-Head.",
+      "evidence_type": "object",
+      "id": "full-validation-green"
+    },
+    {
+      "assertion": "Die Reparatur wird in einem eigenen, revisionsgebundenen PR veröffentlicht und nicht mit Audio-, Registry- oder anderen Bureau-Arbeiten vermischt.",
+      "evidence_type": "object",
+      "id": "isolated-publication"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur Justfile-Syntax, ein enger Regressionstest und gegebenenfalls der bestehende Validate-Workflow dürfen verändert werden. Registry-, Queue-, Runtime- und fremde PR-Zustände bleiben unangetastet.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/Justfile",
+      "path:/home/alex/repos/bureau/.github/workflows/validate.yml",
+      "path:/home/alex/repos/bureau/tests/test_justfile_contract.py"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Den auf dem kanonischen Bureau-main reproduzierbaren Justfile-Parserfehler in der Recipe-Signatur `emit-event ID?=auto KIND?=debug.test PAYLOAD?={\"ok\":true}` beheben, die beabsichtigten Standardwerte semantisch erhalten und die Parsebarkeit mit der unterstützten just-Version dauerhaft in der Validierung absichern.",
+  "id": "OPERATOR-MACHINE-READABILITY-V1-T027",
+  "initiative": "OPERATOR-MACHINE-READABILITY-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Implementierung",
+      "Mergebereitschaft",
+      "Queue- oder Claim-Autorität",
+      "Änderung der Audio-Systemwahrheit"
+    ],
+    "observed_error": "Expected '*', '+', end of line, or end of file at KIND?=debug.test",
+    "observed_main": "6b41d844235b3672264aca97c601a76912ceb7aa",
+    "publication_base": "ce37d7087994d905cb12b9d9fa90783cdc513772",
+    "registered_from_obligation": "goo-bureau-justfile-parse-regression-v1-20260801",
+    "source_locator": "grabowski-task:af8ea3c72580418ba9f242a2#Justfile:13:32",
+    "source_receipt_sha256": "04f55e48bf4f0f5abe341353b75c94e24f3970558a26f5054f332de12127c26c",
+    "source_task": "af8ea3c72580418ba9f242a2",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-4cf999d9369c8b35bc843855",
+      "event_id": 2006,
+      "event_created_at": "2026-08-01T21:15:11.622810Z",
+      "request_sha256": "e2fd038c3340c9dbeae99949e1ca6dff427f1d7d1a7ac1fc440da2791c4151e5",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-runtime-validation",
+        "locator": "grabowski-task:af8ea3c72580418ba9f242a2#Justfile:13:32",
+        "observed_at": "2026-08-01T20:53:00Z",
+        "sha256": "04f55e48bf4f0f5abe341353b75c94e24f3970558a26f5054f332de12127c26c"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 28
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski",
+    "git",
+    "github"
+  ],
+  "rollback": {
+    "strategy": "Die Justfile-Syntaxänderung, den fokussierten Regressionstest und einen gegebenenfalls ergänzten Parser-Gate gemeinsam revertieren; keine Registry-, Queue- oder Runtime-Migration ist erforderlich."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bureau-Justfile parsebar machen und Parserregression absichern"
+}

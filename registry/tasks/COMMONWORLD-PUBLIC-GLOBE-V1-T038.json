@@ -11,7 +11,7 @@
       "id": "bounded-interaction-profile"
     },
     {
-      "assertion": "Before the first profiling sample, a frozen plan records numeric frame-cadence and long-frame thresholds, warm-up and repetition counts, the aggregation rule, and the exact retain-versus-reduce decision mapping between retaining the current maximum of four subordinate lines and one text lane per bundle and reducing detail on affected devices; the final evidence binds that unchanged plan by digest and timestamp to the measured results, and visual preference alone is not treated as a performance breach.",
+      "assertion": "Before the first profiling sample, a frozen digest-bound plan records a two-second warm-up followed by a ten-second no-op requestAnimationFrame calibration in an otherwise blank Safari document on the exact device, browser, power and motion setting; the calibrated frame budget is the median callback interval after discarding the first sixty callbacks, while the device maximum refresh rate is recorded only as an upper-bound capability and never substituted for measured Safari cadence. Each required scenario then has one ten-second warm-up and three ten-second measured repetitions. For every repetition the evidence reports median and p95 frame duration, the fraction of frames longer than twice the calibrated frame budget, and the fraction at or above 50 ms. The current maximum of four subordinate lines and one text lane per bundle is retained only when no scenario breaches, in at least two of its three repetitions, either p95 greater than twice the calibrated budget or at least one percent of frames at or above 50 ms, and when paired Layers evidence does not show independent subordinate-ring repaint or animation in at least two repetitions; otherwise the affected device policy is reduced. The unchanged formulas, counts and decision mapping are bound by digest and timestamp to the exported measurements, and visual preference alone is not treated as a performance breach.",
       "evidence_type": "object",
       "id": "thresholded-decision"
     },
@@ -54,6 +54,8 @@
     "does_not_establish": [
       "that Chromium iPad viewport smoke is equivalent to physical Safari GPU or compositor evidence",
       "that Safari Web Inspector Timelines or Layers evidence directly measures GPU utilization, device-wide energy use or operating-system thermal behavior",
+      "that UIScreen maximumFramesPerSecond equals the cadence Safari actually sustains for the measured page",
+      "that Safari exposes the Long Animation Frames API; the 50 ms boundary is only a classification threshold applied to exported frame durations",
       "permission to change the current ring-bundle PR without a measured threshold breach",
       "permission to create independently animated subordinate ring text",
       "automatic merge, deployment or production verification authority"

@@ -6,54 +6,12 @@ on:
   merge_group:
     types: [checks_requested]
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: validate-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.merge_group.head_sha || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
-  apply-pr1322-scope-binding:
-    if: github.event_name == 'pull_request' && github.event.pull_request.number == 1322
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.ref }}
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-      - name: Apply exact scope binding if still needed
-        id: patch
-        shell: bash
-        run: |
-          set -euo pipefail
-          if grep -Fq 'coordinated claim approval scope differs from task action class' src/bureau/v2.py; then
-            echo "changed=false" >> "${GITHUB_OUTPUT}"
-          else
-            python tools/_pr1322_scope_binding.py
-            echo "changed=true" >> "${GITHUB_OUTPUT}"
-          fi
-      - name: Install test environment
-        if: steps.patch.outputs.changed == 'true'
-        run: python -m pip install -e '.[dev]'
-      - name: Validate coordinated approval tamper resistance
-        if: steps.patch.outputs.changed == 'true'
-        run: python -m pytest -q tests/test_v2.py -k 'coordinated_runtime_claim or coordinated_claim_cli_contract'
-      - name: Check patch hygiene
-        if: steps.patch.outputs.changed == 'true'
-        run: git diff --check
-      - name: Commit verified scope binding
-        if: steps.patch.outputs.changed == 'true'
-        env:
-          BRANCH: ${{ github.event.pull_request.head.ref }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/bureau/v2.py tests/test_v2.py
-          git commit -m "Bind coordinated approval scope and reviewer"
-          git push origin "HEAD:${BRANCH}"
-
   validate:
     runs-on: ubuntu-latest
     strategy:

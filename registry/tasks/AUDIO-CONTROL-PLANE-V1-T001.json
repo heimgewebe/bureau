@@ -101,14 +101,14 @@
     "blocker": {
       "schema_version": 1,
       "code": "physical-audio-hardware-and-human-readback-required",
-      "observed_at": "2026-08-01T20:32:45.371232+00:00",
+      "observed_at": "2026-08-01T22:18:26.610925+00:00",
       "hardware": {
         "motu_m2_present": false,
         "roland_fp_30x_present": false
       },
       "physical_fact_counts": {
-        "known": 0,
-        "unknown": 16
+        "known": 4,
+        "unknown": 12
       },
       "round_trip_latency_ms": null,
       "profiles_ready": {
@@ -138,17 +138,129 @@
           "physical_unknown_count": 16,
           "round_trip_latency_ms": null,
           "host_mutation": false
+        },
+        {
+          "kind": "audio_pull_request",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T001",
+          "repository": "heimgewebe/audio",
+          "number": 37,
+          "state": "merged",
+          "base_sha": "404736337ec315eb0af556b412c68136e49c1159",
+          "head_sha": "2222854491a5afbe3b9f2d8713930851458fc097",
+          "merge_commit": "81fab5c57a3609b8b931a2ee5251c4f576368298",
+          "tree_sha": "85857465d287598e82846ac601e10a45e6b419ab",
+          "diff_sha256": "21587687d0695ee5655c6b6c8553bc6acb2e0b92ee32643a303d94028e18671b",
+          "ci": "pass"
+        },
+        {
+          "kind": "grabowski_task_receipt",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T001",
+          "source_ref": "grabowski-task:d4b42a5c2c9d4503922b16d2",
+          "tested_commit": "2222854491a5afbe3b9f2d8713930851458fc097",
+          "test_count": 493,
+          "terminalization_sha256": "f9b5a96b908d3baa4c73c151e389de54712419ac5586926a23d4bf4a805ab927",
+          "receipt_sha256": "dd125470cccad4eac472d64492ce6953bfccf39c0b7122a108af58fff207f87d",
+          "verdict": "pass"
+        },
+        {
+          "kind": "audio_system_truth_report",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T001",
+          "source_ref": "post-merge-live-capture:81fab5c57a3609b8b931a2ee5251c4f576368298",
+          "source_commit": "81fab5c57a3609b8b931a2ee5251c4f576368298",
+          "schema_version": 2,
+          "report_sha256": "07d01dae2d5a4a7ac45bc088cfa4acf28f4b7f8212327ed1255f993f941840bf",
+          "truth_chain_sha256": "f0e424f9f7566d58d81d78aec68e99f88cd68624d9d3e083f7702530f1d8a15f",
+          "operationally_ready": false,
+          "motu_m2_present": false,
+          "roland_fp_30x_present": false,
+          "physical_known_count": 4,
+          "physical_unknown_count": 12,
+          "laboratory_status": "invalid",
+          "laboratory_issue_code": "laboratory-state-catalog-changed",
+          "host_mutation": false
+        },
+        {
+          "kind": "independent_review_advisory",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T001",
+          "provider_family": "google",
+          "model": "gemini-3.1-pro",
+          "reviewed_commit": "2222854491a5afbe3b9f2d8713930851458fc097",
+          "raw_output_sha256": "161def2bb9ce954c87ee5b7c2d3989eb981276dea9dc1b366a8f3cdf82126cda",
+          "material_findings": 0,
+          "confidence": "high",
+          "formal_receipt": false,
+          "receipt_failure_reason": "valid JSON review followed by non-contract completion prose"
         }
       ],
       "does_not_establish": [
         "physische Wahrheit ohne menschlichen Readback",
         "Apply-Autorität für Audio-Profile",
         "automatische Wiederaufnahme ohne neuen Live-Readback"
-      ]
+      ],
+      "laboratory_state": {
+        "status": "invalid",
+        "issue_code": "laboratory-state-catalog-changed"
+      },
+      "truth_report": {
+        "schema_version": 2,
+        "report_sha256": "07d01dae2d5a4a7ac45bc088cfa4acf28f4b7f8212327ed1255f993f941840bf",
+        "truth_chain_sha256": "f0e424f9f7566d58d81d78aec68e99f88cd68624d9d3e083f7702530f1d8a15f",
+        "operationally_ready": false,
+        "verification_scope": "structural-integrity-not-operational-readiness",
+        "nonpassing_gates": [
+          "device-loss-baseline",
+          "latency-xrun-baseline",
+          "managed-plugin-host-proof",
+          "qobuz-rate-proof",
+          "rate-resampling-policy",
+          "safe-listening-calibration",
+          "single-truth-model",
+          "voice-reference"
+        ]
+      }
     },
     "does_not_establish": [
       "physische Wahrheit ohne menschlichen Readback",
-      "Apply-Autorität für Audio-Profile"
-    ]
+      "Apply-Autorität für Audio-Profile",
+      "Repositorymerge oder strukturell gültiger Truth-Report begründet keine operative Bereitschaft.",
+      "Die verbleibende physische Abnahme bleibt Bestandteil dieses Tasks und des gestuften Live-Rollouts T007."
+    ],
+    "repository_progress": {
+      "schema_version": 1,
+      "status": "repository_fix_merged_physical_acceptance_blocked",
+      "observed_at": "2026-08-01T22:18:26.610925+00:00",
+      "repository": "heimgewebe/audio",
+      "pull_request": 37,
+      "merge_commit": "81fab5c57a3609b8b931a2ee5251c4f576368298",
+      "merged_tree_sha": "85857465d287598e82846ac601e10a45e6b419ab",
+      "implementation": {
+        "report_schema_version": 2,
+        "failed_private_state_is_explicit": true,
+        "failed_projections_are_empty_and_verifier_enforced": true,
+        "stable_path_free_issue_codes": true,
+        "gate_projection_rederived": true,
+        "operational_readiness_separate_from_structural_validity": true,
+        "legacy_schema_v1_readable_reports_supported": true
+      },
+      "validation": {
+        "focused_test_count": 50,
+        "full_test_count": 493,
+        "audio_safety": "pass",
+        "control_contract": "pass",
+        "compileall": "pass",
+        "github_ci": "pass",
+        "post_merge_live_capture": "pass",
+        "post_merge_live_verify": "pass"
+      },
+      "does_not_establish": [
+        "physische Gerätepräsenz",
+        "sichere Hörkalibrierung",
+        "Stimmreferenzmessung",
+        "Round-Trip-Latenz- oder XRun-Baseline",
+        "Geräteverlustübung",
+        "operative Bereitschaft",
+        "Taskabschluss"
+      ]
+    }
   }
 }

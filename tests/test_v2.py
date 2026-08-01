@@ -2236,6 +2236,18 @@ def prepare_coordinated_registry(root: Path) -> str:
     return task["id"]
 
 
+
+
+def declare_runtime_mutation(root: Path, task_id: str) -> None:
+    task_path = root / f"registry/tasks/{task_id}.json"
+    task = json.loads(task_path.read_text())
+    task["execution"]["approval"] = {
+        "action_class": "runtime_mutation",
+        "required_level": "break_glass",
+        "note": "test-only live runtime effect",
+    }
+    task_path.write_text(json.dumps(task))
+
 def coordinated_lease_database(
     root: Path,
     intent: dict,
@@ -2347,6 +2359,85 @@ def test_coordinated_claim_intent_is_read_only_and_requires_approval(
     with store.connect() as connection:
         assert connection.execute("SELECT COUNT(*) FROM workers").fetchone()[0] == 0
 
+
+
+
+def test_coordinated_runtime_claim_rejects_operator_approval(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    declare_runtime_mutation(root, task_id)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    with pytest.raises(StateError, match="approval required for runtime_mutation"):
+        dispatcher.claim_intent(
+            "operator",
+            ("repository",),
+            task_id=task_id,
+            approved=True,
+            approval_source="test operator approval",
+        )
+
+    assert store.list_runs() == []
+
+
+def test_coordinated_runtime_claim_binds_break_glass_through_commit(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    declare_runtime_mutation(root, task_id)
+    registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    intent = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        break_glass=True,
+        approval_source="test explicit break glass",
+    )["intent"]
+
+    approval = intent["operator_approval"]
+    assert approval["level"] == "break_glass"
+    assert approval["scope"] == ["runtime_mutation"]
+    assert approval["reference"] == intent["run_id"]
+    assert approval["task_id"] == task_id
+
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+    claimed = dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+
+    decision = claimed["envelope"]["operator_approval"]
+    assert decision["action_class"] == "runtime_mutation"
+    assert decision["required_level"] == "break_glass"
+    assert decision["allowed"] is True
+    assert decision["evidence"]["level"] == "break_glass"
+    assert registry.tasks[task_id].state == "ready"
+    assert store.run(intent["run_id"])["state"] == "assigned"
+
+
+def test_coordinated_runtime_claim_rejects_rehashed_approval_downgrade(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    declare_runtime_mutation(root, task_id)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    intent = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        break_glass=True,
+    )["intent"]
+    intent["operator_approval"]["level"] = "operator"
+    intent["intent_sha256"] = bureau_v2.coordinated_claim_intent_sha256(intent)
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+
+    with pytest.raises(StateError, match="approval required for runtime_mutation"):
+        dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+
+    assert store.list_runs() == []
 
 def test_coordinated_claim_handoff_does_not_require_absent_lease(
     registry_factory, tmp_path, monkeypatch
@@ -2501,6 +2592,33 @@ def test_coordinated_claim_cli_contract_parses_exact_surfaces():
     )
     assert intent_args.command == "claim-intent"
     assert intent_args.approve is True
+    assert intent_args.break_glass is False
+
+    break_glass_args = bureau_cli.parser().parse_args(
+        [
+            "claim-intent",
+            "--worker",
+            "operator",
+            "--task-id",
+            "TASK-1",
+            "--capability",
+            "repository",
+            "--break-glass",
+        ]
+    )
+    assert break_glass_args.approve is False
+    assert break_glass_args.break_glass is True
+
+    with pytest.raises(SystemExit):
+        bureau_cli.parser().parse_args(
+            [
+                "claim-intent",
+                "--worker",
+                "operator",
+                "--approve",
+                "--break-glass",
+            ]
+        )
     commit_args = bureau_cli.parser().parse_args(
         [
             "claim-commit",

@@ -195,6 +195,17 @@ def test_candidate_supersession_projects_latest_and_preserves_history(
     tmp_path,
 ):
     _root, registry, store = setup_live(registry_factory, tmp_path)
+    original_context = {
+        "schema_version": 1,
+        "desired_outcome": "Preserve exact candidate evidence",
+        "source": {
+            "kind": "conversation",
+            "locator": "chat:original",
+            "sha256": "a" * 64,
+            "observed_at": "2026-08-01T06:57:00Z",
+            "freshness": "digest-bound",
+        },
+    }
     first = live_register_record(
         registry,
         store,
@@ -203,6 +214,7 @@ def test_candidate_supersession_projects_latest_and_preserves_history(
         title="Original candidate",
         source="chat",
         promotion_required=True,
+        operator_context=original_context,
     )
 
     corrected = live_register_record(
@@ -219,6 +231,8 @@ def test_candidate_supersession_projects_latest_and_preserves_history(
     assert corrected["record"]["supersedes_event_id"] == first["event_id"]
     assert corrected["record"]["repo"] == "repo.alpha"
     assert corrected["record"]["promotion_required"] is True
+    assert corrected["record"]["operator_intake"] == original_context
+    assert corrected["record"]["operator_intake"] is not original_context
 
     listed = live_register_list(store, kind="candidate_task")
     assert len(listed["records"]) == 2
@@ -456,6 +470,7 @@ def test_candidate_supersession_supports_legacy_event_identity(registry_factory,
     )
 
     assert corrected["record"]["candidate_id"] == f"candidate-event-{legacy_event_id}"
+    assert "operator_intake" not in corrected["record"]
     listed = live_register_list(store, kind="candidate_task")
     assert listed["summary"]["open_candidate_count"] == 1
     assert listed["summary"]["open_candidates"][0]["event_id"] == corrected["event_id"]

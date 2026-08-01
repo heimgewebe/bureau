@@ -179,6 +179,17 @@ def _live_nonclaims() -> list[str]:
     ]
 
 
+def _validated_operator_context(value: dict[str, Any] | None) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise StateError("operator_context must be an object")
+    rendered = legacy.canonical_json(value)
+    if len(rendered.encode("utf-8")) > 16_384:
+        raise StateError("operator_context must be at most 16384 bytes")
+    return json.loads(rendered)
+
+
 def live_register_record(
     registry: Registry | None,
     store: StateStore,
@@ -228,13 +239,7 @@ def live_register_record(
         raise StateError(f"repo is required for {checked_kind}")
     if supersedes_event_id is not None and supersedes_event_id < 1:
         raise StateError("supersedes_event_id must be a positive integer")
-    if operator_context is not None:
-        if not isinstance(operator_context, dict):
-            raise StateError("operator_context must be an object")
-        rendered_context = legacy.canonical_json(operator_context)
-        if len(rendered_context.encode("utf-8")) > 16_384:
-            raise StateError("operator_context must be at most 16384 bytes")
-        operator_context = json.loads(rendered_context)
+    operator_context = _validated_operator_context(operator_context)
     if checked_kind != "candidate_task" and (
         checked_candidate_id is not None or supersedes_event_id is not None
     ):
@@ -290,6 +295,10 @@ def live_register_record(
                             f"candidate event {supersedes_event_id} is missing required status"
                         )
                     checked_status = _validate_status(checked_kind, previous_status)
+                if operator_context is None:
+                    previous_context = previous["record"].get("operator_intake")
+                    if isinstance(previous_context, dict):
+                        operator_context = _validated_operator_context(previous_context)
                 checked_candidate_id = inherited_id
             elif checked_candidate_id is not None and any(
                 _candidate_identity(item) == checked_candidate_id for item in candidates

@@ -454,15 +454,24 @@ def test_candidate_replay_returns_current_superseding_event_without_self_duplica
         source="operator-intake-correction",
         repo="repo.alpha",
         candidate_id=first["candidate_id"],
-        status="active",
-        promotion_required=True,
+        status="promoted",
+        promotion_required=False,
         supersedes_event_id=first["event_id"],
         note="Corrected wording without creating a new candidate identity",
     )
     replay = _record(registry, store)
     assert replay["candidate_id"] == first["candidate_id"]
     assert replay["event_id"] == correction["event_id"]
+    assert correction["record"]["operator_intake"] == first["record"]["operator_intake"]
     result = candidate_assess(registry, store, candidate_id=first["candidate_id"])
+    assert result["candidate_status"] == "promoted"
+    assert result["missing_fields"] == []
+    assert result["source_freshness"] == {
+        "status": "digest-bound",
+        "observed_at": first["record"]["operator_intake"]["source"]["observed_at"],
+        "sha256": "a" * 64,
+        "catalog_validation": correction["record"]["catalog_validation"],
+    }
     assert result["exact_duplicates"] == []
     assert not any(
         item.get("id") == first["candidate_id"] for item in result["similarity_suggestions"]
@@ -505,6 +514,9 @@ def test_candidate_request_refines_current_event_and_inherits_identity(
         refined["record"]["operator_intake"]["request_sha256"]
         == refined["request_sha256"]
     )
+    assert refined["record"]["operator_intake"]["desired_outcome"] == request["desired_outcome"]
+    assert refined["record"]["operator_intake"]["source"]["sha256"] == "b" * 64
+    assert refined["record"]["operator_intake"] != first["record"]["operator_intake"]
 
 
 def test_candidate_request_rejects_refinement_task_rebinding(

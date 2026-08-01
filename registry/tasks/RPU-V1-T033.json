@@ -2,9 +2,9 @@
   "schema_version": 1,
   "id": "RPU-V1-T033",
   "initiative": "REPOBRIEF-EVIDENCE-CONTEXT-GRAPH-V1",
-  "title": "Establish a scoped Ruff formatting baseline for RepoBrief navigation",
-  "state": "planned",
-  "goal": "Resolve the pinned Ruff formatter drift in the RepoBrief call-navigation files through a reviewable style-only change and make the applicable formatting gate explicit without mixing semantic refactors into the cleanup.",
+  "title": "Establish a scoped Ruff formatting baseline for RepoGround call navigation",
+  "state": "ready",
+  "goal": "Resolve the current pinned-Ruff formatter drift in RepoGround call navigation through one AST-neutral test-file formatting change, then make the exact five-file format gate explicit in CI without changing runtime behavior or upgrading Ruff.",
   "depends_on": [
     "RPU-V1-T029"
   ],
@@ -14,20 +14,16 @@
   },
   "claims": [
     {
-      "resource": "repo.repoground",
+      "resource": "component.repoground.test-tooling",
       "mode": "write",
       "isolation": "worktree"
-    },
-    {
-      "resource": "component.bureau.registry",
-      "mode": "read",
-      "isolation": "none"
     }
   ],
   "required_capabilities": [
     "repository",
-    "shell",
-    "grabowski",
+    "python",
+    "testing",
+    "continuous-integration",
     "github"
   ],
   "execution": {
@@ -35,45 +31,97 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/repoground",
     "grabowski_resources": [
-      "component:chore/repobrief-ruff-format-baseline-v1",
-      "path:/home/alex/repos/.lenskit-worktrees/repobrief-ruff-format-baseline-v1",
-      "repo:/home/alex/repos/repoground:branch:chore/repobrief-ruff-format-baseline-v1",
-      "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T033.json"
-    ]
+      "path:/home/alex/repos/repoground/merger/repoground/tests/test_call_navigation.py",
+      "path:/home/alex/repos/repoground/.github/workflows/lint.yml",
+      "path:/home/alex/repos/repoground/config/workflow-control-plane.v1.json"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Only the one measured formatting file, the lint workflow gate, and its workflow-control-plane identity may change. Ruff upgrades, semantic edits, repository-wide formatting and unrelated cleanup are excluded."
+    }
   },
   "acceptance": [
     {
       "id": "rpu-v1-t033-pinned-formatter",
-      "assertion": "The exact repository-pinned Ruff version formats and then accepts the four T029 navigation and benchmark files with no remaining formatter drift."
+      "assertion": "Repository-pinned Ruff 0.15.13 formats and accepts the five current call-navigation files; only merger/repoground/tests/test_call_navigation.py requires a content change on RepoGround main 90255dd02c9a5e4b3718ecdbfa26241b1414c169."
     },
     {
       "id": "rpu-v1-t033-semantic-neutrality",
-      "assertion": "AST-normalized Python structure and all focused, integration, parity and complete non-browser test results prove that the cleanup changes formatting only."
+      "assertion": "The AST-normalized SHA-256 of the formatted Python file remains fc281b278a1641dccbde35b8dcc216c6f4402f3babca0774368f0200c76c8513, and focused call-navigation tests plus the complete required test suites pass."
     },
     {
       "id": "rpu-v1-t033-review-scope",
-      "assertion": "The patch is isolated from producer refactors and feature work, explicitly reports broad legacy-file churn and is diff-reviewed as a style-only change before merge."
+      "assertion": "The patch changes exactly the one formatted test file, .github/workflows/lint.yml, and config/workflow-control-plane.v1.json; the 95-addition/73-deletion formatter churn is reviewed as style-only and no producer refactor or Ruff upgrade is mixed in."
     },
     {
       "id": "rpu-v1-t033-gate-contract",
-      "assertion": "The repository documents or enforces the intended Ruff format check scope so future tasks cannot report it as passed when only Ruff lint was executed."
+      "assertion": "The lint workflow executes pinned Ruff format --check over the exact five current call-navigation files, and the workflow-control-plane inventory is refreshed so future lint-only runs cannot be mistaken for format validation."
+    },
+    {
+      "id": "rpu-v1-t033-delivery",
+      "assertion": "Ruff lint and format checks, focused tests, full non-browser and browser suites, CodeQL, workflow contracts, git diff --check, revision-bound self-review, merge and main readback pass on the exact final head."
     }
   ],
   "metadata": {
     "registered_at": "2026-07-16T11:27:13Z",
     "source_task": "RPU-V1-T029",
-    "source_pr": "heimgewebe/lenskit#1022",
-    "source_finding": "ruff format --check with pinned Ruff 0.15.13 reports four T029 files as requiring formatting; repobrief_access.py would produce broad pre-existing style churn.",
+    "source_pr": "heimgewebe/repoground#1022",
+    "source_finding": "Historical Ruff 0.15.13 drift on T029 was remeasured on current RepoGround main: one of five surviving call-navigation files still requires formatting; four are already formatted and historical repobrief_access.py no longer exists.",
     "does_not_establish": [
-      "semantic_improvement",
-      "performance_improvement",
-      "permission_to_mix_refactoring",
-      "repository_wide_format_convergence"
+      "semantic improvement",
+      "performance improvement",
+      "repository-wide format convergence",
+      "permission to change files outside the exact three-path scope",
+      "merge readiness before fresh CI and review"
     ],
-    "bureau_always_open_scope": {
-      "claim_resource": "component.bureau.registry",
-      "task_resource_key": "path:/home/alex/repos/bureau/registry/tasks/RPU-V1-T033.json",
-      "reason": "Keep Bureau intake and unrelated registry writes available while the isolated Lenskit formatting cleanup is reviewed."
+    "current_assessment": {
+      "observed_at": "2026-08-01T22:58:00+02:00",
+      "repoground_main": "90255dd02c9a5e4b3718ecdbfa26241b1414c169",
+      "open_repoground_pull_requests": 0,
+      "ruff_version": "0.15.13",
+      "checked_files": [
+        "merger/repoground/core/call_navigation_index.py",
+        "merger/repoground/scripts/bench_call_navigation.py",
+        "merger/repoground/tests/test_bench_call_navigation.py",
+        "merger/repoground/tests/test_call_navigation_index.py",
+        "merger/repoground/tests/test_call_navigation.py"
+      ],
+      "would_reformat": [
+        "merger/repoground/tests/test_call_navigation.py"
+      ],
+      "already_formatted": [
+        "merger/repoground/core/call_navigation_index.py",
+        "merger/repoground/scripts/bench_call_navigation.py",
+        "merger/repoground/tests/test_bench_call_navigation.py",
+        "merger/repoground/tests/test_call_navigation_index.py"
+      ],
+      "ast_sha256_before": "fc281b278a1641dccbde35b8dcc216c6f4402f3babca0774368f0200c76c8513",
+      "ast_sha256_after": "fc281b278a1641dccbde35b8dcc216c6f4402f3babca0774368f0200c76c8513",
+      "format_diff_sha256": "b9f13ab69ab65f645559ed35521ccc3593b258c933ecb07552cd4f229b2dab40",
+      "format_diff_bytes": 19354,
+      "format_diff_stat": {
+        "insertions": 95,
+        "deletions": 73
+      },
+      "lint_workflow_has_format_gate": false,
+      "dependency_RPU_V1_T029": "verified"
+    },
+    "fine_grained_execution_scope": {
+      "decision": "component-and-exact-paths",
+      "component_resource": "component.repoground.test-tooling",
+      "exact_paths": [
+        "/home/alex/repos/repoground/merger/repoground/tests/test_call_navigation.py",
+        "/home/alex/repos/repoground/.github/workflows/lint.yml",
+        "/home/alex/repos/repoground/config/workflow-control-plane.v1.json"
+      ],
+      "does_not_authorize": [
+        "changes to the other four measured navigation files",
+        "runtime or production-code changes",
+        "Ruff or other dependency upgrades",
+        "repository-wide formatting",
+        "queue or unrelated Bureau registry mutations"
+      ]
     }
   }
 }

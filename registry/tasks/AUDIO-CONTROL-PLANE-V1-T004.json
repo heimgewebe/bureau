@@ -90,6 +90,51 @@
     "plan_commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
     "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc",
     "supersedes_candidate_event_id": 1483,
-    "legacy_reuse_boundary": "Only CLI intent, dry-run behaviour and rewritten negative tests may inform the new code."
+    "legacy_reuse_boundary": "Only CLI intent, dry-run behaviour and rewritten negative tests may inform the new code.",
+    "partial_evidence": [
+      {
+        "scope": "voice-recording-session-core",
+        "status": "merged",
+        "repository": "heimgewebe/audio",
+        "pull_request": 32,
+        "base_commit": "df7802194862d54a62e43a387f7789d09a0759cd",
+        "reviewed_head": "33b278616d93f16045453d581e01ab5a16a123ba",
+        "merge_commit": "49710c62c017019ba3778d0599e511e6b8bc61a7",
+        "merged_at": "2026-07-31T20:24:59Z",
+        "verification": [
+          "focused recording-session tests 28/28 PASS",
+          "repository tests 417/417 PASS",
+          "audio safety tests PASS",
+          "audio control contract status ok",
+          "compileall PASS",
+          "git diff --check PASS",
+          "GitHub safety check SUCCESS (run 30662644622, job 91262223695)",
+          "exact-head methodically separated self-review with no unresolved finding"
+        ],
+        "implemented": [
+          "private atomic plan, spec, state, result and active-pointer handling",
+          "exact PID, start-tick, executable, command-line digest and process-group identity",
+          "bounded 48 kHz stereo s32le WAV sessions with storage, duration, file-size, stderr, descriptor and core limits",
+          "descriptor-bound WAV validation and no-replace publication",
+          "fail-closed persisted plan, state, process, artifact, recovery and terminal-result validation",
+          "transient device and inode binding without making static repository bindings host-specific",
+          "recoverable spawn-failure, startup-timeout, stop and abandoned-session paths"
+        ],
+        "does_not_establish": [
+          "Roland audio session implementation",
+          "production session implementation",
+          "physical MOTU or RØDE recording quality",
+          "live PipeWire or device rollout",
+          "completion of AUDIO-CONTROL-PLANE-V1-T004",
+          "completion of AUDIO-CONTROL-PLANE-V1-T007"
+        ]
+      }
+    ],
+    "remaining_scope": [
+      "Roland-Audio-Sitzungsmanager repositoryseitig implementieren",
+      "Produktions-Sitzungsmanager und Mehrquellenvertrag repositoryseitig implementieren",
+      "fehlende negative Abdeckung für Geräteverlust und Kanaldrift über die zusätzlichen Sitzungstypen schließen",
+      "physische und Liveabnahme ausschließlich in AUDIO-CONTROL-PLANE-V1-T007"
+    ]
   }
 }

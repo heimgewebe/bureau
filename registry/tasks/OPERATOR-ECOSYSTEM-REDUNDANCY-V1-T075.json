@@ -52,7 +52,9 @@
       "candidate source correctness beyond inherited evidence",
       "registry task readiness",
       "queue mutation",
-      "automatic repair of historical malformed events"
+      "automatic repair of historical malformed events",
+      "semantic correctness of inherited candidate evidence",
+      "future absence of unrelated Live Register defects"
     ],
     "implementation_approval": {
       "approved": true,
@@ -86,6 +88,178 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verified_at": "2026-08-01T08:17:11Z",
+    "outcome": "Bureau PR #1305 made status-only candidate_task supersessions preserve a canonical copy of the predecessor operator_intake context when no replacement context is supplied. Explicit refinements remain authoritative and legacy context absence is not fabricated. The exact head passed 140 focused-module tests, the complete 954-test validation suite under local and GitHub Python matrices, was deployed as immutable Bureau release 93b919e068c0-srcdd1f4afad2fa, and preserved the original Candidate evidence through live event 1944.",
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_merged_deployed_live",
+      "queue_mutated": false,
+      "runtime_deployment_required": true,
+      "runtime_deployment_completed": true,
+      "candidate_status": "promoted"
+    },
+    "implementation": {
+      "repository": "heimgewebe/bureau",
+      "pull_request": 1305,
+      "url": "https://github.com/heimgewebe/bureau/pull/1305",
+      "base_sha": "eb79103942802d68529c24830a74e61eb249ca02",
+      "reviewed_head_sha": "fe55ec18b6fe85758d6f78cd76373252cae7b7ec",
+      "merge_commit_sha": "93b919e068c0111f7ea0fab04ea23cea9a001013",
+      "current_main_sha": "93b919e068c0111f7ea0fab04ea23cea9a001013",
+      "merge_is_current_main": true,
+      "merged_at": "2026-08-01T08:11:20Z",
+      "changed_file_count": 3,
+      "additions": 45,
+      "deletions": 9,
+      "full_diff_bytes": 6491,
+      "full_diff_sha256": "14d804791a166afb6f7960467cb6f13958ce53c2cfd763d7d1c257e6ea6231fb",
+      "implementation_paths": [
+        "src/bureau/live_register.py",
+        "tests/test_live_register.py",
+        "tests/test_operator_intake.py"
+      ],
+      "review": {
+        "kind": "methodically-separated-self-review",
+        "reviewed_head_sha": "fe55ec18b6fe85758d6f78cd76373252cae7b7ec",
+        "material_findings": 0,
+        "unresolved_findings": 0,
+        "external_review_present": false,
+        "authority": [
+          "exact-head GitHub state",
+          "deterministic local tests",
+          "GitHub Actions Python matrices",
+          "CodeQL",
+          "SHA-256-bound diff"
+        ]
+      },
+      "ci": {
+        "state": "green",
+        "checks": [
+          "validate (3.10)",
+          "validate (3.12)",
+          "CodeQL/Analyze (actions)",
+          "CodeQL/Analyze (python)",
+          "CodeQL",
+          "registry-registration-preflight/freshness"
+        ]
+      }
+    },
+    "runtime_deployment": {
+      "schema_version": 1,
+      "source_commit": "93b919e068c0111f7ea0fab04ea23cea9a001013",
+      "release_id": "93b919e068c0-srcdd1f4afad2fa",
+      "manifest_sha256": "dae0e9d958c4ede9c86c707826791c6d66cab16e6b9c58fb45af0894796306f8",
+      "package_tree_sha256": "dd1f4afad2fa40da6d7855f21cc655b08ca6f633d98f53f08b043ff97cc4401a",
+      "canonical_registry_root": "/home/alex/.local/share/bureau/registry-snapshots/93b919e068c0-treecc3fbd1fb2f6",
+      "canonical_registry_tree_sha256": "cc3fbd1fb2f684b614cc2b0741a20ba53dfc41877b1d8eeb5fea018697ec2a79",
+      "result_sha256": "2dcbcc681a353858b7b694bbc6948933348b2913eab38ce6f30430490370dd21",
+      "runtime_identity_valid": true
+    },
+    "live_verification": {
+      "schema_version": 1,
+      "candidate_id": "candidate-c27b8fe006ea71ee48e0deda",
+      "predecessor_event_id": 1936,
+      "superseding_event_id": 1944,
+      "transition": "observed-to-promoted",
+      "replacement_operator_context_supplied": false,
+      "candidate_status": "promoted",
+      "missing_fields": [],
+      "source_freshness": {
+        "status": "digest-bound",
+        "observed_at": "2026-08-01T06:57:00Z",
+        "sha256": "dd950a404fdcb151fa7d8268d3107ca0efa3202420b33e97a25fbfcd0aa19035"
+      },
+      "desired_outcome_preserved": true,
+      "task_source_digest_relationship": "identity_equivalent",
+      "registry_or_queue_mutated": false
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T075",
+          "source_ref": "heimgewebe/bureau#1305",
+          "head_sha": "fe55ec18b6fe85758d6f78cd76373252cae7b7ec",
+          "merge_commit_sha": "93b919e068c0111f7ea0fab04ea23cea9a001013",
+          "full_diff_sha256": "14d804791a166afb6f7960467cb6f13958ce53c2cfd763d7d1c257e6ea6231fb"
+        },
+        {
+          "kind": "focused_test_run",
+          "authority": "grabowski-task",
+          "task_id": "6645275b78c64b0597099e7f",
+          "result": "140 passed, 0 failed",
+          "lifecycle_receipt_sha256": "5eadac3b28d79fe2128e622498a7bfac5e1ecd30ed0d2d647ea9733931272edd"
+        },
+        {
+          "kind": "full_validation",
+          "authority": "grabowski-task",
+          "task_id": "2f7d1cfb05ef40959078c841",
+          "result": "ruff passed; 954 tests passed; systemkatalog boundary passed; registry check valid",
+          "lifecycle_receipt_sha256": "5f57d1ce6f1618857e72c396d97cbf972f53dfd0a2ed5cbb0d9eecbdecd28d19"
+        },
+        {
+          "kind": "runtime_deployment",
+          "authority": "bureau-runtime-refresh",
+          "source_commit": "93b919e068c0111f7ea0fab04ea23cea9a001013",
+          "release_id": "93b919e068c0-srcdd1f4afad2fa",
+          "result_sha256": "2dcbcc681a353858b7b694bbc6948933348b2913eab38ce6f30430490370dd21"
+        },
+        {
+          "kind": "live_candidate_assessment",
+          "authority": "bureau-runtime",
+          "event_id": 1944,
+          "candidate_status": "promoted",
+          "missing_fields": [],
+          "source_sha256": "dd950a404fdcb151fa7d8268d3107ca0efa3202420b33e97a25fbfcd0aa19035"
+        }
+      ]
+    },
+    "verified_acceptance": {
+      "status-supersession-inherits-context": {
+        "verdict": "pass",
+        "evidence": "Live event 1944 inherited the complete canonical operator_intake object from event 1936 without a replacement context, preserving desired_outcome, request identity, source locator, observed_at and SHA-256."
+      },
+      "explicit-refinement-remains-authoritative": {
+        "verdict": "pass",
+        "evidence": "The inheritance branch executes only when operator_context is None. Existing candidate_record refinement tests prove a supplied replacement desired_outcome and source SHA remain authoritative and are not merged with predecessor evidence."
+      },
+      "assessment-remains-complete": {
+        "verdict": "pass",
+        "evidence": "Post-deployment operator-candidate-assess returned event 1944, status promoted, missing_fields empty and the original digest-bound source freshness, observed_at and SHA-256."
+      },
+      "legacy-absence-not-fabricated": {
+        "verdict": "pass",
+        "evidence": "The legacy supersession regression asserts operator_intake remains absent when the predecessor does not contain a valid context object."
+      },
+      "regression-validation": {
+        "verdict": "pass",
+        "focused_modules": "140/140",
+        "complete_suite": "954/954",
+        "additional_checks": [
+          "ruff check src tests",
+          "systemkatalog boundary",
+          "bureau registry check",
+          "GitHub validate Python 3.10",
+          "GitHub validate Python 3.12",
+          "CodeQL"
+        ]
+      }
+    },
+    "validation": [
+      "Four focused contract tests passed for status inheritance, legacy absence, complete assessment and explicit refinement authority.",
+      "tests/test_live_register.py plus tests/test_operator_intake.py -> 140 passed, 0 failed.",
+      "make validate -> Ruff passed; 954 tests passed; Systemkatalog boundary passed; Bureau Registry check valid with 861 tasks, 70 initiatives and no broad-scope findings.",
+      "GitHub PR #1305 exact head fe55ec18b6fe85758d6f78cd76373252cae7b7ec -> validate Python 3.10 and 3.12, CodeQL and freshness checks passed.",
+      "Immutable runtime refresh deployed merge commit 93b919e068c0111f7ea0fab04ea23cea9a001013 with valid runtime identity.",
+      "Live status-only supersession event 1944 preserved the predecessor source SHA-256 and desired_outcome; candidate assessment reports promoted and no missing fields."
+    ],
+    "verification": {
+      "task_sha256": "7668e6850958240708aa73853b9c737801cf1ddb1356c973a341f8cb0e533b54",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   },
   "priority": {
@@ -102,6 +276,6 @@
     "bureau"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Live-Register-Supersession bewahrt Candidate-Evidenz"
 }

@@ -52,8 +52,8 @@
   "execution": {
     "approval": {
       "action_class": "runtime_mutation",
-      "note": "Der Nutzer hat den atomaren Reposkop-2.0-/Grabowski-v2-Cutover am 2026-08-01 um 17:31 Europe/Berlin ausdrücklich mit @grabowski umsetzen beauftragt. Die Freigabe gilt nur für die exakt gemergten Produzenten- und Verbraucherrevisionen, deren gebundene Runtimeinstallation und die beschriebenen Positiv-, Negativ-, Gesundheits- und Rollbackprüfungen; fremde offene Pull Requests, Dirty-States, Prozesse und Leases bleiben ausgeschlossen.",
-      "required_level": "operator"
+      "note": "Der Nutzer hat den atomaren Reposkop-2.0-/Grabowski-v2-Cutover am 2026-08-01 um 17:31 Europe/Berlin ausdrücklich mit @grabowski umsetzen beauftragt. Der kanonische Runtimevertrag stuft diese Wirkung als break-glass ein. Die Freigabe gilt nur für die exakt gemergten Produzenten- und Verbraucherrevisionen, deren gebundene Runtimeinstallation und die beschriebenen Positiv-, Negativ-, Gesundheits- und Rollbackprüfungen; fremde offene Pull Requests, Dirty-States, Prozesse und Leases bleiben ausgeschlossen.",
+      "required_level": "break_glass"
     },
     "grabowski_resources": [
       "repo:/home/alex/repos/reposkop",
@@ -136,6 +136,7 @@
       "classification": "operator-transport-unavailable",
       "detail": "The Grabowski tool namespace was discovered successfully, but direct calls currently return Resource not found and rediscovery no longer exposes the namespace.",
       "effect": "No host installation or runtime deployment may be claimed until a fresh Grabowski preflight succeeds.",
+      "unblock_condition": "A fresh typed Grabowski status, Git, task/process/lease, blockade, binary and runtime preflight succeeds before any host effect; only then may a separate evidence-bound registry mutation transition this task to ready.",
       "does_not_establish": [
         "Grabowski runtime failure",
         "Reposkop binary corruption",
@@ -174,6 +175,6 @@
     "strategy": "Vor dem ersten Effekt werden die exakte alte Reposkop-Dateiidentität, SHA-256, Version und die aktive Grabowski-Release-/Manifestidentität gebunden. Bei einem Produzenten-, Verbraucher-, Audit-, Connector-, Doctor-, Runtime- oder Live-Roundtrip-Fehler werden keine weiteren Effekte ausgeführt. Falls bereits mutiert wurde, wird ausschließlich auf diese gebundenen Vorgängeridentitäten zurückgeschaltet; neue v2-Receipts werden nicht umgeschrieben oder gelöscht, sondern als fehlgeschlagene Cutover-Evidenz erhalten."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "blocked",
   "title": "Reposkop 2.0 und Grabowski-Verbraucher atomar ausrollen"
 }

@@ -1621,7 +1621,7 @@ def test_commit_rejects_unexpected_nonconflict_evidence(registry_factory, tmp_pa
 
     with pytest.raises(
         bureau_v2.legacy.StateError,
-        match="unexpected open PR nonconflict evidence",
+        match="intent differs from issued identity",
     ):
         dispatcher.commit_claim_intent(intent, None)
 

@@ -19,7 +19,13 @@ from typing import Any
 
 from . import legacy, runtime_refresh
 from .adapters import AdapterRegistry
-from .approval import explicit_operator_approval, require_approval, task_approval_contract
+from .approval import (
+    ApprovalEvidence,
+    break_glass_approval,
+    explicit_operator_approval,
+    require_approval,
+    task_approval_contract,
+)
 from .coordination_scope import (
     coordination_scope_for_task,
     coordination_scope_sha256,
@@ -62,12 +68,115 @@ EXTERNAL_AGENT_MARKERS = ("codex", "claude", "cline", "agy", "gemini", "jules")
 COORDINATED_CLAIM_INTENT_SCHEMA_VERSION = 1
 COORDINATED_CLAIM_INTENT_TTL_SECONDS = 300
 COORDINATED_CLAIM_MIN_LEASE_SECONDS = 60
+COORDINATED_CLAIM_ISSUED_EVENT = "coordinated-claim-intent-issued"
 
 
 def coordinated_claim_intent_sha256(intent: dict[str, Any]) -> str:
     payload = json.loads(json.dumps(intent))
     payload.pop("intent_sha256", None)
     return legacy.sha256_json(payload)
+
+
+
+
+def _coordinated_task_action_class(task: legacy.Task) -> str:
+    contract = task_approval_contract(task.raw)
+    action_class = contract.get("action_class")
+    if not isinstance(action_class, str) or not action_class:
+        raise legacy.StateError(
+            f"task {task.id} has no executable approval action class"
+        )
+    return action_class
+
+
+def _coordinated_claim_approval(
+    task: legacy.Task,
+    *,
+    worker_id: str,
+    run_id: str,
+    approved: bool,
+    break_glass: bool,
+    source: str,
+) -> tuple[ApprovalEvidence, dict[str, Any]]:
+    if approved and break_glass:
+        raise legacy.StateError(
+            "coordinated claim approval must choose operator or break-glass authority"
+        )
+    action_class = _coordinated_task_action_class(task)
+    if break_glass:
+        approval = break_glass_approval(
+            source=source,
+            approved=True,
+            reviewer=worker_id,
+            reference=run_id,
+            task_id=task.id,
+            scope=action_class,
+            note="explicit coordinated claim break-glass approval",
+        )
+    else:
+        approval = explicit_operator_approval(
+            source=source,
+            approved=approved,
+            reviewer=worker_id,
+            reference=run_id,
+            task_id=task.id,
+            scope=action_class,
+        )
+    decision = require_approval(
+        action_class,
+        approval,
+        expected_reference=run_id,
+        task_id=task.id,
+    )
+    return approval, decision
+
+
+def _coordinated_approval_from_dict(data: dict[str, Any]) -> ApprovalEvidence:
+    if data.get("schema_version") != 1:
+        raise legacy.StateError("coordinated claim approval schema is invalid")
+    level = data.get("level")
+    source = data.get("source")
+    reviewer = data.get("reviewer")
+    reference = data.get("reference")
+    task_id = data.get("task_id")
+    if not all(
+        isinstance(value, str) and value
+        for value in (source, reviewer, reference, task_id)
+    ):
+        raise legacy.StateError("coordinated claim approval identity is incomplete")
+    common = {
+        "source": source,
+        "approved": data.get("approved") is True,
+        "reviewer": reviewer,
+        "reference": reference,
+        "task_id": task_id,
+        "scope": data.get("scope"),
+        "note": data.get("note"),
+    }
+    if level == "operator":
+        return explicit_operator_approval(**common)
+    if level == "break_glass":
+        return break_glass_approval(**common)
+    raise legacy.StateError(
+        f"unsupported coordinated claim approval level {level or '<missing>'}"
+    )
+
+def _coordinated_claim_issuance(
+    intent: dict[str, Any], action_class: str
+) -> dict[str, Any]:
+    approval = intent["operator_approval"]
+    return {
+        "schema_version": 1,
+        "run_id": intent["run_id"],
+        "task_id": intent["task_id"],
+        "worker_id": intent["worker_id"],
+        "reviewer": approval["reviewer"],
+        "action_class": action_class,
+        "approval_level": approval["level"],
+        "approval_sha256": legacy.sha256_json(approval),
+        "intent_sha256": intent["intent_sha256"],
+        "expires_at_unix": intent["expires_at_unix"],
+    }
 
 
 def _validate_coordinated_claim_intent(intent: dict[str, Any]) -> None:
@@ -2750,6 +2859,81 @@ class StateStore:
             (run_id, event_type, legacy.canonical_json(payload), legacy.utc_now()),
         )
 
+    def issue_claim_intent(
+        self, intent: dict[str, Any], action_class: str
+    ) -> dict[str, Any]:
+        issuance = _coordinated_claim_issuance(intent, action_class)
+        with self.immediate() as connection:
+            rows = connection.execute(
+                "SELECT payload_json FROM events "
+                "WHERE run_id=? AND event_type=? ORDER BY event_id",
+                (intent["run_id"], COORDINATED_CLAIM_ISSUED_EVENT),
+            ).fetchall()
+            if len(rows) > 1:
+                raise legacy.StateError(
+                    "coordinated claim intent has multiple issuance records"
+                )
+            if rows:
+                existing = json.loads(rows[0]["payload_json"])
+                if existing != issuance:
+                    raise legacy.StateError(
+                        "coordinated claim run id already has another issuance"
+                    )
+                return existing
+            self.event(
+                connection,
+                COORDINATED_CLAIM_ISSUED_EVENT,
+                issuance,
+                intent["run_id"],
+            )
+        return issuance
+
+    def claim_intent_issuance(self, run_id: str) -> dict[str, Any]:
+        with self.connect() as connection:
+            rows = connection.execute(
+                "SELECT payload_json FROM events "
+                "WHERE run_id=? AND event_type=? ORDER BY event_id",
+                (run_id, COORDINATED_CLAIM_ISSUED_EVENT),
+            ).fetchall()
+        if len(rows) != 1:
+            raise legacy.StateError(
+                "coordinated claim intent has no unique issuance record"
+            )
+        issuance = json.loads(rows[0]["payload_json"])
+        required = {
+            "schema_version",
+            "run_id",
+            "task_id",
+            "worker_id",
+            "reviewer",
+            "action_class",
+            "approval_level",
+            "approval_sha256",
+            "intent_sha256",
+            "expires_at_unix",
+        }
+        if not isinstance(issuance, dict) or set(issuance) != required:
+            raise legacy.StateError(
+                "coordinated claim issuance fields are not exact"
+            )
+        if issuance.get("schema_version") != 1:
+            raise legacy.StateError(
+                "coordinated claim issuance schema is invalid"
+            )
+        text_fields = required - {"schema_version", "expires_at_unix"}
+        if not all(
+            isinstance(issuance.get(field), str) and issuance[field]
+            for field in text_fields
+        ):
+            raise legacy.StateError(
+                "coordinated claim issuance identity is incomplete"
+            )
+        if not isinstance(issuance.get("expires_at_unix"), int):
+            raise legacy.StateError(
+                "coordinated claim issuance expiry is invalid"
+            )
+        return issuance
+
     def register_worker(self, worker_id: str, kind: str, capabilities: tuple[str, ...]) -> None:
         if not worker_id or len(worker_id) > 200:
             raise legacy.StateError("worker_id must contain 1-200 characters")
@@ -3427,9 +3611,10 @@ class Dispatcher(legacy.Dispatcher):
         resource: str | None = None,
         base_dir: Path | None = None,
         approved: bool = False,
+        break_glass: bool = False,
         approval_source: str = "coordinated claim intent",
     ) -> dict[str, Any]:
-        """Return a source-bound claim plan without mutating Bureau state."""
+        """Issue a source-bound plan without claiming or creating run effects."""
         self._validate_resource_filter(resource)
         runtime_truth = self._runtime_execution_truth()
         runtime_stop = self._runtime_execution_stop(
@@ -3465,6 +3650,7 @@ class Dispatcher(legacy.Dispatcher):
             selected: legacy.Task | None = None
             approval_evidence: dict[str, Any] | None = None
             for task in self.registry.ordered_tasks():
+                candidate_approval_evidence: dict[str, Any] | None = None
                 if task_id is not None and task.id != task_id:
                     continue
                 if not self._task_matches_resource(task, resource):
@@ -3475,26 +3661,21 @@ class Dispatcher(legacy.Dispatcher):
                     review_reason in reasons
                     and task.mode == "interactive-agent"
                     and task.policy == "review-before-effect"
-                    and approved
+                    and (approved or break_glass)
                 ):
-                    approval = explicit_operator_approval(
+                    approval, _approval_decision = _coordinated_claim_approval(
+                        task,
+                        worker_id=worker_id,
+                        run_id=run_id,
+                        approved=approved,
+                        break_glass=break_glass,
                         source=approval_source,
-                        approved=True,
-                        reviewer=worker_id,
-                        reference=run_id,
-                        task_id=task.id,
-                        scope="repository_mutation",
-                    )
-                    require_approval(
-                        "repository_mutation",
-                        approval,
-                        expected_reference=run_id,
-                        task_id=task.id,
                     )
                     reasons = [reason for reason in reasons if reason != review_reason]
-                    approval_evidence = approval.as_dict()
+                    candidate_approval_evidence = approval.as_dict()
                 if not reasons:
                     selected = task
+                    approval_evidence = candidate_approval_evidence
                     break
                 rejected.append({"task_id": task.id, "reasons": reasons})
                 if task_id is not None:
@@ -3510,19 +3691,13 @@ class Dispatcher(legacy.Dispatcher):
                 + 1
             )
         if approval_evidence is None:
-            approval = explicit_operator_approval(
-                source=approval_source,
+            approval, _approval_decision = _coordinated_claim_approval(
+                selected,
+                worker_id=worker_id,
+                run_id=run_id,
                 approved=approved,
-                reviewer=worker_id,
-                reference=run_id,
-                task_id=selected.id,
-                scope="repository_mutation",
-            )
-            require_approval(
-                "repository_mutation",
-                approval,
-                expected_reference=run_id,
-                task_id=selected.id,
+                break_glass=break_glass,
+                source=approval_source,
             )
             approval_evidence = approval.as_dict()
         open_pr_scope = _task_open_pr_scope_assessment(
@@ -3568,6 +3743,9 @@ class Dispatcher(legacy.Dispatcher):
             ],
         }
         intent["intent_sha256"] = coordinated_claim_intent_sha256(intent)
+        self.store.issue_claim_intent(
+            intent, _coordinated_task_action_class(selected)
+        )
         return {
             "status": "claim-intent",
             "intent": intent,
@@ -3607,6 +3785,14 @@ class Dispatcher(legacy.Dispatcher):
             return _existing_coordinated_claim_result(existing, intent, resource_db=resource_db)
         if intent["expires_at_unix"] <= int(datetime.now(timezone.utc).timestamp()):
             raise legacy.StateError("coordinated claim intent expired")
+        issuance = self.store.claim_intent_issuance(intent["run_id"])
+        expected_issuance = _coordinated_claim_issuance(
+            intent, issuance["action_class"]
+        )
+        if issuance != expected_issuance:
+            raise legacy.StateError(
+                "coordinated claim intent differs from issued identity"
+            )
         runtime_truth = self._runtime_execution_truth()
         runtime_stop = self._runtime_execution_stop(
             command="claim-commit", runtime_truth=runtime_truth
@@ -3619,17 +3805,22 @@ class Dispatcher(legacy.Dispatcher):
         if task is None:
             raise legacy.StateError("coordinated claim task no longer exists")
         approval_data = intent["operator_approval"]
-        approval = explicit_operator_approval(
-            source=approval_data.get("source", "coordinated claim intent"),
-            approved=approval_data.get("approved") is True,
-            reviewer=approval_data.get("reviewer"),
-            reference=approval_data.get("reference"),
-            task_id=approval_data.get("task_id"),
-            scope=approval_data.get("scope"),
-            note=approval_data.get("note"),
-        )
+        approval = _coordinated_approval_from_dict(approval_data)
+        approval_action_class = _coordinated_task_action_class(task)
+        if issuance["action_class"] != approval_action_class:
+            raise legacy.StateError(
+                "coordinated claim issued action class differs from task"
+            )
+        if approval.reviewer != intent["worker_id"]:
+            raise legacy.StateError(
+                "coordinated claim approval reviewer differs from worker"
+            )
+        if tuple(approval.scope) != (approval_action_class,):
+            raise legacy.StateError(
+                "coordinated claim approval scope differs from task action class"
+            )
         approval_decision = require_approval(
-            "repository_mutation",
+            approval_action_class,
             approval,
             expected_reference=intent["run_id"],
             task_id=task.id,

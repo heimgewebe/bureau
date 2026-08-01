@@ -312,6 +312,7 @@ class Dispatcher(_BaseDispatcher):
         resource: str | None = None,
         base_dir: Path | None = None,
         approved: bool = False,
+        break_glass: bool = False,
         approval_source: str = "coordinated claim intent",
     ) -> dict[str, Any]:
         evidence: dict[str, Any] | None = None
@@ -350,6 +351,7 @@ class Dispatcher(_BaseDispatcher):
                 resource=resource,
                 base_dir=base_dir,
                 approved=approved,
+                break_glass=break_glass,
                 approval_source=approval_source,
             )
         finally:

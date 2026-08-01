@@ -3,7 +3,7 @@
   "id": "OPERATOR-INTEGRATION-LOOP-V1-T002",
   "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
   "title": "Add WGX quick and full validation receipts",
-  "state": "planned",
+  "state": "ready",
   "priority": {
     "lane": "later",
     "rank": 380
@@ -14,8 +14,7 @@
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/wgx",
     "grabowski_resources": [
-      "repo:/home/alex/repos/wgx",
-      "repo:/home/alex/repos/grabowski"
+      "repo:/home/alex/repos/wgx"
     ]
   },
   "claims": [
@@ -23,11 +22,6 @@
       "resource": "repo.wgx",
       "mode": "write",
       "isolation": "worktree"
-    },
-    {
-      "resource": "repo.grabowski",
-      "mode": "read",
-      "isolation": "none"
     }
   ],
   "required_capabilities": [
@@ -66,7 +60,93 @@
       "merge_readiness_from_quick_profile",
       "test_sufficiency",
       "runtime_correctness"
-    ]
+    ],
+    "readiness": {
+      "schema_version": 1,
+      "kind": "operator-authorized-task-readiness",
+      "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T002",
+      "ready_at": "2026-08-01T19:46:15Z",
+      "authorized_by": "alex",
+      "authorization_reference": "chat:2026-08-01T21:15+02:00 @grabowski gehe ins bureau und hole die nächste aufgabe ab. setze sie um.",
+      "source_main_head": "039f0a1d5d43dcb7782e977be985dc3b0a14ecf7",
+      "selected_by": {
+        "command": "bureau what-now",
+        "task_id": "OPERATOR-INTEGRATION-LOOP-V1-T002",
+        "queue_lane": "later",
+        "queue_index": 36,
+        "priority_rank": 380
+      },
+      "preexisting_implementation": {
+        "repository": "heimgewebe/wgx",
+        "pull_request": 654,
+        "final_head": "f924660f86c5d5e3162197692e8cc985e6301e54",
+        "merge_commit": "88304251454a93ee9590e1971457540472681b77",
+        "merged_at": "2026-08-01T15:45:31Z",
+        "tree_equivalent": true
+      },
+      "exact_scope": [
+        "path:/home/alex/repos/wgx/cmd/validate.bash",
+        "path:/home/alex/repos/wgx/modules/validate_runner.py",
+        "path:/home/alex/repos/wgx/modules/profile_parser.py",
+        "path:/home/alex/repos/wgx/scripts/validate_fleet_proof.sh",
+        "path:/home/alex/repos/wgx/tests",
+        "path:/home/alex/repos/wgx/docs",
+        "path:/home/alex/repos/wgx/.wgx"
+      ],
+      "checks": {
+        "initiative_active": true,
+        "dependency_verified": true,
+        "operator_authorization_present": true,
+        "selected_by_current_what_now": true,
+        "open_wgx_pull_requests_observed": 0,
+        "preexisting_implementation_merged": true,
+        "feature_and_main_trees_equal": true,
+        "acceptance_scope_resolved": true,
+        "review_before_effect_preserved": true
+      },
+      "does_not_establish": [
+        "claim_or_dispatch_authority before this readiness change is merged",
+        "absence of future repository conflicts",
+        "automatic verification",
+        "merge readiness of the Bureau readiness PR",
+        "runtime correctness beyond the cited WGX evidence"
+      ],
+      "selection_revalidated_at": "2026-08-01T20:04:27Z",
+      "selection_revalidation": {
+        "command": "bureau what-now",
+        "registry_head": "039f0a1d5d43dcb7782e977be985dc3b0a14ecf7",
+        "selected_task_id": "OPERATOR-INTEGRATION-LOOP-V1-T002",
+        "queue_lane": "later",
+        "queue_index": 36,
+        "priority_rank": 380,
+        "approval_contract_required": true,
+        "approval_contract_observed_reason": "explicit approval missing before reviewed readiness merge"
+      }
+    },
+    "claim_scope_correction": {
+      "schema_version": 1,
+      "corrected_at": "2026-08-01T20:19:44Z",
+      "failed_claim_run": "BUR-RUN-20260801T201330Z-12d573f49c",
+      "observed_failure": "lease-acquisition-failed before claim commit",
+      "removed_claim": {
+        "resource": "repo.grabowski",
+        "mode": "read",
+        "isolation": "none"
+      },
+      "removed_grabowski_resource": "repo:/home/alex/repos/grabowski",
+      "reason": "The task implementation and acceptance surface are entirely in WGX. The broad read claim on the Grabowski repository was an unnecessary coordination dependency and collided with unrelated active Grabowski branch leases. Broad repository leases are intentionally not bypassable by a non-conflict proof.",
+      "remaining_effect_scope": {
+        "repository": "/home/alex/repos/wgx",
+        "mode": "write",
+        "isolation": "worktree"
+      },
+      "does_not_establish": [
+        "permission to alter or clean existing Grabowski worktrees",
+        "absence of future WGX conflicts",
+        "automatic task verification",
+        "successful claim until current-main readback"
+      ]
+    }
   },
   "depends_on": [
     "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T009"

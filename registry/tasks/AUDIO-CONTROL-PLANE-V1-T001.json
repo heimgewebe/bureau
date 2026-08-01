@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T001",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Audio-Systemwahrheit und sichere Referenzmessungen schließen",
-  "state": "ready",
+  "state": "blocked",
   "goal": "Die Phasen 0 und 1 als gemeinsame read-only Wahrheits- und Messgrundlage einschließlich sicherer Hör-, Aufnahme- und Gerätebelege abschließen.",
   "depends_on": [],
   "priority": {
@@ -98,6 +98,54 @@
     "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
     "plan_commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
     "plan_document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc",
+    "blocker": {
+      "schema_version": 1,
+      "code": "physical-audio-hardware-and-human-readback-required",
+      "observed_at": "2026-08-01T20:32:45.371232+00:00",
+      "hardware": {
+        "motu_m2_present": false,
+        "roland_fp_30x_present": false
+      },
+      "physical_fact_counts": {
+        "known": 0,
+        "unknown": 16
+      },
+      "round_trip_latency_ms": null,
+      "profiles_ready": {
+        "headphone_listening": false,
+        "voice_recording": false,
+        "piano_software_monitoring": false
+      },
+      "required_to_unblock": [
+        "MOTU M2 physisch anschließen und über ALSA/PipeWire sichtbar machen",
+        "Roland FP-30X für die einschlägigen Prüfungen physisch anschließen und sichtbar machen",
+        "physische Gain-, Routing-, Phantomspannungs- und Hörreglerzustände menschlich bestätigen",
+        "reale Stimm- und Loopbackmessungen unter den vorhandenen sicheren Labor-Gates durchführen"
+      ],
+      "evidence": [
+        {
+          "kind": "bureau_run",
+          "run_id": "BUR-RUN-20260730T223535Z-289ae93b62",
+          "outcome": "failed_without_repository_or_runtime_effect",
+          "reason": "MOTU M2 and Roland FP-30X absent; physical truth incomplete"
+        },
+        {
+          "kind": "read_only_audio_doctor",
+          "lease_owner": "operator:chatgpt:audio-host-observation:20260801T2232",
+          "observed_at": "2026-08-01T20:32:45.371232+00:00",
+          "motu_m2_present": false,
+          "roland_fp_30x_present": false,
+          "physical_unknown_count": 16,
+          "round_trip_latency_ms": null,
+          "host_mutation": false
+        }
+      ],
+      "does_not_establish": [
+        "physische Wahrheit ohne menschlichen Readback",
+        "Apply-Autorität für Audio-Profile",
+        "automatische Wiederaufnahme ohne neuen Live-Readback"
+      ]
+    },
     "does_not_establish": [
       "physische Wahrheit ohne menschlichen Readback",
       "Apply-Autorität für Audio-Profile"

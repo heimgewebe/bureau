@@ -2370,6 +2370,36 @@ def test_coordinated_claim_intent_records_issuance_and_requires_approval(
         ).fetchone()[0] == 1
 
 
+def test_coordinated_claim_binds_approval_to_selected_candidate(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(2, mode="write")
+    first_path = root / "registry/tasks/BUR-TEST-001-T001.json"
+    first = json.loads(first_path.read_text())
+    first["execution"]["policy"] = "review-before-effect"
+    first["required_capabilities"] = ["repository", "shell"]
+    first_path.write_text(json.dumps(first))
+    init_clean_origin_main(root)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    result = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        approved=True,
+        approval_source="test selected candidate approval",
+    )
+
+    intent = result["intent"]
+    assert intent["task_id"] == "BUR-TEST-001-T002"
+    assert intent["operator_approval"]["task_id"] == "BUR-TEST-001-T002"
+    assert intent["operator_approval"]["scope"] == ["repository_mutation"]
+    issuance = store.claim_intent_issuance(intent["run_id"])
+    assert issuance["task_id"] == "BUR-TEST-001-T002"
+    assert issuance["approval_sha256"] == bureau_v2.legacy.sha256_json(
+        intent["operator_approval"]
+    )
+
+
 
 
 def test_coordinated_runtime_claim_rejects_operator_approval(

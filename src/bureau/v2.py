@@ -3650,6 +3650,7 @@ class Dispatcher(legacy.Dispatcher):
             selected: legacy.Task | None = None
             approval_evidence: dict[str, Any] | None = None
             for task in self.registry.ordered_tasks():
+                candidate_approval_evidence: dict[str, Any] | None = None
                 if task_id is not None and task.id != task_id:
                     continue
                 if not self._task_matches_resource(task, resource):
@@ -3671,9 +3672,10 @@ class Dispatcher(legacy.Dispatcher):
                         source=approval_source,
                     )
                     reasons = [reason for reason in reasons if reason != review_reason]
-                    approval_evidence = approval.as_dict()
+                    candidate_approval_evidence = approval.as_dict()
                 if not reasons:
                     selected = task
+                    approval_evidence = candidate_approval_evidence
                     break
                 rejected.append({"task_id": task.id, "reasons": reasons})
                 if task_id is not None:

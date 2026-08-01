@@ -1,0 +1,109 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The evidence records the exact Commonworld commit and deployed release together with the physical iPad model, iPadOS version, Safari version, power mode, viewport orientation and accessibility motion setting; simulated Chromium tablet profiles are not accepted as physical-device proof.",
+      "evidence_type": "object",
+      "id": "exact-device-release-binding"
+    },
+    {
+      "assertion": "Physical Safari measurements cover idle ring motion, map pan and zoom, focus or touch pause, digital hierarchy entry and return, portrait and landscape orientation, and reduced-motion mode. Each scenario is captured from the physical iPad as a separate exported Safari Web Inspector Timelines recording, delimited by console.profile and console.profileEnd or console.timeStamp markers, with Frames and Layout & Rendering composite and paint records. Paired Layers evidence records the relevant layer tree, layer-creation reasons, cumulative paint counts and memory costs, with compositing borders and paint flashing used to show whether the bundle or subordinate rings repaint or animate independently. Every scenario is repeated at the warm-up and repetition counts frozen by thresholded-decision, and both the cadence records and the compositor finding on independent subordinate-ring animation are reported per repetition and agree across them.",
+      "evidence_type": "object",
+      "id": "bounded-interaction-profile"
+    },
+    {
+      "assertion": "Before the first profiling sample, a frozen plan records numeric frame-cadence and long-frame thresholds, warm-up and repetition counts, the aggregation rule, and the exact retain-versus-reduce decision mapping between retaining the current maximum of four subordinate lines and one text lane per bundle and reducing detail on affected devices; the final evidence binds that unchanged plan by digest and timestamp to the measured results, and visual preference alone is not treated as a performance breach.",
+      "evidence_type": "object",
+      "id": "thresholded-decision"
+    },
+    {
+      "assertion": "If a threshold is breached, the remediation preserves one animated group and at most one moving textPath per bundle, introduces no per-letter DOM, keeps hierarchy semantics and accessibility summaries intact, and regenerates all version-bound public and release surfaces.",
+      "evidence_type": "object",
+      "id": "safe-remediation-if-needed"
+    },
+    {
+      "assertion": "The exact evidence or remediation head passes focused ring-bundle tests, full repository validation, browser smoke, diff-bound self-review and required GitHub checks; any deployment claim is followed by exact-SHA Pages and production readback.",
+      "evidence_type": "object",
+      "id": "exact-head-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Profiling is read-only until evidence shows a threshold breach; any corrective code change requires an isolated worktree, exact release binding and full Commonworld validation.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/commonworld"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Verify the adaptive digital-sphere ring bundles on a physical iPad in Safari against an exact deployed Commonworld release, measure frame cadence and compositing during idle rotation, map interaction and hierarchy transitions, and either confirm the current responsive budgets or implement a smaller fail-safe detail level without adding independently animated child rings.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T038",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "that Chromium iPad viewport smoke is equivalent to physical Safari GPU or compositor evidence",
+      "that Safari Web Inspector Timelines or Layers evidence directly measures GPU utilization, device-wide energy use or operating-system thermal behavior",
+      "permission to change the current ring-bundle PR without a measured threshold breach",
+      "permission to create independently animated subordinate ring text",
+      "automatic merge, deployment or production verification authority"
+    ],
+    "source": "Commonworld ring-bundle implementation closeout on 2026-08-01",
+    "source_candidate_id": "candidate-2f91259ec1c4070d81a6d7ba",
+    "source_event_id": 1986,
+    "source_sha256": "366e270b35ea13006e3462e536014f3160f25a2cc0e47285b6698e08575a7a58",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-2f91259ec1c4070d81a6d7ba",
+      "event_id": 1986,
+      "event_created_at": "2026-08-01T17:15:29.353073Z",
+      "request_sha256": "1c2a8f76d7603cf2d0dcc297a0aff43a8cdfe6cafaf39f9b085f64520a739ca7",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "implementation-closeout",
+        "locator": "chatgpt:commonworld:ring-bundles:2026-08-01",
+        "observed_at": "2026-08-01T17:15:29.336096Z",
+        "sha256": "366e270b35ea13006e3462e536014f3160f25a2cc0e47285b6698e08575a7a58"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 35
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "testing",
+    "browser",
+    "webkit",
+    "ios",
+    "mobile",
+    "profiling",
+    "performance-measurement"
+  ],
+  "rollback": {
+    "strategy": "If a corrective detail policy regresses hierarchy, accessibility or layout, revert the device-specific policy and regenerated release artifacts together while retaining the physical-device evidence and threshold decision for a revised implementation."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Profile adaptive ring bundles on physical iPad Safari"
+}

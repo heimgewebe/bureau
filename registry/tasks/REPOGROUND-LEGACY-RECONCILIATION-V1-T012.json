@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
-  "state": "ready",
+  "state": "blocked",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -38,7 +38,156 @@
       "continuation_worktree": "/home/alex/repos/repoground-t004-chatgpt-20260729",
       "continuation_branch": "bureau/repoground-legacy-reconciliation-v1-t004/chatgpt-20260729",
       "continuation_rule": "Rebind the fresh isolated current-main service split worktree to T012 after verifying no open RepoGround PR and no live conflicting broad RepoGround lease; do not reuse historical T004 worktrees."
-    }
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-82360406cc7f07c1bd7b5d48",
+      "event_id": 1972,
+      "event_created_at": "2026-08-01T15:34:59.507412Z",
+      "request_sha256": "228c44c8ebace2cb9df66c0ca59b48fbc744b7678842038c1b7387711ad2752a",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "registry-pr-reconciliation",
+        "locator": "bureau:registry-snapshot:7243b5a45ca76a2876fe4deda9ac4752ddc562ec;repoground:pr/1124,pr/1130",
+        "observed_at": "2026-08-01T17:30:00+02:00",
+        "sha256": "fcba855b70c71f80ac1b930bcc9bad0415178964cdc1503a61cd7d6ac12468c7"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "acceptance_evidence_observed_at": "2026-08-01T16:05:03Z",
+    "implementation_outcome": "RepoGround PR #1124 zerlegte service/app.py am Merge 20b9fa60add19370a8f0e1620c59a640ed135139 in getrennte Health-, Query-, Job-, Artefakt- und Atlas-Router. PR #1130 band den unveränderten Produktstand am Merge a1846da73901f1da5a17b6bed51be74de1e1869a an einen frischen 33-Routen-/OpenAPI-Snapshot, Auth- und Traversal-Negativbelege, einen isolierten ASGI-Readback sowie eine kausale Vorher-/Nachher-Messung. Der aktuelle RepoGround-main-Readback a60d0dd93ad8b18bbbce94ccc1267c27ab0a34b9 enthält dieselben T012-Produkt- und Proofbytes und ist vollständig CI-grün; die Produktimplementierung darf nicht erneut ausgeführt werden.",
+    "block_reason": "Der terminale Wechsel auf verified lässt den unveränderten vollständigen Bureau-Gate-Lauf deterministisch in tests/test_parent_child_claim_gate.py::test_real_t004_registry_contract_has_explicit_bounded_relationships scheitern: Die reale Parent-/Child-Projektion entfernt T012 korrekt aus T004.blocking_child_task_ids, während der Test weiterhin T010, T012 und T014 erwartet. Der Auftrag erlaubt ausschließlich Änderungen an T012.json und T004.json und verbietet damit die nötige enge Test-Fixture-Fortschreibung; bei 953 bestandenen Tests blieb genau dieser eine Fehler.",
+    "next_action": "In einem separat autorisierten engen Bureau-Contract-Änderungssatz die reale T004-Test-Fixture an den terminalen T012-Zustand anpassen, danach alle geforderten Gates erneut ausführen und T012 ohne jede RepoGround-Produktänderung auf verified setzen.",
+    "implementation": {
+      "repository": "heimgewebe/repoground",
+      "pull_requests": [
+        {
+          "number": 1124,
+          "base_sha": "b7a807dbe22cff864b5407c8b4ba42f6ae97f1e2",
+          "head_sha": "54d577576a46cf630d09e00386028ac8aeed6b85",
+          "merge_commit_sha": "20b9fa60add19370a8f0e1620c59a640ed135139",
+          "merge_tree_sha": "2b61f3c35930cf98fbf71306bacb27d7410289de",
+          "merged_at": "2026-07-30T05:06:48Z",
+          "diff_sha256": "668f490507001f69f9c29fbaea1f17d81f681c830c0e506b55d6fb6164fdbcdc",
+          "diff_basis": "GitHub compare b7a807dbe22cff864b5407c8b4ba42f6ae97f1e2...20b9fa60add19370a8f0e1620c59a640ed135139"
+        },
+        {
+          "number": 1130,
+          "base_sha": "04f83dcce6cb40aa572ca155ca15eb88ae2202d4",
+          "head_sha": "b4ea19555a626055d110a7932759ab50116bbb30",
+          "merge_commit_sha": "a1846da73901f1da5a17b6bed51be74de1e1869a",
+          "merge_tree_sha": "6dab2f8a62899de0e464aaafc2826ee2f8c9b333",
+          "merged_at": "2026-07-30T16:46:23Z",
+          "diff_sha256": "91fb4f7761af1dbd391e3158f0f5c9a57d37c6bc5499898289983f1138f5bcda",
+          "diff_basis": "GitHub compare 04f83dcce6cb40aa572ca155ca15eb88ae2202d4...a1846da73901f1da5a17b6bed51be74de1e1869a"
+        }
+      ],
+      "review_readback": {
+        "pull_request_1124": {
+          "reviews": 0,
+          "review_threads": 0,
+          "issue_comments": 0
+        },
+        "pull_request_1130": {
+          "reviews": 0,
+          "review_threads": 0,
+          "issue_comments": 1,
+          "self_review_comment": "https://github.com/heimgewebe/repoground/pull/1130#issuecomment-5133724256",
+          "independent_review": false
+        },
+        "material_open_findings": 0
+      }
+    },
+    "evidence": {
+      "proof_path": "docs/proofs/repoground-t012-service-router-split-20260730.md",
+      "proof_sha256": "223d993f864992b730e10fcfc5e5480003b4ac9a2ee3093286b683f3e2b7b8e9",
+      "measurement_path": "docs/proofs/repoground-t012-service-router-split-20260730.measurement.json",
+      "measurement_sha256": "fe198ddcc78079cb8cd92038c96fcb234ea6117d8269f6148ace2f8806720e3a",
+      "closeout_test_path": "merger/repoground/tests/test_service_router_closeout.py",
+      "closeout_test_sha256": "8f51d6c21d7edbb8c3b7d1acda3a9ed6ba6ff9f664b636c0206b40549d673c78",
+      "benchmark_path": "scripts/benchmarks/measure_service_router_split.py",
+      "benchmark_sha256": "9de063e4d0e8bec825f21ceb7da6435d99056650a1fb08aa3e70d89965311ee2"
+    },
+    "current_main_readback": {
+      "observed_at": "2026-08-01T16:05:03Z",
+      "commit": "a60d0dd93ad8b18bbbce94ccc1267c27ab0a34b9",
+      "tree": "dd0a467a36c33157dfa0e043830eb93c1093a2f9",
+      "commits_after_closeout_merge": 14,
+      "t012_relevant_files_changed_after_a1846da73901f1da5a17b6bed51be74de1e1869a": [],
+      "service_app_lines": 824,
+      "service_app_bytes": 29691,
+      "service_app_sha256": "5235e19249fe9a6064358cea5956203caa0580b740731613e6f930b7f68841d6",
+      "c901_finding_count": 189,
+      "c901_max_complexity": 138,
+      "module_reachability": {
+        "module_count": 238,
+        "unproven": 0,
+        "documentation_only": 0,
+        "test_only": 0,
+        "status": "pass"
+      }
+    },
+    "validation": {
+      "pull_request_heads": {
+        "1124": "20 visible checks passed on 54d577576a46cf630d09e00386028ac8aeed6b85",
+        "1130": "20 visible checks passed on b4ea19555a626055d110a7932759ab50116bbb30; pytest-full run 30558612659 passed 5203 tests, skipped 17 and deselected 13"
+      },
+      "committed_focused_results": {
+        "fresh_process_closeout": "8 passed",
+        "adjacent_runtime_security": "94 passed"
+      },
+      "current_main": {
+        "commit": "a60d0dd93ad8b18bbbce94ccc1267c27ab0a34b9",
+        "check_runs": "30/30 successful",
+        "pytest_full_run": 30699103189,
+        "pytest_full": "5265 passed, 17 skipped, 13 deselected",
+        "lint_run": 30699103173,
+        "lint_complexity_reachability": "pass"
+      },
+      "attempted_terminal_lifecycle_closeout": {
+        "command": "make validate",
+        "result": "blocked",
+        "passed": 953,
+        "failed": 1,
+        "failing_test": "tests/test_parent_child_claim_gate.py::test_real_t004_registry_contract_has_explicit_bounded_relationships",
+        "actual_blocking_children_after_terminal_transition": [
+          "REPOGROUND-LEGACY-RECONCILIATION-V1-T010",
+          "REPOGROUND-LEGACY-RECONCILIATION-V1-T014"
+        ],
+        "stale_expected_blocking_children": [
+          "REPOGROUND-LEGACY-RECONCILIATION-V1-T010",
+          "REPOGROUND-LEGACY-RECONCILIATION-V1-T012",
+          "REPOGROUND-LEGACY-RECONCILIATION-V1-T014"
+        ]
+      }
+    },
+    "acceptance_evidence": {
+      "router-boundaries": "PASS: Der exakte Merge 20b9fa60 enthält getrennte health_router.py, query_router.py, job_router.py, artifact_router.py und atlas_router.py; app.py fiel von 2394 auf 824 Zeilen und bindet die fünf Router explizit über build_router-Abhängigkeiten und include_router.",
+      "auth-boundary": "PASS: Der frische Vertrags-Snapshot weist verify_token auf allen 31 nichtöffentlichen API-Methoden/Pfaden nach. verify_token vergleicht konstantzeitig und antwortet fail-closed mit 401; gemeinsame Pfadauflösung, Artefakt-Containment, Atlas-Allowlist, Traversal- und Symlink-Negativtests blieben am exakten Closeout-Head und auf aktuellem main grün.",
+      "api-parity": "PASS: Vor b7a807db und nach 20b9fa60 sind 33 Methoden/Pfade, 33 OpenAPI-Pfade, 18 Schemas, der normalisierte Routenhash 01028deb2057dc0d267d18d13b4040f7241897a6c32d1a1870b1db570bc4dc4a und der OpenAPI-Hash 9d645279574fc2c7d086f220fd1287595513b9a77d9700430807d1bd3d103c2e identisch; der Snapshot läuft in einem checkoutgebundenen frischen Interpreter und scheitert bei Timeout, falschem Modulpfad, Prozess- oder JSON-Fehler.",
+      "runtime-proof": "PASS: test_isolated_service_readback_covers_health_auth_jobs_and_query baut Hub, JobStore und echte SQLite-Querydaten isoliert auf; belegt Health 200, fehlende/falsche Auth 401, Create/Get/List/Cancel/Get eines Jobs sowie eine authentisierte read-only Query und identische Größe, mtime_ns und SHA-256 der SQLite-Datei vor/nach Zugriff.",
+      "complexity-performance": "PASS: app.py fiel von 2394 auf 824 Zeilen; die C901-Baseline fiel im T012-Paar von 191 auf 189 Findings bei unverändertem Maximum 138. Neun frische Prozesse je Revision messen Import/App-Median 899,300174 auf 896,443606 ms, Health-p50 0,698045 auf 0,700074 ms und RSS nach Import 67624 auf 67660 KiB; die kleinen Median-/RSS-Deltas sind keine materielle Regression, während Ausreißer und Hostlast ungekürzt dokumentiert bleiben."
+    },
+    "closeout_binding": {
+      "bureau_snapshot_commit": "61159099eba69cd2cfa0cec66bff20f48188d71b",
+      "bureau_snapshot_tree": "16feb71859c4a122386c2aea47b0e0fb80b37214",
+      "closeout_input_task_sha256": "4578436a985f54f41fc61950e642b788d21203e3490d496f6d4e81e18627a7d8",
+      "operator_intake_source_sha256": "fcba855b70c71f80ac1b930bcc9bad0415178964cdc1503a61cd7d6ac12468c7",
+      "observed_at": "2026-08-01T16:05:03Z"
+    },
+    "closeout_does_not_establish": [
+      "production deployment of the T012 merges",
+      "Uvicorn, TCP, proxy or TLS runtime behavior",
+      "a performance SLO or statistical significance",
+      "independent review completeness",
+      "terminal T012 verification before the Bureau parent-child fixture is updated and all gates pass",
+      "completion of REPOGROUND-LEGACY-RECONCILIATION-V1-T004 or T014"
+    ]
   },
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T012",
   "title": "Service-App in Router, Jobs und Atlas-Flächen trennen",

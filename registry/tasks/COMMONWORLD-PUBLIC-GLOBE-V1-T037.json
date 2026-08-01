@@ -1,0 +1,118 @@
+{
+  "acceptance": [
+    {
+      "assertion": "One explicit editorial validation contract associates each released locale with bounded generic-summary formulations and explains when similar wording is allowed because it conveys a concrete distinguishing governance or responsibility fact.",
+      "evidence_type": "object",
+      "id": "locale-aware-policy"
+    },
+    {
+      "assertion": "Canonical German summaries and the English locale overlay reject recurring generic formulations, including German equivalents of gemeinschaftlich entwickelt or gemeinsam gepflegt and English equivalents such as community-developed, community-driven or collaboratively developed, without relying on one language's phrase list for another locale.",
+      "evidence_type": "object",
+      "id": "german-english-coverage"
+    },
+    {
+      "assertion": "A locale cannot be promoted to released status unless its summary-specificity validation policy and positive and negative regression cases are present; planned locales remain unaffected until promotion.",
+      "evidence_type": "object",
+      "id": "future-locale-gate"
+    },
+    {
+      "assertion": "Tests prove that concrete distinguishing claims such as member-owned governance, an elected council, a maintained package archive or named stewardship duties remain valid even when they describe collective action.",
+      "evidence_type": "object",
+      "id": "false-positive-boundary"
+    },
+    {
+      "assertion": "Validation covers canonical project summaries and every released locale overlay summary through independent mutation tests and reports the exact locale, project and matched rule on failure.",
+      "evidence_type": "object",
+      "id": "all-summary-surfaces"
+    },
+    {
+      "assertion": "Canonical data, locale overlays, generated public shells, runtime assets, immutable release and evidence bindings are regenerated deterministically and pass full repository validation plus desktop, mobile and iPad browser smoke on the exact implementation head.",
+      "evidence_type": "object",
+      "id": "generated-release-parity"
+    },
+    {
+      "assertion": "Closeout binds the complete diff and exact head to self-review, required GitHub checks, merge commit, exact-SHA Pages deployment and production readback.",
+      "evidence_type": "object",
+      "id": "exact-head-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.commonworld"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "The user requires sensible unfixed Commonworld findings to be registered and implemented autonomously. This task is a bounded catalogue-validation change; coordinate with T036 and never mutate foreign worktrees or active leases.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/commonworld"
+  },
+  "goal": "Prevent Commonworld catalogue summaries from reintroducing generic Commons boilerplate in any supported interface locale by defining locale-appropriate specificity checks, while preserving concrete distinguishing statements about governance, participation and responsibility.",
+  "id": "COMMONWORLD-PUBLIC-GLOBE-V1-T037",
+  "initiative": "COMMONWORLD-PUBLIC-GLOBE-V1",
+  "metadata": {
+    "coordinates_with": [
+      "COMMONWORLD-PUBLIC-GLOBE-V1-T036"
+    ],
+    "does_not_establish": [
+      "that all future locale wording can be exhaustively recognized by static phrases",
+      "permission to reject concrete governance facts merely because they describe collaboration",
+      "permission to expose a planned locale before T036 promotion gates pass",
+      "automatic queue, claim, dispatch, merge or deployment authority"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-4614b5ae995b698aa8913ae4",
+      "event_id": 1933,
+      "event_created_at": "2026-08-01T06:48:56.127567Z",
+      "request_sha256": "48dcc7ed2220d155c008f3ef61bc13e8482e5ca662b94ecd0e28701c9e4f98e7",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "pull-request-review",
+        "locator": "github-pr:heimgewebe/commonworld#173:discussion_r2458567642",
+        "observed_at": "2026-08-01T06:47:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-08-01",
+    "source": "Commonworld PR #173 Codex review and post-merge audit",
+    "source_head": "93a545f03fa4b053135fe3d741c8bebb64a186f9",
+    "source_merge": "9497e5f025ac4136a4a04c794b92f5c50253d38a",
+    "source_pull_request": 173,
+    "source_repository": "heimgewebe/commonworld",
+    "source_review_thread": "discussion_r2458567642"
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 15
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "shell",
+    "grabowski",
+    "testing",
+    "browser"
+  ],
+  "rollback": {
+    "strategy": "Revert the locale-aware summary policy, validator and tests together, regenerate the previous release surface and verify the restored exact release; do not remove the project-specific summaries introduced by PR #173."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Make summary boilerplate validation locale-aware"
+}

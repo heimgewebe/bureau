@@ -1,0 +1,126 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die während PR #1296 beobachteten Fehlannahmen über dict-, list- und verschachtelte result-Formen werden mit kleinen ausführbaren Reproducern nachgestellt und als Produktvertrag, Auswerterfehler oder Dokumentationslücke klassifiziert.",
+      "evidence_type": "object",
+      "id": "failure-reproduction",
+      "verifier": "ausführbarer Reproducer auf exakter Revision"
+    },
+    {
+      "assertion": "Für doctor, frontier, check und runtime-identity sind Top-Level-Schema, Befehlsidentität, result-Typ, optionale Zusatzfelder und bestehende Kompatibilitätszusagen auf einer exakten Main-Revision inventarisiert.",
+      "evidence_type": "object",
+      "id": "contract-inventory",
+      "verifier": "revisionsgebundene Ausgabe- und Codeanalyse"
+    },
+    {
+      "assertion": "Eine explizite Entscheidung implement oder no-change ist an Reproducer, Vertragsinventar und Nutzen gebunden. No-change ist erforderlich, wenn nur fehlerhafte ad-hoc Auswerter vorlagen und der vorhandene Vertrag ausreichend eindeutig ist.",
+      "evidence_type": "object",
+      "id": "decision-bound",
+      "verifier": "hashgebundener Entscheidungsbeleg"
+    },
+    {
+      "assertion": "Bei implement können Auswerter den Befehl und die befehlsspezifische Ergebnisform über einen stabilen, versionierten Vertrag unterscheiden, ohne result pauschal als Liste oder Objekt anzunehmen. Bei no-change ist belegt, welcher vorhandene Discriminator dafür bereits genügt.",
+      "evidence_type": "object",
+      "id": "typed-discrimination",
+      "verifier": "Vertragstests oder No-change-Beleg"
+    },
+    {
+      "assertion": "Eine Implementierung erhält bestehende JSON-Felder und befehlsspezifische result-Inhalte kompatibel; mehrdeutige oder nicht unterstützte Legacyformen werden fail-closed behandelt.",
+      "evidence_type": "boolean",
+      "id": "compatibility",
+      "verifier": "Regressionstests auf exakter Head-Revision"
+    },
+    {
+      "assertion": "Die Aufgabe verändert keine Registry-, Queue-, Claim-, Dispatch-, Review-, Merge-, Deployment- oder Lease-Autorität und vereinheitlicht befehlsspezifische Ergebnisdaten nicht künstlich.",
+      "evidence_type": "boolean",
+      "id": "boundary",
+      "verifier": "Diff- und Autoritätsreview"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.docs"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat am 1. August 2026 die vollständige Umsetzung samt Registrierung sinnvoller Restarbeit beauftragt. Eine spätere Mutation ist ausschließlich nach revisionsgebundener Auditentscheidung zulässig; unterschiedliche befehlsspezifische JSON-Ergebnisformen dürfen nicht ohne Nutzen vereinheitlicht werden.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/cli.py",
+      "path:/home/alex/repos/bureau/src/bureau/runtime_refresh.py",
+      "path:/home/alex/repos/bureau/tests",
+      "path:/home/alex/repos/bureau/docs"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Prüfe revisionsgebunden die maschinenlesbaren JSON-Ausgaben von doctor, frontier, check, runtime-identity und eng verwandten Bureau-Befehlen. Ermittle, ob der bestehende schema-versionierte Top-Level-Vertrag Ergebnisform und Befehlstyp bereits eindeutig genug beschreibt oder ob ein stabiler Discriminator beziehungsweise eine gemeinsame Parser-Hilfe fehlt. Unterschiedliche befehlsspezifische result-Formen bleiben zulässig. Nur eine belegte Lücke mit reproduzierbarem Operatornutzen wird kompatibel gehärtet; andernfalls endet die Aufgabe mit einem revisionsgebundenen No-change-Beleg.",
+  "id": "BUREAU-TRUTH-MODEL-V2-T023",
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "metadata": {
+    "does_not_establish": [
+      "Vorliegen eines Produktfehlers",
+      "Notwendigkeit einer neuen JSON-Version",
+      "Taskbereitschaft",
+      "Claim- oder Mergeautorität",
+      "Erlaubnis zur inkompatiblen Ausgabeänderung"
+    ],
+    "observed_failures": [
+      "Ad-hoc Doctor-Auswertung behandelte eine Liste als Objekt.",
+      "Ad-hoc Frontier-Auswertung verwechselte verschachtelte T127-Unterobjekte mit dem eigentlichen Datensatz.",
+      "Runtime-Identity und Runtime-Refresh verwenden bewusst schema-versionierte, aber befehlsspezifische Ergebnisformen."
+    ],
+    "related_existing_task": "GRABOWSKI-OPERATOR-SURFACE-V1-T054",
+    "source": "PR #1296 Implementierungs- und Runtime-Readback am 1. August 2026",
+    "source_main_commit": "8d06a617f7922427a1b28f283513552a9db10c7f",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-81572d08ad1a5e5f44407d9b",
+      "event_id": 1945,
+      "event_created_at": "2026-08-01T08:35:32.196600Z",
+      "request_sha256": "56618b6c702a890ebd4c89bfd30187c1220dc1dc60ccf923f4452bbb550324a7",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "live-repository-audit",
+        "locator": "github:heimgewebe/bureau#1296@685c57e1167ac12abf4faca4d649c22a53d86271",
+        "observed_at": "2026-08-01T08:35:32.179058Z",
+        "sha256": "fbe1a4905e1b0f58d40e1ea36c6705cb36e4a753f186288d2d60d37ebd4bb867"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 23
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich neu eingeführte Discriminator-, Parser-, Dokumentations- und Teständerungen. Bestehende befehlsspezifische JSON-Ausgaben bleiben unverändert; bei unklarer Form müssen Auswerter weiterhin fail-closed abbrechen."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Bureau-JSON-Ergebnisformen revisionssicher typisieren"
+}

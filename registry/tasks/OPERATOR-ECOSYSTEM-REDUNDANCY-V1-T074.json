@@ -49,7 +49,10 @@
     "does_not_establish": [
       "runtime artifact freshness",
       "production deployment",
-      "absence of unrelated future test pollution"
+      "absence of unrelated future test pollution",
+      "production runtime deployment by T074",
+      "future absence of unrelated test pollution",
+      "network or mutation authority"
     ],
     "implementation_approval": {
       "approved": true,
@@ -83,6 +86,138 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "verified_at": "2026-08-01T06:46:20Z",
+    "outcome": "Leitstand PR #202 isolated Bureau, checkout and storage-health controller tests from repository-local runtime artifacts by adding an optional sourceRoot boundary that defaults to process.cwd(). The exact reviewed head passed focused tests, typecheck, lint, build and the complete 272-test suite both without and with copies of the three real runtime artifacts, then merged cleanly to current main.",
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_merged_pr",
+      "queue_mutated": false,
+      "production_deployment_required": false
+    },
+    "implementation": {
+      "repository": "heimgewebe/leitstand",
+      "pull_request": 202,
+      "url": "https://github.com/heimgewebe/leitstand/pull/202",
+      "base_sha": "362dda6ac161bf275a38682d18998fc284eebe52",
+      "reviewed_head_sha": "7cbd744cc453d7e31530783670d29f8129cbca0e",
+      "merge_commit_sha": "f1a3299cd77dbfd02b1709bdf25d3f0ba37296a6",
+      "current_main_sha": "f1a3299cd77dbfd02b1709bdf25d3f0ba37296a6",
+      "merge_is_current_main": true,
+      "merged_at": "2026-08-01T06:41:39Z",
+      "changed_file_count": 6,
+      "additions": 157,
+      "deletions": 56,
+      "full_diff_bytes": 24285,
+      "full_diff_sha256": "b98b554a841b6fbd8dca448be974c9aee58fd406bf0b515f56df7af3c62ed78f",
+      "implementation_paths": [
+        "src/controllers/bureau.ts",
+        "src/controllers/checkouts.ts",
+        "src/controllers/storageHealth.ts",
+        "tests/controllers/bureau.test.ts",
+        "tests/controllers/checkouts.test.ts",
+        "tests/controllers/storageHealth.test.ts"
+      ],
+      "ci": {
+        "state": "green",
+        "checks": [
+          "CI/build",
+          "CodeQL/Analyze (actions)",
+          "CodeQL/Analyze (javascript-typescript)",
+          "CodeQL/Analyze (python)",
+          "CodeQL",
+          "ai-context guard/repo-root",
+          "ai-context guard/templates",
+          "security-hygiene/scan",
+          "Cloudflare Pages"
+        ]
+      },
+      "review": {
+        "kind": "methodically-separated-self-review",
+        "reviewed_head_sha": "7cbd744cc453d7e31530783670d29f8129cbca0e",
+        "material_findings": 0,
+        "unresolved_findings": 0,
+        "external_review_present": false,
+        "authority": [
+          "exact-head GitHub state",
+          "deterministic local tests",
+          "GitHub Actions checks",
+          "SHA-256-bound diff"
+        ]
+      }
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T074",
+          "source_ref": "heimgewebe/leitstand#202",
+          "head_sha": "7cbd744cc453d7e31530783670d29f8129cbca0e",
+          "merge_commit_sha": "f1a3299cd77dbfd02b1709bdf25d3f0ba37296a6",
+          "full_diff_sha256": "b98b554a841b6fbd8dca448be974c9aee58fd406bf0b515f56df7af3c62ed78f"
+        },
+        {
+          "kind": "test_run",
+          "authority": "local-deterministic",
+          "environment": "isolated worktree without runtime artifacts",
+          "command": "pnpm test",
+          "result": "42 files, 272 passed, 0 failed"
+        },
+        {
+          "kind": "test_run",
+          "authority": "local-deterministic",
+          "environment": "isolated worktree with copies of canonical bureau-tasks, checkout-inventory and storage-health artifacts",
+          "command": "pnpm test",
+          "result": "42 files, 272 passed, 0 failed"
+        },
+        {
+          "kind": "focused_validation",
+          "authority": "local-deterministic",
+          "result": "22 focused tests passed; typecheck, lint and build passed"
+        }
+      ]
+    },
+    "verified_acceptance": {
+      "isolated-default-path-tests": {
+        "verdict": "pass",
+        "evidence": "All three suites create temporary source roots; fixture tests copy only the required tracked fixture into that root. Missing-path assertions remain artifacts/<name>.json and pass even when real repository artifacts exist."
+      },
+      "production-defaults-unchanged": {
+        "verdict": "pass",
+        "evidence": "Each controller resolves options.sourceRoot ?? process.cwd(); new regression tests assert the no-options path remains process.cwd()/artifacts/<name>.json. Existing environment override, strict and fixture fallback branches are unchanged."
+      },
+      "dual-environment-regression": {
+        "verdict": "pass",
+        "focused_tests": "22/22",
+        "full_without_runtime_artifacts": "272/272",
+        "full_with_runtime_artifacts": "272/272",
+        "additional_checks": [
+          "pnpm typecheck",
+          "pnpm lint",
+          "pnpm build"
+        ]
+      },
+      "read-only-scope": {
+        "verdict": "pass",
+        "evidence": "The diff adds only root selection before existing filesystem reads and path display. No network call, artifact write, execution authority or mutable controller state was introduced."
+      }
+    },
+    "validation": [
+      "pnpm exec vitest run tests/controllers/bureau.test.ts tests/controllers/checkouts.test.ts tests/controllers/storageHealth.test.ts -> 22 passed, 0 failed.",
+      "pnpm typecheck -> passed.",
+      "pnpm lint -> passed.",
+      "pnpm build -> passed.",
+      "pnpm test without runtime artifacts -> 42 files, 272 passed, 0 failed.",
+      "pnpm test after copying real bureau-tasks.json, checkout-inventory.json and storage-health.json into the worktree -> 42 files, 272 passed, 0 failed.",
+      "GitHub PR #202 exact head 7cbd744cc453d7e31530783670d29f8129cbca0e -> all required checks passed.",
+      "GitHub PR #202 merged as f1a3299cd77dbfd02b1709bdf25d3f0ba37296a6; remote main readback equals that merge commit."
+    ],
+    "verification": {
+      "task_sha256": "eb2502377bdb7d89d1cd655fd929342e13cdef2e8496b2247b72ddc9915b35c4",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   },
   "priority": {
@@ -98,6 +233,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "verified",
   "title": "Leitstand-Controller-Tests von Runtime-Artefakten isolieren"
 }

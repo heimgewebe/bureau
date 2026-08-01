@@ -23,9 +23,9 @@
   ],
   "claims": [
     {
-      "isolation": "worktree",
+      "resource": "component.repoground.test-tooling",
       "mode": "write",
-      "resource": "repo.repoground"
+      "isolation": "worktree"
     }
   ],
   "depends_on": [],
@@ -36,7 +36,10 @@
       "required_level": "operator"
     },
     "grabowski_resources": [
-      "repo:/home/alex/repos/repoground"
+      "path:/home/alex/repos/repoground/requirements-dev.txt",
+      "path:/home/alex/repos/repoground/requirements-browser.txt",
+      "path:/home/alex/repos/repoground/requirements/repoground-dev.lock.txt",
+      "path:/home/alex/repos/repoground/requirements/repoground-browser.lock.txt"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -53,7 +56,7 @@
       "Berechtigung zu weiteren Dependency-Updates"
     ],
     "fallback_reason": "Keine bestehende RepoGround-Aufgabe ist aktuell claimbar: T012 und T021 sind verifiziert, T004 ist durch Unteraufgaben blockiert, T010/T017 benötigen einen nativen Pythonista-Beleg und T014 hängt von T010 ab.",
-    "scope_rule": "In einem frischen isolierten Worktree auf aktuellem main arbeiten; keine historischen oder fremden RepoGround-Worktrees übernehmen, zurücksetzen oder verändern.",
+    "scope_rule": "In einem frischen isolierten Worktree auf aktuellem main arbeiten; ausschließlich die beiden pytest-Quelldateien und ihre zwei generierten Lockdateien verändern; keine historischen oder fremden RepoGround-Worktrees übernehmen, zurücksetzen oder verändern.",
     "source_issue": "heimgewebe/repoground#1137",
     "source_release": "pypi:pytest:9.1.1",
     "operator_intake": {
@@ -76,6 +79,39 @@
         "queue_truth",
         "task_readiness",
         "claim_or_dispatch_authority"
+      ]
+    },
+    "fine_grained_execution_scope": {
+      "reviewed_at": "2026-08-01T13:11:00+02:00",
+      "decision": "component-and-exact-paths",
+      "component_resource": "component.repoground.test-tooling",
+      "basis": [
+        "T022 verändert eine begrenzte Testwerkzeugfläche und keine allgemeine RepoGround-Komponente.",
+        "Der kanonische RepoGround-main ist sauber und ohne offenen Pull Request; die breite Repo-Lease wird ausschließlich durch historische fremde, retained und dirty Worktrees blockiert.",
+        "Bureau erzeugt den isolierten Workspace unabhängig von der Lease-Granularität aus execution.working_repository.",
+        "Der erfolgreiche Präzedenzlauf BUR-RUN-20260731T152008Z-287eff15d0 hat denselben Mechanismus mit einer Komponenten-Lease und exakten Pfadleasing belegt.",
+        "Die vier exakten Pfadleasing-Schlüssel decken beide direkten pytest-Pins und die daraus generierten Lockdateien vollständig ab."
+      ],
+      "live_evidence": {
+        "repoground_head": "7d03b713482b8d227e624b5cbba10f935c6f76d5",
+        "repo_open_pull_requests": 0,
+        "repo_active_resource_leases": 0,
+        "broad_admission_blocker_codes": [
+          "binding-reconciliation-blocking",
+          "dirty-worktree",
+          "foreign-lifecycle-owner",
+          "foreign-retained-worktree",
+          "worktree-convergence-required"
+        ],
+        "failed_broad_claim_run": "BUR-RUN-20260801T074610Z-2c77c11f0f",
+        "successful_precedent_run": "BUR-RUN-20260731T152008Z-287eff15d0",
+        "bureau_base": "8d06a617f7922427a1b28f283513552a9db10c7f"
+      },
+      "does_not_authorize": [
+        "Mutation außerhalb der vier exakten RepoGround-Pfade",
+        "Bereinigung, Übernahme oder Rücksetzung fremder RepoGround-Worktrees",
+        "weitere Dependency-Updates",
+        "Merge ohne Tests, Review und grüne GitHub-CI"
       ]
     }
   },

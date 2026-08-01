@@ -35,6 +35,12 @@
       "evidence_type": "boolean",
       "id": "boundary",
       "verifier": "Diff- und Autoritätsreview"
+    },
+    {
+      "assertion": "Vor einer Produktänderung werden die vier Zielbefehle auf dem exakten Source-Head mit befehlsspezifischen Positiv- und Negativreproducern geprüft. Der direkte fokussierte Registry-Check ist nur Vorfilter; make validate bleibt vollständiges Gate. Implement ist nur bei reproduzierbarer Vertragslücke zulässig, andernfalls ist ein hashgebundener No-change-Abschluss erforderlich.",
+      "evidence_type": "object",
+      "id": "execution-plan-bound",
+      "verifier": "revisionsgebundene Befehlsmatrix, vollständige Validierung und Diff-Review"
     }
   ],
   "claims": [
@@ -104,6 +110,74 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "execution_clarity": {
+      "schema_version": 1,
+      "acceptance_scope": {
+        "target_commands": [
+          "doctor",
+          "frontier",
+          "check",
+          "runtime-identity"
+        ],
+        "focused_preflight": "PYTHONPATH=src python -m bureau.cli --root . check",
+        "full_gate": "make validate",
+        "required_cases": [
+          "saubere aktuelle Ausgabe je Zielbefehl",
+          "dict-result-Reproducer",
+          "list-result-Reproducer",
+          "verschachtelter-result-Reproducer",
+          "unbekannte oder mehrdeutige Form muss fail-closed bleiben"
+        ],
+        "abort_when": [
+          "Source-Head oder Task-Fingerprint driftet",
+          "Befehlshilfe oder deklarierter Entry-Point widerspricht dem geplanten Aufruf",
+          "keine reproduzierbare Vertragslücke nach Positiv- und Negativfällen"
+        ]
+      },
+      "evidence_scope": {
+        "source_task_id": "f6ccc961c1fd4ea4b63fb9a2",
+        "terminalization_sha256": "c2387223b6133d2c33dcdd2a9b10d2d9f59203e5aee94de70c14f87822071a84",
+        "lifecycle_receipt_sha256": "b59c4109f3ae148ff898ba0261bc94c84282961340bcae62f1e61306d055e47c",
+        "source_file_sha256": "2550b2f79ace92c32f85a1ac3240a48d9541296467f62c8e4346a5d5943f7092",
+        "focused_clean_seconds": 1.3139,
+        "focused_negative_seconds": 0.3621,
+        "full_negative_seconds": 233.9334,
+        "full_over_focused_ratio": 646.05,
+        "rollback_exact": true,
+        "does_not_establish": [
+          "Produktfehler in doctor, frontier oder runtime-identity",
+          "Mergebereitschaft",
+          "Ersetzbarkeit der vollständigen Validierung"
+        ]
+      },
+      "dependency_scope": {
+        "hard_dependencies": [],
+        "related_nonblocking": [
+          "GRABOWSKI-OPERATOR-SURFACE-V1-T054"
+        ],
+        "rationale": "T023 auditiert den aktuellen Bureau-Ausgabevertrag eigenständig und darf mit no-change enden; T054 ist Kontext, aber keine Voraussetzung für Reproducer oder Vertragsinventar."
+      },
+      "resource_scope": {
+        "repository": "/home/alex/repos/bureau",
+        "write_allowlist": [
+          "src/bureau/cli.py",
+          "src/bureau/runtime_refresh.py",
+          "tests",
+          "docs"
+        ],
+        "forbidden_authority_surfaces": [
+          "registry",
+          "queue",
+          "claims",
+          "dispatch",
+          "reviews",
+          "merge",
+          "deployment",
+          "leases"
+        ],
+        "single_writer": true
+      }
     }
   },
   "priority": {

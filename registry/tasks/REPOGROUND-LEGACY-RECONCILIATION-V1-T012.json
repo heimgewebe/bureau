@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
-  "state": "blocked",
+  "state": "verified",
   "execution": {
     "mode": "interactive-agent",
     "policy": "review-before-effect",
@@ -61,8 +61,6 @@
     },
     "acceptance_evidence_observed_at": "2026-08-01T16:05:03Z",
     "implementation_outcome": "RepoGround PR #1124 zerlegte service/app.py am Merge 20b9fa60add19370a8f0e1620c59a640ed135139 in getrennte Health-, Query-, Job-, Artefakt- und Atlas-Router. PR #1130 band den unveränderten Produktstand am Merge a1846da73901f1da5a17b6bed51be74de1e1869a an einen frischen 33-Routen-/OpenAPI-Snapshot, Auth- und Traversal-Negativbelege, einen isolierten ASGI-Readback sowie eine kausale Vorher-/Nachher-Messung. Der aktuelle RepoGround-main-Readback a60d0dd93ad8b18bbbce94ccc1267c27ab0a34b9 enthält dieselben T012-Produkt- und Proofbytes und ist vollständig CI-grün; die Produktimplementierung darf nicht erneut ausgeführt werden.",
-    "block_reason": "Der terminale Wechsel auf verified lässt den unveränderten vollständigen Bureau-Gate-Lauf deterministisch in tests/test_parent_child_claim_gate.py::test_real_t004_registry_contract_has_explicit_bounded_relationships scheitern: Die reale Parent-/Child-Projektion entfernt T012 korrekt aus T004.blocking_child_task_ids, während der Test weiterhin T010, T012 und T014 erwartet. Der Auftrag erlaubt ausschließlich Änderungen an T012.json und T004.json und verbietet damit die nötige enge Test-Fixture-Fortschreibung; bei 953 bestandenen Tests blieb genau dieser eine Fehler.",
-    "next_action": "In einem separat autorisierten engen Bureau-Contract-Änderungssatz die reale T004-Test-Fixture an den terminalen T012-Zustand anpassen, danach alle geforderten Gates erneut ausführen und T012 ohne jede RepoGround-Produktänderung auf verified setzen.",
     "implementation": {
       "repository": "heimgewebe/repoground",
       "pull_requests": [
@@ -185,9 +183,24 @@
       "Uvicorn, TCP, proxy or TLS runtime behavior",
       "a performance SLO or statistical significance",
       "independent review completeness",
-      "terminal T012 verification before the Bureau parent-child fixture is updated and all gates pass",
       "completion of REPOGROUND-LEGACY-RECONCILIATION-V1-T004 or T014"
-    ]
+    ],
+    "finalized_at": "2026-08-01T19:14:41Z",
+    "resolution_summary": "Die bereits vollständig belegte RepoGround-Produktscheibe bleibt unverändert. Der einzige offene Bureau-Lifecycle-Blocker wurde durch die eng begrenzte Fortschreibung der realen T004-Parent-/Child-Testfixture auf den terminalen T012-Zustand geschlossen; T004 projiziert danach nur noch T010 und T014 als nichtterminale Kinder.",
+    "lifecycle_closeout": {
+      "status": "verified",
+      "resolved_at": "2026-08-01T19:14:41Z",
+      "changed_product_code": false,
+      "fixture": "tests/test_parent_child_claim_gate.py::test_real_t004_registry_contract_has_explicit_bounded_relationships",
+      "expected_blocking_children": [
+        "REPOGROUND-LEGACY-RECONCILIATION-V1-T010",
+        "REPOGROUND-LEGACY-RECONCILIATION-V1-T014"
+      ]
+    },
+    "verification": {
+      "task_sha256": "ec303cbea71c766977f5a58e5a9995e76db6ee3eec0cf61277c4b6f6dc0f0f42",
+      "plan_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    }
   },
   "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T012",
   "title": "Service-App in Router, Jobs und Atlas-Flächen trennen",

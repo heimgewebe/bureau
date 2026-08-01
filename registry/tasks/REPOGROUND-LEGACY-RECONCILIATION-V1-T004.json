@@ -78,8 +78,8 @@
       ]
     },
     "t012_closeout": {
-      "status": "implementation_acceptance_pass_lifecycle_blocked",
-      "observed_at": "2026-08-01T16:05:03Z",
+      "status": "verified",
+      "observed_at": "2026-08-01T19:14:41Z",
       "bureau_snapshot_commit": "61159099eba69cd2cfa0cec66bff20f48188d71b",
       "repoground_main_commit": "a60d0dd93ad8b18bbbce94ccc1267c27ab0a34b9",
       "implementation_merge_commits": [
@@ -88,21 +88,20 @@
       ],
       "proof_sha256": "223d993f864992b730e10fcfc5e5480003b4ac9a2ee3093286b683f3e2b7b8e9",
       "measurement_sha256": "fe198ddcc78079cb8cd92038c96fcb234ea6117d8269f6148ace2f8806720e3a",
-      "outcome": "Die Service-App-Produktscheibe ist vollständig erledigt und darf innerhalb T004 nicht erneut implementiert werden; app.py ist in fünf Domänenrouter zerlegt, API/Auth/Traversal sind gebunden, der isolierte Runtime-Readback ist grün und Zeit-/Speichermessungen liegen vor. T012 bleibt ausschließlich wegen der veralteten Bureau-Parent-/Child-Test-Fixture nichtterminal.",
-      "lifecycle_blocker": "tests/test_parent_child_claim_gate.py erwartet T012 weiterhin in T004.blocking_child_task_ids; der terminale Wechsel liefert korrekt nur T010 und T014, darf aber im auf zwei Taskdateien begrenzten Auftrag nicht durch eine Teständerung begleitet werden.",
+      "outcome": "Die Service-App-Produktscheibe ist vollständig erledigt und darf innerhalb T004 nicht erneut implementiert werden; app.py ist in fünf Domänenrouter zerlegt, API/Auth/Traversal sind gebunden, der isolierte Runtime-Readback ist grün und Zeit-/Speichermessungen liegen vor. Die reale Parent-/Child-Testfixture ist auf den terminalen T012-Zustand fortgeschrieben; T012 ist verified.",
       "does_not_establish": [
-        "terminal verification of T012",
         "completion of T004",
         "completion of T010 or T014",
         "native Pythonista compatibility",
         "aggregate current-main performance and end-to-end regression closure"
-      ]
+      ],
+      "lifecycle_closeout": "tests/test_parent_child_claim_gate.py projiziert nach dem terminalen T012-Wechsel revisionsgebunden nur noch T010 und T014 als blockierende Kinder."
     },
     "acceptance_progress": {
       "observed_at": "2026-08-01T16:05:03Z",
       "repoground_main_commit": "a60d0dd93ad8b18bbbce94ccc1267c27ab0a34b9",
       "complexity-budget": "CURRENT EVIDENCE PASS, FINAL CONVERGENCE PENDING: Das gebundene Budget sank von 213 Findings/Maximum 170 auf 189/138 bei Excess-Mass 2315 und liegt unter den Ratchets 193/138/2348; T014 muss den finalen unveränderten Gesamtstand erneut binden.",
-      "monolith-slices": "PARTIAL: T009 und T011 sind verified; T012 hat vollständige Produkt-Acceptance, bleibt aber am engen Bureau-Lifecycle-Gate blockiert. Pythonista build.py ist implementiert, aber T010/T017 fehlt der native Pythonista-iPad-Beleg. merge.py bleibt auf aktuellem main 7479 Zeilen groß und write_reports_v2 C901 73; die finalen Verantwortlichkeits-/Restgrenzen sind in T014 zu entscheiden.",
+      "monolith-slices": "PARTIAL: T009, T011 und T012 sind verified. Pythonista build.py ist implementiert, aber T010/T017 fehlt der native Pythonista-iPad-Beleg. merge.py bleibt auf aktuellem main 7479 Zeilen groß und write_reports_v2 C901 73; die finalen Verantwortlichkeits-/Restgrenzen sind in T014 zu entscheiden.",
       "reachability": "CURRENT EVIDENCE PASS, FINAL CONVERGENCE PENDING: Der aktuelle main-Lintlauf 30699103173 klassifiziert 238 Produktionsmodule mit unproven=[], documentation_only=[] und test_only=[]; T014 muss dies nach Abschluss der offenen Scheiben erneut binden.",
       "performance": "PARTIAL: Einzelbelege existieren für Bundle-/Report-, Query-/Bundle-Read-, Service-/Atlas- und Pythonista-Desktoppfade; der reproduzierbare aktuelle Gesamtvergleich für Bundle, Query, Service, Atlas und Pythonista ist als T014-Abschlussbeleg noch nicht ausgeführt.",
       "regression": "PARTIAL: RepoGround main a60d0dd9 bestand 5265 Pytests und alle 30 sichtbaren Checks, aber der native Pythonista-Readback und der kombinierte revisions-/diffgebundene T004-End-to-End-Abschluss über Service, MCP, Bundles und Frontends fehlen noch."
@@ -115,12 +114,11 @@
         "T012 isolated ASGI and performance measurement"
       ],
       "blocking_sequence": [
-        "REPOGROUND-LEGACY-RECONCILIATION-V1-T012: in einem separat autorisierten engen Bureau-Contract-Änderungssatz die stale Parent-/Child-Test-Fixture fortschreiben, alle Gates grün ausführen und ohne Produktmutation verified setzen",
         "REPOGROUND-LEGACY-RECONCILIATION-V1-T017: echten unterstützten Pythonista-/iPad-Lauf mit runtime identity, nativem Loader, lokalem Report, iOS-Gates und Abhängigkeitsgrenze belegen",
         "REPOGROUND-LEGACY-RECONCILIATION-V1-T010: erst nach vollständigem T017-PASS verifizieren",
         "REPOGROUND-LEGACY-RECONCILIATION-V1-T014: aktuellen main gegen Monolithgrenzen, Reachability, Bundle-/Query-/Service-/Atlas-/Pythonista-Zeit und Speicher sowie kombinierten Regressions-/End-to-End-Vertrag konvergieren"
       ],
-      "terminal_condition": "T004 bleibt ready und darf erst verified werden, wenn T012, T010 und T014 terminal grün sind und alle fünf eigenen Acceptance-Kriterien auf demselben aktuellen RepoGround-Stand revisionsgebunden belegt sind."
+      "terminal_condition": "T004 bleibt ready und darf erst verified werden, wenn T010 und T014 terminal grün sind und alle fünf eigenen Acceptance-Kriterien auf demselben aktuellen RepoGround-Stand revisionsgebunden belegt sind."
     }
   }
 }

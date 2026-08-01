@@ -6,12 +6,12 @@
       "id": "exact-device-release-binding"
     },
     {
-      "assertion": "Physical Safari measurements cover idle ring motion, map pan and zoom, focus or touch pause, digital hierarchy entry and return, portrait and landscape orientation, and reduced-motion mode. Each scenario is captured from the physical iPad as a separate exported Safari Web Inspector Timelines recording, delimited by console.profile and console.profileEnd or console.timeStamp markers, with Frames and Layout & Rendering composite and paint records. Paired Layers evidence records the relevant layer tree, layer-creation reasons, cumulative paint counts and memory costs, with compositing borders and paint flashing used to show whether the bundle or subordinate rings repaint or animate independently.",
+      "assertion": "Physical Safari measurements cover idle ring motion, map pan and zoom, focus or touch pause, digital hierarchy entry and return, portrait and landscape orientation, and reduced-motion mode. Each scenario is captured from the physical iPad as a separate exported Safari Web Inspector Timelines recording, delimited by console.profile and console.profileEnd or console.timeStamp markers, with Frames and Layout & Rendering composite and paint records. Paired Layers evidence records the relevant layer tree, layer-creation reasons, cumulative paint counts and memory costs, with compositing borders and paint flashing used to show whether the bundle or subordinate rings repaint or animate independently. Every scenario is repeated at the warm-up and repetition counts frozen by thresholded-decision, and both the cadence records and the compositor finding on independent subordinate-ring animation are reported per repetition and agree across them.",
       "evidence_type": "object",
       "id": "bounded-interaction-profile"
     },
     {
-      "assertion": "Before the first profiling sample, a frozen plan records numeric frame-cadence and long-frame thresholds, warm-up and repetition counts, the aggregation rule, and the exact retain-versus-reduce decision mapping; the final evidence binds that unchanged plan by digest and timestamp to the measured results, and visual preference alone is not treated as a performance breach.",
+      "assertion": "Before the first profiling sample, a frozen plan records numeric frame-cadence and long-frame thresholds, warm-up and repetition counts, the aggregation rule, and the exact retain-versus-reduce decision mapping between retaining the current maximum of four subordinate lines and one text lane per bundle and reducing detail on affected devices; the final evidence binds that unchanged plan by digest and timestamp to the measured results, and visual preference alone is not treated as a performance breach.",
       "evidence_type": "object",
       "id": "thresholded-decision"
     },

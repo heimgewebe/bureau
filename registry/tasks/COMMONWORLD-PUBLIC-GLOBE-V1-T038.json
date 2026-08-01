@@ -6,12 +6,12 @@
       "id": "exact-device-release-binding"
     },
     {
-      "assertion": "Physical Safari measurements cover idle ring motion, map pan and zoom, focus or touch pause, digital hierarchy entry and return, portrait and landscape orientation, and reduced-motion mode with repeatable frame-cadence or long-frame observations and no hidden independent animation on subordinate rings.",
+      "assertion": "Physical Safari measurements cover idle ring motion, map pan and zoom, focus or touch pause, digital hierarchy entry and return, portrait and landscape orientation, and reduced-motion mode with repeatable frame-cadence or long-frame observations, a repeatable Safari compositor or layer observation for the same scenarios, and proof that subordinate rings do not run hidden independent animations.",
       "evidence_type": "object",
       "id": "bounded-interaction-profile"
     },
     {
-      "assertion": "A documented threshold converts the measurements into one of two explicit outcomes: retain the current maximum of four subordinate lines and one text lane per bundle, or reduce detail on affected devices; visual preference alone is not treated as a performance breach.",
+      "assertion": "Before the first profiling sample, a frozen plan records numeric frame-cadence and long-frame thresholds, warm-up and repetition counts, the aggregation rule, and the exact retain-versus-reduce decision mapping; the final evidence binds that unchanged plan by digest and timestamp to the measured results, and visual preference alone is not treated as a performance breach.",
       "evidence_type": "object",
       "id": "thresholded-decision"
     },

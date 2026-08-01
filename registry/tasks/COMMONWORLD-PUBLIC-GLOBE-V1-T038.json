@@ -6,7 +6,7 @@
       "id": "exact-device-release-binding"
     },
     {
-      "assertion": "Physical Safari measurements cover idle ring motion, map pan and zoom, focus or touch pause, digital hierarchy entry and return, portrait and landscape orientation, and reduced-motion mode with repeatable frame-cadence or long-frame observations, a repeatable Safari compositor or layer observation for the same scenarios, and proof that subordinate rings do not run hidden independent animations.",
+      "assertion": "Physical Safari measurements cover idle ring motion, map pan and zoom, focus or touch pause, digital hierarchy entry and return, portrait and landscape orientation, and reduced-motion mode. Each scenario is captured from the physical iPad as a separate exported Safari Web Inspector Timelines recording, delimited by console.profile and console.profileEnd or console.timeStamp markers, with Frames and Layout & Rendering composite and paint records. Paired Layers evidence records the relevant layer tree, layer-creation reasons, cumulative paint counts and memory costs, with compositing borders and paint flashing used to show whether the bundle or subordinate rings repaint or animate independently.",
       "evidence_type": "object",
       "id": "bounded-interaction-profile"
     },
@@ -53,6 +53,7 @@
   "metadata": {
     "does_not_establish": [
       "that Chromium iPad viewport smoke is equivalent to physical Safari GPU or compositor evidence",
+      "that Safari Web Inspector Timelines or Layers evidence directly measures GPU utilization, device-wide energy use or operating-system thermal behavior",
       "permission to change the current ring-bundle PR without a measured threshold breach",
       "permission to create independently animated subordinate ring text",
       "automatic merge, deployment or production verification authority"

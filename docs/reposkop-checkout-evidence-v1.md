@@ -16,6 +16,10 @@ This reference establishes only which local checkout identity and transition acc
 
 Bureau remains authoritative for task lifecycle. Reposkop remains authoritative for local checkout identity, transition and continuity.
 
+Consequently, `reposkop_checkout_ref` cannot be the sole acceptance criterion for `complete_run`. Every run that records it must also satisfy at least one independent Bureau-owned acceptance criterion. This applies to every continuity state: even `intact` or `explainable_drift` proves repository continuity, not task completion; `pre_effect_only`, `identity_break` and `inconclusive` are never successful completion signals.
+
+Idempotent replay revalidates the stored receipt schema, its self-declared digest and the database digest before materializing or returning it.
+
 ## Pre-effect reference
 
 A task may record only a bound starting observation:

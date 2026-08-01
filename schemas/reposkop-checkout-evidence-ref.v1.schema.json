@@ -71,6 +71,14 @@
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
+      "allOf": [
+        {
+          "contains": {"const": "task_completion"}
+        },
+        {
+          "contains": {"const": "effect_authorization"}
+        }
+      ],
       "items": {"type": "string"}
     }
   },
@@ -83,6 +91,11 @@
         "required": ["continuity_state"]
       },
       "then": {
+        "required": [
+          "post_observation_sha256",
+          "transition_sha256",
+          "continuity_sha256"
+        ],
         "properties": {
           "post_observation_sha256": {"type": "null"},
           "transition_sha256": {"type": "null"},

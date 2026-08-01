@@ -10,14 +10,13 @@ from unittest.mock import patch
 
 from jsonschema import Draft202012Validator
 
+from bureau import legacy
 from bureau.schema_validation import DocumentSchemaError, SchemaSet
 from bureau.v2 import complete_run, plan_sha256
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = json.loads(
-    (ROOT / "schemas" / "reposkop-checkout-evidence-ref.v1.schema.json").read_text(
-        encoding="utf-8"
-    )
+    (ROOT / "schemas" / "reposkop-checkout-evidence-ref.v1.schema.json").read_text(encoding="utf-8")
 )
 VALIDATOR = Draft202012Validator(SCHEMA)
 RECEIPT_SCHEMA = json.loads(
@@ -46,8 +45,15 @@ class _FakeConnection:
                     "envelope_json": json.dumps(self.store.envelope),
                 }
             )
-        if "SELECT receipt_json FROM receipts" in statement:
-            return _QueryResult(None)
+        if "SELECT receipt_json,receipt_sha256 FROM receipts" in statement:
+            if self.store.stored_receipt is None:
+                return _QueryResult(None)
+            return _QueryResult(
+                {
+                    "receipt_json": json.dumps(self.store.stored_receipt),
+                    "receipt_sha256": self.store.stored_receipt_sha256,
+                }
+            )
         if "INSERT INTO receipts" in statement:
             self.store.receipt_written = True
         if "INSERT INTO task_status" in statement:
@@ -72,6 +78,8 @@ class _FakeStore:
         self.immediate_calls = 0
         self.receipt_written = False
         self.verified_written = False
+        self.stored_receipt: dict[str, object] | None = None
+        self.stored_receipt_sha256: str | None = None
 
     def receipt(self, _run_id: str) -> None:
         return None
@@ -136,6 +144,17 @@ class ReposkopCheckoutEvidenceRefTests(unittest.TestCase):
             }
         )
         self.assert_valid(value)
+        for field in (
+            "post_observation_sha256",
+            "transition_sha256",
+            "continuity_sha256",
+        ):
+            incomplete = dict(value)
+            incomplete.pop(field)
+            with self.subTest(field=field, schema="standalone"):
+                self.assertTrue(list(VALIDATOR.iter_errors(incomplete)))
+            with self.subTest(field=field, schema="receipt"):
+                self.assertTrue(self.receipt_errors(incomplete))
 
     def test_completed_state_requires_all_post_digests(self) -> None:
         value = self.base()
@@ -182,7 +201,25 @@ class ReposkopCheckoutEvidenceRefTests(unittest.TestCase):
         value["task_verified"] = True
         self.assertTrue(list(VALIDATOR.iter_errors(value)))
 
-    def completion_fixture(self, root: Path) -> tuple[object, _FakeStore]:
+    def test_reference_requires_core_non_establishment_boundary(self) -> None:
+        for required_boundary in ("task_completion", "effect_authorization"):
+            value = self.base()
+            value["does_not_establish"] = [
+                item
+                for item in value["does_not_establish"]
+                if item != required_boundary
+            ]
+            with self.subTest(required_boundary=required_boundary, schema="standalone"):
+                self.assertTrue(list(VALIDATOR.iter_errors(value)))
+            with self.subTest(required_boundary=required_boundary, schema="receipt"):
+                self.assertTrue(self.receipt_errors(value))
+
+    def completion_fixture(
+        self,
+        root: Path,
+        *,
+        independent_completion: bool = True,
+    ) -> tuple[object, _FakeStore]:
         task = SimpleNamespace(sha256="1" * 64, initiative="INIT-1")
         registry = SimpleNamespace(
             tasks={"TASK-1": task},
@@ -198,17 +235,30 @@ class ReposkopCheckoutEvidenceRefTests(unittest.TestCase):
             "external_system": None,
             "external_id": None,
         }
+        acceptance = [
+            {
+                "id": "reposkop_checkout_ref",
+                "evidence_type": "object",
+            }
+        ]
+        if independent_completion:
+            acceptance.insert(
+                0,
+                {"id": "completion_proof", "evidence_type": "object"},
+            )
         envelope = {
             "task": {
-                "acceptance": [
-                    {
-                        "id": "reposkop_checkout_ref",
-                        "evidence_type": "object",
-                    }
-                ]
+                "acceptance": acceptance,
             }
         }
         return registry, _FakeStore(root, run_record, envelope)
+
+    @staticmethod
+    def completion_evidence(reference: dict[str, object]) -> dict[str, object]:
+        return {
+            "completion_proof": {"result": "passed"},
+            "reposkop_checkout_ref": reference,
+        }
 
     @staticmethod
     def close_revision(store: _FakeStore) -> SimpleNamespace:
@@ -234,7 +284,7 @@ class ReposkopCheckoutEvidenceRefTests(unittest.TestCase):
                     registry,
                     store,
                     "run-1",
-                    {"reposkop_checkout_ref": reference},
+                    self.completion_evidence(reference),
                 )
             self.assertEqual(1, store.immediate_calls)
             self.assertTrue(store.receipt_written)
@@ -256,6 +306,45 @@ class ReposkopCheckoutEvidenceRefTests(unittest.TestCase):
 
     def test_complete_run_accepts_completed_transition_reference(self) -> None:
         self.assert_complete_run_accepts(self.base())
+
+    def test_complete_run_requires_independent_completion_evidence(self) -> None:
+        for continuity_state in (
+            "pre_effect_only",
+            "intact",
+            "explainable_drift",
+            "identity_break",
+            "inconclusive",
+        ):
+            reference = self.base()
+            reference["continuity_state"] = continuity_state
+            if continuity_state == "pre_effect_only":
+                reference.update(
+                    {
+                        "post_observation_sha256": None,
+                        "transition_sha256": None,
+                        "continuity_sha256": None,
+                    }
+                )
+            with (
+                self.subTest(continuity_state=continuity_state),
+                tempfile.TemporaryDirectory() as directory,
+            ):
+                registry, store = self.completion_fixture(
+                    Path(directory), independent_completion=False
+                )
+                with self.assertRaisesRegex(
+                    legacy.StateError,
+                    "requires independent Bureau acceptance evidence",
+                ):
+                    complete_run(
+                        registry,
+                        store,
+                        "run-1",
+                        {"reposkop_checkout_ref": reference},
+                    )
+                self.assertFalse(store.receipt_written)
+                self.assertFalse(store.verified_written)
+                self.assertEqual("running", store.run_record["state"])
 
     def test_complete_run_rejects_malformed_references_before_mutation(self) -> None:
         malformed_references = []
@@ -280,12 +369,59 @@ class ReposkopCheckoutEvidenceRefTests(unittest.TestCase):
                         registry,
                         store,
                         "run-1",
-                        {"reposkop_checkout_ref": reference},
+                        self.completion_evidence(reference),
                     )
                 self.assertEqual(1, store.immediate_calls)
                 self.assertFalse(store.receipt_written)
                 self.assertFalse(store.verified_written)
                 self.assertEqual("running", store.run_record["state"])
+
+    def signed_receipt(self, reference: dict[str, object]) -> dict[str, object]:
+        receipt = self.receipt(reference)
+        receipt.pop("receipt_sha256")
+        receipt["receipt_sha256"] = legacy.sha256_json(receipt)
+        return receipt
+
+    def test_complete_run_rejects_malformed_stored_receipt_on_replay(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            registry, store = self.completion_fixture(Path(directory))
+            reference = self.base()
+            reference["producer"] = "not-reposkop"
+            receipt = self.signed_receipt(reference)
+            store.stored_receipt = receipt
+            store.stored_receipt_sha256 = str(receipt["receipt_sha256"])
+
+            with self.assertRaises(DocumentSchemaError):
+                complete_run(registry, store, "run-1", {})
+
+            self.assertFalse(store.receipt_path("run-1").exists())
+
+    def test_complete_run_rejects_stored_receipt_digest_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            registry, store = self.completion_fixture(Path(directory))
+            receipt = self.signed_receipt(self.base())
+            store.stored_receipt = receipt
+            store.stored_receipt_sha256 = "0" * 64
+
+            with self.assertRaisesRegex(legacy.StateError, "integrity mismatch"):
+                complete_run(registry, store, "run-1", {})
+
+            self.assertFalse(store.receipt_path("run-1").exists())
+
+    def test_complete_run_rejects_stored_receipt_run_id_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            registry, store = self.completion_fixture(Path(directory))
+            receipt = self.receipt(self.base())
+            receipt["run_id"] = "run-other"
+            receipt.pop("receipt_sha256")
+            receipt["receipt_sha256"] = legacy.sha256_json(receipt)
+            store.stored_receipt = receipt
+            store.stored_receipt_sha256 = str(receipt["receipt_sha256"])
+
+            with self.assertRaisesRegex(legacy.StateError, "run_id mismatch"):
+                complete_run(registry, store, "run-1", {})
+
+            self.assertFalse(store.receipt_path("run-1").exists())
 
 
 if __name__ == "__main__":

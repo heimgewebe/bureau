@@ -1,0 +1,130 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Der Account-Aktivitätspfad besitzt ein hartes serverseitiges Seitenlimit und einen dokumentierten, stabilen Cursor über eine vollständig deterministische Ordnung; normale Requests laden niemals die vollständige Aktivitätschronik.",
+      "evidence_type": "object",
+      "id": "bounded-cursor-contract"
+    },
+    {
+      "assertion": "Die Tagesaggregation von Gesprächsbeiträgen bleibt über Seitengrenzen exakt: Ein Aggregat wird weder doppelt ausgegeben noch geteilt oder ausgelassen, auch bei identischen Zeitstempeln und parallel eintreffenden Beiträgen.",
+      "evidence_type": "object",
+      "id": "aggregation-boundary-correctness"
+    },
+    {
+      "assertion": "Knoten-Erstellung, öffentliche Gesprächsbeiträge, Tombstones, archivierte Gespräche, Identitätsentkopplung und gelöschte beziehungsweise gesperrte Accounts behalten dieselbe Sichtbarkeits- und Datenschutzsemantik wie der revisionsgebundene Vertrag aus PR #1657; Beitragsinhalte werden nicht in die Aktivitätsprojektion aufgenommen.",
+      "evidence_type": "object",
+      "id": "visibility-and-lifecycle-parity"
+    },
+    {
+      "assertion": "PostgreSQL-Abfragepläne, passende Indizes und reproduzierbare Lasttests belegen für kleine und große Bestände, dass Laufzeit und Speicher mit Seitengröße und relevantem Ausschnitt statt mit dem Gesamtbestand wachsen; p95/p99, Zeilenlesungen und Fehlerrate sind dokumentiert.",
+      "evidence_type": "object",
+      "id": "query-plan-and-index-proof"
+    },
+    {
+      "assertion": "Die Weboberfläche bietet zugängliches Nachladen oder eine gleichwertige Pagination mit stabiler Fokusführung, verständlichen Lade-, Leer- und Fehlerzuständen sowie Tastatur- und Mobilbedienung; bereits geladene Einträge flackern oder duplizieren nicht.",
+      "evidence_type": "object",
+      "id": "accessible-load-more-ux"
+    },
+    {
+      "assertion": "Metriken und strukturierte Fehler unterscheiden Seitenabrufe, Cursorfehler, Grenzwertverletzungen und Datenbankprobleme; Missbrauch durch übergroße Limits oder manipulierte Cursor scheitert deterministisch und ohne interne Daten preiszugeben.",
+      "evidence_type": "object",
+      "id": "observability-and-abuse-limits"
+    },
+    {
+      "assertion": "Vor Merge liegen exakte Base-, Head- und Diffbindung, API-, PostgreSQL-, Web- und Browsertests, Lastbelege, unabhängiger Review und grüne Pflichtchecks vor; nach Merge wird der produktive API- und UI-Vertrag auf dem exakten Produktionscommit zurückgelesen.",
+      "evidence_type": "object",
+      "id": "proof-and-release"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.weltgewebe"
+    }
+  ],
+  "depends_on": [
+    "WELTGEWEBE-OS-V1-T048"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer verlangte am 1. August 2026 ausdrücklich, alle sinnvollen nicht im aktuellen PR gelösten Punkte im Bureau zu registrieren. Diese Registrierung autorisiert keine unmittelbare Implementierung; vor Wirkung sind Livezustand, isolierter Worktree, Tests, Review, CI und kostenfreie Ausführung erneut zu prüfen.",
+      "required_level": "operator"
+    },
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/weltgewebe"
+  },
+  "goal": "Die dauerhafte Garnrollen-Aktivitätschronik so begrenzen, dass API und Oberfläche auch bei großen Beitrags- und Knotenbeständen nur einen stabil geordneten Ausschnitt laden, ohne Tagesaggregation, Sichtbarkeit, Tombstone-/Archivsemantik oder Datenschutz zu verfälschen.",
+  "id": "WELTGEWEBE-OS-V1-T062",
+  "initiative": "WELTGEWEBE-OS-V1",
+  "metadata": {
+    "coordination": {
+      "note": "T049 enthält den allgemeinen O(N)-Ablösevertrag. T062 konkretisiert die durch PR #1657 neu sichtbare Aktivitätschronik; gemeinsame API-, Index- oder Lastteständerungen sind zusammenzuführen statt parallel zu duplizieren.",
+      "related_task": "WELTGEWEBE-OS-V1-T049",
+      "relationship": "concrete bounded-list implementation slice"
+    },
+    "does_not_establish": [
+      "automatic implementation",
+      "task readiness",
+      "queue truth",
+      "claim or dispatch authority",
+      "permission to change PR #1657 scope",
+      "permission to expose contribution content",
+      "guaranteed production performance improvement"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-85405bad6131609360067908",
+      "event_id": 1966,
+      "event_created_at": "2026-08-01T15:16:21.413884Z",
+      "request_sha256": "723a86715bb6207dc0311a2189f4e7228d6926618c9d7c37c9b0179967f63fcd",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "pull-request-followup",
+        "locator": "github:heimgewebe/weltgewebe#1657@fee50cd56c877832e9bf1b2d352e9c6bb2cdfd51",
+        "observed_at": "2026-08-01T15:15:58Z",
+        "sha256": "c813a650619a98d3b5b933563239e7425cd328121cdedd40a1c1a532cffd20f8"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_at": "2026-08-01",
+    "source": "operator_followup_from_weltgewebe_pr_1657",
+    "source_diff_sha256": "c813a650619a98d3b5b933563239e7425cd328121cdedd40a1c1a532cffd20f8",
+    "source_head": "fee50cd56c877832e9bf1b2d352e9c6bb2cdfd51",
+    "source_pr": "heimgewebe/weltgewebe#1657"
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 62
+  },
+  "required_capabilities": [
+    "repository",
+    "github",
+    "rust",
+    "postgresql",
+    "svelte",
+    "typescript",
+    "performance",
+    "observability",
+    "accessibility-review",
+    "browser-e2e",
+    "bureau",
+    "grabowski"
+  ],
+  "rlens_policy": {
+    "mode": "live-first",
+    "note": "Vor Planung und Umsetzung müssen der aktuelle PR-#1657-Vertrag, WELTGEWEBE-OS-V1-T049, Account-API, PostgreSQL-Abfragen und Indizes, Web-Aktivitätsansicht, Lastprofil und parallele Weltgewebe-Arbeiten live geprüft werden; RepoGround ergänzt Aufruf- und Abhängigkeitsbeziehungen.",
+    "skip_reason": "live_first_primary",
+    "task_profile": "repo_change"
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Garnrollen-Aktivitätschronik begrenzen und cursor-paginieren"
+}

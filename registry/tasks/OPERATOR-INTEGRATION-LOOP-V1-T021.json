@@ -33,10 +33,19 @@
     "approval": {
       "required_level": "operator",
       "action_class": "repository_mutation",
-      "note": "Nur das exakt gebundene Repository bearbeiten. Alt-PRs bleiben geschlossen; Merge ausschließlich nach frischem revisionsgebundenem Review- und CI-Readback."
+      "note": "Nur die zehn exakt gebundenen Mitschreiber-Dateien bearbeiten. Der fremde Review-Audit-Worktree bleibt unangetastet; Alt-PRs bleiben geschlossen; Merge ausschließlich nach frischem revisionsgebundenem Review- und CI-Readback."
     },
     "grabowski_resources": [
-      "repo:/home/alex/repos/mitschreiber"
+      "path:/home/alex/repos/mitschreiber/Cargo.toml",
+      "path:/home/alex/repos/mitschreiber/Justfile",
+      "path:/home/alex/repos/mitschreiber/.github/workflows/ci.yml",
+      "path:/home/alex/repos/mitschreiber/.github/workflows/validate.yml",
+      "path:/home/alex/repos/mitschreiber/crates/core/Cargo.toml",
+      "path:/home/alex/repos/mitschreiber/crates/core/src/lib.rs",
+      "path:/home/alex/repos/mitschreiber/crates/mitschreiber-sampler/Cargo.toml",
+      "path:/home/alex/repos/mitschreiber/crates/mitschreiber-sampler/src/sampler.rs",
+      "path:/home/alex/repos/mitschreiber/crates/mitschreiber-sampler/src/x11.rs",
+      "path:/home/alex/repos/mitschreiber/src/lib.rs"
     ]
   },
   "metadata": {

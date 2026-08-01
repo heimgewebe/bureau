@@ -1,5 +1,148 @@
 {
   "$defs": {
+    "reposkop_checkout_ref": {
+      "$defs": {
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "else": {
+            "properties": {
+              "continuity_sha256": {
+                "$ref": "#/$defs/reposkop_checkout_ref/$defs/sha256"
+              },
+              "post_observation_sha256": {
+                "$ref": "#/$defs/reposkop_checkout_ref/$defs/sha256"
+              },
+              "transition_sha256": {
+                "$ref": "#/$defs/reposkop_checkout_ref/$defs/sha256"
+              }
+            },
+            "required": [
+              "post_observation_sha256",
+              "transition_sha256",
+              "continuity_sha256"
+            ]
+          },
+          "if": {
+            "properties": {
+              "continuity_state": {
+                "const": "pre_effect_only"
+              }
+            },
+            "required": [
+              "continuity_state"
+            ]
+          },
+          "then": {
+            "properties": {
+              "continuity_sha256": {
+                "type": "null"
+              },
+              "post_observation_sha256": {
+                "type": "null"
+              },
+              "transition_sha256": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "captured_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "checkout_identity_sha256": {
+          "$ref": "#/$defs/reposkop_checkout_ref/$defs/sha256"
+        },
+        "continuity_sha256": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/reposkop_checkout_ref/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "continuity_state": {
+          "enum": [
+            "pre_effect_only",
+            "intact",
+            "explainable_drift",
+            "identity_break",
+            "inconclusive"
+          ]
+        },
+        "does_not_establish": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "post_observation_sha256": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/reposkop_checkout_ref/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pre_observation_sha256": {
+          "$ref": "#/$defs/reposkop_checkout_ref/$defs/sha256"
+        },
+        "producer": {
+          "const": "reposkop"
+        },
+        "purpose": {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        "repository": {
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$",
+          "type": "string"
+        },
+        "repository_identity_sha256": {
+          "$ref": "#/$defs/reposkop_checkout_ref/$defs/sha256"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "transition_sha256": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/reposkop_checkout_ref/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "producer",
+        "repository",
+        "purpose",
+        "pre_observation_sha256",
+        "repository_identity_sha256",
+        "checkout_identity_sha256",
+        "continuity_state",
+        "does_not_establish"
+      ],
+      "type": "object"
+    },
     "rlens_context_ref": {
       "additionalProperties": false,
       "properties": {
@@ -211,6 +354,11 @@
     },
     "evidence": {
       "minProperties": 1,
+      "properties": {
+        "reposkop_checkout_ref": {
+          "$ref": "#/$defs/reposkop_checkout_ref"
+        }
+      },
       "type": "object"
     },
     "external": {

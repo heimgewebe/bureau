@@ -3,7 +3,7 @@
   "id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T022",
   "initiative": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1",
   "title": "Make Leitstand Git health worktree-aware",
-  "state": "planned",
+  "state": "verified",
   "priority": {
     "lane": "later",
     "rank": 365
@@ -56,7 +56,97 @@
     "does_not_establish": [
       "production health failure",
       "consumer contract failure",
-      "merge blocker for Systemkatalog migration"
-    ]
+      "merge blocker for Systemkatalog migration",
+      "full Leitstand test suite green",
+      "production runtime deployment by this closeout",
+      "absence of unrelated artifact-test isolation defects"
+    ],
+    "verified_at": "2026-08-01T01:37:58Z",
+    "outcome": "Leitstand PR #167 had already implemented the complete linked-worktree Git health contract on 2026-07-14. Fresh readback on current remote main 362dda6ac161bf275a38682d18998fc284eebe52 confirmed the merge commit is an ancestor, and the focused runtime-health suite passed all 10 tests. The stale planned task is therefore terminalized without another Leitstand code change.",
+    "completion": {
+      "schema_version": 1,
+      "status": "verified_existing_merged_pr",
+      "discovery": "stale_registry_task",
+      "queue_mutated": false
+    },
+    "implementation": {
+      "repository": "heimgewebe/leitstand",
+      "pull_request": 167,
+      "url": "https://github.com/heimgewebe/leitstand/pull/167",
+      "reviewed_head_sha": "825be16cb9e12f1f240b85aecf9dfefb5300d6de",
+      "merge_commit_sha": "e74b2a4e981a374a9eb48ddb9983299199535d15",
+      "merged_at": "2026-07-14T15:44:44Z",
+      "current_main_sha": "362dda6ac161bf275a38682d18998fc284eebe52",
+      "merge_is_ancestor_of_current_main": true,
+      "implementation_paths": [
+        "src/runtimeHealth.ts",
+        "tests/runtimeHealth.test.ts"
+      ],
+      "ci": {
+        "state": "green_at_merge",
+        "checks": [
+          "CI/build",
+          "ai-context guard/repo-root",
+          "ai-context guard/templates",
+          "security-hygiene/scan",
+          "Cloudflare Pages"
+        ]
+      }
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "source_ref": "heimgewebe/leitstand#167",
+          "head_sha": "825be16cb9e12f1f240b85aecf9dfefb5300d6de",
+          "merge_commit_sha": "e74b2a4e981a374a9eb48ddb9983299199535d15",
+          "merged_at": "2026-07-14T15:44:44Z"
+        },
+        {
+          "kind": "source_diff",
+          "authority": "git",
+          "merge_commit_sha": "e74b2a4e981a374a9eb48ddb9983299199535d15",
+          "result": "resolveCommonGitDir, safe loose/common ref lookup, packed-refs fallback, and two linked-worktree regression tests added"
+        },
+        {
+          "kind": "test_run",
+          "authority": "local-deterministic",
+          "observed_at": "2026-08-01T01:28:25Z",
+          "command": "pnpm exec vitest run tests/runtimeHealth.test.ts",
+          "result": "10 passed, 0 failed"
+        }
+      ]
+    },
+    "verified_acceptance": {
+      "gitdir-resolution": {
+        "verdict": "pass",
+        "evidence": "resolveGitDir handles a normal .git directory and a gitdir: file; readGitRef resolves worktree-local, common-dir and packed refs."
+      },
+      "normal-checkout-regression": {
+        "verdict": "pass",
+        "evidence": "The focused runtime-health suite passed 10/10 on current main and retains the normal-checkout assertions and fail-closed warning behavior."
+      },
+      "linked-worktree-test": {
+        "verdict": "pass",
+        "evidence": "Two automated tests simulate linked worktrees with loose and packed branch refs and assert the expected commit and branch."
+      },
+      "scope-boundary": {
+        "verdict": "pass",
+        "evidence": "PR #167 changed Git identity discovery and tests without adding network calls, execution authority or mutable health state."
+      }
+    },
+    "validation": [
+      "GitHub PR #167 state MERGED; merge commit e74b2a4e981a374a9eb48ddb9983299199535d15; required checks green at merge.",
+      "git merge-base --is-ancestor e74b2a4e981a374a9eb48ddb9983299199535d15 362dda6ac161bf275a38682d18998fc284eebe52 -> passed.",
+      "pnpm exec vitest run tests/runtimeHealth.test.ts -> 10 passed, 0 failed.",
+      "Full pnpm test was also sampled: runtimeHealth remained green, while 8 unrelated controller tests failed because live artifacts leaked into test defaults; this does not weaken T022 evidence and is recorded separately."
+    ],
+    "verification": {
+      "task_sha256": "5863a88bfde58f948602ac7f6e2c85801f0b1716f17857c8c3c2a0357c7223f5",
+      "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
+    }
   }
 }

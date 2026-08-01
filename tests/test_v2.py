@@ -2316,7 +2316,7 @@ def coordinated_lease_database(
     }, database
 
 
-def test_coordinated_claim_intent_is_read_only_and_requires_approval(
+def test_coordinated_claim_intent_records_issuance_and_requires_approval(
     registry_factory, tmp_path, monkeypatch
 ):
     root = registry_factory(1, mode="write")
@@ -2356,8 +2356,18 @@ def test_coordinated_claim_intent_is_read_only_and_requires_approval(
     }
     assert handoff["minimum_remaining_seconds"] == 60
     assert store.list_runs() == []
+    issuance = store.claim_intent_issuance(result["intent"]["run_id"])
+    assert issuance["intent_sha256"] == result["intent"]["intent_sha256"]
+    assert issuance["worker_id"] == "operator"
+    assert issuance["reviewer"] == "operator"
+    assert issuance["action_class"] == "repository_mutation"
+    assert issuance["approval_level"] == "operator"
     with store.connect() as connection:
         assert connection.execute("SELECT COUNT(*) FROM workers").fetchone()[0] == 0
+        assert connection.execute(
+            "SELECT COUNT(*) FROM events WHERE event_type=?",
+            (bureau_v2.COORDINATED_CLAIM_ISSUED_EVENT,),
+        ).fetchone()[0] == 1
 
 
 
@@ -2434,7 +2444,7 @@ def test_coordinated_runtime_claim_rejects_rehashed_approval_downgrade(
     intent["intent_sha256"] = bureau_v2.coordinated_claim_intent_sha256(intent)
     binding, database = coordinated_lease_database(tmp_path / "leases", intent)
 
-    with pytest.raises(StateError, match="approval required for runtime_mutation"):
+    with pytest.raises(StateError, match="intent differs from issued identity"):
         dispatcher.commit_claim_intent(intent, binding, resource_db=database)
 
     assert store.list_runs() == []
@@ -2457,7 +2467,7 @@ def test_coordinated_runtime_claim_rejects_rehashed_scope_widening(
     intent["intent_sha256"] = bureau_v2.coordinated_claim_intent_sha256(intent)
     binding, database = coordinated_lease_database(tmp_path / "leases", intent)
 
-    with pytest.raises(StateError, match="approval scope differs from task action class"):
+    with pytest.raises(StateError, match="intent differs from issued identity"):
         dispatcher.commit_claim_intent(intent, binding, resource_db=database)
 
     assert store.list_runs() == []
@@ -2481,7 +2491,32 @@ def test_coordinated_runtime_claim_rejects_rehashed_reviewer_drift(
     intent["intent_sha256"] = bureau_v2.coordinated_claim_intent_sha256(intent)
     binding, database = coordinated_lease_database(tmp_path / "leases", intent)
 
-    with pytest.raises(StateError, match="approval reviewer differs from worker"):
+    with pytest.raises(StateError, match="intent differs from issued identity"):
+        dispatcher.commit_claim_intent(intent, binding, resource_db=database)
+
+    assert store.list_runs() == []
+
+
+def test_coordinated_runtime_claim_rejects_worker_and_reviewer_transfer(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    declare_runtime_mutation(root, task_id)
+    _registry, store, dispatcher = setup(root, tmp_path, monkeypatch)
+
+    intent = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        break_glass=True,
+    )["intent"]
+    intent["worker_id"] = "other-worker"
+    intent["operator_approval"]["reviewer"] = "other-worker"
+    intent["intent_sha256"] = bureau_v2.coordinated_claim_intent_sha256(intent)
+    binding, database = coordinated_lease_database(tmp_path / "leases", intent)
+
+    with pytest.raises(StateError, match="intent differs from issued identity"):
         dispatcher.commit_claim_intent(intent, binding, resource_db=database)
 
     assert store.list_runs() == []
@@ -2751,7 +2786,7 @@ def test_coordinated_claim_rejects_rehashed_workspace_baseline_tamper(
     intent["workspace"]["baseline_commit"] = "0" * 40
     intent["intent_sha256"] = bureau_v2.coordinated_claim_intent_sha256(intent)
     binding, database = coordinated_lease_database(tmp_path / "leases", intent)
-    with pytest.raises(StateError, match="workspace changed after intent"):
+    with pytest.raises(StateError, match="intent differs from issued identity"):
         dispatcher.commit_claim_intent(intent, binding, resource_db=database)
     assert store.list_runs() == []
 

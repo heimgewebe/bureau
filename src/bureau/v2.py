@@ -68,6 +68,7 @@ EXTERNAL_AGENT_MARKERS = ("codex", "claude", "cline", "agy", "gemini", "jules")
 COORDINATED_CLAIM_INTENT_SCHEMA_VERSION = 1
 COORDINATED_CLAIM_INTENT_TTL_SECONDS = 300
 COORDINATED_CLAIM_MIN_LEASE_SECONDS = 60
+COORDINATED_CLAIM_ISSUED_EVENT = "coordinated-claim-intent-issued"
 
 
 def coordinated_claim_intent_sha256(intent: dict[str, Any]) -> str:
@@ -159,6 +160,24 @@ def _coordinated_approval_from_dict(data: dict[str, Any]) -> ApprovalEvidence:
     raise legacy.StateError(
         f"unsupported coordinated claim approval level {level or '<missing>'}"
     )
+
+def _coordinated_claim_issuance(
+    intent: dict[str, Any], action_class: str
+) -> dict[str, Any]:
+    approval = intent["operator_approval"]
+    return {
+        "schema_version": 1,
+        "run_id": intent["run_id"],
+        "task_id": intent["task_id"],
+        "worker_id": intent["worker_id"],
+        "reviewer": approval["reviewer"],
+        "action_class": action_class,
+        "approval_level": approval["level"],
+        "approval_sha256": legacy.sha256_json(approval),
+        "intent_sha256": intent["intent_sha256"],
+        "expires_at_unix": intent["expires_at_unix"],
+    }
+
 
 def _validate_coordinated_claim_intent(intent: dict[str, Any]) -> None:
     required = {
@@ -2840,6 +2859,81 @@ class StateStore:
             (run_id, event_type, legacy.canonical_json(payload), legacy.utc_now()),
         )
 
+    def issue_claim_intent(
+        self, intent: dict[str, Any], action_class: str
+    ) -> dict[str, Any]:
+        issuance = _coordinated_claim_issuance(intent, action_class)
+        with self.immediate() as connection:
+            rows = connection.execute(
+                "SELECT payload_json FROM events "
+                "WHERE run_id=? AND event_type=? ORDER BY event_id",
+                (intent["run_id"], COORDINATED_CLAIM_ISSUED_EVENT),
+            ).fetchall()
+            if len(rows) > 1:
+                raise legacy.StateError(
+                    "coordinated claim intent has multiple issuance records"
+                )
+            if rows:
+                existing = json.loads(rows[0]["payload_json"])
+                if existing != issuance:
+                    raise legacy.StateError(
+                        "coordinated claim run id already has another issuance"
+                    )
+                return existing
+            self.event(
+                connection,
+                COORDINATED_CLAIM_ISSUED_EVENT,
+                issuance,
+                intent["run_id"],
+            )
+        return issuance
+
+    def claim_intent_issuance(self, run_id: str) -> dict[str, Any]:
+        with self.connect() as connection:
+            rows = connection.execute(
+                "SELECT payload_json FROM events "
+                "WHERE run_id=? AND event_type=? ORDER BY event_id",
+                (run_id, COORDINATED_CLAIM_ISSUED_EVENT),
+            ).fetchall()
+        if len(rows) != 1:
+            raise legacy.StateError(
+                "coordinated claim intent has no unique issuance record"
+            )
+        issuance = json.loads(rows[0]["payload_json"])
+        required = {
+            "schema_version",
+            "run_id",
+            "task_id",
+            "worker_id",
+            "reviewer",
+            "action_class",
+            "approval_level",
+            "approval_sha256",
+            "intent_sha256",
+            "expires_at_unix",
+        }
+        if not isinstance(issuance, dict) or set(issuance) != required:
+            raise legacy.StateError(
+                "coordinated claim issuance fields are not exact"
+            )
+        if issuance.get("schema_version") != 1:
+            raise legacy.StateError(
+                "coordinated claim issuance schema is invalid"
+            )
+        text_fields = required - {"schema_version", "expires_at_unix"}
+        if not all(
+            isinstance(issuance.get(field), str) and issuance[field]
+            for field in text_fields
+        ):
+            raise legacy.StateError(
+                "coordinated claim issuance identity is incomplete"
+            )
+        if not isinstance(issuance.get("expires_at_unix"), int):
+            raise legacy.StateError(
+                "coordinated claim issuance expiry is invalid"
+            )
+        return issuance
+
     def register_worker(self, worker_id: str, kind: str, capabilities: tuple[str, ...]) -> None:
         if not worker_id or len(worker_id) > 200:
             raise legacy.StateError("worker_id must contain 1-200 characters")
@@ -3520,7 +3614,7 @@ class Dispatcher(legacy.Dispatcher):
         break_glass: bool = False,
         approval_source: str = "coordinated claim intent",
     ) -> dict[str, Any]:
-        """Return a source-bound claim plan without mutating Bureau state."""
+        """Issue a source-bound plan without claiming or creating run effects."""
         self._validate_resource_filter(resource)
         runtime_truth = self._runtime_execution_truth()
         runtime_stop = self._runtime_execution_stop(
@@ -3647,6 +3741,9 @@ class Dispatcher(legacy.Dispatcher):
             ],
         }
         intent["intent_sha256"] = coordinated_claim_intent_sha256(intent)
+        self.store.issue_claim_intent(
+            intent, _coordinated_task_action_class(selected)
+        )
         return {
             "status": "claim-intent",
             "intent": intent,
@@ -3686,6 +3783,14 @@ class Dispatcher(legacy.Dispatcher):
             return _existing_coordinated_claim_result(existing, intent, resource_db=resource_db)
         if intent["expires_at_unix"] <= int(datetime.now(timezone.utc).timestamp()):
             raise legacy.StateError("coordinated claim intent expired")
+        issuance = self.store.claim_intent_issuance(intent["run_id"])
+        expected_issuance = _coordinated_claim_issuance(
+            intent, issuance["action_class"]
+        )
+        if issuance != expected_issuance:
+            raise legacy.StateError(
+                "coordinated claim intent differs from issued identity"
+            )
         runtime_truth = self._runtime_execution_truth()
         runtime_stop = self._runtime_execution_stop(
             command="claim-commit", runtime_truth=runtime_truth
@@ -3700,6 +3805,10 @@ class Dispatcher(legacy.Dispatcher):
         approval_data = intent["operator_approval"]
         approval = _coordinated_approval_from_dict(approval_data)
         approval_action_class = _coordinated_task_action_class(task)
+        if issuance["action_class"] != approval_action_class:
+            raise legacy.StateError(
+                "coordinated claim issued action class differs from task"
+            )
         if approval.reviewer != intent["worker_id"]:
             raise legacy.StateError(
                 "coordinated claim approval reviewer differs from worker"

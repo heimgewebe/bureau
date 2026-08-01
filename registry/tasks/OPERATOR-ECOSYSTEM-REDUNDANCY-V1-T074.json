@@ -157,7 +157,8 @@
           "source_ref": "heimgewebe/leitstand#202",
           "head_sha": "7cbd744cc453d7e31530783670d29f8129cbca0e",
           "merge_commit_sha": "f1a3299cd77dbfd02b1709bdf25d3f0ba37296a6",
-          "full_diff_sha256": "b98b554a841b6fbd8dca448be974c9aee58fd406bf0b515f56df7af3c62ed78f"
+          "full_diff_sha256": "b98b554a841b6fbd8dca448be974c9aee58fd406bf0b515f56df7af3c62ed78f",
+          "number": 202
         },
         {
           "kind": "test_run",
@@ -216,7 +217,7 @@
       "GitHub PR #202 merged as f1a3299cd77dbfd02b1709bdf25d3f0ba37296a6; remote main readback equals that merge commit."
     ],
     "verification": {
-      "task_sha256": "eb2502377bdb7d89d1cd655fd929342e13cdef2e8496b2247b72ddc9915b35c4",
+      "task_sha256": "69fbf8942b1b798edba659a49c269ba4710a1750dce1f91b69c416af192b17ef",
       "plan_sha256": "f264153b545003ff99a4889a911190802d39c022ed595c6002ee2c109c590396"
     }
   },

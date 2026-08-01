@@ -86,8 +86,7 @@
     "now": [
       "BUREAU-TRUTH-MODEL-V2-T022",
       "REPOGROUND-LEGACY-RECONCILIATION-V1-T004",
-      "AUDIO-CONTROL-PLANE-V1-T001",
-      "REPOGROUND-LEGACY-RECONCILIATION-V1-T022"
+      "AUDIO-CONTROL-PLANE-V1-T001"
     ]
   },
   "queue_policy": "skip-blocked",

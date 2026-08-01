@@ -1,0 +1,95 @@
+{
+  "acceptance": [
+    {
+      "assertion": "requirements-dev.txt und requirements-browser.txt binden pytest exakt an 9.1.1; keine weitere direkte Abhängigkeit wird geändert.",
+      "id": "exact-version-scope"
+    },
+    {
+      "assertion": "Produktionsabhängigkeiten und Produktcode bleiben unverändert, sofern kein durch pytest 9.1.1 belegter Testkompatibilitätsfix zwingend erforderlich ist; jede Ausnahme wird separat begründet.",
+      "id": "runtime-boundary"
+    },
+    {
+      "assertion": "Der vollständige RepoGround-Pytest-Lauf unter pytest 9.1.1 sowie relevante Browser- und Contract-Tests sind grün, oder ein externer Blocker wird revisionsgebunden ausgewiesen.",
+      "id": "test-compatibility"
+    },
+    {
+      "assertion": "Ruff und git diff --check sind auf dem exakten Head grün.",
+      "id": "static-quality"
+    },
+    {
+      "assertion": "Diff, Review, GitHub-CI und Merge-Readback sind revisionsgebunden; erst danach gilt der Task als verified.",
+      "id": "delivery"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.repoground"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer hat die Umsetzung am 1. August 2026 mit '@grabowski umsetzen' ausdrücklich autorisiert. Claim, Tests, Review, CI und revisionsgebundener Readback bleiben zwingend.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/repoground"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/repoground"
+  },
+  "goal": "Die in requirements-dev.txt und requirements-browser.txt gebundene pytest-Version von 9.0.3 auf 9.1.1 aktualisieren und durch aktuelle Tests belegen, ohne Produktlaufzeitabhängigkeiten oder Produktsemantik zu verändern.",
+  "id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T022",
+  "initiative": "REPOGROUND-LEGACY-RECONCILIATION-V1",
+  "metadata": {
+    "does_not_establish": [
+      "Produktionsverhalten",
+      "Kompatibilität ohne Tests",
+      "Merge-Bereitschaft",
+      "Berechtigung zu weiteren Dependency-Updates"
+    ],
+    "fallback_reason": "Keine bestehende RepoGround-Aufgabe ist aktuell claimbar: T012 und T021 sind verifiziert, T004 ist durch Unteraufgaben blockiert, T010/T017 benötigen einen nativen Pythonista-Beleg und T014 hängt von T010 ab.",
+    "scope_rule": "In einem frischen isolierten Worktree auf aktuellem main arbeiten; keine historischen oder fremden RepoGround-Worktrees übernehmen, zurücksetzen oder verändern.",
+    "source_issue": "heimgewebe/repoground#1137",
+    "source_release": "pypi:pytest:9.1.1",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-da577f283685e5936f02a65c",
+      "event_id": 1934,
+      "event_created_at": "2026-08-01T06:49:52.219410Z",
+      "request_sha256": "cb2bb6881fae1dd5a3c507736f5d49b7507f74872c8bc9706c7e8b2ae680b074",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chatgpt:repoground:2026-08-01T08:06+02:00; github:heimgewebe/repoground#1137; pypi:pytest:9.1.1",
+        "observed_at": "2026-08-01T06:47:00Z",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "now",
+    "rank": 81
+  },
+  "required_capabilities": [
+    "python",
+    "dependency-management",
+    "testing",
+    "github"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "RepoGround-Testwerkzeug pytest auf 9.1.1 aktualisieren"
+}

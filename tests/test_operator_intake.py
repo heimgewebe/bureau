@@ -336,6 +336,75 @@ def test_candidate_record_is_idempotent_and_source_bound(registry_factory, tmp_p
     assert context["source"]["freshness"] == "digest-bound"
 
 
+def test_operator_intake_accepts_strict_acs_binding_and_rejects_unknown_repo(
+    registry_factory, tmp_path
+):
+    root, _registry = _committed_registry(registry_factory)
+    source = Path(__file__).resolve().parents[1]
+    shutil.copy2(
+        source / "registry/resources/agent-control-surface.json",
+        root / "registry/resources/agent-control-surface.json",
+    )
+    _git(root, "add", "registry/resources/agent-control-surface.json")
+    _git(root, "commit", "-m", "catalogue ACS fixture")
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+
+    recorded = candidate_record(
+        registry,
+        store,
+        idempotency_key="source:acs-resource-parity",
+        title="Implement ACS repository work",
+        source_kind="registry-live-audit",
+        source_locator="systemkatalog:repo:agent-control-surface",
+        source_sha256="a" * 64,
+        desired_outcome="Bind an ACS task to its exact repository resource",
+        repo="repo.agent-control-surface",
+    )
+
+    assert recorded["record"]["repo"] == "repo.agent-control-surface"
+    assert recorded["record"]["catalog_validation"]["status"] == "validated"
+    with pytest.raises(OperatorIntakeError, match="unknown live register repo") as caught:
+        candidate_record(
+            registry,
+            store,
+            idempotency_key="source:unknown-acs-resource",
+            title="Reject unknown repository work",
+            source_kind="registry-live-audit",
+            desired_outcome="Reject a missing repository binding",
+            repo="repo.unknown-acs",
+        )
+    assert caught.value.code == "candidate-record-invalid"
+    assert len(operator_intake_module.candidate_records(store)) == 1
+
+    task = _task(root)
+    task["claims"] = [
+        {
+            "resource": "repo.agent-control-surface",
+            "mode": "write",
+            "isolation": "worktree",
+        }
+    ]
+    task["required_capabilities"] = ["repository", "shell", "git", "github"]
+    plan_path = tmp_path / "acs-proposal.json"
+    task_propose(
+        registry,
+        store,
+        candidate_id=recorded["candidate_id"],
+        task_json=task,
+        publishing_task_id="BUR-TEST-001-T001",
+        path=plan_path,
+    )
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    assert plan["task_json"]["claims"] == task["claims"]
+    assert plan["task_json"]["required_capabilities"] == [
+        "repository",
+        "shell",
+        "git",
+        "github",
+    ]
+
+
 def test_candidate_record_preserves_v1_request_hash_without_refinement(
     registry_factory, tmp_path
 ):

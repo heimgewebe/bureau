@@ -4913,86 +4913,276 @@ def coordinated_claim_status(
     }
 
 
+class RunStateConflict(legacy.StateError):
+    """A close attempt lost against an authoritative close precondition."""
+
+    def __init__(
+        self,
+        code: str,
+        message: str,
+        *,
+        run_id: str,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.code = code
+        self.run_id = run_id
+        self.details = details or {}
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "schema_version": 1,
+            "kind": "bureau_run_state_conflict",
+            "status": "rejected",
+            "code": self.code,
+            "message": str(self),
+            "run_id": self.run_id,
+            "effect_applied": False,
+            "details": self.details,
+            "does_not_establish": [
+                "safe_retry_without_readback",
+                "task_verification",
+                "receipt_validity",
+            ],
+        }
+
+
+@dataclass(frozen=True)
+class _CloseRevision:
+    """One task and plan revision derived from the authoritative registry documents."""
+
+    task_id: str
+    initiative_id: str
+    task_sha256: str
+    plan_sha256: str
+    task_path: str
+    initiative_path: str
+
+    @property
+    def digests(self) -> tuple[str, str]:
+        return (self.task_sha256, self.plan_sha256)
+
+
+def _authoritative_document(
+    registry: Registry,
+    directory: Path,
+    document_id: str,
+    kind: str,
+    *,
+    run_id: str,
+) -> tuple[Path, dict[str, Any]]:
+    """Resolve exactly one registry document by id, or fail closed.
+
+    The registry is Git-backed, so ``BEGIN IMMEDIATE`` orders SQLite writers but
+    never the files. Anything that must not be read from a caller's snapshot is
+    read here, from the documents themselves.
+    """
+    expected = directory / f"{document_id}.json"
+    matches: list[tuple[Path, dict[str, Any]]] = []
+    invalid_matches: list[str] = []
+    for candidate in sorted(directory.glob("*.json")) if directory.is_dir() else []:
+        try:
+            raw = legacy.read_json(candidate)
+        except legacy.ValidationError as exc:
+            if candidate == expected:
+                invalid_matches.append(f"{candidate}: {exc}")
+            continue
+        candidate_id = raw.get("id")
+        if candidate == expected and candidate_id != document_id:
+            invalid_matches.append(
+                f"{candidate}: canonical path contains id {candidate_id!r}"
+            )
+        if not document_id or candidate_id != document_id:
+            continue
+        try:
+            registry.schemas.validate(kind, raw, candidate)
+        except DocumentSchemaError as exc:
+            invalid_matches.append(f"{candidate}: {exc}")
+            continue
+        matches.append((candidate, raw))
+    if invalid_matches or len(matches) != 1:
+        raise RunStateConflict(
+            "registry-revision-unavailable",
+            f"authoritative {kind} document for {document_id!r} is unavailable or ambiguous",
+            run_id=run_id,
+            details={
+                "document_kind": kind,
+                "document_id": document_id,
+                "directory": str(directory),
+                "matches": len(matches),
+                "match_paths": [str(path) for path, _raw in matches],
+                "invalid_matches": invalid_matches,
+            },
+        )
+    return matches[0]
+
+
+def _authoritative_close_revision(
+    registry: Registry, task_id: str, *, run_id: str
+) -> _CloseRevision:
+    """Re-read the task and its initiative plan from the Git-backed registry.
+
+    Reads only: neither the caller's registry snapshot nor any document on disk
+    is mutated, so a close never disturbs a foreign working state.
+    """
+    task_path, task_raw = _authoritative_document(
+        registry,
+        registry.root / "registry" / "tasks",
+        task_id,
+        "task",
+        run_id=run_id,
+    )
+    initiative_id = task_raw.get("initiative")
+    if not isinstance(initiative_id, str) or not initiative_id:
+        raise RunStateConflict(
+            "registry-revision-unavailable",
+            f"authoritative task document for {task_id!r} names no initiative",
+            run_id=run_id,
+            details={
+                "document_kind": "task",
+                "document_id": task_id,
+                "task_path": str(task_path),
+            },
+        )
+    initiative_path, initiative_raw = _authoritative_document(
+        registry,
+        registry.root / "registry" / "initiatives",
+        initiative_id,
+        "initiative",
+        run_id=run_id,
+    )
+    return _CloseRevision(
+        task_id=task_id,
+        initiative_id=initiative_id,
+        task_sha256=task_revision_sha256(task_raw),
+        plan_sha256=legacy.sha256_json(initiative_raw.get("current_plan") or {}),
+        task_path=str(task_path),
+        initiative_path=str(initiative_path),
+    )
+
+
+def _receipt_binds_current_revision(registry: Registry, receipt: dict[str, Any]) -> bool:
+    """Report whether a stored receipt still describes the authoritative revision.
+
+    ``current`` is a positive claim about registry truth, so a revision that
+    cannot be read is reported as not current rather than assumed to match.
+    """
+    task_id = receipt.get("task_id")
+    if not isinstance(task_id, str) or not task_id:
+        return False
+    try:
+        revision = _authoritative_close_revision(
+            registry, task_id, run_id=str(receipt.get("run_id", ""))
+        )
+    except RunStateConflict:
+        return False
+    return revision.digests == (receipt.get("task_sha256"), receipt.get("plan_sha256"))
+
+
 def complete_run(
     registry: Registry,
     store: StateStore,
     run_id: str,
     evidence: dict[str, Any],
 ) -> dict[str, Any]:
-    existing = store.receipt(run_id)
-    if existing is not None:
-        path = _materialize_receipt(store, existing)
-        task = registry.tasks.get(existing["task_id"])
-        current = bool(
-            task
-            and existing["task_sha256"] == task.sha256
-            and existing["plan_sha256"] == plan_sha256(registry, task.initiative)
-        )
-        with store.connect() as connection:
-            envelope_row = connection.execute(
-                "SELECT envelope_json FROM runs WHERE run_id=?", (run_id,)
-            ).fetchone()
-        envelope = json.loads(envelope_row["envelope_json"]) if envelope_row else {}
-        return {
-            "receipt": existing,
-            "receipt_path": str(path),
-            "idempotent": True,
-            "current": current,
-            "lease_release": coordinated_lease_release_projection(envelope),
-        }
-    run = store.run(run_id)
-    if run["state"] not in legacy.ACTIVE_STATES:
-        raise legacy.StateError(f"run {run_id} is not active")
-    task = registry.tasks[run["task_id"]]
-    current_plan_sha = plan_sha256(registry, task.initiative)
-    if task.sha256 != run["task_sha256"] or current_plan_sha != run["plan_sha256"]:
-        raise legacy.StateError("run baseline is stale; task or plan changed after claim")
-    with store.connect() as connection:
-        envelope = json.loads(
-            connection.execute(
-                "SELECT envelope_json FROM runs WHERE run_id=?", (run_id,)
-            ).fetchone()[0]
-        )
-    criteria = [
-        item if isinstance(item, dict) else {"id": f"criterion-{index}"}
-        for index, item in enumerate(envelope["task"]["acceptance"], 1)
-    ]
-    missing = _validate_evidence(criteria, evidence)
-    if missing:
-        raise legacy.StateError("missing evidence for: " + ", ".join(sorted(missing)))
-    receipt = {
-        "schema_version": 1,
-        "run_id": run_id,
-        "task_id": run["task_id"],
-        "task_sha256": run["task_sha256"],
-        "plan_sha256": run["plan_sha256"],
-        "envelope_sha256": run["envelope_sha256"],
-        "verified_at": legacy.utc_now(),
-        "external": (
-            {"system": run["external_system"], "id": run["external_id"]}
-            if run["external_system"]
-            else None
-        ),
-        "evidence": {item["id"]: evidence[item["id"]] for item in criteria},
-    }
-    if isinstance(envelope.get("rlens_context_ref"), dict):
-        receipt["rlens_context_ref"] = envelope["rlens_context_ref"]
-    if isinstance(envelope.get("rlens_context_policy"), dict):
-        receipt["rlens_context_policy"] = envelope["rlens_context_policy"]
-    receipt_sha = legacy.sha256_json(receipt)
-    receipt["receipt_sha256"] = receipt_sha
-    registry.schemas.validate("receipt", receipt, f"receipt:{run_id}")
+    """Close one run under a single compare-and-swap against authoritative state.
+
+    Every expectation the close depends on — receipt absence, run state, and the
+    claim baseline — is read and enforced inside the same immediate transaction
+    that writes the effect, so a concurrent fail, cancel or re-claim rejects the
+    close instead of silently overwriting it.
+
+    On a first close, the task and plan revision is read from the registry files
+    immediately before the SQLite effects and compared with the run baseline. It
+    is read again after the SQLite effects and before commit. Detected drift
+    rolls the full transaction back. A non-cooperating registry writer can still
+    land in the residual interval between that second read and SQLite commit; no
+    cross-domain atomicity is claimed.
+    """
     now = legacy.utc_now()
+    replay_receipt: dict[str, Any] | None = None
+    receipt: dict[str, Any] | None = None
+    envelope: dict[str, Any] = {}
     with store.immediate() as connection:
-        current = connection.execute("SELECT state FROM runs WHERE run_id=?", (run_id,)).fetchone()
-        if current is None:
-            raise legacy.StateError(f"unknown run {run_id}")
+        run_row = connection.execute(
+            "SELECT * FROM runs WHERE run_id=?", (run_id,)
+        ).fetchone()
         duplicate = connection.execute(
             "SELECT receipt_json FROM receipts WHERE run_id=?", (run_id,)
         ).fetchone()
-        if duplicate:
-            receipt = json.loads(duplicate["receipt_json"])
+        if duplicate is not None:
+            replay_receipt = json.loads(duplicate["receipt_json"])
+            envelope = json.loads(run_row["envelope_json"]) if run_row is not None else {}
         else:
+            if run_row is None:
+                raise RunStateConflict(
+                    "unknown-run",
+                    f"unknown run {run_id}",
+                    run_id=run_id,
+                )
+            if run_row["state"] not in legacy.ACTIVE_STATES:
+                raise RunStateConflict(
+                    "run-not-active",
+                    f"run {run_id} is not active",
+                    run_id=run_id,
+                    details={
+                        "observed_state": run_row["state"],
+                        "expected_states": list(legacy.ACTIVE_STATES),
+                    },
+                )
+            run = store.public_run(run_row)
+            envelope = json.loads(run_row["envelope_json"])
+            criteria = [
+                item if isinstance(item, dict) else {"id": f"criterion-{index}"}
+                for index, item in enumerate(envelope["task"]["acceptance"], 1)
+            ]
+            missing = _validate_evidence(criteria, evidence)
+            if missing:
+                raise legacy.StateError("missing evidence for: " + ", ".join(sorted(missing)))
+            receipt = {
+                "schema_version": 1,
+                "run_id": run_id,
+                "task_id": run["task_id"],
+                "task_sha256": run["task_sha256"],
+                "plan_sha256": run["plan_sha256"],
+                "envelope_sha256": run["envelope_sha256"],
+                "verified_at": now,
+                "external": (
+                    {"system": run["external_system"], "id": run["external_id"]}
+                    if run["external_system"]
+                    else None
+                ),
+                "evidence": {item["id"]: evidence[item["id"]] for item in criteria},
+            }
+            if isinstance(envelope.get("rlens_context_ref"), dict):
+                receipt["rlens_context_ref"] = envelope["rlens_context_ref"]
+            if isinstance(envelope.get("rlens_context_policy"), dict):
+                receipt["rlens_context_policy"] = envelope["rlens_context_policy"]
+            receipt_sha = legacy.sha256_json(receipt)
+            receipt["receipt_sha256"] = receipt_sha
+            registry.schemas.validate("receipt", receipt, f"receipt:{run_id}")
+
+            # This is the last precondition read before the first SQLite effect.
+            revision = _authoritative_close_revision(
+                registry, run["task_id"], run_id=run_id
+            )
+            if revision.digests != (run["task_sha256"], run["plan_sha256"]):
+                raise RunStateConflict(
+                    "stale-baseline",
+                    "run baseline is stale; task or plan changed after claim",
+                    run_id=run_id,
+                    details={
+                        "task_id": run["task_id"],
+                        "initiative_id": revision.initiative_id,
+                        "expected_task_sha256": run["task_sha256"],
+                        "observed_task_sha256": revision.task_sha256,
+                        "expected_plan_sha256": run["plan_sha256"],
+                        "observed_plan_sha256": revision.plan_sha256,
+                        "task_path": revision.task_path,
+                        "initiative_path": revision.initiative_path,
+                    },
+                )
+
             connection.execute(
                 (
                     "INSERT INTO receipts("
@@ -5016,11 +5206,64 @@ def complete_run(
                 """,
                 (run["task_id"], run["task_sha256"], run["plan_sha256"], receipt_sha, now),
             )
+            active_placeholders = ",".join("?" for _ in legacy.ACTIVE_STATES)
             connection.execute(
-                "UPDATE runs SET state='succeeded',updated_at=? WHERE run_id=?", (now, run_id)
+                f"UPDATE runs SET state='succeeded',updated_at=? "
+                f"WHERE run_id=? AND state IN ({active_placeholders})",
+                (now, run_id, *legacy.ACTIVE_STATES),
             )
             connection.execute("DELETE FROM reservations WHERE run_id=?", (run_id,))
             store.event(connection, "run-completed", {"receipt_sha256": receipt_sha}, run_id)
+            readback = connection.execute(
+                "SELECT state FROM runs WHERE run_id=?", (run_id,)
+            ).fetchone()
+            if readback is None or readback["state"] != "succeeded":
+                raise RunStateConflict(
+                    "close-readback-mismatch",
+                    f"run {run_id} did not read back as succeeded after close",
+                    run_id=run_id,
+                    details={
+                        "observed_state": None if readback is None else readback["state"],
+                        "expected_state": "succeeded",
+                    },
+                )
+
+            # This is the final guard before the context manager commits SQLite.
+            rebound = _authoritative_close_revision(
+                registry, run["task_id"], run_id=run_id
+            )
+            if (
+                rebound.digests != revision.digests
+                or rebound.initiative_id != revision.initiative_id
+            ):
+                raise RunStateConflict(
+                    "close-revision-drift",
+                    "task or plan revision changed while the close was being written",
+                    run_id=run_id,
+                    details={
+                        "task_id": run["task_id"],
+                        "expected_task_sha256": revision.task_sha256,
+                        "observed_task_sha256": rebound.task_sha256,
+                        "expected_plan_sha256": revision.plan_sha256,
+                        "observed_plan_sha256": rebound.plan_sha256,
+                        "expected_initiative_id": revision.initiative_id,
+                        "observed_initiative_id": rebound.initiative_id,
+                        "task_path": rebound.task_path,
+                        "initiative_path": rebound.initiative_path,
+                    },
+                )
+
+    if replay_receipt is not None:
+        replay_path = _materialize_receipt(store, replay_receipt)
+        return {
+            "receipt": replay_receipt,
+            "receipt_path": str(replay_path),
+            "idempotent": True,
+            "current": _receipt_binds_current_revision(registry, replay_receipt),
+            "lease_release": coordinated_lease_release_projection(envelope),
+        }
+    if receipt is None:  # pragma: no cover - every transaction branch assigns or raises
+        raise AssertionError("close transaction produced neither a receipt nor a replay")
     path = _materialize_receipt(store, receipt)
     return {
         "receipt": receipt,

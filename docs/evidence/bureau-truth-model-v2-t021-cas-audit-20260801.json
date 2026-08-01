@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "task_id": "BUREAU-TRUTH-MODEL-V2-T021",
+  "recorded_at": "2026-08-01",
+  "revision_binding": {
+    "bureau_repository": "/home/alex/repos/bureau",
+    "bureau_head_at_audit": "255b5e0d4d94e8f4dccc49e763904ce3537144b1",
+    "grabowski_repository": "/home/alex/repos/grabowski",
+    "grabowski_head_at_audit": "e42fcf099793d3b4a9510b11f8129690de83fd3b",
+    "grabowski_pr_513_commit": "83ddd58d4f10bc25b55d30e4fbe8302174e533dd"
+  },
+  "cas_requirement_model": {
+    "expected_version": "the mutation names the state revision it expects (row state, revision digest, or head object id)",
+    "owner_or_lease_binding": "the mutation names the owner or lease token it acts under, where an owner exists",
+    "idempotency_key": "a repeated call with the same key returns the first effect instead of producing a second",
+    "atomic_expectation_check": "every first-close effect precondition is evaluated inside the same SQLite transaction that writes the effect",
+    "deterministic_rejection": "a lost race is rejected with a stable machine-readable reason and changes no truth",
+    "unknown_outcome_contract": "transport abort or timeout after a possible effect yields an unknown outcome with a named readback and forbids unchanged retry",
+    "authoritative_readback": "a successful effect is read back from the authoritative source; an event append alone is never success"
+  },
+  "evidence": {
+    "existing-contract-audit": {
+      "applicability": "required",
+      "audited_surfaces": [
+        {
+          "surface": "Bureau claim intent and lifecycle store",
+          "location": "src/bureau/v2.py:claim_intent, commit_claim_intent",
+          "verdict": "already-satisfied",
+          "observed": "The intent carries task_sha256, plan_sha256, runtime_truth_sha256, the workspace source head, lease_owner_id, an expiry and intent_sha256. commit_claim_intent re-derives and compares every one of them, re-observes open PRs for byte-equivalent nonconflict evidence, and writes under store.immediate(). run_id is the idempotency key: an existing run short-circuits to _existing_coordinated_claim_result.",
+          "duplication_avoided": "No CAS element was added to the claim path."
+        },
+        {
+          "surface": "Live Register append-only intake",
+          "location": "src/bureau/live_register.py:live_register_record",
+          "verdict": "already-satisfied",
+          "observed": "The supersedes_event_id validation reads existing candidate events inside the same store.immediate() transaction that appends, so a concurrent supersede loses. The intake establishes no claim, queue or dispatch truth.",
+          "duplication_avoided": "No CAS element was added to the live register."
+        },
+        {
+          "surface": "Grabowski coordinated pickup",
+          "location": "grabowski src/grabowski_bureau_pickup.py:_commit_claim, _recover_after_commit",
+          "verdict": "already-satisfied",
+          "observed": "_commit_claim invokes claim-commit with mutation=True and required_readback bound to the exact bureau run and grabowski lease owner. _recover_after_commit reads coordination status back, returns recovery-required on readback failure with does_not_establish including 'safe retry without another readback', and compensates acquisitions only on a definitive missing run.",
+          "duplication_avoided": "No CAS element was added to the pickup path."
+        },
+        {
+          "surface": "Grabowski PR #513 current-head contract",
+          "location": "grabowski commit 83ddd58 'Fix Bureau candidate and claim readback contracts'",
+          "verdict": "already-satisfied",
+          "observed": "expected_head / expected_base_head bindings are validated before and after effect across grabowski_agent_role.py, grabowski_job_finalizer.py, grabowski_merge_delivery.py and grabowski_self_deploy.py.",
+          "duplication_avoided": "No head-binding work was repeated."
+        },
+        {
+          "surface": "Bureau close path",
+          "location": "src/bureau/v2.py:complete_run",
+          "verdict": "gap",
+          "observed": "Receipt absence, run state and the claim baseline were read through three separate connections before the write transaction. Inside store.immediate() only 'run row exists' was re-checked; the ACTIVE_STATES expectation was never re-evaluated. Every other mutating store method (bind, prepare_dispatch, mark_dispatch_uncertain, heartbeat, fail_run) does re-check state inside its transaction, so complete_run was the sole outlier.",
+          "second_gap": "Moving the baseline comparison inside the transaction was not sufficient on its own: task.sha256 and the plan digest were still projected from the Registry snapshot the caller loaded before the close, and BEGIN IMMEDIATE orders SQLite writers only. A registry document rewritten between Registry.load() and the transaction therefore passed both comparisons and had its obsolete revision recorded as verified. Closed for stale-before-close and for drift between two in-transaction reads by re-deriving the revision immediately before the effects and again after the effects.",
+          "residual_gap": "Without a cooperative registry writer lock, a non-cooperating writer can still land after the second authoritative file read and before SQLite commit. This path does not detect that residual race and does not establish cross-domain atomicity."
+        }
+      ]
+    },
+    "measured-read-reduction": {
+      "applicability": "required",
+      "decision": "implement",
+      "path": "bureau complete (close) path, src/bureau/v2.py:complete_run",
+      "method": "Instrumented StateStore.connect and sqlite3 trace callback in a hermetic pytest run on a single-task registry; counted database connections and SELECT/INSERT/UPDATE/DELETE statements per close.",
+      "before": {
+        "first_close": {"connections": 4, "statements": 11},
+        "idempotent_replay": {"connections": 2, "statements": 2}
+      },
+      "after": {
+        "first_close": {"connections": 1, "statements": 8},
+        "idempotent_replay": {"connections": 1, "statements": 2}
+      },
+      "reduction": {
+        "first_close_connections": "4 -> 1 (-75%)",
+        "first_close_statements": "11 -> 8 (-27%), and the 8 include one newly added post-write readback SELECT, so pre-read statements fell from 11 to 7 (-36%)",
+        "idempotent_replay_connections": "2 -> 1 (-50%)",
+        "unsynchronised_pre_reads": "3 -> 0"
+      },
+      "registry_revision_derivations": {
+        "note": "The close resolves by document id and inspects the candidate directory so missing, invalid and duplicate target documents fail closed; actual JSON file reads therefore scale with the directory rather than being a fixed four-read claim.",
+        "first_close_target_derivations": 4,
+        "idempotent_replay_target_derivations": 2,
+        "breakdown": "first close: task and initiative immediately before SQLite effects, then the same two after all effects and run-row readback; replay: task and initiative once for current, after leaving BEGIN IMMEDIATE",
+        "sql_statements_unchanged": "The revision binding adds no SQL; the measured 8 (first close) and 2 (replay) statements are unchanged by it."
+      },
+      "regression_guard": "test_close_reads_authoritative_state_in_a_single_transaction asserts one DB connection for a first close; test_first_close_reads_registry_inside_immediate_around_sqlite_effects proves the two document reads remain inside it and bracket the effects; test_idempotent_replay_performs_file_and_registry_work_after_immediate asserts one replay connection/transaction and proves both receipt materialisation and registry-current evaluation run after it."
+    },
+    "exact-preconditions": {
+      "applicability": "required",
+      "command": "bureau complete / bureau.core.complete_run",
+      "bound_preconditions": {
+        "task_identity": "run.task_id is read from the authoritative run row inside the transaction and written into the receipt and task_status rows",
+        "expected_lifecycle_version": "run.state must be in ('assigned','running','verifying'); the UPDATE additionally carries the same state predicate in its WHERE clause",
+        "expected_attempt_and_baseline": "run.task_sha256 and run.plan_sha256 must equal the task and plan digest re-derived from exactly one readable, schema-valid task and initiative document immediately before the SQLite effects; the revision is re-read after all effects and run-row readback and required to be unchanged before commit",
+        "expected_owner_or_lease": "run.worker_id and the coordinated lease_owner_id ride in the envelope; lease release is projected from the same envelope read inside the transaction",
+        "idempotency_key": "run_id, enforced by the receipts primary key and by the in-transaction duplicate check",
+        "outcome_receipt": "a schema-validated receipt with receipt_sha256, persisted in the same transaction and materialised to disk after commit"
+      }
+    },
+    "deterministic-rejection": {
+      "applicability": "required",
+      "error_type": "bureau.core.RunStateConflict",
+      "codes": [
+        {"code": "unknown-run", "condition": "no run row for run_id"},
+        {"code": "run-not-active", "condition": "run state left ACTIVE_STATES (failed, cancelled, orphaned, succeeded)"},
+        {"code": "stale-baseline", "condition": "the task or plan digest re-read from the registry documents at the close boundary differs from the claim baseline"},
+        {"code": "registry-revision-unavailable", "condition": "the task or initiative document is missing, unreadable, schema-invalid, ambiguous, or the task names no initiative"},
+        {"code": "close-revision-drift", "condition": "the authoritative task or plan revision changed between the pre-write binding and the post-write re-read"},
+        {"code": "close-readback-mismatch", "condition": "the authoritative row does not read back as succeeded after the write"}
+      ],
+      "payload_fields": ["schema_version", "kind", "status", "code", "message", "run_id", "effect_applied", "details", "does_not_establish"],
+      "no_truth_change": "Every rejection is raised inside store.immediate(), whose context manager rolls back on exception. Tests assert the run keeps its prior state, no receipt exists and task_status is unchanged.",
+      "cli_surface": "src/bureau/cli.py emits the payload object and exits 2."
+    },
+    "unknown-outcome-contract": {
+      "applicability": "required",
+      "contract": "A transport abort or crash after the committed effect leaves the receipt row present. The next close reads the run and receipt rows in one BEGIN IMMEDIATE transaction. Only after that transaction ends does it materialise the identical receipt_sha256 and derive registry current. A rejection carries does_not_establish ['safe_retry_without_readback', 'task_verification', 'receipt_validity'], so an unchanged retry is never authorised by the rejection itself; the named readback is the run row plus the receipts row for the same run_id.",
+      "tests": [
+        "tests/test_close_cas.py::test_close_replays_idempotently_after_crash_between_effect_and_receipt_file",
+        "tests/test_close_cas.py::test_idempotent_replay_performs_file_and_registry_work_after_immediate"
+      ]
+    },
+    "authoritative-readback": {
+      "applicability": "required",
+      "contract": "After writing the receipt, task_status, run transition and reservation release, the same transaction re-reads runs.state for the same run_id and requires 'succeeded' before committing. The run-completed event is appended alongside but is never treated as the success signal; the row read is. A mismatch raises close-readback-mismatch and rolls the whole transaction back.",
+      "identity_bound": ["run_id", "task_id", "worker_id via the run row and envelope"],
+      "registry_revision_binding": {
+        "why": "BEGIN IMMEDIATE serialises SQLite writers only. The registry is a Git-backed file tree, so task and plan authority must be read from the documents inside the close transaction instead of being projected from the Registry snapshot loaded earlier.",
+        "before_effect": "As the last pre-effect check, the transaction resolves exactly one readable, schema-valid task document and initiative document, re-derives task_revision_sha256 and the plan digest, and compares both with the run baseline. Stale-before-close rejects with stale-baseline; missing, unreadable, invalid or ambiguous documents reject with registry-revision-unavailable.",
+        "after_effect": "After all SQLite writes and the authoritative run-row readback, and still inside the transaction, both documents are resolved and read again as the final guard. Semantic drift between the two reads rejects with close-revision-drift and rolls the complete SQLite effect back.",
+        "snapshot_gate_removed": "The in-memory Registry snapshot is not compared after the fresh baseline check. It is not part of the run's frozen precondition, and once the authoritative documents match the run baseline it cannot add safety; it can only reject a valid close because the caller loaded older bytes. test_close_ignores_stale_snapshot_when_authoritative_revision_matches_run_baseline proves that case, while the stale-before-close and mid-write drift tests preserve both safety checks.",
+        "residual_window": "There is no cooperative registry writer lock. A non-cooperating writer that lands after the second document read and before SQLite commit is not detected. The implementation narrows the unordered interval to that exact residual window but does not provide cross-domain atomicity or writer exclusion.",
+        "read_only": "The two registry checks mutate no document and do not rewrite the caller's snapshot, so a close disturbs no foreign working state.",
+        "revision_boundary": "task_revision_sha256 excludes state and metadata.verification, so the closure stamp a verified task later carries does not break the binding; every other field change does.",
+        "current_flag": "After the replay transaction ends, the idempotent path derives current from the authoritative documents. A revision that disagrees with the stored receipt, or that cannot be read, reports current: false instead of asserting currency from a stale snapshot.",
+        "tests": [
+          "tests/test_close_cas.py::test_close_binds_the_authoritative_revision_not_the_loaded_snapshot",
+          "tests/test_close_cas.py::test_close_binds_the_authoritative_plan_revision",
+          "tests/test_close_cas.py::test_close_ignores_stale_snapshot_when_authoritative_revision_matches_run_baseline",
+          "tests/test_close_cas.py::test_close_rejects_when_the_authoritative_document_cannot_be_read",
+          "tests/test_close_cas.py::test_close_rejects_when_the_authoritative_document_is_missing",
+          "tests/test_close_cas.py::test_close_rejects_when_the_authoritative_document_is_ambiguous",
+          "tests/test_close_cas.py::test_close_loses_against_registry_drift_during_the_write"
+        ]
+      }
+    },
+    "concurrency-tests": {
+      "applicability": "required",
+      "location": "tests/test_close_cas.py",
+      "hermetic": true,
+      "tests": [
+        {"name": "test_close_loses_against_concurrent_cancel", "proves": "cancel wins; close rejects with run-not-active; no receipt, no verified task status"},
+        {"name": "test_close_loses_against_concurrent_failure", "proves": "failure wins and keeps its error; close rejects"},
+        {"name": "test_close_loses_against_baseline_drift_inside_cas", "proves": "drift rejects with stale-baseline and both digests reported; run stays assigned"},
+        {"name": "test_close_rejects_unknown_run_with_machine_readable_reason", "proves": "unknown-run carries the does_not_establish contract"},
+        {"name": "test_concurrent_closes_produce_exactly_one_effect", "proves": "four real threads closing one run yield exactly one receipt row, one run-completed event, one winner and three explicit idempotent losers"},
+        {"name": "test_close_replays_idempotently_after_crash_between_effect_and_receipt_file", "proves": "replay after a lost receipt file returns the identical digest, not a second effect"},
+        {"name": "test_idempotent_replay_performs_file_and_registry_work_after_immediate", "proves": "an activity flag observes one replay BEGIN IMMEDIATE and proves receipt materialisation plus registry-current evaluation both happen after it"},
+        {"name": "test_close_reads_authoritative_state_in_a_single_transaction", "proves": "no unsynchronised pre-reads remain"},
+        {"name": "test_first_close_reads_registry_inside_immediate_around_sqlite_effects", "proves": "an activity flag proves both authoritative document reads remain inside BEGIN IMMEDIATE, before and after the SQLite effects"},
+        {"name": "test_close_binds_the_authoritative_revision_not_the_loaded_snapshot", "proves": "a task document that drifts after Registry.load rejects with stale-baseline even though the caller's snapshot still equals the claim baseline"},
+        {"name": "test_close_binds_the_authoritative_plan_revision", "proves": "plan drift is read from the initiative document, not from the snapshot"},
+        {"name": "test_close_ignores_stale_snapshot_when_authoritative_revision_matches_run_baseline", "proves": "a stale in-memory snapshot is not a safety gate when both authoritative reads bind the run baseline"},
+        {"name": "test_close_rejects_when_the_authoritative_document_cannot_be_read", "proves": "an unreadable revision fails closed with registry-revision-unavailable instead of trusting the snapshot"},
+        {"name": "test_close_rejects_when_the_authoritative_document_is_missing", "proves": "a missing task document fails closed before any SQLite effect"},
+        {"name": "test_close_rejects_when_the_authoritative_document_is_ambiguous", "proves": "two readable documents with the task id fail closed before any SQLite effect"},
+        {"name": "test_close_loses_against_registry_drift_during_the_write", "proves": "a revision that moves after the write and before the commit rejects with close-revision-drift; no receipt, no verified task status, no run-completed event"},
+        {"name": "test_close_accepts_a_rewrite_that_keeps_the_revision", "proves": "the close binds the revision, not the byte encoding, so a reformatted document still closes"},
+        {"name": "test_close_accepts_the_closure_stamp_the_registry_writes_after_verification", "proves": "state and metadata.verification stay outside the frozen revision"},
+        {"name": "test_idempotent_replay_reads_current_from_the_registry_not_the_snapshot", "proves": "a replay reports current: false against a drifted document even with a stale snapshot in hand"},
+        {"name": "test_idempotent_replay_reports_not_current_when_the_revision_is_unreadable", "proves": "an unreadable revision reports current: false rather than assuming currency"}
+      ],
+      "pre_fix_reproduction": "Before the change, an interleaved cancel followed by close left the run at 'succeeded' and the task at 'verified' - a silent double mutation that produced false verification truth. Before the registry revision binding, a task document rewritten after the caller's Registry.load() closed successfully and stamped the obsolete revision as verified, because both digest comparisons ran against the stale in-memory snapshot. The stale-before-close and mid-write drift tests reproduce those two gaps.",
+      "suite": "Post-rebase focused CAS suite: 20 passed; ruff check src tests: exit 0; full PYTHONPATH=src pytest -q: exit 0. make validate and git diff --check remain mandatory final pre-commit gates and are reported from their terminal results."
+    },
+    "no-change-closeout": {
+      "applicability": "not_applicable",
+      "reason": "decision is implement",
+      "bound_to": "measured-read-reduction.decision"
+    },
+    "truth-boundary": {
+      "applicability": "required",
+      "no_second_lifecycle_truth": "The authoritative run row and receipts table remain the only close truth. The run-completed event is a trace, and the post-write readback explicitly reads the row rather than the event.",
+      "no_queue_or_dispatch_authority_from_events": "No event type gained queue, claim or dispatch meaning. registry/queue.json remains the dispatch canon.",
+      "no_policy_review_merge_or_deployment_bypass": "No approval, review, open-PR, lease or rLens gate was relaxed. A first close still requires the frozen run baseline to equal fresh authoritative documents before effect and again after effect. Removing the separate snapshot comparison avoids a false rejection when only the caller's in-memory copy is stale; the snapshot was never part of the claimed baseline and added no safety after the authoritative comparison.",
+      "fail_closed_preserved": "Every new branch raises rather than degrading to a permissive path, and rejections roll back. The close never falls back to the caller's snapshot when the authoritative revision is unreadable, ambiguous or drifted.",
+      "surface_added": "One typed error class RunStateConflict, exported from bureau.core and emitted by the CLI. The registry revision binding adds no exported surface: it is internal to the close path and reads the registry documents read-only."
+    }
+  },
+  "changed_files": [
+    "src/bureau/v2.py",
+    "src/bureau/core.py",
+    "src/bureau/cli.py",
+    "tests/test_close_cas.py",
+    "docs/concurrency.md",
+    "docs/evidence/bureau-truth-model-v2-t021-cas-audit-20260801.json"
+  ],
+  "does_not_establish": [
+    "generic_asynchronous_mutation",
+    "event_as_claim_truth",
+    "safe_retry_after_unknown_effect",
+    "cross_domain_atomicity",
+    "registry_writer_exclusion",
+    "queue_or_dispatch_authority",
+    "merge_or_deployment_permission"
+  ]
+}

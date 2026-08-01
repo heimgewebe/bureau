@@ -33,6 +33,7 @@ from .legacy import (
 )
 from .v2 import (
     Registry,
+    RunStateConflict,
     StateStore,
     cleanup_workspace,
     close_ready_initiatives,
@@ -60,6 +61,7 @@ __all__ = [
     "Registry",
     "Reservation",
     "Resource",
+    "RunStateConflict",
     "StateError",
     "StateStore",
     "Task",

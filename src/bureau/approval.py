@@ -401,6 +401,62 @@ def approval_decision_for_effects(
     return result
 
 
+class ApprovalRequired(legacy.StateError):
+    """Typed pre-effect approval rejection with a bounded public decision."""
+
+    def __init__(self, decision: dict[str, Any]) -> None:
+        self.decision = dict(decision)
+        actions = self.decision.get("action_classes")
+        if not isinstance(actions, list) or not all(isinstance(item, str) for item in actions):
+            action = self.decision.get("action_class")
+            actions = [action] if isinstance(action, str) else ["unknown"]
+        reason = self.decision.get("reason", "not allowed")
+        super().__init__(f"approval required for {', '.join(actions)}: {reason}")
+
+    def payload(self) -> dict[str, Any]:
+        evidence = self.decision.get("evidence")
+        evidence_summary = None
+        if isinstance(evidence, dict):
+            evidence_summary = {
+                key: evidence.get(key)
+                for key in ("schema_version", "approved", "level", "scope", "task_id", "reference")
+                if key in evidence
+            }
+        approval = {
+            key: self.decision.get(key)
+            for key in (
+                "schema_version",
+                "action_class",
+                "action_classes",
+                "required",
+                "required_level",
+                "allowed",
+                "reason",
+                "expected_reference",
+                "expected_task_id",
+            )
+            if key in self.decision
+        }
+        if evidence_summary is not None:
+            approval["evidence"] = evidence_summary
+        return {
+            "schema_version": 1,
+            "kind": "bureau_approval_required",
+            "status": "approval-required",
+            "code": "approval-required",
+            "approval": approval,
+            "effect_started": False,
+            "retryable": False,
+            "ambiguity": False,
+            "required_readback": [],
+            "does_not_establish": [
+                "approval_granted",
+                "claim_or_lease_effect",
+                "safe_retry_without_new_approval",
+            ],
+        }
+
+
 def require_approval(
     action_class: str,
     approval: ApprovalEvidence | None,
@@ -416,7 +472,7 @@ def require_approval(
         task_id=task_id,
     )
     if not decision["allowed"]:
-        raise legacy.StateError(f"approval required for {action_class}: {decision['reason']}")
+        raise ApprovalRequired(decision)
     return decision
 
 
@@ -436,7 +492,7 @@ def require_approval_for_effects(
         task_id=task_id,
     )
     if not decision["allowed"]:
-        raise legacy.StateError(f"approval required for {', '.join(actions)}: {decision['reason']}")
+        raise ApprovalRequired(decision)
     return decision
 
 

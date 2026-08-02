@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T133",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "title": "Globalen Task-Reconcile begrenzen und fortsetzbar machen",
+  "goal": "Reproduziere und isoliere den live beobachteten Timeout des globalen persistenten Task-Reconcile bei großer Task- und Attention-Projektion. Messe die Kosten getrennt für Terminalisierungs-Recovery, Kandidatenselektion, Systembeobachtung und Ergebniserzeugung; optimiere nur den belegten dominanten Pfad. Der öffentliche Check muss begrenzt, paginierbar und fortsetzbar werden, ohne Task-, Lease- oder Terminalisierungswahrheit zu verlieren.",
+  "state": "ready",
+  "priority": {
+    "lane": "next",
+    "rank": 2
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "sqlite",
+    "performance-testing",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "repo.grabowski",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer ordnete am 2026-08-02 an, alle durchsatzmindernden Blockaden mit Priorität durchsatz1 abzuarbeiten. Änderungen müssen die bestehende fail-closed Task-, Lease- und Terminalisierungssemantik erhalten."
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/src/grabowski_tasks.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_resources.py",
+      "path:/home/alex/repos/grabowski/tests/test_tasks.py",
+      "path:/home/alex/repos/grabowski/tests/test_resources.py",
+      "path:/home/alex/repos/grabowski/docs/root-task-lifetime-v1.md",
+      "path:/home/alex/repos/grabowski/docs/task-attention-decisions-v1.md"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "phase-bound-reproducer",
+      "assertion": "Ein hermetischer Reproducer auf exakter Revision enthält mindestens 30.000 Taskzeilen, 5.000 Attention-Entscheidungen, eine konfigurierbare Menge aktiver Tasks und pending terminalizations. Er misst getrennt Terminalisierungs-Recovery, Kandidatenselektion, Systembeobachtung, Serialisierung und Connector-Payload; die Hauptursache wird belegt statt aus Gesamtgröße abgeleitet."
+    },
+    {
+      "id": "bounded-page-contract",
+      "assertion": "Der globale Read-only-Check besitzt eine explizite Obergrenze und einen stabil gebundenen Cursor oder gleichwertigen Fortsetzungsvertrag. Eine Standardseite überschreitet weder 200 Kandidaten noch 1 MiB Antwortgröße; weitere Wahrheit bleibt vollständig und deterministisch erreichbar."
+    },
+    {
+      "id": "latency-and-memory-budget",
+      "assertion": "Auf der Live-Skalen-Fixture liefert die erste Seite innerhalb von 10 Sekunden und unter 256 MiB zusätzlichem Prozessspeicher. Ein vollständiger Durchlauf kann über Seiten fortgesetzt werden, ohne die Connector-Sitzung zu beenden oder bereits gelieferte Kandidaten erneut zu beobachten."
+    },
+    {
+      "id": "truth-preservation",
+      "assertion": "Pagination, Cursor und Optimierung verändern weder Zustandsklassifikation noch Resume-Entscheidung, Ressourcenfreigabe, Terminalisierungs-Recovery oder Autorität. Dieselbe eingefrorene Eingabe ergibt seitenübergreifend dieselbe kanonische Gesamtmenge wie der bisherige unbegrenzte Pfad."
+    },
+    {
+      "id": "specific-read-compatibility",
+      "assertion": "Task-spezifische Aufrufe mit task_id bleiben unverändert, schnell und revisionsgebunden. Globale Begrenzung darf keine Einzelabfrage, Refresh- oder Resume-Semantik lockern."
+    },
+    {
+      "id": "interruption-and-replay",
+      "assertion": "Timeout, Cursor-Drift, zwischenzeitliche Taskmutation und Prozessverlust liefern maschinenlesbare, fail-closed und idempotent wiederaufnehmbare Zustände. Veraltete Cursor werden nicht still auf neue Wahrheit interpoliert."
+    },
+    {
+      "id": "regression-and-deployment",
+      "assertion": "Fokussierte Performance-, Cursor-, Drift-, Recovery- und Semantiktests sowie die vollständigen relevanten Grabowski-Gates sind auf dem exakten finalen Head grün. Nach Merge und Runtime-Deploy belegt ein Live-Readback einen begrenzten globalen Check ohne Connector-Abbruch."
+    }
+  ],
+  "metadata": {
+    "throughput_priority": "durchsatz1",
+    "observed_at": "2026-08-02T20:33:00Z",
+    "friction_event": "4314cd33e82e4cdfa31a090369726805",
+    "live_observation": {
+      "global_reconcile": "connector-timeout-with-session-termination",
+      "bounded_task_reads": "successful-after-recovery",
+      "estimated_projection": {
+        "task_records": 28500,
+        "raw_attention_records_lower_bound": 5000
+      },
+      "host_snapshot": {
+        "cpu_count": 32,
+        "memory_used_percent": 34.1,
+        "disk_used_percent": 33,
+        "gpu_utilization_percent": 0
+      },
+      "excluded_primary_explanation": "Der Host war nicht ressourcengesättigt; reine Kapazitätsknappheit ist als Primärursache unwahrscheinlich."
+    },
+    "causal_boundary": {
+      "belegt": [
+        "reconcile_tasks_check ruft vor der globalen Kandidatenselektion _recover_pending_task_terminalizations auf",
+        "die anschließende SQL-Kandidatenselektion filtert auf launching, running und outcome_unknown",
+        "task-spezifische Status-Reads blieben funktionsfähig"
+      ],
+      "ungeklärt": [
+        "Kostenanteil der pending-terminalization-Recovery",
+        "Kosten der Systembeobachtung aktiver Units",
+        "Kosten von Ergebnisprojektion, Audit oder Connector-Serialisierung",
+        "Einfluss der Attention-Projektion auf den beobachteten Timeout"
+      ]
+    },
+    "does_not_establish": [
+      "dass Pagination allein die Ursache beseitigt",
+      "dass alle 28.500 Taskzeilen im beobachteten Pfad vollständig gelesen wurden",
+      "dass Attention-Daten direkt vom Reconcile verarbeitet werden",
+      "Mergebereitschaft eines künftigen Implementierungs-PRs"
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-8ed4e44541f218b29f231946",
+      "event_id": 2213,
+      "event_created_at": "2026-08-02T21:09:52.847011Z",
+      "request_sha256": "7cb0aa87248dce0873862aac27aa7d76d0af76d9a60a06de5fb80d9661dcf607",
+      "source": {
+        "kind": "operator-observation",
+        "locator": "friction:4314cd33e82e4cdfa31a090369726805",
+        "observed_at": "2026-08-02T20:33:00Z",
+        "sha256": null,
+        "freshness": "unknown",
+        "does_not_establish": [
+          "source_content_identity"
+        ]
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "rollback": {
+    "strategy": "Revertiere ausschließlich neue Begrenzungs-, Cursor-, Index-, Test- und Dokumentationsänderungen über einen normalen PR. Die bestehende task_id-Einzelabfrage und fail-closed Terminalisierungssemantik bleiben während des Rollbacks erhalten."
+  }
+}

@@ -180,6 +180,32 @@
         ],
         "overlap": []
       }
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "f795a0e530bdac092a1982b84315a4537ff5e76ce3b93dbb77415068731ba245",
+      "verified_at": "2026-08-02T22:30:47.692436Z",
+      "source": "merged-pr-and-current-main-readback",
+      "source_ref": "github:heimgewebe/bureau#1401@a9395c1d115285551233d12cbe70b89021780c21",
+      "implementation_pr": 1401,
+      "implementation_head_commit": "a1b27eac1a49458cb05c99a14009dca7aa399b56",
+      "implementation_merge_commit": "a9395c1d115285551233d12cbe70b89021780c21",
+      "current_main_commit": "11a3e843722d287be2dad9dacfb5ed8a1de5802b",
+      "current_registry_snapshot_tree_sha256": "f043514840848eb8706c703a49dfb8c9cea671a852e947be6099ff346d162d5b",
+      "required_checks_result": "success",
+      "acceptance_readback": [
+        "queue reduced from 90 to 88 entries in merged PR #1401",
+        "three ready now-lane repair tasks published without dependency, run, lease or open-PR blockers beyond review-before-effect approval",
+        "five stale or blocked queue entries removed without deleting task documents",
+        "four queue entries aligned to declared next priority",
+        "focused tests, full validation and required CI passed on the implementation head"
+      ],
+      "does_not_establish": [
+        "execution of promoted tasks",
+        "future claimability after unrelated registry or lease changes",
+        "initiative completion"
+      ],
+      "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8"
     }
   },
   "priority": {
@@ -197,6 +223,6 @@
     "strategy": "Revert the reviewed Registry commit. This restores the previous queue ordering and the prior task priority metadata without deleting task documents, rewriting evidence or touching state-root objects."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Restore actionable Bureau queue truth and seed backlog burn"
 }

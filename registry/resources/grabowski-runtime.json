@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "component.grabowski.runtime",
+  "type": "component",
+  "parent": "repo.grabowski",
+  "path": "/home/alex/.local/share/grabowski-mcp",
+  "grabowski_key": "service:grabowski-mcp",
+  "metadata": {
+    "role": "Canonical deployed Grabowski MCP runtime and its user-service admission surface. Source repositories are separate read-only evidence inputs; the component resource does not authorize repository-wide mutation.",
+    "does_not_establish": [
+      "healthy runtime",
+      "deployment approval",
+      "permission to mutate source repositories",
+      "permission to bypass path or service leases"
+    ]
+  }
+}

@@ -11,9 +11,9 @@
       "id": "producer-exact-deploy"
     },
     {
-      "assertion": "Grabowski wird ausschließlich aus dem gemergten Commit d17674c0e3fedcd8cd17c3a739d3707748b06e9d als vollständige immutable Runtime-Release ausgerollt. Deploymentmanifest, Source-Set, Runtime-Lock, Entrypoint-Vertrag, Toolnamen und aktive Servicebindung sind vollständig und integer; ungemergte Änderungen aus anderen Pull Requests werden nicht aufgenommen.",
+      "assertion": "Der Grabowski-Verbrauchervertrag wird an den gemergten Commit d17674c0e3fedcd8cd17c3a739d3707748b06e9d gebunden. Ist die aktive vollständig integre Runtime exakt dieser Commit, wird sie als immutable Release verwendet. Ist vor dem ersten T076-Hosteffekt bereits ein gemergter main-Nachfolger aktiv, darf er ausschließlich dann unverändert erhalten bleiben, wenn d17674c0e3fedcd8cd17c3a739d3707748b06e9d dessen Git-Vorfahr ist, die Reposkop-v2-Verbraucherimplementierung, Vertragsdokumente und Tests byteidentisch zum Zielcommit sind und Manifest, Source-Set, Runtime-Lock, Entrypoint, Toolregistry und Servicebindung vollständig integer sind. Ein Downgrade, das neuere gemergte Runtimefixes entfernt, ist unzulässig; ungemergte Änderungen werden nicht aufgenommen.",
       "evidence_type": "object",
-      "id": "consumer-exact-deploy"
+      "id": "consumer-target-or-successor-bound"
     },
     {
       "assertion": "Eine Live-Ausführung von reposkop report gegen einen expliziten kontrollierten Checkout erzeugt ein vollständiges reposkop_coherence_report Schema v2 mit Checkout-Observation v2, exakter Authority Boundary und unabhängig neu berechneten Observation-, Projection- und Report-Digests. reposkop validate bestätigt dasselbe Artefakt; Zielpfad, Zweck, Repository- und Checkout-Identität stimmen mit dem vorab gebundenen Checkout überein.",
@@ -21,7 +21,7 @@
       "id": "producer-live-v2-report"
     },
     {
-      "assertion": "Der deployte typisierte Grabowski-Aufruf grabowski_reposkop_context akzeptiert den Live-v2-Report, veröffentlicht ein privates create-only Nutzungsreceipt Schema v2 und bindet Executable-, Report-, Observation-, Repository-, Checkout- und Projection-Digest an den Audit-vor-Publikation-Vertrag. Eine semantisch identische Wiederholung verwendet den bestehenden Beleg statt einen zweiten widersprüchlichen Datensatz zu erzeugen.",
+      "assertion": "Der deployte typisierte FastMCP-Aufruf grabowski_reposkop_context wird über die gebundene aktive Runtime per MCP-Protokoll ausgeführt, akzeptiert den Live-v2-Report, veröffentlicht ein privates create-only Nutzungsreceipt Schema v2 und bindet Executable-, Report-, Observation-, Repository-, Checkout- und Projection-Digest an den Audit-vor-Publikation-Vertrag. Eine semantisch identische Wiederholung verwendet den bestehenden Beleg statt einen zweiten widersprüchlichen Datensatz zu erzeugen. Server-Toolregistry, aufrufender MCP-Client und beobachtete Connectoroberfläche werden getrennt belegt; Abweichungen werden nicht als grün geglättet.",
       "evidence_type": "object",
       "id": "consumer-live-roundtrip"
     },
@@ -31,7 +31,7 @@
       "id": "negative-contract-fails-closed"
     },
     {
-      "assertion": "Nach dem Cutover sind Grabowski-Status, Doctor, Recovery, Auditkette und Connector-Snapshot grün; Runtime- und Connector-Toolzahl sowie Namenshash stimmen überein, kein Reposkop-Prozess bleibt bestehen und ein frischer Live-Aufruf belegt den produktiven v2-Vertrag. Bei einem fehlgeschlagenen Gate wird vor weiteren Effekten auf die exakt gebundene vorherige Binary- und Runtimeidentität zurückgerollt oder fail-closed gestoppt.",
+      "assertion": "Nach dem Cutover sind Grabowski-Status, Doctor, Recovery und Auditkette grün. Runtime-Toolzahl und Namenshash stimmen mit dem Deploymentmanifest überein; die tatsächlich beobachtete Connector-/Clientoberfläche wird zusätzlich gegen die Serverregistry geprüft und jede Abweichung als eigener Defekt registriert. Kein Reposkop-Prozess bleibt bestehen und ein frischer MCP-Live-Aufruf belegt den produktiven v2-Vertrag. Bei einem fehlgeschlagenen Gate wird vor weiteren Effekten auf die exakt gebundene vorherige Reposkop-Binary zurückgerollt; eine vor T076 bereits aktive, integre Grabowski-Nachfolgerrelease bleibt unangetastet, sofern T076 sie nicht mutiert hat.",
       "evidence_type": "object",
       "id": "post-cutover-health-and-rollback"
     },
@@ -44,15 +44,15 @@
   "claims": [
     {
       "isolation": "none",
-      "mode": "read",
-      "resource": "repo.grabowski"
+      "mode": "write",
+      "resource": "component.grabowski.runtime"
     }
   ],
   "depends_on": [],
   "execution": {
     "approval": {
       "action_class": "runtime_mutation",
-      "note": "Der Nutzer hat den atomaren Reposkop-2.0-/Grabowski-v2-Cutover am 2026-08-01 um 17:31 Europe/Berlin ausdrücklich mit @grabowski umsetzen beauftragt. Der kanonische Runtimevertrag stuft diese Wirkung als break-glass ein. Die Freigabe gilt nur für die exakt gemergten Produzenten- und Verbraucherrevisionen, deren gebundene Runtimeinstallation und die beschriebenen Positiv-, Negativ-, Gesundheits- und Rollbackprüfungen; fremde offene Pull Requests, Dirty-States, Prozesse und Leases bleiben ausgeschlossen.",
+      "note": "Der Nutzer hat den atomaren Reposkop-2.0-/Grabowski-v2-Cutover am 2026-08-01 um 17:31 Europe/Berlin ausdrücklich mit @grabowski umsetzen beauftragt. Der kanonische Runtimevertrag stuft diese Wirkung als break-glass ein. Die Freigabe gilt für den exakt gemergten Reposkop-Produzentencommit und den gemergten Grabowski-Verbrauchercommit. Ein vor dem ersten T076-Hosteffekt bereits aktiver, vollständig integrer main-Nachfolger darf nur bei belegter Vorfahrbindung und byteidentischem Verbraucher erhalten bleiben; Downgrade und Aufnahme ungemergter Änderungen sind ausgeschlossen. Fremde Pull Requests, Dirty-States, Prozesse und Leases bleiben unberührt.",
       "required_level": "break_glass"
     },
     "grabowski_resources": [
@@ -83,9 +83,9 @@
       "source": "user"
     },
     "logical_claim_scope": {
-      "resource": "repo.grabowski",
-      "mode": "read",
-      "reason": "Der Bureau-Katalog kennt den kanonischen logischen Grabowski-Repositoryclaim. Die exakten Produzenten- und Verbraucherrevisionen werden in unabhängige, unveränderliche Quellklone unter dem bereits exklusiv geleasten T076-Statepfad materialisiert; dadurch bleiben fremde linked Worktrees und ihre Lebenszyklusentscheidungen unangetastet. Sämtliche Hosteffekte sind enger durch execution.grabowski_resources gebunden.",
+      "resource": "component.grabowski.runtime",
+      "mode": "write",
+      "reason": "Der kanonische logische Claim bindet ausschließlich die deployte Grabowski-Runtime über service:grabowski-mcp. Exakte Produzenten- und Verbraucherrevisionen werden in unabhängige Quellklone unter dem exklusiv geleasten T076-Statepfad materialisiert; fremde linked Worktrees und Repository-Lebenszyklen bleiben unangetastet.",
       "exact_effect_resources": [
         "path:/home/alex/.local/bin/reposkop",
         "path:/home/alex/.local/share/grabowski-mcp",
@@ -105,7 +105,10 @@
         "reposkop_source_commit": "6c0847c2cbc6ee1d1cff52fc1b4a1c5ee17af487",
         "grabowski_source_commit": "d17674c0e3fedcd8cd17c3a739d3707748b06e9d",
         "materialization": "independent-clones-without-shared-git-common-dir",
-        "reason": "Broad read-only repository leases are rejected by the live work-admission guard while unrelated clean linked worktrees remain deliberately unclassified. Source isolation preserves those foreign checkouts instead of retaining, archiving or adopting them."
+        "reason": "Broad read-only repository leases are rejected by the live work-admission guard while unrelated clean linked worktrees remain deliberately unclassified. Source isolation preserves those foreign checkouts instead of retaining, archiving or adopting them.",
+        "grabowski_contract_commit": "d17674c0e3fedcd8cd17c3a739d3707748b06e9d",
+        "grabowski_active_successor_commit": "87038eec83fd0dfb53938d7734e95fa5fa8e9ee2",
+        "successor_policy": "Preserve the already active merged main successor only when the target is an ancestor and the Reposkop-v2 consumer artifacts are byte-identical; otherwise stop before effects."
       }
     },
     "producer": {
@@ -128,14 +131,27 @@
       "pull_request": 544,
       "reviewed_head_sha": "82a636facb532dd072325728177247483759ec3a",
       "merge_commit_sha": "d17674c0e3fedcd8cd17c3a739d3707748b06e9d",
-      "contract": "reposkop-coherence-report-v2-and-usage-receipt-v2"
-    },
-    "pre_cutover_runtime_observation": {
-      "grabowski_repo_head": "2d19f9c31c9f333a507e7a75e11a0e8c417b0e35",
-      "release_id": "2d19f9c31c9f-srcset6c423ab36b9c-locke6664d600b6c-contract5d1484d08302",
-      "runtime_integrity": "valid",
-      "reposkop_reported_version": "1.0.0",
-      "freshness": "last-successful-live-readback-before-connector-loss"
+      "contract": "reposkop-coherence-report-v2-and-usage-receipt-v2",
+      "deployment_policy": "exact-target-or-preexisting-verified-main-successor-with-byte-identical-consumer",
+      "successor_verification_contract": {
+        "schema_version": 1,
+        "target_commit": "d17674c0e3fedcd8cd17c3a739d3707748b06e9d",
+        "allowed_active_runtime": "exact-target-or-current-remote-main-descendant",
+        "required_immediately_before_claim_and_first_effect": [
+          "active_runtime_release_and_repo_head_are_manifest_integral",
+          "active_repo_head_equals_fresh_remote_main",
+          "target_commit_is_git_ancestor_of_active_repo_head",
+          "reposkop_consumer_implementation_documents_and_tests_are_byte_identical_to_target_commit",
+          "runtime_tool_registry_matches_deployment_contract",
+          "no_unmerged_change_is_included"
+        ],
+        "forbidden": [
+          "persisting_one_live_runtime_head_as_future_authority",
+          "downgrading_a_newer_verified_main_runtime",
+          "including_unmerged_or_foreign_work"
+        ],
+        "evidence_destination": "T076 claim and cutover receipts, not canonical task metadata"
+      }
     },
     "t051_relationship": {
       "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T051",
@@ -143,10 +159,13 @@
       "reason": "T051 remains planned and contains historical broad acceptance language that predates Reposkop 2.0 canonical checkout authority. T076 isolates the currently executable producer-consumer runtime cutover without silently rewriting the broader task."
     },
     "does_not_establish": [
-      "successful host deployment",
+      "any future active runtime identity before fresh readback",
       "completion of all T051 acceptance items",
-      "task claim or dispatch authority",
-      "permission to include open Grabowski pull requests 543, 546 or 547"
+      "permission to include any unmerged Grabowski change",
+      "platform exposure of every MCP server tool",
+      "resolution of the 177-versus-175 client discovery discrepancy",
+      "successful host deployment",
+      "task claim or dispatch authority"
     ],
     "previous_blockade": {
       "classification": "operator-transport-unavailable",
@@ -224,6 +243,62 @@
       "foreign_worktrees_touched": false,
       "claim_intent_invalidated": "BUR-RUN-20260802T061139Z-87c7b87337",
       "requires_new_break_glass_claim": true
+    },
+    "logical_claim_corrected_at": "2026-08-02T06:23:29.790969+00:00",
+    "logical_claim_correction": {
+      "schema_version": 1,
+      "previous_resource": "repo.grabowski",
+      "current_resource": "component.grabowski.runtime",
+      "current_grabowski_key": "service:grabowski-mcp",
+      "reason": "The live claim intent proved that the logical repo claim reintroduced repo:/home/alex/repos/grabowski after explicit repo resources were removed. A runtime component is the narrow authoritative scheduling surface.",
+      "invalidated_claim_intents": [
+        "BUR-RUN-20260802T061139Z-87c7b87337",
+        "BUR-RUN-20260802T061815Z-213ae3280e"
+      ],
+      "requires_new_break_glass_claim": true,
+      "foreign_worktrees_touched": false
+    },
+    "fresh_pre_effect_observation_required": true,
+    "client_surface_discrepancy": {
+      "schema_version": 1,
+      "status": "known-platform-projection-discrepancy-requires-fresh-classification",
+      "server_registered_tool_count": 177,
+      "api_tool_discovery_count": 175,
+      "server_contains_grabowski_reposkop_context": true,
+      "api_tool_exposes_grabowski_reposkop_context": false,
+      "interpretation": "The MCP server and a direct protocol client may prove the full 177-tool contract. The ChatGPT api_tool discovery projection has separately exposed 175 tools. A release-bound connector snapshot may be rebound after a direct 177-tool observation, but that receipt does not prove that the platform projection exposes every server tool. T076 may use direct MCP for grabowski_reposkop_context, must record the 175/177 projection discrepancy as a separate defect, and may not describe the platform projection itself as resolved.",
+      "required_before_effect": "release-bound direct MCP snapshot matched; platform projection discrepancy explicitly retained",
+      "does_not_block_direct_mcp_consumer_probe": true
+    },
+    "runtime_successor_policy_updated_at": "2026-08-02T07:35:52.549472+00:00",
+    "live_pre_effect_observation_contract": {
+      "schema_version": 1,
+      "freshness": "same execution window immediately before claim and first host effect",
+      "required_sources": [
+        "Grabowski runtime status and manifest",
+        "fresh Git remote main readback",
+        "Reposkop binary stat and version",
+        "active tasks processes and leases",
+        "Bureau Registry and queue",
+        "GitHub PR and checks",
+        "audit chain recovery and kill switch",
+        "MCP server tool list and connector snapshot"
+      ],
+      "invalidated_by": [
+        "runtime deploy",
+        "remote main advance",
+        "connector snapshot change",
+        "effect-resource lease change",
+        "Reposkop path identity change"
+      ],
+      "persistence": "write exact observations to execution receipts only"
+    },
+    "volatile_runtime_identity_removed_at": "2026-08-02T07:35:10.448292+00:00",
+    "superseded_live_observation_policy": {
+      "schema_version": 1,
+      "removed_snapshot_count": 3,
+      "reason": "Live runtime identities are execution evidence, not durable task authority. Prior values remain in Git history and PR review evidence.",
+      "future_storage": "claim and cutover receipts only"
     }
   },
   "priority": {
@@ -241,7 +316,7 @@
     "user_service_control"
   ],
   "rollback": {
-    "strategy": "Vor dem ersten Effekt werden die exakte alte Reposkop-Dateiidentität, SHA-256, Version und die aktive Grabowski-Release-/Manifestidentität gebunden. Bei einem Produzenten-, Verbraucher-, Audit-, Connector-, Doctor-, Runtime- oder Live-Roundtrip-Fehler werden keine weiteren Effekte ausgeführt. Falls bereits mutiert wurde, wird ausschließlich auf diese gebundenen Vorgängeridentitäten zurückgeschaltet; neue v2-Receipts werden nicht umgeschrieben oder gelöscht, sondern als fehlgeschlagene Cutover-Evidenz erhalten."
+    "strategy": "Vor dem ersten Effekt werden die exakte alte Reposkop-Dateiidentität, SHA-256 und Version sowie die aktive Grabowski-Release-/Manifestidentität gebunden. Eine bereits aktive, vollständig integre Grabowski-main-Nachfolgerrelease, die den Zielcommit als Vorfahr enthält und den Reposkop-v2-Verbraucher byteidentisch führt, wird nicht heruntergestuft und von T076 nicht mutiert. Bei einem Produzenten-, Verbraucher-, Audit-, Connector-, Doctor-, Runtime- oder Live-Roundtrip-Fehler werden keine weiteren Effekte ausgeführt. Falls Reposkop bereits mutiert wurde, wird ausschließlich auf die gebundene Reposkop-Vorgängeridentität zurückgeschaltet; falls T076 wider Erwarten die Runtime mutiert hat, wird auf deren gebundene Vorgängerrelease zurückgeschaltet. Neue v2-Receipts werden nicht umgeschrieben oder gelöscht, sondern als fehlgeschlagene Cutover-Evidenz erhalten."
   },
   "schema_version": 1,
   "state": "ready",

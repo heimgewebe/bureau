@@ -168,6 +168,27 @@
         "foreign lease bypass",
         "Bureau mutation outside declared components and exact paths"
       ]
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "628a38ccf760fe78425fe69b96774f1926a4c8569c242539ba94782f15b860f2",
+      "plan_sha256": "2e220de72fc29f62a7408dbc4e34b2da11114b8f1fcb22df7872e0ffbd8eb0d8",
+      "receipt_sha256": "b74e8bf7da0dc5259202329f670d34ad6e597cce4088ecde1ded863c42059062",
+      "run_id": "BUR-RUN-20260802T042735Z-064ec43456",
+      "verified_at": "2026-08-02T06:46:47.153985Z",
+      "source": "bureau-completion-receipt",
+      "source_ref": "bureau-run:BUR-RUN-20260802T042735Z-064ec43456@b74e8bf7da0dc5259202329f670d34ad6e597cce4088ecde1ded863c42059062",
+      "implementation_pr": 1303,
+      "implementation_merge_commit": "5273dd09a2ae7c489f277517ba4cf04296cb2337",
+      "followup_task_id": "BUREAU-TRUTH-MODEL-V2-T024",
+      "followup_merge_commit": "6736fc0dd4f56b4ec6237841fbf4ec86d5c2479a",
+      "main_validation_run": 30736301325,
+      "does_not_establish": [
+        "cross_domain_atomicity",
+        "initiative_completion",
+        "merge_or_deployment_authority",
+        "future_correctness_after_unrelated_changes"
+      ]
     }
   },
   "priority": {
@@ -180,6 +201,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Bureau-Zustandsbefehle auf enge CAS-Verträge prüfen und härten"
 }

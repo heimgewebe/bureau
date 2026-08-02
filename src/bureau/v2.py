@@ -288,7 +288,14 @@ def _planned_workspace(
     repo = Path(repository).expanduser().resolve()
     source_head = _git(repo, "rev-parse", "HEAD").stdout.strip()
     if baseline is None:
-        baseline = source_head
+        origin_main = _git(
+            repo, "rev-parse", "--verify", "origin/main", check=False
+        )
+        baseline = (
+            origin_main.stdout.strip()
+            if origin_main.returncode == 0 and origin_main.stdout.strip()
+            else source_head
+        )
     root = base_dir.resolve() if base_dir else repo.parent / ".bureau-worktrees"
     destination = (root / run_id).resolve()
     branch_task = re.sub(r"[^A-Za-z0-9._-]+", "-", task.id).lower()

@@ -2370,6 +2370,35 @@ def test_coordinated_claim_intent_records_issuance_and_requires_approval(
         ).fetchone()[0] == 1
 
 
+def test_coordinated_claim_intent_uses_origin_main_when_source_head_is_stale(
+    registry_factory, tmp_path, monkeypatch
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    stale_head = git_output(root, "rev-parse", "HEAD")
+    (root / "fresh-origin-main.txt").write_text("fresh\n")
+    git_output(root, "add", "fresh-origin-main.txt")
+    git_output(root, "commit", "-m", "advance origin main")
+    origin_main = git_output(root, "rev-parse", "HEAD")
+    git_output(root, "update-ref", "refs/remotes/origin/main", origin_main)
+    git_output(root, "checkout", "--detach", stale_head)
+    (root / "dirty-local-only.txt").write_text("dirty\n")
+
+    _registry, _store, dispatcher = setup(root, tmp_path, monkeypatch)
+    result = dispatcher.claim_intent(
+        "operator",
+        ("repository",),
+        task_id=task_id,
+        base_dir=tmp_path / "worktrees",
+        approved=True,
+        approval_source="test clean origin main baseline",
+    )
+
+    workspace = result["intent"]["workspace"]
+    assert workspace["source_head_at_intent"] == stale_head
+    assert workspace["baseline_commit"] == origin_main
+
+
 def test_coordinated_claim_binds_approval_to_selected_candidate(
     registry_factory, tmp_path, monkeypatch
 ):

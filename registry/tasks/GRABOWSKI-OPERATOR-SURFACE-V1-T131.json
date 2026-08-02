@@ -1,42 +1,42 @@
 {
   "acceptance": [
     {
-      "assertion": "Ein deterministischer Reproducer bindet den fehlgeschlagenen Cutover auf Grabowski-Commit 87038eec83fd0dfb53938d7734e95fa5fa8e9ee2 und Receipt 78566461e05b08cddc4e711c42a71b9eba79a6bbdfb8144dfb36283e66ba8f6e: Nach 4446 bestandenen Tests blockiert genau ein eigener Statusaufruf den Admission-Drain. Derselbe revisionsidentische Cutover ohne Polling endet mit Job grabowski-job-6ae99e6e556b und Receipt d541ecee8c64dcb52c67a3dd1090c5cbad020417f4247580ec5321ddccbdf700 erfolgreich.",
+      "assertion": "Ein deterministischer Reproducer bindet den ersten fehlgeschlagenen Cutover auf Grabowski-Commit 87038eec83fd0dfb53938d7734e95fa5fa8e9ee2 und Receipt 78566461e05b08cddc4e711c42a71b9eba79a6bbdfb8144dfb36283e66ba8f6e: Nach 4446 bestandenen Tests blockiert genau ein eigener Statusaufruf den Deployment-Admission-Drain; derselbe revisionsidentische Cutover ohne Polling endet erfolgreich mit Receipt d541ecee8c64dcb52c67a3dd1090c5cbad020417f4247580ec5321ddccbdf700.",
       "evidence_type": "object",
       "id": "incident-baseline"
     },
     {
-      "assertion": "Eine nicht drain-relevante Beobachtung ist nur mit serverseitig erzeugter und validierter Identität zulässig, die mindestens den exakten Deployment-Job, Zielcommit oder Release, eine kleine Read-only-Operationsallowlist, Runtime-Actor-Bindung und kurze Ablaufzeit umfasst. Caller-kontrollierte Flags, bloße Toolnamen, Prozessumgebungen oder generische Read-only-Klassifikation begründen keine Ausnahme.",
+      "assertion": "Eine nicht drain-relevante Beobachtung ist nur mit serverseitig erzeugter und validierter Identität zulässig, die mindestens den exakten Deployment-Job, Zielcommit oder Release, eine kleine Read-only-Operationsallowlist, die anfragende Sitzung und eine kurze Ablaufzeit bindet. Caller-kontrollierte Flags, bloße Toolnamen, Prozessumgebungen oder generische Read-only-Klassifikation begründen keine Ausnahme.",
       "evidence_type": "object",
       "id": "narrow-observer-identity"
     },
     {
-      "assertion": "Die Lösung ist über Work-Admission-Kern, Operator-Wrapper, Self-Deploy sowie Single-, Dual- und Scheduled-Deploy konsistent. Kein Einstiegspunkt besitzt eine abweichende Zähler-, Drain- oder Beobachtersemantik; gezielte Tests belegen jeden dieser Pfade.",
-      "evidence_type": "object",
-      "id": "complete-deploy-surface"
-    },
-    {
-      "assertion": "Mutierende, fremde, ungebundene, abgelaufene, wiederverwendete, verschachtelte oder nicht allowlistete Aufrufe erhöhen weiterhin die aktive Admission-Zahl beziehungsweise blockieren den Drain vor Runtime-Wirkung. Negative Tests belegen insbesondere, dass Statusaufrufe zu einem anderen Job und beliebige Grabowski-Leseoperationen nicht ausgenommen werden.",
+      "assertion": "Mutierende, fremde, ungebundene, abgelaufene, wiederverwendete, verschachtelte oder nicht allowlistete Aufrufe erhöhen weiterhin die aktive Deployment-Admission-Zahl beziehungsweise blockieren den Drain vor Runtime-Wirkung. Negative Tests belegen insbesondere, dass Statusaufrufe zu einem anderen Job und beliebige Grabowski-Leseoperationen nicht ausgenommen werden.",
       "evidence_type": "object",
       "id": "foreign-effects-still-block"
     },
     {
-      "assertion": "Nebenläufigkeitstests decken Beobachtungsstart vor, während und nach Drain-Beginn, Abschluss während des Cutovers sowie Job-, Commit- und Releasewechsel ab. Es gibt kein Zeitfenster, in dem normale Arbeit aufgenommen wird, Zähler verloren gehen oder ein Beobachtungsnachweis nach Jobende Autorität behält.",
+      "assertion": "Nebenläufigkeitstests decken Beobachtungsstart vor, während und nach Drain-Beginn, Abschluss während des Cutovers sowie Job-, Release-, Marker- und Watchdogwechsel ab. Es gibt kein Zeitfenster, in dem neue normale Arbeit aufgenommen wird, Zähler verloren gehen oder ein Beobachtungsnachweis nach Jobende Autorität behält.",
       "evidence_type": "object",
       "id": "race-safe-drain"
     },
     {
-      "assertion": "Der bestehende Work-Admission-Vertrag bleibt die einzige Autorität für Drain, aktive Aufrufe und neue Arbeitsaufnahme. Die Lösung führt keine zweite persistente Aktivitätszählung, keine globale Bypassliste und keine vom Deployment-Receipt losgelöste Beobachterwahrheit ein.",
+      "assertion": "Der bestehende Deployment-Admission-Vertrag in grabowski_operator.py mit seinem aktiven Toolzähler, Marker und drain-neutralen serverseitigen Statuspfad bleibt die einzige Runtime-Autorität für Drain und aktive Aufrufe. Die Lösung führt keine zweite persistente Aktivitätszählung, keine globale Bypassliste und keine vom Deployment-Job oder Receipt losgelöste Beobachterwahrheit ein.",
       "evidence_type": "boolean",
-      "id": "single-admission-truth"
+      "id": "single-deployment-admission-truth"
     },
     {
-      "assertion": "Der laufende Deployment-Job kann über die typisierte Statusoberfläche wiederholt beobachtet werden, ohne seinen eigenen Admission-Drain zu blockieren. Jede Antwort bleibt job-, revisions- und receiptgebunden und behauptet keine erfolgreiche Mutation vor abschließendem Runtime-Readback.",
+      "assertion": "Der laufende Deployment-Job kann über eine typisierte, jobgebundene Statusoberfläche wiederholt beobachtet werden, ohne seinen eigenen Admission-Drain zu blockieren. Die Antwort bleibt receipt-, job-, release- und sitzungsgebunden und behauptet keine erfolgreiche Mutation vor dem abschließenden Runtime-Readback.",
       "evidence_type": "object",
       "id": "observable-without-interference"
     },
     {
-      "assertion": "Gezielte positive und negative Tests für Work Admission, Operator-Runtime, Self-Deploy, Single-/Dual-/Scheduled-Deploy und Statusbeobachtung sowie die vollständige Grabowski-Validierung und GitHub-CI sind auf dem exakten Implementierungs-Head grün. Ein getrennter adversarialer Self-Review findet keine offenen hohen oder kritischen Befunde.",
+      "assertion": "Component-Watchdog und Admission-Recovery erkennen den engen Observervertrag konsistent, behandeln fehlende oder driftende Bindungen fail-closed und können weder Marker noch Zähler durch eine zweite Wahrheit ersetzen. Restart und Recovery erhalten die Job- und Ablaufbindung oder verwerfen sie.",
+      "evidence_type": "object",
+      "id": "watchdog-and-recovery-consistency"
+    },
+    {
+      "assertion": "Gezielte positive und negative Tests in Operator-, Self-Deploy-, Dual-Deploy-, Watchdog- und Recovery-Pfaden sowie die vollständige Grabowski-Validierung und GitHub-CI sind auf dem exakten Implementierungs-Head grün. Ein getrennter adversarialer Self-Review findet keine offenen hohen oder kritischen Befunde.",
       "evidence_type": "object",
       "id": "regression-proof"
     },
@@ -62,38 +62,59 @@
   "execution": {
     "approval": {
       "action_class": "repository_mutation",
-      "note": "Der Task behebt einen revisionsgebunden reproduzierten Selbstblocker im Runtime-Deployment. Zulässig ist nur eine serverseitig erzeugte, enge Job-/Revision-/Operations-/Zeitbindung. Generische Read-only-, Caller-Flag-, Toolnamen- oder Prozessumgebungs-Ausnahmen sind ausgeschlossen. Merge und Runtime-Aktivierung benötigen weiterhin ihre separaten Verträge.",
+      "note": "Der Task behebt einen revisionsgebunden reproduzierten Selbstblocker im Runtime-Deployment. Zulässig ist nur eine serverseitig erzeugte, eng job-, revisions-, operations- und zeitgebundene Beobachtungsidentität. Generische Read-only-, Client-Flag-, Toolnamen- oder Umgebungs-Ausnahmen sind ausgeschlossen. Runtime-Aktivierung benötigt weiterhin einen separaten runtime_mutation-Vertrag.",
       "required_level": "operator"
     },
     "grabowski_resources": [
-      "path:/home/alex/repos/grabowski/src/grabowski_work_admission.py",
       "path:/home/alex/repos/grabowski/src/grabowski_operator.py",
-      "path:/home/alex/repos/grabowski/src/grabowski_operator_core.py",
       "path:/home/alex/repos/grabowski/src/grabowski_self_deploy.py",
-      "path:/home/alex/repos/grabowski/tools/deploy_runtime.py",
-      "path:/home/alex/repos/grabowski/tools/deploy_runtime_dual.py",
       "path:/home/alex/repos/grabowski/tools/run_scheduled_deploy.py",
-      "path:/home/alex/repos/grabowski/tests/test_work_admission.py",
-      "path:/home/alex/repos/grabowski/tests/test_operator_v2_runtime.py",
+      "path:/home/alex/repos/grabowski/tools/deploy_runtime_dual.py",
+      "path:/home/alex/repos/grabowski/tools/component_watchdog.py",
+      "path:/home/alex/repos/grabowski/tools/watchdog_admission_recovery.py",
+      "path:/home/alex/repos/grabowski/tests/test_operator_contract.py",
       "path:/home/alex/repos/grabowski/tests/test_self_deploy.py",
       "path:/home/alex/repos/grabowski/tests/test_dual_service_deploy.py",
+      "path:/home/alex/repos/grabowski/tests/test_component_watchdog.py",
       "path:/home/alex/repos/grabowski/docs/runtime-deployment-admission-drain-v1.md"
     ],
     "mode": "interactive-agent",
     "policy": "review-before-effect",
     "working_repository": "/home/alex/repos/grabowski"
   },
-  "goal": "Den Grabowski-Runtime-Deploymentpfad so härten, dass ausschließlich eine serverseitig authentisierte, exakt job-, revisions-, operations- und zeitgebundene Read-only-Beobachtung des eigenen laufenden Deployments den zugehörigen Admission-Drain nicht selbst als aktiver Toolaufruf blockiert. Mutierende, fremde, ungebundene, abgelaufene, wiederverwendete oder nicht explizit zugelassene Aufrufe bleiben vollständig drain-relevant und fail-closed.",
+  "goal": "Den Grabowski-Runtime-Deploymentpfad so härten, dass eine eng serverseitig authentisierte, exakt job-, operations-, revisions- und zeitgebundene Read-only-Beobachtung des laufenden Deployments den eigenen Deployment-Admission-Drain nicht als aktiver Toolaufruf blockiert. Alle mutierenden, fremden, ungebundenen, abgelaufenen oder nicht explizit zugelassenen Aufrufe bleiben vollständig drain-relevant und fail-closed.",
   "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T131",
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
+    "correction_history": [
+      {
+        "pull_request": 1369,
+        "decision": "closed-superseded",
+        "reason": "Erste Fassung war gegenüber dem parallel erzeugten Sicherheitsvertrag schwächer."
+      },
+      {
+        "pull_request": 1371,
+        "decision": "closed-blocking-review-finding",
+        "reason": "Band grabowski_work_admission.py statt der tatsächlichen Deployment-Admission-Wahrheit in grabowski_operator.py."
+      },
+      {
+        "pull_request": 1372,
+        "decision": "merged-registration-corrected",
+        "merge_commit": "abf9817fffc51484155045ab9fdd7a5dffdf0b07",
+        "reason": "Registrierte T131 kanonisch, enthielt aber eine überbreite und teilweise sachfremde Ressourcengrenze und ließ Watchdog-/Recovery-Abdeckung aus."
+      },
+      {
+        "pull_request": 1373,
+        "decision": "closed-after-target-collision",
+        "reason": "Reviewed Korrektur konnte nach Merge von PR 1372 nicht mehr als Add-PR veröffentlicht werden und wird deshalb als normaler Ein-Datei-Korrektur-PR fortgeführt."
+      }
+    ],
     "design_constraints": [
       "keine generische Read-only-Ausnahme",
       "keine caller-kontrollierte Bypass-Markierung",
-      "keine zweite Admission-Wahrheit",
-      "vollständige Single-/Dual-/Scheduled-Deploy-Konsistenz",
-      "fail-closed bei Identitäts- oder Revisionsdrift",
-      "separate Merge- und Runtime-Mutationsautorität bleiben erforderlich"
+      "keine zweite Deployment-Admission-Wahrheit",
+      "fail-closed bei Identitäts-, Job-, Operations- oder Revisionsdrift",
+      "separate Runtime-Mutationsautorität bleibt erforderlich"
     ],
     "does_not_establish": [
       "dass die genaue technische Lösung bereits feststeht",
@@ -101,6 +122,13 @@
       "Merge- oder Deploymentautorität",
       "dass jeder Statusaufruf drain-neutral sein darf"
     ],
+    "implementation_evidence": {
+      "deployment_admission_and_job_status_path": "src/grabowski_operator.py",
+      "deployment_admission_and_job_status_sha256": "58b83e90d4f73affe35f2d37813ecf797e7b895da80d317bcc20951d03b0e934",
+      "rejected_unrelated_path": "src/grabowski_work_admission.py",
+      "rejected_unrelated_path_sha256": "9ffb4c1169259168341d6e8282cb0d017f5adfdac6a380fed93fa2e98d04ea57",
+      "reviewed_grabowski_runtime_head": "5d2a845b68fab2d89dbf4a743bdfb210deb0d2c9"
+    },
     "source": {
       "failed_job": "grabowski-job-5ba128e4a48e",
       "failed_receipt_sha256": "78566461e05b08cddc4e711c42a71b9eba79a6bbdfb8144dfb36283e66ba8f6e",
@@ -110,18 +138,6 @@
       "successful_retry_job": "grabowski-job-6ae99e6e556b",
       "target_commit": "87038eec83fd0dfb53938d7734e95fa5fa8e9ee2"
     },
-    "supersedes_partial_publications": [
-      {
-        "head": "7f9d4c57a51096feadcc4ccb223f7137e7037f46",
-        "pull_request": 1369,
-        "reason": "covered dual/scheduled deployment paths but omitted the authoritative Work-Admission counter module and its tests"
-      },
-      {
-        "head": "9c230682c3edd40c28899da3f15147aed26a7e9d",
-        "pull_request": 1371,
-        "reason": "covered the Work-Admission core but omitted parts of the operator, single/dual and scheduled deployment surface"
-      }
-    ],
     "operator_intake": {
       "schema_version": 1,
       "candidate_id": "candidate-18ae81b3bdf4bd9f7edc407c",

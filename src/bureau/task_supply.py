@@ -87,7 +87,7 @@ FALLBACK_CATALOG: tuple[FallbackSpec, ...] = (
             "creating a second source of truth."
         ),
         capabilities=("repository", "documentation", "bureau", "grabowski"),
-        claim_resource="repo.bureau",
+        claim_resource="component.bureau.docs",
         claim_mode="write",
         scope_path="docs",
         acceptance=(
@@ -104,7 +104,7 @@ FALLBACK_CATALOG: tuple[FallbackSpec, ...] = (
             "tests; repair only a proven gap or close out with reproducible evidence."
         ),
         capabilities=("repository", "audit", "python", "testing", "bureau", "grabowski"),
-        claim_resource="repo.bureau",
+        claim_resource="component.bureau.docs",
         claim_mode="write",
         scope_path="docs/evidence",
         acceptance=(

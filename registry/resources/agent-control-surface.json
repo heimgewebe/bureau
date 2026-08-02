@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "id": "repo.agent-control-surface",
+  "type": "git-repository",
+  "parent": "repo",
+  "path": "/home/alex/repos/agent-control-surface",
+  "github_slug": "heimgewebe/agent-control-surface",
+  "grabowski_key": "repo:/home/alex/repos/agent-control-surface",
+  "metadata": {
+    "purpose": "local manual control surface for Jules sessions and guarded step-by-step Git workflows",
+    "scope": "catalog-only",
+    "visibility": "public",
+    "capabilities": [
+      "repository",
+      "shell",
+      "git",
+      "github"
+    ],
+    "lifecycle": "transition",
+    "lifecycle_reviewed_at": "2026-07-26",
+    "lifecycle_evidence_refs": [
+      "docs/audits/repository-lifecycle-classification-2026-07-19.v1.json",
+      "bureau:OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T034"
+    ],
+    "boundaries": [
+      "no_autonomous_task_dispatch",
+      "no_task_priority_authority",
+      "no_merge_authorization",
+      "no_remote_access_security"
+    ]
+  }
+}

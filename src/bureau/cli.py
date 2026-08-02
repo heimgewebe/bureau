@@ -113,6 +113,40 @@ def emit(value: Any, as_json: bool) -> None:
         print(value)
 
 
+def _cli_error_payload(
+    args: argparse.Namespace, exc: BureauError, *, code: str
+) -> dict[str, Any]:
+    command = str(getattr(args, "command", "unknown"))
+    mutates = _command_mutates(args)
+    return {
+        "schema_version": 1,
+        "kind": "bureau_cli_failure",
+        "status": "failed",
+        "code": code,
+        "command": command,
+        "detail": str(exc),
+        "error_type": type(exc).__name__,
+        "effect_started": mutates,
+        "ambiguity": mutates,
+        "retryable": False,
+        "required_readback": (
+            [f"bureau-command:{command}"] if mutates else []
+        ),
+        "does_not_establish": (
+            ["effect_absence", "safe_retry"] if mutates else []
+        ),
+    }
+
+
+def _emit_cli_error(
+    args: argparse.Namespace, exc: BureauError, *, code: str
+) -> None:
+    if bool(getattr(args, "json", False) or getattr(args, "json_envelope", False)):
+        emit(_cli_error_payload(args, exc, code=code), True)
+        return
+    print(f"bureau: {exc}", file=sys.stderr)
+
+
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="bureau")
     result.add_argument("--root")
@@ -575,6 +609,7 @@ def _canonical_coordination_state_binding(
 def main(argv: list[str] | None = None) -> int:
     global _CLI_JSON_ENVELOPE, _CLI_RUNTIME_IDENTITY
     args = parser().parse_args(argv)
+    args.json = bool(args.json or args.json_envelope)
     try:
         root, registry_selection = resolve_registry_root(args.root)
 
@@ -1285,13 +1320,13 @@ def main(argv: list[str] | None = None) -> int:
                     "operator-intake-invalid",
                     str(exc),
                 ).payload(),
-                args.json,
+                bool(args.json or args.json_envelope),
             )
             return 2
-        print(f"bureau: {exc}", file=sys.stderr)
+        _emit_cli_error(args, exc, code="state-error")
         return 2
     except BureauError as exc:
-        print(f"bureau: {exc}", file=sys.stderr)
+        _emit_cli_error(args, exc, code="bureau-error")
         return 2
 
 

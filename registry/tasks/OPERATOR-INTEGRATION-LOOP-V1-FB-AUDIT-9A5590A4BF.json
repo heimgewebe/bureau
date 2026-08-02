@@ -1,0 +1,71 @@
+{
+  "acceptance": [
+    {
+      "assertion": "The audited contract, revision, method, and evidence sources are explicit.",
+      "id": "audit-1"
+    },
+    {
+      "assertion": "Belegt, plausibel, and unresolved findings remain separated.",
+      "id": "audit-2"
+    },
+    {
+      "assertion": "Any repair has a negative regression test or the no-change closeout is justified.",
+      "id": "audit-3"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.docs"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Bounded supply fallback. Re-read live state, preserve foreign work, and stop when the stated scope or evidence no longer matches.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/docs/evidence"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Audit one current Bureau contract against live code, Registry, runtime, and tests; repair only a proven gap or close out with reproducible evidence.",
+  "id": "OPERATOR-INTEGRATION-LOOP-V1-FB-AUDIT-9A5590A4BF",
+  "initiative": "OPERATOR-INTEGRATION-LOOP-V1",
+  "metadata": {
+    "supply_fallback": {
+      "category": "audit",
+      "does_not_establish": [
+        "claimability before canonical Registry publication",
+        "permission to bypass current leases or open-PR guards",
+        "merge or deployment authority"
+      ],
+      "fingerprint": "9a5590a4bfae9907e0b265fb935eeba75f39b1b57eccaf0af11a9f21fb8e115a",
+      "generated_by_task": "OPERATOR-INTEGRATION-LOOP-V1-T014",
+      "open_key": "a94c9cac2a240c546e93bc7ea5e4095d4097d54bf79c7aa883a19ac4ed86ac02",
+      "schema_version": 1,
+      "scope_path": "docs/evidence",
+      "time_bucket": "20667"
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 902
+  },
+  "required_capabilities": [
+    "repository",
+    "audit",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "schema_version": 1,
+  "state": "ready",
+  "title": "Audit one bounded Bureau contract"
+}

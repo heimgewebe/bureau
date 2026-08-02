@@ -187,6 +187,14 @@ def test_empty_frontier_refills_toward_target_but_is_bounded(tmp_path: Path) -> 
         "audit",
         "diagnosis",
     ]
+    assert [
+        item["task"]["claims"][0]["resource"] for item in result["proposals"]
+    ] == [
+        "component.bureau.core",
+        "component.bureau.docs",
+        "component.bureau.docs",
+        "component.bureau.core",
+    ]
     assert all(item["claimable"] is False for item in result["proposals"])
     assert all(item["canonical_publication_required"] for item in result["proposals"])
 
@@ -637,9 +645,14 @@ def test_frontier_cannot_spoof_fallback_metadata_without_canonical_task() -> Non
 def test_registry_preview_rejects_stale_frontier_bindings(tmp_path: Path) -> None:
     project_root = Path(__file__).parents[1]
     root = copy_registry(project_root, tmp_path / "registry-copy")
+    fallback_frontier = [
+        frontier_item(task_id)
+        for task_id, task in task_documents(root).items()
+        if FALLBACK_METADATA_KEY in task.get("metadata", {})
+    ]
     result = build_registry_supply_report(
         registry_root=root,
-        frontier=[],
+        frontier=fallback_frontier,
         runtime_healthy=True,
         mutation_authority=True,
         frontier_registry_head="d" * 40,

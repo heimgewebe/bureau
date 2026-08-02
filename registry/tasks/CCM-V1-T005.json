@@ -3,7 +3,7 @@
   "id": "CCM-V1-T005",
   "initiative": "CHRONIK-CODING-MEMORY-V1",
   "title": "Run and close the natural-case history brief pilot",
-  "state": "planned",
+  "state": "blocked",
   "depends_on": [
     "CCM-V1-T001",
     "CCM-V1-T002",
@@ -72,11 +72,27 @@
     "experiment_id": "2026-07-13_chronik-history-brief-effect",
     "review_at": "2026-08-15T00:00:00Z",
     "expires_at": "2026-09-01T00:00:00Z",
-    "current_blocker": "The required natural future coding cases do not yet exist and must not be fabricated or repeated solely for measurement.",
+    "current_blocker": "As of 2026-08-02, the registered experiment has zero prospective observations. Historical Chronik coding runs lack a frozen condition assignment, comparison key and independent blinded score, so they are non-comparable and cannot be backfilled.",
+    "blocked_at": "2026-08-02T13:05:44Z",
+    "block_reason": "No naturally occurring coding case was assigned to control or treatment before planning. Repeating productive mutations or retrospectively relabeling historical runs would violate the prospective registration and cannot satisfy the minimum-sample or independent-scoring acceptance criteria.",
+    "block_evidence": {
+      "vibe_lab_main": "6cc50a357ce75d49db3507390e08ec38c9901029",
+      "registration_sha256": "742b49ebc68b9bb388e08ba7625d4036251454f5132dadabf977f768fd67c209",
+      "evidence_jsonl_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decision_sha256": "89d0161d8c596b6d1532f9e1549bb3785ab3eae1ce684f4d283e3601a99e1bda",
+      "result_sha256": "aeaa9b9d174fb40c5f593a1559fea2953348c6573b073933b2624a1093216a72",
+      "manifest_sha256": "fa560ec44d6b61b6d6061e726d26bd0c2d5c4a0563eb36c1191f4c9a0fb09bf5",
+      "prospective_observation_count": 0,
+      "chronik_history_result_sha256": "c83346e9ac51086a6cd233be23aeac7429d9f457e7b5162eaf2e466c4283dccc"
+    },
+    "next_action": "Unblock only when a naturally occurring eligible coding task can be assigned before planning to one registered condition with frozen comparison metadata and independent blinded review capacity. Close no earlier than the registered review on 2026-08-15 and only after at least three comparable cases per condition.",
     "does_not_establish": [
       "future_benefit",
       "automatic_promotion",
-      "permission_to_repeat_productive_mutations"
+      "permission_to_repeat_productive_mutations",
+      "absence_of_future_natural_cases",
+      "effect_direction",
+      "experiment_closure"
     ],
     "lease_scope_migration": {
       "migration_id": "BUREAU-TRUTH-MODEL-V2-T013",

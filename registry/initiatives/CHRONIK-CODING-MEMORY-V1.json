@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "CHRONIK-CODING-MEMORY-V1",
   "title": "Chronik coding memory and Vibe-Lab effect pilot",
-  "state": "active",
+  "state": "waiting",
   "commitment": "now",
   "goal": "Make Chronik a narrow local coding-outcome memory for Grabowski and test prospectively in Vibe-Lab whether a frozen history brief improves real coding decisions without becoming live truth or automatic policy.",
   "current_plan": {
@@ -37,6 +37,11 @@
       "general_productivity_improvement",
       "automatic_policy_or_routing_authority",
       "automatic_bureau_task_creation"
-    ]
+    ],
+    "lifecycle": {
+      "reconciled_at": "2026-08-02T13:08:02Z",
+      "reconciled_from": "active",
+      "reconciled_to": "waiting"
+    }
   }
 }

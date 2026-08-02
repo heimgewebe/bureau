@@ -1,0 +1,111 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Ein deterministischer Test reproduziert, dass eine normale status- oder logbasierte Grabowski-Abfrage während eines aktiven Deployment-Admission-Drains active_tool_calls über null hält und den gebundenen Lauf fail-closed mit operator-admission-drain beendet.",
+      "id": "incident-reproduced"
+    },
+    {
+      "assertion": "Der neue Beobachtungspfad ist mindestens an Deployment-Job, erwarteten Head, Source-Identity, Session und kurzlebige Gültigkeit gebunden. Eine andere Session, ein anderer Job, Head-Drift, fehlende oder manipulierte Bindung fällt auf den normalen drain-relevanten Pfad zurück oder blockiert.",
+      "id": "observer-identity-bound"
+    },
+    {
+      "assertion": "Mutierende, fremde, ungebundene und beliebige read-only Toolaufrufe werden nie pauschal aus active_tool_calls entfernt. Der Deployment-Final-Guard behält denselben oder stärkeren Fail-closed-Vertrag.",
+      "id": "no-broad-exemption"
+    },
+    {
+      "assertion": "Ein Operator kann Status und finales Receipt des exakt gebundenen Deployment-Laufs lesen, ohne dadurch dessen Admission-Drain selbst aktiv zu halten; die Umsetzung verwendet einen außerhalb des drain-gezählten Requests liegenden, unveränderlichen Receipt- oder Snapshotpfad oder einen nachweislich gleich starken Mechanismus.",
+      "id": "observable-without-self-block"
+    },
+    {
+      "assertion": "Gezielte Tests decken parallele Beobachter, Ablauf der Observerbindung, Job- und Head-Wechsel, Transportfehler, Markerdrift, Restart und finalen Guard ab. Unklare Zustände bleiben retry- und effect-sicher.",
+      "id": "concurrency-fault-proof"
+    },
+    {
+      "assertion": "Fokustests, vollständige Grabowski-Validierung, Python 3.10, Python 3.12 und CodeQL sind auf dem exakten PR-Head grün; die Deployment-Dokumentation beschreibt Beobachtungs- und Nichtautoritätsgrenzen.",
+      "id": "regression-proof"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.grabowski"
+    }
+  ],
+  "depends_on": [],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur einen eng revisions-, Job- und sitzungsgebundenen Observerpfad zulassen. Keine generische Ausnahme von active_tool_calls und kein Abschwächen des Admission-, Drain-, Marker-, Transport- oder Final-Guard-Vertrags.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/grabowski/tools/deploy_runtime_dual.py",
+      "path:/home/alex/repos/grabowski/tools/run_scheduled_deploy.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_operator_core.py",
+      "path:/home/alex/repos/grabowski/src/grabowski_self_deploy.py",
+      "path:/home/alex/repos/grabowski/tests/test_dual_service_deploy.py",
+      "path:/home/alex/repos/grabowski/tests/test_self_deploy.py",
+      "path:/home/alex/repos/grabowski/docs/runtime-deployment-admission-drain-v1.md"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
+  },
+  "goal": "Einen revisions-, Job- und sitzungsgebundenen Beobachtungspfad schaffen, der Deployment-Fortschritt und Abschlussreceipt lesbar macht, ohne durch dieselbe Statusabfrage active_tool_calls während des Operator-Admission-Drains künstlich über null zu halten. Fremde, mutierende, ungebundene oder driftende Aufrufe bleiben vollständig drain-relevant und fail-closed.",
+  "id": "GRABOWSKI-OPERATOR-SURFACE-V1-T131",
+  "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "implementation_complete",
+      "safe generic observer exemption",
+      "merge authority",
+      "deployment authority"
+    ],
+    "source_incident": {
+      "failed_job": "grabowski-job-5ba128e4a48e",
+      "failed_receipt_sha256": "78566461e05b08cddc4e711c42a71b9eba79a6bbdfb8144dfb36283e66ba8f6e",
+      "observed_failure": "active_tool_calls=1 during operator-admission-drain",
+      "reviewed_runtime_head": "87038eec83fd0dfb53938d7734e95fa5fa8e9ee2",
+      "successful_receipt_sha256": "d541ecee8c64dcb52c67a3dd1090c5cbad020417f4247580ec5321ddccbdf700",
+      "successful_retry_job": "grabowski-job-6ae99e6e556b"
+    },
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-18ae81b3bdf4bd9f7edc407c",
+      "event_id": 2066,
+      "event_created_at": "2026-08-02T06:31:24.889712Z",
+      "request_sha256": "696f48e80cbdb1c4348ccdbb3f262955d6f30c94b9e541ab2c7bb3150a3b40f9",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "runtime-deploy-incident",
+        "locator": "grabowski-job-5ba128e4a48e/finalization.json",
+        "observed_at": "2026-08-02T06:19:41Z",
+        "sha256": "78566461e05b08cddc4e711c42a71b9eba79a6bbdfb8144dfb36283e66ba8f6e"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "next",
+    "rank": 71
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "deployment",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Den speziellen Observerpfad vollständig revertieren und zum aktuellen No-Poll-Workaround zurückkehren; Admission- und Final-Guard bleiben unverändert fail-closed."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Deployment-Beobachtung ohne Admission-Selbstblockade"
+}

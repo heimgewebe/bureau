@@ -19,7 +19,7 @@
   ],
   "id": "GRIP-ROADMAP-V1-T009",
   "title": "Make Captain preflight validation gate-native",
-  "state": "planned",
+  "state": "ready",
   "goal": "Convert Captain preflight envelope validation failures into structured gate records where feasible, so invalid targets, scopes, recovery records, and evidence bindings are visible in the same gate model as missing evidence.",
   "depends_on": [
     "GRIP-ROADMAP-V1-T005"

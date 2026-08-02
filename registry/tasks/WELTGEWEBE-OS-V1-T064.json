@@ -71,7 +71,6 @@
     },
     "does_not_establish": [
       "automatic implementation",
-      "task readiness",
       "queue truth",
       "claim or dispatch authority",
       "permission for permanent animation",
@@ -135,6 +134,6 @@
     "task_profile": "repo_change"
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Ereignisbezogene Fadenbewegung und Garnrollenimpuls umsetzen"
 }

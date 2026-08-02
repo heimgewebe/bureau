@@ -117,6 +117,12 @@ Within this contract, Bureau may automate bounded non-destructive surfaces:
 
 Any external-state change must be visible as a command, receipt, PR or reviewable diff.
 
+## Machine-readable CLI failures
+
+When `--json` or `--json-envelope` is requested, Bureau domain failures remain on stdout as a JSON result instead of falling back to prose-only stderr. The failure object names the command, error class and stable broad code while preserving the domain detail.
+
+Read-only command failures bind `effect_started=false`, `ambiguity=false` and no readback requirement. Failures from commands classified as mutating are conservative: they bind `effect_started=true`, `ambiguity=true`, require authoritative command-state readback and explicitly do not establish effect absence or safe retry. This envelope changes diagnostics only; it grants no retry, mutation, claim, completion or recovery authority. Human CLI calls without either JSON option retain the existing `bureau: ...` stderr form.
+
 ## Conflict handling
 
 When facts conflict, automation must choose safety over continuity:

@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from bureau import cli as bureau_cli
 from bureau.core import (
     Claim,
     ConflictError,
@@ -136,3 +137,147 @@ def test_workspace_isolated(registry_factory, tmp_path, monkeypatch):
     result = create_workspace(registry, store, run["run_id"], tmp_path / "worktrees")
     assert Path(result["workspace_path"]).is_dir()
     assert result["workspace_branch"].startswith("bureau/")
+
+@pytest.mark.parametrize(
+    ("error", "expected_code"),
+    [
+        (
+            StateError(
+                "approval level operator is not accepted for required break_glass"
+            ),
+            "state-error",
+        ),
+        (ValidationError("registry contract invalid"), "bureau-error"),
+    ],
+)
+def test_cli_json_envelope_covers_domain_errors(
+    registry_factory, tmp_path, monkeypatch, capsys, error, expected_code
+):
+    root = registry_factory()
+
+    def fail_load(_root):
+        raise error
+
+    monkeypatch.setattr(bureau_cli.Registry, "load", staticmethod(fail_load))
+    rc = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-db",
+            str(tmp_path / "state.sqlite3"),
+            "--json",
+            "--json-envelope",
+            "status",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert rc == 2
+    assert captured.err == ""
+    envelope = json.loads(captured.out)
+    failure = envelope["result"]
+    assert envelope["runtime_identity"]["command_effect_scope"] == "read_only"
+    assert failure == {
+        "ambiguity": False,
+        "code": expected_code,
+        "command": "status",
+        "detail": str(error),
+        "does_not_establish": [],
+        "effect_started": False,
+        "error_type": type(error).__name__,
+        "kind": "bureau_cli_failure",
+        "required_readback": [],
+        "retryable": False,
+        "schema_version": 1,
+        "status": "failed",
+    }
+
+
+def test_cli_json_envelope_implies_json_for_existing_typed_failures(
+    registry_factory, tmp_path, monkeypatch, capsys
+):
+    root = registry_factory()
+
+    def fail_load(_root):
+        raise NoEligibleTask("no task matches the requested capability set")
+
+    monkeypatch.setattr(bureau_cli.Registry, "load", staticmethod(fail_load))
+    rc = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-db",
+            str(tmp_path / "state.sqlite3"),
+            "--json-envelope",
+            "status",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert rc == 3
+    assert captured.err == ""
+    envelope = json.loads(captured.out)
+    assert envelope["result"] == {
+        "detail": "no task matches the requested capability set",
+        "status": "no-eligible-task",
+    }
+
+
+def test_cli_json_mutating_domain_error_is_ambiguous_and_requires_readback(
+    registry_factory, tmp_path, monkeypatch, capsys
+):
+    root = registry_factory()
+    error = StateError("mutation outcome requires authoritative readback")
+
+    def fail_load(_root):
+        raise error
+
+    monkeypatch.setattr(bureau_cli.Registry, "load", staticmethod(fail_load))
+    rc = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-db",
+            str(tmp_path / "state.sqlite3"),
+            "--json-envelope",
+            "complete",
+            "BUR-RUN-20990101T000000Z-0000000000",
+            "--evidence",
+            str(tmp_path / "unused.json"),
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert rc == 2
+    assert captured.err == ""
+    failure = json.loads(captured.out)["result"]
+    assert failure["effect_started"] is True
+    assert failure["ambiguity"] is True
+    assert failure["required_readback"] == ["bureau-command:complete"]
+    assert failure["does_not_establish"] == ["effect_absence", "safe_retry"]
+
+
+def test_cli_domain_error_keeps_legacy_stderr_without_json(
+    registry_factory, tmp_path, monkeypatch, capsys
+):
+    root = registry_factory()
+    error = StateError("legacy human-readable failure")
+
+    def fail_load(_root):
+        raise error
+
+    monkeypatch.setattr(bureau_cli.Registry, "load", staticmethod(fail_load))
+    rc = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-db",
+            str(tmp_path / "state.sqlite3"),
+            "status",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert rc == 2
+    assert captured.out == ""
+    assert captured.err == "bureau: legacy human-readable failure\n"

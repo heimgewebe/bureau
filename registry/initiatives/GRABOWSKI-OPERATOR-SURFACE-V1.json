@@ -88,12 +88,17 @@
         "claim authority",
         "merge or deployment authority"
       ]
+    },
+    "lifecycle": {
+      "reconciled_at": "2026-08-02T21:46:38.454460Z",
+      "reconciled_from": "waiting",
+      "reconciled_to": "active"
     }
   },
   "parallelism": {
     "max_active_tasks": 1
   },
   "schema_version": 1,
-  "state": "waiting",
+  "state": "active",
   "title": "Grabowski operator surface"
 }

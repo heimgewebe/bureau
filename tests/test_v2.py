@@ -2422,6 +2422,55 @@ def test_coordinated_runtime_claim_rejects_operator_approval(
     assert store.list_runs() == []
 
 
+def test_claim_intent_cli_json_envelopes_approval_rejection(
+    registry_factory, tmp_path, capsys
+):
+    root = registry_factory(1, mode="write")
+    task_id = prepare_coordinated_registry(root)
+    declare_runtime_mutation(root, task_id)
+    init_clean_origin_main(root)
+    state_db = tmp_path / "claim-intent.sqlite3"
+
+    result = bureau_cli.main(
+        [
+            "--root",
+            str(root),
+            "--state-db",
+            str(state_db),
+            "--json",
+            "--json-envelope",
+            "claim-intent",
+            "--worker",
+            "operator",
+            "--capability",
+            "repository",
+            "--task-id",
+            task_id,
+            "--approve",
+            "--approval-source",
+            "test operator approval",
+        ]
+    )
+
+    streams = capsys.readouterr()
+    envelope = json.loads(streams.out)
+    failure = envelope["result"]
+    assert result == 2
+    assert streams.err == ""
+    assert envelope["runtime_identity"]["registry"]["root"] == str(root)
+    assert failure["kind"] == "bureau_approval_required"
+    assert failure["status"] == "approval-required"
+    assert failure["code"] == "approval-required"
+    assert failure["effect_started"] is False
+    assert failure["ambiguity"] is False
+    assert failure["retryable"] is False
+    assert failure["required_readback"] == []
+    assert failure["approval"]["action_classes"] == ["runtime_mutation"]
+    assert failure["approval"]["required_level"] == "break_glass"
+    assert failure["approval"]["evidence"]["level"] == "operator"
+    assert StateStore(state_db).list_runs() == []
+
+
 def test_coordinated_runtime_claim_binds_break_glass_through_commit(
     registry_factory, tmp_path, monkeypatch
 ):

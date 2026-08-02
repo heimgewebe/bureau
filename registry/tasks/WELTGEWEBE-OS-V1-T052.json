@@ -70,6 +70,57 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "readiness": {
+      "schema_version": 1,
+      "ready_at": "2026-08-02T10:12:30Z",
+      "authorized_by": "alex",
+      "authorization_reference": "conversation:2026-08-02T12:02+02:00 @grabowski gehe ins bureau und hole die nächste aufgabe ab. setze sie um.",
+      "source_main_head": "0c2f51d383e35bae8040d87e485432303a90db7f",
+      "selection": {
+        "queue_policy": "skip-blocked",
+        "skipped": [
+          {
+            "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T076",
+            "reason": "verified implementation already has a foreign active registry closeout"
+          },
+          {
+            "task_id": "REPOGROUND-LEGACY-RECONCILIATION-V1-T004",
+            "reason": "blocked by native Pythonista evidence required by T017 and subsequent T010/T014 convergence"
+          },
+          {
+            "task_id": "CCM-V1-T005",
+            "reason": "natural future cases do not yet exist and must not be fabricated"
+          },
+          {
+            "task_id": "GRABOWSKI-OPERATOR-SURFACE-V1-T120",
+            "reason": "cross-repository ruleset rollout is broader and requires separate per-repository reservations"
+          },
+          {
+            "task_id": "WELTGEWEBE-OS-V1-T051",
+            "reason": "dependency WELTGEWEBE-OS-V1-T048 is not verified"
+          }
+        ],
+        "selected_task": "WELTGEWEBE-OS-V1-T052",
+        "basis": "first queued candidate with no dependency, no existing implementation pull request and a bounded fail-closed repository deliverable"
+      },
+      "checks": {
+        "task_queued": true,
+        "initiative_active": true,
+        "initiative_commitment_supported": true,
+        "dependencies_satisfied": true,
+        "existing_task_implementation_pr_observed": false,
+        "foreign_checkout_mutation_required": false,
+        "isolated_checkout_required": true,
+        "operator_authorization_present": true
+      },
+      "does_not_establish": [
+        "implementation",
+        "claim_or_dispatch_authority",
+        "safe_merge",
+        "absence of path overlap before exact implementation inventory",
+        "permission to mutate foreign worktrees or open pull requests"
+      ]
     }
   },
   "priority": {
@@ -88,6 +139,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Abdeckung, Revision und Unsicherheit für Prüfberichte verpflichtend machen"
 }

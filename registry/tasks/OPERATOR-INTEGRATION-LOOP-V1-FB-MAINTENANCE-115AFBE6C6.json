@@ -51,6 +51,30 @@
       "schema_version": 1,
       "scope_path": "src/bureau",
       "time_bucket": "20667"
+    },
+    "verification": {
+      "schema_version": 1,
+      "task_sha256": "16cd1da26b972b8ddf6198cfd9325c6fc9c1e92bf2b8df2586d21339dcd1dda6",
+      "plan_sha256": "12662f2ed585335286d4a73696388d05db725bb058550f810fb5478c03cb6ab2",
+      "verified_at": "2026-08-02T22:34:11.615200Z",
+      "source": "merged-pr-and-current-main-readback",
+      "source_ref": "github:heimgewebe/bureau#1399@7a5ef99a4f0dc93679588d8b23afeaa1935f8f26",
+      "implementation_pr": 1399,
+      "implementation_head_commit": "a73024390c4281e54d800218efa61397525ad6ee",
+      "implementation_merge_commit": "7a5ef99a4f0dc93679588d8b23afeaa1935f8f26",
+      "current_main_commit": "11a3e843722d287be2dad9dacfb5ed8a1de5802b",
+      "required_checks_result": "success",
+      "acceptance_readback": [
+        "frontier result-list defect reproduced on exact base before repair",
+        "repair limited to src/bureau/task_supply.py with three insertions",
+        "focused task-supply tests, ruff, full validation and required CI passed",
+        "merged implementation remains present on current main"
+      ],
+      "does_not_establish": [
+        "future task-supply correctness after unrelated changes",
+        "initiative completion",
+        "execution of other fallback tasks"
+      ]
     }
   },
   "priority": {
@@ -65,6 +89,6 @@
     "grabowski"
   ],
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "Perform one bounded Bureau maintenance repair"
 }

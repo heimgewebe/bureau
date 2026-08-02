@@ -67,7 +67,7 @@
   "initiative": "GRABOWSKI-OPERATOR-SURFACE-V1",
   "metadata": {
     "current_blockers": [
-      "The connected connector snapshot is not observable and the currently published grabowski_task_start schema omits force_new_reason, operation_identity, supersedes_receipt_sha256 and supersedes_task_id."
+      "The fresh client snapshot proves only that the 177 connected tool names and count match the runtime. It does not bind input schemas. The connected grabowski_task_start input schema still omits force_new_reason, operation_identity, supersedes_receipt_sha256 and supersedes_task_id."
     ],
     "does_not_establish": [
       "immediate queue admission",
@@ -78,9 +78,11 @@
       "permission to overlap foreign Grabowski work",
       "completion of T129 before a fresh connected connector-schema readback",
       "permission to fabricate or infer a client snapshot",
-      "need for another Grabowski code or runtime deployment"
+      "need for another Grabowski code or runtime deployment",
+      "input-schema parity from the matched 177-tool name snapshot",
+      "completion of T129 before a schema-bearing connector readback"
     ],
-    "next_action": "Refresh or rebind the connected connector snapshot against exact runtime release 87038eec83fd-srcset7631615a2738-locke6664d600b6c-contract5d1484d08302-attempt1, then rerun the PR #536 connector probe and terminalize only if all four required properties are visible in both connector and runtime schemas.",
+    "next_action": "Obtain or add a schema-bearing connector snapshot for the exact connected grabowski_task_start inputSchema, then run the PR #536 connector probe against runtime release 5d2a845b68fa-srcset7cfca08cf843-locke6664d600b6c-contract5d1484d08302. Terminalize only if all four required properties are present and normalized schema fingerprints match; do not treat the green name hash as schema evidence.",
     "operator_intake": {
       "candidate_id": "candidate-152368530021c11fadf89d31",
       "does_not_establish": [
@@ -103,16 +105,43 @@
     },
     "partial_completion": {
       "connector_readback": {
-        "connector_snapshot_observable": false,
-        "expected_runtime_tool_count": 177,
-        "missing_required_properties": [
-          "force_new_reason",
-          "operation_identity",
-          "supersedes_receipt_sha256",
-          "supersedes_task_id"
-        ],
-        "observation": "The connected tool definition exposed in this operator session lacks all four fields although the deployed runtime and contract are current.",
-        "tool": "grabowski_task_start"
+        "name_snapshot": {
+          "age_seconds_at_observation": 27,
+          "created_at_unix": 1785655409,
+          "does_not_establish": [
+            "input-schema parity",
+            "presence of the four retry fields in the connected grabowski_task_start schema",
+            "platform-enforced client snapshot identity"
+          ],
+          "expires_at_unix": 1785659009,
+          "fresh_at_observation": true,
+          "matched": true,
+          "names_sha256": "cb3cd4bbc3354b8209f777343530bdb81818683ceff54ad89fa6ff3f2c703b63",
+          "observable_at_observation": true,
+          "observed_at_unix": 1785655436,
+          "receipt_sha256": "168e3af270c59e2366af14ee1b35dbce026686113888481f77baa91f9607d046",
+          "state": "matched",
+          "tool_count": 177,
+          "verification_model": "client-declared-server-compared-v1"
+        },
+        "projection_disambiguation": {
+          "grabowski_contract_drift_connector_snapshot_observable": false,
+          "grabowski_status_client_snapshot_observable": true,
+          "meaning": "The status snapshot observes name/count parity; the contract-drift path has no schema-bearing connector snapshot. These projections are not equivalent."
+        },
+        "schema_readback": {
+          "client_snapshot_scope": "src/grabowski_client_snapshot.py validates observed_tool_count and observed_names_sha256 only",
+          "missing_required_properties": [
+            "force_new_reason",
+            "operation_identity",
+            "supersedes_receipt_sha256",
+            "supersedes_task_id"
+          ],
+          "runtime_probe_capability": "tools/connector_probe.py accepts a schema-bearing observed file and compares normalized inputSchema fingerprints",
+          "schema_match": false,
+          "source": "fresh connected tool-catalog discovery in the current operator session",
+          "tool": "grabowski_task_start"
+        }
       },
       "dependency": {
         "bureau_merge_commit": "4a85b9c5cf70be68855f4802833165034eba09de",
@@ -124,8 +153,8 @@
         "deployment_complete": true,
         "deployment_integrity_valid": true,
         "healthy": true,
-        "release_id": "87038eec83fd-srcset7631615a2738-locke6664d600b6c-contract5d1484d08302-attempt1",
-        "repo_head": "87038eec83fd0dfb53938d7734e95fa5fa8e9ee2",
+        "release_id": "5d2a845b68fa-srcset7cfca08cf843-locke6664d600b6c-contract5d1484d08302",
+        "repo_head": "5d2a845b68fab2d89dbf4a743bdfb210deb0d2c9",
         "source_pr_merge_is_ancestor": true
       },
       "source_pull_request": {
@@ -166,7 +195,7 @@
       "validate_conclusion": "success",
       "validate_run": 30643297017
     },
-    "updated_at": "2026-08-02T07:11:40Z"
+    "updated_at": "2026-08-02T07:18:48Z"
   },
   "priority": {
     "lane": "next",

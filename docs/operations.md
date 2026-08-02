@@ -436,37 +436,46 @@ The gate rejects restored Cabinet execution modules, the retired
 available under `docs/archive/cabinet-era/` and do not authorize current
 execution.
 
-### Always-open Bureau Registry work
+### Lease authority and run-bound worktrees
 
-The broad resource key `repo:/home/alex/repos/bureau` is deprecated for normal work. It may not
-be held across analysis, implementation, tests or review. Independent changes instead acquire the
-exact object or component key returned by the machine-readable contract:
+`docs/concurrency.md` is the human-readable concurrency contract. The current
+`bureau --json lease-contract` result and live Grabowski lease readback are the machine authority.
+This runbook neither grants nor narrows a lease.
+
+Normal Registry work uses the exact object, component or path resources returned by the contract.
+The broad key `repo:/home/alex/repos/bureau` remains emergency-only. Do not infer Grabowski resource
+keys from Bureau's internal `worktree-admin` phase gate: the Bureau gate serializes the Git metadata
+effect, while Grabowski independently proves ownership of the concrete repository and target paths.
+
+For a claimed task with `isolation: worktree`, use the run-bound coordinator instead of assembling a
+second lease recipe by hand:
+
+```bash
+bureau --root /clean/revision-matched/bureau --json workspace-create <run-id>
+bureau --root /clean/revision-matched/bureau --json workspace-status <run-id>
+```
+
+Before creation, verify the claim envelope's `baseline_commit`, task and plan digests. If the
+baseline is not the intended revision, stop and repair the task or claim path; do not reuse, reset or
+adopt a foreign checkout. The coordinator-created worktree remains bound to the run and does not by
+itself establish test sufficiency, merge readiness or deployment authority.
+
+Canonical scope stays in `registry/tasks/*.json`; queue order stays in `registry/queue.json`; the
+run envelope binds the exact task and plan revisions. Diagnose intended resources without acquiring
+them:
 
 ```bash
 bureau --json lease-contract \
   --operation registry-task-write \
   --subject BUREAU-TRUTH-MODEL-V2-T003
-```
-
-Task and initiative writes receive different file keys and may proceed in parallel. Queue, core,
-schema and runtime operations use their own component scopes. Linked-worktree creation or removal
-uses only `path:/home/alex/repos/bureau/.bureau-scopes/worktree-admin` with a TTL of at most 300
-seconds. A merge acquires only the dedicated
-`path:/home/alex/repos/bureau/.bureau-scopes/merge-main` gate with an explicit TTL of at most 300
-seconds and releases it immediately after the effect.
-
-A global Bureau repo lease is accepted only for explicitly justified emergency recovery with a TTL
-of at most 300 seconds. Diagnose intended keys without acquiring them:
-
-```bash
 bureau --json lease-contract \
-  --resource-key repo:/home/alex/repos/bureau \
-  --phase emergency-recovery \
+  --phase worktree-admin \
+  --resource-key path:/home/alex/repos/bureau/.bureau-scopes/worktree-admin \
   --ttl-seconds 300 \
-  --justification "recover corrupt shared Git metadata" \
-  --expected-head 0123456789abcdef0123456789abcdef01234567
+  --justification "create one run-bound worktree" \
+  --expected-head <current-head>
 ```
 
-Doctor reports nonterminal legacy tasks that still request the broad key. Planned tasks produce a
-migration warning; a ready task or a task in `now` produces a blocker until its scope is narrowed.
-Historical terminal evidence is not rewritten.
+Doctor reports nonterminal legacy tasks that still request the broad repository key. Planned tasks
+produce a migration warning; a ready task or a task in `now` produces a blocker until its scope is
+narrowed. Historical terminal evidence is not rewritten.

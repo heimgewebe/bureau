@@ -9,8 +9,12 @@
     }
   ],
   "execution": {
+    "grabowski_resources": [
+      "repo:/home/alex/repos/grabowski"
+    ],
     "mode": "interactive-agent",
-    "policy": "review-before-effect"
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/grabowski"
   },
   "required_capabilities": [
     "repository",

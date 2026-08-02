@@ -1,0 +1,133 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Die Studie benennt genau die zehn untersuchten Organic-Komponenten sowie Morph und Organic-Full; jede Einzelablation, isolierte Komponente und zugelassene Kombination ist in einem revisions- und hashgebundenen Studienmanifest enthalten.",
+      "evidence_type": "object",
+      "id": "component-matrix-bound"
+    },
+    {
+      "assertion": "Interne Auswahl und Gegenprüfung verwenden vorab festgelegte, gleichgewichtete Leave-one-family-out-Folds; Aggregation, Worst-Family-Grenzen und Qualifikationsregeln sind deterministisch und werden nicht nach Ergebnis angepasst.",
+      "evidence_type": "object",
+      "id": "balanced-family-evaluation"
+    },
+    {
+      "assertion": "Der Kandidat wird einschließlich aktivierter Komponenten, Parameter und Entscheidungsregel vor Zugriff auf die externe Evaluation eingefroren; spätere externe Ergebnisse dürfen keine Nachstimmung oder Kandidatenneuwahl auslösen.",
+      "evidence_type": "object",
+      "id": "pre-freeze-before-external"
+    },
+    {
+      "assertion": "Alle externen NOAA- beziehungsweise PMEL-Aufnahmen und Segmente sind rechtlich, zeitlich und per SHA-256 gebunden; Trainings-, Auswahl- und externe Evaluationsdaten bleiben disjunkt und ein gesperrter Negativbefund wird nicht umgedeutet.",
+      "evidence_type": "object",
+      "id": "external-provenance-and-isolation"
+    },
+    {
+      "assertion": "Interne und externe Ergebnisse werden vollständig und widerspruchstolerant berichtet. Positive Mittelwertverschiebungen dürfen instabile Familienverluste oder negative Einzelfälle nicht verdecken; biologische oder subjektive Walähnlichkeit wird nicht behauptet.",
+      "evidence_type": "object",
+      "id": "contradictory-evidence-visible"
+    },
+    {
+      "assertion": "Wenn keine Komponente die vorab festgelegten Qualifikationsgrenzen erfüllt, bleibt Morph der eingefrorene Kandidat und der Abschluss klassifiziert ausdrücklich no-engine-change statt eine v5.1-Engine oder einen Organic-Default zu veröffentlichen.",
+      "evidence_type": "object",
+      "id": "morph-no-change-decision"
+    },
+    {
+      "assertion": "Studienmanifest, Modellbank, Kandidat, interne und externe Ergebnisartefakte lassen sich aus dem exakten PR-Head reproduzieren; fokussierte Tests, vollständige Repositoryprüfung und Diff-Prüfung sind grün.",
+      "evidence_type": "object",
+      "id": "deterministic-reproduction"
+    },
+    {
+      "assertion": "Während Planung, Studie, Review und Closeout bleibt der Wal-Dienst inaktiv; es erfolgen keine physische Wiedergabe, kein PipeWire- oder MIDI-Effekt, kein Profilwechsel und keine Änderung von aktivem Profil oder Standardmodus.",
+      "evidence_type": "object",
+      "id": "zero-live-effect"
+    },
+    {
+      "assertion": "PR #43 wird auf einen aktuellen konfliktfreien Head gebracht, revisionsgebunden selbst geprüft, durch frische Pflichtchecks validiert und nur mit erwarteter Head-Bindung gemergt; notwendige Folgearbeit wird getrennt registriert.",
+      "evidence_type": "object",
+      "id": "revision-bound-pr-closeout"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "repo.audio"
+    }
+  ],
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T015"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Nur die bestehende Offline-Studie, reproduzierbare Auswertung, Quellenbindung, Dokumentation und PR-Konvergenz bearbeiten. Physische Wiedergabe, Audio-Routing, Profilwechsel, Dienststart und Änderung des Standardmodus sind ausgeschlossen.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio"
+  },
+  "goal": "Die bereits in Audio PR #43 ausgeführte Offline-Ablations- und Generalisierungsstudie für zehn Organic-Komponenten revisionsgebunden validieren, den vor externer Prüfung eingefrorenen Morph-Kandidaten und die widersprüchliche externe Evidenz ohne Nachstimmen dokumentieren und die Studie als no-engine-change abschließen, ohne physische Audio-, Profil- oder Defaultwirkung zu erzeugen.",
+  "id": "AUDIO-CONTROL-PLANE-V1-T029",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "metadata": {
+    "does_not_establish": [
+      "biological_model_fidelity",
+      "subjectively_convincing_whale_similarity",
+      "physical_Roland_or_MOTU_validation",
+      "production_engine_change",
+      "v5.1_release",
+      "automatic_merge_authority"
+    ],
+    "expected_initial_head": "bf690c377fef354ec56a1114d55a8e391b8e21bb",
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-1655dd4968082c9f630694a5",
+      "event_id": 2119,
+      "event_created_at": "2026-08-02T12:36:51.006372Z",
+      "request_sha256": "92482f71b962eadd3c0d661decf597bf95239620f4b9f1a5849a693a2abba7a9",
+      "source": {
+        "does_not_establish": [],
+        "freshness": "digest-bound",
+        "kind": "exact-head-github-pr-study",
+        "locator": "github:heimgewebe/audio#43@bf690c377fef354ec56a1114d55a8e391b8e21bb;private-binding:/home/alex/.local/state/grabowski/operator-intake/audio-pr43-whale-ablation-source-v1.json",
+        "observed_at": "2026-08-02T12:36:50.987521Z",
+        "sha256": "18563d9e718bfb2408f713f4fc331162c771ca0cbcf2198dd820c56a8b899092"
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "registered_from_open_pr": "heimgewebe/audio#43",
+    "scope_decision": "Die Studie ist kein Teil der bereits verifizierten T015-Engine-Lieferung, keine physische T016-Abnahme und kein T023-Produkt-Spielweg; sie benötigt deshalb eine eigene enge Aufgabe."
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 29
+  },
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "python",
+    "testing",
+    "audio-analysis",
+    "benchmarking",
+    "statistics",
+    "reproducibility",
+    "provenance",
+    "rollback"
+  ],
+  "rollback": {
+    "strategy": "Der spätere Mergecommit kann repositoryseitig revertiert werden. Die Aufgabe autorisiert keine produktive Audio-, Geräte-, Routing-, Profil- oder Dienstwirkung."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Buckelwal-Organic-Ablation und externe Generalisierung revisionsgebunden schließen"
+}

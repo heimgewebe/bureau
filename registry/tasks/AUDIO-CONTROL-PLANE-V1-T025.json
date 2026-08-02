@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T025",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "E-Gitarren-Setup mit interner Kette liefern",
+  "state": "planned",
+  "goal": "E-Gitarre über den MOTU-Hi-Z-Eingang mit Onboarding, Tuner, Gate, Kompressor, Verzerrung, Amp/Cab-ähnlicher interner Verarbeitung, Delay, Hall, Szenen und Controllersteuerung als verifiziertes Setup ergänzen.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T024"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 25
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Repositoryarbeit und Offlineprüfung gehen jeder Wirkung voraus; physische Audio-, Routing- oder Gerätewirkung benötigt das jeweils explizite Live-Gate."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "guitar-profile",
+      "assertion": "Geräte-, Kanal-, Hi-Z-, Gain-, Pegel-, Latenz-, Geräteverlust- und Rückfallvertrag sind deklarativ und getestet.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "internal-chain",
+      "assertion": "Die Gitarrenkette nutzt interne Module und keine frühe Plugin- oder neuronale Modellabhängigkeit.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "feedback-boundary",
+      "assertion": "Bekannte Softwarezyklen werden blockiert; Panic/Mute und Pegelrampe sind verfügbar, ohne allgemeine akustische Feedbackerkennung zu behaupten.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "scene-quality",
+      "assertion": "Clean, Drive und Raum wechseln clickfrei; digitaler Ausgangspegel ist begrenzt.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "onsite-acceptance",
+      "assertion": "Physische Hi-Z-/Gain-Abnahme, Rausch- und Latenzmessung sind vor Livefreigabe zwingend.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing",
+    "rollback",
+    "dsp",
+    "audio",
+    "hardware-validation"
+  ],
+  "rollback": {
+    "strategy": "Den exakten Repositorydiff oder Mergecommit zurücknehmen. Livewirkungen sind nur in ausdrücklich hostgebundenen Tasks erlaubt und müssen ihren eigenen Preimage-, Stop- und Readbackvertrag verwenden."
+  },
+  "metadata": {
+    "registered_at": "2026-08-02T07:46:00+02:00",
+    "plan": {
+      "repository": "heimgewebe/audio",
+      "path": "docs/plans/audiozentrale-product-v2.md",
+      "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
+      "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae"
+    },
+    "does_not_establish": []
+  }
+}

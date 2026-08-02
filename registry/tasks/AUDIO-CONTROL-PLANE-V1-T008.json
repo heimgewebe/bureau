@@ -3,7 +3,7 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T008",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Typisierte Audio-Bedienoberfläche repositoryseitig bauen",
-  "state": "planned",
+  "state": "cancelled",
   "goal": "Nach stabiler Liveabnahme eine lokale und optional iPad-taugliche Oberfläche als reine Projektion der autoritativen Audioverträge implementieren.",
   "depends_on": [
     "AUDIO-CONTROL-PLANE-V1-T007"
@@ -87,6 +87,18 @@
     "does_not_establish": [
       "Netzwerkfreigabe",
       "Erfolg ohne Runtime-Readback"
-    ]
+    ],
+    "superseded_at": "2026-08-02T07:46:00+02:00",
+    "superseded_by": [
+      "AUDIO-CONTROL-PLANE-V1-T019",
+      "AUDIO-CONTROL-PLANE-V1-T020",
+      "AUDIO-CONTROL-PLANE-V1-T021",
+      "AUDIO-CONTROL-PLANE-V1-T022",
+      "AUDIO-CONTROL-PLANE-V1-T023",
+      "AUDIO-CONTROL-PLANE-V1-T024",
+      "AUDIO-CONTROL-PLANE-V1-T025",
+      "AUDIO-CONTROL-PLANE-V1-T026"
+    ],
+    "supersession_reason": "Der gemergte Audiozentrale-v2-Plan trennt Produktmodell, Oberfläche, Telemetrie, vertikale Schnitte, Modulation, Gitarre und Packaging in prüfbare Tasks; T008s frühere Abhängigkeit vom vollständigen Live-Rollout war sachlich rückwärts."
   }
 }

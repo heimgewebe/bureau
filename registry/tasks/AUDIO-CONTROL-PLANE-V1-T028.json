@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T028",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Deterministische Ableitung und Bibliothek nach v1 liefern",
+  "state": "planned",
+  "goal": "Nach bestandener kommerzieller v1 Aufnahmen nichtdestruktiv segmentieren, loopen, samplen, als Modulationsdaten verwenden und als Audio oder internes Instrument einfrieren; Herkunft und Reproduzierbarkeit bleiben vollständig sichtbar.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T027"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 28
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Repositoryarbeit und Offlineprüfung gehen jeder Wirkung voraus; physische Audio-, Routing- oder Gerätewirkung benötigt das jeweils explizite Live-Gate."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "non-destructive",
+      "assertion": "Original-Takes bleiben unverändert; jede Ableitung erzeugt ein neues identifiziertes Objekt.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "deterministic",
+      "assertion": "Segmentierung, Loopgrenzen, Hüllkurven, Transienten, Wavetable-/Filterableitung und Exporte sind versions- und hashgebunden reproduzierbar.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-ai-cloud",
+      "assertion": "Der Task benötigt weder generative KI noch versteckte Modelle, Konten oder Cloudzustand.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "provenance",
+      "assertion": "Bibliothek zeigt Quelle, Setup, Szene, Parameter, Softwareversion und Exportstatus.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "bounded-workers",
+      "assertion": "Analyse und Export laufen außerhalb des Echtzeitthreads mit Zeit-, CPU-, Speicher- und Dateigrenzen.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing",
+    "rollback",
+    "audio-analysis",
+    "dsp",
+    "storage"
+  ],
+  "rollback": {
+    "strategy": "Den exakten Repositorydiff oder Mergecommit zurücknehmen. Livewirkungen sind nur in ausdrücklich hostgebundenen Tasks erlaubt und müssen ihren eigenen Preimage-, Stop- und Readbackvertrag verwenden."
+  },
+  "metadata": {
+    "registered_at": "2026-08-02T07:46:00+02:00",
+    "plan": {
+      "repository": "heimgewebe/audio",
+      "path": "docs/plans/audiozentrale-product-v2.md",
+      "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
+      "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae"
+    },
+    "does_not_establish": []
+  }
+}

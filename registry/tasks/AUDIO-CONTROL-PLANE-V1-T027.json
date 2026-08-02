@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T027",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Audiozentrale v1 physisch abnehmen und gestuft ausrollen",
+  "state": "planned",
+  "goal": "Die kommerzielle Version 1 auf dem Heim-PC mit echter Hardware revisionsgebunden abnehmen und ausrollen: Stimme, Roland/Wal, interne Modulation und Gitarre einschließlich Pegel-, Latenz-, XRun-, Geräteverlust-, Recovery- und Updateprüfungen.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T001",
+    "AUDIO-CONTROL-PLANE-V1-T016",
+    "AUDIO-CONTROL-PLANE-V1-T026"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 27
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio",
+      "host:heim-pc"
+    ],
+    "approval": {
+      "action_class": "runtime_mutation",
+      "required_level": "break_glass",
+      "note": "Repositoryarbeit und Offlineprüfung gehen jeder Wirkung voraus; physische Audio-, Routing- oder Gerätewirkung benötigt das jeweils explizite Live-Gate."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "host.heim-pc",
+      "mode": "write",
+      "isolation": "none"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "exact-release",
+      "assertion": "Paket, Engine, UI, Profile, Modelle und Testprotokolle sind an denselben exakten Releasecommit gebunden.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "profile-soaks",
+      "assertion": "Jedes verifizierte Profil besteht Kaltstart, Dauerlauf, Geräteverlust, Rückkehr, Stop/Abbruch und keine zurechenbaren XRuns.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "digital-level-truth",
+      "assertion": "Digitale Pegelgrenzen und analoge physische Stellungen werden getrennt belegt; keine Software behauptet sicheren Schalldruck.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "commercial-core",
+      "assertion": "Setup öffnen, Signal live sehen, sicher hören/spielen/aufnehmen, Verknüpfung verstehen, speichern und nach Fehler wiederfinden funktioniert ohne Konto und Internet.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "rollback",
+      "assertion": "Jede Rolloutstufe kann zum gebundenen Vorzustand zurückkehren; unbekannte oder mehrdeutige Wirkung blockiert weitere Stufen.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing",
+    "rollback",
+    "audio",
+    "systemd",
+    "deployment",
+    "runtime-observability",
+    "hardware-validation"
+  ],
+  "rollback": {
+    "strategy": "Den exakten Repositorydiff oder Mergecommit zurücknehmen. Livewirkungen sind nur in ausdrücklich hostgebundenen Tasks erlaubt und müssen ihren eigenen Preimage-, Stop- und Readbackvertrag verwenden."
+  },
+  "metadata": {
+    "registered_at": "2026-08-02T07:46:00+02:00",
+    "plan": {
+      "repository": "heimgewebe/audio",
+      "path": "docs/plans/audiozentrale-product-v2.md",
+      "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
+      "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae"
+    },
+    "does_not_establish": []
+  }
+}

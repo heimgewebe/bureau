@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T026",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "App-Shell, Packaging und Produkthärtung liefern",
+  "state": "planned",
+  "goal": "Die gemeinsame Frontendbasis nach einem messbaren Spike in eine begrenzte Desktop-Shell integrieren und Packaging, sichere Updates, Recovery, Tastatur, Touch, Barrierefreiheit und lokalen Diagnoseexport produktreif machen.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T022",
+    "AUDIO-CONTROL-PLANE-V1-T023",
+    "AUDIO-CONTROL-PLANE-V1-T024",
+    "AUDIO-CONTROL-PLANE-V1-T025"
+  ],
+  "priority": {
+    "lane": "later",
+    "rank": 26
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Repositoryarbeit und Offlineprüfung gehen jeder Wirkung voraus; physische Audio-, Routing- oder Gerätewirkung benötigt das jeweils explizite Live-Gate."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "shell-decision",
+      "assertion": "Tauri und minimale native Shell werden nach Startzeit, IPC, WebView-Stabilität, Packaging und Barrierefreiheit gemessen; Entscheidung und Ablehnung sind dokumentiert.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "capability-boundary",
+      "assertion": "Die Shell besitzt nur explizite Capabilities; kein Shellzugriff, kein freier Dateizugriff und keine zweite Audioautorität.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "single-bundle",
+      "assertion": "App und Browser-Fallback liefern dieselben versionierten Frontendassets und API-Verträge.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "recovery-and-update",
+      "assertion": "UI-Neustart, Enginefehler, Update und Rollback besitzen getestete, revisionsgebundene Zustände; Updates verändern keinen laufenden Performancezustand.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "accessibility",
+      "assertion": "Kernabläufe bestehen Tastatur-, Touch-, Screenreader-, Kontrast- und reduced-motion-Abnahme.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing",
+    "rollback",
+    "desktop",
+    "packaging",
+    "accessibility",
+    "security-review"
+  ],
+  "rollback": {
+    "strategy": "Den exakten Repositorydiff oder Mergecommit zurücknehmen. Livewirkungen sind nur in ausdrücklich hostgebundenen Tasks erlaubt und müssen ihren eigenen Preimage-, Stop- und Readbackvertrag verwenden."
+  },
+  "metadata": {
+    "registered_at": "2026-08-02T07:46:00+02:00",
+    "plan": {
+      "repository": "heimgewebe/audio",
+      "path": "docs/plans/audiozentrale-product-v2.md",
+      "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
+      "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae"
+    },
+    "does_not_establish": []
+  }
+}

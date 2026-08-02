@@ -126,6 +126,10 @@
         "prompt-injection absence for every downstream agent",
         "future correctness after unrelated changes"
       ]
+    },
+    "verification": {
+      "task_sha256": "bfbf95219e3f386cedbd60febb5ec00d06e90228b9b53eea88ca7584b853ab98",
+      "plan_sha256": "780b6f48eda338faf5d38b7e4964242e1d3290c74404ab8e2bc1bb5d50c25955"
     }
   },
   "priority": {

@@ -93,6 +93,90 @@
         "task_readiness",
         "claim_or_dispatch_authority"
       ]
+    },
+    "completed_at": "2026-08-02",
+    "verified_at": "2026-08-02T20:49:23Z",
+    "outcome": "RepoGround ignores absent or empty SCIP SymbolInformation relationships without false source-definition degradation, while malformed and non-empty relationship evidence remains fail-closed.",
+    "implementation_pr": "heimgewebe/repoground#1149",
+    "implementation_head": "3b68d2f4789804e11849a51e001abefecfec73c1",
+    "implementation_merge_commit": "5548ca2d23a3d22ffe14fb1006363e4078e7c009",
+    "implementation_diff_sha256": "3f771d31ce89311bedcbe39459d075ba74365b6816100839c5ded77cf6e29cf9",
+    "bureau_run": {
+      "run_id": "BUR-RUN-20260802T134712Z-a275b627db",
+      "state": "succeeded",
+      "worker_id": "operator-chatgpt-rpu-v1-t035-20260802",
+      "task_sha256": "0bd6e805113864b4821cef6864342d9dc3f5c1575ebb8afac529d8876c7ea171",
+      "updated_at": "2026-08-02T19:20:41.501916Z"
+    },
+    "validation": {
+      "base": "d60334cc7715ca2057c95d314abcbdfdc65ab2d3",
+      "head": "3b68d2f4789804e11849a51e001abefecfec73c1",
+      "self_review": "PASS; revisionsgebunden, 0 offene Findings",
+      "local_checks": {
+        "focused_scip": "24 passed",
+        "focused_hardening": "6 passed",
+        "full_suite": "5167 passed, 12 skipped",
+        "ruff": "pass",
+        "diff_check": "pass"
+      },
+      "github_checks_result": "PASS auf finalem PR-Head vor Merge",
+      "merge_readback": "PR #1149 MERGED; remote main equals merge commit 5548ca2d23a3d22ffe14fb1006363e4078e7c009"
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "bureau_run",
+          "task_id": "RPU-V1-T035",
+          "run_id": "BUR-RUN-20260802T134712Z-a275b627db",
+          "state": "succeeded",
+          "task_sha256": "0bd6e805113864b4821cef6864342d9dc3f5c1575ebb8afac529d8876c7ea171"
+        },
+        {
+          "kind": "pull_request",
+          "task_id": "RPU-V1-T035",
+          "repository": "heimgewebe/repoground",
+          "number": 1149,
+          "state": "merged",
+          "head_sha": "3b68d2f4789804e11849a51e001abefecfec73c1",
+          "merge_commit": "5548ca2d23a3d22ffe14fb1006363e4078e7c009",
+          "diff_sha256": "3f771d31ce89311bedcbe39459d075ba74365b6816100839c5ded77cf6e29cf9"
+        },
+        {
+          "kind": "github_checks",
+          "task_id": "RPU-V1-T035",
+          "repository": "heimgewebe/repoground",
+          "head_sha": "3b68d2f4789804e11849a51e001abefecfec73c1",
+          "verdict": "pass"
+        },
+        {
+          "kind": "review",
+          "task_id": "RPU-V1-T035",
+          "repository": "heimgewebe/repoground",
+          "head_sha": "3b68d2f4789804e11849a51e001abefecfec73c1",
+          "self_review": "pass",
+          "external_review_claimed": false,
+          "material_findings_resolved": 0
+        },
+        {
+          "kind": "merge_readback",
+          "task_id": "RPU-V1-T035",
+          "repository": "heimgewebe/repoground",
+          "merge_commit": "5548ca2d23a3d22ffe14fb1006363e4078e7c009",
+          "remote_main_equal": true,
+          "verdict": "pass"
+        }
+      ]
+    },
+    "explicit_nonclaims": [
+      "No consumer enablement or default promotion is established.",
+      "No cross-repository SCIP completeness is established.",
+      "The unavailable Codex review is not treated as an independent review result."
+    ],
+    "verification": {
+      "task_sha256": "d47dcb7855306542d0e3dd664a07abcacec104b42927d3635fddda7329a460c3",
+      "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db"
     }
   },
   "priority": {
@@ -110,6 +194,6 @@
     "strategy": "Revert the single relationship-list guard and its regression tests. This restores the previous conservative false degradation without changing SCIP schemas, consumer enablement, deployment or persisted artifacts."
   },
   "schema_version": 1,
-  "state": "ready",
+  "state": "verified",
   "title": "SCIP empty relationships must not cause false definition degradation"
 }

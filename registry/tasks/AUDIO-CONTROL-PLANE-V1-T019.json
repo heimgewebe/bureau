@@ -3,11 +3,11 @@
   "id": "AUDIO-CONTROL-PLANE-V1-T019",
   "initiative": "AUDIO-CONTROL-PLANE-V1",
   "title": "Audiozentrale-v2-Objektmodell und Migrationsvertrag liefern",
-  "state": "planned",
+  "state": "verified",
   "goal": "Setup, Signalbahn, Modul, Verknüpfung, Szene und Take als maschinenlesbares, versions- und migrationsfähiges Produktmodell definieren und die heutige Fünferoberfläche ohne zweite Zustandswahrheit auf Jetzt, Setups, Bibliothek und System abbilden.",
   "depends_on": [],
   "priority": {
-    "lane": "next",
+    "lane": "later",
     "rank": 19
   },
   "execution": {
@@ -79,6 +79,103 @@
       "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
       "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae"
     },
-    "does_not_establish": []
+    "does_not_establish": [
+      "Live-PipeWire- oder Geräteautorität",
+      "physische MOTU-, Roland- oder Mikrofonabnahme",
+      "Aufnahmefähigkeit",
+      "subjektive Audioqualität",
+      "Abschluss von T020 oder späteren Audiozentrale-v2-Phasen"
+    ],
+    "verified_at": "2026-08-02T10:55:47+02:00",
+    "outcome": "Audio PR #45 liefert das maschinenlesbare Audiozentrale-v2-Objekt- und Migrationsmodell, strikte JSON-Schemata, einen fail-closed Referenzvalidator und ein einziges kanonisches Workspace-Beispiel. Mergecommit 0b150a165c7c7b9d9035e76ea779491bc19c903e ist automatisch deployt; die Audiozentrale meldet denselben Runtime-Head und serving.",
+    "validated_acceptance": {
+      "schema-contract": "PASS: Produktmodell und Workspace besitzen Draft-2020-12-Schemata. Der Validator bindet Plan, Schemata und Profilkatalog an Pfad und SHA-256, liest jede Bindung einmalig aus demselben Snapshot und verwirft doppelte Schlüssel, NaN/Infinity, Symlinks, Übergröße, UTF-8-Fehler, Mid-read-Drift und unbekannte Felder.",
+      "single-active-setup": "PASS: Der semantische Validator erlaubt höchstens ein aktives Setup, verlangt für dieses mindestens eine Signalbahn und trennt active, draft und template fail-closed.",
+      "migration-map": "PASS: Die bisherige Fünferoberfläche ist vollständig auf Jetzt, Setups, Bibliothek und System abgebildet. Beobachtet, konfiguriert, physisch offen und ausführbar bleiben orthogonal zu kompakt, erweitert und Fokus.",
+      "no-daw-no-free-graph": "PASS: Signalbahnen sind lineare typisierte Ketten interner Module. Freie Ports, externe Plugins, Skripte, Sidechains, Routingzyklen, Timeline, Comping und Clipbearbeitung werden ausgeschlossen; Takes sind unveränderlich, quellengebunden und müssen auf eine Recorder-Bahn zeigen.",
+      "exact-head": "PASS: Self-Review, Diff, 13 fokussierte Tests mit 21 semantischen Negativfällen, 532/532 Repositorytests und GitHub-Safety sind an Head e55ce727a5db4a6321d63b3569b34e1b3642cc61 gebunden; Mergecommit ist 0b150a165c7c7b9d9035e76ea779491bc19c903e."
+    },
+    "verification": {
+      "source": "github_pull_request_and_exact_head_offline_validation",
+      "source_ref": "github-pr:heimgewebe/audio#45",
+      "repository": "heimgewebe/audio",
+      "pull_request": 45,
+      "base_commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
+      "reviewed_head": "e55ce727a5db4a6321d63b3569b34e1b3642cc61",
+      "merge_commit": "0b150a165c7c7b9d9035e76ea779491bc19c903e",
+      "final_diff_sha256": "0ef461b7a7971fccb3546842e7849f3afc4ba436930530da5e2afd7434a3b0bd",
+      "final_diff_bytes": 142544,
+      "product_model_sha256": "87a36ce5cae399069adae5ad7b7b4fd015e2df5f71ed117dd950286d284e6d6f",
+      "product_schema_sha256": "80c4a9389aa6490996723354b493ba2db3cfd7080cb2152dc3e48fc7c42c5a21",
+      "workspace_schema_sha256": "7754b11ec3ac8147180cf121c0d8848af0619229fba8591302cfb8d1395a1e0e",
+      "task_sha256": "ed48eb2b0c9531ebc8f300ca20999ef96b45403471a7d46d3798a6156f9c001b",
+      "plan_sha256": "a157c3481a3ba0b6525e5f53494854cbf43f790da75ff9471a37cc24450ec76d",
+      "github_required_check": {
+        "safety": "success",
+        "workflow_run_id": 30740326254
+      },
+      "local_validation": {
+        "repository_tests": "532/532 pass",
+        "focused_product_model_tests": "13/13 pass with 21 semantic negative cases",
+        "json_schema_draft_2020_12": "pass",
+        "ruff": "pass",
+        "compileall": "pass",
+        "git_diff_check": "pass",
+        "durable_job_unit": "grabowski-job-50cd950245d2",
+        "receipt_sha256": "706b357df8556b30ace94e18f290898443250b4bfd4b9a89d832d176997481d4",
+        "payload_sha256": "ac9e5da91a9cb575ed199f29764041098abbcd09e3b23756afd969f7bc0f7f9c"
+      },
+      "deployment": {
+        "source_ref": "audio-control-deploy:latest",
+        "runtime_commit": "0b150a165c7c7b9d9035e76ea779491bc19c903e",
+        "status": "current-serving",
+        "service": "audio-control-ui-v1.service",
+        "timer": "audio-control-deploy.timer"
+      }
+    },
+    "registry_truth": {
+      "schema_version": 1,
+      "status": "satisfied",
+      "evidence": [
+        {
+          "kind": "pull_request",
+          "authority": "github",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T019",
+          "source_ref": "heimgewebe/audio#45",
+          "number": 45,
+          "base_sha": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
+          "head_sha": "e55ce727a5db4a6321d63b3569b34e1b3642cc61",
+          "merge_commit_sha": "0b150a165c7c7b9d9035e76ea779491bc19c903e",
+          "diff_sha256": "0ef461b7a7971fccb3546842e7849f3afc4ba436930530da5e2afd7434a3b0bd"
+        },
+        {
+          "kind": "test_run",
+          "authority": "heim-pc",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T019",
+          "source_ref": "grabowski-job:50cd950245d2",
+          "commit_sha": "e55ce727a5db4a6321d63b3569b34e1b3642cc61",
+          "receipt_sha256": "706b357df8556b30ace94e18f290898443250b4bfd4b9a89d832d176997481d4",
+          "result": "repository-532-of-532-and-safety-pass"
+        },
+        {
+          "kind": "test_run",
+          "authority": "github_actions",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T019",
+          "source_ref": "github-actions:heimgewebe/audio#45:safety",
+          "workflow_run_id": 30740326254,
+          "commit_sha": "e55ce727a5db4a6321d63b3569b34e1b3642cc61",
+          "result": "safety-success"
+        },
+        {
+          "kind": "deployment_receipt",
+          "authority": "heim-pc",
+          "task_id": "AUDIO-CONTROL-PLANE-V1-T019",
+          "source_ref": "audio-control-deploy:latest",
+          "commit_sha": "0b150a165c7c7b9d9035e76ea779491bc19c903e",
+          "result": "current-serving"
+        }
+      ]
+    },
+    "evidence_reconciled_at": "2026-08-02T10:55:47+02:00"
   }
 }

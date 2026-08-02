@@ -81,6 +81,12 @@
       "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
       "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae"
     },
-    "does_not_establish": []
+    "does_not_establish": [],
+    "unblocked_at": "2026-08-02T10:55:47+02:00",
+    "unblocked_by": {
+      "task_id": "AUDIO-CONTROL-PLANE-V1-T019",
+      "merge_commit": "0b150a165c7c7b9d9035e76ea779491bc19c903e",
+      "source_ref": "heimgewebe/audio#45"
+    }
   }
 }

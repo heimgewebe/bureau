@@ -1,0 +1,126 @@
+{
+  "acceptance": [
+    {
+      "assertion": "Das Restfenster zwischen finaler autoritativer Registry-Lesung und SQLite-Commit wird auf einer exakten Revision mit einem hermetischen Reproducer nachgestellt oder als formal vorhanden, aber praktisch nicht reproduzierbar revisionsgebunden klassifiziert.",
+      "evidence_type": "object",
+      "id": "residual-race-reproduction"
+    },
+    {
+      "assertion": "Eine explizite Entscheidung implement oder no-change vergleicht mindestens gemeinsamen Registry-Writer-Vertrag, enges Write-Gate und Beibehaltung des dokumentierten Restrisikos nach Nutzen, Komplexität, Crash-Sicherheit und Deadlock-Risiko.",
+      "evidence_type": "object",
+      "id": "coordination-decision"
+    },
+    {
+      "assertion": "Bei implement können Registry-Schreiber und complete_run nicht still widersprüchliche Task- und Run-Wahrheiten erzeugen; Verlierer werden deterministisch maschinenlesbar abgelehnt, unklare Ausgänge verlangen autoritativen Readback. Bei no-change ist dieser Punkt als nicht anwendbar gebunden.",
+      "evidence_type": "object",
+      "id": "single-effect-contract"
+    },
+    {
+      "assertion": "Bei implement bleiben Crash, Timeout und Prozessverlust vor, während und nach der gemeinsamen Koordination fail-closed und idempotent; kein Recovery-Pfad darf fremde Registry-Bytes oder Run-Wahrheit überschreiben. Bei no-change ist dieser Punkt als nicht anwendbar gebunden.",
+      "evidence_type": "object",
+      "id": "crash-recovery-contract"
+    },
+    {
+      "assertion": "Hermetische Race-, Crash-, Replay-, Idempotenz- und Drift-Tests sowie make validate sind auf dem exakten finalen Head grün; bei no-change belegt der Abschluss, dass keine neue Mutationslogik entstand.",
+      "evidence_type": "object",
+      "id": "compatibility-tests"
+    },
+    {
+      "assertion": "Es entsteht keine zweite Registry-, Lifecycle-, Queue- oder Dispatch-Wahrheit und kein Approval-, Review-, Lease-, Merge- oder Deployment-Bypass.",
+      "evidence_type": "boolean",
+      "id": "truth-boundary"
+    }
+  ],
+  "claims": [
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.core"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.truth-model"
+    },
+    {
+      "isolation": "worktree",
+      "mode": "write",
+      "resource": "component.bureau.docs"
+    }
+  ],
+  "depends_on": [
+    "BUREAU-TRUTH-MODEL-V2-T021"
+  ],
+  "execution": {
+    "approval": {
+      "action_class": "repository_mutation",
+      "note": "Die Aufgabe stammt aus dem revisionsgebundenen T021-Closeout. Änderungen dürfen ausschließlich das belegte Cross-Domain-Restfenster adressieren und keine Queue-, Claim-, Review-, Lease-, Merge- oder Deployment-Gates lockern.",
+      "required_level": "operator"
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau/v2.py",
+      "path:/home/alex/repos/bureau/src/bureau/operator_intake.py",
+      "path:/home/alex/repos/bureau/tests",
+      "path:/home/alex/repos/bureau/docs/concurrency.md",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T024.json"
+    ],
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau"
+  },
+  "goal": "Entferne oder formal begrenze das verbleibende Cross-Domain-Restfenster im Bureau-Close-Pfad, in dem ein nicht kooperierender Registry-Schreiber nach der zweiten autoritativen Dokumentlesung und vor dem SQLite-Commit landen kann. Prüfe zuerst, ob ein gemeinsamer crash-sicherer Registry-Schreibvertrag, ein enges Write-Gate oder ein anderer enger Koordinationsmechanismus den Zusatznutzen mit vertretbarer Komplexität liefert; implementiere nur eine belegte Lösung, andernfalls schließe revisionsgebunden als no-change mit expliziter Risikoklassifikation.",
+  "id": "BUREAU-TRUTH-MODEL-V2-T024",
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "metadata": {
+    "does_not_establish": [
+      "task readiness",
+      "claim or dispatch authority",
+      "necessity of a new lock",
+      "merge or deployment permission"
+    ],
+    "reason": "PR #1303 und sein Self-Review benennen diese Restarbeit fälschlich als T023. Der tatsächlich registrierte T023 betrifft JSON-Ergebnisformen und deckt die Cross-Domain-Race nicht ab. Der ältere eigenständige Kandidat candidate-1233b2e352f9ef371c431e27, Event 1958, ist die kanonische Source.",
+    "source": "BUREAU-TRUTH-MODEL-V2-T021 revisionsgebundener Closeout",
+    "source_evidence": "docs/evidence/bureau-truth-model-v2-t021-cas-audit-20260801.json",
+    "source_merge_commit": "5273dd09a2ae7c489f277517ba4cf04296cb2337",
+    "source_pr": 1303,
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-1233b2e352f9ef371c431e27",
+      "event_id": 1958,
+      "event_created_at": "2026-08-01T12:26:19.955611Z",
+      "request_sha256": "0ee40c2af9bf073dcc12e2280b528b70cd21dd0056b3344eb5500094c4223f1a",
+      "source": {
+        "does_not_establish": [
+          "source_content_identity"
+        ],
+        "freshness": "unknown",
+        "kind": "conversation",
+        "locator": "chatgpt:heimgewebe/bureau:pr-1303:self-review:followup",
+        "observed_at": "2026-08-01T14:26:00+02:00",
+        "sha256": null
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    }
+  },
+  "priority": {
+    "lane": "later",
+    "rank": 24
+  },
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich neu eingeführte Koordinations-, Test- und Dokumentationsänderungen; bestehende fail-closed Close-CAS-Semantik bleibt erhalten."
+  },
+  "schema_version": 1,
+  "state": "planned",
+  "title": "Cross-Domain-CAS zwischen Registry und Run-Abschluss schließen"
+}

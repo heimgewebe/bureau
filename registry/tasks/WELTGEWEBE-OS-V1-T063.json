@@ -56,7 +56,6 @@
     "does_not_establish": [
       "current root cause after future main changes",
       "automatic implementation",
-      "task readiness",
       "queue truth",
       "claim or dispatch authority",
       "permission to weaken validation",
@@ -119,6 +118,6 @@
     "task_profile": "repo_change"
   },
   "schema_version": 1,
-  "state": "planned",
+  "state": "ready",
   "title": "Lokale Validierungswahrheit von Weltgewebe reparieren"
 }

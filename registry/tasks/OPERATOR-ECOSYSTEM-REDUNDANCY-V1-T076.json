@@ -133,26 +133,24 @@
       "merge_commit_sha": "d17674c0e3fedcd8cd17c3a739d3707748b06e9d",
       "contract": "reposkop-coherence-report-v2-and-usage-receipt-v2",
       "deployment_policy": "exact-target-or-preexisting-verified-main-successor-with-byte-identical-consumer",
-      "active_successor_evidence": {
+      "successor_verification_contract": {
         "schema_version": 1,
-        "observed_at": "2026-08-02T06:34:19.313564+00:00",
-        "active_release_id": "87038eec83fd-srcset7631615a2738-locke6664d600b6c-contract5d1484d08302-attempt1",
-        "active_repo_head": "87038eec83fd0dfb53938d7734e95fa5fa8e9ee2",
-        "remote_main_head": "87038eec83fd0dfb53938d7734e95fa5fa8e9ee2",
-        "target_is_git_ancestor": true,
-        "runtime_integrity_valid": true,
-        "server_tool_count": 177,
-        "server_tool_names_sha256": "cb3cd4bbc3354b8209f777343530bdb81818683ceff54ad89fa6ff3f2c703b63",
-        "server_registry_contains_grabowski_reposkop_context": true,
-        "consumer_artifact_sha256s": {
-          "src/grabowski_reposkop_context.py": "c1e46bd5b921834a89325fdffe4edba8f716369e6edca3401d230d736f3cfdae",
-          "docs/reposkop-context-v2.md": "52c9b4a3652245cafc0e32cd87f661d59003e68e3d22d3054596880f20b3b4cf",
-          "docs/reposkop-v2-consumer.md": "de1a6972d6992a12e567a6d01a65d516670db7cd76b0d31cac2ebd23aac4df4b",
-          "tests/test_reposkop_context.py": "5f1f65e60ca6cd76a158078d929901d831bb87c4dc040b501bf3d4ccf4c4bfb6"
-        },
-        "artifacts_byte_identical_to_target": true,
-        "t076_runtime_effect_required": false,
-        "reason": "The active main runtime was deployed by foreign work after the initial preflight, contains the target commit as an ancestor, and retains the complete Reposkop-v2 consumer artifacts byte-for-byte. Downgrading would remove newer merged task-lifecycle fixes."
+        "target_commit": "d17674c0e3fedcd8cd17c3a739d3707748b06e9d",
+        "allowed_active_runtime": "exact-target-or-current-remote-main-descendant",
+        "required_immediately_before_claim_and_first_effect": [
+          "active_runtime_release_and_repo_head_are_manifest_integral",
+          "active_repo_head_equals_fresh_remote_main",
+          "target_commit_is_git_ancestor_of_active_repo_head",
+          "reposkop_consumer_implementation_documents_and_tests_are_byte_identical_to_target_commit",
+          "runtime_tool_registry_matches_deployment_contract",
+          "no_unmerged_change_is_included"
+        ],
+        "forbidden": [
+          "persisting_one_live_runtime_head_as_future_authority",
+          "downgrading_a_newer_verified_main_runtime",
+          "including_unmerged_or_foreign_work"
+        ],
+        "evidence_destination": "T076 claim and cutover receipts, not canonical task metadata"
       }
     },
     "t051_relationship": {
@@ -161,11 +159,13 @@
       "reason": "T051 remains planned and contains historical broad acceptance language that predates Reposkop 2.0 canonical checkout authority. T076 isolates the currently executable producer-consumer runtime cutover without silently rewriting the broader task."
     },
     "does_not_establish": [
-      "successful host deployment",
+      "any future active runtime identity before fresh readback",
       "completion of all T051 acceptance items",
-      "task claim or dispatch authority",
       "permission to include any unmerged Grabowski change",
-      "resolution of the 177-versus-175 client discovery discrepancy"
+      "platform exposure of every MCP server tool",
+      "resolution of the 177-versus-175 client discovery discrepancy",
+      "successful host deployment",
+      "task claim or dispatch authority"
     ],
     "previous_blockade": {
       "classification": "operator-transport-unavailable",
@@ -261,41 +261,44 @@
     "fresh_pre_effect_observation_required": true,
     "client_surface_discrepancy": {
       "schema_version": 1,
-      "status": "open-pre-cutover-observation",
+      "status": "known-platform-projection-discrepancy-requires-fresh-classification",
       "server_registered_tool_count": 177,
       "api_tool_discovery_count": 175,
       "server_contains_grabowski_reposkop_context": true,
       "api_tool_exposes_grabowski_reposkop_context": false,
-      "interpretation": "Runtime health and the declared client snapshot are green, but the conversation-visible discovery surface omits two server tools. T076 must exercise the consumer through an exact MCP protocol client and register the client-surface mismatch separately; it may not report the discrepancy as resolved without fresh evidence."
+      "interpretation": "The MCP server and a direct protocol client may prove the full 177-tool contract. The ChatGPT api_tool discovery projection has separately exposed 175 tools. A release-bound connector snapshot may be rebound after a direct 177-tool observation, but that receipt does not prove that the platform projection exposes every server tool. T076 may use direct MCP for grabowski_reposkop_context, must record the 175/177 projection discrepancy as a separate defect, and may not describe the platform projection itself as resolved.",
+      "required_before_effect": "release-bound direct MCP snapshot matched; platform projection discrepancy explicitly retained",
+      "does_not_block_direct_mcp_consumer_probe": true
     },
-    "runtime_successor_policy_updated_at": "2026-08-02T06:34:19.313579+00:00",
-    "initial_registration_runtime_observation": {
-      "grabowski_repo_head": "2d19f9c31c9f333a507e7a75e11a0e8c417b0e35",
-      "release_id": "2d19f9c31c9f-srcset6c423ab36b9c-locke6664d600b6c-contract5d1484d08302",
-      "runtime_integrity": "valid",
-      "reposkop_reported_version": "1.0.0",
-      "freshness": "last-successful-live-readback-before-connector-loss"
-    },
-    "pre_cutover_runtime_observation": {
+    "runtime_successor_policy_updated_at": "2026-08-02T07:35:52.549472+00:00",
+    "live_pre_effect_observation_contract": {
       "schema_version": 1,
-      "observed_at": "2026-08-02T06:35:00.864957+00:00",
-      "grabowski_repo_head": "87038eec83fd0dfb53938d7734e95fa5fa8e9ee2",
-      "release_id": "87038eec83fd-srcset7631615a2738-locke6664d600b6c-contract5d1484d08302-attempt1",
-      "remote_main_head": "87038eec83fd0dfb53938d7734e95fa5fa8e9ee2",
-      "runtime_integrity": "valid",
-      "deployment_complete": true,
-      "target_consumer_commit_is_ancestor": true,
-      "consumer_artifacts_byte_identical": true,
-      "runtime_mutated_by_t076": false,
-      "server_tool_count": 177,
-      "server_tool_names_sha256": "cb3cd4bbc3354b8209f777343530bdb81818683ceff54ad89fa6ff3f2c703b63",
-      "audit_last_record_sha256": "9a8273239ce76516223e095cdfe2a98ffe5a3428b1edf6089f6e9ea97612efd4",
-      "kill_switch_engaged": false,
-      "reposkop_path": "/home/alex/.local/bin/reposkop",
-      "reposkop_reported_version": "1.0.0",
-      "reposkop_sha256": "cdc6450bbbb652458cc383ff1f82a96cbd9ccf18be791274b93ca8d4340527f3",
-      "freshness": "fresh-live-after-foreign-main-deploy-before-first-T076-effect",
-      "requires_refresh_immediately_before_claim_and_first_effect": true
+      "freshness": "same execution window immediately before claim and first host effect",
+      "required_sources": [
+        "Grabowski runtime status and manifest",
+        "fresh Git remote main readback",
+        "Reposkop binary stat and version",
+        "active tasks processes and leases",
+        "Bureau Registry and queue",
+        "GitHub PR and checks",
+        "audit chain recovery and kill switch",
+        "MCP server tool list and connector snapshot"
+      ],
+      "invalidated_by": [
+        "runtime deploy",
+        "remote main advance",
+        "connector snapshot change",
+        "effect-resource lease change",
+        "Reposkop path identity change"
+      ],
+      "persistence": "write exact observations to execution receipts only"
+    },
+    "volatile_runtime_identity_removed_at": "2026-08-02T07:35:10.448292+00:00",
+    "superseded_live_observation_policy": {
+      "schema_version": 1,
+      "removed_snapshot_count": 3,
+      "reason": "Live runtime identities are execution evidence, not durable task authority. Prior values remain in Git history and PR review evidence.",
+      "future_storage": "claim and cutover receipts only"
     }
   },
   "priority": {

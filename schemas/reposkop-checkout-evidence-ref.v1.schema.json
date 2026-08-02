@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://heimgewebe.local/bureau/reposkop-checkout-evidence-ref.v1.schema.json",
+  "title": "Bureau Reposkop checkout evidence reference v1",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "schema_version",
+    "producer",
+    "repository",
+    "purpose",
+    "pre_observation_sha256",
+    "repository_identity_sha256",
+    "checkout_identity_sha256",
+    "continuity_state",
+    "does_not_establish"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "producer": {"const": "reposkop"},
+    "repository": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "pre_observation_sha256": {"$ref": "#/$defs/sha256"},
+    "post_observation_sha256": {
+      "oneOf": [
+        {"$ref": "#/$defs/sha256"},
+        {"type": "null"}
+      ]
+    },
+    "repository_identity_sha256": {"$ref": "#/$defs/sha256"},
+    "checkout_identity_sha256": {"$ref": "#/$defs/sha256"},
+    "transition_sha256": {
+      "oneOf": [
+        {"$ref": "#/$defs/sha256"},
+        {"type": "null"}
+      ]
+    },
+    "continuity_sha256": {
+      "oneOf": [
+        {"$ref": "#/$defs/sha256"},
+        {"type": "null"}
+      ]
+    },
+    "continuity_state": {
+      "enum": [
+        "pre_effect_only",
+        "intact",
+        "explainable_drift",
+        "identity_break",
+        "inconclusive"
+      ]
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "does_not_establish": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "allOf": [
+        {
+          "contains": {"const": "task_completion"}
+        },
+        {
+          "contains": {"const": "effect_authorization"}
+        }
+      ],
+      "items": {"type": "string"}
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "continuity_state": {"const": "pre_effect_only"}
+        },
+        "required": ["continuity_state"]
+      },
+      "then": {
+        "required": [
+          "post_observation_sha256",
+          "transition_sha256",
+          "continuity_sha256"
+        ],
+        "properties": {
+          "post_observation_sha256": {"type": "null"},
+          "transition_sha256": {"type": "null"},
+          "continuity_sha256": {"type": "null"}
+        }
+      },
+      "else": {
+        "required": [
+          "post_observation_sha256",
+          "transition_sha256",
+          "continuity_sha256"
+        ],
+        "properties": {
+          "post_observation_sha256": {"$ref": "#/$defs/sha256"},
+          "transition_sha256": {"$ref": "#/$defs/sha256"},
+          "continuity_sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    }
+  ]
+}

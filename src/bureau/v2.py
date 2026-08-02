@@ -4987,6 +4987,48 @@ def _validate_evidence(criteria: list[dict[str, Any]], evidence: dict[str, Any])
     return missing
 
 
+def _require_independent_completion_evidence(criteria: list[dict[str, Any]]) -> None:
+    """Keep repository identity evidence from becoming task-completion truth."""
+    has_reposkop_ref = any(
+        criterion.get("id") == "reposkop_checkout_ref" for criterion in criteria
+    )
+    has_independent_criterion = any(
+        criterion.get("id") != "reposkop_checkout_ref" for criterion in criteria
+    )
+    if has_reposkop_ref and not has_independent_criterion:
+        raise legacy.StateError(
+            "reposkop checkout evidence requires independent Bureau acceptance evidence "
+            "to complete a run"
+        )
+
+
+def _load_validated_stored_receipt(
+    registry: Registry,
+    run_id: str,
+    receipt_row: Any,
+) -> dict[str, Any]:
+    """Load an idempotent replay receipt without trusting legacy stored bytes."""
+    try:
+        receipt = json.loads(receipt_row["receipt_json"])
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise legacy.StateError(f"stored receipt for run {run_id} is invalid JSON") from exc
+    if not isinstance(receipt, dict):
+        raise legacy.StateError(f"stored receipt for run {run_id} must be an object")
+
+    registry.schemas.validate("receipt", receipt, f"receipt:{run_id}:stored")
+    if receipt.get("run_id") != run_id:
+        raise legacy.StateError(f"stored receipt run_id mismatch for run {run_id}")
+
+    unsigned = {key: value for key, value in receipt.items() if key != "receipt_sha256"}
+    observed_sha256 = legacy.sha256_json(unsigned)
+    if (
+        receipt.get("receipt_sha256") != observed_sha256
+        or receipt_row["receipt_sha256"] != observed_sha256
+    ):
+        raise legacy.StateError(f"stored receipt integrity mismatch for run {run_id}")
+    return receipt
+
+
 def _materialize_receipt(store: StateStore, receipt: dict[str, Any]) -> Path:
     path = store.receipt_path(receipt["run_id"])
     legacy.atomic_write(path, json.dumps(receipt, indent=2, ensure_ascii=False) + "\n")
@@ -5299,10 +5341,11 @@ def complete_run(
             "SELECT * FROM runs WHERE run_id=?", (run_id,)
         ).fetchone()
         duplicate = connection.execute(
-            "SELECT receipt_json FROM receipts WHERE run_id=?", (run_id,)
+            "SELECT receipt_json,receipt_sha256 FROM receipts WHERE run_id=?",
+            (run_id,),
         ).fetchone()
         if duplicate is not None:
-            replay_receipt = json.loads(duplicate["receipt_json"])
+            replay_receipt = _load_validated_stored_receipt(registry, run_id, duplicate)
             envelope = json.loads(run_row["envelope_json"]) if run_row is not None else {}
         else:
             if run_row is None:
@@ -5330,6 +5373,7 @@ def complete_run(
             missing = _validate_evidence(criteria, evidence)
             if missing:
                 raise legacy.StateError("missing evidence for: " + ", ".join(sorted(missing)))
+            _require_independent_completion_evidence(criteria)
             receipt = {
                 "schema_version": 1,
                 "run_id": run_id,

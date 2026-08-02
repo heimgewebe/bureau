@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "id": "BUREAU-TRUTH-MODEL-V2-T026",
+  "initiative": "BUREAU-TRUTH-MODEL-V2",
+  "title": "Queue-Entfernung und Task-Terminalisierung atomar binden",
+  "goal": "Verhindere, dass Bureau-Reparaturen einen Task wegen effektiver Terminalität aus aktiven Queue-Lanes entfernen, während sein kanonisches Task-Dokument nonterminal bleibt. Führe einen engen fail-closed Vertrag ein: Entweder terminalisiert dieselbe geprüfte Registry-Transaktion den Task mit gültigem task_sha256, plan_sha256 und Abschlussbeleg, oder sie hinterlegt einen expliziten strukturierten Nonterminal-Ausschluss, der in Doctor und Frontier sichtbar ist. Ergänze Regressionstests für das bei RPU-V1-T035 beobachtete Split-Closeout.",
+  "state": "planned",
+  "priority": {
+    "lane": "later",
+    "rank": 26
+  },
+  "depends_on": [],
+  "required_capabilities": [
+    "repository",
+    "python",
+    "testing",
+    "bureau",
+    "grabowski"
+  ],
+  "claims": [
+    {
+      "resource": "component.bureau.core",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.truth-model",
+      "mode": "write",
+      "isolation": "worktree"
+    },
+    {
+      "resource": "component.bureau.docs",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/bureau",
+    "approval": {
+      "required_level": "operator",
+      "action_class": "repository_mutation",
+      "note": "Der Nutzer verlangt dauerhaft, sinnvolle nicht behobene Operator- und Bureau-Befunde als Folgetasks zu registrieren. Die Umsetzung ist auf den beobachteten Queue/Task-State-Drift, Doctor-/Check-Invariante, Regressionstests und notwendige Dokumentation begrenzt; Queue-, Claim-, Review-, Lease-, Merge- und Deployment-Gates dürfen nicht gelockert werden."
+    },
+    "grabowski_resources": [
+      "path:/home/alex/repos/bureau/src/bureau",
+      "path:/home/alex/repos/bureau/tests",
+      "path:/home/alex/repos/bureau/docs",
+      "path:/home/alex/repos/bureau/registry/tasks/BUREAU-TRUTH-MODEL-V2-T026.json"
+    ]
+  },
+  "metadata": {
+    "registered_from_candidate": "candidate-699913c540bd9141a75b3680",
+    "source_event_id": 2209,
+    "source_digest": "7b72506d6371215646c8537da8f3849347f5fd21f75d07cc46f8a26b88fa3c79",
+    "source_prs": [
+      {
+        "repository": "heimgewebe/bureau",
+        "pull_request": 1401,
+        "merge_commit": "a9395c1d115285551233d12cbe70b89021780c21",
+        "observation": "RPU-V1-T035 wurde wegen runtime-effektiver Verifikation aus der Queue entfernt, blieb im kanonischen Task-Dokument aber state=ready."
+      },
+      {
+        "repository": "heimgewebe/bureau",
+        "pull_request": 1407,
+        "merge_commit": "000efdf47ff884fc508775140b895351d9c7ad3c",
+        "observation": "Ein separater Closeout war nötig, um denselben Task revisionsgebunden auf verified zu setzen und Task-/Plan-Hashes zu binden."
+      }
+    ],
+    "operator_intake": {
+      "schema_version": 1,
+      "candidate_id": "candidate-699913c540bd9141a75b3680",
+      "event_id": 2209,
+      "event_created_at": "2026-08-02T21:07:22.439404Z",
+      "request_sha256": "8af4bcf1529102dcb63eda47aed78391355d1ea9623772f0ed44aaeb9f2b9e16",
+      "source": {
+        "kind": "merged-pull-request-pair",
+        "locator": "heimgewebe/bureau#1401@a9395c1d115285551233d12cbe70b89021780c21 + heimgewebe/bureau#1407@000efdf47ff884fc508775140b895351d9c7ad3c",
+        "sha256": "7b72506d6371215646c8537da8f3849347f5fd21f75d07cc46f8a26b88fa3c79",
+        "observed_at": "2026-08-02T21:03:08Z",
+        "freshness": "digest-bound",
+        "does_not_establish": []
+      },
+      "does_not_establish": [
+        "queue_truth",
+        "task_readiness",
+        "claim_or_dispatch_authority"
+      ]
+    },
+    "publication_path": {
+      "kind": "normal-protected-pull-request",
+      "reason": "Die kanonische typed publication war vor Wirkung durch die absichtlich erhaltene fremde Runtime-Refresh-Lease und einen hinter main zurückliegenden immutable Bureau-Release blockiert. Der normale PR erhält exakte Pfadbindung, Vollvalidierung, revisionsgebundenes Self-Review und Required Checks; Queue und Live Register werden nicht direkt mutiert.",
+      "does_not_establish": [
+        "typed publication bypass authority",
+        "queue mutation",
+        "claim or dispatch authority",
+        "merge readiness before exact-head CI"
+      ]
+    },
+    "does_not_establish": [
+      "task readiness",
+      "queue or dispatch authority",
+      "necessity of a global lock",
+      "permission to rewrite historical evidence",
+      "initiative completion"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "terminal-removal-atomic",
+      "assertion": "Wird ein aktiver Queue-Eintrag wegen erledigter Arbeit entfernt, terminalisiert dieselbe geprüfte Registry-Transaktion das kanonische Task-Dokument und bindet gültige task_sha256-, plan_sha256- und Abschlussbelege."
+    },
+    {
+      "id": "nonterminal-exclusion-explicit",
+      "assertion": "Ein nonterminaler Task darf außerhalb aktiver Lanes bleiben, wenn ein expliziter strukturierter Ausschlussgrund vorliegt, der keine Terminalität behauptet und in Doctor sowie Frontier-Diagnostik sichtbar ist."
+    },
+    {
+      "id": "drift-fail-closed",
+      "assertion": "Bureau check oder Doctor erkennt und blockiert den Fall, dass Queue-Reparatur oder Abschlusslogik Terminalität behauptet, während das kanonische Task-Dokument nonterminal bleibt."
+    },
+    {
+      "id": "regression-proof",
+      "assertion": "Hermetische Tests decken mindestens das RPU-V1-T035-Split-Closeout, idempotenten Replay, konkurrierende Registry-Änderung und absichtlich unqueued blocked/waiting Tasks ab; make validate ist auf dem exakten finalen Head grün."
+    },
+    {
+      "id": "truth-boundary",
+      "assertion": "Die Lösung erzeugt keine zweite Registry-, Queue-, Lifecycle- oder Dispatch-Wahrheit und leitet weder Claim- noch Dispatch-Autorität allein aus Task-State oder Queue-Präsenz ab."
+    }
+  ],
+  "rollback": {
+    "strategy": "Revertiere ausschließlich die neue Queue/Task-Konsistenzinvariante, ihre Diagnoseausgabe, Tests und Dokumentation. Bestehende Registry- und Queue-Daten werden nicht rückwirkend umgeschrieben; historische Abschlussbelege bleiben erhalten."
+  }
+}

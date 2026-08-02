@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -73,6 +74,42 @@ def test_live_register_rejects_unknown_repo_resource(registry_factory, tmp_path)
             thread_id="chat-1",
             repo="repo.unknown",
             title="Bad repo",
+        )
+
+
+def test_strict_catalog_accepts_acs_candidate_and_rejects_unknown_repo(tmp_path):
+    root = Path(__file__).resolve().parents[1]
+    registry = Registry.load(root)
+    store = StateStore(tmp_path / "state.sqlite3")
+
+    accepted = live_register_record(
+        registry,
+        store,
+        kind="candidate_task",
+        candidate_id="candidate-acs-catalog-test",
+        repo="repo.agent-control-surface",
+        title="Bound ACS candidate",
+        promotion_required=True,
+    )
+
+    assert accepted["record"]["repo"] == "repo.agent-control-surface"
+    assert accepted["record"]["catalog_validation"] == {
+        "mode": "strict",
+        "status": "validated",
+        "does_not_establish": [],
+    }
+    with pytest.raises(
+        StateError,
+        match=r"unknown live register repo resource repo\.unknown-acs",
+    ):
+        live_register_record(
+            registry,
+            store,
+            kind="candidate_task",
+            candidate_id="candidate-unknown-acs-catalog-test",
+            repo="repo.unknown-acs",
+            title="Unknown repository candidate",
+            promotion_required=True,
         )
 
 

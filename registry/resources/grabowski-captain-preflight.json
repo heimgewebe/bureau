@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "component.grabowski.captain-preflight",
+  "type": "component",
+  "parent": "repo.grabowski",
+  "path": "/home/alex/repos/grabowski/.grabowski-scopes/captain-preflight",
+  "grabowski_key": "component:grabowski-captain-preflight"
+}

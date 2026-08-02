@@ -132,7 +132,18 @@
       "reposkop_reported_version": "1.0.0",
       "freshness": "last-successful-live-readback-before-connector-loss"
     },
-    "current_blockade": {
+    "t051_relationship": {
+      "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T051",
+      "classification": "narrow_runtime_cutover_followup",
+      "reason": "T051 remains planned and contains historical broad acceptance language that predates Reposkop 2.0 canonical checkout authority. T076 isolates the currently executable producer-consumer runtime cutover without silently rewriting the broader task."
+    },
+    "does_not_establish": [
+      "successful host deployment",
+      "completion of all T051 acceptance items",
+      "task claim or dispatch authority",
+      "permission to include open Grabowski pull requests 543, 546 or 547"
+    ],
+    "previous_blockade": {
       "classification": "operator-transport-unavailable",
       "detail": "The Grabowski tool namespace was discovered successfully, but direct calls currently return Resource not found and rediscovery no longer exposes the namespace.",
       "effect": "No host installation or runtime deployment may be claimed until a fresh Grabowski preflight succeeds.",
@@ -143,19 +154,53 @@
         "permission to bypass leases or the deployment contract"
       ]
     },
-    "t051_relationship": {
-      "task_id": "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T051",
-      "classification": "narrow_runtime_cutover_followup",
-      "reason": "T051 remains planned and contains historical broad acceptance language that predates Reposkop 2.0 canonical checkout authority. T076 isolates the currently executable producer-consumer runtime cutover without silently rewriting the broader task."
-    },
-    "does_not_establish": [
-      "successful host deployment",
-      "current installed binary identity after connector loss",
-      "absence of conflicting live host work without fresh Grabowski reads",
-      "completion of all T051 acceptance items",
-      "task claim or dispatch authority",
-      "permission to include open Grabowski pull requests 543, 546 or 547"
-    ]
+    "unblocked_at": "2026-08-02T05:50:50.226180+00:00",
+    "unblock_evidence": {
+      "schema_version": 1,
+      "preflight_scope": "fresh-live-before-host-cutover",
+      "connector": {
+        "expected_tool_count": 177,
+        "registered_tool_count": 177,
+        "tool_names_sha256": "cb3cd4cc79e34e7db61bcb60ade2b3547d15acb388e6f617af25424f08e03b63",
+        "snapshot_fresh": true,
+        "binding_matched": true
+      },
+      "runtime": {
+        "release_id": "058bea9b6b28-srcset9f2f298a92ed-locke6664d600b6c-contract5d1484d08302",
+        "repo_head": "058bea9b6b28959a2ba847411555827ebce833f0",
+        "deployment_integrity_valid": true,
+        "recovery_ready": true
+      },
+      "safety": {
+        "audit_chain_valid": true,
+        "audit_writable": true,
+        "audit_last_record_sha256": "38a55e2d539900a482fc2ce51e5e8c05ed1ff1d6df94ef96f997e3e651febc3a",
+        "kill_switch_engaged": false,
+        "typed_blockade_allowed": true
+      },
+      "reposkop_preimage": {
+        "path": "/home/alex/.local/bin/reposkop",
+        "version": "reposkop 1.0.0",
+        "sha256": "cdc6450bbbb652458cc383ff1f82a96cbd9ccf18be791274b93ca8d4340527f3",
+        "owner": "alex",
+        "group": "alex",
+        "mode": "0o755",
+        "is_symlink": false,
+        "size": 159
+      },
+      "source_revisions": {
+        "reposkop_merge_commit": "6c0847c2cbc6ee1d1cff52fc1b4a1c5ee17af487",
+        "reposkop_ci_green": true,
+        "grabowski_merge_commit": "d17674c0e3fedcd8cd17c3a739d3707748b06e9d",
+        "grabowski_ci_green": true
+      },
+      "coordination": {
+        "effect_resource_lease_conflicts": 0,
+        "conflicting_open_pull_requests": 0,
+        "foreign_dirty_states_touched": false,
+        "foreign_processes_touched": false
+      }
+    }
   },
   "priority": {
     "lane": "now",
@@ -175,6 +220,6 @@
     "strategy": "Vor dem ersten Effekt werden die exakte alte Reposkop-Dateiidentität, SHA-256, Version und die aktive Grabowski-Release-/Manifestidentität gebunden. Bei einem Produzenten-, Verbraucher-, Audit-, Connector-, Doctor-, Runtime- oder Live-Roundtrip-Fehler werden keine weiteren Effekte ausgeführt. Falls bereits mutiert wurde, wird ausschließlich auf diese gebundenen Vorgängeridentitäten zurückgeschaltet; neue v2-Receipts werden nicht umgeschrieben oder gelöscht, sondern als fehlgeschlagene Cutover-Evidenz erhalten."
   },
   "schema_version": 1,
-  "state": "blocked",
+  "state": "ready",
   "title": "Reposkop 2.0 und Grabowski-Verbraucher atomar ausrollen"
 }

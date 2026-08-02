@@ -1,22 +1,22 @@
 {
   "schema_version": 1,
   "id": "AUDIO-CONTROL-PLANE-V1",
-  "title": "Messbare und sichere Audio-Steuerung für den Heim-PC",
-  "state": "waiting",
+  "title": "Audiozentrale als lokale, messbare Live-Audioumgebung",
+  "state": "active",
   "commitment": "now",
-  "goal": "Eine einzige nachvollziehbare Audio-Steuerung für Referenzhören, Qobuz, Aufnahme, Roland-Livespiel, Produktion, Receiver, Bluetooth, Dauersong und begrenzte Klangexperimente aufbauen, ohne veraltete hausKI-audio-Verträge oder parallele Zustandswahrheiten zu übernehmen.",
+  "goal": "Eine lokal betriebene Audiozentrale liefern, die reale Signalwege live sichtbar macht, Referenzhören, sichere Aufnahme, Roland- und Gitarrenspiel sowie begrenzte erklärbare Modulation in einer gemeinsamen wiederherstellbaren Produktoberfläche verbindet, ohne DAW-, Cloud-, KI- oder freien Modulargraph-Zwang.",
   "current_plan": {
     "repository": "heimgewebe/audio",
-    "path": "docs/plans/audio-configuration-redesign-v1.md",
-    "commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
-    "document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc"
+    "path": "docs/plans/audiozentrale-product-v2.md",
+    "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
+    "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae"
   },
   "completion": [
-    "Systemwahrheit, sichere Referenzpegel und alle Architekturentscheidungen der Phasen 0 bis 2 sind objektiv geschlossen.",
-    "Profil-, Aufnahme-, Wiedergabe- und Kreativkomponenten sind repositoryseitig implementiert, ohne produktive Laufzeitwirkung vor dem gemeinsamen Labor- und Rollouttask.",
-    "Alle Profile einschließlich production bestehen die phasen- und profilhashgebundene Laborprüfung sowie die gestufte Live-Anwendung mit vollständigem Rollback.",
-    "Eine typisierte Bedienoberfläche projiziert nur frische autoritative Zustände und kann Sicherheits- oder Messgates nicht umgehen.",
-    "Wartungs- und Recoverywerkzeuge bestehen reale Drills; Altquellen sind deterministisch erfasst, Altaktivierungen geschlossen, das Repository recovery-first archiviert und entbehrliche Worktrees separat bereinigt."
+    "Die gemeinsame Produktoberfläche mit Jetzt, Setups, Bibliothek und System nutzt dieselbe Frontendbasis im Browser und in der gewählten App-Shell; Wahrheitsebenen und progressive Darstellungstiefen bleiben getrennt.",
+    "Systemwahrheit, Audio- und MIDI-Telemetrie sowie Darstellung sind getrennte, begrenzte Datenpfade; Liveanzeigen verursachen im Zielprofil keine zurechenbaren XRuns und degradieren bei Verbindungsverlust sichtbar.",
+    "Referenzhören, Stimme, Roland/Wal und E-Gitarre besitzen jeweils einen vollständigen, versionsgebundenen Setup-, Pegel-, Recovery- und Geräteverlustvertrag; physische Fakten werden nicht erfunden.",
+    "Interne Module und typisierte Verknüpfungen sind erklärbar, reproduzierbar und können weder Aufnahme, Ausgabeziel, Masterpegel noch Sicherheitsfunktionen modulieren.",
+    "Die kommerzielle Version 1 besteht Packaging, Update-, Crash-, Recovery-, Touch-, Tastatur- und Hardware-Kompatibilitätsgates ohne Konto- oder Internetzwang; Ableitungen und Bibliotheksausbau folgen erst danach."
   ],
   "parallelism": {
     "max_active_tasks": 2
@@ -30,20 +30,17 @@
     "source_sha256": "bceb4c089c4a545b77494f86f995eae3f51b486eb5b0221b1a6309e9d9ec21f1",
     "implementation_policy": "new-code-in-audio-by-default",
     "legacy_policy": "hausKI-audio supplies ideas and rewritten behavioural requirements only; source and history are not imported by default",
-    "sequencing_authority": "docs/plans/audio-configuration-redesign-v1.md phases 0 through 8",
+    "sequencing_authority": "docs/plans/audiozentrale-product-v2.md phases 0 through 7, bound to audio merge 25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
     "review_reconciliation": "Repository implementation, live runtime mutation, maintenance validation, deterministic legacy reconciliation, runtime closeout, repository archival and worktree cleanup are separate tasks.",
-    "waiting_on": {
-      "schema_version": 1,
-      "task_id": "AUDIO-CONTROL-PLANE-V1-T001",
-      "code": "physical-audio-hardware-and-human-readback-required",
-      "observed_at": "2026-08-01T20:32:45.371232+00:00",
-      "resume_condition": "MOTU M2 und Roland FP-30X sind physisch sichtbar; die erforderlichen Gain-, Routing-, Phantomspannungs- und Hörreglerzustände wurden menschlich bestätigt; reale Stimm- und Loopbackmessungen können sicher durchgeführt werden.",
-      "does_not_establish": [
-        "automatische Wiederaufnahme ohne frischen Live-Readback",
-        "Hardwareanwesenheit zu einem späteren Zeitpunkt"
-      ]
-    },
     "supplemental_plans": [
+      {
+        "id": "audio-configuration-redesign-v1",
+        "repository": "heimgewebe/audio",
+        "path": "docs/plans/audio-configuration-redesign-v1.md",
+        "commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
+        "document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc",
+        "scope": "Operative Profil-, Mess-, Labor- und Rollbackgrundlage; bleibt unter dem Produktplan verbindlich."
+      },
       {
         "id": "buckelwal-continuous-voice-v1",
         "repository": "heimgewebe/audio",
@@ -67,6 +64,75 @@
       "Erlaubnis zum Überschreiben fremder Audio-, Bureau- oder Laufzeitarbeit",
       "Archivierungsfreigabe für hausKI-audio vor vollständiger Coverage-Matrix und exklusivem Cleanup-Task",
       "subjektive Klangabnahme der durchgehend spielbaren Buckelwalstimme vor AUDIO-CONTROL-PLANE-V1-T016"
+    ],
+    "previous_current_plan": {
+      "repository": "heimgewebe/audio",
+      "path": "docs/plans/audio-configuration-redesign-v1.md",
+      "commit": "ab2dab6da4ddb7edd3db16b47709f083b0402908",
+      "document_sha256": "61f9467eb131bfef06c3acaf6f6820de7046b616b94888a015b2675644aab9dc"
+    },
+    "physical_gates": {
+      "status": "phase-specific",
+      "blocked_tasks": [
+        "AUDIO-CONTROL-PLANE-V1-T001",
+        "AUDIO-CONTROL-PLANE-V1-T016",
+        "AUDIO-CONTROL-PLANE-V1-T027"
+      ],
+      "resume_condition": "MOTU M2 und Roland FP-30X sind physisch sichtbar; Kabel, Hi-Z, 48 V, Gain- und analoge Hörstellungen sind für den jeweiligen vertikalen Schnitt menschlich bestätigt.",
+      "does_not_block": [
+        "AUDIO-CONTROL-PLANE-V1-T019",
+        "AUDIO-CONTROL-PLANE-V1-T020",
+        "AUDIO-CONTROL-PLANE-V1-T021",
+        "repository-only portions of T022 through T026"
+      ]
+    },
+    "implementation_waves": [
+      {
+        "wave": 0,
+        "tasks": [
+          "AUDIO-CONTROL-PLANE-V1-T019",
+          "AUDIO-CONTROL-PLANE-V1-T020"
+        ],
+        "scope": "Objektmodell, Migration, Replay und read-only Produktoberfläche"
+      },
+      {
+        "wave": 1,
+        "tasks": [
+          "AUDIO-CONTROL-PLANE-V1-T021"
+        ],
+        "scope": "Passive Live-Telemetrie ohne produktive Routingmutation"
+      },
+      {
+        "wave": 2,
+        "tasks": [
+          "AUDIO-CONTROL-PLANE-V1-T022",
+          "AUDIO-CONTROL-PLANE-V1-T023"
+        ],
+        "scope": "Stimme und Roland/Wal als vollständige vertikale Schnitte"
+      },
+      {
+        "wave": 3,
+        "tasks": [
+          "AUDIO-CONTROL-PLANE-V1-T024",
+          "AUDIO-CONTROL-PLANE-V1-T025"
+        ],
+        "scope": "Typisierte interne Modulation und E-Gitarre"
+      },
+      {
+        "wave": 4,
+        "tasks": [
+          "AUDIO-CONTROL-PLANE-V1-T026",
+          "AUDIO-CONTROL-PLANE-V1-T027"
+        ],
+        "scope": "App-Shell, Produkthärtung, physische Abnahme und kommerzielle v1"
+      },
+      {
+        "wave": 5,
+        "tasks": [
+          "AUDIO-CONTROL-PLANE-V1-T028"
+        ],
+        "scope": "Ableitung und Bibliothek nach v1"
+      }
     ]
   }
 }

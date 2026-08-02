@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "id": "AUDIO-CONTROL-PLANE-V1-T022",
+  "initiative": "AUDIO-CONTROL-PLANE-V1",
+  "title": "Stimmaufnahme als ersten Produkt-Vertikalschnitt integrieren",
+  "state": "planned",
+  "goal": "Den vorhandenen gehärteten Recordervertrag als vollständiges Voice-Setup in Jetzt und Bibliothek integrieren: Pegel, Quelle, Monitoring, Start, Stop, Take, Wiedergabe und Recovery, weiterhin strikt an MOTU-, RØDE-, 48-V- und Pegelgates gebunden.",
+  "depends_on": [
+    "AUDIO-CONTROL-PLANE-V1-T021",
+    "AUDIO-CONTROL-PLANE-V1-T004"
+  ],
+  "priority": {
+    "lane": "next",
+    "rank": 22
+  },
+  "execution": {
+    "mode": "interactive-agent",
+    "policy": "review-before-effect",
+    "working_repository": "/home/alex/repos/audio",
+    "grabowski_resources": [
+      "repo:/home/alex/repos/audio"
+    ],
+    "approval": {
+      "action_class": "repository_mutation",
+      "required_level": "operator",
+      "note": "Repositoryarbeit und Offlineprüfung gehen jeder Wirkung voraus; physische Audio-, Routing- oder Gerätewirkung benötigt das jeweils explizite Live-Gate."
+    }
+  },
+  "claims": [
+    {
+      "resource": "repo.audio",
+      "mode": "write",
+      "isolation": "worktree"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "typed-recorder-api",
+      "assertion": "UI-Aktionen sind kleine typisierte Absichten; Planhash, Quellenbindung und autoritativer Folgezustand bleiben Backendautorität.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "take-contract",
+      "assertion": "Regulärer Stop, Abbruch, App-Neustart und Geräteverlust liefern finalisierte oder ausdrücklich recoverable Takes ohne Überschreiben.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "monitoring-truth",
+      "assertion": "Direktes und softwareseitiges Monitoring werden nicht verwechselt; erwartete Latenz und physische Fakten sind sichtbar.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "onsite-gate",
+      "assertion": "Ohne beobachtete MOTU-Quelle und bestätigte Mikrofon-, Kanal-, Gain- und 48-V-Fakten bleibt Start fail-closed.",
+      "evidence_type": "object"
+    },
+    {
+      "id": "no-content-logs",
+      "assertion": "Audio-, MIDI- und Sprachinhalt gelangt nicht in Telemetrie, Logs oder Diagnoseexporte.",
+      "evidence_type": "object"
+    }
+  ],
+  "required_capabilities": [
+    "repository",
+    "git",
+    "github",
+    "grabowski",
+    "bureau",
+    "testing",
+    "rollback",
+    "recording",
+    "audio",
+    "runtime-observability"
+  ],
+  "rollback": {
+    "strategy": "Den exakten Repositorydiff oder Mergecommit zurücknehmen. Livewirkungen sind nur in ausdrücklich hostgebundenen Tasks erlaubt und müssen ihren eigenen Preimage-, Stop- und Readbackvertrag verwenden."
+  },
+  "metadata": {
+    "registered_at": "2026-08-02T07:46:00+02:00",
+    "plan": {
+      "repository": "heimgewebe/audio",
+      "path": "docs/plans/audiozentrale-product-v2.md",
+      "commit": "25d790ff2fee589f725b8f96a3fd1e9d8ec34dfc",
+      "document_sha256": "61979e0e4182291b460274153bee4ce2c770225a5d6c7940ee52bdc4785e47ae"
+    },
+    "does_not_establish": []
+  }
+}

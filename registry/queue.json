@@ -89,7 +89,8 @@
     ],
     "now": [
       "OPERATOR-ECOSYSTEM-REDUNDANCY-V1-T076",
-      "REPOGROUND-LEGACY-RECONCILIATION-V1-T004"
+      "REPOGROUND-LEGACY-RECONCILIATION-V1-T004",
+      "RPU-V1-T035"
     ]
   },
   "queue_policy": "skip-blocked",

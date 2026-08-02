@@ -6,8 +6,8 @@
   "goal": "Erzeuge für das weiterhin sinnvolle geschlossene Plexer-Update aus PR #83 einen frischen Ersatz-PR vom aktuellen origin/main und belege reproduzierbare pnpm-Abhängigkeiten, Build- und Testartefakte auf dem exakten Ersatz-Head.",
   "state": "ready",
   "priority": {
-    "lane": "next",
-    "rank": 23
+    "lane": "now",
+    "rank": 2
   },
   "depends_on": [],
   "required_capabilities": [
@@ -56,6 +56,18 @@
         "Wiederverwendbarkeit alter CI-Ergebnisse",
         "automatische Queueaufnahme",
         "Berechtigung zu administrativen Merge-Bypässen"
+      ]
+    },
+    "queue_promotion": {
+      "schema_version": 1,
+      "observed_at": "2026-08-02T19:56:35Z",
+      "registry_head": "030e7eeca73d934a3bdb0933aeb0095034fb9934",
+      "reason": "Promoted into the repaired actionable now lane after a fresh full-capability frontier on the rebased canonical head found no blocker, dependency, active run, lease conflict or open-PR reservation beyond review-before-effect approval.",
+      "promoted_by_task": "BUREAU-TRUTH-MODEL-V2-T016",
+      "does_not_establish": [
+        "claim success",
+        "future resource availability",
+        "merge readiness before fresh checks"
       ]
     }
   },

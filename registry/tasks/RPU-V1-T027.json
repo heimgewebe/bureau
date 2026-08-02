@@ -90,7 +90,7 @@
     "receipt_reconciliation": {
       "schema_version": 1,
       "basis": "RepoGround PR #1147 and the authoritative post-merge readback prove all three RPU-V1-T027 acceptance criteria on current main.",
-      "registry_base_commit": "62b97a1b9649d8ae3bb41a51be024b50a4fab378",
+      "registry_base_commit": "6736fc0dd4f56b4ec6237841fbf4ec86d5c2479a",
       "source_task_blob_sha": "e6e6d3e2620be2737c1a5df5e2dc91dcbe2979d7",
       "implementation_head": "91dd551c007be11b0d994ba8a098583344d31210",
       "merged_pull_request": "heimgewebe/repoground#1147",
@@ -138,7 +138,7 @@
       ]
     },
     "verification": {
-      "task_sha256": "6aa782bf7895779135ee72501555b79f705b6edcee0e199120f28547f77f09ca",
+      "task_sha256": "357813cab3c89b780e4ffe5976227bea268112414185a638f6624830d010d336",
       "plan_sha256": "45b3a6f8887f5e40fb4d1f4f72e676a36511ccd3a648b38c7a653d406ceaf9db"
     }
   }
